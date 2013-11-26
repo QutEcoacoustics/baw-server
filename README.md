@@ -29,12 +29,21 @@ You may need to install some additional tools for working with audio and images.
 
 ## Testing
 
+First create the `/config/settings/test.yml` settings file. 
+Then create the test databas (you may need to use `rake db:create RAILS_ENV=test`). 
+Then migrate and seed the test databse using `rake db:migrate db:seed RAILS_ENV=test`.
+
 The tests are run using Guard:
 
     $ bundle exec guard
     $ [1] guard(main)>
 
 Press enter to execute all tests. Guard will monitor for changes and the relevant tests will be run as files are saved.
+
+Tests can also be run with a specified seed using rspec:
+
+    $ rspec --seed <number>
+
 
 Documentation can be generated from tests using [rspec_api_documentation](https://github.com/zipmark/rspec_api_documentation).
 
