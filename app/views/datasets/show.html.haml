@@ -1,0 +1,35 @@
+.row-fluid
+  %h1= @dataset.name
+  %p= @dataset.description
+  = render partial: 'summary', locals: {dataset: @dataset}
+
+
+%h3= 'Sites'
+.row-fluid
+  .span6
+    - @dataset.sites.each do |site|
+      .row-fluid.spacer
+        = render partial: 'sites/site_thumb_large', locals: {site: site}
+  .span6= gmaps(markers: {data: @dataset.sites.to_gmaps4rails}, map_options: gmaps_default_options)
+  = yield :scripts
+
+.row-fluid
+  %h3= 'Jobs'
+  - unless @dataset.jobs.empty?
+    = render partial: 'jobs/jobs_table', locals: {jobs: @dataset.jobs.includes(:dataset)}
+  = link_to new_project_job_path(@dataset), title: 'Add a new analysis job to this project',
+  data: {toggle: 'tooltip',  placement: 'right'}, class: 'btn-create-site btn' do
+    Add New Job
+
+- content_for :right_sidebar do
+  = sidebar_metadata_users('Created by', [{user: @dataset.creator, subtext: time_ago_in_words(@dataset.created_at) + ' ago' }])
+  = sidebar_metadata_users('Modified by', [{user: @dataset.updater, subtext: time_ago_in_words(@dataset.updated_at) + ' ago' }])
+
+- content_for :left_sidebar do
+  = render layout: '/shared/left_sidebar', locals: {title: 'Datasets'} do
+    - if can? :edit, @project
+      %li= link_to 'Edit Dataset',edit_project_dataset_path(@project, @dataset),  title: "Edit dataset's parameters", data: {toggle: 'tooltip',  placement: 'right'}
+    - if can? :destroy, @project
+      %li= link_to 'Delete Dataset', [@project, @dataset], :method => :delete, data: { confirm: 'Are you sure?', toggle: 'tooltip',  placement: 'right' }, title: 'Delete dataset'
+    - if can? :edit, @project
+      %li= link_to 'Add New Dataset', new_project_dataset_path(@project),  title: "Add a new dataset to this project", data: {toggle: 'tooltip',  placement: 'right'}

@@ -1,0 +1,12 @@
+= simple_form_for [@project, @job], html: {class: 'form-horizontal'} do |f|
+  = f.error_notification
+
+  .form-inputs
+    = f.input :name , required: true
+    = f.input :annotation_name
+    = f.association :dataset, collection: @project.datasets, required: true
+    = f.association :script, collection: Script.latest_versions, label_method: :display_name, required: true
+    = f.input :script_settings , input_html: {rows: 6, class: 'span12'} , required: true
+
+  .form-actions
+    = f.button :submit

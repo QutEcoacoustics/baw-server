@@ -1,0 +1,24 @@
+= f.error_notification
+
+.form-inputs
+  = f.input :name
+  = f.input :description, input_html: {rows: '3'}
+  = f.input :notes, input_html: {rows: '3'}
+  = f.input :analysis_identifier
+  = f.input :version
+  .control_group
+    = f.label :settings_file
+    .controls
+      - unless @script.settings_file_file_name.blank?
+        = link_to "Current #{@script.settings_file_file_name}", @script.settings_file.url
+      = f.file_field :settings_file
+  .control_group
+    = f.label :data_file
+    .controls
+      - unless @script.data_file_file_name.blank?
+        = link_to "Current #{@script.data_file_file_name}", @script.data_file.url
+      = f.file_field :data_file
+  = f.input :verified
+
+.form-actions
+  = f.button :submit

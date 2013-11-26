@@ -1,0 +1,27 @@
+%h1= @job.name
+
+%h3 Tasks
+
+
+%h3
+  Script:
+  = link_to @job.script.display_name, @job.script
+%p= @job.script.description
+.well= @job.script_settings
+
+
+
+- content_for :right_sidebar do
+  = sidebar_metadata_users('Created by', [{user: @job.creator, subtext: time_ago_in_words(@job.created_at) + ' ago' }])
+  = sidebar_metadata_users('Modified by', [{user: @job.updater, subtext: time_ago_in_words(@job.updated_at) + ' ago' }])
+  = sidebar_metadata('Annotation Name', @job.annotation_name)
+
+
+- content_for :left_sidebar do
+  = render layout: '/shared/left_sidebar', locals: {title: 'Jobs'} do
+    - if can? :edit, @project
+      %li= link_to 'Edit Job',edit_project_job_path(@project, @job),  title: "Edit analysis job's parameters", data: {toggle: 'tooltip',  placement: 'right'}
+    - if can? :destroy, @project
+      %li= link_to 'Delete Job', [@project, @job], :method => :delete, data: { confirm: 'Are you sure?', toggle: 'tooltip',  placement: 'right' }, title: 'Delete dataset'
+    - if can? :edit, @project
+      %li= link_to 'Add New Job', new_project_job_path(@project),  title: "Add a new analysis job to this project", data: {toggle: 'tooltip',  placement: 'right'}

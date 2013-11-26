@@ -1,0 +1,18 @@
+# the project
+project_id: <%= @project.id %>
+
+# the site
+site_id: <%= @site.id %>
+
+# this needs to be set manually
+# below is a list of uploader_ids that have write access to this project
+# uncomment the one that you want to set as the uploader of the audio files
+# |---------- IMPORTANT: Ensure there is no whitespaces left before uploader_id
+#uploader_id: <%= @project.owner.id %> # <%=  @project.owner.user_name %>
+<% @project.writers.each do |writer| %>
+#uploader_id: <%= writer.id %> # <%= writer.user_name %>
+<% end %>
+
+# this is the timezone for all the recodings
+utc_offset: '+10'
+

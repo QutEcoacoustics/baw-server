@@ -1,19 +1,48 @@
-*.rbc
-*.sassc
-.sass-cache
-capybara-*.html
-.rspec
-.rvmrc
-/.bundle
-/vendor/bundle
-/log/*
-/tmp/*
+# Ignore the SQLite databases.
 /db/*.sqlite3
+
+# ignore media folder
+/media/*
+
+# ignore custom rake import task
+/lib/tasks/import/*
+/lib/tasks/sample_data.rake
+
+# ignore deploy files
+/config/deploy.rb
+/config/deploy/production.rb
+/config/deploy/staging.rb
+
+# ignore settings files (except default.yml)
+/config/settings/development.yml
+/config/settings/test.yml
+/config/settings/staging.yml
+/config/settings/production.yml
+
+# ignore harvester settings files (except default.yml)
+/lib/external/harvester/harvester_production.yml
+/lib/external/harvester/harvester_staging.yml
+/lib/external/harvester/harvester_development.yml
+
+# files created by tests and extra temp files
 /public/system/*
+
+# log files
+/log/*.log
+external_modules.log
+
+# ignore temporary files
+/tmp
+
+# ignore ide settings
+/.idea
+
+# ignore test coverage files
 /coverage/
-/spec/tmp/*
-**.orig
-rerun.txt
-pickle-email-*.html
-.project
-config/initializers/secret_token.rb
+
+# ignore vendor binary files
+/vendor/bin/*
+/vendor
+
+# ignore generated api documentation
+/doc

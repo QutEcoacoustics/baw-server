@@ -1,0 +1,12 @@
+-# this view is not used, only here for debugging purposes
+
+= simple_form_for [@project, @permission] do |f|
+  = f.error_notification
+
+  .form-inputs
+    = f.input :level, collection: ['reader', 'writer']
+    = f.input :project_id, :as => :hidden, :input_html => { :value => @project.id }
+    = f.association :user, collection: User.all(order: 'user_name'), prompt: 'Choose a User', label_method: :user_name
+
+  .form-actions
+    = f.button :submit

@@ -1,0 +1,20 @@
+# Sample localization file for English. Add more files in this directory for other locales.
+# See https://github.com/svenfuchs/rails-i18n/tree/master/rails%2Flocale for starting points.
+
+en-AU:
+  hello: "Hello world"
+  date:
+    formats:
+      short: "%d/%m/%Y"
+  time:
+    formats:
+      short: "%H:%M"
+      long:  "%d/%m/%Y %H:%M"
+  enumerize:
+    dataset:
+      filters:
+        wind: "Wind"
+        rain: "Rain"
+      types_of_tags:
+        human: "Human"
+        computer: "Computer"

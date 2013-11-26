@@ -1,0 +1,40 @@
+= simple_form_for [@project, @site], html: {:multipart => true } do |f|
+  .row-fluid
+    .span6
+      = f.error_notification
+
+      .form-inputs
+        = f.input :name, input_html: { class: 'span12' }
+        = f.input :notes, input_html: {rows: '6', class: 'span12' }
+        .control_group
+          = f.label :image
+          .controls
+            - unless @site.image_file_name.blank?
+              = image_tag @site.image.url(:span1)
+            = f.file_field :image
+        = f.input :longitude, as: :hidden
+        = f.input :latitude, as: :hidden
+    .span6= gmaps(markers: {data: @markers, options: { draggable: true  } },
+    map_options: gmaps_default_options )
+  .row-fluid
+    .form-actions
+      = f.button :submit
+
+= yield :scripts
+
+:javascript
+  Gmaps.map.HandleDragend = function(pos) {
+    $('#site_longitude').val(pos.lng());
+    $('#site_latitude').val(pos.lat());
+  };
+  Gmaps.map.callback = function() {
+    for (var i = 0; i <  this.markers.length; ++i) {
+       google.maps.event.addListener(Gmaps.map.markers[i].serviceObject, 'dragend', function() { Gmaps.map.HandleDragend(this.getPosition()) });
+    }
+    if (Gmaps.map.markers.length == 1) {
+
+      var marker = Gmaps.map.markers[0];
+      var infowindow = marker.infowindow;
+      infowindow.open(Gmaps.map.map, marker.serviceObject);
+    }
+  };

@@ -1,0 +1,28 @@
+- unless dataset.sites.empty?
+  %b Site(s):
+  - dataset.sites.each do |s|
+    = "#{s.name}, "
+
+- unless dataset.start_time.blank?
+  %b Time:
+  = "#{l(dataset.start_time, format: :short)} - #{l(dataset.end_time, format: :short)};"
+
+- unless dataset.start_date.blank?
+  %b Date
+  = "#{l(dataset.start_date, format: :short)} - #{l(dataset.end_date, format: :short)};"
+
+- unless dataset.filters.blank?
+  %b Filters:
+  = "#{dataset.filters};"
+
+- unless dataset.number_of_samples.blank?
+  %b Samples:
+  = "#{dataset.number_of_samples};"
+
+- unless dataset.number_of_tags.blank?
+  %b Tags:
+  = "#{dataset.number_of_tags};"
+
+- unless dataset.types_of_tags.blank?
+  %b Type(s):
+  = "#{dataset.types_of_tags}"

@@ -1,0 +1,32 @@
+%h1= @script.display_name
+%p= @script.description
+%p= @script.notes
+
+- unless @script.update_from.blank? && @script.updated_by.blank?
+  %h3 Versions
+
+  %table.table.table-striped.table-condensed(data-provides='rowlink')
+    %thead
+      %tr
+        %th Name
+        %th Version
+        %th Analysis identifier
+        %th Settings file
+        %th Data file
+    %tbody
+      = render partial: 'scripts/script_row', locals: { script: @script.latest_version, current_version: @script}
+
+
+
+
+- content_for :right_sidebar do
+  = sidebar_metadata_users('Created by', [{user: @script.creator, subtext: time_ago_in_words(@script.created_at) + ' ago' }])
+  = sidebar_metadata('Analysis Identifier', @script.analysis_identifier)
+  = sidebar_metadata('Settings file', link_to(@script.settings_file_file_name, @script.settings_file.url))
+  - unless @script.data_file_file_name.blank?
+    = sidebar_metadata('Data file', link_to(@script.data_file_file_name, @script.data_file.url))
+
+- content_for :left_sidebar do
+  = render layout: '/shared/left_sidebar', locals: {title: 'Scripts'} do
+    - if can? :update, @script
+      %li= link_to 'Create new version', edit_script_path(@script),  title: "Create new version of this script", data: {toggle: 'tooltip',  placement: 'right'}

@@ -1,0 +1,35 @@
+%h1 Listing jobs
+
+%table
+  %tr
+    %th Name
+    %th Description
+    %th Notes
+    %th Dataset
+    %th Analysis script
+    %th Creator
+    %th Updater
+    %th Deleter
+    %th Deleted at
+    %th
+    %th
+    %th
+
+  - @jobs.each do |job|
+    %tr
+      %td= job.name
+      %td= job.description
+      %td= job.notes
+      %td= job.dataset_id
+      %td= job.script_id
+      %td= job.creator_id
+      %td= job.updater_id
+      %td= job.deleter_id
+      %td= job.deleted_at
+      %td= link_to 'Show', job
+      %td= link_to 'Edit', edit_job_path(job)
+      %td= link_to 'Destroy', job, :method => :delete, :data => { :confirm => 'Are you sure?' }
+
+%br
+
+= link_to 'New Analysis job', new_job_path

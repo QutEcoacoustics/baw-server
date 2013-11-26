@@ -1,0 +1,24 @@
+// Place all the styles related to the Projects controller here.
+// They will automatically be included in application.scss.
+// You can use Less here: http://lesscss.org/
+
+$grayDark: #333;
+$baseFontSize: 14px;
+
+.project_sites {
+  height:400px;
+  overflow:auto;
+}
+
+
+
+.project_thumbnail {
+  position: relative;
+  i {
+    color: $grayDark;
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
+    font-size: $baseFontSize * 1.75;
+  }
+}

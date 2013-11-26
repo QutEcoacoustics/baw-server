@@ -1,0 +1,56 @@
+.row-fluid.spacer
+  = image_tag @site.image.url(:span3), class: 'span3'
+
+  .span9
+    %h1= @site.name
+    %p= @site.notes
+
+
+- unless @site.audio_recordings.blank?
+  .row-fluid
+    .span12
+      %h3= 'Audio Recordings'
+      %table.table.table-striped
+        %thead
+          %tr
+            %th
+            %th Id
+            %th Type
+            %th Status
+            %th Exists?
+
+        %tbody
+        - @site.audio_recordings.each do |audio_recording|
+          %tr
+            %td= link_to 'Edit Annotations', "/listen/#{audio_recording.id}", target: '_blank'
+            %td= audio_recording.id
+            %td= audio_recording.media_type
+            %td= audio_recording.status
+            %td= audio_recording.original_file_exists?
+
+
+.row-fluid
+  .span12
+    = gmaps(markers: {data: @site.to_gmaps4rails},
+    map_options: gmaps_default_options)
+
+    = yield :scripts
+
+
+- content_for :right_sidebar do
+  = sidebar_metadata_users('Created by', [{user: @site.creator, subtext: time_ago_in_words(@site.created_at) + ' ago' }])
+  = sidebar_metadata_users('Modified by', [{user: @site.updater, subtext: time_ago_in_words(@site.updated_at) + ' ago' }])
+  - permission = current_user.get_permission(@project)
+  - unless permission.blank?
+    = sidebar_metadata('Your access level', permission.level)
+
+- content_for :left_sidebar do
+  = render layout: '/shared/left_sidebar', locals: {title: 'Sites'} do
+    - if can? :edit, @project
+      %li= link_to 'Edit Site',edit_project_site_path(@project, @site),  title: "Edit site's details", data: {toggle: 'tooltip',  placement: 'right'}
+    - if can? :destroy, @project
+      %li= link_to 'Delete Site', [@project, @site], :method => :delete, data: { confirm: 'Are you sure?', toggle: 'tooltip',  placement: 'right' }, title: 'Delete site'
+    - if can? :edit, @project
+      %li= link_to 'Add New Site', new_project_site_path(@project),  title: "Add a new site to this project", data: {toggle: 'tooltip',  placement: 'right'}
+    - if current_user.has_role? :admin
+      %li= link_to 'Upload Audio', upload_instructions_project_site_path(@project, @site),  title: "Upload new audio to this site", data: {toggle: 'tooltip',  placement: 'right'}

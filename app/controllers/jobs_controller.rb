@@ -1,0 +1,116 @@
+class JobsController < ApplicationController
+
+  add_breadcrumb 'home', :root_path
+
+  load_and_authorize_resource :project
+  before_filter :build_project_job, only: [:new, :create] # this is necessary so that the ability has access to site.projects
+  load_and_authorize_resource :job, through: :project
+
+  before_filter :add_project_breadcrumb
+
+  # GET /jobs
+  # GET /jobs.json
+  def index
+    @jobs = Job.all
+
+    respond_to do |format|
+      format.html # index.html.erb
+      format.json { render json: @jobs }
+    end
+  end
+
+  # GET /jobs/1
+  # GET /jobs/1.json
+  def show
+    @job = Job.find(params[:id])
+
+    respond_to do |format|
+      format.html {
+        add_breadcrumb "Dataset: #{@job.dataset.name}", project_dataset_path(@project, @job.dataset)
+        add_breadcrumb "Job: #{@job.name}", [@project, @job]
+      }
+      format.json { render json: @job }
+    end
+  end
+
+  # GET /jobs/new
+  # GET /jobs/new.json
+  def new
+    @job = Job.new
+
+    respond_to do |format|
+      format.html {
+        add_breadcrumb 'New Script'
+      }
+      format.json { render json: @job }
+    end
+  end
+
+  # GET /jobs/1/edit
+  def edit
+    @job = Job.find(params[:id])
+    add_breadcrumb "Dataset: #{@job.dataset.name}", project_dataset_path(@project, @job.dataset)
+    add_breadcrumb "Job: #{@job.name}", [@project,  @job.dataset, @job]
+    add_breadcrumb 'Edit', edit_project_job_path(@project, @job)
+  end
+
+  # POST /jobs
+  # POST /jobs.json
+  def create
+    @job = Job.new(params[:job])
+
+    respond_to do |format|
+      if @job.save
+        format.html { redirect_to @project, notice: 'Analysis job was successfully created.' }
+        format.json { render json: @job, status: :created, location: @job }
+      else
+        format.html { render action: "new" }
+        format.json { render json: @job.errors, status: :unprocessable_entity }
+      end
+    end
+  end
+
+  # PUT /jobs/1
+  # PUT /jobs/1.json
+  def update
+    @job = Job.find(params[:id])
+
+    respond_to do |format|
+      if @job.update_attributes(params[:job])
+        format.html { redirect_to [@project, @job.dataset, @job], notice: 'Analysis job was successfully updated.' }
+        format.json { head :no_content }
+      else
+        format.html { render action: "edit" }
+        format.json { render json: @job.errors, status: :unprocessable_entity }
+      end
+    end
+  end
+
+  # DELETE /jobs/1
+  # DELETE /jobs/1.json
+  def destroy
+    @job = Job.find(params[:id])
+    @job.destroy
+
+    respond_to do |format|
+      format.html { redirect_to @project }
+      format.json { head :no_content }
+    end
+  end
+
+  private
+
+
+  private
+  def add_project_breadcrumb
+    add_breadcrumb 'Projects', projects_path
+    add_breadcrumb @project.name, @project
+  end
+
+  def build_project_job
+    @dataset = Dataset.new
+    @dataset.project = @project
+    @job = Job.new
+    @job.dataset = @dataset
+  end
+end

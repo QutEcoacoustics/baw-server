@@ -1,0 +1,21 @@
+-# see https://github.com/seyhunak/twitter-bootstrap-rails#navbar-helper
+= nav_bar fixed: :top, responsive: true, brand: 'Bioacoustic Workbench', inverse: true do
+  = menu_group do
+    = menu_item 'Projects', projects_path if can? :index, Project
+    -#= menu_item 'Sites', '/path2'
+    -#= menu_item 'Datasets', '/path3'
+    -#= menu_item 'Jobs', '/path3'
+    = menu_item 'Reference Library', '/reference library is not implemented yet' if can? :index, Project
+    = menu_item 'Scripts', scripts_path  if can? :manage, Script
+    = menu_item 'User Accounts', user_accounts_path if can? :manage, User
+    -#= menu_item 'Scripts', '/path3'
+  = menu_group pull: :right do
+    - if current_user.blank?
+      - title = 'Account'
+    - else
+      -title = "#{current_user.user_name} #{current_user.role_symbols.to_s}"
+    = drop_down title do
+      = menu_item 'Sign up', new_user_registration_path  if current_user.blank?
+      = menu_item 'Login', new_user_session_path  if current_user.blank?
+      = menu_item 'Logout', destroy_user_session_path unless current_user.blank?
+      = menu_item 'My Account Details', edit_user_registration_path unless current_user.blank?

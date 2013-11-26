@@ -1,0 +1,15 @@
+= simple_form_for(@user, :url => user_account_path(@user), html: {class: 'form-horizontal', :multipart => true }) do |f|
+  = f.error_notification
+  .form-inputs
+    = f.input :user_name, :required => true , :autofocus => true
+    -#= f.input :password, :required => true
+    -#= f.input :password_confirmation, :required => true
+    = f.input :email, :required => true
+    .control_group
+      = f.label :image
+      .controls
+        - unless @user.image_file_name.blank?
+          = image_tag @user.image.url(:span1)
+        = f.file_field :image
+  .form-actions
+    = f.button :submit

@@ -1,0 +1,8 @@
+Annotation Id, Start Date, Start Time, End Date, End Time, Max Frequency (hz), Min Frequency (hz), Projects, Site, Audio Recording Id, Tagged by, Player link, Tag 1 Id, Tag 1 Text, Tag 1 Type, Tag 1 Is Taxanomic, Tag 2 Id, Tag 2 Text, Tag 2 Type, Tag 2 Is Taxanomic, Tag 3 Id, Tag 3 Text, Tag 3 Type, Tag 3 Is Taxanomic
+<%=
+    CSV.generate do |csv|
+      @formatted_annotations.each do |annotation|
+        csv << annotation
+      end
+    end
+%>

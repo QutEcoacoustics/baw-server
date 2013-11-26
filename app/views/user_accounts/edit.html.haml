@@ -1,0 +1,8 @@
+%h1= "Edit #{@user.user_name}"
+
+= render 'form'
+
+- content_for :left_sidebar do
+  = render layout: '/shared/left_sidebar', locals: {title: 'User Accounts'} do
+    - if can? :edit, @user
+      %li= link_to 'List', user_accounts_path

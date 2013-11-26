@@ -1,0 +1,233 @@
+require 'spec_helper'
+
+include Warden::Test::Helpers
+Warden.test_mode!
+
+
+describe 'CRUD Projects as valid user with write permission' do
+  before(:each) do
+    @permission = FactoryGirl.create(:write_permission)
+    login_as @permission.user, scope: :user
+  end
+
+    it 'lists all projects' do
+      visit projects_path
+      current_path.should eq(projects_path)
+      page.should have_content('Projects')
+      page.should have_content(@permission.project.name)
+    end
+
+    it 'shows project details' do
+      visit project_path(@permission.project)
+      page.should have_content(@permission.project.name)
+      page.should have_link('Edit')
+      page.should have_link('Edit Permissions')
+      page.should_not have_link('Delete')
+    end
+
+    it 'creates new project when filling out form correctly' do
+      visit new_project_path
+      fill_in 'project[name]', with: 'test name'
+      fill_in 'project[description]', with: 'description'
+      fill_in 'project[notes]', with: 'notes'
+      attach_file('project[image]', 'public/images/user/user-512.png')
+      click_button 'Create Project'
+      #save_and_open_page
+      page.should have_content('test name')
+      page.should have_content('Project was successfully created.')
+    end
+
+    it 'Fails to create new project when filling out form incomplete' do
+      visit new_project_path
+      click_button 'Create Project'
+      #save_and_open_page
+      page.should have_content('Please review the problems below:')
+    end
+
+    it 'updates project when filling out form correctly' do
+      visit edit_project_path(@permission.project)
+      #save_and_open_page
+      fill_in 'project[name]', with: 'test name'
+      fill_in 'project[description]', with: 'description'
+      fill_in 'project[notes]', with: 'notes'
+      attach_file('project[image]', 'public/images/user/user-512.png')
+      click_button 'Update Project'
+      page.should have_content('test name')
+    end
+
+end
+
+describe 'CRUD Projects as valid user and project owner' do
+  before(:each) do
+    @permission = FactoryGirl.create(:write_permission)
+    login_as @permission.project.owner, scope: :user
+  end
+
+  it 'lists all projects' do
+    visit projects_path
+    current_path.should eq(projects_path)
+    page.should have_content('Projects')
+    page.should have_content(@permission.project.name)
+  end
+
+  it 'shows project details' do
+    visit project_path(@permission.project)
+    page.should have_content(@permission.project.name)
+    page.should have_link('Edit')
+    page.should have_link('Edit Permissions')
+    page.should_not have_link('Delete')
+  end
+
+  it 'creates new project when filling out form correctly' do
+    visit new_project_path
+    fill_in 'project[name]', with: 'test name'
+    fill_in 'project[description]', with: 'description'
+    fill_in 'project[notes]', with: 'notes'
+    attach_file('project[image]', 'public/images/user/user-512.png')
+    click_button 'Create Project'
+    #save_and_open_page
+    page.should have_content('test name')
+    page.should have_content('Project was successfully created.')
+  end
+
+  it 'updates project when filling out form correctly' do
+    visit edit_project_path(@permission.project)
+    #save_and_open_page
+    fill_in 'project[name]', with: 'test name'
+    fill_in 'project[description]', with: 'description'
+    fill_in 'project[notes]', with: 'notes'
+    attach_file('project[image]', 'public/images/user/user-512.png')
+    click_button 'Update Project'
+    page.should have_content('test name')
+  end
+
+end
+
+describe 'CRUD Projects as valid user with read permission' do
+  before(:each) do
+    @permission = FactoryGirl.create(:read_permission)
+    login_as @permission.user, scope: :user
+  end
+
+    it 'lists all projects' do
+      visit projects_path
+      current_path.should eq(projects_path)
+      page.should have_content('Projects')
+      page.should have_content(@permission.project.name)
+    end
+
+    it 'shows project details' do
+      visit project_path(@permission.project)
+      page.should have_content(@permission.project.name)
+      page.should_not have_link('Edit')
+      page.should_not have_link('Edit Permissions')
+      page.should_not have_link('Delete')
+    end
+
+    it 'creates new project when filling out form correctly' do
+      visit new_project_path
+      fill_in 'project[name]', with: 'test name'
+      fill_in 'project[description]', with: 'description'
+      fill_in 'project[notes]', with: 'notes'
+      attach_file('project[image]', 'public/images/user/user-512.png')
+      click_button 'Create Project'
+      #save_and_open_page
+      page.should have_content('test name')
+      page.should have_content('Project was successfully created.')
+    end
+
+
+    it 'rejects access to update project' do
+      visit edit_project_path(@permission.project)
+      page.should have_content('You are not authorized to access this page.')
+    end
+
+end
+
+describe 'CRUD Projects as valid user with no permissions' do
+  before(:each) do
+    @permission = FactoryGirl.create(:write_permission)
+    @user = FactoryGirl.create(:user) # creating new user with no permission to login
+    login_as @user, scope: :user
+  end
+
+    it 'lists all projects' do
+      # Run the generator again with the --webrat flag if you want to use webrat methods/matchers
+      visit projects_path
+      current_path.should eq(projects_path)
+      page.should have_content('Projects')
+      page.should_not have_content(@permission.project.name)
+    end
+
+    it 'rejects access to shows project details' do
+      visit project_path(@permission.project)
+      page.should have_content('You are not authorized to access this page.')
+    end
+
+    it 'creates new project when filling out form correctly' do
+      visit new_project_path
+      fill_in 'project[name]', with: 'test name'
+      fill_in 'project[description]', with: 'description'
+      fill_in 'project[notes]', with: 'notes'
+      attach_file('project[image]', 'public/images/user/user-512.png')
+      click_button 'Create Project'
+      #save_and_open_page
+      page.should have_content('test name')
+      page.should have_content('Project was successfully created.')
+    end
+
+    it 'rejects access to edit project details' do
+      visit edit_project_path(@permission.project)
+      page.should have_content('You are not authorized to access this page.')
+    end
+
+end
+
+describe 'Delete Projects as admin user' do
+  before(:each) do
+    admin = FactoryGirl.create(:admin)
+    login_as admin, scope: :user
+  end
+
+    it 'deletes a project' do
+      permission = FactoryGirl.create(:write_permission)
+      visit project_path(permission.project)
+      page.should have_link('Delete')
+      expect { first(:link, 'Delete').click }.to change(Project, :count).by(-1)
+    end
+end
+
+describe 'CRUD Projects as unconfirmed user' do
+  before(:each) do
+    @user = FactoryGirl.create(:unconfirmed_user) # creating new user unconfirmed user
+    @permission = FactoryGirl.create(:write_permission)
+    login_as @user, scope: :user
+  end
+
+  it 'lists all projects' do
+    # Run the generator again with the --webrat flag if you want to use webrat methods/matchers
+    visit projects_path
+    current_path.should eq(root_path)
+    page.should have_content('You are not authorized to access this page.')
+  end
+
+  it 'rejects access to shows project details' do
+    visit project_path(@permission.project)
+    current_path.should eq(root_path)
+    page.should have_content('You are not authorized to access this page.')
+  end
+
+  it 'creates new project when filling out form correctly' do
+    visit new_project_path
+    current_path.should eq(root_path)
+    page.should have_content('You are not authorized to access this page.')
+
+  end
+
+  it 'rejects access to edit project details' do
+    visit edit_project_path(@permission.project)
+    current_path.should eq(root_path)
+    page.should have_content('You are not authorized to access this page.')
+  end
+
+end

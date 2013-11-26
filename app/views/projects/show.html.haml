@@ -1,0 +1,69 @@
+.row-fluid.spacer
+  = image_tag @project.image.url(:span3), class: 'span3'
+
+  .span9
+    %h1= @project.name
+    %p= @project.description
+
+.row-fluid
+  %h3= 'Sites'
+  - unless @project.sites.empty?
+    %ul.thumbnails.span6.project_sites
+      - @project.sites.each do |site|
+        .row-fluid.spacer
+          = render partial: 'sites/site_thumb_large', locals: {site: site}
+
+    - if @project.sites.length < 2
+      .span6= gmaps(markers: {data: @project.sites.to_gmaps4rails}, map_options: gmaps_default_options)
+    - else
+      .span6= gmaps4rails(@project.sites.to_gmaps4rails)
+    = yield :scripts
+
+.row-fluid
+  = link_to new_project_site_path(@project), title: 'Add a new site to this project',
+  data: {toggle: 'tooltip',  placement: 'right'}, class: 'btn-create-site btn' do
+    Add New Site
+
+.row-fluid
+  %h3= 'Datasets'
+  - unless @project.datasets.empty?
+    = render partial: 'datasets/datasets_table', locals: {datasets: @project.datasets}
+  = link_to new_project_dataset_path(@project), title: 'Add a new dataset to this project',
+  data: {toggle: 'tooltip',  placement: 'right'}, class: 'btn-create-site btn' do
+    Add New Dataset
+
+.row-fluid
+  %h3= 'Jobs'
+  - unless @project.jobs.empty?
+    = render partial: 'jobs/jobs_table', locals: {jobs: @project.jobs}
+  = link_to new_project_job_path(@project), title: 'Add a new analysis job to this project',
+  data: {toggle: 'tooltip',  placement: 'right'}, class: 'btn-create-site btn' do
+    Add New Job
+
+- content_for :right_sidebar do
+  = sidebar_metadata_users('Created by', [{user: @project.creator, subtext: time_ago_in_words(@project.created_at) + ' ago' }])
+  = sidebar_metadata_users('Modified by', [{user: @project.updater, subtext: time_ago_in_words(@project.updated_at) + ' ago' }])
+  = sidebar_metadata('Notes', @project.notes)
+  = sidebar_metadata('Urn', @project.urn)
+  - permission = current_user.get_permission(@project)
+  - unless permission.blank?
+    = sidebar_metadata('Your access level', permission.level)
+
+- content_for :left_sidebar do
+  = render layout: '/shared/left_sidebar', locals: {title: 'Projects'} do
+    - if can? :edit, @project
+      %li
+        = link_to edit_project_path(@project),  title: "Edit project's details", data: {toggle: 'tooltip',  placement: 'right'} do
+          Edit Project
+    - if can? :update_permissions, @project
+      %li= link_to 'Edit Permissions', project_permissions_path(@project),  title: "Edit project's access permissions", data: {toggle: 'tooltip',  placement: 'right'}
+    - if can? :destroy, @project
+      %li
+        = link_to @project, :method => :delete, data: { confirm: 'Are you sure?', toggle: 'tooltip',  placement: 'right' }, title: 'Delete project' do
+          Delete Project
+    - if can? :edit, @project
+      %li= link_to 'Add New Site', new_project_site_path(@project),  title: "Add a new site to this project", data: {toggle: 'tooltip',  placement: 'right'}
+    - if can? :edit, @project
+      %li= link_to 'Add New Dataset', new_project_dataset_path(@project),  title: "Add a new dataset to this project", data: {toggle: 'tooltip',  placement: 'right'}
+    - if can? :edit, @project
+      %li= link_to 'Add New Job', new_project_job_path(@project),  title: "Add a new analysis job to this project", data: {toggle: 'tooltip',  placement: 'right'}

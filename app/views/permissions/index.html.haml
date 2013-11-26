@@ -1,0 +1,45 @@
+%h1= "#{@project.name} - Permissions"
+
+%p
+  Project is owned by
+  = link_to @project.owner.user_name, user_account_path(@project.owner)
+
+= simple_form_for :permission, url: update_permissions_project_path(@project) do |p|
+  %table.table.table-striped
+    %thead
+      %tr
+        %th User
+        %th No Access
+        %th Read
+        %th Read & Write
+    %tbody
+    - User.users.each do |user|
+      - unless @project.owner == user
+        %tr{user_id: user.id}
+          %td= link_to user.user_name, user_account_path(user)
+          %td
+            %input{id: "user_#{user.id}_permissions_level_none",
+                      type: 'radio',
+                      name: "[user_ids][#{user.id}][permissions][level]",
+                      value: '',
+                      checked: !user.has_permission?(@project)}
+          %td
+            %input{id: "user_#{user.id}_permissions_level_reader",
+                      type: 'radio',
+                      name: "[user_ids][#{user.id}][permissions][level]",
+                      value: 'reader',
+                      checked: user.can_read?(@project)}
+
+          %td
+            %input{id: "user_#{user.id}_permissions_level_writer",
+                      type: 'radio',
+                      name: "[user_ids][#{user.id}][permissions][level]",
+                      value: 'writer',
+                      checked: user.can_write?(@project)}
+  .form-actions
+    = p.submit 'Update Permissions', class: 'btn'
+
+-#- content_for :left_sidebar do
+-#  = render layout: '/shared/left_sidebar', locals: {title: 'Projects'} do
+-#    %li= link_to 'Project', project_path(@project),  title: "Back to project view", data: {toggle: 'tooltip',  placement: 'right'}
+

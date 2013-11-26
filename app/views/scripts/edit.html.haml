@@ -1,0 +1,12 @@
+%h1= "Create new version for #{@script.name}"
+
+
+= simple_form_for @script, html: {class: 'form-horizontal', multipart: true, method: :post } do |f|
+  = render partial: 'form', locals: {f: f}
+
+
+-#- content_for :left_sidebar do
+-#  = render layout: '/shared/left_sidebar', locals: {title: 'Scripts'} do
+-#    %li= link_to 'Scripts', scripts_path,  title: "Back to scripts overview", data: {toggle: 'tooltip',  placement: 'right'}
+-#    %li= link_to @script.name, @script,  title: "View script details", data: {toggle: 'tooltip',  placement: 'right'}
+-#

@@ -1,0 +1,17 @@
+%table.table.table-striped(data-provides='rowlink')
+  %thead
+    %tr
+      %th Name
+      %th Description
+
+  %tbody
+  - datasets.each do |dataset|
+    %tr
+      %td= link_to dataset.name, project_dataset_path(@project, dataset)
+      %td= render partial: 'datasets/summary', locals: {dataset: dataset}
+
+      -#%td.nolink
+      -#  = link_to edit_user_account_path(user), class: 'btn btn-mini btn-edit' do
+      -#    Edit
+      -#  = link_to user_account_path(user), :method => :delete, :data => { :confirm => 'Are you sure?' }, class: 'btn-destroy btn btn-mini' do
+      -#    Delete

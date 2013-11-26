@@ -1,0 +1,56 @@
+%h1= 'Upload Instructions'
+
+%h3
+  1. Put audio files into one folder
+%p
+  Your folder should now look something like the image below:
+= image_tag 'audio_upload_folder.png'
+
+%h3
+  2. Access server
+%p
+  Access the following host via scp:
+%p
+  %code= Settings.host.name
+
+%h3
+  3. Transfer folder to server
+%p
+  Transfer the entire folder to the following destination directory on the server:
+%p
+  %code= Settings.paths.harvester_base
+
+%h3
+  4. Create a harvest configuration file
+%p
+  The file
+  %strong= "must"
+  be named
+  = link_to Settings.harvester_config_file, harvest_project_site_path(@project, @site, format: :yml)
+  file and
+  %strong= "must"
+  = "have the following format for uploading to site '#{@site.name}'"
+%pre= render :partial => 'harvest.yml.erb'
+
+%h3= "5. Transfer #{Settings.harvester_config_file}"
+%p= "It is important to do this as the last step. Once the system recognises the #{Settings.harvester_config_file}, it attempts to start harvesting. After the transfer, your audio_upload_folder should be under the following path ON THE SERVER"
+%p
+  %code= Settings.paths.harvester_base
+%p= "and look something like the image below:"
+= image_tag 'harvester_upload_folder.png'
+
+%h3
+  6. Look for logs in your audio upload folder
+%p
+  %b
+    process.log
+%p= "A process.log file will indicate what the harvester is currently doing."
+%p
+  %b
+    error.log
+%p= "If you find an error.log in your folder, please check it to see if the errors are caused by your #{Settings.harvester_config_file}. If so, change the #{Settings.harvester_config_file} and transfer it over the existing one. The system recognises that the file has changed and will attempt to harvest the audio files in the folder again."
+
+
+
+
+

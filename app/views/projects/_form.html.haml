@@ -1,0 +1,17 @@
+= simple_form_for @project, html: {class: 'form-horizontal', :multipart => true } do |f|
+  = f.error_notification
+
+  .form-inputs
+    = f.input :name, required: true, label: 'Project Name'
+    = f.input :description, input_html: {rows: '3'}
+    = f.input :notes, input_html: {rows: '3'}
+    .control_group
+      = f.label :image
+      .controls
+        - unless @project.image_file_name.blank?
+          = image_tag @project.image.url(:span1)
+        = f.file_field :image
+
+
+  .form-actions
+    = f.button :submit
