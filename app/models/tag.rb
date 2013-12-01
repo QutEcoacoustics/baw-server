@@ -18,13 +18,21 @@ class Tag < ActiveRecord::Base
   AVAILABLE_TYPE_OF_TAGS_SYMBOLS = [:general, :common_name, :species_name, :looks_like, :sounds_like]
   AVAILABLE_TYPE_OF_TAGS = AVAILABLE_TYPE_OF_TAGS_SYMBOLS.map{ |item| item.to_s }
 
+  AVAILABLE_TYPE_OF_TAGS_DISPLAY = [
+      { id: :general, name: 'General'},
+      { id: :common_name, name: 'Common Name'},
+      { id: :species_name, name: 'Scientific Name'},
+      { id: :looks_like, name: 'Looks like'},
+      { id: :sounds_like, name: 'Sounds Like'},
+  ]
+
   enumerize :type_of_tag, in: AVAILABLE_TYPE_OF_TAGS, predicates: true
 
   # validation
   validates :is_taxanomic, inclusion: { in: [true, false] }
   validates :text, uniqueness: { case_sensitive: false }, presence: true
   validates :retired, inclusion: { in: [true, false] }
-  validates :type_of_tag, inclusion: {in: AVAILABLE_TYPE_OF_TAGS}, presence: true
+  validates_presence_of :type_of_tag
 
   # http://stackoverflow.com/questions/11569940/inclusion-validation-fails-when-provided-a-symbol-instead-of-a-string
   # this lets a symbol be set, and it all still works

@@ -19,7 +19,7 @@ describe 'datasets/edit' do
       #assert_select 'input#dataset_filters[name=?]', 'dataset[filters]'
       #assert_select 'input#dataset_number_of_samples[name=?]', 'dataset[number_of_samples]'
       assert_select 'select#dataset_number_of_tags[name=?]', 'dataset[number_of_tags]'
-      assert_select 'select#dataset_types_of_tags[name=?]', 'dataset[types_of_tags]'
+      assert_select 'select#dataset_types_of_tags[name=?]', 'dataset[types_of_tags][]'
       assert_select 'textarea#dataset_description[name=?]', 'dataset[description]'
     end
   end

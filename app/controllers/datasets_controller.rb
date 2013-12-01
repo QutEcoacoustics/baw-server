@@ -1,5 +1,5 @@
 class DatasetsController < ApplicationController
-  add_breadcrumb 'home', :root_path
+  add_breadcrumb 'Home', :root_path
 
   load_and_authorize_resource :project
   before_filter :build_project_dataset, only: [:new, :create] # this is necessary so that the ability has access to site.projects

@@ -29,7 +29,8 @@ RSpec.configure do |config|
   # If you're not using ActiveRecord, or you'd prefer not to run each of your
   # examples within a transaction, remove the following line or assign false
   # instead of true.
-  config.use_transactional_fixtures = true
+  # DatabaseCLeaner takes care of this instead
+  config.use_transactional_fixtures = false
 
   # If true, the base class of anonymous controllers will be inferred
   # automatically. This will be the default behavior in future versions of
@@ -58,49 +59,28 @@ RSpec.configure do |config|
   end
 
   config.before(:suite) do
+    DatabaseCleaner.strategy = :transaction
+    DatabaseCleaner.clean_with(:truncation)
+  end
 
-    current_adapter = ActiveRecord::Base.configurations[Rails.env]['adapter']
+  # Request specs cannot use a transaction because Capybara runs in a
+  # separate thread with a different database connection.
+  config.before type: :request do
+    DatabaseCleaner.strategy = :truncation
+  end
 
-    ##for mysql
-    ##https://github.com/bmabey/database_cleaner
-    ##http://stackoverflow.com/a/5964483
-    ##http://stackoverflow.com/a/9248602
-    ##I found the SQLite exception solution was to remove the clean_with(:truncation) and
-    ##change the strategy entirely to DatabaseCleaner.strategy = :truncation
-
-    if current_adapter == 'mysql2'
-      DatabaseCleaner.strategy = :transaction
-      DatabaseCleaner.clean_with(:truncation)
-    end
-
-    ## for sqlite3
-    if current_adapter == 'sqlite3'
-      DatabaseCleaner.strategy = :truncation
-    end
-
-    ## http://stackoverflow.com/questions/5568367/rails-migration-and-column-change
-    ## add this Around line 535 (in version 3.2.9) of
-    ## $GEM_HOME/gems/activerecord-3.2.9/lib/active_record/connection_adapters/sqlite_adapter.rb
-    ## indexes can't be more than 64 chars long
-    ##opts[:name] = opts[:name][0..63]
-    ## !! This is now patched in config/initializers/patches.rb
-
+  # Reset so other non-request specs don't have to deal with slow truncation.
+  config.after type: :request  do
+    DatabaseCleaner.strategy = :transaction
   end
 
   config.before(:each) do
-    #puts 'Database cleaner start...'
     DatabaseCleaner.start
-    #empty_file = File.join(Rails.root, 'db', 'test-empty.sqlite3')
-    #using_file = File.join(Rails.root, 'db', 'test.sqlite3')
-    #File.delete using_file if File.exists? using_file
-    #File.copy empty_file, using_file
-    #puts '...database cleaner start complete.'
+    ActionMailer::Base.deliveries.clear
   end
 
   config.after(:each) do
-    #puts 'Begining database clean...'
     DatabaseCleaner.clean
-    #puts '...database clean done.'
   end
 
 end

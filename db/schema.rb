@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20131120070151) do
+ActiveRecord::Schema.define(:version => 20131124234346) do
 
   create_table "audio_events", :force => true do |t|
     t.integer  "audio_recording_id",                                                     :null => false
@@ -37,7 +37,7 @@ ActiveRecord::Schema.define(:version => 20131120070151) do
     t.integer  "updater_id"
   end
 
-  add_index "audio_events_tags", ["audio_event_id", "tag_id"], :name => "index_audio_events_tags_on_audio_event_id_and_tag_i", :unique => true
+  add_index "audio_events_tags", ["audio_event_id", "tag_id"], :name => "index_audio_events_tags_on_audio_event_id_and_tag_id", :unique => true
 
   create_table "audio_recordings", :force => true do |t|
     t.string   "uuid",               :limit => 36,                                                    :null => false
@@ -74,7 +74,7 @@ ActiveRecord::Schema.define(:version => 20131120070151) do
   end
 
   create_table "datasets", :force => true do |t|
-    t.string   "name",              :null => false
+    t.string   "name",                        :null => false
     t.time     "start_time"
     t.time     "end_time"
     t.date     "start_date"
@@ -84,11 +84,15 @@ ActiveRecord::Schema.define(:version => 20131120070151) do
     t.integer  "number_of_tags"
     t.string   "types_of_tags"
     t.text     "description"
-    t.integer  "creator_id",        :null => false
+    t.integer  "creator_id",                  :null => false
     t.integer  "updater_id"
-    t.integer  "project_id",        :null => false
-    t.datetime "created_at",        :null => false
-    t.datetime "updated_at",        :null => false
+    t.integer  "project_id",                  :null => false
+    t.datetime "created_at",                  :null => false
+    t.datetime "updated_at",                  :null => false
+    t.string   "dataset_result_file_name"
+    t.string   "dataset_result_content_type"
+    t.integer  "dataset_result_file_size"
+    t.datetime "dataset_result_updated_at"
   end
 
   create_table "datasets_sites", :id => false, :force => true do |t|

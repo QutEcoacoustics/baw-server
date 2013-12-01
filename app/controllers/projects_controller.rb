@@ -1,6 +1,6 @@
 class ProjectsController < ApplicationController
+  add_breadcrumb 'Home', :root_path
 
-  add_breadcrumb 'home', :root_path
   load_and_authorize_resource
 
   # GET /projects

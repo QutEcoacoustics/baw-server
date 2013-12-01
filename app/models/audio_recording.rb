@@ -16,6 +16,7 @@ class AudioRecording < ActiveRecord::Base
   has_many :audio_events, inverse_of: :audio_recording
   #has_many :analysis_items
   has_many :bookmarks, inverse_of: :audio_recording
+  has_many :tags, through: :audio_events
 
   belongs_to :owner, class_name: 'User', foreign_key: :creator_id
   belongs_to :creator, class_name: 'User', foreign_key: :creator_id
@@ -50,6 +51,11 @@ class AudioRecording < ActiveRecord::Base
   validates :file_hash, :presence => true
 
   before_validation :set_uuid, :on => :create
+
+  scope :start_after, lambda { |time| where('recorded_date >= ?', time)}
+  scope :start_before, lambda { |time| where('recorded_date <= ?', time)}
+  scope :end_after, lambda { |time| where('recorded_date + duration_seconds >= ?', time)}
+  scope :end_before, lambda { |time| where('end_time_seconds + duration_seconds <= ?', time)}
 
   def original_file_exists?
     if self.original_file_name.blank?

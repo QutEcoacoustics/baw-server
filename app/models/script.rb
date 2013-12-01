@@ -2,7 +2,7 @@ class Script < ActiveRecord::Base
   attr_accessible :analysis_identifier, :data_file, :description, :name, :notes, :settings_file, :verified, :version, :creator_id
 
 
-  has_attached_file :settings_file, :content_type => { :content_type => 'text/plain' },
+  has_attached_file :settings_file,
                     path: ':rails_root/public/system/:class/:attachment/:id_partition/:style/:filename',
                     url: '/system/:class/:attachment/:id_partition/:style/:filename'
   has_attached_file :data_file,
@@ -25,7 +25,8 @@ class Script < ActiveRecord::Base
   validates :name, presence: true
   validates :analysis_identifier, presence: true
   validates :settings_file, attachment_presence: true
-  validate  :version, :version_increase, on: :create
+  validate :version, :version_increase, on: :create
+  validates_attachment_content_type :settings_file, :content_type => 'text/plain'
 
   # scopes
   scope :latest_versions, -> { where(updated_by_script_id: nil) }

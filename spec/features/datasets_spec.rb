@@ -44,8 +44,10 @@ describe 'CRUD Datasets as valid user with write permission' do
     #fill_in 'dataset[end_date]', with: '24/07/2013'
     #select 'Wind', from: 'dataset[filters]'
     #fill_in 'dataset[number_of_samples]', with: '100'
-    select 'None', from: 'dataset[number_of_tags]'
-    select 'Human', from: 'dataset[types_of_tags]'
+    #select 'None', from: 'dataset[number_of_tags]'
+    #select 'Human', from: 'dataset[types_of_tags]'
+    select 'General', from: 'dataset[types_of_tags][]'
+    select 'Common name', from: 'dataset[types_of_tags][]'
     click_button 'Create Dataset'
     page.should have_content('test name')
     page.should have_content('Dataset was successfully created.')

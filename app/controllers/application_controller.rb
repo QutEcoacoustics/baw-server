@@ -5,7 +5,9 @@ class ApplicationController < ActionController::Base
 
   # error handling for correct route when id does not exist.
   # for incorrect routes see errors_controller and routes.rb
-  rescue_from ActiveRecord::RecordNotFound, :with => :record_not_found
+  rescue_from ActiveRecord::RecordNotFound, with: :record_not_found
+  rescue_from ActiveRecord::RecordNotUnique, with: :record_not_unique
+
 
   protect_from_forgery
 
@@ -93,8 +95,15 @@ class ApplicationController < ActionController::Base
 
   def record_not_found(error)
     respond_to do |format|
-      format.html { render :template => 'errors/record_not_found', locals: {message: error.message}, status: :not_found }
-      format.json { render :json => {error: '404 Not Found', message: error.message}, status: :not_found }
+      format.html { render template: 'errors/record_not_found', status: :not_found }
+      format.json { render json: {error: '404 Not Found'}, status: :not_found }
+    end
+  end
+
+  def record_not_unique(error)
+    respond_to do |format|
+      format.html { render template: 'errors/generic', status: :conflict }
+      format.json { render json: {error: '409 Conflict', }, status: :conflict }
     end
   end
 

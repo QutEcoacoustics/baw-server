@@ -4,11 +4,11 @@
     = "#{s.name}, "
 
 - unless dataset.start_time.blank?
-  %b Time:
+  %b Time Range:
   = "#{l(dataset.start_time, format: :short)} - #{l(dataset.end_time, format: :short)};"
 
 - unless dataset.start_date.blank?
-  %b Date
+  %b Date Range:
   = "#{l(dataset.start_date, format: :short)} - #{l(dataset.end_date, format: :short)};"
 
 - unless dataset.filters.blank?
@@ -20,9 +20,9 @@
   = "#{dataset.number_of_samples};"
 
 - unless dataset.number_of_tags.blank?
-  %b Tags:
-  = "#{dataset.number_of_tags};"
+  %b Number of Tags:
+  = "#{dataset.selected_number_of_tags};"
 
 - unless dataset.types_of_tags.blank?
-  %b Type(s):
-  = "#{dataset.types_of_tags}"
+  %b Tag Type(s):
+  = "#{dataset.selected_types_of_tags}"

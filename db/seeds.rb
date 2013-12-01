@@ -4,7 +4,15 @@
 # Examples:
 #
 
-# admin user created in migration 'add_roles_mask_to_users'
+if User.find_by_user_name('Admin').blank?
+  harvester = User.new(user_name: 'Admin',
+                       email: Settings.admin_user.email,
+                       password: Settings.admin_user.password)
+  harvester.roles = [:admin]
+  harvester.skip_confirmation!
+  harvester.save!
+end
+
 if User.find_by_user_name('Harvester').blank?
   harvester = User.new(user_name: 'Harvester',
                               email: Settings.harvester.email,
@@ -13,3 +21,4 @@ if User.find_by_user_name('Harvester').blank?
   harvester.skip_confirmation!
   harvester.save!
 end
+

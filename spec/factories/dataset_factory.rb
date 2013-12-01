@@ -4,7 +4,7 @@ FactoryGirl.define do
   # factory generally used to create attributes for POST requests
   # to create a dataset with all dependencies, check permission_factory.rb
   factory :required_dataset_attributes, class: Dataset do
-    name {Faker::Name.title}
+    name { Faker::Name.title }
     association :creator, factory: :user
     association :project, factory: :project
 
@@ -16,10 +16,12 @@ FactoryGirl.define do
       filters nil
       number_of_samples nil
       number_of_tags [nil, 0, 1].sample
-      types_of_tags [nil, :human, :computer].sample
+
+      # first sample from empty array and available types of tags
+      # then sample 2 from available types of tags if it is chosen
+      types_of_tags Tag::AVAILABLE_TYPE_OF_TAGS.sample(2)
       description { Faker::Lorem.paragraph }
       factory :dataset do
-
       end
     end
   end

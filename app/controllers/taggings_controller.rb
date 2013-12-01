@@ -30,7 +30,7 @@ class TaggingsController < ApplicationController
   # POST /tags
   # POST /tags.json
   def create
-    if params[:tagging][:tag_attributes]
+    if params[:tagging] && params[:tagging][:tag_attributes] && params[:tagging][:tag_attributes][:text]
       @tagging = Tagging.new
       @tag = Tag.find_by_text(params[:tagging][:tag_attributes][:text])
       if @tag.blank?
@@ -43,6 +43,7 @@ class TaggingsController < ApplicationController
     else
       @tagging = Tagging.new(params[:tagging])
     end
+
     @tagging.audio_event = @audio_event
 
     if @tagging.save

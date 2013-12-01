@@ -211,7 +211,9 @@ resource 'Taggings' do
     let(:raw_post) { {'tagging' => post_invalid_nested_attributes}.to_json }
 
     let(:authentication_token) { writer_token}
-    standard_request('CREATE (invalid tag_attributes as writer)', 422, 'tag.type_of_tag', true)
+
+    # 0 - index in array
+    standard_request('CREATE (invalid tag_attributes as writer)', 422, '0', true, "\"Tag type of tag is not included in the list\"")
   end
 
 
@@ -272,7 +274,8 @@ resource 'Taggings' do
     let(:raw_post) { {'tagging' => post_invalid_nested_attributes}.to_json }
 
     let(:authentication_token) { writer_token}
-    standard_request('CREATE (invalid tag_attributes as writer, with shallow path)', 422, 'tag.type_of_tag', true)
+    # 0 - index in array
+    standard_request('CREATE (invalid tag_attributes as writer, with shallow path)', 422, '0', true, "\"Tag type of tag is not included in the list\"")
   end
 
 

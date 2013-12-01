@@ -1,6 +1,5 @@
 class SitesController < ApplicationController
-
-  add_breadcrumb 'home', :root_path
+  add_breadcrumb 'Home', :root_path
 
   load_and_authorize_resource :project
   before_filter :build_project_site, only: [:new, :create] # this is necessary so that the ability has access to site.projects
@@ -24,6 +23,8 @@ class SitesController < ApplicationController
   def show
     @site = @project.sites.find(params[:id])
 
+    @site_audio_recordings = @site.audio_recordings.paginate(page: params[:page], :per_page => 30)
+
     respond_to do |format|
       format.html {
         add_breadcrumb @site.name, [@project, @site]
@@ -36,9 +37,9 @@ class SitesController < ApplicationController
   # GET /project/1/sites/new.json
   def new
     @site.longitude = 152
-    @site.latitude  = -27
+    @site.latitude = -27
     respond_to do |format|
-      format.html{
+      format.html {
         @markers = @site.to_gmaps4rails do |site, marker|
           marker.infowindow 'Drag&Drop to site location'
         end
@@ -123,7 +124,7 @@ class SitesController < ApplicationController
   end
 
   def harvest
-    render file: 'sites/_harvest.yml.erb' , content_type: 'text/yaml', layout: false
+    render file: 'sites/_harvest.yml.erb', content_type: 'text/yaml', layout: false
   end
 
   private

@@ -5,7 +5,11 @@ require 'arel/visitors/bind_visitor'
 
 # patching:
 # "C:\Ruby\lib\ruby\gems\1.9.1\gems\activerecord-3.2.15\lib\active_record\connection_adapters\sqlite_adapter.rb"
-
+## http://stackoverflow.com/questions/5568367/rails-migration-and-column-change
+## add this Around line 535 (in version 3.2.9) of
+## $GEM_HOME/gems/activerecord-3.2.9/lib/active_record/connection_adapters/sqlite_adapter.rb
+## indexes can't be more than 64 chars long
+##opts[:name] = opts[:name][0..63]
 module ActiveRecord
   module ConnectionAdapters #:nodoc:
 

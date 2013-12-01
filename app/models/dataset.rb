@@ -1,3 +1,5 @@
+require './lib/modules/dataset_creator'
+
 class Dataset < ActiveRecord::Base
   extend Enumerize
   extend ActiveModel::Naming
@@ -6,7 +8,8 @@ class Dataset < ActiveRecord::Base
                   :start_date, :start_time, :types_of_tags, :site_ids,
                   :has_time, :has_date
 
-  attr_accessor   :has_time, :has_date # custom fields to set dates and times to nil if not selected in form
+  # custom fields to set dates and times to nil if not selected in form
+  attr_accessor :has_time, :has_date, :selected_types_of_tags
 
   belongs_to :user, class_name: 'User', foreign_key: :creator_id
   belongs_to :creator, class_name: 'User', foreign_key: :creator_id
@@ -14,23 +17,36 @@ class Dataset < ActiveRecord::Base
   belongs_to :updater, class_name: 'User', foreign_key: :updater_id
   belongs_to :project, inverse_of: :datasets
   has_and_belongs_to_many :sites, uniq: true
-  has_many   :jobs, inverse_of: :dataset
+  has_many :jobs, inverse_of: :dataset
 
+  before_save :generate_dataset_result
 
-  AVAILABLE_FILTERS = [:wind, :rain]
-  enumerize :filters, in: AVAILABLE_FILTERS, predicates: true # , multiple: true (does not work in the form when editing values)
-  AVAILABLE_TAG_TYPES = [:human, :computer]
-  enumerize :types_of_tags, in: AVAILABLE_TAG_TYPES, predicates: true
+  has_attached_file :dataset_result,
+                    path: ':rails_root/public/system/:class/:attachment/:id_partition/:style/:filename',
+                    url: '/system/:class/:attachment/:id_partition/:style/:filename'
+
+  AVAILABLE_NUMBER_OF_TAGS = {'None' => 0, 'At least one' => 1}
+
+  #AVAILABLE_FILTERS = [:wind, :rain]
+  #enumerize :filters, in: AVAILABLE_FILTERS, predicates: true # , multiple: true (does not work in the form when editing values)
+  #AVAILABLE_TAG_TYPES = [:human, :computer]
+  #enumerize :types_of_tags, in: AVAILABLE_TAG_TYPES, predicates: true
+
+  # the magic solution to saving multiple selection
+  # see https://github.com/brainspec/enumerize/blob/master/test/activerecord_test.rb#L50
+  serialize :types_of_tags, Array
+  enumerize :types_of_tags, in: Tag::AVAILABLE_TYPE_OF_TAGS, predicates: true, multiple: true
 
   # userstamp
   stampable
 
   # validation
-  validates :name, presence: true, uniqueness: { case_sensitive: false, scope: :creator_id, message: 'should be unique per user' }
+  validates :name, presence: true, uniqueness: {case_sensitive: false, scope: :creator_id, message: 'should be unique per user'}
   validates_presence_of :start_time, if: :end_time?
   validates_presence_of :end_time, if: :start_time?
   validates_presence_of :start_date, if: :end_date?
   validates_presence_of :end_date, if: :start_date?
+  validates :number_of_tags, inclusion: {in: [0, 1]}, allow_nil: true, allow_blank: true
 
   validates :start_date, allow_nil: true, allow_blank: true, timeliness: {type: :datetime}
   validates :end_date, allow_nil: true, allow_blank: true, timeliness: {type: :datetime}
@@ -50,6 +66,14 @@ class Dataset < ActiveRecord::Base
     !self.start_date.blank?
   end
 
+  def selected_types_of_tags
+    Tag::AVAILABLE_TYPE_OF_TAGS_DISPLAY.select { |item| self.types_of_tags.to_a.include? item[:id].to_s }.collect { |item| item[:name] }.join(', ')
+  end
+
+  def selected_number_of_tags
+    AVAILABLE_NUMBER_OF_TAGS.select{ |key, value| self.number_of_tags == value }.keys.first
+  end
+
   def execute_query
     AudioRecording.scoped
   end
@@ -66,6 +90,20 @@ class Dataset < ActiveRecord::Base
     if !self.start_time.blank? && !self.end_time.blank? && self.start_time >= self.end_time
       self.errors.add(:start_time, "must be before end time")
     end
+  end
+
+  def generate_dataset_result
+    dsc = DataSetCreator.new
+    result = dsc.execute AudioRecording.readonly, self
+
+    # http://stackoverflow.com/questions/5166782/write-stream-to-paperclip/5188448#5188448
+    self.dataset_result = StringIO.new(result.to_json)
+
+    self.dataset_result_content_type = 'application/json'
+    self.dataset_result_file_name = "dataset_result.json"
+
+    #self.save!
+
   end
 
 end

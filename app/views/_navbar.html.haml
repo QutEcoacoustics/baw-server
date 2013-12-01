@@ -13,7 +13,7 @@
     - if current_user.blank?
       - title = 'Account'
     - else
-      -title = "#{current_user.user_name} #{current_user.role_symbols.to_s}"
+      -title = "#{current_user.user_name}"
     = drop_down title do
       = menu_item 'Sign up', new_user_registration_path  if current_user.blank?
       = menu_item 'Login', new_user_session_path  if current_user.blank?

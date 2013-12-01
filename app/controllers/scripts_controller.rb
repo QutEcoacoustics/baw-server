@@ -1,8 +1,7 @@
 class ScriptsController < ApplicationController
+  add_breadcrumb 'Home', :root_path
+
   load_and_authorize_resource :script
-
-  add_breadcrumb 'home', :root_path
-
 
   # GET /scripts
   # GET /scripts.json

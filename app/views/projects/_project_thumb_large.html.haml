@@ -2,8 +2,8 @@
   = link_to project , class: 'thumbnail right-caption span12 project_thumbnail' do
     .span4= image_tag project.image.url(:span2)
     .caption.span7
-      %h3= project.name
-      %p= project.description
+      %h4= project.name
+      %p= truncate(project.description, length: 50, separator: ' ')
     - if current_user.can_write?(project)
       %i.icon-unlock(title="You have read & write access" data-toggle='tooltip' data-placement='top')
     - elsif current_user.can_read?(project)

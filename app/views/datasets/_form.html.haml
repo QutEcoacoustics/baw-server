@@ -9,7 +9,7 @@
 
       %fieldset
         %legend Sites
-        = f.collection_select :site_ids, @project.sites, :id, :name, {}, { class: 'span12', :multiple => true }
+        = f.collection_select :site_ids, @project.sites, :id, :name, {prompt: false, include_blank:false }, { class: 'span12', multiple: true }
     .span6
       = gmaps(markers: {data: @project.sites.to_gmaps4rails},
       map_options: gmaps_default_options)
@@ -30,8 +30,8 @@
         %legend Filtering and Sampling
         -#= f.input :filters, prompt: 'No Filter'
         -#= f.input :number_of_samples, label: 'Number of random 1 min samples', input_html: {class: 'span12'}
-        = f.input :number_of_tags, collection: {'None' => 0, '1 or more' => 1  }, prompt: 'No Restriction', input_html: {class: 'span12'}
-        = f.input :types_of_tags, input_html: {class: 'span12'}, prompt: 'No Restriction'
+        = f.input :number_of_tags, collection: Dataset::AVAILABLE_NUMBER_OF_TAGS, include_blank: 'No Restriction', input_html: {class: 'span12'}
+        = f.input :types_of_tags, input_html: {class: 'span12'}
 
   .form-actions
     = f.button :submit

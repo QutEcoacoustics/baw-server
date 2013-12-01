@@ -10,6 +10,10 @@
   .row-fluid
     .span12
       %h3= 'Audio Recordings'
+
+      = page_entries_info @site_audio_recordings
+      = will_paginate @site_audio_recordings
+
       %table.table.table-striped
         %thead
           %tr
@@ -20,14 +24,16 @@
             %th Exists?
 
         %tbody
-        - @site.audio_recordings.each do |audio_recording|
+        - @site_audio_recordings.each do |audio_recording|
           %tr
-            %td= link_to 'Edit Annotations', "/listen/#{audio_recording.id}", target: '_blank'
+            %td= audio_recording.original_file_exists? ? (link_to 'Edit Annotations', "/listen/#{audio_recording.id}", target: '_blank') : 'Not Available'
             %td= audio_recording.id
             %td= audio_recording.media_type
             %td= audio_recording.status
             %td= audio_recording.original_file_exists?
 
+      = page_entries_info @site_audio_recordings
+      = will_paginate @site_audio_recordings
 
 .row-fluid
   .span12

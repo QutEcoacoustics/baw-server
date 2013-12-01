@@ -80,6 +80,7 @@ describe 'CRUD Projects as valid user and project owner' do
 
   it 'creates new project when filling out form correctly' do
     visit new_project_path
+    #save_and_open_page
     fill_in 'project[name]', with: 'test name'
     fill_in 'project[description]', with: 'description'
     fill_in 'project[notes]', with: 'notes'

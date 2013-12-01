@@ -68,7 +68,10 @@ defaults: &defaults
     harvester_base: <%= Rails.root %>/tmp/_harvester_to_do
   harvester_config_file: harvest.yml
   harvester:
-    email: address@example.com
+    email: address+harvester@example.com
+    password: password
+  admin_user:
+    email: address+admin@example.com
     password: password
   cached_audio_defaults:
     mp3:

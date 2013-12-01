@@ -1,6 +1,5 @@
 class PermissionsController < ApplicationController
-
-  add_breadcrumb 'home', :root_path
+  add_breadcrumb 'Home', :root_path
 
   load_and_authorize_resource :project
   load_and_authorize_resource :permission, through: :project

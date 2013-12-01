@@ -4,8 +4,8 @@ gem 'rails', '~> 3.2'
 
 # http://ryanbigg.com/2011/01/why-you-should-run-bundle-update/
 ########################  DATABASES  ########################
-gem 'mysql2', platforms: :ruby # http://bundler.io/v1.3/man/gemfile.5.html
 gem 'sqlite3', platforms: [:mswin, :mingw]
+gem 'pg'
 
 ########################  ASSETS  ########################
 
@@ -22,8 +22,6 @@ end
 
 # See https://github.com/sstephenson/execjs#readme for more supported runtimes
 gem 'therubyracer', '>= 0.11.3', platforms: :ruby, require: 'v8', group: [:production, :staging]
-# only using mysql on server
-gem 'mysql2', platforms: :ruby, group: [:production, :staging]
 
 ########################  DEVELOPMENT  ########################
 group :development do
@@ -32,6 +30,8 @@ group :development do
   # capistrano gems
   gem 'capistrano', '~> 2', require: false
   gem 'rvm-capistrano'
+
+  gem 'rack-mini-profiler'
 end
 
 ########################  TESTING  ########################
@@ -75,6 +75,7 @@ gem 'twitter-bootstrap-rails', git: 'https://github.com/seyhunak/twitter-bootstr
 gem 'bootstrap-timepicker-rails'
 gem 'bootstrap-datepicker-rails'
 # gem 'select2-rails', '>=3.3.2'
+gem 'will_paginate', '~> 3.0.5'
 
 
 ########################  MISC ########################
