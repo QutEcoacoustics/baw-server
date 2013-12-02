@@ -16,7 +16,7 @@ group :assets do
   gem 'coffee-rails', '~> 3.2'
   #gem 'less-rails',   '>= 2.2.6'
   gem 'sass-rails'
-
+  gem 'pg'
 
   gem 'uglifier', '>= 1.0.3'
 end
