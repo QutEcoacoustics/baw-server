@@ -4,9 +4,13 @@ gem 'rails', '~> 3.2'
 
 # http://ryanbigg.com/2011/01/why-you-should-run-bundle-update/
 ########################  DATABASES  ########################
-gem 'sqlite3', platforms: [:mswin, :mingw]
 gem 'mysql2', platforms: :ruby # http://bundler.io/v1.3/man/gemfile.5.html
-gem 'pg'
+gem 'mysql2', platforms: :ruby, group: [:production, :staging]
+
+gem 'pg', platforms: :ruby
+gem 'pg', platforms: :ruby, group: [:production, :staging]
+
+gem 'sqlite3', platforms: [:mswin, :mingw]
 
 ########################  ASSETS  ########################
 
