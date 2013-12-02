@@ -37,7 +37,7 @@ ActiveRecord::Schema.define(:version => 20131124234346) do
     t.integer  "updater_id"
   end
 
-  add_index "audio_events_tags", ["audio_event_id", "tag_id"], :name => "index_audio_events_tags_on_audio_event_id_and_tag_id", :unique => true
+  add_index "audio_events_tags", ["audio_event_id", "tag_id"], :name => "index_audio_events_tags_on_audio_event_id_and_tag_i", :unique => true
 
   create_table "audio_recordings", :force => true do |t|
     t.string   "uuid",               :limit => 36,                                                    :null => false

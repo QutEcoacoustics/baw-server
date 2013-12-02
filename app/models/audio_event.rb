@@ -21,7 +21,7 @@ class AudioEvent < ActiveRecord::Base
   #validates_as_paranoid
 
   # validation
-  validates :audio_recording, presence: true
+  validates :audio_recording_id, presence: true
   validates :is_reference, inclusion: {in: [true, false]}
 
   validates :start_time_seconds, presence: true, numericality: {greater_than_or_equal_to: 0}

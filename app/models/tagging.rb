@@ -17,8 +17,8 @@ class Tagging < ActiveRecord::Base
   stampable
 
   ##validations
-  validates_presence_of  :audio_event
-  validates_presence_of  :tag
+  validates_presence_of  :audio_event_id
+  validates_presence_of  :tag_id
   #
   #validates_uniqueness_of :audio_event_id, :scope => :tag_id
 end
