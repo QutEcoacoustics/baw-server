@@ -4,12 +4,7 @@ gem 'rails', '~> 3.2'
 
 # http://ryanbigg.com/2011/01/why-you-should-run-bundle-update/
 ########################  DATABASES  ########################
-gem 'mysql2', platforms: :ruby # http://bundler.io/v1.3/man/gemfile.5.html
-gem 'mysql2', platforms: :ruby, group: [:production, :staging]
-
-gem 'pg', platforms: :ruby
-gem 'pg', platforms: :ruby, group: [:production, :staging]
-
+gem 'pg', platforms: :ruby # http://bundler.io/v1.3/man/gemfile.5.html
 gem 'sqlite3', platforms: [:mswin, :mingw]
 
 ########################  ASSETS  ########################
@@ -26,6 +21,7 @@ end
 
 # See https://github.com/sstephenson/execjs#readme for more supported runtimes
 gem 'therubyracer', '>= 0.11.3', platforms: :ruby, require: 'v8', group: [:production, :staging]
+gem 'pg', platforms: :ruby, group: [:production, :staging]
 
 ########################  DEVELOPMENT  ########################
 group :development do
