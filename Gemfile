@@ -5,8 +5,8 @@ gem 'rails', '~> 3.2'
 # http://ryanbigg.com/2011/01/why-you-should-run-bundle-update/
 ########################  DATABASES  ########################
 gem 'sqlite3', platforms: [:mswin, :mingw]
+gem 'mysql2', platforms: :ruby # http://bundler.io/v1.3/man/gemfile.5.html
 gem 'pg'
-
 
 ########################  ASSETS  ########################
 
@@ -16,7 +16,6 @@ group :assets do
   gem 'coffee-rails', '~> 3.2'
   #gem 'less-rails',   '>= 2.2.6'
   gem 'sass-rails'
-  gem 'pg'
 
   gem 'uglifier', '>= 1.0.3'
 end
