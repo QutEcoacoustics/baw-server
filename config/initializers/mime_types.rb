@@ -5,7 +5,7 @@
 # Mime::Type.register_alias "text/html", :iphone
 
 # audio mime types
-Mime::Type.register 'audio/wav', :wav, ['audio/vnd.wave', 'audio/x-wav', 'audio/L16'], ['wave']
+Mime::Type.register 'audio/wav', :wav, ['audio/x-wav', 'audio/vnd.wave', 'audio/L16'], ['wave']
 Mime::Type.register 'audio/mp3', :mp3, ['audio/mpeg'], ['mp1', 'mp2', 'mp3', 'mpg','mpeg','mpeg3']
 Mime::Type.register 'audio/webm', :webm, ['audio/webma'], ['webma']
 Mime::Type.register 'audio/ogg', :ogg, ['audio/oga'], ['oga']

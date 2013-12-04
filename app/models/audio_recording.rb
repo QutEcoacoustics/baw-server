@@ -58,17 +58,23 @@ class AudioRecording < ActiveRecord::Base
   scope :end_before, lambda { |time| where('end_time_seconds + duration_seconds <= ?', time)}
 
   def original_file_exists?
-    if self.original_file_name.blank?
+
+    cache = Cache::Cache.new(Settings.paths.original_audios, Settings.paths.cached_audios, nil, nil, nil)
+
+    file_name_params = {
+        :uuid => self.uuid,
+        :date => self.recorded_date.strftime("%Y%m%d"),
+        :time => self.recorded_date.strftime("%H%M%S"),
+        :original_format => File.extname(self.original_file_name)
+    }
+
+    if file_name_params[:original_format].blank?
+      file_name_params[:original_format] = Mime::Type.file_extension_of(self.media_type)
+    end
+
+    if file_name_params[:original_format].blank?
       false
     else
-      file_name_params = {
-          :uuid => self.uuid,
-          :date => self.recorded_date.strftime("%Y%m%d"),
-          :time => self.recorded_date.strftime("%H%M%S"),
-          :original_format => File.extname(self.original_file_name)
-      }
-
-      cache = Cache::Cache.new(Settings.paths.original_audios, Settings.paths.cached_audios, nil, nil, nil)
       file_name = cache.original_audio_file(file_name_params)
       source_possible_paths = cache.existing_original_audio_paths(file_name)
       source_possible_paths.length > 0
