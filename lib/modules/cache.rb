@@ -13,7 +13,6 @@ module Cache
       @cached_audio_defaults = cached_audio_defaults
       @cached_spectrogram_paths = cached_spectrogram_paths
       @cached_spectrogram_defaults = cached_spectrogram_defaults
-      @parameter_file_name_separator = '_'
     end
 
     ###############################
@@ -125,6 +124,9 @@ module Cache
           file_name += get_parameter(param, modify_parameters, true, :float)
         elsif [:channel, :sample_rate, :window].include? param
           file_name += get_parameter(param, modify_parameters, true, :int)
+        elsif [:time].include? param
+          # add '-' in front of time
+          file_name += get_parameter(param, modify_parameters, true, :string, '-')
         else
           file_name += get_parameter(param, modify_parameters)
         end
@@ -133,7 +135,7 @@ module Cache
       file_name
     end
 
-    def get_parameter(parameter, modify_parameters, include_separator = true, format = :string)
+    def get_parameter(parameter, modify_parameters, include_separator = true, format = :string, the_separator = '_')
       # need to cater for the situation where modify_parameters contains strings (we want symbols)
       modify_parameters.keys.each do |key|
         modify_parameters[(key.to_sym rescue key) || key] = modify_parameters.delete(key)
@@ -163,7 +165,7 @@ module Cache
         #end
 
         if include_separator
-          result_name = @parameter_file_name_separator+result_name
+          result_name = the_separator+result_name
         end
       end
 
