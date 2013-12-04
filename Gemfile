@@ -4,9 +4,9 @@ gem 'rails', '~> 3.2'
 
 # http://ryanbigg.com/2011/01/why-you-should-run-bundle-update/
 ########################  DATABASES  ########################
-gem 'pg', platforms: :ruby # http://bundler.io/v1.3/man/gemfile.5.html
+gem 'pg' # http://bundler.io/v1.3/man/gemfile.5.html
 gem 'sqlite3', platforms: [:mswin, :mingw]
-
+# don't change the database gems
 ########################  ASSETS  ########################
 
 # Gems used only for assets and not required
@@ -21,8 +21,9 @@ end
 
 # See https://github.com/sstephenson/execjs#readme for more supported runtimes
 gem 'therubyracer', '>= 0.11.3', platforms: :ruby, require: 'v8', group: [:production, :staging]
-gem 'pg', platforms: :ruby, group: [:production, :staging]
-
+gem 'pg', group: [:production, :staging]
+# don't change the database gems - causes:
+# Please install the <db> adapter: `gem install activerecord-<db>-adapter` (<db> is not part of the bundle. Add it to Gemfile.)
 ########################  DEVELOPMENT  ########################
 group :development do
   gem 'quiet_assets', '>= 1.0.2'
