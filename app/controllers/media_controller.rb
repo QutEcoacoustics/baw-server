@@ -32,8 +32,6 @@ class MediaController < ApplicationController
         options[:end_offset] = (params[:end_offset] || @audio_recording.duration_seconds).to_f
         options[:uuid] = @audio_recording.uuid
         options[:id] = @audio_recording.id
-        #options[:date] = @audio_recording.recorded_date.strftime "%Y%m%d"
-        #options[:time] = @audio_recording.recorded_date.strftime "%H%M%S"
         mime_type = Mime::Type.lookup_by_extension(options[:format])
 
         download_options = {
@@ -46,6 +44,9 @@ class MediaController < ApplicationController
         if AUDIO_MEDIA_TYPES.include?(mime_type)
           options[:channel] = (params[:channel] || Settings.cached_audio_defaults[options[:format]].channel).to_i
           options[:sample_rate] = (params[:sample_rate] || Settings.cached_audio_defaults[options[:format]].sample_rate).to_f
+          # date and time are for finding the original audio file
+          options[:date] = @audio_recording.recorded_date.strftime "%y%m%d"
+          options[:time] = @audio_recording.recorded_date.strftime "%H%M"
           download_options[:file_path] = MediaCacher::create_audio_segment(options)
           download_file(download_options)
         elsif  IMAGE_MEDIA_TYPES.include?(mime_type)
@@ -53,6 +54,8 @@ class MediaController < ApplicationController
           options[:sample_rate] = (params[:sample_rate] || Settings.cached_spectrogram_defaults[options[:format]].sample_rate).to_f
           options[:window] = (params[:window] || Settings.cached_spectrogram_defaults[options[:format]].window).to_i
           options[:colour] = (params[:colour] || Settings.cached_spectrogram_defaults[options[:format]].colour).to_s
+          options[:date] = @audio_recording.recorded_date.strftime "%y%m%d"
+          options[:time] = @audio_recording.recorded_date.strftime "%H%M"
           full_path = MediaCacher::generate_spectrogram(options)
           #download_file(full_path, mime_type)
           send_file full_path, :stream => true, :buffer_size => 4096, :disposition => 'inline', :type => mime_type, :content_type => mime_type

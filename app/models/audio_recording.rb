@@ -63,8 +63,8 @@ class AudioRecording < ActiveRecord::Base
 
     file_name_params = {
         :uuid => self.uuid,
-        :date => self.recorded_date.strftime("%Y%m%d"),
-        :time => self.recorded_date.strftime("%H%M%S"),
+        :date => self.recorded_date.strftime("%y%m%d"),
+        :time => self.recorded_date.strftime("%H%M"),
         :original_format => File.extname(self.original_file_name)
     }
 
@@ -75,6 +75,7 @@ class AudioRecording < ActiveRecord::Base
     if file_name_params[:original_format].blank?
       false
     else
+      file_name_params[:original_format] = file_name_params[:original_format].downcase
       file_name = cache.original_audio_file(file_name_params)
       source_possible_paths = cache.existing_original_audio_paths(file_name)
       source_possible_paths.length > 0
