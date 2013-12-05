@@ -196,11 +196,11 @@ class MediaController < ApplicationController
     elsif !(params[:end_offset]=~OFFSET_REGEXP)
       render json: {error: 'end_offset parameter must be a float number indicating seconds (maximum precision milliseconds, e.g., 1.234)'}.to_json, status: :unprocessable_entity
     elsif params[:end_offset].to_i > @audio_recording.duration_seconds
-      render json: {error: "end_offset parameter must be a smaller than the duration of the audio recording requested: #{@audio_recording.duration_seconds} seconds"}.to_json, status: :unprocessable_entity
+      render json: {error: "end_offset parameter must be a smaller than the duration of the audio recording requested: #{@audio_recording.duration_seconds} seconds"}.to_json, status: :requested_range_not_satisfiable
     elsif params[:start_offset].to_i >= @audio_recording.duration_seconds
-      render json: {error: "start_offset parameter must be a smaller than the duration of the audio recording requested: #{@audio_recording.duration_seconds} seconds"}.to_json, status: :unprocessable_entity
+      render json: {error: "start_offset parameter must be a smaller than the duration of the audio recording requested: #{@audio_recording.duration_seconds} seconds"}.to_json, status: :requested_range_not_satisfiable
     elsif params[:start_offset].to_i >= params[:end_offset].to_i
-      render json: {error: "start_offset parameter must be a smaller than end_offset"}.to_json, status: :unprocessable_entity
+      render json: {error: "start_offset parameter must be a smaller than end_offset"}.to_json, status: :requested_range_not_satisfiable
     end
   end
 end
