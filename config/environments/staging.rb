@@ -29,6 +29,10 @@ AWB::Application.configure do
 
   # Use a different logger for distributed setups
   # config.logger = ActiveSupport::TaggedLogging.new(SyslogLogger.new)
+  # keep 5 log files, max file size is 300 mb
+  # http://www.ruby-doc.org/stdlib-1.9.3/libdoc/logger/rdoc/Logger.html#method-c-new
+  # http://trevorturk.com/2010/10/14/limit-the-size-of-rails-3-log-files/
+  config.logger = Logger.new(config.paths.log.first, 5, 300.megabytes)
 
   # Use a different cache store in production
   # config.cache_store = :mem_cache_store

@@ -80,7 +80,7 @@ module MediaCacher
       source_possible_paths = cache.possible_original_audio_paths(source_file)
 
       # if the original audio files cannot be found, raise an exception
-      raise Exceptions::AudioFileNotFoundError, "Could not find original audio file for '#{source_file}' in '#{Settings.paths.original_audios}'" if source_existing_paths.blank?
+      raise Exceptions::AudioFileNotFoundError, "Could not find original audio in '#{source_possible_paths}'." if source_existing_paths.blank?
 
       audio_recording = AudioRecording.where(:id => modify_parameters[:id]).first!
 

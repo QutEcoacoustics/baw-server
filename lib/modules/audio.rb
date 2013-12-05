@@ -38,9 +38,9 @@ module Audio
   # parameters in modify_parameters. Possible options:
   # :start_offset :end_offset :channel :sample_rate :format
   def self.modify(source, target, modify_parameters)
-    raise ArgumentError, "Source does not exist: #{File.basename(source)}" unless File.exists? source
-    raise ArgumentError, "Target exists: #{File.basename(target)}" unless !File.exists? target
-    raise ArgumentError "Source and Target are the same file: #{File.basename(target)}" unless source != target
+    raise ArgumentError, "Source does not exist: #{source}" unless File.exists? source
+    raise ArgumentError, "Target exists: #{target}" unless !File.exists? target
+    raise ArgumentError "Source and Target are the same file: #{target}" unless source != target
 
     if source.match(/\.wv$/) && (modify_parameters.include?(:start_offset) || modify_parameters.include?(:end_offset))
       # convert to wav, then to target file (might need to change channels or sample rate or format)
