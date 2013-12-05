@@ -132,7 +132,7 @@ module Cache
         end
       end
 
-      file_name
+      file_name.downcase
     end
 
     def get_parameter(parameter, modify_parameters, include_separator = true, format = :string, the_separator = '_')
