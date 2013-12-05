@@ -42,15 +42,15 @@ module AudioWavpack
   # target should be calculated based on modify_parameters by cache module
   # modify_parameters can contain start_offset (fractions of seconds from start) and/or end_offset (fractions of seconds from start)
   def self.modify_wavpack(source, target, modify_parameters = {})
-    raise ArgumentError, "Source is not a wavpack file: #{File.basename(source)}" unless source.match(/\.wv$/)
-    raise ArgumentError, "Target is not a wav file: : #{File.basename(target)}" unless target.match(/\.wav$/)
-    raise ArgumentError "Source and Target are the same file: #{File.basename(target)}" unless source != target
+    raise ArgumentError, "Source is not a wavpack file: #{source}" unless source.match(/\.wv$/)
+    raise ArgumentError, "Target is not a wav file: #{target}" unless target.match(/\.wav$/)
+    raise ArgumentError "Source and Target are the same file: #{target}" unless source != target
 
     if File.exists? target
       return result
     end
 
-    raise ArgumentError, "Source does not exist: #{File.basename(source)}" unless File.exists? source
+    raise ArgumentError, "Source does not exist: #{source}" unless File.exists? source
 
     # formatted time: hh:mm:ss.ss
     arguments = '-t -q'

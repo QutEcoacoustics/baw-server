@@ -91,8 +91,8 @@ module Audio
 
   # only does conversion to wav, and optional segmenting
   def self.modify_wv_wav(source, target, modify_parameters)
-    raise ArgumentError, "Source must be a wavpack file: #{File.basename(source)}" unless source.match(/\.wv$/)
-    raise ArgumentError, "Target must be a wav file: #{File.basename(target)}" unless  target.match(/\.wav$/)
+    raise ArgumentError, "Source must be a wavpack file: #{source}" unless source.match(/\.wv$/)
+    raise ArgumentError, "Target must be a wav file: #{target}" unless  target.match(/\.wav$/)
 
     # wav pack can only be converted to wav
     #cached_wav_audio_parameters = modify_parameters.clone

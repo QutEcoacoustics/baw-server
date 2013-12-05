@@ -40,10 +40,10 @@ include OS, Logging
   end
 
   def self.modify_sox(source, target, modify_parameters = {})
-    raise ArgumentError, "Source is not a mp3 or wav file: #{File.basename(source)}" unless source.match(/\.mp3|\.wav$/)
-    raise ArgumentError, "Target is not a mp3 or wav file: : #{File.basename(target)}" unless target.match(/\.mp3|\.wav$/)
-    raise ArgumentError, "Source does not exist: #{File.basename(source)}" unless File.exists? source
-    raise ArgumentError, "Target exists: #{File.basename(target)}" unless !File.exists? target
+    raise ArgumentError, "Source is not a mp3 or wav file: #{source}" unless source.match(/\.mp3|\.wav$/)
+    raise ArgumentError, "Target is not a mp3 or wav file: : #{target}" unless target.match(/\.mp3|\.wav$/)
+    raise ArgumentError, "Source does not exist: #{source}" unless File.exists? source
+    raise ArgumentError, "Target exists: #{target}" unless !File.exists? target
 
     result = {}
 

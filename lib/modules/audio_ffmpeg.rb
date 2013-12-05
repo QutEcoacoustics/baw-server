@@ -83,11 +83,11 @@ module AudioFfmpeg
   def self.modify_ffmpeg(source, target, modify_parameters = {})
     # ffmpeg is the catch-all, so it will do anything specified in modify_parameters.
 
-    raise ArgumentError, "Source is a wavpack file, use wavpack to convert to .wav first instead: #{File.basename(source)}" if source.match(/\.wv$/)
+    raise ArgumentError, "Source is a wavpack file, use wavpack to convert to .wav first instead: #{source}" if source.match(/\.wv$/)
 
-    raise ArgumentError, "Source does not exist: #{File.basename(source)}" unless File.exists? source
-    raise ArgumentError, "Target exists: #{File.basename(target)}" if File.exists? target
-    raise ArgumentError "Source and Target are the same file: #{File.basename(target)}" unless source != target
+    raise ArgumentError, "Source does not exist: #{source}" unless File.exists? source
+    raise ArgumentError, "Target exists: #{target}" if File.exists? target
+    raise ArgumentError "Source and Target are the same file: #{target}" unless source != target
 
     arguments = ''
 

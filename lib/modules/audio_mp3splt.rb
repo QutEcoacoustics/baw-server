@@ -10,11 +10,11 @@ module AudioMp3splt
   # @param [hash] modify_parameters
   # mp3splt can only segment (mp3 to mp3), can't change any other parameters
   def self.modify_mp3splt(source, target, modify_parameters = {})
-    raise ArgumentError, "Source is not a mp3 file: #{File.basename(source)}" unless source.match(/\.mp3$/)
-    raise ArgumentError, "Target is not a mp3 file: : #{File.basename(target)}" unless target.match(/\.mp3$/)
-    raise ArgumentError, "Source does not exist: #{File.basename(source)}" unless File.exists? source
-    raise ArgumentError, "Target exists: #{File.basename(target)}" if File.exists? target
-    raise ArgumentError "Source and Target are the same file: #{File.basename(target)}" unless source != target
+    raise ArgumentError, "Source is not a mp3 file: #{source}" unless source.match(/\.mp3$/)
+    raise ArgumentError, "Target is not a mp3 file: : #{target}" unless target.match(/\.mp3$/)
+    raise ArgumentError, "Source does not exist: #{source}" unless File.exists? source
+    raise ArgumentError, "Target exists: #{target}" if File.exists? target
+    raise ArgumentError "Source and Target are the same file: #{target}" unless source != target
 
     # mp3splt needs the file extension removed
     target_dirname = File.dirname target
