@@ -5,7 +5,7 @@ class UserAccountsController < ApplicationController
   # GET /users
   # GET /users.json
   def index
-    @users = User.all
+    @users = User.order('user_name ASC').all
 
     respond_to do |format|
       format.html # index.html.erb
@@ -20,6 +20,15 @@ class UserAccountsController < ApplicationController
 
     respond_to do |format|
       format.html # show.html.erb
+      format.json { render json: @user }
+    end
+  end
+
+  def my_account
+    @user = current_user
+
+    respond_to do |format|
+      format.html { render template: 'user_accounts/show' }
       format.json { render json: @user }
     end
   end

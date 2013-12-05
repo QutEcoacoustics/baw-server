@@ -141,6 +141,9 @@ AWB::Application.routes.draw do
 
   get 'listen/:id' => 'listen#show'
 
+  # when a user goes to my account, render user_account/show view for that user
+  get '/my_account/' => 'user_accounts#my_account'
+
   mount Raddocs::App => '/doc'
 
   match '*a', :to => 'errors#routing'

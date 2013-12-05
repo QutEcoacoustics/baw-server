@@ -11,11 +11,8 @@
     -#= menu_item 'Scripts', '/path3'
   = menu_group pull: :right do
     - if current_user.blank?
-      - title = 'Account'
+      = menu_item 'Sign up', new_user_registration_path
+      = menu_item 'Login', new_user_session_path
     - else
-      -title = "#{current_user.user_name}"
-    = drop_down title do
-      = menu_item 'Sign up', new_user_registration_path  if current_user.blank?
-      = menu_item 'Login', new_user_session_path  if current_user.blank?
-      = menu_item 'Logout', destroy_user_session_path unless current_user.blank?
-      = menu_item 'My Account Details', edit_user_registration_path unless current_user.blank?
+      = menu_item "#{current_user.user_name}", my_account_path
+      = menu_item 'Logout', destroy_user_session_path
