@@ -66,6 +66,7 @@ defaults: &defaults
     analysis_runs:
       - <%= Rails.root %>/tmp/_analysis_run
     harvester_base: <%= Rails.root %>/tmp/_harvester_to_do
+    modules_log_file: <%= Rails.root %>/tmp/_modules_log.log
   harvester_config_file: harvest.yml
   harvester:
     email: address+harvester@example.com

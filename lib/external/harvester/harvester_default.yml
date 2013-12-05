@@ -30,3 +30,4 @@ harvester_to_do_path:
   - <%= Rails.root %>/tmp/_harvester_to_do
 harvester_completed_path:
   - <%= Rails.root %>/tmp/_harvester_completed
+harvester_log_file: /tmp/harvester.log

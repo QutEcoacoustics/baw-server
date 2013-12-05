@@ -26,7 +26,7 @@ class HarvestListener
     yaml = YAML.load_file(@yaml_config_file)
     @listen_path = yaml['harvester_to_do_path'][0]
     # this sets the logger which is used in the harvester and shared Audio tools (audioffmpeg, audiosox, etc.)
-    Logging::set_logger(Logger.new("#{@listen_path}/listen.log"))
+    Logging::set_logger(Logger.new("#{@listen_path}/listen.log", 5, 300.megabytes))
     puts "Start listening to '#{@listen_path}'" if File.directory?(@listen_path)
   end
 

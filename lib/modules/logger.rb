@@ -7,7 +7,7 @@ module Logging
   # Global, memoized, lazy initialized instance of a logger
   def self.logger
 
-    @logger ||= Logger.new('external_modules.log', 'daily') #Logger.new(STDOUT)
+    @logger ||= Logger.new(Settings.paths.modules_log_file, 5, 300.megabytes)
   end
 
   def self.set_logger(new_logger)

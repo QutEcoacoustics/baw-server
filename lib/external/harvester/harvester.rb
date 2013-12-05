@@ -37,6 +37,7 @@ module Harvester
         @original_audio_paths = yaml['original_audios']
         @harvester_completed_path = yaml['harvester_completed_path']
 
+        @logger_file = yaml['harvester_log_file']
 
         @config_file_object = nil
         @dir_to_process = dir_to_process
@@ -448,11 +449,11 @@ module Harvester
 
     def log(log_level, message)
       # create log files if they haven't been created yet
-      @LOG = @LOG || Logger.new(@process_log_file)
+      @LOG = @LOG || Logger.new(@process_log_file, 5, 300.megabytes)
       @LOG.add(log_level, message)
       Logging.logger.add(log_level, message)
       if log_level == Logger::FATAL ||  log_level == Logger::ERROR
-        @ERROR_LOG = @ERROR_LOG ||Logger.new(@error_log_file)
+        @ERROR_LOG = @ERROR_LOG ||Logger.new(@error_log_file, 5, 300.megabytes)
         @ERROR_LOG.add(log_level, message)
       end
     end
