@@ -20,7 +20,8 @@
             %th Id
             %th Type
             %th Status
-            %th Exists?
+            %th Start Date
+            %th Duration
 
         %tbody
         - @site_audio_recordings.each do |audio_recording|
@@ -29,7 +30,8 @@
             %td= audio_recording.id
             %td= audio_recording.media_type
             %td= audio_recording.status
-            %td= audio_recording.original_file_exists?
+            %td= audio_recording.recorded_date.to_formatted_s(:rfc822)
+            %td= distance_of_time_in_words(audio_recording.duration_seconds)
 
       = page_entries_info @site_audio_recordings
       = will_paginate @site_audio_recordings
