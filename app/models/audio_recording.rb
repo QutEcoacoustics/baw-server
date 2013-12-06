@@ -52,10 +52,19 @@ class AudioRecording < ActiveRecord::Base
 
   before_validation :set_uuid, :on => :create
 
+  # postgres-specific
+  #Failure/Error: build(:job, script_settings: nil).should_not be_valid
+  #ActiveRecord::StatementInvalid:
+  #    PG::UndefinedFunction: ERROR:  operator does not exist: timestamp without time zone + numeric
+  #LINE 1: ...".* FROM "audio_recordings"  WHERE (recorded_date + duration...
+  #                                                             ^
+  #HINT:  No operator matches the given name and argument type(s). You might need to add explicit type casts.
+  #: SELECT "audio_recordings".* FROM "audio_recordings"  WHERE (recorded_date + duration_seconds >= '2013-11-06T06:30:00') AND (recorded_date <= '2013-11-09T11:45:00')
+
   scope :start_after, lambda { |time| where('recorded_date >= ?', time)}
   scope :start_before, lambda { |time| where('recorded_date <= ?', time)}
-  scope :end_after, lambda { |time| where('recorded_date + duration_seconds >= ?', time)}
-  scope :end_before, lambda { |time| where('end_time_seconds + duration_seconds <= ?', time)}
+  scope :end_after, lambda { |time| where('recorded_date + CAST(duration_seconds || \' seconds\' as interval)  >= ?', time)}
+  scope :end_before, lambda { |time| where('end_time_seconds + CAST(duration_seconds || \'seconds\' as interval) <= ?', time)}
 
   def original_file_exists?
 
