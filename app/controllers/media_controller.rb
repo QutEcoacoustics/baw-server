@@ -1,4 +1,3 @@
-require './lib/modules/mime'
 require './lib/modules/media_cacher'
 
 class MediaController < ApplicationController
