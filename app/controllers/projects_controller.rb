@@ -9,7 +9,7 @@ class ProjectsController < ApplicationController
     if current_user.has_role? :admin
       @projects = Project.includes(:owner).order('lower(name) ASC')
     else
-      @projects = current_user.projects.order('lower(name) ASC')
+      @projects = current_user.projects.sort {|a,b| a.name <=> b.name }
     end
 
     respond_to do |format|
