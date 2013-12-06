@@ -11,6 +11,7 @@ class Ability
     elsif user.has_role?(:user) && user.confirmed?
       #user abilities
       can [:show], User
+      can [:my_account], User, user_id: user.id
       can [:index, :create], Project
       can [:read, :update, :update_permissions], Project do |project|
         user.can_write?(project)
