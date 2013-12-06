@@ -28,6 +28,14 @@ class DataSetCreator
 
     # times - creates segments
 
+    # number of tags
+    unless dataset_metadata.number_of_tags.blank?
+      recordings = recordings.tag_count dataset_metadata.number_of_tags
+    end
+
+    # types of tags
+    #unless dataset_metadata.
+
     recordings.explain
     recordings
   end

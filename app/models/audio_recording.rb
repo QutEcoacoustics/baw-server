@@ -9,7 +9,7 @@ class AudioRecording < ActiveRecord::Base
                   :duration_seconds, :file_hash, :media_type, :notes,
                   :recorded_date, :sample_rate_hertz, :status, :uploader_id,
                   :site_id
-  attr_protected  :uuid
+  attr_protected :uuid
 
   # relations
   belongs_to :site, inverse_of: :audio_recordings
@@ -53,18 +53,16 @@ class AudioRecording < ActiveRecord::Base
   before_validation :set_uuid, :on => :create
 
   # postgres-specific
-  #Failure/Error: build(:job, script_settings: nil).should_not be_valid
-  #ActiveRecord::StatementInvalid:
-  #    PG::UndefinedFunction: ERROR:  operator does not exist: timestamp without time zone + numeric
-  #LINE 1: ...".* FROM "audio_recordings"  WHERE (recorded_date + duration...
-  #                                                             ^
-  #HINT:  No operator matches the given name and argument type(s). You might need to add explicit type casts.
-  #: SELECT "audio_recordings".* FROM "audio_recordings"  WHERE (recorded_date + duration_seconds >= '2013-11-06T06:30:00') AND (recorded_date <= '2013-11-09T11:45:00')
 
-  scope :start_after, lambda { |time| where('recorded_date >= ?', time)}
-  scope :start_before, lambda { |time| where('recorded_date <= ?', time)}
-  scope :end_after, lambda { |time| where('recorded_date + CAST(duration_seconds || \' seconds\' as interval)  >= ?', time)}
-  scope :end_before, lambda { |time| where('end_time_seconds + CAST(duration_seconds || \'seconds\' as interval) <= ?', time)}
+  scope :start_after, lambda { |time| where('recorded_date >= ?', time) }
+  scope :start_before, lambda { |time| where('recorded_date <= ?', time) }
+  scope :end_after, lambda { |time| where('recorded_date + CAST(duration_seconds || \' seconds\' as interval)  >= ?', time) }
+  scope :end_before, lambda { |time| where('end_time_seconds + CAST(duration_seconds || \'seconds\' as interval) <= ?', time) }
+  scope :has_tag, lambda { |tag| includes(:tags).where('tags.text = ?', tag) }
+  scope :has_tags, lambda { |tags| includes(:tags).where('tags.text IN ?', tags) }
+  scope :does_not_have_tag, lambda { |tag| includes(:tags).where('tags.text <> ?', tag) }
+  scope :does_not_have_tags, lambda { |tags| includes(:tags).where('tags.text NOT IN ?', tags) }
+  scope :tag_count, lambda { |num_tags| includes(:tags).where('? = ?', self.includes(:tags).tags.count, num_tags) }
 
   def original_file_exists?
 
