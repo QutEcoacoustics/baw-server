@@ -43,8 +43,8 @@
       $('#dataset_start_time').prop("disabled",!$('#dataset_start_time').prop("disabled"));
       $('#dataset_end_time').prop("disabled",!$('#dataset_end_time').prop("disabled"));
   });
-  $('#dataset_start_date').datepicker({format: 'dd/mm/yyyy'});
-  $('#dataset_end_date').datepicker({format: 'dd/mm/yyyy'});
+  $('#dataset_start_date').datepicker({format: 'yyyy/mm/dd'});
+  $('#dataset_end_date').datepicker({format: 'yyyy/mm/dd'});
   $('#dataset_has_date').change(function(){
       $('#dataset_start_date').prop("disabled",!$('#dataset_start_date').prop("disabled"));
       $('#dataset_end_date').prop("disabled",!$('#dataset_end_date').prop("disabled"));
