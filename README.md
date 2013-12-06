@@ -2,9 +2,9 @@
 
 The bioacoustic workbench server. Manages the structure and audio data. Provides an API for clients access.
 
-[![Build Status](https://travis-ci.org/QutBioacoustics/baw-client.png)](https://travis-ci.org/QutBioacoustics/baw-client.png)
-[![Dependency Status](https://gemnasium.com/QutBioacoustics/baw-client.png)](https://gemnasium.com/QutBioacoustics/baw-client.png)
-[![Code Quality](https://d3s6mut3hikguw.cloudfront.net/github/QutBioacoustics/baw-client.png)](https://codeclimate.com/github/QutBioacoustics/baw-client)
+[![Dependency Status](https://gemnasium.com/QutBioacoustics/baw-server.png)](https://gemnasium.com/QutBioacoustics/baw-server)
+[![Code Climate](https://codeclimate.com/github/QutBioacoustics/baw-server.png)](https://codeclimate.com/github/QutBioacoustics/baw-server)
+
 
 ## Install instructions
 
