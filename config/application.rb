@@ -31,6 +31,9 @@ module AWB
     # Activate observers that should always be running.
     # config.active_record.observers = :cacher, :garbage_collector, :forum_observer
 
+    # check that locales are valid - new default in rails 3.2.14
+    config.i18n.enforce_available_locales = true
+
     # Set Time.zone default to the specified zone and make Active Record auto-convert to this zone.
     # Run "rake -D time" for a list of tasks for finding time zone names. Default is UTC.
     # config.time_zone = 'Central Time (US & Canada)'
@@ -42,7 +45,7 @@ module AWB
     config.i18n.default_locale = 'en-AU'
 
     # Configure the default encoding used in templates for Ruby 1.9.
-    config.encoding = "utf-8"
+    config.encoding = 'utf-8'
 
     # Configure sensitive parameters which will be filtered from the log file.
     config.filter_parameters += [:password]
