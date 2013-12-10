@@ -22,9 +22,9 @@
 - content_for :left_sidebar do
   = render layout: '/shared/left_sidebar', locals: {title: 'User Accounts'} do
     - if current_user == @user
-      %li= link_to 'Edit my account', edit_user_registration_path
+      %li= link_to 'Edit my details', edit_user_registration_path, title: 'Edit your account information', data: {toggle: 'tooltip',  placement: 'right'}
     - elsif can? :edit, @user
-      %li= link_to 'Edit', edit_user_account_path(@user)
+      %li= link_to 'Edit', edit_user_account_path(@user), title: 'Edit this user\'s details', data: {toggle: 'tooltip',  placement: 'right'}
     - if can? :index, User
-      %li= link_to 'List', user_accounts_path
+      %li= link_to 'List', user_accounts_path, title: 'List all user accounts', data: {toggle: 'tooltip',  placement: 'right'}
 

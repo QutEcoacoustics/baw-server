@@ -33,6 +33,7 @@ group :development do
   gem 'rvm-capistrano'
 
   gem 'rack-mini-profiler'
+  gem 'scrap'
 end
 
 ########################  TESTING  ########################

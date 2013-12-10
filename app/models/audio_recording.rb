@@ -62,7 +62,7 @@ class AudioRecording < ActiveRecord::Base
   scope :has_tags, lambda { |tags| includes(:tags).where('tags.text IN ?', tags) }
   scope :does_not_have_tag, lambda { |tag| includes(:tags).where('tags.text <> ?', tag) }
   scope :does_not_have_tags, lambda { |tags| includes(:tags).where('tags.text NOT IN ?', tags) }
-  scope :tag_count, lambda { |num_tags| includes(:tags).where('? = ?', self.includes(:tags).tags.count, num_tags) }
+  #scope :tag_count, lambda { |num_tags| includes(:tags).where('? = ?', self.includes(:tags).tags.count, num_tags) }
 
   def original_file_exists?
 
@@ -71,12 +71,15 @@ class AudioRecording < ActiveRecord::Base
     file_name_params = {
         :uuid => self.uuid,
         :date => self.recorded_date.strftime("%y%m%d"),
-        :time => self.recorded_date.strftime("%H%M"),
-        :original_format => File.extname(self.original_file_name)
+        :time => self.recorded_date.strftime("%H%M")
     }
 
-    if file_name_params[:original_format].blank?
+    if !self.original_file_name.blank?
+      file_name_params[:original_format] = File.extname(self.original_file_name)
+    elsif !self.media_type.blank?
       file_name_params[:original_format] = Mime::Type.file_extension_of(self.media_type)
+    else
+      file_name_params[:original_format] = '.wv' # pick something
     end
 
     if file_name_params[:original_format].blank?

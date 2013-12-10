@@ -12,7 +12,7 @@ AWB::Application.configure do
   config.serve_static_assets = false
 
   # Compress JavaScripts and CSS
-  config.assets.compress = false
+  config.assets.compress = true
 
   # Don't fallback to assets pipeline if a precompiled asset is missed
   config.assets.compile = true
@@ -38,6 +38,7 @@ AWB::Application.configure do
 
   # Use a different logger for distributed setups
   # config.logger = ActiveSupport::TaggedLogging.new(SyslogLogger.new)
+  config.logger = Logger.new(config.paths.log.first, 5, 300.megabytes)
 
   # Use a different cache store in production
   # config.cache_store = :mem_cache_store
@@ -52,17 +53,13 @@ AWB::Application.configure do
   config.action_mailer.raise_delivery_errors = true
   config.action_mailer.default_url_options = { :host => "#{Settings.host.name}" }
 
-  config.action_mailer.delivery_method = :smtp
+  config.action_mailer.delivery_method = :sendmail
+  config.action_mailer.perform_deliveries = true
 
-  config.action_mailer.smtp_settings = {
-      :address        => Settings.smtp.address,
-      :port           => Settings.smtp.port,
-      :domain         => Settings.smtp.domain,
-      :authentication => Settings.smtp.authentication,
-      :user_name      => Settings.smtp.user_name,
-      :password       => Settings.smtp.password
+  config.action_mailer.sendmail_settings = {
+      :location       => '/usr/sbin/sendmail',
+      :arguments      => '-i -t'
   }
-
 
   # Enable threaded mode
   # config.threadsafe!
@@ -76,5 +73,12 @@ AWB::Application.configure do
 
   # Log the query plan for queries taking more than this (works
   # with SQLite, MySQL, and PostgreSQL)
-  # config.active_record.auto_explain_threshold_in_seconds = 0.5
+  config.active_record.auto_explain_threshold_in_seconds = 0.5
+
+  AWB::Application.config.middleware.use ExceptionNotification::Rack,
+    email: {
+       email_prefix: Settings.exception_notification.email_prefix,
+       sender_address:  Settings.exception_notification.sender_address,
+       exception_recipients:  Settings.exception_notification.exception_recipients
+    }
 end
