@@ -256,6 +256,7 @@ GEM
       mustache (>= 0.99.4)
       rspec (>= 2.14.0)
       webmock (>= 1.7.0)
+    ruby-progressbar (1.2.0)
     rvm-capistrano (1.5.1)
       capistrano (~> 2.15.4)
     safe_yaml (0.9.7)
@@ -315,7 +316,6 @@ GEM
       addressable (>= 2.2.7)
       crack (>= 0.3.2)
     will_paginate (3.0.5)
-    win32console (1.3.2)
     win32console (1.3.2-x86-mingw32)
     xpath (2.0.0)
       nokogiri (~> 1.3)
@@ -359,6 +359,7 @@ DEPENDENCIES
   role_model
   rspec-rails (>= 2.0.1)
   rspec_api_documentation
+  ruby-progressbar
   rvm-capistrano
   sass-rails
   scrap
