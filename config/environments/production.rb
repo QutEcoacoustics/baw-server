@@ -38,7 +38,7 @@ AWB::Application.configure do
 
   # Use a different logger for distributed setups
   # config.logger = ActiveSupport::TaggedLogging.new(SyslogLogger.new)
-  config.logger = Logger.new(config.paths.log.first, 5, 300.megabytes)
+  #config.logger = Logger.new(config.paths.log.first, 5, 300.megabytes)
 
   # Use a different cache store in production
   # config.cache_store = :mem_cache_store
