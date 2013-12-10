@@ -1,27 +1,44 @@
-- if !user_signed_in?
-  .alert.fade.in.alert-info
-    %button.close{ 'data-dismiss' => 'alert'} &times;
-    Please
-    = link_to('Login', new_user_session_path)
-    or
-    = link_to('Sign up', new_user_registration_path)
-    to gain access to more projects.
-- elsif !current_user.confirmed?
-  .alert.fade.in.alert-warning
-    %button.close{ 'data-dismiss' => 'alert'} &times;
-    Please check your email and click the confirmation link.
-    = link_to 'Resend confirmation', new_user_confirmation_path
+- unless current_user.blank?
+  - if !current_user.confirmed?
+    .alert.fade.in.alert-warning
+      %button.close{ 'data-dismiss' => 'alert'} &times;
+      Please check your email and click the confirmation link.
+      = link_to 'Resend confirmation', new_user_confirmation_path
 
 %h1 Bioacoustic Workbench
 
-%p The Acoustic Workbench is a repository for information and audio about fauna that make human-audible sounds.
-%p We gather recordings from a wide range of environments, find practical ways to annotate the sounds with information about what's going on in them, and then enable that information to be put to use by ecologists and other parties interested in conservation.
+%p
+  Welcome! The Bioacoustic Workbench is a repository of information and audio recording annotations for fauna that make human-audible sounds.
+%p
+  We gather recordings from a wide range of environments and find practical ways to annotate the sounds with information about what's going on in them.
+  Then we enable that information to be put to use by ecologists and other parties interested in conservation.
 
-%h2 Projects
-- @projects.each_slice(2) do |projects|
-  %ul.thumbnails
-    .row-fluid
-      - projects.each do |project|
-        = render partial: 'projects/project_thumb_large', locals: {project: project}
-- if @projects.blank?
-  There are no projects available.
+- unless @selected_images.blank?
+  %h3= 'Focus on: '+@selected_images[:animal]['name']
+
+
+  .row-fluid
+    .span6.text-center
+
+    .span6.text-center
+      %img{src: "#{@selected_images[:image_base]}#{@selected_images[:animal]['folder'].html_safe}/#{@selected_images[:animal]['imagelocal'].html_safe}",
+        alt: @selected_images[:animal]['imagealt'].html_safe, style: 'height:200px;', class: 'img-polaroid' }
+  .row-fluid
+    .span12.text-center
+      %img{src: "#{@selected_images[:image_base]}#{@selected_images[:animal]['folder'].html_safe}/#{@selected_images[:animal]['spectrolocal'].html_safe}",
+        alt: @selected_images[:animal]['spectroalt'].html_safe, style: 'height:200px;', class: 'img-polaroid'}
+
+- content_for :left_sidebar do
+  = render layout: '/shared/left_sidebar', locals: {title: 'Quick Links'} do
+    -  if can? :index, Project
+      %li= link_to 'Projects', projects_path, title: 'View the projects you can access', data: {toggle: 'tooltip',  placement: 'right'}
+    - unless current_user.blank?
+      %li= link_to 'Profile', my_account_path, title: 'View your profile', data: {toggle: 'tooltip',  placement: 'right'}
+    - if current_user.blank?
+      %li= link_to 'Login', new_user_session_path, title: 'Sign in', data: {toggle: 'tooltip',  placement: 'right'}
+      %li= link_to 'Sign up', new_user_registration_path, title: 'Create an account', data: {toggle: 'tooltip',  placement: 'right'}
+
+- unless @selected_images.blank?
+  - content_for :right_sidebar do
+    %img{src: "#{@selected_images[:image_base]}#{@selected_images[:sensor_tree]}",
+            alt: 'An acoustic sensor attached to a tree.', style: 'height: 200px;', class: 'img-polaroid' }
