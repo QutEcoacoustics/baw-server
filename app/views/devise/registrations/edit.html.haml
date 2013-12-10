@@ -25,8 +25,10 @@
         = f.file_field :image
   .form-actions
     = f.button :submit, 'Update'
-%h3 Cancel my account
-%p
-  Unhappy? #{link_to 'Cancel my account', registration_path(resource_name), :data => { :confirm => 'Are you sure?' }, :method => :delete}
-= link_to 'Back', :back
 
+- content_for :left_sidebar do
+  = render layout: '/shared/left_sidebar', locals: {title: 'Users'} do
+    %li= link_to 'View profile', my_account_path, title: 'View your profile page', data: {toggle: 'tooltip',  placement: 'right'}
+    - unless current_user.is_admin?
+      %li= link_to 'Cancel my account', registration_path(resource_name), method: :delete,
+        title: "Permanently delete your account", data: {confirm: 'Are you sure?', toggle: 'tooltip',  placement: 'right'}
