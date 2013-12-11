@@ -14,19 +14,23 @@
   Then we enable that information to be put to use by ecologists and other parties interested in conservation.
 
 - unless @selected_images.blank?
-  %h3= 'Focus on: '+@selected_images[:animal]['name']
-
+  %h3= 'Focus on: '+@selected_images[:animal]['commonName']
 
   .row-fluid
     .span6.text-center
-
-    .span6.text-center
-      %img{src: "#{@selected_images[:image_base]}#{@selected_images[:animal]['folder'].html_safe}/#{@selected_images[:animal]['imagelocal'].html_safe}",
-        alt: @selected_images[:animal]['imagealt'].html_safe, style: 'height:200px;', class: 'img-polaroid' }
+      %img{src: "#{@selected_images[:image_base]}#{@selected_images[:animal]['baseName'].html_safe+'.jpg'}",
+        alt: "Image of #{@selected_images[:animal]['commonName']}", style: 'height:200px;', class: 'img-polaroid' }
+    .span6
+      %p= @selected_images[:animal]['animalDescription']
   .row-fluid
-    .span12.text-center
-      %img{src: "#{@selected_images[:image_base]}#{@selected_images[:animal]['folder'].html_safe}/#{@selected_images[:animal]['spectrolocal'].html_safe}",
-        alt: @selected_images[:animal]['spectroalt'].html_safe, style: 'height:200px;', class: 'img-polaroid'}
+    .span6.text-center
+      %img{src: "#{@selected_images[:image_base]}#{@selected_images[:animal]['baseName'].html_safe+'_spectrogram.jpg'}",
+        alt: "Spectrogram of #{@selected_images[:animal]['commonName']}", style: 'height:200px;', class: 'img-polaroid' }
+    .span6.text-center
+      %img{src: "#{@selected_images[:image_base]}#{@selected_images[:animal]['baseName'].html_safe+'_distribution.jpg'}",
+        alt: "Distribution of #{@selected_images[:animal]['commonName']}", style: 'height:200px;', class: 'img-polaroid' }
+
+
 
 - content_for :left_sidebar do
   = render layout: '/shared/left_sidebar', locals: {title: 'Quick Links'} do
@@ -40,5 +44,5 @@
 
 - unless @selected_images.blank?
   - content_for :right_sidebar do
-    %img{src: "#{@selected_images[:image_base]}#{@selected_images[:sensor_tree]}",
+    %img{src: @selected_images[:sensor_tree],
             alt: 'An acoustic sensor attached to a tree.', style: 'height: 200px;', class: 'img-polaroid' }
