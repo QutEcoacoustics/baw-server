@@ -33,7 +33,7 @@ group :development do
   gem 'rvm-capistrano'
 
   gem 'rack-mini-profiler'
-  gem 'scrap'
+  #gem 'scrap'
 end
 
 ########################  TESTING  ########################
@@ -98,6 +98,3 @@ require 'rbconfig'
 gem 'wdm', '>= 0.1.0', platforms: [:mswin, :mingw]
 
 gem 'rack-cors', require: 'rack/cors'
-
-# for import task
-gem 'ruby-progressbar'
