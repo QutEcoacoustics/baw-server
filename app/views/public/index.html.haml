@@ -20,17 +20,25 @@
     .span6.text-center
       %img{src: "#{@selected_images[:image_base]}#{@selected_images[:animal]['baseName'].html_safe+'.jpg'}",
         alt: "Image of #{@selected_images[:animal]['commonName']}", style: 'height:200px;', class: 'img-polaroid' }
+
     .span6
       %p= @selected_images[:animal]['animalDescription']
+
   .row-fluid
     .span6.text-center
+      %small.muted
+        Source:
+        %a{href: @selected_images[:animal]['animalImageSourceLink'], rel: 'nofollow'}= @selected_images[:animal]['animalImageSourceName']
+
+    .span6.text-center
+      %small.muted
+        Source:
+        %a{href: @selected_images[:animal]['animalDescriptionSourceLink'], rel: 'nofollow'}= @selected_images[:animal]['animalDescriptionSourceName']
+
+  .row-fluid
+    .span12.text-center
       %img{src: "#{@selected_images[:image_base]}#{@selected_images[:animal]['baseName'].html_safe+'_spectrogram.jpg'}",
         alt: "Spectrogram of #{@selected_images[:animal]['commonName']}", style: 'height:200px;', class: 'img-polaroid' }
-    .span6.text-center
-      %img{src: "#{@selected_images[:image_base]}#{@selected_images[:animal]['baseName'].html_safe+'_distribution.jpg'}",
-        alt: "Distribution of #{@selected_images[:animal]['commonName']}", style: 'height:200px;', class: 'img-polaroid' }
-
-
 
 - content_for :left_sidebar do
   = render layout: '/shared/left_sidebar', locals: {title: 'Quick Links'} do
