@@ -30,17 +30,20 @@ class TaggingsController < ApplicationController
   # POST /tags
   # POST /tags.json
   def create
+    # @audio_recording, @audio_event and @tagging are initialised/preloaded by load_resource/load_and_authorize_resource
     if params[:tagging] && params[:tagging][:tag_attributes] && params[:tagging][:tag_attributes][:text]
       @tagging = Tagging.new
       @tag = Tag.find_by_text(params[:tagging][:tag_attributes][:text])
       if @tag.blank?
-        # if the tag with the name does not already exist, build it via tag_attributes
-        @tagging.tag_attributes = params[:tagging][:tag_attributes]
-      else
-        # if the tag already exists, use it
-        @tagging.tag = @tag
+        # if the tag with the name does not already exist, create it via tag_attributes
+        @tag = Tag.new(params[:tagging][:tag_attributes])
+        unless @tag.save
+          render json: @tag.errors, status: :unprocessable_entity and return
+        end
       end
+      @tagging.tag = @tag
     else
+      # tag attributes are directly available
       @tagging = Tagging.new(params[:tagging])
     end
 

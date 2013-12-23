@@ -13,7 +13,7 @@ resource 'Datasets' do
 
   # prepare ids needed for paths in requests below
   let(:project_id)            {@write_permission.project.id}
-  let(:id)                    {@write_permission.project.sites[0].id}
+  let(:id)                    {@write_permission.project.datasets[0].id}
 
   # prepare authentication_token for different users
   let(:writer_token)          {"Token token=\"#{@write_permission.user.authentication_token}\"" }

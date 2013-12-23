@@ -40,4 +40,7 @@ class Tag < ActiveRecord::Base
     super new_type_of_tag.to_s
   end
 
+  # order by number of audio recordings associated with a tag
+  #Tag.joins(:taggings).select('tags.*, count(tag_id) as "tag_count"').group(:tag_id).order(' tag_count desc')
+
 end

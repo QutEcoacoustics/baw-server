@@ -62,7 +62,7 @@ class AudioRecording < ActiveRecord::Base
   scope :has_tags, lambda { |tags| includes(:tags).where('tags.text IN ?', tags) }
   scope :does_not_have_tag, lambda { |tag| includes(:tags).where('tags.text <> ?', tag) }
   scope :does_not_have_tags, lambda { |tags| includes(:tags).where('tags.text NOT IN ?', tags) }
-  #scope :tag_count, lambda { |num_tags| includes(:tags).where('? = ?', self.includes(:tags).tags.count, num_tags) }
+  scope :tag_count, lambda { |num_tags| includes(:tags).where('audio_events_tags.tag_id' => Tagging.select(:tag_id).group(:tag_id).having('count(tag_id) > ?', num_tags)) }
 
   def original_file_exists?
 

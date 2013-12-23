@@ -49,7 +49,7 @@ resource 'Taggings' do
     parameter :audio_recording_id, 'Accessed audio recording ID (in path/route)', required: true
     parameter :audio_event_id, 'Requested audio event ID (in path/route)', required: true
 
-    let(:authentication_token) { writer_token}
+    let(:authentication_token) { writer_token }
     standard_request('LIST (as writer)', 200, '0/tag_id', true)
   end
 
@@ -60,7 +60,7 @@ resource 'Taggings' do
     parameter :audio_recording_id, 'Requested audio recording ID (in path/route)', required: true
     parameter :audio_event_id, 'Requested audio event ID (in path/route)', required: true
 
-    let(:authentication_token) { reader_token}
+    let(:authentication_token) { reader_token }
     standard_request('LIST (as reader)', 200, nil, true)
   end
 
@@ -71,7 +71,7 @@ resource 'Taggings' do
     parameter :audio_recording_id, 'Requested audio recording ID (in path/route)', required: true
     parameter :audio_event_id, 'Requested audio event ID (in path/route)', required: true
 
-    let(:authentication_token) { unconfirmed_token}
+    let(:authentication_token) { unconfirmed_token }
     standard_request('LIST (as unconfirmed user)', 401, nil, true)
   end
 
@@ -80,7 +80,7 @@ resource 'Taggings' do
     parameter :audio_recording_id, 'Accessed audio recording ID (in path/route)', required: true
     parameter :audio_event_id, 'Requested audio event ID (in path/route)', required: true
 
-    let(:authentication_token) { writer_token}
+    let(:authentication_token) { writer_token }
     standard_request('LIST (as writer, with shallow path)', 200, '0/tag_id', true)
   end
 
@@ -89,7 +89,7 @@ resource 'Taggings' do
     parameter :audio_recording_id, 'Requested audio recording ID (in path/route)', required: true
     parameter :audio_event_id, 'Requested audio event ID (in path/route)', required: true
 
-    let(:authentication_token) { reader_token}
+    let(:authentication_token) { reader_token }
     standard_request('LIST (as reader, with shallow path)', 200, nil, true)
   end
 
@@ -98,76 +98,76 @@ resource 'Taggings' do
     parameter :audio_recording_id, 'Requested audio recording ID (in path/route)', required: true
     parameter :audio_event_id, 'Requested audio event ID (in path/route)', required: true
 
-    let(:authentication_token) { unconfirmed_token}
+    let(:authentication_token) { unconfirmed_token }
     standard_request('LIST (as unconfirmed user, with shallow path)', 401, nil, true)
   end
 
   ################################
   # SHOW
   ################################
-  get  '/projects/:project_id/sites/:site_id/audio_recordings/:audio_recording_id/audio_events/:audio_event_id/taggings/:id' do
+  get '/projects/:project_id/sites/:site_id/audio_recordings/:audio_recording_id/audio_events/:audio_event_id/taggings/:id' do
     parameter :project_id, 'Accessed project ID (in path/route)', required: true
     parameter :site_id, 'Accessed site ID (in path/route)', required: true
     parameter :audio_recording_id, 'Requested audio recording ID (in path/route)', required: true
     parameter :audio_event_id, 'Requested audio event id (in path/route)', required: true
     parameter :id, 'Requested tag ID (in path/route)', required: true
 
-    let(:authentication_token) { writer_token}
+    let(:authentication_token) { writer_token }
     standard_request('SHOW (as writer)', 200, 'tag_id', true)
   end
 
-  get  '/projects/:project_id/sites/:site_id/audio_recordings/:audio_recording_id/audio_events/:audio_event_id/taggings/:id' do
+  get '/projects/:project_id/sites/:site_id/audio_recordings/:audio_recording_id/audio_events/:audio_event_id/taggings/:id' do
     parameter :project_id, 'Accessed project ID (in path/route)', required: true
     parameter :site_id, 'Accessed site ID (in path/route)', required: true
     parameter :audio_recording_id, 'Requested audio recording ID (in path/route)', required: true
     parameter :audio_event_id, 'Requested audio event id (in path/route)', required: true
     parameter :id, 'Requested tag ID (in path/route)', required: true
 
-    let(:authentication_token) { reader_token}
+    let(:authentication_token) { reader_token }
     standard_request('SHOW (as reader)', 200, 'tag_id', true)
   end
 
-  get  '/projects/:project_id/sites/:site_id/audio_recordings/:audio_recording_id/audio_events/:audio_event_id/taggings/:id' do
+  get '/projects/:project_id/sites/:site_id/audio_recordings/:audio_recording_id/audio_events/:audio_event_id/taggings/:id' do
     parameter :project_id, 'Accessed project ID (in path/route)', required: true
     parameter :site_id, 'Accessed site ID (in path/route)', required: true
     parameter :audio_recording_id, 'Requested audio recording ID (in path/route)', required: true
     parameter :audio_event_id, 'Requested audio event id (in path/route)', required: true
     parameter :id, 'Requested tag ID (in path/route)', required: true
 
-    let(:authentication_token) { unconfirmed_token}
+    let(:authentication_token) { unconfirmed_token }
     standard_request('SHOW (as unconfirmed user)', 401, nil, true)
   end
 
-  get  '/audio_recordings/:audio_recording_id/audio_events/:audio_event_id/taggings/:id' do
+  get '/audio_recordings/:audio_recording_id/audio_events/:audio_event_id/taggings/:id' do
     parameter :project_id, 'Accessed project ID (in path/route)', required: true
     parameter :site_id, 'Accessed site ID (in path/route)', required: true
     parameter :audio_recording_id, 'Requested audio recording ID (in path/route)', required: true
     parameter :audio_event_id, 'Requested audio event id (in path/route)', required: true
     parameter :id, 'Requested tag ID (in path/route)', required: true
 
-    let(:authentication_token) { writer_token}
+    let(:authentication_token) { writer_token }
     standard_request('SHOW (as writer, with shallow path)', 200, 'tag_id', true)
   end
 
-  get  '/audio_recordings/:audio_recording_id/audio_events/:audio_event_id/taggings/:id' do
+  get '/audio_recordings/:audio_recording_id/audio_events/:audio_event_id/taggings/:id' do
     parameter :project_id, 'Accessed project ID (in path/route)', required: true
     parameter :site_id, 'Accessed site ID (in path/route)', required: true
     parameter :audio_recording_id, 'Requested audio recording ID (in path/route)', required: true
     parameter :audio_event_id, 'Requested audio event id (in path/route)', required: true
     parameter :id, 'Requested tag ID (in path/route)', required: true
 
-    let(:authentication_token) { reader_token}
+    let(:authentication_token) { reader_token }
     standard_request('SHOW (as reader, with shallow path)', 200, 'tag_id', true)
   end
 
-  get  '/audio_recordings/:audio_recording_id/audio_events/:audio_event_id/taggings/:id' do
+  get '/audio_recordings/:audio_recording_id/audio_events/:audio_event_id/taggings/:id' do
     parameter :project_id, 'Accessed project ID (in path/route)', required: true
     parameter :site_id, 'Accessed site ID (in path/route)', required: true
     parameter :audio_recording_id, 'Requested audio recording ID (in path/route)', required: true
     parameter :audio_event_id, 'Requested audio event id (in path/route)', required: true
     parameter :id, 'Requested tag ID (in path/route)', required: true
 
-    let(:authentication_token) { unconfirmed_token}
+    let(:authentication_token) { unconfirmed_token }
     standard_request('SHOW (as unconfirmed user, with shallow path)', 401, nil, true)
   end
 
@@ -184,7 +184,7 @@ resource 'Taggings' do
     let(:raw_post) { {'tagging' => post_attributes}.to_json }
 
 
-    let(:authentication_token) { writer_token}
+    let(:authentication_token) { writer_token }
     standard_request('CREATE (with tag_id as writer)', 201, 'tag_id', true)
   end
 
@@ -197,7 +197,7 @@ resource 'Taggings' do
 
     let(:raw_post) { {'tagging' => post_nested_attributes}.to_json }
 
-    let(:authentication_token) { writer_token}
+    let(:authentication_token) { writer_token }
     standard_request('CREATE (with tag_attributes as writer)', 201, 'tag_id', true)
   end
 
@@ -210,10 +210,10 @@ resource 'Taggings' do
 
     let(:raw_post) { {'tagging' => post_invalid_nested_attributes}.to_json }
 
-    let(:authentication_token) { writer_token}
+    let(:authentication_token) { writer_token }
 
     # 0 - index in array
-    standard_request('CREATE (invalid tag_attributes as writer)', 422, '0', true, "\"Tag type of tag is not included in the list\"")
+    standard_request('CREATE (invalid tag_attributes as writer)', 422, 'type_of_tag', true, "\"is not included in the list\"")
   end
 
 
@@ -224,9 +224,9 @@ resource 'Taggings' do
     parameter :audio_recording_id, 'Requested audio recording ID (in path/route)', required: true
     parameter :audio_event_id, 'Requested audio event ID (in path/route)', required: true
 
-    let(:raw_post) {{:tagging=>{:tag_attributes=>{:is_taxanomic=>false, :text=> @existing_tag.text, :type_of_tag=>'looks like', :retired=>false}}}.to_json}
+    let(:raw_post) { {:tagging => {:tag_attributes => {:is_taxanomic => false, :text => @existing_tag.text, :type_of_tag => 'looks like', :retired => false}}}.to_json }
 
-    let(:authentication_token) { writer_token}
+    let(:authentication_token) { writer_token }
 
     #example 'CREATE (existing tag name as writer) - 200', :document => true do
     #  # create orphaned tags
@@ -249,7 +249,7 @@ resource 'Taggings' do
     let(:raw_post) { {'tagging' => post_attributes}.to_json }
 
 
-    let(:authentication_token) { writer_token}
+    let(:authentication_token) { writer_token }
     standard_request('CREATE (with tag_id as writer, with shallow path)', 201, 'tag_id', true)
   end
 
@@ -261,7 +261,7 @@ resource 'Taggings' do
 
     let(:raw_post) { {'tagging' => post_nested_attributes}.to_json }
 
-    let(:authentication_token) { writer_token}
+    let(:authentication_token) { writer_token }
     standard_request('CREATE (with tag_attributes as writer, with shallow path)', 201, 'tag_id', true)
   end
 
@@ -273,9 +273,9 @@ resource 'Taggings' do
 
     let(:raw_post) { {'tagging' => post_invalid_nested_attributes}.to_json }
 
-    let(:authentication_token) { writer_token}
+    let(:authentication_token) { writer_token }
     # 0 - index in array
-    standard_request('CREATE (invalid tag_attributes as writer, with shallow path)', 422, '0', true, "\"Tag type of tag is not included in the list\"")
+    standard_request('CREATE (invalid tag_attributes as writer, with shallow path)', 422, 'type_of_tag', true, "\"is not included in the list\"")
   end
 
 
@@ -285,9 +285,9 @@ resource 'Taggings' do
     parameter :audio_recording_id, 'Requested audio recording ID (in path/route)', required: true
     parameter :audio_event_id, 'Requested audio event ID (in path/route)', required: true
 
-    let(:raw_post) {{:tagging=>{:tag_attributes=>{:is_taxanomic=>false, :text=> @existing_tag.text, :type_of_tag=>'looks like', :retired=>false}}}.to_json}
+    let(:raw_post) { {:tagging => {:tag_attributes => {:is_taxanomic => false, :text => @existing_tag.text, :type_of_tag => 'looks like', :retired => false}}}.to_json }
 
-    let(:authentication_token) { writer_token}
+    let(:authentication_token) { writer_token }
 
     #example 'CREATE (existing tag name as writer) - 200', :document => true do
     #  # create orphaned tags
