@@ -247,30 +247,18 @@ module Harvester
     def create_params(file_path, file_info, config_file_object)
       # info we need to send, construct based on mime type
 
-      media_type = AudioFfmpeg::get_mime_type(file_info[:info][:ffmpeg])
+      media_type = file_info[:media_type]
       recording_start = recording_start_datetime(file_path, config_file_object['utc_offset'])
 
       to_send = {
           :audio_recording => {
               :file_hash => 'SHA256::'+generate_hash(file_path).hexdigest,
-              :sample_rate_hertz => file_info[:info][:ffmpeg]['STREAM sample_rate'],
-              :media_type => media_type,
               :uploader_id => config_file_object['uploader_id'],
               :recorded_date => recording_start,
               :original_file_name =>  File.basename(file_path)
           }}
 
-      if media_type == 'audio/wavpack'
-        to_send[:audio_recording][:bit_rate_bps] = file_info[:info][:wavpack]['ave bitrate']
-        to_send[:audio_recording][:data_length_bytes] = file_info[:info][:wavpack]['file size']
-        to_send[:audio_recording][:channels] =  file_info[:info][:wavpack]['channels']
-        to_send[:audio_recording][:duration_seconds] =  file_info[:info][:wavpack]['duration']
-      else
-        to_send[:audio_recording][:bit_rate_bps] = file_info[:info][:ffmpeg]['FORMAT bit_rate']
-        to_send[:audio_recording][:data_length_bytes] =file_info[:info][:ffmpeg]['FORMAT size']
-        to_send[:audio_recording][:channels] = file_info[:info][:ffmpeg]['STREAM channels']
-        to_send[:audio_recording][:duration_seconds] = AudioFfmpeg::parse_duration(file_info[:info][:ffmpeg]['FORMAT duration'])
-      end
+      to_send[:audio_recording].merge!(file_info)
 
       to_send
     end
@@ -422,7 +410,7 @@ module Harvester
             }
 
             log Logger::DEBUG, "Parameters for moving file: '#{file_name_params}'."
-            cache = Cache::Cache.new(@original_audio_paths, @cached_audio_paths, nil, nil, nil)
+            cache = CacheTools::Cache.new(@original_audio_paths, @cached_audio_paths, nil, nil, nil)
             file_name = cache.original_audio_file(file_name_params)
             source_possible_paths = cache.possible_original_audio_paths(file_name)
             result_of_move = copy_file(file_to_process, source_possible_paths)
