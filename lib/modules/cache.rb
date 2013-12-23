@@ -1,6 +1,5 @@
 # Determines file names for cached and original files.
-module Cache
-
+module CacheTools
   class Cache
 
     attr_reader :original_audio_paths , :cached_audio_paths, :cached_audio_defaults, :cached_spectrogram_defaults, :cached_spectrogram_paths

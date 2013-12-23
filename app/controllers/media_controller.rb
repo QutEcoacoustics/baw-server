@@ -1,7 +1,6 @@
 require './lib/modules/media_cacher'
 
 class MediaController < ApplicationController
-  include MediaCacher, Mime
 
   #load_resource :project, only: [:audio, :spectrogram]
   #load_resource :site, only: [:audio, :spectrogram]
@@ -46,7 +45,7 @@ class MediaController < ApplicationController
           # date and time are for finding the original audio file
           options[:date] = @audio_recording.recorded_date.strftime "%y%m%d"
           options[:time] = @audio_recording.recorded_date.strftime "%H%M"
-          download_options[:file_path] = MediaCacher::create_audio_segment(options)
+          download_options[:file_path] = CacheTools::MediaCacher.create_audio_segment(options)
           download_file(download_options)
         elsif  IMAGE_MEDIA_TYPES.include?(mime_type)
           options[:channel] = (params[:channel] || Settings.cached_spectrogram_defaults[options[:format]].channel).to_i
@@ -55,7 +54,7 @@ class MediaController < ApplicationController
           options[:colour] = (params[:colour] || Settings.cached_spectrogram_defaults[options[:format]].colour).to_s
           options[:date] = @audio_recording.recorded_date.strftime "%y%m%d"
           options[:time] = @audio_recording.recorded_date.strftime "%H%M"
-          full_path = MediaCacher::generate_spectrogram(options)
+          full_path = CacheTools::MediaCacher.generate_spectrogram(options)
           #download_file(full_path, mime_type)
           send_file full_path, :stream => true, :buffer_size => 4096, :disposition => 'inline', :type => mime_type, :content_type => mime_type
         else

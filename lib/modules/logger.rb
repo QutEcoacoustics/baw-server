@@ -6,7 +6,7 @@ module Logging
 
   # Global, memoized, lazy initialized instance of a logger
   def self.logger
-
+    # requires 'environment' to be loaded so Settings are available
     @logger ||= Logger.new(Settings.paths.modules_log_file, 5, 300.megabytes)
   end
 
