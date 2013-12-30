@@ -55,6 +55,15 @@ describe 'CRUD Projects as valid user with write permission' do
       page.should have_content('test name')
     end
 
+  it 'shows errors when updating form incorrectly' do
+    visit edit_project_path(@permission.project)
+    #save_and_open_page
+    fill_in 'project[name]', with: ''
+    click_button 'Update Project'
+    page.should have_content('Please review the problems below:')
+    page.should have_content('can\'t be blank')
+  end
+
 end
 
 describe 'CRUD Projects as valid user and project owner' do
@@ -193,7 +202,7 @@ describe 'Delete Projects as admin user' do
     it 'deletes a project' do
       permission = FactoryGirl.create(:write_permission)
       visit project_path(permission.project)
-      page.should have_link('Delete')
+      page.should have_link('Delete Project')
       expect { first(:link, 'Delete').click }.to change(Project, :count).by(-1)
     end
 end
@@ -212,13 +221,13 @@ describe 'CRUD Projects as unconfirmed user' do
     page.should have_content('You are not authorized to access this page.')
   end
 
-  it 'rejects access to shows project details' do
+  it 'rejects access to show project details' do
     visit project_path(@permission.project)
     current_path.should eq(root_path)
     page.should have_content('You are not authorized to access this page.')
   end
 
-  it 'creates new project when filling out form correctly' do
+  it 'rejects access to create a new project' do
     visit new_project_path
     current_path.should eq(root_path)
     page.should have_content('You are not authorized to access this page.')

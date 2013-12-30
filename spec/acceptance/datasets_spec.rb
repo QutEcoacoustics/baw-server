@@ -70,6 +70,7 @@ resource 'Datasets' do
     parameter :start_date, 'Earliest date (inclusive - interval start)', scope: :dataset
     parameter :end_date, 'Latest date (inclusive - interval end)', scope: :dataset
     parameter :filters, 'Filters', scope: :dataset
+    parameter :tag_text_filters, 'Array of partial tag text to filter results', scope: :dataset
     parameter :number_of_samples, 'Number of random 1 minute samples', scope: :dataset
     parameter :number_of_tags, 'Minimum number of tags required', scope: :dataset
     parameter :types_of_tags, 'Types of tags', scope: :dataset
@@ -91,6 +92,7 @@ resource 'Datasets' do
     parameter :start_date, 'Earliest date (inclusive - interval start)', scope: :dataset
     parameter :end_date, 'Latest date (inclusive - interval end)', scope: :dataset
     parameter :filters, 'Filters', scope: :dataset
+    parameter :tag_text_filters, 'Array of partial tag text to filter results', scope: :dataset
     parameter :number_of_samples, 'Number of random 1 minute samples', scope: :dataset
     parameter :number_of_tags, 'Minimum number of tags required', scope: :dataset
     parameter :types_of_tags, 'Types of tags', scope: :dataset
@@ -113,6 +115,7 @@ resource 'Datasets' do
     parameter :start_date, 'Earliest date (inclusive - interval start)', scope: :dataset
     parameter :end_date, 'Latest date (inclusive - interval end)', scope: :dataset
     parameter :filters, 'Filters', scope: :dataset
+    parameter :tag_text_filters, 'Array of partial tag text to filter results', scope: :dataset
     parameter :number_of_samples, 'Number of random 1 minute samples', scope: :dataset
     parameter :number_of_tags, 'Minimum number of tags required', scope: :dataset
     parameter :types_of_tags, 'Types of tags', scope: :dataset
@@ -176,6 +179,7 @@ resource 'Datasets' do
     parameter :start_date, 'Earliest date (inclusive - interval start)', scope: :dataset
     parameter :end_date, 'Latest date (inclusive - interval end)', scope: :dataset
     parameter :filters, 'Filters', scope: :dataset
+    parameter :tag_text_filters, 'Array of partial tag text to filter results', scope: :dataset
     parameter :number_of_samples, 'Number of random 1 minute samples', scope: :dataset
     parameter :number_of_tags, 'Minimum number of tags required', scope: :dataset
     parameter :types_of_tags, 'Types of tags', scope: :dataset
@@ -205,6 +209,7 @@ resource 'Datasets' do
     parameter :start_date, 'Earliest date (inclusive - interval start)', scope: :dataset
     parameter :end_date, 'Latest date (inclusive - interval end)', scope: :dataset
     parameter :filters, 'Filters', scope: :dataset
+    parameter :tag_text_filters, 'Array of partial tag text to filter results', scope: :dataset
     parameter :number_of_samples, 'Number of random 1 minute samples', scope: :dataset
     parameter :number_of_tags, 'Minimum number of tags required', scope: :dataset
     parameter :types_of_tags, 'Types of tags', scope: :dataset
@@ -229,6 +234,7 @@ resource 'Datasets' do
     parameter :start_date, 'Earliest date (inclusive - interval start)', scope: :dataset
     parameter :end_date, 'Latest date (inclusive - interval end)', scope: :dataset
     parameter :filters, 'Filters', scope: :dataset
+    parameter :tag_text_filters, 'Array of partial tag text to filter results', scope: :dataset
     parameter :number_of_samples, 'Number of random 1 minute samples', scope: :dataset
     parameter :number_of_tags, 'Minimum number of tags required', scope: :dataset
     parameter :types_of_tags, 'Types of tags', scope: :dataset

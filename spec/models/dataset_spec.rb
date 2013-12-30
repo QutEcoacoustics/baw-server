@@ -32,6 +32,54 @@ describe Dataset do
     ss3.should be_valid
   end
 
+  it 'should not be an error to give a start date before the end date' do
+    d = create(:dataset, {creator_id: 1, start_date: '2013-12-01', end_date: '2013-12-10'})
+    expect(d).to be_valid
+  end
+
+  it 'should not be an error to give equal start and end dates' do
+    d = create(:dataset, {creator_id: 1, start_date: '2013-12-01', end_date: '2013-12-01'})
+    expect(d).to be_valid
+  end
+
+  it 'should be an error to give a start date after the end date' do
+    expect {
+      create(:dataset, {creator_id: 1, start_date: '2013-12-01', end_date: '2013-11-15'})
+    }.to raise_error(ActiveRecord::RecordInvalid, "Validation failed: Start date must be before end date")
+  end
+
+  it 'should not be an error to give a start time before the end time' do
+    d = create(:dataset, {creator_id: 1, start_time: '11:30', end_time: '13:45'})
+    expect(d).to be_valid
+  end
+
+  it 'should be an error to give equal start and end times' do
+    expect {
+      create(:dataset, {creator_id: 1, start_time: '11:30', end_time: '11:30'})
+    }.to raise_error(ActiveRecord::RecordInvalid, "Validation failed: Start time must not be equal to end time")
+  end
+
+  it 'should not be an error to give a start time after the end time' do
+    # times can wrap around, so a time range overnight can be specified
+    d = create(:dataset, {creator_id: 1, start_time: '11:45', end_time: '10:20'})
+    expect(d).to be_valid
+  end
+
+  it 'should not be an error when tag_text_filters is an empty array' do
+    d = create(:dataset, {creator_id: 1, tag_text_filters: []})
+    expect(d).to be_valid
+  end
+
+  it 'should not be an error when tag_text_filters is an array' do
+    d = create(:dataset, {creator_id: 1, tag_text_filters: %w(one two)})
+    expect(d).to be_valid
+  end
+
+  it 'should be an error when tag_text_filters is not an array' do
+    expect {
+      create(:dataset, {creator_id: 1, tag_text_filters: {}})
+    }.to raise_error(ActiveRecord::RecordInvalid, "Validation failed: Tag text filters must be an array")
+  end
 
   #context "States (different types of search)" do
   #  cases = [

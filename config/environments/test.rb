@@ -37,7 +37,7 @@ AWB::Application.configure do
   config.active_support.deprecation = :stderr
 
   # Paperclip default location in tmp, so it can be cleared after test suite is run
-  Paperclip::Attachment.default_options[:path] = ':rails_root/tmp/paperclip/:class/:id_partition/:style.:extension'
+  Paperclip::Attachment.default_options[:path] = ':rails_root/tmp/paperclip:url'
 
   # Set path for image magick for windows only
   if RbConfig::CONFIG['target_os'] =~ /mswin|mingw/i
@@ -46,5 +46,5 @@ AWB::Application.configure do
     Paperclip.options[:command_path] = im_dir
   end
 
-  config.log_level = :info
+  config.log_level = :debug
 end

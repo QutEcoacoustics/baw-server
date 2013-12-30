@@ -2,12 +2,8 @@ class Script < ActiveRecord::Base
   attr_accessible :analysis_identifier, :data_file, :description, :name, :notes, :settings_file, :verified, :version, :creator_id
 
 
-  has_attached_file :settings_file,
-                    path: ':rails_root/public/system/:class/:attachment/:id_partition/:style/:filename',
-                    url: '/system/:class/:attachment/:id_partition/:style/:filename'
-  has_attached_file :data_file,
-                    path: ':rails_root/public/system/:class/:attachment/:id_partition/:style/:filename',
-                    url: '/system/:class/:attachment/:id_partition/:style/:filename'
+  has_attached_file :settings_file
+  has_attached_file :data_file
 
   # relationships
   belongs_to :owner, class_name: 'User', foreign_key: :creator_id

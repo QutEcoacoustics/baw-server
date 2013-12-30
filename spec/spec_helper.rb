@@ -48,14 +48,14 @@ RSpec.configure do |config|
   #config.include Rails.application.routes.url_helpers
 
   # clear paperclip attachments from tmp directory
-  RSpec.configure do |config|
-    config.after {
+  RSpec.configure do |config_rspec|
+    config_rspec.after {
       FileUtils.rm_rf(Dir["#{Rails.root}/tmp/paperclip/[^.]*"])
     }
   end
 
-  RspecApiDocumentation.configure do |config|
-    config.format = :json
+  RspecApiDocumentation.configure do |config_rspec_api|
+    config_rspec_api.format = :json
   end
 
   config.before(:suite) do

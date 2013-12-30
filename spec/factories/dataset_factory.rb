@@ -14,6 +14,7 @@ FactoryGirl.define do
       start_date '2013-11-06'
       end_date '2013-11-09'
       filters nil
+      tag_text_filters [Faker::Lorem.words(5), Faker::Lorem.words(2)].sample
       number_of_samples nil
       number_of_tags [nil, 0, 1].sample
 

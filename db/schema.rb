@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20131124234346) do
+ActiveRecord::Schema.define(:version => 20131230021055) do
 
   create_table "audio_events", :force => true do |t|
     t.integer  "audio_recording_id",                                                     :null => false
@@ -93,6 +93,7 @@ ActiveRecord::Schema.define(:version => 20131124234346) do
     t.string   "dataset_result_content_type"
     t.integer  "dataset_result_file_size"
     t.datetime "dataset_result_updated_at"
+    t.text     "tag_text_filters"
   end
 
   create_table "datasets_sites", :id => false, :force => true do |t|

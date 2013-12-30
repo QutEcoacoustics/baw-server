@@ -30,6 +30,6 @@
     - if can? :edit, @project
       %li= link_to 'Edit Dataset',edit_project_dataset_path(@project, @dataset),  title: "Edit dataset's parameters", data: {toggle: 'tooltip',  placement: 'right'}
     - if can? :destroy, @project
-      %li= link_to 'Delete Dataset', [@project, @dataset], :method => :delete, data: { confirm: 'Are you sure?', toggle: 'tooltip',  placement: 'right' }, title: 'Delete dataset'
+      %li= link_to 'Delete Dataset', [@project, @dataset], :method => :delete, data: { confirm: 'Are you sure?', toggle: 'tooltip',  placement: 'right' }, title: 'Delete dataset permanently'
     - if can? :edit, @project
       %li= link_to 'Add New Dataset', new_project_dataset_path(@project),  title: "Add a new dataset to this project", data: {toggle: 'tooltip',  placement: 'right'}

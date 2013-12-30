@@ -3,7 +3,7 @@ class Dataset < ActiveRecord::Base
   extend ActiveModel::Naming
 
   attr_accessible :description, :end_date, :end_time, :filters, :name, :number_of_samples, :number_of_tags,
-                  :start_date, :start_time, :types_of_tags, :site_ids,
+                  :start_date, :start_time, :types_of_tags, :site_ids, :tag_text_filters,
                   :has_time, :has_date
 
   # custom fields to set dates and times to nil if not selected in form
@@ -19,9 +19,7 @@ class Dataset < ActiveRecord::Base
 
   before_save :generate_dataset_result
 
-  has_attached_file :dataset_result,
-                    path: ':rails_root/public/system/:class/:attachment/:id_partition/:style/:filename',
-                    url: '/system/:class/:attachment/:id_partition/:style/:filename'
+  has_attached_file :dataset_result
 
   AVAILABLE_NUMBER_OF_TAGS = {'None' => 0, 'At least one' => 1}
 
@@ -35,6 +33,9 @@ class Dataset < ActiveRecord::Base
   serialize :types_of_tags, Array
   enumerize :types_of_tags, in: Tag::AVAILABLE_TYPE_OF_TAGS, predicates: true, multiple: true
 
+  # search by tag text (array of partial tag text)
+  serialize :tag_text_filters, Array
+
   # userstamp
   stampable
 
@@ -46,6 +47,8 @@ class Dataset < ActiveRecord::Base
   validates_presence_of :end_date, if: :start_date?
   validates :number_of_tags, inclusion: {in: [0, 1]}, allow_nil: true, allow_blank: true
 
+  validate :tag_text_filters_validation
+
   validates :start_date, allow_nil: true, allow_blank: true, timeliness: {type: :datetime}
   validates :end_date, allow_nil: true, allow_blank: true, timeliness: {type: :datetime}
 
@@ -54,7 +57,7 @@ class Dataset < ActiveRecord::Base
   validates :start_time, allow_nil: true, allow_blank: true, timeliness: {type: :time}
   validates :start_time, allow_nil: true, allow_blank: true, timeliness: {type: :time}
 
-  validate :time_start_before_end
+  validate :time_start_equal_end
 
   def has_time
     !self.start_time.blank?
@@ -72,21 +75,24 @@ class Dataset < ActiveRecord::Base
     AVAILABLE_NUMBER_OF_TAGS.select{ |key, value| self.number_of_tags == value }.keys.first
   end
 
-  def execute_query
-    AudioRecording.scoped
-  end
-
   private
 
   def date_start_before_end
-    if !self.start_date.blank? && !self.end_date.blank? && self.start_date >= self.end_date
+    if !self.start_date.blank? && !self.end_date.blank? && self.start_date > self.end_date
       self.errors.add(:start_date, "must be before end date")
     end
   end
 
-  def time_start_before_end
-    if !self.start_time.blank? && !self.end_time.blank? && self.start_time >= self.end_time
-      self.errors.add(:start_time, "must be before end time")
+  def time_start_equal_end
+    if !self.start_time.blank? && !self.end_time.blank? && self.start_time == self.end_time
+      self.errors.add(:start_time, "must not be equal to end time")
+    end
+  end
+
+  def tag_text_filters_validation
+    # must be an array if given, but can be empty or not given
+    unless self.tag_text_filters.is_a?(Array)
+      self.errors.add(:tag_text_filters, "must be an array")
     end
   end
 
@@ -106,6 +112,11 @@ class Dataset < ActiveRecord::Base
   # take in the ActiveRecord AudioRecording (with all attributes) and the dataset model that specifies the metadata.
   # use the saved_search attributes to create the { :audiorecording_id, :start_offset, :end_offset } list
   def execute(audio_recording, dataset_metadata)
+
+    # - dataset (collection of audio recordings)
+    # -- audio recording (a single audio file)
+    # --- segment (start and end offset within an audio recording)
+    # ---- sub-segment (start and end offset within a segment)
 
     date_format_string = '%Y-%m-%d'
     time_format_string = '%H:%M:%S'
@@ -129,7 +140,9 @@ class Dataset < ActiveRecord::Base
       recordings = recordings.start_before date_string
     end
 
-    # times - creates segments
+    # times - start and end - creates segments
+    # filters - e.g. wind, rain, other indicies - removes audio from result set
+    # number of samples - select a random number of sub-segments
 
     # number of tags
     unless dataset_metadata.number_of_tags.blank?
@@ -137,9 +150,17 @@ class Dataset < ActiveRecord::Base
     end
 
     # types of tags
-    #unless dataset_metadata.
+    unless dataset_metadata.types_of_tags.blank?
+      recordings = recordings.tag_types dataset_metadata.types_of_tags.to_a
+    end
 
-    #recordings.explain
-    recordings
+    unless dataset_metadata.tag_text_filters.blank?
+      dataset_metadata.tag_text_filters.each do |tag_text|
+        recordings = recordings.tag_text tag_text
+      end
+    end
+
+    #puts recordings.explain
+    recordings.select([:id, :uuid, :duration_seconds,:recorded_date])
   end
 end

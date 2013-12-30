@@ -11,9 +11,7 @@ class Site < ActiveRecord::Base
 
   has_attached_file :image,
                     styles: { span4: '300x300#', span3: '220x220#', span2: '140x140#', span1: '60x60#', spanhalf: '30x30#'},
-                    default_url: '/images/site/site_:style.png',
-                    path: ':rails_root/public/system/:class/:attachment/:id_partition/:style/:filename',
-                    url: '/system/:class/:attachment/:id_partition/:style/:filename'
+                    default_url: '/images/site/site_:style.png'
 
 
   # acts_as_paranoid

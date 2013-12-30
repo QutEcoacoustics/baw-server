@@ -58,9 +58,7 @@
     - if can? :update_permissions, @project
       %li= link_to 'Edit Permissions', project_permissions_path(@project),  title: "Edit project's access permissions", data: {toggle: 'tooltip',  placement: 'right'}
     - if can? :destroy, @project
-      %li
-        = link_to @project, :method => :delete, data: { confirm: 'Are you sure?', toggle: 'tooltip',  placement: 'right' }, title: 'Delete project' do
-          Delete Project
+      %li= link_to 'Delete Project', @project, :method => :delete, data: { confirm: 'Are you sure?', toggle: 'tooltip',  placement: 'right' }, title: 'Delete project'
     - if can? :edit, @project
       %li= link_to 'Add New Site', new_project_site_path(@project),  title: "Add a new site to this project", data: {toggle: 'tooltip',  placement: 'right'}
     - if can? :edit, @project
