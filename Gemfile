@@ -98,3 +98,5 @@ require 'rbconfig'
 gem 'wdm', '>= 0.1.0', platforms: [:mswin, :mingw]
 
 gem 'rack-cors', require: 'rack/cors'
+
+gem 'ruby-progressbar', group: [:production, :staging, :development]
