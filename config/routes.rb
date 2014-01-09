@@ -58,6 +58,7 @@ AWB::Application.routes.draw do
     end
   end
 
+  # routes for audio recordings and bookmarks within particular recordings
   resources :audio_recordings, :only => [], :defaults => { :format => 'json' }, shallow: true do
     member do
       put 'update_status'   # for when harvester has moved a file to the correct location
@@ -67,6 +68,7 @@ AWB::Application.routes.draw do
   resources :tags, :defaults => { :format => 'json' }
   resources :audio_events, only: [:new], :defaults => { :format => 'json' }
 
+  # route for scripts
   resources :scripts, except: [:update, :destroy] do
     member do
       get 'versions' => 'scripts#versions', as: :versions
@@ -74,6 +76,9 @@ AWB::Application.routes.draw do
       post :update
     end
   end
+
+  # shallow path to sites
+  get '/sites/:id' => 'sites#show_shallow', defaults: {format: 'json'}
 
   # devise for RESTful API Authentication, see Api/sessions_controller.rb
   devise_for :users, :controllers => { :sessions => 'sessions' },
@@ -146,6 +151,7 @@ AWB::Application.routes.draw do
 
   mount Raddocs::App => '/doc'
 
+  # for error pages
   match '*a', :to => 'errors#routing'
 
 end

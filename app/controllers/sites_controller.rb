@@ -1,11 +1,11 @@
 class SitesController < ApplicationController
   add_breadcrumb 'Home', :root_path
 
-  load_and_authorize_resource :project
+  load_and_authorize_resource :project, except: [:show_shallow]
   before_filter :build_project_site, only: [:new, :create] # this is necessary so that the ability has access to site.projects
-  load_and_authorize_resource :site, through: :project
+  load_and_authorize_resource :site, through: :project, except: [:show_shallow]
 
-  before_filter :add_project_breadcrumb
+  before_filter :add_project_breadcrumb, except: [:show_shallow]
 
   # GET /project/1/sites
   # GET /project/1/sites.json
@@ -15,6 +15,15 @@ class SitesController < ApplicationController
     respond_to do |format|
       #format.html # index.html.erb
       format.json { render json: @sites }
+    end
+  end
+
+  def show_shallow
+    @site = Site.find(params[:id])
+    authorize! :show, @site
+
+    respond_to do |format|
+      format.json { render json: @site }
     end
   end
 

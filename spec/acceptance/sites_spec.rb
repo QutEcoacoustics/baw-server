@@ -153,6 +153,31 @@ resource 'Sites' do
     standard_request('SHOW (with invalid token)' ,401, nil, true)
   end
 
+  # shallow routes
+  get '/sites/:id' do
+    parameter :id, 'Requested site ID (in path/route)', required: true
+
+    let(:authentication_token) { writer_token }
+
+    standard_request('SHOW (as writer)' ,200,'longitude', true)
+  end
+
+  get '/sites/:id' do
+    parameter :id, 'Requested site ID (in path/route)', required: true
+
+    let(:authentication_token) { reader_token }
+
+    standard_request('SHOW (as reader)' ,200,'longitude', true)
+  end
+
+  get '/sites/:id' do
+    parameter :id, 'Requested site ID (in path/route)', required: true
+
+    let(:authentication_token) { "Token token=\"INVALID TOKEN\"" }
+
+    standard_request('SHOW (with invalid token)' ,401, nil, true)
+  end
+
   ################################
   # UPDATE
   ################################
