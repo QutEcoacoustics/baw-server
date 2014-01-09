@@ -21,15 +21,15 @@ You may need to install some additional tools for working with audio and images.
  - [ImageMagick](http://www.imagemagick.org/) is used by [paperclip](https://github.com/thoughtbot/paperclip).
     - Set the path to the directory containing `convert.exe` in the settings file(s) at `Settings.paths.image_magick_dir` and in `/lib/modules/spectrogram.rb`.
  - [WavPack](http://www.wavpack.com/) is used to expand compressed `.wv` files.
-    - Set the path to `wvunpack.exe` in `/lib/modules/audio_wavpack.rb`.
+    - Set the path to `wvunpack.exe` in `/lib/modules/audio.rb`.
  - [SoX](http://sox.sourceforge.net/) is used to create spectrograms and resample audio.
-    - Set the path to `sox.exe` in `/lib/modules/audio_sox.rb` and `/lib/modules/spectrogram.rb`.
+    - Set the path to `sox.exe` in `/lib/modules/audio.rb` and `/lib/modules/spectrogram.rb`.
  - [shnTool](http://www.etree.org/shnutils/shntool/) is a tool for quickly segmenting large `.wav` files.
     - It is not currently used, but may be in the future.
  - [mp3splt](http://mp3splt.sourceforge.net/mp3splt_page/home.php) is a tool for quickly segmenting large `.mp3` files.
-    - Set the path to `mp3splt.exe` in `/lib/modules/audio_mp3splt.rb`.
+    - Set the path to `mp3splt.exe` in `/lib/modules/audio.rb`.
  - [ffmpeg](http://www.ffmpeg.org/) is used for audio conversion and gathering audio file information.
-    - Set the path to `ffmpeg.exe` and `ffprobe.exe` in `/lib/modules/audio_ffmpeg.rb`.
+    - Set the path to `ffmpeg.exe` and `ffprobe.exe` in `/lib/modules/audio.rb`.
 
 ## Testing
 

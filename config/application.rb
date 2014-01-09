@@ -74,8 +74,10 @@ module AWB
     Paperclip::Attachment.default_options[:path] = ':rails_root/public:url'
     Paperclip::Attachment.default_options[:url] = '/system/:class/:attachment/:id_partition/:style/:filename'
 
+    # for generating documentation from tests
     Raddocs.configuration.docs_dir = "doc/api"
 
+    # allow any origin, with any header, to access the array of methods
     config.middleware.use Rack::Cors do
       allow do
         origins '*'
