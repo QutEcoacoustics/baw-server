@@ -173,9 +173,9 @@ module MediaTools
       ffmpeg_command = "#{@ffmpeg_executable} -i \"#{source}\" #{arguments} \"#{target}\""
       ffmpeg_stdout_str, ffmpeg_stderr_str, ffmpeg_status = Open3.capture3(ffmpeg_command)
 
-      Logging::logger.debug "Ffmpeg command #{ffmpeg_command}"
+      Logging::logger.debug "Ffmpeg info return status #{ffmpeg_status.exitstatus}. Command: #{ffmpeg_command}"
 
-      if ffmpeg_status.exitstatus != 0 || !File.exists?(target)
+      if ffmpeg_status.exitstatus != 0 || !File.exists?(target) || !ffmpeg_stderr_str.blank?
         Logging::logger.error "Ffmpeg exited with an error: #{ffmpeg_stderr_str}"
       end
 
