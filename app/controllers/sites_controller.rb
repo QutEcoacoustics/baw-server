@@ -18,10 +18,13 @@ class SitesController < ApplicationController
     end
   end
 
+  # GET /sites/1.json
   def show_shallow
+    # do authorisation manually
     @site = Site.find(params[:id])
     authorize! :show, @site
 
+    # only responds to json requests
     respond_to do |format|
       format.json { render json: @site }
     end
