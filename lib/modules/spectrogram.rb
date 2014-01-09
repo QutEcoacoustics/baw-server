@@ -77,15 +77,18 @@ module Spectrogram
     #raise ArgumentError, "Target path for spectrogram modification already exists: #{target}." unless !File.exist?(target)
 
     # calculate the expected width
-    width = ppms * (duration_sec * 1000)
+    ##width = ppms * (duration_sec * 1000)
 
     # http://www.imagemagick.org/Usage/resize/#noaspect
     # don't have to use for linux \! apparently
     #resize_ignore_aspect_ratio = if OS.windows? then '!' else '\!' end
-    resize_ignore_aspect_ratio = '!'
+    ##resize_ignore_aspect_ratio = '!'
 
     # chop: http://www.imagemagick.org/Usage/crop/#chop
-    command = "#{@image_magick_path} \"#{source}\" -gravity South -chop 0x1 -resize #{width}x256#{resize_ignore_aspect_ratio} #{target}"
+    # resize: http://www.imagemagick.org/Usage/resize/
+    # disable resizing. The client can take care of manipulating the image to suit the client's needs
+    ##command = "#{@image_magick_path} \"#{source}\" -gravity South -chop 0x1 -resize #{width}x256#{resize_ignore_aspect_ratio} #{target}"
+    command = "#{@image_magick_path} \"#{source}\" -gravity South -chop 0x1 #{target}"
 
     # run the command and wait for the result
     stdout_str, stderr_str, status = Open3.capture3(command)
