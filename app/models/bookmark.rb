@@ -3,7 +3,7 @@ class Bookmark < ActiveRecord::Base
 
   # relations
   belongs_to :audio_recording, inverse_of: :bookmarks
-  belongs_to :user, class_name: 'User', foreign_key: :creator_id
+  belongs_to :user, class_name: 'User', foreign_key: :creator_id, inverse_of: :bookmarks
 
   # userstamp
   stampable

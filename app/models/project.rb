@@ -10,7 +10,7 @@ class Project < ActiveRecord::Base
   has_many :readers, through: :permissions, source: :user, conditions: "permissions.level = 'reader'", uniq: true
   has_many :writers, through: :permissions, source: :user, conditions: "permissions.level = 'writer'", uniq: true
   has_and_belongs_to_many :sites, uniq: true
-  has_many :datasets, inverse_of: :project
+  has_many :datasets
   has_many :jobs, through: :datasets
 
   #plugins

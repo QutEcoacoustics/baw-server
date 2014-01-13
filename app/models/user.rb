@@ -23,12 +23,13 @@ class User < ActiveRecord::Base
                     default_url: '/images/user/user_:style.png'
 
   # relations
-  has_many :owned_projects, :class_name => 'Project', :foreign_key => 'creator_id'
+  has_many :owned_projects, class_name: 'Project', foreign_key: :creator_id
   has_many :permissions, inverse_of: :user
   has_many :accessible_projects, through: :permissions, source: :project
   has_many :readable_projects, through: :permissions, source: :project, conditions: 'permissions.level = reader'
   has_many :writable_projects, through: :permissions, source: :project, conditions: 'permissions.level = writer'
-  has_many :bookmarks, foreign_key: 'creator_id'
+  has_many :bookmarks, foreign_key: :creator_id
+  has_many :datasets, foreign_key: :creator_id, include: :project
 
   # scopes
   scope :users, -> { where(roles_mask: 2) }

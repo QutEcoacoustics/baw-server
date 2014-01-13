@@ -3,17 +3,17 @@ class Dataset < ActiveRecord::Base
   extend ActiveModel::Naming
 
   attr_accessible :description, :end_date, :end_time, :filters, :name, :number_of_samples, :number_of_tags,
-                  :start_date, :start_time, :types_of_tags, :site_ids, :tag_text_filters,
+                  :start_date, :start_time, :types_of_tags, :site_ids, :tag_text_filters, :tag_text_filters_list,
                   :has_time, :has_date
 
   # custom fields to set dates and times to nil if not selected in form
-  attr_accessor :has_time, :has_date, :selected_types_of_tags
+  attr_accessor :has_time, :has_date, :selected_types_of_tags, :json_dataset_result_info
 
   belongs_to :user, class_name: 'User', foreign_key: :creator_id
   belongs_to :creator, class_name: 'User', foreign_key: :creator_id
   belongs_to :owner, class_name: 'User', foreign_key: :creator_id
   belongs_to :updater, class_name: 'User', foreign_key: :updater_id
-  belongs_to :project, inverse_of: :datasets
+  belongs_to :project
   has_and_belongs_to_many :sites, uniq: true
   has_many :jobs, inverse_of: :dataset
 
@@ -59,6 +59,8 @@ class Dataset < ActiveRecord::Base
 
   validate :time_start_equal_end
 
+  validate :tag_count_and_tag_text_filters
+
   def has_time
     !self.start_time.blank?
   end
@@ -67,12 +69,45 @@ class Dataset < ActiveRecord::Base
     !self.start_date.blank?
   end
 
+  def has_time=(new_value)
+    if new_value == '0'
+      self.start_time = nil
+      self.end_time = nil
+    end
+  end
+
+  def has_date=(new_value)
+    if new_value == '0'
+      self.start_date = nil
+      self.end_date = nil
+    end
+  end
+
   def selected_types_of_tags
     Tag::AVAILABLE_TYPE_OF_TAGS_DISPLAY.select { |item| self.types_of_tags.to_a.include? item[:id].to_s }.collect { |item| item[:name] }.join(', ')
   end
 
   def selected_number_of_tags
-    AVAILABLE_NUMBER_OF_TAGS.select{ |key, value| self.number_of_tags == value }.keys.first
+    AVAILABLE_NUMBER_OF_TAGS.select { |key, value| self.number_of_tags == value }.keys.first
+  end
+
+  def tag_text_filters_list
+    self.tag_text_filters.join(', ')
+  end
+
+  def tag_text_filters_list=(new_value)
+    tag_names = new_value.split(/,\s+/)
+    self.tag_text_filters = tag_names
+  end
+
+  def dataset_result_info
+    if json_dataset_result_info.blank?
+      if self.dataset_result.file? && File.exists?(self.dataset_result.path)
+        json_dataset_result_info = JSON.parse File.read(self.dataset_result.path)
+      end
+    end
+
+    json_dataset_result_info
   end
 
   private
@@ -92,15 +127,49 @@ class Dataset < ActiveRecord::Base
   def tag_text_filters_validation
     # must be an array if given, but can be empty or not given
     unless self.tag_text_filters.is_a?(Array)
-      self.errors.add(:tag_text_filters, "must be an array")
+      self.errors.add(:tag_text_filters, 'must be an array')
+    end
+  end
+
+  def tag_count_and_tag_text_filters
+    if self.number_of_tags == 0 && self.tag_text_filters.size > 0
+      self.errors.add(:number_of_tags, 'must be \'No restriction\' or \'At least one\' if tags are given')
     end
   end
 
   def generate_dataset_result
-    result = execute AudioRecording.readonly, self
+    results = execute AudioRecording.readonly, self
+
+    total_duration = results.reduce(0) { |sum, value|
+      sum + value.duration_seconds
+    }
+
+    earliest = results.reduce { |current, value|
+      if current.blank?
+        value
+      else
+        current.recorded_date < value.recorded_date ? current : value
+      end
+    }
+
+    most_recent = results.reduce { |current, value|
+      if current.blank?
+        value
+      else
+        current.recorded_date > value.recorded_date ? current : value
+      end
+    }
+
+    stored_info = {
+        total_duration_seconds: total_duration,
+        begin: earliest,
+        end: most_recent,
+
+        results: results
+    }
 
     # http://stackoverflow.com/questions/5166782/write-stream-to-paperclip/5188448#5188448
-    self.dataset_result = StringIO.new(result.to_json)
+    self.dataset_result = StringIO.new(stored_info.to_json)
 
     self.dataset_result_content_type = 'application/json'
     self.dataset_result_file_name = "dataset_result.json"
@@ -161,6 +230,6 @@ class Dataset < ActiveRecord::Base
     end
 
     #puts recordings.explain
-    recordings.select([:id, :uuid, :duration_seconds,:recorded_date])
+    recordings.select([:id, :uuid, :duration_seconds, :recorded_date])
   end
 end
