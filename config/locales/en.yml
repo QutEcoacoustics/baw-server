@@ -5,11 +5,11 @@ en-AU:
   hello: "Hello world"
   date:
     formats:
-      short: "%d/%m/%Y"
+      short: "%Y/%m/%d"
   time:
     formats:
       short: "%H:%M"
-      long:  "%d/%m/%Y %H:%M"
+      long:  "%Y/%m/%d %H:%M"
   enumerize:
     dataset:
       filters:

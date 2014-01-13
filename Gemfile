@@ -50,6 +50,7 @@ group :test do
   gem 'launchy'
   gem 'json_spec'
   gem 'database_cleaner', '~> 1'
+  #gem 'bullet'
 end
 
 ########################  TESTING & Documentation ########################

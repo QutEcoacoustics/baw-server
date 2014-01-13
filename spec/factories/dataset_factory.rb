@@ -14,9 +14,9 @@ FactoryGirl.define do
       start_date '2013-11-06'
       end_date '2013-11-09'
       filters nil
-      tag_text_filters [Faker::Lorem.words(5), Faker::Lorem.words(2)].sample
+      tag_text_filters ['a tag', 'my other tag', 'the-next-tag']
       number_of_samples nil
-      number_of_tags [nil, 0, 1].sample
+      number_of_tags [nil, 1].sample
 
       # first sample from empty array and available types of tags
       # then sample 2 from available types of tags if it is chosen
