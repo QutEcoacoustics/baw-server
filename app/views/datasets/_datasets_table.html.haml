@@ -7,7 +7,7 @@
   %tbody
   - datasets.each do |dataset|
     %tr
-      %td= link_to dataset.name, project_dataset_path(@project, dataset)
+      %td= link_to dataset.name, project_dataset_path(dataset.project, dataset)
       %td= render partial: 'datasets/summary', locals: {dataset: dataset}
 
       -#%td.nolink

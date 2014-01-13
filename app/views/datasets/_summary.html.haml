@@ -1,7 +1,6 @@
-- unless dataset.sites.empty?
-  %b Site(s):
-  - dataset.sites.each do |s|
-    = "#{s.name}, "
+- unless dataset.sites.count.zero?
+  %b Number of Sites:
+  = "#{dataset.sites.count};"
 
 - unless dataset.start_time.blank?
   %b Time Range:
@@ -24,5 +23,9 @@
   = "#{dataset.selected_number_of_tags};"
 
 - unless dataset.types_of_tags.blank?
-  %b Tag Type(s):
-  = "#{dataset.selected_types_of_tags}"
+  %b Tag Types:
+  = "#{dataset.selected_types_of_tags};"
+
+- unless dataset.tag_text_filters_list.blank?
+  %b Tags:
+  = "#{dataset.tag_text_filters_list}"

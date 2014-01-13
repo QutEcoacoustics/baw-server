@@ -1,7 +1,7 @@
 .row-fluid
   %h1= @dataset.name
   %p= @dataset.description
-  = render partial: 'summary', locals: {dataset: @dataset}
+  %p= render partial: 'summary', locals: {dataset: @dataset}
 
 
 %h3= 'Sites'
