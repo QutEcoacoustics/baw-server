@@ -43,7 +43,7 @@ class User < ActiveRecord::Base
   before_validation :ensure_user_role
 
   def projects
-    (self.owned_projects + self.accessible_projects).uniq
+    (self.owned_projects.includes(:owner) + self.accessible_projects).uniq
   end
 
   def recently_updated_projects

@@ -62,4 +62,14 @@ AWB::Application.configure do
     sender_address:  Settings.exception_notification.sender_address,
     exception_recipients:  Settings.exception_notification.exception_recipients
   }
+
+  config.after_initialize do
+    Bullet.enable = true
+    Bullet.bullet_logger = true
+    Bullet.alert = true
+    Bullet.rails_logger = true
+    Bullet.add_footer = true
+    Bullet.raise = false
+  end
 end
+
