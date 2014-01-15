@@ -90,6 +90,9 @@ defaults: &defaults
       sample_rate: 22050
       window: 512
       colour: 'g'
+  cached_dataset_defaults:
+    txt:
+      one_item_per_line: true
 
 development:
   <<: *defaults

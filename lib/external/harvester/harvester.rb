@@ -410,7 +410,7 @@ module Harvester
             }
 
             log Logger::DEBUG, "Parameters for moving file: '#{file_name_params}'."
-            cache = CacheTools::Cache.new(@original_audio_paths, @cached_audio_paths, nil, nil, nil)
+            cache = CacheTools::CacheBase.from_paths_orig(@original_audio_paths)
             file_name = cache.original_audio_file(file_name_params)
             source_possible_paths = cache.possible_original_audio_paths(file_name)
             result_of_move = copy_file(file_to_process, source_possible_paths)

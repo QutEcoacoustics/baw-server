@@ -68,7 +68,8 @@ class AudioRecording < ActiveRecord::Base
 
   def original_file_exists?
 
-    cache = CacheTools::Cache.new(Settings.paths.original_audios, Settings.paths.cached_audios, nil, nil, nil)
+    cache = CacheTools::CacheBase.from_paths_audio(
+        Settings.paths.original_audios, Settings.paths.cached_audios, Settings.cached_audio_defaults)
 
     file_name_params = {
         :uuid => self.uuid,
