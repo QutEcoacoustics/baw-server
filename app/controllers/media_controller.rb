@@ -41,7 +41,7 @@ class MediaController < ApplicationController
 
         if AUDIO_MEDIA_TYPES.include?(mime_type)
           options[:channel] = (params[:channel] || Settings.cached_audio_defaults[options[:format]].channel).to_i
-          options[:sample_rate] = (params[:sample_rate] || Settings.cached_audio_defaults[options[:format]].sample_rate).to_f
+          options[:sample_rate] = (params[:sample_rate] || Settings.cached_audio_defaults[options[:format]].sample_rate).to_i
           # date and time are for finding the original audio file
           options[:date] = @audio_recording.recorded_date.strftime "%y%m%d"
           options[:time] = @audio_recording.recorded_date.strftime "%H%M"
@@ -49,7 +49,7 @@ class MediaController < ApplicationController
           download_file(download_options)
         elsif  IMAGE_MEDIA_TYPES.include?(mime_type)
           options[:channel] = (params[:channel] || Settings.cached_spectrogram_defaults[options[:format]].channel).to_i
-          options[:sample_rate] = (params[:sample_rate] || Settings.cached_spectrogram_defaults[options[:format]].sample_rate).to_f
+          options[:sample_rate] = (params[:sample_rate] || Settings.cached_spectrogram_defaults[options[:format]].sample_rate).to_i
           options[:window] = (params[:window] || Settings.cached_spectrogram_defaults[options[:format]].window).to_i
           options[:colour] = (params[:colour] || Settings.cached_spectrogram_defaults[options[:format]].colour).to_s
           options[:date] = @audio_recording.recorded_date.strftime "%y%m%d"
