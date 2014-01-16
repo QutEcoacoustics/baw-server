@@ -19,8 +19,8 @@ module MediaTools
           :error => {:sox => {}}
       }
 
-      sox_arguments_info = "--info -V4"
-      sox_command = "#{@sox_executable} #{sox_arguments_info} \"#{source}\"" # commands to get info from audio file
+      # basic audio file info
+      sox_command = "#{@sox_executable} --info -V2 \"#{source}\"" # commands to get info from audio file
       sox_stdout_str, sox_stderr_str, sox_status = Open3.capture3(sox_command) # run the commands and wait for the result
 
       Logging::logger.debug "sox info return status #{sox_status.exitstatus}. Command: #{sox_command}"
@@ -39,6 +39,27 @@ module MediaTools
       else
         result[:error][:sox][:stderror] = sox_stderr_str
         Logging::logger.error "Sox info error: #{result[:error][:sox]}"
+      end
+
+      # detailed audio info
+      sox_command = "#{@sox_executable} -V2 \"#{source}\" -n stat" # commands to get info from audio file
+      sox_stdout_str, sox_stderr_str, sox_status = Open3.capture3(sox_command) # run the commands and wait for the result
+
+      Logging::logger.debug "sox stat return status #{sox_status.exitstatus}. Command: #{sox_command}"
+
+      if sox_status.exitstatus == 0
+        # sox std err contains stat output (separate on first colon(:))
+        sox_stderr_str.strip.split(/\r?\n|\r/).each { |line|
+          if line.include?(':')
+            colon_index = line.index(':')
+            new_value = line[colon_index+1, line.length].strip
+            new_key = line[0, colon_index].strip
+            result[:info][:sox][new_key] = new_value
+          end
+        }
+      else
+        result[:error][:sox][:stderror] += sox_stderr_str
+        Logging::logger.error "Sox stat error: #{result[:error][:sox]}"
       end
 
       result
@@ -83,9 +104,14 @@ module MediaTools
       performs a mix-down of all input channels to mono.
 =end
       if modify_parameters.include? :channel
-        # help... not sure how to do this
-        # HACK: WARNING this will always mix down to mono
-        arguments += ' remix - '
+        channel_number = modify_parameters[:channel].to_i
+        if channel_number < 1
+          # mix down to mono
+          arguments += ' remix - '
+        else
+          # select the channel (0 indicates silent channel)
+          arguments += " remix #{channel_number} "
+        end
       end
 
       # −q, −−no−show−progress

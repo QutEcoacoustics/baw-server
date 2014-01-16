@@ -78,7 +78,7 @@ module MediaTools
         result[:error][:ffmpeg] = ffprobe_std_info
       end
 
-      unless ffprobe_stderr_str.blank?
+      if ffprobe_status.exitstatus != 0 && !ffprobe_stderr_str.blank?
         result[:error][:ffmpeg][:stderror] = ffprobe_stderr_str
       end
 
@@ -88,7 +88,7 @@ module MediaTools
 
       if result[:info][:ffmpeg]['STREAM codec_type'] != 'audio'
         result[:error][:ffmpeg][:file_type] = 'Not an audio file.'
-        Logging::logger.warn "Ffprobe gave info about a non-audio file: #{result[:info][:ffmpeg]['STREAM codec_type']}"
+        Logging::logger.warn "Ffprobe gave info about a non-audio file: #{result[:info][:ffmpeg]}"
       end
 
       result
@@ -165,9 +165,14 @@ module MediaTools
       arguments += " -acodec #{codec}"
 
       if modify_parameters.include? :channel
-        # help... not sure how to do this
-        # HACK: WARNING this will always mix down to mono
-        arguments += ' -ac 1 '
+        channel_number = modify_parameters[:channel].to_i
+        if channel_number < 1
+          # mix down to mono
+          arguments += ' -ac 1 '
+        else
+          # select the channel (0 index based)
+          arguments += " -map_channel 0.0.#{channel_number - 1} "
+        end
       end
 
       ffmpeg_command = "#{@ffmpeg_executable} -i \"#{source}\" #{arguments} \"#{target}\""
@@ -175,7 +180,7 @@ module MediaTools
 
       Logging::logger.debug "Ffmpeg info return status #{ffmpeg_status.exitstatus}. Command: #{ffmpeg_command}"
 
-      if ffmpeg_status.exitstatus != 0 || !File.exists?(target) || !ffmpeg_stderr_str.blank?
+      if !File.exists?(target) || (!ffmpeg_stderr_str.blank? && ffmpeg_status.exitstatus != 0)
         Logging::logger.error "Ffmpeg exited with an error: #{ffmpeg_stderr_str}"
       end
 

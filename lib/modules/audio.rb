@@ -6,10 +6,12 @@ require File.dirname(__FILE__) + '/audio_mp3splt'
 require File.dirname(__FILE__) + '/audio_wavpack'
 require File.dirname(__FILE__) + '/audio_ffmpeg'
 require File.dirname(__FILE__) + '/exceptions'
+require File.dirname(__FILE__) + '/logger'
 
 # the audio
 module MediaTools
   class AudioMaster
+    include Logging
 
     attr_reader :audio_ffmpeg, :audio_mp3splt, :audio_sox, :audio_wavpack, :temp_dir
 
@@ -52,12 +54,15 @@ module MediaTools
       wavpack = @audio_wavpack.info source
       result = result.deep_merge wavpack
 
+      Logging::logger.debug "Info for #{source}: #{result.to_json}"
+
       #TODO: what to do if there is an error?
 
       # extract only necessary information into a flattened hash
       info_flattened = {
           media_type: @audio_ffmpeg.get_mime_type(result[:info][:ffmpeg]),
           sample_rate_hertz: result[:info][:ffmpeg]['STREAM sample_rate'].to_f,
+          max_amplitude: result[:info][:sox]['Maximum amplitude'].to_f
       }
 
       if info_flattened[:media_type] == 'audio/wavpack'
