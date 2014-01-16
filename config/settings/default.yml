@@ -65,6 +65,8 @@ defaults: &defaults
       - <%= Rails.root %>/tmp/_analysis_result
     analysis_runs:
       - <%= Rails.root %>/tmp/_analysis_run
+    cached_datasets:
+      - <%= Rails.root %>/tmp/_cached_dataset
     harvester_base: <%= Rails.root %>/tmp/_harvester_to_do
     modules_log_file: <%= Rails.root %>/tmp/_modules_log.log
   harvester_config_file: harvest.yml

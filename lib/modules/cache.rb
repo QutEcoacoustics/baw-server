@@ -56,6 +56,18 @@ module CacheTools
       possible_paths(cache_class, file_name).find_all { |file| File.exists? file }
     end
 
+    def possible_storage_dirs(cache_class)
+      check_cache_class(cache_class)
+
+      cache_class.storage_paths
+    end
+
+    def existing_storage_dirs(cache_class)
+      check_cache_class(cache_class)
+
+      cache_class.storage_paths.find_all { |dir| Dir.exists? dir }
+    end
+
     ###############################
     # HELPERS
     ###############################
