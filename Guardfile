@@ -23,13 +23,14 @@ guard :rspec, cli: '--format progress --color' do
 
   # for external modules
   #watch(%r{^lib/external/harvester/(.+)\.rb$})        { |m| 'spec/externals/harvester_spec.rb' }
-  #watch(%r{^lib/modules/(.+)\.rb$})                   { |m| "spec/externals/#{m[1]}_spec.rb" }
+  watch(%r{^lib/modules/(.+)\.rb$})                   { |m| "spec/externals/#{m[1]}_spec.rb" }
 
   # for media tools
   watch(%r{^lib/modules/(.+)\.rb$})        { |m| "spec/media_tools/#{m[1]}_spec.rb" }
 
   # changes to factories
   watch(%r{^spec/factories/(.+)_(factory).rb$})       { |m| %W(spec/features/#{m[1]}s_spec.rb spec/features/#{m[1]}_spec.rb spec/acceptance/#{m[1]}s_spec.rb spec/acceptance/#{m[1]}_spec.rb spec/models/#{m[1]}s_spec.rb spec/models/#{m[1]}_spec.rb)}
+
 
   ## Turnip features and steps
   #watch(%r{^spec/acceptance/(.+)\.feature$})

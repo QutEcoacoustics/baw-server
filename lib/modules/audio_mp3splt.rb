@@ -48,11 +48,13 @@ module MediaTools
       end
 
       mp3splt_command = "#{@mp3splt_executable}  #{arguments}" # commands to get info from audio file ( -D )
+
       mp3splt_stdout_str, mp3splt_stderr_str, mp3splt_status = Open3.capture3(mp3splt_command) # run the commands and wait for the result
 
       Logging::logger.debug "mp3splt info return status #{mp3splt_status.exitstatus}. Command: #{mp3splt_command}"
 
       if mp3splt_status.exitstatus != 0 || !File.exists?(target) || !mp3splt_stderr_str.blank?
+
         Logging::logger.error "Mp3splt exited with an error: #{mp3splt_stderr_str}"
       end
 

@@ -1,5 +1,9 @@
-# Determines file names for cached and original files.
+require File.dirname(__FILE__) + '/cache_audio'
+require File.dirname(__FILE__) + '/cache_dataset'
+require File.dirname(__FILE__) + '/cache_spectrogram'
+require File.dirname(__FILE__) + '/original_audio'
 
+# Determines file names for cached and original files.
 module CacheTools
   class CacheBase
 
@@ -22,25 +26,25 @@ module CacheTools
       spectrogram_paths, spectrogram_defaults,
       dataset_paths, dataset_defaults)
 
-      original = Cache::OriginalAudio.new(original_paths)
-      cache_audio = Cache::CacheAudio.new(cache_audio_paths, cache_audio_defaults)
-      cache_spectrogram = Cache::CacheSpectrogram.new(spectrogram_paths, spectrogram_defaults)
-      cache_dataset = Cache::CacheDataset.new(dataset_paths, dataset_defaults)
+      original = CacheTools::OriginalAudio.new(original_paths)
+      cache_audio = CacheTools::CacheAudio.new(cache_audio_paths, cache_audio_defaults)
+      cache_spectrogram = CacheTools::CacheSpectrogram.new(spectrogram_paths, spectrogram_defaults)
+      cache_dataset = CacheTools::CacheDataset.new(dataset_paths, dataset_defaults)
 
-      Cache::CacheBase.new(original, cache_audio, cache_spectrogram, cache_dataset)
+      CacheBase.new(original, cache_audio, cache_spectrogram, cache_dataset)
     end
 
     def self.from_paths_orig(original_paths)
-      original = Cache::OriginalAudio.new(original_paths)
+      original = CacheTools::OriginalAudio.new(original_paths)
 
-      Cache::CacheBase.new(original, nil, nil, nil)
+      CacheBase.new(original, nil, nil, nil)
     end
 
     def self.from_paths_audio(original_paths, cache_audio_paths, cache_audio_defaults)
-      original = Cache::OriginalAudio.new(original_paths)
-      cache_audio = Cache::CacheAudio.new(cache_audio_paths, cache_audio_defaults)
+      original = CacheTools::OriginalAudio.new(original_paths)
+      cache_audio = CacheTools::CacheAudio.new(cache_audio_paths, cache_audio_defaults)
 
-      Cache::CacheBase.new(original, cache_audio, nil, nil)
+      CacheBase.new(original, cache_audio, nil, nil)
     end
 
     # get all possible full paths for a file
@@ -52,7 +56,7 @@ module CacheTools
 
     # get the full paths for all existing files that match a file name
     def existing_storage_paths(cache_class, file_name)
-      check_cache_class(cache)
+      check_cache_class(cache_class)
       possible_paths(cache_class, file_name).find_all { |file| File.exists? file }
     end
 

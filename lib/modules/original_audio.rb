@@ -1,4 +1,4 @@
-module Cache
+module CacheTools
   class OriginalAudio
 
     attr_reader :storage_paths
@@ -34,13 +34,13 @@ module Cache
       end
 
       result += @extension_indicator + original_format.trim('.', '').to_s
-      result
+      result.downcase
     end
 
     def partial_path(file_name)
       # prepend first two chars of uuid
       # assume that the file name starts with the uuid, get the first two chars as the sub folder
-      file_name[0, 2]
+      file_name[0, 2].downcase
     end
 
   end

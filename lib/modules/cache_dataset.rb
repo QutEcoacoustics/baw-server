@@ -1,4 +1,4 @@
-module Cache
+module CacheTools
   class CacheDataset
 
     attr_reader :storage_paths, :defaults
@@ -17,7 +17,8 @@ module Cache
     end
 
     def file_name(saved_search_id, dataset_id, format = @default_format)
-      saved_search_id.to_s + @separator + dataset_id.to_s + @extension_indicator + format.trim('.', '').to_s
+      result = saved_search_id.to_s + @separator + dataset_id.to_s + @extension_indicator + format.trim('.', '').to_s
+      result.downcase
     end
 
     def partial_path(file_name)
