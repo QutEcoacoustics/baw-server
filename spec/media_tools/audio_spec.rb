@@ -31,6 +31,7 @@ describe MediaTools::AudioMaster do
   let(:audio_file_does_not_exist_1) { File.join(File.dirname(__FILE__), 'not-here-1.ogg') }
   let(:audio_file_does_not_exist_2) { File.join(File.dirname(__FILE__), 'not-here-2.ogg') }
   let(:audio_file_amp_1_channels) { File.join(File.dirname(__FILE__), 'amp-channels-1.ogg') }
+
   let(:audio_file_amp_2_channels) { File.join(File.dirname(__FILE__), 'amp-channels-2.ogg') }
   let(:audio_file_amp_3_channels) { File.join(File.dirname(__FILE__), 'amp-channels-3.ogg') }
 
@@ -98,6 +99,7 @@ describe MediaTools::AudioMaster do
       expect(info.size).to eq(7)
     end
   end
+
 
   context 'when modifying audio file' do
     it 'causes exception for invalid path' do

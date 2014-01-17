@@ -5,6 +5,7 @@ require File.dirname(__FILE__) + '/audio_sox'
 require File.dirname(__FILE__) + '/audio_mp3splt'
 require File.dirname(__FILE__) + '/audio_wavpack'
 require File.dirname(__FILE__) + '/audio_ffmpeg'
+require File.dirname(__FILE__) + '/audio_shntool'
 require File.dirname(__FILE__) + '/exceptions'
 require File.dirname(__FILE__) + '/logger'
 
@@ -25,11 +26,13 @@ module MediaTools
       mp3splt_executable = OS.windows? ? "./vendor/bin/mp3splt/mp3splt.exe" : "mp3splt"
       sox_executable = OS.windows? ? "./vendor/bin/sox/sox.exe" : "sox"
       wavpack_executable = OS.windows? ? "./vendor/bin/wavpack/wvunpack.exe" : "wvunpack"
+      shntool_executable = OS.windows? ? "./vendor/bin/shntool/shntool.exe" : "shntool"
 
       @audio_ffmpeg = AudioFfmpeg.new(ffmpeg_executable, ffprobe_executable, @temp_dir)
       @audio_mp3splt = AudioMp3splt.new(mp3splt_executable, @temp_dir)
       @audio_sox = AudioSox.new(sox_executable, @temp_dir)
       @audio_wavpack = AudioWavpack.new(wavpack_executable, @temp_dir)
+      @audio_shntool = AudioShntool.new(shntool_executable, @temp_dir)
     end
 
     # @return Path to a file. The file does not exist.
@@ -55,8 +58,8 @@ module MediaTools
       ffmpeg_info_output = execute(ffmpeg_info_cmd)
       ffmpeg_info = @audio_ffmpeg.parse_ffprobe_output(ffmpeg_info_output[:stdout])
 
-      @audio_sox.check_for_errors(sox_stat_output[:stdout],sox_stat_output[:stderr])
-      @audio_ffmpeg.check_for_errors(ffmpeg_info_output[:stdout],ffmpeg_info_output[:stderr])
+      @audio_sox.check_for_errors(sox_stat_output[:stdout], sox_stat_output[:stderr])
+      @audio_ffmpeg.check_for_errors(ffmpeg_info_output[:stdout], ffmpeg_info_output[:stderr])
 
       # extract only necessary information into a flattened hash
       info_flattened = {

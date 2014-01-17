@@ -1,4 +1,4 @@
-module Cache
+module CacheTools
   class CacheAudio
 
     attr_reader :storage_paths, :defaults
@@ -16,18 +16,19 @@ module Cache
       @extension_indicator = '.'
     end
 
-    def file_name(uuid, start_offset = 0, end_offset, channel = @defaults[@default_format]['channel'],
+    def file_name(uuid, end_offset, start_offset = 0, channel = @defaults[@default_format]['channel'],
         sample_rate = @defaults[@default_format]['sample_rate'], format = @default_format)
-      uuid.to_s + @separator +
+      result = uuid.to_s + @separator +
           start_offset.to_f.to_s + @separator + end_offset.to_f.to_s + @separator +
           channel.to_i.to_s + @separator + sample_rate.to_i.to_s +
           @extension_indicator + format.trim('.', '').to_s
+      result.downcase
     end
 
     def partial_path(file_name)
       # prepend first two chars of uuid
       # assume that the file name starts with the uuid, get the first two chars as the sub folder
-      file_name[0, 2]
+      file_name[0, 2].downcase
     end
 
 

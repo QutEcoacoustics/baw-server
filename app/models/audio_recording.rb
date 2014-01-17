@@ -71,26 +71,19 @@ class AudioRecording < ActiveRecord::Base
     cache = CacheTools::CacheBase.from_paths_audio(
         Settings.paths.original_audios, Settings.paths.cached_audios, Settings.cached_audio_defaults)
 
-    file_name_params = {
-        :uuid => self.uuid,
-        :date => self.recorded_date.strftime("%y%m%d"),
-        :time => self.recorded_date.strftime("%H%M")
-    }
+    original_format = '.wv' # pick something
 
     if !self.original_file_name.blank?
-      file_name_params[:original_format] = File.extname(self.original_file_name)
+      original_format = File.extname(self.original_file_name)
     elsif !self.media_type.blank?
-      file_name_params[:original_format] = Mime::Type.file_extension_of(self.media_type)
-    else
-      file_name_params[:original_format] = '.wv' # pick something
+      original_format = Mime::Type.file_extension_of(self.media_type)
     end
 
-    if file_name_params[:original_format].blank?
+    if original_format.blank?
       false
     else
-      file_name_params[:original_format] = file_name_params[:original_format].downcase
-      file_name = cache.original_audio_file(file_name_params)
-      source_possible_paths = cache.existing_original_audio_paths(file_name)
+      file_name = cache.original_audio.file_name(self.uuid, self.recorded_date, self.recorded_date, original_format)
+      source_possible_paths = cache.existing_storage_paths(cache.original_audio, file_name)
       source_possible_paths.length > 0
     end
   end

@@ -68,6 +68,7 @@ module MediaTools
       ffprobe_command = "#{@ffprobe_executable} #{ffprobe_arguments_info} \"#{source}\""
       ffprobe_stdout_str, ffprobe_stderr_str, ffprobe_status = Open3.capture3(ffprobe_command)
 
+
       Logging::logger.debug "Ffprobe info return status #{ffprobe_status.exitstatus}. Command: #{ffprobe_command}"
 
 
@@ -333,6 +334,7 @@ module MediaTools
           ext_to_copy_to: ext_to_copy_to,
           target: target
       }
+
     end
 
   end
