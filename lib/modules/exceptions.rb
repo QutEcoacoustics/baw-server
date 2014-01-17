@@ -6,6 +6,7 @@ module Exceptions
   class FileAlreadyExistsError < IOError; end
   class AudioFileNotFoundError < FileNotFoundError; end
   class SpectrogramFileNotFoundError < FileNotFoundError; end
+  class AudioToolError < StandardError; end
   class HarvesterError < StandardError; end
   class HarvesterConfigFileNotFound < HarvesterError; end
   class HarvesterConfigurationError < HarvesterError; end

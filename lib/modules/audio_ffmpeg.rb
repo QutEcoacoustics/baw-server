@@ -96,9 +96,7 @@ module MediaTools
 
     def modify(source, target, modify_parameters = {})
       # ffmpeg is the catch-all, so it will do anything specified in modify_parameters.
-
       raise ArgumentError, "Source is a wavpack file, use wavpack to convert to .wav first instead: #{source}" if source.match(/\.wv$/)
-
       raise ArgumentError, "Source does not exist: #{source}" unless File.exists? source
       raise ArgumentError, "Target exists: #{target}" if File.exists? target
       raise ArgumentError "Source and Target are the same file: #{target}" unless source != target
@@ -159,10 +157,14 @@ module MediaTools
           ext_to_copy_to = 'webma'
         when 'WV'
           codec = 'wavpack'
+        when 'AAC'
+          codec = 'aac'
         else
-          codec = 'copy'
+          #codec = 'copy'
+          codec = ''
       end
-      arguments += " -acodec #{codec}"
+      # don't specify codec for any other extension
+      arguments += " -acodec #{codec}" unless codec.blank?
 
       if modify_parameters.include? :channel
         channel_number = modify_parameters[:channel].to_i
@@ -201,6 +203,14 @@ module MediaTools
       }
     end
 
+    def info_command(source)
+      "#{@ffprobe_executable} -sexagesimal -print_format default -show_error -show_streams -show_format \"#{source}\""
+    end
+
+    def check_for_errors(stdout, stderr)
+      raise Exceptions::FileCorruptError if !stderr.blank? && stderr.include?('[') && stderr.include?(' @ ') && stderr.include?('] ')
+    end
+
     # returns the duration in seconds (and fractions if present)
     def parse_duration(duration_string)
       duration_match = /(?<hour>\d+):(?<minute>\d+):(?<second>[\d+\.]+)/i.match(duration_string)
@@ -210,8 +220,6 @@ module MediaTools
       end
       duration
     end
-
-    private
 
     def parse_ffprobe_output(raw)
       # ffprobe std err contains info (separate on first equals(=))
@@ -230,6 +238,101 @@ module MediaTools
       end
 
       result
+    end
+
+    def arg_channel(channel)
+      cmd_arg = ''
+      unless channel.blank?
+        channel_number = channel.to_i
+        if channel_number < 1
+          # mix down to mono
+          cmd_arg = ' -ac 1 '
+        else
+          # select the channel (0 index based)
+          cmd_arg = " -map_channel 0.0.#{channel_number - 1} "
+        end
+      end
+      cmd_arg
+    end
+
+    def arg_sample_rate(sample_rate)
+      cmd_arg = ''
+      unless sample_rate.blank?
+        # -ar Set the audio sampling frequency (default = 44100 Hz).
+        # -ab Set the audio bitrate in bit/s (default = 64k).
+        cmd_arg = " -ar #{sample_rate} "
+      end
+      cmd_arg
+    end
+
+    def arg_offsets(start_offset, end_offset)
+      cmd_arg = ''
+
+      # start offset
+      # -ss Seek to given time position in seconds. hh:mm:ss[.xxx] syntax is also supported.
+      unless start_offset.blank?
+        start_offset_formatted = Time.at(start_offset.to_f).utc.strftime('%H:%M:%S.%3N')
+        cmd_arg = " -ss #{start_offset_formatted}"
+      end
+
+      # end offset
+      # -t Restrict the transcoded/captured video sequence to the duration specified in seconds. hh:mm:ss[.xxx] syntax is also supported.
+      unless end_offset.blank?
+        #end_offset_formatted = Time.at(modify_parameters[:end_offset]).utc.strftime('%H:%M:%S.%3N')
+        end_offset_raw = end_offset.to_f
+        end_offset_time = Time.at(end_offset_raw).utc
+        if start_offset.blank?
+          # if start offset was not included, include audio from the start of the file.
+          cmd_arg += " -t #{end_offset_time.strftime('%H:%M:%S.%3N')}"
+        else
+          start_offset_raw = start_offset.to_f
+          #start_offset_time = Time.at(start_offset_raw).utc
+          cmd_arg += " -t #{Time.at(end_offset_raw - start_offset_raw).utc.strftime('%H:%M:%S.%3N')}"
+        end
+      end
+
+      cmd_arg
+    end
+
+    def codec_calc(target)
+      # set the right codec if we know it
+      # -acodec Force audio codec to codec. Use the copy special value to specify that the raw codec data must be copied as is.
+      # output file. extension used to determine filetype.
+      ext_to_copy_to = ''
+      vorbis_codec = 'libvorbis -aq 80' # ogg container vorbis encoder at quality level of 80
+      codec = ''
+      case File.extname(target).upcase!.reverse.chomp('.').reverse
+        when 'WAV'
+          codec = "pcm_s16le" # pcm signed 16-bit little endian - compatible with CDDA
+        when 'MP3'
+          codec = "libmp3lame" # needs to be specified, different codecs for encoding and decoding
+        when 'OGG'
+          codec = vorbis_codec
+        when 'OGA'
+          codec = vorbis_codec
+          target = target.chomp(File.extname(target))+'.ogg'
+          ext_to_copy_to = 'oga'
+        when 'WEBM'
+          codec = vorbis_codec
+        when 'WEBMA'
+          codec = vorbis_codec
+          target = target.chomp(File.extname(target))+'.webm'
+          ext_to_copy_to = 'webma'
+        when 'WV'
+          codec = 'wavpack'
+        when 'AAC'
+          codec = 'aac'
+        else
+          #codec = 'copy'
+          codec = ''
+      end
+      # don't specify codec for any other extension
+
+      {
+          codec: codec.blank? ? '' : " -acodec #{codec}",
+          ext_to_copy_to: ext_to_copy_to,
+          target: target
+      }
     end
 
   end

@@ -2,6 +2,10 @@ module MediaTools
   class AudioWavpack
     include Logging
 
+    error_not_compatible = 'not compatible with this version of WavPack file!'
+    error_not_valid = 'not a valid WavPack file!'
+    error_cannot_open = 'can\'t open file'
+
     def initialize(wavpack_executable, temp_dir)
       @wavpack_executable = wavpack_executable
       @temp_dir = temp_dir
@@ -35,7 +39,8 @@ module MediaTools
 
         # wvunpack_stderr_str contains human-formatted info and errors
       else
-        result[:error][:wavpack][:stderror] = wvunpack_stderr_str.strip!.split(/\r?\n|\r/).last
+        error_text = wvunpack_stderr_str.strip!.split(/\r?\n|\r/).last
+        result[:error][:wavpack][:stderror] = error_text
         Logging::logger.error "Wavpack info error: #{result[:error][:wavpack]}"
       end
 

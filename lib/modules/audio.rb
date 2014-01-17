@@ -43,39 +43,59 @@ module MediaTools
       raise Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.exists? source
       raise Exceptions::FileEmptyError, "Source exists, but has no content: #{source}" if File.size(source) < 1
 
-      result = {}
+      #sox_info_cmd = @audio_sox.info_command_info(source)
+      #sox_info_output = execute(sox_info_cmd)
+      #sox_info = @audio_sox.parse_info_output(sox_info_output[:stdout])
 
-      sox = @audio_sox.info source
-      result = result.deep_merge sox
+      sox_stat_cmd = @audio_sox.info_command_stat(source)
+      sox_stat_output = execute(sox_stat_cmd)
+      sox_stat = @audio_sox.parse_info_output(sox_stat_output[:stderr])
 
-      ffmpeg = @audio_ffmpeg.info source
-      result = result.deep_merge ffmpeg
+      ffmpeg_info_cmd = @audio_ffmpeg.info_command(source)
+      ffmpeg_info_output = execute(ffmpeg_info_cmd)
+      ffmpeg_info = @audio_ffmpeg.parse_ffprobe_output(ffmpeg_info_output[:stdout])
 
-      wavpack = @audio_wavpack.info source
-      result = result.deep_merge wavpack
-
-      Logging::logger.debug "Info for #{source}: #{result.to_json}"
-
-      #TODO: what to do if there is an error?
+      @audio_sox.check_for_errors(sox_stat_output[:stdout],sox_stat_output[:stderr])
+      @audio_ffmpeg.check_for_errors(ffmpeg_info_output[:stdout],ffmpeg_info_output[:stderr])
 
       # extract only necessary information into a flattened hash
       info_flattened = {
-          media_type: @audio_ffmpeg.get_mime_type(result[:info][:ffmpeg]),
-          sample_rate_hertz: result[:info][:ffmpeg]['STREAM sample_rate'].to_f,
-          max_amplitude: result[:info][:sox]['Maximum amplitude'].to_f
+          media_type: @audio_ffmpeg.get_mime_type(ffmpeg_info),
+          sample_rate_hertz: ffmpeg_info['STREAM sample_rate'].to_f,
+          max_amplitude: sox_stat['Maximum amplitude'].to_f
       }
 
       if info_flattened[:media_type] == 'audio/wavpack'
-        info_flattened[:bit_rate_bps] = result[:info][:wavpack]['ave bitrate'].to_f
-        info_flattened[:data_length_bytes] = result[:info][:wavpack]['file size'].to_f
-        info_flattened[:channels] = result[:info][:wavpack]['channels'].to_i
-        info_flattened[:duration_seconds] = result[:info][:wavpack]['duration'].to_f
+        # only get wavpack info for wavpack files
+        wavpack_info_cmd = @audio_wavpack.info_command(source)
+        wavpack_info_output = execute(wavpack_info_cmd)
+        wavpack_info = @audio_wavpack.parse_info_output(wavpack_info_output[:stdout])
+
+        info_flattened[:bit_rate_bps] = wavpack_info['ave bitrate'].to_f
+        info_flattened[:data_length_bytes] = wavpack_info['file size'].to_f
+        info_flattened[:channels] = wavpack_info['channels'].to_i
+        info_flattened[:duration_seconds] = wavpack_info['duration'].to_f
+
+      elsif info_flattened[:media_type] == 'audio/wav'
+        # only get shntool info for wav files
+        shntool_info_cmd = @audio_shntool.info_command(source)
+        shntool_info_output = execute(shntool_info_cmd)
+        shntool_info = @audio_shntool.parse_info_output(shntool_info_output[:stdout])
+
+        info_flattened[:bit_rate_bps] = shntool_info['ave bitrate'].to_f
+        info_flattened[:data_length_bytes] = shntool_info['file size'].to_f
+        info_flattened[:channels] = shntool_info['channels'].to_i
+        info_flattened[:duration_seconds] = shntool_info['duration'].to_f
+
       else
-        info_flattened[:bit_rate_bps] = result[:info][:ffmpeg]['FORMAT bit_rate'].to_i
-        info_flattened[:data_length_bytes] = result[:info][:ffmpeg]['FORMAT size'].to_i
-        info_flattened[:channels] = result[:info][:ffmpeg]['STREAM channels'].to_i
-        info_flattened[:duration_seconds] = @audio_ffmpeg.parse_duration(result[:info][:ffmpeg]['FORMAT duration']).to_f
+        # get ffmpeg info for everything else
+        info_flattened[:bit_rate_bps] = ffmpeg_info['FORMAT bit_rate'].to_i
+        info_flattened[:data_length_bytes] = ffmpeg_info['FORMAT size'].to_i
+        info_flattened[:channels] = ffmpeg_info['STREAM channels'].to_i
+        info_flattened[:duration_seconds] = @audio_ffmpeg.parse_duration(ffmpeg_info['FORMAT duration']).to_f
       end
+
+      Logging::logger.debug "Info for #{source}: #{info_flattened.to_json}"
 
       info_flattened
     end
@@ -88,8 +108,12 @@ module MediaTools
       raise Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.exists? source
       raise Exceptions::FileAlreadyExistsError, "Target exists: #{target}" if File.exists? target
 
-      if source.match(/\.wv$/)
-        # convert to wav, then to target file (might need to change channels or sample rate or format)
+      # first get info about the source file
+      source_info = info(source)
+
+      # convert to wav, then to target file (might need to change channels or sample rate or format)
+      if source_info[:media_type] == 'audio/wavpack'
+
         # put the wav file in a temp location
         temp_wav_file = temp_file('wav')
         @audio_wavpack.modify(source, temp_wav_file, modify_parameters)
@@ -127,5 +151,30 @@ module MediaTools
       end
 
     end
+
+    private
+
+    def modify_private(info, source, target, modify_parameters)
+
+    end
+
+    def execute(command)
+      stdout_str, stderr_str, status = Open3.capture3(command)
+
+      msg = "Command status #{status.exitstatus}, executed #{command}"
+
+      if !stderr_str.blank? && status.exitstatus != 0
+        Logging::logger.warn msg+"\n Standard output: #{stdout_str}\n Standard Error: #{stderr_str}"
+      else
+        Logging::logger.debug msg
+      end
+      {
+          command: command,
+          stdout: stdout_str,
+          stderr: stderr_str,
+          status: status
+      }
+    end
+
   end
 end
