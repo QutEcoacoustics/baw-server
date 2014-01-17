@@ -60,7 +60,7 @@ resource 'Projects' do
     let(:raw_post) { {'project' => post_attributes}.to_json }
 
     let(:authentication_token) { writer_token }
-    standard_request('CREATE (as confirmed user)', 201, 'name', true)
+    standard_request('CREATE (as confirmed user writer)', 201, 'name', true)
 
   end
 
@@ -73,6 +73,18 @@ resource 'Projects' do
 
     let(:authentication_token) { "Token token=\"#{FactoryGirl.create(:unconfirmed_user).authentication_token}\"" }
     standard_request('CREATE (as unconfirmed user)', 401, nil, true)
+
+  end
+
+  post '/projects' do
+    parameter :name, 'Name of project', scope: :project, :required => true
+    parameter :description, 'Description of project', scope: :project
+    parameter :notes, 'Notes of project', scope: :project
+
+    let(:raw_post) { {'project' => post_attributes}.to_json }
+
+    let(:authentication_token) { reader_token }
+    standard_request('CREATE (as reader)', 201, 'name', true)
 
   end
 
@@ -146,7 +158,7 @@ resource 'Projects' do
 
     let(:authentication_token) { reader_token }
 
-    standard_request('UPDATE (as reader)' ,401,nil, true)
+    standard_request('UPDATE (as reader)' ,403,nil, true)
   end
 
   put '/projects/:id' do

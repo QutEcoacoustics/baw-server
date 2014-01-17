@@ -103,7 +103,7 @@ resource 'Datasets' do
 
     let(:raw_post) { {'dataset' => post_attributes}.to_json }
 
-    standard_request('CREATE (as reader)', 401, nil, true)
+    standard_request('CREATE (as reader)', 403, nil, true)
 
   end
 
@@ -223,7 +223,7 @@ resource 'Datasets' do
 
     #puts "Existing datasets: #{Dataset.all.inspect}"
 
-    standard_request('UPDATE (as reader)' ,401,nil, true)
+    standard_request('UPDATE (as reader)', 403, nil, true)
   end
 
   put '/projects/:project_id/datasets/:id' do

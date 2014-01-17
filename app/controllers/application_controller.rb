@@ -20,11 +20,12 @@ class ApplicationController < ActionController::Base
       if !request.env["HTTP_REFERER"].blank? and request.env["HTTP_REFERER"] != request.env["REQUEST_URI"]
         respond_to do |format|
           format.html { redirect_to :back, :alert => exception.message }
+          format.json { render json: {error: exception.message}.to_json, status: :forbidden }
         end
       else
         respond_to do |format|
           format.html { redirect_to projects_path, :alert => exception.message }
-          format.json { render json: {error: exception.message}.to_json, status: :unauthorized }
+          format.json { render json: {error: exception.message}.to_json, status: :forbidden }
         end
 
       end

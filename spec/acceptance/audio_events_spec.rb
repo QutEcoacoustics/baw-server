@@ -250,7 +250,7 @@ resource 'AudioEvents' do
 
     let(:authentication_token) { reader_token }
 
-    standard_request('CREATE (as reader)', 401, nil, true)
+    standard_request('CREATE (as reader)', 403, nil, true)
 
   end
 
@@ -384,7 +384,7 @@ resource 'AudioEvents' do
 
     let(:authentication_token) { reader_token }
 
-    standard_request('UPDATE (as reader)', 401, nil, true)
+    standard_request('UPDATE (as reader)', 403, nil, true)
   end
 
   put '/projects/:project_id/sites/:site_id/audio_recordings/:audio_recording_id/audio_events/:id' do

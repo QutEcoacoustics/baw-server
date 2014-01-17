@@ -19,6 +19,7 @@ resource 'AudioRecordings' do
     # a site, audio_recording and audio_event having off the project (see permission_factory.rb)
     @write_permission = FactoryGirl.create(:write_permission) # has to be 'write' so that the uploader has access
     @read_permission = FactoryGirl.create(:read_permission, project: @write_permission.project)
+    @user = FactoryGirl.create(:user)
     @harvester = FactoryGirl.create(:harvester)
   end
 
@@ -30,6 +31,7 @@ resource 'AudioRecordings' do
   # prepare authentication_token for different users
   let(:writer_token)          {"Token token=\"#{@write_permission.user.authentication_token}\"" }
   let(:reader_token)          {"Token token=\"#{@read_permission.user.authentication_token}\"" }
+  let(:no_access_token)       {"Token token=\"#{@user.authentication_token}\"" }
   let(:harvester_token)       {"Token token=\"#{@harvester.authentication_token}\"" }
 
 
@@ -89,6 +91,15 @@ resource 'AudioRecordings' do
 
     standard_request('SHOW (as writer)', 200, 'bit_rate_bps', true)
 
+  end
+
+  get  '/audio_recordings/:id' do
+
+    parameter :id, 'Requested audio recording id (in path/route)', required: true
+
+    let(:authentication_token) { no_access_token }
+
+    standard_request('SHOW (as no access, with shallow path)', 403, nil, true)
   end
 
   get  '/audio_recordings/:id' do
@@ -155,7 +166,7 @@ resource 'AudioRecordings' do
 
     let(:authentication_token) { writer_token }
 
-    standard_request('CREATE (as writer)', 401, nil, true)
+    standard_request('CREATE (as writer)', 403, nil, true)
 
   end
 
@@ -167,7 +178,7 @@ resource 'AudioRecordings' do
 
     let(:authentication_token) { reader_token }
 
-    standard_request('CREATE (as reader)', 401, nil, true)
+    standard_request('CREATE (as reader)', 403, nil, true)
 
   end
 
@@ -212,7 +223,7 @@ resource 'AudioRecordings' do
 
     let(:authentication_token) { writer_token }
 
-    standard_request('UPDATE STATUS (writer)', 401, nil, true)
+    standard_request('UPDATE STATUS (writer)', 403, nil, true)
 
   end
 
@@ -225,7 +236,7 @@ resource 'AudioRecordings' do
                                             'uuid' => @write_permission.project.sites[0].audio_recordings[0].uuid}}.to_json }
     let(:authentication_token) { reader_token}
 
-    standard_request('UPDATE STATUS (as reader)', 401, nil, true)
+    standard_request('UPDATE STATUS (as reader)', 403, nil, true)
 
   end
 

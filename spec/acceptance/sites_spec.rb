@@ -94,7 +94,7 @@ resource 'Sites' do
 
     let(:raw_post) { {'site' => post_attributes}.to_json }
 
-    standard_request('CREATE (as reader)', 401, nil, true)
+    standard_request('CREATE (as reader)', 403, nil, true)
 
   end
 
@@ -221,7 +221,7 @@ resource 'Sites' do
 
     #puts "Existing sites: #{Site.all.inspect}"
 
-    standard_request('UPDATE (as reader)' ,401,nil, true)
+    standard_request('UPDATE (as reader)' ,403,nil, true)
   end
 
   put '/projects/:project_id/sites/:id' do
