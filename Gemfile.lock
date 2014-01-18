@@ -1,13 +1,13 @@
 GIT
   remote: https://github.com/brainspec/enumerize.git
-  revision: 5d6fc4625b9eff2c97b31cbe783af56994fd8b63
+  revision: 3d153b553223ea21534d7d056774728f2637be6f
   specs:
     enumerize (0.7.0)
       activesupport (>= 3.2)
 
 GIT
   remote: https://github.com/seyhunak/twitter-bootstrap-rails.git
-  revision: f634e07d9c567e8e46abf95355514956121923d5
+  revision: 7cafa289567eed49787ae70f57041933b53c0ba7
   specs:
     twitter-bootstrap-rails (2.2.8)
       actionpack (>= 3.1)
@@ -199,7 +199,7 @@ GEM
     rack-cors (0.2.9)
     rack-mini-profiler (0.9.0)
       rack (>= 1.1.3)
-    rack-protection (1.5.1)
+    rack-protection (1.5.2)
       rack
     rack-ssl (1.3.3)
       rack
@@ -312,7 +312,7 @@ GEM
     warden (1.2.3)
       rack (>= 1.0)
     wdm (0.1.0)
-    webmock (1.16.1)
+    webmock (1.17.1)
       addressable (>= 2.2.7)
       crack (>= 0.3.2)
     will_paginate (3.0.5)

@@ -1,10 +1,11 @@
+require File.dirname(__FILE__) + '/logger'
+
 module MediaTools
   class AudioWavpack
-    include Logging
 
-    error_not_compatible = 'not compatible with this version of WavPack file!'
-    error_not_valid = 'not a valid WavPack file!'
-    error_cannot_open = 'can\'t open file'
+    ERROR_NOT_COMPATIBLE = 'not compatible with this version of WavPack file!'
+    ERROR_NOT_VALID = 'not a valid WavPack file!'
+    ERROR_CANNOT_OPEN = 'can\'t open file'
 
     def initialize(wavpack_executable, temp_dir)
       @wavpack_executable = wavpack_executable
@@ -13,92 +14,72 @@ module MediaTools
 
     public
 
-    # get information about a wav file.
-    def info(source)
-      result = {
-          :info => {:wavpack => {}},
-          :error => {:wavpack => {}}
-      }
+    def info_command(source)
+      "#{@wavpack_executable} -s \"#{source}\""
+    end
 
-      # commands to get info from audio file
-      wvunpack_command = "#{@wavpack_executable} -s \"#{source}\""
-
-      # run the commands and wait for the result
-      wvunpack_stdout_str, wvunpack_stderr_str, wvunpack_status = Open3.capture3(wvunpack_command)
-
-      Logging::logger.debug "Wavpack info return status #{wvunpack_status.exitstatus}. Command: #{wvunpack_command}"
-
-      if wvunpack_status.exitstatus == 0
-        # wvunpack std out contains info (separate on first colon(:))
-        wvunpack_stdout_str.strip.split(/\r?\n|\r/).each do |line|
-          line.strip!
-          current_key = line[0, line.index(':')].strip
-          current_value = line[line.index(':')+1, line.length].strip
-          result[:info][:wavpack][current_key] = current_value
-        end
-
-        # wvunpack_stderr_str contains human-formatted info and errors
-      else
-        error_text = wvunpack_stderr_str.strip!.split(/\r?\n|\r/).last
-        result[:error][:wavpack][:stderror] = error_text
-        Logging::logger.error "Wavpack info error: #{result[:error][:wavpack]}"
+    def parse_info_output(output)
+      # wvunpack std out contains info (separate on first colon(:))
+      result = {}
+      output.strip.split(/\r?\n|\r/).each do |line|
+        line.strip!
+        current_key = line[0, line.index(':')].strip
+        current_value = line[line.index(':')+1, line.length].strip
+        result[current_key] = current_value
       end
-
-      #'not compatible with this version of WavPack file!'
 
       result
     end
 
-    # wvunpack converts .wv files to .wav, optionally segmenting them
-    # target should be calculated based on modify_parameters by cache module
-    # modify_parameters can contain start_offset (fractions of seconds from start) and/or end_offset (fractions of seconds from start)
-    def modify(source, target, modify_parameters = {})
+    def parse_error_output(output)
+      output.strip!.split(/\r?\n|\r/).last
+    end
+
+    def check_for_errors(stdout, stderr)
+      raise Exceptions::FileCorruptError if !stderr.blank? && stderr.include?(ERROR_CANNOT_OPEN)
+      raise Exceptions::AudioToolError if !stderr.blank? && stderr.include?(ERROR_NOT_VALID)
+      raise Exceptions::AudioToolError if !stderr.blank? && stderr.include?(ERROR_NOT_COMPATIBLE)
+    end
+
+    def modify_command(source, target, start_offset = nil, end_offset = nil)
       raise ArgumentError, "Source is not a wavpack file: #{source}" unless source.match(/\.wv$/)
-      raise ArgumentError, "Target is not a wav file: #{target}" unless target.match(/\.wav$/)
+      raise ArgumentError, "Target is not a wav file: : #{target}" unless target.match(/\.wav$/)
+      raise Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.exists? source
+      raise Exceptions::FileAlreadyExistsError, "Target exists: #{target}" if File.exists? target
       raise ArgumentError "Source and Target are the same file: #{target}" unless source != target
 
-      if File.exists? target
-        return result
-      end
+      cmd_offsets = arg_offsets(start_offset, end_offset)
 
-      raise ArgumentError, "Source does not exist: #{source}" unless File.exists? source
-
-      # formatted time: hh:mm:ss.ss
-      arguments = '-t -q'
-      if modify_parameters.include? :start_offset
-        start_offset_formatted = Time.at(modify_parameters[:start_offset].to_f).utc.strftime('%H:%M:%S.%2N')
-        arguments += " --skip=#{start_offset_formatted}"
-      end
-
-      if modify_parameters.include? :end_offset
-        end_offset_formatted = Time.at(modify_parameters[:end_offset].to_f).utc.strftime('%H:%M:%S.%2N')
-        arguments += " --until=#{end_offset_formatted}"
-      end
-
-      wvunpack_command = "#{@wavpack_executable} #{arguments} \"#{source}\" \"#{target}\"" # commands to get info from audio file
-
-      if OS.windows?
-        wvunpack_command = wvunpack_command.gsub(%r{/}) { "\\" }
-      end
-
-      wvunpack_stdout_str, wvunpack_stderr_str, wvunpack_status = Open3.capture3(wvunpack_command) # run the commands and wait for the result
-
-      Logging::logger.debug "mp3splt info return status #{wvunpack_status.exitstatus}. Command: #{wvunpack_command}"
-
-      if wvunpack_status.exitstatus != 0 || !File.exists?(target)
-        Logging::logger.error "Wvunpack command #{wvunpack_command} exited with an error: #{wvunpack_stderr_str}"
-      end
-
-      {
-          info: {
-              wavpack: {
-                  command: wvunpack_command,
-                  source: source,
-                  target: target,
-                  parameters: modify_parameters
-              }
-          }
-      }
+      wvunpack_command = "#{@wavpack_executable} #{cmd_offsets} \"#{source}\" \"#{target}\""
+      wvunpack_command = wvunpack_command.gsub(%r{/}) { "\\" } if OS.windows?
+      wvunpack_command
     end
+
+    def arg_offsets(start_offset, end_offset)
+      # formatted time: hh:mm:ss.ss
+      cmd_arg = '-t -q'
+      unless start_offset.blank?
+        start_offset_formatted = Time.at(start_offset.to_f).utc.strftime('%H:%M:%S.%2N')
+        cmd_arg += " --skip=#{start_offset_formatted}"
+      end
+
+      unless end_offset.blank?
+        end_offset_formatted = Time.at(end_offset.to_f).utc.strftime('%H:%M:%S.%2N')
+        cmd_arg += " --until=#{end_offset_formatted}"
+      end
+
+      cmd_arg
+    end
+
+    def parse_duration(duration_string)
+      # 0:01:10.02
+      duration_match = /(?<hour>\d+):(?<minute>\d+):(?<second>\d+)\.(?<fraction>\d+)/i.match(duration_string)
+      duration = 0
+      if !duration_match.nil? && duration_match.size == 5
+        duration = (duration_match[:hour].to_f * 60 * 60) + (duration_match[:minute].to_f * 60) + duration_match[:second].to_f + (duration_match[:fraction].to_f / 100)
+      end
+      duration
+    end
+
   end
 end

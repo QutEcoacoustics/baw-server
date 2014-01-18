@@ -1,8 +1,9 @@
-require 'logger'
+require File.dirname(__FILE__) + '/logger'
 
 module MediaTools
   class AudioShntool
-    include Logging
+
+    ERROR_NO_HANDLER = 'warning: none of the builtin format modules handle input file:'
 
     def initialize(shntool_executable, temp_dir)
       @shntool_executable = shntool_executable
@@ -29,9 +30,23 @@ module MediaTools
       result
     end
 
+    def parse_duration(duration_string)
+      # 0:10.00
+      duration_match = /(?<minute>\d+):(?<second>\d+)\.(?<fraction>\d+)/i.match(duration_string)
+      duration = 0
+      if !duration_match.nil? && duration_match.size == 5
+        duration = (duration_match[:minute].to_f * 60) + duration_match[:second].to_f + (duration_match[:fraction].to_f / 100)
+      end
+      duration
+    end
+
+    def check_for_errors(stdout, stderr)
+      raise Exceptions::AudioToolError if !stderr.blank? && stderr.include?(ERROR_NO_HANDLER)
+    end
+
     def modify_command(source, target, start_offset = nil, end_offset = nil)
       #cmd_offsets = arg_offsets(start_offset, end_offset)
-
+      raise StandardError, 'Not implemented'
       #-O val Overwrite existing files?  val is one of: {ask, always,  never}. The default is ask.
       #-a str Prefix str to base part of output filenames
       #-d dir Specify output directory

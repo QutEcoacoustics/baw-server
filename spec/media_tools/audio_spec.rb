@@ -5,7 +5,7 @@ require 'modules/exceptions'
 describe MediaTools::AudioMaster do
 
   # mp3, webm, ogg (wav, wv)
-  let(:duration_range) { 0.07 }
+  let(:duration_range) { 0.15 }
   let(:amplitude_range) { 0.025 }
 
   let(:audio_file_mono) { File.join(File.dirname(__FILE__), 'test-audio-mono.ogg') }
@@ -35,7 +35,7 @@ describe MediaTools::AudioMaster do
   let(:audio_file_amp_2_channels) { File.join(File.dirname(__FILE__), 'amp-channels-2.ogg') }
   let(:audio_file_amp_3_channels) { File.join(File.dirname(__FILE__), 'amp-channels-3.ogg') }
 
-  let(:temp_dir) { File.join(File.dirname(__FILE__), '..', '..', 'tmp') }
+  let(:temp_dir) { File.join(Rails.root, 'tmp') }
   let(:audio_master) { MediaTools::AudioMaster.new(temp_dir) }
   let(:temp_audio_file_1) { File.join(temp_dir, 'temp-audio-1') }
   let(:temp_audio_file_2) { File.join(temp_dir, 'temp-audio-2') }
@@ -104,25 +104,27 @@ describe MediaTools::AudioMaster do
   context 'when modifying audio file' do
     it 'causes exception for invalid path' do
       expect {
-        audio_master.modify(audio_file_does_not_exist_1, audio_file_does_not_exist_2, {})
+        audio_master.modify(audio_file_does_not_exist_1, audio_file_does_not_exist_2)
       }.to raise_error(Exceptions::FileNotFoundError)
     end
 
     it 'causes exception for same path for source and target' do
       expect {
-        audio_master.modify(audio_file_stereo, audio_file_stereo, {})
+        audio_master.modify(audio_file_stereo, audio_file_stereo)
       }.to raise_error(ArgumentError, /Source and Target are the same file/)
     end
 
     context 'ffmpeg makes all changes requested' do
       it 'segments and converts successfully for 2 channels' do
         temp_audio_file = temp_audio_file_1+'.mp3'
-        result = audio_master.audio_ffmpeg.modify(audio_file_amp_2_channels, temp_audio_file, {
-            start_offset: 10,
-            end_offset: 25,
-            channel: 1,
-            sample_rate: 17640
-        })
+        audio_master.modify(audio_file_amp_2_channels, temp_audio_file,
+          {
+              start_offset: 10,
+              end_offset: 25,
+              channel: 1,
+              sample_rate: 17640
+          }
+        )
         info = audio_master.info(temp_audio_file)
         expect(info[:media_type]).to eq('audio/mp3')
         expect(info[:sample_rate_hertz]).to be_within(0.0).of(17640)
@@ -133,12 +135,14 @@ describe MediaTools::AudioMaster do
 
       it 'segments and converts successfully for 1 channel' do
         temp_audio_file = temp_audio_file_1+'.mp3'
-        result = audio_master.audio_ffmpeg.modify(audio_file_amp_1_channels, temp_audio_file, {
-            start_offset: 2.5,
-            end_offset: 7.5,
-            channel: 1,
-            sample_rate: 17640
-        })
+        audio_master.modify(audio_file_amp_1_channels, temp_audio_file,
+          {
+              start_offset: 2.5,
+              end_offset: 7.5,
+              channel: 1,
+              sample_rate: 17640
+          }
+        )
         info = audio_master.info(temp_audio_file)
         expect(info[:media_type]).to eq('audio/mp3')
         expect(info[:sample_rate_hertz]).to be_within(0.0).of(17640)
@@ -152,13 +156,13 @@ describe MediaTools::AudioMaster do
       it 'mp3splt must have a mp3 file as the source' do
         temp_audio_file = temp_audio_file_1+'.mp3'
         expect {
-          audio_master.audio_mp3splt.modify(audio_file_stereo, temp_audio_file, {})
+          audio_master.audio_mp3splt.modify_command(audio_file_stereo, temp_audio_file)
         }.to raise_error(ArgumentError, /Source is not a mp3 file/)
       end
 
       it 'mp3splt must have a mp3 file as the destination' do
         temp_audio_file_a = temp_audio_file_1+'.mp3'
-        result_1 = audio_master.modify(audio_file_stereo, temp_audio_file_a, {})
+        result_1 = audio_master.modify(audio_file_stereo, temp_audio_file_a)
         info_1 = audio_master.info(temp_audio_file_a)
         expect(info_1[:media_type]).to eq('audio/mp3')
         expect(info_1[:sample_rate_hertz]).to be_within(0.0).of(audio_file_stereo_sample_rate)
@@ -168,20 +172,20 @@ describe MediaTools::AudioMaster do
         temp_audio_file_b = temp_audio_file_2+'.wav'
 
         expect {
-          audio_master.audio_mp3splt.modify(temp_audio_file_a, temp_audio_file_b, {})
+          audio_master.audio_mp3splt.modify_command(temp_audio_file_a, temp_audio_file_b)
         }.to raise_error(ArgumentError, /not a mp3 file/)
       end
 
       it 'wavpack must have a wavpack file as the source' do
         temp_audio_file = temp_audio_file_1+'.mp3'
         expect {
-          audio_master.audio_wavpack.modify(audio_file_stereo, temp_audio_file, {})
+          audio_master.audio_wavpack.modify_command(audio_file_stereo, temp_audio_file)
         }.to raise_error(ArgumentError, /Source is not a wavpack file/)
       end
 
       it 'wavpack must have a wav file as the destination' do
         temp_audio_file_a = temp_audio_file_1+'.wv'
-        result_1 = audio_master.modify(audio_file_stereo, temp_audio_file_a, {})
+        result_1 = audio_master.modify(audio_file_stereo, temp_audio_file_a)
         info_1 = audio_master.info(temp_audio_file_a)
         expect(info_1[:media_type]).to eq('audio/wavpack')
         expect(info_1[:sample_rate_hertz]).to be_within(0.0).of(audio_file_stereo_sample_rate)
@@ -191,15 +195,15 @@ describe MediaTools::AudioMaster do
         temp_audio_file_b = temp_audio_file_2+'.wv'
 
         expect {
-          audio_master.audio_wavpack.modify(temp_audio_file_a, temp_audio_file_b, {})
-        }.to raise_error(ArgumentError, /not a wav pack file/)
+          audio_master.audio_wavpack.modify_command(temp_audio_file_a, temp_audio_file_b)
+        }.to raise_error(ArgumentError, /not a wav file/)
       end
     end
 
     context 'processing entire file' do
       it 'correctly converts from .ogg to .wav' do
         temp_audio_file = temp_audio_file_1+'.wav'
-        result = audio_master.modify(audio_file_stereo, temp_audio_file, {})
+        result = audio_master.modify(audio_file_stereo, temp_audio_file)
         info = audio_master.info(temp_audio_file)
         expect(info[:media_type]).to eq('audio/wav')
         expect(info[:sample_rate_hertz]).to be_within(0.0).of(audio_file_stereo_sample_rate)
@@ -209,20 +213,20 @@ describe MediaTools::AudioMaster do
 
       it 'correctly converts from .ogg to .oga' do
         temp_audio_file = temp_audio_file_1+'.oga'
-        result = audio_master.modify(audio_file_stereo, temp_audio_file, {})
+        result = audio_master.modify(audio_file_stereo, temp_audio_file)
         info = audio_master.info(temp_audio_file)
         expect(info[:media_type]).to eq('audio/ogg')
       end
       context 'when modifying audio file' do
         it 'causes exception for invalid path' do
           expect {
-            audio_master.modify(audio_file_does_not_exist_1, audio_file_does_not_exist_2, {})
+            audio_master.modify(audio_file_does_not_exist_1, audio_file_does_not_exist_2)
           }.to raise_error(Exceptions::FileNotFoundError)
         end
 
         it 'causes exception for same path for source and target' do
           expect {
-            audio_master.modify(audio_file_stereo, audio_file_stereo, {})
+            audio_master.modify(audio_file_stereo, audio_file_stereo)
           }.to raise_error(ArgumentError, /Source and Target are the same file/)
         end
 
@@ -230,13 +234,13 @@ describe MediaTools::AudioMaster do
           it 'mp3splt must have a mp3 file as the source' do
             temp_audio_file = temp_audio_file_1+'.mp3'
             expect {
-              audio_master.audio_mp3splt.modify(audio_file_stereo, temp_audio_file, {})
+              audio_master.audio_mp3splt.modify_command(audio_file_stereo, temp_audio_file)
             }.to raise_error(ArgumentError, /Source is not a mp3 file/)
           end
 
           it 'mp3splt must have a mp3 file as the destination' do
             temp_audio_file_a = temp_audio_file_1+'.mp3'
-            result_1 = audio_master.modify(audio_file_stereo, temp_audio_file_a, {})
+            result_1 = audio_master.modify(audio_file_stereo, temp_audio_file_a)
             info_1 = audio_master.info(temp_audio_file_a)
             expect(info_1[:media_type]).to eq('audio/mp3')
             expect(info_1[:sample_rate_hertz]).to be_within(0.0).of(audio_file_stereo_sample_rate)
@@ -246,20 +250,20 @@ describe MediaTools::AudioMaster do
             temp_audio_file_b = temp_audio_file_2+'.wav'
 
             expect {
-              audio_master.audio_mp3splt.modify(temp_audio_file_a, temp_audio_file_b, {})
+              audio_master.audio_mp3splt.modify_command(temp_audio_file_a, temp_audio_file_b)
             }.to raise_error(ArgumentError, /not a mp3 file/)
           end
 
           it 'wavpack must have a wavpack file as the source' do
             temp_audio_file = temp_audio_file_1+'.mp3'
             expect {
-              audio_master.audio_wavpack.modify(audio_file_stereo, temp_audio_file, {})
+              audio_master.audio_wavpack.modify_command(audio_file_stereo, temp_audio_file)
             }.to raise_error(ArgumentError, /Source is not a wavpack file/)
           end
 
           it 'wavpack must have a wav file as the destination' do
             temp_audio_file_a = temp_audio_file_1+'.wv'
-            result_1 = audio_master.modify(audio_file_stereo, temp_audio_file_a, {})
+            result_1 = audio_master.modify(audio_file_stereo, temp_audio_file_a)
             info_1 = audio_master.info(temp_audio_file_a)
             expect(info_1[:media_type]).to eq('audio/wavpack')
             expect(info_1[:sample_rate_hertz]).to be_within(0.0).of(audio_file_stereo_sample_rate)
@@ -269,15 +273,15 @@ describe MediaTools::AudioMaster do
             temp_audio_file_b = temp_audio_file_2+'.wv'
 
             expect {
-              audio_master.audio_wavpack.modify(temp_audio_file_a, temp_audio_file_b, {})
-            }.to raise_error(ArgumentError, /not a wav pack file/)
+              audio_master.audio_wavpack.modify_command(temp_audio_file_a, temp_audio_file_b)
+            }.to raise_error(ArgumentError, /not a wav file/)
           end
         end
 
         context 'processing entire file' do
           it 'correctly converts from .ogg to .wav' do
             temp_audio_file = temp_audio_file_1+'.wav'
-            result = audio_master.modify(audio_file_stereo, temp_audio_file, {})
+            result = audio_master.modify(audio_file_stereo, temp_audio_file)
             info = audio_master.info(temp_audio_file)
             expect(info[:media_type]).to eq('audio/wav')
             expect(info[:sample_rate_hertz]).to be_within(0.0).of(audio_file_stereo_sample_rate)
@@ -287,7 +291,7 @@ describe MediaTools::AudioMaster do
 
           it 'correctly converts from .ogg to .oga' do
             temp_audio_file = temp_audio_file_1+'.oga'
-            result = audio_master.modify(audio_file_stereo, temp_audio_file, {})
+            result = audio_master.modify(audio_file_stereo, temp_audio_file)
             info = audio_master.info(temp_audio_file)
             expect(info[:media_type]).to eq('audio/ogg')
             expect(info[:sample_rate_hertz]).to be_within(0.0).of(audio_file_stereo_sample_rate)
@@ -297,7 +301,7 @@ describe MediaTools::AudioMaster do
 
           it 'correctly converts from .ogg to .mp3' do
             temp_audio_file = temp_audio_file_1+'.mp3'
-            result = audio_master.modify(audio_file_stereo, temp_audio_file, {})
+            result = audio_master.modify(audio_file_stereo, temp_audio_file)
             info = audio_master.info(temp_audio_file)
             expect(info[:media_type]).to eq('audio/mp3')
 
@@ -309,7 +313,7 @@ describe MediaTools::AudioMaster do
 
           it 'correctly converts from .ogg to .asf' do
             temp_audio_file = temp_audio_file_1+'.asf'
-            result = audio_master.modify(audio_file_stereo, temp_audio_file, {})
+            result = audio_master.modify(audio_file_stereo, temp_audio_file)
             info = audio_master.info(temp_audio_file)
             expect(info[:media_type]).to eq('audio/asf')
             expect(info[:sample_rate_hertz]).to be_within(0.0).of(audio_file_stereo_sample_rate)
@@ -319,7 +323,7 @@ describe MediaTools::AudioMaster do
 
           it 'correctly converts from .ogg to .mp4' do
             temp_audio_file = temp_audio_file_1+'.mp4'
-            result = audio_master.modify(audio_file_stereo, temp_audio_file, {})
+            result = audio_master.modify(audio_file_stereo, temp_audio_file)
             info = audio_master.info(temp_audio_file)
             expect(info[:media_type]).to eq('audio/mp4')
             expect(info[:sample_rate_hertz]).to be_within(0.0).of(audio_file_stereo_sample_rate)
@@ -330,7 +334,7 @@ describe MediaTools::AudioMaster do
 
           it 'correctly converts from .ogg to .aac' do
             temp_audio_file = temp_audio_file_1+'.aac'
-            result = audio_master.modify(audio_file_stereo, temp_audio_file, {})
+            result = audio_master.modify(audio_file_stereo, temp_audio_file)
             info = audio_master.info(temp_audio_file)
             expect(info[:media_type]).to eq('audio/aac')
             expect(info[:sample_rate_hertz]).to be_within(0.0).of(audio_file_stereo_sample_rate)
@@ -341,7 +345,7 @@ describe MediaTools::AudioMaster do
 
           it 'correctly converts from .ogg to .webm' do
             temp_audio_file = temp_audio_file_1+'.webm'
-            result = audio_master.modify(audio_file_stereo, temp_audio_file, {})
+            result = audio_master.modify(audio_file_stereo, temp_audio_file)
             info = audio_master.info(temp_audio_file)
             expect(info[:media_type]).to eq('audio/webm')
             expect(info[:sample_rate_hertz]).to be_within(0.0).of(audio_file_stereo_sample_rate)
@@ -352,7 +356,7 @@ describe MediaTools::AudioMaster do
 
           it 'correctly converts from .ogg to .webma' do
             temp_audio_file = temp_audio_file_1+'.webma'
-            result = audio_master.modify(audio_file_stereo, temp_audio_file, {})
+            result = audio_master.modify(audio_file_stereo, temp_audio_file)
             info = audio_master.info(temp_audio_file)
             expect(info[:media_type]).to eq('audio/webm')
             expect(info[:sample_rate_hertz]).to be_within(0.0).of(audio_file_stereo_sample_rate)
@@ -362,7 +366,7 @@ describe MediaTools::AudioMaster do
 
           it 'correctly converts from .ogg to .wv' do
             temp_audio_file = temp_audio_file_1+'.wv'
-            result = audio_master.modify(audio_file_stereo, temp_audio_file, {})
+            result = audio_master.modify(audio_file_stereo, temp_audio_file)
             info = audio_master.info(temp_audio_file)
             expect(info[:media_type]).to eq('audio/wavpack')
             expect(info[:sample_rate_hertz]).to be_within(0.0).of(audio_file_stereo_sample_rate)
@@ -372,7 +376,7 @@ describe MediaTools::AudioMaster do
 
           it 'correctly converts from .ogg to .wav, then from .wav to .mp3' do
             temp_audio_file_a = temp_audio_file_1+'.wav'
-            result_1 = audio_master.modify(audio_file_stereo, temp_audio_file_a, {})
+            result_1 = audio_master.modify(audio_file_stereo, temp_audio_file_a)
             info_1 = audio_master.info(temp_audio_file_a)
             expect(info_1[:media_type]).to eq('audio/wav')
             expect(info_1[:sample_rate_hertz]).to be_within(0.0).of(audio_file_stereo_sample_rate)
@@ -380,7 +384,7 @@ describe MediaTools::AudioMaster do
             expect(info_1[:duration_seconds]).to be_within(duration_range).of(audio_file_stereo_duration_seconds)
 
             temp_audio_file_b = temp_audio_file_2+'.mp3'
-            result_2 = audio_master.modify(temp_audio_file_a, temp_audio_file_b, {})
+            result_2 = audio_master.modify(temp_audio_file_a, temp_audio_file_b)
             info_2 = audio_master.info(temp_audio_file_b)
             expect(info_2[:media_type]).to eq('audio/mp3')
             expect(info_2[:sample_rate_hertz]).to be_within(0.0).of(audio_file_stereo_sample_rate)
@@ -390,7 +394,7 @@ describe MediaTools::AudioMaster do
 
           it 'correctly converts from .ogg to .wav, then from .wav to .ogg' do
             temp_audio_file_a = temp_audio_file_1+'.wav'
-            result_1 = audio_master.modify(audio_file_stereo, temp_audio_file_a, {})
+            result_1 = audio_master.modify(audio_file_stereo, temp_audio_file_a)
             info_1 = audio_master.info(temp_audio_file_a)
             expect(info_1[:media_type]).to eq('audio/wav')
             expect(info_1[:sample_rate_hertz]).to be_within(0.0).of(audio_file_stereo_sample_rate)
@@ -398,7 +402,7 @@ describe MediaTools::AudioMaster do
             expect(info_1[:duration_seconds]).to be_within(duration_range).of(audio_file_stereo_duration_seconds)
 
             temp_audio_file_b = temp_audio_file_2+'.ogg'
-            result_2 = audio_master.modify(temp_audio_file_a, temp_audio_file_b, {})
+            result_2 = audio_master.modify(temp_audio_file_a, temp_audio_file_b)
             info_2 = audio_master.info(temp_audio_file_b)
             expect(info_2[:media_type]).to eq('audio/ogg')
             expect(info_2[:sample_rate_hertz]).to be_within(0.0).of(audio_file_stereo_sample_rate)
@@ -408,7 +412,7 @@ describe MediaTools::AudioMaster do
 
           it 'correctly converts from .ogg to .mp3, then from .mp3 to .wav' do
             temp_audio_file_a = temp_audio_file_1+'.mp3'
-            result_1 = audio_master.modify(audio_file_stereo, temp_audio_file_a, {})
+            result_1 = audio_master.modify(audio_file_stereo, temp_audio_file_a)
             info_1 = audio_master.info(temp_audio_file_a)
             expect(info_1[:media_type]).to eq('audio/mp3')
             expect(info_1[:sample_rate_hertz]).to be_within(0.0).of(audio_file_stereo_sample_rate)
@@ -416,7 +420,7 @@ describe MediaTools::AudioMaster do
             expect(info_1[:duration_seconds]).to be_within(duration_range).of(audio_file_stereo_duration_seconds)
 
             temp_audio_file_b = temp_audio_file_2+'.wav'
-            result_2 = audio_master.modify(temp_audio_file_a, temp_audio_file_b, {})
+            result_2 = audio_master.modify(temp_audio_file_a, temp_audio_file_b)
             info_2 = audio_master.info(temp_audio_file_b)
             expect(info_2[:media_type]).to eq('audio/wav')
             expect(info_2[:sample_rate_hertz]).to be_within(0.0).of(audio_file_stereo_sample_rate)
@@ -456,7 +460,7 @@ describe MediaTools::AudioMaster do
             expect(info_1[:duration_seconds]).to be_within(duration_range).of(10)
 
             temp_audio_file_b = temp_audio_file_2+'.wav'
-            result_2 = audio_master.modify(temp_audio_file_a, temp_audio_file_b, {})
+            result_2 = audio_master.modify(temp_audio_file_a, temp_audio_file_b)
             info_2 = audio_master.info(temp_audio_file_b)
             expect(info_2[:media_type]).to eq('audio/wav')
             expect(info_2[:sample_rate_hertz]).to be_within(0.0).of(audio_file_stereo_sample_rate)
@@ -474,7 +478,7 @@ describe MediaTools::AudioMaster do
             expect(info_1[:duration_seconds]).to be_within(duration_range).of(10)
 
             temp_audio_file_b = temp_audio_file_2+'.ogg'
-            result_2 = audio_master.modify(temp_audio_file_a, temp_audio_file_b, {})
+            result_2 = audio_master.modify(temp_audio_file_a, temp_audio_file_b)
             info_2 = audio_master.info(temp_audio_file_b)
             expect(info_2[:media_type]).to eq('audio/ogg')
             expect(info_2[:sample_rate_hertz]).to be_within(0.0).of(audio_file_stereo_sample_rate)
@@ -485,7 +489,7 @@ describe MediaTools::AudioMaster do
           context 'special case for wavpack files' do
             it 'gets the correct segment of the file when only start_offset is specified' do
               temp_audio_file_a = temp_audio_file_1+'.wv'
-              result_1 = audio_master.modify(audio_file_stereo, temp_audio_file_a, {})
+              result_1 = audio_master.modify(audio_file_stereo, temp_audio_file_a)
               info_1 = audio_master.info(temp_audio_file_a)
               expect(info_1[:media_type]).to eq('audio/wavpack')
               expect(info_1[:sample_rate_hertz]).to be_within(0.0).of(audio_file_stereo_sample_rate)
@@ -503,7 +507,7 @@ describe MediaTools::AudioMaster do
 
             it 'gets the correct segment of the file when only end_offset is specified' do
               temp_audio_file_a = temp_audio_file_1+'.wv'
-              result_1 = audio_master.modify(audio_file_stereo, temp_audio_file_a, {})
+              result_1 = audio_master.modify(audio_file_stereo, temp_audio_file_a)
               info_1 = audio_master.info(temp_audio_file_a)
               expect(info_1[:media_type]).to eq('audio/wavpack')
               expect(info_1[:sample_rate_hertz]).to be_within(0.0).of(audio_file_stereo_sample_rate)
@@ -521,7 +525,7 @@ describe MediaTools::AudioMaster do
 
             it 'gets the correct segment of the file when only offsets are specified' do
               temp_audio_file_a = temp_audio_file_1+'.wv'
-              result_1 = audio_master.modify(audio_file_stereo, temp_audio_file_a, {})
+              result_1 = audio_master.modify(audio_file_stereo, temp_audio_file_a)
               info_1 = audio_master.info(temp_audio_file_a)
               expect(info_1[:media_type]).to eq('audio/wavpack')
               expect(info_1[:sample_rate_hertz]).to be_within(0.0).of(audio_file_stereo_sample_rate)
@@ -541,7 +545,7 @@ describe MediaTools::AudioMaster do
           context 'special case for mp3 files' do
             it 'gets the correct segment of the file when only start_offset is specified' do
               temp_audio_file_a = temp_audio_file_1+'.mp3'
-              result_1 = audio_master.modify(audio_file_stereo, temp_audio_file_a, {})
+              result_1 = audio_master.modify(audio_file_stereo, temp_audio_file_a)
               info_1 = audio_master.info(temp_audio_file_a)
               expect(info_1[:media_type]).to eq('audio/mp3')
               expect(info_1[:sample_rate_hertz]).to be_within(0.0).of(audio_file_stereo_sample_rate)
@@ -559,7 +563,7 @@ describe MediaTools::AudioMaster do
 
             it 'gets the correct segment of the file when only end_offset is specified' do
               temp_audio_file_a = temp_audio_file_1+'.mp3'
-              result_1 = audio_master.modify(audio_file_stereo, temp_audio_file_a, {})
+              result_1 = audio_master.modify(audio_file_stereo, temp_audio_file_a)
               info_1 = audio_master.info(temp_audio_file_a)
               expect(info_1[:media_type]).to eq('audio/mp3')
               expect(info_1[:sample_rate_hertz]).to be_within(0.0).of(audio_file_stereo_sample_rate)
@@ -577,7 +581,7 @@ describe MediaTools::AudioMaster do
 
             it 'gets the correct segment of the file when only offsets are specified' do
               temp_audio_file_a = temp_audio_file_1+'.mp3'
-              result_1 = audio_master.modify(audio_file_stereo, temp_audio_file_a, {})
+              result_1 = audio_master.modify(audio_file_stereo, temp_audio_file_a)
               info_1 = audio_master.info(temp_audio_file_a)
               expect(info_1[:media_type]).to eq('audio/mp3')
               expect(info_1[:sample_rate_hertz]).to be_within(0.0).of(audio_file_stereo_sample_rate)
@@ -726,7 +730,7 @@ describe MediaTools::AudioMaster do
             expect(info[:sample_rate_hertz]).to be_within(0.0).of(44100)
             expect(info[:channels]).to eq(1)
             expect(info[:duration_seconds]).to be_within(duration_range).of(10)
-            expect(info[:max_amplitude]).to be_within(amplitude_range).of(0.9)
+            expect(info[:max_amplitude]).to be_within(amplitude_range).of(0.5)
           end
 
           it 'selects the third of three channels' do
@@ -737,7 +741,7 @@ describe MediaTools::AudioMaster do
             expect(info[:sample_rate_hertz]).to be_within(0.0).of(44100)
             expect(info[:channels]).to eq(1)
             expect(info[:duration_seconds]).to be_within(duration_range).of(10)
-            expect(info[:max_amplitude]).to be_within(amplitude_range).of(0.5)
+            expect(info[:max_amplitude]).to be_within(amplitude_range).of(0.9)
           end
         end
       end
