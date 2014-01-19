@@ -36,21 +36,18 @@ module CacheTools
 
     def self.from_paths_orig(original_paths)
       original = CacheTools::OriginalAudio.new(original_paths)
-
       CacheBase.new(original, nil, nil, nil)
     end
 
     def self.from_paths_audio(original_paths, cache_audio_paths, cache_audio_defaults)
       original = CacheTools::OriginalAudio.new(original_paths)
       cache_audio = CacheTools::CacheAudio.new(cache_audio_paths, cache_audio_defaults)
-
       CacheBase.new(original, cache_audio, nil, nil)
     end
 
     # get all possible full paths for a file
     def possible_storage_paths(cache_class, file_name)
       check_cache_class(cache_class)
-
       cache_class.storage_paths.collect { |path| File.join(path, cache_class.partial_path(file_name), file_name) }
     end
 
@@ -62,13 +59,11 @@ module CacheTools
 
     def possible_storage_dirs(cache_class)
       check_cache_class(cache_class)
-
       cache_class.storage_paths
     end
 
     def existing_storage_dirs(cache_class)
       check_cache_class(cache_class)
-
       cache_class.storage_paths.find_all { |dir| Dir.exists? dir }
     end
 

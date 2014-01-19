@@ -11,14 +11,13 @@ module CacheTools
       # hash of defaults
       @defaults = defaults
 
-      @default_format = 'png'
       @separator = '_'
       @extension_indicator = '.'
     end
 
-    def file_name(uuid, end_offset, start_offset = 0, channel = @defaults[@default_format]['channel'],
-        sample_rate = @defaults[@default_format]['sample_rate'], window = @defaults[@default_format]['window'],
-        colour = @defaults[@default_format]['colour'], format = @default_format)
+    def file_name(uuid, end_offset, start_offset = 0, channel = @defaults.channel,
+        sample_rate = @defaults.sample_rate, window = @defaults.window,
+        colour = @defaults,colour, format = @defaults.format)
 
       result = uuid.to_s + @separator +
 

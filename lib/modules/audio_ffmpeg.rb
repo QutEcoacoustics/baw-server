@@ -4,6 +4,8 @@ require File.dirname(__FILE__) + '/OS'
 module MediaTools
   class AudioFfmpeg
 
+    WARN_ESTIMATE_DURATION = 'Estimating duration from bitrate, this may be inaccurate'
+
     def initialize(ffmpeg_executable, ffprobe_executable, temp_dir)
       @ffmpeg_executable = ffmpeg_executable
       @ffprobe_executable = ffprobe_executable
@@ -16,13 +18,20 @@ module MediaTools
       "#{@ffprobe_executable} -sexagesimal -print_format default -show_error -show_streams -show_format \"#{source}\""
     end
 
-    def modify_command(source, target, start_offset = nil, end_offset = nil, channel = nil, sample_rate = nil)
+    def modify_command(source, source_info, target, start_offset = nil, end_offset = nil, channel = nil, sample_rate = nil)
       raise Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.exists? source
       raise Exceptions::FileAlreadyExistsError, "Target exists: #{target}" if File.exists? target
       raise ArgumentError "Source and Target are the same file: #{target}" unless source != target
 
       cmd_offsets = arg_offsets(start_offset, end_offset)
       sample_rate = arg_sample_rate(sample_rate)
+
+      if sample_rate.blank? && source_info.include?(:sample_rate)
+        sample_rate = arg_sample_rate(source_info[:sample_rate])
+        else
+        sample_rate = arg_sample_rate(sample_rate)
+      end
+
       cmd_channel = arg_channel(channel)
       codec_info = codec_calc(target)
 
@@ -34,9 +43,6 @@ module MediaTools
       else
         move_cmd = "move \"#{codec_info[:target]}\" \"#{codec_info[:old_target]}\""
         separator = OS.windows? ? '&&' : ';'
-        if OS.windows?
-          move_cmd = move_cmd.gsub('/','\\')
-        end
         cmd = "#{audio_cmd} #{separator} #{move_cmd}"
       end
 
@@ -44,7 +50,17 @@ module MediaTools
     end
 
     def check_for_errors(stdout, stderr)
-      raise Exceptions::FileCorruptError if !stderr.blank? && stderr.include?('[') && stderr.include?(' @ ') && stderr.include?('] ')
+
+      unless stderr.blank?
+
+        ffmpeg_warning_tag = '\[[^ ]+ @ [^ ]+\] '
+
+        mod_stderr = stderr
+        if stderr.include?(WARN_ESTIMATE_DURATION)
+          mod_stderr = mod_stderr.gsub(/#{ffmpeg_warning_tag}#{WARN_ESTIMATE_DURATION}/, '')
+        end
+        raise Exceptions::FileCorruptError if !mod_stderr.blank? && mod_stderr.match(/#{ffmpeg_warning_tag}/)
+      end
     end
 
     # returns the duration in seconds (and fractions if present)
@@ -208,7 +224,8 @@ module MediaTools
           # codec_long_name=ALAC (Apple Lossless Audio Codec)
           # format_name=mov,mp4,m4a,3gp,3g2,mj2
           'audio/mp4'
-        when 'AAC (Advanced Audio Coding)', 'AAC LATM (Advanced Audio Coding LATM syntax)', 'ADTS AAC (Advanced Audio Coding)'
+        when 'AAC (Advanced Audio Coding)', 'AAC LATM (Advanced Audio Coding LATM syntax)',
+            'ADTS AAC (Advanced Audio Coding)', 'raw ADTS AAC (Advanced Audio Coding)'
           # codec_name=aac
           # codec_long_name=AAC (Advanced Audio Coding)
           # format_name=aac

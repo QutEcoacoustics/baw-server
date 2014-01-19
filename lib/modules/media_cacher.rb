@@ -125,7 +125,6 @@ module CacheTools
       incr_hash = Digest::SHA256.new
       case hash_type
         when 'MD5'
-          # '::Digest::MD5.new' is actually correct, I have no idea what RubyMine is underlining it for >:(
           incr_hash = ::Digest::MD5.new
         else
 

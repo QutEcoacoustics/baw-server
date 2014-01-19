@@ -8,33 +8,38 @@ require File.dirname(__FILE__) + '/audio_ffmpeg'
 require File.dirname(__FILE__) + '/audio_shntool'
 require File.dirname(__FILE__) + '/exceptions'
 require File.dirname(__FILE__) + '/logger'
+require File.dirname(__FILE__) + '/OS'
 
 # the audio
 module MediaTools
   class AudioMaster
-    include Logging
 
-    attr_reader :audio_ffmpeg, :audio_mp3splt, :audio_sox, :audio_wavpack, :temp_dir, :max_duration_seconds
+    attr_reader :audio_ffmpeg, :audio_mp3splt, :audio_sox, :audio_wavpack, :temp_dir, :max_duration_seconds, :min_duration_seconds
 
     public
 
-    def initialize(temp_dir)
+    def initialize(audio_ffmpeg, audio_mp3splt, audio_sox, audio_wavpack, audio_defaults, temp_dir)
+      @audio_ffmpeg = audio_ffmpeg
+      @audio_mp3splt = audio_mp3splt
+      @audio_sox = audio_sox
+      @audio_wavpack =audio_wavpack
+      @defaults = audio_defaults
       @temp_dir = temp_dir
 
-      ffmpeg_executable = OS.windows? ? "./vendor/bin/ffmpeg/ffmpeg.exe" : "ffmpeg"
-      ffprobe_executable = OS.windows? ? "./vendor/bin/ffmpeg/ffprobe.exe" : "ffprobe"
-      mp3splt_executable = OS.windows? ? "./vendor/bin/mp3splt/mp3splt.exe" : "mp3splt"
-      sox_executable = OS.windows? ? "./vendor/bin/sox/sox.exe" : "sox"
-      wavpack_executable = OS.windows? ? "./vendor/bin/wavpack/wvunpack.exe" : "wvunpack"
-      shntool_executable = OS.windows? ? "./vendor/bin/shntool/shntool.exe" : "shntool"
+      @max_duration_seconds = 300 # 5 minutes
+      @min_duration_seconds = 0.5
+    end
 
-      @audio_ffmpeg = AudioFfmpeg.new(ffmpeg_executable, ffprobe_executable, @temp_dir)
-      @audio_mp3splt = AudioMp3splt.new(mp3splt_executable, @temp_dir)
-      @audio_sox = AudioSox.new(sox_executable, @temp_dir)
-      @audio_wavpack = AudioWavpack.new(wavpack_executable, @temp_dir)
-      @audio_shntool = AudioShntool.new(shntool_executable, @temp_dir)
+    def self.from_executables(ffmpeg_executable, ffprobe_executable,
+        mp3splt_executable, sox_executable, wavpack_executable,
+        audio_defaults, temp_dir)
+      audio_ffmpeg = AudioFfmpeg.new(ffmpeg_executable, ffprobe_executable, temp_dir)
+      audio_mp3splt = AudioMp3splt.new(mp3splt_executable, temp_dir)
+      audio_sox = AudioSox.new(sox_executable, temp_dir)
+      audio_wavpack = AudioWavpack.new(wavpack_executable, temp_dir)
+      #audio_shntool = AudioShntool.new(shntool_executable, temp_dir)
 
-      @max_duration_seconds = 300
+      AudioMaster.new(audio_ffmpeg, audio_mp3splt, audio_sox, audio_wavpack, audio_defaults, temp_dir)
     end
 
     # @return Path to a file. The file does not exist.
@@ -56,7 +61,7 @@ module MediaTools
       # extract only necessary information into a flattened hash
       info_flattened = {
           media_type: @audio_ffmpeg.get_mime_type(ffmpeg_info),
-          sample_rate_hertz: ffmpeg_info['STREAM sample_rate'].to_f
+          sample_rate: ffmpeg_info['STREAM sample_rate'].to_f
       }
 
       if info_flattened[:media_type] == 'audio/wav' ||
@@ -114,29 +119,35 @@ module MediaTools
     end
 
     # Creates a new audio file from source path in target path, modified according to the
-    # parameters in modify_parameters. Possible options:
+    # parameters in modify_parameters. Possible options for modify_parameters:
     # :start_offset :end_offset :channel :sample_rate :format
     def modify(source, target, modify_parameters = {})
       raise ArgumentError, "Source and Target are the same file: #{target}" unless source != target
       raise Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.exists? source
       raise Exceptions::FileAlreadyExistsError, "Target exists: #{target}" if File.exists? target
 
-      check_offsets(modify_parameters)
-
       source_info = info(source)
+
+      check_offsets(source_info, modify_parameters)
 
       modify_worker(source_info, source, target, modify_parameters)
     end
 
     def execute(command)
+
+      if OS.windows?
+        command = command.gsub('/', '\\')
+      end
+
       stdout_str, stderr_str, status = Open3.capture3(command)
 
       msg = "Command status #{status.exitstatus}, executed #{command}"
+      extra_msg = "\n\t Standard output: #{stdout_str}\n\t Standard Error: #{stderr_str}"
 
       if !stderr_str.blank? && status.exitstatus != 0
-        Logging::logger.warn msg+"\n\t Standard output: #{stdout_str}\n\t Standard Error: #{stderr_str}"
+        Logging::logger.warn msg+extra_msg
       else
-        Logging::logger.debug msg
+        Logging::logger.debug msg+extra_msg
       end
 
       {
@@ -147,18 +158,50 @@ module MediaTools
       }
     end
 
+    def check_offsets(source_info, modify_parameters = {})
+      start_offset = 0.0
+      end_offset = source_info[:duration_seconds].to_f
+
+      if modify_parameters.include? :start_offset
+        start_offset = modify_parameters[:start_offset].to_f
+      end
+
+      if modify_parameters.include? :end_offset
+        end_offset = modify_parameters[:end_offset].to_f
+      end
+
+      if end_offset < start_offset
+        temp_end_offset = end_offset
+        end_offset = start_offset
+        start_offset = temp_end_offset
+      end
+
+      duration = end_offset - start_offset
+      raise Exceptions::SegmentRequestTooLong, "#{end_offset} - #{start_offset} = #{duration} (max: #{@max_duration_seconds})" if duration > @max_duration_seconds
+      raise Exceptions::SegmentRequestTooShort, "#{end_offset} - #{start_offset} = #{duration} (min: #{@min_duration_seconds})" if duration > @min_duration_seconds
+
+      modify_parameters[:start_offset] = start_offset
+      modify_parameters[:end_offset] = end_offset
+      modify_parameters[:duration] = duration
+    end
+
+    def check_target(target)
+      raise Exceptions::FileNotFoundError, "#{target}" unless File.exists?(target)
+      raise Exceptions::FileEmptyError, "#{target}" if File.size(target) < 1
+    end
+
     private
 
     def modify_worker(source_info, source, target, modify_parameters = {})
       if source_info[:media_type] == 'audio/wavpack'
         # convert to wave and segment
-        audio_tool_segment('wav', :modify_wavpack, source, target, modify_parameters)
+        audio_tool_segment('wav', :modify_wavpack, source, source_info, target, modify_parameters)
       elsif source_info[:media_type] == 'audio/mp3' && (modify_parameters.include?(:start_offset) || modify_parameters.include?(:end_offset))
         # segment only, so check for offsets
-        audio_tool_segment('mp3', :modify_mp3splt, source, target, modify_parameters)
+        audio_tool_segment('mp3', :modify_mp3splt, source, source_info, target, modify_parameters)
         #elsif source_info[:media_type] == 'audio/wav' && (modify_parameters.include?(:start_offset) || modify_parameters.include?(:end_offset))
         #  # segment only, so check for offsets
-        #  audio_tool_segment('wav', :modify_shntool, source, target, modify_parameters)
+        #  audio_tool_segment('wav', :modify_shntool, source, source_info, target, modify_parameters)
       else
 
         start_offset = modify_parameters.include?(:start_offset) ? modify_parameters[:start_offset] : nil
@@ -170,18 +213,18 @@ module MediaTools
 
           # Convert to wav first to avoid problems with other formats
           temp_file_1 = temp_file('wav')
-          cmd = @audio_ffmpeg.modify_command(source, temp_file_1, start_offset, end_offset)
+          cmd = @audio_ffmpeg.modify_command(source, source_info, temp_file_1, start_offset, end_offset)
           execute(cmd)
           check_target(temp_file_1)
 
           # resample using sox.
           temp_file_2 = temp_file('wav')
-          cmd = @audio_sox.modify_command(temp_file_1, temp_file_2, nil, nil, channel, sample_rate)
+          cmd = @audio_sox.modify_command(temp_file_1, info(temp_file_1), temp_file_2, nil, nil, channel, sample_rate)
           execute(cmd)
           check_target(temp_file_2)
 
           # convert to requested format after resampling
-          cmd = @audio_ffmpeg.modify_command(temp_file_2, target)
+          cmd = @audio_ffmpeg.modify_command(temp_file_2, info(temp_file_2), target)
           execute(cmd)
           check_target(temp_file_1)
 
@@ -189,7 +232,7 @@ module MediaTools
           File.delete temp_file_2
         else
           # use ffmpeg for anything else
-          cmd = @audio_ffmpeg.modify_command(source, target, start_offset, end_offset, channel, sample_rate)
+          cmd = @audio_ffmpeg.modify_command(source, source_info, target, start_offset, end_offset, channel, sample_rate)
           execute(cmd)
           check_target(target)
         end
@@ -197,25 +240,25 @@ module MediaTools
       end
     end
 
-    def modify_wavpack(source, target, start_offset, end_offset)
-      cmd = @audio_wavpack.modify_command(source, target, start_offset, end_offset)
+    def modify_wavpack(source, source_info, target, start_offset, end_offset)
+      cmd = @audio_wavpack.modify_command(source, source_info, target, start_offset, end_offset)
       execute(cmd)
     end
 
-    def modify_mp3splt(source, target, start_offset, end_offset)
-      cmd = @audio_mp3splt.modify_command(source, target, start_offset, end_offset)
+    def modify_mp3splt(source, source_info, target, start_offset, end_offset)
+      cmd = @audio_mp3splt.modify_command(source, source_info, target, start_offset, end_offset)
       execute(cmd)
     end
 
-    def modify_shntool(source, target, start_offset, end_offset)
-      cmd = @audio_shntool.modify_command(source, target, start_offset, end_offset)
-      execute(cmd)
-    end
+    #def modify_shntool(source, source_info, target, start_offset, end_offset)
+    #  cmd = @audio_shntool.modify_command(source, source_info, target, start_offset, end_offset)
+    #  execute(cmd)
+    #end
 
-    def audio_tool_segment(extension, audio_tool_method, source, target, modify_parameters)
+    def audio_tool_segment(extension, audio_tool_method, source, source_info, target, modify_parameters)
       # process the source file, put output to temp file
       temp_file = temp_file(extension)
-      self.send(audio_tool_method, source, temp_file, modify_parameters[:start_offset], modify_parameters[:end_offset])
+      self.send(audio_tool_method, source, source_info, temp_file, modify_parameters[:start_offset], modify_parameters[:end_offset])
       check_target(temp_file)
 
       # remove start and end offset from modify_parameters (otherwise it will be done again!)
@@ -228,35 +271,13 @@ module MediaTools
       File.delete temp_file
     end
 
-    def check_offsets(modify_parameters = {})
-      start_offset = 0
-      end_offset = @max_duration_seconds
-
-      if modify_parameters.include? :start_offset
-        start_offset = modify_parameters[:start_offset]
+    def check_sample_rate(modify_parameters = {})
+      # must be 8, 11.025, 12, 16, 22.05, 24, 32, 44.1, 48 khz if not wav
+      if modify_parameters.include?(:sample_rate) && File.extname(arget) != '.wav'
+        sample_rate = modify_parameters[:sample_rate]
+        raise InvalidSampleRateError, "Sample rate #{}"
       end
 
-      if modify_parameters.include? :end_offset
-        end_offset = modify_parameters[:end_offset]
-      end
-
-      if end_offset < start_offset
-        temp_end_offset = end_offset
-        end_offset = start_offset
-        start_offset = temp_end_offset
-      end
-
-      duration = end_offset - start_offset
-      raise Exceptions::SegmentRequestTooLong, "#{end_offset} - #{start_offset} = #{duration} (max: #{@max_duration_seconds})" if duration > @max_duration_seconds
-
-      modify_parameters[:start_offset] = start_offset
-      modify_parameters[:end_offset] = end_offset
-      modify_parameters[:duration] = duration
-    end
-
-    def check_target(target)
-      raise Exceptions::AudioFileNotFoundError, "#{target}" unless File.exists?(target)
-      raise Exceptions::FileEmptyError, "#{target}" if File.size(target) < 1
     end
 
   end

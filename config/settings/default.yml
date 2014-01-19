@@ -77,24 +77,27 @@ defaults: &defaults
     email: address+admin@example.com
     password: password
   cached_audio_defaults:
-    mp3:
-      channel: 0
-      sample_rate: 22050
-    webm:
-      channel: 0
-      sample_rate: 22050
-    ogg:
-      channel: 0
-      sample_rate: 22050
+    format: mp3
+    channel: 0
+    sample_rate: 22050
   cached_spectrogram_defaults:
-    png:
-      channel: 0
-      sample_rate: 22050
-      window: 512
-      colour: 'g'
+    format: png
+    channel: 0
+    sample_rate: 22050
+    window: 512
+    colour: 'g'
+    ppms: 0.045
   cached_dataset_defaults:
-    txt:
-      one_item_per_line: true
+    format: txt
+    one_item_per_line: true
+  audio_tools:
+    ffmpeg_executable: .\vendor\bin\ffmpeg\ffmpeg.exe
+    ffprobe_executable: .\vendor\bin\ffmpeg\ffprobe_executable.exe
+    mp3splt_executable: .\vendor\bin\mp3splt\mp3splt.exe
+    sox_executable: .\vendor\bin\sox\sox.exe
+    wavpack_executable: .\vendor\bin\wavpack\wvunpack.exe
+    imagemagick_executable: .\vendor\bin\imagemagick\convert.exe
+    max_duration_seconds: 300
 
 development:
   <<: *defaults

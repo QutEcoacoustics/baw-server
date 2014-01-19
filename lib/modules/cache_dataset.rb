@@ -11,12 +11,11 @@ module CacheTools
       # hash of defaults
       @defaults = defaults
 
-      @default_format = 'txt'
       @separator = '_'
       @extension_indicator = '.'
     end
 
-    def file_name(saved_search_id, dataset_id, format = @default_format)
+    def file_name(saved_search_id, dataset_id, format = @defaults.format)
       result = saved_search_id.to_s + @separator + dataset_id.to_s + @extension_indicator + format.trim('.', '').to_s
       result.downcase
 

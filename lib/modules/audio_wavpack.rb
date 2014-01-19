@@ -41,7 +41,7 @@ module MediaTools
       raise Exceptions::AudioToolError if !stderr.blank? && stderr.include?(ERROR_NOT_COMPATIBLE)
     end
 
-    def modify_command(source, target, start_offset = nil, end_offset = nil)
+    def modify_command(source, source_info, target, start_offset = nil, end_offset = nil)
       raise ArgumentError, "Source is not a wavpack file: #{source}" unless source.match(/\.wv$/)
       raise ArgumentError, "Target is not a wav file: : #{target}" unless target.match(/\.wav$/)
       raise Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.exists? source

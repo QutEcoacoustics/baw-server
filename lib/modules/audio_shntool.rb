@@ -44,7 +44,7 @@ module MediaTools
       raise Exceptions::AudioToolError if !stderr.blank? && stderr.include?(ERROR_NO_HANDLER)
     end
 
-    def modify_command(source, target, start_offset = nil, end_offset = nil)
+    def modify_command(source, source_info, target, start_offset = nil, end_offset = nil)
       #cmd_offsets = arg_offsets(start_offset, end_offset)
       raise StandardError, 'Not implemented'
       #-O val Overwrite existing files?  val is one of: {ask, always,  never}. The default is ask.

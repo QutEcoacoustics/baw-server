@@ -8,7 +8,7 @@ module MediaTools
 
     public
 
-    def modify_command(source, target, start_offset = nil, end_offset = nil)
+    def modify_command(source, source_info, target, start_offset = nil, end_offset = nil)
       raise ArgumentError, "Source is not a mp3 file: #{source}" unless source.match(/\.mp3$/)
       raise ArgumentError, "Target is not a mp3 file: : #{target}" unless target.match(/\.mp3$/)
       raise Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.exists? source

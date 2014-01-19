@@ -25,7 +25,7 @@ class MediaController < ApplicationController
         options[:datetime] = @audio_recording.recorded_date
         options[:original_format] = File.extname(@audio_recording.original_file_name) unless @audio_recording.original_file_name.blank?
         options[:original_format] = '.' + Mime::Type.lookup(@audio_recording.media_type).to_sym.to_s if options[:original_format].blank?
-        options[:format] = params[:format]
+        options[:format] = params[:format] || Settings.cached_audio_defaults.format
         options[:start_offset] = (params[:start_offset] || 0).to_f
         options[:end_offset] = (params[:end_offset] || @audio_recording.duration_seconds).to_f
         options[:uuid] = @audio_recording.uuid
@@ -40,8 +40,8 @@ class MediaController < ApplicationController
         }
 
         if AUDIO_MEDIA_TYPES.include?(mime_type)
-          options[:channel] = (params[:channel] || Settings.cached_audio_defaults[options[:format]].channel).to_i
-          options[:sample_rate] = (params[:sample_rate] || Settings.cached_audio_defaults[options[:format]].sample_rate).to_i
+          options[:channel] = (params[:channel] || Settings.cached_audio_defaults.channel).to_i
+          options[:sample_rate] = (params[:sample_rate] || Settings.cached_audio_defaults.sample_rate).to_i
           # date and time are for finding the original audio file
           options[:date] = @audio_recording.recorded_date.strftime "%y%m%d"
           options[:time] = @audio_recording.recorded_date.strftime "%H%M"

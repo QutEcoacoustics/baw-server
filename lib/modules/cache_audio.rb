@@ -11,13 +11,12 @@ module CacheTools
       # hash of defaults
       @defaults = defaults
 
-      @default_format = 'mp3'
       @separator = '_'
       @extension_indicator = '.'
     end
 
-    def file_name(uuid, end_offset, start_offset = 0, channel = @defaults[@default_format]['channel'],
-        sample_rate = @defaults[@default_format]['sample_rate'], format = @default_format)
+    def file_name(uuid, end_offset, start_offset = 0, channel = @defaults.channel,
+        sample_rate = @defaults.sample_rate, format = @defaults.format)
       result = uuid.to_s + @separator +
           start_offset.to_f.to_s + @separator + end_offset.to_f.to_s + @separator +
           channel.to_i.to_s + @separator + sample_rate.to_i.to_s +

@@ -42,7 +42,7 @@ module MediaTools
       raise Exceptions::AudioToolError if !stderr.blank? && stderr.include?(ERROR_NO_HANDLER)
     end
 
-    def modify_command(source, target, start_offset = nil, end_offset = nil, channel = nil, sample_rate = nil)
+    def modify_command(source, source_info, target, start_offset = nil, end_offset = nil, channel = nil, sample_rate = nil)
       raise ArgumentError, "Source is not a wav file: #{source}" unless source.match(/\.wav$/)
       raise ArgumentError, "Target is not a wav file: : #{target}" unless target.match(/\.wav$/)
       raise Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.exists? source
@@ -57,6 +57,38 @@ module MediaTools
       "#{@sox_executable} -q -V4 \"#{source}\" \"#{target}\" #{cmd_offsets} #{sample_rate} #{cmd_channel}"
     end
 
+    def spectrogram_command(source, source_info, target, start_offset = nil, end_offset = nil, channel = nil, sample_rate = nil,
+        window = nil, colour = nil)
+      raise ArgumentError, "Source is not a wav file: #{source}" unless source.match(/\.wav$/)
+      raise ArgumentError, "Target is not a png file: : #{target}" unless target.match(/\.png/)
+      raise Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.exists? source
+      raise Exceptions::FileAlreadyExistsError, "Target exists: #{target}" if File.exists? target
+      raise ArgumentError "Source and Target are the same file: #{target}" unless source != target
+
+      cmd_offsets = arg_offsets(start_offset, end_offset)
+      cmd_sample_rate = arg_sample_rate(sample_rate)
+      cmd_channel = arg_channel(channel)
+      cmd_window = arg_window(window)
+      cmd_colour = arg_colour(colour)
+
+      cmd_spectrogram = 'spectrogram -r -l -a -w Hamming -X 43.06640625'
+
+      # sox command to create a spectrogram from an audio file
+      # -V is for verbose
+      # -n indicates no output audio file
+      "#{@sox_path} -V \"#{source}\" -n #{cmd_offsets} #{cmd_sample_rate} #{cmd_channel} #{cmd_spectrogram} #{cmd_colour} #{cmd_window} -o \"#{target}\""
+    end
+
+    def window_options
+      [128, 256, 512, 1024, 2048, 4096]
+    end
+
+    def colour_options
+      {:g => :greyscale}
+    end
+
+    private
+
     def arg_channel(channel)
       cmd_arg = ''
       unless channel.blank?
@@ -69,10 +101,10 @@ module MediaTools
             sox input.wav output.wav remix −
             performs a mix-down of all input channels to mono.
 =end
-          cmd_arg = ' remix - '
+          cmd_arg = 'remix -'
         else
           # select the channel (0 indicates silent channel)
-          cmd_arg = " remix #{channel_number} "
+          cmd_arg = "remix #{channel_number}"
         end
       end
       cmd_arg
@@ -84,7 +116,7 @@ module MediaTools
         # resample quality: medium (m), high (h), veryhigh (v)
         # -s steep filter (band-width = 99%)
         # -a allow aliasing/imaging above the pass-band
-        cmd_arg = " rate -v -s -a #{sample_rate}"
+        cmd_arg = "rate -v -s -a #{sample_rate}"
       end
       cmd_arg
     end
@@ -108,6 +140,38 @@ module MediaTools
       end
 
       cmd_arg
+    end
+
+    def arg_window(window)
+      all_window_options = window_options.join(', ')
+      window_param = @defaults_spectrogram[:window].to_i
+
+      unless window.blank?
+        window_param = window.to_i
+        raise ArgumentError, "Window size must be one of '#{all_window_options}', given '#{window_param}'." unless window_options.include? window_param
+      end
+
+      # window size must be one more than a power of two, see sox documentation http://sox.sourceforge.net/sox.html
+      window_param = (window_param / 2) + 1
+      '-y '+window_param.to_s
+    end
+
+    def arg_colour(colour)
+      colours_available = colour_options.map { |k, v| "#{k} (#{v})" }.join(', ')
+      colour_param = @defaults_spectrogram[:colour].to_s
+
+      unless colour.blank?
+        colour_param = colour.to_s
+        raise ArgumentError, "Colour must be one of '#{colours_available}', given '#{}'." unless colour_options.include? colour_param.to_sym
+      end
+
+      default = '-m -q 249 -z 100'
+      case colour_param
+        when 'g'
+          default
+        else
+          default
+      end
     end
 
   end
