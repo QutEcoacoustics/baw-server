@@ -178,7 +178,7 @@ module MediaTools
 
       duration = end_offset - start_offset
       raise Exceptions::SegmentRequestTooLong, "#{end_offset} - #{start_offset} = #{duration} (max: #{@max_duration_seconds})" if duration > @max_duration_seconds
-      raise Exceptions::SegmentRequestTooShort, "#{end_offset} - #{start_offset} = #{duration} (min: #{@min_duration_seconds})" if duration > @min_duration_seconds
+      raise Exceptions::SegmentRequestTooShort, "#{end_offset} - #{start_offset} = #{duration} (min: #{@min_duration_seconds})" if duration < @min_duration_seconds
 
       modify_parameters[:start_offset] = start_offset
       modify_parameters[:end_offset] = end_offset

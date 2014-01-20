@@ -92,7 +92,7 @@ defaults: &defaults
     one_item_per_line: true
   audio_tools:
     ffmpeg_executable: .\vendor\bin\ffmpeg\ffmpeg.exe
-    ffprobe_executable: .\vendor\bin\ffmpeg\ffprobe_executable.exe
+    ffprobe_executable: .\vendor\bin\ffmpeg\ffprobe.exe
     mp3splt_executable: .\vendor\bin\mp3splt\mp3splt.exe
     sox_executable: .\vendor\bin\sox\sox.exe
     wavpack_executable: .\vendor\bin\wavpack\wvunpack.exe

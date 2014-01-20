@@ -17,7 +17,7 @@ module CacheTools
 
     def file_name(uuid, end_offset, start_offset = 0, channel = @defaults.channel,
         sample_rate = @defaults.sample_rate, window = @defaults.window,
-        colour = @defaults,colour, format = @defaults.format)
+        colour = @defaults.colour, format = @defaults.format)
 
       result = uuid.to_s + @separator +
 
