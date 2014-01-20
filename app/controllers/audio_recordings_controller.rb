@@ -1,4 +1,4 @@
-require './lib/modules/media_cacher'
+
 
 class AudioRecordingsController < ApplicationController
 

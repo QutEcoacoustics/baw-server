@@ -1,11 +1,10 @@
 require 'fileutils'
 require 'spec_helper'
-require 'modules/cache'
-require 'modules/exceptions'
+require 'string'
 
-describe CacheTools::CacheBase do
+describe CacheBase do
 
-  let(:cache_base) { CacheTools::CacheBase.from_paths(
+  let(:cache_base) { CacheBase.from_paths(
       Settings.paths.original_audios,
       Settings.paths.cached_audios, Settings.cached_audio_defaults,
       Settings.paths.cached_spectrograms, Settings.cached_spectrogram_defaults,

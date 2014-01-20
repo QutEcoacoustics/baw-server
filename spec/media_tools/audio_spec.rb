@@ -2,7 +2,7 @@ require 'spec_helper'
 require 'modules/audio'
 require 'modules/exceptions'
 
-describe MediaTools::AudioMaster do
+describe AudioMaster do
 
   # mp3, webm, ogg (wav, wv)
   let(:duration_range) { 0.15 }
@@ -29,7 +29,7 @@ describe MediaTools::AudioMaster do
   let(:audio_file_amp_3_channels) { File.join(File.dirname(__FILE__), 'amp-channels-3.ogg') }
 
   let(:temp_dir) { File.join(Rails.root, 'tmp') }
-  let(:audio_master) { MediaTools::AudioMaster.from_executables(
+  let(:audio_master) { AudioMaster.from_executables(
       Settings.audio_tools.ffmpeg_executable, Settings.audio_tools.ffprobe_executable,
       Settings.audio_tools.mp3splt_executable, Settings.audio_tools.sox_executable, Settings.audio_tools.wavpack_executable,
       Settings.cached_audio_defaults,

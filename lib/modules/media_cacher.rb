@@ -115,40 +115,6 @@ module CacheTools
       target_existing_paths.first
     end
 
-    def check_file_hash(file_path, audio_recording)
-      # ensure this audio recording needs to be checked
-      return if audio_recording.status != :to_check
 
-      # type of hash is at start of hash_to_compare, split using two colons
-      hash_type, compare_hash = audio_recording.file_hash.split('::')
-
-      incr_hash = Digest::SHA256.new
-      case hash_type
-        when 'MD5'
-          incr_hash = ::Digest::MD5.new
-        else
-
-      end
-
-      File.open(file_path) do |file|
-        buffer = ''
-
-        # Read the file 512 bytes at a time
-        until file.eof
-          file.read(512, buffer)
-          incr_hash.update(buffer)
-        end
-      end
-
-      # if hashes do not match, mark audio recording as corrupt
-      if incr_hash.hexdigest.upcase == compare_hash
-        audio_recording.status = :ready
-        audio_recording.save!
-      else
-        audio_recording.status = :corrupt
-        audio_recording.save!
-        raise "Audio recording was not verified successfully: #{audio_recording.uuid}."
-      end
-    end
   end
 end

@@ -1,5 +1,3 @@
-require './lib/modules/media_cacher'
-
 class MediaController < ApplicationController
 
   #load_resource :project, only: [:audio, :spectrogram]
@@ -17,10 +15,17 @@ class MediaController < ApplicationController
   OFFSET_REGEXP = /^\d+(\.\d{1,3})?$/ # passes '111', '11.123'
 
   def show
+
+    available_text_formats = Settings.available_formats.text
+    available_audio_formats = Settings.available_formats.audio
+    available_image_formats = Settings.available_formats.image
+
+    available_formats = available_text_formats.concat(available_audio_formats).concat(available_image_formats)
+
     if @audio_recording.status != 'ready'
       render json: {error: 'Audio recording is not ready'}.to_json, status: :unprocessable_entity
     else
-      if %w(json mp3 webm ogg png).include?(params[:format].downcase)
+      if available_formats.include?(params[:format].downcase)
         options = Hash.new
         options[:datetime] = @audio_recording.recorded_date
         options[:original_format] = File.extname(@audio_recording.original_file_name) unless @audio_recording.original_file_name.blank?
@@ -45,7 +50,7 @@ class MediaController < ApplicationController
           # date and time are for finding the original audio file
           options[:date] = @audio_recording.recorded_date.strftime "%y%m%d"
           options[:time] = @audio_recording.recorded_date.strftime "%H%M"
-          download_options[:file_path] = CacheTools::MediaCacher.create_audio_segment(options)
+          download_options[:file_path] = MediaCacher.create_audio_segment(options)
           download_file(download_options)
         elsif  IMAGE_MEDIA_TYPES.include?(mime_type)
           options[:channel] = (params[:channel] || Settings.cached_spectrogram_defaults[options[:format]].channel).to_i
@@ -58,8 +63,8 @@ class MediaController < ApplicationController
           #download_file(full_path, mime_type)
           send_file full_path, :stream => true, :buffer_size => 4096, :disposition => 'inline', :type => mime_type, :content_type => mime_type
         else
-          options[:available_audio_formats] = Settings.cached_audio_defaults.each { |key, value| value.merge!({mime_type: Mime::Type.lookup_by_extension(key).to_s, url: audio_recording_media_path(@audio_recording, format: key, start_offset: params[:start_offset], end_offset: params[:end_offset])}) }
-          options[:available_image_formats] = Settings.cached_spectrogram_defaults.each { |key, value| value.merge!({mime_type: Mime::Type.lookup_by_extension(key).to_s, url: audio_recording_media_path(@audio_recording, format: key, start_offset: params[:start_offset], end_offset: params[:end_offset])}) }
+          options[:available_audio_formats] = get_available_formats(@audio_recording, available_audio_formats, params[:start_offset], params[:end_offset], Settings.cached_audio_defaults)
+          options[:available_image_formats] = get_available_formats(@audio_recording, available_image_formats, params[:start_offset], params[:end_offset], Settings.cached_spectrogram_defaults)
           render json: options.to_json
         end
       else
@@ -68,6 +73,18 @@ class MediaController < ApplicationController
     end
   end
 
+  def get_available_formats(audio_recording, formats, start_offset, end_offset, defaults)
+    formats.each { |format| info_hash = defaults.merge!({
+                                                            mime_type: Mime::Type.lookup_by_extension(format).to_s,
+                                                            url: audio_recording_media_path(audio_recording,
+                                                                                            format: format,
+                                                                                            start_offset: start_offset,
+                                                                                            end_offset: end_offset),
+                                                        })
+    info_hash.delete :format
+    info_hash
+    }
+  end
 
   def reference_audio
 

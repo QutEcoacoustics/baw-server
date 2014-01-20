@@ -1,4 +1,5 @@
-require './lib/modules/media_cacher'
+require 'digest'
+require 'digest/md5'
 
 class AudioRecording < ActiveRecord::Base
 
@@ -67,9 +68,11 @@ class AudioRecording < ActiveRecord::Base
   scope :tag_text, lambda { |tag_text| includes(:tags).where(Tag.arel_table[:text].matches("%#{tag_text}%")) }
 
   def original_file_exists?
+    self.original_file_paths.length > 0
+  end
 
-    cache = CacheTools::CacheBase.from_paths_audio(
-        Settings.paths.original_audios, Settings.paths.cached_audios, Settings.cached_audio_defaults)
+  def original_file_paths
+    cache = Settings.cache_tool
 
     original_format = '.wv' # pick something
 
@@ -79,13 +82,160 @@ class AudioRecording < ActiveRecord::Base
       original_format = Mime::Type.file_extension_of(self.media_type)
     end
 
-    if original_format.blank?
-      false
-    else
+    source_existing_paths = []
+    unless original_format.blank?
       file_name = cache.original_audio.file_name(self.uuid, self.recorded_date, self.recorded_date, original_format)
-      source_possible_paths = cache.existing_storage_paths(cache.original_audio, file_name)
-      source_possible_paths.length > 0
+      source_existing_paths = cache.existing_storage_paths(cache.original_audio, file_name)
     end
+
+    source_existing_paths
+  end
+
+  def check_file_hash
+    # ensure this audio recording needs to be checked
+    return if self.status != 'to_check'
+
+    # type of hash is at start of hash_to_compare, split using two colons
+    hash_type, compare_hash = self.file_hash.split('::')
+
+    case hash_type
+      when 'MD5'
+        incr_hash = ::Digest::MD5.new
+      else
+        incr_hash = Digest::SHA256.new
+    end
+
+    raise "Audio recording file could not be found: #{self.uuid}" if self.original_file_paths.length < 1
+
+    # assume that all files for a recording are identical. pick the first one
+    File.open(self.original_file_paths.first!) do |file|
+      buffer = ''
+
+      # Read the file 512 bytes at a time
+      until file.eof
+        file.read(512, buffer)
+        incr_hash.update(buffer)
+      end
+    end
+
+    # if hashes do not match, mark audio recording as corrupt
+    if incr_hash.hexdigest.upcase == compare_hash
+      self.status = 'ready'
+      self.save!
+    else
+      self.status = 'corrupt'
+      self.save!
+      raise "Audio recording was not verified successfully: #{self.uuid}."
+    end
+  end
+
+  def check_status
+    case self.status.to_s
+      when 'new'
+        raise "Audio recording is not yet ready to be accessed: #{self.uuid}."
+      when 'to_check'
+        # check the original file hash
+        self.check_file_hash
+      when 'corrupt'
+        raise "Audio recording is corrupt and cannot be accessed: #{self.uuid}."
+      when 'ignore'
+        raise "Audio recording is ignored and may not be accessed: #{self.uuid}."
+      else
+    end
+  end
+
+  def generate_spectrogram(modify_parameters = {})
+    cache = Settings.cache_tool
+# first check if a cached spectrogram matches the request
+
+    target_file = cache.cache_spectrogram.file_name(modify_parameters)
+    target_existing_paths = cache.existing_storage_paths(cache.cache_spectrogram, target_file)
+
+    if target_existing_paths.blank?
+      # if no cached spectrogram images exist, try to create them from the cached audio (it must be a wav file)
+      cached_wav_audio_parameters = modify_parameters.clone
+      cached_wav_audio_parameters[:format] = 'wav'
+
+      source_file = cache.cached_audio_file(cached_wav_audio_parameters)
+      source_existing_paths = cache.existing_cached_audio_paths(source_file)
+
+      if source_existing_paths.blank?
+        # change the format to wav, so spectrograms can be created from the audio
+        audio_modify_parameters = modify_parameters.clone
+        audio_modify_parameters[:format] = 'wav'
+
+        # if no cached audio files exist, try to create them
+        create_audio_segment(audio_modify_parameters)
+        source_existing_paths = cache.existing_cached_audio_paths(source_file)
+        # raise an exception if the cached audio files could not be created
+        raise Exceptions::AudioFileNotFoundError, "Could not generate spectrogram." if source_existing_paths.blank?
+      end
+
+      # create the spectrogram image in each of the possible paths
+      target_possible_paths = cache.possible_cached_spectrogram_paths(target_file)
+      target_possible_paths.each { |path|
+        # ensure the subdirectories exist
+        FileUtils.mkpath(File.dirname(path))
+        # generate the spectrogram
+        Spectrogram::generate(source_existing_paths.first, path, modify_parameters)
+      }
+      target_existing_paths = cache.existing_cached_spectrogram_paths(target_file)
+
+      raise Exceptions::SpectrogramFileNotFoundError, "Could not find spectrogram." if target_existing_paths.blank?
+    end
+
+    # the requested spectrogram image should exist in at least one possible path
+    # return the first existing full path
+    target_existing_paths.first
+  end
+
+  def modify_audio(modify_parameters = {})
+    cache = Settings.cache_tool
+# first check if a cached audio file matches the request
+    target_file = cache.cached_audio_file(modify_parameters)
+    target_existing_paths = cache.existing_cached_audio_paths(target_file)
+
+    if target_existing_paths.blank?
+      # if no cached audio files exist, try to create them from the original audio
+      source_file = cache.original_audio_file(modify_parameters)
+      source_existing_paths = cache.existing_original_audio_paths(source_file)
+      source_possible_paths = cache.possible_original_audio_paths(source_file)
+
+      # if the original audio files cannot be found, raise an exception
+      raise Exceptions::AudioFileNotFoundError, "Could not find original audio in '#{source_possible_paths}'." if source_existing_paths.blank?
+
+      audio_recording = AudioRecording.where(:id => modify_parameters[:id]).first!
+
+      # check audio file status
+      case audio_recording.status
+        when :new
+          raise "Audio recording is not yet ready to be accessed: #{audio_recording.uuid}."
+        when :to_check
+          # check the original file hash
+          check_file_hash(source_existing_paths.first, audio_recording)
+        when :corrupt
+          raise "Audio recording is corrupt and cannot be accessed: #{audio_recording.uuid}."
+        when :ignore
+          raise "Audio recording is ignored and may not be accessed: #{audio_recording.uuid}."
+        else
+      end
+
+      raise "Audio recording was not ready: #{audio_recording.uuid}." unless audio_recording.status.to_sym == :ready
+
+      # create the cached audio file in each of the possible paths
+      target_possible_paths = cache.possible_cached_audio_paths(target_file)
+      target_possible_paths.each { |path|
+        # ensure the subdirectories exist
+        FileUtils.mkpath(File.dirname(path))
+        # create the audio segment
+        Audio::modify(source_existing_paths.first, path, modify_parameters)
+      }
+      target_existing_paths = cache.existing_cached_audio_paths(target_file)
+    end
+
+    # the requested audio file should exist in at least one possible path
+    # return the first existing full path
+    target_existing_paths.first
   end
 
   private
