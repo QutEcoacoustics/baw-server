@@ -26,7 +26,7 @@ class SitesController < ApplicationController
 
     # only responds to json requests
     respond_to do |format|
-      format.json { render json: @site }
+      format.json { render json: @site, methods: :project_ids }
     end
   end
 

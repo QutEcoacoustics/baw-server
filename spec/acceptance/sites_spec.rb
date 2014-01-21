@@ -159,7 +159,7 @@ resource 'Sites' do
 
     let(:authentication_token) { writer_token }
 
-    standard_request('SHOW (as writer)' ,200,'longitude', true)
+    standard_request('SHOW (as writer)' ,200,'project_ids', true)
   end
 
   get '/sites/:id' do
