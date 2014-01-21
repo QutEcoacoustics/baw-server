@@ -1,5 +1,5 @@
 require 'spec_helper'
-require 'modules/audio'
+require 'modules/audio_base'
 require 'modules/spectrogram'
 require 'modules/exceptions'
 
@@ -15,13 +15,12 @@ describe Spectrogram do
   let(:audio_file_amp_3_channels) { File.join(File.dirname(__FILE__), 'amp-channels-3.ogg') }
 
   let(:temp_dir) { File.join(Rails.root, 'tmp') }
-  let(:audio_master) { AudioMaster.from_executables(
+  let(:audio_base) { AudioBase.from_executables(
       Settings.audio_tools.ffmpeg_executable, Settings.audio_tools.ffprobe_executable,
       Settings.audio_tools.mp3splt_executable, Settings.audio_tools.sox_executable, Settings.audio_tools.wavpack_executable,
-      Settings.cached_audio_defaults,
-      temp_dir) }
+      Settings.cached_audio_defaults, temp_dir) }
   let(:spectrogram) { Spectrogram.from_executables(
-      audio_master,
+      audio_base,
       Settings.audio_tools.imagemagick_convert_executable, Settings.audio_tools.imagemagick_identify_executable,
       Settings.cached_spectrogram_defaults, temp_dir) }
   let(:temp_image_file_1) { File.join(temp_dir, 'temp-image-1') }
@@ -40,8 +39,12 @@ describe Spectrogram do
 
   context 'getting info about image' do
     it 'returns all required information' do
+
+      source = temp_audio_file_1+'.wav'
+      audio_base.modify(audio_file_mono, source)
+
       target = temp_image_file_1+'.png'
-      spectrogram.modify(audio_file_mono, target)
+      spectrogram.modify(source, target)
       info = spectrogram.info(target)
       expect(info).to include(:media_type)
       expect(info).to include(:width)
@@ -53,14 +56,12 @@ describe Spectrogram do
 
   context 'generating spectrogram' do
     it 'runs to completion when given an existing audio file' do
-      target = temp_image_file_1+'.png'
-      spectrogram.modify(audio_file_mono, target)
-    end
 
-    it 'gives the expected image width' do
-      target = temp_image_file_1+'.png'
-      spectrogram.modify(audio_file_mono, target, {start_offset: 10, end_offset: 55})
-    end
+      source = temp_audio_file_1+'.wav'
+      audio_base.modify(audio_file_mono, source)
 
+      target = temp_image_file_1+'.png'
+      spectrogram.modify(source, target)
+    end
   end
 end

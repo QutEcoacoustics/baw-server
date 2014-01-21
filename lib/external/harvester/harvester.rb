@@ -7,7 +7,7 @@ require 'fileutils'
 
 
 require File.dirname(__FILE__) + '/../../modules/logging'
-require File.dirname(__FILE__) + '/../../modules/audio'
+require File.dirname(__FILE__) + '/../../modules/audio_base'
 require File.dirname(__FILE__) + '/../../modules/exceptions'
 require File.dirname(__FILE__) + '/../../modules/cache'
 

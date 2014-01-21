@@ -1,5 +1,5 @@
 require File.dirname(__FILE__) + '/logging'
-
+require File.dirname(__FILE__) + '/string'
 class AudioWavpack
 
   ERROR_NOT_COMPATIBLE = 'not compatible with this version of WavPack file!'

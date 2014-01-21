@@ -20,6 +20,10 @@ class MediaController < ApplicationController
     available_audio_formats = Settings.available_formats.audio
     available_image_formats = Settings.available_formats.image
 
+    default_audio = Settings.cached_audio_defaults
+    default_spectrogram = Settings.cached_spectrogram_defaults
+    default_dataset = Settings.cached_dataset_defaults
+
     available_formats = available_text_formats.concat(available_audio_formats).concat(available_image_formats)
 
     if @audio_recording.status != 'ready'
@@ -30,41 +34,39 @@ class MediaController < ApplicationController
         options[:datetime] = @audio_recording.recorded_date
         options[:original_format] = File.extname(@audio_recording.original_file_name) unless @audio_recording.original_file_name.blank?
         options[:original_format] = '.' + Mime::Type.lookup(@audio_recording.media_type).to_sym.to_s if options[:original_format].blank?
-        options[:format] = params[:format] || Settings.cached_audio_defaults.format
+        # date and time are for finding the original audio file
+        options[:date] = @audio_recording.recorded_date.strftime '%y%m%d'
+        options[:time] = @audio_recording.recorded_date.strftime '%H%M'
         options[:start_offset] = (params[:start_offset] || 0).to_f
         options[:end_offset] = (params[:end_offset] || @audio_recording.duration_seconds).to_f
         options[:uuid] = @audio_recording.uuid
         options[:id] = @audio_recording.id
         mime_type = Mime::Type.lookup_by_extension(options[:format])
 
-        download_options = {
-            media_type: mime_type,
-            site_name: @audio_recording.site.name,
-            recorded_date: @audio_recording.recorded_date,
-            ext: options[:format]
-        }
-
         if AUDIO_MEDIA_TYPES.include?(mime_type)
-          options[:channel] = (params[:channel] || Settings.cached_audio_defaults.channel).to_i
-          options[:sample_rate] = (params[:sample_rate] || Settings.cached_audio_defaults.sample_rate).to_i
-          # date and time are for finding the original audio file
-          options[:date] = @audio_recording.recorded_date.strftime "%y%m%d"
-          options[:time] = @audio_recording.recorded_date.strftime "%H%M"
-          download_options[:file_path] = MediaCacher.create_audio_segment(options)
-          download_file(download_options)
+          options[:format] = params[:format] || default_audio.format
+          options[:channel] = (params[:channel] || default_audio.channel).to_i
+          options[:sample_rate] = (params[:sample_rate] || default_audio.sample_rate).to_i
+          download_file(
+              {
+                  media_type: mime_type,
+                  site_name: @audio_recording.site.name,
+                  recorded_date: @audio_recording.recorded_date,
+                  ext: options[:format],
+                  file_path: MediaCacher.create_audio_segment(options)
+              })
         elsif  IMAGE_MEDIA_TYPES.include?(mime_type)
-          options[:channel] = (params[:channel] || Settings.cached_spectrogram_defaults[options[:format]].channel).to_i
-          options[:sample_rate] = (params[:sample_rate] || Settings.cached_spectrogram_defaults[options[:format]].sample_rate).to_i
-          options[:window] = (params[:window] || Settings.cached_spectrogram_defaults[options[:format]].window).to_i
-          options[:colour] = (params[:colour] || Settings.cached_spectrogram_defaults[options[:format]].colour).to_s
-          options[:date] = @audio_recording.recorded_date.strftime "%y%m%d"
-          options[:time] = @audio_recording.recorded_date.strftime "%H%M"
+          options[:format] = params[:format] || default_spectrogram.format
+          options[:channel] = (params[:channel] || default_spectrogram.channel).to_i
+          options[:sample_rate] = (params[:sample_rate] || default_spectrogram.sample_rate).to_i
+          options[:window] = (params[:window] || default_spectrogram.window).to_i
+          options[:colour] = (params[:colour] || default_spectrogram.colour).to_s
           full_path = CacheTools::MediaCacher.generate_spectrogram(options)
           #download_file(full_path, mime_type)
-          send_file full_path, :stream => true, :buffer_size => 4096, :disposition => 'inline', :type => mime_type, :content_type => mime_type
+          send_file full_path, stream: true, buffer_size: 4096, disposition: 'inline', type: mime_type, content_type: mime_type
         else
-          options[:available_audio_formats] = get_available_formats(@audio_recording, available_audio_formats, params[:start_offset], params[:end_offset], Settings.cached_audio_defaults)
-          options[:available_image_formats] = get_available_formats(@audio_recording, available_image_formats, params[:start_offset], params[:end_offset], Settings.cached_spectrogram_defaults)
+          options[:available_audio_formats] = get_available_formats(@audio_recording, available_audio_formats, params[:start_offset], params[:end_offset], default_audio)
+          options[:available_image_formats] = get_available_formats(@audio_recording, available_image_formats, params[:start_offset], params[:end_offset], default_spectrogram)
           render json: options.to_json
         end
       else
@@ -74,13 +76,15 @@ class MediaController < ApplicationController
   end
 
   def get_available_formats(audio_recording, formats, start_offset, end_offset, defaults)
-    formats.each { |format| info_hash = defaults.merge!({
-                                                            mime_type: Mime::Type.lookup_by_extension(format).to_s,
-                                                            url: audio_recording_media_path(audio_recording,
-                                                                                            format: format,
-                                                                                            start_offset: start_offset,
-                                                                                            end_offset: end_offset),
-                                                        })
+    formats.each { |format| info_hash = defaults.merge!(
+        {
+            mime_type: Mime::Type.lookup_by_extension(format).to_s,
+            url: audio_recording_media_path(audio_recording,
+                                            format: format,
+                                            start_offset: start_offset,
+                                            end_offset: end_offset),
+        }
+    )
     info_hash.delete :format
     info_hash
     }

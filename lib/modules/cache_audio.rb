@@ -1,21 +1,19 @@
+require File.dirname(__FILE__) + '/string'
+
 class CacheAudio
 
-  attr_reader :storage_paths, :defaults
+  attr_reader :storage_paths
 
   public
 
-  def initialize(storage_paths, defaults)
+  def initialize(storage_paths)
     # array of top-level folder paths to store cached audio
     @storage_paths = storage_paths
-    # hash of defaults
-    @defaults = defaults
-
     @separator = '_'
     @extension_indicator = '.'
   end
 
-  def file_name(uuid, end_offset, start_offset = 0, channel = @defaults.channel,
-      sample_rate = @defaults.sample_rate, format = @defaults.format)
+  def file_name(uuid, start_offset, end_offset, channel, sample_rate, format)
     result = uuid.to_s + @separator +
         start_offset.to_f.to_s + @separator + end_offset.to_f.to_s + @separator +
         channel.to_i.to_s + @separator + sample_rate.to_i.to_s +
@@ -28,6 +26,4 @@ class CacheAudio
     # assume that the file name starts with the uuid, get the first two chars as the sub folder
     file_name[0, 2].downcase
   end
-
-
 end

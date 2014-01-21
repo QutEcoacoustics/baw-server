@@ -5,15 +5,15 @@ require File.dirname(__FILE__) + '/audio_sox'
 require File.dirname(__FILE__) + '/audio_mp3splt'
 require File.dirname(__FILE__) + '/audio_wavpack'
 require File.dirname(__FILE__) + '/audio_ffmpeg'
-require File.dirname(__FILE__) + '/audio_shntool'
+#require File.dirname(__FILE__) + '/audio_shntool'
 require File.dirname(__FILE__) + '/exceptions'
 require File.dirname(__FILE__) + '/logging'
 require File.dirname(__FILE__) + '/OS'
 
 
-class AudioMaster
+class AudioBase
 
-  attr_reader :audio_ffmpeg, :audio_mp3splt, :audio_sox, :audio_wavpack, :temp_dir, :max_duration_seconds, :min_duration_seconds
+  attr_reader :audio_ffmpeg, :audio_mp3splt, :audio_sox, :audio_wavpack, :temp_dir, :audio_defaults
 
   public
 
@@ -22,11 +22,8 @@ class AudioMaster
     @audio_mp3splt = audio_mp3splt
     @audio_sox = audio_sox
     @audio_wavpack =audio_wavpack
-    @defaults = audio_defaults
+    @audio_defaults = audio_defaults
     @temp_dir = temp_dir
-
-    @max_duration_seconds = 300 # 5 minutes
-    @min_duration_seconds = 0.5
   end
 
   def self.from_executables(ffmpeg_executable, ffprobe_executable,
@@ -38,7 +35,7 @@ class AudioMaster
     audio_wavpack = AudioWavpack.new(wavpack_executable, temp_dir)
     #audio_shntool = AudioShntool.new(shntool_executable, temp_dir)
 
-    AudioMaster.new(audio_ffmpeg, audio_mp3splt, audio_sox, audio_wavpack, audio_defaults, temp_dir)
+    AudioBase.new(audio_ffmpeg, audio_mp3splt, audio_sox, audio_wavpack, audio_defaults, temp_dir)
   end
 
   # @return Path to a file. The file does not exist.
@@ -76,7 +73,29 @@ class AudioMaster
       sox_stat = @audio_sox.parse_info_output(sox_stat_output[:stderr])
 
       @audio_sox.check_for_errors(sox_stat_output[:stdout], sox_stat_output[:stderr])
-      info_flattened[:max_amplitude] = sox_stat['Maximum amplitude'].to_f
+      max_amp = sox_stat['Maximum amplitude'].to_f
+      info_flattened[:max_amplitude] = max_amp
+
+      # check for audio problems
+
+      # too short
+      duration = sox_stat['Length (seconds)'].to_f
+      min_useful = 0.5
+      Logging::logger.warn "Audio file duration #{duration} is less than #{min_useful}. This file may not be useful: #{source}" if duration < min_useful
+
+      # clipped
+      min_amp = sox_stat['Maximum amplitude'].to_f
+      min_amp_threshold = -0.999
+      max_amp_threshold = 0.999
+      Logging::logger.warn "Audio file has been clipped (max amplitude #{max_amp_threshold}, min amplitude #{min_amp_threshold}): #{source}" if min_amp_threshold >= min_amp && max_amp_threshold <= max_amp
+
+      # dc offset TODO
+
+      # zero signal
+      mean_norm = sox_stat['Mean    norm'].to_f
+      zero_sig_threshold = 0.001
+      Logging::logger.warn "Audio file has zero signal (mean norm is less than #{zero_sig_threshold}): #{source}" if zero_sig_threshold >= mean_norm
+
     end
 
     if info_flattened[:media_type] == 'audio/wavpack'
@@ -127,7 +146,8 @@ class AudioMaster
 
     source_info = info(source)
 
-    check_offsets(source_info, modify_parameters)
+    check_offsets(source_info, @audio_defaults.min_duration_seconds, @audio_defaults.max_duration_seconds, modify_parameters)
+    check_sample_rate(target, modify_parameters)
 
     modify_worker(source_info, source, target, modify_parameters)
   end
@@ -157,7 +177,7 @@ class AudioMaster
     }
   end
 
-  def check_offsets(source_info, modify_parameters = {})
+  def check_offsets(source_info, min_duration_seconds, max_duration_seconds, modify_parameters = {})
     start_offset = 0.0
     end_offset = source_info[:duration_seconds].to_f
 
@@ -176,8 +196,8 @@ class AudioMaster
     end
 
     duration = end_offset - start_offset
-    raise Exceptions::SegmentRequestTooLong, "#{end_offset} - #{start_offset} = #{duration} (max: #{@max_duration_seconds})" if duration > @max_duration_seconds
-    raise Exceptions::SegmentRequestTooShort, "#{end_offset} - #{start_offset} = #{duration} (min: #{@min_duration_seconds})" if duration < @min_duration_seconds
+    raise Exceptions::SegmentRequestTooLong, "#{end_offset} - #{start_offset} = #{duration} (max: #{max_duration_seconds})" if duration > max_duration_seconds
+    raise Exceptions::SegmentRequestTooShort, "#{end_offset} - #{start_offset} = #{duration} (min: #{min_duration_seconds})" if duration < min_duration_seconds
 
     modify_parameters[:start_offset] = start_offset
     modify_parameters[:end_offset] = end_offset
@@ -187,6 +207,16 @@ class AudioMaster
   def check_target(target)
     raise Exceptions::FileNotFoundError, "#{target}" unless File.exists?(target)
     raise Exceptions::FileEmptyError, "#{target}" if File.size(target) < 1
+  end
+
+  def check_sample_rate(target, modify_parameters = {})
+    # must be 8, 11.025, 12, 16, 22.05, 24, 32, 44.1, 48 khz if not wav
+    if modify_parameters.include?(:sample_rate) && File.extname(target) != '.wav'
+      sample_rate = modify_parameters[:sample_rate].to_i
+      valid_sample_rates = [8000, 11025, 12000, 16000, 22050, 24000, 32000, 44100, 48000]
+      raise Exceptions::InvalidSampleRateError, 'Arbitrary sample rates only valid for wav files. '+
+          "Sample rate #{sample_rate} requested for #{File.extname(target)} not in #{valid_sample_rates}." unless valid_sample_rates.include?(sample_rate)
+    end
   end
 
   private
@@ -270,13 +300,5 @@ class AudioMaster
     File.delete temp_file
   end
 
-  def check_sample_rate(modify_parameters = {})
-    # must be 8, 11.025, 12, 16, 22.05, 24, 32, 44.1, 48 khz if not wav
-    if modify_parameters.include?(:sample_rate) && File.extname(arget) != '.wav'
-      sample_rate = modify_parameters[:sample_rate]
-      raise InvalidSampleRateError, "Sample rate #{}"
-    end
-
-  end
 
 end

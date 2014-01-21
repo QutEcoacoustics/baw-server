@@ -49,6 +49,8 @@ AWB::Application.configure do
   # Expands the lines which load the assets
   config.assets.debug = true
 
+
+
   # Set path for image magick for windows only
   if RbConfig::CONFIG['target_os'] =~ /mswin|mingw/i
     im_dir = Settings.paths.image_magick_dir
@@ -70,6 +72,9 @@ AWB::Application.configure do
     Bullet.rails_logger = true
     Bullet.add_footer = true
     Bullet.raise = false
+
+    # rotate the log files once they reach 5MB and save the 3 most recent rotated logs
+    config.logger = Logger.new(Rails.root.join('log', "#{Rails.env}.log"), 3, 5.megabytes)
   end
 end
 

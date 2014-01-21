@@ -33,6 +33,6 @@ module Logging
   end
 
   def self.set_level
-    @logger.level = Logger::DEBUG
+    @logger.level = Logger::INFO
   end
 end

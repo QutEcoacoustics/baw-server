@@ -6,9 +6,9 @@ describe CacheBase do
 
   let(:cache_base) { CacheBase.from_paths(
       Settings.paths.original_audios,
-      Settings.paths.cached_audios, Settings.cached_audio_defaults,
-      Settings.paths.cached_spectrograms, Settings.cached_spectrogram_defaults,
-      Settings.paths.cached_datasets, Settings.cached_dataset_defaults) }
+      Settings.paths.cached_audios,
+      Settings.paths.cached_spectrograms,
+      Settings.paths.cached_datasets) }
 
   let(:uuid) { '5498633d-89a7-4b65-8f4a-96aa0c09c619' }
   let(:datetime) { Time.zone.parse("2012-03-02 16:05:37") }
@@ -108,15 +108,10 @@ describe CacheBase do
       cache_base.possible_storage_dirs(cache_base.cache_audio).should =~ Settings.paths.cached_audios
     end
 
-    it 'defaults match settings' do
-      # uuid, end_offset, start_offset, channel, sample_rate, format
-      expect(cache_base.cache_audio.file_name(uuid, end_offset)).to eq cached_audio_file_name_defaults
-    end
-
     it 'creates the correct name' do
       # uuid, end_offset, start_offset, channel, sample_rate, format
       expect(
-          cache_base.cache_audio.file_name(uuid, end_offset, start_offset, channel, sample_rate, format_audio)
+          cache_base.cache_audio.file_name(uuid, start_offset, end_offset, channel, sample_rate, format_audio)
       ).to eq cached_audio_file_name_given_parameters
     end
 
@@ -140,15 +135,10 @@ describe CacheBase do
       cache_base.possible_storage_dirs(cache_base.cache_spectrogram).should =~ Settings.paths.cached_spectrograms
     end
 
-    it 'defaults match settings' do
-      # uuid, end_offset, start_offset, channel, sample_rate, window,colour, format
-      expect(cache_base.cache_spectrogram.file_name(uuid, end_offset)).to eq cached_spectrogram_file_name_defaults
-    end
-
     it 'creates the correct name' do
       # uuid, end_offset, start_offset, channel, sample_rate, window,colour, format
       expect(
-          cache_base.cache_spectrogram.file_name(uuid, end_offset, start_offset, channel, sample_rate, window, colour, format_spectrogram)
+          cache_base.cache_spectrogram.file_name(uuid, start_offset, end_offset, channel, sample_rate, window, colour, format_spectrogram)
       ).to eq cached_spectrogram_file_name_given_parameters
     end
 

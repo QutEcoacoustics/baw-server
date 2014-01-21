@@ -18,8 +18,7 @@ class Settings < Settingslogic
   end
 
   def cache_tool
-    @cache_tool ||= CacheBase.from_paths_audio(
-        Settings.paths.original_audios, Settings.paths.cached_audios, Settings.cached_audio_defaults)
+    @cache_tool ||= CacheBase.from_paths_audio(Settings.paths.original_audios, Settings.paths.cached_audios)
   end
 
 end

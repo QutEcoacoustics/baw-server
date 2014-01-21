@@ -80,6 +80,8 @@ defaults: &defaults
     format: mp3
     channel: 0
     sample_rate: 22050
+    max_duration_seconds: 300.0
+    min_duration_seconds: 0.5
   cached_spectrogram_defaults:
     format: png
     channel: 0
@@ -87,6 +89,8 @@ defaults: &defaults
     window: 512
     colour: 'g'
     ppms: 0.045
+    max_duration_seconds: 120.0
+    min_duration_seconds: 0.5
   cached_dataset_defaults:
     format: txt
     one_item_per_line: true
