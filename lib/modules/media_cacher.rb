@@ -5,7 +5,7 @@ require File.dirname(__FILE__) + '/spectrogram'
 require File.dirname(__FILE__) + '/audio_base'
 require File.dirname(__FILE__) + '/exceptions'
 
-# This is the class that uses the audio tools and cache tools to cur audio segments
+# This is the class that uses the audio tools and cache tools to cut audio segments
 # and generate spectrograms, then save them to the correct path.
 class MediaCacher
 
