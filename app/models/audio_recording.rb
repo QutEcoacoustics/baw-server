@@ -119,29 +119,37 @@ class AudioRecording < ActiveRecord::Base
     end
 
     # if hashes do not match, mark audio recording as corrupt
-    if incr_hash.hexdigest.upcase == compare_hash
+    if incr_hash.hexdigest.upcase == compare_hash.upcase
       self.status = 'ready'
       self.save!
     else
       self.status = 'corrupt'
       self.save!
-      raise "Audio recording was not verified successfully: #{self.uuid}."
+      raise "Audio recording file hash did not match stored hash: #{self.uuid} File hash: #{incr_hash.hexdigest.upcase} stored hash: #{compare_hash.upcase}."
     end
   end
 
+  # returns true if this audio_recording can be accessed, otherwise false
   def check_status
+    can_be_accessed = false
+
     case self.status.to_s
       when 'new'
-        raise "Audio recording is not yet ready to be accessed: #{self.uuid}."
+        logger.info "Audio recording #{self.uuid} is in state 'new' and is not yet ready to be accessed."
       when 'to_check'
-        # check the original file hash
+        logger.debug "Audio recording #{self.uuid} is in state 'to_check' and will be checked by comparing the file hash and stored hash."
         self.check_file_hash
       when 'corrupt'
-        raise "Audio recording is corrupt and cannot be accessed: #{self.uuid}."
+        logger.warn "Audio recording #{self.uuid} is in state 'corrupt' and cannot be accessed."
       when 'ignore'
-        raise "Audio recording is ignored and may not be accessed: #{self.uuid}."
+        logger.info "Audio recording #{self.uuid} is in state 'ignore' and cannot be accessed."
+      when 'ready'
+        can_be_accessed = true
       else
+        logger.info "Audio recording #{self.uuid} is in state '#{self.status.to_s}', which is unknown."
     end
+
+    can_be_accessed
   end
 
   private

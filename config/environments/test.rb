@@ -46,9 +46,7 @@ AWB::Application.configure do
     Paperclip.options[:command_path] = im_dir
   end
 
-  config.log_level = :debug
-
-
+  config.log_level = :info
 
   config.after_initialize do
   #  Bullet.enable = false
