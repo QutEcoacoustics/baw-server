@@ -71,12 +71,12 @@ class AudioEventsController < ApplicationController
 
     project_id = nil
     if params[:project_id]
-      project_id = Integer(params[:project_id].to_s, 10)
+      project_id = params[:project_id].to_i
     end
 
     site_id = nil
     if params[:site_id]
-      site_id = Integer(params[:site_id].to_s, 10)
+      site_id = params[:site_id].to_i
     end
 
     query = AudioEvent.includes(:tags)
@@ -112,12 +112,15 @@ class AudioEventsController < ApplicationController
 
     annotations.each do |annotation|
 
+      abs_start = annotation.audio_recording.recorded_date.advance(seconds: annotation[:start_time_seconds])
+      abs_end = annotation.audio_recording.recorded_date.advance(seconds: annotation[:end_time_seconds])
+
       annotation_items = [
           annotation[:id],
-          annotation.audio_recording.recorded_date.advance(:seconds => annotation[:start_time_seconds]).strftime('%Y/%m/%d'),
-          annotation.audio_recording.recorded_date.advance(:seconds => annotation[:start_time_seconds]).strftime('%H:%M:%S'),
-          annotation.audio_recording.recorded_date.advance(:seconds => annotation[:end_time_seconds]).strftime('%Y/%m/%d'),
-          annotation.audio_recording.recorded_date.advance(:seconds => annotation[:end_time_seconds]).strftime('%H:%M:%S'),
+          abs_start.strftime('%Y/%m/%d'),
+          abs_start.strftime('%H:%M:%S'),
+          abs_end.strftime('%Y/%m/%d'),
+          abs_end.strftime('%H:%M:%S'),
           annotation[:high_frequency_hertz], annotation[:low_frequency_hertz],
           annotation.audio_recording.site.projects.collect{ |project| project.id }.join(' | '),
           annotation.audio_recording.site.id,
