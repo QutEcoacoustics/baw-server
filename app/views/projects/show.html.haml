@@ -9,7 +9,7 @@
   %h3= 'Sites'
   - unless @project.sites.empty?
     %ul.thumbnails.span6.project_sites
-      - @project.sites.each do |site|
+      - NaturalSort.sort(@project.sites, :name).each do |site|
         .row-fluid.spacer
           = render partial: 'sites/site_thumb_large', locals: {site: site}
 
