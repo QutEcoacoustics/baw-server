@@ -17,8 +17,7 @@ class AudioEvent < ActiveRecord::Base
 
   # userstamp
   stampable
-  #acts_as_paranoid
-  #validates_as_paranoid
+  acts_as_paranoid({column: 'deleted_at', column_type: 'time'})
 
   # validation
   validates :audio_recording_id, presence: true
@@ -32,14 +31,14 @@ class AudioEvent < ActiveRecord::Base
   validate :start_must_be_lte_end
   validate :low_must_be_lte_high
 
-  before_validation :set_tags , on: :create
+  before_validation :set_tags, on: :create
 
 
   # Scopes
-  scope :start_after, lambda { |offset_seconds| where('start_time_seconds > ?', offset_seconds)}
-  scope :start_before, lambda { |offset_seconds| where('start_time_seconds < ?', offset_seconds)}
-  scope :end_after, lambda { |offset_seconds| where('end_time_seconds > ?', offset_seconds)}
-  scope :end_before, lambda { |offset_seconds| where('end_time_seconds < ?', offset_seconds)}
+  scope :start_after, lambda { |offset_seconds| where('start_time_seconds > ?', offset_seconds) }
+  scope :start_before, lambda { |offset_seconds| where('start_time_seconds < ?', offset_seconds) }
+  scope :end_after, lambda { |offset_seconds| where('end_time_seconds > ?', offset_seconds) }
+  scope :end_before, lambda { |offset_seconds| where('end_time_seconds < ?', offset_seconds) }
 
   private
 

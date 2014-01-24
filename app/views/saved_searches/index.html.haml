@@ -1,0 +1,37 @@
+%h1 Listing datasets
+
+%table
+  %tr
+    %th Name
+    %th Start time
+    %th End time
+    %th Start date
+    %th End date
+    %th Filters
+    %th Number of samples
+    %th Number of tags
+    %th Types of tags
+    %th Description
+    %th
+    %th
+    %th
+
+  - @datasets.each do |dataset|
+    %tr
+      %td= dataset.name
+      %td= dataset.start_time
+      %td= dataset.end_time
+      %td= dataset.start_date
+      %td= dataset.end_date
+      %td= dataset.filters
+      %td= dataset.number_of_samples
+      %td= dataset.number_of_tags
+      %td= dataset.types_of_tags
+      %td= dataset.description
+      %td= link_to 'Show', dataset
+      %td= link_to 'Edit', edit_dataset_path(dataset)
+      %td= link_to 'Destroy', dataset, :method => :delete, :data => { :confirm => 'Are you sure?' }
+
+%br
+
+= link_to 'New Dataset', new_dataset_path

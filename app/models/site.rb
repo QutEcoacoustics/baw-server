@@ -3,7 +3,7 @@ class Site < ActiveRecord::Base
 
   # relations
   has_and_belongs_to_many :projects, uniq: true
-  has_and_belongs_to_many :datasets, uniq: true
+  has_and_belongs_to_many :saved_searches, uniq: true
   has_many :audio_recordings, inverse_of: :site
 
   belongs_to :creator, class_name: 'User', foreign_key: :creator_id

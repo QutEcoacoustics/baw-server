@@ -60,7 +60,7 @@ FactoryGirl.define do
     end
   end
 
-  factory :dataset_for_project, class: Dataset do
+  factory :saved_search_for_project, class: SavedSearch do
     name { Faker::Name.title }
     description { Faker::Lorem.paragraph }
     association :creator, factory: :user
@@ -76,7 +76,7 @@ FactoryGirl.define do
 
     after(:create) do |project, evaluator|
       FactoryGirl.create(:site_for_project, projects: [project])
-      FactoryGirl.create(:dataset_for_project, project: project)
+      FactoryGirl.create(:saved_search_for_project, project: project)
     end
   end
 

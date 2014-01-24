@@ -31,6 +31,8 @@ resource 'Datasets' do
     @read_permission = FactoryGirl.create(:read_permission, project: @write_permission.project)
   end
 
+  it_should_behave_like :a_delete_api_call, Dataset, :allow_delete, :allow_archive
+
   ################################
   # LIST
   ################################

@@ -40,11 +40,11 @@ AWB::Application.routes.draw do
       end
     end
     resources :sites, :only => [:index], :defaults => { :format => 'json' }
-    resources :datasets, :except => [:index] do
+    resources :saved_searches, :except => [:index] do
       resources :jobs, :only => [:show]
       resources :jobs, :only => [:index], :defaults => { :format => 'json' }
     end
-    resources :datasets, :only => [:index], :defaults => { :format => 'json' }
+    resources :saved_searches, :only => [:index], :defaults => { :format => 'json' }
     resources :jobs, :except => [:index, :show]
     resources :jobs, :only => [:index], :defaults => { :format => 'json' }
   end

@@ -1,0 +1,56 @@
+= simple_form_for [@project, @saved_search], html: {class: 'form-horizontal'}  do |f|
+  = f.error_notification
+  .row-fluid
+    .span6.form-inputs
+      %fieldset
+        %legend Information
+        = f.input :name, required: true, placeholder: 'Name', input_html: {class: 'span12' }
+        = f.input :description, input_html: {class: 'span12',rows: 3 }, placeholder: 'Description'
+
+      %fieldset
+        %legend Sites
+        = f.collection_select :site_ids, @project.sites, :id, :name, {prompt: false, include_blank:false }, { class: 'span12', multiple: true }
+    .span6
+      = gmaps(markers: {data: @project.sites.to_gmaps4rails},
+      map_options: gmaps_default_options)
+      = yield :scripts
+
+  .row-fluid
+    .span6
+      %fieldset
+        %legend Dates and Times
+        = f.input :has_time, as: :boolean, label: 'Enable Time Filter'
+        = f.input :start_time, as: :string , disabled: !@saved_search.has_time,  wrapper: :bootstrap_timepicker, input_html: {class: 'span12', value: (@saved_search.start_time.nil? ? nil : l(@saved_search.start_time, format: :short))}
+        = f.input :end_time, as: :string , disabled: !@saved_search.has_time, wrapper: :bootstrap_timepicker, input_html: {class: 'span12', value: (@saved_search.end_time.nil? ? nil : l(@saved_search.end_time, format: :short))}
+        = f.input :has_date, as: :boolean, label: 'Enable Date Filter'
+        = f.input :start_date, as: :string, order: [:year, :month, :day], disabled: !@saved_search.has_date, input_html: {class: 'span12', value: (@saved_search.start_date.nil? ? nil : l(@saved_search.start_date, format: :short))}
+        = f.input :end_date, as: :string, order: [:year, :month, :day], disabled: !@saved_search.has_date,  input_html: {class: 'span12', value: (@saved_search.end_date.nil? ? nil : l(@saved_search.end_date, format: :short))}
+    .span6
+      %fieldset
+        %legend Tag Filters
+        -#= f.input :filters, prompt: 'No Filter'
+        -#= f.input :number_of_samples, label: 'Number of random 1 min samples', input_html: {class: 'span12'}
+        = f.input :number_of_tags, collection: SavedSearch::AVAILABLE_NUMBER_OF_TAGS, include_blank: 'No Restriction', input_html: {class: 'span12'}
+        = f.input :types_of_tags, input_html: {class: 'span12'}
+        = f.input :tag_text_filters_list, as: :string, input_html: {class: 'span12'}
+
+  .form-actions
+    = f.button :submit, 'Create Dataset'
+
+:javascript
+  $('#saved_search_start_time').timepicker({template: false, showInputs: false, minuteStep: 1, showMeridian: false,  defaultTime:false});
+  $('#saved_search_end_time').timepicker({template: false, showInputs: false, minuteStep: 1, showMeridian: false, defaultTime:false});
+  $('#saved_search_has_time').change(function(){
+      $('#saved_search_start_time').prop("disabled",!$('#saved_search_start_time').prop("disabled"));
+      $('#saved_search_start_time').val('');
+      $('#saved_search_end_time').prop("disabled",!$('#saved_search_end_time').prop("disabled"));
+      $('#saved_search_end_time').val('');
+  });
+  $('#saved_search_start_date').datepicker({format: 'yyyy/mm/dd'});
+  $('#saved_search_end_date').datepicker({format: 'yyyy/mm/dd'});
+  $('#saved_search_has_date').change(function(){
+      $('#saved_search_start_date').prop("disabled",!$('#saved_search_start_date').prop("disabled"));
+      $('#saved_search_start_date').val('');
+      $('#saved_search_end_date').prop("disabled",!$('#saved_search_end_date').prop("disabled"));
+      $('#saved_search_end_date').val('');
+  });

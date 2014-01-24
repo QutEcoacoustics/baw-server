@@ -1,0 +1,31 @@
+- unless saved_search.sites.count.zero?
+  %b Number of Sites:
+  = "#{saved_search.sites.count};"
+
+- unless saved_search.start_time.blank?
+  %b Time Range:
+  = "#{l(saved_search.start_time, format: :short)} - #{l(saved_search.end_time, format: :short)};"
+
+- unless saved_search.start_date.blank?
+  %b Date Range:
+  = "#{l(saved_search.start_date, format: :short)} - #{l(saved_search.end_date, format: :short)};"
+
+- unless saved_search.filters.blank?
+  %b Filters:
+  = "#{saved_search.filters};"
+
+- unless saved_search.number_of_samples.blank?
+  %b Samples:
+  = "#{saved_search.number_of_samples};"
+
+- unless saved_search.number_of_tags.blank?
+  %b Number of Tags:
+  = "#{saved_search.selected_number_of_tags};"
+
+- unless saved_search.types_of_tags.blank?
+  %b Tag Types:
+  = "#{saved_search.selected_types_of_tags};"
+
+- unless saved_search.tag_text_filters_list.blank?
+  %b Tags:
+  = "#{saved_search.tag_text_filters_list}"
