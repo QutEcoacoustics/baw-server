@@ -91,7 +91,7 @@ gem 'uuidtools'
 gem 'validates_timeliness'
 gem 'userstamp', git: 'https://github.com/theepan/userstamp.git' # https://github.com/delynn/userstamp
 gem 'settingslogic'
-gem 'acts_as_paranoid'
+gem 'acts_as_paranoid', '~>0.4.0'
 gem 'trollop'
 #gem 'daemons-rails'
 gem 'exception_notification'

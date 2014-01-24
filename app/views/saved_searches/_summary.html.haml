@@ -1,0 +1,31 @@
+- unless dataset.sites.count.zero?
+  %b Number of Sites:
+  = "#{dataset.sites.count};"
+
+- unless dataset.start_time.blank?
+  %b Time Range:
+  = "#{l(dataset.start_time, format: :short)} - #{l(dataset.end_time, format: :short)};"
+
+- unless dataset.start_date.blank?
+  %b Date Range:
+  = "#{l(dataset.start_date, format: :short)} - #{l(dataset.end_date, format: :short)};"
+
+- unless dataset.filters.blank?
+  %b Filters:
+  = "#{dataset.filters};"
+
+- unless dataset.number_of_samples.blank?
+  %b Samples:
+  = "#{dataset.number_of_samples};"
+
+- unless dataset.number_of_tags.blank?
+  %b Number of Tags:
+  = "#{dataset.selected_number_of_tags};"
+
+- unless dataset.types_of_tags.blank?
+  %b Tag Types:
+  = "#{dataset.selected_types_of_tags};"
+
+- unless dataset.tag_text_filters_list.blank?
+  %b Tags:
+  = "#{dataset.tag_text_filters_list}"
