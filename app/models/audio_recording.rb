@@ -32,7 +32,7 @@ class AudioRecording < ActiveRecord::Base
 
   # Enums
   AVAILABLE_STATUSES = [:new, :to_check, :ready, :corrupt, :ignore].map { |item| item.to_s }
-  enumerize :status, in: AVAILABLE_STATUSES, predicates: true
+  enumerize :status, in: AVAILABLE_STATUSES, predicates: true, multiple: false
 
   # Validations
   validates :status, :inclusion => {in: AVAILABLE_STATUSES}, :presence => true

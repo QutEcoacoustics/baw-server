@@ -10,7 +10,7 @@ class Permission < ActiveRecord::Base
 
 
   AVAILABLE_LEVELS = [:writer, :reader]
-  enumerize :level, in: AVAILABLE_LEVELS, predicates: true
+  enumerize :level, in: AVAILABLE_LEVELS, predicates: true, multiple: false
 
   # userstamp
   stampable

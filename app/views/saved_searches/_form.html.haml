@@ -1,4 +1,4 @@
-= simple_form_for [@project, @dataset], html: {class: 'form-horizontal'}  do |f|
+= simple_form_for [@project, @saved_search], html: {class: 'form-horizontal'}  do |f|
   = f.error_notification
   .row-fluid
     .span6.form-inputs
@@ -20,37 +20,37 @@
       %fieldset
         %legend Dates and Times
         = f.input :has_time, as: :boolean, label: 'Enable Time Filter'
-        = f.input :start_time, as: :string , disabled: !@dataset.has_time,  wrapper: :bootstrap_timepicker, input_html: {class: 'span12', value: (@dataset.start_time.nil? ? nil : l(@dataset.start_time, format: :short))}
-        = f.input :end_time, as: :string , disabled: !@dataset.has_time, wrapper: :bootstrap_timepicker, input_html: {class: 'span12', value: (@dataset.end_time.nil? ? nil : l(@dataset.end_time, format: :short))}
+        = f.input :start_time, as: :string , disabled: !@saved_search.has_time,  wrapper: :bootstrap_timepicker, input_html: {class: 'span12', value: (@saved_search.start_time.nil? ? nil : l(@saved_search.start_time, format: :short))}
+        = f.input :end_time, as: :string , disabled: !@saved_search.has_time, wrapper: :bootstrap_timepicker, input_html: {class: 'span12', value: (@saved_search.end_time.nil? ? nil : l(@saved_search.end_time, format: :short))}
         = f.input :has_date, as: :boolean, label: 'Enable Date Filter'
-        = f.input :start_date, as: :string, order: [:year, :month, :day], disabled: !@dataset.has_date, input_html: {class: 'span12', value: (@dataset.start_date.nil? ? nil : l(@dataset.start_date, format: :short))}
-        = f.input :end_date, as: :string, order: [:year, :month, :day], disabled: !@dataset.has_date,  input_html: {class: 'span12', value: (@dataset.end_date.nil? ? nil : l(@dataset.end_date, format: :short))}
+        = f.input :start_date, as: :string, order: [:year, :month, :day], disabled: !@saved_search.has_date, input_html: {class: 'span12', value: (@saved_search.start_date.nil? ? nil : l(@saved_search.start_date, format: :short))}
+        = f.input :end_date, as: :string, order: [:year, :month, :day], disabled: !@saved_search.has_date,  input_html: {class: 'span12', value: (@saved_search.end_date.nil? ? nil : l(@saved_search.end_date, format: :short))}
     .span6
       %fieldset
         %legend Tag Filters
         -#= f.input :filters, prompt: 'No Filter'
         -#= f.input :number_of_samples, label: 'Number of random 1 min samples', input_html: {class: 'span12'}
-        = f.input :number_of_tags, collection: Dataset::AVAILABLE_NUMBER_OF_TAGS, include_blank: 'No Restriction', input_html: {class: 'span12'}
+        = f.input :number_of_tags, collection: SavedSearch::AVAILABLE_NUMBER_OF_TAGS, include_blank: 'No Restriction', input_html: {class: 'span12'}
         = f.input :types_of_tags, input_html: {class: 'span12'}
         = f.input :tag_text_filters_list, as: :string, input_html: {class: 'span12'}
 
   .form-actions
-    = f.button :submit
+    = f.button :submit, 'Create Dataset'
 
 :javascript
-  $('#dataset_start_time').timepicker({template: false, showInputs: false, minuteStep: 1, showMeridian: false,  defaultTime:false});
-  $('#dataset_end_time').timepicker({template: false, showInputs: false, minuteStep: 1, showMeridian: false, defaultTime:false});
-  $('#dataset_has_time').change(function(){
-      $('#dataset_start_time').prop("disabled",!$('#dataset_start_time').prop("disabled"));
-      $('#dataset_start_time').val('');
-      $('#dataset_end_time').prop("disabled",!$('#dataset_end_time').prop("disabled"));
-      $('#dataset_end_time').val('');
+  $('#saved_search_start_time').timepicker({template: false, showInputs: false, minuteStep: 1, showMeridian: false,  defaultTime:false});
+  $('#saved_search_end_time').timepicker({template: false, showInputs: false, minuteStep: 1, showMeridian: false, defaultTime:false});
+  $('#saved_search_has_time').change(function(){
+      $('#saved_search_start_time').prop("disabled",!$('#saved_search_start_time').prop("disabled"));
+      $('#saved_search_start_time').val('');
+      $('#saved_search_end_time').prop("disabled",!$('#saved_search_end_time').prop("disabled"));
+      $('#saved_search_end_time').val('');
   });
-  $('#dataset_start_date').datepicker({format: 'yyyy/mm/dd'});
-  $('#dataset_end_date').datepicker({format: 'yyyy/mm/dd'});
-  $('#dataset_has_date').change(function(){
-      $('#dataset_start_date').prop("disabled",!$('#dataset_start_date').prop("disabled"));
-      $('#dataset_start_date').val('');
-      $('#dataset_end_date').prop("disabled",!$('#dataset_end_date').prop("disabled"));
-      $('#dataset_end_date').val('');
+  $('#saved_search_start_date').datepicker({format: 'yyyy/mm/dd'});
+  $('#saved_search_end_date').datepicker({format: 'yyyy/mm/dd'});
+  $('#saved_search_has_date').change(function(){
+      $('#saved_search_start_date').prop("disabled",!$('#saved_search_start_date').prop("disabled"));
+      $('#saved_search_start_date').val('');
+      $('#saved_search_end_date').prop("disabled",!$('#saved_search_end_date').prop("disabled"));
+      $('#saved_search_end_date').val('');
   });

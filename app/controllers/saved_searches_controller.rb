@@ -22,6 +22,7 @@ class SavedSearchesController < ApplicationController
   # GET /projects/:id/saved_searches/1.json
   def show
     @saved_search = @project.saved_searches.find(params[:id])
+    @preview_item = @saved_search.preview_results(AudioRecording.readonly).first
 
     respond_to do |format|
       format.html {

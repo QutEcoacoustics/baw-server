@@ -1,35 +1,40 @@
 .row-fluid
-  %h1= @dataset.name
-  %p= @dataset.description
-  %p= render partial: 'summary', locals: {dataset: @dataset}
-
+  %h1= @saved_search.name
+  %p= @saved_search.description
+  %p= render partial: 'summary', locals: {saved_search: @saved_search}
+  %p= @preview_item.audio_recording_count
+  %p= @preview_item.total_duration_seconds
+  %p= @preview_item.earliest_datetime
+  %p= @preview_item.earliest_time_of_day
+  %p= @preview_item.latest_datetime
+  %p= @preview_item.latest_time_of_day
 
 %h3= 'Sites'
 .row-fluid
   .span6
-    - @dataset.sites.each do |site|
+    - @saved_search.sites.each do |site|
       .row-fluid.spacer
         = render partial: 'sites/site_thumb_large', locals: {site: site}
-  .span6= gmaps(markers: {data: @dataset.sites.to_gmaps4rails}, map_options: gmaps_default_options)
+  .span6= gmaps(markers: {data: @saved_search.sites.to_gmaps4rails}, map_options: gmaps_default_options)
   = yield :scripts
 
 .row-fluid
   %h3= 'Jobs'
-  - unless @dataset.jobs.empty?
-    = render partial: 'jobs/jobs_table', locals: {jobs: @dataset.jobs.includes(:dataset)}
-  = link_to new_project_job_path(@dataset), title: 'Add a new analysis job to this project',
+  - unless @saved_search.datasets.empty? || @saved_search.datasets.jobs.empty?
+    = render partial: 'jobs/jobs_table', locals: {jobs: @saved_search.datasets.jobs.includes(:saved_search)}
+  = link_to new_project_job_path(@saved_search.project), title: 'Add a new analysis job to this project',
   data: {toggle: 'tooltip',  placement: 'right'}, class: 'btn-create-site btn' do
     Add New Job
 
 - content_for :right_sidebar do
-  = sidebar_metadata_users('Created by', [{user: @dataset.creator, subtext: time_ago_in_words(@dataset.created_at) + ' ago' }])
-  = sidebar_metadata_users('Modified by', [{user: @dataset.updater, subtext: time_ago_in_words(@dataset.updated_at) + ' ago' }])
+  = sidebar_metadata_users('Created by', [{user: @saved_search.creator, subtext: time_ago_in_words(@saved_search.created_at) + ' ago' }])
+  = sidebar_metadata_users('Modified by', [{user: @saved_search.updater, subtext: time_ago_in_words(@saved_search.updated_at) + ' ago' }])
 
 - content_for :left_sidebar do
   = render layout: '/shared/left_sidebar', locals: {title: 'Datasets'} do
     - if can? :edit, @project
-      %li= link_to 'Edit Dataset',edit_project_dataset_path(@project, @dataset),  title: "Edit dataset's parameters", data: {toggle: 'tooltip',  placement: 'right'}
+      %li= link_to 'Edit Dataset',edit_project_saved_search_path(@project, @saved_search),  title: "Edit dataset's parameters", data: {toggle: 'tooltip',  placement: 'right'}
     - if can? :destroy, @project
-      %li= link_to 'Delete Dataset', [@project, @dataset], :method => :delete, data: { confirm: 'Are you sure?', toggle: 'tooltip',  placement: 'right' }, title: 'Delete dataset permanently'
+      %li= link_to 'Delete Dataset', [@project, @saved_search], :method => :delete, data: { confirm: 'Are you sure?', toggle: 'tooltip',  placement: 'right' }, title: 'Delete dataset permanently'
     - if can? :edit, @project
-      %li= link_to 'Add New Dataset', new_project_dataset_path(@project),  title: "Add a new dataset to this project", data: {toggle: 'tooltip',  placement: 'right'}
+      %li= link_to 'Add New Dataset', new_project_saved_search_path(@project),  title: "Add a new dataset to this project", data: {toggle: 'tooltip',  placement: 'right'}

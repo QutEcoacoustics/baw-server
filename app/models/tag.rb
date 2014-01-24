@@ -26,7 +26,7 @@ class Tag < ActiveRecord::Base
       { id: :sounds_like, name: 'Sounds Like'},
   ]
 
-  enumerize :type_of_tag, in: AVAILABLE_TYPE_OF_TAGS, predicates: true
+  enumerize :type_of_tag, in: AVAILABLE_TYPE_OF_TAGS, predicates: true, multiple: false
 
   # validation
   validates :is_taxanomic, inclusion: { in: [true, false] }

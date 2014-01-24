@@ -1,31 +1,31 @@
-- unless dataset.sites.count.zero?
+- unless saved_search.sites.count.zero?
   %b Number of Sites:
-  = "#{dataset.sites.count};"
+  = "#{saved_search.sites.count};"
 
-- unless dataset.start_time.blank?
+- unless saved_search.start_time.blank?
   %b Time Range:
-  = "#{l(dataset.start_time, format: :short)} - #{l(dataset.end_time, format: :short)};"
+  = "#{l(saved_search.start_time, format: :short)} - #{l(saved_search.end_time, format: :short)};"
 
-- unless dataset.start_date.blank?
+- unless saved_search.start_date.blank?
   %b Date Range:
-  = "#{l(dataset.start_date, format: :short)} - #{l(dataset.end_date, format: :short)};"
+  = "#{l(saved_search.start_date, format: :short)} - #{l(saved_search.end_date, format: :short)};"
 
-- unless dataset.filters.blank?
+- unless saved_search.filters.blank?
   %b Filters:
-  = "#{dataset.filters};"
+  = "#{saved_search.filters};"
 
-- unless dataset.number_of_samples.blank?
+- unless saved_search.number_of_samples.blank?
   %b Samples:
-  = "#{dataset.number_of_samples};"
+  = "#{saved_search.number_of_samples};"
 
-- unless dataset.number_of_tags.blank?
+- unless saved_search.number_of_tags.blank?
   %b Number of Tags:
-  = "#{dataset.selected_number_of_tags};"
+  = "#{saved_search.selected_number_of_tags};"
 
-- unless dataset.types_of_tags.blank?
+- unless saved_search.types_of_tags.blank?
   %b Tag Types:
-  = "#{dataset.selected_types_of_tags};"
+  = "#{saved_search.selected_types_of_tags};"
 
-- unless dataset.tag_text_filters_list.blank?
+- unless saved_search.tag_text_filters_list.blank?
   %b Tags:
-  = "#{dataset.tag_text_filters_list}"
+  = "#{saved_search.tag_text_filters_list}"

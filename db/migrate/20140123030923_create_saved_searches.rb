@@ -1,87 +1,61 @@
 class CreateSavedSearches < ActiveRecord::Migration
-  def change
-    create_table :saved_searches do |t|
-      t.string :name, :null => false
-      t.text    :description
-      t.time :start_time
-      t.time :end_time
-      t.date :start_date
-      t.date :end_date
-      t.string  :filters
-      t.integer :number_of_samples
-      t.integer :number_of_tags
-      t.string  :types_of_tags
-      t.text :tag_text_filters
-      t.integer :creator_id, :null => false
-      t.integer :updater_id
-      t.integer :project_id, :null => false
+  def up
+
+    # datasets table becomes saved_searches table
+    rename_table :datasets, :saved_searches
+
+    # remove and add columns
+    change_table :saved_searches do |t|
+      t.remove :dataset_result_file_name
+      t.remove :dataset_result_content_type
+      t.remove :dataset_result_file_size
+      t.remove :dataset_result_updated_at
+      t.string :auto_generated_identifer
       t.integer :deleter_id
       t.datetime :deleted_at
-      t.timestamps # created_at, updated_at
     end
 
     # change linking table
+    rename_column :datasets_sites, :dataset_id, :saved_search_id
     rename_table :datasets_sites, :saved_searches_sites
-    rename_column :datasets_sites, :dataset_id, :saved_searches_id
-
-    # drop old datasets table, create from scratch
-    drop_table :datasets
 
     create_table :datasets do |t|
-      t.string     :processing_status, :null => false
-      t.decimal    :total_duration_seconds,     :precision => 10, :scale => 4
-      t.integer    :audio_recording_count
-
+      t.string :processing_status, null: false
+      t.decimal :total_duration_seconds, precision: 10, scale: 4
+      t.integer :audio_recording_count
       t.datetime :earliest_datetime
-      t.date :earliest_date
-      t.time :earliest_time
+      t.time :earliest_time_of_day
       t.datetime :latest_datetime
-      t.date  :latest_date
-      t.time :latest_time
-      t.integer :creator_id, :null => false
+      t.time :latest_time_of_day
+      t.integer :saved_search_id, null: false
+      t.integer :creator_id, null: false
       t.integer :updater_id
       t.integer :deleter_id
       t.datetime :deleted_at
       t.timestamps # created_at, updated_at
     end
   end
+
+  def down
+    drop_table :datasets
+
+    # change linking table
+    rename_table :saved_searches_sites, :datasets_sites
+    rename_column :datasets_sites, :saved_search_id, :dataset_id
+
+    # remove and add columns
+    change_table :saved_searches do |t|
+      t.string :dataset_result_file_name
+      t.string :dataset_result_content_type
+      t.integer :dataset_result_file_size
+      t.datetime :dataset_result_updated_at
+      t.remove :auto_generated_identifer
+      t.remove :deleter_id
+      t.remove :deleted_at
+    end
+
+    # saved_searches becomes datasets table
+    rename_table :saved_searches, :datasets
+
+  end
 end
-
-=begin
-select
-min(recorded_date AT TIME ZONE 'UTC' AT TIME ZONE INTERVAL '+10:00'),
-max(recorded_date AT TIME ZONE 'UTC' AT TIME ZONE INTERVAL '+10:00' + CAST(duration_seconds || ' seconds' as interval)),
-max(CAST(recorded_date AT TIME ZONE 'UTC' AT TIME ZONE INTERVAL '+10:00' + CAST(duration_seconds || ' seconds' as interval) as date)),
-min(CAST(recorded_date AT TIME ZONE 'UTC' AT TIME ZONE INTERVAL '+10:00' as date)),
-max(CAST(recorded_date AT TIME ZONE 'UTC' AT TIME ZONE INTERVAL '+10:00' + CAST(duration_seconds || ' seconds' as interval) as time)),
-min(CAST(recorded_date AT TIME ZONE 'UTC' AT TIME ZONE INTERVAL '+10:00' as time)),
-count(*),
-sum(duration_seconds)
-FROM audio_recordings ar
-WHERE recorded_date >= '2012-11-10' AND recorded_date < '2012-11-16'
-;
-
--- select tags.text, count(*)
--- from audio_events
--- inner join audio_recordings on audio_events.audio_recording_id = audio_recordings.id
--- inner join audio_events_tags on audio_events.id = audio_events_tags.audio_event_id
--- inner join tags on audio_events_tags.tag_id = tags.id
--- WHERE recorded_date >= '2012-01-01' AND recorded_date < '2012-11-15'
--- group by tags.text
--- order by count(*) DESC;
-
-SELECT
-recorded_date,
-recorded_date AT TIME ZONE 'UTC' ,
-recorded_date AT TIME ZONE INTERVAL '+10:00',
-recorded_date AT TIME ZONE 'UTC' AT TIME ZONE INTERVAL '+10:00',
-
-recorded_date + CAST(duration_seconds || ' seconds' as interval),
-CAST(recorded_date AT TIME ZONE 'UTC' AT TIME ZONE INTERVAL '+10:00' as time),
-CAST(recorded_date AT TIME ZONE 'UTC' AT TIME ZONE INTERVAL '+10:00' + CAST(duration_seconds || ' seconds' as interval) as time),
-recorded_date - date_trunc('day', recorded_date)
-
-FROM audio_recordings ar
-WHERE recorded_date >= '2012-11-10' AND recorded_date < '2012-11-16'
-order by recorded_date;
-=end

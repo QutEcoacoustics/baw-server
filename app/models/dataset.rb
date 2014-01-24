@@ -3,8 +3,9 @@ class Dataset < ActiveRecord::Base
   extend ActiveModel::Naming
 
   attr_accessible :processing_status, :total_duration_seconds,
-                  :earliest_datetime, :earliest_date, :earliest_time,
-                  :latest_datetime, :latest_date, :latest_time
+                  :audio_recording_count,
+                  :earliest_datetime, :earliest_time_of_day,
+                  :latest_datetime, :latest_time_of_day
 
   belongs_to :user, class_name: 'User', foreign_key: :creator_id
   belongs_to :creator, class_name: 'User', foreign_key: :creator_id
@@ -32,12 +33,11 @@ class Dataset < ActiveRecord::Base
   # validation
   validates :processing_status, presence: true
   validates :total_duration_seconds, presence: false, numericality: true
-  validates :earliest_datestamp, presence: false, timeliness: {on_or_before: lambda { Date.current }, type: :datetime}
-  validates :earliest_date, presence: false, timeliness: {on_or_before: lambda { Date.current }, type: :date}
-  validates :earliest_time, presence: false, timeliness: {on_or_before: lambda { Date.current }, type: :time}
-  validates :latest_datestamp, presence: false, timeliness: {on_or_before: lambda { Date.current }, type: :datetime}
-  validates :latest_date, presence: false, timeliness: {on_or_before: lambda { Date.current }, type: :date}
-  validates :latest_time, presence: false, timeliness: {on_or_before: lambda { Date.current }, type: :time}
+  validates :audio_recording_count, presence: false, numericality: { only_integer: true }
+  validates :earliest_datestime, presence: false, timeliness: {on_or_before: lambda { Date.current }, type: :datetime}
+  validates :earliest_time_of_day, presence: false, timeliness: {on_or_before: lambda { Date.current }, type: :time}
+  validates :latest_datestime, presence: false, timeliness: {on_or_before: lambda { Date.current }, type: :datetime}
+  validates :latest_time_of_day, presence: false, timeliness: {on_or_before: lambda { Date.current }, type: :time}
 
   private
 
@@ -80,60 +80,5 @@ class Dataset < ActiveRecord::Base
 
     #self.save!
 
-  end
-
-  # take in the ActiveRecord AudioRecording (with all attributes) and the dataset model that specifies the metadata.
-  # use the saved_search attributes to create the { :audiorecording_id, :start_offset, :end_offset } list
-  def execute(audio_recording, dataset_metadata)
-
-    # - dataset (collection of audio recordings)
-    # -- audio recording (a single audio file)
-    # --- segment (start and end offset within an audio recording)
-    # ---- sub-segment (start and end offset within a segment)
-
-    date_format_string = '%Y-%m-%d'
-    time_format_string = '%H:%M:%S'
-    date_and_time_format_string = date_format_string+'T'+time_format_string
-
-    recordings = audio_recording.scoped
-
-    # sites
-    unless dataset_metadata.site_ids.blank?
-      recordings = recordings.where(site_id: dataset_metadata.site_ids)
-    end
-
-    # dates - exclude audio outside the start and end dates if they are specified
-    unless dataset_metadata.start_date.blank?
-      date_string = dataset_metadata.start_date.to_time.strftime(date_format_string)
-      recordings = recordings.end_after date_string
-    end
-
-    unless dataset_metadata.end_date.blank?
-      date_string = dataset_metadata.end_date.to_time.strftime(date_format_string)
-      recordings = recordings.start_before date_string
-    end
-
-    # times - start and end - creates segments
-    # filters - e.g. wind, rain, other indicies - removes audio from result set
-    # number of samples - select a random number of sub-segments
-
-    # number of tags
-    unless dataset_metadata.number_of_tags.blank?
-      recordings = recordings.tag_count dataset_metadata.number_of_tags
-    end
-
-    # types of tags
-    unless dataset_metadata.types_of_tags.blank?
-      recordings = recordings.tag_types dataset_metadata.types_of_tags.to_a
-    end
-
-    unless dataset_metadata.tag_text_filters.blank?
-      dataset_metadata.tag_text_filters.each do |tag_text|
-        recordings = recordings.tag_text tag_text
-      end
-    end
-
-    #puts recordings.explain
-    recordings.select([:id, :uuid, :duration_seconds, :recorded_date])
   end
 end
