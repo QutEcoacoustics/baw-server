@@ -50,6 +50,29 @@ describe AudioBase do
     Dir.glob(temp_audio_file_4+'*.*').each { |f| File.delete(f) }
   end
 
+  context 'audio tool utilities' do
+    it 'check timeout is enforced' do
+      command = 'sleep 30'
+      expect {
+        audio_base.execute(command)
+      }.to raise_error(Exceptions::AudioToolTimedOutError, /#{command}/)
+    end
+
+    it 'check timeout does not impact successful execution' do
+      settings_timeout = Settings.audio_tools_timeout_sec
+      sleep_duration = 1
+      command = "sleep #{sleep_duration}"
+      result = nil
+
+      result = audio_base.execute(command)
+
+      expect(result.time_taken).to be_within(0.3).of(sleep_duration)
+      expect(result.stdout).to be_blank
+      expect(result.stderr).to be_blank
+      expect(result.command).to eq(command)
+    end
+  end
+
   context 'when getting audio file information' do
     it 'runs to completion when given an existing file' do
       audio_base.info(audio_file_stereo)

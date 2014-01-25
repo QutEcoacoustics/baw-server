@@ -10,14 +10,14 @@ class ImageImageMagick
   end
 
   def info_command(source)
-    cmd_format = '"width:%[fx:w]\nheight:%[fx:h]\nmedia_type:%m"'
+    cmd_format = '"width:%[fx:w]|||height:%[fx:h]|||media_type:%m"'
     "#{@image_magick_identify_exe} -regard-warnings -ping -format #{cmd_format} \"#{source}\""
   end
 
   def parse_info_output(output)
     # contains key value output (separate on first colon(:))
     result = {}
-    output.strip.split(/\r?\n|\r/).each { |line|
+    output.strip.split(/\|\|\|/).each { |line|
       if line.include?(':')
         colon_index = line.index(':')
         new_value = line[colon_index+1, line.length].strip

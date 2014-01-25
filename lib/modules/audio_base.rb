@@ -155,26 +155,62 @@ class AudioBase
   def execute(command)
 
     if OS.windows?
-      command = command.gsub('/', '\\')
+      if command.include? '&& move'
+        # if windows and contains a 'move' command, need to ensure relative path has '\' separators
+        command = command.gsub('/', '\\')
+      else
+        command = command.gsub('\\', '/')
+      end
     end
 
-    stdout_str, stderr_str, status = Open3.capture3(command)
+    stdout_str = ''
+    stderr_str = ''
+    status = nil
+    timed_out = nil
+    killed = nil
 
-    msg = "Command status #{status.exitstatus}, executed #{command}"
+    time = Benchmark.realtime do
+      begin
+        run_with_timeout(command, timeout: Settings.audio_tools_timeout_sec) do |output, error, thread, timed_out_return, killed_return|
+          #thread_success = thread.value.success?
+          stdout_str = output
+          stderr_str = error
+          status = thread.value
+          timed_out = timed_out_return
+          killed = killed_return
+        end
+      rescue Exception => e
+        Logging::logger.fatal e
+        raise e
+      end
+    end
+
+    msg = "External Program: status=#{status.exitstatus};time_out_sec=#{Settings.audio_tools_timeout_sec};time_taken_sec=#{time};timed_out=#{timed_out};killed=#{killed};command=#{command}"
     extra_msg = "\n\t Standard output: #{stdout_str}\n\t Standard Error: #{stderr_str}"
 
-    if !stderr_str.blank? && status.exitstatus != 0
+    if (!stderr_str.blank? && !status.success?) || timed_out || killed
       Logging::logger.warn msg+extra_msg
     else
       Logging::logger.debug msg+extra_msg
     end
 
+    raise Exceptions::AudioToolTimedOutError, msg if timed_out || killed
+    raise Exceptions::AudioToolError, msg if !stderr_str.blank? && !status.success?
+
     {
         command: command,
         stdout: stdout_str,
         stderr: stderr_str,
-        status: status
+        time_taken: time
     }
+  end
+
+  def tempfile_content(tempfile)
+    tempfile.rewind
+    content = tempfile.read
+    tempfile.close
+    tempfile.unlink # deletes the temp file
+    content
   end
 
   def check_offsets(source_info, min_duration_seconds, max_duration_seconds, modify_parameters = {})
@@ -214,7 +250,7 @@ class AudioBase
     if modify_parameters.include?(:sample_rate) && File.extname(target) != '.wav'
       sample_rate = modify_parameters[:sample_rate].to_i
       valid_sample_rates = [8000, 11025, 12000, 16000, 22050, 24000, 32000, 44100, 48000]
-      raise Exceptions::InvalidSampleRateError, 'Arbitrary sample rates only valid for wav files. '+
+      raise Exceptions::InvalidSampleRateError, ' Arbitrary sample rates only valid for wav files. '+
           "Sample rate #{sample_rate} requested for #{File.extname(target)} not in #{valid_sample_rates}." unless valid_sample_rates.include?(sample_rate)
     end
   end
@@ -222,15 +258,16 @@ class AudioBase
   private
 
   def modify_worker(source_info, source, target, modify_parameters = {})
-    if source_info[:media_type] == 'audio/wavpack'
+    if source_info[:media_type] == '
+                                                                                                                                                                                                                                                                                                                                                      audio/wavpack '
       # convert to wave and segment
       audio_tool_segment('wav', :modify_wavpack, source, source_info, target, modify_parameters)
-    elsif source_info[:media_type] == 'audio/mp3' && (modify_parameters.include?(:start_offset) || modify_parameters.include?(:end_offset))
+    elsif source_info[:media_type] == ' audio/mp3 ' && (modify_parameters.include?(:start_offset) || modify_parameters.include?(:end_offset))
       # segment only, so check for offsets
       audio_tool_segment('mp3', :modify_mp3splt, source, source_info, target, modify_parameters)
-      #elsif source_info[:media_type] == 'audio/wav' && (modify_parameters.include?(:start_offset) || modify_parameters.include?(:end_offset))
+      #elsif source_info[:media_type] == ' audio/wav ' && (modify_parameters.include?(:start_offset) || modify_parameters.include?(:end_offset))
       #  # segment only, so check for offsets
-      #  audio_tool_segment('wav', :modify_shntool, source, source_info, target, modify_parameters)
+      #  audio_tool_segment(' wav ', :modify_shntool, source, source_info, target, modify_parameters)
     else
 
       start_offset = modify_parameters.include?(:start_offset) ? modify_parameters[:start_offset] : nil
@@ -300,5 +337,71 @@ class AudioBase
     File.delete temp_file
   end
 
+
+  # https://gist.github.com/mgarrick/3108185
+  # Runs a specified shell command in a separate thread.
+  # If it exceeds the given timeout in seconds, kills it.
+  # Passes stdout, stderr, thread, and a boolean indicating a timeout occurred to the passed in block.
+  # Uses Kernel.select to wait up to the tick length (in seconds) between
+  # checks on the command's status
+  #
+  # If you've got a cleaner way of doing this, I'd be interested to see it.
+  # If you think you can do it with Ruby's Timeout module, think again.
+  def run_with_timeout(*command)
+    options = command.extract_options!.reverse_merge(timeout: 60, tick: 1, cleanup_sleep: 0.1, buffer_size: 10240)
+
+    timeout = options[:timeout]
+    cleanup_sleep = options[:cleanup_sleep]
+    tick = options[:tick]
+    buffer_size = options[:buffer_size]
+
+    output = ''
+    error = ''
+
+    # Start task in another thread, which spawns a process
+    Open3.popen3(*command) do |stdin, stdout, stderr, thread|
+      # Get the pid of the spawned process
+      pid = thread[:pid]
+      start = Time.now
+
+      time_remaining = nil
+      while (time_remaining = (Time.now - start) < timeout) and thread.alive?
+        # Wait up to `tick` seconds for output/error data
+        readables, writeables, = Kernel.select([stdout, stderr], nil, nil, tick)
+        next if readables.blank?
+        readables.each do |readable|
+          stream = readable == stdout ? output : error
+          begin
+            # can't use read_nonblock with pipes in windows (only sockets)
+            # https://bugs.ruby-lang.org/issues/5954
+            # throw a proper error, then!!! ('Errno::EBADF: Bad file descriptor' is useless)
+            stream << readable.readpartial(buffer_size)
+          rescue IO::WaitReadable, EOFError => e
+            # Need to read all of both streams
+            # Keep going until thread dies
+          end
+        end
+      end
+
+      # Give Ruby time to clean up the other thread
+      sleep cleanup_sleep
+
+      killed = false
+
+      if thread.alive?
+        # We need to kill the process, because killing the thread leaves
+        # the process alive but detached, annoyingly enough.
+        if OS.windows?
+          Process.kill('KILL', pid)
+        else
+          Process.kill('TERM', pid)
+        end
+
+        killed = true
+      end
+
+      yield output, error, thread, !time_remaining, killed
+    end
+  end
 
 end
