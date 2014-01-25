@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20131230021055) do
+ActiveRecord::Schema.define(:version => 20140125054808) do
 
   create_table "audio_events", :force => true do |t|
     t.integer  "audio_recording_id",                                                     :null => false
@@ -224,6 +224,7 @@ ActiveRecord::Schema.define(:version => 20131230021055) do
     t.string   "image_content_type"
     t.integer  "image_file_size"
     t.datetime "image_updated_at"
+    t.text     "preferences"
   end
 
   add_index "users", ["authentication_token"], :name => "index_users_on_authentication_token", :unique => true

@@ -8,8 +8,7 @@ class UserAccountsController < ApplicationController
     @users = User.order('user_name ASC').all
 
     respond_to do |format|
-      format.html # index.html.erb
-      format.json { render json: @users }
+      format.html # no json API to list users
     end
   end
 
@@ -74,7 +73,7 @@ class UserAccountsController < ApplicationController
       params[:user].delete('password')
       params[:user].delete('password_confirmation')
     end
-    
+
     @user = User.find(params[:id])
 
     respond_to do |format|
@@ -97,6 +96,30 @@ class UserAccountsController < ApplicationController
     respond_to do |format|
       format.html { redirect_to user_accounts_url }
       format.json { head :no_content }
+    end
+  end
+
+  # PUT /my_account/prefs.json
+  def modify_preferences
+
+    @user = current_user
+    prefs_specified = false
+
+    if !params.blank? && !params[:user_account].blank?
+      @user.preferences = params[:user_account]
+      prefs_specified = true
+    end
+
+    respond_to do |format|
+      if prefs_specified
+        if @user.save
+          format.json { head :no_content }
+        else
+          format.json { render json: @user.errors, status: :unprocessable_entity }
+        end
+      else
+        format.json { render json: {error: 'must include user preferences in body as json'}, status: :unprocessable_entity }
+      end
     end
   end
 end

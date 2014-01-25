@@ -11,7 +11,8 @@ class Ability
     elsif user.has_role?(:user) && user.confirmed?
       #user abilities
       can [:show], User
-      can [:my_account], User, user_id: user.id
+      can [:update], User, id: user.id
+      can [:my_account, :modify_preferences], User, user_id: user.id
       can [:index, :create], Project
       can [:read, :update, :update_permissions], Project do |project|
         user.can_write?(project)
@@ -41,7 +42,7 @@ class Ability
         user.has_permission?(job.dataset.project)
       end
       can [:show, :index], AudioRecording do |audio_recording|
-          user.has_permission_any?(audio_recording.site.projects)
+        user.has_permission_any?(audio_recording.site.projects)
       end
       can [:manage], AudioEvent do |audio_event|
         user.can_write_any?(audio_event.audio_recording.site.projects)
