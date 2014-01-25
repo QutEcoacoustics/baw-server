@@ -1,7 +1,6 @@
-require './lib/modules/media_cacher'
+
 
 class AudioRecordingsController < ApplicationController
-  include MediaCacher, Mime
 
   load_resource :project, only: [:check_uploader, :create]
   load_resource :site, only: [:check_uploader, :create]

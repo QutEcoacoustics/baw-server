@@ -1,4 +1,5 @@
-require './lib/modules/media_cacher'
+require 'digest'
+require 'digest/md5'
 
 class AudioRecording < ActiveRecord::Base
 
@@ -67,31 +68,88 @@ class AudioRecording < ActiveRecord::Base
   scope :tag_text, lambda { |tag_text| includes(:tags).where(Tag.arel_table[:text].matches("%#{tag_text}%")) }
 
   def original_file_exists?
+    self.original_file_paths.length > 0
+  end
 
-    cache = Cache::Cache.new(Settings.paths.original_audios, Settings.paths.cached_audios, nil, nil, nil)
+  def original_file_paths
+    cache = Settings.cache_tool
 
-    file_name_params = {
-        :uuid => self.uuid,
-        :date => self.recorded_date.strftime("%y%m%d"),
-        :time => self.recorded_date.strftime("%H%M")
-    }
+    original_format = '.wv' # pick something
 
     if !self.original_file_name.blank?
-      file_name_params[:original_format] = File.extname(self.original_file_name)
+      original_format = File.extname(self.original_file_name)
     elsif !self.media_type.blank?
-      file_name_params[:original_format] = Mime::Type.file_extension_of(self.media_type)
-    else
-      file_name_params[:original_format] = '.wv' # pick something
+      original_format = Mime::Type.file_extension_of(self.media_type)
     end
 
-    if file_name_params[:original_format].blank?
-      false
-    else
-      file_name_params[:original_format] = file_name_params[:original_format].downcase
-      file_name = cache.original_audio_file(file_name_params)
-      source_possible_paths = cache.existing_original_audio_paths(file_name)
-      source_possible_paths.length > 0
+    source_existing_paths = []
+    unless original_format.blank?
+      file_name = cache.original_audio.file_name(self.uuid, self.recorded_date, self.recorded_date, original_format)
+      source_existing_paths = cache.existing_storage_paths(cache.original_audio, file_name)
     end
+
+    source_existing_paths
+  end
+
+  def check_file_hash
+    # ensure this audio recording needs to be checked
+    return if self.status != 'to_check'
+
+    # type of hash is at start of hash_to_compare, split using two colons
+    hash_type, compare_hash = self.file_hash.split('::')
+
+    case hash_type
+      when 'MD5'
+        incr_hash = ::Digest::MD5.new
+      else
+        incr_hash = Digest::SHA256.new
+    end
+
+    raise "Audio recording file could not be found: #{self.uuid}" if self.original_file_paths.length < 1
+
+    # assume that all files for a recording are identical. pick the first one
+    File.open(self.original_file_paths.first!) do |file|
+      buffer = ''
+
+      # Read the file 512 bytes at a time
+      until file.eof
+        file.read(512, buffer)
+        incr_hash.update(buffer)
+      end
+    end
+
+    # if hashes do not match, mark audio recording as corrupt
+    if incr_hash.hexdigest.upcase == compare_hash.upcase
+      self.status = 'ready'
+      self.save!
+    else
+      self.status = 'corrupt'
+      self.save!
+      raise "Audio recording file hash did not match stored hash: #{self.uuid} File hash: #{incr_hash.hexdigest.upcase} stored hash: #{compare_hash.upcase}."
+    end
+  end
+
+  # returns true if this audio_recording can be accessed, otherwise false
+  def check_status
+    can_be_accessed = false
+
+    case self.status.to_s
+      when 'new'
+        logger.info "Audio recording #{self.uuid} is in state 'new' and is not yet ready to be accessed."
+      when 'to_check'
+        logger.debug "Audio recording #{self.uuid} is in state 'to_check' and will be checked by comparing the file hash and stored hash."
+        self.check_file_hash
+      when 'corrupt'
+        logger.warn "Audio recording #{self.uuid} is in state 'corrupt' and cannot be accessed."
+      when 'ignore'
+        logger.info "Audio recording #{self.uuid} is in state 'ignore' and cannot be accessed."
+      when 'ready'
+        can_be_accessed = true
+      else
+        logger.info "Audio recording #{self.uuid} is in state '#{self.status.to_s}', which is unknown."
+    end
+
+    can_be_accessed
   end
 
   private

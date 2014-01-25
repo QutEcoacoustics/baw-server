@@ -1,106 +1,80 @@
 require 'open3'
+require File.dirname(__FILE__) + '/string'
+require File.dirname(__FILE__) + '/hash'
+require File.dirname(__FILE__) + '/exceptions'
+require File.dirname(__FILE__) + '/logging'
 require File.dirname(__FILE__) + '/OS'
+require File.dirname(__FILE__) + '/image_image_magick'
 
-module Spectrogram
-  include OS
 
-  @sox_path = if OS.windows? then "./vendor/bin/sox/sox.exe" else "sox" end
-  @image_magick_path = if OS.windows? then './vendor/bin/imagemagick/convert.exe' else 'convert' end
-  @sox_arguments_spectrogram = "spectrogram -m -r -l -a -q 249 -w hann -y 257 -X 43.06640625 -z 100"
-  @sox_arguments_output = "-o"
+class Spectrogram
 
-  def self.colour_options()
-    { :g => :greyscale }
+  attr_reader :audio_base, :image_image_magick, :temp_dir
+
+  public
+
+  def initialize(audio_base, image_image_magick, spectrogram_defaults, temp_dir)
+    @audio_base = audio_base
+    @image_image_magick = image_image_magick
+    @spectrogram_defaults = spectrogram_defaults
+    @temp_dir = temp_dir
   end
 
-  def self.window_options()
-    [ 128, 256, 512, 1024, 2048, 4096 ]
+  def self.from_executables(audio_master, im_convert_exe, im_identify_exe, spectrogram_defaults, temp_dir)
+    audio_master = audio_master
+    image_image_magick = ImageImageMagick.new(im_convert_exe, im_identify_exe, temp_dir)
+
+    Spectrogram.new(audio_master, image_image_magick, spectrogram_defaults, temp_dir)
   end
 
-  # Generate a spectrogram image from an audio file.
-  # The spectrogram will be 257 pixels high, but the length is not known exactly beforehand.
-  # The spectrogram will be created for the entire file. Durations longer than 2 minutes are not recommended.
-  # Source is the audio file, target is the image file that will be created.
-  # An existing image file will not be overwritten.
-  # possible parameters: :window :colour :format
-  def self.generate(source, target, modify_parameters)
-    raise ArgumentError, "Target path for spectrogram generation already exists: #{target}." unless !File.exist?(target)
+  def info(source)
+    raise Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.exists? source
+    raise Exceptions::FileEmptyError, "Source exists, but has no content: #{source}" if File.size(source) < 1
 
-    # sample rate
-    sample_rate_param = modify_parameters.include?(:sample_rate) ? modify_parameters[:sample_rate].to_i : 11025
+    im_info_cmd = @image_image_magick.info_command(source)
+    im_info_output = @audio_base.execute(im_info_cmd)
+    im_info = @image_image_magick.parse_info_output(im_info_output[:stdout])
 
-    # window size
-    all_window_options = window_options.join(', ')
-    window_param = modify_parameters.include?(:window) ? modify_parameters[:window].to_i : 512
-    raise ArgumentError, "Window size must be one of '#{all_window_options}', given '#{window_param}'." unless window_options.include? window_param
+    im_info[:data_length_bytes] = File.size(source)
+    im_info[:media_type] = 'image/'+im_info[:media_type].downcase
+    im_info[:height] = im_info[:height].to_i
+    im_info[:width] = im_info[:width].to_i
 
-    # window size must be one more than a power of two, see sox documentation http://sox.sourceforge.net/sox.html
-    window_param = (window_param / 2) + 1
-    window_settings = ' -y '+window_param.to_s
-
-    # colours
-    colours_available = colour_options.map { |k, v| "#{k} (#{v})" }.join(', ')
-    colour_param = modify_parameters.include?(:colour) ? modify_parameters[:colour] : 'g'
-    raise ArgumentError, "Colour must be one of '#{colours_available}', given '#{}'." unless colour_options.include? colour_param.to_sym
-    colour_settings = ' -m -q 249 -z 100'
-
-
-    # sox command to create a spectrogram from an audio file
-    # -V is for verbose
-    # -n indicates no output audio file
-    spectrogram_settings = 'spectrogram -r -l -a -w Hamming -X 43.06640625' + colour_settings + window_settings
-    command = "#{@sox_path} -V \"#{source}\" -n rate #{sample_rate_param} #{spectrogram_settings}  #{@sox_arguments_output} \"#{target}\""
-
-    # run the command and wait for the result
-    stdout_str, stderr_str, status = Open3.capture3(command)
-
-    # log the command
-    Rails.logger.debug "Spectrogram generation return status #{status.exitstatus}. Command: #{command}"
-
-    # check for source file problems
-    raise ArgumentError, "Source file was not a valid audio file: #{source}." if stderr_str.include? 'FAIL formats: can\'t open input file'
-
-    # package up all the available information and return it
-    result = [ stdout_str, stderr_str, status, source, File.exist?(source), target, File.exist?(target) ]
-
-    # modify the result file to match expected image (remove DC value, size matching ppms of 0.045)
-    ppms = 0.045
-    duration_sec = modify_parameters[:end_offset].to_f - modify_parameters[:start_offset].to_f
-    modify_result = modify(target, target, ppms, duration_sec)
-
-    result
+    im_info
   end
 
-  def self.modify(source, target, ppms, duration_sec)
-    raise ArgumentError, "Source path for spectrogram modification does not exist: #{source}." unless File.exist?(source)
-    # target will probably already exist
-    #raise ArgumentError, "Target path for spectrogram modification already exists: #{target}." unless !File.exist?(target)
+  # Creates a new image file from source path in target path, modified according to the
+  # parameters in modify_parameters. Possible options for modify_parameters:
+  # :start_offset :end_offset :channel :sample_rate :window :colour :format
+  def modify(source, target, modify_parameters = {})
+    raise ArgumentError, "Target is not a png file: : #{target}" unless target.match(/\.png/)
+    raise ArgumentError, "Source is not a wav file: : #{source}" unless source.match(/\.wav/)
+    raise Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.exists? source
+    raise Exceptions::FileAlreadyExistsError, "Target exists: #{target}" if File.exists? target
+    raise ArgumentError "Source and Target are the same file: #{target}" unless source != target
 
-    # calculate the expected width
-    ##width = ppms * (duration_sec * 1000)
+    source_info = audio_base.info(source)
+    audio_base.check_offsets(source_info, @spectrogram_defaults.min_duration_seconds, @spectrogram_defaults.max_duration_seconds, modify_parameters)
 
-    # http://www.imagemagick.org/Usage/resize/#noaspect
-    # don't have to use for linux \! apparently
-    #resize_ignore_aspect_ratio = if OS.windows? then '!' else '\!' end
-    ##resize_ignore_aspect_ratio = '!'
+    start_offset = modify_parameters.include?(:start_offset) ? modify_parameters[:start_offset] : nil
+    end_offset = modify_parameters.include?(:end_offset) ? modify_parameters[:end_offset] : nil
+    channel = modify_parameters.include?(:channel) ? modify_parameters[:channel] : nil
+    sample_rate = modify_parameters.include?(:sample_rate) ? modify_parameters[:sample_rate] : nil
+    window = modify_parameters.include?(:window) ? modify_parameters[:window] : nil
+    colour = modify_parameters.include?(:colour) ? modify_parameters[:colour] : nil
+    #format = modify_parameters.include?(:format) ? modify_parameters[:format] : @defaults.format
 
-    # chop: http://www.imagemagick.org/Usage/crop/#chop
-    # resize: http://www.imagemagick.org/Usage/resize/
-    # disable resizing. The client can take care of manipulating the image to suit the client's needs
-    ##command = "#{@image_magick_path} \"#{source}\" -gravity South -chop 0x1 -resize #{width}x256#{resize_ignore_aspect_ratio} #{target}"
-    command = "#{@image_magick_path} \"#{source}\" -gravity South -chop 0x1 #{target}"
+    # create spectrogram with sox
+    cmd =
+        @audio_base.audio_sox.spectrogram_command(
+            source, source_info, target, start_offset, end_offset, channel, sample_rate, window, colour)
 
-    # run the command and wait for the result
-    stdout_str, stderr_str, status = Open3.capture3(command)
+    @audio_base.execute(cmd)
+    @audio_base.check_target(target)
 
-    # log the command
-    Rails.logger.debug "Spectrogram modification return status #{status.exitstatus}. Command: #{command}"
-
-    # check for source file problems
-    raise ArgumentError, "Source file was not found: #{source}." if stderr_str.include? 'unable to open image'
-    raise ArgumentError, "Source file was not a valid image file: #{source}." if stderr_str.include? 'no decode delegate for this image format'
-
-    # package up all the available information and return it
-    result = [stdout_str, stderr_str, status, source, File.exist?(source), target, File.exist?(target)]
+    # remove dc offset using image magick
+    cmd = @image_image_magick.modify_command(target, target, source_info[:duration_seconds], @spectrogram_defaults.ppms)
+    @audio_base.execute(cmd)
+    @audio_base.check_target(target)
   end
 end

@@ -16,4 +16,9 @@ class Settings < Settingslogic
   else
     puts "===> #{Rails.root}/config/settings/#{Rails.env}.yml not found."
   end
+
+  def cache_tool
+    @cache_tool ||= CacheBase.from_paths_audio(Settings.paths.original_audios, Settings.paths.cached_audios)
+  end
+
 end

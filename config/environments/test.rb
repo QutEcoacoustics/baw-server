@@ -46,16 +46,19 @@ AWB::Application.configure do
     Paperclip.options[:command_path] = im_dir
   end
 
-  config.log_level = :debug
+  config.log_level = :info
 
-  #config.after_initialize do
+  config.after_initialize do
   #  Bullet.enable = false
   #  Bullet.bullet_logger = true
   #  Bullet.alert = false
   #  Bullet.rails_logger = true
   #  Bullet.add_footer = true
   #  Bullet.raise = true # raise an error if n+1 query occurs
-  #end
+
+  # rotate the log files once they reach 5MB and save the 3 most recent rotated logs
+    config.logger = Logger.new(Rails.root.join('log', "#{Rails.env}.log"), 3, 5.megabytes)
+  end
 
 end
 
