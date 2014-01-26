@@ -18,6 +18,10 @@ AWB::Application.routes.draw do
     member do
       post 'update_permissions'
     end
+    collection do
+      get 'new_access_request'
+      post 'submit_access_request'
+    end
     resources :permissions, :except => [:show]
     resources :permissions, :only => [:show], :defaults => { :format => 'json' }
     resources :sites, :except => [:index] do

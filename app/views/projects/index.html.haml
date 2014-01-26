@@ -5,8 +5,13 @@
     .row-fluid
       - projects.each do |project|
         = render partial: 'projects/project_thumb_large', locals: {project: project}
-
+- if @projects.empty?
+  %p
+    You do not have access to any projects. Try
+    = link_to 'requesting access', new_access_request_projects_path
+    to a project.
 
 - content_for :left_sidebar do
   = render layout: '/shared/left_sidebar', locals: {title: 'Projects'} do
     %li= link_to 'New', new_project_path,  title: "Create a new project", data: {toggle: 'tooltip',  placement: 'right'}
+    %li= link_to 'Request Access', new_access_request_projects_path,  title: "Request access to a project not listed here", data: {toggle: 'tooltip',  placement: 'right'}

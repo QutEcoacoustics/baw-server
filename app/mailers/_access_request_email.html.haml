@@ -1,0 +1,8 @@
+%p
+  Hello #{@receiver[:email]}!
+%p #{@sender[:name]} (user name: #{@sender[:user_name]})has requested access to a project you manage on #{@receiver[:site_name]}.
+%p= link_to "#{@sender[:project_name]}", project_path(@sender[:project_id])
+%p The reason they want access is described below.
+%p #{@sender[:access_reason]}
+%p To grant access, visit the permissions page for the project. On that page, give read access or read and write access to the user named #{@sender[:user_name]}.
+%p= link_to "#{@sender[:project_name]} permissions", project_permissions_path(@sender[:project_id])

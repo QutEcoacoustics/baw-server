@@ -5,3 +5,4 @@
 - content_for :left_sidebar do
   = render layout: '/shared/left_sidebar', locals: {title: 'Projects'} do
     %li= link_to 'Projects', projects_path,  title: "Back to project overview", data: {toggle: 'tooltip',  placement: 'right'}
+    %li= link_to 'Request Access', new_access_request_projects_path,  title: "Request access to an existing project", data: {toggle: 'tooltip',  placement: 'right'}

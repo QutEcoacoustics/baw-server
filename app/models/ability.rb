@@ -13,7 +13,7 @@ class Ability
       can [:show], User
       can [:update], User, id: user.id
       can [:my_account, :modify_preferences], User, user_id: user.id
-      can [:index, :create], Project
+      can [:index, :create, :new_access_request, :submit_access_request], Project
       can [:read, :update, :update_permissions], Project do |project|
         user.can_write?(project)
       end

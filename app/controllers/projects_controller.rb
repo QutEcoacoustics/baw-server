@@ -9,7 +9,7 @@ class ProjectsController < ApplicationController
     if current_user.has_role? :admin
       @projects = Project.includes(:owner).order('lower(name) ASC')
     else
-      @projects = current_user.projects.sort {|a,b| a.name <=> b.name }
+      @projects = current_user.projects.sort { |a, b| a.name <=> b.name }
     end
 
     respond_to do |format|
@@ -127,7 +127,7 @@ class ProjectsController < ApplicationController
         format.html { redirect_to project_permissions_path(@project), notice: 'Permissions were successfully updated.' }
         #format.json { render json: @permission, status: :created, location: @permission }
       else
-        format.html { redirect_to project_permissions_path(@project), alert: 'Permissions were not updated.'  }
+        format.html { redirect_to project_permissions_path(@project), alert: 'Permissions were not updated.' }
         #format.json { render json: @permission.errors, status: :unprocessable_entity }
       end
     end
@@ -141,6 +141,44 @@ class ProjectsController < ApplicationController
     respond_to do |format|
       format.html { redirect_to projects_url }
       format.json { head :no_content }
+    end
+  end
+
+  # GET /projects/request_access
+  def new_access_request
+    @all_projects = Project.readonly.all
+    respond_to do |format|
+      format.html {
+        add_breadcrumb 'Projects', projects_path
+        add_breadcrumb 'Request Project Access', new_access_request_projects_path
+
+      }
+    end
+  end
+
+  # POST /projects/request_access
+  def submit_access_request
+    valid_request = params[:access_request].include?(:projects) &&
+        params[:access_request][:projects].is_a?(Array) &&
+        params[:access_request][:projects].size > 1 &&
+        params[:access_request].include?(:reason) &&
+        params[:access_request][:reason].is_a?(String) &&
+        params[:access_request][:reason].size > 0
+
+    if valid_request
+
+    end
+
+    respond_to do |format|
+      if valid_request
+        format.html { redirect_to projects_path, notice: 'Access request successfully submitted.' }
+      else
+        format.html {
+          add_breadcrumb 'Projects', projects_path
+          add_breadcrumb 'Request Project Access', new_access_request_projects_path
+          redirect_to new_access_request_projects_path, alert: 'Please select projects and provide reason for access.'
+        }
+      end
     end
   end
 end
