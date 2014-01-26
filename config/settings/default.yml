@@ -90,6 +90,7 @@ defaults: &defaults
       sample_rate: 22050
       window: 512
       colour: 'g'
+  server_version: 0.5.0
 
 development:
   <<: *defaults
