@@ -10,8 +10,10 @@ class User < ActiveRecord::Base
   # http://www.phase2technology.com/blog/authentication-permissions-and-roles-in-rails-with-devise-cancan-and-role-model/
   include RoleModel
 
+
+
   attr_accessible :user_name, :email, :password, :password_confirmation, :remember_me,
-                  :roles, :roles_mask,
+                  :roles, :roles_mask, :preferences,
                   :image
 
   roles :admin, :user, :harvester # do not change the order, it matters!
@@ -33,6 +35,9 @@ class User < ActiveRecord::Base
 
   # scopes
   scope :users, -> { where(roles_mask: 2) }
+
+  # store preferences as json in a text column
+  serialize :preferences, JSON
 
   # validations
   validates :user_name, presence: true, uniqueness: { case_sensitive: false }

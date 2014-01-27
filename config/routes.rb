@@ -18,6 +18,10 @@ AWB::Application.routes.draw do
     member do
       post 'update_permissions'
     end
+    collection do
+      get 'new_access_request'
+      post 'submit_access_request'
+    end
     resources :permissions, :except => [:show]
     resources :permissions, :only => [:show], :defaults => { :format => 'json' }
     resources :sites, :except => [:index] do
@@ -100,6 +104,9 @@ AWB::Application.routes.draw do
 
   # when a user goes to my account, render user_account/show view for that user
   get '/my_account/' => 'user_accounts#my_account'
+
+  # for updating only preferences for only the currently logged in user
+  put '/my_account/prefs/' => 'user_accounts#modify_preferences'
 
   # provide access to API documentation
   mount Raddocs::App => '/doc'

@@ -113,6 +113,7 @@ defaults: &defaults
     imagemagick_identify_executable: .\vendor\bin\imagemagick\identify.exe
     max_duration_seconds: 300
   audio_tools_timeout_sec: 20
+  server_version: 0.5.0
 
 development:
   <<: *defaults

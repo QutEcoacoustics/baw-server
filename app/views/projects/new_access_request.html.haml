@@ -1,0 +1,18 @@
+%h1 Request Project Access
+
+= simple_form_for :access_request, url: '/projects/submit_access_request',html: {class: 'form-horizontal'}  do |f|
+  = f.error_notification
+  .row-fluid
+    .span12.form-inputs
+      = f.input :projects, as: :select, required: true, collection: @all_projects, label_method: Proc.new {|item| "#{item.name}: \"#{item.description}\""},
+        value_method: Proc.new {|item| [item.id, item.name] }, label: 'Projects',
+        include_blank: false, input_html: {  class: 'span12', multiple: true, required: true }
+      = f.input :reason, as: :text, required: true,
+        placeholder: 'Why would you like to access this project? Will you need to be able to change project information or create annotations?',
+        input_html: { rows: 8, class: 'span12', required: true }
+  .form-actions
+    = f.button :submit, 'Submit request'
+
+- content_for :left_sidebar do
+  = render layout: '/shared/left_sidebar', locals: {title: 'Projects'} do
+    %li= link_to 'New', new_project_path,  title: "Create a new project", data: {toggle: 'tooltip',  placement: 'right'}

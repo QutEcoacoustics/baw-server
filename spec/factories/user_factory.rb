@@ -6,8 +6,9 @@ FactoryGirl.define do
 
   factory :unconfirmed_user, class: User do
     user_name { Faker::Internet.user_name + generate(:user_counter).to_s }
-    email { Faker::Internet.email + generate(:user_counter).to_s}
-    password {Faker::Lorem.words(6).join(' ')}
+    email { Faker::Internet.email + generate(:user_counter).to_s }
+    password { Faker::Lorem.words(6).join(' ') }
+    preferences { {someSettingOrOther: [1, 2, 5], ImAnotherOne: 'hello!'}.to_json }
     authentication_token { SecureRandom.urlsafe_base64(nil, false) }
     factory :confirmed_user do
       after(:create) { |user| user.confirm! } #confirmed_at { Time.zone.now }

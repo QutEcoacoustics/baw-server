@@ -34,13 +34,13 @@ module ActiveRecord
           end
 
           to_column_names = columns(to).map { |c| c.name }
-          columns = index.columns.map {|c| rename[c] || c }.select do |column|
+          columns = index.columns.map { |c| rename[c] || c }.select do |column|
             to_column_names.include?(column)
           end
 
           unless columns.empty?
             # index name can't be the same
-            opts = { :name => name.gsub(/(^|_)(#{from})_/, "\\1#{to}_") }
+            opts = {:name => name.gsub(/(^|_)(#{from})_/, "\\1#{to}_")}
             opts[:unique] = true if index.unique
             opts[:name] = opts[:name][0..63] # can't be more than 64 chars long
             add_index(to, columns, opts)
@@ -50,7 +50,6 @@ module ActiveRecord
     end
   end
 end
-
 
 
 # http://blog.choonkeat.com/weblog/2007/02/retrieving-a-se.html
@@ -98,5 +97,12 @@ class Float
     else
       super
     end
+  end
+end
+
+# from http://stackoverflow.com/questions/4078906/is-there-a-natural-sort-by-method-for-ruby/15170063#15170063
+class NaturalSort
+  def self.sort(collection, property)
+    collection.sort_by { |e| e.send(property.to_sym).split(/(\d+)/).map { |a| a =~ /\d+/ ? a.to_i : a } }
   end
 end

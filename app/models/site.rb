@@ -1,5 +1,5 @@
 class Site < ActiveRecord::Base
-  attr_accessible :name, :latitude, :longitude, :notes, :image
+  attr_accessible :name, :latitude, :longitude, :notes, :image, :project_ids
 
   # relations
   has_and_belongs_to_many :projects, uniq: true
@@ -31,4 +31,7 @@ class Site < ActiveRecord::Base
   #scope :sites_in_project, lambda { |project_ids| where(Project.specified_projects, { :ids => project_ids } ) }
   #scope :site_projects, lambda{ |project_ids| includes(:projects).where(:projects => {:id => project_ids} ) }
 
+  def project_ids
+    self.projects.collect { |project| project.id }
+  end
 end
