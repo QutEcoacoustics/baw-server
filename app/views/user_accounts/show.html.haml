@@ -18,7 +18,7 @@
       - @user.bookmarks.each do |bookmark|
         %tr
           %td= link_to bookmark.name, bookmark_path(bookmark)
-          %td= bookmark.notes
+          %td= bookmark.description
 
 .span12
   %h3 Datasets

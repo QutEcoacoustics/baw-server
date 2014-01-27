@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20140125054808) do
+ActiveRecord::Schema.define(:version => 20140127011711) do
 
   create_table "audio_events", :force => true do |t|
     t.integer  "audio_recording_id",                                                     :null => false
@@ -66,11 +66,11 @@ ActiveRecord::Schema.define(:version => 20140125054808) do
     t.integer  "audio_recording_id"
     t.decimal  "offset_seconds",     :precision => 10, :scale => 4
     t.string   "name"
-    t.text     "notes"
     t.datetime "created_at",                                        :null => false
     t.datetime "updated_at",                                        :null => false
     t.integer  "creator_id",                                        :null => false
     t.integer  "updater_id"
+    t.text     "description"
   end
 
   create_table "datasets", :force => true do |t|
@@ -113,6 +113,7 @@ ActiveRecord::Schema.define(:version => 20140125054808) do
     t.datetime "deleted_at"
     t.datetime "created_at",      :null => false
     t.datetime "updated_at",      :null => false
+    t.text     "description"
   end
 
   create_table "permissions", :force => true do |t|
@@ -182,6 +183,7 @@ ActiveRecord::Schema.define(:version => 20140125054808) do
     t.datetime "image_updated_at"
     t.datetime "created_at",                                       :null => false
     t.datetime "updated_at",                                       :null => false
+    t.text     "description"
   end
 
   create_table "tags", :force => true do |t|

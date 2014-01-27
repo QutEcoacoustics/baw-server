@@ -1,5 +1,5 @@
 class Bookmark < ActiveRecord::Base
-  attr_accessible :audio_recording_id, :name, :notes, :offset_seconds
+  attr_accessible :audio_recording_id, :name, :description, :offset_seconds
 
   # relations
   belongs_to :audio_recording, inverse_of: :bookmarks

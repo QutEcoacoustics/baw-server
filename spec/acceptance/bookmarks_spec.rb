@@ -34,7 +34,6 @@ resource 'Bookmarks' do
   ################################
   get 'user_accounts/:user_account_id/bookmarks' do
     parameter :user_account_id, 'Requested user_account ID (in path/route)', required: true
-
     let(:authentication_token) { user_token}
     standard_request('LIST for user_account (as user)', 200, '0/offset_seconds', true)
   end
@@ -63,6 +62,9 @@ resource 'Bookmarks' do
   ################################
   post 'audio_recordings/:audio_recording_id/bookmarks' do
     parameter :audio_recording_id, 'Requested audio_recording ID (in path/route)', required: true
+    parameter :offset_seconds, 'Offset from start of audio recording to place bookmark', required: true
+    parameter :name, 'Name for bookmark', required: false
+    parameter :description, 'Description of bookmark', required: false
 
     let(:raw_post) { {'bookmark' => post_attributes}.to_json }
 

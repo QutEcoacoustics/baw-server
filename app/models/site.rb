@@ -1,5 +1,5 @@
 class Site < ActiveRecord::Base
-  attr_accessible :name, :latitude, :longitude, :notes, :image, :project_ids
+  attr_accessible :name, :latitude, :longitude, :description, :image, :project_ids
 
   # relations
   has_and_belongs_to_many :projects, uniq: true

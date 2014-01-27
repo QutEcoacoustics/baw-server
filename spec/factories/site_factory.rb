@@ -9,7 +9,7 @@ FactoryGirl.define do
     longitude Random.rand(360) - 180
 
     factory :all_site_attributes, class: Site do
-      notes { {Faker::Lorem.word => Faker::Lorem.paragraph} }
+      description { {Faker::Lorem.word => Faker::Lorem.paragraph} }
       factory :site do
         association :creator, factory: :user
       end

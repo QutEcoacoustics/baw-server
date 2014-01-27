@@ -46,17 +46,6 @@ RSpec.configure do |config|
   config.include FactoryGirl::Syntax::Methods
   #config.include Rails.application.routes.url_helpers
 
-  # clear paperclip attachments from tmp directory
-  RSpec.configure do |config_rspec|
-    config_rspec.after {
-      FileUtils.rm_rf(Dir["#{Rails.root}/tmp/paperclip/[^.]*"])
-    }
-  end
-
-  RspecApiDocumentation.configure do |config_rspec_api|
-    config_rspec_api.format = :json
-  end
-
   config.before(:suite) do
     DatabaseCleaner.strategy = :transaction
     DatabaseCleaner.clean_with(:truncation)
@@ -69,22 +58,30 @@ RSpec.configure do |config|
   end
 
   # Reset so other non-request specs don't have to deal with slow truncation.
-  config.after type: :request  do
+  config.after type: :request do
+    # clear paperclip attachments from tmp directory
     DatabaseCleaner.strategy = :transaction
+    FileUtils.rm_rf(Dir["#{Rails.root}/tmp/paperclip/[^.]*"])
   end
 
   config.before(:each) do
     DatabaseCleaner.start
     ActionMailer::Base.deliveries.clear
 
+    example_description = example.description
+    Rails::logger.info  "\n\n#{example_description}\n#{'-' * (example_description.length)}"
+
     #Bullet.start_request if Bullet.enable?
   end
 
   config.after(:each) do
     DatabaseCleaner.clean
-
     #Bullet.perform_out_of_channel_notifications if Bullet.enable? && Bullet.notification?
     #Bullet.end_request if Bullet.enable?
   end
 
+end
+
+RspecApiDocumentation.configure do |config_rspec_api|
+  config_rspec_api.format = :json
 end

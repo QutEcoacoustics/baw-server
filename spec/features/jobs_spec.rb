@@ -40,6 +40,7 @@ describe 'CRUD Jobs as valid user with write permission' do
     select @dataset.name, from: 'job[dataset_id]'
     select @script.name, from: 'job[script_id]'
     fill_in 'job[script_settings]', with: 'test name'
+    fill_in 'job[description]', with: 'description'
     click_button 'Create Job'
     page.should have_content('test name')
     page.should have_content('Analysis job was successfully created.')

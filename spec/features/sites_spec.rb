@@ -29,7 +29,7 @@ describe 'CRUD Sites as valid user with write permission' do
     visit new_project_site_path(@project)
     #save_and_open_page
     fill_in 'site[name]', with: 'test name'
-    fill_in 'site[notes]', with: 'notes'
+    fill_in 'site[description]', with: 'description'
     attach_file('site[image]', 'public/images/user/user-512.png')
     click_button 'Create Site'
     page.should have_content('test name')
@@ -47,7 +47,7 @@ describe 'CRUD Sites as valid user with write permission' do
     visit edit_project_site_path(@project, @site)
     #save_and_open_page
     fill_in 'site[name]', with: 'test name'
-    fill_in 'site[notes]', with: 'notes'
+    fill_in 'site[description]', with: 'description'
     attach_file('site[image]', 'public/images/user/user-512.png')
     click_button 'Update Site'
     page.should have_content('test name')
