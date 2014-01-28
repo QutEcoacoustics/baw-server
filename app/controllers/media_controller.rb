@@ -55,7 +55,7 @@ class MediaController < ApplicationController
                   site_name: @audio_recording.site.name,
                   recorded_date: @audio_recording.recorded_date,
                   ext: options[:format],
-                  file_path: media_cacher.create_audio_segment(options)
+                  file_path: media_cacher.create_audio_segment(options).first
               })
         elsif  IMAGE_MEDIA_TYPES.include?(mime_type)
           options[:format] = params[:format] || default_spectrogram.format
@@ -65,7 +65,7 @@ class MediaController < ApplicationController
           options[:colour] = (params[:colour] || default_spectrogram.colour).to_s
           full_path = media_cacher.generate_spectrogram(options)
           #download_file(full_path, mime_type)
-          send_file full_path, stream: true, buffer_size: 4096, disposition: 'inline', type: mime_type, content_type: mime_type
+          send_file full_path.first, stream: true, buffer_size: 4096, disposition: 'inline', type: mime_type, content_type: mime_type
         else
           options[:available_audio_formats] = get_available_formats(@audio_recording, available_audio_formats, params[:start_offset], params[:end_offset], default_audio)
           #Settings.cached_audio_defaults.each { |key, value| value.merge!({mime_type: Mime::Type.lookup_by_extension(key).to_s, url: audio_recording_media_path(@audio_recording, format: key, start_offset: params[:start_offset], end_offset: params[:end_offset])}) }
