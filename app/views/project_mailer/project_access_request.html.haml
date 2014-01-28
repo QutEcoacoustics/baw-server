@@ -1,8 +1,26 @@
+%p= "Hello #{@owner_name},"
 %p
-  Hello #{@receiver[:email]}!
-%p #{@sender[:name]} (user name: #{@sender[:user_name]})has requested access to a project you manage on #{@receiver[:site_name]}.
-%p= link_to "#{@sender[:project_name]}", project_path(@sender[:project_id])
-%p The reason they want access is described below.
-%p #{@sender[:access_reason]}
-%p To grant access, visit the permissions page for the project. On that page, give read access or read and write access to the user named #{@sender[:user_name]}.
-%p= link_to "#{@sender[:project_name]} permissions", project_permissions_path(@sender[:project_id])
+  You are receiving this email because the
+  = Settings.organisation_names.site_long_name
+  website member
+  = "'#{@sender_user.user_name}'"
+  is requesting access to one or more of your projects:
+%ul
+  - @projects.each do |project|
+    %li
+      = link_to "#{project[:name]}", project_url(project[:id])
+      = link_to ' (permissions page)', project_permissions_url(project[:id])
+
+%p The reason they want access to the project(s) is:
+%p= "#{@access_reason}"
+%br
+%br
+%p If you do not want to grant access, then there is nothing else you need to do.
+%p To grant access, visit the permissions page for the project(s) listed above."
+%p
+  You can choose to give
+  = @sender_user.user_name
+  read only access or read and write access separately for each project.
+
+Regards,
+%br= Settings.organisation_names.organisation_name

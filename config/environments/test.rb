@@ -27,8 +27,11 @@ AWB::Application.configure do
   # Tell Action Mailer not to deliver emails to the real world.
   # The :test delivery method accumulates sent emails in the
   # ActionMailer::Base.deliveries array.
+  config.action_mailer.raise_delivery_errors = true
+  config.action_mailer.default_url_options = { :host => "#{Settings.host.name}:#{Settings.host.port}" }
   config.action_mailer.delivery_method = :test
-  config.action_mailer.default_url_options = { :host => 'localhost:3030' }
+  config.action_mailer.perform_deliveries = true
+
 
   # Raise exception on mass assignment protection for Active Record models
   config.active_record.mass_assignment_sanitizer = :strict
@@ -58,6 +61,7 @@ AWB::Application.configure do
 
   # rotate the log files once they reach 5MB and save the 3 most recent rotated logs
     config.logger = Logger.new(Rails.root.join('log', "#{Rails.env}.log"), 3, 5.megabytes)
+    config.action_mailer.logger = Logger.new(Rails.root.join('log', "#{Rails.env}.mailer.log"), 3, 5.megabytes)
   end
 
 end

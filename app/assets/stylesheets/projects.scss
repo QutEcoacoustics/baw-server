@@ -22,3 +22,8 @@ $baseFontSize: 14px;
     font-size: $baseFontSize * 1.75;
   }
 }
+
+select[multiple] {
+  height: 100px;
+
+}

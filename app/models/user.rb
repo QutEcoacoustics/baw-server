@@ -11,7 +11,6 @@ class User < ActiveRecord::Base
   include RoleModel
 
 
-
   attr_accessible :user_name, :email, :password, :password_confirmation, :remember_me,
                   :roles, :roles_mask, :preferences,
                   :image
@@ -21,7 +20,7 @@ class User < ActiveRecord::Base
   model_stamper # this identifies this class as being the class that 'stamps'
 
   has_attached_file :image,
-                    styles: { span4: '300x300#', span3: '220x220#', span2: '140x140#', span1: '60x60#', spanhalf: '30x30#'},
+                    styles: {span4: '300x300#', span3: '220x220#', span2: '140x140#', span1: '60x60#', spanhalf: '30x30#'},
                     default_url: '/images/user/user_:style.png'
 
   # relations
@@ -40,7 +39,7 @@ class User < ActiveRecord::Base
   serialize :preferences, JSON
 
   # validations
-  validates :user_name, presence: true, uniqueness: { case_sensitive: false }
+  validates :user_name, presence: true, uniqueness: {case_sensitive: false}
   validates :email, presence: true, uniqueness: true
   validates :roles_mask, presence: true
 
@@ -51,21 +50,32 @@ class User < ActiveRecord::Base
     (self.owned_projects.includes(:owner) + self.accessible_projects).uniq
   end
 
+  def inaccessible_projects
+    user_projects = self.projects.map { |project| project.id}
+
+    Project
+    .where('id NOT IN (?)', (user_projects.blank? ? '' : user_projects))
+    .order(:name)
+    .uniq
+  end
+
   def recently_updated_projects
     # .includes() for left outer join
     # .joins for inner join
     creator_id_check = 'projects.creator_id = ?'
     permissions_check = '(permissions.user_id = ? AND permissions.level IN (\'reader\', \'writer\'))'
-    Project.includes(:permissions).where("(#{creator_id_check} OR #{permissions_check})",self.id, self.id).uniq.order('projects.updated_at DESC')
+    Project.includes(:permissions).where("(#{creator_id_check} OR #{permissions_check})", self.id, self.id).uniq.order('projects.updated_at DESC')
   end
 
   # helper methods for permission checks
   def can_read?(project)
     !Permission.find_by_user_id_and_project_id_and_level(self, project, 'reader').blank? || project.owner == self
   end
+
   def can_write?(project)
     !Permission.find_by_user_id_and_project_id_and_level(self, project, 'writer').blank? || project.owner == self
   end
+
   def can_write_any?(projects)
     projects.each do |project|
       if self.can_write?(project)
@@ -74,9 +84,11 @@ class User < ActiveRecord::Base
     end
     return false
   end
+
   def has_permission?(project)
     !Permission.find_by_user_id_and_project_id(self, project).blank? || project.owner == self # project.creator == self
   end
+
   def has_permission_any?(projects)
     projects.each do |project|
       if self.has_permission?(project)
@@ -85,12 +97,15 @@ class User < ActiveRecord::Base
     end
     return false
   end
+
   def get_read_permission(project)
     Permission.find_by_user_id_and_project_id_and_level(self, project, 'reader')
   end
+
   def get_write_permission(project)
     Permission.find_by_user_id_and_project_id_and_level(self, project, 'writer')
   end
+
   def get_permission(project)
     Permission.find_by_user_id_and_project_id(self, project)
   end

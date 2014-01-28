@@ -114,6 +114,10 @@ defaults: &defaults
     max_duration_seconds: 300
   audio_tools_timeout_sec: 20
   server_version: 0.5.0
+  organisation_names:
+    site_long_name: Audio Workbench
+    site_short_name: AWB
+    organisation_name: Audio Group
 
 development:
   <<: *defaults

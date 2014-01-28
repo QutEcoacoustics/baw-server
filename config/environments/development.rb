@@ -13,22 +13,13 @@ AWB::Application.configure do
   config.consider_all_requests_local       = true
   config.action_controller.perform_caching = false
 
-  # Don't care if the mailer can't send
+  # configure mailer for development
   config.action_mailer.raise_delivery_errors = true
   config.action_mailer.default_url_options = { :host => "#{Settings.host.name}:#{Settings.host.port}" }
+  config.action_mailer.delivery_method = :file
+  config.action_mailer.file_settings = { :location => Rails.root.join('tmp','mail') }
+  config.action_mailer.perform_deliveries = true
 
-  config.action_mailer.delivery_method = :smtp
-
-  config.action_mailer.smtp_settings = {
-      :address        => Settings.smtp.address,
-      :port           => Settings.smtp.port,
-      :domain         => Settings.smtp.domain,
-      :authentication => Settings.smtp.authentication,
-      :user_name      => Settings.smtp.user_name,
-      :password       => Settings.smtp.password
-  }
-
-  config.action_mailer.perform_deliveries = false
 
   # Print deprecation notices to the Rails logger
   config.active_support.deprecation = :log
@@ -44,12 +35,10 @@ AWB::Application.configure do
   config.active_record.auto_explain_threshold_in_seconds = 0.5
 
   # Do not compress assets
-  config.assets.compress = false
+  config.assets.compress = true
 
   # Expands the lines which load the assets
-  config.assets.debug = true
-
-
+  config.assets.debug = false
 
   # Set path for image magick for windows only
   if RbConfig::CONFIG['target_os'] =~ /mswin|mingw/i
@@ -74,7 +63,8 @@ AWB::Application.configure do
     Bullet.raise = false
 
     # rotate the log files once they reach 5MB and save the 3 most recent rotated logs
-    config.logger = Logger.new(Rails.root.join('log', "#{Rails.env}.log"), 3, 5.megabytes)
+    config.logger = Logger.new(Rails.root.join('log', "#{Rails.env}.log"), 3, 5.0.megabytes)
+    config.action_mailer.logger = Logger.new(Rails.root.join('log', "#{Rails.env}.mailer.log"), 3, 5.megabytes)
   end
 end
 

@@ -74,31 +74,20 @@ ActiveRecord::Schema.define(:version => 20140127011711) do
   end
 
   create_table "datasets", :force => true do |t|
-    t.string   "name",                        :null => false
-    t.time     "start_time"
-    t.time     "end_time"
-    t.date     "start_date"
-    t.date     "end_date"
-    t.string   "filters"
-    t.integer  "number_of_samples"
-    t.integer  "number_of_tags"
-    t.string   "types_of_tags"
-    t.text     "description"
-    t.integer  "creator_id",                  :null => false
+    t.string   "processing_status",                                     :null => false
+    t.decimal  "total_duration_seconds", :precision => 10, :scale => 4
+    t.integer  "audio_recording_count"
+    t.datetime "earliest_datetime"
+    t.time     "earliest_time_of_day"
+    t.datetime "latest_datetime"
+    t.time     "latest_time_of_day"
+    t.integer  "saved_search_id",                                       :null => false
+    t.integer  "creator_id",                                            :null => false
     t.integer  "updater_id"
-    t.integer  "project_id",                  :null => false
-    t.datetime "created_at",                  :null => false
-    t.datetime "updated_at",                  :null => false
-    t.string   "dataset_result_file_name"
-    t.string   "dataset_result_content_type"
-    t.integer  "dataset_result_file_size"
-    t.datetime "dataset_result_updated_at"
-    t.text     "tag_text_filters"
-  end
-
-  create_table "datasets_sites", :id => false, :force => true do |t|
-    t.integer "dataset_id", :null => false
-    t.integer "site_id",    :null => false
+    t.integer  "deleter_id"
+    t.datetime "deleted_at"
+    t.datetime "created_at",                                            :null => false
+    t.datetime "updated_at",                                            :null => false
   end
 
   create_table "jobs", :force => true do |t|
@@ -146,6 +135,33 @@ ActiveRecord::Schema.define(:version => 20140127011711) do
   create_table "projects_sites", :id => false, :force => true do |t|
     t.integer "project_id", :null => false
     t.integer "site_id",    :null => false
+  end
+
+  create_table "saved_searches", :force => true do |t|
+    t.string   "name",                     :null => false
+    t.time     "start_time"
+    t.time     "end_time"
+    t.date     "start_date"
+    t.date     "end_date"
+    t.string   "filters"
+    t.integer  "number_of_samples"
+    t.integer  "number_of_tags"
+    t.string   "types_of_tags"
+    t.text     "description"
+    t.integer  "creator_id",               :null => false
+    t.integer  "updater_id"
+    t.integer  "project_id",               :null => false
+    t.datetime "created_at",               :null => false
+    t.datetime "updated_at",               :null => false
+    t.text     "tag_text_filters"
+    t.string   "auto_generated_identifer"
+    t.integer  "deleter_id"
+    t.datetime "deleted_at"
+  end
+
+  create_table "saved_searches_sites", :id => false, :force => true do |t|
+    t.integer "saved_search_id", :null => false
+    t.integer "site_id",         :null => false
   end
 
   create_table "scripts", :force => true do |t|

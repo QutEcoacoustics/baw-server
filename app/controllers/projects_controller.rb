@@ -146,7 +146,7 @@ class ProjectsController < ApplicationController
 
   # GET /projects/request_access
   def new_access_request
-    @all_projects = Project.readonly.all
+    @all_projects = current_user.inaccessible_projects
     respond_to do |format|
       format.html {
         add_breadcrumb 'Projects', projects_path
@@ -171,6 +171,10 @@ class ProjectsController < ApplicationController
 
     respond_to do |format|
       if valid_request
+        ProjectMailer.project_access_request(
+            current_user, params[:access_request][:projects], params[:access_request][:reason]).each do |message|
+          message.deliver
+        end
         format.html { redirect_to projects_path, notice: 'Access request successfully submitted.' }
       else
         format.html {
