@@ -66,7 +66,13 @@ class MediaController < ApplicationController
           send_file full_path, stream: true, buffer_size: 4096, disposition: 'inline', type: mime_type, content_type: mime_type
         else
           options[:available_audio_formats] = get_available_formats(@audio_recording, available_audio_formats, params[:start_offset], params[:end_offset], default_audio)
+          #Settings.cached_audio_defaults.each { |key, value| value.merge!({mime_type: Mime::Type.lookup_by_extension(key).to_s, url: audio_recording_media_path(@audio_recording, format: key, start_offset: params[:start_offset], end_offset: params[:end_offset])}) }
           options[:available_image_formats] = get_available_formats(@audio_recording, available_image_formats, params[:start_offset], params[:end_offset], default_spectrogram)
+
+          options.delete :date
+          options.delete :time
+          options[:format] = 'json'
+
           render json: options.to_json
         end
       else
@@ -76,18 +82,22 @@ class MediaController < ApplicationController
   end
 
   def get_available_formats(audio_recording, formats, start_offset, end_offset, defaults)
-    formats.each { |format| info_hash = defaults.merge!(
-        {
-            mime_type: Mime::Type.lookup_by_extension(format).to_s,
-            url: audio_recording_media_path(audio_recording,
-                                            format: format,
-                                            start_offset: start_offset,
-                                            end_offset: end_offset),
-        }
-    )
-    info_hash.delete :format
-    info_hash
-    }
+
+    result = {}
+
+    formats.each do |format|
+      result[format] = defaults
+      result.delete 'max_duration_seconds'
+      result.delete 'min_duration_seconds'
+      result[format][:mime_type] = Mime::Type.lookup_by_extension(format).to_s
+      result[format][:url] = audio_recording_media_path(audio_recording,
+                                      format: format,
+                                      start_offset: start_offset,
+                                      end_offset: end_offset)
+      result[format].delete 'format'
+    end
+
+    result
   end
 
   def reference_audio
