@@ -16,6 +16,8 @@ class MediaController < ApplicationController
 
   def show
 
+    media_cacher = MediaCacher.new(Settings.paths.temp_files)
+
     available_text_formats = Settings.available_formats.text
     available_audio_formats = Settings.available_formats.audio
     available_image_formats = Settings.available_formats.image
@@ -41,7 +43,7 @@ class MediaController < ApplicationController
         options[:end_offset] = (params[:end_offset] || @audio_recording.duration_seconds).to_f
         options[:uuid] = @audio_recording.uuid
         options[:id] = @audio_recording.id
-        mime_type = Mime::Type.lookup_by_extension(options[:format])
+        mime_type = Mime::Type.lookup_by_extension(params[:format])
 
         if AUDIO_MEDIA_TYPES.include?(mime_type)
           options[:format] = params[:format] || default_audio.format
@@ -53,7 +55,7 @@ class MediaController < ApplicationController
                   site_name: @audio_recording.site.name,
                   recorded_date: @audio_recording.recorded_date,
                   ext: options[:format],
-                  file_path: MediaCacher.create_audio_segment(options)
+                  file_path: media_cacher.create_audio_segment(options)
               })
         elsif  IMAGE_MEDIA_TYPES.include?(mime_type)
           options[:format] = params[:format] || default_spectrogram.format
@@ -61,7 +63,7 @@ class MediaController < ApplicationController
           options[:sample_rate] = (params[:sample_rate] || default_spectrogram.sample_rate).to_i
           options[:window] = (params[:window] || default_spectrogram.window).to_i
           options[:colour] = (params[:colour] || default_spectrogram.colour).to_s
-          full_path = CacheTools::MediaCacher.generate_spectrogram(options)
+          full_path = media_cacher.generate_spectrogram(options)
           #download_file(full_path, mime_type)
           send_file full_path, stream: true, buffer_size: 4096, disposition: 'inline', type: mime_type, content_type: mime_type
         else
