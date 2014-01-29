@@ -11,6 +11,7 @@ class OriginalAudio
     @storage_paths = storage_paths
 
     @separator = '_'
+    @separator_dash = '-'
     @extension_indicator = '.'
     @date_format = '%y%m%d'
     @time_format = '%H%M'
@@ -26,7 +27,7 @@ class OriginalAudio
       result += date.to_s
     end
 
-    result += @separator
+    result += @separator_dash
 
     if time.respond_to?(:strftime)
       result += time.strftime @time_format

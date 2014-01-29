@@ -24,7 +24,7 @@ describe CacheBase do
   let(:format_spectrogram) { 'jpg' }
 
   let(:original_format) { 'mp3' }
-  let(:original_file_name) { "#{uuid}_#{datetime.strftime('%y%m%d')}_#{datetime.strftime('%H%M')}.#{original_format}" }
+  let(:original_file_name) { "#{uuid}_#{datetime.strftime('%y%m%d')}-#{datetime.strftime('%H%M')}.#{original_format}" }
 
   let(:cached_audio_file_name_defaults) { "#{uuid}_0.0_#{end_offset}_0_22050.mp3" }
   let(:cached_audio_file_name_given_parameters) { "#{uuid}_#{start_offset}_#{end_offset}_#{channel}_#{sample_rate}.#{format_audio}" }
