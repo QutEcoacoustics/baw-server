@@ -7,17 +7,18 @@ resource 'Sessions' do
   header 'Accept', 'application/json'
   header 'Content-Type', 'application/json'
 
-  let(:format) {'json'}
+  let(:format) { 'json' }
 
   # Create post parameters from factory
   let(:authentication_token) { "Token token=\"#{@permission.user.authentication_token}\"" }
+  let(:authentication_token_user) { "Token token=\"#{@user.authentication_token}\"" }
 
 
   before(:each) do
     # this creates a @permission.user with read access to @permission.project, as well as
     # a site, audio_recording and audio_event having off the project (see permission_factory.rb)
     @permission = FactoryGirl.create(:write_permission)
-
+    @user = FactoryGirl.create(:user)
   end
 
   get '/security/sign_in' do
@@ -46,6 +47,25 @@ resource 'Sessions' do
 
     example_request 'SHOW' do
       status.should == 200
+    end
+  end
+
+  get '/projects' do
+    example_request 'Not logged in' do
+      status.should == 401
+      response_body.should have_json_path('error')
+      response_body.should have_json_path('sign_in_link')
+      response_body.should have_json_path('user_confirmation_link')
+    end
+  end
+
+  get '/projects/:id' do
+    let(:id) { @permission.user.projects[0].id }
+    header 'Authorization', :authentication_token_user
+    example_request 'logged in but no access' do
+      status.should == 403
+      response_body.should have_json_path('error')
+      response_body.should have_json_path('request_new_permissions_link')
     end
   end
 

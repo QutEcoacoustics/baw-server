@@ -219,6 +219,7 @@ GEM
       activesupport (= 3.2.16)
       bundler (~> 1.0)
       railties (= 3.2.16)
+    rails-i18n-debug (1.0.1)
     railties (3.2.16)
       actionpack (= 3.2.16)
       activesupport (= 3.2.16)
@@ -360,6 +361,7 @@ DEPENDENCIES
   rack-mini-profiler
   raddocs
   rails (~> 3.2)
+  rails-i18n-debug
   role_model
   rspec-rails (>= 2.0.1)
   rspec_api_documentation

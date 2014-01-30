@@ -17,22 +17,32 @@ class ApplicationController < ActionController::Base
 
   rescue_from CanCan::AccessDenied do |exception|
     if current_user && current_user.confirmed?
-      if !request.env["HTTP_REFERER"].blank? and request.env["HTTP_REFERER"] != request.env["REQUEST_URI"]
+
+      json_forbidden = {
+          error: 'You are logged in, but do not have sufficent permissions to access this resource.',
+          request_new_permissions_link: new_access_request_projects_url
+      }
+
+      if !request.env['HTTP_REFERER'].blank? and request.env['HTTP_REFERER'] != request.env['REQUEST_URI']
         respond_to do |format|
           format.html { redirect_to :back, :alert => exception.message }
-          format.json { render json: {error: exception.message}.to_json, status: :forbidden }
+          format.json { render json: json_forbidden.to_json, status: :forbidden }
         end
       else
         respond_to do |format|
           format.html { redirect_to projects_path, :alert => exception.message }
-          format.json { render json: {error: exception.message}.to_json, status: :forbidden }
+          format.json { render json: json_forbidden.to_json, status: :forbidden }
         end
 
       end
     else
       respond_to do |format|
         format.html { redirect_to root_path, :alert => exception.message }
-        format.json { render json: {error: exception.message}.to_json, status: :unauthorized }
+        format.json { render json: {
+            error: 'You need to log in and confirm your account to access this resource.',
+            sign_in_link: new_user_session_url,
+            user_confirmation_link: new_user_confirmation_url
+        }.to_json, status: :unauthorized }
       end
     end
   end
