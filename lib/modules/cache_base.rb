@@ -89,7 +89,7 @@ class CacheBase
       raise ArgumentError, "start_offset #{eq_or_gt} 0: #{modify_parameters[:end_offset]}" unless modify_parameters[:start_offset].to_f >= 0.0
 
       raise ArgumentError, "#{msg} end_offset" unless modify_parameters.include? :end_offset
-      raise ArgumentError, "end_offset (#{modify_parameters[:end_offset]}) must be greater than start_offset (#{modify_parameters[:start_offset]})" if modify_parameters[:start_offset].to_f >= modify_parameters[:end_offset]
+      raise ArgumentError, "end_offset (#{modify_parameters[:end_offset]}) must be greater than start_offset (#{modify_parameters[:start_offset]})" if modify_parameters[:start_offset].to_f >= modify_parameters[:end_offset].to_f
 
       raise ArgumentError, "#{msg} channel" unless modify_parameters.include? :channel
       raise ArgumentError, "channel#{eq_or_gt} 0: #{modify_parameters[:channel]}" unless modify_parameters[:channel].to_i >= 0

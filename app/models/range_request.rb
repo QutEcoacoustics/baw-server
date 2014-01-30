@@ -48,7 +48,11 @@ class RangeRequest
         file_modified_time: File.mtime(file_path).getutc,
         file_media_type: media_type,
 
-        response_suggested_file_name: options[:site_name].gsub(' ', '_') + '_' + options[:recorded_date].strftime('%Y%m%d_%H%M%S') + '.' + options[:ext],
+        response_suggested_file_name:
+            options[:site_name].gsub(' ', '_') +'_' +
+                options[:recorded_date].advance(seconds: options[:start_offset]).strftime('%Y%m%d_%H%M%S') + '_' +
+                (options[:end_offset] - options[:start_offset]).to_s + '_' +
+                '.' + options[:ext],
         response_has_content: true,
         response_is_range: false,
         response_code: 200,
@@ -128,7 +132,7 @@ class RangeRequest
     # check If modified since header to determine if file needs to be resent
     # ==========================================
     if_mod_since = rails_request.headers[HTTP_HEADER_IF_MODIFIED_SINCE]
-    if if_mod_since
+    unless if_mod_since.blank?
       header_modified_time = Time.parse(if_mod_since).getutc
 
       if info[:file_modified_time] <= header_modified_time
@@ -142,11 +146,11 @@ class RangeRequest
     # check for if unmod since and unless mod since (not quite sure what these headers do or are for)
     # ==========================================
     if_unmod_since = rails_request.headers[HTTP_HEADER_IF_UNMODIFIED_SINCE]
-    unless if_unmod_since
+    if if_unmod_since.blank?
       if_unmod_since = rails_request.headers[HTTP_HEADER_UNLESS_MODIFIED_SINCE]
     end
 
-    if if_unmod_since
+    unless if_unmod_since.blank?
       header_time = Time.parse(if_unmod_since).getutc
 
       if info[:file_modified_time] > header_time

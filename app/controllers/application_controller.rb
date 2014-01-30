@@ -50,13 +50,13 @@ class ApplicationController < ActionController::Base
   protected
 
   def json_request?
-    request.format.json?
+    request.format && request.format.json?
   end
 
   # http://stackoverflow.com/questions/14734243/rails-csrf-protection-angular-js-protect-from-forgery-makes-me-to-log-out-on
   def set_csrf_cookie_for_ng
     csrf_cookie_key = 'XSRF-TOKEN'
-    if request.format.json?
+    if request.format && request.format.json?
       cookies[csrf_cookie_key] = form_authenticity_token if protect_against_forgery?
     end
   end
@@ -65,7 +65,7 @@ class ApplicationController < ActionController::Base
   # cookies can only be accessed by js from the same origin (protocol, host and port) as the response.
   # WARNING: disable csrf check for json for now.
   def verified_request?
-    if request.format.json?
+    if request.format && request.format.json?
       true
     else
       csrf_header_key = 'X-XSRF-TOKEN'

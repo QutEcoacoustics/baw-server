@@ -17,7 +17,7 @@ describe MediaCacher do
   let(:original_format) { 'ogg' }
   let(:uuid) { '5498633d-89a7-4b65-8f4a-96aa0c09c619' }
 
-  let(:original_file_name) { "#{uuid}_#{datetime.strftime('%y%m%d')}_#{datetime.strftime('%H%M')}.#{original_format}" }
+  let(:original_file_name) { "#{uuid}_#{datetime.strftime('%y%m%d')}-#{datetime.strftime('%H%M')}.#{original_format}" }
   let(:original_file_dir) { File.join(Settings.paths.original_audios, '54') }
   let(:original_file_path) { File.join(original_file_dir, original_file_name) }
 
@@ -46,7 +46,7 @@ describe MediaCacher do
            end_offset: duration_seconds,
            channel: 0,
            sample_rate: sample_rate,
-           format: Settings.cached_audio_defaults.format
+           format: Settings.cached_audio_defaults.storage_format
           })
     }.to raise_error(Exceptions::AudioFileNotFoundError, /Could not find original audio in/)
   end
@@ -87,15 +87,15 @@ describe MediaCacher do
               end_offset: Settings.cached_audio_defaults.min_duration_seconds,
               channel: Settings.cached_audio_defaults.channel,
               sample_rate: Settings.cached_audio_defaults.sample_rate,
-              format: Settings.cached_audio_defaults.format
+              format: Settings.cached_audio_defaults.storage_format
           })
       file_name = "#{uuid}_0.0_#{Settings.cached_audio_defaults.min_duration_seconds}_"+
-          "#{Settings.cached_audio_defaults.channel}_#{Settings.cached_audio_defaults.sample_rate}.#{Settings.cached_audio_defaults.format}"
+          "#{Settings.cached_audio_defaults.channel}_#{Settings.cached_audio_defaults.sample_rate}.#{Settings.cached_audio_defaults.storage_format}"
       expect(existing_paths).to include(File.join(Settings.paths.cached_audios, '54', file_name))
       existing_paths.should have(1).items
 
       info = media_cacher.audio.info(existing_paths.first)
-      expect(info[:media_type]).to eq("audio/#{Settings.cached_audio_defaults.format}")
+      expect(info[:media_type]).to eq("audio/#{Settings.cached_audio_defaults.storage_format}")
       expect(info[:sample_rate]).to be_within(0.0).of(Settings.cached_audio_defaults.sample_rate)
       expect(info[:channels]).to eq(1) # number of channels
       expect(info[:duration_seconds]).to be_within(duration_range).of(Settings.cached_audio_defaults.min_duration_seconds)
@@ -142,16 +142,16 @@ describe MediaCacher do
               window: Settings.cached_spectrogram_defaults.window,
               colour: Settings.cached_spectrogram_defaults.colour,
               sample_rate: Settings.cached_spectrogram_defaults.sample_rate,
-              format: Settings.cached_spectrogram_defaults.format
+              format: Settings.cached_spectrogram_defaults.storage_format
           })
       file_name =  "#{uuid}_0.0_#{Settings.cached_spectrogram_defaults.min_duration_seconds}_"+
           "#{Settings.cached_spectrogram_defaults.channel}_#{Settings.cached_spectrogram_defaults.sample_rate}_"+
-          "#{Settings.cached_spectrogram_defaults.window}_#{Settings.cached_spectrogram_defaults.colour}.#{Settings.cached_spectrogram_defaults.format}"
+          "#{Settings.cached_spectrogram_defaults.window}_#{Settings.cached_spectrogram_defaults.colour}.#{Settings.cached_spectrogram_defaults.storage_format}"
       expect(existing_paths).to include(File.join(Settings.paths.cached_spectrograms, '54', file_name))
       existing_paths.should have(1).items
 
       info = media_cacher.spectrogram.info(existing_paths.first)
-      expect(info[:media_type]).to eq("image/#{Settings.cached_spectrogram_defaults.format}")
+      expect(info[:media_type]).to eq("image/#{Settings.cached_spectrogram_defaults.storage_format}")
       expect(info[:height]).to eq(Settings.cached_spectrogram_defaults.window / 2)
       expect(info[:width]).to be_within(1).of(0.043 * (Settings.cached_spectrogram_defaults.min_duration_seconds * 1000))
     end

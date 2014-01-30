@@ -6,14 +6,80 @@ def standard_media_parameters
 
   parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
 
-  parameter :format,        'Required format of the audio segment (defaults: json; alternatives: mp3|webm|ogg|png). Use json if requesting metadata', :required => true
-  parameter :start_offset,  'Start time of the audio segment in seconds'
-  parameter :end_offset,    'End time of the audio segment in seconds'
+  parameter :format, 'Required format of the audio segment (defaults: json; alternatives: mp3|webm|ogg|png). Use json if requesting metadata', required: true
+  parameter :start_offset, 'Start time of the audio segment in seconds'
+  parameter :end_offset, 'End time of the audio segment in seconds'
 
-  let(:start_offset)  { '1' }
-  let(:end_offset)    { '2' }
+  let(:start_offset) { '1' }
+  let(:end_offset) { '2' }
 
   let(:raw_post) { params.to_json }
+end
+
+def using_original_audio(audio_recording, content_type, check_accept_header = true)
+  # set up audio file
+
+
+  options = {}
+  options[:datetime] = audio_recording.recorded_date
+  options[:original_format] = File.extname(audio_recording.original_file_name) unless audio_recording.original_file_name.blank?
+  options[:original_format] = '.' + Mime::Type.lookup(audio_recording.media_type).to_sym.to_s if options[:original_format].blank?
+  options[:date] = audio_recording.recorded_date.strftime '%y%m%d'
+  options[:time] = audio_recording.recorded_date.strftime '%H%M'
+  options[:uuid] = audio_recording.uuid
+  options[:id] = audio_recording.id
+  options[:start_offset] = start_offset
+  options[:end_offset] = end_offset
+
+  original_file = media_cacher.original_audio_file_name(options)
+  original_possible_paths = media_cacher.cache.possible_storage_paths(media_cacher.cache.original_audio, original_file)
+
+  FileUtils.mkpath File.dirname(original_possible_paths.first)
+  FileUtils.cp audio_file_mono, original_possible_paths.first
+
+  request = do_request
+  status.should eq(200), "expected status #{200} but was #{status}. Response body was #{response_body}"
+  response_headers['Content-Type'].should include(content_type)
+  response_headers['Accept-Ranges'].should eq('bytes') if check_accept_header
+  response_headers['Content-Transfer-Encoding'].should eq('binary') unless content_type == 'application/json'
+
+  request[0][:request_body].should be_nil
+
+  if request[0][:request_method] == 'HEAD'
+    response_body.size.should eq(0)
+    if response_headers['Content-Type'].include? 'image'
+      default_spectrogram = Settings.cached_spectrogram_defaults
+      options[:format] =  default_spectrogram.storage_format
+      options[:channel] =  default_spectrogram.channel.to_i
+      options[:sample_rate] =  default_spectrogram.sample_rate.to_i
+      options[:window] =  default_spectrogram.window.to_i
+      options[:colour] =  default_spectrogram.colour.to_s
+      cache_spectrogram_file = media_cacher.cached_spectrogram_file_name(options)
+      cache_spectrogram_possible_paths = media_cacher.cache.possible_storage_paths(media_cacher.cache.cache_spectrogram, cache_spectrogram_file)
+      response_headers['Content-Length'].to_i.should eq(File.size(cache_spectrogram_possible_paths.first))
+    elsif response_headers['Content-Type'].include? 'audio'
+      default_audio = Settings.cached_audio_defaults
+      options[:format] = default_audio.storage_format
+      options[:channel] =  default_audio.channel.to_i
+      options[:sample_rate] =  default_audio.sample_rate.to_i
+      cache_audio_file = media_cacher.cached_audio_file_name(options)
+      cache_audio_possible_paths = media_cacher.cache.possible_storage_paths(media_cacher.cache.cache_audio, cache_audio_file)
+      response_headers['Content-Length'].to_i.should eq(File.size(cache_audio_possible_paths.first))
+    elsif response_headers['Content-Type'].include? 'application/json'
+      response_headers['Content-Length'].to_i.should be > 0
+      # TODO: files should not exist?
+    else
+      fail "Unrecognised content type: #{response_headers['Content-Type']}"
+    end
+  else
+    begin
+      temp_file = File.join(Settings.paths.temp_files, 'temp-media_controller_response')
+      File.open(temp_file, 'wb') { |f| f.write(response_body) }
+      response_headers['Content-Length'].to_i.should eq(File.size(temp_file))
+    ensure
+      File.delete temp_file if File.exists? temp_file
+    end
+  end
 end
 
 # https://github.com/zipmark/rspec_api_documentation
@@ -25,7 +91,7 @@ resource 'Media' do
   header 'Authorization', :authentication_token
 
   # default format
-  let(:format)                {'json'}
+  let(:format) { 'json' }
 
   before(:each) do
     # this creates a @write_permission.user with write access to @write_permission.project,
@@ -35,59 +101,192 @@ resource 'Media' do
     @read_permission = FactoryGirl.create(:read_permission, project: @write_permission.project)
   end
 
+  after(:all) do
+    FileUtils.rm_r media_cacher.cache.original_audio.storage_paths.first if Dir.exists? media_cacher.cache.original_audio.storage_paths.first
+    FileUtils.rm_r media_cacher.cache.cache_audio.storage_paths.first if Dir.exists? media_cacher.cache.cache_audio.storage_paths.first
+    FileUtils.rm_r media_cacher.cache.cache_spectrogram.storage_paths.first if Dir.exists? media_cacher.cache.cache_spectrogram.storage_paths.first
+  end
+
   # prepare ids needed for paths in requests below
-  let(:project_id)            {@write_permission.project.id}
-  let(:site_id)               {@write_permission.project.sites[0].id}
-  let(:audio_recording_id)    {@write_permission.project.sites[0].audio_recordings[0].id}
+  let(:project_id) { @write_permission.project.id }
+  let(:site_id) { @write_permission.project.sites[0].id }
+  let(:audio_recording_id) { @write_permission.project.sites[0].audio_recordings[0].id }
+  let(:audio_recording) { @write_permission.project.sites[0].audio_recordings[0] }
+
+  let(:audio_file_mono) { File.join(File.dirname(__FILE__), '..', 'media_tools', 'test-audio-mono.ogg') }
+  let(:audio_file_mono_media_type) { Mime::Type.lookup('audio/ogg') }
+  let(:audio_file_mono_sample_rate) { 44100 }
+  let(:audio_file_mono_channels) { 1 }
+  let(:audio_file_mono_duration_seconds) { 70 }
+
+  let(:media_cacher) { MediaCacher.new(Settings.paths.temp_files) }
 
   # prepare authentication_token for different users
-  let(:writer_token)          {"Token token=\"#{@write_permission.user.authentication_token}\"" }
-  let(:reader_token)          {"Token token=\"#{@read_permission.user.authentication_token}\"" }
-  let(:unconfirmed_token)     {"Token token=\"#{FactoryGirl.create(:unconfirmed_user).authentication_token}\"" }
+  let(:writer_token) { "Token token=\"#{@write_permission.user.authentication_token}\"" }
+  let(:reader_token) { "Token token=\"#{@read_permission.user.authentication_token}\"" }
+  let(:unconfirmed_token) { "Token token=\"#{FactoryGirl.create(:unconfirmed_user).authentication_token}\"" }
 
   ################################
   # MEDIA GET
   ################################
-  get '/projects/:project_id/sites/:site_id/audio_recordings/:audio_recording_id/media.json' do
+  get '/projects/:project_id/sites/:site_id/audio_recordings/:audio_recording_id/media.:format' do
     parameter :project_id, 'Requested project ID (in path/route)', required: true
     parameter :site_id, 'Requested site ID (in path/route)', required: true
     standard_media_parameters
-    let(:authentication_token) { writer_token}
+    let(:authentication_token) { writer_token }
+    let(:format) { 'json' }
     standard_request('MEDIA (as writer)', 200, nil, true)
   end
 
-  get '/projects/:project_id/sites/:site_id/audio_recordings/:audio_recording_id/media.json' do
+  get '/projects/:project_id/sites/:site_id/audio_recordings/:audio_recording_id/media.:format' do
     parameter :project_id, 'Requested project ID (in path/route)', required: true
     parameter :site_id, 'Requested site ID (in path/route)', required: true
     standard_media_parameters
-    let(:authentication_token) { reader_token}
+    let(:authentication_token) { reader_token }
+    let(:format) { 'json' }
     standard_request('MEDIA (as reader)', 200, nil, true)
   end
 
-  get '/projects/:project_id/sites/:site_id/audio_recordings/:audio_recording_id/media.mp4' do
+  get '/projects/:project_id/sites/:site_id/audio_recordings/:audio_recording_id/media.:format' do
     parameter :project_id, 'Requested project ID (in path/route)', required: true
     parameter :site_id, 'Requested site ID (in path/route)', required: true
     standard_media_parameters
-    let(:authentication_token) { reader_token}
+    let(:authentication_token) { reader_token }
+    let(:format) { 'mp4' }
     standard_request('MEDIA (invalid format (mp4), as reader)', 415, nil, true)
   end
-  get '/projects/:project_id/sites/:site_id/audio_recordings/:audio_recording_id/media.json' do
+
+  get '/projects/:project_id/sites/:site_id/audio_recordings/:audio_recording_id/media.:format' do
     parameter :project_id, 'Requested project ID (in path/route)', required: true
     parameter :site_id, 'Requested site ID (in path/route)', required: true
     standard_media_parameters
-    let(:authentication_token) { unconfirmed_token}
+    let(:authentication_token) { unconfirmed_token }
+    let(:format) { 'json' }
     standard_request('MEDIA (as unconfirmed user)', 401, nil, true)
   end
 
-  get '/audio_recordings/:audio_recording_id/media.json' do
+  get '/audio_recordings/:audio_recording_id/media.:format' do
     standard_media_parameters
-    let(:authentication_token) { reader_token}
+    let(:authentication_token) { reader_token }
+    let(:format) { 'json' }
     standard_request('MEDIA (as reader with shallow path)', 200, nil, true)
   end
-  get '/audio_recordings/:audio_recording_id/media.mp4' do
+
+  get '/audio_recordings/:audio_recording_id/media.:format' do
     standard_media_parameters
-    let(:authentication_token) { reader_token}
+    let(:authentication_token) { reader_token }
+    let(:format) { 'mp4' }
     standard_request('MEDIA (invalid format (mp4), as reader with shallow path)', 415, nil, true)
+  end
+
+  get '/audio_recordings/:audio_recording_id/media.:format' do
+    standard_media_parameters
+    let(:authentication_token) { reader_token }
+    let(:format) { 'zjfyrdnd' }
+    standard_request('MEDIA (invalid format (zjfyrdnd), as reader with shallow path)', 415, nil, true)
+  end
+
+  get '/audio_recordings/:audio_recording_id/media.:format' do
+    standard_media_parameters
+    let(:authentication_token) { reader_token }
+    let(:format) { 'json' }
+    example 'MEDIA (as reader) checking json format - 200', document: true do
+      do_request
+      status.should eq(200), "expected status #{200} but was #{status}. Response body was #{response_body}"
+
+      json_paths = [
+          'datetime',
+          'original_format',
+          'start_offset',
+          'end_offset',
+          'uuid',
+          'id',
+          'format',
+          'available_audio_formats/mp3/channel',
+          'available_audio_formats/mp3/sample_rate',
+          'available_audio_formats/mp3/max_duration_seconds',
+          'available_audio_formats/mp3/min_duration_seconds',
+          'available_audio_formats/mp3/mime_type',
+          'available_audio_formats/mp3/url',
+          'available_audio_formats/webm/channel',
+          'available_audio_formats/webm/sample_rate',
+          'available_audio_formats/webm/max_duration_seconds',
+          'available_audio_formats/webm/min_duration_seconds',
+          'available_audio_formats/webm/mime_type',
+          'available_audio_formats/webm/url',
+          'available_audio_formats/ogg/channel',
+          'available_audio_formats/ogg/sample_rate',
+          'available_audio_formats/ogg/max_duration_seconds',
+          'available_audio_formats/ogg/min_duration_seconds',
+          'available_audio_formats/ogg/mime_type',
+          'available_audio_formats/ogg/url',
+          'available_image_formats/png/channel',
+          'available_image_formats/png/sample_rate',
+          'available_image_formats/png/window',
+          'available_image_formats/png/colour',
+          'available_image_formats/png/ppms',
+          'available_image_formats/png/max_duration_seconds',
+          'available_image_formats/png/min_duration_seconds',
+          'available_image_formats/png/mime_type',
+          'available_image_formats/png/url',
+      ]
+
+      json_paths.each do |expected_json_path|
+        response_body.should have_json_path(expected_json_path), "Expected #{expected_json_path} in #{response_body}"
+      end
+
+      json_paths_exclude = %w(time date available_image_formats/jpg 'available_image_formats/jpeg)
+
+      json_paths_exclude.each do |expected_json_path|
+        response_body.should_not have_json_path(expected_json_path), "Did not expect #{expected_json_path} in #{response_body}"
+      end
+
+    end
+  end
+
+  head '/audio_recordings/:audio_recording_id/media.:format' do
+    standard_media_parameters
+    let(:authentication_token) { reader_token }
+    let(:format) { 'json' }
+    example 'MEDIA (json head request as reader with shallow path) - 200', document: true do
+      using_original_audio(audio_recording, 'application/json', false)
+    end
+  end
+
+  get '/audio_recordings/:audio_recording_id/media.:format' do
+    standard_media_parameters
+    let(:authentication_token) { reader_token }
+    let(:format) { 'mp3' }
+    example 'MEDIA (audio get request as reader with shallow path) - 200', document: true do
+      using_original_audio(audio_recording, 'audio/mp3')
+    end
+  end
+
+  head '/audio_recordings/:audio_recording_id/media.:format' do
+    standard_media_parameters
+    let(:authentication_token) { reader_token }
+    let(:format) { 'mp3' }
+    example 'MEDIA (audio head request as reader with shallow path) - 200', document: true do
+      using_original_audio(audio_recording, 'audio/mp3')
+    end
+  end
+
+  get '/audio_recordings/:audio_recording_id/media.:format' do
+    standard_media_parameters
+    let(:authentication_token) { reader_token }
+    let(:format) { 'png' }
+    example 'MEDIA (spectrogram get request as reader with shallow path) - 200', document: true do
+      using_original_audio(audio_recording, 'image/png', false)
+    end
+  end
+
+  head '/audio_recordings/:audio_recording_id/media.:format' do
+    standard_media_parameters
+    let(:authentication_token) { reader_token }
+    let(:format) { 'png' }
+    example 'MEDIA (spectrogram head request as reader with shallow path) - 200', document: true do
+      using_original_audio(audio_recording, 'image/png', false)
+    end
   end
 
 end

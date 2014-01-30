@@ -24,12 +24,16 @@ class MediaController < ApplicationController
 
     default_audio = Settings.cached_audio_defaults
     default_spectrogram = Settings.cached_spectrogram_defaults
-    default_dataset = Settings.cached_dataset_defaults
+    #default_dataset = Settings.cached_dataset_defaults
 
     available_formats = available_text_formats.concat(available_audio_formats).concat(available_image_formats)
 
     if @audio_recording.status != 'ready'
-      render json: {error: 'Audio recording is not ready'}.to_json, status: :unprocessable_entity
+      if request.head?
+        head status: :unprocessable_entity
+      else
+        render json: {error: 'Audio recording is not ready'}.to_json, status: :unprocessable_entity
+      end
     else
       if available_formats.include?(params[:format].downcase)
         options = Hash.new
@@ -46,7 +50,7 @@ class MediaController < ApplicationController
         mime_type = Mime::Type.lookup_by_extension(params[:format])
 
         if AUDIO_MEDIA_TYPES.include?(mime_type)
-          options[:format] = params[:format] || default_audio.format
+          options[:format] = params[:format] || default_audio.storage_format
           options[:channel] = (params[:channel] || default_audio.channel).to_i
           options[:sample_rate] = (params[:sample_rate] || default_audio.sample_rate).to_i
           download_file(
@@ -55,16 +59,19 @@ class MediaController < ApplicationController
                   site_name: @audio_recording.site.name,
                   recorded_date: @audio_recording.recorded_date,
                   ext: options[:format],
-                  file_path: media_cacher.create_audio_segment(options).first
+                  file_path: media_cacher.create_audio_segment(options).first,
+                  start_offset: options[:start_offset],
+                  end_offset: options[:end_offset]
               })
         elsif  IMAGE_MEDIA_TYPES.include?(mime_type)
-          options[:format] = params[:format] || default_spectrogram.format
+          options[:format] = params[:format] || default_spectrogram.storage_format
           options[:channel] = (params[:channel] || default_spectrogram.channel).to_i
           options[:sample_rate] = (params[:sample_rate] || default_spectrogram.sample_rate).to_i
           options[:window] = (params[:window] || default_spectrogram.window).to_i
           options[:colour] = (params[:colour] || default_spectrogram.colour).to_s
           full_path = media_cacher.generate_spectrogram(options)
           #download_file(full_path, mime_type)
+          headers['Content-Length'] = File.size(full_path.first).to_s
           send_file full_path.first, stream: true, buffer_size: 4096, disposition: 'inline', type: mime_type, content_type: mime_type
         else
           options[:available_audio_formats] = get_available_formats(@audio_recording, available_audio_formats, params[:start_offset], params[:end_offset], default_audio)
@@ -75,10 +82,24 @@ class MediaController < ApplicationController
           options.delete :time
           options[:format] = 'json'
 
-          render json: options.to_json
+          json_result = options.to_json
+
+          if request.head?
+
+            head status: :ok, content_length: json_result.size
+          else
+            headers['Content-Length'] = json_result.size.to_s
+            render json: json_result
+          end
+
         end
       else
-        render json: {error: 'Requested format is invalid. It has to be mp3, webm, ogg, png or json'}.to_json, status: :unsupported_media_type
+        if request.head?
+          head status: :unsupported_media_type
+        else
+          render json: {error: 'Requested format is invalid. It has to be mp3, webm, ogg, png or json'}.to_json, status: :unsupported_media_type
+        end
+
       end
     end
   end
@@ -93,9 +114,9 @@ class MediaController < ApplicationController
       result.delete 'min_duration_seconds'
       result[format][:mime_type] = Mime::Type.lookup_by_extension(format).to_s
       result[format][:url] = audio_recording_media_path(audio_recording,
-                                      format: format,
-                                      start_offset: start_offset,
-                                      end_offset: end_offset)
+                                                        format: format,
+                                                        start_offset: start_offset,
+                                                        end_offset: end_offset)
       result[format].delete 'format'
     end
 

@@ -95,6 +95,7 @@ gem 'acts_as_paranoid'
 gem 'trollop'
 #gem 'daemons-rails'
 gem 'exception_notification'
+gem 'bindata'
 
 gem 'guard', '~> 1.8'
 gem 'listen', '~> 1'

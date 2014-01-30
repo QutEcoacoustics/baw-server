@@ -38,12 +38,6 @@ describe CacheBase do
 
   let(:cached_dataset_file_name) { "#{saved_search_id}_#{dataset_id}.#{dataset_format}" }
 
-  context 'cache base' do
-    it 'existing paths is correct' do
-
-    end
-  end
-
   context 'original audio' do
     it 'no storage directories exist' do
       expect(cache_base.existing_storage_dirs(cache_base.original_audio)).to be_empty
