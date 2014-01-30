@@ -109,10 +109,6 @@ end
 
 # make sure head requests get the parameters as a query string, not
 # in the body
-require 'rspec/core/formatters/base_formatter'
-require 'rack/utils'
-require 'rack/test/utils'
-
 module RspecApiDocumentation::DSL
   module Endpoint
     def do_request(extra_params = {})
