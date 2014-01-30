@@ -38,6 +38,7 @@ group :development do
 
   gem 'rack-mini-profiler'
   #gem 'scrap'
+  gem 'rails-i18n-debug'
 end
 
 ########################  TESTING  ########################
