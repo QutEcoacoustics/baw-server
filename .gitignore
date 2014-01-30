@@ -19,6 +19,7 @@
 /config/settings/test.yml
 /config/settings/staging.yml
 /config/settings/production.yml
+/config/newrelic.yml
 
 # ignore harvester settings files (except default.yml)
 /lib/external/harvester/harvester_production.yml

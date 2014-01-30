@@ -9,10 +9,6 @@ gem 'sqlite3', platforms: [:mswin, :mingw]
 # don't change the database gems
 ########################  ASSETS  ########################
 
-group :production, :staging do
-  gem 'newrelic_rpm'
-end
-
 # Gems used only for assets and not required
 # in production environments by default.
 group :assets do
@@ -96,6 +92,7 @@ gem 'trollop'
 #gem 'daemons-rails'
 gem 'exception_notification'
 gem 'bindata'
+gem 'newrelic_rpm'
 
 gem 'guard', '~> 1.8'
 gem 'listen', '~> 1'
