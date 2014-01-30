@@ -73,6 +73,7 @@ FactoryGirl.define do
     sequence(:urn) { |n| "urn:project:ecosounds.org/project/#{n}" }
 
     association :creator, factory: :user
+    association :owner, factory: :user
 
     after(:create) do |project, evaluator|
       FactoryGirl.create(:site_for_project, projects: [project])

@@ -47,14 +47,14 @@ class User < ActiveRecord::Base
   before_validation :ensure_user_role
 
   def projects
-    (self.owned_projects.includes(:owner) + self.accessible_projects).uniq
+    (self.owned_projects + self.accessible_projects).uniq
   end
 
   def inaccessible_projects
     user_projects = self.projects.map { |project| project.id}
 
     Project
-    .where('id NOT IN (?)', (user_projects.blank? ? '' : user_projects))
+    .where('id NOT IN (?)', (user_projects.blank? ? '0' : user_projects))
     .order(:name)
     .uniq
   end

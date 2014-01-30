@@ -165,16 +165,9 @@ class ProjectsController < ApplicationController
         params[:access_request][:reason].is_a?(String) &&
         params[:access_request][:reason].size > 0
 
-    if valid_request
-
-    end
-
     respond_to do |format|
       if valid_request
-        ProjectMailer.project_access_request(
-            current_user, params[:access_request][:projects], params[:access_request][:reason]).each do |message|
-          message.deliver
-        end
+        ProjectMailer.project_access_request(current_user, params[:access_request][:projects], params[:access_request][:reason])
         format.html { redirect_to projects_path, notice: 'Access request successfully submitted.' }
       else
         format.html {

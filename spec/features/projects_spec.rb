@@ -3,6 +3,11 @@ require 'spec_helper'
 include Warden::Test::Helpers
 Warden.test_mode!
 
+def select_by_value(id, value)
+  option_xpath = "//*[@id='#{id}']/option[@value='#{value}']"
+  option = find(:xpath, option_xpath).text
+  page.select(option, from: id)
+end
 
 describe 'CRUD Projects as valid user with write permission' do
   before(:each) do
@@ -10,50 +15,50 @@ describe 'CRUD Projects as valid user with write permission' do
     login_as @permission.user, scope: :user
   end
 
-    it 'lists all projects' do
-      visit projects_path
-      current_path.should eq(projects_path)
-      page.should have_content('Projects')
-      page.should have_content(@permission.project.name)
-    end
+  it 'lists all projects' do
+    visit projects_path
+    current_path.should eq(projects_path)
+    page.should have_content('Projects')
+    page.should have_content(@permission.project.name)
+  end
 
-    it 'shows project details' do
-      visit project_path(@permission.project)
-      page.should have_content(@permission.project.name)
-      page.should have_link('Edit')
-      page.should have_link('Edit Permissions')
-      page.should_not have_link('Delete')
-    end
+  it 'shows project details' do
+    visit project_path(@permission.project)
+    page.should have_content(@permission.project.name)
+    page.should have_link('Edit')
+    page.should have_link('Edit Permissions')
+    page.should_not have_link('Delete')
+  end
 
-    it 'creates new project when filling out form correctly' do
-      visit new_project_path
-      fill_in 'project[name]', with: 'test name'
-      fill_in 'project[description]', with: 'description'
-      fill_in 'project[notes]', with: 'notes'
-      attach_file('project[image]', 'public/images/user/user-512.png')
-      click_button 'Create Project'
-      #save_and_open_page
-      page.should have_content('test name')
-      page.should have_content('Project was successfully created.')
-    end
+  it 'creates new project when filling out form correctly' do
+    visit new_project_path
+    fill_in 'project[name]', with: 'test name'
+    fill_in 'project[description]', with: 'description'
+    fill_in 'project[notes]', with: 'notes'
+    attach_file('project[image]', 'public/images/user/user-512.png')
+    click_button 'Create Project'
+    #save_and_open_page
+    page.should have_content('test name')
+    page.should have_content('Project was successfully created.')
+  end
 
-    it 'Fails to create new project when filling out form incomplete' do
-      visit new_project_path
-      click_button 'Create Project'
-      #save_and_open_page
-      page.should have_content('Please review the problems below:')
-    end
+  it 'Fails to create new project when filling out form incomplete' do
+    visit new_project_path
+    click_button 'Create Project'
+    #save_and_open_page
+    page.should have_content('Please review the problems below:')
+  end
 
-    it 'updates project when filling out form correctly' do
-      visit edit_project_path(@permission.project)
-      #save_and_open_page
-      fill_in 'project[name]', with: 'test name'
-      fill_in 'project[description]', with: 'description'
-      fill_in 'project[notes]', with: 'notes'
-      attach_file('project[image]', 'public/images/user/user-512.png')
-      click_button 'Update Project'
-      page.should have_content('test name')
-    end
+  it 'updates project when filling out form correctly' do
+    visit edit_project_path(@permission.project)
+    #save_and_open_page
+    fill_in 'project[name]', with: 'test name'
+    fill_in 'project[description]', with: 'description'
+    fill_in 'project[notes]', with: 'notes'
+    attach_file('project[image]', 'public/images/user/user-512.png')
+    click_button 'Update Project'
+    page.should have_content('test name')
+  end
 
   it 'shows errors when updating form incorrectly' do
     visit edit_project_path(@permission.project)
@@ -119,38 +124,38 @@ describe 'CRUD Projects as valid user with read permission' do
     login_as @permission.user, scope: :user
   end
 
-    it 'lists all projects' do
-      visit projects_path
-      current_path.should eq(projects_path)
-      page.should have_content('Projects')
-      page.should have_content(@permission.project.name)
-    end
+  it 'lists all projects' do
+    visit projects_path
+    current_path.should eq(projects_path)
+    page.should have_content('Projects')
+    page.should have_content(@permission.project.name)
+  end
 
-    it 'shows project details' do
-      visit project_path(@permission.project)
-      page.should have_content(@permission.project.name)
-      page.should_not have_link('Edit')
-      page.should_not have_link('Edit Permissions')
-      page.should_not have_link('Delete')
-    end
+  it 'shows project details' do
+    visit project_path(@permission.project)
+    page.should have_content(@permission.project.name)
+    page.should_not have_link('Edit')
+    page.should_not have_link('Edit Permissions')
+    page.should_not have_link('Delete')
+  end
 
-    it 'creates new project when filling out form correctly' do
-      visit new_project_path
-      fill_in 'project[name]', with: 'test name'
-      fill_in 'project[description]', with: 'description'
-      fill_in 'project[notes]', with: 'notes'
-      attach_file('project[image]', 'public/images/user/user-512.png')
-      click_button 'Create Project'
-      #save_and_open_page
-      page.should have_content('test name')
-      page.should have_content('Project was successfully created.')
-    end
+  it 'creates new project when filling out form correctly' do
+    visit new_project_path
+    fill_in 'project[name]', with: 'test name'
+    fill_in 'project[description]', with: 'description'
+    fill_in 'project[notes]', with: 'notes'
+    attach_file('project[image]', 'public/images/user/user-512.png')
+    click_button 'Create Project'
+    #save_and_open_page
+    page.should have_content('test name')
+    page.should have_content('Project was successfully created.')
+  end
 
 
-    it 'rejects access to update project' do
-      visit edit_project_path(@permission.project)
-      page.should have_content('You are not authorized to access this page.')
-    end
+  it 'rejects access to update project' do
+    visit edit_project_path(@permission.project)
+    page.should have_content('You are not authorized to access this page.')
+  end
 
 end
 
@@ -161,35 +166,35 @@ describe 'CRUD Projects as valid user with no permissions' do
     login_as @user, scope: :user
   end
 
-    it 'lists all projects' do
-      # Run the generator again with the --webrat flag if you want to use webrat methods/matchers
-      visit projects_path
-      current_path.should eq(projects_path)
-      page.should have_content('Projects')
-      page.should_not have_content(@permission.project.name)
-    end
+  it 'lists all projects' do
+    # Run the generator again with the --webrat flag if you want to use webrat methods/matchers
+    visit projects_path
+    current_path.should eq(projects_path)
+    page.should have_content('Projects')
+    page.should_not have_content(@permission.project.name)
+  end
 
-    it 'rejects access to shows project details' do
-      visit project_path(@permission.project)
-      page.should have_content('You are not authorized to access this page.')
-    end
+  it 'rejects access to shows project details' do
+    visit project_path(@permission.project)
+    page.should have_content('You are not authorized to access this page.')
+  end
 
-    it 'creates new project when filling out form correctly' do
-      visit new_project_path
-      fill_in 'project[name]', with: 'test name'
-      fill_in 'project[description]', with: 'description'
-      fill_in 'project[notes]', with: 'notes'
-      attach_file('project[image]', 'public/images/user/user-512.png')
-      click_button 'Create Project'
-      #save_and_open_page
-      page.should have_content('test name')
-      page.should have_content('Project was successfully created.')
-    end
+  it 'creates new project when filling out form correctly' do
+    visit new_project_path
+    fill_in 'project[name]', with: 'test name'
+    fill_in 'project[description]', with: 'description'
+    fill_in 'project[notes]', with: 'notes'
+    attach_file('project[image]', 'public/images/user/user-512.png')
+    click_button 'Create Project'
+    #save_and_open_page
+    page.should have_content('test name')
+    page.should have_content('Project was successfully created.')
+  end
 
-    it 'rejects access to edit project details' do
-      visit edit_project_path(@permission.project)
-      page.should have_content('You are not authorized to access this page.')
-    end
+  it 'rejects access to edit project details' do
+    visit edit_project_path(@permission.project)
+    page.should have_content('You are not authorized to access this page.')
+  end
 
 end
 
@@ -199,12 +204,12 @@ describe 'Delete Projects as admin user' do
     login_as admin, scope: :user
   end
 
-    it 'deletes a project' do
-      permission = FactoryGirl.create(:write_permission)
-      visit project_path(permission.project)
-      page.should have_link('Delete Project')
-      expect { first(:link, 'Delete').click }.to change(Project, :count).by(-1)
-    end
+  it 'deletes a project' do
+    permission = FactoryGirl.create(:write_permission)
+    visit project_path(permission.project)
+    page.should have_link('Delete Project')
+    expect { first(:link, 'Delete').click }.to change(Project, :count).by(-1)
+  end
 end
 
 describe 'CRUD Projects as unconfirmed user' do
@@ -240,4 +245,67 @@ describe 'CRUD Projects as unconfirmed user' do
     page.should have_content('You are not authorized to access this page.')
   end
 
+end
+
+describe 'request project access' do
+  before(:each) do
+    @permission = FactoryGirl.create(:write_permission)
+    @user = FactoryGirl.create(:user) # creating new user with no permission to login
+    login_as @user, scope: :user
+  end
+
+  it 'sends emails when form filled out successfully' do
+    ActionMailer::Base.deliveries.clear
+
+    visit new_access_request_projects_path
+    #save_and_open_page
+    current_path.should eq(new_access_request_projects_path)
+    fill_in 'access_request[reason]', with: 'testing testing'
+    select_by_value('access_request_projects', @permission.project.id)
+    #page.select @permission.project.name, from: 'access_request[projects][]'
+    click_button 'Submit request'
+
+    current_path.should eq(projects_path)
+    page.should have_content('Access request successfully submitted.')
+
+    ActionMailer::Base.deliveries.size.should eq(1)
+    email = ActionMailer::Base.deliveries[0]
+    email.should have_content(@permission.project.name)
+    email.should have_content(@permission.project.owner.user_name)
+    email.should have_content(@user.user_name)
+  end
+
+  it 'shows error when form not filled out correctly' do
+    ActionMailer::Base.deliveries.clear
+
+    visit new_access_request_projects_path
+    #save_and_open_page
+    current_path.should eq(new_access_request_projects_path)
+    #fill_in 'access_request[reason]', with: 'testing testing'
+    select_by_value('access_request_projects', @permission.project.id)
+    #page.select @permission.project.name, from: 'access_request[projects][]'
+    click_button 'Submit request'
+
+    current_path.should eq(new_access_request_projects_path)
+    page.should have_content('Please select projects and provide reason for access.')
+
+    ActionMailer::Base.deliveries.size.should eq(0)
+  end
+
+  it 'shows error when form not filled out correctly' do
+    ActionMailer::Base.deliveries.clear
+
+    visit new_access_request_projects_path
+    #save_and_open_page
+    current_path.should eq(new_access_request_projects_path)
+    fill_in 'access_request[reason]', with: 'testing testing'
+    #select_by_value('access_request_projects', @permission.project.id)
+    #page.select @permission.project.name, from: 'access_request[projects][]'
+    click_button 'Submit request'
+
+    current_path.should eq(new_access_request_projects_path)
+    page.should have_content('Please select projects and provide reason for access.')
+
+    ActionMailer::Base.deliveries.size.should eq(0)
+  end
 end

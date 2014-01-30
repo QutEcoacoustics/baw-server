@@ -29,17 +29,12 @@ class ProjectMailer < ActionMailer::Base
       end
     end
 
-    messages = []
-
-    user_projects.each do |key,value|
+    user_projects.each do |key, value|
       email = value[:email]
       @owner_name = value[:user_name]
       subject = "#{Settings.exception_notification.email_prefix} #{@sender_user.user_name} is requesting access to one or more of your projects."
       @projects = value[:projects]
-
-      messages << mail(to: email, subject: subject)
+      mail(to: email, subject: subject).deliver
     end
-
-    messages
   end
 end
