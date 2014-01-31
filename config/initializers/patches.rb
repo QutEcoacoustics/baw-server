@@ -132,5 +132,31 @@ if ENV['RAILS_ENV'] == 'test' || ENV['RAILS_ENV'] == 'development'
       end
     end
   end
+
+# need to patch json writing to ensure binary response_body
+# does not get included.
+  module RspecApiDocumentation
+    module Writers
+      module Formatter
+
+        def self.to_json(object)
+          json_obj = object.as_json
+
+          if json_obj.include? :requests
+            json_obj.requests.each do |request|
+              check_non_ascii_printable = request.response_body =~ /[^[:print:]]/
+              unless check_non_ascii_printable.nil?
+                request[:response_body] = 'Cannot be printed.'
+              end
+            end
+          end
+
+          JSON.pretty_generate(json_obj)
+        end
+
+      end
+    end
+  end
+
 end
 

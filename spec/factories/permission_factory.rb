@@ -2,6 +2,9 @@ require 'faker'
 
 FactoryGirl.define do
 
+  after(:build) { |object| Rails.logger.debug "Built #{object.inspect}" }
+  after(:create) { |object| Rails.logger.debug "Created #{object.inspect}" }
+
   # TODO: these factories should be cleaned up. factory_for_factory is unneccessary once we have factories of varying completeness or use FactoryGirl.create options
 
   factory :tag do |f|

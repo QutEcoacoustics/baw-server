@@ -57,12 +57,17 @@ class AudioBase
     # extract only necessary information into a flattened hash
     info_flattened = {
         media_type: @audio_ffmpeg.get_mime_type(ffmpeg_info),
-        sample_rate: ffmpeg_info['STREAM sample_rate'].to_f
+        sample_rate: ffmpeg_info['STREAM sample_rate'].to_f,
+        duration_seconds: @audio_ffmpeg.parse_duration(ffmpeg_info['FORMAT duration']).to_f
     }
 
-    if info_flattened[:media_type] == 'audio/wav' ||
+    # check for clipping, zero signal
+    # only if duration less than 4 minutes
+    four_minutes_in_sec = 4.0 * 60.0
+    if (info_flattened[:media_type] == 'audio/wav' ||
         info_flattened[:media_type] == 'audio/mp3' ||
-        info_flattened[:media_type] == 'audio/ogg'
+        info_flattened[:media_type] == 'audio/ogg') &&
+        info_flattened[:duration_seconds] < four_minutes_in_sec
 
       #sox_info_cmd = @audio_sox.info_command_info(source)
       #sox_info_output = execute(sox_info_cmd)
@@ -84,17 +89,17 @@ class AudioBase
       Logging::logger.warn "Audio file duration #{duration} is less than #{min_useful}. This file may not be useful: #{source}" if duration < min_useful
 
       # clipped
-      min_amp = sox_stat['Maximum amplitude'].to_f
+      min_amp = sox_stat['Minimum amplitude'].to_f
       min_amp_threshold = -0.999
       max_amp_threshold = 0.999
-      Logging::logger.warn "Audio file has been clipped (max amplitude #{max_amp_threshold}, min amplitude #{min_amp_threshold}): #{source}" if min_amp_threshold >= min_amp && max_amp_threshold <= max_amp
+      Logging::logger.warn "Audio file has been clipped #{min_amp} (max amplitude #{max_amp_threshold}, min amplitude #{min_amp_threshold}): #{source}" if min_amp_threshold >= min_amp && max_amp_threshold <= max_amp
 
       # dc offset TODO
 
       # zero signal
       mean_norm = sox_stat['Mean    norm'].to_f
       zero_sig_threshold = 0.001
-      Logging::logger.warn "Audio file has zero signal (mean norm is less than #{zero_sig_threshold}): #{source}" if zero_sig_threshold >= mean_norm
+      Logging::logger.warn "Audio file has zero signal #{mean_norm} (mean norm is less than #{zero_sig_threshold}): #{source}" if zero_sig_threshold >= mean_norm
 
     end
 
@@ -128,7 +133,7 @@ class AudioBase
       info_flattened[:bit_rate_bps] = ffmpeg_info['FORMAT bit_rate'].to_i
       info_flattened[:data_length_bytes] = ffmpeg_info['FORMAT size'].to_i
       info_flattened[:channels] = ffmpeg_info['STREAM channels'].to_i
-      info_flattened[:duration_seconds] = @audio_ffmpeg.parse_duration(ffmpeg_info['FORMAT duration']).to_f
+      # duration
     end
 
     Logging::logger.debug "Info for #{source}: #{info_flattened.to_json}"
@@ -155,12 +160,12 @@ class AudioBase
   def execute(command)
 
     if OS.windows?
-      if command.include? '&& move'
+      #if command.include? '&& move'
         # if windows and contains a 'move' command, need to ensure relative path has '\' separators
         command = command.gsub('/', '\\')
-      else
-        command = command.gsub('\\', '/')
-      end
+      #else
+        #command = command.gsub('\\', '/')
+      #end
     end
 
     stdout_str = ''
@@ -194,8 +199,8 @@ class AudioBase
       Logging::logger.debug msg+extra_msg
     end
 
-    raise Exceptions::AudioToolTimedOutError, msg if timed_out || killed
-    raise Exceptions::AudioToolError, msg if !stderr_str.blank? && !status.success?
+    raise Exceptions::AudioToolTimedOutError, msg + extra_msg if timed_out || killed
+    raise Exceptions::AudioToolError, msg + extra_msg if !stderr_str.blank? && !status.success?
 
     {
         command: command,
@@ -258,11 +263,10 @@ class AudioBase
   private
 
   def modify_worker(source_info, source, target, modify_parameters = {})
-    if source_info[:media_type] == '
-                                                                                                                                                                                                                                                                                                                                                      audio/wavpack '
+    if source_info[:media_type] == 'audio/wavpack'
       # convert to wave and segment
       audio_tool_segment('wav', :modify_wavpack, source, source_info, target, modify_parameters)
-    elsif source_info[:media_type] == ' audio/mp3 ' && (modify_parameters.include?(:start_offset) || modify_parameters.include?(:end_offset))
+    elsif source_info[:media_type] == 'audio/mp3' && (modify_parameters.include?(:start_offset) || modify_parameters.include?(:end_offset))
       # segment only, so check for offsets
       audio_tool_segment('mp3', :modify_mp3splt, source, source_info, target, modify_parameters)
       #elsif source_info[:media_type] == ' audio/wav ' && (modify_parameters.include?(:start_offset) || modify_parameters.include?(:end_offset))

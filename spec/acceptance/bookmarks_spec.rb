@@ -19,7 +19,7 @@ resource 'Bookmarks' do
   end
 
   # prepare ids needed for paths in requests below
-  let(:user_account_id)       {@bookmark.creator.id}
+  let(:user_account_id)       {@bookmark.user.id}
   let(:audio_recording_id)    {@bookmark.audio_recording.id}
   let(:id)                    {@bookmark.id}
 
