@@ -9,7 +9,7 @@ FactoryGirl.define do
     offset_seconds  {Random.rand(360.0)}
     description           { { 'my favourite' => Faker::Lorem.paragraph} }
 
-    association :creator, factory: :user
+    association :user, factory: :user
 
     association :audio_recording
   end

@@ -54,6 +54,8 @@ AWB::Application.configure do
     exception_recipients:  Settings.exception_notification.exception_recipients
   }
 
+  config.log_level = :info
+
   config.after_initialize do
     Bullet.enable = true
     Bullet.bullet_logger = true
