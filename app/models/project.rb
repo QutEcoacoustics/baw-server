@@ -24,6 +24,7 @@ class Project < ActiveRecord::Base
   validates :name, :presence => true, :uniqueness => { :case_sensitive => false }
   #validates :urn, :presence => true, :uniqueness => { :case_sensitive => false }
   #validates_format_of :urn, :with => /^urn:[a-z0-9][a-z0-9-]{0,31}:[a-z0-9()+,\-.:=@;$_!*'%\/?#]+$/
+  validates_attachment_content_type :image, :content_type => /\Aimage\/.*\Z/
 
   # scopes
   scope :none, where('1 = 0') # for getting an empty set

@@ -168,11 +168,11 @@ class Dataset < ActiveRecord::Base
         results: results
     }
 
-    # http://stackoverflow.com/questions/5166782/write-stream-to-paperclip/5188448#5188448
-    self.dataset_result = StringIO.new(stored_info.to_json)
+    ## http://stackoverflow.com/questions/5166782/write-stream-to-paperclip/5188448#5188448
+    #self.dataset_result = StringIO.new(stored_info.to_json)
 
-    self.dataset_result_content_type = 'application/json'
-    self.dataset_result_file_name = "dataset_result.json"
+    #self.dataset_result_content_type = 'application/json'
+    #self.dataset_result_file_name = "dataset_result.json"
 
     #self.save!
 

@@ -49,7 +49,11 @@ class AudioWavpack
 
     cmd_offsets = arg_offsets(start_offset, end_offset)
 
-    wvunpack_command = "#{@wavpack_executable} #{cmd_offsets} \"#{source}\" \"#{target}\""
+    if OS.windows?
+      wvunpack_command = "#{@wavpack_executable} #{cmd_offsets} \"#{source}\" \"#{target}\""
+    else
+      wvunpack_command = "#{@wavpack_executable} #{cmd_offsets} \"#{source}\" -o \"#{target}\""
+    end
     wvunpack_command = wvunpack_command.gsub(%r{/}) { "\\" } if OS.windows?
     wvunpack_command
   end

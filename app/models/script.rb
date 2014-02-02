@@ -22,7 +22,7 @@ class Script < ActiveRecord::Base
   validates :analysis_identifier, presence: true
   validates :settings_file, attachment_presence: true
   validate :version, :version_increase, on: :create
-  validates_attachment_content_type :settings_file, :content_type => 'text/plain'
+  validates_attachment_content_type :settings_file, content_type: 'text/plain'
 
   # scopes
   scope :latest_versions, -> { where(updated_by_script_id: nil) }

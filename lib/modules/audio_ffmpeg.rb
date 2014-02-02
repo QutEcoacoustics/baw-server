@@ -41,9 +41,9 @@ class AudioFfmpeg
     if codec_info[:target] == codec_info[:old_target]
       cmd = audio_cmd
     else
-      move_cmd = "move \"#{codec_info[:target]}\" \"#{codec_info[:old_target]}\""
-      separator = OS.windows? ? '&&' : ';'
-      cmd = "#{audio_cmd} #{separator} #{move_cmd}"
+      partial_cmd = "\"#{codec_info[:target]}\" \"#{codec_info[:old_target]}\""
+      separator_move = OS.windows? ? '&& move' : '; mv'
+      cmd = "#{audio_cmd} #{separator_move} #{partial_cmd}"
     end
 
     cmd
@@ -73,7 +73,7 @@ class AudioFfmpeg
     duration
   end
 
-  def parse_ffprobe_output(raw)
+  def parse_ffprobe_output(source, raw)
     # ffprobe std err contains info (separate on first equals(=))
     result = {}
     ffprobe_current_block_name = ''
@@ -89,7 +89,7 @@ class AudioFfmpeg
       end
     end
 
-    raise Exceptions::NotAnAudioFileError, "Not an audio file #{result.to_json}" if result['STREAM codec_type'] != 'audio'
+    raise Exceptions::NotAnAudioFileError, "Not an audio file #{source}: #{result.to_json}" if result['STREAM codec_type'] != 'audio'
 
     result
   end

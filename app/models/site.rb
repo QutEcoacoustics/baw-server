@@ -25,6 +25,7 @@ class Site < ActiveRecord::Base
   validates :latitude, numericality: true, :allow_nil => true
   validates :longitude, numericality: true, :allow_nil => true
   #validates_as_paranoid
+  validates_attachment_content_type :image, :content_type => /\Aimage\/.*\Z/
 
   # commonly used queries
   #scope :specified_sites, lambda { |site_ids| where('id in (:ids)', { :ids => site_ids } ) }

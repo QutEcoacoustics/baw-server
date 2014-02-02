@@ -52,7 +52,7 @@ describe AudioBase do
 
   context 'audio tool utilities' do
     it 'check timeout is enforced' do
-      command = 'sleep 30'
+      command = 'sleep 120'
       expect {
         audio_base.execute(command)
       }.to raise_error(Exceptions::AudioToolTimedOutError, /#{command}/)

@@ -50,7 +50,7 @@ class AudioBase
 
     ffmpeg_info_cmd = @audio_ffmpeg.info_command(source)
     ffmpeg_info_output = execute(ffmpeg_info_cmd)
-    ffmpeg_info = @audio_ffmpeg.parse_ffprobe_output(ffmpeg_info_output[:stdout])
+    ffmpeg_info = @audio_ffmpeg.parse_ffprobe_output(source, ffmpeg_info_output[:stdout])
 
     @audio_ffmpeg.check_for_errors(ffmpeg_info_output[:stdout], ffmpeg_info_output[:stderr])
 
@@ -391,11 +391,7 @@ class AudioBase
       if thread.alive?
         # We need to kill the process, because killing the thread leaves
         # the process alive but detached, annoyingly enough.
-        if OS.windows?
-          Process.kill('KILL', pid)
-        else
-          Process.kill('TERM', pid)
-        end
+        Process.kill('KILL', pid)
 
         killed = true
       end
