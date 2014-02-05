@@ -9,15 +9,16 @@ resource 'Sites' do
   header 'Content-Type', 'application/json'
   header 'Authorization', :authentication_token
 
-  let(:format) {'json'}
+  let(:format) { 'json' }
 
   # prepare ids needed for paths in requests below
-  let(:project_id)            {@write_permission.project.id}
-  let(:id)                    {@write_permission.project.sites[0].id}
+  let(:project_id) { @write_permission.project.id }
+  let(:id) { @write_permission.project.sites[0].id }
 
   # prepare authentication_token for different users
-  let(:writer_token)          {"Token token=\"#{@write_permission.user.authentication_token}\"" }
-  let(:reader_token)          {"Token token=\"#{@read_permission.user.authentication_token}\"" }
+  let(:writer_token) { "Token token=\"#{@write_permission.user.authentication_token}\"" }
+  let(:reader_token) { "Token token=\"#{@read_permission.user.authentication_token}\"" }
+  let(:admin_token) { "Token token=\"#{@admin.authentication_token}\"" }
 
   # Create post parameters from factory
   let(:post_attributes) { FactoryGirl.attributes_for(:all_site_attributes) }
@@ -30,6 +31,7 @@ resource 'Sites' do
     #puts 'Creating permissions for Sites spec...'
     @write_permission = FactoryGirl.create(:write_permission) # has to be 'write' so that the uploader has access
     @read_permission = FactoryGirl.create(:read_permission, project: @write_permission.project)
+    @admin = FactoryGirl.create(:admin)
     #puts '...permissions created for Sites spec.'
   end
 
@@ -41,7 +43,7 @@ resource 'Sites' do
 
     let(:authentication_token) { writer_token }
 
-    standard_request('LIST (as writer)' ,200,'0/longitude', true)
+    standard_request('LIST (as writer)', 200, '0/longitude', true)
   end
 
   get '/projects/:project_id/sites' do
@@ -49,7 +51,7 @@ resource 'Sites' do
 
     let(:authentication_token) { reader_token }
 
-    standard_request('LIST (as reader)' ,200,'0/longitude', true)
+    standard_request('LIST (as reader)', 200, '0/longitude', true)
   end
 
   get '/projects/:project_id/sites' do
@@ -132,7 +134,7 @@ resource 'Sites' do
     #puts ActiveSupport::JSON.decode(response_body)
     #response_json = JSON.parse(response_body).to_s
     #response_body.should have_json_path('name')
-    standard_request('SHOW (as writer)' ,200,'longitude', true)
+    standard_request('SHOW (as writer)', 200, 'longitude', true)
   end
 
   get '/projects/:project_id/sites/:id' do
@@ -141,7 +143,7 @@ resource 'Sites' do
 
     let(:authentication_token) { reader_token }
 
-    standard_request('SHOW (as reader)' ,200,'longitude', true)
+    standard_request('SHOW (as reader)', 200, 'longitude', true)
   end
 
   get '/projects/:project_id/sites/:id' do
@@ -150,7 +152,7 @@ resource 'Sites' do
 
     let(:authentication_token) { "Token token=\"INVALID TOKEN\"" }
 
-    standard_request('SHOW (with invalid token)' ,401, nil, true)
+    standard_request('SHOW (with invalid token)', 401, nil, true)
   end
 
   # shallow routes
@@ -159,7 +161,7 @@ resource 'Sites' do
 
     let(:authentication_token) { writer_token }
 
-    standard_request('SHOW (as writer)' ,200,'project_ids', true)
+    standard_request('SHOW (as writer)', 200, 'project_ids', true)
   end
 
   get '/sites/:id' do
@@ -167,7 +169,7 @@ resource 'Sites' do
 
     let(:authentication_token) { reader_token }
 
-    standard_request('SHOW (as reader)' ,200,'longitude', true)
+    standard_request('SHOW (as reader)', 200, 'longitude', true)
   end
 
   get '/sites/:id' do
@@ -175,7 +177,32 @@ resource 'Sites' do
 
     let(:authentication_token) { "Token token=\"INVALID TOKEN\"" }
 
-    standard_request('SHOW (with invalid token)' ,401, nil, true)
+    standard_request('SHOW (with invalid token)', 401, nil, true)
+  end
+
+  # latitude and longitude obfuscation
+  get '/sites/:id' do
+    parameter :id, 'Requested site ID (in path/route)', required: true
+    let(:authentication_token) { reader_token }
+    check_site_lat_long_response('latitude and longitude should be obfuscated for read permission', 200)
+  end
+
+  get '/sites/:id' do
+    parameter :id, 'Requested site ID (in path/route)', required: true
+    let(:authentication_token) { writer_token }
+    check_site_lat_long_response('latitude and longitude should be obfuscated for write permission', 200)
+  end
+
+  get '/sites/:id' do
+    parameter :id, 'Requested site ID (in path/route)', required: true
+    let(:authentication_token) { "Token token=\"#{@write_permission.project.owner.authentication_token}\"" }
+    check_site_lat_long_response('latitude and longitude should NOT be obfuscated for project owner', 200, false)
+  end
+
+  get '/sites/:id' do
+    parameter :id, 'Requested site ID (in path/route)', required: true
+    let(:authentication_token) { admin_token }
+    check_site_lat_long_response('latitude and longitude should NOT be obfuscated for admin', 200, false)
   end
 
   ################################
@@ -202,7 +229,7 @@ resource 'Sites' do
     #puts ActiveSupport::JSON.decode(response_body)
     #response_json = JSON.parse(response_body).to_s
     #response_body.should have_json_path('name')
-    standard_request('UPDATE (as writer)' ,204, nil, true)
+    standard_request('UPDATE (as writer)', 204, nil, true)
   end
 
   put '/projects/:project_id/sites/:id' do
@@ -221,7 +248,7 @@ resource 'Sites' do
 
     #puts "Existing sites: #{Site.all.inspect}"
 
-    standard_request('UPDATE (as reader)' ,403,nil, true)
+    standard_request('UPDATE (as reader)', 403, nil, true)
   end
 
   put '/projects/:project_id/sites/:id' do
@@ -238,6 +265,6 @@ resource 'Sites' do
 
     let(:authentication_token) { "Token token=\"INVALID TOKEN\"" }
 
-    standard_request('UPDATE (with invalid token)' ,401, nil, true)
+    standard_request('UPDATE (with invalid token)', 401, nil, true)
   end
 end

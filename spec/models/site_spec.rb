@@ -28,7 +28,7 @@ describe Site do
   it 'has a valid factory' do
     FactoryGirl.create(:site).should be_valid
   end
-  it 'is invalid without an name' do
+  it 'is invalid without a name' do
     FactoryGirl.build(:site, :name => nil).should_not be_valid
   end
   it 'requires a name with at least two characters' do
@@ -36,6 +36,7 @@ describe Site do
     s.should_not be_valid
     s.should have(1).error_on(:name)
   end
+
   it 'latitude should be within the range [-90, 90]' do
     site = FactoryGirl.build(:site)
 

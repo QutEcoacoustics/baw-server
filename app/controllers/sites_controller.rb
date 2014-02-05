@@ -24,9 +24,11 @@ class SitesController < ApplicationController
     @site = Site.find(params[:id])
     authorize! :show, @site
 
+    @site.update_location_obfuscated(current_user)
+
     # only responds to json requests
     respond_to do |format|
-      format.json { render json: @site, methods: :project_ids }
+      format.json { render json: @site, methods: [:project_ids, :location_obfuscated] }
     end
   end
 
@@ -35,13 +37,15 @@ class SitesController < ApplicationController
   def show
     @site = @project.sites.find(params[:id])
 
-    @site_audio_recordings = @site.audio_recordings.paginate(page: params[:page], per_page: 20)
+    @site_audio_recordings = @site.audio_recordings.order('recorded_date DESC').paginate(page: params[:page], per_page: 20)
+
+    @site.update_location_obfuscated(current_user)
 
     respond_to do |format|
       format.html {
         add_breadcrumb @site.name, [@project, @site]
       }
-      format.json { render json: @site }
+      format.json { render json: @site, methods: [:project_ids, :location_obfuscated] }
     end
   end
 
@@ -53,7 +57,7 @@ class SitesController < ApplicationController
     respond_to do |format|
       format.html {
         @markers = @site.to_gmaps4rails do |site, marker|
-          marker.infowindow 'Drag&Drop to site location'
+          marker.infowindow 'Drag&Drop to site location. Delete Latitude and Longitude to specify no location.'
         end
         add_breadcrumb 'New Site'
       }

@@ -15,11 +15,11 @@ describe 'CRUD Datasets as valid user with write permission' do
     login_as @permission.user, scope: :user
   end
 
-  it 'lists all datasets' do
+  it 'does not list all datasets' do
     visit project_path(@project)
     #save_and_open_page
-    page.should have_content('Datasets')
-    page.should have_content(@dataset.name)
+    page.should_not have_content('Datasets')
+    page.should_not have_content(@dataset.name)
   end
 
   it 'shows dataset details' do
@@ -99,10 +99,10 @@ describe 'CRUD Datasets as valid user with read permission' do
     login_as @permission.user, scope: :user
   end
 
-  it 'lists all datasets' do
+  it 'does not list all datasets' do
     visit project_path(@project)
-    page.should have_content('Datasets')
-    page.should have_content(@dataset.name)
+    page.should_not have_content('Datasets')
+    page.should_not have_content(@dataset.name)
   end
 
   it 'shows dataset details' do

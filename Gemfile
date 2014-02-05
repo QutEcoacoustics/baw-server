@@ -52,6 +52,7 @@ group :test do
   gem 'json_spec'
   gem 'database_cleaner', '~> 1'
   #gem 'bullet'
+  gem 'webmock'
 end
 
 ########################  TESTING & Documentation ########################

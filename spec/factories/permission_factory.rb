@@ -54,8 +54,8 @@ FactoryGirl.define do
 
   factory :site_for_project, class: Site do
     name { Faker::Name.title }
-    latitude Random.rand(180) - 90
-    longitude Random.rand(360) - 180
+    latitude Random.rand(-90.0..90.0)
+    longitude Random.rand(-180.0..180.0)
     notes { {Faker::Lorem.word => Faker::Lorem.paragraph} }
     association :creator, factory: :user
     after(:create) do |site|

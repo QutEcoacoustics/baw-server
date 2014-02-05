@@ -27,6 +27,12 @@ class ProjectsController < ApplicationController
       format.html {
         add_breadcrumb 'Projects', projects_path
         add_breadcrumb @project.name, @project
+
+        @markers = @project.sites.to_gmaps4rails do |site, marker|
+          marker.infowindow site.name
+          marker.title site.name
+        end
+
       }
       format.json { render json: @project }
     end

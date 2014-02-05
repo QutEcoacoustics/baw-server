@@ -16,11 +16,11 @@ describe 'CRUD Jobs as valid user with write permission' do
     login_as @permission.user, scope: :user
   end
 
-  it 'lists all jobs' do
+  it 'does not list all jobs' do
     visit project_path(@project)
     #save_and_open_page
-    page.should have_content('Jobs')
-    page.should have_content(@job.name)
+    page.should_not have_content('Jobs')
+    page.should_not have_content(@job.name)
   end
 
   it 'shows job details' do
@@ -42,7 +42,8 @@ describe 'CRUD Jobs as valid user with write permission' do
     fill_in 'job[script_settings]', with: 'test name'
     fill_in 'job[description]', with: 'description'
     click_button 'Create Job'
-    page.should have_content('test name')
+    # jobs are not listed on project page for now
+    page.should_not have_content('test name')
     page.should have_content('Analysis job was successfully created.')
   end
 

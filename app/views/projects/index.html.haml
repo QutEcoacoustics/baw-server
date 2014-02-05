@@ -11,6 +11,8 @@
     = link_to 'requesting access', new_access_request_projects_path
     to a project.
 
+- content_for :title, 'Projects'
+
 - content_for :left_sidebar do
   = render layout: '/shared/left_sidebar', locals: {title: 'Projects'} do
     %li= link_to 'New', new_project_path,  title: "Create a new project", data: {toggle: 'tooltip',  placement: 'right'}

@@ -86,6 +86,32 @@ class User < ActiveRecord::Base
     return false
   end
 
+  def highest_permission(project)
+    # low to high: none, read, write, owner, admin
+    if self.has_role? :admin
+      AccessLevel::ADMIN
+    elsif project.owner == self
+      AccessLevel::OWNER
+    elsif self.can_write? project
+      AccessLevel::WRITE
+    elsif self.can_read? project
+      AccessLevel::READ
+    else
+      AccessLevel::NONE
+    end
+  end
+
+  def highest_permission_any(projects)
+    highest = 0
+    projects.each do |project|
+      permission = self.highest_permission(project)
+      if permission > highest
+        highest = permission
+      end
+    end
+    highest
+  end
+
   def has_permission?(project)
     !Permission.find_by_user_id_and_project_id(self, project).blank? || project.owner == self # project.creator == self
   end

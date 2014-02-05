@@ -13,6 +13,9 @@ require 'capybara/rspec'
 
 require 'database_cleaner'
 
+require 'webmock/rspec'
+WebMock.disable_net_connect!(allow_localhost: true)
+
 RSpec.configure do |config|
   # ## Mock Framework
   #
@@ -78,6 +81,19 @@ RSpec.configure do |config|
     DatabaseCleaner.clean
     #Bullet.perform_out_of_channel_notifications if Bullet.enable? && Bullet.notification?
     #Bullet.end_request if Bullet.enable?
+  end
+
+# redirect puts into a text file
+  original_stderr = $stderr
+  original_stdout = $stdout
+  config.before(:all) do
+    # Redirect stderr and stdout
+    $stderr = File.new(File.join(File.dirname(__FILE__), '..','tmp', 'rspec_stderr.txt'), 'w')
+    $stdout = File.new(File.join(File.dirname(__FILE__), '..','tmp', 'rspec_stdout.txt'), 'w')
+  end
+  config.after(:all) do
+    $stderr = original_stderr
+    $stdout = original_stdout
   end
 
 end

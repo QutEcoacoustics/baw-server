@@ -109,7 +109,7 @@ end
 
 # make sure head requests get the parameters as a query string, not
 # in the body
-if ENV['RAILS_ENV'] == 'test' || ENV['RAILS_ENV'] == 'development'
+if ENV['RAILS_ENV'] == 'test'
   require 'rspec/core/formatters/base_formatter'
   require 'rack/utils'
   require 'rack/test/utils'

@@ -1,0 +1,14 @@
+# the project
+project_id: 1
+
+# the site
+site_id: 1
+
+# this needs to be set manually
+# below is a list of uploader_ids that have write access to this project
+# uncomment the one that you want to set as the uploader of the audio files
+# |---------- IMPORTANT: Ensure there is no whitespaces left before uploader_id
+uploader_id: 1
+
+# this is the timezone for all the recordings
+utc_offset: '+10'

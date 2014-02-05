@@ -18,20 +18,14 @@
         %thead
           %tr
             %th
-            %th Id
-            %th Type
-            %th Status
-            %th Start Date
+            %th Recording Start Date
             %th Duration
 
         %tbody
         - @site_audio_recordings.each do |audio_recording|
           %tr
-            %td= audio_recording.original_file_exists? ? (link_to 'Edit Annotations', "/listen/#{audio_recording.id}", target: '_blank') : 'Not Available'
-            %td= audio_recording.id
-            %td= audio_recording.media_type
-            %td= audio_recording.status
-            %td= audio_recording.recorded_date.to_formatted_s(:rfc822)
+            %td= audio_recording.original_file_exists? ? (link_to 'Play', "/listen/#{audio_recording.id}", target: '_blank') : 'Not Available'
+            %td= audio_recording.recorded_date.to_formatted_s(:readable_full)
             %td= distance_of_time_in_words(audio_recording.duration_seconds)
 
       = page_entries_info @site_audio_recordings
@@ -39,10 +33,13 @@
 
 .row-fluid
   .span12
-    = gmaps(markers: {data: @site.to_gmaps4rails},
-    map_options: gmaps_default_options)
+    - if @site.latitude.blank? || @site.longitude.blank?
+      %p This site does not have a location set.
+    - else
+      = gmaps(markers: {data: @site.to_gmaps4rails},
+      map_options: gmaps_default_options)
 
-    = yield :scripts
+      = yield :scripts
 
 
 - content_for :right_sidebar do
@@ -51,6 +48,8 @@
   - permission = current_user.get_permission(@project)
   - unless permission.blank?
     = sidebar_metadata('Your access level', permission.level)
+
+- content_for :title, "Project #{@project.name} | Site #{@site.name}"
 
 - content_for :left_sidebar do
   = render layout: '/shared/left_sidebar', locals: {title: 'Sites'} do

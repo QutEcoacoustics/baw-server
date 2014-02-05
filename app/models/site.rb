@@ -1,6 +1,8 @@
 class Site < ActiveRecord::Base
   attr_accessible :name, :latitude, :longitude, :description, :image, :project_ids
 
+  attr_reader :location_obfuscated
+
   # relations
   has_and_belongs_to_many :projects, uniq: true
   has_and_belongs_to_many :datasets, uniq: true
@@ -10,7 +12,7 @@ class Site < ActiveRecord::Base
   belongs_to :updater, class_name: 'User', foreign_key: :updater_id
 
   has_attached_file :image,
-                    styles: { span4: '300x300#', span3: '220x220#', span2: '140x140#', span1: '60x60#', spanhalf: '30x30#'},
+                    styles: {span4: '300x300#', span3: '220x220#', span2: '140x140#', span1: '60x60#', spanhalf: '30x30#'},
                     default_url: '/images/site/site_:style.png'
 
 
@@ -21,7 +23,7 @@ class Site < ActiveRecord::Base
   acts_as_gmappable process_geocoding: false
 
   # validations
-  validates :name, presence: true, :length => { :minimum => 2 }
+  validates :name, presence: true, :length => {:minimum => 2}
   validates :latitude, numericality: true, :allow_nil => true
   validates :longitude, numericality: true, :allow_nil => true
   #validates_as_paranoid
@@ -34,5 +36,28 @@ class Site < ActiveRecord::Base
 
   def project_ids
     self.projects.collect { |project| project.id }
+  end
+
+  def latitude
+    value = read_attribute(:latitude)
+    if self.location_obfuscated && !value.blank?
+      value.round(2)
+    else
+      value
+    end
+  end
+
+  def longitude
+    value = read_attribute(:longitude)
+    if self.location_obfuscated && !value.blank?
+      value.round(2)
+    else
+      value
+    end
+  end
+
+  def update_location_obfuscated(current_user)
+    highest_permission = current_user.highest_permission_any(self.projects)
+    @location_obfuscated = highest_permission < AccessLevel::OWNER
   end
 end

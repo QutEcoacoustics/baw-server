@@ -50,6 +50,8 @@
       %li= link_to 'Login', new_user_session_path, title: 'Sign in', data: {toggle: 'tooltip',  placement: 'right'}
       %li= link_to 'Sign up', new_user_registration_path, title: 'Create an account', data: {toggle: 'tooltip',  placement: 'right'}
 
+- content_for :title, 'Home'
+
 - unless @selected_images.blank?
   - content_for :right_sidebar do
     %img{src: @selected_images[:sensor_tree],

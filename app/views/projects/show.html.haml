@@ -13,18 +13,19 @@
         .row-fluid.spacer
           = render partial: 'sites/site_thumb_large', locals: {site: site}
 
-    - if @project.sites.length < 2
-      .span6= gmaps(markers: {data: @project.sites.to_gmaps4rails}, map_options: gmaps_default_options)
+    - if @project.sites.select { |site| !site.longitude.blank? && !site.latitude.blank? }.length > 0
+      .span6= gmaps(markers: {data: @markers}, map_options: {zoom: 7, auto_zoom: true})
+      = yield :scripts
     - else
-      .span6= gmaps4rails(@project.sites.to_gmaps4rails)
-    = yield :scripts
+      .span6.map-placeholder
+        %span.map-placeholder-text No locations specified.
 
 .row-fluid
   = link_to new_project_site_path(@project), title: 'Add a new site to this project',
   data: {toggle: 'tooltip',  placement: 'right'}, class: 'btn-create-site btn' do
     Add New Site
 
-.row-fluid
+-#.row-fluid
   %h3= 'Datasets'
   - unless @project.datasets.empty?
     %table.table.table-striped(data-provides='rowlink')
@@ -45,7 +46,7 @@
   data: {toggle: 'tooltip',  placement: 'right'}, class: 'btn-create-site btn' do
     Add New Dataset
 
-.row-fluid
+-#.row-fluid
   %h3= 'Jobs'
   - unless @project.jobs.empty?
     = render partial: 'jobs/jobs_table', locals: {jobs: @project.jobs}
@@ -62,6 +63,8 @@
   - unless permission.blank?
     = sidebar_metadata('Your access level', permission.level)
 
+- content_for :title, "Project #{@project.name}"
+
 - content_for :left_sidebar do
   = render layout: '/shared/left_sidebar', locals: {title: 'Projects'} do
     - if can? :edit, @project
@@ -74,7 +77,7 @@
       %li= link_to 'Delete Project', @project, :method => :delete, data: { confirm: 'Are you sure?', toggle: 'tooltip',  placement: 'right' }, title: 'Delete project'
     - if can? :edit, @project
       %li= link_to 'Add New Site', new_project_site_path(@project),  title: "Add a new site to this project", data: {toggle: 'tooltip',  placement: 'right'}
-    - if can? :edit, @project
+    -# if can? :edit, @project
       %li= link_to 'Add New Dataset', new_project_dataset_path(@project),  title: "Add a new dataset to this project", data: {toggle: 'tooltip',  placement: 'right'}
-    - if can? :edit, @project
+    -# if can? :edit, @project
       %li= link_to 'Add New Job', new_project_job_path(@project),  title: "Add a new analysis job to this project", data: {toggle: 'tooltip',  placement: 'right'}

@@ -109,15 +109,15 @@ class MediaController < ApplicationController
     result = {}
 
     formats.each do |format|
-      result[format] = defaults
-      result.delete 'max_duration_seconds'
-      result.delete 'min_duration_seconds'
-      result[format][:mime_type] = Mime::Type.lookup_by_extension(format).to_s
-      result[format][:url] = audio_recording_media_path(audio_recording,
+      format_key = format.to_s
+      result[format_key] = defaults.clone
+      result[format_key].delete 'format'
+      result[format_key][:storage_format] = format_key
+      result[format_key]['mime_type'] = Mime::Type.lookup_by_extension(format).to_s
+      result[format_key]['url'] = audio_recording_media_path(audio_recording,
                                                         format: format,
                                                         start_offset: start_offset,
                                                         end_offset: end_offset)
-      result[format].delete 'format'
     end
 
     result
