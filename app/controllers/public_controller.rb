@@ -9,7 +9,12 @@ class PublicController < ApplicationController
       item_count = species_data['species'].size
       item_index = rand(item_count)
       # select a random image with audio and sensor tree
-      @selected_images = {animal: species_data['species'][item_index], sensor_tree: "#{image_base}sensor_tree.jpg", image_base: image_base+'media/'}
+      @selected_images = {
+          animal: species_data['species'][item_index],
+          sensor_tree: "#{image_base}sensor_tree.jpg",
+          image_base: image_base+'media/',
+          example_spectrogram: "#{image_base}spectrogram_example.jpg"
+      }
     end
 
     respond_to do |format|

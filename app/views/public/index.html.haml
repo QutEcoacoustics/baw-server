@@ -14,31 +14,58 @@
   Then we enable that information to be put to use by ecologists and other parties interested in conservation.
 
 - unless @selected_images.blank?
-  %h3= 'Focus on: '+@selected_images[:animal]['commonName']
 
   .row-fluid
-    .span6.text-center
+    .span3.text-center
+      %strong
+        = "#{@selected_images[:animal]['commonName']} Vocalisation"
+
+    .span1.text-centre
+
+    .span3.text-center
+      %strong
+        Acoustic Sensor
+
+    .span1
+
+    .span4
+      %strong
+        Annotated Spectrogram
+
+  .row-fluid
+    .span3.text-center
       %img{src: "#{@selected_images[:image_base]}#{@selected_images[:animal]['baseName'].html_safe+'.jpg'}",
         alt: "Image of #{@selected_images[:animal]['commonName']}", style: 'height:200px;', class: 'img-polaroid' }
 
-    .span6
-      %p= @selected_images[:animal]['animalDescription']
+    .span1.text-centre.vertical-align
+      = '&rarr;'.html_safe
+
+    .span3.text-center
+      %img{src: @selected_images[:sensor_tree],
+        alt: 'An acoustic sensor attached to a tree.', style: 'height: 200px;', class: 'img-polaroid' }
+
+    .span1.text-centre.vertical-align
+      = '&rarr;'.html_safe
+
+    .span4
+      %img{src: @selected_images[:example_spectrogram],
+        alt: 'An example spectrogram.', style: 'height: 200px;', class: 'img-polaroid' }
 
   .row-fluid
-    .span6.text-center
+    .span3.text-center
       %small.muted
         Source:
         %a{href: @selected_images[:animal]['animalImageSourceLink'], rel: 'nofollow'}= @selected_images[:animal]['animalImageSourceName']
 
-    .span6.text-center
-      %small.muted
-        Source:
-        %a{href: @selected_images[:animal]['animalDescriptionSourceLink'], rel: 'nofollow'}= @selected_images[:animal]['animalDescriptionSourceName']
+    .span1
 
-  .row-fluid
-    .span12.text-center
-      %img{src: "#{@selected_images[:image_base]}#{@selected_images[:animal]['baseName'].html_safe+'_spectrogram.jpg'}",
-        alt: "Spectrogram of #{@selected_images[:animal]['commonName']}", style: 'height:200px;', class: 'img-polaroid' }
+    .span3.text-center
+      %small.muted
+        An acoustic sensor attached to a tree.
+
+    .span1
+
+    .span4
 
 - content_for :left_sidebar do
   = render layout: '/shared/left_sidebar', locals: {title: 'Quick Links'} do
@@ -51,8 +78,3 @@
       %li= link_to 'Sign up', new_user_registration_path, title: 'Create an account', data: {toggle: 'tooltip',  placement: 'right'}
 
 - content_for :title, 'Home'
-
-- unless @selected_images.blank?
-  - content_for :right_sidebar do
-    %img{src: @selected_images[:sensor_tree],
-            alt: 'An acoustic sensor attached to a tree.', style: 'height: 200px;', class: 'img-polaroid' }
