@@ -14,58 +14,65 @@
   Then we enable that information to be put to use by ecologists and other parties interested in conservation.
 
 - unless @selected_images.blank?
+  .row-fluid.vertical-offset
+    .span5.text-center
+      .row-fluid
+        %strong
+          = "#{@selected_images[:animal]['commonName']} Sound"
+      .row-fluid
+        %img{src: "#{@selected_images[:image_base]}#{@selected_images[:animal]['baseName'].html_safe+'.jpg'}",
+          alt: "Image of #{@selected_images[:animal]['commonName']}", style: 'height:180px;', class: 'img-polaroid' }
+      .row-fluid
+        %small
+          Faunal vocalisations and other environmental sounds
+      .row-fluid
+        %small.muted
+          Photo Source:
+          %a{href: @selected_images[:animal]['animalImageSourceLink'], rel: 'nofollow'}= @selected_images[:animal]['animalImageSourceName']
 
-  .row-fluid
-    .span3.text-center
-      %strong
-        = "#{@selected_images[:animal]['commonName']} Vocalisation"
-
-    .span1.text-centre
-
-    .span3.text-center
-      %strong
-        Acoustic Sensor
-
-    .span1
-
-    .span4
-      %strong
-        Annotated Spectrogram
-
-  .row-fluid
-    .span3.text-center
-      %img{src: "#{@selected_images[:image_base]}#{@selected_images[:animal]['baseName'].html_safe+'.jpg'}",
-        alt: "Image of #{@selected_images[:animal]['commonName']}", style: 'height:200px;', class: 'img-polaroid' }
-
-    .span1.text-centre.vertical-align
+    .span1.text-center.home-arrow.visible-desktop
       = '&rarr;'.html_safe
 
-    .span3.text-center
-      %img{src: @selected_images[:sensor_tree],
-        alt: 'An acoustic sensor attached to a tree.', style: 'height: 200px;', class: 'img-polaroid' }
+    .span5.text-center
+      .row-fluid
+        %strong
+          Acoustic Sensor
+      .row-fluid
+        %img{src: @selected_images[:sensor_tree],
+          alt: 'An acoustic sensor attached to a tree.', style: 'height: 200px;', class: 'img-polaroid' }
+      .row-fluid
+        %small
+          Acoustic sensors record sound in locations of study
 
-    .span1.text-centre.vertical-align
+    .span1.text-center.home-arrow.visible-desktop
       = '&rarr;'.html_safe
 
-    .span4
-      %img{src: @selected_images[:example_spectrogram],
-        alt: 'An example spectrogram.', style: 'height: 200px;', class: 'img-polaroid' }
+  .row-fluid.vertical-offset
 
-  .row-fluid
-    .span3.text-center
-      %small.muted
-        Source:
-        %a{href: @selected_images[:animal]['animalImageSourceLink'], rel: 'nofollow'}= @selected_images[:animal]['animalImageSourceName']
+    .span5.text-center
+      .row-fluid
+        %strong
+          Annotated Spectrogram
+      .row-fluid
+        %img{src: @selected_images[:example_spectrogram],
+          alt: 'Annotated Spectrogram.', style: 'height: 200px;', class: 'img-polaroid' }
+      .row-fluid
+        %small
+          Animal sounds are identified by people and automated detectors
 
-    .span1
+    .span1.text-center.home-arrow.visible-desktop
+      = '&rarr;'.html_safe
 
-    .span3.text-center
-      %small.muted
-        An acoustic sensor attached to a tree.
-
-    .span1
-
-    .span4
+    .span6.text-center
+      .row-fluid
+        %strong
+          Ecologists
+      .row-fluid
+        %img{src: @selected_images[:ecologist],
+          alt: 'Ecologists.', style: 'height: 200px;', class: 'img-polaroid' }
+      .row-fluid
+        %small
+          Observations of fauna sounds are passed to ecologists to answer environmental questions.
 
 - content_for :left_sidebar do
   = render layout: '/shared/left_sidebar', locals: {title: 'Quick Links'} do

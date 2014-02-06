@@ -81,3 +81,28 @@
       %li= link_to 'Add New Dataset', new_project_dataset_path(@project),  title: "Add a new dataset to this project", data: {toggle: 'tooltip',  placement: 'right'}
     -# if can? :edit, @project
       %li= link_to 'Add New Job', new_project_job_path(@project),  title: "Add a new analysis job to this project", data: {toggle: 'tooltip',  placement: 'right'}
+
+-# include markerwithlabel.js
+%script
+  =raw File.read(File.join(File.dirname(__FILE__),'..','..','assets','javascripts','gmaps4rails','markerwithlabel.js'))
+
+:javascript
+  Gmaps.map.callback = function() {
+    for (var i = 0; i <  this.markers.length; ++i) {
+      var oldMarker = Gmaps.map.markers[i].serviceObject;
+      oldMarker.setMap(null);
+      Gmaps.map.clearMarker(Gmaps.map.markers[i]);
+      Gmaps.map.markers[i] = new MarkerWithLabel({
+        position: oldMarker.position,
+        draggable: false,
+        raiseOnDrag: false,
+        map: Gmaps.map.map,
+        labelContent: oldMarker.title,
+        title: oldMarker.title,
+        labelAnchor: new google.maps.Point(-9, 34),
+        labelClass: "labels", // the CSS class for the label
+        labelStyle: {opacity: 1.0}
+      });
+
+    }
+  };

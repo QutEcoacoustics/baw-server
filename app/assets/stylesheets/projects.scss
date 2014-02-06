@@ -27,3 +27,13 @@ select[multiple] {
   height: 100px;
 
 }
+
+.labels {
+  font-size: 14px;
+  text-align: center;
+  min-width: 20px;
+  border: 1px solid #555;
+  white-space: nowrap;
+  background-color:white;
+  padding:0 2px;
+}

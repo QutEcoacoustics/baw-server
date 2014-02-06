@@ -28,7 +28,7 @@ class SitesController < ApplicationController
 
     # only responds to json requests
     respond_to do |format|
-      format.json { render json: @site, methods: [:project_ids, :location_obfuscated] }
+      format.json { render json: @site, methods: [:project_ids, :location_obfuscated], except: :notes }
     end
   end
 
@@ -45,7 +45,7 @@ class SitesController < ApplicationController
       format.html {
         add_breadcrumb @site.name, [@project, @site]
       }
-      format.json { render json: @site, methods: [:project_ids, :location_obfuscated] }
+      format.json { render json: @site, methods: [:project_ids, :location_obfuscated], except: :notes }
     end
   end
 

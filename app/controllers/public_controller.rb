@@ -13,7 +13,8 @@ class PublicController < ApplicationController
           animal: species_data['species'][item_index],
           sensor_tree: "#{image_base}sensor_tree.jpg",
           image_base: image_base+'media/',
-          example_spectrogram: "#{image_base}spectrogram_example.jpg"
+          example_spectrogram: "#{image_base}spectrogram_example.jpg",
+          ecologist: "#{image_base}eco.jpg",
       }
     end
 
