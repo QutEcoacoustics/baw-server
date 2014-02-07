@@ -219,7 +219,7 @@ class RangeRequest
     if_range = rails_request.headers[HTTP_HEADER_IF_RANGE]
     # If the entity is unchanged, send me the part(s) that I am missing; otherwise, send me the entire new entity
     # change is determined by etag in if-range header
-    if if_range && if_range != info[:file_entity_tag] && info.range
+    if if_range && if_range != info[:file_entity_tag] && info[:is_range]
       info[:response_code] = 200
       info[:response_is_range] = false
       info[:response_has_content] = true

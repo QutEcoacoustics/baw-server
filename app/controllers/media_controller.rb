@@ -53,11 +53,20 @@ class MediaController < ApplicationController
           options[:format] = params[:format] || default_audio.storage_format
           options[:channel] = (params[:channel] || default_audio.channel).to_i
           options[:sample_rate] = (params[:sample_rate] || default_audio.sample_rate).to_i
+
+          media_cacher.audio.check_offsets(
+              {duration_seconds: @audio_recording.duration_seconds},
+              default_audio.min_duration_seconds,
+              default_audio.max_duration_seconds,
+              options
+          )
+
           download_file(
               {
                   media_type: mime_type,
                   site_name: @audio_recording.site.name,
                   recorded_date: @audio_recording.recorded_date,
+                  recording_duration: @audio_recording.duration_seconds,
                   ext: options[:format],
                   file_path: media_cacher.create_audio_segment(options).first,
                   start_offset: options[:start_offset],
@@ -69,6 +78,14 @@ class MediaController < ApplicationController
           options[:sample_rate] = (params[:sample_rate] || default_spectrogram.sample_rate).to_i
           options[:window] = (params[:window] || default_spectrogram.window).to_i
           options[:colour] = (params[:colour] || default_spectrogram.colour).to_s
+
+          media_cacher.audio.check_offsets(
+              {duration_seconds: @audio_recording.duration_seconds},
+              default_spectrogram.min_duration_seconds,
+              default_spectrogram.max_duration_seconds,
+              options
+          )
+
           full_path = media_cacher.generate_spectrogram(options)
           #download_file(full_path, mime_type)
           headers['Content-Length'] = File.size(full_path.first).to_s

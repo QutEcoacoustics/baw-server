@@ -1,5 +1,3 @@
-
-
 class AudioRecordingsController < ApplicationController
 
   load_resource :project, only: [:check_uploader, :create]
@@ -13,9 +11,9 @@ class AudioRecordingsController < ApplicationController
   def index
 
     if @site
-      @audio_recordings = @site.audio_recordings
+      @audio_recordings = @site.audio_recordings.order('recorded_date DESC').limit(5)
     else
-      @audio_recordings = AudioRecording.all
+      @audio_recordings = AudioRecording.order('recorded_date DESC').limit(5)
     end
 
     render json: @audio_recordings
@@ -34,7 +32,7 @@ class AudioRecordingsController < ApplicationController
   def new
     @audio_recording = AudioRecording.new
 
-    render json: @audio_recording.to_json(only: [:uploader_id, :sample_rate_hertz, :media_type, :recorded_date, :bit_rate_bps, :data_length_bytes, :channels, :duration_seconds] )
+    render json: @audio_recording.to_json(only: [:uploader_id, :sample_rate_hertz, :media_type, :recorded_date, :bit_rate_bps, :data_length_bytes, :channels, :duration_seconds])
   end
 
 
@@ -43,8 +41,13 @@ class AudioRecordingsController < ApplicationController
     @audio_recording = AudioRecording.new(params[:audio_recording])
     @audio_recording.site = @site
 
-    if !User.exists?(params[:audio_recording][:uploader_id]) || !User.find(params[:audio_recording][:uploader_id]).can_write?(@project)
-      render json: {error:'uploader does not have access to this project'}.to_json, status: :unprocessable_entity
+    uploader_id = params[:audio_recording][:uploader_id]
+    user_exists = User.exists?(uploader_id)
+    user = User.find(uploader_id)
+    highest_permission = user.highest_permission(@project)
+
+    if !user_exists || highest_permission < AccessLevel::WRITE
+      render json: {error: 'uploader does not have access to this project'}.to_json, status: :unprocessable_entity
     elsif @audio_recording.save
       render json: @audio_recording, status: :created, location: [@project, @site, @audio_recording]
     else
@@ -55,7 +58,7 @@ class AudioRecordingsController < ApplicationController
 
   def check_uploader
     if !User.exists?(params[:uploader_id]) || !User.find(params[:uploader_id]).can_write?(@project)
-      render json: {error:'uploader does not have access to this project'}.to_json, status: :unprocessable_entity
+      render json: {error: 'uploader does not have access to this project'}.to_json, status: :unprocessable_entity
     else
       head :no_content
     end
@@ -88,19 +91,19 @@ class AudioRecordingsController < ApplicationController
 
   # this is called by the harvester once the audio file is in the correct location
   def update_status
-
-    @audio_recording.status = :ready
     if @audio_recording.blank?
-      render json: {error:"Could not find Audio Recording with id #{params[:id]}"}.to_json, status: :not_found
+      render json: {error: "Could not find Audio Recording with id #{params[:id]}"}.to_json, status: :not_found
     elsif @audio_recording.file_hash != params[:audio_recording][:file_hash]
-      render json: {error:"Incorrect file_hash #{params[:audio_recording][:file_hash]}"}.to_json, status: :unprocessable_entity
+      render json: {error: 'Incorrect file hash'}.to_json, status: :unprocessable_entity
     elsif @audio_recording.uuid != params[:audio_recording][:uuid]
-      render json: {error:"Incorrect uuid #{params[:audio_recording][:uuid]}"}.to_json, status: :unprocessable_entity
-    elsif @audio_recording.save!
-      head :no_content
+      render json: {error: 'Incorrect uuid'}.to_json, status: :unprocessable_entity
     else
-      head :bad_request
+      @audio_recording.status = :ready
+      if @audio_recording.save!
+        head :no_content
+      else
+        render json: @audio_recording.errors, status: :unprocessable_entity
+      end
     end
   end
-
 end
