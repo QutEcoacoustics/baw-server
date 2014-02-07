@@ -24,7 +24,7 @@
         %tbody
         - @site_audio_recordings.each do |audio_recording|
           %tr
-            %td= audio_recording.original_file_exists? ? (link_to 'Play', "/listen/#{audio_recording.id}", target: '_blank') : 'Not Available'
+            %td= audio_recording.original_file_exists? ? (link_to 'Play', "/listen/#{audio_recording.id}", target: '_self') : 'Not Available'
             %td= audio_recording.recorded_date.to_formatted_s(:readable_full)
             %td= distance_of_time_in_words(audio_recording.duration_seconds)
 
