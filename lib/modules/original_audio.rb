@@ -1,4 +1,4 @@
-require 'string'
+require File.dirname(__FILE__) + '/string'
 
 class OriginalAudio
 

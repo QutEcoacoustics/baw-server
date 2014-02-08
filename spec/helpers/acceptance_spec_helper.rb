@@ -26,11 +26,11 @@ def check_site_lat_long_response(description, expected_status, should_be_obfusca
     long = site['longitude']
 
     if should_be_obfuscated
-      expect(lat.to_s.split('.').last.size).to eq(4), "expected latitude to be obfuscated to two decimal places, got #{lat}"
-      expect(long.to_s.split('.').last.size).to eq(4), "expected longitude to be obfuscated to two decimal places, got #{long}"
+      expect(lat.to_s.split('.').last.size).to satisfy { |v| v > 2 && v < 5 }, "expected latitude to be obfuscated to two decimal places, got #{lat}"
+      expect(long.to_s.split('.').last.size).to satisfy { |v| v > 2 && v < 5 }, "expected longitude to be obfuscated to two decimal places, got #{long}"
     else
-      expect(lat.to_s.split('.').last.size).to be > 4, "expected latitude to be untouched, got #{lat}"
-      expect(long.to_s.split('.').last.size).to be > 4, "expected longitude to be untouched, got #{long}"
+      expect(lat.to_s.split('.').last.size).to satisfy { |v| v <= 2 || v >= 5 }, "expected latitude to be untouched, got #{lat}"
+      expect(long.to_s.split('.').last.size).to satisfy { |v| v <= 2 || v >= 5 }, "expected longitude to be untouched, got #{long}"
     end
   end
 end

@@ -5,7 +5,6 @@ require 'pathname'
 require 'listen'
 require 'daemons'
 
-
 ######################################################################################
 # This is a command line tool that listens to the harvester_to_do directory for incoming
 # folders containing a harvest.yml file. When harvest.yml is added or modified, it 
@@ -24,13 +23,13 @@ class HarvestListener
 
     @yaml_config_file =  yaml_config_file
     yaml = YAML.load_file(@yaml_config_file)
-    @listen_path = yaml['harvester_to_do_path'][0]
+    @listen_path = yaml['settings']['paths']['harvester_to_do']
     # this sets the logger which is used in the harvester and shared Audio tools (audioffmpeg, audiosox, etc.)
-    Logging::set_logger(Logger.new("#{@listen_path}/listen.log", 5, 300.megabytes))
-    puts "Start listening to '#{@listen_path}'" if File.directory?(@listen_path)
+    Logging::set_logger(Logger.new("#{@listen_path}/listen.log"))
   end
 
   def listen
+    puts "Start listening to '#{@listen_path}'" if File.directory?(@listen_path)
     Listen.to!(@listen_path, filter: %r{harvest.yml$}, relative_paths: true) do |modified, added, removed|
       puts "Modified: #{modified}"
       puts "Added: #{added}"
@@ -56,11 +55,11 @@ class HarvestListener
         puts "Harvester Instantiated"
         harvester.start_harvesting
         puts "Finished Harvesting: '#{dir}"
-      rescue Exceptions::HarvesterError => e
-        # keep guard going even if harvester throws harvester error exception
-        puts e
-      rescue Exception => e
-        puts e
+      #rescue Exceptions::HarvesterError => e
+      #  # keep guard going even if harvester throws harvester error exception
+      #  puts e.inspect
+      #rescue Exception => e
+      #  puts e.inspect
       end
     end
   end

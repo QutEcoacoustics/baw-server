@@ -5,15 +5,22 @@ require 'net/http'
 require 'json'
 require 'fileutils'
 require 'settingslogic'
+require 'active_support/all'
 
 require File.dirname(__FILE__) + '/../../modules/logging'
 require File.dirname(__FILE__) + '/../../modules/audio_base'
 require File.dirname(__FILE__) + '/../../modules/exceptions'
 require File.dirname(__FILE__) + '/../../modules/cache_base'
+require File.dirname(__FILE__) + '/../../modules/media_cacher'
 
+# used when running outside rails
+class Settings < Settingslogic
+  namespace 'settings'
+end
 
 module Harvester
 
+  # required for running tests under rails
   class Settings < Settingslogic
     namespace 'settings'
   end
@@ -32,6 +39,11 @@ module Harvester
       @listen_log_file = "#{dir_to_process}/listen.log"
 
       begin
+        # for running outside of rails
+        ::Settings.source(yaml_settings_file)
+        Harvester::Settings.source(yaml_settings_file)
+
+        # when running in tests.
         @settings = Settings.new(yaml_settings_file)
 
         @config_file_object = nil
@@ -54,9 +66,7 @@ module Harvester
       begin
 
         # get login token
-        res = Net::HTTP.start(@settings.host, @settings.port) do |http|
-          @auth_token = request_login(http)
-        end
+        @auth_token = request_login
 
         # check if absolute_path has required files and the right format
         check_config_file(@dir_to_process)
@@ -69,10 +79,10 @@ module Harvester
 
         harvest_dir(@dir_to_process)
 
-      rescue Exceptions::HarvesterError => e
+      rescue Exceptions::HarvesterError, Errno::ENOENT, Exception => e
         log_with_puts Logger::ERROR, "Error Processing #{@dir_to_process}:\n\t#{e.message}"
         log Logger::DEBUG, e
-        raise e
+        raise
       end
 
     end
@@ -168,17 +178,19 @@ module Harvester
     # return a hash[:file_to_process] = file_info
     def get_file_info_hash(files_to_process)
       file_info_hash = Hash.new
-      files_to_process.each do |file_to_process|
-        # get info about the file to process
-        file_info = @media_cacher.audio.info(file_to_process)
+      unless files_to_process.nil?
+        files_to_process.each do |file_to_process|
+          # get info about the file to process
+          file_info = @media_cacher.audio.info(file_to_process)
 
-        if audio_info?(file_info)
-          file_info_hash[file_to_process] = file_info
-          log Logger::DEBUG, "File info '#{file_to_process}': '#{file_info}'"
-        else
-          nil
-          # raise exception if audio info could not be retrieved
-          raise Exceptions::HarvesterAnalysisError, "Could not get file info for '#{file_to_process}': '#{file_info}'"
+          if audio_info?(file_info)
+            file_info_hash[file_to_process] = file_info
+            log Logger::DEBUG, "File info '#{file_to_process}': '#{file_info}'"
+          else
+            nil
+            # raise exception if audio info could not be retrieved
+            raise Exceptions::HarvesterAnalysisError, "Could not get file info for '#{file_to_process}': '#{file_info}'"
+          end
         end
       end
       file_info_hash
@@ -226,16 +238,14 @@ module Harvester
     ##########################################
 
     def check_config_against_endpoint
-      Net::HTTP.start(@settings.host, @settings.port) do |http|
-        if @auth_token
-          check_uploader_response = send_request('Check uploader id', http, :get, @settings.endpoint_check_uploader, {uploader_id: @config_file_object['uploader_id']})
-          if check_uploader_response.code.to_s == '204'
-            log_with_puts Logger::INFO, "Uploader with id #{@config_file_object['uploader_id']} has project access."
-            true
-          else
-            false
-            raise Exceptions::HarvesterConfigurationError, "Check your #{@settings.config_file_name} file: Uploader ID #{@config_file_object['uploader_id']} does not have required permissions for Project ID #{@config_file_object['project_id']}"
-          end
+      if @auth_token
+        check_uploader_response = send_request('Check uploader id', :get, @settings.endpoint_check_uploader, {uploader_id: @config_file_object['uploader_id']})
+        if check_uploader_response.code.to_s == '204'
+          log_with_puts Logger::INFO, "Uploader with id #{@config_file_object['uploader_id']} has project access."
+          true
+        else
+          false
+          raise Exceptions::HarvesterConfigurationError, "Check your #{@settings.config_file_name} file: Uploader ID #{@config_file_object['uploader_id']} does not have required permissions for Project ID #{@config_file_object['project_id']}"
         end
       end
     end
@@ -259,7 +269,7 @@ module Harvester
       to_send
     end
 
-    def send_request(description, http, method, endpoint, body)
+    def send_request(description, method, endpoint, body)
       if method == :get
         request = Net::HTTP::Get.new(endpoint)
 
@@ -279,7 +289,12 @@ module Harvester
 
       log Logger::DEBUG, "Sent request for '#{description}': #{request.inspect}, URL: #{@settings.host}:#{@settings.port}#{endpoint}, Body: #{request.body}"
 
-      response = http.request(request)
+      response = nil
+
+      res = Net::HTTP.start(@settings.host, @settings.port) do |http|
+        response = http.request(request)
+      end
+
 
       log Logger::DEBUG, "Received response for '#{description}': #{response.inspect}, Body: #{response.body}"
 
@@ -287,8 +302,9 @@ module Harvester
     end
 
     # request an auth token
-    def request_login(http)
-      login_response = send_request('Login', http, :post, @settings.endpoint_login, {email: @settings.login_email, password: @settings.login_password})
+    def request_login
+
+      login_response = send_request('Login', :post, @settings.endpoint_login, {email: @settings.login_email, password: @settings.login_password})
 
       if login_response.code == '200' && !login_response.body.blank?
         log_with_puts Logger::INFO, 'Successfully logged in.'
@@ -310,23 +326,20 @@ module Harvester
     # content type in the request headers, since any post from a form must
     # contain an authenticity token.
     def create_new_audiorecording(post_params, file_to_process)
-      Net::HTTP.start(@settings.host, @settings.port) do |http|
+      # change sample_rate to sample_rate_hertz
+      request_body = post_params.clone
+      request_body[:audio_recording][:sample_rate_hertz] = request_body[:audio_recording][:sample_rate].to_i
+      request_body[:audio_recording].delete :sample_rate
+      request_body[:audio_recording].delete :max_amplitude
 
-        # change sample_rate to sample_rate_hertz
-        request_body = post_params.clone
-        request_body[:audio_recording][:sample_rate_hertz] = request_body[:audio_recording][:sample_rate].to_i
-        request_body[:audio_recording].delete :sample_rate
-        request_body[:audio_recording].delete :max_amplitude
+      response = send_request('Create audiorecording', :post, @settings.endpoint_create, request_body)
+      if response.code == '201'
+        response_json = JSON.parse(response.body)
 
-        response = send_request('Create audiorecording', http, :post, @settings.endpoint_create, request_body)
-        if response.code == '201'
-          response_json = JSON.parse(response.body)
-
-          log_with_puts Logger::INFO, "Created new audio recording with id #{response_json['id']}: #{file_to_process}."
-          response
-        else
-          raise Exceptions::HarvesterAnalysisError, "Request to create audio recording failed: code #{response.code}, Message: #{response.message}, Body: #{response.body}"
-        end
+        log_with_puts Logger::INFO, "Created new audio recording with id #{response_json['id']}: #{file_to_process}."
+        response
+      else
+        raise Exceptions::HarvesterAnalysisError, "Request to create audio recording failed: code #{response.code}, Message: #{response.message}, Body: #{response.body}"
       end
     end
 
@@ -336,28 +349,25 @@ module Harvester
     ##########################################
 
     def record_file_move(create_result_params)
-      Net::HTTP.start(@settings.host, @settings.port) do |http|
-
-        if @auth_token
-          new_params = {
-              :auth_token => @auth_token,
-              :audio_recording => {
-                  :file_hash => create_result_params['file_hash'],
-                  :uuid => create_result_params['uuid']
-              }
-          }
-          endpoint = @settings.endpoint_record_move.gsub(':id', create_result_params['id'].to_s)
-          response = send_request('Record audiorecording file move', http, :put, endpoint, new_params)
-          if response.code == '200' || response.code == '204'
-            true
-          else
-            log Logger::ERROR, "Record move response was not recognised: code #{response.code}, Message: #{response.message}, Body: #{response.body}"
-            false
-          end
+      if @auth_token
+        new_params = {
+            :auth_token => @auth_token,
+            :audio_recording => {
+                :file_hash => create_result_params['file_hash'],
+                :uuid => create_result_params['uuid']
+            }
+        }
+        endpoint = @settings.endpoint_record_move.gsub(':id', create_result_params['id'].to_s)
+        response = send_request('Record audiorecording file move', :put, endpoint, new_params)
+        if response.code == '200' || response.code == '204'
+          true
         else
-          log Logger::ERROR, "Login problem."
+          log Logger::ERROR, "Record move response was not recognised: code #{response.code}, Message: #{response.message}, Body: #{response.body}"
           false
         end
+      else
+        log Logger::ERROR, "Login problem."
+        false
       end
     end
 
@@ -418,6 +428,8 @@ module Harvester
       end
 
       if all_status_changed
+        # move audio files, leave harvest.yml and log files.
+        # can't move log files, they're still open and being used.
         target_dir = FileUtils.mkpath(File.join(@settings.paths.harvester_completed, File.basename(absolute_path)))
         files_to_move = file_list(absolute_path)
         files_to_move.each do |file_to_move|
@@ -435,7 +447,7 @@ module Harvester
     def log(log_level, message)
       # create log files if they haven't been created yet
       unless @LOG
-        @LOG =Logger.new(@process_log_file, 5, 300.megabytes)
+        @LOG =Logger.new(@process_log_file)
         @LOG.formatter = Logger::Formatter.new
       end
 
@@ -444,7 +456,7 @@ module Harvester
       if log_level == Logger::FATAL || log_level == Logger::ERROR
 
         unless @ERROR_LOG
-          @ERROR_LOG = Logger.new(@error_log_file, 5, 300.megabytes)
+          @ERROR_LOG = Logger.new(@error_log_file)
           @ERROR_LOG.formatter = Logger::Formatter.new
         end
 

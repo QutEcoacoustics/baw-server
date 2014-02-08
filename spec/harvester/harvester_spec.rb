@@ -39,6 +39,10 @@ describe Harvester do
   end
 
   after(:each) do
+
+    # remove harvester_settings file
+    FileUtils.rm_f(target_config_file)
+
     # remove to_do directory
     FileUtils.rm_rf(dir_to_do)
 

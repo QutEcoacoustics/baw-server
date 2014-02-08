@@ -26,8 +26,44 @@ settings:
     # paths are relative to the harvester.rb file
     original_audios:
       - <%= Rails.root %>/tmp/_original_audio
-    harvester_to_do:
-      - <%= Rails.root %>/tmp/_harvester_to_do
+    harvester_to_do: <%= Rails.root %>/tmp/_harvester_to_do
     harvester_completed: <%= Rails.root %>/tmp/_harvester_completed
     harvester_log_file: <%= Rails.root %>/tmp/harvester.log
     temp_files: <%= Rails.root %>/tmp/
+  cached_audio_defaults:
+    storage_format: mp3
+    channel: 0
+    sample_rate: 22050
+    max_duration_seconds: 300.0
+    min_duration_seconds: 0.5
+  cached_spectrogram_defaults:
+    storage_format: png
+    channel: 0
+    sample_rate: 22050
+    window: 512
+    colour: 'g'
+    ppms: 0.045
+    max_duration_seconds: 120.0
+    min_duration_seconds: 0.5
+  cached_dataset_defaults:
+    storage_format: txt
+    one_item_per_line: true
+  available_formats:
+    text:
+      - json
+    audio:
+      - mp3
+      - webm
+      - ogg
+    image:
+      - png
+  audio_tools:
+    ffmpeg_executable: .\vendor\bin\ffmpeg\ffmpeg.exe
+    ffprobe_executable: .\vendor\bin\ffmpeg\ffprobe.exe
+    mp3splt_executable: .\vendor\bin\mp3splt\mp3splt.exe
+    sox_executable: .\vendor\bin\sox\sox.exe
+    wavpack_executable: .\vendor\bin\wavpack\wvunpack.exe
+    imagemagick_convert_executable: .\vendor\bin\imagemagick\convert.exe
+    imagemagick_identify_executable: .\vendor\bin\imagemagick\identify.exe
+    max_duration_seconds: 300
+  audio_tools_timeout_sec: 20
