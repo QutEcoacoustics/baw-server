@@ -20,6 +20,7 @@ resource 'AudioEvents' do
     @write_permission = FactoryGirl.create(:write_permission) # has to be 'write' so that the uploader has access
     @read_permission = FactoryGirl.create(:read_permission, project: @write_permission.project)
     @existing_tag = FactoryGirl.create(:tag, text: 'existing')
+    @admin_user = FactoryGirl.create(:admin)
   end
 
 
@@ -33,6 +34,7 @@ resource 'AudioEvents' do
   let(:writer_token) { "Token token=\"#{@write_permission.user.authentication_token}\"" }
   let(:reader_token) { "Token token=\"#{@read_permission.user.authentication_token}\"" }
   let(:unconfirmed_token) { "Token token=\"#{FactoryGirl.create(:unconfirmed_user).authentication_token}\"" }
+  let(:admin_token) { "Token token=\"#{@admin_user.authentication_token}\"" }
 
 
   # Create post parameters from factory
@@ -147,6 +149,30 @@ resource 'AudioEvents' do
     standard_request('LIST (as unconfirmed user)', 401, nil, true)
 
   end
+
+  ################################
+  # LIBRARY
+  ################################
+  get '/audio_events/library' do
+    let(:authentication_token) { writer_token }
+    standard_request('LIST (as writer)', 200, '0/start_time_seconds', true)
+  end
+
+  get '/audio_events/library' do
+    let(:authentication_token) { reader_token }
+    standard_request('LIST (as reader)', 200, '0/start_time_seconds', true)
+  end
+
+  get '/audio_events/library' do
+    let(:authentication_token) { admin_token }
+    standard_request('LIST (as admin)', 200, '0/start_time_seconds', true)
+  end
+
+  get '/audio_events/library' do
+    let(:authentication_token) { unconfirmed_token }
+    standard_request('LIST (as unconfirmed user)', 401, nil, true)
+  end
+
   ################################
   # SHOW
   ################################

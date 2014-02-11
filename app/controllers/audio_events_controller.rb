@@ -1,7 +1,10 @@
+require 'csv'
+
 class AudioEventsController < ApplicationController
 
-  load_and_authorize_resource :audio_recording, except: [:new]
-  load_and_authorize_resource :audio_event, through: :audio_recording, except: [:new]
+  load_and_authorize_resource :audio_recording, except: [:new, :library]
+  load_and_authorize_resource :audio_event, through: :audio_recording, except: [:new, :library]
+  skip_authorization_check only: [:library]
   respond_to :json
 
   before_filter
@@ -16,8 +19,19 @@ class AudioEventsController < ApplicationController
         event = event.start_before(params[:end_offset]) if params[:end_offset]
         render json: event.to_json(include: {taggings: {include: :tag}})
     else
-      render json: AudioEvent.all.to_json(include: {taggings: {include: :tag}})
+      render json: {error: 'An audio recording must be specified.'}, status: :bad_request
     end
+  end
+
+  def library
+    authorize! :library, AudioEvent
+    audio_event_attrs = [:id, :audio_recording_id, :is_reference,
+                         :start_time_seconds, :end_time_seconds,
+                         :high_frequency_hertz, :low_frequency_hertz,
+                         :tags]
+    tag_attrs = [:id, :text, :is_taxanomic, :retired, :type_of_tag]
+
+    render json: current_user.audio_events(params).to_json(only: audio_event_attrs, include: {tags: {only: tag_attrs}})
   end
 
   # GET /audio_events/1

@@ -9,6 +9,7 @@ def standard_request(description, expected_status, expected_json_path, document,
     unless response_body_content.blank?
       expect(response_body).to include(response_body_content)
     end
+    response_body
   end
 end
 

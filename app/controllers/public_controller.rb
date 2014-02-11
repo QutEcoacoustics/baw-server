@@ -1,4 +1,7 @@
 class PublicController < ApplicationController
+
+  skip_authorization_check only: [:index]
+
   def index
     base_path = "#{Rails.root}/public"
     image_base = '/system/home/'

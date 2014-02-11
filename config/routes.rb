@@ -77,7 +77,11 @@ AWB::Application.routes.draw do
     resources :bookmarks, :defaults => { :format => 'json' }
   end
   resources :tags, :defaults => { :format => 'json' }
-  resources :audio_events, only: [:new], :defaults => { :format => 'json' }
+  resources :audio_events, only: [:new], :defaults => { :format => 'json' } do
+    collection do
+      get 'library'
+    end
+  end
 
   # custom routes for scripts
   resources :scripts, except: [:update, :destroy] do
@@ -97,10 +101,7 @@ AWB::Application.routes.draw do
              :only => [ :sessions], :skip_helpers => true
 
   # route to the home page of site
-  root :to => 'public#index'
-
-  # route to access annotation tool
-  get 'listen/:id' => 'listen#show'
+  root to: 'public#index'
 
   # when a user goes to my account, render user_account/show view for that user
   get '/my_account/' => 'user_accounts#my_account'

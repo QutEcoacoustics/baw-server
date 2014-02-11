@@ -95,6 +95,7 @@ gem 'trollop'
 gem 'exception_notification'
 gem 'bindata'
 gem 'newrelic_rpm'
+gem 'rack-rewrite'
 
 gem 'guard', '~> 1.8'
 gem 'listen', '~> 1'

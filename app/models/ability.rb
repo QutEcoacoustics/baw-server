@@ -8,6 +8,7 @@ class Ability
     if user.has_role? :admin
       # admin abilities
       can :manage, :all
+
     elsif user.has_role?(:user) && user.confirmed?
       #user abilities
       can [:show], User
@@ -51,8 +52,9 @@ class Ability
         user.has_permission_any?(audio_event.audio_recording.site.projects)
       end
       can [:manage], Tag
-      can [:manage], Bookmark, :creator_id => user.id
+      can [:manage], Bookmark, creator_id: user.id
       can [:read], Bookmark
+      can [:library], AudioEvent
       #can [:audio, :spectrogram], Media if user.has_permission_any?(media.audio_recording.site.projects)
 
     elsif user.has_role? :harvester

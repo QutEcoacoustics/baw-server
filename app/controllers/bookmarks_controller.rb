@@ -1,6 +1,7 @@
 class BookmarksController < ApplicationController
 
   load_resource :audio_recording, only: [:new, :create]
+  load_and_authorize_resource :bookmark
   respond_to :json
 
   # GET /bookmarks

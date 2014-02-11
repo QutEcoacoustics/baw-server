@@ -174,7 +174,7 @@ describe 'CRUD Projects as valid user with no permissions' do
     page.should_not have_content(@permission.project.name)
   end
 
-  it 'rejects access to shows project details' do
+  it 'rejects access to show project details' do
     visit project_path(@permission.project)
     page.should have_content('You are not authorized to access this page.')
   end

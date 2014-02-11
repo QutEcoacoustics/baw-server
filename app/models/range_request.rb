@@ -29,12 +29,21 @@ class RangeRequest
 
     range_header = rails_request.headers[HTTP_HEADER_RANGE]
 
+    response_file_abs_start = options[:recorded_date].advance(seconds: options[:start_offset]).strftime('%Y%m%d_%H%M%S')
+    response_file_duration = options[:end_offset] - options[:start_offset]
+
+    suggested_file_name =
+        "#{options[:site_name].gsub(' ', '_')}_#{response_file_abs_start}_#{response_file_duration}.#{options[:ext]}"
+
+
     item = {
         # Indicates if the HTTP request is for multiple ranges.
         is_multipart: false,
 
         # Indicates if the HTTP request is for one or more ranges.
         is_range: false,
+
+        response_suggested_file_name: suggested_file_name,
 
         # The start byte(s) for the requested range(s).
         range_start_bytes: [0],
@@ -48,11 +57,6 @@ class RangeRequest
         file_modified_time: File.mtime(file_path).getutc,
         file_media_type: media_type,
 
-        response_suggested_file_name:
-            options[:site_name].gsub(' ', '_') +'_' +
-                options[:recorded_date].advance(seconds: options[:start_offset]).strftime('%Y%m%d_%H%M%S') + '_' +
-                (options[:end_offset] - options[:start_offset]).to_s + '_' +
-                '.' + options[:ext],
         response_has_content: true,
         response_is_range: false,
         response_code: 200,

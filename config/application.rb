@@ -78,5 +78,15 @@ module AWB
         resource '*', :headers => :any, :methods => [:get, :post, :put, :delete, :options]
       end
     end
+
+    # middleware to rewrite angular urls
+    # insert at the start of the Rack stack.
+    config.middleware.insert_before(0, Rack::Rewrite) do
+      # angular routing system will use the url that was originally requested
+      # rails just needs to load the index.html
+      rewrite   /^\/listen.*/i,     '/system/listen_to/index.html'
+      rewrite   /^\/birdwalks.*/i,  '/system/listen_to/index.html'
+      rewrite   /^\/library.*/i,    '/system/listen_to/index.html'
+    end
   end
 end

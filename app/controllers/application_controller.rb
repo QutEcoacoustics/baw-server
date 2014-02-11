@@ -1,4 +1,6 @@
 class ApplicationController < ActionController::Base
+# CanCan - always check authorization
+  check_authorization unless: :devise_controller?
 
   # userstamp
   include Userstamp
