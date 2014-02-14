@@ -32,14 +32,104 @@ class AudioEvent < ActiveRecord::Base
   validate :start_must_be_lte_end
   validate :low_must_be_lte_high
 
-  before_validation :set_tags , on: :create
+  before_validation :set_tags, on: :create
 
 
   # Scopes
-  scope :start_after, lambda { |offset_seconds| where('start_time_seconds > ?', offset_seconds)}
-  scope :start_before, lambda { |offset_seconds| where('start_time_seconds < ?', offset_seconds)}
-  scope :end_after, lambda { |offset_seconds| where('end_time_seconds > ?', offset_seconds)}
-  scope :end_before, lambda { |offset_seconds| where('end_time_seconds < ?', offset_seconds)}
+  scope :start_after, lambda { |offset_seconds| where('start_time_seconds > ?', offset_seconds) }
+  scope :start_before, lambda { |offset_seconds| where('start_time_seconds < ?', offset_seconds) }
+  scope :end_after, lambda { |offset_seconds| where('end_time_seconds > ?', offset_seconds) }
+  scope :end_before, lambda { |offset_seconds| where('end_time_seconds < ?', offset_seconds) }
+
+  def self.filtered(user, params)
+    # get a paged collection of all audio_events the current user can access
+    # option params:
+    # page, items, reference, tags_partial
+
+    creator_id_check = 'projects.creator_id = ?'
+    permissions_check = '(permissions.user_id = ? AND permissions.level IN (\'reader\', \'writer\'))'
+
+    query = AudioEvent
+    .includes(:tags)
+    .joins(audio_recording: {site: {projects: :permissions}})
+
+    unless user.is_admin?
+      query = query.where("#{creator_id_check} OR #{permissions_check}", user.id, user.id)
+    end
+
+    query = AudioEvent.filter_reference(query, params)
+    query = AudioEvent.filter_tags(query, params)
+    query = AudioEvent.filter_distance(query, params)
+
+    page = AudioEvent.filter_count(params, :page, 1, nil)
+    items = AudioEvent.filter_count(params, :items, 20, 50)
+    query = query.offset((page - 1) * items).limit(items)
+    puts query.to_sql
+    query
+  end
+
+  def self.filter_tags(query, params)
+    if params.include?(:tagsPartial) && !params[:tagsPartial].blank?
+      tags_partial = CSV.parse(params[:tagsPartial], col_sep: ' ').flatten.join('|').downcase
+      tags_query = AudioEvent.joins(:tags).where('lower(tags.text) SIMILAR TO ?', "%(#{tags_partial})%")
+      query.where(id: tags_query.pluck(:id))
+    else
+      query
+    end
+  end
+
+  def self.filter_reference(query, params)
+    if params.include?(:reference)
+      query.where(is_reference: params[:reference] == 'true' ? true : false)
+    else
+      query
+    end
+  end
+
+  def self.filter_count(params, params_symbol, min = 1, max)
+    count = min
+    if params.include?(params_symbol)
+      count = params[params_symbol].to_i
+    end
+
+    if count < min
+      count = min
+    end
+
+    if !max.blank? && count > max
+      count = max
+    end
+
+    count
+  end
+
+  def self.filter_distance(query, params)
+    if params.include?(:freqMin) || params.include?(:freqMax) || params.include?(:annotationDuration)
+      compare_items = []
+      compare_text = []
+
+      if params.include?(:freqMin)
+        compare_items << params[:freqMin].to_f
+        compare_text << 'power(low_frequency_hertz - ?, 2)'
+      end
+
+      if params.include?(:freqMax)
+        compare_items << params[:freqMax].to_f
+        compare_text << 'power(high_frequency_hertz - ?, 2)'
+      end
+
+      if params.include?(:annotationDuration)
+        compare_items << params[:annotationDuration].to_f
+        compare_text << 'power((end_time_seconds - start_time_seconds) - ?, 2)'
+      end
+
+      dangerous_sql = 'sqrt('+compare_text.join(' + ')+')'
+      sanitized_sql = sanitize_sql([dangerous_sql, compare_items].flatten, self.table_name)
+      query.order(sanitized_sql)
+    else
+      query.order('audio_events.created_at DESC')
+    end
+  end
 
   private
 

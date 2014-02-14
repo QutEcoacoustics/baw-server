@@ -28,10 +28,12 @@ class AudioEventsController < ApplicationController
     audio_event_attrs = [:id, :audio_recording_id, :is_reference,
                          :start_time_seconds, :end_time_seconds,
                          :high_frequency_hertz, :low_frequency_hertz,
-                         :tags]
+                         :tags, :created_at]
     tag_attrs = [:id, :text, :is_taxanomic, :retired, :type_of_tag]
+    audio_recording_attrs = [:recorded_date]
 
-    render json: current_user.audio_events(params).to_json(only: audio_event_attrs, include: {tags: {only: tag_attrs}})
+    query = AudioEvent.filtered(current_user, params)
+    render json: query.to_json(only: audio_event_attrs, include: {tags: {only: tag_attrs}, audio_recording: {only: audio_recording_attrs}})
   end
 
   # GET /audio_events/1

@@ -68,62 +68,6 @@ class User < ActiveRecord::Base
     Project.includes(:permissions).where("(#{creator_id_check} OR #{permissions_check})", self.id, self.id).uniq.order('projects.updated_at DESC')
   end
 
-  def audio_events(params)
-    # get a paged collection of all audio_events the current user can access
-    # option params:
-    # page, items, reference, tags_partial
-
-    creator_id_check = 'projects.creator_id = ?'
-    permissions_check = '(permissions.user_id = ? AND permissions.level IN (\'reader\', \'writer\'))'
-
-    query = AudioEvent
-    .includes(:tags)
-    .joins(audio_recording: {site: {projects: :permissions}})
-
-    unless self.is_admin?
-      query = query.where("#{creator_id_check} OR #{permissions_check}", self.id, self.id)
-    end
-
-    if params[:reference]
-      query = query.where(is_reference: params[:reference] == 'true' ? true : false)
-    end
-
-    if params[:tags_partial]
-      tags_partial = CSV.parse(params[:tags_partial], col_sep: ' ').flatten.join('|').downcase
-
-      tags_query = AudioEvent.joins(:tags).where('lower(tags.text) SIMILAR TO ?', "%(#{tags_partial})%")
-      puts tags_query.explain
-      query = query.where(id: tags_query.pluck(:id))
-    end
-
-    # paging and ordering
-    page = 1
-    if params[:page]
-      page = params[:page].to_i
-    end
-
-    if page < 1
-      page = 1
-    end
-
-    items = 30
-    if params[:items]
-      items = params[:items].to_i
-    end
-
-    if items < 1
-      items = 1
-    end
-
-    if items > 30
-      items = 30
-    end
-
-    query = query.offset((page - 1) * items).limit(items).order('audio_events.created_at DESC')
-    puts query.explain
-    query
-  end
-
   # helper methods for permission checks
   def can_read?(project)
     !Permission.find_by_user_id_and_project_id_and_level(self, project, 'reader').blank? || project.owner == self

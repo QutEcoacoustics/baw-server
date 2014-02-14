@@ -5,7 +5,7 @@
     -#= menu_item 'Sites', '/path2'
     -#= menu_item 'Datasets', '/path3'
     -#= menu_item 'Jobs', '/path3'
-    = menu_item 'Reference Library', '/reference library is not implemented yet' if can? :index, Project
+    = menu_item 'Reference Library', '/library' if can? :index, Project
     = menu_item 'Scripts', scripts_path  if can? :manage, Script
     = menu_item 'User Accounts', user_accounts_path if can? :manage, User
     -#= menu_item 'Scripts', '/path3'
