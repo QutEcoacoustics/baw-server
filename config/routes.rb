@@ -109,6 +109,9 @@ AWB::Application.routes.draw do
   # for updating only preferences for only the currently logged in user
   put '/my_account/prefs/' => 'user_accounts#modify_preferences'
 
+  # site status API
+  get '/status/' => 'public#status'
+
   # provide access to API documentation
   mount Raddocs::App => '/doc'
 

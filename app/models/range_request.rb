@@ -22,12 +22,22 @@ class RangeRequest
   HTTP_METHOD_GET = 'GET'
   HTTP_METHOD_HEAD = 'HEAD'
 
+  def RangeRequest.check_options(options, sym_array)
+    msg = 'RangeRequest - Required parameter missing:'
+    provided = "Provided parameters: #{options}"
+    sym_array.each do |sym|
+      raise ArgumentError, "#{msg} #{sym.to_s}. #{provided}" unless options.include?(sym) && !options[sym].blank?
+    end
+  end
+
   def RangeRequest.request_info(options, rails_request)
 
     file_path = options[:file_path]
     media_type = options[:media_type]
 
     range_header = rails_request.headers[HTTP_HEADER_RANGE]
+
+    RangeRequest.check_options(options, [:start_offset, :end_offset, :recorded_date, :site_name, :ext])
 
     response_file_abs_start = options[:recorded_date].advance(seconds: options[:start_offset]).strftime('%Y%m%d_%H%M%S')
     response_file_duration = options[:end_offset] - options[:start_offset]

@@ -1,6 +1,6 @@
 class PublicController < ApplicationController
 
-  skip_authorization_check only: [:index]
+  skip_authorization_check only: [:index, :status]
 
   def index
     base_path = "#{Rails.root}/public"
@@ -26,4 +26,16 @@ class PublicController < ApplicationController
       format.json { no_content_as_json }
     end
   end
+
+  def status
+    # only returns json
+    # for now only indicates if audio recording storage is available
+    storage_msg = AudioRecording.check_storage
+    status = storage_msg[:success] ? 'good' : 'bad'
+    respond_to do |format|
+      format.json  { render json: {status: status, storage: storage_msg}, status: :ok }
+    end
+  end
+
+
 end

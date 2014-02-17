@@ -72,7 +72,7 @@ class CacheBase
     check_cache_class(cache_class)
 
     # check file name arguments before passing to cache class
-    msg = 'Required parameter missing:'
+    msg = 'CacheBase - Required parameter missing:'
     eq_or_gt = 'must be equal to or greater than'
     provided = "Provided parameters: #{modify_parameters}"
     if cache_class.is_a?(OriginalAudio) || cache_class.is_a?(CacheAudio) || cache_class.is_a?(CacheSpectrogram)

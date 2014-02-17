@@ -152,6 +152,19 @@ class AudioRecording < ActiveRecord::Base
     can_be_accessed
   end
 
+  def self.check_storage
+    cache = Settings.cache_tool
+    existing_dirs = cache.existing_storage_dirs(cache.original_audio)
+    if existing_dirs.empty?
+      msg = 'None of the audio recording storage directories are available.'
+      logger.warn msg
+      { message: msg, success: false }
+    else
+      msg = "#{existing_dirs.size} audio recording storage directories are available."
+      { message: msg, success: true }
+    end
+  end
+
   private
   def set_uuid
     self.uuid = UUIDTools::UUID.random_create.to_s
