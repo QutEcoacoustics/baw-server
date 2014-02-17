@@ -211,6 +211,12 @@ module Harvester
         file_name.scan(/.*_(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})(\d{2})\..+/) do |year, month, day, hour, min, sec|
           datetime_from_file = DateTime.new(year.to_i, month.to_i, day.to_i, hour.to_i, min.to_i, sec.to_i, utc_offset)
         end
+ 
+        # _yyMMdd-HHmm.
+        file_name.scan(/.*_(\d{2})(\d{2})(\d{2})-(\d{2})(\d{2})\..+/) do |year, month, day, hour, min|
+          datetime_from_file = DateTime.new(year.to_i, month.to_i, day.to_i, hour.to_i, min.to_i, 0, utc_offset)
+        end
+
         datetime_from_file
       else
         nil
