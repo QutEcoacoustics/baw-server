@@ -11,6 +11,10 @@ AWB::Application.configure do
   # Do not compress assets
   config.assets.compress = false
 
+  # enable Rails to serve static assets -  this may be a performance issue
+  # required to enable client to be reachable
+  config.serve_static_assets = true
+
   # Defaults to nil and saved in location specified by config.assets.prefix
   # config.assets.manifest = YOUR_PATH
 

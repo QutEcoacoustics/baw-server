@@ -8,8 +8,10 @@ AWB::Application.configure do
   config.consider_all_requests_local       = false
   config.action_controller.perform_caching = true
 
-  # Disable Rails's static asset server (Apache or nginx will already do this)
-  config.serve_static_assets = false
+  # No longer correct: Disable Rails's static asset server (Apache or nginx will already do this)
+  # enable Rails to serve static assets -  this may be a performance issue
+  # required to enable client to be reachable
+  config.serve_static_assets = true
 
   # Compress JavaScripts and CSS
   config.assets.compress = true

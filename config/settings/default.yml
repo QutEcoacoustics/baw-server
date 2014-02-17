@@ -119,6 +119,9 @@ defaults: &defaults
     site_long_name: Audio Workbench
     site_short_name: AWB
     organisation_name: Audio Group
+  analytics:
+    domain: example.com
+    ua: UA-XXXXXX
 
 development:
   <<: *defaults
