@@ -15,9 +15,8 @@ settings:
   ######################################################
   endpoint_login: /security/sign_in
   endpoint_create: /projects/:project_id/sites/:site_id/audio_recordings
-  endpoint_check_uploader: /projects/:project_id/sites/:site_id/audio_recordings/check_uploader
-  endpoint_new: /projects/:project_id/sites/:site_id/audio_recordings/new
-  endpoint_record_move: /audio_recordings/:id/update_status
+  endpoint_check_uploader: /projects/:project_id/sites/:site_id/audio_recordings/check_uploader?uploader_id=:uploader_id
+  endpoint_update_status: /audio_recordings/:id/update_status
   ######################################################
   # these paths must align with the paths used by the rails app defined in
   # File config/settings/default.yml or config/settings/{environment}.yml
