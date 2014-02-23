@@ -20,7 +20,7 @@ resource 'Projects' do
   let(:reader_token)          {"Token token=\"#{@read_permission.user.authentication_token}\"" }
 
   # Create post parameters from factory
-  let(:post_attributes) { FactoryGirl.attributes_for(:required_project_attributes) }
+  let(:post_attributes) { FactoryGirl.attributes_for(:project) }
 
 
   before(:each) do

@@ -37,7 +37,7 @@ resource 'AudioRecordings' do
 
   # Create post parameters from factory
   # make sure the uploader has write permission to the project
-  let(:post_attributes) { FactoryGirl.attributes_for(:all_audio_recording_attributes, uploader_id: @write_permission.user.id) }
+  let(:post_attributes) { FactoryGirl.attributes_for(:audio_recording, uploader_id: @write_permission.user.id) }
 
   ################################
   # LIST

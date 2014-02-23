@@ -1,18 +1,41 @@
 require 'faker'
 
 FactoryGirl.define do
-  # factory generally used to create attributes for POST requests
-  # to create an site with all dependencies, check permission_factory.rb
-  factory :required_site_attributes, class: Site do
-    name {Faker::Name.title}
-    latitude Random.rand(180) - 90
-    longitude Random.rand(360) - 180
 
-    factory :all_site_attributes, class: Site do
-      description { {Faker::Lorem.word => Faker::Lorem.paragraph} }
-      factory :site do
-        association :creator, factory: :user
+  factory :site do
+    creator
+    sequence(:name) { |n| "#{Faker::Name.title}#{n}" }
+
+    trait :site_with_lat_long do
+      # Random.rand returns "a random integer greater than or equal to zero and less than the argument"
+      # between -90 and 90 degrees
+      latitude Random.rand(181) - 90
+      # -180 and 180 degrees
+      longitude Random.rand(361) - 180
+    end
+
+    trait :notes do
+      notes { {Faker::Lorem.word => Faker::Lorem.paragraph} }
+    end
+
+    trait :description do
+      description { Faker::Lorem.paragraph }
+    end
+
+    # the after(:create) yields two values; the instance itself and the
+    # evaluator, which stores all values from the factory, including ignored
+    # attributes; `create_list`'s second argument is the number of records
+    # to create and we make sure the instance is associated properly to the list of items
+    trait :with_audio_recordings do
+      ignore do
+        audio_recording_count 5
+      end
+      after(:create) do |site, evaluator|
+        create_list(:audio_recording_with_audio_events, evaluator.audio_recording_count, site: site)
       end
     end
+
+    factory :site_with_lat_long, traits: [:site_with_lat_long]
+    factory :site_with_audio_recordings, traits: [:site_with_lat_long, :with_audio_recordings]
   end
 end

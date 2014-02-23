@@ -23,9 +23,11 @@ class Site < ActiveRecord::Base
   acts_as_gmappable process_geocoding: false
 
   # validations
-  validates :name, presence: true, :length => {:minimum => 2}
-  validates :latitude, numericality: true, :allow_nil => true
-  validates :longitude, numericality: true, :allow_nil => true
+  validates :name, presence: true, length: {minimum: 2}
+  # between -90 and 90 degrees
+  validates :latitude, numericality: { only_integer: false, greater_than_or_equal_to: -90, less_than_or_equal_to: 90 }, allow_nil: true
+  # -180 and 180 degrees
+  validates :longitude, numericality: { only_integer: false, greater_than_or_equal_to: -180, less_than_or_equal_to: 180 }, allow_nil: true
   #validates_as_paranoid
   validates_attachment_content_type :image, :content_type => /\Aimage\/.*\Z/
 

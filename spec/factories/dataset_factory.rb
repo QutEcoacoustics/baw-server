@@ -1,28 +1,67 @@
 require 'faker'
 
 FactoryGirl.define do
-  # factory generally used to create attributes for POST requests
-  # to create a dataset with all dependencies, check permission_factory.rb
-  factory :required_dataset_attributes, class: Dataset do
-    name { Faker::Name.title }
-    association :creator, factory: :user
-    association :project, factory: :project
 
-    factory :all_dataset_attributes, class: Dataset do
-      start_time '06:30'
-      end_time '11:45'
-      start_date '2013-11-06'
-      end_date '2013-11-09'
-      filters nil
-      tag_text_filters ['a tag', 'my other tag', 'the-next-tag']
-      number_of_samples nil
-      number_of_tags [nil, 1].sample
+  factory :dataset do
+    sequence(:name) { |n| "#{Faker::Name.title}#{n}" }
+    creator
+    project
 
-      # first sample from empty array and available types of tags
-      # then sample 2 from available types of tags if it is chosen
-      types_of_tags Tag::AVAILABLE_TYPE_OF_TAGS.sample(2)
+    trait :description do
       description { Faker::Lorem.paragraph }
-      factory :dataset do
+    end
+
+    trait :start_time do
+      start_time '06:30'
+    end
+
+    trait :end_time do
+      end_time '11:45'
+    end
+
+    trait :start_date do
+      start_date '2013-11-06'
+    end
+
+    trait :end_date do
+      end_date '2013-11-09'
+    end
+
+    trait :number_of_samples do
+      number_of_samples 100
+    end
+
+    trait :number_of_tags do
+      number_of_tags 1
+    end
+
+    trait :random_type do
+      type_of_tag Tag::AVAILABLE_TYPE_OF_TAGS.sample(2)
+    end
+
+    trait :description do
+      description { Faker::Lorem.paragraph }
+    end
+
+    trait :tag_text_filters do
+      tag_text_filters ['a tag', 'my other tag', 'the-next-tag']
+    end
+
+    trait :with_jobs do
+      ignore do
+        job_count 5
+      end
+      after(:create) do |dataset, evaluator|
+        create_list(:job, evaluator.dataset_count, dataset: dataset)
+      end
+    end
+
+    trait :with_sites do
+      ignore do
+        site_count 5
+      end
+      after(:create) do |dataset, evaluator|
+        create_list(:site, evaluator.site_count, dataset: dataset)
       end
     end
   end

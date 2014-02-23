@@ -1,19 +1,41 @@
 require 'faker'
 
 FactoryGirl.define do
-  factory :required_audio_event_attributes, class: AudioEvent do
-    # factory generally used to create attributes for POST requests
-    # to create an audio_event with all dependencies, check permission_factory.rb
-    start_time_seconds     Random.rand(100) + 10 + 0.123456  # making sure start is over 10 so it doesn't interfere with tests against specific times
-    low_frequency_hertz    Random.rand(100) + 0.123456
-    factory :all_audio_event_attributes, class: AudioEvent do
-      end_time_seconds       Random.rand(100) + 200 + 0.123456
-      high_frequency_hertz   Random.rand(100) + 4000 + 0.123456
-      is_reference           false
-      factory :audio_event do
-        association :creator, factory: :user
-        association :audio_recording
+
+  factory :audio_event do
+
+    start_time_seconds     Random.rand(86401)
+    low_frequency_hertz    Random.rand(10000)
+
+    owner
+    creator
+    audio_recording
+
+    trait :high_frequency do
+      high_frequency_hertz { low_frequency_hertz + Random.rand((10000 / 2) + 1) }
+    end
+
+    trait :end_time do
+      end_time_seconds { start_time_seconds + Random.rand((86400 / 2) + 1) }
+    end
+
+    trait :reference do
+      is_reference           true
+    end
+
+    trait :with_tags do
+      ignore do
+        audio_event_count 5
+      end
+      after(:create) do |audio_event, evaluator|
+        create_list(:tagging, evaluator.audio_event_count, audio_event: audio_event)
       end
     end
+
+    factory :audio_event_complete, traits: [:high_frequency, :end_time]
+    factory :audio_event_complete_with_tags, traits: [:high_frequency, :end_time, :with_tags]
+    factory :audio_event_with_tags, traits: [:with_tags]
+
   end
+
 end
