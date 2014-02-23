@@ -1,8 +1,8 @@
 # This file is copied to spec/ when you run 'rails generate rspec:install'
 ENV['RAILS_ENV'] ||= 'test'
 
-#require 'simplecov'
-#SimpleCov.start
+require 'simplecov'
+SimpleCov.start
 
 require File.expand_path('../../config/environment', __FILE__)
 require 'rspec/rails'
@@ -14,6 +14,7 @@ require 'capybara/rspec'
 require 'database_cleaner'
 
 require 'webmock/rspec'
+require 'paperclip/matchers'
 WebMock.disable_net_connect!(allow_localhost: true)
 
 RSpec.configure do |config|
@@ -29,12 +30,14 @@ RSpec.configure do |config|
   # config.fixture_path = "#{::Rails.root}/spec/fixtures"
 
   config.profile_examples = 20
+  config.include Paperclip::Shoulda::Matchers
 
   # If you're not using ActiveRecord, or you'd prefer not to run each of your
   # examples within a transaction, remove the following line or assign false
   # instead of true.
   # DatabaseCLeaner takes care of this instead
   config.use_transactional_fixtures = false
+  config.use_transactional_examples = false
 
   # If true, the base class of anonymous controllers will be inferred
   # automatically. This will be the default behavior in future versions of
@@ -51,10 +54,18 @@ RSpec.configure do |config|
   config.include FactoryGirl::Syntax::Methods
   #config.include Rails.application.routes.url_helpers
 
+  # redirect puts into a text file
+  original_stderr = $stderr
+  original_stdout = $stdout
+
   config.before(:suite) do
     DatabaseCleaner.strategy = :transaction
     DatabaseCleaner.clean_with(:truncation)
-    #FactoryGirl.lint
+    FactoryGirl.lint
+
+    # Redirect stderr and stdout
+    $stderr = File.new(File.join(File.dirname(__FILE__), '..','tmp', 'rspec_stderr.txt'), 'w')
+    $stdout = File.new(File.join(File.dirname(__FILE__), '..','tmp', 'rspec_stdout.txt'), 'w')
   end
 
   # Request specs cannot use a transaction because Capybara runs in a
@@ -86,15 +97,7 @@ RSpec.configure do |config|
     #Bullet.end_request if Bullet.enable?
   end
 
-# redirect puts into a text file
-  original_stderr = $stderr
-  original_stdout = $stdout
-  config.before(:all) do
-    # Redirect stderr and stdout
-    $stderr = File.new(File.join(File.dirname(__FILE__), '..','tmp', 'rspec_stderr.txt'), 'w')
-    $stdout = File.new(File.join(File.dirname(__FILE__), '..','tmp', 'rspec_stdout.txt'), 'w')
-  end
-  config.after(:all) do
+  config.after(:suite) do
     $stderr = original_stderr
     $stdout = original_stdout
   end

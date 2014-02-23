@@ -38,7 +38,7 @@ def using_original_audio(audio_recording, content_type, check_accept_header = tr
   FileUtils.cp audio_file_mono, original_possible_paths.first
 
   request = do_request
-  status.should eq(200), "expected status #{200} but was #{status}. Response body was #{response_body}"
+  status.should eq(200), "expected status 200 but was #{status}. Response body was #{response_body}"
   response_headers['Content-Type'].should include(content_type)
   response_headers['Accept-Ranges'].should eq('bytes') if check_accept_header
   response_headers['Content-Transfer-Encoding'].should eq('binary') unless content_type == 'application/json'

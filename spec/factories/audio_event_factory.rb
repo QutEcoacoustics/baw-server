@@ -25,7 +25,7 @@ FactoryGirl.define do
 
     trait :with_tags do
       ignore do
-        audio_event_count 5
+        audio_event_count 1
       end
       after(:create) do |audio_event, evaluator|
         create_list(:tagging, evaluator.audio_event_count, audio_event: audio_event)

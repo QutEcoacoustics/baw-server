@@ -24,6 +24,10 @@ FactoryGirl.define do
       status 'new'
     end
 
+    trait :status_ready do
+      status 'ready'
+    end
+
     trait :status_random do
       status AudioRecording::AVAILABLE_STATUSES.sample
     end
@@ -34,14 +38,14 @@ FactoryGirl.define do
 
     trait :with_audio_events do
       ignore do
-        audio_event_count 5
+        audio_event_count 1
       end
       after(:create) do |audio_recording, evaluator|
         create_list(:audio_event_with_tags, evaluator.audio_event_count, audio_recording: audio_recording)
       end
     end
 
-    factory :audio_recording_with_audio_events, traits: [:with_audio_events]
+    factory :audio_recording_with_audio_events, traits: [:with_audio_events, :status_ready]
 
   end
 end

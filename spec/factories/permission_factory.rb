@@ -2,8 +2,8 @@ require 'faker'
 
 FactoryGirl.define do
 
-  after(:build) { |object| Rails.logger.debug "Built #{object.inspect}" }
-  after(:create) { |object| Rails.logger.debug "Created #{object.inspect}" }
+  #after(:build) { |object| Rails.logger.debug "Built #{object.inspect}" }
+  #after(:create) { |object| Rails.logger.debug "Created #{object.inspect}" }
 
   factory :permission do
     creator

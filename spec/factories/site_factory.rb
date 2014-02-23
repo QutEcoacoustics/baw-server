@@ -28,7 +28,7 @@ FactoryGirl.define do
     # to create and we make sure the instance is associated properly to the list of items
     trait :with_audio_recordings do
       ignore do
-        audio_recording_count 5
+        audio_recording_count 1
       end
       after(:create) do |site, evaluator|
         create_list(:audio_recording_with_audio_events, evaluator.audio_recording_count, site: site)

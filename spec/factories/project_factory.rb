@@ -25,7 +25,7 @@ FactoryGirl.define do
 
     trait :with_sites do
       ignore do
-        site_count 5
+        site_count 1
       end
       after(:create) do |project, evaluator|
         evaluator.site_count.times do
@@ -37,7 +37,7 @@ FactoryGirl.define do
 
     trait :with_datasets do
       ignore do
-        dataset_count 5
+        dataset_count 1
       end
       after(:create) do |project, evaluator|
         create_list(:dataset, evaluator.dataset_count, project: project)

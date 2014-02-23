@@ -29,7 +29,7 @@ class Site < ActiveRecord::Base
   # -180 and 180 degrees
   validates :longitude, numericality: { only_integer: false, greater_than_or_equal_to: -180, less_than_or_equal_to: 180 }, allow_nil: true
   #validates_as_paranoid
-  validates_attachment_content_type :image, :content_type => /\Aimage\/.*\Z/
+  validates_attachment_content_type :image, content_type: /\Aimage\/.*\Z/
 
   # commonly used queries
   #scope :specified_sites, lambda { |site_ids| where('id in (:ids)', { :ids => site_ids } ) }

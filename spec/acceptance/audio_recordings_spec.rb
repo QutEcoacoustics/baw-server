@@ -160,9 +160,9 @@ resource 'AudioRecordings' do
       status.should eq(201), "expected status 201 but was #{status}. Response body was #{response_body}"
       response_body.should have_json_path('bit_rate_bps'), "could not find bit_rate_bps in #{response_body}"
 
-      AudioRecording.count.should eq(2)
-      AudioRecording.order(:created_at).first.status.should eq('ready')
-      AudioRecording.order(:created_at).offset(1).first.status.should eq('new')
+      new_audio_recording_id = JSON.parse(response_body)['id']
+
+      AudioRecording.where(id: new_audio_recording_id).first.status.should eq('new')
     end
 
   end

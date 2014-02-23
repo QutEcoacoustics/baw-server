@@ -1,6 +1,6 @@
 GIT
   remote: https://github.com/brainspec/enumerize.git
-  revision: 1b4efb95a17b384fe35619855ecb78cbe2fdaba8
+  revision: 7e28649ee4756bf1670a37f01699028259d3b039
   specs:
     enumerize (0.7.0)
       activesupport (>= 3.2)
@@ -89,9 +89,9 @@ GEM
     cocaine (0.5.3)
       climate_control (>= 0.0.3, < 1.0)
     coderay (1.1.0)
-    coffee-rails (3.2.1)
+    coffee-rails (3.2.2)
       coffee-script (>= 2.2.0)
-      railties (~> 3.2.0.beta)
+      railties (~> 3.2.0)
     coffee-script (2.2.0)
       coffee-script-source
       execjs
