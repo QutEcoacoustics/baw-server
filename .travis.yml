@@ -10,6 +10,8 @@ bundler_args: --without development production staging
 before_script:
   - yes | cp config/settings/test.travis.yml config/settings/test.yml
   - psql -c 'create database myapp_test;' -U postgres
+  - ls
+  - mkdir tmp
 before_install:
   - echo "Installing audio tools..."
   - sudo apt-get update -qq
