@@ -5,6 +5,6 @@ describe Script do
 
   it { should validate_attachment_content_type(:settings_file).
                   allowing('text/plain').
-                  rejecting( 'image/gif', 'image/jpeg', 'image/png', 'text/xml', 'image/abc', 'some_image/png') }
+                  rejecting('text/plain1', 'image/gif', 'image/jpeg', 'image/png', 'text/xml', 'image/abc', 'some_image/png') }
 
 end

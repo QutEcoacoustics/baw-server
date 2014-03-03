@@ -107,6 +107,23 @@ class NaturalSort
   end
 end
 
+# fix bug in paperclip content_type matcher
+module Paperclip
+  module Shoulda
+    module Matchers
+      class ValidateAttachmentContentTypeMatcher
+        protected
+        def type_allowed?(type)
+          @subject.send("#{@attachment_name}_content_type=", type)
+          @subject.valid?
+          @subject.errors[:"#{@attachment_name}_content_type"].blank? && @subject.errors[:"#{@attachment_name}"].blank?
+        end
+      end
+    end
+  end
+end
+
+
 # make sure head requests get the parameters as a query string, not
 # in the body
 if ENV['RAILS_ENV'] == 'test'
