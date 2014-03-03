@@ -8,7 +8,7 @@ gemfile:
   - Gemfile
 bundler_args: --without development production staging
 before_script:
-  - yes | cp config/settings/database.travis.yml config/database.yml
+  - yes | cp config/settings/test.travis.yml config/settings/test.yml
   - psql -c 'create database myapp_test;' -U postgres
 before_install:
   - echo "Installing audio tools..."
