@@ -29,6 +29,11 @@ FactoryGirl.define do
       preferences { {someSettingOrOther: [1, 2, 5], ImAnotherOne: 'hello!'}.to_json }
     end
 
+    trait :avatar_image do
+      # this will be slow
+      image { fixture_file_upload(Rails.root.join('public', 'images','user', 'user-512.png'), 'image/png') }
+    end
+
     factory :confirmed_user, traits: [:confirmed], aliases: [:user, :creator, :owner, :updater, :deleter, :uploader]
     factory :admin, traits: [:confirmed, :admin_role]
     factory :harvester, traits: [:confirmed, :harvester_role]

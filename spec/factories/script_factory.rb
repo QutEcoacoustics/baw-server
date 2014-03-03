@@ -7,6 +7,8 @@ FactoryGirl.define do
     sequence(:name) { |n| "#{Faker::Name.title}#{n}"}
     sequence(:analysis_identifier) { |n| "#{Faker::Lorem.word}#{n}"}
     sequence(:version) { |n| n * 0.01}
+
+    # this will be slow
     settings_file { fixture_file_upload(Rails.root.join('public', 'files','script', 'settings_file.txt'), 'text/plain') }
 
     creator

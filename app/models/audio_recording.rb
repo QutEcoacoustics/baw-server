@@ -43,6 +43,7 @@ class AudioRecording < ActiveRecord::Base
   validates :site, presence: true
   validates :duration_seconds, presence: true, numericality: {greater_than: 0}
   validates :sample_rate_hertz, presence: true, numericality: {only_integer: true, greater_than: 0}
+
   # the channels field encodes our special version of a bit flag. 0 (no bits flipped) represents
   # a mix down option - we don't store mix downs (if we did they would be stored as single channel / mono (value = 1))
   validates :channels, presence: true, numericality: {only_integer: true, greater_than: 0}
@@ -50,6 +51,7 @@ class AudioRecording < ActiveRecord::Base
   validates :media_type, presence: true
   validates :data_length_bytes, presence: true, numericality: {only_integer: true, greater_than: 0}
   validates :file_hash, presence: true, uniqueness: {case_sensitive: false}
+  validate :check_duplicate_file_hashes, :check_overlapping
 
   before_validation :set_uuid, on: :create
 
@@ -158,16 +160,65 @@ class AudioRecording < ActiveRecord::Base
     if existing_dirs.empty?
       msg = 'None of the audio recording storage directories are available.'
       logger.warn msg
-      { message: msg, success: false }
+      {message: msg, success: false}
     else
       msg = "#{existing_dirs.size} audio recording storage directories are available."
-      { message: msg, success: true }
+      {message: msg, success: true}
     end
   end
 
   private
   def set_uuid
     self.uuid = UUIDTools::UUID.random_create.to_s
+  end
+
+  def check_duplicate_file_hashes
+    # self.id will be nil; self will not be in database yet
+    query = AudioRecording.where(file_hash: self.file_hash)
+    unless self.id.blank?
+      query = query.where('id <> ?', self.id)
+    end
+    count = query.count
+    if count > 0
+      errors.add(:file_hash, "can't be duplicate")
+    end
+  end
+
+  def check_overlapping
+    # recordings are overlapping if:
+    # do not have the same id,
+    # do have same site
+    # start is before .recorded_date.advance(seconds: self.duration_seconds)
+    # and end is before self.recorded_date
+    # self.id will be nil; self will not be in database yet
+    if self.recorded_date.respond_to?(:advance)
+      end_time = self.recorded_date.advance(seconds: self.duration_seconds)
+      query = AudioRecording
+        .where(site_id: self.site_id)
+        .start_before(end_time)
+        .end_after(self.recorded_date)
+      unless self.id.blank?
+        query = query.where('id <> ?', self.id)
+      end
+      count = query.count
+      if count > 0
+        this_audio_recording = {
+            uuid: self.uuid,
+            id: self.id,
+            recorded_date: self.recorded_date,
+            duration: self.duration_seconds,
+            end_date: self.recorded_date.advance(seconds: self.duration_seconds)
+        }
+        overlapping = query.map { |a| {
+            uuid: a.uuid,
+            id: a.id,
+            recorded_date: a.recorded_date,
+            duration: a.duration_seconds,
+            end_date: a.recorded_date.advance(seconds: a.duration_seconds)
+        } }
+        errors.add(:recorded_date, "#{this_audio_recording} can't overlap with #{overlapping}")
+      end
+    end
   end
 
 end

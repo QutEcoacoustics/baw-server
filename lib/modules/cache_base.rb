@@ -3,6 +3,7 @@ require File.dirname(__FILE__) + '/cache_dataset'
 require File.dirname(__FILE__) + '/cache_spectrogram'
 require File.dirname(__FILE__) + '/original_audio'
 require File.dirname(__FILE__) + '/string'
+require File.dirname(__FILE__) + '/logging'
 
 # Determines file names for cached and original files.
 
@@ -69,6 +70,7 @@ class CacheBase
   end
 
   def file_name(cache_class, modify_parameters = {})
+    log_options(modify_parameters, '#file_name method start')
     check_cache_class(cache_class)
 
     # check file name arguments before passing to cache class
@@ -86,6 +88,7 @@ class CacheBase
     end
 
     if cache_class.is_a?(CacheAudio) || cache_class.is_a?(CacheSpectrogram)
+      log_options(modify_parameters, '#file_name CacheAudio || CacheSpectrogram')
       raise ArgumentError, "#{msg} start_offset. #{provided}" unless modify_parameters.include? :start_offset
       raise ArgumentError, "start_offset #{eq_or_gt} 0: #{modify_parameters[:end_offset]}. #{provided}" unless modify_parameters[:start_offset].to_f >= 0.0
 
@@ -186,5 +189,8 @@ class CacheBase
         cache_class.respond_to?(:file_name) && cache_class.respond_to?(:partial_path)
   end
 
+  def log_options(options, description)
+    Logging::logger.warn "CacheBase - Provided parameters at #{description}: #{options}"
+  end
 
 end
