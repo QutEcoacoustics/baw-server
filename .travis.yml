@@ -18,8 +18,9 @@ before_install:
   - mkdir tmp
   - wget http://ffmpeg.gusari.org/static/64bit/ffmpeg.static.64bit.2014-03-02.tar.gz
   - tar xvzf ffmpeg.static.64bit.2014-03-02.tar.gz
-  - mv ./ffmpeg ~/bin/
-  - mv ./ffprobe ~/bin/
+  - ls -la
+  - mv ffmpeg ~/bin
+  - mv ffprobe ~/bin
   - ls -la ~/bin
   - echo "...testing for audio tools..."
   - ffmpeg -version
