@@ -10,13 +10,18 @@ bundler_args: --without development production staging
 before_script:
   - yes | cp config/settings/test.travis.yml config/settings/test.yml
   - psql -c 'create database myapp_test;' -U postgres
-  - ls
-  - mkdir tmp
 before_install:
   - echo "Installing audio tools..."
   - sudo apt-get update -qq
-  - sudo apt-get install -qq wavpack sox shntool mp3splt libavcodec-extra-53 ffmpeg --fix-missing
+  - sudo apt-get install -qq wavpack sox shntool mp3splt libavcodec-extra-53 --fix-missing
+  - ls
+  - uname -a
+  - mkdir tmp
+  - wget http://ffmpeg.gusari.org/static/64bit/ffmpeg.static.64bit.2014-03-02.tar.gz
+  - tar xvzf ffmpeg.static.64bit.2014-03-02.tar.gz
+  - mv ./ffmpeg/* ./bin
   - echo "...testing for audio tools..."
+  - which ffmpeg
   - ffmpeg -version
   - mp3splt -version
   - sox --version
