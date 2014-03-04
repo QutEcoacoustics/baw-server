@@ -1,9 +1,9 @@
-require File.dirname(__FILE__) + '/../harvester/harvester'
-require File.dirname(__FILE__) + '/../../modules/exceptions'
-
 require 'pathname'
 require 'listen'
 require 'daemons'
+
+require File.dirname(__FILE__) + '/../harvester/harvester'
+require File.dirname(__FILE__) + '/../../modules/exceptions'
 
 ######################################################################################
 # This is a command line tool that listens to the harvester_to_do directory for incoming
@@ -52,7 +52,7 @@ class HarvestListener
       begin
         puts "Started Harvesting: '#{dir}' with #{yaml_settings_file}"
         harvester = Harvester::Harvester.new(yaml_settings_file, dir)
-        puts "Harvester Instantiated"
+        puts 'Harvester Instantiated'
         harvester.start_harvesting
         puts "Finished Harvesting: '#{dir}"
       #rescue Exceptions::HarvesterError => e

@@ -26,7 +26,11 @@ module Harvester
   end
 
   class Harvester
+=begin
+This class is the audio file harvester. There are 3 files that make up the harvester:
+this file, harvester_single_file.rb and harvester_communication.rb
 
+=end
     def initialize(yaml_settings_file, dir_to_process)
 
       raise Exceptions::HarvesterConfigFileNotFound, "Configuration file not found: #{yaml_settings_file}" unless File.exists?(yaml_settings_file)
@@ -211,7 +215,7 @@ module Harvester
         file_name.scan(/.*_(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})(\d{2})\..+/) do |year, month, day, hour, min, sec|
           datetime_from_file = DateTime.new(year.to_i, month.to_i, day.to_i, hour.to_i, min.to_i, sec.to_i, utc_offset)
         end
- 
+
         # _yyMMdd-HHmm.
         file_name.scan(/.*_(\d{2})(\d{2})(\d{2})-(\d{2})(\d{2})\..+/) do |year, month, day, hour, min|
           datetime_from_file = DateTime.new(year.to_i, month.to_i, day.to_i, hour.to_i, min.to_i, 0, utc_offset)
@@ -354,7 +358,7 @@ module Harvester
     # RESTful API to update AudioRecording
     ##########################################
 
-    def record_file_move(create_result_params)
+    def record_file_moved(create_result_params)
       if @auth_token
         new_params = {
             :auth_token => @auth_token,
@@ -363,8 +367,8 @@ module Harvester
                 :uuid => create_result_params['uuid']
             }
         }
-        endpoint = @settings.endpoint_record_move.gsub(':id', create_result_params['id'].to_s)
-        response = send_request('Record audiorecording file move', :put, endpoint, new_params)
+        endpoint = @settings.endpoint_update_status.gsub(':id', create_result_params['id'].to_s)
+        response = send_request('Record audio recording file moved', :put, endpoint, new_params)
         if response.code == '200' || response.code == '204'
           true
         else
@@ -425,7 +429,7 @@ module Harvester
           ################################
           # Record file move
           ################################
-          if record_file_move(response_json)
+          if record_file_moved(response_json)
             log_with_puts Logger::INFO, "Successfully completed file: #{file_to_process}"
           else
             all_status_changed = false
@@ -452,21 +456,21 @@ module Harvester
 
     def log(log_level, message)
       # create log files if they haven't been created yet
-      unless @LOG
-        @LOG =Logger.new(@process_log_file)
-        @LOG.formatter = Logger::Formatter.new
+      unless @log
+        @log =Logger.new(@process_log_file)
+        @log.formatter = Logger::Formatter.new
       end
 
-      @LOG.add(log_level, message)
+      @log.add(log_level, message)
       Logging.logger.add(log_level, message)
       if log_level == Logger::FATAL || log_level == Logger::ERROR
 
-        unless @ERROR_LOG
-          @ERROR_LOG = Logger.new(@error_log_file)
-          @ERROR_LOG.formatter = Logger::Formatter.new
+        unless @error_log
+          @error_log = Logger.new(@error_log_file)
+          @error_log.formatter = Logger::Formatter.new
         end
 
-        @ERROR_LOG.add(log_level, message)
+        @error_log.add(log_level, message)
       end
     end
   end

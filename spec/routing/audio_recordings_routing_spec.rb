@@ -20,7 +20,7 @@ describe AudioRecordingsController do
     end
 
     it 'routes to #check_uploader' do
-      get('/projects/1/sites/1/audio_recordings/check_uploader').should route_to('audio_recordings#check_uploader', :project_id => '1', :site_id => '1', format: 'json')
+      get('/projects/1/sites/1/audio_recordings/check_uploader/1').should route_to('audio_recordings#check_uploader', :project_id => '1', :site_id => '1', uploader_id: '1', format: 'json')
     end
 
     it 'routes to #update' do
