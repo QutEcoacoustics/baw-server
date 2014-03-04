@@ -43,7 +43,7 @@ test:
     ffmpeg_executable: ffmpeg
     ffprobe_executable: ffprobe
     mp3splt_executable: mp3splt
-    sox_executable: .sox
+    sox_executable: sox
     wavpack_executable: wvunpack
     imagemagick_convert_executable: convert
     imagemagick_identify_executable: identify
