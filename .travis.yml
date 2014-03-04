@@ -14,16 +14,14 @@ before_install:
   - echo "Installing audio tools..."
   - sudo apt-get update -qq
   - sudo apt-get install -qq wavpack sox shntool mp3splt libavcodec-extra-53 --fix-missing
-  - ls
-  - uname -a
+  - pwd
   - mkdir tmp
   - wget http://ffmpeg.gusari.org/static/64bit/ffmpeg.static.64bit.2014-03-02.tar.gz
   - tar xvzf ffmpeg.static.64bit.2014-03-02.tar.gz
-  - mv ./ffmpeg ~/bin
-  - mv ./ffprobe ~/bin
-  - ls ~/bin
+  - mv ./ffmpeg ~/bin/
+  - mv ./ffprobe ~/bin/
+  - ls -la ~/bin
   - echo "...testing for audio tools..."
-  - which ffmpeg
   - ffmpeg -version
   - mp3splt -version
   - sox --version
