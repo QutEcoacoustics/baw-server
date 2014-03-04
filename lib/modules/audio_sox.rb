@@ -126,7 +126,7 @@ class AudioSox
 
     unless start_offset.blank?
       start_offset_formatted = Time.at(start_offset.to_f).utc.strftime('%H:%M:%S.%2N')
-      cmd_arg += "trim =#{start_offset_formatted}"
+      cmd_arg += "trim #{start_offset_formatted}"
     end
 
     unless end_offset.blank?
