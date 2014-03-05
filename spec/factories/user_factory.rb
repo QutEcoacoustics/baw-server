@@ -31,7 +31,7 @@ FactoryGirl.define do
 
     trait :avatar_image do
       # this will be slow
-      image { fixture_file_upload(Rails.root.join('public', 'images','user', 'user-512.png'), 'image/png') }
+      image { fixture_file_upload(Rails.root.join('public', 'images', 'user', 'user-512.png'), 'image/png') }
     end
 
     factory :confirmed_user, traits: [:confirmed], aliases: [:user, :creator, :owner, :updater, :deleter, :uploader]

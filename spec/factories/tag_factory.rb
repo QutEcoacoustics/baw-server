@@ -20,7 +20,7 @@ FactoryGirl.define do
     end
 
     trait :notes do
-      notes { {Faker::Lorem.word => Faker::Lorem.paragraph} }
+      notes { {Faker::Lorem.word => Faker::Lorem.word} }
     end
 
     factory :tag_random, traits: [:random_type]

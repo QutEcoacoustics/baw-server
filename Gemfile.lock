@@ -1,8 +1,8 @@
 GIT
   remote: https://github.com/brainspec/enumerize.git
-  revision: 8294531885e7d5d126be1a4b6d2991be231429d8
+  revision: 6e44e636a16f04111a4b10d630e169481f159a46
   specs:
-    enumerize (0.7.0)
+    enumerize (0.8.0)
       activesupport (>= 3.2)
 
 GIT
@@ -164,7 +164,7 @@ GEM
     method_source (0.8.2)
     mime-types (1.25.1)
     mini_portile (0.5.2)
-    multi_json (1.8.4)
+    multi_json (1.9.0)
     mustache (0.99.5)
     net-scp (1.1.2)
       net-ssh (>= 2.6.5)
@@ -296,7 +296,7 @@ GEM
     therubyracer (0.12.1)
       libv8 (~> 3.16.14.0)
       ref
-    thin (1.6.1)
+    thin (1.6.2)
       daemons (>= 1.0.9)
       eventmachine (>= 1.0.0)
       rack (>= 1.0.0)

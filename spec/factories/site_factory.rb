@@ -15,11 +15,11 @@ FactoryGirl.define do
     end
 
     trait :notes do
-      notes { {Faker::Lorem.word => Faker::Lorem.paragraph} }
+      notes { {Faker::Lorem.word => Faker::Lorem.word} }
     end
 
     trait :description do
-      description { Faker::Lorem.paragraph }
+      description { Faker::Lorem.word }
     end
 
     # the after(:create) yields two values; the instance itself and the

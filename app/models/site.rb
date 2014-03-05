@@ -43,9 +43,7 @@ class Site < ActiveRecord::Base
   def latitude
     value = read_attribute(:latitude)
     if self.location_obfuscated && !value.blank?
-      random_num = (Random.rand * 100).round(0)
-      rounded = value.round(2)
-      "#{rounded}#{random_num}".to_f
+      add_jitter(value, -90, 90)
     else
       value
     end
@@ -54,9 +52,7 @@ class Site < ActiveRecord::Base
   def longitude
     value = read_attribute(:longitude)
     if self.location_obfuscated && !value.blank?
-      random_num = (Random.rand * 100).round(0)
-      rounded = value.round(2)
-      "#{rounded}#{random_num}".to_f
+      add_jitter(value, -180, 180)
     else
       value
     end

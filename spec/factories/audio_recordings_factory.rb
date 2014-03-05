@@ -17,7 +17,7 @@ FactoryGirl.define do
     site
 
     trait :notes do
-      notes { {Faker::Lorem.word => Faker::Lorem.paragraph} }
+      notes { {Faker::Lorem.word => Faker::Lorem.word} }
     end
 
     trait :status_new do

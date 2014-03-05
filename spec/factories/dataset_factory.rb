@@ -8,7 +8,7 @@ FactoryGirl.define do
     project
 
     trait :description do
-      description { Faker::Lorem.paragraph }
+      description { Faker::Lorem.word }
     end
 
     trait :start_time do
@@ -40,7 +40,7 @@ FactoryGirl.define do
     end
 
     trait :description do
-      description { Faker::Lorem.paragraph }
+      description { Faker::Lorem.word }
     end
 
     trait :tag_text_filters do

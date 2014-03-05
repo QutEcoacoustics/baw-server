@@ -12,11 +12,11 @@ FactoryGirl.define do
     end
 
     trait :description do
-      description { Faker::Lorem.paragraph }
+      description { Faker::Lorem.word }
     end
 
     trait :notes do
-      notes { {Faker::Lorem.word => Faker::Lorem.paragraph} }
+      notes { {Faker::Lorem.word => Faker::Lorem.word} }
     end
 
     trait :image do
