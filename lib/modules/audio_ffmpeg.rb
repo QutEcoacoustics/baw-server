@@ -153,13 +153,16 @@ class AudioFfmpeg
     # -acodec Force audio codec to codec. Use the copy special value to specify that the raw codec data must be copied as is.
     # output file. extension used to determine filetype.
     old_target = target
-    vorbis_codec = 'libvorbis -aq 80' # ogg container vorbis encoder at quality level of 80
+    bit_rate = '-b:a 128k'
+    vorbis_codec = "libvorbis #{bit_rate}" # ogg container vorbis encoder at quality level of 80
+    mp3_codec =
+
     codec = ''
     case File.extname(target).upcase!.reverse.chomp('.').reverse
       when 'WAV'
-        codec = "pcm_s16le" # pcm signed 16-bit little endian - compatible with CDDA
+        codec = "pcm_s16le #{bit_rate}" # pcm signed 16-bit little endian - compatible with CDDA
       when 'MP3'
-        codec = "libmp3lame" # needs to be specified, different codecs for encoding and decoding
+        codec = "libmp3lame #{bit_rate}" # needs to be specified, different codecs for encoding and decoding
       when 'OGG'
         codec = vorbis_codec
       when 'OGA'
@@ -171,9 +174,9 @@ class AudioFfmpeg
         codec = vorbis_codec
         target = target.chomp(File.extname(target))+'.webm'
       when 'WV'
-        codec = 'wavpack'
+        codec = "wavpack #{bit_rate}"
       when 'AAC'
-        codec = 'libvo_aacenc'
+        codec = "libvo_aacenc #{bit_rate}"
       else
         #codec = 'copy'
         codec = ''

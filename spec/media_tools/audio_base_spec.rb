@@ -7,6 +7,8 @@ describe AudioBase do
   # mp3, webm, ogg (wav, wv)
   let(:duration_range) { 0.15 }
   let(:amplitude_range) { 0.019 }
+  let(:bit_rate_range) { 400 }
+  let(:bit_rate_min) { 128000 }
 
   let(:audio_file_mono) { File.join(File.dirname(__FILE__), 'test-audio-mono.ogg') }
   let(:audio_file_mono_media_type) { Mime::Type.lookup('audio/ogg') }
@@ -19,6 +21,7 @@ describe AudioBase do
   let(:audio_file_stereo_sample_rate) { 44100 }
   let(:audio_file_stereo_channels) { 2 }
   let(:audio_file_stereo_duration_seconds) { 70 }
+
 
   let(:audio_file_empty) { File.join(File.dirname(__FILE__), 'test-audio-empty.ogg') }
   let(:audio_file_corrupt) { File.join(File.dirname(__FILE__), 'test-audio-corrupt.ogg') }
@@ -101,11 +104,12 @@ describe AudioBase do
       expect(info).to include(:media_type)
       expect(info).to include(:sample_rate)
       expect(info).to include(:bit_rate_bps)
+      expect(info).to include(:bit_rate_bps_calc)
       expect(info).to include(:data_length_bytes)
       expect(info).to include(:channels)
       expect(info).to include(:duration_seconds)
       expect(info).to include(:max_amplitude)
-      expect(info.size).to eq(7)
+      expect(info.size).to eq(8)
     end
   end
 
@@ -121,6 +125,19 @@ describe AudioBase do
         audio_base.modify(audio_file_stereo, audio_file_stereo)
       }.to raise_error(ArgumentError, /Source and Target are the same file/)
     end
+
+    it 'successfully converts sample rate' do
+      temp_audio_file = temp_audio_file_1+'.mp3'
+      result = audio_base.modify(audio_file_stereo, temp_audio_file, {sample_rate: 22050})
+      info = audio_base.info(temp_audio_file)
+      expect(File.size(temp_audio_file)).to be > 0
+      expect(info[:media_type]).to eq('audio/mp3')
+      expect(info[:sample_rate]).to be_within(0.0).of(22050)
+      expect(info[:channels]).to eq(audio_file_stereo_channels)
+      expect(info[:duration_seconds]).to be_within(duration_range).of(audio_file_stereo_duration_seconds)
+      expect(info[:bit_rate_bps]).to be_within(bit_rate_range).of(bit_rate_min)
+    end
+
   end
   context 'restrictions are enforced' do
     it 'mp3splt must have a mp3 file as the source' do
@@ -134,10 +151,12 @@ describe AudioBase do
       temp_audio_file_a = temp_audio_file_1+'.mp3'
       result_1 = audio_base.modify(audio_file_stereo, temp_audio_file_a)
       info_1 = audio_base.info(temp_audio_file_a)
+      expect(File.size(temp_audio_file_a)).to be > 0
       expect(info_1[:media_type]).to eq('audio/mp3')
       expect(info_1[:sample_rate]).to be_within(0.0).of(audio_file_stereo_sample_rate)
       expect(info_1[:channels]).to eq(audio_file_stereo_channels)
       expect(info_1[:duration_seconds]).to be_within(duration_range).of(audio_file_stereo_duration_seconds)
+      expect(info_1[:bit_rate_bps]).to be_within(bit_rate_range).of(bit_rate_min)
 
       temp_audio_file_b = temp_audio_file_2+'.wav'
 
@@ -157,6 +176,7 @@ describe AudioBase do
       temp_audio_file_a = temp_audio_file_1+'.wv'
       result_1 = audio_base.modify(audio_file_stereo, temp_audio_file_a)
       info_1 = audio_base.info(temp_audio_file_a)
+      expect(File.size(temp_audio_file_a)).to be > 0
       expect(info_1[:media_type]).to eq('audio/wavpack')
       expect(info_1[:sample_rate]).to be_within(0.0).of(audio_file_stereo_sample_rate)
       expect(info_1[:channels]).to eq(audio_file_stereo_channels)
@@ -176,6 +196,7 @@ describe AudioBase do
       temp_audio_file = temp_audio_file_1+'.wav'
       result = audio_base.modify(audio_file_stereo, temp_audio_file, {start_offset: 10})
       info = audio_base.info(temp_audio_file)
+      expect(File.size(temp_audio_file)).to be > 0
       expect(info[:media_type]).to eq('audio/wav')
       expect(info[:sample_rate]).to be_within(0.0).of(audio_file_stereo_sample_rate)
       expect(info[:channels]).to eq(audio_file_stereo_channels)
@@ -186,6 +207,7 @@ describe AudioBase do
       temp_audio_file = temp_audio_file_1+'.wav'
       result = audio_base.modify(audio_file_stereo, temp_audio_file, {end_offset: 20})
       info = audio_base.info(temp_audio_file)
+      expect(File.size(temp_audio_file)).to be > 0
       expect(info[:media_type]).to eq('audio/wav')
       expect(info[:sample_rate]).to be_within(0.0).of(audio_file_stereo_sample_rate)
       expect(info[:channels]).to eq(audio_file_stereo_channels)
@@ -196,6 +218,7 @@ describe AudioBase do
       temp_audio_file_a = temp_audio_file_1+'.wv'
       result_1 = audio_base.modify(audio_file_stereo, temp_audio_file_a, {start_offset: 10, end_offset: 20})
       info_1 = audio_base.info(temp_audio_file_a)
+      expect(File.size(temp_audio_file_a)).to be > 0
       expect(info_1[:media_type]).to eq('audio/wavpack')
       expect(info_1[:sample_rate]).to be_within(0.0).of(audio_file_stereo_sample_rate)
       expect(info_1[:channels]).to eq(audio_file_stereo_channels)
@@ -204,6 +227,7 @@ describe AudioBase do
       temp_audio_file_b = temp_audio_file_2+'.wav'
       result_2 = audio_base.modify(temp_audio_file_a, temp_audio_file_b)
       info_2 = audio_base.info(temp_audio_file_b)
+      expect(File.size(temp_audio_file_b)).to be > 0
       expect(info_2[:media_type]).to eq('audio/wav')
       expect(info_2[:sample_rate]).to be_within(0.0).of(audio_file_stereo_sample_rate)
       expect(info_2[:channels]).to eq(audio_file_stereo_channels)
@@ -214,6 +238,7 @@ describe AudioBase do
       temp_audio_file_a = temp_audio_file_1+'.webm'
       result_1 = audio_base.modify(audio_file_stereo, temp_audio_file_a, {start_offset: 10, end_offset: 20})
       info_1 = audio_base.info(temp_audio_file_a)
+      expect(File.size(temp_audio_file_a)).to be > 0
       expect(info_1[:media_type]).to eq('audio/webm')
       expect(info_1[:sample_rate]).to be_within(0.0).of(audio_file_stereo_sample_rate)
       expect(info_1[:channels]).to eq(audio_file_stereo_channels)
@@ -222,10 +247,12 @@ describe AudioBase do
       temp_audio_file_b = temp_audio_file_2+'.ogg'
       result_2 = audio_base.modify(temp_audio_file_a, temp_audio_file_b)
       info_2 = audio_base.info(temp_audio_file_b)
+      expect(File.size(temp_audio_file_b)).to be > 0
       expect(info_2[:media_type]).to eq('audio/ogg')
       expect(info_2[:sample_rate]).to be_within(0.0).of(audio_file_stereo_sample_rate)
       expect(info_2[:channels]).to eq(audio_file_stereo_channels)
       expect(info_2[:duration_seconds]).to be_within(duration_range).of(10)
+      expect(info_2[:bit_rate_bps]).to be_within(bit_rate_range).of(bit_rate_min)
     end
 
     context 'special case for wavpack files' do
@@ -233,6 +260,7 @@ describe AudioBase do
         temp_audio_file_a = temp_audio_file_1+'.wv'
         result_1 = audio_base.modify(audio_file_stereo, temp_audio_file_a)
         info_1 = audio_base.info(temp_audio_file_a)
+        expect(File.size(temp_audio_file_a)).to be > 0
         expect(info_1[:media_type]).to eq('audio/wavpack')
         expect(info_1[:sample_rate]).to be_within(0.0).of(audio_file_stereo_sample_rate)
         expect(info_1[:channels]).to eq(audio_file_stereo_channels)
@@ -241,6 +269,7 @@ describe AudioBase do
         temp_audio_file_b = temp_audio_file_2+'.wav'
         result_2 = audio_base.modify(temp_audio_file_a, temp_audio_file_b, {start_offset: 10})
         info_2 = audio_base.info(temp_audio_file_b)
+        expect(File.size(temp_audio_file_b)).to be > 0
         expect(info_2[:media_type]).to eq('audio/wav')
         expect(info_2[:sample_rate]).to be_within(0.0).of(audio_file_stereo_sample_rate)
         expect(info_2[:channels]).to eq(audio_file_stereo_channels)
@@ -251,6 +280,7 @@ describe AudioBase do
         temp_audio_file_a = temp_audio_file_1+'.wv'
         result_1 = audio_base.modify(audio_file_stereo, temp_audio_file_a)
         info_1 = audio_base.info(temp_audio_file_a)
+        expect(File.size(temp_audio_file_a)).to be > 0
         expect(info_1[:media_type]).to eq('audio/wavpack')
         expect(info_1[:sample_rate]).to be_within(0.0).of(audio_file_stereo_sample_rate)
         expect(info_1[:channels]).to eq(audio_file_stereo_channels)
@@ -259,6 +289,7 @@ describe AudioBase do
         temp_audio_file_b = temp_audio_file_2+'.wav'
         result_2 = audio_base.modify(temp_audio_file_a, temp_audio_file_b, {end_offset: 20})
         info_2 = audio_base.info(temp_audio_file_b)
+        expect(File.size(temp_audio_file_b)).to be > 0
         expect(info_2[:media_type]).to eq('audio/wav')
         expect(info_2[:sample_rate]).to be_within(0.0).of(audio_file_stereo_sample_rate)
         expect(info_2[:channels]).to eq(audio_file_stereo_channels)
@@ -269,6 +300,7 @@ describe AudioBase do
         temp_audio_file_a = temp_audio_file_1+'.wv'
         result_1 = audio_base.modify(audio_file_stereo, temp_audio_file_a)
         info_1 = audio_base.info(temp_audio_file_a)
+        expect(File.size(temp_audio_file_a)).to be > 0
         expect(info_1[:media_type]).to eq('audio/wavpack')
         expect(info_1[:sample_rate]).to be_within(0.0).of(audio_file_stereo_sample_rate)
         expect(info_1[:channels]).to eq(audio_file_stereo_channels)
@@ -277,6 +309,7 @@ describe AudioBase do
         temp_audio_file_b = temp_audio_file_2+'.wav'
         result_2 = audio_base.modify(temp_audio_file_a, temp_audio_file_b, {start_offset: 10, end_offset: 20})
         info_2 = audio_base.info(temp_audio_file_b)
+        expect(File.size(temp_audio_file_b)).to be > 0
         expect(info_2[:media_type]).to eq('audio/wav')
         expect(info_2[:sample_rate]).to be_within(0.0).of(audio_file_stereo_sample_rate)
         expect(info_2[:channels]).to eq(audio_file_stereo_channels)
@@ -289,54 +322,68 @@ describe AudioBase do
         temp_audio_file_a = temp_audio_file_1+'.mp3'
         result_1 = audio_base.modify(audio_file_stereo, temp_audio_file_a)
         info_1 = audio_base.info(temp_audio_file_a)
+        expect(File.size(temp_audio_file_a)).to be > 0
         expect(info_1[:media_type]).to eq('audio/mp3')
         expect(info_1[:sample_rate]).to be_within(0.0).of(audio_file_stereo_sample_rate)
         expect(info_1[:channels]).to eq(audio_file_stereo_channels)
         expect(info_1[:duration_seconds]).to be_within(duration_range).of(audio_file_stereo_duration_seconds)
+        expect(info_1[:bit_rate_bps]).to be_within(bit_rate_range).of(bit_rate_min)
 
         temp_audio_file_b = temp_audio_file_2+'.mp3'
         result_2 = audio_base.modify(temp_audio_file_a, temp_audio_file_b, {start_offset: 10})
         info_2 = audio_base.info(temp_audio_file_b)
+        expect(File.size(temp_audio_file_b)).to be > 0
         expect(info_2[:media_type]).to eq('audio/mp3')
         expect(info_2[:sample_rate]).to be_within(0.0).of(audio_file_stereo_sample_rate)
         expect(info_2[:channels]).to eq(audio_file_stereo_channels)
         expect(info_2[:duration_seconds]).to be_within(duration_range).of(audio_file_stereo_duration_seconds - 10)
+        expect(info_2[:bit_rate_bps]).to be_within(bit_rate_range).of(bit_rate_min)
       end
 
       it 'gets the correct segment of the file when only end_offset is specified' do
         temp_audio_file_a = temp_audio_file_1+'.mp3'
         result_1 = audio_base.modify(audio_file_stereo, temp_audio_file_a)
         info_1 = audio_base.info(temp_audio_file_a)
+        expect(File.size(temp_audio_file_a)).to be > 0
         expect(info_1[:media_type]).to eq('audio/mp3')
         expect(info_1[:sample_rate]).to be_within(0.0).of(audio_file_stereo_sample_rate)
         expect(info_1[:channels]).to eq(audio_file_stereo_channels)
         expect(info_1[:duration_seconds]).to be_within(duration_range).of(audio_file_stereo_duration_seconds)
+        expect(info_1[:bit_rate_bps]).to be_within(bit_rate_range).of(bit_rate_min)
 
         temp_audio_file_b = temp_audio_file_2+'.mp3'
         result_2 = audio_base.modify(temp_audio_file_a, temp_audio_file_b, {end_offset: 20})
         info_2 = audio_base.info(temp_audio_file_b)
+        expect(File.size(temp_audio_file_b)).to be > 0
         expect(info_2[:media_type]).to eq('audio/mp3')
         expect(info_2[:sample_rate]).to be_within(0.0).of(audio_file_stereo_sample_rate)
         expect(info_2[:channels]).to eq(audio_file_stereo_channels)
         expect(info_2[:duration_seconds]).to be_within(duration_range).of(20)
+        expect(info_2[:bit_rate_bps]).to be_within(bit_rate_range).of(bit_rate_min)
       end
 
       it 'gets the correct segment of the file when only offsets are specified' do
         temp_audio_file_a = temp_audio_file_1+'.mp3'
         result_1 = audio_base.modify(audio_file_stereo, temp_audio_file_a)
         info_1 = audio_base.info(temp_audio_file_a)
+        expect(File.size(temp_audio_file_a)).to be > 0
         expect(info_1[:media_type]).to eq('audio/mp3')
         expect(info_1[:sample_rate]).to be_within(0.0).of(audio_file_stereo_sample_rate)
         expect(info_1[:channels]).to eq(audio_file_stereo_channels)
         expect(info_1[:duration_seconds]).to be_within(duration_range).of(audio_file_stereo_duration_seconds)
+        #expect(info_1[:bit_rate_bps]).to be_within(bit_rate_range).of(bit_rate_min)
+        expect(info_1[:bit_rate_bps_calc]).to be_within(bit_rate_range).of(bit_rate_min)
 
         temp_audio_file_b = temp_audio_file_2+'.mp3'
         result_2 = audio_base.modify(temp_audio_file_a, temp_audio_file_b, {start_offset: 10, end_offset: 20})
         info_2 = audio_base.info(temp_audio_file_b)
+        expect(File.size(temp_audio_file_b)).to be > 0
         expect(info_2[:media_type]).to eq('audio/mp3')
         expect(info_2[:sample_rate]).to be_within(0.0).of(audio_file_stereo_sample_rate)
         expect(info_2[:channels]).to eq(audio_file_stereo_channels)
         expect(info_2[:duration_seconds]).to be_within(duration_range).of(10)
+        #expect(info_2[:bit_rate_bps]).to be_within(bit_rate_range).of(bit_rate_min)
+        expect(info_2[:bit_rate_bps_calc]).to be_within(bit_rate_range).of(bit_rate_min)
       end
     end
   end

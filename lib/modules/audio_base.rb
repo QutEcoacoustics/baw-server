@@ -61,6 +61,9 @@ class AudioBase
         duration_seconds: @audio_ffmpeg.parse_duration(ffmpeg_info['FORMAT duration']).to_f
     }
 
+    # calculate the bit rate in bits per second (bytes * 8 = bits)
+    info_flattened[:bit_rate_bps_calc] = (File.size(source).to_f * 8.0) / info_flattened[:duration_seconds]
+
     # check for clipping, zero signal
     # only if duration less than 4 minutes
     four_minutes_in_sec = 4.0 * 60.0
@@ -130,7 +133,8 @@ class AudioBase
 
     else
       # get ffmpeg info for everything else
-      info_flattened[:bit_rate_bps] = ffmpeg_info['FORMAT bit_rate'].to_i
+      info_flattened[:bit_rate_bps] = ffmpeg_info['STREAM bit_rate'].to_i
+      info_flattened[:bit_rate_bps] = ffmpeg_info['FORMAT bit_rate'].to_i if info_flattened[:bit_rate_bps].blank?
       info_flattened[:data_length_bytes] = ffmpeg_info['FORMAT size'].to_i
       info_flattened[:channels] = ffmpeg_info['STREAM channels'].to_i
       # duration
