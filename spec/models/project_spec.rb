@@ -11,14 +11,19 @@ describe Project do
   it { should belong_to(:creator).with_foreign_key(:creator_id) }
 
   it 'is invalid without an name' do
-    FactoryGirl.build(:project, :name => nil).should_not be_valid
+    FactoryGirl.build(:project, name: nil).should_not be_valid
   end
   it 'is invalid without a creator' do
-    lambda{FactoryGirl.create(:project, :creator_id => nil)}.should raise_error(ActiveRecord::StatementInvalid)
+    lambda{FactoryGirl.create(:project, creator_id: nil)}.should raise_error(ActiveRecord::StatementInvalid)
   end
   it 'is invalid without a created_at' do
-    FactoryGirl.create(:project, :created_at => nil).should_not be_a_new(Project)
+    FactoryGirl.create(:project, created_at: nil).should_not be_a_new(Project)
   end
+
+  it { should validate_attachment_content_type(:image).
+                  allowing('image/gif', 'image/jpeg', 'image/jpg','image/png').
+                  rejecting('text/xml', 'image_maybe/abc', 'some_image/png') }
+
 
   #it 'is invalid without a urn' do
   #  FactoryGirl.build(:project, :urn => nil).should_not be_valid

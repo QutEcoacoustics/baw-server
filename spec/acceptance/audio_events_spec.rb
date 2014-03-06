@@ -38,9 +38,9 @@ resource 'AudioEvents' do
 
 
   # Create post parameters from factory
-  let(:post_attributes) { FactoryGirl.attributes_for(:all_audio_event_attributes) }
+  let(:post_attributes) { FactoryGirl.attributes_for(:audio_event) }
   let(:post_nested_attributes) {
-    {'tags_attributes' => [FactoryGirl.attributes_for(:required_tag_attributes),
+    {'tags_attributes' => [FactoryGirl.attributes_for(:tag),
                            {:is_taxanomic => @existing_tag.is_taxanomic, :text => @existing_tag.text, :type_of_tag => @existing_tag.type_of_tag, :retired => @existing_tag.retired}]
     }
   }

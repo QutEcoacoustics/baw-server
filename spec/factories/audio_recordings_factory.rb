@@ -2,29 +2,50 @@ require 'faker'
 
 FactoryGirl.define do
 
-  factory :required_audio_recording_attributes do
-    # factory generally used to create attributes for POST requests
-    # to create an audio_recording with all dependencies, check permission_factory.rb
-    recorded_date       '2012-03-26 07:06:59'
-    duration_seconds    Random.rand(600)
-    media_type          ['audio/mp3', 'audio/wav', 'audio/webm'].sample
-    data_length_bytes   Random.rand(64)
-    file_hash           'SHA256::fbb815630fa3b432003f3c11aea4b8da566c20d05601f2adedfb9407991f87ac'
-    original_file_name   'test.wav'
-    association :creator, factory: :harvester
-    association :site, factory: :site
-    association :uploader, factory: :user
+  factory :audio_recording do
+    sequence(:file_hash) { |n| "SHA256::#{n}"  }
+    recorded_date '2012-03-26 07:06:59'
+    duration_seconds Random.rand(86401.0)
+    sample_rate_hertz (Random.rand(441) + 1) * 100
+    channels Random.rand(2) + 1
+    bit_rate_bps (Random.rand(64) + 1) * 100
+    media_type ['audio/mp3', 'audio/wav', 'audio/webm', 'audio/ogg'].sample
+    data_length_bytes Random.rand(5000)
 
-    factory :all_audio_recording_attributes, class: AudioRecording do
-      sample_rate_hertz   Random.rand(441) * 100
-      channels            Random.rand(2) + 1
-      bit_rate_bps        Random.rand(64) * 100
-      status              'ready'
-      notes { {Faker::Lorem.word => Faker::Lorem.paragraph} }
+    creator
+    uploader
+    site
 
-      factory :audio_recording do
+    trait :notes do
+      notes { {Faker::Lorem.word => Faker::Lorem.word} }
+    end
 
+    trait :status_new do
+      status 'new'
+    end
+
+    trait :status_ready do
+      status 'ready'
+    end
+
+    trait :status_random do
+      status AudioRecording::AVAILABLE_STATUSES.sample
+    end
+
+    trait :original_file_name do
+      original_file_name { "#{Faker::Lorem.word}.#{media_type.gsub('audio/', '')}" }
+    end
+
+    trait :with_audio_events do
+      ignore do
+        audio_event_count 1
+      end
+      after(:create) do |audio_recording, evaluator|
+        create_list(:audio_event_with_tags, evaluator.audio_event_count, audio_recording: audio_recording)
       end
     end
+
+    factory :audio_recording_with_audio_events, traits: [:with_audio_events, :status_ready]
+
   end
 end

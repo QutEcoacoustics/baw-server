@@ -10,9 +10,9 @@ class Script < ActiveRecord::Base
   belongs_to :creator, class_name: 'User', foreign_key: :creator_id
   belongs_to :updater, class_name: 'User', foreign_key: :updater_id
   belongs_to :updated_by, class_name: 'Script', foreign_key: :updated_by_script_id
-  has_one    :update_from, class_name: 'Script', foreign_key: :updated_by_script_id
-  has_one    :latest_update, class_name: 'Script', foreign_key: :original_script_id, order: 'created_at DESC'
-  has_many   :jobs, inverse_of: :script
+  has_one :update_from, class_name: 'Script', foreign_key: :updated_by_script_id
+  has_one :latest_update, class_name: 'Script', foreign_key: :original_script_id, order: 'created_at DESC'
+  has_many :jobs, inverse_of: :script
 
   # userstamp
   stampable
@@ -20,9 +20,10 @@ class Script < ActiveRecord::Base
   #validation
   validates :name, presence: true
   validates :analysis_identifier, presence: true
-  validates :settings_file, attachment_presence: true
   validate :version, :version_increase, on: :create
-  validates_attachment_content_type :settings_file, content_type: 'text/plain'
+
+  validates_attachment :settings_file, presence: true, content_type: {content_type: 'text/plain'}
+
 
   # scopes
   scope :latest_versions, -> { where(updated_by_script_id: nil) }

@@ -37,6 +37,17 @@ describe Site do
     s.should have(1).error_on(:name)
   end
 
+  it 'should obfuscate lat/longs properly' do
+    min = -90
+    max = 90
+
+    1_000_000.times {
+      result = add_jitter((rand * (max - -min)) + min, min, max)
+      expect(result).to be <= max
+      expect(result).to be >= min
+    }
+  end
+
   it 'latitude should be within the range [-90, 90]' do
     site = FactoryGirl.build(:site)
 
@@ -62,4 +73,8 @@ describe Site do
     }
   end
   it {should have_and_belong_to_many :projects}
+
+  it { should validate_attachment_content_type(:image).
+                  allowing('image/gif', 'image/jpeg', 'image/jpg','image/png').
+                  rejecting('text/xml', 'image_maybe/abc', 'some_image/png') }
 end

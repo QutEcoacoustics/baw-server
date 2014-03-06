@@ -21,7 +21,8 @@ resource 'Sites' do
   let(:admin_token) { "Token token=\"#{@admin.authentication_token}\"" }
 
   # Create post parameters from factory
-  let(:post_attributes) { FactoryGirl.attributes_for(:all_site_attributes) }
+  let(:post_attributes) { FactoryGirl.attributes_for(:site) }
+  let(:post_attributes_with_lat_long) { FactoryGirl.attributes_for(:site_with_lat_long) }
 
 
   before(:each) do

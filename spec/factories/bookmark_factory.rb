@@ -2,16 +2,16 @@ require 'faker'
 
 FactoryGirl.define do
   factory :bookmark do
-    sequence(:name) {|n|
-      Faker::Lorem.words(2).join(' ') + "_#{n}"
-    }
+    offset_seconds { Random.rand(86401.0) }
+    description { Faker::Lorem.word }
 
-    offset_seconds  {Random.rand(360.0)}
-    description           { { 'my favourite' => Faker::Lorem.paragraph} }
+    user
+    audio_recording
 
-    association :user, factory: :user
+    trait :name do
+      sequence(:name) { |n| "#{Faker::Name.title}#{n}" }
+    end
 
-    association :audio_recording
   end
 end
 

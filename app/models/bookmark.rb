@@ -9,7 +9,7 @@ class Bookmark < ActiveRecord::Base
   stampable
 
   # validation
-  validates :offset_seconds,  :presence => true, :numericality => { :greater_than_or_equal_to  => 0 }
-  validates :audio_recording_id, :presence => true
+  validates :offset_seconds, presence: true, numericality: {greater_than_or_equal_to: 0}
+  validates :audio_recording_id, presence: true
 
 end

@@ -6,7 +6,7 @@ describe AudioBase do
 
   # mp3, webm, ogg (wav, wv)
   let(:duration_range) { 0.15 }
-  let(:amplitude_range) { 0.019 }
+  let(:amplitude_range) { 0.020 }
 
   let(:audio_file_mono) { File.join(File.dirname(__FILE__), 'test-audio-mono.ogg') }
   let(:audio_file_mono_media_type) { Mime::Type.lookup('audio/ogg') }

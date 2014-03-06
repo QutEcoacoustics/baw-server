@@ -20,6 +20,7 @@ guard :rspec, cli: '--format progress --color' do
   watch(%r{^app/views/(.+)/.*\.(erb|haml)$})          { |m| "spec/features/#{m[1]}_spec.rb" }
   watch(%r{^app/controllers/(.+)_(controller)\.rb$})  { |m| "spec/features/#{m[1]}_spec.rb" }
   watch(%r{^app/models/(.+)\.rb$})                    { |m| "spec/features/#{m[1]}s_spec.rb" }
+  watch(%r{^app/models/(.+)\.rb$})                    { |m| "spec/acceptance/#{m[1]}s_spec.rb" }
 
   # for external modules
   watch(%r{^lib/external/harvester/(.+)\.rb$})        { |m| 'spec/harvester/harvester_spec.rb' }

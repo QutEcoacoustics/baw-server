@@ -31,7 +31,7 @@ AWB::Application.routes.draw do
       end
       resources :audio_recordings, :only => [:index, :new, :create, :show], :defaults => { :format => 'json' } do
         collection do
-          get 'check_uploader', :defaults => { :format => 'json' }
+          get 'check_uploader/:uploader_id', :defaults => { :format => 'json' }, action: :check_uploader
         end
         get 'media.:format' => 'media#show', :defaults => { :format => 'json' }, as: :media
         resources :audio_events, :defaults => { :format => 'json' } do
@@ -56,9 +56,6 @@ AWB::Application.routes.draw do
   # allow shallow paths to audio_recordings
   # TODO: cleanup unneccessary paths
   resources :audio_recordings, :only => [:show], :defaults => { :format => 'json' } do
-    collection do
-      get 'check_uploader', :defaults => { :format => 'json' }
-    end
     get 'media.:format' => 'media#show', :defaults => { :format => 'json' }, as: :media
     resources :audio_events, :defaults => { :format => 'json' } do
       collection do

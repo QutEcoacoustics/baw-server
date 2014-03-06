@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20140127011711) do
+ActiveRecord::Schema.define(:version => 20140222044740) do
 
   create_table "audio_events", :force => true do |t|
     t.integer  "audio_recording_id",                                                     :null => false
@@ -199,9 +199,9 @@ ActiveRecord::Schema.define(:version => 20140127011711) do
   end
 
   create_table "users", :force => true do |t|
-    t.string   "email",                  :default => "", :null => false
-    t.string   "user_name",              :default => "", :null => false
-    t.string   "encrypted_password",     :default => "", :null => false
+    t.string   "email",                                 :null => false
+    t.string   "user_name",                             :null => false
+    t.string   "encrypted_password",                    :null => false
     t.string   "reset_password_token"
     t.datetime "reset_password_sent_at"
     t.datetime "remember_created_at"
@@ -219,8 +219,8 @@ ActiveRecord::Schema.define(:version => 20140127011711) do
     t.datetime "locked_at"
     t.string   "authentication_token"
     t.string   "invitation_token"
-    t.datetime "created_at",                             :null => false
-    t.datetime "updated_at",                             :null => false
+    t.datetime "created_at",                            :null => false
+    t.datetime "updated_at",                            :null => false
     t.integer  "roles_mask"
     t.string   "image_file_name"
     t.string   "image_content_type"

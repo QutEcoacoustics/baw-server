@@ -6,7 +6,7 @@ def standard_media_parameters
 
   parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
 
-  parameter :format, 'Required format of the audio segment (defaults: json; alternatives: mp3|webm|ogg|png). Use json if requesting metadata', required: true
+  parameter :format, 'Required format of the audio segment (defaults: json; alternatives: mp3|webm|ogg|wav|png). Use json if requesting metadata', required: true
   parameter :start_offset, 'Start time of the audio segment in seconds'
   parameter :end_offset, 'End time of the audio segment in seconds'
 
@@ -38,7 +38,7 @@ def using_original_audio(audio_recording, content_type, check_accept_header = tr
   FileUtils.cp audio_file_mono, original_possible_paths.first
 
   request = do_request
-  status.should eq(200), "expected status #{200} but was #{status}. Response body was #{response_body}"
+  status.should eq(200), "expected status 200 but was #{status}. Response body was #{response_body}"
   response_headers['Content-Type'].should include(content_type)
   response_headers['Accept-Ranges'].should eq('bytes') if check_accept_header
   response_headers['Content-Transfer-Encoding'].should eq('binary') unless content_type == 'application/json'
@@ -220,6 +220,18 @@ resource 'Media' do
           'available_audio_formats/ogg/min_duration_seconds',
           'available_audio_formats/ogg/mime_type',
           'available_audio_formats/ogg/url',
+          'available_audio_formats/flac/channel',
+          'available_audio_formats/flac/sample_rate',
+          'available_audio_formats/flac/max_duration_seconds',
+          'available_audio_formats/flac/min_duration_seconds',
+          'available_audio_formats/flac/mime_type',
+          'available_audio_formats/flac/url',
+          'available_audio_formats/wav/channel',
+          'available_audio_formats/wav/sample_rate',
+          'available_audio_formats/wav/max_duration_seconds',
+          'available_audio_formats/wav/min_duration_seconds',
+          'available_audio_formats/wav/mime_type',
+          'available_audio_formats/wav/url',
           'available_image_formats/png/channel',
           'available_image_formats/png/sample_rate',
           'available_image_formats/png/window',
@@ -257,8 +269,35 @@ resource 'Media' do
     standard_media_parameters
     let(:authentication_token) { reader_token }
     let(:format) { 'mp3' }
-    example 'MEDIA (audio get request as reader with shallow path) - 200', document: true do
+    example 'MEDIA (audio get request mp3 as reader with shallow path) - 200', document: true do
       using_original_audio(audio_recording, 'audio/mp3')
+    end
+  end
+
+  get '/audio_recordings/:audio_recording_id/media.:format' do
+    standard_media_parameters
+    let(:authentication_token) { reader_token }
+    let(:format) { 'wav' }
+    example 'MEDIA (audio get request wav as reader with shallow path) - 200', document: true do
+      using_original_audio(audio_recording, 'audio/wav')
+    end
+  end
+
+  get '/audio_recordings/:audio_recording_id/media.:format' do
+    standard_media_parameters
+    let(:authentication_token) { reader_token }
+    let(:format) { 'ogg' }
+    example 'MEDIA (audio get request ogg as reader with shallow path) - 200', document: true do
+      using_original_audio(audio_recording, 'audio/ogg')
+    end
+  end
+
+  get '/audio_recordings/:audio_recording_id/media.:format' do
+    standard_media_parameters
+    let(:authentication_token) { reader_token }
+    let(:format) { 'webm' }
+    example 'MEDIA (audio get request webm as reader with shallow path) - 200', document: true do
+      using_original_audio(audio_recording, 'audio/webm')
     end
   end
 

@@ -4,6 +4,7 @@ require File.dirname(__FILE__) + '/cache_base'
 require File.dirname(__FILE__) + '/spectrogram'
 require File.dirname(__FILE__) + '/audio_base'
 require File.dirname(__FILE__) + '/exceptions'
+require File.dirname(__FILE__) + '/logging'
 
 # This is the class that uses the audio tools and cache tools to cut audio segments
 # and generate spectrograms, then save them to the correct path.
@@ -75,7 +76,7 @@ class MediaCacher
   end
 
   def generate_spectrogram(modify_parameters = {})
-
+    log_options(modify_parameters, '#generate_spectrogram method start')
     # first check if a cached spectrogram matches the request
     target_file = self.cached_spectrogram_file_name(modify_parameters)
     target_existing_paths = @cache.existing_storage_paths(@cache.cache_spectrogram, target_file)
@@ -95,6 +96,7 @@ class MediaCacher
         self.create_audio_segment(cached_wav_audio_parameters)
 
         # update existing paths after cutting audio
+        log_options(modify_parameters, '#generate_spectrogram self.cached_audio_file_name')
         source_wav_file = self.cached_audio_file_name(cached_wav_audio_parameters)
         source_existing_paths = @cache.existing_storage_paths(@cache.cache_audio, source_wav_file)
         raise Exceptions::AudioFileNotFoundError, "Could not find or create cached audio for #{target_file} using cached audio file #{source_wav_file}." if source_existing_paths.blank?
@@ -143,6 +145,10 @@ class MediaCacher
 
   def cached_dataset_file_name(modify_parameters)
     @cache.file_name(@cache.cache_dataset, modify_parameters)
+  end
+
+  def log_options(options, description)
+    Logging::logger.warn "MediaCacher - Provided parameters at #{description}: #{options}"
   end
 
 end

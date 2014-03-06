@@ -36,8 +36,8 @@ resource 'Taggings' do
 
   # Create post parameters from factory
   let(:post_attributes) { {tag_id: @existing_tag.id } }
-  let(:post_nested_attributes) { {'tag_attributes' => FactoryGirl.attributes_for(:required_tag_attributes)} }
-  let(:post_invalid_nested_attributes) { {'tag_attributes' => FactoryGirl.attributes_for(:required_tag_attributes, type_of_tag: 'invalid value')} }
+  let(:post_nested_attributes) { {'tag_attributes' => FactoryGirl.attributes_for(:tag)} }
+  let(:post_invalid_nested_attributes) { {'tag_attributes' => FactoryGirl.attributes_for(:tag, type_of_tag: 'invalid value')} }
 
   ################################
   # LIST

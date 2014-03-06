@@ -30,7 +30,7 @@ resource 'Sessions' do
   end
 
   post '/security/sign_in' do
-    let(:raw_post) { {:email => @permission.user.email, :password => @permission.user.password}.to_json }
+    let(:raw_post) { {email: @permission.user.email, password: @permission.user.password}.to_json }
 
     example_request 'CREATE ' do
       status.should == 200
