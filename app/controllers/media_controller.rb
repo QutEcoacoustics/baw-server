@@ -131,7 +131,7 @@ class MediaController < ApplicationController
         if request.head?
           head status: :unsupported_media_type
         else
-          render json: {error: "Requested format is invalid. It must be one of #{available_formats}."}.to_json, status: :unsupported_media_type
+          render json: {error: 'Requested format is invalid. It must be one of available_formats.', available_formats: available_formats}.to_json, status: :unsupported_media_type
         end
 
       end
