@@ -149,40 +149,63 @@ class AudioFfmpeg
   end
 
   def codec_calc(target)
-    # set the right codec if we know it
-    # -acodec Force audio codec to codec. Use the copy special value to specify that the raw codec data must be copied as is.
+
+    # high quality codec settings
+    # https://trac.ffmpeg.org/wiki/GuidelinesHighQualityAudio
+
+    # http://trac.ffmpeg.org/wiki/TheoraVorbisEncodingGuide
+    # http://en.wikipedia.org/wiki/Vorbis#Technical_details
+    # http://wiki.hydrogenaudio.org/index.php?title=Recommended_Ogg_Vorbis#Recommended_Encoder_Settings
+    # -aq 6 will be approx 192kbit/s
+    codec_high_vorbis = 'libvorbis -aq 6'
+
+    # pcm signed 16-bit little endian - compatible with CDDA
+    codec_high_wav = 'pcm_s16le'
+
+    # http://lame.cvs.sourceforge.net/viewvc/lame/lame/USAGE
+    # 0 = slowest algorithms, but potentially highest quality
+    # 9 = faster algorithms, very poor quality
+    # http://trac.ffmpeg.org/wiki/Encoding%20VBR%20(Variable%20Bit%20Rate)%20mp3%20audio
+    # -aq 2 recommended, but still cuts off at 10khz at 22.05khz
+    # using CBR
+    codec_high_mp3 = 'libmp3lame -b:a 192k'
+
+    codec_high_wavpack = 'wavpack'
+
+    codec_high_flac = 'flac'
+
     # output file. extension used to determine filetype.
     old_target = target
-    bit_rate = '-b:a 128k'
-    vorbis_codec = "libvorbis #{bit_rate}" # ogg container vorbis encoder at quality level of 80
-    mp3_codec =
 
+    # set the right codec if we know it
     codec = ''
-    case File.extname(target).upcase!.reverse.chomp('.').reverse
+    extension = File.extname(target).upcase!.reverse.chomp('.').reverse
+    case extension
       when 'WAV'
-        codec = "pcm_s16le #{bit_rate}" # pcm signed 16-bit little endian - compatible with CDDA
+        codec = codec_high_wav
       when 'MP3'
-        codec = "libmp3lame #{bit_rate}" # needs to be specified, different codecs for encoding and decoding
+        codec = codec_high_mp3
       when 'OGG'
-        codec = vorbis_codec
+        codec = codec_high_vorbis
       when 'OGA'
-        codec = vorbis_codec
+        codec = codec_high_vorbis
         target = target.chomp(File.extname(target))+'.ogg'
       when 'WEBM'
-        codec = vorbis_codec
+        codec = codec_high_vorbis
       when 'WEBMA'
-        codec = vorbis_codec
+        codec = codec_high_vorbis
         target = target.chomp(File.extname(target))+'.webm'
       when 'WV'
-        codec = "wavpack #{bit_rate}"
-      when 'AAC'
-        codec = "libvo_aacenc #{bit_rate}"
+        codec = codec_high_wavpack
+      when 'FLAC'
+        codec = codec_high_flac
       else
-        #codec = 'copy'
+        # don't specify codec for any other extension
+        # Alternative: Use the 'copy' special value to specify that the raw codec data must be copied as is.
         codec = ''
     end
 
-    # don't specify codec for any other extension
+    # -acodec Force audio codec to codec.
     {
         codec: codec.blank? ? '' : " -acodec #{codec}",
         target: target,
@@ -233,6 +256,11 @@ class AudioFfmpeg
         # codec_long_name=AAC (Advanced Audio Coding)
         # format_name=aac
         'audio/aac'
+      when 'FLAC (Free Lossless Audio Codec)', 'raw FLAC', 'flac'
+        # codec_name=flac
+        # codec_long_name=raw FLAC
+        # format_name=flac
+        'audio/x-flac'
       else
         'application/octet-stream'
     end

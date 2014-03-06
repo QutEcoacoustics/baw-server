@@ -6,9 +6,9 @@ describe AudioBase do
 
   # mp3, webm, ogg (wav, wv)
   let(:duration_range) { 0.15 }
-  let(:amplitude_range) { 0.019 }
+  let(:amplitude_range) { 0.0299 }
   let(:bit_rate_range) { 400 }
-  let(:bit_rate_min) { 128000 }
+  let(:bit_rate_min) { 192000 }
 
   let(:audio_file_mono) { File.join(File.dirname(__FILE__), 'test-audio-mono.ogg') }
   let(:audio_file_mono_media_type) { Mime::Type.lookup('audio/ogg') }
@@ -135,7 +135,7 @@ describe AudioBase do
       expect(info[:sample_rate]).to be_within(0.0).of(22050)
       expect(info[:channels]).to eq(audio_file_stereo_channels)
       expect(info[:duration_seconds]).to be_within(duration_range).of(audio_file_stereo_duration_seconds)
-      expect(info[:bit_rate_bps]).to be_within(bit_rate_range).of(bit_rate_min)
+      expect(info[:bit_rate_bps]).to be >= 128000
     end
 
   end
@@ -253,6 +253,38 @@ describe AudioBase do
       expect(info_2[:channels]).to eq(audio_file_stereo_channels)
       expect(info_2[:duration_seconds]).to be_within(duration_range).of(10)
       expect(info_2[:bit_rate_bps]).to be_within(bit_rate_range).of(bit_rate_min)
+    end
+
+    it 'correctly converts from .ogg to .mp3, then to from .mp3 to .wav' do
+      temp_audio_file_a = temp_audio_file_1+'.mp3'
+      result_1 = audio_base.modify(audio_file_stereo, temp_audio_file_a, {start_offset: 10, end_offset: 40, sample_rate:22050})
+      info_1 = audio_base.info(temp_audio_file_a)
+      expect(File.size(temp_audio_file_a)).to be > 0
+      expect(info_1[:media_type]).to eq('audio/mp3')
+      expect(info_1[:sample_rate]).to be_within(0.0).of(22050)
+      expect(info_1[:channels]).to eq(audio_file_stereo_channels)
+      expect(info_1[:duration_seconds]).to be_within(duration_range).of(30)
+      expect(info_1[:bit_rate_bps]).to be > 128000
+
+      temp_audio_file_b = temp_audio_file_2+'.wav'
+      result_2 = audio_base.modify(temp_audio_file_a, temp_audio_file_b)
+      info_2 = audio_base.info(temp_audio_file_b)
+      expect(File.size(temp_audio_file_b)).to be > 0
+      expect(info_2[:media_type]).to eq('audio/wav')
+      expect(info_2[:sample_rate]).to be_within(0.0).of(22050)
+      expect(info_2[:channels]).to eq(audio_file_stereo_channels)
+      expect(info_2[:duration_seconds]).to be_within(duration_range).of(30)
+    end
+
+    it 'correctly converts from .ogg to .flac' do
+      temp_audio_file_a = temp_audio_file_1+'.flac'
+      result = audio_base.modify(audio_file_stereo, temp_audio_file_a, {start_offset: 10, end_offset: 40, sample_rate:22050})
+      info = audio_base.info(temp_audio_file_a)
+      expect(File.size(temp_audio_file_a)).to be > 0
+      expect(info[:media_type]).to eq('audio/x-flac')
+      expect(info[:sample_rate]).to be_within(0.0).of(22050)
+      expect(info[:channels]).to eq(audio_file_stereo_channels)
+      expect(info[:duration_seconds]).to be_within(duration_range).of(30)
     end
 
     context 'special case for wavpack files' do

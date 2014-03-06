@@ -9,7 +9,8 @@ class MediaController < ApplicationController
   AUDIO_MEDIA_TYPES = [Mime::Type.lookup('audio/webm'), Mime::Type.lookup('audio/webma'),
                        Mime::Type.lookup('audio/ogg'), Mime::Type.lookup('audio/oga'),
                        Mime::Type.lookup('audio/mp3'), Mime::Type.lookup('audio/mpeg'),
-                       Mime::Type.lookup('audio/wav')] #Mime::Type.lookup('audio/x-wav')
+                       Mime::Type.lookup('audio/wav'), Mime::Type.lookup('audio/x-wav'),
+                       Mime::Type.lookup('audio/x-flac')]
   IMAGE_MEDIA_TYPES = [Mime::Type.lookup('image/png')]
 
   OFFSET_REGEXP = /^\d+(\.\d{1,3})?$/ # passes '111', '11.123'
@@ -130,7 +131,7 @@ class MediaController < ApplicationController
         if request.head?
           head status: :unsupported_media_type
         else
-          render json: {error: 'Requested format is invalid. It has to be mp3, webm, ogg, png or json'}.to_json, status: :unsupported_media_type
+          render json: {error: "Requested format is invalid. It must be one of #{available_formats}."}.to_json, status: :unsupported_media_type
         end
 
       end
