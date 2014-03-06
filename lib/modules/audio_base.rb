@@ -412,7 +412,7 @@ class AudioBase
       yield output, error, thread, !time_remaining, killed
     end
   end
- 
+
   def log_options(options, description)
     Logging::logger.warn "AudioBase - Provided parameters at #{description}: #{options}"
   end

@@ -167,8 +167,8 @@ class AudioFfmpeg
     # 9 = faster algorithms, very poor quality
     # http://trac.ffmpeg.org/wiki/Encoding%20VBR%20(Variable%20Bit%20Rate)%20mp3%20audio
     # -aq 2 recommended, but still cuts off at 10khz at 22.05khz
-    # using CBR
-    codec_high_mp3 = 'libmp3lame -b:a 192k'
+    # using CBR: -b:a 192k
+    codec_high_mp3 = 'libmp3lame -aq 0'
 
     codec_high_wavpack = 'wavpack'
 
