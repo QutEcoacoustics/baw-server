@@ -41,7 +41,7 @@ describe Site do
     min = -90
     max = 90
 
-    1_000_000.times {
+    1000.times {
       result = add_jitter((rand * (max - -min)) + min, min, max)
       expect(result).to be <= max
       expect(result).to be >= min
