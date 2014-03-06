@@ -223,6 +223,7 @@ class AudioBase
   end
 
   def check_offsets(source_info, min_duration_seconds, max_duration_seconds, modify_parameters = {})
+    log_options(modify_parameters, '#check_offsets method start')
     start_offset = 0.0
     end_offset = source_info[:duration_seconds].to_f
 
@@ -247,6 +248,10 @@ class AudioBase
     modify_parameters[:start_offset] = start_offset
     modify_parameters[:end_offset] = end_offset
     modify_parameters[:duration] = duration
+
+    log_options(modify_parameters, '#check_offsets method end')
+
+    modify_parameters
   end
 
   def check_target(target)
@@ -406,6 +411,10 @@ class AudioBase
 
       yield output, error, thread, !time_remaining, killed
     end
+  end
+ 
+  def log_options(options, description)
+    Logging::logger.warn "AudioBase - Provided parameters at #{description}: #{options}"
   end
 
 end

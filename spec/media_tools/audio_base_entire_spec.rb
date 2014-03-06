@@ -75,10 +75,10 @@ describe AudioBase do
     result = audio_base.modify(audio_file_stereo, temp_audio_file)
     info = audio_base.info(temp_audio_file)
     expect(info[:media_type]).to eq('audio/mp3')
-
     expect(info[:sample_rate]).to be_within(0.0).of(audio_file_stereo_sample_rate)
     expect(info[:channels]).to eq(audio_file_stereo_channels)
     expect(info[:duration_seconds]).to be_within(duration_range).of(audio_file_stereo_duration_seconds)
+    expect(info[:bit_rate_bps]).to be >= 192000
   end
 
 
