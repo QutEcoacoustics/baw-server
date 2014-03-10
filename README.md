@@ -5,6 +5,7 @@ The bioacoustic workbench server. Manages the structure and audio data. Provides
 [![Dependency Status](https://gemnasium.com/QutBioacoustics/baw-server.png)](https://gemnasium.com/QutBioacoustics/baw-server)
 [![Code Climate](https://codeclimate.com/github/QutBioacoustics/baw-server.png)](https://codeclimate.com/github/QutBioacoustics/baw-server)
 [![Build Status](https://travis-ci.org/QutBioacoustics/baw-server.png?branch=master)](https://travis-ci.org/QutBioacoustics/baw-server)
+[![Coverage Status](https://coveralls.io/repos/QutBioacoustics/baw-server/badge.png)](https://coveralls.io/r/QutBioacoustics/baw-server)
 
 ## Install instructions
 
