@@ -95,6 +95,12 @@ GEM
       coffee-script-source
       execjs
     coffee-script-source (1.7.0)
+    coveralls (0.7.0)
+      multi_json (~> 1.3)
+      rest-client
+      simplecov (>= 0.7)
+      term-ansicolor
+      thor
     crack (0.4.2)
       safe_yaml (~> 1.0.0)
     daemons (1.1.9)
@@ -117,7 +123,7 @@ GEM
     factory_girl_rails (4.4.1)
       factory_girl (~> 4.4.0)
       railties (>= 3.0.0)
-    faker (1.2.0)
+    faker (1.3.0)
       i18n (~> 0.5)
     ffi (1.9.3)
     ffi (1.9.3-x86-mingw32)
@@ -240,6 +246,8 @@ GEM
     rdoc (3.12.2)
       json (~> 1.4)
     ref (1.0.5)
+    rest-client (1.6.7)
+      mime-types (>= 1.16)
     role_model (0.8.1)
     rspec (2.14.1)
       rspec-core (~> 2.14.0)
@@ -268,7 +276,8 @@ GEM
     rvm-capistrano (1.5.1)
       capistrano (~> 2.15.4)
     safe_yaml (1.0.1)
-    sass (3.2.14)
+    sass (3.3.0)
+      rake
     sass-rails (3.2.6)
       railties (~> 3.2.0)
       sass (>= 3.1.10)
@@ -293,6 +302,8 @@ GEM
       multi_json (~> 1.0)
       rack (~> 1.0)
       tilt (~> 1.1, != 1.3.0)
+    term-ansicolor (1.3.0)
+      tins (~> 1.0)
     therubyracer (0.12.1)
       libv8 (~> 3.16.14.0)
       ref
@@ -303,10 +314,11 @@ GEM
     thor (0.18.1)
     tilt (1.4.1)
     timeliness (0.3.7)
+    tins (1.0.0)
     treetop (1.4.15)
       polyglot
       polyglot (>= 0.3.1)
-    tzinfo (0.3.38)
+    tzinfo (0.3.39)
     uglifier (2.4.0)
       execjs (>= 0.3.0)
       json (>= 1.8.0)
@@ -339,6 +351,7 @@ DEPENDENCIES
   capistrano (~> 2)
   capybara
   coffee-rails (~> 3.2)
+  coveralls
   database_cleaner (~> 1)
   devise (< 3.1)
   enumerize!

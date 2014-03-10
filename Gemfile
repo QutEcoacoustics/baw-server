@@ -126,6 +126,7 @@ group :test do
   gem 'database_cleaner', '~> 1'
   #gem 'bullet'
   gem 'webmock'
+  gem 'coveralls', require: false
 end
 
 group :production, :staging, :development do
