@@ -102,6 +102,8 @@ defaults: &defaults
       - mp3
       - webm
       - ogg
+      - flac
+      - wav
     image:
       - png
   audio_tools:

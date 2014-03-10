@@ -56,6 +56,9 @@ AWB::Application.configure do
 
   config.log_level = :info
 
+  # profile requests
+  #config.middleware.insert 0, 'Rack::RequestProfiler', printer: ::RubyProf::CallTreePrinter
+
   config.after_initialize do
     Bullet.enable = true
     Bullet.bullet_logger = true

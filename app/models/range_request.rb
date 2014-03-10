@@ -30,8 +30,12 @@ class RangeRequest
     end
   end
 
-  def RangeRequest.request_info(options, rails_request)
+  def RangeRequest.log_options(options, description)
+    Rails.logger.warn "RangeRequest - Provided parameters at #{description}: #{options}"
+  end
 
+  def RangeRequest.request_info(options, rails_request)
+    RangeRequest.log_options(options, '#request_info method start')
     file_path = options[:file_path]
     media_type = options[:media_type]
 
@@ -136,7 +140,7 @@ class RangeRequest
   end
 
   def RangeRequest.process_request(options, rails_request)
-
+    RangeRequest.log_options(options, '#process_request method start')
     info = RangeRequest.request_info(options, rails_request)
 
     # auth is performed elsewhere

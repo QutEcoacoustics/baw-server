@@ -3,7 +3,7 @@ require 'spec_helper'
 include Warden::Test::Helpers
 Warden.test_mode!
 
-describe 'MANAGE Scripts as admin user' do
+describe 'MANAGE Scripts as admin user' do 
   before(:each) do
     admin = FactoryGirl.create(:admin)
     @script = FactoryGirl.create(:script)

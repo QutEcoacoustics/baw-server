@@ -23,11 +23,13 @@ class Site < ActiveRecord::Base
   acts_as_gmappable process_geocoding: false
 
   # validations
-  validates :name, presence: true, :length => {:minimum => 2}
-  validates :latitude, numericality: true, :allow_nil => true
-  validates :longitude, numericality: true, :allow_nil => true
+  validates :name, presence: true, length: {minimum: 2}
+  # between -90 and 90 degrees
+  validates :latitude, numericality: { only_integer: false, greater_than_or_equal_to: -90, less_than_or_equal_to: 90 }, allow_nil: true
+  # -180 and 180 degrees
+  validates :longitude, numericality: { only_integer: false, greater_than_or_equal_to: -180, less_than_or_equal_to: 180 }, allow_nil: true
   #validates_as_paranoid
-  validates_attachment_content_type :image, :content_type => /\Aimage\/.*\Z/
+  validates_attachment_content_type :image, content_type: /\Aimage\/.*\Z/
 
   # commonly used queries
   #scope :specified_sites, lambda { |site_ids| where('id in (:ids)', { :ids => site_ids } ) }
@@ -41,9 +43,7 @@ class Site < ActiveRecord::Base
   def latitude
     value = read_attribute(:latitude)
     if self.location_obfuscated && !value.blank?
-      random_num = (Random.rand * 100).round(0)
-      rounded = value.round(2)
-      "#{rounded}#{random_num}".to_f
+      add_jitter(value, -90, 90)
     else
       value
     end
@@ -52,9 +52,7 @@ class Site < ActiveRecord::Base
   def longitude
     value = read_attribute(:longitude)
     if self.location_obfuscated && !value.blank?
-      random_num = (Random.rand * 100).round(0)
-      rounded = value.round(2)
-      "#{rounded}#{random_num}".to_f
+      add_jitter(value, -180, 180)
     else
       value
     end

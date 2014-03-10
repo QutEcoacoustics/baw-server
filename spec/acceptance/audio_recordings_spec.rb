@@ -37,7 +37,7 @@ resource 'AudioRecordings' do
 
   # Create post parameters from factory
   # make sure the uploader has write permission to the project
-  let(:post_attributes) { FactoryGirl.attributes_for(:all_audio_recording_attributes, uploader_id: @write_permission.user.id) }
+  let(:post_attributes) { FactoryGirl.attributes_for(:audio_recording, uploader_id: @write_permission.user.id) }
 
   ################################
   # LIST
@@ -150,19 +150,19 @@ resource 'AudioRecordings' do
     parameter :sample_rate_hertz, '', scope: :audio_recording, :required => true
     parameter :uploader_id, 'The id of the user who uploaded the audio recording. User must have write access to the project.', scope: :audio_recording, :required => true
 
-    let(:raw_post) { {'audio_recording' => post_attributes}.to_json }
+    let(:raw_post) { {'audio_recording' => FactoryGirl.attributes_for(:audio_recording, recorded_date: '2013-03-26 07:06:59', uploader_id: @write_permission.user.id)}.to_json }
 
     let(:authentication_token) { harvester_token }
 
     # Execute request with ids defined in above let(:id) statements
-    example "'CREATE (as harvester)' - 201", document: true do
+    example 'CREATE (as harvester) - 201', document: true do
       do_request
       status.should eq(201), "expected status 201 but was #{status}. Response body was #{response_body}"
       response_body.should have_json_path('bit_rate_bps'), "could not find bit_rate_bps in #{response_body}"
 
-      AudioRecording.count.should eq(2)
-      AudioRecording.order(:created_at).first.status.should eq('ready')
-      AudioRecording.order(:created_at).offset(1).first.status.should eq('new')
+      new_audio_recording_id = JSON.parse(response_body)['id']
+
+      AudioRecording.where(id: new_audio_recording_id).first.status.should eq('new')
     end
 
   end
@@ -194,7 +194,7 @@ resource 'AudioRecordings' do
   ################################
   # CHECK_UPLOADER
   ################################
-  put '/projects/:project_id/sites/:site_id/audio_recordings/check_uploader/:uploader_id' do
+  get '/projects/:project_id/sites/:site_id/audio_recordings/check_uploader/:uploader_id' do
     parameter :project_id, 'Requested project ID (in path/route)', required: true
     parameter :site_id, 'Requested site ID (in path/route)', required: true
     parameter :uploader_id, 'Uploader id (in path/route)', required: true
@@ -206,7 +206,7 @@ resource 'AudioRecordings' do
     standard_request('CHECK_UPLOADER (as harvester checking writer)', 204, nil, true)
   end
 
-  put '/projects/:project_id/sites/:site_id/audio_recordings/check_uploader/:uploader_id' do
+  get '/projects/:project_id/sites/:site_id/audio_recordings/check_uploader/:uploader_id' do
     parameter :project_id, 'Requested project ID (in path/route)', required: true
     parameter :site_id, 'Requested site ID (in path/route)', required: true
     parameter :uploader_id, 'Uploader id (in path/route)', required: true
@@ -215,10 +215,10 @@ resource 'AudioRecordings' do
     let(:raw_post) { {'audio_recording' => post_attributes}.to_json }
 
     let(:authentication_token) { writer_token }
-    standard_request('CHECK_UPLOADER (as writer checking writer)', 406, nil, true)
+    standard_request('CHECK_UPLOADER (as writer checking writer)', 403, nil, true)
   end
 
-  put '/projects/:project_id/sites/:site_id/audio_recordings/check_uploader/:uploader_id' do
+  get '/projects/:project_id/sites/:site_id/audio_recordings/check_uploader/:uploader_id' do
     parameter :project_id, 'Requested project ID (in path/route)', required: true
     parameter :site_id, 'Requested site ID (in path/route)', required: true
     parameter :uploader_id, 'Uploader id (in path/route)', required: true
@@ -227,7 +227,7 @@ resource 'AudioRecordings' do
     let(:raw_post) { {'audio_recording' => post_attributes}.to_json }
 
     let(:authentication_token) { harvester_token }
-    standard_request('CHECK_UPLOADER (as harvester checking no access)', 406, nil, true)
+    standard_request('CHECK_UPLOADER (as harvester checking no access)', 200, nil, true, 'uploader does not have access to this project')
   end
 
   ################################
@@ -238,8 +238,11 @@ resource 'AudioRecordings' do
     parameter :file_hash, '', scope: :audio_recording, :required => true
     parameter :uuid, '', scope: :audio_recording, :required => true
 
-    let(:raw_post) { {'audio_recording' => {'file_hash' => @write_permission.project.sites[0].audio_recordings[0].file_hash,
-                                            'uuid' => @write_permission.project.sites[0].audio_recordings[0].uuid}}.to_json }
+
+    let(:update_status_harvester_audio_recording) { FactoryGirl.create(:audio_recording) }
+    let(:id) { update_status_harvester_audio_recording.id }
+    let(:raw_post) { {'audio_recording' => {'file_hash' => update_status_harvester_audio_recording.file_hash,
+                                            'uuid' => update_status_harvester_audio_recording.uuid}}.to_json }
 
     let(:authentication_token) { harvester_token }
     standard_request('UPDATE STATUS (as harvester)', 204, nil, true)
@@ -254,7 +257,7 @@ resource 'AudioRecordings' do
                                             'uuid' => nil}}.to_json }
 
     let(:authentication_token) { harvester_token }
-    standard_request('UPDATE STATUS (as harvester without uuid)', 422, 'error', true)
+    standard_request('UPDATE STATUS (as harvester without uuid)', 422, nil, true, 'Incorrect uuid')
   end
 
   put '/audio_recordings/:id/update_status' do
@@ -267,7 +270,7 @@ resource 'AudioRecordings' do
 
     let(:authentication_token) { writer_token }
 
-    standard_request('UPDATE STATUS (writer)', 403, nil, true)
+    standard_request('UPDATE STATUS (writer)', 403, nil, true, 'You are logged in, but do not have sufficent permissions to access this resource.')
 
   end
 

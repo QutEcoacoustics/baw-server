@@ -2,26 +2,43 @@ require 'faker'
 
 FactoryGirl.define do
 
-  sequence(:user_counter)
-
   factory :unconfirmed_user, class: User do
-    user_name { Faker::Internet.user_name + generate(:user_counter).to_s }
-    email { Faker::Internet.email + generate(:user_counter).to_s }
+    sequence(:user_name) { |n| "#{Faker::Internet.user_name}#{n}" }
+    sequence(:email) { |n| "#{n}#{Faker::Internet.email}" }
+
     password { Faker::Lorem.words(6).join(' ') }
-    preferences { {someSettingOrOther: [1, 2, 5], ImAnotherOne: 'hello!'}.to_json }
     authentication_token { SecureRandom.urlsafe_base64(nil, false) }
-    factory :confirmed_user do
-      after(:create) { |user| user.confirm! } #confirmed_at { Time.zone.now }
-      factory :user do
-        roles_mask { 2 } # user role
-      end
-      factory :admin do
-        roles_mask { 1 } # admin role
-      end
-      factory :harvester do
-        roles_mask { 4 } # harvester role
+    roles_mask { 2 } # user role
+
+    trait :confirmed do
+      after(:create) do |user|
+        #confirmed_at { Time.zone.now }
+        user.confirm!
       end
     end
+
+    trait :admin_role do
+      roles_mask { 1 } # admin role
+    end
+
+    trait :harvester_role do
+      roles_mask { 4 } # harvester role
+    end
+
+    trait :saved_preferences do
+      preferences { {someSettingOrOther: [1, 2, 5], ImAnotherOne: 'hello!'}.to_json }
+    end
+
+    trait :avatar_image do
+      # this will be slow
+      image { fixture_file_upload(Rails.root.join('public', 'images', 'user', 'user-512.png'), 'image/png') }
+    end
+
+    factory :confirmed_user, traits: [:confirmed], aliases: [:user, :creator, :owner, :updater, :deleter, :uploader]
+    factory :admin, traits: [:confirmed, :admin_role]
+    factory :harvester, traits: [:confirmed, :harvester_role]
+    factory :user_with_preferences, traits: [:confirmed, :saved_preferences]
+
   end
 
 end

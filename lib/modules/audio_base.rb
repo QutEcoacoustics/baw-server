@@ -61,6 +61,9 @@ class AudioBase
         duration_seconds: @audio_ffmpeg.parse_duration(ffmpeg_info['FORMAT duration']).to_f
     }
 
+    # calculate the bit rate in bits per second (bytes * 8 = bits)
+    info_flattened[:bit_rate_bps_calc] = (File.size(source).to_f * 8.0) / info_flattened[:duration_seconds]
+
     # check for clipping, zero signal
     # only if duration less than 4 minutes
     four_minutes_in_sec = 4.0 * 60.0
@@ -130,7 +133,8 @@ class AudioBase
 
     else
       # get ffmpeg info for everything else
-      info_flattened[:bit_rate_bps] = ffmpeg_info['FORMAT bit_rate'].to_i
+      info_flattened[:bit_rate_bps] = ffmpeg_info['STREAM bit_rate'].to_i
+      info_flattened[:bit_rate_bps] = ffmpeg_info['FORMAT bit_rate'].to_i if info_flattened[:bit_rate_bps].blank?
       info_flattened[:data_length_bytes] = ffmpeg_info['FORMAT size'].to_i
       info_flattened[:channels] = ffmpeg_info['STREAM channels'].to_i
       # duration
@@ -219,6 +223,7 @@ class AudioBase
   end
 
   def check_offsets(source_info, min_duration_seconds, max_duration_seconds, modify_parameters = {})
+    log_options(modify_parameters, '#check_offsets method start')
     start_offset = 0.0
     end_offset = source_info[:duration_seconds].to_f
 
@@ -243,6 +248,10 @@ class AudioBase
     modify_parameters[:start_offset] = start_offset
     modify_parameters[:end_offset] = end_offset
     modify_parameters[:duration] = duration
+
+    log_options(modify_parameters, '#check_offsets method end')
+
+    modify_parameters
   end
 
   def check_target(target)
@@ -402,6 +411,10 @@ class AudioBase
 
       yield output, error, thread, !time_remaining, killed
     end
+  end
+
+  def log_options(options, description)
+    Logging::logger.warn "AudioBase - Provided parameters at #{description}: #{options}"
   end
 
 end

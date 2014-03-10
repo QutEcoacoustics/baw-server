@@ -9,12 +9,15 @@ class MediaController < ApplicationController
   AUDIO_MEDIA_TYPES = [Mime::Type.lookup('audio/webm'), Mime::Type.lookup('audio/webma'),
                        Mime::Type.lookup('audio/ogg'), Mime::Type.lookup('audio/oga'),
                        Mime::Type.lookup('audio/mp3'), Mime::Type.lookup('audio/mpeg'),
-                       Mime::Type.lookup('audio/wav')] #Mime::Type.lookup('audio/x-wav')
+                       Mime::Type.lookup('audio/wav'), Mime::Type.lookup('audio/x-wav'),
+                       Mime::Type.lookup('audio/x-flac')]
   IMAGE_MEDIA_TYPES = [Mime::Type.lookup('image/png')]
 
   OFFSET_REGEXP = /^\d+(\.\d{1,3})?$/ # passes '111', '11.123'
 
   def show
+
+    log_options(params, '#show method start')
 
     media_cacher = MediaCacher.new(Settings.paths.temp_files)
 
@@ -35,6 +38,9 @@ class MediaController < ApplicationController
         render json: {error: 'Audio recording is not ready'}.to_json, status: :unprocessable_entity
       end
     else
+
+      log_options(params, '#show audio recording ready')
+
       if available_formats.include?(params[:format].downcase)
         options = Hash.new
         options[:datetime] = @audio_recording.recorded_date
@@ -43,6 +49,9 @@ class MediaController < ApplicationController
         # date and time are for finding the original audio file
         options[:date] = @audio_recording.recorded_date.strftime '%y%m%d'
         options[:time] = @audio_recording.recorded_date.strftime '%H%M'
+
+        log_options(options, '#show format is image or audio')
+
         options[:start_offset] = (params[:start_offset] || 0).to_f
         options[:end_offset] = (params[:end_offset] || @audio_recording.duration_seconds).to_f
         options[:uuid] = @audio_recording.uuid
@@ -54,12 +63,16 @@ class MediaController < ApplicationController
           options[:channel] = (params[:channel] || default_audio.channel).to_i
           options[:sample_rate] = (params[:sample_rate] || default_audio.sample_rate).to_i
 
+          log_options(options, '#show format is audio')
+
           media_cacher.audio.check_offsets(
               {duration_seconds: @audio_recording.duration_seconds},
               default_audio.min_duration_seconds,
               default_audio.max_duration_seconds,
               options
           )
+
+          log_options(options, '#show after check offsets for audio')
 
           download_file(
               {
@@ -79,12 +92,16 @@ class MediaController < ApplicationController
           options[:window] = (params[:window] || default_spectrogram.window).to_i
           options[:colour] = (params[:colour] || default_spectrogram.colour).to_s
 
+          log_options(options, '#show format is image')
+
           media_cacher.audio.check_offsets(
               {duration_seconds: @audio_recording.duration_seconds},
               default_spectrogram.min_duration_seconds,
               default_spectrogram.max_duration_seconds,
               options
           )
+
+          log_options(options, '#show after check offsets for image')
 
           full_path = media_cacher.generate_spectrogram(options)
           #download_file(full_path, mime_type)
@@ -114,7 +131,7 @@ class MediaController < ApplicationController
         if request.head?
           head status: :unsupported_media_type
         else
-          render json: {error: 'Requested format is invalid. It has to be mp3, webm, ogg, png or json'}.to_json, status: :unsupported_media_type
+          render json: {error: 'Requested format is invalid. It must be one of available_formats.', available_formats: available_formats}.to_json, status: :unsupported_media_type
         end
 
       end
@@ -132,9 +149,9 @@ class MediaController < ApplicationController
       result[format_key][:storage_format] = format_key
       result[format_key]['mime_type'] = Mime::Type.lookup_by_extension(format).to_s
       result[format_key]['url'] = audio_recording_media_path(audio_recording,
-                                                        format: format,
-                                                        start_offset: start_offset,
-                                                        end_offset: end_offset)
+                                                             format: format,
+                                                             start_offset: start_offset,
+                                                             end_offset: end_offset)
     end
 
     result
@@ -157,6 +174,8 @@ class MediaController < ApplicationController
     # http://blog.sparqcode.com/2012/02/04/streaming-data-with-rails-3-1-or-3-2/
     # http://stackoverflow.com/questions/3507594/ruby-on-rails-3-streaming-data-through-rails-to-client
     # ended up using StringIO as a MemoryStream to store part of audio file requested.
+
+    log_options(options, '#download_file method start')
 
     info = RangeRequest.process_request(options, request)
 
@@ -271,5 +290,9 @@ class MediaController < ApplicationController
     elsif params[:start_offset].to_i >= params[:end_offset].to_i
       render json: {error: "start_offset parameter must be a smaller than end_offset"}.to_json, status: :requested_range_not_satisfiable
     end
+  end
+
+  def log_options(options, description)
+    logger.warn "mediaController - Provided parameters at #{description}: #{options}"
   end
 end

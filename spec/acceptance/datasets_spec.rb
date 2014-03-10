@@ -9,18 +9,18 @@ resource 'Datasets' do
   header 'Content-Type', 'application/json'
   header 'Authorization', :authentication_token
 
-  let(:format) {'json'}
+  let(:format) { 'json' }
 
   # prepare ids needed for paths in requests below
-  let(:project_id)            {@write_permission.project.id}
-  let(:id)                    {@write_permission.project.datasets[0].id}
+  let(:project_id) { @write_permission.project.id }
+  let(:id) { @write_permission.project.datasets[0].id }
 
   # prepare authentication_token for different users
-  let(:writer_token)          {"Token token=\"#{@write_permission.user.authentication_token}\"" }
-  let(:reader_token)          {"Token token=\"#{@read_permission.user.authentication_token}\"" }
+  let(:writer_token) { "Token token=\"#{@write_permission.user.authentication_token}\"" }
+  let(:reader_token) { "Token token=\"#{@read_permission.user.authentication_token}\"" }
 
   # Create post parameters from factory
-  let(:post_attributes) { FactoryGirl.attributes_for(:all_dataset_attributes) }
+  let(:post_attributes) { FactoryGirl.attributes_for(:dataset) }
 
 
   before(:each) do
@@ -39,7 +39,7 @@ resource 'Datasets' do
 
     let(:authentication_token) { writer_token }
 
-    standard_request('LIST (as writer)' ,200,'0/number_of_tags', true)
+    standard_request('LIST (as writer)', 200, '0/number_of_tags', true)
   end
 
   get '/projects/:project_id/datasets' do
@@ -47,7 +47,7 @@ resource 'Datasets' do
 
     let(:authentication_token) { reader_token }
 
-    standard_request('LIST (as reader)' ,200,'0/number_of_tags', true)
+    standard_request('LIST (as reader)', 200, '0/number_of_tags', true)
   end
 
   get '/projects/:project_id/datasets' do
@@ -147,7 +147,7 @@ resource 'Datasets' do
     #puts ActiveSupport::JSON.decode(response_body)
     #response_json = JSON.parse(response_body).to_s
     #response_body.should have_json_path('name')
-    standard_request('SHOW (as writer)' ,200,'number_of_tags', true)
+    standard_request('SHOW (as writer)', 200, 'number_of_tags', true)
   end
 
   get '/projects/:project_id/datasets/:id' do
@@ -156,7 +156,7 @@ resource 'Datasets' do
 
     let(:authentication_token) { reader_token }
 
-    standard_request('SHOW (as reader)' ,200,'number_of_tags', true)
+    standard_request('SHOW (as reader)', 200, 'number_of_tags', true)
   end
 
   get '/projects/:project_id/datasets/:id' do
@@ -165,7 +165,7 @@ resource 'Datasets' do
 
     let(:authentication_token) { "Token token=\"INVALID TOKEN\"" }
 
-    standard_request('SHOW (with invalid token)' ,401, nil, true)
+    standard_request('SHOW (with invalid token)', 401, nil, true)
   end
 
   ################################
@@ -198,7 +198,7 @@ resource 'Datasets' do
     #puts ActiveSupport::JSON.decode(response_body)
     #response_json = JSON.parse(response_body).to_s
     #response_body.should have_json_path('name')
-    standard_request('UPDATE (as writer)' ,204, nil, true)
+    standard_request('UPDATE (as writer)', 204, nil, true)
   end
 
   put '/projects/:project_id/datasets/:id' do
@@ -246,6 +246,6 @@ resource 'Datasets' do
 
     let(:authentication_token) { "Token token=\"INVALID TOKEN\"" }
 
-    standard_request('UPDATE (with invalid token)' ,401, nil, true)
+    standard_request('UPDATE (with invalid token)', 401, nil, true)
   end
 end

@@ -35,7 +35,7 @@ resource 'Tags' do
   let(:confirmed_token)     {"Token token=\"#{FactoryGirl.create(:confirmed_user).authentication_token}\"" }
 
   # Create post parameters from factory
-  let(:post_attributes) {FactoryGirl.attributes_for(:required_tag_attributes)}
+  let(:post_attributes) {FactoryGirl.attributes_for(:tag)}
 
   ################################
   # LIST

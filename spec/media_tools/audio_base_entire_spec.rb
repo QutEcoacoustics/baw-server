@@ -75,10 +75,10 @@ describe AudioBase do
     result = audio_base.modify(audio_file_stereo, temp_audio_file)
     info = audio_base.info(temp_audio_file)
     expect(info[:media_type]).to eq('audio/mp3')
-
     expect(info[:sample_rate]).to be_within(0.0).of(audio_file_stereo_sample_rate)
     expect(info[:channels]).to eq(audio_file_stereo_channels)
     expect(info[:duration_seconds]).to be_within(duration_range).of(audio_file_stereo_duration_seconds)
+    expect(info[:bit_rate_bps]).to be >= 192000
   end
 
 
@@ -103,11 +103,11 @@ describe AudioBase do
   end
 
 
-  it 'correctly converts from .ogg to .aac' do
-    temp_audio_file = temp_audio_file_1+'.aac'
+  it 'correctly converts from .ogg to .flac' do
+    temp_audio_file = temp_audio_file_1+'.flac'
     result = audio_base.modify(audio_file_stereo, temp_audio_file)
     info = audio_base.info(temp_audio_file)
-    expect(info[:media_type]).to eq('audio/aac')
+    expect(info[:media_type]).to eq('audio/x-flac')
     expect(info[:sample_rate]).to be_within(0.0).of(audio_file_stereo_sample_rate)
     expect(info[:channels]).to eq(audio_file_stereo_channels)
     expect(info[:duration_seconds]).to be_within(duration_range).of(audio_file_stereo_duration_seconds)
