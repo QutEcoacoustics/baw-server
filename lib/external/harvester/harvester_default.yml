@@ -1,4 +1,3 @@
-# Using SettingsLogic, see https://github.com/binarylogic/settingslogic
 settings:
   host: localhost
   port: 3030

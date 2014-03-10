@@ -22,7 +22,7 @@ guard :rspec, cli: '--format progress --color' do
   watch(%r{^app/models/(.+)\.rb$})                    { |m| "spec/features/#{m[1]}s_spec.rb" }
 
   # for external modules
-  watch(%r{^lib/external/harvester/(.+)\.rb$})        { |m| 'spec/harvester/harvester_spec.rb' }
+  watch(%r{^lib/external/harvester/harvest_(.+)\.rb$})        { |m| "spec/harvester/harvest_#{m[1]}_spec.rb" }
   #watch(%r{^lib/modules/(.+)\.rb$})                   { |m| "spec/externals/#{m[1]}_spec.rb" }
 
   # for media tools

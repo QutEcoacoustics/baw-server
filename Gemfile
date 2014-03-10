@@ -53,6 +53,7 @@ group :test do
   gem 'database_cleaner', '~> 1'
   #gem 'bullet'
   gem 'webmock'
+  gem "fakefs", require: "fakefs/safe"
 end
 
 ########################  TESTING & Documentation ########################

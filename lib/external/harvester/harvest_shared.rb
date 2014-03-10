@@ -34,7 +34,7 @@ module Harvester
     # @param [string] endpoint
     # @param [Hash] body
     # @return [Net::HTTP::Response]
-    def send_request(description, method, endpoint, body)
+    def send_request(description, method, endpoint, body = nil)
       if method == :get
         request = Net::HTTP::Get.new(endpoint)
 
@@ -57,7 +57,6 @@ module Harvester
       res = Net::HTTP.start(@settings.host, @settings.port) do |http|
         response = http.request(request)
       end
-
 
       log Logger::DEBUG, "Received response for '#{description}': #{response.inspect}, Body: #{response.body}"
 
@@ -91,6 +90,10 @@ module Harvester
 
         @error_log.add(log_level, message)
       end
+    end
+
+    def setting(name)
+
     end
   end
 end

@@ -14,8 +14,8 @@ module Exceptions
   class SegmentRequestTooLong < ArgumentError; end
   class SegmentRequestTooShort < ArgumentError; end
   class HarvesterError < StandardError; end
-  class HarvesterConfigFileNotFound < HarvesterError; end
   class HarvesterConfigurationError < HarvesterError; end
+  class HarvesterConfigFileNotFound < HarvesterConfigurationError; end
   class HarvesterIOError < HarvesterError; end
   class HarvesterEndpointError < HarvesterError; end
   class HarvesterAnalysisError < HarvesterError; end
