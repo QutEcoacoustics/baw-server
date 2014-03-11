@@ -1,13 +1,38 @@
 module Harvester
-  class File
+  class AudioFile
 
     attr_reader :shared
 
     # Initialize Harvester::File
-    # @param [Harvester::Shared] harvester_shared
+    # @param [Manager::Shared] harvester_shared
     def initialize(harvester_shared)
       @shared = harvester_shared
     end
+
+    def start_harvesting_file(full_path, uploader_id, utc_offset = nil)
+
+      # collect info about audio file
+      file_info_name = info_from_name(full_path, utc_offset)
+      file_info_content = info_from_content(full_path)
+      file_hash = generate_hash(file_path)
+      file_hash_formatted = 'SHA256::'+file_hash.hexdigest
+      recording_start = ''
+      original_file_name = File.basename(file_path)
+
+      {
+          audio_recording: {
+              file_hash: file_hash_formatted,
+              uploader_id: uploader_id,
+              recorded_date: recording_start,
+              original_file_name: original_file_name
+          }
+      }
+
+      # make request to create new (or reuse existing) audio recording
+      create_new_audiorecording()
+    end
+
+    private
 
     # calculate the audio recording start date and time.
     # @return [Hash] Parsed info from file name
@@ -19,15 +44,15 @@ module Harvester
         #access_time = File.atime full_path
         #change_time = File.ctime full_path
 
-        modified_time =  ::File.mtime(audio_file)
+        modified_time = ::File.mtime(audio_file)
         file_name = ::File.basename(audio_file)
-            extension = ::File.extname(audio_file).reverse.chomp('.').reverse
+        extension = ::File.extname(audio_file).reverse.chomp('.').reverse
 
         result = {
             recording_start: nil,
             file_modified: modified_time,
             file_name: file_name,
-            extension:extension
+            extension: extension
         }
 
         additional_info = parse_all_info_filename(file_name)
@@ -139,11 +164,10 @@ module Harvester
       response = send_request('Create audiorecording', :post, @settings.endpoint_create, request_body)
       if response.code == '201'
         response_json = JSON.parse(response.body)
-
         log_with_puts Logger::INFO, "Created new audio recording with id #{response_json['id']}: #{file_to_process}."
         response
       else
-        raise Exceptions::HarvesterAnalysisError, "Request to create audio recording failed: code #{response.code}, Message: #{response.message}, Body: #{response.body}"
+        raise Exceptions::HarvesterCommunicationError, "Request to create audio recording failed: code #{response.code}, Message: #{response.message}, Body: #{response.body}"
       end
     end
 
@@ -163,7 +187,6 @@ module Harvester
       incr_hash
     end
 
-    private
 
     def parse_all_info_filename(file_name)
       result = {}

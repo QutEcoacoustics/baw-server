@@ -1,10 +1,10 @@
 require 'spec_helper'
 require 'modules/exceptions'
-require 'external/harvester/harvest_file'
+require 'external/harvester/harvest_audio_file'
 
 require 'fakefs/spec_helpers'
 
-describe Harvester::File do
+describe Harvester::AudioFile do
   context 'recorded date parsing' do
     include FakeFS::SpecHelpers
 
@@ -15,7 +15,7 @@ describe Harvester::File do
     end
 
 =begin
-  For: Harvester::File.get_file_info_from_name
+  For: Harvester::AudioFile.get_file_info_from_name
   All Incorrect
   -------------
   blah
@@ -58,7 +58,7 @@ describe Harvester::File do
 
     it 'should error if the file does not exist' do
       file_name = 'blah.ext'
-      harvest_file = Harvester::File.new(@harvest_shared)
+      harvest_file = Harvester::AudioFile.new(@harvest_shared)
       expect {
         harvest_file.info_from_name(file_name, '+03')
       }.to raise_error(Exceptions::HarvesterError, /Could not find audio file/)
@@ -67,7 +67,7 @@ describe Harvester::File do
     it 'should parse a date and time without offset file name correctly' do
       file_name = 'site_name_20140301_085031.mp3'
       FileUtils.touch(file_name)
-      harvest_file = Harvester::File.new(@harvest_shared)
+      harvest_file = Harvester::AudioFile.new(@harvest_shared)
       result = harvest_file.info_from_name(file_name, '+11')
 
       expect(result[:recording_start]).to eq(DateTime.new(2014, 3, 1, 8, 50, 31, '+11'))
@@ -79,7 +79,7 @@ describe Harvester::File do
     it 'should parse a date and time with offset file name correctly' do
       file_name = 'site_name_20140301_085031+11.mp3'
       FileUtils.touch(file_name)
-      harvest_file = Harvester::File.new(@harvest_shared)
+      harvest_file = Harvester::AudioFile.new(@harvest_shared)
       result = harvest_file.info_from_name(file_name)
 
       expect(result[:recording_start]).to eq(DateTime.new(2014, 3, 1, 8, 50, 31, '+11'))
@@ -92,7 +92,7 @@ describe Harvester::File do
       file_name = 'my_audio_file.mp3'
       FileUtils.touch(file_name)
       file_mtime = File.mtime(file_name)
-      harvest_file = Harvester::File.new(@harvest_shared)
+      harvest_file = Harvester::AudioFile.new(@harvest_shared)
 
 
       expect {
@@ -102,7 +102,7 @@ describe Harvester::File do
 
     it 'should parse a regular ALL THE INFO! file name correctly' do
       file_name = 'p143_s254_u1045_d20140228_t235959Z.wav'
-      harvest_file = Harvester::File.new(@harvest_shared)
+      harvest_file = Harvester::AudioFile.new(@harvest_shared)
       FileUtils.touch(file_name)
       result = harvest_file.info_from_name(file_name)
 
@@ -126,7 +126,7 @@ describe Harvester::File do
       file_name = 'test-hash.txt'
       file_contents = 'some sample text for my test'
       File.write(file_name, file_contents)
-      harvest_file = Harvester::File.new(@harvest_shared)
+      harvest_file = Harvester::AudioFile.new(@harvest_shared)
       hash = harvest_file.generate_hash(file_name).hexdigest
 
       expect(hash).to eq('555c8db88da7adbae8293c3df7d6993c84f6f0a36d4a6ee592c367c0e7b4f753')

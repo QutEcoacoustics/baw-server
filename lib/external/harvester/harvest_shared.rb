@@ -54,8 +54,15 @@ module Harvester
 
       response = nil
 
-      res = Net::HTTP.start(@settings.host, @settings.port) do |http|
-        response = http.request(request)
+      begin
+        res = Net::HTTP.start(@settings.host, @settings.port) do |http|
+          response = http.request(request)
+        end
+      rescue StandardError => e
+        msg = "Error requesting URL '#{@settings.host}:#{@settings.port}#{endpoint}': #{e}"
+        log Logger::ERROR, "Error requesting URL '#{@settings.host}:#{@settings.port}#{endpoint}': #{e}"
+        # preserve backtrace
+        raise e, msg, $!.backtrace
       end
 
       log Logger::DEBUG, "Received response for '#{description}': #{response.inspect}, Body: #{response.body}"

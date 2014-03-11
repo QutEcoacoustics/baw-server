@@ -1,16 +1,20 @@
 module Harvester
-  class Directory
+  class ProcessDirectory
 
     attr_reader :harvest_directory, :harvest_dir_file, :harvest_dir_config
 
     # Initialize Harvester::Directory with a harvest file and harvest shared class.
     # @param [string] harvest_file
-    # @param [Harvester::Shared] harvester_shared
+    # @param [Manager::Shared] harvester_shared
     def initialize(harvest_file, harvester_shared)
       @shared = harvester_shared
       @harvest_dir_file = harvest_file
       @harvest_directory = File.dirname(@harvest_dir_file)
       @harvest_dir_config = @shared.load_config_file(@harvest_dir_file)
+    end
+
+    def start_harvesting_dir
+
     end
 
     # Ask server to check uploader id.

@@ -2,7 +2,7 @@ require 'pathname'
 require 'listen'
 require 'daemons'
 
-require File.dirname(__FILE__) + '/../harvester/harvester'
+require File.dirname(__FILE__) + '/../harvester/harvest_manager'
 require File.dirname(__FILE__) + '/../../modules/exceptions'
 
 ######################################################################################
@@ -51,7 +51,7 @@ class HarvestListener
     if File.exists?(harvest_file_full_path)
       begin
         puts "Started Harvesting: '#{dir}' with #{yaml_settings_file}"
-        harvester = Harvester::Harvester.new(yaml_settings_file, dir)
+        harvester = Harvester::Manager.new(yaml_settings_file, dir)
         puts 'Harvester Instantiated'
         harvester.start_harvesting
         puts "Finished Harvesting: '#{dir}"

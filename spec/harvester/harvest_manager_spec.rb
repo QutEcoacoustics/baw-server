@@ -1,4 +1,5 @@
 require 'spec_helper'
+require 'pathname'
 require 'modules/exceptions'
 require 'external/harvester/harvest_manager'
 
@@ -6,6 +7,80 @@ include Warden::Test::Helpers
 Warden.test_mode!
 
 describe Harvester::Manager do
+
+  let(:harvester_file) { File.join(Rails.root, 'lib', 'external', ' harvester', 'harvester.rb') }
+  let(:this_file) { __FILE__ }
+  let(:this_dir) { File.dirname(this_file) }
+
+  let(:source_audio_file) { File.join(Rails.root, 'spec', 'media_tools', 'test-audio-mono.ogg') }
+  let(:source_harvest_file) { File.join(this_dir, 'harvest.yml') }
+  let(:source_config_file) { File.join(Rails.root, 'lib', 'external', 'harvester', 'harvester_default.yml') }
+
+  let(:dir_to_do) { File.join(Rails.root, 'tmp', '_harvester_to_do') }
+  let(:dir_to_do_subdir) { File.join(dir_to_do, 'testing') }
+  let(:dir_complete) { File.join(Rails.root, 'tmp', '_harvester_completed') }
+  let(:dir_original_audio) { File.join(Rails.root, 'tmp', '_original_audio') }
+
+  let(:target_audio_file) { File.join(dir_to_do_subdir, File.basename(source_audio_file)) }
+  let(:target_harvest_file) { File.join(dir_to_do_subdir, File.basename(source_harvest_file)) }
+  let(:target_config_file) { File.join(dir_to_do, 'harvester_settings.yml') }
+
+  let(:harvester) { Harvester::Manager.new(target_config_file, dir_to_do_subdir) }
+
+  before(:each) do
+    # create to_do directory, put harvest.yml and audio file into it
+    FileUtils.mkpath(dir_to_do_subdir)
+    FileUtils.cp(source_audio_file, target_audio_file)
+    FileUtils.cp(source_harvest_file, target_harvest_file)
+    FileUtils.cp(source_config_file, target_config_file)
+
+    # create completed directory
+    FileUtils.mkpath(dir_complete)
+  end
+
+  after(:each) do
+
+    # remove harvester_settings file
+    FileUtils.rm_f(target_config_file)
+
+    # remove to_do directory
+    FileUtils.rm_rf(dir_to_do)
+
+    # remove completed directory
+    FileUtils.rm_rf(dir_complete)
+
+    # remove original audio directory
+    FileUtils.rm_rf(dir_original_audio)
+  end
+
+  context 'creating a new harvester' do
+
+    it 'throws an error when given no config file' do
+      expect {
+        Harvester::Manager.new('', '')
+      }.to raise_error(Exceptions::HarvesterConfigFileNotFound, /Configuration file not found./)
+    end
+
+    it 'throws an error when given invalid path to config file' do
+      expect {
+        Harvester::Manager.new('somewhere', '')
+      }.to raise_error(Exceptions::HarvesterConfigFileNotFound, /Configuration file not found./)
+    end
+
+    it 'throws an error when given empty dir to config file' do
+      expect {
+        Harvester::Manager.new(target_config_file, '')
+      }.to raise_error(Exceptions::HarvesterConfigurationError, /Directory to process not found./)
+    end
+
+    it 'throws an error when given invalid dir to config file' do
+      expect {
+        Harvester::Manager.new(target_config_file, 'somewhere')
+      }.to raise_error(Exceptions::HarvesterConfigurationError, /Directory to process not found./)
+    end
+
+  end
+
   context 'running the harvester' do
 
     before(:each) do
@@ -32,7 +107,6 @@ describe Harvester::Manager do
       login_stub = stub_request(:post, 'http://localhost:3030/security/sign_in')
       .with(body: '{"email":"address@example.com","password":"password"}')
       .to_return(body: '{"success":true,"auth_token":"'+auth_token+'","email":"address@example.com"}')
-
       # no changes
 
       # for each directory
@@ -89,16 +163,17 @@ describe Harvester::Manager do
       #    if the status is new or aborted - use the existin record (set to new)
       #    if status is not new or aborted, this is a duplicate file, raise error
 
-      harvester = Harvester::Manager.new(nil)
       harvester.start_harvesting
-
 
       login_stub.should have_been_made.once
       uploader_id_stub.should have_been_made.once
       create_stub.should have_been_made.once
       recording_moved_stub.should have_been_made.once
 
+
+
     end
 
   end
+
 end
