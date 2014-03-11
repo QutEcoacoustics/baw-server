@@ -16,8 +16,7 @@ require File.dirname(__FILE__) + '/../../modules/media_cacher'
 module Harvester
   class Shared
 
-    attr_reader :global_config, :global_config_file,
-    attr_accessor :auth_token
+    attr_reader :global_config, :global_config_file, :media_cacher, :auth_token
 
     # @param [string] global_config_file
     def initialize(global_config_file)
@@ -26,9 +25,10 @@ module Harvester
       @listen_path = yaml['settings']['paths']['harvester_to_do']
       # this sets the logger which is used in the harvester and shared Audio tools (audioffmpeg, audiosox, etc.)
       Logging::set_logger(Logger.new("#{@listen_path}/listen.log"))
+      @media_cacher = MediaCacher.new(@settings.paths.temp_files)
     end
 
-
+    # Send HTTP request.
     # @param [string] description
     # @param [Symbol] method
     # @param [string] endpoint
@@ -92,8 +92,6 @@ module Harvester
       end
     end
 
-    def setting(name)
 
-    end
   end
 end

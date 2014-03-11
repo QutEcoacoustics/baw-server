@@ -96,8 +96,14 @@ this file, harvester_single_file.rb and harvester_communication.rb
     def replace_endpoint_ids
       project_id = @config_file_object['project_id']
       site_id = @config_file_object['site_id']
-      @settings.endpoint_create.gsub!(':project_id', project_id.to_s).gsub!(':site_id', site_id.to_s)
-      @settings.endpoint_check_uploader.gsub!(':project_id', project_id.to_s).gsub!(':site_id', site_id.to_s)
+      uploader_id = @config_file_object['uploader_id']
+      @settings.endpoint_create
+      .gsub!(':project_id', project_id.to_s)
+      .gsub!(':site_id', site_id.to_s)
+      @settings.endpoint_check_uploader
+      .gsub!(':project_id', project_id.to_s)
+      .gsub!(':site_id', site_id.to_s)
+      .gsub!(':uploader_id', uploader_id.to_s)
     end
 
     ##########################################
@@ -249,7 +255,8 @@ this file, harvester_single_file.rb and harvester_communication.rb
 
     def check_config_against_endpoint
       if @auth_token
-        check_uploader_response = send_request('Check uploader id', :get, @settings.endpoint_check_uploader, {uploader_id: @config_file_object['uploader_id']})
+
+        check_uploader_response = send_request('Check uploader id', :get, @settings.endpoint_check_uploader, nil)
         if check_uploader_response.code.to_s == '204'
           log_with_puts Logger::INFO, "Uploader with id #{@config_file_object['uploader_id']} has project access."
           true
@@ -295,18 +302,22 @@ this file, harvester_single_file.rb and harvester_communication.rb
       if @auth_token
         request['Authorization'] = "Token token=\"#{@auth_token}\""
       end
-      request.body = body.to_json
+      request.body = body.to_json unless body.nil?
 
-      log Logger::DEBUG, "Sent request for '#{description}': #{request.inspect}, URL: #{@settings.host}:#{@settings.port}#{endpoint}, Body: #{request.body}"
+      log Logger::DEBUG, "Sent request for '#{description}': '#{request.inspect}', URL: '#{@settings.host}:#{@settings.port}#{endpoint}', Body: '#{request.body}'"
 
       response = nil
 
-      res = Net::HTTP.start(@settings.host, @settings.port) do |http|
-        response = http.request(request)
+      begin
+        res = Net::HTTP.start(@settings.host, @settings.port) do |http|
+          response = http.request(request)
+        end
+      rescue StandardError => e
+        log Logger::ERROR, "Error requesting URL '#{@settings.host}:#{@settings.port}#{endpoint}': #{e}"
+        raise e
       end
 
-
-      log Logger::DEBUG, "Received response for '#{description}': #{response.inspect}, Body: #{response.body}"
+      log Logger::DEBUG, "Received response for '#{description}': '#{response.inspect}', Body: '#{response.body}'"
 
       response
     end

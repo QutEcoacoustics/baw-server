@@ -40,5 +40,47 @@ module Harvester
         false
       end
     end
+
+    # get the list of files in a directory, excluding the config file.
+    def file_list(full_directory_path)
+      path = File.join(full_directory_path, '*')
+      list_of_files = Dir[path].reject { |fn| File.directory?(fn) || File.basename(fn) == @settings.config_file_name || File.basename(fn) == File.basename(@process_log_file) || File.basename(fn) == File.basename(@error_log_file) || File.basename(fn) == File.basename(@listen_log_file) }
+      if list_of_files.empty?
+        log Logger::WARN, "Could not find any audio files in #{full_directory_path}"
+      else
+        log Logger::INFO, "Found #{list_of_files.size} files in #{full_directory_path}"
+        list_of_files
+      end
+    end
+
+    def check_config_file(full_directory_path)
+
+      full_file_path = File.join(full_directory_path, @settings.config_file_name)
+
+      # if the config file does not exist, raise exception
+      if File.exists?(full_file_path)
+        # load the config file
+        @config_file_object = YAML.load_file(full_file_path)
+
+        # get project_id and site_id from config file, raise exception if they are not defined
+        project_id = @config_file_object['project_id']
+        site_id = @config_file_object['site_id']
+
+        if project_id.nil? || !project_id.is_a?(Fixnum)
+          false
+          raise Exceptions::HarvesterConfigurationError, 'Config file must contain a project_id'
+        elsif site_id.nil? || !site_id.is_a?(Fixnum)
+          false
+          raise Exceptions::HarvesterConfigurationError, 'Config file must contain a site_id'
+        end
+
+        true
+      else
+        # load the config file in the same dir, raise exception if it doesn't exits
+        false
+        raise Exceptions::HarvesterConfigFileNotFound.new("Config file #{full_file_path} does not exist.")
+      end
+    end
+
   end
 end

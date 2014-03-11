@@ -5,7 +5,7 @@ module Harvester
 
     # @param [string] global_config_file
     def initialize(global_config_file)
-      raise Exceptions::HarvesterConfigFileNotFound, "Configuration file not found: #{global_config_file}" unless File.exists?(global_config_file)
+      raise Exceptions::HarvesterConfigFileNotFound, "Configuration file not found: #{global_config_file}" unless !global_config_file.nil? && File.exists?(global_config_file)
       @shared = Harvester::Shared.new(global_config_file)
     end
 
