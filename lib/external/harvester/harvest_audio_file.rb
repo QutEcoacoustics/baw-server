@@ -4,7 +4,7 @@ module Harvester
     attr_reader :shared
 
     # Initialize Harvester::File
-    # @param [Manager::Shared] harvester_shared
+    # @param [Harvester::Shared] harvester_shared
     def initialize(harvester_shared)
       @shared = harvester_shared
     end
@@ -167,7 +167,7 @@ module Harvester
         log_with_puts Logger::INFO, "Created new audio recording with id #{response_json['id']}: #{file_to_process}."
         response
       else
-        raise Exceptions::HarvesterCommunicationError, "Request to create audio recording failed: code #{response.code}, Message: #{response.message}, Body: #{response.body}"
+        raise Exceptions::HarvesterEndpointError, "Request to create audio recording failed: code #{response.code}, Message: #{response.message}, Body: #{response.body}"
       end
     end
 
@@ -187,6 +187,7 @@ module Harvester
       incr_hash
     end
 
+    private
 
     def parse_all_info_filename(file_name)
       result = {}

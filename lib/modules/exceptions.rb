@@ -18,6 +18,5 @@ module Exceptions
   class HarvesterConfigFileNotFound < HarvesterConfigurationError; end
   class HarvesterIOError < HarvesterError; end
   class HarvesterEndpointError < HarvesterError; end
-  class HarvesterCommunicationError < HarvesterEndpointError; end
   class HarvesterAnalysisError < HarvesterError; end
 end
