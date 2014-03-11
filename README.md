@@ -1,0 +1,27 @@
+# baw-audio-tools
+
+Bioacoustics Workbench audio tools.
+
+Contains the audio, spectrogram, and caching tools for the Bioacoustics Workbench project.
+
+## Installation
+
+Add this line to your application's Gemfile:
+
+    gem 'baw-audio-tools', git: 'https://github.com/QutBioacoustics/baw-audio-tools.git'
+
+And then execute:
+
+    $ bundle
+
+## Usage
+
+TODO: Write usage instructions here
+
+## Contributing
+
+1. Fork it (https://github.com/QutBioacoustics/baw-audio-tools )
+2. Create your feature branch (`git checkout -b my-new-feature`)
+3. Commit your changes (`git commit -am 'Add some feature'`)
+4. Push to the branch (`git push origin my-new-feature`)
+5. Create new Pull Request
