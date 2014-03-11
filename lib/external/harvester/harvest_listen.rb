@@ -10,22 +10,17 @@ require File.dirname(__FILE__) + '/../../modules/exceptions'
 # folders containing a harvest.yml file. When harvest.yml is added or modified, it 
 # processes that directory.
 # Run this file like this:
-# $ ruby listen_and_harvest.rb 'default.yml'
-# $ ruby ./lib/external/harvester/listen_and_harvest.rb './lib/external/harvester/harvester_development.yml'
+# $ ruby harvest_listen.rb 'default.yml'
+# $ ruby ./lib/external/harvester/harvest_listen.rb './lib/external/harvester/harvester_development.yml'
 ######################################################################################
 
 class HarvestListener
 
-  @yaml_config_file
-  @listen_path
+  attr_reader :listen_path
 
-  def initialize(yaml_config_file)
-
-    @yaml_config_file =  yaml_config_file
-    yaml = YAML.load_file(@yaml_config_file)
-    @listen_path = yaml['settings']['paths']['harvester_to_do']
+  def initialize(listen_path, )
     # this sets the logger which is used in the harvester and shared Audio tools (audioffmpeg, audiosox, etc.)
-    Logging::set_logger(Logger.new("#{@listen_path}/listen.log"))
+    Logging::set_logger(Logger.new("#@listen_path/listen.log"))
   end
 
   def listen

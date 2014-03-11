@@ -8,4 +8,4 @@ require 'daemons'
 # ruby daemonized_listener.rb run -- '/absolute/path/to/default.yml'
 ######################################################################################
 
-Daemons.run(File.join(File.dirname(__FILE__), 'listen_and_harvest.rb'), monitor: true)
+Daemons.run(File.join(File.dirname(__FILE__), 'harvest_listen.rb'), monitor: true)
