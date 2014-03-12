@@ -2,6 +2,7 @@
 lib = File.expand_path('../lib', __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require 'baw-audio-tools/version'
+require 'rbconfig'
 
 Gem::Specification.new do |spec|
   spec.name          = 'baw-audio-tools'
@@ -20,4 +21,9 @@ Gem::Specification.new do |spec|
 
   spec.add_development_dependency 'bundler', '~> 1.5'
   spec.add_development_dependency 'rake'
+  spec.add_development_dependency 'guard', '~> 1.8'
+  spec.add_development_dependency 'listen', '~> 1'
+  spec.add_development_dependency 'guard-rspec'
+  # for guard on windows
+  spec.add_development_dependency 'wdm', '>= 0.1.0' if RbConfig::CONFIG['target_os'] =~ /mswin|mingw|cygwin/i
 end
