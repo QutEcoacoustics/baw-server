@@ -21,3 +21,5 @@ before_install:
   - mp3splt -version
   - sox --version
   - echo "...audio tools installed."
+script:
+  - bundle exec rspec
