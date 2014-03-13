@@ -1,0 +1,75 @@
+# Using SettingsLogic, see https://github.com/binarylogic/settingslogic
+defaults: &defaults
+  paths:
+    image_magick_dir: <%= File.dirname(__FILE__) %>/tmp/_image-magick
+    ######################################################
+    # these paths must align with the paths used by the harvester defined in
+    # File lib/external/harvester/default.yml
+    ######################################################
+    original_audios:
+      - <%= File.dirname(__FILE__) %>/tmp/_original_audio
+    cached_spectrograms:
+      - <%= File.dirname(__FILE__) %>/tmp/_cached_spectrogram
+    cached_audios:
+      - <%= File.dirname(__FILE__) %>/tmp/_cached_audio
+    analysis_scripts:
+      - <%= File.dirname(__FILE__) %>/tmp/_analysis_script
+    analysis_results:
+      - <%= File.dirname(__FILE__) %>/tmp/_analysis_result
+    analysis_runs:
+      - <%= File.dirname(__FILE__) %>/tmp/_analysis_run
+    cached_datasets:
+      - <%= File.dirname(__FILE__) %>/tmp/_cached_dataset
+    modules_log_file: <%= File.dirname(__FILE__) %>/tmp/_modules_log.log
+    temp_files: <%= File.dirname(__FILE__) %>/tmp
+  harvester_config_file: harvest.yml
+  harvester:
+    email: address+harvester@example.com
+    password: password
+  admin_user:
+    email: address+admin@example.com
+    password: password
+  cached_audio_defaults:
+    storage_format: mp3
+    channel: 0
+    sample_rate: 22050
+    max_duration_seconds: 300.0
+    min_duration_seconds: 0.5
+  cached_spectrogram_defaults:
+    storage_format: png
+    channel: 0
+    sample_rate: 22050
+    window: 512
+    colour: 'g'
+    ppms: 0.045
+    max_duration_seconds: 120.0
+    min_duration_seconds: 0.5
+  cached_dataset_defaults:
+    storage_format: txt
+    one_item_per_line: true
+  available_formats:
+    text:
+      - json
+    audio:
+      - mp3
+      - webm
+      - ogg
+      - flac
+      - wav
+    image:
+      - png
+  audio_tools:
+    ffmpeg_executable: .\vendor\bin\ffmpeg\ffmpeg.exe
+    ffprobe_executable: .\vendor\bin\ffmpeg\ffprobe.exe
+    mp3splt_executable: .\vendor\bin\mp3splt\mp3splt.exe
+    sox_executable: .\vendor\bin\sox\sox.exe
+    wavpack_executable: .\vendor\bin\wavpack\wvunpack.exe
+    imagemagick_convert_executable: .\vendor\bin\imagemagick\convert.exe
+    imagemagick_identify_executable: .\vendor\bin\imagemagick\identify.exe
+    max_duration_seconds: 300
+  audio_tools_timeout_sec: 20
+
+test:
+  <<: *defaults
+
+
