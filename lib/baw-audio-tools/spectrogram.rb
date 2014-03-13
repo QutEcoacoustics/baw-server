@@ -1,11 +1,3 @@
-require 'open3'
-require File.dirname(__FILE__) + '/string'
-require File.dirname(__FILE__) + '/hash'
-require File.dirname(__FILE__) + '/exceptions'
-require File.dirname(__FILE__) + '/logging'
-require File.dirname(__FILE__) + '/OS'
-require File.dirname(__FILE__) + '/image_image_magick'
-
 module BawAudioTools
   class Spectrogram
 

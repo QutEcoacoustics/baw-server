@@ -1,6 +1,3 @@
-require File.dirname(__FILE__) + '/logging'
-require File.dirname(__FILE__) + '/OS'
-
 module BawAudioTools
   class AudioSox
 

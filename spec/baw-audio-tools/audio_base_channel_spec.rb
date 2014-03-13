@@ -1,7 +1,4 @@
 require 'spec_helper'
-require File.dirname(__FILE__) + '/shared_spec_helper'
-require File.dirname(__FILE__) + '/../../lib/baw-audio-tools/audio_base'
-require File.dirname(__FILE__) + '/../../lib/baw-audio-tools/exceptions'
 
 describe BawAudioTools::AudioBase do
   include_context 'common'

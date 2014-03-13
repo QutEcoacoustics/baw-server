@@ -4,6 +4,7 @@ shared_context 'common' do
   let(:amplitude_range) { 0.02 }
   let(:bit_rate_range) { 400 }
   let(:bit_rate_min) { 192000 }
+  let(:sleep_range) { 0.5 }
 
   let(:temp_dir) { File.join(File.dirname(__FILE__), '..', '..', 'tmp') }
   let(:audio_dir) { File.join(File.dirname(__FILE__), '..', 'media_files') }

@@ -14,6 +14,8 @@ Coveralls.wear!
 require 'settingslogic'
 require 'active_support/all'
 require 'active_support/core_ext/time/zones'
+require 'baw-audio-tools'
+require File.dirname(__FILE__) + '/baw-audio-tools/shared_spec_helper'
 
 RSpec.configure do |config|
   config.treat_symbols_as_metadata_keys_with_true_values = true
@@ -34,8 +36,8 @@ RSpec.configure do |config|
 
   config.before(:suite) do
     # Redirect stderr and stdout
-    $stderr = File.new(File.join(File.dirname(__FILE__), '..','tmp', 'rspec_stderr.txt'), 'w')
-    $stdout = File.new(File.join(File.dirname(__FILE__), '..','tmp', 'rspec_stdout.txt'), 'w')
+    $stderr = File.new(File.join(File.dirname(__FILE__), '..', 'tmp', 'rspec_stderr.txt'), 'w')
+    $stdout = File.new(File.join(File.dirname(__FILE__), '..', 'tmp', 'rspec_stdout.txt'), 'w')
   end
 
   config.after(:suite) do

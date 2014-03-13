@@ -1,7 +1,5 @@
 require 'fileutils'
 require 'spec_helper'
-require File.dirname(__FILE__) + '/../../lib/baw-audio-tools/string'
-require File.dirname(__FILE__) + '/../../lib/baw-audio-tools/cache_base'
 
 describe BawAudioTools::CacheBase do
 

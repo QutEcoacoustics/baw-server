@@ -1,6 +1,3 @@
-require 'logger'
-require 'active_support/buffered_logger'
-
 module BawAudioTools
   module Logging
     # This is the magical bit that gets mixed into your classes

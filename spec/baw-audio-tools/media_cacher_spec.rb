@@ -1,9 +1,5 @@
 require 'fileutils'
-require 'active_support/all'
 require 'spec_helper'
-require File.dirname(__FILE__) + '/shared_spec_helper'
-require File.dirname(__FILE__) + '/../../lib/baw-audio-tools/string'
-require File.dirname(__FILE__) + '/../../lib/baw-audio-tools/media_cacher'
 
 describe BawAudioTools::MediaCacher do
   include_context 'common'

@@ -1,17 +1,4 @@
 require 'open3'
-require 'securerandom'
-require 'benchmark'
-require 'active_support/all'
-require File.dirname(__FILE__) + '/string'
-require File.dirname(__FILE__) + '/hash'
-require File.dirname(__FILE__) + '/audio_sox'
-require File.dirname(__FILE__) + '/audio_mp3splt'
-require File.dirname(__FILE__) + '/audio_wavpack'
-require File.dirname(__FILE__) + '/audio_ffmpeg'
-#require File.dirname(__FILE__) + '/audio_shntool'
-require File.dirname(__FILE__) + '/exceptions'
-require File.dirname(__FILE__) + '/logging'
-require File.dirname(__FILE__) + '/OS'
 
 module BawAudioTools
   class AudioBase

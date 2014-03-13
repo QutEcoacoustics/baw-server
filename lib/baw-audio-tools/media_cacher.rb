@@ -1,11 +1,3 @@
-require 'digest'
-require 'digest/md5'
-require File.dirname(__FILE__) + '/cache_base'
-require File.dirname(__FILE__) + '/spectrogram'
-require File.dirname(__FILE__) + '/audio_base'
-require File.dirname(__FILE__) + '/exceptions'
-require File.dirname(__FILE__) + '/logging'
-
 # This is the class that uses the audio tools and cache tools to cut audio segments
 # and generate spectrograms, then save them to the correct path.
 module BawAudioTools

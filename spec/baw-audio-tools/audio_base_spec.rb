@@ -1,7 +1,4 @@
 require 'spec_helper'
-require File.dirname(__FILE__)+'/shared_spec_helper'
-require File.dirname(__FILE__) + '/../../lib/baw-audio-tools/audio_base'
-require File.dirname(__FILE__) + '/../../lib/baw-audio-tools/exceptions'
 
 describe BawAudioTools::AudioBase do
   include_context 'common'
@@ -25,7 +22,7 @@ describe BawAudioTools::AudioBase do
 
       result = audio_base.execute(command)
 
-      expect(result.time_taken).to be_within(0.3).of(sleep_duration)
+      expect(result.time_taken).to be_within(sleep_range).of(sleep_duration)
       expect(result.stdout).to be_blank
       expect(result.stderr).to be_blank
       expect(result.command).to eq(command)

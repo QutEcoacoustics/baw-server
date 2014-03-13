@@ -1,5 +1,3 @@
-require File.dirname(__FILE__) + '/string'
-
 module BawAudioTools
   class OriginalAudio
 

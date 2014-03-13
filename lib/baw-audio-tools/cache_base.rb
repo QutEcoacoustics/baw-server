@@ -1,11 +1,3 @@
-require 'active_support/all'
-require File.dirname(__FILE__) + '/cache_audio'
-require File.dirname(__FILE__) + '/cache_dataset'
-require File.dirname(__FILE__) + '/cache_spectrogram'
-require File.dirname(__FILE__) + '/original_audio'
-require File.dirname(__FILE__) + '/string'
-require File.dirname(__FILE__) + '/logging'
-
 # Determines file names for cached and original files.
 module BawAudioTools
   class CacheBase

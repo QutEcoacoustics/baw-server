@@ -1,6 +1,3 @@
-require File.dirname(__FILE__) + '/logging'
-require File.dirname(__FILE__) + '/string'
-
 module BawAudioTools
   class AudioWavpack
 
