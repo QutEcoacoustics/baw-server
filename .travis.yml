@@ -5,8 +5,7 @@ branches:
   only:
     - master
 before_script:
-  - yes | cp config/settings/test.travis.yml config/settings/test.yml
-  - psql -c 'create database myapp_test;' -U postgres
+  - yes | cp spec/baw-audio-tools/test.travis.yml spec/baw-audio-tools/test-settings.yml
 before_install:
   - echo "Installing audio tools..."
   - sudo apt-get update -qq
