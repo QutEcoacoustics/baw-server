@@ -31,7 +31,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'coveralls'
 
 # runtime dependencies
-  spec.add_runtime_dependency 'active_support'
+  spec.add_runtime_dependency 'activesupport', '~> 3.2'
   spec.add_runtime_dependency 'settingslogic'
   spec.add_runtime_dependency 'i18n'
   spec.add_runtime_dependency 'tzinfo'
