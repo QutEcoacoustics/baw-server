@@ -119,7 +119,7 @@ resource 'Media' do
   let(:audio_file_mono_channels) { 1 }
   let(:audio_file_mono_duration_seconds) { 70 }
 
-  let(:media_cacher) { MediaCacher.new(Settings.paths.temp_files) }
+  let(:media_cacher) { BawAudioTools::MediaCacher.new(Settings.paths.temp_files) }
 
   # prepare authentication_token for different users
   let(:writer_token) { "Token token=\"#{@write_permission.user.authentication_token}\"" }

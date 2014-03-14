@@ -1,4 +1,5 @@
 require 'settingslogic'
+require 'baw-audio-tools'
 
 # Using SettingsLogic, see https://github.com/binarylogic/settingslogic
 # settings loaded in model/settings.rb
@@ -18,7 +19,7 @@ class Settings < Settingslogic
   end
 
   def cache_tool
-    @cache_tool ||= CacheBase.from_paths_audio(Settings.paths.original_audios, Settings.paths.cached_audios)
+    @cache_tool ||= BawAudioTools::CacheBase.from_paths_audio(Settings.paths.original_audios, Settings.paths.cached_audios)
   end
 
 end

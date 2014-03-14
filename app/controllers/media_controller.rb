@@ -19,7 +19,7 @@ class MediaController < ApplicationController
 
     log_options(params, '#show method start')
 
-    media_cacher = MediaCacher.new(Settings.paths.temp_files)
+    media_cacher = BawAudioTools::MediaCacher.new(Settings.paths.temp_files)
 
     available_text_formats = Settings.available_formats.text
     available_audio_formats = Settings.available_formats.audio
