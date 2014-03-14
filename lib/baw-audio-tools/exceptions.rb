@@ -14,11 +14,5 @@ module BawAudioTools
     class InvalidSampleRateError < ArgumentError; end
     class SegmentRequestTooLong < ArgumentError; end
     class SegmentRequestTooShort < ArgumentError; end
-    class HarvesterError < StandardError; end
-    class HarvesterConfigurationError < HarvesterError; end
-    class HarvesterConfigFileNotFound < HarvesterConfigurationError; end
-    class HarvesterIOError < HarvesterError; end
-    class HarvesterEndpointError < HarvesterError; end
-    class HarvesterAnalysisError < HarvesterError; end
   end
 end
