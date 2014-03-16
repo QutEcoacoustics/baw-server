@@ -1,6 +1,7 @@
 # baw-audio-tools
 
 [![Build Status](https://travis-ci.org/QutBioacoustics/baw-audio-tools.png?branch=master)](https://travis-ci.org/QutBioacoustics/baw-audio-tools)
+[![Dependency Status](https://gemnasium.com/QutBioacoustics/baw-audio-tools.png)](https://gemnasium.com/QutBioacoustics/baw-audio-tools)
 [![Code Climate](https://codeclimate.com/github/QutBioacoustics/baw-audio-tools.png)](https://codeclimate.com/github/QutBioacoustics/baw-audio-tools)
 [![Coverage Status](https://coveralls.io/repos/QutBioacoustics/baw-audio-tools/badge.png)](https://coveralls.io/r/QutBioacoustics/baw-audio-tools)
 
