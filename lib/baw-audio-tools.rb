@@ -1,3 +1,5 @@
+require 'active_support/all'
+
 require 'baw-audio-tools/version'
 require 'baw-audio-tools/hash'
 require 'baw-audio-tools/string'
