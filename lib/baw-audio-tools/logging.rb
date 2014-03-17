@@ -8,7 +8,7 @@ module BawAudioTools
     # Global, memoized, lazy initialized instance of a logger
     def self.logger
       # requires Settings 'Settings.paths.modules_log_file' value to be available
-      @logger ||= Logger.new(Settings.paths.modules_log_file, 5, 20.megabytes)
+      @logger ||= Logger.new(Settings.paths.modules_log_file)
       self.logger_formatter(@logger)
       set_level
       @logger

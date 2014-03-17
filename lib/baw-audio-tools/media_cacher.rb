@@ -1,3 +1,5 @@
+require 'digest'
+
 # This is the class that uses the audio tools and cache tools to cut audio segments
 # and generate spectrograms, then save them to the correct path.
 module BawAudioTools
@@ -138,6 +140,24 @@ module BawAudioTools
 
     def cached_dataset_file_name(modify_parameters)
       @cache.file_name(@cache.cache_dataset, modify_parameters)
+    end
+
+    # @param [string] file_full_path
+    # @return [Digest::SHA256] Digest::SHA256 of file
+    def generate_hash(file_full_path)
+      incr_hash = Digest::SHA256.new
+
+      File.open(file_full_path) do |file|
+        buffer = ''
+
+        # Read the file 512 bytes at a time
+        until file.eof
+          file.read(512, buffer)
+          incr_hash.update(buffer)
+        end
+      end
+
+      incr_hash
     end
 
     def log_options(options, description)
