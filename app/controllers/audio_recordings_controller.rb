@@ -61,23 +61,25 @@ class AudioRecordingsController < ApplicationController
     # current user should be the harvester
     # uploader_id must have read access to the project
 
-    unless current_user.has_role? :harvester
-      render json: {error: 'only harvester can check uploader permissions'}.to_json, status: :forbidden
+    if current_user.blank?
+      render json: {error: 'not logged in'}.to_json, status: :unauthorized
     else
+      if current_user.has_role? :harvester
+        # auth check is skipped, so auth is checked manually here
+        uploader_id = params[:uploader_id]
+        user_exists = User.exists?(uploader_id)
+        user = User.where(id: uploader_id).first
+        highest_permission = user.highest_permission(@project)
 
-      # auth check is skipped, so auth is checked manually here
-      uploader_id = params[:uploader_id]
-      user_exists = User.exists?(uploader_id)
-      user = User.where(id: uploader_id).first
-      highest_permission = user.highest_permission(@project)
-
-      if !user_exists || highest_permission < AccessLevel::WRITE
-        render json: {error: 'uploader does not have access to this project'}.to_json, status: :ok
+        if !user_exists || highest_permission < AccessLevel::WRITE
+          render json: {error: 'uploader does not have access to this project'}.to_json, status: :ok
+        else
+          head :no_content
+        end
       else
-        head :no_content
+        render json: {error: 'only harvester can check uploader permissions'}.to_json, status: :forbidden
       end
     end
-
   end
 
   ## PUT /audio_recordings/1.json
