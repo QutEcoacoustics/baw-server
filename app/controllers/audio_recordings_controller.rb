@@ -33,7 +33,19 @@ class AudioRecordingsController < ApplicationController
   def new
     @audio_recording = AudioRecording.new
 
-    render json: @audio_recording.to_json(only: [:uploader_id, :sample_rate_hertz, :media_type, :recorded_date, :bit_rate_bps, :data_length_bytes, :channels, :duration_seconds])
+    required = [
+        :uploader_id,
+        :sample_rate_hertz,
+        :media_type,
+        :recorded_date,
+        :bit_rate_bps,
+        :data_length_bytes,
+        :channels,
+        :duration_seconds,
+        :file_hash
+    ]
+
+    render json: @audio_recording.to_json(only: required)
   end
 
 
