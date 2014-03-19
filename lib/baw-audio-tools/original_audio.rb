@@ -14,6 +14,17 @@ module BawAudioTools
       @extension_indicator = '.'
       @date_format = '%y%m%d'
       @time_format = '%H%M'
+
+      @separator_offset = 'T'
+      @date_format_offset = '%Y%m%d'
+      @time_format_offset = '%H%M%S'
+      @offset_format_offset = '%z'
+
+      @full_format_offset =
+          @date_format_offset +
+          @separator_offset +
+          @time_format_offset +
+          @offset_format_offset
     end
 
     # offer option of providing hash instead of method arguments?
@@ -32,6 +43,20 @@ module BawAudioTools
         result += time.strftime @time_format
       else
         result += time.to_s
+      end
+
+      result += @extension_indicator + original_format.trim('.', '').to_s
+      result.downcase
+    end
+
+    def file_name_offset(uuid, datetime, original_format)
+      raise BawAudioTools::Exceptions::CacheRequestError, 'not implemented'
+      result = uuid.to_s + @separator
+
+      if datetime.respond_to?(:strftime)
+        result += date.strftime @full_format_offset
+      else
+        raise BawAudioTools::Exceptions::CacheRequestError, 'To include offset in file name, date or time must respond to strftime.'
       end
 
       result += @extension_indicator + original_format.trim('.', '').to_s

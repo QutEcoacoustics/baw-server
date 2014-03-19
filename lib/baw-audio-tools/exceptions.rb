@@ -14,5 +14,6 @@ module BawAudioTools
     class InvalidSampleRateError < ArgumentError; end
     class SegmentRequestTooLong < ArgumentError; end
     class SegmentRequestTooShort < ArgumentError; end
+    class CacheRequestError < ArgumentError; end
   end
 end
