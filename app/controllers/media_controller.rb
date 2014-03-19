@@ -47,8 +47,8 @@ class MediaController < ApplicationController
         options[:original_format] = File.extname(@audio_recording.original_file_name) unless @audio_recording.original_file_name.blank?
         options[:original_format] = '.' + Mime::Type.lookup(@audio_recording.media_type).to_sym.to_s if options[:original_format].blank?
         # date and time are for finding the original audio file
-        options[:date] = @audio_recording.recorded_date.strftime '%y%m%d'
-        options[:time] = @audio_recording.recorded_date.strftime '%H%M'
+        options[:date] = @audio_recording.recorded_date
+        options[:time] = @audio_recording.recorded_date
 
         log_options(options, '#show format is image or audio')
 

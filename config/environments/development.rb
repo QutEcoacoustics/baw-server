@@ -10,14 +10,14 @@ AWB::Application.configure do
   config.whiny_nils = true
 
   # Show full error reports and disable caching
-  config.consider_all_requests_local       = true
+  config.consider_all_requests_local = true
   config.action_controller.perform_caching = false
 
   # configure mailer for development
   config.action_mailer.raise_delivery_errors = true
-  config.action_mailer.default_url_options = { :host => "#{Settings.host.name}:#{Settings.host.port}" }
+  config.action_mailer.default_url_options = {:host => "#{Settings.host.name}:#{Settings.host.port}"}
   config.action_mailer.delivery_method = :file
-  config.action_mailer.file_settings = { :location => Rails.root.join('tmp','mail') }
+  config.action_mailer.file_settings = {:location => Rails.root.join('tmp', 'mail')}
   config.action_mailer.perform_deliveries = true
 
 
@@ -43,16 +43,19 @@ AWB::Application.configure do
   # Set path for image magick for windows only
   if RbConfig::CONFIG['target_os'] =~ /mswin|mingw/i
     im_dir = Settings.paths.image_magick_dir
-    puts 'WARN: cannot find image magick path' unless File.directory? im_dir
-    Paperclip.options[:command_path] = im_dir
+    if Dir.exists?(im_dir) && File.directory?(im_dir)
+      Paperclip.options[:command_path] = im_dir
+    else
+      puts "WARN: cannot find image magick path #{im_dir}"
+    end
   end
 
   AWB::Application.config.middleware.use ExceptionNotification::Rack,
-  email: {
-    email_prefix: Settings.exception_notification.email_prefix,
-    sender_address:  Settings.exception_notification.sender_address,
-    exception_recipients:  Settings.exception_notification.exception_recipients
-  }
+    email: {
+       email_prefix: Settings.exception_notification.email_prefix,
+       sender_address: Settings.exception_notification.sender_address,
+       exception_recipients: Settings.exception_notification.exception_recipients
+    }
 
   config.log_level = :info
 

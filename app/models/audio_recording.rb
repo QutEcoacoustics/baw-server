@@ -31,8 +31,15 @@ class AudioRecording < ActiveRecord::Base
   #acts_as_paranoid
   #validates_as_paranoid
 
-  # Enums
-  AVAILABLE_STATUSES = [:new, :to_check, :ready, :corrupt, :ignore].map { |item| item.to_s }
+  # Enums for audio recording status
+  # new - record created and passes validation
+  # uploading - file being copied from source to dest
+  # to_check - uploading is complete - file hash should be compared to hash stored in db
+  # ready - audio recording all ready for use on website
+  # corrupt - file hash check failed, audio recording will not be available
+  # aborted - a problem occurred during harvesting or checking, the file needs to be harvested again
+  AVAILABLE_STATUSES_SYMBOLS = [:new, :uploading, :to_check, :ready, :corrupt, :aborted]
+  AVAILABLE_STATUSES = AVAILABLE_STATUSES_SYMBOLS.map { |item| item.to_s }
   enumerize :status, in: AVAILABLE_STATUSES, predicates: true
 
   # Validations
@@ -216,7 +223,16 @@ class AudioRecording < ActiveRecord::Base
             duration: a.duration_seconds,
             end_date: a.recorded_date.advance(seconds: a.duration_seconds)
         } }
-        errors.add(:recorded_date, "#{this_audio_recording} can't overlap with #{overlapping}")
+
+        message = {
+            problem: 'audio recordings that overlap in the same site (calculated from recording_start and duration_seconds) are not permitted',
+            audio_recordings:[
+                this_audio_recording,
+                overlapping
+            ]
+        }
+
+        errors.add(:recorded_date, message.to_json)
       end
     end
   end

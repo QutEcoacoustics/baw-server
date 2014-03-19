@@ -202,4 +202,10 @@ en-AU:
       <<: *errors
   activerecord:
     errors:
+      models:
+        audio_recording:
+          attributes:
+            recorded_date:
+              invalid_datetime: 'invalid datetime'
+              on_or_before: 'must be on or before current datetime'
       <<: *errors

@@ -4,8 +4,10 @@ ENV['RAILS_ENV'] ||= 'test'
 require 'simplecov'
 SimpleCov.start
 
-require 'coveralls'
-Coveralls.wear!
+if ENV['TRAVIS']
+  require 'coveralls'
+  Coveralls.wear!
+end
 
 require File.expand_path('../../config/environment', __FILE__)
 require 'rspec/rails'
@@ -67,8 +69,8 @@ RSpec.configure do |config|
     FactoryGirl.lint
 
     # Redirect stderr and stdout
-    $stderr = File.new(File.join(File.dirname(__FILE__), '..','tmp', 'rspec_stderr.txt'), 'w')
-    $stdout = File.new(File.join(File.dirname(__FILE__), '..','tmp', 'rspec_stdout.txt'), 'w')
+    $stderr = File.new(File.join(File.dirname(__FILE__), '..', 'tmp', 'rspec_stderr.txt'), 'w')
+    $stdout = File.new(File.join(File.dirname(__FILE__), '..', 'tmp', 'rspec_stdout.txt'), 'w')
   end
 
   # Request specs cannot use a transaction because Capybara runs in a
@@ -89,7 +91,7 @@ RSpec.configure do |config|
     ActionMailer::Base.deliveries.clear
 
     example_description = example.description
-    Rails::logger.info  "\n\n#{example_description}\n#{'-' * (example_description.length)}"
+    Rails::logger.info "\n\n#{example_description}\n#{'-' * (example_description.length)}"
 
     #Bullet.start_request if Bullet.enable?
   end
