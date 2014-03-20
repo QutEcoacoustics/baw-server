@@ -187,7 +187,8 @@ class AudioRecording < ActiveRecord::Base
     end
     count = query.count
     if count > 0
-      errors.add(:file_hash, "can't be duplicate")
+      ids = query.select(:id).to_a.map { |item| item.id }
+      errors.add(:file_hash, "has already been taken by id #{ids}.")
     end
   end
 
@@ -201,9 +202,9 @@ class AudioRecording < ActiveRecord::Base
     if self.recorded_date.respond_to?(:advance)
       end_time = self.recorded_date.advance(seconds: self.duration_seconds)
       query = AudioRecording
-        .where(site_id: self.site_id)
-        .start_before(end_time)
-        .end_after(self.recorded_date)
+      .where(site_id: self.site_id)
+      .start_before(end_time)
+      .end_after(self.recorded_date)
       unless self.id.blank?
         query = query.where('id <> ?', self.id)
       end
@@ -226,7 +227,7 @@ class AudioRecording < ActiveRecord::Base
 
         message = {
             problem: 'audio recordings that overlap in the same site (calculated from recording_start and duration_seconds) are not permitted',
-            audio_recordings:[
+            audio_recordings: [
                 this_audio_recording,
                 overlapping
             ]

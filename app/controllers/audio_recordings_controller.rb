@@ -141,15 +141,15 @@ class AudioRecordingsController < ApplicationController
   def update_status_params_check
     if @audio_recording.blank?
       render json: {error: "Could not find Audio Recording with id #{params[:id]}"}.to_json, status: :not_found
-    elsif !params[:audio_recording].include?(:file_hash)
+    elsif !params.include?(:file_hash)
       render json: {error: 'Must include file hash'}.to_json, status: :unprocessable_entity
-    elsif @audio_recording.file_hash != params[:audio_recording][:file_hash]
+    elsif @audio_recording.file_hash != params[:file_hash]
       render json: {error: 'Incorrect file hash'}.to_json, status: :unprocessable_entity
-    elsif !params[:audio_recording].include?(:uuid)
+    elsif !params.include?(:uuid)
       render json: {error: 'Must include uuid'}.to_json, status: :unprocessable_entity
-    elsif @audio_recording.uuid != params[:audio_recording][:uuid]
+    elsif @audio_recording.uuid != params[:uuid]
       render json: {error: 'Incorrect uuid'}.to_json, status: :unprocessable_entity
-    elsif !params[:audio_recording].include?(:status)
+    elsif !params.include?(:status)
       render json: {error: 'Must include status'}.to_json, status: :unprocessable_entity
     else
       update_status_available_check
@@ -157,7 +157,7 @@ class AudioRecordingsController < ApplicationController
   end
 
   def update_status_available_check
-    new_status = params[:audio_recording][:status].to_sym
+    new_status = params[:status].to_sym
     if AudioRecording::AVAILABLE_STATUSES_SYMBOLS.include?(new_status)
       update_status_audio_recording(new_status)
     else
