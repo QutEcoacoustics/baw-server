@@ -96,11 +96,9 @@ module BawAudioTools
       end
 
       if cache_class.is_a?(OriginalAudio)
-        raise ArgumentError, "#{msg} date. #{provided}" unless modify_parameters.include? :date
-        raise ArgumentError, "date must not be blank. #{provided}" if modify_parameters[:date].blank?
-
-        raise ArgumentError, "#{msg} time. #{provided}" unless modify_parameters.include? :time
-        raise ArgumentError, "time must not be blank. #{provided}" if modify_parameters[:time].blank?
+        raise ArgumentError, "#{msg} date. #{provided}" unless modify_parameters.include? :datetime_with_offset
+        raise ArgumentError, "datetime must not be blank. #{provided}" if modify_parameters[:datetime_with_offset].blank?
+        raise ArgumentError, "datetime must be an ActiveSupport::TimeWithZone object. #{provided}" unless modify_parameters[:datetime_with_offset].is_a?(ActiveSupport::TimeWithZone)
 
         raise ArgumentError, "#{msg} original_format. #{provided}" unless modify_parameters.include? :original_format
         raise ArgumentError, "original_format must not be blank. #{provided}" if modify_parameters[:original_format].blank?
@@ -127,12 +125,17 @@ module BawAudioTools
 
       case cache_class
         when OriginalAudio
-          file_name = @original_audio.file_name(
+          file_name_old = @original_audio.file_name(
               modify_parameters[:uuid],
-              modify_parameters[:date],
-              modify_parameters[:time],
+              modify_parameters[:datetime_with_offset],
               modify_parameters[:original_format]
           )
+          file_name_utc = @original_audio.file_name_utc(
+              modify_parameters[:uuid],
+              modify_parameters[:datetime_with_offset],
+              modify_parameters[:original_format]
+          )
+          file_name = [file_name_old, file_name_utc]
         when CacheAudio
           file_name = @cache_audio.file_name(
               modify_parameters[:uuid],

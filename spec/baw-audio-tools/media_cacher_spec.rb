@@ -11,19 +11,22 @@ describe BawAudioTools::MediaCacher do
   let(:sample_rate) { 44100 }
   let(:channels) { 2 }
   let(:duration_seconds) { 70.0 }
-  let(:datetime) { Time.zone.parse("2012-03-02 16:05:37") }
+  let(:datetime) { Time.zone.parse('2012-03-02 16:05:37Z') }
   let(:original_format) { 'ogg' }
   let(:uuid) { '5498633d-89a7-4b65-8f4a-96aa0c09c619' }
 
-  let(:original_file_name) { "#{uuid}_#{datetime.strftime('%y%m%d')}-#{datetime.strftime('%H%M')}.#{original_format}" }
-  let(:original_file_dir) { File.join(Settings.paths.original_audios, '54') }
-  let(:original_file_path) { File.join(original_file_dir, original_file_name) }
+  let(:original_file_name_old) { "#{uuid}_120303-0205.#{original_format}" } # depends on let(:datetime)
+  let(:original_file_name_new) { "#{uuid}_20120302-160537Z.#{original_format}" } # depends on let(:datetime)
+  let(:original_file_dir) { File.expand_path File.join(Settings.paths.original_audios, '54') }
+  let(:original_file_path_old) { File.join(original_file_dir, original_file_name_old) }
+  let(:original_file_path_new) { File.join(original_file_dir, original_file_name_new) }
 
   before(:each) do
     FileUtils.mkpath(original_file_dir)
     # src, dest, preserve, dereference
     # If preserve is true, this method preserves owner, group, permissions and modified time.
-    FileUtils.copy_file(original_audio_file, original_file_path, true)
+    FileUtils.copy_file(original_audio_file, original_file_path_old, true)
+    FileUtils.copy_file(original_audio_file, original_file_path_new, true)
   end
 
   after(:each) do
@@ -37,8 +40,7 @@ describe BawAudioTools::MediaCacher do
     expect {
       media_cacher.create_audio_segment(
           {uuid: '5498633d-89a7-4b65-8f4a-46aa0c09c619',
-           date: datetime,
-           time: datetime,
+           datetime_with_offset: datetime,
            original_format: original_format,
            start_offset: 0,
            end_offset: duration_seconds,
@@ -54,8 +56,7 @@ describe BawAudioTools::MediaCacher do
       existing_paths = media_cacher.create_audio_segment(
           {
               uuid: uuid,
-              date: datetime,
-              time: datetime,
+              datetime_with_offset: datetime,
               original_format: original_format,
               end_offset: 60,
               start_offset: 45,
@@ -78,8 +79,7 @@ describe BawAudioTools::MediaCacher do
       existing_paths = media_cacher.create_audio_segment(
           {
               uuid: uuid,
-              date: datetime,
-              time: datetime,
+              datetime_with_offset: datetime,
               original_format: original_format,
               start_offset: 0,
               end_offset: Settings.cached_audio_defaults.min_duration_seconds,
@@ -106,8 +106,7 @@ describe BawAudioTools::MediaCacher do
       existing_paths = media_cacher.generate_spectrogram(
           {
               uuid: uuid,
-              date: datetime,
-              time: datetime,
+              datetime_with_offset: datetime,
               original_format: original_format,
               end_offset: 60,
               start_offset: 45,
@@ -131,8 +130,7 @@ describe BawAudioTools::MediaCacher do
       existing_paths = media_cacher.generate_spectrogram(
           {
               uuid: uuid,
-              date: datetime,
-              time: datetime,
+              datetime_with_offset: datetime,
               original_format: original_format,
               start_offset: 0,
               end_offset: Settings.cached_spectrogram_defaults.min_duration_seconds,

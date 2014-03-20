@@ -29,6 +29,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'wdm', '>= 0.1.0' if RbConfig::CONFIG['target_os'] =~ /mswin|mingw|cygwin/i
   spec.add_development_dependency 'simplecov', '~> 0.7.1'
   spec.add_development_dependency 'coveralls'
+  spec.add_development_dependency 'zonebie'
 
   # runtime dependencies
   spec.add_runtime_dependency 'activesupport', '>= 3.2'

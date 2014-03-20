@@ -10,58 +10,48 @@ module BawAudioTools
       @storage_paths = storage_paths
 
       @separator = '_'
-      @separator_dash = '-'
       @extension_indicator = '.'
-      @date_format = '%y%m%d'
-      @time_format = '%H%M'
-
-      @separator_offset = 'T'
-      @date_format_offset = '%Y%m%d'
-      @time_format_offset = '%H%M%S'
-      @offset_format_offset = '%z'
-
-      @full_format_offset =
-          @date_format_offset +
-          @separator_offset +
-          @time_format_offset +
-          @offset_format_offset
     end
 
-    # offer option of providing hash instead of method arguments?
-    def file_name(uuid, date, time, original_format)
+    # Create a file name. This file name is by convention always in utc offset +1000.
+    # @deprecated
+    # @param [string] uuid
+    # @param [ActiveSupport::TimeWithZone] datetime
+    # @param [string] original_format
+    # @return [string] file name
+    def file_name(uuid, datetime, original_format)
       result = uuid.to_s + @separator
 
-      if date.respond_to?(:strftime)
-        result += date.strftime @date_format
+      if datetime.is_a?(ActiveSupport::TimeWithZone)
+        format_string = '%y%m%d-%H%M'
+        result += datetime.utc.advance(hours: 10).strftime(format_string)
       else
-        result += date.to_s
-      end
-
-      result += @separator_dash
-
-      if time.respond_to?(:strftime)
-        result += time.strftime @time_format
-      else
-        result += time.to_s
+        raise BawAudioTools::Exceptions::CacheRequestError, "Only uses ActiveSupport::TimeWithZone, given #{uuid}, #{datetime}, #{original_format}."
       end
 
       result += @extension_indicator + original_format.trim('.', '').to_s
       result.downcase
     end
 
-    def file_name_offset(uuid, datetime, original_format)
-      raise BawAudioTools::Exceptions::CacheRequestError, 'not implemented'
+    # Create a file name. This filename is always explicitly in UTC.
+    # @param [string] uuid
+    # @param [ActiveSupport::TimeWithZone] datetime
+    # @param [string] original_format
+    # @return [string] file name
+    def file_name_utc(uuid, datetime, original_format)
       result = uuid.to_s + @separator
 
-      if datetime.respond_to?(:strftime)
-        result += date.strftime @full_format_offset
+      if datetime.is_a?(ActiveSupport::TimeWithZone)
+        format_string = '%Y%m%d-%H%M%S'
+        result += datetime.utc.strftime(format_string).downcase
       else
-        raise BawAudioTools::Exceptions::CacheRequestError, 'To include offset in file name, date or time must respond to strftime.'
+        raise BawAudioTools::Exceptions::CacheRequestError, "Only uses ActiveSupport::TimeWithZone, given #{uuid}, #{datetime}, #{original_format}."
       end
 
-      result += @extension_indicator + original_format.trim('.', '').to_s
-      result.downcase
+      result + 'Z' + @extension_indicator + original_format.trim('.', '').to_s.downcase
     end
+
+
 
     def partial_path(file_name)
       # prepend first two chars of uuid

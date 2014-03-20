@@ -10,7 +10,7 @@ describe BawAudioTools::CacheBase do
       Settings.paths.cached_datasets) }
 
   let(:uuid) { '5498633d-89a7-4b65-8f4a-96aa0c09c619' }
-  let(:datetime) { Time.zone.parse("2012-03-02 16:05:37") }
+  let(:datetime) { Time.zone.parse("2012-03-02 16:05:37+1100") }
   let(:end_offset) { 20.02 }
   let(:partial_path) { uuid[0, 2] }
 
@@ -23,7 +23,8 @@ describe BawAudioTools::CacheBase do
   let(:format_spectrogram) { 'jpg' }
 
   let(:original_format) { 'mp3' }
-  let(:original_file_name) { "#{uuid}_#{datetime.strftime('%y%m%d')}-#{datetime.strftime('%H%M')}.#{original_format}" }
+  let(:original_file_name_old) { "#{uuid}_120302-1505.#{original_format}" } # depends on let(:datetime)
+  let(:original_file_name_new) { "#{uuid}_20120302-050537Z.#{original_format}" } # depends on let(:datetime)
 
   let(:cached_audio_file_name_defaults) { "#{uuid}_0.0_#{end_offset}_0_22050.mp3" }
   let(:cached_audio_file_name_given_parameters) { "#{uuid}_#{start_offset}_#{end_offset}_#{channel}_#{sample_rate}.#{format_audio}" }
@@ -52,45 +53,70 @@ describe BawAudioTools::CacheBase do
       FileUtils.rm_rf(Settings.paths.original_audios[0])
     end
 
-    it 'possible paths match settings' do
-      files = [File.join(Settings.paths.original_audios[0], partial_path, original_file_name)]
-      cache_base.possible_storage_paths(cache_base.original_audio, original_file_name).should =~ files
+    it 'possible paths match settings for old names' do
+      files = [File.join(Settings.paths.original_audios[0], partial_path, original_file_name_old)]
+      cache_base.possible_storage_paths(cache_base.original_audio, original_file_name_old).should =~ files
     end
 
-    it 'existing paths match settings' do
-      files = [File.join(Settings.paths.original_audios[0], partial_path, original_file_name)]
+    it 'possible paths match settings for new names' do
+      files = [File.join(Settings.paths.original_audios[0], partial_path, original_file_name_new)]
+      cache_base.possible_storage_paths(cache_base.original_audio, original_file_name_new).should =~ files
+    end
+
+    it 'existing paths match settings for old names' do
+      files = [
+          File.join(Settings.paths.original_audios[0], partial_path, original_file_name_old)
+      ]
       dir = Settings.paths.original_audios[0]
       sub_dir = File.join(dir, partial_path)
       FileUtils.mkpath(sub_dir)
       FileUtils.touch(files[0])
-      cache_base.existing_storage_paths(cache_base.original_audio, original_file_name).should =~ files
+      cache_base.possible_storage_paths(cache_base.original_audio, original_file_name_old).should =~ files
       FileUtils.rm_rf(dir)
     end
 
-    it 'creates the correct name' do
-      expect(cache_base.original_audio.file_name(uuid, datetime, datetime, original_format)).to eq original_file_name
+    it 'existing paths match settings for new names' do
+      files = [File.join(Settings.paths.original_audios[0], partial_path, original_file_name_new)]
+      dir = Settings.paths.original_audios[0]
+      sub_dir = File.join(dir, partial_path)
+      FileUtils.mkpath(sub_dir)
+      FileUtils.touch(files[0])
+      cache_base.possible_storage_paths(cache_base.original_audio, original_file_name_new).should =~ files
+      FileUtils.rm_rf(dir)
     end
 
-    it 'creates the correct partial path' do
-      expect(cache_base.original_audio.partial_path(original_file_name)).to eq partial_path
+    it 'creates the correct old name' do
+      expect(cache_base.original_audio.file_name(uuid, datetime, original_format)).to eq original_file_name_old
     end
 
-    it 'creates the correct full path' do
-      expected = [File.join(Settings.paths.original_audios[0], partial_path, original_file_name)]
-      expect(cache_base.possible_storage_paths(cache_base.original_audio, original_file_name)).to eq expected
+    it 'creates the correct new name' do
+      expect(cache_base.original_audio.file_name_utc(uuid, datetime, original_format)).to eq original_file_name_new
     end
 
-    it 'detects date that is not Time class' do
-      date_sym = datetime.strftime('%y%m%d').to_sym
-      expect(cache_base.original_audio.file_name(uuid, date_sym, datetime, original_format)).to eq original_file_name
+    it 'creates the correct partial path for old names' do
+      expect(cache_base.original_audio.partial_path(original_file_name_old)).to eq partial_path
     end
 
-    it 'detects time that is not Time class' do
-      time_sym = datetime.strftime('%H%M').to_sym
-      expect(cache_base.original_audio.file_name(uuid, datetime, time_sym, original_format)).to eq original_file_name
+    it 'creates the correct partial path for new names' do
+      expect(cache_base.original_audio.partial_path(original_file_name_new)).to eq partial_path
+    end
+
+    it 'creates the correct full path for old names' do
+      expected = [File.join(Settings.paths.original_audios[0], partial_path, original_file_name_old)]
+      expect(cache_base.possible_storage_paths(cache_base.original_audio, original_file_name_old)).to eq expected
+    end
+
+    it 'creates the correct full path for new names' do
+      expected = [File.join(Settings.paths.original_audios[0], partial_path, original_file_name_new)]
+      expect(cache_base.possible_storage_paths(cache_base.original_audio, original_file_name_new)).to eq expected
+    end
+
+    it 'detects that Date object is not valid' do
+      expect{
+        cache_base.original_audio.file_name(uuid, datetime.localtime, original_format)
+      }.to raise_error(BawAudioTools::Exceptions::CacheRequestError, /Only uses ActiveSupport::TimeWithZone, given/)
     end
   end
-
 
   context 'cached audio' do
     it 'no storage directories exist' do

@@ -86,7 +86,7 @@ module BawAudioTools
         end
       end
 
-      raise Exceptions::NotAnAudioFileError, "Not an audio file #{source}: #{result.to_json}" if result['STREAM codec_type'] != 'audio'
+      raise Exceptions::NotAnAudioFileError, "Not an audio file #{source} (#{result['STREAM codec_type']}): #{result.to_json}" if result['STREAM codec_type'] != 'audio'
 
       result
     end

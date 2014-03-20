@@ -56,4 +56,4 @@ test:
     imagemagick_convert_executable: convert
     imagemagick_identify_executable: identify
     max_duration_seconds: 300
-  audio_tools_timeout_sec: 20
+  audio_tools_timeout_sec: 10

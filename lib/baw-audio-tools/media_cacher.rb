@@ -42,9 +42,9 @@ module BawAudioTools
       if target_existing_paths.blank?
 
         # if no cached audio files exist, try to create them from the original audio
-        source_file = self.original_audio_file_name(modify_parameters)
-        source_existing_paths = @cache.existing_storage_paths(@cache.original_audio, source_file)
-        source_possible_paths = @cache.possible_storage_paths(@cache.original_audio, source_file)
+        source_files = self.original_audio_file_names(modify_parameters)
+        source_existing_paths = source_files.map { |source_file| @cache.existing_storage_paths(@cache.original_audio, source_file) }.flatten
+        source_possible_paths = source_files.map { |source_file| @cache.possible_storage_paths(@cache.original_audio, source_file) }.flatten
 
         # if the original audio file()s) cannot be found, raise an exception
         raise Exceptions::AudioFileNotFoundError, "Could not find original audio in '#{source_possible_paths}' using #{modify_parameters}." if source_existing_paths.blank?
@@ -126,7 +126,7 @@ module BawAudioTools
       target_existing_paths
     end
 
-    def original_audio_file_name(modify_parameters)
+    def original_audio_file_names(modify_parameters)
       @cache.file_name(@cache.original_audio, modify_parameters)
     end
 

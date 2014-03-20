@@ -8,12 +8,14 @@
 require 'simplecov'
 SimpleCov.start
 
-require 'coveralls'
-Coveralls.wear!
+if ENV['TRAVIS']
+  require 'coveralls'
+  Coveralls.wear!
+end
 
 require 'settingslogic'
 require 'active_support/all'
-require 'active_support/core_ext/time/zones'
+require 'zonebie'
 require 'baw-audio-tools'
 require File.dirname(__FILE__) + '/baw-audio-tools/shared_spec_helper'
 
@@ -52,5 +54,6 @@ RSpec.configure do |config|
   end
 
   # so Time.zone.parse can be used
-  Time.zone = 'UTC'
+  #Time.zone = 'UTC'
+  Zonebie.set_random_timezone
 end
