@@ -81,7 +81,7 @@ class AudioRecording < ActiveRecord::Base
   end
 
   def original_file_paths
-    cache = Settings.cache_tool
+    media_cache = Settings.media_cache_tool
 
     original_format = '.wv' # pick something
 
@@ -93,11 +93,26 @@ class AudioRecording < ActiveRecord::Base
 
     source_existing_paths = []
     unless original_format.blank?
-      file_name = cache.original_audio.file_name(self.uuid, self.recorded_date, self.recorded_date, original_format)
-      source_existing_paths = cache.existing_storage_paths(cache.original_audio, file_name)
+      modify_parameters = {
+          uuid: self.uuid,
+          datetime_with_offset: self.recorded_date,
+          original_format: self.original_format_calculated
+      }
+
+      source_files = media_cache.original_audio_file_names(modify_parameters)
+      source_existing_paths = source_files.map { |source_file| media_cache.cache.existing_storage_paths(media_cache.cache.original_audio, source_file) }.flatten
+      #source_possible_paths = source_files.map { |source_file|  media_cache.cache.possible_storage_paths( media_cache.cache.original_audio, source_file) }.flatten
     end
 
     source_existing_paths
+  end
+
+  def original_format_calculated
+    if self.original_file_name.blank?
+      Mime::Type.lookup(self.media_type).to_sym.to_s
+    else
+      File.extname(self.original_file_name)
+    end
   end
 
   def check_file_hash
@@ -162,8 +177,8 @@ class AudioRecording < ActiveRecord::Base
   end
 
   def self.check_storage
-    cache = Settings.cache_tool
-    existing_dirs = cache.existing_storage_dirs(cache.original_audio)
+    media_cache = Settings.media_cache_tool
+    existing_dirs = media_cache.cache.existing_storage_dirs(media_cache.cache.original_audio)
     if existing_dirs.empty?
       msg = 'None of the audio recording storage directories are available.'
       logger.warn msg

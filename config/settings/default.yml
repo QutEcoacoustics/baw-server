@@ -112,8 +112,8 @@ defaults: &defaults
     mp3splt_executable: mp3splt.exe
     sox_executable: sox.exe
     wavpack_executable: wvunpack.exe
-    imagemagick_convert_executable: convert-im.exe
-    imagemagick_identify_executable: identify-im.exe
+    imagemagick_convert_executable: convert.exe
+    imagemagick_identify_executable: identify.exe
     max_duration_seconds: 300
   audio_tools_timeout_sec: 20
   server_version: 0.6.2

@@ -19,20 +19,18 @@ end
 def using_original_audio(audio_recording, content_type, check_accept_header = true)
   # set up audio file
 
-
   options = {}
   options[:datetime] = audio_recording.recorded_date
   options[:original_format] = File.extname(audio_recording.original_file_name) unless audio_recording.original_file_name.blank?
   options[:original_format] = '.' + Mime::Type.lookup(audio_recording.media_type).to_sym.to_s if options[:original_format].blank?
-  options[:date] = audio_recording.recorded_date.strftime '%y%m%d'
-  options[:time] = audio_recording.recorded_date.strftime '%H%M'
+  options[:datetime_with_offset] = audio_recording.recorded_date
   options[:uuid] = audio_recording.uuid
   options[:id] = audio_recording.id
   options[:start_offset] = start_offset
   options[:end_offset] = end_offset
 
-  original_file = media_cacher.original_audio_file_name(options)
-  original_possible_paths = media_cacher.cache.possible_storage_paths(media_cacher.cache.original_audio, original_file)
+  original_file_names = media_cacher.original_audio_file_names(options)
+  original_possible_paths = original_file_names.map { |source_file| media_cacher.cache.possible_storage_paths(media_cacher.cache.original_audio, source_file) }.flatten
 
   FileUtils.mkpath File.dirname(original_possible_paths.first)
   FileUtils.cp audio_file_mono, original_possible_paths.first
@@ -49,19 +47,19 @@ def using_original_audio(audio_recording, content_type, check_accept_header = tr
     response_body.size.should eq(0)
     if response_headers['Content-Type'].include? 'image'
       default_spectrogram = Settings.cached_spectrogram_defaults
-      options[:format] =  default_spectrogram.storage_format
-      options[:channel] =  default_spectrogram.channel.to_i
-      options[:sample_rate] =  default_spectrogram.sample_rate.to_i
-      options[:window] =  default_spectrogram.window.to_i
-      options[:colour] =  default_spectrogram.colour.to_s
+      options[:format] = default_spectrogram.storage_format
+      options[:channel] = default_spectrogram.channel.to_i
+      options[:sample_rate] = default_spectrogram.sample_rate.to_i
+      options[:window] = default_spectrogram.window.to_i
+      options[:colour] = default_spectrogram.colour.to_s
       cache_spectrogram_file = media_cacher.cached_spectrogram_file_name(options)
       cache_spectrogram_possible_paths = media_cacher.cache.possible_storage_paths(media_cacher.cache.cache_spectrogram, cache_spectrogram_file)
       response_headers['Content-Length'].to_i.should eq(File.size(cache_spectrogram_possible_paths.first))
     elsif response_headers['Content-Type'].include? 'audio'
       default_audio = Settings.cached_audio_defaults
       options[:format] = default_audio.storage_format
-      options[:channel] =  default_audio.channel.to_i
-      options[:sample_rate] =  default_audio.sample_rate.to_i
+      options[:channel] = default_audio.channel.to_i
+      options[:sample_rate] = default_audio.sample_rate.to_i
       cache_audio_file = media_cacher.cached_audio_file_name(options)
       cache_audio_possible_paths = media_cacher.cache.possible_storage_paths(media_cacher.cache.cache_audio, cache_audio_file)
       response_headers['Content-Length'].to_i.should eq(File.size(cache_audio_possible_paths.first))

@@ -161,7 +161,7 @@ class AudioRecordingsController < ApplicationController
     if AudioRecording::AVAILABLE_STATUSES_SYMBOLS.include?(new_status)
       update_status_audio_recording(new_status)
     else
-      render json: {error: "Status #{new_status} is not in available status list #{AVAILABLE_STATUSES_SYMBOLS}."}.to_json, status: :unprocessable_entity
+      render json: {error: "Status #{new_status} is not in available status list #{AudioRecording::AVAILABLE_STATUSES_SYMBOLS}."}.to_json, status: :unprocessable_entity
     end
   end
 
