@@ -1,4 +1,5 @@
 require 'settingslogic'
+require 'baw-audio-tools'
 
 # Using SettingsLogic, see https://github.com/binarylogic/settingslogic
 # settings loaded in model/settings.rb
@@ -17,8 +18,8 @@ class Settings < Settingslogic
     puts "===> #{Rails.root}/config/settings/#{Rails.env}.yml not found."
   end
 
-  def cache_tool
-    @cache_tool ||= CacheBase.from_paths_audio(Settings.paths.original_audios, Settings.paths.cached_audios)
+  def media_cache_tool
+    @media_cache_tool ||= BawAudioTools::MediaCacher.new(Settings.paths.temp_files)
   end
 
 end

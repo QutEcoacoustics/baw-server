@@ -19,7 +19,7 @@ class MediaController < ApplicationController
 
     log_options(params, '#show method start')
 
-    media_cacher = MediaCacher.new(Settings.paths.temp_files)
+    media_cacher = BawAudioTools::MediaCacher.new(Settings.paths.temp_files)
 
     available_text_formats = Settings.available_formats.text
     available_audio_formats = Settings.available_formats.audio
@@ -47,8 +47,7 @@ class MediaController < ApplicationController
         options[:original_format] = File.extname(@audio_recording.original_file_name) unless @audio_recording.original_file_name.blank?
         options[:original_format] = '.' + Mime::Type.lookup(@audio_recording.media_type).to_sym.to_s if options[:original_format].blank?
         # date and time are for finding the original audio file
-        options[:date] = @audio_recording.recorded_date.strftime '%y%m%d'
-        options[:time] = @audio_recording.recorded_date.strftime '%H%M'
+        options[:datetime_with_offset] = @audio_recording.recorded_date
 
         log_options(options, '#show format is image or audio')
 
@@ -112,8 +111,7 @@ class MediaController < ApplicationController
           #Settings.cached_audio_defaults.each { |key, value| value.merge!({mime_type: Mime::Type.lookup_by_extension(key).to_s, url: audio_recording_media_path(@audio_recording, format: key, start_offset: params[:start_offset], end_offset: params[:end_offset])}) }
           options[:available_image_formats] = get_available_formats(@audio_recording, available_image_formats, params[:start_offset], params[:end_offset], default_spectrogram)
 
-          options.delete :date
-          options.delete :time
+          options.delete :datetime_with_offset
           options[:format] = 'json'
 
           json_result = options.to_json
