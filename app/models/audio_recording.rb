@@ -31,8 +31,15 @@ class AudioRecording < ActiveRecord::Base
   #acts_as_paranoid
   #validates_as_paranoid
 
-  # Enums
-  AVAILABLE_STATUSES = [:new, :to_check, :ready, :corrupt, :ignore].map { |item| item.to_s }
+  # Enums for audio recording status
+  # new - record created and passes validation
+  # uploading - file being copied from source to dest
+  # to_check - uploading is complete - file hash should be compared to hash stored in db
+  # ready - audio recording all ready for use on website
+  # corrupt - file hash check failed, audio recording will not be available
+  # aborted - a problem occurred during harvesting or checking, the file needs to be harvested again
+  AVAILABLE_STATUSES_SYMBOLS = [:new, :uploading, :to_check, :ready, :corrupt, :aborted]
+  AVAILABLE_STATUSES = AVAILABLE_STATUSES_SYMBOLS.map { |item| item.to_s }
   enumerize :status, in: AVAILABLE_STATUSES, predicates: true
 
   # Validations
@@ -74,7 +81,7 @@ class AudioRecording < ActiveRecord::Base
   end
 
   def original_file_paths
-    cache = Settings.cache_tool
+    media_cache = Settings.media_cache_tool
 
     original_format = '.wv' # pick something
 
@@ -86,11 +93,26 @@ class AudioRecording < ActiveRecord::Base
 
     source_existing_paths = []
     unless original_format.blank?
-      file_name = cache.original_audio.file_name(self.uuid, self.recorded_date, self.recorded_date, original_format)
-      source_existing_paths = cache.existing_storage_paths(cache.original_audio, file_name)
+      modify_parameters = {
+          uuid: self.uuid,
+          datetime_with_offset: self.recorded_date,
+          original_format: self.original_format_calculated
+      }
+
+      source_files = media_cache.original_audio_file_names(modify_parameters)
+      source_existing_paths = source_files.map { |source_file| media_cache.cache.existing_storage_paths(media_cache.cache.original_audio, source_file) }.flatten
+      #source_possible_paths = source_files.map { |source_file|  media_cache.cache.possible_storage_paths( media_cache.cache.original_audio, source_file) }.flatten
     end
 
     source_existing_paths
+  end
+
+  def original_format_calculated
+    if self.original_file_name.blank?
+      Mime::Type.lookup(self.media_type).to_sym.to_s
+    else
+      File.extname(self.original_file_name)
+    end
   end
 
   def check_file_hash
@@ -155,8 +177,8 @@ class AudioRecording < ActiveRecord::Base
   end
 
   def self.check_storage
-    cache = Settings.cache_tool
-    existing_dirs = cache.existing_storage_dirs(cache.original_audio)
+    media_cache = Settings.media_cache_tool
+    existing_dirs = media_cache.cache.existing_storage_dirs(media_cache.cache.original_audio)
     if existing_dirs.empty?
       msg = 'None of the audio recording storage directories are available.'
       logger.warn msg
@@ -180,7 +202,8 @@ class AudioRecording < ActiveRecord::Base
     end
     count = query.count
     if count > 0
-      errors.add(:file_hash, "can't be duplicate")
+      ids = query.select(:id).to_a.map { |item| item.id }
+      errors.add(:file_hash, "has already been taken by id #{ids}.")
     end
   end
 
@@ -194,9 +217,9 @@ class AudioRecording < ActiveRecord::Base
     if self.recorded_date.respond_to?(:advance)
       end_time = self.recorded_date.advance(seconds: self.duration_seconds)
       query = AudioRecording
-        .where(site_id: self.site_id)
-        .start_before(end_time)
-        .end_after(self.recorded_date)
+      .where(site_id: self.site_id)
+      .start_before(end_time)
+      .end_after(self.recorded_date)
       unless self.id.blank?
         query = query.where('id <> ?', self.id)
       end
@@ -216,7 +239,16 @@ class AudioRecording < ActiveRecord::Base
             duration: a.duration_seconds,
             end_date: a.recorded_date.advance(seconds: a.duration_seconds)
         } }
-        errors.add(:recorded_date, "#{this_audio_recording} can't overlap with #{overlapping}")
+
+        message = {
+            problem: 'audio recordings that overlap in the same site (calculated from recording_start and duration_seconds) are not permitted',
+            audio_recordings: [
+                this_audio_recording,
+                overlapping
+            ]
+        }
+
+        errors.add(:recorded_date, message.to_json)
       end
     end
   end

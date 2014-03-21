@@ -148,6 +148,7 @@ resource 'AudioRecordings' do
     parameter :notes, '', scope: :audio_recording
     parameter :recorded_date, '', scope: :audio_recording
     parameter :sample_rate_hertz, '', scope: :audio_recording, :required => true
+    parameter :original_file_name, '', scope: :audio_recording, :required => true
     parameter :uploader_id, 'The id of the user who uploaded the audio recording. User must have write access to the project.', scope: :audio_recording, :required => true
 
     let(:raw_post) { {'audio_recording' => FactoryGirl.attributes_for(:audio_recording, recorded_date: '2013-03-26 07:06:59', uploader_id: @write_permission.user.id)}.to_json }
@@ -162,6 +163,69 @@ resource 'AudioRecordings' do
 
       new_audio_recording_id = JSON.parse(response_body)['id']
 
+      AudioRecording.where(id: new_audio_recording_id).first.status.should eq('new')
+    end
+
+  end
+
+  post '/projects/:project_id/sites/:site_id/audio_recordings' do
+    parameter :project_id, 'Requested project ID (in path/route)', required: true
+    parameter :site_id, 'Requested site ID (in path/route)', required: true
+
+    parameter :bit_rate_bps, '', scope: :audio_recording, :required => true
+    parameter :channels, '', scope: :audio_recording
+    parameter :data_length_bytes, '', scope: :audio_recording
+    parameter :duration_seconds, '', scope: :audio_recording, :required => true
+    parameter :file_hash, '', scope: :audio_recording, :required => true
+    parameter :media_type, '', scope: :audio_recording
+    parameter :notes, '', scope: :audio_recording
+    parameter :recorded_date, '', scope: :audio_recording
+    parameter :sample_rate_hertz, '', scope: :audio_recording, :required => true
+    parameter :original_file_name, '', scope: :audio_recording, :required => true
+    parameter :uploader_id, 'The id of the user who uploaded the audio recording. User must have write access to the project.', scope: :audio_recording, :required => true
+
+    file_hash = "SHA256::c110884206d25a83dd6d4c741861c429c10f99df9102863dde772f149387d891"
+    original_file_name = 'testing.mp3'
+    recorded_date = '2014-01-01 12:00:00Z'
+    data_length_bytes = 9999
+    media_type = 'audio/mp3'
+    duration_seconds = 45.0
+
+    let(:ar_attributes) { FactoryGirl.attributes_for(:audio_recording,
+                                                     original_file_name: original_file_name,
+                                                     file_hash: file_hash,
+                                                     recorded_date: recorded_date,
+                                                     data_length_bytes: data_length_bytes,
+                                                     media_type: media_type,
+                                                     duration_seconds: duration_seconds,
+                                                     site_id: site_id,
+                                                     status: :new,
+                                                     uploader_id: @write_permission.user.id) }
+
+    let(:raw_post) { {'audio_recording' => ar_attributes}.to_json }
+
+    let(:authentication_token) { harvester_token }
+
+    # Execute request with ids defined in above let(:id) statements
+    example 'CREATE (as harvester, resuming upload) - 201', document: true do
+
+      FactoryGirl.create(:audio_recording,
+                         original_file_name: original_file_name,
+                         file_hash: file_hash,
+                         recorded_date: recorded_date,
+                         data_length_bytes: data_length_bytes,
+                         media_type: media_type,
+                         duration_seconds: duration_seconds,
+                         site_id: site_id,
+                         status: :aborted)
+
+      do_request
+      status.should eq(201), "expected status 201 but was #{status}. Response body was #{response_body}"
+      response_body.should have_json_path('bit_rate_bps'), "could not find bit_rate_bps in #{response_body}"
+
+      new_audio_recording_id = JSON.parse(response_body)['id']
+
+      AudioRecording.where(id: new_audio_recording_id).count.should eq(1)
       AudioRecording.where(id: new_audio_recording_id).first.status.should eq('new')
     end
 
@@ -238,11 +302,13 @@ resource 'AudioRecordings' do
     parameter :file_hash, '', scope: :audio_recording, :required => true
     parameter :uuid, '', scope: :audio_recording, :required => true
 
-
     let(:update_status_harvester_audio_recording) { FactoryGirl.create(:audio_recording) }
     let(:id) { update_status_harvester_audio_recording.id }
-    let(:raw_post) { {'audio_recording' => {'file_hash' => update_status_harvester_audio_recording.file_hash,
-                                            'uuid' => update_status_harvester_audio_recording.uuid}}.to_json }
+    let(:raw_post) { {
+        file_hash: update_status_harvester_audio_recording.file_hash,
+        uuid: update_status_harvester_audio_recording.uuid,
+        status: :uploading
+    }.to_json }
 
     let(:authentication_token) { harvester_token }
     standard_request('UPDATE STATUS (as harvester)', 204, nil, true)
@@ -253,11 +319,14 @@ resource 'AudioRecordings' do
     parameter :file_hash, '', scope: :audio_recording, :required => true
     parameter :uuid, '', scope: :audio_recording, :required => true
 
-    let(:raw_post) { {'audio_recording' => {'file_hash' => @write_permission.project.sites[0].audio_recordings[0].file_hash,
-                                            'uuid' => nil}}.to_json }
+    let(:update_status_harvester_audio_recording) { FactoryGirl.create(:audio_recording) }
+    let(:id) { update_status_harvester_audio_recording.id }
+    let(:raw_post) { {
+        file_hash: 'blah'
+    }.to_json }
 
     let(:authentication_token) { harvester_token }
-    standard_request('UPDATE STATUS (as harvester without uuid)', 422, nil, true, 'Incorrect uuid')
+    standard_request('UPDATE STATUS (as harvester incorrect file hash)', 422, nil, true, 'Incorrect file hash')
   end
 
   put '/audio_recordings/:id/update_status' do
@@ -265,8 +334,46 @@ resource 'AudioRecordings' do
     parameter :file_hash, '', scope: :audio_recording, :required => true
     parameter :uuid, '', scope: :audio_recording, :required => true
 
-    let(:raw_post) { {'audio_recording' => {'file_hash' => @write_permission.project.sites[0].audio_recordings[0].file_hash,
-                                            'uuid' => @write_permission.project.sites[0].audio_recordings[0].uuid}}.to_json }
+    let(:update_status_harvester_audio_recording) { FactoryGirl.create(:audio_recording) }
+    let(:id) { update_status_harvester_audio_recording.id }
+    let(:raw_post) { {
+        file_hash: update_status_harvester_audio_recording.file_hash,
+        uuid: 'blah',
+    }.to_json }
+
+    let(:authentication_token) { harvester_token }
+    standard_request('UPDATE STATUS (as harvester incorrect uuid)', 422, nil, true, 'Incorrect uuid')
+  end
+
+  put '/audio_recordings/:id/update_status' do
+    parameter :id, 'Requested audio recording id (in path/route)', required: true
+    parameter :file_hash, '', scope: :audio_recording, :required => true
+    parameter :uuid, '', scope: :audio_recording, :required => true
+
+    let(:update_status_harvester_audio_recording) { FactoryGirl.create(:audio_recording) }
+    let(:id) { update_status_harvester_audio_recording.id }
+    let(:raw_post) { {
+        file_hash: update_status_harvester_audio_recording.file_hash,
+        uuid: update_status_harvester_audio_recording.uuid,
+        status: :does_not_exist
+    }.to_json }
+
+    let(:authentication_token) { harvester_token }
+    standard_request('UPDATE STATUS (as harvester incorrect status)', 422, nil, true, 'is not in available status list')
+  end
+
+  put '/audio_recordings/:id/update_status' do
+    parameter :id, 'Requested audio recording id (in path/route)', required: true
+    parameter :file_hash, '', scope: :audio_recording, :required => true
+    parameter :uuid, '', scope: :audio_recording, :required => true
+
+    let(:update_status_harvester_audio_recording) { FactoryGirl.create(:audio_recording) }
+    let(:id) { update_status_harvester_audio_recording.id }
+    let(:raw_post) { {
+        file_hash: update_status_harvester_audio_recording.file_hash,
+        uuid: update_status_harvester_audio_recording.uuid,
+        status: :uploading
+    }.to_json }
 
     let(:authentication_token) { writer_token }
 
@@ -279,11 +386,16 @@ resource 'AudioRecordings' do
     parameter :file_hash, '', scope: :audio_recording, :required => true
     parameter :uuid, '', scope: :audio_recording, :required => true
 
-    let(:raw_post) { {'audio_recording' => {'file_hash' => @write_permission.project.sites[0].audio_recordings[0].file_hash,
-                                            'uuid' => @write_permission.project.sites[0].audio_recordings[0].uuid}}.to_json }
-    let(:authentication_token) { reader_token }
+    let(:update_status_harvester_audio_recording) { FactoryGirl.create(:audio_recording) }
+    let(:id) { update_status_harvester_audio_recording.id }
+    let(:raw_post) { {
+        file_hash: update_status_harvester_audio_recording.file_hash,
+        uuid: update_status_harvester_audio_recording.uuid,
+        status: :uploading
+    }.to_json }
 
-    standard_request('UPDATE STATUS (as reader)', 403, nil, true)
+    let(:authentication_token) { reader_token }
+    standard_request('UPDATE STATUS (as reader)', 403, nil, true, 'You are logged in, but do not have sufficent permissions to access this resource.')
 
   end
 

@@ -1,4 +1,14 @@
 GIT
+  remote: https://github.com/QutBioacoustics/baw-audio-tools.git
+  revision: 21556bd8be8b6cc5af014ece8f21dc13ad16a3cf
+  specs:
+    baw-audio-tools (0.0.6)
+      activesupport (>= 3.2)
+      i18n
+      settingslogic
+      tzinfo
+
+GIT
   remote: https://github.com/brainspec/enumerize.git
   revision: 6431cdd8abced39e348e9be7d79426707c0a8f30
   specs:
@@ -123,6 +133,7 @@ GEM
     factory_girl_rails (4.4.1)
       factory_girl (~> 4.4.0)
       railties (>= 3.0.0)
+    fakefs (0.5.2)
     faker (1.3.0)
       i18n (~> 0.5)
     ffi (1.9.3)
@@ -158,7 +169,6 @@ GEM
       rspec (~> 2.0)
     launchy (2.4.2)
       addressable (~> 2.3)
-    libv8 (3.16.14.3)
     listen (1.3.1)
       rb-fsevent (>= 0.9.3)
       rb-inotify (>= 0.9)
@@ -245,7 +255,6 @@ GEM
       ffi (>= 0.5.0)
     rdoc (3.12.2)
       json (~> 1.4)
-    ref (1.0.5)
     rest-client (1.6.7)
       mime-types (>= 1.16)
     role_model (0.8.1)
@@ -303,9 +312,6 @@ GEM
       tilt (~> 1.1, != 1.3.0)
     term-ansicolor (1.3.0)
       tins (~> 1.0)
-    therubyracer (0.12.1)
-      libv8 (~> 3.16.14.0)
-      ref
     thin (1.6.2)
       daemons (>= 1.0.9)
       eventmachine (>= 1.0.0)
@@ -337,11 +343,11 @@ GEM
       nokogiri (~> 1.3)
 
 PLATFORMS
-  ruby
   x86-mingw32
 
 DEPENDENCIES
   acts_as_paranoid
+  baw-audio-tools!
   bootstrap-datepicker-rails
   bootstrap-timepicker-rails
   breadcrumbs_on_rails
@@ -356,12 +362,13 @@ DEPENDENCIES
   enumerize!
   exception_notification
   factory_girl_rails
+  fakefs
   faker
   gmaps4rails (< 2)
   guard (~> 1.8)
   guard-rspec
   haml
-  haml-rails
+  haml-rails (~> 0.4)
   jquery-rails
   json_spec
   launchy

@@ -15,20 +15,20 @@ AWB::Application.configure do
   config.whiny_nils = true
 
   # Show full error reports and disable caching
-  config.consider_all_requests_local       = true
+  config.consider_all_requests_local = true
   config.action_controller.perform_caching = false
 
   # Raise exceptions instead of rendering exception templates
   config.action_dispatch.show_exceptions = false
 
   # Disable request forgery protection in test environment
-  config.action_controller.allow_forgery_protection    = false
+  config.action_controller.allow_forgery_protection = false
 
   # Tell Action Mailer not to deliver emails to the real world.
   # The :test delivery method accumulates sent emails in the
   # ActionMailer::Base.deliveries array.
   config.action_mailer.raise_delivery_errors = true
-  config.action_mailer.default_url_options = { :host => "#{Settings.host.name}:#{Settings.host.port}" }
+  config.action_mailer.default_url_options = {:host => "#{Settings.host.name}:#{Settings.host.port}"}
   config.action_mailer.delivery_method = :test
   config.action_mailer.perform_deliveries = true
 
@@ -45,21 +45,24 @@ AWB::Application.configure do
   # Set path for image magick for windows only
   if RbConfig::CONFIG['target_os'] =~ /mswin|mingw/i
     im_dir = Settings.paths.image_magick_dir
-    puts 'WARN: cannot find image magick path' unless File.directory? im_dir
-    Paperclip.options[:command_path] = im_dir
+    if Dir.exists?(im_dir) && File.directory?(im_dir)
+      Paperclip.options[:command_path] = im_dir
+    else
+      puts "WARN: cannot find image magick path #{im_dir}"
+    end
   end
 
   config.log_level = :info
 
   config.after_initialize do
-  #  Bullet.enable = false
-  #  Bullet.bullet_logger = true
-  #  Bullet.alert = false
-  #  Bullet.rails_logger = true
-  #  Bullet.add_footer = true
-  #  Bullet.raise = true # raise an error if n+1 query occurs
+    #  Bullet.enable = false
+    #  Bullet.bullet_logger = true
+    #  Bullet.alert = false
+    #  Bullet.rails_logger = true
+    #  Bullet.add_footer = true
+    #  Bullet.raise = true # raise an error if n+1 query occurs
 
-  # rotate the log files once they reach 5MB and save the 3 most recent rotated logs
+    # rotate the log files once they reach 5MB and save the 3 most recent rotated logs
     config.logger = Logger.new(Rails.root.join('log', "#{Rails.env}.log"), 3, 5.megabytes)
     config.action_mailer.logger = Logger.new(Rails.root.join('log', "#{Rails.env}.mailer.log"), 3, 5.megabytes)
   end

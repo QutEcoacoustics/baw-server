@@ -19,7 +19,7 @@ gem 'rack-cors', require: 'rack/cors'
 # UI HELPERS
 # -------------------------------------
 gem 'haml'
-gem 'haml-rails'
+gem 'haml-rails', '~> 0.4'
 gem 'jquery-rails'
 gem 'simple_form' #https://github.com/plataformatec/simple_form
 gem 'paperclip'
@@ -71,6 +71,7 @@ gem 'exception_notification'
 
 # MEDIA
 # -------------------------------------
+gem 'baw-audio-tools', git: 'https://github.com/QutBioacoustics/baw-audio-tools.git'
 gem 'rack-rewrite'
 
 # Gems restricted by environment and/or platform
@@ -126,6 +127,7 @@ group :test do
   gem 'database_cleaner', '~> 1'
   #gem 'bullet'
   gem 'webmock'
+  gem "fakefs", require: "fakefs/safe"
   gem 'coveralls', require: false
 end
 
