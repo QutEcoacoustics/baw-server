@@ -50,7 +50,7 @@ test:
   audio_tools:
     ffmpeg_executable: ffmpeg.exe
     ffprobe_executable: ffprobe.exe
-    mp3splt_executable: mp3splt.exe
+    mp3splt_executable: ./vendor/mp3splt/mp3splt.exe
     sox_executable: sox.exe
     wavpack_executable: wvunpack.exe
     imagemagick_convert_executable: convert-im.exe
