@@ -1,6 +1,6 @@
 GIT
   remote: https://github.com/QutBioacoustics/baw-audio-tools.git
-  revision: 21556bd8be8b6cc5af014ece8f21dc13ad16a3cf
+  revision: 0f3ea58ba2352879ff43bb8c695f0843a244e16c
   specs:
     baw-audio-tools (0.0.6)
       activesupport (>= 3.2)
@@ -173,7 +173,7 @@ GEM
       rb-fsevent (>= 0.9.3)
       rb-inotify (>= 0.9)
       rb-kqueue (>= 0.2)
-    lumberjack (1.0.4)
+    lumberjack (1.0.5)
     mail (2.5.4)
       mime-types (~> 1.16)
       treetop (~> 1.4.8)
