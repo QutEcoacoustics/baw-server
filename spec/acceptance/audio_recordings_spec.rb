@@ -2,6 +2,74 @@ require 'spec_helper'
 require 'rspec_api_documentation/dsl'
 require 'helpers/acceptance_spec_helper'
 
+def test_overlap(overlap, first = 1)
+  original_file_name = 'testing.mp3'
+  recorded_date = Time.zone.parse('2014-01-01 12:00:00Z')
+  data_length_bytes = 9999
+  media_type = 'audio/mp3'
+  duration_seconds = 45.0
+  new_recorded_date = recorded_date.advance(seconds: (duration_seconds - overlap))
+
+  # second recording to be created
+  let(:ar_attributes) { FactoryGirl.attributes_for(:audio_recording,
+                                                   original_file_name: original_file_name,
+                                                   file_hash: 'def',
+                                                   recorded_date: first == 2 ? recorded_date : new_recorded_date,
+                                                   data_length_bytes: data_length_bytes,
+                                                   media_type: media_type,
+                                                   duration_seconds: duration_seconds,
+                                                   site_id: site_id,
+                                                   status: :new,
+                                                   uploader_id: @write_permission.user.id) }
+
+  let(:raw_post) { {audio_recording: ar_attributes}.to_json }
+
+  let(:authentication_token) { harvester_token }
+
+  # Execute request with ids defined in above let(:id) statements
+  example 'CREATE (as harvester, resuming upload) - 201', document: true do
+
+    # first recording to be created
+    existing = FactoryGirl.create(:audio_recording,
+                                  original_file_name: original_file_name,
+                                  file_hash: 'abc',
+                                  recorded_date: first == 1 ? recorded_date : new_recorded_date,
+                                  data_length_bytes: data_length_bytes,
+                                  media_type: media_type,
+                                  duration_seconds: duration_seconds,
+                                  site_id: site_id,
+                                  status: :ready)
+
+    do_request
+
+    existing_reloaded = AudioRecording.where(id: existing.id).first
+
+    if overlap > Settings.audio_recording_overlap_sec
+      expect(existing_reloaded.duration_seconds).to eq(duration_seconds)
+      expect(AudioRecording.where(file_hash: 'def').count).to eq(0)
+      status.should eq(422), "expected status 422 but was #{status}. Response body was #{response_body}"
+    else
+      status.should eq(201), "expected status 201 but was #{status}. Response body was #{response_body}"
+      response_body.should have_json_path('bit_rate_bps'), "could not find bit_rate_bps in #{response_body}"
+
+      new_audio_recording_id = JSON.parse(response_body)['id']
+      new_recording = AudioRecording.where(id: new_audio_recording_id).first
+
+      if first == 1
+        expect(existing_reloaded.recorded_date).to eq(recorded_date)
+        expect(new_recording.recorded_date).to eq(new_recorded_date)
+        expect(new_recording.duration_seconds).to eq(duration_seconds)
+        expect(existing_reloaded.duration_seconds).to eq(duration_seconds - overlap)
+      else
+        expect(existing_reloaded.recorded_date).to eq(new_recorded_date)
+        expect(new_recording.recorded_date).to eq(recorded_date)
+        expect(existing_reloaded.duration_seconds).to eq(duration_seconds)
+        expect(new_recording.duration_seconds).to eq(duration_seconds - overlap)
+      end
+    end
+  end
+end
+
 # https://github.com/zipmark/rspec_api_documentation
 resource 'AudioRecordings' do
 
@@ -168,6 +236,7 @@ resource 'AudioRecordings' do
 
   end
 
+  # test resuming upload works
   post '/projects/:project_id/sites/:site_id/audio_recordings' do
     parameter :project_id, 'Requested project ID (in path/route)', required: true
     parameter :site_id, 'Requested site ID (in path/route)', required: true
@@ -230,6 +299,122 @@ resource 'AudioRecordings' do
     end
 
   end
+
+  post '/projects/:project_id/sites/:site_id/audio_recordings' do
+    parameter :project_id, 'Requested project ID (in path/route)', required: true
+    parameter :site_id, 'Requested site ID (in path/route)', required: true
+
+    parameter :bit_rate_bps, '', scope: :audio_recording, :required => true
+    parameter :channels, '', scope: :audio_recording
+    parameter :data_length_bytes, '', scope: :audio_recording
+    parameter :duration_seconds, '', scope: :audio_recording, :required => true
+    parameter :file_hash, '', scope: :audio_recording, :required => true
+    parameter :media_type, '', scope: :audio_recording
+    parameter :notes, '', scope: :audio_recording
+    parameter :recorded_date, '', scope: :audio_recording
+    parameter :sample_rate_hertz, '', scope: :audio_recording, :required => true
+    parameter :original_file_name, '', scope: :audio_recording, :required => true
+    parameter :uploader_id, 'The id of the user who uploaded the audio recording. User must have write access to the project.', scope: :audio_recording, :required => true
+
+    test_overlap(Settings.audio_recording_overlap_sec, 1)
+  end
+
+  post '/projects/:project_id/sites/:site_id/audio_recordings' do
+    parameter :project_id, 'Requested project ID (in path/route)', required: true
+    parameter :site_id, 'Requested site ID (in path/route)', required: true
+
+    parameter :bit_rate_bps, '', scope: :audio_recording, :required => true
+    parameter :channels, '', scope: :audio_recording
+    parameter :data_length_bytes, '', scope: :audio_recording
+    parameter :duration_seconds, '', scope: :audio_recording, :required => true
+    parameter :file_hash, '', scope: :audio_recording, :required => true
+    parameter :media_type, '', scope: :audio_recording
+    parameter :notes, '', scope: :audio_recording
+    parameter :recorded_date, '', scope: :audio_recording
+    parameter :sample_rate_hertz, '', scope: :audio_recording, :required => true
+    parameter :original_file_name, '', scope: :audio_recording, :required => true
+    parameter :uploader_id, 'The id of the user who uploaded the audio recording. User must have write access to the project.', scope: :audio_recording, :required => true
+
+    test_overlap(Settings.audio_recording_overlap_sec, 2)
+  end
+
+  post '/projects/:project_id/sites/:site_id/audio_recordings' do
+    parameter :project_id, 'Requested project ID (in path/route)', required: true
+    parameter :site_id, 'Requested site ID (in path/route)', required: true
+
+    parameter :bit_rate_bps, '', scope: :audio_recording, :required => true
+    parameter :channels, '', scope: :audio_recording
+    parameter :data_length_bytes, '', scope: :audio_recording
+    parameter :duration_seconds, '', scope: :audio_recording, :required => true
+    parameter :file_hash, '', scope: :audio_recording, :required => true
+    parameter :media_type, '', scope: :audio_recording
+    parameter :notes, '', scope: :audio_recording
+    parameter :recorded_date, '', scope: :audio_recording
+    parameter :sample_rate_hertz, '', scope: :audio_recording, :required => true
+    parameter :original_file_name, '', scope: :audio_recording, :required => true
+    parameter :uploader_id, 'The id of the user who uploaded the audio recording. User must have write access to the project.', scope: :audio_recording, :required => true
+
+    test_overlap(Settings.audio_recording_overlap_sec + 1, 1)
+  end
+
+  post '/projects/:project_id/sites/:site_id/audio_recordings' do
+    parameter :project_id, 'Requested project ID (in path/route)', required: true
+    parameter :site_id, 'Requested site ID (in path/route)', required: true
+
+    parameter :bit_rate_bps, '', scope: :audio_recording, :required => true
+    parameter :channels, '', scope: :audio_recording
+    parameter :data_length_bytes, '', scope: :audio_recording
+    parameter :duration_seconds, '', scope: :audio_recording, :required => true
+    parameter :file_hash, '', scope: :audio_recording, :required => true
+    parameter :media_type, '', scope: :audio_recording
+    parameter :notes, '', scope: :audio_recording
+    parameter :recorded_date, '', scope: :audio_recording
+    parameter :sample_rate_hertz, '', scope: :audio_recording, :required => true
+    parameter :original_file_name, '', scope: :audio_recording, :required => true
+    parameter :uploader_id, 'The id of the user who uploaded the audio recording. User must have write access to the project.', scope: :audio_recording, :required => true
+
+    test_overlap(Settings.audio_recording_overlap_sec + 1, 2)
+  end
+
+
+  post '/projects/:project_id/sites/:site_id/audio_recordings' do
+    parameter :project_id, 'Requested project ID (in path/route)', required: true
+    parameter :site_id, 'Requested site ID (in path/route)', required: true
+
+    parameter :bit_rate_bps, '', scope: :audio_recording, :required => true
+    parameter :channels, '', scope: :audio_recording
+    parameter :data_length_bytes, '', scope: :audio_recording
+    parameter :duration_seconds, '', scope: :audio_recording, :required => true
+    parameter :file_hash, '', scope: :audio_recording, :required => true
+    parameter :media_type, '', scope: :audio_recording
+    parameter :notes, '', scope: :audio_recording
+    parameter :recorded_date, '', scope: :audio_recording
+    parameter :sample_rate_hertz, '', scope: :audio_recording, :required => true
+    parameter :original_file_name, '', scope: :audio_recording, :required => true
+    parameter :uploader_id, 'The id of the user who uploaded the audio recording. User must have write access to the project.', scope: :audio_recording, :required => true
+
+    test_overlap(1, 1)
+  end
+
+  post '/projects/:project_id/sites/:site_id/audio_recordings' do
+    parameter :project_id, 'Requested project ID (in path/route)', required: true
+    parameter :site_id, 'Requested site ID (in path/route)', required: true
+
+    parameter :bit_rate_bps, '', scope: :audio_recording, :required => true
+    parameter :channels, '', scope: :audio_recording
+    parameter :data_length_bytes, '', scope: :audio_recording
+    parameter :duration_seconds, '', scope: :audio_recording, :required => true
+    parameter :file_hash, '', scope: :audio_recording, :required => true
+    parameter :media_type, '', scope: :audio_recording
+    parameter :notes, '', scope: :audio_recording
+    parameter :recorded_date, '', scope: :audio_recording
+    parameter :sample_rate_hertz, '', scope: :audio_recording, :required => true
+    parameter :original_file_name, '', scope: :audio_recording, :required => true
+    parameter :uploader_id, 'The id of the user who uploaded the audio recording. User must have write access to the project.', scope: :audio_recording, :required => true
+
+    test_overlap(1, 2)
+  end
+
 
   post '/projects/:project_id/sites/:site_id/audio_recordings' do
     parameter :project_id, 'Requested project ID (in path/route)', required: true

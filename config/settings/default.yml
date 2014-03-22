@@ -107,15 +107,16 @@ defaults: &defaults
     image:
       - png
   audio_tools:
-    ffmpeg_executable: ffmpeg.exe
-    ffprobe_executable: ffprobe.exe
-    mp3splt_executable: mp3splt.exe
-    sox_executable: sox.exe
-    wavpack_executable: wvunpack.exe
-    imagemagick_convert_executable: convert.exe
-    imagemagick_identify_executable: identify.exe
+    ffmpeg_executable: ffmpeg
+    ffprobe_executable: ffprobe
+    mp3splt_executable: mp3splt
+    sox_executable: sox
+    wavpack_executable: wvunpack
+    imagemagick_convert_executable: convert
+    imagemagick_identify_executable: identify
     max_duration_seconds: 300
   audio_tools_timeout_sec: 20
+  audio_recording_overlap_sec: 5
   server_version: 0.6.2
   organisation_names:
     site_long_name: Audio Workbench

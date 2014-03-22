@@ -42,7 +42,7 @@ class User < ActiveRecord::Base
   validates :user_name, presence: true, uniqueness: {case_sensitive: false}
   validates :email, presence: true, uniqueness: true
   validates :roles_mask, presence: true
-  validates_attachment_content_type :image, content_type: /\Aimage\/(jpg|jpeg|pjpeg|png|x-png|gif)\Z/, message: 'file type %{value} is not allowed (only jpeg/png/gif images)'
+  validates_attachment_content_type :image, content_type: /^image\/(jpg|jpeg|pjpeg|png|x-png|gif)$/, message: 'file type %{value} is not allowed (only jpeg/png/gif images)'
 
   # before and after methods
   before_validation :ensure_user_role

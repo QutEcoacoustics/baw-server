@@ -25,11 +25,11 @@ class Site < ActiveRecord::Base
   # validations
   validates :name, presence: true, length: {minimum: 2}
   # between -90 and 90 degrees
-  validates :latitude, numericality: { only_integer: false, greater_than_or_equal_to: -90, less_than_or_equal_to: 90 }, allow_nil: true
+  validates :latitude, numericality: {only_integer: false, greater_than_or_equal_to: -90, less_than_or_equal_to: 90}, allow_nil: true
   # -180 and 180 degrees
-  validates :longitude, numericality: { only_integer: false, greater_than_or_equal_to: -180, less_than_or_equal_to: 180 }, allow_nil: true
+  validates :longitude, numericality: {only_integer: false, greater_than_or_equal_to: -180, less_than_or_equal_to: 180}, allow_nil: true
   #validates_as_paranoid
-  validates_attachment_content_type :image, content_type: /\Aimage\/.*\Z/
+  validates_attachment_content_type :image, content_type: /^image\/(jpg|jpeg|pjpeg|png|x-png|gif)$/, message: 'file type %{value} is not allowed (only jpeg/png/gif images)'
 
   # commonly used queries
   #scope :specified_sites, lambda { |site_ids| where('id in (:ids)', { :ids => site_ids } ) }

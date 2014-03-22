@@ -66,45 +66,103 @@ describe AudioRecording do
 
   it { should validate_presence_of(:file_hash) }
 
-  it 'should not allow overlapping dates in the same site - exact' do
-    site = FactoryGirl.create(:site, id: 1001)
-    ar1 = FactoryGirl.create(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:03+10:00", site_id: 1001, file_hash: "1")
-    ar2 = FactoryGirl.build(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:03+10:00", site_id: 1001, file_hash: "2")
-    ar2.should_not be_valid
+  context 'in same site' do
+
+    it 'should allow non overlapping dates - (first before second)' do
+      site = FactoryGirl.create(:site, id: 1001)
+      ar1 = FactoryGirl.create(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:0+10:00", site_id: 1001, file_hash: "1")
+      ar2 = FactoryGirl.build(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:51:03+10:00", site_id: 1001, file_hash: "2")
+      ar2.should be_valid
+    end
+
+    it 'should not allow overlapping dates - (second before first)' do
+      site = FactoryGirl.create(:site, id: 1001)
+      ar1 = FactoryGirl.create(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:51:03+10:00", site_id: 1001, file_hash: "1")
+      ar2 = FactoryGirl.build(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:03+10:00", site_id: 1001, file_hash: "2")
+      ar2.should be_valid
+    end
+
+    it 'should not allow overlapping dates - exact' do
+      site = FactoryGirl.create(:site, id: 1001)
+      ar1 = FactoryGirl.create(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:03+10:00", site_id: 1001, file_hash: "1")
+      ar2 = FactoryGirl.build(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:03+10:00", site_id: 1001, file_hash: "2")
+      ar2.should_not be_valid
+    end
+    it 'should not allow overlapping dates - shift forwards' do
+      site = FactoryGirl.create(:site, id: 1001)
+      ar1 = FactoryGirl.create(:audio_recording, duration_seconds: 30.0, recorded_date: "2014-02-07T17:50:20+10:00", site_id: 1001, file_hash: "1")
+      ar2 = FactoryGirl.build(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:10+10:00", site_id: 1001, file_hash: "2")
+      ar2.should_not be_valid
+    end
+
+    it 'should not allow overlapping dates - shift backwards' do
+      site = FactoryGirl.create(:site, id: 1001)
+      ar1 = FactoryGirl.create(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:04+10:00", site_id: 1001, file_hash: "1")
+      ar2 = FactoryGirl.build(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:48+10:00", site_id: 1001, file_hash: "2")
+      ar2.should_not be_valid
+    end
+
+    it 'should not allow overlapping dates - shift backwards (1 sec overlap)' do
+      site = FactoryGirl.create(:site, id: 1001)
+      ar1 = FactoryGirl.create(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:00+10:00", site_id: 1001, file_hash: "1")
+      ar2 = FactoryGirl.build(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:59+10:00", site_id: 1001, file_hash: "2")
+      ar2.should_not be_valid
+    end
+
+    it 'should allow overlapping dates - edges exact (first before second)' do
+      site = FactoryGirl.create(:site, id: 1001)
+      ar1 = FactoryGirl.create(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:00+10:00", site_id: 1001, file_hash: "1")
+      ar2 = FactoryGirl.build(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:51:00+10:00", site_id: 1001, file_hash: "2")
+      expect(ar1.recorded_date.advance(seconds: ar1.duration_seconds)).to eq(Time.zone.parse("2014-02-07T17:51:00+10:00"))
+      expect(ar2.recorded_date.advance(seconds: ar2.duration_seconds)).to eq(Time.zone.parse("2014-02-07T17:52:00+10:00"))
+      ar2.should be_valid
+    end
+
+    it 'should allow overlapping dates - edges exact (second before first)' do
+      site = FactoryGirl.create(:site, id: 1001)
+      ar1 = FactoryGirl.create(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:51:00+10:00", site_id: 1001, file_hash: "1")
+      ar2 = FactoryGirl.build(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:00+10:00", site_id: 1001, file_hash: "2")
+      expect(ar1.recorded_date.advance(seconds: ar1.duration_seconds)).to eq(Time.zone.parse("2014-02-07T17:52:00+10:00"))
+      expect(ar2.recorded_date.advance(seconds: ar2.duration_seconds)).to eq(Time.zone.parse("2014-02-07T17:51:00+10:00"))
+      ar2.should be_valid
+    end
+
   end
-  it 'should not allow overlapping dates in the same site - shift forwards' do
-    site = FactoryGirl.create(:site, id: 1001)
-    ar1 = FactoryGirl.create(:audio_recording, duration_seconds: 30.0, recorded_date: "2014-02-07T17:50:20+10:00", site_id: 1001, file_hash: "1")
-    ar2 = FactoryGirl.build(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:10+10:00", site_id: 1001, file_hash: "2")
-    ar2.should_not be_valid
+
+  context 'in different sites' do
+    it 'should allow overlapping dates - exact' do
+      FactoryGirl.create(:site, id: 1001)
+      FactoryGirl.create(:site, id: 1002)
+      ar1 = FactoryGirl.create(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:03+10:00", site_id: 1001, file_hash: "1")
+      ar2 = FactoryGirl.build(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:03+10:00", site_id: 1002, file_hash: "2")
+      ar2.should be_valid
+    end
+    it 'should allow overlapping dates - shift forwards' do
+      FactoryGirl.create(:site, id: 1001)
+      FactoryGirl.create(:site, id: 1002)
+      ar1 = FactoryGirl.create(:audio_recording, duration_seconds: 30.0, recorded_date: "2014-02-07T17:50:20+10:00", site_id: 1001, file_hash: "1")
+      ar2 = FactoryGirl.build(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:10+10:00", site_id: 1002, file_hash: "2")
+      ar2.should be_valid
+    end
+    it 'should allow overlapping dates - shift backwards' do
+      FactoryGirl.create(:site, id: 1001)
+      FactoryGirl.create(:site, id: 1002)
+      ar1 = FactoryGirl.create(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:03+10:00", site_id: 1001, file_hash: "1")
+      ar2 = FactoryGirl.build(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:30+10:00", site_id: 1002, file_hash: "2")
+      ar2.should be_valid
+    end
+
+    it 'should allow overlapping dates - edges exact' do
+      FactoryGirl.create(:site, id: 1001)
+      FactoryGirl.create(:site, id: 1002)
+      ar1 = FactoryGirl.create(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:00+10:00", site_id: 1001, file_hash: "1")
+      ar2 = FactoryGirl.build(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:51:00+10:00", site_id: 1002, file_hash: "2")
+      expect(ar1.recorded_date.advance(seconds: ar1.duration_seconds)).to eq(Time.zone.parse("2014-02-07T17:51:00+10:00"))
+      expect(ar2.recorded_date.advance(seconds: ar2.duration_seconds)).to eq(Time.zone.parse("2014-02-07T17:52:00+10:00"))
+      ar2.should be_valid
+    end
   end
-  it 'should not allow overlapping dates in the same site - shift backwards' do
-    site = FactoryGirl.create(:site, id: 1001)
-    ar1 = FactoryGirl.create(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:03+10:00", site_id: 1001, file_hash: "1")
-    ar2 = FactoryGirl.build(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:30+10:00", site_id: 1001, file_hash: "2")
-    ar2.should_not be_valid
-  end
-  it 'should allow overlapping dates in different sites - exact' do
-    site = FactoryGirl.create(:site, id: 1001)
-    site = FactoryGirl.create(:site, id: 1002)
-    ar1 = FactoryGirl.create(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:03+10:00", site_id: 1001, file_hash: "1")
-    ar2 = FactoryGirl.build(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:03+10:00", site_id: 1002, file_hash: "2")
-    ar2.should be_valid
-  end
-  it 'should allow overlapping dates in different sites - shift forwards' do
-    site = FactoryGirl.create(:site, id: 1001)
-    site = FactoryGirl.create(:site, id: 1002)
-    ar1 = FactoryGirl.create(:audio_recording, duration_seconds: 30.0, recorded_date: "2014-02-07T17:50:20+10:00", site_id: 1001, file_hash: "1")
-    ar2 = FactoryGirl.build(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:10+10:00", site_id: 1002, file_hash: "2")
-    ar2.should be_valid
-  end
-  it 'should allow overlapping dates in different sites - shift backwards' do
-    site = FactoryGirl.create(:site, id: 1001)
-    site = FactoryGirl.create(:site, id: 1002)
-    ar1 = FactoryGirl.create(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:03+10:00", site_id: 1001, file_hash: "1")
-    ar2 = FactoryGirl.build(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:30+10:00", site_id: 1002, file_hash: "2")
-    ar2.should be_valid
-  end
+
   it 'should not allow duplicate files' do
     file_hash = "SHA256::c110884206d25a83dd6d4c741861c429c10f99df9102863dde772f149387d891"
     FactoryGirl.create(:audio_recording, file_hash: file_hash)

@@ -10,6 +10,7 @@ class AudioRecording < ActiveRecord::Base
                   :duration_seconds, :file_hash, :media_type, :notes,
                   :recorded_date, :sample_rate_hertz, :status, :uploader_id,
                   :site_id
+  attr_reader :overlapping
   attr_protected :uuid
 
   # relations
@@ -66,7 +67,9 @@ class AudioRecording < ActiveRecord::Base
 
   scope :start_after, lambda { |time| where('recorded_date >= ?', time) }
   scope :start_before, lambda { |time| where('recorded_date <= ?', time) }
+  scope :start_before_not_equal, lambda { |time| where('recorded_date < ?', time) }
   scope :end_after, lambda { |time| where('recorded_date + CAST(duration_seconds || \' seconds\' as interval)  >= ?', time) }
+  scope :end_after_not_equal, lambda { |time| where('recorded_date + CAST(duration_seconds || \' seconds\' as interval)  > ?', time) }
   scope :end_before, lambda { |time| where('end_time_seconds + CAST(duration_seconds || \'seconds\' as interval) <= ?', time) }
   scope :has_tag, lambda { |tag| includes(:tags).where('tags.text = ?', tag) }
   scope :has_tags, lambda { |tags| includes(:tags).where('tags.text IN ?', tags) }
@@ -218,37 +221,44 @@ class AudioRecording < ActiveRecord::Base
       end_time = self.recorded_date.advance(seconds: self.duration_seconds)
       query = AudioRecording
       .where(site_id: self.site_id)
-      .start_before(end_time)
-      .end_after(self.recorded_date)
+      .start_before_not_equal(end_time)
+      .end_after_not_equal(self.recorded_date)
       unless self.id.blank?
         query = query.where('id <> ?', self.id)
       end
       count = query.count
       if count > 0
-        this_audio_recording = {
-            uuid: self.uuid,
-            id: self.id,
-            recorded_date: self.recorded_date,
-            duration: self.duration_seconds,
-            end_date: self.recorded_date.advance(seconds: self.duration_seconds)
+
+        recorded_date = self.recorded_date
+        end_date = self.recorded_date.advance(seconds: self.duration_seconds)
+
+        overlapping = query.map { |a|
+
+          existing_audio_end = a.recorded_date.advance(seconds: a.duration_seconds)
+          overlap_a = end_date - a.recorded_date
+          overlap_b = existing_audio_end - recorded_date
+
+          {
+              uuid: a.uuid,
+              id: a.id,
+              recorded_date: a.recorded_date,
+              duration: a.duration_seconds,
+              end_date: existing_audio_end,
+              overlap_amounts: [
+                  overlap_a,
+                  overlap_b
+              ]
+          }
         }
-        overlapping = query.map { |a| {
-            uuid: a.uuid,
-            id: a.id,
-            recorded_date: a.recorded_date,
-            duration: a.duration_seconds,
-            end_date: a.recorded_date.advance(seconds: a.duration_seconds)
-        } }
 
         message = {
             problem: 'audio recordings that overlap in the same site (calculated from recording_start and duration_seconds) are not permitted',
-            audio_recordings: [
-                this_audio_recording,
-                overlapping
-            ]
+            overlapping_audio_recordings: overlapping
         }
 
-        errors.add(:recorded_date, message.to_json)
+        @overlapping = overlapping
+        errors.add(:recorded_date, message)
+        self
       end
     end
   end
