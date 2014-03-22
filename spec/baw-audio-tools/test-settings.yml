@@ -1,7 +1,7 @@
 # Using SettingsLogic, see https://github.com/binarylogic/settingslogic
 test:
   paths:
-    image_magick_dir: <%= Dir.pwd %>/tmp/_image-magick
+    image_magick_dir: ./vendor/imagemagick
     original_audios:
       - <%= Dir.pwd %>/tmp/_original_audio
     cached_spectrograms:
@@ -48,12 +48,12 @@ test:
     image:
       - png
   audio_tools:
-    ffmpeg_executable: ffmpeg.exe
-    ffprobe_executable: ffprobe.exe
+    ffmpeg_executable: ./vendor/ffmpeg/ffmpeg.exe
+    ffprobe_executable: ./vendor/ffmpeg/ffprobe.exe
     mp3splt_executable: ./vendor/mp3splt/mp3splt.exe
-    sox_executable: sox.exe
-    wavpack_executable: wvunpack.exe
-    imagemagick_convert_executable: convert.exe
-    imagemagick_identify_executable: identify.exe
+    sox_executable: ./vendor/sox/sox.exe
+    wavpack_executable: ./vendor/wavpack/wvunpack.exe
+    imagemagick_convert_executable: ./vendor/imagemagick/convert.exe
+    imagemagick_identify_executable: ./vendor/imagemagick/identify.exe
     max_duration_seconds: 300
   audio_tools_timeout_sec: 10
