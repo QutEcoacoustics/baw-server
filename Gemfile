@@ -74,6 +74,11 @@ gem 'exception_notification'
 gem 'baw-audio-tools', git: 'https://github.com/QutBioacoustics/baw-audio-tools.git'
 gem 'rack-rewrite'
 
+# ASYNC JOBS
+# ------------------------------------
+gem 'resque'
+gem 'baw-workers', git: 'https://github.com/QutBioacoustics/baw-workers.git'
+
 # Gems restricted by environment and/or platform
 # ====================================================
 

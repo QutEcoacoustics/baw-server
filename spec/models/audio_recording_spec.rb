@@ -70,12 +70,12 @@ describe AudioRecording do
 
     it 'should allow non overlapping dates - (first before second)' do
       site = FactoryGirl.create(:site, id: 1001)
-      ar1 = FactoryGirl.create(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:0+10:00", site_id: 1001, file_hash: "1")
+      ar1 = FactoryGirl.create(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:03+10:00", site_id: 1001, file_hash: "1")
       ar2 = FactoryGirl.build(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:51:03+10:00", site_id: 1001, file_hash: "2")
       ar2.should be_valid
     end
 
-    it 'should not allow overlapping dates - (second before first)' do
+    it 'should allow non overlapping dates - (second before first)' do
       site = FactoryGirl.create(:site, id: 1001)
       ar1 = FactoryGirl.create(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:51:03+10:00", site_id: 1001, file_hash: "1")
       ar2 = FactoryGirl.build(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:03+10:00", site_id: 1001, file_hash: "2")

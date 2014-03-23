@@ -66,8 +66,12 @@ RSpec.configure do |config|
   config.before(:suite) do
     DatabaseCleaner.strategy = :transaction
     DatabaseCleaner.clean_with(:truncation)
-    FactoryGirl.lint
-
+    begin
+      DatabaseCleaner.start
+      FactoryGirl.lint
+    ensure
+      DatabaseCleaner.clean
+    end
     # Redirect stderr and stdout
     $stderr = File.new(File.join(File.dirname(__FILE__), '..', 'tmp', 'rspec_stderr.txt'), 'w')
     $stdout = File.new(File.join(File.dirname(__FILE__), '..', 'tmp', 'rspec_stdout.txt'), 'w')
@@ -87,9 +91,8 @@ RSpec.configure do |config|
   end
 
   config.before(:each) do
-    DatabaseCleaner.start
     ActionMailer::Base.deliveries.clear
-
+    DatabaseCleaner.start
     example_description = example.description
     Rails::logger.info "\n\n#{example_description}\n#{'-' * (example_description.length)}"
 

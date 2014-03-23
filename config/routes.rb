@@ -1,3 +1,5 @@
+require 'resque/server'
+
 AWB::Application.routes.draw do
 
   # See how all your routes lay out with "rake routes"
@@ -109,10 +111,13 @@ AWB::Application.routes.draw do
   # site status API
   get '/status/' => 'public#status'
 
+  # resque front end
+  mount Resque::Server.new, at: '/job_queue_status'
+
   # provide access to API documentation
   mount Raddocs::App => '/doc'
 
   # for error pages
-  match '*a', :to => 'errors#routing'
+  get '*a', :to => 'errors#routing'
 
 end

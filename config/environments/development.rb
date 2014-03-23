@@ -20,7 +20,6 @@ AWB::Application.configure do
   config.action_mailer.file_settings = {:location => Rails.root.join('tmp', 'mail')}
   config.action_mailer.perform_deliveries = true
 
-
   # Print deprecation notices to the Rails logger
   config.active_support.deprecation = :log
 
@@ -40,7 +39,10 @@ AWB::Application.configure do
   # Expands the lines which load the assets
   config.assets.debug = false
 
-  # Set path for image magick for windows only
+  # resque configuration
+  Resque.redis = Settings.redis_connection
+
+      # Set path for image magick for windows only
   if RbConfig::CONFIG['target_os'] =~ /mswin|mingw/i
     im_dir = Settings.paths.image_magick_dir
     if Dir.exists?(im_dir) && File.directory?(im_dir)
