@@ -1,7 +1,5 @@
 module BawWorkers
   class PullWorker
-    def queue
-      :misc
-    end
+    @queue = :misc
   end
 end
