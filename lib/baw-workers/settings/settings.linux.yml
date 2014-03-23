@@ -1,0 +1,54 @@
+settings:
+  paths:
+    original_audios:
+      - ./_original_audio
+    cached_spectrograms:
+      - ./_cached_spectrogram
+    cached_audios:
+      - ./_cached_audio
+    cached_datasets:
+      - ./_cached_dataset
+    harvester_to_do: ./_harvester_to_do
+    harvester_completed: ./_harvester_completed
+    harvester_log_file: ./harvester.log
+    modules_log_file: ./audio_tools.log
+    temp_files: .
+  cached_audio_defaults:
+    storage_format: mp3
+    channel: 0
+    sample_rate: 22050
+    max_duration_seconds: 300.0
+    min_duration_seconds: 0.5
+  cached_spectrogram_defaults:
+    storage_format: png
+    channel: 0
+    sample_rate: 22050
+    window: 512
+    colour: 'g'
+    ppms: 0.045
+    max_duration_seconds: 120.0
+    min_duration_seconds: 0.5
+  cached_dataset_defaults:
+    storage_format: txt
+    one_item_per_line: true
+  available_formats:
+    text:
+      - json
+    audio:
+      - mp3
+      - webm
+      - ogg
+      - flac
+      - wav
+    image:
+      - png
+  audio_tools:
+    ffmpeg_executable: ffmpeg
+    ffprobe_executable: ffprobe
+    mp3splt_executable: mp3splt
+    sox_executable: sox
+    wavpack_executable: wvunpack
+    imagemagick_convert_executable: convert
+    imagemagick_identify_executable: identify
+    max_duration_seconds: 300
+  audio_tools_timeout_sec: 20
