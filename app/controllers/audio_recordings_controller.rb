@@ -226,7 +226,7 @@ class AudioRecordingsController < ApplicationController
           existing = AudioRecording.where(id: existing_audio_recording_id).first
           existing.duration_seconds = existing.duration_seconds - overlap_amount
           notes = existing.notes.blank? ? '' : existing.notes
-          existing.notes = notes + create_overlap_notes(overlap_amount, existing_audio_recording_uuid)
+          existing.notes = notes + create_overlap_notes(overlap_amount, new_audio_recording.uuid)
           existing.save!
         end
       end
