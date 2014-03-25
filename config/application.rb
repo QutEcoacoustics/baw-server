@@ -71,6 +71,12 @@ module AWB
     # for generating documentation from tests
     Raddocs.configuration.docs_dir = "doc/api"
 
+    # validate Settings file
+    config.after_initialize do
+      Settings.validate
+    end
+
+
     # allow any origin, with any header, to access the array of methods
     config.middleware.use Rack::Cors do
       allow do

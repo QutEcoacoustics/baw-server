@@ -49,7 +49,7 @@ class AudioRecording < ActiveRecord::Base
   validates :uploader_id, presence: true
   validates :recorded_date, presence: true, timeliness: {on_or_before: lambda { Time.zone.now }, type: :datetime}
   validates :site, presence: true
-  validates :duration_seconds, presence: true, numericality: {greater_than: 0}
+  validates :duration_seconds, presence: true, numericality: {greater_than_or_equal_to: Settings.audio_recording_min_duration_sec}
   validates :sample_rate_hertz, presence: true, numericality: {only_integer: true, greater_than: 0}
 
   # the channels field encodes our special version of a bit flag. 0 (no bits flipped) represents

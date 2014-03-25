@@ -5,7 +5,7 @@ FactoryGirl.define do
   factory :audio_recording do
     sequence(:file_hash) { |n| "SHA256::#{n}"  }
     recorded_date '2012-03-26 07:06:59'
-    duration_seconds Random.rand(86401.0)
+    duration_seconds Random.rand(86401.0 - Settings.audio_recording_min_duration_sec) + Settings.audio_recording_min_duration_sec
     sample_rate_hertz (Random.rand(441) + 1) * 100
     channels Random.rand(2) + 1
     bit_rate_bps (Random.rand(64) + 1) * 100

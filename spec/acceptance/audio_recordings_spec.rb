@@ -44,7 +44,7 @@ def test_overlap(overlap, first = 1)
 
     existing_reloaded = AudioRecording.where(id: existing.id).first
 
-    if overlap > Settings.audio_recording_overlap_sec
+    if overlap > Settings.audio_recording_max_overlap_sec
       expect(existing_reloaded.duration_seconds).to eq(duration_seconds)
       expect(AudioRecording.where(file_hash: 'def').count).to eq(0)
       status.should eq(422), "expected status 422 but was #{status}. Response body was #{response_body}"
@@ -60,11 +60,13 @@ def test_overlap(overlap, first = 1)
         expect(new_recording.recorded_date).to eq(new_recorded_date)
         expect(new_recording.duration_seconds).to eq(duration_seconds)
         expect(existing_reloaded.duration_seconds).to eq(duration_seconds - overlap)
+        expect(existing_reloaded.notes).to include('duration_adjustment_for_overlap')
       else
         expect(existing_reloaded.recorded_date).to eq(new_recorded_date)
         expect(new_recording.recorded_date).to eq(recorded_date)
         expect(existing_reloaded.duration_seconds).to eq(duration_seconds)
         expect(new_recording.duration_seconds).to eq(duration_seconds - overlap)
+        expect(new_recording.notes).to include('duration_adjustment_for_overlap')
       end
     end
   end
@@ -316,7 +318,7 @@ resource 'AudioRecordings' do
     parameter :original_file_name, '', scope: :audio_recording, :required => true
     parameter :uploader_id, 'The id of the user who uploaded the audio recording. User must have write access to the project.', scope: :audio_recording, :required => true
 
-    test_overlap(Settings.audio_recording_overlap_sec, 1)
+    test_overlap(Settings.audio_recording_max_overlap_sec, 1)
   end
 
   post '/projects/:project_id/sites/:site_id/audio_recordings' do
@@ -335,7 +337,7 @@ resource 'AudioRecordings' do
     parameter :original_file_name, '', scope: :audio_recording, :required => true
     parameter :uploader_id, 'The id of the user who uploaded the audio recording. User must have write access to the project.', scope: :audio_recording, :required => true
 
-    test_overlap(Settings.audio_recording_overlap_sec, 2)
+    test_overlap(Settings.audio_recording_max_overlap_sec, 2)
   end
 
   post '/projects/:project_id/sites/:site_id/audio_recordings' do
@@ -354,7 +356,7 @@ resource 'AudioRecordings' do
     parameter :original_file_name, '', scope: :audio_recording, :required => true
     parameter :uploader_id, 'The id of the user who uploaded the audio recording. User must have write access to the project.', scope: :audio_recording, :required => true
 
-    test_overlap(Settings.audio_recording_overlap_sec + 1, 1)
+    test_overlap(Settings.audio_recording_max_overlap_sec + 1, 1)
   end
 
   post '/projects/:project_id/sites/:site_id/audio_recordings' do
@@ -373,7 +375,7 @@ resource 'AudioRecordings' do
     parameter :original_file_name, '', scope: :audio_recording, :required => true
     parameter :uploader_id, 'The id of the user who uploaded the audio recording. User must have write access to the project.', scope: :audio_recording, :required => true
 
-    test_overlap(Settings.audio_recording_overlap_sec + 1, 2)
+    test_overlap(Settings.audio_recording_max_overlap_sec + 1, 2)
   end
 
 

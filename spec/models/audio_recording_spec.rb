@@ -2,11 +2,17 @@ require 'spec_helper'
 
 describe AudioRecording do
   it 'has a valid factory' do
-    ar = create(:audio_recording, recorded_date: Time.zone.now.advance(seconds: -20), file_hash: '1111', duration_seconds: 5)
+    ar = create(:audio_recording,
+                recorded_date: Time.zone.now.advance(seconds: -20),
+                file_hash: '1111',
+                duration_seconds: Settings.audio_recording_min_duration_sec)
     ar.should be_valid
   end
   it 'has a valid FactoryGirl factory' do
-    ar = FactoryGirl.create(:audio_recording, recorded_date: Time.zone.now.advance(seconds: -10), file_hash: '2222', duration_seconds: 5)
+    ar = FactoryGirl.create(:audio_recording,
+                            recorded_date: Time.zone.now.advance(seconds: -10),
+                            file_hash: '2222',
+                            duration_seconds: Settings.audio_recording_min_duration_sec)
     ar.should be_valid
   end
   it 'has a valid FactoryGirl factory' do
@@ -35,7 +41,8 @@ describe AudioRecording do
   it { should validate_presence_of(:duration_seconds) }
   it { should validate_numericality_of(:duration_seconds) }
   it { should_not allow_value(-1).for(:duration_seconds) }
-  it { should allow_value(1).for(:duration_seconds) }
+  it { should allow_value(Settings.audio_recording_min_duration_sec).for(:duration_seconds) }
+  it { should_not allow_value(Settings.audio_recording_min_duration_sec - 0.5).for(:duration_seconds) }
   it { should_not allow_value(0).for(:duration_seconds) }
 
   it { should validate_numericality_of(:sample_rate_hertz) }
@@ -167,5 +174,21 @@ describe AudioRecording do
     file_hash = "SHA256::c110884206d25a83dd6d4c741861c429c10f99df9102863dde772f149387d891"
     FactoryGirl.create(:audio_recording, file_hash: file_hash)
     FactoryGirl.build(:audio_recording, file_hash: file_hash).should_not be_valid
+  end
+
+  it 'should not allow audio recordings shorter than minimum duration' do
+    expect {
+      FactoryGirl.create(:audio_recording, duration_seconds: Settings.audio_recording_min_duration_sec - 1)
+    }.to raise_error(ActiveRecord::RecordInvalid, "Validation failed: Duration seconds must be greater than or equal to #{Settings.audio_recording_min_duration_sec}")
+  end
+
+  it 'should allow audio recordings equal to than minimum duration' do
+    ar = FactoryGirl.build(:audio_recording, duration_seconds: Settings.audio_recording_min_duration_sec)
+    expect(ar.valid?).to be_true
+  end
+
+  it 'should allow audio recordings longer than minimum duration' do
+    ar = FactoryGirl.create(:audio_recording, duration_seconds: Settings.audio_recording_min_duration_sec + 1)
+    expect(ar.valid?).to be_true
   end
 end

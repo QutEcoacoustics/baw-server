@@ -118,7 +118,10 @@ defaults: &defaults
     imagemagick_identify_executable: identify
     max_duration_seconds: 300
   audio_tools_timeout_sec: 20
-  audio_recording_overlap_sec: 5
+  # max overlap (default 5): maximum amount an audio recording can be trimmed at the end
+  audio_recording_max_overlap_sec: 5
+  # min duration (default 10): must be larger than audio_recording_max_overlap_sec
+  audio_recording_min_duration_sec: 10
   server_version: 0.6.2
   organisation_names:
     site_long_name: Audio Workbench

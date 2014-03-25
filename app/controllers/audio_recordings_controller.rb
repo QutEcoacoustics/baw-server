@@ -62,7 +62,7 @@ class AudioRecordingsController < ApplicationController
 
     if !user_exists || highest_permission < AccessLevel::WRITE
       render json: {error: 'uploader does not have access to this project'}.to_json, status: :unprocessable_entity
-    elsif check_overlap(@audio_recording) && @audio_recording.save
+    elsif check_and_correct_overlap(@audio_recording) && @audio_recording.save
       render json: @audio_recording, status: :created, location: [@project, @site, @audio_recording]
     else
       render json: @audio_recording.errors, status: :unprocessable_entity
@@ -197,34 +197,52 @@ class AudioRecordingsController < ApplicationController
   end
 
   # @param [AudioRecording] new_audio_recording
-  def check_overlap(new_audio_recording)
-    unless new_audio_recording.valid?
-      if new_audio_recording.errors.include?(:recorded_date) &&
-          new_audio_recording.errors[:recorded_date].any? { |item| item.include?(:problem) }
-        overlapping = new_audio_recording.overlapping
-        raise "More than one overlapping audio_recording - cannot fix this automatically: #{overlapping}" if overlapping.size > 1
+  def check_and_correct_overlap(new_audio_recording)
+    if has_overlap(new_audio_recording)
+      overlapping = new_audio_recording.overlapping
+      raise "More than one overlapping audio_recording - cannot fix this automatically: #{overlapping}" if overlapping.size > 1
 
-        existing_audio_recording_info = new_audio_recording.overlapping[0]
-        new_audio_recording_end = new_audio_recording.recorded_date.advance(seconds: new_audio_recording.duration_seconds)
+      existing_audio_recording_info = new_audio_recording.overlapping[0]
+      existing_audio_recording_start = existing_audio_recording_info[:recorded_date]
+      existing_audio_recording_end = existing_audio_recording_info[:end_date]
+      existing_audio_recording_id = existing_audio_recording_info[:id]
+      existing_audio_recording_uuid = existing_audio_recording_info[:uuid]
 
-        if existing_audio_recording_info[:recorded_date] > new_audio_recording.recorded_date
-          # if overlap is within threshold, modify new_audio_recording
-          overlap_amount = new_audio_recording_end - existing_audio_recording_info[:recorded_date]
-          if overlap_amount <= Settings.audio_recording_overlap_sec
-            new_audio_recording.duration_seconds = new_audio_recording.duration_seconds - overlap_amount
-          end
-        elsif existing_audio_recording_info[:recorded_date] < new_audio_recording.recorded_date
-          # if overlap is within threshold, modify existing audio recording
-          overlap_amount = new_audio_recording.overlapping[0][:end_date] - new_audio_recording.recorded_date
-          if overlap_amount <= Settings.audio_recording_overlap_sec
-            existing = AudioRecording.where(id: existing_audio_recording_info[:id]).first
-            existing.duration_seconds = existing.duration_seconds - overlap_amount
-            existing.save!
-          end
+      new_audio_recording_start = new_audio_recording.recorded_date
+      new_audio_recording_end = new_audio_recording.recorded_date.advance(seconds: new_audio_recording.duration_seconds)
+
+      if existing_audio_recording_start > new_audio_recording_start
+        # if overlap is within threshold, modify new_audio_recording
+        overlap_amount = new_audio_recording_end - existing_audio_recording_start
+        if overlap_amount <= Settings.audio_recording_max_overlap_sec
+          new_audio_recording.duration_seconds = new_audio_recording.duration_seconds - overlap_amount
+          notes = new_audio_recording.notes.blank? ? '' : new_audio_recording.notes
+          new_audio_recording.notes = notes + create_overlap_notes(overlap_amount, existing_audio_recording_uuid)
+        end
+      elsif existing_audio_recording_start < new_audio_recording_start
+        # if overlap is within threshold, modify existing audio recording
+        overlap_amount = existing_audio_recording_end - new_audio_recording_start
+        if overlap_amount <= Settings.audio_recording_max_overlap_sec
+          existing = AudioRecording.where(id: existing_audio_recording_id).first
+          existing.duration_seconds = existing.duration_seconds - overlap_amount
+          notes = existing.notes.blank? ? '' : existing.notes
+          existing.notes = notes + create_overlap_notes(overlap_amount, existing_audio_recording_uuid)
+          existing.save!
         end
       end
     end
     true
+  end
+
+  def has_overlap(new_audio_recording)
+    !new_audio_recording.valid? &&
+        new_audio_recording.errors.include?(:recorded_date) &&
+        new_audio_recording.errors[:recorded_date].any? { |item| item.include?(:problem) }
+  end
+
+  def create_overlap_notes(overlap_amount, other_audio_recording_uuid)
+    "\n\"duration_adjustment_for_overlap\"=\"Change made #{Time.zone.now.utc.iso8601}: " +
+        "overlap of #{overlap_amount} seconds with audio_recording with uuid #{other_audio_recording_uuid}.\""
   end
 
 end
