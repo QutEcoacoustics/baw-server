@@ -26,7 +26,7 @@
           %tr
             %td= audio_recording.original_file_exists? ? (link_to 'Play', "/listen/#{audio_recording.id}", target: '_self') : 'Not Available'
             %td= audio_recording.recorded_date.to_formatted_s(:readable_full)
-            %td= distance_of_time_in_words(audio_recording.duration_seconds)
+            %td= audio_recording_duration_formatted(audio_recording)
 
       = page_entries_info @site_audio_recordings
       = will_paginate @site_audio_recordings
