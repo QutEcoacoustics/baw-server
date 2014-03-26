@@ -10,12 +10,13 @@ GIT
 
 GIT
   remote: https://github.com/QutBioacoustics/baw-workers.git
-  revision: d76dbe06378d5609c67bc7896331d354d911a9b5
+  revision: 2d886fc93fe223960d76827c7ba5c140029e26db
   specs:
-    baw-workers (0.0.1)
+    baw-workers (0.0.2)
       activesupport (>= 3.2)
       daemons
       i18n
+      resque
       settingslogic
       tzinfo
 
