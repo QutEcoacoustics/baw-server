@@ -17,3 +17,4 @@ test/version_tmp
 tmp
 .idea/
 vendor/
+lib/baw-workers/settings/settings.dev.yml
