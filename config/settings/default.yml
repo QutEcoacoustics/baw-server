@@ -6,7 +6,9 @@ defaults: &defaults
   host:
     name: localhost
     port: 3030
-  redis_connection: localhost:6379
+  resque:
+    connection: localhost:6379
+    media_request_queue: example_queue_name
   media_request_processor: local # options are local or resque
   smtp:
     # see http://guides.rubyonrails.org/action_mailer_basics.html#action-mailer-configuration

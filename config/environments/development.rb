@@ -40,7 +40,7 @@ AWB::Application.configure do
   config.assets.debug = false
 
   # resque configuration
-  Resque.redis = Settings.redis_connection
+  Resque.redis = Settings.resque.connection
 
       # Set path for image magick for windows only
   if RbConfig::CONFIG['target_os'] =~ /mswin|mingw/i

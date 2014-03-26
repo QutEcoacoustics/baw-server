@@ -91,7 +91,9 @@ class MediaController < ApplicationController
     options[:end_offset] = (request_params[:end_offset] || audio_recording.duration_seconds).to_f
     options[:uuid] = audio_recording.uuid
     options[:id] = audio_recording.id
-    options[:media_type] = Mime::Type.lookup_by_extension(request_params[:format])
+    # .to_s on mime:type gets the media type
+    # .to_sym gets the extension
+    options[:media_type] = Mime::Type.lookup_by_extension(request_params[:format]).to_s
 
     if AUDIO_MEDIA_TYPES.include?(options[:media_type])
       audio_response(audio_recording, options, request_params)
@@ -140,7 +142,7 @@ class MediaController < ApplicationController
               end_offset: options[:end_offset]
           })
     elsif @media_processor == MEDIA_PROCESSOR_RESQUE
-      resque_enqueue(options)
+      resque_enqueue('cache_audio', options)
     end
 
   end
@@ -178,7 +180,7 @@ class MediaController < ApplicationController
       send_file full_path.first, stream: true, buffer_size: 4096, disposition: 'inline', type: options[:media_type], content_type: options[:media_type]
 
     elsif @media_processor == MEDIA_PROCESSOR_RESQUE
-      resque_enqueue(options)
+      resque_enqueue('cache_spectrogram', options)
     end
   end
 
@@ -212,8 +214,8 @@ class MediaController < ApplicationController
     end
   end
 
-  def resque_enqueue(options)
-    Resque.enqueue(BawWorkers::MediaRequestWorker, options)
+  def resque_enqueue(media_request_type, options)
+    Resque.enqueue(BawWorkers::MediaAction, media_request_type, options)
     headers['Retry-After'] = Time.zone.now.advance(seconds: 10).httpdate
     head status: :accepted, content_type: 'text/plain'
   end
