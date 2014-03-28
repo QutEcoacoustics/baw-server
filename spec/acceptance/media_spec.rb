@@ -80,6 +80,17 @@ def using_original_audio(audio_recording, content_type, check_accept_header = tr
   end
 end
 
+def check_hash_deep(hash, valid)
+  hash.each do |key, value|
+    if value.is_a?(Hash)
+      check_hash_deep(value)
+    else
+
+    end
+  end
+
+end
+
 # https://github.com/zipmark/rspec_api_documentation
 resource 'Media' do
 
@@ -200,36 +211,44 @@ resource 'Media' do
           'uuid',
           'id',
           'format',
+          'available_audio_formats',
+          'available_audio_formats/mp3',
           'available_audio_formats/mp3/channel',
           'available_audio_formats/mp3/sample_rate',
           'available_audio_formats/mp3/max_duration_seconds',
           'available_audio_formats/mp3/min_duration_seconds',
           'available_audio_formats/mp3/mime_type',
           'available_audio_formats/mp3/url',
+          'available_audio_formats/webm',
           'available_audio_formats/webm/channel',
           'available_audio_formats/webm/sample_rate',
           'available_audio_formats/webm/max_duration_seconds',
           'available_audio_formats/webm/min_duration_seconds',
           'available_audio_formats/webm/mime_type',
           'available_audio_formats/webm/url',
+          'available_audio_formats/ogg',
           'available_audio_formats/ogg/channel',
           'available_audio_formats/ogg/sample_rate',
           'available_audio_formats/ogg/max_duration_seconds',
           'available_audio_formats/ogg/min_duration_seconds',
           'available_audio_formats/ogg/mime_type',
           'available_audio_formats/ogg/url',
+          'available_audio_formats/flac',
           'available_audio_formats/flac/channel',
           'available_audio_formats/flac/sample_rate',
           'available_audio_formats/flac/max_duration_seconds',
           'available_audio_formats/flac/min_duration_seconds',
           'available_audio_formats/flac/mime_type',
           'available_audio_formats/flac/url',
+          'available_audio_formats/wav',
           'available_audio_formats/wav/channel',
           'available_audio_formats/wav/sample_rate',
           'available_audio_formats/wav/max_duration_seconds',
           'available_audio_formats/wav/min_duration_seconds',
           'available_audio_formats/wav/mime_type',
           'available_audio_formats/wav/url',
+          'available_image_formats',
+          'available_image_formats/png',
           'available_image_formats/png/channel',
           'available_image_formats/png/sample_rate',
           'available_image_formats/png/window',
@@ -247,8 +266,8 @@ resource 'Media' do
 
       json_paths_exclude = %w(time date available_image_formats/jpg 'available_image_formats/jpeg)
 
-      json_paths_exclude.each do |expected_json_path|
-        response_body.should_not have_json_path(expected_json_path), "Did not expect #{expected_json_path} in #{response_body}"
+      json_paths_exclude.each do |unexpected_json_path|
+        response_body.should_not have_json_path(unexpected_json_path), "Did not expect #{unexpected_json_path} in #{response_body}"
       end
 
     end

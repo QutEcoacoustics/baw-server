@@ -37,7 +37,7 @@ class SitesController < ApplicationController
   def show
     @site = @project.sites.find(params[:id])
 
-    @site_audio_recordings = @site.audio_recordings.order('recorded_date DESC').paginate(page: params[:page], per_page: 30)
+    @site_audio_recordings = @site.audio_recordings.where(status: 'ready').order('recorded_date DESC').paginate(page: params[:page], per_page: 30)
     @audio_recording_duration_format
 
     @site.update_location_obfuscated(current_user)

@@ -25,13 +25,13 @@ class MediaController < ApplicationController
     @media_processor = Settings.media_request_processor
     @media_cacher = BawAudioTools::MediaCacher.new(Settings.paths.temp_files)
 
-    available_text_formats = Settings.available_formats.text
-    available_audio_formats = Settings.available_formats.audio
-    available_image_formats = Settings.available_formats.image
+    @available_text_formats = Settings.available_formats.text
+    @available_audio_formats = Settings.available_formats.audio
+    @available_image_formats = Settings.available_formats.image
 
     #default_dataset = Settings.cached_dataset_defaults
 
-    @available_formats = available_text_formats.concat(available_audio_formats).concat(available_image_formats)
+    @available_formats = @available_text_formats.concat(@available_audio_formats).concat(@available_image_formats)
 
     is_audio_ready = @audio_recording.status == 'ready'
     is_head_request = request.head?
@@ -188,18 +188,14 @@ class MediaController < ApplicationController
 
     default_audio = Settings.cached_audio_defaults
     default_spectrogram = Settings.cached_spectrogram_defaults
+    default_text = {}
 
-    options[:available_audio_formats] = get_available_formats(audio_recording, @available_formats, request_params[:start_offset], request_params[:end_offset], default_audio)
-    #Settings.cached_audio_defaults.each { |key, value| value.merge!(
-    # {
-    # mime_type: Mime::Type.lookup_by_extension(key).to_s,
-    # url: audio_recording_media_path(@audio_recording,
-    # format: key,
-    # start_offset: params[:start_offset],
-    # end_offset: params[:end_offset])
-    # }
-    # ) }
-    options[:available_image_formats] = get_available_formats(audio_recording, @available_formats, request_params[:start_offset], request_params[:end_offset], default_spectrogram)
+    options[:available_audio_formats] =
+        get_available_formats(audio_recording, @available_audio_formats, request_params[:start_offset], request_params[:end_offset], default_audio)
+    options[:available_image_formats] =
+        get_available_formats(audio_recording, @available_image_formats, request_params[:start_offset], request_params[:end_offset], default_spectrogram)
+    options[:available_text_formats] =
+        get_available_formats(audio_recording, @available_text_formats, request_params[:start_offset], request_params[:end_offset], default_text)
 
     options.delete :datetime_with_offset
     options[:format] = 'json'
