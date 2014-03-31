@@ -16,7 +16,7 @@ test:
       - <%= Dir.pwd %>/tmp/_analysis_run
     cached_datasets:
       - <%= Dir.pwd %>/tmp/_cached_dataset
-    modules_log_file: <%= Dir.pwd %>/tmp/_modules_log.log
+    modules_log_file: <%= Dir.pwd %>/tmp/audio_tools.log
     temp_files: <%= Dir.pwd %>/tmp
   cached_audio_defaults:
     storage_format: mp3

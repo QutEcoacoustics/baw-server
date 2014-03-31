@@ -86,6 +86,7 @@ module BawAudioTools
         end
       end
 
+      raise Exceptions::AudioFileNotFoundError, "Could not locate #{source}" unless File.exists?(source)
       raise Exceptions::NotAnAudioFileError, "Not an audio file #{source} (#{result['STREAM codec_type']}): #{result.to_json}" if result['STREAM codec_type'] != 'audio'
 
       result
