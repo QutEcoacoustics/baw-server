@@ -9,6 +9,5 @@ require 'baw-workers/settings'
 module BawWorkers
   autoload :MediaAction, 'baw-workers/media_action'
 
-  Resque.redis = Settings.resque.connection
 
 end

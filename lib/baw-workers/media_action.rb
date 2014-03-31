@@ -10,6 +10,8 @@ module BawWorkers
       # Settings.paths.original_audios = /production/original_audio
       @media_cacher = BawAudioTools::MediaCacher.new(Settings.paths.temp_files)
 
+      Resque.redis = Settings.resque.connection
+
       if media_request_type == 'cache_audio'
         @media_cacher.create_audio_segment(modify_parameters)
       elsif media_request_type == 'cache_spectrogram'
