@@ -5,7 +5,6 @@
 #
 # See http://rubydoc.info/gems/rspec-core/RSpec/Core/Configuration
 
-
 require 'simplecov'
 SimpleCov.start
 
@@ -14,16 +13,12 @@ if ENV['TRAVIS']
   Coveralls.wear!
 end
 
-require 'settingslogic'
 require 'active_support/all'
 require 'zonebie'
 require 'baw-audio-tools'
 require 'baw-workers'
 
 require File.dirname(__FILE__) + '/baw-workers/shared_context'
-
-# set environment so Settings will not be created
-ENV['baw-workers-env'] = 'test'
 
 RSpec.configure do |config|
   config.treat_symbols_as_metadata_keys_with_true_values = true
@@ -58,6 +53,13 @@ RSpec.configure do |config|
   config.after(:suite) do
     $stderr = original_stderr
     $stdout = original_stdout
+  end
+
+  # for settings when running tests. In normal use, Settings are used from the parent ruby project,
+  # or created when run from the Rakefile.
+  class Settings < Settingslogic
+    source File.join(File.dirname(__FILE__), '..', 'lib', 'baw-workers', 'settings', 'settings.test.yml')
+    namespace 'settings'
   end
 
 end
