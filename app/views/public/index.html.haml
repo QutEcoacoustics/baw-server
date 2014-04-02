@@ -80,8 +80,10 @@
       %li= link_to 'Projects', projects_path, title: 'View the projects you can access', data: {toggle: 'tooltip',  placement: 'right'}
     - unless current_user.blank?
       %li= link_to 'Profile', my_account_path, title: 'View your profile', data: {toggle: 'tooltip',  placement: 'right'}
+      %li= link_to 'Your Annotations', my_account_path, title: 'View your recent annotations', data: {toggle: 'tooltip',  placement: 'right'}
     - if current_user.blank?
       %li= link_to 'Login', new_user_session_path, title: 'Sign in', data: {toggle: 'tooltip',  placement: 'right'}
       %li= link_to 'Sign up', new_user_registration_path, title: 'Create an account', data: {toggle: 'tooltip',  placement: 'right'}
+    %li= link_to 'Website Activity', website_status_path, title: 'Recent activity and overall statistics', data:{toggle: 'tooltip',  placement: 'right'}
 
 - content_for :title, 'Home'

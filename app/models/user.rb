@@ -65,7 +65,21 @@ class User < ActiveRecord::Base
     # .joins for inner join
     creator_id_check = 'projects.creator_id = ?'
     permissions_check = '(permissions.user_id = ? AND permissions.level IN (\'reader\', \'writer\'))'
-    Project.includes(:permissions).where("(#{creator_id_check} OR #{permissions_check})", self.id, self.id).uniq.order('projects.updated_at DESC')
+    Project.includes(:permissions).where("(#{creator_id_check} OR #{permissions_check})", self.id, self.id).uniq.order('projects.updated_at DESC').limit(10)
+  end
+
+  def recently_added_audio_events
+    AudioEvent.includes(:audio_recording).where('creator_id = ? OR updater_id = ?', self.id, self.id).uniq.order('audio_events.updated_at DESC').limit(10)
+  end
+
+  def accessible_audio_recordings
+    user_sites = self.projects.map { |project| project.sites.map { |site| site.id} }.to_a.uniq
+    AudioRecording.where(site_id: user_sites).order('updated_at DESC').limit(10)
+  end
+
+  def accessible_audio_events
+    user_sites = self.projects.map { |project| project.sites.select(:id).map { |site| site.id} }.to_a.uniq
+    AudioEvent.where(audio_recording_id: AudioRecording.where(site_id: user_sites).select(:id)).order('audio_events.updated_at DESC').limit(10)
   end
 
   # helper methods for permission checks

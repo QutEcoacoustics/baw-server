@@ -144,18 +144,6 @@ class SitesController < ApplicationController
     render file: 'sites/_harvest.yml.erb', content_type: 'text/yaml', layout: false
   end
 
-  def audio_recording_duration_formatted(audio_recording)
-
-    total_seconds = audio_recording.duration_seconds
-    seconds = total_seconds % 60
-    minutes = (total_seconds / 60) % 60
-    hours = total_seconds / (60 * 60)
-
-    "#{view_context.distance_of_time_in_words(total_seconds)} "+
-    "(#{format('%02d:%02d:%02d', hours, minutes, seconds)})"
-  end
-  helper_method :audio_recording_duration_formatted
-
   private
   def add_project_breadcrumb
     add_breadcrumb 'Projects', projects_path

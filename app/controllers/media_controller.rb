@@ -31,7 +31,7 @@ class MediaController < ApplicationController
 
     #default_dataset = Settings.cached_dataset_defaults
 
-    @available_formats = @available_text_formats.concat(@available_audio_formats).concat(@available_image_formats)
+    @available_formats = @available_text_formats + @available_audio_formats + @available_image_formats
 
     is_audio_ready = @audio_recording.status == 'ready'
     is_head_request = request.head?
@@ -62,7 +62,7 @@ class MediaController < ApplicationController
       format_key = format.to_s
       result[format_key] = defaults.clone
       result[format_key].delete 'format'
-      result[format_key][:storage_format] = format_key
+      result[format_key][:extension] = format_key
       result[format_key]['mime_type'] = Mime::Type.lookup_by_extension(format).to_s
       result[format_key]['url'] = audio_recording_media_path(audio_recording,
                                                              format: format,

@@ -7,7 +7,7 @@
   %h3 Bookmarks
 
   - if @user.bookmarks.empty?
-    = 'You have not created any bookmarks.'
+    = 'No bookmarks created.'
   - else
     %table.table.table-striped(data-provides='rowlink')
 
@@ -21,28 +21,50 @@
           %td= bookmark.description
 
 .span12
-  %h3 Datasets
+  %h3 Recent Annotations
 
-  - if @user.datasets.empty?
-    = 'You have not created any datasets.'
+  - if @user.recently_added_audio_events.empty?
+    = 'No annotations created.'
   - else
-    %table.table.table-striped
-      %thead
-        %tr
-          %th Name
-          %th Project
-          %th Last Modified
-          %th Description
+    %table.table.table-striped(data-provides='rowlink')
 
-      %tbody
-      - @user.datasets.order('updated_at DESC').each do |dataset|
+      %tr
+        %th Duration (seconds)
+        %th Tags
+        %th Last Updated
+
+      - @user.recently_added_audio_events.each do |audio_event|
         %tr
-          %td= link_to dataset.name, project_dataset_path(dataset.project, dataset)
-          %td= link_to dataset.project.name, project_path(dataset.project)
-          %td
-            = ActiveSupport::Inflector.ordinalize(dataset.updated_at.strftime("%d").to_i)
-            = dataset.updated_at.strftime(" %b, %Y %I:%M %p")
-          %td= render partial: 'datasets/summary', locals: {dataset: dataset}
+          - offset_start_round_30_sec = (audio_event.start_time_seconds / 30).floor * 30
+          - offset_end_round_30_sec = (audio_event.end_time_seconds / 30).floor * 30
+          - offset_end_round_30_sec += (offset_start_round_30_sec == offset_end_round_30_sec ? 30 : 0 )
+          %td= link_to (audio_event.end_time_seconds - audio_event.start_time_seconds), "/listen/#{audio_event.audio_recording.id}?start=#{offset_start_round_30_sec}&end=#{offset_end_round_30_sec}", target: '_self'
+          %td= audio_event.tags.order(:type_of_tag, :text).select(:text).to_a.map{ |item| item.text}.join(', ')
+          %td= distance_of_time_in_words(Time.zone.now, audio_event.updated_at, nil, {vague: true})+ ' ago'
+
+-#.span12
+-#  %h3 Datasets
+-#
+-#  - if @user.datasets.empty?
+-#    = 'You have not created any datasets.'
+-#  - else
+-#    %table.table.table-striped
+-#      %thead
+-#        %tr
+-#          %th Name
+-#          %th Project
+-#          %th Last Modified
+-#          %th Description
+-#
+-#      %tbody
+-#      - @user.datasets.order('updated_at DESC').each do |dataset|
+-#        %tr
+-#          %td= link_to dataset.name, project_dataset_path(dataset.project, dataset)
+-#          %td= link_to dataset.project.name, project_path(dataset.project)
+-#          %td
+-#            = ActiveSupport::Inflector.ordinalize(dataset.updated_at.strftime("%d").to_i)
+-#            = dataset.updated_at.strftime(" %b, %Y %I:%M %p")
+-#          %td= render partial: 'datasets/summary', locals: {dataset: dataset}
 
 - content_for :left_sidebar do
   = render layout: '/shared/left_sidebar', locals: {title: 'User Accounts'} do

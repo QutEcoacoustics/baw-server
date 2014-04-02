@@ -2,6 +2,27 @@ require 'spec_helper'
 require 'rspec_api_documentation/dsl'
 require 'helpers/acceptance_spec_helper'
 
+def parse_deep(parent, hash, remaining_to_match, not_included)
+  hash.each { |key, value|
+
+    new_parent = parent
+    if parent.nil?
+      new_parent = key
+    else
+      new_parent = parent + '/' + key
+    end
+
+    unless remaining_to_match.include?(new_parent)
+      not_included.push(new_parent)
+    end
+
+    if value.is_a?(Hash)
+      parse_deep(new_parent, value, remaining_to_match, not_included)
+    end
+  }
+  not_included
+end
+
 def standard_media_parameters
 
   parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
@@ -47,7 +68,7 @@ def using_original_audio(audio_recording, content_type, check_accept_header = tr
     response_body.size.should eq(0)
     if response_headers['Content-Type'].include? 'image'
       default_spectrogram = Settings.cached_spectrogram_defaults
-      options[:format] = default_spectrogram.storage_format
+      options[:format] = default_spectrogram.extension
       options[:channel] = default_spectrogram.channel.to_i
       options[:sample_rate] = default_spectrogram.sample_rate.to_i
       options[:window] = default_spectrogram.window.to_i
@@ -57,7 +78,7 @@ def using_original_audio(audio_recording, content_type, check_accept_header = tr
       response_headers['Content-Length'].to_i.should eq(File.size(cache_spectrogram_possible_paths.first))
     elsif response_headers['Content-Type'].include? 'audio'
       default_audio = Settings.cached_audio_defaults
-      options[:format] = default_audio.storage_format
+      options[:format] = default_audio.extension
       options[:channel] = default_audio.channel.to_i
       options[:sample_rate] = default_audio.sample_rate.to_i
       cache_audio_file = media_cacher.cached_audio_file_name(options)
@@ -78,17 +99,6 @@ def using_original_audio(audio_recording, content_type, check_accept_header = tr
       File.delete temp_file if File.exists? temp_file
     end
   end
-end
-
-def check_hash_deep(hash, valid)
-  hash.each do |key, value|
-    if value.is_a?(Hash)
-      check_hash_deep(value)
-    else
-
-    end
-  end
-
 end
 
 # https://github.com/zipmark/rspec_api_documentation
@@ -211,6 +221,7 @@ resource 'Media' do
           'uuid',
           'id',
           'format',
+          'media_type',
           'available_audio_formats',
           'available_audio_formats/mp3',
           'available_audio_formats/mp3/channel',
@@ -218,6 +229,7 @@ resource 'Media' do
           'available_audio_formats/mp3/max_duration_seconds',
           'available_audio_formats/mp3/min_duration_seconds',
           'available_audio_formats/mp3/mime_type',
+          'available_audio_formats/mp3/extension',
           'available_audio_formats/mp3/url',
           'available_audio_formats/webm',
           'available_audio_formats/webm/channel',
@@ -225,6 +237,7 @@ resource 'Media' do
           'available_audio_formats/webm/max_duration_seconds',
           'available_audio_formats/webm/min_duration_seconds',
           'available_audio_formats/webm/mime_type',
+          'available_audio_formats/webm/extension',
           'available_audio_formats/webm/url',
           'available_audio_formats/ogg',
           'available_audio_formats/ogg/channel',
@@ -232,6 +245,7 @@ resource 'Media' do
           'available_audio_formats/ogg/max_duration_seconds',
           'available_audio_formats/ogg/min_duration_seconds',
           'available_audio_formats/ogg/mime_type',
+          'available_audio_formats/ogg/extension',
           'available_audio_formats/ogg/url',
           'available_audio_formats/flac',
           'available_audio_formats/flac/channel',
@@ -239,6 +253,7 @@ resource 'Media' do
           'available_audio_formats/flac/max_duration_seconds',
           'available_audio_formats/flac/min_duration_seconds',
           'available_audio_formats/flac/mime_type',
+          'available_audio_formats/flac/extension',
           'available_audio_formats/flac/url',
           'available_audio_formats/wav',
           'available_audio_formats/wav/channel',
@@ -246,6 +261,7 @@ resource 'Media' do
           'available_audio_formats/wav/max_duration_seconds',
           'available_audio_formats/wav/min_duration_seconds',
           'available_audio_formats/wav/mime_type',
+          'available_audio_formats/wav/extension',
           'available_audio_formats/wav/url',
           'available_image_formats',
           'available_image_formats/png',
@@ -257,7 +273,13 @@ resource 'Media' do
           'available_image_formats/png/max_duration_seconds',
           'available_image_formats/png/min_duration_seconds',
           'available_image_formats/png/mime_type',
+          'available_image_formats/png/extension',
           'available_image_formats/png/url',
+          'available_text_formats',
+          'available_text_formats/json',
+          'available_text_formats/json/extension',
+          'available_text_formats/json/mime_type',
+          'available_text_formats/json/url'
       ]
 
       json_paths.each do |expected_json_path|
@@ -270,6 +292,9 @@ resource 'Media' do
         response_body.should_not have_json_path(unexpected_json_path), "Did not expect #{unexpected_json_path} in #{response_body}"
       end
 
+      parsed = JsonSpec::Helpers::parse_json(response_body)
+      remaining = parse_deep(nil, parsed, json_paths.clone, [])
+      expect(remaining).to be_empty, "expected no additional elements, got #{remaining}."
     end
   end
 

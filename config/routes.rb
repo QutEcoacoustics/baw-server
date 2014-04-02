@@ -110,9 +110,12 @@ AWB::Application.routes.draw do
 
   # site status API
   get '/status/' => 'public#status'
+  get '/website_status/' => 'public#website_status'
 
   # resque front end
-  mount Resque::Server.new, at: '/job_queue_status'
+  authenticate :user, lambda {|u| u.has_role? :admin } do
+    mount Resque::Server.new, at: '/job_queue_status'
+  end
 
   # provide access to API documentation
   mount Raddocs::App => '/doc'

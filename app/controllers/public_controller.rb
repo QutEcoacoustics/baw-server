@@ -1,6 +1,6 @@
 class PublicController < ApplicationController
 
-  skip_authorization_check only: [:index, :status]
+  skip_authorization_check only: [:index, :status, :website_status]
 
   def index
     base_path = "#{Rails.root}/public"
@@ -34,6 +34,47 @@ class PublicController < ApplicationController
     status = storage_msg[:success] ? 'good' : 'bad'
     respond_to do |format|
       format.json  { render json: {status: status, storage: storage_msg}, status: :ok }
+    end
+  end
+
+  def website_status
+
+    storage_msg = AudioRecording.check_storage
+
+    online_window = 2.hours.ago
+    users_online = User.where('current_sign_in_at > ? OR last_sign_in_at > ?', online_window, online_window).count
+    users_total = User.count
+
+    month_ago = 1.month.ago
+    annotations_total = AudioEvent.count
+    annotations_recent = AudioEvent.where('created_at > ? OR updated_at > ?', month_ago, month_ago).count
+
+    audio_recording_total = AudioRecording.count
+    audio_recording_recent = AudioRecording.where('created_at > ? OR updated_at > ?', month_ago, month_ago).count
+    audio_recording_total_duration = AudioRecording.sum(:duration_seconds)
+
+    @status_info = {
+        storage: storage_msg,
+        users_online: users_online,
+        users_total: users_total,
+        online_window_start: online_window,
+        annotations_total: annotations_total,
+        annotations_recent: annotations_recent,
+        audio_recording_total: audio_recording_total,
+        audio_recording_recent: audio_recording_recent,
+        audio_recording_total_duration: audio_recording_total_duration
+    }
+
+    if current_user.blank?
+      @recent_audio_events = AudioEvent.order('audio_events.updated_at DESC').limit(7)
+    else
+      @recent_audio_events = current_user.accessible_audio_events.includes(:audio_recording, :updater).order('audio_events.updated_at DESC').limit(7)
+    end
+
+
+    respond_to do |format|
+      format.html
+      format.json { render json: @status_info }
     end
   end
 

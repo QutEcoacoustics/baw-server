@@ -149,6 +149,7 @@ class AudioRecording < ActiveRecord::Base
     if incr_hash.hexdigest.upcase == compare_hash.upcase
       self.status = 'ready'
       self.save!
+      logger.info "Audio recording #{self.uuid} file hash was checked and matched. It is now in 'ready' state."
     else
       self.status = 'corrupt'
       self.save!
@@ -164,13 +165,14 @@ class AudioRecording < ActiveRecord::Base
       when 'new'
         logger.info "Audio recording #{self.uuid} is in state 'new' and is not yet ready to be accessed."
       when 'to_check'
-        logger.debug "Audio recording #{self.uuid} is in state 'to_check' and will be checked by comparing the file hash and stored hash."
+        logger.info "Audio recording #{self.uuid} is in state 'to_check' and will be checked by comparing the file hash and stored hash."
         self.check_file_hash
       when 'corrupt'
         logger.warn "Audio recording #{self.uuid} is in state 'corrupt' and cannot be accessed."
       when 'ignore'
         logger.info "Audio recording #{self.uuid} is in state 'ignore' and cannot be accessed."
       when 'ready'
+        logger.info "Audio recording #{self.uuid} is in state 'ready' and can be accessed."
         can_be_accessed = true
       else
         logger.info "Audio recording #{self.uuid} is in state '#{self.status.to_s}', which is unknown."

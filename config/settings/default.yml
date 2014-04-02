@@ -82,13 +82,13 @@ defaults: &defaults
     email: address+admin@example.com
     password: password
   cached_audio_defaults:
-    storage_format: mp3
+    extension: mp3
     channel: 0
     sample_rate: 22050
     max_duration_seconds: 300.0
     min_duration_seconds: 0.5
   cached_spectrogram_defaults:
-    storage_format: png
+    extension: png
     channel: 0
     sample_rate: 22050
     window: 512

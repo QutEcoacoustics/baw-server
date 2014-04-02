@@ -1,0 +1,56 @@
+%h1 Bioacoustic Workbench Status
+
+.row-fluid
+  .span6
+    %h2 Currently
+    %p= "#{@status_info[:users_online]} users online of #{@status_info[:users_total]} registered"
+    %p
+      = @status_info[:storage][:message]
+      - if @status_info[:storage][:success]
+        %span.label.label-success
+          &#10004;
+      - else
+        %span.label.label-warning
+          !
+    %p= "#{@status_info[:annotations_recent]} new annotations in last month"
+    %p= "#{@status_info[:audio_recording_recent]} new audio recordings in last month"
+
+  .span6
+    %h2 Totals
+    %p= "#{@status_info[:annotations_total]} annotations"
+    %p= "#{@status_info[:audio_recording_total]} audio recordings"
+    %p= "#{distance_of_time(@status_info[:audio_recording_total_duration])} overall audio recording duration"
+
+.row-fluid
+  .span12
+    %h2 Recent Annotations
+
+    - if @recent_audio_events.empty?
+      = 'No recent annotations.'
+    - else
+      %table.table.table-striped
+
+        %tr
+          - unless current_user.blank?
+            %th
+          %th Tags
+          %th Last Updated
+          - unless current_user.blank?
+            %th User
+
+        - @recent_audio_events.each do |audio_event|
+          %tr
+            - offset_start_round_30_sec = (audio_event.start_time_seconds / 30).floor * 30
+            - offset_end_round_30_sec = (audio_event.end_time_seconds / 30).floor * 30
+            - offset_end_round_30_sec += (offset_start_round_30_sec == offset_end_round_30_sec ? 30 : 0 )
+            - tags = audio_event.tags.order(:type_of_tag, :text).select(:text).to_a.map{ |item| item.text}
+            - tag_text = tags.empty? ? '(none)' : tags.join(', ')
+            - unless current_user.blank?
+              %td= link_to 'Play', "/listen/#{audio_event.audio_recording.id}?start=#{offset_start_round_30_sec}&end=#{offset_end_round_30_sec}", target: '_self'
+            %td= tag_text
+            %td= distance_of_time_in_words(Time.zone.now, audio_event.updated_at, nil, {vague: true})+ ' ago'
+            - unless current_user.blank?
+              %td= link_to audio_event.updater.user_name, user_account_path(audio_event.updater)
+
+
+
