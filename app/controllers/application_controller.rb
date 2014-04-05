@@ -15,7 +15,7 @@ class ApplicationController < ActionController::Base
 
   skip_before_filter :verify_authenticity_token, if: :json_request?
 
-  after_filter :set_csrf_cookie_for_ng
+  after_filter :set_csrf_cookie_for_ng, :resource_representation_caching_fixes
 
   rescue_from CanCan::AccessDenied do |exception|
     if current_user && current_user.confirmed?
@@ -140,5 +140,11 @@ class ApplicationController < ActionController::Base
     end
   end
 
+  def resource_representation_caching_fixes
+    # send Vary: Accept for all text/html and application/json responses
+    if response.content_type == 'text/html' || response.content_type == 'application/json'
+      response.headers['Vary'] = 'Accept'
+    end
+  end
 
 end
