@@ -22,7 +22,7 @@ GIT
 
 GIT
   remote: https://github.com/brainspec/enumerize.git
-  revision: 652f53edff115a9c5c29e351ea7e65a88612fbeb
+  revision: 29db9e64e08a8f2f7c45739fdcecb470600ce512
   specs:
     enumerize (0.8.0)
       activesupport (>= 3.2)
@@ -308,7 +308,7 @@ GEM
     ruby-progressbar (1.4.2)
     rvm-capistrano (1.5.1)
       capistrano (~> 2.15.4)
-    safe_yaml (1.0.1)
+    safe_yaml (1.0.2)
     sass (3.3.4)
     sass-rails (3.2.6)
       railties (~> 3.2.0)
