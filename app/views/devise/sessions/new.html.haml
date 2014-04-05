@@ -7,6 +7,8 @@
   .form-actions
     = f.button :submit, 'Sign in'
 
+- content_for :title, 'Sign In'
+
 - content_for :left_sidebar do
   = render partial: 'devise/shared/left_sidebar'
 

@@ -20,7 +20,7 @@
 
 
 - content_for :right_sidebar do
-  = sidebar_metadata_users('Created by', [{user: @script.creator, subtext: time_ago_in_words(@script.created_at) + ' ago' }])
+  = sidebar_metadata_users('Created by', [{user: @script.creator, subtext: distance_of_time_in_words(Time.zone.now, @script.created_at, nil, {vague: true}) + ' ago' }])
   = sidebar_metadata('Analysis Identifier', @script.analysis_identifier)
   = sidebar_metadata('Settings file', link_to(@script.settings_file_file_name, @script.settings_file.url))
   - unless @script.data_file_file_name.blank?

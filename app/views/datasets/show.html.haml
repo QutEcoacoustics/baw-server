@@ -22,8 +22,8 @@
     Add New Job
 
 - content_for :right_sidebar do
-  = sidebar_metadata_users('Created by', [{user: @dataset.creator, subtext: time_ago_in_words(@dataset.created_at) + ' ago' }])
-  = sidebar_metadata_users('Modified by', [{user: @dataset.updater, subtext: time_ago_in_words(@dataset.updated_at) + ' ago' }])
+  = render layout: '/shared/right_sidebar_user_times', locals: { item: @dataset } do
+    ''
 
 - content_for :left_sidebar do
   = render layout: '/shared/left_sidebar', locals: {title: 'Datasets'} do

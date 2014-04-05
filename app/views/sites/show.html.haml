@@ -43,11 +43,10 @@
 
 
 - content_for :right_sidebar do
-  = sidebar_metadata_users('Created by', [{user: @site.creator, subtext: time_ago_in_words(@site.created_at) + ' ago' }])
-  = sidebar_metadata_users('Modified by', [{user: @site.updater, subtext: time_ago_in_words(@site.updated_at) + ' ago' }])
-  - permission = current_user.get_permission(@project)
-  - unless permission.blank?
-    = sidebar_metadata('Your access level', permission.level)
+  = render layout: '/shared/right_sidebar_user_times', locals: { item: @site } do
+    - permission = current_user.get_permission(@project)
+    - unless permission.blank?
+      = sidebar_metadata('Your access level', permission.level)
 
 - content_for :title, "Project #{@project.name} | Site #{@site.name}"
 

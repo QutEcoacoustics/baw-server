@@ -6,7 +6,7 @@
     .span12.form-inputs
       = f.input :projects, as: :select, required: true, collection: @all_projects, label_method: Proc.new {|item| "#{item.name}: \"#{item.description}\""},
         value_method: :id, label: 'Projects',
-        include_blank: false, input_html: {  rows: 8, class: 'span12', multiple: true, required: true }
+        include_blank: false, input_html: {  rows: 16, class: 'span12', multiple: true, required: true, style:'height: 200px;' }
       %span.help-block.span12
         Select one or more projects by holding
         %code Ctrl
@@ -20,6 +20,8 @@
         input_html: { rows: 8, class: 'span12', required: true }
   .form-actions
     = f.button :submit, 'Submit request'
+
+- content_for :title, 'Request Project Access'
 
 - content_for :left_sidebar do
   = render layout: '/shared/left_sidebar', locals: {title: 'Projects'} do

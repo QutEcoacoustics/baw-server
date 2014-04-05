@@ -2,6 +2,8 @@
 
 = render 'form'
 
+- content_for :title, "Edit Profile for #{@user.user_name}"
+
 - content_for :left_sidebar do
   = render layout: '/shared/left_sidebar', locals: {title: 'User Accounts'} do
     - if can? :edit, @user

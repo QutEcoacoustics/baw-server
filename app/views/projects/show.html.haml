@@ -55,13 +55,12 @@
     Add New Job
 
 - content_for :right_sidebar do
-  = sidebar_metadata_users('Created by', [{user: @project.creator, subtext: time_ago_in_words(@project.created_at) + ' ago' }])
-  = sidebar_metadata_users('Modified by', [{user: @project.updater, subtext: time_ago_in_words(@project.updated_at) + ' ago' }])
-  = sidebar_metadata('Notes', @project.notes)
-  = sidebar_metadata('Urn', @project.urn)
-  - permission = current_user.get_permission(@project)
-  - unless permission.blank?
-    = sidebar_metadata('Your access level', permission.level)
+  = render layout: '/shared/right_sidebar_user_times', locals: { item: @project } do
+    = sidebar_metadata('Notes', @project.notes)
+    = sidebar_metadata('Urn', @project.urn)
+    - permission = current_user.get_permission(@project)
+    - unless permission.blank?
+      = sidebar_metadata('Your access level', permission.level)
 
 - content_for :title, "Project #{@project.name}"
 

@@ -14,9 +14,8 @@
 
 
 - content_for :right_sidebar do
-  = sidebar_metadata_users('Created by', [{user: @job.creator, subtext: time_ago_in_words(@job.created_at) + ' ago' }])
-  = sidebar_metadata_users('Modified by', [{user: @job.updater, subtext: time_ago_in_words(@job.updated_at) + ' ago' }])
-  = sidebar_metadata('Annotation Name', @job.annotation_name)
+  = render layout: '/shared/right_sidebar_user_times', locals: { item: @job } do
+    = sidebar_metadata('Annotation Name', @job.annotation_name)
 
 
 - content_for :left_sidebar do

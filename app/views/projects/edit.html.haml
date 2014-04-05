@@ -2,6 +2,8 @@
 
 = render 'form'
 
+- content_for :title, "Edit Project #{@project.name}"
+
 - content_for :left_sidebar do
   = render layout: '/shared/left_sidebar', locals: {title: 'Projects'} do
     %li= link_to 'Project', project_path(@project),  title: "Back to project view", data: {toggle: 'tooltip',  placement: 'right'}

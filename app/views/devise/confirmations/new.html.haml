@@ -7,5 +7,7 @@
   .form-actions
     = f.button :submit, 'Resend confirmation instructions'
 
+- content_for :title, 'Resend confirmation instructions'
+
 - content_for :left_sidebar do
   = render partial: 'devise/shared/left_sidebar'

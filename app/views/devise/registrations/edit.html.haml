@@ -26,6 +26,8 @@
   .form-actions
     = f.button :submit, 'Update'
 
+- content_for :title, "Edit Profile for #{current_user.user_name}"
+
 - content_for :left_sidebar do
   = render layout: '/shared/left_sidebar', locals: {title: 'Users'} do
     %li= link_to 'View profile', my_account_path, title: 'View your profile page', data: {toggle: 'tooltip',  placement: 'right'}

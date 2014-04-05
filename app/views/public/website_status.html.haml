@@ -1,5 +1,7 @@
 %h1 Bioacoustic Workbench Status
 
+- content_for :title, 'Website Status'
+
 .row-fluid
   .span6
     %h2 Currently
@@ -20,6 +22,7 @@
     %p= "#{@status_info[:annotations_total]} annotations"
     %p= "#{@status_info[:audio_recording_total]} audio recordings"
     %p= "#{distance_of_time(@status_info[:audio_recording_total_duration])} overall audio recording duration"
+    %p= "#{number_to_human_size(@status_info[:audio_recording_total_size])} overall audio recording file size"
 
 .row-fluid
   .span12
