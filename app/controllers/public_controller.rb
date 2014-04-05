@@ -52,6 +52,7 @@ class PublicController < ApplicationController
     audio_recording_total = AudioRecording.count
     audio_recording_recent = AudioRecording.where('created_at > ? OR updated_at > ?', month_ago, month_ago).count
     audio_recording_total_duration = AudioRecording.sum(:duration_seconds)
+    audio_recording_total_size = AudioRecording.sum(:data_length_bytes)
 
     @status_info = {
         storage: storage_msg,
@@ -62,7 +63,8 @@ class PublicController < ApplicationController
         annotations_recent: annotations_recent,
         audio_recording_total: audio_recording_total,
         audio_recording_recent: audio_recording_recent,
-        audio_recording_total_duration: audio_recording_total_duration
+        audio_recording_total_duration: audio_recording_total_duration,
+        audio_recording_total_size: audio_recording_total_size
     }
 
     if current_user.blank?
