@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20140222044740) do
+ActiveRecord::Schema.define(:version => 20140404234458) do
 
   create_table "audio_events", :force => true do |t|
     t.integer  "audio_recording_id",                                                     :null => false
@@ -61,6 +61,9 @@ ActiveRecord::Schema.define(:version => 20140222044740) do
     t.datetime "deleted_at"
     t.string   "original_file_name"
   end
+
+  add_index "audio_recordings", ["created_at", "updated_at"], :name => "audio_recordings_created_updated_at"
+  add_index "audio_recordings", ["site_id"], :name => "index_audio_recordings_on_site_id"
 
   create_table "bookmarks", :force => true do |t|
     t.integer  "audio_recording_id"
