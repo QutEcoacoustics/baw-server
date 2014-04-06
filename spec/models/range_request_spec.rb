@@ -4,11 +4,15 @@ describe RangeRequest do
 
   let(:range_request) { RangeRequest.new }
 
-  let(:audio_file_mono) { File.join(File.dirname(__FILE__), '..', 'media_tools', 'test-audio-mono.ogg') }
+  let(:audio_file_mono) { File.expand_path(File.join(File.dirname(__FILE__), '..', 'media_tools', 'test-audio-mono.ogg')) }
   let(:audio_file_mono_media_type) { Mime::Type.lookup('audio/ogg') }
   let(:audio_file_mono_size_bytes) { 822281 }
-  let(:audio_file_mono_etag) { '679bda84b0852653aa636983bf9de1bb072ca6ba7f1bcd82a9b867ec11b5e551' }
   let(:audio_file_mono_modified_time) { File.mtime(audio_file_mono) }
+  let(:audio_file_mono_etag) { 
+    etag_string = audio_file_mono.to_s + '|' + audio_file_mono_modified_time.getutc.to_s + '|' + audio_file_mono_size_bytes.to_s
+    Digest::SHA256.hexdigest etag_string
+ }
+
 
   let(:range_options) {
     {
