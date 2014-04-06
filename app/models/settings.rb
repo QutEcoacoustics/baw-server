@@ -22,6 +22,10 @@ class Settings < Settingslogic
     @media_cache_tool ||= BawAudioTools::MediaCacher.new(Settings.paths.temp_files)
   end
 
+  def range_request
+    @range_request ||= RangeRequest.new
+  end
+
   def validate
     # check that audio_recording_max_overlap_sec < audio_recording_min_duration_sec
     if Settings.audio_recording_max_overlap_sec >= Settings.audio_recording_min_duration_sec

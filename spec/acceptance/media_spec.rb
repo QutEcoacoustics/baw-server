@@ -37,7 +37,7 @@ def standard_media_parameters
   let(:raw_post) { params.to_json }
 end
 
-def using_original_audio(audio_recording, content_type, check_accept_header = true)
+def using_original_audio(audio_recording, content_type, check_accept_header = true, check_content_length = true)
   # set up audio file
 
   options = {}
@@ -75,7 +75,7 @@ def using_original_audio(audio_recording, content_type, check_accept_header = tr
       options[:colour] = default_spectrogram.colour.to_s
       cache_spectrogram_file = media_cacher.cached_spectrogram_file_name(options)
       cache_spectrogram_possible_paths = media_cacher.cache.possible_storage_paths(media_cacher.cache.cache_spectrogram, cache_spectrogram_file)
-      response_headers['Content-Length'].to_i.should eq(File.size(cache_spectrogram_possible_paths.first))
+      response_headers['Content-Length'].to_i.should eq(File.size(cache_spectrogram_possible_paths.first)) if check_content_length
     elsif response_headers['Content-Type'].include? 'audio'
       default_audio = Settings.cached_audio_defaults
       options[:format] = default_audio.extension
@@ -83,7 +83,7 @@ def using_original_audio(audio_recording, content_type, check_accept_header = tr
       options[:sample_rate] = default_audio.sample_rate.to_i
       cache_audio_file = media_cacher.cached_audio_file_name(options)
       cache_audio_possible_paths = media_cacher.cache.possible_storage_paths(media_cacher.cache.cache_audio, cache_audio_file)
-      response_headers['Content-Length'].to_i.should eq(File.size(cache_audio_possible_paths.first))
+      response_headers['Content-Length'].to_i.should eq(File.size(cache_audio_possible_paths.first)) if check_content_length
     elsif response_headers['Content-Type'].include? 'application/json'
       response_headers['Content-Length'].to_i.should be > 0
       # TODO: files should not exist?
@@ -307,6 +307,15 @@ resource 'Media' do
     end
   end
 
+  head '/audio_recordings/:audio_recording_id/media.:format' do
+    standard_media_parameters
+    let(:authentication_token) { reader_token }
+    let(:format) { 'mp3' }
+    example 'MEDIA (audio head request mp3 as reader with shallow path) - 200', document: true do
+      using_original_audio(audio_recording, 'audio/mp3', false, false)
+    end
+  end
+
   get '/audio_recordings/:audio_recording_id/media.:format' do
     standard_media_parameters
     let(:authentication_token) { reader_token }
@@ -343,12 +352,12 @@ resource 'Media' do
     end
   end
 
-  head '/audio_recordings/:audio_recording_id/media.:format' do
+  get '/audio_recordings/:audio_recording_id/media.:format' do
     standard_media_parameters
     let(:authentication_token) { reader_token }
-    let(:format) { 'mp3' }
-    example 'MEDIA (audio head request as reader with shallow path) - 200', document: true do
-      using_original_audio(audio_recording, 'audio/mp3')
+    let(:format) { 'flac' }
+    example 'MEDIA (audio get request flac as reader with shallow path) - 200', document: true do
+      using_original_audio(audio_recording, 'audio/x-flac')
     end
   end
 

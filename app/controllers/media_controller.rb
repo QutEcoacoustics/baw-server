@@ -23,7 +23,8 @@ class MediaController < ApplicationController
     log_options(params, '#show method start')
 
     @media_processor = Settings.media_request_processor
-    @media_cacher = BawAudioTools::MediaCacher.new(Settings.paths.temp_files)
+    @range_request = Settings.range_request
+    @media_cacher = Settings.media_cache_tool
 
     @available_text_formats = Settings.available_formats.text
     @available_audio_formats = Settings.available_formats.audio
@@ -38,10 +39,10 @@ class MediaController < ApplicationController
     is_available_format = @available_formats.include?(params[:format].downcase)
 
     if !is_audio_ready && is_head_request
-      # TODO:  Unprocessable Entity does not seem like the right response here
-      head status: :unprocessable_entity
+      # changed from 422 Unprocessable entity
+      head status: :accepted
     elsif !is_audio_ready && !is_head_request
-      render json: {error: 'Audio recording is not ready'}.to_json, status: :unprocessable_entity
+      render json: {error: 'Audio recording is not ready'}.to_json, status: :accepted
     elsif !is_available_format && is_head_request
       head status: :unsupported_media_type
     elsif !is_available_format && !is_head_request
@@ -64,10 +65,11 @@ class MediaController < ApplicationController
       result[format_key].delete 'format'
       result[format_key][:extension] = format_key
       result[format_key]['mime_type'] = Mime::Type.lookup_by_extension(format).to_s
-      result[format_key]['url'] = audio_recording_media_path(audio_recording,
-                                                             format: format,
-                                                             start_offset: start_offset,
-                                                             end_offset: end_offset)
+      result[format_key]['url'] = audio_recording_media_path(
+          audio_recording,
+          format: format,
+          start_offset: start_offset,
+          end_offset: end_offset)
     end
 
     result
@@ -125,6 +127,8 @@ class MediaController < ApplicationController
 
     target_file = @media_cacher.cached_audio_file_name(options)
     target_existing_paths = @media_cacher.cache.existing_storage_paths(@media_cacher.cache.cache_audio, target_file)
+
+    headers[RangeRequest::HTTP_HEADER_ACCEPT_RANGES] = RangeRequest::HTTP_HEADER_ACCEPT_RANGES_BYTES
 
     if @media_processor == MEDIA_PROCESSOR_LOCAL || !target_existing_paths.blank?
 
@@ -226,22 +230,17 @@ class MediaController < ApplicationController
 
     log_options(options, '#download_file method start')
 
-    info = RangeRequest.process_request(options, request)
+    info = @range_request.build_response(options, request)
 
     if info[:response_has_content]
       if info[:response_is_range]
-        info = RangeRequest.prepare_response_partial(info)
-
-        info[:response_headers].each do |key, value|
-          headers[key.to_s.dasherize.split('-').each { |v| v[0] = v[0].chr.upcase }.join('-')] = value.to_s
-        end
 
         # write audio data from the file to a stringIO
         # use the StringIO in send_data
 
         buffer = ''
         StringIO.open(buffer, 'w') { |string_io|
-          RangeRequest.write_content_to_output(info, string_io)
+          @range_request.write_content_to_output(info, string_io)
         }
 
         send_data buffer,
@@ -250,48 +249,7 @@ class MediaController < ApplicationController
                   disposition: 'inline',
                   status: info[:response_code]
 
-        # seems this can't be done with render - doesn't like it
-        # !! Unexpected error while processing request: undefined method `each' for 208504:Fixnum
-        # !! Unexpected error while processing request: deadlock; recursive locking
-
-        #render text: proc { |response, output|
-        #  1000.times do |i|
-        #    output.write("This is line #{i}\n")
-        #  end
-        #}
-
-        #render text: proc { |response, output|  RangeRequest.write_partial_to_response(info, response, output) }
-
-        # use self.response_body instead, apparently
-
-        #erroneous_call_to_proc = false
-        #self.response_body = proc { |response, output|
-        #  unless erroneous_call_to_proc
-        #    1000.times do |i|
-        #      output.write("This is line #{i}\n")
-        #    end
-        #  end
-        #  erroneous_call_to_proc = true
-        #}
-
-
-        #self.response_body = Enumerator.new do |y|
-        #  1000.times do |i|
-        #    y << "This is line #{i}\n"
-        #  end
-        #end
-
       else
-        info = RangeRequest.prepare_response_entire(info)
-
-        info[:response_headers].each do |key, value|
-          headers[key.to_s.dasherize.split('-').each { |v| v[0] = v[0].chr.upcase }.join('-')] = value.to_s
-        end
-
-        #info.response_headers.each do |key, value|
-        #  response.headers[key] = value
-        #end
-
         send_file info[:file_path],
                   filename: info[:response_suggested_file_name],
                   type: info[:file_media_type],
