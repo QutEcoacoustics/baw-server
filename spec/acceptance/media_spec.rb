@@ -216,6 +216,7 @@ resource 'Media' do
       json_paths = [
           'datetime',
           'original_format',
+          'original_sample_rate',
           'start_offset',
           'end_offset',
           'uuid',

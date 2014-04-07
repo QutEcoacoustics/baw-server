@@ -77,6 +77,8 @@ class MediaController < ApplicationController
 
   private
 
+  # @param [AudioRecording] audio_recording
+  # @param [Hash] request_params
   def parse_media_request(audio_recording, request_params)
     options = Hash.new
     options[:datetime] = audio_recording.recorded_date
@@ -86,6 +88,7 @@ class MediaController < ApplicationController
     options[:original_format] = '.' + Mime::Type.lookup(audio_recording.media_type).to_sym.to_s if options[:original_format].blank?
     # date and time are for finding the original audio file
     options[:datetime_with_offset] = audio_recording.recorded_date
+    options[:original_sample_rate] = audio_recording.sample_rate_hertz
 
     log_options(options, '#show format is image or audio')
 

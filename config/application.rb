@@ -73,7 +73,11 @@ module AWB
 
     # validate Settings file
     config.after_initialize do
+      # validate Settings file
       Settings.validate
+
+      # set resque connection
+      Resque.redis = Settings.resque.connection
     end
 
 
