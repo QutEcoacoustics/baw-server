@@ -235,6 +235,8 @@ class MediaController < ApplicationController
 
     info = @range_request.build_response(options, request)
 
+    headers.merge!(info[:response_headers])
+
     if info[:response_has_content]
       if info[:response_is_range]
 
@@ -253,6 +255,7 @@ class MediaController < ApplicationController
                   status: info[:response_code]
 
       else
+
         send_file info[:file_path],
                   filename: info[:response_suggested_file_name],
                   type: info[:file_media_type],
