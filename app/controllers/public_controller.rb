@@ -33,7 +33,7 @@ class PublicController < ApplicationController
     storage_msg = AudioRecording.check_storage
     status = storage_msg[:success] ? 'good' : 'bad'
     respond_to do |format|
-      format.json  { render json: {status: status, storage: storage_msg}, status: :ok }
+      format.json { render json: {status: status, storage: storage_msg}, status: :ok }
     end
   end
 
@@ -69,10 +69,11 @@ class PublicController < ApplicationController
 
     if current_user.blank?
       @recent_audio_events = AudioEvent.order('audio_events.updated_at DESC').limit(7)
+    elsif current_user.has_role? :admin
+      @recent_audio_events = AudioEvent.includes(:audio_recording, :updater).order('audio_events.updated_at DESC').limit(20)
     else
       @recent_audio_events = current_user.accessible_audio_events.includes(:audio_recording, :updater).order('audio_events.updated_at DESC').limit(7)
     end
-
 
     respond_to do |format|
       format.html

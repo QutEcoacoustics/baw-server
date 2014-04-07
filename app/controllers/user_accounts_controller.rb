@@ -5,7 +5,8 @@ class UserAccountsController < ApplicationController
   # GET /users
   # GET /users.json
   def index
-    @users = User.order('user_name ASC').all
+    order = 'CASE WHEN current_sign_in_at IS NULL THEN last_sign_in_at ELSE current_sign_in_at END DESC'
+    @users = User.order(order).all
 
     respond_to do |format|
       format.html # no json API to list users

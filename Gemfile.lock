@@ -10,7 +10,7 @@ GIT
 
 GIT
   remote: https://github.com/QutBioacoustics/baw-workers.git
-  revision: 3dbc27258f9256e94f2c1f8d16d77a86aba9b75e
+  revision: 5e6e0c85a3bda321db3d583a0e998d2d4b1ba4e6
   specs:
     baw-workers (0.0.2)
       activesupport (>= 3.2)
@@ -343,7 +343,7 @@ GEM
     thor (0.19.1)
     tilt (1.4.1)
     timeliness (0.3.7)
-    tins (1.0.1)
+    tins (1.1.0)
     treetop (1.4.15)
       polyglot
       polyglot (>= 0.3.1)
