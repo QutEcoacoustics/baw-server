@@ -19,3 +19,4 @@ tmp
 vendor/
 lib/baw-workers/settings/settings.test.yml
 lib/baw-workers/settings/settings.dev.yml
+audio_tools.log
