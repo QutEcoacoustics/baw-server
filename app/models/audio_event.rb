@@ -41,19 +41,20 @@ class AudioEvent < ActiveRecord::Base
   scope :end_after, lambda { |offset_seconds| where('end_time_seconds > ?', offset_seconds) }
   scope :end_before, lambda { |offset_seconds| where('end_time_seconds < ?', offset_seconds) }
 
+  # @param [User] user
+  # @param [Hash] params
   def self.filtered(user, params)
     # get a paged collection of all audio_events the current user can access
     # option params:
     # page, items, reference, tags_partial
 
-    creator_id_check = 'projects.creator_id = ?'
-    permissions_check = '(permissions.user_id = ? AND permissions.level IN (\'reader\', \'writer\'))'
-
     query = AudioEvent
-    .includes(:tags)
-    .joins(audio_recording: {site: {projects: :permissions}})
+    .includes(:tags, :audio_recording)
+    .joins(audio_recording: {site: {projects: :permissions}}).uniq
 
     unless user.is_admin?
+      creator_id_check = 'projects.creator_id = ?'
+      permissions_check = '(permissions.user_id = ? AND permissions.level IN (\'reader\', \'writer\'))'
       query = query.where("#{creator_id_check} OR #{permissions_check}", user.id, user.id)
     end
 
@@ -62,15 +63,17 @@ class AudioEvent < ActiveRecord::Base
     query = AudioEvent.filter_distance(query, params)
 
     page = AudioEvent.filter_count(params, :page, 1, nil)
-    items = AudioEvent.filter_count(params, :items, 20, 50)
+    items = AudioEvent.filter_count(params, :items, 1, 30)
     query = query.offset((page - 1) * items).limit(items)
     puts query.to_sql
     query
   end
 
+  # @param [ActiveRecord::Relation] query
+  # @param [Hash] params
   def self.filter_tags(query, params)
     if params.include?(:tagsPartial) && !params[:tagsPartial].blank?
-      tags_partial = CSV.parse(params[:tagsPartial], col_sep: ' ').flatten.join('|').downcase
+      tags_partial = CSV.parse(params[:tagsPartial], col_sep: ',').flatten.map { |item| item.trim(' ', '') }.join('|').downcase
       tags_query = AudioEvent.joins(:tags).where('lower(tags.text) SIMILAR TO ?', "%(#{tags_partial})%")
       query.where(id: tags_query.pluck(:id))
     else
@@ -78,14 +81,22 @@ class AudioEvent < ActiveRecord::Base
     end
   end
 
+  # @param [ActiveRecord::Relation] query
+  # @param [Hash] params
   def self.filter_reference(query, params)
-    if params.include?(:reference)
-      query.where(is_reference: params[:reference] == 'true' ? true : false)
+    if params.include?(:reference) && params[:reference] == 'true'
+      query.where(is_reference: true)
+    elsif params.include?(:reference) && params[:reference] == 'false'
+      query.where(is_reference: false)
     else
       query
     end
   end
 
+  # @param [Hash] params
+  # @param [Symbol] params_symbol
+  # @param [Integer] min
+  # @param [Integer] max
   def self.filter_count(params, params_symbol, min = 1, max)
     count = min
     if params.include?(params_symbol)
@@ -103,6 +114,8 @@ class AudioEvent < ActiveRecord::Base
     count
   end
 
+  # @param [ActiveRecord::Relation] query
+  # @param [Hash] params
   def self.filter_distance(query, params)
     if params.include?(:freqMin) || params.include?(:freqMax) || params.include?(:annotationDuration)
       compare_items = []
@@ -125,7 +138,7 @@ class AudioEvent < ActiveRecord::Base
 
       dangerous_sql = 'sqrt('+compare_text.join(' + ')+')'
       sanitized_sql = sanitize_sql([dangerous_sql, compare_items].flatten, self.table_name)
-      query.order(sanitized_sql)
+      query.select(sanitized_sql).order(sanitized_sql)
     else
       query.order('audio_events.created_at DESC')
     end

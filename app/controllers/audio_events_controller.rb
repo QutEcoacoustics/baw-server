@@ -14,10 +14,10 @@ class AudioEventsController < ApplicationController
   # GET /audio_events.json
   def index
     if @audio_recording
-        event = @audio_recording.audio_events
-        event = event.end_after(params[:start_offset]) if params[:start_offset]
-        event = event.start_before(params[:end_offset]) if params[:end_offset]
-        render json: event.to_json(include: {taggings: {include: :tag}})
+      event = @audio_recording.audio_events
+      event = event.end_after(params[:start_offset]) if params[:start_offset]
+      event = event.start_before(params[:end_offset]) if params[:end_offset]
+      render json: event.to_json(include: {taggings: {include: :tag}})
     else
       render json: {error: 'An audio recording must be specified.'}, status: :bad_request
     end
@@ -32,7 +32,13 @@ class AudioEventsController < ApplicationController
     tag_attrs = [:id, :text, :is_taxanomic, :retired, :type_of_tag]
     audio_recording_attrs = [:recorded_date]
 
-    query = AudioEvent.filtered(current_user, params)
+    raise ArgumentError
+
+    query = AudioEvent.includes(:tags, :audio_recording).select(
+        audio_event_attrs.map { |attribute| "audio_events.#{attribute}" } +
+            tag_attrs.map { |attribute| "tags.#{attribute}" } +
+            audio_recording_attrs.map { |attribute| "audio_recordings.#{attribute}" }
+    ).filtered(current_user, params)
     render json: query.to_json(only: audio_event_attrs, include: {tags: {only: tag_attrs}, audio_recording: {only: audio_recording_attrs}})
   end
 
@@ -47,7 +53,7 @@ class AudioEventsController < ApplicationController
   def new
     @audio_event = AudioEvent.new
 
-    render json: @audio_event.to_json(only: [:start_time_seconds, :end_time_seconds, :low_frequency_hertz, :high_frequency_hertz, :is_reference] )
+    render json: @audio_event.to_json(only: [:start_time_seconds, :end_time_seconds, :low_frequency_hertz, :high_frequency_hertz, :is_reference])
   end
 
   # POST /audio_events
@@ -99,7 +105,7 @@ class AudioEventsController < ApplicationController
 
     if project_id || site_id
 
-      query =  query.joins(audio_recording: {site: :projects})
+      query = query.joins(audio_recording: {site: :projects})
 
       query = query.where(projects: {id: project_id}) if project_id
 
@@ -111,12 +117,12 @@ class AudioEventsController < ApplicationController
         custom_format query.order(:audio_event => :recorded_date).all
 
     respond_to do |format|
-      format.xml { render :xml => @formatted_annotations  }
+      format.xml { render :xml => @formatted_annotations }
       format.json { render :json => @formatted_annotations }
-      format.csv  {
+      format.csv {
         time_now = Time.zone.now
         render_csv("annotations-#{time_now.strftime("%Y%m%d")}-#{time_now.strftime("%H%M%S")}")
-}
+      }
     end
   end
 
@@ -138,7 +144,7 @@ class AudioEventsController < ApplicationController
           abs_end.strftime('%Y/%m/%d'),
           abs_end.strftime('%H:%M:%S'),
           annotation[:high_frequency_hertz], annotation[:low_frequency_hertz],
-          annotation.audio_recording.site.projects.collect{ |project| project.id }.join(' | '),
+          annotation.audio_recording.site.projects.collect { |project| project.id }.join(' | '),
           annotation.audio_recording.site.id,
           annotation.audio_recording.uuid,
           annotation.creator_id,
@@ -146,7 +152,7 @@ class AudioEventsController < ApplicationController
       ]
 
       annotation.tags.each do |tag|
-        annotation_items.push  tag[:id], tag[:text],tag[:type_of_tag], tag[:is_taxanomic]
+        annotation_items.push tag[:id], tag[:text], tag[:type_of_tag], tag[:is_taxanomic]
       end
 
       list.push annotation_items
