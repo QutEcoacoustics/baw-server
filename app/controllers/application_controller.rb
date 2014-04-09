@@ -10,7 +10,6 @@ class ApplicationController < ActionController::Base
   rescue_from ActiveRecord::RecordNotFound, with: :record_not_found
   rescue_from ActiveRecord::RecordNotUnique, with: :record_not_unique
 
-
   protect_from_forgery
 
   skip_before_filter :verify_authenticity_token, if: :json_request?
@@ -129,14 +128,14 @@ class ApplicationController < ActionController::Base
   def record_not_found(error)
     respond_to do |format|
       format.html { render template: 'errors/record_not_found', status: :not_found }
-      format.json { render json: {error: '404 Not Found'}, status: :not_found }
+      format.json { render json: {code: 404, phrase: 'Not Found', message: 'No matches'}, status: :not_found }
     end
   end
 
   def record_not_unique(error)
     respond_to do |format|
       format.html { render template: 'errors/generic', status: :conflict }
-      format.json { render json: {error: '409 Conflict', }, status: :conflict }
+      format.json { render json: {code: 409, phrase: 'Conflict', message: 'Not unique'}, status: :conflict }
     end
   end
 

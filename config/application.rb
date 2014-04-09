@@ -64,6 +64,9 @@ module AWB
     # Version of your assets, change this if you want to expire all your assets
     config.assets.version = '1.0'
 
+    # specify the class to handle exceptions
+    config.exceptions_app = ->(env) { ExceptionsController.action(:show).call(env) }
+
     # set paperclip default path and url
     Paperclip::Attachment.default_options[:path] = ':rails_root/public:url'
     Paperclip::Attachment.default_options[:url] = '/system/:class/:attachment/:id_partition/:style/:filename'
