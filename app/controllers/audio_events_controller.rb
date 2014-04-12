@@ -32,8 +32,6 @@ class AudioEventsController < ApplicationController
     tag_attrs = [:id, :text, :is_taxanomic, :retired, :type_of_tag]
     audio_recording_attrs = [:recorded_date]
 
-    raise ArgumentError
-
     query = AudioEvent.includes(:tags, :audio_recording).select(
         audio_event_attrs.map { |attribute| "audio_events.#{attribute}" } +
             tag_attrs.map { |attribute| "tags.#{attribute}" } +

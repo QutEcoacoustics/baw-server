@@ -8,7 +8,7 @@ describe RangeRequest do
   let(:audio_file_mono_media_type) { Mime::Type.lookup('audio/ogg') }
   let(:audio_file_mono_size_bytes) { 822281 }
   let(:audio_file_mono_modified_time) { File.mtime(audio_file_mono) }
-  let(:audio_file_mono_etag) { 
+  let(:audio_file_mono_etag) {
     etag_string = audio_file_mono.to_s + '|' + audio_file_mono_modified_time.getutc.to_s + '|' + audio_file_mono_size_bytes.to_s
     Digest::SHA256.hexdigest etag_string
  }
@@ -153,7 +153,7 @@ describe RangeRequest do
   it 'should succeed with if-modified-since matching file modified time' do
     mock_request.headers[RangeRequest::HTTP_HEADER_IF_MODIFIED_SINCE] = audio_file_mono_modified_time.httpdate
     info = range_request.build_response(range_options, mock_request)
-    expect(info[:response_code]).to eq(RangeRequest::HTTP_CODE_NOT_MODIFIED)
+    expect(info[:response_code]).to eq(RangeRequest::HTTP_CODE_NOT_MODIFIED), "Header modified: #{audio_file_mono_modified_time}, current: #{File.mtime(audio_file_mono)}"
     expect(info[:response_is_range]).to be_false
     expect(info[:is_multipart]).to be_false
   end

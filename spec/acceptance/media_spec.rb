@@ -276,6 +276,7 @@ resource 'Media' do
           'available_image_formats/png/mime_type',
           'available_image_formats/png/extension',
           'available_image_formats/png/url',
+          'available_image_formats/png/window_function',
           'available_text_formats',
           'available_text_formats/json',
           'available_text_formats/json/extension',
