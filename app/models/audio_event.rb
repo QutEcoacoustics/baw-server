@@ -10,10 +10,11 @@ class AudioEvent < ActiveRecord::Base
   belongs_to :owner, class_name: 'User', foreign_key: :creator_id
   belongs_to :creator, class_name: 'User', foreign_key: :creator_id
   belongs_to :updater, class_name: 'User', foreign_key: :updater_id
-
+  has_many :annotation_discussions, inverse_of: :audio_event
 
   accepts_nested_attributes_for :tags
 
+  include ModelCommon
 
   # userstamp
   stampable
@@ -91,27 +92,6 @@ class AudioEvent < ActiveRecord::Base
     else
       query
     end
-  end
-
-  # @param [Hash] params
-  # @param [Symbol] params_symbol
-  # @param [Integer] min
-  # @param [Integer] max
-  def self.filter_count(params, params_symbol, min = 1, max)
-    count = min
-    if params.include?(params_symbol)
-      count = params[params_symbol].to_i
-    end
-
-    if count < min
-      count = min
-    end
-
-    if !max.blank? && count > max
-      count = max
-    end
-
-    count
   end
 
   # @param [ActiveRecord::Relation] query

@@ -13,6 +13,7 @@ AWB::Application.routes.draw do
   resources :user_accounts do
     resources :permissions
     resources :bookmarks, :only => [:index], :defaults => { :format => 'json' }
+    resources :annotation_discussions, only: [:index], defaults: {format: 'json'}
   end
 
   # routes for projects and nested resources
@@ -80,7 +81,9 @@ AWB::Application.routes.draw do
     collection do
       get 'library'
     end
+    resources :annotation_discussions, defaults: {format: 'json'}
   end
+  resources :annotation_discussions, only: [:index], defaults: {format: 'json'}
 
   # custom routes for scripts
   resources :scripts, except: [:update, :destroy] do

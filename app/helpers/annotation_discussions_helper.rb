@@ -1,0 +1,2 @@
+module AnnotationDiscussionsHelper
+end
