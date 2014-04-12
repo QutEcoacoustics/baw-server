@@ -22,6 +22,13 @@ require 'webmock/rspec'
 require 'paperclip/matchers'
 WebMock.disable_net_connect!(allow_localhost: true)
 
+include Devise::TestHelpers
+
+# gives us the login_as(@user) method when request object is not present
+# http://www.schneems.com/post/15948562424/speed-up-capybara-tests-with-devise/
+include Warden::Test::Helpers
+Warden.test_mode!
+
 RSpec.configure do |config|
   # ## Mock Framework
   #
@@ -103,7 +110,13 @@ RSpec.configure do |config|
     DatabaseCleaner.clean
     #Bullet.perform_out_of_channel_notifications if Bullet.enable? && Bullet.notification?
     #Bullet.end_request if Bullet.enable?
+
+    # https://github.com/plataformatec/devise/wiki/How-To:-Test-with-Capybara
+    # reset warden after each test
+    Warden.test_reset!
   end
+
+  config.after(:each) {}
 
   config.after(:suite) do
     $stderr = original_stderr

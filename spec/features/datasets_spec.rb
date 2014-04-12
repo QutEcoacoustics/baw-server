@@ -1,8 +1,5 @@
 require 'spec_helper'
 
-include Warden::Test::Helpers
-Warden.test_mode!
-
 describe 'CRUD Datasets as valid user with write permission' do
   before(:each) do
     #Capybara.current_driver = :webkit  # needed to test javascript UI with capybara, but couldn't get it to work

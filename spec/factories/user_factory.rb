@@ -3,11 +3,11 @@ require 'faker'
 FactoryGirl.define do
 
   factory :unconfirmed_user, class: User do
-    sequence(:user_name) { |n| "#{Faker::Internet.user_name}#{n}" }
-    sequence(:email) { |n| "#{n}#{Faker::Internet.email}" }
+    sequence(:user_name) { |n| "user#{n}" }
+    sequence(:email) { |n| "user#{n}@example.com" }
+    sequence(:authentication_token) { |n| "some random token #{n}" }
+    sequence(:password) { |n| "password #{n}" }
 
-    password { Faker::Lorem.words(6).join(' ') }
-    authentication_token { SecureRandom.urlsafe_base64(nil, false) }
     roles_mask { 2 } # user role
 
     trait :confirmed do
