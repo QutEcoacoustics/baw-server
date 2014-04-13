@@ -1,22 +1,29 @@
 module ModelCommon
-  # @param [Hash] params
-  # @param [Symbol] params_symbol
-  # @param [Integer] min
-  # @param [Integer] max
-  def self.filter_count(params, params_symbol, min = 1, max)
-    count = min
-    if params.include?(params_symbol)
-      count = params[params_symbol].to_i
-    end
+  extend ActiveSupport::Concern
 
-    if count < min
+  module ClassMethods
+
+    # @param [Hash] params
+    # @param [Symbol] params_symbol
+    # @param [Integer] min
+    # @param [Integer] max
+    def self.filter_count(params, params_symbol, min = 1, max)
       count = min
-    end
+      if params.include?(params_symbol)
+        count = params[params_symbol].to_i
+      end
 
-    if !max.blank? && count > max
-      count = max
-    end
+      if count < min
+        count = min
+      end
 
-    count
+      if !max.blank? && count > max
+        count = max
+      end
+
+      count
+    end
   end
 end
+
+ActiveRecord::Base.send(:include, ModelCommon)

@@ -2,7 +2,6 @@ require 'spec_helper'
 require 'rspec_api_documentation/dsl'
 require 'helpers/acceptance_spec_helper'
 
-
 # https://github.com/zipmark/rspec_api_documentation
 resource 'AudioEvents' do
   # set header

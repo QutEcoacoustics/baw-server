@@ -11,7 +11,21 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20140404234458) do
+ActiveRecord::Schema.define(:version => 20140412092023) do
+
+  create_table "audio_event_comments", :force => true do |t|
+    t.integer  "audio_event_id", :null => false
+    t.text     "comment",        :null => false
+    t.string   "flag"
+    t.integer  "flagger_id"
+    t.datetime "flagged_at"
+    t.integer  "creator_id",     :null => false
+    t.integer  "updater_id"
+    t.integer  "deleter_id"
+    t.datetime "deleted_at"
+    t.datetime "created_at",     :null => false
+    t.datetime "updated_at",     :null => false
+  end
 
   create_table "audio_events", :force => true do |t|
     t.integer  "audio_recording_id",                                                     :null => false

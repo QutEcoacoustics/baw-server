@@ -1,35 +1,19 @@
 require 'spec_helper'
 
 describe ProjectsController do
-  describe 'routing' do
+  describe :routing do
 
-    it 'routes to #index' do
-      get('/projects').should route_to('projects#index')
-    end
+    it { expect(post('/projects/1/update_permissions')).to route_to('projects#update_permissions', id: '1') }
+    it { expect(get('/projects/new_access_request')).to route_to('projects#new_access_request') }
+    it { expect(post('/projects/submit_access_request')).to route_to('projects#submit_access_request') }
 
-    it 'routes to #new' do
-      get('/projects/new').should route_to('projects#new')
-    end
-
-    it 'routes to #show' do
-      get('/projects/1').should route_to('projects#show', :id => '1')
-    end
-
-    it 'routes to #edit' do
-      get('/projects/1/edit').should route_to('projects#edit', :id => '1')
-    end
-
-    it 'routes to #create' do
-      post('/projects').should route_to('projects#create')
-    end
-
-    it 'routes to #update' do
-      put('/projects/1').should route_to('projects#update', :id => '1')
-    end
-
-    it 'routes to #destroy' do
-      delete('/projects/1').should route_to('projects#destroy', :id => '1')
-    end
+    it { expect(get('/projects')).to route_to('projects#index') }
+    it { expect(post('/projects')).to route_to('projects#create') }
+    it { expect(get('/projects/new')).to route_to('projects#new') }
+    it { expect(get('/projects/1/edit')).to route_to('projects#edit', id: '1') }
+    it { expect(get('/projects/1')).to route_to('projects#show', id: '1') }
+    it { expect(put('/projects/1')).to route_to('projects#update', id: '1') }
+    it { expect(delete('/projects/1')).to route_to('projects#destroy', id: '1') }
 
   end
 end

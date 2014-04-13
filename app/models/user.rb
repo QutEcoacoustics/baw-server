@@ -31,7 +31,7 @@ class User < ActiveRecord::Base
   has_many :writable_projects, through: :permissions, source: :project, conditions: 'permissions.level = writer'
   has_many :bookmarks, foreign_key: :creator_id
   has_many :datasets, foreign_key: :creator_id, include: :project
-  has_many :annotation_discussions, foreign_key: :creator_id, inverse_of: :creator
+  has_many :audio_event_comments, foreign_key: :creator_id, inverse_of: :creator
 
   # scopes
   scope :users, -> { where(roles_mask: 2) }

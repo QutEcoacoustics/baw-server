@@ -40,21 +40,4 @@ class TagsController < ApplicationController
       render json: @tag.errors, status: :unprocessable_entity
     end
   end
-
-  # PUT /tags/1
-  # PUT /tags/1.json
-  def update
-    respond_with Tag.update(params[:id], params[:tag])
-  end
-
-  # DELETE /tags/1
-  # DELETE /tags/1.json
-  def destroy
-    @tag = Tag.find(params[:id])
-    @tag.destroy
-
-    respond_to do |format|
-      format.json { no_content_as_json }
-    end
-  end
 end

@@ -1,6 +1,6 @@
-class CreateAnnotationDiscussions < ActiveRecord::Migration
+class CreateAudioEventComments < ActiveRecord::Migration
   def change
-    create_table :annotation_discussions do |t|
+    create_table :audio_event_comments do |t|
 
       t.integer :audio_event_id, null: false
       t.text :comment, null:false

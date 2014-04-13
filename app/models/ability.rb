@@ -56,11 +56,11 @@ class Ability
       can [:read], Bookmark
       can [:library], AudioEvent
       #can [:audio, :spectrogram], Media if user.has_permission_any?(media.audio_recording.site.projects)
-      can [:manage], AnnotationDiscussion do |annotation_discussion|
-        user.can_write_any?(annotation_discussion.audio_event.audio_recording.site.projects)
+      can [:manage], AudioEventComment do |audio_event_comment|
+        user.can_write_any?(audio_event_comment.audio_event.audio_recording.site.projects)
       end
-      can [:manage], AnnotationDiscussion do |annotation_discussion|
-        user.has_permission_any?(annotation_discussion.audio_event.audio_recording.site.projects)
+      can [:manage], AudioEventComment do |audio_event_comment|
+        user.has_permission_any?(audio_event_comment.audio_event.audio_recording.site.projects)
       end
 
     elsif user.has_role? :harvester
