@@ -1,8 +1,5 @@
 require 'spec_helper'
 
-include Warden::Test::Helpers
-Warden.test_mode!
-
 def select_by_value(id, value)
   option_xpath = "//*[@id='#{id}']/option[@value='#{value}']"
   option = find(:xpath, option_xpath).text

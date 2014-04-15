@@ -1,8 +1,5 @@
 require 'spec_helper'
 
-include Warden::Test::Helpers
-Warden.test_mode!
-
 describe "User account actions" do
   # from: http://guides.rubyonrails.org/testing.html
   # The ActionMailer::Base.deliveries array is only reset automatically in

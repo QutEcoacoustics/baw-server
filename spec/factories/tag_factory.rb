@@ -6,10 +6,13 @@ FactoryGirl.define do
     sequence(:text) { |n| "#{Faker::Lorem.word}#{n}" }
 
     creator
+    type_of_tag 'general'
 
     trait :taxonomic do
       is_taxanomic true
     end
+
+    trait :general_type
 
     trait :random_type do
       type_of_tag Tag::AVAILABLE_TYPE_OF_TAGS.sample
@@ -20,7 +23,7 @@ FactoryGirl.define do
     end
 
     trait :notes do
-      notes { {Faker::Lorem.word => Faker::Lorem.word} }
+      notes { {'something' => 'more somethings'} }
     end
 
     factory :tag_random, traits: [:random_type]

@@ -92,6 +92,7 @@ defaults: &defaults
     channel: 0
     sample_rate: 22050
     window: 512
+    window_function: Hamming
     colour: 'g'
     ppms: 0.045
     max_duration_seconds: 120.0

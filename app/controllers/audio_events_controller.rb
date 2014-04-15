@@ -42,6 +42,7 @@ class AudioEventsController < ApplicationController
     }
 
     render json: paged_info
+
   end
 
   # GET /audio_events/1

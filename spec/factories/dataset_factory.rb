@@ -3,7 +3,7 @@ require 'faker'
 FactoryGirl.define do
 
   factory :dataset do
-    sequence(:name) { |n| "#{Faker::Name.title}#{n}" }
+    sequence(:name) { |n| "dataset name#{n}" }
     creator
     project
 

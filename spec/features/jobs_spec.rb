@@ -1,8 +1,5 @@
 require 'spec_helper'
 
-include Warden::Test::Helpers
-Warden.test_mode!
-
 describe 'CRUD Jobs as valid user with write permission' do
   before(:each) do
     @permission = FactoryGirl.create(:write_permission)
