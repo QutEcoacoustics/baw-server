@@ -79,6 +79,7 @@ AWB::Application.routes.draw do
   resources :audio_events, only: [:new], :defaults => { :format => 'json' } do
     collection do
       get 'library'
+      get 'library/paged' => 'audio_events#library_paged', as: :library_paged
     end
   end
 
@@ -113,7 +114,7 @@ AWB::Application.routes.draw do
   get '/website_status/' => 'public#website_status'
 
   # resque front end
-  authenticate :user, lambda {|u| u.has_role? :admin } do
+  authenticate :user, lambda {|u| !u.blank? && u.has_role?(:admin) } do
     mount Resque::Server.new, at: '/job_queue_status'
   end
 

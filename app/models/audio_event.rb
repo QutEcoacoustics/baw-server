@@ -41,6 +41,19 @@ class AudioEvent < ActiveRecord::Base
   scope :end_after, lambda { |offset_seconds| where('end_time_seconds > ?', offset_seconds) }
   scope :end_before, lambda { |offset_seconds| where('end_time_seconds < ?', offset_seconds) }
 
+  # postgres-specific
+  scope :select_start_absolute, lambda { select('audio_recordings.recorded_date + CAST(audio_events.start_time_seconds || \' seconds\' as interval) as start_time_absolute') }
+  scope :select_end_absolute, lambda { select('audio_recordings.recorded_date + CAST(audio_events.end_time_seconds || \' seconds\' as interval) as end_time_absolute') }
+  scope :check_permissions, lambda { |user|
+    if user.is_admin?
+      where # don't change query
+    else
+      creator_id_check = 'projects.creator_id = ?'
+      permissions_check = '(permissions.user_id = ? AND permissions.level IN (\'reader\', \'writer\'))'
+      where("#{creator_id_check} OR #{permissions_check}", user.id, user.id)
+    end
+  }
+
   # @param [User] user
   # @param [Hash] params
   def self.filtered(user, params)
@@ -49,23 +62,17 @@ class AudioEvent < ActiveRecord::Base
     # page, items, reference, tags_partial
 
     query = AudioEvent
-    .includes(:tags, :audio_recording)
-    .joins(audio_recording: {site: {projects: :permissions}}).uniq
-
-    unless user.is_admin?
-      creator_id_check = 'projects.creator_id = ?'
-      permissions_check = '(permissions.user_id = ? AND permissions.level IN (\'reader\', \'writer\'))'
-      query = query.where("#{creator_id_check} OR #{permissions_check}", user.id, user.id)
-    end
+    .includes(:tags, :owner, audio_recording: {site: {projects: :permissions}})
+    .select_start_absolute
+    .select_end_absolute
+    .check_permissions(user)
 
     query = AudioEvent.filter_reference(query, params)
     query = AudioEvent.filter_tags(query, params)
     query = AudioEvent.filter_distance(query, params)
+    query = AudioEvent.filter_paging(query, params)
 
-    page = AudioEvent.filter_count(params, :page, 1, nil)
-    items = AudioEvent.filter_count(params, :items, 1, 30)
-    query = query.offset((page - 1) * items).limit(items)
-    puts query.to_sql
+    puts "SQL: #{query.to_sql}"
     query
   end
 
@@ -74,8 +81,8 @@ class AudioEvent < ActiveRecord::Base
   def self.filter_tags(query, params)
     if params.include?(:tagsPartial) && !params[:tagsPartial].blank?
       tags_partial = CSV.parse(params[:tagsPartial], col_sep: ',').flatten.map { |item| item.trim(' ', '') }.join('|').downcase
-      tags_query = AudioEvent.joins(:tags).where('lower(tags.text) SIMILAR TO ?', "%(#{tags_partial})%")
-      query.where(id: tags_query.pluck(:id))
+      tags_query = AudioEvent.joins(:tags).where('lower(tags.text) SIMILAR TO ?', "%(#{tags_partial})%").select('tags.id')
+      query.where(id: tags_query)
     else
       query
     end
@@ -97,21 +104,21 @@ class AudioEvent < ActiveRecord::Base
   # @param [Symbol] params_symbol
   # @param [Integer] min
   # @param [Integer] max
-  def self.filter_count(params, params_symbol, min = 1, max)
-    count = min
+  def self.filter_count(params, params_symbol, default = 1, min = 1, max = nil)
+    value = default
     if params.include?(params_symbol)
-      count = params[params_symbol].to_i
+      value = params[params_symbol].to_i
     end
 
-    if count < min
-      count = min
+    if value < min
+      value = min
     end
 
-    if !max.blank? && count > max
-      count = max
+    if !max.blank? && value > max
+      value = max
     end
 
-    count
+    value
   end
 
   # @param [ActiveRecord::Relation] query
@@ -142,6 +149,30 @@ class AudioEvent < ActiveRecord::Base
     else
       query.order('audio_events.created_at DESC')
     end
+  end
+
+  def self.filter_paging(query, params)
+
+    defaults = AudioEvent.filter_paging_defaults
+
+    page = defaults[:page]
+    if params.include?(:page)
+      page = params[:page].to_i
+    end
+
+    items = defaults[:items]
+    if params.include?(:items)
+      items = params[:items].to_i
+    end
+
+    query.offset((page - 1) * items).limit(items)
+  end
+
+  def self.filter_paging_defaults
+    {
+        page: 1,
+        items: 20
+    }
   end
 
   private

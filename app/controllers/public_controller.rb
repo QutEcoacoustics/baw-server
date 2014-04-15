@@ -48,11 +48,17 @@ class PublicController < ApplicationController
     month_ago = 1.month.ago
     annotations_total = AudioEvent.count
     annotations_recent = AudioEvent.where('created_at > ? OR updated_at > ?', month_ago, month_ago).count
+    #annotations_total_duration = BigDecimal.new(AudioEvent.sum('end_time_seconds - start_time_seconds'))
 
     audio_recording_total = AudioRecording.count
     audio_recording_recent = AudioRecording.where('created_at > ? OR updated_at > ?', month_ago, month_ago).count
     audio_recording_total_duration = AudioRecording.sum(:duration_seconds)
     audio_recording_total_size = AudioRecording.sum(:data_length_bytes)
+
+    tags_total = Tag.count
+    tags_applied_total = Tagging.count
+
+    #unannotated_audio = audio_recording_total_duration - annotations_total_duration
 
     @status_info = {
         storage: storage_msg,
@@ -64,7 +70,9 @@ class PublicController < ApplicationController
         audio_recording_total: audio_recording_total,
         audio_recording_recent: audio_recording_recent,
         audio_recording_total_duration: audio_recording_total_duration,
-        audio_recording_total_size: audio_recording_total_size
+        audio_recording_total_size: audio_recording_total_size,
+        tags_total: tags_total,
+        tags_applied_total: tags_applied_total
     }
 
     if current_user.blank?

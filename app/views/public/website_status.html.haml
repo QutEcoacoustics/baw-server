@@ -21,6 +21,8 @@
     %h2 Totals
     %p= "#{@status_info[:annotations_total]} annotations"
     %p= "#{@status_info[:audio_recording_total]} audio recordings"
+    %p= "#{@status_info[:tags_total]} unique tags"
+    %p= "#{@status_info[:tags_applied_total]} tags used in annotations"
     %p= "#{distance_of_time(@status_info[:audio_recording_total_duration])} overall audio recording duration"
     %p= "#{number_to_human_size(@status_info[:audio_recording_total_size])} overall audio recording file size"
 
