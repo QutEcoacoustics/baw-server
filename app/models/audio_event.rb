@@ -11,9 +11,7 @@ class AudioEvent < ActiveRecord::Base
   belongs_to :creator, class_name: 'User', foreign_key: :creator_id
   belongs_to :updater, class_name: 'User', foreign_key: :updater_id
 
-
   accepts_nested_attributes_for :tags
-
 
   # userstamp
   stampable
@@ -23,7 +21,6 @@ class AudioEvent < ActiveRecord::Base
   # validation
   validates :audio_recording_id, presence: true
   validates :is_reference, inclusion: {in: [true, false]}
-
   validates :start_time_seconds, presence: true, numericality: {greater_than_or_equal_to: 0}
   validates :end_time_seconds, numericality: {greater_than_or_equal_to: 0}, allow_nil: true
   validates :low_frequency_hertz, presence: true, numericality: {greater_than_or_equal_to: 0}
@@ -33,7 +30,6 @@ class AudioEvent < ActiveRecord::Base
   validate :low_must_be_lte_high
 
   before_validation :set_tags, on: :create
-
 
   # Scopes
   scope :start_after, lambda { |offset_seconds| where('start_time_seconds > ?', offset_seconds) }
@@ -46,7 +42,7 @@ class AudioEvent < ActiveRecord::Base
   scope :select_end_absolute, lambda { select('audio_recordings.recorded_date + CAST(audio_events.end_time_seconds || \' seconds\' as interval) as end_time_absolute') }
   scope :check_permissions, lambda { |user|
     if user.is_admin?
-      where # don't change query
+      where('1 = 1') # don't change query
     else
       creator_id_check = 'projects.creator_id = ?'
       permissions_check = '(permissions.user_id = ? AND permissions.level IN (\'reader\', \'writer\'))'
@@ -61,8 +57,9 @@ class AudioEvent < ActiveRecord::Base
     # option params:
     # page, items, reference, tags_partial
 
-    query = AudioEvent
-    .includes(:tags, :owner, audio_recording: {site: {projects: :permissions}})
+    #.joins(:tags, :owner, audio_recording: {site: {projects: :permissions}})
+
+    query = AudioEvent.includes(:tags, :owner, audio_recording: {site: :projects})
     .select_start_absolute
     .select_end_absolute
     .check_permissions(user)
@@ -72,7 +69,6 @@ class AudioEvent < ActiveRecord::Base
     query = AudioEvent.filter_distance(query, params)
     query = AudioEvent.filter_paging(query, params)
 
-    puts "SQL: #{query.to_sql}"
     query
   end
 
@@ -121,6 +117,7 @@ class AudioEvent < ActiveRecord::Base
     value
   end
 
+  # Postgres-specific queries
   # @param [ActiveRecord::Relation] query
   # @param [Hash] params
   def self.filter_distance(query, params)
@@ -145,7 +142,7 @@ class AudioEvent < ActiveRecord::Base
 
       dangerous_sql = 'sqrt('+compare_text.join(' + ')+')'
       sanitized_sql = sanitize_sql([dangerous_sql, compare_items].flatten, self.table_name)
-      query.select(sanitized_sql).order(sanitized_sql)
+      query.select(sanitized_sql + ' as distance_calc').order(sanitized_sql)
     else
       query.order('audio_events.created_at DESC')
     end

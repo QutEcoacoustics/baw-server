@@ -23,7 +23,6 @@ resource 'AudioEvents' do
     @admin_user = FactoryGirl.create(:admin)
   end
 
-
   # prepare ids needed for paths in requests below
   let(:project_id) { @write_permission.project.id }
   let(:site_id) { @write_permission.project.sites[0].id }
@@ -36,13 +35,18 @@ resource 'AudioEvents' do
   let(:unconfirmed_token) { "Token token=\"#{FactoryGirl.create(:unconfirmed_user).authentication_token}\"" }
   let(:admin_token) { "Token token=\"#{@admin_user.authentication_token}\"" }
 
-
   # Create post parameters from factory
   let(:post_attributes) { FactoryGirl.attributes_for(:audio_event) }
   let(:post_nested_attributes) {
-    {'tags_attributes' => [FactoryGirl.attributes_for(:tag),
-                           {:is_taxanomic => @existing_tag.is_taxanomic, :text => @existing_tag.text, :type_of_tag => @existing_tag.type_of_tag, :retired => @existing_tag.retired}]
-    }
+    {tags_attributes: [
+        FactoryGirl.attributes_for(:tag),
+        {
+            is_taxanomic: @existing_tag.is_taxanomic,
+            text: @existing_tag.text,
+            type_of_tag: @existing_tag.type_of_tag,
+            retired: @existing_tag.retired
+        }
+    ]}
   }
 
   ################################
