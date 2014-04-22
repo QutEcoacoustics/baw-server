@@ -21,6 +21,7 @@ module BawAudioTools
       result.downcase
     end
 
+# channel, brightness, contrast, window size, overlap, window algorithm
 
     def partial_path(file_name)
       # prepend first two chars of uuid

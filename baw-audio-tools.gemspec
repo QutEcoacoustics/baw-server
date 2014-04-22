@@ -36,4 +36,5 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency 'settingslogic'
   spec.add_runtime_dependency 'i18n'
   spec.add_runtime_dependency 'tzinfo'
+  spec.add_runtime_dependency 'tzinfo-data'
 end

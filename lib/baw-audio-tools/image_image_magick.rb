@@ -12,7 +12,7 @@ module BawAudioTools
 
     def info_command(source)
       cmd_format = '"width:%[fx:w]|||height:%[fx:h]|||media_type:%m"'
-      "#{@image_magick_identify_exe} -regard-warnings -ping -format #{cmd_format} \"#{source}\""
+      "#{@image_magick_identify_exe} -quiet -regard-warnings -ping -format #{cmd_format} \"#{source}\""
     end
 
     def parse_info_output(output)
@@ -49,8 +49,7 @@ module BawAudioTools
 
       cmd_remove_dc_value = arg_remove_dc_value
 
-      # chop: http://www.imagemagick.org/Usage/crop/#chop
-      "#{@image_magick_convert_exe} \"#{source}\" #{cmd_remove_dc_value} \"#{target}\""
+      "#{@image_magick_convert_exe} -quiet \"#{source}\" #{cmd_remove_dc_value} \"#{target}\""
     end
 
     def arg_width(ppms, duration_sec)
@@ -67,6 +66,7 @@ module BawAudioTools
     end
 
     def arg_remove_dc_value
+      # chop: http://www.imagemagick.org/Usage/crop/#chop
       '-gravity South -chop 0x1'
     end
 

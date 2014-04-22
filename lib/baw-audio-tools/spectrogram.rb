@@ -53,13 +53,14 @@ module BawAudioTools
       channel = modify_parameters.include?(:channel) ? modify_parameters[:channel] : nil
       sample_rate = modify_parameters.include?(:sample_rate) ? modify_parameters[:sample_rate] : nil
       window = modify_parameters.include?(:window) ? modify_parameters[:window] : nil
+      window_function = modify_parameters.include?(:window_function) ? modify_parameters[:window_function] : @spectrogram_defaults.window_function
       colour = modify_parameters.include?(:colour) ? modify_parameters[:colour] : nil
       #format = modify_parameters.include?(:format) ? modify_parameters[:format] : @defaults.format
 
       # create spectrogram with sox
       cmd =
           @audio_base.audio_sox.spectrogram_command(
-              source, source_info, target, start_offset, end_offset, channel, sample_rate, window, colour)
+              source, source_info, target, start_offset, end_offset, channel, sample_rate, window, window_function, colour)
 
       @audio_base.execute(cmd)
       @audio_base.check_target(target)

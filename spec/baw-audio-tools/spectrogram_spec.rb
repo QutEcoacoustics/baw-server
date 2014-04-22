@@ -37,5 +37,6 @@ describe BawAudioTools::Spectrogram do
       target = temp_media_file_1+'.png'
       spectrogram.modify(source, target)
     end
+
   end
 end
