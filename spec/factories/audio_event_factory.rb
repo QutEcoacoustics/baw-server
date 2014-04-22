@@ -4,10 +4,9 @@ FactoryGirl.define do
 
   factory :audio_event do
 
-    start_time_seconds     Random.rand(86401)
-    low_frequency_hertz    Random.rand(10000)
+    start_time_seconds Random.rand_incl(86400)
+    low_frequency_hertz Random.rand(10000)
 
-    owner
     creator
     audio_recording
 
@@ -20,7 +19,7 @@ FactoryGirl.define do
     end
 
     trait :reference do
-      is_reference           true
+      is_reference true
     end
 
     trait :with_tags do
@@ -28,7 +27,8 @@ FactoryGirl.define do
         audio_event_count 1
       end
       after(:create) do |audio_event, evaluator|
-        create_list(:tagging, evaluator.audio_event_count, audio_event: audio_event)
+        raise 'Creator was blank' if  evaluator.creator.blank?
+        create_list(:tagging, evaluator.audio_event_count, audio_event: audio_event, creator: evaluator.creator)
       end
     end
 

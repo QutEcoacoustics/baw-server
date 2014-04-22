@@ -9,9 +9,9 @@ FactoryGirl.define do
     trait :site_with_lat_long do
       # Random.rand returns "a random integer greater than or equal to zero and less than the argument"
       # between -90 and 90 degrees
-      latitude Random.rand(181) - 90
+      latitude { Random.rand_incl(180.0) - 90.0 }
       # -180 and 180 degrees
-      longitude Random.rand(361) - 180
+      longitude { Random.rand_incl(360.0) - 180.0 }
     end
 
     trait :notes do
@@ -31,7 +31,8 @@ FactoryGirl.define do
         audio_recording_count 1
       end
       after(:create) do |site, evaluator|
-        create_list(:audio_recording_with_audio_events, evaluator.audio_recording_count, site: site)
+        raise 'Creator was blank' if  evaluator.creator.blank?
+        create_list(:audio_recording_with_audio_events, evaluator.audio_recording_count, site: site, creator: evaluator.creator)
       end
     end
 

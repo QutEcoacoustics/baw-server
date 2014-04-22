@@ -41,7 +41,8 @@ FactoryGirl.define do
         audio_event_count 1
       end
       after(:create) do |audio_recording, evaluator|
-        create_list(:audio_event_with_tags, evaluator.audio_event_count, audio_recording: audio_recording)
+        raise 'Creator was blank' if  evaluator.creator.blank?
+        create_list(:audio_event_with_tags, evaluator.audio_event_count, audio_recording: audio_recording, creator: evaluator.creator)
       end
     end
 

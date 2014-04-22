@@ -136,17 +136,20 @@ module Paperclip
   end
 end
 
-# for creating obfuscated lat/longs
-def add_jitter(value, min, max)
-  # add jitter within the range -1 to 1
-  result = (rand * 2) - 1
-  result = value + result.to_f.round(4)
-  if result > max
-    result = max
-  elsif result < min
-    result = min
+# https://gist.github.com/phluid61/5107356
+class << Random
+  def rand_incl(max=1.0)
+    raise ArgumentError 'maximum not greater than 0' if max <= 0.0
+    if @incl_lim.nil?
+      @incl_lim = (1 / Float::EPSILON).to_i
+      @incl_lim1 = @incl_lim + 1
+    end
+    if Float === max
+      max*rand(@incl_lim1) / @incl_lim
+    else
+      rand(max+1)
+    end
   end
-  result
 end
 
 # make sure head requests get the parameters as a query string, not

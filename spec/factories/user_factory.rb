@@ -10,6 +10,14 @@ FactoryGirl.define do
 
     roles_mask { 2 } # user role
 
+    # after(:create) do |user|
+    #   Rails.logger.warn "Created #{user.inspect}"
+    # end
+    #
+    # after(:build) do |user|
+    #   Rails.logger.warn "Built #{user.inspect}"
+    # end
+
     trait :confirmed do
       after(:create) do |user|
         #confirmed_at { Time.zone.now }
@@ -34,7 +42,7 @@ FactoryGirl.define do
       image { fixture_file_upload(Rails.root.join('public', 'images', 'user', 'user-512.png'), 'image/png') }
     end
 
-    factory :confirmed_user, traits: [:confirmed], aliases: [:user_factory, :creator_user, :owner_user, :updater_user, :deleter_user, :uploader_user]
+    factory :confirmed_user, traits: [:confirmed], aliases: [:user, :creator, :updater, :deleter, :uploader]
     factory :admin, traits: [:confirmed, :admin_role]
     factory :harvester, traits: [:confirmed, :harvester_role]
     factory :user_with_preferences, traits: [:confirmed, :saved_preferences]

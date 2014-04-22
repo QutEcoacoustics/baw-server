@@ -52,7 +52,8 @@ FactoryGirl.define do
         job_count 1
       end
       after(:create) do |dataset, evaluator|
-        create_list(:job, evaluator.dataset_count, dataset: dataset)
+        raise 'Creator was blank' if  evaluator.creator.blank?
+        create_list(:job, evaluator.dataset_count, dataset: dataset, creator: evaluator.creator)
       end
     end
 
@@ -61,7 +62,8 @@ FactoryGirl.define do
         site_count 1
       end
       after(:create) do |dataset, evaluator|
-        create_list(:site, evaluator.site_count, dataset: dataset)
+        raise 'Creator was blank' if  evaluator.creator.blank?
+        create_list(:site, evaluator.site_count, dataset: dataset, creator: evaluator.creator)
       end
     end
   end

@@ -32,8 +32,17 @@ def check_site_lat_long_response(description, expected_status, should_be_obfusca
     long = site['longitude']
 
     if should_be_obfuscated
-      expect(lat.to_s.split('.').last.size).to satisfy { |v| v > 1 && v <= 4 }, "expected latitude to be obfuscated to two decimal places, got #{lat.to_s.split('.').last.size} from #{lat}"
-      expect(long.to_s.split('.').last.size).to satisfy { |v| v > 1 && v <= 4 }, "expected longitude to be obfuscated to two decimal places, got #{long.to_s.split('.').last.size} from #{long}"
+      min = 4
+      max = 6
+      expect(lat.to_s.split('.').last.size)
+      .to satisfy { |v| v >= min && v <= max },
+          "expected latitude to be obfuscated to between #{min} to #{max} places, "+
+              "got #{lat.to_s.split('.').last.size} from #{lat}"
+
+      expect(long.to_s.split('.').last.size)
+      .to satisfy { |v| v >= min && v <= max },
+          "expected longitude to be obfuscated to between #{min} to #{max} places, "+
+              "got #{long.to_s.split('.').last.size} from #{long}"
     end
   end
 end
