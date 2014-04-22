@@ -38,13 +38,11 @@ describe Site do
   end
 
   it 'should obfuscate lat/longs properly' do
-    min = -90
-    max = 90
 
-    1000.times {
-      result = add_jitter((rand * (max - -min)) + min, min, max)
-      expect(result).to be <= max
-      expect(result).to be >= min
+    10.times {
+      s = FactoryGirl.build(:site_with_lat_long)
+      expect(Site.add_location_jitter(s.longitude, Site::LONGITUDE_MIN, Site::LONGITUDE_MAX)).to be_within(Site::JITTER_RANGE).of(s.longitude)
+      expect(Site.add_location_jitter(s.latitude, Site::LATITUDE_MIN, Site::LATITUDE_MAX)).to be_within(Site::JITTER_RANGE).of(s.latitude)
     }
   end
 
