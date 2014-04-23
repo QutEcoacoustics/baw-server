@@ -29,12 +29,12 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'coveralls'
   spec.add_development_dependency 'webmock'
   spec.add_development_dependency 'zonebie'
+  spec.add_development_dependency 'i18n'
+  spec.add_development_dependency 'tzinfo', '~> 0.3.39'
 
   # runtime dependencies
   spec.add_runtime_dependency 'daemons'
   spec.add_runtime_dependency 'resque'
   spec.add_runtime_dependency 'settingslogic'
-  spec.add_runtime_dependency 'activesupport', '>= 3.2'
-  spec.add_runtime_dependency 'i18n'
-  spec.add_runtime_dependency 'tzinfo'
+  spec.add_runtime_dependency 'activesupport', '< 4'
 end
