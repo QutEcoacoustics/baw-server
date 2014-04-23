@@ -55,7 +55,7 @@ module BawAudioTools
     end
 
     def spectrogram_command(source, source_info, target, start_offset = nil, end_offset = nil, channel = nil, sample_rate = nil,
-        window = nil, colour = nil)
+        window = nil, window_function = nil, colour = nil)
       raise ArgumentError, "Source is not a wav file: #{source}" unless source.match(/\.wav$/)
       raise ArgumentError, "Target is not a png file: : #{target}" unless target.match(/\.png/)
       raise Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.exists? source
@@ -66,14 +66,15 @@ module BawAudioTools
       cmd_sample_rate = arg_sample_rate(sample_rate)
       cmd_channel = arg_channel(channel)
       cmd_window = arg_window(window)
+      cmd_window_function = arg_window_function(window_function)
       cmd_colour = arg_colour(colour)
 
-      cmd_spectrogram = 'spectrogram -r -l -a -w Hamming -X 43.06640625'
+      cmd_spectrogram = 'spectrogram -r -l -a -X 43.06640625'
 
       # sox command to create a spectrogram from an audio file
       # -V is for verbose
       # -n indicates no output audio file
-      "#{@sox_executable} -V \"#{source}\" -n #{cmd_offsets} #{cmd_sample_rate} #{cmd_channel} #{cmd_spectrogram} #{cmd_colour} #{cmd_window} -o \"#{target}\""
+      "#{@sox_executable} -V \"#{source}\" -n #{cmd_offsets} #{cmd_sample_rate} #{cmd_channel} #{cmd_spectrogram} #{cmd_colour} #{cmd_window} #{cmd_window_function} -o \"#{target}\""
     end
 
     def window_options
@@ -82,6 +83,16 @@ module BawAudioTools
 
     def colour_options
       {:g => :greyscale}
+    end
+
+    def window_function_options
+      # Window: Hann (default), Hamming, Bartlett, Rectangular or Kaiser. The spectrogram is produced using the
+      # Discrete Fourier Transform (DFT) algorithm. A significant parameter to this algorithm is the choice of
+      # ‘window function’. By default, SoX uses the Hann window which has good all-round frequency-resolution
+      # and dynamic-range properties. For better frequency resolution (but lower dynamic-range), select a
+      # Hamming window; for higher dynamic-range (but poorer frequency-resolution), select a Kaiser window.
+      # Bartlett and Rectangular windows are also available.
+      %w(Hann Hamming Bartlett Rectangular Kaiser)
     end
 
     private
@@ -150,6 +161,23 @@ module BawAudioTools
         # window size must be one more than a power of two, see sox documentation http://sox.sourceforge.net/sox.html
         window_param = (window_param / 2) + 1
         cmd_arg = '-y '+window_param.to_s
+      end
+
+      cmd_arg
+    end
+
+    def arg_window_function(window_function)
+      cmd_arg = ''
+      all_window_function_options = window_function_options.join(', ')
+
+      unless window_function.blank?
+
+        window_function_param = window_function.to_s
+        unless window_function_options.map { |wf| wf.downcase }.include? window_function_param.downcase
+          raise ArgumentError, "Window function must be one of '#{all_window_function_options}', given '#{window_function_param}'."
+        end
+
+        cmd_arg = '-w '+window_function_param
       end
 
       cmd_arg
