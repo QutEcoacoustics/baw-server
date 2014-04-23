@@ -1,20 +1,12 @@
-require 'faker'
-
 FactoryGirl.define do
 
   factory :project do
     sequence(:name) { |n| "project#{n}" }
     sequence(:description) { |n| "project description #{n}" }
+    sequence(:urn) { |n| "urn:project:ecosounds.org/project/#{n}" }
+    sequence(:notes) { |n|  "note number #{n}" }
 
     creator
-
-    trait :urn do
-      sequence(:urn) { |n| "urn:project:ecosounds.org/project/#{n}" }
-    end
-
-    trait :notes do
-      notes { {Faker::Lorem.word => Faker::Lorem.word} }
-    end
 
     trait :image do
       image_file { fixture_file_upload(Rails.root.join('public', 'images', 'user', 'user_spanhalf.png'), 'image/png') }

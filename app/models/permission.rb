@@ -3,10 +3,10 @@ class Permission < ActiveRecord::Base
 
   attr_accessible :creator_id, :level, :project_id, :user_id
 
-  belongs_to :project
+  belongs_to :project, inverse_of: :permissions
   belongs_to :user
-  belongs_to :creator, class_name: 'User', :foreign_key => 'creator_id'
-  belongs_to :updater, class_name: 'User', :foreign_key => 'updater_id'
+  belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_permissions
+  belongs_to :updater, class_name: 'User', foreign_key: :updater_id, inverse_of: :updated_permissions
 
 
   AVAILABLE_LEVELS = [:writer, :reader]

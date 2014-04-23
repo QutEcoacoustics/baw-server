@@ -116,8 +116,6 @@ RSpec.configure do |config|
     Warden.test_reset!
   end
 
-  config.after(:each) {}
-
   config.after(:suite) do
     $stderr = original_stderr
     $stdout = original_stdout

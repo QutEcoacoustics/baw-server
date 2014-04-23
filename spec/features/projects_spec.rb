@@ -68,10 +68,10 @@ describe 'CRUD Projects as valid user with write permission' do
 
 end
 
-describe 'CRUD Projects as valid user and project owner' do
+describe 'CRUD Projects as valid user and project creator' do
   before(:each) do
     @permission = FactoryGirl.create(:write_permission)
-    login_as @permission.project.owner, scope: :user
+    login_as @permission.project.creator, scope: :user
   end
 
   it 'lists all projects' do
@@ -268,7 +268,7 @@ describe 'request project access' do
     ActionMailer::Base.deliveries.size.should eq(1)
     email = ActionMailer::Base.deliveries[0]
     email.should have_content(@permission.project.name)
-    email.should have_content(@permission.project.owner.user_name)
+    email.should have_content(@permission.project.creator.user_name)
     email.should have_content(@user.user_name)
   end
 

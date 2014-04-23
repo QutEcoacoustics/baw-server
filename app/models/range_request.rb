@@ -299,7 +299,10 @@ class RangeRequest
         write_buffer_size: @write_buffer_size,
 
         requested_range: range_header,
-        request_headers: rails_request.headers.clone,
+
+        # to ensure a new hash is used
+        # http://thingsaaronmade.com/blog/ruby-shallow-copy-surprise.html
+        request_headers: {}.merge!(rails_request.headers),
 
         file_path: file_path,
         file_size: file_size,

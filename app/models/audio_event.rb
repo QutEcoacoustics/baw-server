@@ -7,9 +7,9 @@ class AudioEvent < ActiveRecord::Base
   belongs_to :audio_recording, inverse_of: :audio_events
   has_many :taggings # no inverse of specified, as it interferes with through: association
   has_many :tags, through: :taggings
-  belongs_to :owner, class_name: 'User', foreign_key: :creator_id
-  belongs_to :creator, class_name: 'User', foreign_key: :creator_id
-  belongs_to :updater, class_name: 'User', foreign_key: :updater_id
+  belongs_to :creator, class_name: 'User', foreign_key: 'creator_id', inverse_of: :created_audio_events
+  belongs_to :updater, class_name: 'User', foreign_key: 'updater_id', inverse_of: :updated_audio_events
+  belongs_to :deleter, class_name: 'User', foreign_key: 'deleter_id', inverse_of: :deleted_audio_events
 
   accepts_nested_attributes_for :tags
 
@@ -42,7 +42,7 @@ class AudioEvent < ActiveRecord::Base
   scope :select_end_absolute, lambda { select('audio_recordings.recorded_date + CAST(audio_events.end_time_seconds || \' seconds\' as interval) as end_time_absolute') }
   scope :check_permissions, lambda { |user|
     if user.is_admin?
-      where('1 = 1') # don't change query
+      where(nil) # don't change query
     else
       creator_id_check = 'projects.creator_id = ?'
       permissions_check = '(permissions.user_id = ? AND permissions.level IN (\'reader\', \'writer\'))'
@@ -54,20 +54,31 @@ class AudioEvent < ActiveRecord::Base
   # @param [Hash] params
   def self.filtered(user, params)
     # get a paged collection of all audio_events the current user can access
-    # option params:
-    # page, items, reference, tags_partial
+    ### option params ###
+    # reference: [true, false] (optional)
+    # tagsPartial: comma separated text (optional)
+    # freqMin: double (optional)
+    # freqMax: double (optional)
+    # annotationDuration: double (optional)
+    # page: int (optional)
+    # items: int (optional)
+    # userId: int (optional)
 
     #.joins(:tags, :owner, audio_recording: {site: {projects: :permissions}})
 
-    query = AudioEvent.includes(:tags, :owner, audio_recording: {site: :projects})
-    .select_start_absolute
-    .select_end_absolute
+    # eager load tags and projects
+
+    query = AudioEvent
+    .includes(:creator, :tags, audio_recording: {site: {projects: :permissions}})
     .check_permissions(user)
 
     query = AudioEvent.filter_reference(query, params)
     query = AudioEvent.filter_tags(query, params)
     query = AudioEvent.filter_distance(query, params)
+    query = AudioEvent.filter_user(query, params)
     query = AudioEvent.filter_paging(query, params)
+
+    query = query.select('audio_events.*, audio_recording.recorded_date, sites.name, sites.id, user.user_name, user.id')
 
     query
   end
@@ -126,18 +137,18 @@ class AudioEvent < ActiveRecord::Base
       compare_text = []
 
       if params.include?(:freqMin)
-        compare_items << params[:freqMin].to_f
-        compare_text << 'power(low_frequency_hertz - ?, 2)'
+        compare_items.push(params[:freqMin].to_f)
+        compare_text.push('power(audio_events.low_frequency_hertz - ?, 2)')
       end
 
       if params.include?(:freqMax)
-        compare_items << params[:freqMax].to_f
-        compare_text << 'power(high_frequency_hertz - ?, 2)'
+        compare_items.push(params[:freqMax].to_f)
+        compare_text.push('power(audio_events.high_frequency_hertz - ?, 2)')
       end
 
       if params.include?(:annotationDuration)
-        compare_items << params[:annotationDuration].to_f
-        compare_text << 'power((end_time_seconds - start_time_seconds) - ?, 2)'
+        compare_items.push(params[:annotationDuration].to_f)
+        compare_text.push('power((audio_events.end_time_seconds - audio_events.start_time_seconds) - ?, 2)')
       end
 
       dangerous_sql = 'sqrt('+compare_text.join(' + ')+')'
@@ -148,6 +159,8 @@ class AudioEvent < ActiveRecord::Base
     end
   end
 
+  # @param [ActiveRecord::Relation] query
+  # @param [Hash] params
   def self.filter_paging(query, params)
 
     defaults = AudioEvent.filter_paging_defaults
@@ -163,6 +176,19 @@ class AudioEvent < ActiveRecord::Base
     end
 
     query.offset((page - 1) * items).limit(items)
+  end
+
+  # @param [ActiveRecord::Relation] query
+  # @param [Hash] params
+  def self.filter_user(query, params)
+    if params.include?(:userId)
+      creator_id_check = 'audio_events.creator_id = ?'
+      updater_id_check = 'audio_events.updater_id = ?'
+      user_id = params[:userId]
+      query.where("(#{creator_id_check} OR #{updater_id_check})", user_id, user_id)
+    else
+      query
+    end
   end
 
   def self.filter_paging_defaults
@@ -198,9 +224,9 @@ class AudioEvent < ActiveRecord::Base
     tags.each do |tag|
       existing_tag = Tag.find_by_text(tag.text)
       if existing_tag
-        existing_tags << existing_tag
+        existing_tags.push(existing_tag)
       else
-        new_tags << tag
+        new_tags.push(tag)
       end
     end
 

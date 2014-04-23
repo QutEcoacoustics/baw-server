@@ -1,5 +1,3 @@
-require 'faker'
-
 FactoryGirl.define do
 
   #after(:build) { |object| Rails.logger.debug "Built #{object.inspect}" }
@@ -9,18 +7,18 @@ FactoryGirl.define do
     creator
     user
     project
-    level 'reader'
+    level { ['reader', 'writer'].sample }
   end
 
   factory :read_permission, class: Permission do
-    level { 'reader' }
+    level 'reader'
     creator
     user # this is the user for which the permission is checked
     association :project, factory: :project_with_sites_and_datasets
   end
 
   factory :write_permission, class: Permission do
-    level { 'writer' }
+    level 'writer'
     creator
     user # this is the user for which the permission is checked
     association :project, factory: :project_with_sites_and_datasets

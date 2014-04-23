@@ -29,6 +29,12 @@ describe AudioRecording do
     ar.uuid = nil
     ar.should_not be_valid
   end
+
+  it { should belong_to(:creator).with_foreign_key(:creator_id) }
+  it { should belong_to(:updater).with_foreign_key(:updater_id) }
+  it { should belong_to(:deleter).with_foreign_key(:deleter_id) }
+  it { should belong_to(:uploader).with_foreign_key(:uploader_id) }
+
   it { should belong_to(:site) }
   it { should have_many(:audio_events) }
   it { should validate_presence_of(:uploader_id) }

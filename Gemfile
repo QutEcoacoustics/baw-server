@@ -126,14 +126,12 @@ group :test do
   gem 'guard-rspec'
   # fixed version due to unresolved bug in higher versions
   gem 'simplecov', '0.7.1', require: false
-  gem 'faker'
   gem 'shoulda-matchers'
   gem 'launchy'
   gem 'json_spec'
   gem 'database_cleaner', '~> 1'
   #gem 'bullet'
   gem 'webmock'
-  gem "fakefs", require: "fakefs/safe"
   gem 'coveralls', require: false
 end
 

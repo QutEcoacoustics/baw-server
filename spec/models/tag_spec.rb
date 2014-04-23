@@ -8,10 +8,11 @@ describe Tag do
     t.should be_valid
   end
 
-  it {should belong_to(:user)}
   it {should have_many(:taggings)}
   it {should have_many(:audio_events)}
 
+  it { should belong_to(:creator).with_foreign_key(:creator_id) }
+  it { should belong_to(:updater).with_foreign_key(:updater_id) }
 
   it 'should not allow nil for is_taxanomic' do
     build(:tag, is_taxanomic: nil).should_not be_valid

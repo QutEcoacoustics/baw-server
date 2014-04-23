@@ -8,7 +8,7 @@ site_id: <%= @site.id %>
 # below is a list of uploader_ids that have write access to this project
 # uncomment the one that you want to set as the uploader of the audio files
 # |---------- IMPORTANT: Ensure there is no whitespaces left before uploader_id
-#uploader_id: <%= @project.owner.id %> # <%=  @project.owner.user_name %>
+#uploader_id: <%= @project.creator.id %> # <%=  @project.creator.user_name %>
 <% @project.writers.each do |writer| %>
 #uploader_id: <%= writer.id %> # <%= writer.user_name %>
 <% end %>

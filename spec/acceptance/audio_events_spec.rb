@@ -159,23 +159,63 @@ resource 'AudioEvents' do
   ################################
   get '/audio_events/library' do
     let(:authentication_token) { writer_token }
-    standard_request('LIST (as writer)', 200, '0/start_time_seconds', true)
+    standard_request('LIBRARY (as writer)', 200, '0/start_time_seconds', true)
   end
 
   get '/audio_events/library' do
     let(:authentication_token) { reader_token }
-    standard_request('LIST (as reader)', 200, '0/start_time_seconds', true)
+    standard_request('LIBRARY (as reader)', 200, '0/start_time_seconds', true)
   end
 
   get '/audio_events/library' do
     let(:authentication_token) { admin_token }
-    standard_request('LIST (as admin)', 200, '0/start_time_seconds', true)
+    standard_request('LIBRARY (as admin)', 200, '0/start_time_seconds', true)
   end
 
   get '/audio_events/library' do
     let(:authentication_token) { unconfirmed_token }
-    standard_request('LIST (as unconfirmed user)', 401, nil, true)
+    standard_request('LIBRARY (as unconfirmed user)', 401, nil, true)
   end
+
+  get '/audio_events/library?reference=true&tagsPartial=koala,lewin&freqMin=450.3&freqMax=500.2&annotationDuration=0.54&page=1&items=1-&userId=5' do
+
+    parameter :reference, '[true, false] (optional)'
+    parameter :tagsPartial, 'comma separated text (optional)'
+    parameter :freqMin, 'double (optional)'
+    parameter :freqMax, 'double (optional)'
+    parameter :annotationDuration, 'double (optional)'
+    parameter :page, 'int (optional)'
+    parameter :items, 'int (optional)'
+    parameter :userId, 'int (optional)'
+
+    let(:authentication_token) { admin_token }
+
+    before do
+
+      user_creator = FactoryGirl.create(:user, id: 5)
+
+      koala = FactoryGirl.create(:tag, text: 'koala', creator: user_creator)
+      lewin = FactoryGirl.create(:tag, text: 'lewin', creator: user_creator)
+
+      ae = FactoryGirl.create(:audio_event,
+                              audio_recording: @write_permission.project.sites[0].audio_recordings[0],
+                              start_time_seconds: 1, end_time_seconds: 1.54,
+                              low_frequency_hertz: 450.3, high_frequency_hertz: 500.2,
+                              creator: user_creator)
+
+      tagging = FactoryGirl.create(:tagging, creator: user_creator, tag: koala, audio_event: ae)
+      tagging = FactoryGirl.create(:tagging, creator: user_creator, tag: lewin, audio_event: ae)
+
+    end
+
+    standard_request('LIBRARY (as admin with parameters)', 200, '0/start_time_seconds', true)
+  end
+
+  get '/audio_events/library?reference=true&tagsPartial=tag1,tag2,tag3&freqMin=100.05&freqMax=6000.45&annotationDuration=1.02&page=5&items3&userId=37' do
+    let(:authentication_token) { reader_token }
+    standard_request('LIBRARY (as reader)', 200, '0/start_time_seconds', true)
+  end
+
 
   ################################
   # SHOW

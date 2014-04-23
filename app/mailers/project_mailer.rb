@@ -10,7 +10,7 @@ class ProjectMailer < ActionMailer::Base
     project_ids.each do |project_id|
       unless project_id.blank?
         project = Project.where(id: project_id).first
-        receiver_user = project.owner
+        receiver_user = project.creator
 
         unless user_projects.include? receiver_user.user_name
           user_projects[receiver_user.user_name] =

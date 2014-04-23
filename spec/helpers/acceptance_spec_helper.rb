@@ -32,7 +32,7 @@ def check_site_lat_long_response(description, expected_status, should_be_obfusca
     long = site['longitude']
 
     if should_be_obfuscated
-      min = 4
+      min = 3
       max = 6
       expect(lat.to_s.split('.').last.size)
       .to satisfy { |v| v >= min && v <= max },

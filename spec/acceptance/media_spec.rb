@@ -295,7 +295,7 @@ resource 'Media' do
       end
 
       parsed = JsonSpec::Helpers::parse_json(response_body)
-      remaining = parse_deep(nil, parsed, json_paths.clone, [])
+      remaining = parse_deep(nil, parsed, json_paths.dup, [])
       expect(remaining).to be_empty, "expected no additional elements, got #{remaining}."
     end
   end

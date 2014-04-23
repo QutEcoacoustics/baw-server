@@ -144,6 +144,7 @@ class AudioEventsController < ApplicationController
 
   private
 
+  # @param [Array<AudioEvent>] annotations
   def custom_format(annotations)
 
     list = []
@@ -177,13 +178,13 @@ class AudioEventsController < ApplicationController
     list
   end
 
-  def get_audio_events(current_user, params)
-    params[:page] = AudioEvent.filter_count(params, :page, 1, 1)
-    params[:items] = AudioEvent.filter_count(params, :items, 10, 1, 30)
+  # @param [User] current_user
+  # @param [Hash] request_params
+  def get_audio_events(current_user, request_params)
+    request_params[:page] = AudioEvent.filter_count(request_params, :page, 1, 1)
+    request_params[:items] = AudioEvent.filter_count(request_params, :items, 10, 1, 30)
 
-    query = AudioEvent.filtered(current_user, params)
-
-    paging_defaults = AudioEvent.filter_paging_defaults
+    query = AudioEvent.filtered(current_user, request_params)
 
     response_hash = []
 
@@ -195,7 +196,11 @@ class AudioEventsController < ApplicationController
     response_hash
   end
 
+  # @param [AudioEvent] audio_event
   def format_response(audio_event)
+
+    user = audio_event.creator
+
     audio_event_hash = {
         audio_event_id: audio_event.id,
         id: audio_event.id,
@@ -204,8 +209,8 @@ class AudioEventsController < ApplicationController
         audio_recording_recorded_date: audio_event.audio_recording.recorded_date,
         site_name: audio_event.audio_recording.site.name,
         site_id: audio_event.audio_recording.site.id,
-        owner_name: audio_event.owner.user_name,
-        owner_id: audio_event.owner.id,
+        owner_name: audio_event.creator.user_name,
+        owner_id: audio_event.creator.id,
         is_reference: audio_event.is_reference,
         start_time_seconds: audio_event.start_time_seconds,
         end_time_seconds: audio_event.end_time_seconds,
@@ -228,13 +233,6 @@ class AudioEventsController < ApplicationController
     end
 
     audio_event_hash[:projects] = audio_event.audio_recording.site.projects.map do |project|
-      {
-          id: project.id,
-          name: project.name
-      }
-    end
-
-    audio_event_hash[:paging] = audio_event.audio_recording.site.projects.map do |project|
       {
           id: project.id,
           name: project.name

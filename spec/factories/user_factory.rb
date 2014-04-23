@@ -1,5 +1,3 @@
-require 'faker'
-
 FactoryGirl.define do
 
   factory :unconfirmed_user, class: User do

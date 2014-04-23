@@ -61,7 +61,7 @@ class MediaController < ApplicationController
 
     formats.each do |format|
       format_key = format.to_s
-      result[format_key] = defaults.clone
+      result[format_key] = defaults.dup
       result[format_key].delete 'format'
       result[format_key][:extension] = format_key
       result[format_key]['mime_type'] = Mime::Type.lookup_by_extension(format).to_s
@@ -92,8 +92,18 @@ class MediaController < ApplicationController
 
     log_options(options, '#show format is image or audio')
 
-    options[:start_offset] = (request_params[:start_offset] || 0).to_f
-    options[:end_offset] = (request_params[:end_offset] || audio_recording.duration_seconds).to_f
+    if request_params.include?(:start_offset)
+      options[:start_offset] = request_params[:start_offset].to_f
+    else
+      options[:start_offset] = 0.0
+    end
+
+    if request_params.include?(:end_offset)
+      options[:end_offset] = request_params[:end_offset].to_f
+    else
+      options[:end_offset] = audio_recording.duration_seconds.to_f
+    end
+
     options[:uuid] = audio_recording.uuid
     options[:id] = audio_recording.id
     # .to_s on mime:type gets the media type

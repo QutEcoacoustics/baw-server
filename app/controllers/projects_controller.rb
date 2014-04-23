@@ -7,7 +7,7 @@ class ProjectsController < ApplicationController
   # GET /projects.json
   def index
     if current_user.has_role? :admin
-      @projects = Project.includes(:owner).order('lower(name) ASC')
+      @projects = Project.includes(:creator).order('lower(name) ASC')
     else
       @projects = current_user.projects.sort { |a, b| a.name <=> b.name }
     end

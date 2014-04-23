@@ -20,10 +20,10 @@ class AudioRecording < ActiveRecord::Base
   has_many :bookmarks, inverse_of: :audio_recording
   has_many :tags, through: :audio_events
 
-  belongs_to :owner, class_name: 'User', foreign_key: :creator_id
-  belongs_to :creator, class_name: 'User', foreign_key: :creator_id
-  belongs_to :updater, class_name: 'User', foreign_key: :updater_id
-  belongs_to :uploader, class_name: 'User', foreign_key: :uploader_id
+  belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_audio_recordings
+  belongs_to :updater, class_name: 'User', foreign_key: :updater_id, inverse_of: :updated_audio_recordings
+  belongs_to :deleter, class_name: 'User', foreign_key: :deleter_id, inverse_of: :deleted_audio_recordings
+  belongs_to :uploader, class_name: 'User', foreign_key: :uploader_id, inverse_of: :uploaded_audio_recordings
 
   accepts_nested_attributes_for :site
 

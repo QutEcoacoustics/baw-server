@@ -196,8 +196,8 @@ resource 'Sites' do
 
   get '/sites/:id' do
     parameter :id, 'Requested site ID (in path/route)', required: true
-    let(:authentication_token) { "Token token=\"#{@write_permission.project.owner.authentication_token}\"" }
-    check_site_lat_long_response('latitude and longitude should NOT be obfuscated for project owner', 200, false)
+    let(:authentication_token) { "Token token=\"#{@write_permission.project.creator.authentication_token}\"" }
+    check_site_lat_long_response('latitude and longitude should NOT be obfuscated for project creator', 200, false)
   end
 
   get '/sites/:id' do
