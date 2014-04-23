@@ -86,7 +86,10 @@ module BawAudioTools
 
         if source_existing_paths.blank? || !source_file.match(/\.wav/)
           # create the cached audio segment (it must be a wav file)
-          cached_wav_audio_parameters = modify_parameters.clone
+          # merge! does not include nested hashes, but will actually create a new hash
+          # http://thingsaaronmade.com/blog/ruby-shallow-copy-surprise.html
+          cached_wav_audio_parameters = {}
+          cached_wav_audio_parameters.merge!(modify_parameters)
           cached_wav_audio_parameters[:format] = 'wav'
           self.create_audio_segment(cached_wav_audio_parameters)
 
