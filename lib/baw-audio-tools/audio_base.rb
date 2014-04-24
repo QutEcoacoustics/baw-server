@@ -348,8 +348,8 @@ module BawAudioTools
 
       # remove start and end offset from new_params (otherwise it will be done again!)
       new_params = {}.merge(modify_parameters)
-      new_params.delete :start_offset if modify_parameters.include?(:start_offset)
-      new_params.delete :end_offset if  modify_parameters.include?(:end_offset)
+      new_params.delete :start_offset if new_params.include?(:start_offset)
+      new_params.delete :end_offset if  new_params.include?(:end_offset)
 
       # more processing might be required
       modify_worker(info(temp_file), temp_file, target, new_params)
