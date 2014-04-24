@@ -200,6 +200,8 @@ class AudioEventsController < ApplicationController
   def format_response(audio_event)
 
     user = audio_event.creator
+    user_name = user.blank? ? '' : user.user_name
+    user_id = user.blank? ? '' : user.id
 
     audio_event_hash = {
         audio_event_id: audio_event.id,
@@ -209,8 +211,8 @@ class AudioEventsController < ApplicationController
         audio_recording_recorded_date: audio_event.audio_recording.recorded_date,
         site_name: audio_event.audio_recording.site.name,
         site_id: audio_event.audio_recording.site.id,
-        owner_name: audio_event.creator.user_name,
-        owner_id: audio_event.creator.id,
+        owner_name: user_name,
+        owner_id: user_id,
         is_reference: audio_event.is_reference,
         start_time_seconds: audio_event.start_time_seconds,
         end_time_seconds: audio_event.end_time_seconds,

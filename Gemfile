@@ -19,7 +19,7 @@ gem 'rack-cors', require: 'rack/cors'
 # UI HELPERS
 # -------------------------------------
 gem 'haml'
-gem 'haml-rails', '~> 0.4'
+gem 'haml-rails', '< 0.5' # from 0.5 activesupport > 3.2 is required
 gem 'jquery-rails'
 gem 'simple_form' #https://github.com/plataformatec/simple_form
 gem 'paperclip'
