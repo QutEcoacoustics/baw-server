@@ -3,6 +3,9 @@ module BawAudioTools
 
     WARN_ESTIMATE_DURATION = 'Estimating duration from bitrate, this may be inaccurate'
 
+    # @param [string] ffmpeg_executable
+    # @param [string] ffprobe_executable
+    # @param [string] temp_dir
     def initialize(ffmpeg_executable, ffprobe_executable, temp_dir)
       @ffmpeg_executable = ffmpeg_executable
       @ffprobe_executable = ffprobe_executable

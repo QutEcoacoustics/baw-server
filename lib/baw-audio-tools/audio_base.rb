@@ -7,6 +7,12 @@ module BawAudioTools
 
     public
 
+    # @param [BawAudioTools::AudioFfmpeg] audio_ffmpeg
+    # @param [BawAudioTools::AudioMp3splt] audio_mp3splt
+    # @param [BawAudioTools::AudioSox] audio_sox
+    # @param [BawAudioTools::AudioWavpack] audio_wavpack
+    # @param [Hash] audio_defaults
+    # @param [string] temp_dir
     def initialize(audio_ffmpeg, audio_mp3splt, audio_sox, audio_wavpack, audio_defaults, temp_dir)
       @audio_ffmpeg = audio_ffmpeg
       @audio_mp3splt = audio_mp3splt
@@ -261,6 +267,10 @@ module BawAudioTools
 
     private
 
+    # @param [Hash] source_info
+    # @param [string] source
+    # @param [string] target
+    # @param [Hash] modify_parameters
     def modify_worker(source_info, source, target, modify_parameters = {})
       if source_info[:media_type] == 'audio/wavpack'
         # convert to wave and segment
@@ -324,18 +334,25 @@ module BawAudioTools
     #  execute(cmd)
     #end
 
+    # @param [string] extension
+    # @param [Symbol] audio_tool_method
+    # @param [string] source
+    # @param [Hash] source_info
+    # @param [string] target
+    # @param [Hash] modify_parameters
     def audio_tool_segment(extension, audio_tool_method, source, source_info, target, modify_parameters)
       # process the source file, put output to temp file
       temp_file = temp_file(extension)
       self.send(audio_tool_method, source, source_info, temp_file, modify_parameters[:start_offset], modify_parameters[:end_offset])
       check_target(temp_file)
 
-      # remove start and end offset from modify_parameters (otherwise it will be done again!)
-      modify_parameters.delete :start_offset if modify_parameters.include?(:start_offset)
-      modify_parameters.delete :end_offset if  modify_parameters.include?(:end_offset)
+      # remove start and end offset from new_params (otherwise it will be done again!)
+      new_params = {}.merge(modify_parameters)
+      new_params.delete :start_offset if modify_parameters.include?(:start_offset)
+      new_params.delete :end_offset if  modify_parameters.include?(:end_offset)
 
       # more processing might be required
-      modify_worker(info(temp_file), temp_file, target, modify_parameters)
+      modify_worker(info(temp_file), temp_file, target, new_params)
 
       File.delete temp_file
     end
@@ -350,6 +367,8 @@ module BawAudioTools
     #
     # If you've got a cleaner way of doing this, I'd be interested to see it.
     # If you think you can do it with Ruby's Timeout module, think again.
+
+    # @param [Hash] command
     def run_with_timeout(*command)
       options = command.extract_options!.reverse_merge(timeout: 60, tick: 1, cleanup_sleep: 0.1, buffer_size: 10240)
 
@@ -403,6 +422,8 @@ module BawAudioTools
       end
     end
 
+    # @param [Hash] options
+    # @param [string] description
     def log_options(options, description)
       Logging::logger.warn "AudioBase - Provided parameters at #{description}: #{options}"
     end
