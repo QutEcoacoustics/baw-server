@@ -103,8 +103,11 @@ group :development do
   gem 'quiet_assets', '>= 1.0.2'
   gem 'bullet'
   # capistrano gems
-  gem 'capistrano', '~> 2', require: false
-  gem 'rvm-capistrano'
+  gem 'capistrano', '~> 3.2'
+  gem 'capistrano-bundler'
+  gem 'capistrano-rvm'
+  gem 'capistrano-rails'
+  gem 'capistrano-newrelic'
 
   gem 'rack-mini-profiler'
   #gem 'scrap'
