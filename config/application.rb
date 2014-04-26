@@ -80,6 +80,9 @@ module AWB
 
       # set resque connection
       Resque.redis = Settings.resque.connection
+
+      # enable garbage collection profiling (reported in New Relic)
+      GC::Profiler.enable
     end
 
     # allow any origin, with any header, to access the array of methods
