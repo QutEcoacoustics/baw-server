@@ -57,11 +57,25 @@ AWB::Application.configure do
   config.log_level = :info
 
   config.after_initialize do
+    # detect n+1 queries
+    Bullet.enable = false
+    Bullet.bullet_logger = false
+    Bullet.console = false
+    Bullet.alert = false
+    Bullet.rails_logger = false
+    Bullet.add_footer = false
+    Bullet.raise = false
+
     config.logger = Logger.new(Rails.root.join('log', "#{Rails.env}.log"))
     BawAudioTools::Logging.logger_formatter(config.logger)
 
     config.action_mailer.logger = Logger.new(Rails.root.join('log', "#{Rails.env}.mailer.log"))
     BawAudioTools::Logging.logger_formatter(config.action_mailer.logger)
+
+    # log all activerecord activity
+    ActiveRecord::Base.logger = Logger.new(Rails.root.join('log', "#{Rails.env}.activerecord.log"))
+    config.active_record.colorize_logging = false
+    BawAudioTools::Logging.logger_formatter(ActiveRecord::Base.logger)
   end
 
 end

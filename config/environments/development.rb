@@ -74,6 +74,7 @@ AWB::Application.configure do
     # detect n+1 queries
     Bullet.enable = true
     Bullet.bullet_logger = true
+    Bullet.console = true
     Bullet.alert = true
     Bullet.rails_logger = true
     Bullet.add_footer = true
