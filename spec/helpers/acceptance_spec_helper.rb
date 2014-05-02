@@ -1,8 +1,19 @@
+def document_media_requests
+  # this is here so rspec_api_documentation can be generated
+  # any request that returns content that cannot be json serialised (e.g. binary data)
+  # will cause generating the documentation to fail
+  if ENV['GENERATE_DOC']
+    false
+  else
+    true
+  end
+end
+
 def standard_request(description, expected_status, expected_json_path, document, response_body_content = nil)
   # Execute request with ids defined in above let(:id) statements
   example "#{description} - #{expected_status}", :document => document do
     do_request
-    status.should eq(expected_status), "expected status #{expected_status} but was #{status}. Response body was #{response_body}"
+    status.should eq(expected_status), "Requested #{path} expecting status #{expected_status} but got status #{status}. Response body was #{response_body}"
     unless expected_json_path.blank?
       response_body.should have_json_path(expected_json_path), "could not find #{expected_json_path} in #{response_body}"
     end
@@ -21,7 +32,7 @@ end
 def check_site_lat_long_response(description, expected_status, should_be_obfuscated = true)
   example "#{description} - #{expected_status}", document: false do
     do_request
-    status.should eq(expected_status), "expected status #{expected_status} but was #{status}. Response body was #{response_body}"
+    status.should eq(expected_status), "Requested #{path} expecting status #{expected_status} but got status #{status}. Response body was #{response_body}"
     response_body.should have_json_path('location_obfuscated'), response_body.to_s
     #response_body.should have_json_type(Boolean).at_path('location_obfuscated'), response_body.to_s
     site = JSON.parse(response_body)

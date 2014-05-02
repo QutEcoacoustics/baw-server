@@ -305,7 +305,7 @@ resource 'Media' do
     let(:authentication_token) { reader_token }
     let(:format) { 'json' }
     # don't document because it returns binary data that can't be json encoded
-    example 'MEDIA (json head request as reader with shallow path) - 200', document: false do
+    example 'MEDIA (json head request as reader with shallow path) - 200', document: document_media_requests do
       using_original_audio(audio_recording, 'application/json', false)
     end
   end
@@ -314,7 +314,7 @@ resource 'Media' do
     standard_media_parameters
     let(:authentication_token) { reader_token }
     let(:format) { 'mp3' }
-    example 'MEDIA (audio head request mp3 as reader with shallow path) - 200', document: false do
+    example 'MEDIA (audio head request mp3 as reader with shallow path) - 200', document: document_media_requests do
       using_original_audio(audio_recording, 'audio/mp3', false, false)
     end
   end
@@ -323,7 +323,7 @@ resource 'Media' do
     standard_media_parameters
     let(:authentication_token) { reader_token }
     let(:format) { 'mp3' }
-    example 'MEDIA (audio get request mp3 as reader with shallow path) - 200', document: false do
+    example 'MEDIA (audio get request mp3 as reader with shallow path) - 200', document: document_media_requests do
       using_original_audio(audio_recording, 'audio/mp3')
     end
   end
@@ -332,7 +332,7 @@ resource 'Media' do
     standard_media_parameters
     let(:authentication_token) { reader_token }
     let(:format) { 'wav' }
-    example 'MEDIA (audio get request wav as reader with shallow path) - 200', document: false do
+    example 'MEDIA (audio get request wav as reader with shallow path) - 200', document: document_media_requests do
       using_original_audio(audio_recording, 'audio/wav')
     end
   end
@@ -341,7 +341,7 @@ resource 'Media' do
     standard_media_parameters
     let(:authentication_token) { reader_token }
     let(:format) { 'ogg' }
-    example 'MEDIA (audio get request ogg as reader with shallow path) - 200', document: false do
+    example 'MEDIA (audio get request ogg as reader with shallow path) - 200', document: document_media_requests do
       using_original_audio(audio_recording, 'audio/ogg')
     end
   end
@@ -350,7 +350,7 @@ resource 'Media' do
     standard_media_parameters
     let(:authentication_token) { reader_token }
     let(:format) { 'webm' }
-    example 'MEDIA (audio get request webm as reader with shallow path) - 200', document: false do
+    example 'MEDIA (audio get request webm as reader with shallow path) - 200', document: document_media_requests do
       using_original_audio(audio_recording, 'audio/webm')
     end
   end
@@ -359,7 +359,7 @@ resource 'Media' do
     standard_media_parameters
     let(:authentication_token) { reader_token }
     let(:format) { 'flac' }
-    example 'MEDIA (audio get request flac as reader with shallow path) - 200', document: false do
+    example 'MEDIA (audio get request flac as reader with shallow path) - 200', document: document_media_requests do
       using_original_audio(audio_recording, 'audio/x-flac')
     end
   end
@@ -368,7 +368,7 @@ resource 'Media' do
     standard_media_parameters
     let(:authentication_token) { reader_token }
     let(:format) { 'png' }
-    example 'MEDIA (spectrogram get request as reader with shallow path) - 200', document: false do
+    example 'MEDIA (spectrogram get request as reader with shallow path) - 200', document: document_media_requests do
       using_original_audio(audio_recording, 'image/png', false)
     end
   end
@@ -377,7 +377,7 @@ resource 'Media' do
     standard_media_parameters
     let(:authentication_token) { reader_token }
     let(:format) { 'png' }
-    example 'MEDIA (spectrogram head request as reader with shallow path) - 200', document: false do
+    example 'MEDIA (spectrogram head request as reader with shallow path) - 200', document: document_media_requests do
       using_original_audio(audio_recording, 'image/png', false)
     end
   end
