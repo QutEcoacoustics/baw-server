@@ -28,6 +28,7 @@ resource 'Taggings' do
   let(:audio_recording_id)    {@write_permission.project.sites[0].audio_recordings[0].id}
   let(:audio_event_id)        {@write_permission.project.sites[0].audio_recordings[0].audio_events[0].id}
   let(:id)                    {@write_permission.project.sites[0].audio_recordings[0].audio_events[0].taggings[0].id}
+  let(:user_id)               {@write_permission.project.sites[0].audio_recordings[0].audio_events[0].taggings[0].creator_id}
 
   # prepare authentication_token for different users
   let(:writer_token)          {"Token token=\"#{@write_permission.user.authentication_token}\"" }
@@ -100,6 +101,13 @@ resource 'Taggings' do
 
     let(:authentication_token) { unconfirmed_token }
     standard_request('LIST (as unconfirmed user, with shallow path)', 401, nil, true)
+  end
+
+  get '/taggings/user/:user_id/tags' do
+    parameter :user_id, 'Get taggings for user id (in path/route)', required: true
+
+    let(:authentication_token) { reader_token }
+    standard_request('LIST (as reader, user taggings)', 200, '0/tag/is_taxanomic', true)
   end
 
   ################################

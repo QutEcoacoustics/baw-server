@@ -1,34 +1,52 @@
 class TaggingsController < ApplicationController
 
-  load_and_authorize_resource :audio_recording
-  load_resource :audio_event
-  load_resource :tagging
+  load_and_authorize_resource :audio_recording, except: [:user_index]
+  load_resource :audio_event, except: [:user_index]
+  load_resource :tagging, except: [:user_index]
+  load_and_authorize_resource :user, only: [:user_index]
   respond_to :json
 
-  # GET /tags
-  # GET /tags.json
+  # /projects/:project_id/sites/:site_id/audio_recordings/:audio_recording_id/audio_events/:audio_event_id/
+  # /audio_recordings/:audio_recording_id/audio_events/:audio_event_id/
+
+  # GET /taggings
+  # GET /taggings.json
+  # GET /taggings/user/1/tags.json
   def index
     if @audio_event
-      render json: @audio_event.taggings.to_json(include: [:tag ])
+      render json: @audio_event.taggings.to_json(include: [:tag])
     else
-      render json: Tagging.all.to_json(include: [:tag ])
+      render json: Tagging.all.to_json(include: [:tag])
     end
   end
 
-  # GET /tags/1
-  # GET /tags/1.json
+  def user_index
+    if params[:user_id]
+      render json: Tagging
+        .includes(:tag, :audio_event)
+        .where('(audio_events_tags.updater_id = ? OR audio_events_tags.creator_id = ?)',params[:user_id], params[:user_id])
+        .order('updated_at DESC')
+        .limit(10)
+        .to_json(include: [:tag, :audio_event])
+    else
+      raise ActiveRecord::RecordNotFound, 'Could not get taggings.'
+    end
+  end
+
+  # GET /taggings/1
+  # GET /taggings/1.json
   def show
     respond_with Tagging.find(params[:id])
   end
 
-  # GET /tags/new
-  # GET /tags/new.json
+  # GET /taggings/new
+  # GET /taggings/new.json
   def new
     respond_with Tagging.new
   end
 
-  # POST /tags
-  # POST /tags.json
+  # POST /taggings
+  # POST /taggings.json
   def create
     # @audio_recording, @audio_event and @tagging are initialised/preloaded by load_resource/load_and_authorize_resource
     if params[:tagging] && params[:tagging][:tag_attributes] && params[:tagging][:tag_attributes][:text]
@@ -56,14 +74,14 @@ class TaggingsController < ApplicationController
     end
   end
 
-  # PUT /tags/1
-  # PUT /tags/1.json
+  # PUT /taggings/1
+  # PUT /taggings/1.json
   def update
     respond_with Tagging.update(params[:id], params[:tag])
   end
 
-  # DELETE /tags/1
-  # DELETE /tags/1.json
+  # DELETE /taggings/1
+  # DELETE /taggings/1.json
   def destroy
     @tag = Tagging.find(params[:id])
     @tag.destroy

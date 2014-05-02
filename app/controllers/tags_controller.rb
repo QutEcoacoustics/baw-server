@@ -11,6 +11,8 @@ class TagsController < ApplicationController
     if params[:audio_event_id]
       @audio_event = AudioEvent.find(params[:audio_event_id])
       respond_with @audio_event.tags
+    elsif params[:filter] #single tag, partial match
+      respond_with Tag.where("text ILIKE '%?%'", params[:filter]).limit(20)
     else
       respond_with Tag.all
     end
@@ -38,23 +40,6 @@ class TagsController < ApplicationController
        render json: @tag, status: :created
     else
       render json: @tag.errors, status: :unprocessable_entity
-    end
-  end
-
-  # PUT /tags/1
-  # PUT /tags/1.json
-  def update
-    respond_with Tag.update(params[:id], params[:tag])
-  end
-
-  # DELETE /tags/1
-  # DELETE /tags/1.json
-  def destroy
-    @tag = Tag.find(params[:id])
-    @tag.destroy
-
-    respond_to do |format|
-      format.json { no_content_as_json }
     end
   end
 end
