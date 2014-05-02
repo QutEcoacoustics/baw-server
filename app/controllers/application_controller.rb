@@ -132,7 +132,7 @@ class ApplicationController < ActionController::Base
   def record_not_found(error)
     respond_to do |format|
       format.html { render template: 'errors/record_not_found', status: :not_found }
-      format.json { render json: {code: 404, phrase: 'Not Found', message: 'No matches'}, status: :not_found }
+      format.json { render json: {code: 404, phrase: 'Not Found', message: 'Not found'}, status: :not_found }
     end
   end
 
