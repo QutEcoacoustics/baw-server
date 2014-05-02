@@ -11,7 +11,7 @@ describe 'CRUD Projects as valid user with write permission' do
     @permission = FactoryGirl.create(:write_permission)
     login_as @permission.user, scope: :user
   end
- 
+
   it 'lists all projects' do
     visit projects_path
     current_path.should eq(projects_path)
