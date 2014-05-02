@@ -101,7 +101,6 @@ end
 
 group :development do
   gem 'quiet_assets', '>= 1.0.2'
-  gem 'bullet'
   # capistrano gems
   gem 'capistrano', '~> 3.2'
   gem 'capistrano-bundler'
@@ -115,6 +114,7 @@ group :development do
 end
 
 group :development, :test do
+  gem 'bullet'
   gem 'rspec-rails', '>= 2.0.1'
   gem 'guard', '~> 1.8'
   gem 'listen', '~> 1'
