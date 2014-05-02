@@ -7,8 +7,6 @@ class AudioEventsController < ApplicationController
   skip_authorization_check only: [:library, :library_paged]
   respond_to :json
 
-  before_filter
-
   # GET /audio_events
   # GET /audio_events.json
   def index

@@ -42,7 +42,7 @@ class AudioEvent < ActiveRecord::Base
   scope :select_end_absolute, lambda { select('audio_recordings.recorded_date + CAST(audio_events.end_time_seconds || \' seconds\' as interval) as end_time_absolute') }
   scope :check_permissions, lambda { |user|
     if user.is_admin?
-      where(nil) # don't change query
+      where('1 = 1') # don't change query
     else
       creator_id_check = 'projects.creator_id = ?'
       permissions_check = '(permissions.user_id = ? AND permissions.level IN (\'reader\', \'writer\'))'
@@ -67,9 +67,8 @@ class AudioEvent < ActiveRecord::Base
     #.joins(:tags, :owner, audio_recording: {site: {projects: :permissions}})
 
     # eager load tags and projects
-
     query = AudioEvent
-    .includes(:creator, :tags, audio_recording: {site: {projects: :permissions}})
+    .includes([:creator, :tags, audio_recording: {site: {projects: :permissions}}])
     .check_permissions(user)
 
     query = AudioEvent.filter_reference(query, params)
@@ -79,7 +78,7 @@ class AudioEvent < ActiveRecord::Base
     query = AudioEvent.filter_paging(query, params)
 
     query = query.select('audio_events.*, audio_recording.recorded_date, sites.name, sites.id, user.user_name, user.id')
-
+    Rails.logger.info "AudioEvent filtered: #{query.to_sql}"
     query
   end
 
@@ -88,7 +87,7 @@ class AudioEvent < ActiveRecord::Base
   def self.filter_tags(query, params)
     if params.include?(:tagsPartial) && !params[:tagsPartial].blank?
       tags_partial = CSV.parse(params[:tagsPartial], col_sep: ',').flatten.map { |item| item.trim(' ', '') }.join('|').downcase
-      tags_query = AudioEvent.joins(:tags).where('lower(tags.text) SIMILAR TO ?', "%(#{tags_partial})%").select('tags.id')
+      tags_query = AudioEvent.joins(:tags).where('lower(tags.text) SIMILAR TO ?', "%(#{tags_partial})%").select('audio_events.id')
       query.where(id: tags_query)
     else
       query
@@ -184,7 +183,7 @@ class AudioEvent < ActiveRecord::Base
     if params.include?(:userId)
       creator_id_check = 'audio_events.creator_id = ?'
       updater_id_check = 'audio_events.updater_id = ?'
-      user_id = params[:userId]
+      user_id = params[:userId].to_i
       query.where("(#{creator_id_check} OR #{updater_id_check})", user_id, user_id)
     else
       query
