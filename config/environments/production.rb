@@ -73,9 +73,9 @@ AWB::Application.configure do
 
   AWB::Application.config.middleware.use ExceptionNotification::Rack, email:
       {
-          email_prefix: Settings.exception_notification.email_prefix,
-          sender_address: Settings.exception_notification.sender_address,
-          exception_recipients: Settings.exception_notification.exception_recipients
+          email_prefix: Settings.emails.email_prefix,
+          sender_address: Settings.emails.sender_address,
+          exception_recipients: Settings.emails.required_recipients
       }
 
   config.after_initialize do

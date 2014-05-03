@@ -1,5 +1,5 @@
 class ProjectMailer < ActionMailer::Base
-  default from: Settings.devise.mailer_sender
+  default from: Settings.emails.sender_address
 
   def project_access_request(sender_user, project_ids, reason)
     @sender_user = sender_user
@@ -30,11 +30,12 @@ class ProjectMailer < ActionMailer::Base
     end
 
     user_projects.each do |key, value|
-      email = value[:email]
+      # emails get sent to project owner plus required recipients (e.g. admins)
+      emails = [value[:email]] + Settings.emails.required_recipients
       @owner_name = value[:user_name]
-      subject = "#{Settings.exception_notification.email_prefix} #{@sender_user.user_name} is requesting access to one or more of your projects."
+      subject = "#{Settings.emails.email_prefix} #{@sender_user.user_name} is requesting access to one or more of your projects."
       @projects = value[:projects]
-      mail(to: email, subject: subject).deliver
+      mail(to: emails, subject: subject).deliver
     end
   end
 end

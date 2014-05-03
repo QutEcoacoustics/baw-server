@@ -34,16 +34,16 @@ defaults: &defaults
     username: root
     password:
     host: localhost
-  exception_notification:
+  emails:
     email_prefix: '[prefix]'
     sender_address: address@example.com
-    exception_recipients: address@example.com
+    required_recipients:
+     - address@example.com
   devise:
     ######################################################
     # these values are read for config.{key} in
     # File devise.rb #
     ######################################################
-    mailer_sender: address@example.com
     pepper: 128 char random pepper 128 char random pepper
     expire_auth_token_on_timeout: true
     secret_key: 128 char random pepper 128 char random pepper
