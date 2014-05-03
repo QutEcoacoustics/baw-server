@@ -1,6 +1,10 @@
 class PublicController < ApplicationController
 
-  skip_authorization_check only: [:index, :status, :website_status]
+  skip_authorization_check only: [
+      :index, :status, :website_status,
+      :new_contact_us, :create_contact_us,
+      :new_bug_report, :create_bug_report
+  ]
 
   def index
     base_path = "#{Rails.root}/public"
@@ -91,5 +95,45 @@ class PublicController < ApplicationController
     end
   end
 
+  # GET /contact_us
+  def new_contact_us
+    @contact_us = ContactUs.new
+    respond_to do |format|
+      format.html {}
+    end
+  end
+
+  # POST /contact_us
+  def create_contact_us
+    @contact_us = ContactUs.new(params[:contact_us])
+
+    model_valid = @contact_us.valid?
+    recaptcha_valid = verify_recaptcha(model: @contact_us, message: "Captcha response was not correct. Please try again.", attribute: :recaptcha)
+
+    respond_to do |format|
+      if recaptcha_valid && model_valid
+        PublicMailer.contact_us_message(current_user, @contact_us, request)
+        format.html {
+          redirect_to contact_us_path,
+                      notice: "Thank you for contacting us. If you've asked us to contact you or " +
+                          'we need more information, we will be in touch with you shortly.'
+        }
+      else
+        format.html {
+          render action: 'new_contact_us'
+        }
+      end
+    end
+  end
+
+  # # GET /bug_report
+  # def new_bug_report
+  #
+  # end
+  #
+  # # POST /bug_report
+  # def create_bug_report
+  #
+  # end
 
 end

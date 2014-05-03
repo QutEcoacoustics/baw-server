@@ -32,6 +32,7 @@ gem 'bootstrap-datepicker-rails'
 # for rails 3, 4
 gem 'will_paginate', '~> 3.0'
 gem 'dotiw'
+gem 'recaptcha', require: 'recaptcha/rails'
 
 # USERS & PERMISSIONS
 # -------------------------------------

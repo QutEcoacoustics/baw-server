@@ -133,6 +133,11 @@ defaults: &defaults
   analytics:
     domain: example.com
     ua: UA-XXXXXX
+  recaptcha:
+    public_key: set recaptcha public key
+    private_key: set recaptcha private key
+    # only set proxy if needed
+    proxy:
 
 development:
   <<: *defaults

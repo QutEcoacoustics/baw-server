@@ -116,6 +116,12 @@ AWB::Application.routes.draw do
   get '/status/' => 'public#status', defaults: {format: 'json'}
   get '/website_status/' => 'public#website_status'
 
+  # feedback forms
+  get '/contact_us' => 'public#new_contact_us'
+  post '/contact_us' => 'public#create_contact_us'
+  # get '/bug_report' => 'public#new_bug_report'
+  # post '/bug_report' => 'public#create_bug_report'
+
   # resque front end
   authenticate :user, lambda { |u| !u.blank? && u.has_role?(:admin) } do
     mount Resque::Server.new, at: '/job_queue_status'
