@@ -239,7 +239,8 @@ class AudioEventsController < ApplicationController
       }
     end
 
-    next_event = AudioEvent.where('id > ?', audio_event.id).order('id DESC').first
+    # next and prev are just in order of ids (essentially the order the audio events were created)
+    next_event = AudioEvent.where('id > ?', audio_event.id).order('id ASC').first
     prev_event = AudioEvent.where('id < ?', audio_event.id).order('id DESC').first
     audio_event_hash[:paging] = {next_event: {}, prev_event: {}}
 
