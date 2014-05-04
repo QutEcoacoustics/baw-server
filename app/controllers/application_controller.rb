@@ -26,24 +26,28 @@ class ApplicationController < ActionController::Base
 
       if !request.env['HTTP_REFERER'].blank? and request.env['HTTP_REFERER'] != request.env['REQUEST_URI']
         respond_to do |format|
-          format.html { redirect_to :back, :alert => exception.message }
+          format.html { redirect_to :back, alert: exception.message }
           format.json { render json: json_forbidden.to_json, status: :forbidden }
         end
       else
         respond_to do |format|
-          format.html { redirect_to projects_path, :alert => exception.message }
+          format.html { redirect_to projects_path, alert: exception.message }
           format.json { render json: json_forbidden.to_json, status: :forbidden }
         end
 
       end
     else
+
+      json_response = {
+          error: 'You need to log in and confirm your account to access this resource.',
+          sign_in_link: new_user_session_url,
+          user_confirmation_link: new_user_confirmation_url
+      }.to_json
+
       respond_to do |format|
-        format.html { redirect_to root_path, :alert => exception.message }
-        format.json { render json: {
-            error: 'You need to log in and confirm your account to access this resource.',
-            sign_in_link: new_user_session_url,
-            user_confirmation_link: new_user_confirmation_url
-        }.to_json, status: :unauthorized }
+        format.html { redirect_to root_path, alert: exception.message }
+        format.json { render json: json_response, status: :unauthorized }
+        format.all { render json: json_response, status: :unauthorized }
       end
     end
   end
@@ -128,7 +132,7 @@ class ApplicationController < ActionController::Base
   def record_not_found(error)
     respond_to do |format|
       format.html { render template: 'errors/record_not_found', status: :not_found }
-      format.json { render json: {code: 404, phrase: 'Not Found', message: 'No matches'}, status: :not_found }
+      format.json { render json: {code: 404, phrase: 'Not Found', message: 'Not found'}, status: :not_found }
     end
   end
 

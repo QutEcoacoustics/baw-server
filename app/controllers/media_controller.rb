@@ -20,7 +20,11 @@ class MediaController < ApplicationController
 
   def show
 
-    log_options(params, '#show method start')
+    # to stop hard-to-find bugs where start_offset and end_offset
+    # change to nil or just vanish
+    request_params = params.symbolize_keys
+
+    log_options(request_params, '#show method start')
 
     @media_processor = Settings.media_request_processor
     @range_request = Settings.range_request
@@ -36,7 +40,7 @@ class MediaController < ApplicationController
 
     is_audio_ready = @audio_recording.status == 'ready'
     is_head_request = request.head?
-    is_available_format = @available_formats.include?(params[:format].downcase)
+    is_available_format = @available_formats.include?(request_params[:format].downcase)
 
     if !is_audio_ready && is_head_request
       # changed from 422 Unprocessable entity
@@ -48,8 +52,8 @@ class MediaController < ApplicationController
     elsif !is_available_format && !is_head_request
       render json: {error: 'Requested format is invalid. It must be one of available_formats.', available_formats: @available_formats}.to_json, status: :unsupported_media_type
     elsif is_available_format && is_audio_ready
-      log_options(params, '#show audio recording ready')
-      parse_media_request(@audio_recording, params)
+      log_options(request_params, '#show audio recording ready')
+      parse_media_request(@audio_recording, request_params)
     else
       render json: {error: 'Invalid request'}.to_json, status: :bad_request
     end
@@ -61,7 +65,7 @@ class MediaController < ApplicationController
 
     formats.each do |format|
       format_key = format.to_s
-      result[format_key] = defaults.clone
+      result[format_key] = defaults.dup
       result[format_key].delete 'format'
       result[format_key][:extension] = format_key
       result[format_key]['mime_type'] = Mime::Type.lookup_by_extension(format).to_s
@@ -92,8 +96,18 @@ class MediaController < ApplicationController
 
     log_options(options, '#show format is image or audio')
 
-    options[:start_offset] = (request_params[:start_offset] || 0).to_f
-    options[:end_offset] = (request_params[:end_offset] || audio_recording.duration_seconds).to_f
+    if request_params.include?(:start_offset)
+      options[:start_offset] = request_params[:start_offset].to_f
+    else
+      options[:start_offset] = 0.0
+    end
+
+    if request_params.include?(:end_offset)
+      options[:end_offset] = request_params[:end_offset].to_f
+    else
+      options[:end_offset] = audio_recording.duration_seconds.to_f
+    end
+
     options[:uuid] = audio_recording.uuid
     options[:id] = audio_recording.id
     # .to_s on mime:type gets the media type

@@ -11,6 +11,8 @@ class TagsController < ApplicationController
     if params[:audio_event_id]
       @audio_event = AudioEvent.find(params[:audio_event_id])
       respond_with @audio_event.tags
+    elsif params[:filter] #single tag, partial match
+      respond_with Tag.where("text ILIKE '%?%'", params[:filter]).limit(20)
     else
       respond_with Tag.all
     end

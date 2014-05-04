@@ -19,7 +19,7 @@ gem 'rack-cors', require: 'rack/cors'
 # UI HELPERS
 # -------------------------------------
 gem 'haml'
-gem 'haml-rails', '~> 0.4'
+gem 'haml-rails', '< 0.5' # from 0.5 activesupport > 3.2 is required
 gem 'jquery-rails'
 gem 'simple_form' #https://github.com/plataformatec/simple_form
 gem 'paperclip'
@@ -32,6 +32,7 @@ gem 'bootstrap-datepicker-rails'
 # for rails 3, 4
 gem 'will_paginate', '~> 3.0'
 gem 'dotiw'
+gem 'recaptcha', require: 'recaptcha/rails'
 
 # USERS & PERMISSIONS
 # -------------------------------------
@@ -101,10 +102,12 @@ end
 
 group :development do
   gem 'quiet_assets', '>= 1.0.2'
-  gem 'bullet'
   # capistrano gems
-  gem 'capistrano', '~> 2', require: false
-  gem 'rvm-capistrano'
+  gem 'capistrano', '~> 3.2'
+  gem 'capistrano-bundler'
+  gem 'capistrano-rvm'
+  gem 'capistrano-rails'
+  gem 'capistrano-newrelic'
 
   gem 'rack-mini-profiler'
   #gem 'scrap'
@@ -112,6 +115,7 @@ group :development do
 end
 
 group :development, :test do
+  gem 'bullet'
   gem 'rspec-rails', '>= 2.0.1'
   gem 'guard', '~> 1.8'
   gem 'listen', '~> 1'
@@ -126,14 +130,12 @@ group :test do
   gem 'guard-rspec'
   # fixed version due to unresolved bug in higher versions
   gem 'simplecov', '0.7.1', require: false
-  gem 'faker'
   gem 'shoulda-matchers'
   gem 'launchy'
   gem 'json_spec'
   gem 'database_cleaner', '~> 1'
   #gem 'bullet'
   gem 'webmock'
-  gem "fakefs", require: "fakefs/safe"
   gem 'coveralls', require: false
 end
 

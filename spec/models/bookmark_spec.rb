@@ -6,8 +6,8 @@ describe Bookmark do
   end
 
   it { should belong_to(:audio_recording)}
-  it { should belong_to(:user).with_foreign_key(:creator_id) }
-
+  it { should belong_to(:creator).with_foreign_key(:creator_id) }
+  it { should belong_to(:updater).with_foreign_key(:updater_id) }
 
   it { should validate_presence_of(:audio_recording_id)}
 

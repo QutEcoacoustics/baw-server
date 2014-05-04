@@ -38,13 +38,11 @@ describe Site do
   end
 
   it 'should obfuscate lat/longs properly' do
-    min = -90
-    max = 90
 
-    1000.times {
-      result = add_jitter((rand * (max - -min)) + min, min, max)
-      expect(result).to be <= max
-      expect(result).to be >= min
+    10.times {
+      s = FactoryGirl.build(:site_with_lat_long)
+      expect(Site.add_location_jitter(s.longitude, Site::LONGITUDE_MIN, Site::LONGITUDE_MAX)).to be_within(Site::JITTER_RANGE).of(s.longitude)
+      expect(Site.add_location_jitter(s.latitude, Site::LATITUDE_MIN, Site::LATITUDE_MAX)).to be_within(Site::JITTER_RANGE).of(s.latitude)
     }
   end
 
@@ -73,6 +71,10 @@ describe Site do
     }
   end
   it {should have_and_belong_to_many :projects}
+
+  it { should belong_to(:creator).with_foreign_key(:creator_id) }
+  it { should belong_to(:updater).with_foreign_key(:updater_id) }
+  it { should belong_to(:deleter).with_foreign_key(:deleter_id) }
 
   # this should pass, but the paperclip implementation of validate_attachment_content_type is buggy.
   # it { should validate_attachment_content_type(:image).

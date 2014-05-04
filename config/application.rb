@@ -74,21 +74,22 @@ module AWB
     # for generating documentation from tests
     Raddocs.configuration.docs_dir = "doc/api"
 
-    # validate Settings file
     config.after_initialize do
       # validate Settings file
       Settings.validate
 
       # set resque connection
       Resque.redis = Settings.resque.connection
-    end
 
+      # enable garbage collection profiling (reported in New Relic)
+      GC::Profiler.enable
+    end
 
     # allow any origin, with any header, to access the array of methods
     config.middleware.use Rack::Cors do
       allow do
         origins '*'
-        resource '*', :headers => :any, :methods => [:get, :post, :put, :delete, :options]
+        resource '*', headers: :any, methods: [:get, :post, :put, :delete, :options]
       end
     end
 

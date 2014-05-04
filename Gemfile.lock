@@ -1,24 +1,20 @@
 GIT
   remote: https://github.com/QutBioacoustics/baw-audio-tools.git
-  revision: cb3f92dd44ca119c472c17d962de248e52e8825f
+  revision: e40dccedb6fbf37dffcc5651d163f3fbd91ca6a6
   specs:
-    baw-audio-tools (0.0.6)
-      activesupport (>= 3.2)
-      i18n
+    baw-audio-tools (0.0.8)
+      activesupport (< 4)
       settingslogic
-      tzinfo
 
 GIT
   remote: https://github.com/QutBioacoustics/baw-workers.git
-  revision: 5e6e0c85a3bda321db3d583a0e998d2d4b1ba4e6
+  revision: 2e8fa58511104c8bb4990753df78f7cd3ca340ad
   specs:
-    baw-workers (0.0.2)
-      activesupport (>= 3.2)
+    baw-workers (0.0.3)
+      activesupport (< 4)
       daemons
-      i18n
       resque
       settingslogic
-      tzinfo
 
 GIT
   remote: https://github.com/brainspec/enumerize.git
@@ -29,7 +25,7 @@ GIT
 
 GIT
   remote: https://github.com/seyhunak/twitter-bootstrap-rails.git
-  revision: 663760e67b80ee25adc293bf5f03debae28b5af9
+  revision: 95de3b0e288aede73d38a18cce30cde66e733558
   specs:
     twitter-bootstrap-rails (2.2.8)
       actionpack (>= 3.1)
@@ -77,10 +73,7 @@ GEM
       activerecord (~> 3.2)
     addressable (2.3.6)
     arel (3.0.3)
-    bcrypt (3.1.7)
     bcrypt (3.1.7-x86-mingw32)
-    bcrypt-ruby (3.1.5)
-      bcrypt (>= 3.1.3)
     bcrypt-ruby (3.1.5-x86-mingw32)
       bcrypt (>= 3.1.3)
     bootstrap-datepicker-rails (1.3.0.2)
@@ -89,16 +82,26 @@ GEM
       railties (>= 3.0)
     breadcrumbs_on_rails (2.3.0)
     builder (3.0.4)
-    bullet (4.8.0)
+    bullet (4.9.0)
       activesupport
-      uniform_notifier (>= 1.4.0)
+      uniform_notifier (~> 1.6.0)
     cancan (1.6.10)
-    capistrano (2.15.5)
-      highline
-      net-scp (>= 1.0.0)
-      net-sftp (>= 2.0.0)
-      net-ssh (>= 2.0.14)
-      net-ssh-gateway (>= 1.1.0)
+    capistrano (3.2.1)
+      i18n
+      rake (>= 10.0.0)
+      sshkit (~> 1.3)
+    capistrano-bundler (1.1.2)
+      capistrano (~> 3.0)
+      sshkit (~> 1.2)
+    capistrano-newrelic (0.0.8)
+      capistrano (~> 3.0)
+      newrelic_rpm
+    capistrano-rails (1.1.1)
+      capistrano (~> 3.1)
+      capistrano-bundler (~> 1.1)
+    capistrano-rvm (0.1.1)
+      capistrano (~> 3.0)
+      sshkit (~> 1.2)
     capybara (2.2.1)
       mime-types (>= 1.16)
       nokogiri (>= 1.3.3)
@@ -110,9 +113,9 @@ GEM
     cocaine (0.5.4)
       climate_control (>= 0.0.3, < 1.0)
     coderay (1.1.0)
-    coffee-rails (3.2.1)
+    coffee-rails (3.2.2)
       coffee-script (>= 2.2.0)
-      railties (~> 3.2.0.beta)
+      railties (~> 3.2.0)
     coffee-script (2.2.0)
       coffee-script-source
       execjs
@@ -136,7 +139,6 @@ GEM
     dotiw (1.1.1)
       actionpack (~> 3)
     erubis (2.7.0)
-    eventmachine (1.0.3)
     eventmachine (1.0.3-x86-mingw32)
     exception_notification (4.0.1)
       actionmailer (>= 3.0.4)
@@ -147,10 +149,6 @@ GEM
     factory_girl_rails (4.4.1)
       factory_girl (~> 4.4.0)
       railties (>= 3.0.0)
-    fakefs (0.5.2)
-    faker (1.3.0)
-      i18n (~> 0.5)
-    ffi (1.9.3)
     ffi (1.9.3-x86-mingw32)
     formatador (0.2.4)
     gmaps4rails (1.5.6)
@@ -170,7 +168,6 @@ GEM
       activesupport (>= 3.1, < 4.1)
       haml (>= 3.1, < 4.1)
       railties (>= 3.1, < 4.1)
-    highline (1.6.21)
     hike (1.2.3)
     i18n (0.6.9)
     journey (1.0.4)
@@ -195,18 +192,12 @@ GEM
     mime-types (1.25.1)
     mini_portile (0.5.3)
     mono_logger (1.1.0)
-    multi_json (1.9.2)
+    multi_json (1.9.3)
     mustache (0.99.5)
-    net-scp (1.2.0)
+    net-scp (1.2.1)
       net-ssh (>= 2.6.5)
-    net-sftp (2.1.2)
-      net-ssh (>= 2.6.5)
-    net-ssh (2.8.0)
-    net-ssh-gateway (1.2.0)
-      net-ssh (>= 2.6.5)
-    newrelic_rpm (3.7.3.204)
-    nokogiri (1.6.1)
-      mini_portile (~> 0.5.0)
+    net-ssh (2.9.0)
+    newrelic_rpm (3.8.0.218)
     nokogiri (1.6.1-x86-mingw32)
       mini_portile (~> 0.5.0)
     orm_adapter (0.5.0)
@@ -215,13 +206,8 @@ GEM
       activesupport (>= 3.0.0)
       cocaine (~> 0.5.3)
       mime-types
-    pg (0.17.1)
     pg (0.17.1-x86-mingw32)
     polyglot (0.3.4)
-    pry (0.9.12.6)
-      coderay (~> 1.0)
-      method_source (~> 0.8)
-      slop (~> 3.4)
     pry (0.9.12.6-x86-mingw32)
       coderay (~> 1.0)
       method_source (~> 0.8)
@@ -262,14 +248,15 @@ GEM
       rake (>= 0.8.7)
       rdoc (~> 3.4)
       thor (>= 0.14.6, < 2.0)
-    rake (10.2.2)
+    rake (10.3.1)
     rb-fsevent (0.9.4)
-    rb-inotify (0.9.3)
+    rb-inotify (0.9.4)
       ffi (>= 0.5.0)
     rb-kqueue (0.2.2)
       ffi (>= 0.5.0)
     rdoc (3.12.2)
       json (~> 1.4)
+    recaptcha (0.3.6)
     redis (3.0.7)
     redis-namespace (1.4.1)
       redis (~> 3.0.4)
@@ -298,24 +285,21 @@ GEM
       rspec-core (~> 2.14.0)
       rspec-expectations (~> 2.14.0)
       rspec-mocks (~> 2.14.0)
-    rspec_api_documentation (2.0.0)
+    rspec_api_documentation (3.0.0)
       activesupport (>= 3.0.0)
       i18n (>= 0.1.0)
       json (>= 1.4.6)
       mustache (>= 0.99.4)
       rspec (>= 2.14.0)
-      webmock (>= 1.7.0)
     ruby-progressbar (1.4.2)
-    rvm-capistrano (1.5.1)
-      capistrano (~> 2.15.4)
-    safe_yaml (1.0.2)
-    sass (3.3.4)
+    safe_yaml (1.0.3)
+    sass (3.3.7)
     sass-rails (3.2.6)
       railties (~> 3.2.0)
       sass (>= 3.1.10)
       tilt (~> 1.3)
     settingslogic (2.0.9)
-    shoulda-matchers (2.6.0)
+    shoulda-matchers (2.6.1)
       activesupport (>= 3.0.0)
     simple_form (2.1.1)
       actionpack (~> 3.0)
@@ -334,13 +318,17 @@ GEM
       multi_json (~> 1.0)
       rack (~> 1.0)
       tilt (~> 1.1, != 1.3.0)
+    sshkit (1.4.0)
+      net-scp (>= 1.1.2)
+      net-ssh (>= 2.8.0)
+      term-ansicolor
     term-ansicolor (1.3.0)
       tins (~> 1.0)
     thin (1.6.2)
       daemons (>= 1.0.9)
       eventmachine (>= 1.0.0)
       rack (>= 1.0.0)
-    thor (0.19.1)
+    thor (0.19.0)
     tilt (1.4.1)
     timeliness (0.3.7)
     tins (1.1.0)
@@ -351,7 +339,7 @@ GEM
     uglifier (2.5.0)
       execjs (>= 0.3.0)
       json (>= 1.8.0)
-    uniform_notifier (1.4.0)
+    uniform_notifier (1.6.1)
     uuidtools (2.1.4)
     validates_timeliness (3.0.14)
       timeliness (~> 0.3.6)
@@ -380,7 +368,11 @@ DEPENDENCIES
   breadcrumbs_on_rails
   bullet
   cancan
-  capistrano (~> 2)
+  capistrano (~> 3.2)
+  capistrano-bundler
+  capistrano-newrelic
+  capistrano-rails
+  capistrano-rvm
   capybara
   coffee-rails (~> 3.2)
   coveralls
@@ -390,13 +382,11 @@ DEPENDENCIES
   enumerize!
   exception_notification
   factory_girl_rails
-  fakefs
-  faker
   gmaps4rails (< 2)
   guard (~> 1.8)
   guard-rspec
   haml
-  haml-rails (~> 0.4)
+  haml-rails (< 0.5)
   jquery-rails
   json_spec
   launchy
@@ -411,12 +401,12 @@ DEPENDENCIES
   raddocs
   rails (~> 3.2)
   rails-i18n-debug
+  recaptcha
   resque
   role_model
   rspec-rails (>= 2.0.1)
   rspec_api_documentation
   ruby-progressbar
-  rvm-capistrano
   sass-rails
   settingslogic
   shoulda-matchers

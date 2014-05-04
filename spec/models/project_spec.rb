@@ -9,6 +9,8 @@ describe Project do
   it {should have_and_belong_to_many :sites}
 
   it { should belong_to(:creator).with_foreign_key(:creator_id) }
+  it { should belong_to(:updater).with_foreign_key(:updater_id) }
+  it { should belong_to(:deleter).with_foreign_key(:deleter_id) }
 
   it 'is invalid without an name' do
     FactoryGirl.build(:project, name: nil).should_not be_valid

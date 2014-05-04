@@ -1,23 +1,12 @@
-require 'faker'
-
 FactoryGirl.define do
 
   factory :project do
-    sequence(:name) { |n| "#{Faker::Name.title}#{n}" }
+    sequence(:name) { |n| "project#{n}" }
+    sequence(:description) { |n| "project description #{n}" }
+    sequence(:urn) { |n| "urn:project:ecosounds.org/project/#{n}" }
+    sequence(:notes) { |n|  "note number #{n}" }
+
     creator
-    owner
-
-    trait :urn do
-      sequence(:urn) { |n| "urn:project:ecosounds.org/project/#{n}" }
-    end
-
-    trait :description do
-      description { Faker::Lorem.word }
-    end
-
-    trait :notes do
-      notes { {Faker::Lorem.word => Faker::Lorem.word} }
-    end
 
     trait :image do
       image_file { fixture_file_upload(Rails.root.join('public', 'images', 'user', 'user_spanhalf.png'), 'image/png') }
@@ -28,8 +17,9 @@ FactoryGirl.define do
         site_count 1
       end
       after(:create) do |project, evaluator|
+        raise 'Creator was blank' if  evaluator.creator.blank?
         evaluator.site_count.times do
-          project.sites << FactoryGirl.create(:site_with_audio_recordings)
+          project.sites << FactoryGirl.create(:site_with_audio_recordings, creator: evaluator.creator)
         end
         #create_list(:site, evaluator.site_count, project: project)
       end
@@ -40,7 +30,8 @@ FactoryGirl.define do
         dataset_count 1
       end
       after(:create) do |project, evaluator|
-        create_list(:dataset, evaluator.dataset_count, project: project)
+        raise 'Creator was blank' if  evaluator.creator.blank?
+        create_list(:dataset, evaluator.dataset_count, project: project, creator: evaluator.creator)
       end
     end
 

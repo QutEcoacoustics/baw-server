@@ -14,5 +14,6 @@ describe TagsController do
     it { expect(put('/tags/1')).to route_to('errors#routing', requested_route: 'tags/1') }
     it { expect(delete('/tags/1')).to route_to('errors#routing', requested_route: 'tags/1') }
 
+    it { expect(get('/tags?filter=koala,bellow')).to route_to('tags#index', format: 'json')}
   end
 end

@@ -1,24 +1,20 @@
-require 'faker'
-
 FactoryGirl.define do
 
   factory :audio_recording do
     sequence(:file_hash) { |n| "SHA256::#{n}"  }
     recorded_date '2012-03-26 07:06:59'
-    duration_seconds Random.rand(86401.0 - Settings.audio_recording_min_duration_sec) + Settings.audio_recording_min_duration_sec
-    sample_rate_hertz (Random.rand(441) + 1) * 100
-    channels Random.rand(2) + 1
-    bit_rate_bps (Random.rand(64) + 1) * 100
-    media_type ['audio/mp3', 'audio/wav', 'audio/webm', 'audio/ogg'].sample
-    data_length_bytes Random.rand(5000)
+    duration_seconds 60000
+    sample_rate_hertz 22050
+    channels 2
+    bit_rate_bps 64000
+    media_type 'audio/mp3'
+    data_length_bytes 3800
+    sequence(:notes) { |n| "note number #{n}" }
+    sequence(:original_file_name) { |n| "origina name #{n}" }
 
     creator
     uploader
     site
-
-    trait :notes do
-      notes { {Faker::Lorem.word => Faker::Lorem.word} }
-    end
 
     trait :status_new do
       status 'new'
@@ -28,20 +24,13 @@ FactoryGirl.define do
       status 'ready'
     end
 
-    trait :status_random do
-      status AudioRecording::AVAILABLE_STATUSES.sample
-    end
-
-    trait :original_file_name do
-      original_file_name { "#{Faker::Lorem.word}.#{media_type.gsub('audio/', '')}" }
-    end
-
     trait :with_audio_events do
       ignore do
         audio_event_count 1
       end
       after(:create) do |audio_recording, evaluator|
-        create_list(:audio_event_with_tags, evaluator.audio_event_count, audio_recording: audio_recording)
+        raise 'Creator was blank' if  evaluator.creator.blank?
+        create_list(:audio_event_with_tags, evaluator.audio_event_count, audio_recording: audio_recording, creator: evaluator.creator)
       end
     end
 
