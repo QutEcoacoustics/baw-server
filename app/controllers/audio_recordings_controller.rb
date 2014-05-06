@@ -22,9 +22,7 @@ class AudioRecordingsController < ApplicationController
 
   # GET /audio_recordings/1.json
   def show
-
     respond_to do |format|
-      format.html {}
       format.json { render json: @audio_recording }
     end
   end
