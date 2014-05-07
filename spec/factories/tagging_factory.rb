@@ -1,5 +1,3 @@
-require 'faker'
-
 FactoryGirl.define do
 
   factory :tagging do

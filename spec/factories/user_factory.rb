@@ -1,5 +1,3 @@
-require 'faker'
-
 FactoryGirl.define do
 
   factory :unconfirmed_user, class: User do
@@ -9,6 +7,14 @@ FactoryGirl.define do
     sequence(:password) { |n| "password #{n}" }
 
     roles_mask { 2 } # user role
+
+    # after(:create) do |user|
+    #   Rails.logger.warn "Created #{user.inspect}"
+    # end
+    #
+    # after(:build) do |user|
+    #   Rails.logger.warn "Built #{user.inspect}"
+    # end
 
     trait :confirmed do
       after(:create) do |user|
@@ -34,7 +40,7 @@ FactoryGirl.define do
       image { fixture_file_upload(Rails.root.join('public', 'images', 'user', 'user-512.png'), 'image/png') }
     end
 
-    factory :confirmed_user, traits: [:confirmed], aliases: [:user, :creator, :owner, :updater, :deleter, :uploader]
+    factory :confirmed_user, traits: [:confirmed], aliases: [:user, :creator, :updater, :deleter, :uploader]
     factory :admin, traits: [:confirmed, :admin_role]
     factory :harvester, traits: [:confirmed, :harvester_role]
     factory :user_with_preferences, traits: [:confirmed, :saved_preferences]

@@ -7,12 +7,16 @@ describe Job do
   end
   #it {should have_many(:analysis_items)}
 
+  it { should belong_to(:creator).with_foreign_key(:creator_id) }
+  it { should belong_to(:updater).with_foreign_key(:updater_id) }
+  it { should belong_to(:deleter).with_foreign_key(:deleter_id) }
+
   it { should validate_presence_of(:name) }
   it 'is invalid without a name' do
     build(:job, name: nil).should_not be_valid
   end
   it 'should ensure the name is no more than 255 characters' do
-    test_string = Faker::Lorem.characters(256)
+    test_string = 'a' * 256
     build(:job, name: test_string).should_not be_valid
     build(:job, name: test_string[0..-2]).should be_valid
   end

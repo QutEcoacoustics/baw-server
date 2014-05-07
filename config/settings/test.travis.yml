@@ -21,7 +21,7 @@ test:
     pool: 5
     username: postgres
     password: ''
-  exception_notification:
+  emails:
     email_prefix: '[BAW travis test]'
   devise:
     pepper: 2a1dd780abf48819876cd0b74b5a988b

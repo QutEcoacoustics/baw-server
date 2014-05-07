@@ -15,9 +15,15 @@ AWB::Application.configure do
 
   # configure mailer for development
   config.action_mailer.raise_delivery_errors = true
-  config.action_mailer.default_url_options = {:host => "#{Settings.host.name}:#{Settings.host.port}"}
+  config.action_mailer.default_url_options =
+      {
+          host: "#{Settings.host.name}:#{Settings.host.port}"
+      }
   config.action_mailer.delivery_method = :file
-  config.action_mailer.file_settings = {:location => Rails.root.join('tmp', 'mail')}
+  config.action_mailer.file_settings =
+      {
+          location: Rails.root.join('tmp', 'mail')
+      }
   config.action_mailer.perform_deliveries = true
 
   # Print deprecation notices to the Rails logger
@@ -42,7 +48,7 @@ AWB::Application.configure do
   # resque configuration
   Resque.redis = Settings.resque.connection
 
-      # Set path for image magick for windows only
+  # Set path for image magick for windows only
   if RbConfig::CONFIG['target_os'] =~ /mswin|mingw/i
     im_dir = Settings.paths.image_magick_dir
     if Dir.exists?(im_dir) && File.directory?(im_dir)
@@ -52,29 +58,37 @@ AWB::Application.configure do
     end
   end
 
-  AWB::Application.config.middleware.use ExceptionNotification::Rack,
-    email: {
-       email_prefix: Settings.exception_notification.email_prefix,
-       sender_address: Settings.exception_notification.sender_address,
-       exception_recipients: Settings.exception_notification.exception_recipients
-    }
+  AWB::Application.config.middleware.use ExceptionNotification::Rack, email:
+      {
+          email_prefix: Settings.emails.email_prefix,
+          sender_address: Settings.emails.sender_address,
+          exception_recipients: Settings.emails.required_recipients
+      }
 
-  config.log_level = :info
+  config.log_level = :debug
 
   # profile requests
   #config.middleware.insert 0, 'Rack::RequestProfiler', printer: ::RubyProf::CallTreePrinter
 
   config.after_initialize do
+    # detect n+1 queries
     Bullet.enable = true
     Bullet.bullet_logger = true
+    Bullet.console = true
     Bullet.alert = true
     Bullet.rails_logger = true
     Bullet.add_footer = true
     Bullet.raise = false
 
-    # rotate the log files once they reach 5MB and save the 3 most recent rotated logs
-    config.logger = Logger.new(Rails.root.join('log', "#{Rails.env}.log"), 3, 5.0.megabytes)
-    config.action_mailer.logger = Logger.new(Rails.root.join('log', "#{Rails.env}.mailer.log"), 3, 5.megabytes)
+    # By default, each log is created under Rails.root/log/ and the log file name is environment_name.log.
+    config.logger = Logger.new(Rails.root.join('log', "#{Rails.env}.log"))
+    BawAudioTools::Logging.logger_formatter(config.logger)
+
+    config.action_mailer.logger = Logger.new(Rails.root.join('log', "#{Rails.env}.mailer.log"))
+    BawAudioTools::Logging.logger_formatter(config.action_mailer.logger)
+
+    # log all activerecord activity
+    ActiveRecord::Base.logger = Logger.new(STDOUT)
   end
 end
 

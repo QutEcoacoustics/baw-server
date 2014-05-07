@@ -1,0 +1,43 @@
+%h1 Contact Us
+
+= simple_form_for @contact_us, url: '/contact_us', html: {class: 'form-horizontal' } do |f|
+  = f.error_notification
+
+  .row-fluid
+    .span12.form-inputs
+      = f.input :name,  label: 'Your Name'
+      = f.input :email,  label: 'Contact Email'
+      = f.input :content, as: :text,  input_html: {rows: '8',style: 'width:100%'}
+      - if @contact_us.errors.include?(:recaptcha) && @contact_us.errors[:recaptcha].size > 0
+        .control-group.string.required.contact_us_recaptcha.error
+          %label.string.required.control-label{for: :contact_us_recaptcha}
+            Human Test
+          .controls
+            = recaptcha_tags({display: {theme: 'clean'}})
+            %span.help-inline
+              = @contact_us.errors[:recaptcha][0]
+      - else
+        .control-group.string.required.contact_us_recaptcha
+          %label.string.required.control-label{for: :contact_us_recaptcha}
+            Human Test
+          .controls
+            %span.help-inline
+              We need to know that you're human.
+            = recaptcha_tags({display: {theme: 'clean'}})
+
+
+
+  .form-actions
+    = f.button :submit, 'Submit'
+
+- content_for :title, 'Contact Us'
+
+- content_for :left_sidebar do
+  = render layout: '/shared/left_sidebar', locals: {title: 'General'} do
+    %li= link_to 'Contact Us', contact_us_path,  title: 'Contact Us', data: {toggle: 'tooltip',  placement: 'right'}
+    %li= link_to 'Website Status', website_status_path,  title: 'Website activity and totals', data: {toggle: 'tooltip',  placement: 'right'}
+    %li= link_to 'Bug Report', bug_report_path,  title: 'Report a problem', data: {toggle: 'tooltip',  placement: 'right'}
+    %li= link_to 'Data Request', data_request_path,  title: 'Request access to particular data', data: {toggle: 'tooltip',  placement: 'right'}
+    %li= link_to 'Disclaimers', disclaimers_path,  title: 'Disclaimers', data: {toggle: 'tooltip',  placement: 'right'}
+    %li= link_to 'Credits', credits_path,  title: 'Third party software we use', data: {toggle: 'tooltip',  placement: 'right'}
+    %li= link_to 'Ethics Statement', ethics_statement_path,  title: 'View our ethics statement', data: {toggle: 'tooltip',  placement: 'right'}

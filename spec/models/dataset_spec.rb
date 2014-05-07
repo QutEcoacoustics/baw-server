@@ -6,6 +6,7 @@ describe Dataset do
   end
   #it { should have_many(:progresses) }
   it { should belong_to(:creator).with_foreign_key(:creator_id) }
+  it { should belong_to(:updater).with_foreign_key(:updater_id) }
 
 
   it 'should not allow duplicate names for the same user (case-insensitive)' do

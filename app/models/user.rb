@@ -24,14 +24,49 @@ class User < ActiveRecord::Base
                     default_url: '/images/user/user_:style.png'
 
   # relations
-  has_many :owned_projects, class_name: 'Project', foreign_key: :creator_id
-  has_many :permissions, inverse_of: :user
   has_many :accessible_projects, through: :permissions, source: :project
   has_many :readable_projects, through: :permissions, source: :project, conditions: 'permissions.level = reader'
   has_many :writable_projects, through: :permissions, source: :project, conditions: 'permissions.level = writer'
-  has_many :bookmarks, foreign_key: :creator_id
-  has_many :datasets, foreign_key: :creator_id, include: :project
-  has_many :audio_event_comments, foreign_key: :creator_id, inverse_of: :creator
+
+  # relations for creator, updater, deleter, and others.
+  has_many :created_audio_events, class_name: 'AudioEvent', foreign_key: :creator_id, inverse_of: :creator
+  has_many :updated_audio_events, class_name: 'AudioEvent', foreign_key: :updater_id, inverse_of: :updater
+  has_many :deleted_audio_events, class_name: 'AudioEvent', foreign_key: :deleter_id, inverse_of: :deleter
+
+  has_many :created_audio_recordings, class_name: 'AudioRecording', foreign_key: :creator_id, inverse_of: :creator
+  has_many :updated_audio_recordings, class_name: 'AudioRecording', foreign_key: :updater_id, inverse_of: :updater
+  has_many :deleted_audio_recordings, class_name: 'AudioRecording', foreign_key: :deleter_id, inverse_of: :deleter
+  has_many :uploaded_audio_recordings, class_name: 'AudioRecording', foreign_key: :uploader_id, inverse_of: :uploader
+
+  has_many :created_taggings, class_name: 'Tagging', foreign_key: :creator_id, inverse_of: :creator
+  has_many :updated_taggings, class_name: 'Tagging', foreign_key: :updater_id, inverse_of: :updater
+
+  has_many :created_bookmarks, class_name: 'Bookmark', foreign_key: :creator_id, inverse_of: :creator
+  has_many :updated_bookmarks, class_name: 'Bookmark', foreign_key: :updater_id, inverse_of: :updater
+
+  has_many :created_datasets, class_name: 'Dataset', foreign_key: :creator_id, inverse_of: :creator, include: :project
+  has_many :updated_datasets, class_name: 'Dataset', foreign_key: :updater_id, inverse_of: :updater, include: :project
+
+  has_many :created_jobs, class_name: 'Job', foreign_key: :creator_id, inverse_of: :creator
+  has_many :updated_jobs, class_name: 'Job', foreign_key: :updater_id, inverse_of: :updater
+  has_many :deleted_jobs, class_name: 'Job', foreign_key: :deleter_id, inverse_of: :deleter
+
+  has_many :permissions, inverse_of: :user
+  has_many :created_permissions, class_name: 'Permission', foreign_key: :creator_id, inverse_of: :creator
+  has_many :updated_permissions, class_name: 'Permission', foreign_key: :updater_id, inverse_of: :updater
+
+  has_many :created_projects, class_name: 'Project', foreign_key: :creator_id, inverse_of: :creator
+  has_many :updated_projects, class_name: 'Project', foreign_key: :updater_id, inverse_of: :updater
+  has_many :deleted_projects, class_name: 'Project', foreign_key: :deleter_id, inverse_of: :deleter
+
+  has_many :created_scripts, class_name: 'Script', foreign_key: :creator_id, inverse_of: :creator
+
+  has_many :created_sites, class_name: 'Site', foreign_key: :creator_id, inverse_of: :creator
+  has_many :updated_sites, class_name: 'Site', foreign_key: :updater_id, inverse_of: :updater
+  has_many :deleted_sites, class_name: 'Site', foreign_key: :creator_id, inverse_of: :deleter
+
+  has_many :created_tags, class_name: 'Tag', foreign_key: :creator_id, inverse_of: :creator
+  has_many :updated_tags, class_name: 'Tag', foreign_key: :updater_id, inverse_of: :updater
 
   # scopes
   scope :users, -> { where(roles_mask: 2) }
@@ -49,7 +84,7 @@ class User < ActiveRecord::Base
   before_validation :ensure_user_role
 
   def projects
-    (self.owned_projects + self.accessible_projects).uniq
+    (self.created_projects + self.accessible_projects).uniq
   end
 
   def inaccessible_projects
@@ -84,28 +119,33 @@ class User < ActiveRecord::Base
   end
 
   # helper methods for permission checks
+
+  # @param [Project] project
   def can_read?(project)
-    !Permission.find_by_user_id_and_project_id_and_level(self, project, 'reader').blank? || project.owner == self
+    !Permission.find_by_user_id_and_project_id_and_level(self, project, 'reader').blank? || project.creator == self
   end
 
+  # @param [Project] project
   def can_write?(project)
-    !Permission.find_by_user_id_and_project_id_and_level(self, project, 'writer').blank? || project.owner == self
+    !Permission.find_by_user_id_and_project_id_and_level(self, project, 'writer').blank? || project.creator == self
   end
 
+  # @param [Array<Project>] projects
   def can_write_any?(projects)
     projects.each do |project|
       if self.can_write?(project)
         return true
       end
     end
-    return false
+    false
   end
 
+  # @param [Project] project
   def highest_permission(project)
-    # low to high: none, read, write, owner, admin
+    # low to high: none, read, write, creator/owner, admin
     if self.has_role? :admin
       AccessLevel::ADMIN
-    elsif project.owner == self
+    elsif project.creator == self
       AccessLevel::OWNER
     elsif self.can_write? project
       AccessLevel::WRITE
@@ -116,6 +156,7 @@ class User < ActiveRecord::Base
     end
   end
 
+  # @param [Array<Project>] projects
   def highest_permission_any(projects)
     highest = 0
     projects.each do |project|
@@ -127,27 +168,32 @@ class User < ActiveRecord::Base
     highest
   end
 
+  # @param [Project] project
   def has_permission?(project)
-    !Permission.find_by_user_id_and_project_id(self, project).blank? || project.owner == self # project.creator == self
+    !Permission.find_by_user_id_and_project_id(self, project).blank? || project.creator == self
   end
 
+  # @param [Array<Project>] projects
   def has_permission_any?(projects)
     projects.each do |project|
       if self.has_permission?(project)
         return true
       end
     end
-    return false
+    false
   end
 
+  # @param [Project] project
   def get_read_permission(project)
     Permission.find_by_user_id_and_project_id_and_level(self, project, 'reader')
   end
 
+  # @param [Project] project
   def get_write_permission(project)
     Permission.find_by_user_id_and_project_id_and_level(self, project, 'writer')
   end
 
+  # @param [Project] project
   def get_permission(project)
     Permission.find_by_user_id_and_project_id(self, project)
   end

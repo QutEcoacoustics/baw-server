@@ -21,6 +21,8 @@
     %h2 Totals
     %p= "#{@status_info[:annotations_total]} annotations"
     %p= "#{@status_info[:audio_recording_total]} audio recordings"
+    %p= "#{@status_info[:tags_total]} unique tags"
+    %p= "#{@status_info[:tags_applied_total]} tags used in annotations"
     %p= "#{distance_of_time(@status_info[:audio_recording_total_duration])} overall audio recording duration"
     %p= "#{number_to_human_size(@status_info[:audio_recording_total_size])} overall audio recording file size"
 
@@ -56,4 +58,12 @@
               %td= link_to audio_event.updater.user_name, user_account_path(audio_event.updater)
 
 
-
+- content_for :left_sidebar do
+  = render layout: '/shared/left_sidebar', locals: {title: 'General'} do
+    %li= link_to 'Contact Us', contact_us_path,  title: 'Contact Us', data: {toggle: 'tooltip',  placement: 'right'}
+    %li= link_to 'Website Status', website_status_path,  title: 'Website activity and totals', data: {toggle: 'tooltip',  placement: 'right'}
+    %li= link_to 'Bug Report', bug_report_path,  title: 'Report a problem', data: {toggle: 'tooltip',  placement: 'right'}
+    %li= link_to 'Data Request', data_request_path,  title: 'Request access to particular data', data: {toggle: 'tooltip',  placement: 'right'}
+    %li= link_to 'Disclaimers', disclaimers_path,  title: 'Disclaimers', data: {toggle: 'tooltip',  placement: 'right'}
+    %li= link_to 'Credits', credits_path,  title: 'Third party software we use', data: {toggle: 'tooltip',  placement: 'right'}
+    %li= link_to 'Ethics Statement', ethics_statement_path,  title: 'View our ethics statement', data: {toggle: 'tooltip',  placement: 'right'}

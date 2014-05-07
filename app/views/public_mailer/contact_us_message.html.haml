@@ -1,0 +1,37 @@
+%p
+  Hello,
+
+%p
+  You are receiving this email because
+  = @feedback_info[:sender_name]
+  sent a message from the
+  = Settings.organisation_names.site_long_name
+  Contact Us page.
+
+- if @feedback_info[:sender_email]
+  %p
+    They included their email address if you would like to reply:
+    = @feedback_info[:sender_email]
+
+%p
+  Their message is:
+  %p= @feedback_info[:content]
+
+Additional information:
+%p
+  Date stamp:
+  = @feedback_info[:datestamp]
+%p
+  User Agent:
+  = @feedback_info[:client_browser]
+%p
+  IP Address:
+  = @feedback_info[:client_ip]
+
+- if @feedback_info[:logged_in_user_name]
+  %p
+    Website Member:
+    = @feedback_info[:logged_in_user_name]
+
+Regards,
+%br= Settings.organisation_names.organisation_name

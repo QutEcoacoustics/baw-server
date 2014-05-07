@@ -35,9 +35,25 @@
           = yield :right_sidebar
     
     %footer
-      %p
-        &copy; QUT 2013
-        %small= "ver #{Settings.server_version}"
+      %ul.nav.nav-pills
+        %li.disabled
+          %a
+            &copy; QUT 2014
+        %li.disabled
+          %a
+            = "#{Rails.env} ver #{Settings.server_version}"
+        %li
+          %a{href:'/website_status'}
+            Website Status
+        %li
+          %a{href:'/contact_us'}
+            Contact Us
+        %li
+          %a{href:'/data_request'}
+            Data Request
+        %li
+          %a{href:'/disclaimers'}
+            Disclaimers
     /
       Javascripts
       \==================================================

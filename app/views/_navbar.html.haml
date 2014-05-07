@@ -3,7 +3,6 @@
   = menu_group do
     = menu_item 'Projects', projects_path if can? :index, Project
     = menu_item 'Annotation Library', '/library' if can? :index, Project
-    = menu_item 'Website Status', '/website_status'
     = menu_item 'Scripts', scripts_path  if can? :manage, Script
     = menu_item 'User Accounts', user_accounts_path if can? :manage, User
   = menu_group pull: :right do

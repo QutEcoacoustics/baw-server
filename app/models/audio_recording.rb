@@ -20,10 +20,10 @@ class AudioRecording < ActiveRecord::Base
   has_many :bookmarks, inverse_of: :audio_recording
   has_many :tags, through: :audio_events
 
-  belongs_to :owner, class_name: 'User', foreign_key: :creator_id
-  belongs_to :creator, class_name: 'User', foreign_key: :creator_id
-  belongs_to :updater, class_name: 'User', foreign_key: :updater_id
-  belongs_to :uploader, class_name: 'User', foreign_key: :uploader_id
+  belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_audio_recordings
+  belongs_to :updater, class_name: 'User', foreign_key: :updater_id, inverse_of: :updated_audio_recordings
+  belongs_to :deleter, class_name: 'User', foreign_key: :deleter_id, inverse_of: :deleted_audio_recordings
+  belongs_to :uploader, class_name: 'User', foreign_key: :uploader_id, inverse_of: :uploaded_audio_recordings
 
   accepts_nested_attributes_for :site
 
@@ -231,14 +231,23 @@ class AudioRecording < ActiveRecord::Base
       count = query.count
       if count > 0
 
-        recorded_date = self.recorded_date
-        end_date = self.recorded_date.advance(seconds: self.duration_seconds)
+        new_recorded_date = self.recorded_date
+        new_end_date = self.recorded_date.advance(seconds: self.duration_seconds)
 
         overlapping = query.map { |a|
 
+          existing_recorded_data = a.recorded_date
           existing_audio_end = a.recorded_date.advance(seconds: a.duration_seconds)
-          overlap_a = end_date - a.recorded_date
-          overlap_b = existing_audio_end - recorded_date
+
+          if new_recorded_date < existing_recorded_data
+            # overlap is at end of new, start of existing
+            overlap_amount = new_end_date - existing_recorded_data
+            overlap_location = 'start of existing, end of new'
+          else
+            # overlap is at start of new, end of existing
+            overlap_amount = existing_audio_end - new_recorded_date
+            overlap_location = 'start of new, end of existing'
+          end
 
           {
               uuid: a.uuid,
@@ -246,10 +255,8 @@ class AudioRecording < ActiveRecord::Base
               recorded_date: a.recorded_date,
               duration: a.duration_seconds,
               end_date: existing_audio_end,
-              overlap_amounts: [
-                  overlap_a,
-                  overlap_b
-              ]
+              overlap_amount: overlap_amount,
+              overlap_location: overlap_location
           }
         }
 
@@ -258,7 +265,10 @@ class AudioRecording < ActiveRecord::Base
             overlapping_audio_recordings: overlapping
         }
 
+        # define overlapping so it can be accessed in the controller
         @overlapping = overlapping
+
+        # add errors entry to this model instance to record overlap problems
         errors.add(:recorded_date, message)
         self
       end

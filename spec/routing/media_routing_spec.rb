@@ -15,3 +15,4 @@ describe MediaController do
 
   end
 end
+

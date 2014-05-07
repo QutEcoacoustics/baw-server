@@ -22,4 +22,18 @@ module ApplicationHelper
   def gmaps_default_options
     { zoom: 7, auto_zoom: false}
   end
+
+  def custom_form_for(object, *args, &block)
+    options = args.extract_options!
+    simple_form_for(object, *(args << options.merge(builder: ApplicationHelper::CustomFormBuilder)), &block)
+  end
+
+  # https://github.com/plataformatec/simple_form#custom-form-builder
+  class CustomFormBuilder < SimpleForm::FormBuilder
+    def input(attribute_name, options = {}, &block)
+      options[:input_html] = {} if options[:input_html].blank?
+      options[:input_html].merge! class: 'custom'
+      super
+    end
+  end
 end

@@ -2,7 +2,7 @@
 
 %p
   Project is owned by
-  = link_to @project.owner.user_name, user_account_path(@project.owner)
+  = link_to @project.creator.user_name, user_account_path(@project.creator)
 
 = simple_form_for :permission, url: update_permissions_project_path(@project) do |p|
   %table.table.table-striped
@@ -14,7 +14,7 @@
         %th Read & Write
     %tbody
     - User.users.order('lower(user_name) ASC').each do |user|
-      - unless @project.owner == user
+      - unless @project.creator == user
         %tr{user_id: user.id}
           %td= link_to user.user_name, user_account_path(user)
           %td

@@ -6,7 +6,7 @@
 .span12
   %h3 Bookmarks
 
-  - if @user.bookmarks.empty?
+  - if @user.created_bookmarks.empty?
     = 'No bookmarks created.'
   - else
     %table.table.table-striped(data-provides='rowlink')
@@ -15,7 +15,7 @@
         %th Name
         %th Description
 
-      - @user.bookmarks.each do |bookmark|
+      - @user.created_bookmarks.each do |bookmark|
         %tr
           %td= link_to bookmark.name, bookmark_path(bookmark)
           %td= bookmark.description

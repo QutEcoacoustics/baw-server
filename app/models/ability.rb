@@ -54,7 +54,7 @@ class Ability
       can [:manage], Tag
       can [:manage], Bookmark, creator_id: user.id
       can [:read], Bookmark
-      can [:library], AudioEvent
+      can [:library, :library_paged], AudioEvent
       #can [:audio, :spectrogram], Media if user.has_permission_any?(media.audio_recording.site.projects)
       can [:manage], AudioEventComment do |audio_event_comment|
         user.can_write_any?(audio_event_comment.audio_event.audio_recording.site.projects)
