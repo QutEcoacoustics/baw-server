@@ -229,6 +229,7 @@ resource 'AudioEvents' do
     parameter :page, 'int (optional)'
     parameter :items, 'int (optional)'
     parameter :userId, 'int (optional)'
+    parameter :audioRecordingId, 'int (optional)'
 
     let(:authentication_token) { reader_token }
 
@@ -254,6 +255,7 @@ resource 'AudioEvents' do
     parameter :page, 'int (optional)'
     parameter :items, 'int (optional)'
     parameter :userId, 'int (optional)'
+    parameter :audioRecordingId, 'int (optional)'
 
     let(:authentication_token) { reader_token }
 
@@ -302,6 +304,7 @@ resource 'AudioEvents' do
     parameter :page, 'int (optional)'
     parameter :items, 'int (optional)'
     parameter :userId, 'int (optional)'
+    parameter :audioRecordingId, 'int (optional)'
 
     let(:authentication_token) { reader_token }
 
@@ -358,6 +361,7 @@ resource 'AudioEvents' do
     parameter :page, 'int (optional)'
     parameter :items, 'int (optional)'
     parameter :userId, 'int (optional)'
+    parameter :audioRecordingId, 'int (optional)'
 
     let(:authentication_token) { reader_token }
 
@@ -417,6 +421,7 @@ resource 'AudioEvents' do
     parameter :page, 'int (optional)'
     parameter :items, 'int (optional)'
     parameter :userId, 'int (optional)'
+    parameter :audioRecordingId, 'int (optional)'
 
     let(:authentication_token) { reader_token }
 
@@ -476,6 +481,7 @@ resource 'AudioEvents' do
     parameter :page, 'int (optional)'
     parameter :items, 'int (optional)'
     parameter :userId, 'int (optional)'
+    parameter :audioRecordingId, 'int (optional)'
 
     let(:authentication_token) { reader_token }
 
@@ -526,6 +532,7 @@ resource 'AudioEvents' do
     parameter :page, 'int (optional)'
     parameter :items, 'int (optional)'
     parameter :userId, 'int (optional)'
+    parameter :audioRecordingId, 'int (optional)'
 
     let(:authentication_token) { reader_token }
 
@@ -575,6 +582,7 @@ resource 'AudioEvents' do
     parameter :page, 'int (optional)'
     parameter :items, 'int (optional)'
     parameter :userId, 'int (optional)'
+    parameter :audioRecordingId, 'int (optional)'
 
     let(:authentication_token) { reader_token }
 
@@ -621,7 +629,7 @@ resource 'AudioEvents' do
         })
   end
 
-  get '/audio_events/library?reference=true&tagsPartial=ewi,ala&freqMin=450.3&freqMax=500.2&annotationDuration=0.54&userId=9998&page=1&items=10' do
+  get '/audio_events/library?audioRecordingId=9987654' do
 
     parameter :reference, '[true, false] (optional)'
     parameter :tagsPartial, 'comma separated text (optional)'
@@ -631,6 +639,65 @@ resource 'AudioEvents' do
     parameter :page, 'int (optional)'
     parameter :items, 'int (optional)'
     parameter :userId, 'int (optional)'
+    parameter :audioRecordingId, 'int (optional)'
+
+    let(:authentication_token) { reader_token }
+
+    before do
+
+      user_creator = FactoryGirl.create(:user, id: 99999)
+
+      existing_audio_recording = @write_permission.project.sites[0].audio_recordings[0]
+
+      audio_recording = FactoryGirl.create(:audio_recording,
+                                           id: 9987654,
+                                           site: @write_permission.project.sites[0],
+                                           recorded_date: Time.zone.parse('2001-07-21 00:00:00'))
+
+      ae = FactoryGirl.create(:audio_event,
+                              id: 9991,
+                              audio_recording: audio_recording,
+                              start_time_seconds: 1,
+                              end_time_seconds: 1.54,
+                              low_frequency_hertz: 450.3,
+                              high_frequency_hertz: 500.2,
+                              is_reference: true,
+                              creator: user_creator)
+
+      ae2 = FactoryGirl.create(:audio_event,
+                               id: 9992,
+                               audio_recording: existing_audio_recording,
+                               start_time_seconds: 1,
+                               end_time_seconds: 2,
+                               low_frequency_hertz: 450.3,
+                               high_frequency_hertz: 500.2,
+                               is_reference: true,
+                               creator: user_creator)
+    end
+
+    # deault sort order is audio_events.created_at DESC
+    let(:ordered_audio_recordings) { [9991] }
+
+    library_request(
+        {
+            description: 'LIBRARY (as reader with parameters, two additional, filter by audioRecordingId)',
+            expected_status: 200,
+            expected_json_path: '0/start_time_seconds',
+            document: true
+        })
+  end
+
+  get '/audio_events/library?reference=true&tagsPartial=ewi,ala&audioRecordingId=99876&freqMin=450.3&freqMax=500.2&annotationDuration=0.54&userId=9998&page=1&items=10' do
+
+    parameter :reference, '[true, false] (optional)'
+    parameter :tagsPartial, 'comma separated text (optional)'
+    parameter :freqMin, 'double (optional)'
+    parameter :freqMax, 'double (optional)'
+    parameter :annotationDuration, 'double (optional)'
+    parameter :page, 'int (optional)'
+    parameter :items, 'int (optional)'
+    parameter :userId, 'int (optional)'
+    parameter :audioRecordingId, 'int (optional)'
 
     let(:authentication_token) { reader_token }
 
@@ -640,9 +707,14 @@ resource 'AudioEvents' do
       lewin = FactoryGirl.create(:tag, text: 'lewin', creator: user_creator)
       koala = FactoryGirl.create(:tag, text: 'koala', creator: user_creator)
 
+      audio_recording = FactoryGirl.create(:audio_recording,
+                                           id: 99876,
+                                           site: @write_permission.project.sites[0],
+                                           recorded_date: Time.zone.parse('2001-08-21 00:00:00'))
+
       ae = FactoryGirl.create(:audio_event,
                               id: 9991,
-                              audio_recording: @write_permission.project.sites[0].audio_recordings[0],
+                              audio_recording: audio_recording,
                               start_time_seconds: 1,
                               end_time_seconds: 1.54,
                               low_frequency_hertz: 450.3,
@@ -651,14 +723,14 @@ resource 'AudioEvents' do
                               creator: user_creator)
 
       ae2 = FactoryGirl.create(:audio_event,
-                              id: 9992,
-                              audio_recording: @write_permission.project.sites[0].audio_recordings[0],
-                              start_time_seconds: 1,
-                              end_time_seconds: 1.54,
-                              low_frequency_hertz: 450.3,
-                              high_frequency_hertz: 505,
-                              is_reference: true,
-                              creator: user_creator)
+                               id: 9992,
+                               audio_recording: audio_recording,
+                               start_time_seconds: 1,
+                               end_time_seconds: 1.54,
+                               low_frequency_hertz: 450.3,
+                               high_frequency_hertz: 505,
+                               is_reference: true,
+                               creator: user_creator)
 
       FactoryGirl.create(:tagging, creator: user_creator, tag: lewin, audio_event: ae)
       FactoryGirl.create(:tagging, creator: user_creator, tag: koala, audio_event: ae2)
