@@ -3,7 +3,9 @@ class PublicController < ApplicationController
   skip_authorization_check only: [
       :index, :status, :website_status,
       :new_contact_us, :create_contact_us,
-      :new_bug_report, :create_bug_report
+      :new_bug_report, :create_bug_report,
+      :new_data_request, :create_data_request,
+      :credits, :ethics_statement, :disclaimers
   ]
 
   def index
@@ -95,6 +97,21 @@ class PublicController < ApplicationController
     end
   end
 
+  # GET /credits
+  def credits
+
+  end
+
+  # GET /disclaimers
+  def disclaimers
+
+  end
+
+  # GET /ethics_statement
+  def ethics_statement
+
+  end
+
   # GET /contact_us
   def new_contact_us
     @contact_us = ContactUs.new
@@ -108,7 +125,10 @@ class PublicController < ApplicationController
     @contact_us = ContactUs.new(params[:contact_us])
 
     model_valid = @contact_us.valid?
-    recaptcha_valid = verify_recaptcha(model: @contact_us, message: "Captcha response was not correct. Please try again.", attribute: :recaptcha)
+    recaptcha_valid = verify_recaptcha(
+        model: @contact_us,
+        message: 'Captcha response was not correct. Please try again.',
+        attribute: :recaptcha)
 
     respond_to do |format|
       if recaptcha_valid && model_valid
@@ -126,14 +146,71 @@ class PublicController < ApplicationController
     end
   end
 
-  # # GET /bug_report
-  # def new_bug_report
-  #
-  # end
-  #
-  # # POST /bug_report
-  # def create_bug_report
-  #
-  # end
+  # GET /bug_report
+  def new_bug_report
+    @bug_report = BugReport.new
+    respond_to do |format|
+      format.html {}
+    end
+  end
+
+  # POST /bug_report
+  def create_bug_report
+    @bug_report = BugReport.new(params[:bug_report])
+
+    model_valid = @bug_report.valid?
+    recaptcha_valid = verify_recaptcha(
+        model: @bug_report,
+        message: 'Captcha response was not correct. Please try again.',
+        attribute: :recaptcha)
+
+    respond_to do |format|
+      if recaptcha_valid && model_valid
+        PublicMailer.bug_report_message(current_user, @bug_report, request)
+        format.html {
+          redirect_to bug_report_path,
+                      notice: 'Thank you, your report was successfully submitted.
+ If you entered an email address, we will let you know if the problems you describe are resolved.'
+        }
+      else
+        format.html {
+          render action: 'new_bug_report'
+        }
+      end
+    end
+  end
+
+  # GET /data_request
+  def new_data_request
+    @data_request = DataRequest.new
+    respond_to do |format|
+      format.html {}
+    end
+  end
+
+  # POST /data_request
+  def create_data_request
+    @data_request = DataRequest.new(params[:data_request])
+
+    model_valid = @data_request.valid?
+    recaptcha_valid = verify_recaptcha(
+        model: @data_request,
+        message: 'Captcha response was not correct. Please try again.',
+        attribute: :recaptcha)
+
+    respond_to do |format|
+      if recaptcha_valid && model_valid
+        PublicMailer.data_request_message(current_user, @data_request, request)
+        format.html {
+          redirect_to data_request_path,
+                      notice: 'Your request was successfully submitted. We will be in contact shortly.'
+        }
+      else
+        format.html {
+          render action: 'new_data_request'
+        }
+      end
+    end
+  end
 
 end
