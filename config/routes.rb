@@ -25,6 +25,10 @@ AWB::Application.routes.draw do
       get 'new_access_request'
       post 'submit_access_request'
     end
+<<<<<<< HEAD
+=======
+
+>>>>>>> 470c1eef048f2b3cbbab1d6e760c845b57310f6b
     resources :permissions, except: [:show]
     resources :permissions, only: [:show], defaults: {format: 'json'}
     resources :sites, except: [:index] do
@@ -78,7 +82,6 @@ AWB::Application.routes.draw do
   end
   resources :tags, only: [:index, :show, :create, :new], defaults: {format: 'json'}
   resources :audio_events, only: [:new], defaults: {format: 'json'} do
-
     collection do
       get 'library'
       get 'library/paged' => 'audio_events#library_paged', as: :library_paged
@@ -120,11 +123,18 @@ AWB::Application.routes.draw do
   get '/status/' => 'public#status', defaults: {format: 'json'}
   get '/website_status/' => 'public#website_status'
 
-  # feedback forms
+  # feedback and contact forms
   get '/contact_us' => 'public#new_contact_us'
   post '/contact_us' => 'public#create_contact_us'
-  # get '/bug_report' => 'public#new_bug_report'
-  # post '/bug_report' => 'public#create_bug_report'
+  get '/bug_report' => 'public#new_bug_report'
+  post '/bug_report' => 'public#create_bug_report'
+  get '/data_request' => 'public#new_data_request'
+  post '/data_request' => 'public#create_data_request'
+
+  # static info pages
+  get '/disclaimers' => 'public#disclaimers'
+  get '/ethics_statement' => 'public#ethics_statement'
+  get '/credits' => 'public#credits'
 
   # resque front end
   authenticate :user, lambda { |u| !u.blank? && u.has_role?(:admin) } do

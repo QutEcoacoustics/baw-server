@@ -233,14 +233,23 @@ class AudioRecording < ActiveRecord::Base
       count = query.count
       if count > 0
 
-        recorded_date = self.recorded_date
-        end_date = self.recorded_date.advance(seconds: self.duration_seconds)
+        new_recorded_date = self.recorded_date
+        new_end_date = self.recorded_date.advance(seconds: self.duration_seconds)
 
         overlapping = query.map { |a|
 
+          existing_recorded_data = a.recorded_date
           existing_audio_end = a.recorded_date.advance(seconds: a.duration_seconds)
-          overlap_a = end_date - a.recorded_date
-          overlap_b = existing_audio_end - recorded_date
+
+          if new_recorded_date < existing_recorded_data
+            # overlap is at end of new, start of existing
+            overlap_amount = new_end_date - existing_recorded_data
+            overlap_location = 'start of existing, end of new'
+          else
+            # overlap is at start of new, end of existing
+            overlap_amount = existing_audio_end - new_recorded_date
+            overlap_location = 'start of new, end of existing'
+          end
 
           {
               uuid: a.uuid,
@@ -248,10 +257,8 @@ class AudioRecording < ActiveRecord::Base
               recorded_date: a.recorded_date,
               duration: a.duration_seconds,
               end_date: existing_audio_end,
-              overlap_amounts: [
-                  overlap_a,
-                  overlap_b
-              ]
+              overlap_amount: overlap_amount,
+              overlap_location: overlap_location
           }
         }
 
@@ -260,7 +267,10 @@ class AudioRecording < ActiveRecord::Base
             overlapping_audio_recordings: overlapping
         }
 
+        # define overlapping so it can be accessed in the controller
         @overlapping = overlapping
+
+        # add errors entry to this model instance to record overlap problems
         errors.add(:recorded_date, message)
         self
       end

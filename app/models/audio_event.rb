@@ -7,6 +7,7 @@ class AudioEvent < ActiveRecord::Base
   belongs_to :audio_recording, inverse_of: :audio_events
   has_many :taggings # no inverse of specified, as it interferes with through: association
   has_many :tags, through: :taggings
+
   belongs_to :creator, class_name: 'User', foreign_key: 'creator_id', inverse_of: :created_audio_events
   belongs_to :updater, class_name: 'User', foreign_key: 'updater_id', inverse_of: :updated_audio_events
   belongs_to :deleter, class_name: 'User', foreign_key: 'deleter_id', inverse_of: :deleted_audio_events
@@ -66,6 +67,7 @@ class AudioEvent < ActiveRecord::Base
     # page: int (optional)
     # items: int (optional)
     # userId: int (optional)
+    # audioRecordingId: int (optional)
 
     #.joins(:tags, :owner, audio_recording: {site: {projects: :permissions}})
 
@@ -78,6 +80,7 @@ class AudioEvent < ActiveRecord::Base
     query = AudioEvent.filter_tags(query, params)
     query = AudioEvent.filter_distance(query, params)
     query = AudioEvent.filter_user(query, params)
+    query = AudioEvent.filter_audio_recording(query, params)
     query = AudioEvent.filter_paging(query, params)
 
     query = query.select('audio_events.*, audio_recording.recorded_date, sites.name, sites.id, user.user_name, user.id')
@@ -188,6 +191,17 @@ class AudioEvent < ActiveRecord::Base
       updater_id_check = 'audio_events.updater_id = ?'
       user_id = params[:userId].to_i
       query.where("(#{creator_id_check} OR #{updater_id_check})", user_id, user_id)
+    else
+      query
+    end
+  end
+
+  # @param [ActiveRecord::Relation] query
+  # @param [Hash] params
+  def self.filter_audio_recording(query, params)
+    if params.include?(:audioRecordingId)
+      audio_recording_id = params[:audioRecordingId].to_i
+      query.where(audio_recording_id: audio_recording_id)
     else
       query
     end

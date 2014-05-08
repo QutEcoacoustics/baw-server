@@ -2,71 +2,310 @@ require 'spec_helper'
 require 'rspec_api_documentation/dsl'
 require 'helpers/acceptance_spec_helper'
 
-def test_overlap(overlap, first = 1)
-  original_file_name = 'testing.mp3'
-  recorded_date = Time.zone.parse('2014-01-01 12:00:00Z')
-  data_length_bytes = 9999
-  media_type = 'audio/mp3'
-  duration_seconds = 45.0
-  new_recorded_date = recorded_date.advance(seconds: (duration_seconds - overlap))
+def test_overlap
 
-  # second recording to be created
-  let(:ar_attributes) { FactoryGirl.attributes_for(:audio_recording,
-                                                   original_file_name: original_file_name,
-                                                   file_hash: 'def',
-                                                   recorded_date: first == 2 ? recorded_date : new_recorded_date,
-                                                   data_length_bytes: data_length_bytes,
-                                                   media_type: media_type,
-                                                   duration_seconds: duration_seconds,
-                                                   site_id: site_id,
-                                                   status: :new,
-                                                   uploader_id: @write_permission.user.id) }
+  settings = [
+      {# no overlap
+       inputs: {
+           post_item: {
+               recorded_date: Time.zone.parse('2000-01-01 12:00:00Z'),
+               duration_seconds: 60.0
+           },
+           existing_items: [
+               {
+                   recorded_date: Time.zone.parse('2000-01-01 12:01:00Z'),
+                   duration_seconds: 60.0
+               }
+           ]
+       },
+       outputs: {
+           status_code: 201,
+           post_item: {
+               recorded_date: Time.zone.parse('2000-01-01 12:00:00Z'),
+               duration_seconds: 60.0
+           },
+           existing_items: [
+               {
+                   recorded_date: Time.zone.parse('2000-01-01 12:01:00Z'),
+                   duration_seconds: 60.0
+               }
+           ]
+       }
+      },
+      {# new overlaps at end of existing, adjust existing
+       inputs: {
+           post_item: {
+               recorded_date: Time.zone.parse('2000-01-02 12:00:59Z'),
+               duration_seconds: 60.0
+           },
+           existing_items: [
+               {
+                   recorded_date: Time.zone.parse('2000-01-02 12:00:00Z'),
+                   duration_seconds: 60.0
+               }
+           ]
+       },
+       outputs: {
+           status_code: 201,
+           post_item: {
+               recorded_date: Time.zone.parse('2000-01-02 12:00:59Z'),
+               duration_seconds: 60.0
+           },
+           existing_items: [
+               {
+                   recorded_date: Time.zone.parse('2000-01-02 12:00:00Z'),
+                   duration_seconds: 59.0
+               }
+           ]
+       }
+      },
+      {# new overlaps at start of existing, adjust new
+       inputs: {
+           post_item: {
+               recorded_date: Time.zone.parse('2000-01-03 12:00:00Z'),
+               duration_seconds: 60.0
+           },
+           existing_items: [
+               {
+                   recorded_date: Time.zone.parse('2000-01-03 12:00:59Z'),
+                   duration_seconds: 60.0
+               }
+           ]
+       },
+       outputs: {
+           status_code: 201,
+           post_item: {
+               recorded_date: Time.zone.parse('2000-01-03 12:00:00Z'),
+               duration_seconds: 59.0
+           },
+           existing_items: [
+               {
+                   recorded_date: Time.zone.parse('2000-01-03 12:00:59Z'),
+                   duration_seconds: 60.0
+               }
+           ]
+       }
+      },
+      {# new overlaps at start of existing, should not be adjusted as overlap is too much
+       inputs: {
+           post_item: {
+               recorded_date: Time.zone.parse('2000-01-04 12:00:00Z'),
+               duration_seconds: 60.0
+           },
+           existing_items: [
+               {
+                   recorded_date: Time.zone.parse('2000-01-04 12:00:50Z'),
+                   duration_seconds: 60.0
+               }
+           ]
+       },
+       outputs: {
+           status_code: 422,
+           existing_items: [
+               {
+                   recorded_date: Time.zone.parse('2000-01-04 12:00:50Z'),
+                   duration_seconds: 60.0
+               }
+           ]
+       }
+      },
+      {# 3 recordings: overlaps at end of new recording, modify new recording
+       inputs: {
+           post_item: {
+               recorded_date: Time.zone.parse('2000-01-05 12:01:02Z'),
+               duration_seconds: 60.0
+           },
+           existing_items: [
+               {
+                   recorded_date: Time.zone.parse('2000-01-05 12:00:00Z'),
+                   duration_seconds: 60.0
+               },
+               {
+                   recorded_date: Time.zone.parse('2000-01-05 12:02:00Z'),
+                   duration_seconds: 60.0
+               }
+           ]
+       },
+       outputs: {
+           status_code: 201,
+           post_item: {
+               recorded_date: Time.zone.parse('2000-01-05 12:01:02Z'),
+               duration_seconds: 58.0
+           },
+           existing_items: [
+               {
+                   recorded_date: Time.zone.parse('2000-01-05 12:00:00Z'),
+                   duration_seconds: 60.0
+               },
+               {
+                   recorded_date: Time.zone.parse('2000-01-05 12:02:00Z'),
+                   duration_seconds: 60.0
+               }
+           ]
+       }
+      },
+      {# 3 recordings: overlaps at both ends of new recording, modify new recording, and one of existing
+       inputs: {
+           post_item: {
+               recorded_date: Time.zone.parse('2000-01-06 12:00:59Z'),
+               duration_seconds: 62.0
+           },
+           existing_items: [
+               {
+                   recorded_date: Time.zone.parse('2000-01-06 12:00:00Z'),
+                   duration_seconds: 60.0
+               },
+               {
+                   recorded_date: Time.zone.parse('2000-01-06 12:02:00Z'),
+                   duration_seconds: 60.0
+               }
+           ]
+       },
+       outputs: {
+           status_code: 201,
+           post_item: {
+               recorded_date: Time.zone.parse('2000-01-06 12:00:59Z'),
+               duration_seconds: 61.0
+           },
+           existing_items: [
+               {
+                   recorded_date: Time.zone.parse('2000-01-06 12:00:00Z'),
+                   duration_seconds: 59.0
+               },
+               {
+                   recorded_date: Time.zone.parse('2000-01-06 12:02:00Z'),
+                   duration_seconds: 60.0
+               }
+           ]
+       }
+      },
+      {# 3 recordings: too much overlap at one end
+       inputs: {
+           post_item: {
+               recorded_date: Time.zone.parse('2000-01-07 12:00:50Z'),
+               duration_seconds: 70.0
+           },
+           existing_items: [
+               {
+                   recorded_date: Time.zone.parse('2000-01-07 12:00:00Z'),
+                   duration_seconds: 60.0
+               },
+               {
+                   recorded_date: Time.zone.parse('2000-01-07 12:02:00Z'),
+                   duration_seconds: 60.0
+               }
+           ]
+       },
+       outputs: {
+           status_code: 422,
+           existing_items: [
+               {
+                   recorded_date: Time.zone.parse('2000-01-07 12:00:00Z'),
+                   duration_seconds: 60.0
+               },
+               {
+                   recorded_date: Time.zone.parse('2000-01-07 12:02:00Z'),
+                   duration_seconds: 60.0
+               }
+           ]
+       }
+      }
+  ]
 
-  let(:raw_post) { {audio_recording: ar_attributes}.to_json }
+  settings.each_with_index do |item, index|
 
-  let(:authentication_token) { harvester_token }
+    post '/projects/:project_id/sites/:site_id/audio_recordings' do
+      parameter :project_id, 'Requested project ID (in path/route)', required: true
+      parameter :site_id, 'Requested site ID (in path/route)', required: true
 
-  # Execute request with ids defined in above let(:id) statements
-  example 'CREATE (as harvester, resuming upload) - 201', document: true do
+      parameter :bit_rate_bps, '', scope: :audio_recording, :required => true
+      parameter :channels, '', scope: :audio_recording
+      parameter :data_length_bytes, '', scope: :audio_recording
+      parameter :duration_seconds, '', scope: :audio_recording, :required => true
+      parameter :file_hash, '', scope: :audio_recording, :required => true
+      parameter :media_type, '', scope: :audio_recording
+      parameter :notes, '', scope: :audio_recording
+      parameter :recorded_date, '', scope: :audio_recording
+      parameter :sample_rate_hertz, '', scope: :audio_recording, :required => true
+      parameter :original_file_name, '', scope: :audio_recording, :required => true
+      parameter :uploader_id, 'The id of the user who uploaded the audio recording. User must have write access to the project.', scope: :audio_recording, :required => true
 
-    # first recording to be created
-    existing = FactoryGirl.create(:audio_recording,
-                                  original_file_name: original_file_name,
-                                  file_hash: 'abc',
-                                  recorded_date: first == 1 ? recorded_date : new_recorded_date,
-                                  data_length_bytes: data_length_bytes,
-                                  media_type: media_type,
-                                  duration_seconds: duration_seconds,
-                                  site_id: site_id,
-                                  status: :ready)
+      # use index to know which one in settings array failed
+      inputs = item[:inputs]
+      outputs = item[:outputs]
 
-    do_request
+      input_post_item = inputs[:post_item]
 
-    existing_reloaded = AudioRecording.where(id: existing.id).first
+      # define item to be posted
+      let(:posted_item_attrs) { FactoryGirl.attributes_for(
+          :audio_recording,
+          recorded_date: input_post_item[:recorded_date],
+          duration_seconds: input_post_item[:duration_seconds],
+          site_id: site_id,
+          status: :ready,
+          creator_id: @write_permission.user.id,
+          uploader_id: @write_permission.user.id) }
 
-    if overlap > Settings.audio_recording_max_overlap_sec
-      expect(existing_reloaded.duration_seconds).to eq(duration_seconds)
-      expect(AudioRecording.where(file_hash: 'def').count).to eq(0)
-      status.should eq(422), "expected status 422 but was #{status}. Response body was #{response_body}"
-    else
-      status.should eq(201), "expected status 201 but was #{status}. Response body was #{response_body}"
-      response_body.should have_json_path('bit_rate_bps'), "could not find bit_rate_bps in #{response_body}"
+      let(:raw_post) { {audio_recording: posted_item_attrs}.to_json }
 
-      new_audio_recording_id = JSON.parse(response_body)['id']
-      new_recording = AudioRecording.where(id: new_audio_recording_id).first
+      let(:authentication_token) { harvester_token }
 
-      if first == 1
-        expect(existing_reloaded.recorded_date).to eq(recorded_date)
-        expect(new_recording.recorded_date).to eq(new_recorded_date)
-        expect(new_recording.duration_seconds).to eq(duration_seconds)
-        expect(existing_reloaded.duration_seconds).to eq(duration_seconds - overlap)
-        expect(existing_reloaded.notes).to include('duration_adjustment_for_overlap')
-      else
-        expect(existing_reloaded.recorded_date).to eq(new_recorded_date)
-        expect(new_recording.recorded_date).to eq(recorded_date)
-        expect(existing_reloaded.duration_seconds).to eq(duration_seconds)
-        expect(new_recording.duration_seconds).to eq(duration_seconds - overlap)
-        expect(new_recording.notes).to include('duration_adjustment_for_overlap')
+      status_code = outputs[:status_code]
+
+      example "CREATE (as harvester, overlapping upload) - #{status_code}", document: true do
+
+        # existing recordings are created here before do_request (so before the posted item)
+        inputs[:existing_items].each do |existing|
+          existing_item = FactoryGirl.create(
+              :audio_recording,
+              recorded_date: existing[:recorded_date],
+              duration_seconds: existing[:duration_seconds],
+              site_id: site_id,
+              status: :ready,
+              creator: @write_permission.user,
+              uploader: @write_permission.user)
+          # set id so it can be used to retrieve the record
+          existing[:id] = existing_item.id
+        end
+
+
+        do_request
+
+        # ensure current state of audio recordings in db matches output
+        if status_code == 201
+          status.should eq(201), "expected status 201 but was #{status}. Response body was #{response_body}"
+          response_body.should have_json_path('bit_rate_bps'), "could not find bit_rate_bps in #{response_body}"
+
+          new_audio_recording_id = JSON.parse(response_body)['id']
+          new_recording = AudioRecording.where(id: new_audio_recording_id).first
+
+          expected_post_item = outputs[:post_item]
+          expect(new_recording.recorded_date).to eq(expected_post_item[:recorded_date])
+          expect(new_recording.duration_seconds).to eq(expected_post_item[:duration_seconds])
+          expect(new_recording.notes).to include('duration_adjustment_for_overlap') if expected_post_item[:modification_made]
+
+        elsif status_code == 422
+          status.should eq(422), "expected status 422 but was #{status}. Response body was #{response_body}"
+          response_body.should have_json_path('recorded_date/0/problem'), "could not find 'problem' in #{response_body}"
+          response_body.should have_json_path('recorded_date/0/overlapping_audio_recordings/0/overlap_amount'), "could not find 'overlap_amount' in #{response_body}"
+
+          # ensure posted audio recording does not exist
+          expect(AudioRecording.where(file_hash: posted_item_attrs[:file_hash]).count)
+          .to eq(0), "all file_hashes #{AudioRecording.select(:file_hash).all}, input posted #{posted_item_attrs[:file_hash]}"
+        else
+          raise "unknown status code #{status_code}"
+        end
+
+        # check that existing audio recordings match expected
+        outputs[:existing_items].each_with_index do |expected, expected_index|
+          stored_id = inputs[:existing_items][expected_index][:id]
+          existing_recording = AudioRecording.where(id: stored_id).first
+
+          expect(existing_recording.recorded_date).to eq(expected[:recorded_date])
+          expect(existing_recording.duration_seconds).to eq(expected[:duration_seconds])
+          expect(existing_recording.notes).to include('duration_adjustment_for_overlap') if expected[:modification_made]
+        end
+
       end
     end
   end
@@ -299,124 +538,7 @@ resource 'AudioRecordings' do
       AudioRecording.where(id: new_audio_recording_id).count.should eq(1)
       AudioRecording.where(id: new_audio_recording_id).first.status.should eq('new')
     end
-
   end
-
-  post '/projects/:project_id/sites/:site_id/audio_recordings' do
-    parameter :project_id, 'Requested project ID (in path/route)', required: true
-    parameter :site_id, 'Requested site ID (in path/route)', required: true
-
-    parameter :bit_rate_bps, '', scope: :audio_recording, :required => true
-    parameter :channels, '', scope: :audio_recording
-    parameter :data_length_bytes, '', scope: :audio_recording
-    parameter :duration_seconds, '', scope: :audio_recording, :required => true
-    parameter :file_hash, '', scope: :audio_recording, :required => true
-    parameter :media_type, '', scope: :audio_recording
-    parameter :notes, '', scope: :audio_recording
-    parameter :recorded_date, '', scope: :audio_recording
-    parameter :sample_rate_hertz, '', scope: :audio_recording, :required => true
-    parameter :original_file_name, '', scope: :audio_recording, :required => true
-    parameter :uploader_id, 'The id of the user who uploaded the audio recording. User must have write access to the project.', scope: :audio_recording, :required => true
-
-    test_overlap(Settings.audio_recording_max_overlap_sec, 1)
-  end
-
-  post '/projects/:project_id/sites/:site_id/audio_recordings' do
-    parameter :project_id, 'Requested project ID (in path/route)', required: true
-    parameter :site_id, 'Requested site ID (in path/route)', required: true
-
-    parameter :bit_rate_bps, '', scope: :audio_recording, :required => true
-    parameter :channels, '', scope: :audio_recording
-    parameter :data_length_bytes, '', scope: :audio_recording
-    parameter :duration_seconds, '', scope: :audio_recording, :required => true
-    parameter :file_hash, '', scope: :audio_recording, :required => true
-    parameter :media_type, '', scope: :audio_recording
-    parameter :notes, '', scope: :audio_recording
-    parameter :recorded_date, '', scope: :audio_recording
-    parameter :sample_rate_hertz, '', scope: :audio_recording, :required => true
-    parameter :original_file_name, '', scope: :audio_recording, :required => true
-    parameter :uploader_id, 'The id of the user who uploaded the audio recording. User must have write access to the project.', scope: :audio_recording, :required => true
-
-    test_overlap(Settings.audio_recording_max_overlap_sec, 2)
-  end
-
-  post '/projects/:project_id/sites/:site_id/audio_recordings' do
-    parameter :project_id, 'Requested project ID (in path/route)', required: true
-    parameter :site_id, 'Requested site ID (in path/route)', required: true
-
-    parameter :bit_rate_bps, '', scope: :audio_recording, :required => true
-    parameter :channels, '', scope: :audio_recording
-    parameter :data_length_bytes, '', scope: :audio_recording
-    parameter :duration_seconds, '', scope: :audio_recording, :required => true
-    parameter :file_hash, '', scope: :audio_recording, :required => true
-    parameter :media_type, '', scope: :audio_recording
-    parameter :notes, '', scope: :audio_recording
-    parameter :recorded_date, '', scope: :audio_recording
-    parameter :sample_rate_hertz, '', scope: :audio_recording, :required => true
-    parameter :original_file_name, '', scope: :audio_recording, :required => true
-    parameter :uploader_id, 'The id of the user who uploaded the audio recording. User must have write access to the project.', scope: :audio_recording, :required => true
-
-    test_overlap(Settings.audio_recording_max_overlap_sec + 1, 1)
-  end
-
-  post '/projects/:project_id/sites/:site_id/audio_recordings' do
-    parameter :project_id, 'Requested project ID (in path/route)', required: true
-    parameter :site_id, 'Requested site ID (in path/route)', required: true
-
-    parameter :bit_rate_bps, '', scope: :audio_recording, :required => true
-    parameter :channels, '', scope: :audio_recording
-    parameter :data_length_bytes, '', scope: :audio_recording
-    parameter :duration_seconds, '', scope: :audio_recording, :required => true
-    parameter :file_hash, '', scope: :audio_recording, :required => true
-    parameter :media_type, '', scope: :audio_recording
-    parameter :notes, '', scope: :audio_recording
-    parameter :recorded_date, '', scope: :audio_recording
-    parameter :sample_rate_hertz, '', scope: :audio_recording, :required => true
-    parameter :original_file_name, '', scope: :audio_recording, :required => true
-    parameter :uploader_id, 'The id of the user who uploaded the audio recording. User must have write access to the project.', scope: :audio_recording, :required => true
-
-    test_overlap(Settings.audio_recording_max_overlap_sec + 1, 2)
-  end
-
-
-  post '/projects/:project_id/sites/:site_id/audio_recordings' do
-    parameter :project_id, 'Requested project ID (in path/route)', required: true
-    parameter :site_id, 'Requested site ID (in path/route)', required: true
-
-    parameter :bit_rate_bps, '', scope: :audio_recording, :required => true
-    parameter :channels, '', scope: :audio_recording
-    parameter :data_length_bytes, '', scope: :audio_recording
-    parameter :duration_seconds, '', scope: :audio_recording, :required => true
-    parameter :file_hash, '', scope: :audio_recording, :required => true
-    parameter :media_type, '', scope: :audio_recording
-    parameter :notes, '', scope: :audio_recording
-    parameter :recorded_date, '', scope: :audio_recording
-    parameter :sample_rate_hertz, '', scope: :audio_recording, :required => true
-    parameter :original_file_name, '', scope: :audio_recording, :required => true
-    parameter :uploader_id, 'The id of the user who uploaded the audio recording. User must have write access to the project.', scope: :audio_recording, :required => true
-
-    test_overlap(1, 1)
-  end
-
-  post '/projects/:project_id/sites/:site_id/audio_recordings' do
-    parameter :project_id, 'Requested project ID (in path/route)', required: true
-    parameter :site_id, 'Requested site ID (in path/route)', required: true
-
-    parameter :bit_rate_bps, '', scope: :audio_recording, :required => true
-    parameter :channels, '', scope: :audio_recording
-    parameter :data_length_bytes, '', scope: :audio_recording
-    parameter :duration_seconds, '', scope: :audio_recording, :required => true
-    parameter :file_hash, '', scope: :audio_recording, :required => true
-    parameter :media_type, '', scope: :audio_recording
-    parameter :notes, '', scope: :audio_recording
-    parameter :recorded_date, '', scope: :audio_recording
-    parameter :sample_rate_hertz, '', scope: :audio_recording, :required => true
-    parameter :original_file_name, '', scope: :audio_recording, :required => true
-    parameter :uploader_id, 'The id of the user who uploaded the audio recording. User must have write access to the project.', scope: :audio_recording, :required => true
-
-    test_overlap(1, 2)
-  end
-
 
   post '/projects/:project_id/sites/:site_id/audio_recordings' do
     parameter :project_id, 'Requested project ID (in path/route)', required: true
@@ -441,6 +563,12 @@ resource 'AudioRecordings' do
     standard_request('CREATE (as reader)', 403, nil, true)
 
   end
+
+  ################################
+  # CREATE - checking overlap
+  ################################
+
+  test_overlap
 
   ################################
   # CHECK_UPLOADER
