@@ -4,11 +4,12 @@ class AudioEventCommentsController < ApplicationController
   load_and_authorize_resource :audio_event, :audio_event_comment
 
   # actions are all api-only
-  # a user or audio_event can :include annotation_discussions in the response for a single item
+  # a user or audio_event can include annotation_discussions in the response for a single item
 
   def index
     # list of annotation_discussions (probably reverse chronological order and paged)
-    AudioEventComment.filtered(params)
+    @audio_event_comments = AudioEventComment.filtered(@audio_event, params)
+    render json: @audio_event_comments.to_json
   end
 
   def show
