@@ -7,7 +7,7 @@
     .span12.form-inputs
       = f.input :name,  label: 'Your Name'
       = f.input :email,  label: 'Contact Email'
-      = f.input :content, as: :text,  input_html: {rows: '8',style: 'width:100%'}
+      = f.input :content, as: :text,  input_html: {rows: '8',style: 'width:100%'}, label: 'Message'
       - if @contact_us.errors.include?(:recaptcha) && @contact_us.errors[:recaptcha].size > 0
         .control-group.string.required.contact_us_recaptcha.error
           %label.string.required.control-label{for: :contact_us_recaptcha}

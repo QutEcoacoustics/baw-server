@@ -9,7 +9,7 @@
       = f.input :email, label: 'Contact Email'
       = f.input :group, label: 'Organisation'
       = f.input :group_type, label: 'Organisation Type', include_blank: false
-      = f.input :content, as: :text, input_html: {rows: '8',style: 'width:100%'}
+      = f.input :content, label: 'Request details (include Projects/Sites, dates/times)', as: :text, input_html: {rows: '8',style: 'width:100%'}
       - if @data_request.errors.include?(:recaptcha) && @data_request.errors[:recaptcha].size > 0
         .control-group.string.required.data_request_recaptcha.error
           %label.string.required.control-label{for: :data_request_recaptcha}

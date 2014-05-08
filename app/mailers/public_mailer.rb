@@ -5,59 +5,35 @@ class PublicMailer < ActionMailer::Base
   # @param [ContactUs] model
   # @param [ActionDispatch::Request] rails_request
   def contact_us_message(logged_in_user, model, rails_request)
-
-    @feedback_info = {
-        logged_in_user_name: logged_in_user.blank? ? nil : logged_in_user.user_name,
-        content: model.content,
-        sender_email: model.email.blank? ? nil : model.email,
-        sender_name: model.name.blank? ? 'Someone' : model.name,
-        client_ip: rails_request.remote_ip,
-        client_browser: rails_request.user_agent,
-        datestamp: Time.zone.now.utc.iso8601
-    }
-
-    # email gets sent to required recipients (e.g. admins)
-    mail(
-        to: Settings.emails.required_recipients,
-        subject: "#{Settings.emails.email_prefix} [Contact Us] #{@feedback_info[:sender_name]} sent a message from the Contact Us page."
-    ).deliver
+    send_message(logged_in_user, model, rails_request, 'Contact Us')
   end
 
   # @param [User] logged_in_user
   # @param [BugReport] model
   # @param [ActionDispatch::Request] rails_request
   def bug_report_message(logged_in_user, model, rails_request)
-
-    @feedback_info = {
-        logged_in_user_name: logged_in_user.blank? ? nil : logged_in_user.user_name,
-        description: model.description,
-        content: model.content,
-        sender_email: model.email.blank? ? nil : model.email,
-        sender_name: model.name.blank? ? 'Someone' : model.name,
-        client_ip: rails_request.remote_ip,
-        client_browser: rails_request.user_agent,
-        datestamp: Time.zone.now.utc.iso8601
-    }
-
-    # email gets sent to required recipients (e.g. admins)
-    mail(
-        to: Settings.emails.required_recipients,
-        subject: "#{Settings.emails.email_prefix} [Bug Report] #{@feedback_info[:sender_name]} submitted a bug report."
-    ).deliver
+    send_message(logged_in_user, model, rails_request, 'Bug Report')
   end
 
   # @param [User] logged_in_user
   # @param [DataRequest] model
   # @param [ActionDispatch::Request] rails_request
   def data_request_message(logged_in_user, model, rails_request)
+    send_message(logged_in_user, model, rails_request, 'Data Request')
+  end
 
-    @feedback_info = {
+  private
+
+  # @param [User] logged_in_user
+  # @param [Object] model
+  # @param [ActionDispatch::Request] rails_request
+  # @param [string] subject_prefix
+  def send_message(logged_in_user, model, rails_request, subject_prefix)
+    @info = {
         logged_in_user_name: logged_in_user.blank? ? nil : logged_in_user.user_name,
-        group: model.group,
-        group_type: model.group_type,
-        content: model.content,
+        model: model,
         sender_email: model.email.blank? ? nil : model.email,
-        sender_name: model.name.blank? ? 'Someone' : model.name,
+        sender_name: model.name.blank? ? "someone (who didn't include their name)" : model.name,
         client_ip: rails_request.remote_ip,
         client_browser: rails_request.user_agent,
         datestamp: Time.zone.now.utc.iso8601
@@ -66,7 +42,7 @@ class PublicMailer < ActionMailer::Base
     # email gets sent to required recipients (e.g. admins)
     mail(
         to: Settings.emails.required_recipients,
-        subject: "#{Settings.emails.email_prefix} [Data Request] #{@feedback_info[:sender_name]} submitted a data request."
+        subject: "#{Settings.emails.email_prefix} [#{subject_prefix}] #{@info[:sender_name]} Form submission."
     ).deliver
   end
 

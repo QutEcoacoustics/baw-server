@@ -6,7 +6,7 @@
   = @info[:sender_name]
   sent a message from the
   = Settings.organisation_names.site_long_name
-  Contact Us page.
+  Bug Report page.
 
 - if @info[:sender_email]
   %p
@@ -14,7 +14,15 @@
     = @info[:sender_email]
 
 %p
-  Their message is:
+  Date issue occurred:
+  %p= @info[:model].date
+
+%p
+  Steps to reproduce:
+  %pre= @info[:model].description
+
+%p
+  Expected and actual:
   %pre= @info[:model].content
 
 Additional information:
