@@ -112,7 +112,6 @@ describe 'CRUD Projects as valid user and project creator' do
     click_button 'Update Project'
     page.should have_content('test name')
   end
-
 end
 
 describe 'CRUD Projects as valid user with read permission' do

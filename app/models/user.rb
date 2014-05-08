@@ -10,8 +10,7 @@ class User < ActiveRecord::Base
   # http://www.phase2technology.com/blog/authentication-permissions-and-roles-in-rails-with-devise-cancan-and-role-model/
   include RoleModel
 
-  # NB: this intentionally left simple
-  #   The bulk of the emails populated into this model will come from external authentication providers
+  # this intentionally left simple
   VALID_EMAIL_REGEX = /^[^@]+@[^@]+\.[^@]+$/
 
   attr_accessible :user_name, :email, :password, :password_confirmation, :remember_me,
@@ -85,8 +84,13 @@ class User < ActiveRecord::Base
   # validations
   validates :user_name, presence: true, uniqueness: {case_sensitive: false},
             exclusion: { in: %w(admin harvester analysis_runner) }
-  validates :email, presence: true, uniqueness: true,
-            format: {with:VALID_EMAIL_REGEX, message: 'Basic email validation failed. It should have at least 1 `@` and 1 `.`'}
+  # format, uniqueness, and presence are validated by devise
+  # Validatable component
+  # validates :email,
+  #           presence: true,
+  #           uniqueness: true,
+  #           format: {with:VALID_EMAIL_REGEX, message: 'Basic email validation failed. It should have at least 1 `@` and 1 `.`'}
+
   validates :roles_mask, presence: true
   validates_attachment_content_type :image, content_type: /^image\/(jpg|jpeg|pjpeg|png|x-png|gif)$/, message: 'file type %{value} is not allowed (only jpeg/png/gif images)'
 

@@ -25,10 +25,6 @@ AWB::Application.routes.draw do
       get 'new_access_request'
       post 'submit_access_request'
     end
-<<<<<<< HEAD
-=======
-
->>>>>>> 470c1eef048f2b3cbbab1d6e760c845b57310f6b
     resources :permissions, except: [:show]
     resources :permissions, only: [:show], defaults: {format: 'json'}
     resources :sites, except: [:index] do

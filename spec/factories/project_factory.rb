@@ -3,7 +3,7 @@ FactoryGirl.define do
   factory :project do
     sequence(:name) { |n| "project#{n}" }
     sequence(:description) { |n| "project description #{n}" }
-    sequence(:urn) { |n| "urn:project:ecosounds.org/project/#{n}" }
+    sequence(:urn) { |n| "urn:project:#{n}" }
     sequence(:notes) { |n|  "note number #{n}" }
 
     creator

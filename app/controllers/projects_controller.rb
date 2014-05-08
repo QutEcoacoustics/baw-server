@@ -46,7 +46,9 @@ class ProjectsController < ApplicationController
         add_breadcrumb 'Projects', projects_path
         add_breadcrumb @project.name, @project
       }
-      format.json { render json: @project }
+      format.json {
+        render json: @project
+      }
     end
   end
 

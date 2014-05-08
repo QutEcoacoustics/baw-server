@@ -88,7 +88,7 @@ describe User do
   context 'basic email syntax checking' do
     emails = [
         ['example@dooby.com', true],
-        ['example@dooby', false],
+        #['example@dooby', false], # devise format allows this
         ['@dooby.com', false],
         ['example.dooby.com', false],
         ['lololololol', false],
