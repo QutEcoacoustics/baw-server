@@ -23,9 +23,12 @@ class Site < ActiveRecord::Base
 
   JITTER_RANGE = 0.0002
 
-  # acts_as_paranoid
-  # userstamp
+  # add created_at and updated_at stamper
   stampable
+
+  # add deleted_at and deleter_id
+  acts_as_paranoid
+  validates_as_paranoid
 
   acts_as_gmappable process_geocoding: false
 
@@ -38,8 +41,7 @@ class Site < ActiveRecord::Base
   # -180 and 180 degrees
   validates :longitude, numericality: {only_integer: false, greater_than_or_equal_to: Site::LONGITUDE_MIN, less_than_or_equal_to: Site::LONGITUDE_MAX,
                                        message: "%{value} must be greater than or equal to #{Site::LONGITUDE_MIN} and less than or equal to #{Site::LONGITUDE_MAX}"}, allow_nil: true
- 
-  #validates_as_paranoid
+
   validates_attachment_content_type :image, content_type: /^image\/(jpg|jpeg|pjpeg|png|x-png|gif)$/, message: 'file type %{value} is not allowed (only jpeg/png/gif images)'
 
   # commonly used queries

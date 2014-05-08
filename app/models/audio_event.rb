@@ -14,10 +14,12 @@ class AudioEvent < ActiveRecord::Base
 
   accepts_nested_attributes_for :tags
 
-  # userstamp
+  # add created_at and updated_at stamper
   stampable
-  #acts_as_paranoid
-  #validates_as_paranoid
+
+  # add deleted_at and deleter_id
+  acts_as_paranoid
+  validates_as_paranoid
 
   # validation
   validates :audio_recording_id, presence: true

@@ -27,10 +27,12 @@ class AudioRecording < ActiveRecord::Base
 
   accepts_nested_attributes_for :site
 
-  # userstamp
+  # add created_at and updated_at stamper
   stampable
-  #acts_as_paranoid
-  #validates_as_paranoid
+
+  # add deleted_at and deleter_id
+  acts_as_paranoid
+  validates_as_paranoid
 
   # Enums for audio recording status
   # new - record created and passes validation

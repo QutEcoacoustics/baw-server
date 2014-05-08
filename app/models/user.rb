@@ -10,6 +10,9 @@ class User < ActiveRecord::Base
   # http://www.phase2technology.com/blog/authentication-permissions-and-roles-in-rails-with-devise-cancan-and-role-model/
   include RoleModel
 
+  # NB: this intentionally left simple
+  #   The bulk of the emails populated into this model will come from external authentication providers
+  VALID_EMAIL_REGEX = /^[^@]+@[^@]+\.[^@]+$/
 
   attr_accessible :user_name, :email, :password, :password_confirmation, :remember_me,
                   :roles, :roles_mask, :preferences,
@@ -32,6 +35,11 @@ class User < ActiveRecord::Base
   has_many :created_audio_events, class_name: 'AudioEvent', foreign_key: :creator_id, inverse_of: :creator
   has_many :updated_audio_events, class_name: 'AudioEvent', foreign_key: :updater_id, inverse_of: :updater
   has_many :deleted_audio_events, class_name: 'AudioEvent', foreign_key: :deleter_id, inverse_of: :deleter
+
+  has_many :created_audio_event_comments, class_name: 'AudioEventComment', foreign_key: :creator_id, inverse_of: :creator
+  has_many :updated_audio_event_comments, class_name: 'AudioEventComment', foreign_key: :updater_id, inverse_of: :updater
+  has_many :deleted_audio_event_comments, class_name: 'AudioEventComment', foreign_key: :deleter_id, inverse_of: :deleter
+  has_many :flagged_audio_event_comments, class_name: 'AudioEventComment', foreign_key: :flagger_id, inverse_of: :flagger
 
   has_many :created_audio_recordings, class_name: 'AudioRecording', foreign_key: :creator_id, inverse_of: :creator
   has_many :updated_audio_recordings, class_name: 'AudioRecording', foreign_key: :updater_id, inverse_of: :updater
@@ -75,8 +83,10 @@ class User < ActiveRecord::Base
   serialize :preferences, JSON
 
   # validations
-  validates :user_name, presence: true, uniqueness: {case_sensitive: false}
-  validates :email, presence: true, uniqueness: true
+  validates :user_name, presence: true, uniqueness: {case_sensitive: false},
+            exclusion: { in: %w(admin harvester analysis_runner) }
+  validates :email, presence: true, uniqueness: true,
+            format: {with:VALID_EMAIL_REGEX, message: 'Basic email validation failed. It should have at least 1 `@` and 1 `.`'}
   validates :roles_mask, presence: true
   validates_attachment_content_type :image, content_type: /^image\/(jpg|jpeg|pjpeg|png|x-png|gif)$/, message: 'file type %{value} is not allowed (only jpeg/png/gif images)'
 

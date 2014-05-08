@@ -1,16 +1,21 @@
 class AudioEventComment < ActiveRecord::Base
   extend Enumerize
-  attr_accessible :comment, :flag, :audio_event_id, :creator_id, :updater_id, :deleter_id, :deleted_at, :flagger_id, :flagged_at
-  attr_readonly :audio_event_id, :creator_id, :updater_id, :deleter_id, :deleted_at, :flagger_id, :flagged_at
 
-  belongs_to :creator, class_name: 'User', foreign_key: :creator_id
-  belongs_to :updater, class_name: 'User', foreign_key: :updater_id
-  belongs_to :deleter, class_name: 'User', foreign_key: :deleter_id
+  attr_accessible :audio_event_id, :comment, :flag
 
-  belongs_to :audio_event, inverse_of: :AudioEventComment
+  belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_audio_event_comments
+  belongs_to :updater, class_name: 'User', foreign_key: :updater_id, inverse_of: :updated_audio_event_comments
+  belongs_to :deleter, class_name: 'User', foreign_key: :deleter_id, inverse_of: :deleted_audio_event_comments
+  belongs_to :flagger, class_name: 'User', foreign_key: :flagger_id, inverse_of: :flagged_audio_event_comments
 
+  belongs_to :audio_event, inverse_of: :audio_event_comments
+
+  # add created_at and updated_at stamper
   stampable
+
+  # add deleted_at and deleter_id
   acts_as_paranoid
+  validates_as_paranoid
 
   # enums
   AVAILABLE_FLAGS_SYMBOLS = [:report]
@@ -25,14 +30,21 @@ class AudioEventComment < ActiveRecord::Base
   # validations
   validates :comment, presence: true, length: {minimum: 2}
 
-  def self.filtered(params)
+  def self.filtered(audio_event, params)
 
-    query = AudioEventComment.include(:audio_event)
+    if audio_event.blank?
+      query = AudioEventComment.include(:audio_event)
+    else
+      query = AudioEventComment.include(:audio_event).where(audio_event_id: audio_event.id)
+    end
 
     page = AudioEventComment.filter_count(params, :page, 1, nil)
     items = AudioEventComment.filter_count(params, :items, 1, 30)
     query = query.offset((page - 1) * items).limit(items)
-    query = query.order('audio_event_comments.created_at DESC')
+
+    order_by_coalesce = 'COALESCE(audio_event_comments.updated_at, audio_event_comments.created_at) DESC'
+
+    query = query.order(order_by_coalesce)
     puts query.to_sql
     query
   end
