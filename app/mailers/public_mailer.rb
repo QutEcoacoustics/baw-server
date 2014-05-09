@@ -42,7 +42,7 @@ class PublicMailer < ActionMailer::Base
     # email gets sent to required recipients (e.g. admins)
     mail(
         to: Settings.emails.required_recipients,
-        subject: "#{Settings.emails.email_prefix} [#{subject_prefix}] #{@info[:sender_name]} Form submission."
+        subject: "#{Settings.emails.email_prefix} [#{subject_prefix}] Form submission from #{@info[:sender_name]}."
     ).deliver
   end
 
