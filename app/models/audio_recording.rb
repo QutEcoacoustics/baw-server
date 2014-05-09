@@ -185,11 +185,11 @@ class AudioRecording < ActiveRecord::Base
     media_cache = Settings.media_cache_tool
     existing_dirs = media_cache.cache.existing_storage_dirs(media_cache.cache.original_audio)
     if existing_dirs.empty?
-      msg = 'None of the audio recording storage directories are available.'
+      msg = 'No audio recording storage directories are available.'
       logger.warn msg
       {message: msg, success: false}
     else
-      msg = "#{existing_dirs.size} audio recording storage directories are available."
+      msg = "#{existing_dirs.size} audio recording storage #{pluralize(existing_dirs.size, 'directory', 'directories')} available."
       {message: msg, success: true}
     end
   end
