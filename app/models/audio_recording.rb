@@ -189,7 +189,7 @@ class AudioRecording < ActiveRecord::Base
       logger.warn msg
       {message: msg, success: false}
     else
-      msg = "#{existing_dirs.size} audio recording storage #{pluralize(existing_dirs.size, 'directory', 'directories')} available."
+      msg = "#{existing_dirs.size} audio recording storage #{existing_dirs.size == 1 ? 'directory' : 'directories'} available."
       {message: msg, success: true}
     end
   end
