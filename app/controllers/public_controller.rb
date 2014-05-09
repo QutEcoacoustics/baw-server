@@ -1,4 +1,6 @@
 class PublicController < ApplicationController
+  layout 'public', except: [:index]
+  layout 'application', only: [:index]
 
   skip_authorization_check only: [
       :index, :status, :website_status,
