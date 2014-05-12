@@ -33,7 +33,7 @@ class ProjectMailer < ActionMailer::Base
       # emails get sent to project owner plus required recipients (e.g. admins)
       emails = [value[:email]] + Settings.emails.required_recipients
       @owner_name = value[:user_name]
-      subject = "#{Settings.emails.email_prefix} #{@sender_user.user_name} is requesting access to one or more of your projects."
+      subject = "#{Settings.emails.email_prefix} [Project Access Request] #{@sender_user.user_name} is requesting access to one or more projects."
       @projects = value[:projects]
       mail(to: emails, subject: subject).deliver
     end
