@@ -9,6 +9,7 @@ FactoryGirl.define do
 
     trait :reported do
       flag 'report'
+      flagger
     end
 
     factory :audio_event_comment_reported, traits: [:reported]

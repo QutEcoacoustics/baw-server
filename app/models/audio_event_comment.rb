@@ -30,23 +30,58 @@ class AudioEventComment < ActiveRecord::Base
   # validations
   validates :comment, presence: true, length: {minimum: 2}
 
-  def self.filtered(audio_event, params)
+  # scopes
+  scope :check_permissions, lambda { |user|
+    if user.is_admin?
+      where('1 = 1') # don't change query
+    else
+      creator_id_check = 'projects.creator_id = ?'
+      permissions_check = '(permissions.user_id = ? AND permissions.level IN (\'reader\', \'writer\'))'
+      where("#{creator_id_check} OR #{permissions_check}", user.id, user.id)
+    end
+  }
+
+  def self.filtered(user, audio_event, params)
+
+    query = AudioEventComment.includes([:creator, audio_event: {audio_recording: {site: {projects: :permissions}}}])
 
     if audio_event.blank?
-      query = AudioEventComment.include(:audio_event)
-    else
-      query = AudioEventComment.include(:audio_event).where(audio_event_id: audio_event.id)
+      query = query.where(audio_event_id: audio_event.id)
     end
 
-    page = AudioEventComment.filter_count(params, :page, 1, nil)
+    query = query.check_permissions(user)
+
+    page = AudioEventComment.filter_count(params, :page, 1, 1)
     items = AudioEventComment.filter_count(params, :items, 1, 30)
     query = query.offset((page - 1) * items).limit(items)
 
-    order_by_coalesce = 'COALESCE(audio_event_comments.updated_at, audio_event_comments.created_at) DESC'
+    # keep comments in order they were created
+    order_by_coalesce = 'COALESCE(audio_event_comments.created_at, audio_event_comments.updated_at) DESC'
 
     query = query.order(order_by_coalesce)
-    puts query.to_sql
+    #puts query.to_sql
     query
+  end
+
+  # @param [Hash] params
+  # @param [Symbol] params_symbol
+  # @param [Integer] min
+  # @param [Integer] max
+  def self.filter_count(params, params_symbol, default = 1, min = 1, max = nil)
+    value = default
+    if params.include?(params_symbol)
+      value = params[params_symbol].to_i
+    end
+
+    if value < min
+      value = min
+    end
+
+    if !max.blank? && value > max
+      value = max
+    end
+
+    value
   end
 
 end

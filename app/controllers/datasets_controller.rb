@@ -6,7 +6,7 @@ class DatasetsController < ApplicationController
   load_and_authorize_resource :dataset, through: :project
 
   before_filter :add_project_breadcrumb
-  
+
   # GET /projects/:id/datasets
   # GET /projects/:id/datasets.json
   def index

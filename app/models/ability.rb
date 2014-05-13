@@ -56,10 +56,10 @@ class Ability
       can [:read], Bookmark
       can [:library, :library_paged], AudioEvent
       #can [:audio, :spectrogram], Media if user.has_permission_any?(media.audio_recording.site.projects)
-      can [:manage], AudioEventComment do |audio_event_comment|
-        user.can_write_any?(audio_event_comment.audio_event.audio_recording.site.projects)
+      can [:update, :destroy], AudioEventComment do |audio_event_comment|
+        user.id == audio_event_comment.creator.id
       end
-      can [:manage], AudioEventComment do |audio_event_comment|
+      can [:index, :create], AudioEventComment do |audio_event_comment|
         user.has_permission_any?(audio_event_comment.audio_event.audio_recording.site.projects)
       end
 
