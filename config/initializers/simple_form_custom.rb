@@ -7,7 +7,7 @@ SimpleForm.setup do |config|
     b.wrapper :tag => 'div', :class => 'controls' do |c|
       c.wrapper :tag => 'div', :class => 'bootstrap-timepicker' do |ba|
         ba.use :input
-        ba.wrapper :tag => 'i', :class => 'icon-time', :style => 'margin: -2px 0 0 -22.5px; pointer-events: none; position: relative;' do |baa|
+        ba.wrapper :tag => 'i', :class => 'fa fa-time', :style => 'margin: -2px 0 0 -22.5px; pointer-events: none; position: relative;' do |baa|
 
         end
         ba.use :error, :wrap_with => { :tag => 'span', :class => 'help-inline' }
