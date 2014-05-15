@@ -7,13 +7,6 @@ test:
   host:
     name: localhost
     port: 3030
-  smtp:
-    address: smtp.address
-    port: smtp.port
-    domain: domain.com
-    user_name: username
-    authentication: login
-    password: password
   db:
     adapter: postgresql
     encoding: unicode
@@ -30,9 +23,6 @@ test:
   secret_token: 286c3a382cc5f94bc4003023f9486845
   paths:
     image_magick_dir: <%= Rails.root %>/vendor/bin/imagemagick
-    ######################################################
-    # these paths must align with the paths used by the harvester settings file
-    ######################################################
     original_audios:
       - <%= Rails.root %>/tmp/_original_audio
     cached_spectrograms:

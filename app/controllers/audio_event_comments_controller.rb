@@ -9,8 +9,15 @@ class AudioEventCommentsController < ApplicationController
   def index
     # list of annotation_discussions (probably reverse chronological order and paged)
     #@audio_event_comments = AudioEventComment.filtered(current_user, @audio_event, params)
-    render json: @audio_event_comments.to_json(include: {creator: {only: :user_name}, updater: {only: :user_name}})
+
     #.image.url(:span1)
+
+    if params.include?(:audio_event_id)
+      @audio_event = AudioEvent.where(id: params[:audio_event_id].to_i).first
+      @audio_event_comments = AudioEventComment.filtered(current_user, @audio_event, params)
+    end
+
+    render json: @audio_event_comments.to_json(include: {creator: {only: :user_name}, updater: {only: :user_name}})
   end
 
   #def show

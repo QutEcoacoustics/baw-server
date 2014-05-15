@@ -199,6 +199,11 @@ en-AU:
   # remove these aliases after 'activemodel' and 'activerecord' namespaces are removed from Rails repository
   activemodel:
     errors:
+      models:
+        bug_report:
+          attributes:
+            date:
+             invalid_date: 'invalid date'
       <<: *errors
   activerecord:
     errors:

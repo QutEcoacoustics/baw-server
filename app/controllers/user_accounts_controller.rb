@@ -17,7 +17,7 @@ class UserAccountsController < ApplicationController
   # GET /users/1.json
   def show
     @user = User.find(params[:id])
-
+    @user_annotations = @user.recently_added_audio_events(params[:page])
     respond_to do |format|
       format.html # show.html.erb
       format.json { render json: @user }
@@ -26,7 +26,7 @@ class UserAccountsController < ApplicationController
 
   def my_account
     @user = current_user
-
+    @user_annotations = @user.recently_added_audio_events(params[:page])
     respond_to do |format|
       format.html { render template: 'user_accounts/show' }
       format.json { render json: @user }

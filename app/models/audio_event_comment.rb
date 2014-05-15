@@ -45,7 +45,7 @@ class AudioEventComment < ActiveRecord::Base
 
     query = AudioEventComment.includes([:creator, audio_event: {audio_recording: {site: {projects: :permissions}}}])
 
-    if audio_event.blank?
+    unless audio_event.blank?
       query = query.where(audio_event_id: audio_event.id)
     end
 

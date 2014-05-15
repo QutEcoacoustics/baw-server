@@ -3,48 +3,60 @@
 .span9
   %h1= @user.user_name
 
-.span12
-  %h3 Bookmarks
-
-  - if @user.created_bookmarks.empty?
-    = 'No bookmarks created.'
-  - else
-    %table.table.table-striped(data-provides='rowlink')
-
-      %tr
-        %th Name
-        %th Description
-
-      - @user.created_bookmarks.each do |bookmark|
-        %tr
-          %td= link_to bookmark.name, bookmark_path(bookmark)
-          %td= bookmark.description
+-#.span12
+-#  %h3 Bookmarks
+-#
+-#  - if @user.created_bookmarks.empty?
+-#    = 'No bookmarks created.'
+-#  - else
+-#    %table.table.table-striped(data-provides='rowlink')
+-#
+-#      %tr
+-#        %th Name
+-#        %th Description
+-#
+-#      - @user.created_bookmarks.each do |bookmark|
+-#        %tr
+-#          %td= link_to bookmark.name, bookmark_path(bookmark)
+-#          %td= bookmark.description
 
 .span12
   %h3 Recent Annotations
 
-  - if @user.recently_added_audio_events.empty?
+  - if @user_annotations.empty?
     = 'No annotations created.'
   - else
+    = page_entries_info @user_annotations
+    = will_paginate @user_annotations, renderer: BawWillPaginateLinkRenderer
+
     %table.table.table-striped(data-provides='rowlink')
 
       %tr
         %th Duration (seconds)
         %th Tags
         %th Last Updated
+        %th
 
-      - @user.recently_added_audio_events.each do |audio_event|
+      - @user_annotations.each do |audio_event|
         %tr
           - offset_start_round_30_sec = (audio_event.start_time_seconds / 30).floor * 30
           - offset_end_round_30_sec = (audio_event.end_time_seconds / 30).floor * 30
           - offset_end_round_30_sec += (offset_start_round_30_sec == offset_end_round_30_sec ? 30 : 0 )
           - audio_recording_exists = !audio_event.audio_recording.blank?
+
           - if audio_recording_exists
+            - link = "/listen/#{audio_event.audio_recording.id}?start=#{offset_start_round_30_sec}&end=#{offset_end_round_30_sec}"
             %td= link_to (audio_event.end_time_seconds - audio_event.start_time_seconds), "/listen/#{audio_event.audio_recording.id}?start=#{offset_start_round_30_sec}&end=#{offset_end_round_30_sec}", target: '_self'
           - else
             %td= "#{audio_event.end_time_seconds - audio_event.start_time_seconds}"
           %td= audio_event.tags.order(:type_of_tag, :text).select(:text).to_a.map{ |item| item.text}.join(', ')
           %td= distance_of_time_in_words(Time.zone.now, audio_event.updated_at, nil, {vague: true})+ ' ago'
+          - if audio_recording_exists
+            - link = "/listen/#{audio_event.audio_recording.id}?start=#{offset_start_round_30_sec}&end=#{offset_end_round_30_sec}"
+            %td.nolink
+              = link_to link, target: '_self', class: 'btn btn-mini' do
+                %i{class: 'fa fa-play'}
+                Play
 
 -#.span12
 -#  %h3 Datasets

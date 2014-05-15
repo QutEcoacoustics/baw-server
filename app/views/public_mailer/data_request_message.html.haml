@@ -6,7 +6,7 @@
   = "'#{@info[:sender_name]}'"
   sent a message from the
   = Settings.organisation_names.site_long_name
-  Contact Us page.
+  Data Request page.
 
 - if @info[:sender_email]
   %p
@@ -14,7 +14,15 @@
     = @info[:sender_email]
 
 %p
-  Their message is:
+  Organisation:
+  %p= @info[:model].group
+
+%p
+  Organisation Type:
+  %p= @info[:model].group_type
+
+%p
+  Request details:
   %pre= @info[:model].content
 
 Additional information:

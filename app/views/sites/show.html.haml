@@ -14,22 +14,22 @@
       = page_entries_info @site_audio_recordings
       = will_paginate @site_audio_recordings
 
-      %table.table.table-striped
+      %table.table.table-striped(data-provides='rowlink')
         %thead
           %tr
-            %th
             %th Recording Start Date
             %th Duration
+            %th
 
         %tbody
         - @site_audio_recordings.each do |audio_recording|
           %tr
-            %td= link_to 'Play', "/listen/#{audio_recording.id}", target: '_self'
-            %td= audio_recording.recorded_date.to_formatted_s(:readable_full)
+            %td= link_to audio_recording.recorded_date.to_formatted_s(:readable_full), "/listen/#{audio_recording.id}"
             %td= "about #{distance_of_time_in_words(audio_recording.duration_seconds, 0, nil, {except: ['seconds']})}"
-
-      = page_entries_info @site_audio_recordings
-      = will_paginate @site_audio_recordings
+            %td.nolink
+              = link_to "/listen/#{audio_recording.id}", target: '_self', class: 'btn btn-mini' do
+                %i{class: 'fa fa-play'}
+                Play
 
 .row-fluid
   .span12
