@@ -271,7 +271,7 @@ class RangeRequest
     response_file_duration = options[:end_offset] - options[:start_offset]
 
     suggested_file_name =
-        "#{options[:site_name].gsub(' ', '_')}_#{response_file_abs_start}_#{response_file_duration}.#{options[:ext]}"
+        "#{options[:site_name].gsub(' ', '_')}_#{options[:recording_id]}_#{response_file_abs_start}_#{response_file_duration}.#{options[:ext]}"
 
     file_modified_time = File.mtime(file_path).getutc
     file_size = File.size(file_path)
