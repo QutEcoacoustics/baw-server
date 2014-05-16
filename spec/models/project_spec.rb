@@ -28,8 +28,8 @@ describe Project do
   #                rejecting('text/xml', 'image_maybe/abc', 'some_image/png') }
 
 
-  it 'is invalid without a urn' do
-    FactoryGirl.build(:project, :urn => nil).should_not be_valid
+  it 'is valid without a urn' do
+    FactoryGirl.build(:project, :urn => nil).should be_valid
   end
 
   it 'requires unique case-insensitive project names (case insensitive)' do

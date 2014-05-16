@@ -19,7 +19,12 @@ FactoryGirl.define do
     trait :confirmed do
       after(:create) do |user|
         user.skip_confirmation_notification!
-        user.confirm!
+        #user.confirm!
+        user.skip_confirmation!
+
+        user.confirmation_token = user.class.confirmation_token
+        user.confirmation_sent_at = Time.now.utc
+        user.save(:validate => false)
       end
     end
 

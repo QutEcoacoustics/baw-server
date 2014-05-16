@@ -1,12 +1,20 @@
 FactoryGirl.define do
 
-  #after(:build) { |object| Rails.logger.debug "Built #{object.inspect}" }
-  #after(:create) { |object| Rails.logger.debug "Created #{object.inspect}" }
+  after(:build) { |object|
+    if object.respond_to?(:creator) && object.creator.blank? && !object.is_a?(User)
+      Rails.logger.warn "Built #{object.inspect}"
+    end
+  }
+  after(:create) { |object|
+    if object.respond_to?(:creator) && object.creator.blank? && !object.is_a?(User)
+      Rails.logger.warn "Created #{object.inspect}"
+    end
+  }
 
   factory :permission do
     creator
     user
-    project
+    association :project, factory: :project
     level { ['reader', 'writer'].sample }
   end
 

@@ -1,7 +1,8 @@
 class AudioEventCommentsController < ApplicationController
-  add_breadcrumb 'Home', :root_path
 
-  load_and_authorize_resource
+  load_and_authorize_resource :audio_event
+  load_and_authorize_resource :audio_event_comment, through: :audio_event
+  respond_to :json
 
   # actions are all api-only
   # a user or audio_event can include annotation_discussions in the response for a single item

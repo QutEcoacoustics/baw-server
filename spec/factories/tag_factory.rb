@@ -4,8 +4,9 @@ FactoryGirl.define do
     sequence(:text) { |n| "tag text #{n}" }
     sequence(:notes) { |n|  "note number #{n}" }
 
-    creator
     type_of_tag 'general'
+
+    creator
 
     trait :taxonomic do
       is_taxanomic true
