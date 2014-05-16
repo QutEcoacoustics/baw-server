@@ -33,15 +33,14 @@
     - if @recent_audio_events.empty?
       = 'No recent annotations.'
     - else
-      %table.table.table-striped
+      %table.table.table-striped(data-provides='rowlink')
 
         %tr
-          - unless current_user.blank?
-            %th
           %th Tags
           %th Last Updated
           - unless current_user.blank?
             %th User
+            %th
 
         - @recent_audio_events.each do |audio_event|
           %tr
@@ -50,9 +49,22 @@
             - offset_end_round_30_sec += (offset_start_round_30_sec == offset_end_round_30_sec ? 30 : 0 )
             - tags = audio_event.tags.order(:type_of_tag, :text).select(:text).to_a.map{ |item| item.text}
             - tag_text = tags.empty? ? '(none)' : tags.join(', ')
-            - unless current_user.blank?
-              %td= link_to 'Play', "/listen/#{audio_event.audio_recording.id}?start=#{offset_start_round_30_sec}&end=#{offset_end_round_30_sec}", target: '_self'
-            %td= tag_text
+            - audio_link = "/listen/#{audio_event.audio_recording.id}?start=#{offset_start_round_30_sec}&end=#{offset_end_round_30_sec}"
+            - annotation_link = "library/#{audio_event.audio_recording_id}/audio_events/#{audio_event.id}"
+            - if current_user.blank?
+              %td= tag_text
+            - else
+              %td= link_to tag_text, audio_link, target: '_self'
             %td= distance_of_time_in_words(Time.zone.now, audio_event.updated_at, nil, {vague: true})+ ' ago'
             - unless current_user.blank?
-              %td= link_to audio_event.updater.user_name, user_account_path(audio_event.updater)
+              %td= audio_event.updater.user_name
+              %td.nolink
+                = link_to audio_link, target: '_self', class: 'btn btn-mini' do
+                  %i{class: 'fa fa-play'}
+                  Audio
+                = link_to user_account_path(audio_event.updater), class: 'btn btn-mini' do
+                  %i{class: 'fa fa-user'}
+                  User
+                = link_to annotation_link, class: 'btn btn-mini' do
+                  %i{class: 'fa fa-dot-circle-o'}
+                  Annotation

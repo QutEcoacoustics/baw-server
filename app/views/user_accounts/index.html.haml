@@ -7,7 +7,6 @@
   %thead
     %tr
       %th User Name
-      %th Role
       %th Last Login
       %th
       %th
@@ -16,14 +15,18 @@
   - @users.each do |user|
     - last_login = user.current_sign_in_at.blank? ? user.last_sign_in_at : user.current_sign_in_at
     %tr
-      %td= link_to user.user_name, user_account_path(user)
-      %td= user.role_symbols.join(', ')
+      %td= link_to "#{user.user_name} (#{user.role_symbols.join(', ')})", user_account_path(user)
       %td= last_login.blank? ? '?' : last_login.to_formatted_s(:readable_full)
       %td= last_login.blank? ? '?' : "#{distance_of_time_in_words(Time.zone.now, last_login, nil, {vague: true})} ago"
       %td.nolink
-        = link_to edit_user_account_path(user), class: 'btn btn-mini btn-edit' do
+        = link_to user_account_path(user), class: 'btn btn-mini' do
+          %i{class: 'fa fa-user'}
+          View
+        = link_to edit_user_account_path(user), class: 'btn btn-mini' do
+          %i{class: 'fa fa-edit'}
           Edit
-        = link_to user_account_path(user), :method => :delete, :data => { :confirm => 'Are you sure?' }, class: 'btn-destroy btn btn-mini' do
+        = link_to user_account_path(user), method: :delete, data: { confirm: 'Are you sure?' }, class: 'btn btn-mini' do
+          %i{class: 'fa fa-times '}
           Delete
 
 - content_for :title, 'Users'
