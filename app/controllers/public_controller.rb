@@ -83,10 +83,10 @@ class PublicController < ApplicationController
         tags_applied_total: tags_applied_total
     }
 
-    order_by_coalesce = 'COALESCE(audio_events.updated_at, audio_events.created_at) DESC'
+    order_by_coalesce = 'COALESCE(audio_events.created_at, audio_events.updated_at) DESC'
 
     if current_user.blank?
-      @recent_audio_events = AudioEvent.order(order_by_coalesce).limit(7)
+      @recent_audio_events = AudioEvent.includes(:audio_recording).order(order_by_coalesce).limit(7)
     elsif current_user.has_role? :admin
       @recent_audio_events = AudioEvent.includes(:audio_recording, :updater).order(order_by_coalesce).limit(20)
     else

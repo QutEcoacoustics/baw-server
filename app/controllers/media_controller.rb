@@ -157,6 +157,7 @@ class MediaController < ApplicationController
               site_name: audio_recording.site.name,
               recorded_date: audio_recording.recorded_date,
               recording_duration: audio_recording.duration_seconds,
+              recording_id: audio_recording.id,
               ext: options[:format],
               file_path: file_path,
               start_offset: options[:start_offset],
@@ -198,7 +199,21 @@ class MediaController < ApplicationController
       # file will be generated if it doesn't exist, blocking the request until finished
       full_path = @media_cacher.generate_spectrogram(options)
       headers['Content-Length'] = File.size(full_path.first).to_s
-      send_file full_path.first, stream: true, buffer_size: 4096, disposition: 'inline', type: options[:media_type], content_type: options[:media_type]
+
+      response_file_abs_start = audio_recording.recorded_date.dup.advance(seconds: options[:start_offset]).strftime('%Y%m%d_%H%M%S')
+      response_file_duration = options[:end_offset] - options[:start_offset]
+      response_time_info = "#{response_file_abs_start}_#{response_file_duration}"
+      response_extra_info = "#{options[:channel]}_#{options[:sample_rate]}_#{options[:window]}_#{options[:colour]}"
+      suggested_file_name =
+          "#{audio_recording.site.name.gsub(' ', '_')}_#{audio_recording.id}_#{response_time_info}_#{response_extra_info}.#{options[:format]}"
+
+      send_file full_path.first,
+                stream: true,
+                buffer_size: 4096,
+                disposition: 'inline',
+                type: options[:media_type],
+                content_type: options[:media_type],
+                filename: suggested_file_name
 
     elsif @media_processor == MEDIA_PROCESSOR_RESQUE
       resque_enqueue('cache_spectrogram', options)
