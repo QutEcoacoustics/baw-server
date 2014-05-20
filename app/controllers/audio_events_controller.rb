@@ -99,12 +99,8 @@ class AudioEventsController < ApplicationController
 
 
   def download
-
     @formatted_annotations = download_format AudioEvent.csv_filter(current_user, params).limit(1000)
-
     respond_to do |format|
-      format.xml { render xml: @formatted_annotations }
-      format.json { render json: @formatted_annotations }
       format.csv {
         time_now = Time.zone.now
         render_csv("annotations-#{time_now.strftime('%Y%m%d')}-#{time_now.strftime('%H%M%S')}")

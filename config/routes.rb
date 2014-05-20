@@ -37,9 +37,6 @@ AWB::Application.routes.draw do
         end
         get 'media.:format' => 'media#show', defaults: {format: 'json'}, as: :media
         resources :audio_events, defaults: {format: 'json'} do
-          collection do
-            get :download, defaults: {format: 'csv'}, constraints: {format: /(csv)/}
-          end
           resources :tags, only: [:index], defaults: {format: 'json'}
           resources :taggings, defaults: {format: 'json'}
         end
@@ -93,7 +90,11 @@ AWB::Application.routes.draw do
   end
 
   # taggings made by a user
-  get '/taggings/user/:user_id/tags' => 'taggings#user_index', as: :user_taggings, defaults: {format: 'json'}
+  get '/taggings/user/:user_id/tags' => 'taggings#user_index', as: :user_taggings, defaults: {format: 'json'}, constraints: {format: /(json)/}
+
+  # audio event csv download routes
+  get '/projects/:project_id/audio_events/download' => 'audio_events#download', defaults: {format: 'csv'}, constraints: {format: /(csv)/}
+  get '/projects/:project_id/sites/:site_id/audio_events/download' => 'audio_events#download', defaults: {format: 'csv'}, constraints: {format: /(csv)/}
 
   # shallow path to sites
   get '/sites/:id' => 'sites#show_shallow', defaults: {format: 'json'}
