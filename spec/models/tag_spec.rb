@@ -8,8 +8,8 @@ describe Tag do
     t.should be_valid
   end
 
-  it {should have_many(:taggings)}
-  it {should have_many(:audio_events)}
+  it { should have_many(:taggings) }
+  it { should have_many(:audio_events) }
 
   it { should belong_to(:creator).with_foreign_key(:creator_id) }
   it { should belong_to(:updater).with_foreign_key(:updater_id) }
@@ -20,9 +20,13 @@ describe Tag do
   it 'ensures is_taxanomic can be true or false' do
     t = build(:tag)
     t.should be_valid
+
     t.is_taxanomic = true
+    t.type_of_tag = :common_name
     t.should be_valid
+    
     t.is_taxanomic = false
+    t.type_of_tag = :general
     t.should be_valid
   end
 
@@ -51,16 +55,30 @@ describe Tag do
   type_of_tags = [:general, :common_name, :species_name, :looks_like, :sounds_like]
 
   type_of_tags.each { |tag_type|
+    expected_is_taxanomic_value = tag_type == :common_name || tag_type == :species_name
     it "ensures type_of_tag can be set to #{tag_type}" do
       t = build(:tag)
       t.should be_valid
       t.type_of_tag = tag_type
+      t.is_taxanomic = expected_is_taxanomic_value
       t.should be_valid
 
       type_of_tags.each { |type_of_tag|
         t.send(type_of_tag.to_s + '?').should == (type_of_tag.to_s == t.type_of_tag)
       }
+    end
 
+    it "ensures is_taxanomic is set to #{expected_is_taxanomic_value} for #{tag_type}" do
+      t = build(:tag)
+      t.should be_valid
+
+      t.type_of_tag = tag_type
+
+      t.is_taxanomic = !expected_is_taxanomic_value
+      t.should_not be_valid
+
+      t.is_taxanomic = expected_is_taxanomic_value
+      t.should be_valid
     end
   }
 
@@ -79,7 +97,7 @@ describe Tag do
   end
 
   it 'ensures retired should be false by default' do
-    t = Tag.new()
+    t = Tag.new
     t.retired.should be_false
   end
 
