@@ -47,7 +47,7 @@ class PublicController < ApplicationController
 
   def website_status
 
-    storage_msg = AudioRecording.check_storage
+    #storage_msg = AudioRecording.check_storage
 
     online_window = 2.hours.ago
     users_online = User.where('current_sign_in_at > ? OR last_sign_in_at > ?', online_window, online_window).count
@@ -69,7 +69,7 @@ class PublicController < ApplicationController
     #unannotated_audio = audio_recording_total_duration - annotations_total_duration
 
     @status_info = {
-        storage: storage_msg,
+        #storage: storage_msg,
         users_online: users_online,
         users_total: users_total,
         online_window_start: online_window,

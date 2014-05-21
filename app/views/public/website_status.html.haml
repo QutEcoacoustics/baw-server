@@ -6,14 +6,6 @@
   .span6
     %h2 Currently
     %p= "#{@status_info[:users_online]} users online of #{@status_info[:users_total]} registered"
-    %p
-      = @status_info[:storage][:message]
-      - if @status_info[:storage][:success]
-        %span.label.label-success
-          &#10004;
-      - else
-        %span.label.label-warning
-          !
     %p= "#{@status_info[:annotations_recent]} new annotations in last month"
     %p= "#{@status_info[:audio_recording_recent]} new audio recordings in last month"
 
