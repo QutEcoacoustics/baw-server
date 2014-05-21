@@ -9,8 +9,8 @@ class Dataset < ActiveRecord::Base
   # custom fields to set dates and times to nil if not selected in form
   attr_accessor :has_time, :has_date, :selected_types_of_tags, :json_dataset_result_info
 
-  belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_datasets
-  belongs_to :updater, class_name: 'User', foreign_key: :updater_id, inverse_of: :updated_datasets
+  belongs_to :creator, class_name: 'User', foreign_key: 'creator_id', inverse_of: :created_datasets
+  belongs_to :updater, class_name: 'User', foreign_key: 'updater_id', inverse_of: :updated_datasets
   belongs_to :project, inverse_of: :datasets
   has_and_belongs_to_many :sites, uniq: true
   has_many :jobs, inverse_of: :dataset

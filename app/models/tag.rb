@@ -7,8 +7,8 @@ class Tag < ActiveRecord::Base
   # relations
   has_many :taggings # no inverse of specified, as it interferes with through: association
   has_many :audio_events, through: :taggings
-  belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_tags
-  belongs_to :updater, class_name: 'User', foreign_key: :updater_id, inverse_of: :updated_tags
+  belongs_to :creator, class_name: 'User', foreign_key: 'creator_id', inverse_of: :created_tags
+  belongs_to :updater, class_name: 'User', foreign_key: 'updater_id', inverse_of: :updated_tags
 
   accepts_nested_attributes_for :audio_events
 

@@ -73,9 +73,9 @@ AWB::Application.configure do
     BawAudioTools::Logging.logger_formatter(config.action_mailer.logger)
 
     # log all activerecord activity
-    #ActiveRecord::Base.logger = Logger.new(Rails.root.join('log', "#{Rails.env}.activerecord.log"))
-    #config.active_record.colorize_logging = false
-    #BawAudioTools::Logging.logger_formatter(ActiveRecord::Base.logger)
+    ActiveRecord::Base.logger = Logger.new(Rails.root.join('log', "#{Rails.env}.activerecord.log"))
+    config.active_record.colorize_logging = false
+    BawAudioTools::Logging.logger_formatter(ActiveRecord::Base.logger)
   end
 
 end

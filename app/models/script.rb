@@ -6,11 +6,11 @@ class Script < ActiveRecord::Base
   has_attached_file :data_file
 
   # relationships
-  belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_scripts
+  belongs_to :creator, class_name: 'User', foreign_key: 'creator_id', inverse_of: :created_scripts
   
-  belongs_to :updated_by, class_name: 'Script', foreign_key: :updated_by_script_id
-  has_one :update_from, class_name: 'Script', foreign_key: :updated_by_script_id
-  has_one :latest_update, class_name: 'Script', foreign_key: :original_script_id, order: 'created_at DESC'
+  belongs_to :updated_by, class_name: 'Script', foreign_key: 'updated_by_script_id'
+  has_one :update_from, class_name: 'Script', foreign_key: 'updated_by_script_id'
+  has_one :latest_update, class_name: 'Script', foreign_key: 'original_script_id', order: 'created_at DESC'
   has_many :jobs, inverse_of: :script
 
   # userstamp

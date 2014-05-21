@@ -8,9 +8,9 @@ class Site < ActiveRecord::Base
   has_and_belongs_to_many :datasets, uniq: true
   has_many :audio_recordings, inverse_of: :site
 
-  belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_sites
-  belongs_to :updater, class_name: 'User', foreign_key: :updater_id, inverse_of: :updated_sites
-  belongs_to :deleter, class_name: 'User', foreign_key: :deleter_id, inverse_of: :deleted_sites
+  belongs_to :creator, class_name: 'User', foreign_key: 'creator_id', inverse_of: :created_sites
+  belongs_to :updater, class_name: 'User', foreign_key: 'updater_id', inverse_of: :updated_sites
+  belongs_to :deleter, class_name: 'User', foreign_key: 'deleter_id', inverse_of: :deleted_sites
 
   has_attached_file :image,
                     styles: {span4: '300x300#', span3: '220x220#', span2: '140x140#', span1: '60x60#', spanhalf: '30x30#'},

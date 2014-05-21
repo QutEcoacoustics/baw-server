@@ -31,49 +31,49 @@ class User < ActiveRecord::Base
   has_many :writable_projects, through: :permissions, source: :project, conditions: 'permissions.level = writer'
 
   # relations for creator, updater, deleter, and others.
-  has_many :created_audio_events, class_name: 'AudioEvent', foreign_key: :creator_id, inverse_of: :creator
-  has_many :updated_audio_events, class_name: 'AudioEvent', foreign_key: :updater_id, inverse_of: :updater
-  has_many :deleted_audio_events, class_name: 'AudioEvent', foreign_key: :deleter_id, inverse_of: :deleter
+  has_many :created_audio_events, class_name: 'AudioEvent', foreign_key: 'creator_id', inverse_of: :creator
+  has_many :updated_audio_events, class_name: 'AudioEvent', foreign_key: 'updater_id', inverse_of: :updater
+  has_many :deleted_audio_events, class_name: 'AudioEvent', foreign_key: 'deleter_id', inverse_of: :deleter
 
-  has_many :created_audio_event_comments, class_name: 'AudioEventComment', foreign_key: :creator_id, inverse_of: :creator
-  has_many :updated_audio_event_comments, class_name: 'AudioEventComment', foreign_key: :updater_id, inverse_of: :updater
-  has_many :deleted_audio_event_comments, class_name: 'AudioEventComment', foreign_key: :deleter_id, inverse_of: :deleter
-  has_many :flagged_audio_event_comments, class_name: 'AudioEventComment', foreign_key: :flagger_id, inverse_of: :flagger
+  has_many :created_audio_event_comments, class_name: 'AudioEventComment', foreign_key: 'creator_id', inverse_of: :creator
+  has_many :updated_audio_event_comments, class_name: 'AudioEventComment', foreign_key: 'updater_id', inverse_of: :updater
+  has_many :deleted_audio_event_comments, class_name: 'AudioEventComment', foreign_key: 'deleter_id', inverse_of: :deleter
+  has_many :flagged_audio_event_comments, class_name: 'AudioEventComment', foreign_key: 'flagger_id', inverse_of: :flagger
 
-  has_many :created_audio_recordings, class_name: 'AudioRecording', foreign_key: :creator_id, inverse_of: :creator
-  has_many :updated_audio_recordings, class_name: 'AudioRecording', foreign_key: :updater_id, inverse_of: :updater
-  has_many :deleted_audio_recordings, class_name: 'AudioRecording', foreign_key: :deleter_id, inverse_of: :deleter
-  has_many :uploaded_audio_recordings, class_name: 'AudioRecording', foreign_key: :uploader_id, inverse_of: :uploader
+  has_many :created_audio_recordings, class_name: 'AudioRecording', foreign_key: 'creator_id', inverse_of: :creator
+  has_many :updated_audio_recordings, class_name: 'AudioRecording', foreign_key: 'updater_id', inverse_of: :updater
+  has_many :deleted_audio_recordings, class_name: 'AudioRecording', foreign_key: 'deleter_id', inverse_of: :deleter
+  has_many :uploaded_audio_recordings, class_name: 'AudioRecording', foreign_key: 'uploader_id', inverse_of: :uploader
 
-  has_many :created_taggings, class_name: 'Tagging', foreign_key: :creator_id, inverse_of: :creator
-  has_many :updated_taggings, class_name: 'Tagging', foreign_key: :updater_id, inverse_of: :updater
+  has_many :created_taggings, class_name: 'Tagging', foreign_key: 'creator_id', inverse_of: :creator
+  has_many :updated_taggings, class_name: 'Tagging', foreign_key: 'updater_id', inverse_of: :updater
 
-  has_many :created_bookmarks, class_name: 'Bookmark', foreign_key: :creator_id, inverse_of: :creator
-  has_many :updated_bookmarks, class_name: 'Bookmark', foreign_key: :updater_id, inverse_of: :updater
+  has_many :created_bookmarks, class_name: 'Bookmark', foreign_key: 'creator_id', inverse_of: :creator
+  has_many :updated_bookmarks, class_name: 'Bookmark', foreign_key: 'updater_id', inverse_of: :updater
 
-  has_many :created_datasets, class_name: 'Dataset', foreign_key: :creator_id, inverse_of: :creator, include: :project
-  has_many :updated_datasets, class_name: 'Dataset', foreign_key: :updater_id, inverse_of: :updater, include: :project
+  has_many :created_datasets, class_name: 'Dataset', foreign_key: 'creator_id', inverse_of: :creator, include: :project
+  has_many :updated_datasets, class_name: 'Dataset', foreign_key: 'updater_id', inverse_of: :updater, include: :project
 
-  has_many :created_jobs, class_name: 'Job', foreign_key: :creator_id, inverse_of: :creator
-  has_many :updated_jobs, class_name: 'Job', foreign_key: :updater_id, inverse_of: :updater
-  has_many :deleted_jobs, class_name: 'Job', foreign_key: :deleter_id, inverse_of: :deleter
+  has_many :created_jobs, class_name: 'Job', foreign_key: 'creator_id', inverse_of: :creator
+  has_many :updated_jobs, class_name: 'Job', foreign_key: 'updater_id', inverse_of: :updater
+  has_many :deleted_jobs, class_name: 'Job', foreign_key: 'deleter_id', inverse_of: :deleter
 
   has_many :permissions, inverse_of: :user
-  has_many :created_permissions, class_name: 'Permission', foreign_key: :creator_id, inverse_of: :creator
-  has_many :updated_permissions, class_name: 'Permission', foreign_key: :updater_id, inverse_of: :updater
+  has_many :created_permissions, class_name: 'Permission', foreign_key: 'creator_id', inverse_of: :creator
+  has_many :updated_permissions, class_name: 'Permission', foreign_key: 'updater_id', inverse_of: :updater
 
-  has_many :created_projects, class_name: 'Project', foreign_key: :creator_id, inverse_of: :creator
-  has_many :updated_projects, class_name: 'Project', foreign_key: :updater_id, inverse_of: :updater
-  has_many :deleted_projects, class_name: 'Project', foreign_key: :deleter_id, inverse_of: :deleter
+  has_many :created_projects, class_name: 'Project', foreign_key: 'creator_id', inverse_of: :creator
+  has_many :updated_projects, class_name: 'Project', foreign_key: 'updater_id', inverse_of: :updater
+  has_many :deleted_projects, class_name: 'Project', foreign_key: 'deleter_id', inverse_of: :deleter
 
-  has_many :created_scripts, class_name: 'Script', foreign_key: :creator_id, inverse_of: :creator
+  has_many :created_scripts, class_name: 'Script', foreign_key: 'creator_id', inverse_of: :creator
 
-  has_many :created_sites, class_name: 'Site', foreign_key: :creator_id, inverse_of: :creator
-  has_many :updated_sites, class_name: 'Site', foreign_key: :updater_id, inverse_of: :updater
-  has_many :deleted_sites, class_name: 'Site', foreign_key: :creator_id, inverse_of: :deleter
+  has_many :created_sites, class_name: 'Site', foreign_key: 'creator_id', inverse_of: :creator
+  has_many :updated_sites, class_name: 'Site', foreign_key: 'updater_id', inverse_of: :updater
+  has_many :deleted_sites, class_name: 'Site', foreign_key: 'deleter_id', inverse_of: :deleter
 
-  has_many :created_tags, class_name: 'Tag', foreign_key: :creator_id, inverse_of: :creator
-  has_many :updated_tags, class_name: 'Tag', foreign_key: :updater_id, inverse_of: :updater
+  has_many :created_tags, class_name: 'Tag', foreign_key: 'creator_id', inverse_of: :creator
+  has_many :updated_tags, class_name: 'Tag', foreign_key: 'updater_id', inverse_of: :updater
 
   # scopes
   scope :users, -> { where(roles_mask: 2) }
