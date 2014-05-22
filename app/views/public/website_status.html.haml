@@ -42,6 +42,8 @@
 
         - @recent_audio_events.each do |audio_event|
           %tr
+            - tags = audio_event.tags.order(:type_of_tag, :text).to_a
+            - tags_text = tags.empty? ? '(none)' : tags.map{ |item| item.text}.join(', ')
             - priority_tag = Tag.get_priority_tag(audio_event.tags.order(:type_of_tag, :text)) || Tag.new(text:'(none)')
             - unless current_user.blank?
               - site_link = "/projects/#{audio_event.audio_recording.site.projects[0].id}/sites/#{audio_event.audio_recording.site.id}"
@@ -51,12 +53,12 @@
               - audio_link = "/listen/#{audio_event.audio_recording.id}?start=#{offset_start_round_30_sec}&end=#{offset_end_round_30_sec}"
               - annotation_link = "library/#{audio_event.audio_recording_id}/audio_events/#{audio_event.id}"
             - if current_user.blank?
-              %td= priority_tag.text
+              %td{title: tags_text}= priority_tag.text
             - else
-              %td= link_to priority_tag.text, audio_link, target: '_self'
+              %td{title: tags_text}= link_to priority_tag.text, audio_link, target: '_self'
             - unless current_user.blank?
               %td= audio_event.audio_recording.site.name
-            %td= distance_of_time_in_words(Time.zone.now, audio_event.updated_at, nil, {vague: true})+ ' ago'
+            %td{title: audio_event.updated_at}= distance_of_time_in_words(Time.zone.now, audio_event.updated_at, nil, {vague: true})+ ' ago'
             - unless current_user.blank?
               %td= audio_event.updater.user_name
               %td.nolink
@@ -97,8 +99,8 @@
               - site_link = "/projects/#{audio_recording.site.projects[0].id}/sites/#{audio_recording.site.id}"
             - unless current_user.blank?
               %td= link_to audio_recording.site.name, audio_link, target: '_self'
-            %td= distance_of_time(audio_recording.duration_seconds)
-            %td= distance_of_time_in_words(Time.zone.now, audio_recording.created_at, nil, {vague: true})+ ' ago'
+            %td{title: "#{audio_recording.duration_seconds.to_s} seconds"}= distance_of_time(audio_recording.duration_seconds)
+            %td{title: audio_recording.created_at}= distance_of_time_in_words(Time.zone.now, audio_recording.created_at, nil, {vague: true})+ ' ago'
             - unless current_user.blank?
               %td.nolink
                 = link_to audio_link, target: '_self', class: 'btn btn-mini' do
