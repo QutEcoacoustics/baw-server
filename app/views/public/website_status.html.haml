@@ -44,7 +44,7 @@
           %tr
             - tags = audio_event.tags.order(:type_of_tag, :text).to_a
             - tags_text = tags.empty? ? '(none)' : tags.map{ |item| item.text}.join(', ')
-            - priority_tag = Tag.get_priority_tag(audio_event.tags.order(:type_of_tag, :text)) || Tag.new(text:'(none)')
+            - priority_tag = Tag.get_priority_tag(tags) || Tag.new(text:'(none)')
             - unless current_user.blank?
               - site_link = "/projects/#{audio_event.audio_recording.site.projects[0].id}/sites/#{audio_event.audio_recording.site.id}"
               - offset_start_round_30_sec = (audio_event.start_time_seconds / 30).floor * 30
