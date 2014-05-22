@@ -37,7 +37,9 @@
     %footer
       %ul.nav.nav-pills
         %li.disabled
-          %a= "&copy; QUT #{Time.zone.now.year}".html_safe
+          %a
+            &copy; QUT
+            =Time.zone.now.year
         %li.disabled
           %a= "#{Rails.env} ver #{Settings.server_version}"
         %li= link_to 'Stats', website_status_path
