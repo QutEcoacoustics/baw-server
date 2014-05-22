@@ -84,7 +84,7 @@ class User < ActiveRecord::Base
   before_validation :ensure_user_role
 
   def projects
-    (self.created_projects + self.accessible_projects).uniq
+    (self.created_projects.includes(:sites) + self.accessible_projects.includes(:sites)).uniq
   end
 
   def inaccessible_projects
@@ -115,12 +115,12 @@ class User < ActiveRecord::Base
 
   def accessible_audio_recordings
     user_sites = self.projects.map { |project| project.sites.map { |site| site.id} }.to_a.uniq
-    AudioRecording.where(site_id: user_sites).order('updated_at DESC').limit(10)
+    AudioRecording.where(site_id: user_sites).limit(10)
   end
 
   def accessible_audio_events
     user_sites = self.projects.map { |project| project.sites.select(:id).map { |site| site.id} }.to_a.uniq
-    AudioEvent.where(audio_recording_id: AudioRecording.where(site_id: user_sites).select(:id)).order('audio_events.updated_at DESC').limit(10)
+    AudioEvent.where(audio_recording_id: AudioRecording.where(site_id: user_sites).select(:id)).limit(10)
   end
 
   # helper methods for permission checks

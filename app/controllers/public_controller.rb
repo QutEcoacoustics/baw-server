@@ -1,9 +1,9 @@
 class PublicController < ApplicationController
-  layout 'public', except: [:index]
-  layout 'application', only: [:index]
+  layout 'public'
 
   skip_authorization_check only: [
       :index, :status, :website_status,
+      :recent_annotations, :recent_audio_recordings,
       :new_contact_us, :create_contact_us,
       :new_bug_report, :create_bug_report,
       :new_data_request, :create_data_request,
@@ -56,15 +56,22 @@ class PublicController < ApplicationController
     month_ago = 1.month.ago
     annotations_total = AudioEvent.count
     annotations_recent = AudioEvent.where('created_at > ? OR updated_at > ?', month_ago, month_ago).count
-    #annotations_total_duration = BigDecimal.new(AudioEvent.sum('end_time_seconds - start_time_seconds'))
+    annotations_total_duration = AudioEvent.sum('end_time_seconds - start_time_seconds').to_f
+    annotations_total_duration = 0 if annotations_total_duration.blank?
 
     audio_recording_total = AudioRecording.count
     audio_recording_recent = AudioRecording.where('created_at > ? OR updated_at > ?', month_ago, month_ago).count
+
     audio_recording_total_duration = AudioRecording.sum(:duration_seconds)
+    audio_recording_total_duration = 0 if audio_recording_total_duration.blank?
+
     audio_recording_total_size = AudioRecording.sum(:data_length_bytes)
+    audio_recording_total_size = 0 if audio_recording_total_size.blank?
 
     tags_total = Tag.count
     tags_applied_total = Tagging.count
+
+    #percent_annotated = annotations_total_duration.to_f / audio_recording_total_duration.to_f * 100
 
     #unannotated_audio = audio_recording_total_duration - annotations_total_duration
 
@@ -74,24 +81,19 @@ class PublicController < ApplicationController
         users_total: users_total,
         online_window_start: online_window,
         annotations_total: annotations_total,
+        annotations_total_duration: annotations_total_duration,
         annotations_recent: annotations_recent,
         audio_recording_total: audio_recording_total,
         audio_recording_recent: audio_recording_recent,
         audio_recording_total_duration: audio_recording_total_duration,
         audio_recording_total_size: audio_recording_total_size,
         tags_total: tags_total,
-        tags_applied_total: tags_applied_total
+        tags_applied_total: tags_applied_total,
+        #percent_annotated: percent_annotated
     }
 
-    order_by_coalesce = 'COALESCE(audio_events.created_at, audio_events.updated_at) DESC'
-
-    if current_user.blank?
-      @recent_audio_events = AudioEvent.includes(:audio_recording).order(order_by_coalesce).limit(7)
-    elsif current_user.has_role? :admin
-      @recent_audio_events = AudioEvent.includes(:audio_recording, :updater).order(order_by_coalesce).limit(20)
-    else
-      @recent_audio_events = current_user.accessible_audio_events.includes(:audio_recording, :updater).order(order_by_coalesce).limit(7)
-    end
+    recent_audio_recordings
+    recent_audio_events
 
     respond_to do |format|
       format.html
@@ -101,17 +103,23 @@ class PublicController < ApplicationController
 
   # GET /credits
   def credits
-
+    respond_to do |format|
+      format.html
+    end
   end
 
   # GET /disclaimers
   def disclaimers
-
+    respond_to do |format|
+      format.html
+    end
   end
 
   # GET /ethics_statement
   def ethics_statement
-
+    respond_to do |format|
+      format.html
+    end
   end
 
   # GET /contact_us
@@ -213,6 +221,34 @@ class PublicController < ApplicationController
         }
       end
     end
+  end
+
+  private
+
+  def recent_audio_recordings
+    order_by_coalesce = 'COALESCE(audio_recordings.updated_at, audio_recordings.created_at) DESC'
+
+    if current_user.blank?
+      @recent_audio_recordings = AudioRecording.order(order_by_coalesce).limit(7)
+    elsif current_user.has_role? :admin
+      @recent_audio_recordings = AudioRecording.includes(site: :projects).order(order_by_coalesce).limit(10)
+    else
+      @recent_audio_recordings = current_user.accessible_audio_recordings.includes(site: :projects).order(order_by_coalesce).limit(10)
+    end
+
+  end
+
+  def recent_audio_events
+    order_by_coalesce = 'COALESCE(audio_events.updated_at, audio_events.created_at) DESC'
+
+    if current_user.blank?
+      @recent_audio_events = AudioEvent.order(order_by_coalesce).limit(7)
+    elsif current_user.has_role? :admin
+      @recent_audio_events = AudioEvent.includes([:updater, audio_recording: :site]).order(order_by_coalesce).limit(10)
+    else
+      @recent_audio_events = current_user.accessible_audio_events.includes([:updater, audio_recording: :site]).order(order_by_coalesce).limit(10)
+    end
+
   end
 
 end
