@@ -54,4 +54,24 @@ class Tag < ActiveRecord::Base
 
   end
 
+  # @param [Tag] tags
+  def self.get_priority_tag(tags)
+
+    return nil if tags.size < 1
+
+    first = tags.first
+    return first if first.type_of_tag.to_s == 'common_name'
+
+    first_common = nil
+    first_species = nil
+    first_other = nil
+    tags.each do |tag|
+      first_common = tag if tag.type_of_tag == 'common_name' && first_common == nil
+      first_species = tag if tag.type_of_tag == 'species_name' && first_common == nil
+      first_other = tag if first_other == nil
+    end
+
+    first_common || first_species || first_other
+  end
+
 end

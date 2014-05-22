@@ -32,7 +32,7 @@
       %table.table.table-striped(data-provides='rowlink')
 
         %tr
-          %th Tags
+          %th Tag
           - unless current_user.blank?
             %th Site
           %th Last Updated
@@ -42,8 +42,7 @@
 
         - @recent_audio_events.each do |audio_event|
           %tr
-            - tags = audio_event.tags.order(:type_of_tag, :text).select(:text).to_a.map{ |item| item.text}
-            - tag_text = tags.empty? ? '(none)' : tags.join(', ')
+            - priority_tag = Tag.get_priority_tag(audio_event.tags.order(:type_of_tag, :text)) || Tag.new(text:'(none)')
             - unless current_user.blank?
               - site_link = "/projects/#{audio_event.audio_recording.site.projects[0].id}/sites/#{audio_event.audio_recording.site.id}"
               - offset_start_round_30_sec = (audio_event.start_time_seconds / 30).floor * 30
@@ -52,9 +51,9 @@
               - audio_link = "/listen/#{audio_event.audio_recording.id}?start=#{offset_start_round_30_sec}&end=#{offset_end_round_30_sec}"
               - annotation_link = "library/#{audio_event.audio_recording_id}/audio_events/#{audio_event.id}"
             - if current_user.blank?
-              %td= tag_text
+              %td= priority_tag.text
             - else
-              %td= link_to tag_text, audio_link, target: '_self'
+              %td= link_to priority_tag.text, audio_link, target: '_self'
             - unless current_user.blank?
               %td= audio_event.audio_recording.site.name
             %td= distance_of_time_in_words(Time.zone.now, audio_event.updated_at, nil, {vague: true})+ ' ago'
