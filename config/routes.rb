@@ -93,8 +93,8 @@ AWB::Application.routes.draw do
   get '/taggings/user/:user_id/tags' => 'taggings#user_index', as: :user_taggings, defaults: {format: 'json'}, constraints: {format: /(json)/}
 
   # audio event csv download routes
-  get '/projects/:project_id/audio_events/download' => 'audio_events#download', defaults: {format: 'csv'}, constraints: {format: /(csv)/}
-  get '/projects/:project_id/sites/:site_id/audio_events/download' => 'audio_events#download', defaults: {format: 'csv'}, constraints: {format: /(csv)/}
+  get '/projects/:project_id/audio_events/download' => 'audio_events#download', defaults: {format: 'csv'}
+  get '/projects/:project_id/sites/:site_id/audio_events/download' => 'audio_events#download', defaults: {format: 'csv'}
 
   # shallow path to sites
   get '/sites/:id' => 'sites#show_shallow', defaults: {format: 'json'}

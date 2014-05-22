@@ -5,7 +5,8 @@ class AudioEventsController < ApplicationController
   load_and_authorize_resource :audio_recording, except: [:new, :library, :library_paged]
   load_and_authorize_resource :audio_event, through: :audio_recording, except: [:new, :library, :library_paged, :download]
   skip_authorization_check only: [:library, :library_paged, :download]
-  respond_to :json
+  respond_to :json, except: [:download]
+  respond_to :csv, only: [:download]
 
   # GET /audio_events
   # GET /audio_events.json
@@ -100,12 +101,8 @@ class AudioEventsController < ApplicationController
 
   def download
     @formatted_annotations = download_format AudioEvent.csv_filter(current_user, params).limit(1000)
-    respond_to do |format|
-      format.csv {
-        time_now = Time.zone.now
-        render_csv("annotations-#{time_now.strftime('%Y%m%d')}-#{time_now.strftime('%H%M%S')}")
-      }
-    end
+    time_now = Time.zone.now
+    render_csv("annotations-#{time_now.strftime('%Y%m%d')}-#{time_now.strftime('%H%M%S')}")
   end
 
   private
