@@ -206,6 +206,7 @@ class AudioEventsController < ApplicationController
         id: audio_event.id,
         audio_event_start_date: audio_event.audio_recording.recorded_date.advance(seconds: audio_event.start_time_seconds),
         audio_recording_id: audio_event.audio_recording_id,
+        audio_recording_duration_seconds: audio_event.audio_recording.duration_seconds,
         audio_recording_recorded_date: audio_event.audio_recording.recorded_date,
         site_name: audio_event.audio_recording.site.name,
         site_id: audio_event.audio_recording.site.id,
