@@ -152,7 +152,7 @@ class AudioEventsController < ApplicationController
           abs_end.strftime('%Y/%m/%d'),
           abs_end.strftime('%H:%M:%S'),
           audio_event_duration_duration,
-          'UTC',
+          abs_end.strftime('%z'),
           audio_event.high_frequency_hertz,
           audio_event.low_frequency_hertz,
           audio_event.audio_recording.site.projects.collect { |project| project.id }.join(' | '),
