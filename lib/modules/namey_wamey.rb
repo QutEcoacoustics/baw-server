@@ -9,8 +9,10 @@ class NameyWamey
   # @return [string] suggested file name
   def self.create_audio_recording_name(audio_recording, start_offset, end_offset, extra_options, extension)
 
-    abs_start = audio_recording.recorded_date.dup.advance(seconds: start_offset).strftime('%Y%m%d_%H%M%S')
-    duration = end_offset - start_offset
+    start_offset_float = start_offset.to_f
+    end_offset_float = end_offset.to_f
+    abs_start = audio_recording.recorded_date.dup.advance(seconds: start_offset_float).strftime('%Y%m%d_%H%M%S')
+    duration = end_offset_float - start_offset_float
     site_name = audio_recording.site.name.gsub(' ', '_')
     site_id = audio_recording.site.id.to_s
     extra_options_formatted = self.get_extra_options(extra_options)

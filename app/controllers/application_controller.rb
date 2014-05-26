@@ -92,6 +92,7 @@ class ApplicationController < ActionController::Base
   def render_csv(filename = nil)
     require 'csv'
     filename ||= params[:action]
+    filename = filename.trim('.', '')
     filename += '.csv'
 
     if request.env['HTTP_USER_AGENT'] =~ /msie/i
