@@ -3,18 +3,19 @@ require 'csv'
 class AudioEventsController < ApplicationController
 
   load_and_authorize_resource :audio_recording, except: [:new, :library, :library_paged]
-  load_and_authorize_resource :audio_event, through: :audio_recording, except: [:new, :library, :library_paged]
-  skip_authorization_check only: [:library, :library_paged]
-  respond_to :json
+  load_and_authorize_resource :audio_event, through: :audio_recording, except: [:new, :library, :library_paged, :download]
+  skip_authorization_check only: [:library, :library_paged, :download]
+  respond_to :json, except: [:download]
+  respond_to :csv, only: [:download]
 
   # GET /audio_events
   # GET /audio_events.json
   def index
     if @audio_recording
-      event = @audio_recording.audio_events
-      event = event.end_after(params[:start_offset]) if params[:start_offset]
-      event = event.start_before(params[:end_offset]) if params[:end_offset]
-      render json: event.to_json(include: {taggings: {include: :tag}})
+      events = @audio_recording.audio_events
+      events = events.end_after(params[:start_offset]) if params[:start_offset]
+      events = events.start_before(params[:end_offset]) if params[:end_offset]
+      render json: events.to_json(include: {taggings: {include: :tag}})
     else
       render json: {error: 'An audio recording must be specified.'}, status: :bad_request
     end
@@ -22,13 +23,13 @@ class AudioEventsController < ApplicationController
 
   def library
     authorize! :library, AudioEvent
-    response_hash = get_audio_events(current_user, params)
+    response_hash = library_format(current_user, params)
     render json: response_hash
   end
 
   def library_paged
     authorize! :library, AudioEvent
-    response_hash = get_audio_events(current_user, params)
+    response_hash = library_format(current_user, params)
 
     total_query = AudioEvent.filtered(current_user, params).offset(nil).limit(nil)
     total = total_query.count
@@ -47,14 +48,14 @@ class AudioEventsController < ApplicationController
   # GET /audio_events/1
   # GET /audio_events/1.json
   def show
-    #render json: format_response(AudioEvent.where(id:params[:id]).first)
+    #render json: json_format(AudioEvent.where(id:params[:id]).first)
     #render json: AudioEvent.find(params[:id]).to_json(include: {taggings: {include: :tag}})
     # options = {
-    #     new: [format_response(AudioEvent.where(id: params[:id]).first)],
+    #     new: [json_format(AudioEvent.where(id: params[:id]).first)],
     #     old: AudioEvent.where(id: params[:id]).includes(taggings: :tag)
     # }
 
-    render json: format_response(AudioEvent.where(id: params[:id]).first)
+    render json: json_format(AudioEvent.where(id: params[:id]).first)
   end
 
   # GET /audio_events/new
@@ -99,78 +100,76 @@ class AudioEventsController < ApplicationController
 
 
   def download
+    @formatted_annotations = download_format AudioEvent.csv_filter(current_user, params).limit(1000)
+    time_now = Time.zone.now
 
-    project_id = nil
-    if params[:project_id]
-      project_id = params[:project_id].to_i
+    file_name = "annotations-#{time_now.strftime('%Y%m%d')}-#{time_now.strftime('%H%M%S')}"
+
+    if params[:audio_recording_id] || params[:audioRecordingId] || params[:recording_id] || params[:recordingId]
+      audio_recording = AudioRecording.where(
+          id: (params[:audio_recording_id] || params[:audioRecordingId] ||
+              params[:recording_id] || params[:recordingId]).to_i).first
+      start_offset = params[:start_offset] || params[:startOffset]
+      end_offset = params[:end_offset] || params[:endOffset]
+      file_name = NameyWamey.create_audio_recording_name(audio_recording, start_offset, end_offset, '', '')
+    elsif filter_params[:site_id] || filter_params[:siteId]
+      site = Site.where(id: (filter_params[:site_id] || filter_params[:siteId])).first
+      file_name = NameyWamey.create_site_name(site.projects.first, site, '', '')
+    elsif filter_params[:project_id] || filter_params[:projectId]
+      project = Project.where(id: (filter_params[:project_id] || filter_params[:projectId])).first
+      file_name = NameyWamey.create_project_name(project, '', '')
     end
 
-    site_id = nil
-    if params[:site_id]
-      site_id = params[:site_id].to_i
-    end
-
-    audio_recording_id = nil
-    if params[:audio_recording_id]
-      audio_recording_id = params[:audio_recording_id].to_i
-    end
-
-    query = AudioEvent.includes(:tags)
-
-    if project_id || site_id
-
-      query = query.joins(audio_recording: {site: :projects})
-
-      query = query.where(projects: {id: project_id}) if project_id
-
-      query = query.where(sites: {id: site_id}) if site_id
-
-    end
-
-    @formatted_annotations =
-        custom_format query.order(:recorded_date).all
-
-    respond_to do |format|
-      format.xml { render xml: @formatted_annotations }
-      format.json { render json: @formatted_annotations }
-      format.csv {
-        time_now = Time.zone.now
-        render_csv("annotations-#{time_now.strftime('%Y%m%d')}-#{time_now.strftime('%H%M%S')}")
-      }
-    end
+    render_csv(file_name)
   end
 
   private
 
-  # @param [Array<AudioEvent>] annotations
-  def custom_format(annotations)
+  # @param [Array<AudioEvent>] audio_events
+  def download_format(audio_events)
 
     list = []
 
-    annotations.each do |annotation|
+    audio_events.each do |audio_event|
 
-      abs_start = annotation.audio_recording.recorded_date.advance(seconds: annotation[:start_time_seconds])
-      abs_end = annotation.audio_recording.recorded_date.advance(seconds: annotation[:end_time_seconds])
+      abs_start = audio_event.audio_recording.recorded_date.advance(seconds: audio_event[:start_time_seconds])
+      abs_end = audio_event.audio_recording.recorded_date.advance(seconds: audio_event[:end_time_seconds])
 
-      annotation_items = [
-          annotation[:id],
+      audio_event_duration_duration = audio_event.end_time_seconds - audio_event.start_time_seconds
+      aligned_30_sec_start = (audio_event.start_time_seconds / 30.0).floor * 30.0
+      aligned_30_sec_end = [aligned_30_sec_start + 30.0, audio_event.audio_recording.duration_seconds].min
+
+# Annotation Id, Audio Recording Id, Start Date, Start Time, End Date, End Time, Timezone, Max Frequency (hz),
+# Min Frequency (hz), Project Ids, Project Names, Site Id, Site Name, Created By Id, Created By Name, Listen Url, Library Url,
+# Tag 1 Id, Tag 1 Text, Tag 1 Type, Tag 1 Is Taxanomic, Tag 2 Id, Tag 2 Text, Tag 2 Type, Tag 2 Is Taxanomic,
+# Tag 3 Id, Tag 3 Text, Tag 3 Type, Tag 3 Is Taxanomic
+
+      audio_event_items = [
+          audio_event.id,
+          audio_event.audio_recording_id,
           abs_start.strftime('%Y/%m/%d'),
           abs_start.strftime('%H:%M:%S'),
           abs_end.strftime('%Y/%m/%d'),
           abs_end.strftime('%H:%M:%S'),
-          annotation[:high_frequency_hertz], annotation[:low_frequency_hertz],
-          annotation.audio_recording.site.projects.collect { |project| project.id }.join(' | '),
-          annotation.audio_recording.site.id,
-          annotation.audio_recording.uuid,
-          annotation.creator_id,
-          'http://localhost:3000/'
+          audio_event_duration_duration,
+          'UTC',
+          audio_event.high_frequency_hertz,
+          audio_event.low_frequency_hertz,
+          audio_event.audio_recording.site.projects.collect { |project| project.id }.join(' | '),
+          audio_event.audio_recording.site.projects.collect { |project| project.name }.join(' | '),
+          audio_event.audio_recording.site.id,
+          audio_event.audio_recording.site.name,
+          audio_event.creator_id,
+          audio_event.creator.user_name,
+          "http://baw.ecosounds.org/listen/#{audio_event.audio_recording_id}?start=#{aligned_30_sec_start.to_i}&end=#{aligned_30_sec_end.to_i}".html_safe,
+          "http://baw.ecosounds.org/library/#{audio_event.audio_recording_id}/audio_events/#{audio_event.id}"
       ]
 
-      annotation.tags.each do |tag|
-        annotation_items.push tag[:id], tag[:text], tag[:type_of_tag], tag[:is_taxanomic]
+      audio_event.tags.order('tags.id ASC').each do |tag|
+        audio_event_items.push tag.id, tag.text, tag.type_of_tag, tag.is_taxanomic
       end
 
-      list.push annotation_items
+      list.push audio_event_items
     end
 
     list
@@ -178,7 +177,7 @@ class AudioEventsController < ApplicationController
 
   # @param [User] current_user
   # @param [Hash] request_params
-  def get_audio_events(current_user, request_params)
+  def library_format(current_user, request_params)
     request_params[:page] = AudioEvent.filter_count(request_params, :page, 1, 1)
     request_params[:items] = AudioEvent.filter_count(request_params, :items, 10, 1, 30)
 
@@ -187,7 +186,7 @@ class AudioEventsController < ApplicationController
     response_hash = []
 
     query.map do |audio_event|
-      audio_event_hash = format_response(audio_event)
+      audio_event_hash = json_format(audio_event)
       response_hash.push(audio_event_hash)
     end
 
@@ -195,7 +194,7 @@ class AudioEventsController < ApplicationController
   end
 
   # @param [AudioEvent] audio_event
-  def format_response(audio_event)
+  def json_format(audio_event)
 
     user = audio_event.creator
     user_name = user.blank? ? '' : user.user_name

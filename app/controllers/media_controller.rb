@@ -155,6 +155,7 @@ class MediaController < ApplicationController
           {
               media_type: options[:media_type],
               site_name: audio_recording.site.name,
+              site_id: audio_recording.site.id,
               recorded_date: audio_recording.recorded_date,
               recording_duration: audio_recording.duration_seconds,
               recording_id: audio_recording.id,
@@ -200,12 +201,8 @@ class MediaController < ApplicationController
       full_path = @media_cacher.generate_spectrogram(options)
       headers['Content-Length'] = File.size(full_path.first).to_s
 
-      response_file_abs_start = audio_recording.recorded_date.dup.advance(seconds: options[:start_offset]).strftime('%Y%m%d_%H%M%S')
-      response_file_duration = options[:end_offset] - options[:start_offset]
-      response_time_info = "#{response_file_abs_start}_#{response_file_duration}"
       response_extra_info = "#{options[:channel]}_#{options[:sample_rate]}_#{options[:window]}_#{options[:colour]}"
-      suggested_file_name =
-          "#{audio_recording.site.name.gsub(' ', '_')}_#{audio_recording.id}_#{response_time_info}_#{response_extra_info}.#{options[:format]}"
+      suggested_file_name = NameyWamey.create_audio_recording_name(audio_recording, options[:start_offset], options[:end_offset], response_extra_info, options[:format])
 
       send_file full_path.first,
                 stream: true,

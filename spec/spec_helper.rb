@@ -22,8 +22,6 @@ require 'webmock/rspec'
 require 'paperclip/matchers'
 WebMock.disable_net_connect!(allow_localhost: true)
 
-include Devise::TestHelpers
-
 # gives us the login_as(@user) method when request object is not present
 # http://www.schneems.com/post/15948562424/speed-up-capybara-tests-with-devise/
 include Warden::Test::Helpers
@@ -40,6 +38,8 @@ RSpec.configure do |config|
 
   # Remove this line if you're not using ActiveRecord or ActiveRecord fixtures
   # config.fixture_path = "#{::Rails.root}/spec/fixtures"
+
+  config.include Devise::TestHelpers, type: :controller
 
   #config.profile_examples = 20
   config.include Paperclip::Shoulda::Matchers

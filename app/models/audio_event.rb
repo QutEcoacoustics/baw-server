@@ -210,6 +210,34 @@ class AudioEvent < ActiveRecord::Base
     }
   end
 
+  def self.csv_filter(user, filter_params)
+    query = AudioEvent
+    .includes([:creator, :tags, audio_recording: {site: {projects: :permissions}}])
+    .check_permissions(user)
+
+    if filter_params[:project_id] || filter_params[:projectId]
+      query = query.where(projects: {id: (filter_params[:project_id] || filter_params[:projectId]).to_i})
+    end
+
+    if filter_params[:site_id] || filter_params[:siteId]
+      query = query.where(sites: {id: (filter_params[:site_id] || filter_params[:siteId]).to_i})
+    end
+
+    if filter_params[:audio_recording_id] || filter_params[:audioRecordingId] || filter_params[:recording_id] || filter_params[:recordingId]
+      query = query.where(audio_recordings: {id: (filter_params[:audio_recording_id] || filter_params[:audioRecordingId] || filter_params[:recording_id] || filter_params[:recordingId]).to_i})
+    end
+
+    if filter_params[:start_offset] || filter_params[:startOffset]
+      query = query.end_after(filter_params[:start_offset] || filter_params[:startOffset])
+    end
+
+    if filter_params[:end_offset] || filter_params[:endOffset]
+      query = query.start_before(filter_params[:end_offset] || filter_params[:endOffset])
+    end
+
+    query.order('audio_events.id DESC')
+  end
+
   private
 
   # custom validation methods
