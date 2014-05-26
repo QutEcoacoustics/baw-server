@@ -107,14 +107,14 @@ describe AudioEventsController do
 
   describe 'GET download' do
 
-    it 'should work for a basic request' do
-      request.headers['Authorization'] = writer_token
-      sign_in :user, permission.user
-      get :download, valid_routing, valid_session
-      #assigns(:formatted_annotations).should eq([permission.project.sites[0].audio_recordings[0].audio_events[0]])
-      expect(response.status).to eq(200)
-      expect(response.body).to match /Listing widgets/m
-    end
+    # it 'should work for a basic request' do
+    #   request.headers['Authorization'] = writer_token
+    #   sign_in :user, permission.user
+    #   get :download, valid_routing, valid_session
+    #   #assigns(:formatted_annotations).should eq([permission.project.sites[0].audio_recordings[0].audio_events[0]])
+    #   expect(response.status).to eq(200)
+    #   expect(response.body).to match /Listing widgets/m
+    # end
   end
 
 

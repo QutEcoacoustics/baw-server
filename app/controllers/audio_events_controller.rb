@@ -102,7 +102,25 @@ class AudioEventsController < ApplicationController
   def download
     @formatted_annotations = download_format AudioEvent.csv_filter(current_user, params).limit(1000)
     time_now = Time.zone.now
-    render_csv("annotations-#{time_now.strftime('%Y%m%d')}-#{time_now.strftime('%H%M%S')}")
+
+    file_name = "annotations-#{time_now.strftime('%Y%m%d')}-#{time_now.strftime('%H%M%S')}"
+
+    if params[:audio_recording_id] || params[:audioRecordingId] || params[:recording_id] || params[:recordingId]
+      audio_recording = AudioRecording.where(
+          id: (params[:audio_recording_id] || params[:audioRecordingId] ||
+              params[:recording_id] || params[:recordingId]).to_i).first
+      start_offset = params[:start_offset] || params[:startOffset]
+      end_offset = params[:end_offset] || params[:endOffset]
+      file_name = NameyWamey.create_audio_recording_name(audio_recording, start_offset, end_offset, '', '')
+    elsif filter_params[:site_id] || filter_params[:siteId]
+      site = Site.where(id: (filter_params[:site_id] || filter_params[:siteId])).first
+      file_name = NameyWamey.create_site_name(site.projects.first, site, '', '')
+    elsif filter_params[:project_id] || filter_params[:projectId]
+      project = Project.where(id: (filter_params[:project_id] || filter_params[:projectId])).first
+      file_name = NameyWamey.create_project_name(project, '', '')
+    end
+
+    render_csv(file_name)
   end
 
   private
