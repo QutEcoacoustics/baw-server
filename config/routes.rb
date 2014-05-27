@@ -9,6 +9,7 @@ AWB::Application.routes.draw do
 
   # standard devise for website authentication
   devise_for :users, path: :my_account
+  resources :users, controller: :user_accounts
 
   resources :user_accounts do
     resources :permissions

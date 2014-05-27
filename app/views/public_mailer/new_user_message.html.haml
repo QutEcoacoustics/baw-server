@@ -1,0 +1,26 @@
+%p
+  Hello,
+
+%p
+  You are receiving this email because
+  = "'#{@info[:sender_name]}'"
+  signed up on
+  = "#{Settings.organisation_names.site_long_name}."
+
+- if @info[:sender_email]
+  %p
+    Their email address is included if you would like to welcome them to the site:
+    = @info[:sender_email]
+
+Additional information:
+%p
+  Date stamp:
+  = @info[:datestamp]
+
+- if @info[:logged_in_user_name]
+  %p
+    Website Member:
+    = @info[:logged_in_user_name]
+
+Regards,
+%br= Settings.organisation_names.organisation_name
