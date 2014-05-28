@@ -167,7 +167,7 @@ class AudioEventsController < ApplicationController
     @formatted_annotations = download_format AudioEvent.csv_filter(current_user, params).limit(1000)
 
     respond_to do |format|
-      format.csv { render_csv("#{file_name}-#{file_name_append}") }
+      format.csv { render_csv("#{file_name.trim('.', '')}-#{file_name_append}") }
       format.json { render json: @formatted_annotations }
     end
   end
@@ -210,8 +210,8 @@ class AudioEventsController < ApplicationController
           audio_event.audio_recording.site.name,
           audio_event.creator_id,
           audio_event.creator.user_name,
-          "http://baw.ecosounds.org/listen/#{audio_event.audio_recording_id}?start=#{aligned_30_sec_start.to_i}&end=#{aligned_30_sec_end.to_i}".html_safe,
-          "http://baw.ecosounds.org/library/#{audio_event.audio_recording_id}/audio_events/#{audio_event.id}"
+          "http://#{Settings.host.name}/listen/#{audio_event.audio_recording_id}?start=#{aligned_30_sec_start.to_i}&end=#{aligned_30_sec_end.to_i}",
+          "http://#{Settings.host.name}/library/#{audio_event.audio_recording_id}/audio_events/#{audio_event.id}"
       ]
 
       audio_event.tags.order('tags.id ASC').each do |tag|
