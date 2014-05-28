@@ -60,3 +60,5 @@
       %li= link_to 'Add New Site', new_project_site_path(@project),  title: "Add a new site to this project", data: {toggle: 'tooltip',  placement: 'right'}
     - if current_user.has_role? :admin
       %li= link_to 'Upload Audio', upload_instructions_project_site_path(@project, @site),  title: "Upload new audio to this site", data: {toggle: 'tooltip',  placement: 'right'}
+    - if can? :read, @project
+      %li= link_to 'Annotations (csv)', download_site_audio_events_path(@project, @site),  title: "Download annotations for this site", data: {toggle: 'tooltip',  placement: 'right'}

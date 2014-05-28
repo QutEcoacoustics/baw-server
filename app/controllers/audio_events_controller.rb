@@ -2,11 +2,10 @@ require 'csv'
 
 class AudioEventsController < ApplicationController
 
-  load_and_authorize_resource :audio_recording, except: [:new, :library, :library_paged]
+  load_and_authorize_resource :audio_recording, except: [:new, :library, :library_paged, :download]
   load_and_authorize_resource :audio_event, through: :audio_recording, except: [:new, :library, :library_paged, :download]
-  skip_authorization_check only: [:library, :library_paged, :download]
+  skip_authorization_check only: [:library, :library_paged]
   respond_to :json, except: [:download]
-  respond_to :csv, only: [:download]
 
   # GET /audio_events
   # GET /audio_events.json
@@ -100,27 +99,77 @@ class AudioEventsController < ApplicationController
 
 
   def download
-    @formatted_annotations = download_format AudioEvent.csv_filter(current_user, params).limit(1000)
-    time_now = Time.zone.now
 
-    file_name = "annotations-#{time_now.strftime('%Y%m%d')}-#{time_now.strftime('%H%M%S')}"
+    # first check what is available to authorise this request
+    is_authorized = false
+    if params[:project_id] || params[:projectId]
+      project = Project.where(id: (params[:project_id] || params[:projectId])).first
+      authorize! :read, project unless project.blank?
+      is_authorized = true unless project.blank?
+    else
+      project = nil
+    end
+
+    if params[:site_id] || params[:siteId]
+      site = Site.where(id: (params[:site_id] || params[:siteId])).first
+      authorize! :read, site unless site.blank?
+      is_authorized = true unless site.blank?
+    else
+      site = nil
+    end
 
     if params[:audio_recording_id] || params[:audioRecordingId] || params[:recording_id] || params[:recordingId]
       audio_recording = AudioRecording.where(
-          id: (params[:audio_recording_id] || params[:audioRecordingId] ||
-              params[:recording_id] || params[:recordingId]).to_i).first
+          id:
+              (params[:audio_recording_id] ||
+                  params[:audioRecordingId] ||
+                  params[:recording_id] ||
+                  params[:recordingId]).to_i).first
+      authorize! :show, audio_recording unless audio_recording.blank?
+      is_authorized = true unless audio_recording.blank?
+    else
+      audio_recording = nil
+    end
+
+    if params[:start_offset] || params[:startOffset]
       start_offset = params[:start_offset] || params[:startOffset]
+    else
+      start_offset = nil
+    end
+
+    if params[:end_offset] || params[:endOffset]
       end_offset = params[:end_offset] || params[:endOffset]
-      file_name = NameyWamey.create_audio_recording_name(audio_recording, start_offset, end_offset, '', '')
-    elsif filter_params[:site_id] || filter_params[:siteId]
-      site = Site.where(id: (filter_params[:site_id] || filter_params[:siteId])).first
-      file_name = NameyWamey.create_site_name(site.projects.first, site, '', '')
-    elsif filter_params[:project_id] || filter_params[:projectId]
-      project = Project.where(id: (filter_params[:project_id] || filter_params[:projectId])).first
+    else
+      end_offset = nil
+    end
+
+    unless is_authorized
+      raise CustomErrors::RoutingArgumentError, 'must provide existing audio_recording_id, start_offset, and end_offset or project_id or site_id'
+    end
+
+    # set file name
+    time_now = Time.zone.now
+    file_name_append = "#{time_now.strftime('%Y%m%d')}-#{time_now.strftime('%H%M%S')}"
+    file_name = 'annotations'
+
+    unless project.blank?
       file_name = NameyWamey.create_project_name(project, '', '')
     end
 
-    render_csv(file_name)
+    unless site.blank?
+      file_name = NameyWamey.create_site_name(site.projects.first, site, '', '')
+    end
+
+    unless audio_recording.blank? && start_offset.blank? && end_offset.blank?
+    file_name = NameyWamey.create_audio_recording_name(audio_recording, start_offset, end_offset, '', '')
+    end
+
+    @formatted_annotations = download_format AudioEvent.csv_filter(current_user, params).limit(1000)
+
+    respond_to do |format|
+      format.csv { render_csv("#{file_name}-#{file_name_append}") }
+      format.json { render json: @formatted_annotations }
+    end
   end
 
   private

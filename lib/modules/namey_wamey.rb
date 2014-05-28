@@ -17,7 +17,7 @@ class NameyWamey
     site_id = audio_recording.site.id.to_s
     extra_options_formatted = self.get_extra_options(extra_options)
 
-    "#{site_name}_#{site_id}_#{audio_recording.id}_#{abs_start}_#{duration}_#{extra_options_formatted}.#{extension.trim('.', '')}"
+    "#{site_name}_#{site_id}_#{audio_recording.id}_#{abs_start}_#{duration}#{extra_options_formatted}.#{extension.trim('.', '')}"
   end
 
   # Suggest a file name based on project, extra options and extension.
@@ -28,7 +28,7 @@ class NameyWamey
   def self.create_project_name(project, extra_options, extension)
     extra_options_formatted = self.get_extra_options(extra_options)
 
-    "#{project.name}_#{project.id}_#{extra_options_formatted}.#{extension.trim('.', '')}"
+    "#{project.name}_#{project.id}#{extra_options_formatted}.#{extension.trim('.', '')}"
   end
 
   # Suggest a file name based on project, site, extra options and extension.
@@ -39,7 +39,7 @@ class NameyWamey
   # @return [string] suggested file name
   def self.create_site_name(project, site, extra_options, extension)
     extra_options_formatted = self.get_extra_options(extra_options)
-    "#{project.name}_#{project.id}_#{site.name}_#{site.id}_#{extra_options_formatted}.#{extension.trim('.', '')}"
+    "#{project.name}_#{project.id}_#{site.name}_#{site.id}#{extra_options_formatted}.#{extension.trim('.', '')}"
   end
 
   private
@@ -54,6 +54,6 @@ class NameyWamey
     else
       extra_options_formatted = extra_options
     end
-    extra_options_formatted
+    extra_options_formatted.size > 0 ? '_' + extra_options_formatted : extra_options_formatted
   end
 end
