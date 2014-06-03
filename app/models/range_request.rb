@@ -29,7 +29,7 @@ class RangeRequest
     MULTIPART_HEADER_LENGTH = 49
     MULTIPART_DASH_LINE_BREAK_LENGTH = 8
     CONVERT_INDEX_TO_LENGTH = 1
-    REQUIRED_PARAMETERS = [:start_offset, :end_offset, :recorded_date, :site_name, :ext, :file_path, :media_type]
+    REQUIRED_PARAMETERS = [:start_offset, :end_offset, :recorded_date, :site_id, :site_name, :ext, :file_path, :media_type]
 
 
     HTTP_HEADER_ACCEPT_RANGES = 'Accept-Ranges'
@@ -267,11 +267,20 @@ class RangeRequest
 
     range_header = rails_request.headers[HTTP_HEADER_RANGE]
 
-    response_file_abs_start = options[:recorded_date].advance(seconds: options[:start_offset]).strftime('%Y%m%d_%H%M%S')
-    response_file_duration = options[:end_offset] - options[:start_offset]
+    audio_recording = {
+        id: options[:recording_id],
+        recorded_date: options[:recorded_date],
+        site: {
+            id: options[:site_id],
+            name: options[:site_name]
+        }
+    }
+    response_extra_info = "#{options[:channel]}_#{options[:sample_rate]}"
 
-    suggested_file_name =
-        "#{options[:site_name].gsub(' ', '_')}_#{options[:recording_id]}_#{response_file_abs_start}_#{response_file_duration}.#{options[:ext]}"
+    suggested_file_name = NameyWamey.create_audio_recording_name(
+        audio_recording,
+        options[:start_offset], options[:end_offset],
+        response_extra_info, options[:ext])
 
     file_modified_time = File.mtime(file_path).getutc
     file_size = File.size(file_path)

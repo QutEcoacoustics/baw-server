@@ -1,5 +1,14 @@
 %h1 Contact Us
 
+%p
+  This form is for general enquiries. We have separate forms to
+  =link_to 'request data', data_request_path
+  or
+  =link_to 'report issues', bug_report_path
+  ="."
+
+%br
+
 = simple_form_for @contact_us, url: '/contact_us', html: {class: 'form-horizontal' } do |f|
   = f.error_notification
 

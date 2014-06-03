@@ -10,47 +10,17 @@ class ApplicationController < ActionController::Base
   rescue_from ActiveRecord::RecordNotFound, with: :record_not_found
   rescue_from ActiveRecord::RecordNotUnique, with: :record_not_unique
 
+  # error handling for cancan authorisation checks
+  rescue_from CanCan::AccessDenied, with: :access_denied
+
+  # error handling for routes that take a combination of attributes
+  rescue_from CustomErrors::RoutingArgumentError, with: :routing_argument_missing
+
   protect_from_forgery
 
   skip_before_filter :verify_authenticity_token, if: :json_request?
 
   after_filter :set_csrf_cookie_for_ng, :resource_representation_caching_fixes
-
-  rescue_from CanCan::AccessDenied do |exception|
-    if current_user && current_user.confirmed?
-
-      json_forbidden = {
-          error: 'You are logged in, but do not have sufficent permissions to access this resource.',
-          request_new_permissions_link: new_access_request_projects_url
-      }
-
-      if !request.env['HTTP_REFERER'].blank? and request.env['HTTP_REFERER'] != request.env['REQUEST_URI']
-        respond_to do |format|
-          format.html { redirect_to :back, alert: exception.message }
-          format.json { render json: json_forbidden.to_json, status: :forbidden }
-        end
-      else
-        respond_to do |format|
-          format.html { redirect_to projects_path, alert: exception.message }
-          format.json { render json: json_forbidden.to_json, status: :forbidden }
-        end
-
-      end
-    else
-
-      json_response = {
-          error: 'You need to log in and confirm your account to access this resource.',
-          sign_in_link: new_user_session_url,
-          user_confirmation_link: new_user_confirmation_url
-      }.to_json
-
-      respond_to do |format|
-        format.html { redirect_to root_path, alert: exception.message }
-        format.json { render json: json_response, status: :unauthorized }
-        format.all { render json: json_response, status: :unauthorized }
-      end
-    end
-  end
 
   def add_archived_at_header(model)
     if model.respond_to?(:deleted_at) && !model.deleted_at.blank?
@@ -92,6 +62,7 @@ class ApplicationController < ActionController::Base
   def render_csv(filename = nil)
     require 'csv'
     filename ||= params[:action]
+    filename = filename.trim('.', '')
     filename += '.csv'
 
     if request.env['HTTP_USER_AGENT'] =~ /msie/i
@@ -114,25 +85,11 @@ class ApplicationController < ActionController::Base
     User.stamper = self.current_user
   end
 
-  # Devise: Overwriting the sign_out redirect path method
-  def after_sign_out_path_for(resource_or_scope)
-    new_user_session_path
-  end
-
-  # Devise: Overwriting the sign_up redirect path method
-  def after_sign_up_path_for(resource_or_scope)
-    new_user_session_path
-  end
-
-  # Devise: Overwriting the sign_up redirect path method
-  def after_sign_up_path_for(resource_or_scope)
-    projects_path
-  end
-
   def record_not_found(error)
     respond_to do |format|
       format.html { render template: 'errors/record_not_found', status: :not_found }
       format.json { render json: {code: 404, phrase: 'Not Found', message: 'Not found'}, status: :not_found }
+      format.all { render json: {code: 404, phrase: 'Not Found', message: 'Not found'}, status: :not_found }
     end
   end
 
@@ -140,7 +97,66 @@ class ApplicationController < ActionController::Base
     respond_to do |format|
       format.html { render template: 'errors/generic', status: :conflict }
       format.json { render json: {code: 409, phrase: 'Conflict', message: 'Not unique'}, status: :conflict }
+      format.all { render json: {code: 409, phrase: 'Conflict', message: 'Not unique'}, status: :conflict }
     end
+  end
+
+  def access_denied(error)
+    if current_user && current_user.confirmed?
+
+      json_forbidden = {
+          code: 403,
+          phrase: 'Forbidden',
+          message: 'You are logged in, but do not have sufficent permissions to access this resource.',
+          request_new_permissions_link: new_access_request_projects_url
+      }
+
+      if !request.env['HTTP_REFERER'].blank? and request.env['HTTP_REFERER'] != request.env['REQUEST_URI']
+        respond_to do |format|
+          format.html { redirect_to :back, alert: error.message }
+          format.json { render json: json_forbidden.to_json, status: :forbidden }
+          format.all { render json: json_forbidden.to_json, status: :forbidden, content_type: 'application/json' }
+        end
+      else
+        respond_to do |format|
+          format.html { redirect_to projects_path, alert: error.message }
+          format.json { render json: json_forbidden.to_json, status: :forbidden }
+          format.all { render json: json_forbidden.to_json, status: :forbidden, content_type: 'application/json' }
+        end
+
+      end
+    else
+
+      json_response = {
+          code: 401,
+          phrase: 'Unauthorized',
+          message: 'You need to log in and confirm your account to access this resource.',
+          sign_in_link: new_user_session_url,
+          user_confirmation_link: new_user_confirmation_url
+      }.to_json
+
+      # http://blogs.thewehners.net/josh/posts/354-obscure-rails-bug-respond_to-formatany
+      respond_to do |format|
+        format.html { redirect_to root_path, alert: error.message }
+        format.json { render json: json_response, status: :unauthorized }
+        format.all { render json: json_response, status: :unauthorized, content_type: 'application/json' }
+      end
+    end
+  end
+
+  def routing_argument_missing(error)
+    json_response = {
+        code: 400,
+        phrase: 'Bad Request',
+        message: error.message
+    }.to_json
+
+    respond_to do |format|
+      format.html { redirect_to root_path, alert: error.message }
+      format.json { render json: json_response, status: :bad_request }
+      format.all { render json: json_response, status: :bad_request, content_type: 'application/json' }
+    end
+
   end
 
   def resource_representation_caching_fixes

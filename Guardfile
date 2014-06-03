@@ -11,7 +11,7 @@ guard :rspec, cli: '--format progress --color' do
   #watch(%r{^app/(.+)\.rb$})                           { |m| "spec/#{m[1]}_spec.rb" }
   #watch(%r{^app/(.*)(\.erb|\.haml)$})                 { |m| "spec/#{m[1]}#{m[2]}_spec.rb" }
   watch(%r{^app/models/(.+)\.rb$})                     { |m| "spec/models/#{m[1]}_spec.rb" }
-  watch(%r{^app/controllers/(.+)_(controller)\.rb$})   { |m| [ "spec/acceptance/#{m[1]}_spec.rb"] }
+  watch(%r{^app/controllers/(.+)_(controller)\.rb$})   { |m| [ "spec/acceptance/#{m[1]}_spec.rb", "spec/controllers/#{m[1]}_controller_spec.rb"] }
   watch(%r{^spec/support/(.+)\.rb$})                   { 'spec' }
   watch('config/routes.rb')                            { 'spec/routing' }
   watch('app/controllers/application_controller.rb')   { 'spec/acceptance' }

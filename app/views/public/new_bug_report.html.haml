@@ -1,17 +1,17 @@
 %h1 Issue Report
 
+%p
+  Complete the form below to report a problem. Alternatively, we have a
+  %a{href: Settings.organisation_names.github_issues_url} Github Issues
+  page.
+
+%br
+
 = simple_form_for @bug_report, url: '/bug_report', html: {class: 'form-horizontal' } do |f|
   = f.error_notification
 
   .row-fluid
     .span12.form-inputs
-      .control-group.string.github_link
-        %label.string.control-label{for: :github_link}
-        .controls
-          %span.help-inline
-            Complete the form below to report a problem. Alternatively, we have a
-            %a{href: Settings.organisation_names.github_issues_url} Github Issues
-            page.
       = f.input :name, label: 'Your Name'
       = f.input :email, label: 'Contact Email'
       = f.input :date, label: 'Date issue occurred', as: :string, order: [:year, :month, :day], input_html: {value: @bug_report.date}

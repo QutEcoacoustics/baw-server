@@ -22,6 +22,10 @@ class PublicMailer < ActionMailer::Base
     send_message(logged_in_user, model, rails_request, 'Data Request')
   end
 
+  def new_user_message(logged_in_user, model)
+    send_message(logged_in_user, model, nil, 'New User Notification')
+  end
+
   private
 
   # @param [User] logged_in_user
@@ -34,8 +38,8 @@ class PublicMailer < ActionMailer::Base
         model: model,
         sender_email: model.email.blank? ? nil : model.email,
         sender_name: model.name.blank? ? "someone (who didn't include their name)" : model.name,
-        client_ip: rails_request.remote_ip,
-        client_browser: rails_request.user_agent,
+        client_ip: rails_request.blank? ? '' : rails_request.remote_ip,
+        client_browser: rails_request.blank? ? '' : rails_request.user_agent,
         datestamp: Time.zone.now.utc.iso8601
     }
 

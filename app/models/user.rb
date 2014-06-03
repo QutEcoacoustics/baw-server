@@ -97,8 +97,10 @@ class User < ActiveRecord::Base
   # before and after methods
   before_validation :ensure_user_role
 
+  after_create :special_after_create_actions
+
   def projects
-    (self.created_projects + self.accessible_projects).uniq
+    (self.created_projects.includes(:sites) + self.accessible_projects.includes(:sites)).uniq
   end
 
   def inaccessible_projects
@@ -128,13 +130,13 @@ class User < ActiveRecord::Base
   end
 
   def accessible_audio_recordings
-    user_sites = self.projects.map { |project| project.sites.map { |site| site.id} }.to_a.uniq
-    AudioRecording.where(site_id: user_sites).order('updated_at DESC').limit(10)
+    user_sites = self.projects.map { |project| project.sites.map { |site| site.id } }.to_a.uniq
+    AudioRecording.where(site_id: user_sites).limit(10)
   end
 
   def accessible_audio_events
-    user_sites = self.projects.map { |project| project.sites.select(:id).map { |site| site.id} }.to_a.uniq
-    AudioEvent.where(audio_recording_id: AudioRecording.where(site_id: user_sites).select(:id)).order('audio_events.updated_at DESC').limit(10)
+    user_sites = self.projects.map { |project| project.sites.select(:id).map { |site| site.id } }.to_a.uniq
+    AudioEvent.where(audio_recording_id: AudioRecording.where(site_id: user_sites).select(:id)).limit(10)
   end
 
   # helper methods for permission checks
@@ -220,5 +222,29 @@ class User < ActiveRecord::Base
   private
   def ensure_user_role
     self.roles << :user if roles_mask.blank?
+  end
+
+
+  def special_after_create_actions
+    # WARNING: if this raises an error, the user will not be created and the page will be redirected to the home page
+    # notify us of new user sign ups
+    PublicMailer.new_user_message(self, NewUserInfo.new(name: self.user_name, email: self.email))
+
+    # add this hack only for a short time
+    # new users are automatically confirmed
+    self.confirmation_token = nil
+    self.skip_confirmation!
+    self.save!
+
+    # add this hack only for a short time
+    # new users get access to this project straight away
+
+    special_project_id = 1007
+    project_id = special_project_id unless Project.where(id: special_project_id).first.blank?
+
+    unless project_id.blank?
+      new_permission = Permission.new(creator_id: self.id, level: :writer, project_id: project_id, user_id: self.id)
+      new_permission.save!
+    end
   end
 end

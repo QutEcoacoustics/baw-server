@@ -1,10 +1,13 @@
 -# see https://github.com/seyhunak/twitter-bootstrap-rails#navbar-helper
-= nav_bar fixed: :top, responsive: true, brand: 'Bioacoustic Workbench', inverse: true do
+= nav_bar fixed: :top, responsive: true, inverse: true do
   = menu_group do
+    = menu_item Settings.organisation_names.parent_site_name, Settings.organisation_names.parent_site_link
+    = menu_item Settings.organisation_names.site_long_name, root_path, class: 'brand'
     = menu_item 'Projects', projects_path if can? :index, Project
     = menu_item 'Annotation Library', '/library' if can? :index, Project
     = menu_item 'Scripts', scripts_path  if can? :manage, Script
     = menu_item 'User Accounts', user_accounts_path if can? :manage, User
+    = menu_item 'Contact Us', contact_us_path
   = menu_group pull: :right do
     - if current_user.blank?
       = menu_item 'Sign up', new_user_registration_path

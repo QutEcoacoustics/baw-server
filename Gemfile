@@ -97,7 +97,7 @@ end
 group :production, :staging do
   # See https://github.com/sstephenson/execjs#readme for more supported runtimes
   gem 'therubyracer', '>= 0.11.3', platforms: :ruby, require: 'v8'
-  gem 'newrelic_rpm', '~> 3.8.0.218'
+  gem 'newrelic_rpm', '~> 3.8.0'
 end
 
 group :development do
@@ -132,7 +132,7 @@ group :test do
   gem 'shoulda-matchers', '~> 2.6.1'
   gem 'launchy', '~> 2.4.2'
   gem 'json_spec', '~> 1.1.1'
-  gem 'database_cleaner', '~> 1.2.0'
+  gem 'database_cleaner', '~> 1.2'
   gem 'webmock', '~> 1.18.0'
   gem 'coveralls', '~> 0.7.0', require: false
 end

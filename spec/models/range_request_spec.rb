@@ -20,6 +20,7 @@ describe RangeRequest do
         end_offset: 34,
         recorded_date: Time.zone.now,
         site_name: 'site_name',
+        site_id: 42,
         ext: audio_file_mono_media_type.to_sym.to_s,
         file_path: audio_file_mono,
         media_type: audio_file_mono_media_type.to_s

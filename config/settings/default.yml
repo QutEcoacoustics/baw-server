@@ -134,6 +134,8 @@ defaults: &defaults
     site_short_name: AWB
     organisation_name: Audio Group
     github_issues_url: 'url to github issues page'
+    parent_site_name: Parent Site
+    parent_site_link: '/'
   analytics:
     domain: example.com
     ua: UA-XXXXXX
