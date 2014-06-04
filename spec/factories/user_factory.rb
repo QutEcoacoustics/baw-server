@@ -17,9 +17,9 @@ FactoryGirl.define do
     # end
 
     trait :confirmed do
-      after(:create) do |user|
-        #confirmed_at { Time.zone.now }
-        user.confirm!
+      after(:build) do |user|
+        user.confirmation_token = nil
+        user.skip_confirmation!
       end
     end
 

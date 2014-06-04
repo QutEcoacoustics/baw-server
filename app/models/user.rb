@@ -214,22 +214,5 @@ class User < ActiveRecord::Base
     # WARNING: if this raises an error, the user will not be created and the page will be redirected to the home page
     # notify us of new user sign ups
     PublicMailer.new_user_message(self, NewUserInfo.new(name: self.user_name, email: self.email))
-
-    # add this hack only for a short time
-    # new users are automatically confirmed
-    self.confirmation_token = nil
-    self.skip_confirmation!
-    self.save!
-
-    # add this hack only for a short time
-    # new users get access to this project straight away
-
-    special_project_id = 1007
-    project_id = special_project_id unless Project.where(id: special_project_id).first.blank?
-
-    unless project_id.blank?
-      new_permission = Permission.new(creator_id: self.id, level: :writer, project_id: project_id, user_id: self.id)
-      new_permission.save!
-    end
   end
 end

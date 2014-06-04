@@ -127,6 +127,7 @@ group :test do
   gem 'capybara', '~> 2.2.1'
   gem 'thin', '~> 1.6.2'
   gem 'guard-rspec', '~> 3.1.0'
+  gem 'rspec', '~> 2.14.1'
   # fixed version due to unresolved bug in higher versions
   gem 'simplecov', '~> 0.7.1', require: false
   gem 'shoulda-matchers', '~> 2.6.1'
