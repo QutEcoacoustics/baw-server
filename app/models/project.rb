@@ -26,7 +26,10 @@ class Project < ActiveRecord::Base
   acts_as_paranoid
   validates_as_paranoid
 
-  # validation
+  # association validations
+  validates :creator, existence: true
+
+  # attribute validations
   validates :name, presence: true, uniqueness: {case_sensitive: false}
   validates :urn, uniqueness: {case_sensitive: false}, allow_blank: true, allow_nil:true
   validates_format_of :urn, with: /^urn:[a-z0-9][a-z0-9-]{0,31}:[a-z0-9()+,\-.:=@;$_!*'%\/?#]+$/, message: 'urn %{value} is not valid, must be in format urn:<name>:<path>', allow_blank: true, allow_nil:true

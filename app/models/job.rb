@@ -17,10 +17,13 @@ class Job < ActiveRecord::Base
   acts_as_paranoid
   validates_as_paranoid
 
-  # validations
-  validates :name, presence: true, length: { minimum: 2, maximum: 255 }, uniqueness: { case_sensitive: false }
+  # association validations
+  validates :script, existence: true
+  validates :dataset, existence: true
+  validates :creator, existence: true
 
-  validates :name, :presence => true
+  # attribute validations
+  validates :name, presence: true, length: { minimum: 2, maximum: 255 }, uniqueness: { case_sensitive: false }
   validates :script_settings, :presence => true
   validates :dataset_id, :presence => true
   validates :script_id, :presence => true

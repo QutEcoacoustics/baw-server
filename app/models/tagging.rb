@@ -17,9 +17,11 @@ class Tagging < ActiveRecord::Base
   #userstamp
   stampable
 
-  ##validations
-  validates_presence_of  :audio_event_id
-  validates_presence_of  :tag_id
-  #
+  # association validations
+  validates :audio_event, existence: true
+  validates :tag, existence: true
+  validates :creator, existence: true
+
+  # attribute validations
   #validates_uniqueness_of :audio_event_id, :scope => :tag_id
 end

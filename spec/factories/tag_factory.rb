@@ -7,7 +7,7 @@ FactoryGirl.define do
     type_of_tag 'general'
     is_taxanomic false
 
-    creator
+    association :creator
 
     trait :taxonomic_true_common do
       is_taxanomic true

@@ -1,7 +1,7 @@
 FactoryGirl.define do
 
   factory :tagging do
-    creator
+    association :creator
     tag
     audio_event
   end

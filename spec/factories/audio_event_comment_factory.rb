@@ -4,12 +4,12 @@ FactoryGirl.define do
 
     comment "Hey look, I have comments! Can't stop me now."
 
-    creator
-    audio_event
+    association :creator
+    association :audio_event
 
     trait :reported do
       flag 'report'
-      flagger
+      association :flagger
     end
 
     factory :audio_event_comment_reported, traits: [:reported]

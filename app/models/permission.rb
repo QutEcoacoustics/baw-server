@@ -15,7 +15,12 @@ class Permission < ActiveRecord::Base
   # userstamp
   stampable
 
-  # validate
+  # association validations
+  validates :project, existence: true
+  validates :user, existence: true
+  validates :creator, existence: true
+
+  # attribute validations
   validates_uniqueness_of :level, :scope => [:user_id, :project_id, :level]
   validates_presence_of :level, :user, :creator, :project
 end

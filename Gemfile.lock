@@ -18,7 +18,7 @@ GIT
 
 GIT
   remote: https://github.com/brainspec/enumerize.git
-  revision: 64c2bb892e24a35ea87117477ced050dd393b628
+  revision: eb49bda2dd7aa75158b9ecec3b44c0174f25b0ac
   specs:
     enumerize (0.8.0)
       activesupport (>= 3.2)
@@ -120,6 +120,7 @@ GEM
       coffee-script-source
       execjs
     coffee-script-source (1.7.0)
+    colorize (0.7.3)
     coveralls (0.7.0)
       multi_json (~> 1.3)
       rest-client
@@ -143,7 +144,7 @@ GEM
     exception_notification (4.0.1)
       actionmailer (>= 3.0.4)
       activesupport (>= 3.0.4)
-    execjs (2.0.2)
+    execjs (2.1.0)
     factory_girl (4.4.0)
       activesupport (>= 3.0.0)
     factory_girl_rails (4.4.1)
@@ -184,7 +185,7 @@ GEM
       rb-fsevent (>= 0.9.3)
       rb-inotify (>= 0.9)
       rb-kqueue (>= 0.2)
-    lumberjack (1.0.5)
+    lumberjack (1.0.6)
     mail (2.5.4)
       mime-types (~> 1.16)
       treetop (~> 1.4.8)
@@ -207,7 +208,7 @@ GEM
       cocaine (~> 0.5.3)
       mime-types
     pg (0.17.1-x86-mingw32)
-    polyglot (0.3.4)
+    polyglot (0.3.5)
     pry (0.9.12.6-x86-mingw32)
       coderay (~> 1.0)
       method_source (~> 0.8)
@@ -252,7 +253,7 @@ GEM
     rb-fsevent (0.9.4)
     rb-inotify (0.9.4)
       ffi (>= 0.5.0)
-    rb-kqueue (0.2.2)
+    rb-kqueue (0.2.3)
       ffi (>= 0.5.0)
     rdoc (3.12.2)
       json (~> 1.4)
@@ -292,7 +293,7 @@ GEM
       mustache (>= 0.99.4)
       rspec (>= 2.14.0)
     safe_yaml (1.0.3)
-    sass (3.3.7)
+    sass (3.3.8)
     sass-rails (3.2.6)
       railties (~> 3.2.0)
       sass (>= 3.1.10)
@@ -317,10 +318,10 @@ GEM
       multi_json (~> 1.0)
       rack (~> 1.0)
       tilt (~> 1.1, != 1.3.0)
-    sshkit (1.4.0)
+    sshkit (1.5.1)
+      colorize
       net-scp (>= 1.1.2)
       net-ssh (>= 2.8.0)
-      term-ansicolor
     term-ansicolor (1.3.0)
       tins (~> 1.0)
     thin (1.6.2)

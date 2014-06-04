@@ -32,7 +32,10 @@ class Site < ActiveRecord::Base
 
   acts_as_gmappable process_geocoding: false
 
-  # validations
+  # association validations
+  validates :creator, existence: true
+
+  # attribute validations
   validates :name, presence: true, length: {minimum: 2}
   # between -90 and 90 degrees
   validates :latitude, numericality: {only_integer: false, greater_than_or_equal_to: Site::LATITUDE_MIN, less_than_or_equal_to: Site::LATITUDE_MAX,

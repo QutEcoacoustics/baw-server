@@ -13,6 +13,9 @@ resource 'AudioEventComments' do
   let(:format) { 'json' }
 
   before(:each) do
+    # create projects, permissions, sites, etc needed for audio_event_comments
+
+
     # permission factories create one of all dependent models (project, site, audio_recording, ...)
     @write_permission = FactoryGirl.create(:write_permission)
     @read_permission = FactoryGirl.create(:read_permission, project: @write_permission.project)
@@ -25,8 +28,6 @@ resource 'AudioEventComments' do
         comment: 'comment 2',
         creator: @write_permission_2.creator,
         audio_event: @write_permission_2.project.sites[0].audio_recordings[0].audio_events[0])
-
-    a = 1
 
     @write_permission_creator = User.where(id: @write_permission.creator_id).first
     @write_permission_2_creator = User.where(id: @write_permission_2.creator_id).first

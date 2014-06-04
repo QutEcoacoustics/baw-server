@@ -10,8 +10,11 @@ class Bookmark < ActiveRecord::Base
   # userstamp
   stampable
 
-  # validation
+  # association validations
+  validates :audio_recording, existence: true
+  validates :creator, existence: true
+
+  # attribute validations
   validates :offset_seconds, presence: true, numericality: {greater_than_or_equal_to: 0}
-  validates :audio_recording_id, presence: true
 
 end

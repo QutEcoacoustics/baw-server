@@ -8,13 +8,14 @@ FactoryGirl.define do
     channels 2
     bit_rate_bps 64000
     media_type 'audio/mp3'
+    status 'ready'
     data_length_bytes 3800
     sequence(:notes) { |n| "note number #{n}" }
     sequence(:original_file_name) { |n| "original name #{n}" }
 
-    creator
-    uploader
-    site
+    association :creator
+    association :uploader
+    association :site
 
     trait :status_new do
       status 'new'
@@ -23,18 +24,6 @@ FactoryGirl.define do
     trait :status_ready do
       status 'ready'
     end
-
-    trait :with_audio_events do
-      ignore do
-        audio_event_count 1
-      end
-      after(:create) do |audio_recording, evaluator|
-        raise 'Creator was blank' if  evaluator.creator.blank?
-        create_list(:audio_event_with_tags_and_comments, evaluator.audio_event_count, audio_recording: audio_recording, creator: evaluator.creator)
-      end
-    end
-
-    factory :audio_recording_with_audio_events, traits: [:with_audio_events, :status_ready]
 
   end
 end

@@ -37,7 +37,11 @@ class Dataset < ActiveRecord::Base
   # userstamp
   stampable
 
-  # validation
+  # association validations
+  validates :project, existence: true
+  validates :creator, existence: true
+
+  # attribute validations
   validates :name, presence: true, uniqueness: {case_sensitive: false, scope: :creator_id, message: 'should be unique per user'}
   validates_presence_of :start_time, if: :end_time?
   validates_presence_of :end_time, if: :start_time?

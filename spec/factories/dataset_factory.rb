@@ -4,8 +4,8 @@ FactoryGirl.define do
     sequence(:name) { |n| "dataset name#{n}" }
     sequence(:description) { |n| "description #{n}" }
 
-    creator
-    project
+    association :creator
+    association :project
 
     trait :start_time do
       start_time '06:30'
@@ -39,24 +39,9 @@ FactoryGirl.define do
       tag_text_filters ['a tag', 'my other tag', 'the-next-tag']
     end
 
-    trait :with_jobs do
-      ignore do
-        job_count 1
-      end
-      after(:create) do |dataset, evaluator|
-        raise 'Creator was blank' if  evaluator.creator.blank?
-        create_list(:job, evaluator.dataset_count, dataset: dataset, creator: evaluator.creator)
-      end
+    after(:build) do |dataset|
+      dataset.sites << build(:dataset) if dataset.sites.size < 1
     end
 
-    trait :with_sites do
-      ignore do
-        site_count 1
-      end
-      after(:create) do |dataset, evaluator|
-        raise 'Creator was blank' if  evaluator.creator.blank?
-        create_list(:site, evaluator.site_count, dataset: dataset, creator: evaluator.creator)
-      end
-    end
   end
 end

@@ -45,12 +45,15 @@ class AudioRecording < ActiveRecord::Base
   AVAILABLE_STATUSES = AVAILABLE_STATUSES_SYMBOLS.map { |item| item.to_s }
   enumerize :status, in: AVAILABLE_STATUSES, predicates: true
 
-  # Validations
+  # association validations
+  validates :site, existence: true
+  validates :uploader, existence: true
+  validates :creator, existence: true
+
+  # attribute validations
   validates :status, inclusion: {in: AVAILABLE_STATUSES}, presence: true
   validates :uuid, presence: true, length: {is: 36}, uniqueness: {case_sensitive: false}
-  validates :uploader_id, presence: true
   validates :recorded_date, presence: true, timeliness: {on_or_before: lambda { Time.zone.now }, type: :datetime}
-  validates :site, presence: true
   validates :duration_seconds, presence: true, numericality: {greater_than_or_equal_to: Settings.audio_recording_min_duration_sec}
   validates :sample_rate_hertz, presence: true, numericality: {only_integer: true, greater_than: 0}
 

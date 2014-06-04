@@ -1,7 +1,6 @@
 class Script < ActiveRecord::Base
   attr_accessible :analysis_identifier, :data_file, :description, :name, :notes, :settings_file, :verified, :version, :creator_id
 
-
   has_attached_file :settings_file
   has_attached_file :data_file
 
@@ -16,7 +15,10 @@ class Script < ActiveRecord::Base
   # userstamp
   stampable
 
-  #validation
+  # association validations
+  validates :creator, existence: true
+
+  # attribute validations
   validates :name, presence: true
   validates :analysis_identifier, presence: true
   validate :version, :version_increase, on: :create

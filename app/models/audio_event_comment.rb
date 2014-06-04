@@ -26,7 +26,11 @@ class AudioEventComment < ActiveRecord::Base
 
   enumerize :flag, in: AVAILABLE_FLAGS, predicates: true
 
-  # validations
+  # association validations
+  validates :audio_event, existence: true
+  validates :creator, existence: true
+
+  # attribute validations
   validates :comment, presence: true, length: {minimum: 2}
 
   # scopes
