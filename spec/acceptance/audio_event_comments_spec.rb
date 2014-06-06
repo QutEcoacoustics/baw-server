@@ -14,6 +14,11 @@ resource 'AudioEventComments' do
 
   before(:each) do
     # create projects, permissions, sites, etc needed for audio_event_comments
+    @user1 = FactoryGirl.create(:user)
+    @user2 = FactoryGirl.create(:user)
+    @admin = FactoryGirl.create(:admin)
+
+    @project =
 
 
     # permission factories create one of all dependent models (project, site, audio_recording, ...)
