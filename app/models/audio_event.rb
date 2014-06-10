@@ -45,8 +45,9 @@ class AudioEvent < ActiveRecord::Base
       where('1 = 1') # don't change query
     else
       creator_id_check = 'projects.creator_id = ?'
-      permissions_check = '(permissions.user_id = ? AND permissions.level IN (\'reader\', \'writer\'))'
-      where("#{creator_id_check} OR #{permissions_check}", user.id, user.id)
+      permissions_check = 'permissions.user_id = ? AND permissions.level IN (\'reader\', \'writer\')'
+      reference_audio_event_check = 'audio_events.is_reference IS TRUE'
+      where("((#{creator_id_check}) OR (#{permissions_check}) OR (#{reference_audio_event_check}))", user.id, user.id)
     end
   }
 

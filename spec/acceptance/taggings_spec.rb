@@ -73,7 +73,7 @@ resource 'Taggings' do
     parameter :audio_event_id, 'Requested audio event ID (in path/route)', required: true
 
     let(:authentication_token) { unconfirmed_token }
-    standard_request('LIST (as unconfirmed user)', 401, nil, true)
+    standard_request('LIST (as unconfirmed user)', 403, nil, true)
   end
 
   get '/audio_recordings/:audio_recording_id/audio_events/:audio_event_id/taggings' do
@@ -100,7 +100,7 @@ resource 'Taggings' do
     parameter :audio_event_id, 'Requested audio event ID (in path/route)', required: true
 
     let(:authentication_token) { unconfirmed_token }
-    standard_request('LIST (as unconfirmed user, with shallow path)', 401, nil, true)
+    standard_request('LIST (as unconfirmed user, with shallow path)', 403, nil, true)
   end
 
   get '/taggings/user/:user_id/tags' do
@@ -143,7 +143,7 @@ resource 'Taggings' do
     parameter :id, 'Requested tag ID (in path/route)', required: true
 
     let(:authentication_token) { unconfirmed_token }
-    standard_request('SHOW (as unconfirmed user)', 401, nil, true)
+    standard_request('SHOW (as unconfirmed user)', 403, nil, true)
   end
 
   get '/audio_recordings/:audio_recording_id/audio_events/:audio_event_id/taggings/:id' do
@@ -176,7 +176,7 @@ resource 'Taggings' do
     parameter :id, 'Requested tag ID (in path/route)', required: true
 
     let(:authentication_token) { unconfirmed_token }
-    standard_request('SHOW (as unconfirmed user, with shallow path)', 401, nil, true)
+    standard_request('SHOW (as unconfirmed user, with shallow path)', 403, nil, true)
   end
 
   ################################

@@ -41,7 +41,7 @@ resource 'Projects' do
 
   get '/projects' do
     let(:authentication_token) { "Token token=\"#{FactoryGirl.create(:unconfirmed_user).authentication_token}\"" }
-    standard_request('LIST (as unconfirmed user)', 401, nil, true)
+    standard_request('LIST (as unconfirmed user)', 403, nil, true)
   end
 
   get '/projects' do
@@ -72,7 +72,7 @@ resource 'Projects' do
     let(:raw_post) { {'project' => post_attributes}.to_json }
 
     let(:authentication_token) { "Token token=\"#{FactoryGirl.create(:unconfirmed_user).authentication_token}\"" }
-    standard_request('CREATE (as unconfirmed user)', 401, nil, true)
+    standard_request('CREATE (as unconfirmed user)', 403, nil, true)
 
   end
 
@@ -121,7 +121,7 @@ resource 'Projects' do
     parameter :id, 'Requested project ID (in path/route)', required: true
 
     let(:authentication_token) { "Token token=\"#{FactoryGirl.create(:unconfirmed_user).authentication_token}\"" }
-    standard_request('SHOW (as unconfirmed user)', 401, nil, true)
+    standard_request('SHOW (as unconfirmed user)', 403, nil, true)
   end
 
   get '/projects/:id' do
@@ -185,7 +185,7 @@ resource 'Projects' do
 
     let(:authentication_token) { "Token token=\"#{FactoryGirl.create(:unconfirmed_user).authentication_token}\"" }
 
-    standard_request('UPDATE (as unconfirmed user)' ,401, nil, true)
+    standard_request('UPDATE (as unconfirmed user)' ,403, nil, true)
   end
 
 end

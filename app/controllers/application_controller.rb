@@ -120,9 +120,32 @@ class ApplicationController < ActionController::Base
         end
       else
         respond_to do |format|
-          format.html { redirect_to projects_path, alert: msg_forbidden }
+          format.html { redirect_to root_path, alert: msg_forbidden }
           format.json { render json: json_forbidden.to_json, status: :forbidden }
           format.all { render json: json_forbidden.to_json, status: :forbidden, content_type: 'application/json' }
+        end
+
+      end
+    elsif current_user && !current_user.confirmed?
+      msg_unconfirmed = I18n.t 'devise.failure.unconfirmed'
+      json_unconfirmed = {
+          code: 403,
+          phrase: 'Forbidden',
+          message: msg_unconfirmed,
+          user_confirmation_link: new_user_confirmation_url
+      }
+
+      if !request.env['HTTP_REFERER'].blank? and request.env['HTTP_REFERER'] != request.env['REQUEST_URI']
+        respond_to do |format|
+          format.html { redirect_to :back, alert: msg_unconfirmed }
+          format.json { render json: json_unconfirmed.to_json, status: :forbidden }
+          format.all { render json: json_unconfirmed.to_json, status: :forbidden, content_type: 'application/json' }
+        end
+      else
+        respond_to do |format|
+          format.html { redirect_to root_path, alert: msg_unconfirmed }
+          format.json { render json: json_unconfirmed.to_json, status: :forbidden }
+          format.all { render json: json_unconfirmed.to_json, status: :forbidden, content_type: 'application/json' }
         end
 
       end

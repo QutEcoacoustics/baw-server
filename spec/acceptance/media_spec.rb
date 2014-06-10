@@ -181,7 +181,7 @@ resource 'Media' do
     standard_media_parameters
     let(:authentication_token) { unconfirmed_token }
     let(:format) { 'json' }
-    standard_request('MEDIA (as unconfirmed user)', 401, nil, true)
+    standard_request('MEDIA (as unconfirmed user)', 403, nil, true)
   end
 
   get '/audio_recordings/:audio_recording_id/media.:format' do

@@ -24,7 +24,8 @@ def library_request(settings = {})
 
     parsed_response_body = JsonSpec::Helpers::parse_json(response_body)
 
-    unless ordered_audio_recordings.blank? && parsed_response_body.blank?
+    if !ordered_audio_recordings.blank?  && ordered_audio_recordings.respond_to?(:each_index) &&
+        !parsed_response_body.blank? && parsed_response_body.respond_to?(:each_index)
       parsed_response_body.each_index do |index|
         expect(parsed_response_body[index]['audio_event_id'])
         .to eq(ordered_audio_recordings[index]),
@@ -70,6 +71,7 @@ resource 'AudioEvents' do
   # prepare authentication_token for different users
   let(:writer_token) { "Token token=\"#{@write_permission.user.authentication_token}\"" }
   let(:reader_token) { "Token token=\"#{@read_permission.user.authentication_token}\"" }
+  let(:other_user_token) { "Token token=\"#{FactoryGirl.create(:user).authentication_token}\"" }
   let(:unconfirmed_token) { "Token token=\"#{FactoryGirl.create(:unconfirmed_user).authentication_token}\"" }
   let(:admin_token) { "Token token=\"#{@admin_user.authentication_token}\"" }
 
@@ -188,7 +190,7 @@ resource 'AudioEvents' do
 
     let(:authentication_token) { unconfirmed_token }
 
-    standard_request('LIST (as unconfirmed user)', 401, nil, true)
+    standard_request('LIST (as unconfirmed user)', 403, nil, true)
 
   end
 
@@ -212,7 +214,7 @@ resource 'AudioEvents' do
 
   get '/audio_events/library' do
     let(:authentication_token) { unconfirmed_token }
-    standard_request('LIBRARY (as unconfirmed user)', 401, nil, true)
+    standard_request('LIBRARY (as unconfirmed user)', 403, nil, true)
   end
 
   ################################
@@ -617,7 +619,7 @@ resource 'AudioEvents' do
       FactoryGirl.create(:tagging, creator: user_creator, tag: lewin, audio_event: ae2)
     end
 
-    # deault sort order is audio_events.created_at DESC
+    # default sort order is audio_events.created_at DESC
     let(:ordered_audio_recordings) { [9992, 9991] }
 
     library_request(
@@ -675,7 +677,7 @@ resource 'AudioEvents' do
                                creator: user_creator)
     end
 
-    # deault sort order is audio_events.created_at DESC
+    # default sort order is audio_events.created_at DESC
     let(:ordered_audio_recordings) { [9991] }
 
     library_request(
@@ -748,6 +750,187 @@ resource 'AudioEvents' do
 
   end
 
+  get '/audio_events/library' do
+
+    parameter :reference, '[true, false] (optional)'
+    parameter :tagsPartial, 'comma separated text (optional)'
+    parameter :freqMin, 'double (optional)'
+    parameter :freqMax, 'double (optional)'
+    parameter :annotationDuration, 'double (optional)'
+    parameter :page, 'int (optional)'
+    parameter :items, 'int (optional)'
+    parameter :userId, 'int (optional)'
+    parameter :audioRecordingId, 'int (optional)'
+
+    let(:authentication_token) { other_user_token }
+
+    before do
+      user_creator = FactoryGirl.create(:user, id: 5)
+
+      ae = FactoryGirl.create(:audio_event,
+                              id: 9991,
+                              audio_recording: @write_permission.project.sites[0].audio_recordings[0],
+                              start_time_seconds: 1,
+                              end_time_seconds: 1.54,
+                              low_frequency_hertz: 450.3,
+                              high_frequency_hertz: 500.2,
+                              is_reference: true,
+                              creator: user_creator)
+
+      ae2 = FactoryGirl.create(:audio_event,
+                               id: 9992,
+                               audio_recording: @write_permission.project.sites[0].audio_recordings[0],
+                               start_time_seconds: 1,
+                               end_time_seconds: 1.54,
+                               low_frequency_hertz: 451,
+                               high_frequency_hertz: 500.2,
+                               is_reference: true,
+                               creator: user_creator)
+
+      ae3 = FactoryGirl.create(:audio_event,
+                               id: 9993,
+                               audio_recording: @write_permission.project.sites[0].audio_recordings[0],
+                               start_time_seconds: 1,
+                               end_time_seconds: 1.54,
+                               low_frequency_hertz: 445,
+                               high_frequency_hertz: 500.2,
+                               is_reference: false,
+                               creator: user_creator)
+    end
+
+    # default sort order is audio_events.created_at DESC
+    let(:ordered_audio_recordings) { [9992, 9991] }
+
+    library_request(
+        {
+            description: 'LIBRARY (as no project access, able to access all reference audio_events)',
+            expected_status: 200,
+            expected_json_path: '0/start_time_seconds',
+            document: true
+        })
+
+  end
+
+  get '/audio_events/library' do
+
+    parameter :reference, '[true, false] (optional)'
+    parameter :tagsPartial, 'comma separated text (optional)'
+    parameter :freqMin, 'double (optional)'
+    parameter :freqMax, 'double (optional)'
+    parameter :annotationDuration, 'double (optional)'
+    parameter :page, 'int (optional)'
+    parameter :items, 'int (optional)'
+    parameter :userId, 'int (optional)'
+    parameter :audioRecordingId, 'int (optional)'
+
+    let(:authentication_token) { unconfirmed_token }
+
+    before do
+      user_creator = FactoryGirl.create(:user, id: 5)
+
+      ae = FactoryGirl.create(:audio_event,
+                              id: 9991,
+                              audio_recording: @write_permission.project.sites[0].audio_recordings[0],
+                              start_time_seconds: 1,
+                              end_time_seconds: 1.54,
+                              low_frequency_hertz: 450.3,
+                              high_frequency_hertz: 500.2,
+                              is_reference: true,
+                              creator: user_creator)
+
+      ae2 = FactoryGirl.create(:audio_event,
+                               id: 9992,
+                               audio_recording: @write_permission.project.sites[0].audio_recordings[0],
+                               start_time_seconds: 1,
+                               end_time_seconds: 1.54,
+                               low_frequency_hertz: 451,
+                               high_frequency_hertz: 500.2,
+                               is_reference: true,
+                               creator: user_creator)
+
+      ae3 = FactoryGirl.create(:audio_event,
+                               id: 9993,
+                               audio_recording: @write_permission.project.sites[0].audio_recordings[0],
+                               start_time_seconds: 1,
+                               end_time_seconds: 1.54,
+                               low_frequency_hertz: 445,
+                               high_frequency_hertz: 500.2,
+                               is_reference: false,
+                               creator: user_creator)
+    end
+
+    # default sort order is audio_events.created_at DESC
+    let(:ordered_audio_recordings) { nil }
+
+    library_request(
+        {
+            description: 'LIBRARY (as unconfirmed, prevent access to all audio_events)',
+            expected_status: 403,
+            document: true
+        })
+
+  end
+
+  get '/audio_events/library' do
+
+    parameter :reference, '[true, false] (optional)'
+    parameter :tagsPartial, 'comma separated text (optional)'
+    parameter :freqMin, 'double (optional)'
+    parameter :freqMax, 'double (optional)'
+    parameter :annotationDuration, 'double (optional)'
+    parameter :page, 'int (optional)'
+    parameter :items, 'int (optional)'
+    parameter :userId, 'int (optional)'
+    parameter :audioRecordingId, 'int (optional)'
+
+    #let(:authentication_token) { unconfirmed_token }
+
+    before do
+      user_creator = FactoryGirl.create(:user, id: 5)
+
+      ae = FactoryGirl.create(:audio_event,
+                              id: 9991,
+                              audio_recording: @write_permission.project.sites[0].audio_recordings[0],
+                              start_time_seconds: 1,
+                              end_time_seconds: 1.54,
+                              low_frequency_hertz: 450.3,
+                              high_frequency_hertz: 500.2,
+                              is_reference: true,
+                              creator: user_creator)
+
+      ae2 = FactoryGirl.create(:audio_event,
+                               id: 9992,
+                               audio_recording: @write_permission.project.sites[0].audio_recordings[0],
+                               start_time_seconds: 1,
+                               end_time_seconds: 1.54,
+                               low_frequency_hertz: 451,
+                               high_frequency_hertz: 500.2,
+                               is_reference: true,
+                               creator: user_creator)
+
+      ae3 = FactoryGirl.create(:audio_event,
+                               id: 9993,
+                               audio_recording: @write_permission.project.sites[0].audio_recordings[0],
+                               start_time_seconds: 1,
+                               end_time_seconds: 1.54,
+                               low_frequency_hertz: 445,
+                               high_frequency_hertz: 500.2,
+                               is_reference: false,
+                               creator: user_creator)
+    end
+
+    # default sort order is audio_events.created_at DESC
+    let(:ordered_audio_recordings) { nil }
+
+    library_request(
+        {
+            description: 'LIBRARY (as anon, prevent access to all audio_events)',
+            expected_status: 401,
+            document: true
+        })
+
+  end
+
   ################################
   # SHOW
   ################################
@@ -794,7 +977,7 @@ resource 'AudioEvents' do
 
     let(:authentication_token) { unconfirmed_token }
 
-    standard_request('SHOW (as unconfirmed user)', 401, nil, true)
+    standard_request('SHOW (as unconfirmed user)', 403, nil, true)
   end
 
   ################################
@@ -870,7 +1053,7 @@ resource 'AudioEvents' do
 
     let(:authentication_token) { unconfirmed_token }
 
-    standard_request('CREATE (as unconfirmed user)', 401, nil, true)
+    standard_request('CREATE (as unconfirmed user)', 403, nil, true)
 
   end
 
@@ -1003,6 +1186,6 @@ resource 'AudioEvents' do
 
     let(:authentication_token) { unconfirmed_token }
 
-    standard_request('UPDATE (as unconfirmed user)', 401, nil, true)
+    standard_request('UPDATE (as unconfirmed user)', 403, nil, true)
   end
 end
