@@ -20,6 +20,5 @@ describe PermissionsController do
 
     it { expect(get('/projects/1/permissions/2')).to  route_to('permissions#show', project_id: '1', id: '2', format: 'json') }
 
-
   end
 end

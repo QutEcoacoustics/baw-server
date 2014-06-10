@@ -14,6 +14,7 @@ AWB::Application.routes.draw do
   resources :user_accounts do
     resources :permissions
     resources :bookmarks, only: [:index], defaults: {format: 'json'}
+    resources :audio_event_comments, only: [:index], defaults: {format: 'json'}
   end
 
   # routes for projects and nested resources
@@ -79,7 +80,9 @@ AWB::Application.routes.draw do
       get 'library'
       get 'library/paged' => 'audio_events#library_paged', as: :library_paged
     end
+    resources :audio_event_comments, defaults: {format: 'json'}
   end
+  resources :audio_event_comments, only: [:index], defaults: {format: 'json'}
 
   # custom routes for scripts
   resources :scripts, except: [:update, :destroy] do

@@ -5,16 +5,9 @@ FactoryGirl.define do
     sequence(:email) { |n| "user#{n}@example.com" }
     sequence(:authentication_token) { |n| "some random token #{n}" }
     sequence(:password) { |n| "password #{n}" }
+    sequence(:id) { |n| n }
 
-    roles_mask { 2 } # user role
-
-    # after(:create) do |user|
-    #   Rails.logger.warn "Created #{user.inspect}"
-    # end
-    #
-    # after(:build) do |user|
-    #   Rails.logger.warn "Built #{user.inspect}"
-    # end
+    roles_mask 2 # user role
 
     trait :confirmed do
       after(:build) do |user|
@@ -40,7 +33,7 @@ FactoryGirl.define do
       image { fixture_file_upload(Rails.root.join('public', 'images', 'user', 'user-512.png'), 'image/png') }
     end
 
-    factory :confirmed_user, traits: [:confirmed], aliases: [:user, :creator, :updater, :deleter, :uploader]
+    factory :confirmed_user, traits: [:confirmed], aliases: [:user, :creator, :updater, :deleter, :uploader, :flagger]
     factory :admin, traits: [:confirmed, :admin_role]
     factory :harvester, traits: [:confirmed, :harvester_role]
     factory :user_with_preferences, traits: [:confirmed, :saved_preferences]

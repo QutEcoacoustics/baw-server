@@ -4,8 +4,8 @@ FactoryGirl.define do
     sequence(:description) { |n| "description #{n}" }
     sequence(:name) { |n| "name #{n}" }
 
-    creator
-    audio_recording
+    association :creator
+    association :audio_recording
 
   end
 end

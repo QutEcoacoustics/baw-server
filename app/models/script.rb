@@ -1,22 +1,24 @@
 class Script < ActiveRecord::Base
   attr_accessible :analysis_identifier, :data_file, :description, :name, :notes, :settings_file, :verified, :version, :creator_id
 
-
   has_attached_file :settings_file
   has_attached_file :data_file
 
   # relationships
-  belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_scripts
+  belongs_to :creator, class_name: 'User', foreign_key: 'creator_id', inverse_of: :created_scripts
   
-  belongs_to :updated_by, class_name: 'Script', foreign_key: :updated_by_script_id
-  has_one :update_from, class_name: 'Script', foreign_key: :updated_by_script_id
-  has_one :latest_update, class_name: 'Script', foreign_key: :original_script_id, order: 'created_at DESC'
+  belongs_to :updated_by, class_name: 'Script', foreign_key: 'updated_by_script_id'
+  has_one :update_from, class_name: 'Script', foreign_key: 'updated_by_script_id'
+  has_one :latest_update, class_name: 'Script', foreign_key: 'original_script_id', order: 'created_at DESC'
   has_many :jobs, inverse_of: :script
 
   # userstamp
   stampable
 
-  #validation
+  # association validations
+  validates :creator, existence: true
+
+  # attribute validations
   validates :name, presence: true
   validates :analysis_identifier, presence: true
   validate :version, :version_increase, on: :create

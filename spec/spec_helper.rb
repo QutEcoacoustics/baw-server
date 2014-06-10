@@ -79,9 +79,20 @@ RSpec.configure do |config|
     ensure
       DatabaseCleaner.clean
     end
+
+    FactoryGirl.reload
+
     # Redirect stderr and stdout
     $stderr = File.new(File.join(File.dirname(__FILE__), '..', 'tmp', 'rspec_stderr.txt'), 'w')
     $stdout = File.new(File.join(File.dirname(__FILE__), '..', 'tmp', 'rspec_stdout.txt'), 'w')
+
+    ActiveSupport::Notifications.subscribe("factory_girl.run_factory") do |name, start, finish, id, payload|
+      execution_time_in_seconds = finish - start
+      if execution_time_in_seconds >= 0.5
+        Rails::logger.warn "Slow factory: #{payload[:name]} using strategy #{payload[:strategy]} took #{execution_time_in_seconds} seconds"
+      end
+    end
+
   end
 
   # Request specs cannot use a transaction because Capybara runs in a
@@ -100,7 +111,7 @@ RSpec.configure do |config|
   config.before(:each) do
     ActionMailer::Base.deliveries.clear
     DatabaseCleaner.start
-    example_description = example.description
+    example_description = example.metadata[:full_description]
     Rails::logger.info "\n\n#{example_description}\n#{'-' * (example_description.length)}"
 
     #Bullet.start_request if Bullet.enable?

@@ -12,7 +12,7 @@ FactoryGirl.define do
     # this will be slow
     settings_file { fixture_file_upload(Rails.root.join('public', 'files','script', 'settings_file.txt'), 'text/plain') }
 
-    creator
+    association :creator
 
     trait :verified do
       verified true

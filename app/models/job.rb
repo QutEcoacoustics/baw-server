@@ -2,21 +2,28 @@ class Job < ActiveRecord::Base
   attr_accessible :script_id, :dataset_id, :deleted_at, :deleter_id, :annotation_name,
                   :name, :description, :script_settings, :creator_id, :updater_id
 
-  belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_job
-  belongs_to :updater, class_name: 'User', foreign_key: :updater_id, inverse_of: :updated_job
-  belongs_to :deleter, class_name: 'User', foreign_key: :deleter_id, inverse_of: :deleted_job
+  belongs_to :creator, class_name: 'User', foreign_key: 'creator_id', inverse_of: :created_job
+  belongs_to :updater, class_name: 'User', foreign_key: 'updater_id', inverse_of: :updated_job
+  belongs_to :deleter, class_name: 'User', foreign_key: 'deleter_id', inverse_of: :deleted_job
 
   belongs_to :script, inverse_of: :jobs
   belongs_to :dataset, inverse_of: :jobs
   has_one :project, through: :dataset  # using has_one instead of belongs_to to use :through
 
-  # userstamp
+  # add created_at and updated_at stamper
   stampable
 
-  # validations
-  validates :name, presence: true, length: { minimum: 2, maximum: 255 }, uniqueness: { case_sensitive: false }
+  # add deleted_at and deleter_id
+  acts_as_paranoid
+  validates_as_paranoid
 
-  validates :name, :presence => true
+  # association validations
+  validates :script, existence: true
+  validates :dataset, existence: true
+  validates :creator, existence: true
+
+  # attribute validations
+  validates :name, presence: true, length: { minimum: 2, maximum: 255 }, uniqueness: { case_sensitive: false }
   validates :script_settings, :presence => true
   validates :dataset_id, :presence => true
   validates :script_id, :presence => true

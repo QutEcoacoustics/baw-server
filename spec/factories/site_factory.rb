@@ -1,10 +1,11 @@
 FactoryGirl.define do
 
   factory :site do
-    creator
     sequence(:name) { |n| "site name #{n}" }
     sequence(:notes) { |n|  "note number #{n}" }
     sequence(:description) { |n| "site description #{n}" }
+
+    association :creator
 
     trait :site_with_lat_long do
       # Random.rand returns "a random integer greater than or equal to zero and less than the argument"
@@ -14,21 +15,10 @@ FactoryGirl.define do
       longitude { Random.rand_incl(360.0) - 180.0 }
     end
 
-    # the after(:create) yields two values; the instance itself and the
-    # evaluator, which stores all values from the factory, including ignored
-    # attributes; `create_list`'s second argument is the number of records
-    # to create and we make sure the instance is associated properly to the list of items
-    trait :with_audio_recordings do
-      ignore do
-        audio_recording_count 1
-      end
-      after(:create) do |site, evaluator|
-        raise 'Creator was blank' if  evaluator.creator.blank?
-        create_list(:audio_recording_with_audio_events, evaluator.audio_recording_count, site: site, creator: evaluator.creator)
-      end
+    after(:build) do |site|
+      site.projects << build(:project) if site.projects.size < 1
     end
 
     factory :site_with_lat_long, traits: [:site_with_lat_long]
-    factory :site_with_audio_recordings, traits: [:site_with_lat_long, :with_audio_recordings]
   end
 end

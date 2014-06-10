@@ -1,26 +1,47 @@
 FactoryGirl.define do
 
-  #after(:build) { |object| Rails.logger.debug "Built #{object.inspect}" }
-  #after(:create) { |object| Rails.logger.debug "Created #{object.inspect}" }
+  after(:build) { |object|
+    is_blank = object.respond_to?(:creator) && object.creator.blank? && !object.is_a?(User)
+    Rails.logger.warn "After build #{is_blank ? '[blank]' : ''} [#{object.object_id}] #{object.inspect}"
+  }
+
+  before(:create) { |object|
+    is_blank = object.respond_to?(:creator) && object.creator.blank? && !object.is_a?(User)
+    Rails.logger.warn "Before create #{is_blank ? '[blank]' : ''} [#{object.object_id}] #{object.inspect}"
+  }
+
+  after(:create) { |object|
+    is_blank = object.respond_to?(:creator) && object.creator.blank? && !object.is_a?(User)
+    Rails.logger.warn "After create #{is_blank ? '[blank]' : ''} [#{object.object_id}] #{object.inspect}"
+  }
+
+  before(:stub) { |object|
+    is_blank = object.respond_to?(:creator) && object.creator.blank? && !object.is_a?(User)
+    Rails.logger.warn "Before stub #{is_blank ? '[blank]' : ''} [#{object.object_id}] #{object.inspect}"
+  }
 
   factory :permission do
-    creator
-    user
-    project
-    level { ['reader', 'writer'].sample }
-  end
 
-  factory :read_permission, class: Permission do
+    # attributes
     level 'reader'
-    creator
-    user # this is the user for which the permission is checked
-    association :project, factory: :project_with_sites_and_datasets
+
+    # associations
+    association :creator
+    association :user # this is the user for which the permission is checked
+    association :project
+
+    # traits
+    trait :write do
+      level 'writer'
+    end
+
+    trait :read do
+      level 'reader'
+    end
+
+    # other factories
+    factory :write_permission, traits: [:write]
+    factory :read_permission, traits: [:read]
   end
 
-  factory :write_permission, class: Permission do
-    level 'writer'
-    creator
-    user # this is the user for which the permission is checked
-    association :project, factory: :project_with_sites_and_datasets
-  end
 end

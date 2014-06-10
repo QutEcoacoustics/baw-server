@@ -289,8 +289,12 @@ class AudioEventsController < ApplicationController
     end
 
     # next and prev are just in order of ids (essentially the order the audio events were created)
-    next_event = AudioEvent.where('id > ?', audio_event.id).order('id ASC').first
-    prev_event = AudioEvent.where('id < ?', audio_event.id).order('id DESC').first
+    common_query = AudioEvent
+    .includes([:creator, :tags, audio_recording: {site: {projects: :permissions}}])
+    .check_permissions(current_user)
+
+    next_event = common_query.where('audio_events.id > ?', audio_event.id).order('audio_events.id ASC').first
+    prev_event = common_query.where('audio_events.id < ?', audio_event.id).order('audio_events.id DESC').first
     audio_event_hash[:paging] = {next_event: {}, prev_event: {}}
 
     audio_event_hash[:paging][:next_event][:audio_event_id] = next_event.id unless next_event.blank?

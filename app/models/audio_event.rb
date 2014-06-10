@@ -7,19 +7,26 @@ class AudioEvent < ActiveRecord::Base
   belongs_to :audio_recording, inverse_of: :audio_events
   has_many :taggings # no inverse of specified, as it interferes with through: association
   has_many :tags, through: :taggings
+
   belongs_to :creator, class_name: 'User', foreign_key: 'creator_id', inverse_of: :created_audio_events
   belongs_to :updater, class_name: 'User', foreign_key: 'updater_id', inverse_of: :updated_audio_events
   belongs_to :deleter, class_name: 'User', foreign_key: 'deleter_id', inverse_of: :deleted_audio_events
+  has_many :audio_event_comments, inverse_of: :audio_event
 
   accepts_nested_attributes_for :tags
 
-  # userstamp
+  # add created_at and updated_at stamper
   stampable
-  #acts_as_paranoid
-  #validates_as_paranoid
 
-  # validation
-  validates :audio_recording_id, presence: true
+  # add deleted_at and deleter_id
+  acts_as_paranoid
+  validates_as_paranoid
+
+  # association validations
+  validates :audio_recording, existence: true
+  validates :creator, existence: true
+
+  # attribute validations
   validates :is_reference, inclusion: {in: [true, false]}
   validates :start_time_seconds, presence: true, numericality: {greater_than_or_equal_to: 0}
   validates :end_time_seconds, numericality: {greater_than_or_equal_to: 0}, allow_nil: true

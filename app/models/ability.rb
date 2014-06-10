@@ -10,11 +10,8 @@ class Ability
       can :manage, :all
 
     elsif user.has_role?(:user) && user.confirmed?
-      #user abilities
-      can [:show], User
-      can [:update], User, id: user.id
-      can [:my_account, :modify_preferences], User, user_id: user.id
-      can [:index, :create, :new_access_request, :submit_access_request], Project
+
+      # user must have read or write permissions on the project
       can [:read, :update, :update_permissions], Project do |project|
         user.can_write?(project)
       end
@@ -51,11 +48,27 @@ class Ability
       can [:read], AudioEvent do |audio_event|
         user.has_permission_any?(audio_event.audio_recording.site.projects)
       end
-      can [:manage], Tag
+      can [:index, :create], AudioEventComment do |audio_event_comment|
+        user.has_permission_any?(audio_event_comment.audio_event.audio_recording.site.projects)
+      end
+
+      # a user can only edit their own profile, bookmarks, comments
+      can [:update], User, id: user.id
+      can [:my_account, :modify_preferences], User, user_id: user.id
       can [:manage], Bookmark, creator_id: user.id
+      can [:update, :destroy], AudioEventComment, creator_id: user.id
+
+      # any confirmed user can do these:
+      # view user profile
+      can [:show], User
+      # projects: list, create, request access
+      can [:index, :create, :new_access_request, :submit_access_request], Project
+      # Tags: list, create, edit, delete
+      can [:manage], Tag
+      # view a bookmark
       can [:read], Bookmark
+      # get the audio events library (permissions are checked in the action)
       can [:library, :library_paged], AudioEvent
-      #can [:audio, :spectrogram], Media if user.has_permission_any?(media.audio_recording.site.projects)
 
     elsif user.has_role? :harvester
       can [:manage, :check_uploader], AudioRecording
