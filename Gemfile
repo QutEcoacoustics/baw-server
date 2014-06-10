@@ -26,7 +26,11 @@ gem 'paperclip', '~> 4.1.1'
 gem 'breadcrumbs_on_rails', '~> 2.3.0'
 # kept below version 2 due to huge breaking changes
 gem 'gmaps4rails', '~> 1.5.6'
-gem 'twitter-bootstrap-rails', git: 'https://github.com/seyhunak/twitter-bootstrap-rails.git' # https://github.com/seyhunak/twitter-bootstrap-rails
+
+# https://github.com/seyhunak/twitter-bootstrap-rails
+# huge changes since last release (2.2.8 in Aug 2013), and not sure about rails 3.2 vs 4 support.
+gem 'twitter-bootstrap-rails', git: 'https://github.com/seyhunak/twitter-bootstrap-rails.git'
+
 gem 'bootstrap-timepicker-rails', '~> 0.1.3'
 gem 'bootstrap-datepicker-rails', '~> 1.3.0.2'
 # for rails 3, 4
@@ -52,8 +56,16 @@ gem 'pg', '~> 0.17.1'
 # MODELS
 # -------------------------------------
 gem 'validates_timeliness', '~> 3.0.14'
-gem 'userstamp', git: 'https://github.com/theepan/userstamp.git' # https://github.com/delynn/userstamp
-gem 'enumerize', git: 'https://github.com/brainspec/enumerize.git' #https://github.com/brainspec/enumerize
+
+# https://github.com/delynn/userstamp
+# no changes in a long time, and we are very dependant on how this works
+# this might need to be changed to a fork that is maintained.
+gem 'userstamp', git: 'https://github.com/theepan/userstamp.git'
+
+# https://github.com/brainspec/enumerize
+# we need the changes since version 0.8.0. Reassess when there is a new release.
+gem 'enumerize', git: 'https://github.com/brainspec/enumerize.git'
+
 gem 'uuidtools', '~> 2.1.4'
 gem 'acts_as_paranoid', '~> 0.4.2'
 

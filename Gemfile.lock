@@ -18,7 +18,7 @@ GIT
 
 GIT
   remote: https://github.com/brainspec/enumerize.git
-  revision: eb49bda2dd7aa75158b9ecec3b44c0174f25b0ac
+  revision: 3b11589a34f9d9933e84e493c859a3286815d51f
   specs:
     enumerize (0.8.0)
       activesupport (>= 3.2)
@@ -144,7 +144,7 @@ GEM
     exception_notification (4.0.1)
       actionmailer (>= 3.0.4)
       activesupport (>= 3.0.4)
-    execjs (2.1.0)
+    execjs (2.2.0)
     factory_girl (4.4.0)
       activesupport (>= 3.0.0)
     factory_girl_rails (4.4.1)
@@ -209,9 +209,9 @@ GEM
       mime-types
     pg (0.17.1-x86-mingw32)
     polyglot (0.3.5)
-    pry (0.9.12.6-x86-mingw32)
-      coderay (~> 1.0)
-      method_source (~> 0.8)
+    pry (0.10.0-x86-mingw32)
+      coderay (~> 1.1.0)
+      method_source (~> 0.8.1)
       slop (~> 3.4)
       win32console (~> 1.3)
     quiet_assets (1.0.2)
@@ -251,7 +251,7 @@ GEM
       thor (>= 0.14.6, < 2.0)
     rake (10.3.2)
     rb-fsevent (0.9.4)
-    rb-inotify (0.9.4)
+    rb-inotify (0.9.5)
       ffi (>= 0.5.0)
     rb-kqueue (0.2.3)
       ffi (>= 0.5.0)
@@ -339,7 +339,7 @@ GEM
     uglifier (2.5.0)
       execjs (>= 0.3.0)
       json (>= 1.8.0)
-    uniform_notifier (1.6.1)
+    uniform_notifier (1.6.2)
     uuidtools (2.1.4)
     validates_timeliness (3.0.14)
       timeliness (~> 0.3.6)
