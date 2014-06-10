@@ -5,13 +5,16 @@
     = menu_item Settings.organisation_names.site_long_name, root_path, class: 'brand'
     = menu_item 'Projects', projects_path if can? :index, Project
     = menu_item 'Annotation Library', '/library' if can? :index, Project
-    = menu_item 'Scripts', scripts_path  if can? :manage, Script
-    = menu_item 'User Accounts', user_accounts_path if can? :manage, User
     = menu_item 'Contact Us', contact_us_path
   = menu_group pull: :right do
     - if current_user.blank?
       = menu_item 'Sign up', new_user_registration_path
       = menu_item 'Login', new_user_session_path
     - else
-      = menu_item "#{current_user.user_name}", my_account_path
+      - if current_user.is_admin?
+        = drop_down "#{current_user.user_name}" do
+          = menu_item 'Scripts', scripts_path  if can? :manage, Script
+          = menu_item 'User Accounts', user_accounts_path if can? :manage, User
+      - else
+        = menu_item "#{current_user.user_name}", my_account_path
       = menu_item 'Logout', destroy_user_session_path
