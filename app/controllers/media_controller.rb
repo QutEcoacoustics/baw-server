@@ -19,9 +19,7 @@ class MediaController < ApplicationController
   MEDIA_PROCESSOR_RESQUE = 'resque'
 
   def show
-
-    # to stop hard-to-find bugs where start_offset and end_offset
-    # change to nil or just vanish
+    # ensure all param keys are symbols rather than strings
     request_params = params.symbolize_keys
 
     @media_processor = Settings.media_request_processor
@@ -56,6 +54,11 @@ class MediaController < ApplicationController
     end
   end
 
+# @param [AudioRecording] audio_recording
+# @param [Array<String>] formats
+# @param [Numeric] start_offset
+# @param [Numeric] end_offset
+# @param [Object] defaults
   def get_available_formats(audio_recording, formats, start_offset, end_offset, defaults)
 
     result = {}
@@ -118,13 +121,18 @@ class MediaController < ApplicationController
     end
   end
 
+  # Respond to a request for audio.
+  # @param [AudioRecording] audio_recording
+  # @param [Hash] options
+  # @param [Hash] request_params
   def audio_response(audio_recording, options, request_params)
 
     default_audio = Settings.cached_audio_defaults
 
-    options[:format] = request_params[:format] || default_audio.storage_format
+    options[:format] = request_params[:format] || default_audio.extension
     options[:channel] = (request_params[:channel] || default_audio.channel).to_i
-    options[:sample_rate] = (request_params[:sample_rate] || default_audio.sample_rate).to_i
+    # if sample rate not given, default to audio recording native sample rate
+    options[:sample_rate] = (request_params[:sample_rate] || audio_recording.sample_rate_hertz).to_i
 
     @media_cacher.audio.check_offsets(
         {duration_seconds: audio_recording.duration_seconds},
@@ -161,13 +169,17 @@ class MediaController < ApplicationController
 
   end
 
+  # @param [AudioRecording] audio_recording
+  # @param [Hash] options
+  # @param [Hash] request_params
   def spectrogram_response(audio_recording, options, request_params)
 
     default_spectrogram = Settings.cached_spectrogram_defaults
 
-    options[:format] = request_params[:format] || default_spectrogram.storage_format
+    options[:format] = request_params[:format] || default_spectrogram.extension
     options[:channel] = (request_params[:channel] || default_spectrogram.channel).to_i
-    options[:sample_rate] = (request_params[:sample_rate] || default_spectrogram.sample_rate).to_i
+    # default to native sample rate when not given
+    options[:sample_rate] = (request_params[:sample_rate] || audio_recording.sample_rate_hertz).to_i
     options[:window] = (request_params[:window] || default_spectrogram.window).to_i
     options[:colour] = (request_params[:colour] || default_spectrogram.colour).to_s
 
