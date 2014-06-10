@@ -112,12 +112,12 @@ describe 'CRUD Datasets as valid user with read permission' do
 
   it 'rejects access to create project dataset' do
     visit new_project_dataset_path(@project)
-    page.should have_content('You are not authorized to access this page.')
+    page.should have_content(I18n.t('devise.failure.unauthorized'))
   end
 
   it 'rejects access to update project dataset' do
     visit edit_project_dataset_path(@project, @dataset)
-    page.should have_content('You are not authorized to access this page.')
+    page.should have_content(I18n.t('devise.failure.unauthorized'))
   end
 end
 
@@ -135,12 +135,12 @@ describe 'CRUD Datasets as valid user with no permission' do
 
   it 'lists all datasets' do
     visit project_path(@project)
-    page.should have_content('You are not authorized to access this page.')
+    page.should have_content(I18n.t('devise.failure.unauthorized'))
   end
 
   it 'shows dataset details' do
     visit project_dataset_path(@project, @dataset)
-    page.should have_content('You are not authorized to access this page.')
+    page.should have_content(I18n.t('devise.failure.unauthorized'))
     page.should_not have_link('Edit Dataset')
     page.should_not have_link('Add New Dataset')
     page.should_not have_link('Delete')
@@ -148,12 +148,12 @@ describe 'CRUD Datasets as valid user with no permission' do
 
   it 'rejects access to create project dataset' do
     visit new_project_dataset_path(@project)
-    page.should have_content('You are not authorized to access this page.')
+    page.should have_content(I18n.t('devise.failure.unauthorized'))
   end
 
   it 'rejects access to update project dataset' do
     visit edit_project_dataset_path(@project, @dataset)
-    page.should have_content('You are not authorized to access this page.')
+    page.should have_content(I18n.t('devise.failure.unauthorized'))
   end
 end
 

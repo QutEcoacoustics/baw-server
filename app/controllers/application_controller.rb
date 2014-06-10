@@ -104,7 +104,7 @@ class ApplicationController < ActionController::Base
   def access_denied(error)
     if current_user && current_user.confirmed?
 
-      msg_forbidden = 'You are logged in, but do not have sufficent permissions to access this resource.'
+      msg_forbidden = I18n.t 'devise.failure.unauthorized'
       json_forbidden = {
           code: 403,
           phrase: 'Forbidden',
@@ -128,7 +128,7 @@ class ApplicationController < ActionController::Base
       end
     else
 
-      msg_response = 'You need to log in and confirm your account to access this resource.'
+      msg_response = I18n.t 'devise.failure.unauthenticated'
       json_response = {
           code: 401,
           phrase: 'Unauthorized',

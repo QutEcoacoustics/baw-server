@@ -93,9 +93,9 @@ describe 'MANAGE User Accounts as user' do
   it 'denies access' do
     user = FactoryGirl.create(:user)
     visit user_accounts_path
-    page.should have_content('You are not authorized to access this page.')
+    page.should have_content(I18n.t('devise.failure.unauthorized'))
     visit edit_user_account_path(user)
-    page.should have_content('You are not authorized to access this page.')
+    page.should have_content(I18n.t('devise.failure.unauthorized'))
   end
 
   it 'shows user account details' do

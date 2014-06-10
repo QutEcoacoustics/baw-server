@@ -84,12 +84,12 @@ describe 'CRUD Sites as valid user with read permission' do
 
   it 'rejects access to create project site' do
     visit new_project_site_path(@project)
-    page.should have_content('You are not authorized to access this page.')
+    page.should have_content(I18n.t('devise.failure.unauthorized'))
   end
 
   it 'rejects access to update project site' do
     visit edit_project_site_path(@project, @site)
-    page.should have_content('You are not authorized to access this page.')
+    page.should have_content(I18n.t('devise.failure.unauthorized'))
   end
 end
 
@@ -104,23 +104,23 @@ describe 'CRUD Sites as valid user with no permission' do
 
   it 'lists all sites' do
     visit project_path(@project)
-    page.should have_content('You are not authorized to access this page.')
+    page.should have_content(I18n.t('devise.failure.unauthorized'))
   end
 
   it 'shows site details' do
     visit project_site_path(@project, @site)
-    page.should have_content('You are not authorized to access this page.')
+    page.should have_content(I18n.t('devise.failure.unauthorized'))
 
   end
 
   it 'rejects access to create project site' do
     visit new_project_site_path(@project)
-    page.should have_content('You are not authorized to access this page.')
+    page.should have_content(I18n.t('devise.failure.unauthorized'))
   end
 
   it 'rejects access to update project site' do
     visit edit_project_site_path(@project, @site)
-    page.should have_content('You are not authorized to access this page.')
+    page.should have_content(I18n.t('devise.failure.unauthorized'))
   end
 end
 

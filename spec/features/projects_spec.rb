@@ -151,7 +151,7 @@ describe 'CRUD Projects as valid user with read permission' do
 
   it 'rejects access to update project' do
     visit edit_project_path(@permission.project)
-    page.should have_content('You are not authorized to access this page.')
+    page.should have_content(I18n.t('devise.failure.unauthorized'))
   end
 
 end
@@ -173,7 +173,7 @@ describe 'CRUD Projects as valid user with no permissions' do
 
   it 'rejects access to show project details' do
     visit project_path(@permission.project)
-    page.should have_content('You are not authorized to access this page.')
+    page.should have_content(I18n.t('devise.failure.unauthorized'))
   end
 
   it 'creates new project when filling out form correctly' do
@@ -190,7 +190,7 @@ describe 'CRUD Projects as valid user with no permissions' do
 
   it 'rejects access to edit project details' do
     visit edit_project_path(@permission.project)
-    page.should have_content('You are not authorized to access this page.')
+    page.should have_content(I18n.t('devise.failure.unauthorized'))
   end
 
 end
@@ -216,30 +216,30 @@ describe 'CRUD Projects as unconfirmed user' do
     login_as @user, scope: :user
   end
 
-  it 'lists all projects' do
+  it 'reject access to list all projects' do
     # Run the generator again with the --webrat flag if you want to use webrat methods/matchers
     visit projects_path
     current_path.should eq(root_path)
-    page.should have_content('You are not authorized to access this page.')
+    page.should have_content(I18n.t('devise.failure.unconfirmed'))
   end
 
   it 'rejects access to show project details' do
     visit project_path(@permission.project)
     current_path.should eq(root_path)
-    page.should have_content('You are not authorized to access this page.')
+    page.should have_content(I18n.t('devise.failure.unconfirmed'))
   end
 
   it 'rejects access to create a new project' do
     visit new_project_path
     current_path.should eq(root_path)
-    page.should have_content('You are not authorized to access this page.')
+    page.should have_content(I18n.t('devise.failure.unconfirmed'))
 
   end
 
   it 'rejects access to edit project details' do
     visit edit_project_path(@permission.project)
     current_path.should eq(root_path)
-    page.should have_content('You are not authorized to access this page.')
+    page.should have_content(I18n.t('devise.failure.unconfirmed'))
   end
 
 end

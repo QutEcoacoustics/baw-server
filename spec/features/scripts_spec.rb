@@ -79,13 +79,13 @@ describe 'MANAGE Scripts as user' do
   it 'denies access' do
     script = FactoryGirl.create(:script)
     visit scripts_path
-    page.should have_content('You are not authorized to access this page.')
+    page.should have_content(I18n.t('devise.failure.unauthorized'))
     visit script_path(script)
-    page.should have_content('You are not authorized to access this page.')
+    page.should have_content(I18n.t('devise.failure.unauthorized'))
     visit new_script_path
-    page.should have_content('You are not authorized to access this page.')
+    page.should have_content(I18n.t('devise.failure.unauthorized'))
     visit edit_script_path(script)
-    page.should have_content('You are not authorized to access this page.')
+    page.should have_content(I18n.t('devise.failure.unauthorized'))
   end
 
 

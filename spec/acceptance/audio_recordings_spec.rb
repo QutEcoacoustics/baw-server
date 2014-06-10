@@ -692,7 +692,7 @@ resource 'AudioRecordings' do
 
     let(:authentication_token) { writer_token }
 
-    standard_request('UPDATE STATUS (writer)', 403, nil, true, 'You are logged in, but do not have sufficent permissions to access this resource.')
+    standard_request('UPDATE STATUS (writer)', 403, nil, true, I18n.t('devise.failure.unauthorized'))
 
   end
 
@@ -710,7 +710,7 @@ resource 'AudioRecordings' do
     }.to_json }
 
     let(:authentication_token) { reader_token }
-    standard_request('UPDATE STATUS (as reader)', 403, nil, true, 'You are logged in, but do not have sufficent permissions to access this resource.')
+    standard_request('UPDATE STATUS (as reader)', 403, nil, true, I18n.t('devise.failure.unauthorized'))
 
   end
 

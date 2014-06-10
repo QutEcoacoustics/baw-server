@@ -35,7 +35,7 @@ describe 'Deny Project Permissions as valid user with read permission only' do
 
   it 'denies access to list project permissions' do
     visit project_permissions_path(@permission.project)
-    page.should have_content('You are not authorized to access this page.')
+    page.should have_content(I18n.t('devise.failure.unauthorized'))
   end
 
 
