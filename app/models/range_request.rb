@@ -72,7 +72,6 @@ class RangeRequest
   # @param [Hash] options
   def build_response(options, rails_request)
 
-    log_options(options, '#request_info method start')
     check_options(options, REQUIRED_PARAMETERS)
 
     info = response_info(options, rails_request)
@@ -167,10 +166,6 @@ class RangeRequest
     sym_array.each do |sym|
       raise ArgumentError, "#{msg} #{sym.to_s}. #{provided}" unless options.include?(sym) && !options[sym].blank?
     end
-  end
-
-  def log_options(options, description)
-    Rails.logger.warn "RangeRequest - Provided parameters at #{description}: #{options}"
   end
 
   def file_entity_tag(info)

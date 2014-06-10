@@ -24,8 +24,6 @@ class MediaController < ApplicationController
     # change to nil or just vanish
     request_params = params.symbolize_keys
 
-    log_options(request_params, '#show method start')
-
     @media_processor = Settings.media_request_processor
     @range_request = Settings.range_request
     @media_cacher = Settings.media_cache_tool
@@ -52,7 +50,6 @@ class MediaController < ApplicationController
     elsif !is_available_format && !is_head_request
       render json: {error: 'Requested format is invalid. It must be one of available_formats.', available_formats: @available_formats}.to_json, status: :unsupported_media_type
     elsif is_available_format && is_audio_ready
-      log_options(request_params, '#show audio recording ready')
       parse_media_request(@audio_recording, request_params)
     else
       render json: {error: 'Invalid request'}.to_json, status: :bad_request
@@ -94,8 +91,6 @@ class MediaController < ApplicationController
     options[:datetime_with_offset] = audio_recording.recorded_date
     options[:original_sample_rate] = audio_recording.sample_rate_hertz
 
-    log_options(options, '#show format is image or audio')
-
     if request_params.include?(:start_offset)
       options[:start_offset] = request_params[:start_offset].to_f
     else
@@ -131,16 +126,12 @@ class MediaController < ApplicationController
     options[:channel] = (request_params[:channel] || default_audio.channel).to_i
     options[:sample_rate] = (request_params[:sample_rate] || default_audio.sample_rate).to_i
 
-    log_options(options, '#show format is audio')
-
     @media_cacher.audio.check_offsets(
         {duration_seconds: audio_recording.duration_seconds},
         default_audio.min_duration_seconds,
         default_audio.max_duration_seconds,
         options
     )
-
-    log_options(options, '#show after check offsets for audio')
 
     target_file = @media_cacher.cached_audio_file_name(options)
     target_existing_paths = @media_cacher.cache.existing_storage_paths(@media_cacher.cache.cache_audio, target_file)
@@ -180,16 +171,12 @@ class MediaController < ApplicationController
     options[:window] = (request_params[:window] || default_spectrogram.window).to_i
     options[:colour] = (request_params[:colour] || default_spectrogram.colour).to_s
 
-    log_options(options, '#show format is image')
-
     @media_cacher.audio.check_offsets(
         {duration_seconds: audio_recording.duration_seconds},
         default_spectrogram.min_duration_seconds,
         default_spectrogram.max_duration_seconds,
         options
     )
-
-    log_options(options, '#show after check offsets for image')
 
     target_file = @media_cacher.cached_spectrogram_file_name(options)
     target_existing_paths = @media_cacher.cache.existing_storage_paths(@media_cacher.cache.cache_spectrogram, target_file)
@@ -256,8 +243,6 @@ class MediaController < ApplicationController
     # http://blog.sparqcode.com/2012/02/04/streaming-data-with-rails-3-1-or-3-2/
     # http://stackoverflow.com/questions/3507594/ruby-on-rails-3-streaming-data-through-rails-to-client
     # ended up using StringIO as a MemoryStream to store part of audio file requested.
-
-    log_options(options, '#download_file method start')
 
     info = @range_request.build_response(options, request)
 
@@ -329,9 +314,5 @@ class MediaController < ApplicationController
     elsif params[:start_offset].to_i >= params[:end_offset].to_i
       render json: {error: "start_offset parameter must be a smaller than end_offset"}.to_json, status: :requested_range_not_satisfiable
     end
-  end
-
-  def log_options(options, description)
-    logger.warn "mediaController - Provided parameters at #{description}: #{options}"
   end
 end
