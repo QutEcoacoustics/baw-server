@@ -22,6 +22,8 @@ class PublicMailer < ActionMailer::Base
     send_message(logged_in_user, model, rails_request, 'Data Request')
   end
 
+  # @param [User] logged_in_user
+  # @param [NewUserInfo] model
   def new_user_message(logged_in_user, model)
     send_message(logged_in_user, model, nil, 'New User Notification')
   end

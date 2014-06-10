@@ -104,22 +104,23 @@ class ApplicationController < ActionController::Base
   def access_denied(error)
     if current_user && current_user.confirmed?
 
+      msg_forbidden = 'You are logged in, but do not have sufficent permissions to access this resource.'
       json_forbidden = {
           code: 403,
           phrase: 'Forbidden',
-          message: 'You are logged in, but do not have sufficent permissions to access this resource.',
+          message: msg_forbidden,
           request_new_permissions_link: new_access_request_projects_url
       }
 
       if !request.env['HTTP_REFERER'].blank? and request.env['HTTP_REFERER'] != request.env['REQUEST_URI']
         respond_to do |format|
-          format.html { redirect_to :back, alert: error.message }
+          format.html { redirect_to :back, alert: msg_forbidden }
           format.json { render json: json_forbidden.to_json, status: :forbidden }
           format.all { render json: json_forbidden.to_json, status: :forbidden, content_type: 'application/json' }
         end
       else
         respond_to do |format|
-          format.html { redirect_to projects_path, alert: error.message }
+          format.html { redirect_to projects_path, alert: msg_forbidden }
           format.json { render json: json_forbidden.to_json, status: :forbidden }
           format.all { render json: json_forbidden.to_json, status: :forbidden, content_type: 'application/json' }
         end
@@ -127,17 +128,18 @@ class ApplicationController < ActionController::Base
       end
     else
 
+      msg_response = 'You need to log in and confirm your account to access this resource.'
       json_response = {
           code: 401,
           phrase: 'Unauthorized',
-          message: 'You need to log in and confirm your account to access this resource.',
+          message: msg_response,
           sign_in_link: new_user_session_url,
           user_confirmation_link: new_user_confirmation_url
       }.to_json
 
       # http://blogs.thewehners.net/josh/posts/354-obscure-rails-bug-respond_to-formatany
       respond_to do |format|
-        format.html { redirect_to root_path, alert: error.message }
+        format.html { redirect_to root_path, alert: msg_response }
         format.json { render json: json_response, status: :unauthorized }
         format.all { render json: json_response, status: :unauthorized, content_type: 'application/json' }
       end
@@ -145,18 +147,18 @@ class ApplicationController < ActionController::Base
   end
 
   def routing_argument_missing(error)
+    msg = 'Bad request, please change the request and try again.'
     json_response = {
         code: 400,
         phrase: 'Bad Request',
-        message: error.message
+        message: msg
     }.to_json
 
     respond_to do |format|
-      format.html { redirect_to root_path, alert: error.message }
+      format.html { redirect_to root_path, alert: msg }
       format.json { render json: json_response, status: :bad_request }
       format.all { render json: json_response, status: :bad_request, content_type: 'application/json' }
     end
-
   end
 
   def resource_representation_caching_fixes
