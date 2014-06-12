@@ -18,7 +18,7 @@ GIT
 
 GIT
   remote: https://github.com/brainspec/enumerize.git
-  revision: 3b11589a34f9d9933e84e493c859a3286815d51f
+  revision: 5adb11dea2e69e3a511664bc85436c8c9b273deb
   specs:
     enumerize (0.8.0)
       activesupport (>= 3.2)
