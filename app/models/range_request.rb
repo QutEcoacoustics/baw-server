@@ -406,7 +406,8 @@ class RangeRequest
     unless if_mod_since.blank?
       header_modified_time = Time.zone.parse(if_mod_since)
 
-      if !header_modified_time.blank? && info[:file_modified_time].getutc <= header_modified_time.getutc
+      # use .to_i so that compares will match even if sub-seconds are removed by Time.zone.parse
+      if !header_modified_time.blank? && info[:file_modified_time].getutc.to_i <= header_modified_time.getutc.to_i
         return_value[:response_code] = HTTP_CODE_NOT_MODIFIED
         return_value[:response_is_range] = false
         return_value[:response_has_content] = false
@@ -432,7 +433,8 @@ class RangeRequest
     unless if_unmod_since.blank?
       header_time = Time.zone.parse(if_unmod_since)
 
-      if !header_time.blank? && info[:file_modified_time].getutc > header_time.getutc
+      # use .to_i so that compares will match even if sub-seconds are removed by Time.zone.parse
+      if !header_time.blank? && info[:file_modified_time].getutc.to_i > header_time.getutc.to_i
         # file was created after specified date
         return_value[:response_code] = HTTP_CODE_PRECONDITION_FAILED
         return_value[:response_is_range] = false
