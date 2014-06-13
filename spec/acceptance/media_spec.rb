@@ -60,10 +60,15 @@ def using_original_audio(audio_recording, content_type, check_accept_header = tr
   status.should eq(200), "expected status 200 but was #{status}. Response body was #{response_body}"
   response_headers['Content-Type'].should include(content_type)
   response_headers['Accept-Ranges'].should eq('bytes') if check_accept_header
+
   response_headers['Content-Transfer-Encoding'].should eq('binary') unless content_type == 'application/json'
+  response_headers['Content-Transfer-Encoding'].should be_nil if content_type == 'application/json'
 
-  request[0][:request_body].should be_nil
+  response_headers['Content-Disposition'].should start_with('inline; filename=') unless content_type == 'application/json'
+  response_headers['Content-Disposition'].should be_nil if content_type == 'application/json'
 
+  #request[0][:request_body].should be_nil
+ 
   if request[0][:request_method] == 'HEAD'
     response_body.size.should eq(0)
     if response_headers['Content-Type'].include? 'image'
