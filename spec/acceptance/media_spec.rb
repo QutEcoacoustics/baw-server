@@ -68,7 +68,7 @@ def using_original_audio(audio_recording, content_type, check_accept_header = tr
   response_headers['Content-Disposition'].should be_nil if content_type == 'application/json'
 
   #request[0][:request_body].should be_nil
- 
+
   if request[0][:request_method] == 'HEAD'
     response_body.size.should eq(0)
     if response_headers['Content-Type'].include? 'image'

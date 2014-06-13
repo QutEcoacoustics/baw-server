@@ -154,7 +154,17 @@ describe RangeRequest do
   it 'should succeed with if-modified-since matching file modified time' do
     mock_request.headers[RangeRequest::HTTP_HEADER_IF_MODIFIED_SINCE] = audio_file_mono_modified_time.httpdate
     info = range_request.build_response(range_options, mock_request)
-    expect(info[:response_code]).to eq(RangeRequest::HTTP_CODE_NOT_MODIFIED), "Header modified: #{audio_file_mono_modified_time} (#{audio_file_mono_modified_time.to_f}), current: #{File.mtime(audio_file_mono)} (#{File.mtime(audio_file_mono).to_f}), expected #{info[:response_code]}, actual #{RangeRequest::HTTP_CODE_NOT_MODIFIED}"
+
+    info_msg = {
+        httpdate: audio_file_mono_modified_time.httpdate,
+        file_mtime_utc: File.mtime(audio_file_mono).getutc,
+        time_zone_parse: Time.zone.parse(audio_file_mono_modified_time.httpdate),
+        compare: info[:file_modified_time].getutc <= Time.zone.parse(audio_file_mono_modified_time.httpdate).getutc,
+        expected: RangeRequest::HTTP_CODE_NOT_MODIFIED,
+        actual: info[:response_code]
+    }
+
+    expect(info[:response_code]).to eq(RangeRequest::HTTP_CODE_NOT_MODIFIED), info_msg.to_json
     expect(info[:response_is_range]).to be_false
     expect(info[:is_multipart]).to be_false
   end
