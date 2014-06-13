@@ -155,11 +155,19 @@ describe RangeRequest do
     mock_request.headers[RangeRequest::HTTP_HEADER_IF_MODIFIED_SINCE] = audio_file_mono_modified_time.httpdate
     info = range_request.build_response(range_options, mock_request)
 
+    fmt = info[:file_modified_time]
+    tzp = Time.zone.parse(audio_file_mono_modified_time.httpdate)
+    file_mt = File.mtime(audio_file_mono)
+
     info_msg = {
         httpdate: audio_file_mono_modified_time.httpdate,
-        file_mtime_utc: File.mtime(audio_file_mono).getutc,
-        time_zone_parse: Time.zone.parse(audio_file_mono_modified_time.httpdate),
-        compare: info[:file_modified_time].getutc <= Time.zone.parse(audio_file_mono_modified_time.httpdate).getutc,
+        file_mtime_utc: file_mt.getutc,
+        time_zone_parse: tzp,
+        file_modified_time:  fmt.getutc,
+        file_modified_time_f: fmt.getutc.to_f,
+        time_zone_parse_utc: tzp.getutc,
+        time_zone_parse_utc_f: tzp.getutc.to_f,
+        compare: fmt.getutc <= tzp.getutc,
         expected: RangeRequest::HTTP_CODE_NOT_MODIFIED,
         actual: info[:response_code]
     }
