@@ -1,7 +1,24 @@
 FactoryGirl.define do
 
-  #after(:build) { |object| Rails.logger.debug "Built #{object.inspect}" }
-  #after(:create) { |object| Rails.logger.debug "Created #{object.inspect}" }
+  after(:build) { |object|
+    is_blank = object.respond_to?(:creator) && object.creator.blank? && !object.is_a?(User)
+    Rails.logger.warn "After build #{is_blank ? '[blank]' : ''} [#{object.object_id}] #{object.inspect}"
+  }
+
+  before(:create) { |object|
+    is_blank = object.respond_to?(:creator) && object.creator.blank? && !object.is_a?(User)
+    Rails.logger.warn "Before create #{is_blank ? '[blank]' : ''} [#{object.object_id}] #{object.inspect}"
+  }
+
+  after(:create) { |object|
+    is_blank = object.respond_to?(:creator) && object.creator.blank? && !object.is_a?(User)
+    Rails.logger.warn "After create #{is_blank ? '[blank]' : ''} [#{object.object_id}] #{object.inspect}"
+  }
+
+  before(:stub) { |object|
+    is_blank = object.respond_to?(:creator) && object.creator.blank? && !object.is_a?(User)
+    Rails.logger.warn "Before stub #{is_blank ? '[blank]' : ''} [#{object.object_id}] #{object.inspect}"
+  }
 
   factory :permission do
     creator
