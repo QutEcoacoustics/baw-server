@@ -81,16 +81,14 @@ class ApplicationController < ActionController::Base
 
   private
 
-  def set_stampers
-    User.stamper = self.current_user
-  end
-
   def record_not_found(error)
     respond_to do |format|
       format.html { render template: 'errors/record_not_found', status: :not_found }
       format.json { render json: {code: 404, phrase: 'Not Found', message: 'Not found'}, status: :not_found }
       format.all { render json: {code: 404, phrase: 'Not Found', message: 'Not found'}, status: :not_found }
     end
+
+    check_reset_stamper
   end
 
   def record_not_unique(error)
@@ -99,6 +97,8 @@ class ApplicationController < ActionController::Base
       format.json { render json: {code: 409, phrase: 'Conflict', message: 'Not unique'}, status: :conflict }
       format.all { render json: {code: 409, phrase: 'Conflict', message: 'Not unique'}, status: :conflict }
     end
+
+    check_reset_stamper
   end
 
   def access_denied(error)
@@ -167,6 +167,8 @@ class ApplicationController < ActionController::Base
         format.all { render json: json_response, status: :unauthorized, content_type: 'application/json' }
       end
     end
+
+    check_reset_stamper
   end
 
   def routing_argument_missing(error)
@@ -182,6 +184,8 @@ class ApplicationController < ActionController::Base
       format.json { render json: json_response, status: :bad_request }
       format.all { render json: json_response, status: :bad_request, content_type: 'application/json' }
     end
+
+    check_reset_stamper
   end
 
   def resource_representation_caching_fixes
@@ -189,6 +193,10 @@ class ApplicationController < ActionController::Base
     if response.content_type == 'text/html' || response.content_type == 'application/json'
       response.headers['Vary'] = 'Accept'
     end
+  end
+
+  def check_reset_stamper
+    reset_stamper if User.stamper
   end
 
 end

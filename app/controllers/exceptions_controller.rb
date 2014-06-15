@@ -6,6 +6,9 @@
 class ExceptionsController < ActionController::Base
   layout 'application'
 
+  # userstamp
+  include Userstamp
+
   # called with env as a parameter
   def show
     @exception = env['action_dispatch.exception']
@@ -31,6 +34,8 @@ class ExceptionsController < ActionController::Base
       format.html { render :show, status: @status_code, layout: !request.xhr? }
       format.json { render json: details, status: @status_code }
     end
+
+    User.reset_stamper if User.stamper
   end
 
   protected
