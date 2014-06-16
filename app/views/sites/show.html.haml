@@ -5,8 +5,9 @@
     %h1= @site.name
     %p= @site.description
 
-
-- unless @site.audio_recordings.blank?
+- if @site.audio_recordings.blank?
+  %p No audio recordings from this site.
+- else
   .row-fluid
     .span12
       %h3= 'Audio Recordings'

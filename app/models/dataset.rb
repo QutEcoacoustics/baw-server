@@ -34,10 +34,14 @@ class Dataset < ActiveRecord::Base
   # search by tag text (array of partial tag text)
   serialize :tag_text_filters, Array
 
-  # userstamp
+  # add created_at and updated_at stamper
   stampable
 
-  # validation
+  # association validations
+  validates :project, existence: true
+  validates :creator, existence: true
+
+  # attribute validations
   validates :name, presence: true, uniqueness: {case_sensitive: false, scope: :creator_id, message: 'should be unique per user'}
   validates_presence_of :start_time, if: :end_time?
   validates_presence_of :end_time, if: :start_time?
