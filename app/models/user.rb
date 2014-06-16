@@ -74,8 +74,15 @@ class User < ActiveRecord::Base
   serialize :preferences, JSON
 
   # validations
-  validates :user_name, presence: true, uniqueness: {case_sensitive: false}
-  validates :email, presence: true, uniqueness: true
+  validates :user_name, presence: true, uniqueness: {case_sensitive: false},
+            exclusion: { in: %w(admin harvester analysis_runner) }
+  # format, uniqueness, and presence are validated by devise
+  # Validatable component
+  # validates :email,
+  #           presence: true,
+  #           uniqueness: true,
+  #           format: {with:VALID_EMAIL_REGEX, message: 'Basic email validation failed. It should have at least 1 `@` and 1 `.`'}
+
   validates :roles_mask, presence: true
   validates_attachment_content_type :image, content_type: /^image\/(jpg|jpeg|pjpeg|png|x-png|gif)$/, message: 'file type %{value} is not allowed (only jpeg/png/gif images)'
 
