@@ -20,9 +20,9 @@ module BawAudioTools
       target_no_ext = File.basename(target, File.extname(target))
       cmd_offsets = arg_offsets(start_offset, end_offset)
 
-      wvunpack_command = "#{@mp3splt_executable} -q -d \"#{target_dirname}\" -o \"#{target_no_ext}\" \"#{source}\" #{cmd_offsets}"
-      wvunpack_command = wvunpack_command.gsub(%r{/}) { "\\" } if OS.windows?
-      wvunpack_command
+      mp3splt_command = "#{@mp3splt_executable} -q -d \"#{target_dirname}\" -o \"#{target_no_ext}\" \"#{source}\" #{cmd_offsets}"
+      mp3splt_command = mp3splt_command.gsub(%r{/}) { "\\" } if OS.windows?
+      mp3splt_command
     end
 
     def arg_offsets(start_offset, end_offset)
