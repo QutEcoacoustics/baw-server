@@ -76,7 +76,7 @@ require 'rbconfig'
 
 # TESTING & Documentation
 # -------------------------------------
-gem 'rspec_api_documentation', '~> 3.0.0'
+gem 'rspec_api_documentation', '~> 3.1.0'
 gem 'raddocs', '~> 0.4.0'
 
 # MONITORING
@@ -127,7 +127,7 @@ group :development do
 end
 
 group :development, :test do
-  gem 'bullet', '~> 4.9.0'
+  gem 'bullet', '~> 4.10.0'
   gem 'rspec-rails', '~> 2.14.2'
   gem 'guard', '~> 1.8.3'
   gem 'listen', '~> 1.3.1'
@@ -136,7 +136,7 @@ end
 
 group :test do
   gem 'factory_girl_rails', '~> 4.4.1'
-  gem 'capybara', '~> 2.2.1'
+  gem 'capybara', '~> 2.3.0'
   gem 'thin', '~> 1.6.2'
   gem 'guard-rspec', '~> 3.1.0'
   gem 'rspec', '~> 2.14.1'
