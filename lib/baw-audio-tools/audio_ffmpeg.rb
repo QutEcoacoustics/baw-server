@@ -19,9 +19,9 @@ module BawAudioTools
     end
 
     def modify_command(source, source_info, target, start_offset = nil, end_offset = nil, channel = nil, sample_rate = nil)
-      raise Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.exists? source
-      raise Exceptions::FileAlreadyExistsError, "Target exists: #{target}" if File.exists? target
-      raise ArgumentError "Source and Target are the same file: #{target}" unless source != target
+      fail Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.exists? source
+      fail Exceptions::FileAlreadyExistsError, "Target exists: #{target}" if File.exists? target
+      fail ArgumentError, "Source and Target are the same file: #{target}" unless source != target
 
       cmd_offsets = arg_offsets(start_offset, end_offset)
       cmd_sample_rate = arg_sample_rate(sample_rate)
@@ -59,7 +59,9 @@ module BawAudioTools
         if stderr.include?(WARN_ESTIMATE_DURATION)
           mod_stderr = mod_stderr.gsub(/#{ffmpeg_warning_tag}#{WARN_ESTIMATE_DURATION}/, '')
         end
-        raise Exceptions::FileCorruptError if !mod_stderr.blank? && mod_stderr.match(/#{ffmpeg_warning_tag}/)
+        if !mod_stderr.blank? && mod_stderr.match(/#{ffmpeg_warning_tag}/)
+          fail Exceptions::FileCorruptError, "Ffmpeg output contained warning.\n\t Standard output: #{stdout}\n\t Standard Error: #{mod_stderr}"
+        end
       end
     end
 
@@ -89,8 +91,8 @@ module BawAudioTools
         end
       end
 
-      raise Exceptions::AudioFileNotFoundError, "Could not locate #{source}" unless File.exists?(source)
-      raise Exceptions::NotAnAudioFileError, "Not an audio file #{source} (#{result['STREAM codec_type']}): #{result.to_json}" if result['STREAM codec_type'] != 'audio'
+      fail Exceptions::AudioFileNotFoundError, "Could not locate #{source}" unless File.exists?(source)
+      fail Exceptions::NotAnAudioFileError, "Not an audio file #{source} (#{result['STREAM codec_type']} is not 'audio'): #{result.to_json}" if result['STREAM codec_type'] != 'audio'
 
       result
     end

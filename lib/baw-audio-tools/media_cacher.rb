@@ -47,7 +47,7 @@ module BawAudioTools
         source_possible_paths = source_files.map { |source_file| @cache.possible_storage_paths(@cache.original_audio, source_file) }.flatten
 
         # if the original audio file()s) cannot be found, raise an exception
-        raise Exceptions::AudioFileNotFoundError, "Could not find original audio in '#{source_possible_paths}' using #{modify_parameters}." if source_existing_paths.blank?
+        fail Exceptions::AudioFileNotFoundError, "Could not find original audio in '#{source_possible_paths}' using #{modify_parameters}." if source_existing_paths.blank?
 
         # create the cached audio file in each of the possible paths
         target_possible_paths.each { |target|
@@ -62,7 +62,7 @@ module BawAudioTools
 
         # update existing paths after cutting audio
         target_existing_paths = @cache.existing_storage_paths(@cache.cache_audio, target_file)
-        raise Exceptions::AudioFileNotFoundError, "Could not find cached audio for #{target_file} using #{modify_parameters}." if target_existing_paths.blank?
+        fail Exceptions::AudioFileNotFoundError, "Could not find cached audio for #{target_file} using #{modify_parameters}." if target_existing_paths.blank?
       end
 
       # the requested audio file should exist in at least one possible path
@@ -96,7 +96,7 @@ module BawAudioTools
           log_options(modify_parameters, '#generate_spectrogram self.cached_audio_file_name')
           source_wav_file = self.cached_audio_file_name(cached_wav_audio_parameters)
           source_existing_paths = @cache.existing_storage_paths(@cache.cache_audio, source_wav_file)
-          raise Exceptions::AudioFileNotFoundError, "Could not find or create cached audio for #{target_file} using cached audio file #{source_wav_file}." if source_existing_paths.blank?
+          fail Exceptions::AudioFileNotFoundError, "Could not find or create cached audio for #{target_file} using cached audio file #{source_wav_file}." if source_existing_paths.blank?
         end
 
         # create the spectrogram image in each of the possible paths
@@ -120,7 +120,7 @@ module BawAudioTools
 
         # update existing paths after generating spectrogram
         target_existing_paths = @cache.existing_storage_paths(@cache.cache_spectrogram, target_file)
-        raise Exceptions::SpectrogramFileNotFoundError, "Could not find cached spectrogram for #{target_file} using #{modify_parameters}." if target_existing_paths.blank?
+        fail Exceptions::SpectrogramFileNotFoundError, "Could not find cached spectrogram for #{target_file} using #{modify_parameters}." if target_existing_paths.blank?
       end
 
       # the requested spectrogram image should exist in at least one possible path

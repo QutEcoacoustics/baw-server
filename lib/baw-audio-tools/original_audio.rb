@@ -26,7 +26,7 @@ module BawAudioTools
         format_string = '%y%m%d-%H%M'
         result += datetime.utc.advance(hours: 10).strftime(format_string)
       else
-        raise BawAudioTools::Exceptions::CacheRequestError, "Only uses ActiveSupport::TimeWithZone, given #{uuid}, #{datetime}, #{original_format}."
+        fail BawAudioTools::Exceptions::CacheRequestError, "Only uses ActiveSupport::TimeWithZone, given #{uuid}, #{datetime}, #{original_format}."
       end
 
       result += @extension_indicator + original_format.trim('.', '').to_s
@@ -45,7 +45,7 @@ module BawAudioTools
         format_string = '%Y%m%d-%H%M%S'
         result += datetime.utc.strftime(format_string).downcase
       else
-        raise BawAudioTools::Exceptions::CacheRequestError, "Only uses ActiveSupport::TimeWithZone, given #{uuid}, #{datetime}, #{original_format}."
+        fail BawAudioTools::Exceptions::CacheRequestError, "Only uses ActiveSupport::TimeWithZone, given #{uuid}, #{datetime}, #{original_format}."
       end
 
       result + 'Z' + @extension_indicator + original_format.trim('.', '').to_s.downcase

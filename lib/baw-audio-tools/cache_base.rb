@@ -71,53 +71,53 @@ module BawAudioTools
       eq_or_gt = 'must be equal to or greater than'
       provided = "Provided parameters: #{modify_parameters}"
       if cache_class.is_a?(OriginalAudio) || cache_class.is_a?(CacheAudio) || cache_class.is_a?(CacheSpectrogram)
-        raise ArgumentError, "#{msg} uuid. #{provided}" unless modify_parameters.include? :uuid
-        raise ArgumentError, "uuid must not be blank. #{provided}" if modify_parameters[:uuid].blank?
+        fail ArgumentError, "#{msg} uuid. #{provided}" unless modify_parameters.include? :uuid
+        fail ArgumentError, "uuid must not be blank. #{provided}" if modify_parameters[:uuid].blank?
       end
 
       if cache_class.is_a?(CacheDataset) || cache_class.is_a?(CacheAudio) || cache_class.is_a?(CacheSpectrogram)
-        raise ArgumentError, "#{msg} format. #{provided}" unless modify_parameters.include? :format
-        raise ArgumentError, "format must not be blank. #{provided}" if modify_parameters[:format].blank?
+        fail ArgumentError, "#{msg} format. #{provided}" unless modify_parameters.include? :format
+        fail ArgumentError, "format must not be blank. #{provided}" if modify_parameters[:format].blank?
       end
 
       if cache_class.is_a?(CacheAudio) || cache_class.is_a?(CacheSpectrogram)
         log_options(modify_parameters, '#file_name CacheAudio || CacheSpectrogram')
-        raise ArgumentError, "#{msg} start_offset. #{provided}" unless modify_parameters.include? :start_offset
-        raise ArgumentError, "start_offset #{eq_or_gt} 0: #{modify_parameters[:end_offset]}. #{provided}" unless modify_parameters[:start_offset].to_f >= 0.0
+        fail ArgumentError, "#{msg} start_offset. #{provided}" unless modify_parameters.include? :start_offset
+        fail ArgumentError, "start_offset #{eq_or_gt} 0: #{modify_parameters[:end_offset]}. #{provided}" unless modify_parameters[:start_offset].to_f >= 0.0
 
-        raise ArgumentError, "#{msg} end_offset. #{provided}" unless modify_parameters.include? :end_offset
-        raise ArgumentError, "end_offset (#{modify_parameters[:end_offset]}) must be greater than start_offset (#{modify_parameters[:start_offset]}). #{provided}" if modify_parameters[:start_offset].to_f >= modify_parameters[:end_offset].to_f
+        fail ArgumentError, "#{msg} end_offset. #{provided}" unless modify_parameters.include? :end_offset
+        fail ArgumentError, "end_offset (#{modify_parameters[:end_offset]}) must be greater than start_offset (#{modify_parameters[:start_offset]}). #{provided}" if modify_parameters[:start_offset].to_f >= modify_parameters[:end_offset].to_f
 
-        raise ArgumentError, "#{msg} channel. #{provided}" unless modify_parameters.include? :channel
-        raise ArgumentError, "channel#{eq_or_gt} 0: #{modify_parameters[:channel]}. #{provided}" unless modify_parameters[:channel].to_i >= 0
+        fail ArgumentError, "#{msg} channel. #{provided}" unless modify_parameters.include? :channel
+        fail ArgumentError, "channel#{eq_or_gt} 0: #{modify_parameters[:channel]}. #{provided}" unless modify_parameters[:channel].to_i >= 0
 
-        raise ArgumentError, "#{msg} sample_rate. #{provided}" unless modify_parameters.include? :sample_rate
-        raise ArgumentError, "sample_rate #{eq_or_gt} 8000: #{modify_parameters[:sample_rate]}. #{provided}" if modify_parameters[:sample_rate].to_i < 8000
+        fail ArgumentError, "#{msg} sample_rate. #{provided}" unless modify_parameters.include? :sample_rate
+        fail ArgumentError, "sample_rate #{eq_or_gt} 8000: #{modify_parameters[:sample_rate]}. #{provided}" if modify_parameters[:sample_rate].to_i < 8000
       end
 
       if cache_class.is_a?(OriginalAudio)
-        raise ArgumentError, "#{msg} date. #{provided}" unless modify_parameters.include? :datetime_with_offset
-        raise ArgumentError, "datetime must not be blank. #{provided}" if modify_parameters[:datetime_with_offset].blank?
-        raise ArgumentError, "datetime must be an ActiveSupport::TimeWithZone object. #{provided}" unless modify_parameters[:datetime_with_offset].is_a?(ActiveSupport::TimeWithZone)
+        fail ArgumentError, "#{msg} date. #{provided}" unless modify_parameters.include? :datetime_with_offset
+        fail ArgumentError, "datetime must not be blank. #{provided}" if modify_parameters[:datetime_with_offset].blank?
+        fail ArgumentError, "datetime must be an ActiveSupport::TimeWithZone object. #{provided}" unless modify_parameters[:datetime_with_offset].is_a?(ActiveSupport::TimeWithZone)
 
-        raise ArgumentError, "#{msg} original_format. #{provided}" unless modify_parameters.include? :original_format
-        raise ArgumentError, "original_format must not be blank. #{provided}" if modify_parameters[:original_format].blank?
+        fail ArgumentError, "#{msg} original_format. #{provided}" unless modify_parameters.include? :original_format
+        fail ArgumentError, "original_format must not be blank. #{provided}" if modify_parameters[:original_format].blank?
       end
 
       if cache_class.is_a?(CacheSpectrogram)
-        raise ArgumentError, "#{msg} window. #{provided}" unless modify_parameters.include? :window
-        raise ArgumentError, "window must be greater than 0: #{modify_parameters[:window]}. #{provided}" unless modify_parameters[:window].to_i > 0
+        fail ArgumentError, "#{msg} window. #{provided}" unless modify_parameters.include? :window
+        fail ArgumentError, "window must be greater than 0: #{modify_parameters[:window]}. #{provided}" unless modify_parameters[:window].to_i > 0
 
-        raise ArgumentError, "#{msg} colour. #{provided}" unless modify_parameters.include? :colour
-        raise ArgumentError, "colour must be a single character: #{modify_parameters[:colour]}. #{provided}" if modify_parameters[:colour].to_s.size != 1
+        fail ArgumentError, "#{msg} colour. #{provided}" unless modify_parameters.include? :colour
+        fail ArgumentError, "colour must be a single character: #{modify_parameters[:colour]}. #{provided}" if modify_parameters[:colour].to_s.size != 1
       end
 
       if cache_class.is_a?(CacheDataset)
-        raise ArgumentError, "#{msg} saved_search_id. #{provided}" unless modify_parameters.include? :saved_search_id
-        raise ArgumentError, "saved_search_id must be greater than 0: #{modify_parameters[:saved_search_id]}. #{provided}" unless modify_parameters[:saved_search_id].to_i > 0
+        fail ArgumentError, "#{msg} saved_search_id. #{provided}" unless modify_parameters.include? :saved_search_id
+        fail ArgumentError, "saved_search_id must be greater than 0: #{modify_parameters[:saved_search_id]}. #{provided}" unless modify_parameters[:saved_search_id].to_i > 0
 
-        raise ArgumentError, "#{msg} dataset_id. #{provided}" unless modify_parameters.include? :dataset_id
-        raise ArgumentError, "dataset_id must be greater than 0: #{modify_parameters[:dataset_id]}. #{provided}" unless modify_parameters[:dataset_id].to_i > 0
+        fail ArgumentError, "#{msg} dataset_id. #{provided}" unless modify_parameters.include? :dataset_id
+        fail ArgumentError, "dataset_id must be greater than 0: #{modify_parameters[:dataset_id]}. #{provided}" unless modify_parameters[:dataset_id].to_i > 0
       end
 
       # get file name
@@ -163,7 +163,7 @@ module BawAudioTools
               modify_parameters[:format]
           )
         else
-          raise ArgumentError, "#{cache_class} was not recognised as a valid cache class."
+          fail ArgumentError, "#{cache_class} was not recognised as a valid cache class."
       end
 
       file_name
@@ -181,7 +181,7 @@ module BawAudioTools
     end
 
     def check_cache_class(cache_class)
-      raise ArgumentError, "#{cache_class} is not a valid cache class." unless !cache_class.nil? && cache_class.respond_to?(:storage_paths) &&
+      fail ArgumentError, "#{cache_class} is not a valid cache class." unless !cache_class.nil? && cache_class.respond_to?(:storage_paths) &&
           cache_class.respond_to?(:file_name) && cache_class.respond_to?(:partial_path)
     end
 

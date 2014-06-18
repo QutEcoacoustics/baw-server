@@ -34,17 +34,23 @@ module BawAudioTools
     end
 
     def check_for_errors(stdout, stderr)
-      raise Exceptions::FileCorruptError if !stderr.blank? && stderr.include?(ERROR_CANNOT_OPEN)
-      raise Exceptions::AudioToolError if !stderr.blank? && stderr.include?(ERROR_NOT_VALID)
-      raise Exceptions::AudioToolError if !stderr.blank? && stderr.include?(ERROR_NOT_COMPATIBLE)
+      if !stderr.blank? && stderr.include?(ERROR_CANNOT_OPEN)
+        fail Exceptions::FileCorruptError, "Wavpack could not open the file.\n\t Standard output: #{stdout}\n\t Standard Error: #{stderr}"
+      end
+      if !stderr.blank? && stderr.include?(ERROR_NOT_VALID)
+        fail Exceptions::AudioToolError, "Wavpack was given a non-wavpack file.\n\t Standard output: #{stdout}\n\t Standard Error: #{stderr}"
+      end
+      if !stderr.blank? && stderr.include?(ERROR_NOT_COMPATIBLE)
+        fail Exceptions::AudioToolError, "Wavpack was given a non-compatible wavpack file.\n\t Standard output: #{stdout}\n\t Standard Error: #{stderr}"
+      end
     end
 
     def modify_command(source, source_info, target, start_offset = nil, end_offset = nil)
-      raise ArgumentError, "Source is not a wavpack file: #{source}" unless source.match(/\.wv$/)
-      raise ArgumentError, "Target is not a wav file: : #{target}" unless target.match(/\.wav$/)
-      raise Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.exists? source
-      raise Exceptions::FileAlreadyExistsError, "Target exists: #{target}" if File.exists? target
-      raise ArgumentError "Source and Target are the same file: #{target}" unless source != target
+      fail ArgumentError, "Source is not a wavpack file: #{source}" unless source.match(/\.wv$/)
+      fail ArgumentError, "Target is not a wav file: : #{target}" unless target.match(/\.wav$/)
+      fail Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.exists? source
+      fail Exceptions::FileAlreadyExistsError, "Target exists: #{target}" if File.exists? target
+      fail ArgumentError "Source and Target are the same file: #{target}" unless source != target
 
       cmd_offsets = arg_offsets(start_offset, end_offset)
 

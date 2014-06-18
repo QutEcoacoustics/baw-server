@@ -9,11 +9,11 @@ module BawAudioTools
     public
 
     def modify_command(source, source_info, target, start_offset = nil, end_offset = nil)
-      raise ArgumentError, "Source is not a mp3 file: #{source}" unless source.match(/\.mp3$/)
-      raise ArgumentError, "Target is not a mp3 file: : #{target}" unless target.match(/\.mp3$/)
-      raise Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.exists? source
-      raise Exceptions::FileAlreadyExistsError, "Target exists: #{target}" if File.exists? target
-      raise ArgumentError "Source and Target are the same file: #{target}" unless source != target
+      fail ArgumentError, "Source is not a mp3 file: #{source}" unless source.match(/\.mp3$/)
+      fail ArgumentError, "Target is not a mp3 file: : #{target}" unless target.match(/\.mp3$/)
+      fail Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.exists? source
+      fail Exceptions::FileAlreadyExistsError, "Target exists: #{target}" if File.exists? target
+      fail ArgumentError "Source and Target are the same file: #{target}" unless source != target
 
       # mp3splt needs the file extension removed
       target_dirname = File.dirname target

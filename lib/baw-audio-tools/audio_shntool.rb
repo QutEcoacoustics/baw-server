@@ -41,12 +41,14 @@ module BawAudioTools
     end
 
     def check_for_errors(stdout, stderr)
-      raise Exceptions::AudioToolError if !stderr.blank? && stderr.include?(ERROR_NO_HANDLER)
+      if !stderr.blank? && stderr.include?(ERROR_NO_HANDLER)
+        fail Exceptions::AudioToolError, "shntool output contained error.\n\t Standard output: #{stdout}\n\t Standard Error: #{stderr}"
+      end
     end
 
     def modify_command(source, source_info, target, start_offset = nil, end_offset = nil)
       #cmd_offsets = arg_offsets(start_offset, end_offset)
-      raise StandardError, 'Not implemented'
+      fail StandardError, 'Not implemented'
       #-O val Overwrite existing files?  val is one of: {ask, always,  never}. The default is ask.
       #-a str Prefix str to base part of output filenames
       #-d dir Specify output directory

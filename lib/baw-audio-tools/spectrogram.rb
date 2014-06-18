@@ -20,8 +20,8 @@ module BawAudioTools
     end
 
     def info(source)
-      raise Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.exists? source
-      raise Exceptions::FileEmptyError, "Source exists, but has no content: #{source}" if File.size(source) < 1
+      fail Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.exists? source
+      fail Exceptions::FileEmptyError, "Source exists, but has no content: #{source}" if File.size(source) < 1
 
       im_info_cmd = @image_image_magick.info_command(source)
       im_info_output = @audio_base.execute(im_info_cmd)
@@ -39,11 +39,11 @@ module BawAudioTools
     # parameters in modify_parameters. Possible options for modify_parameters:
     # :start_offset :end_offset :channel :sample_rate :window :colour :format
     def modify(source, target, modify_parameters = {})
-      raise ArgumentError, "Target is not a png file: : #{target}" unless target.match(/\.png/)
-      raise ArgumentError, "Source is not a wav file: : #{source}" unless source.match(/\.wav/)
-      raise Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.exists? source
-      raise Exceptions::FileAlreadyExistsError, "Target exists: #{target}" if File.exists? target
-      raise ArgumentError "Source and Target are the same file: #{target}" unless source != target
+      fail ArgumentError, "Target is not a png file: : #{target}" unless target.match(/\.png/)
+      fail ArgumentError, "Source is not a wav file: : #{source}" unless source.match(/\.wav/)
+      fail Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.exists? source
+      fail Exceptions::FileAlreadyExistsError, "Target exists: #{target}" if File.exists? target
+      fail ArgumentError "Source and Target are the same file: #{target}" unless source != target
 
       source_info = audio_base.info(source)
       audio_base.check_offsets(source_info, @spectrogram_defaults.min_duration_seconds, @spectrogram_defaults.max_duration_seconds, modify_parameters)

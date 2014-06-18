@@ -41,8 +41,8 @@ module BawAudioTools
 
     # Provides information about an audio file.
     def info(source)
-      raise Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.exists? source
-      raise Exceptions::FileEmptyError, "Source exists, but has no content: #{source}" if File.size(source) < 1
+      fail Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.exists? source
+      fail Exceptions::FileEmptyError, "Source exists, but has no content: #{source}" if File.size(source) < 1
 
       ffmpeg_info_cmd = @audio_ffmpeg.info_command(source)
       ffmpeg_info_output = execute(ffmpeg_info_cmd)
@@ -145,9 +145,9 @@ module BawAudioTools
     # parameters in modify_parameters. Possible options for modify_parameters:
     # :start_offset :end_offset :channel :sample_rate :format
     def modify(source, target, modify_parameters = {})
-      raise ArgumentError, "Source and Target are the same file: #{target}" unless source != target
-      raise Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.exists? source
-      raise Exceptions::FileAlreadyExistsError, "Target exists: #{target}" if File.exists? target
+      fail ArgumentError, "Source and Target are the same file: #{target}" unless source != target
+      fail Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.exists? source
+      fail Exceptions::FileAlreadyExistsError, "Target exists: #{target}" if File.exists? target
 
       source_info = info(source)
 
@@ -199,8 +199,8 @@ module BawAudioTools
         Logging::logger.debug msg+extra_msg
       end
 
-      raise Exceptions::AudioToolTimedOutError, msg + extra_msg if timed_out || killed
-      raise Exceptions::AudioToolError, msg + extra_msg if !stderr_str.blank? && !status.success?
+      fail Exceptions::AudioToolTimedOutError, msg + extra_msg if timed_out || killed
+      fail Exceptions::AudioToolError, msg + extra_msg if !stderr_str.blank? && !status.success?
 
       {
           command: command,
@@ -238,8 +238,8 @@ module BawAudioTools
       end
 
       duration = end_offset - start_offset
-      raise Exceptions::SegmentRequestTooLong, "#{end_offset} - #{start_offset} = #{duration} (max: #{max_duration_seconds})" if duration > max_duration_seconds
-      raise Exceptions::SegmentRequestTooShort, "#{end_offset} - #{start_offset} = #{duration} (min: #{min_duration_seconds})" if duration < min_duration_seconds
+      fail Exceptions::SegmentRequestTooLong, "#{end_offset} - #{start_offset} = #{duration} (max: #{max_duration_seconds})" if duration > max_duration_seconds
+      fail Exceptions::SegmentRequestTooShort, "#{end_offset} - #{start_offset} = #{duration} (min: #{min_duration_seconds})" if duration < min_duration_seconds
 
       modify_parameters[:start_offset] = start_offset
       modify_parameters[:end_offset] = end_offset
@@ -251,8 +251,8 @@ module BawAudioTools
     end
 
     def check_target(target)
-      raise Exceptions::FileNotFoundError, "#{target}" unless File.exists?(target)
-      raise Exceptions::FileEmptyError, "#{target}" if File.size(target) < 1
+      fail Exceptions::FileNotFoundError, "#{target}" unless File.exists?(target)
+      fail Exceptions::FileEmptyError, "#{target}" if File.size(target) < 1
     end
 
     def check_sample_rate(target, modify_parameters = {})
@@ -260,7 +260,7 @@ module BawAudioTools
       if modify_parameters.include?(:sample_rate) && File.extname(target) != '.wav'
         sample_rate = modify_parameters[:sample_rate].to_i
         valid_sample_rates = [8000, 11025, 12000, 16000, 22050, 24000, 32000, 44100, 48000]
-        raise Exceptions::InvalidSampleRateError, ' Arbitrary sample rates only valid for wav files. '+
+        fail Exceptions::InvalidSampleRateError, ' Arbitrary sample rates only valid for wav files. '+
             "Sample rate #{sample_rate} requested for #{File.extname(target)} not in #{valid_sample_rates}." unless valid_sample_rates.include?(sample_rate)
       end
     end

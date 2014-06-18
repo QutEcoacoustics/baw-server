@@ -31,17 +31,21 @@ module BawAudioTools
     end
 
     def check_for_errors(stdout, stderr)
-      raise Exceptions::FileNotFoundError if !stderr.blank? && stderr.include?(ERROR_UNABLE_TO_OPEN)
-      raise Exceptions::NotAnImageFileError if !stderr.blank? && stderr.include?(ERROR_IMAGE_FORMAT)
+      if !stderr.blank? && stderr.include?(ERROR_UNABLE_TO_OPEN)
+        fail Exceptions::FileCorruptError, "Image magick could not open the file.\n\t Standard output: #{stdout}\n\t Standard Error: #{stderr}"
+      end
+      if !stderr.blank? && stderr.include?(ERROR_IMAGE_FORMAT)
+        fail Exceptions::NotAnImageFileError, "Image magick was given a non-image file.\n\t Standard output: #{stdout}\n\t Standard Error: #{stderr}"
+      end
     end
 
     def modify_command(source, target, duration_sec, ppms)
-      raise ArgumentError, "Source is not a png file: #{source}" unless source.match(/\.png/)
-      raise ArgumentError, "Target is not a png file: : #{target}" unless target.match(/\.png/)
-      raise Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.exists? source
+      fail ArgumentError, "Source is not a png file: #{source}" unless source.match(/\.png/)
+      fail ArgumentError, "Target is not a png file: : #{target}" unless target.match(/\.png/)
+      fail Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.exists? source
       # target will probably already exist, coz we're overwriting the image
-      #raise Exceptions::FileAlreadyExistsError, "Target exists: #{target}" if File.exists? target
-      #raise ArgumentError "Source and Target are the same file: #{target}" unless source != target
+      #fail Exceptions::FileAlreadyExistsError, "Target exists: #{target}" if File.exists? target
+      #fail ArgumentError "Source and Target are the same file: #{target}" unless source != target
 
       # disable resizing. The client can take care of manipulating the image to suit the client's needs
       ##cmd_width = arg_width(ppms, duration_sec)
