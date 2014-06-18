@@ -42,7 +42,7 @@ module BawAudioTools
 
     def check_for_errors(stdout, stderr)
       if !stderr.blank? && stderr.include?(ERROR_NO_HANDLER)
-        fail Exceptions::AudioToolError, "shntool output contained error.\n\t Standard output: #{stdout}\n\t Standard Error: #{stderr}"
+        fail Exceptions::AudioToolError, "shntool cannot open this file type.\n\t Standard output: #{stdout}\n\t Standard Error: #{stderr}"
       end
     end
 

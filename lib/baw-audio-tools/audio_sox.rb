@@ -36,10 +36,10 @@ module BawAudioTools
 
     def check_for_errors(stdout, stderr)
       if !stderr.blank? && stderr.include?(ERROR_CANNOT_OPEN)
-        fail Exceptions::FileCorruptError, "sox output contained error.\n\t Standard output: #{stdout}\n\t Standard Error: #{stderr}"
+        fail Exceptions::FileCorruptError, "sox could not open the file.\n\t Standard output: #{stdout}\n\t Standard Error: #{stderr}"
       end
       if !stderr.blank? && stderr.include?(ERROR_NO_HANDLER)
-        fail Exceptions::AudioToolError, "sox output contained error.\n\t Standard output: #{stdout}\n\t Standard Error: #{stderr}"
+        fail Exceptions::AudioToolError, "sox cannot open this file type.\n\t Standard output: #{stdout}\n\t Standard Error: #{stderr}"
       end
     end
 
