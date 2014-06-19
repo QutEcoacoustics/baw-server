@@ -91,8 +91,14 @@ module BawAudioTools
         end
       end
 
-      fail Exceptions::AudioFileNotFoundError, "Could not locate #{source}" unless File.exists?(source)
-      fail Exceptions::NotAnAudioFileError, "Not an audio file #{source} (#{result['STREAM codec_type']} is not 'audio'): #{result.to_json}" if result['STREAM codec_type'] != 'audio'
+      unless File.exists?(source)
+        fail Exceptions::AudioFileNotFoundError, "Could not locate #{source}\n\tStandard Output: #{raw}"
+      end
+
+      if result['STREAM codec_type'] != 'audio'
+        msg = "Not an audio file #{source} ('#{result['STREAM codec_type']}' is not 'audio'): #{result.to_json}\n\tStandard Output: #{raw}"
+        fail Exceptions::NotAnAudioFileError, msg
+      end
 
       result
     end
