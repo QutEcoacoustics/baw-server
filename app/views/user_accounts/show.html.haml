@@ -1,7 +1,31 @@
+
 = image_tag @user.image.url(:span3), class: 'span3'
 
 .span9
   %h1= @user.user_name
+  .row-fluid
+    .span6{style:'text-align:center'}
+      %p
+        Projects:
+        = number_with_delimiter(@user.get_project_count)
+      %p
+        Tags:
+        = number_with_delimiter(@user.get_tag_count, delimiter: ' ')
+      %p
+        Last seen
+        - last_seen = @user.get_last_seen
+        = last_seen.blank? ? '?' : "#{distance_of_time_in_words(Time.zone.now, last_seen, nil, {vague: true})} ago"
+    .span6{style:'text-align:center'}
+      %p
+        Sites:
+        = number_with_delimiter(@user.get_site_count)
+      %p
+        Annotations:
+        = number_with_delimiter(@user.get_annotation_count, delimiter: ' ')
+      %p
+        Member for
+        - signed_up_date = @user.created_at
+        = signed_up_date.blank? ? '?' : "#{distance_of_time_in_words(signed_up_date, Time.zone.now, nil, {vague: true})}"
 
 -#.span12
 -#  %h3 Bookmarks

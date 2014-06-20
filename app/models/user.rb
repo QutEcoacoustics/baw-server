@@ -204,6 +204,43 @@ class User < ActiveRecord::Base
     Permission.find_by_user_id_and_project_id(self, project)
   end
 
+  # Get the number of projects this user has access to.
+  # @return [Integer] Number of projects.
+  def get_project_count
+    projects.count
+  end
+
+  # Get the number of sites this user has access to.
+  # @return [Integer] Number of sites.
+  def get_site_count
+    projects.map { |project| project.sites.count }.reduce(0) do |result, value|
+      result += value
+      result
+    end
+  end
+
+  # Get the number of tags this user has used.
+  # @return [Integer] Number of tags.
+  def get_tag_count
+    Tagging.where('audio_events_tags.creator_id = ? OR audio_events_tags.updater_id = ?', self.id, self.id).count
+  end
+
+  def get_annotation_count
+    AudioEvent.where('audio_events.creator_id = ? OR audio_events.updater_id = ?', self.id, self.id).count
+  end
+
+  # Get the last tiem this user was seen.
+  # @return [DateTime] Date this user was last seen
+  def get_last_seen
+    self.current_sign_in_at.blank? ? self.last_sign_in_at : self.current_sign_in_at
+  end
+
+  # Length of time this person has been a member.
+  # @return [DateTime] Membership duration
+  def get_membership_duration
+    Time.zone.now - self.created_at
+  end
+
   private
   def ensure_user_role
     self.roles << :user if roles_mask.blank?

@@ -45,7 +45,6 @@ gem 'recaptcha', '~> 0.3.6', require: 'recaptcha/rails'
 gem 'devise', '< 3.1'
 gem 'cancan', '~> 1.6.10'
 gem 'role_model', '~> 0.8.1'
-# gem 'userstamp' # https://github.com/delynn/userstamp
 
 # Database gems
 # -------------------------------------
