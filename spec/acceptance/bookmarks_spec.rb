@@ -38,6 +38,30 @@ resource 'Bookmarks' do
     standard_request('LIST for user_account (as user)', 200, '0/offset_seconds', true)
   end
 
+  get 'user_accounts/:user_account_id/bookmarks?name=the_expected_name' do
+    parameter :user_account_id, 'Requested user_account ID (in path/route)', required: true
+    let(:authentication_token) { user_token}
+
+    let!(:extra_bookmark) {
+      FactoryGirl.create(:bookmark, name:'the_expected_name')
+      FactoryGirl.create(:bookmark, name:'the_unexpected_name')
+    }
+
+    standard_request('LIST for user_account (as user)', 200, '0/offset_seconds', true, 'the_expected_name', 'the_unexpected_name')
+  end
+
+  get 'user_accounts/:user_account_id/bookmarks?category=the_expected_category' do
+    parameter :user_account_id, 'Requested user_account ID (in path/route)', required: true
+    let(:authentication_token) { user_token}
+
+    let!(:extra_bookmark) {
+      FactoryGirl.create(:bookmark,  category: 'the_expected_category')
+      FactoryGirl.create(:bookmark, category: 'the_unexpected_category')
+    }
+
+    standard_request('LIST for user_account (as user)', 200, '0/offset_seconds', true, 'the_expected_category', 'the_unexpected_category')
+  end
+
   ################################
   # LIST
   ################################
@@ -65,14 +89,12 @@ resource 'Bookmarks' do
     parameter :offset_seconds, 'Offset from start of audio recording to place bookmark', required: true
     parameter :name, 'Name for bookmark', required: false
     parameter :description, 'Description of bookmark', required: false
+    parameter :category, 'Category of bookmark', required: false
 
-    let(:raw_post) { {'bookmark' => post_attributes}.to_json }
+    let(:raw_post) { {bookmark: post_attributes}.to_json }
 
     let(:authentication_token) { user_token}
 
     standard_request('CREATE (as user)', 201, 'offset_seconds', true)
   end
-
-
-
 end

@@ -7,7 +7,18 @@ class BookmarksController < ApplicationController
   # GET /bookmarks
   # GET /bookmarks.json
   def index
-    @bookmarks = Bookmark.all
+
+    query = Bookmark.scoped
+
+    unless params[:name].blank?
+      query = query.merge(Bookmark.filter_by_name(params[:name]))
+    end
+
+    unless params[:category].blank?
+      query = query.merge(Bookmark.filter_by_category(params[:category]))
+    end
+
+    @bookmarks = query
 
     respond_to do |format|
       format.html # index.html.erb
@@ -18,7 +29,7 @@ class BookmarksController < ApplicationController
   # GET /bookmarks/1
   # GET /bookmarks/1.json
   def show
-    @bookmark = Bookmark.find(params[:id])
+    @bookmark = Bookmark.where(id: params[:id]).first
 
     respond_to do |format|
       format.html # show.html.erb
@@ -40,7 +51,7 @@ class BookmarksController < ApplicationController
 
   # GET /bookmarks/1/edit
   def edit
-    @bookmark = Bookmark.find(params[:id])
+    @bookmark = Bookmark.where(id: params[:id]).first
   end
 
   # POST /bookmarks
@@ -63,7 +74,7 @@ class BookmarksController < ApplicationController
   # PUT /bookmarks/1
   # PUT /bookmarks/1.json
   def update
-    @bookmark = Bookmark.find(params[:id])
+    @bookmark = Bookmark.where(id: params[:id]).first
 
     respond_to do |format|
       if @bookmark.update_attributes(params[:bookmark])
@@ -79,7 +90,7 @@ class BookmarksController < ApplicationController
   # DELETE /bookmarks/1
   # DELETE /bookmarks/1.json
   def destroy
-    @bookmark = Bookmark.find(params[:id])
+    @bookmark = Bookmark.where(id: params[:id]).first
     @bookmark.destroy
 
     respond_to do |format|

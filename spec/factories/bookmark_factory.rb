@@ -3,6 +3,7 @@ FactoryGirl.define do
     offset_seconds 4
     sequence(:description) { |n| "description #{n}" }
     sequence(:name) { |n| "name #{n}" }
+    sequence(:category) { |n| "category #{n}" }
 
     creator
     audio_recording
