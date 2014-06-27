@@ -2,6 +2,10 @@ module BawAudioTools
   class AudioFfmpeg
 
     WARN_ESTIMATE_DURATION = 'Estimating duration from bitrate, this may be inaccurate'
+    # e.g. [mp3 @ 0x2935600] overread, skip -6 enddists: -4 -4
+    # e.g. [mp3 @ 0x3314600] overread, skip -5 enddists: -2 -2
+    WARN_OVER_READ = 'overread, skip -?[0-9]+ enddists: -?[0-9]+ -?[0-9]+'
+
 
     # @param [string] ffmpeg_executable
     # @param [string] ffprobe_executable
@@ -57,8 +61,19 @@ module BawAudioTools
 
         mod_stderr = stderr
         if stderr.include?(WARN_ESTIMATE_DURATION)
-          mod_stderr = mod_stderr.gsub(/#{ffmpeg_warning_tag}#{WARN_ESTIMATE_DURATION}/, '')
+          match_regex = /#{ffmpeg_warning_tag}#{WARN_ESTIMATE_DURATION}/
+          match_info = match_regex.match(match_regex)
+          mod_stderr = mod_stderr.gsub(match_regex, '')
+          Logging::logger.warn "Found #{match_info} in ffmpeg output."
         end
+
+        if stderr.include?(WARN_OVER_READ)
+          match_regex = /#{ffmpeg_warning_tag}#{WARN_OVER_READ}/
+          match_info = match_regex.match(match_regex)
+          mod_stderr = mod_stderr.gsub(match_regex, '')
+          Logging::logger.warn "Found #{match_info} in ffmpeg output."
+        end
+
         if !mod_stderr.blank? && mod_stderr.match(/#{ffmpeg_warning_tag}/)
           fail Exceptions::FileCorruptError, "Ffmpeg output contained warning.\n\t Standard output: #{stdout}\n\t Standard Error: #{mod_stderr}"
         end
@@ -75,11 +90,11 @@ module BawAudioTools
       duration
     end
 
-    def parse_ffprobe_output(source, raw)
+    def parse_ffprobe_output(source, stdout, stderr)
       # ffprobe std err contains info (separate on first equals(=))
       result = {}
       ffprobe_current_block_name = ''
-      raw.strip.split(/\r?\n|\r/).each do |line|
+      stdout.strip.split(/\r?\n|\r/).each do |line|
         line.strip!
         if line[0] == '['
           # this chomp reverse stuff is due to the lack of a proper 'trim'
@@ -92,11 +107,11 @@ module BawAudioTools
       end
 
       unless File.exists?(source)
-        fail Exceptions::AudioFileNotFoundError, "Could not locate #{source}\n\tStandard Output: #{raw}"
+        fail Exceptions::AudioFileNotFoundError, "Could not locate #{source}\n\tStandard Output: #{stdout}\n\t Standard Error: #{stderr}"
       end
 
       if result['STREAM codec_type'] != 'audio'
-        msg = "Not an audio file #{source} ('#{result['STREAM codec_type']}' is not 'audio'): #{result.to_json}\n\tStandard Output: #{raw}"
+        msg = "Not an audio file #{source} ('#{result['STREAM codec_type']}' is not 'audio'): #{result.to_json}\n\tStandard Output: #{stdout}\n\t Standard Error: #{stderr}"
         fail Exceptions::NotAnAudioFileError, msg
       end
 

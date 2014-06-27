@@ -46,7 +46,7 @@ module BawAudioTools
 
       ffmpeg_info_cmd = @audio_ffmpeg.info_command(source)
       ffmpeg_info_output = execute(ffmpeg_info_cmd)
-      ffmpeg_info = @audio_ffmpeg.parse_ffprobe_output(source, ffmpeg_info_output[:stdout])
+      ffmpeg_info = @audio_ffmpeg.parse_ffprobe_output(source, ffmpeg_info_output[:stdout], ffmpeg_info_output[:stderr])
 
       @audio_ffmpeg.check_for_errors(ffmpeg_info_output[:stdout], ffmpeg_info_output[:stderr])
 
