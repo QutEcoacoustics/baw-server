@@ -89,12 +89,15 @@ class User < ActiveRecord::Base
   end
 
   def inaccessible_projects
-    user_projects = self.projects.map { |project| project.id }
+    user_projects = self.projects.map { |project| project.id }.to_a
 
-    Project
-    .where('id NOT IN (?)', (user_projects.blank? ? '0' : user_projects))
-    .order(:name)
-    .uniq
+    query = Project.scoped
+
+    unless user_projects.blank?
+      query = query.where('id NOT IN (?)', user_projects)
+    end
+
+    query.order(:name).uniq
   end
 
   def recently_updated_projects

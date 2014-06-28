@@ -1,5 +1,6 @@
 class Project < ActiveRecord::Base
-  attr_accessible :creator_id, :deleted_at, :deleter_id, :description, :image, :name, :notes, :updater_id, :urn
+  attr_accessible :creator_id, :deleted_at, :deleter_id, :description, :image, :name, :notes, :updater_id, :urn,
+                  :sign_in_level, :anonymous_level
 
   # relationships
   belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_projects
