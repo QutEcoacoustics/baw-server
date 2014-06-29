@@ -62,14 +62,14 @@ module BawAudioTools
         mod_stderr = stderr
         if stderr.include?(WARN_ESTIMATE_DURATION)
           match_regex = /#{ffmpeg_warning_tag}#{WARN_ESTIMATE_DURATION}/
-          match_info = match_regex.match(match_regex)
+          match_info = match_regex.match(mod_stderr)
           mod_stderr = mod_stderr.gsub(match_regex, '')
           Logging::logger.warn "Found #{match_info} in ffmpeg output."
         end
 
         if stderr.include?(WARN_OVER_READ)
           match_regex = /#{ffmpeg_warning_tag}#{WARN_OVER_READ}/
-          match_info = match_regex.match(match_regex)
+          match_info = match_regex.match(mod_stderr)
           mod_stderr = mod_stderr.gsub(match_regex, '')
           Logging::logger.warn "Found #{match_info} in ffmpeg output."
         end
