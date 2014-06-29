@@ -7,6 +7,10 @@ module BawAudioTools
     # e.g. [mp3 @ 0x3314600] overread, skip -5 enddists: -2 -2
     WARN_OVER_READ = 'overread, skip -?[0-9]+ enddists: -?[0-9]+ -?[0-9]+'
 
+    REGEX_WARN_INDICATOR = /#{WARN_INDICATOR}/
+    REGEX_WARN_DURATION = /#{WARN_INDICATOR}#{WARN_ESTIMATE_DURATION}/
+    REGEX_WARN_OVER_READ = /#{WARN_INDICATOR}#{WARN_OVER_READ}/
+
 
     # @param [string] ffmpeg_executable
     # @param [string] ffprobe_executable
@@ -60,15 +64,15 @@ module BawAudioTools
 
         mod_stderr = stderr
 
-        if stderr.include?(WARN_ESTIMATE_DURATION)
-          mod_stderr = find_remove_warning(mod_stderr, /#{WARN_INDICATOR}#{WARN_ESTIMATE_DURATION}/)
+        if mod_stderr.include?(WARN_ESTIMATE_DURATION)
+          mod_stderr = find_remove_warning(mod_stderr, REGEX_WARN_DURATION)
         end
 
-        if stderr.include?(WARN_OVER_READ)
-          mod_stderr = find_remove_warning(mod_stderr, /#{WARN_INDICATOR}#{WARN_OVER_READ}/)
+        if has_regex?(mod_stderr, REGEX_WARN_OVER_READ)
+          mod_stderr = find_remove_warning(mod_stderr, REGEX_WARN_OVER_READ)
         end
 
-        if !mod_stderr.blank? && mod_stderr.match(/#{WARN_INDICATOR}/)
+        if !mod_stderr.blank? && mod_stderr.match(REGEX_WARN_INDICATOR)
           fail Exceptions::FileCorruptError, "Ffmpeg output contained warning.\n\t Standard output: #{stdout}\n\t Standard Error: #{mod_stderr}"
         end
 
@@ -80,6 +84,10 @@ module BawAudioTools
       mod_stderr = mod_stderr.gsub(match_regex, '')
       Logging::logger.warn "Found and removed #{match_info} in ffmpeg output."
       mod_stderr
+    end
+
+    def has_regex?(string, regex)
+      !!(string =~ regex)
     end
 
     # returns the duration in seconds (and fractions if present)
