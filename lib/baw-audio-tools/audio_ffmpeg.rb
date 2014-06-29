@@ -1,6 +1,7 @@
 module BawAudioTools
   class AudioFfmpeg
 
+    WARN_INDICATOR = '\[[^ ]+ @ [^ ]+\] '
     WARN_ESTIMATE_DURATION = 'Estimating duration from bitrate, this may be inaccurate'
     # e.g. [mp3 @ 0x2935600] overread, skip -6 enddists: -4 -4
     # e.g. [mp3 @ 0x3314600] overread, skip -5 enddists: -2 -2
@@ -57,27 +58,28 @@ module BawAudioTools
 
       unless stderr.blank?
 
-        ffmpeg_warning_tag = '\[[^ ]+ @ [^ ]+\] '
-
         mod_stderr = stderr
+
         if stderr.include?(WARN_ESTIMATE_DURATION)
-          match_regex = /#{ffmpeg_warning_tag}#{WARN_ESTIMATE_DURATION}/
-          match_info = match_regex.match(mod_stderr)
-          mod_stderr = mod_stderr.gsub(match_regex, '')
-          Logging::logger.warn "Found #{match_info} in ffmpeg output."
+          mod_stderr = find_remove_warning(mod_stderr, /#{WARN_INDICATOR}#{WARN_ESTIMATE_DURATION}/)
         end
 
         if stderr.include?(WARN_OVER_READ)
-          match_regex = /#{ffmpeg_warning_tag}#{WARN_OVER_READ}/
-          match_info = match_regex.match(mod_stderr)
-          mod_stderr = mod_stderr.gsub(match_regex, '')
-          Logging::logger.warn "Found #{match_info} in ffmpeg output."
+          mod_stderr = find_remove_warning(mod_stderr, /#{WARN_INDICATOR}#{WARN_OVER_READ}/)
         end
 
-        if !mod_stderr.blank? && mod_stderr.match(/#{ffmpeg_warning_tag}/)
+        if !mod_stderr.blank? && mod_stderr.match(/#{WARN_INDICATOR}/)
           fail Exceptions::FileCorruptError, "Ffmpeg output contained warning.\n\t Standard output: #{stdout}\n\t Standard Error: #{mod_stderr}"
         end
+
       end
+    end
+
+    def find_remove_warning(mod_stderr, match_regex)
+      match_info = mod_stderr.match(match_regex)
+      mod_stderr = mod_stderr.gsub(match_regex, '')
+      Logging::logger.warn "Found and removed #{match_info} in ffmpeg output."
+      mod_stderr
     end
 
     # returns the duration in seconds (and fractions if present)
