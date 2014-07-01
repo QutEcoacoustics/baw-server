@@ -1,8 +1,10 @@
-%h1 Credits
-
-%p
-  %em
-    Comming soon...
-
 - content_for :title, 'Credits'
 
+%h1 Credits
+%p
+  The development of the infrastructure that powers this website was an initiative
+  of the Queensland University of Technology's Bioacoustics Research Group. This website makes use of
+  a range of other technologies and libraries.
+
+- if File.exists? "#{Rails.root}/app/views/public/_credits.html.haml"
+  = render partial: 'public/credits'

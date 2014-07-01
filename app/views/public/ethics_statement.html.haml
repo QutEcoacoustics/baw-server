@@ -1,3 +1,5 @@
+- content_for :title, 'Ethics Statement'
+
 - if File.exists? "#{Rails.root}/app/views/public/_ethics.html.haml"
   = render partial: 'public/ethics'
 - else
