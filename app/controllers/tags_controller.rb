@@ -9,7 +9,7 @@ class TagsController < ApplicationController
   # GET /projects/1/sites/1/audio_recordings/1/audio_events/1/tags.json
   def index
     if params[:audio_event_id]
-      @audio_event = AudioEvent.find(params[:audio_event_id])
+      @audio_event = AudioEvent.where(id: params[:audio_event_id])
       respond_with @audio_event.tags
     elsif params[:filter] #single tag, partial match
       respond_with Tag.where("text ILIKE '%?%'", params[:filter]).limit(20)
