@@ -48,7 +48,7 @@ class AudioRecording < ActiveRecord::Base
   # association validations
   validates :site, existence: true
   validates :uploader, existence: true
-  validates :creator, existence: true
+  #validates :creator, existence: true
 
   # attribute validations
   validates :status, inclusion: {in: AVAILABLE_STATUSES}, presence: true

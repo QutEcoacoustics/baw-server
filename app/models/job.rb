@@ -20,7 +20,7 @@ class Job < ActiveRecord::Base
   # association validations
   validates :script, existence: true
   validates :dataset, existence: true
-  validates :creator, existence: true
+  #validates :creator, existence: true
 
   # attribute validations
   validates :name, presence: true, length: { minimum: 2, maximum: 255 }, uniqueness: { case_sensitive: false }

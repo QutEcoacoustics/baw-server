@@ -39,7 +39,7 @@ class Dataset < ActiveRecord::Base
 
   # association validations
   validates :project, existence: true
-  validates :creator, existence: true
+  #validates :creator, existence: true
 
   # attribute validations
   validates :name, presence: true, uniqueness: {case_sensitive: false, scope: :creator_id, message: 'should be unique per user'}

@@ -30,7 +30,7 @@ class Tag < ActiveRecord::Base
   enumerize :type_of_tag, in: AVAILABLE_TYPE_OF_TAGS, predicates: true
 
   # association validations
-  validates :creator, existence: true
+  #validates :creator, existence: true
 
   # attribute validations
   validates :is_taxanomic, inclusion: {in: [true, false]}

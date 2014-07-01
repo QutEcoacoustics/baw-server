@@ -12,7 +12,7 @@ class Bookmark < ActiveRecord::Base
 
   # association validations
   validates :audio_recording, existence: true
-  validates :creator, existence: true
+  #validates :creator, existence: true
 
   # attribute validations
   validates :offset_seconds, presence: true, numericality: {greater_than_or_equal_to: 0}

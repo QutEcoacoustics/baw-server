@@ -33,7 +33,7 @@ class Site < ActiveRecord::Base
   acts_as_gmappable process_geocoding: false
 
   # association validations
-  validates :creator, existence: true
+  #validates :creator, existence: true
 
   # attribute validations
   validates :name, presence: true, length: {minimum: 2}

@@ -17,7 +17,7 @@ class Script < ActiveRecord::Base
   stampable
 
   # association validations
-  validates :creator, existence: true
+  #validates :creator, existence: true
 
   # attribute validations
   validates :name, presence: true

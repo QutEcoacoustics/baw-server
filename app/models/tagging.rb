@@ -20,7 +20,7 @@ class Tagging < ActiveRecord::Base
   # association validations
   validates :audio_event, existence: true
   validates :tag, existence: true
-  validates :creator, existence: true
+  #validates :creator, existence: true
 
   # attribute validations
   validates_uniqueness_of :audio_event_id, scope: [:tag_id, :audio_event_id]
