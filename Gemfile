@@ -108,7 +108,7 @@ end
 group :production, :staging do
   # See https://github.com/sstephenson/execjs#readme for more supported runtimes
   gem 'therubyracer', '>= 0.11.3', platforms: :ruby, require: 'v8'
-  gem 'newrelic_rpm', '~> 3.8.0'
+  gem 'newrelic_rpm', '~> 3.9.0'
 end
 
 group :development do
@@ -126,7 +126,7 @@ group :development do
 end
 
 group :development, :test do
-  gem 'bullet', '~> 4.10.0'
+  gem 'bullet', '~> 4.11.0'
   gem 'rspec-rails', '~> 2.14.2'
   gem 'guard', '~> 1.8.3'
   gem 'listen', '~> 1.3.1'
