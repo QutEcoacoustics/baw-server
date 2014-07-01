@@ -27,16 +27,30 @@ describe Job do
     as2.should have(1).error_on(:name)
   end
 
+  it 'fails validation when dataset is nil' do
+    test_item = FactoryGirl.build(:job)
+    test_item.dataset = nil
+    expect(subject).to have(1).error_on(:dataset)
+    expect(subject.errors_on(:dataset)).to include('must exist as an object or foreign key')
+  end
+
+  it 'fails validation when script is nil' do
+    test_item = FactoryGirl.build(:job)
+    test_item.script = nil
+    expect(subject).to have(1).error_on(:script)
+    expect(subject.errors_on(:script)).to include('must exist as an object or foreign key')
+  end
+  
   it { should validate_presence_of(:script_settings) }
   it 'is invalid without a script_settings' do
     build(:job, script_settings: nil).should_not be_valid
   end
 
-  it { should validate_presence_of(:dataset_id) }
+
   it 'is invalid without a dataset' do
     build(:job, dataset_id: nil).should_not be_valid
   end
-  it { should validate_presence_of(:script_id) }
+
   it 'is invalid without a script' do
     build(:job, script_id: nil).should_not be_valid
   end

@@ -12,7 +12,7 @@ class Tag < ActiveRecord::Base
 
   accepts_nested_attributes_for :audio_events
 
-  # userstamp
+  # add created_at and updated_at stamper
   stampable
 
   # enums
@@ -29,7 +29,10 @@ class Tag < ActiveRecord::Base
 
   enumerize :type_of_tag, in: AVAILABLE_TYPE_OF_TAGS, predicates: true
 
-  # validation
+  # association validations
+  #validates :creator, existence: true
+
+  # attribute validations
   validates :is_taxanomic, inclusion: {in: [true, false]}
   validates :text, uniqueness: {case_sensitive: false}, presence: true
   validates :retired, inclusion: {in: [true, false]}

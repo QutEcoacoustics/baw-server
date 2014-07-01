@@ -12,10 +12,15 @@ class Permission < ActiveRecord::Base
   AVAILABLE_LEVELS = [:writer, :reader]
   enumerize :level, in: AVAILABLE_LEVELS, predicates: true
 
-  # userstamp
+  # add created_at and updated_at stamper
   stampable
 
-  # validate
-  validates_uniqueness_of :level, :scope => [:user_id, :project_id, :level]
+  # association validations
+  validates :project, existence: true
+  validates :user, existence: true
+  #validates :creator, existence: true
+
+  # attribute validations
+  validates_uniqueness_of :level, scope: [:user_id, :project_id, :level]
   validates_presence_of :level, :user, :creator, :project
 end

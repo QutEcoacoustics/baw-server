@@ -10,16 +10,21 @@ class Job < ActiveRecord::Base
   belongs_to :dataset, inverse_of: :jobs
   has_one :project, through: :dataset  # using has_one instead of belongs_to to use :through
 
-  # userstamp
+  # add created_at and updated_at stamper
   stampable
 
-  # validations
-  validates :name, presence: true, length: { minimum: 2, maximum: 255 }, uniqueness: { case_sensitive: false }
+  # add deleted_at and deleter_id
+  acts_as_paranoid
+  validates_as_paranoid
 
-  validates :name, :presence => true
-  validates :script_settings, :presence => true
-  validates :dataset_id, :presence => true
-  validates :script_id, :presence => true
+  # association validations
+  validates :script, existence: true
+  validates :dataset, existence: true
+  #validates :creator, existence: true
+
+  # attribute validations
+  validates :name, presence: true, length: { minimum: 2, maximum: 255 }, uniqueness: { case_sensitive: false }
+  validates :script_settings, presence: true
 
   #validates :process_new, :inclusion => { :in => [true, false] }, allow_nil: true
   #validate :data_set_cannot_process_new

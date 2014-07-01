@@ -13,18 +13,19 @@ class Script < ActiveRecord::Base
   has_one :latest_update, class_name: 'Script', foreign_key: :original_script_id, order: 'created_at DESC'
   has_many :jobs, inverse_of: :script
 
-  # userstamp
+  # add created_at and updated_at stamper
   stampable
 
-  #validation
+  # association validations
+  #validates :creator, existence: true
+
+  # attribute validations
   validates :name, presence: true
   validates :analysis_identifier, presence: true
   validate :version, :version_increase, on: :create
 
   validates :settings_file, presence: true
   validates_attachment_content_type :settings_file, content_type: 'text/plain'
-
-
 
   # scopes
   scope :latest_versions, -> { where(updated_by_script_id: nil) }

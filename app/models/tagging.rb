@@ -14,12 +14,15 @@ class Tagging < ActiveRecord::Base
   accepts_nested_attributes_for :audio_event
   accepts_nested_attributes_for :tag
 
-  #userstamp
+  # add created_at and updated_at stamper
   stampable
 
-  ##validations
-  validates_presence_of  :audio_event_id
-  validates_presence_of  :tag_id
-  #
-  #validates_uniqueness_of :audio_event_id, :scope => :tag_id
+  # association validations
+  validates :audio_event, existence: true
+  validates :tag, existence: true
+  #validates :creator, existence: true
+
+  # attribute validations
+  validates_uniqueness_of :audio_event_id, scope: [:tag_id, :audio_event_id]
+  validates_uniqueness_of :tag_id, scope: [:tag_id, :audio_event_id]
 end
