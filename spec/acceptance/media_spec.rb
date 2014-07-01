@@ -37,9 +37,7 @@ def standard_media_parameters
   let(:raw_post) { params.to_json }
 end
 
-def using_original_audio(audio_recording, content_type, check_accept_header = true, check_content_length = true)
-  # set up audio file
-
+def check_common_request_items(audio_recording, content_type, check_accept_header = true)
   options = {}
   options[:datetime] = audio_recording.recorded_date
   options[:original_format] = File.extname(audio_recording.original_file_name) unless audio_recording.original_file_name.blank?
@@ -67,12 +65,28 @@ def using_original_audio(audio_recording, content_type, check_accept_header = tr
   response_headers['Content-Disposition'].should start_with('inline; filename=') unless content_type == 'application/json'
   response_headers['Content-Disposition'].should be_nil if content_type == 'application/json'
 
-  #request[0][:request_body].should be_nil
+  [options, request]
+end
 
-  if request[0][:request_method] == 'HEAD'
+def using_original_audio(audio_recording, content_type, check_accept_header = true, check_content_length = true, expected_head_request = false)
+
+  options, request = check_common_request_items(audio_recording, content_type, check_accept_header)
+
+  is_image = response_headers['Content-Type'].include? 'image'
+  default_spectrogram = Settings.cached_spectrogram_defaults
+
+  is_audio = response_headers['Content-Type'].include? 'audio'
+  default_audio = Settings.cached_audio_defaults
+
+  # !! - forces the boolean context, but returns the proper boolean value
+  is_documentation_run = !!(ENV['GENERATE_DOC'])
+
+  actual_head_request = !is_documentation_run && !request.blank? && !request[0].blank? && request[0][:request_method] == 'HEAD'
+
+  # assert
+  if actual_head_request || expected_head_request
     response_body.size.should eq(0)
-    if response_headers['Content-Type'].include? 'image'
-      default_spectrogram = Settings.cached_spectrogram_defaults
+    if is_image
       options[:format] = default_spectrogram.extension
       options[:channel] = default_spectrogram.channel.to_i
       options[:sample_rate] = default_spectrogram.sample_rate.to_i
@@ -81,8 +95,7 @@ def using_original_audio(audio_recording, content_type, check_accept_header = tr
       cache_spectrogram_file = media_cacher.cached_spectrogram_file_name(options)
       cache_spectrogram_possible_paths = media_cacher.cache.possible_storage_paths(media_cacher.cache.cache_spectrogram, cache_spectrogram_file)
       response_headers['Content-Length'].to_i.should eq(File.size(cache_spectrogram_possible_paths.first)) if check_content_length
-    elsif response_headers['Content-Type'].include? 'audio'
-      default_audio = Settings.cached_audio_defaults
+    elsif is_audio
       options[:format] = default_audio.extension
       options[:channel] = default_audio.channel.to_i
       options[:sample_rate] = default_audio.sample_rate.to_i
@@ -305,25 +318,6 @@ resource 'Media' do
     end
   end
 
-  head '/audio_recordings/:audio_recording_id/media.:format' do
-    standard_media_parameters
-    let(:authentication_token) { reader_token }
-    let(:format) { 'json' }
-    # don't document because it returns binary data that can't be json encoded
-    example 'MEDIA (json head request as reader with shallow path) - 200', document: document_media_requests do
-      using_original_audio(audio_recording, 'application/json', false)
-    end
-  end
-
-  head '/audio_recordings/:audio_recording_id/media.:format' do
-    standard_media_parameters
-    let(:authentication_token) { reader_token }
-    let(:format) { 'mp3' }
-    example 'MEDIA (audio head request mp3 as reader with shallow path) - 200', document: document_media_requests do
-      using_original_audio(audio_recording, 'audio/mp3', false, false)
-    end
-  end
-
   get '/audio_recordings/:audio_recording_id/media.:format' do
     standard_media_parameters
     let(:authentication_token) { reader_token }
@@ -381,9 +375,28 @@ resource 'Media' do
   head '/audio_recordings/:audio_recording_id/media.:format' do
     standard_media_parameters
     let(:authentication_token) { reader_token }
+    let(:format) { 'json' }
+    # don't document because it returns binary data that can't be json encoded
+    example 'MEDIA (json head request as reader with shallow path) - 200', document: true do
+      using_original_audio(audio_recording, 'application/json', false, true, true)
+    end
+  end
+
+  head '/audio_recordings/:audio_recording_id/media.:format' do
+    standard_media_parameters
+    let(:authentication_token) { reader_token }
+    let(:format) { 'mp3' }
+    example 'MEDIA (audio head request mp3 as reader with shallow path) - 200', document: true do
+      using_original_audio(audio_recording, 'audio/mp3', false, false, true)
+    end
+  end
+
+  head '/audio_recordings/:audio_recording_id/media.:format' do
+    standard_media_parameters
+    let(:authentication_token) { reader_token }
     let(:format) { 'png' }
-    example 'MEDIA (spectrogram head request as reader with shallow path) - 200', document: document_media_requests do
-      using_original_audio(audio_recording, 'image/png', false)
+    example 'MEDIA (spectrogram head request as reader with shallow path) - 200', document: true do
+      using_original_audio(audio_recording, 'image/png', false, true, true)
     end
   end
 
