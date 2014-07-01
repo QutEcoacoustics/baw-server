@@ -1,5 +1,19 @@
 %h1 Data Request
 
+- unless @annotation_download.blank?
+  %p
+    The CSV file containing annotations for
+    =@annotation_download[:name]
+    will download shortly (some downloads might take a minute or two to be generated). If it does not, click
+    %a{href: @annotation_download[:link]} here
+    ='.'
+    If you need more data or a different format, please submit a request using this form.
+  %iframe{width:1, height:1, frameborder:0, src:@annotation_download[:link]}
+- else
+  %p Use this form to request annotations or other data related to the audio recordings on this website.
+
+  %br
+
 = simple_form_for @data_request, url: '/data_request', html: {class: 'form-horizontal' } do |f|
   = f.error_notification
 

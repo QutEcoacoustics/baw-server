@@ -193,6 +193,17 @@ class PublicController < ApplicationController
   # GET /data_request
   def new_data_request
     @data_request = DataRequest.new
+
+    @annotation_download = nil
+    if !params[:annotation_download].blank? &&
+        !params[:annotation_download][:project_id].blank? &&
+        !params[:annotation_download][:site_id].blank?
+      @annotation_download = {
+          link: download_site_audio_events_path(params[:annotation_download][:project_id], params[:annotation_download][:site_id]),
+          name: params[:annotation_download][:name]
+      }
+    end
+
     respond_to do |format|
       format.html {}
     end
