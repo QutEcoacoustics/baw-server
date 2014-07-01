@@ -28,7 +28,7 @@ class Project < ActiveRecord::Base
   validates_as_paranoid
 
   # association validations
-  validates :creator, existence: true
+  #validates :creator, existence: true
 
   # attribute validations
   validates :name, presence: true, uniqueness: {case_sensitive: false}

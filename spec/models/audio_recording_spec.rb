@@ -30,55 +30,63 @@ describe AudioRecording do
     ar.should_not be_valid
   end
 
-  it { should belong_to(:creator).with_foreign_key(:creator_id) }
-  it { should belong_to(:updater).with_foreign_key(:updater_id) }
-  it { should belong_to(:deleter).with_foreign_key(:deleter_id) }
-  it { should belong_to(:uploader).with_foreign_key(:uploader_id) }
+  it 'fails validation when uploader is nil' do
+    test_item = FactoryGirl.build(:audio_recording)
+    test_item.uploader = nil
+    expect(subject).to have(1).error_on(:uploader)
+    expect(subject.errors_on(:uploader)).to include('must exist as an object or foreign key')
+  end
 
-  it { should belong_to(:site) }
-  it { should have_many(:audio_events) }
-  it { should validate_presence_of(:uploader_id) }
-  it { should_not allow_value(nil).for(:uploader_id) }
+  context 'validation' do
+    subject { FactoryGirl.build(:audio_recording) }
+    it { should belong_to(:creator).with_foreign_key(:creator_id) }
+    it { should belong_to(:updater).with_foreign_key(:updater_id) }
+    it { should belong_to(:deleter).with_foreign_key(:deleter_id) }
+    it { should belong_to(:uploader).with_foreign_key(:uploader_id) }
 
-  it { should validate_presence_of(:recorded_date) }
-  it { should_not allow_value(7.days.from_now).for(:recorded_date) }
-  it { should_not allow_value(3.0).for(:recorded_date) }
+    it { should belong_to(:site) }
+    it { should have_many(:audio_events) }
 
-  it { should validate_presence_of(:duration_seconds) }
-  it { should validate_numericality_of(:duration_seconds) }
-  it { should_not allow_value(-1).for(:duration_seconds) }
-  it { should allow_value(Settings.audio_recording_min_duration_sec).for(:duration_seconds) }
-  it { should_not allow_value(Settings.audio_recording_min_duration_sec - 0.5).for(:duration_seconds) }
-  it { should_not allow_value(0).for(:duration_seconds) }
+    it { should validate_presence_of(:recorded_date) }
+    it { should_not allow_value(7.days.from_now).for(:recorded_date) }
+    it { should_not allow_value(3.0).for(:recorded_date) }
 
-  it { should validate_numericality_of(:sample_rate_hertz) }
-  it { should_not allow_value(-1).for(:sample_rate_hertz) }
-  it { should_not allow_value(0).for(:sample_rate_hertz) }
-  it { should_not allow_value(5.32).for(:sample_rate_hertz) }
+    it { should validate_presence_of(:duration_seconds) }
+    it { should validate_numericality_of(:duration_seconds) }
+    it { should_not allow_value(-1).for(:duration_seconds) }
+    it { should allow_value(Settings.audio_recording_min_duration_sec).for(:duration_seconds) }
+    it { should_not allow_value(Settings.audio_recording_min_duration_sec - 0.5).for(:duration_seconds) }
+    it { should_not allow_value(0).for(:duration_seconds) }
 
-  it { should validate_numericality_of(:channels) }
-  it { should_not allow_value(-1).for(:channels) }
-  it { should_not allow_value(0).for(:channels) }
-  it { should_not allow_value(5.32).for(:channels) }
-  it { should_not allow_value(5.00).for(:channels) }
-  it { should allow_value(5).for(:channels) }
+    it { should validate_numericality_of(:sample_rate_hertz) }
+    it { should_not allow_value(-1).for(:sample_rate_hertz) }
+    it { should_not allow_value(0).for(:sample_rate_hertz) }
+    it { should_not allow_value(5.32).for(:sample_rate_hertz) }
 
-  it { should validate_numericality_of(:bit_rate_bps) }
-  it { should_not allow_value(-1).for(:bit_rate_bps) }
-  it { should_not allow_value(0).for(:bit_rate_bps) }
-  it { should_not allow_value(5.32).for(:bit_rate_bps) }
-  it { should_not allow_value(5.00).for(:bit_rate_bps) }
-  it { should allow_value(5).for(:bit_rate_bps) }
+    it { should validate_numericality_of(:channels) }
+    it { should_not allow_value(-1).for(:channels) }
+    it { should_not allow_value(0).for(:channels) }
+    it { should_not allow_value(5.32).for(:channels) }
+    it { should_not allow_value(5.00).for(:channels) }
+    it { should allow_value(5).for(:channels) }
 
-  it { should validate_presence_of(:media_type) }
-  it { should validate_presence_of(:data_length_bytes) }
-  it { should validate_numericality_of(:data_length_bytes) }
-  it { should_not allow_value(-1).for(:data_length_bytes) }
-  it { should_not allow_value(0).for(:data_length_bytes) }
-  it { should_not allow_value(5.32).for(:data_length_bytes) }
+    it { should validate_numericality_of(:bit_rate_bps) }
+    it { should_not allow_value(-1).for(:bit_rate_bps) }
+    it { should_not allow_value(0).for(:bit_rate_bps) }
+    it { should_not allow_value(5.32).for(:bit_rate_bps) }
+    it { should_not allow_value(5.00).for(:bit_rate_bps) }
+    it { should allow_value(5).for(:bit_rate_bps) }
 
-  it { should validate_presence_of(:file_hash) }
+    it { should validate_presence_of(:media_type) }
+    it { should validate_presence_of(:data_length_bytes) }
+    it { should validate_numericality_of(:data_length_bytes) }
+    it { should_not allow_value(-1).for(:data_length_bytes) }
+    it { should_not allow_value(0).for(:data_length_bytes) }
+    it { should_not allow_value(5.32).for(:data_length_bytes) }
 
+    it { should validate_presence_of(:file_hash) }
+
+  end
   context 'in same site' do
 
     it 'should allow non overlapping dates - (first before second)' do

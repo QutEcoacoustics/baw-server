@@ -18,7 +18,7 @@ class Permission < ActiveRecord::Base
   # association validations
   validates :project, existence: true
   validates :user, existence: true
-  validates :creator, existence: true
+  #validates :creator, existence: true
 
   # attribute validations
   validates_uniqueness_of :level, scope: [:user_id, :project_id, :level]

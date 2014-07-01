@@ -23,7 +23,8 @@ class AudioEvent < ActiveRecord::Base
 
   # association validations
   validates :audio_recording, existence: true
-  validates :creator, existence: true
+  # stamper adds creator/updater in before_save/before_update, which occur after validation
+  #validates :creator, existence: true
 
   # validation
   validates :is_reference, inclusion: {in: [true, false]}
