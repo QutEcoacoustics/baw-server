@@ -18,7 +18,7 @@ describe 'CRUD Sites as valid user with write permission' do
     visit project_site_path(@project, @site)
     page.should have_content(@site.name)
     page.should have_link('Edit Site')
-    page.should have_link('Add New Site')
+    page.should_not have_link('Add New Site')
     page.should_not have_link('Delete')
   end
 
