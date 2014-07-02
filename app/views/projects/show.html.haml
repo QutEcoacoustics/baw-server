@@ -67,9 +67,7 @@
 - content_for :left_sidebar do
   = render layout: '/shared/left_sidebar', locals: {title: 'Projects'} do
     - if can? :edit, @project
-      %li
-        = link_to edit_project_path(@project),  title: "Edit project's details", data: {toggle: 'tooltip',  placement: 'right'} do
-          Edit Project
+      %li= link_to 'Edit Project Details', edit_project_path(@project),  title: "Change this project's details", data: {toggle: 'tooltip',  placement: 'right'}
     - if can? :update_permissions, @project
       %li= link_to 'Edit Permissions', project_permissions_path(@project),  title: "Edit project's access permissions", data: {toggle: 'tooltip',  placement: 'right'}
     - if can? :destroy, @project
