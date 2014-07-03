@@ -63,10 +63,10 @@ resource 'AudioEvents' do
 
   # prepare ids needed for paths in requests below
   let(:project_id) { @write_permission.project.id }
-  let(:site_id) { @write_permission.project.sites[0].id }
-  let(:audio_recording_id) { @write_permission.project.sites[0].audio_recordings[0].id }
+  let(:site_id) { @write_permission.project.sites.order(:id).first.id }
+  let(:audio_recording_id) { @write_permission.project.sites.order(:id).first.audio_recordings.order(:id).first.id }
   #  freq diff 5600, duration diff 0.6, start_time_seconds 5.2, low_frequency_hertz 400, high_frequency_hertz 6000, end_time_seconds 5.8
-  let(:id) { @write_permission.project.sites[0].audio_recordings[0].audio_events[0].id }
+  let(:id) { @write_permission.project.sites.order(:id).first.audio_recordings.order(:id).first.audio_events.order(:id).first.id }
 
   # prepare authentication_token for different users
   let(:writer_token) { "Token token=\"#{@write_permission.user.authentication_token}\"" }
