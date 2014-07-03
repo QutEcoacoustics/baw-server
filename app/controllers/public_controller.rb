@@ -2,7 +2,7 @@ class PublicController < ApplicationController
   layout 'public'
 
   skip_authorization_check only: [
-      :index, :status, :website_status,
+      :index, :status, :website_status, :audio_recording_catalogue,
       :recent_annotations, :recent_audio_recordings,
       :new_contact_us, :create_contact_us,
       :new_bug_report, :create_bug_report,
@@ -98,6 +98,41 @@ class PublicController < ApplicationController
     respond_to do |format|
       format.html
       format.json { render json: @status_info }
+    end
+  end
+
+  def audio_recording_catalogue
+
+
+    respond_to do |format|
+      format.html
+      format.json {
+        query = AudioRecording.includes(site: :projects)
+        .select(
+            'count(*) as grouped_count,
+EXTRACT(YEAR FROM recorded_date) as extracted_year,
+EXTRACT(MONTH FROM recorded_date) as extracted_month,
+EXTRACT(DAY FROM recorded_date) as extracted_day')
+
+        unless params[:project_id].blank?
+          query = query.where(project_id: params[:project_id])
+        end
+
+        unless params[:site_id].blank?
+          query = query.where(site_id: params[:site_id])
+        end
+
+        audio_recordings_grouped = query
+        .group('extracted_year, extracted_month, extracted_day')
+        .map { |ar|
+          {
+              count: ar.grouped_count,
+              extracted_year: ar.extracted_year,
+              extracted_month: ar.extracted_month.rjust(2, '0'),
+              extracted_day: ar.extracted_day.rjust(2, '0')
+          }
+        }
+        render json: audio_recordings_grouped }
     end
   end
 

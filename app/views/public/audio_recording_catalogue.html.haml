@@ -1,0 +1,30 @@
+%h1 Audio Recording Catalogue
+
+- content_for :title, 'Audio Recording Catalogue'
+
+%p Displaying the audio recording catalogue for . Years not shown contain no recordings.
+%p Select a project and optionally a site to display, then click 'Display'
+
+%form{clas:'form-horizontal', role:'form'}
+  .row-fluid
+    .span5
+      .control-group
+        %label Projects
+        .controls
+          %select{id:'project_list', class:'span12'}
+    .span5
+      .control-group
+        %label Sites
+        .controls
+          %select{id:'site_list', class:'span12'}
+    .span2
+      .control-group
+        %label= '&nbsp;'.html_safe
+        .controls
+        %button{id:'update_calendar', class: 'btn', type:'button'} Display
+
+#audioRecordingCalendar
+
+%script{src:'//cdnjs.cloudflare.com/ajax/libs/d3/3.4.9/d3.min.js'}
+%script
+  createAudioRecordingCalendar();

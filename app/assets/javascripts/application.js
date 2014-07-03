@@ -18,11 +18,6 @@
 //= require bootstrap-datepicker
 //= require gmaps4rails/gmaps4rails.base
 //= require gmaps4rails/gmaps4rails.googlemaps
-
-$(document).ready(function(){
-  $ ('a').tooltip();
-});
-$(document).ready(function(){
-  $ ('i').tooltip();
-});
-//= require_tree .
+//= require bootstrap
+//= require public
+// require_tree .
