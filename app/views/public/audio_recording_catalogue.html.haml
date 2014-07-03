@@ -2,8 +2,8 @@
 
 - content_for :title, 'Audio Recording Catalogue'
 
-%p Displaying the audio recording catalogue for . Years not shown contain no recordings.
-%p Select a project and optionally a site to display, then click 'Display'
+%p Select a Project and optionally a Site to display, then click 'Display'.
+%p Years not shown contain no recordings for the selections.
 
 %form{clas:'form-horizontal', role:'form'}
   .row-fluid
@@ -27,4 +27,4 @@
 
 %script{src:'//cdnjs.cloudflare.com/ajax/libs/d3/3.4.9/d3.min.js'}
 %script
-  createAudioRecordingCalendar();
+  baw.begin();

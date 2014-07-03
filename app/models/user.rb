@@ -147,9 +147,21 @@ class User < ActiveRecord::Base
   end
 
   # @param [Array<Project>] projects
+  # @return [boolean]
   def can_write_any?(projects)
     projects.each do |project|
       if self.can_write?(project)
+        return true
+      end
+    end
+    false
+  end
+
+  # @param [Array<Project>] projects
+  # @return [boolean]
+  def can_read_any?(projects)
+    projects.each do |project|
+      if self.can_read?(project)
         return true
       end
     end

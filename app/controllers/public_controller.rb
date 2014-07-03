@@ -103,23 +103,48 @@ class PublicController < ApplicationController
 
   def audio_recording_catalogue
 
-
     respond_to do |format|
       format.html
       format.json {
-        query = AudioRecording.includes(site: :projects)
+
+        unless params[:projectId].blank?
+          project = Project.where(id: params[:projectId]).first
+
+          if project.blank?
+            fail ActiveRecord::RecordNotFound, 'Project not found from audio_recording_catalogue'
+          end
+
+          if current_user.blank? || !current_user.can_read?(project)
+            fail CanCan::AccessDenied, 'Project access denied from audio_recording_catalogue'
+          end
+        end
+
+        unless params[:siteId].blank?
+          site = Site.where(id: params[:siteId]).first
+
+          if site.blank?
+            fail ActiveRecord::RecordNotFound, 'Site not found from audio_recording_catalogue'
+          end
+
+          projects = Site.where(id: params[:siteId]).first.projects
+          if current_user.blank? || !current_user.can_read_any?(projects)
+            fail CanCan::AccessDenied, 'Site access denied from audio_recording_catalogue'
+          end
+        end
+
+        query = AudioRecording.joins(site: :projects)
         .select(
             'count(*) as grouped_count,
 EXTRACT(YEAR FROM recorded_date) as extracted_year,
 EXTRACT(MONTH FROM recorded_date) as extracted_month,
 EXTRACT(DAY FROM recorded_date) as extracted_day')
 
-        unless params[:project_id].blank?
-          query = query.where(project_id: params[:project_id])
+        if !params[:projectId].blank? && !current_user.blank?
+          query = query.where('projects_sites.project_id = ?', params[:projectId])
         end
 
-        unless params[:site_id].blank?
-          query = query.where(site_id: params[:site_id])
+        if !params[:siteId].blank? && !current_user.blank?
+          query = query.where(site_id: params[:siteId])
         end
 
         audio_recordings_grouped = query
