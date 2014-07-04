@@ -138,6 +138,7 @@ class MediaController < ApplicationController
     # .to_s on mime:type gets the media type
     # .to_sym gets the extension
     options[:media_type] = Mime::Type.lookup_by_extension(request_params[:format]).to_s
+    options[:format] = request_params[:format]
 
     options
   end
@@ -234,6 +235,8 @@ class MediaController < ApplicationController
       result[format_key] = defaults.dup
       result[format_key].delete 'format'
       result[format_key][:extension] = format_key
+      result[format_key][:start_offset] = start_offset
+      result[format_key][:end_offset] = end_offset
       result[format_key]['mime_type'] = Mime::Type.lookup_by_extension(format).to_s
       result[format_key]['url'] = audio_recording_media_path(
           audio_recording,
@@ -257,12 +260,22 @@ class MediaController < ApplicationController
 
     options[:format] = request_params[:format] || defaults.extension
     options[:channel] = (request_params[:channel] || defaults.channel).to_i
+
     # if sample rate not given, default to audio recording native sample rate
-    options[:sample_rate] = (request_params[:sample_rate] || audio_recording.sample_rate_hertz).to_i
+    #options[:sample_rate] = (request_params[:sample_rate] || audio_recording.sample_rate_hertz).to_i
 
     if request_type == :image
       options[:window] = (request_params[:window] || defaults.window).to_i
       options[:colour] = (request_params[:colour] || defaults.colour).to_s
+
+      # for now, use the sample rate from the settings file if none given
+      options[:sample_rate] = (request_params[:sample_rate] || @default_spectrogram.sample_rate).to_i
+
+    elsif request_type == :audio
+
+      # for now, use the sample rate from the settings file if none given
+      options[:sample_rate] = (request_params[:sample_rate] || @default_audio.sample_rate).to_i
+
     end
 
     @media_cacher.audio.check_offsets(
