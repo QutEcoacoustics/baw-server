@@ -104,31 +104,36 @@ class PublicController < ApplicationController
   def audio_recording_catalogue
 
     respond_to do |format|
-      format.html
+      #format.html
       format.json {
 
-        unless params[:projectId].blank?
-          project = Project.where(id: params[:projectId]).first
+        if !current_user.blank? && current_user.is_admin?
 
-          if project.blank?
-            fail ActiveRecord::RecordNotFound, 'Project not found from audio_recording_catalogue'
+        else
+
+          unless params[:projectId].blank?
+            project = Project.where(id: params[:projectId]).first
+
+            if project.blank?
+              fail ActiveRecord::RecordNotFound, 'Project not found from audio_recording_catalogue'
+            end
+
+            if current_user.blank? || !current_user.can_read?(project)
+              fail CanCan::AccessDenied, 'Project access denied from audio_recording_catalogue'
+            end
           end
 
-          if current_user.blank? || !current_user.can_read?(project)
-            fail CanCan::AccessDenied, 'Project access denied from audio_recording_catalogue'
-          end
-        end
+          unless params[:siteId].blank?
+            site = Site.where(id: params[:siteId]).first
 
-        unless params[:siteId].blank?
-          site = Site.where(id: params[:siteId]).first
+            if site.blank?
+              fail ActiveRecord::RecordNotFound, 'Site not found from audio_recording_catalogue'
+            end
 
-          if site.blank?
-            fail ActiveRecord::RecordNotFound, 'Site not found from audio_recording_catalogue'
-          end
-
-          projects = Site.where(id: params[:siteId]).first.projects
-          if current_user.blank? || !current_user.can_read_any?(projects)
-            fail CanCan::AccessDenied, 'Site access denied from audio_recording_catalogue'
+            projects = Site.where(id: params[:siteId]).first.projects
+            if current_user.blank? || !current_user.can_read_any?(projects)
+              fail CanCan::AccessDenied, 'Site access denied from audio_recording_catalogue'
+            end
           end
         end
 
