@@ -1,10 +1,12 @@
 %h1 Data Request
 
 - unless @annotation_download.blank?
-  %p
+  %h4
     The CSV file containing annotations for
     =@annotation_download[:name]
-    will download shortly (some downloads might take a minute or two to be generated). If it does not, click
+    will download shortly.
+  %p
+    Some downloads might take a minute or two to be generated. If it does not download after a short time, click
     %a{href: @annotation_download[:link]} here
     ='.'
     If you need more data or a different format, please submit a request using this form.
