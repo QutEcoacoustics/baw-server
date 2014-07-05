@@ -2,9 +2,9 @@ require 'csv'
 
 class AudioEventsController < ApplicationController
 
-  load_and_authorize_resource :audio_recording, except: [:new, :library, :library_paged, :download]
-  load_and_authorize_resource :audio_event, through: :audio_recording, except: [:new, :library, :library_paged, :download]
-  skip_authorization_check only: [:library, :library_paged]
+  load_and_authorize_resource :audio_recording, except: [:show, :new, :library, :library_paged, :download]
+  load_and_authorize_resource :audio_event, through: :audio_recording, except: [:show, :new, :library, :library_paged, :download]
+  skip_authorization_check only: [:show, :library, :library_paged]
   respond_to :json, except: [:download]
 
   # GET /audio_events
@@ -54,7 +54,16 @@ class AudioEventsController < ApplicationController
     #     old: AudioEvent.where(id: params[:id]).includes(taggings: :tag)
     # }
 
-    render json: json_format(AudioEvent.where(id: params[:id]).first)
+    # allow logged-in users to access reference audio events
+    # they would otherwise not have access to
+
+    request_params = params.dup.symbolize_keys
+    request_params[:audio_event_id] = request_params[:id]
+
+    audio_recording = auth_custom_audio_recording(request_params)
+    audio_event = auth_custom_audio_event(request_params, audio_recording)
+
+    render json: json_format(audio_event)
   end
 
   # GET /audio_events/new
@@ -161,7 +170,7 @@ class AudioEventsController < ApplicationController
     end
 
     unless audio_recording.blank? && start_offset.blank? && end_offset.blank?
-    file_name = NameyWamey.create_audio_recording_name(audio_recording, start_offset, end_offset, '', '')
+      file_name = NameyWamey.create_audio_recording_name(audio_recording, start_offset, end_offset, '', '')
     end
 
     @formatted_annotations = download_format AudioEvent.csv_filter(current_user, params).limit(1000)

@@ -968,6 +968,25 @@ resource 'AudioEvents' do
     standard_request('SHOW (as reader with shallow path)', 200, 'start_time_seconds', true)
   end
 
+  get '/audio_recordings/:audio_recording_id/audio_events/:id' do
+
+    parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
+    parameter :id, 'Requested audio event id (in path/route)', required: true
+
+    let(:authentication_token) { reader_token }
+
+    let(:id) { @audio_event.id }
+    let(:audio_recording_id) { @other_audio_recording_id }
+
+    before do
+      other_permissions = FactoryGirl.create(:write_permission)
+      @other_audio_recording_id = other_permissions.project.sites[0].audio_recordings[0].id
+      @audio_event = FactoryGirl.create(:audio_event, audio_recording_id: @other_audio_recording_id, start_time_seconds: 5, end_time_seconds: 6, is_reference: true)
+    end
+
+    standard_request('SHOW (as reader with shallow path for reference audio event with no access to audio recording)', 200, 'start_time_seconds', true)
+  end
+
   get '/projects/:project_id/sites/:site_id/audio_recordings/:audio_recording_id/audio_events/:id' do
 
     parameter :project_id, 'Requested project ID (in path/route)', required: true

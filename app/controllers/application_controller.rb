@@ -79,6 +79,33 @@ class ApplicationController < ActionController::Base
     render layout: false
   end
 
+  def auth_custom_audio_recording(request_params)
+    # do auth manually
+    #authorize! :show, @audio_recording
+
+    audio_recording = AudioRecording.where(id: request_params[:audio_recording_id]).first
+    fail ActiveRecord::RecordNotFound, 'Could not find audio recording with given id.' if audio_recording.blank?
+
+    # can? should also check for admin access
+    can_access_audio_recording = can? :show, audio_recording
+
+    # Can't do anything if can't access audio recording and no audio event id given
+    fail CanCan::AccessDenied, 'Permission denied to audio recording and no audio event id given.' if !can_access_audio_recording && request_params[:audio_event_id].blank?
+
+    audio_recording
+  end
+
+  def auth_custom_audio_event(request_params, audio_recording)
+    audio_event = AudioEvent.where(id: request_params[:audio_event_id]).first
+    fail ActiveRecord::RecordNotFound, 'Could not find audio event with given id.' if audio_event.blank?
+
+    # can? should also check for admin access
+    can_access_audio_event = can? :read, audio_event
+    fail CanCan::AccessDenied, "Requested audio event (#{audio_event.audio_recording_id}) and audio recording (#{audio_recording.id}) must be related." if audio_event.audio_recording_id != audio_recording.id
+    fail CanCan::AccessDenied, 'Permission denied to audio event, and it is not a marked as reference.' if !audio_event.is_reference && !can_access_audio_event
+    audio_event
+  end
+
   private
 
   def record_not_found(error)
