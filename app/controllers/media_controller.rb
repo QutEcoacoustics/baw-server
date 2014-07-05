@@ -86,9 +86,8 @@ class MediaController < ApplicationController
 
     # can? should also check for admin access
     can_access_audio_event = can? :read, audio_event
-    fail CanCan::AccessDenied, 'Permission denied to audio event.' unless can_access_audio_event
-    fail CanCan::AccessDenied, 'Audio event is not a reference annotation.' unless audio_event.is_reference
-    fail CanCan::AccessDenied, 'Requested audio event and audio recording must be related.' if audio_event.audio_recording_id != audio_recording.id
+    fail CanCan::AccessDenied, "Requested audio event (#{audio_event.audio_recording_id}) and audio recording (#{audio_recording.id}) must be related." if audio_event.audio_recording_id != audio_recording.id
+    fail CanCan::AccessDenied, 'Permission denied to audio event, and it is not a marked as reference.' if !audio_event.is_reference && !can_access_audio_event
 
     # check offsets are within range
     if request_params.include?(:start_offset)

@@ -484,7 +484,7 @@ resource 'Media' do
       @audio_event = FactoryGirl.create(:audio_event, audio_recording_id: audio_recording_id, start_time_seconds: 5, end_time_seconds: 6, is_reference: true)
     end
 
-    standard_request('MEDIA (as reader with shallow path, valid audio event request offsets)', 200, nil, true)
+    standard_request('MEDIA (as reader with shallow path, valid audio event request offsets with read access to audio recording)', 200, nil, true)
   end
 
   get '/audio_recordings/:audio_recording_id/media.:format?audio_event_id=:audio_event_id&start_offset=:start_offset&end_offset=:end_offset' do
@@ -492,7 +492,25 @@ resource 'Media' do
     let(:authentication_token) { reader_token }
     let(:format) { 'json' }
     let(:audio_event_id) { @audio_event.id }
-    let(:start_offset) {  120 }
+    let(:start_offset) { 4 }
+    let(:end_offset) { 7 }
+    let(:audio_recording_id) { @other_audio_recording_id }
+
+    before do
+      other_permissions = FactoryGirl.create(:write_permission)
+      @other_audio_recording_id = other_permissions.project.sites[0].audio_recordings[0].id
+      @audio_event = FactoryGirl.create(:audio_event, audio_recording_id: @other_audio_recording_id, start_time_seconds: 5, end_time_seconds: 6, is_reference: true)
+    end
+
+    standard_request('MEDIA (as reader with shallow path, valid audio event request offsets with no access to audio recording)', 200, nil, true)
+  end
+
+  get '/audio_recordings/:audio_recording_id/media.:format?audio_event_id=:audio_event_id&start_offset=:start_offset&end_offset=:end_offset' do
+    standard_media_parameters
+    let(:authentication_token) { reader_token }
+    let(:format) { 'json' }
+    let(:audio_event_id) { @audio_event.id }
+    let(:start_offset) { 120 }
     let(:end_offset) { 150 }
 
     before do
@@ -507,11 +525,15 @@ resource 'Media' do
     let(:authentication_token) { reader_token }
     let(:format) { 'json' }
     let(:audio_event_id) { @audio_event.id }
-    let(:start_offset) {  20 }
+    let(:start_offset) { 20 }
     let(:end_offset) { 23 }
+    let(:audio_recording_id) { @other_audio_recording_id }
 
     before do
-      @audio_event = FactoryGirl.create(:audio_event, audio_recording_id: audio_recording_id, start_time_seconds: 21, end_time_seconds: 22, is_reference: false)
+      other_permissions = FactoryGirl.create(:write_permission)
+      @other_audio_recording_id = other_permissions.project.sites[0].audio_recordings[0].id
+      # note that this audio event is not a reference audio event
+      @audio_event = FactoryGirl.create(:audio_event, audio_recording_id: @other_audio_recording_id, start_time_seconds: 21, end_time_seconds: 22, is_reference: false)
     end
 
     standard_request('MEDIA (as reader with shallow path, not a reference audio event)', 403, nil, true)
@@ -521,14 +543,15 @@ resource 'Media' do
     standard_media_parameters
     let(:authentication_token) { reader_token }
     let(:format) { 'json' }
-    let(:audio_event_id) { audio_event.id }
+    let(:audio_event_id) { audio_event.id } # pre-existing audio event
     let(:start_offset) { 10 }
     let(:end_offset) { 13 }
+    let(:audio_recording_id) { @other_audio_recording_id }
 
     before do
       other_permissions = FactoryGirl.create(:write_permission)
-      other_audio_recording_id = other_permissions.project.sites[0].audio_recordings[0].id
-      @audio_event = FactoryGirl.create(:audio_event, audio_recording_id: other_audio_recording_id, start_time_seconds: 11, end_time_seconds: 12, is_reference: true)
+      @other_audio_recording_id = other_permissions.project.sites[0].audio_recordings[0].id
+      @audio_event = FactoryGirl.create(:audio_event, audio_recording_id: @other_audio_recording_id, start_time_seconds: 11, end_time_seconds: 12, is_reference: true)
     end
 
     standard_request('MEDIA (as reader with shallow path, audio event request not related to audio recording)', 403, nil, true)
