@@ -1,5 +1,6 @@
 class MediaController < ApplicationController
-  load_and_authorize_resource :audio_recording, only: [:show]
+  #load_and_authorize_resource :audio_recording, only: [:show]
+  skip_authorization_check only: [:show]
 
   AUDIO_MEDIA_TYPES = [Mime::Type.lookup('audio/webm'), Mime::Type.lookup('audio/webma'),
                        Mime::Type.lookup('audio/ogg'), Mime::Type.lookup('audio/oga'),
@@ -19,6 +20,9 @@ class MediaController < ApplicationController
     request_params = params.dup.symbolize_keys
     rails_request = request
 
+    # check authorisation manually, take audio event into account
+    audio_recording = authorise_custom(request_params, current_user)
+
     # set up resources to process request
     @range_request = Settings.range_request
     @media_cacher = Settings.media_cache_tool
@@ -32,7 +36,7 @@ class MediaController < ApplicationController
 
     @available_formats = @available_text_formats + @available_audio_formats + @available_image_formats
 
-    is_audio_ready = @audio_recording.status == 'ready'
+    is_audio_ready = audio_recording.status == 'ready'
     is_head_request = rails_request.head?
     is_available_format = @available_formats.include?(request_params[:format].downcase)
 
@@ -51,13 +55,85 @@ class MediaController < ApplicationController
     elsif !is_available_format && !is_head_request
       render json: {code: 415, phrase: 'Unsupported Media Type', message: 'Requested format is invalid. It must be one of available_formats.', available_formats: @available_formats}, status: :unsupported_media_type
     elsif is_available_format && is_audio_ready
-      process_media_request(@audio_recording, request_params, rails_request)
+      process_media_request(audio_recording, request_params, rails_request)
     else
       render json: {code: 400, phrase: 'Bad Request', message: 'Invalid request'}, status: :bad_request
     end
   end
 
   private
+
+  def auth_custom_audio_recording(request_params)
+    # do auth manually
+    #authorize! :show, @audio_recording
+
+    audio_recording = AudioRecording.where(id: request_params[:audio_recording_id]).first
+    fail ActiveRecord::RecordNotFound, 'Could not find audio recording with given id.' if audio_recording.blank?
+
+    # can? should also check for admin access
+    can_access_audio_recording = can? :show, audio_recording
+
+    # Can't do anything if can't access audio recording and no audio event id given
+    fail CanCan::AccessDenied, 'Permission denied to audio recording and no audio event id given.' if !can_access_audio_recording && request_params[:audio_event_id].blank?
+
+    audio_recording
+  end
+
+  def auth_custom_audio_event(request_params, audio_recording)
+
+    audio_event = AudioEvent.where(id: request_params[:audio_event_id]).first
+    fail ActiveRecord::RecordNotFound, 'Could not find audio event with given id.' if audio_event.blank?
+
+    # can? should also check for admin access
+    can_access_audio_event = can? :read, audio_event
+    fail CanCan::AccessDenied, 'Permission denied to audio event.' unless can_access_audio_event
+    fail CanCan::AccessDenied, 'Audio event is not a reference annotation.' unless audio_event.is_reference
+    fail CanCan::AccessDenied, 'Requested audio event and audio recording must be related.' if audio_event.audio_recording_id != audio_recording.id
+
+    # check offsets are within range
+    if request_params.include?(:start_offset)
+      start_offset = request_params[:start_offset].to_f
+    else
+      start_offset = 0.0
+    end
+
+    if request_params.include?(:end_offset)
+      end_offset = request_params[:end_offset].to_f
+    else
+      end_offset = audio_recording.duration_seconds.to_f
+    end
+
+    audio_event_start = audio_event.start_time_seconds
+    audio_event_end = audio_event.end_time_seconds
+
+    allowable_padding = 5
+
+    allowable_start_offset = audio_event_start - allowable_padding
+    allowable_end_offset = audio_event_end + allowable_padding
+
+    if start_offset < allowable_start_offset || end_offset > allowable_end_offset
+      fail CanCan::AccessDenied,
+           'Permission denied to audio recording, offsets were too far outside given audio recording (including padding).'
+    end
+
+    audio_event
+  end
+
+  def authorise_custom(request_params, user)
+
+    # Can't do anything if not logged in, not in user or admin role, or not confirmed
+    if user.blank? || (!user.has_role?(:user) && !user.has_role?(:admin)) || !user.confirmed?
+      fail CanCan::AccessDenied, 'Anonymous users, non-admin and non-users, or unconfirmed users cannot access media.'
+    end
+
+    audio_recording = auth_custom_audio_recording(request_params)
+
+    unless request_params[:audio_event_id].blank?
+      audio_event = auth_custom_audio_event(request_params, audio_recording)
+    end
+
+    audio_recording
+  end
 
   # Process a request.
   # @param [AudioRecording] audio_recording
