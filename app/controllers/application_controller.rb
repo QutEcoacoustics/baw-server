@@ -82,16 +82,22 @@ class ApplicationController < ActionController::Base
   private
 
   def record_not_found(error)
+    json_response = {code: 404, phrase: 'Not Found', message: 'Not found'}
+    log_original_error('record_not_found', error, json_response)
+
     respond_to do |format|
       format.html { render template: 'errors/record_not_found', status: :not_found }
-      format.json { render json: {code: 404, phrase: 'Not Found', message: 'Not found'}, status: :not_found }
-      format.all { render json: {code: 404, phrase: 'Not Found', message: 'Not found'}, status: :not_found }
+      format.json { render json: json_response, status: :not_found }
+      format.all { render json: json_response, status: :not_found }
     end
 
     check_reset_stamper
   end
 
   def record_not_unique(error)
+    json_response = {code: 409, phrase: 'Conflict', message: 'Not unique'}
+    log_original_error('record_not_unique', error, json_response)
+
     respond_to do |format|
       format.html { render template: 'errors/generic', status: :conflict }
       format.json { render json: {code: 409, phrase: 'Conflict', message: 'Not unique'}, status: :conflict }
@@ -112,17 +118,19 @@ class ApplicationController < ActionController::Base
           request_new_permissions_link: new_access_request_projects_url
       }
 
+      log_original_error('access_denied - forbidden', error, json_forbidden)
+
       if !request.env['HTTP_REFERER'].blank? and request.env['HTTP_REFERER'] != request.env['REQUEST_URI']
         respond_to do |format|
           format.html { redirect_to :back, alert: msg_forbidden }
-          format.json { render json: json_forbidden.to_json, status: :forbidden }
-          format.all { render json: json_forbidden.to_json, status: :forbidden, content_type: 'application/json' }
+          format.json { render json: json_forbidden, status: :forbidden }
+          format.all { render json: json_forbidden, status: :forbidden, content_type: 'application/json' }
         end
       else
         respond_to do |format|
           format.html { redirect_to root_path, alert: msg_forbidden }
-          format.json { render json: json_forbidden.to_json, status: :forbidden }
-          format.all { render json: json_forbidden.to_json, status: :forbidden, content_type: 'application/json' }
+          format.json { render json: json_forbidden, status: :forbidden }
+          format.all { render json: json_forbidden, status: :forbidden, content_type: 'application/json' }
         end
 
       end
@@ -135,17 +143,19 @@ class ApplicationController < ActionController::Base
           user_confirmation_link: new_user_confirmation_url
       }
 
+      log_original_error('access_denied - unconfirmed', error, json_unconfirmed)
+
       if !request.env['HTTP_REFERER'].blank? and request.env['HTTP_REFERER'] != request.env['REQUEST_URI']
         respond_to do |format|
           format.html { redirect_to :back, alert: msg_unconfirmed }
-          format.json { render json: json_unconfirmed.to_json, status: :forbidden }
-          format.all { render json: json_unconfirmed.to_json, status: :forbidden, content_type: 'application/json' }
+          format.json { render json: json_unconfirmed, status: :forbidden }
+          format.all { render json: json_unconfirmed, status: :forbidden, content_type: 'application/json' }
         end
       else
         respond_to do |format|
           format.html { redirect_to root_path, alert: msg_unconfirmed }
-          format.json { render json: json_unconfirmed.to_json, status: :forbidden }
-          format.all { render json: json_unconfirmed.to_json, status: :forbidden, content_type: 'application/json' }
+          format.json { render json: json_unconfirmed, status: :forbidden }
+          format.all { render json: json_unconfirmed, status: :forbidden, content_type: 'application/json' }
         end
 
       end
@@ -158,7 +168,9 @@ class ApplicationController < ActionController::Base
           message: msg_response,
           sign_in_link: new_user_session_url,
           user_confirmation_link: new_user_confirmation_url
-      }.to_json
+      }
+
+      log_original_error('access_denied - unauthorised', error, json_response)
 
       # http://blogs.thewehners.net/josh/posts/354-obscure-rails-bug-respond_to-formatany
       respond_to do |format|
@@ -177,7 +189,9 @@ class ApplicationController < ActionController::Base
         code: 400,
         phrase: 'Bad Request',
         message: msg
-    }.to_json
+    }
+
+    log_original_error('routing_argument_missing', error, json_response)
 
     respond_to do |format|
       format.html { redirect_to root_path, alert: msg }
@@ -197,6 +211,10 @@ class ApplicationController < ActionController::Base
 
   def check_reset_stamper
     reset_stamper if User.stamper
+  end
+
+  def log_original_error(method_name, error, response_given)
+    Rails.logger.warn "Error handled by #{method_name} in application controller. Original error: #{error.inspect}. Response given: #{response_given}."
   end
 
 end
