@@ -1,5 +1,5 @@
 class Project < ActiveRecord::Base
-  attr_accessible :creator_id, :deleted_at, :deleter_id, :description, :image, :name, :notes, :updater_id, :urn #,
+  attr_accessible :description, :image, :name, :notes, :urn #,
                   #:sign_in_level, :anonymous_level
 
   # relationships
@@ -33,8 +33,8 @@ class Project < ActiveRecord::Base
   # attribute validations
   validates :name, presence: true, uniqueness: {case_sensitive: false}
   #validates :urn, uniqueness: {case_sensitive: false}, allow_blank: true, allow_nil: true
-  validates_format_of :urn, with: /^urn:[a-z0-9][a-z0-9-]{0,31}:[a-z0-9()+,\-.:=@;$_!*'%\/?#]+$/, message: 'urn %{value} is not valid, must be in format urn:<name>:<path>', allow_blank: true, allow_nil: true
-  validates_attachment_content_type :image, content_type: /^image\/(jpg|jpeg|pjpeg|png|x-png|gif)$/, message: 'file type %{value} is not allowed (only jpeg/png/gif images)'
+  validates_format_of :urn, with: /\Aurn:[a-z0-9][a-z0-9-]{0,31}:[a-z0-9()+,\-.:=@;$_!*'%\/?#]+\z/, message: 'urn %{value} is not valid, must be in format urn:<name>:<path>', allow_blank: true, allow_nil: true
+  validates_attachment_content_type :image, content_type: /\Aimage\/(jpg|jpeg|pjpeg|png|x-png|gif)\z/, message: 'file type %{value} is not allowed (only jpeg/png/gif images)'
 
   # scopes
   scope :none, where('1 = 0') # for getting an empty set

@@ -1,5 +1,5 @@
 class Script < ActiveRecord::Base
-  attr_accessible :analysis_identifier, :data_file, :description, :name, :notes, :settings_file, :verified, :version, :creator_id
+  attr_accessible :analysis_identifier, :data_file, :description, :name, :notes, :settings_file, :verified, :version
 
 
   has_attached_file :settings_file

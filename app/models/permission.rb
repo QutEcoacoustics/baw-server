@@ -1,7 +1,7 @@
 class Permission < ActiveRecord::Base
   extend Enumerize
 
-  attr_accessible :creator_id, :level, :project_id, :user_id
+  attr_accessible :level, :project_id, :user_id
 
   belongs_to :project, inverse_of: :permissions
   belongs_to :user

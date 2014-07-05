@@ -53,7 +53,7 @@ class AudioRecordingsController < ApplicationController
     @audio_recording = match_existing_or_create_new(params)
     @audio_recording.site = @site
 
-    uploader_id = params[:audio_recording][:uploader_id]
+    uploader_id = params[:audio_recording][:uploader_id].to_i
     user_exists = User.exists?(uploader_id)
     user = User.where(id: uploader_id).first
     highest_permission = user.highest_permission(@project)
@@ -78,7 +78,7 @@ class AudioRecordingsController < ApplicationController
     else
       if current_user.has_role? :harvester
         # auth check is skipped, so auth is checked manually here
-        uploader_id = params[:uploader_id]
+        uploader_id = params[:uploader_id].to_i
         user_exists = User.exists?(uploader_id)
         user = User.where(id: uploader_id).first
         highest_permission = user.highest_permission(@project)

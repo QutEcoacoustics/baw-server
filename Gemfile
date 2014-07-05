@@ -123,6 +123,7 @@ group :development do
   gem 'rack-mini-profiler', '~> 0.9.1'
   #gem 'scrap'
   gem 'rails-i18n-debug', '~> 1.0.1'
+  gem 'brakeman', :require => false
 end
 
 group :development, :test do

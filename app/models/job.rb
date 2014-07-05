@@ -1,6 +1,5 @@
 class Job < ActiveRecord::Base
-  attr_accessible :script_id, :dataset_id, :deleted_at, :deleter_id, :annotation_name,
-                  :name, :description, :script_settings, :creator_id, :updater_id
+  attr_accessible :script_id, :dataset_id, :annotation_name, :name, :description, :script_settings
 
   belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_job
   belongs_to :updater, class_name: 'User', foreign_key: :updater_id, inverse_of: :updated_job
