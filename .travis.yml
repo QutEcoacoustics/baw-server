@@ -26,6 +26,5 @@ before_install:
   - sox --version
   - echo "...audio tools installed."
 script:
-  - CODECLIMATE_REPO_TOKEN=4f2e42e49d4b6c160dc5910d8382b30d938159143179ff3d69f21467bbfeac77
   - RAILS_ENV=test bundle exec rake db:migrate --trace
-  - RAILS_ENV=test bundle exec rake --trace
+  - CODECLIMATE_REPO_TOKEN=4f2e42e49d4b6c160dc5910d8382b30d938159143179ff3d69f21467bbfeac77 RAILS_ENV=test bundle exec rake --trace
