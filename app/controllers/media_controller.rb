@@ -17,8 +17,14 @@ class MediaController < ApplicationController
 
   def show
     # ensure all param keys are symbols rather than strings
-    request_params = params.dup.symbolize_keys
+    request_params_mixed = params.dup.symbolize_keys
     rails_request = request
+
+    # convert all params to snake case
+    request_params = ActiveSupport::HashWithIndifferentAccess.new
+    request_params_mixed.each do |key, value|
+      request_params[key.to_s.underscore] = value
+    end
 
     # check authorisation manually, take audio event into account
     audio_recording = authorise_custom(request_params, current_user)
