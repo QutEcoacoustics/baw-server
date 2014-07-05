@@ -58,6 +58,27 @@ describe 'CRUD Sites as valid user with write permission' do
     page.should have_content('Please review the problems below:')
     page.should have_content('can\'t be blank')
   end
+
+  it 'downloads csv file successfully' do
+    visit project_site_path(@project, @site)
+    page.should have_content('Annotations (csv)')
+    click_link('Annotations (csv)')
+
+    expected_url = "#{data_request_url}?annotation_download[project_id]=#{@project.id}&annotation_download[site_id]=#{@site.id}&annotation_download[name]=#{CGI::escape(@site.name)}"
+
+    expect(current_url).to eq(expected_url)
+    page.should have_content("The CSV file containing annotations for #{@site.name} will download shortly.")
+
+    click_link('here')
+
+    expected_url = download_site_audio_events_url(@project, @site)
+    expect(current_url).to eq(expected_url)
+
+    page.should have_content('Annotation Id, Audio Recording Id, Start Date, Start Time, End Date, End Time, Duration, Timezone, Max Frequency (hz), Min Frequency (hz), Project Ids, Project Names, Site Id, Site Name, Created By Id, Created By Name, Listen Url, Library Url, Tag 1 Id, Tag 1 Text, Tag 1 Type, Tag 1 Is Taxanomic, Tag 2 Id, Tag 2 Text, Tag 2 Type, Tag 2 Is Taxanomic, Tag 3 Id, Tag 3 Text, Tag 3 Type, Tag 3 Is Taxanomic, Tag 4 Id, Tag 4 Text, Tag 4 Type, Tag 4 Is Taxanomic')
+
+    expect(page.response_headers['Content-Disposition']).to include('attachment; filename="')
+    expect(page.response_headers['Content-Type']).to eq('text/csv')
+  end
 end
 
 describe 'CRUD Sites as valid user with read permission' do

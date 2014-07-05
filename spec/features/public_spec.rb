@@ -117,4 +117,54 @@ describe 'Website forms' do
       ActionMailer::Base.deliveries.size.should eq(0)
     end
   end
+
+  context 'website status' do
+    it 'shows the Statistics page' do
+      visit website_status_path
+      current_path.should eq(website_status_path)
+      page.should have_content('unique tags')
+    end
+
+    it 'shows the Statistics page' do
+      visit status_path
+      current_path.should eq(status_path)
+      page.should have_content('bad')
+    end
+  end
+end
+
+describe 'public website forms' do
+  context 'static pages' do
+    it 'shows the ethics_statement page' do
+      visit ethics_statement_path
+      current_path.should eq(ethics_statement_path)
+      page.should have_content('Ethics Statement')
+    end
+
+    it 'shows the credits page' do
+      visit credits_path
+      current_path.should eq(credits_path)
+      page.should have_content('Credits')
+    end
+
+    it 'shows the disclaimers page' do
+      visit disclaimers_path
+      current_path.should eq(disclaimers_path)
+      page.should have_content('without express or implied warranty')
+    end
+  end
+
+  context 'website status' do
+    it 'shows the Statistics page' do
+      visit website_status_path
+      current_path.should eq(website_status_path)
+      page.should have_content('unique tags')
+    end
+
+    it 'shows the Statistics page' do
+      visit status_path
+      current_path.should eq(status_path)
+      page.should have_content('bad')
+    end
+  end
 end
