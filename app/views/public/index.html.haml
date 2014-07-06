@@ -15,6 +15,19 @@
   We gather recordings from a wide range of environments and find practical ways to annotate the sounds with information about what's going on in them.
   Then we enable that information to be put to use by ecologists and other parties interested in conservation.
 
+- if current_user.blank?
+  .alert.fade.in.alert-info
+    To access Projects, Sites, and Audio Recordings and participate in our analysis work you will need to
+    =link_to 'Login', new_user_session_path
+    with an existing account or
+    =link_to 'Sign up', new_user_registration_path
+    for a new account.
+- elsif can? :index, Project
+  .alert.fade.in.alert-info
+    To begin, have a look at the
+    =link_to 'Projects', projects_path
+    that are available to you. You can access Audio Recordings through Projects then the Sites they contain.
+
 - unless @selected_images.blank?
   .row-fluid.vertical-offset
     .span5.text-center
