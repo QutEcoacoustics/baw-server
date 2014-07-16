@@ -22,7 +22,7 @@ gem 'haml', '~> 4.0.5'
 gem 'haml-rails', '~> 0.4' # from 0.5 activesupport > 3.2 is required
 gem 'jquery-rails', '~> 3.1.0'
 gem 'simple_form', '~> 2.1.1' #https://github.com/plataformatec/simple_form
-gem 'paperclip', '~> 4.1.1'
+gem 'paperclip', '~> 4.2.0'
 gem 'breadcrumbs_on_rails', '~> 2.3.0'
 # kept below version 2 due to huge breaking changes
 gem 'gmaps4rails', '~> 1.5.6'
@@ -127,7 +127,7 @@ group :development do
 end
 
 group :development, :test do
-  gem 'bullet', '~> 4.11.0'
+  gem 'bullet', '~> 4.12.0'
   gem 'rspec-rails', '~> 2.14.2'
   gem 'guard', '~> 1.8.3'
   gem 'listen', '~> 1.3.1'
@@ -136,7 +136,7 @@ end
 
 group :test do
   gem 'factory_girl_rails', '~> 4.4.1'
-  gem 'capybara', '~> 2.3.0'
+  gem 'capybara', '~> 2.4.0'
   gem 'thin', '~> 1.6.2'
   gem 'guard-rspec', '~> 3.1.0'
   gem 'rspec', '~> 2.14.1'
