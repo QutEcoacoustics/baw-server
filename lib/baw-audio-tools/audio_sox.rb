@@ -73,6 +73,8 @@ module BawAudioTools
       cmd_window_function = arg_window_function(window_function)
       cmd_colour = arg_colour(colour)
 
+      # -X is for native ppms - not 0.045
+      # defaults to ()22050 / 512) || (11025 / 256) (sample rate / window size)
       cmd_spectrogram = 'spectrogram -r -l -a -X 43.06640625'
 
       # sox command to create a spectrogram from an audio file
