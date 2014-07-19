@@ -13,7 +13,7 @@ source 'https://rubygems.org'
 # RAILS
 # -------------------------------------
 # using rails 3.2.x because upgrading to rails 4 involves lots of breaking changes
-gem 'rails', '~> 3.2.18'
+gem 'rails', '< 4'
 gem 'rack-cors', '~> 0.2.9', require: 'rack/cors'
 
 # UI HELPERS
@@ -21,7 +21,7 @@ gem 'rack-cors', '~> 0.2.9', require: 'rack/cors'
 gem 'haml', '~> 4.0.5'
 gem 'haml-rails', '~> 0.4' # from 0.5 activesupport > 3.2 is required
 gem 'jquery-rails', '~> 3.1.0'
-gem 'simple_form', '~> 2.1.1' #https://github.com/plataformatec/simple_form
+gem 'simple_form', '< 3' #https://github.com/plataformatec/simple_form
 gem 'paperclip', '~> 4.2.0'
 gem 'breadcrumbs_on_rails', '~> 2.3.0'
 # kept below version 2 due to huge breaking changes
