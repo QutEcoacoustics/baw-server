@@ -1,0 +1,47 @@
+
+= image_tag @user.image.url(:span3), class: 'span3'
+
+.span9
+  %h1= @user.user_name
+
+.span12
+  %h3 Projects
+
+  - if @user_projects.empty?
+    = 'This user cannot access any projects.'
+  - else
+
+    %table.table.table-striped(data-provides='rowlink')
+      %thead
+        %tr
+          %th Project
+          %th Number of Sites
+          %th Last Updated
+          %th
+
+      %tbody
+      - @user_projects.each do |project|
+        %tr
+          %td= link_to project.name, project_path(project)
+          %td= project.sites.size
+          %td{title: project.updated_at}= distance_of_time_in_words(Time.zone.now, project.updated_at, nil, {vague: true})+ ' ago'
+          %td.nolink
+            = link_to project_path(project), class: 'btn btn-mini' do
+              %i{class: 'fa fa-home'}
+              Project
+            = link_to project_permissions_path(project), class: 'btn btn-mini' do
+              %i{class: 'fa fa-key'}
+              Permissions
+
+- content_for :title, "Projects #{@user.user_name} can access"
+
+- content_for :left_sidebar do
+  = render layout: '/shared/left_sidebar', locals: {title: 'User Accounts'} do
+    - if can? :show, User
+      %li= link_to 'Show', user_account_path(@user), title: 'Show user account', data: {toggle: 'tooltip',  placement: 'right'}
+    - if current_user == @user
+      %li= link_to 'Edit my details', edit_user_registration_path, title: 'Edit your account information', data: {toggle: 'tooltip',  placement: 'right'}
+    - elsif can? :edit, @user
+      %li= link_to 'Edit', edit_user_account_path(@user), title: 'Edit this user\'s details', data: {toggle: 'tooltip',  placement: 'right'}
+    - if can? :index, User
+      %li= link_to 'List', user_accounts_path, title: 'List all user accounts', data: {toggle: 'tooltip',  placement: 'right'}

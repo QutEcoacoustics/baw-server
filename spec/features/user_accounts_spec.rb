@@ -82,6 +82,21 @@ describe 'MANAGE User Accounts as admin user' do
     visit user_accounts_path
     expect { first(:link, 'Delete').click }.to change(User, :count).by(-1)
   end
+
+  it 'provides link to user projects' do
+    user = FactoryGirl.create(:user)
+    visit user_account_path(user)
+    page.should have_content('User Projects')
+  end
+
+  it 'lists user\'s projects' do
+    user = FactoryGirl.create(:user)
+    project = FactoryGirl.create(:project)
+    permission = FactoryGirl.create(:permission, user_id: user.id, project_id: project.id)
+    visit projects_user_account_path(user)
+    page.should have_content('Number of Sites')
+    page.should have_content(project.name)
+  end
 end
 
 describe 'MANAGE User Accounts as user' do
@@ -104,5 +119,24 @@ describe 'MANAGE User Accounts as user' do
     visit user_account_path(user)
     page.should have_content(user.user_name)
   end
+
+  it 'should not link to user projects for other user page' do
+    user = FactoryGirl.create(:user)
+    visit user_account_path(user)
+    page.should_not have_content('User Projects')
+  end
+
+  it 'should not link to user projects for current user' do
+    visit my_account_path
+    page.should_not have_content('User Projects')
+  end
+
+  it 'denies access to user projects page' do
+    user = FactoryGirl.create(:user)
+    visit projects_user_account_path(user)
+    page.should have_content(I18n.t('devise.failure.unauthorized'))
+  end
+
+
 
 end

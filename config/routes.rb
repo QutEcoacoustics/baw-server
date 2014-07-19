@@ -14,6 +14,9 @@ AWB::Application.routes.draw do
   resources :user_accounts do
     resources :permissions
     resources :bookmarks, only: [:index], defaults: {format: 'json'}
+    member do
+      get 'projects'
+    end
   end
 
   # routes for projects and nested resources

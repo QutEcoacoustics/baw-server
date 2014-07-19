@@ -123,4 +123,15 @@ class UserAccountsController < ApplicationController
       end
     end
   end
+
+  # GET /user_accounts/1/projects
+  def projects
+    @user = User.find(params[:id])
+    @user_projects = @user.projects
+    respond_to do |format|
+      format.html # projects.html.erb
+      format.json { render json: @user_projects }
+    end
+  end
+
 end

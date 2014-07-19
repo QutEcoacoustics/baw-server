@@ -116,4 +116,6 @@
       %li= link_to 'Edit', edit_user_account_path(@user), title: 'Edit this user\'s details', data: {toggle: 'tooltip',  placement: 'right'}
     - if can? :index, User
       %li= link_to 'List', user_accounts_path, title: 'List all user accounts', data: {toggle: 'tooltip',  placement: 'right'}
+    - if current_user.is_admin?
+      %li= link_to 'User Projects', projects_user_account_path(@user), title: 'List all projects this user has access to', data: {toggle: 'tooltip',  placement: 'right'}
 
