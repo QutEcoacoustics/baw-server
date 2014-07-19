@@ -270,7 +270,7 @@ class AudioEvent < ActiveRecord::Base
     new_tags = []
 
     tags.each do |tag|
-      existing_tag = Tag.find_by_text(tag.text)
+      existing_tag = Tag.where(text: tag.text).first
       if existing_tag
         existing_tags.push(existing_tag)
       else

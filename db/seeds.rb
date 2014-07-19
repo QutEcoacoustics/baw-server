@@ -4,7 +4,7 @@
 # Examples:
 #
 
-if User.find_by_user_name('Admin').blank?
+if User.where(user_name:'Admin').first.blank?
   harvester = User.new(user_name: 'Admin',
                        email: Settings.admin_user.email,
                        password: Settings.admin_user.password)
@@ -13,7 +13,7 @@ if User.find_by_user_name('Admin').blank?
   harvester.save!
 end
 
-if User.find_by_user_name('Harvester').blank?
+if User.where(user_name:'Harvester').first.blank?
   harvester = User.new(user_name: 'Harvester',
                               email: Settings.harvester.email,
                               password: Settings.harvester.password)

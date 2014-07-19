@@ -75,7 +75,7 @@ class User < ActiveRecord::Base
 
   # validations
   validates :user_name, presence: true, uniqueness: {case_sensitive: false},
-            exclusion: { in: %w(admin harvester analysis_runner) }
+            exclusion: {in: %w(admin harvester analysis_runner)}
   # format, uniqueness, and presence are validated by devise
   # Validatable component
   # validates :email,
@@ -92,7 +92,7 @@ class User < ActiveRecord::Base
   after_create :special_after_create_actions
 
   def projects
-    (self.created_projects.includes(:sites) + self.accessible_projects.includes(:sites)).uniq
+    (self.created_projects.includes(:sites) + self.accessible_projects.includes(:sites)).uniq.sort { |a, b| a.name.downcase <=> b.name.downcase }
   end
 
   def inaccessible_projects
@@ -138,12 +138,12 @@ class User < ActiveRecord::Base
 
   # @param [Project] project
   def can_read?(project)
-    !Permission.find_by_user_id_and_project_id_and_level(self, project, 'reader').blank? || project.creator == self
+    !Permission.where(user_id: self.id, project_id: project.id, level: 'reader').first.blank? || project.creator == self
   end
 
   # @param [Project] project
   def can_write?(project)
-    !Permission.find_by_user_id_and_project_id_and_level(self, project, 'writer').blank? || project.creator == self
+    !Permission.where(user_id: self.id, project_id: project.id, level: 'writer').first.blank? || project.creator == self
   end
 
   # @param [Array<Project>] projects
@@ -198,7 +198,7 @@ class User < ActiveRecord::Base
 
   # @param [Project] project
   def has_permission?(project)
-    !Permission.find_by_user_id_and_project_id(self, project).blank? || project.creator == self
+    !Permission.where(user_id: self.id, project_id: project.id).first.blank? || project.creator == self
   end
 
   # @param [Array<Project>] projects
@@ -213,17 +213,17 @@ class User < ActiveRecord::Base
 
   # @param [Project] project
   def get_read_permission(project)
-    Permission.find_by_user_id_and_project_id_and_level(self, project, 'reader')
+    Permission.where(user_id: self.id, project_id: project.id, level: 'reader').first
   end
 
   # @param [Project] project
   def get_write_permission(project)
-    Permission.find_by_user_id_and_project_id_and_level(self, project, 'writer')
+    Permission.where(user_id: self.id, project_id: project.id, level: 'writer').first
   end
 
   # @param [Project] project
   def get_permission(project)
-    Permission.find_by_user_id_and_project_id(self, project)
+    Permission.where(user_id: self.id, project_id: project.id).first
   end
 
   # Get the number of projects this user has access to.

@@ -104,7 +104,7 @@ class ProjectsController < ApplicationController
     User.all.each do |user|
       # if the user's permission has been set, create permission
       if params[:user_ids].has_key?(user.id.to_s)
-        @permission = Permission.find_by_project_id_and_user_id(@project, user)
+        @permission = Permission.where(project_id: @project.id, user_id: user.id).first
         if @permission.blank?
           @permission = Permission.new
           @permission.project = @project
@@ -123,7 +123,7 @@ class ProjectsController < ApplicationController
           end
         end
       else # if the user's permission has NOT been set, destroy permission
-        @permission = Permission.find_by_project_id_and_user_id(@project, user)
+        @permission = Permission.where(project_id: @project.id, user_id: user.id).first
         @permission.destroy unless @permission.blank?
       end
     end

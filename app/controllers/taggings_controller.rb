@@ -23,11 +23,11 @@ class TaggingsController < ApplicationController
   def user_index
     if params[:user_id]
       render json: Tagging
-        .includes(:tag, :audio_event)
-        .where('(audio_events_tags.updater_id = ? OR audio_events_tags.creator_id = ?)',params[:user_id], params[:user_id])
-        .order('updated_at DESC')
-        .limit(10)
-        .to_json(include: [:tag, :audio_event])
+      .includes(:tag, :audio_event)
+      .where('(audio_events_tags.updater_id = ? OR audio_events_tags.creator_id = ?)', params[:user_id], params[:user_id])
+      .order('updated_at DESC')
+      .limit(10)
+      .to_json(include: [:tag, :audio_event])
     else
       raise ActiveRecord::RecordNotFound, 'Could not get taggings.'
     end
@@ -51,7 +51,7 @@ class TaggingsController < ApplicationController
     # @audio_recording, @audio_event and @tagging are initialised/preloaded by load_resource/load_and_authorize_resource
     if params[:tagging] && params[:tagging][:tag_attributes] && params[:tagging][:tag_attributes][:text]
       @tagging = Tagging.new
-      @tag = Tag.find_by_text(params[:tagging][:tag_attributes][:text])
+      @tag = Tag.where(text: params[:tagging][:tag_attributes][:text]).first
       if @tag.blank?
         # if the tag with the name does not already exist, create it via tag_attributes
         @tag = Tag.new(params[:tagging][:tag_attributes])
