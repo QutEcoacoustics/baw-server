@@ -127,7 +127,7 @@ group :development do
 end
 
 group :development, :test do
-  gem 'bullet', '~> 4.12.0'
+  gem 'bullet', '~> 4.13.0'
   gem 'rspec-rails', '~> 2.14.2'
   gem 'guard', '~> 1.8.3'
   gem 'listen', '~> 1.3.1'
