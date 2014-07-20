@@ -36,5 +36,5 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency 'daemons'
   spec.add_runtime_dependency 'resque'
   spec.add_runtime_dependency 'settingslogic'
-  spec.add_runtime_dependency 'activesupport', '< 4'
+  spec.add_runtime_dependency 'activesupport', '>= 3.2'
 end
