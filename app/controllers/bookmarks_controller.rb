@@ -1,7 +1,6 @@
 class BookmarksController < ApplicationController
-
-  load_resource :audio_recording, only: [:new, :create]
   load_and_authorize_resource :bookmark
+  respond_to :html, only: [:index, :show]
   respond_to :json
 
   # GET /bookmarks
@@ -23,53 +22,35 @@ class BookmarksController < ApplicationController
     @bookmarks = query
     #@bookmarks = [{hi: 'hello', boring: :yes}, {hi: 4565, boring: :yes}]
 
-    respond_to do |format|
-      format.html # index.html.erb
-      format.json # index.json.jbuilder
-    end
+    respond_with @bookmarks
   end
 
   # GET /bookmarks/1
   # GET /bookmarks/1.json
   def show
     @bookmark = Bookmark.where(id: params[:id]).first
-
-    respond_to do |format|
-      format.html # show.html.erb
-      format.json { render json: @bookmark }
-    end
+    respond_with @bookmark
   end
 
   # GET /bookmarks/new
   # GET /bookmarks/new.json
   def new
     @bookmark = Bookmark.new
-    @bookmark.audio_recording = @audio_recording
-
-    respond_to do |format|
-      format.html # new.html.erb
-      format.json { render json: @bookmark }
-    end
-  end
-
-  # GET /bookmarks/1/edit
-  def edit
-    @bookmark = Bookmark.where(id: params[:id]).first
+    respond_with @bookmark
   end
 
   # POST /bookmarks
   # POST /bookmarks.json
   def create
     @bookmark = Bookmark.new(params[:bookmark])
-    @bookmark.audio_recording = @audio_recording
 
     respond_to do |format|
       if @bookmark.save
         format.html { redirect_to @bookmark, notice: 'Bookmark was successfully created.' }
         format.json { render json: @bookmark, status: :created, location: @bookmark }
       else
-        format.html { render action: "new" }
-        format.json { render json: @bookmark.errors, status: :unprocessable_entity }
+        format.html { render action: 'new' }
+        format.json { render @bookmark.errors, status: :unprocessable_entity }
       end
     end
   end
@@ -84,7 +65,7 @@ class BookmarksController < ApplicationController
         format.html { redirect_to @bookmark, notice: 'Bookmark was successfully updated.' }
         format.json { head :no_content }
       else
-        format.html { render action: "edit" }
+        format.html { render action: 'edit' }
         format.json { render json: @bookmark.errors, status: :unprocessable_entity }
       end
     end
