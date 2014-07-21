@@ -126,7 +126,7 @@ class UserAccountsController < ApplicationController
 
   # GET /user_accounts/1/projects
   def projects
-    @user = User.find(params[:id])
+    @user = User.where(id: params[:id]).first
     @user_projects = @user.projects
     respond_to do |format|
       format.html # projects.html.erb

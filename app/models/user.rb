@@ -92,7 +92,7 @@ class User < ActiveRecord::Base
   after_create :special_after_create_actions
 
   def projects
-    (self.created_projects.includes(:sites) + self.accessible_projects.includes(:sites)).uniq.sort { |a, b| a.name.downcase <=> b.name.downcase }
+    (self.created_projects.includes(:sites, :creator) + self.accessible_projects.includes(:sites, :creator)).uniq.sort { |a, b| a.name.downcase <=> b.name.downcase }
   end
 
   def inaccessible_projects
