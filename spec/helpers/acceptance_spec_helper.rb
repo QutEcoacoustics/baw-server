@@ -9,7 +9,7 @@ def document_media_requests
   end
 end
 
-def standard_request(description, expected_status, expected_json_path, document, response_body_content = nil, invalid_content = nil)
+def standard_request(description, expected_status, expected_json_path = nil, document = true, response_body_content = nil, invalid_content = nil)
   # Execute request with ids defined in above let(:id) statements
   example "#{description} - #{expected_status}", :document => document do
     do_request
