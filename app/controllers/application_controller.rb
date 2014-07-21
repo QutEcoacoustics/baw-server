@@ -1,5 +1,7 @@
 class ApplicationController < ActionController::Base
-# CanCan - always check authorization
+  layout :api_or_html
+
+  # CanCan - always check authorization
   check_authorization unless: :devise_controller?
 
   # userstamp
@@ -242,6 +244,14 @@ class ApplicationController < ActionController::Base
 
   def log_original_error(method_name, error, response_given)
     Rails.logger.warn "Error handled by #{method_name} in application controller. Original error: #{error.inspect}. Response given: #{response_given}."
+  end
+
+  def api_or_html
+    if json_request?
+      'api'
+    else
+      'application'
+    end
   end
 
 end

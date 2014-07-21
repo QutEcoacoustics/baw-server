@@ -8,21 +8,24 @@ class BookmarksController < ApplicationController
   # GET /bookmarks.json
   def index
 
+    cleaned_params = CleanParams.perform(params)
+
     query = Bookmark.scoped
 
     unless params[:name].blank?
-      query = query.merge(Bookmark.filter_by_name(params[:name]))
+      query = query.merge(Bookmark.filter_by_name(cleaned_params[:name]))
     end
 
     unless params[:category].blank?
-      query = query.merge(Bookmark.filter_by_category(params[:category]))
+      query = query.merge(Bookmark.filter_by_category(cleaned_params[:category]))
     end
 
     @bookmarks = query
+    #@bookmarks = [{hi: 'hello', boring: :yes}, {hi: 4565, boring: :yes}]
 
     respond_to do |format|
       format.html # index.html.erb
-      format.json { render json: @bookmarks }
+      format.json # index.json.jbuilder
     end
   end
 

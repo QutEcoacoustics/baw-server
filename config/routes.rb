@@ -7,17 +7,40 @@ AWB::Application.routes.draw do
   # The priority is based upon order of creation:
   # first created -> highest priority.
 
+  # User and Devise routes
+  # ======================
+
   # standard devise for website authentication
   devise_for :users, path: :my_account
+
+  # devise for RESTful API Authentication, see Api/sessions_controller.rb
+  devise_for :users,
+             controllers: {sessions: 'sessions'},
+             as: :security,
+             path: :security,
+             defaults: {format: 'json'},
+             only: [:sessions],
+             skip_helpers: true
+
   resources :users, controller: :user_accounts
+
+  # when a user goes to my account, render user_account/show view for that user
+  get '/my_account/' => 'user_accounts#my_account'
+
+  # for updating only preferences for only the currently logged in user
+  put '/my_account/prefs/' => 'user_accounts#modify_preferences'
 
   resources :user_accounts do
     resources :permissions
-    resources :bookmarks, only: [:index], defaults: {format: 'json'}
     member do
       get 'projects'
     end
   end
+
+  # Resource Routes
+  # ===============
+
+  resources :bookmarks, except: [:edit]
 
   # routes for projects and nested resources
   resources :projects do
@@ -69,12 +92,11 @@ AWB::Application.routes.draw do
     end
   end
 
-  # routes for audio recordings and bookmarks within particular recordings
+  # routes for audio recordings within particular recordings
   resources :audio_recordings, only: [], defaults: {format: 'json'}, shallow: true do
     member do
       put 'update_status' # for when harvester has moved a file to the correct location
     end
-    resources :bookmarks, defaults: {format: 'json'}
   end
   resources :tags, only: [:index, :show, :create, :new], defaults: {format: 'json'}
   resources :audio_events, only: [:new], defaults: {format: 'json'} do
@@ -103,19 +125,8 @@ AWB::Application.routes.draw do
   # shallow path to sites
   get '/sites/:id' => 'sites#show_shallow', defaults: {format: 'json'}
 
-  # devise for RESTful API Authentication, see Api/sessions_controller.rb
-  devise_for :users, controllers: {sessions: 'sessions'},
-             as: :security, path: :security, defaults: {format: 'json'},
-             only: [:sessions], skip_helpers: true
-
   # route to the home page of site
   root to: 'public#index'
-
-  # when a user goes to my account, render user_account/show view for that user
-  get '/my_account/' => 'user_accounts#my_account'
-
-  # for updating only preferences for only the currently logged in user
-  put '/my_account/prefs/' => 'user_accounts#modify_preferences'
 
   # site status API
   get '/status/' => 'public#status', defaults: {format: 'json'}
