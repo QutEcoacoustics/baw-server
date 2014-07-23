@@ -3,6 +3,7 @@ class Ability
 
   def initialize(user)
     # Define abilities for the passed in user here.
+    # WARNING :manage represents ANY action on the object.
     user ||= User.new # guest user (not logged in)
 
     if user.has_role? :admin
@@ -52,8 +53,10 @@ class Ability
         user.has_permission_any?(audio_event.audio_recording.site.projects)
       end
       can [:manage], Tag
-      can [:manage], Bookmark, creator_id: user.id
-      can [:read], Bookmark
+      can [:index, :new, :create], Bookmark
+      can [:update, :destroy, :show], Bookmark do |bookmark|
+        bookmark.creator_id == user.id && user.has_permission_any?(bookmark.audio_recording.site.projects)
+      end
       can [:library, :library_paged], AudioEvent
       #can [:audio, :spectrogram], Media if user.has_permission_any?(media.audio_recording.site.projects)
 

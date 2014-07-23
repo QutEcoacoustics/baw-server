@@ -17,7 +17,7 @@ class Bookmark < ActiveRecord::Base
   # attribute validations
   validates :offset_seconds, presence: true, numericality: {greater_than_or_equal_to: 0}
   validates :audio_recording_id, presence: true
-  validates :name, uniqueness: {case_sensitive: false, scope: :creator_id, message: 'should be unique per user'}
+  validates :name, presence: true, uniqueness: {case_sensitive: false, scope: :creator_id, message: 'should be unique per user'}
 
   # model scopes
   scope :filter_by_name, lambda { |name| where(name: name) }

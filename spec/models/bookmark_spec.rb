@@ -11,10 +11,9 @@ describe Bookmark do
 
   it { should validate_presence_of(:audio_recording_id) }
 
-  it 'is valid without name specified, due to default name' do
+  it 'is invalid without name specified' do
     b = build(:bookmark, name: nil)
-    b.should be_valid
-    b.name.should start_with('New Bookmark (')
+    b.should_not be_valid
   end
 
   it { should validate_presence_of(:offset_seconds) }

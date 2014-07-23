@@ -20,4 +20,3 @@ json.data JSON.parse(yield)
 # else
 #   #json.partial! @view_info.data, partial: @view_info.partial_view, as: @view_info.view_container
 # end
-

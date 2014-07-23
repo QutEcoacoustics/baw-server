@@ -1,7 +1,7 @@
 class BookmarksController < ApplicationController
-  load_and_authorize_resource :bookmark
-  respond_to :html, only: [:index, :show]
-  respond_to :json
+  add_breadcrumb 'Home', :root_path
+
+  load_and_authorize_resource
 
   # GET /bookmarks
   # GET /bookmarks.json
@@ -22,32 +22,47 @@ class BookmarksController < ApplicationController
     @bookmarks = query
     #@bookmarks = [{hi: 'hello', boring: :yes}, {hi: 4565, boring: :yes}]
 
-    respond_with @bookmarks
+    respond_to do |format|
+      format.html {
+        add_breadcrumb 'Bookmarks', bookmarks_path
+      }
+      format.json { render template: 'bookmarks/index', locals: { bookmark: @bookmark } }
+    end
+
   end
 
   # GET /bookmarks/1
   # GET /bookmarks/1.json
   def show
-    @bookmark = Bookmark.where(id: params[:id]).first
-    respond_with @bookmark
+    respond_to do |format|
+      format.html {
+        add_breadcrumb 'Bookmarks', bookmarks_path
+        add_breadcrumb @bookmark.name, @bookmark
+      }
+      format.json { render template: 'bookmarks/new', locals: { bookmark: @bookmark } }
+    end
   end
 
   # GET /bookmarks/new
   # GET /bookmarks/new.json
   def new
-    @bookmark = Bookmark.new
-    respond_with @bookmark
+    respond_to do |format|
+      format.html {
+        add_breadcrumb 'Bookmarks', bookmarks_path
+        add_breadcrumb @bookmark.name, @bookmark
+      }
+      format.json { render template: 'bookmarks/new', locals: { bookmark: @bookmark } }
+    end
   end
 
   # POST /bookmarks
   # POST /bookmarks.json
   def create
     @bookmark = Bookmark.new(params[:bookmark])
-
     respond_to do |format|
       if @bookmark.save
         format.html { redirect_to @bookmark, notice: 'Bookmark was successfully created.' }
-        format.json { render json: @bookmark, status: :created, location: @bookmark }
+        format.json { render template: 'bookmarks/new', locals: { bookmark: @bookmark }, status: :created, location: @bookmark }
       else
         format.html { render action: 'new' }
         format.json { render @bookmark.errors, status: :unprocessable_entity }
@@ -59,7 +74,6 @@ class BookmarksController < ApplicationController
   # PUT /bookmarks/1.json
   def update
     @bookmark = Bookmark.where(id: params[:id]).first
-
     respond_to do |format|
       if @bookmark.update_attributes(params[:bookmark])
         format.html { redirect_to @bookmark, notice: 'Bookmark was successfully updated.' }
