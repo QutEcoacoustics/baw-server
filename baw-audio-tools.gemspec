@@ -34,7 +34,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'tzinfo', '~> 0.3.39'
 
   # runtime dependencies
-  spec.add_runtime_dependency 'activesupport', '< 4'
+  spec.add_runtime_dependency 'activesupport', '>= 3.2'
   spec.add_runtime_dependency 'settingslogic'
 
 end
