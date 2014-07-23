@@ -18,7 +18,7 @@ if ENV['TRAVIS']
   CodeClimate::TestReporter.start
 
   # coveralls
-  Coveralls.wear!('rails')
+  Coveralls.wear!
 
   SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter[
       Coveralls::SimpleCov::Formatter,
@@ -33,7 +33,7 @@ else
 end
 
 # start code coverage
-SimpleCov.start 'rails'
+SimpleCov.start
 
 require 'settingslogic'
 require 'active_support/all'
