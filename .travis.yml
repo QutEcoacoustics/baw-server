@@ -1,30 +1,34 @@
 language: ruby
 rvm:
-  - 1.9.3
+- 1.9.3
 branches:
   only:
-    - master
+  - master
 gemfile:
-  - Gemfile
+- Gemfile
 bundler_args: --without development production staging
 before_script:
-  - yes | cp config/settings/test.travis.yml config/settings/test.yml
-  - psql -c 'create database myapp_test;' -U postgres
+- yes | cp config/settings/test.travis.yml config/settings/test.yml
+- psql -c 'create database myapp_test;' -U postgres
 before_install:
-  - echo "Installing audio tools..."
-  - sudo apt-get update -qq
-  - sudo apt-get -y install imagemagick wavpack libsox-fmt-all sox shntool mp3splt libav-tools --fix-missing
-  - mkdir tmp
-  - wget http://ffmpeg.gusari.org/static/64bit/ffmpeg.static.64bit.latest.tar.gz
-  - tar xvzf ffmpeg.static.64bit.latest.tar.gz
-  - rm ffmpeg.static.64bit.latest.tar.gz
-  - sudo mv ffmpeg /usr/local/bin
-  - sudo mv ffprobe /usr/local/bin
-  - echo "...testing for audio tools..."
-  - ffmpeg -version
-  - mp3splt -version
-  - sox --version
-  - echo "...audio tools installed."
+- echo "Installing audio tools..."
+- sudo apt-get update -qq
+- sudo apt-get -y install imagemagick wavpack libsox-fmt-all sox shntool mp3splt libav-tools --fix-missing
+- mkdir tmp
+- wget http://ffmpeg.gusari.org/static/64bit/ffmpeg.static.64bit.latest.tar.gz
+- tar xvzf ffmpeg.static.64bit.latest.tar.gz
+- rm ffmpeg.static.64bit.latest.tar.gz
+- sudo mv ffmpeg /usr/local/bin
+- sudo mv ffprobe /usr/local/bin
+- echo "...testing for audio tools..."
+- ffmpeg -version
+- mp3splt -version
+- sox --version
+- echo "...audio tools installed."
 script:
-  - RAILS_ENV=test bundle exec rake db:migrate --trace
-  - CODECLIMATE_REPO_TOKEN=4f2e42e49d4b6c160dc5910d8382b30d938159143179ff3d69f21467bbfeac77 RAILS_ENV=test bundle exec rake --trace
+- RAILS_ENV=test bundle exec rake db:migrate --trace
+- RAILS_ENV=test bundle exec rake --trace
+env:
+  global:
+    # Code climate token encrypted with travis gem (travis encrypt CODECLIMATE_REPO_TOKEN=...)
+    secure: JUFFho398MH3PBrEkE4lsuiBJG3J2WN3rscaxy49AnU60IM+45qkvxR6+eTkTtrc5mHhxBepPpNJNLuhiW5T32ckftxT7Ct0n/6FGykRIFixqXAWv91XfxkPrbfg2O/ll43RYqnbFW4LC/zNnp3us6LMKoL+7oxfFLowA9/1uoE=
