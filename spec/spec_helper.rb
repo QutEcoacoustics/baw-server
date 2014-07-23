@@ -1,18 +1,35 @@
 # This file is copied to spec/ when you run 'rails generate rspec:install'
 ENV['RAILS_ENV'] ||= 'test'
 
+require 'simplecov'
+
 if ENV['TRAVIS']
   require 'codeclimate-test-reporter'
-  CodeClimate::TestReporter.start
-end
-
-require 'simplecov'
-SimpleCov.start
-
-if ENV['TRAVIS']
   require 'coveralls'
-  Coveralls.wear!
+
+  # code climate
+  CodeClimate::TestReporter.configure do |config|
+    config.logger.level = Logger::DEBUG
+  end
+  CodeClimate::TestReporter.start
+
+  # coveralls
+  Coveralls.wear!('rails')
+
+  SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter[
+      Coveralls::SimpleCov::Formatter,
+      SimpleCov::Formatter::HTMLFormatter,
+      CodeClimate::TestReporter::Formatter
+  ]
+
+else
+  SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter[
+      SimpleCov::Formatter::HTMLFormatter
+  ]
 end
+
+# start code coverage
+SimpleCov.start 'rails'
 
 require File.expand_path('../../config/environment', __FILE__)
 require 'rspec/rails'

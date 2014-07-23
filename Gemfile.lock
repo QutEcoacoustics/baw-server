@@ -1,6 +1,6 @@
 GIT
   remote: https://github.com/QutBioacoustics/baw-audio-tools.git
-  revision: 9a887a549abdd1bacf33985533d9a2425d2872ad
+  revision: bbea89cf29a3fe05448c2aa299816e66e95ab7b7
   specs:
     baw-audio-tools (0.0.9)
       activesupport (>= 3.2)
@@ -129,9 +129,9 @@ GEM
     codeclimate-test-reporter (0.3.0)
       simplecov (>= 0.7.1, < 1.0.0)
     coderay (1.1.0)
-    coffee-rails (3.2.1)
+    coffee-rails (3.2.2)
       coffee-script (>= 2.2.0)
-      railties (~> 3.2.0.beta)
+      railties (~> 3.2.0)
     coffee-script (2.3.0)
       coffee-script-source
       execjs
@@ -223,9 +223,9 @@ GEM
     net-ssh (2.9.1)
     netrc (0.7.7)
     newrelic_rpm (3.9.0.229)
-    nokogiri (1.6.3)
+    nokogiri (1.6.3.1)
       mini_portile (= 0.6.0)
-    nokogiri (1.6.3-x86-mingw32)
+    nokogiri (1.6.3.1-x86-mingw32)
       mini_portile (= 0.6.0)
     orm_adapter (0.5.0)
     paperclip (4.2.0)

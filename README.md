@@ -5,7 +5,11 @@ The bioacoustic workbench server. Manages the structure and audio data. Provides
 [![Build Status](https://travis-ci.org/QutBioacoustics/baw-server.png?branch=master)](https://travis-ci.org/QutBioacoustics/baw-server)
 [![Dependency Status](https://gemnasium.com/QutBioacoustics/baw-server.png)](https://gemnasium.com/QutBioacoustics/baw-server)
 [![Code Climate](https://codeclimate.com/github/QutBioacoustics/baw-server.png)](https://codeclimate.com/github/QutBioacoustics/baw-server)
+[![Test Coverage](https://codeclimate.com/github/QutBioacoustics/baw-server/coverage.png)](https://codeclimate.com/github/QutBioacoustics/baw-server)
 [![Coverage Status](https://coveralls.io/repos/QutBioacoustics/baw-server/badge.png)](https://coveralls.io/r/QutBioacoustics/baw-server)
+[![Inline docs](http://inch-ci.org/github/QutBioacoustics/baw-server.png?branch=master)](http://inch-ci.org/github/QutBioacoustics/baw-server)
+
+[Rubydoc](http://rubydoc.info/github/QutBioacoustics/baw-server/frames) is available.
 
 ## Install instructions
 
