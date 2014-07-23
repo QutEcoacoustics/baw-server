@@ -5,6 +5,14 @@
 #
 # See http://rubydoc.info/gems/rspec-core/RSpec/Core/Configuration
 
+if ENV['TRAVIS']
+  require 'codeclimate-test-reporter'
+  CodeClimate::TestReporter.configure do |config|
+    config.logger.level = Logger::DEBUG
+  end
+  CodeClimate::TestReporter.start
+end
+
 require 'simplecov'
 SimpleCov.start
 
