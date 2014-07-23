@@ -2,12 +2,10 @@
 ENV['RAILS_ENV'] ||= 'test'
 
 if ENV['TRAVIS']
-
+  require 'codeclimate-test-reporter'
   CodeClimate::TestReporter.configure do |config|
     config.logger.level = Logger::DEBUG
   end
-
-  require 'codeclimate-test-reporter'
   CodeClimate::TestReporter.start
 end
 
