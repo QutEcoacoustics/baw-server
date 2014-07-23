@@ -26,9 +26,10 @@ before_install:
 - sox --version
 - echo "...audio tools installed."
 script:
-- RAILS_ENV=test bundle exec rake db:migrate --trace
-- RAILS_ENV=test bundle exec rake --trace
+- bundle exec rake db:migrate
+- bundle exec rake
 env:
   global:
     # Code climate token encrypted with travis gem (travis encrypt CODECLIMATE_REPO_TOKEN=...)
-    secure: JUFFho398MH3PBrEkE4lsuiBJG3J2WN3rscaxy49AnU60IM+45qkvxR6+eTkTtrc5mHhxBepPpNJNLuhiW5T32ckftxT7Ct0n/6FGykRIFixqXAWv91XfxkPrbfg2O/ll43RYqnbFW4LC/zNnp3us6LMKoL+7oxfFLowA9/1uoE=
+    - secure: JUFFho398MH3PBrEkE4lsuiBJG3J2WN3rscaxy49AnU60IM+45qkvxR6+eTkTtrc5mHhxBepPpNJNLuhiW5T32ckftxT7Ct0n/6FGykRIFixqXAWv91XfxkPrbfg2O/ll43RYqnbFW4LC/zNnp3us6LMKoL+7oxfFLowA9/1uoE=
+    - RAILS_ENV=test
