@@ -5,21 +5,35 @@
 #
 # See http://rubydoc.info/gems/rspec-core/RSpec/Core/Configuration
 
+require 'simplecov'
+
 if ENV['TRAVIS']
   require 'codeclimate-test-reporter'
+  require 'coveralls'
+
+  # code climate
   CodeClimate::TestReporter.configure do |config|
     config.logger.level = Logger::DEBUG
   end
   CodeClimate::TestReporter.start
+
+  # coveralls
+  Coveralls.wear!('rails')
+
+  SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter[
+      Coveralls::SimpleCov::Formatter,
+      SimpleCov::Formatter::HTMLFormatter,
+      CodeClimate::TestReporter::Formatter
+  ]
+
+else
+  SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter[
+      SimpleCov::Formatter::HTMLFormatter
+  ]
 end
 
-require 'simplecov'
-SimpleCov.start
-
-if ENV['TRAVIS']
-  require 'coveralls'
-  Coveralls.wear!
-end
+# start code coverage
+SimpleCov.start 'rails'
 
 require 'settingslogic'
 require 'active_support/all'
