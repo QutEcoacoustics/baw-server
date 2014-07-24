@@ -9,8 +9,12 @@ class ApplicationController < ActionController::Base
 
   # error handling for correct route when id does not exist.
   # for incorrect routes see errors_controller and routes.rb
-  rescue_from ActiveRecord::RecordNotFound, with: :record_not_found
-  rescue_from ActiveRecord::RecordNotUnique, with: :record_not_unique
+  rescue_from ActiveRecord::RecordNotFound, with: :record_not_found_error
+  rescue_from CustomErrors::ItemNotFoundError, with: :resource_not_found_error
+  rescue_from ActiveRecord::RecordNotUnique, with: :record_not_unique_error
+  rescue_from CustomErrors::UnsupportedMediaTypeError, with: :unsupported_media_type_error
+  rescue_from CustomErrors::UnprocessableEntityError, with: :unprocessable_entity_error
+  rescue_from ActiveResource::BadRequest, with: :bad_request
 
   # error handling for cancan authorisation checks
   rescue_from CanCan::AccessDenied, with: :access_denied
@@ -108,15 +112,23 @@ class ApplicationController < ActionController::Base
     audio_event
   end
 
+  def create_json_data_response(status_symbol, data)
+    json_response = create_json_response(status_symbol)
+
+    json_response[:data] = data
+
+    json_response
+  end
+
   private
 
-  def record_not_found(error)
+  def record_not_found_error(error)
 
     render_error(
         :not_found,
         'Not found',
         error,
-        'record_not_found',
+        'record_not_found_error',
         nil,
         'errors/record_not_found'
     )
@@ -124,13 +136,71 @@ class ApplicationController < ActionController::Base
     check_reset_stamper
   end
 
-  def record_not_unique(error)
+  def resource_not_found_error(error)
+    # #render json: {code: 404, phrase: 'Not Found', message: 'Audio recording is not ready'}, status: :not_found
+    render_error(
+        :not_found,
+        error.message,
+        error,
+        'resource_not_found_error',
+        nil,
+        'errors/record_not_found'
+    )
+
+    check_reset_stamper
+  end
+
+
+  def record_not_unique_error(error)
 
     render_error(
         :conflict,
         'Not unique',
         error,
-        'record_not_unique',
+        'record_not_unique_error',
+        nil,
+        'errors/generic'
+    )
+
+    check_reset_stamper
+  end
+
+  def unsupported_media_type_error(error)
+    # render json: {code: 415, phrase: 'Unsupported Media Type', message: 'Requested format is invalid. It must be one of available_formats.', available_formats: @available_formats}, status: :unsupported_media_type
+
+    render_error(
+        :unsupported_media_type,
+        error.message,
+        error,
+        'unsupported_media_type_error',
+        nil,
+        'errors/generic'
+    )
+
+    check_reset_stamper
+  end
+
+  def unprocessable_entity_error(error)
+    render_error(
+        :unprocessable_entity,
+        error.message,
+        error,
+        'unsupported_media_type',
+        nil,
+        'errors/generic'
+    )
+
+    check_reset_stamper
+  end
+
+  def bad_request(error)
+    # render json: {code: 400, phrase: 'Bad Request', message: 'Invalid request'}, status: :bad_request
+
+    render_error(
+        :bad_request,
+        'Invalid request',
+        error,
+        'bad_request',
         nil,
         'errors/generic'
     )
@@ -190,7 +260,7 @@ class ApplicationController < ActionController::Base
 
   def render_error(status_symbol, detail_message, error, method_name, links_object = nil, template = nil)
 
-    json_response = create_json_response(status_symbol, detail_message, links_object)
+    json_response = create_json_error_response(status_symbol, detail_message, links_object)
 
     # method_name = __method__
     # caller[0]
@@ -198,6 +268,7 @@ class ApplicationController < ActionController::Base
 
     respond_to do |format|
       format.html {
+        default_template = 'errors/generic'
         if template.blank?
           redirect_to get_redirect, alert: detail_message
         else
@@ -221,20 +292,27 @@ class ApplicationController < ActionController::Base
     redirect_target
   end
 
-  def create_json_response(status_symbol, detail_message, links_object = nil)
+  def create_json_response(status_symbol)
     status_code = Rack::Utils::SYMBOL_TO_STATUS_CODE[status_symbol]
     status_message = Rack::Utils::HTTP_STATUS_CODES[status_code]
 
     json_response = {
         meta: {
             status: status_code,
-            message: status_message,
-            error: {
-                details: detail_message
-            }
+            message: status_message
         },
         data: nil
     }
+
+    json_response
+  end
+
+  def create_json_error_response(status_symbol, detail_message, links_object = nil)
+    json_response = create_json_response(status_symbol)
+
+    json_response[:meta][:error] = {} if !detail_message.blank? && !links_object.blank?
+
+    json_response[:meta][:error][:details] = detail_message unless detail_message.blank?
 
     json_response[:meta][:error][:links] = {} unless links_object.blank?
     json_response[:meta][:error][:links]['sign in'] = new_user_session_url if !links_object.blank? && links_object.include?(:sign_in)

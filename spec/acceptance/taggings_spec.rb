@@ -246,7 +246,7 @@ resource 'Taggings' do
     #  status.should == 200
     #  response_body.should have_json_path('2/is_taxanomic')
     #end
-    standard_request('CREATE (with tag_attributes but existing tag text as writer)', 201, 'data/tag_id', true)
+    standard_request('CREATE (with tag_attributes but existing tag text as writer)', 201, 'tag_id', true)
   end
 
   post '/audio_recordings/:audio_recording_id/audio_events/:audio_event_id/taggings' do
@@ -258,7 +258,7 @@ resource 'Taggings' do
 
 
     let(:authentication_token) { writer_token }
-    standard_request('CREATE (with tag_id as writer, with shallow path)', 201, 'data/tag_id', true)
+    standard_request('CREATE (with tag_id as writer, with shallow path)', 201, 'tag_id', true)
   end
 
   post '/audio_recordings/:audio_recording_id/audio_events/:audio_event_id/taggings' do
@@ -270,7 +270,7 @@ resource 'Taggings' do
     let(:raw_post) { {'tagging' => post_nested_attributes}.to_json }
 
     let(:authentication_token) { writer_token }
-    standard_request('CREATE (with tag_attributes as writer, with shallow path)', 201, 'data/tag_id', true)
+    standard_request('CREATE (with tag_attributes as writer, with shallow path)', 201, 'tag_id', true)
   end
 
   post '/audio_recordings/:audio_recording_id/audio_events/:audio_event_id/taggings' do
@@ -283,7 +283,7 @@ resource 'Taggings' do
 
     let(:authentication_token) { writer_token }
     # 0 - index in array
-    standard_request('CREATE (invalid tag_attributes as writer, with shallow path)', 422, 'data/type_of_tag', true, "\"is not included in the list\"")
+    standard_request('CREATE (invalid tag_attributes as writer, with shallow path)', 422, 'type_of_tag', true, "\"is not included in the list\"")
   end
 
 
@@ -307,7 +307,7 @@ resource 'Taggings' do
     #  status.should == 200
     #  response_body.should have_json_path('2/is_taxanomic')
     #end
-    standard_request('CREATE (with tag_attributes but existing tag text as writer, with shallow path)', 201, 'data/tag_id', true)
+    standard_request('CREATE (with tag_attributes but existing tag text as writer, with shallow path)', 201, 'tag_id', true)
   end
 
 end

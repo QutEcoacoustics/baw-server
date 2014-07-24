@@ -55,15 +55,15 @@ class MediaController < ApplicationController
       # changed from 422 Unprocessable entity
       head :accepted
     elsif !is_audio_ready && !is_head_request
-      render json: {code: 404, phrase: 'Not Found', message: 'Audio recording is not ready'}, status: :not_found
+      fail CustomErrors::ItemNotFoundError.new(response, 'Audio recording is not ready')
     elsif !is_available_format && is_head_request
-      head :unsupported_media_type
+      head :unsupported_media_type_error
     elsif !is_available_format && !is_head_request
-      render json: {code: 415, phrase: 'Unsupported Media Type', message: 'Requested format is invalid. It must be one of available_formats.', available_formats: @available_formats}, status: :unsupported_media_type
+      fail CustomErrors::UnsupportedMediaTypeError.new(response, {detail: 'Requested format is invalid. It must be one of available_formats.', available_formats: @available_formats})
     elsif is_available_format && is_audio_ready
       process_media_request(audio_recording, request_params, rails_request)
     else
-      render json: {code: 400, phrase: 'Bad Request', message: 'Invalid request'}, status: :bad_request
+      fail ActiveResource::BadRequest
     end
   end
 
@@ -121,43 +121,38 @@ class MediaController < ApplicationController
   # @param [Hash] request_params
   # @param [ActionDispatch::Request] rails_request
   def process_media_request(audio_recording, request_params, rails_request)
-
     parsed_options = parse_media_request(audio_recording, request_params, rails_request)
-
-    parsed_options, is_error_state = check_request_parameters(audio_recording, parsed_options, rails_request)
+    parsed_options = check_request_parameters(audio_recording, parsed_options, rails_request)
 
     # an error ocurred when checking parameters
     # render has already been called, don't do anything else.
-    unless is_error_state
+    is_audio = AUDIO_MEDIA_TYPES.include?(parsed_options[:media_type])
+    is_image = IMAGE_MEDIA_TYPES.include?(parsed_options[:media_type])
 
-      is_audio = AUDIO_MEDIA_TYPES.include?(parsed_options[:media_type])
-      is_image = IMAGE_MEDIA_TYPES.include?(parsed_options[:media_type])
+    if is_audio
+      request_type =:audio
+      request_defaults = @default_audio
+    elsif is_image
+      request_type =:image
+      request_defaults = @default_spectrogram
+    else
+      request_type =:json
+      request_defaults = {}
+    end
 
-      if is_audio
-        request_type =:audio
-        request_defaults = @default_audio
-      elsif is_image
-        request_type =:image
-        request_defaults = @default_spectrogram
-      else
-        request_type =:json
-        request_defaults = {}
-      end
+    if request_type == :json
+      response_options = build_json_response(audio_recording, parsed_options, request_params, rails_request)
+      json_response(audio_recording, response_options, request_params, rails_request)
+    else
+      response_options = build_response(
+          audio_recording, parsed_options,
+          request_params, rails_request,
+          request_type, request_defaults)
 
-      if request_type == :json
-        response_options = build_json_response(audio_recording, parsed_options, request_params, rails_request)
-        json_response(audio_recording, response_options, request_params, rails_request)
-      else
-        response_options = build_response(
-            audio_recording, parsed_options,
-            request_params, rails_request,
-            request_type, request_defaults)
-
-        if request_type == :audio
-          audio_response(audio_recording, response_options, request_params, rails_request)
-        elsif request_type == :image
-          spectrogram_response(audio_recording, response_options, request_params, rails_request)
-        end
+      if request_type == :audio
+        audio_response(audio_recording, response_options, request_params, rails_request)
+      elsif request_type == :image
+        spectrogram_response(audio_recording, response_options, request_params, rails_request)
       end
     end
   end
@@ -211,8 +206,6 @@ class MediaController < ApplicationController
     end_offset = request_params[:end_offset].to_s
     audio_duration = audio_recording.duration_seconds
 
-    is_error_state = false
-
     if format == 'json'
       start_offset ||= '0'
       end_offset ||= audio_duration.to_s
@@ -231,50 +224,56 @@ class MediaController < ApplicationController
       end
       if end_offset.to_i - start_offset.to_i > 600
         msg = "Maximum range is 600 seconds, you requested #{end_offset.to_i - start_offset.to_i} seconds between start_offset=#{start_offset} and end_offset=#{end_offset}"
-        render json: {code: 416,
-                      phrase: 'Requested Range Not Satisfiable',
-                      message: msg},
-               status: :requested_range_not_satisfiable
-        is_error_state = true
+        fail BawAudioTools::SegmentRequestTooLong.new(msg)
+        # render json: {code: 416,
+        #               phrase: 'Requested Range Not Satisfiable',
+        #               message: msg},
+        #        status: :requested_range_not_satisfiable
+        # is_error_state = true
       end
     end
 
     if !(start_offset=~OFFSET_REGEXP)
-      render json: {code: 422,
-                    phrase: 'Unprocessable Entity',
-                    message: "start_offset parameter (#{start_offset}) must be a decimal number indicating seconds (maximum precision milliseconds, e.g., 1.234)"},
-             status: :unprocessable_entity
-      is_error_state = true
+      fail CustomErrors::UnprocessableEntityError.new(response, "start_offset parameter (#{start_offset}) must be a decimal number indicating seconds (maximum precision milliseconds, e.g., 1.234)")
+      # render json: {code: 422,
+      #               phrase: 'Unprocessable Entity',
+      #               message: "start_offset parameter (#{start_offset}) must be a decimal number indicating seconds (maximum precision milliseconds, e.g., 1.234)"},
+      #        status: :unprocessable_entity
+      # is_error_state = true
     elsif !(end_offset=~OFFSET_REGEXP)
-      render json: {code: 422,
-                    phrase: 'Unprocessable Entity',
-                    message: "end_offset parameter (#{end_offset}) must be a decimal number indicating seconds (maximum precision milliseconds, e.g., 1.234)"},
-             status: :unprocessable_entity
-      is_error_state = true
+      fail CustomErrors::UnprocessableEntityError.new(response, "end_offset parameter (#{end_offset}) must be a decimal number indicating seconds (maximum precision milliseconds, e.g., 1.234)")
+      #       render json: {code: 422,
+      #               phrase: 'Unprocessable Entity',
+      #               message: "end_offset parameter (#{end_offset}) must be a decimal number indicating seconds (maximum precision milliseconds, e.g., 1.234)"},
+      #        status: :unprocessable_entity
+      # is_error_state = true
     elsif end_offset.to_i > audio_duration
-      render json: {code: 416,
-                    phrase: 'Requested Range Not Satisfiable',
-                    message: "end_offset parameter (#{end_offset}) must be a smaller than the duration of the audio recording (#{audio_duration})"},
-             status: :requested_range_not_satisfiable
-      is_error_state = true
+      fail CustomErrors::UnprocessableEntityError.new(response, "end_offset parameter (#{end_offset}) must be a smaller than the duration of the audio recording (#{audio_duration})")
+      # render json: {code: 416,
+      #               phrase: 'Requested Range Not Satisfiable',
+      #               message: "end_offset parameter (#{end_offset}) must be a smaller than the duration of the audio recording (#{audio_duration})"},
+      #        status: :requested_range_not_satisfiable
+      # is_error_state = true
     elsif start_offset.to_i >= audio_duration
-      render json: {code: 416,
-                    phrase: 'Requested Range Not Satisfiable',
-                    message: "start_offset parameter (#{start_offset}) must be a smaller than the duration of the audio recording (#{audio_duration})"},
-             status: :requested_range_not_satisfiable
-      is_error_state = true
+      fail CustomErrors::UnprocessableEntityError.new(response, "start_offset parameter (#{start_offset}) must be a smaller than the duration of the audio recording (#{audio_duration})")
+      # render json: {code: 416,
+      #               phrase: 'Requested Range Not Satisfiable',
+      #               message: "start_offset parameter (#{start_offset}) must be a smaller than the duration of the audio recording (#{audio_duration})"},
+      #        status: :requested_range_not_satisfiable
+      # is_error_state = true
     elsif start_offset.to_i >= end_offset.to_i
-      render json: {code: 416,
-                    phrase: 'Requested Range Not Satisfiable',
-                    message: "start_offset parameter (#{start_offset}) must be a smaller than end_offset (#{end_offset})"},
-             status: :requested_range_not_satisfiable
-      is_error_state = true
+      fail CustomErrors::UnprocessableEntityError.new(response, "start_offset parameter (#{start_offset}) must be a smaller than end_offset (#{end_offset})")
+      # render json: {code: 416,
+      #               phrase: 'Requested Range Not Satisfiable',
+      #               message: "start_offset parameter (#{start_offset}) must be a smaller than end_offset (#{end_offset})"},
+      #        status: :requested_range_not_satisfiable
+      # is_error_state = true
     end
 
     request_params[:start_offset] = start_offset.to_f
     request_params[:end_offset] = end_offset.to_f
 
-    [request_params, is_error_state]
+    request_params
   end
 
   # Get the available formats.
@@ -451,7 +450,7 @@ class MediaController < ApplicationController
   # @param [ActionDisptach::Request] rails_request
   def json_response(audio_recording, options, request_params, rails_request)
 
-    json_result = options.to_json
+    json_result = create_json_data_response(:ok, options).to_json
 
     headers['Content-Length'] = json_result.size.to_s
 
