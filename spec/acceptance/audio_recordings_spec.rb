@@ -594,7 +594,7 @@ resource 'AudioRecordings' do
     let(:raw_post) { {'audio_recording' => post_attributes}.to_json }
 
     let(:authentication_token) { writer_token }
-    standard_request('CHECK_UPLOADER (as writer checking writer)', 403, 'meta/error/links/request permissions', true)
+    standard_request('CHECK_UPLOADER (as writer checking writer)', 403, 'error', true, 'only harvester can check uploader permissions')
   end
 
   get '/projects/:project_id/sites/:site_id/audio_recordings/check_uploader/:uploader_id' do

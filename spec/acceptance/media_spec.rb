@@ -232,35 +232,35 @@ resource 'Media' do
     standard_media_parameters
     let(:authentication_token) { admin_token }
     let(:format) { 'json' }
-    standard_request('MEDIA (as admin with shallow path)', 200, 'data/original_format', true)
+    standard_request('MEDIA (as admin with shallow path)', 200, 'original_format', true)
   end
 
   get '/audio_recordings/:audio_recording_id/media.:format' do
     standard_media_parameters
     let(:authentication_token) { writer_token }
     let(:format) { 'json' }
-    standard_request('MEDIA (as writer with shallow path)', 200,'data/original_format', true)
+    standard_request('MEDIA (as writer with shallow path)', 200,'original_format', true)
   end
 
   get '/audio_recordings/:audio_recording_id/media.:format' do
     standard_media_parameters
     let(:authentication_token) { reader_token }
     let(:format) { 'json' }
-    standard_request('MEDIA (as reader with shallow path)', 200, 'data/original_format', true)
+    standard_request('MEDIA (as reader with shallow path)', 200, 'original_format', true)
   end
 
   get '/audio_recordings/:audio_recording_id/media.:format' do
     standard_media_parameters
     let(:authentication_token) { unconfirmed_token }
     let(:format) { 'json' }
-    standard_request('MEDIA (as reader with shallow path)', 403, 'data/original_format', true)
+    standard_request('MEDIA (as unconfirmed with shallow path)', 403, 'meta/error/links/confirm your account', true)
   end
 
   get '/audio_recordings/:audio_recording_id/media.:format' do
     standard_media_parameters
     let(:authentication_token) { invalid_token }
     let(:format) { 'json' }
-    standard_request('MEDIA (as reader with shallow path)', 401, 'data/original_format', true)
+    standard_request('MEDIA (as invalid with shallow path)', 401, 'meta/error/links/sign in', true)
   end
 
   get '/audio_recordings/:audio_recording_id/media.:format' do
@@ -564,7 +564,7 @@ resource 'Media' do
     let(:authentication_token) { reader_token }
     let(:format) { 'json' }
 
-    standard_request('CATALOGUE (as reader)', 200, 'data/count', true)
+    standard_request('CATALOGUE (as reader)', 200, '0/count', true)
   end
 
   get '/audio_recording_catalogue?projectId=99999998888' do
@@ -588,7 +588,7 @@ resource 'Media' do
     let(:authentication_token) { reader_token }
     let(:format) { 'json' }
 
-    standard_request('CATALOGUE (as reader restricted to site)', 200, 'data/count', true)
+    standard_request('CATALOGUE (as reader restricted to site)', 200, '0/count', true)
   end
 
 end

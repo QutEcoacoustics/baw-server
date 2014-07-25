@@ -55,11 +55,11 @@ class MediaController < ApplicationController
       # changed from 422 Unprocessable entity
       head :accepted
     elsif !is_audio_ready && !is_head_request
-      fail CustomErrors::ItemNotFoundError.new(response, 'Audio recording is not ready')
+      fail CustomErrors::ItemNotFoundError, 'Audio recording is not ready'
     elsif !is_available_format && is_head_request
       head :unsupported_media_type_error
     elsif !is_available_format && !is_head_request
-      fail CustomErrors::UnsupportedMediaTypeError.new(response, {detail: 'Requested format is invalid. It must be one of available_formats.', available_formats: @available_formats})
+      fail CustomErrors::UnsupportedMediaTypeError.new(@available_formats), 'Requested format is invalid. It must be one of available_formats.'
     elsif is_available_format && is_audio_ready
       process_media_request(audio_recording, request_params, rails_request)
     else
@@ -234,35 +234,35 @@ class MediaController < ApplicationController
     end
 
     if !(start_offset=~OFFSET_REGEXP)
-      fail CustomErrors::UnprocessableEntityError.new(response, "start_offset parameter (#{start_offset}) must be a decimal number indicating seconds (maximum precision milliseconds, e.g., 1.234)")
+      fail CustomErrors::UnprocessableEntityError, "start_offset parameter (#{start_offset}) must be a decimal number indicating seconds (maximum precision milliseconds, e.g., 1.234)"
       # render json: {code: 422,
       #               phrase: 'Unprocessable Entity',
       #               message: "start_offset parameter (#{start_offset}) must be a decimal number indicating seconds (maximum precision milliseconds, e.g., 1.234)"},
       #        status: :unprocessable_entity
       # is_error_state = true
     elsif !(end_offset=~OFFSET_REGEXP)
-      fail CustomErrors::UnprocessableEntityError.new(response, "end_offset parameter (#{end_offset}) must be a decimal number indicating seconds (maximum precision milliseconds, e.g., 1.234)")
+      fail CustomErrors::UnprocessableEntityError, "end_offset parameter (#{end_offset}) must be a decimal number indicating seconds (maximum precision milliseconds, e.g., 1.234)"
       #       render json: {code: 422,
       #               phrase: 'Unprocessable Entity',
       #               message: "end_offset parameter (#{end_offset}) must be a decimal number indicating seconds (maximum precision milliseconds, e.g., 1.234)"},
       #        status: :unprocessable_entity
       # is_error_state = true
     elsif end_offset.to_i > audio_duration
-      fail CustomErrors::UnprocessableEntityError.new(response, "end_offset parameter (#{end_offset}) must be a smaller than the duration of the audio recording (#{audio_duration})")
+      fail CustomErrors::UnprocessableEntityError, "end_offset parameter (#{end_offset}) must be a smaller than the duration of the audio recording (#{audio_duration})"
       # render json: {code: 416,
       #               phrase: 'Requested Range Not Satisfiable',
       #               message: "end_offset parameter (#{end_offset}) must be a smaller than the duration of the audio recording (#{audio_duration})"},
       #        status: :requested_range_not_satisfiable
       # is_error_state = true
     elsif start_offset.to_i >= audio_duration
-      fail CustomErrors::UnprocessableEntityError.new(response, "start_offset parameter (#{start_offset}) must be a smaller than the duration of the audio recording (#{audio_duration})")
+      fail CustomErrors::UnprocessableEntityError, "start_offset parameter (#{start_offset}) must be a smaller than the duration of the audio recording (#{audio_duration})"
       # render json: {code: 416,
       #               phrase: 'Requested Range Not Satisfiable',
       #               message: "start_offset parameter (#{start_offset}) must be a smaller than the duration of the audio recording (#{audio_duration})"},
       #        status: :requested_range_not_satisfiable
       # is_error_state = true
     elsif start_offset.to_i >= end_offset.to_i
-      fail CustomErrors::UnprocessableEntityError.new(response, "start_offset parameter (#{start_offset}) must be a smaller than end_offset (#{end_offset})")
+      fail CustomErrors::UnprocessableEntityError, "start_offset parameter (#{start_offset}) must be a smaller than end_offset (#{end_offset})"
       # render json: {code: 416,
       #               phrase: 'Requested Range Not Satisfiable',
       #               message: "start_offset parameter (#{start_offset}) must be a smaller than end_offset (#{end_offset})"},
@@ -450,7 +450,8 @@ class MediaController < ApplicationController
   # @param [ActionDisptach::Request] rails_request
   def json_response(audio_recording, options, request_params, rails_request)
 
-    json_result = create_json_data_response(:ok, options).to_json
+    #json_result = create_json_data_response(:ok, options).to_json
+    json_result = options.to_json
 
     headers['Content-Length'] = json_result.size.to_s
 

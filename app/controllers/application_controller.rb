@@ -132,8 +132,6 @@ class ApplicationController < ActionController::Base
         nil,
         'errors/record_not_found'
     )
-
-    check_reset_stamper
   end
 
   def resource_not_found_error(error)
@@ -146,8 +144,6 @@ class ApplicationController < ActionController::Base
         nil,
         'errors/record_not_found'
     )
-
-    check_reset_stamper
   end
 
 
@@ -161,8 +157,6 @@ class ApplicationController < ActionController::Base
         nil,
         'errors/generic'
     )
-
-    check_reset_stamper
   end
 
   def unsupported_media_type_error(error)
@@ -174,10 +168,9 @@ class ApplicationController < ActionController::Base
         error,
         'unsupported_media_type_error',
         nil,
-        'errors/generic'
+        'errors/generic',
+        { available_formats: error.available_formats_info }
     )
-
-    check_reset_stamper
   end
 
   def unprocessable_entity_error(error)
@@ -189,8 +182,6 @@ class ApplicationController < ActionController::Base
         nil,
         'errors/generic'
     )
-
-    check_reset_stamper
   end
 
   def bad_request(error)
@@ -199,13 +190,11 @@ class ApplicationController < ActionController::Base
     render_error(
         :bad_request,
         'Invalid request',
-        error,
+        error.message,
         'bad_request',
         nil,
         'errors/generic'
     )
-
-    check_reset_stamper
   end
 
   def access_denied(error)
@@ -219,8 +208,6 @@ class ApplicationController < ActionController::Base
       render_error(:unauthorized, I18n.t('devise.failure.unauthenticated'), error, 'access_denied - unauthorised', [:sign_in, :confirm])
 
     end
-
-    check_reset_stamper
   end
 
   def routing_argument_missing(error)
@@ -231,8 +218,6 @@ class ApplicationController < ActionController::Base
         error,
         'routing_argument_missing'
     )
-
-    check_reset_stamper
   end
 
   def resource_representation_caching_fixes
@@ -258,9 +243,13 @@ class ApplicationController < ActionController::Base
     end
   end
 
-  def render_error(status_symbol, detail_message, error, method_name, links_object = nil, template = nil)
+  def render_error(status_symbol, detail_message, error, method_name, links_object = nil, template = nil, error_info = nil)
 
     json_response = create_json_error_response(status_symbol, detail_message, links_object)
+
+    unless error_info.blank?
+      json_response.meta.error.merge!(error_info)
+    end
 
     # method_name = __method__
     # caller[0]
@@ -280,6 +269,7 @@ class ApplicationController < ActionController::Base
       format.all { render json: json_response, status: status_symbol, content_type: 'application/json' }
     end
 
+    check_reset_stamper
   end
 
   def get_redirect
@@ -310,7 +300,7 @@ class ApplicationController < ActionController::Base
   def create_json_error_response(status_symbol, detail_message, links_object = nil)
     json_response = create_json_response(status_symbol)
 
-    json_response[:meta][:error] = {} if !detail_message.blank? && !links_object.blank?
+    json_response[:meta][:error] = {} if !detail_message.blank? || !links_object.blank?
 
     json_response[:meta][:error][:details] = detail_message unless detail_message.blank?
 
