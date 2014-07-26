@@ -13,6 +13,7 @@ class ApplicationController < ActionController::Base
   rescue_from CustomErrors::ItemNotFoundError, with: :resource_not_found_error
   rescue_from ActiveRecord::RecordNotUnique, with: :record_not_unique_error
   rescue_from CustomErrors::UnsupportedMediaTypeError, with: :unsupported_media_type_error
+  rescue_from CustomErrors::NotAcceptableError, with: :not_acceptable_error
   rescue_from CustomErrors::UnprocessableEntityError, with: :unprocessable_entity_error
   rescue_from ActiveResource::BadRequest, with: :bad_request
 
@@ -167,6 +168,21 @@ class ApplicationController < ActionController::Base
         error.message,
         error,
         'unsupported_media_type_error',
+        nil,
+        'errors/generic',
+        { available_formats: error.available_formats_info }
+    )
+  end
+
+  def not_acceptable_error(error)
+
+    request.format = :json
+
+    render_error(
+        :not_acceptable,
+        error.message,
+        error,
+        'not_acceptable_error',
         nil,
         'errors/generic',
         { available_formats: error.available_formats_info }

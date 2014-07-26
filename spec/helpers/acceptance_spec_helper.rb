@@ -28,6 +28,8 @@ def standard_request(description, expected_status, expected_json_path = nil, doc
     expect(actual_response).to include(response_body_content), "#{message_prefix} to find '#{response_body_content}' in '#{actual_response}'" unless response_body_content.blank?
     expect(actual_response).to_not include(invalid_content), "#{message_prefix} not to find '#{response_body_content}' in '#{actual_response}'" unless invalid_content.blank?
 
+    # 406 when you can't send what they want, 415 when they send what you don't want
+
     if block_given?
       yield(actual_response)
     end

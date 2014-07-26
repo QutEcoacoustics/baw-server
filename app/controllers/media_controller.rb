@@ -42,9 +42,10 @@ class MediaController < ApplicationController
 
     @available_formats = @available_text_formats + @available_audio_formats + @available_image_formats
 
+    requested_format = request_params[:format].downcase
     is_audio_ready = audio_recording.status == 'ready'
     is_head_request = rails_request.head?
-    is_available_format = @available_formats.include?(request_params[:format].downcase)
+    is_available_format = @available_formats.include?(requested_format)
 
     # where will this request be processed
     media_processor = Settings.media_request_processor
@@ -57,9 +58,9 @@ class MediaController < ApplicationController
     elsif !is_audio_ready && !is_head_request
       fail CustomErrors::ItemNotFoundError, 'Audio recording is not ready'
     elsif !is_available_format && is_head_request
-      head :unsupported_media_type_error
+      head :not_acceptable
     elsif !is_available_format && !is_head_request
-      fail CustomErrors::UnsupportedMediaTypeError.new(@available_formats), 'Requested format is invalid. It must be one of available_formats.'
+      fail CustomErrors::NotAcceptableError.new(@available_formats), "Requested format #{requested_format} is not acceptable. It must be one of available_formats."
     elsif is_available_format && is_audio_ready
       process_media_request(audio_recording, request_params, rails_request)
     else

@@ -203,7 +203,7 @@ resource 'Media' do
     standard_media_parameters
     let(:authentication_token) { reader_token }
     let(:format) { 'mp4' }
-    standard_request('MEDIA (invalid format (mp4), as reader)', 415, nil, true)
+    standard_request('MEDIA (invalid format (mp4), as reader)', 406, nil, true)
   end
 
   get '/projects/:project_id/sites/:site_id/audio_recordings/:audio_recording_id/media.:format' do
@@ -267,14 +267,15 @@ resource 'Media' do
     standard_media_parameters
     let(:authentication_token) { reader_token }
     let(:format) { 'mp4' }
-    standard_request('MEDIA (invalid format (mp4), as reader with shallow path)', 415, 'meta/error/available_formats', true)
+    standard_request('MEDIA (invalid format (mp4), as reader with shallow path)', 406, 'meta/error/available_formats', true)
   end
 
   get '/audio_recordings/:audio_recording_id/media.:format' do
     standard_media_parameters
     let(:authentication_token) { reader_token }
     let(:format) { 'zjfyrdnd' }
-    standard_request('MEDIA (invalid format (zjfyrdnd), as reader with shallow path)', 415, 'meta/error/available_formats', true)
+    # can't respond with the format requested
+    standard_request('MEDIA (invalid format (zjfyrdnd), as reader with shallow path)', 406, 'meta/error/available_formats', true)
   end
 
   get '/audio_recordings/:audio_recording_id/media.:format' do
