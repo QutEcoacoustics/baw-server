@@ -78,7 +78,7 @@ AWB::Application.configure do
     # for mailer
     config.action_mailer.logger = Logger.new(Rails.root.join('log', "#{Rails.env}.mailer.log"))
     BawAudioTools::Logging.logger_formatter(config.action_mailer.logger)
-    config.action_mailer.logger.level = :info
+    config.action_mailer.logger.level = Logger::INFO
 
     # log all activerecord activity
     #ActiveRecord::Base.logger = Logger.new(Rails.root.join('log', "#{Rails.env}.activerecord.log"))

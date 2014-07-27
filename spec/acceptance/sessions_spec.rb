@@ -53,11 +53,11 @@ resource 'Sessions' do
   get '/projects' do
     example_request 'Not logged in' do
       status.should == 401
-      response_body.should have_json_path('code')
-      response_body.should have_json_path('phrase')
-      response_body.should have_json_path('message')
-      response_body.should have_json_path('sign_in_link')
-      response_body.should have_json_path('user_confirmation_link')
+      response_body.should have_json_path('meta')
+      response_body.should have_json_path('meta/status')
+      response_body.should have_json_path('meta/message')
+      response_body.should have_json_path('meta/error/links/sign in')
+      response_body.should have_json_path('meta/error/links/confirm your account')
     end
   end
 
@@ -66,10 +66,10 @@ resource 'Sessions' do
     header 'Authorization', :authentication_token_user
     example_request 'logged in but no access' do
       status.should == 403
-      response_body.should have_json_path('code')
-      response_body.should have_json_path('phrase')
-      response_body.should have_json_path('message')
-      response_body.should have_json_path('request_new_permissions_link')
+      response_body.should have_json_path('meta')
+      response_body.should have_json_path('meta/status')
+      response_body.should have_json_path('meta/message')
+      response_body.should have_json_path('meta/error/links/request permissions')
     end
   end
 
