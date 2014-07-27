@@ -13,23 +13,28 @@ def standard_request(description, expected_status, expected_json_path = nil, doc
   # Execute request with ids defined in above let(:id) statements
   example "#{description} - #{expected_status}", :document => document do
     do_request
-    status.should eq(expected_status), "Requested #{path} expecting status #{expected_status} but got status #{status}. Response body was #{response_body}"
-    unless expected_json_path.blank?
-      response_body.should have_json_path(expected_json_path), "could not find #{expected_json_path} in #{response_body}"
-    end
-    unless response_body_content.blank?
-      expect(response_body).to include(response_body_content)
-    end
 
-    unless invalid_content.blank?
-      expect(response_body).to_not include(invalid_content)
-    end
+    actual_response = response_body
+    the_request_method = method
+    the_request_path = path
+
+    message_prefix =  "Requested #{the_request_method} #{the_request_path} expecting"
+
+    status.should eq(expected_status), "#{message_prefix} status #{expected_status} but got status #{status}. Response body was #{actual_response}"
+
+    actual_response.should have_json_path(expected_json_path), "#{message_prefix} to find '#{expected_json_path}' in '#{actual_response}'" unless expected_json_path.blank?
+    # this check ensures that there is an assertion when the content is not blank.
+    #expect(actual_response).to be_blank, "#{message_prefix} blank response, but got #{actual_response}" if response_body_content.blank? && expected_json_path.blank?
+    expect(actual_response).to include(response_body_content), "#{message_prefix} to find '#{response_body_content}' in '#{actual_response}'" unless response_body_content.blank?
+    expect(actual_response).to_not include(invalid_content), "#{message_prefix} not to find '#{response_body_content}' in '#{actual_response}'" unless invalid_content.blank?
+
+    # 406 when you can't send what they want, 415 when they send what you don't want
 
     if block_given?
-      yield(response_body)
+      yield(actual_response)
     end
 
-    response_body
+    actual_response
   end
 end
 

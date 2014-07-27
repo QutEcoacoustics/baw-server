@@ -1,5 +1,7 @@
 class ApplicationController < ActionController::Base
-# CanCan - always check authorization
+  layout :api_or_html
+
+  # CanCan - always check authorization
   check_authorization unless: :devise_controller?
 
   # userstamp
@@ -7,8 +9,13 @@ class ApplicationController < ActionController::Base
 
   # error handling for correct route when id does not exist.
   # for incorrect routes see errors_controller and routes.rb
-  rescue_from ActiveRecord::RecordNotFound, with: :record_not_found
-  rescue_from ActiveRecord::RecordNotUnique, with: :record_not_unique
+  rescue_from ActiveRecord::RecordNotFound, with: :record_not_found_error
+  rescue_from CustomErrors::ItemNotFoundError, with: :resource_not_found_error
+  rescue_from ActiveRecord::RecordNotUnique, with: :record_not_unique_error
+  rescue_from CustomErrors::UnsupportedMediaTypeError, with: :unsupported_media_type_error
+  rescue_from CustomErrors::NotAcceptableError, with: :not_acceptable_error
+  rescue_from CustomErrors::UnprocessableEntityError, with: :unprocessable_entity_error
+  rescue_from ActiveResource::BadRequest, with: :bad_request
 
   # error handling for cancan authorisation checks
   rescue_from CanCan::AccessDenied, with: :access_denied
@@ -106,127 +113,127 @@ class ApplicationController < ActionController::Base
     audio_event
   end
 
-  private
+  def create_json_data_response(status_symbol, data)
+    json_response = create_json_response(status_symbol)
 
-  def record_not_found(error)
-    json_response = {code: 404, phrase: 'Not Found', message: 'Not found'}
-    log_original_error('record_not_found', error, json_response)
+    json_response[:data] = data
 
-    respond_to do |format|
-      format.html { render template: 'errors/record_not_found', status: :not_found }
-      format.json { render json: json_response, status: :not_found }
-      format.all { render json: json_response, status: :not_found }
-    end
-
-    check_reset_stamper
+    json_response
   end
 
-  def record_not_unique(error)
-    json_response = {code: 409, phrase: 'Conflict', message: 'Not unique'}
-    log_original_error('record_not_unique', error, json_response)
+  private
 
-    respond_to do |format|
-      format.html { render template: 'errors/generic', status: :conflict }
-      format.json { render json: {code: 409, phrase: 'Conflict', message: 'Not unique'}, status: :conflict }
-      format.all { render json: {code: 409, phrase: 'Conflict', message: 'Not unique'}, status: :conflict }
-    end
+  def record_not_found_error(error)
 
-    check_reset_stamper
+    render_error(
+        :not_found,
+        'Not found',
+        error,
+        'record_not_found_error',
+        nil,
+        'errors/record_not_found'
+    )
+  end
+
+  def resource_not_found_error(error)
+    # #render json: {code: 404, phrase: 'Not Found', message: 'Audio recording is not ready'}, status: :not_found
+    render_error(
+        :not_found,
+        error.message,
+        error,
+        'resource_not_found_error',
+        nil,
+        'errors/record_not_found'
+    )
+  end
+
+
+  def record_not_unique_error(error)
+
+    render_error(
+        :conflict,
+        'Not unique',
+        error,
+        'record_not_unique_error',
+        nil,
+        'errors/generic'
+    )
+  end
+
+  def unsupported_media_type_error(error)
+    # render json: {code: 415, phrase: 'Unsupported Media Type', message: 'Requested format is invalid. It must be one of available_formats.', available_formats: @available_formats}, status: :unsupported_media_type
+
+    render_error(
+        :unsupported_media_type,
+        error.message,
+        error,
+        'unsupported_media_type_error',
+        nil,
+        'errors/generic',
+        { available_formats: error.available_formats_info }
+    )
+  end
+
+  def not_acceptable_error(error)
+
+    request.format = :json
+
+    render_error(
+        :not_acceptable,
+        error.message,
+        error,
+        'not_acceptable_error',
+        nil,
+        'errors/generic',
+        { available_formats: error.available_formats_info }
+    )
+  end
+
+  def unprocessable_entity_error(error)
+    render_error(
+        :unprocessable_entity,
+        error.message,
+        error,
+        'unsupported_media_type',
+        nil,
+        'errors/generic'
+    )
+  end
+
+  def bad_request(error)
+    # render json: {code: 400, phrase: 'Bad Request', message: 'Invalid request'}, status: :bad_request
+
+    render_error(
+        :bad_request,
+        'Invalid request',
+        error.message,
+        'bad_request',
+        nil,
+        'errors/generic'
+    )
   end
 
   def access_denied(error)
     if current_user && current_user.confirmed?
+      render_error(:forbidden, I18n.t('devise.failure.unauthorized'), error, 'access_denied - forbidden', [:permissions])
 
-      msg_forbidden = I18n.t 'devise.failure.unauthorized'
-      json_forbidden = {
-          code: 403,
-          phrase: 'Forbidden',
-          message: msg_forbidden,
-          request_new_permissions_link: new_access_request_projects_url
-      }
-
-      log_original_error('access_denied - forbidden', error, json_forbidden)
-
-      if !request.env['HTTP_REFERER'].blank? and request.env['HTTP_REFERER'] != request.env['REQUEST_URI']
-        respond_to do |format|
-          format.html { redirect_to :back, alert: msg_forbidden }
-          format.json { render json: json_forbidden, status: :forbidden }
-          format.all { render json: json_forbidden, status: :forbidden, content_type: 'application/json' }
-        end
-      else
-        respond_to do |format|
-          format.html { redirect_to root_path, alert: msg_forbidden }
-          format.json { render json: json_forbidden, status: :forbidden }
-          format.all { render json: json_forbidden, status: :forbidden, content_type: 'application/json' }
-        end
-
-      end
     elsif current_user && !current_user.confirmed?
-      msg_unconfirmed = I18n.t 'devise.failure.unconfirmed'
-      json_unconfirmed = {
-          code: 403,
-          phrase: 'Forbidden',
-          message: msg_unconfirmed,
-          user_confirmation_link: new_user_confirmation_url
-      }
+      render_error(:forbidden, I18n.t('devise.failure.unconfirmed'), error, 'access_denied - unconfirmed', [:confirm])
 
-      log_original_error('access_denied - unconfirmed', error, json_unconfirmed)
-
-      if !request.env['HTTP_REFERER'].blank? and request.env['HTTP_REFERER'] != request.env['REQUEST_URI']
-        respond_to do |format|
-          format.html { redirect_to :back, alert: msg_unconfirmed }
-          format.json { render json: json_unconfirmed, status: :forbidden }
-          format.all { render json: json_unconfirmed, status: :forbidden, content_type: 'application/json' }
-        end
-      else
-        respond_to do |format|
-          format.html { redirect_to root_path, alert: msg_unconfirmed }
-          format.json { render json: json_unconfirmed, status: :forbidden }
-          format.all { render json: json_unconfirmed, status: :forbidden, content_type: 'application/json' }
-        end
-
-      end
     else
+      render_error(:unauthorized, I18n.t('devise.failure.unauthenticated'), error, 'access_denied - unauthorised', [:sign_in, :confirm])
 
-      msg_response = I18n.t 'devise.failure.unauthenticated'
-      json_response = {
-          code: 401,
-          phrase: 'Unauthorized',
-          message: msg_response,
-          sign_in_link: new_user_session_url,
-          user_confirmation_link: new_user_confirmation_url
-      }
-
-      log_original_error('access_denied - unauthorised', error, json_response)
-
-      # http://blogs.thewehners.net/josh/posts/354-obscure-rails-bug-respond_to-formatany
-      respond_to do |format|
-        format.html { redirect_to root_path, alert: msg_response }
-        format.json { render json: json_response, status: :unauthorized }
-        format.all { render json: json_response, status: :unauthorized, content_type: 'application/json' }
-      end
     end
-
-    check_reset_stamper
   end
 
   def routing_argument_missing(error)
-    msg = 'Bad request, please change the request and try again.'
-    json_response = {
-        code: 400,
-        phrase: 'Bad Request',
-        message: msg
-    }
 
-    log_original_error('routing_argument_missing', error, json_response)
-
-    respond_to do |format|
-      format.html { redirect_to root_path, alert: msg }
-      format.json { render json: json_response, status: :bad_request }
-      format.all { render json: json_response, status: :bad_request, content_type: 'application/json' }
-    end
-
-    check_reset_stamper
+    render_error(
+        :bad_request,
+        'Bad request, please change the request and try again.',
+        error,
+        'routing_argument_missing'
+    )
   end
 
   def resource_representation_caching_fixes
@@ -242,6 +249,83 @@ class ApplicationController < ActionController::Base
 
   def log_original_error(method_name, error, response_given)
     Rails.logger.warn "Error handled by #{method_name} in application controller. Original error: #{error.inspect}. Response given: #{response_given}."
+  end
+
+  def api_or_html
+    if json_request?
+      'api'
+    else
+      'application'
+    end
+  end
+
+  def render_error(status_symbol, detail_message, error, method_name, links_object = nil, template = nil, error_info = nil)
+
+    json_response = create_json_error_response(status_symbol, detail_message, links_object)
+
+    unless error_info.blank?
+      json_response.meta.error.merge!(error_info)
+    end
+
+    # method_name = __method__
+    # caller[0]
+    log_original_error(method_name, error, json_response)
+
+    respond_to do |format|
+      format.html {
+        default_template = 'errors/generic'
+        if template.blank?
+          redirect_to get_redirect, alert: detail_message
+        else
+          render template: template, status: status_symbol
+        end
+      }
+      format.json { render json: json_response, status: status_symbol }
+      # http://blogs.thewehners.net/josh/posts/354-obscure-rails-bug-respond_to-formatany
+      format.all { render json: json_response, status: status_symbol, content_type: 'application/json' }
+    end
+
+    check_reset_stamper
+  end
+
+  def get_redirect
+    if !request.env['HTTP_REFERER'].blank? and request.env['HTTP_REFERER'] != request.env['REQUEST_URI']
+      redirect_target = :back
+    else
+      redirect_target = root_path
+    end
+
+    redirect_target
+  end
+
+  def create_json_response(status_symbol)
+    status_code = Rack::Utils::SYMBOL_TO_STATUS_CODE[status_symbol]
+    status_message = Rack::Utils::HTTP_STATUS_CODES[status_code]
+
+    json_response = {
+        meta: {
+            status: status_code,
+            message: status_message
+        },
+        data: nil
+    }
+
+    json_response
+  end
+
+  def create_json_error_response(status_symbol, detail_message, links_object = nil)
+    json_response = create_json_response(status_symbol)
+
+    json_response[:meta][:error] = {} if !detail_message.blank? || !links_object.blank?
+
+    json_response[:meta][:error][:details] = detail_message unless detail_message.blank?
+
+    json_response[:meta][:error][:links] = {} unless links_object.blank?
+    json_response[:meta][:error][:links]['sign in'] = new_user_session_url if !links_object.blank? && links_object.include?(:sign_in)
+    json_response[:meta][:error][:links]['request permissions'] = new_access_request_projects_url if !links_object.blank? && links_object.include?(:permissions)
+    json_response[:meta][:error][:links]['confirm your account'] = new_user_confirmation_url if !links_object.blank? && links_object.include?(:confirm)
+
+    json_response
   end
 
 end

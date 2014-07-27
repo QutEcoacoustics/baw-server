@@ -375,7 +375,7 @@ resource 'AudioRecordings' do
     parameter :site_id, 'Requested site ID (in path/route)', required: true
 
     let(:authentication_token) { "Token token=\"INVALID\"" }
-    standard_request('LIST (with invalid token)', 401, nil, true)
+    standard_request('LIST (with invalid token)', 401, 'meta/error/links/sign in', true)
   end
 
   ################################
@@ -408,7 +408,7 @@ resource 'AudioRecordings' do
 
     let(:authentication_token) { no_access_token }
 
-    standard_request('SHOW (as no access, with shallow path)', 403, nil, true)
+    standard_request('SHOW (as no access, with shallow path)', 403, 'meta/error/links/request permissions', true)
   end
 
   get '/audio_recordings/:id' do
@@ -548,7 +548,7 @@ resource 'AudioRecordings' do
 
     let(:authentication_token) { writer_token }
 
-    standard_request('CREATE (as writer)', 403, nil, true)
+    standard_request('CREATE (as writer)', 403, 'meta/error/links/request permissions', true)
 
   end
 
@@ -560,7 +560,7 @@ resource 'AudioRecordings' do
 
     let(:authentication_token) { reader_token }
 
-    standard_request('CREATE (as reader)', 403, nil, true)
+    standard_request('CREATE (as reader)', 403, 'meta/error/links/request permissions', true)
 
   end
 
@@ -594,7 +594,7 @@ resource 'AudioRecordings' do
     let(:raw_post) { {'audio_recording' => post_attributes}.to_json }
 
     let(:authentication_token) { writer_token }
-    standard_request('CHECK_UPLOADER (as writer checking writer)', 403, nil, true)
+    standard_request('CHECK_UPLOADER (as writer checking writer)', 403, 'error', true, 'only harvester can check uploader permissions')
   end
 
   get '/projects/:project_id/sites/:site_id/audio_recordings/check_uploader/:uploader_id' do
