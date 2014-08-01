@@ -170,7 +170,7 @@ resource 'Media' do
   ################################
   # MEDIA GET - long path
   ################################
-  get '/projects/:project_id/sites/:site_id/audio_recordings/:audio_recording_id/media.:format' do
+  get '/audio_recordings/:audio_recording_id/media.:format' do
     parameter :project_id, 'Requested project ID (in path/route)', required: true
     parameter :site_id, 'Requested site ID (in path/route)', required: true
     standard_media_parameters
@@ -179,7 +179,7 @@ resource 'Media' do
     standard_request('MEDIA (as admin)', 200, nil, true)
   end
 
-  get '/projects/:project_id/sites/:site_id/audio_recordings/:audio_recording_id/media.:format' do
+  get 'audio_recordings/:audio_recording_id/media.:format' do
     parameter :project_id, 'Requested project ID (in path/route)', required: true
     parameter :site_id, 'Requested site ID (in path/route)', required: true
     standard_media_parameters
@@ -188,7 +188,7 @@ resource 'Media' do
     standard_request('MEDIA (as writer)', 200, nil, true)
   end
 
-  get '/projects/:project_id/sites/:site_id/audio_recordings/:audio_recording_id/media.:format' do
+  get '/audio_recordings/:audio_recording_id/media.:format' do
     parameter :project_id, 'Requested project ID (in path/route)', required: true
     parameter :site_id, 'Requested site ID (in path/route)', required: true
     standard_media_parameters
@@ -197,7 +197,7 @@ resource 'Media' do
     standard_request('MEDIA (as reader)', 200, nil, true)
   end
 
-  get '/projects/:project_id/sites/:site_id/audio_recordings/:audio_recording_id/media.:format' do
+  get '/audio_recordings/:audio_recording_id/media.:format' do
     parameter :project_id, 'Requested project ID (in path/route)', required: true
     parameter :site_id, 'Requested site ID (in path/route)', required: true
     standard_media_parameters
@@ -206,7 +206,7 @@ resource 'Media' do
     standard_request('MEDIA (invalid format (mp4), as reader)', 406, nil, true)
   end
 
-  get '/projects/:project_id/sites/:site_id/audio_recordings/:audio_recording_id/media.:format' do
+  get '/audio_recordings/:audio_recording_id/media.:format' do
     parameter :project_id, 'Requested project ID (in path/route)', required: true
     parameter :site_id, 'Requested site ID (in path/route)', required: true
     standard_media_parameters
@@ -215,7 +215,7 @@ resource 'Media' do
     standard_request('MEDIA (as unconfirmed user)', 403, nil, true)
   end
 
-  get '/projects/:project_id/sites/:site_id/audio_recordings/:audio_recording_id/media.:format' do
+  get '/audio_recordings/:audio_recording_id/media.:format' do
     parameter :project_id, 'Requested project ID (in path/route)', required: true
     parameter :site_id, 'Requested site ID (in path/route)', required: true
     standard_media_parameters
