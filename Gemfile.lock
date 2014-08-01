@@ -25,7 +25,7 @@ GIT
 
 GIT
   remote: https://github.com/seyhunak/twitter-bootstrap-rails.git
-  revision: 95de3b0e288aede73d38a18cce30cde66e733558
+  revision: 4d86a00d95021751633dcaa7dfea1c39b0ea3ff5
   specs:
     twitter-bootstrap-rails (2.2.8)
       actionpack (>= 3.1)
@@ -217,7 +217,7 @@ GEM
       net-ssh (>= 2.6.5)
     net-ssh (2.9.1)
     netrc (0.7.7)
-    newrelic_rpm (3.9.0.229)
+    newrelic_rpm (3.9.1.236)
     nokogiri (1.6.3.1-x86-mingw32)
       mini_portile (= 0.6.0)
     orm_adapter (0.5.0)
@@ -319,7 +319,7 @@ GEM
     ruby_parser (3.5.0)
       sexp_processor (~> 4.1)
     safe_yaml (1.0.3)
-    sass (3.3.11)
+    sass (3.3.13)
     sass-rails (3.2.6)
       railties (~> 3.2.0)
       sass (>= 3.1.10)
@@ -439,7 +439,7 @@ DEPENDENCIES
   recaptcha (~> 0.3.6)
   resque (~> 1.25.2)
   role_model (~> 0.8.1)
-  rspec (~> 2.14.1)
+  rspec (~> 2.14)
   rspec-rails (~> 2.14.2)
   rspec_api_documentation (~> 3.1.0)
   sass-rails (~> 3.2.6)

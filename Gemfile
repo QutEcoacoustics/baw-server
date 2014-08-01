@@ -130,6 +130,7 @@ end
 group :development, :test do
   gem 'bullet', '~> 4.13.0'
   gem 'rspec-rails', '~> 2.14.2'
+  # fixed at lower version due to windows issues in higher versions
   gem 'guard', '~> 1.8.3'
   gem 'listen', '~> 1.3.1'
   gem 'wdm', '>= 0.1.0', platforms: [:mswin, :mingw]
@@ -140,7 +141,7 @@ group :test do
   gem 'capybara', '~> 2.4.0'
   gem 'thin', '~> 1.6.2'
   gem 'guard-rspec', '~> 3.1.0'
-  gem 'rspec', '~> 2.14.1'
+  gem 'rspec', '~> 2.14'
   # fixed version due to unresolved bug in higher versions
   gem 'simplecov', '~> 0.7.1', require: false
   gem 'shoulda-matchers', '~> 2.6.1'
