@@ -3,7 +3,7 @@ require 'spec_helper'
 describe TagsController do
   describe :routing do
 
-    it { expect(get('/projects/1/sites/2/audio_recordings/3/audio_events/4/tags')).to route_to('tags#index', project_id: '1', site_id: '2', audio_recording_id: '3', audio_event_id: '4', format: 'json') }
+    it { expect(get('/projects/1/sites/2/audio_recordings/3/audio_events/4/tags')).to route_to('errors#routing', requested_route: 'projects/1/sites/2/audio_recordings/3/audio_events/4/tags') }
     it { expect(get('audio_recordings/3/audio_events/4/tags')).to route_to('tags#index', audio_recording_id: '3', audio_event_id: '4', format: 'json') }
 
     it { expect(get('/tags')).to route_to('tags#index', format: 'json') }

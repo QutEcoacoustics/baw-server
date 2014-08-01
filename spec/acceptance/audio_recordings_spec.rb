@@ -351,7 +351,7 @@ resource 'AudioRecordings' do
   ################################
   # LIST
   ################################
-  get '/projects/:project_id/sites/:site_id/audio_recordings' do
+  get '/audio_recordings' do
     parameter :project_id, 'Requested project ID (in path/route)', required: true
     parameter :site_id, 'Requested site ID (in path/route)', required: true
 
@@ -361,7 +361,7 @@ resource 'AudioRecordings' do
 
   end
 
-  get '/projects/:project_id/sites/:site_id/audio_recordings' do
+  get '/audio_recordings' do
     parameter :project_id, 'Requested project ID (in path/route)', required: true
     parameter :site_id, 'Requested site ID (in path/route)', required: true
 
@@ -370,7 +370,7 @@ resource 'AudioRecordings' do
     standard_request('LIST (as writer)', 200, '0/bit_rate_bps', true)
   end
 
-  get '/projects/:project_id/sites/:site_id/audio_recordings' do
+  get '/audio_recordings' do
     parameter :project_id, 'Requested project ID (in path/route)', required: true
     parameter :site_id, 'Requested site ID (in path/route)', required: true
 
@@ -381,7 +381,7 @@ resource 'AudioRecordings' do
   ################################
   # SHOW
   ################################
-  get '/projects/:project_id/sites/:site_id/audio_recordings/:id' do
+  get '/audio_recordings/:id' do
     parameter :project_id, 'Requested project ID (in path/route)', required: true
     parameter :site_id, 'Requested site ID (in path/route)', required: true
     parameter :id, 'Requested audio recording id (in path/route)', required: true
@@ -391,7 +391,7 @@ resource 'AudioRecordings' do
     standard_request('SHOW (as reader)', 200, 'bit_rate_bps', true)
   end
 
-  get '/projects/:project_id/sites/:site_id/audio_recordings/:id' do
+  get '/audio_recordings/:id' do
     parameter :project_id, 'Requested project ID (in path/route)', required: true
     parameter :site_id, 'Requested site ID (in path/route)', required: true
     parameter :id, 'Requested audio recording id (in path/route)', required: true
@@ -438,6 +438,14 @@ resource 'AudioRecordings' do
     let(:authentication_token) { harvester_token }
 
     standard_request('NEW (as harvester)', 200, 'bit_rate_bps', true)
+
+  end
+
+  get '/audio_recordings/new' do
+
+    let(:authentication_token) { writer_token }
+
+    standard_request('NEW (as reader, for api)', 200, 'bit_rate_bps', true)
 
   end
 

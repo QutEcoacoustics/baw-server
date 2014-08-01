@@ -40,38 +40,38 @@ resource 'Tags' do
   ################################
   # LIST
   ################################
-  get '/projects/:project_id/sites/:site_id/audio_recordings/:audio_recording_id/audio_events/:audio_event_id/tags' do
-    # Execute request with ids defined in above let(:id) statements
-    parameter :project_id, 'Accessed project ID (in path/route)', required: true
-    parameter :site_id, 'Accessed site ID (in path/route)', required: true
-    parameter :audio_recording_id, 'Requested audio recording ID (in path/route)', required: true
-    parameter :audio_event_id, 'Requested audio event ID (in path/route)', required: true
-
-    let(:authentication_token) { writer_token}
-    standard_request('LIST for audio_event (as writer)', 200, '0/is_taxanomic', true)
-  end
-
-  get '/projects/:project_id/sites/:site_id/audio_recordings/:audio_recording_id/audio_events/:audio_event_id/tags' do
-    # Execute request with ids defined in above let(:id) statements
-    parameter :project_id, 'Accessed project ID (in path/route)', required: true
-    parameter :site_id, 'Accessed site ID (in path/route)', required: true
-    parameter :audio_recording_id, 'Requested audio recording ID (in path/route)', required: true
-    parameter :audio_event_id, 'Requested audio event ID (in path/route)', required: true
-
-    let(:authentication_token) { reader_token}
-    standard_request('LIST for audio_event (as reader)', 200, '0/is_taxanomic', true)
-  end
-
-  get '/projects/:project_id/sites/:site_id/audio_recordings/:audio_recording_id/audio_events/:audio_event_id/tags' do
-    # Execute request with ids defined in above let(:id) statements
-    parameter :project_id, 'Accessed project ID (in path/route)', required: true
-    parameter :site_id, 'Accessed site ID (in path/route)', required: true
-    parameter :audio_recording_id, 'Requested audio recording ID (in path/route)', required: true
-    parameter :audio_event_id, 'Requested audio event ID (in path/route)', required: true
-
-    let(:authentication_token) { unconfirmed_token}
-    standard_request('LIST for audio_event (as unconfirmed user)', 403, nil, true)
-  end
+  # get '/projects/:project_id/sites/:site_id/audio_recordings/:audio_recording_id/audio_events/:audio_event_id/tags' do
+  #   # Execute request with ids defined in above let(:id) statements
+  #   parameter :project_id, 'Accessed project ID (in path/route)', required: true
+  #   parameter :site_id, 'Accessed site ID (in path/route)', required: true
+  #   parameter :audio_recording_id, 'Requested audio recording ID (in path/route)', required: true
+  #   parameter :audio_event_id, 'Requested audio event ID (in path/route)', required: true
+  #
+  #   let(:authentication_token) { writer_token}
+  #   standard_request('LIST for audio_event (as writer)', 200, '0/is_taxanomic', true)
+  # end
+  #
+  # get '/projects/:project_id/sites/:site_id/audio_recordings/:audio_recording_id/audio_events/:audio_event_id/tags' do
+  #   # Execute request with ids defined in above let(:id) statements
+  #   parameter :project_id, 'Accessed project ID (in path/route)', required: true
+  #   parameter :site_id, 'Accessed site ID (in path/route)', required: true
+  #   parameter :audio_recording_id, 'Requested audio recording ID (in path/route)', required: true
+  #   parameter :audio_event_id, 'Requested audio event ID (in path/route)', required: true
+  #
+  #   let(:authentication_token) { reader_token}
+  #   standard_request('LIST for audio_event (as reader)', 200, '0/is_taxanomic', true)
+  # end
+  #
+  # get '/projects/:project_id/sites/:site_id/audio_recordings/:audio_recording_id/audio_events/:audio_event_id/tags' do
+  #   # Execute request with ids defined in above let(:id) statements
+  #   parameter :project_id, 'Accessed project ID (in path/route)', required: true
+  #   parameter :site_id, 'Accessed site ID (in path/route)', required: true
+  #   parameter :audio_recording_id, 'Requested audio recording ID (in path/route)', required: true
+  #   parameter :audio_event_id, 'Requested audio event ID (in path/route)', required: true
+  #
+  #   let(:authentication_token) { unconfirmed_token}
+  #   standard_request('LIST for audio_event (as unconfirmed user)', 403, nil, true)
+  # end
 
   get '/tags' do
     let(:authentication_token) { confirmed_token}

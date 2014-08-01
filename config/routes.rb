@@ -22,14 +22,14 @@ AWB::Application.routes.draw do
              only: [:sessions],
              skip_helpers: true
 
-  resources :users, controller: :user_accounts
-
   # when a user goes to my account, render user_account/show view for that user
   get '/my_account/' => 'user_accounts#my_account'
 
   # for updating only preferences for only the currently logged in user
   put '/my_account/prefs/' => 'user_accounts#modify_preferences'
 
+  #TODO: this will be changed from :user_accounts to :users at some point
+  # user list and user profile
   resources :user_accounts do
     resources :permissions
     member do
@@ -42,6 +42,58 @@ AWB::Application.routes.draw do
 
   resources :bookmarks, except: [:edit]
 
+  # routes used by harvester:
+  # endpoint_login: /security/sign_in
+  # endpoint_create: /projects/:project_id/sites/:site_id/audio_recordings
+  # endpoint_check_uploader: /projects/:project_id/sites/:site_id/audio_recordings/check_uploader/:uploader_id
+  # endpoint_update_status: /audio_recordings/:id/update_status
+
+  # endpoints used by client:
+  # routes: {
+  #     project: "/projects/{projectId}",
+  #     site: {
+  #         flattened: "/sites/{siteId}",
+  #         nested: "/projects/{projectId}/sites/{siteId}"
+  #     },
+  #     audioRecording: {
+  #         listShort: "/audio_recordings/{recordingId}",
+  #         show: "/audio_recordings/{recordingId}",
+  #         list: "/audio_recordings/"
+  #     },
+  #     audioEvent: {
+  #         list: "/audio_recordings/{recordingId}/audio_events",
+  #         show: "/audio_recordings/{recordingId}/audio_events/{audioEventId}",
+  #         csv: "/audio_recordings/{recordingId}/audio_events/download.{format}",
+  #         library: "/audio_events/library/paged"
+  #     },
+  #     tagging: {
+  #         list: "/audio_recordings/{recordingId}/audio_events/{audioEventId}/taggings",
+  #         show: "/audio_recordings/{recordingId}/audio_events/{audioEventId}/taggings/{taggingId}"
+  #     },
+  #     tag: {
+  #         list: '/tags/',
+  #         show: '/tags/{tagId}'
+  #     },
+  #     media: {
+  #         show: "/audio_recordings/{recordingId}/media.{format}"
+  #     },
+  #     security: {
+  #         ping: "/security/sign_in",
+  #         signIn: "/my_account/sign_in"
+  #     },
+  #     user: {
+  #         profile: "/my_account",
+  #         settings: "/my_account/prefs"
+  #     }
+  # },
+  #     links: {
+  #     projects: '/projects',
+  #     home: '/',
+  #     project: '/projects/{projectId}',
+  #     site: '/projects/{projectId}/sites/{siteId}',
+  #     userAccounts: '/user_accounts/{userId}'
+  # }
+
   # routes for projects and nested resources
   resources :projects do
     member do
@@ -51,24 +103,24 @@ AWB::Application.routes.draw do
       get 'new_access_request'
       post 'submit_access_request'
     end
+    # HTML project permissions list
     resources :permissions, except: [:show]
+    # API project permission item
     resources :permissions, only: [:show], defaults: {format: 'json'}
+    # HTML project site item
     resources :sites, except: [:index] do
       member do
         get :upload_instructions
         get 'harvest' => 'sites#harvest', defaults: {format: 'yml'}, constraints: {format: /(yml)/}
       end
-      resources :audio_recordings, only: [:index, :new, :create, :show], defaults: {format: 'json'} do
+      # API project site recording check_uploader
+      resources :audio_recordings, only: [:create, :new], defaults: {format: 'json'} do
         collection do
           get 'check_uploader/:uploader_id', defaults: {format: 'json'}, action: :check_uploader
         end
-        get 'media.:format' => 'media#show', defaults: {format: 'json'}, as: :media
-        resources :audio_events, defaults: {format: 'json'} do
-          resources :tags, only: [:index], defaults: {format: 'json'}
-          resources :taggings, defaults: {format: 'json'}
-        end
       end
     end
+    # API project sites list
     resources :sites, only: [:index], defaults: {format: 'json'}
     resources :datasets, except: [:index] do
       resources :jobs, only: [:show]
@@ -79,9 +131,8 @@ AWB::Application.routes.draw do
     resources :jobs, only: [:index], defaults: {format: 'json'}
   end
 
-  # allow shallow paths to audio_recordings
-  # TODO: cleanup unneccessary paths
-  resources :audio_recordings, only: [:show], defaults: {format: 'json'} do
+  # API audio recording item
+  resources :audio_recordings, only: [:index, :show, :new], defaults: {format: 'json'} do
     get 'media.:format' => 'media#show', defaults: {format: 'json'}, as: :media
     resources :audio_events, defaults: {format: 'json'} do
       collection do
@@ -92,13 +143,17 @@ AWB::Application.routes.draw do
     end
   end
 
-  # routes for audio recordings within particular recordings
+  # API update status for audio_recording item, separate so it has :id and not :audio_recording_id
   resources :audio_recordings, only: [], defaults: {format: 'json'}, shallow: true do
     member do
       put 'update_status' # for when harvester has moved a file to the correct location
     end
   end
+
+  # API tags
   resources :tags, only: [:index, :show, :create, :new], defaults: {format: 'json'}
+
+  # API audio_event create
   resources :audio_events, only: [:new], defaults: {format: 'json'} do
     collection do
       get 'library'
