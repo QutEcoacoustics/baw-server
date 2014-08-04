@@ -19,10 +19,10 @@ module BawAudioTools
       "#{@sox_executable} --info -V2 \"#{source}\""
     end
 
-    def parse_info_output(output)
+    def parse_info_output(execute_msg)
       # contains key value output (separate on first colon(:))
       result = {}
-      output.strip.split(/\r?\n|\r/).each { |line|
+      execute_msg[:stderr].strip.split(/\r?\n|\r/).each { |line|
         if line.include?(':')
           colon_index = line.index(':')
           new_value = line[colon_index+1, line.length].strip
@@ -34,12 +34,14 @@ module BawAudioTools
       result
     end
 
-    def check_for_errors(stdout, stderr)
+    def check_for_errors(execute_msg)
+      stdout = execute_msg[:stdout]
+      stderr = execute_msg[:stderr]
       if !stderr.blank? && stderr.include?(ERROR_CANNOT_OPEN)
-        fail Exceptions::FileCorruptError, "sox could not open the file.\n\t Standard output: #{stdout}\n\t Standard Error: #{stderr}"
+        fail Exceptions::FileCorruptError, "sox could not open the file.\n\t#{execute_msg[:execute_msg]}"
       end
       if !stderr.blank? && stderr.include?(ERROR_NO_HANDLER)
-        fail Exceptions::AudioToolError, "sox cannot open this file type.\n\t Standard output: #{stdout}\n\t Standard Error: #{stderr}"
+        fail Exceptions::AudioToolError, "sox cannot open this file type.\n\t#{execute_msg[:execute_msg]}"
       end
     end
 
@@ -48,7 +50,7 @@ module BawAudioTools
       fail ArgumentError, "Target is not a wav file: : #{target}" unless target.match(/\.wav$/)
       fail Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.exists? source
       fail Exceptions::FileAlreadyExistsError, "Target exists: #{target}" if File.exists? target
-      fail ArgumentError "Source and Target are the same file: #{target}" unless source != target
+      fail ArgumentError "Source and Target are the same file: #{target}" if source == target
 
 
       cmd_offsets = arg_offsets(start_offset, end_offset)
@@ -59,12 +61,12 @@ module BawAudioTools
     end
 
     def spectrogram_command(source, source_info, target, start_offset = nil, end_offset = nil, channel = nil, sample_rate = nil,
-        window = nil, window_function = nil, colour = nil)
+                            window = nil, window_function = nil, colour = nil)
       fail ArgumentError, "Source is not a wav file: #{source}" unless source.match(/\.wav$/)
       fail ArgumentError, "Target is not a png file: : #{target}" unless target.match(/\.png/)
       fail Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.exists? source
       fail Exceptions::FileAlreadyExistsError, "Target exists: #{target}" if File.exists? target
-      fail ArgumentError "Source and Target are the same file: #{target}" unless source != target
+      fail ArgumentError "Source and Target are the same file: #{target}" if source == target
 
       cmd_offsets = arg_offsets(start_offset, end_offset)
       cmd_sample_rate = arg_sample_rate(sample_rate)

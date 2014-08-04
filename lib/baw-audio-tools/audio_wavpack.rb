@@ -33,15 +33,18 @@ module BawAudioTools
       output.strip!.split(/\r?\n|\r/).last
     end
 
-    def check_for_errors(stdout, stderr)
+    def check_for_errors(execute_msg)
+      stdout = execute_msg[:stdout]
+      stderr = execute_msg[:stderr]
+
       if !stderr.blank? && stderr.include?(ERROR_CANNOT_OPEN)
-        fail Exceptions::FileCorruptError, "Wavpack could not open the file.\n\t Standard output: #{stdout}\n\t Standard Error: #{stderr}"
+        fail Exceptions::FileCorruptError, "Wavpack could not open the file.\n\t#{execute_msg[:execute_msg]}"
       end
       if !stderr.blank? && stderr.include?(ERROR_NOT_VALID)
-        fail Exceptions::AudioToolError, "Wavpack was given a non-wavpack file.\n\t Standard output: #{stdout}\n\t Standard Error: #{stderr}"
+        fail Exceptions::AudioToolError, "Wavpack was given a non-wavpack file.\n\t#{execute_msg[:execute_msg]}"
       end
       if !stderr.blank? && stderr.include?(ERROR_NOT_COMPATIBLE)
-        fail Exceptions::AudioToolError, "Wavpack was given a non-compatible wavpack file.\n\t Standard output: #{stdout}\n\t Standard Error: #{stderr}"
+        fail Exceptions::AudioToolError, "Wavpack was given a non-compatible wavpack file.\n\t#{execute_msg[:execute_msg]}"
       end
     end
 
@@ -50,7 +53,7 @@ module BawAudioTools
       fail ArgumentError, "Target is not a wav file: : #{target}" unless target.match(/\.wav$/)
       fail Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.exists? source
       fail Exceptions::FileAlreadyExistsError, "Target exists: #{target}" if File.exists? target
-      fail ArgumentError "Source and Target are the same file: #{target}" unless source != target
+      fail ArgumentError "Source and Target are the same file: #{target}" if source == target
 
       cmd_offsets = arg_offsets(start_offset, end_offset)
 

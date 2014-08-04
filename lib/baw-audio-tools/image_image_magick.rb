@@ -30,12 +30,14 @@ module BawAudioTools
       result
     end
 
-    def check_for_errors(stdout, stderr)
+    def check_for_errors(execute_msg)
+      stdout = execute_msg[:stdout]
+      stderr = execute_msg[:stderr]
       if !stderr.blank? && stderr.include?(ERROR_UNABLE_TO_OPEN)
-        fail Exceptions::FileCorruptError, "Image magick could not open the file.\n\t Standard output: #{stdout}\n\t Standard Error: #{stderr}"
+        fail Exceptions::FileCorruptError, "Image magick could not open the file.\n\t#{execute_msg[:execute_msg]}"
       end
       if !stderr.blank? && stderr.include?(ERROR_IMAGE_FORMAT)
-        fail Exceptions::NotAnImageFileError, "Image magick was given a non-image file.\n\t Standard output: #{stdout}\n\t Standard Error: #{stderr}"
+        fail Exceptions::NotAnImageFileError, "Image magick was given a non-image file.\n\t#{execute_msg[:execute_msg]}"
       end
     end
 
@@ -45,7 +47,7 @@ module BawAudioTools
       fail Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.exists? source
       # target will probably already exist, coz we're overwriting the image
       #fail Exceptions::FileAlreadyExistsError, "Target exists: #{target}" if File.exists? target
-      #fail ArgumentError "Source and Target are the same file: #{target}" unless source != target
+      #fail ArgumentError "Source and Target are the same file: #{target}" if source == target
 
       # disable resizing. The client can take care of manipulating the image to suit the client's needs
       ##cmd_width = arg_width(ppms, duration_sec)

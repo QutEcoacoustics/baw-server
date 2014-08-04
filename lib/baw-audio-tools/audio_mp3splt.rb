@@ -13,7 +13,7 @@ module BawAudioTools
       fail ArgumentError, "Target is not a mp3 file: : #{target}" unless target.match(/\.mp3$/)
       fail Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.exists? source
       fail Exceptions::FileAlreadyExistsError, "Target exists: #{target}" if File.exists? target
-      fail ArgumentError "Source and Target are the same file: #{target}" unless source != target
+      fail ArgumentError "Source and Target are the same file: #{target}" if source == target
 
       # mp3splt needs the file extension removed
       target_dirname = File.dirname target

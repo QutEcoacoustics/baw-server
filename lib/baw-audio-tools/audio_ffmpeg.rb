@@ -30,7 +30,7 @@ module BawAudioTools
     def modify_command(source, source_info, target, start_offset = nil, end_offset = nil, channel = nil, sample_rate = nil)
       fail Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.exists? source
       fail Exceptions::FileAlreadyExistsError, "Target exists: #{target}" if File.exists? target
-      fail ArgumentError, "Source and Target are the same file: #{target}" unless source != target
+      fail ArgumentError, "Source and Target are the same file: #{target}" if source == target
 
       cmd_offsets = arg_offsets(start_offset, end_offset)
       cmd_sample_rate = arg_sample_rate(sample_rate)
@@ -58,7 +58,10 @@ module BawAudioTools
       cmd
     end
 
-    def check_for_errors(stdout, stderr)
+    def check_for_errors(execute_msg)
+
+      stdout = execute_msg[:stdout]
+      stderr = execute_msg[:stderr]
 
       unless stderr.blank?
 
@@ -73,7 +76,7 @@ module BawAudioTools
         end
 
         if !mod_stderr.blank? && mod_stderr.match(REGEX_WARN_INDICATOR)
-          fail Exceptions::FileCorruptError, "Ffmpeg output contained warning.\n\t Standard output: #{stdout}\n\t Standard Error: #{mod_stderr}"
+          fail Exceptions::FileCorruptError, "Ffmpeg output contained warning.\n\t#{execute_msg[:execute_msg]}"
         end
 
       end
@@ -100,11 +103,12 @@ module BawAudioTools
       duration
     end
 
-    def parse_ffprobe_output(source, stdout, stderr)
+    def parse_ffprobe_output(source, execute_msg)
       # ffprobe std err contains info (separate on first equals(=))
+
       result = {}
       ffprobe_current_block_name = ''
-      stdout.strip.split(/\r?\n|\r/).each do |line|
+      execute_msg[:stdout].strip.split(/\r?\n|\r/).each do |line|
         line.strip!
         if line[0] == '['
           # this chomp reverse stuff is due to the lack of a proper 'trim'
@@ -117,11 +121,13 @@ module BawAudioTools
       end
 
       unless File.exists?(source)
-        fail Exceptions::AudioFileNotFoundError, "Could not locate #{source}\n\tStandard Output: #{stdout}\n\t Standard Error: #{stderr}"
+        fail Exceptions::AudioFileNotFoundError, "Could not locate #{source}\n\t#{execute_msg[:execute_msg]}"
       end
 
-      if result['STREAM codec_type'] != 'audio'
-        msg = "Not an audio file #{source} ('#{result['STREAM codec_type']}' is not 'audio'): #{result.to_json}\n\tStandard Output: #{stdout}\n\t Standard Error: #{stderr}"
+      actual_stream_codec_type = result['STREAM codec_type']
+      expected_stream_codec_type = 'audio'
+      if actual_stream_codec_type != expected_stream_codec_type
+        msg = "Not an audio file #{source} ('#{actual_stream_codec_type}' is not '#{expected_stream_codec_type}'): #{result.to_json}\n\t#{execute_msg[:execute_msg]}"
         fail Exceptions::NotAnAudioFileError, msg
       end
 

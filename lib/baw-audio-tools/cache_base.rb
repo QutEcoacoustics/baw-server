@@ -63,7 +63,6 @@ module BawAudioTools
     end
 
     def file_name(cache_class, modify_parameters = {})
-      log_options(modify_parameters, '#file_name method start')
       check_cache_class(cache_class)
 
       # check file name arguments before passing to cache class
@@ -81,7 +80,6 @@ module BawAudioTools
       end
 
       if cache_class.is_a?(CacheAudio) || cache_class.is_a?(CacheSpectrogram)
-        log_options(modify_parameters, '#file_name CacheAudio || CacheSpectrogram')
         fail ArgumentError, "#{msg} start_offset. #{provided}" unless modify_parameters.include? :start_offset
         fail ArgumentError, "start_offset #{eq_or_gt} 0: #{modify_parameters[:end_offset]}. #{provided}" unless modify_parameters[:start_offset].to_f >= 0.0
 
@@ -183,10 +181,6 @@ module BawAudioTools
     def check_cache_class(cache_class)
       fail ArgumentError, "#{cache_class} is not a valid cache class." unless !cache_class.nil? && cache_class.respond_to?(:storage_paths) &&
           cache_class.respond_to?(:file_name) && cache_class.respond_to?(:partial_path)
-    end
-
-    def log_options(options, description)
-      Logging::logger.warn "CacheBase - Provided parameters at #{description}: #{options}"
     end
 
   end

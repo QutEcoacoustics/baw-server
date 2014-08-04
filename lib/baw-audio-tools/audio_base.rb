@@ -46,9 +46,10 @@ module BawAudioTools
 
       ffmpeg_info_cmd = @audio_ffmpeg.info_command(source)
       ffmpeg_info_output = execute(ffmpeg_info_cmd)
-      ffmpeg_info = @audio_ffmpeg.parse_ffprobe_output(source, ffmpeg_info_output[:stdout], ffmpeg_info_output[:stderr])
 
-      @audio_ffmpeg.check_for_errors(ffmpeg_info_output[:stdout], ffmpeg_info_output[:stderr])
+      ffmpeg_info = @audio_ffmpeg.parse_ffprobe_output(source, ffmpeg_info_output)
+
+      @audio_ffmpeg.check_for_errors(ffmpeg_info_output)
 
       # extract only necessary information into a flattened hash
       info_flattened = {
@@ -74,9 +75,9 @@ module BawAudioTools
 
         sox_stat_cmd = @audio_sox.info_command_stat(source)
         sox_stat_output = execute(sox_stat_cmd)
-        sox_stat = @audio_sox.parse_info_output(sox_stat_output[:stderr])
+        sox_stat = @audio_sox.parse_info_output(sox_stat_output)
 
-        @audio_sox.check_for_errors(sox_stat_output[:stdout], sox_stat_output[:stderr])
+        @audio_sox.check_for_errors(sox_stat_output)
         max_amp = sox_stat['Maximum amplitude'].to_f
         info_flattened[:max_amplitude] = max_amp
 
@@ -108,7 +109,7 @@ module BawAudioTools
         wavpack_info_output = execute(wavpack_info_cmd)
         wavpack_info = @audio_wavpack.parse_info_output(wavpack_info_output[:stdout])
         wavpack_error = @audio_wavpack.parse_error_output(wavpack_info_output[:stderr])
-        @audio_wavpack.check_for_errors(wavpack_info_output[:stdout], wavpack_info_output[:stderr])
+        @audio_wavpack.check_for_errors(wavpack_info_output)
 
         info_flattened[:bit_rate_bps] = wavpack_info['ave bitrate'].to_f * 1000.0
         info_flattened[:data_length_bytes] = wavpack_info['file size'].to_f
@@ -120,7 +121,7 @@ module BawAudioTools
         #  shntool_info_cmd = @audio_shntool.info_command(source)
         #  shntool_info_output = execute(shntool_info_cmd)
         #  shntool_info = @audio_shntool.parse_info_output(shntool_info_output[:stdout])
-        #  @audio_shntool.check_for_errors(shntool_info_output[:stdout], shntool_info_output[:stderr])
+        #  @audio_shntool.check_for_errors(shntool_info_output)
         #
         #  info_flattened[:bit_rate_bps] = shntool_info['Average bytes/sec'].to_f
         #  info_flattened[:data_length_bytes] = shntool_info['Actual file size'].to_f
@@ -145,7 +146,7 @@ module BawAudioTools
     # parameters in modify_parameters. Possible options for modify_parameters:
     # :start_offset :end_offset :channel :sample_rate :format
     def modify(source, target, modify_parameters = {})
-      fail ArgumentError, "Source and Target are the same file: #{target}" unless source != target
+      fail ArgumentError, "Source and Target are the same file: #{target}" if source == target
       fail Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.exists? source
       fail Exceptions::FileAlreadyExistsError, "Target exists: #{target}" if File.exists? target
 
@@ -190,23 +191,26 @@ module BawAudioTools
         end
       end
 
-      msg = "External Program: status=#{status.exitstatus};time_out_sec=#{Settings.audio_tools_timeout_sec};time_taken_sec=#{time};timed_out=#{timed_out};killed=#{killed};command=#{command}"
-      extra_msg = "\n\t Standard output: #{stdout_str}\n\t Standard Error: #{stderr_str}"
+      status_msg = "status=#{status.exitstatus};killed=#{killed};"
+      timeout_msg = "time_out_sec=#{Settings.audio_tools_timeout_sec};time_taken_sec=#{time};timed_out=#{timed_out};"
+      output_msg = "\n\tStandard output: #{stdout_str}\n\tStandard Error: #{stderr_str}"
+      msg = "External Program: #{status_msg}#{timeout_msg}command=#{command}#{output_msg}"
 
       if (!stderr_str.blank? && !status.success?) || timed_out || killed
-        Logging::logger.warn msg+extra_msg
+        Logging::logger.warn msg
       else
-        Logging::logger.debug msg+extra_msg
+        Logging::logger.debug msg
       end
 
-      fail Exceptions::AudioToolTimedOutError, msg + extra_msg if timed_out || killed
-      fail Exceptions::AudioToolError, msg + extra_msg if !stderr_str.blank? && !status.success?
+      fail Exceptions::AudioToolTimedOutError, msg if timed_out || killed
+      fail Exceptions::AudioToolError, msg if !stderr_str.blank? && !status.success?
 
       {
           command: command,
           stdout: stdout_str,
           stderr: stderr_str,
-          time_taken: time
+          time_taken: time,
+          execute_msg: msg
       }
     end
 
@@ -219,7 +223,6 @@ module BawAudioTools
     end
 
     def check_offsets(source_info, min_duration_seconds, max_duration_seconds, modify_parameters = {})
-      log_options(modify_parameters, '#check_offsets method start')
       start_offset = 0.0
       end_offset = source_info[:duration_seconds].to_f
 
@@ -244,8 +247,6 @@ module BawAudioTools
       modify_parameters[:start_offset] = start_offset
       modify_parameters[:end_offset] = end_offset
       modify_parameters[:duration] = duration
-
-      log_options(modify_parameters, '#check_offsets method end')
 
       modify_parameters
     end
@@ -420,12 +421,6 @@ module BawAudioTools
 
         yield output, error, thread, !time_remaining, killed
       end
-    end
-
-    # @param [Hash] options
-    # @param [string] description
-    def log_options(options, description)
-      Logging::logger.warn "AudioBase - Provided parameters at #{description}: #{options}"
     end
 
   end

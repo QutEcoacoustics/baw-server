@@ -43,7 +43,7 @@ module BawAudioTools
       fail ArgumentError, "Source is not a wav file: : #{source}" unless source.match(/\.wav/)
       fail Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.exists? source
       fail Exceptions::FileAlreadyExistsError, "Target exists: #{target}" if File.exists? target
-      fail ArgumentError "Source and Target are the same file: #{target}" unless source != target
+      fail ArgumentError "Source and Target are the same file: #{target}" if source == target
 
       source_info = audio_base.info(source)
       audio_base.check_offsets(source_info, @spectrogram_defaults.min_duration_seconds, @spectrogram_defaults.max_duration_seconds, modify_parameters)

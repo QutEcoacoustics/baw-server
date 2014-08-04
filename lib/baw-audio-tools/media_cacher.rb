@@ -71,7 +71,7 @@ module BawAudioTools
     end
 
     def generate_spectrogram(modify_parameters = {})
-      log_options(modify_parameters, '#generate_spectrogram method start')
+
       # first check if a cached spectrogram matches the request
       target_file = self.cached_spectrogram_file_name(modify_parameters)
       target_existing_paths = @cache.existing_storage_paths(@cache.cache_spectrogram, target_file)
@@ -93,7 +93,7 @@ module BawAudioTools
           self.create_audio_segment(cached_wav_audio_parameters)
 
           # update existing paths after cutting audio
-          log_options(modify_parameters, '#generate_spectrogram self.cached_audio_file_name')
+
           source_wav_file = self.cached_audio_file_name(cached_wav_audio_parameters)
           source_existing_paths = @cache.existing_storage_paths(@cache.cache_audio, source_wav_file)
           fail Exceptions::AudioFileNotFoundError, "Could not find or create cached audio for #{target_file} using cached audio file #{source_wav_file}." if source_existing_paths.blank?
@@ -160,10 +160,6 @@ module BawAudioTools
       end
 
       incr_hash
-    end
-
-    def log_options(options, description)
-      Logging::logger.warn "MediaCacher - Provided parameters at #{description}: #{options}"
     end
 
   end

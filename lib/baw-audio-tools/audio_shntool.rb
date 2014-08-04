@@ -40,9 +40,11 @@ module BawAudioTools
       duration
     end
 
-    def check_for_errors(stdout, stderr)
+    def check_for_errors(execute_msg)
+      stdout = execute_msg[:stdout]
+      stderr = execute_msg[:stderr]
       if !stderr.blank? && stderr.include?(ERROR_NO_HANDLER)
-        fail Exceptions::AudioToolError, "shntool cannot open this file type.\n\t Standard output: #{stdout}\n\t Standard Error: #{stderr}"
+        fail Exceptions::AudioToolError, "shntool cannot open this file type.\n\t#{execute_msg[:execute_msg]}"
       end
     end
 
