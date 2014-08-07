@@ -15,10 +15,12 @@ describe 'MANAGE Project Permissions as valid user with write permission' do
     permission_user = FactoryGirl.create(:user)
     visit project_permissions_path(@permission.project)
     page.should have_checked_field("user_#{permission_user.id}_permissions_level_none")
+
     page.choose("user_#{permission_user.id}_permissions_level_reader")
     click_button 'Update Permissions'
     page.should have_content('Permissions were successfully updated.')
     page.should have_checked_field("user_#{permission_user.id}_permissions_level_reader")
+
     page.choose("user_#{permission_user.id}_permissions_level_writer")
     click_button 'Update Permissions'
     page.should have_content('Permissions were successfully updated.')
