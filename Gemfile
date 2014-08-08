@@ -131,9 +131,9 @@ group :development, :test do
   gem 'bullet', '~> 4.13.0'
   gem 'rspec-rails', '~> 2.14.2'
   # fixed at lower version due to windows issues in higher versions
-  gem 'guard', '~> 1.8.3'
-  gem 'listen', '~> 1.3.1'
-  gem 'wdm', '>= 0.1.0', platforms: [:mswin, :mingw]
+  gem 'guard', '~> 2.6.1'
+  gem 'listen', '~> 2.7.9'
+  #gem 'wdm', '>= 0.1.0', platforms: [:mswin, :mingw]
 end
 
 group :test do

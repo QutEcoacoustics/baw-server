@@ -16,9 +16,10 @@ class PermissionsController < ApplicationController
     respond_to do |format|
       format.html {
         # Only deny access to html, because it basically renders an EDIT page
-        # We need to raise AccessDenied because cancan doesn't allow project read AND permissions deny at the same time without having a permission object, which in this case we don't have
+        # We need to raise AccessDenied because cancan doesn't allow project read AND permissions deny at the same
+        # time without having a permission object, which in this case we don't have
         if cannot? :update_permissions, @project
-          raise CanCan::AccessDenied.new(I18n.t('devise.failure.unauthorized'), :index, Permission)
+          fail CanCan::AccessDenied.new(I18n.t('devise.failure.unauthorized'), :index, Permission)
         end
         add_breadcrumb 'Permissions', project_permissions_path(@project)
       }# index.html.erb
