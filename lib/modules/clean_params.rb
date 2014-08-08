@@ -8,7 +8,12 @@ class CleanParams
       # convert all param keys to a snake case symbol
       new_key = key.to_s.underscore.to_sym
 
-      value.is_a?(Hash) ? cleaned_hash[new_key] = self.perform(value) : cleaned_hash[new_key] = value
+      if value.is_a?(Hash)
+        cleaned_hash[new_key] = self.perform(value)
+      else
+        cleaned_hash[new_key] = value
+      end
+
     end
     cleaned_hash
   end
