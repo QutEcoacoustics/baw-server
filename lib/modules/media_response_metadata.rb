@@ -2,13 +2,25 @@ class MediaResponseMetadata
 
   public
 
+  AUDIO_MEDIA_TYPES = [Mime::Type.lookup('audio/webm'), Mime::Type.lookup('audio/webma'),
+                       Mime::Type.lookup('audio/ogg'), Mime::Type.lookup('audio/oga'),
+                       Mime::Type.lookup('audio/mp3'), Mime::Type.lookup('audio/mpeg'),
+                       Mime::Type.lookup('audio/wav'), Mime::Type.lookup('audio/x-wav'),
+                       Mime::Type.lookup('audio/x-flac')]
+
+  IMAGE_MEDIA_TYPES = [Mime::Type.lookup('image/png')]
+
+  OFFSET_REGEXP = /^\d+(\.\d{1,3})?$/ # passes '111', '11.123'
+
   def initialize(request_params = {}, user)
-    @user = user
     @request_params = request_params
+    @user = user
     @media_cacher = Settings.media_cache_tool
   end
 
-  def details
+  # Calculate and return the full details for an api response.
+  # @return [Hash] Hash of properties reflecting request.
+  def full_details
     default_audio = Settings.cached_audio_defaults
     default_spectrogram = Settings.cached_spectrogram_defaults
     available_formats = Settings.available_formats
@@ -28,6 +40,12 @@ class MediaResponseMetadata
     end
 
     details
+  end
+
+  # Calculate and return data compatible with BawAudioTools generation request.
+  # @return [Hash] Hash compatible with BawAudioTools.
+  def generation_request
+
   end
 
   private
