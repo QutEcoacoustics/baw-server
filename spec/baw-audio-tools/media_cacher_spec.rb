@@ -66,7 +66,7 @@ describe BawAudioTools::MediaCacher do
           })
       file_name = "#{uuid}_45.0_60.0_1_17640.wav"
       expect(existing_paths).to include(File.join(Settings.paths.cached_audios, '54', file_name))
-      existing_paths.should have(1).items
+      expect(existing_paths.size).to eq(1)
 
       info = media_cacher.audio.info(existing_paths.first)
       expect(info[:media_type]).to eq('audio/wav')
@@ -90,7 +90,7 @@ describe BawAudioTools::MediaCacher do
       file_name = "#{uuid}_0.0_#{Settings.cached_audio_defaults.min_duration_seconds}_"+
           "#{Settings.cached_audio_defaults.channel}_#{Settings.cached_audio_defaults.sample_rate}.#{Settings.cached_audio_defaults.storage_format}"
       expect(existing_paths).to include(File.join(Settings.paths.cached_audios, '54', file_name))
-      existing_paths.should have(1).items
+      expect(existing_paths.size).to eq(1)
 
       info = media_cacher.audio.info(existing_paths.first)
       expect(info[:media_type]).to eq("audio/#{Settings.cached_audio_defaults.storage_format}")
@@ -118,7 +118,7 @@ describe BawAudioTools::MediaCacher do
           })
       file_name = "#{uuid}_45.0_60.0_1_17640_1024_g.png"
       expect(existing_paths).to include(File.join(Settings.paths.cached_spectrograms, '54',file_name ))
-      existing_paths.should have(1).items
+      expect(existing_paths.size).to eq(1)
 
       info = media_cacher.spectrogram.info(existing_paths.first)
       expect(info[:media_type]).to eq('image/png')
@@ -144,7 +144,7 @@ describe BawAudioTools::MediaCacher do
           "#{Settings.cached_spectrogram_defaults.channel}_#{Settings.cached_spectrogram_defaults.sample_rate}_"+
           "#{Settings.cached_spectrogram_defaults.window}_#{Settings.cached_spectrogram_defaults.colour}.#{Settings.cached_spectrogram_defaults.storage_format}"
       expect(existing_paths).to include(File.join(Settings.paths.cached_spectrograms, '54', file_name))
-      existing_paths.should have(1).items
+      expect(existing_paths.size).to eq(1)
 
       info = media_cacher.spectrogram.info(existing_paths.first)
       expect(info[:media_type]).to eq("image/#{Settings.cached_spectrogram_defaults.storage_format}")
