@@ -398,7 +398,6 @@ module BawAudioTools
         # was processed again
         exceptions.push read_to_stream(stdout, stderr, output, error, options)
 
-
         # Give Ruby time to clean up the other thread
         sleep cleanup_sleep
 
