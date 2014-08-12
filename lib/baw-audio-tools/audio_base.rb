@@ -174,16 +174,18 @@ module BawAudioTools
       status = nil
       timed_out = nil
       killed = nil
+      exceptions = []
 
       time = Benchmark.realtime do
         begin
-          run_with_timeout(command, timeout: Settings.audio_tools_timeout_sec) do |output, error, thread, timed_out_return, killed_return|
+          run_with_timeout(command, timeout: Settings.audio_tools_timeout_sec) do |output, error, thread, timed_out_return, killed_return, exceptions|
             #thread_success = thread.value.success?
             stdout_str = output
             stderr_str = error
             status = thread.value
             timed_out = timed_out_return
             killed = killed_return
+            exceptions = exceptions
           end
         rescue Exception => e
           Logging::logger.fatal e
@@ -193,8 +195,9 @@ module BawAudioTools
 
       status_msg = "status=#{status.exitstatus};killed=#{killed};"
       timeout_msg = "time_out_sec=#{Settings.audio_tools_timeout_sec};time_taken_sec=#{time};timed_out=#{timed_out};"
-      output_msg = "\n\tStandard output: #{stdout_str}\n\tStandard Error: #{stderr_str}"
-      msg = "External Program: #{status_msg}#{timeout_msg}command=#{command}#{output_msg}"
+      exceptions_msg = "exceptions=#{exceptions.inspect};"
+      output_msg = "\n\tStandard output: #{stdout_str.inspect}\n\t#{stdout_str}\n\tStandard Error: #{stderr_str}"
+      msg = "External Program: #{status_msg}#{timeout_msg}#{exceptions_msg}command=#{command}#{output_msg}"
 
       if (!stderr_str.blank? && !status.success?) || timed_out || killed
         Logging::logger.warn msg
@@ -375,8 +378,6 @@ module BawAudioTools
 
       timeout = options[:timeout]
       cleanup_sleep = options[:cleanup_sleep]
-      tick = options[:tick]
-      buffer_size = options[:buffer_size]
 
       output = ''
       error = ''
@@ -388,22 +389,19 @@ module BawAudioTools
         start = Time.now
 
         time_remaining = nil
-        while (time_remaining = (Time.now - start) < timeout) and thread.alive?
-          # Wait up to `tick` seconds for output/error data
-          readables, writeables, = Kernel.select([stdout, stderr], nil, nil, tick)
-          next if readables.blank?
-          readables.each do |readable|
-            stream = readable == stdout ? output : error
-            begin
-              # can't use read_nonblock with pipes in windows (only sockets)
-              # https://bugs.ruby-lang.org/issues/5954
-              # throw a proper error, then!!! ('Errno::EBADF: Bad file descriptor' is useless)
-              stream << readable.readpartial(buffer_size)
-            rescue IO::WaitReadable, EOFError => e
-              # Need to read all of both streams
-              # Keep going until thread dies
-            end
-          end
+        readables = nil
+        exceptions = []
+        while (time_remaining = (Time.now - start) < timeout) && thread.alive?
+          exceptions.push read_to_stream(stdout, stderr, output, error, options)
+        end
+
+        # read to stream a final time to ensure all stdout and stderr have been captured
+        # program may have exited so quickly that some was not caught before the while loop
+        # was processed again
+        exceptions.push read_to_stream(stdout, stderr, output, error, options)
+
+        if output.blank? && error[0..6] == 'ffprobe'
+          a = [readables, stdout, stderr, output, error]
         end
 
         # Give Ruby time to clean up the other thread
@@ -419,9 +417,53 @@ module BawAudioTools
           killed = true
         end
 
-        yield output, error, thread, !time_remaining, killed
+        yield output, error, thread, !time_remaining, killed, exceptions
       end
     end
 
+
+    def read_windows(stream, readable, buffer_size)
+      # can't use read_nonblock with pipes in windows (only sockets)
+      # https://bugs.ruby-lang.org/issues/5954
+      # throw a proper error, then!!! ('Errno::EBADF: Bad file descriptor' is useless)
+      stream << readable.readpartial(buffer_size)
+    end
+
+    def read_linux(stream, readable, buffer_size)
+      stream << readable.read_nonblock(buffer_size)
+    end
+
+    def read_to_stream(stdout, stderr, output, error, options)
+      tick = options[:tick]
+      buffer_size = options[:buffer_size]
+      exceptions = []
+      is_windows = OS.windows?
+
+      # Wait up to `tick` seconds for output/error data
+      readables, writeables, = Kernel.select([stdout, stderr], nil, nil, tick)
+      unless readables.blank?
+        readables.each do |readable|
+          stream = readable == stdout ? output : error
+          begin
+            if is_windows
+              read_windows(stream, readable, buffer_size)
+            else
+              read_linux(stream, readable, buffer_size)
+            end
+          rescue IO::WaitReadable, EOFError => e
+            # Need to read all of both streams
+            # Keep going until thread dies
+            exceptions.push(e)
+          end
+        end
+
+        # readables, writeables, = Kernel.select([stdout, stderr], nil, nil, tick)
+        # next if readables.blank?
+        # output << readables[0].readpartial(buffer_size)
+        # error << readables[1].readpartial(buffer_size)
+      end
+
+      exceptions
+    end
   end
 end
