@@ -196,7 +196,7 @@ module BawAudioTools
       status_msg = "status=#{status.exitstatus};killed=#{killed};"
       timeout_msg = "time_out_sec=#{Settings.audio_tools_timeout_sec};time_taken_sec=#{time};timed_out=#{timed_out};"
       exceptions_msg = "exceptions=#{exceptions.inspect};"
-      output_msg = "\n\tStandard output: #{stdout_str.inspect}\n\t#{stdout_str}\n\tStandard Error: #{stderr_str}"
+      output_msg = "\n\tStandard output: #{stdout_str}\n\tStandard Error: #{stderr_str}"
       msg = "External Program: #{status_msg}#{timeout_msg}#{exceptions_msg}command=#{command}#{output_msg}"
 
       if (!stderr_str.blank? && !status.success?) || timed_out || killed
@@ -388,8 +388,6 @@ module BawAudioTools
         pid = thread[:pid]
         start = Time.now
 
-        time_remaining = nil
-        readables = nil
         exceptions = []
         while (time_remaining = (Time.now - start) < timeout) && thread.alive?
           exceptions.push read_to_stream(stdout, stderr, output, error, options)
@@ -400,9 +398,6 @@ module BawAudioTools
         # was processed again
         exceptions.push read_to_stream(stdout, stderr, output, error, options)
 
-        if output.blank? && error[0..6] == 'ffprobe'
-          a = [readables, stdout, stderr, output, error]
-        end
 
         # Give Ruby time to clean up the other thread
         sleep cleanup_sleep
