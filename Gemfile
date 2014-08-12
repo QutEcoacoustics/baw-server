@@ -30,7 +30,7 @@ gem 'gmaps4rails', '~> 1.5.6'
 
 # https://github.com/seyhunak/twitter-bootstrap-rails
 # huge changes since last release (2.2.8 in Aug 2013), and not sure about rails 3.2 vs 4 support.
-gem 'twitter-bootstrap-rails', git: 'https://github.com/seyhunak/twitter-bootstrap-rails.git'
+gem 'twitter-bootstrap-rails', git: 'https://github.com/seyhunak/twitter-bootstrap-rails.git', ref: '0387901'
 
 gem 'bootstrap-timepicker-rails', '~> 0.1.3'
 gem 'bootstrap-datepicker-rails', '~> 1.3.0.2'
