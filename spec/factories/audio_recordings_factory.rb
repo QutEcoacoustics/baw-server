@@ -10,7 +10,7 @@ FactoryGirl.define do
     media_type 'audio/mp3'
     data_length_bytes 3800
     sequence(:notes) { |n| "note number #{n}" }
-    sequence(:original_file_name) { |n| "original name #{n}" }
+    sequence(:original_file_name) { |n| "original name #{n}.mp3" }
 
     creator
     uploader

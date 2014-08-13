@@ -1,3 +1,4 @@
+# run using rake exceptions:list
 namespace :exceptions do
   task :list => :environment do
     exceptions = []

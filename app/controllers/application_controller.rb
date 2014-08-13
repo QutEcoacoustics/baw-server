@@ -9,13 +9,13 @@ class ApplicationController < ActionController::Base
 
   # error handling for correct route when id does not exist.
   # for incorrect routes see errors_controller and routes.rb
-  rescue_from ActiveRecord::RecordNotFound, with: :record_not_found_error
-  rescue_from CustomErrors::ItemNotFoundError, with: :resource_not_found_error
-  rescue_from ActiveRecord::RecordNotUnique, with: :record_not_unique_error
-  rescue_from CustomErrors::UnsupportedMediaTypeError, with: :unsupported_media_type_error
-  rescue_from CustomErrors::NotAcceptableError, with: :not_acceptable_error
-  rescue_from CustomErrors::UnprocessableEntityError, with: :unprocessable_entity_error
-  rescue_from ActiveResource::BadRequest, with: :bad_request
+  rescue_from ActiveRecord::RecordNotFound, with: :record_not_found_response
+  rescue_from CustomErrors::ItemNotFoundError, with: :item_not_found_response
+  rescue_from ActiveRecord::RecordNotUnique, with: :record_not_unique_response
+  rescue_from CustomErrors::UnsupportedMediaTypeError, with: :unsupported_media_type_response
+  rescue_from CustomErrors::NotAcceptableError, with: :not_acceptable_response
+  rescue_from CustomErrors::UnprocessableEntityError, with: :unprocessable_entity_response
+  rescue_from ActiveResource::BadRequest, with: :bad_request_response
 
   # error handling for cancan authorisation checks
   rescue_from CanCan::AccessDenied, with: :access_denied
@@ -93,11 +93,12 @@ class ApplicationController < ActionController::Base
     audio_recording = AudioRecording.where(id: request_params[:audio_recording_id]).first
     fail ActiveRecord::RecordNotFound, 'Could not find audio recording with given id.' if audio_recording.blank?
 
-    # can? should also check for admin access
+    # can? also checks for admin access
     can_access_audio_recording = can? :show, audio_recording
 
     # Can't do anything if can't access audio recording and no audio event id given
-    fail CanCan::AccessDenied, 'Permission denied to audio recording and no audio event id given.' if !can_access_audio_recording && request_params[:audio_event_id].blank?
+    has_any_permission = can_access_audio_recording || !request_params[:audio_event_id].blank?
+    fail CanCan::AccessDenied, 'Permission denied to audio recording and no audio event id given.' unless has_any_permission
 
     audio_recording
   end
@@ -106,11 +107,57 @@ class ApplicationController < ActionController::Base
     audio_event = AudioEvent.where(id: request_params[:audio_event_id]).first
     fail ActiveRecord::RecordNotFound, 'Could not find audio event with given id.' if audio_event.blank?
 
-    # can? should also check for admin access
+    # can? also checks for admin access
     can_access_audio_event = can? :read, audio_event
-    fail CanCan::AccessDenied, "Requested audio event (#{audio_event.audio_recording_id}) and audio recording (#{audio_recording.id}) must be related." if audio_event.audio_recording_id != audio_recording.id
-    fail CanCan::AccessDenied, 'Permission denied to audio event, and it is not a marked as reference.' if !audio_event.is_reference && !can_access_audio_event
+    matching_ids = audio_event.audio_recording_id == audio_recording.id
+    is_reference = audio_event.is_reference
+    has_any_permission = can_access_audio_event || is_reference
+
+    unless matching_ids
+      msg = "Requested audio event (#{audio_event.audio_recording_id}) " +
+          "and audio recording (#{audio_recording.id}) must be related."
+      fail CanCan::AccessDenied, msg
+    end
+
+    unless has_any_permission
+    msg = "Permission denied to audio event (#{audio_event.id})"+
+        'and it is not a marked as reference.'
+      fail CanCan::AccessDenied, msg
+    end
+
     audio_event
+  end
+
+  def auth_custom_offsets(request_params, audio_recording, audio_event)
+    # check offsets are within range
+
+    start_offset = 0.0
+    start_offset = request_params[:start_offset].to_f if request_params.include?(:start_offset)
+
+    end_offset = audio_recording.duration_seconds.to_f
+    end_offset = request_params[:end_offset].to_f if request_params.include?(:end_offset)
+
+    audio_event_start = audio_event.start_time_seconds
+    audio_event_end = audio_event.end_time_seconds
+
+    allowable_padding = 5
+
+    allowable_start_offset = audio_event_start - allowable_padding
+    allowable_end_offset = audio_event_end + allowable_padding
+
+    msg1 = "Permission denied to audio recording (#{audio_recording.id}): "
+    msg3 = "(including padding of #{allowable_padding})."
+
+    if start_offset < allowable_start_offset
+      msg2 = "start offset (#{start_offset}) was less than allowable bounds (#{allowable_start_offset}) "
+      fail CanCan::AccessDenied, msg1 + msg2 + msg3
+    end
+
+    if end_offset > allowable_end_offset
+      msg2 = "end offset (#{end_offset}) was greater than allowable bounds (#{allowable_end_offset}) "
+      fail CanCan::AccessDenied, msg1 + msg2 + msg3
+    end
+
   end
 
   def create_json_data_response(status_symbol, data)
@@ -123,7 +170,7 @@ class ApplicationController < ActionController::Base
 
   private
 
-  def record_not_found_error(error)
+  def record_not_found_response(error)
 
     render_error(
         :not_found,
@@ -135,7 +182,7 @@ class ApplicationController < ActionController::Base
     )
   end
 
-  def resource_not_found_error(error)
+  def item_not_found_response(error)
     # #render json: {code: 404, phrase: 'Not Found', message: 'Audio recording is not ready'}, status: :not_found
     render_error(
         :not_found,
@@ -148,7 +195,7 @@ class ApplicationController < ActionController::Base
   end
 
 
-  def record_not_unique_error(error)
+  def record_not_unique_response(error)
 
     render_error(
         :conflict,
@@ -160,7 +207,7 @@ class ApplicationController < ActionController::Base
     )
   end
 
-  def unsupported_media_type_error(error)
+  def unsupported_media_type_response(error)
     # render json: {code: 415, phrase: 'Unsupported Media Type', message: 'Requested format is invalid. It must be one of available_formats.', available_formats: @available_formats}, status: :unsupported_media_type
 
     render_error(
@@ -170,11 +217,11 @@ class ApplicationController < ActionController::Base
         'unsupported_media_type_error',
         nil,
         'errors/generic',
-        { available_formats: error.available_formats_info }
+        {available_formats: error.available_formats_info}
     )
   end
 
-  def not_acceptable_error(error)
+  def not_acceptable_response(error)
 
     request.format = :json
 
@@ -185,11 +232,11 @@ class ApplicationController < ActionController::Base
         'not_acceptable_error',
         nil,
         'errors/generic',
-        { available_formats: error.available_formats_info }
+        {available_formats: error.available_formats_info}
     )
   end
 
-  def unprocessable_entity_error(error)
+  def unprocessable_entity_response(error)
     render_error(
         :unprocessable_entity,
         error.message,
@@ -200,7 +247,7 @@ class ApplicationController < ActionController::Base
     )
   end
 
-  def bad_request(error)
+  def bad_request_response(error)
     # render json: {code: 400, phrase: 'Bad Request', message: 'Invalid request'}, status: :bad_request
 
     render_error(
