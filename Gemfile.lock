@@ -377,7 +377,7 @@ GEM
       execjs (>= 0.3.0)
       json (>= 1.8.0)
     uniform_notifier (1.6.2)
-    uuidtools (2.1.4)
+    uuidtools (2.1.5)
     validates_timeliness (3.0.14)
       timeliness (~> 0.3.6)
     vegas (0.1.11)
