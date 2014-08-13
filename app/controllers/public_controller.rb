@@ -7,7 +7,8 @@ class PublicController < ApplicationController
       :new_contact_us, :create_contact_us,
       :new_bug_report, :create_bug_report,
       :new_data_request, :create_data_request,
-      :credits, :ethics_statement, :disclaimers
+      :credits, :ethics_statement, :disclaimers,
+      :test_exceptions
   ]
 
   def index
@@ -298,6 +299,16 @@ EXTRACT(DAY FROM recorded_date) as extracted_day')
       end
     end
   end
+
+  def test_exceptions
+    if ENV['RAILS_ENV'] == 'test'
+      if params.include?(:exception_class)
+        # Purposeful exception raised for testing.
+        fail params[:exception_class].constantize
+      end
+    end
+  end
+
 
   private
 

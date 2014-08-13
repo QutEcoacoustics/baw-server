@@ -72,7 +72,9 @@ module AWB
     config.assets.version = '1.0'
 
     # specify the class to handle exceptions
-    config.exceptions_app = ->(env) { ExceptionsController.action(:show).call(env) }
+    config.exceptions_app = ->(env) {
+      ErrorsController.action(:uncaught_error).call(env)
+    }
 
     # set paperclip default path and url
     Paperclip::Attachment.default_options[:path] = ':rails_root/public:url'

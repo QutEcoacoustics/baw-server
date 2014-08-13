@@ -7,8 +7,9 @@ class ApplicationController < ActionController::Base
   # userstamp
   include Userstamp
 
-  # error handling for correct route when id does not exist.
-  # for incorrect routes see errors_controller and routes.rb
+  # see routes.rb for the catch-all route for routing errors.
+  # see application.rb for the exceptions_app settings.
+  # see errors_controller.rb for the actions that handle routing errors and uncaught errors.
   rescue_from ActiveRecord::RecordNotFound, with: :record_not_found_response
   rescue_from CustomErrors::ItemNotFoundError, with: :item_not_found_response
   rescue_from ActiveRecord::RecordNotUnique, with: :record_not_unique_response
@@ -18,7 +19,7 @@ class ApplicationController < ActionController::Base
   rescue_from ActiveResource::BadRequest, with: :bad_request_response
 
   # error handling for cancan authorisation checks
-  rescue_from CanCan::AccessDenied, with: :access_denied
+  rescue_from CanCan::AccessDenied, with: :access_denied_response
 
   # error handling for routes that take a combination of attributes
   rescue_from CustomErrors::RoutingArgumentError, with: :routing_argument_missing
@@ -29,6 +30,8 @@ class ApplicationController < ActionController::Base
 
   after_filter :set_csrf_cookie_for_ng, :resource_representation_caching_fixes
 
+  protected
+
   def add_archived_at_header(model)
     if model.respond_to?(:deleted_at) && !model.deleted_at.blank?
       response.headers['X-Archived-At'] = model.deleted_at
@@ -38,8 +41,6 @@ class ApplicationController < ActionController::Base
   def no_content_as_json
     head :no_content, :content_type => 'application/json'
   end
-
-  protected
 
   def json_request?
     request.format && request.format.json?
@@ -161,11 +162,51 @@ class ApplicationController < ActionController::Base
   end
 
   def create_json_data_response(status_symbol, data)
+    # used by other controllers to easily return json responses.
     json_response = create_json_response(status_symbol)
 
     json_response[:data] = data
 
     json_response
+  end
+
+  def render_error(status_symbol, detail_message, error, method_name, links_object = nil, template = nil, error_info = nil)
+
+    json_response = create_json_error_response(status_symbol, detail_message, links_object)
+
+    unless error_info.blank?
+      json_response.meta.error.merge!(error_info)
+    end
+
+    # method_name = __method__
+    # caller[0]
+    log_original_error(method_name, error, json_response)
+
+    respond_to do |format|
+      format.html {
+        default_template = 'errors/generic'
+        if template.blank?
+          redirect_to get_redirect, alert: detail_message
+        else
+          render template: template, status: status_symbol
+        end
+      }
+      format.json { render json: json_response, status: status_symbol }
+      # http://blogs.thewehners.net/josh/posts/354-obscure-rails-bug-respond_to-formatany
+      format.all { render json: json_response, status: status_symbol, content_type: 'application/json' }
+    end
+
+    check_reset_stamper
+  end
+
+  def get_redirect
+    if !request.env['HTTP_REFERER'].blank? and request.env['HTTP_REFERER'] != request.env['REQUEST_URI']
+      redirect_target = :back
+    else
+      redirect_target = root_path
+    end
+
+    redirect_target
   end
 
   private
@@ -260,7 +301,7 @@ class ApplicationController < ActionController::Base
     )
   end
 
-  def access_denied(error)
+  def access_denied_response(error)
     if current_user && current_user.confirmed?
       render_error(:forbidden, I18n.t('devise.failure.unauthorized'), error, 'access_denied - forbidden', [:permissions])
 
@@ -276,10 +317,12 @@ class ApplicationController < ActionController::Base
   def routing_argument_missing(error)
 
     render_error(
-        :bad_request,
-        'Bad request, please change the request and try again.',
+        :not_found,
+        'Not found, please change the request and try again.',
         error,
-        'routing_argument_missing'
+        'routing_argument_missing',
+        nil,
+        'errors/routing'
     )
   end
 
@@ -295,7 +338,18 @@ class ApplicationController < ActionController::Base
   end
 
   def log_original_error(method_name, error, response_given)
-    Rails.logger.warn "Error handled by #{method_name} in application controller. Original error: #{error.inspect}. Response given: #{response_given}."
+
+    msg = "Error handled by #{method_name} in application or errors controller."
+
+    if error.blank?
+      msg += ' No original error.'
+    else
+      msg += " Original error: #{error.inspect}."
+    end
+
+    msg += " Response given: #{response_given}."
+
+    Rails.logger.warn msg
   end
 
   def api_or_html
@@ -304,45 +358,6 @@ class ApplicationController < ActionController::Base
     else
       'application'
     end
-  end
-
-  def render_error(status_symbol, detail_message, error, method_name, links_object = nil, template = nil, error_info = nil)
-
-    json_response = create_json_error_response(status_symbol, detail_message, links_object)
-
-    unless error_info.blank?
-      json_response.meta.error.merge!(error_info)
-    end
-
-    # method_name = __method__
-    # caller[0]
-    log_original_error(method_name, error, json_response)
-
-    respond_to do |format|
-      format.html {
-        default_template = 'errors/generic'
-        if template.blank?
-          redirect_to get_redirect, alert: detail_message
-        else
-          render template: template, status: status_symbol
-        end
-      }
-      format.json { render json: json_response, status: status_symbol }
-      # http://blogs.thewehners.net/josh/posts/354-obscure-rails-bug-respond_to-formatany
-      format.all { render json: json_response, status: status_symbol, content_type: 'application/json' }
-    end
-
-    check_reset_stamper
-  end
-
-  def get_redirect
-    if !request.env['HTTP_REFERER'].blank? and request.env['HTTP_REFERER'] != request.env['REQUEST_URI']
-      redirect_target = :back
-    else
-      redirect_target = root_path
-    end
-
-    redirect_target
   end
 
   def create_json_response(status_symbol)

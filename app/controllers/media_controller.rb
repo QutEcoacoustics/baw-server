@@ -185,7 +185,7 @@ class MediaController < ApplicationController
     target_existing_paths = media_cache_tools.cache.existing_storage_paths(media_cache_tools.cache.cache_spectrogram, file_name)
     [file_name, target_existing_paths]
   end
- 
+
   def response_local_spectrogram(audio_recording, generation_request, existing_files, rails_request, range_request)
 
     options = generation_request

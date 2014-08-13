@@ -3,13 +3,13 @@ require 'spec_helper'
 describe AudioEventsController do
   describe :routing do
 
-    it { expect(get('/projects/1/sites/2/audio_recordings/3/audio_events')).to route_to('errors#routing', requested_route: 'projects/1/sites/2/audio_recordings/3/audio_events') }
-    it { expect(post('/projects/1/sites/2/audio_recordings/3/audio_events')).to route_to('errors#routing', requested_route: 'projects/1/sites/2/audio_recordings/3/audio_events') }
-    it { expect(get('/projects/1/sites/2/audio_recordings/3/audio_events/new')).to route_to('errors#routing', requested_route: 'projects/1/sites/2/audio_recordings/3/audio_events/new') }
-    it { expect(get('/projects/1/sites/2/audio_recordings/3/audio_events/4/edit')).to route_to('errors#routing', requested_route: 'projects/1/sites/2/audio_recordings/3/audio_events/4/edit') }
-    it { expect(get('/projects/1/sites/2/audio_recordings/3/audio_events/4')).to route_to('errors#routing', requested_route: 'projects/1/sites/2/audio_recordings/3/audio_events/4') }
-    it { expect(put('/projects/1/sites/2/audio_recordings/3/audio_events/4')).to route_to('errors#routing', requested_route: 'projects/1/sites/2/audio_recordings/3/audio_events/4') }
-    it { expect(delete('/projects/1/sites/2/audio_recordings/3/audio_events/4')).to route_to('errors#routing', requested_route: 'projects/1/sites/2/audio_recordings/3/audio_events/4') }
+    it { expect(get('/projects/1/sites/2/audio_recordings/3/audio_events')).to route_to('errors#route_error', requested_route: 'projects/1/sites/2/audio_recordings/3/audio_events') }
+    it { expect(post('/projects/1/sites/2/audio_recordings/3/audio_events')).to route_to('errors#route_error', requested_route: 'projects/1/sites/2/audio_recordings/3/audio_events') }
+    it { expect(get('/projects/1/sites/2/audio_recordings/3/audio_events/new')).to route_to('errors#route_error', requested_route: 'projects/1/sites/2/audio_recordings/3/audio_events/new') }
+    it { expect(get('/projects/1/sites/2/audio_recordings/3/audio_events/4/edit')).to route_to('errors#route_error', requested_route: 'projects/1/sites/2/audio_recordings/3/audio_events/4/edit') }
+    it { expect(get('/projects/1/sites/2/audio_recordings/3/audio_events/4')).to route_to('errors#route_error', requested_route: 'projects/1/sites/2/audio_recordings/3/audio_events/4') }
+    it { expect(put('/projects/1/sites/2/audio_recordings/3/audio_events/4')).to route_to('errors#route_error', requested_route: 'projects/1/sites/2/audio_recordings/3/audio_events/4') }
+    it { expect(delete('/projects/1/sites/2/audio_recordings/3/audio_events/4')).to route_to('errors#route_error', requested_route: 'projects/1/sites/2/audio_recordings/3/audio_events/4') }
 
 
     it { expect(get('/audio_recordings/3/audio_events/download')).to route_to('audio_events#download', audio_recording_id: '3', format: 'csv') }

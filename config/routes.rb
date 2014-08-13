@@ -188,6 +188,11 @@ AWB::Application.routes.draw do
   get '/website_status/' => 'public#website_status'
   get '/audio_recording_catalogue/' => 'public#audio_recording_catalogue'
 
+  # exceptions testing route - only available in test env
+  if ENV['RAILS_ENV'] == 'test'
+    get '/test_exceptions' => 'public#test_exceptions'
+  end
+
   # feedback and contact forms
   get '/contact_us' => 'public#new_contact_us'
   post '/contact_us' => 'public#create_contact_us'
@@ -210,6 +215,6 @@ AWB::Application.routes.draw do
   mount Raddocs::App => '/doc'
 
   # for error pages (add via: :all for rails 4)
-  match '*requested_route', to: 'errors#routing'
+  match '*requested_route', to: 'errors#route_error'
 
 end
