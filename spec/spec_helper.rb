@@ -13,7 +13,7 @@ if ENV['TRAVIS']
 
   # code climate
   CodeClimate::TestReporter.configure do |config|
-    config.logger.level = Logger::DEBUG
+    config.logger.level = Logger::WARN
   end
   CodeClimate::TestReporter.start
 
@@ -22,7 +22,6 @@ if ENV['TRAVIS']
 
   SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter[
       Coveralls::SimpleCov::Formatter,
-      SimpleCov::Formatter::HTMLFormatter,
       CodeClimate::TestReporter::Formatter
   ]
 
