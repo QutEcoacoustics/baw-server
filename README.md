@@ -5,7 +5,9 @@ Bioacoustics Workbench workers.
 [![Build Status](https://travis-ci.org/QutBioacoustics/baw-workers.png?branch=master)](https://travis-ci.org/QutBioacoustics/baw-workers)
 [![Dependency Status](https://gemnasium.com/QutBioacoustics/baw-workers.png)](https://gemnasium.com/QutBioacoustics/baw-workers)
 [![Code Climate](https://codeclimate.com/github/QutBioacoustics/baw-workers.png)](https://codeclimate.com/github/QutBioacoustics/baw-workers)
+[![Code Climate](https://codeclimate.com/github/QutBioacoustics/baw-workers/badges/gpa.svg)](https://codeclimate.com/github/QutBioacoustics/baw-workers)
 [![Coverage Status](https://coveralls.io/repos/QutBioacoustics/baw-workers/badge.png)](https://coveralls.io/r/QutBioacoustics/baw-workers)
+[![Inline docs](http://inch-ci.org/github/QutBioacoustics/baw-workers.png?branch=master)](http://inch-ci.org/github/QutBioacoustics/baw-workers)
 
 Workers that can process various long-running or intensive tasks.
 
