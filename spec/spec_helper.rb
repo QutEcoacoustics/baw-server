@@ -4,7 +4,7 @@ ENV['RAILS_ENV'] ||= 'test'
 require 'simplecov'
 
 if ENV['TRAVIS']
-  #require 'codeclimate-test-reporter'
+  require 'codeclimate-test-reporter'
   require 'coveralls'
 
   # code climate
@@ -18,7 +18,6 @@ if ENV['TRAVIS']
 
   SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter[
       Coveralls::SimpleCov::Formatter,
-      SimpleCov::Formatter::HTMLFormatter,
       CodeClimate::TestReporter::Formatter
   ]
 
