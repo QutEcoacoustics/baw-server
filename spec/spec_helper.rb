@@ -9,7 +9,7 @@ if ENV['TRAVIS']
 
   # code climate
    CodeClimate::TestReporter.configure do |config|
-     config.logger.level = Logger::DEBUG
+     config.logger.level = Logger::WARN
    end
    CodeClimate::TestReporter.start
 
@@ -41,7 +41,7 @@ require 'database_cleaner'
 
 require 'webmock/rspec'
 require 'paperclip/matchers'
-WebMock.disable_net_connect!(allow_localhost: true)
+WebMock.disable_net_connect!(allow_localhost: true, allow: 'codeclimate.com')
 
 # gives us the login_as(@user) method when request object is not present
 # http://www.schneems.com/post/15948562424/speed-up-capybara-tests-with-devise/
