@@ -1,6 +1,7 @@
 language: ruby
 rvm:
   - 1.9.3
+  - 2.1.2
 branches:
   only:
     - master
@@ -9,11 +10,11 @@ before_script:
 before_install:
   - echo "Installing audio tools..."
   - sudo apt-get update -qq
-  - sudo apt-get install -qq wavpack libsox-fmt-all sox shntool mp3splt libavcodec-extra-53 --fix-missing
+  - sudo apt-get -y install imagemagick wavpack libsox-fmt-all sox shntool mp3splt libav-tools --fix-missing
   - mkdir tmp
-  - wget http://ffmpeg.gusari.org/static/64bit/ffmpeg.static.64bit.2014-03-02.tar.gz
-  - tar xvzf ffmpeg.static.64bit.2014-03-02.tar.gz
-  - rm ffmpeg.static.64bit.2014-03-02.tar.gz
+  - wget http://ffmpeg.gusari.org/static/64bit/ffmpeg.static.64bit.latest.tar.gz
+  - tar xvzf ffmpeg.static.64bit.latest.tar.gz
+  - rm ffmpeg.static.64bit.latest.tar.gz
   - sudo mv ffmpeg /usr/local/bin
   - sudo mv ffprobe /usr/local/bin
   - echo "...testing for audio tools..."
@@ -23,3 +24,7 @@ before_install:
   - echo "...audio tools installed."
 script:
   - bundle exec rspec
+env:
+  global:
+    secure: "Kq1sbJ7fwl27/QICiZtzdPe9mmPbnQfgyOujm+stPTmnpHtYU1gfwJtyrw+bBi9INdxiZHTzPjRdLM36zWEysSi8HRySVkVCzG3fgG/AWvmTlqzBigLjlHV0Xhb9YRSb1FgbC2UNcp2YF4FcAdlFkrgRKWNxNGLAy4gyH3E9a3A="
+
