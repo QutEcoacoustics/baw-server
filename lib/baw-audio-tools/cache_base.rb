@@ -108,6 +108,8 @@ module BawAudioTools
 
         fail ArgumentError, "#{msg} colour. #{provided}" unless modify_parameters.include? :colour
         fail ArgumentError, "colour must be a single character: #{modify_parameters[:colour]}. #{provided}" if modify_parameters[:colour].to_s.size != 1
+
+        fail ArgumentError, "#{msg} window function. #{provided}" unless modify_parameters.include? :window_function
       end
 
       if cache_class.is_a?(CacheDataset)

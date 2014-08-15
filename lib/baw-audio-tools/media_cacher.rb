@@ -100,12 +100,13 @@ module BawAudioTools
         end
 
         # create the spectrogram image in each of the possible paths
-        # do not include the offsets, channel or resampling, since that has been done already in the source audio file
-        # only needs the window and colour
+        # only needs the window, colour, and sample rate (for calculating pixels per second)
+        # everything else has already been done
 
         spectrogram_parameters = {
             window: modify_parameters[:window],
-            colour: modify_parameters[:colour]
+            colour: modify_parameters[:colour],
+            sample_rate: modify_parameters[:sample_rate]
         }
 
         target_possible_paths.each { |target|

@@ -16,7 +16,7 @@ describe BawAudioTools::CacheBase do
 
   let(:start_offset) { 8.1 }
   let(:channel) { 0 }
-  let(:sample_rate) { 17640 }
+  let(:sample_rate) { 22050 }
   let(:format_audio) { 'wav' }
   let(:window) { 1024 }
   let(:colour) { 'g' }

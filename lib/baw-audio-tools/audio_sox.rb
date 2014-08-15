@@ -74,15 +74,25 @@ module BawAudioTools
       cmd_window = arg_window(window)
       cmd_window_function = arg_window_function(window_function)
       cmd_colour = arg_colour(colour)
+      cmd_pixels_second = arg_pixels_second(sample_rate, window)
 
       # -X is for native ppms - not 0.045
       # defaults to ()22050 / 512) || (11025 / 256) (sample rate / window size)
-      cmd_spectrogram = 'spectrogram -r -l -a -X 43.06640625'
+
+      # common parameters
+      # -r Raw spectrogram: suppress the display of axes and legends.
+      # -l Creates a ‘printer friendly’ spectrogram with a light background
+      #    (the default has a dark background).
+      # -a Suppress the display of the axis lines. This is sometimes
+      #    useful in helping to discern artefacts at the spectrogram edges.
+      cmd_spectrogram = 'spectrogram -r -l -a'
 
       # sox command to create a spectrogram from an audio file
       # -V is for verbose
       # -n indicates no output audio file
-      "#{@sox_executable} -V \"#{source}\" -n #{cmd_offsets} #{cmd_sample_rate} #{cmd_channel} #{cmd_spectrogram} #{cmd_colour} #{cmd_window} #{cmd_window_function} -o \"#{target}\""
+      "#{@sox_executable} -V \"#{source}\" -n #{cmd_offsets} #{cmd_sample_rate} #{cmd_channel} " +
+          "#{cmd_spectrogram} #{cmd_pixels_second} #{cmd_colour} #{cmd_window} #{cmd_window_function} " +
+          "-o \"#{target}\""
     end
 
     def window_options
@@ -138,6 +148,23 @@ module BawAudioTools
     end
 
     def arg_offsets(start_offset, end_offset)
+      # Cuts portions out of the audio. Any number of positions may be given; audio is not sent
+      # to the output until the first position is reached. The effect then alternates between
+      # copying and discarding audio at each position.
+
+      #If a position is preceded by an equals (=) or minus (-) sign, it is interpreted relative to the
+      # beginning or the end of the audio, respectively. (The audio length must be known for
+      # end-relative locations to work.) Otherwise, it is considered an offset from the last
+      # position, or from the start of audio for the first parameter. Using a value of 0 for
+      # the first position parameter allows copying from the beginning of the audio.
+
+      #All parameters can be specified using either an amount of time or an exact count of samples.
+      # The format for specifying lengths in time is hh:mm:ss.frac. A value of 1:30.5 for the first
+      # parameter will not start until 1 minute, thirty and ½ seconds into the audio. The format for
+      # specifying sample counts is the number of samples with the letter ‘s’ appended to it.
+      # A value of 8000s for the first parameter will wait until 8000 samples are read before
+      # starting to process audio.
+
       cmd_arg = ''
 
       unless start_offset.blank?
@@ -159,6 +186,10 @@ module BawAudioTools
     end
 
     def arg_window(window)
+      # Sets the Y-axis size in pixels (per channel); this is the number of frequency ‘bins’ used in
+      # the Fourier analysis that produces the spectrogram. N.B. it can be slow to produce the
+      # spectrogram if this number is not one more than a power of two (e.g. 129). By default
+      # the Y-axis size is chosen automatically (depending on the number of channels).
       cmd_arg = ''
       all_window_options = window_options.join(', ')
 
@@ -168,24 +199,26 @@ module BawAudioTools
 
         # window size must be one more than a power of two, see sox documentation http://sox.sourceforge.net/sox.html
         window_param = (window_param / 2) + 1
-        cmd_arg = '-y '+window_param.to_s
+        cmd_arg = "-y #{window_param}"
       end
 
       cmd_arg
     end
 
     def arg_window_function(window_function)
+      # The spectrogram is produced using the Discrete Fourier Transform (DFT) algorithm.
+      # A significant parameter to this algorithm is the choice of ‘window function’.
       cmd_arg = ''
       all_window_function_options = window_function_options.join(', ')
 
       unless window_function.blank?
 
         window_function_param = window_function.to_s
-        unless window_function_options.map { |wf| wf.downcase }.include? window_function_param.downcase
+        unless window_function_options.map { |wf| wf }.include? window_function_param
           fail ArgumentError, "Window function must be one of '#{all_window_function_options}', given '#{window_function_param}'."
         end
 
-        cmd_arg = '-w '+window_function_param
+        cmd_arg = "-w #{window_function_param}"
       end
 
       cmd_arg
@@ -204,10 +237,29 @@ module BawAudioTools
       default = '-m -q 249 -z 100'
       case colour_param
         when 'g'
-          default
+          cmd_arg = default
         else
-          default
+          cmd_arg = default
       end
+
+      cmd_arg
+    end
+
+    def arg_pixels_second(sample_rate, window_size)
+      # X-axis pixels/second; the default is auto-calculated to fit the given or known audio
+      # duration to the X-axis size, or 100 otherwise. If given in conjunction with −d, this
+      # option affects the width of the spectrogram; otherwise, it affects the duration of the
+      # spectrogram. num can be from 1 (low time resolution) to 5000 (high time resolution) and
+      # need not be an integer. SoX may make a slight adjustment to the given number for
+      # processing quantisation reasons; if so, SoX will report the actual number used
+      # (viewable when the SoX global option −V is in effect). See also −x and −d.
+      cmd_arg = ''
+      if !sample_rate.blank? && !window_size.blank?
+        pixels_per_second = sample_rate.to_f / window_size.to_f
+        cmd_arg = "-X #{pixels_per_second}"
+      end
+
+      cmd_arg
     end
 
   end

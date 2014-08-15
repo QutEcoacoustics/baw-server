@@ -28,12 +28,12 @@ describe BawAudioTools::AudioBase do
                           start_offset: 3,
                           end_offset: 9,
                           channel: 1,
-                          sample_rate: 17640
+                          sample_rate: 8000
                       }
     )
     info = audio_base.info(temp_audio_file)
     expect(info[:media_type]).to eq('audio/wav')
-    expect(info[:sample_rate]).to be_within(0.0).of(17640)
+    expect(info[:sample_rate]).to be_within(0.0).of(8000)
     expect(info[:channels]).to eq(1)
     expect(info[:duration_seconds]).to be_within(duration_range).of(6)
     expect(info[:max_amplitude]).to be_within(amplitude_range).of(0.2)
@@ -46,12 +46,12 @@ describe BawAudioTools::AudioBase do
                           start_offset: 2.5,
                           end_offset: 7.5,
                           channel: 1,
-                          sample_rate: 17640
+                          sample_rate: 48000
                       }
     )
     info = audio_base.info(temp_audio_file)
     expect(info[:media_type]).to eq('audio/wav')
-    expect(info[:sample_rate]).to be_within(0.0).of(17640)
+    expect(info[:sample_rate]).to be_within(0.0).of(48000)
     expect(info[:channels]).to eq(1)
     expect(info[:duration_seconds]).to be_within(duration_range).of(5)
     expect(info[:max_amplitude]).to be_within(amplitude_range).of(0.5)

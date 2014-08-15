@@ -61,16 +61,16 @@ describe BawAudioTools::MediaCacher do
               end_offset: 60,
               start_offset: 45,
               channel: 1,
-              sample_rate: 17640,
+              sample_rate: 22050,
               format: 'wav'
           })
-      file_name = "#{uuid}_45.0_60.0_1_17640.wav"
+      file_name = "#{uuid}_45.0_60.0_1_22050.wav"
       expect(existing_paths).to include(File.join(Settings.paths.cached_audios, '54', file_name))
       expect(existing_paths.size).to eq(1)
 
       info = media_cacher.audio.info(existing_paths.first)
       expect(info[:media_type]).to eq('audio/wav')
-      expect(info[:sample_rate]).to be_within(0.0).of(17640)
+      expect(info[:sample_rate]).to be_within(0.0).of(22050)
       expect(info[:channels]).to eq(1)
       expect(info[:duration_seconds]).to be_within(duration_range).of(15.0)
     end
@@ -111,19 +111,20 @@ describe BawAudioTools::MediaCacher do
               end_offset: 60,
               start_offset: 45,
               channel: 1,
-              sample_rate: 17640,
+              sample_rate: 32000,
               window: 1024,
+              window_function: 'Hanning',
               colour: 'g',
               format: 'png'
           })
-      file_name = "#{uuid}_45.0_60.0_1_17640_1024_g.png"
+      file_name = "#{uuid}_45.0_60.0_1_32000_1024_g.png"
       expect(existing_paths).to include(File.join(Settings.paths.cached_spectrograms, '54',file_name ))
       expect(existing_paths.size).to eq(1)
 
       info = media_cacher.spectrogram.info(existing_paths.first)
       expect(info[:media_type]).to eq('image/png')
       expect(info[:height]).to eq(1024 / 2)
-      expect(info[:width]).to be_within(1).of(0.043 * (15.0 * 1000))
+      expect(info[:width]).to be_within(1).of((32000.0 / 1024.0) * 15.0)
     end
 
     it 'has correct path and output with default settings' do
@@ -136,6 +137,7 @@ describe BawAudioTools::MediaCacher do
               end_offset: Settings.cached_spectrogram_defaults.min_duration_seconds,
               channel: Settings.cached_spectrogram_defaults.channel,
               window: Settings.cached_spectrogram_defaults.window,
+              window_function: Settings.cached_spectrogram_defaults.window_function,
               colour: Settings.cached_spectrogram_defaults.colour,
               sample_rate: Settings.cached_spectrogram_defaults.sample_rate,
               format: Settings.cached_spectrogram_defaults.storage_format
@@ -149,7 +151,14 @@ describe BawAudioTools::MediaCacher do
       info = media_cacher.spectrogram.info(existing_paths.first)
       expect(info[:media_type]).to eq("image/#{Settings.cached_spectrogram_defaults.storage_format}")
       expect(info[:height]).to eq(Settings.cached_spectrogram_defaults.window / 2)
-      expect(info[:width]).to be_within(1).of(0.043 * (Settings.cached_spectrogram_defaults.min_duration_seconds * 1000))
+
+      pixels_per_second =
+          Settings.cached_spectrogram_defaults.sample_rate.to_f /
+              Settings.cached_spectrogram_defaults.window
+
+      duration = Settings.cached_spectrogram_defaults.min_duration_seconds
+
+          expect(info[:width]).to be_within(1).of(pixels_per_second * duration)
     end
   end
 end

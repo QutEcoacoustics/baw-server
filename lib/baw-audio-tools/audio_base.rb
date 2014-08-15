@@ -260,13 +260,17 @@ module BawAudioTools
     end
 
     def check_sample_rate(target, modify_parameters = {})
-      # must be 8, 11.025, 12, 16, 22.05, 24, 32, 44.1, 48 khz if not wav
-      if modify_parameters.include?(:sample_rate) && File.extname(target) != '.wav'
+      # enforce sample rates for all formats, including wav
+      # must be 8, 11.025, 12, 16, 22.05, 24, 32, 44.1, 48 khz
+      if modify_parameters.include?(:sample_rate)
         sample_rate = modify_parameters[:sample_rate].to_i
-        valid_sample_rates = [8000, 11025, 12000, 16000, 22050, 24000, 32000, 44100, 48000]
-        fail Exceptions::InvalidSampleRateError, ' Arbitrary sample rates only valid for wav files. '+
-            "Sample rate #{sample_rate} requested for #{File.extname(target)} not in #{valid_sample_rates}." unless valid_sample_rates.include?(sample_rate)
+        fail Exceptions::InvalidSampleRateError, "Sample rate #{sample_rate} requested for " +
+            "#{File.extname(target)} not in #{valid_sample_rates}." unless valid_sample_rates.include?(sample_rate)
       end
+    end
+
+    def valid_sample_rates
+      [8000, 11025, 12000, 16000, 22050, 24000, 32000, 44100, 48000]
     end
 
     private
