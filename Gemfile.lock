@@ -8,7 +8,7 @@ GIT
 
 GIT
   remote: https://github.com/QutBioacoustics/baw-workers.git
-  revision: d233ccffc620e15ad16695be9b5bb7c02669d966
+  revision: 44a6fbf2dbe50bcaf8f405c95052d9c74a3b3014
   specs:
     baw-workers (0.0.3)
       activesupport (>= 3.2)
@@ -325,7 +325,7 @@ GEM
       sass (>= 3.1.10)
       tilt (~> 1.3)
     settingslogic (2.0.9)
-    sexp_processor (4.4.3)
+    sexp_processor (4.4.4)
     shoulda-matchers (2.6.2)
       activesupport (>= 3.0.0)
     simple_form (2.1.1)
