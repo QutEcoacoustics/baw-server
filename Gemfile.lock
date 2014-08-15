@@ -1,8 +1,8 @@
 GIT
   remote: https://github.com/QutBioacoustics/baw-audio-tools.git
-  revision: 3c4b340256d23f70438ff4e2ed604d1b5138f9d4
+  revision: 54aaaeb9f0dd2c820fa5191a502d16ae548509da
   specs:
-    baw-audio-tools (0.0.9)
+    baw-audio-tools (0.1.0)
       activesupport (>= 3.2)
       settingslogic
 

@@ -13,6 +13,14 @@ resource 'Errors' do
   # default format
   let(:format) { 'json' }
 
+  around(:each) do |example|
+    Rails.application.config.consider_all_requests_local = false
+    Rails.application.config.action_dispatch.show_exceptions = true
+    example.run
+    Rails.application.config.consider_all_requests_local = true
+    Rails.application.config.action_dispatch.show_exceptions = false
+  end
+
   get '/does_not_exist' do
     standard_request('ROUTE (does not exist)' ,404,'meta/error/original_route', true, 'does_not_exist')
   end

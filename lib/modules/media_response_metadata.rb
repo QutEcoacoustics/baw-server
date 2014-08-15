@@ -122,6 +122,7 @@ class MediaResponseMetadata
         datetime_with_offset: audio_recording_info[:recorded_date],
         original_format: audio_recording_info[:extension],
         window: current_request_info[:window_size],
+        window_function: current_request_info[:window_function],
         colour: current_request_info[:colour]
     }
   end

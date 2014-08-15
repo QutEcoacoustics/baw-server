@@ -70,6 +70,7 @@ def using_original_audio(audio_recording, content_type, check_accept_header = tr
       options[:channel] = default_spectrogram.channel.to_i
       options[:sample_rate] = default_spectrogram.sample_rate.to_i
       options[:window] = default_spectrogram.window.to_i
+      options[:window_function] = default_spectrogram.window_function.to_i
       options[:colour] = default_spectrogram.colour.to_s
       cache_spectrogram_file = media_cacher.cached_spectrogram_file_name(options)
       cache_spectrogram_possible_paths = media_cacher.cache.possible_storage_paths(media_cacher.cache.cache_spectrogram, cache_spectrogram_file)
