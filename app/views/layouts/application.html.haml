@@ -41,7 +41,7 @@
             &copy; QUT
             =Time.zone.now.year
         %li.disabled
-          %a= "#{Rails.env} ver #{Settings.server_version}"
+          %a= "#{Rails.env} ver #{Settings.version_string}"
         %li= link_to 'Statistics', website_status_path
         %li= link_to 'Contact Us', contact_us_path
         %li= link_to 'Disclaimers', disclaimers_path

@@ -37,4 +37,3 @@ test:
     wavpack_executable: wvunpack
     imagemagick_convert_executable: convert
     imagemagick_identify_executable: identify
-  server_version: 0.0.1
