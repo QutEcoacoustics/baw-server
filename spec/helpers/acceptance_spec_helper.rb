@@ -66,3 +66,34 @@ def check_site_lat_long_response(description, expected_status, should_be_obfusca
     end
   end
 end
+
+def find_unexpected_entries(parent, hash, remaining_to_match, not_included)
+  hash.each { |key, value|
+
+    new_parent = parent
+    if parent.nil?
+      new_parent = key
+    else
+      new_parent = parent + '/' + key
+    end
+
+    unless remaining_to_match.include?(new_parent)
+      not_included.push(new_parent)
+    end
+
+    if value.is_a?(Hash)
+      find_unexpected_entries(new_parent, value, remaining_to_match, not_included)
+    end
+  }
+  not_included
+end
+
+def check_hash_matches(expected, actual)
+  expected.each do |expected_json_path|
+    actual.should have_json_path(expected_json_path), "Expected #{expected_json_path} in #{actual}"
+  end
+
+  parsed = JsonSpec::Helpers::parse_json(actual)
+  remaining = find_unexpected_entries(nil, parsed, expected.dup, [])
+  expect(remaining).to be_empty, "expected no additional elements, got #{remaining}."
+end

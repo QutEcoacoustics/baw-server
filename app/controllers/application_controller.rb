@@ -215,7 +215,7 @@ class ApplicationController < ActionController::Base
 
     render_error(
         :not_found,
-        'Not found',
+        'Could not find the requested item.',
         error,
         'record_not_found_error',
         nil,
@@ -227,7 +227,7 @@ class ApplicationController < ActionController::Base
     # #render json: {code: 404, phrase: 'Not Found', message: 'Audio recording is not ready'}, status: :not_found
     render_error(
         :not_found,
-        error.message,
+        'Could not find the requested item.',
         error,
         'resource_not_found_error',
         nil,
@@ -240,7 +240,7 @@ class ApplicationController < ActionController::Base
 
     render_error(
         :conflict,
-        'Not unique',
+        'The item must be unique.',
         error,
         'record_not_unique_error',
         nil,
@@ -249,11 +249,13 @@ class ApplicationController < ActionController::Base
   end
 
   def unsupported_media_type_response(error)
+    # 415 - Unsupported Media Type
+    # they sent what we don't want
     # render json: {code: 415, phrase: 'Unsupported Media Type', message: 'Requested format is invalid. It must be one of available_formats.', available_formats: @available_formats}, status: :unsupported_media_type
 
     render_error(
         :unsupported_media_type,
-        error.message,
+        'The format of the request is not supported.',
         error,
         'unsupported_media_type_error',
         nil,
@@ -263,12 +265,14 @@ class ApplicationController < ActionController::Base
   end
 
   def not_acceptable_response(error)
+    # 406 - Not Acceptable
+    # we can't send what they want
 
     request.format = :json
 
     render_error(
         :not_acceptable,
-        error.message,
+        'None of the acceptable response formats are available.',
         error,
         'not_acceptable_error',
         nil,
@@ -280,7 +284,7 @@ class ApplicationController < ActionController::Base
   def unprocessable_entity_response(error)
     render_error(
         :unprocessable_entity,
-        error.message,
+        'The request could not be understood.',
         error,
         'unsupported_media_type',
         nil,
@@ -293,7 +297,7 @@ class ApplicationController < ActionController::Base
 
     render_error(
         :bad_request,
-        'Invalid request',
+        'The request was not valid.',
         error.message,
         'bad_request',
         nil,
@@ -318,7 +322,7 @@ class ApplicationController < ActionController::Base
 
     render_error(
         :not_found,
-        'Not found, please change the request and try again.',
+        'Could not find the requested page.',
         error,
         'routing_argument_missing',
         nil,

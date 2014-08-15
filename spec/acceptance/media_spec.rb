@@ -2,27 +2,6 @@ require 'spec_helper'
 require 'rspec_api_documentation/dsl'
 require 'helpers/acceptance_spec_helper'
 
-def parse_deep(parent, hash, remaining_to_match, not_included)
-  hash.each { |key, value|
-
-    new_parent = parent
-    if parent.nil?
-      new_parent = key
-    else
-      new_parent = parent + '/' + key
-    end
-
-    unless remaining_to_match.include?(new_parent)
-      not_included.push(new_parent)
-    end
-
-    if value.is_a?(Hash)
-      parse_deep(new_parent, value, remaining_to_match, not_included)
-    end
-  }
-  not_included
-end
-
 def standard_media_parameters
 
   parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
@@ -45,8 +24,8 @@ def check_common_request_items(audio_recording, content_type, check_accept_heade
   options[:datetime_with_offset] = audio_recording.recorded_date
   options[:uuid] = audio_recording.uuid
   options[:id] = audio_recording.id
-  options[:start_offset] = start_offset
-  options[:end_offset] = end_offset
+  options[:start_offset] = start_offset unless start_offset.blank?
+  options[:end_offset] = end_offset unless end_offset.blank?
 
   original_file_names = media_cacher.original_audio_file_names(options)
   original_possible_paths = original_file_names.map { |source_file| media_cacher.cache.possible_storage_paths(media_cacher.cache.original_audio, source_file) }.flatten
@@ -232,21 +211,21 @@ resource 'Media' do
     standard_media_parameters
     let(:authentication_token) { admin_token }
     let(:format) { 'json' }
-    standard_request('MEDIA (as admin with shallow path)', 200, 'original_format', true)
+    standard_request('MEDIA (as admin with shallow path)', 200, 'common_parameters/start_offset', true)
   end
 
   get '/audio_recordings/:audio_recording_id/media.:format' do
     standard_media_parameters
     let(:authentication_token) { writer_token }
     let(:format) { 'json' }
-    standard_request('MEDIA (as writer with shallow path)', 200,'original_format', true)
+    standard_request('MEDIA (as writer with shallow path)', 200,'common_parameters/start_offset', true)
   end
 
   get '/audio_recordings/:audio_recording_id/media.:format' do
     standard_media_parameters
     let(:authentication_token) { reader_token }
     let(:format) { 'json' }
-    standard_request('MEDIA (as reader with shallow path)', 200, 'original_format', true)
+    standard_request('MEDIA (as reader with shallow path)', 200, 'common_parameters/start_offset', true)
   end
 
   get '/audio_recordings/:audio_recording_id/media.:format' do
@@ -279,111 +258,162 @@ resource 'Media' do
   end
 
   get '/audio_recordings/:audio_recording_id/media.:format' do
-    standard_media_parameters
+    parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
+    parameter :format, 'Required format of the audio segment (options: json|mp3|flac|webm|ogg|wav|png). Use json if requesting metadata', required: true
+
+    let(:raw_post) { params.to_json }
+
     let(:authentication_token) { reader_token }
     let(:format) { 'json' }
-    example 'MEDIA (as reader) checking json format - 200', document: true do
+
+    example 'MEDIA (as reader) checking default json format - 200', document: true do
       do_request
       status.should eq(200), "expected status #{200} but was #{status}. Response body was #{response_body}"
 
       json_paths = [
-          'datetime',
-          'original_format',
-          'original_sample_rate',
-          'start_offset',
-          'end_offset',
-          'uuid',
-          'id',
-          'format',
-          'media_type',
-          'available_audio_formats',
-          'available_audio_formats/mp3',
-          'available_audio_formats/mp3/channel',
-          'available_audio_formats/mp3/sample_rate',
-          'available_audio_formats/mp3/max_duration_seconds',
-          'available_audio_formats/mp3/min_duration_seconds',
-          'available_audio_formats/mp3/mime_type',
-          'available_audio_formats/mp3/extension',
-          'available_audio_formats/mp3/url',
-          'available_audio_formats/mp3/start_offset',
-          'available_audio_formats/mp3/end_offset',
-          'available_audio_formats/webm',
-          'available_audio_formats/webm/channel',
-          'available_audio_formats/webm/sample_rate',
-          'available_audio_formats/webm/max_duration_seconds',
-          'available_audio_formats/webm/min_duration_seconds',
-          'available_audio_formats/webm/mime_type',
-          'available_audio_formats/webm/extension',
-          'available_audio_formats/webm/url',
-          'available_audio_formats/webm/start_offset',
-          'available_audio_formats/webm/end_offset',
-          'available_audio_formats/ogg',
-          'available_audio_formats/ogg/channel',
-          'available_audio_formats/ogg/sample_rate',
-          'available_audio_formats/ogg/max_duration_seconds',
-          'available_audio_formats/ogg/min_duration_seconds',
-          'available_audio_formats/ogg/mime_type',
-          'available_audio_formats/ogg/extension',
-          'available_audio_formats/ogg/url',
-          'available_audio_formats/ogg/start_offset',
-          'available_audio_formats/ogg/end_offset',
-          'available_audio_formats/flac',
-          'available_audio_formats/flac/channel',
-          'available_audio_formats/flac/sample_rate',
-          'available_audio_formats/flac/max_duration_seconds',
-          'available_audio_formats/flac/min_duration_seconds',
-          'available_audio_formats/flac/mime_type',
-          'available_audio_formats/flac/extension',
-          'available_audio_formats/flac/url',
-          'available_audio_formats/flac/start_offset',
-          'available_audio_formats/flac/end_offset',
-          'available_audio_formats/wav',
-          'available_audio_formats/wav/channel',
-          'available_audio_formats/wav/sample_rate',
-          'available_audio_formats/wav/max_duration_seconds',
-          'available_audio_formats/wav/min_duration_seconds',
-          'available_audio_formats/wav/mime_type',
-          'available_audio_formats/wav/extension',
-          'available_audio_formats/wav/url',
-          'available_audio_formats/wav/start_offset',
-          'available_audio_formats/wav/end_offset',
-          'available_image_formats',
-          'available_image_formats/png',
-          'available_image_formats/png/channel',
-          'available_image_formats/png/sample_rate',
-          'available_image_formats/png/window',
-          'available_image_formats/png/colour',
-          'available_image_formats/png/ppms',
-          'available_image_formats/png/max_duration_seconds',
-          'available_image_formats/png/min_duration_seconds',
-          'available_image_formats/png/mime_type',
-          'available_image_formats/png/extension',
-          'available_image_formats/png/url',
-          'available_image_formats/png/start_offset',
-          'available_image_formats/png/end_offset',
-          'available_image_formats/png/window_function',
-          'available_text_formats',
-          'available_text_formats/json',
-          'available_text_formats/json/extension',
-          'available_text_formats/json/mime_type',
-          'available_text_formats/json/url',
-          'available_text_formats/json/start_offset',
-          'available_text_formats/json/end_offset'
+          'recording',
+          'recording/id',
+          'recording/uuid',
+          'recording/recorded_date',
+          'recording/duration_seconds',
+          'recording/sample_rate_hertz',
+          'recording/channel_count',
+          'recording/media_type',
+          'common_parameters',
+          'common_parameters/start_offset',
+          'common_parameters/end_offset',
+          'common_parameters/audio_event_id',
+          'common_parameters/channel',
+          'common_parameters/sample_rate',
+          'available',
+          'available/audio',
+          'available/audio/mp3',
+          'available/audio/mp3/media_type',
+          'available/audio/mp3/extension',
+          'available/audio/mp3/url',
+          'available/audio/webm',
+          'available/audio/webm/media_type',
+          'available/audio/webm/extension',
+          'available/audio/webm/url',
+          'available/audio/ogg',
+          'available/audio/ogg/media_type',
+          'available/audio/ogg/extension',
+          'available/audio/ogg/url',
+          'available/audio/flac',
+          'available/audio/flac/media_type',
+          'available/audio/flac/extension',
+          'available/audio/flac/url',
+          'available/audio/wav',
+          'available/audio/wav/media_type',
+          'available/audio/wav/extension',
+          'available/audio/wav/url',
+          'available/image',
+          'available/image/png',
+          'available/image/png/window_size',
+          'available/image/png/window_function',
+          'available/image/png/colour',
+          'available/image/png/ppms',
+          'available/image/png/media_type',
+          'available/image/png/extension',
+          'available/image/png/url',
+          'available/text',
+          'available/text/json',
+          'available/text/json/media_type',
+          'available/text/json/extension',
+          'available/text/json/url',
+          'options',
+          'options/valid_sample_rates',
+          'options/channels',
+          'options/audio',
+          'options/audio/duration_max',
+          'options/audio/duration_min',
+          'options/audio/formats',
+          'options/image',
+          'options/image/spectrogram',
+          'options/image/spectrogram/duration_max',
+          'options/image/spectrogram/duration_min',
+          'options/image/spectrogram/formats',
+          'options/image/spectrogram/window_sizes',
+          'options/image/spectrogram/window_functions',
+          'options/image/spectrogram/colours',
+          'options/image/spectrogram/colours/g',
+          'options/text',
+          'options/text/formats',
       ]
 
-      json_paths.each do |expected_json_path|
-        response_body.should have_json_path(expected_json_path), "Expected #{expected_json_path} in #{response_body}"
-      end
+      check_hash_matches(json_paths, response_body)
 
-      json_paths_exclude = %w(time date available_image_formats/jpg 'available_image_formats/jpeg)
+    end
+  end
 
-      json_paths_exclude.each do |unexpected_json_path|
-        response_body.should_not have_json_path(unexpected_json_path), "Did not expect #{unexpected_json_path} in #{response_body}"
-      end
+  get '/audio_recordings/:audio_recording_id/media.:format?start_offset=1&end_offset=2&sample_rate=11025' do
+    standard_media_parameters
+    let(:authentication_token) { reader_token }
+    let(:format) { 'json' }
 
-      parsed = JsonSpec::Helpers::parse_json(response_body)
-      remaining = parse_deep(nil, parsed, json_paths.dup, [])
-      expect(remaining).to be_empty, "expected no additional elements, got #{remaining}."
+    let(:start_offset) { '1' }
+    let(:end_offset) { '2' }
+    let(:sample_rate) { '11025' }
+
+    example 'MEDIA (as reader) checking modified json format - 200', document: true do
+      do_request
+      status.should eq(200), "expected status #{200} but was #{status}. Response body was #{response_body}"
+
+      json_paths = [
+          'recording',
+          'recording/id',
+          'recording/uuid',
+          'recording/recorded_date',
+          'recording/duration_seconds',
+          'recording/sample_rate_hertz',
+          'recording/channel_count',
+          'recording/media_type',
+          'common_parameters',
+          'common_parameters/start_offset',
+          'common_parameters/end_offset',
+          'common_parameters/audio_event_id',
+          'common_parameters/channel',
+          'common_parameters/sample_rate',
+          'available',
+          'available/audio',
+          'available/audio/mp3',
+          'available/audio/mp3/media_type',
+          'available/audio/mp3/extension',
+          'available/audio/mp3/url',
+          'available/audio/webm',
+          'available/audio/webm/media_type',
+          'available/audio/webm/extension',
+          'available/audio/webm/url',
+          'available/audio/ogg',
+          'available/audio/ogg/media_type',
+          'available/audio/ogg/extension',
+          'available/audio/ogg/url',
+          'available/audio/flac',
+          'available/audio/flac/media_type',
+          'available/audio/flac/extension',
+          'available/audio/flac/url',
+          'available/audio/wav',
+          'available/audio/wav/media_type',
+          'available/audio/wav/extension',
+          'available/audio/wav/url',
+          'available/image',
+          'available/image/png',
+          'available/image/png/window_size',
+          'available/image/png/window_function',
+          'available/image/png/colour',
+          'available/image/png/ppms',
+          'available/image/png/media_type',
+          'available/image/png/extension',
+          'available/image/png/url',
+          'available/text',
+          'available/text/json',
+          'available/text/json/media_type',
+          'available/text/json/extension',
+          'available/text/json/url'
+      ]
+
+      check_hash_matches(json_paths, response_body)
+
     end
   end
 

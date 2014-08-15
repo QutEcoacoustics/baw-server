@@ -72,9 +72,10 @@ class MediaResponseMetadata
     sox = @media_cache_tool.audio.audio_sox
 
     {
-        non_wav_valid_sample_rates: [8000, 11025, 12000, 16000, 22050, 24000, 32000, 44100, 48000],
+        # all formats, even wav, must adhere to this list
+        valid_sample_rates: [8000, 11025, 12000, 16000, 22050, 24000, 32000, 44100, 48000],
         channels: [*0..audio_recording.channels],
-        statuses: AudioRecording::AVAILABLE_STATUSES,
+        #statuses: AudioRecording::AVAILABLE_STATUSES,
         audio: {
             duration_max: @default_audio.max_duration_seconds,
             duration_min: @default_audio.min_duration_seconds,
@@ -97,14 +98,15 @@ class MediaResponseMetadata
   end
 
   def available_request_details(audio_recording, current, modified_params, available_formats)
-    audio_keys = [:start_offset, :end_offset, :audio_event_id, :channel, :sample_rate]
-    image_keys = [:start_offset, :end_offset, :audio_event_id, :channel, :sample_rate,
-                  :window_size, :window_function, :colour]
+    audio_keys = [] #[:start_offset, :end_offset, :audio_event_id, :channel, :sample_rate]
+    image_keys = #[:start_offset, :end_offset, :audio_event_id, :channel, :sample_rate,
+                  [:window_size, :window_function, :colour, :ppms]
+    text_keys = []
 
     {
         audio: create_available_details(audio_recording, current, modified_params, available_formats.audio, audio_keys),
         image: create_available_details(audio_recording, current, modified_params, available_formats.image, image_keys),
-        text: create_available_details(audio_recording, current, modified_params, available_formats.text, image_keys)
+        text: create_available_details(audio_recording, current, modified_params, available_formats.text, text_keys)
     }
   end
 
@@ -134,15 +136,25 @@ class MediaResponseMetadata
 
     available = available_request_details(audio_recording, current, modified_params, available_formats)
 
-    details = {recording: original, current: current, available: available}
+    details = {recording: original, common_parameters: current, available: available}
 
-    if modified_params.size > 0
+    if modified_params.size < 1
       valid_options = valid_options(audio_recording, available_formats)
       details[:options] = valid_options
     end
 
     # ensure media_type for original is a string
     details[:recording][:media_type] = details[:recording][:media_type].to_s
+
+    # keep only required entries
+    details[:recording].slice!(
+        :id, :uuid, :recorded_date, :duration_seconds, :sample_rate_hertz,
+        :channel_count, :media_type
+    )
+
+    details[:common_parameters].slice!(
+        :start_offset, :end_offset, :audio_event_id, :channel, :sample_rate
+    )
 
     details
   end
@@ -231,7 +243,7 @@ class MediaResponseMetadata
       result[format][:media_type] = Mime::Type.lookup_by_extension(format.to_s.downcase).to_s
       result[format][:extension] = format
       # only include modified settings in url
-      modified_keys = modified_params.slice(*relevant_keys).merge!(format: format)
+      modified_keys = modified_params.merge(format: format)
       result[format][:url] = rails_url_helpers.audio_recording_media_path(audio_recording, modified_keys)
     end
     result

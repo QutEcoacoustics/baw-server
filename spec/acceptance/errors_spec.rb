@@ -20,19 +20,41 @@ resource 'Errors' do
   get '/does_not_exist/42' do
     standard_request('ROUTE (does not exist with id)' ,404,'meta/error/original_route', true, 'does_not_exist/42')
   end
- 
 
-  # /test_exceptions?exception_class=CustomErrors::RoutingArgumentError
-  # /test_exceptions?exception_class=ActiveRecord::RecordNotFound
-  # /test_exceptions?exception_class=ActionView::MissingTemplate
-  # /test_exceptions?exception_class=ArgumentError
-  # /test_exceptions?exception_class=CanCan::AccessDenied
+  get '/test_exceptions?exception_class=ActiveRecord::RecordNotFound' do
+    standard_request('ROUTE (does not exist with id)' ,404,'meta/error/details', true, 'Could not find the requested item.')
+  end
 
-  # ActiveRecord::RecordNotFound, with: :record_not_found_response
-  # CustomErrors::ItemNotFoundError, with: :item_not_found_response
-  # ActiveRecord::RecordNotUnique, with: :record_not_unique_response
-  # CustomErrors::UnsupportedMediaTypeError, with: :unsupported_media_type_response
-  # CustomErrors::NotAcceptableError, with: :not_acceptable_response
-  # CustomErrors::UnprocessableEntityError, with: :unprocessable_entity_response
-  # ActiveResource::BadRequest, with: :bad_request_response
+  get '/test_exceptions?exception_class=CustomErrors::ItemNotFoundError' do
+    standard_request('ERROR' ,404,'meta/error/details', true, 'Could not find the requested item.')
+  end
+
+  get '/test_exceptions?exception_class=ActiveRecord::RecordNotUnique' do
+    standard_request('ERROR' ,404,'meta/error/details', true, 'The item must be unique.')
+  end
+
+  get '/test_exceptions?exception_class=CustomErrors::UnsupportedMediaTypeError' do
+    standard_request('ERROR' ,415,'meta/error/details', true, 'The format of the request is not supported.')
+  end
+
+  get '/test_exceptions?exception_class=CustomErrors::NotAcceptableError' do
+    standard_request('ERROR' ,406,'meta/error/details', true, 'None of the acceptable response formats are available.')
+  end
+
+  get '/test_exceptions?exception_class=CustomErrors::UnprocessableEntityError' do
+    standard_request('ERROR' ,422,'meta/error/details', true, 'The request could not be understood.')
+  end
+
+  get '/test_exceptions?exception_class=ActiveResource::BadRequest' do
+    standard_request('ERROR' ,404,'meta/error/original_route', true, 'The request was not valid.')
+  end
+
+  get '/test_exceptions?exception_class=CanCan::AccessDenied' do
+    standard_request('ERROR' ,401,'meta/error/links/confirm your account', true, 'sign_in')
+  end
+
+  get '/test_exceptions?exception_class=CustomErrors::RoutingArgumentError' do
+    standard_request('ERROR' ,404,'meta/error/original_route', true, 'Could not find the requested page.')
+  end
+
 end

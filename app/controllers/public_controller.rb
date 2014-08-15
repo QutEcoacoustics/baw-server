@@ -304,7 +304,23 @@ EXTRACT(DAY FROM recorded_date) as extracted_day')
     if ENV['RAILS_ENV'] == 'test'
       if params.include?(:exception_class)
         # Purposeful exception raised for testing.
-        fail params[:exception_class].constantize
+        error_class = params[:exception_class].constantize
+
+        arity = error_class.method(:initialize).arity
+
+        case arity
+          when -1
+            fail error_class
+          when 0
+            fail error_class
+          when 1
+            fail error_class('testing1')
+          when 2
+            fail error_class('testing1', 'testing2')
+          else
+            fail ArgumentError, "Could not raise exception for testing: #{error_class.inspect}"
+        end
+
       end
     end
   end

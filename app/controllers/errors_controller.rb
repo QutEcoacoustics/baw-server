@@ -11,7 +11,7 @@ class ErrorsController < ApplicationController
 
     render_error(
         :not_found,
-        'Not found, please change the request and try again.',
+        'Could not find the requested page.',
         nil,
         'route_error',
         nil,
@@ -38,7 +38,7 @@ class ErrorsController < ApplicationController
     status_code = exception_wrapper.status_code
     rescue_response = exception_wrapper.rescue_responses[error.class.name]
     #rescue_template = exception_wrapper.rescue_template[error.class.name]
-    detail_message = Rack::Utils::HTTP_STATUS_CODES[status_code]
+    detail_message = Rack::Utils::HTTP_STATUS_CODES[status_code].humanize
     #error_name = error.class.name.titleize
     #error_message = error.message.underscore.humanize
 
