@@ -26,6 +26,32 @@ class Settings < Settingslogic
     @range_request ||= RangeRequest.new
   end
 
+  def version_info
+    # see http://semver.org/
+    # see http://nvie.com/posts/a-successful-git-branching-model/
+    {
+        major: 0,
+        minor: 10,
+        patch: 0,
+        pre: '',
+        build: ''
+    }
+  end
+
+  def version_string
+    version = "#{version_info[:major]}.#{version_info[:minor]}.#{version_info[:patch]}"
+
+    unless version_info[:pre].blank?
+      version += "-#{version_info[:pre]}"
+    end
+
+    unless version_info[:build].blank?
+      version += "+#{version_info[:build]}"
+    end
+
+    version
+  end
+
   def validate
     # check that audio_recording_max_overlap_sec < audio_recording_min_duration_sec
     if Settings.audio_recording_max_overlap_sec >= Settings.audio_recording_min_duration_sec
