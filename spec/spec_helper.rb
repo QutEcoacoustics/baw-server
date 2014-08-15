@@ -4,22 +4,21 @@ ENV['RAILS_ENV'] ||= 'test'
 require 'simplecov'
 
 if ENV['TRAVIS']
-  #require 'codeclimate-test-reporter'
+  require 'codeclimate-test-reporter'
   require 'coveralls'
 
   # code climate
-  # CodeClimate::TestReporter.configure do |config|
-  #   config.logger.level = Logger::DEBUG
-  # end
-  # CodeClimate::TestReporter.start
+   CodeClimate::TestReporter.configure do |config|
+     config.logger.level = Logger::WARN
+   end
+   CodeClimate::TestReporter.start
 
   # coveralls
   Coveralls.wear!('rails')
 
   SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter[
       Coveralls::SimpleCov::Formatter,
-      SimpleCov::Formatter::HTMLFormatter#,
-      #CodeClimate::TestReporter::Formatter
+      CodeClimate::TestReporter::Formatter
   ]
 
 else
@@ -42,7 +41,7 @@ require 'database_cleaner'
 
 require 'webmock/rspec'
 require 'paperclip/matchers'
-WebMock.disable_net_connect!(allow_localhost: true)
+WebMock.disable_net_connect!(allow_localhost: true, allow: 'codeclimate.com')
 
 # gives us the login_as(@user) method when request object is not present
 # http://www.schneems.com/post/15948562424/speed-up-capybara-tests-with-devise/

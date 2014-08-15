@@ -1,9 +1,11 @@
 language: ruby
 rvm:
 - 1.9.3
+- 2.1.2
 branches:
   only:
   - master
+  - develop
 gemfile:
 - Gemfile
 bundler_args: --without development production staging
