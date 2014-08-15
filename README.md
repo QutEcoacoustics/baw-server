@@ -9,6 +9,8 @@ Bioacoustics Workbench workers.
 [![Coverage Status](https://coveralls.io/repos/QutBioacoustics/baw-workers/badge.png)](https://coveralls.io/r/QutBioacoustics/baw-workers)
 [![Inline docs](http://inch-ci.org/github/QutBioacoustics/baw-workers.png?branch=master)](http://inch-ci.org/github/QutBioacoustics/baw-workers)
 
+[Rubydoc](http://rubydoc.info/github/QutBioacoustics/baw-workers/frames) is available.
+
 Workers that can process various long-running or intensive tasks.
 
 ## Installation
