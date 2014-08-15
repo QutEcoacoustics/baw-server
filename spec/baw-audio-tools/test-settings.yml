@@ -49,12 +49,12 @@ test:
     image:
       - png
   audio_tools:
-    ffmpeg_executable: ./vendor/ffmpeg/ffmpeg.exe
-    ffprobe_executable: ./vendor/ffmpeg/ffprobe.exe
-    mp3splt_executable: ./vendor/mp3splt/mp3splt.exe
-    sox_executable: ./vendor/sox/sox.exe
-    wavpack_executable: ./vendor/wavpack/wvunpack.exe
-    imagemagick_convert_executable: ./vendor/imagemagick/convert.exe
-    imagemagick_identify_executable: ./vendor/imagemagick/identify.exe
+    ffmpeg_executable: ffmpeg
+    ffprobe_executable: ffprobe
+    mp3splt_executable: mp3splt
+    sox_executable: sox
+    wavpack_executable: wvunpack
+    imagemagick_convert_executable: convert
+    imagemagick_identify_executable: identify
     max_duration_seconds: 300
   audio_tools_timeout_sec: 10

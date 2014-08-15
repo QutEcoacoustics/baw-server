@@ -44,23 +44,23 @@ describe BawAudioTools::CacheBase do
     end
 
     it 'possible dirs match settings' do
-      cache_base.possible_storage_dirs(cache_base.original_audio).should =~ Settings.paths.original_audios
+      expect(cache_base.possible_storage_dirs(cache_base.original_audio)).to match_array Settings.paths.original_audios
     end
 
     it 'existing dirs match settings' do
       Dir.mkdir(Settings.paths.original_audios[0]) unless Dir.exists?(Settings.paths.original_audios[0])
-      cache_base.existing_storage_dirs(cache_base.original_audio).should =~ Settings.paths.original_audios
+      expect(cache_base.existing_storage_dirs(cache_base.original_audio)).to match_array Settings.paths.original_audios
       FileUtils.rm_rf(Settings.paths.original_audios[0])
     end
 
     it 'possible paths match settings for old names' do
       files = [File.join(Settings.paths.original_audios[0], partial_path, original_file_name_old)]
-      cache_base.possible_storage_paths(cache_base.original_audio, original_file_name_old).should =~ files
+      expect(cache_base.possible_storage_paths(cache_base.original_audio, original_file_name_old)).to match_array files
     end
 
     it 'possible paths match settings for new names' do
       files = [File.join(Settings.paths.original_audios[0], partial_path, original_file_name_new)]
-      cache_base.possible_storage_paths(cache_base.original_audio, original_file_name_new).should =~ files
+      expect(cache_base.possible_storage_paths(cache_base.original_audio, original_file_name_new)).to match_array files
     end
 
     it 'existing paths match settings for old names' do
@@ -71,7 +71,7 @@ describe BawAudioTools::CacheBase do
       sub_dir = File.join(dir, partial_path)
       FileUtils.mkpath(sub_dir)
       FileUtils.touch(files[0])
-      cache_base.possible_storage_paths(cache_base.original_audio, original_file_name_old).should =~ files
+      expect(cache_base.possible_storage_paths(cache_base.original_audio, original_file_name_old)).to match_array files
       FileUtils.rm_rf(dir)
     end
 
@@ -81,7 +81,7 @@ describe BawAudioTools::CacheBase do
       sub_dir = File.join(dir, partial_path)
       FileUtils.mkpath(sub_dir)
       FileUtils.touch(files[0])
-      cache_base.possible_storage_paths(cache_base.original_audio, original_file_name_new).should =~ files
+      expect(cache_base.possible_storage_paths(cache_base.original_audio, original_file_name_new)).to match_array files
       FileUtils.rm_rf(dir)
     end
 
@@ -124,7 +124,7 @@ describe BawAudioTools::CacheBase do
     end
 
     it 'paths match settings' do
-      cache_base.possible_storage_dirs(cache_base.cache_audio).should =~ Settings.paths.cached_audios
+      expect(cache_base.possible_storage_dirs(cache_base.cache_audio)).to match_array Settings.paths.cached_audios
     end
 
     it 'creates the correct name' do
@@ -151,7 +151,7 @@ describe BawAudioTools::CacheBase do
     end
 
     it 'paths match settings' do
-      cache_base.possible_storage_dirs(cache_base.cache_spectrogram).should =~ Settings.paths.cached_spectrograms
+      expect(cache_base.possible_storage_dirs(cache_base.cache_spectrogram)).to match_array Settings.paths.cached_spectrograms
     end
 
     it 'creates the correct name' do
@@ -178,7 +178,7 @@ describe BawAudioTools::CacheBase do
     end
 
     it 'paths match settings' do
-      cache_base.possible_storage_dirs(cache_base.cache_dataset).should =~ Settings.paths.cached_datasets
+      expect(cache_base.possible_storage_dirs(cache_base.cache_dataset)).to match_array Settings.paths.cached_datasets
     end
 
     it 'creates the correct name' do
