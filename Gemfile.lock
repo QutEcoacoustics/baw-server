@@ -1,14 +1,14 @@
 GIT
   remote: https://github.com/QutBioacoustics/baw-audio-tools.git
-  revision: 17185c3b8fa364b3c47ab34e81e3e76eb752bff7
+  revision: 54aaaeb9f0dd2c820fa5191a502d16ae548509da
   specs:
-    baw-audio-tools (0.0.9)
+    baw-audio-tools (0.1.0)
       activesupport (>= 3.2)
       settingslogic
 
 GIT
   remote: https://github.com/QutBioacoustics/baw-workers.git
-  revision: 44a6fbf2dbe50bcaf8f405c95052d9c74a3b3014
+  revision: 73f72282b0830b3de9d0423536f58a0d2ea01f75
   specs:
     baw-workers (0.0.3)
       activesupport (>= 3.2)
@@ -25,7 +25,7 @@ GIT
 
 GIT
   remote: https://github.com/seyhunak/twitter-bootstrap-rails.git
-  revision: b86063aa9fb47effdc9937788eb2b3d51c26f934
+  revision: a50313904c61a02473b9ba5359dc4e32d50c23bf
   specs:
     twitter-bootstrap-rails (3.2.0)
       actionpack (>= 3.1)
@@ -128,15 +128,15 @@ GEM
     codeclimate-test-reporter (0.4.0)
       simplecov (>= 0.7.1, < 1.0.0)
     coderay (1.1.0)
-    coffee-rails (3.2.2)
+    coffee-rails (3.2.1)
       coffee-script (>= 2.2.0)
-      railties (~> 3.2.0)
+      railties (~> 3.2.0.beta)
     coffee-script (2.3.0)
       coffee-script-source
       execjs
     coffee-script-source (1.7.1)
     colorize (0.7.3)
-    coveralls (0.7.0)
+    coveralls (0.7.1)
       multi_json (~> 1.3)
       rest-client
       simplecov (>= 0.7)

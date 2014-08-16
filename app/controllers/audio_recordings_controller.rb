@@ -61,7 +61,7 @@ class AudioRecordingsController < ApplicationController
     if !user_exists || highest_permission < AccessLevel::WRITE
       render json: {error: 'uploader does not have access to this project'}.to_json, status: :unprocessable_entity
     elsif check_and_correct_overlap(@audio_recording) && @audio_recording.save
-      render json: @audio_recording, status: :created, location: [@project, @site, @audio_recording]
+      render json: @audio_recording, status: :created, location: @audio_recording
     else
       render json: @audio_recording.errors, status: :unprocessable_entity
     end

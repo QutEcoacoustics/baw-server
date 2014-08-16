@@ -7,7 +7,8 @@ class PublicController < ApplicationController
       :new_contact_us, :create_contact_us,
       :new_bug_report, :create_bug_report,
       :new_data_request, :create_data_request,
-      :credits, :ethics_statement, :disclaimers
+      :credits, :ethics_statement, :disclaimers,
+      :test_exceptions
   ]
 
   def index
@@ -115,7 +116,7 @@ class PublicController < ApplicationController
             project = Project.where(id: params[:projectId]).first
 
             if project.blank?
-              fail ActiveRecord::RecordNotFound, 'Project not found from audio_recording_catalogue'
+              fail CustomErrors::ItemNotFoundError, 'Project not found from audio_recording_catalogue'
             end
 
             if current_user.blank? || !current_user.can_read?(project)
@@ -127,7 +128,7 @@ class PublicController < ApplicationController
             site = Site.where(id: params[:siteId]).first
 
             if site.blank?
-              fail ActiveRecord::RecordNotFound, 'Site not found from audio_recording_catalogue'
+              fail CustomErrors::ItemNotFoundError, 'Site not found from audio_recording_catalogue'
             end
 
             projects = Site.where(id: params[:siteId]).first.projects
@@ -298,6 +299,35 @@ EXTRACT(DAY FROM recorded_date) as extracted_day')
       end
     end
   end
+
+  def test_exceptions
+    if ENV['RAILS_ENV'] == 'test'
+      if params.include?(:exception_class)
+        msg = 'Purposeful exception raised for testing.'
+        error_class_string = params[:exception_class]
+        error_class = error_class_string.constantize
+
+        case error_class_string
+          when 'ActiveResource::BadRequest'
+            fail error_class.new(response)
+
+          when 'ActiveRecord::RecordNotUnique'
+            fail error_class.new(msg, nil)
+
+          when 'CustomErrors::UnsupportedMediaTypeError',
+              'ActiveResource::BadRequest',
+              'CustomErrors::NotAcceptableError',
+              'CustomErrors::RoutingArgumentError'
+            fail error_class.new(msg)
+
+          else
+            fail error_class
+        end
+
+      end
+    end
+  end
+
 
   private
 

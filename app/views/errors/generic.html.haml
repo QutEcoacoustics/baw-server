@@ -1,9 +1,11 @@
 .span6
-  %h1
-    Sorry,
-    %br
-    there was a problem
-  %p
-    We've encountered a problem. Sorry about that.
+  - if @details.blank?
+    %h1 Sorry, something is not right
+    %p There's been an issue.
+  - else
+    %h1= @details.phrase
+    %p= @details.message
+  %p You could go back and try again.
+
 .span6
   = image_tag 'bird_watcher.jpg'

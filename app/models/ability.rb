@@ -46,6 +46,7 @@ class Ability
       can [:show, :index], AudioRecording do |audio_recording|
         user.has_permission_any?(audio_recording.site.projects)
       end
+      can [:new], AudioRecording
       can [:manage], AudioEvent do |audio_event|
         user.can_write_any?(audio_event.audio_recording.site.projects)
       end
