@@ -34,31 +34,31 @@ resource 'Errors' do
     end
 
     get '/test_exceptions?exception_class=ActiveRecord::RecordNotFound' do
-      standard_request('ROUTE (does not exist with id)', 404, 'meta/error/details', true, 'Could not find the requested item.')
+      standard_request('ROUTE (does not exist with id)', 404, 'meta/error/details', true, 'Could not find the requested item')
     end
 
     get '/test_exceptions?exception_class=CustomErrors::ItemNotFoundError' do
-      standard_request('ERROR', 404, 'meta/error/details', true, 'Could not find the requested item.')
+      standard_request('ERROR', 404, 'meta/error/details', true, 'Could not find the requested item')
     end
 
     get '/test_exceptions?exception_class=ActiveRecord::RecordNotUnique' do
-      standard_request('ERROR', 409, 'meta/error/details', true, 'The item must be unique.')
+      standard_request('ERROR', 409, 'meta/error/details', true, 'The item must be unique')
     end
 
     get '/test_exceptions?exception_class=CustomErrors::UnsupportedMediaTypeError' do
-      standard_request('ERROR', 415, 'meta/error/details', true, 'The format of the request is not supported.')
+      standard_request('ERROR', 415, 'meta/error/details', true, 'The format of the request is not supported')
     end
 
     get '/test_exceptions?exception_class=CustomErrors::NotAcceptableError' do
-      standard_request('ERROR', 406, 'meta/error/details', true, 'None of the acceptable response formats are available.')
+      standard_request('ERROR', 406, 'meta/error/details', true, 'None of the acceptable response formats are available')
     end
 
     get '/test_exceptions?exception_class=CustomErrors::UnprocessableEntityError' do
-      standard_request('ERROR', 422, 'meta/error/details', true, 'The request could not be understood.')
+      standard_request('ERROR', 422, 'meta/error/details', true, 'The request could not be understood')
     end
 
     get '/test_exceptions?exception_class=ActiveResource::BadRequest' do
-      standard_request('ERROR', 400, 'meta/error/details', true, 'The request was not valid.')
+      standard_request('ERROR', 400, 'meta/error/details', true, 'The request was not valid')
     end
 
     get '/test_exceptions?exception_class=CanCan::AccessDenied' do
@@ -66,7 +66,7 @@ resource 'Errors' do
     end
 
     get '/test_exceptions?exception_class=CustomErrors::RoutingArgumentError' do
-      standard_request('ERROR', 404, 'meta/error/original_route', true, 'Could not find the requested page.')
+      standard_request('ERROR', 404, 'meta/error/original_route', true, 'Could not find the requested page')
     end
   end
 end

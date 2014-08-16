@@ -11,4 +11,5 @@ module CustomErrors
   class NotAcceptableError < RequestedMediaTypeError; end
   class UnsupportedMediaTypeError < RequestedMediaTypeError; end
   class UnprocessableEntityError < StandardError; end
+  class BadRequestError < StandardError; end
 end

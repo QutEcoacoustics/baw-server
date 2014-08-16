@@ -40,6 +40,8 @@ class ErrorsController < ApplicationController
     #error_name = error.class.name.titleize
     #error_message = error.message.underscore.humanize
 
+    # give basic information about the error
+    # do not reveal information about the error
     render_error(
         rescue_response,
         detail_message,

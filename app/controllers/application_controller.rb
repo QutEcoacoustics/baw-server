@@ -10,19 +10,27 @@ class ApplicationController < ActionController::Base
   # see routes.rb for the catch-all route for routing errors.
   # see application.rb for the exceptions_app settings.
   # see errors_controller.rb for the actions that handle routing errors and uncaught errors.
+
+  # Ruby and Rails errors - do not reveal information about the error
   rescue_from ActiveRecord::RecordNotFound, with: :record_not_found_response
-  rescue_from CustomErrors::ItemNotFoundError, with: :item_not_found_response
   rescue_from ActiveRecord::RecordNotUnique, with: :record_not_unique_response
-  rescue_from CustomErrors::UnsupportedMediaTypeError, with: :unsupported_media_type_response
-  rescue_from CustomErrors::NotAcceptableError, with: :not_acceptable_response
-  rescue_from CustomErrors::UnprocessableEntityError, with: :unprocessable_entity_response
   rescue_from ActiveResource::BadRequest, with: :bad_request_response
+
+  # Custom errors - these use the message in the error
+  # RoutingArgumentError - error handling for routes that take a combination of attributes
+  rescue_from CustomErrors::RoutingArgumentError, with: :routing_argument_error_response
+  rescue_from CustomErrors::ItemNotFoundError, with: :item_not_found_error_response
+  rescue_from CustomErrors::UnsupportedMediaTypeError, with: :unsupported_media_type_error_response
+  rescue_from CustomErrors::NotAcceptableError, with: :not_acceptable_error_response
+  rescue_from CustomErrors::UnprocessableEntityError, with: :unprocessable_entity_error_response
+
+  # Don't rescue this, it is the base for 406 and 415
+  #rescue_from CustomErrors::RequestedMediaTypeError, with: :requested_media_type_error_response
+
+  rescue_from CustomErrors::BadRequestError, with: :bad_request_error_response
 
   # error handling for cancan authorisation checks
   rescue_from CanCan::AccessDenied, with: :access_denied_response
-
-  # error handling for routes that take a combination of attributes
-  rescue_from CustomErrors::RoutingArgumentError, with: :routing_argument_missing
 
   protect_from_forgery
 
@@ -92,21 +100,21 @@ class ApplicationController < ActionController::Base
     #authorize! :show, @audio_recording
 
     audio_recording = AudioRecording.where(id: request_params[:audio_recording_id]).first
-    fail ActiveRecord::RecordNotFound, 'Could not find audio recording with given id.' if audio_recording.blank?
+    fail CustomErrors::ItemNotFoundError, "Could not find audio recording with id #{request_params[:audio_recording_id]}." if audio_recording.blank?
 
     # can? also checks for admin access
     can_access_audio_recording = can? :show, audio_recording
 
     # Can't do anything if can't access audio recording and no audio event id given
     has_any_permission = can_access_audio_recording || !request_params[:audio_event_id].blank?
-    fail CanCan::AccessDenied, 'Permission denied to audio recording and no audio event id given.' unless has_any_permission
+    fail CanCan::AccessDenied, "Permission denied to audio recording id #{request_params[:audio_recording_id]} and no audio event id given." unless has_any_permission
 
     audio_recording
   end
 
   def auth_custom_audio_event(request_params, audio_recording)
     audio_event = AudioEvent.where(id: request_params[:audio_event_id]).first
-    fail ActiveRecord::RecordNotFound, 'Could not find audio event with given id.' if audio_event.blank?
+    fail CustomErrors::ItemNotFoundError, "Could not find audio event with id #{request_params[:audio_event_id]}." if audio_event.blank?
 
     # can? also checks for admin access
     can_access_audio_event = can? :read, audio_event
@@ -222,17 +230,17 @@ class ApplicationController < ActionController::Base
         :not_found,
         'Could not find the requested item.',
         error,
-        'record_not_found_error'
+        'record_not_found_response'
     )
   end
 
-  def item_not_found_response(error)
+  def item_not_found_error_response(error)
     # #render json: {code: 404, phrase: 'Not Found', message: 'Audio recording is not ready'}, status: :not_found
     render_error(
         :not_found,
-        'Could not find the requested item.',
+        "Could not find the requested item: #{error.message}",
         error,
-        'resource_not_found_error'
+        'item_not_found_error_response'
     )
   end
 
@@ -243,25 +251,25 @@ class ApplicationController < ActionController::Base
         :conflict,
         'The item must be unique.',
         error,
-        'record_not_unique_error'
+        'record_not_unique_response'
     )
   end
 
-  def unsupported_media_type_response(error)
+  def unsupported_media_type_error_response(error)
     # 415 - Unsupported Media Type
     # they sent what we don't want
     # render json: {code: 415, phrase: 'Unsupported Media Type', message: 'Requested format is invalid. It must be one of available_formats.', available_formats: @available_formats}, status: :unsupported_media_type
 
     render_error(
         :unsupported_media_type,
-        'The format of the request is not supported.',
+        "The format of the request is not supported: #{error.message}",
         error,
-        'unsupported_media_type_error',
+        'unsupported_media_type_error_response',
         error_info: {available_formats: error.available_formats_info}
     )
   end
 
-  def not_acceptable_response(error)
+  def not_acceptable_error_response(error)
     # 406 - Not Acceptable
     # we can't send what they want
 
@@ -269,19 +277,19 @@ class ApplicationController < ActionController::Base
 
     render_error(
         :not_acceptable,
-        'None of the acceptable response formats are available.',
+        "None of the acceptable response formats are available: #{error.message}",
         error,
-        'not_acceptable_error',
+        'not_acceptable_error_response',
         error_info: {available_formats: error.available_formats_info}
     )
   end
 
-  def unprocessable_entity_response(error)
+  def unprocessable_entity_error_response(error)
     render_error(
         :unprocessable_entity,
-        'The request could not be understood.',
+        "The request could not be understood: #{error.message}",
         error,
-        'unsupported_media_type'
+        'unprocessable_entity_error_response'
     )
   end
 
@@ -292,7 +300,7 @@ class ApplicationController < ActionController::Base
         :bad_request,
         'The request was not valid.',
         error,
-        'bad_request',
+        'bad_request_response',
     )
   end
 
@@ -302,7 +310,7 @@ class ApplicationController < ActionController::Base
           :forbidden,
           I18n.t('devise.failure.unauthorized'),
           error,
-          'access_denied - forbidden',
+          'access_denied_response - forbidden',
           redirect: true,
           links_object: [:permissions])
 
@@ -311,7 +319,7 @@ class ApplicationController < ActionController::Base
           :forbidden,
           I18n.t('devise.failure.unconfirmed'),
           error,
-          'access_denied - unconfirmed',
+          'access_denied_response - unconfirmed',
           redirect: true,
           links_object: [:confirm])
 
@@ -320,21 +328,29 @@ class ApplicationController < ActionController::Base
           :unauthorized,
           I18n.t('devise.failure.unauthenticated'),
           error,
-          'access_denied - unauthorised',
+          'access_denied_response - unauthorised',
           redirect: true,
           links_object: [:sign_in, :confirm])
 
     end
   end
 
-  def routing_argument_missing(error)
-
+  def routing_argument_error_response(error)
     render_error(
         :not_found,
-        'Could not find the requested page.',
+        "Could not find the requested page: #{error.message}",
         error,
-        'routing_argument_missing',
+        'routing_argument_error_response',
         error_info: {original_route: request.env['PATH_INFO']}
+    )
+  end
+
+  def bad_request_error_response(error)
+    render_error(
+        :bad_request,
+        "The request was not valid: #{error.message}",
+        error,
+        'bad_request_error_response',
     )
   end
 

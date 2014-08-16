@@ -26,7 +26,7 @@ class MediaController < ApplicationController
       # changed from 422 Unprocessable entity
       head :accepted
     elsif !is_audio_ready && !is_head_request
-      fail CustomErrors::ItemNotFoundError, "Audio recording (#{audio_recording.id}) is not ready"
+      fail CustomErrors::ItemNotFoundError, "Audio recording id #{audio_recording.id} is not ready"
     elsif !is_supported_format && is_head_request
       head :not_acceptable
     elsif !is_supported_format && !is_head_request
@@ -47,7 +47,7 @@ class MediaController < ApplicationController
 
       supported_media_response(audio_recording, audio_event, media_info, request_params)
     else
-      fail ActiveResource::BadRequest
+      fail CustomErrors::BadRequestError, 'There was a problem with the request.'
     end
   end
 
@@ -90,7 +90,14 @@ class MediaController < ApplicationController
 
     # parse request
     metadata = MediaResponseMetadata.new(Settings.media_cache_tool, default_audio, default_spectrogram)
+
+    # validate common request parameters
+    metadata.check_request_parameters(audio_recording, request_params)
+
+    # original audio recording info
     original = metadata.audio_recording_details(audio_recording)
+
+    # current request parameters - combination of specified and defaults
     current, modified_params = metadata.current_request_details(audio_recording, media_info, request_params)
 
     if media_info[:category] == :text
@@ -99,7 +106,7 @@ class MediaController < ApplicationController
     elsif [:audio, :image].include?(media_info[:category])
       media_response(audio_recording, metadata, original, current, media_info)
     else
-      fail ActiveResource::BadRequest
+      fail CustomErrors::BadRequestError, 'There was a problem with the request.'
     end
   end
 
@@ -134,8 +141,8 @@ class MediaController < ApplicationController
     media_cache_tool = Settings.media_cache_tool
     range_request = Settings.range_request
 
-    # validate request parameters
-    metadata.check_request_parameters(original, current, media_info[:defaults])
+    # validate duration min and max defaults against request parameters
+    metadata.check_duration_defaults(audio_recording, current, media_info[:defaults])
 
     # get parameters for creating/retrieving cache
     generation_request = metadata.generation_request(original, current)
@@ -267,7 +274,7 @@ class MediaController < ApplicationController
                            info[:file_media_type],
                            info[:response_suggested_file_name])
     else
-      fail CustomErrors::UnprocessableEntityError, 'Unprocessable request'
+      fail CustomErrors::UnprocessableEntityError, 'There was a problem with the request.'
 
     end
 

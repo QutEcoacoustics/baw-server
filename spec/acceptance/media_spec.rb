@@ -219,7 +219,7 @@ resource 'Media' do
     standard_media_parameters
     let(:authentication_token) { writer_token }
     let(:format) { 'json' }
-    standard_request('MEDIA (as writer with shallow path)', 200,'common_parameters/start_offset', true)
+    standard_request('MEDIA (as writer with shallow path)', 200, 'common_parameters/start_offset', true)
   end
 
   get '/audio_recordings/:audio_recording_id/media.:format' do
@@ -347,7 +347,7 @@ resource 'Media' do
     end
   end
 
-  get '/audio_recordings/:audio_recording_id/media.:format?start_offset=1&end_offset=2&sample_rate=11025' do
+  get '/audio_recordings/:audio_recording_id/media.:format?start_offset=:start_offset&end_offset=:end_offset&sample_rate=:sample_rate' do
     standard_media_parameters
     let(:authentication_token) { reader_token }
     let(:format) { 'json' }
@@ -622,5 +622,119 @@ resource 'Media' do
 
     standard_request('CATALOGUE (as reader restricted to site)', 200, '0/count', true)
   end
+
+  #
+  # Ensure parameter checks are working
+  #
+
+  get '/audio_recordings/:audio_recording_id/media.:format?start_offset=:start_offset&end_offset=:end_offset' do
+    standard_media_parameters
+    let(:authentication_token) { reader_token }
+    let(:format) { 'json' }
+    let(:start_offset) { 'number' }
+    standard_request('MEDIA (as reader invalid start_offset)', 422,
+                     'meta/error/details', true, 'start_offset parameter must be a decimal number')
+  end
+
+  get '/audio_recordings/:audio_recording_id/media.:format?start_offset=:start_offset&end_offset=:end_offset' do
+    standard_media_parameters
+    let(:authentication_token) { reader_token }
+    let(:format) { 'json' }
+    let(:end_offset) { 'number' }
+    standard_request('MEDIA (as reader invalid end_offset)', 422,
+                     'meta/error/details', true, 'end_offset parameter must be a decimal number')
+  end
+
+  get '/audio_recordings/:audio_recording_id/media.:format?start_offset=:start_offset&end_offset=:end_offset' do
+    standard_media_parameters
+    let(:authentication_token) { reader_token }
+    let(:format) { 'json' }
+    let(:end_offset) { (audio_recording.duration_seconds + 1).to_s }
+    standard_request('MEDIA (as reader end_offset past original duration)', 422,
+                     'meta/error/details', true, 'smaller than or equal to the duration of the audio recording')
+  end
+
+  get '/audio_recordings/:audio_recording_id/media.:format?start_offset=:start_offset&end_offset=:end_offset' do
+    standard_media_parameters
+    let(:authentication_token) { reader_token }
+    let(:format) { 'json' }
+    let(:end_offset) { '0' }
+    standard_request('MEDIA (as reader end_offset too small)', 422,
+                     'meta/error/details', true, 'must be greater than 0.')
+  end
+
+  get '/audio_recordings/:audio_recording_id/media.:format?start_offset=:start_offset&end_offset=:end_offset' do
+    standard_media_parameters
+    let(:authentication_token) { reader_token }
+    let(:format) { 'json' }
+    let(:start_offset) { audio_recording.duration_seconds.to_s }
+    standard_request('MEDIA (as reader start_offset past original duration)', 422,
+                     'meta/error/details', true, 'smaller than the duration of the audio recording')
+  end
+
+  get '/audio_recordings/:audio_recording_id/media.:format?start_offset=:start_offset&end_offset=:end_offset' do
+    standard_media_parameters
+    let(:authentication_token) { reader_token }
+    let(:format) { 'json' }
+    let(:start_offset) { '-1' }
+    standard_request('MEDIA (as reader start_offset smaller than 0)', 422,
+                     'meta/error/details', true, 'greater than or equal to 0')
+  end
+
+  get '/audio_recordings/:audio_recording_id/media.:format?start_offset=:start_offset&end_offset=:end_offset' do
+    standard_media_parameters
+    let(:authentication_token) { reader_token }
+    let(:format) { 'json' }
+    let(:start_offset) { '9' }
+    let(:end_offset) { '8' }
+    standard_request('MEDIA (as reader start_offset larger than end_offset)', 422,
+                     'meta/error/details', true, 'smaller than end_offset')
+  end
+
+  get '/audio_recordings/:audio_recording_id/media.:format?start_offset=:start_offset&end_offset=:end_offset&window_size=:window_size' do
+    standard_media_parameters
+    let(:authentication_token) { reader_token }
+    let(:format) { 'json' }
+    let(:window_size) { 'number' }
+    standard_request('MEDIA (as reader invalid window_size)', 422,
+                     'meta/error/details', 'window_size parameter')
+  end
+
+  get '/audio_recordings/:audio_recording_id/media.:format?start_offset=:start_offset&end_offset=:end_offset&window_function=:window_function' do
+    standard_media_parameters
+    let(:authentication_token) { reader_token }
+    let(:format) { 'json' }
+    let(:window_function) { 'number' }
+    standard_request('MEDIA (as reader invalid window_function)', 422,
+                     'meta/error/details', 'window_function parameter')
+  end
+
+  get '/audio_recordings/:audio_recording_id/media.:format?start_offset=:start_offset&end_offset=:end_offset&sample_rate=:sample_rate' do
+    standard_media_parameters
+    let(:authentication_token) { reader_token }
+    let(:format) { 'json' }
+    let(:sample_rate) { '22' }
+    standard_request('MEDIA (as reader invalid sample_rate)', 422,
+                     'meta/error/details', 'sample_rate parameter')
+  end
+
+  get '/audio_recordings/:audio_recording_id/media.:format?start_offset=:start_offset&end_offset=:end_offset&channel=:channel' do
+    standard_media_parameters
+    let(:authentication_token) { reader_token }
+    let(:format) { 'json' }
+    let(:channel) { (audio_recording.channels + 1).to_s }
+    standard_request('MEDIA (as reader invalid channel)', 422,
+                     'meta/error/details', 'channel parameter')
+  end
+
+  get '/audio_recordings/:audio_recording_id/media.:format?start_offset=:start_offset&end_offset=:end_offset&colour=:colour' do
+    standard_media_parameters
+    let(:authentication_token) { reader_token }
+    let(:format) { 'json' }
+    let(:colour) { 'h' }
+    standard_request('MEDIA (as reader invalid colour)', 422,
+                     'meta/error/details', 'colour parameter')
+  end
+
 
 end

@@ -2,7 +2,7 @@ class MediaResponseMetadata
 
   public
 
-  OFFSET_REGEXP = /^\d+(\.\d{1,3})?$/ # passes '111', '11.123'
+  OFFSET_REGEXP = /^-?(\d+\.)?\d+$/ # accepts '111', '11.123', not '.11'
 
   def initialize(media_cache_tool, default_audio, default_spectrogram)
     @media_cache_tool = media_cache_tool
@@ -68,12 +68,9 @@ class MediaResponseMetadata
   end
 
   def valid_options(audio_recording, available_formats)
-
-    sox = @media_cache_tool.audio.audio_sox
-
     {
         # all formats, even wav, must adhere to this list
-        valid_sample_rates: [8000, 11025, 12000, 16000, 22050, 24000, 32000, 44100, 48000],
+        valid_sample_rates: valid_sample_rates,
         channels: [*0..audio_recording.channels],
         #statuses: AudioRecording::AVAILABLE_STATUSES,
         audio: {
@@ -100,7 +97,7 @@ class MediaResponseMetadata
   def available_request_details(audio_recording, current, modified_params, available_formats)
     audio_keys = [] #[:start_offset, :end_offset, :audio_event_id, :channel, :sample_rate]
     image_keys = #[:start_offset, :end_offset, :audio_event_id, :channel, :sample_rate,
-                  [:window_size, :window_function, :colour, :ppms]
+        [:window_size, :window_function, :colour, :ppms]
     text_keys = []
 
     {
@@ -160,30 +157,15 @@ class MediaResponseMetadata
     details
   end
 
-  # Check request parameters.
-  # @param [Hash] original
+  # Check offset parameters against min and max duration defaults.
+  # @param [AduioRecording] audio_recording
   # @param [Hash] current
   # @param [Hash] request_defaults
-  def check_request_parameters(original, current, request_defaults)
-    # check start and end offset formatting first
-    start_offset_s = current[:start_offset].to_s
-    end_offset_s = current[:end_offset].to_s
-
-    unless start_offset_s=~OFFSET_REGEXP
-      msg = "start_offset parameter (#{start_offset_s}) must be a decimal number indicating seconds (maximum precision milliseconds, e.g., 1.234)"
-      fail CustomErrors::UnprocessableEntityError, msg
-    end
-
-    unless end_offset_s=~OFFSET_REGEXP
-      msg = "end_offset parameter (#{end_offset_s}) must be a decimal number indicating seconds (maximum precision milliseconds, e.g., 1.234)"
-
-      fail CustomErrors::UnprocessableEntityError, msg
-    end
-
-    start_offset = start_offset_s.to_f
-    end_offset = end_offset_s.to_f
+  def check_duration_defaults(audio_recording, current, request_defaults)
+    start_offset = current[:start_offset].to_f
+    end_offset = current[:end_offset].to_f
     requested_duration = end_offset - start_offset
-    original_duration = original[:duration_seconds]
+    original_duration = audio_recording.duration_seconds
     max_duration = request_defaults.max_duration_seconds.to_f
     min_duration = request_defaults.min_duration_seconds.to_f
 
@@ -197,29 +179,99 @@ class MediaResponseMetadata
       msg = "Requested duration #{requested_duration} (#{start_offset} to #{end_offset}) is less than minimum (#{min_duration})."
       fail BawAudioTools::Exceptions::SegmentRequestTooLong, msg
     end
+  end
 
-    if end_offset > original_duration
-      msg = "end_offset parameter (#{end_offset}) must be smaller than or equal to the duration of the audio recording (#{original_duration})."
+  # Check common request parameters.
+  # @param [AudioRecording] audio_recording
+  # @param [ActionDispatch::Request] request_params
+  def check_request_parameters(audio_recording, request_params)
+
+    original_duration = audio_recording.duration_seconds
+
+    # offsets
+    start_offset = nil
+    end_offset = nil
+    if request_params.include?(:start_offset)
+      start_offset_s = request_params[:start_offset].to_s
+      start_offset = start_offset_s.to_f
+
+      unless OFFSET_REGEXP === start_offset_s
+        msg = "start_offset parameter must be a decimal number indicating seconds (maximum precision milliseconds, e.g., 1.234) (#{start_offset_s})"
+        fail CustomErrors::UnprocessableEntityError, msg
+      end
+
+      if start_offset >= original_duration
+        msg = "start_offset parameter (#{start_offset}) must be smaller than the duration of the audio recording (#{original_duration})."
+        fail CustomErrors::UnprocessableEntityError, msg
+      end
+
+      if start_offset < 0
+        msg = "start_offset parameter (#{start_offset}) must be greater than or equal to 0."
+        fail CustomErrors::UnprocessableEntityError, msg
+      end
+    end
+
+    if request_params.include?(:end_offset)
+      end_offset_s = request_params[:end_offset].to_s
+      end_offset = end_offset_s.to_f
+
+      unless OFFSET_REGEXP === end_offset_s
+        msg = "end_offset parameter must be a decimal number indicating seconds (maximum precision milliseconds, e.g., 1.234) (#{end_offset_s})"
+        fail CustomErrors::UnprocessableEntityError, msg
+      end
+
+      if end_offset > original_duration
+        msg = "end_offset parameter (#{end_offset}) must be smaller than or equal to the duration of the audio recording (#{original_duration})."
+        fail CustomErrors::UnprocessableEntityError, msg
+      end
+
+      if end_offset <= 0
+        msg = "end_offset parameter (#{end_offset}) must be greater than 0."
+        fail CustomErrors::UnprocessableEntityError, msg
+      end
+    end
+
+    if request_params.include?(:start_offset) && request_params.include?(:end_offset)
+      if start_offset >= end_offset
+        msg = "start_offset parameter (#{start_offset}) must be smaller than end_offset (#{end_offset})."
+        fail CustomErrors::UnprocessableEntityError, msg
+      end
+    end
+
+    # don't need to check overall duration - one of the start/end offset checks will pick it up?
+    # if requested_duration > original_duration
+    #   msg = "Requested duration #{requested_duration} (#{start_offset} to #{end_offset}) is greater than audio recording duration (#{original_duration})."
+    #   fail BawAudioTools::Exceptions::SegmentRequestTooLong, msg
+    # end
+
+    # check window size
+    if request_params.include?(:window_size) && !sox.window_options.include?(request_params[:window_size].to_i)
+      msg = "window_size parameter (#{request_params[:window_size]}) must be valid (#{sox.window_options})."
       fail CustomErrors::UnprocessableEntityError, msg
     end
 
-    if end_offset <= 0
-      msg = "end_offset parameter (#{end_offset}) must be greater than 0."
+    # check window function
+    if request_params.include?(:window_function) && !sox.window_function_options.include?(request_params[:window_function])
+      msg = "window_function parameter (#{request_params[:window_function]}) must be valid (#{sox.window_function_options})."
       fail CustomErrors::UnprocessableEntityError, msg
     end
 
-    if start_offset >= original_duration
-      msg = "start_offset parameter (#{start_offset}) must be smaller than the duration of the audio recording (#{original_duration})."
+    # check sample rate
+    if request_params.include?(:sample_rate) && !valid_sample_rates.include?(request_params[:sample_rate].to_i)
+      msg = "sample_rate parameter (#{request_params[:sample_rate]}) must be valid (#{valid_sample_rates})."
       fail CustomErrors::UnprocessableEntityError, msg
     end
 
-    if start_offset < 0
-      msg = "start_offset parameter (#{start_offset}) must be greater than or equal to 0."
+    # check channel
+    valid_channels = [*0..audio_recording.channels]
+    if request_params.include?(:channel) && !valid_channels.include?(request_params[:channel].to_i)
+      msg = "channel parameter (#{request_params[:channel]}) must be valid (#{valid_channels})."
       fail CustomErrors::UnprocessableEntityError, msg
     end
 
-    if start_offset >= end_offset
-      msg = "start_offset parameter (#{start_offset}) must be smaller than end_offset (#{end_offset})."
+    # check colour
+    if request_params.include?(:colour) && !sox.colour_options.keys.include?(request_params[:colour].to_sym)
+      msg = "colour parameter (#{request_params[:colour]}) must be valid (#{sox.colour_options})."
       fail CustomErrors::UnprocessableEntityError, msg
     end
   end
@@ -263,6 +315,16 @@ class MediaResponseMetadata
       param_value = default_value
     end
     param_value
+  end
+
+  def valid_sample_rates
+    audio = @media_cache_tool.audio
+    audio.valid_sample_rates
+  end
+
+  def sox
+    audio = @media_cache_tool.audio
+    audio.audio_sox
   end
 
 end

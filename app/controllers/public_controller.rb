@@ -116,7 +116,7 @@ class PublicController < ApplicationController
             project = Project.where(id: params[:projectId]).first
 
             if project.blank?
-              fail ActiveRecord::RecordNotFound, 'Project not found from audio_recording_catalogue'
+              fail CustomErrors::ItemNotFoundError, 'Project not found from audio_recording_catalogue'
             end
 
             if current_user.blank? || !current_user.can_read?(project)
@@ -128,7 +128,7 @@ class PublicController < ApplicationController
             site = Site.where(id: params[:siteId]).first
 
             if site.blank?
-              fail ActiveRecord::RecordNotFound, 'Site not found from audio_recording_catalogue'
+              fail CustomErrors::ItemNotFoundError, 'Site not found from audio_recording_catalogue'
             end
 
             projects = Site.where(id: params[:siteId]).first.projects
