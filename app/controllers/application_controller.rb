@@ -121,8 +121,8 @@ class ApplicationController < ActionController::Base
     end
 
     unless has_any_permission
-    msg = "Permission denied to audio event (#{audio_event.id})"+
-        'and it is not a marked as reference.'
+      msg = "Permission denied to audio event (#{audio_event.id})"+
+          'and it is not a marked as reference.'
       fail CanCan::AccessDenied, msg
     end
 
@@ -170,12 +170,13 @@ class ApplicationController < ActionController::Base
     json_response
   end
 
-  def render_error(status_symbol, detail_message, error, method_name, links_object = nil, template = nil, error_info = nil)
+  def render_error(status_symbol, detail_message, error, method_name, options = {})
+    options = {redirect: false, links_object: nil, error_info: nil}.merge(options)
 
-    json_response = create_json_error_response(status_symbol, detail_message, links_object)
+    json_response = create_json_error_response(status_symbol, detail_message, options[:links_object])
 
-    unless error_info.blank?
-      json_response.meta.error.merge!(error_info)
+    unless options[:error_info].blank?
+      json_response.meta.error.merge!(options[:error_info])
     end
 
     # method_name = __method__
@@ -184,11 +185,15 @@ class ApplicationController < ActionController::Base
 
     respond_to do |format|
       format.html {
-        default_template = 'errors/generic'
-        if template.blank?
-          redirect_to get_redirect, alert: detail_message
+
+        status_code = Rack::Utils::SYMBOL_TO_STATUS_CODE[status_symbol]
+        status_message = Rack::Utils::HTTP_STATUS_CODES[status_code].humanize
+
+        if options[:redirect]
+          redirect_to get_redirect, alert: "#{status_message}: #{detail_message}"
         else
-          render template: template, status: status_symbol
+          @details = {code: status_code, phrase: status_message, message: detail_message}
+          render template: 'errors/generic', status: status_symbol
         end
       }
       format.json { render json: json_response, status: status_symbol }
@@ -217,9 +222,7 @@ class ApplicationController < ActionController::Base
         :not_found,
         'Could not find the requested item.',
         error,
-        'record_not_found_error',
-        nil,
-        'errors/record_not_found'
+        'record_not_found_error'
     )
   end
 
@@ -229,9 +232,7 @@ class ApplicationController < ActionController::Base
         :not_found,
         'Could not find the requested item.',
         error,
-        'resource_not_found_error',
-        nil,
-        'errors/record_not_found'
+        'resource_not_found_error'
     )
   end
 
@@ -242,9 +243,7 @@ class ApplicationController < ActionController::Base
         :conflict,
         'The item must be unique.',
         error,
-        'record_not_unique_error',
-        nil,
-        'errors/generic'
+        'record_not_unique_error'
     )
   end
 
@@ -258,9 +257,7 @@ class ApplicationController < ActionController::Base
         'The format of the request is not supported.',
         error,
         'unsupported_media_type_error',
-        nil,
-        'errors/generic',
-        {available_formats: error.available_formats_info}
+        error_info: {available_formats: error.available_formats_info}
     )
   end
 
@@ -275,9 +272,7 @@ class ApplicationController < ActionController::Base
         'None of the acceptable response formats are available.',
         error,
         'not_acceptable_error',
-        nil,
-        'errors/generic',
-        {available_formats: error.available_formats_info}
+        error_info: {available_formats: error.available_formats_info}
     )
   end
 
@@ -286,9 +281,7 @@ class ApplicationController < ActionController::Base
         :unprocessable_entity,
         'The request could not be understood.',
         error,
-        'unsupported_media_type',
-        nil,
-        'errors/generic'
+        'unsupported_media_type'
     )
   end
 
@@ -298,22 +291,38 @@ class ApplicationController < ActionController::Base
     render_error(
         :bad_request,
         'The request was not valid.',
-        error.message,
+        error,
         'bad_request',
-        nil,
-        'errors/generic'
     )
   end
 
   def access_denied_response(error)
     if current_user && current_user.confirmed?
-      render_error(:forbidden, I18n.t('devise.failure.unauthorized'), error, 'access_denied - forbidden', [:permissions])
+      render_error(
+          :forbidden,
+          I18n.t('devise.failure.unauthorized'),
+          error,
+          'access_denied - forbidden',
+          redirect: true,
+          links_object: [:permissions])
 
     elsif current_user && !current_user.confirmed?
-      render_error(:forbidden, I18n.t('devise.failure.unconfirmed'), error, 'access_denied - unconfirmed', [:confirm])
+      render_error(
+          :forbidden,
+          I18n.t('devise.failure.unconfirmed'),
+          error,
+          'access_denied - unconfirmed',
+          redirect: true,
+          links_object: [:confirm])
 
     else
-      render_error(:unauthorized, I18n.t('devise.failure.unauthenticated'), error, 'access_denied - unauthorised', [:sign_in, :confirm])
+      render_error(
+          :unauthorized,
+          I18n.t('devise.failure.unauthenticated'),
+          error,
+          'access_denied - unauthorised',
+          redirect: true,
+          links_object: [:sign_in, :confirm])
 
     end
   end
@@ -325,8 +334,7 @@ class ApplicationController < ActionController::Base
         'Could not find the requested page.',
         error,
         'routing_argument_missing',
-        nil,
-        'errors/routing'
+        error_info: {original_route: request.env['PATH_INFO']}
     )
   end
 

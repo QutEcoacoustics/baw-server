@@ -14,9 +14,7 @@ class ErrorsController < ApplicationController
         'Could not find the requested page.',
         nil,
         'route_error',
-        nil,
-        'errors/routing',
-        {original_route: params[:requested_route]}
+        error_info: {original_route: params[:requested_route]}
     )
 
   end
@@ -46,10 +44,7 @@ class ErrorsController < ApplicationController
         rescue_response,
         detail_message,
         error,
-        'uncaught_error',
-        nil,
-        'errors/generic'
-        #{ error_name: error_name, error_message: error_message }
+        'uncaught_error'
     )
 
     # I18n.with_options scope: [:exception, :show, rescue_response], exception_name: error.class.name, exception_message: error.message do |i18n|

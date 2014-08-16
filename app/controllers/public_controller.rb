@@ -303,22 +303,25 @@ EXTRACT(DAY FROM recorded_date) as extracted_day')
   def test_exceptions
     if ENV['RAILS_ENV'] == 'test'
       if params.include?(:exception_class)
-        # Purposeful exception raised for testing.
-        error_class = params[:exception_class].constantize
+        msg = 'Purposeful exception raised for testing.'
+        error_class_string = params[:exception_class]
+        error_class = error_class_string.constantize
 
-        arity = error_class.method(:initialize).arity
+        case error_class_string
+          when 'ActiveResource::BadRequest'
+            fail error_class.new(response)
 
-        case arity
-          when -1
-            fail error_class
-          when 0
-            fail error_class
-          when 1
-            fail error_class('testing1')
-          when 2
-            fail error_class('testing1', 'testing2')
+          when 'ActiveRecord::RecordNotUnique'
+            fail error_class.new(msg, nil)
+
+          when 'CustomErrors::UnsupportedMediaTypeError',
+              'ActiveResource::BadRequest',
+              'CustomErrors::NotAcceptableError',
+              'CustomErrors::RoutingArgumentError'
+            fail error_class.new(msg)
+
           else
-            fail ArgumentError, "Could not raise exception for testing: #{error_class.inspect}"
+            fail error_class
         end
 
       end
