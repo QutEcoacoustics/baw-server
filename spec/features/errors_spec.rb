@@ -93,7 +93,7 @@ describe 'checking reactions to errors' do
       visit '/test_exceptions?exception_class=CanCan::AccessDenied'
       expect(current_path).to eq('/')
       expect(page).to have_content('You need to sign in or sign up before continuing')
-      expect(page).to have_content('Bioacoustic Workbench Welcome!')
+      expect(page).to have_content('Unauthorized')
     end
 
     it 'displays the correct page on custom routing error' do
