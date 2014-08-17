@@ -25,9 +25,10 @@ GIT
 
 GIT
   remote: https://github.com/seyhunak/twitter-bootstrap-rails.git
-  revision: a50313904c61a02473b9ba5359dc4e32d50c23bf
+  revision: 38476dbd7f9a99179388bffb101826d844029949
+  ref: 38476dbd7f
   specs:
-    twitter-bootstrap-rails (3.2.0)
+    twitter-bootstrap-rails (2.2.8)
       actionpack (>= 3.1)
       execjs
       rails (>= 3.1)
@@ -128,9 +129,9 @@ GEM
     codeclimate-test-reporter (0.4.0)
       simplecov (>= 0.7.1, < 1.0.0)
     coderay (1.1.0)
-    coffee-rails (3.2.1)
+    coffee-rails (3.2.2)
       coffee-script (>= 2.2.0)
-      railties (~> 3.2.0.beta)
+      railties (~> 3.2.0)
     coffee-script (2.3.0)
       coffee-script-source
       execjs
@@ -231,7 +232,7 @@ GEM
       mime-types
     pg (0.17.1)
     polyglot (0.3.5)
-    pry (0.10.0)
+    pry (0.10.1)
       coderay (~> 1.1.0)
       method_source (~> 0.8.1)
       slop (~> 3.4)

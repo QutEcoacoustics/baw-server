@@ -30,7 +30,10 @@ gem 'gmaps4rails', '~> 1.5.6'
 
 # https://github.com/seyhunak/twitter-bootstrap-rails
 # huge changes since last release (2.2.8 in Aug 2013), and not sure about rails 3.2 vs 4 support.
-gem 'twitter-bootstrap-rails', git: 'https://github.com/seyhunak/twitter-bootstrap-rails.git'
+# used these commands to get lists of commits, then compared the commits to find the most recent matching commit
+# git grep --full-name --name-only 'bootstrap-affix.js v2.3.2' $(git rev-list --all) > tbsr-2.3.2-find.txt
+# git grep --full-name --name-only '.fa-play' $(git rev-list --all) > font-awesome-find.txt
+gem 'twitter-bootstrap-rails', git: 'https://github.com/seyhunak/twitter-bootstrap-rails.git', ref: '38476dbd7f'
 
 gem 'bootstrap-timepicker-rails', '~> 0.1.3'
 gem 'bootstrap-datepicker-rails', '~> 1.3.0.2'
