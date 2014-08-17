@@ -9,7 +9,7 @@ Gem::Specification.new do |spec|
   spec.authors       = ['Mark Cottman-Fields']
   spec.email         = ['qut.bioacoustics.research+mark@gmail.com']
   spec.summary       = %q{Bioacoustics Workbench workers}
-  spec.description   = %q{Workers that can process various long-running or intensive tasks.}
+  spec.description   = %q{Workers that can process various asynchronous long-running or intensive tasks.}
   spec.homepage      = 'https://github.com/QutBioacoustics/baw-workers'
   spec.license       = 'MIT'
 
@@ -33,6 +33,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'zonebie'
   spec.add_development_dependency 'i18n'
   spec.add_development_dependency 'tzinfo', '~> 1.2.2'
+  spec.add_development_dependency 'fakeredis'
 
   # runtime dependencies
   spec.add_runtime_dependency 'daemons'

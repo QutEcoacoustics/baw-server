@@ -34,12 +34,16 @@ end
 # start code coverage
 SimpleCov.start
 
-require 'active_support/all'
 require 'zonebie'
-require 'baw-audio-tools'
 require 'baw-workers'
+require 'fakeredis'
 
-require File.dirname(__FILE__) + '/baw-workers/shared_context'
+# include shared_context
+Dir[File.join(File.dirname(__FILE__), 'support', '**', '*.rb')].each {|file| require file }
+
+# include rake tasks
+require 'rake'
+Dir[File.join(File.dirname(__FILE__), '..', 'lib', 'tasks', '*.rb')].each { |file| require file }
 
 RSpec.configure do |config|
   config.run_all_when_everything_filtered = true
@@ -57,33 +61,56 @@ RSpec.configure do |config|
 
   config.profile_examples = 20
 
-  # redirect puts into a text file
-  original_stderr = $stderr
-  original_stdout = $stdout
-
   Zonebie.set_random_timezone
 
+  # redirect puts into a text file
+  original_stderr = STDERR.clone
+  original_stdout = STDOUT.clone
+
+  # provide access to tmp dir and stdout and stderr files
+  config.add_setting :tmp_dir
+  config.tmp_dir = File.expand_path(File.join(File.dirname(__FILE__), '..', 'tmp'))
+
+  config.add_setting :default_settings_path
+  config.default_settings_path = File.expand_path(File.join(File.dirname(__FILE__), '..', 'lib', 'settings.default.yml'))
+
+  config.add_setting :rspec_stdout_path
+  config.rspec_stdout_path = File.join(config.tmp_dir, 'rspec_stdout.txt')
+
+  config.add_setting :rspec_stderr_path
+  config.rspec_stderr_path = File.join(config.tmp_dir, 'rspec_stderr.txt')
+
+  config.add_setting :resque_stdout_path
+  config.resque_stdout_path = File.join(config.tmp_dir, 'resque_worker.log')
+
+  config.add_setting :resque_stderr_path
+  config.resque_stderr_path = File.join(config.tmp_dir, 'resque_worker_error.log')
+
   config.before(:suite) do
+    FileUtils.mkpath(config.tmp_dir)
+  end
+
+  config.before(:each) do
     # Redirect stderr and stdout
-    dir = File.expand_path(File.join(File.dirname(__FILE__), '..', 'tmp'))
-    FileUtils.mkpath(dir)
-    $stderr = File.new(File.join(dir, 'rspec_stderr.txt'), 'w')
-    $stdout = File.new(File.join(dir, 'rspec_stdout.txt'), 'w')
-
-    # create directories
-    FileUtils.mkpath(File.expand_path(File.join(dir, '_harvester_to_do')))
+    STDERR.reopen(config.rspec_stderr_path, 'w+')
+    STDERR.sync = true
+    STDOUT.reopen(config.rspec_stdout_path, 'w+')
+    STDOUT.sync = true
   end
 
-  config.after(:suite) do
-    $stderr = original_stderr
-    $stdout = original_stdout
+  config.after(:each) do
+    # Redirect stderr and stdout
+    STDERR.reopen(original_stderr)
+    STDOUT.reopen(original_stdout)
+
+    FileUtils.rm config.rspec_stderr_path if File.exists? config.rspec_stderr_path
+    FileUtils.rm config.rspec_stdout_path if File.exists? config.rspec_stdout_path
+
+    FileUtils.rm config.resque_stderr_path if File.exists? config.resque_stderr_path
+    FileUtils.rm config.resque_stdout_path if File.exists? config.resque_stdout_path
   end
 
-  # for settings when running tests. In normal use, Settings are used from the parent ruby project,
-  # or created when run from the Rakefile.
-  class Settings < Settingslogic
-    source File.join(File.dirname(__FILE__), '..', 'lib', 'baw-workers', 'settings', 'settings.test.yml')
-    namespace 'settings'
-  end
+  # setting the source file here means the rake task cannot change it
+  Settings.set_source(config.default_settings_path)
 
 end

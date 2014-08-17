@@ -1,20 +1,51 @@
 module BawWorkers
+  # Media Action for cutting audio files and generating spectrograms.
   class MediaAction
 
+    # Get the queue for this action. Used by `resque`.
+    # @return [Symbol] The queue.
     def self.queue
-      Settings.resque.media_request_queue.map { |queue| queue.to_sym }
+      :media
     end
 
-    def self.perform(media_request_type, modify_parameters)
-      # queue and paths should match e.g. Settings.resque.queue_prefix = production
-      # Settings.paths.original_audios = /production/original_audio
-      @media_cacher = BawAudioTools::MediaCacher.new(Settings.paths.temp_files)
+    # Enqueue a media processing request.
+    # @param [Symbol] media_type
+    # @param [Hash] media_request_params
+    def self.enqueue(media_type, media_request_params)
+      validate(media_type, media_request_params)
+      Resque.enqueue(MediaAction, media_type, media_request_params)
+    end
 
-      if media_request_type == 'cache_audio'
-        @media_cacher.create_audio_segment(modify_parameters)
-      elsif media_request_type == 'cache_spectrogram'
-        @media_cacher.generate_spectrogram(modify_parameters)
+    # Get the available media types this action can create.
+    # @return [Symbol] The available media types.
+    def self.valid_media_types
+      [:audio, :spectrogram]
+    end
+
+    # Create specified media type by applying media request params. Used by `resque`.
+    # @param [Symbol] media_type
+    # @param [Hash] media_request_params
+    def self.perform(media_type, media_request_params)
+      validate(media_type, media_request_params)
+
+      media_cache_tool = Settings.media_cache_tool
+
+      target_existing_paths = []
+
+      if media_type == :audio
+        target_existing_paths = media_cache_tool.create_audio_segment(media_request_params)
+      elsif media_type == :spectrogram
+        target_existing_paths = media_cache_tool.generate_spectrogram(media_request_params)
       end
+
+      target_existing_paths
+    end
+
+    private
+
+    def self.validate(media_type, media_request_params)
+      fail ArgumentError, "Media type (#{media_type.inspect}) was not valid (#{valid_media_types})." unless valid_media_types.include?(media_type)
+      fail ArgumentError, "Media request params was not a hash (#{media_request_params.inspect})" unless media_request_params.is_a?(Hash)
     end
 
   end
