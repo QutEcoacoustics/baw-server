@@ -8,7 +8,7 @@ shared_context 'media_file' do
   let(:audio_file_mono_channels) { 1 }
   let(:audio_file_mono_duration_seconds) { 70 }
 
-  let(:media_cache_tool) { Settings.media_cache_tool }
+  let(:media_cache_tool) { BawWorkers::Settings.media_cache_tool }
 
   def create_original_audio(media_cache_tool, options, example_file_name)
     original_file_names = media_cache_tool.original_audio_file_names(options)

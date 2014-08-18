@@ -32,7 +32,7 @@ module BawWorkers
     # @param [Hash] media_request_params
     def self.perform(media_type, media_request_params)
       validate(media_type, media_request_params)
-      media_cache_tool = Settings.media_cache_tool
+      media_cache_tool = BawWorkers::Settings.media_cache_tool
       target_existing_paths = []
       if media_type == :audio
         target_existing_paths = media_cache_tool.create_audio_segment(media_request_params)

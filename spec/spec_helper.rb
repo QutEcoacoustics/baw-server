@@ -102,6 +102,13 @@ RSpec.configure do |config|
   end
 
   # setting the source file here means the rake task cannot change it
-  Settings.set_source(config.default_settings_path)
+  BawWorkers::Settings.set_source(config.default_settings_path)
+
+  unless defined? Settings
+    class Settings < BawWorkers::Settings
+      source BawWorkers::Settings.source
+      namespace 'settings'
+    end
+  end
 
 end
