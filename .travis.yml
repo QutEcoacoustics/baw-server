@@ -12,9 +12,9 @@ before_install:
   - sudo apt-get update -qq
   - sudo apt-get -y install imagemagick wavpack libsox-fmt-all sox shntool mp3splt libav-tools --fix-missing
   - mkdir tmp
-  - wget http://ffmpeg.gusari.org/static/64bit/ffmpeg.static.64bit.latest.tar.gz
-  - tar xvzf ffmpeg.static.64bit.latest.tar.gz
-  - rm ffmpeg.static.64bit.latest.tar.gz
+  - wget https://github.com/QutBioacoustics/baw-audio-tools/releases/download/v0.1.0/ffmpeg-git-20140817-64bit-static.tar.gz
+  - tar xvzf ffmpeg-git-20140817-64bit-static.tar.gz
+  - rm ffmpeg-git-20140817-64bit-static.tar.gz
   - sudo mv ffmpeg /usr/local/bin
   - sudo mv ffprobe /usr/local/bin
   - echo "...testing for audio tools..."
