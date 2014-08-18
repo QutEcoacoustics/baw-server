@@ -1,8 +1,9 @@
 module BawWorkers
+  # Runs checks on original audio recording files.
   class AudioFileCheckAction
 
     def self.queue
-      Settings.resque.media_request_queue.map { |queue| queue.to_sym }
+      BawWorkers::Settings.resque.media_request_queue.map { |queue| queue.to_sym }
     end
 
     # Perform action. Use audio_recordings.to_a.map(&:serializable_hash). Add 'original_extension'.
@@ -16,12 +17,14 @@ module BawWorkers
       data_length_bytes = audio_recording_hash['data_length_bytes']
       duration_seconds = audio_recording_hash['duration_seconds']
 
-      @media_cacher = BawAudioTools::MediaCacher.new(Settings.paths.temp_files)
+      @media_cacher = BawAudioTools::MediaCacher.new(BawWorkers::Settings.paths.temp_files)
+      cache = @media_cacher
+      original_audio = cache.original_audio
 
-      original_file_name = @media_cacher.cache.original_audio.file_name_utc(uuid, recorded_date, extension)
+      original_file_name = original_audio.file_name_utc(uuid, recorded_date, extension)
 
-      possible_storage_paths = @media_cacher.cache.existing_storage_paths(@media_cacher.cache.original_audio, original_file_name)
-      existing_storage_paths = @media_cacher.cache.existing_storage_paths(@media_cacher.cache.original_audio, original_file_name)
+      possible_storage_paths = cache.possible_storage_paths(original_audio, original_file_name)
+      existing_storage_paths = cache.existing_storage_paths(original_audio, original_file_name)
 
       if existing_storage_paths.blank?
         msg = "Could not find original audio file #{original_file_name} in #{possible_storage_paths}."
@@ -29,7 +32,7 @@ module BawWorkers
       end
 
       existing_storage_paths.each do |file_full_path|
-        file_info = @media_cacher.audio.info(file_full_path)
+        file_info = cache.audio.info(file_full_path)
         # TODO: compare file info with stored info, any differences should be updated in database?
       end
 

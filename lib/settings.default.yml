@@ -6,8 +6,8 @@ settings:
     log_level: 1 # Severity::INFO
     polling_interval_seconds: 5
     background_pid_file: ./tmp/resque_worker.pid
-    output_log_file: ./tmp/resque_worker.log
-    error_log_file: ./tmp/resque_worker_error.log
+    output_log_file: ./tmp/program_stdout.log
+    error_log_file: ./tmp/program_stderr.log
     queues:
       media: media_default
   paths:
