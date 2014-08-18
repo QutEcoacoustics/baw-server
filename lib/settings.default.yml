@@ -8,6 +8,8 @@ settings:
     background_pid_file: ./tmp/resque_worker.pid
     output_log_file: ./tmp/resque_worker.log
     error_log_file: ./tmp/resque_worker_error.log
+    queues:
+      media: media_default
   paths:
     original_audios:
       - ./tmp/_original_audio

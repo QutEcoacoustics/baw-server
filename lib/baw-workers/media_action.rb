@@ -5,7 +5,7 @@ module BawWorkers
     # Get the queue for this action. Used by `resque`.
     # @return [Symbol] The queue.
     def self.queue
-      :media
+      "#{BawWorkers::Settings.resque.queues.media}_media"
     end
 
     # Enqueue a media processing request.
