@@ -315,16 +315,17 @@ class MediaController < ApplicationController
   end
 
   def response_resque_spectrogram(generation_request)
-    response_resque_enqueue('cache_spectrogram', generation_request)
+    response_resque_enqueue(:spectrogram, generation_request)
   end
 
   def response_resque_audio(generation_request)
-    response_resque_enqueue('cache_audio', generation_request)
+    response_resque_enqueue(:audio, generation_request)
   end
 
   def response_resque_enqueue(media_request_type, options)
-    Resque.enqueue(BawWorkers::MediaAction, media_request_type, options)
-    headers['Retry-After'] = Time.zone.now.advance(seconds: 10).httpdate
+    BawWorkers::MediaAction.enqueue(media_request_type, options)
+    #Resque.enqueue(BawWorkers::MediaAction, media_request_type, options)
+    headers['Retry-After'] = Time.zone.now.advance(seconds: 5).httpdate
     head :accepted, content_type: 'text/plain'
   end
 

@@ -70,7 +70,7 @@ class Settings < Settingslogic
           mime_type = Mime::Type.lookup_by_extension(ext)
           @media_types[media_category].push mime_type unless mime_type.blank?
         end
-        @media_types[media_category].sort { |a, b| a.to_s <=> b.to_s }
+        #@media_types[media_category].sort { |a, b| a.to_s <=> b.to_s }
       end
     end
 
