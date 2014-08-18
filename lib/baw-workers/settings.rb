@@ -1,5 +1,5 @@
 require 'settingslogic'
-
+# Provides access to settings from yaml file.
 class Settings < Settingslogic
   namespace 'settings'
 

@@ -2,6 +2,11 @@ module BawWorkers
   # Media Action for cutting audio files and generating spectrograms.
   class MediaAction
 
+    # ensure that there is only one job with the same payload per queue.
+    # The default method to create a job ID from these parameters is to
+    # do some normalization on the payload and then md5'ing it
+    include Resque::Plugins::UniqueJob
+
     # Get the queue for this action. Used by `resque`.
     # @return [Symbol] The queue.
     def self.queue
@@ -27,11 +32,8 @@ module BawWorkers
     # @param [Hash] media_request_params
     def self.perform(media_type, media_request_params)
       validate(media_type, media_request_params)
-
       media_cache_tool = Settings.media_cache_tool
-
       target_existing_paths = []
-
       if media_type == :audio
         target_existing_paths = media_cache_tool.create_audio_segment(media_request_params)
       elsif media_type == :spectrogram

@@ -9,6 +9,55 @@ describe BawWorkers::MediaAction do
     FileUtils.rm_r media_cache_tool.cache.cache_spectrogram.storage_paths.first if Dir.exists? media_cache_tool.cache.cache_spectrogram.storage_paths.first
   end
 
+  context 'queues' do
+
+    let(:test_media_request_params) { {testing: :testing} }
+    let(:expected_payload) {
+      {
+          'class' => 'BawWorkers::MediaAction',
+          'args' => ['audio', {'testing' => 'testing'}]
+      }
+    }
+
+    it 'works on the media queue' do
+      expect(Resque.queue_from_class(BawWorkers::MediaAction)).to eq(:media)
+    end
+
+    it 'can enqueue' do
+      result = BawWorkers::MediaAction.enqueue(:audio, test_media_request_params)
+      expect(Resque.size(:media)).to eq(1)
+
+      actual = Resque.peek(:media)
+      expect(actual).to include(expected_payload)
+    end
+
+    it 'does not enqueue the same payload into the same queue more than once' do
+      result1 = BawWorkers::MediaAction.enqueue(:audio, test_media_request_params)
+      expect(Resque.size(:media)).to eq(1)
+      expect(result1).to eq(true)
+      expect(Resque.enqueued?(BawWorkers::MediaAction, :audio, test_media_request_params)).to eq(true)
+
+      result2 = BawWorkers::MediaAction.enqueue(:audio, test_media_request_params)
+      expect(Resque.size(:media)).to eq(1)
+      expect(result2).to eq(true)
+      expect(Resque.enqueued?(BawWorkers::MediaAction, :audio, test_media_request_params)).to eq(true)
+
+      result3 = BawWorkers::MediaAction.enqueue(:audio, test_media_request_params)
+      expect(Resque.size(:media)).to eq(1)
+      expect(result3).to eq(true)
+      expect(Resque.enqueued?(BawWorkers::MediaAction, :audio, test_media_request_params)).to eq(true)
+
+      actual = Resque.peek(:media)
+      expect(actual).to include(expected_payload)
+      expect(Resque.size(:media)).to eq(1)
+
+      popped = Resque.pop(:media)
+      expect(popped).to include(expected_payload)
+      expect(Resque.size(:media)).to eq(0)
+    end
+
+  end
+
   context 'should execute perform method' do
 
     it 'raises error when params is not a hash' do

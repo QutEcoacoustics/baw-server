@@ -12,9 +12,9 @@ namespace :baw_workers do
     if Settings.resque.background_pid_file.blank?
       puts '===> Running in foreground.'
     else
-      STDOUT.reopen(Settings.resque.output_log_file, 'w+')
+      STDOUT.reopen(File.open(Settings.resque.output_log_file, 'w+'))
       STDOUT.sync = true
-      STDERR.reopen(Settings.resque.error_log_file, 'w+')
+      STDERR.reopen(File.open(Settings.resque.error_log_file, 'w+'))
       STDERR.sync = true
 
       puts "===> Running in background with pid file #{Settings.resque.background_pid_file}."
@@ -29,6 +29,8 @@ namespace :baw_workers do
     log_level = Settings.resque.log_level
     puts "===> Log level: #{log_level}."
     Resque.logger.level = log_level
+    ENV['VERBOSE '] = '1'
+    ENV['VVERBOSE '] = '1'
 
     puts "===> Polling every #{Settings.resque.polling_interval_seconds} seconds."
     ENV['INTERVAL'] = Settings.resque.polling_interval_seconds.to_s

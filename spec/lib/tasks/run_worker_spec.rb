@@ -14,11 +14,11 @@ describe 'baw_workers:setup_worker' do
 
       run_rake_task(rake_task_name, default_settings_file)
 
-      expect(resque_output_log_content).to include("===> Using settings file #{default_settings_file}")
-      expect(resque_output_log_content).to include('===> Polling queues example.')
-      expect(resque_output_log_content).to include('===> Log level: 1.')
-      expect(resque_output_log_content).to include('===> Polling every 5 seconds')
-      expect(resque_output_log_content).to include('===> Running in background with pid file ./tmp/resque_worker.pid.')
+      #expect(program_stdout_content).to include("===> Using settings file #{default_settings_file}")
+      expect(program_stdout_content).to include('===> Polling queues example.')
+      expect(program_stdout_content).to include('===> Log level: 1.')
+      expect(program_stdout_content).to include('===> Polling every 5 seconds')
+      expect(program_stdout_content).to include('===> Running in background with pid file ./tmp/resque_worker.pid.')
 
       Settings.resque['background_pid_file'] = store_pid_file
     end
@@ -30,11 +30,11 @@ describe 'baw_workers:setup_worker' do
 
       run_rake_task(rake_task_name, default_settings_file)
 
-      expect(rspec_stdout_content).to include("===> Using settings file #{default_settings_file}")
-      expect(rspec_stdout_content).to include('===> Polling queues example.')
-      expect(rspec_stdout_content).to include('===> Log level: 1.')
-      expect(rspec_stdout_content).to include('===> Polling every 5 seconds')
-      expect(rspec_stdout_content).to include('===> Running in foreground.')
+      #expect(program_stdout_content).to include("===> Using settings file #{default_settings_file}")
+      expect(program_stdout_content).to include('===> Polling queues example.')
+      expect(program_stdout_content).to include('===> Log level: 1.')
+      expect(program_stdout_content).to include('===> Polling every 5 seconds')
+      expect(program_stdout_content).to include('===> Running in foreground.')
 
       Settings.resque['background_pid_file'] = store_pid_file
     end

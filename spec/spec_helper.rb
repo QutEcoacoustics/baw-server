@@ -59,7 +59,7 @@ RSpec.configure do |config|
   #     --seed 1234
   config.order = 'random'
 
-  config.profile_examples = 20
+  #config.profile_examples = 20
 
   Zonebie.set_random_timezone
 
@@ -74,40 +74,31 @@ RSpec.configure do |config|
   config.add_setting :default_settings_path
   config.default_settings_path = File.expand_path(File.join(File.dirname(__FILE__), '..', 'lib', 'settings.default.yml'))
 
-  config.add_setting :rspec_stdout_path
-  config.rspec_stdout_path = File.join(config.tmp_dir, 'rspec_stdout.txt')
+  config.add_setting :program_stdout
+  config.program_stdout = File.join(config.tmp_dir, 'program_stdout.log')
 
-  config.add_setting :rspec_stderr_path
-  config.rspec_stderr_path = File.join(config.tmp_dir, 'rspec_stderr.txt')
+  config.add_setting :program_stderr
+  config.program_stderr = File.join(config.tmp_dir, 'program_stderr.log')
 
-  config.add_setting :resque_stdout_path
-  config.resque_stdout_path = File.join(config.tmp_dir, 'resque_worker.log')
-
-  config.add_setting :resque_stderr_path
-  config.resque_stderr_path = File.join(config.tmp_dir, 'resque_worker_error.log')
-
-  config.before(:suite) do
-    FileUtils.mkpath(config.tmp_dir)
+  config.before(:all) do
+    FileUtils.mkdir_p(config.tmp_dir)
   end
 
   config.before(:each) do
     # Redirect stderr and stdout
-    STDERR.reopen(config.rspec_stderr_path, 'w+')
+    STDERR.reopen(File.open(config.program_stderr, 'w+'))
     STDERR.sync = true
-    STDOUT.reopen(config.rspec_stdout_path, 'w+')
+    STDOUT.reopen(File.open(config.program_stdout, 'w+'))
     STDOUT.sync = true
   end
 
   config.after(:each) do
-    # Redirect stderr and stdout
+    # restore stderr and stdout
     STDERR.reopen(original_stderr)
     STDOUT.reopen(original_stdout)
 
-    FileUtils.rm config.rspec_stderr_path if File.exists? config.rspec_stderr_path
-    FileUtils.rm config.rspec_stdout_path if File.exists? config.rspec_stdout_path
-
-    FileUtils.rm config.resque_stderr_path if File.exists? config.resque_stderr_path
-    FileUtils.rm config.resque_stdout_path if File.exists? config.resque_stdout_path
+    FileUtils.rm config.program_stderr if File.exists? config.program_stderr
+    FileUtils.rm config.program_stdout if File.exists? config.program_stdout
   end
 
   # setting the source file here means the rake task cannot change it
