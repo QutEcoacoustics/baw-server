@@ -3,6 +3,8 @@ require 'spec_helper'
 describe BawWorkers::MediaAction do
   include_context 'media_file'
 
+  let(:queue_name) {BawWorkers::Settings.resque.queues.media}
+
   after(:each) do
     FileUtils.rm_r media_cache_tool.cache.original_audio.storage_paths.first if Dir.exists? media_cache_tool.cache.original_audio.storage_paths.first
     FileUtils.rm_r media_cache_tool.cache.cache_audio.storage_paths.first if Dir.exists? media_cache_tool.cache.cache_audio.storage_paths.first
@@ -20,40 +22,40 @@ describe BawWorkers::MediaAction do
     }
 
     it 'works on the media queue' do
-      expect(Resque.queue_from_class(BawWorkers::MediaAction)).to eq(:media)
+      expect(Resque.queue_from_class(BawWorkers::MediaAction)).to eq(queue_name)
     end
 
     it 'can enqueue' do
       result = BawWorkers::MediaAction.enqueue(:audio, test_media_request_params)
-      expect(Resque.size(:media)).to eq(1)
+      expect(Resque.size(queue_name)).to eq(1)
 
-      actual = Resque.peek(:media)
+      actual = Resque.peek(queue_name)
       expect(actual).to include(expected_payload)
     end
 
     it 'does not enqueue the same payload into the same queue more than once' do
       result1 = BawWorkers::MediaAction.enqueue(:audio, test_media_request_params)
-      expect(Resque.size(:media)).to eq(1)
+      expect(Resque.size(queue_name)).to eq(1)
       expect(result1).to eq(true)
       expect(Resque.enqueued?(BawWorkers::MediaAction, :audio, test_media_request_params)).to eq(true)
 
       result2 = BawWorkers::MediaAction.enqueue(:audio, test_media_request_params)
-      expect(Resque.size(:media)).to eq(1)
+      expect(Resque.size(queue_name)).to eq(1)
       expect(result2).to eq(true)
       expect(Resque.enqueued?(BawWorkers::MediaAction, :audio, test_media_request_params)).to eq(true)
 
       result3 = BawWorkers::MediaAction.enqueue(:audio, test_media_request_params)
-      expect(Resque.size(:media)).to eq(1)
+      expect(Resque.size(queue_name)).to eq(1)
       expect(result3).to eq(true)
       expect(Resque.enqueued?(BawWorkers::MediaAction, :audio, test_media_request_params)).to eq(true)
 
-      actual = Resque.peek(:media)
+      actual = Resque.peek(queue_name)
       expect(actual).to include(expected_payload)
-      expect(Resque.size(:media)).to eq(1)
+      expect(Resque.size(queue_name)).to eq(1)
 
-      popped = Resque.pop(:media)
+      popped = Resque.pop(queue_name)
       expect(popped).to include(expected_payload)
-      expect(Resque.size(:media)).to eq(0)
+      expect(Resque.size(queue_name)).to eq(0)
     end
 
   end

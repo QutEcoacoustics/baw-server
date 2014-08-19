@@ -12,9 +12,9 @@ namespace :baw_workers do
     if BawWorkers::Settings.resque.background_pid_file.blank?
       puts '===> Running in foreground.'
     else
-      STDOUT.reopen(File.open(BawWorkers::Settings.resque.output_log_file, 'w+'))
+      STDOUT.reopen(File.open(BawWorkers::Settings.resque.output_log_file, 'a+'))
       STDOUT.sync = true
-      STDERR.reopen(File.open(BawWorkers::Settings.resque.error_log_file, 'w+'))
+      STDERR.reopen(File.open(BawWorkers::Settings.resque.error_log_file, 'a+'))
       STDERR.sync = true
 
       puts "===> Running in background with pid file #{BawWorkers::Settings.resque.background_pid_file}."

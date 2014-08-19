@@ -97,6 +97,7 @@ RSpec.configure do |config|
     STDERR.reopen(original_stderr)
     STDOUT.reopen(original_stdout)
 
+    # clear stdout and stderr files
     FileUtils.rm config.program_stderr if File.exists? config.program_stderr
     FileUtils.rm config.program_stdout if File.exists? config.program_stdout
   end
