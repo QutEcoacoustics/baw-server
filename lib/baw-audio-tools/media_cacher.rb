@@ -45,7 +45,7 @@ module BawAudioTools
             modify_parameters)
 
         # create in temp dir to prevent access while creating
-        temp_target_existing = temp_path(cache_audio_info.file_names.first)
+        temp_target_existing = @audio.temp_file_from_name(cache_audio_info.file_names.first)
         run_audio_modify(
             original_audio_info.existing.first,
             temp_target_existing,
@@ -83,7 +83,7 @@ module BawAudioTools
         source_existing = create_audio_segment(cached_wav_audio_parameters)
 
         # create in temp dir to prevent access while creating
-        temp_target_existing = temp_path(cache_spectrogram_info.file_names.first)
+        temp_target_existing = @audio.temp_file_from_name(cache_spectrogram_info.file_names.first)
         run_spectrogram_modify(
             source_existing.first,
             temp_target_existing,
@@ -205,10 +205,6 @@ module BawAudioTools
     end
 
     private
-
-    def temp_path(file_name)
-      File.join(Settings.paths.temp_files, file_name)
-    end
 
     def copy_media(source, targets)
       targets.each do |target|

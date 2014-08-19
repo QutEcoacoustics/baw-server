@@ -34,9 +34,18 @@ module BawAudioTools
       BawAudioTools::AudioBase.new(audio_ffmpeg, audio_mp3splt, audio_sox, audio_wavpack, audio_defaults, temp_dir)
     end
 
+    # Construct path to a temp file with extension that does not exist.
     # @return Path to a file. The file does not exist.
+    # @param [String] extension
     def temp_file(extension)
       File.join(@temp_dir, ::SecureRandom.hex(7)+'.'+extension.trim('.', '')).to_s
+    end
+
+    # Construct path to a temp file with full_name as the file name that does not exist.
+    # @return Path to a file. The file does not exist.
+    # @param [String] file_name
+    def temp_file_from_name(file_name)
+      File.join(@temp_dir, file_name).to_s
     end
 
     # Provides information about an audio file.
