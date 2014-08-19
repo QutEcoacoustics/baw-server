@@ -95,6 +95,7 @@ gem 'rack-rewrite', '~> 1.5.0'
 # ------------------------------------
 gem 'resque', '~> 1.25.2'
 gem 'baw-workers', git: 'https://github.com/QutBioacoustics/baw-workers.git'
+gem 'fire_poll', '~> 1.2.0'
 
 # Gems restricted by environment and/or platform
 # ====================================================

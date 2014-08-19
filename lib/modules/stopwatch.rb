@@ -13,7 +13,7 @@ class Stopwatch
   def split(message)
     @max = message.size > @max ? message.size : @max
     time = Time.now
-    @start = time if !@start
+    @start = time unless @start
     @end = time
     @splits << [time, message]
   end

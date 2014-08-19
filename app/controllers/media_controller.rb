@@ -133,10 +133,6 @@ class MediaController < ApplicationController
   def media_response(audio_recording, metadata, original, current, media_info)
     rails_request = request
 
-    # determine where media cutting and/ort spectrogram generation will occur
-    is_processed_locally = Settings.process_media_locally?
-    is_processed_by_resque = Settings.process_media_resque?
-
     # get pre-defined settings
     media_cache_tool = Settings.media_cache_tool
     range_request = Settings.range_request
@@ -147,70 +143,111 @@ class MediaController < ApplicationController
     # get parameters for creating/retrieving cache
     generation_request = metadata.generation_request(original, current)
 
+    # start timing request
+    time_start = Time.now
+
     if media_info[:category] == :audio
       # check if audio file exists in cache
-      file_name, existing_files = cached_audio(media_cache_tool, generation_request)
+      cached_audio_info = media_cache_tool.cached_audio_paths(generation_request)
+      media_category = :audio
 
-      if existing_files.blank? && is_processed_locally
-        existing_files = create_audio_local(media_cache_tool, generation_request)
-        response_local_audio(audio_recording, generation_request, existing_files, rails_request, range_request)
-
-      elsif existing_files.blank? && is_processed_by_resque
-        response_resque_audio(generation_request)
-
-      elsif !existing_files.blank?
-        response_local_audio(audio_recording, generation_request, existing_files, rails_request, range_request)
-      end
-
+      existing_file = create_media(media_category, cached_audio_info, generation_request, time_start)
+      response_local_audio(audio_recording, generation_request, existing_file, rails_request, range_request)
     elsif media_info[:category] == :image
       # check if spectrogram image file exists in cache
-      file_name, existing_files = cached_spectrogram(media_cache_tool, generation_request)
+      cached_spectrogram_info = media_cache_tool.cached_spectrogram_paths(generation_request)
+      media_category = :spectrogram
 
-      if existing_files.blank? && is_processed_locally
-        existing_files = create_spectrogram_local(media_cache_tool, generation_request)
-        response_local_spectrogram(audio_recording, generation_request, existing_files, rails_request, range_request)
-
-      elsif existing_files.blank? && is_processed_by_resque
-        response_resque_spectrogram(generation_request)
-
-      elsif !existing_files.blank?
-        response_local_spectrogram(audio_recording, generation_request, existing_files, rails_request, range_request)
-
-      end
+      existing_file = create_media(media_category, cached_spectrogram_info, generation_request, time_start)
+      response_local_spectrogram(audio_recording, generation_request, existing_file, rails_request, range_request)
     end
 
   end
 
-  def cached_audio(media_cache_tools, options)
-    file_name = media_cache_tools.cached_audio_file_name(options)
-    target_existing_paths = media_cache_tools.cache.existing_storage_paths(media_cache_tools.cache.cache_audio, file_name)
-    [file_name, target_existing_paths]
+  def create_media(media_category, files_info, generation_request, time_start)
+    # determine where media cutting and/ort spectrogram generation will occur
+    is_processed_locally = Settings.process_media_locally?
+    is_processed_by_resque = Settings.process_media_resque?
+
+    existing = files_info.existing
+
+    if existing.blank? && is_processed_locally
+      add_header_generated_local
+      existing = create_media_local(media_category, generation_request)
+
+    elsif  existing.blank? && is_processed_by_resque
+      add_header_generated_remote
+      existing = create_media_resque(media_category, files_info, generation_request)
+
+    elsif !existing.blank?
+      add_header_cache
+
+    end
+
+    time_stop = Time.now
+
+    # add timing headers
+    add_header_started(time_start)
+    add_header_elapsed(time_stop - time_start)
+
+    existing
   end
 
-  def cached_spectrogram(media_cache_tools, options)
-    file_name = media_cache_tools.cached_spectrogram_file_name(options)
-    target_existing_paths = media_cache_tools.cache.existing_storage_paths(media_cache_tools.cache.cache_spectrogram, file_name)
-    [file_name, target_existing_paths]
+  # Create a media request locally.
+  # @param [Symbol] media_category
+  # @param [Object] generation_request
+  # @return [String] path to existing file
+  def create_media_local(media_category, generation_request)
+    BawWorkers::MediaAction.make_media_request(media_category, generation_request)
   end
 
-  def response_local_spectrogram(audio_recording, generation_request, existing_files, rails_request, range_request)
+
+  # Create a media request using resque.
+  # @param [Symbol] media_category
+  # @param [Hash] files_info
+  # @param [Object] generation_request
+  # @return [String] path to existing file
+  def create_media_resque(media_category, files_info, generation_request)
+    BawWorkers::MediaAction.enqueue(media_category, generation_request)
+    poll_media(files_info.possible, Settings.audio_tools.max_duration_seconds)
+  end
+
+  # this will block the request and wait until the resource is available
+  # waits up to wait_max seconds
+  # @param [Array<String>] expected_files
+  # @param [Number] wait_max
+  # @return [String] existing file
+  def poll_media(expected_files, wait_max)
+    new_existing_file = nil
+    FirePoll.poll("Took longer than #{wait_max} seconds for resque to fulfil media request.", wait_max) do
+      expected_files.each do |file|
+        test = File.exists?(file)
+        if test
+          new_existing_file = file
+        end
+        test
+      end
+    end
+    new_existing_file
+  end
+
+  def response_local_spectrogram(audio_recording, generation_request, existing_file, rails_request, range_request)
 
     options = generation_request
 
     response_extra_info = "#{options[:channel]}_#{options[:sample_rate]}_#{options[:window]}_#{options[:colour]}"
     suggested_file_name = NameyWamey.create_audio_recording_name(audio_recording, options[:start_offset], options[:end_offset], response_extra_info, options[:format])
 
-    full_path = existing_files.first
-    content_length = File.size(full_path)
+    content_length = File.size(existing_file)
 
-    headers['Content-Length'] = File.size(full_path).to_s
+    add_header_length(File.size(existing_file))
 
     if rails_request.head?
       head_response_inline(:ok, {content_length: content_length}, options[:media_type], suggested_file_name)
 
     else
       info = {
-          file_path: full_path,
+          file_path: existing_file,
           response_suggested_file_name: suggested_file_name,
           file_media_type: options[:media_type],
           response_code: :ok
@@ -231,7 +268,7 @@ class MediaController < ApplicationController
         recording_duration: audio_recording.duration_seconds,
         recording_id: audio_recording.id,
         ext: generation_request[:format],
-        file_path: existing_files.first,
+        file_path: existing_file,
         start_offset: generation_request[:start_offset],
         end_offset: generation_request[:end_offset]
     }
@@ -314,31 +351,6 @@ class MediaController < ApplicationController
     }
   end
 
-  def response_resque_spectrogram(generation_request)
-    response_resque_enqueue(:spectrogram, generation_request)
-  end
-
-  def response_resque_audio(generation_request)
-    response_resque_enqueue(:audio, generation_request)
-  end
-
-  def response_resque_enqueue(media_request_type, options)
-    BawWorkers::MediaAction.enqueue(media_request_type, options)
-    #Resque.enqueue(BawWorkers::MediaAction, media_request_type, options)
-    headers['Retry-After'] = Time.zone.now.advance(seconds: 5).httpdate
-    head :accepted, content_type: 'text/plain'
-  end
-
-  def create_spectrogram_local(media_cache_tool, generation_request)
-    existing_paths = media_cache_tool.generate_spectrogram(generation_request)
-    existing_paths
-  end
-
-  def create_audio_local(media_cache_tool, generation_request)
-    existing_paths = media_cache_tool.create_audio_segment(generation_request)
-    existing_paths
-  end
-
   def head_response(response_code, response_headers)
     #headers['Content-Transfer-Encoding'] = 'binary'
     #head :ok, content_length: File.size(full_path.first), content_type: options[:media_type], filename: suggested_file_name
@@ -354,6 +366,30 @@ class MediaController < ApplicationController
         content_disposition: "inline; filename=\"#{suggested_name}\"",
         filename: suggested_name
     )
+  end
+
+  def add_header_length(length)
+    headers['Content-Length'] = length.to_s
+  end
+
+  def add_header_cache
+    headers['X-Media-Response-From'] = 'Cache'
+  end
+
+  def add_header_generated_remote
+    headers['X-Media-Response-From'] = 'Generated Remotely'
+  end
+
+  def add_header_generated_local
+    headers['X-Media-Response-From'] = 'Generated Locally'
+  end
+
+  def add_header_started(start_datetime)
+    headers['X-Media-Response-Start'] = start_datetime.httpdate
+  end
+
+  def add_header_elapsed(elapsed_seconds)
+    headers['X-Media-Elapsed-Seconds'] = elapsed_seconds.to_s
   end
 
 end
