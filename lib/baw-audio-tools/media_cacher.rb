@@ -33,100 +33,141 @@ module BawAudioTools
     end
 
     def create_audio_segment(modify_parameters = {})
+      cache_audio_info = cached_audio_paths(modify_parameters)
+      target_existing = cache_audio_info.existing
 
-      # first check if a cached audio file matches the request
-      target_file = self.cached_audio_file_name(modify_parameters)
-      target_existing_paths = @cache.existing_storage_paths(@cache.cache_audio, target_file)
-      target_possible_paths = @cache.possible_storage_paths(@cache.cache_audio, target_file)
+      if target_existing.blank?
+        original_audio_info = original_audio_paths(modify_parameters)
 
-      if target_existing_paths.blank?
+        check_original_paths(
+            original_audio_info.possible,
+            original_audio_info.existing,
+            modify_parameters)
 
-        # if no cached audio files exist, try to create them from the original audio
-        source_files = self.original_audio_file_names(modify_parameters)
-        source_existing_paths = source_files.map { |source_file| @cache.existing_storage_paths(@cache.original_audio, source_file) }.flatten
-        source_possible_paths = source_files.map { |source_file| @cache.possible_storage_paths(@cache.original_audio, source_file) }.flatten
+        # create in temp dir to prevent access while creating
+        temp_target_existing = temp_path(cache_audio_info.file_names.first)
+        run_audio_modify(
+            original_audio_info.existing.first,
+            temp_target_existing,
+            modify_parameters)
 
-        # if the original audio file()s) cannot be found, raise an exception
-        fail Exceptions::AudioFileNotFoundError, "Could not find original audio in '#{source_possible_paths}' using #{modify_parameters}." if source_existing_paths.blank?
+        # copy to target dirs when finished creating temp file
+        copy_media(temp_target_existing, cache_audio_info.possible)
 
-        # create the cached audio file in each of the possible paths
-        target_possible_paths.each { |target|
-
-          # ensure the subdirectories exist
-          FileUtils.mkpath(File.dirname(target))
-
-          # TODO: optimisation: do task once, then copy file to other locations
-          # create the audio segment
-          @audio.modify(source_existing_paths.first, target, modify_parameters)
-        }
+        # delete temp file
+        FileUtils.rm(temp_target_existing)
 
         # update existing paths after cutting audio
-        target_existing_paths = @cache.existing_storage_paths(@cache.cache_audio, target_file)
-        fail Exceptions::AudioFileNotFoundError, "Could not find cached audio for #{target_file} using #{modify_parameters}." if target_existing_paths.blank?
+        target_existing = check_cached_audio_paths(
+            cache_audio_info.file_names.first,
+            original_audio_info.existing,
+            original_audio_info.possible,
+            modify_parameters)
       end
 
-      # the requested audio file should exist in at least one possible path
-      # return the first existing full path
-      target_existing_paths
+      target_existing
     end
 
     def generate_spectrogram(modify_parameters = {})
+      cache_spectrogram_info = cached_spectrogram_paths(modify_parameters)
+      target_existing = cache_spectrogram_info.existing
 
-      # first check if a cached spectrogram matches the request
-      target_file = self.cached_spectrogram_file_name(modify_parameters)
-      target_existing_paths = @cache.existing_storage_paths(@cache.cache_spectrogram, target_file)
-      target_possible_paths = @cache.possible_storage_paths(@cache.cache_spectrogram, target_file)
+      if target_existing.blank?
+        # create the cached audio segment (it must be a wav file)
+        # merge does not include nested hashes, but will actually create a new hash
+        # http://thingsaaronmade.com/blog/ruby-shallow-copy-surprise.html
+        cached_wav_audio_parameters = {}.merge(modify_parameters)
+        cached_wav_audio_parameters[:format] = 'wav'
 
-      if target_existing_paths.blank?
+        # create cached wav audio
+        source_existing = create_audio_segment(cached_wav_audio_parameters)
 
-        # if no cached spectrogram images exist, try to create them from the cached audio
-        source_file = self.cached_audio_file_name(modify_parameters)
-        source_existing_paths = @cache.existing_storage_paths(@cache.cache_audio, source_file)
-        source_possible_paths = @cache.possible_storage_paths(@cache.cache_audio, source_file)
+        # create in temp dir to prevent access while creating
+        temp_target_existing = temp_path(cache_spectrogram_info.file_names.first)
+        run_spectrogram_modify(
+            source_existing.first,
+            temp_target_existing,
+            modify_parameters
+        )
 
-        if source_existing_paths.blank? || !source_file.match(/\.wav/)
-          # create the cached audio segment (it must be a wav file)
-          # merge! does not include nested hashes, but will actually create a new hash
-          # http://thingsaaronmade.com/blog/ruby-shallow-copy-surprise.html
-          cached_wav_audio_parameters = {}.merge(modify_parameters)
-          cached_wav_audio_parameters[:format] = 'wav'
-          self.create_audio_segment(cached_wav_audio_parameters)
+        # copy to target dirs when finished creating temp file
+        copy_media(temp_target_existing, cache_spectrogram_info.possible)
 
-          # update existing paths after cutting audio
-
-          source_wav_file = self.cached_audio_file_name(cached_wav_audio_parameters)
-          source_existing_paths = @cache.existing_storage_paths(@cache.cache_audio, source_wav_file)
-          fail Exceptions::AudioFileNotFoundError, "Could not find or create cached audio for #{target_file} using cached audio file #{source_wav_file}." if source_existing_paths.blank?
-        end
-
-        # create the spectrogram image in each of the possible paths
-        # only needs the window, colour, and sample rate (for calculating pixels per second)
-        # everything else has already been done
-
-        spectrogram_parameters = {
-            window: modify_parameters[:window],
-            colour: modify_parameters[:colour],
-            sample_rate: modify_parameters[:sample_rate]
-        }
-
-        target_possible_paths.each { |target|
-
-          # ensure the subdirectories exist
-          FileUtils.mkpath(File.dirname(target))
-
-          # TODO: optimisation: do task once, then copy file to other locations
-          # generate the spectrogram
-          @spectrogram.modify(source_existing_paths.first, target, spectrogram_parameters)
-        }
+        # delete temp file
+        FileUtils.rm(temp_target_existing)
 
         # update existing paths after generating spectrogram
-        target_existing_paths = @cache.existing_storage_paths(@cache.cache_spectrogram, target_file)
-        fail Exceptions::SpectrogramFileNotFoundError, "Could not find cached spectrogram for #{target_file} using #{modify_parameters}." if target_existing_paths.blank?
+        target_existing = check_cached_spectrogram_paths(
+            cache_spectrogram_info.file_names.first,
+            source_existing,
+            cache_spectrogram_info.possible,
+            modify_parameters)
       end
 
-      # the requested spectrogram image should exist in at least one possible path
-      # return the first existing full path
-      target_existing_paths
+      target_existing
+    end
+
+    def original_audio_paths(modify_parameters = {})
+      source_files = self.original_audio_file_names(modify_parameters)
+
+      {
+          file_names: source_files,
+          possible: source_files.map { |source_file|
+            @cache.possible_storage_paths(@cache.original_audio, source_file)
+          }.flatten,
+
+          existing: source_files.map { |source_file|
+            @cache.existing_storage_paths(@cache.original_audio, source_file)
+          }.flatten
+      }
+    end
+
+    def cached_audio_paths(modify_parameters = {})
+      target_file = self.cached_audio_file_name(modify_parameters)
+
+      {
+          file_names: [target_file],
+          possible: @cache.possible_storage_paths(@cache.cache_audio, target_file),
+          existing: @cache.existing_storage_paths(@cache.cache_audio, target_file)
+      }
+    end
+
+    def cached_spectrogram_paths(modify_parameters = {})
+      target_file = self.cached_spectrogram_file_name(modify_parameters)
+
+      {
+          file_names: [target_file],
+          possible: @cache.possible_storage_paths(@cache.cache_spectrogram, target_file),
+          existing: @cache.existing_storage_paths(@cache.cache_spectrogram, target_file)
+      }
+    end
+
+    # run audio modify to create target using source
+    def run_audio_modify(source, target, modify_parameters)
+      # ensure the subdirectories exist
+      FileUtils.mkpath(File.dirname(target))
+
+      # create the audio segment
+      @audio.modify(source, target, modify_parameters)
+    end
+
+    # run audio modify to create target using source
+    def run_spectrogram_modify(source, target, modify_parameters)
+      # create the spectrogram image in target
+      # only needs the window, colour, and sample rate (for calculating pixels per second)
+      # everything else has already been done
+
+      spectrogram_parameters = {
+          window: modify_parameters[:window],
+          colour: modify_parameters[:colour],
+          sample_rate: modify_parameters[:sample_rate]
+      }
+
+      # ensure the subdirectories exist
+      FileUtils.mkpath(File.dirname(target))
+
+      # create the spectrogram
+      @spectrogram.modify(source, target, spectrogram_parameters)
     end
 
     def original_audio_file_names(modify_parameters)
@@ -161,6 +202,51 @@ module BawAudioTools
       end
 
       incr_hash
+    end
+
+    private
+
+    def temp_path(file_name)
+      File.join(Settings.paths.temp_files, file_name)
+    end
+
+    def copy_media(source, targets)
+      targets.each do |target|
+
+        # ensure the subdirectories exist
+        FileUtils.mkpath(File.dirname(target))
+
+        # copy file to other locations
+        FileUtils.cp(source, target)
+      end
+    end
+
+    def check_original_paths(possible, existing, modify_parameters)
+      # if the original audio file()s) cannot be found, raise an exception
+      if existing.blank?
+        msg = "Could not find original audio in '#{possible}' using #{modify_parameters}."
+        fail Exceptions::AudioFileNotFoundError, msg
+      end
+    end
+
+    def check_cached_audio_paths(file_name, source_existing, target_possible, modify_parameters)
+      target_existing_paths = @cache.existing_storage_paths(@cache.cache_audio, file_name)
+      if target_existing_paths.blank?
+        msg = "Could not create cached audio for #{file_name} from " +
+            " #{source_existing} in #{target_possible} using #{modify_parameters}."
+        fail Exceptions::AudioFileNotFoundError, msg
+      end
+      target_existing_paths
+    end
+
+    def check_cached_spectrogram_paths(file_name, source_existing, target_possible, modify_parameters)
+      target_existing_paths = @cache.existing_storage_paths(@cache.cache_spectrogram, file_name)
+      if target_existing_paths.blank?
+        msg = "Could not create cached spectrogram for #{file_name} from " +
+            " #{source_existing} in #{target_possible} using #{modify_parameters}."
+        fail Exceptions::SpectrogramFileNotFoundError, msg
+      end
+      target_existing_paths
     end
 
   end
