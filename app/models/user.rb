@@ -12,7 +12,17 @@ class User < ActiveRecord::Base
 
   attr_accessible :user_name, :email, :password, :password_confirmation, :remember_me,
                   :roles, :roles_mask, :preferences,
-                  :image
+                  :image, :login
+
+  # Virtual attribute for authenticating by either :user_name or :email
+  # This is in addition to real persisted fields.
+  def login=(login)
+    @login = login
+  end
+
+  def login
+    @login || self.user_name || self.email
+  end
 
   roles :admin, :user, :harvester # do not change the order, it matters!
 
@@ -74,8 +84,17 @@ class User < ActiveRecord::Base
   serialize :preferences, JSON
 
   # validations
-  validates :user_name, presence: true, uniqueness: {case_sensitive: false},
-            exclusion: {in: %w(admin harvester analysis_runner)}
+  validates :user_name, presence: true,
+            uniqueness: {
+                case_sensitive: false
+            },
+            exclusion: {
+                in: %w(admin harvester analysis_runner)
+            },
+            format: {
+                with: /\A[a-zA-Z0-9 _-]+\z/,
+                message: 'Only letters, numbers, spaces ( ), underscores (_) and dashes (-) are valid.'
+            }
   # format, uniqueness, and presence are validated by devise
   # Validatable component
   # validates :email,
@@ -273,5 +292,26 @@ class User < ActiveRecord::Base
     # WARNING: if this raises an error, the user will not be created and the page will be redirected to the home page
     # notify us of new user sign ups
     PublicMailer.new_user_message(self, NewUserInfo.new(name: self.user_name, email: self.email))
+  end
+
+  # Change the behaviour of the auth action to use :login rather than :email.
+  # Because we want to change the behavior of the login action, we have to overwrite
+  # the find_for_database_authentication method. The method's stack works like this:
+  # find_for_database_authentication calls find_for_authentication which calls
+  # find_first_by_auth_conditions. Overriding the find_for_database_authentication
+  # method allows you to edit database authentication; overriding find_for_authentication
+  # allows you to redefine authentication at a specific point (such as token, LDAP or database).
+  # Finally, if you override the find_first_by_auth_conditions method, you can customize
+  # finder methods (such as authentication, account unlocking or password recovery).
+   def self.find_first_by_auth_conditions(warden_conditions)
+    conditions = warden_conditions.dup
+    login = conditions.delete(:login)
+    if login
+      where(conditions)
+        .where(['lower(user_name) = :value OR lower(email) = :value', {value: login.downcase}])
+        .first
+    else
+      where(conditions).first
+    end
   end
 end

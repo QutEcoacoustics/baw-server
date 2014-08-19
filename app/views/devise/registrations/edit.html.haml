@@ -10,8 +10,8 @@
 = simple_form_for(resource, :as => resource_name, :url => registration_path(resource_name), :html => { class: 'form-horizontal', :multipart => true, :method => :put }) do |f|
   = f.error_notification
   .form-inputs
-    = f.input :user_name, :required => true, :autofocus => true
-    = f.input :email, :required => true
+    = f.input :user_name, required: true, autofocus: true
+    = f.input :email, required: true
     - if devise_mapping.confirmable? && resource.pending_reconfirmation?
       %p
         Currently waiting confirmation for: #{resource.unconfirmed_email}
