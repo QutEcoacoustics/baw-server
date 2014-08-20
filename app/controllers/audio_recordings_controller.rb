@@ -133,7 +133,8 @@ class AudioRecordingsController < ApplicationController
         :overlapping,
         :uuid
     ]
-    filter = ModelFilter::ParseAst.new(AudioRecording, valid_fields, params)
+    text_fields = [:notes, :status, :original_file_name]
+    filter = ModelFilter::ParseAst.new(AudioRecording, params, valid_fields, text_fields)
     render json: filter.to_query
   end
 
