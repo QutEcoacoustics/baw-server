@@ -124,6 +124,19 @@ class AudioRecordingsController < ApplicationController
     update_status_user_check
   end
 
+  def filter
+    valid_fields = [
+        :bit_rate_bps, :channels, :data_length_bytes, :original_file_name,
+        :duration_seconds, :file_hash, :media_type, :notes,
+        :recorded_date, :sample_rate_hertz, :status, :uploader_id,
+        :site_id,
+        :overlapping,
+        :uuid
+    ]
+    filter = ModelFilter::ParseAst.new(AudioRecording, valid_fields, params)
+    render json: filter.to_query
+  end
+
   private
 
   def update_status_user_check

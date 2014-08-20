@@ -148,6 +148,9 @@ AWB::Application.routes.draw do
     member do
       put 'update_status' # for when harvester has moved a file to the correct location
     end
+    collection do
+      post 'filter'
+    end
   end
 
   # API tags

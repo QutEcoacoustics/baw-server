@@ -1,7 +1,7 @@
 # Provides comparisons for composing queries.
 module ModelFilter
   class Comparison
-    extend Validate
+    include Validate
 
     class << self
 

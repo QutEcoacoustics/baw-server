@@ -31,17 +31,6 @@ module ModelFilter
         model.arel_table
       end
 
-      # Append GROUP BY to a query.
-      # @param [ActiveRecord::Relation] query
-      # @param [Arel::Table] table
-      # @param [Symbol] column_name
-      # @param [Array<Symbol>] allowed
-      # @return [ActiveRecord::Relation] the modified query
-      def compose_group_by(query, table, column_name, allowed)
-        validate_query_table_column(query, table, column_name, allowed)
-        query.group(table[column_name])
-      end
-
       # Append sorting to a query.
       # @param [ActiveRecord::Relation] query
       # @param [Arel::Table] table
@@ -51,6 +40,8 @@ module ModelFilter
       # @return [ActiveRecord::Relation] the modified query
       def compose_sort(query, table, column_name, allowed, order)
         validate_query_table_column(query, table, column_name, allowed)
+        fail ArgumentError, 'Order must not be null' if order.blank?
+        order = order.to_sym
 
         if order == :asc
           query.order(table[column_name].asc)
@@ -67,8 +58,10 @@ module ModelFilter
       # @param [Integer] limit
       # @return [ActiveRecord::Relation] the modified query
       def compose_paging(query, offset, limit)
+        fail ArgumentError, 'Offset cannot be empty.' if offset.blank?
+        fail ArgumentError, 'Limit cannot be empty.' if limit.blank?
         offset_i = offset.to_i
-        limit_i = offset.to_i
+        limit_i = limit.to_i
         fail ArgumentError, "Offset must be an integer, got #{offset.inspect}" if offset_i.blank? || offset != offset_i
         fail ArgumentError, "Limit must be an integer, got #{limit.inspect}" if limit_i.blank? || limit != limit_i
         query.skip(offset).take(limit)
@@ -92,6 +85,15 @@ module ModelFilter
         validate_condition(first_condition)
         validate_condition(second_condition)
         first_condition.and(second_condition)
+      end
+
+      # Join conditions using not.
+      # @param [Arel::Nodes::Node] condition
+      # @return [Arel::Nodes::Node] condition
+      def compose_not(condition)
+        validate_condition(first_condition)
+        validate_condition(second_condition)
+        condition.not
       end
     end
   end

@@ -90,6 +90,18 @@ module ModelFilter
         range = Range.new(from, to, true)
         table[column_name].in(range)
       end
+
+      # Create regular expression condition.
+      # @param [Arel::Table] table
+      # @param [Symbol] column_name
+      # @param [Array<Symbol>] allowed
+      # @param [Array] values
+      # @return [Arel::Nodes::Node] condition
+      def compose_regex(table, column_name, allowed, values)
+        validate_table_column(table, column_name, allowed)
+        Arel::Nodes::Regexp.new(table[column_name], values)
+      end
+
     end
   end
 end

@@ -1,6 +1,6 @@
 require 'active_support/concern'
 
-# Provides common functionality for composing queries.
+# Provides common validations for composing queries.
 module ModelFilter
   module Validate
     extend ActiveSupport::Concern
@@ -34,7 +34,7 @@ module ModelFilter
       # @param [Arel::Table] table
       # @raise [ArgumentError] if table is not an Arel::Table
       def validate_table(table)
-        fail ArgumentError, "Table must be Arel::Table, got #{query.inspect}" unless table.is_a?(Arel::Table)
+        fail ArgumentError, "Table must be Arel::Table, got #{table.inspect}" unless table.is_a?(Arel::Table)
       end
 
       # Validate table value.
@@ -56,6 +56,7 @@ module ModelFilter
       # @param [Array<Symbol>] allowed
       # @raise [ArgumentError] if column name is not a symbol in allowed
       def validate_column_name(column_name, allowed)
+        fail ArgumentError, "Column name must not be null, got #{column_name.inspect}" if column_name.blank?
         fail ArgumentError, "Column name must be a symbol, got #{column_name.inspect}" unless column_name.is_a?(Symbol)
         fail ArgumentError, "Allowed must be an Array, got #{allowed.inspect}" unless allowed.is_a?(Array)
         fail ArgumentError, "Column name must be in #{allowed.inspect}, got #{column_name.inspect}" unless allowed.include?(column_name)
