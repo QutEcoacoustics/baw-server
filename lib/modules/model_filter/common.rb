@@ -91,8 +91,7 @@ module ModelFilter
       # @param [Arel::Nodes::Node] condition
       # @return [Arel::Nodes::Node] condition
       def compose_not(condition)
-        validate_condition(first_condition)
-        validate_condition(second_condition)
+        validate_condition(condition)
         condition.not
       end
     end

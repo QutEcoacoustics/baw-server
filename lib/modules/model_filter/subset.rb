@@ -92,14 +92,16 @@ module ModelFilter
       end
 
       # Create regular expression condition.
+      # Available in Arel 6?
       # @param [Arel::Table] table
       # @param [Symbol] column_name
       # @param [Array<Symbol>] allowed
-      # @param [Array] values
+      # @param [Object] value
       # @return [Arel::Nodes::Node] condition
-      def compose_regex(table, column_name, allowed, values)
+      def compose_regex(table, column_name, allowed, value)
+        fail NotImplementedError
         validate_table_column(table, column_name, allowed)
-        Arel::Nodes::Regexp.new(table[column_name], values)
+        table[column_name] =~ value
       end
 
     end

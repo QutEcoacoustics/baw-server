@@ -74,9 +74,9 @@ module ModelFilter
         elsif key == :in
           # special case for in filter (Array)
           conditions.push(filter_in(field, value))
-        #elsif key == :not
+        elsif key == :not
           # negation
-          #Common.compose_not()
+          conditions.push(*filter_not(value))
         elsif value.is_a?(Hash)
           # recurse
           conditions.push(*create_conditions(key, value))
@@ -122,6 +122,8 @@ module ModelFilter
           Subset.compose_starts_with(@table, field, @valid_columns, filter_value)
         when :ends_with
           Subset.compose_ends_with(@table, field, @valid_columns, filter_value)
+        #when :regex - not implemented in Arel 3.
+        #  Subset.compose_regex(@table, field, @valid_columns, filter_value)
 
         else
           fail ArgumentError, "Unrecognised filter #{filter_name}."
@@ -179,6 +181,22 @@ module ModelFilter
 
     def filter_in(field, filter_value)
       Subset.compose_in(@table, field, @valid_columns, filter_value)
+    end
+
+    def filter_not(value)
+      conditions_to_negate = []
+      value.each do |item|
+        new_conditions = create_conditions(:not, item)
+        conditions_to_negate.push(*new_conditions)
+      end
+
+      conditions = []
+
+      conditions_to_negate.each do |condition|
+        conditions.push(Common.compose_not(condition))
+      end
+
+      conditions
     end
 
     def value_to_sym(value, description)
@@ -250,6 +268,19 @@ Sample json
                 "channels": {
                     "eq": 2,
                     "less_than_or_equal": "012345"
+                }
+            }
+        ],
+        "not": [
+            {
+                "duration_seconds": {
+                    "not_eq": 140
+                }
+            },
+            {
+                "channels": {
+                    "eq": 1,
+                    "less_than_or_equal": "54321"
                 }
             }
         ]
