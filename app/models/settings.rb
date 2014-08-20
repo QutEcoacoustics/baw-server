@@ -6,15 +6,30 @@ require 'baw-audio-tools'
 # Accessible through Settings.key
 # Environment specific settings expected in config/settings/{environment_name}.yml
 class Settings < Settingslogic
-  source "#{Rails.root}/config/settings/default.yml"
+  settings_file_default = "#{Rails.root}/config/settings/default.yml"
+  settings_file_env = "#{Rails.root}/config/settings/#{Rails.env}.yml"
+
+  source settings_file_default
   namespace Rails.env
 
+  def self.instance_merge(settings)
+    instance.deep_merge!(settings)
+  end
+
   # allow environment specific settings in separate yml files:
-  if File.exist?("#{Rails.root}/config/settings/#{Rails.env}.yml")
-    puts "===> #{Rails.root}/config/settings/#{Rails.env}.yml loaded."
-    instance.deep_merge!(Settings.new("#{Rails.root}/config/settings/#{Rails.env}.yml"))
+  if File.exist?(settings_file_env)
+    # load default settings file
+    BawWorkers::Settings.set_source(settings_file_default)
+    BawWorkers::Settings.set_namespace(Rails.env)
+
+    # merge settings from env settings file
+    env_settings = Settings.new(settings_file_env)
+    Settings.instance_merge(env_settings)
+    BawWorkers::Settings.instance_merge(env_settings)
+
+    puts "===> baw-server file #{settings_file_env} loaded."
   else
-    puts "===> #{Rails.root}/config/settings/#{Rails.env}.yml not found."
+    puts "===> baw-server file #{settings_file_env} not found."
   end
 
   # Create or return an existing BawAudioTools::MediaCacher.
@@ -22,6 +37,8 @@ class Settings < Settingslogic
   def media_cache_tool
     @media_cache_tool ||= BawAudioTools::MediaCacher.new(Settings.paths.temp_files)
   end
+
+
 
   # Create or return an existing RangeRequest.
   # @return [RangeRequest]

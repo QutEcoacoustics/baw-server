@@ -151,15 +151,15 @@ class MediaController < ApplicationController
       cached_audio_info = media_cache_tool.cached_audio_paths(generation_request)
       media_category = :audio
 
-      existing_file = create_media(media_category, cached_audio_info, generation_request, time_start)
-      response_local_audio(audio_recording, generation_request, existing_file, rails_request, range_request)
+      existing_files = create_media(media_category, cached_audio_info, generation_request, time_start)
+      response_local_audio(audio_recording, generation_request, existing_files, rails_request, range_request)
     elsif media_info[:category] == :image
       # check if spectrogram image file exists in cache
       cached_spectrogram_info = media_cache_tool.cached_spectrogram_paths(generation_request)
       media_category = :spectrogram
 
-      existing_file = create_media(media_category, cached_spectrogram_info, generation_request, time_start)
-      response_local_spectrogram(audio_recording, generation_request, existing_file, rails_request, range_request)
+      existing_files = create_media(media_category, cached_spectrogram_info, generation_request, time_start)
+      response_local_spectrogram(audio_recording, generation_request, existing_files, rails_request, range_request)
     end
 
   end
@@ -169,17 +169,17 @@ class MediaController < ApplicationController
     is_processed_locally = Settings.process_media_locally?
     is_processed_by_resque = Settings.process_media_resque?
 
-    existing = files_info.existing
+    existing_files = files_info.existing
 
-    if existing.blank? && is_processed_locally
+    if existing_files.blank? && is_processed_locally
       add_header_generated_local
-      existing = create_media_local(media_category, generation_request)
+      existing_files = create_media_local(media_category, generation_request)
 
-    elsif  existing.blank? && is_processed_by_resque
+    elsif  existing_files.blank? && is_processed_by_resque
       add_header_generated_remote
-      existing = create_media_resque(media_category, files_info, generation_request)
+      existing_files = create_media_resque(media_category, files_info, generation_request)
 
-    elsif !existing.blank?
+    elsif !existing_files.blank?
       add_header_cache
 
     end
@@ -190,7 +190,7 @@ class MediaController < ApplicationController
     add_header_started(time_start)
     add_header_elapsed(time_stop - time_start)
 
-    existing
+    existing_files
   end
 
   # Create a media request locally.
@@ -216,7 +216,7 @@ class MediaController < ApplicationController
   # waits up to wait_max seconds
   # @param [Array<String>] expected_files
   # @param [Number] wait_max
-  # @return [String] existing file
+  # @return [Array<String>] existing files
   def poll_media(expected_files, wait_max)
     new_existing_file = nil
     FirePoll.poll("Took longer than #{wait_max} seconds for resque to fulfil media request.", wait_max) do
@@ -228,16 +228,17 @@ class MediaController < ApplicationController
         test
       end
     end
-    new_existing_file
+    [new_existing_file]
   end
 
-  def response_local_spectrogram(audio_recording, generation_request, existing_file, rails_request, range_request)
+  def response_local_spectrogram(audio_recording, generation_request, existing_files, rails_request, range_request)
 
     options = generation_request
 
     response_extra_info = "#{options[:channel]}_#{options[:sample_rate]}_#{options[:window]}_#{options[:colour]}"
     suggested_file_name = NameyWamey.create_audio_recording_name(audio_recording, options[:start_offset], options[:end_offset], response_extra_info, options[:format])
 
+    existing_file = existing_files.first
     content_length = File.size(existing_file)
 
     add_header_length(File.size(existing_file))
@@ -268,7 +269,7 @@ class MediaController < ApplicationController
         recording_duration: audio_recording.duration_seconds,
         recording_id: audio_recording.id,
         ext: generation_request[:format],
-        file_path: existing_file,
+        file_path: existing_files.first,
         start_offset: generation_request[:start_offset],
         end_offset: generation_request[:end_offset]
     }
