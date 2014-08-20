@@ -30,6 +30,7 @@ module BawWorkers
     # Perform work. Used by `resque`.
     # @param [Symbol] media_type
     # @param [Hash] media_request_params
+    # @return [Array<String>] target existing paths
     def self.perform(media_type, media_request_params)
       target_existing_paths = make_media_request(media_type, media_request_params)
       target_existing_paths
@@ -38,6 +39,7 @@ module BawWorkers
     # Create specified media type by applying media request params.
     # @param [Symbol] media_type
     # @param [Hash] media_request_params
+    # @return [Array<String>] target existing paths
     def self.make_media_request(media_type, media_request_params)
       validate(media_type, media_request_params)
       media_cache_tool = BawWorkers::Settings.media_cache_tool
