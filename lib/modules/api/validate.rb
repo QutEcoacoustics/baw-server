@@ -1,3 +1,4 @@
+# use include, not extend in host classes
 require 'active_support/concern'
 
 # Provides common validations for composing queries.
@@ -5,21 +6,207 @@ module Api
   module Validate
     extend ActiveSupport::Concern
 
-    module ClassMethods
+    # using Arel https://github.com/rails/arel
+    # http://robots.thoughtbot.com/using-arel-to-compose-sql-queries
+    # http://jpospisil.com/2014/06/16/the-definitive-guide-to-arel-the-sql-manager-for-ruby.html
 
-      # Validate order by value.
-      # @param [Symbol] order_by
-      # @param [Array<Symbol>] valid_fields
-      # @param [Symbol] direction
-      # @raise [ArgumentError] if order_by is not valid
-      def validate_order_by(order_by, valid_fields, direction)
-        fail ArgumentError, 'Order by must not be null' if order_by.blank?
-        fail ArgumentError, "Order by must be in #{valid_fields.inspect}, got #{order_by.inspect}" unless valid_fields.include?(order_by)
-        fail ArgumentError, "Direction must be :asc or ;desc, got #{direction.inspect}" unless [:desc, :asc].include?(direction)
-      end
+    private
 
-
-
+    def validate_max_items
+      30
     end
+
+    # Validate sorting values.
+    # @param [Symbol] order_by
+    # @param [Array<Symbol>] valid_fields
+    # @param [Symbol] direction
+    # @raise [ArgumentError] if order_by is not valid
+    # @return [Hash] validated and corrected order_by and direction values
+    def validate_sorting(order_by, valid_fields, direction)
+      fail ArgumentError, 'Order by must not be null' if order_by.blank?
+      fail ArgumentError, 'Direction must not be null' if direction.blank?
+      fail ArgumentError, 'Valid Fields must not be null' if valid_fields.blank?
+
+      direction_sym = direction.to_sym
+      order_by_sym = order_by.to_sym
+      valid_fields_sym = valid_fields.map(&:to_sym)
+
+      fail ArgumentError, "Order by must be in #{valid_fields_sym.inspect}, got #{order_by_sym.inspect}" unless valid_fields_sym.include?(order_by_sym)
+      fail ArgumentError, "Direction must be asc or desc, got #{direction_sym.inspect}" unless [:desc, :asc].include?(direction_sym)
+
+      {
+          order_by: order_by_sym,
+          direction: direction_sym
+      }
+    end
+
+    # Validate paging values.
+    # @param [Integer] offset
+    # @param [Integer] limit
+    # @param [Integer] max_limit
+    # @return [Hash] validated and corrected offset and limit values
+    def validate_paging(offset, limit, max_limit)
+      fail ArgumentError, 'Offset by must not be null' if offset.blank?
+      fail ArgumentError, 'Limit must not be null' if limit.blank?
+      fail ArgumentError, 'Max limit must not be null' if max_limit.blank?
+
+      offset_i = offset.to_i
+      limit_i = limit.to_i
+      max_limit_i = max_limit.to_i
+
+      fail ArgumentError, "Offset must be an integer, got #{offset_i.inspect}" if offset_i.blank? || offset != offset_i
+      fail ArgumentError, "Limit must be an integer, got #{limit_i.inspect}" if limit_i.blank? || limit != limit_i
+      fail ArgumentError, "Max must be an integer, got #{max_limit_i.inspect}" if max_limit_i.blank? || max_limit != max_limit_i
+
+      fail ArgumentError, "Offset must be 0 or greater, got #{offset_i.inspect}" if offset_i < 0
+      fail ArgumentError, "Limit must be greater than 0, got #{limit_i.inspect}" if limit_i < 1
+      fail ArgumentError, "Max must be greater than 0, got #{max_limit_i.inspect}" if max_limit_i < 1
+
+      limit_i = max_limit_i if limit_i > max_limit_i
+
+      {
+          offset: offset_i,
+          limit: limit_i
+      }
+    end
+
+    # Validate paging values.
+    # @param [Integer] page
+    # @param [Integer] items
+    # @param [Integer] max_items
+    # @return [Hash] validated and corrected offset and limit values
+    def validate_paging_external(page, items, max_items)
+      fail ArgumentError, 'Page by must not be null' if page.blank?
+      fail ArgumentError, 'Items must not be null' if items.blank?
+      fail ArgumentError, 'Max must not be null' if max_items.blank?
+
+      page_i = page.to_i
+      items_i = items.to_i
+      max_items_i = max_items.to_i
+
+      fail ArgumentError, "Page must be an integer, got #{page_i.inspect}" if page_i.blank? || page != page_i
+      fail ArgumentError, "Items must be an integer, got #{items_i.inspect}" if items_i.blank? || items != items_i
+      fail ArgumentError, "Max must be an integer, got #{max_items_i.inspect}" if max_items_i.blank? || max_items != max_items_i
+
+      fail ArgumentError, "Page must be greater than 0, got #{page_i.inspect}" if page_i < 1
+      fail ArgumentError, "Items must be greater than 0, got #{items_i.inspect}" if items_i < 1
+      fail ArgumentError, "Max must be greater than 0, got #{max_items_i.inspect}" if max_items_i < 1
+
+      items_i = max_items_i if items_i > max_items_i
+
+      {
+          offset: (page_i - 1) * items_i,
+          limit: items_i
+      }
+    end
+
+    # Validate query, table, and column values.
+    # @param [Arel::Query] query
+    # @param [Arel::Table] table
+    # @param [Symbol] column_name
+    # @param [Array<Symbol>] allowed
+    # @return [void]
+    def validate_query_table_column(query, table, column_name, allowed)
+      validate_query(query)
+      validate_table(table)
+      validate_column_name(column_name, allowed)
+    end
+
+    # Validate table and column values.
+    # @param [Arel::Table] table
+    # @param [Symbol] column_name
+    # @param [Array<Symbol>] allowed
+    # @return [void]
+    def validate_table_column(table, column_name, allowed)
+      validate_table(table)
+      validate_column_name(column_name, allowed)
+    end
+
+    # Validate query and hash values.
+    # @param [ActiveRecord::Relation] query
+    # @param [Hash] hash
+    # @return [void]
+    def validate_query_hash(query, hash)
+      validate_query(query)
+      validate_hash(hash)
+    end
+
+    # Validate table value.
+    # @param [Arel::Table] table
+    # @raise [ArgumentError] if table is not an Arel::Table
+    # @return [void]
+    def validate_table(table)
+      fail ArgumentError, "Table must be Arel::Table, got #{table.inspect}" unless table.is_a?(Arel::Table)
+    end
+
+    # Validate table value.
+    # @param [ActiveRecord::Relation] query
+    # @raise [ArgumentError] if query is not an Arel::Query
+    # @return [void]
+    def validate_query(query)
+      fail ArgumentError, "Query must be ActiveRecord::Relation, got #{query.inspect}" unless query.is_a?(ActiveRecord::Relation)
+    end
+
+    # Validate condition value.
+    # @param [Arel::Nodes::Node] condition
+    # @raise [ArgumentError] if condition is not an Arel::Nodes::Node
+    # @return [void]
+    def validate_condition(condition)
+      fail ArgumentError, "Condition must be Arel::Nodes::Node, got #{condition.inspect}" unless condition.is_a?(Arel::Nodes::Node)
+    end
+
+    # Validate column name value.
+    # @param [Symbol] column_name
+    # @param [Array<Symbol>] allowed
+    # @raise [ArgumentError] if column name is not a symbol in allowed
+    # @return [void]
+    def validate_column_name(column_name, allowed)
+      fail ArgumentError, "Column name must not be null, got #{column_name.inspect}" if column_name.blank?
+      fail ArgumentError, "Column name must be a symbol, got #{column_name.inspect}" unless column_name.is_a?(Symbol)
+      fail ArgumentError, "Allowed must be an Array, got #{allowed.inspect}" unless allowed.is_a?(Array)
+      fail ArgumentError, "Column name must be in #{allowed.inspect}, got #{column_name.inspect}" unless allowed.include?(column_name)
+    end
+
+    # Validate model value.
+    # @param [ActiveRecord::Base] model
+    # @raise [ArgumentError] if model is not an ActiveRecord::Base
+    # @return [void]
+    def validate_model(model)
+      fail ArgumentError, "Model must respond to scoped, got #{model.inspect}" unless model.respond_to?(:scoped)
+    end
+
+    # Escape wildcards in like value..
+    # @param [String] value
+    # @raise [String] escaped value
+    # @return [String] sanitized value
+    def sanitize_like_value(value)
+      value.gsub(/[\\_%\|]/) { |x| "\\#{x}" }
+    end
+
+    # Escape meta-characters in SIMILAR TO value.
+    # see http://www.postgresql.org/docs/9.3/static/functions-matching.html
+    # @param [String] value
+    # @raise [String] escaped value
+    # @return [String] sanitized value
+    def sanitize_similar_to_value(value)
+      value.gsub(/[\\_%\|\*\+\?\{\}\(\)\[\]]/) { |x| "\\#{x}" }
+    end
+
+    # Validate an array.
+    # @param [Array] value
+    # @return [void]
+    def validate_array(value)
+      fail ArgumentError, "Value must not be null, got #{value.inspect}" if value.blank?
+      fail ArgumentError, "Value must be an Array, got #{value.inspect}" unless value.is_a?(Array)
+    end
+
+    # Validate a hash.
+    # @param [Array] value
+    # @return [void]
+    def validate_hash(value)
+      fail ArgumentError, "Value must not be null, got #{value.inspect}" if value.blank?
+      fail ArgumentError, "values must be a Hash, got #{value.inspect}" unless value.is_a?(Hash)
+    end
+
   end
 end

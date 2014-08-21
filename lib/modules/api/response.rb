@@ -1,6 +1,9 @@
 module Api
   # Builds api responses.
   class Response
+    include Validate
+    include UrlHelpers
+
 
     # Get the status code for a status symbol.
     # @param [Symbol] status_symbol
@@ -21,6 +24,14 @@ module Api
     # @return [String] status phrase
     def status_phrase(status_symbol = :ok)
       Rack::Utils::HTTP_STATUS_CODES[status_code(status_symbol)]
+    end
+
+    def paging_params
+      params
+    end
+
+    def sort_params
+
     end
 
     # Create the basic structure for an api response.
@@ -59,52 +70,77 @@ module Api
       response_data[:meta][:error][:details] = message unless message.blank?
 
       response_data[:meta][:error][:links] = {} unless links_object.blank?
-      response_data[:meta][:error][:links]['sign in'] = url_helper.new_user_session_url if !links_object.blank? && links_object.include?(:sign_in)
-      response_data[:meta][:error][:links]['request permissions'] = url_helper.new_access_request_projects_url if !links_object.blank? && links_object.include?(:permissions)
-      response_data[:meta][:error][:links]['confirm your account'] = url_helper.new_user_confirmation_url if !links_object.blank? && links_object.include?(:confirm)
+      response_data[:meta][:error][:links]['sign in'] = url_helpers.new_user_session_url if !links_object.blank? && links_object.include?(:sign_in)
+      response_data[:meta][:error][:links]['request permissions'] = url_helpers.new_access_request_projects_url if !links_object.blank? && links_object.include?(:permissions)
+      response_data[:meta][:error][:links]['confirm your account'] = url_helpers.new_user_confirmation_url if !links_object.blank? && links_object.include?(:confirm)
 
       response_data
     end
 
-    def response_paging(order_by, direction)
+    def response_sort(order_by, direction)
       {
           order_by: order_by,
           direction: direction
       }
     end
 
-    def response_paging(offset, limit, controller, action)
-      offset = 0 if offset < 0
-      limit = 0 if offset < 0
+    def response_paging(offset, limit, count, total, controller, action)
+      values = validate_paging(offset, limit, validate_max_items)
+
+      page = (offset.to_i / limit.to_i) + 1
 
       {
-          offset: offset,
-          limit: limit,
-          next: url_helper.url_for(controller: controller, action: action, offset: offset),
-          previous: url_helper.url_for(controller: controller, action: action, offset: offset)
+          page: page,
+          items: limit,
+          count: count,
+          total: total,
+          # TODO: include text filter, generic filter, order_by, direction, offset, limit
+          next: url_helpers.url_for(controller: controller, action: action, offset: offset, items: limit),
+          previous: url_helpers.url_for(controller: controller, action: action, offset: offset, items: limit)
       }
     end
 
-    # Get param value if available, otherwise a default value.
-    # @param [ActiveSupport::HashWithIndifferentAccess] request_params
-    # @param [Hash] modified_params
-    # @param [String] param_name
-    # @param [Object] default_value
-    def get_param_value(request_params, modified_params, param_name, default_value)
-      if request_params.include?(param_name)
-        param_value = request_params[param_name]
-        modified_params[param_name] = param_value
-      else
-        param_value = default_value
-      end
-      param_value
+    def response_paging_external(page, items, count, total, controller, action)
+      values = validate_paging_external(page, items, validate_max_items)
+      response_paging(values.offset, values.limit, count, total, controller, action)
+    end
+
+    def response_filter(params, model, valid_fields, text_fields)
+      filter_query = Api::FilterQuery.new(params, model, valid_fields, text_fields)
+
+      # query without paging to get total
+      query = filter_query.query_without_paging
+
+      # execute a count against entire set without paging
+      total = query.count
+
+      # add paging
+      query = filter_query.query_paging(query)
+
+      # execute a count for this page only
+      count = query.count
+
+      # execute query to get entire page of info
+      all_data = query.all
+      built_response = response_data(:ok, all_data)
+
+      # add sorting info
+      sorting = filter_query.get_sort
+      built_response[:sorting] = response_sort(sorting.order_by, sorting.direction)
+
+      # add paging info
+      paging = filter_query.get_paging
+      built_response[:pagination] = response_paging(
+          paging.offset, paging.limit,
+          count, total,
+          :audio_recordings, :filter
+      )
+
+      # return result
+      built_response
     end
 
     private
-
-    def url_helper
-      UrlHelpers
-    end
 
     def format_date_time(value)
       if value.respond_to?(:iso8601)

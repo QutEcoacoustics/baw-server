@@ -80,7 +80,7 @@ class MediaController < ApplicationController
   def audio_recording_ready?(audio_recording)
     audio_recording.status == 'ready'
   end
-
+ 
   def supported_media_response(audio_recording, audio_event, media_info, request_params)
     rails_request = request
 
@@ -89,7 +89,7 @@ class MediaController < ApplicationController
     default_spectrogram = Settings.cached_spectrogram_defaults
 
     # parse request
-    metadata = MediaResponseMetadata.new(Settings.media_cache_tool, default_audio, default_spectrogram)
+    metadata = Api::MediaMetadata.new(Settings.media_cache_tool, default_audio, default_spectrogram)
 
     # validate common request parameters
     metadata.check_request_parameters(audio_recording, request_params)

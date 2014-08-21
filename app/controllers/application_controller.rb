@@ -172,7 +172,7 @@ class ApplicationController < ActionController::Base
   def render_error(status_symbol, detail_message, error, method_name, options = {})
     options = {redirect: false, links_object: nil, error_info: nil}.merge(options)
 
-    json_response = api_common.response_error(status_symbol, detail_message, options[:links_object])
+    json_response = api_response.response_error(status_symbol, detail_message, options[:links_object])
 
     unless options[:error_info].blank?
       json_response.meta.error.merge!(options[:error_info])
@@ -185,8 +185,8 @@ class ApplicationController < ActionController::Base
     respond_to do |format|
       format.html {
 
-        status_code = Rack::Utils::SYMBOL_TO_STATUS_CODE[status_symbol]
-        status_message = Rack::Utils::HTTP_STATUS_CODES[status_code].humanize
+        status_code = api_response.status_code(status_symbol)
+        status_message = api_response.status_phrase(status_symbol).humanize
 
         if options[:redirect]
           redirect_to get_redirect, alert: "#{status_message}: #{detail_message}"
@@ -203,6 +203,12 @@ class ApplicationController < ActionController::Base
     check_reset_stamper
   end
 
+  def render_api_response(content, status_symbol = :ok)
+    respond_to do |format|
+      format.all { render json: content, status: status_symbol, content_type: 'application/json' }
+    end
+  end
+
   def get_redirect
     if !request.env['HTTP_REFERER'].blank? and request.env['HTTP_REFERER'] != request.env['REQUEST_URI']
       redirect_target = :back
@@ -213,8 +219,8 @@ class ApplicationController < ActionController::Base
     redirect_target
   end
 
-  def api_common
-    Api::Common.new
+  def api_response
+    @api_response ||= Api::Response.new
   end
 
   private

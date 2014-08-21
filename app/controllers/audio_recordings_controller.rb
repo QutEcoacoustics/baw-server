@@ -97,13 +97,13 @@ class AudioRecordingsController < ApplicationController
   end
 
   def filter
-    filter = ModelFilter::ParseAst.new(
-        AudioRecording,
+    filter_response = api_response.response_filter(
         params,
+        AudioRecording,
         AudioRecording.valid_fields,
-        AudioRecording.text_fields)
-    api_formatted = api_common.response_data(:ok, filter.query.all)
-    render json: api_formatted
+        AudioRecording.text_fields
+    )
+    render_api_response(filter_response)
   end
 
   private

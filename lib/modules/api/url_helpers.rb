@@ -27,6 +27,7 @@ module Api
       if @url_helpers.respond_to?(method)
         @url_helpers.send(method, *args, &block)
       else
+        # calls method in class this was include into.
         super method, *args, &block
       end
     end
