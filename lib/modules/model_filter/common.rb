@@ -2,6 +2,7 @@
 module ModelFilter
   class Common
     include Validate
+    include Api::Validate
 
     class << self
 
@@ -36,19 +37,16 @@ module ModelFilter
       # @param [Arel::Table] table
       # @param [Symbol] column_name
       # @param [Array<Symbol>] allowed
-      # @param [Symbol] order
+      # @param [Symbol] direction
       # @return [ActiveRecord::Relation] the modified query
-      def compose_sort(query, table, column_name, allowed, order)
+      def compose_sort(query, table, column_name, allowed, direction)
         validate_query_table_column(query, table, column_name, allowed)
-        fail ArgumentError, 'Order must not be null' if order.blank?
-        order = order.to_sym
+        validate_order_by(column_name, allowed, direction)
 
-        if order == :asc
+        if direction == :asc
           query.order(table[column_name].asc)
-        elsif order == :desc
+        elsif direction == :desc
           query.order(table[column_name].desc)
-        else
-          fail ArgumentError, "Order must be ':asc' or ':desc', got #{order.inspect}"
         end
       end
 
@@ -64,7 +62,7 @@ module ModelFilter
         limit_i = limit.to_i
         fail ArgumentError, "Offset must be an integer, got #{offset.inspect}" if offset_i.blank? || offset != offset_i
         fail ArgumentError, "Limit must be an integer, got #{limit.inspect}" if limit_i.blank? || limit != limit_i
-        query.skip(offset).take(limit)
+        query.offset(offset).limit(limit)
       end
 
       # Join conditions using or.

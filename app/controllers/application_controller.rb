@@ -169,19 +169,10 @@ class ApplicationController < ActionController::Base
 
   end
 
-  def create_json_data_response(status_symbol, data)
-    # used by other controllers to easily return json responses.
-    json_response = create_json_response(status_symbol)
-
-    json_response[:data] = data
-
-    json_response
-  end
-
   def render_error(status_symbol, detail_message, error, method_name, options = {})
     options = {redirect: false, links_object: nil, error_info: nil}.merge(options)
 
-    json_response = create_json_error_response(status_symbol, detail_message, options[:links_object])
+    json_response = api_common.response_error(status_symbol, detail_message, options[:links_object])
 
     unless options[:error_info].blank?
       json_response.meta.error.merge!(options[:error_info])
@@ -220,6 +211,10 @@ class ApplicationController < ActionController::Base
     end
 
     redirect_target
+  end
+
+  def api_common
+    Api::Common.new
   end
 
   private
@@ -386,36 +381,6 @@ class ApplicationController < ActionController::Base
     else
       'application'
     end
-  end
-
-  def create_json_response(status_symbol)
-    status_code = Rack::Utils::SYMBOL_TO_STATUS_CODE[status_symbol]
-    status_message = Rack::Utils::HTTP_STATUS_CODES[status_code]
-
-    json_response = {
-        meta: {
-            status: status_code,
-            message: status_message
-        },
-        data: nil
-    }
-
-    json_response
-  end
-
-  def create_json_error_response(status_symbol, detail_message, links_object = nil)
-    json_response = create_json_response(status_symbol)
-
-    json_response[:meta][:error] = {} if !detail_message.blank? || !links_object.blank?
-
-    json_response[:meta][:error][:details] = detail_message unless detail_message.blank?
-
-    json_response[:meta][:error][:links] = {} unless links_object.blank?
-    json_response[:meta][:error][:links]['sign in'] = new_user_session_url if !links_object.blank? && links_object.include?(:sign_in)
-    json_response[:meta][:error][:links]['request permissions'] = new_access_request_projects_url if !links_object.blank? && links_object.include?(:permissions)
-    json_response[:meta][:error][:links]['confirm your account'] = new_user_confirmation_url if !links_object.blank? && links_object.include?(:confirm)
-
-    json_response
   end
 
 end

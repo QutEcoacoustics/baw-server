@@ -1,8 +1,6 @@
 module ModelFilter
   class ParseAst
 
-    attr_reader :qsp_text_filter, :qsp_generic_filters
-
     # Convert a json POST body to an arel query.
     # @param [ActiveRecord::Base] model
     # @param [Hash] params
@@ -17,25 +15,64 @@ module ModelFilter
       @query_request = CleanParams.perform(params)
 
       @specified_field_equals = 'filter_'
-      @qsp_text_filter = text_qsp_filter(@query_request)
-      @qsp_generic_filters = qsp_filter_perform(nil, @query_request)
+    end
+
+    def custom_query(offset = 0, limit = 10, order_by, direction, filter_text, filter_hash)
+      query = Common.all_relation(@model)
+      request_params = @query_request
+
+      # sorting
+      Common.compose_sort(query, @table, order_by, @valid_fields, direction)
+
+      # paging
+      Common.compose_paging(query, offset, limit)
+
+      # filter
+      filter = request_params[:filter]
+      filter = {} if filter.blank?
+      add_conditions(query, create_conditions(:filter, filter))
+
+      # add text filter
+      add_conditions(query, build_qsp_text_filter(filter_text))
+
+      # add generic filters
+      add_conditions(query, build_qsp_generic_filter(filter_hash))
+
+      # result
+      query
     end
 
     # Convert a json post to an arel query.
     # @return [ActiveRecord::Relation] abstract query matching the params
-    def to_query
+    def query
       query = Common.all_relation(@model)
+      request_params = @query_request
 
-      filter = @query_request[:filter]
+      # sorting
+      query = compose_sort(query, request_params)
+
+      # paging
+      query = compose_paging(query, request_params)
+
+      # filter
+      filter = request_params[:filter]
       filter = {} if filter.blank?
+      add_conditions(query, create_conditions(:filter, filter))
 
-      query = compose_sort(query, @query_request)
-      query = compose_paging(query, @query_request)
-      query = compose_filter(query, filter)
+      # add qsp text filters
+      qsp_text_filter = text_qsp_filter(request_params)
+      unless qsp_text_filter.blank?
+        add_conditions(query, build_qsp_text_filter(qsp_text_filter))
+      end
 
+      # add qsp generic_filters
+      qsp_generic_filters = qsp_filter_perform(nil, request_params)
+      unless qsp_generic_filters.blank?
+        add_conditions(query, build_qsp_generic_filter(qsp_generic_filters))
+      end
 
-
-      query.to_sql
+      # result
+      query
     end
 
     private
@@ -53,14 +90,11 @@ module ModelFilter
       order_by = params[:sort][:order_by] if order_by.blank? && !params[:sort].blank?
       direction = params[:sort][:direction] if order_by.blank? && !params[:sort].blank?
 
-      # set default direction to :asc
-      direction = :asc if direction.blank?
+      # default to reverse chronological
+      order_by = :recorded_date if order_by.blank?
+      direction = :desc if direction.blank?
 
-      if order_by.blank?
-        query
-      else
-        Common.compose_sort(query, @table, order_by.to_sym, @valid_fields, direction.to_sym)
-      end
+      Common.compose_sort(query, @table, order_by, @valid_fields, direction)
     end
 
     # Append paging to a query.
@@ -76,31 +110,21 @@ module ModelFilter
       offset = params[:paging][:offset] if offset.blank? && !params[:paging].blank?
       limit = params[:paging][:limit] if limit.blank? && !params[:paging].blank?
 
-      # default offset
+      # default to first page with 50 per age
       offset = 0 if offset.blank?
+      limit = 50 if limit.blank?
 
-      if limit.blank?
-        query
-      else
-        Common.compose_paging(query, offset, limit)
-      end
+      Common.compose_paging(query, offset, limit)
     end
 
-    # Append filtering to a query.
+    # Add conditions to a query.
     # @param [ActiveRecord::Relation] query
-    # @param [Hash] value
+    # @param [Array<Arel::Nodes::Node>] conditions
     # @return [ActiveRecord::Relation] the modified query
-    def compose_filter(query, value)
-      conditions = create_conditions(:filter, value)
-
-      # add qsp filters
-      conditions.push(add_qsp_text_filter) unless @qsp_text_filter.blank?
-      conditions.push(add_qsp_generic_filter) unless @qsp_generic_filters.blank?
-
+    def add_conditions(query, conditions)
       conditions.each do |condition|
         query = query.where(condition)
       end
-
       query
     end
 
@@ -242,19 +266,19 @@ module ModelFilter
     end
 
     # add a text filter to all applicable fields
-    def add_qsp_text_filter
+    def build_qsp_text_filter(text)
       conditions = []
       @text_fields.each do |text_field|
-        conditions.push(Subset.compose_contains(@table, text_field, @valid_fields, @qsp_text_filter))
+        conditions.push(Subset.compose_contains(@table, text_field, @valid_fields, text))
       end
 
       filter_combine_builder(:or, conditions)
     end
 
     # add an equality filter match specified value to specified fields
-    def add_qsp_generic_filter
+    def build_qsp_generic_filter(filter_hash)
       conditions = []
-      @qsp_generic_filters.each do |key, value|
+      filter_hash.each do |key, value|
         conditions.push(filter_components(key, :eq, value))
       end
 

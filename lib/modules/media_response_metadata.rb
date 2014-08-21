@@ -1,3 +1,4 @@
+# Provides support for creating metadata for media responses.
 class MediaResponseMetadata
 
   public
@@ -41,14 +42,14 @@ class MediaResponseMetadata
   def current_request_details(audio_recording, media_info, request_params)
     modified_params = {}
 
-    start_offset = get_param_value(request_params, modified_params, :start_offset, 0)
-    end_offset = get_param_value(request_params, modified_params, :end_offset, audio_recording.duration_seconds)
-    audio_event_id = get_param_value(request_params, modified_params, :audio_event_id, nil)
-    channel = get_param_value(request_params, modified_params, :channel, 0)
-    sample_rate = get_param_value(request_params, modified_params, :sample_rate, audio_recording.sample_rate_hertz)
-    window_size = get_param_value(request_params, modified_params, :window_size, @default_spectrogram.window)
-    window_function = get_param_value(request_params, modified_params, :window_function, @default_spectrogram.window_function)
-    colour = get_param_value(request_params, modified_params, :colour, @default_spectrogram.colour)
+    start_offset = api_common.get_param_value(request_params, modified_params, :start_offset, 0)
+    end_offset = api_common.get_param_value(request_params, modified_params, :end_offset, audio_recording.duration_seconds)
+    audio_event_id = api_common.get_param_value(request_params, modified_params, :audio_event_id, nil)
+    channel = api_common.get_param_value(request_params, modified_params, :channel, 0)
+    sample_rate = api_common.get_param_value(request_params, modified_params, :sample_rate, audio_recording.sample_rate_hertz)
+    window_size = api_common.get_param_value(request_params, modified_params, :window_size, @default_spectrogram.window)
+    window_function = api_common.get_param_value(request_params, modified_params, :window_function, @default_spectrogram.window_function)
+    colour = api_common.get_param_value(request_params, modified_params, :colour, @default_spectrogram.colour)
 
     current_details = {
         start_offset: start_offset.to_f,
@@ -278,10 +279,6 @@ class MediaResponseMetadata
 
   private
 
-  def rails_url_helpers
-    Rails.application.routes.url_helpers
-  end
-
   # Create a Hash representing the available formats for the current request.
   # @param [AudioRecording] audio_recording
   # @param [Hash] current
@@ -297,24 +294,9 @@ class MediaResponseMetadata
       result[format][:extension] = format
       # only include modified settings in url
       modified_keys = modified_params.merge(format: format)
-      result[format][:url] = rails_url_helpers.audio_recording_media_path(audio_recording, modified_keys)
+      result[format][:url] = Api::UrlHelpers.audio_recording_media_path(audio_recording, modified_keys)
     end
     result
-  end
-
-  # Get param value if available, otherwise a default value.
-  # @param [ActiveSupport::HashWithIndifferentAccess] request_params
-  # @param [Hash] modified_params
-  # @param [String] param_name
-  # @param [Object] default_value
-  def get_param_value(request_params, modified_params, param_name, default_value)
-    if request_params.include?(param_name)
-      param_value = request_params[param_name]
-      modified_params[param_name] = param_value
-    else
-      param_value = default_value
-    end
-    param_value
   end
 
   def valid_sample_rates
@@ -325,6 +307,10 @@ class MediaResponseMetadata
   def sox
     audio = @media_cache_tool.audio
     audio.audio_sox
+  end
+
+  def api_common
+    Api::Common.new
   end
 
 end

@@ -69,7 +69,6 @@ class AudioRecording < ActiveRecord::Base
   before_validation :set_uuid, on: :create
 
   # postgres-specific
-
   scope :start_after, lambda { |time| where('recorded_date >= ?', time) }
   scope :start_before, lambda { |time| where('recorded_date <= ?', time) }
   scope :start_before_not_equal, lambda { |time| where('recorded_date < ?', time) }
@@ -84,10 +83,12 @@ class AudioRecording < ActiveRecord::Base
   scope :tag_types, lambda { |tag_types| includes(:tags).where('tags.type_of_tag' => tag_types) }
   scope :tag_text, lambda { |tag_text| includes(:tags).where(Tag.arel_table[:text].matches("%#{tag_text}%")) }
 
+  # Check if the original file for this audio recording currently exists.
   def original_file_exists?
     self.original_file_paths.length > 0
   end
 
+  # Get the existing paths for the audio recording file.
   def original_file_paths
     media_cache = Settings.media_cache_tool
 
@@ -115,6 +116,7 @@ class AudioRecording < ActiveRecord::Base
     source_existing_paths
   end
 
+  # Calculate the format of original audio recording.
   def original_format_calculated
     if self.original_file_name.blank?
       Mime::Type.lookup(self.media_type).to_sym.to_s
@@ -197,6 +199,21 @@ class AudioRecording < ActiveRecord::Base
       msg = "#{existing_dirs.size} audio recording storage #{existing_dirs.size == 1 ? 'directory' : 'directories'} available."
       {message: msg, success: true}
     end
+  end
+
+  # Get the valid fields for an api response.
+  def self.valid_fields
+    [
+        :bit_rate_bps, :channels, :data_length_bytes, :original_file_name,
+        :duration_seconds, :file_hash, :media_type, :notes, :recorded_date,
+        :sample_rate_hertz, :status, :uploader_id, :site_id, :overlapping,
+        :uuid
+    ]
+  end
+
+  # Get the text fields that can be searched.
+  def self.text_fields
+    [:notes, :status, :original_file_name]
   end
 
   private

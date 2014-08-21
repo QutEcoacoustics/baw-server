@@ -291,7 +291,7 @@ class User < ActiveRecord::Base
   def special_after_create_actions
     # WARNING: if this raises an error, the user will not be created and the page will be redirected to the home page
     # notify us of new user sign ups
-    PublicMailer.new_user_message(self, NewUserInfo.new(name: self.user_name, email: self.email))
+    PublicMailer.new_user_message(self, DataClass::NewUserInfo.new(name: self.user_name, email: self.email))
   end
 
   # Change the behaviour of the auth action to use :login rather than :email.

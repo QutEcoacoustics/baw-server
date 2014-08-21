@@ -190,7 +190,7 @@ EXTRACT(DAY FROM recorded_date) as extracted_day')
 
   # GET /contact_us
   def new_contact_us
-    @contact_us = ContactUs.new
+    @contact_us = DataClass::ContactUs.new
     respond_to do |format|
       format.html {}
     end
@@ -198,7 +198,7 @@ EXTRACT(DAY FROM recorded_date) as extracted_day')
 
   # POST /contact_us
   def create_contact_us
-    @contact_us = ContactUs.new(params[:contact_us])
+    @contact_us = DataClass::ContactUs.new(params[:data_class_contact_us])
 
     model_valid = @contact_us.valid?
     recaptcha_valid = verify_recaptcha(
@@ -224,7 +224,7 @@ EXTRACT(DAY FROM recorded_date) as extracted_day')
 
   # GET /bug_report
   def new_bug_report
-    @bug_report = BugReport.new
+    @bug_report = DataClass::BugReport.new
     respond_to do |format|
       format.html {}
     end
@@ -232,7 +232,7 @@ EXTRACT(DAY FROM recorded_date) as extracted_day')
 
   # POST /bug_report
   def create_bug_report
-    @bug_report = BugReport.new(params[:bug_report])
+    @bug_report = DataClass::BugReport.new(params[:data_class_bug_report])
 
     model_valid = @bug_report.valid?
     recaptcha_valid = verify_recaptcha(
@@ -258,7 +258,7 @@ EXTRACT(DAY FROM recorded_date) as extracted_day')
 
   # GET /data_request
   def new_data_request
-    @data_request = DataRequest.new
+    @data_request = DataClass::DataRequest.new
 
     @annotation_download = nil
     if !params[:annotation_download].blank? &&
@@ -277,7 +277,7 @@ EXTRACT(DAY FROM recorded_date) as extracted_day')
 
   # POST /data_request
   def create_data_request
-    @data_request = DataRequest.new(params[:data_request])
+    @data_request = DataClass::DataRequest.new(params[:data_class_data_request])
 
     model_valid = @data_request.valid?
     recaptcha_valid = verify_recaptcha(

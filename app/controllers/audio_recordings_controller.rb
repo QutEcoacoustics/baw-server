@@ -47,7 +47,6 @@ class AudioRecordingsController < ApplicationController
     render json: @audio_recording.to_json(only: required)
   end
 
-
   # POST /audio_recordings.json
   def create
     @audio_recording = match_existing_or_create_new(params)
@@ -65,8 +64,6 @@ class AudioRecordingsController < ApplicationController
     else
       render json: @audio_recording.errors, status: :unprocessable_entity
     end
-
-
   end
 
   def check_uploader
@@ -94,48 +91,19 @@ class AudioRecordingsController < ApplicationController
     end
   end
 
-  ## PUT /audio_recordings/1.json
-  #def update
-  #  @audio_recording = AudioRecording.find(params[:id])
-  #
-  #  respond_to do |format|
-  #    if @audio_recording.update_attributes(params[:audio_recording])
-  #      format.json { head :no_content }
-  #    else
-  #      format.json { render json: @audio_recording.errors, status: :unprocessable_entity }
-  #    end
-  #  end
-  #end
-  #
-  ## DELETE /audio_recordings/1.json
-  #def destroy
-  #  @audio_recording = AudioRecording.find(params[:id])
-  #  @audio_recording.destroy
-  #
-  #  add_archived_at_header(@audio_recording)
-  #
-  #  respond_to do |format|
-  #    format.json { no_content_as_json }
-  #  end
-  #end
-
   # this is called by the harvester once the audio file is in the correct location
   def update_status
     update_status_user_check
   end
 
   def filter
-    valid_fields = [
-        :bit_rate_bps, :channels, :data_length_bytes, :original_file_name,
-        :duration_seconds, :file_hash, :media_type, :notes,
-        :recorded_date, :sample_rate_hertz, :status, :uploader_id,
-        :site_id,
-        :overlapping,
-        :uuid
-    ]
-    text_fields = [:notes, :status, :original_file_name]
-    filter = ModelFilter::ParseAst.new(AudioRecording, params, valid_fields, text_fields)
-    render json: filter.to_query
+    filter = ModelFilter::ParseAst.new(
+        AudioRecording,
+        params,
+        AudioRecording.valid_fields,
+        AudioRecording.text_fields)
+    api_formatted = api_common.response_data(:ok, filter.query.all)
+    render json: api_formatted
   end
 
   private
@@ -212,6 +180,7 @@ class AudioRecordingsController < ApplicationController
   # if changes are successfully made by this check, then the
   # check_overlapping validation on audio_recording will succeed.
   # @param [AudioRecording] new_audio_recording
+  # @return [Boolean] true if overlaps were checked and corrected, otherwise false
   def check_and_correct_overlap(new_audio_recording)
     if has_overlap(new_audio_recording)
       overlapping = new_audio_recording.overlapping
@@ -222,6 +191,9 @@ class AudioRecordingsController < ApplicationController
     true
   end
 
+  # Correct overlap and record changes in notes field for both audio recordings.
+  # @param [AudioRecording] new_audio_recording
+  # @param [AudioRecording] existing_audio_recording
   def correct_overlap(new_audio_recording, existing_audio_recording)
     existing_audio_recording_start = existing_audio_recording[:recorded_date]
     existing_audio_recording_end = existing_audio_recording[:end_date]
