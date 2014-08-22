@@ -2,103 +2,6 @@ require 'spec_helper'
 require 'rspec_api_documentation/dsl'
 require 'helpers/acceptance_spec_helper'
 
-def standard_media_parameters
-
-  parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
-
-  parameter :format, 'Required format of the audio segment (options: json|mp3|flac|webm|ogg|wav|png). Use json if requesting metadata', required: true
-  parameter :start_offset, 'Start time of the audio segment in seconds'
-  parameter :end_offset, 'End time of the audio segment in seconds'
-
-  let(:start_offset) { '1' }
-  let(:end_offset) { '2' }
-
-  let(:raw_post) { params.to_json }
-end
-
-def check_common_request_items(audio_recording, content_type, check_accept_header = true)
-  options = {}
-  options[:datetime] = audio_recording.recorded_date
-  options[:original_format] = File.extname(audio_recording.original_file_name) unless audio_recording.original_file_name.blank?
-  options[:original_format] = '.' + Mime::Type.lookup(audio_recording.media_type).to_sym.to_s if options[:original_format].blank?
-  options[:datetime_with_offset] = audio_recording.recorded_date
-  options[:uuid] = audio_recording.uuid
-  options[:id] = audio_recording.id
-  options[:start_offset] = start_offset unless start_offset.blank?
-  options[:end_offset] = end_offset unless end_offset.blank?
-
-  original_file_names = media_cacher.original_audio_file_names(options)
-  original_possible_paths = original_file_names.map { |source_file| media_cacher.cache.possible_storage_paths(media_cacher.cache.original_audio, source_file) }.flatten
-
-  FileUtils.mkpath File.dirname(original_possible_paths.first)
-  FileUtils.cp audio_file_mono, original_possible_paths.first
-
-  request = do_request
-  status.should eq(200), "expected status 200 but was #{status}. Response body was #{response_body}"
-  response_headers['Content-Type'].should include(content_type)
-  response_headers['Accept-Ranges'].should eq('bytes') if check_accept_header
-
-  response_headers['Content-Transfer-Encoding'].should eq('binary') unless content_type == 'application/json'
-  response_headers['Content-Transfer-Encoding'].should be_nil if content_type == 'application/json'
-
-  response_headers['Content-Disposition'].should start_with('inline; filename=') unless content_type == 'application/json'
-  response_headers['Content-Disposition'].should be_nil if content_type == 'application/json'
-
-  [options, request]
-end
-
-def using_original_audio(audio_recording, content_type, check_accept_header = true, check_content_length = true, expected_head_request = false)
-
-  options, request = check_common_request_items(audio_recording, content_type, check_accept_header)
-
-  is_image = response_headers['Content-Type'].include? 'image'
-  default_spectrogram = Settings.cached_spectrogram_defaults
-
-  is_audio = response_headers['Content-Type'].include? 'audio'
-  default_audio = Settings.cached_audio_defaults
-
-  # !! - forces the boolean context, but returns the proper boolean value
-  is_documentation_run = !!(ENV['GENERATE_DOC'])
-
-  actual_head_request = !is_documentation_run && !request.blank? && !request[0].blank? && request[0][:request_method] == 'HEAD'
-
-  # assert
-  if actual_head_request || expected_head_request
-    response_body.size.should eq(0)
-    if is_image
-      options[:format] = default_spectrogram.extension
-      options[:channel] = default_spectrogram.channel.to_i
-      options[:sample_rate] = default_spectrogram.sample_rate.to_i
-      options[:window] = default_spectrogram.window.to_i
-      options[:window_function] = default_spectrogram.window_function.to_i
-      options[:colour] = default_spectrogram.colour.to_s
-      cache_spectrogram_file = media_cacher.cached_spectrogram_file_name(options)
-      cache_spectrogram_possible_paths = media_cacher.cache.possible_storage_paths(media_cacher.cache.cache_spectrogram, cache_spectrogram_file)
-      response_headers['Content-Length'].to_i.should eq(File.size(cache_spectrogram_possible_paths.first)) if check_content_length
-    elsif is_audio
-      options[:format] = default_audio.extension
-      options[:channel] = default_audio.channel.to_i
-      options[:sample_rate] = default_audio.sample_rate.to_i
-      cache_audio_file = media_cacher.cached_audio_file_name(options)
-      cache_audio_possible_paths = media_cacher.cache.possible_storage_paths(media_cacher.cache.cache_audio, cache_audio_file)
-      response_headers['Content-Length'].to_i.should eq(File.size(cache_audio_possible_paths.first)) if check_content_length
-    elsif response_headers['Content-Type'].include? 'application/json'
-      response_headers['Content-Length'].to_i.should be > 0
-      # TODO: files should not exist?
-    else
-      fail "Unrecognised content type: #{response_headers['Content-Type']}"
-    end
-  else
-    begin
-      temp_file = File.join(Settings.paths.temp_files, 'temp-media_controller_response')
-      File.open(temp_file, 'wb') { |f| f.write(response_body) }
-      response_headers['Content-Length'].to_i.should eq(File.size(temp_file))
-    ensure
-      File.delete temp_file if File.exists? temp_file
-    end
-  end
-end
-
 # https://github.com/zipmark/rspec_api_documentation
 resource 'Media' do
 
@@ -736,5 +639,48 @@ resource 'Media' do
                      'meta/error/details', 'colour parameter')
   end
 
+  context 'remote media generation' do
+    around(:each) do |example|
+      Settings[:media_request_processor] = Settings::MEDIA_PROCESSOR_RESQUE
+      stored = Settings.audio_tools_timeout_sec
+      Settings[:audio_tools_timeout_sec] = 1
+      example.run
+      Settings[:media_request_processor] = Settings::MEDIA_PROCESSOR_LOCAL
+      Settings[:audio_tools_timeout_sec] = stored
+    end
+
+    get '/audio_recordings/:audio_recording_id/media.:format' do
+      standard_media_parameters
+      let(:authentication_token) { reader_token }
+      let(:format) { 'mp3' }
+
+      example 'MEDIA (audio get request mp3 as reader with shallow path) - 200', document: document_media_requests do
+        options = create_media_options(audio_recording)
+
+        queue_name = Settings.resque.queues.media.to_sym
+
+        # do first request - this purposely fails,
+        # we're restricted to a single thread, so can't run request and worker at once (they both block)
+        expect {
+          do_request
+        }.to raise_error(RuntimeError, /Took longer than 1 seconds for resque to fulfil media request/)
+
+        # store request that's in queue
+        expect(Resque.size(queue_name)).to eq(1)
+
+        # run emulated worker - this will process the single job in the queue
+        emulate_resque_worker(queue_name, false, true)
+
+        # run a second request, which should use the cached file to complete the request
+        request = do_request
+
+        # assertions
+        media_type = 'audio/mp3'
+        validate_media_response(media_type)
+        using_original_audio_custom(options, request, audio_recording, media_type)
+      end
+    end
+
+  end
 
 end

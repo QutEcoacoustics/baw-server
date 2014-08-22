@@ -53,6 +53,7 @@ module Api
     # @param [Array<Symbol>] valid_fields
     # @return [Array<Arel::Nodes::Node>] conditions
     def build_conditions(field, hash, table, valid_fields)
+      fail ArgumentError, "Conditions hash must have at least 1 entry, got #{hash.size}." if hash.blank? || hash.size < 1
       conditions = []
       hash.each do |key, value|
         if key == :range
@@ -67,7 +68,7 @@ module Api
         elsif value.is_a?(Hash)
           # recurse
           conditions.push(*build_conditions(key, value, table, valid_fields))
-        elsif value.is_a?(Array) && [:or, :and].include?(key)
+        elsif value.is_a?(Array)
           # combine conditions
           conditions.push(build_array(key, value, table, valid_fields))
         else
@@ -104,11 +105,7 @@ module Api
           compose_gteq(table, field, valid_fields, filter_value)
 
         # subsets
-        # range is handled separately
-        when :interval
-          compose_range_string(table, field, valid_fields, filter_value)
-        when :in
-          compose_in(table, field, valid_fields, filter_value)
+        # range (from/to, interval), in are handled separately
         when :contains
           compose_contains(table, field, valid_fields, filter_value)
         when :starts_with
@@ -144,6 +141,7 @@ module Api
     # @param [Array<Arel::Nodes::Node>] conditions
     # @return [Arel::Nodes::Node] condition
     def build_combine(filter_name, conditions)
+      fail ArgumentError, "Conditions array must have at least 2 entries, got #{conditions.size}." if conditions.blank? || conditions.size < 2
       condition_builder = nil
       conditions.each do |condition|
         if condition_builder.blank?

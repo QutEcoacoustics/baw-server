@@ -84,6 +84,10 @@ AWB::Application.configure do
     #ActiveRecord::Base.logger = Logger.new(Rails.root.join('log', "#{Rails.env}.activerecord.log"))
     #config.active_record.colorize_logging = false
     #BawAudioTools::Logging.logger_formatter(ActiveRecord::Base.logger)
+
+    # overwrite redis
+    require 'fakeredis'
+    Resque.redis = Redis.new
   end
 
 end

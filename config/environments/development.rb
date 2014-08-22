@@ -45,9 +45,6 @@ AWB::Application.configure do
   # Expands the lines which load the assets
   config.assets.debug = false
 
-  # resque configuration
-  Resque.redis = Settings.resque.connection
-
   # Set path for image magick for windows only
   if RbConfig::CONFIG['target_os'] =~ /mswin|mingw/i
     im_dir = Settings.paths.image_magick_dir

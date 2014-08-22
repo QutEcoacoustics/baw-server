@@ -10,7 +10,7 @@ guard :rspec, cli: '--format progress --color --seed 3583' do
   #watch(%r{^app/(.+)\.rb$})                           { |m| "spec/#{m[1]}_spec.rb" }
   #watch(%r{^app/(.*)(\.erb|\.haml)$})                 { |m| "spec/#{m[1]}#{m[2]}_spec.rb" }
   watch(%r{^app/models/(.+)\.rb$})                     { |m| "spec/models/#{m[1]}_spec.rb" }
-  watch(%r{^app/controllers/(.+)_(controller)\.rb$})   { |m| [ "spec/acceptance/#{m[1]}_spec.rb", "spec/controllers/#{m[1]}_controller_spec.rb"] }
+  watch(%r{^app/controllers/(.+)_(controller)\.rb$})   { |m| %W(spec/acceptance/#{m[1]}_spec.rb spec/controllers/#{m[1]}_controller_spec.rb) }
   watch(%r{^spec/support/(.+)\.rb$})                   { 'spec' }
   watch('config/routes.rb')                            { 'spec/routing' }
   watch('app/controllers/application_controller.rb')   { 'spec/acceptance' }
@@ -22,13 +22,8 @@ guard :rspec, cli: '--format progress --color --seed 3583' do
   watch(%r{^app/models/(.+)\.rb$})                     { |m| "spec/features/#{m[1]}s_spec.rb" }
   watch(%r{^app/models/(.+)\.rb$})                     { |m| "spec/acceptance/#{m[1]}s_spec.rb" }
 
-  # for external modules
-  watch(%r{^lib/external/harvester/harvest_(.+)\.rb$}) { |m| "spec/harvester/harvest_#{m[1]}_spec.rb" }
-  watch(%r{^lib/external/harvester/harvester\.rb$})    { |m| 'spec/harvester/harvester_spec.rb' }
-  #watch(%r{^lib/modules/(.+)\.rb$})                   { |m| "spec/externals/#{m[1]}_spec.rb" }
-
-  # for media tools
-  watch(%r{^lib/modules/(.+)\.rb$})                    { |m| ["spec/media_tools/#{m[1]}_spec.rb", ].concat(Dir.glob("spec/media_tools/#{m[1]}_*_spec.rb")) }
+  # for lib folder
+  watch(%r{^lib/modules/(.+)\.rb$})                   { |m| "spec/lib/#{m[1]}_spec.rb" }
 
   # changes to factories
   watch(%r{^spec/factories/(.+)_(factory).rb$})        { |m| %W(spec/features/#{m[1]}s_spec.rb spec/features/#{m[1]}_spec.rb spec/acceptance/#{m[1]}s_spec.rb spec/acceptance/#{m[1]}_spec.rb spec/models/#{m[1]}s_spec.rb spec/models/#{m[1]}_spec.rb)}

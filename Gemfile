@@ -155,4 +155,5 @@ group :test do
   gem 'webmock', '~> 1.18.0'
   gem 'coveralls', '~> 0.7.0', require: false
   gem 'codeclimate-test-reporter', require: nil
+  gem 'fakeredis', require: 'fakeredis/rspec'
 end

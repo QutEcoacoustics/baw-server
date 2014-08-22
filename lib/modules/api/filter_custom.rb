@@ -57,15 +57,15 @@ module Api
     # @param [Arel::Table] table
     # @param [Symbol] column_name
     # @param [Array<Symbol>] text_allowed
-    # @param [String] text
+    # @param [Array<String>] text_array
     # @return [Arel::Nodes::Node] condition
-    def compose_similar(table, column_name, text_allowed, text)
+    def compose_similar(table, column_name, text_allowed, text_array)
 
       #tags_partial = CSV.parse(params[:tagsPartial], col_sep: ',').flatten.map { |item| item.trim(' ', '') }.join('|').downcase
       #tags_query = AudioEvent.joins(:tags).where('lower(tags.text) SIMILAR TO ?', "%(#{tags_partial})%").select('audio_events.id')
 
       validate_table_column(table, column_name, text_allowed)
-      sanitized_value = sanitize_similar_to_value(text)
+      sanitized_value = text_array.map { |item| sanitize_similar_to_value(item.trim(' ', '')) }.join('|').downcase
       contains_value = "%(#{sanitized_value})%"
       lower_value = "lower(#{table.name}.#{column_name})"
       similar = "#{lower_value} SIMILAR TO #{contains_value}"

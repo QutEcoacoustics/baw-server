@@ -80,7 +80,7 @@ class MediaController < ApplicationController
   def audio_recording_ready?(audio_recording)
     audio_recording.status == 'ready'
   end
- 
+
   def supported_media_response(audio_recording, audio_event, media_info, request_params)
     rails_request = request
 
@@ -168,6 +168,7 @@ class MediaController < ApplicationController
     # determine where media cutting and/ort spectrogram generation will occur
     is_processed_locally = Settings.process_media_locally?
     is_processed_by_resque = Settings.process_media_resque?
+    processor = Settings.media_request_processor
 
     existing_files = files_info.existing
 
@@ -185,6 +186,16 @@ class MediaController < ApplicationController
     end
 
     time_stop = Time.now
+
+    # check that there is at least one existing file
+    existing_files = existing_files.compact # remove nils
+    if existing_files.blank?
+      msg1 = "Could not create #{media_category}"
+      msg2 = "using #{processor}"
+      msg3 = "from request #{generation_request}"
+      msg4 = "for #{files_info}"
+      fail BawAudioTools::Exceptions::AudioToolError, "#{msg1} #{msg2} #{msg3} #{msg4}"
+    end
 
     # add timing headers
     add_header_started(time_start)
@@ -206,10 +217,10 @@ class MediaController < ApplicationController
   # @param [Symbol] media_category
   # @param [Hash] files_info
   # @param [Object] generation_request
-  # @return [String] path to existing file
+  # @return [Array<String>] path to existing file
   def create_media_resque(media_category, files_info, generation_request)
     BawWorkers::MediaAction.enqueue(media_category, generation_request)
-    poll_media(files_info.possible, Settings.audio_tools.max_duration_seconds)
+    poll_media(files_info.possible, Settings.audio_tools_timeout_sec)
   end
 
   # this will block the request and wait until the resource is available
@@ -218,17 +229,14 @@ class MediaController < ApplicationController
   # @param [Number] wait_max
   # @return [Array<String>] existing files
   def poll_media(expected_files, wait_max)
-    new_existing_file = nil
     FirePoll.poll("Took longer than #{wait_max} seconds for resque to fulfil media request.", wait_max) do
+      existing_files = []
       expected_files.each do |file|
-        test = File.exists?(file)
-        if test
-          new_existing_file = file
-        end
-        test
+        existing_files.push(file) if File.exists?(file)
       end
+      existing_files = existing_files.compact
+      existing_files.blank? ? false : existing_files
     end
-    [new_existing_file]
   end
 
   def response_local_spectrogram(audio_recording, generation_request, existing_files, rails_request, range_request)
