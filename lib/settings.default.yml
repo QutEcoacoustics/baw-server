@@ -3,7 +3,7 @@ settings:
     queues_to_process:
       - example
     connection: localhost:6379
-    log_level: 1 # Severity::INFO
+    log_level: 0 # Severity::DEBUG
     polling_interval_seconds: 5
     background_pid_file: ./tmp/resque_worker.pid
     output_log_file: ./tmp/program_stdout.log

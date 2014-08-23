@@ -31,8 +31,7 @@ module BawWorkers
     # @param [Symbol] media_type
     # @param [Hash] media_request_params
     def self.enqueue(media_type, media_request_params)
-      media_type_sym, params_sym = symbolize(media_type, media_request_params)
-      validate(media_type_sym, params_sym)
+      media_type_sym, params_sym = validate(media_type, media_request_params)
       Resque.enqueue(MediaAction, media_type_sym, params_sym)
     end
 
@@ -47,7 +46,7 @@ module BawWorkers
     # @param [Hash] media_request_params
     # @return [Array<String>] target existing paths
     def self.perform(media_type, media_request_params)
-      media_type_sym, params_sym = symbolize(media_type, media_request_params)
+      media_type_sym, params_sym = validate(media_type, media_request_params)
       target_existing_paths = make_media_request(media_type_sym, params_sym)
       target_existing_paths
     end
@@ -57,12 +56,11 @@ module BawWorkers
     # @param [Hash] media_request_params
     # @return [Array<String>] target existing paths
     def self.make_media_request(media_type, media_request_params)
-      media_type_sym, params_sym = symbolize(media_type, media_request_params)
-      validate(media_type_sym, params_sym)
+      media_type_sym, params_sym = validate(media_type, media_request_params)
 
       # ensure datetime_with_offset is an ActiveSupport::TimeWithZone
       datetime_with_offset_value = params_sym[:datetime_with_offset]
-      unless datetime_with_offset_value.is_a?(ActiveSupport::TimeWithZone)
+      if !datetime_with_offset_value.blank? && !datetime_with_offset_value.is_a?(ActiveSupport::TimeWithZone)
         params_sym[:datetime_with_offset] = Time.zone.parse(datetime_with_offset_value)
       end
 
@@ -83,8 +81,19 @@ module BawWorkers
     private
 
     def self.validate(media_type, media_request_params)
-      fail ArgumentError, "Media type (#{media_type.inspect}) was not valid (#{valid_media_types})." unless valid_media_types.include?(media_type)
-      fail ArgumentError, "Media request params was not a hash (#{media_request_params.inspect})" unless media_request_params.is_a?(Hash)
+      validate_hash(media_request_params)
+      media_type_sym, params_sym = symbolize(media_type, media_request_params)
+      validate_contains(media_type_sym, valid_media_types)
+      [media_type_sym, params_sym]
+    end
+
+    def self.validate_contains(value, hash)
+      fail ArgumentError, "Media type (#{value.inspect}) was not valid (#{hash})." unless hash.include?(value)
+
+    end
+
+    def self.validate_hash(hash)
+      fail ArgumentError, "Media request params was not a hash (#{hash.inspect})" unless hash.is_a?(Hash)
     end
 
     def self.symbolize_hash_keys(hash)

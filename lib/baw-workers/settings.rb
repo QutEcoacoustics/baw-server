@@ -23,6 +23,7 @@ module BawWorkers
     # @param [String] namespace
     # @return [void]
     def self.set_namespace(namespace)
+      puts "===> baw-workers namespace set to #{namespace}."
       BawWorkers::Settings.namespace(namespace)
     end
 
@@ -30,6 +31,7 @@ module BawWorkers
     # @param [Settings] settings
     # @return [void]
     def self.instance_merge(settings)
+      puts '===> baw-workers merged additional settings.'
       instance.deep_merge!(settings)
     end
 
