@@ -45,7 +45,7 @@ namespace :baw_workers do
   # run a worker. Passes parameter to prerequisite 'setup_worker'. Takes one argument: settings_file
   # examples:
   # bundle exec rake baw_workers:run_worker
-  # bundle exec rake baw_workers:run_worker['/home/ubuntu/bioacoustics/workers/settings.media.yml']
+  # bundle exec rake baw_workers:run_worker['/home/user/folder/workers/settings.media.yml']
   desc 'Run a resque:work with the specified settings file.'
   task :run_worker, [:settings_file] => [:setup_worker] do |t, args|
 
