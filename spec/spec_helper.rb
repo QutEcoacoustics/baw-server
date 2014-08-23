@@ -37,6 +37,7 @@ SimpleCov.start
 require 'zonebie'
 require 'baw-workers'
 require 'fakeredis'
+require 'active_support/core_ext'
 
 # include shared_context
 Dir[File.join(File.dirname(__FILE__), 'support', '**', '*.rb')].each {|file| require file }

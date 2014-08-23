@@ -3,8 +3,9 @@ require 'resque/tasks'
 
 namespace :baw_workers do
 
+  # Set up the worker parameters. Takes one argument: settings_file
   desc 'Run setup for Resque worker'
-  task :setup_worker, [:settings_file] do |t, args|
+  task :setup_worker, :settings_file do |t, args|
     args.with_defaults(settings_file: File.join(File.dirname(__FILE__), '..', 'settings.default.yml'))
 
     BawWorkers::Settings.set_source(args.settings_file)
@@ -40,8 +41,11 @@ namespace :baw_workers do
     ENV['TERM_CHILD'] = '1'
   end
 
+  # run a worker. Passes parameter to prerequisite 'setup_worker'. Takes one argument: settings_file
+  # examples:
+  # bundle exec rake baw_workers:run_worker[''/home/ubuntu/bioacoustics/workers/settings.media.yml']
   desc 'Run a resque:work with the specified settings file.'
-  task :run_worker => [:setup_worker] do |t, args|
+  task :run_worker, :settings_file => :setup_worker do |t, args|
 
     puts "===> Connecting to Redis on #{BawWorkers::Settings.resque.connection}."
     Resque.redis = BawWorkers::Settings.resque.connection
