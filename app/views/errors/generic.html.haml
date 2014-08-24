@@ -5,6 +5,10 @@
   - else
     %h1= @details.phrase
     %p= @details.message
+    - @details.links.each do |key, value|
+      %p
+        %a{href: value}= key
+      
   %p You could go back and try again.
 
 .span6

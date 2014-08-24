@@ -69,12 +69,51 @@ module Api
 
       response_data[:meta][:error][:details] = message unless message.blank?
 
-      response_data[:meta][:error][:links] = {} unless links_object.blank?
-      response_data[:meta][:error][:links]['sign in'] = url_helpers.new_user_session_url if !links_object.blank? && links_object.include?(:sign_in)
-      response_data[:meta][:error][:links]['request permissions'] = url_helpers.new_access_request_projects_url if !links_object.blank? && links_object.include?(:permissions)
-      response_data[:meta][:error][:links]['confirm your account'] = url_helpers.new_user_confirmation_url if !links_object.blank? && links_object.include?(:confirm)
+      response_data[:meta][:error][:links] = response_links(links_object)
 
       response_data
+    end
+
+    def response_link_sign_in
+      {
+          text: 'sign in',
+          link: url_helpers.new_user_session_url
+      }
+    end
+
+    def response_link_new_permissions
+      {
+          text: 'request permissions',
+          link: url_helpers.new_access_request_projects_url
+      }
+    end
+
+    def response_link_confirm_account
+      {
+          text: 'confirm your account',
+          link: url_helpers.new_user_confirmation_url
+      }
+    end
+
+    def response_links(links_object = nil)
+      response = {}
+      unless links_object.blank?
+        if links_object.include?(:sign_in)
+          sign_in_info = response_link_sign_in
+          response[sign_in_info.text] = sign_in_info.link
+        end
+
+        if links_object.include?(:permissions)
+          request_permissions_info = response_link_new_permissions
+          response[request_permissions_info.text] = request_permissions_info.link
+        end
+
+        if links_object.include?(:confirm)
+          confirm_info = response_link_confirm_account
+          response[confirm_info.text] = confirm_info.link
+        end
+      end
+      response
     end
 
     def response_sort(order_by, direction)

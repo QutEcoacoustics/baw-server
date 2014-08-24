@@ -188,10 +188,12 @@ class ApplicationController < ActionController::Base
         status_code = api_response.status_code(status_symbol)
         status_message = api_response.status_phrase(status_symbol).humanize
 
+        response_links = api_response.response_links(options[:links_object])
+
         if options[:redirect]
           redirect_to get_redirect, alert: "#{status_message}: #{detail_message}"
         else
-          @details = {code: status_code, phrase: status_message, message: detail_message}
+          @details = {code: status_code, phrase: status_message, message: detail_message, links: response_links}
           render template: 'errors/generic', status: status_symbol
         end
       }
