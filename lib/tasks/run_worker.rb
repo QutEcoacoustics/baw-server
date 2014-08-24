@@ -16,13 +16,21 @@ Time.zone = 'UTC'
 
 namespace :baw_workers do
 
-  # Set up the worker parameters. Takes one argument: settings_file
-  desc 'Run setup for Resque worker'
-  task :setup_worker, [:settings_file] do |t, args|
+  desc 'Load settings and connect to Redis'
+  task :init_worker, [:settings_file] do |t, args|
     args.with_defaults(settings_file: File.join(File.dirname(__FILE__), '..', 'settings.default.yml'))
 
     BawWorkers::Settings.set_source(args.settings_file)
     BawWorkers::Settings.set_namespace('settings')
+
+    puts "===> Connecting to Redis on #{BawWorkers::Settings.resque.connection}."
+    Resque.redis = BawWorkers::Settings.resque.connection
+    #Resque.redis = Redis.new
+  end
+
+  # Set up the worker parameters. Takes one argument: settings_file
+  desc 'Run setup for Resque worker'
+  task :setup_worker, [:settings_file] => [:init_worker]  do |t, args|
 
     if BawWorkers::Settings.resque.background_pid_file.blank?
       puts '===> Running in foreground.'
@@ -64,11 +72,24 @@ namespace :baw_workers do
   desc 'Run a resque:work with the specified settings file.'
   task :run_worker, [:settings_file] => [:setup_worker] do |t, args|
 
-    puts "===> Connecting to Redis on #{BawWorkers::Settings.resque.connection}."
-    Resque.redis = BawWorkers::Settings.resque.connection
-    #Resque.redis = Redis.new
-
     # invoke the resque rake task
     Rake::Task['resque:work'].invoke
   end
+
+  desc 'Quit running workers'
+  task :stop_workers, [:settings_file] => [:init_worker] do |t, args|
+
+    pids = Array.new
+    Resque.workers.each do |worker|
+      pids.concat(worker.worker_pids)
+    end
+    if pids.empty?
+      puts 'No workers to kill'
+    else
+      syscmd = "kill -s QUIT #{pids.join(' ')}"
+      puts "Running syscmd: #{syscmd}"
+      system(syscmd)
+    end
+  end
+
 end
