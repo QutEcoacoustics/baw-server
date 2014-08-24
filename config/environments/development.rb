@@ -86,6 +86,11 @@ AWB::Application.configure do
 
     # log all activerecord activity
     ActiveRecord::Base.logger = Logger.new(STDOUT)
+
+    # log all redis output
+    Resque.logger = Logger.new(Rails.root.join('log', "#{Rails.env}.resque.log"))
+    BawAudioTools::Logging.logger_formatter(config.logger)
+    Resque.logger.level = Logger::DEBUG
   end
 end
 

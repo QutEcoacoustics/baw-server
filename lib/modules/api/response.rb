@@ -77,21 +77,21 @@ module Api
     def response_link_sign_in
       {
           text: 'sign in',
-          link: url_helpers.new_user_session_url
+          link: url_helpers.new_user_session_path
       }
     end
 
     def response_link_new_permissions
       {
           text: 'request permissions',
-          link: url_helpers.new_access_request_projects_url
+          link: url_helpers.new_access_request_projects_path
       }
     end
 
     def response_link_confirm_account
       {
           text: 'confirm your account',
-          link: url_helpers.new_user_confirmation_url
+          link: url_helpers.new_user_confirmation_path
       }
     end
 

@@ -314,7 +314,7 @@ class ApplicationController < ActionController::Base
           I18n.t('devise.failure.unauthorized'),
           error,
           'access_denied_response - forbidden',
-          redirect: true,
+          redirect: false,
           links_object: [:permissions])
 
     elsif current_user && !current_user.confirmed?
@@ -323,7 +323,7 @@ class ApplicationController < ActionController::Base
           I18n.t('devise.failure.unconfirmed'),
           error,
           'access_denied_response - unconfirmed',
-          redirect: true,
+          redirect: false,
           links_object: [:confirm])
 
     else
@@ -332,7 +332,7 @@ class ApplicationController < ActionController::Base
           I18n.t('devise.failure.unauthenticated'),
           error,
           'access_denied_response - unauthorised',
-          redirect: true,
+          redirect: false,
           links_object: [:sign_in, :confirm])
 
     end

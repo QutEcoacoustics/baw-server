@@ -8,7 +8,7 @@ GIT
 
 GIT
   remote: https://github.com/QutBioacoustics/baw-workers.git
-  revision: 3d918069306a5bfaafaf1cc104854a9730d45511
+  revision: 6d2f175cd9a84ccfad51d59ebd613a5927692ee5
   specs:
     baw-workers (0.1.1)
       activesupport (>= 3.2)
@@ -326,7 +326,7 @@ GEM
     ruby_parser (3.5.0)
       sexp_processor (~> 4.1)
     safe_yaml (1.0.3)
-    sass (3.4.0)
+    sass (3.4.1)
     sass-rails (3.2.6)
       railties (~> 3.2.0)
       sass (>= 3.1.10)
