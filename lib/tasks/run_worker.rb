@@ -20,8 +20,18 @@ namespace :baw_workers do
   task :init_worker, [:settings_file] do |t, args|
     args.with_defaults(settings_file: File.join(File.dirname(__FILE__), '..', 'settings.default.yml'))
 
+    settings_namespace = 'settings'
+
     BawWorkers::Settings.set_source(args.settings_file)
-    BawWorkers::Settings.set_namespace('settings')
+    BawWorkers::Settings.set_namespace(settings_namespace)
+
+    # define the Settings class for baw-audio-tools
+    unless defined? Settings
+      class Settings < BawWorkers::Settings
+        source BawWorkers::Settings.source
+        namespace settings_namespace
+      end
+    end
 
     puts "===> Connecting to Redis on #{BawWorkers::Settings.resque.connection}."
     Resque.redis = BawWorkers::Settings.resque.connection
