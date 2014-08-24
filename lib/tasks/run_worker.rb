@@ -58,8 +58,13 @@ namespace :baw_workers do
     ENV['QUEUES'] = queues
 
     log_level = BawWorkers::Settings.resque.log_level
-    puts "===> Log level: #{log_level}."
+    log_file = Settings.resque.output_log_file
+    puts "===> Logging to #{log_file} at level #{log_level}."
+    Resque.logger = Logger.new(log_file)
+    BawAudioTools::Logging.logger_formatter(Resque.logger)
     Resque.logger.level = log_level
+
+    # set resque verbose on
     ENV['VERBOSE '] = '1'
     ENV['VVERBOSE '] = '1'
 

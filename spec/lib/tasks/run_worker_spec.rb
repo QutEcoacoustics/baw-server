@@ -16,7 +16,7 @@ describe 'baw_workers:setup_worker' do
 
       #expect(program_stdout_content).to include("===> Using settings file #{default_settings_file}")
       expect(program_stdout_content).to include('===> Polling queues example.')
-      expect(program_stdout_content).to include('===> Log level: 1.')
+      expect(program_stdout_content).to include('===> Logging to ./tmp/program_stdout.log at level 1.')
       expect(program_stdout_content).to include('===> Polling every 5 seconds')
       expect(program_stdout_content).to include('===> Running in background with pid file ./tmp/resque_worker.pid.')
 
@@ -32,7 +32,7 @@ describe 'baw_workers:setup_worker' do
 
       #expect(program_stdout_content).to include("===> Using settings file #{default_settings_file}")
       expect(program_stdout_content).to include('===> Polling queues example.')
-      expect(program_stdout_content).to include('===> Log level: 1.')
+      expect(program_stdout_content).to include('===> Logging to ./tmp/program_stdout.log at level 1.')
       expect(program_stdout_content).to include('===> Polling every 5 seconds')
       expect(program_stdout_content).to include('===> Running in foreground.')
 
