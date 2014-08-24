@@ -17,6 +17,6 @@ test/version_tmp
 tmp
 .idea/
 vendor/
-lib/baw-workers/settings/settings.test.yml
-lib/baw-workers/settings/settings.dev.yml
+lib/settings.test.yml
+lib/settings.dev.yml
 audio_tools.log

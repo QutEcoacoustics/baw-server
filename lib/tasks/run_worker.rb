@@ -1,6 +1,19 @@
 require 'rake'
 require 'resque/tasks'
 
+# mirror baw-workers gem startup
+require 'active_support/all'
+require 'logger'
+require 'baw-audio-tools'
+require 'resque'
+require 'resque_solo'
+
+require 'baw-workers/version'
+require 'baw-workers/settings'
+
+# set time zone
+Time.zone = 'UTC'
+
 namespace :baw_workers do
 
   # Set up the worker parameters. Takes one argument: settings_file
@@ -43,9 +56,11 @@ namespace :baw_workers do
   end
 
   # run a worker. Passes parameter to prerequisite 'setup_worker'. Takes one argument: settings_file
-  # examples:
+  # start examples:
   # bundle exec rake baw_workers:run_worker
   # bundle exec rake baw_workers:run_worker['/home/user/folder/workers/settings.media.yml']
+  # stopping workers:
+  # kill -s QUIT $(/home/user/folder/workers/media.pid)
   desc 'Run a resque:work with the specified settings file.'
   task :run_worker, [:settings_file] => [:setup_worker] do |t, args|
 
