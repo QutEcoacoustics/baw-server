@@ -48,6 +48,7 @@ class AudioRecordingsController < ApplicationController
   end
 
   # POST /audio_recordings.json
+  # this is used by the harvester, do not change!
   def create
     @audio_recording = match_existing_or_create_new(params)
     @audio_recording.site = @site
@@ -66,6 +67,7 @@ class AudioRecordingsController < ApplicationController
     end
   end
 
+  # this is used by the harvester, do not change!
   def check_uploader
     # current user should be the harvester
     # uploader_id must have read access to the project
@@ -92,16 +94,18 @@ class AudioRecordingsController < ApplicationController
   end
 
   # this is called by the harvester once the audio file is in the correct location
+  # this is used by the harvester, do not change!
   def update_status
     update_status_user_check
   end
 
+  # POST /audio_recordings/1/filter.json
+  # GET /audio_recordings/1/filter.json
   def filter
     filter_response = api_response.response_filter(
         params,
         AudioRecording,
-        AudioRecording.valid_fields,
-        AudioRecording.text_fields
+        AudioRecording.filter_settings
     )
     render_api_response(filter_response)
   end

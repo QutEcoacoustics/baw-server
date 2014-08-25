@@ -201,19 +201,22 @@ class AudioRecording < ActiveRecord::Base
     end
   end
 
-  # Get the valid fields for an api response.
-  def self.valid_fields
-    [
-        :bit_rate_bps, :channels, :data_length_bytes, :original_file_name,
-        :duration_seconds, :file_hash, :media_type, :notes, :recorded_date,
-        :sample_rate_hertz, :status, :uploader_id, :site_id, :overlapping,
-        :uuid
-    ]
-  end
-
-  # Get the text fields that can be searched.
-  def self.text_fields
-    [:notes, :status, :original_file_name]
+  # Define filter api settings
+  def self.filter_settings
+    {
+        valid_fields: [
+            :uuid, :recorded_date, :site_id, :duration_seconds,
+            :sample_rate_hertz, :channels, :bit_rate_bps, :media_type,
+            :data_length_bytes, :created_at, :updated_at
+        # :uploader_id, :file_hash, :status, :notes, :creator_id,
+        #:updater_id, :deleter_id, :deleted_at, :original_file_name
+        ],
+        text_fields: [:media_type, :notes, :status],
+        controller: :audio_recordings,
+        action: :filter,
+        default_order_by: :recorded_date,
+        default_direction: :desc
+    }
   end
 
   private

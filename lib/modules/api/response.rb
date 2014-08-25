@@ -144,8 +144,8 @@ module Api
       response_paging(values.offset, values.limit, count, total, controller, action)
     end
 
-    def response_filter(params, model, valid_fields, text_fields)
-      filter_query = Api::FilterQuery.new(params, model, valid_fields, text_fields)
+    def response_filter(params, model, filter_settings)
+      filter_query = Api::FilterQuery.new(params, model, filter_settings)
 
       # query without paging to get total
       query = filter_query.query_without_paging
@@ -170,9 +170,12 @@ module Api
       # add paging info
       paging = filter_query.get_paging
       built_response[:pagination] = response_paging(
-          paging.offset, paging.limit,
-          count, total,
-          :audio_recordings, :filter
+          paging.offset,
+          paging.limit,
+          count,
+          total,
+          filter_settings.controller,
+          filter_settings.action
       )
 
       # return result

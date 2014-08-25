@@ -6,8 +6,7 @@ describe Api::FilterQuery do
     Api::FilterQuery.new(
         params,
         AudioRecording,
-        AudioRecording.valid_fields,
-        AudioRecording.text_fields
+        AudioRecording.filter_settings
     )
   end
 

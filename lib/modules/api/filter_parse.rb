@@ -12,9 +12,11 @@ module Api
     # Append sorting to a query.
     # @param [ActiveRecord::Relation] query
     # @param [Hash] params
+    # @param [Symbol] default_order_by
+    # @param [Symbol] default_direction
     # @return [ActiveRecord::Relation] the modified query
-    def build_sort(query, params)
-      result = parse_sort(params)
+    def build_sort(query, params, default_order_by, default_direction)
+      result = parse_sort(params, default_order_by, default_direction)
       compose_sort(query, @table, result.order_by.to_sym, @valid_fields, result.direction.to_sym)
     end
 
@@ -266,7 +268,7 @@ module Api
       {offset: offset, limit: limit}
     end
 
-    def parse_sort(params)
+    def parse_sort(params, default_order_by, default_direction)
       # qsp
       order_by = params[:order_by]
       direction = params[:direction]
@@ -276,8 +278,8 @@ module Api
       direction = params[:sort][:direction] if order_by.blank? && !params[:sort].blank?
 
       # default to reverse chronological
-      order_by = :recorded_date if order_by.blank?
-      direction = :desc if direction.blank?
+      order_by = default_order_by if order_by.blank?
+      direction = default_direction if direction.blank?
 
       {order_by: order_by, direction: direction}
     end

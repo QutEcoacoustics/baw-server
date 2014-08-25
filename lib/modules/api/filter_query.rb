@@ -9,14 +9,14 @@ module Api
     # Convert a json POST body to an arel query.
     # @param [Hash] parameters
     # @param [ActiveRecord::Base] model
-    # @param [Array<Symbol>] valid_fields
-    # @param [Array<Symbol>] text_fields
-    def initialize(parameters, model, valid_fields = [], text_fields = [])
+    # @param [Hash] filter_settings
+    def initialize(parameters, model, filter_settings)
       # might need this at some point: Rack::Utils.parse_nested_query
       @model = model
       @table = relation_table(model)
-      @valid_fields = valid_fields.map(&:to_sym)
-      @text_fields = text_fields.map(&:to_sym)
+      @valid_fields = filter_settings.valid_fields.map(&:to_sym)
+      @text_fields = filter_settings.text_fields.map(&:to_sym)
+      @filter_settings = filter_settings
 
       @parameters = CleanParams.perform(parameters)
       validate_hash(@parameters)
@@ -29,7 +29,7 @@ module Api
     end
 
     def get_sort
-      parse_sort(@parameters)
+      parse_sort(@parameters, @filter_settings.default_order_by, @filter_settings.default_direction)
     end
 
     # Convert a hash to a query. Includes sorting and paging.
@@ -41,7 +41,7 @@ module Api
       query = query_base(query)
 
       # sorting
-      query = query_sort(query)
+      query = query_sort(query, @filter_settings.default_order_by, @filter_settings.default_direction)
 
       # paging
       query = query_paging(query)
@@ -65,7 +65,7 @@ module Api
       query = query_base(query)
 
       # sorting
-      query = query_sort(query)
+      query = query_sort(query, @filter_settings.default_order_by, @filter_settings.default_direction)
 
       # add qsp text filters
       query = query_filter_text(query)
@@ -123,10 +123,12 @@ module Api
 
     # Add sorting to query.
     # @param [ActiveRecord::Relation] query
+    # @param [Symbol] default_order_by
+    # @param [Symbol] default_direction
     # @return [ActiveRecord::Relation] query
-    def query_sort(query)
+    def query_sort(query, default_order_by, default_direction)
       validate_query(query)
-      build_sort(query, @parameters)
+      build_sort(query, @parameters, default_order_by, default_direction)
     end
 
     # Add sorting to query.
