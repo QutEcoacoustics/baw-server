@@ -96,4 +96,16 @@ class BookmarksController < ApplicationController
       format.json { head :no_content }
     end
   end
+
+  # POST /bookmarks/1/filter.json
+  # GET /bookmarks/1/filter.json
+  def filter
+    filter_response = api_response.response_filter(
+        params,
+        Bookmark,
+        Bookmark.filter_settings
+    )
+    render_api_response(filter_response)
+  end
+
 end

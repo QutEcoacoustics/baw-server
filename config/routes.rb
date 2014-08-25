@@ -14,6 +14,7 @@ AWB::Application.routes.draw do
   devise_for :users, path: :my_account
 
   # devise for RESTful API Authentication, see Api/sessions_controller.rb
+  # /security/sign_in is used by the harvester, do not change!
   devise_for :users,
              controllers: {sessions: 'sessions'},
              as: :security,
@@ -40,7 +41,11 @@ AWB::Application.routes.draw do
   # Resource Routes
   # ===============
 
-  resources :bookmarks, except: [:edit]
+  resources :bookmarks, except: [:edit] do
+    collection do
+      match 'filter', via: [:get, :post]
+    end
+  end
 
   # routes used by harvester:
   # endpoint_login: /security/sign_in
@@ -149,7 +154,7 @@ AWB::Application.routes.draw do
       put 'update_status' # for when harvester has moved a file to the correct location
     end
     collection do
-      post 'filter'
+      match 'filter', via: [:get, :post]
     end
   end
 

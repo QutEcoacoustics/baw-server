@@ -23,4 +23,17 @@ class Bookmark < ActiveRecord::Base
   scope :filter_by_name, lambda { |name| where(name: name) }
   scope :filter_by_category, lambda { |category| where(category: category) }
 
+  # Define filter api settings
+  def self.filter_settings
+    {
+        valid_fields: [:audio_recording_id, :offset_seconds, :name, :description, :category],
+        # :created_at, :updated_at, :creator_id, :updater_id,
+        text_fields: [:name, :description, :category],
+        controller: :bookmarks,
+        action: :filter,
+        default_order_by: :created_at,
+        default_direction: :desc
+    }
+  end
+
 end
