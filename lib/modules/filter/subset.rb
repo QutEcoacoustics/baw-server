@@ -1,8 +1,8 @@
 require 'active_support/concern'
 
-# Provides subset filtering (contains, in, range) for composing queries.
-module Api
-  module FilterSubset
+module Filter
+  # Provides subset filtering (contains, in, range) for composing queries.
+  module Subset
     extend ActiveSupport::Concern
     extend Validate
 

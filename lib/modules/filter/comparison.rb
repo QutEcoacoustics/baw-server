@@ -1,9 +1,9 @@
 require 'active_support/concern'
 
-module Api
+module Filter
 
   # Provides comparisons for composing queries.
-  module FilterComparison
+  module Comparison
     extend ActiveSupport::Concern
     extend Validate
 

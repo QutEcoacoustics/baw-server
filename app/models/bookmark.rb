@@ -31,8 +31,10 @@ class Bookmark < ActiveRecord::Base
         text_fields: [:name, :description, :category],
         controller: :bookmarks,
         action: :filter,
-        default_order_by: :created_at,
-        default_direction: :desc
+        defaults: {
+            order_by: :created_at,
+            direction: :desc
+        }
     }
   end
 

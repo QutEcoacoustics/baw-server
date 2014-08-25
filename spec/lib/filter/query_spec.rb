@@ -1,9 +1,9 @@
 require 'spec_helper'
 
-describe Api::FilterQuery do
+describe Filter::Query do
 
   def create_filter(params)
-    Api::FilterQuery.new(
+    Filter::Query.new(
         params,
         AudioRecording,
         AudioRecording.filter_settings
@@ -191,7 +191,7 @@ describe Api::FilterQuery do
                       to: 200
                   }
               },
-              notes: {
+              status: {
                   greater_than_or_equal: 012345,
                   contains: 'contain text',
                   starts_with: 'starts with text',
@@ -207,7 +207,7 @@ describe Api::FilterQuery do
                       }
                   },
                   {
-                      file_hash: {
+                      media_type: {
                           ends_with: 'world'
                       }
                   },
@@ -261,7 +261,7 @@ describe Api::FilterQuery do
               next: 'http://host.domain/resource?offset=1&limit=10',
               previous: 'http://host.domain/resource?offset=1&limit=10'
           },
-          filter_notes: 'hello',
+          filter_status: 'hello',
           filter_channels: 28,
           filter_partial_match: 'testing_testing'
       }

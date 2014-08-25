@@ -1,9 +1,9 @@
 require 'active_support/concern'
 
-module Api
+module Filter
 
   # Provides grouping, sorting, paging, 'and', and 'or' for composing queries.
-  module FilterCore
+  module Core
     extend ActiveSupport::Concern
     extend Validate
 
@@ -31,34 +31,6 @@ module Api
     def relation_table(model)
       validate_model(model)
       model.arel_table
-    end
-
-    # Append sorting to a query.
-    # @param [ActiveRecord::Relation] query
-    # @param [Arel::Table] table
-    # @param [Symbol] column_name
-    # @param [Array<Symbol>] allowed
-    # @param [Symbol] direction
-    # @return [ActiveRecord::Relation] the modified query
-    def compose_sort(query, table, column_name, allowed, direction)
-      validate_query_table_column(query, table, column_name, allowed)
-      validate_sorting(column_name, allowed, direction)
-
-      if direction == :asc
-        query.order(table[column_name].asc)
-      elsif direction == :desc
-        query.order(table[column_name].desc)
-      end
-    end
-
-    # Append paging to a query.
-    # @param [ActiveRecord::Relation] query
-    # @param [Integer] offset
-    # @param [Integer] limit
-    # @return [ActiveRecord::Relation] the modified query
-    def compose_paging(query, offset, limit)
-      values = validate_paging(offset, limit, validate_max_items)
-      query.offset(values.offset).limit(values.limit)
     end
 
     # Join conditions using or.
