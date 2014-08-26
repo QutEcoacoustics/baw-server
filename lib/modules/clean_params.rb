@@ -14,7 +14,7 @@ class CleanParams
   end
 
   # get a cleaned Array
-  # @param [Array] hash_to_clean
+  # @param [Array] array_to_clean
   # @return [Array] Cleaned array
   def self.array(array_to_clean)
     cleaned_array = []

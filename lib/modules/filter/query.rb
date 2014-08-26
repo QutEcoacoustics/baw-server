@@ -107,6 +107,21 @@ module Filter
       query
     end
 
+    # Get the query represented by the parameters sent in new. DOES NOT include filter, sort, or paging.
+    # @return [ActiveRecord::Relation] query
+    def query_basic
+      query = relation_all(@model)
+
+      # add qsp text filters
+      query = query_filter_text(query)
+
+      # add qsp generic_filters
+      query = query_filter_generic(query)
+
+      # result
+      query
+    end
+
     # Add filtering to a query.
     # @param [ActiveRecord::Relation] query
     # @return [ActiveRecord::Relation] query
@@ -245,8 +260,8 @@ module Filter
     # @param [Integer] limit
     # @return [ActiveRecord::Relation] the modified query
     def apply_paging(query, offset, limit)
-      values = validate_paging(offset, limit, @max_limit)
-      query.offset(values.offset).limit(values.limit)
+      validate_paging(offset, limit, @max_limit)
+      query.offset(offset).limit(limit)
     end
 
   end

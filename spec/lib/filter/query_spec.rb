@@ -180,7 +180,7 @@ describe Filter::Query do
           filter: {
               site_id: {
                   less_than: 123456,
-                  greater_than: 012345,
+                  greater_than: 9876,
                   in: [
                       1,
                       2,
@@ -192,7 +192,7 @@ describe Filter::Query do
                   }
               },
               status: {
-                  greater_than_or_equal: 012345,
+                  greater_than_or_equal: 4567,
                   contains: 'contain text',
                   starts_with: 'starts with text',
                   ends_with: 'ends with text',
@@ -233,7 +233,7 @@ describe Filter::Query do
                   {
                       channels: {
                           eq: 2,
-                          less_than_or_equal: 012345
+                          less_than_or_equal: 9999
                       }
                   }
               ],
@@ -246,20 +246,18 @@ describe Filter::Query do
                   {
                       channels: {
                           eq: 1,
-                          less_than_or_equal: 54321
+                          less_than_or_equal: 8888
                       }
                   }
               ]
           },
           sort: {
-              orderBy: 'duration_seconds',
+              order_by: 'duration_seconds',
               direction: 'desc'
           },
           paging: {
-              offset: 0,
-              limit: 10,
-              next: 'http://host.domain/resource?offset=1&limit=10',
-              previous: 'http://host.domain/resource?offset=1&limit=10'
+              page: 1,
+              items: 10,
           },
           filter_status: 'hello',
           filter_channels: 28,
@@ -268,46 +266,38 @@ describe Filter::Query do
     }
 
     let(:complex_result) {
-"SELECT  \"audio_recordings\".* \
-FROM \"audio_recordings\" \
+"SELECT\"audio_recordings\".* \
+FROM\"audio_recordings\" \
 WHERE \
-\"audio_recordings\".\"site_id\" IN (1, 2, 3) \
-AND (\"audio_recordings\".\"deleted_at\" IS NULL) \
-AND (\"audio_recordings\".\"site_id\" < 123456) \
-AND (\"audio_recordings\".\"site_id\" > 5349) \
-AND (\"audio_recordings\".\"site_id\" >= 100 \
-AND \"audio_recordings\".\"site_id\" < 200)  \
-AND (\"audio_recordings\".\"notes\" >= 5349)  \
-AND (\"audio_recordings\".\"notes\" ILIKE '%contain text%')  \
-AND (\"audio_recordings\".\"notes\" ILIKE 'starts with text%')  \
-AND (\"audio_recordings\".\"notes\" ILIKE '%ends with text')  \
-AND (\"audio_recordings\".\"notes\" BETWEEN '123' AND ' 128')  \
-AND ( \
-( \
-( \
-( \
-( \
-(\"audio_recordings\".\"recorded_date\" ILIKE '%Hello%' \
-OR \"audio_recordings\".\"file_hash\" ILIKE '%world') \
-OR \"audio_recordings\".\"duration_seconds\" = 60) \
-OR \"audio_recordings\".\"duration_seconds\" <= 70) \
-OR \"audio_recordings\".\"duration_seconds\" = 50) \
-OR \"audio_recordings\".\"duration_seconds\" >= 80)) \
-AND (\"audio_recordings\".\"duration_seconds\" != 40 \
-AND \"audio_recordings\".\"channels\" = 2 \
-AND \"audio_recordings\".\"channels\" <= 5349) \
-AND (NOT (\"audio_recordings\".\"duration_seconds\" != 140)) \
-AND (NOT (\"audio_recordings\".\"channels\" = 1)) \
-AND (NOT (\"audio_recordings\".\"channels\" <= 54321)) \
-AND ( \
-( \
-(\"audio_recordings\".\"notes\" ILIKE '%testing\\_testing%' \
-OR \"audio_recordings\".\"status\" ILIKE '%testing\\_testing%') \
-OR \"audio_recordings\".\"original_file_name\" ILIKE '%testing\\_testing%')) \
-AND (\"audio_recordings\".\"notes\" = 'hello' \
-AND \"audio_recordings\".\"channels\" = 28) \
-ORDER BY \"audio_recordings\".\"duration_seconds\" \
-DESC LIMIT 10 OFFSET 0"
+\"audio_recordings\".\"site_id\"IN(1,2,3) \
+AND(\"audio_recordings\".\"deleted_at\"ISNULL) \
+AND(\"audio_recordings\".\"site_id\"<123456) \
+AND(\"audio_recordings\".\"site_id\">9876) \
+AND(\"audio_recordings\".\"site_id\">=100 \
+AND\"audio_recordings\".\"site_id\"<200) \
+AND(\"audio_recordings\".\"status\">=4567) \
+AND(\"audio_recordings\".\"status\"ILIKE'%containtext%') \
+AND(\"audio_recordings\".\"status\"ILIKE'startswithtext%') \
+AND(\"audio_recordings\".\"status\"ILIKE'%endswithtext') \
+AND(\"audio_recordings\".\"status\"BETWEEN'123'AND'128') \
+AND((((((\"audio_recordings\".\"recorded_date\"ILIKE'%Hello%' \
+OR\"audio_recordings\".\"media_type\"ILIKE'%world') \
+OR\"audio_recordings\".\"duration_seconds\"=60) \
+OR\"audio_recordings\".\"duration_seconds\"<=70) \
+OR\"audio_recordings\".\"duration_seconds\"=50) \
+OR\"audio_recordings\".\"duration_seconds\">=80)) \
+AND(\"audio_recordings\".\"duration_seconds\"!=40 \
+AND\"audio_recordings\".\"channels\"=2 \
+AND\"audio_recordings\".\"channels\"<=9999) \
+AND(NOT(\"audio_recordings\".\"duration_seconds\"!=140)) \
+AND(NOT(\"audio_recordings\".\"channels\"=1)) \
+AND(NOT(\"audio_recordings\".\"channels\"<=8888)) \
+AND((\"audio_recordings\".\"media_type\"ILIKE'%testing\\_testing%' \
+OR\"audio_recordings\".\"status\"ILIKE'%testing\\_testing%')) \
+AND(\"audio_recordings\".\"status\"='hello' \
+AND\"audio_recordings\".\"channels\"=28) \
+ORDERBY\"audio_recordings\".\"duration_seconds\"DESC \
+LIMIT10OFFSET0"
     }
 
     it 'generates expected SQL' do

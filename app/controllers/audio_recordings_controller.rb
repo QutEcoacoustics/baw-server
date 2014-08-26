@@ -99,8 +99,8 @@ class AudioRecordingsController < ApplicationController
     update_status_user_check
   end
 
-  # POST /audio_recordings/1/filter.json
-  # GET /audio_recordings/1/filter.json
+  # POST /audio_recordings/filter.json
+  # GET /audio_recordings/filter.json
   def filter
     filter_response = api_response.response_filter(
         params,

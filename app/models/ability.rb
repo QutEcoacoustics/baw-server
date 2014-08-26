@@ -46,7 +46,7 @@ class Ability
       can [:show, :index], AudioRecording do |audio_recording|
         user.has_permission_any?(audio_recording.site.projects)
       end
-      can [:new], AudioRecording
+      can [:new, :filter], AudioRecording
       can [:manage], AudioEvent do |audio_event|
         user.can_write_any?(audio_event.audio_recording.site.projects)
       end
@@ -54,7 +54,7 @@ class Ability
         user.has_permission_any?(audio_event.audio_recording.site.projects)
       end
       can [:manage], Tag
-      can [:index, :new, :create], Bookmark
+      can [:index, :new, :create, :filter], Bookmark
       can [:update, :destroy, :show], Bookmark do |bookmark|
         bookmark.creator_id == user.id && user.has_permission_any?(bookmark.audio_recording.site.projects)
       end

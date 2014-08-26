@@ -315,13 +315,11 @@ EXTRACT(DAY FROM recorded_date) as extracted_day')
             fail error_class.new(msg, nil)
 
           when 'CustomErrors::UnsupportedMediaTypeError',
-              'ActiveResource::BadRequest',
-              'CustomErrors::NotAcceptableError',
-              'CustomErrors::RoutingArgumentError'
-            fail error_class.new(msg)
+              'CustomErrors::NotAcceptableError'
+            fail error_class.new(msg, {format: :a_format})
 
           else
-            fail error_class
+            fail error_class, msg
         end
 
       end

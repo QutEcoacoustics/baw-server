@@ -24,104 +24,205 @@ module Api
       Rack::Utils::HTTP_STATUS_CODES[status_code(status_symbol)]
     end
 
-    # Create meta hash for an api response.
-    # @param [Symbol] status_symbol
-    # @return [Hash] meta hash
-    def meta(status_symbol = :ok)
-      {
+    # Build an api response hash.
+    # @param [Symbol] status_symbol Response status.
+    # @param [Object] data Data for response.
+    # @param [Hash] opts the options for additional information.
+    # @option opts [Array<Symbol>] :error_links ([]) Error links.
+    # @option opts [String] :error_details (nil) Error details.
+    # @option opts [Symbol] :order_by (nil) Model property data is ordered by.
+    # @option opts [Symbol] :direction (nil) Direction of sort.
+    # @option opts [Symbol] :controller (nil) Controller for paging links.
+    # @option opts [Symbol] :action (nil) Action for paging links.
+    # @option opts [Integer] :page (nil) Page number when paging.
+    # @option opts [Integer] :items (nil) Number of items per page when paging.
+    # @option opts [Integer] :count (nil) Actual number of items on a page when paging.
+    # @option opts [Integer] :total (nil) Total items matching.
+    # @option opts [String] :filter_text (nil) Text for contains filter.
+    # @option opts [Hash] :filter_generic_keys ({}) Property/value pairs for equality filter.
+    def build(status_symbol = :ok, data = nil, opts = {})
+      # initialise with defaults
+      opts.reverse_merge!(
+          {
+              error_links: [], error_details: nil,
+              order_by: nil, direction: nil,
+              page: nil, items: nil, count: nil, total: nil,
+              filter_text: nil, filter_generic_keys: {}
+          })
+
+      # base hash
+      result = {
           meta: {
               status: status_code(status_symbol),
               message: status_phrase(status_symbol)
-          }
-      }
-    end
-
-    # Create data hash for an api response.
-    # @param [Hash, Array, Object] data
-    # @return [Hash] response
-    def data(data = nil)
-      {
+          },
           data: data
       }
-    end
 
-    # Create error hash for an api response.
-    # @param [String] message
-    # @param [Hash] links_object
-    # @return [Hash] error hash
-    def error(message, links_object = nil)
-      result = {}
-      result[:error] = {} if !message.blank? || !links_object.blank?
-      result[:error][:details] = message unless message.blank?
+      # error information
+      result[:meta][:error] = {} if !opts[:error_details].blank? || !opts[:error_links].blank?
+      result[:meta][:error][:details] = opts[:error_details] unless opts[:error_details].blank?
+
+      # error links
+      unless opts[:error_links].blank?
+        result[:meta][:error][:links] = response_error_links(opts[:error_links])
+      end
+
+      # sort info
+      if !opts[:order_by].blank? && !opts[:direction].blank?
+        result[:meta][:sort] = {
+            order_by: opts[:order_by],
+            direction: opts[:direction]
+        }
+      end
+
+      # paging: page, items
+      if !opts[:page].blank? && !opts[:items].blank?
+        result[:meta][:paging] = {
+            page: opts[:page],
+            items: opts[:items]
+        }
+      end
+
+      # paging: count, total
+      if !opts[:count].blank? && !opts[:total].blank?
+        result[:meta][:paging] = {
+            count: opts[:count],
+            total: opts[:total]
+        }
+      end
+
+      # paging: next/prev links
+      if result[:meta].include?(:paging)
+        controller = opts[:controller]
+        action = opts[:action]
+
+        current_link = paging_link(
+            controller, action,
+            opts[:page], opts[:items],
+            opts[:filter_text], opts[:filter_generic_keys])
+
+        previous_link = paging_link(
+            controller, action,
+            restrict_to_bounds(opts[:page] - 1),
+            opts[:items],
+            opts[:filter_text],
+            opts[:filter_generic_keys]
+        )
+        next_link = paging_link(
+            controller, action,
+            restrict_to_bounds(opts[:page] + 1),
+            opts[:items],
+            opts[:filter_text],
+            opts[:filter_generic_keys]
+        )
+
+        result[:meta][:paging][:current] = current_link
+        result[:meta][:paging][:previous] = previous_link
+        result[:meta][:paging][:next] = next_link
+
+      end
+
       result
     end
 
-    # Create link hash for an api response.
-    # @param [String] display_text
-    # @param [String] link
-    # @return [Hash] link hash
-    def link_base(display_text, link)
-      {display_text: display_text, link: link}
+    def response_error_links(link_ids)
+      result = {}
+      unless link_ids.blank?
+        error_links = error_links_hash
+        link_ids.each do |id|
+          link_info = error_links[id]
+          result[link_info.text] = link_info.url
+        end
+      end
+      result
     end
 
-    # Create links array for an api response.
-    # @param [Hash] links_object
-    # @return [Array] links array
-    def error_links(links_object = nil)
-      link_array = []
-      add_error_link(link_array, links_object, :sign_in, error_link_sign_in)
-      add_error_link(link_array, links_object, :permissions, error_link_new_permissions)
-      add_error_link(link_array, links_object, :confirm, error_link_confirm_account)
-      link_array
-    end
+    # Create and execute a query based on a filter request.
+    # @param [Hash] params
+    # @param [ActiveRecord::Base] model
+    # @param [Hash] filter_settings
+    # @return [Hash] api response
+    def response_filter(params, model, filter_settings)
+      filter_query = Filter::Query.new(params, model, filter_settings)
 
-    # Create sort hash for an api response.
-    # @param [Symbol] order_by
-    # @param [Symbol] direction
-    # @return [Hash] sort hash
-    def sort(order_by, direction)
-      {
-          sort: {
-              order_by: order_by,
-              direction: direction
-          }
+      # query without paging to get total
+      query = filter_query.query_basic
+
+      # basic options
+      opts = {
+          controller: filter_settings.controller,
+          action: filter_settings.action,
+          filter_text: filter_query.qsp_text_filter,
+          filter_generic_keys: filter_query.qsp_generic_filters
+
       }
+
+      # paging
+      if filter_query.has_paging_params?
+
+        # execute a count against entire set without paging
+        total = query.count
+
+        # add paging
+        query = filter_query.query_paging(query)
+
+        # execute a count for this page only
+        count = query.count
+
+        # update options
+        opts.merge!(
+            page: filter_query.paging.page,
+            items: filter_query.paging.items,
+            count: count,
+            total: total
+        )
+      end
+
+      # sort
+      if filter_query.has_sort_params?
+
+        # add sorting
+        query = filter_query.query_sort(query)
+
+        # update options
+        opts.merge!(
+            order_by: filter_query.sort.order_by,
+            direction: filter_query.sort.direction
+        )
+      end
+
+      # build response data
+      data = query.all
+
+      # build complete api response
+      result = build(:ok, data, opts)
+
+      # return result
+      result
     end
 
-    # Create the basic structure for an api response.
-    # @param [Symbol] status_symbol
-    # @param [Hash, Array, Object] data
-    # @return [Hash] response
-    def base(status_symbol = :ok, data = nil)
-      meta_hash = meta(status_symbol)
-      data_hash = data(data)
-      {}.merge(meta_hash).merge(data_hash)
+    private
+
+    def restrict_to_bounds(value, lower = 1, upper = nil)
+      value_i = value.to_i
+
+      value_i = lower if !lower.blank? && value_i < lower
+      value_i = upper if !upper.blank? && value_i > upper
+      value_i
     end
 
-    # Create basic paging for an api response.
-    # @param [Integer] page
-    # @param [Integer] items
-    # @return [Hash] paging hash
-    def paging(page, items)
-      {
-          paging: {
-              page: page,
-              items: items
-          }
-      }
+    def format_date_time(value)
+      if value.respond_to?(:iso8601)
+        value.iso8601(3) # 3 decimal places
+      else
+        value
+      end
     end
 
-    # Create paging counts for an api response.
-    # @param [Integer] actual_items_count
-    # @param [Integer] total
-    # @return [Hash] paging hash
-    def paging_counts(actual_items_count, total)
-      {
-          paging: {
-              count: actual_items_count,
-              total: total
-          }
-      }
+    def to_f_or_i_or_s(v)
+      # http://stackoverflow.com/questions/8071533/convert-input-value-to-integer-or-float-as-appropriate-using-ruby
+      ((float = Float(v)) && (float % 1.0 == 0) ? float.to_i : float) rescue v
     end
 
     # Create paging link for an api response.
@@ -148,166 +249,23 @@ module Api
       url_helpers.url_for(additional_info)
     end
 
-    def response_error(status_symbol, detail_message, links_object = nil)
-      meta_info = meta(status_symbol)
-      error_info = error(detail_message, links_object)
-      data_info = data(nil)
-
-      result = data_info.merge(meta_info)
-      result[:meta].merge!(error_info)
-      result
-    end
-
-    # Create filter for an api response.
-    # @param [Hash] params
-    # @param [ActiveRecord::Base] model
-    # @param [Hash] filter_settings
-    # @return [Hash] api response
-    def response_filter(params, model, filter_settings)
-      filter_query = Filter::Query.new(params, model, filter_settings)
-
-      # query without paging to get total
-      query = filter_query.query_without_paging
-
-      # metadata
-      meta_info = meta(:ok)
-
-      # paging
-      if filter_query.has_paging_params?
-        paging_info, query = response_paging(
-            filter_query,
-            query,
-            filter_settings.controller,
-            filter_settings.action)
-        meta_info.merge!(paging_info)
-      end
-
-      # sort
-      if filter_query.has_sort_params?
-        sort_info = sort(
-            filter_query.sort.order_by,
-            filter_query.sort.direction)
-        query = filter_query.query_sort(query)
-        meta_info.merge!(sort_info)
-      end
-
-      # execute query to get entire page of info
-      # after adding paging and sort
-      data_info = data(query.all)
-
-      # result
-      {}.merge(meta_info).merge(data_info)
-    end
-
-    private
-
-    # Create paging hash for an api response.
-    # @param [Filter::Query] filter_query
-    # @param [ActiveRecord::Relation] query
-    # @param [Symbol] controller
-    # @param [Symbol] action
-    # @return [Hash] paging hash
-    def response_paging(filter_query, query, controller, action)
-      # execute a count against entire set without paging
-      total = query.count
-
-      # add paging
-      query = filter_query.query_paging(query)
-
-      # execute a count for this page only
-      count = query.count
-
-      paging = filter_query.paging
-
-      paging_info = paging(paging.page, paging.items)
-      paging_count_info = paging_counts(count, total)
-      paging_link_current = paging_link(
-          controller, action,
-          paging.page, paging.items,
-          filter_query.qsp_text_filter,
-          filter_query.qsp_generic_filters
-      )
-
-      max_page = restrict_to_bounds((total % paging.items))
-
-      prev_page = restrict_to_bounds(paging.page - 1, 1, max_page)
-      next_page = restrict_to_bounds(paging.page + 1, 1, max_page)
-
-      paging_link_prev = paging_link(
-          controller, action,
-          prev_page,
-          paging.items,
-          filter_query.qsp_text_filter,
-          filter_query.qsp_generic_filters
-      )
-      paging_link_next = paging_link(
-          controller, action,
-          next_page,
-          paging.items,
-          filter_query.qsp_text_filter,
-          filter_query.qsp_generic_filters
-      )
-
-
-      [
-          {
-              paging: {
-                  links: {
-                      previous: link_base('previous', paging_link_prev),
-                      next: link_base('next', paging_link_next)
-                  }
-              }
+    # Get error links hash.
+    # @return [Hash] links hash
+    def error_links_hash
+      {
+          sign_in: {
+              text: 'sign in',
+              url: url_helpers.new_user_session_path
           },
-          query
-      ]
-    end
-
-    def restrict_to_bounds(value, lower = 1, upper = nil)
-      value_i = value.to_i
-
-      value_i = lower if !lower.blank? && value_i < lower
-      value_i = upper if !upper.blank? && value_i > upper
-      value_i
-    end
-
-    def format_date_time(value)
-      if value.respond_to?(:iso8601)
-        value.iso8601(3) # 3 decimal places
-      else
-        value
-      end
-    end
-
-    def to_f_or_i_or_s(v)
-      # http://stackoverflow.com/questions/8071533/convert-input-value-to-integer-or-float-as-appropriate-using-ruby
-      ((float = Float(v)) && (float % 1.0 == 0) ? float.to_i : float) rescue v
-    end
-
-    def add_error_link(link_array, links_object, key, value)
-      unless links_object.blank?
-        if links_object.include?(key)
-          link_array.push(value)
-        end
-      end
-      link_array
-    end
-
-    # Create sign in link hash.
-    # @return [Hash] link hash
-    def error_link_sign_in
-      link_base('sign in', url_helpers.new_user_session_path)
-    end
-
-    # Create permissions link hash.
-    # @return [Hash] link hash
-    def error_link_new_permissions
-      link_base('request permissions', url_helpers.new_access_request_projects_path)
-    end
-
-    # Create confirm account link hash.
-    # @return [Hash] link hash
-    def error_link_confirm_account
-      link_base('confirm your account', url_helpers.new_user_confirmation_path)
+          permissions: {
+              text: 'request permissions',
+              url: url_helpers.new_access_request_projects_path
+          },
+          confirm: {
+              text: 'confirm your account',
+              url: url_helpers.new_user_confirmation_path
+          }
+      }
     end
 
   end

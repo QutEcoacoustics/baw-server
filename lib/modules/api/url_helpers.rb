@@ -1,15 +1,15 @@
-# from http://stackoverflow.com/questions/16720514/how-to-use-url-helpers-in-lib-modules-and-set-host-for-multiple-environments
-# usage:
-# include UrlHelpers
-# url_helpers.posts_url # returns https://blabla.com/posts
-# or
-# UrlHelpers.posts_url # returns https://blabla.com/posts
 module Api
+  # @example Usage
+  #   include UrlHelpers
+  #   url_helpers.posts_url # returns https://blabla.com/posts
+  # @example Usage
+  #   UrlHelpers.posts_url # returns https://blabla.com/posts
   module UrlHelpers
-
+# from http://stackoverflow.com/questions/16720514/how-to-use-url-helpers-in-lib-modules-and-set-host-for-multiple-environments
     extend ActiveSupport::Concern
 
     class Base
+      # @return [Module]
       include Rails.application.routes.url_helpers
 
       def default_url_options

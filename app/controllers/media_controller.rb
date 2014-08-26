@@ -101,8 +101,8 @@ class MediaController < ApplicationController
     current, modified_params = metadata.current_request_details(audio_recording, media_info, request_params)
 
     if media_info[:category] == :text
-      api_response = metadata.api_response(audio_recording, original, current, modified_params)
-      json_response(api_response, current, rails_request)
+      metadata_response = metadata.api_response(audio_recording, original, current, modified_params)
+      json_response(metadata_response, current, rails_request)
     elsif [:audio, :image].include?(media_info[:category])
       media_response(audio_recording, metadata, original, current, media_info)
     else
@@ -111,11 +111,14 @@ class MediaController < ApplicationController
   end
 
   # Send json response.
-  # @param [Hash] api_response
+  # @param [Hash] metadata_response
   # @param [Hash] current
   # @param [ActionDispatch::Request] rails_request
-  def json_response(api_response, current, rails_request)
-    json_result = api_response.to_json
+  def json_response(metadata_response, current, rails_request)
+
+    wrapped = api_response.build(:ok, metadata_response)
+
+    json_result = wrapped.to_json
     json_result_size = json_result.size.to_s
 
     headers['Content-Length'] = json_result_size
