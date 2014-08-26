@@ -723,4 +723,23 @@ resource 'AudioRecordings' do
   end
 
 
+  # FILTER
+  ###########
+
+  post '/audio_recordings/filter' do
+    let(:raw_post) { {
+        filter: {
+            and: {
+                site_id: {
+                    less_than: 123456
+                },
+                duration_seconds: {
+                    not_eq: 40
+                }
+            }
+        }
+    }.to_json }
+    let(:authentication_token) { reader_token }
+    standard_request('FILTER (as reader)', 200, 'data/0/sample_rate_hertz')
+  end
 end

@@ -354,4 +354,24 @@ resource 'Bookmarks' do
     standard_request('DELETE (as user)', 204)
   end
 
+  # Filter (#filter)
+  # ================
+
+  post '/bookmarks/filter' do
+    let(:raw_post) { {
+        filter: {
+            and: {
+                offset_seconds: {
+                    less_than: 123456
+                },
+                description: {
+                    contains: 'some text'
+                }
+            }
+        }
+    }.to_json }
+    let(:authentication_token) { reader_token }
+    standard_request('FILTER (as reader)', 200, 'data/0/category')
+  end
+
 end

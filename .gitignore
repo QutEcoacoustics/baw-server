@@ -43,3 +43,4 @@ external_modules.log
 
 # ignore generated api documentation
 /doc
+/.yardoc/

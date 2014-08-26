@@ -207,15 +207,17 @@ class AudioRecording < ActiveRecord::Base
         valid_fields: [
             :uuid, :recorded_date, :site_id, :duration_seconds,
             :sample_rate_hertz, :channels, :bit_rate_bps, :media_type,
-            :data_length_bytes, :created_at, :updated_at
-        # :uploader_id, :file_hash, :status, :notes, :creator_id,
+            :data_length_bytes, :status, :created_at, :updated_at
+        # :uploader_id, :file_hash, , :notes, :creator_id,
         #:updater_id, :deleter_id, :deleted_at, :original_file_name
         ],
-        text_fields: [:media_type, :notes, :status],
+        text_fields: [:media_type, :status],
         controller: :audio_recordings,
         action: :filter,
-        default_order_by: :recorded_date,
-        default_direction: :desc
+        defaults: {
+            order_by: :recorded_date,
+            direction: :desc
+        }
     }
   end
 

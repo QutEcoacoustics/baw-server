@@ -1,52 +1,16 @@
 require 'active_support/concern'
 
-module Api
+module Filter
 
   # Provides support for parsing a query from a hash.
-  module FilterParse
+  module Build
     extend ActiveSupport::Concern
+    extend Comparison
+    extend Core
+    extend Subset
     extend Validate
 
     private
-
-    # Append sorting to a query.
-    # @param [ActiveRecord::Relation] query
-    # @param [Hash] params
-    # @param [Symbol] default_order_by
-    # @param [Symbol] default_direction
-    # @return [ActiveRecord::Relation] the modified query
-    def build_sort(query, params, default_order_by, default_direction)
-      result = parse_sort(params, default_order_by, default_direction)
-      compose_sort(query, @table, result.order_by.to_sym, @valid_fields, result.direction.to_sym)
-    end
-
-    # Append paging to a query.
-    # @param [ActiveRecord::Relation] query
-    # @param [Hash] params
-    # @return [ActiveRecord::Relation] the modified query
-    def build_paging(query, params)
-      result = parse_paging(params)
-      compose_paging(query, result.offset, result.limit)
-    end
-
-    # Add conditions to a query.
-    # @param [ActiveRecord::Relation] query
-    # @param [Array<Arel::Nodes::Node>] conditions
-    # @return [ActiveRecord::Relation] the modified query
-    def add_conditions(query, conditions)
-      conditions.each do |condition|
-        query = query.where(condition)
-      end
-      query
-    end
-
-    # Add condition to a query.
-    # @param [ActiveRecord::Relation] query
-    # @param [Arel::Nodes::Node] condition
-    # @return [ActiveRecord::Relation] the modified query
-    def add_condition(query, condition)
-        query.where(condition)
-    end
 
     # Build conditions.
     # @param [Symbol] field
@@ -63,7 +27,7 @@ module Api
           conditions.push(build_range(field, value, table, valid_fields))
         elsif key == :in
           # special case for in filter (Array)
-          conditions.push(build_in(field, value, table, valid_fields))
+          conditions.push(compose_in(table, field, valid_fields, value))
         elsif key == :not
           # negation
           conditions.push(*build_not(value, table, valid_fields))
@@ -191,16 +155,6 @@ module Api
       end
     end
 
-    # Build an in condition.
-    # @param [Symbol] field
-    # @param [Object] filter_value
-    # @param [Arel::Table] table
-    # @param [Array<Symbol>] valid_fields
-    # @return [Arel::Nodes::Node] condition
-    def build_in(field, filter_value, table, valid_fields)
-      compose_in(table, field, valid_fields, filter_value)
-    end
-
     # Build a not condition.
     # @param [Array<Hash>] value
     # @param [Arel::Table] table
@@ -250,97 +204,6 @@ module Api
       end
 
       build_combine(:and, conditions)
-    end
-
-    def parse_paging(params)
-      # qsp
-      offset = params[:offset]
-      limit = params[:limit]
-
-      # POST body
-      offset = params[:paging][:offset] if offset.blank? && !params[:paging].blank?
-      limit = params[:paging][:limit] if limit.blank? && !params[:paging].blank?
-
-      # default to first page with 50 per age
-      offset = 0 if offset.blank?
-      limit = validate_max_items if limit.blank?
-
-      {offset: offset, limit: limit}
-    end
-
-    def parse_sort(params, default_order_by, default_direction)
-      # qsp
-      order_by = params[:order_by]
-      direction = params[:direction]
-
-      # POST body
-      order_by = params[:sort][:order_by] if order_by.blank? && !params[:sort].blank?
-      direction = params[:sort][:direction] if order_by.blank? && !params[:sort].blank?
-
-      # default to reverse chronological
-      order_by = default_order_by if order_by.blank?
-      direction = default_direction if direction.blank?
-
-      {order_by: order_by, direction: direction}
-    end
-
-    # Parse text from parameters.
-    # @param [Hash] params
-    # @param [Symbol] key
-    # @return [String] condition
-    def parse_qsp_text(params, key = :filter_partial_match)
-      params[key].blank? ? nil : params[key]
-    end
-
-    # Get the QSPs from an object.
-    # @param [Object] obj
-    # @param [Object] value
-    # @param [String] key_prefix
-    # @param [Array<Symbol>] valid_fields
-    # @param [Hash] found
-    # @return [Hash] matching entries
-    def parse_qsp(obj, value, key_prefix, valid_fields, found = {})
-      if value.is_a?(Hash)
-        found = parse_qsp_hash(value, key_prefix, valid_fields, found)
-      elsif value.is_a?(Array)
-        found = parse_qsp_array(obj, value, key_prefix, valid_fields, found)
-      else
-        key_s = obj.blank? ? '' : obj.to_s
-        is_filter_qsp = key_s.starts_with?(key_prefix)
-
-        if is_filter_qsp
-          new_key = key_s[key_prefix.size..-1].to_sym
-          found[new_key] = value if valid_fields.include?(new_key)
-        end
-      end
-      found
-    end
-
-    # Get the QSPs from a hash.
-    # @param [Hash] hash
-    # @param [String] key_prefix
-    # @param [Array<Symbol>] valid_fields
-    # @param [Hash] found
-    # @return [Hash] matching entries
-    def parse_qsp_hash(hash, key_prefix, valid_fields, found = {})
-      hash.each do |key, value|
-        found = parse_qsp(key, value, key_prefix, valid_fields, found)
-      end
-      found
-    end
-
-    # Get the QSPs from an array.
-    # @param [Object] key
-    # @param [Array] array
-    # @param [String] key_prefix
-    # @param [Array<Symbol>] valid_fields
-    # @param [Hash] found
-    # @return [Hash] matching entries
-    def parse_qsp_array(key, array, key_prefix, valid_fields, found)
-      array.each do |item|
-        found = parse_qsp(key, item, key_prefix, valid_fields, found)
-      end
-      found
     end
 
   end

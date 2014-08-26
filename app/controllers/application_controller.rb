@@ -172,10 +172,17 @@ class ApplicationController < ActionController::Base
   def render_error(status_symbol, detail_message, error, method_name, options = {})
     options = {redirect: false, links_object: nil, error_info: nil}.merge(options)
 
-    json_response = api_response.response_error(status_symbol, detail_message, options[:links_object])
+    json_response = api_response.build(
+        status_symbol,
+        nil,
+        {
+            error_details:detail_message,
+            error_links: options[:links_object]
+        })
 
     unless options[:error_info].blank?
-      json_response.meta.error.merge!(options[:error_info])
+      json_response[:meta][:error] = {} unless json_response[:meta].include?(:error)
+      json_response[:meta].error.merge!(options[:error_info])
     end
 
     # method_name = __method__
@@ -188,7 +195,7 @@ class ApplicationController < ActionController::Base
         status_code = api_response.status_code(status_symbol)
         status_message = api_response.status_phrase(status_symbol).humanize
 
-        response_links = api_response.response_links(options[:links_object])
+        response_links = api_response.response_error_links(options[:links_object])
 
         if options[:redirect]
           redirect_to get_redirect, alert: "#{status_message}: #{detail_message}"
