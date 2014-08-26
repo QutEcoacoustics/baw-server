@@ -38,7 +38,7 @@ namespace :baw_workers do
 
   # Set up the worker parameters. Takes one argument: settings_file
   desc 'Run setup for Resque worker'
-  task :setup_worker, [:settings_file] => [:init_worker]  do |t, args|
+  task :setup_worker, [:settings_file] => [:init_worker] do |t, args|
 
     if BawWorkers::Settings.resque.background_pid_file.blank?
       puts '===> Running in foreground.'
@@ -95,13 +95,30 @@ namespace :baw_workers do
     pids = Array.new
     Resque.workers.each do |worker|
       pids.concat(worker.worker_pids)
+      host, pid, queues_raw = worker.to_s.split(':')
+      puts "Worker with host: #{host}, queues: #{worker.queues.join(', ')}"
     end
     if pids.empty?
       puts 'No workers to kill'
     else
+
       syscmd = "kill -s QUIT #{pids.join(' ')}"
-      puts "Running syscmd: #{syscmd}"
+      puts "Running syscmd to kill all workers: #{syscmd}"
       system(syscmd)
+    end
+  end
+
+  desc 'List running workers'
+  task :current_workers, [:settings_file] => [:init_worker] do |t, args|
+    workers = Resque.workers
+    if !workers.blank? && workers.size > 0
+      puts "Current workers (#{workers.size}):"
+      workers.each do |worker|
+        host, pid, queues_raw = worker.to_s.split(':')
+        puts "Worker with host: #{host}, queues: #{worker.queues.join(', ')}"
+      end
+    else
+      puts 'No current workers.'
     end
   end
 
