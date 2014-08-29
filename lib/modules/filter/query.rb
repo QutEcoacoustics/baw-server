@@ -32,6 +32,9 @@ module Filter
       @filter = @parameters[:filter]
       @filter = {} if @filter.blank?
 
+      @projection = @parameters[:projection]
+      @projection = nil if @projection.blank?
+
       @qsp_text_filter = parse_qsp_text(@parameters)
       @qsp_generic_filters = parse_qsp(nil, @parameters, @key_prefix, @valid_fields)
       @paging = parse_paging(@parameters, @max_limit)
@@ -45,6 +48,9 @@ module Filter
     # @return [ActiveRecord::Relation] query
     def query_full
       query = relation_all(@model)
+
+      # restrict to select columns
+      query = query_projection(query)
 
       #filter
       query = query_filter(query)
@@ -70,6 +76,9 @@ module Filter
     def query_without_paging
       query = relation_all(@model)
 
+      # restrict to select columns
+      query = query_projection(query)
+
       #filter
       query = query_filter(query)
 
@@ -90,6 +99,9 @@ module Filter
     # @return [ActiveRecord::Relation] query
     def query_qsp
       query = relation_all(@model)
+
+      # restrict to select columns
+      query = query_projection(query)
 
       # sorting
       query = query_sort(query)
@@ -112,6 +124,9 @@ module Filter
     def query_basic
       query = relation_all(@model)
 
+      # restrict to select columns
+      query = query_projection(query)
+
       # add qsp text filters
       query = query_filter_text(query)
 
@@ -126,20 +141,21 @@ module Filter
     # @param [ActiveRecord::Relation] query
     # @return [ActiveRecord::Relation] query
     def query_filter(query)
-      validate_query(query)
-      apply_conditions(query, build_conditions(:filter, @filter, @table, @valid_fields))
+      apply_conditions(query, build_top(@filter, @table, @valid_fields))
+    end
+
+    def query_projection(query)
+      return query unless has_projection_params?
+      apply_projections(query, build_projections(@projection, @table, @valid_fields))
     end
 
     # Add text filter to a query.
     # @param [ActiveRecord::Relation] query
     # @return [ActiveRecord::Relation] query
     def query_filter_text(query)
-      validate_query(query)
-      unless @qsp_text_filter.blank?
-        text_condition = build_text(@qsp_text_filter, @text_fields, @table, @valid_fields)
-        query = apply_condition(query, text_condition)
-      end
-      query
+      return query if @qsp_text_filter.blank?
+      text_condition = build_text(@qsp_text_filter, @text_fields, @table, @valid_fields)
+      apply_condition(query, text_condition)
     end
 
     # Add text filter to a query.
@@ -147,7 +163,6 @@ module Filter
     # @param [String] filter_text
     # @return [ActiveRecord::Relation] query
     def query_filter_text_custom(query, filter_text)
-      validate_query(query)
       text_condition = build_text(filter_text, @text_fields, @table, @valid_fields)
       apply_condition(query, text_condition)
     end
@@ -156,10 +171,8 @@ module Filter
     # @param [ActiveRecord::Relation] query
     # @return [ActiveRecord::Relation] query
     def query_filter_generic(query)
-      unless @qsp_generic_filters.blank?
-        query = apply_condition(query, build_generic(@qsp_generic_filters, @table, @valid_fields))
-      end
-      query
+      return query if @qsp_generic_filters.blank?
+      apply_condition(query, build_generic(@qsp_generic_filters, @table, @valid_fields))
     end
 
     # Add generic equality filters to a query.
@@ -167,16 +180,15 @@ module Filter
     # @param [Hash] filter_hash
     # @return [ActiveRecord::Relation] query
     def query_filter_generic_custom(query, filter_hash)
-      unless @qsp_generic_filters.blank?
-        query = apply_condition(query, build_generic(filter_hash, @table, @valid_fields))
-      end
-      query
+      return query if @qsp_generic_filters.blank?
+      apply_condition(query, build_generic(filter_hash, @table, @valid_fields))
     end
 
     # Add sorting to query.
     # @param [ActiveRecord::Relation] query
     # @return [ActiveRecord::Relation] query
     def query_sort(query)
+      return query unless has_sort_params?
       apply_sort(query, @table, @sort.order_by, @valid_fields, @sort.direction)
     end
 
@@ -193,6 +205,7 @@ module Filter
     # @param [ActiveRecord::Relation] query
     # @return [ActiveRecord::Relation] query
     def query_paging(query)
+      return query unless has_paging_params?
       apply_paging(query, @paging.offset, @paging.limit)
     end
 
@@ -211,6 +224,10 @@ module Filter
 
     def has_sort_params?
       !@sort.order_by.blank? && !@sort.direction.blank?
+    end
+
+    def has_projection_params?
+      !@projection.blank?
     end
 
     private
@@ -262,6 +279,27 @@ module Filter
     def apply_paging(query, offset, limit)
       validate_paging(offset, limit, @max_limit)
       query.offset(offset).limit(limit)
+    end
+
+    # Add projections to a query.
+    # @param [ActiveRecord::Relation] query
+    # @param [Array<Arel::Nodes::Node>] projections
+    # @return [ActiveRecord::Relation] the modified query
+    def apply_projections(query, projections)
+      projections.each do |projection|
+        query = apply_projection(query, projection)
+      end
+      query
+    end
+
+    # Add projection to a query.
+    # @param [ActiveRecord::Relation] query
+    # @param [Arel::Nodes::Node] projection
+    # @return [ActiveRecord::Relation] the modified query
+    def apply_projection(query, projection)
+      validate_query(query)
+      validate_projection(projection)
+      query.select(projection)
     end
 
   end

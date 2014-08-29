@@ -133,6 +133,14 @@ module Filter
       fail ArgumentError, "Condition must be Arel::Nodes::Node, got #{condition.inspect}" unless condition.is_a?(Arel::Nodes::Node)
     end
 
+    # Validate projection value.
+    # @param [Arel::Attributes::Attribute] projection
+    # @raise [ArgumentError] if projection is not an Arel::Attributes::Attribute
+    # @return [void]
+    def validate_projection(projection)
+      fail ArgumentError, "Condition must be Arel::Attributes::Attribute, got #{projection.inspect}" unless projection.is_a?(Arel::Attributes::Attribute)
+    end
+
     # Validate column name value.
     # @param [Symbol] column_name
     # @param [Array<Symbol>] allowed
@@ -155,6 +163,7 @@ module Filter
 
     # Validate an array.
     # @param [Array] value
+    # @raise [ArgumentError] if value is not a valid Array.
     # @return [void]
     def validate_array(value)
       fail ArgumentError, "Value must not be null, got #{value.inspect}" if value.blank?
@@ -163,15 +172,31 @@ module Filter
 
     # Validate a hash.
     # @param [Array] value
+    # @raise [ArgumentError] if value is not a valid Hash.
     # @return [void]
     def validate_hash(value)
       fail ArgumentError, "Value must not be null, got #{value.inspect}" if value.blank?
       fail ArgumentError, "value must be a Hash, got #{value.inspect}" unless value.is_a?(Hash)
     end
 
+    # Validate Extract field for timestamp, time, interval, date.
+    # @param [String] value
+    # @raise [ArgumentError] if value is not a valid field value.
+    # @return [void]
+    def validate_projection_extract(value)
+      valid = [
+          :century, :day, :decade, :dow, :epoch, :hour,
+          :isodow, :isoyear, :microseconds, :millennium,
+          :milliseconds, :minute, :month, :quarter,
+          :second, :timezone, :timezone_hour, :timezone_minute,
+          :week, :year
+      ]
+      fail ArgumentError, 'Value for extract must not be null' if value.blank?
+      fail ArgumentError, "Value for extract must be in #{valid}, got #{value.inspect}" unless valid.include?(value.downcase.to_sym)
+    end
+
     # Escape wildcards in like value..
     # @param [String] value
-    # @raise [String] escaped value
     # @return [String] sanitized value
     def sanitize_like_value(value)
       value.gsub(/[\\_%\|]/) { |x| "\\#{x}" }
@@ -180,10 +205,16 @@ module Filter
     # Escape meta-characters in SIMILAR TO value.
     # see http://www.postgresql.org/docs/9.3/static/functions-matching.html
     # @param [String] value
-    # @raise [String] escaped value
     # @return [String] sanitized value
     def sanitize_similar_to_value(value)
       value.gsub(/[\\_%\|\*\+\?\{\}\(\)\[\]]/) { |x| "\\#{x}" }
+    end
+
+    # Remove all except 0-9, a-z, _ from projection alias
+    # @param [String] value
+    # @return [String] sanitized value
+    def sanitize_projection_alias(value)
+      value.gsub(/[^0-9a-zA-Z_]/) { |x|}
     end
 
   end

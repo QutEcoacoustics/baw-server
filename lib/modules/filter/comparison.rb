@@ -42,6 +42,16 @@ module Filter
       table[column_name].lt(value)
     end
 
+    # Create not less than condition.
+    # @param [Arel::Table] table
+    # @param [Symbol] column_name
+    # @param [Array<Symbol>] allowed
+    # @param [Object] value
+    # @return [Arel::Nodes::Node] condition
+    def compose_not_lt(table, column_name, allowed, value)
+      compose_lt(table, column_name, allowed, value).not
+    end
+
     # Create greater than condition.
     # @param [Arel::Table] table
     # @param [Symbol] column_name
@@ -51,6 +61,16 @@ module Filter
     def compose_gt(table, column_name, allowed, value)
       validate_table_column(table, column_name, allowed)
       table[column_name].gt(value)
+    end
+
+    # Create not greater than condition.
+    # @param [Arel::Table] table
+    # @param [Symbol] column_name
+    # @param [Array<Symbol>] allowed
+    # @param [Object] value
+    # @return [Arel::Nodes::Node] condition
+    def compose_not_gt(table, column_name, allowed, value)
+      compose_gt(table, column_name, allowed, value).not
     end
 
     # Create less than or equal condition.
@@ -64,6 +84,16 @@ module Filter
       table[column_name].lteq(value)
     end
 
+    # Create not less than or equal condition.
+    # @param [Arel::Table] table
+    # @param [Symbol] column_name
+    # @param [Array<Symbol>] allowed
+    # @param [Object] value
+    # @return [Arel::Nodes::Node] condition
+    def compose_not_lteq(table, column_name, allowed, value)
+      compose_lteq(table, column_name, allowed, value).not
+    end
+
     # Create greater than or equal condition.
     # @param [Arel::Table] table
     # @param [Symbol] column_name
@@ -74,5 +104,16 @@ module Filter
       validate_table_column(table, column_name, allowed)
       table[column_name].gteq(value)
     end
+
+    # Create not greater than or equal condition.
+    # @param [Arel::Table] table
+    # @param [Symbol] column_name
+    # @param [Array<Symbol>] allowed
+    # @param [Object] value
+    # @return [Arel::Nodes::Node] condition
+    def compose_not_gteq(table, column_name, allowed, value)
+      compose_gteq(table, column_name, allowed, value).not
+    end
+
   end
 end

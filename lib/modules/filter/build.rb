@@ -12,39 +12,158 @@ module Filter
 
     private
 
-    # Build conditions.
+    # Build conditions from a hash.
+    # @param [Hash] hash
+    # @param [Arel::Table] table
+    # @param [Array<Symbol>] valid_fields
+    # @return [Array<Arel::Nodes::Node>] conditions
+    def build_top(hash, table, valid_fields)
+      fail ArgumentError, "Conditions hash must have at least 1 entry, got #{hash.size}." if hash.blank? || hash.size < 1
+      conditions = []
+      hash.each do |key, value|
+        # allow a single field name at top level
+        has_combiner = [:and, :or, :not].include?(key)
+        has_valid_field = valid_fields.include?(key)
+        number_of_items = hash.size
+
+        msg1 = "Must be 'and', 'or', 'not' when there is more than one item at top level, got #{key} with #{number_of_items} entries."
+        fail ArgumentError, msg1 if !has_combiner && number_of_items > 1
+
+        msg2 = "Must be 'and', 'or', 'not' or a single field in #{valid_fields} at top level, got #{key} with 1 entry."
+        fail ArgumentError, msg2 if !has_valid_field && number_of_items == 1 && !has_combiner
+
+        built_conditions = build_hash(key, value, table, valid_fields)
+        conditions.push(*built_conditions)
+      end
+      conditions
+    end
+
+    # Build conditions from a hash.
     # @param [Symbol] field
     # @param [Hash] hash
     # @param [Arel::Table] table
     # @param [Array<Symbol>] valid_fields
     # @return [Array<Arel::Nodes::Node>] conditions
-    def build_conditions(field, hash, table, valid_fields)
+    def build_hash(field, hash, table, valid_fields)
       fail ArgumentError, "Conditions hash must have at least 1 entry, got #{hash.size}." if hash.blank? || hash.size < 1
+      fail ArgumentError, "'Not' must have a single combiner or field name, got #{hash.size}" if field == :not && hash.size != 1
+      conditions = []
+
+      case field
+        when :and, :or
+          conditions_to_combine = build_hashes(hash, table, valid_fields)
+          combined_conditions = build_combiner(field, conditions_to_combine)
+          conditions.push(combined_conditions)
+        else
+          hash.each do |key, value|
+            conditions.push(build_field(field, key, value, table, valid_fields))
+          end
+      end
+
+      conditions
+    end
+
+    # Build conditions from nested hashes.
+    # @param [Hash] hash
+    # @param [Arel::Table] table
+    # @param [Array<Symbol>] valid_fields
+    # @return [Array<Arel::Nodes::Node>] conditions
+    def build_hashes(hash, table, valid_fields)
       conditions = []
       hash.each do |key, value|
-        if key == :range
-          # special case for range filter (Hash)
-          conditions.push(build_range(field, value, table, valid_fields))
-        elsif key == :in
-          # special case for in filter (Array)
-          conditions.push(compose_in(table, field, valid_fields, value))
-        elsif key == :not
-          # negation
-          conditions.push(*build_not(value, table, valid_fields))
-        elsif value.is_a?(Hash)
-          # recurse
-          conditions.push(*build_conditions(key, value, table, valid_fields))
-        elsif value.is_a?(Array)
-          # combine conditions
-          conditions.push(build_array(key, value, table, valid_fields))
+        built_conditions = build_hash(key, value, table, valid_fields)
+        conditions.push(*built_conditions)
+      end
+      conditions
+    end
+
+    # Build a field condition.
+    # @param [Symbol] field
+    # @param [Symbol] key
+    # @param [Object] value
+    # @param [Arel::Table] table
+    # @param [Array<Symbol>] valid_fields
+    # @return [Arel::Nodes::Node] condition
+    def build_field(field, key, value, table, valid_fields)
+      case field
+        when :not
+          build_not(key, value, table, valid_fields)
+        when *valid_fields
+          build_condition(field, key, value, table, valid_fields)
         else
-          # create base condition
-          conditions.push(build_condition(field, key, value, table, valid_fields))
+          fail ArgumentError, "Unrecognised combiner or field name: #{key}"
+      end
+    end
+
+    # Build multiple combiners or field conditions.
+    # @param [Symbol] field
+    # @param [Symbol] key
+    # @param [Object] value
+    # @param [Arel::Table] table
+    # @param [Array<Symbol>] valid_fields
+    # @return [Arel::Nodes::Node] condition
+    def build_multiple(field, key, value, table, valid_fields)
+      case field
+        when :and, :or
+          build_combiner(field, build_hash(key, value, table, valid_fields))
+        else
+          fail ArgumentError, "Unrecognised combiner or field name: #{key}"
+      end
+    end
+
+    # Combine two conditions.
+    # @param [Symbol] combiner
+    # @param [Arel::Nodes::Node] condition1
+    # @param [Arel::Nodes::Node] condition2
+    # @return [Arel::Nodes::Node] condition
+    def build_combiner_binary(combiner, condition1, condition2)
+      case combiner
+        when :and
+          compose_and(condition1, condition2)
+        when :or
+          compose_or(condition1, condition2)
+        else
+          fail ArgumentError, "Unrecognised filter combiner #{combiner}."
+      end
+    end
+
+    # Combine conditions.
+    # @param [Symbol] combiner
+    # @param [Array<Arel::Nodes::Node>] conditions
+    # @return [Arel::Nodes::Node] condition
+    def build_combiner(combiner, conditions)
+      fail ArgumentError, "Combiner '#{combiner}' must have at least 2 entries, got #{conditions.size}." if conditions.blank? || conditions.size < 2
+      combined_conditions = nil
+
+      conditions.each do |condition|
+
+        if combined_conditions.blank?
+          combined_conditions = condition
+        else
+          combined_conditions = build_combiner_binary(combiner, combined_conditions, condition)
         end
 
       end
 
-      conditions
+      combined_conditions
+    end
+
+    # Build a not condition.
+    # @param [Symbol] field
+    # @param [Hash] hash
+    # @param [Arel::Table] table
+    # @param [Array<Symbol>] valid_fields
+    # @return [Arel::Nodes::Node] condition
+    def build_not(field, hash, table, valid_fields)
+      fail ArgumentError, "'Not' must have a single filter, got #{hash.size}." if hash.size != 1
+      negated_condition = nil
+
+      hash.each do |key, value|
+        condition = build_condition(field, key, value, table, valid_fields)
+        negated_condition = compose_not(condition)
+      end
+
+      negated_condition
     end
 
     # Build a condition.
@@ -56,6 +175,7 @@ module Filter
     # @return [Arel::Nodes::Node] condition
     def build_condition(field, filter_name, filter_value, table, valid_fields)
       case filter_name
+
         # comparisons
         when :eq, :equal
           compose_eq(table, field, valid_fields, filter_value)
@@ -63,117 +183,48 @@ module Filter
           compose_not_eq(table, field, valid_fields, filter_value)
         when :lt, :less_than
           compose_lt(table, field, valid_fields, filter_value)
+        when :not_lt, :not_less_than
+          compose_not_lt(table, field, valid_fields, filter_value)
         when :gt, :greater_than
           compose_gt(table, field, valid_fields, filter_value)
+        when :not_gt, :not_greater_than
+          compose_not_gt(table, field, valid_fields, filter_value)
         when :lteq, :less_than_or_equal
           compose_lteq(table, field, valid_fields, filter_value)
+        when :not_lteq, :not_less_than_or_equal
+          compose_not_lteq(table, field, valid_fields, filter_value)
         when :gteq, :greater_than_or_equal
           compose_gteq(table, field, valid_fields, filter_value)
+        when :not_gteq, :not_greater_than_or_equal
+          compose_not_gteq(table, field, valid_fields, filter_value)
 
         # subsets
-        # range (from/to, interval), in are handled separately
-        when :contains
+        when :range, :in_range
+          compose_range_options(table, field, valid_fields, filter_value)
+        when :not_range, :not_in_range
+          compose_not_range_options(table, field, valid_fields, filter_value)
+        when :in
+          compose_in(table, field, valid_fields, filter_value)
+        when :not_in
+          compose_not_in(table, field, valid_fields, filter_value)
+        when :contains, :contain
           compose_contains(table, field, valid_fields, filter_value)
-        when :starts_with
+        when :not_contains, :not_contain, :does_not_contain
+          compose_not_contains(table, field, valid_fields, filter_value)
+        when :starts_with, :start_with
           compose_starts_with(table, field, valid_fields, filter_value)
-        when :ends_with
+        when :not_starts_with, :not_start_with, :does_not_start_with
+          compose_not_starts_with(table, field, valid_fields, filter_value)
+        when :ends_with, :end_with
           compose_ends_with(table, field, valid_fields, filter_value)
+        when :not_ends_with, :not_end_with, :does_not_end_with
+          compose_not_ends_with(table, field, valid_fields, filter_value)
         #when :regex - not implemented in Arel 3.
         #  compose_regex(@table, field, @valid_columns, filter_value)
 
         else
           fail ArgumentError, "Unrecognised filter #{filter_name}."
       end
-    end
-
-    # Build a condition from an array.
-    # @param [Symbol] filter_name
-    # @param [Object] filter_value
-    # @param [Arel::Table] table
-    # @param [Array<Symbol>] valid_fields
-    # @return [Arel::Nodes::Node] condition
-    def build_array(filter_name, filter_value, table, valid_fields)
-      conditions = []
-      filter_value.each do |item|
-        new_conditions = build_conditions(filter_name, item, table, valid_fields)
-        conditions.push(*new_conditions)
-      end
-
-      build_combine(filter_name, conditions)
-    end
-
-    # Combine conditions.
-    # @param [Symbol] filter_name
-    # @param [Array<Arel::Nodes::Node>] conditions
-    # @return [Arel::Nodes::Node] condition
-    def build_combine(filter_name, conditions)
-      fail ArgumentError, "Conditions array must have at least 2 entries, got #{conditions.size}." if conditions.blank? || conditions.size < 2
-      condition_builder = nil
-      conditions.each do |condition|
-        if condition_builder.blank?
-          condition_builder = condition
-
-        else
-          case filter_name
-            when :and
-              condition_builder = compose_and(condition_builder, condition)
-            when :or
-              condition_builder = compose_or(condition_builder, condition)
-            else
-              fail ArgumentError, "Unrecognised filter combiner #{filter_name}."
-          end
-
-        end
-      end
-
-      condition_builder
-    end
-
-    # Build a range condition.
-    # @param [Symbol] field
-    # @param [Object] filter_value
-    # @param [Arel::Table] table
-    # @param [Array<Symbol>] valid_fields
-    # @return [Arel::Nodes::Node] condition
-    def build_range(field, filter_value, table, valid_fields)
-      from = filter_value[:from]
-      to = filter_value[:to]
-      interval = filter_value[:interval]
-
-      if !from.blank? && !to.blank? && !interval.blank?
-        fail ArgumentError, "Range filter must use either 'from' and 'to' or 'interval', not both."
-      elsif from.blank? && !to.blank?
-        fail ArgumentError, "Range filter missing 'from'."
-      elsif !from.blank? && to.blank?
-        fail ArgumentError, "Range filter missing 'to'."
-      elsif !from.blank? && !to.blank?
-        compose_range(table, field, valid_fields, from, to)
-      elsif !interval.blank?
-        compose_range_string(table, field, valid_fields, interval)
-      else
-        fail ArgumentError, 'Range filter was not valid.'
-      end
-    end
-
-    # Build a not condition.
-    # @param [Array<Hash>] value
-    # @param [Arel::Table] table
-    # @param [Array<Symbol>] valid_fields
-    # @return [Arel::Nodes::Node] condition
-    def build_not(value, table, valid_fields)
-      conditions_to_negate = []
-      value.each do |item|
-        new_conditions = build_conditions(:not, item, table, valid_fields)
-        conditions_to_negate.push(*new_conditions)
-      end
-
-      conditions = []
-
-      conditions_to_negate.each do |condition|
-        conditions.push(compose_not(condition))
-      end
-
-      conditions
     end
 
     # Build a text condition.
@@ -189,7 +240,11 @@ module Filter
         conditions.push(condition)
       end
 
-      build_combine(:or, conditions)
+      if conditions.size > 1
+        build_combiner(:or, conditions)
+      else
+        conditions[0]
+      end
     end
 
     # Build an equality condition that matches specified value to specified fields.
@@ -203,7 +258,50 @@ module Filter
         conditions.push(build_condition(key, :eq, value, table, valid_fields))
       end
 
-      build_combine(:and, conditions)
+      if conditions.size > 1
+        build_combiner(:and, conditions)
+      else
+        conditions[0]
+      end
+
+    end
+
+    # Build projections from a hash.
+    # @param [Hash] hash
+    # @param [Array<Symbol>] valid_fields
+    # @return [Array<Arel::Attributes::Attribute>] projections
+    def build_projections(hash, table, valid_fields)
+      fail ArgumentError, "Projections hash must have exactly 1 entry, got #{hash.size}." if hash.blank? || hash.size != 1
+      result = []
+      hash.each do |key, value|
+        fail ArgumentError, "Must be 'include' or 'exclude' at top level, got #{key}" unless [:include, :exclude].include?(key)
+        result = build_projection(key, value, table, valid_fields)
+      end
+      result
+    end
+
+    # Build projection to include or exclude.
+    # @param [Symbol] key
+    # @param [Hash<Symbol>] value
+    # @param [Array<Symbol>] valid_fields
+    # @return [Array<Arel::Attributes::Attribute>] projections
+    def build_projection(key, value, table, valid_fields)
+      fail ArgumentError, 'Must not contain duplicate fields.' if value.uniq.length != value.length
+      columns = []
+      case key
+        when :include
+          fail ArgumentError, 'Include must contain at least one field.' if value.blank?
+          columns = value
+        when :exclude
+          columns = valid_fields.reject { |item| value.include?(item)}
+        else
+          fail ArgumentError, "Unrecognised projection key #{key}."
+      end
+
+      columns.map { |item|
+        validate_column_name(item, valid_fields)
+        table[item]
+      }
     end
 
   end
