@@ -17,7 +17,6 @@ class UserAccountsController < ApplicationController
   # GET /users/1.json
   def show
     @user = User.find(params[:id])
-    @user_annotations = @user.recently_added_audio_events(params[:page])
     respond_to do |format|
       format.html # show.html.erb
       format.json { render json: @user }
@@ -26,20 +25,8 @@ class UserAccountsController < ApplicationController
 
   def my_account
     @user = current_user
-    @user_annotations = @user.recently_added_audio_events(params[:page])
     respond_to do |format|
       format.html { render template: 'user_accounts/show' }
-      format.json { render json: @user }
-    end
-  end
-
-  # GET /users/new
-  # GET /users/new.json
-  def new
-    @user = User.new
-
-    respond_to do |format|
-      format.html # new.html.erb
       format.json { render json: @user }
     end
   end
@@ -47,22 +34,6 @@ class UserAccountsController < ApplicationController
   # GET /users/1/edit
   def edit
     @user = User.find(params[:id])
-  end
-
-  # POST /users
-  # POST /users.json
-  def create
-    @user = User.new(params[:user])
-
-    respond_to do |format|
-      if @user.save
-        format.html { redirect_to user_account_path(@user), notice: 'User was successfully created.' }
-        format.json { render json: @user, status: :created, location: @user }
-      else
-        format.html { render action: 'new' }
-        format.json { render json: @user.errors, status: :unprocessable_entity }
-      end
-    end
   end
 
   # PUT /users/1
@@ -131,6 +102,35 @@ class UserAccountsController < ApplicationController
     respond_to do |format|
       format.html # projects.html.erb
       format.json { render json: @user_projects }
+    end
+  end
+
+  # GET /user_accounts/1/bookmarks
+  def bookmarks
+    @user = User.where(id: params[:id]).first
+    @user_bookmarks = @user.created_bookmarks
+    respond_to do |format|
+      format.html # bookmarks.html.erb
+      format.json { render json: @user_bookmarks }
+    end
+  end
+
+  # GET /user_accounts/1/audio_event_comments
+  def audio_event_comments
+    @user = User.where(id: params[:id]).first
+    @user_audio_event_comments = @user.created_audio_event_comments
+    respond_to do |format|
+      format.html # audio_event_comments.html.erb
+      format.json { render json: @user_audio_event_comments }
+    end
+  end
+
+  def audio_events
+    @user = User.where(id: params[:id]).first
+    @user_annotations = @user.recently_added_audio_events(params[:page])
+    respond_to do |format|
+      format.html # audio_events.html.erb
+      format.json { render json: @user_annotations }
     end
   end
 

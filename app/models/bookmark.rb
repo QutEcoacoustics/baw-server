@@ -23,6 +23,14 @@ class Bookmark < ActiveRecord::Base
   scope :filter_by_name, lambda { |name| where(name: name) }
   scope :filter_by_category, lambda { |category| where(category: category) }
 
+  def get_listen_path
+    segment_duration_seconds = 30
+    offset_start_rounded = (self.offset_seconds / segment_duration_seconds).floor * segment_duration_seconds
+    offset_end_rounded = offset_start_rounded + segment_duration_seconds
+
+    "#{self.audio_recording.get_listen_path}?start=#{offset_start_rounded}&end=#{offset_end_rounded}"
+  end
+
   # Define filter api settings
   def self.filter_settings
     {

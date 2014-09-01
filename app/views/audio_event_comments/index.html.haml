@@ -1,0 +1,17 @@
+%h1 Listing audio_event_comments
+
+%table
+  %tr
+    %th
+    %th
+    %th
+
+  - @audio_event_comments.each do |audio_event_comment|
+    %tr
+      %td= link_to 'Show', audio_event_comment
+      %td= link_to 'Edit', edit_audio_event_comment_path(audio_event_comment)
+      %td= link_to 'Destroy', audio_event_comment, :method => :delete, :data => { :confirm => 'Are you sure?' }
+
+%br
+
+= link_to 'New Audio event comment', new_audio_event_comment_path

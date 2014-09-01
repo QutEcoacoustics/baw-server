@@ -31,10 +31,12 @@ AWB::Application.routes.draw do
 
   #TODO: this will be changed from :user_accounts to :users at some point
   # user list and user profile
-  resources :user_accounts do
-    resources :permissions
+  resources :user_accounts, only: [:index, :show, :edit, :update] do
     member do
       get 'projects'
+      get 'bookmarks'
+      get 'audio_events'
+      get 'audio_event_comments'
     end
   end
 
@@ -163,6 +165,7 @@ AWB::Application.routes.draw do
 
   # API audio_event create
   resources :audio_events, only: [:new], defaults: {format: 'json'} do
+    resources :audio_event_comments, except: [:edit], defaults: {format: 'json'}, path: :comments
     collection do
       get 'library'
       get 'library/paged' => 'audio_events#library_paged', as: :library_paged

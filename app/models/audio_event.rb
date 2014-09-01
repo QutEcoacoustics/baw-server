@@ -11,6 +11,7 @@ class AudioEvent < ActiveRecord::Base
   belongs_to :creator, class_name: 'User', foreign_key: 'creator_id', inverse_of: :created_audio_events
   belongs_to :updater, class_name: 'User', foreign_key: 'updater_id', inverse_of: :updated_audio_events
   belongs_to :deleter, class_name: 'User', foreign_key: 'deleter_id', inverse_of: :deleted_audio_events
+  has_many :comments, class_name: 'AudioEventComment', foreign_key: 'audio_event_id', inverse_of: :audio_event
 
   accepts_nested_attributes_for :tags
 
@@ -244,6 +245,19 @@ class AudioEvent < ActiveRecord::Base
     end
 
     query.order('audio_events.id DESC')
+  end
+
+  def get_listen_path
+    segment_duration_seconds = 30
+    offset_start_rounded = (self.start_time_seconds / segment_duration_seconds).floor * segment_duration_seconds
+    offset_end_rounded = (self.end_time_seconds / segment_duration_seconds).floor * segment_duration_seconds
+    offset_end_rounded += (offset_start_rounded == offset_end_rounded ? segment_duration_seconds : 0 )
+
+    "#{self.audio_recording.get_listen_path}?start=#{offset_start_rounded}&end=#{offset_end_rounded}"
+  end
+
+  def get_library_path
+    "library/#{self.audio_recording_id}/audio_events/#{self.id}"
   end
 
   private

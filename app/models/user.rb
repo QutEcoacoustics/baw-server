@@ -42,6 +42,11 @@ class User < ActiveRecord::Base
   has_many :updated_audio_events, class_name: 'AudioEvent', foreign_key: :updater_id, inverse_of: :updater
   has_many :deleted_audio_events, class_name: 'AudioEvent', foreign_key: :deleter_id, inverse_of: :deleter
 
+  has_many :created_audio_event_comments, class_name: 'AudioEventComment', foreign_key: 'creator_id', inverse_of: :creator
+  has_many :updated_audio_event_comments, class_name: 'AudioEventComment', foreign_key: 'updater_id', inverse_of: :updater
+  has_many :deleted_audio_event_comments, class_name: 'AudioEventComment', foreign_key: 'deleter_id', inverse_of: :deleter
+  has_many :flagged_audio_event_comments, class_name: 'AudioEventComment', foreign_key: 'flagger_id', inverse_of: :flagger
+
   has_many :created_audio_recordings, class_name: 'AudioRecording', foreign_key: :creator_id, inverse_of: :creator
   has_many :updated_audio_recordings, class_name: 'AudioRecording', foreign_key: :updater_id, inverse_of: :updater
   has_many :deleted_audio_recordings, class_name: 'AudioRecording', foreign_key: :deleter_id, inverse_of: :deleter
@@ -157,12 +162,12 @@ class User < ActiveRecord::Base
 
   # @param [Project] project
   def can_read?(project)
-    !Permission.where(user_id: self.id, project_id: project.id, level: 'reader').first.blank? || project.creator == self
+    !get_read_permission(project).blank? || creator?(project)
   end
 
   # @param [Project] project
   def can_write?(project)
-    !Permission.where(user_id: self.id, project_id: project.id, level: 'writer').first.blank? || project.creator == self
+    !get_write_permission(project).blank? || creator?(project)
   end
 
   # @param [Array<Project>] projects
@@ -192,7 +197,7 @@ class User < ActiveRecord::Base
     # low to high: none, read, write, creator/owner, admin
     if self.has_role? :admin
       AccessLevel::ADMIN
-    elsif project.creator == self
+    elsif creator?(project)
       AccessLevel::OWNER
     elsif self.can_write? project
       AccessLevel::WRITE
@@ -217,7 +222,7 @@ class User < ActiveRecord::Base
 
   # @param [Project] project
   def has_permission?(project)
-    !Permission.where(user_id: self.id, project_id: project.id).first.blank? || project.creator == self
+    !get_permission(project).blank? || creator?(project)
   end
 
   # @param [Array<Project>] projects
@@ -228,6 +233,20 @@ class User < ActiveRecord::Base
       end
     end
     false
+  end
+
+  # True if this user is the creator of project.
+  # @param [Project] project
+  # @return [Boolean]
+  def creator?(project)
+    project.creator == self
+  end
+
+  # True if this user is the updater of project.
+  # @param [Project] project
+  # @return [Boolean]
+  def updater(project)
+    project.updater == self
   end
 
   # @param [Project] project

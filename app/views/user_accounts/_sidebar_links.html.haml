@@ -1,0 +1,56 @@
+= render layout: '/shared/left_sidebar', locals: {title: 'User Accounts'} do
+  - if request.path != my_account_path
+    %li= link_to 'View my profile', my_account_path, title: 'View your account information', data: {toggle: 'tooltip',  placement: 'right'}
+  - if !@user.blank? && request.path != edit_user_registration_path && current_user == @user
+    %li= link_to 'Edit my profile', edit_user_registration_path, title: 'Edit your account information', data: {toggle: 'tooltip',  placement: 'right'}
+  - if current_user.is_admin? && request.path != user_accounts_path
+    %li= link_to 'User List', user_accounts_path, title: 'View a list of all user accounts', data: {toggle: 'tooltip',  placement: 'right'}
+  - if current_user.is_admin? && !@user.blank? && request.path != edit_user_account_path(@user)
+    %li= link_to 'Edit user profile', edit_user_account_path(@user), title: 'Edit this user\'s details', data: {toggle: 'tooltip',  placement: 'right'}
+  - if !@user.blank? && request.path != projects_user_account_path(@user) && (current_user == @user || current_user.is_admin?)
+    %li= link_to 'Projects', projects_user_account_path(@user), title: "Projects #{@user.user_name} can access", data: {toggle: 'tooltip',  placement: 'right'}
+  - if !@user.blank? && request.path != bookmarks_user_account_path(@user)
+    %li= link_to 'Bookmarks', bookmarks_user_account_path(@user), title: "Bookmarks created by #{@user.user_name}", data: {toggle: 'tooltip',  placement: 'right'}
+  - if !@user.blank? && request.path != audio_events_user_account_path(@user)
+    %li= link_to 'Annotations', audio_events_user_account_path(@user), title: "Annotations created by #{@user.user_name}", data: {toggle: 'tooltip',  placement: 'right'}
+  - if !@user.blank? && request.path != audio_event_comments_user_account_path(@user) && (current_user == @user || current_user.is_admin?)
+    %li= link_to 'Comments', audio_event_comments_user_account_path(@user), title: "Comments by #{@user.user_name}", data: {toggle: 'tooltip',  placement: 'right'}
+
+
+
+  -#- if current_user == @user
+  -#  %li= link_to 'Edit my details', edit_user_registration_path, title: 'Edit your account information', data: {toggle: 'tooltip',  placement: 'right'}
+  -#- if !@user.blank? && can?(:edit, @user)
+  -#  %li= link_to 'Edit', edit_user_account_path(@user), title: 'Edit this user\'s details', data: {toggle: 'tooltip',  placement: 'right'}
+  -#- if can? :index, User
+  -#  %li= link_to 'List', user_accounts_path, title: 'List all user accounts', data: {toggle: 'tooltip',  placement: 'right'}
+  -#- if current_user.is_admin?
+  -#  %li= link_to 'User Projects', projects_user_account_path(@user), title: 'List all projects this user has access to', data: {toggle: 'tooltip',  placement: 'right'}
+  -#- if can? :show, User
+  -#  %li= link_to 'View Profile', user_account_path(@user), title: 'Show user account', data: {toggle: 'tooltip',  placement: 'right'}
+  -#- if can? :index, @user
+  -#  %li= link_to 'User List', user_accounts_path
+
+
+  -#- content_for :left_sidebar do
+  -#  = render layout: '/shared/left_sidebar', locals: {title: 'User Accounts'} do
+  -#    - if can? :show, User
+  -#      %li= link_to 'Show', user_account_path(@user), title: 'Show user account', data: {toggle: 'tooltip',  placement: 'right'}
+  -#
+  -#    - elsif can? :edit, @user
+  -#      %li= link_to 'Edit', edit_user_account_path(@user), title: 'Edit this user\'s details', data: {toggle: 'tooltip',  placement: 'right'}
+  -#    - if can? :index, User
+  -#      %li= link_to 'List', user_accounts_path, title: 'List all user accounts', data: {toggle: 'tooltip',  placement: 'right'}
+  -#
+  -#
+  -#      - content_for :left_sidebar do
+  -#        = render layout: '/shared/left_sidebar', locals: {title: 'User Accounts'} do
+  -#          - if current_user == @user
+  -#            %li= link_to 'Edit my details', edit_user_registration_path, title: 'Edit your account information', data: {toggle: 'tooltip',  placement: 'right'}
+  -#          - elsif can? :edit, @user
+  -#            %li= link_to 'Edit', edit_user_account_path(@user), title: 'Edit this user\'s details', data: {toggle: 'tooltip',  placement: 'right'}
+  -#          - if can? :index, User
+  -#            %li= link_to 'List', user_accounts_path, title: 'List all user accounts', data: {toggle: 'tooltip',  placement: 'right'}
+  -#          - if current_user.is_admin?
+  -#            %li= link_to 'User Projects', projects_user_account_path(@user), title: 'List all projects this user has access to', data: {toggle: 'tooltip',  placement: 'right'}
+

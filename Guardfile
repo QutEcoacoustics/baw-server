@@ -14,6 +14,7 @@ guard :rspec, cli: '--format progress --color' do
   watch(%r{^spec/support/(.+)\.rb$})                   { 'spec' }
   watch('config/routes.rb')                            { 'spec/routing' }
   watch('app/controllers/application_controller.rb')   { 'spec/acceptance' }
+  watch('app/models/ability.rb')                       { 'spec/acceptance' }
   #watch(%r{^spec/factories/(.+)\.rb$})                { %w(spec/acceptance spec/features spec/models) }
 
   # Capybara features specs
