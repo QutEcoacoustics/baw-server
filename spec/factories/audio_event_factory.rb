@@ -30,7 +30,7 @@ FactoryGirl.define do
       end
       after(:create) do |audio_event, evaluator|
         raise 'Creator was blank' if  evaluator.creator.blank?
-        create_list(:audio_event_comment, evaluator.audio_event_count, audio_event: audio_event, creator: evaluator.creator)
+        create_list(:comment, evaluator.audio_event_count, audio_event: audio_event, creator: evaluator.creator)
       end
     end
 

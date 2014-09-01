@@ -1,6 +1,6 @@
 FactoryGirl.define do
 
-  factory :audio_event_comment do
+  factory :audio_event_comment, aliases: [:comment] do
 
     sequence(:comment) { |n| "comment text #{n}" }
 

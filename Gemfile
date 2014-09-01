@@ -63,7 +63,8 @@ gem 'validates_timeliness', '~> 3.0.14'
 # https://github.com/delynn/userstamp
 # no changes in a long time, and we are very dependant on how this works
 # this might need to be changed to a fork that is maintained.
-gem 'userstamp', git: 'https://github.com/theepan/userstamp.git'
+# No longer used - incorporated the gem's functionality directly.
+#gem 'userstamp', git: 'https://github.com/theepan/userstamp.git'
 
 # https://github.com/brainspec/enumerize
 # we need the changes since version 0.8.0. Reassess when there is a new release.

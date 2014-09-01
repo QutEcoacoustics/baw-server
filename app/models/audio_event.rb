@@ -1,4 +1,6 @@
 class AudioEvent < ActiveRecord::Base
+  # ensures that creator_id, updater_id, deleter_id are set
+  include UserChange
 
   attr_accessible :audio_recording_id, :start_time_seconds, :end_time_seconds, :low_frequency_hertz, :high_frequency_hertz, :is_reference,
                   :tags_attributes, :tag_ids
@@ -15,8 +17,6 @@ class AudioEvent < ActiveRecord::Base
 
   accepts_nested_attributes_for :tags
 
-  # add created_at and updated_at stamper
-  stampable
 
   # add deleted_at and deleter_id
   acts_as_paranoid
@@ -24,8 +24,7 @@ class AudioEvent < ActiveRecord::Base
 
   # association validations
   validates :audio_recording, existence: true
-  # stamper adds creator/updater in before_save/before_update, which occur after validation
-  #validates :creator, existence: true
+  validates :creator, existence: true
 
   # validation
   validates :is_reference, inclusion: {in: [true, false]}

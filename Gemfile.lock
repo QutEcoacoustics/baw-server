@@ -35,12 +35,6 @@ GIT
       rails (>= 3.1)
       railties (>= 3.1)
 
-GIT
-  remote: https://github.com/theepan/userstamp.git
-  revision: bf05d832ee27a717ea9455d685c83ae2cfb80310
-  specs:
-    userstamp (2.0.2)
-
 GEM
   remote: https://rubygems.org/
   specs:
@@ -109,7 +103,7 @@ GEM
     capistrano-newrelic (0.0.8)
       capistrano (~> 3.0)
       newrelic_rpm
-    capistrano-rails (1.1.1)
+    capistrano-rails (1.1.2)
       capistrano (~> 3.1)
       capistrano-bundler (~> 1.1)
     capistrano-rvm (0.1.1)
@@ -462,7 +456,6 @@ DEPENDENCIES
   thin (~> 1.6.2)
   twitter-bootstrap-rails!
   uglifier (~> 2.5.0)
-  userstamp!
   uuidtools (~> 2.1.4)
   validates_timeliness (~> 3.0.14)
   webmock (~> 1.18.0)

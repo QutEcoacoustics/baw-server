@@ -1,4 +1,7 @@
 class Bookmark < ActiveRecord::Base
+  # ensures that creator_id, updater_id, deleter_id are set
+  include UserChange
+
   attr_accessible :audio_recording_id, :name, :description, :offset_seconds, :category
 
   # relations
@@ -7,12 +10,9 @@ class Bookmark < ActiveRecord::Base
   belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_bookmarks
   belongs_to :updater, class_name: 'User', foreign_key: :updater_id, inverse_of: :updated_bookmarks
 
-  # add created_at and updated_at stamper
-  stampable
-
   # association validations
   validates :audio_recording, existence: true
-  #validates :creator, existence: true
+  validates :creator, existence: true
 
   # attribute validations
   validates :offset_seconds, presence: true, numericality: {greater_than_or_equal_to: 0}

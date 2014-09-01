@@ -1,4 +1,6 @@
 class Tagging < ActiveRecord::Base
+# ensures that creator_id, updater_id, deleter_id are set
+  include UserChange
 
   self.table_name = 'audio_events_tags'
 
@@ -14,13 +16,10 @@ class Tagging < ActiveRecord::Base
   accepts_nested_attributes_for :audio_event
   accepts_nested_attributes_for :tag
 
-  # add created_at and updated_at stamper
-  stampable
-
   # association validations
   validates :audio_event, existence: true
   validates :tag, existence: true
-  #validates :creator, existence: true
+  validates :creator, existence: true
 
   # attribute validations
   validates_uniqueness_of :audio_event_id, scope: [:tag_id, :audio_event_id]

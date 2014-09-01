@@ -1,4 +1,7 @@
 class Project < ActiveRecord::Base
+  # ensures that creator_id, updater_id, deleter_id are set
+  include UserChange
+
   attr_accessible :description, :image, :name, :notes, :urn #,
                   #:sign_in_level, :anonymous_level
 
@@ -20,15 +23,12 @@ class Project < ActiveRecord::Base
                     styles: {span4: '300x300#', span3: '220x220#', span2: '140x140#', span1: '60x60#', spanhalf: '30x30#'},
                     default_url: '/images/project/project_:style.png'
 
-  # add created_at and updated_at stamper
-  stampable
-
   # add deleted_at and deleter_id
   acts_as_paranoid
   validates_as_paranoid
 
   # association validations
-  #validates :creator, existence: true
+  validates :creator, existence: true
 
   # attribute validations
   validates :name, presence: true, uniqueness: {case_sensitive: false}

@@ -4,9 +4,6 @@ class ApplicationController < ActionController::Base
   # CanCan - always check authorization
   check_authorization unless: :devise_controller?
 
-  # userstamp
-  include Userstamp
-
   # see routes.rb for the catch-all route for routing errors.
   # see application.rb for the exceptions_app settings.
   # see errors_controller.rb for the actions that handle routing errors and uncaught errors.
@@ -37,6 +34,10 @@ class ApplicationController < ActionController::Base
   skip_before_filter :verify_authenticity_token, if: :json_request?
 
   after_filter :set_csrf_cookie_for_ng, :resource_representation_caching_fixes
+
+  # set and reset user stamper for each request
+  # based on https://github.com/theepan/userstamp/tree/bf05d832ee27a717ea9455d685c83ae2cfb80310
+  around_filter :set_then_reset_user_stamper
 
   protected
 
@@ -176,7 +177,7 @@ class ApplicationController < ActionController::Base
         status_symbol,
         nil,
         {
-            error_details:detail_message,
+            error_details: detail_message,
             error_links: options[:links_object]
         })
 
@@ -395,6 +396,16 @@ class ApplicationController < ActionController::Base
       'api'
     else
       'application'
+    end
+  end
+
+  def set_then_reset_user_stamper
+    begin
+      old_stamper = User.stamper
+      User.stamper = self.current_user
+      yield
+    ensure
+      User.stamper = old_stamper
     end
   end
 

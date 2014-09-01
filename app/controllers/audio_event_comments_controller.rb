@@ -2,12 +2,12 @@ class AudioEventCommentsController < ApplicationController
 
   load_and_authorize_resource :audio_event
   load_and_authorize_resource through: :audio_event
-  respond_to :json, except: [:download]
+  respond_to :json
 
   # GET /audio_event_comments
   # GET /audio_event_comments.json
   def index
-    @audio_event_comments = AudioEventComment.all
+    #@audio_event_comments = AudioEventComment.accessible_by
 
     respond_to do |format|
       format.html # index.html.erb
@@ -18,7 +18,7 @@ class AudioEventCommentsController < ApplicationController
   # GET /audio_event_comments/1
   # GET /audio_event_comments/1.json
   def show
-    @audio_event_comment = AudioEventComment.find(params[:id])
+    #@audio_event_comment = AudioEventComment.find(params[:id])
 
     respond_to do |format|
       format.html # show.html.erb
@@ -29,7 +29,7 @@ class AudioEventCommentsController < ApplicationController
   # GET /audio_event_comments/new
   # GET /audio_event_comments/new.json
   def new
-    @audio_event_comment = AudioEventComment.new
+    #@audio_event_comment = AudioEventComment.new
 
     respond_to do |format|
       format.html # new.html.erb
@@ -40,7 +40,7 @@ class AudioEventCommentsController < ApplicationController
   # POST /audio_event_comments
   # POST /audio_event_comments.json
   def create
-    @audio_event_comment = AudioEventComment.new(params[:audio_event_comment])
+    #@audio_event_comment = AudioEventComment.new(params[:audio_event_comment])
 
     respond_to do |format|
       if @audio_event_comment.save
@@ -56,7 +56,7 @@ class AudioEventCommentsController < ApplicationController
   # PUT /audio_event_comments/1
   # PUT /audio_event_comments/1.json
   def update
-    @audio_event_comment = AudioEventComment.find(params[:id])
+    #@audio_event_comment = AudioEventComment.find(params[:id])
 
     respond_to do |format|
       if @audio_event_comment.update_attributes(params[:audio_event_comment])
@@ -72,7 +72,7 @@ class AudioEventCommentsController < ApplicationController
   # DELETE /audio_event_comments/1
   # DELETE /audio_event_comments/1.json
   def destroy
-    @audio_event_comment = AudioEventComment.find(params[:id])
+    #@audio_event_comment = AudioEventComment.find(params[:id])
     @audio_event_comment.destroy
 
     respond_to do |format|
