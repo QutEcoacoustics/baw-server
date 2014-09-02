@@ -222,7 +222,9 @@ class User < ActiveRecord::Base
     highest
   end
 
+  # Check if user has any permission on given project.
   # @param [Project] project
+  # @return [Boolean] true if user has any permission on project.
   def has_permission?(project)
     !get_permission(project).blank? || creator?(project)
   end

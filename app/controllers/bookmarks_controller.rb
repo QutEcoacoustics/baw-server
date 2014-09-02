@@ -58,7 +58,6 @@ class BookmarksController < ApplicationController
   # POST /bookmarks
   # POST /bookmarks.json
   def create
-    @bookmark = Bookmark.new(params[:bookmark])
     respond_to do |format|
       if @bookmark.save
         format.html { redirect_to @bookmark, notice: 'Bookmark was successfully created.' }
@@ -73,7 +72,6 @@ class BookmarksController < ApplicationController
   # PUT /bookmarks/1
   # PUT /bookmarks/1.json
   def update
-    @bookmark = Bookmark.where(id: params[:id]).first
     respond_to do |format|
       if @bookmark.update_attributes(params[:bookmark])
         format.html { redirect_to @bookmark, notice: 'Bookmark was successfully updated.' }
@@ -88,7 +86,6 @@ class BookmarksController < ApplicationController
   # DELETE /bookmarks/1
   # DELETE /bookmarks/1.json
   def destroy
-    @bookmark = Bookmark.where(id: params[:id]).first
     @bookmark.destroy
 
     respond_to do |format|

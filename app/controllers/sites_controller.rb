@@ -1,9 +1,13 @@
 class SitesController < ApplicationController
   add_breadcrumb 'Home', :root_path
 
-  load_and_authorize_resource :project, except: [:show_shallow]
-  before_filter :build_project_site, only: [:new, :create] # this is necessary so that the ability has access to site.projects
-  load_and_authorize_resource :site, through: :project, except: [:show_shallow]
+  # order matters for before_filter and load_and_authorize_resource!
+  load_and_authorize_resource :project
+
+  # this is necessary so that the ability has access to site.projects
+  before_filter :build_project_site, only: [:new, :create]
+
+  load_and_authorize_resource :site, through: :project
 
   before_filter :add_project_breadcrumb, except: [:show_shallow]
 
@@ -20,10 +24,7 @@ class SitesController < ApplicationController
 
   # GET /sites/1.json
   def show_shallow
-    # do authorisation manually
-    @site = Site.find(params[:id])
-    authorize! :show, @site
-
+# CanCan does auth for custom actions too
     @site.update_location_obfuscated(current_user)
 
     # only responds to json requests
@@ -35,8 +36,6 @@ class SitesController < ApplicationController
   # GET /project/1/sites/1
   # GET /project/1/sites/1.json
   def show
-    @site = @project.sites.find(params[:id])
-
     @site_audio_recordings = @site.audio_recordings.where(status: 'ready').order('recorded_date DESC').paginate(page: params[:page], per_page: 30)
 
     @site.update_location_obfuscated(current_user)
@@ -52,6 +51,15 @@ class SitesController < ApplicationController
   # GET /project/1/sites/new
   # GET /project/1/sites/new.json
   def new
+
+    # need to do what cancan would otherwise do due to before_filter creating @site
+    # see https://github.com/CanCanCommunity/cancancan/wiki/Controller-Authorization-Example
+    current_ability.attributes_for(:new, Site).each do |key, value|
+      @site.send("#{key}=", value)
+    end
+    @site.attributes = params[:site]
+    authorize! :new, @site
+
     @site.longitude = 152
     @site.latitude = -27
     respond_to do |format|
@@ -67,7 +75,6 @@ class SitesController < ApplicationController
 
   # GET /project/1/sites/1/edit
   def edit
-    @site = @project.sites.find(params[:id])
     add_breadcrumb @site.name, [@project, @site]
     add_breadcrumb 'Edit'
     @markers = @site.to_gmaps4rails do |site, marker|
@@ -78,8 +85,14 @@ class SitesController < ApplicationController
   # POST /project/1/sites
   # POST /project/1/sites.json
   def create
-    @site = Site.new(params[:site])
-    @site.projects << @project
+
+    # need to do what cancan would otherwise do due to before_filter creating @site
+    # see https://github.com/CanCanCommunity/cancancan/wiki/Controller-Authorization-Example
+    current_ability.attributes_for(:new, Site).each do |key, value|
+      @site.send("#{key}=", value)
+    end
+    @site.attributes = params[:site]
+    authorize! :create, @site
 
     respond_to do |format|
       if @site.save
@@ -101,7 +114,6 @@ class SitesController < ApplicationController
   # PUT /project/1/sites/1
   # PUT /project/1/sites/1.json
   def update
-    @site = Site.find(params[:id])
     @site.projects << @project unless @site.projects.include?(@project) # to avoid duplicates in the Projects_Sites table
 
     respond_to do |format|
@@ -121,7 +133,6 @@ class SitesController < ApplicationController
   # DELETE /project/1/sites/1
   # DELETE /project/1/sites/1.json
   def destroy
-    @site = Site.find(params[:id])
     @site.destroy
 
     respond_to do |format|

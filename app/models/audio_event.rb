@@ -256,7 +256,7 @@ class AudioEvent < ActiveRecord::Base
   end
 
   def get_library_path
-    "library/#{self.audio_recording_id}/audio_events/#{self.id}"
+    "/library/#{self.audio_recording_id}/audio_events/#{self.id}"
   end
 
   private

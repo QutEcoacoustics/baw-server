@@ -1,17 +1,21 @@
 class PermissionsController < ApplicationController
   add_breadcrumb 'Home', :root_path
 
+  # order matters for before_filter and load_and_authorize_resource!
   load_and_authorize_resource :project
-  load_and_authorize_resource :permission, through: :project
 
+  # this is necessary so that the ability has access to permission.project
+  before_filter :build_project_permission, only: [:new, :create]
+
+  load_and_authorize_resource :permission, through: :project
 
   before_filter :add_project_breadcrumb
 
   # GET /permissions
   # GET /permissions.json
   def index
-    @permissions = @project.permissions
-    @project.permissions.new  # this is required for the form to render
+    #@permissions = @project.permissions
+    #@project.permissions.new # this is required for the form to render
 
     respond_to do |format|
       format.html {
@@ -22,7 +26,7 @@ class PermissionsController < ApplicationController
           fail CanCan::AccessDenied.new(I18n.t('devise.failure.unauthorized'), :index, Permission)
         end
         add_breadcrumb 'Permissions', project_permissions_path(@project)
-      }# index.html.erb
+      } # index.html.erb
       format.json { render json: @permissions }
     end
   end
@@ -41,7 +45,14 @@ class PermissionsController < ApplicationController
   # GET /permissions/new
   # GET /permissions/new.json
   def new
-    @permission = Permission.new
+
+    # need to do what cancan would otherwise do due to before_filter creating @permission
+    # see https://github.com/CanCanCommunity/cancancan/wiki/Controller-Authorization-Example
+    current_ability.attributes_for(:new, Permission).each do |key, value|
+      @permission.send("#{key}=", value)
+    end
+    @permission.attributes = params[:permission]
+    authorize! :new, @permission
 
     respond_to do |format|
       format.html # new.html.erb
@@ -51,14 +62,21 @@ class PermissionsController < ApplicationController
 
   # GET /permissions/1/edit
   def edit
-    @permission = Permission.find(params[:id])
+
   end
 
   # POST /permissions
   # POST /permissions.json
   def create
-    @permission = Permission.new(params[:permission])
-    @project.permissions << @permission
+
+    # need to do what cancan would otherwise do due to before_filter creating @permission
+    # see https://github.com/CanCanCommunity/cancancan/wiki/Controller-Authorization-Example
+    current_ability.attributes_for(:new, Permission).each do |key, value|
+      @permission.send("#{key}=", value)
+    end
+    @permission.attributes = params[:permission]
+    authorize! :create, @permission
+
     @permission.creator = current_user
 
     respond_to do |format|
@@ -73,7 +91,7 @@ class PermissionsController < ApplicationController
   # PUT /permissions/1
   # PUT /permissions/1.json
   def update
-    @permission = Permission.find(params[:id])
+
     @permission.updater = current_user
 
     respond_to do |format|
@@ -90,7 +108,6 @@ class PermissionsController < ApplicationController
   # DELETE /permissions/1
   # DELETE /permissions/1.json
   def destroy
-    @permission = Permission.find(params[:id])
     @permission.destroy
 
     respond_to do |format|
@@ -103,6 +120,11 @@ class PermissionsController < ApplicationController
   def add_project_breadcrumb
     add_breadcrumb 'Projects', projects_path
     add_breadcrumb @project.name, @project
+  end
+
+  def build_project_permission
+    @permission = Permission.new
+    @permission.project = @project
   end
 
 end

@@ -1,8 +1,12 @@
 class DatasetsController < ApplicationController
   add_breadcrumb 'Home', :root_path
 
+  # order matters for before_filter and load_and_authorize_resource!
   load_and_authorize_resource :project
-  before_filter :build_project_dataset, only: [:new, :create] # this is necessary so that the ability has access to site.projects
+
+  # this is necessary so that the ability has access to dataset.projects
+  before_filter :build_project_dataset, only: [:new, :create]
+
   load_and_authorize_resource :dataset, through: :project
 
   before_filter :add_project_breadcrumb
@@ -10,8 +14,6 @@ class DatasetsController < ApplicationController
   # GET /projects/:id/datasets
   # GET /projects/:id/datasets.json
   def index
-    @datasets = @project.datasets
-
     respond_to do |format|
       #format.html # index.html.erb
       format.json { render json: @datasets }
@@ -21,8 +23,6 @@ class DatasetsController < ApplicationController
   # GET /projects/:id/datasets/1
   # GET /projects/:id/datasets/1.json
   def show
-    @dataset = @project.datasets.find(params[:id])
-
     respond_to do |format|
       format.html {
         add_breadcrumb @dataset.name, [@project, @dataset]
@@ -34,7 +34,14 @@ class DatasetsController < ApplicationController
   # GET /projects/:id/datasets/new
   # GET /projects/:id/datasets/new.json
   def new
-    @dataset = Dataset.new
+
+    # need to do what cancan would otherwise do due to before_filter creating @dataset
+    # see https://github.com/CanCanCommunity/cancancan/wiki/Controller-Authorization-Example
+    current_ability.attributes_for(:new, Dataset).each do |key, value|
+      @dataset.send("#{key}=", value)
+    end
+    @dataset.attributes = params[:dataset]
+    authorize! :new, @dataset
 
     respond_to do |format|
       format.html {
@@ -46,7 +53,6 @@ class DatasetsController < ApplicationController
 
   # GET /projects/:id/datasets/1/edit
   def edit
-    @dataset = @project.datasets.find(params[:id])
     add_breadcrumb @dataset.name, [@project, @dataset]
     add_breadcrumb 'Edit'
   end
@@ -54,8 +60,14 @@ class DatasetsController < ApplicationController
   # POST /projects/:id/datasets
   # POST /projects/:id/datasets.json
   def create
-    @dataset = Dataset.new(params[:dataset])
-    @dataset.project = @project
+
+    # need to do what cancan would otherwise do due to before_filter creating @dataset
+    # see https://github.com/CanCanCommunity/cancancan/wiki/Controller-Authorization-Example
+    current_ability.attributes_for(:new, Dataset).each do |key, value|
+      @dataset.send("#{key}=", value)
+    end
+    @dataset.attributes = params[:dataset]
+    authorize! :create, @dataset
 
     respond_to do |format|
       if @dataset.save
@@ -71,7 +83,6 @@ class DatasetsController < ApplicationController
   # PUT /projects/:id/datasets/1
   # PUT /projects/:id/datasets/1.json
   def update
-    @dataset = Dataset.find(params[:id])
     respond_to do |format|
       if @dataset.update_attributes(params[:dataset])
         format.html { redirect_to [@project, @dataset], notice: 'Dataset was successfully updated.' }
@@ -89,7 +100,6 @@ class DatasetsController < ApplicationController
   # DELETE /projects/:id/datasets/1
   # DELETE /projects/:id/datasets/1.json
   def destroy
-    @dataset = Dataset.find(params[:id])
     @dataset.destroy
 
     respond_to do |format|

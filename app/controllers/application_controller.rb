@@ -118,7 +118,7 @@ class ApplicationController < ActionController::Base
     fail CustomErrors::ItemNotFoundError, "Could not find audio event with id #{request_params[:audio_event_id]}." if audio_event.blank?
 
     # can? also checks for admin access
-    can_access_audio_event = can? :read, audio_event
+    can_access_audio_event = can? :show, audio_event
     matching_ids = audio_event.audio_recording_id == audio_recording.id
     is_reference = audio_event.is_reference
     has_any_permission = can_access_audio_event || is_reference

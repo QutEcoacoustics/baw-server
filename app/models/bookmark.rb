@@ -34,7 +34,7 @@ class Bookmark < ActiveRecord::Base
   # Define filter api settings
   def self.filter_settings
     {
-        valid_fields: [:audio_recording_id, :offset_seconds, :name, :description, :category, :created_at],
+        valid_fields: [:id, :audio_recording_id, :offset_seconds, :name, :description, :category, :created_at],
         # :updated_at, :creator_id, :updater_id,
         text_fields: [:name, :description, :category],
         controller: :bookmarks,

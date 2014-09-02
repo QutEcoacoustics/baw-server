@@ -1,6 +1,6 @@
 class UserAccountsController < ApplicationController
 
-  load_and_authorize_resource :class => 'User'
+  load_and_authorize_resource :user, parent: false
 
   # GET /users
   # GET /users.json
@@ -16,7 +16,6 @@ class UserAccountsController < ApplicationController
   # GET /users/1
   # GET /users/1.json
   def show
-    @user = User.find(params[:id])
     respond_to do |format|
       format.html # show.html.erb
       format.json { render json: @user }
@@ -33,7 +32,7 @@ class UserAccountsController < ApplicationController
 
   # GET /users/1/edit
   def edit
-    @user = User.find(params[:id])
+
   end
 
   # PUT /users/1
@@ -45,8 +44,6 @@ class UserAccountsController < ApplicationController
       params[:user].delete('password')
       params[:user].delete('password_confirmation')
     end
-
-    @user = User.find(params[:id])
 
     respond_to do |format|
       if @user.update_attributes(params[:user])
@@ -85,7 +82,6 @@ class UserAccountsController < ApplicationController
 
   # GET /user_accounts/1/projects
   def projects
-    @user = User.where(id: params[:id]).first
     @user_projects = @user.projects
     respond_to do |format|
       format.html # projects.html.erb
@@ -95,7 +91,6 @@ class UserAccountsController < ApplicationController
 
   # GET /user_accounts/1/bookmarks
   def bookmarks
-    @user = User.where(id: params[:id]).first
     @user_bookmarks = @user.created_bookmarks
     respond_to do |format|
       format.html # bookmarks.html.erb
@@ -105,8 +100,7 @@ class UserAccountsController < ApplicationController
 
   # GET /user_accounts/1/audio_event_comments
   def audio_event_comments
-    @user = User.where(id: params[:id]).first
-    @user_audio_event_comments = @user.created_audio_event_comments
+    @user_audio_event_comments = @user.created_audio_event_comments.includes(:audio_event)
     respond_to do |format|
       format.html # audio_event_comments.html.erb
       format.json { render json: @user_audio_event_comments }
@@ -114,7 +108,6 @@ class UserAccountsController < ApplicationController
   end
 
   def audio_events
-    @user = User.where(id: params[:id]).first
     @user_annotations = @user.recently_added_audio_events(params[:page])
     respond_to do |format|
       format.html # audio_events.html.erb

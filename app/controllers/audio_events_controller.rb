@@ -69,15 +69,12 @@ class AudioEventsController < ApplicationController
   # GET /audio_events/new
   # GET /audio_events/new.json
   def new
-    @audio_event = AudioEvent.new
-
     render json: @audio_event.to_json(only: [:start_time_seconds, :end_time_seconds, :low_frequency_hertz, :high_frequency_hertz, :is_reference])
   end
 
   # POST /audio_events
   # POST /audio_events.json
   def create
-    @audio_event = AudioEvent.new(params[:audio_event])
     @audio_event.audio_recording = @audio_recording
 
     if @audio_event.save
@@ -113,7 +110,7 @@ class AudioEventsController < ApplicationController
     is_authorized = false
     if params[:project_id] || params[:projectId]
       project = Project.where(id: (params[:project_id] || params[:projectId])).first
-      authorize! :read, project unless project.blank?
+      authorize! :show, project unless project.blank?
       is_authorized = true unless project.blank?
     else
       project = nil
@@ -121,7 +118,7 @@ class AudioEventsController < ApplicationController
 
     if params[:site_id] || params[:siteId]
       site = Site.where(id: (params[:site_id] || params[:siteId])).first
-      authorize! :read, site unless site.blank?
+      authorize! :show, site unless site.blank?
       is_authorized = true unless site.blank?
     else
       site = nil

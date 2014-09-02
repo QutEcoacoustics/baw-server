@@ -8,8 +8,8 @@ class Tagging < ActiveRecord::Base
   attr_accessible :audio_event_id, :tag_id, :tag_attributes
 
   # relations
-  belongs_to :audio_event # no inverse of specified, as it interferes with through: association
-  belongs_to :tag # no inverse of specified, as it interferes with through: association
+  belongs_to :audio_event, inverse_of: :taggings # inverse_of allows CanCan to make permissions work properly
+  belongs_to :tag, inverse_of: :taggings # inverse_of allows CanCan to make permissions work properly
   belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_taggings
   belongs_to :updater, class_name: 'User', foreign_key: :updater_id, inverse_of: :updated_taggings
 

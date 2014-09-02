@@ -4,9 +4,9 @@ class AudioRecordingsController < ApplicationController
   load_resource :site, only: [:index, :create]
   skip_authorization_check only: :check_uploader
   load_and_authorize_resource :audio_recording, except: [:check_uploader]
+  respond_to :json, except: [:show]
 
   layout 'player', only: :show
-
 
   # GET /audio_recordings.json
   def index
@@ -22,15 +22,11 @@ class AudioRecordingsController < ApplicationController
 
   # GET /audio_recordings/1.json
   def show
-    respond_to do |format|
-      format.json { render json: @audio_recording }
-    end
+    render json: @audio_recording
   end
 
   # GET /audio_recordings/new.json
   def new
-    @audio_recording = AudioRecording.new
-
     required = [
         :uploader_id,
         :sample_rate_hertz,
