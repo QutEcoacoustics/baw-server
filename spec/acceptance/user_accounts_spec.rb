@@ -70,22 +70,9 @@ resource 'Users' do
   end
 
   ################################
-  # CREATE
+  # CREATE does not make sense for user_accounts -
+  # account creation is done by devise/registrations#create
   ################################
-  post '/user_accounts' do
-    let(:authentication_token) { writer_token }
-    standard_request('CREATE (as writer)', 403, nil, true)
-  end
-
-  post '/user_accounts' do
-    let(:authentication_token) { reader_token }
-    standard_request('CREATE (as reader)', 403, nil, true)
-  end
-
-  post '/user_accounts' do
-    let(:authentication_token) { "Token token=\"INVALID TOKEN\"" }
-    standard_request('CREATE (with invalid token)', 401, nil, true)
-  end
 
   ################################
   # SHOW

@@ -12,6 +12,9 @@
         Tags:
         = number_with_delimiter(@user.get_tag_count, delimiter: ' ')
       %p
+        Bookmarks:
+        = number_with_delimiter(@user.get_bookmark_count, delimiter: ' ')
+      %p
         Last seen
         - last_seen = @user.get_last_seen
         = last_seen.blank? ? '?' : "#{distance_of_time_in_words(Time.zone.now, last_seen, nil, {vague: true})} ago"
@@ -22,6 +25,9 @@
       %p
         Annotations:
         = number_with_delimiter(@user.get_annotation_count, delimiter: ' ')
+      %p
+        Comments:
+        = number_with_delimiter(@user.get_comment_count, delimiter: ' ')
       %p
         Member for
         - signed_up_date = @user.created_at

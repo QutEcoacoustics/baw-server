@@ -153,7 +153,7 @@ class AudioEventsController < ApplicationController
     end
 
     unless is_authorized
-      raise CustomErrors::RoutingArgumentError, 'must provide existing audio_recording_id, start_offset, and end_offset or project_id or site_id'
+      fail CustomErrors::RoutingArgumentError, 'must provide existing audio_recording_id, start_offset, and end_offset or project_id or site_id'
     end
 
     # set file name

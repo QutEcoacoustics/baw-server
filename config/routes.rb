@@ -141,12 +141,12 @@ AWB::Application.routes.draw do
   # API audio recording item
   resources :audio_recordings, only: [:index, :show, :new], defaults: {format: 'json'} do
     get 'media.:format' => 'media#show', defaults: {format: 'json'}, as: :media
-    resources :audio_events, defaults: {format: 'json'} do
+    resources :audio_events, except: [:edit], defaults: {format: 'json'} do
       collection do
         get 'download', defaults: {format: 'csv'}
       end
       resources :tags, only: [:index], defaults: {format: 'json'}
-      resources :taggings, defaults: {format: 'json'}
+      resources :taggings, except: [:edit], defaults: {format: 'json'}
     end
   end
 

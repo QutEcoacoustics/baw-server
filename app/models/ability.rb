@@ -26,7 +26,7 @@ class Ability
     # when checking on a class, and it will return true.
     # Think of it as asking "can the current user read *a* project?" when using a class,
     # and "can the current user read *this* project?" when checking an instance.
-    # This is mainly relevant for :index, :new, and :create,
+    # This is mainly relevant for :index and :new.
     # since they do no have an instance of the model.
 
     # WARNING: :manage represents ANY action on the object.
@@ -74,7 +74,7 @@ class Ability
       can [:manage], AudioEvent do |audio_event|
         user.can_write_any?(audio_event.audio_recording.site.projects)
       end
-      can [:index, :show], AudioEvent do |audio_event|
+      can [:index, :show, :download], AudioEvent do |audio_event|
         user.has_permission_any?(audio_event.audio_recording.site.projects)
       end
       can [:show], Bookmark do |bookmark|
@@ -114,7 +114,7 @@ class Ability
       can [:library, :library_paged], AudioEvent
 
       # Audio Recordings: filter (permissions are checked in the action)
-      can [:filter], AudioRecording
+      can [:filter, :new], AudioRecording
 
     elsif user.has_role? :harvester
       can [:manage, :check_uploader], AudioRecording

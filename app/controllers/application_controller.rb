@@ -209,8 +209,6 @@ class ApplicationController < ActionController::Base
       # http://blogs.thewehners.net/josh/posts/354-obscure-rails-bug-respond_to-formatany
       format.all { render json: json_response, status: status_symbol, content_type: 'application/json' }
     end
-
-    check_reset_stamper
   end
 
   def render_api_response(content, status_symbol = :ok)
@@ -341,7 +339,7 @@ class ApplicationController < ActionController::Base
           error,
           'access_denied_response - unauthorised',
           redirect: false,
-          links_object: [:sign_in, :confirm])
+          links_object: [:sign_in, :sign_up, :confirm])
 
     end
   end
@@ -372,10 +370,6 @@ class ApplicationController < ActionController::Base
     end
   end
 
-  def check_reset_stamper
-    reset_stamper if User.stamper
-  end
-
   def log_original_error(method_name, error, response_given)
 
     msg = "Error handled by #{method_name} in application or errors controller."
@@ -401,11 +395,10 @@ class ApplicationController < ActionController::Base
 
   def set_then_reset_user_stamper
     begin
-      old_stamper = User.stamper
       User.stamper = self.current_user
       yield
     ensure
-      User.stamper = old_stamper
+      User.stamper = nil
     end
   end
 

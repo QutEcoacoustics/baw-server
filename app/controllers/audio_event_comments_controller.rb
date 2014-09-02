@@ -1,7 +1,7 @@
 class AudioEventCommentsController < ApplicationController
 
   load_and_authorize_resource :audio_event
-  load_and_authorize_resource through: :audio_event
+  load_and_authorize_resource :audio_event_comment, through: :audio_event, through_association: :comments
   respond_to :json
 
   # GET /audio_event_comments

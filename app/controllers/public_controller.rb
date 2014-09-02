@@ -264,9 +264,17 @@ EXTRACT(DAY FROM recorded_date) as extracted_day')
     if !params[:annotation_download].blank? &&
         !params[:annotation_download][:project_id].blank? &&
         !params[:annotation_download][:site_id].blank?
+
+      # check permissions
+      site_id = params[:annotation_download][:site_id].to_i
+      site = Site.where(id: site_id).first
+      access = can?(:show, site)
+      msg = 'You must have access to the site to download annotations.'
+      fail CanCan::AccessDenied.new(msg, :show, site) unless access
+
       @annotation_download = {
           link: download_site_audio_events_path(params[:annotation_download][:project_id], params[:annotation_download][:site_id]),
-          name: params[:annotation_download][:name]
+          name: site.name
       }
     end
 

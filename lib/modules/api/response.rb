@@ -257,6 +257,10 @@ module Api
               text: 'sign in',
               url: url_helpers.new_user_session_path
           },
+          sign_up: {
+              text: 'sign up',
+              url: url_helpers.new_user_registration_path
+          },
           permissions: {
               text: 'request permissions',
               url: url_helpers.new_access_request_projects_path

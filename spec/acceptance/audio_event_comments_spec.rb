@@ -79,7 +79,7 @@ resource 'AudioEventComments' do
     parameter :audio_event_id, 'Requested audio event id (in path/route)', required: true
     let(:audio_event_id) { @comment_1.audio_event_id }
     let(:authentication_token) { unconfirmed_token }
-    standard_request('LIST (as unconfirmed_token)', 401, nil, true)
+    standard_request('LIST (as unconfirmed_token)', 403, nil, true)
   end
 
   get '/audio_events/:audio_event_id/comments' do
@@ -121,7 +121,7 @@ resource 'AudioEventComments' do
     let(:audio_event_id) { @comment_1.audio_event_id }
     let(:raw_post) { {audio_event_comment: post_attributes}.to_json }
     let(:authentication_token) { unconfirmed_token }
-    standard_request('CREATE (as unconfirmed user)', 401, nil, true)
+    standard_request('CREATE (as unconfirmed user)', 403, nil, true)
   end
 
   post '/audio_events/:audio_event_id/comments' do
@@ -172,7 +172,7 @@ resource 'AudioEventComments' do
     let(:id) { @comment_1.id }
     let(:raw_post) { {audio_event_comment: post_attributes}.to_json }
     let(:authentication_token) { unconfirmed_token }
-    standard_request('UPDATE (as unconfirmed user)', 401, nil, true)
+    standard_request('UPDATE (as unconfirmed user)', 403, nil, true)
   end
 
   put '/audio_events/:audio_event_id/comments/:id' do
@@ -232,7 +232,7 @@ resource 'AudioEventComments' do
     let(:audio_event_id) { @comment_1.audio_event_id }
     let(:id) { @comment_1.id }
     let(:authentication_token) { unconfirmed_token }
-    standard_request('DESTROY (as unconfirmed user)', 401, nil, true)
+    standard_request('DESTROY (as unconfirmed user)', 403, nil, true)
   end
 
   delete '/audio_events/:audio_event_id/comments/:id' do

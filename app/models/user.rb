@@ -91,13 +91,17 @@ class User < ActiveRecord::Base
             uniqueness: {
                 case_sensitive: false
             },
-            exclusion: {
-                in: %w(admin harvester analysis_runner root superuser administrator admins administrators)
-            },
             format: {
                 with: /\A[a-zA-Z0-9 _-]+\z/,
                 message: 'Only letters, numbers, spaces ( ), underscores (_) and dashes (-) are valid.'
             }
+
+  validates :user_name,
+            exclusion: {
+                in: %w(admin harvester analysis_runner root superuser administrator admins administrators)
+            },
+            if: Proc.new { |user| user.user_name_changed? }
+
   # format, uniqueness, and presence are validated by devise
   # Validatable component
   # validates :email,
@@ -287,6 +291,14 @@ class User < ActiveRecord::Base
     AudioEvent.where('audio_events.creator_id = ? OR audio_events.updater_id = ?', self.id, self.id).count
   end
 
+  def get_bookmark_count
+    Bookmark.where('bookmarks.creator_id = ? OR bookmarks.updater_id = ?', self.id, self.id).count
+  end
+
+  def get_comment_count
+    AudioEventComment.where('audio_event_comments.creator_id = ? OR audio_event_comments.updater_id = ?', self.id, self.id).count
+  end
+
   # Get the last tiem this user was seen.
   # @return [DateTime] Date this user was last seen
   def get_last_seen
@@ -322,7 +334,7 @@ class User < ActiveRecord::Base
 
   # Store the current_user id in the thread so it can be accessed by models
   def self.stamper=(object)
-    object_stamper = object.is_a?(ActiveRecord::Base) ? object.id : object
+    object_stamper = object.is_a?(ActiveRecord::Base) ? object.send("#{object.class.primary_key}".to_sym) : object
     Thread.current["#{self.to_s.downcase}_#{self.object_id}_stamper"] = object_stamper
   end
 
