@@ -152,12 +152,19 @@ class User < ActiveRecord::Base
 
   def accessible_audio_recordings
     user_sites = self.projects.map { |project| project.sites.map { |site| site.id } }.to_a.uniq
-    AudioRecording.where(site_id: user_sites).limit(10)
+    AudioRecording.where(site_id: user_sites)
   end
 
   def accessible_audio_events
-    user_sites = self.projects.map { |project| project.sites.select(:id).map { |site| site.id } }.to_a.uniq
-    AudioEvent.where(audio_recording_id: AudioRecording.where(site_id: user_sites).select(:id)).limit(10)
+    AudioEvent.where(audio_recording_id: accessible_audio_recordings.select(:id))
+  end
+
+  def accessible_comments
+    AudioEventComment.where(audio_event_id: accessible_audio_events.select(:id))
+  end
+
+  def accessible_bookmarks
+    Bookmark.where(creator_id: self.id)
   end
 
   # helper methods for permission checks
@@ -249,7 +256,7 @@ class User < ActiveRecord::Base
   # True if this user is the updater of project.
   # @param [Project] project
   # @return [Boolean]
-  def updater(project)
+  def updater?(project)
     project.updater == self
   end
 

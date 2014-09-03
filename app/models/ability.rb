@@ -80,9 +80,6 @@ class Ability
       can [:show, :download], AudioEvent do |audio_event|
         user.has_permission_any?(audio_event.audio_recording.site.projects)
       end
-      can [:show], Bookmark do |bookmark|
-        user.has_permission_any?(bookmark.audio_recording.site.projects)
-      end
       can [:show], AudioEventComment do |audio_event_comment|
         user.has_permission_any?(audio_event_comment.audio_event.audio_recording.site.projects)
       end
@@ -100,7 +97,7 @@ class Ability
 
       # users can only change or delete their own bookmarks and comments
       can [:edit, :update, :destroy], AudioEventComment, creator_id: user.id
-      can [:edit, :update, :destroy], Bookmark, creator_id: user.id
+      can [:edit, :update, :destroy, :show], Bookmark, creator_id: user.id
 
       # --------------------------------------
       # any confirmed user can access these actions

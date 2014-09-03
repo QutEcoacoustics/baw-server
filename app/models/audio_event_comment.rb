@@ -31,4 +31,19 @@ class AudioEventComment < ActiveRecord::Base
 
   # attribute validations
   validates :comment, presence: true, length: {minimum: 2}
+
+  # Define filter api settings
+  def self.filter_settings
+    {
+        valid_fields: [:id, :audio_event_id, :comment, :flag, :flag_explain, :flagged_at, :created_at, :creator_id],
+        render_fields: [:id, :audio_event_id, :comment, :flag, :creator_id],
+        text_fields: [:comment, :flag, :flag_explain],
+        controller: :audio_event_comments,
+        action: :filter,
+        defaults: {
+            order_by: :created_at,
+            direction: :desc
+        }
+    }
+  end
 end

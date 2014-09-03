@@ -38,7 +38,11 @@ class Settings < Settingslogic
     @media_cache_tool ||= BawAudioTools::MediaCacher.new(Settings.paths.temp_files)
   end
 
-
+  # Create or return an existing Api::Response.
+  # @return [Api::Response]
+  def api_response
+    @api_response ||= Api::Response.new
+  end
 
   # Create or return an existing RangeRequest.
   # @return [RangeRequest]

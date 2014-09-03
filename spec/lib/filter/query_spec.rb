@@ -10,6 +10,7 @@ describe Filter::Query do
   def create_filter(params)
     Filter::Query.new(
         params,
+        nil,
         AudioRecording,
         AudioRecording.filter_settings
     )

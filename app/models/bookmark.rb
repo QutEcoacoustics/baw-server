@@ -19,10 +19,6 @@ class Bookmark < ActiveRecord::Base
   validates :audio_recording_id, presence: true
   validates :name, presence: true, uniqueness: {case_sensitive: false, scope: :creator_id, message: 'should be unique per user'}
 
-  # model scopes
-  scope :filter_by_name, lambda { |name| where(name: name) }
-  scope :filter_by_category, lambda { |category| where(category: category) }
-
   def get_listen_path
     segment_duration_seconds = 30
     offset_start_rounded = (self.offset_seconds / segment_duration_seconds).floor * segment_duration_seconds
@@ -34,7 +30,8 @@ class Bookmark < ActiveRecord::Base
   # Define filter api settings
   def self.filter_settings
     {
-        valid_fields: [:id, :audio_recording_id, :offset_seconds, :name, :description, :category, :created_at],
+        valid_fields: [:id, :audio_recording_id, :name, :category, :description, :offset_seconds, :created_at, :creator_id],
+        render_fields: [:id, :audio_recording_id, :name, :category, :description, :offset_seconds, :creator_id],
         # :updated_at, :creator_id, :updater_id,
         text_fields: [:name, :description, :category],
         controller: :bookmarks,

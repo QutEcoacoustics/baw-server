@@ -60,12 +60,8 @@ module Api
       }
 
       # error information
-      result[:meta][:error] = {} if !opts[:error_details].blank? || !opts[:error_links].blank?
-      result[:meta][:error][:details] = opts[:error_details] unless opts[:error_details].blank?
-
-      # error links
-      unless opts[:error_links].blank?
-        result[:meta][:error][:links] = response_error_links(opts[:error_links])
+      if !opts[:error_details].blank? || !opts[:error_links].blank?
+        result[:meta][:error] = response_error(opts[:error_details], opts[:error_links])
       end
 
       # sort info
@@ -126,6 +122,13 @@ module Api
       result
     end
 
+    def response_error(details, link_ids)
+      error_hash = {}
+      error_hash[:details] = details unless details.blank?
+      error_hash[:links] = response_error_links(link_ids) unless link_ids.blank?
+      error_hash
+    end
+
     def response_error_links(link_ids)
       result = {}
       unless link_ids.blank?
@@ -138,13 +141,14 @@ module Api
       result
     end
 
-    # Create and execute a query based on a filter request.
+    # Create and execute a query based on am index request.
     # @param [Hash] params
+    # @param [ActiveRecord::Relation] query
     # @param [ActiveRecord::Base] model
     # @param [Hash] filter_settings
-    # @return [Hash] api response
-    def response_filter(params, model, filter_settings)
-      filter_query = Filter::Query.new(params, model, filter_settings)
+    # @return [ActiveRecord::Relation] query
+    def response_index(params, query, model, filter_settings)
+      filter_query = Filter::Query.new(params, query, model, filter_settings)
 
       # query without paging to get total
       query = filter_query.query_basic
@@ -192,11 +196,25 @@ module Api
         )
       end
 
+      # return the constructed query and options
+      [query, opts]
+    end
+
+    # Create and execute a query based on a filter request.
+    # @param [Hash] params
+    # @param [ActiveRecord::Relation] query
+    # @param [ActiveRecord::Base] model
+    # @param [Hash] filter_settings
+    # @param [Symbol] status_symbol Response status.
+    # @return [Hash] api response
+    def response_filter(params, query, model, filter_settings, status_symbol = :ok)
+      query, opts = response_index(params, query, model, filter_settings)
+
       # build response data
       data = query.all
 
       # build complete api response
-      result = build(:ok, data, opts)
+      result = build(status_symbol, data, opts)
 
       # return result
       result

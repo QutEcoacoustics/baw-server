@@ -294,6 +294,7 @@ module Filter
           columns = value
         when :exclude
           columns = valid_fields.reject { |item| value.include?(item)}
+          fail ArgumentError, 'Exclude must contain at least one field.' if columns.blank?
         else
           fail ArgumentError, "Unrecognised projection key #{key}."
       end

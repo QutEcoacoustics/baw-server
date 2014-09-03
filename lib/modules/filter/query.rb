@@ -8,20 +8,21 @@ module Filter
     include Build
     include Validate
 
-    attr_reader :key_prefix, :max_limit, :model, :table, :valid_fields, :text_fields, :filter_settings,
+    attr_reader :key_prefix, :max_limit, :initial_query, :table, :valid_fields, :text_fields, :filter_settings,
                 :parameters, :filter, :qsp_text_filter, :qsp_generic_filters,
                 :paging, :sort
 
     # Convert a json POST body to an arel query.
     # @param [Hash] parameters
+    # @param [ActiveRecord::Relation] query
     # @param [ActiveRecord::Base] model
     # @param [Hash] filter_settings
-    def initialize(parameters, model, filter_settings)
+    def initialize(parameters, query, model, filter_settings)
       # might need this at some point: Rack::Utils.parse_nested_query
       @key_prefix = 'filter_'
       @max_limit = 30
-      @model = model
       @table = relation_table(model)
+      @initial_query = query.blank? ? relation_all(model) : query
       @valid_fields = filter_settings.valid_fields.map(&:to_sym)
       @text_fields = filter_settings.text_fields.map(&:to_sym)
       @filter_settings = filter_settings
@@ -47,7 +48,7 @@ module Filter
     # Get the query represented by the parameters sent in new.
     # @return [ActiveRecord::Relation] query
     def query_full
-      query = relation_all(@model)
+      query = @initial_query.dup
 
       # restrict to select columns
       query = query_projection(query)
@@ -74,7 +75,7 @@ module Filter
     # Get the query represented by the parameters sent in new. DOES NOT include paging.
     # @return [ActiveRecord::Relation] query
     def query_without_paging
-      query = relation_all(@model)
+      query = @initial_query.dup
 
       # restrict to select columns
       query = query_projection(query)
@@ -98,7 +99,7 @@ module Filter
     # Get the query represented by the parameters sent in new. DOES NOT include filter.
     # @return [ActiveRecord::Relation] query
     def query_qsp
-      query = relation_all(@model)
+      query = @initial_query.dup
 
       # restrict to select columns
       query = query_projection(query)
@@ -122,7 +123,7 @@ module Filter
     # Get the query represented by the parameters sent in new. DOES NOT include filter, sort, or paging.
     # @return [ActiveRecord::Relation] query
     def query_basic
-      query = relation_all(@model)
+      query = @initial_query.dup
 
       # restrict to select columns
       query = query_projection(query)
@@ -144,9 +145,30 @@ module Filter
       apply_conditions(query, build_top(@filter, @table, @valid_fields))
     end
 
+    # Add projections to a query.
+    # @param [ActiveRecord::Relation] query
+    # @return [ActiveRecord::Relation] query
     def query_projection(query)
-      return query unless has_projection_params?
-      apply_projections(query, build_projections(@projection, @table, @valid_fields))
+      if has_projection_params?
+        apply_projections(query, build_projections(@projection, @table, @valid_fields))
+      else
+        query_projection_default(query)
+      end
+    end
+
+    # Add projections to a query.
+    # @param [ActiveRecord::Relation] query
+    # @param [Array<Symbol>] filter_projection
+    # @return [ActiveRecord::Relation] query
+    def query_projection_custom(query, filter_projection)
+      apply_projections(query, build_projections({include: filter_projection}, @table, @valid_fields))
+    end
+
+    # Add default projections to a query.
+    # @param [ActiveRecord::Relation] query
+    # @return [ActiveRecord::Relation] query
+    def query_projection_default(query)
+      apply_projections(query, build_projections({include: @filter_settings.render_fields}, @table, @valid_fields))
     end
 
     # Add text filter to a query.
@@ -180,7 +202,6 @@ module Filter
     # @param [Hash] filter_hash
     # @return [ActiveRecord::Relation] query
     def query_filter_generic_custom(query, filter_hash)
-      return query if @qsp_generic_filters.blank?
       apply_condition(query, build_generic(filter_hash, @table, @valid_fields))
     end
 

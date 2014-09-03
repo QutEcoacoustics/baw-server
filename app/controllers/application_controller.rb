@@ -173,7 +173,7 @@ class ApplicationController < ActionController::Base
   def render_error(status_symbol, detail_message, error, method_name, options = {})
     options = {redirect: false, links_object: nil, error_info: nil}.merge(options)
 
-    json_response = api_response.build(
+    json_response = Settings.api_response.build(
         status_symbol,
         nil,
         {
@@ -193,10 +193,10 @@ class ApplicationController < ActionController::Base
     respond_to do |format|
       format.html {
 
-        status_code = api_response.status_code(status_symbol)
-        status_message = api_response.status_phrase(status_symbol).humanize
+        status_code = Settings.api_response.status_code(status_symbol)
+        status_message = Settings.api_response.status_phrase(status_symbol).humanize
 
-        response_links = api_response.response_error_links(options[:links_object])
+        response_links = Settings.api_response.response_error_links(options[:links_object])
 
         if options[:redirect]
           redirect_to get_redirect, alert: "#{status_message}: #{detail_message}"
@@ -225,10 +225,6 @@ class ApplicationController < ActionController::Base
     end
 
     redirect_target
-  end
-
-  def api_response
-    @api_response ||= Api::Response.new
   end
 
   private

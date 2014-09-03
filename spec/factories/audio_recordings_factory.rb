@@ -34,7 +34,17 @@ FactoryGirl.define do
       end
     end
 
-    factory :audio_recording_with_audio_events, traits: [:with_audio_events, :status_ready]
+    trait :with_bookmarks do
+      ignore do
+        bookmark_count 1
+      end
+      after(:create) do |audio_recording, evaluator|
+        raise 'Creator was blank' if  evaluator.creator.blank?
+        create_list(:bookmark, evaluator.bookmark_count, audio_recording: audio_recording, creator: evaluator.creator)
+      end
+    end
+
+    factory :audio_recording_with_audio_events_and_bookmarks, traits: [:with_audio_events, :with_bookmarks, :status_ready]
 
   end
 end

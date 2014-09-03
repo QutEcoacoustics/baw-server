@@ -98,8 +98,9 @@ class AudioRecordingsController < ApplicationController
   # POST /audio_recordings/filter.json
   # GET /audio_recordings/filter.json
   def filter
-    filter_response = api_response.response_filter(
+    filter_response = Settings.api_response.response_filter(
         params,
+        current_user.accessible_audio_recordings,
         AudioRecording,
         AudioRecording.filter_settings
     )
