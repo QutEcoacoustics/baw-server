@@ -2,8 +2,8 @@ require 'csv'
 
 class AudioEventsController < ApplicationController
 
-  load_and_authorize_resource :audio_recording, except: [:show, :new, :library, :library_paged, :download]
-  load_and_authorize_resource :audio_event, through: :audio_recording, except: [:show, :new, :library, :library_paged, :download]
+  load_and_authorize_resource :audio_recording, except: [:show, :library, :library_paged, :download]
+  load_and_authorize_resource :audio_event, through: :audio_recording, except: [:show, :library, :library_paged, :download]
   skip_authorization_check only: [:show, :library, :library_paged]
   respond_to :json, except: [:download]
 

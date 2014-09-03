@@ -217,5 +217,20 @@ module Filter
       value.gsub(/[^0-9a-zA-Z_]/) { |x|}
     end
 
+    # Check that value is a float.
+    # @param [Object] value
+    # @return [void]
+    def validate_float(value)
+      fail ArgumentError, 'Must have a value, got blank' if value.blank?
+
+      filtered = value.to_s.tr('^0-9.', '')
+      fail ArgumentError, "Value must be a float, got #{filtered.inspect}" if filtered != value
+      fail ArgumentError, "Value must be a float after conversion, got #{filtered.inspect}" if filtered != value.to_f
+
+      value_f = filtered.to_f
+      fail ArgumentError, "Value must be greater than 0, got #{value_f.inspect}" if value_f <= 0
+
+    end
+
   end
 end

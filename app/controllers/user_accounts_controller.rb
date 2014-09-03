@@ -108,7 +108,7 @@ class UserAccountsController < ApplicationController
   end
 
   def audio_events
-    @user_annotations = @user.recently_added_audio_events(params[:page])
+    @user_annotations = @user.accessible_audio_events(params[:page])
     respond_to do |format|
       format.html # audio_events.html.erb
       format.json { render json: @user_annotations }

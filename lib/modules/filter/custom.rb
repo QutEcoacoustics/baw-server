@@ -2,7 +2,7 @@ require 'active_support/concern'
 
 module Filter
 
-  # Provides comparisons for composing queries.
+  # Provides custom filters for composing queries.
   module Custom
     extend ActiveSupport::Concern
     extend Comparison
@@ -71,6 +71,38 @@ module Filter
       similar = "#{lower_value} SIMILAR TO #{contains_value}"
 
       Arel::Nodes::SqlLiteral.new(similar)
+    end
+
+    # Create distance projection.
+    # @param [Float] freq_min
+    # @param [Float] freq_max
+    # @param [Float] annotation_duration
+    # @return [Arel::Nodes::Node] projection
+    def project_distance(freq_min, freq_max, annotation_duration)
+      if !freq_min.blank? || !freq_max.blank? || !annotation_duration.blank?
+        select_string = []
+
+        unless freq_min.blank?
+          validate_float(freq_min)
+          select_string.push("power(audio_events.low_frequency_hertz - #{freq_min}, 2)")
+        end
+
+        unless freq_max.blank?
+          validate_float(freq_max)
+          select_string.push("power(audio_events.high_frequency_hertz - #{freq_max}, 2)")
+        end
+
+        unless annotation_duration.blank?
+          validate_float(annotation_duration)
+          select_string.push("power((audio_events.end_time_seconds - audio_events.start_time_seconds) - #{annotation_duration}, 2)")
+        end
+
+        sql = 'sqrt('+select_string.join(' + ')+') as distance_calc'
+
+        Arel::Nodes::SqlLiteral.new(sql)
+      else
+        nil
+      end
     end
 
   end

@@ -53,13 +53,13 @@
 
 - content_for :left_sidebar do
   = render layout: '/shared/left_sidebar', locals: {title: 'Sites'} do
-    - if can? :edit, @project
+    - if can? :edit, @site
       %li= link_to 'Edit Site Details',edit_project_site_path(@project, @site),  title: "Change this site's details", data: {toggle: 'tooltip',  placement: 'right'}
-    - if can? :destroy, @project
+    - if can? :destroy, @site
       %li= link_to 'Delete Site', [@project, @site], :method => :delete, data: { confirm: 'Are you sure?', toggle: 'tooltip',  placement: 'right' }, title: 'Delete site'
     -# if can? :edit, @project
       %li= link_to 'Add New Site', new_project_site_path(@project),  title: "Add a new site to this project", data: {toggle: 'tooltip',  placement: 'right'}
-    - if can? :edit, @project
+    - if can? :edit, @site
       %li= link_to 'Upload Audio', upload_instructions_project_site_path(@project, @site),  title: "Upload new audio to this site", data: {toggle: 'tooltip',  placement: 'right'}
-    - if can? :show, @project
+    - if can? :show, @site
       %li= link_to 'Annotations (csv)', "#{data_request_path}?annotation_download[project_id]=#{@project.id}&annotation_download[site_id]=#{@site.id}&annotation_download[name]=#{CGI::escape(@site.name)}",  title: "Download annotations for this site", data: {toggle: 'tooltip',  placement: 'right'}

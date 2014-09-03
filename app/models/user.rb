@@ -141,7 +141,7 @@ class User < ActiveRecord::Base
     Project.includes(:permissions).where("(#{creator_id_check} OR #{permissions_check})", self.id, self.id).uniq.order('projects.updated_at DESC').limit(10)
   end
 
-  def recently_added_audio_events(page = 1, per_page = 30)
+  def accessible_audio_events(page = 1, per_page = 30)
     AudioEvent
     .includes(:audio_recording)
     .where('creator_id = ? OR updater_id = ?', self.id, self.id)

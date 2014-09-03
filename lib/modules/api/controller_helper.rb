@@ -77,5 +77,16 @@ module Api
       render json: content, status: status_symbol, content_type: 'application/json'
     end
 
+    def attributes_and_authorize
+      # need to do what cancan would otherwise do due to before_filter creating instance variable, so cancan
+      # assumes already authorized
+      # see https://github.com/CanCanCommunity/cancancan/wiki/Controller-Authorization-Example
+      current_ability.attributes_for(action_name.to_sym, resource_class).each do |key, value|
+        get_resource.send("#{key}=", value)
+      end
+      get_resource.attributes = params[resource_name.to_sym]
+      authorize! action_name.to_sym, get_resource
+    end
+
   end
 end

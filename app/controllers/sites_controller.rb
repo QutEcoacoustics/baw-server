@@ -1,4 +1,6 @@
 class SitesController < ApplicationController
+  include Api::ControllerHelper
+
   add_breadcrumb 'Home', :root_path
 
   # order matters for before_filter and load_and_authorize_resource!
@@ -52,13 +54,7 @@ class SitesController < ApplicationController
   # GET /project/1/sites/new.json
   def new
 
-    # need to do what cancan would otherwise do due to before_filter creating @site
-    # see https://github.com/CanCanCommunity/cancancan/wiki/Controller-Authorization-Example
-    current_ability.attributes_for(:new, Site).each do |key, value|
-      @site.send("#{key}=", value)
-    end
-    @site.attributes = params[:site]
-    authorize! :new, @site
+    attributes_and_authorize
 
     @site.longitude = 152
     @site.latitude = -27
@@ -86,13 +82,7 @@ class SitesController < ApplicationController
   # POST /project/1/sites.json
   def create
 
-    # need to do what cancan would otherwise do due to before_filter creating @site
-    # see https://github.com/CanCanCommunity/cancancan/wiki/Controller-Authorization-Example
-    current_ability.attributes_for(:new, Site).each do |key, value|
-      @site.send("#{key}=", value)
-    end
-    @site.attributes = params[:site]
-    authorize! :create, @site
+    attributes_and_authorize
 
     respond_to do |format|
       if @site.save

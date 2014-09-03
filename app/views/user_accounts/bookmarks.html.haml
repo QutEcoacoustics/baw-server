@@ -10,6 +10,8 @@
   - if @user_bookmarks.empty?
     = 'No bookmarks to show.'
   - else
+    = page_entries_info @user_bookmarks
+    = will_paginate @user_bookmarks, renderer: BawWillPaginateLinkRenderer
 
     %table.table.table-striped(data-provides='rowlink')
       %thead

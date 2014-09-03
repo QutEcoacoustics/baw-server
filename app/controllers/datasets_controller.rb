@@ -1,4 +1,6 @@
 class DatasetsController < ApplicationController
+  include Api::ControllerHelper
+
   add_breadcrumb 'Home', :root_path
 
   # order matters for before_filter and load_and_authorize_resource!
@@ -35,13 +37,7 @@ class DatasetsController < ApplicationController
   # GET /projects/:id/datasets/new.json
   def new
 
-    # need to do what cancan would otherwise do due to before_filter creating @dataset
-    # see https://github.com/CanCanCommunity/cancancan/wiki/Controller-Authorization-Example
-    current_ability.attributes_for(:new, Dataset).each do |key, value|
-      @dataset.send("#{key}=", value)
-    end
-    @dataset.attributes = params[:dataset]
-    authorize! :new, @dataset
+    attributes_and_authorize
 
     respond_to do |format|
       format.html {
@@ -61,13 +57,7 @@ class DatasetsController < ApplicationController
   # POST /projects/:id/datasets.json
   def create
 
-    # need to do what cancan would otherwise do due to before_filter creating @dataset
-    # see https://github.com/CanCanCommunity/cancancan/wiki/Controller-Authorization-Example
-    current_ability.attributes_for(:new, Dataset).each do |key, value|
-      @dataset.send("#{key}=", value)
-    end
-    @dataset.attributes = params[:dataset]
-    authorize! :create, @dataset
+    attributes_and_authorize
 
     respond_to do |format|
       if @dataset.save

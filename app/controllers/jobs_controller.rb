@@ -1,4 +1,6 @@
 class JobsController < ApplicationController
+  include Api::ControllerHelper
+
   add_breadcrumb 'Home', :root_path
 
   # order matters for before_filter and load_and_authorize_resource!
@@ -35,13 +37,7 @@ class JobsController < ApplicationController
   # GET /jobs/new
   # GET /jobs/new.json
   def new
-    # need to do what cancan would otherwise do due to before_filter creating @job
-    # see https://github.com/CanCanCommunity/cancancan/wiki/Controller-Authorization-Example
-    current_ability.attributes_for(:new, Job).each do |key, value|
-      @job.send("#{key}=", value)
-    end
-    @job.attributes = params[:job]
-    authorize! :new, @job
+    attributes_and_authorize
 
     respond_to do |format|
       format.html {
@@ -62,13 +58,7 @@ class JobsController < ApplicationController
   # POST /jobs.json
   def create
 
-    # need to do what cancan would otherwise do due to before_filter creating @job
-    # see https://github.com/CanCanCommunity/cancancan/wiki/Controller-Authorization-Example
-    current_ability.attributes_for(:new, Job).each do |key, value|
-      @job.send("#{key}=", value)
-    end
-    @job.attributes = params[:job]
-    authorize! :create, @job
+    attributes_and_authorize
 
     respond_to do |format|
       if @job.save

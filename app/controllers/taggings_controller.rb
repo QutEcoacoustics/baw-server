@@ -1,7 +1,7 @@
 class TaggingsController < ApplicationController
 
   load_and_authorize_resource :audio_recording, except: [:user_index]
-  load_resource :audio_event, except: [:user_index]
+  load_and_authorize_resource :audio_event, except: [:user_index]
   load_resource :tagging, except: [:user_index]
   load_and_authorize_resource :user, only: [:user_index]
   respond_to :json
@@ -25,7 +25,7 @@ class TaggingsController < ApplicationController
       render json: Tagging
       .includes(:tag, :audio_event)
       .where('(audio_events_tags.updater_id = ? OR audio_events_tags.creator_id = ?)', params[:user_id], params[:user_id])
-      .order('updated_at DESC')
+      .order('updated_at DESC, created_at DESC')
       .limit(10)
       .to_json(include: [:tag, :audio_event])
     else
