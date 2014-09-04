@@ -27,8 +27,8 @@ class Permission < ActiveRecord::Base
   # Define filter api settings
   def self.filter_settings
     {
-        valid_fields: [:project_id, :user_id, :level, :creator_id, :created_at],
-        render_fields: [:project_id, :user_id, :level],
+        valid_fields: [:id, :project_id, :user_id, :level, :creator_id, :created_at],
+        render_fields: [:id, :project_id, :user_id, :level],
         text_fields: [:level],
         controller: :permissions,
         action: :filter,

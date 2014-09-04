@@ -23,7 +23,7 @@ describe AudioEventsController do
     it { expect(delete('/audio_recordings/3/audio_events/4')).to route_to('audio_events#destroy', audio_recording_id: '3', id: '4', format: 'json') }
 
     it { expect(get('/audio_events/library')).to route_to('audio_events#library', format: 'json') }
-    it { expect(get('/audio_events/new')).to route_to('audio_events#new', format: 'json') }
+    it { expect(get('/audio_events/new')).to route_to('errors#route_error', requested_route: 'audio_events/new') }
 
     it { expect(get '/projects/1/audio_events/download').to route_to('audio_events#download', project_id: '1', format: 'csv') }
     it { expect(get '/projects/1/sites/2/audio_events/download').to route_to('audio_events#download', project_id: '1', site_id: '2', format: 'csv') }

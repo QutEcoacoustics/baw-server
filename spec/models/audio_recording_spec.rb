@@ -34,7 +34,8 @@ describe AudioRecording do
     test_item = FactoryGirl.build(:audio_recording)
     test_item.uploader = nil
     expect(subject).to have(1).error_on(:uploader)
-    expect(subject.errors_on(:uploader)).to include('must exist as an object or foreign key')
+    #expect(subject.errors_on(:uploader)).to include('must exist as an object or foreign key')
+    subject.errors_on(:uploader).to_s.should =~ /must exist as an object or foreign key/
   end
 
   context 'validation' do

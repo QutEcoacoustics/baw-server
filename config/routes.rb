@@ -113,7 +113,7 @@ AWB::Application.routes.draw do
     # HTML project permissions list
     resources :permissions, only: [:index]
     # API project permission item
-    resources :permissions, except: [:index, :edit], defaults: {format: 'json'}
+    resources :permissions, except: [:index, :edit, :update], defaults: {format: 'json'}
     # HTML project site item
     resources :sites, except: [:index] do
       member do
@@ -164,7 +164,7 @@ AWB::Application.routes.draw do
   resources :tags, only: [:index, :show, :create, :new], defaults: {format: 'json'}
 
   # API audio_event create
-  resources :audio_events, only: [:new], defaults: {format: 'json'} do
+  resources :audio_events, only: [], defaults: {format: 'json'} do
     resources :audio_event_comments, except: [:edit], defaults: {format: 'json'}, path: :comments, as: :comments
     collection do
       get 'library'

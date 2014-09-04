@@ -66,7 +66,7 @@ module Api
     def respond_change_fail
       # render directly from api response, since json layout doesn't include errors
       built_response = Settings.api_response.build(:unprocessable_entity, nil, {error_details: get_resource.errors})
-      render built_response, status: :unprocessable_entity
+      render json: built_response, status: :unprocessable_entity
     end
 
     def respond_destroy

@@ -72,9 +72,9 @@ module Filter
       query
     end
 
-    # Get the query represented by the parameters sent in new. DOES NOT include paging.
+    # Get the query represented by the parameters sent in new. DOES NOT include paging or sorting.
     # @return [ActiveRecord::Relation] query
-    def query_without_paging
+    def query_without_paging_sorting
       query = @initial_query.dup
 
       # restrict to select columns
@@ -83,9 +83,6 @@ module Filter
       #filter
       query = query_filter(query)
 
-      # sorting
-      query = query_sort(query)
-
       # add qsp text filters
       query = query_filter_text(query)
 
@@ -96,33 +93,9 @@ module Filter
       query
     end
 
-    # Get the query represented by the parameters sent in new. DOES NOT include filter.
+    # Get the query represented by the parameters sent in new. DOES NOT include advanced filtering, paging or sorting.
     # @return [ActiveRecord::Relation] query
-    def query_qsp
-      query = @initial_query.dup
-
-      # restrict to select columns
-      query = query_projection(query)
-
-      # sorting
-      query = query_sort(query)
-
-      # paging
-      query = query_paging(query)
-
-      # add qsp text filters
-      query = query_filter_text(query)
-
-      # add qsp generic_filters
-      query = query_filter_generic(query)
-
-      # result
-      query
-    end
-
-    # Get the query represented by the parameters sent in new. DOES NOT include filter, sort, or paging.
-    # @return [ActiveRecord::Relation] query
-    def query_basic
+    def query_without_filter_paging_sorting
       query = @initial_query.dup
 
       # restrict to select columns

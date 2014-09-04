@@ -82,10 +82,9 @@ module Api
 
       # paging: count, total
       if !opts[:count].blank? && !opts[:total].blank?
-        result[:meta][:paging] = {
-            count: opts[:count],
-            total: opts[:total]
-        }
+        result[:meta][:paging] = {} unless result[:meta].include?(:paging)
+        result[:meta][:paging][:count] = opts[:count]
+        result[:meta][:paging][:total] = opts[:total]
       end
 
       # paging: next/prev links
@@ -151,8 +150,39 @@ module Api
       filter_query = Filter::Query.new(params, query, model, filter_settings)
 
       # query without paging to get total
-      new_query = filter_query.query_basic
+      new_query = filter_query.query_without_filter_paging_sorting
 
+      add_paging_and_sorting(new_query, filter_settings, filter_query)
+    end
+
+    # Create and execute a query based on a filter request.
+    # @param [Hash] params
+    # @param [ActiveRecord::Relation] query
+    # @param [ActiveRecord::Base] model
+    # @param [Hash] filter_settings
+    # @param [Symbol] status_symbol Response status.
+    # @return [Hash] api response
+    def response_filter(params, query, model, filter_settings, status_symbol = :ok)
+      filter_query = Filter::Query.new(params, query, model, filter_settings)
+
+      # query without paging to get total
+      new_query = filter_query.query_without_paging_sorting
+
+      paged_sorted_query, opts = add_paging_and_sorting(new_query, filter_settings, filter_query)
+
+      # build response data
+      data = paged_sorted_query.all
+
+      # build complete api response
+      result = build(status_symbol, data, opts)
+
+      # return result
+      result
+    end
+
+    private
+
+    def add_paging_and_sorting(new_query, filter_settings, filter_query)
       # basic options
       opts = {
           controller: filter_settings.controller,
@@ -199,28 +229,6 @@ module Api
       # return the constructed query and options
       [new_query, opts]
     end
-
-    # Create and execute a query based on a filter request.
-    # @param [Hash] params
-    # @param [ActiveRecord::Relation] query
-    # @param [ActiveRecord::Base] model
-    # @param [Hash] filter_settings
-    # @param [Symbol] status_symbol Response status.
-    # @return [Hash] api response
-    def response_filter(params, query, model, filter_settings, status_symbol = :ok)
-      query, opts = response_index(params, query, model, filter_settings)
-
-      # build response data
-      data = query.all
-
-      # build complete api response
-      result = build(status_symbol, data, opts)
-
-      # return result
-      result
-    end
-
-    private
 
     def restrict_to_bounds(value, lower = 1, upper = nil)
       value_i = value.to_i

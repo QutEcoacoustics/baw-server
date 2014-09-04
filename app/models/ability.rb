@@ -78,9 +78,9 @@ class Ability
       end
 
       # permission
-      # :edit is not used,
-      # :show, :create, :update, :delete are only used by json api
-      can [:show, :new, :create, :update, :destroy], Permission do |permission|
+      # :edit and :update are not allowed
+      # :show, :create, :delete are only used by json api
+      can [:show, :new, :create, :destroy], Permission do |permission|
         user.can_write?(permission.project)
       end
 

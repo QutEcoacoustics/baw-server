@@ -740,7 +740,7 @@ resource 'AudioRecordings' do
         }
     }.to_json }
     let(:authentication_token) { reader_token }
-    standard_request_options('FILTER (as reader)', :ok, { expected_json_path: 'data/0/sample_rate_hertz', data_item_count: 1 })
+    standard_request_options('FILTER (as reader matching)', :ok, { expected_json_path: 'data/0/sample_rate_hertz', data_item_count: 1 })
   end
 
   post '/audio_recordings/filter' do
@@ -758,7 +758,7 @@ resource 'AudioRecordings' do
         }
     }.to_json }
     let(:authentication_token) { reader_token }
-    standard_request_options('FILTER (as reader)', :ok, { data_item_count: 0 })
+    standard_request_options('FILTER (as reader no match)', :ok, { expected_json_path: 'meta/message',data_item_count: 0 })
   end
 
   post '/audio_recordings/filter' do
@@ -779,7 +779,7 @@ resource 'AudioRecordings' do
         }
     }.to_json }
     let(:authentication_token) { reader_token }
-    standard_request_options('FILTER (as reader)', :ok, { expected_json_path: 'meta/paging/page', data_item_count: 0 })
+    standard_request_options('FILTER (as reader with paging)', :ok, { expected_json_path: 'meta/paging/page', data_item_count: 0})
   end
 
 end

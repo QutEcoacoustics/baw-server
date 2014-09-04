@@ -35,8 +35,8 @@ resource 'Bookmarks' do
 
   # prepare authentication_token for different users
   let(:admin_token) { "Token token=\"#{@admin_user.authentication_token}\"" }
-  let(:writer_token) { "Token token=\"#{@write_permission.user.authentication_token}\"" }
-  let(:reader_token) { "Token token=\"#{@read_permission.user.authentication_token}\"" }
+  let(:writer_token) { "Token token=\"#{@writer_user.authentication_token}\"" }
+  let(:reader_token) { "Token token=\"#{@reader_user.authentication_token}\"" }
   let(:user_token) { "Token token=\"#{@user.authentication_token}\"" }
   let(:other_user_token) { "Token token=\"#{@other_user.authentication_token}\"" }
   let(:unconfirmed_token) { "Token token=\"#{@unconfirmed_user.authentication_token}\"" }
@@ -50,17 +50,17 @@ resource 'Bookmarks' do
 
   get '/bookmarks' do
     let(:authentication_token) { admin_token }
-    standard_request_options('LIST (as admin)', :ok, {expected_json_path: 'data/0/offset_seconds', data_item_count: 2})
+    standard_request_options('LIST (as admin)', :ok, {response_body_content: '200', data_item_count: 0})
   end
 
   get '/bookmarks' do
     let(:authentication_token) { writer_token }
-    standard_request_options('LIST (as writer)', :ok, {expected_json_path: 'data/0/offset_seconds', data_item_count: 1})
+    standard_request_options('LIST (as writer)', :ok, {response_body_content: '200', data_item_count: 0})
   end
 
   get '/bookmarks' do
     let(:authentication_token) { reader_token }
-    standard_request_options('LIST (as reader)', :ok, {expected_json_path: 'data/0/offset_seconds', data_item_count: 0})
+    standard_request_options('LIST (as reader)', :ok, {response_body_content: '200', data_item_count: 0})
   end
 
   get '/bookmarks' do
@@ -70,7 +70,7 @@ resource 'Bookmarks' do
 
   get '/bookmarks' do
     let(:authentication_token) { other_user_token }
-    standard_request_options('LIST (as other user)', :ok, {expected_json_path: 'data/0/offset_seconds', data_item_count: 0})
+    standard_request_options('LIST (as other user)', :ok, {response_body_content: '200', data_item_count: 0})
   end
 
   get '/bookmarks' do
@@ -388,13 +388,13 @@ resource 'Bookmarks' do
                     less_than: 123456
                 },
                 description: {
-                    contains: 'some text'
+                    contains: 'description'
                 }
             }
         }
     }.to_json }
-    let(:authentication_token) { reader_token }
-    standard_request_options('FILTER (as reader)', :ok, {expected_json_path: 'data/0/category'})
+    let(:authentication_token) { user_token }
+    standard_request_options('FILTER (as reader)', :ok, {expected_json_path: 'data/0/category', data_item_count: 1})
   end
 
 end

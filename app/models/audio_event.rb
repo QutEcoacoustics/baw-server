@@ -38,6 +38,12 @@ class AudioEvent < ActiveRecord::Base
 
   before_validation :set_tags, on: :create
 
+  after_validation :after_validation_check
+
+  def after_validation_check
+    self.errors
+  end
+
   # Scopes
   scope :start_after, lambda { |offset_seconds| where('start_time_seconds > ?', offset_seconds) }
   scope :start_before, lambda { |offset_seconds| where('start_time_seconds < ?', offset_seconds) }
@@ -266,7 +272,7 @@ class AudioEvent < ActiveRecord::Base
     return unless end_time_seconds && start_time_seconds
 
     if start_time_seconds > end_time_seconds then
-      errors.add(:start_time_seconds, 'must be lower than end time')
+      errors.add(:start_time_seconds, '%{value} must be lower than end time')
     end
   end
 
@@ -274,7 +280,7 @@ class AudioEvent < ActiveRecord::Base
     return unless high_frequency_hertz && low_frequency_hertz
 
     if low_frequency_hertz > high_frequency_hertz then
-      errors.add(:start_time_seconds, 'must be lower than high frequency')
+      errors.add(:start_time_seconds, '%{value} must be lower than high frequency')
     end
   end
 

@@ -17,7 +17,7 @@ describe PermissionsController do
     it { expect(post('/projects/1/permissions')).to  route_to('permissions#create', project_id: '1', format: 'json') }
     it { expect(get('/projects/1/permissions/new')).to  route_to('permissions#new', project_id: '1', format: 'json') }
     it { expect(get('/projects/1/permissions/2/edit')).to  route_to('errors#route_error', requested_route: 'projects/1/permissions/2/edit') }
-    it { expect(put('/projects/1/permissions/2')).to  route_to('permissions#update', project_id: '1', id: '2', format: 'json') }
+    it { expect(put('/projects/1/permissions/2')).to  route_to('errors#route_error', requested_route: 'projects/1/permissions/2') }
     it { expect(delete('/projects/1/permissions/2')).to  route_to('permissions#destroy', project_id: '1', id: '2', format: 'json') }
 
 

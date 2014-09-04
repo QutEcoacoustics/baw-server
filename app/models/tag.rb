@@ -39,6 +39,12 @@ class Tag < ActiveRecord::Base
   validates_presence_of :type_of_tag
   validate :taxonomic_enforced
 
+  after_validation :after_validation_check
+
+  def after_validation_check
+    self.errors
+  end
+
   # http://stackoverflow.com/questions/11569940/inclusion-validation-fails-when-provided-a-symbol-instead-of-a-string
   # this lets a symbol be set, and it all still works
   def type_of_tag=(new_type_of_tag)

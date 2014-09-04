@@ -13,7 +13,7 @@ class PermissionsController < ApplicationController
 
   before_filter :add_project_breadcrumb, only: [:index]
 
-  respond_to :json, except: [:show]
+  respond_to :json
 
   # GET /permissions
   # GET /permissions.json
@@ -66,15 +66,6 @@ class PermissionsController < ApplicationController
       respond_change_fail
     end
 
-  end
-
-  # PUT /permissions/1.json
-  def update
-    if @permission.update_attributes(params[:permission])
-      respond_show
-    else
-      respond_change_fail
-    end
   end
 
   # DELETE /permissions/1.json

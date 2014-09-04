@@ -83,11 +83,15 @@ def do_checks(expected_status, opts = {})
       actual_response_parsed.include?('data') &&
       !actual_response_parsed['data'].blank?
 
+  data_included = !actual_response.blank? &&
+      !actual_response_parsed.blank? &&
+      actual_response_parsed.include?('data')
 
-  if data_present && actual_response_parsed['data'].is_a?(Array)
+
+  if data_included && actual_response_parsed['data'].is_a?(Array)
     actual_response_parsed_size = actual_response_parsed['data'].size
     data_format = :array
-  elsif data_present && actual_response_parsed['data'].is_a?(Hash)
+  elsif data_included && actual_response_parsed['data'].is_a?(Hash)
     actual_response_parsed_size = 1
     data_format = :hash
   else
@@ -213,6 +217,12 @@ def standard_media_parameters
   let(:end_offset) { '2' }
 
   let(:raw_post) { params.to_json }
+end
+
+def remove_media_dirs(media_cacher)
+  FileUtils.rm_r media_cacher.cache.original_audio.storage_paths.first if Dir.exists? media_cacher.cache.original_audio.storage_paths.first
+  FileUtils.rm_r media_cacher.cache.cache_audio.storage_paths.first if Dir.exists? media_cacher.cache.cache_audio.storage_paths.first
+  FileUtils.rm_r media_cacher.cache.cache_spectrogram.storage_paths.first if Dir.exists? media_cacher.cache.cache_spectrogram.storage_paths.first
 end
 
 def create_media_options(audio_recording)
