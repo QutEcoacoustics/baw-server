@@ -4,12 +4,13 @@ class SitesController < ApplicationController
   add_breadcrumb 'Home', :root_path
 
   # order matters for before_filter and load_and_authorize_resource!
-  load_and_authorize_resource :project
+  load_and_authorize_resource :project, except: [:show_shallow]
 
   # this is necessary so that the ability has access to site.projects
   before_filter :build_project_site, only: [:new, :create]
 
-  load_and_authorize_resource :site, through: :project
+  load_and_authorize_resource :site, through: :project, except: [:show_shallow]
+  load_and_authorize_resource :site, only: [:show_shallow]
 
   before_filter :add_project_breadcrumb, except: [:show_shallow]
 
@@ -26,7 +27,7 @@ class SitesController < ApplicationController
 
   # GET /sites/1.json
   def show_shallow
-# CanCan does auth for custom actions too
+
     @site.update_location_obfuscated(current_user)
 
     # only responds to json requests
@@ -68,7 +69,7 @@ class SitesController < ApplicationController
       format.json { render json: @site }
     end
   end
-
+ 
   # GET /project/1/sites/1/edit
   def edit
     add_breadcrumb @site.name, [@project, @site]

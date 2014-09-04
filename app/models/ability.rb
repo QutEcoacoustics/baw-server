@@ -57,16 +57,19 @@ class Ability
 
       # site
       # only admin can delete sites
-      can [:show], Site do |site|
+      can [:show, :show_shallow], Site do |site|
         user.has_permission_any?(site.projects)
       end
-      can [:create, :edit, :update], Site do |site|
+      can [:new, :create, :edit, :update], Site do |site|
         user.can_write_any?(site.projects)
       end
 
       # data set
-      can [:show, :show_shallow, :create], Dataset do |dataset|
+      can [:show, :show_shallow], Dataset do |dataset|
         user.has_permission?(dataset.project)
+      end
+      can [:new, :create, :edit, :update, :destroy], Dataset do |dataset|
+        user.can_write?(dataset.project)
       end
 
       # job
@@ -77,7 +80,7 @@ class Ability
       # permission
       # :edit is not used,
       # :show, :create, :update, :delete are only used by json api
-      can [:show, :create, :update, :destroy], Permission do |permission|
+      can [:show, :new, :create, :update, :destroy], Permission do |permission|
         user.can_write?(permission.project)
       end
 
@@ -126,7 +129,6 @@ class Ability
       can [:edit, :update, :destroy], AudioEventComment, creator_id: user.id
       can [:edit, :update, :destroy, :show], Bookmark, creator_id: user.id
       can [:edit, :update, :destroy], Job, creator_id: user.id
-      can [:edit, :update, :destroy], Dataset, creator_id: user.id
 
       # --------------------------------------
       # any confirmed user can access these actions
@@ -137,16 +139,16 @@ class Ability
 
       # index permissions are enforced in the controller action
       can [:index, :new, :create, :new_access_request, :submit_access_request], Project
-      can [:index, :new], Site
-      can [:index, :new], Dataset
+      can [:index], Site
+      can [:index], Dataset
       can [:index, :new], Job
 
       # index permission is checked in the controller index action
-      # :new is only used by the json api
-      can [:index, :new], Permission
+      can [:index], Permission
 
       can [:index, :new, :filter], AudioRecording
-      can [:index, :new], AudioEvent
+      # any user can access the library, permissions are checked in the action
+      can [:index, :new, :library], AudioEvent
       can [:index, :new], AudioEventComment
 
       can [:index, :new, :filter], Bookmark

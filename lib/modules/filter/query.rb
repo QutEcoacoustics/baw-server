@@ -22,7 +22,7 @@ module Filter
       @key_prefix = 'filter_'
       @max_limit = 30
       @table = relation_table(model)
-      @initial_query = query.blank? ? relation_all(model) : query
+      @initial_query = !query.nil? && query.is_a?(ActiveRecord::Relation) ? query : relation_all(model)
       @valid_fields = filter_settings.valid_fields.map(&:to_sym)
       @text_fields = filter_settings.text_fields.map(&:to_sym)
       @filter_settings = filter_settings
@@ -307,10 +307,11 @@ module Filter
     # @param [Array<Arel::Nodes::Node>] projections
     # @return [ActiveRecord::Relation] the modified query
     def apply_projections(query, projections)
+      new_query = query
       projections.each do |projection|
-        query = apply_projection(query, projection)
+        new_query = apply_projection(new_query, projection)
       end
-      query
+      new_query
     end
 
     # Add projection to a query.

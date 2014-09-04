@@ -262,7 +262,8 @@ resource 'Bookmarks' do
     let(:raw_post) { {bookmark: FactoryGirl.attributes_for(:bookmark, audio_recording_id: @bookmark.audio_recording_id, creator: @other_user)}.to_json }
     let(:authentication_token) { other_user_token }
 
-    standard_request_options('CREATE (as other user)', :created, {expected_json_path: 'data/offset_seconds'})
+    # fails because other user does not have any access to @bookmark.audio_recording_id
+    standard_request_options('CREATE (as other user)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
   end
 
   post '/bookmarks' do

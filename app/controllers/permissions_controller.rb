@@ -11,7 +11,9 @@ class PermissionsController < ApplicationController
 
   load_and_authorize_resource :permission, through: :project
 
-  before_filter :add_project_breadcrumb
+  before_filter :add_project_breadcrumb, only: [:index]
+
+  respond_to :json, except: [:show]
 
   # GET /permissions
   # GET /permissions.json
@@ -31,81 +33,64 @@ class PermissionsController < ApplicationController
 
         add_breadcrumb 'Permissions', project_permissions_path(@project)
       } # index.html.erb
-      format.json { render json: @permissions }
+      format.json {
+        @permissions, constructed_options = Settings.api_response.response_index(
+            params,
+            Permission.where(project_id: @project.id),
+            Permission,
+            Permission.filter_settings
+        )
+        respond_index
+      }
     end
   end
 
-  # GET /permissions/1
   # GET /permissions/1.json
   def show
-    @permission = Permission.find(params[:id])
-
-    respond_to do |format|
-      format.html # show.html.erb
-      format.json { render json: @permission }
-    end
+    respond_show
   end
 
-  # GET /permissions/new
   # GET /permissions/new.json
   def new
-
     attributes_and_authorize
-
-    respond_to do |format|
-      format.html # new.html.erb
-      format.json { render json: @permission.to_json(:only => [:user_id, :level]) }
-    end
+    respond_show
   end
 
-  # GET /permissions/1/edit
-  def edit
-
-  end
-
-  # POST /permissions
   # POST /permissions.json
   def create
-
     attributes_and_authorize
 
-    @permission.creator = current_user
-
-    respond_to do |format|
-      if @permission.save
-        format.json { render json: @permission, status: :created, location: @permission }
-      else
-        format.json { render json: @permission.errors, status: :unprocessable_entity }
-      end
+    if @permission.save
+      respond_create_success(project_permission_url(@project, @permission))
+    else
+      respond_change_fail
     end
+
   end
 
-  # PUT /permissions/1
   # PUT /permissions/1.json
   def update
-
-    @permission.updater = current_user
-
-    respond_to do |format|
-      if @permission.update_attributes(params[:permission])
-        format.html { redirect_to project_permissions_url(@project), notice: 'Permission was successfully updated.' }
-        format.json { head :no_content }
-      else
-        format.html { render action: 'edit' }
-        format.json { render json: @permission.errors, status: :unprocessable_entity }
-      end
+    if @permission.update_attributes(params[:permission])
+      respond_show
+    else
+      respond_change_fail
     end
   end
 
-  # DELETE /permissions/1
   # DELETE /permissions/1.json
   def destroy
     @permission.destroy
+    respond_destroy
+  end
 
-    respond_to do |format|
-      format.html { redirect_to project_permissions_url(@project) }
-      format.json { head :no_content }
-    end
+  def filter
+    filter_response = Settings.api_response.response_filter(
+        params,
+        Permission.where(project_id: @project.id),
+        AudioEventComment,
+        AudioEventComment.filter_settings
+    )
+    render_api_response(filter_response)
   end
 
   private

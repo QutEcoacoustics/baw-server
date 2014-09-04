@@ -1,8 +1,6 @@
 class BookmarksController < ApplicationController
   include Api::ControllerHelper
 
-  add_breadcrumb 'Home', :root_path
-
   load_and_authorize_resource
   respond_to :json
 
@@ -21,13 +19,7 @@ class BookmarksController < ApplicationController
   end
 
   def new
-    respond_to do |format|
-      format.html {
-        add_breadcrumb 'Bookmarks', bookmarks_path
-        add_breadcrumb @bookmark.name, @bookmark
-      }
-      format.json { respond_show }
-    end
+    respond_show
   end
 
   def create

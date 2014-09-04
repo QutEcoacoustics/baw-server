@@ -111,9 +111,9 @@ AWB::Application.routes.draw do
       post 'submit_access_request'
     end
     # HTML project permissions list
-    resources :permissions, except: [:show]
+    resources :permissions, only: [:index]
     # API project permission item
-    resources :permissions, only: [:show], defaults: {format: 'json'}
+    resources :permissions, except: [:index, :edit], defaults: {format: 'json'}
     # HTML project site item
     resources :sites, except: [:index] do
       member do

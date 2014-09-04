@@ -97,7 +97,7 @@ resource 'AudioEventComments' do
     let(:audio_event_id) { @comment_user.audio_event_id }
     let(:expected_unordered_ids) { AudioEventComment.where(audio_event_id: @comment_user.audio_event_id).pluck(:id) }
     let(:authentication_token) { user_token }
-    standard_request_options('LIST (as other token)', :ok, {expected_json_path: 'data/0/comment', data_item_count: 3})
+    standard_request_options('LIST (as user token)', :ok, {expected_json_path: 'data/0/comment', data_item_count: 3})
   end
 
   get '/audio_events/:audio_event_id/comments' do
@@ -105,14 +105,14 @@ resource 'AudioEventComments' do
     let(:audio_event_id) { @other_comment.audio_event_id }
     let(:expected_unordered_ids) { AudioEventComment.where(audio_event_id: @other_comment.audio_event_id).pluck(:id) }
     let(:authentication_token) { other_user_token }
-    standard_request_options('LIST (as other token)', :ok, {expected_json_path: 'data/0/comment', data_item_count: 2})
+    standard_request_options('LIST (as other token, other user comment)', :ok, {expected_json_path: 'data/0/comment', data_item_count: 2})
   end
 
   get '/audio_events/:audio_event_id/comments' do
     parameter :audio_event_id, 'Requested audio event id (in path/route)', required: true
     let(:audio_event_id) { @comment_user.audio_event_id }
     let(:authentication_token) { other_user_token }
-    standard_request_options('LIST (as other token)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
+    standard_request_options('LIST (as other token, user comment)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
   end
 
   get '/audio_events/:audio_event_id/comments' do

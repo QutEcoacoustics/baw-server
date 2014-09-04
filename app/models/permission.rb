@@ -23,4 +23,19 @@ class Permission < ActiveRecord::Base
   # attribute validations
   validates_uniqueness_of :level, scope: [:user_id, :project_id, :level]
   validates_presence_of :level, :user, :creator, :project
+
+  # Define filter api settings
+  def self.filter_settings
+    {
+        valid_fields: [:project_id, :user_id, :level, :creator_id, :created_at],
+        render_fields: [:project_id, :user_id, :level],
+        text_fields: [:level],
+        controller: :permissions,
+        action: :filter,
+        defaults: {
+            order_by: :project_id,
+            direction: :asc
+        }
+    }
+  end
 end

@@ -49,80 +49,94 @@ end
 # @option opts [Symbol] :data_item_count (nil) Number of items in a json response
 # @return [void]
 def standard_request_options(description, expected_status, opts = {})
-  opts.reverse_merge!(
-      {
-          expected_json_path: nil,
-          document: true,
-          response_body_content: nil,
-          invalid_content: nil,
-          data_item_count: nil
-      })
+  opts.reverse_merge!({document: true})
 
   # 406 when you can't send what they want, 415 when they send what you don't want
 
   example "#{description} - #{expected_status}", :document => opts[:document] do
     do_request
+    do_checks(expected_status, opts)
+  end
+end
 
-    actual_response = response_body
-    actual_response_parsed = actual_response.blank? ? nil : JsonSpec::Helpers::parse_json(actual_response)
-    data_present = !actual_response.blank? &&
-        !actual_response_parsed.blank? &&
-        actual_response_parsed.include?('data') &&
-        !actual_response_parsed['data'].blank?
+# Check response.
+# @param [Symbol] expected_status
+# @param [Hash] opts the options for additional information.
+# @option opts [String] :expected_json_path (nil) Expected json path.
+# @option opts [Symbol] :response_body_content (nil) Content that must be in the response body.
+# @option opts [Symbol] :invalid_content (nil) Content that must not be in the response body.
+# @option opts [Symbol] :data_item_count (nil) Number of items in a json response
+# @return [void]
+def do_checks(expected_status, opts = {})
+  opts.reverse_merge!(
+      {
+          expected_json_path: nil,
+          response_body_content: nil,
+          invalid_content: nil,
+          data_item_count: nil
+      })
+
+  actual_response = response_body
+  actual_response_parsed = actual_response.blank? ? nil : JsonSpec::Helpers::parse_json(actual_response)
+  data_present = !actual_response.blank? &&
+      !actual_response_parsed.blank? &&
+      actual_response_parsed.include?('data') &&
+      !actual_response_parsed['data'].blank?
 
 
-    if data_present && actual_response_parsed['data'].is_a?(Array)
-      actual_response_parsed_size = actual_response_parsed['data'].size
-      data_format = :array
-    elsif data_present && actual_response_parsed['data'].is_a?(Hash)
-      actual_response_parsed_size = 1
-      data_format = :hash
-    else
-      actual_response_parsed_size = nil
-      data_format = nil
-    end
+  if data_present && actual_response_parsed['data'].is_a?(Array)
+    actual_response_parsed_size = actual_response_parsed['data'].size
+    data_format = :array
+  elsif data_present && actual_response_parsed['data'].is_a?(Hash)
+    actual_response_parsed_size = 1
+    data_format = :hash
+  else
+    actual_response_parsed_size = nil
+    data_format = nil
+  end
 
-    the_request_method = method
-    the_request_path = path
-    actual_status_code = status
-    actual_status = Settings.api_response.status_symbol(actual_status_code)
-    expected_status_code = Settings.api_response.status_symbol(expected_status)
+  the_request_method = method
+  the_request_path = path
+  actual_status_code = status
+  actual_status = Settings.api_response.status_symbol(actual_status_code)
+  expected_status_code = Settings.api_response.status_symbol(expected_status)
 
-    message_prefix = "Requested #{the_request_method} #{the_request_path} expecting"
+  message_prefix = "Requested #{the_request_method} #{the_request_path} expecting"
 
-    expect(expected_status).to eq(actual_status), "#{message_prefix} status #{expected_status} but got status #{actual_status}. Response body was #{actual_response}"
+  expect(expected_status).to eq(actual_status), "#{message_prefix} status #{expected_status} but got status #{actual_status}. Response body was #{actual_response}"
 
-    # this check ensures that there is an assertion when the content is not blank.
-    expect(actual_response).to be_blank, "#{message_prefix} blank response, but got #{actual_response}" if opts[:response_body_content].blank? && opts[:expected_json_path].blank?
-    expect((data_format == :hash && data_present && actual_response_parsed_size == 1) || !data_present).to be_true, "#{message_prefix} no items in response, but got #{actual_response_parsed_size} items in #{actual_response}" if opts[:data_item_count].blank?
+  # this check ensures that there is an assertion when the content is not blank.
+  expect(actual_response).to be_blank, "#{message_prefix} blank response, but got #{actual_response}" if opts[:response_body_content].blank? && opts[:expected_json_path].blank?
+  expect((data_format == :hash && data_present && actual_response_parsed_size == 1) || !data_present).to be_true, "#{message_prefix} no items in response, but got #{actual_response_parsed_size} items in #{actual_response} (type #{data_format})" if opts[:data_item_count].blank?
 
-    expect(actual_response).to have_json_path(opts[:expected_json_path]), "#{message_prefix} to find '#{opts[:expected_json_path]}' in '#{actual_response}'" unless opts[:expected_json_path].blank?
-    expect(actual_response).to include(opts[:response_body_content]), "#{message_prefix} to find '#{opts[:response_body_content]}' in '#{actual_response}'" unless opts[:response_body_content].blank?
-    expect(actual_response).to_not include(opts[:invalid_content]), "#{message_prefix} not to find '#{opts[:response_body_content]}' in '#{actual_response}'" unless opts[:invalid_content].blank?
-    expect(actual_response_parsed_size).to eq(opts[:data_item_count]), "#{message_prefix} count to be #{opts[:data_item_count]} but got #{actual_response_parsed_size} items in #{actual_response}" if !opts[:data_item_count].blank?
+  expect(actual_response_parsed_size).to eq(opts[:data_item_count]), "#{message_prefix} count to be #{opts[:data_item_count]} but got #{actual_response_parsed_size} items in #{actual_response} (type #{data_format})" unless opts[:data_item_count].blank?
 
-    if defined?(expected_unordered_ids) &&
-        !expected_unordered_ids.blank?  &&
-        expected_unordered_ids.is_a?(Array) &&
-        data_present &&
-        actual_response_parsed['data'].is_a?(Array)
+  expect(actual_response).to include(opts[:response_body_content]), "#{message_prefix} to find '#{opts[:response_body_content]}' in '#{actual_response}'" unless opts[:response_body_content].blank?
+  expect(actual_response).to_not include(opts[:invalid_content]), "#{message_prefix} not to find '#{opts[:response_body_content]}' in '#{actual_response}'" unless opts[:invalid_content].blank?
 
-      # RSpec also provides a =~ matcher for arrays that disregards differences in
-      # the ordering between the actual and expected array.
-      actual_ids = actual_response_parsed['data'].map {|x| x.include?('id') ? x.id : nil }
-      actual_ids.should =~ expected_unordered_ids
+  expect(actual_response).to have_json_path(opts[:expected_json_path]), "#{message_prefix} to find '#{opts[:expected_json_path]}' in '#{actual_response}'" unless opts[:expected_json_path].blank?
 
-      # actual_response_parsed.each_index do |index|
-      #   expect(actual_response_parsed[index]['audio_event_id'])
-      #   .to eq(opts[:unordered_ids][index]),
-      #       "Result body index #{index} in #{opts[:unordered_ids]}: #{actual_response_parsed}"
-      # end
-      # opts[:unordered_ids].each_index do |index|
-      #   expect(opts[:unordered_ids][index])
-      #   .to eq(actual_response_parsed[index]['audio_event_id']),
-      #       "Audio Event Order index #{index} in #{opts[:unordered_ids]}: #{actual_response_parsed}"
-      # end
-    end
+  if defined?(expected_unordered_ids) &&
+      !expected_unordered_ids.blank? &&
+      expected_unordered_ids.is_a?(Array) &&
+      data_present &&
+      actual_response_parsed['data'].is_a?(Array)
+
+    # RSpec also provides a =~ matcher for arrays that disregards differences in
+    # the ordering between the actual and expected array.
+    actual_ids = actual_response_parsed['data'].map { |x| x.include?('id') ? x.id : nil }
+    actual_ids.should =~ expected_unordered_ids
+
+    # actual_response_parsed.each_index do |index|
+    #   expect(actual_response_parsed[index]['audio_event_id'])
+    #   .to eq(opts[:unordered_ids][index]),
+    #       "Result body index #{index} in #{opts[:unordered_ids]}: #{actual_response_parsed}"
+    # end
+    # opts[:unordered_ids].each_index do |index|
+    #   expect(opts[:unordered_ids][index])
+    #   .to eq(actual_response_parsed[index]['audio_event_id']),
+    #       "Audio Event Order index #{index} in #{opts[:unordered_ids]}: #{actual_response_parsed}"
+    # end
   end
 end
 

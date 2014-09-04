@@ -151,7 +151,7 @@ module Api
       filter_query = Filter::Query.new(params, query, model, filter_settings)
 
       # query without paging to get total
-      query = filter_query.query_basic
+      new_query = filter_query.query_basic
 
       # basic options
       opts = {
@@ -166,13 +166,13 @@ module Api
       if filter_query.has_paging_params?
 
         # execute a count against entire set without paging
-        total = query.count
+        total = new_query.count
 
         # add paging
-        query = filter_query.query_paging(query)
+        new_query = filter_query.query_paging(new_query)
 
         # execute a count for this page only
-        count = query.count
+        count = new_query.count
 
         # update options
         opts.merge!(
@@ -187,7 +187,7 @@ module Api
       if filter_query.has_sort_params?
 
         # add sorting
-        query = filter_query.query_sort(query)
+        new_query = filter_query.query_sort(new_query)
 
         # update options
         opts.merge!(
@@ -197,7 +197,7 @@ module Api
       end
 
       # return the constructed query and options
-      [query, opts]
+      [new_query, opts]
     end
 
     # Create and execute a query based on a filter request.

@@ -155,9 +155,9 @@ class User < ActiveRecord::Base
     AudioRecording.where(site_id: user_sites)
   end
 
-  def accessible_audio_events
-    AudioEvent.where(audio_recording_id: accessible_audio_recordings.select(:id))
-  end
+  # def accessible_audio_events
+  #   AudioEvent.where(audio_recording_id: accessible_audio_recordings.select(:id))
+  # end
 
   def accessible_comments
     AudioEventComment.where(audio_event_id: accessible_audio_events.select(:id))
