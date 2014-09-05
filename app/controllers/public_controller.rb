@@ -356,7 +356,7 @@ EXTRACT(DAY FROM recorded_date) as extracted_day')
     if current_user.blank?
       @recent_audio_events = AudioEvent.order(order_by_coalesce).limit(7)
     elsif current_user.has_role? :admin
-      @recent_audio_events = AudioEvent.includes([:updater, audio_recording: :site]).order(order_by_coalesce).limit(10)
+      @recent_audio_events = AudioEvent.includes([:creator, audio_recording: {site: :projects}]).order(order_by_coalesce).limit(10)
     else
       @recent_audio_events = current_user.accessible_audio_events.includes([:updater, audio_recording: :site]).order(order_by_coalesce).limit(10)
     end

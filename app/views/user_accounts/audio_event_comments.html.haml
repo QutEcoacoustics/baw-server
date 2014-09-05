@@ -10,6 +10,8 @@
   - if @user_audio_event_comments.empty?
     = 'No annotation comments to show.'
   - else
+    = page_entries_info @user_audio_event_comments
+    = will_paginate @user_audio_event_comments, renderer: BawWillPaginateLinkRenderer
 
     %table.table.table-striped(data-provides='rowlink')
       %thead

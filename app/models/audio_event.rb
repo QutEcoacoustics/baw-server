@@ -38,12 +38,6 @@ class AudioEvent < ActiveRecord::Base
 
   before_validation :set_tags, on: :create
 
-  after_validation :after_validation_check
-
-  def after_validation_check
-    self.errors
-  end
-
   # Scopes
   scope :start_after, lambda { |offset_seconds| where('start_time_seconds > ?', offset_seconds) }
   scope :start_before, lambda { |offset_seconds| where('start_time_seconds < ?', offset_seconds) }

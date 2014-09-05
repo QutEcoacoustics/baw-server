@@ -134,20 +134,21 @@ class User < ActiveRecord::Base
   end
 
   def recently_updated_projects
+    accessible_projects_all.uniq.limit(10)
+  end
+
+  def accessible_projects_all
     # .includes() for left outer join
     # .joins for inner join
     creator_id_check = 'projects.creator_id = ?'
     permissions_check = '(permissions.user_id = ? AND permissions.level IN (\'reader\', \'writer\'))'
-    Project.includes(:permissions).where("(#{creator_id_check} OR #{permissions_check})", self.id, self.id).uniq.order('projects.updated_at DESC').limit(10)
+    Project.includes(:permissions, :sites, :creator).where("(#{creator_id_check} OR #{permissions_check})", self.id, self.id).order('projects.name DESC')
   end
 
-  def accessible_audio_events(page = 1, per_page = 30)
+  def accessible_audio_events
     AudioEvent
-    .includes(:audio_recording)
-    .where('creator_id = ? OR updater_id = ?', self.id, self.id)
-    .uniq
-    .order('audio_events.updated_at DESC')
-    .paginate(page: page, per_page: per_page)
+    .includes(:audio_recording, :creator)
+    .where(audio_recording_id: accessible_audio_recordings.select(:id))
   end
 
   def accessible_audio_recordings

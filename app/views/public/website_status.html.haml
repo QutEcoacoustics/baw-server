@@ -55,14 +55,14 @@
               %td{title: tags_text}= link_to priority_tag.text, audio_link, target: '_self'
             - unless current_user.blank?
               %td= audio_event.audio_recording.site.name
-            %td{title: audio_event.updated_at}= distance_of_time_in_words(Time.zone.now, audio_event.updated_at, nil, {vague: true})+ ' ago'
+            %td{title: audio_event.created_at}= distance_of_time_in_words(Time.zone.now, audio_event.created_at, nil, {vague: true})+ ' ago'
             - unless current_user.blank?
-              %td= audio_event.updater.user_name
+              %td= audio_event.creator.user_name
               %td.nolink
                 = link_to audio_link, target: '_self', class: 'btn btn-mini' do
                   %i{class: 'fa fa-play'}
                   Play
-                = link_to user_account_path(audio_event.updater), class: 'btn btn-mini' do
+                = link_to user_account_path(audio_event.creator_id), class: 'btn btn-mini' do
                   %i{class: 'fa fa-user'}
                   User
                 = link_to annotation_link, class: 'btn btn-mini' do
@@ -102,7 +102,7 @@
               %td.nolink
                 = link_to audio_link, target: '_self', class: 'btn btn-mini' do
                   %i{class: 'fa fa-play'}
-                  Audio
+                  Play
                 = link_to site_link, target: '_self', class: 'btn btn-mini' do
                   %i{class: 'fa fa-map-marker'}
                   Site

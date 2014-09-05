@@ -224,7 +224,7 @@ class AudioRecording < ActiveRecord::Base
   end
 
   def get_listen_path
-    "/library/#{self.id}"
+    "/listen/#{self.id}"
   end
 
   private

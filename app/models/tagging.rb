@@ -26,9 +26,4 @@ class Tagging < ActiveRecord::Base
   validates_uniqueness_of :audio_event_id, scope: [:tag_id, :audio_event_id], message: 'audio_event_id %{value} must be unique within tag_id and audio_event_id'
   validates_uniqueness_of :tag_id, scope: [:tag_id, :audio_event_id], message: 'tag_id %{value} must be unique within tag_id and audio_event_id'
 
-  after_validation :after_validation_check
-
-  def after_validation_check
-    self.errors
-  end
 end
