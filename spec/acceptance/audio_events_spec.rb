@@ -1091,9 +1091,10 @@ resource 'AudioEvents' do
       tag_count = Tag.count
       do_request
 
-      do_checks(:created, {expected_json_path: 'taggings/1/tag'})
+      do_checks(:created, {expected_json_path: 'taggings/1/tag'}) # expecting two 'taggings'
 
       expect(response_body).to have_json_path('start_time_seconds')
+      # only one tag should have been created, so new tag count should be one more than old tag count
       expect(tag_count).to eq(Tag.count - 1)
     end
   end

@@ -8,7 +8,7 @@ class Tag < ActiveRecord::Base
   attr_accessible :is_taxanomic, :text, :type_of_tag, :retired, :notes
 
   # relations
-  has_many :taggings # no inverse of specified, as it interferes with through: association
+  has_many :taggings, inverse_of: :tag
   has_many :audio_events, through: :taggings
   belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_tags
   belongs_to :updater, class_name: 'User', foreign_key: :updater_id, inverse_of: :updated_tags

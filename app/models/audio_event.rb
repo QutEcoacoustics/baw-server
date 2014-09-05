@@ -7,7 +7,7 @@ class AudioEvent < ActiveRecord::Base
 
   # relations
   belongs_to :audio_recording, inverse_of: :audio_events
-  has_many :taggings # no inverse of specified, as it interferes with through: association
+  has_many :taggings, inverse_of: :audio_event
   has_many :tags, through: :taggings
 
   belongs_to :creator, class_name: 'User', foreign_key: 'creator_id', inverse_of: :created_audio_events
@@ -256,7 +256,7 @@ class AudioEvent < ActiveRecord::Base
     segment_duration_seconds = 30
     offset_start_rounded = (self.start_time_seconds / segment_duration_seconds).floor * segment_duration_seconds
     offset_end_rounded = (self.end_time_seconds / segment_duration_seconds).floor * segment_duration_seconds
-    offset_end_rounded += (offset_start_rounded == offset_end_rounded ? segment_duration_seconds : 0 )
+    offset_end_rounded += (offset_start_rounded == offset_end_rounded ? segment_duration_seconds : 0)
 
     "#{self.audio_recording.get_listen_path}?start=#{offset_start_rounded}&end=#{offset_end_rounded}"
   end
@@ -271,7 +271,7 @@ class AudioEvent < ActiveRecord::Base
   def start_must_be_lte_end
     return unless end_time_seconds && start_time_seconds
 
-    if start_time_seconds > end_time_seconds then
+    if start_time_seconds > end_time_seconds
       errors.add(:start_time_seconds, '%{value} must be lower than end time')
     end
   end
@@ -279,24 +279,32 @@ class AudioEvent < ActiveRecord::Base
   def low_must_be_lte_high
     return unless high_frequency_hertz && low_frequency_hertz
 
-    if low_frequency_hertz > high_frequency_hertz then
+    if low_frequency_hertz > high_frequency_hertz
       errors.add(:start_time_seconds, '%{value} must be lower than high frequency')
     end
   end
 
   def set_tags
-    existing_tags = []
-    new_tags = []
-
-    tags.each do |tag|
+    # must use taggings here, can't use the through association to tags
+    # as taggings does not get the changes
+    self.taggings.each do |tagging|
+      tag = tagging.tag
       existing_tag = Tag.where(text: tag.text).first
-      if existing_tag
-        existing_tags.push(existing_tag)
-      else
-        new_tags.push(tag)
+      unless existing_tag.blank?
+        # remove the association, otherwise it tries to create it and fails (as it already exists)
+        tagging.tag = nil
+        tagging.tag_id = existing_tag.id
+        self.tags.reject! { |x| x.text == existing_tag.text}
       end
     end
 
-    self.tags = new_tags + existing_tags
+    # cater for tag_ids
+    # if self.taggings is empty, and self.tags is not, create the taggings based on the tags
+    if self.taggings.blank? && !self.tags.blank?
+      self.tags.each do |tag|
+        self.taggings.push(Tagging.new(tag_id:tag.id))
+      end
+    end
+
   end
 end

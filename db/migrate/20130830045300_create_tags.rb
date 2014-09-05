@@ -6,16 +6,18 @@ class CreateTags < ActiveRecord::Migration
       t.string   :type_of_tag  , :null => false
       t.boolean  :retired      , :null => false, :default => false
       t.text     :notes
+      t.integer  :creator_id   , :null => false
+      t.integer  :updater_id
 
       t.timestamps
-      t.userstamps
     end
     create_table :audio_events_tags do |t|
-      t.integer :audio_event_id, :null => false
-      t.integer :tag_id, :null => false
+      t.integer  :audio_event_id, :null => false
+      t.integer  :tag_id,         :null => false
+      t.integer  :creator_id   ,  :null => false
+      t.integer  :updater_id
 
       t.timestamps
-      t.userstamps
     end
     add_index :audio_events_tags, [:audio_event_id, :tag_id], :unique => true
   end

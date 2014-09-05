@@ -132,7 +132,7 @@ module Filter
     # @param [Hash] hash
     # @return [Arel::Nodes::Node] condition
     def compose_not_range_options(table, column_name, allowed, hash)
-      compose_not_range_options(table, column_name, allowed, hash).not
+      compose_range_options(table, column_name, allowed, hash).not
     end
 
     # Create IN condition using range.
