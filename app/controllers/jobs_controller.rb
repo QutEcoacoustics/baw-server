@@ -1,8 +1,14 @@
 class JobsController < ApplicationController
+  include Api::ControllerHelper
+
   add_breadcrumb 'Home', :root_path
 
+  # order matters for before_filter and load_and_authorize_resource!
   load_and_authorize_resource :project
-  before_filter :build_project_job, only: [:new, :create] # this is necessary so that the ability has access to site.projects
+
+  # this is necessary so that the ability has access to job.dataset.projects
+  before_filter :build_project_job, only: [:new, :create]
+
   load_and_authorize_resource :job, through: :project
 
   before_filter :add_project_breadcrumb
@@ -10,8 +16,6 @@ class JobsController < ApplicationController
   # GET /jobs
   # GET /jobs.json
   def index
-    @jobs = Job.all
-
     respond_to do |format|
       format.html # index.html.erb
       format.json { render json: @jobs }
@@ -21,8 +25,6 @@ class JobsController < ApplicationController
   # GET /jobs/1
   # GET /jobs/1.json
   def show
-    @job = Job.find(params[:id])
-
     respond_to do |format|
       format.html {
         add_breadcrumb "Dataset: #{@job.dataset.name}", project_dataset_path(@project, @job.dataset)
@@ -35,7 +37,7 @@ class JobsController < ApplicationController
   # GET /jobs/new
   # GET /jobs/new.json
   def new
-    @job = Job.new
+    attributes_and_authorize
 
     respond_to do |format|
       format.html {
@@ -47,7 +49,6 @@ class JobsController < ApplicationController
 
   # GET /jobs/1/edit
   def edit
-    @job = Job.find(params[:id])
     add_breadcrumb "Dataset: #{@job.dataset.name}", project_dataset_path(@project, @job.dataset)
     add_breadcrumb "Job: #{@job.name}", [@project,  @job.dataset, @job]
     add_breadcrumb 'Edit', edit_project_job_path(@project, @job)
@@ -56,7 +57,8 @@ class JobsController < ApplicationController
   # POST /jobs
   # POST /jobs.json
   def create
-    @job = Job.new(params[:job])
+
+    attributes_and_authorize
 
     respond_to do |format|
       if @job.save
@@ -72,8 +74,6 @@ class JobsController < ApplicationController
   # PUT /jobs/1
   # PUT /jobs/1.json
   def update
-    @job = Job.find(params[:id])
-
     respond_to do |format|
       if @job.update_attributes(params[:job])
         format.html { redirect_to [@project, @job.dataset, @job], notice: 'Analysis job was successfully updated.' }
@@ -88,7 +88,6 @@ class JobsController < ApplicationController
   # DELETE /jobs/1
   # DELETE /jobs/1.json
   def destroy
-    @job = Job.find(params[:id])
     @job.destroy
 
     respond_to do |format|
@@ -99,8 +98,6 @@ class JobsController < ApplicationController
 
   private
 
-
-  private
   def add_project_breadcrumb
     add_breadcrumb 'Projects', projects_path
     add_breadcrumb @project.name, @project

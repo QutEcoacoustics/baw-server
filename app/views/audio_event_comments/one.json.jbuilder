@@ -1,0 +1,1 @@
+json.(@audio_event_comment, *AudioEventComment.filter_settings.render_fields)

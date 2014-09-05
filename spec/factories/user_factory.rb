@@ -44,7 +44,7 @@ FactoryGirl.define do
       image { fixture_file_upload(Rails.root.join('public', 'images', 'user', 'user-512.png'), 'image/png') }
     end
 
-    factory :confirmed_user, traits: [:confirmed], aliases: [:user, :creator, :updater, :deleter, :uploader]
+    factory :confirmed_user, traits: [:confirmed], aliases: [:user, :creator, :updater, :deleter, :uploader, :flagger]
     factory :admin, traits: [:confirmed, :admin_role]
     factory :harvester, traits: [:confirmed, :harvester_role]
     factory :user_with_preferences, traits: [:confirmed, :saved_preferences]

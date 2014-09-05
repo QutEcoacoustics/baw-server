@@ -1,4 +1,7 @@
 class Site < ActiveRecord::Base
+  # ensures that creator_id, updater_id, deleter_id are set
+  include UserChange
+
   attr_accessible :name, :latitude, :longitude, :description, :image, :project_ids, :notes
 
   attr_reader :location_obfuscated
@@ -23,9 +26,6 @@ class Site < ActiveRecord::Base
 
   JITTER_RANGE = 0.0002
 
-  # add created_at and updated_at stamper
-  stampable
-
   # add deleted_at and deleter_id
   acts_as_paranoid
   validates_as_paranoid
@@ -33,7 +33,7 @@ class Site < ActiveRecord::Base
   acts_as_gmappable process_geocoding: false
 
   # association validations
-  #validates :creator, existence: true
+  validates :creator, existence: true
 
   # attribute validations
   validates :name, presence: true, length: {minimum: 2}

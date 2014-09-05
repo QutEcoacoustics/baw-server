@@ -31,10 +31,12 @@ AWB::Application.routes.draw do
 
   #TODO: this will be changed from :user_accounts to :users at some point
   # user list and user profile
-  resources :user_accounts do
-    resources :permissions
+  resources :user_accounts, only: [:index, :show, :edit, :update], constraints: {id: /[0-9]+/} do
     member do
       get 'projects'
+      get 'bookmarks'
+      get 'audio_events'
+      get 'audio_event_comments'
     end
   end
 
@@ -109,9 +111,9 @@ AWB::Application.routes.draw do
       post 'submit_access_request'
     end
     # HTML project permissions list
-    resources :permissions, except: [:show]
+    resources :permissions, only: [:index]
     # API project permission item
-    resources :permissions, only: [:show], defaults: {format: 'json'}
+    resources :permissions, except: [:index, :edit, :update], defaults: {format: 'json'}
     # HTML project site item
     resources :sites, except: [:index] do
       member do
@@ -139,12 +141,12 @@ AWB::Application.routes.draw do
   # API audio recording item
   resources :audio_recordings, only: [:index, :show, :new], defaults: {format: 'json'} do
     get 'media.:format' => 'media#show', defaults: {format: 'json'}, as: :media
-    resources :audio_events, defaults: {format: 'json'} do
+    resources :audio_events, except: [:edit], defaults: {format: 'json'} do
       collection do
         get 'download', defaults: {format: 'csv'}
       end
       resources :tags, only: [:index], defaults: {format: 'json'}
-      resources :taggings, defaults: {format: 'json'}
+      resources :taggings, except: [:edit], defaults: {format: 'json'}
     end
   end
 
@@ -162,7 +164,8 @@ AWB::Application.routes.draw do
   resources :tags, only: [:index, :show, :create, :new], defaults: {format: 'json'}
 
   # API audio_event create
-  resources :audio_events, only: [:new], defaults: {format: 'json'} do
+  resources :audio_events, only: [], defaults: {format: 'json'} do
+    resources :audio_event_comments, except: [:edit], defaults: {format: 'json'}, path: :comments, as: :comments
     collection do
       get 'library'
       get 'library/paged' => 'audio_events#library_paged', as: :library_paged

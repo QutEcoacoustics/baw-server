@@ -1,0 +1,45 @@
+= image_tag @user.image.url(:span3), class: 'span3'
+
+.span9
+  %h1= @user.user_name
+
+.span12
+  %h3 Recent Annotations
+
+  - if @user_annotations.empty?
+    = 'No annotations created.'
+  - else
+    = page_entries_info @user_annotations
+    = will_paginate @user_annotations, renderer: BawWillPaginateLinkRenderer
+
+    %table.table.table-striped(data-provides='rowlink')
+
+      %tr
+        %th Duration (seconds)
+        %th Tags
+        %th Last Updated
+        %th
+
+      - @user_annotations.each do |audio_event|
+        %tr
+          - audio_link = audio_event.get_listen_path
+          - audio_recording_exists = !audio_event.audio_recording.blank?
+          - if audio_recording_exists
+            %td= link_to (audio_event.end_time_seconds - audio_event.start_time_seconds), audio_link, target: '_self'
+          - else
+            %td= "#{audio_event.end_time_seconds - audio_event.start_time_seconds}"
+          %td= audio_event.tags.order(:type_of_tag, :text).select(:text).to_a.map{ |item| item.text}.join(', ')
+          %td= distance_of_time_in_words(Time.zone.now, audio_event.updated_at, nil, {vague: true})+ ' ago'
+          - if audio_recording_exists
+            %td.nolink
+              = link_to audio_link, target: '_self', class: 'btn btn-mini' do
+                %i{class: 'fa fa-play'}
+                Play
+              = link_to audio_event.get_library_path, target: '_self', class: 'btn btn-mini' do
+                %i{class: 'fa fa-flag'}
+                Annotation
+
+- content_for :title, "Annotations by #{@user.user_name}"
+
+- content_for :left_sidebar do
+  = render partial: 'sidebar_links'

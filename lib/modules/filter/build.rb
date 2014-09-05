@@ -21,16 +21,7 @@ module Filter
       fail ArgumentError, "Conditions hash must have at least 1 entry, got #{hash.size}." if hash.blank? || hash.size < 1
       conditions = []
       hash.each do |key, value|
-        # allow a single field name at top level
-        has_combiner = [:and, :or, :not].include?(key)
-        has_valid_field = valid_fields.include?(key)
-        number_of_items = hash.size
-
-        msg1 = "Must be 'and', 'or', 'not' when there is more than one item at top level, got #{key} with #{number_of_items} entries."
-        fail ArgumentError, msg1 if !has_combiner && number_of_items > 1
-
-        msg2 = "Must be 'and', 'or', 'not' or a single field in #{valid_fields} at top level, got #{key} with 1 entry."
-        fail ArgumentError, msg2 if !has_valid_field && number_of_items == 1 && !has_combiner
+        # combinators or fields can be at top level. Assumes 'and' (query.where(condition) uses 'and').
 
         built_conditions = build_hash(key, value, table, valid_fields)
         conditions.push(*built_conditions)
@@ -91,7 +82,7 @@ module Filter
         when *valid_fields
           build_condition(field, key, value, table, valid_fields)
         else
-          fail ArgumentError, "Unrecognised combiner or field name: #{key}"
+          fail ArgumentError, "Unrecognised combiner or field name: #{field}."
       end
     end
 
@@ -107,7 +98,7 @@ module Filter
         when :and, :or
           build_combiner(field, build_hash(key, value, table, valid_fields))
         else
-          fail ArgumentError, "Unrecognised combiner or field name: #{key}"
+          fail ArgumentError, "Unrecognised combiner or field name: #{field}"
       end
     end
 
@@ -294,6 +285,7 @@ module Filter
           columns = value
         when :exclude
           columns = valid_fields.reject { |item| value.include?(item)}
+          fail ArgumentError, 'Exclude must contain at least one field.' if columns.blank?
         else
           fail ArgumentError, "Unrecognised projection key #{key}."
       end

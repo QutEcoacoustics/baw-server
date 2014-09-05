@@ -15,7 +15,7 @@
         = drop_down "#{current_user.user_name}" do
           = menu_item 'Profile', my_account_path
           = menu_item 'Scripts', scripts_path  if can? :manage, Script
-          = menu_item 'User Accounts', user_accounts_path if can? :manage, User
+          = menu_item 'User List', user_accounts_path if can? :index, User
       - else
         = menu_item "#{current_user.user_name}", my_account_path
       = menu_item 'Logout', destroy_user_session_path

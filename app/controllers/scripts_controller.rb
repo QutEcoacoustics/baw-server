@@ -19,8 +19,6 @@ class ScriptsController < ApplicationController
   # GET /scripts/1
   # GET /scripts/1.json
   def show
-    @script = Script.find(params[:id])
-
     respond_to do |format|
       format.html {
         add_breadcrumb 'Scripts', scripts_path
@@ -34,8 +32,6 @@ class ScriptsController < ApplicationController
   # GET /scripts/new
   # GET /scripts/new.json
   def new
-    @script = Script.new
-
     respond_to do |format|
       format.html {
         add_breadcrumb 'Scripts', scripts_path
@@ -50,7 +46,6 @@ class ScriptsController < ApplicationController
     unless @script.is_latest_version?
       redirect_to edit_script_path(@script.latest_version), notice: 'You have been redirected to update the latest version of this Script.'
     end
-    @script = Script.find(params[:id])
     add_breadcrumb 'Scripts', scripts_path
     add_breadcrumb @script.display_name, @script
     add_breadcrumb 'New Version', edit_script_path(@script)
@@ -59,7 +54,6 @@ class ScriptsController < ApplicationController
   # POST /scripts
   # POST /scripts.json
   def create
-    @script = Script.new(params[:script])
     respond_to do |format|
       if @script.save
         format.html { redirect_to @script, notice: 'Script was successfully created.' }

@@ -31,14 +31,16 @@ describe Job do
     test_item = FactoryGirl.build(:job)
     test_item.dataset = nil
     expect(subject).to have(1).error_on(:dataset)
-    expect(subject.errors_on(:dataset)).to include('must exist as an object or foreign key')
+    #expect(subject.errors_on(:dataset)).to include('must exist as an object or foreign key')
+    subject.errors_on(:dataset).to_s.should =~ /must exist as an object or foreign key/
   end
 
   it 'fails validation when script is nil' do
     test_item = FactoryGirl.build(:job)
     test_item.script = nil
     expect(subject).to have(1).error_on(:script)
-    expect(subject.errors_on(:script)).to include('must exist as an object or foreign key')
+    #expect(subject.errors_on(:script)).to include('must exist as an object or foreign key')
+    subject.errors_on(:script).to_s.should =~ /must exist as an object or foreign key/
   end
   
   it { should validate_presence_of(:script_settings) }

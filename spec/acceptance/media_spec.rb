@@ -23,9 +23,7 @@ resource 'Media' do
   end
 
   after(:all) do
-    FileUtils.rm_r media_cacher.cache.original_audio.storage_paths.first if Dir.exists? media_cacher.cache.original_audio.storage_paths.first
-    FileUtils.rm_r media_cacher.cache.cache_audio.storage_paths.first if Dir.exists? media_cacher.cache.cache_audio.storage_paths.first
-    FileUtils.rm_r media_cacher.cache.cache_spectrogram.storage_paths.first if Dir.exists? media_cacher.cache.cache_spectrogram.storage_paths.first
+    remove_media_dirs(media_cacher)
   end
 
   # prepare ids needed for paths in requests below
@@ -663,6 +661,8 @@ resource 'Media' do
       let(:format) { 'mp3' }
 
       example 'MEDIA (audio get request mp3 as reader with shallow path) - 200', document: document_media_requests do
+        remove_media_dirs(media_cacher)
+
         options = create_media_options(audio_recording)
 
         queue_name = Settings.resque.queues.media.to_sym

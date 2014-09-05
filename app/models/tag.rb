@@ -1,19 +1,19 @@
 class Tag < ActiveRecord::Base
   extend Enumerize
 
+  # ensures that creator_id, updater_id, deleter_id are set
+  include UserChange
+
   # attr
   attr_accessible :is_taxanomic, :text, :type_of_tag, :retired, :notes
 
   # relations
-  has_many :taggings # no inverse of specified, as it interferes with through: association
+  has_many :taggings, inverse_of: :tag
   has_many :audio_events, through: :taggings
   belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_tags
   belongs_to :updater, class_name: 'User', foreign_key: :updater_id, inverse_of: :updated_tags
 
   accepts_nested_attributes_for :audio_events
-
-  # add created_at and updated_at stamper
-  stampable
 
   # enums
   AVAILABLE_TYPE_OF_TAGS_SYMBOLS = [:general, :common_name, :species_name, :looks_like, :sounds_like]
@@ -30,7 +30,7 @@ class Tag < ActiveRecord::Base
   enumerize :type_of_tag, in: AVAILABLE_TYPE_OF_TAGS, predicates: true
 
   # association validations
-  #validates :creator, existence: true
+  validates :creator, existence: true
 
   # attribute validations
   validates :is_taxanomic, inclusion: {in: [true, false]}
@@ -38,6 +38,12 @@ class Tag < ActiveRecord::Base
   validates :retired, inclusion: {in: [true, false]}
   validates_presence_of :type_of_tag
   validate :taxonomic_enforced
+
+  after_validation :after_validation_check
+
+  def after_validation_check
+    self.errors
+  end
 
   # http://stackoverflow.com/questions/11569940/inclusion-validation-fails-when-provided-a-symbol-instead-of-a-string
   # this lets a symbol be set, and it all still works

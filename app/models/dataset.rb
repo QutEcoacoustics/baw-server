@@ -2,6 +2,9 @@ class Dataset < ActiveRecord::Base
   extend Enumerize
   extend ActiveModel::Naming
 
+  # ensures that creator_id, updater_id, deleter_id are set
+  include UserChange
+
   attr_accessible :description, :end_date, :end_time, :filters, :name, :number_of_samples, :number_of_tags,
                   :start_date, :start_time, :types_of_tags, :site_ids, :tag_text_filters, :tag_text_filters_list,
                   :has_time, :has_date
@@ -34,12 +37,9 @@ class Dataset < ActiveRecord::Base
   # search by tag text (array of partial tag text)
   serialize :tag_text_filters, Array
 
-  # add created_at and updated_at stamper
-  stampable
-
   # association validations
   validates :project, existence: true
-  #validates :creator, existence: true
+  validates :creator, existence: true
 
   # attribute validations
   validates :name, presence: true, uniqueness: {case_sensitive: false, scope: :creator_id, message: 'should be unique per user'}

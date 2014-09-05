@@ -201,16 +201,16 @@ describe 'MANAGE User Accounts as admin user' do
     page.should have_content('test name')
   end
 
-  it 'deletes a user account' do
+  it 'cannot delete account' do
     FactoryGirl.create(:user)
     visit user_accounts_path
-    expect { first(:link, 'Delete').click }.to change(User, :count).by(-1)
+    expect(page).not_to have_content('Cancel my account')
   end
 
-  it 'provides link to user projects' do
+  it 'provides link to Projects Bookmarks Annotations Comments' do
     user = FactoryGirl.create(:user)
     visit user_account_path(user)
-    page.should have_content('User Projects')
+    expect(page).to have_content('Projects Bookmarks Annotations Comments')
   end
 
   it 'lists user\'s projects' do
@@ -244,15 +244,42 @@ describe 'MANAGE User Accounts as user' do
     page.should have_content(user.user_name)
   end
 
+  it 'should not link to user comments for other user page' do
+    user = FactoryGirl.create(:user)
+    visit user_account_path(user)
+    expect(find('.nav-list')).to_not have_content('Comments')
+  end
+
+  it 'should not link to user bookmarks for other user page' do
+    user = FactoryGirl.create(:user)
+    visit user_account_path(user)
+    expect(find('.nav-list')).to_not have_content('Bookmarks')
+  end
+
   it 'should not link to user projects for other user page' do
     user = FactoryGirl.create(:user)
     visit user_account_path(user)
-    page.should_not have_content('User Projects')
+    expect(find('.nav-list')).to_not have_content('Projects')
   end
 
-  it 'should not link to user projects for current user' do
+  it 'should link to user comments for current user page' do
     visit my_account_path
-    page.should_not have_content('User Projects')
+    expect(find('.nav-list')).to have_content('Comments')
+  end
+
+  it 'should link to user bookmarks for current user page' do
+    visit my_account_path
+    expect(find('.nav-list')).to have_content('Bookmarks')
+  end
+
+  it 'should link to user projects for current user page' do
+    visit my_account_path
+    expect(find('.nav-list')).to have_content('Projects')
+  end
+
+  it 'should link to user projects for current user page' do
+    visit my_account_path
+    expect(find('.nav-list')).to have_content('Annotations')
   end
 
   it 'denies access to user projects page' do

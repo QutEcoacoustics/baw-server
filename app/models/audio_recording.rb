@@ -5,6 +5,9 @@ class AudioRecording < ActiveRecord::Base
 
   extend Enumerize
 
+  # ensures that creator_id, updater_id, deleter_id are set
+  include UserChange
+
   # attr
   attr_accessible :bit_rate_bps, :channels, :data_length_bytes, :original_file_name,
                   :duration_seconds, :file_hash, :media_type, :notes,
@@ -27,9 +30,6 @@ class AudioRecording < ActiveRecord::Base
 
   accepts_nested_attributes_for :site
 
-  # add created_at and updated_at stamper
-  stampable
-
   # add deleted_at and deleter_id
   acts_as_paranoid
   validates_as_paranoid
@@ -48,7 +48,7 @@ class AudioRecording < ActiveRecord::Base
   # association validations
   validates :site, existence: true
   validates :uploader, existence: true
-  #validates :creator, existence: true
+  validates :creator, existence: true
 
   # attribute validations
   validates :status, inclusion: {in: AVAILABLE_STATUSES}, presence: true
@@ -211,6 +211,8 @@ class AudioRecording < ActiveRecord::Base
         # :uploader_id, :file_hash, , :notes, :creator_id,
         #:updater_id, :deleter_id, :deleted_at, :original_file_name
         ],
+        render_fields: [:uuid, :recorded_date, :site_id, :duration_seconds,
+                        :sample_rate_hertz, :channels, :bit_rate_bps, :media_type, :status],
         text_fields: [:media_type, :status],
         controller: :audio_recordings,
         action: :filter,
@@ -219,6 +221,10 @@ class AudioRecording < ActiveRecord::Base
             direction: :desc
         }
     }
+  end
+
+  def get_listen_path
+    "/library/#{self.id}"
   end
 
   private

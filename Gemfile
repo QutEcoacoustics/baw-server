@@ -47,7 +47,7 @@ gem 'recaptcha', '~> 0.3.6', require: 'recaptcha/rails'
 # https://github.com/plataformatec/devise/blob/master/CHANGELOG.md
 # using devise 3.0.x because 3.1 introduces breaking changes
 gem 'devise', '< 3.1'
-gem 'cancan', '~> 1.6.10'
+gem 'cancancan', '~> 1.9.2'
 gem 'role_model', '~> 0.8.1'
 
 # Database gems
@@ -63,7 +63,8 @@ gem 'validates_timeliness', '~> 3.0.14'
 # https://github.com/delynn/userstamp
 # no changes in a long time, and we are very dependant on how this works
 # this might need to be changed to a fork that is maintained.
-gem 'userstamp', git: 'https://github.com/theepan/userstamp.git'
+# No longer used - incorporated the gem's functionality directly.
+#gem 'userstamp', git: 'https://github.com/theepan/userstamp.git'
 
 # https://github.com/brainspec/enumerize
 # we need the changes since version 0.8.0. Reassess when there is a new release.

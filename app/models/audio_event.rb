@@ -1,21 +1,22 @@
 class AudioEvent < ActiveRecord::Base
+  # ensures that creator_id, updater_id, deleter_id are set
+  include UserChange
 
   attr_accessible :audio_recording_id, :start_time_seconds, :end_time_seconds, :low_frequency_hertz, :high_frequency_hertz, :is_reference,
                   :tags_attributes, :tag_ids
 
   # relations
   belongs_to :audio_recording, inverse_of: :audio_events
-  has_many :taggings # no inverse of specified, as it interferes with through: association
+  has_many :taggings, inverse_of: :audio_event
   has_many :tags, through: :taggings
 
   belongs_to :creator, class_name: 'User', foreign_key: 'creator_id', inverse_of: :created_audio_events
   belongs_to :updater, class_name: 'User', foreign_key: 'updater_id', inverse_of: :updated_audio_events
   belongs_to :deleter, class_name: 'User', foreign_key: 'deleter_id', inverse_of: :deleted_audio_events
+  has_many :comments, class_name: 'AudioEventComment', foreign_key: 'audio_event_id', inverse_of: :audio_event
 
   accepts_nested_attributes_for :tags
 
-  # add created_at and updated_at stamper
-  stampable
 
   # add deleted_at and deleter_id
   acts_as_paranoid
@@ -23,8 +24,7 @@ class AudioEvent < ActiveRecord::Base
 
   # association validations
   validates :audio_recording, existence: true
-  # stamper adds creator/updater in before_save/before_update, which occur after validation
-  #validates :creator, existence: true
+  validates :creator, existence: true
 
   # validation
   validates :is_reference, inclusion: {in: [true, false]}
@@ -37,6 +37,12 @@ class AudioEvent < ActiveRecord::Base
   validate :low_must_be_lte_high
 
   before_validation :set_tags, on: :create
+
+  after_validation :after_validation_check
+
+  def after_validation_check
+    self.errors
+  end
 
   # Scopes
   scope :start_after, lambda { |offset_seconds| where('start_time_seconds > ?', offset_seconds) }
@@ -246,38 +252,59 @@ class AudioEvent < ActiveRecord::Base
     query.order('audio_events.id DESC')
   end
 
+  def get_listen_path
+    segment_duration_seconds = 30
+    offset_start_rounded = (self.start_time_seconds / segment_duration_seconds).floor * segment_duration_seconds
+    offset_end_rounded = (self.end_time_seconds / segment_duration_seconds).floor * segment_duration_seconds
+    offset_end_rounded += (offset_start_rounded == offset_end_rounded ? segment_duration_seconds : 0)
+
+    "#{self.audio_recording.get_listen_path}?start=#{offset_start_rounded}&end=#{offset_end_rounded}"
+  end
+
+  def get_library_path
+    "/library/#{self.audio_recording_id}/audio_events/#{self.id}"
+  end
+
   private
 
   # custom validation methods
   def start_must_be_lte_end
     return unless end_time_seconds && start_time_seconds
 
-    if start_time_seconds > end_time_seconds then
-      errors.add(:start_time_seconds, 'must be lower than end time')
+    if start_time_seconds > end_time_seconds
+      errors.add(:start_time_seconds, '%{value} must be lower than end time')
     end
   end
 
   def low_must_be_lte_high
     return unless high_frequency_hertz && low_frequency_hertz
 
-    if low_frequency_hertz > high_frequency_hertz then
-      errors.add(:start_time_seconds, 'must be lower than high frequency')
+    if low_frequency_hertz > high_frequency_hertz
+      errors.add(:start_time_seconds, '%{value} must be lower than high frequency')
     end
   end
 
   def set_tags
-    existing_tags = []
-    new_tags = []
-
-    tags.each do |tag|
+    # must use taggings here, can't use the through association to tags
+    # as taggings does not get the changes
+    self.taggings.each do |tagging|
+      tag = tagging.tag
       existing_tag = Tag.where(text: tag.text).first
-      if existing_tag
-        existing_tags.push(existing_tag)
-      else
-        new_tags.push(tag)
+      unless existing_tag.blank?
+        # remove the association, otherwise it tries to create it and fails (as it already exists)
+        tagging.tag = nil
+        tagging.tag_id = existing_tag.id
+        self.tags.reject! { |x| x.text == existing_tag.text}
       end
     end
 
-    self.tags = new_tags + existing_tags
+    # cater for tag_ids
+    # if self.taggings is empty, and self.tags is not, create the taggings based on the tags
+    if self.taggings.blank? && !self.tags.blank?
+      self.tags.each do |tag|
+        self.taggings.push(Tagging.new(tag_id:tag.id))
+      end
+    end
+
   end
 end

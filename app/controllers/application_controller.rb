@@ -4,9 +4,6 @@ class ApplicationController < ActionController::Base
   # CanCan - always check authorization
   check_authorization unless: :devise_controller?
 
-  # userstamp
-  include Userstamp
-
   # see routes.rb for the catch-all route for routing errors.
   # see application.rb for the exceptions_app settings.
   # see errors_controller.rb for the actions that handle routing errors and uncaught errors.
@@ -37,6 +34,10 @@ class ApplicationController < ActionController::Base
   skip_before_filter :verify_authenticity_token, if: :json_request?
 
   after_filter :set_csrf_cookie_for_ng, :resource_representation_caching_fixes
+
+  # set and reset user stamper for each request
+  # based on https://github.com/theepan/userstamp/tree/bf05d832ee27a717ea9455d685c83ae2cfb80310
+  around_filter :set_then_reset_user_stamper
 
   protected
 
@@ -117,7 +118,7 @@ class ApplicationController < ActionController::Base
     fail CustomErrors::ItemNotFoundError, "Could not find audio event with id #{request_params[:audio_event_id]}." if audio_event.blank?
 
     # can? also checks for admin access
-    can_access_audio_event = can? :read, audio_event
+    can_access_audio_event = can? :show, audio_event
     matching_ids = audio_event.audio_recording_id == audio_recording.id
     is_reference = audio_event.is_reference
     has_any_permission = can_access_audio_event || is_reference
@@ -172,11 +173,11 @@ class ApplicationController < ActionController::Base
   def render_error(status_symbol, detail_message, error, method_name, options = {})
     options = {redirect: false, links_object: nil, error_info: nil}.merge(options)
 
-    json_response = api_response.build(
+    json_response = Settings.api_response.build(
         status_symbol,
         nil,
         {
-            error_details:detail_message,
+            error_details: detail_message,
             error_links: options[:links_object]
         })
 
@@ -192,10 +193,10 @@ class ApplicationController < ActionController::Base
     respond_to do |format|
       format.html {
 
-        status_code = api_response.status_code(status_symbol)
-        status_message = api_response.status_phrase(status_symbol).humanize
+        status_code = Settings.api_response.status_code(status_symbol)
+        status_message = Settings.api_response.status_phrase(status_symbol).humanize
 
-        response_links = api_response.response_error_links(options[:links_object])
+        response_links = Settings.api_response.response_error_links(options[:links_object])
 
         if options[:redirect]
           redirect_to get_redirect, alert: "#{status_message}: #{detail_message}"
@@ -208,8 +209,6 @@ class ApplicationController < ActionController::Base
       # http://blogs.thewehners.net/josh/posts/354-obscure-rails-bug-respond_to-formatany
       format.all { render json: json_response, status: status_symbol, content_type: 'application/json' }
     end
-
-    check_reset_stamper
   end
 
   def render_api_response(content, status_symbol = :ok)
@@ -226,10 +225,6 @@ class ApplicationController < ActionController::Base
     end
 
     redirect_target
-  end
-
-  def api_response
-    @api_response ||= Api::Response.new
   end
 
   private
@@ -340,7 +335,7 @@ class ApplicationController < ActionController::Base
           error,
           'access_denied_response - unauthorised',
           redirect: false,
-          links_object: [:sign_in, :confirm])
+          links_object: [:sign_in, :sign_up, :confirm])
 
     end
   end
@@ -371,10 +366,6 @@ class ApplicationController < ActionController::Base
     end
   end
 
-  def check_reset_stamper
-    reset_stamper if User.stamper
-  end
-
   def log_original_error(method_name, error, response_given)
 
     msg = "Error handled by #{method_name} in application or errors controller."
@@ -395,6 +386,15 @@ class ApplicationController < ActionController::Base
       'api'
     else
       'application'
+    end
+  end
+
+  def set_then_reset_user_stamper
+    begin
+      User.stamper = self.current_user
+      yield
+    ensure
+      User.stamper = nil
     end
   end
 

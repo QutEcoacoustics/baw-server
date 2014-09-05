@@ -26,8 +26,6 @@ class User < ActiveRecord::Base
 
   roles :admin, :user, :harvester # do not change the order, it matters!
 
-  model_stamper # this identifies this class as being the class that 'stamps'
-
   has_attached_file :image,
                     styles: {span4: '300x300#', span3: '220x220#', span2: '140x140#', span1: '60x60#', spanhalf: '30x30#'},
                     default_url: '/images/user/user_:style.png'
@@ -41,6 +39,11 @@ class User < ActiveRecord::Base
   has_many :created_audio_events, class_name: 'AudioEvent', foreign_key: :creator_id, inverse_of: :creator
   has_many :updated_audio_events, class_name: 'AudioEvent', foreign_key: :updater_id, inverse_of: :updater
   has_many :deleted_audio_events, class_name: 'AudioEvent', foreign_key: :deleter_id, inverse_of: :deleter
+
+  has_many :created_audio_event_comments, class_name: 'AudioEventComment', foreign_key: 'creator_id', inverse_of: :creator
+  has_many :updated_audio_event_comments, class_name: 'AudioEventComment', foreign_key: 'updater_id', inverse_of: :updater
+  has_many :deleted_audio_event_comments, class_name: 'AudioEventComment', foreign_key: 'deleter_id', inverse_of: :deleter
+  has_many :flagged_audio_event_comments, class_name: 'AudioEventComment', foreign_key: 'flagger_id', inverse_of: :flagger
 
   has_many :created_audio_recordings, class_name: 'AudioRecording', foreign_key: :creator_id, inverse_of: :creator
   has_many :updated_audio_recordings, class_name: 'AudioRecording', foreign_key: :updater_id, inverse_of: :updater
@@ -88,13 +91,17 @@ class User < ActiveRecord::Base
             uniqueness: {
                 case_sensitive: false
             },
-            exclusion: {
-                in: %w(admin harvester analysis_runner)
-            },
             format: {
                 with: /\A[a-zA-Z0-9 _-]+\z/,
                 message: 'Only letters, numbers, spaces ( ), underscores (_) and dashes (-) are valid.'
             }
+
+  validates :user_name,
+            exclusion: {
+                in: %w(admin harvester analysis_runner root superuser administrator admins administrators)
+            },
+            if: Proc.new { |user| user.user_name_changed? }
+
   # format, uniqueness, and presence are validated by devise
   # Validatable component
   # validates :email,
@@ -134,7 +141,7 @@ class User < ActiveRecord::Base
     Project.includes(:permissions).where("(#{creator_id_check} OR #{permissions_check})", self.id, self.id).uniq.order('projects.updated_at DESC').limit(10)
   end
 
-  def recently_added_audio_events(page = 1, per_page = 30)
+  def accessible_audio_events(page = 1, per_page = 30)
     AudioEvent
     .includes(:audio_recording)
     .where('creator_id = ? OR updater_id = ?', self.id, self.id)
@@ -145,24 +152,28 @@ class User < ActiveRecord::Base
 
   def accessible_audio_recordings
     user_sites = self.projects.map { |project| project.sites.map { |site| site.id } }.to_a.uniq
-    AudioRecording.where(site_id: user_sites).limit(10)
+    AudioRecording.where(site_id: user_sites)
   end
 
-  def accessible_audio_events
-    user_sites = self.projects.map { |project| project.sites.select(:id).map { |site| site.id } }.to_a.uniq
-    AudioEvent.where(audio_recording_id: AudioRecording.where(site_id: user_sites).select(:id)).limit(10)
+  def accessible_comments
+    audio_events = AudioEvent.where(audio_recording_id: accessible_audio_recordings.select(:id))
+    AudioEventComment.where(audio_event_id: audio_events).select(:id)
+  end
+
+  def accessible_bookmarks
+    Bookmark.where(creator_id: self.id)
   end
 
   # helper methods for permission checks
 
   # @param [Project] project
   def can_read?(project)
-    !Permission.where(user_id: self.id, project_id: project.id, level: 'reader').first.blank? || project.creator == self
+    !get_read_permission(project).blank? || creator?(project)
   end
 
   # @param [Project] project
   def can_write?(project)
-    !Permission.where(user_id: self.id, project_id: project.id, level: 'writer').first.blank? || project.creator == self
+    !get_write_permission(project).blank? || creator?(project)
   end
 
   # @param [Array<Project>] projects
@@ -192,7 +203,7 @@ class User < ActiveRecord::Base
     # low to high: none, read, write, creator/owner, admin
     if self.has_role? :admin
       AccessLevel::ADMIN
-    elsif project.creator == self
+    elsif creator?(project)
       AccessLevel::OWNER
     elsif self.can_write? project
       AccessLevel::WRITE
@@ -215,9 +226,11 @@ class User < ActiveRecord::Base
     highest
   end
 
+  # Check if user has any permission on given project.
   # @param [Project] project
+  # @return [Boolean] true if user has any permission on project.
   def has_permission?(project)
-    !Permission.where(user_id: self.id, project_id: project.id).first.blank? || project.creator == self
+    !get_permission(project).blank? || creator?(project)
   end
 
   # @param [Array<Project>] projects
@@ -228,6 +241,20 @@ class User < ActiveRecord::Base
       end
     end
     false
+  end
+
+  # True if this user is the creator of project.
+  # @param [Project] project
+  # @return [Boolean]
+  def creator?(project)
+    project.creator == self
+  end
+
+  # True if this user is the updater of project.
+  # @param [Project] project
+  # @return [Boolean]
+  def updater?(project)
+    project.updater == self
   end
 
   # @param [Project] project
@@ -270,6 +297,14 @@ class User < ActiveRecord::Base
     AudioEvent.where('audio_events.creator_id = ? OR audio_events.updater_id = ?', self.id, self.id).count
   end
 
+  def get_bookmark_count
+    Bookmark.where('bookmarks.creator_id = ? OR bookmarks.updater_id = ?', self.id, self.id).count
+  end
+
+  def get_comment_count
+    AudioEventComment.where('audio_event_comments.creator_id = ? OR audio_event_comments.updater_id = ?', self.id, self.id).count
+  end
+
   # Get the last tiem this user was seen.
   # @return [DateTime] Date this user was last seen
   def get_last_seen
@@ -280,6 +315,38 @@ class User < ActiveRecord::Base
   # @return [DateTime] Membership duration
   def get_membership_duration
     Time.zone.now - self.created_at
+  end
+
+  # Change the behaviour of the auth action to use :login rather than :email.
+  # Because we want to change the behavior of the login action, we have to overwrite
+  # the find_for_database_authentication method. The method's stack works like this:
+  # find_for_database_authentication calls find_for_authentication which calls
+  # find_first_by_auth_conditions. Overriding the find_for_database_authentication
+  # method allows you to edit database authentication; overriding find_for_authentication
+  # allows you to redefine authentication at a specific point (such as token, LDAP or database).
+  # Finally, if you override the find_first_by_auth_conditions method, you can customize
+  # finder methods (such as authentication, account unlocking or password recovery).
+  def self.find_first_by_auth_conditions(warden_conditions)
+    conditions = warden_conditions.dup
+    login = conditions.delete(:login)
+    if login
+      where(conditions)
+      .where(['lower(user_name) = :value OR lower(email) = :value', {value: login.downcase}])
+      .first
+    else
+      where(conditions).first
+    end
+  end
+
+  # Store the current_user id in the thread so it can be accessed by models
+  def self.stamper=(object)
+    object_stamper = object.is_a?(ActiveRecord::Base) ? object.send("#{object.class.primary_key}".to_sym) : object
+    Thread.current["#{self.to_s.downcase}_#{self.object_id}_stamper"] = object_stamper
+  end
+
+  # Retrieves the existing stamper (current_user id) for the current request.
+  def self.stamper
+    Thread.current["#{self.to_s.downcase}_#{self.object_id}_stamper"]
   end
 
   private
@@ -294,24 +361,4 @@ class User < ActiveRecord::Base
     PublicMailer.new_user_message(self, DataClass::NewUserInfo.new(name: self.user_name, email: self.email))
   end
 
-  # Change the behaviour of the auth action to use :login rather than :email.
-  # Because we want to change the behavior of the login action, we have to overwrite
-  # the find_for_database_authentication method. The method's stack works like this:
-  # find_for_database_authentication calls find_for_authentication which calls
-  # find_first_by_auth_conditions. Overriding the find_for_database_authentication
-  # method allows you to edit database authentication; overriding find_for_authentication
-  # allows you to redefine authentication at a specific point (such as token, LDAP or database).
-  # Finally, if you override the find_first_by_auth_conditions method, you can customize
-  # finder methods (such as authentication, account unlocking or password recovery).
-   def self.find_first_by_auth_conditions(warden_conditions)
-    conditions = warden_conditions.dup
-    login = conditions.delete(:login)
-    if login
-      where(conditions)
-        .where(['lower(user_name) = :value OR lower(email) = :value', {value: login.downcase}])
-        .first
-    else
-      where(conditions).first
-    end
-  end
 end

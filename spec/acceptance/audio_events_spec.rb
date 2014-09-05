@@ -24,7 +24,7 @@ def library_request(settings = {})
 
     parsed_response_body = JsonSpec::Helpers::parse_json(response_body)
 
-    if !ordered_audio_recordings.blank?  && ordered_audio_recordings.respond_to?(:each_index) &&
+    if !ordered_audio_recordings.blank? && ordered_audio_recordings.respond_to?(:each_index) &&
         !parsed_response_body.blank? && parsed_response_body.respond_to?(:each_index)
       parsed_response_body.each_index do |index|
         expect(parsed_response_body[index]['audio_event_id'])
@@ -1090,10 +1090,12 @@ resource 'AudioEvents' do
       explanation 'this should create an audiorecording, including two taggings, one with the newly created tag and one with an existing tag'
       tag_count = Tag.count
       do_request
-      tag_count.should == Tag.count - 1
-      status.should == 201
-      response_body.should have_json_path('start_time_seconds')
-      response_body.should have_json_path('taggings/1/tag')
+
+      do_checks(:created, {expected_json_path: 'taggings/1/tag'}) # expecting two 'taggings'
+
+      expect(response_body).to have_json_path('start_time_seconds')
+      # only one tag should have been created, so new tag count should be one more than old tag count
+      expect(tag_count).to eq(Tag.count - 1)
     end
   end
 
@@ -1122,10 +1124,13 @@ resource 'AudioEvents' do
     example 'CREATE (with existing tag_ids as writer) - 201', :document => true do
       tag_count = Tag.count
       do_request
-      tag_count.should == Tag.count
-      status.should == 201
+
+      do_checks(:created, {expected_json_path: 'taggings/1/tag'})  # expecting two 'taggings'
+
+      expect(response_body).to have_json_path('start_time_seconds')
+      expect(tag_count).to eq(Tag.count)
+
       response_body.should have_json_path('start_time_seconds')
-      response_body.should have_json_path('taggings/1/tag') # expecting two 'taggings'
     end
   end
 

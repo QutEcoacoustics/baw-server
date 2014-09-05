@@ -10,6 +10,7 @@ describe Filter::Query do
   def create_filter(params)
     Filter::Query.new(
         params,
+        nil,
         AudioRecording,
         AudioRecording.filter_settings
     )
@@ -131,7 +132,7 @@ describe Filter::Query do
                 }
             }
         ).query_full
-      }.to raise_error(ArgumentError, /got not_a_valid_combiner/)
+      }.to raise_error(ArgumentError, /Unrecognised combiner or field name: not_a_valid_combiner/)
     end
 
 #
@@ -221,23 +222,6 @@ describe Filter::Query do
             }
         ).query_full
       }.to raise_error(ArgumentError, /Conditions hash must have at least 1 entry, got 0/)
-    end
-
-    it 'occurs when top level properties are not a combiner' do
-      expect {
-        create_filter(
-            {
-                filter: {
-                    site_id: {
-                        eq: 5
-                    },
-                    recorded_date: {
-                        contains: 'Hello'
-                    }
-                }
-            }
-        ).query_full
-      }.to raise_error(ArgumentError, /Must be 'and', 'or', 'not' when there is more than one item at top level, got site_id with 2 entries/)
     end
 
     it 'occurs when projection includes invalid field' do

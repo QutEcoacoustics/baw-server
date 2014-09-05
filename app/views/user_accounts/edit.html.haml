@@ -5,8 +5,4 @@
 - content_for :title, "Edit Profile for #{@user.user_name}"
 
 - content_for :left_sidebar do
-  = render layout: '/shared/left_sidebar', locals: {title: 'User Accounts'} do
-    - if can? :show, User
-      %li= link_to 'Show', user_account_path(@user), title: 'Show user account', data: {toggle: 'tooltip',  placement: 'right'}
-    - if can? :index, @user
-      %li= link_to 'List', user_accounts_path
+  = render partial: 'sidebar_links'

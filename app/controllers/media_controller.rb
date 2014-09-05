@@ -116,7 +116,7 @@ class MediaController < ApplicationController
   # @param [ActionDispatch::Request] rails_request
   def json_response(metadata_response, current, rails_request)
 
-    wrapped = api_response.build(:ok, metadata_response)
+    wrapped = Settings.api_response.build(:ok, metadata_response)
 
     json_result = wrapped.to_json
     json_result_size = json_result.size.to_s

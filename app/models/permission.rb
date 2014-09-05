@@ -1,6 +1,9 @@
 class Permission < ActiveRecord::Base
   extend Enumerize
 
+  # ensures that creator_id, updater_id, deleter_id are set
+  include UserChange
+
   attr_accessible :level, :project_id, :user_id
 
   belongs_to :project, inverse_of: :permissions
@@ -12,15 +15,27 @@ class Permission < ActiveRecord::Base
   AVAILABLE_LEVELS = [:writer, :reader]
   enumerize :level, in: AVAILABLE_LEVELS, predicates: true
 
-  # add created_at and updated_at stamper
-  stampable
-
   # association validations
   validates :project, existence: true
   validates :user, existence: true
-  #validates :creator, existence: true
+  validates :creator, existence: true
 
   # attribute validations
   validates_uniqueness_of :level, scope: [:user_id, :project_id, :level]
   validates_presence_of :level, :user, :creator, :project
+
+  # Define filter api settings
+  def self.filter_settings
+    {
+        valid_fields: [:id, :project_id, :user_id, :level, :creator_id, :created_at],
+        render_fields: [:id, :project_id, :user_id, :level],
+        text_fields: [:level],
+        controller: :permissions,
+        action: :filter,
+        defaults: {
+            order_by: :project_id,
+            direction: :asc
+        }
+    }
+  end
 end

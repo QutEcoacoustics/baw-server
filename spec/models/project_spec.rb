@@ -5,8 +5,8 @@ describe Project do
     FactoryGirl.create(:project).should be_valid
   end
 
-  it {should have_many :permissions}
-  it {should have_and_belong_to_many :sites}
+  it { should have_many :permissions }
+  it { should have_and_belong_to_many :sites }
 
   it { should belong_to(:creator).with_foreign_key(:creator_id) }
   it { should belong_to(:updater).with_foreign_key(:updater_id) }
@@ -16,7 +16,9 @@ describe Project do
     FactoryGirl.build(:project, name: nil).should_not be_valid
   end
   it 'is invalid without a creator' do
-    lambda{FactoryGirl.create(:project, creator_id: nil)}.should raise_error(ActiveRecord::StatementInvalid)
+    expect {
+      FactoryGirl.create(:project, creator_id: nil)
+    }.to raise_error(ActiveRecord::RecordInvalid, /Creator must exist as an object or foreign key/)
   end
   it 'is invalid without a created_at' do
     FactoryGirl.create(:project, created_at: nil).should_not be_a_new(Project)
