@@ -100,7 +100,7 @@ class AudioRecordingsController < ApplicationController
   def filter
     filter_response = Settings.api_response.response_filter(
         params,
-        current_user.accessible_audio_recordings,
+        current_user.is_admin? ? AudioRecording.scoped : current_user.accessible_audio_recordings,
         AudioRecording,
         AudioRecording.filter_settings
     )

@@ -5,11 +5,17 @@ AWB::Application.configure do
   config.cache_classes = true
 
   # Full error reports are disabled and caching is turned on
-  config.consider_all_requests_local = true
+  config.consider_all_requests_local = false
   config.action_controller.perform_caching = true
 
-  # Do not compress assets
-  config.assets.compress = false
+  # Do compress assets
+  config.assets.compress = true
+
+  # Don't fallback to assets pipeline if a precompiled asset is missed
+  config.assets.compile = true
+
+  # Generate digests for assets URLs
+  config.assets.digest = true
 
   # enable Rails to serve static assets -  this may be a performance issue
   # required to enable client to be reachable

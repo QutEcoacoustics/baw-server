@@ -282,9 +282,10 @@ module Filter
       case key
         when :include
           fail ArgumentError, 'Include must contain at least one field.' if value.blank?
-          columns = value
+          columns = value.map(&:to_sym)
         when :exclude
-          columns = valid_fields.reject { |item| value.include?(item)}
+          fail ArgumentError, 'Exclude must contain at least one field.' if value.blank?
+          columns = valid_fields.reject { |item| value.include?(item)}.map(&:to_sym)
           fail ArgumentError, 'Exclude must contain at least one field.' if columns.blank?
         else
           fail ArgumentError, "Unrecognised projection key #{key}."

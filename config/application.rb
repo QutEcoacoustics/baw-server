@@ -99,7 +99,7 @@ module AWB
     # allow any origin, with any header, to access the array of methods
     config.middleware.use Rack::Cors do
       allow do
-        origins '*'
+        origins /http:\/\/localhost(:\d+)?/, /http:\/\/127\.0\.0\.1(:\d+)?/, /http:\/\/192\.168\.0\.\d{1,3}(:\d+)?/
         resource '*', headers: :any, methods: [:get, :post, :put, :delete, :options]
       end
     end

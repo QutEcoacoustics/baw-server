@@ -289,7 +289,7 @@ describe Filter::Query do
         ).query_full
       }.to raise_error(ArgumentError, /Projections hash must have exactly 1 entry, got 2/)
     end
-
+ 
     it 'occurs when projection has empty include' do
       expect {
         create_filter(
@@ -349,7 +349,8 @@ ORDERBY\"audio_recordings\".\"recorded_date\"DESC"
           }
       }
       complex_result =
-          "SELECT\"audio_recordings\".\"duration_seconds\" \
+          "SELECT\"audio_recordings\".\"id\", \
+\"audio_recordings\".\"duration_seconds\" \
 FROM\"audio_recordings\" \
 WHERE\"audio_recordings\".\"site_id\"=5 \
 AND(\"audio_recordings\".\"deleted_at\"ISNULL) \

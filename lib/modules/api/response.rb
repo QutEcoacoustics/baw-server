@@ -28,6 +28,8 @@ module Api
     # @param [Symbol] status_symbol Response status.
     # @param [Object] data Data for response.
     # @param [Hash] opts the options for additional information.
+    # @option opts [Hash] :filter (nil) Filter that produced data.
+    # @option opts [Hash] :projection (nil) Projection.
     # @option opts [Array<Symbol>] :error_links ([]) Error links.
     # @option opts [String] :error_details (nil) Error details.
     # @option opts [Symbol] :order_by (nil) Model property data is ordered by.
@@ -59,6 +61,15 @@ module Api
           data: data
       }
 
+      # include projection/filter if given
+      unless opts[:projection].blank?
+        result[:meta][:projection] = opts[:projection]
+      end
+
+      unless opts[:filter].blank?
+        result[:meta][:filter] = opts[:filter]
+      end
+
       # error information
       if !opts[:error_details].blank? || !opts[:error_links].blank?
         result[:meta][:error] = response_error(opts[:error_details], opts[:error_links])
@@ -87,6 +98,12 @@ module Api
         result[:meta][:paging][:total] = opts[:total]
       end
 
+      # max page
+      max_page = nil
+      if !opts[:total].blank? && !opts[:items].blank?
+        max_page = result[:meta][:paging][:max_page] = (opts[:total].to_f / opts[:items].to_f).ceil
+      end
+
       # paging: next/prev links
       if result[:meta].include?(:paging)
         controller = opts[:controller]
@@ -106,15 +123,15 @@ module Api
         )
         next_link = paging_link(
             controller, action,
-            restrict_to_bounds(opts[:page] + 1),
+            restrict_to_bounds(opts[:page] + 1, 1, max_page),
             opts[:items],
             opts[:filter_text],
             opts[:filter_generic_keys]
         )
 
         result[:meta][:paging][:current] = current_link
-        result[:meta][:paging][:previous] = previous_link
-        result[:meta][:paging][:next] = next_link
+        result[:meta][:paging][:previous] = previous_link == current_link ? nil : previous_link
+        result[:meta][:paging][:next] = next_link == current_link ? nil : next_link
 
       end
 
@@ -174,6 +191,8 @@ module Api
       data = paged_sorted_query.all
 
       # build complete api response
+      opts[:filter] = filter_query.filter unless filter_query.filter.blank?
+      opts[:projection] = filter_query.projection unless filter_query.projection.blank?
       result = build(status_symbol, data, opts)
 
       # return result
@@ -189,7 +208,6 @@ module Api
           action: filter_settings.action,
           filter_text: filter_query.qsp_text_filter,
           filter_generic_keys: filter_query.qsp_generic_filters
-
       }
 
       # paging

@@ -205,13 +205,13 @@ class AudioRecording < ActiveRecord::Base
   def self.filter_settings
     {
         valid_fields: [
-            :uuid, :recorded_date, :site_id, :duration_seconds,
+            :id, :uuid, :recorded_date, :site_id, :duration_seconds,
             :sample_rate_hertz, :channels, :bit_rate_bps, :media_type,
             :data_length_bytes, :status, :created_at, :updated_at
         # :uploader_id, :file_hash, , :notes, :creator_id,
         #:updater_id, :deleter_id, :deleted_at, :original_file_name
         ],
-        render_fields: [:uuid, :recorded_date, :site_id, :duration_seconds,
+        render_fields: [:id, :uuid, :recorded_date, :site_id, :duration_seconds,
                         :sample_rate_hertz, :channels, :bit_rate_bps, :media_type, :status],
         text_fields: [:media_type, :status],
         controller: :audio_recordings,

@@ -9,7 +9,7 @@ module Filter
     include Validate
 
     attr_reader :key_prefix, :max_limit, :initial_query, :table, :valid_fields, :text_fields, :filter_settings,
-                :parameters, :filter, :qsp_text_filter, :qsp_generic_filters,
+                :parameters, :filter, :projection, :qsp_text_filter, :qsp_generic_filters,
                 :paging, :sort
 
     # Convert a json POST body to an arel query.
