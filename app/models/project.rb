@@ -1,9 +1,10 @@
 class Project < ActiveRecord::Base
+  extend Enumerize
   # ensures that creator_id, updater_id, deleter_id are set
   include UserChange
 
-  attr_accessible :description, :image, :name, :notes, :urn #,
-                  #:sign_in_level, :anonymous_level
+  attr_accessible :description, :image, :name, :notes, :urn,
+                  :sign_in_level, :anonymous_level
 
   # relationships
   belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_projects
@@ -14,9 +15,15 @@ class Project < ActiveRecord::Base
   accepts_nested_attributes_for :permissions
   has_many :readers, through: :permissions, source: :user, conditions: "permissions.level = 'reader'", uniq: true
   has_many :writers, through: :permissions, source: :user, conditions: "permissions.level = 'writer'", uniq: true
+  has_many :owners, through: :permissions, source: :user, conditions: "permissions.level = 'owner'", uniq: true
   has_and_belongs_to_many :sites, uniq: true
   has_many :datasets, inverse_of: :project
   has_many :jobs, through: :datasets
+
+  AVAILABLE_PRPJECT_LEVELS_SYMBOLS = [:none, :writer, :reader]
+  AVAILABLE_PROJECT_LEVELS = AVAILABLE_PROJECT_LEVELS_SYMBOLS.map { |item| item.to_s }
+  enumerize :sign_in_level, in: AVAILABLE_PROJECT_LEVELS, predicates: true
+  enumerize :anonymous_level, in: AVAILABLE_PROJECT_LEVELS, predicates: true
 
   #plugins
   has_attached_file :image,

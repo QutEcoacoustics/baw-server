@@ -11,8 +11,8 @@ class Permission < ActiveRecord::Base
   belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_permissions
   belongs_to :updater, class_name: 'User', foreign_key: :updater_id, inverse_of: :updated_permissions
 
-
-  AVAILABLE_LEVELS = [:writer, :reader]
+  AVAILABLE_LEVELS_SYMBOLS = [:writer, :reader, :owner]
+  AVAILABLE_LEVELS = AVAILABLE_LEVELS_SYMBOLS.map { |item| item.to_s }
   enumerize :level, in: AVAILABLE_LEVELS, predicates: true
 
   # association validations
