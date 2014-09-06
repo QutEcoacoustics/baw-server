@@ -40,6 +40,8 @@ module AWB
     # Run "rake -D time" for a list of tasks for finding time zone names. Default is UTC.
     # config.time_zone = 'Central Time (US & Canada)'
     #config.time_zone - 'UTC'
+    # used as default when user is not logged in
+    # for detecting user daylight savings time, see http://stackoverflow.com/a/11888430/31567
     config.time_zone = 'Brisbane'
 
     # The default locale is :en and all translations from config/locales/*.rb,yml are auto loaded.

@@ -12,7 +12,7 @@ class User < ActiveRecord::Base
 
   attr_accessible :user_name, :email, :password, :password_confirmation, :remember_me,
                   :roles, :roles_mask, :preferences,
-                  :image, :login
+                  :image, :login, :time_zone_name
 
   # Virtual attribute for authenticating by either :user_name or :email
   # This is in addition to real persisted fields.
