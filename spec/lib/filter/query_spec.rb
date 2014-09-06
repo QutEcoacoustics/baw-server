@@ -461,7 +461,7 @@ ORDERBY\"audio_recordings\".\"recorded_date\"DESC"
                       :media_type
                   ]
               },
-              sort: {
+              sorting: {
                   order_by: 'duration_seconds',
                   direction: 'desc'
               },

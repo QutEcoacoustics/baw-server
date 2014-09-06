@@ -49,14 +49,14 @@ module Filter
     # @param [Symbol] default_order_by
     # @param [Symbol] default_direction
     # @return [Hash] Sorting parameters
-    def parse_sort(params, default_order_by, default_direction)
+    def parse_sorting(params, default_order_by, default_direction)
       # qsp
       order_by = params[:order_by]
       direction = params[:direction]
 
       # POST body
-      order_by = params[:sort][:order_by] if order_by.blank? && !params[:sort].blank?
-      direction = params[:sort][:direction] if order_by.blank? && !params[:sort].blank?
+      order_by = params[:sorting][:order_by] if order_by.blank? && !params[:sorting].blank?
+      direction = params[:sorting][:direction] if order_by.blank? && !params[:sorting].blank?
 
       # set defaults if necessary
       order_by = default_order_by if order_by.blank?

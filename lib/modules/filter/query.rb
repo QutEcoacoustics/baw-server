@@ -10,7 +10,7 @@ module Filter
 
     attr_reader :key_prefix, :max_limit, :initial_query, :table, :valid_fields, :text_fields, :filter_settings,
                 :parameters, :filter, :projection, :qsp_text_filter, :qsp_generic_filters,
-                :paging, :sort
+                :paging, :sorting
 
     # Convert a json POST body to an arel query.
     # @param [Hash] parameters
@@ -39,7 +39,7 @@ module Filter
       @qsp_text_filter = parse_qsp_text(@parameters)
       @qsp_generic_filters = parse_qsp(nil, @parameters, @key_prefix, @valid_fields)
       @paging = parse_paging(@parameters, @max_limit)
-      @sort = parse_sort(
+      @sorting = parse_sorting(
           @parameters,
           filter_settings.defaults.order_by,
           filter_settings.defaults.direction)
@@ -183,7 +183,7 @@ module Filter
     # @return [ActiveRecord::Relation] query
     def query_sort(query)
       return query unless has_sort_params?
-      apply_sort(query, @table, @sort.order_by, @valid_fields, @sort.direction)
+      apply_sort(query, @table, @sorting.order_by, @valid_fields, @sorting.direction)
     end
 
     # Add sorting to query.
@@ -217,7 +217,7 @@ module Filter
     end
 
     def has_sort_params?
-      !@sort.order_by.blank? && !@sort.direction.blank?
+      !@sorting.order_by.blank? && !@sorting.direction.blank?
     end
 
     def has_projection_params?
