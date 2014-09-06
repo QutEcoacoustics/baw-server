@@ -1,6 +1,8 @@
 class ApplicationController < ActionController::Base
   layout :api_or_html
 
+  before_filter :authenticate_user!
+
   # CanCan - always check authorization
   check_authorization unless: :devise_controller?
 
@@ -34,6 +36,8 @@ class ApplicationController < ActionController::Base
   skip_before_filter :verify_authenticity_token, if: :json_request?
 
   after_filter :set_csrf_cookie_for_ng, :resource_representation_caching_fixes
+
+  before_filter :set_user_time_zone
 
   # set and reset user stamper for each request
   # based on https://github.com/theepan/userstamp/tree/bf05d832ee27a717ea9455d685c83ae2cfb80310
@@ -396,6 +400,10 @@ class ApplicationController < ActionController::Base
     ensure
       User.stamper = nil
     end
+  end
+
+  def set_user_time_zone
+    Time.zone = current_user.time_zone_name if user_signed_in?
   end
 
 end
