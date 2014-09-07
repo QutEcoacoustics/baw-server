@@ -68,5 +68,10 @@ resource 'Errors' do
     get '/test_exceptions?exception_class=CustomErrors::RoutingArgumentError' do
       standard_request('ERROR', 404, 'meta/error/original_route', true, 'Could not find the requested page')
     end
+
+    get '/test_exceptions?exception_class=CustomErrors::FilterArgumentError' do
+      standard_request('ERROR', 400, 'meta/error/details', true, 'Filter parameters were not valid')
+    end
+
   end
 end

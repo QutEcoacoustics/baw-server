@@ -115,7 +115,11 @@ module Filter
     # @param [ActiveRecord::Relation] query
     # @return [ActiveRecord::Relation] query
     def query_filter(query)
-      apply_conditions(query, build_top(@filter, @table, @valid_fields))
+      if has_filter_params?
+        apply_conditions(query, build_top(@filter, @table, @valid_fields))
+      else
+        query
+      end
     end
 
     # Add projections to a query.
@@ -148,7 +152,7 @@ module Filter
     # @param [ActiveRecord::Relation] query
     # @return [ActiveRecord::Relation] query
     def query_filter_text(query)
-      return query if @qsp_text_filter.blank?
+      return query unless has_qsp_text?
       text_condition = build_text(@qsp_text_filter, @text_fields, @table, @valid_fields)
       apply_condition(query, text_condition)
     end
@@ -166,7 +170,7 @@ module Filter
     # @param [ActiveRecord::Relation] query
     # @return [ActiveRecord::Relation] query
     def query_filter_generic(query)
-      return query if @qsp_generic_filters.blank?
+      return query unless has_qsp_generic?
       apply_condition(query, build_generic(@qsp_generic_filters, @table, @valid_fields))
     end
 
@@ -222,6 +226,18 @@ module Filter
 
     def has_projection_params?
       !@projection.blank?
+    end
+
+    def has_filter_params?
+      !@filter.blank?
+    end
+
+    def has_qsp_generic?
+      !@qsp_generic_filters.blank?
+    end
+
+    def has_qsp_text?
+      !@qsp_text_filter.blank?
     end
 
     private

@@ -20,6 +20,7 @@ class ApplicationController < ActionController::Base
   rescue_from CustomErrors::UnsupportedMediaTypeError, with: :unsupported_media_type_error_response
   rescue_from CustomErrors::NotAcceptableError, with: :not_acceptable_error_response
   rescue_from CustomErrors::UnprocessableEntityError, with: :unprocessable_entity_error_response
+  rescue_from CustomErrors::FilterArgumentError, with: :filter_argument_error_response
 
   # Don't rescue this, it is the base for 406 and 415
   #rescue_from CustomErrors::RequestedMediaTypeError, with: :requested_media_type_error_response
@@ -356,6 +357,16 @@ class ApplicationController < ActionController::Base
         "The request was not valid: #{error.message}",
         error,
         'bad_request_error_response',
+    )
+  end
+
+  def filter_argument_error_response(error)
+    render_error(
+        :bad_request,
+        "Filter parameters were not valid: #{error.message}",
+        error,
+        'filter_argument_error_response',
+        {error_info: error.filter_segment}
     )
   end
 

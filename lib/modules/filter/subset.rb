@@ -111,17 +111,17 @@ module Filter
       interval = hash[:interval]
 
       if !from.blank? && !to.blank? && !interval.blank?
-        fail ArgumentError, "Range filter must use either ('from' and 'to') or ('interval'), not both."
+        fail CustomErrors::FilterArgumentError.new("Range filter must use either ('from' and 'to') or ('interval'), not both.", {field: column_name, hash: hash})
       elsif from.blank? && !to.blank?
-        fail ArgumentError, "Range filter missing 'from'."
+        fail CustomErrors::FilterArgumentError.new("Range filter missing 'from'.", {field: column_name, hash: hash})
       elsif !from.blank? && to.blank?
-        fail ArgumentError, "Range filter missing 'to'."
+        fail CustomErrors::FilterArgumentError.new("Range filter missing 'to'.", {field: column_name, hash: hash})
       elsif !from.blank? && !to.blank?
         compose_range(table, column_name, allowed, from, to)
       elsif !interval.blank?
         compose_range_string(table, column_name, allowed, interval)
       else
-        fail ArgumentError, "Range filter was not valid (#{hash})"
+        fail CustomErrors::FilterArgumentError.new("Range filter was not valid (#{hash})", {field: column_name, hash: hash})
       end
     end
 
@@ -146,7 +146,7 @@ module Filter
 
       range_regex = /(\[|\()(.*),(.*)(\)|\])/i
       matches = range_string.match(range_regex)
-      fail ArgumentError, "Range string must be in the form (|[.*,.*]|), got #{range_string.inspect}" unless matches
+      fail CustomErrors::FilterArgumentError.new("Range string must be in the form (|[.*,.*]|), got #{range_string.inspect}", {field: column_name}) unless matches
 
       captures = matches.captures
 

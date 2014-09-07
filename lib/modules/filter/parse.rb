@@ -63,8 +63,8 @@ module Filter
       direction = default_direction if direction.blank?
 
       # ensure symbols
-      order_by = order_by.to_sym unless order_by.blank?
-      direction = direction.to_sym unless direction.blank?
+      order_by = CleanParams.clean(order_by) unless order_by.blank?
+      direction = CleanParams.clean(direction) unless direction.blank?
 
       {order_by: order_by, direction: direction}
     end
@@ -94,7 +94,7 @@ module Filter
         is_filter_qsp = key_s.starts_with?(key_prefix)
 
         if is_filter_qsp
-          new_key = key_s[key_prefix.size..-1].to_sym
+          new_key = CleanParams.clean(key_s[key_prefix.size..-1])
           found[new_key] = value if valid_fields.include?(new_key)
         end
       end
