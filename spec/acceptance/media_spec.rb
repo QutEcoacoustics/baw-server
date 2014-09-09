@@ -690,5 +690,32 @@ resource 'Media' do
     end
 
   end
+ 
+  context 'range request' do
+    header 'Range', 'bytes=0-'
+
+    get '/audio_recordings/:audio_recording_id/media.:format' do
+      standard_media_parameters
+      let(:authentication_token) { reader_token }
+      let(:format) { 'mp3' }
+      example 'MEDIA (audio get request mp3 as reader with shallow path using range request) - 200', document: document_media_requests do
+        using_original_audio(audio_recording, 'audio/mp3')
+
+        expect(response_headers).to include('Accept-Ranges')
+        expect(response_headers['Accept-Ranges']).to eq('bytes')
+
+        expect(response_headers).to include('Content-Range')
+        expect(response_headers['Content-Range']).to include('bytes 0-')
+
+        expect(response_headers).to include('Content-Length')
+        expect(response_headers['Content-Length']).to_not be_blank
+
+        expect(response_headers).to include('X-Media-Response-From')
+        expect(response_headers['X-Media-Response-From']).to eq('Generated Locally')
+
+        expect(response_headers).to include('X-Media-Response-Start')
+      end
+    end
+  end
 
 end

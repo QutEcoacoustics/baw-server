@@ -311,7 +311,7 @@ class MediaController < ApplicationController
     info[:response_has_content] = false if is_head_request
 
     if has_content && is_range
-      buffer = write_to_response_stream(info)
+      buffer = write_to_response_stream(info, range_request)
       response_send_data(buffer, info)
 
     elsif has_content && !is_range
@@ -329,13 +329,13 @@ class MediaController < ApplicationController
 
   end
 
-  def write_to_response_stream(info)
+  def write_to_response_stream(info, range_request)
     # write audio data from the file to a stringIO
     # use the StringIO in send_data
 
     buffer = ''
     StringIO.open(buffer, 'w') { |string_io|
-      @range_request.write_content_to_output(info, string_io)
+      range_request.write_content_to_output(info, string_io)
     }
     buffer
   end
