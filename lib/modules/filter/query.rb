@@ -7,6 +7,7 @@ module Filter
     include Parse
     include Build
     include Validate
+    include Custom
 
     attr_reader :key_prefix, :max_limit, :initial_query, :table, :valid_fields, :text_fields, :filter_settings,
                 :parameters, :filter, :projection, :qsp_text_filter, :qsp_generic_filters,

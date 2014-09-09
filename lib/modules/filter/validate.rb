@@ -130,7 +130,9 @@ module Filter
     # @raise [FilterArgumentError] if condition is not an Arel::Nodes::Node
     # @return [void]
     def validate_condition(condition)
-      fail CustomErrors::FilterArgumentError, "Condition must be Arel::Nodes::Node, got #{condition}" unless condition.is_a?(Arel::Nodes::Node)
+      if !condition.is_a?(Arel::Nodes::Node) && !condition.is_a?(String)
+        fail CustomErrors::FilterArgumentError, "Condition must be Arel::Nodes::Node or String, got #{condition}"
+      end
     end
 
     # Validate projection value.
@@ -167,7 +169,7 @@ module Filter
     # @return [void]
     def validate_array(value)
       fail CustomErrors::FilterArgumentError, "Value must not be null, got #{value}" if value.blank?
-      fail CustomErrors::FilterArgumentError, "Value must be an Array, got #{value}" unless value.is_a?(Array)
+      fail CustomErrors::FilterArgumentError, "Value must be an Array or String, got #{value}" unless value.is_a?(Array) || value.is_a?(String)
     end
 
     # Validate a hash.

@@ -10,6 +10,7 @@ module Filter
     extend Subset
     extend Validate
     extend Projection
+    extend Custom
 
     private
 
@@ -166,6 +167,12 @@ module Filter
     # @param [Array<Symbol>] valid_fields
     # @return [Arel::Nodes::Node] condition
     def build_condition(field, filter_name, filter_value, table, valid_fields)
+      # special cases
+      if table.name == 'sites' && field == :project_ids && filter_name == :in
+        field = :id
+        filter_value = compose_project_ids(filter_value)
+      end
+
       case filter_name
 
         # comparisons

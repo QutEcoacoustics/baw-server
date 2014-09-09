@@ -122,7 +122,7 @@ class Site < ActiveRecord::Base
   # Define filter api settings
   def self.filter_settings
     {
-        valid_fields: [:id, :name, :description, :created_at, :updated_at],
+        valid_fields: [:id, :name, :description, :created_at, :updated_at, :project_ids],
         render_fields: [:id, :name, :description],
         text_fields: [:description, :name],
         controller: :sites,

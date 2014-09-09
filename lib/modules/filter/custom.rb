@@ -73,6 +73,15 @@ module Filter
       Arel::Nodes::SqlLiteral.new(similar)
     end
 
+    # Create :projects_sites WHERE arel query to filter by :project_id.
+    # @param [Array<Integer>] project_ids
+    # @return [Arel::SelectManager] arel query
+    def compose_project_ids(project_ids)
+      projects_sites_table = Arel::Table.new(:projects_sites)
+      result = Arel::Table.new(:projects_sites).project(:site_id).where(compose_in(projects_sites_table, :project_id, [:project_id], project_ids))
+      result.to_sql
+    end
+
     # Create distance projection.
     # @param [Float] freq_min
     # @param [Float] freq_max
