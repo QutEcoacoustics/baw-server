@@ -21,7 +21,8 @@ module Filter
     def initialize(parameters, query, model, filter_settings)
       # might need this at some point: Rack::Utils.parse_nested_query
       @key_prefix = 'filter_'
-      @max_limit = 30
+      @default_page = 1
+      @default_items = 500
       @table = relation_table(model)
       @initial_query = !query.nil? && query.is_a?(ActiveRecord::Relation) ? query : relation_all(model)
       @valid_fields = filter_settings.valid_fields.map(&:to_sym)
@@ -39,7 +40,10 @@ module Filter
 
       @qsp_text_filter = parse_qsp_text(@parameters)
       @qsp_generic_filters = parse_qsp(nil, @parameters, @key_prefix, @valid_fields)
-      @paging = parse_paging(@parameters, @max_limit)
+      @paging = parse_paging(
+          @parameters,
+          @default_page,
+          @default_items)
       @sorting = parse_sorting(
           @parameters,
           filter_settings.defaults.order_by,
@@ -288,7 +292,7 @@ module Filter
     # @param [Integer] limit
     # @return [ActiveRecord::Relation] the modified query
     def apply_paging(query, offset, limit)
-      validate_paging(offset, limit, @max_limit)
+      validate_paging(offset, limit, @default_items)
       query.offset(offset).limit(limit)
     end
 

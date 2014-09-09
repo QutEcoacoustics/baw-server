@@ -11,9 +11,10 @@ module Filter
 
     # Parse paging parameters.
     # @param [Hash] params
+    # @param [Integer] default_page
     # @param [Integer] default_items
     # @return [Hash] Paging parameters
-    def parse_paging(params, default_items)
+    def parse_paging(params, default_page, default_items)
       page, items, offset, limit = nil
 
       # qsp
@@ -25,19 +26,19 @@ module Filter
       items = params[:paging][:items] if items.blank? && !params[:paging].blank?
 
       # if page or items is set, set the other to default
-      page = 1 if page.blank? && !items.blank?
-      items = default_items if !page.blank? && items.blank?
+      page = default_page if page.blank?
+      items = default_items if items.blank?
 
       # calculate offset if able
-      offset = (page - 1) * items if !page.blank? && !items.blank?
-      limit = items if !page.blank? && !items.blank?
+      offset = (page - 1) * items
+      limit = items
       #page = (values.offset / values.limit) + 1
 
       # ensure integer
-      offset = offset.to_i unless offset.blank?
-      limit = limit.to_i unless limit.blank?
-      page = page.to_i unless page.blank?
-      items = items.to_i unless items.blank?
+      offset = offset.to_i
+      limit = limit.to_i
+      page = page.to_i
+      items = items.to_i
 
       # will always return offset, limit, page, items
       # either all will be nil, or all will be set

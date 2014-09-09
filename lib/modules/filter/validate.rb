@@ -164,12 +164,12 @@ module Filter
     end
 
     # Validate an array.
-    # @param [Array] value
+    # @param [Array, Arel::SelectManager] value
     # @raise [FilterArgumentError] if value is not a valid Array.
     # @return [void]
     def validate_array(value)
       fail CustomErrors::FilterArgumentError, "Value must not be null, got #{value}" if value.blank?
-      fail CustomErrors::FilterArgumentError, "Value must be an Array or String, got #{value}" unless value.is_a?(Array) || value.is_a?(String)
+      fail CustomErrors::FilterArgumentError, "Value must be an Array or Arel::SelectManager, got #{value}" unless value.is_a?(Array) || value.is_a?(Arel::SelectManager)
     end
 
     # Validate a hash.

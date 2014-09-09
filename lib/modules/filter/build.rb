@@ -148,7 +148,7 @@ module Filter
     # @param [Array<Symbol>] valid_fields
     # @return [Arel::Nodes::Node] condition
     def build_not(field, hash, table, valid_fields)
-      fail CustomErrors::FilterArgumentError.new("'Not' must have a single filter, got #{hash.size}.", {field:field, hash:hash}) if hash.size != 1
+      fail CustomErrors::FilterArgumentError.new("'Not' must have a single filter, got #{hash.size}.", {field: field, hash: hash}) if hash.size != 1
       negated_condition = nil
 
       hash.each do |key, value|
@@ -167,11 +167,8 @@ module Filter
     # @param [Array<Symbol>] valid_fields
     # @return [Arel::Nodes::Node] condition
     def build_condition(field, filter_name, filter_value, table, valid_fields)
-      # special cases
-      if table.name == 'sites' && field == :project_ids && filter_name == :in
-        field = :id
-        filter_value = compose_project_ids(filter_value)
-      end
+      special_condition = build_condition_special(field, filter_name, filter_value, table, valid_fields)
+      return special_condition unless special_condition.nil?
 
       case filter_name
 
@@ -270,10 +267,10 @@ module Filter
     # @param [Array<Symbol>] valid_fields
     # @return [Array<Arel::Attributes::Attribute>] projections
     def build_projections(hash, table, valid_fields)
-      fail CustomErrors::FilterArgumentError.new("Projections hash must have exactly 1 entry, got #{hash.size}.", {hash:hash}) if hash.blank? || hash.size != 1
+      fail CustomErrors::FilterArgumentError.new("Projections hash must have exactly 1 entry, got #{hash.size}.", {hash: hash}) if hash.blank? || hash.size != 1
       result = []
       hash.each do |key, value|
-        fail CustomErrors::FilterArgumentError.new("Must be 'include' or 'exclude' at top level, got #{key}", {hash:hash}) unless [:include, :exclude].include?(key)
+        fail CustomErrors::FilterArgumentError.new("Must be 'include' or 'exclude' at top level, got #{key}", {hash: hash}) unless [:include, :exclude].include?(key)
         result = build_projection(key, value, table, valid_fields)
       end
       result
@@ -286,6 +283,7 @@ module Filter
     # @return [Array<Arel::Attributes::Attribute>] projections
     def build_projection(key, value, table, valid_fields)
       fail CustomErrors::FilterArgumentError.new('Must not contain duplicate fields.', {"#{key}" => value}) if value.uniq.length != value.length
+
       columns = []
       case key
         when :include
@@ -300,10 +298,21 @@ module Filter
       end
 
       columns.map { |item|
-          #project_column(table, item, valid_fields)
-          validate_table_column(table, item, valid_fields)
-          table[item]
+        #project_column(table, item, valid_fields)
+        validate_table_column(table, item, valid_fields)
+        table[item]
       }
+    end
+
+    def build_condition_special(field, filter_name, filter_value, table, valid_fields)
+      # construct special conditions
+      if table.name == 'sites' && field == :project_ids
+        # filter by many-to-many projects <-> sites
+        fail CustomErrors::FilterArgumentError.new("Project_ids permits only 'in' filter, got #{filter_name}.") unless filter_name == :in
+        projects_sites_table = Arel::Table.new(:projects_sites)
+        special_value = Arel::Table.new(:projects_sites).project(:site_id).where(compose_in(projects_sites_table, :project_id, [:project_id], filter_value))
+        compose_in(table, :id, valid_fields, special_value)
+      end
     end
 
   end

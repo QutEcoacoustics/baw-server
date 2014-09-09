@@ -155,8 +155,7 @@ class SitesController < ApplicationController
         Site.filter_settings
     )
 
-    # always get project_ids
-    # allow project_ids
+    # always display project_ids
     filter_response[:data] = filter_response.data.each { |site|
       site[:project_ids] = Site.where(id: site.id).first.projects.select(:id)
       site
