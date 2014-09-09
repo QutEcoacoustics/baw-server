@@ -327,6 +327,25 @@ resource 'Media' do
     end
   end
 
+  get '/audio_recordings/:audio_recording_id/media.:format?start_offset=:start_offset&end_offset=:end_offset&sample_rate=:sample_rate' do
+    standard_media_parameters
+    let(:authentication_token) { reader_token }
+    let(:format) { 'json' }
+
+    let(:start_offset) { '1' }
+    let(:end_offset) { '2' }
+    let(:sample_rate) { '11025' }
+
+    example 'MEDIA (as reader) checking modified json format - 200', document: true do
+      do_request
+      status.should eq(200), "expected status #{200} but was #{status}. Response body was #{response_body}"
+
+      # not sure how to test that duration_seconds returns an unquoted number
+      #parsed = JsonSpec::Helpers::parse_json(response_body)
+      #expect(parsed.data.recording.duration_seconds.class).to be_a(BigDecimal)
+    end
+  end
+
   get '/audio_recordings/:audio_recording_id/media.:format' do
     standard_media_parameters
     let(:authentication_token) { reader_token }

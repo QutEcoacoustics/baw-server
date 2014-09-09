@@ -9,6 +9,7 @@ module Filter
     extend Core
     extend Subset
     extend Validate
+    extend Projection
 
     private
 
@@ -292,8 +293,9 @@ module Filter
       end
 
       columns.map { |item|
-        validate_column_name(item, valid_fields)
-        table[item]
+          #project_column(table, item, valid_fields)
+          validate_table_column(table, item, valid_fields)
+          table[item]
       }
     end
 

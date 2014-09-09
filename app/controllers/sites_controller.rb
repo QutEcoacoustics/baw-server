@@ -69,7 +69,7 @@ class SitesController < ApplicationController
       format.json { render json: @site }
     end
   end
- 
+
   # GET /project/1/sites/1/edit
   def edit
     add_breadcrumb @site.name, [@project, @site]
@@ -154,6 +154,14 @@ class SitesController < ApplicationController
         Site,
         Site.filter_settings
     )
+
+    # always get project_ids
+    # allow project_ids
+    filter_response[:data] = filter_response.data.each { |site|
+      site[:project_ids] = Site.where(id: site.id).first.projects.select(:id)
+      site
+    }
+
     render_api_response(filter_response)
   end
 

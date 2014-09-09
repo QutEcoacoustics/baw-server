@@ -284,7 +284,7 @@ resource 'Sites' do
         'projection' => {
             'include' => ['id', 'name']}
     }.to_json }
-    standard_request_options('FILTER (as reader)', :ok, {expected_json_path: 'data/0/name', data_item_count: 1})
+    standard_request_options('FILTER (as reader)', :ok, {expected_json_path: 'data/0/project_ids', data_item_count: 1})
   end
 
 end
