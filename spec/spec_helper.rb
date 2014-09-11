@@ -107,10 +107,15 @@ RSpec.configure do |config|
   BawWorkers::Settings.set_source(config.default_settings_path)
   BawWorkers::Settings.set_namespace('settings')
 
+  require 'action_mailer'
+
+
   unless defined? Settings
     class Settings < BawWorkers::Settings
       source BawWorkers::Settings.source
       namespace 'settings'
+      BawWorkers::Settings.set_mailer_config
+      ActionMailer::Base.delivery_method = :test
     end
   end
 

@@ -24,6 +24,9 @@ settings:
     harvester_log_file: ./tmp/harvester.log
     modules_log_file: ./tmp/audio_tools.log
     temp_files: .
+  smtp:
+    address: localhost
+    port:
   cached_audio_defaults:
     storage_format: mp3
     channel: 0

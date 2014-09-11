@@ -88,12 +88,12 @@ module BawWorkers
     end
 
     def self.validate_contains(value, hash)
-      fail ArgumentError, "Media type (#{value.inspect}) was not valid (#{hash})." unless hash.include?(value)
+      fail ArgumentError, "Media type (#{value}) was not valid (#{hash})." unless hash.include?(value)
 
     end
 
     def self.validate_hash(hash)
-      fail ArgumentError, "Media request params was not a hash (#{hash.inspect})" unless hash.is_a?(Hash)
+      fail ArgumentError, "Media request params was not a hash (#{hash})" unless hash.is_a?(Hash)
     end
 
     def self.symbolize_hash_keys(hash)

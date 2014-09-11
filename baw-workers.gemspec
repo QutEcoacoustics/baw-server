@@ -37,8 +37,9 @@ Gem::Specification.new do |spec|
 
   # runtime dependencies
   spec.add_runtime_dependency 'daemons'
-  spec.add_runtime_dependency 'resque'
+  spec.add_runtime_dependency 'resque', '~> 1.25.2'
   spec.add_runtime_dependency 'settingslogic'
   spec.add_runtime_dependency 'activesupport', '>= 3.2'
   spec.add_runtime_dependency 'resque_solo'
+  spec.add_runtime_dependency 'actionmailer', '>= 3.2'
 end

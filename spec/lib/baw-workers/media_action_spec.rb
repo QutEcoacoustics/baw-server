@@ -71,7 +71,7 @@ describe BawWorkers::MediaAction do
     it 'raises error when media type is invalid' do
       expect {
         BawWorkers::MediaAction.perform(:not_valid_param, {})
-      }.to raise_error(ArgumentError, /Media type \(:not_valid_param\) was not valid/)
+      }.to raise_error(ArgumentError, /Media type \(not_valid_param\) was not valid/)
     end
 
     context 'generate spectrogram' do
