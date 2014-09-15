@@ -27,6 +27,10 @@ module BawAudioTools
       "#{@ffprobe_executable} -sexagesimal -print_format default -show_error -show_streams -show_format \"#{source}\""
     end
 
+    def integrity_command(source)
+      "#{@ffmpeg_executable} -loglevel repeat+verbose -nostdin -i \"#{source}\" -f null -"
+    end
+
     def modify_command(source, source_info, target, start_offset = nil, end_offset = nil, channel = nil, sample_rate = nil)
       fail Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.exists? source
       fail Exceptions::FileAlreadyExistsError, "Target exists: #{target}" if File.exists? target
@@ -80,6 +84,36 @@ module BawAudioTools
         end
 
       end
+    end
+
+    def check_integrity_output(execute_msg)
+      stdout = execute_msg[:stdout]
+      stderr = execute_msg[:stderr]
+
+      return [] if stderr.blank?
+
+      # ignore:
+      # parser not found for codec pcm_s16le, packets or times may be invalid.
+      # max_analyze_duration 5000000 reached at 5015510 microseconds
+
+      # <regexp>.match(<string>)
+
+      # [graph
+      # [audio format
+      # [auto-inserted
+
+      # : End of file
+      # Error
+      # /^\[(.+?) @ 0x.+?\](.*)$/
+      # -- for input & output samples, size, frames, packets:
+      # (\d+) packets read
+      # \((\d+) bytes\)
+      # Total: (\d+) packets \((\d+) bytes\) demuxed
+      # Total: (\d+) packets \((\d+) bytes\) muxed
+      # (\d+) frames decoded \((\d+) samples\);
+      # (\d+) frames encoded \((\d+) samples\);
+
+      fail NotImplementedError
     end
 
     def find_remove_warning(mod_stderr, match_regex)

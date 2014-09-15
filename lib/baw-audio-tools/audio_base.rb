@@ -151,6 +151,17 @@ module BawAudioTools
       info_flattened
     end
 
+    def integrity_check(source)
+      fail Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.exists? source
+
+      ffmpeg_integrity_cmd = @audio_ffmpeg.integrity_command(source)
+      ffmpeg_integrity_output = execute(ffmpeg_integrity_cmd)
+
+      # wavpack only for wv files
+
+      fail NotImplementedError
+    end
+
     # Creates a new audio file from source path in target path, modified according to the
     # parameters in modify_parameters. Possible options for modify_parameters:
     # :start_offset :end_offset :channel :sample_rate :format

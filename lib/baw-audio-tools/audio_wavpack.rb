@@ -16,6 +16,10 @@ module BawAudioTools
       "#{@wavpack_executable} -s \"#{source}\""
     end
 
+    def integrity_command(source)
+      "#{@wavpack_executable} -v \"#{source}\""
+    end
+
     def parse_info_output(output)
       # wvunpack std out contains info (separate on first colon(:))
       result = {}
@@ -46,6 +50,15 @@ module BawAudioTools
       if !stderr.blank? && stderr.include?(ERROR_NOT_COMPATIBLE)
         fail Exceptions::AudioToolError, "Wavpack was given a non-compatible wavpack file.\n\t#{execute_msg[:execute_msg]}"
       end
+    end
+
+    def check_integrity_output(execute_msg)
+      stdout = execute_msg[:stdout]
+      stderr = execute_msg[:stderr]
+
+      return [] if stderr.blank?
+
+      fail NotImplementedError
     end
 
     def modify_command(source, source_info, target, start_offset = nil, end_offset = nil)
