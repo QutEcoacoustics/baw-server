@@ -2,6 +2,8 @@ module BawWorkers
   # Media Action for cutting audio files and generating spectrograms.
   class MediaAction
 
+    include BawWorkers::Common
+
     # Ensure that there is only one job with the same payload per queue.
     # The default method to create a job ID from these parameters is to
     # do some normalization on the payload and then md5'ing it
@@ -58,11 +60,7 @@ module BawWorkers
     def self.make_media_request(media_type, media_request_params)
       media_type_sym, params_sym = validate(media_type, media_request_params)
 
-      # ensure datetime_with_offset is an ActiveSupport::TimeWithZone
-      datetime_with_offset_value = params_sym[:datetime_with_offset]
-      if !datetime_with_offset_value.blank? && !datetime_with_offset_value.is_a?(ActiveSupport::TimeWithZone)
-        params_sym[:datetime_with_offset] = Time.zone.parse(datetime_with_offset_value)
-      end
+      params_sym[:datetime_with_offset] = check_datetime(params_sym[:datetime_with_offset])
 
       media_cache_tool = BawWorkers::Settings.media_cache_tool
       target_existing_paths = []
@@ -79,7 +77,6 @@ module BawWorkers
     end
 
     private
-
     def self.validate(media_type, media_request_params)
       validate_hash(media_request_params)
       media_type_sym, params_sym = symbolize(media_type, media_request_params)
@@ -87,21 +84,5 @@ module BawWorkers
       [media_type_sym, params_sym]
     end
 
-    def self.validate_contains(value, hash)
-      fail ArgumentError, "Media type (#{value}) was not valid (#{hash})." unless hash.include?(value)
-
-    end
-
-    def self.validate_hash(hash)
-      fail ArgumentError, "Media request params was not a hash (#{hash})" unless hash.is_a?(Hash)
-    end
-
-    def self.symbolize_hash_keys(hash)
-      Hash[hash.map{ |k, v| [k.to_sym, v] }]
-    end
-
-    def self.symbolize(value, hash)
-      [value.to_sym, symbolize_hash_keys(hash)]
-    end
   end
 end

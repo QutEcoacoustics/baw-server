@@ -10,6 +10,8 @@ require 'resque_solo'
 
 require 'baw-workers/version'
 require 'baw-workers/settings'
+require 'baw-workers/common'
+require 'baw-workers/mail/mailer'
 
 # set time zone
 Time.zone = 'UTC'

@@ -76,9 +76,15 @@ describe BawWorkers::MediaAction do
 
     context 'generate spectrogram' do
 
-      it 'raises error with bad params' do
+      it 'raises error with no params' do
         expect {
           BawWorkers::MediaAction.perform(:spectrogram, {})
+        }.to raise_error(ArgumentError, /Must provide a value for datetime_with_offset/)
+      end
+
+      it 'raises error with some bad params' do
+        expect {
+          BawWorkers::MediaAction.perform(:spectrogram, {datetime_with_offset: Time.zone.now})
         }.to raise_error(ArgumentError, /CacheBase - Required parameter missing: uuid./)
       end
 
@@ -116,9 +122,15 @@ describe BawWorkers::MediaAction do
 
     context 'cut audio' do
 
-      it 'raises error with bad params' do
+      it 'raises error with no params' do
         expect {
           BawWorkers::MediaAction.perform(:audio, {})
+        }.to raise_error(ArgumentError, /Must provide a value for datetime_with_offset/)
+      end
+
+      it 'raises error with some bad params' do
+        expect {
+          BawWorkers::MediaAction.perform(:audio, {datetime_with_offset: Time.zone.now})
         }.to raise_error(ArgumentError, /CacheBase - Required parameter missing: uuid./)
       end
 
