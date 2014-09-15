@@ -55,8 +55,8 @@ class Settings < Settingslogic
     # see http://nvie.com/posts/a-successful-git-branching-model/
     {
         major: 0,
-        minor: 10,
-        patch: 2,
+        minor: 11,
+        patch: 0,
         pre: '',
         build: ''
     }
