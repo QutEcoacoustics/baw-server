@@ -10,6 +10,7 @@ settings:
     error_log_file: ./tmp/program_stderr.log
     queues:
       media: media_travis
+      maintenance: maintenance_default
   paths:
     original_audios:
       - ./tmp/_original_audio
