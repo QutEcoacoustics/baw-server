@@ -154,12 +154,19 @@ module BawAudioTools
     def integrity_check(source)
       fail Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.exists? source
 
-      ffmpeg_integrity_cmd = @audio_ffmpeg.integrity_command(source)
-      ffmpeg_integrity_output = execute(ffmpeg_integrity_cmd)
+      if File.extname(source) != '.wv'
+        # ffmpeg for everything except wavpack
+        ffmpeg_integrity_cmd = @audio_ffmpeg.integrity_command(source)
+        ffmpeg_integrity_output = execute(ffmpeg_integrity_cmd)
+        output = @audio_ffmpeg.check_integrity_output(ffmpeg_integrity_output)
+      else
+        # wavpack for wv files
+        wvpack_integrity_cmd = @audio_wavpack.integrity_command(source)
+        wvpack_integrity_output = execute(wvpack_integrity_cmd)
+        output = @audio_wavpack.check_integrity_output(wvpack_integrity_output)
+      end
 
-      # wavpack only for wv files
-
-      fail NotImplementedError
+      output
     end
 
     # Creates a new audio file from source path in target path, modified according to the

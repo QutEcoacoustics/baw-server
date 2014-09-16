@@ -90,30 +90,73 @@ module BawAudioTools
       stdout = execute_msg[:stdout]
       stderr = execute_msg[:stderr]
 
-      return [] if stderr.blank?
+      result = {
+          errors: [],
+          info: {
+              read: {
+                  packets: 0, bytes: 0, frames: 0, samples: 0
+              },
+              write: {
+                  packets: 0, bytes: 0, frames: 0, samples: 0
+              }
+          }
+      }
 
-      # ignore:
-      # parser not found for codec pcm_s16le, packets or times may be invalid.
-      # max_analyze_duration 5000000 reached at 5015510 microseconds
+      return result if stderr.blank?
 
-      # <regexp>.match(<string>)
+      stderr.each_line do |line|
+        match_result = /\A\[(.+?) @ 0x.+?\] (.*)/.match(line)
+        item = nil
+        item = check_integrity_item({id: match_result[1], description: match_result[2]}) unless match_result.blank?
+        result.errors.push(item) unless item.blank?
 
-      # [graph
-      # [audio format
-      # [auto-inserted
+        # other information
+        error_match = /error/i.match(line)
+        result.errors.push({id: 'error', description: line}) unless error_match.blank?
 
-      # : End of file
-      # Error
-      # /^\[(.+?) @ 0x.+?\](.*)$/
-      # -- for input & output samples, size, frames, packets:
-      # (\d+) packets read
-      # \((\d+) bytes\)
-      # Total: (\d+) packets \((\d+) bytes\) demuxed
-      # Total: (\d+) packets \((\d+) bytes\) muxed
-      # (\d+) frames decoded \((\d+) samples\);
-      # (\d+) frames encoded \((\d+) samples\);
+        eof_match = /: End of file/i.match(line)
+        result.errors.push({id: 'end of file', description: line}) unless eof_match.blank?
 
-      fail NotImplementedError
+        read_packets_match = /Total: (\d+) packets \((\d+) bytes\) demuxed/.match(line)
+        unless read_packets_match.blank?
+          result.info.read[:packets] = read_packets_match[1]
+          result.info.read[:bytes] = read_packets_match[2]
+        end
+
+        read_frames_match = /(\d+) frames decoded \((\d+) samples\);/.match(line)
+        unless read_frames_match.blank?
+          result.info.read[:frames] = read_frames_match[1]
+          result.info.read[:samples] = read_frames_match[2]
+        end
+
+        write_packets_match = /Total: (\d+) packets \((\d+) bytes\) muxed/.match(line)
+        unless write_packets_match.blank?
+          result.info.write[:packets] = write_packets_match[1]
+          result.info.write[:bytes] = write_packets_match[2]
+        end
+
+        write_frames_match = /(\d+) frames encoded \((\d+) samples\);/.match(line)
+        unless write_frames_match.blank?
+          result.info.write[:frames] = write_frames_match[1]
+          result.info.write[:samples] = write_frames_match[2]
+        end
+      end
+
+      result
+    end
+
+    def check_integrity_item(hash)
+      return nil if hash.blank?
+
+      return nil if hash.id.starts_with?('graph')
+      return nil if hash.id.starts_with?('audio format')
+      return nil if hash.id.starts_with?('auto-inserted')
+
+      return nil if hash.description.starts_with?('parser not found for')
+      return nil if hash.description.starts_with?('max_analyze_duration')
+      return nil if hash.description.starts_with?('Application provided invalid, non monotonically increasing dts to muxer in stream')
+
+      hash
     end
 
     def find_remove_warning(mod_stderr, match_regex)

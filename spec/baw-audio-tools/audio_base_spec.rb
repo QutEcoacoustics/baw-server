@@ -210,7 +210,7 @@ describe BawAudioTools::AudioBase do
 
     it 'correctly converts from .ogg to .mp3, then to from .mp3 to .wav' do
       temp_media_file_a = temp_media_file_1+'.mp3'
-      result_1 = audio_base.modify(audio_file_stereo, temp_media_file_a, {start_offset: 10, end_offset: 40, sample_rate:22050})
+      result_1 = audio_base.modify(audio_file_stereo, temp_media_file_a, {start_offset: 10, end_offset: 40, sample_rate: 22050})
       info_1 = audio_base.info(temp_media_file_a)
       expect(File.size(temp_media_file_a)).to be > 0
       expect(info_1[:media_type]).to eq('audio/mp3')
@@ -231,7 +231,7 @@ describe BawAudioTools::AudioBase do
 
     it 'correctly converts from .ogg to .flac' do
       temp_media_file_a = temp_media_file_1+'.flac'
-      result = audio_base.modify(audio_file_stereo, temp_media_file_a, {start_offset: 10, end_offset: 40, sample_rate:22050})
+      result = audio_base.modify(audio_file_stereo, temp_media_file_a, {start_offset: 10, end_offset: 40, sample_rate: 22050})
       info = audio_base.info(temp_media_file_a)
       expect(File.size(temp_media_file_a)).to be > 0
       expect(info[:media_type]).to eq('audio/x-flac')
@@ -370,6 +370,105 @@ describe BawAudioTools::AudioBase do
         expect(info_2[:duration_seconds]).to be_within(duration_range).of(10)
         #expect(info_2[:bit_rate_bps]).to be_within(bit_rate_range).of(bit_rate_min)
         #expect(info_2[:bit_rate_bps_calc]).to be_within(bit_rate_range).of(bit_rate_min)
+      end
+    end
+  end
+
+  context 'verifying integrity' do
+    context 'succeeds' do
+      it 'processing valid .wv file' do
+        temp_media_file_a = temp_media_file_1+'.wv'
+        result_1 = audio_base.modify(audio_file_stereo, temp_media_file_a)
+        result = audio_base.integrity_check(temp_media_file_a)
+        expect(result.errors.size).to eq(0)
+        expect(result.info[:operation]).to eq('verified')
+        expect(result.info[:mode]).to eq('lossless')
+      end
+
+      it 'processing valid .mp3 file' do
+        temp_media_file_a = temp_media_file_1+'.mp3'
+        result_1 = audio_base.modify(audio_file_stereo, temp_media_file_a)
+        result = audio_base.integrity_check(temp_media_file_a)
+        expect(result.errors.size).to eq(0)
+        expect(result.info.read[:samples]).to eq(result.info.write[:samples])
+      end
+
+      it 'processing valid .asf file' do
+        temp_media_file_a = temp_media_file_1+'.asf'
+        result_1 = audio_base.modify(audio_file_stereo, temp_media_file_a)
+        result = audio_base.integrity_check(temp_media_file_a)
+        expect(result.errors.size).to eq(0)
+        expect(result.info.read[:samples]).to eq(result.info.write[:samples])
+      end
+
+      it 'processing valid .wav file' do
+        temp_media_file_a = temp_media_file_1+'.wav'
+        result_1 = audio_base.modify(audio_file_stereo, temp_media_file_a)
+        result = audio_base.integrity_check(temp_media_file_a)
+        expect(result.errors.size).to eq(0)
+        expect(result.info.read[:samples]).to eq(result.info.write[:samples])
+      end
+
+
+      it 'processing valid .flac file' do
+        temp_media_file_a = temp_media_file_1+'.flac'
+        result_1 = audio_base.modify(audio_file_stereo, temp_media_file_a)
+        result = audio_base.integrity_check(temp_media_file_a)
+        expect(result.errors.size).to eq(0)
+        expect(result.info.read[:samples]).to eq(result.info.write[:samples])
+      end
+
+      it 'processing valid .ogg file' do
+        temp_media_file_a = temp_media_file_1+'.ogg'
+        result_1 = audio_base.modify(audio_file_stereo, temp_media_file_a)
+        result = audio_base.integrity_check(temp_media_file_a)
+        expect(result.errors.size).to eq(0)
+        expect(result.info.read[:samples]).to eq(result.info.write[:samples])
+      end
+
+      it 'processing valid .wma file' do
+        temp_media_file_a = temp_media_file_1+'.wma'
+        result_1 = audio_base.modify(audio_file_stereo, temp_media_file_a)
+        result = audio_base.integrity_check(temp_media_file_a)
+        expect(result.errors.size).to eq(0)
+        expect(result.info.read[:samples]).to eq(result.info.write[:samples])
+      end
+
+      it 'processing valid .webm file' do
+        temp_media_file_a = temp_media_file_1+'.webm'
+        result_1 = audio_base.modify(audio_file_stereo, temp_media_file_a)
+        result = audio_base.integrity_check(temp_media_file_a)
+        expect(result.errors.size).to eq(0)
+        expect(result.info.read[:samples]).to eq(result.info.write[:samples])
+      end
+
+      it 'processing valid .webm file' do
+        temp_media_file_a = temp_media_file_1+'.webm'
+        result_1 = audio_base.modify(audio_file_stereo, temp_media_file_a)
+        result = audio_base.integrity_check(temp_media_file_a)
+        expect(result.errors.size).to eq(0)
+        expect(result.info.read[:samples]).to eq(result.info.write[:samples])
+      end
+    end
+    context 'fails' do
+      it 'processing empty .ogg file' do
+        expect {
+          audio_base.integrity_check(audio_file_empty)
+        }.to raise_error(BawAudioTools::Exceptions::AudioToolError)
+      end
+
+      it 'processing empty .mp3 file' do
+        temp_media_file_a = temp_media_file_1+'.mp3'
+        FileUtils.touch(temp_media_file_a)
+        expect {
+          audio_base.integrity_check(temp_media_file_a)
+        }.to raise_error(BawAudioTools::Exceptions::AudioToolError)
+      end
+
+      it 'processing corrupt .ogg file' do
+        expect {
+          audio_base.integrity_check(audio_file_corrupt)
+        }.to raise_error(BawAudioTools::Exceptions::AudioToolError)
       end
     end
   end

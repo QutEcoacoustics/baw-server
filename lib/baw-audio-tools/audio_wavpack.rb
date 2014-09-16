@@ -56,9 +56,36 @@ module BawAudioTools
       stdout = execute_msg[:stdout]
       stderr = execute_msg[:stderr]
 
-      return [] if stderr.blank?
+      result = {
+          errors: [],
+          info: {
+              operation: '',
+              time: 0,
+              mode: '',
+              ratio: ''
+          }
+      }
 
-      fail NotImplementedError
+      return result if stderr.blank?
+
+      stderr.each_line do |line|
+        info_match = /([^\s]+?) [^ ]+? in ([^ ]+?) secs \((.*?), (.*?)\)/i.match(line)
+        if info_match.blank?
+          #result.errors.push(line)
+        else
+          result.info[:operation] = info_match[1]
+          result.info[:time] = info_match[2]
+          result.info[:mode] = info_match[3]
+          result.info[:ratio] = info_match[4]
+        end
+      end
+
+      # consider verification failed if info is not populated
+      if result.info[:operation].blank?
+        result.errors.push('Verification failed')
+      end
+
+      result
     end
 
     def modify_command(source, source_info, target, start_offset = nil, end_offset = nil)
