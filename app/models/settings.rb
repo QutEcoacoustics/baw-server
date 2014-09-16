@@ -56,7 +56,7 @@ class Settings < Settingslogic
     {
         major: 0,
         minor: 11,
-        patch: 0,
+        patch: 1,
         pre: '',
         build: ''
     }
