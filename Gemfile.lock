@@ -1,16 +1,16 @@
 GIT
   remote: https://github.com/QutBioacoustics/baw-audio-tools.git
-  revision: 07518669327b68d3a40464cee4b1c14ee01061c4
+  revision: c002900c7ec638259cdc62d7dd1b2f1f07a44bbb
   specs:
-    baw-audio-tools (0.1.0)
+    baw-audio-tools (0.2.0)
       activesupport (>= 3.2)
       settingslogic
 
 GIT
   remote: https://github.com/QutBioacoustics/baw-workers.git
-  revision: c8e80f0fab7555d6d9c40e8e3c522e4e468c7652
+  revision: a1cdfc05074985aa93233b34c96da44cd6ca74e2
   specs:
-    baw-workers (0.1.1)
+    baw-workers (0.1.2)
       actionmailer (>= 3.2)
       activesupport (>= 3.2)
       daemons
@@ -133,9 +133,9 @@ GEM
     codeclimate-test-reporter (0.4.0)
       simplecov (>= 0.7.1, < 1.0.0)
     coderay (1.1.0)
-    coffee-rails (3.2.2)
+    coffee-rails (3.2.1)
       coffee-script (>= 2.2.0)
-      railties (~> 3.2.0)
+      railties (~> 3.2.0.beta)
     coffee-script (2.3.0)
       coffee-script-source
       execjs

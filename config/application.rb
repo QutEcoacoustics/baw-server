@@ -93,7 +93,7 @@ module AWB
       Resque.redis = Settings.resque.connection
 
       # set resque namespace
-      Resque.redis.namespace = 'resque:BAW'
+      Resque.redis.namespace = Settings.resque.namespace
 
       # enable garbage collection profiling (reported in New Relic)
       GC::Profiler.enable
