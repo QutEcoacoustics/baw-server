@@ -3,13 +3,7 @@ require 'spec_helper'
 describe BawWorkers::MediaAction do
   include_context 'media_file'
 
-  let(:queue_name) {BawWorkers::Settings.resque.queues.media}
-
-  after(:each) do
-    FileUtils.rm_r media_cache_tool.cache.original_audio.storage_paths.first if Dir.exists? media_cache_tool.cache.original_audio.storage_paths.first
-    FileUtils.rm_r media_cache_tool.cache.cache_audio.storage_paths.first if Dir.exists? media_cache_tool.cache.cache_audio.storage_paths.first
-    FileUtils.rm_r media_cache_tool.cache.cache_spectrogram.storage_paths.first if Dir.exists? media_cache_tool.cache.cache_spectrogram.storage_paths.first
-  end
+  let(:queue_name) { BawWorkers::Settings.resque.queues.media }
 
   context 'queues' do
 

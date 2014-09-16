@@ -109,7 +109,6 @@ RSpec.configure do |config|
 
   require 'action_mailer'
 
-
   unless defined? Settings
     class Settings < BawWorkers::Settings
       source BawWorkers::Settings.source

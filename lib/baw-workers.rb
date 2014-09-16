@@ -14,5 +14,6 @@ Time.zone = 'UTC'
 
 module BawWorkers
   autoload :MediaAction, 'baw-workers/media_action'
+  autoload :AudioFileCheckAction, 'baw-workers/audio_file_check_action'
   autoload :Mailer, 'baw-workers/mail/mailer'
 end

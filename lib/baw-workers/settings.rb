@@ -11,6 +11,12 @@ module BawWorkers
       @media_cache_tool ||= BawAudioTools::MediaCacher.new(BawWorkers::Settings.paths.temp_files)
     end
 
+    # get access to the logger
+    # @return [Logger]
+    def logger
+      BawAudioTools::Logging.logger
+    end
+
     # Set the source file.
     # @param [String] settings_file
     # @return [void]

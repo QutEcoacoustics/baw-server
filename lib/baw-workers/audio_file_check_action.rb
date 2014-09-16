@@ -25,6 +25,7 @@ module BawWorkers
     def self.enqueue(audio_params)
       audio_params_sym = validate(audio_params)
       Resque.enqueue(AudioFileCheckAction, audio_params_sym)
+      BawWorkers::Settings.logger.debug("Enqueued from AudioFileCheckAction #{audio_params}.")
     end
 
     # Perform work. Used by `resque`.
@@ -47,25 +48,31 @@ module BawWorkers
       original_exists = original_paths.existing.size > 0
 
       # file hashes match check
-      file_hash_check = compare_hashes(audio_params_sym, original_exists)
+      file_hash_check = compare_hashes(audio_params_sym, original_paths)
 
       # for each file that is in the old format, rename to new format.
       # use info in original_paths hash.
 
       # file validity check
+      integrity_check_result = integrity_check(original_paths)
+
+      # get info for each existing file
+      existing_info = original_paths.existing.map { |file| media_cache_tool.info(file) }
 
       # file extension and stored mime-type check
+      # existing_info
 
       # Compare values from file with stored values.
       # prefer values from file.
       # sample_rate, channels, bit_rate, data_length_bytes
+      # existing_info
 
       # get duration using ffmpeg and sox.
       # figure out what to use - they're always a little different.
-
+      # existing_info
 
       # TODO: logging and csv file generation.
-
+      #write_csv()
 
       recorded_date = Time.zone.parse(audio_recording_hash['recorded_date'])
       uuid = audio_recording_hash['uuid']
@@ -148,10 +155,10 @@ module BawWorkers
       given_file_hash = audio_params.file_hash
       original_paths.existing.each do |existing_file|
         # based on how harvester gets file hash.
-        # TODO: check is there are file hashes in db with 'SHA256' prefix.
+        # TODO: check is there are file hashes in db without 'SHA256' prefix.
         generated_file_hash = 'SHA256::' + media_cache_tool.generate_hash(existing_file).hexdigest
 
-        # compare hashes ( 0 means equal, -1 left is less, 1 if right is less)
+        # compare hashes ( 0 means equal, -1: left is less, 1: right is less)
         comparison_result = given_file_hash <=> generated_file_hash
 
         results.push({
@@ -163,6 +170,29 @@ module BawWorkers
       end
 
       results
+    end
+
+    def self.integrity_check(original_paths)
+      media_cache_tool = BawWorkers::Settings.media_cache_tool
+      results = []
+      original_paths.existing.each do |existing_file|
+        integrity_check = media_cache_tool.integrity_check(existing_file)
+        results.push({path: existing_file, errors: integrity_check.errors})
+      end
+      results
+    end
+
+    def self.write_csv(file, hash)
+      csv_headers = []
+      CSV.open(file, "wb", col_sep: ',', headers: csv_headers, write_headers: true, force_quotes:true) do |csv|
+        # get elements in order
+        hash.sort.map do |key, value|
+
+        end
+        # csv << ["row", "of", "CSV", "data"]
+        # csv << ["another", "row"]
+        # ...
+      end
     end
 
   end

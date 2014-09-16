@@ -35,6 +35,7 @@ module BawWorkers
     def self.enqueue(media_type, media_request_params)
       media_type_sym, params_sym = validate(media_type, media_request_params)
       Resque.enqueue(MediaAction, media_type_sym, params_sym)
+      BawWorkers::Settings.logger.debug("Enqueued #{media_type} from MediaAction #{media_request_params}.")
     end
 
     # Get the available media types this action can create.
