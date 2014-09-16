@@ -166,41 +166,6 @@ module BawWorkers
       {possible: source_possible_paths, existing: source_existing_paths, name_utc: name_utc, name_old: name_old}
     end
 
-    def self.compare_hashes(audio_params, original_paths)
-      media_cache_tool = BawWorkers::Settings.media_cache_tool
-      results = []
-
-      # get file hash for each existing file
-      given_file_hash = audio_params.file_hash
-      original_paths.existing.each do |existing_file|
-        # based on how harvester gets file hash.
-        # TODO: check is there are file hashes in db without 'SHA256' prefix.
-        generated_file_hash = 'SHA256::' + media_cache_tool.generate_hash(existing_file).hexdigest
-
-        # compare hashes ( 0 means equal, -1: left is less, 1: right is less)
-        comparison_result = given_file_hash <=> generated_file_hash
-
-        results.push({
-                         path: existing_file,
-                         given: given_file_hash,
-                         generated: generated_file_hash,
-                         comparison: comparison_result == 0 ? :match : :different
-                     })
-      end
-
-      results
-    end
-
-    def self.integrity_check(original_paths)
-      media_cache_tool = BawWorkers::Settings.media_cache_tool
-      results = []
-      original_paths.existing.each do |existing_file|
-        integrity_check = media_cache_tool.audio.integrity_check(existing_file)
-        results.push({path: existing_file, errors: integrity_check.errors})
-      end
-      results
-    end
-
     def self.write_csv(file, hash)
       csv_headers = []
       CSV.open(file, "wb", col_sep: ',', headers: csv_headers, write_headers: true, force_quotes:true) do |csv|
