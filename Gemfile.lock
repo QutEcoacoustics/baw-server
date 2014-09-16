@@ -26,6 +26,14 @@ GIT
       activesupport (>= 3.2)
 
 GIT
+  remote: https://github.com/echannel/resque-job-stats.git
+  revision: 8932c036ae0eb272476c3f4e5aace4233aa0fa2f
+  ref: 8932c036ae
+  specs:
+    resque-job-stats (0.3.0)
+      resque (>= 1.17)
+
+GIT
   remote: https://github.com/seyhunak/twitter-bootstrap-rails.git
   revision: 38476dbd7f9a99179388bffb101826d844029949
   ref: 38476dbd7f
@@ -446,6 +454,7 @@ DEPENDENCIES
   rails-i18n-debug (~> 1.0.1)
   recaptcha (~> 0.3.6)
   resque (~> 1.25.2)
+  resque-job-stats!
   role_model (~> 0.8.1)
   rspec (~> 2.14)
   rspec-rails (~> 2.14.2)

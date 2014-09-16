@@ -55,13 +55,6 @@ AWB::Application.configure do
     end
   end
 
-  AWB::Application.config.middleware.use ExceptionNotification::Rack, email:
-      {
-          email_prefix: "#{Settings.emails.email_prefix} [Exception] ",
-          sender_address: Settings.emails.sender_address,
-          exception_recipients: Settings.emails.required_recipients
-      }
-
   config.log_level = :debug
 
   # profile requests

@@ -221,6 +221,7 @@ AWB::Application.routes.draw do
 
   # resque front end
   authenticate :user, lambda { |u| !u.blank? && u.has_role?(:admin) } do
+    require 'resque-job-stats/server' # add stats tab to web interface
     mount Resque::Server.new, at: '/job_queue_status'
   end
 
