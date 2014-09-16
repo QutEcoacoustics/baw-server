@@ -35,7 +35,7 @@ namespace :baw_workers do
 
     puts "===> Connecting to Redis on #{BawWorkers::Settings.resque.connection}."
     Resque.redis = BawWorkers::Settings.resque.connection
-    #Resque.redis = Redis.new
+    Resque.redis.namespace = Settings.resque.namespace
   end
 
   # Set up the worker parameters. Takes one argument: settings_file

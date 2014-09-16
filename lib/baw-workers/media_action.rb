@@ -9,6 +9,17 @@ module BawWorkers
     # do some normalization on the payload and then md5'ing it
     include Resque::Plugins::UniqueJob
 
+    # a set of keys starting with 'stats:jobs:queue_name' inside your Resque redis namespace
+    # Jobs performed
+    # Jobs enqueued
+    # Jobs failed
+    # Duration of last x jobs completed
+    # Average job duration over last 100 jobs completed
+    # Longest job duration over last 100 jobs completed
+    # Jobs enqueued as timeseries data (minute, hourly, day)
+    # Jobs performed as timeseries data (minute, hourly, day)
+    extend Resque::Plugins::JobStats
+
     # By default, lock_after_execution_period is 0 and enqueued? becomes
     # false as soon as the job is being worked on.
     # The lock_after_execution_period setting can be used to delay when

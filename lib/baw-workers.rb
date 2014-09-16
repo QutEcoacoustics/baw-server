@@ -3,6 +3,7 @@ require 'logger'
 require 'baw-audio-tools'
 require 'resque'
 require 'resque_solo'
+require 'resque-job-stats'
 
 require 'baw-workers/version'
 require 'baw-workers/settings'

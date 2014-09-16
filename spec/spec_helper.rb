@@ -115,6 +115,9 @@ RSpec.configure do |config|
       namespace 'settings'
       BawWorkers::Settings.set_mailer_config
       ActionMailer::Base.delivery_method = :test
+
+      Resque.redis = Redis.new
+      Resque.redis.namespace = Settings.resque.namespace
     end
   end
 

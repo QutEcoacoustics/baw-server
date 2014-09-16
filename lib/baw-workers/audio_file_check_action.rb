@@ -7,6 +7,9 @@ module BawWorkers
     # Ensure that there is only one job with the same payload per queue.
     include Resque::Plugins::UniqueJob
 
+    # a set of keys starting with 'stats:jobs:queue_name' inside your Resque redis namespace
+    extend Resque::Plugins::JobStats
+
     # Delay when the unique job key is deleted (i.e. when enqueued? becomes false).
     # @return [Fixnum]
     def self.lock_after_execution_period
@@ -37,6 +40,63 @@ module BawWorkers
       file_info
     end
 
+    def self.existing_info(existing_file)
+      media_cache_tool = BawWorkers::Settings.media_cache_tool
+
+      # based on how harvester gets file hash.
+      # TODO: check is there are file hashes in db without 'SHA256' prefix.
+      generated_file_hash = 'SHA256::' + media_cache_tool.generate_hash(existing_file).hexdigest
+
+      # integrity
+      integrity_check = media_cache_tool.audio.integrity_check(existing_file)
+
+      # get file info using ffmpeg
+      info = media_cache_tool.audio.info(existing_file)
+
+      {
+          file: existing_file,
+          errors: integrity_check.errors,
+          file_hash: generated_file_hash,
+          media_type: info[:media_type],
+          sample_rate_hertz: info[:sample_rate],
+          duration_seconds: info[:duration_seconds],
+          bit_rate_bps: info[:bit_rate_bps],
+          data_length_bytes: info[:data_length_bytes],
+          channels: info[:channels],
+      }
+    end
+
+    def self.compare(existing_file, given_info)
+      existing_file_info = existing_info(existing_file)
+
+      bit_rate_bps_delta = 1000
+
+      {
+          actual: existing_file_info,
+          expected: given_info,
+          checks: {
+            file_hash: existing_file_info[:file_hash] == given_info[:file_hash] ? :pass : :fail,
+            extension: File.extname(existing_file_info[:file]).delete('.') == given_info[:original_format] ? :pass : :fail,
+            media_type: existing_file_info[:media_type] == given_info[:media_type] ? :pass : :fail,
+            sample_rate_hertz: existing_file_info[:sample_rate_hertz] == given_info[:sample_rate_hertz] ? :pass : :fail,
+            channels: existing_file_info[:channels] == given_info[:channels] ? :pass : :fail,
+            bit_rate_bps: (existing_file_info[:bit_rate_bps] - given_info[:bit_rate_bps]).abs <= bit_rate_bps_delta ? :pass : :fail,
+            data_length_bytes: existing_file_info[:data_length_bytes] == given_info[:data_length_bytes] ? :pass : :fail,
+            duration_seconds: existing_file_info[:duration_seconds] == given_info[:duration_seconds] ? :pass : :fail,
+            file_errors: existing_file_info.errors.size < 1 ? :pass : :fail,
+            new_file_name: File.basename(existing_file, File.extname(existing_file)).ends_with?('Z') ? :pass : :fail
+          }
+      }
+    end
+
+    def self.check_and_fix_file(existing_file, given_info)
+
+    end
+
+    def self.check_and_fix_files(audio_params)
+
+    end
+
     # @param [Hash] audio_params
     def self.get_info_and_check(audio_params)
       audio_params_sym = validate(audio_params)
@@ -44,61 +104,20 @@ module BawWorkers
 
       original_paths = original_paths(audio_params_sym)
 
+      checks = []
+
+      original_paths.existing.each do |existing_file|
+        checks.push(compare(existing_file, audio_params))
+      end
+
+
       # file exists check
       original_exists = original_paths.existing.size > 0
 
-      # file hashes match check
-      file_hash_check = compare_hashes(audio_params_sym, original_paths)
 
-      # for each file that is in the old format, rename to new format.
-      # use info in original_paths hash.
-
-      # file validity check
-      integrity_check_result = integrity_check(original_paths)
-
-      # get info for each existing file
-      existing_info = original_paths.existing.map { |file| media_cache_tool.info(file) }
-
-      # file extension and stored mime-type check
-      # existing_info
-
-      # Compare values from file with stored values.
-      # prefer values from file.
-      # sample_rate, channels, bit_rate, data_length_bytes
-      # existing_info
-
-      # get duration using ffmpeg and sox.
-      # figure out what to use - they're always a little different.
-      # existing_info
 
       # TODO: logging and csv file generation.
       #write_csv()
-
-      recorded_date = Time.zone.parse(audio_recording_hash['recorded_date'])
-      uuid = audio_recording_hash['uuid']
-      extension = audio_recording_hash['original_extension']
-      file_hash = audio_recording_hash['file_hash']
-      data_length_bytes = audio_recording_hash['data_length_bytes']
-      duration_seconds = audio_recording_hash['duration_seconds']
-
-      @media_cacher = BawAudioTools::MediaCacher.new(BawWorkers::Settings.paths.temp_files)
-      cache = @media_cacher
-      original_audio = cache.original_audio
-
-      original_file_name = original_audio.file_name_utc(uuid, recorded_date, extension)
-
-      possible_storage_paths = cache.possible_storage_paths(original_audio, original_file_name)
-      existing_storage_paths = cache.existing_storage_paths(original_audio, original_file_name)
-
-      if existing_storage_paths.blank?
-        msg = "Could not find original audio file #{original_file_name} in #{possible_storage_paths}."
-        raise BawAudioTools::Exceptions::AudioFileNotFoundError, msg
-      end
-
-      existing_storage_paths.each do |file_full_path|
-        file_info = cache.audio.info(file_full_path)
-        # TODO: compare file info with stored info, any differences should be updated in database?
-      end
 
     end
 
@@ -176,7 +195,7 @@ module BawWorkers
       media_cache_tool = BawWorkers::Settings.media_cache_tool
       results = []
       original_paths.existing.each do |existing_file|
-        integrity_check = media_cache_tool.integrity_check(existing_file)
+        integrity_check = media_cache_tool.audio.integrity_check(existing_file)
         results.push({path: existing_file, errors: integrity_check.errors})
       end
       results
