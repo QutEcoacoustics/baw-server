@@ -25,6 +25,7 @@ settings:
     harvester_completed: ./tmp/_harvester_completed
     harvester_log_file: ./tmp/harvester.log
     modules_log_file: ./tmp/audio_tools.log
+    workers_log_file: ./tmp/workers.log
     temp_files: .
   smtp:
     address: localhost

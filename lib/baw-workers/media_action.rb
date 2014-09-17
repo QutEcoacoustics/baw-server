@@ -46,7 +46,9 @@ module BawWorkers
     def self.enqueue(media_type, media_request_params)
       media_type_sym, params_sym = validate(media_type, media_request_params)
       Resque.enqueue(MediaAction, media_type_sym, params_sym)
-      BawWorkers::Settings.logger.debug("Enqueued #{media_type} from MediaAction #{media_request_params}.")
+      BawWorkers::Settings.logger.info(self.name) {
+        "Enqueued #{media_type} from MediaAction #{media_request_params}."
+      }
     end
 
     # Get the available media types this action can create.
@@ -84,6 +86,10 @@ module BawWorkers
         else
           fail ArgumentError, "Media type (#{media_type_sym.inspect}) was not valid (#{valid_media_types})."
       end
+
+      BawWorkers::Settings.logger.info(self.name) {
+        "Created cache files #{media_type}: #{target_existing_paths}."
+      }
 
       target_existing_paths
     end
