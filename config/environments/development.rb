@@ -55,8 +55,6 @@ AWB::Application.configure do
     end
   end
 
-  config.log_level = :debug
-
   # profile requests
   #config.middleware.insert 0, 'Rack::RequestProfiler', printer: ::RubyProf::CallTreePrinter
 
@@ -70,20 +68,6 @@ AWB::Application.configure do
     Bullet.add_footer = true
     Bullet.raise = false
 
-    # By default, each log is created under Rails.root/log/ and the log file name is environment_name.log.
-    config.logger = Logger.new(Rails.root.join('log', "#{Rails.env}.log"))
-    BawAudioTools::Logging.logger_formatter(config.logger)
-
-    config.action_mailer.logger = Logger.new(Rails.root.join('log', "#{Rails.env}.mailer.log"))
-    BawAudioTools::Logging.logger_formatter(config.action_mailer.logger)
-
-    # log all activerecord activity
-    ActiveRecord::Base.logger = Logger.new(STDOUT)
-
-    # log all redis output
-    Resque.logger = Logger.new(Rails.root.join('log', "#{Rails.env}.resque.log"))
-    BawAudioTools::Logging.logger_formatter(config.logger)
-    Resque.logger.level = Logger::DEBUG
   end
 end
 

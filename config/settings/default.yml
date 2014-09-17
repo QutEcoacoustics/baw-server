@@ -78,6 +78,7 @@ defaults: &defaults
       - <%= Rails.root %>/tmp/_cached_dataset
     harvester_base: <%= Rails.root %>/tmp/_harvester_to_do
     modules_log_file: <%= Rails.root %>/tmp/_modules_log.log
+    workers_log_file: <%= Rails.root %>/tmp/workers_log.log
     temp_files: <%= Rails.root %>/tmp
   harvester_config_file: harvest.yml
   harvester:
