@@ -59,13 +59,13 @@ describe BawWorkers::MediaAction do
     it 'raises error when params is not a hash' do
       expect {
         BawWorkers::MediaAction.perform(:audio, 'not a hash')
-      }.to raise_error(ArgumentError, /Media request params was not a hash/)
+      }.to raise_error(ArgumentError, /Media request params was a 'String'\. It must be a 'Hash'\./)
     end
 
     it 'raises error when media type is invalid' do
       expect {
         BawWorkers::MediaAction.perform(:not_valid_param, {})
-      }.to raise_error(ArgumentError, /Media type \(not_valid_param\) was not valid/)
+      }.to raise_error(ArgumentError, /Media type 'not_valid_param' is not in list of valid media types/)
     end
 
     context 'generate spectrogram' do

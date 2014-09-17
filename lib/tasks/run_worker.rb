@@ -4,9 +4,14 @@ require 'resque/tasks'
 # mirror baw-workers gem startup
 require 'active_support/all'
 require 'logger'
+require 'net/http'
+require 'pathname'
+
 require 'baw-audio-tools'
+
 require 'resque'
 require 'resque_solo'
+require 'resque-job-stats'
 
 require 'baw-workers/version'
 require 'baw-workers/settings'

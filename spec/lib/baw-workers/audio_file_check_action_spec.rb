@@ -75,7 +75,7 @@ describe BawWorkers::AudioFileCheckAction do
     it 'raises error when params is not a hash' do
       expect {
         BawWorkers::AudioFileCheckAction.perform('not a hash')
-      }.to raise_error(ArgumentError, /Media request params was not a hash/)
+      }.to raise_error(ArgumentError, /Media request params was a 'String'\. It must be a 'Hash'\./)
     end
 
     it 'raises error when required value is missing' do
@@ -84,7 +84,7 @@ describe BawWorkers::AudioFileCheckAction do
       }.to raise_error(ArgumentError, /Audio params must include original_format/)
     end
 
-    it 'is successful with correct parameters' do
+    it 'is successful with correct parameters for file with old style name' do
 
       media_request_params =
           {
@@ -111,12 +111,50 @@ describe BawWorkers::AudioFileCheckAction do
       result = BawWorkers::AudioFileCheckAction.perform(original_params)
 
       # assert
-      a = 1
+      expect(result.size).to eq(1)
 
+      original_file_names = media_cache_tool.original_audio_file_names(media_request_params)
+      original_possible_paths = original_file_names.map { |source_file| media_cache_tool.cache.possible_storage_paths(media_cache_tool.cache.original_audio, source_file) }.flatten
+      expect(File.expand_path(original_possible_paths.second)).to eq(result[0])
+
+      expect(File.exist?(original_possible_paths.first)).to be_falsey
     end
 
-    it 'is successful with valid params' do
-      BawWorkers::AudioFileCheckAction.perform(test_params)
+    it 'is successful with correct parameters for file with new style name' do
+
+      media_request_params =
+          {
+              uuid: '7bb0c719-143f-4373-a724-8138219006d9',
+              format: 'png',
+              media_type: 'image/png',
+              start_offset: 5,
+              end_offset: 10,
+              channel: 0,
+              sample_rate: 22050,
+              datetime_with_offset: Time.zone.now,
+              original_format: audio_file_mono_format,
+              window: 512,
+              window_function: 'Hamming',
+              colour: 'g'
+          }
+
+      original_params = test_params.dup
+
+      # arrange
+      create_original_audio(media_cache_tool, media_request_params, audio_file_mono, true)
+
+      # act
+      result = BawWorkers::AudioFileCheckAction.perform(original_params)
+
+      # assert
+      expect(result.size).to eq(1)
+
+      original_file_names = media_cache_tool.original_audio_file_names(media_request_params)
+      original_possible_paths = original_file_names.map { |source_file| media_cache_tool.cache.possible_storage_paths(media_cache_tool.cache.original_audio, source_file) }.flatten
+      expect(File.expand_path(original_possible_paths.second)).to eq(result[0])
+
+      expect(File.exist?(original_possible_paths.first)).to be_falsey
+
     end
 
   end

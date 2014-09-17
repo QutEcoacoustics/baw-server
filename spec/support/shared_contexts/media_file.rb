@@ -16,12 +16,18 @@ shared_context 'media_file' do
     FileUtils.rm_r media_cache_tool.cache.cache_spectrogram.storage_paths.first if Dir.exists? media_cache_tool.cache.cache_spectrogram.storage_paths.first
   end
 
-  def create_original_audio(media_cache_tool, options, example_file_name)
+  def create_original_audio(media_cache_tool, options, example_file_name, new_name_style = false)
     original_file_names = media_cache_tool.original_audio_file_names(options)
     original_possible_paths = original_file_names.map { |source_file| media_cache_tool.cache.possible_storage_paths(media_cache_tool.cache.original_audio, source_file) }.flatten
 
-    FileUtils.mkpath File.dirname(original_possible_paths.first)
-    FileUtils.cp example_file_name, original_possible_paths.first
+    if new_name_style
+      file_to_make = original_possible_paths.second
+    else
+      file_to_make = original_possible_paths.first
+    end
+
+    FileUtils.mkpath File.dirname(file_to_make)
+    FileUtils.cp example_file_name, file_to_make
   end
 
   def get_cached_audio_paths(media_cache_tool, options)

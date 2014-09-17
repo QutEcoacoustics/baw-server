@@ -4,17 +4,18 @@ module BawWorkers
   module Common
     extend ActiveSupport::Concern
 
-    private
-
     module ClassMethods
 
       def validate_contains(value, hash)
-        fail ArgumentError, "Media type (#{value}) was not valid (#{hash})." unless hash.include?(value)
-
+        unless hash.include?(value)
+          msg = "Media type '#{value}' is not in list of valid media types '#{hash}'."
+          BawWorkers::Settings.logger.error(self.name) { msg }
+          fail ArgumentError, msg
+        end
       end
 
       def validate_hash(hash)
-        fail ArgumentError, "Media request params was not a hash (#{hash})" unless hash.is_a?(Hash)
+        fail ArgumentError, "Media request params was a '#{hash.class}'. It must be a 'Hash'. '#{hash}'." unless hash.is_a?(Hash)
       end
 
       def symbolize_hash_keys(hash)
