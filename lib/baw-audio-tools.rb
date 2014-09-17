@@ -8,6 +8,7 @@ require 'baw-audio-tools/OS'
 module BawAudioTools
 
   autoload :Exceptions, 'baw-audio-tools/exceptions'
+  autoload :CustomFormatter, 'baw-audio-tools/custom_formatter'
   autoload :Logging, 'baw-audio-tools/logging'
 
   autoload :AudioFfmpeg, 'baw-audio-tools/audio_ffmpeg'

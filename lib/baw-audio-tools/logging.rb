@@ -30,13 +30,7 @@ module BawAudioTools
     end
 
     def self.logger_formatter(logger)
-      logger.formatter = proc  do |severity, datetime, progname, msg|
-        time = datetime.strftime('%Y-%m-%dT%H:%M:%S.') << '%03d' % datetime.usec.to_s[0..2].rjust(3)
-        sev = '%5s' % severity
-        pid = '%06d' % $$
-        # e.g. 2014-04-07T09:49:13.290+0000 [ WARN--024611] <msg>
-        "#{time}#{datetime.strftime('%z')} [#{sev}-#{progname}-#{pid}] #{msg}\n"
-      end
+      logger.formatter = BawAudioTools::CustomFormatter.new
     end
   end
 end
