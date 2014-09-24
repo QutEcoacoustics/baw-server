@@ -42,11 +42,12 @@ end
 # @param [String] description
 # @param [Symbol] expected_status
 # @param [Hash] opts the options for additional information.
-# @option opts [String] :expected_json_path (nil) Expected json path.
-# @option opts [Boolean] :document (true) Include in api spec documentation.
-# @option opts [Symbol] :response_body_content (nil) Content that must be in the response body.
-# @option opts [Symbol] :invalid_content (nil) Content that must not be in the response body.
-# @option opts [Symbol] :data_item_count (nil) Number of items in a json response
+# @option opts [String]  :expected_json_path     (nil) Expected json path.
+# @option opts [Boolean] :document               (true) Include in api spec documentation.
+# @option opts [Symbol]  :response_body_content  (nil) Content that must be in the response body.
+# @option opts [Symbol]  :invalid_content        (nil) Content that must not be in the response body.
+# @option opts [Symbol]  :data_item_count        (nil) Number of items in a json response
+# @option opts [Hash]    :property_match         (nil) Properties to match
 # @return [void]
 def standard_request_options(description, expected_status, opts = {})
   opts.reverse_merge!({document: true})
@@ -62,10 +63,11 @@ end
 # Check response.
 # @param [Symbol] expected_status
 # @param [Hash] opts the options for additional information.
-# @option opts [String] :expected_json_path (nil) Expected json path.
+# @option opts [String] :expected_json_path    (nil) Expected json path.
 # @option opts [Symbol] :response_body_content (nil) Content that must be in the response body.
-# @option opts [Symbol] :invalid_content (nil) Content that must not be in the response body.
-# @option opts [Symbol] :data_item_count (nil) Number of items in a json response
+# @option opts [Symbol] :invalid_content       (nil) Content that must not be in the response body.
+# @option opts [Symbol] :data_item_count       (nil) Number of items in a json response
+# @option opts [Hash]   :property_match        (nil) Properties to match
 # @return [void]
 def do_checks(expected_status, opts = {})
   opts.reverse_merge!(
@@ -73,7 +75,8 @@ def do_checks(expected_status, opts = {})
           expected_json_path: nil,
           response_body_content: nil,
           invalid_content: nil,
-          data_item_count: nil
+          data_item_count: nil,
+          property_match: nil
       })
 
   actual_response = response_body
@@ -142,6 +145,14 @@ def do_checks(expected_status, opts = {})
     #       "Audio Event Order index #{index} in #{opts[:unordered_ids]}: #{actual_response_parsed}"
     # end
   end
+
+  unless opts[:property_match].nil?
+    opts[:property_match].each do |key, value|
+      expect(actual_response_parsed['data']).to include(key.to_s)
+      expect(actual_response_parsed['data'][key.to_s].to_s).to eq(value.to_s)
+    end
+  end
+
 end
 
 def check_site_lat_long_response(description, expected_status, should_be_obfuscated = true)

@@ -212,7 +212,8 @@ class AudioRecording < ActiveRecord::Base
         #:updater_id, :deleter_id, :deleted_at, :original_file_name
         ],
         render_fields: [:id, :uuid, :recorded_date, :site_id, :duration_seconds,
-                        :sample_rate_hertz, :channels, :bit_rate_bps, :media_type, :status],
+                        :sample_rate_hertz, :channels, :bit_rate_bps, :media_type,
+                        :data_length_bytes, :status],
         text_fields: [:media_type, :status],
         controller: :audio_recordings,
         action: :filter,

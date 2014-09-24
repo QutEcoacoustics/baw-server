@@ -156,7 +156,10 @@ class Ability
       can [:index, :new, :create, :show], Tag
 
     elsif user.has_role? :harvester
-      can [:new, :create, :check_uploader, :update_status], AudioRecording
+      # harvester user is used by baw-harvester and baw-workers
+      # baw-harvester: :new, :create, :check_uploader, :update_status
+      # baw-workers: :update
+      can [:new, :create, :check_uploader, :update_status, :update], AudioRecording
 
     end
   end

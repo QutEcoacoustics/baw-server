@@ -1,4 +1,5 @@
 class AudioRecordingsController < ApplicationController
+  include Api::ControllerHelper
 
   load_resource :project, only: [:check_uploader, :create]
   load_resource :site, only: [:index, :create]
@@ -60,6 +61,24 @@ class AudioRecordingsController < ApplicationController
       render json: @audio_recording, status: :created, location: @audio_recording
     else
       render json: @audio_recording.errors, status: :unprocessable_entity
+    end
+  end
+
+  def update
+
+    valid_keys = [
+        :media_type,
+        :sample_rate_hertz,
+        :channels,
+        :bit_rate_bps,
+        :data_length_bytes,
+        :duration_seconds
+    ]
+
+    if @audio_recording.update_attributes(params[:audio_recording].slice(*valid_keys))
+      respond_show
+    else
+      respond_change_fail
     end
   end
 

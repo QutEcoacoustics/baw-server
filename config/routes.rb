@@ -46,6 +46,10 @@ AWB::Application.routes.draw do
   match 'bookmarks/filter' => 'bookmarks#filter', via: [:get, :post], defaults: {format: 'json'}
   resources :bookmarks, except: [:edit]
 
+  # routes used by workers:
+  # login: /security/sign_in
+  # audio_recording_update: /audio_recordings/:id
+
   # routes used by harvester:
   # endpoint_login: /security/sign_in
   # endpoint_create: /projects/:project_id/sites/:site_id/audio_recordings
@@ -140,7 +144,7 @@ AWB::Application.routes.draw do
   match 'audio_recordings/filter' => 'audio_recordings#filter', via: [:get, :post], defaults: {format: 'json'}
 
   # API audio recording item
-  resources :audio_recordings, only: [:index, :show, :new], defaults: {format: 'json'} do
+  resources :audio_recordings, only: [:index, :show, :new, :update], defaults: {format: 'json'} do
     get 'media.:format' => 'media#show', defaults: {format: 'json'}, as: :media
     resources :audio_events, except: [:edit], defaults: {format: 'json'} do
       collection do
