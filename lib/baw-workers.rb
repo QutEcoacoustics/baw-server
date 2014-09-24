@@ -23,7 +23,13 @@ module BawWorkers
   autoload :AudioFileCheck, 'baw-workers/audio_file_check'
   autoload :ApiCommunicator, 'baw-workers/api_communicator'
 
-  autoload :MediaAction, 'baw-workers/media_action'
-  autoload :AudioFileCheckAction, 'baw-workers/audio_file_check_action'
-  autoload :Mailer, 'baw-workers/mail/mailer'
+  module Action
+    autoload :MediaAction, 'baw-workers/action/media_action'
+    autoload :AudioFileCheckAction, 'baw-workers/action/audio_file_check_action'
+  end
+
+  module Mail
+    autoload :Mailer, 'baw-workers/mail/mailer'
+  end
+
 end

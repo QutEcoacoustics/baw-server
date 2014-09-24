@@ -1,5 +1,4 @@
 shared_context 'media_file' do
-  let(:log_file) { "#{@tmp_dir}/spec.log" }
 
   let(:audio_file_mono) { File.join(File.dirname(__FILE__), '..', '..', 'example_media', 'test-audio-mono.ogg') }
   let(:audio_file_mono_media_type) { Mime::Type.lookup('audio/ogg') }

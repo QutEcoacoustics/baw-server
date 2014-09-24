@@ -39,6 +39,10 @@ require 'baw-workers'
 require 'fakeredis'
 require 'active_support/core_ext'
 
+# require webmock
+require 'webmock/rspec'
+WebMock.disable_net_connect!(allow: 'codeclimate.com')
+
 # include shared_context
 Dir[File.join(File.dirname(__FILE__), 'support', '**', '*.rb')].each {|file| require file }
 
@@ -101,6 +105,11 @@ RSpec.configure do |config|
     # clear stdout and stderr files
     FileUtils.rm config.program_stderr if File.exists? config.program_stderr
     FileUtils.rm config.program_stdout if File.exists? config.program_stdout
+  end
+
+  # indicate that webmock requests were successful
+  WebMock.after_request do |request_signature, response|
+    puts "Request #{request_signature} was made and #{response} was returned"
   end
 
   # setting the source file here means the rake task cannot change it

@@ -5,18 +5,17 @@ module BawWorkers
     # include common methods
     include BawWorkers::Common
 
-    def initialize
-      # hash where keys are paths, values are hashes of properties as specified in csv_headers
-      @store_csv = {}
+    def initialize(logger)
+      @logger = logger
 
       # api communication
-      @api_communicator = ApiCommunicator.new
+      @api_communicator = ApiCommunicator.new(logger)
     end
 
     # Get info for an existing file.
     # @param [String] existing_file
     # @return [Hash] information about an existing file
-    def existing(existing_file)
+    def existing_info(existing_file)
       media_cache_tool = BawWorkers::Settings.media_cache_tool
 
       # based on how harvester gets file hash.
@@ -29,8 +28,9 @@ module BawWorkers
       # get file info using ffmpeg
       info = media_cache_tool.audio.info(existing_file)
 
-      info_hash = {
+      {
           file: existing_file,
+          extension: File.extname(existing_file).delete('.'),
           errors: integrity_check.errors,
           file_hash: generated_file_hash,
           media_type: info[:media_type],
@@ -40,39 +40,33 @@ module BawWorkers
           data_length_bytes: info[:data_length_bytes],
           channels: info[:channels],
       }
-
-      BawWorkers::Settings.logger.info(get_class_name) {
-        "Gathered info for existing file #{info_hash}"
-      }
-
-      info_hash
     end
 
     # Compare expected and actual audio file information.
     # @param [String] existing_file
     # @param [Hash] audio_params
     # @return [Hash] information about comparison between expected and actual audio file info.
-    def compare(existing_file, audio_params)
-      existing_file_info = existing(existing_file)
+    def compare_info(existing_file, audio_params)
+      existing_file_info = existing_info(existing_file)
 
+      correct = :pass
+      wrong = :fail
       bit_rate_bps_delta = 1000
 
-      actual_extension = File.extname(existing_file_info[:file]).delete('.')
+      file_hash = existing_file_info[:file_hash] == audio_params[:file_hash] ? correct : wrong
+      extension = existing_file_info[:extension] == audio_params[:original_format] ? correct : wrong
+      media_type = existing_file_info[:media_type] == audio_params[:media_type] ? correct : wrong
 
-      file_hash = existing_file_info[:file_hash] == audio_params[:file_hash] ? :pass : :fail
-      extension = actual_extension == audio_params[:original_format] ? :pass : :fail
-      media_type = existing_file_info[:media_type] == audio_params[:media_type] ? :pass : :fail
+      sample_rate_hertz = existing_file_info[:sample_rate_hertz] == audio_params[:sample_rate_hertz] ? correct : wrong
+      channels = existing_file_info[:channels] == audio_params[:channels] ? correct : wrong
+      bit_rate_bps = (existing_file_info[:bit_rate_bps] - audio_params[:bit_rate_bps]).abs <= bit_rate_bps_delta ? correct : wrong
+      data_length_bytes = existing_file_info[:data_length_bytes] == audio_params[:data_length_bytes] ? correct : wrong
+      duration_seconds = existing_file_info[:duration_seconds] == audio_params[:duration_seconds] ? correct : wrong
 
-      sample_rate_hertz = existing_file_info[:sample_rate_hertz] == audio_params[:sample_rate_hertz] ? :pass : :fail
-      channels = existing_file_info[:channels] == audio_params[:channels] ? :pass : :fail
-      bit_rate_bps = (existing_file_info[:bit_rate_bps] - audio_params[:bit_rate_bps]).abs <= bit_rate_bps_delta ? :pass : :fail
-      data_length_bytes = existing_file_info[:data_length_bytes] == audio_params[:data_length_bytes] ? :pass : :fail
-      duration_seconds = existing_file_info[:duration_seconds] == audio_params[:duration_seconds] ? :pass : :fail
+      file_errors = existing_file_info.errors.size < 1 ? correct : wrong
+      new_file_name = File.basename(existing_file, File.extname(existing_file)).end_with?('Z') ? correct : wrong
 
-      file_errors = existing_file_info.errors.size < 1 ? :pass : :fail
-      new_file_name = File.basename(existing_file, File.extname(existing_file)).end_with?('Z') ? :pass : :fail
-
-      compare_hash = {
+      {
           actual: existing_file_info,
           expected: audio_params,
           checks: {
@@ -86,66 +80,24 @@ module BawWorkers
               duration_seconds: duration_seconds,
               file_errors: file_errors,
               new_file_name: new_file_name
-          }
+          },
+          bit_rate_bps_delta: bit_rate_bps_delta
       }
-
-      # set csv values
-      @store_csv[existing_file] = {
-          exists: true,
-          check_new_file_name: new_file_name,
-          file_errors: existing_file_info.errors,
-          moved_path: nil,
-
-          check_file_hash: file_hash,
-          check_extension: extension,
-          check_media_type: media_type,
-          check_sample_rate_hertz: sample_rate_hertz,
-          check_channels: channels,
-          check_bit_rate_bps: bit_rate_bps,
-          check_data_length_bytes: data_length_bytes,
-          check_duration_seconds: duration_seconds,
-
-          expected_file_hash: audio_params[:file_hash],
-          expected_extension: audio_params[:original_format],
-          expected_media_type: audio_params[:media_type],
-          expected_sample_rate_hertz: audio_params[:sample_rate_hertz],
-          expected_channels: audio_params[:channels],
-          expected_bit_rate_bps: audio_params[:bit_rate_bps],
-          expected_data_length_bytes: audio_params[:data_length_bytes],
-          expected_duration_seconds: audio_params[:duration_seconds],
-
-          actual_file_hash: existing_file_info[:file_hash],
-          actual_extension: actual_extension,
-          actual_media_type: existing_file_info[:media_type],
-          actual_sample_rate_hertz: existing_file_info[:sample_rate_hertz],
-          actual_channels: existing_file_info[:channels],
-          actual_bit_rate_bps: existing_file_info[:bit_rate_bps],
-          actual_data_length_bytes: existing_file_info[:data_length_bytes],
-          actual_duration_seconds: existing_file_info[:duration_seconds]
-      }
-
-      BawWorkers::Settings.logger.info(get_class_name) {
-        "Compared expected and actual info for file #{existing_file} => #{compare_hash[:checks]}"
-      }
-
-      compare_hash
     end
 
     # Check existing files and modify the file name and/or details on website if necessary.
     # @param [Hash] audio_params
     # @return [Array<String>] existing paths after moves
-    def modify(audio_params)
+    def run(audio_params)
       audio_params_sym = BawWorkers::AudioFileCheck.validate(audio_params)
       original_paths = original_paths(audio_params_sym)
 
       # HIGH LEVEL PROBLEM: do any audio files exist?
       check_exists(original_paths, audio_params)
 
-      # populate 
-
       # now check the comparisons for each existing file. Any failures will be logged and fixed if possible.
       original_paths.existing.each do |existing_file|
-        modify_file(existing_file, audio_params)
+        run_single(existing_file, audio_params)
       end
 
       # LOW LEVEL PROBLEM: rename old file names to new file names
@@ -157,20 +109,26 @@ module BawWorkers
     # @param [String] existing_file
     # @param [Hash] audio_params
     # @return [void]
-    def modify_file(existing_file, audio_params)
+    def run_single(existing_file, audio_params)
       # get existing file info and comparisons between expected and actual
-      checks_hash = compare(existing_file, audio_params)
+      checks_hash = compare_info(existing_file, audio_params)
 
-      msg = "for existing file #{checks_hash}"
+      base_msg = "for #{checks_hash}"
+
+      @logger.info(get_class_name) {
+        "Compared expected and actual info #{checks_hash}"
+      }
+
+
 
       # HIGH LEVEL PROBLEM: do the hashes match?
       check_file_hash = checks_hash[:checks][:file_hash] == :pass
       if check_file_hash
         BawWorkers::Settings.logger.debug(get_class_name) {
-          "File hashes match #{msg}"
+          "File hashes match #{base_msg}"
         }
       else
-        msg = "File hashes DOT NOT match #{msg}"
+        msg = "File hashes DOT NOT match #{base_msg}"
         BawWorkers::Settings.logger.error(get_class_name) { msg }
         fail BawAudioTools::Exceptions::FileCorruptError, msg
       end
@@ -180,29 +138,86 @@ module BawWorkers
       check_file_integrity = checks_hash[:checks][:file_errors] == :pass
       if check_file_integrity
         BawWorkers::Settings.logger.debug(get_class_name) {
-          "File integrity ok #{msg}"
+          "File integrity ok #{base_msg}"
         }
       else
-        msg = "File integrity uncertain #{msg}"
+        msg = "File integrity uncertain #{base_msg}"
         BawWorkers::Settings.logger.warn(get_class_name) { msg }
+      end
+
+      # MID LEVEL PROBLEM: extensions do not match
+      # (this is impossible, since if the extension/media_type doesn't match,
+      # can't find the file in the first place)
+      check_extension = checks_hash[:checks][:extension] == :pass
+      if check_extension
+        BawWorkers::Settings.logger.debug(get_class_name) {
+          "File extensions match #{base_msg}"
+        }
+      else
+        msg = "File extensions do not match #{base_msg}"
+        BawWorkers::Settings.logger.warn(get_class_name) { msg }
+      end
+
+      changed_metadata = {}
+
+      # LOW LEVEL PROBLEM: media type, sample_rate, channels, bit_rate, data_length_bytes, duration_seconds
+      check_media_type = checks_hash[:checks][:media_type] == :pass
+      changed_metadata[:media_type] = checks_hash[:actual][:media_type] unless check_media_type
+      #@store_csv[existing_file][]
+
+      check_sample_rate = checks_hash[:checks][:sample_rate_hertz] == :pass
+      changed_metadata[:sample_rate_hertz] = checks_hash[:actual][:sample_rate_hertz] unless check_sample_rate
+
+      check_channels = checks_hash[:checks][:channels] == :pass
+      changed_metadata[:channels] = checks_hash[:actual][:channels] unless check_channels
+
+      check_bit_rate_bps = checks_hash[:checks][:bit_rate_bps] == :pass
+      changed_metadata[:bit_rate_bps] = checks_hash[:actual][:bit_rate_bps] unless check_bit_rate_bps
+
+      check_data_length_bytes = checks_hash[:checks][:data_length_bytes] == :pass
+      changed_metadata[:data_length_bytes] = checks_hash[:actual][:data_length_bytes] unless check_data_length_bytes
+
+      check_duration_seconds = checks_hash[:checks][:duration_seconds] == :pass
+      changed_metadata[:duration_seconds] = checks_hash[:actual][:duration_seconds] unless check_duration_seconds
+
+      # use api for any changes/updates for low level problems
+      if changed_metadata.size > 0
+
+        msg = "Updates required #{changed_metadata} - #{base_msg}"
+        BawWorkers::Settings.logger.warn(get_class_name) { msg }
+
+        host = BawWorkers::Settings.api.host
+        port = BawWorkers::Settings.api.port
+
+        # get auth token
+        auth_token = @api_communicator.request_login(
+            BawWorkers::Settings.api.user_email,
+            BawWorkers::Settings.api.user_password,
+            host,
+            port,
+            nil,
+            BawWorkers::Settings.endpoints.login
+        )
+
+        # update audio recording metadata
+        update_success = @api_communicator.update_audio_recording_details(
+            'mismatch between file and database',
+            existing_file,
+            'id',
+            changed_metadata,
+            host, port, auth_token,
+            BawWorkers::Settings.endpoints.audio_recording_update
+        )
+
+      else
+        BawWorkers::Settings.logger.debug(get_class_name) {
+          "No updates required #{base_msg}"
+        }
       end
 
       # TODO: record any changes made to these properties in @store_csv
 
-      # LOW LEVEL PROBLEM: media type and extension
-      check_media_type = checks_hash.checks[:media_type] == :pass
-      check_extension = checks_hash.checks[:extension] == :pass
-      # TODO
 
-      # LOW LEVEL PROBLEM: sample_rate, channels, bit_rate, data_length_bytes, duration_seconds
-      check_sample_rate = checks_hash.checks[:sample_rate_hertz] == :pass
-      check_channels = checks_hash.checks[:channels] == :pass
-      check_bit_rate_bps = checks_hash.checks[:bit_rate_bps] == :pass
-      check_data_length_bytes = checks_hash.checks[:data_length_bytes] == :pass
-      check_duration_seconds = checks_hash.checks[:duration_seconds] == :pass
-      # TODO
-
-      # TODO: use api for any changes/updates for low level problems
     end
 
     # Write hash to file in csv format.
@@ -231,8 +246,9 @@ module BawWorkers
       # new_file_name
 
       csv_headers = [
-          :path, :exists, :check_new_file_name, :file_errors, :moved_path,
+          :path, :exists, :file_errors, :moved_path,
 
+          :check_new_file_name, :check_file_errors,
           :check_file_hash, :check_extension, :check_media_type, :check_sample_rate_hertz,
           :check_channels, :check_bit_rate_bps, :check_data_length_bytes, :check_duration_seconds,
 
@@ -322,7 +338,11 @@ module BawWorkers
           "Existing files #{original_paths} given #{audio_params}"
         }
       else
-        msg = "No existing file for #{original_paths} given #{audio_params}"
+        
+        # can't write csv file at this point
+
+
+        msg = "No existing files for #{original_paths} given #{audio_params}"
         BawWorkers::Settings.logger.error(get_class_name) { msg }
         fail BawAudioTools::Exceptions::FileNotFoundError, msg
       end
@@ -345,7 +365,7 @@ module BawWorkers
           # move old name to new name unless it already exists
           if new_path_exists
             BawWorkers::Settings.logger.debug(get_class_name) {
-              "Found equivalent old and new file names, no action required. Old: #{existing_file} New: #{new_path}."
+              "Found equivalent old and new file names, no action performed. Old: #{existing_file} New: #{new_path}."
             }
           else
             BawWorkers::Settings.logger.info(get_class_name) {

@@ -27,6 +27,14 @@ settings:
     modules_log_file: ./tmp/audio_tools.log
     workers_log_file: ./tmp/workers.log
     temp_files: .
+  endpoints:
+    login: /security/sign_in
+    audio_recording_update: /audio_recordings/:id
+  api:
+    host: localhost
+    port: 3030
+    user_email:
+    user_password:
   smtp:
     address: localhost
     port:
