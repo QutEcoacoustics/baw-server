@@ -41,17 +41,10 @@ module BawWorkers
 
         # Perform work. Used by `resque`.
         # @param [Hash] audio_params
-        # @return [Array<String>] existing paths after moves
+        # @return [Array<String>] new existing file paths
         def perform(audio_params)
           audio_file_check = AudioFileCheck.new(BawWorkers::Settings.logger)
-          updated_existing = audio_file_check.run(audio_params)
-
-          log_file = Settings.paths.workers_log_file
-          csv_name = File.basename(log_file, File.extname(log_file))
-          csv_file = File.join(File.dirname(log_file), csv_name + '.csv')
-          audio_file_check.write_csv(csv_file)
-
-          updated_existing
+          audio_file_check.run(audio_params)
         end
 
       end
