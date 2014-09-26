@@ -68,11 +68,17 @@ module BawWorkers
 
 
       # HIGH LEVEL PROBLEM: do the hashes match?
+      # if the hash from params is 'SHA256::' then first check all other checks pass
+      # then update it.
       check_file_hash = compare_hash[:checks][:file_hash] == :pass
+      is_expected_file_hash_default = compare_hash[:expected][:file_hash] == 'SHA256::'
       if check_file_hash
         @logger.debug(get_class_name) {
           "File hashes match #{base_msg}"
         }
+
+      elsif is_expected_file_hash_default
+        # do nothing here - raise error if something else doesn't match
       else
         msg = "File hashes DOT NOT match #{base_msg}"
 
@@ -132,6 +138,24 @@ module BawWorkers
 
       check_duration_seconds = compare_hash[:checks][:duration_seconds] == :pass
       changed_metadata[:duration_seconds] = compare_hash[:actual][:duration_seconds] unless check_duration_seconds
+
+      # check on file hash - if everything else matches, update it. if anything else doesn't
+      # match, raise an error
+      if is_expected_file_hash_default
+        if changed_metadata.size > 0
+          msg = "File hash and other properties DOT NOT match #{changed_metadata} #{base_msg}"
+
+          # log error
+          @logger.error(get_class_name) { msg }
+
+          # write row of csv into log file
+          log_csv_line(existing_file, true, nil, compare_hash)
+
+          fail BawAudioTools::Exceptions::FileCorruptError, msg
+        else
+          changed_metadata[:file_hash] = compare_hash[:actual][:file_hash]
+        end
+      end
 
       # use api for any changes/updates for low level problems
       update_result = nil
@@ -433,10 +457,10 @@ module BawWorkers
       csv_options = {col_sep: ',', force_quotes: true}
 
       csv_header_line = csv_headers.to_csv(csv_options).strip
-      @logger.fatal(get_class_name) { csv_header_line }
+      @logger.fatal(get_class_name) { ",#{csv_header_line}" }
 
       csv_value_line = csv_values.to_csv(csv_options).strip
-      @logger.fatal(get_class_name) { csv_value_line }
+      @logger.fatal(get_class_name) { ",#{csv_value_line}" }
     end
 
     # Rename file with old file name to new file name.
