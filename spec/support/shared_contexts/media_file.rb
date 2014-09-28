@@ -1,11 +1,15 @@
 shared_context 'media_file' do
 
-  let(:audio_file_mono) { File.join(File.dirname(__FILE__), '..', '..', 'example_media', 'test-audio-mono.ogg') }
+  let(:audio_file_mono) { File.expand_path(File.join(File.dirname(__FILE__), '..', '..', 'example_media', 'test-audio-mono.ogg')) }
   let(:audio_file_mono_media_type) { Mime::Type.lookup('audio/ogg') }
   let(:audio_file_mono_format) { 'ogg' }
   let(:audio_file_mono_sample_rate) { 44100 }
   let(:audio_file_mono_channels) { 1 }
   let(:audio_file_mono_duration_seconds) { 70 }
+  let(:audio_file_mono_data_length_bytes) { 822281 }
+  let(:audio_file_mono_bit_rate_bps) { 239920 }
+
+  let(:audio_file_corrupt) { File.expand_path(File.join(File.dirname(__FILE__), '..', '..', 'example_media', 'test-audio-corrupt.ogg')) }
 
   let(:media_cache_tool) { BawWorkers::Settings.media_cache_tool }
 
@@ -27,6 +31,8 @@ shared_context 'media_file' do
 
     FileUtils.mkpath File.dirname(file_to_make)
     FileUtils.cp example_file_name, file_to_make
+
+    file_to_make
   end
 
   def get_cached_audio_paths(media_cache_tool, options)

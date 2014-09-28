@@ -95,6 +95,9 @@ RSpec.configure do |config|
     STDERR.sync = true
     STDOUT.reopen(File.open(config.program_stdout, 'w+'))
     STDOUT.sync = true
+
+    # delete log file
+    File.delete(BawWorkers::Settings.paths.workers_log_file) if File.exists?(BawWorkers::Settings.paths.workers_log_file)
   end
 
   config.after(:each) do
@@ -122,11 +125,13 @@ RSpec.configure do |config|
     class Settings < BawWorkers::Settings
       source BawWorkers::Settings.source
       namespace 'settings'
+
       BawWorkers::Settings.set_mailer_config
       ActionMailer::Base.delivery_method = :test
 
       Resque.redis = Redis.new
       Resque.redis.namespace = Settings.resque.namespace
+
     end
   end
 

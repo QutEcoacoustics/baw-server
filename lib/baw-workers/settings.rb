@@ -16,7 +16,7 @@ module BawWorkers
     def logger
       # requires Settings 'Settings.paths.workers_log_file' value to be available
       if !defined?(@stored_logger) || @stored_logger.blank?
-        @stored_logger = Logger.new(Settings.paths.workers_log_file)
+        @stored_logger = Logger.new(BawWorkers::Settings.paths.workers_log_file)
         @stored_logger.formatter = BawAudioTools::CustomFormatter.new
         @stored_logger.level = Logger::DEBUG
       end

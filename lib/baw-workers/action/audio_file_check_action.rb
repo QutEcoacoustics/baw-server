@@ -41,7 +41,7 @@ module BawWorkers
 
         # Perform work. Used by `resque`.
         # @param [Hash] audio_params
-        # @return [Array<String>] new existing file paths
+        # @return [Array<Hash>] array of hashes representing operations performed
         def perform(audio_params)
           audio_file_check = AudioFileCheck.new(BawWorkers::Settings.logger)
           audio_file_check.run(audio_params)

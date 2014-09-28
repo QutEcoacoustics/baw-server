@@ -14,7 +14,7 @@ module BawWorkers
 
     # Check existing files and modify the file name and/or details via api if necessary.
     # @param [Hash] audio_params
-    # @return [Array<String>] updated array of file paths
+    # @return [Array<Hash>] array of hashes representing operations performed
     def run(audio_params)
       # validate params
       audio_params_sym = BawWorkers::AudioFileCheck.validate(audio_params)
@@ -26,30 +26,40 @@ module BawWorkers
       check_exists(original_paths, audio_params)
 
       # now check the comparisons for each existing file. Any failures will be logged and fixed if possible.
-      updated_existing_paths = []
+      result = []
       original_paths.existing.each do |existing_file|
 
         # fix all other issues before renaming file
-        results = run_single(existing_file, audio_params)
+        single_result = run_single(existing_file, audio_params)
 
         # LOW LEVEL PROBLEM: rename old file names to new file names
         file_move_info = rename_file(existing_file, original_paths[:name_utc])
 
+        # record new file location
+        result_hash =
+            {
+                file_path: existing_file,
+                exists: true,
+                moved_path: file_move_info[:moved] ? file_move_info[:new_file] : nil,
+                compare_hash: single_result[:compare_hash],
+                api_result_hash: single_result[:api_result_hash],
+                api_response: single_result[:api_result]
+            }
+
+        result.push(result_hash)
+
         # create csv info line
         log_csv_line(
-            existing_file,
-            true,
-            file_move_info[:moved] ? file_move_info[:new_file] : nil,
-            results[:compare_hash],
-            results[:api_result_hash],
-            results[:api_result]
+            result_hash[:file_path],
+            result_hash[:exists],
+            result_hash[:moved_path],
+            result_hash[:compare_hash],
+            result_hash[:api_result_hash],
+            result_hash[:api_response],
         )
-
-        # record new file location
-        updated_existing_paths.push(file_move_info[:new_file])
       end
 
-      updated_existing_paths
+      result
     end
 
     # Check an existing file and modify the file name and/or details on website if necessary.
@@ -66,33 +76,9 @@ module BawWorkers
         "Compared expected and actual info #{base_msg}"
       }
 
-
-      # HIGH LEVEL PROBLEM: do the hashes match?
-      # if the hash from params is 'SHA256::' then first check all other checks pass
-      # then update it.
-      check_file_hash = compare_hash[:checks][:file_hash] == :pass
-      is_expected_file_hash_default = compare_hash[:expected][:file_hash] == 'SHA256::'
-      if check_file_hash
-        @logger.debug(get_class_name) {
-          "File hashes match #{base_msg}"
-        }
-
-      elsif is_expected_file_hash_default
-        # do nothing here - raise error if something else doesn't match
-      else
-        msg = "File hashes DOT NOT match #{base_msg}"
-
-        # log error
-        @logger.error(get_class_name) { msg }
-
-        # write row of csv into log file
-        log_csv_line(existing_file, true, nil, compare_hash)
-
-        fail BawAudioTools::Exceptions::FileCorruptError, msg
-      end
-
-
       # MID LEVEL PROBLEM: is the file valid?
+      # usually will not log 'File integrity uncertain', since the info check will raise an error
+      # for most things that would present as 'File integrity uncertain'.
       check_file_integrity = compare_hash[:checks][:file_errors] == :pass
       if check_file_integrity
         @logger.debug(get_class_name) {
@@ -117,6 +103,29 @@ module BawWorkers
         @logger.warn(get_class_name) { msg }
       end
 
+      # HIGH LEVEL PROBLEM: do the hashes match?
+      # if the hash from params is 'SHA256::' then first check all other checks pass
+      # then update it.
+      check_file_hash = compare_hash[:checks][:file_hash] == :pass
+      is_expected_file_hash_default = compare_hash[:expected][:file_hash] == 'SHA256::'
+      if check_file_hash
+        @logger.debug(get_class_name) {
+          "File hashes match #{base_msg}"
+        }
+
+      elsif is_expected_file_hash_default
+        # do nothing here - raise error if something else doesn't match
+      else
+        msg = "File hashes DO NOT match #{base_msg}"
+
+        # log error
+        @logger.error(get_class_name) { msg }
+
+        # write row of csv into log file
+        log_csv_line(existing_file, true, nil, compare_hash)
+
+        fail BawAudioTools::Exceptions::FileCorruptError, msg
+      end
 
       changed_metadata = {}
 
@@ -143,7 +152,7 @@ module BawWorkers
       # match, raise an error
       if is_expected_file_hash_default
         if changed_metadata.size > 0
-          msg = "File hash and other properties DOT NOT match #{changed_metadata} #{base_msg}"
+          msg = "File hash and other properties DO NOT match #{changed_metadata} #{base_msg}"
 
           # log error
           @logger.error(get_class_name) { msg }
@@ -267,7 +276,6 @@ module BawWorkers
       media_cache_tool = BawWorkers::Settings.media_cache_tool
 
       # based on how harvester gets file hash.
-      # TODO: are there file hashes in db without 'SHA256' prefix?
       generated_file_hash = 'SHA256::' + media_cache_tool.generate_hash(existing_file).hexdigest
 
       # integrity
