@@ -452,23 +452,49 @@ describe BawAudioTools::AudioBase do
     end
     context 'fails' do
       it 'processing empty .ogg file' do
-        expect {
-          audio_base.integrity_check(audio_file_empty)
-        }.to raise_error(BawAudioTools::Exceptions::AudioToolError)
+        result = audio_base.integrity_check(audio_file_empty)
+
+        expect(result[:errors].size).to eq(2)
+
+        expect(result[:errors][0][:id]).to eq('ogg')
+        expect(result[:errors][0][:description]).to eq('Format ogg detected only with low score of 1, misdetection possible!')
+
+        expect(result[:errors][1][:id]).to eq('end of file')
+        expect(result[:errors][1][:description]).to include('End of file')
+
       end
 
       it 'processing empty .mp3 file' do
         temp_media_file_a = temp_media_file_1+'.mp3'
         FileUtils.touch(temp_media_file_a)
-        expect {
-          audio_base.integrity_check(temp_media_file_a)
-        }.to raise_error(BawAudioTools::Exceptions::AudioToolError)
+
+        result = audio_base.integrity_check(temp_media_file_a)
+
+        expect(result[:errors].size).to eq(2)
+
+        expect(result[:errors][0][:id]).to eq('mp3')
+        expect(result[:errors][0][:description]).to eq('Format mp3 detected only with low score of 1, misdetection possible!')
+
+        expect(result[:errors][1][:id]).to eq('mp3')
+        expect(result[:errors][1][:description]).to eq('Could not find codec parameters for stream 0 (Audio: mp3, 0 channels, s16p): unspecified frame size')
+
       end
 
       it 'processing corrupt .ogg file' do
-        expect {
-          audio_base.integrity_check(audio_file_corrupt)
-        }.to raise_error(BawAudioTools::Exceptions::AudioToolError)
+
+        result = audio_base.integrity_check(audio_file_corrupt)
+
+        expect(result[:errors].size).to eq(6)
+
+        expect(result[:errors][0][:id]).to eq('NULL')
+        expect(result[:errors][0][:description]).to eq('Invalid Setup header')
+
+        expect(result[:errors][1][:id]).to eq('vorbis')
+        expect(result[:errors][1][:description]).to eq('Extradata missing.')
+
+        expect(result[:errors][5][:id]).to eq('error')
+        expect(result[:errors][5][:description]).to include('Error while opening decoder for input stream #0:0 : Invalid data found when processing input')
+
       end
     end
   end

@@ -157,12 +157,12 @@ module BawAudioTools
       if File.extname(source) != '.wv'
         # ffmpeg for everything except wavpack
         ffmpeg_integrity_cmd = @audio_ffmpeg.integrity_command(source)
-        ffmpeg_integrity_output = execute(ffmpeg_integrity_cmd)
+        ffmpeg_integrity_output = execute(ffmpeg_integrity_cmd, false)
         output = @audio_ffmpeg.check_integrity_output(ffmpeg_integrity_output)
       else
         # wavpack for wv files
         wvpack_integrity_cmd = @audio_wavpack.integrity_command(source)
-        wvpack_integrity_output = execute(wvpack_integrity_cmd)
+        wvpack_integrity_output = execute(wvpack_integrity_cmd, false)
         output = @audio_wavpack.check_integrity_output(wvpack_integrity_output)
       end
 
@@ -185,7 +185,7 @@ module BawAudioTools
       modify_worker(source_info, source, target, modify_parameters)
     end
 
-    def execute(command)
+    def execute(command, raise_program_exit_error = true)
 
       if OS.windows?
         #if command.include? '&& move'
@@ -233,13 +233,14 @@ module BawAudioTools
       end
 
       fail Exceptions::AudioToolTimedOutError, msg if timed_out || killed
-      fail Exceptions::AudioToolError, msg if !stderr_str.blank? && !status.success?
+      fail Exceptions::AudioToolError, msg if !stderr_str.blank? && !status.success? && raise_program_exit_error
 
       {
           command: command,
           stdout: stdout_str,
           stderr: stderr_str,
           time_taken: time,
+          exit_code: status.exitstatus,
           execute_msg: msg
       }
     end
