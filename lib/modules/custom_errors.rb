@@ -15,7 +15,17 @@ module CustomErrors
   end
   class NotAcceptableError < RequestedMediaTypeError; end
   class UnsupportedMediaTypeError < RequestedMediaTypeError; end
-  class UnprocessableEntityError < StandardError; end
+  class UnprocessableEntityError < StandardError
+    attr_reader :additional_details
+    def initialize(message = nil, additional_details = nil)
+      @message = message
+      @additional_details = additional_details
+    end
+
+    def to_s
+      @message
+    end
+  end
   class BadRequestError < StandardError; end
   class FilterArgumentError < ArgumentError
     attr_reader :filter_segment

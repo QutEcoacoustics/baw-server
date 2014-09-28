@@ -291,11 +291,13 @@ class ApplicationController < ActionController::Base
   end
 
   def unprocessable_entity_error_response(error)
+    options = error.additional_details.nil? ? {} : {error_info: {info: error.additional_details}}
     render_error(
         :unprocessable_entity,
         "The request could not be understood: #{error.message}",
         error,
-        'unprocessable_entity_error_response'
+        'unprocessable_entity_error_response',
+        options
     )
   end
 
