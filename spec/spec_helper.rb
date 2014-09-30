@@ -55,7 +55,7 @@ RSpec.configure do |config|
   config.filter_run :focus
 
   config.expect_with :rspec do |c|
-    c.syntax = :expect
+    c.syntax = [:should, :expect]
   end
 
   # Run specs in random order to surface order dependencies. If you find an
@@ -87,6 +87,13 @@ RSpec.configure do |config|
 
   config.before(:all) do
     FileUtils.mkdir_p(config.tmp_dir)
+
+    # delete log file
+    #File.delete(BawWorkers::Settings.paths.workers_log_file) if File.exists?(BawWorkers::Settings.paths.workers_log_file)
+
+    # clear stdout and stderr files
+    #FileUtils.rm config.program_stderr if File.exists? config.program_stderr
+    #FileUtils.rm config.program_stdout if File.exists? config.program_stdout
   end
 
   config.before(:each) do
@@ -95,19 +102,12 @@ RSpec.configure do |config|
     STDERR.sync = true
     STDOUT.reopen(File.open(config.program_stdout, 'w+'))
     STDOUT.sync = true
-
-    # delete log file
-    File.delete(BawWorkers::Settings.paths.workers_log_file) if File.exists?(BawWorkers::Settings.paths.workers_log_file)
   end
 
   config.after(:each) do
     # restore stderr and stdout
     STDERR.reopen(original_stderr)
     STDOUT.reopen(original_stdout)
-
-    # clear stdout and stderr files
-    FileUtils.rm config.program_stderr if File.exists? config.program_stderr
-    FileUtils.rm config.program_stdout if File.exists? config.program_stdout
   end
 
   # indicate that webmock requests were successful

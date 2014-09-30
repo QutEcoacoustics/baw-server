@@ -21,8 +21,10 @@ module BawWorkers
       # validate params
       audio_params_sym = BawWorkers::AudioFileCheck.validate(audio_params)
 
+      @logger.info(get_class_name) { 'Starting...' }
+
       if @is_dry_run
-        @logger.warn(get_class_name) { 'Dry run.' }
+        @logger.warn(get_class_name) { 'Dry Run starting.' }
         puts 'Starting Dry Run...'
       end
 
@@ -65,6 +67,8 @@ module BawWorkers
             result_hash[:api_response],
         )
       end
+
+      @logger.info(get_class_name) { '...finished.' }
 
       result
     end
@@ -180,7 +184,9 @@ module BawWorkers
         msg = "Update required #{changed_metadata} #{base_msg}"
         @logger.warn(get_class_name) { msg }
 
-        unless @is_dry_run
+        if @is_dry_run
+          @logger.info(get_class_name) { 'Dry Run: Would have updated properties.' }
+        else
           host = BawWorkers::Settings.api.host
           port = BawWorkers::Settings.api.port
 
@@ -510,13 +516,20 @@ module BawWorkers
 
         # logging
         if new_path_exists
-          @logger.debug(get_class_name) {
+          @logger.info(get_class_name) {
             "Found equivalent old and new file names, no action performed. Old: #{existing_file} New: #{new_path}."
           }
         else
-          @logger.info(get_class_name) {
-            "Moving #{existing_file} to #{new_path}."
-          }
+          if @is_dry_run
+            @logger.info(get_class_name) {
+              "Dry Run: Would have moved #{existing_file} to #{new_path}."
+            }
+          else
+            @logger.info(get_class_name) {
+              "Moving #{existing_file} to #{new_path}."
+            }
+          end
+
         end
 
         # result details
