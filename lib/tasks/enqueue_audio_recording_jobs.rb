@@ -32,7 +32,7 @@ namespace :baw_workers do
       # special case for original_format
       # get original_format from original_file_name
       original_file_name = audio_params.delete(:original_file_name)
-      original_format = original_file_name.blank? ? '' : File.extname(original_file_name).trim('.','')
+      original_format = original_file_name.blank? ? '' : File.extname(original_file_name).trim('.','').downcase
       audio_params[:original_format] = original_format
 
       # get original_format from media_type
@@ -42,10 +42,9 @@ namespace :baw_workers do
           'audio/x-ms-wma' => 'wma',
           'audio/x-wav' => 'wav',
           'audio/x-wv' => 'wv',
-          'video/x-ms-asf' => 'asf',
-
+          'video/x-ms-asf' => 'asf'
       }
-      audio_params[:original_format] = media_type_mapping[audio_params[:media_type]] if audio_params[:original_format].blank?
+      audio_params[:original_format] = media_type_mapping[audio_params[:media_type].downcase] if audio_params[:original_format].blank?
 
       # enqueue
       BawWorkers::Action::AudioFileCheckAction.enqueue(audio_params)

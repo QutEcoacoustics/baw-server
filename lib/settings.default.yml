@@ -9,6 +9,7 @@ settings:
     background_pid_file: ./tmp/resque_worker.pid
     output_log_file: ./tmp/program_stdout.log
     error_log_file: ./tmp/program_stderr.log
+    dry_run: false
     queues:
       media: media_default
       maintenance: maintenance_default

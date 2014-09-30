@@ -5,11 +5,13 @@ module BawWorkers
     # include common methods
     include BawWorkers::Common
 
-    def initialize(logger)
+    def initialize(logger, is_dry_run = false)
       @logger = logger
 
       # api communication
       @api_communicator = ApiCommunicator.new(logger)
+
+      @is_dry_run = is_dry_run
     end
 
     # Check existing files and modify the file name and/or details via api if necessary.
@@ -18,6 +20,11 @@ module BawWorkers
     def run(audio_params)
       # validate params
       audio_params_sym = BawWorkers::AudioFileCheck.validate(audio_params)
+
+      if @is_dry_run
+        @logger.warn(get_class_name) { 'Dry run.' }
+        puts 'Starting Dry Run...'
+      end
 
       # get the original possible and existing paths, and new and old file names
       original_paths = original_paths(audio_params_sym)
@@ -173,29 +180,30 @@ module BawWorkers
         msg = "Update required #{changed_metadata} #{base_msg}"
         @logger.warn(get_class_name) { msg }
 
-        host = BawWorkers::Settings.api.host
-        port = BawWorkers::Settings.api.port
+        unless @is_dry_run
+          host = BawWorkers::Settings.api.host
+          port = BawWorkers::Settings.api.port
 
-        # get auth token
-        auth_token = @api_communicator.request_login(
-            BawWorkers::Settings.api.user_email,
-            BawWorkers::Settings.api.user_password,
-            host,
-            port,
-            nil,
-            BawWorkers::Settings.endpoints.login
-        )
+          # get auth token
+          auth_token = @api_communicator.request_login(
+              BawWorkers::Settings.api.user_email,
+              BawWorkers::Settings.api.user_password,
+              host,
+              port,
+              nil,
+              BawWorkers::Settings.endpoints.login
+          )
 
-        # update audio recording metadata
-        update_result = @api_communicator.update_audio_recording_details(
-            'mismatch between file and database',
-            existing_file,
-            'id',
-            changed_metadata,
-            host, port, auth_token,
-            BawWorkers::Settings.endpoints.audio_recording_update
-        )
-
+          # update audio recording metadata
+          update_result = @api_communicator.update_audio_recording_details(
+              'mismatch between file and database',
+              existing_file,
+              'id',
+              changed_metadata,
+              host, port, auth_token,
+              BawWorkers::Settings.endpoints.audio_recording_update
+          )
+        end
       else
         @logger.info(get_class_name) {
           "No updates required #{base_msg}"
@@ -374,7 +382,7 @@ module BawWorkers
     # @param [Hash] api_result_hash
     # @return [void]
     def log_csv_line(file_path, exists, moved_path = nil,
-                        compare_hash = nil, api_result_hash = nil, api_response = nil)
+                     compare_hash = nil, api_result_hash = nil, api_response = nil)
       csv_headers = [
           :file_path, :exists,
 
@@ -496,7 +504,9 @@ module BawWorkers
         new_path_exists = File.exist?(new_path)
 
         # move old name to new name unless it already exists
-        FileUtils.move(existing_file, new_path) unless new_path_exists
+        unless @is_dry_run
+          FileUtils.move(existing_file, new_path) unless new_path_exists
+        end
 
         # logging
         if new_path_exists

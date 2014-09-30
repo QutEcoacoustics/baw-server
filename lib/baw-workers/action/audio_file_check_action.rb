@@ -43,7 +43,7 @@ module BawWorkers
         # @param [Hash] audio_params
         # @return [Array<Hash>] array of hashes representing operations performed
         def perform(audio_params)
-          audio_file_check = AudioFileCheck.new(BawWorkers::Settings.logger)
+          audio_file_check = AudioFileCheck.new(BawWorkers::Settings.logger, BawWorkers::Settings.resque.dry_run)
           audio_file_check.run(audio_params)
         end
 
