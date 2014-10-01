@@ -335,15 +335,15 @@ module BawWorkers
       wrong = :fail
       bit_rate_bps_delta = 1000
 
-      file_hash = existing_file_info[:file_hash] == audio_params[:file_hash] ? correct : wrong
-      extension = existing_file_info[:extension] == audio_params[:original_format] ? correct : wrong
-      media_type = existing_file_info[:media_type] == audio_params[:media_type] ? correct : wrong
+      file_hash = existing_file_info[:file_hash].to_s == audio_params[:file_hash].to_s ? correct : wrong
+      extension = existing_file_info[:extension].to_s == audio_params[:original_format].to_s ? correct : wrong
+      media_type = existing_file_info[:media_type].to_s == audio_params[:media_type].to_s ? correct : wrong
 
-      sample_rate_hertz = existing_file_info[:sample_rate_hertz] == audio_params[:sample_rate_hertz] ? correct : wrong
-      channels = existing_file_info[:channels] == audio_params[:channels] ? correct : wrong
-      bit_rate_bps = (existing_file_info[:bit_rate_bps] - audio_params[:bit_rate_bps]).abs <= bit_rate_bps_delta ? correct : wrong
-      data_length_bytes = existing_file_info[:data_length_bytes] == audio_params[:data_length_bytes] ? correct : wrong
-      duration_seconds = existing_file_info[:duration_seconds] == audio_params[:duration_seconds] ? correct : wrong
+      sample_rate_hertz = existing_file_info[:sample_rate_hertz].to_i == audio_params[:sample_rate_hertz].to_i ? correct : wrong
+      channels = existing_file_info[:channels].to_i == audio_params[:channels].to_i ? correct : wrong
+      bit_rate_bps = (existing_file_info[:bit_rate_bps].to_i - audio_params[:bit_rate_bps].to_i).abs <= bit_rate_bps_delta ? correct : wrong
+      data_length_bytes = existing_file_info[:data_length_bytes].to_i == audio_params[:data_length_bytes].to_i ? correct : wrong
+      duration_seconds = existing_file_info[:duration_seconds].to_f == audio_params[:duration_seconds].to_f ? correct : wrong
 
       file_errors = existing_file_info.errors.size < 1 ? correct : wrong
       new_file_name = File.basename(existing_file, File.extname(existing_file)).end_with?('Z') ? correct : wrong

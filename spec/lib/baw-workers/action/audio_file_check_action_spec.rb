@@ -5,19 +5,20 @@ describe BawWorkers::Action::AudioFileCheckAction do
 
   let(:queue_name) { BawWorkers::Settings.resque.queues.maintenance }
 
+  # when args are retreived from redis, they are all strings.
   let(:test_params) {
     {
         id: 5,
         uuid: '7bb0c719-143f-4373-a724-8138219006d9',
         recorded_date: '2010-02-23 20:42:00Z',
-        duration_seconds: audio_file_mono_duration_seconds,
-        sample_rate_hertz: audio_file_mono_sample_rate,
-        channels: audio_file_mono_channels,
-        bit_rate_bps: audio_file_mono_bit_rate_bps,
+        duration_seconds: audio_file_mono_duration_seconds.to_s,
+        sample_rate_hertz: audio_file_mono_sample_rate.to_s,
+        channels: audio_file_mono_channels.to_s,
+        bit_rate_bps: audio_file_mono_bit_rate_bps.to_s,
         media_type: audio_file_mono_media_type.to_s,
-        data_length_bytes: audio_file_mono_data_length_bytes,
+        data_length_bytes: audio_file_mono_data_length_bytes.to_s,
         file_hash: 'SHA256::c110884206d25a83dd6d4c741861c429c10f99df9102863dde772f149387d891',
-        original_format: audio_file_mono_format
+        original_format: audio_file_mono_format.to_s
     }
   }
 
