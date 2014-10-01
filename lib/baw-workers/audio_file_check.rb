@@ -28,6 +28,13 @@ module BawWorkers
         puts 'Starting Dry Run...'
       end
 
+      # ensure :recorded_date is an ActiveSupport::TimeWithZone object
+      if audio_params_sym[:recorded_date].end_with?('Z')
+        audio_params_sym[:recorded_date] = Time.zone.parse(audio_params_sym[:recorded_date])
+      else
+        fail ArgumentError, ":recorded_date must be a UTC time (i.e. end with Z), given #{audio_params_sym[:recorded_date]}"
+      end
+
       # get the original possible and existing paths, and new and old file names
       original_paths = original_paths(audio_params_sym)
 
