@@ -8,17 +8,17 @@ describe BawWorkers::Action::AudioFileCheckAction do
   # when args are retreived from redis, they are all strings.
   let(:test_params) {
     {
-        id: 5,
-        uuid: '7bb0c719-143f-4373-a724-8138219006d9',
-        recorded_date: '2010-02-23 20:42:00Z',
-        duration_seconds: audio_file_mono_duration_seconds.to_s,
-        sample_rate_hertz: audio_file_mono_sample_rate.to_s,
-        channels: audio_file_mono_channels.to_s,
-        bit_rate_bps: audio_file_mono_bit_rate_bps.to_s,
-        media_type: audio_file_mono_media_type.to_s,
-        data_length_bytes: audio_file_mono_data_length_bytes.to_s,
-        file_hash: 'SHA256::c110884206d25a83dd6d4c741861c429c10f99df9102863dde772f149387d891',
-        original_format: audio_file_mono_format.to_s
+        'id' => 5,
+        'uuid' => '7bb0c719-143f-4373-a724-8138219006d9',
+        'recorded_date' => '2010-02-23 20:42:00Z',
+        'duration_seconds' => audio_file_mono_duration_seconds.to_s,
+        'sample_rate_hertz' => audio_file_mono_sample_rate.to_s,
+        'channels' => audio_file_mono_channels.to_s,
+        'bit_rate_bps' => audio_file_mono_bit_rate_bps.to_s,
+        'media_type' => audio_file_mono_media_type.to_s,
+        'data_length_bytes' => audio_file_mono_data_length_bytes.to_s,
+        'file_hash' => 'SHA256::c110884206d25a83dd6d4c741861c429c10f99df9102863dde772f149387d891',
+        'original_format' => audio_file_mono_format.to_s
     }
   }
 
@@ -82,7 +82,7 @@ describe BawWorkers::Action::AudioFileCheckAction do
 
       it 'with a params missing required value' do
         expect {
-          BawWorkers::Action::AudioFileCheckAction.perform(test_params.except(:original_format))
+          BawWorkers::Action::AudioFileCheckAction.perform(test_params.except('original_format'))
         }.to raise_error(ArgumentError, /Audio params must include original_format/)
       end
 
@@ -106,7 +106,7 @@ describe BawWorkers::Action::AudioFileCheckAction do
             }
 
         original_params = test_params.dup
-        original_params[:file_hash] = 'SHA256::this is really very wrong'
+        original_params['file_hash'] = 'SHA256::this is really very wrong'
 
         # arrange
         create_original_audio(media_cache_tool, media_request_params, audio_file_mono, true)
@@ -127,7 +127,7 @@ describe BawWorkers::Action::AudioFileCheckAction do
             }
 
         original_params = test_params.dup
-        original_params[:original_format] = 'mp3'
+        original_params['original_format'] = 'mp3'
 
         # arrange
         create_original_audio(media_cache_tool, media_request_params, audio_file_mono, true)
@@ -195,11 +195,9 @@ describe BawWorkers::Action::AudioFileCheckAction do
             }
 
         original_params = test_params.dup
-        expected_request_body = {
-            file_hash: original_params[:file_hash]
-        }
-        original_params[:file_hash] = 'SHA256::'
-        original_params[:duration_seconds] = 12345
+
+        original_params['file_hash'] = 'SHA256::'
+        original_params['duration_seconds'] = 12345
 
         # arrange
         create_original_audio(media_cache_tool, media_request_params, audio_file_mono, true)
@@ -315,12 +313,12 @@ describe BawWorkers::Action::AudioFileCheckAction do
 
         original_params = test_params.dup
 
-        original_params[:media_type] = 'audio/mp3'
-        original_params[:sample_rate_hertz] = 22050
-        original_params[:channels] = 5
-        original_params[:bit_rate_bps] = 800
-        original_params[:data_length_bytes] = 99
-        original_params[:duration_seconds] = 120
+        original_params['media_type'] = 'audio/mp3'
+        original_params['sample_rate_hertz'] = 22050
+        original_params['channels'] = 5
+        original_params['bit_rate_bps'] = 800
+        original_params['data_length_bytes'] = 99
+        original_params['duration_seconds'] = 120
 
         # arrange
         create_original_audio(media_cache_tool, media_request_params, audio_file_mono, true)
@@ -375,9 +373,9 @@ describe BawWorkers::Action::AudioFileCheckAction do
 
         original_params = test_params.dup
         expected_request_body = {
-            file_hash: original_params[:file_hash]
+            file_hash: original_params['file_hash']
         }
-        original_params[:file_hash] = 'SHA256::'
+        original_params['file_hash'] = 'SHA256::'
 
         # arrange
         create_original_audio(media_cache_tool, media_request_params, audio_file_mono, true)
@@ -423,12 +421,12 @@ describe BawWorkers::Action::AudioFileCheckAction do
 
         original_params = test_params.dup
 
-        original_params[:media_type] = 'audio/mp3'
-        original_params[:sample_rate_hertz] = 22050
-        original_params[:channels] = 5
-        original_params[:bit_rate_bps] = 800
-        original_params[:data_length_bytes] = 99
-        original_params[:duration_seconds] = 120
+        original_params['media_type'] = 'audio/mp3'
+        original_params['sample_rate_hertz'] = 22050
+        original_params['channels'] = 5
+        original_params['bit_rate_bps'] = 800
+        original_params['data_length_bytes'] = 99
+        original_params['duration_seconds'] = 120
 
         # arrange
         create_original_audio(media_cache_tool, media_request_params, audio_file_mono)

@@ -39,14 +39,14 @@ module BawWorkers
       original_paths = original_paths(audio_params_sym)
 
       # HIGH LEVEL PROBLEM: do any audio files exist?
-      check_exists(original_paths, audio_params)
+      check_exists(original_paths, audio_params_sym)
 
       # now check the comparisons for each existing file. Any failures will be logged and fixed if possible.
       result = []
       original_paths.existing.each do |existing_file|
 
         # fix all other issues before renaming file
-        single_result = run_single(existing_file, audio_params)
+        single_result = run_single(existing_file, audio_params_sym)
 
         # LOW LEVEL PROBLEM: rename old file names to new file names
         file_move_info = rename_file(existing_file, original_paths[:name_utc])
