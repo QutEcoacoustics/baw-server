@@ -86,7 +86,13 @@ module BawWorkers
     # @return [Hash] comparison and api results
     def run_single(existing_file, audio_params)
       # get existing file info and comparisons between expected and actual
-      compare_hash = compare_info(existing_file, audio_params)
+      existing_file_info = existing_info(existing_file)
+
+      @logger.debug(get_class_name) {
+        "Actual file info: #{existing_file_info}"
+      }
+
+      compare_hash = compare_info(existing_file, existing_file_info, audio_params)
 
       base_msg = "for #{compare_hash}"
 
@@ -321,11 +327,10 @@ module BawWorkers
 
     # Compare expected and actual audio file information.
     # @param [String] existing_file
+    # @param [Hash] existing_file_info
     # @param [Hash] audio_params
     # @return [Hash] information about comparison between expected and actual audio file info.
-    def compare_info(existing_file, audio_params)
-      existing_file_info = existing_info(existing_file)
-
+    def compare_info(existing_file, existing_file_info, audio_params)
       correct = :pass
       wrong = :fail
       bit_rate_bps_delta = 1000

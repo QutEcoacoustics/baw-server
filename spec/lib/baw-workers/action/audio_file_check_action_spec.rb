@@ -9,7 +9,7 @@ describe BawWorkers::Action::AudioFileCheckAction do
     {
         id: 5,
         uuid: '7bb0c719-143f-4373-a724-8138219006d9',
-        recorded_date: Time.zone.now,
+        recorded_date: '2010-02-23 20:42:00Z',
         duration_seconds: audio_file_mono_duration_seconds,
         sample_rate_hertz: audio_file_mono_sample_rate,
         channels: audio_file_mono_channels,
@@ -100,7 +100,7 @@ describe BawWorkers::Action::AudioFileCheckAction do
         media_request_params =
             {
                 uuid: '7bb0c719-143f-4373-a724-8138219006d9',
-                datetime_with_offset: Time.zone.now,
+                datetime_with_offset: '2010-02-23 20:42:00Z',
                 original_format: audio_file_mono_format,
             }
 
@@ -121,7 +121,7 @@ describe BawWorkers::Action::AudioFileCheckAction do
         media_request_params =
             {
                 uuid: '7bb0c719-143f-4373-a724-8138219006d9',
-                datetime_with_offset: Time.zone.now,
+                datetime_with_offset: '2010-02-23 20:42:00Z',
                 original_format: audio_file_mono_format,
             }
 
@@ -142,7 +142,7 @@ describe BawWorkers::Action::AudioFileCheckAction do
         media_request_params =
             {
                 uuid: '7bb0c719-143f-4373-a724-8138219006d9',
-                datetime_with_offset: Time.zone.now,
+                datetime_with_offset: '2010-02-23 20:42:00Z',
                 original_format: audio_file_mono_format,
             }
 
@@ -169,7 +169,7 @@ describe BawWorkers::Action::AudioFileCheckAction do
         media_request_params =
             {
                 uuid: '7bb0c719-143f-4373-a724-8138219006d9',
-                datetime_with_offset: Time.zone.now,
+                datetime_with_offset: '2010-02-23 20:42:00Z',
                 original_format: audio_file_mono_format,
             }
 
@@ -189,7 +189,7 @@ describe BawWorkers::Action::AudioFileCheckAction do
         media_request_params =
             {
                 uuid: '7bb0c719-143f-4373-a724-8138219006d9',
-                datetime_with_offset: Time.zone.now,
+                datetime_with_offset: '2010-02-23 20:42:00Z',
                 original_format: audio_file_mono_format,
             }
 
@@ -218,7 +218,7 @@ describe BawWorkers::Action::AudioFileCheckAction do
         media_request_params =
             {
                 uuid: '7bb0c719-143f-4373-a724-8138219006d9',
-                datetime_with_offset: Time.zone.now,
+                datetime_with_offset: '2010-02-23 20:42:00Z',
                 original_format: audio_file_mono_format,
             }
 
@@ -245,7 +245,7 @@ describe BawWorkers::Action::AudioFileCheckAction do
         media_request_params =
             {
                 uuid: '7bb0c719-143f-4373-a724-8138219006d9',
-                datetime_with_offset: Time.zone.now,
+                datetime_with_offset: '2010-02-23 20:42:00Z',
                 original_format: audio_file_mono_format,
             }
 
@@ -273,7 +273,7 @@ describe BawWorkers::Action::AudioFileCheckAction do
         media_request_params =
             {
                 uuid: '7bb0c719-143f-4373-a724-8138219006d9',
-                datetime_with_offset: Time.zone.now,
+                datetime_with_offset: '2010-02-23 20:42:00Z',
                 original_format: audio_file_mono_format,
             }
 
@@ -308,7 +308,7 @@ describe BawWorkers::Action::AudioFileCheckAction do
         media_request_params =
             {
                 uuid: '7bb0c719-143f-4373-a724-8138219006d9',
-                datetime_with_offset: Time.zone.now,
+                datetime_with_offset: '2010-02-23 20:42:00Z',
                 original_format: audio_file_mono_format,
             }
 
@@ -368,7 +368,7 @@ describe BawWorkers::Action::AudioFileCheckAction do
         media_request_params =
             {
                 uuid: '7bb0c719-143f-4373-a724-8138219006d9',
-                datetime_with_offset: Time.zone.now,
+                datetime_with_offset: '2010-02-23 20:42:00Z',
                 original_format: audio_file_mono_format,
             }
 
@@ -416,7 +416,7 @@ describe BawWorkers::Action::AudioFileCheckAction do
         media_request_params =
             {
                 uuid: '7bb0c719-143f-4373-a724-8138219006d9',
-                datetime_with_offset: Time.zone.now,
+                datetime_with_offset: '2010-02-23 20:42:00Z',
                 original_format: audio_file_mono_format,
             }
 
