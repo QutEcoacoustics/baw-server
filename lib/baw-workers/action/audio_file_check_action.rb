@@ -49,7 +49,7 @@ module BawWorkers
             audio_file_check.run(audio_params)
           rescue Exception => e
             BawWorkers::Settings.logger.error(self.name) { e }
-            raise
+            raise e
           end
 
         end
