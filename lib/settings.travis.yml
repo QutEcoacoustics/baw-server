@@ -3,7 +3,7 @@ settings:
     queues_to_process:
       - example
     connection: localhost:6379
-    namespace: 'resque:BAW:default'
+    namespace: 'baw:default'
     log_level: 1 # Severity::INFO
     polling_interval_seconds: 5
     background_pid_file: ./tmp/resque_worker.pid

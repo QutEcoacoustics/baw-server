@@ -33,9 +33,9 @@ module BawWorkers
         #   if the job was rejected by a before_enqueue hook.
         def enqueue(audio_params)
           audio_params_sym = AudioFileCheck.validate(audio_params)
-          Resque.enqueue(AudioFileCheckAction, audio_params_sym)
+          result = Resque.enqueue(AudioFileCheckAction, audio_params_sym)
           BawWorkers::Settings.logger.info(self.name) {
-            "Enqueued from AudioFileCheckAction #{audio_params}."
+            "Enqueued from AudioFileCheckAction. Resque enqueue returned #{result} using #{audio_params}."
           }
         end
 
