@@ -28,7 +28,7 @@ module BawAudioTools
     end
 
     def integrity_command(source)
-      "#{@ffmpeg_executable} -loglevel repeat+verbose -nostdin -i \"#{source}\" -f null -"
+      "#{@ffmpeg_executable} -loglevel repeat+verbose -nostdin -i \"#{source}\" -codec copy -f null -"
     end
 
     def modify_command(source, source_info, target, start_offset = nil, end_offset = nil, channel = nil, sample_rate = nil)
