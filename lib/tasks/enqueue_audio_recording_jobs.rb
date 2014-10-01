@@ -32,19 +32,11 @@ namespace :baw_workers do
       # special case for original_format
       # get original_format from original_file_name
       original_file_name = audio_params.delete(:original_file_name)
-      original_format = original_file_name.blank? ? '' : File.extname(original_file_name).trim('.','').downcase
-      audio_params[:original_format] = original_format
+      original_extension = original_file_name.blank? ? '' : File.extname(original_file_name).trim('.','').downcase
+      audio_params[:original_format] = original_extension
 
-      # get original_format from media_type
-      media_type_mapping = {
-          'audio/mpeg' => 'mp3',
-          'audio/wav' => 'wav',
-          'audio/x-ms-wma' => 'wma',
-          'audio/x-wav' => 'wav',
-          'audio/x-wv' => 'wv',
-          'video/x-ms-asf' => 'asf'
-      }
-      audio_params[:original_format] = media_type_mapping[audio_params[:media_type].downcase] if audio_params[:original_format].blank?
+      # get extension from media_type
+      audio_params[:original_format] = Mime::Type.lookup(audio_params[:media_type].downcase).to_sym.to_s if audio_params[:original_format].blank?
 
       # enqueue
       BawWorkers::Action::AudioFileCheckAction.enqueue(audio_params)

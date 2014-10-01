@@ -18,6 +18,8 @@ require 'baw-workers/settings'
 require 'baw-workers/common'
 require 'baw-workers/mail/mailer'
 
+require 'baw-workers/register_mime_types'
+
 # set time zone
 Time.zone = 'UTC'
 
