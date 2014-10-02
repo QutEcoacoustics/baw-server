@@ -15,7 +15,7 @@ class Ability
     #-------------|---------------------|-----------|----------------------------------------
     # GET         | /projects           | :index    | NO             | display a list of all projects
     # GET         | /projects/new       | :new      | NO             | return an HTML form/json properties for creating a new project
-    # POST        | /projects           | :create   | YES             | create a new project
+    # POST        | /projects           | :create   | YES            | create a new project
     # GET         | /projects/:id       | :show     | YES            | display a specific project
     # GET         | /projects/:id/edit  | :edit     | YES            | return an HTML form for editing a project (not relevant to json API)
     # PUT         | /projects/:id       | :update   | YES            | update a specific project
