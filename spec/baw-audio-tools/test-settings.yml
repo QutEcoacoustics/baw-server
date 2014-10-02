@@ -17,7 +17,7 @@ test:
     cached_datasets:
       - <%= Dir.pwd %>/tmp/_cached_dataset
     modules_log_file: <%= Dir.pwd %>/tmp/audio_tools.log
-    temp_files: <%= Dir.pwd %>/tmp
+    temp_dir: <%= Dir.pwd %>/tmp
   cached_audio_defaults:
     storage_format: mp3
     channel: 0

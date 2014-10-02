@@ -293,11 +293,11 @@ module BawAudioTools
       if modify_parameters.include?(:sample_rate)
         sample_rate = modify_parameters[:sample_rate].to_i
         fail Exceptions::InvalidSampleRateError, "Sample rate #{sample_rate} requested for " +
-            "#{File.extname(target)} not in #{valid_sample_rates}." unless valid_sample_rates.include?(sample_rate)
+            "#{File.extname(target)} not in #{AudioBase.valid_sample_rates}." unless AudioBase.valid_sample_rates.include?(sample_rate)
       end
     end
 
-    def valid_sample_rates
+    def self.valid_sample_rates
       [8000, 11025, 12000, 16000, 22050, 24000, 32000, 44100, 48000]
     end
 

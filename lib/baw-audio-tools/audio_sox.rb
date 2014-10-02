@@ -95,15 +95,15 @@ module BawAudioTools
           "-o \"#{target}\""
     end
 
-    def window_options
+    def self.window_options
       [128, 256, 512, 1024, 2048, 4096]
     end
 
-    def colour_options
+    def self.colour_options
       {:g => :greyscale}
     end
 
-    def window_function_options
+    def self.window_function_options
       # Window: Hann (default), Hamming, Bartlett, Rectangular or Kaiser. The spectrogram is produced using the
       # Discrete Fourier Transform (DFT) algorithm. A significant parameter to this algorithm is the choice of
       # ‘window function’. By default, SoX uses the Hann window which has good all-round frequency-resolution
@@ -191,11 +191,11 @@ module BawAudioTools
       # spectrogram if this number is not one more than a power of two (e.g. 129). By default
       # the Y-axis size is chosen automatically (depending on the number of channels).
       cmd_arg = ''
-      all_window_options = window_options.join(', ')
+      all_window_options = AudioSox.window_options.join(', ')
 
       unless window.blank?
         window_param = window.to_i
-        fail ArgumentError, "Window size must be one of '#{all_window_options}', given '#{window_param}'." unless window_options.include? window_param
+        fail ArgumentError, "Window size must be one of '#{all_window_options}', given '#{window_param}'." unless AudioSox.window_options.include? window_param
 
         # window size must be one more than a power of two, see sox documentation http://sox.sourceforge.net/sox.html
         window_param = (window_param / 2) + 1
@@ -209,12 +209,12 @@ module BawAudioTools
       # The spectrogram is produced using the Discrete Fourier Transform (DFT) algorithm.
       # A significant parameter to this algorithm is the choice of ‘window function’.
       cmd_arg = ''
-      all_window_function_options = window_function_options.join(', ')
+      all_window_function_options = AudioSox.window_function_options.join(', ')
 
       unless window_function.blank?
 
         window_function_param = window_function.to_s
-        unless window_function_options.map { |wf| wf }.include? window_function_param
+        unless AudioSox.window_function_options.map { |wf| wf }.include? window_function_param
           fail ArgumentError, "Window function must be one of '#{all_window_function_options}', given '#{window_function_param}'."
         end
 
@@ -226,12 +226,12 @@ module BawAudioTools
 
     def arg_colour(colour)
       cmd_arg = ''
-      colours_available = colour_options.map { |k, v| "#{k} (#{v})" }.join(', ')
+      colours_available = AudioSox.colour_options.map { |k, v| "#{k} (#{v})" }.join(', ')
       colour_param = ''
 
       unless colour.blank?
         colour_param = colour.to_s
-        fail ArgumentError, "Colour must be one of '#{colours_available}', given '#{}'." unless colour_options.include? colour_param.to_sym
+        fail ArgumentError, "Colour must be one of '#{colours_available}', given '#{}'." unless AudioSox.colour_options.include? colour_param.to_sym
       end
 
       default = '-m -q 249 -z 100'
