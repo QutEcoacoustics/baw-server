@@ -139,7 +139,7 @@ class Ability
 
       # index permissions are enforced in the controller action
       can [:index, :new, :create, :new_access_request, :submit_access_request], Project
-      can [:index], Site
+      can [:index, :filter], Site
       can [:index], Dataset
       can [:index, :new], Job
 
@@ -149,14 +149,17 @@ class Ability
       can [:index, :new, :filter], AudioRecording
       # any user can access the library, permissions are checked in the action
       can [:index, :new, :library], AudioEvent
-      can [:index, :new], AudioEventComment
+      can [:index, :new, :filter], AudioEventComment
 
       can [:index, :new, :filter], Bookmark
       # anyone can create tags
       can [:index, :new, :create, :show], Tag
 
     elsif user.has_role? :harvester
-      can [:new, :create, :check_uploader, :update_status], AudioRecording
+      # harvester user is used by baw-harvester and baw-workers
+      # baw-harvester: :new, :create, :check_uploader, :update_status
+      # baw-workers: :update
+      can [:new, :create, :check_uploader, :update_status, :update], AudioRecording
 
     end
   end

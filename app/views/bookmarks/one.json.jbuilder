@@ -1,1 +1,0 @@
-json.(@bookmark, *Bookmark.filter_settings.render_fields)

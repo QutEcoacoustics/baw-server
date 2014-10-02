@@ -8,11 +8,11 @@ module Api
     OFFSET_REGEXP = /^-?(\d+\.)?\d+$/
 
     # Create a new Api::Media instance.
-    # @param [BawAudioTools::MediaCacher] media_cache_tool
+    # @param [BawAudioTools::AudioBase] audio
     # @param [Hash] default_audio
     # @param [Hash] default_spectrogram
-    def initialize(media_cache_tool, default_audio, default_spectrogram)
-      @media_cache_tool = media_cache_tool
+    def initialize(audio, default_audio, default_spectrogram)
+      @audio = audio
       @default_audio = default_audio
       @default_spectrogram = default_spectrogram
     end
@@ -90,9 +90,9 @@ module Api
                   duration_max: @default_spectrogram.max_duration_seconds,
                   duration_min: @default_spectrogram.min_duration_seconds,
                   formats: available_formats.image,
-                  window_sizes: sox.window_options,
-                  window_functions: sox.window_function_options,
-                  colours: sox.colour_options,
+                  window_sizes: window_options,
+                  window_functions: window_function_options,
+                  colours: colour_options,
               }
           },
           text: {
@@ -252,14 +252,14 @@ module Api
       # end
 
       # check window size
-      if request_params.include?(:window_size) && !sox.window_options.include?(request_params[:window_size].to_i)
-        msg = "window_size parameter (#{request_params[:window_size]}) must be valid (#{sox.window_options})."
+      if request_params.include?(:window_size) && !window_options.include?(request_params[:window_size].to_i)
+        msg = "window_size parameter (#{request_params[:window_size]}) must be valid (#{window_options})."
         fail CustomErrors::UnprocessableEntityError, msg
       end
 
       # check window function
-      if request_params.include?(:window_function) && !sox.window_function_options.include?(request_params[:window_function])
-        msg = "window_function parameter (#{request_params[:window_function]}) must be valid (#{sox.window_function_options})."
+      if request_params.include?(:window_function) && !window_function_options.include?(request_params[:window_function])
+        msg = "window_function parameter (#{request_params[:window_function]}) must be valid (#{window_function_options})."
         fail CustomErrors::UnprocessableEntityError, msg
       end
 
@@ -277,8 +277,8 @@ module Api
       end
 
       # check colour
-      if request_params.include?(:colour) && !sox.colour_options.keys.include?(request_params[:colour].to_sym)
-        msg = "colour parameter (#{request_params[:colour]}) must be valid (#{sox.colour_options})."
+      if request_params.include?(:colour) && !colour_options.keys.include?(request_params[:colour].to_sym)
+        msg = "colour parameter (#{request_params[:colour]}) must be valid (#{colour_options})."
         fail CustomErrors::UnprocessableEntityError, msg
       end
     end
@@ -306,13 +306,20 @@ module Api
     end
 
     def valid_sample_rates
-      audio = @media_cache_tool.audio
-      audio.valid_sample_rates
+      BawAudioTools::AudioBase.valid_sample_rates
     end
 
-    def sox
-      audio = @media_cache_tool.audio
-      audio.audio_sox
+    def window_function_options
+      BawAudioTools::AudioSox.window_function_options
+    end
+
+
+    def window_options
+      BawAudioTools::AudioSox.window_options
+    end
+
+    def colour_options
+      BawAudioTools::AudioSox.colour_options
     end
 
     # Get param value if available, otherwise a default value.

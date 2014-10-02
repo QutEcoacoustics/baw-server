@@ -448,7 +448,7 @@ resource 'AudioRecordings' do
     standard_request('NEW (as reader, for api)', 200, 'bit_rate_bps', true)
 
   end
- 
+
   ################################
   # CREATE
   ################################
@@ -722,6 +722,97 @@ resource 'AudioRecordings' do
 
   end
 
+  ################################
+  # UPDATE (for baw-workers)
+  ################################
+
+  put '/audio_recordings/:id/' do
+    parameter :id, 'Requested audio recording id (in path/route)', required: true
+    parameter :media_type, 'media type', scope: :audio_recording, required: false
+    parameter :sample_rate_hertz, 'sample rate in hertz', scope: :audio_recording, required: false
+    parameter :channels, 'channel count', scope: :audio_recording, required: false
+    parameter :bit_rate_bps, 'bit rate in bps', scope: :audio_recording, required: false
+    parameter :data_length_bytes, 'data length of file in bytes', scope: :audio_recording, required: false
+    parameter :duration_seconds, 'audio recording duration in seconds', scope: :audio_recording, required: false
+    parameter :file_hash, 'audio file hash', scope: :audio_recording, required: false
+
+    let(:update_harvester_audio_recording) { FactoryGirl.create(:audio_recording) }
+    let(:id) { update_harvester_audio_recording.id }
+
+    changed_details = {
+        media_type: 'audio/webm',
+        sample_rate_hertz: 456,
+        channels: 20,
+        bit_rate_bps: 123,
+        data_length_bytes: 789,
+        duration_seconds: 70.0,
+    }
+
+    let(:raw_post) { changed_details.to_json }
+
+    let(:authentication_token) { harvester_token }
+    standard_request_options('UPDATE (as harvester) standard properties', :ok, {expected_json_path: 'data/duration_seconds', property_match: changed_details})
+
+  end
+
+  put '/audio_recordings/:id/' do
+    parameter :id, 'Requested audio recording id (in path/route)', required: true
+    parameter :media_type, 'media type', scope: :audio_recording, required: false
+    parameter :sample_rate_hertz, 'sample rate in hertz', scope: :audio_recording, required: false
+    parameter :channels, 'channel count', scope: :audio_recording, required: false
+    parameter :bit_rate_bps, 'bit rate in bps', scope: :audio_recording, required: false
+    parameter :data_length_bytes, 'data length of file in bytes', scope: :audio_recording, required: false
+    parameter :duration_seconds, 'audio recording duration in seconds', scope: :audio_recording, required: false
+    parameter :file_hash, 'audio file hash', scope: :audio_recording, required: false
+
+    let(:update_harvester_audio_recording) { FactoryGirl.create(:audio_recording) }
+    let(:id) { update_harvester_audio_recording.id }
+
+    changed_details = {
+        file_hash: 'SHA256::something'
+    }
+
+    let(:raw_post) { changed_details.to_json }
+
+    let(:authentication_token) { harvester_token }
+    standard_request_options('UPDATE (as harvester) file hash only', :ok, {expected_json_path: 'data/duration_seconds'})
+
+  end
+
+  # fails due to file_hash and other properties in same request
+  put '/audio_recordings/:id/' do
+    parameter :id, 'Requested audio recording id (in path/route)', required: true
+    parameter :media_type, 'media type', scope: :audio_recording, required: false
+    parameter :sample_rate_hertz, 'sample rate in hertz', scope: :audio_recording, required: false
+    parameter :channels, 'channel count', scope: :audio_recording, required: false
+    parameter :bit_rate_bps, 'bit rate in bps', scope: :audio_recording, required: false
+    parameter :data_length_bytes, 'data length of file in bytes', scope: :audio_recording, required: false
+    parameter :duration_seconds, 'audio recording duration in seconds', scope: :audio_recording, required: false
+    parameter :file_hash, 'audio file hash', scope: :audio_recording, required: false
+
+    let(:update_harvester_audio_recording) { FactoryGirl.create(:audio_recording) }
+    let(:id) { update_harvester_audio_recording.id }
+
+    changed_details = {
+        media_type: 'audio/webm',
+        sample_rate_hertz: 456,
+        channels: 20,
+        bit_rate_bps: 123,
+        data_length_bytes: 789,
+        duration_seconds: 70.0,
+        file_hash: 'SHA256::something'
+    }
+
+    let(:raw_post) { changed_details.to_json }
+
+    let(:authentication_token) { harvester_token }
+    standard_request_options(
+        'UPDATE (as harvester) file hash and other properties',
+        :unprocessable_entity,
+        {expected_json_path: 'meta/error/info/file_hash'})
+
+  end
+
 
   # FILTER
   ###########
@@ -740,7 +831,7 @@ resource 'AudioRecordings' do
         }
     }.to_json }
     let(:authentication_token) { reader_token }
-    standard_request_options('FILTER (as reader matching)', :ok, { expected_json_path: 'data/0/sample_rate_hertz', data_item_count: 1 })
+    standard_request_options('FILTER (as reader matching)', :ok, {expected_json_path: 'data/0/sample_rate_hertz', data_item_count: 1})
   end
 
   post '/audio_recordings/filter' do
@@ -758,7 +849,7 @@ resource 'AudioRecordings' do
         }
     }.to_json }
     let(:authentication_token) { reader_token }
-    standard_request_options('FILTER (as reader no match)', :ok, { expected_json_path: 'meta/message',data_item_count: 0 })
+    standard_request_options('FILTER (as reader no match)', :ok, {expected_json_path: 'meta/message', data_item_count: 0})
   end
 
   post '/audio_recordings/filter' do
@@ -773,13 +864,26 @@ resource 'AudioRecordings' do
                 }
             }
         },
-        paging:{
+        paging: {
             page: 2,
             items: 30
         }
     }.to_json }
     let(:authentication_token) { reader_token }
-    standard_request_options('FILTER (as reader with paging)', :ok, { expected_json_path: 'meta/paging/page', data_item_count: 0})
+    standard_request_options('FILTER (as reader with paging)', :ok, {expected_json_path: 'meta/paging/page', data_item_count: 0})
+  end
+
+  post '/audio_recordings/filter' do
+    let(:raw_post) {
+      {"paging" =>
+           {'items' => 10, "page" => 1},
+       "projection" => {
+           "include" => ["id", "siteId", "durationSeconds", "recordedDate", "createdAt"]},
+       "sorting" =>
+           {"orderBy" => "createdAt", "direction" => "desc"}}
+      .to_json }
+    let(:authentication_token) { reader_token }
+    standard_request_options('FILTER (as reader with paging, sorting, projection)', :ok, {expected_json_path: 'meta/paging/current', data_item_count: 1})
   end
 
 end

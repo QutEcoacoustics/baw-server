@@ -43,11 +43,12 @@ AWB::Application.routes.draw do
   # Resource Routes
   # ===============
 
-  resources :bookmarks, except: [:edit] do
-    collection do
-      match 'filter', via: [:get, :post]
-    end
-  end
+  match 'bookmarks/filter' => 'bookmarks#filter', via: [:get, :post], defaults: {format: 'json'}
+  resources :bookmarks, except: [:edit]
+
+  # routes used by workers:
+  # login: /security/sign_in
+  # audio_recording_update: /audio_recordings/:id
 
   # routes used by harvester:
   # endpoint_login: /security/sign_in
@@ -128,6 +129,7 @@ AWB::Application.routes.draw do
       end
     end
     # API project sites list
+
     resources :sites, only: [:index], defaults: {format: 'json'}
     resources :datasets, except: [:index] do
       resources :jobs, only: [:show]
@@ -138,8 +140,11 @@ AWB::Application.routes.draw do
     resources :jobs, only: [:index], defaults: {format: 'json'}
   end
 
+  # placed here so it does not conflict with audio_recordings/:id => audio_recordings#show
+  match 'audio_recordings/filter' => 'audio_recordings#filter', via: [:get, :post], defaults: {format: 'json'}
+
   # API audio recording item
-  resources :audio_recordings, only: [:index, :show, :new], defaults: {format: 'json'} do
+  resources :audio_recordings, only: [:index, :show, :new, :update], defaults: {format: 'json'} do
     get 'media.:format' => 'media#show', defaults: {format: 'json'}, as: :media
     resources :audio_events, except: [:edit], defaults: {format: 'json'} do
       collection do
@@ -155,9 +160,6 @@ AWB::Application.routes.draw do
     member do
       put 'update_status' # for when harvester has moved a file to the correct location
     end
-    collection do
-      match 'filter', via: [:get, :post]
-    end
   end
 
   # API tags
@@ -165,6 +167,7 @@ AWB::Application.routes.draw do
 
   # API audio_event create
   resources :audio_events, only: [], defaults: {format: 'json'} do
+    match 'comments/filter' => 'audio_event_comments#filter', via: [:get, :post], defaults: {format: 'json'}
     resources :audio_event_comments, except: [:edit], defaults: {format: 'json'}, path: :comments, as: :comments
     collection do
       get 'library'
@@ -187,6 +190,9 @@ AWB::Application.routes.draw do
   # audio event csv download routes
   get '/projects/:project_id/audio_events/download' => 'audio_events#download', defaults: {format: 'csv'}, as: :download_project_audio_events
   get '/projects/:project_id/sites/:site_id/audio_events/download' => 'audio_events#download', defaults: {format: 'csv'}, as: :download_site_audio_events
+
+  # placed here so it does not conflict with sites/:id => sites#show
+  match 'sites/filter' => 'sites#filter', via: [:get, :post], defaults: {format: 'json'}
 
   # shallow path to sites
   get '/sites/:id' => 'sites#show_shallow', defaults: {format: 'json'}
@@ -219,6 +225,7 @@ AWB::Application.routes.draw do
 
   # resque front end
   authenticate :user, lambda { |u| !u.blank? && u.has_role?(:admin) } do
+    require 'resque-job-stats/server' # add stats tab to web interface
     mount Resque::Server.new, at: '/job_queue_status'
   end
 

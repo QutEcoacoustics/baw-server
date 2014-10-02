@@ -15,7 +15,10 @@ describe SitesController do
 
     it { expect(get('projects/1/sites')).to route_to('sites#index', project_id: '1', format: 'json') }
 
-    it { expect(get('/sites/1')).to route_to('sites#show_shallow', id: '1', format: 'json') }
+    it { expect(get('sites/1')).to route_to('sites#show_shallow', id: '1', format: 'json') }
+
+    it { expect(get('sites/filter')).to route_to('sites#filter', format: 'json') }
+    it { expect(post('sites/filter')).to route_to('sites#filter', format: 'json') }
 
   end
 end

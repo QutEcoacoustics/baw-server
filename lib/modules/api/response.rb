@@ -77,7 +77,7 @@ module Api
 
       # sort info
       if !opts[:order_by].blank? && !opts[:direction].blank?
-        result[:meta][:sort] = {
+        result[:meta][:sorting] = {
             order_by: opts[:order_by],
             direction: opts[:direction]
         }
@@ -239,8 +239,8 @@ module Api
 
         # update options
         opts.merge!(
-            order_by: filter_query.sort.order_by,
-            direction: filter_query.sort.direction
+            order_by: filter_query.sorting.order_by,
+            direction: filter_query.sorting.direction
         )
       end
 

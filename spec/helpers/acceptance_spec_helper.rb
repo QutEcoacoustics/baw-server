@@ -42,11 +42,12 @@ end
 # @param [String] description
 # @param [Symbol] expected_status
 # @param [Hash] opts the options for additional information.
-# @option opts [String] :expected_json_path (nil) Expected json path.
-# @option opts [Boolean] :document (true) Include in api spec documentation.
-# @option opts [Symbol] :response_body_content (nil) Content that must be in the response body.
-# @option opts [Symbol] :invalid_content (nil) Content that must not be in the response body.
-# @option opts [Symbol] :data_item_count (nil) Number of items in a json response
+# @option opts [String]  :expected_json_path     (nil) Expected json path.
+# @option opts [Boolean] :document               (true) Include in api spec documentation.
+# @option opts [Symbol]  :response_body_content  (nil) Content that must be in the response body.
+# @option opts [Symbol]  :invalid_content        (nil) Content that must not be in the response body.
+# @option opts [Symbol]  :data_item_count        (nil) Number of items in a json response
+# @option opts [Hash]    :property_match         (nil) Properties to match
 # @return [void]
 def standard_request_options(description, expected_status, opts = {})
   opts.reverse_merge!({document: true})
@@ -62,10 +63,11 @@ end
 # Check response.
 # @param [Symbol] expected_status
 # @param [Hash] opts the options for additional information.
-# @option opts [String] :expected_json_path (nil) Expected json path.
+# @option opts [String] :expected_json_path    (nil) Expected json path.
 # @option opts [Symbol] :response_body_content (nil) Content that must be in the response body.
-# @option opts [Symbol] :invalid_content (nil) Content that must not be in the response body.
-# @option opts [Symbol] :data_item_count (nil) Number of items in a json response
+# @option opts [Symbol] :invalid_content       (nil) Content that must not be in the response body.
+# @option opts [Symbol] :data_item_count       (nil) Number of items in a json response
+# @option opts [Hash]   :property_match        (nil) Properties to match
 # @return [void]
 def do_checks(expected_status, opts = {})
   opts.reverse_merge!(
@@ -73,7 +75,8 @@ def do_checks(expected_status, opts = {})
           expected_json_path: nil,
           response_body_content: nil,
           invalid_content: nil,
-          data_item_count: nil
+          data_item_count: nil,
+          property_match: nil
       })
 
   actual_response = response_body
@@ -142,6 +145,14 @@ def do_checks(expected_status, opts = {})
     #       "Audio Event Order index #{index} in #{opts[:unordered_ids]}: #{actual_response_parsed}"
     # end
   end
+
+  unless opts[:property_match].nil?
+    opts[:property_match].each do |key, value|
+      expect(actual_response_parsed['data']).to include(key.to_s)
+      expect(actual_response_parsed['data'][key.to_s].to_s).to eq(value.to_s)
+    end
+  end
+
 end
 
 def check_site_lat_long_response(description, expected_status, should_be_obfuscated = true)
@@ -219,10 +230,10 @@ def standard_media_parameters
   let(:raw_post) { params.to_json }
 end
 
-def remove_media_dirs(media_cacher)
-  FileUtils.rm_r media_cacher.cache.original_audio.storage_paths.first if Dir.exists? media_cacher.cache.original_audio.storage_paths.first
-  FileUtils.rm_r media_cacher.cache.cache_audio.storage_paths.first if Dir.exists? media_cacher.cache.cache_audio.storage_paths.first
-  FileUtils.rm_r media_cacher.cache.cache_spectrogram.storage_paths.first if Dir.exists? media_cacher.cache.cache_spectrogram.storage_paths.first
+def remove_media_dirs
+  audio_original.existing_dirs.each { |dir| FileUtils.rm_r dir }
+  audio_cache.existing_dirs.each { |dir| FileUtils.rm_r dir }
+  spectrogram_cache.existing_dirs.each { |dir| FileUtils.rm_r dir }
 end
 
 def create_media_options(audio_recording)
@@ -236,8 +247,7 @@ def create_media_options(audio_recording)
   options[:start_offset] = start_offset unless start_offset.blank?
   options[:end_offset] = end_offset unless end_offset.blank?
 
-  original_file_names = media_cacher.original_audio_file_names(options)
-  original_possible_paths = original_file_names.map { |source_file| media_cacher.cache.possible_storage_paths(media_cacher.cache.original_audio, source_file) }.flatten
+  original_possible_paths = audio_original.possible_paths(options)
 
   FileUtils.mkpath File.dirname(original_possible_paths.first)
   FileUtils.cp audio_file_mono, original_possible_paths.first
@@ -292,17 +302,19 @@ def using_original_audio_custom(options, request, audio_recording, check_accept_
       options[:channel] = default_spectrogram.channel.to_i
       options[:sample_rate] = default_spectrogram.sample_rate.to_i
       options[:window] = default_spectrogram.window.to_i
-      options[:window_function] = default_spectrogram.window_function.to_i
+      options[:window_function] = default_spectrogram.window_function
       options[:colour] = default_spectrogram.colour.to_s
-      cache_spectrogram_file = media_cacher.cached_spectrogram_file_name(options)
-      cache_spectrogram_possible_paths = media_cacher.cache.possible_storage_paths(media_cacher.cache.cache_spectrogram, cache_spectrogram_file)
+
+      cache_spectrogram_possible_paths = spectrogram_cache.possible_paths(options)
+
       response_headers['Content-Length'].to_i.should eq(File.size(cache_spectrogram_possible_paths.first)) if check_content_length
     elsif is_audio
       options[:format] = default_audio.extension
       options[:channel] = default_audio.channel.to_i
       options[:sample_rate] = default_audio.sample_rate.to_i
-      cache_audio_file = media_cacher.cached_audio_file_name(options)
-      cache_audio_possible_paths = media_cacher.cache.possible_storage_paths(media_cacher.cache.cache_audio, cache_audio_file)
+
+      cache_audio_possible_paths = audio_cache.possible_paths(options)
+
       response_headers['Content-Length'].to_i.should eq(File.size(cache_audio_possible_paths.first)) if check_content_length
     elsif response_headers['Content-Type'].include? 'application/json'
       response_headers['Content-Length'].to_i.should be > 0
@@ -312,7 +324,7 @@ def using_original_audio_custom(options, request, audio_recording, check_accept_
     end
   else
     begin
-      temp_file = File.join(Settings.paths.temp_files, 'temp-media_controller_response')
+      temp_file = File.join(Settings.paths.temp_dir, 'temp-media_controller_response')
       File.open(temp_file, 'wb') { |f| f.write(response_body) }
       response_headers['Content-Length'].to_i.should eq(File.size(temp_file))
     ensure

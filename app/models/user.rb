@@ -145,6 +145,11 @@ class User < ActiveRecord::Base
     Project.includes(:permissions, :sites, :creator).where("(#{creator_id_check} OR #{permissions_check})", self.id, self.id).order('projects.name DESC')
   end
 
+  def accessible_sites
+    user_sites = self.projects.map { |project| project.sites.map { |site| site.id } }.to_a.uniq
+    Site.where(id: user_sites)
+  end
+
   def accessible_audio_events
     AudioEvent
     .includes(:audio_recording, :creator)

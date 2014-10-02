@@ -10,5 +10,7 @@ describe BookmarksController do
     it { expect(put('/bookmarks/1')).to route_to('bookmarks#update', id: '1') }
     it { expect(delete('/bookmarks/1')).to route_to('bookmarks#destroy', id: '1') }
 
+    it { expect(get('bookmarks/filter')).to route_to('bookmarks#filter', format: 'json') }
+    it { expect(post('bookmarks/filter')).to route_to('bookmarks#filter', format: 'json') }
   end
 end

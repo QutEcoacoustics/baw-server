@@ -118,4 +118,19 @@ class Site < ActiveRecord::Base
 
     modified_value
   end
+
+  # Define filter api settings
+  def self.filter_settings
+    {
+        valid_fields: [:id, :name, :description, :created_at, :updated_at, :project_ids],
+        render_fields: [:id, :name, :description],
+        text_fields: [:description, :name],
+        controller: :sites,
+        action: :filter,
+        defaults: {
+            order_by: :name,
+            direction: :asc
+        }
+    }
+  end
 end

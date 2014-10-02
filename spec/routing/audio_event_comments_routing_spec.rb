@@ -16,5 +16,8 @@ describe AudioEventCommentsController do
       it { expect(delete('/audio_events/1/comments/2')).to route_to('audio_event_comments#destroy', audio_event_id: '1', id: '2', format: 'json') }
 
       it { expect(get('/audio_event_comments')).to route_to('errors#route_error', requested_route: 'audio_event_comments') }
+
+      it { expect(get('/audio_events/1/comments/filter')).to route_to('audio_event_comments#filter',audio_event_id: '1', format: 'json') }
+      it { expect(post('/audio_events/1/comments/filter')).to route_to('audio_event_comments#filter', audio_event_id: '1', format: 'json') }
     end
 end

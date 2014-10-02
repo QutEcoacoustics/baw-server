@@ -9,6 +9,8 @@ module Filter
     extend Core
     extend Subset
     extend Validate
+    extend Projection
+    extend Custom
 
     private
 
@@ -18,7 +20,7 @@ module Filter
     # @param [Array<Symbol>] valid_fields
     # @return [Array<Arel::Nodes::Node>] conditions
     def build_top(hash, table, valid_fields)
-      fail ArgumentError, "Conditions hash must have at least 1 entry, got #{hash.size}." if hash.blank? || hash.size < 1
+      fail CustomErrors::FilterArgumentError.new("Conditions hash must have at least 1 entry, got #{hash.size}.", {hash: hash}) if hash.blank? || hash.size < 1
       conditions = []
       hash.each do |key, value|
         # combinators or fields can be at top level. Assumes 'and' (query.where(condition) uses 'and').
@@ -36,8 +38,8 @@ module Filter
     # @param [Array<Symbol>] valid_fields
     # @return [Array<Arel::Nodes::Node>] conditions
     def build_hash(field, hash, table, valid_fields)
-      fail ArgumentError, "Conditions hash must have at least 1 entry, got #{hash.size}." if hash.blank? || hash.size < 1
-      fail ArgumentError, "'Not' must have a single combiner or field name, got #{hash.size}" if field == :not && hash.size != 1
+      fail CustomErrors::FilterArgumentError.new("Conditions hash must have at least 1 entry, got #{hash.size}.", {field: field, hash: hash}) if hash.blank? || hash.size < 1
+      fail CustomErrors::FilterArgumentError.new("'Not' must have a single combiner or field name, got #{hash.size}", {field: field, hash: hash}) if field == :not && hash.size != 1
       conditions = []
 
       case field
@@ -82,7 +84,7 @@ module Filter
         when *valid_fields
           build_condition(field, key, value, table, valid_fields)
         else
-          fail ArgumentError, "Unrecognised combiner or field name: #{field}."
+          fail CustomErrors::FilterArgumentError.new("Unrecognised combiner or field name: #{field}.")
       end
     end
 
@@ -98,7 +100,7 @@ module Filter
         when :and, :or
           build_combiner(field, build_hash(key, value, table, valid_fields))
         else
-          fail ArgumentError, "Unrecognised combiner or field name: #{field}"
+          fail CustomErrors::FilterArgumentError.new("Unrecognised combiner or field name: #{field}", {field: key, hash: value})
       end
     end
 
@@ -114,7 +116,7 @@ module Filter
         when :or
           compose_or(condition1, condition2)
         else
-          fail ArgumentError, "Unrecognised filter combiner #{combiner}."
+          fail CustomErrors::FilterArgumentError.new("Unrecognised filter combiner #{combiner}.")
       end
     end
 
@@ -123,7 +125,7 @@ module Filter
     # @param [Array<Arel::Nodes::Node>] conditions
     # @return [Arel::Nodes::Node] condition
     def build_combiner(combiner, conditions)
-      fail ArgumentError, "Combiner '#{combiner}' must have at least 2 entries, got #{conditions.size}." if conditions.blank? || conditions.size < 2
+      fail CustomErrors::FilterArgumentError.new("Combiner '#{combiner}' must have at least 2 entries, got #{conditions.size}.") if conditions.blank? || conditions.size < 2
       combined_conditions = nil
 
       conditions.each do |condition|
@@ -146,7 +148,7 @@ module Filter
     # @param [Array<Symbol>] valid_fields
     # @return [Arel::Nodes::Node] condition
     def build_not(field, hash, table, valid_fields)
-      fail ArgumentError, "'Not' must have a single filter, got #{hash.size}." if hash.size != 1
+      fail CustomErrors::FilterArgumentError.new("'Not' must have a single filter, got #{hash.size}.", {field: field, hash: hash}) if hash.size != 1
       negated_condition = nil
 
       hash.each do |key, value|
@@ -165,6 +167,9 @@ module Filter
     # @param [Array<Symbol>] valid_fields
     # @return [Arel::Nodes::Node] condition
     def build_condition(field, filter_name, filter_value, table, valid_fields)
+      special_condition = build_condition_special(field, filter_name, filter_value, table, valid_fields)
+      return special_condition unless special_condition.nil?
+
       case filter_name
 
         # comparisons
@@ -214,7 +219,7 @@ module Filter
         #  compose_regex(@table, field, @valid_columns, filter_value)
 
         else
-          fail ArgumentError, "Unrecognised filter #{filter_name}."
+          fail CustomErrors::FilterArgumentError.new("Unrecognised filter #{filter_name}.")
       end
     end
 
@@ -262,10 +267,10 @@ module Filter
     # @param [Array<Symbol>] valid_fields
     # @return [Array<Arel::Attributes::Attribute>] projections
     def build_projections(hash, table, valid_fields)
-      fail ArgumentError, "Projections hash must have exactly 1 entry, got #{hash.size}." if hash.blank? || hash.size != 1
+      fail CustomErrors::FilterArgumentError.new("Projections hash must have exactly 1 entry, got #{hash.size}.", {hash: hash}) if hash.blank? || hash.size != 1
       result = []
       hash.each do |key, value|
-        fail ArgumentError, "Must be 'include' or 'exclude' at top level, got #{key}" unless [:include, :exclude].include?(key)
+        fail CustomErrors::FilterArgumentError.new("Must be 'include' or 'exclude' at top level, got #{key}", {hash: hash}) unless [:include, :exclude].include?(key)
         result = build_projection(key, value, table, valid_fields)
       end
       result
@@ -277,24 +282,37 @@ module Filter
     # @param [Array<Symbol>] valid_fields
     # @return [Array<Arel::Attributes::Attribute>] projections
     def build_projection(key, value, table, valid_fields)
-      fail ArgumentError, 'Must not contain duplicate fields.' if value.uniq.length != value.length
+      fail CustomErrors::FilterArgumentError.new('Must not contain duplicate fields.', {"#{key}" => value}) if value.uniq.length != value.length
+
       columns = []
       case key
         when :include
-          fail ArgumentError, 'Include must contain at least one field.' if value.blank?
-          columns = value.map(&:to_sym)
+          fail CustomErrors::FilterArgumentError.new('Include must contain at least one field.') if value.blank?
+          columns = value.map { |x| CleanParams.clean(x) }
         when :exclude
-          fail ArgumentError, 'Exclude must contain at least one field.' if value.blank?
-          columns = valid_fields.reject { |item| value.include?(item)}.map(&:to_sym)
-          fail ArgumentError, 'Exclude must contain at least one field.' if columns.blank?
+          fail CustomErrors::FilterArgumentError.new('Exclude must contain at least one field.') if value.blank?
+          columns = valid_fields.reject { |item| value.include?(item) }.map { |x| CleanParams.clean(x) }
+          fail CustomErrors::FilterArgumentError.new('Exclude must contain at least one field.') if columns.blank?
         else
-          fail ArgumentError, "Unrecognised projection key #{key}."
+          fail CustomErrors::FilterArgumentError.new("Unrecognised projection key #{key}.")
       end
 
       columns.map { |item|
-        validate_column_name(item, valid_fields)
+        #project_column(table, item, valid_fields)
+        validate_table_column(table, item, valid_fields)
         table[item]
       }
+    end
+
+    def build_condition_special(field, filter_name, filter_value, table, valid_fields)
+      # construct special conditions
+      if table.name == 'sites' && field == :project_ids
+        # filter by many-to-many projects <-> sites
+        fail CustomErrors::FilterArgumentError.new("Project_ids permits only 'in' filter, got #{filter_name}.") unless filter_name == :in
+        projects_sites_table = Arel::Table.new(:projects_sites)
+        special_value = Arel::Table.new(:projects_sites).project(:site_id).where(compose_in(projects_sites_table, :project_id, [:project_id], filter_value))
+        compose_in(table, :id, valid_fields, special_value)
+      end
     end
 
   end

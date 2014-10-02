@@ -35,7 +35,7 @@ describe Filter::Query do
                 }
             }
         ).query_full
-      }.to raise_error(ArgumentError, /Unrecognised filter not_a_real_filter/)
+      }.to raise_error(CustomErrors::FilterArgumentError, /Unrecognised filter not_a_real_filter/)
     end
 
     it 'occurs when or has only 1 entry' do
@@ -51,7 +51,7 @@ describe Filter::Query do
                 }
             }
         ).query_full
-      }.to raise_error(ArgumentError, /Combiner 'or' must have at least 2 entries, got 1/)
+      }.to raise_error(CustomErrors::FilterArgumentError, /Combiner 'or' must have at least 2 entries, got 1/)
     end
 
     it 'occurs when not has no entries' do
@@ -64,7 +64,7 @@ describe Filter::Query do
                 }
             }
         ).query_full
-      }.to raise_error(ArgumentError, /Conditions hash must have at least 1 entry, got 0/)
+      }.to raise_error(CustomErrors::FilterArgumentError, /Conditions hash must have at least 1 entry, got 0/)
     end
 
     it 'occurs when or has no entries' do
@@ -77,7 +77,7 @@ describe Filter::Query do
                 }
             }
         ).query_full
-      }.to raise_error(ArgumentError, /Conditions hash must have at least 1 entry, got 0/)
+      }.to raise_error(CustomErrors::FilterArgumentError, /Conditions hash must have at least 1 entry, got 0/)
     end
 
     it 'occurs when not has more than one field' do
@@ -96,7 +96,7 @@ describe Filter::Query do
                 }
             }
         ).query_full
-      }.to raise_error(ArgumentError, /'Not' must have a single combiner or field name, got 2/)
+      }.to raise_error(CustomErrors::FilterArgumentError, /'Not' must have a single combiner or field name, got 2/)
     end
 
     it 'occurs when not has more than one filter' do
@@ -113,7 +113,7 @@ describe Filter::Query do
                 }
             }
         ).query_full
-      }.to raise_error(ArgumentError, /'Not' must have a single filter, got 2/)
+      }.to raise_error(CustomErrors::FilterArgumentError, /'Not' must have a single filter, got 2/)
     end
 
     it 'occurs when a combiner is not recognised with valid filters' do
@@ -132,7 +132,7 @@ describe Filter::Query do
                 }
             }
         ).query_full
-      }.to raise_error(ArgumentError, /Unrecognised combiner or field name: not_a_valid_combiner/)
+      }.to raise_error(CustomErrors::FilterArgumentError, /Unrecognised combiner or field name: not_a_valid_combiner/)
     end
 
 #
@@ -151,7 +151,7 @@ describe Filter::Query do
                 }
             }
         ).query_full
-      }.to raise_error(ArgumentError, /Range filter missing 'from'/)
+      }.to raise_error(CustomErrors::FilterArgumentError, /Range filter missing 'from'/)
     end
 
     it "occurs when a range is missing 'to'" do
@@ -169,7 +169,7 @@ describe Filter::Query do
                 }
             }
         ).query_full
-      }.to raise_error(ArgumentError, /Range filter missing 'to'/)
+      }.to raise_error(CustomErrors::FilterArgumentError, /Range filter missing 'to'/)
     end
 
     it 'occurs when a range has from/to and interval' do
@@ -188,7 +188,7 @@ describe Filter::Query do
                 }
             }
         ).query_full
-      }.to raise_error(ArgumentError, "Range filter must use either ('from' and 'to') or ('interval'), not both.")
+      }.to raise_error(CustomErrors::FilterArgumentError, "Range filter must use either ('from' and 'to') or ('interval'), not both.")
     end
 
     it 'occurs when a range has no recognised properties' do
@@ -206,7 +206,7 @@ describe Filter::Query do
                 }
             }
         ).query_full
-      }.to raise_error(ArgumentError, /Range filter was not valid/)
+      }.to raise_error(CustomErrors::FilterArgumentError, /Range filter was not valid/)
     end
 
     it 'occurs when a property has no filters' do
@@ -221,7 +221,7 @@ describe Filter::Query do
                 }
             }
         ).query_full
-      }.to raise_error(ArgumentError, /Conditions hash must have at least 1 entry, got 0/)
+      }.to raise_error(CustomErrors::FilterArgumentError, /Conditions hash must have at least 1 entry, got 0/)
     end
 
     it 'occurs when projection includes invalid field' do
@@ -242,7 +242,7 @@ describe Filter::Query do
                 }
             }
         ).query_full
-      }.to raise_error(ArgumentError, /, got :does_not_exist/)
+      }.to raise_error(CustomErrors::FilterArgumentError, /, got does_not_exist/)
     end
 
     it 'occurs when projection includes duplicate fields' do
@@ -263,7 +263,7 @@ describe Filter::Query do
                 }
             }
         ).query_full
-      }.to raise_error(ArgumentError, /Must not contain duplicate fields/)
+      }.to raise_error(CustomErrors::FilterArgumentError, /Must not contain duplicate fields/)
     end
 
     it 'occurs when projection has both include and exclude' do
@@ -287,7 +287,7 @@ describe Filter::Query do
                 }
             }
         ).query_full
-      }.to raise_error(ArgumentError, /Projections hash must have exactly 1 entry, got 2/)
+      }.to raise_error(CustomErrors::FilterArgumentError, /Projections hash must have exactly 1 entry, got 2/)
     end
  
     it 'occurs when projection has empty include' do
@@ -304,7 +304,7 @@ describe Filter::Query do
                 }
             }
         ).query_full
-      }.to raise_error(ArgumentError, /Include must contain at least one field/)
+      }.to raise_error(CustomErrors::FilterArgumentError, /Include must contain at least one field/)
     end
 
   end
@@ -329,7 +329,7 @@ describe Filter::Query do
 FROM\"audio_recordings\" \
 WHERE\"audio_recordings\".\"site_id\"=5 \
 AND(\"audio_recordings\".\"deleted_at\"ISNULL) \
-ORDERBY\"audio_recordings\".\"recorded_date\"DESC"
+ORDERBY\"audio_recordings\".\"recorded_date\"DESCLIMIT500OFFSET0"
       compare_filter_sql(request_body_obj, complex_result)
     end
 
@@ -354,7 +354,7 @@ ORDERBY\"audio_recordings\".\"recorded_date\"DESC"
 FROM\"audio_recordings\" \
 WHERE\"audio_recordings\".\"site_id\"=5 \
 AND(\"audio_recordings\".\"deleted_at\"ISNULL) \
-ORDERBY\"audio_recordings\".\"recorded_date\"DESC"
+ORDERBY\"audio_recordings\".\"recorded_date\"DESCLIMIT500OFFSET0"
       compare_filter_sql(request_body_obj, complex_result)
     end
 
@@ -461,7 +461,7 @@ ORDERBY\"audio_recordings\".\"recorded_date\"DESC"
                       :media_type
                   ]
               },
-              sort: {
+              sorting: {
                   order_by: 'duration_seconds',
                   direction: 'desc'
               },

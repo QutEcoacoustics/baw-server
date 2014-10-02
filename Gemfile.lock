@@ -1,28 +1,37 @@
 GIT
   remote: https://github.com/QutBioacoustics/baw-audio-tools.git
-  revision: 07518669327b68d3a40464cee4b1c14ee01061c4
+  revision: c09694c5572907f5e85b7e98e0a69cc5ca822f09
   specs:
-    baw-audio-tools (0.1.0)
+    baw-audio-tools (0.3.0)
       activesupport (>= 3.2)
       settingslogic
 
 GIT
   remote: https://github.com/QutBioacoustics/baw-workers.git
-  revision: 1141649e92024d05fa3c7970c19d83ead442b370
+  revision: c334cf583a59b184480e92ec9148af2e4dc1394a
   specs:
-    baw-workers (0.1.1)
+    baw-workers (0.2.0)
+      actionmailer (>= 3.2)
       activesupport (>= 3.2)
       daemons
-      resque
+      resque (~> 1.25.2)
       resque_solo
       settingslogic
 
 GIT
   remote: https://github.com/brainspec/enumerize.git
-  revision: 5adb11dea2e69e3a511664bc85436c8c9b273deb
+  revision: 38ff4974ae71836c81d627f527d088f7787ef261
   specs:
     enumerize (0.8.0)
       activesupport (>= 3.2)
+
+GIT
+  remote: https://github.com/echannel/resque-job-stats.git
+  revision: 8932c036ae0eb272476c3f4e5aace4233aa0fa2f
+  ref: 8932c036ae
+  specs:
+    resque-job-stats (0.3.0)
+      resque (>= 1.17)
 
 GIT
   remote: https://github.com/seyhunak/twitter-bootstrap-rails.git
@@ -89,7 +98,7 @@ GEM
       terminal-table (~> 1.4)
     breadcrumbs_on_rails (2.3.0)
     builder (3.0.4)
-    bullet (4.13.1)
+    bullet (4.13.2)
       activesupport (>= 3.0.0)
       uniform_notifier (>= 1.6.0)
     cancancan (1.9.2)
@@ -109,19 +118,19 @@ GEM
     capistrano-rvm (0.1.1)
       capistrano (~> 3.0)
       sshkit (~> 1.2)
-    capybara (2.4.1)
+    capybara (2.4.3)
       mime-types (>= 1.16)
       nokogiri (>= 1.3.3)
       rack (>= 1.0.0)
       rack-test (>= 0.5.4)
       xpath (~> 2.0)
-    celluloid (0.15.2)
-      timers (~> 1.1.0)
+    celluloid (0.16.0)
+      timers (~> 4.0.0)
     climate_control (0.0.3)
       activesupport (>= 3.0)
     cocaine (0.5.4)
       climate_control (>= 0.0.3, < 1.0)
-    codeclimate-test-reporter (0.4.0)
+    codeclimate-test-reporter (0.4.1)
       simplecov (>= 0.7.1, < 1.0.0)
     coderay (1.1.0)
     coffee-rails (3.2.2)
@@ -164,7 +173,7 @@ GEM
     fakeredis (0.5.0)
       redis (~> 3.0)
     fastercsv (1.5.5)
-    ffi (1.9.3)
+    ffi (1.9.5)
     fire_poll (1.2.0)
     formatador (0.2.5)
     gmaps4rails (1.5.6)
@@ -186,10 +195,8 @@ GEM
       railties (>= 3.1, < 4.1)
     highline (1.6.21)
     hike (1.2.3)
+    hitimes (1.2.2)
     i18n (0.6.11)
-    jbuilder (2.1.3)
-      activesupport (>= 3.0.0, < 5)
-      multi_json (~> 1.2)
     journey (1.0.4)
     jquery-rails (3.1.2)
       railties (>= 3.0, < 5.0)
@@ -200,8 +207,8 @@ GEM
       rspec (>= 2.0, < 4.0)
     launchy (2.4.2)
       addressable (~> 2.3)
-    libv8 (3.16.14.3)
-    listen (2.7.9)
+    libv8 (3.16.14.7)
+    listen (2.7.11)
       celluloid (>= 0.15.2)
       rb-fsevent (>= 0.9.3)
       rb-inotify (>= 0.9)
@@ -219,7 +226,7 @@ GEM
       net-ssh (>= 2.6.5)
     net-ssh (2.9.1)
     netrc (0.7.7)
-    newrelic_rpm (3.9.3.241)
+    newrelic_rpm (3.9.5.251)
     nokogiri (1.6.3.1)
       mini_portile (= 0.6.0)
     orm_adapter (0.5.0)
@@ -314,13 +321,13 @@ GEM
       json (>= 1.4.6)
       mustache (>= 0.99.4)
       rspec (~> 2.14.0, >= 2.14.0)
-    ruby2ruby (2.1.2)
+    ruby2ruby (2.1.3)
       ruby_parser (~> 3.1)
       sexp_processor (~> 4.0)
     ruby_parser (3.5.0)
       sexp_processor (~> 4.1)
-    safe_yaml (1.0.3)
-    sass (3.4.3)
+    safe_yaml (1.0.4)
+    sass (3.4.5)
     sass-rails (3.2.6)
       railties (~> 3.2.0)
       sass (>= 3.1.10)
@@ -360,15 +367,16 @@ GEM
     therubyracer (0.12.1)
       libv8 (~> 3.16.14.0)
       ref
-    thin (1.6.2)
-      daemons (>= 1.0.9)
-      eventmachine (>= 1.0.0)
-      rack (>= 1.0.0)
+    thin (1.6.3)
+      daemons (~> 1.0, >= 1.0.9)
+      eventmachine (~> 1.0)
+      rack (~> 1.0)
     thor (0.19.1)
     tilt (1.4.1)
     timeliness (0.3.7)
-    timers (1.1.0)
-    tins (1.3.2)
+    timers (4.0.1)
+      hitimes
+    tins (1.3.3)
     treetop (1.4.15)
       polyglot
       polyglot (>= 0.3.1)
@@ -426,7 +434,6 @@ DEPENDENCIES
   guard-rspec (~> 3.1.0)
   haml (~> 4.0.5)
   haml-rails (~> 0.4)
-  jbuilder (~> 2.1.3)
   jquery-rails (~> 3.1.0)
   json_spec (~> 1.1.1)
   launchy (~> 2.4.2)
@@ -443,6 +450,7 @@ DEPENDENCIES
   rails-i18n-debug (~> 1.0.1)
   recaptcha (~> 0.3.6)
   resque (~> 1.25.2)
+  resque-job-stats!
   role_model (~> 0.8.1)
   rspec (~> 2.14)
   rspec-rails (~> 2.14.2)

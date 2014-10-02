@@ -90,8 +90,6 @@ class AudioRecording < ActiveRecord::Base
 
   # Get the existing paths for the audio recording file.
   def original_file_paths
-    media_cache = Settings.media_cache_tool
-
     original_format = '.wv' # pick something
 
     if !self.original_file_name.blank?
@@ -108,9 +106,8 @@ class AudioRecording < ActiveRecord::Base
           original_format: self.original_format_calculated
       }
 
-      source_files = media_cache.original_audio_file_names(modify_parameters)
-      source_existing_paths = source_files.map { |source_file| media_cache.cache.existing_storage_paths(media_cache.cache.original_audio, source_file) }.flatten
-      #source_possible_paths = source_files.map { |source_file|  media_cache.cache.possible_storage_paths( media_cache.cache.original_audio, source_file) }.flatten
+      audio_original = BawWorkers::Settings.original_audio_helper
+      source_existing_paths = audio_original.existing_paths(modify_parameters)
     end
 
     source_existing_paths
@@ -131,6 +128,8 @@ class AudioRecording < ActiveRecord::Base
 
     # type of hash is at start of hash_to_compare, split using two colons
     hash_type, compare_hash = self.file_hash.split('::')
+
+    # TODO: use BawWorkers to get hash - only allow SHA256.
 
     case hash_type
       when 'MD5'
@@ -189,8 +188,9 @@ class AudioRecording < ActiveRecord::Base
   end
 
   def self.check_storage
-    media_cache = Settings.media_cache_tool
-    existing_dirs = media_cache.cache.existing_storage_dirs(media_cache.cache.original_audio)
+    audio_original = BawWorkers::Settings.original_audio_helper
+    existing_dirs = audio_original.existing_dirs
+
     if existing_dirs.empty?
       msg = 'No audio recording storage directories are available.'
       logger.warn msg
@@ -212,7 +212,8 @@ class AudioRecording < ActiveRecord::Base
         #:updater_id, :deleter_id, :deleted_at, :original_file_name
         ],
         render_fields: [:id, :uuid, :recorded_date, :site_id, :duration_seconds,
-                        :sample_rate_hertz, :channels, :bit_rate_bps, :media_type, :status],
+                        :sample_rate_hertz, :channels, :bit_rate_bps, :media_type,
+                        :data_length_bytes, :status],
         text_fields: [:media_type, :status],
         controller: :audio_recordings,
         action: :filter,

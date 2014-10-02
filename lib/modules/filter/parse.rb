@@ -11,9 +11,10 @@ module Filter
 
     # Parse paging parameters.
     # @param [Hash] params
+    # @param [Integer] default_page
     # @param [Integer] default_items
     # @return [Hash] Paging parameters
-    def parse_paging(params, default_items)
+    def parse_paging(params, default_page, default_items)
       page, items, offset, limit = nil
 
       # qsp
@@ -25,19 +26,19 @@ module Filter
       items = params[:paging][:items] if items.blank? && !params[:paging].blank?
 
       # if page or items is set, set the other to default
-      page = 1 if page.blank? && !items.blank?
-      items = default_items if !page.blank? && items.blank?
+      page = default_page if page.blank?
+      items = default_items if items.blank?
 
       # calculate offset if able
-      offset = (page - 1) * items if !page.blank? && !items.blank?
-      limit = items if !page.blank? && !items.blank?
+      offset = (page - 1) * items
+      limit = items
       #page = (values.offset / values.limit) + 1
 
       # ensure integer
-      offset = offset.to_i unless offset.blank?
-      limit = limit.to_i unless limit.blank?
-      page = page.to_i unless page.blank?
-      items = items.to_i unless items.blank?
+      offset = offset.to_i
+      limit = limit.to_i
+      page = page.to_i
+      items = items.to_i
 
       # will always return offset, limit, page, items
       # either all will be nil, or all will be set
@@ -49,22 +50,22 @@ module Filter
     # @param [Symbol] default_order_by
     # @param [Symbol] default_direction
     # @return [Hash] Sorting parameters
-    def parse_sort(params, default_order_by, default_direction)
+    def parse_sorting(params, default_order_by, default_direction)
       # qsp
       order_by = params[:order_by]
       direction = params[:direction]
 
       # POST body
-      order_by = params[:sort][:order_by] if order_by.blank? && !params[:sort].blank?
-      direction = params[:sort][:direction] if order_by.blank? && !params[:sort].blank?
+      order_by = params[:sorting][:order_by] if order_by.blank? && !params[:sorting].blank?
+      direction = params[:sorting][:direction] if order_by.blank? && !params[:sorting].blank?
 
       # set defaults if necessary
       order_by = default_order_by if order_by.blank?
       direction = default_direction if direction.blank?
 
       # ensure symbols
-      order_by = order_by.to_sym unless order_by.blank?
-      direction = direction.to_sym unless direction.blank?
+      order_by = CleanParams.clean(order_by) unless order_by.blank?
+      direction = CleanParams.clean(direction) unless direction.blank?
 
       {order_by: order_by, direction: direction}
     end
@@ -94,7 +95,7 @@ module Filter
         is_filter_qsp = key_s.starts_with?(key_prefix)
 
         if is_filter_qsp
-          new_key = key_s[key_prefix.size..-1].to_sym
+          new_key = CleanParams.clean(key_s[key_prefix.size..-1])
           found[new_key] = value if valid_fields.include?(new_key)
         end
       end
