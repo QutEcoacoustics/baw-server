@@ -22,6 +22,8 @@ settings:
       - ./tmp/_cached_audio
     cached_datasets:
       - ./tmp/_cached_dataset
+    cached_analysis_jobs:
+      - ./tmp/_cached_analysis_jobs
     harvester_to_do: ./tmp/_harvester_to_do
     harvester_completed: ./tmp/_harvester_completed
     harvester_log_file: ./tmp/harvester.log
