@@ -11,9 +11,6 @@ require 'resque-job-stats'
 
 require 'baw-workers/version'
 require 'baw-workers/settings'
-require 'baw-workers/common'
-require 'baw-workers/mail/mailer'
-
 require 'baw-workers/register_mime_types'
 
 # set time zone
@@ -21,17 +18,40 @@ Time.zone = 'UTC'
 
 module BawWorkers
   autoload :Common, 'baw-workers/common'
-
-  autoload :AudioFileCheck, 'baw-workers/audio_file_check'
   autoload :ApiCommunicator, 'baw-workers/api_communicator'
+  autoload :FileInfo, 'baw-workers/file_info'
 
-  module Action
-    autoload :MediaAction, 'baw-workers/action/media_action'
-    autoload :AudioFileCheckAction, 'baw-workers/action/audio_file_check_action'
+  module Analysis
+    autoload :Action, 'baw-workers/analysis/action'
+    autoload :Workhelper, 'baw-workers/analysis/work_helper'
+  end
+
+  module AudioCheck
+    autoload :Action, 'baw-workers/audio_check/action'
+    autoload :WorkHelper, 'baw-workers/audio_check/work_helper'
+  end
+
+  module Harvest
+    autoload :Action, 'baw-workers/harvest/action'
+    autoload :WorkHelper, 'baw-workers/harvest/work_helper'
   end
 
   module Mail
     autoload :Mailer, 'baw-workers/mail/mailer'
+  end
+
+  module Media
+    autoload :Action, 'baw-workers/media/action'
+    autoload :WorkHelper, 'baw-workers/media/work_helper'
+  end
+
+  module Storage
+    autoload :Common, 'baw-workers/storage/common'
+    autoload :AnalysisCache, 'baw-workers/storage/analysis_cache'
+    autoload :AudioCache, 'baw-workers/storage/audio_cache'
+    autoload :AudioOriginal, 'baw-workers/storage/audio_original'
+    autoload :DatasetCache, 'baw-workers/storage/dataset_cache'
+    autoload :SpectrogramCache, 'baw-workers/storage/spectrogram_cache'
   end
 
 end

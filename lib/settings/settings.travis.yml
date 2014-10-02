@@ -11,7 +11,7 @@ settings:
     error_log_file: ./tmp/program_stderr.log
     dry_run: false
     queues:
-      media: media_default
+      media: media_travis
       maintenance: maintenance_default
   paths:
     original_audios:
@@ -27,7 +27,7 @@ settings:
     harvester_log_file: ./tmp/harvester.log
     modules_log_file: ./tmp/audio_tools.log
     workers_log_file: ./tmp/workers.log
-    temp_files: .
+    temp_dir: ./tmp
   endpoints:
     login: /security/sign_in
     audio_recording_update: /audio_recordings/:id

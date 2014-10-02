@@ -1,11 +1,9 @@
-require 'tasks/run_worker'
-
 require 'csv'
 
-namespace :baw_workers do
-
+namespace :baw do
+namespace :action do
   desc 'Enqueue audio recording file checks using Resque'
-  task :enqueue_audio_file_checks, [:settings_file, :csv_file] => [:init_worker] do |t, args|
+  task :audio_check, [:settings_file, :csv_file] => ['worker:init'] do |t, args|
 
     index_to_key_map = {
         id: 0,
@@ -39,10 +37,11 @@ namespace :baw_workers do
       audio_params[:original_format] = Mime::Type.lookup(audio_params[:media_type].downcase).to_sym.to_s if audio_params[:original_format].blank?
 
       # enqueue
-      BawWorkers::Action::AudioFileCheckAction.enqueue(audio_params)
+      BawWorkers::AudioCheck::Action.enqueue(audio_params)
     end
 
 
   end
 
+  end
 end

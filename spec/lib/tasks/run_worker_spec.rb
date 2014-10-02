@@ -1,7 +1,7 @@
 require 'spec_helper'
 require 'fakeredis'
 
-describe 'baw_workers:setup_worker' do
+describe 'baw:worker:setup' do
   include_context 'rake_tests'
   include_context 'rspect_output_files'
 

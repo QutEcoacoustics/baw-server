@@ -1,7 +1,7 @@
 module BawWorkers
-  module Action
-    # Media Action for cutting audio files and generating spectrograms.
-    class MediaAction
+  module Media
+    # Action for cutting audio files and generating spectrograms.
+    class Action
 
       include BawWorkers::Common
 
@@ -37,7 +37,7 @@ module BawWorkers
           30
         end
 
-        # Get the queue for this action. Used by `resque`.
+        # Get the queue for this action. Used by Resque.
         # @return [Symbol] The queue.
         def queue
           BawWorkers::Settings.resque.queues.media
@@ -48,7 +48,7 @@ module BawWorkers
         # @param [Hash] media_request_params
         def enqueue(media_type, media_request_params)
           media_type_sym, params_sym = validate(media_type, media_request_params)
-          Resque.enqueue(MediaAction, media_type_sym, params_sym)
+          Resque.enqueue(BawWorkers::Media::Action, media_type_sym, params_sym)
           BawWorkers::Settings.logger.info(self.name) {
             "Enqueued #{media_type} from MediaAction #{media_request_params}."
           }
@@ -60,14 +60,13 @@ module BawWorkers
           [:audio, :spectrogram]
         end
 
-        # Perform work. Used by `resque`.
+        # Perform work. Used by Resque.
         # @param [Symbol] media_type
         # @param [Hash] media_request_params
         # @return [Array<String>] target existing paths
         def perform(media_type, media_request_params)
           media_type_sym, params_sym = validate(media_type, media_request_params)
-          target_existing_paths = make_media_request(media_type_sym, params_sym)
-          target_existing_paths
+          make_media_request(media_type_sym, params_sym)
         end
 
         # Create specified media type by applying media request params.
@@ -79,13 +78,25 @@ module BawWorkers
 
           params_sym[:datetime_with_offset] = check_datetime(params_sym[:datetime_with_offset])
 
-          media_cache_tool = BawWorkers::Settings.media_cache_tool
+          logger = BawWorkers::Settings.logger
+
+          helper = BawWorkers::Media::WorkHelper.new(
+              BawWorkers::Settings.audio_helper,
+              BawWorkers::Settings.spectrogram_helper,
+              BawWorkers::Settings.original_audio_helper,
+              BawWorkers::Settings.audio_cache_helper,
+              BawWorkers::Settings.spectrogram_cache_helper,
+              BawWorkers::FileInfo.new(logger, BawWorkers::Settings.audio_helper),
+              BawWorkers::Settings.logger,
+              BawWorkers::Settings.paths.temp_dir
+          )
+
           target_existing_paths = []
           case media_type_sym
             when :audio
-              target_existing_paths = media_cache_tool.create_audio_segment(params_sym)
+              target_existing_paths = helper.create_audio_segment(params_sym)
             when :spectrogram
-              target_existing_paths = media_cache_tool.generate_spectrogram(params_sym)
+              target_existing_paths = helper.generate_spectrogram(params_sym)
             else
               validate_contains(media_type_sym, valid_media_types)
           end

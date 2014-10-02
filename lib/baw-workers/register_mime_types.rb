@@ -3,6 +3,8 @@
 # Mime::Type.register "text/richtext", :rtf
 # Mime::Type.register_alias "text/html", :iphone
 
+require 'action_dispatch/http/mime_type'
+
 # audio mime types
 Mime::Type.register 'audio/wav', :wav, ['audio/x-wav', 'audio/vnd.wave', 'audio/L16'], ['wave']
 Mime::Type.register 'audio/mp3', :mp3, ['audio/mpeg'], ['mp1', 'mp2', 'mp3', 'mpg','mpeg','mpeg3']

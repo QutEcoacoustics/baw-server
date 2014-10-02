@@ -1,7 +1,7 @@
 module BawWorkers
-  module Action
+  module AudioCheck
     # Runs checks on original audio recording files.
-    class AudioFileCheckAction
+    class Action
 
       # include common methods
       include BawWorkers::Common
@@ -21,7 +21,7 @@ module BawWorkers
           30
         end
 
-        # Get the queue for this action. Used by `resque`.
+        # Get the queue for this action. Used by Resque.
         # @return [Symbol] The queue.
         def queue
           BawWorkers::Settings.resque.queues.maintenance
@@ -32,18 +32,25 @@ module BawWorkers
         # @return [Boolean] True if job was queued, otherwise false. +nil+
         #   if the job was rejected by a before_enqueue hook.
         def enqueue(audio_params)
-          audio_params_sym = AudioFileCheck.validate(audio_params)
-          result = Resque.enqueue(AudioFileCheckAction, audio_params_sym)
+          audio_params_sym = BawWorkers::AudioCheck::WorkHelper.validate(audio_params)
+          result = Resque.enqueue(BawWorkers::AudioCheck::Action, audio_params_sym)
           BawWorkers::Settings.logger.info(self.name) {
             "Enqueued from AudioFileCheckAction. Resque enqueue returned #{result} using #{audio_params}."
           }
         end
 
-        # Perform work. Used by `resque`.
+        # Perform work. Used by Resque.
         # @param [Hash] audio_params
         # @return [Array<Hash>] array of hashes representing operations performed
         def perform(audio_params)
-          audio_file_check = AudioFileCheck.new(BawWorkers::Settings.logger, BawWorkers::Settings.resque.dry_run)
+          file_info = BawWorkers::FileInfo.new(
+              BawWorkers::Settings.logger,
+              BawWorkers::Settings.audio_helper
+          )
+          audio_file_check = BawWorkers::AudioCheck::WorkHelper.new(
+              BawWorkers::Settings.logger,
+              file_info,
+              BawWorkers::Settings.resque.dry_run)
 
           begin
             audio_file_check.run(audio_params)

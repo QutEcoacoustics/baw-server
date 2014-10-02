@@ -37,6 +37,7 @@ SimpleCov.start
 require 'zonebie'
 require 'baw-workers'
 require 'fakeredis'
+require 'fakeredis/rspec'
 require 'active_support/core_ext'
 
 # require webmock
@@ -44,11 +45,10 @@ require 'webmock/rspec'
 WebMock.disable_net_connect!(allow: 'codeclimate.com')
 
 # include shared_context
-Dir[File.join(File.dirname(__FILE__), 'support', '**', '*.rb')].each {|file| require file }
+Dir[File.join(File.dirname(__FILE__), 'support', '**', '*.rb')].each { |file| require file }
 
 # include rake tasks
 require 'rake'
-Dir[File.join(File.dirname(__FILE__), '..', 'lib', 'tasks', '*.rb')].each { |file| require file }
 
 RSpec.configure do |config|
   config.run_all_when_everything_filtered = true
@@ -77,7 +77,7 @@ RSpec.configure do |config|
   config.tmp_dir = File.expand_path(File.join(File.dirname(__FILE__), '..', 'tmp'))
 
   config.add_setting :default_settings_path
-  config.default_settings_path = File.expand_path(File.join(File.dirname(__FILE__), '..', 'lib', 'settings.default.yml'))
+  config.default_settings_path = File.expand_path(File.join(File.dirname(__FILE__), '..', 'lib', 'settings', 'settings.default.yml'))
 
   config.add_setting :program_stdout
   config.program_stdout = File.join(config.tmp_dir, 'program_stdout.log')
@@ -94,6 +94,12 @@ RSpec.configure do |config|
     # clear stdout and stderr files
     #FileUtils.rm config.program_stderr if File.exists? config.program_stderr
     #FileUtils.rm config.program_stdout if File.exists? config.program_stdout
+
+    # include rake tasks
+    Dir[File.join(File.dirname(__FILE__), '..', 'lib', 'tasks', '*.rake')].each do |file|
+      Rake.application.rake_require File.join('tasks',File.basename(file, File.extname(file)))
+    end
+    Rake::Task.define_task(:environment)
   end
 
   config.before(:each) do
@@ -121,6 +127,7 @@ RSpec.configure do |config|
 
   require 'action_mailer'
 
+  # need to define and load settings for specs to use.
   unless defined? Settings
     class Settings < BawWorkers::Settings
       source BawWorkers::Settings.source

@@ -11,15 +11,19 @@ shared_context 'media_file' do
 
   let(:audio_file_corrupt) { File.expand_path(File.join(File.dirname(__FILE__), '..', '..', 'example_media', 'test-audio-corrupt.ogg')) }
 
-  let(:media_cache_tool) { BawWorkers::Settings.media_cache_tool }
+  let(:audio_original) { BawWorkers::Storage::AudioOriginal.new(BawWorkers::Settings.paths.original_audios) }
+  let(:audio_cache) { BawWorkers::Storage::AudioCache.new(BawWorkers::Settings.paths.cached_audios) }
+  let(:spectrogram_cache) { BawWorkers::Storage::SpectrogramCache.new(BawWorkers::Settings.paths.cached_spectrograms) }
+
+  let(:duration_range) { 0.11 }
 
   after(:each) do
-    FileUtils.rm_r media_cache_tool.cache.original_audio.storage_paths.first if Dir.exists? media_cache_tool.cache.original_audio.storage_paths.first
-    FileUtils.rm_r media_cache_tool.cache.cache_audio.storage_paths.first if Dir.exists? media_cache_tool.cache.cache_audio.storage_paths.first
-    FileUtils.rm_r media_cache_tool.cache.cache_spectrogram.storage_paths.first if Dir.exists? media_cache_tool.cache.cache_spectrogram.storage_paths.first
+    audio_original.existing_dirs.each { |dir| FileUtils.rm_r dir }
+    audio_cache.existing_dirs.each { |dir| FileUtils.rm_r dir }
+    spectrogram_cache.existing_dirs.each { |dir| FileUtils.rm_r dir }
   end
 
-  def create_original_audio(media_cache_tool, options, example_file_name, new_name_style = false)
+  def create_original_audio(options, example_file_name, new_name_style = false)
 
     # ensure :datetime_with_offset is an ActiveSupport::TimeWithZone object
     if options[:datetime_with_offset].is_a?(ActiveSupport::TimeWithZone)
@@ -30,8 +34,8 @@ shared_context 'media_file' do
       fail ArgumentError, ":recorded_date must be a UTC time (i.e. end with Z), given #{options[:datetime_with_offset]}"
     end
 
-    original_file_names = media_cache_tool.original_audio_file_names(options)
-    original_possible_paths = original_file_names.map { |source_file| media_cache_tool.cache.possible_storage_paths(media_cache_tool.cache.original_audio, source_file) }.flatten
+    original_file_names = audio_original.file_names(options)
+    original_possible_paths = audio_original.possible_paths(options)
 
     if new_name_style
       file_to_make = original_possible_paths.second
@@ -45,14 +49,12 @@ shared_context 'media_file' do
     file_to_make
   end
 
-  def get_cached_audio_paths(media_cache_tool, options)
-    cache_audio_file = media_cache_tool.cached_audio_file_name(options)
-    media_cache_tool.cache.possible_storage_paths(media_cache_tool.cache.cache_audio, cache_audio_file)
+  def get_cached_audio_paths(options)
+    audio_cache.possible_paths(options)
   end
 
-  def get_cached_spectrogram_paths(media_cache_tool, options)
-    cache_spectrogram_file = media_cache_tool.cached_spectrogram_file_name(options)
-    media_cache_tool.cache.possible_storage_paths(media_cache_tool.cache.cache_spectrogram, cache_spectrogram_file)
+  def get_cached_spectrogram_paths(options)
+    spectrogram_cache.possible_paths(options)
   end
 
   def transform_hash(original, options={}, &block)

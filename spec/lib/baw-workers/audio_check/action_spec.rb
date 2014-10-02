@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe BawWorkers::Action::AudioFileCheckAction do
+describe BawWorkers::AudioCheck::Action do
   include_context 'media_file'
 
   let(:queue_name) { BawWorkers::Settings.resque.queues.maintenance }
@@ -26,17 +26,17 @@ describe BawWorkers::Action::AudioFileCheckAction do
 
     let(:expected_payload) {
       {
-          class: 'BawWorkers::Action::AudioFileCheckAction',
+          class: 'BawWorkers::AudioCheck::Action',
           args: [test_params]
       }
     }
 
     it 'works on the media queue' do
-      expect(Resque.queue_from_class(BawWorkers::Action::AudioFileCheckAction)).to eq(queue_name)
+      expect(Resque.queue_from_class(BawWorkers::AudioCheck::Action)).to eq(queue_name)
     end
 
     it 'can enqueue' do
-      BawWorkers::Action::AudioFileCheckAction.enqueue(test_params)
+      BawWorkers::AudioCheck::Action.enqueue(test_params)
       expect(Resque.size(queue_name)).to eq(1)
 
       actual = Resque.peek(queue_name)
@@ -45,20 +45,20 @@ describe BawWorkers::Action::AudioFileCheckAction do
     end
 
     it 'does not enqueue the same payload into the same queue more than once' do
-      result1 = BawWorkers::Action::AudioFileCheckAction.enqueue(test_params)
+      result1 = BawWorkers::AudioCheck::Action.enqueue(test_params)
       expect(Resque.size(queue_name)).to eq(1)
       expect(result1).to eq(true)
-      expect(Resque.enqueued?(BawWorkers::Action::AudioFileCheckAction, test_params)).to eq(true)
+      expect(Resque.enqueued?(BawWorkers::AudioCheck::Action, test_params)).to eq(true)
 
-      result2 = BawWorkers::Action::AudioFileCheckAction.enqueue(test_params)
+      result2 = BawWorkers::AudioCheck::Action.enqueue(test_params)
       expect(Resque.size(queue_name)).to eq(1)
       expect(result2).to eq(true)
-      expect(Resque.enqueued?(BawWorkers::Action::AudioFileCheckAction, test_params)).to eq(true)
+      expect(Resque.enqueued?(BawWorkers::AudioCheck::Action, test_params)).to eq(true)
 
-      result3 = BawWorkers::Action::AudioFileCheckAction.enqueue(test_params)
+      result3 = BawWorkers::AudioCheck::Action.enqueue(test_params)
       expect(Resque.size(queue_name)).to eq(1)
       expect(result3).to eq(true)
-      expect(Resque.enqueued?(BawWorkers::Action::AudioFileCheckAction, test_params)).to eq(true)
+      expect(Resque.enqueued?(BawWorkers::AudioCheck::Action, test_params)).to eq(true)
 
       actual = Resque.peek(queue_name)
       expect(deep_stringify_keys(expected_payload)).to eq(actual)
@@ -76,13 +76,13 @@ describe BawWorkers::Action::AudioFileCheckAction do
     context 'raises error' do
       it 'with a params that is not a hash' do
         expect {
-          BawWorkers::Action::AudioFileCheckAction.perform('not a hash')
+          BawWorkers::AudioCheck::Action.perform('not a hash')
         }.to raise_error(ArgumentError, /Media request params was a 'String'\. It must be a 'Hash'\./)
       end
 
       it 'with a params missing required value' do
         expect {
-          BawWorkers::Action::AudioFileCheckAction.perform(test_params.except('original_format'))
+          BawWorkers::AudioCheck::Action.perform(test_params.except('original_format'))
         }.to raise_error(ArgumentError, /Audio params must include original_format/)
       end
 
@@ -91,7 +91,7 @@ describe BawWorkers::Action::AudioFileCheckAction do
         original_params = test_params.dup
 
         expect {
-          BawWorkers::Action::AudioFileCheckAction.perform(original_params)
+          BawWorkers::AudioCheck::Action.perform(original_params)
         }.to raise_error(BawAudioTools::Exceptions::FileNotFoundError, /No existing files for.*?7bb0c719-143f-4373-a724-8138219006d9.*?\.ogg/)
 
       end
@@ -109,11 +109,11 @@ describe BawWorkers::Action::AudioFileCheckAction do
         original_params['file_hash'] = 'SHA256::this is really very wrong'
 
         # arrange
-        create_original_audio(media_cache_tool, media_request_params, audio_file_mono, true)
+        create_original_audio(media_request_params, audio_file_mono, true)
 
         # act
         expect {
-          BawWorkers::Action::AudioFileCheckAction.perform(original_params)
+          BawWorkers::AudioCheck::Action.perform(original_params)
         }.to raise_error(BawAudioTools::Exceptions::FileCorruptError, /File hashes DO NOT match for.*?:file_hash=>:fail/)
       end
 
@@ -130,11 +130,11 @@ describe BawWorkers::Action::AudioFileCheckAction do
         original_params['original_format'] = 'mp3'
 
         # arrange
-        create_original_audio(media_cache_tool, media_request_params, audio_file_mono, true)
+        create_original_audio(media_request_params, audio_file_mono, true)
 
         # act
         expect {
-          BawWorkers::Action::AudioFileCheckAction.perform(original_params)
+          BawWorkers::AudioCheck::Action.perform(original_params)
         }.to raise_error(BawAudioTools::Exceptions::FileNotFoundError, /No existing files for/)
       end
 
@@ -150,7 +150,7 @@ describe BawWorkers::Action::AudioFileCheckAction do
         original_params = test_params.dup
 
         # arrange
-        new_file = create_original_audio(media_cache_tool, media_request_params, audio_file_mono, true)
+        new_file = create_original_audio(media_request_params, audio_file_mono, true)
 
         # modify audio file
         a = ["010", "1111", "10", "10", "110", "1110", "001", "110", "000", "10", "011"]
@@ -161,7 +161,7 @@ describe BawWorkers::Action::AudioFileCheckAction do
 
         # act
         expect {
-          BawWorkers::Action::AudioFileCheckAction.perform(original_params)
+          BawWorkers::AudioCheck::Action.perform(original_params)
         }.to raise_error(BawAudioTools::Exceptions::FileCorruptError, /File hashes DO NOT match for/)
       end
 
@@ -177,11 +177,11 @@ describe BawWorkers::Action::AudioFileCheckAction do
         original_params = test_params.dup
 
         # arrange
-        new_file = create_original_audio(media_cache_tool, media_request_params, audio_file_corrupt, true)
+        new_file = create_original_audio(media_request_params, audio_file_corrupt, true)
 
         # act
         expect {
-          BawWorkers::Action::AudioFileCheckAction.perform(original_params)
+          BawWorkers::AudioCheck::Action.perform(original_params)
         }.to raise_error(BawAudioTools::Exceptions::FileCorruptError, /Ffmpeg output contained warning/)
       end
 
@@ -200,11 +200,11 @@ describe BawWorkers::Action::AudioFileCheckAction do
         original_params['duration_seconds'] = 12345
 
         # arrange
-        create_original_audio(media_cache_tool, media_request_params, audio_file_mono, true)
+        create_original_audio(media_request_params, audio_file_mono, true)
 
         # act
         expect{
-          BawWorkers::Action::AudioFileCheckAction.perform(original_params)
+          BawWorkers::AudioCheck::Action.perform(original_params)
         }.to raise_error(BawAudioTools::Exceptions::FileCorruptError, /File hash and other properties DO NOT match.*?:file_hash=>:fail.*?:duration_seconds=>:fail/)
 
       end
@@ -224,16 +224,15 @@ describe BawWorkers::Action::AudioFileCheckAction do
         original_params = test_params.dup
 
         # arrange
-        create_original_audio(media_cache_tool, media_request_params, audio_file_mono)
+        create_original_audio(media_request_params, audio_file_mono)
 
         # act
-        result = BawWorkers::Action::AudioFileCheckAction.perform(original_params)
+        result = BawWorkers::AudioCheck::Action.perform(original_params)
 
         # assert
         expect(result.size).to eq(1)
 
-        original_file_names = media_cache_tool.original_audio_file_names(media_request_params)
-        original_possible_paths = original_file_names.map { |source_file| media_cache_tool.cache.possible_storage_paths(media_cache_tool.cache.original_audio, source_file) }.flatten
+        original_possible_paths = audio_original.possible_paths(media_request_params)
         expect(File.expand_path(original_possible_paths.second)).to eq(result[0][:moved_path])
 
         expect(File.exist?(original_possible_paths.first)).to be_falsey
@@ -251,16 +250,15 @@ describe BawWorkers::Action::AudioFileCheckAction do
         original_params = test_params.dup
 
         # arrange
-        create_original_audio(media_cache_tool, media_request_params, audio_file_mono, true)
+        create_original_audio(media_request_params, audio_file_mono, true)
 
         # act
-        result = BawWorkers::Action::AudioFileCheckAction.perform(original_params)
+        result = BawWorkers::AudioCheck::Action.perform(original_params)
 
         # assert
         expect(result.size).to eq(1)
 
-        original_file_names = media_cache_tool.original_audio_file_names(media_request_params)
-        original_possible_paths = original_file_names.map { |source_file| media_cache_tool.cache.possible_storage_paths(media_cache_tool.cache.original_audio, source_file) }.flatten
+        original_possible_paths = audio_original.possible_paths(media_request_params)
         expect(File.expand_path(original_possible_paths.second)).to eq(result[0][:file_path])
 
         expect(File.exist?(original_possible_paths.first)).to be_falsey
@@ -279,17 +277,17 @@ describe BawWorkers::Action::AudioFileCheckAction do
         original_params = test_params.dup
 
         # arrange
-        create_original_audio(media_cache_tool, media_request_params, audio_file_mono, true)
-        create_original_audio(media_cache_tool, media_request_params, audio_file_mono, false)
+        create_original_audio(media_request_params, audio_file_mono, true)
+        create_original_audio(media_request_params, audio_file_mono, false)
 
         # act
-        result = BawWorkers::Action::AudioFileCheckAction.perform(original_params)
+        result = BawWorkers::AudioCheck::Action.perform(original_params)
 
         # assert
         expect(result.size).to eq(2)
 
-        original_file_names = media_cache_tool.original_audio_file_names(media_request_params)
-        original_possible_paths = original_file_names.map { |source_file| media_cache_tool.cache.possible_storage_paths(media_cache_tool.cache.original_audio, source_file) }.flatten
+
+        original_possible_paths = audio_original.possible_paths(media_request_params)
         expect(File.expand_path(original_possible_paths.first)).to eq(result[0][:file_path])
         expect(File.expand_path(original_possible_paths.second)).to eq(result[1][:file_path])
 
@@ -321,7 +319,7 @@ describe BawWorkers::Action::AudioFileCheckAction do
         original_params['duration_seconds'] = 120
 
         # arrange
-        create_original_audio(media_cache_tool, media_request_params, audio_file_mono, true)
+        create_original_audio(media_request_params, audio_file_mono, true)
 
         auth_token = 'auth token I am'
         email = 'address@example.com'
@@ -347,13 +345,12 @@ describe BawWorkers::Action::AudioFileCheckAction do
             to_return(:status => 200)
 
         # act
-        result = BawWorkers::Action::AudioFileCheckAction.perform(original_params)
+        result = BawWorkers::AudioCheck::Action.perform(original_params)
 
         # assert
         expect(result.size).to eq(1)
 
-        original_file_names = media_cache_tool.original_audio_file_names(media_request_params)
-        original_possible_paths = original_file_names.map { |source_file| media_cache_tool.cache.possible_storage_paths(media_cache_tool.cache.original_audio, source_file) }.flatten
+        original_possible_paths = audio_original.possible_paths(media_request_params)
         expect(File.expand_path(original_possible_paths.second)).to eq(result[0][:file_path])
 
         expect(File.exist?(original_possible_paths.first)).to be_falsey
@@ -378,7 +375,7 @@ describe BawWorkers::Action::AudioFileCheckAction do
         original_params['file_hash'] = 'SHA256::'
 
         # arrange
-        create_original_audio(media_cache_tool, media_request_params, audio_file_mono, true)
+        create_original_audio(media_request_params, audio_file_mono, true)
 
         auth_token = 'auth token I am'
         email = 'address@example.com'
@@ -394,13 +391,12 @@ describe BawWorkers::Action::AudioFileCheckAction do
             to_return(:status => 200)
 
         # act
-        result = BawWorkers::Action::AudioFileCheckAction.perform(original_params)
+        result = BawWorkers::AudioCheck::Action.perform(original_params)
 
         # assert
         expect(result.size).to eq(1)
 
-        original_file_names = media_cache_tool.original_audio_file_names(media_request_params)
-        original_possible_paths = original_file_names.map { |source_file| media_cache_tool.cache.possible_storage_paths(media_cache_tool.cache.original_audio, source_file) }.flatten
+        original_possible_paths = audio_original.possible_paths(media_request_params)
         expect(File.expand_path(original_possible_paths.second)).to eq(result[0][:file_path])
 
         expect(File.exist?(original_possible_paths.first)).to be_falsey
@@ -429,7 +425,7 @@ describe BawWorkers::Action::AudioFileCheckAction do
         original_params['duration_seconds'] = 120
 
         # arrange
-        create_original_audio(media_cache_tool, media_request_params, audio_file_mono)
+        create_original_audio(media_request_params, audio_file_mono)
 
         auth_token = 'auth token I am'
         email = 'address@example.com'
@@ -455,14 +451,19 @@ describe BawWorkers::Action::AudioFileCheckAction do
             to_return(:status => 200)
 
         # act
-        #result = BawWorkers::Action::AudioFileCheckAction.perform(original_params)
-        audio_file_check = BawWorkers::AudioFileCheck.new(BawWorkers::Settings.logger, true)
+        #result = BawWorkers::AudioCheck::Action.perform(original_params)
+        audio_file_check = BawWorkers::AudioCheck::WorkHelper.new(
+            BawWorkers::Settings.logger,
+            BawWorkers::FileInfo.new(
+                BawWorkers::Settings.logger,
+                BawWorkers::Settings.audio_helper
+            ),
+            true)
         result = audio_file_check.run(original_params)
         # assert
         expect(result.size).to eq(1)
 
-        original_file_names = media_cache_tool.original_audio_file_names(media_request_params)
-        original_possible_paths = original_file_names.map { |source_file| media_cache_tool.cache.possible_storage_paths(media_cache_tool.cache.original_audio, source_file) }.flatten
+        original_possible_paths = audio_original.possible_paths(media_request_params)
         expect(File.expand_path(original_possible_paths.first)).to eq(result[0][:file_path])
         expect(File.exist?(original_possible_paths.second)).to be_falsey, "File should not exist #{original_possible_paths.second}"
 
