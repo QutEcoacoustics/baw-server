@@ -32,12 +32,6 @@ class Settings < Settingslogic
     puts "===> baw-server file #{settings_file_env} not found."
   end
 
-  # Create or return an existing BawAudioTools::MediaCacher.
-  # @return [BawAudioTools::MediaCacher]
-  def media_cache_tool
-    @media_cache_tool ||= BawAudioTools::MediaCacher.new(Settings.paths.temp_files)
-  end
-
   # Create or return an existing Api::Response.
   # @return [Api::Response]
   def api_response

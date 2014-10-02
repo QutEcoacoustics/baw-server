@@ -23,7 +23,7 @@ resource 'Media' do
   end
 
   after(:all) do
-    remove_media_dirs(media_cacher)
+    remove_media_dirs
   end
 
   # prepare ids needed for paths in requests below
@@ -39,7 +39,9 @@ resource 'Media' do
   let(:audio_file_mono_channels) { 1 }
   let(:audio_file_mono_duration_seconds) { 70 }
 
-  let(:media_cacher) { BawAudioTools::MediaCacher.new(Settings.paths.temp_files) }
+  let(:audio_original) { BawWorkers::Storage::AudioOriginal.new(BawWorkers::Settings.paths.original_audios) }
+  let(:audio_cache) { BawWorkers::Storage::AudioCache.new(BawWorkers::Settings.paths.cached_audios) }
+  let(:spectrogram_cache) { BawWorkers::Storage::SpectrogramCache.new(BawWorkers::Settings.paths.cached_spectrograms) }
 
   # prepare authentication_token for different users
   let(:admin_token) { "Token token=\"#{@admin_user.authentication_token}\"" }
@@ -680,7 +682,7 @@ resource 'Media' do
       let(:format) { 'mp3' }
 
       example 'MEDIA (audio get request mp3 as reader with shallow path) - 200', document: document_media_requests do
-        remove_media_dirs(media_cacher)
+        remove_media_dirs
 
         options = create_media_options(audio_recording)
 

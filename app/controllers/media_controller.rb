@@ -89,7 +89,7 @@ class MediaController < ApplicationController
     default_spectrogram = Settings.cached_spectrogram_defaults
 
     # parse request
-    metadata = Api::MediaMetadata.new(Settings.media_cache_tool, default_audio, default_spectrogram)
+    metadata = Api::MediaMetadata.new(BawWorkers::Settings.audio_helper, default_audio, default_spectrogram)
 
     # validate common request parameters
     metadata.check_request_parameters(audio_recording, request_params)
@@ -137,7 +137,8 @@ class MediaController < ApplicationController
     rails_request = request
 
     # get pre-defined settings
-    media_cache_tool = Settings.media_cache_tool
+    audio_cached = BawWorkers::Settings.audio_cache_helper
+    spectrogram_cached = BawWorkers::Settings.spectrogram_cache_helper
     range_request = Settings.range_request
 
     # validate duration min and max defaults against request parameters
@@ -151,14 +152,14 @@ class MediaController < ApplicationController
 
     if media_info[:category] == :audio
       # check if audio file exists in cache
-      cached_audio_info = media_cache_tool.cached_audio_paths(generation_request)
+      cached_audio_info = audio_cached.path_info(generation_request)
       media_category = :audio
 
       existing_files = create_media(media_category, cached_audio_info, generation_request, time_start)
       response_local_audio(audio_recording, generation_request, existing_files, rails_request, range_request)
     elsif media_info[:category] == :image
       # check if spectrogram image file exists in cache
-      cached_spectrogram_info = media_cache_tool.cached_spectrogram_paths(generation_request)
+      cached_spectrogram_info = spectrogram_cached.path_info(generation_request)
       media_category = :spectrogram
 
       existing_files = create_media(media_category, cached_spectrogram_info, generation_request, time_start)
@@ -212,7 +213,7 @@ class MediaController < ApplicationController
   # @param [Object] generation_request
   # @return [String] path to existing file
   def create_media_local(media_category, generation_request)
-    BawWorkers::Action::MediaAction.make_media_request(media_category, generation_request)
+    BawWorkers::Media::Action.make_media_request(media_category, generation_request)
   end
 
 
@@ -222,7 +223,7 @@ class MediaController < ApplicationController
   # @param [Object] generation_request
   # @return [Array<String>] path to existing file
   def create_media_resque(media_category, files_info, generation_request)
-    BawWorkers::Action::MediaAction.enqueue(media_category, generation_request)
+    BawWorkers::Media::Action.enqueue(media_category, generation_request)
     poll_media(files_info.possible, Settings.audio_tools_timeout_sec)
   end
 

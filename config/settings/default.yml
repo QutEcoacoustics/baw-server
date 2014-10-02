@@ -79,7 +79,7 @@ defaults: &defaults
     harvester_base: <%= Rails.root %>/tmp/_harvester_to_do
     modules_log_file: <%= Rails.root %>/tmp/_modules_log.log
     workers_log_file: <%= Rails.root %>/tmp/workers_log.log
-    temp_files: <%= Rails.root %>/tmp
+    temp_dir: <%= Rails.root %>/tmp
   harvester_config_file: harvest.yml
   harvester:
     email: address+harvester@example.com
