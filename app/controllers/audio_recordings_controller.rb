@@ -1,4 +1,5 @@
 class AudioRecordingsController < ApplicationController
+  include Api::ControllerHelper
 
   load_resource :project, only: [:check_uploader, :create]
   load_resource :site, only: [:index, :create]
@@ -60,6 +61,41 @@ class AudioRecordingsController < ApplicationController
       render json: @audio_recording, status: :created, location: @audio_recording
     else
       render json: @audio_recording.errors, status: :unprocessable_entity
+    end
+  end
+
+  def update
+
+    relevant_params = params[:audio_recording]
+
+    # can either be one or more of valid_keys, or file_hash only
+    file_hash = :file_hash
+    valid_keys = [
+        :media_type,
+        :sample_rate_hertz,
+        :channels,
+        :bit_rate_bps,
+        :data_length_bytes,
+        :duration_seconds
+    ]
+
+    additional_keys = relevant_params.except(file_hash)
+    if relevant_params.include?(file_hash) && additional_keys.size > 0
+      fail CustomErrors::UnprocessableEntityError.new(
+               'If updating file_hash, all other values must match.',
+               relevant_params
+           )
+    elsif relevant_params.include?(file_hash) && additional_keys.size == 0
+      relevant_params = relevant_params.slice(file_hash)
+    else
+      # if params does not include file_hash, restrict to valid_keys
+      relevant_params = relevant_params.slice(*valid_keys)
+    end
+
+    if @audio_recording.update_attributes(relevant_params)
+      respond_show
+    else
+      respond_change_fail
     end
   end
 

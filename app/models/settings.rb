@@ -32,12 +32,6 @@ class Settings < Settingslogic
     puts "===> baw-server file #{settings_file_env} not found."
   end
 
-  # Create or return an existing BawAudioTools::MediaCacher.
-  # @return [BawAudioTools::MediaCacher]
-  def media_cache_tool
-    @media_cache_tool ||= BawAudioTools::MediaCacher.new(Settings.paths.temp_files)
-  end
-
   # Create or return an existing Api::Response.
   # @return [Api::Response]
   def api_response
@@ -55,8 +49,8 @@ class Settings < Settingslogic
     # see http://nvie.com/posts/a-successful-git-branching-model/
     {
         major: 0,
-        minor: 10,
-        patch: 0,
+        minor: 11,
+        patch: 1,
         pre: '',
         build: ''
     }

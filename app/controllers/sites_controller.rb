@@ -4,15 +4,15 @@ class SitesController < ApplicationController
   add_breadcrumb 'Home', :root_path
 
   # order matters for before_filter and load_and_authorize_resource!
-  load_and_authorize_resource :project, except: [:show_shallow]
+  load_and_authorize_resource :project, except: [:show_shallow, :filter]
 
   # this is necessary so that the ability has access to site.projects
   before_filter :build_project_site, only: [:new, :create]
 
-  load_and_authorize_resource :site, through: :project, except: [:show_shallow]
-  load_and_authorize_resource :site, only: [:show_shallow]
+  load_and_authorize_resource :site, through: :project, except: [:show_shallow, :filter]
+  load_and_authorize_resource :site, only: [:show_shallow, :filter]
 
-  before_filter :add_project_breadcrumb, except: [:show_shallow]
+  before_filter :add_project_breadcrumb, except: [:show_shallow, :filter]
 
   # GET /project/1/sites
   # GET /project/1/sites.json
@@ -69,7 +69,7 @@ class SitesController < ApplicationController
       format.json { render json: @site }
     end
   end
- 
+
   # GET /project/1/sites/1/edit
   def edit
     add_breadcrumb @site.name, [@project, @site]
@@ -143,6 +143,25 @@ class SitesController < ApplicationController
 
   def harvest
     render file: 'sites/_harvest.yml.erb', content_type: 'text/yaml', layout: false
+  end
+
+  # POST /sites/filter.json
+  # GET /sites/filter.json
+  def filter
+    filter_response = Settings.api_response.response_filter(
+        params,
+        current_user.is_admin? ? Site.scoped : current_user.accessible_sites,
+        Site,
+        Site.filter_settings
+    )
+
+    # always display project_ids
+    filter_response[:data] = filter_response.data.each { |site|
+      site[:project_ids] = Site.where(id: site.id).first.projects.select(:id)
+      site
+    }
+
+    render_api_response(filter_response)
   end
 
   private

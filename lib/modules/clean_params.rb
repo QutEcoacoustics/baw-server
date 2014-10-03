@@ -6,7 +6,7 @@ class CleanParams
     cleaned_hash = Hash.new
     hash_to_clean.each do |key, value|
       # convert all param keys to a snake case symbol
-      new_key = key.to_s.underscore.to_sym
+      new_key = self.clean(key)
 
       cleaned_hash[new_key] = self.perform(value)
     end
@@ -35,6 +35,10 @@ class CleanParams
     else
       to_clean
     end
+  end
+
+  def self.clean(value)
+    value.to_s.underscore.to_sym
   end
 
 end

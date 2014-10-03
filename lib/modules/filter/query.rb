@@ -7,10 +7,11 @@ module Filter
     include Parse
     include Build
     include Validate
+    include Custom
 
     attr_reader :key_prefix, :max_limit, :initial_query, :table, :valid_fields, :text_fields, :filter_settings,
                 :parameters, :filter, :projection, :qsp_text_filter, :qsp_generic_filters,
-                :paging, :sort
+                :paging, :sorting
 
     # Convert a json POST body to an arel query.
     # @param [Hash] parameters
@@ -20,7 +21,8 @@ module Filter
     def initialize(parameters, query, model, filter_settings)
       # might need this at some point: Rack::Utils.parse_nested_query
       @key_prefix = 'filter_'
-      @max_limit = 30
+      @default_page = 1
+      @default_items = 500
       @table = relation_table(model)
       @initial_query = !query.nil? && query.is_a?(ActiveRecord::Relation) ? query : relation_all(model)
       @valid_fields = filter_settings.valid_fields.map(&:to_sym)
@@ -38,8 +40,11 @@ module Filter
 
       @qsp_text_filter = parse_qsp_text(@parameters)
       @qsp_generic_filters = parse_qsp(nil, @parameters, @key_prefix, @valid_fields)
-      @paging = parse_paging(@parameters, @max_limit)
-      @sort = parse_sort(
+      @paging = parse_paging(
+          @parameters,
+          @default_page,
+          @default_items)
+      @sorting = parse_sorting(
           @parameters,
           filter_settings.defaults.order_by,
           filter_settings.defaults.direction)
@@ -115,7 +120,11 @@ module Filter
     # @param [ActiveRecord::Relation] query
     # @return [ActiveRecord::Relation] query
     def query_filter(query)
-      apply_conditions(query, build_top(@filter, @table, @valid_fields))
+      if has_filter_params?
+        apply_conditions(query, build_top(@filter, @table, @valid_fields))
+      else
+        query
+      end
     end
 
     # Add projections to a query.
@@ -148,7 +157,7 @@ module Filter
     # @param [ActiveRecord::Relation] query
     # @return [ActiveRecord::Relation] query
     def query_filter_text(query)
-      return query if @qsp_text_filter.blank?
+      return query unless has_qsp_text?
       text_condition = build_text(@qsp_text_filter, @text_fields, @table, @valid_fields)
       apply_condition(query, text_condition)
     end
@@ -166,7 +175,7 @@ module Filter
     # @param [ActiveRecord::Relation] query
     # @return [ActiveRecord::Relation] query
     def query_filter_generic(query)
-      return query if @qsp_generic_filters.blank?
+      return query unless has_qsp_generic?
       apply_condition(query, build_generic(@qsp_generic_filters, @table, @valid_fields))
     end
 
@@ -183,7 +192,7 @@ module Filter
     # @return [ActiveRecord::Relation] query
     def query_sort(query)
       return query unless has_sort_params?
-      apply_sort(query, @table, @sort.order_by, @valid_fields, @sort.direction)
+      apply_sort(query, @table, @sorting.order_by, @valid_fields, @sorting.direction)
     end
 
     # Add sorting to query.
@@ -217,11 +226,23 @@ module Filter
     end
 
     def has_sort_params?
-      !@sort.order_by.blank? && !@sort.direction.blank?
+      !@sorting.order_by.blank? && !@sorting.direction.blank?
     end
 
     def has_projection_params?
       !@projection.blank?
+    end
+
+    def has_filter_params?
+      !@filter.blank?
+    end
+
+    def has_qsp_generic?
+      !@qsp_generic_filters.blank?
+    end
+
+    def has_qsp_text?
+      !@qsp_text_filter.blank?
     end
 
     private
@@ -271,7 +292,7 @@ module Filter
     # @param [Integer] limit
     # @return [ActiveRecord::Relation] the modified query
     def apply_paging(query, offset, limit)
-      validate_paging(offset, limit, @max_limit)
+      validate_paging(offset, limit, @default_items)
       query.offset(offset).limit(limit)
     end
 

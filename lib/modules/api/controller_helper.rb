@@ -47,30 +47,37 @@ module Api
     end
 
     def respond_index
-      respond_with(get_resource_plural, template: "#{resource_name_plural}/many", status: :ok)
+      items = get_resource_plural.map { |item|
+        item.as_json(only: item.class.filter_settings.render_fields)
+      }
+      built_response = Settings.api_response.build(:ok, items)
+      render json: built_response, status: :ok, layout: false
     end
 
     # also used for update_success and new
     def respond_show
-      respond_with(get_resource, template: "#{resource_name_plural}/one", status: :ok)
+      item_resource = get_resource
+      item = item_resource.as_json(only: item_resource.class.filter_settings.render_fields)
+      built_response = Settings.api_response.build(:ok, item)
+      render json: built_response, status: :ok, layout: false
     end
 
     def respond_create_success(location = nil)
-      respond_with(get_resource,
-                   template: "#{resource_name_plural}/one",
-                   status: :created,
-                   location: location.blank? ? get_resource : location)
+      item_resource = get_resource
+      item = item_resource.as_json(only: item_resource.class.filter_settings.render_fields)
+      built_response = Settings.api_response.build(:created, item)
+      render json: built_response, status: :created, location: location.blank? ? get_resource : location, layout: false
     end
 
     # used for create_fail and update_fail
     def respond_change_fail
-      # render directly from api response, since json layout doesn't include errors
       built_response = Settings.api_response.build(:unprocessable_entity, nil, {error_details: get_resource.errors})
       render json: built_response, status: :unprocessable_entity
     end
 
     def respond_destroy
-      head :no_content
+      built_response = Settings.api_response.build(:no_content, nil)
+      render json: built_response, status: :no_content
     end
 
     def respond_filter(content, status_symbol)

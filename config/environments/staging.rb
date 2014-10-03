@@ -70,25 +70,4 @@ AWB::Application.configure do
   # with SQLite, MySQL, and PostgreSQL)
   # config.active_record.auto_explain_threshold_in_seconds = 0.5
 
-  AWB::Application.config.middleware.use ExceptionNotification::Rack, email:
-      {
-          email_prefix: "#{Settings.emails.email_prefix} [Exception] ",
-          sender_address: Settings.emails.sender_address,
-          exception_recipients: Settings.emails.required_recipients
-      }
-
-  config.after_initialize do
-    # By default, each log is created under Rails.root/log/ and the log file name is environment_name.log.
-    config.logger = Logger.new(Rails.root.join('log', "#{Rails.env}.log"))
-    BawAudioTools::Logging.logger_formatter(config.logger)
-
-    config.action_mailer.logger = Logger.new(Rails.root.join('log', "#{Rails.env}.mailer.log"))
-    BawAudioTools::Logging.logger_formatter(config.action_mailer.logger)
-
-    # See everything in the log (default is :info)
-    # config.log_level = :debug
-
-    # Prepend all log lines with the following tags
-    # config.log_tags = [ :subdomain, :uuid ]
-  end
 end

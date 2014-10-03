@@ -23,7 +23,7 @@ resource 'Media' do
   end
 
   after(:all) do
-    remove_media_dirs(media_cacher)
+    remove_media_dirs
   end
 
   # prepare ids needed for paths in requests below
@@ -39,7 +39,9 @@ resource 'Media' do
   let(:audio_file_mono_channels) { 1 }
   let(:audio_file_mono_duration_seconds) { 70 }
 
-  let(:media_cacher) { BawAudioTools::MediaCacher.new(Settings.paths.temp_files) }
+  let(:audio_original) { BawWorkers::Storage::AudioOriginal.new(BawWorkers::Settings.paths.original_audios) }
+  let(:audio_cache) { BawWorkers::Storage::AudioCache.new(BawWorkers::Settings.paths.cached_audios) }
+  let(:spectrogram_cache) { BawWorkers::Storage::SpectrogramCache.new(BawWorkers::Settings.paths.cached_spectrograms) }
 
   # prepare authentication_token for different users
   let(:admin_token) { "Token token=\"#{@admin_user.authentication_token}\"" }
@@ -324,6 +326,25 @@ resource 'Media' do
 
       check_hash_matches(json_paths, response_body)
 
+    end
+  end
+
+  get '/audio_recordings/:audio_recording_id/media.:format?start_offset=:start_offset&end_offset=:end_offset&sample_rate=:sample_rate' do
+    standard_media_parameters
+    let(:authentication_token) { reader_token }
+    let(:format) { 'json' }
+
+    let(:start_offset) { '1' }
+    let(:end_offset) { '2' }
+    let(:sample_rate) { '11025' }
+
+    example 'MEDIA (as reader) checking modified json format - 200', document: true do
+      do_request
+      status.should eq(200), "expected status #{200} but was #{status}. Response body was #{response_body}"
+
+      # not sure how to test that duration_seconds returns an unquoted number
+      #parsed = JsonSpec::Helpers::parse_json(response_body)
+      #expect(parsed.data.recording.duration_seconds.class).to be_a(BigDecimal)
     end
   end
 
@@ -661,7 +682,7 @@ resource 'Media' do
       let(:format) { 'mp3' }
 
       example 'MEDIA (audio get request mp3 as reader with shallow path) - 200', document: document_media_requests do
-        remove_media_dirs(media_cacher)
+        remove_media_dirs
 
         options = create_media_options(audio_recording)
 
@@ -689,6 +710,33 @@ resource 'Media' do
       end
     end
 
+  end
+ 
+  context 'range request' do
+    header 'Range', 'bytes=0-'
+
+    get '/audio_recordings/:audio_recording_id/media.:format' do
+      standard_media_parameters
+      let(:authentication_token) { reader_token }
+      let(:format) { 'mp3' }
+      example 'MEDIA (audio get request mp3 as reader with shallow path using range request) - 200', document: document_media_requests do
+        using_original_audio(audio_recording, 'audio/mp3')
+
+        expect(response_headers).to include('Accept-Ranges')
+        expect(response_headers['Accept-Ranges']).to eq('bytes')
+
+        expect(response_headers).to include('Content-Range')
+        expect(response_headers['Content-Range']).to include('bytes 0-')
+
+        expect(response_headers).to include('Content-Length')
+        expect(response_headers['Content-Length']).to_not be_blank
+
+        expect(response_headers).to include('X-Media-Response-From')
+        expect(response_headers['X-Media-Response-From']).to eq('Generated Locally')
+
+        expect(response_headers).to include('X-Media-Response-Start')
+      end
+    end
   end
 
 end

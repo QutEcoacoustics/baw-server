@@ -19,7 +19,6 @@ gem 'rack-cors', '~> 0.2.9', require: 'rack/cors'
 # UI HELPERS
 # -------------------------------------
 gem 'haml', '~> 4.0.5'
-gem 'jbuilder', '~> 2.1.3'
 gem 'haml-rails', '~> 0.4' # from 0.5 activesupport > 3.2 is required
 gem 'jquery-rails', '~> 3.1.0'
 gem 'simple_form', '< 3' #https://github.com/plataformatec/simple_form
@@ -95,6 +94,7 @@ gem 'rack-rewrite', '~> 1.5.0'
 # ASYNC JOBS
 # ------------------------------------
 gem 'resque', '~> 1.25.2'
+gem 'resque-job-stats', git: 'https://github.com/echannel/resque-job-stats.git', ref: '8932c036ae'
 gem 'baw-workers', git: 'https://github.com/QutBioacoustics/baw-workers.git'
 gem 'fire_poll', '~> 1.2.0'
 
