@@ -17,6 +17,8 @@ shared_context 'media_file' do
 
   let(:duration_range) { 0.11 }
 
+  let(:temp_dir) { File.expand_path(BawWorkers::Settings.paths.temp_dir) }
+
   after(:each) do
     audio_original.existing_dirs.each { |dir| FileUtils.rm_r dir }
     audio_cache.existing_dirs.each { |dir| FileUtils.rm_r dir }

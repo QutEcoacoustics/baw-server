@@ -59,5 +59,10 @@ module BawWorkers
       # end
 
     end
+
+    def get_class_name
+      self.class.name
+    end
+
   end
 end

@@ -48,7 +48,11 @@ module BawWorkers
           # create in temp dir to prevent access while creating
           temp_target_existing = File.join(@temp_dir, cache_audio_info.file_names.first)
 
-          run_audio_modify(
+          # ensure the subdirectories exist
+          FileUtils.mkpath(File.dirname(temp_target_existing))
+
+          # create the audio segment
+          @audio.modify(
               original_audio_info.existing.first,
               temp_target_existing,
               modify_parameters)
@@ -87,11 +91,26 @@ module BawWorkers
           # create in temp dir to prevent access while creating
           temp_target_existing = File.join(@temp_dir, cache_spectrogram_info.file_names.first)
 
-          run_spectrogram_modify(
+          # create the spectrogram image in target
+          # only needs the window, window_function, colour,
+          # and sample rate (for calculating pixels per second)
+          # everything else has already been done
+
+          spectrogram_parameters = {
+              window: modify_parameters[:window],
+              window_function: modify_parameters[:window_function],
+              colour: modify_parameters[:colour],
+              sample_rate: modify_parameters[:sample_rate]
+          }
+
+          # ensure the subdirectories exist
+          FileUtils.mkpath(File.dirname(temp_target_existing))
+
+          # create the spectrogram
+          @spectrogram.modify(
               source_existing.first,
               temp_target_existing,
-              modify_parameters
-          )
+              spectrogram_parameters)
 
           # copy to target dirs when finished creating temp file
           @file_info.copy_to_many(temp_target_existing, cache_spectrogram_info.possible)
@@ -112,34 +131,9 @@ module BawWorkers
 
 
       # run audio modify to create target using source
-      def run_audio_modify(source, target, modify_parameters)
-        # ensure the subdirectories exist
-        FileUtils.mkpath(File.dirname(target))
-
-        # create the audio segment
-        @audio.modify(source, target, modify_parameters)
-      end
-
-      # run audio modify to create target using source
       def run_spectrogram_modify(source, target, modify_parameters)
-        # create the spectrogram image in target
-        # only needs the window, colour, and sample rate (for calculating pixels per second)
-        # everything else has already been done
 
-        spectrogram_parameters = {
-            window: modify_parameters[:window],
-            colour: modify_parameters[:colour],
-            sample_rate: modify_parameters[:sample_rate]
-        }
-
-        # ensure the subdirectories exist
-        FileUtils.mkpath(File.dirname(target))
-
-        # create the spectrogram
-        @spectrogram.modify(source, target, spectrogram_parameters)
       end
-
-      private
 
       def check_original_paths(possible, existing, modify_parameters)
         # if the original audio file()s) cannot be found, raise an exception

@@ -114,11 +114,8 @@ RSpec.configure do |config|
     # restore stderr and stdout
     STDERR.reopen(original_stderr)
     STDOUT.reopen(original_stdout)
-  end
 
-  # indicate that webmock requests were successful
-  WebMock.after_request do |request_signature, response|
-    puts "Request #{request_signature} was made and #{response} was returned"
+    FileUtils.rm_rf BawWorkers::Settings.paths.harvester_to_do if File.directory?(BawWorkers::Settings.paths.harvester_to_do)
   end
 
   # setting the source file here means the rake task cannot change it
@@ -140,6 +137,13 @@ RSpec.configure do |config|
       Resque.redis.namespace = Settings.resque.namespace
 
     end
+  end
+
+  # indicate that webmock requests were successful
+  WebMock.after_request do |request_signature, response|
+    BawWorkers::Settings.logger.debug('config') {
+      "Request #{request_signature} was made and #{response} was returned"
+    }
   end
 
 end

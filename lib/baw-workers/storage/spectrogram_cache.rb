@@ -29,7 +29,7 @@ module BawWorkers
         validate_colour(opts)
         validate_format(opts)
 
-        # Add in future? brightness, contrast, overlap
+        # TODO: Add in future? brightness, contrast, overlap
 
         opts[:uuid].to_s.downcase + @separator +
             opts[:start_offset].to_f.to_s + @separator +

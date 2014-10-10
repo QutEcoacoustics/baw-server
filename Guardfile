@@ -10,3 +10,7 @@ guard :rspec, cmd: 'bundle exec rspec --format progress --color' do
   watch(%r{^spec/support/.+\.rb$})  { 'spec' }
   watch('spec/spec_helper.rb')      { 'spec' }
 end
+
+guard :yard, port: 8809, stdout: './tmp/yard-out.log', stderr: './tmp/yard-err.log' do
+  watch(%r{lib/.+\.rb})
+end

@@ -17,9 +17,11 @@ require 'baw-workers/register_mime_types'
 Time.zone = 'UTC'
 
 module BawWorkers
+  autoload :Exceptions, 'baw-workers/exceptions'
   autoload :Common, 'baw-workers/common'
   autoload :ApiCommunicator, 'baw-workers/api_communicator'
   autoload :FileInfo, 'baw-workers/file_info'
+
 
   module Analysis
     autoload :Action, 'baw-workers/analysis/action'
@@ -34,6 +36,7 @@ module BawWorkers
   module Harvest
     autoload :Action, 'baw-workers/harvest/action'
     autoload :WorkHelper, 'baw-workers/harvest/work_helper'
+    autoload :GatherFiles, 'baw-workers/harvest/gather_files'
   end
 
   module Mail

@@ -3,15 +3,14 @@ module BawWorkers
   module AudioCheck
     class WorkHelper
 
-      # include common methods
       include BawWorkers::Common
 
-      def initialize(logger, file_info, is_dry_run = false)
+      def initialize(logger, file_info, api_comm, is_dry_run = false)
         @logger = logger
         @file_info = file_info
 
         # api communication
-        @api_communicator = ApiCommunicator.new(logger)
+        @api_communicator = api_comm
 
         @is_dry_run = is_dry_run
       end
@@ -206,14 +205,7 @@ module BawWorkers
             port = BawWorkers::Settings.api.port
 
             # get auth token
-            auth_token = @api_communicator.request_login(
-                BawWorkers::Settings.api.user_email,
-                BawWorkers::Settings.api.user_password,
-                host,
-                port,
-                nil,
-                BawWorkers::Settings.endpoints.login
-            )
+            auth_token = @api_communicator.request_login
 
             # update audio recording metadata
             update_result = @api_communicator.update_audio_recording_details(
@@ -221,8 +213,7 @@ module BawWorkers
                 existing_file,
                 'id',
                 changed_metadata,
-                host, port, auth_token,
-                BawWorkers::Settings.endpoints.audio_recording_update
+                auth_token
             )
           end
         else
@@ -522,9 +513,7 @@ module BawWorkers
         end
       end
 
-      def get_class_name
-        self.class.name
-      end
+
 
     end
   end

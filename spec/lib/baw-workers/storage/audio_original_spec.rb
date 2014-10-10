@@ -86,7 +86,7 @@ describe BawWorkers::Storage::AudioOriginal do
 
   it 'creates the correct full path for old names' do
     expected = [File.join(Settings.paths.original_audios[0], partial_path, original_file_name_old)]
-    expect(audio_original.possible_paths_file(opts,original_file_name_old)).to eq expected
+    expect(audio_original.possible_paths_file(opts, original_file_name_old)).to eq expected
   end
 
   it 'creates the correct full path for new names for a single file' do

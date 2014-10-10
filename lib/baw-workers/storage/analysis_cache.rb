@@ -4,6 +4,8 @@ module BawWorkers
     class AnalysisCache
       include BawWorkers::Storage::Common
 
+      FILE_NAME_NOT_ALLOWED = /[^0-9a-zA-Z_\-\.]/
+
       public
 
       # Create a new BawWorkers::Storage::AnalysisCache.
@@ -22,7 +24,7 @@ module BawWorkers
       def file_name(opts = {})
         validate_result_file_name(opts)
 
-        opts[:result_file_name].gsub(/[^0-9a-zA-Z_\-\.]/, @separator).downcase
+        opts[:result_file_name].gsub(FILE_NAME_NOT_ALLOWED, @separator).downcase
       end
 
       # Get file names
@@ -41,7 +43,7 @@ module BawWorkers
 
         first = opts[:uuid][0, 2].downcase
         second = opts[:uuid].downcase
-        third = opts[:analysis_id].gsub(/[^0-9a-zA-Z_\-]/, @separator).downcase
+        third = opts[:analysis_id].gsub(FILE_NAME_NOT_ALLOWED, @separator).downcase
 
         File.join(first, second, third)
       end

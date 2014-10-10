@@ -21,14 +21,14 @@ module BawWorkers
         @storage_paths.select { |dir| Dir.exists? dir }
       end
 
-      # Get all possible full paths for a file
+      # Get all possible full paths for an audio recording.
       # @param [Hash] opts
       # @return [Array<String>]
       def possible_paths(opts = {})
         file_names(opts).map { |file_name| possible_paths_file(opts, file_name) }.flatten
       end
 
-      # Get all possible full paths for a file
+      # Get all possible full paths for a file name.
       # @param [Hash] opts
       # @param [String] file_name
       # @return [Array<String>]
@@ -36,7 +36,7 @@ module BawWorkers
         @storage_paths.map { |path| File.join(path, partial_path(opts), file_name) }
       end
 
-      # Get the full paths for all existing files that match a file name
+      # Get all existing full paths for an audio recording.
       # @param [Hash] opts
       # @return [Array<String>]
       def existing_paths(opts = {})

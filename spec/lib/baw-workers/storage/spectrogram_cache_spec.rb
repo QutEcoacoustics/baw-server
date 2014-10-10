@@ -41,7 +41,7 @@ describe BawWorkers::Storage::SpectrogramCache do
   end
 
   it 'paths match settings' do
-    expect(spectrogram_cache.possible_dirs).to match_array Settings.paths.cached_spectrograms
+    expect(spectrogram_cache.possible_dirs).to match_array BawWorkers::Settings.paths.cached_spectrograms
   end
 
   it 'creates the correct name' do
@@ -55,12 +55,12 @@ describe BawWorkers::Storage::SpectrogramCache do
   end
 
   it 'creates the correct full path for a single file' do
-    expected = [File.join(Settings.paths.cached_spectrograms[0], partial_path, cached_spectrogram_file_name_defaults)]
+    expected = [File.join(BawWorkers::Settings.paths.cached_spectrograms[0], partial_path, cached_spectrogram_file_name_defaults)]
     expect(spectrogram_cache.possible_paths_file(opts, cached_spectrogram_file_name_defaults)).to eq expected
   end
 
   it 'creates the correct full path' do
-    expected = [File.join(Settings.paths.cached_spectrograms[0], partial_path, cached_spectrogram_file_name_given_parameters)]
+    expected = [File.join(BawWorkers::Settings.paths.cached_spectrograms[0], partial_path, cached_spectrogram_file_name_given_parameters)]
     expect(spectrogram_cache.possible_paths(opts)).to eq expected
   end
 

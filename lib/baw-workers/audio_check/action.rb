@@ -43,13 +43,20 @@ module BawWorkers
         # @param [Hash] audio_params
         # @return [Array<Hash>] array of hashes representing operations performed
         def perform(audio_params)
+          api_comm = BawWorkers::ApiCommunicator.new(
+              BawWorkers::Settings.logger,
+              BawWorkers::Settings.api,
+              BawWorkers::Settings.endpoints)
+
           file_info = BawWorkers::FileInfo.new(
               BawWorkers::Settings.logger,
               BawWorkers::Settings.audio_helper
           )
+
           audio_file_check = BawWorkers::AudioCheck::WorkHelper.new(
               BawWorkers::Settings.logger,
               file_info,
+              api_comm,
               BawWorkers::Settings.resque.dry_run)
 
           begin

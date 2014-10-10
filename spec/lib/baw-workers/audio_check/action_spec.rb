@@ -154,7 +154,7 @@ describe BawWorkers::AudioCheck::Action do
 
         # modify audio file
         a = ["010", "1111", "10", "10", "110", "1110", "001", "110", "000", "10", "011"]
-        File.open(new_file, 'ab' ) do |output|
+        File.open(new_file, 'ab') do |output|
           output.seek(0, IO::SEEK_END)
           output.write [a.join].pack('B*')
         end
@@ -203,7 +203,7 @@ describe BawWorkers::AudioCheck::Action do
         create_original_audio(media_request_params, audio_file_mono, true)
 
         # act
-        expect{
+        expect {
           BawWorkers::AudioCheck::Action.perform(original_params)
         }.to raise_error(BawAudioTools::Exceptions::FileCorruptError, /File hash and other properties DO NOT match.*?:file_hash=>:fail.*?:duration_seconds=>:fail/)
 
@@ -407,74 +407,79 @@ describe BawWorkers::AudioCheck::Action do
 
       context 'in dry run mode' do
 
-      it 'does nothing even when there are changes to be made' do
-        media_request_params =
-            {
-                uuid: '7bb0c719-143f-4373-a724-8138219006d9',
-                datetime_with_offset: '2010-02-23 20:42:00Z',
-                original_format: audio_file_mono_format,
-            }
+        it 'does nothing even when there are changes to be made' do
+          media_request_params =
+              {
+                  uuid: '7bb0c719-143f-4373-a724-8138219006d9',
+                  datetime_with_offset: '2010-02-23 20:42:00Z',
+                  original_format: audio_file_mono_format,
+              }
 
-        original_params = test_params.dup
+          original_params = test_params.dup
 
-        original_params['media_type'] = 'audio/mp3'
-        original_params['sample_rate_hertz'] = 22050
-        original_params['channels'] = 5
-        original_params['bit_rate_bps'] = 800
-        original_params['data_length_bytes'] = 99
-        original_params['duration_seconds'] = 120
+          original_params['media_type'] = 'audio/mp3'
+          original_params['sample_rate_hertz'] = 22050
+          original_params['channels'] = 5
+          original_params['bit_rate_bps'] = 800
+          original_params['data_length_bytes'] = 99
+          original_params['duration_seconds'] = 120
 
-        # arrange
-        create_original_audio(media_request_params, audio_file_mono)
+          # arrange
+          create_original_audio(media_request_params, audio_file_mono)
 
-        auth_token = 'auth token I am'
-        email = 'address@example.com'
-        password = 'password'
-        login_request = stub_request(:post, "http://localhost:3030/security/sign_in").
-            with(:body => "{\"email\":\""+email+"\",\"password\":\""+password+"\"}",
-                 :headers => {'Accept' => 'application/json', 'Content-Type' => 'application/json', 'User-Agent' => 'Ruby'}).
-            to_return(status: 200, body: '{"success":true,"auth_token":"'+auth_token+'","email":"'+email+'"}')
+          auth_token = 'auth token I am'
+          email = 'address@example.com'
+          password = 'password'
+          login_request = stub_request(:post, "http://localhost:3030/security/sign_in").
+              with(:body => "{\"email\":\""+email+"\",\"password\":\""+password+"\"}",
+                   :headers => {'Accept' => 'application/json', 'Content-Type' => 'application/json', 'User-Agent' => 'Ruby'}).
+              to_return(status: 200, body: '{"success":true,"auth_token":"'+auth_token+'","email":"'+email+'"}')
 
 
-        expected_request_body = {
-            media_type: audio_file_mono_media_type.to_s,
-            sample_rate_hertz: audio_file_mono_sample_rate.to_f,
-            channels: audio_file_mono_channels,
-            bit_rate_bps: audio_file_mono_bit_rate_bps,
-            data_length_bytes: audio_file_mono_data_length_bytes,
-            duration_seconds: audio_file_mono_duration_seconds.to_f
-        }
+          expected_request_body = {
+              media_type: audio_file_mono_media_type.to_s,
+              sample_rate_hertz: audio_file_mono_sample_rate.to_f,
+              channels: audio_file_mono_channels,
+              bit_rate_bps: audio_file_mono_bit_rate_bps,
+              data_length_bytes: audio_file_mono_data_length_bytes,
+              duration_seconds: audio_file_mono_duration_seconds.to_f
+          }
 
-        update_request = stub_request(:put, "http://localhost:3030/audio_recordings/id").
-            with(:body => expected_request_body.to_json,
-                 :headers => {'Accept' => 'application/json', 'Authorization' => 'Token token="'+auth_token+'"', 'Content-Type' => 'application/json', 'User-Agent' => 'Ruby'}).
-            to_return(:status => 200)
+          update_request = stub_request(:put, "http://localhost:3030/audio_recordings/id").
+              with(:body => expected_request_body.to_json,
+                   :headers => {'Accept' => 'application/json', 'Authorization' => 'Token token="'+auth_token+'"', 'Content-Type' => 'application/json', 'User-Agent' => 'Ruby'}).
+              to_return(:status => 200)
 
-        # act
-        #result = BawWorkers::AudioCheck::Action.perform(original_params)
-        audio_file_check = BawWorkers::AudioCheck::WorkHelper.new(
-            BawWorkers::Settings.logger,
-            BawWorkers::FileInfo.new(
-                BawWorkers::Settings.logger,
-                BawWorkers::Settings.audio_helper
-            ),
-            true)
-        result = audio_file_check.run(original_params)
-        # assert
-        expect(result.size).to eq(1)
+          # act
+          #result = BawWorkers::AudioCheck::Action.perform(original_params)
+          audio_file_check = BawWorkers::AudioCheck::WorkHelper.new(
+              BawWorkers::Settings.logger,
+              BawWorkers::FileInfo.new(
+                  BawWorkers::Settings.logger,
+                  BawWorkers::Settings.audio_helper
+              ),
+              BawWorkers::ApiCommunicator.new(
+                  BawWorkers::Settings.logger,
+                  BawWorkers::Settings.api,
+                  BawWorkers::Settings.endpoints
+              ),
+              true)
+          result = audio_file_check.run(original_params)
+          # assert
+          expect(result.size).to eq(1)
 
-        original_possible_paths = audio_original.possible_paths(media_request_params)
-        expect(File.expand_path(original_possible_paths.first)).to eq(result[0][:file_path])
-        expect(File.exist?(original_possible_paths.second)).to be_falsey, "File should not exist #{original_possible_paths.second}"
+          original_possible_paths = audio_original.possible_paths(media_request_params)
+          expect(File.expand_path(original_possible_paths.first)).to eq(result[0][:file_path])
+          expect(File.exist?(original_possible_paths.second)).to be_falsey, "File should not exist #{original_possible_paths.second}"
 
-        expect(login_request).to_not have_been_requested
-        login_request.should_not have_been_requested
+          expect(login_request).to_not have_been_requested
+          login_request.should_not have_been_requested
 
-        expect(update_request).to_not have_been_requested
-        update_request.should_not have_been_requested
+          expect(update_request).to_not have_been_requested
+          update_request.should_not have_been_requested
 
-        expect(result[0][:api_response]).to eq(:noaction)
-      end
+          expect(result[0][:api_response]).to eq(:noaction)
+        end
       end
 
     end

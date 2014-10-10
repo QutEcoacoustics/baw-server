@@ -31,15 +31,18 @@ settings:
     harvester_log_file: ./tmp/harvester.log
     modules_log_file: ./tmp/audio_tools.log
     workers_log_file: ./tmp/workers.log
-    temp_dir: ./tmp
+    temp_dir: ./tmp/
   endpoints:
     login: /security/sign_in
-    audio_recording_update: /audio_recordings/:id
+    audio_recording: /audio_recordings/:id
+    audio_recording_create: /projects/:project_id/sites/:site_id/audio_recordings
+    audio_recording_uploader: /projects/:project_id/sites/:site_id/audio_recordings/check_uploader/:uploader_id
+    audio_recording_update_status: /audio_recordings/:id/update_status
   api:
     host: localhost
     port: 3030
-    user_email: address@example.com
-    user_password: password
+    user: address@example.com
+    password: password
   smtp:
     address: localhost
     port:

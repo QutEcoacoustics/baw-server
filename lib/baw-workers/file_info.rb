@@ -72,7 +72,7 @@ module BawWorkers
     # @return [Hash]
     def basic(source)
       {
-          file_path: source,
+          file_path: File.expand_path(source),
           file_name: File.basename(source),
           extension: File.extname(source).reverse.chomp('.').reverse,
           access_time: File.atime(source),

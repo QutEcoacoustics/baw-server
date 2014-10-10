@@ -86,19 +86,19 @@ module BawWorkers
     end
 
     def self.audio_cache_helper
-      @audio_cache_helper = BawWorkers::Storage::AudioCache.new(Settings.paths.cached_audios)
+      @audio_cache_helper ||= BawWorkers::Storage::AudioCache.new(Settings.paths.cached_audios)
     end
 
     def self.spectrogram_cache_helper
-      @spectrogram_cache_helper = BawWorkers::Storage::SpectrogramCache.new(Settings.paths.cached_spectrograms)
+      @spectrogram_cache_helper ||= BawWorkers::Storage::SpectrogramCache.new(Settings.paths.cached_spectrograms)
     end
 
     def self.dataset_cache_helper
-      @dataset_cache_helper = BawWorkers::Storage::DatasetCache.new(Settings.paths.cached_datasets)
+      @dataset_cache_helper ||= BawWorkers::Storage::DatasetCache.new(Settings.paths.cached_datasets)
     end
 
     def self.analysis_cache_helper
-      @spectrogram_cache_helper = BawWorkers::Storage::AnalysisCache.new(Settings.paths.cached_analysis_jobs)
+      @spectrogram_cache_helper ||= BawWorkers::Storage::AnalysisCache.new(Settings.paths.cached_analysis_jobs)
     end
 
   end
