@@ -22,7 +22,6 @@ module BawWorkers
   autoload :ApiCommunicator, 'baw-workers/api_communicator'
   autoload :FileInfo, 'baw-workers/file_info'
 
-
   module Analysis
     autoload :Action, 'baw-workers/analysis/action'
     autoload :Workhelper, 'baw-workers/analysis/work_helper'
@@ -37,6 +36,7 @@ module BawWorkers
     autoload :Action, 'baw-workers/harvest/action'
     autoload :WorkHelper, 'baw-workers/harvest/work_helper'
     autoload :GatherFiles, 'baw-workers/harvest/gather_files'
+    autoload :SingleFile, 'baw-workers/harvest/single_file'
   end
 
   module Mail

@@ -23,11 +23,28 @@ module BawWorkers
         #@upload_dir = Settings.paths.progressive_upload_directory
       end
 
-      # Get files that can be harvested.
+      # Get attributes for a single file.
+      # @param [String] path
+      # @return [Hash] file properties
+      def process_file(path)
+        expanded_file_path = File.expand_path(path)
+
+        fail BawAudioTools::Exceptions::NotAnAudioFileError, "#{expanded_file_path} does not have a valid extension (#{@ext_include})." unless valid_ext?(expanded_file_path)
+
+        # check for config file
+        config_file = File.join(File.dirname(expanded_file_path), @config_file_name)
+        config_file_found = File.exists?(config_file)
+        folder_settings = config_file_found ? get_folder_settings(config_file) : {}
+
+        # get file info
+        file_properties(expanded_file_path, folder_settings)
+      end
+
+      # Get files that can be harvested. Accepts a single dir or an array of dirs.
       # @param [String, Array<String>] harvest_locations
       # @param [String] upload_dir_name
       # @return [Array<Hash>] files
-      def all_files(harvest_locations, upload_dir_name)
+      def process_dir(harvest_locations, upload_dir_name)
 
         every_dir = all_dirs(harvest_locations)
         valid_dirs = valid_dirs(every_dir, upload_dir_name)

@@ -113,7 +113,7 @@ module BawWorkers
     # @param [string] site_id
     # @param [string] uploader_id
     # @param [string] auth_token
-    # @return [bool]
+    # @return [Boolean]
     def check_uploader_project_access(project_id, site_id, uploader_id, auth_token)
       if auth_token
         @logger.debug(get_class_name) {
@@ -150,22 +150,6 @@ module BawWorkers
       check_uploader_response.code.to_i == 204
     end
 
-    def create_audio_info_hash(file_info_hash, content_info_hash, file_hash_string)
-      {
-          bit_rate_bps: content_info_hash[:bit_rate_bps].to_i,
-          channels: content_info_hash[:channels].to_i,
-          data_length_bytes: file_info_hash[:data_length_bytes].to_i,
-          duration_seconds: content_info_hash[:duration_seconds].to_f.round(4),
-          media_type: content_info_hash[:media_type].to_s,
-          recorded_date: file_info_hash[:recorded_date],
-          sample_rate_hertz: content_info_hash[:sample_rate].to_i,
-          uploader_id: file_info_hash[:uploader_id].to_i,
-          file_hash: file_hash_string,
-          original_file_name: file_info_hash[:file_name].to_s,
-          site_id: file_info_hash[:site_id].to_i
-      }
-    end
-
     # Create a new audio recording.
     # @param [String] file_to_process
     # @param [Integer] project_id
@@ -187,19 +171,6 @@ module BawWorkers
       else
         {response: response, response_json: nil}
       end
-    end
-
-    # Create hash for updating audio recording attributes.
-    # @param [String] uuid
-    # @param [String] file_hash
-    # @param [String] status
-    # @return [Hash]
-    def create_update_hash(uuid, file_hash, status)
-      {
-          uuid: uuid,
-          file_hash: file_hash,
-          status: status
-      }
     end
 
     # Update audio recording status.

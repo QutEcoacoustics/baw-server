@@ -67,6 +67,46 @@ module BawWorkers
       end
     end
 
+    def copy_and_rename(source_file, create_response_json, file_info_hash)
+      dest_paths = []
+
+      # construct paths to move file
+      dest_paths = construct_destinations(create_response_json, file_info_hash)
+      @logger.log Logger::DEBUG, "Copying source file to #{dest_paths}."
+
+      dest_paths.each do |dest_path|
+        @fs.copy_file(source_file, dest_path)
+      end
+
+      # delete file once it is copied to all destinations
+      source_size = File.size(source_file)
+      if dest_paths.all? { |file| File.exists?(file) && File.file?(file) && File.size(file) == source_size }
+        @logger.log Logger::INFO, "Source file #{source_file} was copied successfully to all destinations, renaming source file."
+        renamed_source_file = source_file + '.completed'
+        File.rename(source_file, renamed_source_file)
+        if File.exists?(source_file)
+          @logger.log Logger::WARN, "Source file #{source_file} was not renamed."
+        elsif File.exists?(renamed_source_file)
+          @logger.log Logger::INFO, "Source file #{source_file} was successfully renamed to #{renamed_source_file}."
+        end
+      else
+        @logger.log Logger::WARN, "Source file #{source_file} was not copied to all destinations #{dest_paths}."
+      end
+    end
+
+    def construct_destinations(create_response, file_info_hash)
+      datetime = Time.zone.parse(file_info_hash[:recorded_date])
+
+      #original_file_name = @media_cacher.original_audio_file_names(original_file_name_hash)
+      original_file_name = @media_cacher.cache.original_audio.file_name_utc(
+          create_response['uuid'],
+          datetime,
+          file_info_hash[:extension]
+      )
+
+      @media_cacher.cache.possible_storage_paths(@media_cacher.cache.original_audio, original_file_name)
+    end
+
     # Get basic file info.
     # @param [string] source
     # @return [Hash]
