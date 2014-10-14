@@ -21,6 +21,7 @@ module BawWorkers
   autoload :Common, 'baw-workers/common'
   autoload :ApiCommunicator, 'baw-workers/api_communicator'
   autoload :FileInfo, 'baw-workers/file_info'
+  autoload :ResqueApi, 'baw-workers/resque_api'
 
   module Analysis
     autoload :Action, 'baw-workers/analysis/action'
