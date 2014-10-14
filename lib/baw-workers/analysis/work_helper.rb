@@ -5,9 +5,8 @@ module BawWorkers
       # include common methods
       include BawWorkers::Common
 
-      def initialize(logger, is_dry_run = false)
+      def initialize(logger)
         @logger = logger
-        @is_dry_run = is_dry_run
       end
 
     end

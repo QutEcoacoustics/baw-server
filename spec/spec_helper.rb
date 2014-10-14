@@ -141,8 +141,8 @@ RSpec.configure do |config|
 
   # indicate that webmock requests were successful
   WebMock.after_request do |request_signature, response|
-    BawWorkers::Settings.logger.debug('config') {
-      "Request #{request_signature} was made and #{response} was returned"
+    BawWorkers::Settings.logger.debug('respec-config') {
+      "Request #{request_signature} was made and #{response.inspect} was returned"
     }
   end
 

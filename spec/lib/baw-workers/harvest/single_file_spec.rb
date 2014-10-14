@@ -27,7 +27,8 @@ describe BawWorkers::Harvest::SingleFile do
     BawWorkers::Harvest::SingleFile.new(
         BawWorkers::Settings.logger,
         file_info,
-        api_comm
+        api_comm,
+        BawWorkers::Settings.original_audio_helper
     )
   }
 
@@ -58,24 +59,103 @@ describe BawWorkers::Harvest::SingleFile do
       password = 'password'
       auth_token = 'auth token this is'
 
+      file_hash = 'SHA256::c110884206d25a83dd6d4c741861c429c10f99df9102863dde772f149387d891'
+      recorded_date = '2014-10-12T18:14:55.000+10:00'
+      uuid = 'fb4af424-04c1-4739-96e3-23f8dc719665'
+      original_format = 'ogg'
+
+      request_login_body = {email: user, password: password}
+      response_login_body = {success: true, auth_token: auth_token, email: user}
+      request_headers_base = {'Accept' => 'application/json', 'Content-Type' => 'application/json', 'User-Agent' => 'Ruby'}
+      request_headers = request_headers_base.merge('Authorization' => "Token token=\"#{auth_token}\"")
+      request_create_body = {
+          uploader_id: 30,
+          recorded_date: recorded_date,
+          site_id: 20,
+          duration_seconds: 70.0,
+          sample_rate_hertz: 44100,
+          channels: 1,
+          bit_rate_bps: 239920,
+          media_type: 'audio/ogg',
+          data_length_bytes: 822281,
+          file_hash: file_hash,
+          original_file_name: 'test_20141012_181455.ogg'
+      }
+      response_create_body = {
+          uploader_id: 30,
+          recorded_date: '2014-10-12T08:14:55Z',
+          site_id: 20,
+          duration_seconds: 70.0,
+          sample_rate_hertz: 44100,
+          channels: 1,
+          bit_rate_bps: 239920,
+          media_type: 'audio/ogg',
+          data_length_bytes: 822281,
+          file_hash: file_hash,
+          status: 'new',
+          original_file_name: 'test_20141012_181455.ogg',
+
+          created_at: "2014-10-13T05:21:13Z",
+          creator_id: 1208,
+          deleted_at: nil,
+          deleter_id: nil,
+          id: 177,
+          notes: "note number 183",
+          updated_at: "2014-10-13T05:21:13Z",
+          updater_id: nil,
+          uuid: uuid
+      }
+      request_update_status_body = {
+          uuid: uuid,
+          file_hash: file_hash,
+          status: nil
+      }
+
+      possible_paths = audio_original.possible_paths(
+          {
+              uuid: uuid,
+              datetime_with_offset: Time.zone.parse(recorded_date),
+              original_format: original_format
+          }
+      )
+
       stub_login = stub_request(:post, "http://localhost:3030/security/sign_in")
-      .with(
-          body: "{\"email\":\"#{user}\",\"password\":\"#{password}\"}",
-          headers: {'Accept' => 'application/json', 'Accept-Encoding' => 'gzip;q=1.0,deflate;q=0.6,identity;q=0.3', 'Content-Type' => 'application/json', 'User-Agent' => 'Ruby'})
-      .to_return(
-          status: 200,
-          body: "{\"success\":\"true\",\"auth_token\":\"#{auth_token}\",\"email\":\"#{user}\"}")
+      .with(body: request_login_body.to_json, headers: request_headers_base)
+      .to_return(status: 200, body: response_login_body.to_json)
 
       stub_uploader_check = stub_request(:get, "http://localhost:3030/projects/10/sites/20/audio_recordings/check_uploader/30")
-      .with(
-          headers: {'Accept' => 'application/json', 'Authorization' => "Token token=\"#{auth_token}\"", 'Content-Type' => 'application/json', 'User-Agent' => 'Ruby'})
-      .to_return(
-          status: 204)
+      .with(headers: request_headers)
+      .to_return(status: 204)
 
+      stub_create = stub_request(:post, "http://localhost:3030/projects/10/sites/20/audio_recordings")
+      .with(body: request_create_body.to_json, headers: request_headers)
+      .to_return(status: 201, body: response_create_body.to_json)
 
-      # process a single file
+      stub_uploading_status = stub_request(:put, "http://localhost:3030/audio_recordings/177/update_status")
+      .with(body: request_update_status_body.merge(status: 'uploading'), headers: request_headers)
+      .to_return(status: 200)
+
+      stub_ready_status = stub_request(:put, "http://localhost:3030/audio_recordings/177/update_status")
+      .with(body: request_update_status_body.merge(status: 'ready'), headers: request_headers)
+      .to_return(status: 200)
+
+      # execute - process a single file
       file_info_hash = gather_files.process_file(dest_audio_file)
-      single_file.run(file_info_hash)
+      single_file.run(file_info_hash, false)
+
+      # verify - requests made in the correct order
+      stub_login.should have_been_made.once
+      stub_uploader_check.should have_been_made.once
+      stub_create.should have_been_made.once
+      stub_uploading_status.should have_been_made.once
+      stub_ready_status.should have_been_made.once
+
+      # ensure file is moved to correct location
+      expect(File.exists?(possible_paths[1])).to be_truthy
+
+      # ensure source file is renamed to *.completed
+      expect(File.exists?(dest_audio_file)).to be_falsey
+      expect(File.exists?(dest_audio_file+'.completed')).to be_truthy
     end
 
   end

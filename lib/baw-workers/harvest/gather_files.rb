@@ -176,7 +176,7 @@ module BawWorkers
 
         info = basic_info.merge(folder_settings).merge(file_name_info)
 
-        @logger.debug(get_class_name) {
+        @logger.info(get_class_name) {
           "File #{file} details #{info}"
         }
 

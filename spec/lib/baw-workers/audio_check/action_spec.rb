@@ -462,9 +462,8 @@ describe BawWorkers::AudioCheck::Action do
                   BawWorkers::Settings.logger,
                   BawWorkers::Settings.api,
                   BawWorkers::Settings.endpoints
-              ),
-              true)
-          result = audio_file_check.run(original_params)
+              ))
+          result = audio_file_check.run(original_params, true)
           # assert
           expect(result.size).to eq(1)
 

@@ -230,9 +230,9 @@ describe BawWorkers::Harvest::GatherFiles do
 
       settings = gather_files.get_folder_settings(folder_example)
       expect(settings).not_to be_empty
-      expect(settings[:project_id]).to eq(1)
-      expect(settings[:site_id]).to eq(1)
-      expect(settings[:uploader_id]).to eq(1)
+      expect(settings[:project_id]).to eq(10)
+      expect(settings[:site_id]).to eq(20)
+      expect(settings[:uploader_id]).to eq(30)
       expect(settings[:utc_offset]).to eq('+10')
       #FileUtils.rm(sub_folder)
     end

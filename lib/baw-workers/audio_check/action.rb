@@ -56,11 +56,10 @@ module BawWorkers
           audio_file_check = BawWorkers::AudioCheck::WorkHelper.new(
               BawWorkers::Settings.logger,
               file_info,
-              api_comm,
-              BawWorkers::Settings.resque.dry_run)
+              api_comm)
 
           begin
-            audio_file_check.run(audio_params)
+            audio_file_check.run(audio_params, BawWorkers::Settings.resque.dry_run)
           rescue Exception => e
             BawWorkers::Settings.logger.error(self.name) { e }
             raise e

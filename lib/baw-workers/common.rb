@@ -9,7 +9,6 @@ module BawWorkers
       def validate_contains(value, hash)
         unless hash.include?(value)
           msg = "Media type '#{value}' is not in list of valid media types '#{hash}'."
-          BawWorkers::Settings.logger.error(self.name) { msg }
           fail ArgumentError, msg
         end
       end

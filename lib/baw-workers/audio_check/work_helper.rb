@@ -5,26 +5,23 @@ module BawWorkers
 
       include BawWorkers::Common
 
-      def initialize(logger, file_info, api_comm, is_dry_run = false)
+      def initialize(logger, file_info, api_comm)
         @logger = logger
         @file_info = file_info
-
-        # api communication
         @api_communicator = api_comm
-
-        @is_dry_run = is_dry_run
       end
 
       # Check existing files and modify the file name and/or details via api if necessary.
       # @param [Hash] audio_params
+      # @param [Boolean] is_dry_run
       # @return [Array<Hash>] array of hashes representing operations performed
-      def run(audio_params)
+      def run(audio_params, is_dry_run)
         # validate params
         audio_params_sym = BawWorkers::AudioCheck::WorkHelper.validate(audio_params)
 
         @logger.info(get_class_name) { 'Starting...' }
 
-        if @is_dry_run
+        if is_dry_run
           @logger.warn(get_class_name) { 'Dry Run starting.' }
           puts 'Starting Dry Run...'
         end
@@ -47,10 +44,10 @@ module BawWorkers
         original_paths.existing.each do |existing_file|
 
           # fix all other issues before renaming file
-          single_result = run_single(existing_file, audio_params_sym)
+          single_result = run_single(existing_file, audio_params_sym, is_dry_run)
 
           # LOW LEVEL PROBLEM: rename old file names to new file names
-          file_move_info = rename_file(existing_file, original_paths[:name_utc])
+          file_move_info = rename_file(existing_file, original_paths[:name_utc], is_dry_run)
 
           # record new file location
           result_hash =
@@ -84,8 +81,9 @@ module BawWorkers
       # Check an existing file and modify the file name and/or details on website if necessary.
       # @param [String] existing_file
       # @param [Hash] audio_params
+      # @param [Boolean] is_dry_run
       # @return [Hash] comparison and api results
-      def run_single(existing_file, audio_params)
+      def run_single(existing_file, audio_params, is_dry_run)
         # get existing file info and comparisons between expected and actual
         existing_file_info = @file_info.audio_info(existing_file)
 
@@ -198,7 +196,7 @@ module BawWorkers
           msg = "Update required #{changed_metadata} #{base_msg}"
           @logger.warn(get_class_name) { msg }
 
-          if @is_dry_run
+          if is_dry_run
             @logger.info(get_class_name) { 'Dry Run: Would have updated properties.' }
           else
             host = BawWorkers::Settings.api.host
@@ -460,8 +458,9 @@ module BawWorkers
       # Rename file with old file name to new file name.
       # @param [String] existing_file
       # @param [String] file_name_utc
+      # @param [Boolean] is_dry_run
       # @return [Hash] action applied to existing file
-      def rename_file(existing_file, file_name_utc)
+      def rename_file(existing_file, file_name_utc, is_dry_run)
 
         existing_name = File.basename(existing_file, File.extname(existing_file))
 
@@ -482,7 +481,7 @@ module BawWorkers
           new_path_exists = File.exist?(new_path)
 
           # move old name to new name unless it already exists
-          unless @is_dry_run
+          unless is_dry_run
             FileUtils.move(existing_file, new_path) unless new_path_exists
           end
 
@@ -492,7 +491,7 @@ module BawWorkers
               "Found equivalent old and new file names, no action performed. Old: #{existing_file} New: #{new_path}."
             }
           else
-            if @is_dry_run
+            if is_dry_run
               @logger.info(get_class_name) {
                 "Dry Run: Would have moved #{existing_file} to #{new_path}."
               }
