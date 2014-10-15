@@ -95,6 +95,7 @@ gem 'rack-rewrite', '~> 1.5.0'
 # ------------------------------------
 gem 'resque', '~> 1.25.2'
 gem 'resque-job-stats', git: 'https://github.com/echannel/resque-job-stats.git', ref: '8932c036ae'
+gem 'resque-status'
 gem 'baw-workers', git: 'https://github.com/QutBioacoustics/baw-workers.git'
 gem 'fire_poll', '~> 1.2.0'
 
