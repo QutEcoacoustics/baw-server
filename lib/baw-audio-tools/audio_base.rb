@@ -7,12 +7,14 @@ module BawAudioTools
 
     public
 
+    # Create a new BawAudioTools::AudioBase.
     # @param [BawAudioTools::AudioFfmpeg] audio_ffmpeg
     # @param [BawAudioTools::AudioMp3splt] audio_mp3splt
     # @param [BawAudioTools::AudioSox] audio_sox
     # @param [BawAudioTools::AudioWavpack] audio_wavpack
     # @param [Hash] audio_defaults
     # @param [string] temp_dir
+    # @return [BawAudioTools::AudioBase]
     def initialize(audio_ffmpeg, audio_mp3splt, audio_sox, audio_wavpack, audio_defaults, temp_dir)
       @audio_ffmpeg = audio_ffmpeg
       @audio_mp3splt = audio_mp3splt

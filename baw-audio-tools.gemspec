@@ -25,6 +25,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'guard', '~> 2.6.1'
   spec.add_development_dependency 'listen', '~> 2.7.9'
   spec.add_development_dependency 'guard-rspec', '~> 4.3.1'
+  spec.add_development_dependency 'guard-yard', '~> 2.1.1'
   # for guard on windows
   spec.add_development_dependency 'wdm', '>= 0.1.0' if RbConfig::CONFIG['target_os'] =~ /mswin|mingw|cygwin/i
   spec.add_development_dependency 'simplecov', '~> 0.9.0'
