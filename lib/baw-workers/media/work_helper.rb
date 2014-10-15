@@ -129,12 +129,6 @@ module BawWorkers
         target_existing
       end
 
-
-      # run audio modify to create target using source
-      def run_spectrogram_modify(source, target, modify_parameters)
-
-      end
-
       def check_original_paths(possible, existing, modify_parameters)
         # if the original audio file()s) cannot be found, raise an exception
         if existing.blank?
@@ -160,6 +154,32 @@ module BawWorkers
               " #{source_existing} in #{target_possible} using #{modify_parameters}."
           fail BawAudioTools::Exceptions::SpectrogramFileNotFoundError, msg
         end
+        target_existing_paths
+      end
+
+      # Create specified media type by applying media request params.
+      # @param [Symbol] media_type
+      # @param [Hash] media_request_params
+      # @return [Array<String>] target existing paths
+      def make_media_request(media_type, media_request_params, logger)
+        media_type_sym, params_sym = validate(media_type, media_request_params)
+
+        params_sym[:datetime_with_offset] = check_datetime(params_sym[:datetime_with_offset])
+
+        target_existing_paths = []
+        case media_type_sym
+          when :audio
+            target_existing_paths = create_audio_segment(params_sym)
+          when :spectrogram
+            target_existing_paths = generate_spectrogram(params_sym)
+          else
+            validate_contains(media_type_sym, valid_media_types)
+        end
+
+        logger.info(self.name) {
+          "Created cache files #{media_type}: #{target_existing_paths}."
+        }
+
         target_existing_paths
       end
 

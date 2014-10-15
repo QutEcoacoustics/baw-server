@@ -21,6 +21,12 @@ module BawWorkers
       # Jobs performed as timeseries data (minute, hour, day)
       extend Resque::Plugins::JobStats
 
+      # track specific job instances and their status.
+      # resque-status achieves this by giving job instances UUID's
+      # and allowing the job instances to report their
+      # status from within their iterations.
+      include Resque::Plugins::Status
+
       class << self
 
         # By default, lock_after_execution_period is 0 and enqueued? becomes
@@ -37,50 +43,22 @@ module BawWorkers
           30
         end
 
-        # Get the queue for this action. Used by Resque.
+        # Get the queue for this action. Used by Resque. Overrides resque-status class method.
         # @return [Symbol] The queue.
         def queue
           BawWorkers::Settings.resque.queues.media
         end
 
-        # Enqueue a media processing request.
-        # @param [Symbol] media_type
-        # @param [Hash] media_request_params
-        def enqueue(media_type, media_request_params)
-          media_type_sym, params_sym = validate(media_type, media_request_params)
-          Resque.enqueue(BawWorkers::Media::Action, media_type_sym, params_sym)
-          BawWorkers::Settings.logger.info(self.name) {
-            "Enqueued #{media_type} from MediaAction #{media_request_params}."
-          }
-        end
-
         # Get the available media types this action can create.
-        # @return [Symbol] The available media types.
+        # @return [Array<Symbol>] The available media types.
         def valid_media_types
           [:audio, :spectrogram]
         end
 
-        # Perform work. Used by Resque.
-        # @param [Symbol] media_type
-        # @param [Hash] media_request_params
-        # @return [Array<String>] target existing paths
-        def perform(media_type, media_request_params)
-          media_type_sym, params_sym = validate(media_type, media_request_params)
-          make_media_request(media_type_sym, params_sym)
-        end
-
-        # Create specified media type by applying media request params.
-        # @param [Symbol] media_type
-        # @param [Hash] media_request_params
-        # @return [Array<String>] target existing paths
-        def make_media_request(media_type, media_request_params)
-          media_type_sym, params_sym = validate(media_type, media_request_params)
-
-          params_sym[:datetime_with_offset] = check_datetime(params_sym[:datetime_with_offset])
-
-          logger = BawWorkers::Settings.logger
-
-          helper = BawWorkers::Media::WorkHelper.new(
+        # Get helper class instance.
+        # @return [BawWorkers::Media::WorkHelper]
+        def action_helper
+          BawWorkers::Media::WorkHelper.new(
               BawWorkers::Settings.audio_helper,
               BawWorkers::Settings.spectrogram_helper,
               BawWorkers::Settings.original_audio_helper,
@@ -90,33 +68,46 @@ module BawWorkers
               BawWorkers::Settings.logger,
               BawWorkers::Settings.paths.temp_dir
           )
+        end
 
-          target_existing_paths = []
-          case media_type_sym
-            when :audio
-              target_existing_paths = helper.create_audio_segment(params_sym)
-            when :spectrogram
-              target_existing_paths = helper.generate_spectrogram(params_sym)
-            else
-              validate_contains(media_type_sym, valid_media_types)
-          end
+        # Get logger
+        def action_logger
+          BawWorkers::Settings.logger
+        end
 
-          BawWorkers::Settings.logger.info(self.name) {
-            "Created cache files #{media_type}: #{target_existing_paths}."
+        # Perform work. Used by Resque.
+        # @param [Symbol] media_type
+        # @param [Hash] media_request_params
+        # @return [Array<String>] target existing paths
+        def action_perform(media_type, media_request_params)
+          media_type_sym, params_sym = action_validate(media_type, media_request_params)
+          action_helper.make_media_request(media_type_sym, params_sym, action_logger)
+        end
+
+        # Enqueue a media processing request.
+        # @param [Symbol] media_type
+        # @param [Hash] media_request_params
+        # @return [void]
+        def action_enqueue(media_type, media_request_params)
+          media_type_sym, params_sym = action_validate(media_type, media_request_params)
+          #Resque.enqueue(BawWorkers::Media::Action, media_type_sym, params_sym)
+          BawWorkers::Media::Action.create(media_type_sym: media_type_sym, params_sym: params_sym)
+          action_logger.info(self.name) {
+            "Enqueued #{media_type} from MediaAction #{media_request_params}."
           }
-
-          target_existing_paths
         end
 
         private
 
-        def validate(media_type, media_request_params)
+        def action_validate(media_type, media_request_params)
           validate_hash(media_request_params)
           media_type_sym, params_sym = symbolize(media_type, media_request_params)
           validate_contains(media_type_sym, valid_media_types)
           [media_type_sym, params_sym]
         end
+
       end
+
     end
   end
 end

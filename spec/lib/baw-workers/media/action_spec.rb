@@ -54,18 +54,44 @@ describe BawWorkers::Media::Action do
 
   end
 
-  context 'should execute perform method' do
+  context 'executes perform method' do
+    context 'raises error' do
 
-    it 'raises error when params is not a hash' do
+    it 'when params is not a hash' do
       expect {
         BawWorkers::Media::Action.perform(:audio, 'not a hash')
       }.to raise_error(ArgumentError, /Media request params was a 'String'\. It must be a 'Hash'\./)
     end
 
-    it 'raises error when media type is invalid' do
+    it 'when media type is invalid' do
       expect {
         BawWorkers::Media::Action.perform(:not_valid_param, {})
       }.to raise_error(ArgumentError, /Media type 'not_valid_param' is not in list of valid media types/)
+    end
+
+    it 'when recorded date is invalid' do
+
+      media_request_params =
+          {
+              uuid: '7bb0c719-143f-4373-a724-8138219006d9',
+              format: 'png',
+              media_type: 'image/png',
+              start_offset: 5,
+              end_offset: 10,
+              channel: 0,
+              sample_rate: 22050,
+              datetime_with_offset: 'blah blah blah',
+              original_format: audio_file_mono_format,
+              window: 512,
+              window_function: 'Hamming',
+              colour: 'g'
+          }
+
+      expect {
+        BawWorkers::Media::Action.make_media_request(:audio, media_request_params)
+      }.to raise_error(ArgumentError, /Media type 'not_valid_param' is not in list of valid media types/)
+    end
+
     end
 
     context 'generate spectrogram' do

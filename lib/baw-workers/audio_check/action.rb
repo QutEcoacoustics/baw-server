@@ -12,6 +12,9 @@ module BawWorkers
       # a set of keys starting with 'stats:jobs:queue_name' inside your Resque redis namespace
       extend Resque::Plugins::JobStats
 
+      # track specific job instances and their status
+      include Resque::Plugins::Status
+
       # All methods do not require a class instance.
       class << self
 

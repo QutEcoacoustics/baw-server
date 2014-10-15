@@ -5,6 +5,19 @@ describe BawWorkers::AudioCheck::Action do
 
   let(:queue_name) { BawWorkers::Settings.resque.queues.maintenance }
 
+  let(:audio_file_check) { BawWorkers::AudioCheck::WorkHelper.new(
+      BawWorkers::Settings.logger,
+      BawWorkers::FileInfo.new(
+          BawWorkers::Settings.logger,
+          BawWorkers::Settings.audio_helper
+      ),
+      BawWorkers::ApiCommunicator.new(
+          BawWorkers::Settings.logger,
+          BawWorkers::Settings.api,
+          BawWorkers::Settings.endpoints
+      ))
+  }
+
   # when args are retreived from redis, they are all strings.
   let(:test_params) {
     {
@@ -206,6 +219,29 @@ describe BawWorkers::AudioCheck::Action do
         expect {
           BawWorkers::AudioCheck::Action.perform(original_params)
         }.to raise_error(BawAudioTools::Exceptions::FileCorruptError, /File hash and other properties DO NOT match.*?:file_hash=>:fail.*?:duration_seconds=>:fail/)
+
+      end
+
+      it 'when recorded date is in incorrect format' do
+
+        media_request_params =
+            {
+                uuid: '7bb0c719-143f-4373-a724-8138219006d9',
+                datetime_with_offset: '2010-02-23 20:42:00Z',
+                original_format: audio_file_mono_format,
+            }
+
+        original_params = test_params.dup
+
+        original_params['recorded_date'] = '2010-02-23 20:42:00+10:00'
+
+        # arrange
+        create_original_audio(media_request_params, audio_file_mono, true)
+
+        # act
+        expect {
+          BawWorkers::AudioCheck::Action.perform(original_params)
+        }.to raise_error(ArgumentError, /recorded_date must be a UTC time \(i\.e\. end with Z\), given/)
 
       end
 
@@ -452,17 +488,7 @@ describe BawWorkers::AudioCheck::Action do
 
           # act
           #result = BawWorkers::AudioCheck::Action.perform(original_params)
-          audio_file_check = BawWorkers::AudioCheck::WorkHelper.new(
-              BawWorkers::Settings.logger,
-              BawWorkers::FileInfo.new(
-                  BawWorkers::Settings.logger,
-                  BawWorkers::Settings.audio_helper
-              ),
-              BawWorkers::ApiCommunicator.new(
-                  BawWorkers::Settings.logger,
-                  BawWorkers::Settings.api,
-                  BawWorkers::Settings.endpoints
-              ))
+
           result = audio_file_check.run(original_params, true)
           # assert
           expect(result.size).to eq(1)
