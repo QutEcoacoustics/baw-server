@@ -3,9 +3,6 @@ module BawWorkers
     # Runs analysis scripts on audio files.
     class Action
 
-      # include common methods
-      include BawWorkers::Common
-
       # Ensure that there is only one job with the same payload per queue.
       include Resque::Plugins::UniqueJob
 
@@ -14,6 +11,10 @@ module BawWorkers
 
       # track specific job instances and their status
       include Resque::Plugins::Status
+
+      # include common methods
+      # must be the last include/extend so it can override methods
+      include BawWorkers::Common
 
       # All methods do not require a class instance.
       class << self
@@ -30,36 +31,39 @@ module BawWorkers
           BawWorkers::Settings.resque.queues.analysis
         end
 
-        # Enqueue an analysis request.
-        # @param [Hash] analysis_params
-        # @return [Boolean] True if job was queued, otherwise false. +nil+
-        #   if the job was rejected by a before_enqueue hook.
-        def enqueue(analysis_params)
-          # audio_params_sym = BawWorkers::AudioCheck::Process.validate(audio_params)
-          # result = Resque.enqueue(BawWorkers::AudioCheck::Action, audio_params_sym)
-          # BawWorkers::Settings.logger.info(self.name) {
-          #   "Enqueued from AudioFileCheckAction. Resque enqueue returned #{result} using #{audio_params}."
-          # }
+        # Get logger
+        def action_logger
+          BawWorkers::Settings.logger
         end
 
         # Perform work. Used by resque.
         # @param [Hash] analysis_params
-        def perform(analysis_params)
-          # audio_file_check = BawWorkers::AudioCheck::Process.new(BawWorkers::Settings.logger, BawWorkers::Settings.resque.dry_run)
-          #
-          # begin
-          #   audio_file_check.run(audio_params)
-          # rescue Exception => e
-          #   BawWorkers::Settings.logger.error(self.name) { e }
-          #   raise e
-          # end
+        def action_perform(analysis_params)
+          begin
+            # todo
+          rescue Exception => e
+            BawWorkers::Settings.logger.error(self.name) { e }
+            raise e
+          end
+        end
 
+        # Enqueue an analysis request.
+        # @param [Hash] analysis_params
+        # @return [Boolean] True if job was queued, otherwise false. +nil+
+        #   if the job was rejected by a before_enqueue hook.
+        def action_enqueue(analysis_params)
+          result = BawWorkers::Media::Action.create(analysis_params: analysis_params)
+          BawWorkers::Settings.logger.info(self.name) {
+            "Job enqueue returned '#{result}' using type #{media_type} with #{analysis_params}."
+          }
         end
 
       end
 
+      # Perform method used by resque-status.
       def perform
-
+        analysis_params = options['analysis_params']
+        self.class.action_perform(analysis_params)
       end
 
     end

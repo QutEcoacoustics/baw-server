@@ -3,8 +3,6 @@ module BawWorkers
     # Action for cutting audio files and generating spectrograms.
     class Action
 
-      include BawWorkers::Common
-
       # Ensure that there is only one job with the same payload per queue.
       # The default method to create a job ID from these parameters is to
       # do some normalization on the payload and then md5'ing it
@@ -26,6 +24,10 @@ module BawWorkers
       # and allowing the job instances to report their
       # status from within their iterations.
       include Resque::Plugins::Status
+
+      # include common methods
+      # must be the last include/extend so it can override methods
+      include BawWorkers::Common
 
       class << self
 
@@ -64,7 +66,9 @@ module BawWorkers
               BawWorkers::Settings.original_audio_helper,
               BawWorkers::Settings.audio_cache_helper,
               BawWorkers::Settings.spectrogram_cache_helper,
-              BawWorkers::FileInfo.new(logger, BawWorkers::Settings.audio_helper),
+              BawWorkers::FileInfo.new(
+                  BawWorkers::Settings.logger,
+                  BawWorkers::Settings.audio_helper),
               BawWorkers::Settings.logger,
               BawWorkers::Settings.paths.temp_dir
           )
@@ -81,7 +85,14 @@ module BawWorkers
         # @return [Array<String>] target existing paths
         def action_perform(media_type, media_request_params)
           media_type_sym, params_sym = action_validate(media_type, media_request_params)
-          action_helper.make_media_request(media_type_sym, params_sym, action_logger)
+
+          begin
+            make_media_request(media_type_sym, params_sym, action_logger)
+          rescue Exception => e
+            BawWorkers::Settings.logger.error(self.name) { e }
+            raise e
+          end
+
         end
 
         # Enqueue a media processing request.
@@ -91,13 +102,38 @@ module BawWorkers
         def action_enqueue(media_type, media_request_params)
           media_type_sym, params_sym = action_validate(media_type, media_request_params)
           #Resque.enqueue(BawWorkers::Media::Action, media_type_sym, params_sym)
-          BawWorkers::Media::Action.create(media_type_sym: media_type_sym, params_sym: params_sym)
+          result = BawWorkers::Media::Action.create(media_type: media_type_sym, media_request_params: params_sym)
           action_logger.info(self.name) {
-            "Enqueued #{media_type} from MediaAction #{media_request_params}."
+            "Job enqueue returned '#{result}' using type #{media_type} with #{media_request_params}."
           }
         end
 
-        private
+        # Create specified media type by applying media request params.
+        # @param [Symbol] media_type
+        # @param [Hash] media_request_params
+        # @param [Logger] logger
+        # @return [Array<String>] target existing paths
+        def make_media_request(media_type, media_request_params, logger)
+          media_type_sym, params_sym = action_validate(media_type, media_request_params)
+
+          params_sym[:datetime_with_offset] = check_datetime(params_sym[:datetime_with_offset])
+
+          target_existing_paths = []
+          case media_type_sym
+            when :audio
+              target_existing_paths = action_helper.create_audio_segment(params_sym)
+            when :spectrogram
+              target_existing_paths = action_helper.generate_spectrogram(params_sym)
+            else
+              validate_contains(media_type_sym, valid_media_types)
+          end
+
+          logger.info(self.name) {
+            "Created cache files #{media_type}: #{target_existing_paths}."
+          }
+
+          target_existing_paths
+        end
 
         def action_validate(media_type, media_request_params)
           validate_hash(media_request_params)
@@ -106,6 +142,15 @@ module BawWorkers
           [media_type_sym, params_sym]
         end
 
+
+
+      end
+
+      # Perform method used by resque-status.
+      def perform
+        media_type = options['media_type']
+        media_request_params = options['media_request_params']
+        self.class.action_perform(media_type, media_request_params)
       end
 
     end

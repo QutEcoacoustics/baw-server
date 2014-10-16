@@ -3,9 +3,6 @@ module BawWorkers
     # Harvests files enqueued in redis.
     class Action
 
-      # include common methods
-      include BawWorkers::Common
-
       # Ensure that there is only one job with the same payload per queue.
       include Resque::Plugins::UniqueJob
 
@@ -14,6 +11,9 @@ module BawWorkers
 
       # track specific job instances and their status
       include Resque::Plugins::Status
+
+      # include common methods
+      include BawWorkers::Common
 
       # All methods do not require a class instance.
       class << self
@@ -30,27 +30,38 @@ module BawWorkers
           BawWorkers::Settings.resque.queues.harvest
         end
 
+        # Perform work. Used by Resque.
+        # @param [Hash] harvest_params
+        # @return [Array<Hash>] array of hashes representing operations performed
+        def action_perform(harvest_params)
+          begin
+            # TODO
+          rescue Exception => e
+            BawWorkers::Settings.logger.error(self.name) { e }
+            raise e
+          end
+        end
+
         # Enqueue a single file for harvesting.
         # @param [Hash] harvest_params
         # @return [Boolean] True if job was queued, otherwise false. +nil+
         #   if the job was rejected by a before_enqueue hook.
-        def enqueue(harvest_params)
-          # harvest_params_sym = AudioFileCheck.validate(harvest_params)
-          # result = Resque.enqueue(HarvestAction, harvest_params_sym)
-          # BawWorkers::Settings.logger.info(self.name) {
-          #   "Enqueued from HarvestAction. Resque enqueue returned #{result} using #{harvest_params}."
-          # }
-        end
+        def action_enqueue(harvest_params)
 
-        # Perform work. Used by Resque.
-        # @param [Hash] harvest_params
-        # @return [Array<Hash>] array of hashes representing operations performed
-        def perform(harvest_params)
-
-
+          result = BawWorkers::Media::Action.create(harvest_params: harvest_params)
+          action_logger.info(self.name) {
+            "Job enqueue returned '#{result}' using #{harvest_params}."
+          }
         end
 
       end
+
+      # Perform method used by resque-status.
+      def perform
+        harvest_params = options['harvest_params']
+        self.class.action_perform(harvest_params)
+      end
+
     end
   end
 end

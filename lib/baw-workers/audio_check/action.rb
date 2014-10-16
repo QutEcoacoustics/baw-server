@@ -3,9 +3,6 @@ module BawWorkers
     # Runs checks on original audio recording files.
     class Action
 
-      # include common methods
-      include BawWorkers::Common
-
       # Ensure that there is only one job with the same payload per queue.
       include Resque::Plugins::UniqueJob
 
@@ -14,6 +11,9 @@ module BawWorkers
 
       # track specific job instances and their status
       include Resque::Plugins::Status
+
+      # include common methods
+      include BawWorkers::Common
 
       # All methods do not require a class instance.
       class << self
@@ -30,36 +30,37 @@ module BawWorkers
           BawWorkers::Settings.resque.queues.maintenance
         end
 
-        # Enqueue an audio file check request.
-        # @param [Hash] audio_params
-        # @return [Boolean] True if job was queued, otherwise false. +nil+
-        #   if the job was rejected by a before_enqueue hook.
-        def enqueue(audio_params)
-          audio_params_sym = BawWorkers::AudioCheck::WorkHelper.validate(audio_params)
-          result = Resque.enqueue(BawWorkers::AudioCheck::Action, audio_params_sym)
-          BawWorkers::Settings.logger.info(self.name) {
-            "Enqueued from AudioFileCheckAction. Resque enqueue returned #{result} using #{audio_params}."
-          }
+        # Get logger
+        def action_logger
+          BawWorkers::Settings.logger
+        end
+
+        def action_api
+          api_comm = BawWorkers::ApiCommunicator.new(
+              action_logger,
+              BawWorkers::Settings.api,
+              BawWorkers::Settings.endpoints)
+        end
+
+        def action_file_info
+          BawWorkers::FileInfo.new(
+              action_logger,
+              BawWorkers::Settings.audio_helper
+          )
+        end
+
+        def action_audio_check
+          BawWorkers::AudioCheck::WorkHelper.new(
+              BawWorkers::Settings.logger,
+              action_file_info,
+              action_api)
         end
 
         # Perform work. Used by Resque.
         # @param [Hash] audio_params
         # @return [Array<Hash>] array of hashes representing operations performed
-        def perform(audio_params)
-          api_comm = BawWorkers::ApiCommunicator.new(
-              BawWorkers::Settings.logger,
-              BawWorkers::Settings.api,
-              BawWorkers::Settings.endpoints)
-
-          file_info = BawWorkers::FileInfo.new(
-              BawWorkers::Settings.logger,
-              BawWorkers::Settings.audio_helper
-          )
-
-          audio_file_check = BawWorkers::AudioCheck::WorkHelper.new(
-              BawWorkers::Settings.logger,
-              file_info,
-              api_comm)
+        def action_perform(audio_params)
+          audio_file_check = action_audio_check
 
           begin
             audio_file_check.run(audio_params, BawWorkers::Settings.resque.dry_run)
@@ -70,7 +71,29 @@ module BawWorkers
 
         end
 
+        # Enqueue an audio file check request.
+        # @param [Hash] audio_params
+        # @return [Boolean] True if job was queued, otherwise false. +nil+
+        #   if the job was rejected by a before_enqueue hook.
+        def action_enqueue(audio_params)
+          audio_params_sym = BawWorkers::AudioCheck::WorkHelper.validate(audio_params)
+          #result = Resque.enqueue(BawWorkers::AudioCheck::Action, audio_params_sym)
+          result = BawWorkers::Media::Action.create(audio_params: audio_params_sym)
+          BawWorkers::Settings.logger.info(self.name) {
+            "Job enqueue returned '#{result}' using #{audio_params}."
+          }
+        end
+
+
+
       end
+
+      # Perform method used by resque-status.
+      def perform
+        audio_params = options['audio_params']
+        self.class.action_perform(audio_params)
+      end
+
     end
   end
 end

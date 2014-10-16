@@ -8,6 +8,7 @@ require 'baw-audio-tools'
 require 'resque'
 require 'resque_solo'
 require 'resque-job-stats'
+require 'resque-status'
 
 require 'baw-workers/version'
 require 'baw-workers/settings'
@@ -22,6 +23,7 @@ module BawWorkers
   autoload :ApiCommunicator, 'baw-workers/api_communicator'
   autoload :FileInfo, 'baw-workers/file_info'
   autoload :ResqueApi, 'baw-workers/resque_api'
+  autoload :ResqueJobId, 'baw-workers/resque_job_id'
 
   module Analysis
     autoload :Action, 'baw-workers/analysis/action'

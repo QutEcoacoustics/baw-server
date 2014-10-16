@@ -35,27 +35,28 @@ module BawWorkers
         end
       end
 
-      # def self.stringify_hash(hash)
-      #   s2s =
-      #       lambda do |h|
-      #         if Hash === h
-      #           Hash[
-      #               h.map do |k, v|
-      #                 [
-      #                     k.is_a?(Symbol) ? k.to_s : k,
-      #                     s2s[v.is_a?(Symbol) ? v.to_s : v]
-      #                 ]
-      #               end
-      #           ]
-      #         elsif Array === h
-      #           h.map { |item| item.is_a?(Symbol) ? item.to_s : item }
-      #         else
-      #           h
-      #         end
-      #       end
+      # Get the key for resque_solo to use in redis.
+      def redis_key(payload)
+        BawWorkers::ResqueJobId.create_id_payload(payload)
+      end
+
+      # Overrides method used by resque-status.
+      # Uses resque_solo redis key instead of random uuid.
+      # Adds a job of type <tt>klass<tt> to a specified queue with <tt>options<tt>.
       #
-      #   s2s[hash]
-      # end
+      # Returns the UUID of the job if the job was queued, or nil if the job was
+      # rejected by a before_enqueue hook.
+      def enqueue_to(queue, klass, options = {})
+        uuid = BawWorkers::ResqueJobId.create_id_props(klass, options)
+        Resque::Plugins::Status::Hash.create uuid, :options => options
+
+        if Resque.enqueue_to(queue, klass, uuid, options)
+          uuid
+        else
+          Resque::Plugins::Status::Hash.remove(uuid)
+          nil
+        end
+      end
 
     end
 
