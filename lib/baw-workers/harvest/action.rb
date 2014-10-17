@@ -1,6 +1,6 @@
 module BawWorkers
   module Harvest
-    # Harvests files enqueued in redis.
+    # Harvests audio files to be accessible via baw-server.
     class Action
 
       # Ensure that there is only one job with the same payload per queue.

@@ -25,7 +25,20 @@ And then execute:
 
 ## Usage
 
-TODO: Write usage instructions here
+This project provides four workers:
+
+ - Analysis: Runs analysis scripts on audio files.
+ - Audio Check: Runs checks on original audio recording files.
+ - Harvester: Harvests audio files to be accessible via baw-server.
+ - Media: Cuts audio files and generates spectrograms.
+
+It also provides classes for working with well-defined file system storage:
+
+ - original audio files
+ - caches for 
+    - cut audio
+    - generated spectrograms
+    - analysis results. 
 
 ## Contributing
 

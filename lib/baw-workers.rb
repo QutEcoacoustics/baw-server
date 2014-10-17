@@ -11,12 +11,14 @@ require 'resque-job-stats'
 require 'resque-status'
 
 require 'baw-workers/version'
-require 'baw-workers/settings'
 require 'baw-workers/register_mime_types'
+require 'baw-workers/settings'
 
 # set time zone
 Time.zone = 'UTC'
 
+# Bioacoustics Workbench workers.
+# Workers that can process various long-running or intensive tasks.
 module BawWorkers
   autoload :Exceptions, 'baw-workers/exceptions'
   autoload :Common, 'baw-workers/common'
@@ -27,7 +29,7 @@ module BawWorkers
 
   module Analysis
     autoload :Action, 'baw-workers/analysis/action'
-    autoload :Workhelper, 'baw-workers/analysis/work_helper'
+    autoload :WorkHelper, 'baw-workers/analysis/work_helper'
   end
 
   module AudioCheck
@@ -37,7 +39,6 @@ module BawWorkers
 
   module Harvest
     autoload :Action, 'baw-workers/harvest/action'
-    autoload :WorkHelper, 'baw-workers/harvest/work_helper'
     autoload :GatherFiles, 'baw-workers/harvest/gather_files'
     autoload :SingleFile, 'baw-workers/harvest/single_file'
   end

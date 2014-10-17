@@ -1,5 +1,6 @@
 module BawWorkers
   module Storage
+    # Provides access to original audio storage.
     class AudioOriginal
       include BawWorkers::Storage::Common
 

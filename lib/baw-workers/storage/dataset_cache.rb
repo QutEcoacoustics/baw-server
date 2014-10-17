@@ -1,5 +1,6 @@
 module BawWorkers
   module Storage
+    # Provides access to dataset cache storage.
     class DatasetCache
       include BawWorkers::Storage::Common
 

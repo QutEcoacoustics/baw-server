@@ -1,6 +1,6 @@
 module BawWorkers
   module Media
-    # Action for cutting audio files and generating spectrograms.
+    # Cuts audio files and generates spectrograms.
     class Action
 
       # Ensure that there is only one job with the same payload per queue.
@@ -141,7 +141,6 @@ module BawWorkers
           validate_contains(media_type_sym, valid_media_types)
           [media_type_sym, params_sym]
         end
-
 
 
       end

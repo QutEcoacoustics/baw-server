@@ -1,6 +1,6 @@
 module BawWorkers
   module Storage
-    # Provides access to Analysis Cache storage.
+    # Provides access to analysis cache storage.
     class AnalysisCache
       include BawWorkers::Storage::Common
 

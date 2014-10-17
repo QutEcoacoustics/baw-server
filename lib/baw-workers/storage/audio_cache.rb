@@ -1,5 +1,6 @@
 module BawWorkers
   module Storage
+    # Provides access to audio cache storage.
     class AudioCache
       include BawWorkers::Storage::Common
 

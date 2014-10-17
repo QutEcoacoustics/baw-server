@@ -141,7 +141,7 @@ describe BawWorkers::Media::Action do
 
       expect {
         BawWorkers::Media::Action.action_perform(:audio, media_request_params)
-      }.to raise_error(ArgumentError, /Media type 'not_valid_param' is not in list of valid media types/)
+      }.to raise_error(ArgumentError, /Provided value for datetime_with_offset is not valid/)
     end
 
     end

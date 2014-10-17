@@ -13,7 +13,7 @@ module BawWorkers
         Resque.decode(Resque.encode(payload))
       end
 
-      # Get an id from payload (name of class, array representation of args hash).
+      # Get an id from payload (name of class, args hash).
       # @param [Hash] payload
       # @return [String] id
       def create_id_payload(payload)

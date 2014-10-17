@@ -1,5 +1,6 @@
 module BawWorkers
   module Storage
+    # Provides access to spectrogram cache storage.
     class SpectrogramCache
       include BawWorkers::Storage::Common
 

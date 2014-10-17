@@ -30,8 +30,9 @@ module BawWorkers
         if value.is_a?(ActiveSupport::TimeWithZone)
           value
         else
-          fail ArgumentError, 'Must provide a value for datetime_with_offset.' if value.blank?
-          Time.zone.parse(value)
+          fail ArgumentError, "Must provide a value for datetime_with_offset: '#{value}'." if value.blank?
+          result = Time.zone.parse(value)
+          fail ArgumentError, "Provided value for datetime_with_offset is not valid: '#{result}'." if result.blank?
         end
       end
 

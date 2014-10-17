@@ -84,8 +84,6 @@ module BawWorkers
           }
         end
 
-
-
       end
 
       # Perform method used by resque-status.
