@@ -10,6 +10,8 @@ shared_context 'rake_tests' do
   def run_rake_task(task_name, args)
     the_task = Rake::Task[task_name]
 
+    the_task.application.options.trace = true
+
     #args = [] if args.blank?
     #task_args = Rake::TaskArguments.new(the_task.arg_names, args)
     #the_task.execute(task_args)

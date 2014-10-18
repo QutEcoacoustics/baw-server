@@ -48,7 +48,7 @@ module BawWorkers
         # Get the queue for this action. Used by Resque. Overrides resque-status class method.
         # @return [Symbol] The queue.
         def queue
-          BawWorkers::Settings.resque.queues.media
+          BawWorkers::Settings.actions.media.queue
         end
 
         # Get the available media types this action can create.

@@ -5,8 +5,6 @@ rvm:
 branches:
   only:
     - master
-before_script:
-  - yes | cp lib/settings/settings.travis.yml lib/settings/settings.default.yml
 before_install:
   - echo "Installing audio tools..."
   - sudo apt-get update -qq

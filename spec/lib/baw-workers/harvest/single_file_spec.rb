@@ -32,7 +32,7 @@ describe BawWorkers::Harvest::SingleFile do
     )
   }
 
-  let(:to_do_dir) { BawWorkers::Settings.paths.harvester_to_do }
+  let(:to_do_dir) { BawWorkers::Settings.actions.harvest.to_do_path }
 
   let(:example_audio) { audio_file_mono }
 
@@ -42,7 +42,7 @@ describe BawWorkers::Harvest::SingleFile do
 
     it 'should succeed with valid file and settings' do
       # set up audio file and folder config
-      sub_folder = File.expand_path File.join('..', 'tmp', '_harvester_to_do', 'harvest_file_exists')
+      sub_folder = File.expand_path File.join('..', 'tmp', '_workers.harvester.to_do_path', 'harvest_file_exists')
       FileUtils.mkpath(sub_folder)
 
       source_audio_file = File.expand_path File.join('.', 'spec', 'example_media', 'test-audio-mono.ogg')

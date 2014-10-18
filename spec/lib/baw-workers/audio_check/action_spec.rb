@@ -3,7 +3,7 @@ require 'spec_helper'
 describe BawWorkers::AudioCheck::Action do
   include_context 'media_file'
 
-  let(:queue_name) { BawWorkers::Settings.resque.queues.maintenance }
+  let(:queue_name) { BawWorkers::Settings.actions.audio_check.queue }
 
   let(:audio_file_check) { BawWorkers::AudioCheck::WorkHelper.new(
       BawWorkers::Settings.logger,
@@ -39,8 +39,13 @@ describe BawWorkers::AudioCheck::Action do
 
     let(:expected_payload) {
       {
-          class: 'BawWorkers::AudioCheck::Action',
-          args: [test_params]
+          'class' => BawWorkers::AudioCheck::Action.to_s,
+          'args' => [
+              '2f65b9b2d3ffd4222b82102bc0e15e79',
+              {
+                  'audio_params' => test_params
+              }
+          ]
       }
     }
 
@@ -49,36 +54,42 @@ describe BawWorkers::AudioCheck::Action do
     end
 
     it 'can enqueue' do
-      BawWorkers::AudioCheck::Action.enqueue(test_params)
+      BawWorkers::AudioCheck::Action.action_enqueue(test_params)
       expect(Resque.size(queue_name)).to eq(1)
 
       actual = Resque.peek(queue_name)
-      # {:a => 1, :b => 2}.stringify_keys.should =~ {"a" => 1, "b" => 2}
-      expect(deep_stringify_keys(expected_payload)).to eq(actual)
+      expect(actual).to include(expected_payload)
     end
 
     it 'does not enqueue the same payload into the same queue more than once' do
-      result1 = BawWorkers::AudioCheck::Action.enqueue(test_params)
+
+      queued_query = { audio_params: test_params  }
+
+      expect(Resque.size(queue_name)).to eq(0)
+      expect(BawWorkers::ResqueApi.job_queued?(BawWorkers::AudioCheck::Action, queued_query)).to eq(false)
+      expect(Resque.enqueued?(BawWorkers::AudioCheck::Action, queued_query)).to eq(false)
+
+      result1 = BawWorkers::AudioCheck::Action.action_enqueue(test_params)
       expect(Resque.size(queue_name)).to eq(1)
       expect(result1).to eq(true)
-      expect(Resque.enqueued?(BawWorkers::AudioCheck::Action, test_params)).to eq(true)
+      expect(Resque.enqueued?(BawWorkers::AudioCheck::Action, queued_query)).to eq(true)
 
-      result2 = BawWorkers::AudioCheck::Action.enqueue(test_params)
+      result2 = BawWorkers::AudioCheck::Action.action_enqueue(test_params)
       expect(Resque.size(queue_name)).to eq(1)
       expect(result2).to eq(true)
-      expect(Resque.enqueued?(BawWorkers::AudioCheck::Action, test_params)).to eq(true)
+      expect(Resque.enqueued?(BawWorkers::AudioCheck::Action, queued_query)).to eq(true)
 
-      result3 = BawWorkers::AudioCheck::Action.enqueue(test_params)
+      result3 = BawWorkers::AudioCheck::Action.action_enqueue(test_params)
       expect(Resque.size(queue_name)).to eq(1)
       expect(result3).to eq(true)
-      expect(Resque.enqueued?(BawWorkers::AudioCheck::Action, test_params)).to eq(true)
+      expect(Resque.enqueued?(BawWorkers::AudioCheck::Action, queued_query)).to eq(true)
 
       actual = Resque.peek(queue_name)
-      expect(deep_stringify_keys(expected_payload)).to eq(actual)
+      expect(actual).to include(expected_payload)
       expect(Resque.size(queue_name)).to eq(1)
 
       popped = Resque.pop(queue_name)
-      expect(deep_stringify_keys(expected_payload)).to eq(popped)
+      expect(popped).to include(expected_payload)
       expect(Resque.size(queue_name)).to eq(0)
     end
 
@@ -89,13 +100,13 @@ describe BawWorkers::AudioCheck::Action do
     context 'raises error' do
       it 'with a params that is not a hash' do
         expect {
-          BawWorkers::AudioCheck::Action.perform('not a hash')
+          BawWorkers::AudioCheck::Action.action_perform('not a hash')
         }.to raise_error(ArgumentError, /Media request params was a 'String'\. It must be a 'Hash'\./)
       end
 
       it 'with a params missing required value' do
         expect {
-          BawWorkers::AudioCheck::Action.perform(test_params.except('original_format'))
+          BawWorkers::AudioCheck::Action.action_perform(test_params.except('original_format'))
         }.to raise_error(ArgumentError, /Audio params must include original_format/)
       end
 
@@ -104,7 +115,7 @@ describe BawWorkers::AudioCheck::Action do
         original_params = test_params.dup
 
         expect {
-          BawWorkers::AudioCheck::Action.perform(original_params)
+          BawWorkers::AudioCheck::Action.action_perform(original_params)
         }.to raise_error(BawAudioTools::Exceptions::FileNotFoundError, /No existing files for.*?7bb0c719-143f-4373-a724-8138219006d9.*?\.ogg/)
 
       end
@@ -126,7 +137,7 @@ describe BawWorkers::AudioCheck::Action do
 
         # act
         expect {
-          BawWorkers::AudioCheck::Action.perform(original_params)
+          BawWorkers::AudioCheck::Action.action_perform(original_params)
         }.to raise_error(BawAudioTools::Exceptions::FileCorruptError, /File hashes DO NOT match for.*?:file_hash=>:fail/)
       end
 
@@ -147,7 +158,7 @@ describe BawWorkers::AudioCheck::Action do
 
         # act
         expect {
-          BawWorkers::AudioCheck::Action.perform(original_params)
+          BawWorkers::AudioCheck::Action.action_perform(original_params)
         }.to raise_error(BawAudioTools::Exceptions::FileNotFoundError, /No existing files for/)
       end
 
@@ -174,7 +185,7 @@ describe BawWorkers::AudioCheck::Action do
 
         # act
         expect {
-          BawWorkers::AudioCheck::Action.perform(original_params)
+          BawWorkers::AudioCheck::Action.action_perform(original_params)
         }.to raise_error(BawAudioTools::Exceptions::FileCorruptError, /File hashes DO NOT match for/)
       end
 
@@ -194,7 +205,7 @@ describe BawWorkers::AudioCheck::Action do
 
         # act
         expect {
-          BawWorkers::AudioCheck::Action.perform(original_params)
+          BawWorkers::AudioCheck::Action.action_perform(original_params)
         }.to raise_error(BawAudioTools::Exceptions::FileCorruptError, /Ffmpeg output contained warning/)
       end
 
@@ -217,7 +228,7 @@ describe BawWorkers::AudioCheck::Action do
 
         # act
         expect {
-          BawWorkers::AudioCheck::Action.perform(original_params)
+          BawWorkers::AudioCheck::Action.action_perform(original_params)
         }.to raise_error(BawAudioTools::Exceptions::FileCorruptError, /File hash and other properties DO NOT match.*?:file_hash=>:fail.*?:duration_seconds=>:fail/)
 
       end
@@ -240,7 +251,7 @@ describe BawWorkers::AudioCheck::Action do
 
         # act
         expect {
-          BawWorkers::AudioCheck::Action.perform(original_params)
+          BawWorkers::AudioCheck::Action.action_perform(original_params)
         }.to raise_error(ArgumentError, /recorded_date must be a UTC time \(i\.e\. end with Z\), given/)
 
       end
@@ -263,7 +274,7 @@ describe BawWorkers::AudioCheck::Action do
         create_original_audio(media_request_params, audio_file_mono)
 
         # act
-        result = BawWorkers::AudioCheck::Action.perform(original_params)
+        result = BawWorkers::AudioCheck::Action.action_perform(original_params)
 
         # assert
         expect(result.size).to eq(1)
@@ -289,7 +300,7 @@ describe BawWorkers::AudioCheck::Action do
         create_original_audio(media_request_params, audio_file_mono, true)
 
         # act
-        result = BawWorkers::AudioCheck::Action.perform(original_params)
+        result = BawWorkers::AudioCheck::Action.action_perform(original_params)
 
         # assert
         expect(result.size).to eq(1)
@@ -317,7 +328,7 @@ describe BawWorkers::AudioCheck::Action do
         create_original_audio(media_request_params, audio_file_mono, false)
 
         # act
-        result = BawWorkers::AudioCheck::Action.perform(original_params)
+        result = BawWorkers::AudioCheck::Action.action_perform(original_params)
 
         # assert
         expect(result.size).to eq(2)
@@ -381,7 +392,7 @@ describe BawWorkers::AudioCheck::Action do
             to_return(:status => 200)
 
         # act
-        result = BawWorkers::AudioCheck::Action.perform(original_params)
+        result = BawWorkers::AudioCheck::Action.action_perform(original_params)
 
         # assert
         expect(result.size).to eq(1)
@@ -427,7 +438,7 @@ describe BawWorkers::AudioCheck::Action do
             to_return(:status => 200)
 
         # act
-        result = BawWorkers::AudioCheck::Action.perform(original_params)
+        result = BawWorkers::AudioCheck::Action.action_perform(original_params)
 
         # assert
         expect(result.size).to eq(1)
@@ -487,7 +498,7 @@ describe BawWorkers::AudioCheck::Action do
               to_return(:status => 200)
 
           # act
-          #result = BawWorkers::AudioCheck::Action.perform(original_params)
+          #result = BawWorkers::AudioCheck::Action.action_perform(original_params)
 
           result = audio_file_check.run(original_params, true)
           # assert

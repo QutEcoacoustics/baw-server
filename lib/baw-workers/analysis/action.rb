@@ -28,7 +28,7 @@ module BawWorkers
         # Get the queue for this action. Used by Resque.
         # @return [Symbol] The queue.
         def queue
-          BawWorkers::Settings.resque.queues.analysis
+          BawWorkers::Settings.actions.analysis.queue
         end
 
         # Get logger

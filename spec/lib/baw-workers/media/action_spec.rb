@@ -3,7 +3,7 @@ require 'spec_helper'
 describe BawWorkers::Media::Action do
   include_context 'media_file'
 
-  let(:queue_name) { BawWorkers::Settings.resque.queues.media }
+  let(:queue_name) { BawWorkers::Settings.actions.media.queue }
 
   context 'queues' do
 
@@ -231,6 +231,36 @@ describe BawWorkers::Media::Action do
         expect(target_existing_paths.size).to eq(1)
         expect(target_existing_paths[0]).to eq(expected_paths[0])
 
+      end
+
+      it 'runs a worker that processes the media_test queue' do
+        # arrange
+
+        # create original audio file
+        media_request_params =
+            {
+                uuid: '7bb0c719-143f-4373-a724-8138219006d9',
+                format: 'wav',
+                media_type: 'audio/wav',
+                start_offset: 5,
+                end_offset: 10,
+                channel: 0,
+                sample_rate: 22050,
+                datetime_with_offset: Time.zone.now,
+                original_format: audio_file_mono_format
+            }
+
+        create_original_audio(media_request_params, audio_file_mono)
+
+        BawWorkers::Media::Action.action_enqueue(:audio, media_request_params)
+
+        # act
+        emulate_resque_worker(BawWorkers::Media::Action.queue)
+
+        # assert
+        expected_paths = get_cached_audio_paths(media_request_params)
+        expect(expected_paths.size).to eq(1)
+        expect(File.exists?(expected_paths[0])).to be_truthy
       end
 
     end

@@ -27,7 +27,7 @@ module BawWorkers
         # Get the queue for this action. Used by Resque.
         # @return [Symbol] The queue.
         def queue
-          BawWorkers::Settings.resque.queues.harvest
+          BawWorkers::Settings.actions.harvest.queue
         end
 
         # Perform work. Used by Resque.
@@ -48,7 +48,7 @@ module BawWorkers
         #   if the job was rejected by a before_enqueue hook.
         def action_enqueue(harvest_params)
 
-          result = BawWorkers::Media::Action.create(harvest_params: harvest_params)
+          result = BawWorkers::Harvest::Action.create(harvest_params: harvest_params)
           action_logger.info(self.name) {
             "Job enqueue returned '#{result}' using #{harvest_params}."
           }

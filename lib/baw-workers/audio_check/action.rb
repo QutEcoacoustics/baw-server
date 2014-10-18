@@ -27,7 +27,7 @@ module BawWorkers
         # Get the queue for this action. Used by Resque.
         # @return [Symbol] The queue.
         def queue
-          BawWorkers::Settings.resque.queues.maintenance
+          BawWorkers::Settings.actions.audio_check.queue
         end
 
         # Get logger
@@ -63,7 +63,7 @@ module BawWorkers
           audio_file_check = action_audio_check
 
           begin
-            audio_file_check.run(audio_params, BawWorkers::Settings.resque.dry_run)
+            audio_file_check.run(audio_params, BawWorkers::Settings.actions.audio_check.dry_run)
           rescue Exception => e
             BawWorkers::Settings.logger.error(self.name) { e }
             raise e
@@ -78,7 +78,7 @@ module BawWorkers
         def action_enqueue(audio_params)
           audio_params_sym = BawWorkers::AudioCheck::WorkHelper.validate(audio_params)
           #result = Resque.enqueue(BawWorkers::AudioCheck::Action, audio_params_sym)
-          result = BawWorkers::Media::Action.create(audio_params: audio_params_sym)
+          result = BawWorkers::AudioCheck::Action.create(audio_params: audio_params_sym)
           BawWorkers::Settings.logger.info(self.name) {
             "Job enqueue returned '#{result}' using #{audio_params}."
           }

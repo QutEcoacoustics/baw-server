@@ -16,11 +16,9 @@ module BawWorkers
         @logger = logger
         @file_info_helper = file_info_helper
 
-        #@harvest_paths = Settings.paths.harvester_to_do
         @ext_include = ext_include #Settings.available_formats.audio
         @ext_exclude = %w(completed log yml)
-        @config_file_name = config_file_name #Settings.config_file_name
-        #@upload_dir = Settings.paths.progressive_upload_directory
+        @config_file_name = config_file_name
       end
 
       # Get attributes for a single file.
@@ -77,7 +75,7 @@ module BawWorkers
           output.push(*dirs)
 
         else
-          msg = "Could not find harvester_to_do path(s): #{dirs}"
+          msg = "Could not find workers.harvester.to_do_path path(s): #{dirs}"
           @logger.error(get_class_name) { msg }
           fail Exceptions::HarvesterConfigurationError, msg
         end

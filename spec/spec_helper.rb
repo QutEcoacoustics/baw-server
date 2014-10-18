@@ -115,7 +115,7 @@ RSpec.configure do |config|
     STDERR.reopen(original_stderr)
     STDOUT.reopen(original_stdout)
 
-    FileUtils.rm_rf BawWorkers::Settings.paths.harvester_to_do if File.directory?(BawWorkers::Settings.paths.harvester_to_do)
+    FileUtils.rm_rf BawWorkers::Settings.actions.harvest.to_do_path if File.directory?(BawWorkers::Settings.actions.harvest.to_do_path)
   end
 
   # setting the source file here means the rake task cannot change it

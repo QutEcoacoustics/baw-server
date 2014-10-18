@@ -3,7 +3,7 @@ require 'spec_helper'
 describe BawWorkers::Harvest::GatherFiles do
   include_context 'media_file'
 
-  let(:config_file_name) { 'harvest.yml'}
+  let(:config_file_name) { BawWorkers::Settings.actions.harvest.config_file_name}
 
   let(:file_info) {BawWorkers::FileInfo.new(BawWorkers::Settings.logger, BawWorkers::Settings.audio_helper)}
 
@@ -16,7 +16,7 @@ describe BawWorkers::Harvest::GatherFiles do
     )
   }
   
-  let(:to_do_dir) { BawWorkers::Settings.paths.harvester_to_do}
+  let(:to_do_dir) { BawWorkers::Settings.actions.harvest.to_do_path}
 
   let(:example_audio) { audio_file_mono }
 
@@ -222,7 +222,7 @@ describe BawWorkers::Harvest::GatherFiles do
 
     it 'should success if file does exist' do
       audio_file = File.expand_path File.join('.', 'spec', 'example_media', 'test-audio-mono.ogg')
-      sub_folder = File.expand_path File.join('..', 'tmp', '_harvester_to_do', 'harvest_file_exists')
+      sub_folder = File.expand_path File.join('..', 'tmp', '_workers.harvester.to_do_path', 'harvest_file_exists')
 
       FileUtils.mkpath(sub_folder)
       FileUtils.copy(folder_example, File.join(sub_folder, 'harvest.yml'))

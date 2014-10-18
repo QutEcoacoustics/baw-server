@@ -59,6 +59,13 @@ shared_context 'media_file' do
     spectrogram_cache.possible_paths(options)
   end
 
+  def emulate_resque_worker(queue)
+    job = Resque.reserve(queue)
+
+    # returns true if job was performed
+    job.perform
+  end
+
   def transform_hash(original, options={}, &block)
     original.inject({}) { |result, (key, value)|
       value = if options[:deep] && Hash === value

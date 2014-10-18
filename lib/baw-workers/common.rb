@@ -33,6 +33,7 @@ module BawWorkers
           fail ArgumentError, "Must provide a value for datetime_with_offset: '#{value}'." if value.blank?
           result = Time.zone.parse(value)
           fail ArgumentError, "Provided value for datetime_with_offset is not valid: '#{result}'." if result.blank?
+          result
         end
       end
 

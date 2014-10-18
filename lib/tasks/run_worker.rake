@@ -5,8 +5,8 @@ require 'baw-workers'
 namespace :baw do
   namespace :worker do
 
-    desc 'Load settings and connect to Redis'
-    task :init, [:settings_file] do |t, args|
+    desc 'Load settings'
+    task :init_settings, [:settings_file] do |t, args|
       args.with_defaults(settings_file: File.join(File.dirname(__FILE__), '..', 'settings', 'settings.default.yml'))
 
       BawWorkers::Settings.set_source(args.settings_file)
@@ -19,7 +19,10 @@ namespace :baw do
           namespace 'settings'
         end
       end
+    end
 
+    desc 'Connect to Redis'
+    task :init_redis, [:settings_file] => [:init_settings] do |t, args|
       puts "===> Connecting to Redis on #{BawWorkers::Settings.resque.connection}."
       Resque.redis = BawWorkers::Settings.resque.connection
       Resque.redis.namespace = Settings.resque.namespace
@@ -27,7 +30,7 @@ namespace :baw do
 
     # Set up the worker parameters. Takes one argument: settings_file
     desc 'Run setup for Resque worker'
-    task :setup, [:settings_file] => [:init] do |t, args|
+    task :setup, [:settings_file] => [:init_redis] do |t, args|
 
       if BawWorkers::Settings.resque.background_pid_file.blank?
         puts '===> Running in foreground.'
@@ -79,7 +82,7 @@ namespace :baw do
     end
 
     desc 'Quit running workers'
-    task :stop_all, [:settings_file] => [:init] do |t, args|
+    task :stop_all, [:settings_file] => [:init_redis] do |t, args|
 
       pids = Array.new
       Resque.workers.each do |worker|
@@ -98,7 +101,7 @@ namespace :baw do
     end
 
     desc 'List running workers'
-    task :current, [:settings_file] => [:init] do |t, args|
+    task :current, [:settings_file] => [:init_redis] do |t, args|
       workers = Resque.workers
       if !workers.blank? && workers.size > 0
         puts "Current workers (#{workers.size}):"

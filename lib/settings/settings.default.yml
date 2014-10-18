@@ -2,19 +2,37 @@ settings:
   resque:
     queues_to_process:
       - example
-    connection: localhost:6379
-    namespace: 'resque:baw:default'
+    connection:
+        host: localhost
+        port: 6379
+        password: password
+        db: 0
+    namespace: resque
     log_level: 1 # Severity::INFO
     polling_interval_seconds: 5
     background_pid_file: ./tmp/resque_worker.pid
     output_log_file: ./tmp/program_stdout.log
     error_log_file: ./tmp/program_stderr.log
-    dry_run: false
-    queues:
-      media: media_default
-      maintenance: maintenance_default
-      harvest: harvest_default
-      analysis: analysis_default
+  actions:
+    analysis:
+      queue: analysis_default
+      dry_run: false
+      analyser_id:
+      to_do_path:
+    audio_check:
+      queue: maintenance_default
+      dry_run: false
+      to_do_folder_path: ./tmp/_audio_check_to_do_folder_path
+      to_do_csv_path: ./tmp/_audio_check_to_do.csv
+    harvest:
+      queue: harvest_default
+      dry_run: false
+      to_do_path: ./tmp/_harvester_to_do_path
+      config_file_name: harvest.yml
+      progressive_upload_directory: ./tmp/_progressive-upload/
+    media:
+      queue: media_default
+      dry_run: false
   paths:
     original_audios:
       - ./tmp/_original_audio
@@ -26,9 +44,7 @@ settings:
       - ./tmp/_cached_dataset
     cached_analysis_jobs:
       - ./tmp/_cached_analysis_jobs
-    harvester_to_do: ./tmp/_harvester_to_do
-    harvester_completed: ./tmp/_harvester_completed
-    harvester_log_file: ./tmp/harvester.log
+    workers.harvester.to_do_path:
     modules_log_file: ./tmp/audio_tools.log
     workers_log_file: ./tmp/workers.log
     temp_dir: ./tmp/
@@ -45,7 +61,7 @@ settings:
     password: password
   smtp:
     address: localhost
-    port:
+    port: 25
   cached_audio_defaults:
     storage_format: mp3
     channel: 0
@@ -62,9 +78,6 @@ settings:
     ppms: 0.045
     max_duration_seconds: 120.0
     min_duration_seconds: 0.5
-  cached_dataset_defaults:
-    storage_format: txt
-    one_item_per_line: true
   available_formats:
     text:
       - json

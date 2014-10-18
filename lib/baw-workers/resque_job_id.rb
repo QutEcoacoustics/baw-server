@@ -1,3 +1,5 @@
+require 'active_support/core_ext/object/deep_dup'
+
 module BawWorkers
   # Create and manage resque job ids.
   class ResqueJobId
@@ -86,12 +88,14 @@ module BawWorkers
         end
 
         # ensure args are not nested in another array
-        if modified_args.size == 1
+        if modified_args.size == 1 && modified_args[0].is_a?(Array) && modified_args[0][0].is_a?(Array)
           modified_args = modified_args[0]
         end
 
         # sort the arg array by the first item in each sub-array
-        modified_args = modified_args.sort{ |a, b| a[0] <=> b[0]}
+        modified_args = modified_args.sort{ |a, b|
+          a[0] <=> b[0]
+        }
 
         id = Digest::MD5.hexdigest Resque.encode(class: klass, args: modified_args)
         id
