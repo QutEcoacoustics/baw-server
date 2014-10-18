@@ -7,6 +7,7 @@ require "#{File.dirname(__FILE__)}/../lib/patches/enable_stampable_deleter"
 require "#{File.dirname(__FILE__)}/../lib/patches/big_decimal"
 require "#{File.dirname(__FILE__)}/../lib/patches/float"
 require "#{File.dirname(__FILE__)}/../lib/patches/random"
+require "#{File.dirname(__FILE__)}/../lib/patches/deep_dup"
 
 if defined?(Bundler)
   # If you precompile assets before deploying to production, use this line

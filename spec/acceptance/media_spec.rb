@@ -686,7 +686,7 @@ resource 'Media' do
 
         options = create_media_options(audio_recording)
 
-        queue_name = Settings.resque.queues.media.to_sym
+        queue_name = Settings.actions.media.queue
 
         # do first request - this purposely fails,
         # we're restricted to a single thread, so can't run request and worker at once (they both block)

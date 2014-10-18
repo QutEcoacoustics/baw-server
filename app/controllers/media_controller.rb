@@ -213,7 +213,7 @@ class MediaController < ApplicationController
   # @param [Object] generation_request
   # @return [String] path to existing file
   def create_media_local(media_category, generation_request)
-    BawWorkers::Media::Action.make_media_request(media_category, generation_request)
+    BawWorkers::Media::Action.make_media_request(media_category, generation_request, Rails.logger)
   end
 
 
@@ -223,7 +223,7 @@ class MediaController < ApplicationController
   # @param [Object] generation_request
   # @return [Array<String>] path to existing file
   def create_media_resque(media_category, files_info, generation_request)
-    BawWorkers::Media::Action.enqueue(media_category, generation_request)
+    BawWorkers::Media::Action.action_enqueue(media_category, generation_request)
     poll_media(files_info.possible, Settings.audio_tools_timeout_sec)
   end
 

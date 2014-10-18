@@ -12,8 +12,9 @@ defaults: &defaults
       port: 6379
       password: password
     namespace: 'resque'
-    queues:
-      media: media_default
+  actions:
+    media:
+      queue: media_default
   media_request_processor: local # options are local or resque
   smtp:
     # see http://guides.rubyonrails.org/action_mailer_basics.html#action-mailer-configuration
