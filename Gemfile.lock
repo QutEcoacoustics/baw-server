@@ -1,6 +1,6 @@
 GIT
   remote: https://github.com/QutBioacoustics/baw-audio-tools.git
-  revision: c09694c5572907f5e85b7e98e0a69cc5ca822f09
+  revision: 07af4484afe492b2fd5417f91df6a8772a19b9ff
   specs:
     baw-audio-tools (0.3.0)
       activesupport (>= 3.2)
@@ -8,7 +8,7 @@ GIT
 
 GIT
   remote: https://github.com/QutBioacoustics/baw-workers.git
-  revision: a59b6870c61b6cecb4f53c1cd5f951bdfd160150
+  revision: 38e2aef2ac02dec44959320c2bb7e79f297f30c7
   specs:
     baw-workers (0.3.0)
       actionmailer (>= 3.2)
@@ -21,7 +21,7 @@ GIT
 
 GIT
   remote: https://github.com/brainspec/enumerize.git
-  revision: 42b9cf480f0b4ae3d157c6af83880e3555ef68af
+  revision: 8235f6b07962bbee6fca0dd90c8b6cad19d8b5d3
   specs:
     enumerize (0.8.0)
       activesupport (>= 3.2)
@@ -134,9 +134,9 @@ GEM
     codeclimate-test-reporter (0.4.1)
       simplecov (>= 0.7.1, < 1.0.0)
     coderay (1.1.0)
-    coffee-rails (3.2.1)
+    coffee-rails (3.2.2)
       coffee-script (>= 2.2.0)
-      railties (~> 3.2.0.beta)
+      railties (~> 3.2.0)
     coffee-script (2.3.0)
       coffee-script-source
       execjs
@@ -226,7 +226,7 @@ GEM
     net-scp (1.2.1)
       net-ssh (>= 2.6.5)
     net-ssh (2.9.1)
-    netrc (0.7.7)
+    netrc (0.8.0)
     newrelic_rpm (3.9.5.251)
     nokogiri (1.6.3.1)
       mini_portile (= 0.6.0)
@@ -330,7 +330,7 @@ GEM
     ruby_parser (3.5.0)
       sexp_processor (~> 4.1)
     safe_yaml (1.0.4)
-    sass (3.4.5)
+    sass (3.4.6)
     sass-rails (3.2.6)
       railties (~> 3.2.0)
       sass (>= 3.1.10)
