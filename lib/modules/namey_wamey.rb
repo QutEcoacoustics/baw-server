@@ -42,6 +42,10 @@ class NameyWamey
     "#{project.name}_#{project.id}_#{site.name}_#{site.id}#{extra_options_formatted}.#{extension.trim('.', '')}"
   end
 
+  def self.trim(string_value, chars_to_replace, char_to_insert)
+    "#{string_value}".gsub(/^[#{chars_to_replace}]+|[#{chars_to_replace}]+$/, char_to_insert)
+  end
+
   private
 
   def self.get_extra_options(extra_options)

@@ -1,11 +1,18 @@
 class SitesController < ApplicationController
+  include Api::ControllerHelper
+
   add_breadcrumb 'Home', :root_path
 
-  load_and_authorize_resource :project, except: [:show_shallow]
-  before_filter :build_project_site, only: [:new, :create] # this is necessary so that the ability has access to site.projects
-  load_and_authorize_resource :site, through: :project, except: [:show_shallow]
+  # order matters for before_filter and load_and_authorize_resource!
+  load_and_authorize_resource :project, except: [:show_shallow, :filter]
 
-  before_filter :add_project_breadcrumb, except: [:show_shallow]
+  # this is necessary so that the ability has access to site.projects
+  before_filter :build_project_site, only: [:new, :create]
+
+  load_and_authorize_resource :site, through: :project, except: [:show_shallow, :filter]
+  load_and_authorize_resource :site, only: [:show_shallow, :filter]
+
+  before_filter :add_project_breadcrumb, except: [:show_shallow, :filter]
 
   # GET /project/1/sites
   # GET /project/1/sites.json
@@ -20,9 +27,6 @@ class SitesController < ApplicationController
 
   # GET /sites/1.json
   def show_shallow
-    # do authorisation manually
-    @site = Site.find(params[:id])
-    authorize! :show, @site
 
     @site.update_location_obfuscated(current_user)
 
@@ -35,8 +39,6 @@ class SitesController < ApplicationController
   # GET /project/1/sites/1
   # GET /project/1/sites/1.json
   def show
-    @site = @project.sites.find(params[:id])
-
     @site_audio_recordings = @site.audio_recordings.where(status: 'ready').order('recorded_date DESC').paginate(page: params[:page], per_page: 30)
 
     @site.update_location_obfuscated(current_user)
@@ -52,6 +54,9 @@ class SitesController < ApplicationController
   # GET /project/1/sites/new
   # GET /project/1/sites/new.json
   def new
+
+    attributes_and_authorize
+
     @site.longitude = 152
     @site.latitude = -27
     respond_to do |format|
@@ -67,7 +72,6 @@ class SitesController < ApplicationController
 
   # GET /project/1/sites/1/edit
   def edit
-    @site = @project.sites.find(params[:id])
     add_breadcrumb @site.name, [@project, @site]
     add_breadcrumb 'Edit'
     @markers = @site.to_gmaps4rails do |site, marker|
@@ -78,8 +82,8 @@ class SitesController < ApplicationController
   # POST /project/1/sites
   # POST /project/1/sites.json
   def create
-    @site = Site.new(params[:site])
-    @site.projects << @project
+
+    attributes_and_authorize
 
     respond_to do |format|
       if @site.save
@@ -101,7 +105,6 @@ class SitesController < ApplicationController
   # PUT /project/1/sites/1
   # PUT /project/1/sites/1.json
   def update
-    @site = Site.find(params[:id])
     @site.projects << @project unless @site.projects.include?(@project) # to avoid duplicates in the Projects_Sites table
 
     respond_to do |format|
@@ -121,7 +124,6 @@ class SitesController < ApplicationController
   # DELETE /project/1/sites/1
   # DELETE /project/1/sites/1.json
   def destroy
-    @site = Site.find(params[:id])
     @site.destroy
 
     respond_to do |format|
@@ -141,6 +143,26 @@ class SitesController < ApplicationController
 
   def harvest
     render file: 'sites/_harvest.yml.erb', content_type: 'text/yaml', layout: false
+  end
+
+  # POST /sites/filter.json
+  # GET /sites/filter.json
+  def filter
+    filter_response = Settings.api_response.response_filter(
+        params,
+        current_user.is_admin? ? Site.scoped : current_user.accessible_sites,
+        Site,
+        Site.filter_settings
+    )
+
+    # always display project_ids
+    filter_response[:data] = filter_response.data.each { |site|
+      # TODO: this causes a deprecation warning for writing arbitrary attributes to a model
+      site[:project_ids] = Site.where(id: site.id).first.projects.select(:id)
+      site
+    }
+
+    render_api_response(filter_response)
   end
 
   private

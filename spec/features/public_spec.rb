@@ -13,8 +13,8 @@ describe 'Website forms' do
 
       visit contact_us_path
       current_path.should eq(contact_us_path)
-      fill_in 'contact_us[name]', with: 'name'
-      fill_in 'contact_us[content]', with: 'testing testing'
+      fill_in 'data_class_contact_us[name]', with: 'name'
+      fill_in 'data_class_contact_us[content]', with: 'testing testing'
       click_button 'Submit'
 
       current_path.should eq(contact_us_path)
@@ -49,8 +49,8 @@ describe 'Website forms' do
 
       visit bug_report_path
       current_path.should eq(bug_report_path)
-      fill_in 'bug_report[description]', with: 'description-1-1-1-1'
-      fill_in 'bug_report[content]', with: 'testing testing'
+      fill_in 'data_class_bug_report[description]', with: 'description-1-1-1-1'
+      fill_in 'data_class_bug_report[content]', with: 'testing testing'
       click_button 'Submit'
 
       current_path.should eq(bug_report_path)
@@ -85,10 +85,10 @@ describe 'Website forms' do
 
       visit data_request_path
       current_path.should eq(data_request_path)
-      fill_in 'data_request[email]', with: 'email@email.com'
-      fill_in 'data_request[group]', with: 'description-1-1-1-1'
-      select 'Non profit', from: 'data_request[group_type]'
-      fill_in 'data_request[content]', with: 'testing testing'
+      fill_in 'data_class_data_request[email]', with: 'email@email.com'
+      fill_in 'data_class_data_request[group]', with: 'description-1-1-1-1'
+      select 'Non profit', from: 'data_class_data_request[group_type]'
+      fill_in 'data_class_data_request[content]', with: 'testing testing'
       click_button 'Submit'
 
       current_path.should eq(data_request_path)

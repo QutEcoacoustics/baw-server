@@ -1,1 +1,0 @@
-json.(@bookmark, :id, :name, :offset_seconds, :audio_recording_id, :description, :category)

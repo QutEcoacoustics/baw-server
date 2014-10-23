@@ -3,13 +3,20 @@
 
 .span9
   %h1= @user.user_name
+  You can
+  = link_to 'request access', new_access_request_projects_path
+  to existing projects or
+  = link_to 'create', new_project_path
+  your own projects.
 
 .span12
   %h3 Projects
 
   - if @user_projects.empty?
-    = 'This user cannot access any projects.'
+    No projects to show.
   - else
+    = page_entries_info @user_projects
+    = will_paginate @user_projects, renderer: BawWillPaginateLinkRenderer
 
     %table.table.table-striped(data-provides='rowlink')
       %thead
@@ -36,12 +43,4 @@
 - content_for :title, "Projects #{@user.user_name} can access"
 
 - content_for :left_sidebar do
-  = render layout: '/shared/left_sidebar', locals: {title: 'User Accounts'} do
-    - if can? :show, User
-      %li= link_to 'Show', user_account_path(@user), title: 'Show user account', data: {toggle: 'tooltip',  placement: 'right'}
-    - if current_user == @user
-      %li= link_to 'Edit my details', edit_user_registration_path, title: 'Edit your account information', data: {toggle: 'tooltip',  placement: 'right'}
-    - elsif can? :edit, @user
-      %li= link_to 'Edit', edit_user_account_path(@user), title: 'Edit this user\'s details', data: {toggle: 'tooltip',  placement: 'right'}
-    - if can? :index, User
-      %li= link_to 'List', user_accounts_path, title: 'List all user accounts', data: {toggle: 'tooltip',  placement: 'right'}
+  = render partial: 'sidebar_links'

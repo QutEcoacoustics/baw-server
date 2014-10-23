@@ -1,10 +1,11 @@
 FactoryGirl.define do
 
   factory :site do
-    creator
     sequence(:name) { |n| "site name #{n}" }
     sequence(:notes) { |n|  "note number #{n}" }
     sequence(:description) { |n| "site description #{n}" }
+
+    creator
 
     trait :site_with_lat_long do
       # Random.rand returns "a random integer greater than or equal to zero and less than the argument"
@@ -24,7 +25,7 @@ FactoryGirl.define do
       end
       after(:create) do |site, evaluator|
         raise 'Creator was blank' if  evaluator.creator.blank?
-        create_list(:audio_recording_with_audio_events, evaluator.audio_recording_count, site: site, creator: evaluator.creator)
+        create_list(:audio_recording_with_audio_events_and_bookmarks, evaluator.audio_recording_count, site: site, creator: evaluator.creator)
       end
     end
 

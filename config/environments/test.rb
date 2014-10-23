@@ -66,24 +66,9 @@ AWB::Application.configure do
     Bullet.add_footer = false
     Bullet.raise = false
 
-    # for rails
-    config.logger = Logger.new(Rails.root.join('log', "#{Rails.env}.log"))
-    BawAudioTools::Logging.logger_formatter(config.logger)
-    config.level = :info
-
-    # for audio tools
-    BawAudioTools::Logging.set_logger(Logger.new(Rails.root.join('log', "#{Rails.env}.audiotools.log")))
-    BawAudioTools::Logging.set_level(Logger::INFO)
-
-    # for mailer
-    config.action_mailer.logger = Logger.new(Rails.root.join('log', "#{Rails.env}.mailer.log"))
-    BawAudioTools::Logging.logger_formatter(config.action_mailer.logger)
-    config.action_mailer.logger.level = Logger::INFO
-
-    # log all activerecord activity
-    #ActiveRecord::Base.logger = Logger.new(Rails.root.join('log', "#{Rails.env}.activerecord.log"))
-    #config.active_record.colorize_logging = false
-    #BawAudioTools::Logging.logger_formatter(ActiveRecord::Base.logger)
+    # overwrite redis
+    require 'fakeredis'
+    Resque.redis = Redis.new
   end
 
 end

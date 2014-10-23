@@ -11,7 +11,10 @@ defaults: &defaults
       host: localhost
       port: 6379
       password: password
-    media_request_queue: example_queue_name
+    namespace: 'resque'
+  actions:
+    media:
+      queue: media_default
   media_request_processor: local # options are local or resque
   smtp:
     # see http://guides.rubyonrails.org/action_mailer_basics.html#action-mailer-configuration
@@ -76,7 +79,8 @@ defaults: &defaults
       - <%= Rails.root %>/tmp/_cached_dataset
     harvester_base: <%= Rails.root %>/tmp/_harvester_to_do
     modules_log_file: <%= Rails.root %>/tmp/_modules_log.log
-    temp_files: <%= Rails.root %>/tmp
+    workers_log_file: <%= Rails.root %>/tmp/workers_log.log
+    temp_dir: <%= Rails.root %>/tmp
   harvester_config_file: harvest.yml
   harvester:
     email: address+harvester@example.com

@@ -10,8 +10,8 @@
 = simple_form_for(resource, :as => resource_name, :url => registration_path(resource_name), :html => { class: 'form-horizontal', :multipart => true, :method => :put }) do |f|
   = f.error_notification
   .form-inputs
-    = f.input :user_name, :required => true, :autofocus => true
-    = f.input :email, :required => true
+    = f.input :user_name, required: true, autofocus: true
+    = f.input :email, required: true
     - if devise_mapping.confirmable? && resource.pending_reconfirmation?
       %p
         Currently waiting confirmation for: #{resource.unconfirmed_email}
@@ -24,14 +24,18 @@
         - unless resource.image_file_name.blank?
           = image_tag resource.image.url(:span1)
         = f.file_field :image
+
   .form-actions
     = f.button :submit, 'Update'
+
+- unless current_user.is_admin?
+  = link_to 'Cancel my account', registration_path(resource_name),
+                     method: :delete,
+                     title: "WARNING: This will permanently delete your account",
+                     data: {confirm: 'Are you sure?', toggle: 'tooltip',  placement: 'right'}
+
 
 - content_for :title, "Edit Profile for #{current_user.user_name}"
 
 - content_for :left_sidebar do
-  = render layout: '/shared/left_sidebar', locals: {title: 'Users'} do
-    %li= link_to 'View profile', my_account_path, title: 'View your profile page', data: {toggle: 'tooltip',  placement: 'right'}
-    - unless current_user.is_admin?
-      %li= link_to 'Cancel my account', registration_path(resource_name), method: :delete,
-        title: "Permanently delete your account", data: {confirm: 'Are you sure?', toggle: 'tooltip',  placement: 'right'}
+  = render partial: '/user_accounts/sidebar_links'

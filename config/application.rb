@@ -7,6 +7,7 @@ require "#{File.dirname(__FILE__)}/../lib/patches/enable_stampable_deleter"
 require "#{File.dirname(__FILE__)}/../lib/patches/big_decimal"
 require "#{File.dirname(__FILE__)}/../lib/patches/float"
 require "#{File.dirname(__FILE__)}/../lib/patches/random"
+require "#{File.dirname(__FILE__)}/../lib/patches/deep_dup"
 
 if defined?(Bundler)
   # If you precompile assets before deploying to production, use this line
@@ -22,7 +23,9 @@ module AWB
     # -- all .rb files in that directory are automatically loaded.
 
     # Custom directories with classes and modules you want to be autoloadable.
-    config.autoload_paths += %W(#{config.root}/lib/modules #{config.root}/lib/validators)
+    config.autoload_paths += %W(#{config.root}/lib/validators)
+    # add all dirs recursively from lib/modules
+    config.autoload_paths += Dir["#{config.root}/lib/modules/**/"]
 
     # Only load the plugins named here, in the order given (default is alphabetical).
     # :all can be used as a placeholder for all plugins not explicitly named.
@@ -72,7 +75,9 @@ module AWB
     config.assets.version = '1.0'
 
     # specify the class to handle exceptions
-    config.exceptions_app = ->(env) { ExceptionsController.action(:show).call(env) }
+    config.exceptions_app = ->(env) {
+      ErrorsController.action(:uncaught_error).call(env)
+    }
 
     # set paperclip default path and url
     Paperclip::Attachment.default_options[:path] = ':rails_root/public:url'
@@ -80,17 +85,6 @@ module AWB
 
     # for generating documentation from tests
     Raddocs.configuration.docs_dir = "doc/api"
-
-    config.after_initialize do
-      # validate Settings file
-      Settings.validate
-
-      # set resque connection
-      Resque.redis = Settings.resque.connection
-
-      # enable garbage collection profiling (reported in New Relic)
-      GC::Profiler.enable
-    end
 
     # allow any origin, with any header, to access the array of methods
     config.middleware.use Rack::Cors do
@@ -109,5 +103,51 @@ module AWB
       rewrite /^\/birdwalks.*/i, '/system/listen_to/index.html'
       rewrite /^\/library.*/i, '/system/listen_to/index.html'
     end
+
+    config.after_initialize do
+      # validate Settings file
+      Settings.validate
+
+      # set resque connection
+      Resque.redis = Settings.resque.connection
+
+      # set resque namespace
+      Resque.redis.namespace = Settings.resque.namespace
+
+      # enable garbage collection profiling (reported in New Relic)
+      GC::Profiler.enable
+
+      # logging
+      # By default, each log is created under Rails.root/log/ and the log file name is environment_name.log.
+      # The default Rails log level is info in production env and debug in any other env.
+
+      current_log_level = Rails.env.production? ? Logger::INFO : Logger::DEBUG
+      log_rotation_frequency = 'weekly'
+
+      # core rails logging
+      config.logger = Logger.new(Rails.root.join('log', "#{Rails.env}.log"), log_rotation_frequency)
+      config.logger.formatter = BawAudioTools::CustomFormatter.new
+      config.logger.level = current_log_level
+
+      # action mailer logging
+      config.action_mailer.logger = Logger.new(Rails.root.join('log', "#{Rails.env}.mailer.log"), log_rotation_frequency)
+      config.action_mailer.logger.formatter = BawAudioTools::CustomFormatter.new
+      config.action_mailer.logger.level = current_log_level
+
+      # activerecord logging
+      ActiveRecord::Base.logger = Logger.new(Rails.root.join('log', "#{Rails.env}.activerecord.log"), log_rotation_frequency)
+      ActiveRecord::Base.logger.formatter = BawAudioTools::CustomFormatter.new
+      ActiveRecord::Base.logger.level = current_log_level
+
+      # resque logging
+      Resque.logger = Logger.new(Rails.root.join('log', "#{Rails.env}.resque.log"), log_rotation_frequency)
+      Resque.logger.formatter = BawAudioTools::CustomFormatter.new
+      Resque.logger.level = current_log_level
+
+      # audio tools logging
+      BawAudioTools::Logging.set_logger(Logger.new(Rails.root.join('log', "#{Rails.env}.audiotools.log"), log_rotation_frequency))
+      BawAudioTools::Logging.set_level(current_log_level)
+    end
+
   end
 end

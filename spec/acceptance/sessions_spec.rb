@@ -24,7 +24,7 @@ resource 'Sessions' do
   get '/security/sign_in' do
     example_request 'LIST' do
       status.should == 200
-      response_body.should have_json_path('email')
+      response_body.should have_json_path('login')
       response_body.should have_json_path('password')
     end
   end

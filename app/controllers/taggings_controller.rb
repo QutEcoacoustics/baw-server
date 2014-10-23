@@ -1,12 +1,11 @@
 class TaggingsController < ApplicationController
 
   load_and_authorize_resource :audio_recording, except: [:user_index]
-  load_resource :audio_event, except: [:user_index]
+  load_and_authorize_resource :audio_event, except: [:user_index]
   load_resource :tagging, except: [:user_index]
   load_and_authorize_resource :user, only: [:user_index]
   respond_to :json
 
-  # /projects/:project_id/sites/:site_id/audio_recordings/:audio_recording_id/audio_events/:audio_event_id/
   # /audio_recordings/:audio_recording_id/audio_events/:audio_event_id/
 
   # GET /taggings
@@ -20,12 +19,13 @@ class TaggingsController < ApplicationController
     end
   end
 
+  # GET /taggings/user/:user_id/tags
   def user_index
     if params[:user_id]
       render json: Tagging
       .includes(:tag, :audio_event)
       .where('(audio_events_tags.updater_id = ? OR audio_events_tags.creator_id = ?)', params[:user_id], params[:user_id])
-      .order('updated_at DESC')
+      .order('updated_at DESC, created_at DESC')
       .limit(10)
       .to_json(include: [:tag, :audio_event])
     else
@@ -36,13 +36,13 @@ class TaggingsController < ApplicationController
   # GET /taggings/1
   # GET /taggings/1.json
   def show
-    respond_with Tagging.find(params[:id])
+    respond_with @tagging
   end
 
   # GET /taggings/new
   # GET /taggings/new.json
   def new
-    respond_with Tagging.new
+    respond_with @tagging
   end
 
   # POST /taggings
@@ -50,7 +50,6 @@ class TaggingsController < ApplicationController
   def create
     # @audio_recording, @audio_event and @tagging are initialised/preloaded by load_resource/load_and_authorize_resource
     if params[:tagging] && params[:tagging][:tag_attributes] && params[:tagging][:tag_attributes][:text]
-      @tagging = Tagging.new
       @tag = Tag.where(text: params[:tagging][:tag_attributes][:text]).first
       if @tag.blank?
         # if the tag with the name does not already exist, create it via tag_attributes
@@ -83,7 +82,7 @@ class TaggingsController < ApplicationController
   # DELETE /taggings/1
   # DELETE /taggings/1.json
   def destroy
-    @tag = Tagging.find(params[:id])
+    @tagging.destroy
     @tag.destroy
 
     respond_to do |format|

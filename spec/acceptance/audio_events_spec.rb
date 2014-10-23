@@ -24,7 +24,7 @@ def library_request(settings = {})
 
     parsed_response_body = JsonSpec::Helpers::parse_json(response_body)
 
-    if !ordered_audio_recordings.blank?  && ordered_audio_recordings.respond_to?(:each_index) &&
+    if !ordered_audio_recordings.blank? && ordered_audio_recordings.respond_to?(:each_index) &&
         !parsed_response_body.blank? && parsed_response_body.respond_to?(:each_index)
       parsed_response_body.each_index do |index|
         expect(parsed_response_body[index]['audio_event_id'])
@@ -92,10 +92,8 @@ resource 'AudioEvents' do
   ################################
   # LIST
   ################################
-  get '/projects/:project_id/sites/:site_id/audio_recordings/:audio_recording_id/audio_events' do
+  get '/audio_recordings/:audio_recording_id/audio_events' do
 
-    parameter :project_id, 'Requested project ID (in path/route)', required: true
-    parameter :site_id, 'Requested site ID (in path/route)', required: true
     parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
     parameter :start_offset, 'Request audio events within offset bounds (start)'
     parameter :end_offset, 'Request audio events within offset bounds (end)'
@@ -106,10 +104,8 @@ resource 'AudioEvents' do
 
   end
 
-  get '/projects/:project_id/sites/:site_id/audio_recordings/:audio_recording_id/audio_events' do
+  get '/audio_recordings/:audio_recording_id/audio_events' do
 
-    parameter :project_id, 'Requested project ID (in path/route)', required: true
-    parameter :site_id, 'Requested site ID (in path/route)', required: true
     parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
     parameter :start_offset, 'Request audio events within offset bounds (start)'
     parameter :end_offset, 'Request audio events within offset bounds (end)'
@@ -133,10 +129,8 @@ resource 'AudioEvents' do
 
   end
 
-  get '/projects/:project_id/sites/:site_id/audio_recordings/:audio_recording_id/audio_events?start_offset=1&end_offset=2.5' do
+  get '/audio_recordings/:audio_recording_id/audio_events?start_offset=1&end_offset=2.5' do
 
-    parameter :project_id, 'Requested project ID (in path/route)', required: true
-    parameter :site_id, 'Requested site ID (in path/route)', required: true
     parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
     parameter :start_offset, 'Request audio events within offset bounds (start)'
     parameter :end_offset, 'Request audio events within offset bounds (end)'
@@ -180,7 +174,7 @@ resource 'AudioEvents' do
     end
   end
 
-  get '/projects/:project_id/sites/:site_id/audio_recordings/:audio_recording_id/audio_events' do
+  get '/audio_recordings/:audio_recording_id/audio_events' do
 
     parameter :project_id, 'Requested project ID (in path/route)', required: true
     parameter :site_id, 'Requested site ID (in path/route)', required: true
@@ -934,7 +928,7 @@ resource 'AudioEvents' do
   ################################
   # SHOW
   ################################
-  get '/projects/:project_id/sites/:site_id/audio_recordings/:audio_recording_id/audio_events/:id' do
+  get '/audio_recordings/:audio_recording_id/audio_events/:id' do
 
     parameter :project_id, 'Requested project ID (in path/route)', required: true
     parameter :site_id, 'Requested site ID (in path/route)', required: true
@@ -946,7 +940,7 @@ resource 'AudioEvents' do
     standard_request('SHOW (as writer)', 200, 'start_time_seconds', true)
   end
 
-  get '/projects/:project_id/sites/:site_id/audio_recordings/:audio_recording_id/audio_events/:id' do
+  get '/audio_recordings/:audio_recording_id/audio_events/:id' do
 
     parameter :project_id, 'Requested project ID (in path/route)', required: true
     parameter :site_id, 'Requested site ID (in path/route)', required: true
@@ -987,7 +981,7 @@ resource 'AudioEvents' do
     standard_request('SHOW (as reader with shallow path for reference audio event with no access to audio recording)', 200, 'start_time_seconds', true)
   end
 
-  get '/projects/:project_id/sites/:site_id/audio_recordings/:audio_recording_id/audio_events/:id' do
+  get '/audio_recordings/:audio_recording_id/audio_events/:id' do
 
     parameter :project_id, 'Requested project ID (in path/route)', required: true
     parameter :site_id, 'Requested site ID (in path/route)', required: true
@@ -1002,7 +996,7 @@ resource 'AudioEvents' do
   ################################
   # CREATE
   ################################
-  post '/projects/:project_id/sites/:site_id/audio_recordings/:audio_recording_id/audio_events' do
+  post '/audio_recordings/:audio_recording_id/audio_events' do
     parameter :project_id, 'Requested project ID (in path/route)', required: true
     parameter :site_id, 'Requested site ID (in path/route)', required: true
     parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
@@ -1038,7 +1032,7 @@ resource 'AudioEvents' do
 
   end
 
-  post '/projects/:project_id/sites/:site_id/audio_recordings/:audio_recording_id/audio_events' do
+  post '/audio_recordings/:audio_recording_id/audio_events' do
     parameter :project_id, 'Requested project ID (in path/route)', required: true
     parameter :site_id, 'Requested site ID (in path/route)', required: true
     parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
@@ -1057,7 +1051,7 @@ resource 'AudioEvents' do
 
   end
 
-  post '/projects/:project_id/sites/:site_id/audio_recordings/:audio_recording_id/audio_events' do
+  post '/audio_recordings/:audio_recording_id/audio_events' do
     parameter :project_id, 'Requested project ID (in path/route)', required: true
     parameter :site_id, 'Requested site ID (in path/route)', required: true
     parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
@@ -1076,7 +1070,7 @@ resource 'AudioEvents' do
 
   end
 
-  post '/projects/:project_id/sites/:site_id/audio_recordings/:audio_recording_id/audio_events' do
+  post '/audio_recordings/:audio_recording_id/audio_events' do
     parameter :project_id, 'Requested project ID (in path/route)', required: true
     parameter :site_id, 'Requested site ID (in path/route)', required: true
     parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
@@ -1096,14 +1090,16 @@ resource 'AudioEvents' do
       explanation 'this should create an audiorecording, including two taggings, one with the newly created tag and one with an existing tag'
       tag_count = Tag.count
       do_request
-      tag_count.should == Tag.count - 1
-      status.should == 201
-      response_body.should have_json_path('start_time_seconds')
-      response_body.should have_json_path('taggings/1/tag')
+
+      do_checks(:created, {expected_json_path: 'taggings/1/tag'}) # expecting two 'taggings'
+
+      expect(response_body).to have_json_path('start_time_seconds')
+      # only one tag should have been created, so new tag count should be one more than old tag count
+      expect(tag_count).to eq(Tag.count - 1)
     end
   end
 
-  post '/projects/:project_id/sites/:site_id/audio_recordings/:audio_recording_id/audio_events' do
+  post '/audio_recordings/:audio_recording_id/audio_events' do
     parameter :project_id, 'Requested project ID (in path/route)', required: true
     parameter :site_id, 'Requested site ID (in path/route)', required: true
     parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
@@ -1128,17 +1124,20 @@ resource 'AudioEvents' do
     example 'CREATE (with existing tag_ids as writer) - 201', :document => true do
       tag_count = Tag.count
       do_request
-      tag_count.should == Tag.count
-      status.should == 201
+
+      do_checks(:created, {expected_json_path: 'taggings/1/tag'})  # expecting two 'taggings'
+
+      expect(response_body).to have_json_path('start_time_seconds')
+      expect(tag_count).to eq(Tag.count)
+
       response_body.should have_json_path('start_time_seconds')
-      response_body.should have_json_path('taggings/1/tag') # expecting two 'taggings'
     end
   end
 
   ################################
   # UPDATE
   ################################
-  put '/projects/:project_id/sites/:site_id/audio_recordings/:audio_recording_id/audio_events/:id' do
+  put '/audio_recordings/:audio_recording_id/audio_events/:id' do
     parameter :project_id, 'Requested project ID (in path/route)', required: true
     parameter :site_id, 'Requested site ID (in path/route)', required: true
     parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
@@ -1172,7 +1171,7 @@ resource 'AudioEvents' do
     standard_request('UPDATE (as writer with shallow path)', 201, nil, true)
   end
 
-  put '/projects/:project_id/sites/:site_id/audio_recordings/:audio_recording_id/audio_events/:id' do
+  put '/audio_recordings/:audio_recording_id/audio_events/:id' do
     parameter :project_id, 'Requested project ID (in path/route)', required: true
     parameter :site_id, 'Requested site ID (in path/route)', required: true
     parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
@@ -1190,7 +1189,7 @@ resource 'AudioEvents' do
     standard_request('UPDATE (as reader)', 403, nil, true)
   end
 
-  put '/projects/:project_id/sites/:site_id/audio_recordings/:audio_recording_id/audio_events/:id' do
+  put '/audio_recordings/:audio_recording_id/audio_events/:id' do
     parameter :project_id, 'Requested project ID (in path/route)', required: true
     parameter :site_id, 'Requested site ID (in path/route)', required: true
     parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true

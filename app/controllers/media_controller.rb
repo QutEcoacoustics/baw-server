@@ -1,104 +1,57 @@
 class MediaController < ApplicationController
-  #load_and_authorize_resource :audio_recording, only: [:show]
   skip_authorization_check only: [:show]
 
-  AUDIO_MEDIA_TYPES = [Mime::Type.lookup('audio/webm'), Mime::Type.lookup('audio/webma'),
-                       Mime::Type.lookup('audio/ogg'), Mime::Type.lookup('audio/oga'),
-                       Mime::Type.lookup('audio/mp3'), Mime::Type.lookup('audio/mpeg'),
-                       Mime::Type.lookup('audio/wav'), Mime::Type.lookup('audio/x-wav'),
-                       Mime::Type.lookup('audio/x-flac')]
-
-  IMAGE_MEDIA_TYPES = [Mime::Type.lookup('image/png')]
-
-  OFFSET_REGEXP = /^\d+(\.\d{1,3})?$/ # passes '111', '11.123'
-
-  MEDIA_PROCESSOR_LOCAL = 'local'
-  MEDIA_PROCESSOR_RESQUE = 'resque'
-
   def show
-    # ensure all param keys are symbols rather than strings
-    request_params_mixed = params.dup.symbolize_keys
-    rails_request = request
+    # normalise params and get access to rails request instance
+    request_params = CleanParams.perform(params.dup)
 
-    # convert all params to snake case
-    request_params = ActiveSupport::HashWithIndifferentAccess.new
-    request_params_mixed.each do |key, value|
-      request_params[key.to_s.underscore] = value
-    end
+    # should the response include content?
+    is_head_request = request.head?
 
     # check authorisation manually, take audio event into account
-    audio_recording = authorise_custom(request_params, current_user)
+    audio_recording, audio_event = authorise_custom(request_params, current_user)
 
-    # set up resources to process request
-    @range_request = Settings.range_request
-    @media_cacher = Settings.media_cache_tool
+    # can the audio recording be accessed?
+    is_audio_ready = audio_recording_ready?(audio_recording)
 
-    @available_text_formats = Settings.available_formats.text
-    @available_audio_formats = Settings.available_formats.audio
-    @available_image_formats = Settings.available_formats.image
+    # parse and validate the requested media type
+    requested_format, requested_media_type = get_media_type(request_params)
+    is_text = Settings.is_supported_text_media?(requested_format)
+    is_audio = Settings.is_supported_audio_media?(requested_format)
+    is_image = Settings.is_supported_image_media?(requested_format)
+    is_supported_format = is_text || is_audio || is_image
 
-    @default_audio = Settings.cached_audio_defaults
-    @default_spectrogram = Settings.cached_spectrogram_defaults
-
-    @available_formats = @available_text_formats + @available_audio_formats + @available_image_formats
-
-    requested_format = request_params[:format].downcase
-    is_audio_ready = audio_recording.status == 'ready'
-    is_head_request = rails_request.head?
-    is_available_format = @available_formats.include?(requested_format)
-
-    # where will this request be processed
-    media_processor = Settings.media_request_processor
-    @is_processed_locally = media_processor == MEDIA_PROCESSOR_LOCAL
-    @is_processed_by_resque = media_processor == MEDIA_PROCESSOR_RESQUE
-
+    # do initial checking
     if !is_audio_ready && is_head_request
       # changed from 422 Unprocessable entity
       head :accepted
     elsif !is_audio_ready && !is_head_request
-      fail CustomErrors::ItemNotFoundError, 'Audio recording is not ready'
-    elsif !is_available_format && is_head_request
+      fail CustomErrors::ItemNotFoundError, "Audio recording id #{audio_recording.id} is not ready"
+    elsif !is_supported_format && is_head_request
       head :not_acceptable
-    elsif !is_available_format && !is_head_request
-      fail CustomErrors::NotAcceptableError.new(@available_formats), "Requested format #{requested_format} is not acceptable. It must be one of available_formats."
-    elsif is_available_format && is_audio_ready
-      process_media_request(audio_recording, request_params, rails_request)
+    elsif !is_supported_format && !is_head_request
+      supported_types = Settings.supported_media_types
+      msg = "Requested format #{requested_format} (#{requested_media_type}) is not acceptable. " +
+          'It must be one of available_formats.'
+      fail CustomErrors::NotAcceptableError.new(supported_types), msg
+    elsif is_supported_format && is_audio_ready
+
+      category, defaults = Settings.media_category(requested_format)
+
+      media_info = {
+          category: category,
+          defaults: defaults,
+          format: requested_format,
+          media_type: requested_media_type
+      }
+
+      supported_media_response(audio_recording, audio_event, media_info, request_params)
     else
-      fail ActiveResource::BadRequest
+      fail CustomErrors::BadRequestError, 'There was a problem with the request.'
     end
   end
 
   private
-
-  def auth_custom_offsets(request_params, audio_recording, audio_event)
-
-    # check offsets are within range
-    if request_params.include?(:start_offset)
-      start_offset = request_params[:start_offset].to_f
-    else
-      start_offset = 0.0
-    end
-
-    if request_params.include?(:end_offset)
-      end_offset = request_params[:end_offset].to_f
-    else
-      end_offset = audio_recording.duration_seconds.to_f
-    end
-
-    audio_event_start = audio_event.start_time_seconds
-    audio_event_end = audio_event.end_time_seconds
-
-    allowable_padding = 5
-
-    allowable_start_offset = audio_event_start - allowable_padding
-    allowable_end_offset = audio_event_end + allowable_padding
-
-    if start_offset < allowable_start_offset || end_offset > allowable_end_offset
-      fail CanCan::AccessDenied,
-           'Permission denied to audio recording, offsets were too far outside given audio recording (including padding).'
-    end
-
-  end
 
   def authorise_custom(request_params, user)
 
@@ -109,372 +62,238 @@ class MediaController < ApplicationController
 
     audio_recording = auth_custom_audio_recording(request_params)
 
-    unless request_params[:audio_event_id].blank?
+    if request_params[:audio_event_id].blank?
+      [audio_recording, nil]
+    else
       audio_event = auth_custom_audio_event(request_params, audio_recording)
       auth_custom_offsets(request_params, audio_recording, audio_event)
+      [audio_recording, audio_event]
     end
-
-    audio_recording
   end
 
-  # Process a request.
-  # @param [AudioRecording] audio_recording
-  # @param [Hash] request_params
+  def get_media_type(request_params)
+    requested_format = request_params[:format].downcase
+    requested_media_type = Mime::Type.lookup_by_extension(requested_format).to_s
+    [requested_format, requested_media_type]
+  end
+
+  def audio_recording_ready?(audio_recording)
+    audio_recording.status == 'ready'
+  end
+
+  def supported_media_response(audio_recording, audio_event, media_info, request_params)
+    rails_request = request
+
+    # get pre-defined settings
+    default_audio = Settings.cached_audio_defaults
+    default_spectrogram = Settings.cached_spectrogram_defaults
+
+    # parse request
+    metadata = Api::MediaMetadata.new(BawWorkers::Settings.audio_helper, default_audio, default_spectrogram)
+
+    # validate common request parameters
+    metadata.check_request_parameters(audio_recording, request_params)
+
+    # original audio recording info
+    original = metadata.audio_recording_details(audio_recording)
+
+    # current request parameters - combination of specified and defaults
+    current, modified_params = metadata.current_request_details(audio_recording, media_info, request_params)
+
+    if media_info[:category] == :text
+      metadata_response = metadata.api_response(audio_recording, original, current, modified_params)
+      json_response(metadata_response, current, rails_request)
+    elsif [:audio, :image].include?(media_info[:category])
+      media_response(audio_recording, metadata, original, current, media_info)
+    else
+      fail CustomErrors::BadRequestError, 'There was a problem with the request.'
+    end
+  end
+
+  # Send json response.
+  # @param [Hash] metadata_response
+  # @param [Hash] current
   # @param [ActionDispatch::Request] rails_request
-  def process_media_request(audio_recording, request_params, rails_request)
-    parsed_options = parse_media_request(audio_recording, request_params, rails_request)
-    parsed_options = check_request_parameters(audio_recording, parsed_options, rails_request)
+  def json_response(metadata_response, current, rails_request)
 
-    # an error ocurred when checking parameters
-    # render has already been called, don't do anything else.
-    is_audio = AUDIO_MEDIA_TYPES.include?(parsed_options[:media_type])
-    is_image = IMAGE_MEDIA_TYPES.include?(parsed_options[:media_type])
+    wrapped = Settings.api_response.build(:ok, metadata_response)
 
-    if is_audio
-      request_type =:audio
-      request_defaults = @default_audio
-    elsif is_image
-      request_type =:image
-      request_defaults = @default_spectrogram
-    else
-      request_type =:json
-      request_defaults = {}
-    end
+    json_result = wrapped.to_json
+    json_result_size = json_result.size.to_s
 
-    if request_type == :json
-      response_options = build_json_response(audio_recording, parsed_options, request_params, rails_request)
-      json_response(audio_recording, response_options, request_params, rails_request)
-    else
-      response_options = build_response(
-          audio_recording, parsed_options,
-          request_params, rails_request,
-          request_type, request_defaults)
-
-      if request_type == :audio
-        audio_response(audio_recording, response_options, request_params, rails_request)
-      elsif request_type == :image
-        spectrogram_response(audio_recording, response_options, request_params, rails_request)
-      end
-    end
-  end
-
-  # Parse a request.
-  # @param [AudioRecording] audio_recording
-  # @param [Hash] request_params
-  # @param [ActionDispatch::Request] rails_request
-  # @return [Hash] Parsed request options
-  def parse_media_request(audio_recording, request_params, rails_request)
-    options = Hash.new
-    options[:datetime] = audio_recording.recorded_date
-    # use audio recording original file name if available
-    options[:original_format] = File.extname(audio_recording.original_file_name) unless audio_recording.original_file_name.blank?
-    # get the extension for the mime type if original file name is not available
-    options[:original_format] = '.' + Mime::Type.lookup(audio_recording.media_type).to_sym.to_s if options[:original_format].blank?
-    # date and time are for finding the original audio file
-    options[:datetime_with_offset] = audio_recording.recorded_date
-    options[:original_sample_rate] = audio_recording.sample_rate_hertz
-
-    if request_params.include?(:start_offset)
-      options[:start_offset] = request_params[:start_offset].to_f
-    else
-      options[:start_offset] = 0.0
-    end
-
-    if request_params.include?(:end_offset)
-      options[:end_offset] = request_params[:end_offset].to_f
-    else
-      options[:end_offset] = audio_recording.duration_seconds.to_f
-    end
-
-    options[:uuid] = audio_recording.uuid
-    options[:id] = audio_recording.id
-    # .to_s on mime:type gets the media type
-    # .to_sym gets the extension
-    options[:media_type] = Mime::Type.lookup_by_extension(request_params[:format]).to_s
-    options[:format] = request_params[:format]
-
-    options
-  end
-
-  # Check request parameters.
-  # @param [AudioRecording] audio_recording
-  # @param [Hash] request_params
-  # @param [ActionDispatch::Request] rails_request
-  # @return [Hash] Modified request parameters
-  def check_request_parameters(audio_recording, request_params, rails_request)
-    format = request_params[:format]
-    start_offset = request_params[:start_offset].to_s
-    end_offset = request_params[:end_offset].to_s
-    audio_duration = audio_recording.duration_seconds
-
-    if format == 'json'
-      start_offset ||= '0'
-      end_offset ||= audio_duration.to_s
-    else
-      if start_offset.blank? &&end_offset.blank?
-        start_offset = '0'
-        if audio_duration < 600
-          end_offset = audio_duration.to_s
-        else
-          end_offset = '600'
-        end
-      elsif end_offset.blank?
-        end_offset = audio_duration.to_s
-      elsif start_offset.blank?
-        start_offset = '0'
-      end
-      if end_offset.to_i - start_offset.to_i > 600
-        msg = "Maximum range is 600 seconds, you requested #{end_offset.to_i - start_offset.to_i} seconds between start_offset=#{start_offset} and end_offset=#{end_offset}"
-        fail BawAudioTools::SegmentRequestTooLong.new(msg)
-        # render json: {code: 416,
-        #               phrase: 'Requested Range Not Satisfiable',
-        #               message: msg},
-        #        status: :requested_range_not_satisfiable
-        # is_error_state = true
-      end
-    end
-
-    if !(start_offset=~OFFSET_REGEXP)
-      fail CustomErrors::UnprocessableEntityError, "start_offset parameter (#{start_offset}) must be a decimal number indicating seconds (maximum precision milliseconds, e.g., 1.234)"
-      # render json: {code: 422,
-      #               phrase: 'Unprocessable Entity',
-      #               message: "start_offset parameter (#{start_offset}) must be a decimal number indicating seconds (maximum precision milliseconds, e.g., 1.234)"},
-      #        status: :unprocessable_entity
-      # is_error_state = true
-    elsif !(end_offset=~OFFSET_REGEXP)
-      fail CustomErrors::UnprocessableEntityError, "end_offset parameter (#{end_offset}) must be a decimal number indicating seconds (maximum precision milliseconds, e.g., 1.234)"
-      #       render json: {code: 422,
-      #               phrase: 'Unprocessable Entity',
-      #               message: "end_offset parameter (#{end_offset}) must be a decimal number indicating seconds (maximum precision milliseconds, e.g., 1.234)"},
-      #        status: :unprocessable_entity
-      # is_error_state = true
-    elsif end_offset.to_i > audio_duration
-      fail CustomErrors::UnprocessableEntityError, "end_offset parameter (#{end_offset}) must be a smaller than the duration of the audio recording (#{audio_duration})"
-      # render json: {code: 416,
-      #               phrase: 'Requested Range Not Satisfiable',
-      #               message: "end_offset parameter (#{end_offset}) must be a smaller than the duration of the audio recording (#{audio_duration})"},
-      #        status: :requested_range_not_satisfiable
-      # is_error_state = true
-    elsif start_offset.to_i >= audio_duration
-      fail CustomErrors::UnprocessableEntityError, "start_offset parameter (#{start_offset}) must be a smaller than the duration of the audio recording (#{audio_duration})"
-      # render json: {code: 416,
-      #               phrase: 'Requested Range Not Satisfiable',
-      #               message: "start_offset parameter (#{start_offset}) must be a smaller than the duration of the audio recording (#{audio_duration})"},
-      #        status: :requested_range_not_satisfiable
-      # is_error_state = true
-    elsif start_offset.to_i >= end_offset.to_i
-      fail CustomErrors::UnprocessableEntityError, "start_offset parameter (#{start_offset}) must be a smaller than end_offset (#{end_offset})"
-      # render json: {code: 416,
-      #               phrase: 'Requested Range Not Satisfiable',
-      #               message: "start_offset parameter (#{start_offset}) must be a smaller than end_offset (#{end_offset})"},
-      #        status: :requested_range_not_satisfiable
-      # is_error_state = true
-    end
-
-    request_params[:start_offset] = start_offset.to_f
-    request_params[:end_offset] = end_offset.to_f
-
-    request_params
-  end
-
-  # Get the available formats.
-  # @param [AudioRecording] audio_recording
-  # @param [Array<String>] formats
-  # @param [Numeric] start_offset
-  # @param [Numeric] end_offset
-  # @param [Object] defaults
-  # @return [Hash] Available formats
-  def get_available_formats(audio_recording, formats, start_offset, end_offset, defaults = {})
-    result = {}
-
-    formats.each do |format|
-      format_key = format.to_s
-      result[format_key] = defaults.dup
-      result[format_key].delete 'format'
-      result[format_key][:extension] = format_key
-      result[format_key][:start_offset] = start_offset
-      result[format_key][:end_offset] = end_offset
-      result[format_key]['mime_type'] = Mime::Type.lookup_by_extension(format).to_s
-      result[format_key]['url'] = audio_recording_media_path(
-          audio_recording,
-          format: format,
-          start_offset: start_offset,
-          end_offset: end_offset)
-    end
-
-    result
-  end
-
-  # Build response options
-  # @param [AudioRecording] audio_recording
-  # @param [Hash] options
-  # @param [Hash] request_params
-  # @param [ActionDispatch::Request] rails_request
-  # @param [Symbol] request_type
-  # @param [Hash] defaults
-  # @return [Hash] Response options.
-  def build_response(audio_recording, options, request_params, rails_request, request_type, defaults)
-
-    options[:format] = request_params[:format] || defaults.extension
-    options[:channel] = (request_params[:channel] || defaults.channel).to_i
-
-    # if sample rate not given, default to audio recording native sample rate
-    #options[:sample_rate] = (request_params[:sample_rate] || audio_recording.sample_rate_hertz).to_i
-
-    if request_type == :image
-      options[:window] = (request_params[:window] || defaults.window).to_i
-      options[:colour] = (request_params[:colour] || defaults.colour).to_s
-
-      # for now, use the sample rate from the settings file if none given
-      options[:sample_rate] = (request_params[:sample_rate] || @default_spectrogram.sample_rate).to_i
-
-    elsif request_type == :audio
-
-      # for now, use the sample rate from the settings file if none given
-      options[:sample_rate] = (request_params[:sample_rate] || @default_audio.sample_rate).to_i
-
-    end
-
-    @media_cacher.audio.check_offsets(
-        {duration_seconds: audio_recording.duration_seconds},
-        defaults.min_duration_seconds,
-        defaults.max_duration_seconds,
-        options
-    )
-
-    options
-  end
-
-  # Build json response.
-  # @param [AudioRecording] audio_recording
-  # @param [Hash] options
-  # @param [Hash] request_params
-  # @param [ActionDisptach::Request] rails_request
-  # @return [Hash] Json response
-  def build_json_response(audio_recording, options, request_params, rails_request)
-
-    options[:available_audio_formats] =
-        get_available_formats(audio_recording, @available_audio_formats, request_params[:start_offset], request_params[:end_offset], @default_audio)
-    options[:available_image_formats] =
-        get_available_formats(audio_recording, @available_image_formats, request_params[:start_offset], request_params[:end_offset], @default_spectrogram)
-    options[:available_text_formats] =
-        get_available_formats(audio_recording, @available_text_formats, request_params[:start_offset], request_params[:end_offset])
-
-    options.delete :datetime_with_offset
-    options[:format] = 'json'
-
-    options
-  end
-
-
-  # Respond to a request for audio.
-  # @param [AudioRecording] audio_recording
-  # @param [Hash] options
-  # @param [Hash] request_params
-  # @param [ACtionDisptach::Request] rails_request
-  def audio_response(audio_recording, options, request_params, rails_request)
-
-    target_file = @media_cacher.cached_audio_file_name(options)
-    target_existing_paths = @media_cacher.cache.existing_storage_paths(@media_cacher.cache.cache_audio, target_file)
-
-    headers[RangeRequest::HTTP_HEADER_ACCEPT_RANGES] = RangeRequest::HTTP_HEADER_ACCEPT_RANGES_BYTES
-
-    if @is_processed_locally || !target_existing_paths.blank?
-
-      file_path = @media_cacher.create_audio_segment(options).first
-
-      download_options = {
-          media_type: options[:media_type],
-          site_name: audio_recording.site.name,
-          site_id: audio_recording.site.id,
-          recorded_date: audio_recording.recorded_date,
-          recording_duration: audio_recording.duration_seconds,
-          recording_id: audio_recording.id,
-          ext: options[:format],
-          file_path: file_path,
-          start_offset: options[:start_offset],
-          end_offset: options[:end_offset]
-      }
-
-      download_file(download_options, rails_request)
-
-    elsif @is_processed_by_resque
-      resque_enqueue('cache_audio', options)
-    end
-
-  end
-
-  # @param [AudioRecording] audio_recording
-  # @param [Hash] options
-  # @param [Hash] request_params
-  def spectrogram_response(audio_recording, options, request_params, rails_request)
-
-    target_file = @media_cacher.cached_spectrogram_file_name(options)
-    target_existing_paths = @media_cacher.cache.existing_storage_paths(@media_cacher.cache.cache_spectrogram, target_file)
-
-    if @is_processed_locally || !target_existing_paths.blank?
-      # either the request will be processed locally or the file already exists
-
-      # file will be generated if it doesn't exist, blocking the request until finished
-      full_path = @media_cacher.generate_spectrogram(options)
-      headers['Content-Length'] = File.size(full_path.first).to_s
-
-      response_extra_info = "#{options[:channel]}_#{options[:sample_rate]}_#{options[:window]}_#{options[:colour]}"
-      suggested_file_name = NameyWamey.create_audio_recording_name(audio_recording, options[:start_offset], options[:end_offset], response_extra_info, options[:format])
-
-      if rails_request.head?
-        head_response(:ok, {
-            content_length: File.size(full_path.first),
-            content_type: options[:media_type],
-            filename: suggested_file_name,
-            content_transfer_encoding: 'binary',
-            content_disposition: "inline; filename=\"#{suggested_file_name}\""
-        })
-      else
-        send_file full_path.first,
-                  stream: true,
-                  buffer_size: 4096,
-                  disposition: 'inline',
-                  type: options[:media_type],
-                  content_type: options[:media_type],
-                  filename: suggested_file_name
-      end
-
-    elsif @is_processed_by_resque
-      resque_enqueue('cache_spectrogram', options)
-    end
-  end
-
-  # @param [AudioRecording] audio_recording
-  # @param [Hash] options
-  # @param [Hash] request_params
-  # @param [ActionDisptach::Request] rails_request
-  def json_response(audio_recording, options, request_params, rails_request)
-
-    #json_result = create_json_data_response(:ok, options).to_json
-    json_result = options.to_json
-
-    headers['Content-Length'] = json_result.size.to_s
+    headers['Content-Length'] = json_result_size
 
     if rails_request.head?
       head_response(:ok, {
-          content_length: json_result.size.to_s,
-          content_type: options[:media_type]
+          content_length: json_result_size,
+          content_type: current[:media_type]
       })
     else
-      render json: json_result, content_length: json_result.size.to_s
+      render json: json_result, content_length: json_result_size
     end
   end
 
-  def resque_enqueue(media_request_type, options)
-    Resque.enqueue(BawWorkers::MediaAction, media_request_type, options)
-    headers['Retry-After'] = Time.zone.now.advance(seconds: 10).httpdate
-    head :accepted, content_type: 'text/plain'
+  def media_response(audio_recording, metadata, original, current, media_info)
+    rails_request = request
+
+    # get pre-defined settings
+    audio_cached = BawWorkers::Settings.audio_cache_helper
+    spectrogram_cached = BawWorkers::Settings.spectrogram_cache_helper
+    range_request = Settings.range_request
+
+    # validate duration min and max defaults against request parameters
+    metadata.check_duration_defaults(audio_recording, current, media_info[:defaults])
+
+    # get parameters for creating/retrieving cache
+    generation_request = metadata.generation_request(original, current)
+
+    # start timing request
+    time_start = Time.now
+
+    if media_info[:category] == :audio
+      # check if audio file exists in cache
+      cached_audio_info = audio_cached.path_info(generation_request)
+      media_category = :audio
+
+      existing_files = create_media(media_category, cached_audio_info, generation_request, time_start)
+      response_local_audio(audio_recording, generation_request, existing_files, rails_request, range_request)
+    elsif media_info[:category] == :image
+      # check if spectrogram image file exists in cache
+      cached_spectrogram_info = spectrogram_cached.path_info(generation_request)
+      media_category = :spectrogram
+
+      existing_files = create_media(media_category, cached_spectrogram_info, generation_request, time_start)
+      response_local_spectrogram(audio_recording, generation_request, existing_files, rails_request, range_request)
+    end
+
   end
 
+  def create_media(media_category, files_info, generation_request, time_start)
+    # determine where media cutting and/ort spectrogram generation will occur
+    is_processed_locally = Settings.process_media_locally?
+    is_processed_by_resque = Settings.process_media_resque?
+    processor = Settings.media_request_processor
+
+    existing_files = files_info.existing
+
+    if existing_files.blank? && is_processed_locally
+      add_header_generated_local
+      existing_files = create_media_local(media_category, generation_request)
+
+    elsif  existing_files.blank? && is_processed_by_resque
+      add_header_generated_remote
+      existing_files = create_media_resque(media_category, files_info, generation_request)
+
+    elsif !existing_files.blank?
+      add_header_cache
+
+    end
+
+    time_stop = Time.now
+
+    # check that there is at least one existing file
+    existing_files = existing_files.compact # remove nils
+    if existing_files.blank?
+      msg1 = "Could not create #{media_category}"
+      msg2 = "using #{processor}"
+      msg3 = "from request #{generation_request}"
+      msg4 = "for #{files_info}"
+      fail BawAudioTools::Exceptions::AudioToolError, "#{msg1} #{msg2} #{msg3} #{msg4}"
+    end
+
+    # add timing headers
+    add_header_started(time_start)
+    add_header_elapsed(time_stop - time_start)
+
+    existing_files
+  end
+
+  # Create a media request locally.
+  # @param [Symbol] media_category
+  # @param [Object] generation_request
+  # @return [String] path to existing file
+  def create_media_local(media_category, generation_request)
+    BawWorkers::Media::Action.make_media_request(media_category, generation_request, Rails.logger)
+  end
+
+
+  # Create a media request using resque.
+  # @param [Symbol] media_category
+  # @param [Hash] files_info
+  # @param [Object] generation_request
+  # @return [Array<String>] path to existing file
+  def create_media_resque(media_category, files_info, generation_request)
+    BawWorkers::Media::Action.action_enqueue(media_category, generation_request)
+    poll_media(files_info.possible, Settings.audio_tools_timeout_sec)
+  end
+
+  # this will block the request and wait until the resource is available
+  # waits up to wait_max seconds
+  # @param [Array<String>] expected_files
+  # @param [Number] wait_max
+  # @return [Array<String>] existing files
+  def poll_media(expected_files, wait_max)
+    FirePoll.poll("Took longer than #{wait_max} seconds for resque to fulfil media request.", wait_max) do
+      existing_files = []
+      expected_files.each do |file|
+        existing_files.push(file) if File.exists?(file)
+      end
+      existing_files = existing_files.compact
+      existing_files.blank? ? false : existing_files
+    end
+  end
+
+  def response_local_spectrogram(audio_recording, generation_request, existing_files, rails_request, range_request)
+
+    options = generation_request
+
+    response_extra_info = "#{options[:channel]}_#{options[:sample_rate]}_#{options[:window]}_#{options[:colour]}"
+    suggested_file_name = NameyWamey.create_audio_recording_name(audio_recording, options[:start_offset], options[:end_offset], response_extra_info, options[:format])
+
+    existing_file = existing_files.first
+    content_length = File.size(existing_file)
+
+    add_header_length(File.size(existing_file))
+
+    if rails_request.head?
+      head_response_inline(:ok, {content_length: content_length}, options[:media_type], suggested_file_name)
+
+    else
+      info = {
+          file_path: existing_file,
+          response_suggested_file_name: suggested_file_name,
+          file_media_type: options[:media_type],
+          response_code: :ok
+      }
+      response_send_file(info)
+
+    end
+  end
+
+  def response_local_audio(audio_recording, generation_request, existing_files, rails_request, range_request)
+    # headers[RangeRequest::HTTP_HEADER_ACCEPT_RANGES] = RangeRequest::HTTP_HEADER_ACCEPT_RANGES_BYTES
+
+    download_options = {
+        media_type: generation_request[:media_type],
+        site_name: audio_recording.site.name,
+        site_id: audio_recording.site.id,
+        recorded_date: audio_recording.recorded_date,
+        recording_duration: audio_recording.duration_seconds,
+        recording_id: audio_recording.id,
+        ext: generation_request[:format],
+        file_path: existing_files.first,
+        start_offset: generation_request[:start_offset],
+        end_offset: generation_request[:end_offset]
+    }
+
+    download_file(download_options, rails_request, range_request)
+  end
+
+  # Respond with audio range request.
   # @param [Hash] options
   # @param [ActionDispatch::Request] rails_request
-  def download_file(options, rails_request)
+  # @param [RangeRequest] range_request
+  def download_file(options, rails_request, range_request)
     #raise ArgumentError, 'File does not exist on disk' if full_path.blank?
     # are HEAD requests supported?
     # more info: http://patshaughnessy.net/2010/10/11/activerecord-with-large-result-sets-part-2-streaming-data
@@ -482,50 +301,67 @@ class MediaController < ApplicationController
     # http://stackoverflow.com/questions/3507594/ruby-on-rails-3-streaming-data-through-rails-to-client
     # ended up using StringIO as a MemoryStream to store part of audio file requested.
 
-    info = @range_request.build_response(options, rails_request)
+    info = range_request.build_response(options, rails_request)
 
     headers.merge!(info[:response_headers])
 
-    if rails_request.head?
-      info[:response_has_content] = false
-    end
+    is_head_request = rails_request.head?
+    has_content = info[:response_has_content]
+    is_range = info[:response_is_range]
 
-    if info[:response_has_content]
-      if info[:response_is_range]
+    info[:response_has_content] = false if is_head_request
 
-        # write audio data from the file to a stringIO
-        # use the StringIO in send_data
+    if has_content && is_range
+      buffer = write_to_response_stream(info, range_request)
+      response_send_data(buffer, info)
 
-        buffer = ''
-        StringIO.open(buffer, 'w') { |string_io|
-          @range_request.write_content_to_output(info, string_io)
-        }
+    elsif has_content && !is_range
+      response_send_file(info)
 
-        send_data buffer,
-                  filename: info[:response_suggested_file_name],
-                  type: info[:file_media_type],
-                  disposition: 'inline',
-                  status: info[:response_code]
-
-      else
-
-        send_file info[:file_path],
-                  filename: info[:response_suggested_file_name],
-                  type: info[:file_media_type],
-                  disposition: 'inline',
-                  status: info[:response_code]
-        #stream: true,
-        #buffer_size: 4096
-      end
+    elsif !has_content
+      head_response_inline(info[:response_code],
+                           info[:response_headers],
+                           info[:file_media_type],
+                           info[:response_suggested_file_name])
     else
-      # return response code and headers with no content
-      head_response(info[:response_code], info[:response_headers].merge(
-          {
-              content_transfer_encoding: 'binary',
-              content_disposition: "inline; filename=\"#{info[:response_suggested_file_name]}\"",
-              content_type: info[:file_media_type]
-          }))
+      fail CustomErrors::UnprocessableEntityError, 'There was a problem with the request.'
+
     end
+
+  end
+
+  def write_to_response_stream(info, range_request)
+    # write audio data from the file to a stringIO
+    # use the StringIO in send_data
+
+    buffer = ''
+    StringIO.open(buffer, 'w') { |string_io|
+      range_request.write_content_to_output(info, string_io)
+    }
+    buffer
+  end
+
+  # Responds with data in buffer, using metadata from info.
+  # @param [String] buffer
+  # @param [Hash] info
+  def response_send_data(buffer, info)
+    send_data buffer, response_binary_metadata(info)
+  end
+
+  # Responds with file content in file, using metadata from info.
+  # @param [Hash] info
+  def response_send_file(info)
+    send_file info[:file_path], response_binary_metadata(info)
+  end
+
+  def response_binary_metadata(info)
+    {
+        filename: info[:response_suggested_file_name],
+        type: info[:file_media_type],
+        content_type: info[:file_media_type],
+        disposition: 'inline',
+        status: info[:response_code]
+    }
   end
 
   def head_response(response_code, response_headers)
@@ -533,6 +369,40 @@ class MediaController < ApplicationController
     #head :ok, content_length: File.size(full_path.first), content_type: options[:media_type], filename: suggested_file_name
 
     head response_code, response_headers
+  end
+
+  def head_response_inline(response_code, response_headers, content_type, suggested_name)
+    # return response code and headers with no content
+    head_response response_code, response_headers.merge(
+        content_type: content_type,
+        content_transfer_encoding: 'binary',
+        content_disposition: "inline; filename=\"#{suggested_name}\"",
+        filename: suggested_name
+    )
+  end
+
+  def add_header_length(length)
+    headers['Content-Length'] = length.to_s
+  end
+
+  def add_header_cache
+    headers['X-Media-Response-From'] = 'Cache'
+  end
+
+  def add_header_generated_remote
+    headers['X-Media-Response-From'] = 'Generated Remotely'
+  end
+
+  def add_header_generated_local
+    headers['X-Media-Response-From'] = 'Generated Locally'
+  end
+
+  def add_header_started(start_datetime)
+    headers['X-Media-Response-Start'] = start_datetime.httpdate
+  end
+
+  def add_header_elapsed(elapsed_seconds)
+    headers['X-Media-Elapsed-Seconds'] = elapsed_seconds.to_s
   end
 
 end

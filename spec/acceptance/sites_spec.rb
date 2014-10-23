@@ -268,4 +268,23 @@ resource 'Sites' do
 
     standard_request('UPDATE (with invalid token)', 401, nil, true)
   end
+
+  #####################
+  # Filter
+  #####################
+
+  post '/sites/filter' do
+    let(:authentication_token) { writer_token }
+    let(:raw_post) { {
+        'filter' => {
+            'id' => {
+                'in' => ['1', '2', '3', '4', id.to_s]
+            }
+        },
+        'projection' => {
+            'include' => ['id', 'name']}
+    }.to_json }
+    standard_request_options('FILTER (as reader)', :ok, {expected_json_path: 'data/0/project_ids', data_item_count: 1})
+  end
+
 end

@@ -1,0 +1,38 @@
+
+= image_tag @user.image.url(:span3), class: 'span3'
+
+.span9
+  %h1= @user.user_name
+
+.span12
+  %h3 Bookmarks
+
+  - if @user_bookmarks.empty?
+    = 'No bookmarks to show.'
+  - else
+    = page_entries_info @user_bookmarks
+    = will_paginate @user_bookmarks, renderer: BawWillPaginateLinkRenderer
+
+    %table.table.table-striped(data-provides='rowlink')
+      %thead
+        %tr
+          %th Name
+          %th Category
+          %th Description
+          %th
+
+      %tbody
+      - @user_bookmarks.each do |bookmark|
+        %tr
+          %td= link_to bookmark.name, bookmark.get_listen_path
+          %td= bookmark.category
+          %td= bookmark.description
+          %td.nolink
+            = link_to  bookmark.get_listen_path, target: '_self', class: 'btn btn-mini' do
+              %i{class: 'fa fa-play'}
+              Play
+
+- content_for :title, "Bookmarks created by #{@user.user_name}"
+
+- content_for :left_sidebar do
+  = render partial: 'sidebar_links'

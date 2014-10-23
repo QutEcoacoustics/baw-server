@@ -10,7 +10,7 @@ describe PublicController do
     #it { expect(get('/job_queue_status')).to route_to('Resque::Server') }
     #it { expect(get('/doc')).to route_to('Raddocs::App') }
 
-    it { expect(get('/does_not_exist')).to route_to('errors#routing', requested_route: 'does_not_exist') }
+    it { expect(get('/does_not_exist')).to route_to('errors#route_error', requested_route: 'does_not_exist') }
 
     it { expect(get('/contact_us')).to route_to('public#new_contact_us') }
     it { expect(post('/contact_us')).to route_to('public#create_contact_us') }

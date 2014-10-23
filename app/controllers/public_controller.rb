@@ -7,7 +7,8 @@ class PublicController < ApplicationController
       :new_contact_us, :create_contact_us,
       :new_bug_report, :create_bug_report,
       :new_data_request, :create_data_request,
-      :credits, :ethics_statement, :disclaimers
+      :credits, :ethics_statement, :disclaimers,
+      :test_exceptions
   ]
 
   def index
@@ -115,7 +116,7 @@ class PublicController < ApplicationController
             project = Project.where(id: params[:projectId]).first
 
             if project.blank?
-              fail ActiveRecord::RecordNotFound, 'Project not found from audio_recording_catalogue'
+              fail CustomErrors::ItemNotFoundError, 'Project not found from audio_recording_catalogue'
             end
 
             if current_user.blank? || !current_user.can_read?(project)
@@ -127,7 +128,7 @@ class PublicController < ApplicationController
             site = Site.where(id: params[:siteId]).first
 
             if site.blank?
-              fail ActiveRecord::RecordNotFound, 'Site not found from audio_recording_catalogue'
+              fail CustomErrors::ItemNotFoundError, 'Site not found from audio_recording_catalogue'
             end
 
             projects = Site.where(id: params[:siteId]).first.projects
@@ -189,7 +190,7 @@ EXTRACT(DAY FROM recorded_date) as extracted_day')
 
   # GET /contact_us
   def new_contact_us
-    @contact_us = ContactUs.new
+    @contact_us = DataClass::ContactUs.new
     respond_to do |format|
       format.html {}
     end
@@ -197,7 +198,7 @@ EXTRACT(DAY FROM recorded_date) as extracted_day')
 
   # POST /contact_us
   def create_contact_us
-    @contact_us = ContactUs.new(params[:contact_us])
+    @contact_us = DataClass::ContactUs.new(params[:data_class_contact_us])
 
     model_valid = @contact_us.valid?
     recaptcha_valid = verify_recaptcha(
@@ -223,7 +224,7 @@ EXTRACT(DAY FROM recorded_date) as extracted_day')
 
   # GET /bug_report
   def new_bug_report
-    @bug_report = BugReport.new
+    @bug_report = DataClass::BugReport.new
     respond_to do |format|
       format.html {}
     end
@@ -231,7 +232,7 @@ EXTRACT(DAY FROM recorded_date) as extracted_day')
 
   # POST /bug_report
   def create_bug_report
-    @bug_report = BugReport.new(params[:bug_report])
+    @bug_report = DataClass::BugReport.new(params[:data_class_bug_report])
 
     model_valid = @bug_report.valid?
     recaptcha_valid = verify_recaptcha(
@@ -257,15 +258,23 @@ EXTRACT(DAY FROM recorded_date) as extracted_day')
 
   # GET /data_request
   def new_data_request
-    @data_request = DataRequest.new
+    @data_request = DataClass::DataRequest.new
 
     @annotation_download = nil
     if !params[:annotation_download].blank? &&
         !params[:annotation_download][:project_id].blank? &&
         !params[:annotation_download][:site_id].blank?
+
+      # check permissions
+      site_id = params[:annotation_download][:site_id].to_i
+      site = Site.where(id: site_id).first
+      access = can?(:show, site)
+      msg = 'You must have access to the site to download annotations.'
+      fail CanCan::AccessDenied.new(msg, :show, site) unless access
+
       @annotation_download = {
           link: download_site_audio_events_path(params[:annotation_download][:project_id], params[:annotation_download][:site_id]),
-          name: params[:annotation_download][:name]
+          name: site.name
       }
     end
 
@@ -276,7 +285,7 @@ EXTRACT(DAY FROM recorded_date) as extracted_day')
 
   # POST /data_request
   def create_data_request
-    @data_request = DataRequest.new(params[:data_request])
+    @data_request = DataClass::DataRequest.new(params[:data_class_data_request])
 
     model_valid = @data_request.valid?
     recaptcha_valid = verify_recaptcha(
@@ -299,6 +308,33 @@ EXTRACT(DAY FROM recorded_date) as extracted_day')
     end
   end
 
+  def test_exceptions
+    if ENV['RAILS_ENV'] == 'test'
+      if params.include?(:exception_class)
+        msg = 'Purposeful exception raised for testing.'
+        error_class_string = params[:exception_class]
+        error_class = error_class_string.constantize
+
+        case error_class_string
+          when 'ActiveResource::BadRequest'
+            fail error_class.new(response)
+
+          when 'ActiveRecord::RecordNotUnique'
+            fail error_class.new(msg, nil)
+
+          when 'CustomErrors::UnsupportedMediaTypeError',
+              'CustomErrors::NotAcceptableError'
+            fail error_class.new(msg, {format: :a_format})
+
+          else
+            fail error_class, msg
+        end
+
+      end
+    end
+  end
+
+
   private
 
   def recent_audio_recordings
@@ -320,7 +356,7 @@ EXTRACT(DAY FROM recorded_date) as extracted_day')
     if current_user.blank?
       @recent_audio_events = AudioEvent.order(order_by_coalesce).limit(7)
     elsif current_user.has_role? :admin
-      @recent_audio_events = AudioEvent.includes([:updater, audio_recording: :site]).order(order_by_coalesce).limit(10)
+      @recent_audio_events = AudioEvent.includes([:creator, audio_recording: {site: :projects}]).order(order_by_coalesce).limit(10)
     else
       @recent_audio_events = current_user.accessible_audio_events.includes([:updater, audio_recording: :site]).order(order_by_coalesce).limit(10)
     end

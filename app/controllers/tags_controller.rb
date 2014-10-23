@@ -1,7 +1,5 @@
 class TagsController < ApplicationController
 
-  #load_and_authorize_resource :project
-  #load_resource :audio_event
   load_and_authorize_resource :tag
   respond_to :json
 
@@ -21,21 +19,18 @@ class TagsController < ApplicationController
   # GET /tags/1
   # GET /tags/1.json
   def show
-    respond_with Tag.find(params[:id])
+    respond_with @tag
   end
 
   # GET /tags/new
   # GET /tags/new.json
   def new
-    @tag = Tag.new
     render json: @tag.to_json(except: [:created_at, :creator_id, :updated_at, :updater_id] )
   end
 
   # POST /tags
   # POST /tags.json
   def create
-    @tag = Tag.new(params[:tag])
-
     if @tag.save
        render json: @tag, status: :created
     else

@@ -1,12 +1,13 @@
 class AudioRecordingsController < ApplicationController
+  include Api::ControllerHelper
 
   load_resource :project, only: [:check_uploader, :create]
   load_resource :site, only: [:index, :create]
   skip_authorization_check only: :check_uploader
   load_and_authorize_resource :audio_recording, except: [:check_uploader]
+  respond_to :json, except: [:show]
 
   layout 'player', only: :show
-
 
   # GET /audio_recordings.json
   def index
@@ -22,15 +23,11 @@ class AudioRecordingsController < ApplicationController
 
   # GET /audio_recordings/1.json
   def show
-    respond_to do |format|
-      format.json { render json: @audio_recording }
-    end
+    render json: @audio_recording
   end
 
   # GET /audio_recordings/new.json
   def new
-    @audio_recording = AudioRecording.new
-
     required = [
         :uploader_id,
         :sample_rate_hertz,
@@ -47,8 +44,8 @@ class AudioRecordingsController < ApplicationController
     render json: @audio_recording.to_json(only: required)
   end
 
-
   # POST /audio_recordings.json
+  # this is used by the harvester, do not change!
   def create
     @audio_recording = match_existing_or_create_new(params)
     @audio_recording.site = @site
@@ -61,14 +58,48 @@ class AudioRecordingsController < ApplicationController
     if !user_exists || highest_permission < AccessLevel::WRITE
       render json: {error: 'uploader does not have access to this project'}.to_json, status: :unprocessable_entity
     elsif check_and_correct_overlap(@audio_recording) && @audio_recording.save
-      render json: @audio_recording, status: :created, location: [@project, @site, @audio_recording]
+      render json: @audio_recording, status: :created, location: @audio_recording
     else
       render json: @audio_recording.errors, status: :unprocessable_entity
     end
-
-
   end
 
+  def update
+
+    relevant_params = params[:audio_recording]
+
+    # can either be one or more of valid_keys, or file_hash only
+    file_hash = :file_hash
+    valid_keys = [
+        :media_type,
+        :sample_rate_hertz,
+        :channels,
+        :bit_rate_bps,
+        :data_length_bytes,
+        :duration_seconds
+    ]
+
+    additional_keys = relevant_params.except(file_hash)
+    if relevant_params.include?(file_hash) && additional_keys.size > 0
+      fail CustomErrors::UnprocessableEntityError.new(
+               'If updating file_hash, all other values must match.',
+               relevant_params
+           )
+    elsif relevant_params.include?(file_hash) && additional_keys.size == 0
+      relevant_params = relevant_params.slice(file_hash)
+    else
+      # if params does not include file_hash, restrict to valid_keys
+      relevant_params = relevant_params.slice(*valid_keys)
+    end
+
+    if @audio_recording.update_attributes(relevant_params)
+      respond_show
+    else
+      respond_change_fail
+    end
+  end
+
+  # this is used by the harvester, do not change!
   def check_uploader
     # current user should be the harvester
     # uploader_id must have read access to the project
@@ -94,34 +125,22 @@ class AudioRecordingsController < ApplicationController
     end
   end
 
-  ## PUT /audio_recordings/1.json
-  #def update
-  #  @audio_recording = AudioRecording.find(params[:id])
-  #
-  #  respond_to do |format|
-  #    if @audio_recording.update_attributes(params[:audio_recording])
-  #      format.json { head :no_content }
-  #    else
-  #      format.json { render json: @audio_recording.errors, status: :unprocessable_entity }
-  #    end
-  #  end
-  #end
-  #
-  ## DELETE /audio_recordings/1.json
-  #def destroy
-  #  @audio_recording = AudioRecording.find(params[:id])
-  #  @audio_recording.destroy
-  #
-  #  add_archived_at_header(@audio_recording)
-  #
-  #  respond_to do |format|
-  #    format.json { no_content_as_json }
-  #  end
-  #end
-
   # this is called by the harvester once the audio file is in the correct location
+  # this is used by the harvester, do not change!
   def update_status
     update_status_user_check
+  end
+
+  # POST /audio_recordings/filter.json
+  # GET /audio_recordings/filter.json
+  def filter
+    filter_response = Settings.api_response.response_filter(
+        params,
+        current_user.is_admin? ? AudioRecording.scoped : current_user.accessible_audio_recordings,
+        AudioRecording,
+        AudioRecording.filter_settings
+    )
+    render_api_response(filter_response)
   end
 
   private
@@ -198,6 +217,7 @@ class AudioRecordingsController < ApplicationController
   # if changes are successfully made by this check, then the
   # check_overlapping validation on audio_recording will succeed.
   # @param [AudioRecording] new_audio_recording
+  # @return [Boolean] true if overlaps were checked and corrected, otherwise false
   def check_and_correct_overlap(new_audio_recording)
     if has_overlap(new_audio_recording)
       overlapping = new_audio_recording.overlapping
@@ -208,6 +228,9 @@ class AudioRecordingsController < ApplicationController
     true
   end
 
+  # Correct overlap and record changes in notes field for both audio recordings.
+  # @param [AudioRecording] new_audio_recording
+  # @param [AudioRecording] existing_audio_recording
   def correct_overlap(new_audio_recording, existing_audio_recording)
     existing_audio_recording_start = existing_audio_recording[:recorded_date]
     existing_audio_recording_end = existing_audio_recording[:end_date]

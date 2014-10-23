@@ -19,7 +19,6 @@ gem 'rack-cors', '~> 0.2.9', require: 'rack/cors'
 # UI HELPERS
 # -------------------------------------
 gem 'haml', '~> 4.0.5'
-gem 'jbuilder', '~> 2.1.3'
 gem 'haml-rails', '~> 0.4' # from 0.5 activesupport > 3.2 is required
 gem 'jquery-rails', '~> 3.1.0'
 gem 'simple_form', '< 3' #https://github.com/plataformatec/simple_form
@@ -30,7 +29,10 @@ gem 'gmaps4rails', '~> 1.5.6'
 
 # https://github.com/seyhunak/twitter-bootstrap-rails
 # huge changes since last release (2.2.8 in Aug 2013), and not sure about rails 3.2 vs 4 support.
-gem 'twitter-bootstrap-rails', git: 'https://github.com/seyhunak/twitter-bootstrap-rails.git'
+# used these commands to get lists of commits, then compared the commits to find the most recent matching commit
+# git grep --full-name --name-only 'bootstrap-affix.js v2.3.2' $(git rev-list --all) > tbsr-2.3.2-find.txt
+# git grep --full-name --name-only '.fa-play' $(git rev-list --all) > font-awesome-find.txt
+gem 'twitter-bootstrap-rails', git: 'https://github.com/seyhunak/twitter-bootstrap-rails.git', ref: '38476dbd7f'
 
 gem 'bootstrap-timepicker-rails', '~> 0.1.3'
 gem 'bootstrap-datepicker-rails', '~> 1.3.0.2'
@@ -44,7 +46,7 @@ gem 'recaptcha', '~> 0.3.6', require: 'recaptcha/rails'
 # https://github.com/plataformatec/devise/blob/master/CHANGELOG.md
 # using devise 3.0.x because 3.1 introduces breaking changes
 gem 'devise', '< 3.1'
-gem 'cancan', '~> 1.6.10'
+gem 'cancancan', '~> 1.9.2'
 gem 'role_model', '~> 0.8.1'
 
 # Database gems
@@ -60,7 +62,8 @@ gem 'validates_timeliness', '~> 3.0.14'
 # https://github.com/delynn/userstamp
 # no changes in a long time, and we are very dependant on how this works
 # this might need to be changed to a fork that is maintained.
-gem 'userstamp', git: 'https://github.com/theepan/userstamp.git'
+# No longer used - incorporated the gem's functionality directly.
+#gem 'userstamp', git: 'https://github.com/theepan/userstamp.git'
 
 # https://github.com/brainspec/enumerize
 # we need the changes since version 0.8.0. Reassess when there is a new release.
@@ -85,14 +88,16 @@ gem 'exception_notification', '~> 4.0.1'
 
 # MEDIA
 # -------------------------------------
-gem 'baw-audio-tools', git: 'https://github.com/QutBioacoustics/baw-audio-tools.git', ref: 'cb3f92d'
+gem 'baw-audio-tools', git: 'https://github.com/QutBioacoustics/baw-audio-tools.git'
 gem 'rack-rewrite', '~> 1.5.0'
 
 # ASYNC JOBS
 # ------------------------------------
 gem 'resque', '~> 1.25.2'
-gem 'baw-workers', git: 'https://github.com/QutBioacoustics/baw-workers.git', ref: 'd4195ab48e'
 gem 'resque-job-stats', git: 'https://github.com/echannel/resque-job-stats.git', ref: '8932c036ae'
+gem 'resque-status'
+gem 'baw-workers', git: 'https://github.com/QutBioacoustics/baw-workers.git'
+gem 'fire_poll', '~> 1.2.0'
 
 # Gems restricted by environment and/or platform
 # ====================================================
@@ -130,7 +135,7 @@ end
 
 group :development, :test do
   gem 'bullet', '~> 4.13.0'
-  gem 'rspec-rails', '~> 2.14.2'
+  gem 'rspec-rails', '~> 2.14'
   # fixed at lower version due to windows issues in higher versions
   gem 'guard', '~> 2.6.1'
   gem 'listen', '~> 2.7.9'
@@ -142,14 +147,15 @@ group :test do
   gem 'capybara', '~> 2.4.0'
   gem 'thin', '~> 1.6.2'
   gem 'guard-rspec', '~> 3.1.0'
-  gem 'rspec', '~> 2.14'
+  gem 'rspec', '~> 2.14.1'
   # fixed version due to unresolved bug in higher versions
-  gem 'simplecov', '~> 0.7.1', require: false
-  gem 'shoulda-matchers', '~> 2.6.1'
+  gem 'simplecov', '~> 0.7', require: false
+  gem 'shoulda-matchers', '~> 2.7'
   gem 'launchy', '~> 2.4.2'
   gem 'json_spec', '~> 1.1.1'
   gem 'database_cleaner', '~> 1.2'
-  gem 'webmock', '~> 1.18.0'
+  gem 'webmock', '~> 1.18'
   gem 'coveralls', '~> 0.7.0', require: false
   gem 'codeclimate-test-reporter', require: nil
+  gem 'fakeredis', require: 'fakeredis/rspec'
 end

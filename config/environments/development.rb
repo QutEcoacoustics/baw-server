@@ -45,9 +45,6 @@ AWB::Application.configure do
   # Expands the lines which load the assets
   config.assets.debug = false
 
-  # resque configuration
-  Resque.redis = Settings.resque.connection
-
   # Set path for image magick for windows only
   if RbConfig::CONFIG['target_os'] =~ /mswin|mingw/i
     im_dir = Settings.paths.image_magick_dir
@@ -57,15 +54,6 @@ AWB::Application.configure do
       puts "WARN: cannot find image magick path #{im_dir}"
     end
   end
-
-  AWB::Application.config.middleware.use ExceptionNotification::Rack, email:
-      {
-          email_prefix: "#{Settings.emails.email_prefix} [Exception] ",
-          sender_address: Settings.emails.sender_address,
-          exception_recipients: Settings.emails.required_recipients
-      }
-
-  config.log_level = :debug
 
   # profile requests
   #config.middleware.insert 0, 'Rack::RequestProfiler', printer: ::RubyProf::CallTreePrinter
@@ -80,15 +68,6 @@ AWB::Application.configure do
     Bullet.add_footer = true
     Bullet.raise = false
 
-    # By default, each log is created under Rails.root/log/ and the log file name is environment_name.log.
-    config.logger = Logger.new(Rails.root.join('log', "#{Rails.env}.log"))
-    BawAudioTools::Logging.logger_formatter(config.logger)
-
-    config.action_mailer.logger = Logger.new(Rails.root.join('log', "#{Rails.env}.mailer.log"))
-    BawAudioTools::Logging.logger_formatter(config.action_mailer.logger)
-
-    # log all activerecord activity
-    ActiveRecord::Base.logger = Logger.new(STDOUT)
   end
 end
 

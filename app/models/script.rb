@@ -1,4 +1,7 @@
 class Script < ActiveRecord::Base
+  # ensures that creator_id, updater_id, deleter_id are set
+  include UserChange
+
   attr_accessible :analysis_identifier, :data_file, :description, :name, :notes, :settings_file, :verified, :version
 
 
@@ -13,11 +16,8 @@ class Script < ActiveRecord::Base
   has_one :latest_update, class_name: 'Script', foreign_key: :original_script_id, order: 'created_at DESC'
   has_many :jobs, inverse_of: :script
 
-  # add created_at and updated_at stamper
-  stampable
-
   # association validations
-  #validates :creator, existence: true
+  validates :creator, existence: true
 
   # attribute validations
   validates :name, presence: true

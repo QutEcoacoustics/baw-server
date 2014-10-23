@@ -10,7 +10,7 @@ if User.where(user_name:'Admin').first.blank?
                        password: Settings.admin_user.password)
   harvester.roles = [:admin]
   harvester.skip_confirmation!
-  harvester.save!
+  harvester.save!(validate: false)
 end
 
 if User.where(user_name:'Harvester').first.blank?
@@ -19,6 +19,6 @@ if User.where(user_name:'Harvester').first.blank?
                               password: Settings.harvester.password)
   harvester.roles = [:harvester]
   harvester.skip_confirmation!
-  harvester.save!
+  harvester.save!(validate: false)
 end
 

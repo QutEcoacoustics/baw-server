@@ -217,28 +217,27 @@ describe 'CRUD Projects as unconfirmed user' do
   end
 
   it 'reject access to list all projects' do
-    # Run the generator again with the --webrat flag if you want to use webrat methods/matchers
     visit projects_path
-    current_path.should eq(root_path)
+    current_path.should eq(projects_path)
     page.should have_content(I18n.t('devise.failure.unconfirmed'))
   end
 
   it 'rejects access to show project details' do
     visit project_path(@permission.project)
-    current_path.should eq(root_path)
+    current_path.should eq(project_path(@permission.project))
     page.should have_content(I18n.t('devise.failure.unconfirmed'))
   end
 
   it 'rejects access to create a new project' do
     visit new_project_path
-    current_path.should eq(root_path)
+    current_path.should eq(new_project_path)
     page.should have_content(I18n.t('devise.failure.unconfirmed'))
 
   end
 
   it 'rejects access to edit project details' do
     visit edit_project_path(@permission.project)
-    current_path.should eq(root_path)
+    current_path.should eq(edit_project_path(@permission.project))
     page.should have_content(I18n.t('devise.failure.unconfirmed'))
   end
 

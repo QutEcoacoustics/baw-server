@@ -5,6 +5,9 @@ class AudioRecording < ActiveRecord::Base
 
   extend Enumerize
 
+  # ensures that creator_id, updater_id, deleter_id are set
+  include UserChange
+
   # attr
   attr_accessible :bit_rate_bps, :channels, :data_length_bytes, :original_file_name,
                   :duration_seconds, :file_hash, :media_type, :notes,
@@ -27,9 +30,6 @@ class AudioRecording < ActiveRecord::Base
 
   accepts_nested_attributes_for :site
 
-  # add created_at and updated_at stamper
-  stampable
-
   # add deleted_at and deleter_id
   acts_as_paranoid
   validates_as_paranoid
@@ -48,7 +48,7 @@ class AudioRecording < ActiveRecord::Base
   # association validations
   validates :site, existence: true
   validates :uploader, existence: true
-  #validates :creator, existence: true
+  validates :creator, existence: true
 
   # attribute validations
   validates :status, inclusion: {in: AVAILABLE_STATUSES}, presence: true
@@ -69,7 +69,6 @@ class AudioRecording < ActiveRecord::Base
   before_validation :set_uuid, on: :create
 
   # postgres-specific
-
   scope :start_after, lambda { |time| where('recorded_date >= ?', time) }
   scope :start_before, lambda { |time| where('recorded_date <= ?', time) }
   scope :start_before_not_equal, lambda { |time| where('recorded_date < ?', time) }
@@ -84,13 +83,13 @@ class AudioRecording < ActiveRecord::Base
   scope :tag_types, lambda { |tag_types| includes(:tags).where('tags.type_of_tag' => tag_types) }
   scope :tag_text, lambda { |tag_text| includes(:tags).where(Tag.arel_table[:text].matches("%#{tag_text}%")) }
 
+  # Check if the original file for this audio recording currently exists.
   def original_file_exists?
     self.original_file_paths.length > 0
   end
 
+  # Get the existing paths for the audio recording file.
   def original_file_paths
-    media_cache = Settings.media_cache_tool
-
     original_format = '.wv' # pick something
 
     if !self.original_file_name.blank?
@@ -107,14 +106,14 @@ class AudioRecording < ActiveRecord::Base
           original_format: self.original_format_calculated
       }
 
-      source_files = media_cache.original_audio_file_names(modify_parameters)
-      source_existing_paths = source_files.map { |source_file| media_cache.cache.existing_storage_paths(media_cache.cache.original_audio, source_file) }.flatten
-      #source_possible_paths = source_files.map { |source_file|  media_cache.cache.possible_storage_paths( media_cache.cache.original_audio, source_file) }.flatten
+      audio_original = BawWorkers::Settings.original_audio_helper
+      source_existing_paths = audio_original.existing_paths(modify_parameters)
     end
 
     source_existing_paths
   end
 
+  # Calculate the format of original audio recording.
   def original_format_calculated
     if self.original_file_name.blank?
       Mime::Type.lookup(self.media_type).to_sym.to_s
@@ -129,6 +128,8 @@ class AudioRecording < ActiveRecord::Base
 
     # type of hash is at start of hash_to_compare, split using two colons
     hash_type, compare_hash = self.file_hash.split('::')
+
+    # TODO: use BawWorkers to get hash - only allow SHA256.
 
     case hash_type
       when 'MD5'
@@ -187,8 +188,9 @@ class AudioRecording < ActiveRecord::Base
   end
 
   def self.check_storage
-    media_cache = Settings.media_cache_tool
-    existing_dirs = media_cache.cache.existing_storage_dirs(media_cache.cache.original_audio)
+    audio_original = BawWorkers::Settings.original_audio_helper
+    existing_dirs = audio_original.existing_dirs
+
     if existing_dirs.empty?
       msg = 'No audio recording storage directories are available.'
       logger.warn msg
@@ -197,6 +199,33 @@ class AudioRecording < ActiveRecord::Base
       msg = "#{existing_dirs.size} audio recording storage #{existing_dirs.size == 1 ? 'directory' : 'directories'} available."
       {message: msg, success: true}
     end
+  end
+
+  # Define filter api settings
+  def self.filter_settings
+    {
+        valid_fields: [
+            :id, :uuid, :recorded_date, :site_id, :duration_seconds,
+            :sample_rate_hertz, :channels, :bit_rate_bps, :media_type,
+            :data_length_bytes, :status, :created_at, :updated_at
+        # :uploader_id, :file_hash, , :notes, :creator_id,
+        #:updater_id, :deleter_id, :deleted_at, :original_file_name
+        ],
+        render_fields: [:id, :uuid, :recorded_date, :site_id, :duration_seconds,
+                        :sample_rate_hertz, :channels, :bit_rate_bps, :media_type,
+                        :data_length_bytes, :status],
+        text_fields: [:media_type, :status],
+        controller: :audio_recordings,
+        action: :filter,
+        defaults: {
+            order_by: :recorded_date,
+            direction: :desc
+        }
+    }
+  end
+
+  def get_listen_path
+    "/listen/#{self.id}"
   end
 
   private

@@ -2,28 +2,28 @@ class PublicMailer < ActionMailer::Base
   default from: Settings.emails.sender_address
 
   # @param [User] logged_in_user
-  # @param [ContactUs] model
+  # @param [DataClass::ContactUs] model
   # @param [ActionDispatch::Request] rails_request
   def contact_us_message(logged_in_user, model, rails_request)
     send_message(logged_in_user, model, rails_request, 'Contact Us')
   end
 
   # @param [User] logged_in_user
-  # @param [BugReport] model
+  # @param [DataClass::BugReport] model
   # @param [ActionDispatch::Request] rails_request
   def bug_report_message(logged_in_user, model, rails_request)
     send_message(logged_in_user, model, rails_request, 'Bug Report')
   end
 
   # @param [User] logged_in_user
-  # @param [DataRequest] model
+  # @param [DataClass::DataRequest] model
   # @param [ActionDispatch::Request] rails_request
   def data_request_message(logged_in_user, model, rails_request)
     send_message(logged_in_user, model, rails_request, 'Data Request')
   end
 
   # @param [User] logged_in_user
-  # @param [NewUserInfo] model
+  # @param [DataClass::NewUserInfo] model
   def new_user_message(logged_in_user, model)
     send_message(logged_in_user, model, nil, 'New User Notification')
   end

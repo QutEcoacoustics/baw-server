@@ -47,29 +47,26 @@
             - priority_tag = Tag.get_priority_tag(tags) || Tag.new(text:'(none)')
             - unless current_user.blank?
               - site_link = "/projects/#{audio_event.audio_recording.site.projects[0].id}/sites/#{audio_event.audio_recording.site.id}"
-              - offset_start_round_30_sec = (audio_event.start_time_seconds / 30).floor * 30
-              - offset_end_round_30_sec = (audio_event.end_time_seconds / 30).floor * 30
-              - offset_end_round_30_sec += (offset_start_round_30_sec == offset_end_round_30_sec ? 30 : 0 )
-              - audio_link = "/listen/#{audio_event.audio_recording.id}?start=#{offset_start_round_30_sec}&end=#{offset_end_round_30_sec}"
-              - annotation_link = "library/#{audio_event.audio_recording_id}/audio_events/#{audio_event.id}"
+              - audio_link = audio_event.get_listen_path
+              - annotation_link = audio_event.get_library_path
             - if current_user.blank?
               %td{title: tags_text}= priority_tag.text
             - else
               %td{title: tags_text}= link_to priority_tag.text, audio_link, target: '_self'
             - unless current_user.blank?
               %td= audio_event.audio_recording.site.name
-            %td{title: audio_event.updated_at}= distance_of_time_in_words(Time.zone.now, audio_event.updated_at, nil, {vague: true})+ ' ago'
+            %td{title: audio_event.created_at}= distance_of_time_in_words(Time.zone.now, audio_event.created_at, nil, {vague: true})+ ' ago'
             - unless current_user.blank?
-              %td= audio_event.updater.user_name
+              %td= audio_event.creator.user_name
               %td.nolink
                 = link_to audio_link, target: '_self', class: 'btn btn-mini' do
                   %i{class: 'fa fa-play'}
-                  Audio
-                = link_to user_account_path(audio_event.updater), class: 'btn btn-mini' do
+                  Play
+                = link_to user_account_path(audio_event.creator_id), class: 'btn btn-mini' do
                   %i{class: 'fa fa-user'}
                   User
                 = link_to annotation_link, class: 'btn btn-mini' do
-                  %i{class: 'fa fa-dot-circle-o'}
+                  %i{class: 'fa fa-flag'}
                   Annotation
                 = link_to site_link, target: '_self', class: 'btn btn-mini' do
                   %i{class: 'fa fa-map-marker'}
@@ -105,7 +102,7 @@
               %td.nolink
                 = link_to audio_link, target: '_self', class: 'btn btn-mini' do
                   %i{class: 'fa fa-play'}
-                  Audio
+                  Play
                 = link_to site_link, target: '_self', class: 'btn btn-mini' do
                   %i{class: 'fa fa-map-marker'}
                   Site

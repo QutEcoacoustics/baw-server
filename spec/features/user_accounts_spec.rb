@@ -6,6 +6,9 @@ describe "User account actions" do
   # ActionMailer::TestCase tests. If you want to have a clean slate outside Action
   # Mailer tests, you can reset it manually with: ActionMailer::Base.deliveries.clear
   before { ActionMailer::Base.deliveries.clear }
+
+  let(:last_email){ ActionMailer::Base.deliveries.last }
+
   it "emails user when requesting password reset" do
     # create user and go to forgot password page
     user = FactoryGirl.create(:user)
@@ -14,14 +17,13 @@ describe "User account actions" do
 
     click_link "Forgot password"
 
-    fill_in "Email", with: user.email
+    fill_in 'Login', with: user.email
     click_button "Send me reset password instructions"
 
     # back to sign in page, use token from email to go to reset password page
     current_path.should eq('/my_account/sign_in')
     page.should have_content("You will receive an email with instructions about how to reset your password in a few minutes.")
 
-    last_email = ActionMailer::Base.deliveries.last
     last_email.to.should include(user.email)
 
     # extract token from mail body
@@ -45,6 +47,128 @@ describe "User account actions" do
     current_path.should eq('/')
     page.should have_content('Your password was changed successfully. You are now signed in.')
   end
+
+  context 'log in' do
+
+    it 'should succeed when using email' do
+      user = FactoryGirl.create(:user)
+      visit root_url
+      first(:link, 'Login').click
+
+      expect(current_url).to eq(new_user_session_url)
+      fill_in 'Login', with: user.email
+      fill_in 'Password', with: user.password
+      click_button 'Sign in'
+
+      expect(current_path).to eq(root_path)
+      expect(page).to have_content('Signed in successfully.')
+    end
+
+    it 'should succeed when using user_name' do
+      user = FactoryGirl.create(:user)
+      visit root_url
+      first(:link, 'Login').click
+
+      expect(current_url).to eq(new_user_session_url)
+      fill_in 'Login', with: user.user_name
+      fill_in 'Password', with: user.password
+      click_button 'Sign in'
+
+      expect(current_path).to eq(root_path)
+      expect(page).to have_content('Signed in successfully.')
+    end
+
+    it 'should fail when invalid' do
+      user = FactoryGirl.create(:user)
+      visit root_url
+      first(:link, 'Login').click
+
+      expect(current_url).to eq(new_user_session_url)
+      fill_in 'Login', with: 'user name does not exist'
+      fill_in 'Password', with: user.password
+      click_button 'Sign in'
+
+      expect(current_path).to eq(new_user_session_path)
+      expect(page).to have_content('Invalid login or password.')
+    end
+
+  end
+
+  context 'resend unlock' do
+    it 'should succeed when using user_name' do
+      user = FactoryGirl.create(:user)
+      user.lock_access!
+
+      visit root_url
+      first(:link, 'Login').click
+      first(:link, 'Resend unlock').click
+
+      expect(current_url).to eq(new_user_unlock_url)
+      fill_in 'Login', with: user.user_name
+      click_button 'Resend unlock instructions'
+
+      expect(current_path).to eq(new_user_session_path)
+      expect(page).to have_content('You will receive an email with instructions about how to unlock your account in a few minutes.')
+      expect(last_email.to).to include(user.email)
+      expect(last_email.body.to_s).to include('unlock your account')
+    end
+
+    it 'should succeed when using email' do
+      user = FactoryGirl.create(:user)
+      user.lock_access!
+
+      visit root_url
+      first(:link, 'Login').click
+      first(:link, 'Resend unlock').click
+
+      expect(current_url).to eq(new_user_unlock_url)
+      fill_in 'Login', with: user.email
+      click_button 'Resend unlock instructions'
+
+      expect(current_path).to eq(new_user_session_path)
+      expect(page).to have_content('You will receive an email with instructions about how to unlock your account in a few minutes.')
+      expect(last_email.to).to include(user.email)
+      expect(last_email.body.to_s).to include('unlock your account')
+    end
+  end
+
+  context 'reset password' do
+    it 'should succeed when using user_name' do
+      user = FactoryGirl.create(:user)
+      user.lock_access!
+
+      visit root_url
+      first(:link, 'Login').click
+      first(:link, 'Forgot password').click
+
+      expect(current_url).to eq(new_user_password_url)
+      fill_in 'Login', with: user.user_name
+      click_button 'Send me reset password instructions'
+
+      expect(current_path).to eq(new_user_session_path)
+      expect(page).to have_content('email with instructions about how to reset your password')
+      expect(last_email.to).to include(user.email)
+      expect(last_email.body.to_s).to include('change your password')
+    end
+    it 'should succeed when using email' do
+      user = FactoryGirl.create(:user)
+      user.lock_access!
+
+      visit root_url
+      first(:link, 'Login').click
+      first(:link, 'Forgot password').click
+
+      expect(current_url).to eq(new_user_password_url)
+      fill_in 'Login', with: user.email
+      click_button 'Send me reset password instructions'
+
+      expect(current_path).to eq(new_user_session_path)
+      expect(page).to have_content('email with instructions about how to reset your password')
+      expect(last_email.to).to include(user.email)
+      expect(last_email.body.to_s).to include('change your password')
+    end
+  end
+
 end
 
 
@@ -77,16 +201,16 @@ describe 'MANAGE User Accounts as admin user' do
     page.should have_content('test name')
   end
 
-  it 'deletes a user account' do
+  it 'cannot delete account' do
     FactoryGirl.create(:user)
     visit user_accounts_path
-    expect { first(:link, 'Delete').click }.to change(User, :count).by(-1)
+    expect(page).not_to have_content('Cancel my account')
   end
 
-  it 'provides link to user projects' do
+  it 'provides link to Projects Bookmarks Annotations Comments' do
     user = FactoryGirl.create(:user)
     visit user_account_path(user)
-    page.should have_content('User Projects')
+    expect(page).to have_content('Projects Bookmarks Annotations Comments')
   end
 
   it 'lists user\'s projects' do
@@ -120,15 +244,42 @@ describe 'MANAGE User Accounts as user' do
     page.should have_content(user.user_name)
   end
 
+  it 'should not link to user comments for other user page' do
+    user = FactoryGirl.create(:user)
+    visit user_account_path(user)
+    expect(find('.nav-list')).to_not have_content('Comments')
+  end
+
+  it 'should not link to user bookmarks for other user page' do
+    user = FactoryGirl.create(:user)
+    visit user_account_path(user)
+    expect(find('.nav-list')).to_not have_content('Bookmarks')
+  end
+
   it 'should not link to user projects for other user page' do
     user = FactoryGirl.create(:user)
     visit user_account_path(user)
-    page.should_not have_content('User Projects')
+    expect(find('.nav-list')).to_not have_content('Projects')
   end
 
-  it 'should not link to user projects for current user' do
+  it 'should link to user comments for current user page' do
     visit my_account_path
-    page.should_not have_content('User Projects')
+    expect(find('.nav-list')).to have_content('Comments')
+  end
+
+  it 'should link to user bookmarks for current user page' do
+    visit my_account_path
+    expect(find('.nav-list')).to have_content('Bookmarks')
+  end
+
+  it 'should link to user projects for current user page' do
+    visit my_account_path
+    expect(find('.nav-list')).to have_content('Projects')
+  end
+
+  it 'should link to user projects for current user page' do
+    visit my_account_path
+    expect(find('.nav-list')).to have_content('Annotations')
   end
 
   it 'denies access to user projects page' do
@@ -136,7 +287,4 @@ describe 'MANAGE User Accounts as user' do
     visit projects_user_account_path(user)
     page.should have_content(I18n.t('devise.failure.unauthorized'))
   end
-
-
-
 end
