@@ -85,13 +85,14 @@ gem 'exception_notification', '~> 4.0.1'
 
 # MEDIA
 # -------------------------------------
-gem 'baw-audio-tools', git: 'https://github.com/QutBioacoustics/baw-audio-tools.git'
+gem 'baw-audio-tools', git: 'https://github.com/QutBioacoustics/baw-audio-tools.git', ref: 'cb3f92d'
 gem 'rack-rewrite', '~> 1.5.0'
 
 # ASYNC JOBS
 # ------------------------------------
 gem 'resque', '~> 1.25.2'
-gem 'baw-workers', git: 'https://github.com/QutBioacoustics/baw-workers.git'
+gem 'baw-workers', git: 'https://github.com/QutBioacoustics/baw-workers.git', ref: 'd4195ab48e'
+gem 'resque-job-stats', git: 'https://github.com/echannel/resque-job-stats.git', ref: '8932c036ae'
 
 # Gems restricted by environment and/or platform
 # ====================================================
