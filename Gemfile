@@ -135,7 +135,7 @@ end
 
 group :development, :test do
   gem 'bullet', '~> 4.13.0'
-  gem 'rspec-rails', '~> 2.14.2'
+  gem 'rspec-rails', '~> 2.14'
   # fixed at lower version due to windows issues in higher versions
   gem 'guard', '~> 2.6.1'
   gem 'listen', '~> 2.7.9'
@@ -147,14 +147,14 @@ group :test do
   gem 'capybara', '~> 2.4.0'
   gem 'thin', '~> 1.6.2'
   gem 'guard-rspec', '~> 3.1.0'
-  gem 'rspec', '~> 2.14'
+  gem 'rspec', '~> 2.14.1'
   # fixed version due to unresolved bug in higher versions
-  gem 'simplecov', '~> 0.7.1', require: false
-  gem 'shoulda-matchers', '~> 2.6.1'
+  gem 'simplecov', '~> 0.7', require: false
+  gem 'shoulda-matchers', '~> 2.7'
   gem 'launchy', '~> 2.4.2'
   gem 'json_spec', '~> 1.1.1'
   gem 'database_cleaner', '~> 1.2'
-  gem 'webmock', '~> 1.18.0'
+  gem 'webmock', '~> 1.18'
   gem 'coveralls', '~> 0.7.0', require: false
   gem 'codeclimate-test-reporter', require: nil
   gem 'fakeredis', require: 'fakeredis/rspec'
