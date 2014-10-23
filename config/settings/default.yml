@@ -77,6 +77,8 @@ defaults: &defaults
       - <%= Rails.root %>/tmp/_analysis_run
     cached_datasets:
       - <%= Rails.root %>/tmp/_cached_dataset
+    cached_analysis_jobs:
+      - <%= Rails.root %>/tmp/_cached_analysis_jobs
     harvester_base: <%= Rails.root %>/tmp/_harvester_to_do
     modules_log_file: <%= Rails.root %>/tmp/_modules_log.log
     workers_log_file: <%= Rails.root %>/tmp/workers_log.log

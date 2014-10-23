@@ -234,6 +234,7 @@ def remove_media_dirs
   audio_original.existing_dirs.each { |dir| FileUtils.rm_r dir }
   audio_cache.existing_dirs.each { |dir| FileUtils.rm_r dir }
   spectrogram_cache.existing_dirs.each { |dir| FileUtils.rm_r dir }
+  analysis_cache.existing_dirs.each { |dir| FileUtils.rm_r dir }
 end
 
 def create_media_options(audio_recording)
