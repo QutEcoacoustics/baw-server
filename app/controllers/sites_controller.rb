@@ -157,6 +157,7 @@ class SitesController < ApplicationController
 
     # always display project_ids
     filter_response[:data] = filter_response.data.each { |site|
+      # TODO: this causes a deprecation warning for writing arbitrary attributes to a model
       site[:project_ids] = Site.where(id: site.id).first.projects.select(:id)
       site
     }
