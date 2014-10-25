@@ -38,7 +38,7 @@ gem 'bootstrap-timepicker-rails', '~> 0.1.3'
 gem 'bootstrap-datepicker-rails', '~> 1.3.0.2'
 # for rails 3, 4
 gem 'will_paginate', '~> 3.0'
-gem 'dotiw', '~> 1.1.1'
+gem 'dotiw', git: 'https://github.com/radar/dotiw.git', ref: 'e01191d'
 gem 'recaptcha', '~> 0.3.6', require: 'recaptcha/rails'
 
 # USERS & PERMISSIONS
@@ -88,7 +88,7 @@ gem 'exception_notification', '~> 4.0.1'
 
 # MEDIA
 # -------------------------------------
-gem 'baw-audio-tools', git: 'https://github.com/QutBioacoustics/baw-audio-tools.git'
+gem 'baw-audio-tools', git: 'https://github.com/QutBioacoustics/baw-audio-tools.git', ref: '07af4484af'
 gem 'rack-rewrite', '~> 1.5.0'
 
 # ASYNC JOBS
@@ -96,7 +96,7 @@ gem 'rack-rewrite', '~> 1.5.0'
 gem 'resque', '~> 1.25.2'
 gem 'resque-job-stats', git: 'https://github.com/echannel/resque-job-stats.git', ref: '8932c036ae'
 gem 'resque-status'
-gem 'baw-workers', git: 'https://github.com/QutBioacoustics/baw-workers.git'
+gem 'baw-workers', git: 'https://github.com/QutBioacoustics/baw-workers.git', ref: '0223c5a1b5'
 gem 'fire_poll', '~> 1.2.0'
 
 # Gems restricted by environment and/or platform
@@ -106,8 +106,8 @@ group :assets do
   # Gems used only for assets and not required
   # in production environments by default.
   # keep consistent with Rails version
-  gem 'coffee-rails', '~> 3.2'
-  gem 'sass-rails', '~> 3.2.6'
+  gem 'coffee-rails', '< 4'
+  gem 'sass-rails', '< 4'
   # must be '>= 1.0.3' or greater to run successfully
   gem 'uglifier', '~> 2.5.0'
 end
@@ -134,7 +134,7 @@ group :development do
 end
 
 group :development, :test do
-  gem 'bullet', '~> 4.13.0'
+  gem 'bullet', '~> 4.14'
   gem 'rspec-rails', '~> 2.14'
   # fixed at lower version due to windows issues in higher versions
   gem 'guard', '~> 2.6.1'
@@ -143,10 +143,11 @@ group :development, :test do
 end
 
 group :test do
-  gem 'factory_girl_rails', '~> 4.4.1'
+  gem 'factory_girl_rails', '~> 4.5'
   gem 'capybara', '~> 2.4.0'
   gem 'thin', '~> 1.6.2'
   gem 'guard-rspec', '~> 3.1.0'
+  gem 'guard-yard'
   gem 'rspec', '~> 2.14.1'
   # fixed version due to unresolved bug in higher versions
   gem 'simplecov', '~> 0.7', require: false
