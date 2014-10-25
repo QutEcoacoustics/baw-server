@@ -73,16 +73,16 @@ module BawAudioTools
         if info_match.blank?
           #result.errors.push(line)
         else
-          result.info[:operation] = info_match[1]
-          result.info[:time] = info_match[2]
-          result.info[:mode] = info_match[3]
-          result.info[:ratio] = info_match[4]
+          result[:info][:operation] = info_match[1]
+          result[:info][:time] = info_match[2]
+          result[:info][:mode] = info_match[3]
+          result[:info][:ratio] = info_match[4]
         end
       end
 
       # consider verification failed if info is not populated
-      if result.info[:operation].blank?
-        result.errors.push('Verification failed')
+      if result[:info][:operation].blank?
+        result[:errors].push('Verification failed')
       end
 
       result

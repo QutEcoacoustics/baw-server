@@ -1,5 +1,3 @@
-require File.dirname(__FILE__) + '/logging'
-
 module BawAudioTools
   class AudioShntool
 

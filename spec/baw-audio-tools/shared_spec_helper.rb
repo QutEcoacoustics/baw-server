@@ -6,16 +6,35 @@ shared_context 'common' do
   let(:bit_rate_min) { 192000 }
   let(:sleep_range) { 0.5 }
 
-  let(:temp_dir) { File.join(File.dirname(__FILE__), '..', '..', 'tmp') }
-  let(:audio_dir) { File.join(File.dirname(__FILE__), '..', 'media_files') }
+  let(:temp_dir) { File.expand_path(File.join(File.dirname(__FILE__), '..', '..', 'tmp')) }
+  let(:audio_dir) { File.expand_path(File.join(File.dirname(__FILE__), '..', 'media_files')) }
+  let(:logger) {
+    logger = Logger.new(File.join(temp_dir, 'test.log'))
+    logger.level = Logger::INFO
+    logger
+  }
 
 end
 
 shared_context 'audio base' do
-  let(:audio_base) { BawAudioTools::AudioBase.from_executables(
-      Settings.audio_tools.ffmpeg_executable, Settings.audio_tools.ffprobe_executable,
-      Settings.audio_tools.mp3splt_executable, Settings.audio_tools.sox_executable, Settings.audio_tools.wavpack_executable,
-      Settings.cached_audio_defaults, temp_dir) }
+  let(:audio_base) {
+
+    audio_tools = RSpec.configuration.test_settings.audio_tools
+
+    BawAudioTools::AudioBase.from_executables(
+        RSpec.configuration.test_settings.cached_audio_defaults,
+        logger,
+        temp_dir,
+        RSpec.configuration.test_settings.audio_tools_timeout_sec,
+        {
+            ffmpeg: audio_tools.ffmpeg_executable,
+            ffprobe: audio_tools.ffprobe_executable,
+            mp3splt: audio_tools.mp3splt_executable,
+            sox: audio_tools.sox_executable,
+            wavpack: audio_tools.wavpack_executable,
+            shntool: audio_tools.shntool_executable
+        })
+  }
 end
 
 shared_context 'test audio files' do

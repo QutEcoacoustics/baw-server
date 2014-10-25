@@ -41,7 +41,7 @@ module BawAudioTools
       end
     end
 
-    def modify_command(source, target, duration_sec, ppms)
+    def modify_command(source, target)
       fail ArgumentError, "Source is not a png file: #{source}" unless source.match(/\.png/)
       fail ArgumentError, "Target is not a png file: : #{target}" unless target.match(/\.png/)
       fail Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.exists? source
@@ -49,26 +49,9 @@ module BawAudioTools
       #fail Exceptions::FileAlreadyExistsError, "Target exists: #{target}" if File.exists? target
       #fail ArgumentError "Source and Target are the same file: #{target}" if source == target
 
-      # disable resizing. The client can take care of manipulating the image to suit the client's needs
-      ##cmd_width = arg_width(ppms, duration_sec)
-      ##command = "#{@image_magick_path} \"#{source}\" -gravity South -chop 0x1 #{cmd_width} #{target}"
-
       cmd_remove_dc_value = arg_remove_dc_value
 
       "#{@image_magick_convert_exe} -quiet \"#{source}\" #{cmd_remove_dc_value} \"#{target}\""
-    end
-
-    def arg_width(ppms, duration_sec)
-      # calculate the expected width
-      width = ppms * (duration_sec * 1000)
-
-      # http://www.imagemagick.org/Usage/resize/#noaspect
-      # don't have to use for linux \! apparently
-      #resize_ignore_aspect_ratio = if OS.windows? then '!' else '\!' end
-      resize_ignore_aspect_ratio = '!'
-
-      # resize: http://www.imagemagick.org/Usage/resize/
-      "-resize #{width}x256#{resize_ignore_aspect_ratio}"
     end
 
     def arg_remove_dc_value

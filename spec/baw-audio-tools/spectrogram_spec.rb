@@ -6,10 +6,15 @@ describe BawAudioTools::Spectrogram do
   include_context 'temp media files'
   include_context 'test audio files'
 
-  let(:spectrogram) { BawAudioTools::Spectrogram.from_executables(
+  let(:spectrogram) {
+    audio_tools = RSpec.configuration.test_settings.audio_tools
+
+    BawAudioTools::Spectrogram.from_executables(
       audio_base,
-      Settings.audio_tools.imagemagick_convert_executable, Settings.audio_tools.imagemagick_identify_executable,
-      Settings.cached_spectrogram_defaults, temp_dir) }
+      audio_tools.imagemagick_convert_executable,
+      audio_tools.imagemagick_identify_executable,
+      RSpec.configuration.test_settings.cached_spectrogram_defaults,
+      temp_dir) }
 
   context 'getting info about image' do
     it 'returns all required information' do

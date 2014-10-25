@@ -12,13 +12,17 @@ module BawAudioTools
     REGEX_WARN_OVER_READ = /#{WARN_INDICATOR}#{WARN_OVER_READ}/
 
 
-    # @param [string] ffmpeg_executable
-    # @param [string] ffprobe_executable
-    # @param [string] temp_dir
-    def initialize(ffmpeg_executable, ffprobe_executable, temp_dir)
+    # @param [String] ffmpeg_executable
+    # @param [String] ffprobe_executable
+    # @param [Logger] logger
+    # @param [String] temp_dir
+    def initialize(ffmpeg_executable, ffprobe_executable, logger, temp_dir)
       @ffmpeg_executable = ffmpeg_executable
       @ffprobe_executable = ffprobe_executable
+      @logger = logger
       @temp_dir = temp_dir
+
+      @class_name = self.class.name
     end
 
     public
@@ -48,7 +52,7 @@ module BawAudioTools
       cmd_channel = arg_channel(channel)
       codec_info = codec_calc(target)
 
-      audio_cmd = "#{@ffmpeg_executable} -i \"#{source}\" #{cmd_offsets} #{cmd_sample_rate} #{cmd_channel} #{codec_info.codec} \"#{codec_info.target}\""
+      audio_cmd = "#{@ffmpeg_executable} -i \"#{source}\" #{cmd_offsets} #{cmd_sample_rate} #{cmd_channel} #{codec_info[:codec]} \"#{codec_info[:target]}\""
       cmd = ''
 
       if codec_info[:target] == codec_info[:old_target]
@@ -108,37 +112,37 @@ module BawAudioTools
         match_result = /\A\[(.+?) @ 0x.+?\] (.*)/.match(line)
         item = nil
         item = check_integrity_item({id: match_result[1], description: match_result[2]}) unless match_result.blank?
-        result.errors.push(item) unless item.blank?
+        result[:errors].push(item) unless item.blank?
 
         # other information
         error_match = /error/i.match(line)
-        result.errors.push({id: 'error', description: line}) unless error_match.blank?
+        result[:errors].push({id: 'error', description: line}) unless error_match.blank?
 
         eof_match = /: End of file/i.match(line)
-        result.errors.push({id: 'end of file', description: line}) unless eof_match.blank?
+        result[:errors].push({id: 'end of file', description: line}) unless eof_match.blank?
 
         read_packets_match = /Total: (\d+) packets \((\d+) bytes\) demuxed/.match(line)
         unless read_packets_match.blank?
-          result.info.read[:packets] = read_packets_match[1]
-          result.info.read[:bytes] = read_packets_match[2]
+          result[:info][:read][:packets] = read_packets_match[1]
+          result[:info][:read][:bytes] = read_packets_match[2]
         end
 
         read_frames_match = /(\d+) frames decoded \((\d+) samples\);/.match(line)
         unless read_frames_match.blank?
-          result.info.read[:frames] = read_frames_match[1]
-          result.info.read[:samples] = read_frames_match[2]
+          result[:info][:read][:frames] = read_frames_match[1]
+          result[:info][:read][:samples] = read_frames_match[2]
         end
 
         write_packets_match = /Total: (\d+) packets \((\d+) bytes\) muxed/.match(line)
         unless write_packets_match.blank?
-          result.info.write[:packets] = write_packets_match[1]
-          result.info.write[:bytes] = write_packets_match[2]
+          result[:info][:write][:packets] = write_packets_match[1]
+          result[:info][:write][:bytes] = write_packets_match[2]
         end
 
         write_frames_match = /(\d+) frames encoded \((\d+) samples\);/.match(line)
         unless write_frames_match.blank?
-          result.info.write[:frames] = write_frames_match[1]
-          result.info.write[:samples] = write_frames_match[2]
+          result[:info][:write][:frames] = write_frames_match[1]
+          result[:info][:write][:samples] = write_frames_match[2]
         end
       end
 
@@ -148,13 +152,13 @@ module BawAudioTools
     def check_integrity_item(hash)
       return nil if hash.blank?
 
-      return nil if hash.id.starts_with?('graph')
-      return nil if hash.id.starts_with?('audio format')
-      return nil if hash.id.starts_with?('auto-inserted')
+      return nil if hash[:id].starts_with?('graph')
+      return nil if hash[:id].starts_with?('audio format')
+      return nil if hash[:id].starts_with?('auto-inserted')
 
-      return nil if hash.description.starts_with?('parser not found for')
-      return nil if hash.description.starts_with?('max_analyze_duration')
-      return nil if hash.description.starts_with?('Application provided invalid, non monotonically increasing dts to muxer in stream')
+      return nil if hash[:description].starts_with?('parser not found for')
+      return nil if hash[:description].starts_with?('max_analyze_duration')
+      return nil if hash[:description].starts_with?('Application provided invalid, non monotonically increasing dts to muxer in stream')
 
       hash
     end
@@ -162,7 +166,13 @@ module BawAudioTools
     def find_remove_warning(mod_stderr, match_regex)
       match_info = mod_stderr.match(match_regex)
       mod_stderr = mod_stderr.gsub(match_regex, '')
-      Logging::logger.warn "Found and removed #{match_info} in ffmpeg output."
+
+      unless match_info.blank?
+        @logger.warn(@class_name) {
+          "Found and removed '#{match_info}' in ffmpeg output."
+        }
+      end
+
       mod_stderr
     end
 

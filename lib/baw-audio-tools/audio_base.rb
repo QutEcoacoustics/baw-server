@@ -3,37 +3,62 @@ require 'open3'
 module BawAudioTools
   class AudioBase
 
-    attr_reader :audio_ffmpeg, :audio_mp3splt, :audio_sox, :audio_wavpack, :temp_dir, :audio_defaults
+    attr_reader :audio_defaults, :logger, :temp_dir, :timeout_sec,
+                :audio_ffmpeg, :audio_mp3splt, :audio_sox,
+                :audio_wavpack, :audio_shntool
 
     public
 
     # Create a new BawAudioTools::AudioBase.
-    # @param [BawAudioTools::AudioFfmpeg] audio_ffmpeg
-    # @param [BawAudioTools::AudioMp3splt] audio_mp3splt
-    # @param [BawAudioTools::AudioSox] audio_sox
-    # @param [BawAudioTools::AudioWavpack] audio_wavpack
     # @param [Hash] audio_defaults
-    # @param [string] temp_dir
+    # @param [Logger] logger
+    # @param [String] temp_dir
+    # @param [Integer] timeout_sec
+    # @param [Hash] opts the available audio tools
+    # @option opts [BawAudioTools::AudioFfmpeg] :ffmpeg
+    # @option opts [BawAudioTools::AudioMp3splt] :mp3splt
+    # @option opts [BawAudioTools::AudioSox] :sox
+    # @option opts [BawAudioTools::AudioWavpack] :wavpack
+    # @option opts [BawAudioTools::AudioShntool] :shntool
     # @return [BawAudioTools::AudioBase]
-    def initialize(audio_ffmpeg, audio_mp3splt, audio_sox, audio_wavpack, audio_defaults, temp_dir)
-      @audio_ffmpeg = audio_ffmpeg
-      @audio_mp3splt = audio_mp3splt
-      @audio_sox = audio_sox
-      @audio_wavpack =audio_wavpack
+    def initialize(audio_defaults, logger, temp_dir, timeout_sec, opts = {})
       @audio_defaults = audio_defaults
+      @logger = logger
       @temp_dir = temp_dir
+      @timeout_sec = timeout_sec
+
+      @audio_ffmpeg = opts[:ffmpeg]
+      @audio_mp3splt = opts[:mp3splt]
+      @audio_sox = opts[:sox]
+      @audio_wavpack = opts[:wavpack]
+      @audio_shntool = opts[:shntool]
+
+      @class_name = self.class.name
     end
 
-    def self.from_executables(ffmpeg_executable, ffprobe_executable,
-        mp3splt_executable, sox_executable, wavpack_executable,
-        audio_defaults, temp_dir)
-      audio_ffmpeg = BawAudioTools::AudioFfmpeg.new(ffmpeg_executable, ffprobe_executable, temp_dir)
-      audio_mp3splt = BawAudioTools::AudioMp3splt.new(mp3splt_executable, temp_dir)
-      audio_sox = BawAudioTools::AudioSox.new(sox_executable, temp_dir)
-      audio_wavpack = BawAudioTools::AudioWavpack.new(wavpack_executable, temp_dir)
-      #audio_shntool = AudioShntool.new(shntool_executable, temp_dir)
+    # Create a new BawAudioTools::AudioBase.
+    # @param [Hash] audio_defaults
+    # @param [Logger] logger
+    # @param [String] temp_dir
+    # @param [Integer] timeout_sec
+    # @param [Hash] opts the available audio tools
+    # @option opts [String] :ffmpeg path to executable
+    # @option opts [String] :ffprobe path to executable
+    # @option opts [String] :mp3splt path to executable
+    # @option opts [String] :sox path to executable
+    # @option opts [String] :wavpack path to executable
+    # @option opts [String] :shntool path to executable
+    # @return [BawAudioTools::AudioBase]
+    def self.from_executables(audio_defaults, logger, temp_dir, timeout_sec, opts = {})
+      audio_tool_opts = {
+          ffmpeg: BawAudioTools::AudioFfmpeg.new(opts[:ffmpeg], opts[:ffprobe], logger, temp_dir),
+          mp3splt: BawAudioTools::AudioMp3splt.new(opts[:mp3splt], temp_dir),
+          sox: BawAudioTools::AudioSox.new(opts[:sox], temp_dir),
+          wavpack: BawAudioTools::AudioWavpack.new(opts[:wavpack], temp_dir),
+          shntool: BawAudioTools::AudioShntool.new(opts[:shntool], temp_dir)
+      }
 
-      BawAudioTools::AudioBase.new(audio_ffmpeg, audio_mp3splt, audio_sox, audio_wavpack, audio_defaults, temp_dir)
+      BawAudioTools::AudioBase.new(audio_defaults, logger, temp_dir, timeout_sec, audio_tool_opts)
     end
 
     # Construct path to a temp file with extension that does not exist.
@@ -97,20 +122,35 @@ module BawAudioTools
         # too short
         duration = sox_stat['Length (seconds)'].to_f
         min_useful = 0.5
-        Logging::logger.warn "Audio file duration #{duration} is less than #{min_useful}. This file may not be useful: #{source}" if duration < min_useful
+
+        if duration < min_useful
+          @logger.warn(@class_name) {
+            "Audio file duration #{duration} is less than #{min_useful}. This file may not be useful: #{source}"
+          }
+        end
 
         # clipped
         min_amp = sox_stat['Minimum amplitude'].to_f
         min_amp_threshold = -0.999
         max_amp_threshold = 0.999
-        Logging::logger.warn "Audio file has been clipped #{min_amp} (max amplitude #{max_amp_threshold}, min amplitude #{min_amp_threshold}): #{source}" if min_amp_threshold >= min_amp && max_amp_threshold <= max_amp
+
+        if min_amp_threshold >= min_amp && max_amp_threshold <= max_amp
+          @logger.warn(@class_name) {
+            "Audio file has been clipped #{min_amp} (max amplitude #{max_amp_threshold}, min amplitude #{min_amp_threshold}): #{source}"
+          }
+        end
 
         # dc offset TODO
 
         # zero signal
         mean_norm = sox_stat['Mean    norm'].to_f
         zero_sig_threshold = 0.001
-        Logging::logger.warn "Audio file has zero signal #{mean_norm} (mean norm is less than #{zero_sig_threshold}): #{source}" if zero_sig_threshold >= mean_norm
+
+        if zero_sig_threshold >= mean_norm
+          @logger.warn(@class_name) {
+            "Audio file has zero signal #{mean_norm} (mean norm is less than #{zero_sig_threshold}): #{source}"
+          }
+        end
 
       end
 
@@ -148,7 +188,9 @@ module BawAudioTools
         # duration
       end
 
-      Logging::logger.debug "Info for #{source}: #{info_flattened.to_json}"
+      @logger.debug(@class_name) {
+        "Info for #{source}: #{info_flattened.to_json}"
+      }
 
       info_flattened
     end
@@ -207,7 +249,7 @@ module BawAudioTools
 
       time = Benchmark.realtime do
         begin
-          run_with_timeout(command, timeout: Settings.audio_tools_timeout_sec) do |output, error, thread, timed_out_return, killed_return, exceptions|
+          run_with_timeout(command, timeout: @timeout_sec) do |output, error, thread, timed_out_return, killed_return, exceptions|
             #thread_success = thread.value.success?
             stdout_str = output
             stderr_str = error
@@ -217,21 +259,21 @@ module BawAudioTools
             exceptions = exceptions
           end
         rescue Exception => e
-          Logging::logger.fatal e
+          @logger.fatal(@class_name) { e }
           raise e
         end
       end
 
       status_msg = "status=#{status.exitstatus};killed=#{killed};"
-      timeout_msg = "time_out_sec=#{Settings.audio_tools_timeout_sec};time_taken_sec=#{time};timed_out=#{timed_out};"
+      timeout_msg = "time_out_sec=#{@timeout_sec};time_taken_sec=#{time};timed_out=#{timed_out};"
       exceptions_msg = "exceptions=#{exceptions.inspect};"
       output_msg = "\n\tStandard output: #{stdout_str}\n\tStandard Error: #{stderr_str}"
       msg = "External Program: #{status_msg}#{timeout_msg}#{exceptions_msg}command=#{command}#{output_msg}"
 
       if (!stderr_str.blank? && !status.success?) || timed_out || killed
-        Logging::logger.warn msg
+        @logger.warn(@class_name) { msg }
       else
-        Logging::logger.debug msg
+        @logger.debug(@class_name) { msg }
       end
 
       fail Exceptions::AudioToolTimedOutError, msg if timed_out || killed
@@ -295,7 +337,7 @@ module BawAudioTools
       if modify_parameters.include?(:sample_rate)
         sample_rate = modify_parameters[:sample_rate].to_i
         fail Exceptions::InvalidSampleRateError, "Sample rate #{sample_rate} requested for " +
-            "#{File.extname(target)} not in #{AudioBase.valid_sample_rates}." unless AudioBase.valid_sample_rates.include?(sample_rate)
+                                                   "#{File.extname(target)} not in #{AudioBase.valid_sample_rates}." unless AudioBase.valid_sample_rates.include?(sample_rate)
       end
     end
 
@@ -445,7 +487,7 @@ module BawAudioTools
           killed = true
         end
 
-        yield output, error, thread, !time_remaining, killed, exceptions
+        yield output, error, thread, !time_remaining, killed, exceptions.flatten
       end
     end
 

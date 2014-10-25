@@ -35,7 +35,6 @@ end
 # start code coverage
 SimpleCov.start
 
-require 'settingslogic'
 require 'active_support/all'
 require 'zonebie'
 require 'baw-audio-tools'
@@ -57,26 +56,68 @@ RSpec.configure do |config|
 
   #config.profile_examples = 20
 
-  # redirect puts into a text file
+  # store original stdout / stderr
   original_stderr = $stderr
   original_stdout = $stdout
 
-  config.before(:suite) do
-    # Redirect stderr and stdout
+  config.before(:all) do
+    # Redirect stderr and stdout to text files
     $stderr = File.new(File.join(File.dirname(__FILE__), '..', 'tmp', 'rspec_stderr.txt'), 'w')
     $stdout = File.new(File.join(File.dirname(__FILE__), '..', 'tmp', 'rspec_stdout.txt'), 'w')
   end
 
-  config.after(:suite) do
+  config.after(:all) do
     $stderr = original_stderr
     $stdout = original_stdout
   end
 
-# for settings when running tests. In normal use, Settings are used from the parent ruby project.
-  class Settings < Settingslogic
-    source File.dirname(__FILE__) + '/baw-audio-tools/test-settings.yml'
-    namespace 'test'
-  end
+  # for settings when running tests. In normal use, Settings are used from the parent ruby project.
+  require 'ostruct'
+  config.add_setting :test_settings
+  config.test_settings = OpenStruct.new({
+      cached_audio_defaults:
+          OpenStruct.new({
+              storage_format: 'mp3',
+              channel: 0,
+              sample_rate: 22050,
+              max_duration_seconds: 300.0,
+              min_duration_seconds: 0.5
+          }),
+      cached_spectrogram_defaults:
+          OpenStruct.new({
+              storage_format: 'png',
+              channel: 0,
+              sample_rate: 22050,
+              window: 512,
+              window_function: 'Hamming',
+              colour: 'g',
+              max_duration_seconds: 120.0,
+              min_duration_seconds: 0.5
+          }),
+      cached_dataset_defaults:
+          OpenStruct.new({
+              storage_format: 'txt',
+              one_item_per_line: true
+          }),
+      available_formats:
+          OpenStruct.new({
+              text: %w(json),
+              audio: %w(mp3 webm ogg flac wav),
+              image: %w(png)
+          }),
+      audio_tools:
+          OpenStruct.new({
+              ffmpeg_executable: 'ffmpeg',
+              ffprobe_executable: 'ffprobe',
+              mp3splt_executable: 'mp3splt',
+              sox_executable: 'sox',
+              wavpack_executable: 'wvunpack',
+              shntool_executable: 'shntool',
+              imagemagick_convert_executable: 'convert',
+              imagemagick_identify_executable: 'identify'
+          }),
+      audio_tools_timeout_sec: 10
+  })
 
   # so Time.zone.parse can be used
   #Time.zone = 'UTC'

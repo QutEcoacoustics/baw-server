@@ -77,7 +77,7 @@ module BawAudioTools
       cmd_pixels_second = arg_pixels_second(sample_rate, window)
 
       # -X is for native ppms - not 0.045
-      # defaults to ()22050 / 512) || (11025 / 256) (sample rate / window size)
+      # defaults to (22050 / 512) || (11025 / 256) (sample rate / window size)
 
       # common parameters
       # -r Raw spectrogram: suppress the display of axes and legends.

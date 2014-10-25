@@ -15,17 +15,15 @@ describe BawAudioTools::AudioBase do
     end
 
     it 'check timeout does not impact successful execution' do
-      settings_timeout = Settings.audio_tools_timeout_sec
       sleep_duration = 1
       command = "sleep #{sleep_duration}"
-      result = nil
 
       result = audio_base.execute(command)
 
-      expect(result.time_taken).to be_within(sleep_range).of(sleep_duration)
-      expect(result.stdout).to be_blank
-      expect(result.stderr).to be_blank
-      expect(result.command).to eq(command)
+      expect(result[:time_taken]).to be_within(sleep_range).of(sleep_duration)
+      expect(result[:stdout]).to be_blank
+      expect(result[:stderr]).to be_blank
+      expect(result[:command]).to eq(command)
     end
   end
 
@@ -373,40 +371,40 @@ describe BawAudioTools::AudioBase do
       end
     end
   end
-
+ 
   context 'verifying integrity' do
     context 'succeeds' do
       it 'processing valid .wv file' do
         temp_media_file_a = temp_media_file_1+'.wv'
         result_1 = audio_base.modify(audio_file_stereo, temp_media_file_a)
         result = audio_base.integrity_check(temp_media_file_a)
-        expect(result.errors.size).to eq(0)
-        expect(result.info[:operation]).to eq('verified')
-        expect(result.info[:mode]).to eq('lossless')
+        expect(result[:errors].size).to eq(0)
+        expect(result[:info][:operation]).to eq('verified')
+        expect(result[:info][:mode]).to eq('lossless')
       end
 
       it 'processing valid .mp3 file' do
         temp_media_file_a = temp_media_file_1+'.mp3'
         result_1 = audio_base.modify(audio_file_stereo, temp_media_file_a)
         result = audio_base.integrity_check(temp_media_file_a)
-        expect(result.errors.size).to eq(0)
-        expect(result.info.read[:samples]).to eq(result.info.write[:samples])
+        expect(result[:errors].size).to eq(0)
+        expect(result[:info][:read][:samples]).to eq(result[:info][:write][:samples])
       end
 
       it 'processing valid .asf file' do
         temp_media_file_a = temp_media_file_1+'.asf'
         result_1 = audio_base.modify(audio_file_stereo, temp_media_file_a)
         result = audio_base.integrity_check(temp_media_file_a)
-        expect(result.errors.size).to eq(0)
-        expect(result.info.read[:samples]).to eq(result.info.write[:samples])
+        expect(result[:errors].size).to eq(0)
+        expect(result[:info][:read][:samples]).to eq(result[:info][:write][:samples])
       end
 
       it 'processing valid .wav file' do
         temp_media_file_a = temp_media_file_1+'.wav'
         result_1 = audio_base.modify(audio_file_stereo, temp_media_file_a)
         result = audio_base.integrity_check(temp_media_file_a)
-        expect(result.errors.size).to eq(0)
-        expect(result.info.read[:samples]).to eq(result.info.write[:samples])
+        expect(result[:errors].size).to eq(0)
+        expect(result[:info][:read][:samples]).to eq(result[:info][:write][:samples])
       end
 
 
@@ -414,40 +412,40 @@ describe BawAudioTools::AudioBase do
         temp_media_file_a = temp_media_file_1+'.flac'
         result_1 = audio_base.modify(audio_file_stereo, temp_media_file_a)
         result = audio_base.integrity_check(temp_media_file_a)
-        expect(result.errors.size).to eq(0)
-        expect(result.info.read[:samples]).to eq(result.info.write[:samples])
+        expect(result[:errors].size).to eq(0)
+        expect(result[:info][:read][:samples]).to eq(result[:info][:write][:samples])
       end
 
       it 'processing valid .ogg file' do
         temp_media_file_a = temp_media_file_1+'.ogg'
         result_1 = audio_base.modify(audio_file_stereo, temp_media_file_a)
         result = audio_base.integrity_check(temp_media_file_a)
-        expect(result.errors.size).to eq(0)
-        expect(result.info.read[:samples]).to eq(result.info.write[:samples])
+        expect(result[:errors].size).to eq(0)
+        expect(result[:info][:read][:samples]).to eq(result[:info][:write][:samples])
       end
 
       it 'processing valid .wma file' do
         temp_media_file_a = temp_media_file_1+'.wma'
         result_1 = audio_base.modify(audio_file_stereo, temp_media_file_a)
         result = audio_base.integrity_check(temp_media_file_a)
-        expect(result.errors.size).to eq(0)
-        expect(result.info.read[:samples]).to eq(result.info.write[:samples])
+        expect(result[:errors].size).to eq(0)
+        expect(result[:info][:read][:samples]).to eq(result[:info][:write][:samples])
       end
 
       it 'processing valid .webm file' do
         temp_media_file_a = temp_media_file_1+'.webm'
         result_1 = audio_base.modify(audio_file_stereo, temp_media_file_a)
         result = audio_base.integrity_check(temp_media_file_a)
-        expect(result.errors.size).to eq(0)
-        expect(result.info.read[:samples]).to eq(result.info.write[:samples])
+        expect(result[:errors].size).to eq(0)
+        expect(result[:info][:read][:samples]).to eq(result[:info][:write][:samples])
       end
 
       it 'processing valid .webm file' do
         temp_media_file_a = temp_media_file_1+'.webm'
         result_1 = audio_base.modify(audio_file_stereo, temp_media_file_a)
         result = audio_base.integrity_check(temp_media_file_a)
-        expect(result.errors.size).to eq(0)
-        expect(result.info.read[:samples]).to eq(result.info.write[:samples])
+        expect(result[:errors].size).to eq(0)
+        expect(result[:info][:read][:samples]).to eq(result[:info][:write][:samples])
       end
     end
     context 'fails' do

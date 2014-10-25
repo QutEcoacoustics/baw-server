@@ -66,7 +66,7 @@ module BawAudioTools
       @audio_base.check_target(target)
 
       # remove dc offset using image magick
-      cmd = @image_image_magick.modify_command(target, target, source_info[:duration_seconds], @spectrogram_defaults.ppms)
+      cmd = @image_image_magick.modify_command(target, target)
       @audio_base.execute(cmd)
       @audio_base.check_target(target)
     end
