@@ -3,9 +3,6 @@ module BawWorkers
     # Get a list of files to be harvested.
     class GatherFiles
 
-      # include common methods
-      include BawWorkers::Common
-
       # Create a new BawWorkers::Harvest::GatherFiles.
       # @param [Logger] logger
       # @param [BawWorkers::FileInfo] file_info_helper
@@ -71,8 +68,8 @@ module BawWorkers
           dirs.each { |item| output.push(*all_dirs(item)) }
 
         elsif File.directory?(dirs)
-          dirs = Dir.glob('**/*').select { |f| File.directory? f }
-          output.push(*dirs)
+          sub_dirs = Dir.glob('**/*').select { |f| File.directory? f }
+          output.push(*sub_dirs)
 
         else
           msg = "Could not find workers.harvester.to_do_path path(s): #{dirs}"
@@ -382,6 +379,10 @@ module BawWorkers
       # @return [Boolean]
       def settings_value_time_offset?(value)
         !value.blank? && (value.start_with?('+') || value.start_with?('-')) && (value[1..-1] =~ /^\d+$/)
+      end
+
+      def get_class_name
+        self.class.name
       end
 
     end

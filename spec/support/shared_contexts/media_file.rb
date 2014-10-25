@@ -28,12 +28,12 @@ shared_context 'media_file' do
   def create_original_audio(options, example_file_name, new_name_style = false)
 
     # ensure :datetime_with_offset is an ActiveSupport::TimeWithZone object
-    if options[:datetime_with_offset].is_a?(ActiveSupport::TimeWithZone)
+    if options.include?(:datetime_with_offset) && options[:datetime_with_offset].is_a?(ActiveSupport::TimeWithZone)
       # all good - no op
-    elsif options[:datetime_with_offset].end_with?('Z')
+    elsif options.include?(:datetime_with_offset) && options[:datetime_with_offset].end_with?('Z')
       options[:datetime_with_offset] = Time.zone.parse(options[:datetime_with_offset])
     else
-      fail ArgumentError, ":recorded_date must be a UTC time (i.e. end with Z), given #{options[:datetime_with_offset]}"
+      fail ArgumentError, "recorded_date must be a UTC time (i.e. end with Z), given '#{options[:datetime_with_offset]}'."
     end
 
     original_file_names = audio_original.file_names(options)

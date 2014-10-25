@@ -13,7 +13,7 @@ module BawWorkers
       include Resque::Plugins::Status
 
       # include common methods
-      include BawWorkers::Common
+      include BawWorkers::ActionCommon
 
       # All methods do not require a class instance.
       class << self
@@ -52,6 +52,29 @@ module BawWorkers
           action_logger.info(self.name) {
             "Job enqueue returned '#{result}' using #{harvest_params}."
           }
+        end
+
+        def action_gather_files
+          # top level directory to harvest
+          to_do_path = BawWorkers::Settings.actions.harvest.to_do_path
+          progressive_upload_directory = BawWorkers::Settings.actions.harvest.progressive_upload_directory
+          config_file_name = BawWorkers::Settings.actions.harvest.config_file_name
+          logger = BawWorkers::Settings.logger
+          valid_audio_formats = Settings.available_formats.audio
+          audio_helper = BawWorkers::Settings.audio_helper
+
+          file_info = BawWorkers::FileInfo.new(logger, audio_helper)
+
+          gather_files = BawWorkers::Harvest::GatherFiles.new(
+              logger,
+              file_info,
+              valid_audio_formats,
+              config_file_name)
+
+          # enqueue to resque
+          file_hashes = gather_files.process_dir(to_do_path, progressive_upload_directory)
+
+          file_hashes
         end
 
       end

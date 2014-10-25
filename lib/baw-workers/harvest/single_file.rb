@@ -3,9 +3,6 @@ module BawWorkers
     # Get a list of files to be harvested.
     class SingleFile
 
-      # include common methods
-      include BawWorkers::Common
-
       # Create a new BawWorkers::Harvest::SingleFile.
       # @param [Logger] logger
       # @param [BawWorkers::FileInfo] file_info_helper
@@ -239,6 +236,10 @@ module BawWorkers
         end
 
         check_target_paths
+      end
+
+      def get_class_name
+        self.class.name
       end
 
     end

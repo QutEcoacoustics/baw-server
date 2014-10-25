@@ -13,7 +13,7 @@ module BawWorkers
       include Resque::Plugins::Status
 
       # include common methods
-      include BawWorkers::Common
+      include BawWorkers::ActionCommon
 
       # All methods do not require a class instance.
       class << self

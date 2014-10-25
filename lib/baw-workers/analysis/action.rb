@@ -14,7 +14,7 @@ module BawWorkers
 
       # include common methods
       # must be the last include/extend so it can override methods
-      include BawWorkers::Common
+      include BawWorkers::ActionCommon
 
       # All methods do not require a class instance.
       class << self

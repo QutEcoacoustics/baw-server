@@ -1,8 +1,6 @@
 module BawWorkers
   class ApiCommunicator
 
-    include BawWorkers::Common
-
     # Create a new BawWorkers::ApiCommunicator.
     # @param [Object] logger
     # @param [Object] login_details
@@ -198,6 +196,10 @@ module BawWorkers
         }
         false
       end
+    end
+
+    def get_class_name
+      self.class.name
     end
 
   end

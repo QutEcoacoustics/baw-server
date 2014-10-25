@@ -21,7 +21,8 @@ Time.zone = 'UTC'
 # Workers that can process various long-running or intensive tasks.
 module BawWorkers
   autoload :Exceptions, 'baw-workers/exceptions'
-  autoload :Common, 'baw-workers/common'
+  autoload :Validation, 'baw-workers/validation'
+  autoload :ActionCommon, 'baw-workers/action_common'
   autoload :ApiCommunicator, 'baw-workers/api_communicator'
   autoload :FileInfo, 'baw-workers/file_info'
   autoload :ResqueApi, 'baw-workers/resque_api'
@@ -35,6 +36,7 @@ module BawWorkers
   module AudioCheck
     autoload :Action, 'baw-workers/audio_check/action'
     autoload :WorkHelper, 'baw-workers/audio_check/work_helper'
+    autoload :CsvHelper, 'baw-workers/audio_check/csv_helper'
   end
 
   module Harvest

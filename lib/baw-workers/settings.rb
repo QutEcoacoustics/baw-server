@@ -17,6 +17,22 @@ module BawWorkers
       @stored_logger
     end
 
+    def multi_logger
+      if !defined?(@stored_multi_logger) || @stored_multi_logger.blank?
+
+        file_logger = Logger.new(BawWorkers::Settings.paths.workers_log_file)
+        file_logger.formatter = BawAudioTools::CustomFormatter.new
+        file_logger.level = Logger::DEBUG
+
+        stdout_logger = Logger.new(STDOUT)
+        stdout_logger.formatter = BawAudioTools::CustomFormatter.new
+        stdout_logger.level = Logger::INFO
+
+        @stored_multi_logger = BawWorkers::MultiLogger.new(file_logger, stdout_logger)
+      end
+      @stored_multi_logger
+    end
+
     # Set the source file.
     # @param [String] settings_file
     # @return [void]
