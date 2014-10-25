@@ -13,7 +13,7 @@ FactoryGirl.define do
     end
 
     trait :with_sites do
-      ignore do
+      transient do
         site_count 1
       end
       after(:create) do |project, evaluator|
@@ -26,7 +26,7 @@ FactoryGirl.define do
     end
 
     trait :with_datasets do
-      ignore do
+      transient do
         dataset_count 1
       end
       after(:create) do |project, evaluator|

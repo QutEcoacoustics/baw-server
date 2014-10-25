@@ -25,7 +25,7 @@ FactoryGirl.define do
     end
 
     trait :with_audio_events do
-      ignore do
+      transient do
         audio_event_count 1
       end
       after(:create) do |audio_recording, evaluator|
@@ -35,7 +35,7 @@ FactoryGirl.define do
     end
 
     trait :with_bookmarks do
-      ignore do
+      transient do
         bookmark_count 1
       end
       after(:create) do |audio_recording, evaluator|
