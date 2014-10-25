@@ -6,7 +6,7 @@ Bioacoustics Workbench audio tools. Contains the audio, spectrogram, and caching
 [![Dependency Status](https://gemnasium.com/QutBioacoustics/baw-audio-tools.png)](https://gemnasium.com/QutBioacoustics/baw-audio-tools)
 [![Code Climate](https://codeclimate.com/github/QutBioacoustics/baw-audio-tools.png)](https://codeclimate.com/github/QutBioacoustics/baw-audio-tools)
 [![Test Coverage](https://codeclimate.com/github/QutBioacoustics/baw-audio-tools/coverage.png)](https://codeclimate.com/github/QutBioacoustics/baw-audio-tools)
-[![Coverage Status](https://coveralls.io/repos/QutBioacoustics/baw-audio-tools/badge.png)](https://coveralls.io/r/QutBioacoustics/baw-audio-tools)
+[![Coverage Status](https://coveralls.io/repos/QutBioacoustics/baw-audio-tools/badge.png?branch=master)](https://coveralls.io/r/QutBioacoustics/baw-audio-tools?branch=master)
 [![Inline docs](http://inch-ci.org/github/QutBioacoustics/baw-audio-tools.png?branch=master)](http://inch-ci.org/github/QutBioacoustics/baw-audio-tools)
 
 [Rubydoc](http://rubydoc.info/github/QutBioacoustics/baw-audio-tools/frames) is available.
