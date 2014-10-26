@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe BawWorkers::Storage::SpectrogramCache do
 
-  let(:spectrogram_cache) { BawWorkers::Storage::SpectrogramCache.new(BawWorkers::Settings.paths.cached_spectrograms) }
+  let(:spectrogram_cache) { BawWorkers::Config.spectrogram_cache_helper }
 
   let(:uuid) { '5498633d-89a7-4b65-8f4a-96aa0c09c619' }
   let(:datetime) { Time.zone.parse("2012-03-02 16:05:37+1100") }

@@ -2,6 +2,8 @@ module BawWorkers
   # Helpers to get info from files.
   class FileInfo
 
+    attr_accessor :logger
+
     def initialize(logger, audio_base)
       @logger = logger
       @audio = audio_base
@@ -24,7 +26,7 @@ module BawWorkers
       {
           file: source,
           extension: File.extname(source).delete('.'),
-          errors: integrity_check.errors,
+          errors: integrity_check[:errors],
           file_hash: generated_file_hash,
           media_type: info[:media_type],
           sample_rate_hertz: info[:sample_rate],

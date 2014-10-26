@@ -11,13 +11,13 @@ shared_context 'media_file' do
 
   let(:audio_file_corrupt) { File.expand_path(File.join(File.dirname(__FILE__), '..', '..', 'example_media', 'test-audio-corrupt.ogg')) }
 
-  let(:audio_original) { BawWorkers::Storage::AudioOriginal.new(BawWorkers::Settings.paths.original_audios) }
-  let(:audio_cache) { BawWorkers::Storage::AudioCache.new(BawWorkers::Settings.paths.cached_audios) }
-  let(:spectrogram_cache) { BawWorkers::Storage::SpectrogramCache.new(BawWorkers::Settings.paths.cached_spectrograms) }
+  let(:audio_original) { BawWorkers::Config.original_audio_helper }
+  let(:audio_cache) { BawWorkers::Config.audio_cache_helper }
+  let(:spectrogram_cache) { BawWorkers::Config.spectrogram_cache_helper }
 
   let(:duration_range) { 0.11 }
 
-  let(:temp_dir) { File.expand_path(BawWorkers::Settings.paths.temp_dir) }
+  let(:temp_dir) { BawWorkers::Config.temp_dir }
 
   after(:each) do
     audio_original.existing_dirs.each { |dir| FileUtils.rm_r dir }

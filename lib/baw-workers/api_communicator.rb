@@ -1,6 +1,8 @@
 module BawWorkers
   class ApiCommunicator
 
+    attr_accessor :logger
+
     # Create a new BawWorkers::ApiCommunicator.
     # @param [Object] logger
     # @param [Object] login_details
@@ -10,6 +12,8 @@ module BawWorkers
       @logger = logger
       @login_details = login_details
       @endpoints = endpoints
+      
+      @class_name = self.class.name
     end
 
     def host; @login_details['host']; end
@@ -45,7 +49,7 @@ module BawWorkers
       request.body = body.to_json unless body.blank?
 
       msg = "'#{description}': #{request.inspect}, URL: #{host}:#{port}#{endpoint}"
-      @logger.debug(get_class_name) {
+      @logger.debug(@class_name) {
         "HTTP: Sent request for #{msg}"
       }
 
@@ -57,13 +61,13 @@ module BawWorkers
           response = http.request(request)
         end
       rescue StandardError => e
-        @logger.error(get_class_name) {
+        @logger.error(@class_name) {
           "HTTP: Request: #{msg}, Error: #{e}\nBacktrace: #{e.backtrace.join("\n")}"
         }
         raise e
       end
 
-      @logger.debug(get_class_name) {
+      @logger.debug(@class_name) {
         "HTTP: Received response for '#{description}': #{response.inspect}, URL: #{host}:#{port}#{endpoint}, Body: #{response.body}"
       }
 
@@ -76,13 +80,13 @@ module BawWorkers
     def request_login(auth_token = nil)
       login_response = send_request('Login request', :post, host, port, endpoint_login, auth_token, {email: user, password: password})
       if login_response.code == '200' && !login_response.body.blank?
-        @logger.info(get_class_name) {
+        @logger.info(@class_name) {
           "HTTP success: Got auth_token: #{login_response.body}."
         }
         json_resp = JSON.parse(login_response.body)
         json_resp['auth_token']
       else
-        @logger.error(get_class_name) {
+        @logger.error(@class_name) {
           "HTTP fail: Problem getting auth_token: #{login_response}."
         }
         nil
@@ -94,12 +98,12 @@ module BawWorkers
       endpoint = endpoint_audio_recording.gsub(':id', audio_recording_id.to_s)
       response = send_request("Update audio recording metadata - #{description}", :put, host, port, endpoint, auth_token, update_hash)
       if response.code == '200' || response.code == '204'
-        @logger.info(get_class_name) {
+        @logger.info(@class_name) {
           "HTTP success: Audio recording metadata update '#{description}' succeeded '#{file_to_process}' - id: #{audio_recording_id} hash: '#{update_hash}'"
         }
         true
       else
-        @logger.error(get_class_name) {
+        @logger.error(@class_name) {
           "HTTP fail: Audio recording metadata update '#{description}' failed with code #{response.code} '#{file_to_process}' - id: #{audio_recording_id} hash: '#{update_hash}' response: #{response.inspect}"
         }
         false
@@ -115,18 +119,18 @@ module BawWorkers
     def check_uploader_project_access(project_id, site_id, uploader_id, auth_token)
       if auth_token
         if uploader_check_success?(project_id, site_id, uploader_id, auth_token)
-          @logger.info(get_class_name) {
+          @logger.info(@class_name) {
             "HTTP success: Uploader with id #{uploader_id} has access to project id #{project_id}."
           }
           true
         else
-          @logger.error(get_class_name) {
+          @logger.error(@class_name) {
             "HTTP fail: Uploader id #{uploader_id} does not have required permissions for project id #{project_id}."
           }
           false
         end
       else
-        @logger.error(get_class_name) {
+        @logger.error(@class_name) {
           "No auth token given so cannot check uploader with id #{uploader_id}  access to project id #{project_id}."
         }
         false
@@ -163,12 +167,12 @@ module BawWorkers
       response = send_request('Create audio recording', :post, host, port, endpoint, auth_token, audio_info_hash)
       if response.code == '201'
         response_json = JSON.parse(response.body)
-        @logger.info(get_class_name) {
+        @logger.info(@class_name) {
           "HTTP success: Created new audio recording with id #{response_json['id']}: #{file_to_process}."
         }
         {response: response, response_json: response_json}
       else
-        @logger.error(get_class_name) {
+        @logger.error(@class_name) {
           "HTTP fail: Problem creating new audio recording response #{response.code}: #{response.body} using #{file_to_process}."
         }
         {response: response, response_json: nil}
@@ -186,20 +190,16 @@ module BawWorkers
       endpoint = endpoint_audio_recording_update_status.gsub(':id', audio_recording_id.to_s)
       response = send_request("Update audio recording status - #{description}", :put, host, port, endpoint, auth_token, update_hash)
       if response.code == '200' || response.code == '204'
-        @logger.info(get_class_name) {
+        @logger.info(@class_name) {
           "HTTP success: Audio recording status update '#{description}' succeeded '#{file_to_process}' - id: #{audio_recording_id} hash: '#{update_hash}'"
         }
         true
       else
-        @logger.error(get_class_name) {
+        @logger.error(@class_name) {
           "HTTP fail: Audio recording status update '#{description}' failed with code #{response.code} '#{file_to_process}' - id: #{audio_recording_id} hash: '#{update_hash}'"
         }
         false
       end
-    end
-
-    def get_class_name
-      self.class.name
     end
 
   end

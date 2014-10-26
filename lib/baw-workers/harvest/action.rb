@@ -30,16 +30,19 @@ module BawWorkers
           BawWorkers::Settings.actions.harvest.queue
         end
 
+
         # Perform work. Used by Resque.
         # @param [Hash] harvest_params
         # @return [Array<Hash>] array of hashes representing operations performed
         def action_perform(harvest_params)
           begin
             # TODO
+            result = true
           rescue Exception => e
-            BawWorkers::Settings.logger.error(self.name) { e }
+            BawWorkers::Config.logger_worker.error(self.name) { e }
             raise e
           end
+          result
         end
 
         # Enqueue a single file for harvesting.
@@ -49,29 +52,27 @@ module BawWorkers
         def action_enqueue(harvest_params)
 
           result = BawWorkers::Harvest::Action.create(harvest_params: harvest_params)
-          action_logger.info(self.name) {
+          BawWorkers::Config.logger_worker.info(self.name) {
             "Job enqueue returned '#{result}' using #{harvest_params}."
           }
+          result
         end
 
         def action_gather_files
           # top level directory to harvest
-          to_do_path = BawWorkers::Settings.actions.harvest.to_do_path
-          progressive_upload_directory = BawWorkers::Settings.actions.harvest.progressive_upload_directory
           config_file_name = BawWorkers::Settings.actions.harvest.config_file_name
-          logger = BawWorkers::Settings.logger
-          valid_audio_formats = Settings.available_formats.audio
-          audio_helper = BawWorkers::Settings.audio_helper
-
-          file_info = BawWorkers::FileInfo.new(logger, audio_helper)
+          valid_audio_formats = BawWorkers::Settings.available_formats.audio
 
           gather_files = BawWorkers::Harvest::GatherFiles.new(
-              logger,
-              file_info,
+              BawWorkers::Config.logger_worker,
+              BawWorkers::Config.file_info,
               valid_audio_formats,
               config_file_name)
 
           # enqueue to resque
+          to_do_path = BawWorkers::Settings.actions.harvest.to_do_path
+          progressive_upload_directory = BawWorkers::Settings.actions.harvest.progressive_upload_directory
+
           file_hashes = gather_files.process_dir(to_do_path, progressive_upload_directory)
 
           file_hashes

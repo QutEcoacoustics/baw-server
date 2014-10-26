@@ -8,58 +8,60 @@ module BawWorkers
 
         details = {
             host: Socket.gethostname,
-            job_class: job.blank? ? '(no job class available)' : job.job_class,
-            job_args: job.blank? ? '(no job args available)' : job.job_args,
-            error_message: error.blank? ? '(no message available)' : error.message,
-            error_backtrace: error.blank? ? '(no backtrace available)' : error.backtrace,
+            job_class: job.blank? || !job.include?(:job_class) ? '(no job class available)' : job[:job_class],
+            job_args: job.blank? || !job.include?(:job_args) ? '(no job args available)' : job[:job_args],
+            error_message: error.blank? || !error.include?(:message) ? '(no message available)' : error[:message],
+            error_backtrace: error.blank? || !error.include?(:backtrace) ? '(no backtrace available)' : error[:backtrace],
             generated_timestamp: Time.zone.now
         }
 
         prepared_email = mail(to: to, from: from, template_path: 'mail',
-                              subject: "[#{details.host}][Exception] #{details.error_message}") do |format|
+                              subject: "[#{details[:host]}][Exception] #{details[:error_message]}") do |format|
           format.text do
             render text: "Hello,
 
-A resque worker running on #{details.host} encountered a problem.
+A resque worker running on #{details[:host]} encountered a problem.
 
 The running job was:
 
-#{details.job_class}
+#{details[:job_class]}
 
-#{details.job_args}
+#{details[:job_args]}
 
 The error was:
 
-#{details.error_message}
+#{details[:error_message]}
 
-#{details.error_backtrace}
+#{details[:error_backtrace]}
 
-This email was generated at #{details.generated_timestamp}.
+This email was generated at #{details[:generated_timestamp]}.
 
-Regards, #{details.host }"
+Regards, #{details[:host]}"
           end
           format.html do
             render html: "<p>Hello,</p>
 
-<p>A resque worker running on #{details.host} encountered a problem.</p>
+<p>A resque worker running on #{details[:host]} encountered a problem.</p>
 
 <p>The running job was:</p>
 
-<p>#{details.job_class}</p>
+<p>#{details[:job_class]}</p>
 
-<p>#{details.job_args}</p>
+<p>#{details[:job_args]}</p>
 
 <p>The error was:</p>
 
-<p>#{details.error_message}</p>
+<p>#{details[:error_message]}</p>
 
-<pre><code>#{details.error_backtrace}</code></pre>
+<pre><code>#{details[:error_backtrace]}</code></pre>
 
-<p>This email was generated at #{details.generated_timestamp }.</p>
+<p>This email was generated at #{details[:generated_timestamp]}.</p>
 
-<p>Regards, #{details.host }</p>"
+<p>Regards, #{details[:host]}</p>"
           end
         end
+
+        prepared_email
       end
     end
   end

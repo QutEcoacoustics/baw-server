@@ -6,16 +6,9 @@ describe BawWorkers::AudioCheck::Action do
   let(:queue_name) { BawWorkers::Settings.actions.audio_check.queue }
 
   let(:audio_file_check) { BawWorkers::AudioCheck::WorkHelper.new(
-      BawWorkers::Settings.logger,
-      BawWorkers::FileInfo.new(
-          BawWorkers::Settings.logger,
-          BawWorkers::Settings.audio_helper
-      ),
-      BawWorkers::ApiCommunicator.new(
-          BawWorkers::Settings.logger,
-          BawWorkers::Settings.api,
-          BawWorkers::Settings.endpoints
-      ))
+      BawWorkers::Config.logger_worker,
+      BawWorkers::Config.file_info,
+      BawWorkers::Config.api_communicator)
   }
 
   # when args are retreived from redis, they are all strings.
@@ -71,17 +64,18 @@ describe BawWorkers::AudioCheck::Action do
 
       result1 = BawWorkers::AudioCheck::Action.action_enqueue(test_params)
       expect(Resque.size(queue_name)).to eq(1)
-      expect(result1).to eq(true)
       expect(Resque.enqueued?(BawWorkers::AudioCheck::Action, queued_query)).to eq(true)
+      expect(result1).to be_a(String)
+      expect(result1.size).to eq(32)
 
       result2 = BawWorkers::AudioCheck::Action.action_enqueue(test_params)
       expect(Resque.size(queue_name)).to eq(1)
-      expect(result2).to eq(true)
+      expect(result2).to eq(result1)
       expect(Resque.enqueued?(BawWorkers::AudioCheck::Action, queued_query)).to eq(true)
 
       result3 = BawWorkers::AudioCheck::Action.action_enqueue(test_params)
       expect(Resque.size(queue_name)).to eq(1)
-      expect(result3).to eq(true)
+      expect(result3).to eq(result1)
       expect(Resque.enqueued?(BawWorkers::AudioCheck::Action, queued_query)).to eq(true)
 
       actual = Resque.peek(queue_name)

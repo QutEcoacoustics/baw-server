@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe BawWorkers::Storage::AudioCache do
 
-  let(:audio_cache) { BawWorkers::Storage::AudioCache.new(BawWorkers::Settings.paths.cached_audios) }
+  let(:audio_cache) { BawWorkers::Config.audio_cache_helper }
 
   let(:uuid) { '5498633d-89a7-4b65-8f4a-96aa0c09c619' }
   let(:datetime) { Time.zone.parse("2012-03-02 16:05:37+1100") }
@@ -33,7 +33,7 @@ describe BawWorkers::Storage::AudioCache do
   end
 
   it 'paths match settings' do
-    expect(audio_cache.possible_dirs).to match_array Settings.paths.cached_audios
+    expect(audio_cache.possible_dirs).to match_array BawWorkers::Settings.paths.cached_audios
   end
 
   it 'creates the correct name' do
@@ -47,12 +47,12 @@ describe BawWorkers::Storage::AudioCache do
   end
 
   it 'creates the correct full path for a single file' do
-    expected = [File.join(Settings.paths.cached_audios[0], partial_path, cached_audio_file_name_defaults)]
+    expected = [File.join(BawWorkers::Settings.paths.cached_audios[0], partial_path, cached_audio_file_name_defaults)]
     expect(audio_cache.possible_paths_file(opts, cached_audio_file_name_defaults)).to eq expected
   end
 
   it 'creates the correct full path' do
-    expected = [File.join(Settings.paths.cached_audios[0], partial_path, cached_audio_file_name_given_parameters)]
+    expected = [File.join(BawWorkers::Settings.paths.cached_audios[0], partial_path, cached_audio_file_name_given_parameters)]
     expect(audio_cache.possible_paths(opts)).to eq expected
   end
 end

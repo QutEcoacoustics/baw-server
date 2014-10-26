@@ -19,7 +19,9 @@ describe 'baw:action:audio_check' do
         # FileUtils.touch(File.join(audio_original.possible_dirs[0], '83/837df827-2be2-43ef-8f48-60fa0ee6ad37_930712-1552.asf'))
       end
 
+      # TODO - how to check that internals of a rake task succeeded?
       run_rake_task('baw:action:audio_check:standalone:from_csv', default_settings_file)
+
     end
 
     it 'runs successfully using resque' do

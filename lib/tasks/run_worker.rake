@@ -5,67 +5,44 @@ require 'baw-workers'
 namespace :baw do
   namespace :worker do
 
-    desc 'Load settings'
-    task :init_settings, [:settings_file] do |t, args|
-      args.with_defaults(settings_file: File.join(File.dirname(__FILE__), '..', 'settings', 'settings.default.yml'))
-
-      BawWorkers::Settings.set_source(args.settings_file)
-      BawWorkers::Settings.set_namespace('settings')
-
-      # define the Settings class for baw-audio-tools
-      unless defined? Settings
-        class Settings < BawWorkers::Settings
-          source BawWorkers::Settings.source
-          namespace 'settings'
-        end
-      end
-    end
-
-    desc 'Connect to Redis'
-    task :init_redis, [:settings_file] => [:init_settings] do |t, args|
-      puts "===> Connecting to Redis on #{BawWorkers::Settings.resque.connection}."
-      Resque.redis = BawWorkers::Settings.resque.connection
-      Resque.redis.namespace = Settings.resque.namespace
-    end
-
     # Set up the worker parameters. Takes one argument: settings_file
     desc 'Run setup for Resque worker'
-    task :setup, [:settings_file] => [:init_redis] do |t, args|
+    task :setup, [:settings_file] => %w(baw:common:init_resque_worker baw:common:init_redis) do |t, args|
 
       if BawWorkers::Settings.resque.background_pid_file.blank?
-        puts '===> Running in foreground.'
+        BawWorkers::Config.logger_worker.info('rake_task:baw:worker:setup') {
+          'Resque worker will run in foreground.'
+        }
       else
-        STDOUT.reopen(File.open(BawWorkers::Settings.resque.output_log_file, 'a+'))
-        STDOUT.sync = true
-        STDERR.reopen(File.open(BawWorkers::Settings.resque.error_log_file, 'a+'))
-        STDERR.sync = true
-
-        puts "===> Running in background with pid file #{BawWorkers::Settings.resque.background_pid_file}."
+        BawWorkers::Config.logger_worker.info('rake_task:baw:worker:setup') {
+          "Resque worker will run in background with pid file #{BawWorkers::Settings.resque.background_pid_file}."
+        }
         ENV['PIDFILE'] = BawWorkers::Settings.resque.background_pid_file
         ENV['BACKGROUND'] = 'yes'
       end
 
       queues = BawWorkers::Settings.resque.queues_to_process.join(',')
-      puts "===> Polling queues #{queues}."
-      ENV['QUEUES'] = queues
 
-      log_level = BawWorkers::Settings.resque.log_level
-      log_file = Settings.resque.output_log_file
-      puts "===> Logging to #{log_file} at level #{log_level}."
-      Resque.logger = Logger.new(log_file)
-      BawAudioTools::Logging.logger_formatter(Resque.logger)
-      Resque.logger.level = log_level
+      BawWorkers::Config.logger_worker.info('rake_task:baw:worker:setup') {
+        "Resque worker will poll queues #{queues}."
+      }
+
+      ENV['QUEUES'] = queues
 
       # set resque verbose on
       ENV['VERBOSE '] = '1'
       ENV['VVERBOSE '] = '1'
 
-      puts "===> Polling every #{BawWorkers::Settings.resque.polling_interval_seconds} seconds."
+      BawWorkers::Config.logger_worker.info('rake_task:baw:worker:setup') {
+        "Resque worker will poll every #{BawWorkers::Settings.resque.polling_interval_seconds} seconds."
+      }
+
       ENV['INTERVAL'] = BawWorkers::Settings.resque.polling_interval_seconds.to_s
 
       # use new signal handling
       # http://hone.heroku.com/resque/2012/08/21/resque-signals.html
       #ENV['TERM_CHILD'] = '1'
+
     end
 
     # run a worker. Passes parameter to prerequisite 'setup_worker'. Takes one argument: settings_file
@@ -77,40 +54,67 @@ namespace :baw do
     desc 'Run a resque:work with the specified settings file.'
     task :run, [:settings_file] => [:setup] do |t, args|
 
+      BawWorkers::Config.logger_worker.info('rake_task:baw:worker:stop_all') {
+        'Resque worker starting...'
+      }
+
       # invoke the resque rake task
       Rake::Task['resque:work'].invoke
     end
 
     desc 'Quit running workers'
-    task :stop_all, [:settings_file] => [:init_redis] do |t, args|
+    task :stop_all, [:settings_file] => [:current] do |t, args|
 
-      pids = Array.new
+      pids = []
       Resque.workers.each do |worker|
         pids.concat(worker.worker_pids)
-        host, pid, queues_raw = worker.to_s.split(':')
-        puts "Worker with host: #{host}, queues: #{worker.queues.join(', ')}"
       end
-      if pids.empty?
-        puts 'No workers to kill'
-      else
 
+      pids = pids.uniq
+
+      BawWorkers::Config.logger_worker.info('rake_task:baw:worker:stop_all') {
+        "Pids of running Resque workers: #{pids.join(',')}."
+      }
+
+      unless pids.empty?
         syscmd = "kill -s QUIT #{pids.join(' ')}"
-        puts "Running syscmd to kill all workers: #{syscmd}"
+
+        BawWorkers::Config.logger_worker.warn('rake_task:baw:worker:stop_all') {
+          "Running syscmd to kill all workers: #{syscmd}"
+        }
+
         system(syscmd)
       end
     end
 
     desc 'List running workers'
-    task :current, [:settings_file] => [:init_redis] do |t, args|
+    task :current, [:settings_file] => %w(baw:common:init_resque_worker baw:common:init_redis) do |t, args|
       workers = Resque.workers
-      if !workers.blank? && workers.size > 0
-        puts "Current workers (#{workers.size}):"
+
+      if workers.size > 0
+
+        BawWorkers::Config.logger_worker.info('rake_task:baw:worker:current') {
+          "There are #{workers.size} Resque workers currently running."
+        }
+
+        running_workers = []
         workers.each do |worker|
-          host, pid, queues_raw = worker.to_s.split(':')
-          puts "Worker with host: #{host}, queues: #{worker.queues.join(', ')}"
+          running_workers.push(worker.to_s)
         end
+
+        BawWorkers::Config.logger_worker.info('rake_task:baw:worker:current') {
+          worker_details = running_workers.map { |worker|
+            host, pid, queues = worker.split(':')
+            {host: host, pid: pid, queues: queues.join('|')}
+          }.join(',')
+
+          "Resque worker details: #{worker_details}."
+        }
+
       else
-        puts 'No current workers.'
+        BawWorkers::Config.logger_worker.info('rake_task:baw:worker:current') {
+          'No Resque workers currently running.'
+        }
       end
     end
 

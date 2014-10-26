@@ -6,14 +6,14 @@ describe BawWorkers::Media::WorkHelper do
 
   let(:work_helper) {
     BawWorkers::Media::WorkHelper.new(
-        BawWorkers::Settings.audio_helper,
-        BawWorkers::Settings.spectrogram_helper,
-        BawWorkers::Settings.original_audio_helper,
-        BawWorkers::Settings.audio_cache_helper,
-        BawWorkers::Settings.spectrogram_cache_helper,
-        BawWorkers::FileInfo.new(BawWorkers::Settings.logger, BawWorkers::Settings.audio_helper),
-        BawWorkers::Settings.logger,
-        BawWorkers::Settings.paths.temp_dir
+        BawWorkers::Config.audio_helper,
+        BawWorkers::Config.spectrogram_helper,
+        BawWorkers::Config.original_audio_helper,
+        BawWorkers::Config.audio_cache_helper,
+        BawWorkers::Config.spectrogram_cache_helper,
+        BawWorkers::Config.file_info,
+        BawWorkers::Config.logger_worker,
+        BawWorkers::Config.temp_dir
     )
   }
 
@@ -30,7 +30,7 @@ describe BawWorkers::Media::WorkHelper do
 
   let(:original_file_name_old) { "#{uuid}_120303-0205.#{original_format}" } # depends on let(:datetime)
   let(:original_file_name_new) { "#{uuid}_20120302-160537Z.#{original_format}" } # depends on let(:datetime)
-  let(:original_file_dir) { File.expand_path File.join(Settings.paths.original_audios, '54') }
+  let(:original_file_dir) { File.expand_path File.join(BawWorkers::Settings.paths.original_audios, '54') }
   let(:original_file_path_old) { File.join(original_file_dir, original_file_name_old) }
   let(:original_file_path_new) { File.join(original_file_dir, original_file_name_new) }
 
@@ -43,10 +43,10 @@ describe BawWorkers::Media::WorkHelper do
   end
 
   after(:each) do
-    FileUtils.rm_rf(Settings.paths.original_audios)
-    FileUtils.rm_rf(Settings.paths.cached_audios)
-    FileUtils.rm_rf(Settings.paths.cached_spectrograms)
-    FileUtils.rm_rf(Settings.paths.cached_datasets)
+    FileUtils.rm_rf(BawWorkers::Settings.paths.original_audios)
+    FileUtils.rm_rf(BawWorkers::Settings.paths.cached_audios)
+    FileUtils.rm_rf(BawWorkers::Settings.paths.cached_spectrograms)
+    FileUtils.rm_rf(BawWorkers::Settings.paths.cached_datasets)
   end
 
   it 'raises exception when original audio not found' do
@@ -59,7 +59,7 @@ describe BawWorkers::Media::WorkHelper do
            end_offset: duration_seconds,
            channel: 0,
            sample_rate: sample_rate,
-           format: Settings.cached_audio_defaults.storage_format
+           format: BawWorkers::Settings.cached_audio_defaults.storage_format
           })
     }.to raise_error(BawAudioTools::Exceptions::AudioFileNotFoundError, /Could not find original audio in/)
   end
@@ -78,7 +78,7 @@ describe BawWorkers::Media::WorkHelper do
               format: 'wav'
           })
       file_name = "#{uuid}_45.0_60.0_1_22050.wav"
-      expect(existing_paths).to include(File.join(Settings.paths.cached_audios, '54', file_name))
+      expect(existing_paths).to include(File.join(BawWorkers::Settings.paths.cached_audios, '54', file_name))
       expect(existing_paths.size).to eq(1)
 
       info = work_helper.audio.info(existing_paths.first)
@@ -95,21 +95,21 @@ describe BawWorkers::Media::WorkHelper do
               datetime_with_offset: datetime,
               original_format: original_format,
               start_offset: 0,
-              end_offset: Settings.cached_audio_defaults.min_duration_seconds,
-              channel: Settings.cached_audio_defaults.channel,
-              sample_rate: Settings.cached_audio_defaults.sample_rate,
-              format: Settings.cached_audio_defaults.storage_format
+              end_offset: BawWorkers::Settings.cached_audio_defaults.min_duration_seconds,
+              channel: BawWorkers::Settings.cached_audio_defaults.channel,
+              sample_rate: BawWorkers::Settings.cached_audio_defaults.sample_rate,
+              format: BawWorkers::Settings.cached_audio_defaults.storage_format
           })
-      file_name = "#{uuid}_0.0_#{Settings.cached_audio_defaults.min_duration_seconds}_"+
-          "#{Settings.cached_audio_defaults.channel}_#{Settings.cached_audio_defaults.sample_rate}.#{Settings.cached_audio_defaults.storage_format}"
-      expect(existing_paths).to include(File.join(Settings.paths.cached_audios, '54', file_name))
+      file_name = "#{uuid}_0.0_#{BawWorkers::Settings.cached_audio_defaults.min_duration_seconds}_"+
+          "#{BawWorkers::Settings.cached_audio_defaults.channel}_#{BawWorkers::Settings.cached_audio_defaults.sample_rate}.#{BawWorkers::Settings.cached_audio_defaults.storage_format}"
+      expect(existing_paths).to include(File.join(BawWorkers::Settings.paths.cached_audios, '54', file_name))
       expect(existing_paths.size).to eq(1)
 
       info = work_helper.audio.info(existing_paths.first)
-      expect(info[:media_type]).to eq("audio/#{Settings.cached_audio_defaults.storage_format}")
-      expect(info[:sample_rate]).to be_within(0.0).of(Settings.cached_audio_defaults.sample_rate)
+      expect(info[:media_type]).to eq("audio/#{BawWorkers::Settings.cached_audio_defaults.storage_format}")
+      expect(info[:sample_rate]).to be_within(0.0).of(BawWorkers::Settings.cached_audio_defaults.sample_rate)
       expect(info[:channels]).to eq(1) # number of channels
-      expect(info[:duration_seconds]).to be_within(duration_range).of(Settings.cached_audio_defaults.min_duration_seconds)
+      expect(info[:duration_seconds]).to be_within(duration_range).of(BawWorkers::Settings.cached_audio_defaults.min_duration_seconds)
     end
   end
 
@@ -131,7 +131,7 @@ describe BawWorkers::Media::WorkHelper do
               format: 'png'
           })
       file_name = "#{uuid}_45.0_60.0_1_32000_1024_Hann_g.png"
-      expect(existing_paths).to include(File.join(Settings.paths.cached_spectrograms, '54', file_name))
+      expect(existing_paths).to include(File.join(BawWorkers::Settings.paths.cached_spectrograms, '54', file_name))
       expect(existing_paths.size).to eq(1)
 
       info = work_helper.spectrogram.info(existing_paths.first)
@@ -147,30 +147,30 @@ describe BawWorkers::Media::WorkHelper do
               datetime_with_offset: datetime,
               original_format: original_format,
               start_offset: 0,
-              end_offset: Settings.cached_spectrogram_defaults.min_duration_seconds,
-              channel: Settings.cached_spectrogram_defaults.channel,
-              window: Settings.cached_spectrogram_defaults.window,
-              window_function: Settings.cached_spectrogram_defaults.window_function,
-              colour: Settings.cached_spectrogram_defaults.colour,
-              sample_rate: Settings.cached_spectrogram_defaults.sample_rate,
-              format: Settings.cached_spectrogram_defaults.storage_format
+              end_offset: BawWorkers::Settings.cached_spectrogram_defaults.min_duration_seconds,
+              channel: BawWorkers::Settings.cached_spectrogram_defaults.channel,
+              window: BawWorkers::Settings.cached_spectrogram_defaults.window,
+              window_function: BawWorkers::Settings.cached_spectrogram_defaults.window_function,
+              colour: BawWorkers::Settings.cached_spectrogram_defaults.colour,
+              sample_rate: BawWorkers::Settings.cached_spectrogram_defaults.sample_rate,
+              format: BawWorkers::Settings.cached_spectrogram_defaults.storage_format
           })
-      file_name = "#{uuid}_0.0_#{Settings.cached_spectrogram_defaults.min_duration_seconds}_"+
-          "#{Settings.cached_spectrogram_defaults.channel}_#{Settings.cached_spectrogram_defaults.sample_rate}_"+
-          "#{Settings.cached_spectrogram_defaults.window}_#{Settings.cached_spectrogram_defaults.window_function}_"+
-          "#{Settings.cached_spectrogram_defaults.colour}.#{Settings.cached_spectrogram_defaults.storage_format}"
-      expect(existing_paths).to include(File.join(Settings.paths.cached_spectrograms, '54', file_name))
+      file_name = "#{uuid}_0.0_#{BawWorkers::Settings.cached_spectrogram_defaults.min_duration_seconds}_"+
+          "#{BawWorkers::Settings.cached_spectrogram_defaults.channel}_#{BawWorkers::Settings.cached_spectrogram_defaults.sample_rate}_"+
+          "#{BawWorkers::Settings.cached_spectrogram_defaults.window}_#{BawWorkers::Settings.cached_spectrogram_defaults.window_function}_"+
+          "#{BawWorkers::Settings.cached_spectrogram_defaults.colour}.#{BawWorkers::Settings.cached_spectrogram_defaults.storage_format}"
+      expect(existing_paths).to include(File.join(BawWorkers::Settings.paths.cached_spectrograms, '54', file_name))
       expect(existing_paths.size).to eq(1)
 
       info = work_helper.spectrogram.info(existing_paths.first)
-      expect(info[:media_type]).to eq("image/#{Settings.cached_spectrogram_defaults.storage_format}")
-      expect(info[:height]).to eq(Settings.cached_spectrogram_defaults.window / 2)
+      expect(info[:media_type]).to eq("image/#{BawWorkers::Settings.cached_spectrogram_defaults.storage_format}")
+      expect(info[:height]).to eq(BawWorkers::Settings.cached_spectrogram_defaults.window / 2)
 
       pixels_per_second =
-          Settings.cached_spectrogram_defaults.sample_rate.to_f /
-              Settings.cached_spectrogram_defaults.window
+          BawWorkers::Settings.cached_spectrogram_defaults.sample_rate.to_f /
+              BawWorkers::Settings.cached_spectrogram_defaults.window
 
-      duration = Settings.cached_spectrogram_defaults.min_duration_seconds
+      duration = BawWorkers::Settings.cached_spectrogram_defaults.min_duration_seconds
 
       expect(info[:width]).to be_within(1).of(pixels_per_second * duration)
     end

@@ -46,19 +46,20 @@ describe BawWorkers::Media::Action do
 
       result1 = BawWorkers::Media::Action.action_enqueue(:audio, test_media_request_params)
       expect(Resque.size(queue_name)).to eq(1)
-      expect(result1).to eq(true)
+      expect(result1).to be_a(String)
+      expect(result1.size).to eq(32)
       expect(BawWorkers::ResqueApi.job_queued?(BawWorkers::Media::Action, queued_query)).to eq(true)
       expect(Resque.enqueued?(BawWorkers::Media::Action, queued_query)).to eq(true)
 
       result2 = BawWorkers::Media::Action.action_enqueue(:audio, test_media_request_params)
       expect(Resque.size(queue_name)).to eq(1)
-      expect(result2).to eq(true)
+      expect(result2).to eq(result1)
       expect(BawWorkers::ResqueApi.job_queued?(BawWorkers::Media::Action, queued_query)).to eq(true)
       expect(Resque.enqueued?(BawWorkers::Media::Action, queued_query)).to eq(true)
 
       result3 = BawWorkers::Media::Action.action_enqueue(:audio, test_media_request_params)
       expect(Resque.size(queue_name)).to eq(1)
-      expect(result3).to eq(true)
+      expect(result3).to eq(result1)
       expect(BawWorkers::ResqueApi.job_queued?(BawWorkers::Media::Action, queued_query)).to eq(true)
       expect(Resque.enqueued?(BawWorkers::Media::Action, queued_query)).to eq(true)
 
@@ -81,7 +82,8 @@ describe BawWorkers::Media::Action do
 
       result1 = BawWorkers::Media::Action.action_enqueue(:audio, test_media_request_params)
       expect(Resque.size(queue_name)).to eq(1)
-      expect(result1).to eq(true)
+      expect(result1).to be_a(String)
+      expect(result1.size).to eq(32)
       expect(BawWorkers::ResqueApi.job_queued?(BawWorkers::Media::Action, queued_query)).to eq(true)
       expect(Resque.enqueued?(BawWorkers::Media::Action, queued_query)).to eq(true)
 

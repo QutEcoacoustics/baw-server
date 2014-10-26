@@ -4,7 +4,7 @@ namespace :baw do
       namespace :resque do
 
         desc 'Enqueue files to harvest using Resque'
-        task :from_files, [:settings_file] => ['worker:init_redis'] do |t, args|
+        task :from_files, [:settings_file] => %w(baw:common:init_rake_task baw:common:init_redis) do |t, args|
 
           file_hashes = BawWorkers::Harvest::Action.action_gather_files
           file_hashes.each do |file_hash|
@@ -18,7 +18,7 @@ namespace :baw do
       namespace :standalone do
 
         desc 'Harvest audio files directly'
-        task :from_files, [:settings_file] => ['worker:init_settings'] do |t, args|
+        task :from_files, [:settings_file] => ['baw:common:init_rake_task'] do |t, args|
 
           file_hashes = BawWorkers::Harvest::Action.action_gather_files
           file_hashes.each do |file_hash|

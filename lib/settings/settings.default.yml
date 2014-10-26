@@ -1,5 +1,7 @@
 settings:
   resque:
+    # queues_to_process is only needed when running a Resque worker to
+    # specify the Resque queues to watch.
     queues_to_process:
       - example
     connection:
@@ -8,30 +10,44 @@ settings:
         password: password
         db: 0
     namespace: resque
-    log_level: 1 # Severity::INFO
+    log_level: 'Logger::INFO'
     polling_interval_seconds: 5
+    # specify background_pid_file to have a Resque worker run in the background
+    # otherwise it will run in the foreground
     background_pid_file: ./tmp/resque_worker.pid
+    # output and error log files are only used when a Resque worker is running
+    # in the background
     output_log_file: ./tmp/program_stdout.log
     error_log_file: ./tmp/program_stderr.log
   actions:
     analysis:
+      # name of queue to append jobs onto
       queue: analysis_default
+      # dry run only valid when running rake task - ignored by Resque workers
       dry_run: false
+      # analyser_id and to_do_path are only used by rake tasks. They are ignored
+      # by the baw-server (since baw-server sets analyser_id and audio_recordings
+      # based on user input).
       analyser_id:
       to_do_path:
     audio_check:
+      # name of queue to append jobs onto
       queue: maintenance_default
+      # dry run only valid when running rake task - ignored by Resque workers
       dry_run: false
-      to_do_folder_path: ./tmp/_audio_check_to_do_folder_path
       to_do_csv_path: ./tmp/_audio_check_to_do.csv
     harvest:
+      # name of queue to append jobs onto
       queue: harvest_default
+      # dry run only valid when running rake task - ignored by Resque workers
       dry_run: false
       to_do_path: ./tmp/_harvester_to_do_path
       config_file_name: harvest.yml
       progressive_upload_directory: ./tmp/_progressive-upload/
     media:
+      # name of queue to append jobs onto
       queue: media_default
+      # dry run only valid when running rake task - ignored by Resque workers
       dry_run: false
   paths:
     original_audios:
@@ -44,9 +60,9 @@ settings:
       - ./tmp/_cached_dataset
     cached_analysis_jobs:
       - ./tmp/_cached_analysis_jobs
-    workers.harvester.to_do_path:
-    modules_log_file: ./tmp/audio_tools.log
-    workers_log_file: ./tmp/workers.log
+    worker_log_file: ./tmp/worker.log
+    mailer_log_file: ./tmp/mailer.log
+    audio_tools_log_file: ./tmp/audio_tools.log
     temp_dir: ./tmp/
   endpoints:
     login: /security/sign_in
@@ -59,9 +75,13 @@ settings:
     port: 3030
     user: address@example.com
     password: password
-  smtp:
-    address: localhost
-    port: 25
+  mailer:
+    # this gets set directly to the mailer.
+    # See http://api.rubyonrails.org/classes/ActionMailer/Base.html#class-ActionMailer::Base-label-Configuration+options
+    smtp:
+      address: localhost
+      port: 25
+    log_level: 'Logger::INFO'
   cached_audio_defaults:
     storage_format: mp3
     channel: 0
@@ -95,7 +115,9 @@ settings:
     mp3splt_executable: mp3splt
     sox_executable: sox
     wavpack_executable: wvunpack
+    shntool_executable: shntool
     imagemagick_convert_executable: convert
     imagemagick_identify_executable: identify
     max_duration_seconds: 300
+    log_level: 'Logger::INFO'
   audio_tools_timeout_sec: 20

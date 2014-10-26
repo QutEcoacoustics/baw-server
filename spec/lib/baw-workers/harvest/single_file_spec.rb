@@ -3,32 +3,25 @@ require 'spec_helper'
 describe BawWorkers::Harvest::SingleFile do
   include_context 'media_file'
 
-  let(:config_file_name) { 'harvest.yml' }
+  let(:file_info) { BawWorkers::Config.file_info }
 
-  let(:file_info) { BawWorkers::FileInfo.new(BawWorkers::Settings.logger, BawWorkers::Settings.audio_helper) }
-
-  let(:api_comm) {
-    BawWorkers::ApiCommunicator.new(
-        BawWorkers::Settings.logger,
-        BawWorkers::Settings.api,
-        BawWorkers::Settings.endpoints)
-  }
+  let(:api_comm) { BawWorkers::Config.api_communicator}
 
   let(:gather_files) {
     BawWorkers::Harvest::GatherFiles.new(
-        BawWorkers::Settings.logger,
+        BawWorkers::Config.logger_worker,
         file_info,
-        Settings.available_formats.audio,
-        config_file_name
+        BawWorkers::Settings.available_formats.audio,
+        BawWorkers::Settings.actions.harvest.config_file_name
     )
   }
 
   let(:single_file) {
     BawWorkers::Harvest::SingleFile.new(
-        BawWorkers::Settings.logger,
+        BawWorkers::Config.logger_worker,
         file_info,
         api_comm,
-        BawWorkers::Settings.original_audio_helper
+        BawWorkers::Config.original_audio_helper
     )
   }
 

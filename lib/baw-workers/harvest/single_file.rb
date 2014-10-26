@@ -3,6 +3,8 @@ module BawWorkers
     # Get a list of files to be harvested.
     class SingleFile
 
+      attr_accessor :logger, :file_info_helper, :api_comm
+
       # Create a new BawWorkers::Harvest::SingleFile.
       # @param [Logger] logger
       # @param [BawWorkers::FileInfo] file_info_helper
@@ -14,6 +16,8 @@ module BawWorkers
         @file_info_helper = file_info_helper
         @api_comm = api_comm
         @original_audio = original_audio
+
+        @class_name = self.class.name
       end
 
       # Process a single audio file.
@@ -45,7 +49,7 @@ module BawWorkers
         # stop here if it is a dry run, shouldn't create a new recording
         # -----------------------------
         if is_dry_run
-          @logger.info(get_class_name) {
+          @logger.info(@class_name) {
             "Finished successful dry run for #{file_path}: #{audio_info_hash}"
           }
           return
@@ -97,7 +101,7 @@ module BawWorkers
 
         rescue Exception => e
           msg = "Error after audio recording created on website, status set to aborted. Exception: #{e}"
-          @logger.error(get_class_name) { msg }
+          @logger.error(@class_name) { msg }
           @api_comm.update_audio_recording_status(
               'record error in harvesting',
               file_path,
@@ -107,7 +111,7 @@ module BawWorkers
           raise e
         end
 
-        @logger.info(get_class_name) { "Finished processing #{file_path}." }
+        @logger.info(@class_name) { "Finished processing #{file_path}." }
         existing_target_paths
       end
 
@@ -118,7 +122,7 @@ module BawWorkers
 
         if auth_token.blank?
           msg = 'Could not get valid auth_token'
-          @logger.error(get_class_name) { msg }
+          @logger.error(@class_name) { msg }
           fail BawWorkers::Exceptions::HarvesterEndpointError, msg
         end
 
@@ -130,7 +134,7 @@ module BawWorkers
 
         unless access_result
           msg = "Could not get access to project_id #{project_id} for uploader_id #{uploader_id}."
-          @logger.error(get_class_name) { msg }
+          @logger.error(@class_name) { msg }
           fail BawWorkers::Exceptions::HarvesterEndpointError, msg
         end
 
@@ -151,7 +155,7 @@ module BawWorkers
 
         if response_hash.blank?
           msg = "Request to create audio recording from #{file_path} failed: Code #{response_meta.code}, Message: #{response_meta.message}, Body: #{response_meta.body}"
-          @logger.error(get_class_name) { msg }
+          @logger.error(@class_name) { msg }
           fail BawWorkers::Exceptions::HarvesterEndpointError, msg
         end
 
@@ -212,7 +216,7 @@ module BawWorkers
         check_target_paths = storage_target_paths.select { |file| File.exists?(file) && File.file?(file) && File.size(file) == source_size }
 
         if storage_target_paths.size == check_target_paths.size
-          @logger.info(get_class_name) {
+          @logger.info(@class_name) {
             "Source file #{file_path} was copied successfully to all destinations, renaming source file."
           }
 
@@ -220,26 +224,22 @@ module BawWorkers
           File.rename(file_path, renamed_source_file)
 
           if File.exists?(renamed_source_file)
-            @logger.info(get_class_name) {
+            @logger.info(@class_name) {
               "Source file #{file_path} was successfully renamed to #{renamed_source_file}."
             }
           else
-            @logger.warn(get_class_name) {
+            @logger.warn(@class_name) {
               "Source file #{file_path} was not renamed."
             }
           end
 
         else
           msg = "Source file #{file_path} was not copied to all destinations #{storage_target_paths}."
-          @logger.error(get_class_name) { msg }
+          @logger.error(@class_name) { msg }
           fail BawWorkers::Exceptions::HarvesterIOError, msg
         end
 
         check_target_paths
-      end
-
-      def get_class_name
-        self.class.name
       end
 
     end

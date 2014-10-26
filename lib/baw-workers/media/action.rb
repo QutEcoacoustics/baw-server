@@ -61,22 +61,15 @@ module BawWorkers
         # @return [BawWorkers::Media::WorkHelper]
         def action_helper
           BawWorkers::Media::WorkHelper.new(
-              BawWorkers::Settings.audio_helper,
-              BawWorkers::Settings.spectrogram_helper,
-              BawWorkers::Settings.original_audio_helper,
-              BawWorkers::Settings.audio_cache_helper,
-              BawWorkers::Settings.spectrogram_cache_helper,
-              BawWorkers::FileInfo.new(
-                  BawWorkers::Settings.logger,
-                  BawWorkers::Settings.audio_helper),
-              BawWorkers::Settings.logger,
-              BawWorkers::Settings.paths.temp_dir
+              BawWorkers::Config.audio_helper,
+              BawWorkers::Config.spectrogram_helper,
+              BawWorkers::Config.original_audio_helper,
+              BawWorkers::Config.audio_cache_helper,
+              BawWorkers::Config.spectrogram_cache_helper,
+              BawWorkers::Config.file_info,
+              BawWorkers::Config.logger_worker,
+              BawWorkers::Config.temp_dir
           )
-        end
-
-        # Get logger
-        def action_logger
-          BawWorkers::Settings.logger
         end
 
         # Perform work. Used by Resque.
@@ -87,12 +80,13 @@ module BawWorkers
           media_type_sym, params_sym = action_validate(media_type, media_request_params)
 
           begin
-            make_media_request(media_type_sym, params_sym, action_logger)
+            result = make_media_request(media_type_sym, params_sym)
           rescue Exception => e
-            BawWorkers::Settings.logger.error(self.name) { e }
+            BawWorkers::Config.logger_worker.error(self.name) { e }
             raise e
           end
 
+          result
         end
 
         # Enqueue a media processing request.
@@ -103,17 +97,17 @@ module BawWorkers
           media_type_sym, params_sym = action_validate(media_type, media_request_params)
           #Resque.enqueue(BawWorkers::Media::Action, media_type_sym, params_sym)
           result = BawWorkers::Media::Action.create(media_type: media_type_sym, media_request_params: params_sym)
-          action_logger.info(self.name) {
+          BawWorkers::Config.logger_worker.info(self.name) {
             "Job enqueue returned '#{result}' using type #{media_type} with #{media_request_params}."
           }
+          result
         end
 
         # Create specified media type by applying media request params.
         # @param [Symbol] media_type
         # @param [Hash] media_request_params
-        # @param [Logger] logger
         # @return [Array<String>] target existing paths
-        def make_media_request(media_type, media_request_params, logger)
+        def make_media_request(media_type, media_request_params)
           media_type_sym, params_sym = action_validate(media_type, media_request_params)
 
           params_sym[:datetime_with_offset] = BawWorkers::Validation.check_datetime(params_sym[:datetime_with_offset])
@@ -128,7 +122,7 @@ module BawWorkers
               BawWorkers::Validation.validate_contains(media_type_sym, valid_media_types)
           end
 
-          logger.info(self.name) {
+          BawWorkers::Config.logger_worker.info(self.name) {
             "Created cache files #{media_type}: #{target_existing_paths}."
           }
 

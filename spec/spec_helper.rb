@@ -5,6 +5,8 @@
 #
 # See http://rubydoc.info/gems/rspec-core/RSpec/Core/Configuration
 
+ENV['RUNNING_RSPEC'] = 'yes'
+
 require 'simplecov'
 
 if ENV['TRAVIS']
@@ -35,13 +37,13 @@ end
 SimpleCov.start
 
 require 'zonebie'
-require 'baw-workers'
 require 'fakeredis'
 require 'fakeredis/rspec'
 require 'active_support/core_ext'
-
-# require webmock
 require 'webmock/rspec'
+
+require 'baw-workers'
+
 WebMock.disable_net_connect!(allow: 'codeclimate.com')
 
 # include shared_context
@@ -68,11 +70,7 @@ RSpec.configure do |config|
 
   Zonebie.set_random_timezone
 
-  # redirect puts into a text file
-  original_stderr = STDERR.clone
-  original_stdout = STDOUT.clone
-
-  # provide access to tmp dir and stdout and stderr files
+  # provide access to tmp dir, default settings file, stdout, and stderr files
   config.add_setting :tmp_dir
   config.tmp_dir = File.expand_path(File.join(File.dirname(__FILE__), '..', 'tmp'))
 
@@ -85,65 +83,50 @@ RSpec.configure do |config|
   config.add_setting :program_stderr
   config.program_stderr = File.join(config.tmp_dir, 'program_stderr.log')
 
-  config.before(:all) do
-    FileUtils.mkdir_p(config.tmp_dir)
-
-    # delete log file
-    #File.delete(BawWorkers::Settings.paths.workers_log_file) if File.exists?(BawWorkers::Settings.paths.workers_log_file)
-
-    # clear stdout and stderr files
-    #FileUtils.rm config.program_stderr if File.exists? config.program_stderr
-    #FileUtils.rm config.program_stdout if File.exists? config.program_stdout
-
-    # include rake tasks
-    Dir[File.join(File.dirname(__FILE__), '..', 'lib', 'tasks', '*.rake')].each do |file|
-      Rake.application.rake_require File.join('tasks',File.basename(file, File.extname(file)))
-    end
-    Rake::Task.define_task(:environment)
+  # indicate that webmock requests were successful
+  WebMock.after_request do |request_signature, response|
+    BawWorkers::Config.logger_worker.debug('respec-config') {
+      "Request #{request_signature} was made and #{response.inspect} was returned"
+    }
   end
 
-  config.before(:each) do
-    # Redirect stderr and stdout
-    STDERR.reopen(File.open(config.program_stderr, 'w+'))
-    STDERR.sync = true
-    STDOUT.reopen(File.open(config.program_stdout, 'w+'))
-    STDOUT.sync = true
+  config.before(:suite) do
+    # delete then create temp dir
+    FileUtils.rm_rf(config.tmp_dir)
+    FileUtils.mkpath(config.tmp_dir)
+
+    # include rake tasks and environment task
+    Dir[File.join(File.dirname(__FILE__), '..', 'lib', 'tasks', '*.rake')].each do |file|
+      Rake.application.rake_require File.join('tasks', File.basename(file, File.extname(file)))
+    end
+    Rake::Task.define_task(:environment)
+
+    # redirect stdout and stderr to files
+    BawWorkers::Config.set_console_to_file(config.program_stdout, config.program_stderr)
+
+    # load settings
+    BawWorkers::Config.set_settings_source(config.default_settings_path)
+
+    # ensure harvester to do path exists
+    FileUtils.mkpath(BawWorkers::Settings.actions.harvest.to_do_path)
+
+    # configure common classes
+    BawWorkers::Config.set_logger_files
+    BawWorkers::Config.set_logger_levels
+    BawWorkers::Config.set_mailer
+    BawWorkers::Config.set_common
+    BawWorkers::Config.set_rspec
+  end
+
+  config.after(:suite) do
+    # redirect stdout and stderr to console
+    BawWorkers::Config.set_to_console
   end
 
   config.after(:each) do
-    # restore stderr and stdout
-    STDERR.reopen(original_stderr)
-    STDOUT.reopen(original_stdout)
-
-    FileUtils.rm_rf BawWorkers::Settings.actions.harvest.to_do_path if File.directory?(BawWorkers::Settings.actions.harvest.to_do_path)
-  end
-
-  # setting the source file here means the rake task cannot change it
-  BawWorkers::Settings.set_source(config.default_settings_path)
-  BawWorkers::Settings.set_namespace('settings')
-
-  require 'action_mailer'
-
-  # need to define and load settings for specs to use.
-  unless defined? Settings
-    class Settings < BawWorkers::Settings
-      source BawWorkers::Settings.source
-      namespace 'settings'
-
-      BawWorkers::Settings.set_mailer_config
-      ActionMailer::Base.delivery_method = :test
-
-      Resque.redis = Redis.new
-      Resque.redis.namespace = Settings.resque.namespace
-
+    if Dir.exists?(BawWorkers::Settings.actions.harvest.to_do_path)
+      FileUtils.rm_rf(BawWorkers::Settings.actions.harvest.to_do_path)
     end
-  end
-
-  # indicate that webmock requests were successful
-  WebMock.after_request do |request_signature, response|
-    BawWorkers::Settings.logger.debug('respec-config') {
-      "Request #{request_signature} was made and #{response.inspect} was returned"
-    }
   end
 
 end

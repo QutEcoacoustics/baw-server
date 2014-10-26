@@ -31,10 +31,6 @@ module BawWorkers
           BawWorkers::Settings.actions.analysis.queue
         end
 
-        # Get logger
-        def action_logger
-          BawWorkers::Settings.logger
-        end
 
         # Perform work. Used by resque.
         # @param [Hash] analysis_params
@@ -42,7 +38,7 @@ module BawWorkers
           begin
             # todo
           rescue Exception => e
-            BawWorkers::Settings.logger.error(self.name) { e }
+            BawWorkers::Config.logger_worker.error(self.name) { e }
             raise e
           end
         end
@@ -53,9 +49,10 @@ module BawWorkers
         #   if the job was rejected by a before_enqueue hook.
         def action_enqueue(analysis_params)
           result = BawWorkers::Media::Action.create(analysis_params: analysis_params)
-          BawWorkers::Settings.logger.info(self.name) {
+          BawWorkers::Config.logger_worker.info(self.name) {
             "Job enqueue returned '#{result}' using type #{media_type} with #{analysis_params}."
           }
+          result
         end
 
       end

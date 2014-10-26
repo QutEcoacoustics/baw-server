@@ -30,30 +30,11 @@ module BawWorkers
           BawWorkers::Settings.actions.audio_check.queue
         end
 
-        # Get logger
-        def action_logger
-          BawWorkers::Settings.logger
-        end
-
-        def action_api
-          api_comm = BawWorkers::ApiCommunicator.new(
-              action_logger,
-              BawWorkers::Settings.api,
-              BawWorkers::Settings.endpoints)
-        end
-
-        def action_file_info
-          BawWorkers::FileInfo.new(
-              action_logger,
-              BawWorkers::Settings.audio_helper
-          )
-        end
-
         def action_audio_check
           BawWorkers::AudioCheck::WorkHelper.new(
-              BawWorkers::Settings.logger,
-              action_file_info,
-              action_api)
+              BawWorkers::Config.logger_worker,
+              BawWorkers::Config.file_info,
+              BawWorkers::Config.api_communicator)
         end
 
         # Perform work. Used by Resque.
@@ -63,12 +44,13 @@ module BawWorkers
           audio_file_check = action_audio_check
 
           begin
-            audio_file_check.run(audio_params, BawWorkers::Settings.actions.audio_check.dry_run)
+            result = audio_file_check.run(audio_params, BawWorkers::Settings.actions.audio_check.dry_run)
           rescue Exception => e
-            BawWorkers::Settings.logger.error(self.name) { e }
+            BawWorkers::Config.logger_worker.error(self.name) { e }
             raise e
           end
 
+          result
         end
 
         # Enqueue an audio file check request.
@@ -79,9 +61,10 @@ module BawWorkers
           audio_params_sym = BawWorkers::AudioCheck::WorkHelper.validate(audio_params)
           #result = Resque.enqueue(BawWorkers::AudioCheck::Action, audio_params_sym)
           result = BawWorkers::AudioCheck::Action.create(audio_params: audio_params_sym)
-          BawWorkers::Settings.logger.info(self.name) {
+          BawWorkers::Config.logger_worker.info(self.name) {
             "Job enqueue returned '#{result}' using #{audio_params}."
           }
+          result
         end
 
       end

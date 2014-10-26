@@ -13,6 +13,10 @@ Bioacoustics Workbench workers.
 
 Workers that can process various long-running or intensive tasks.
 
+Includes Actions and File Storage functionality. Actions are used by workers:
+Actions provide the ability to enqueue jobs to `Resque`, which are then de-queued by `Resque` workers and processed.
+Actions may also be run as standalone rake tasks.
+
 ## Installation
 
 Add this line to your application's Gemfile:
@@ -45,14 +49,15 @@ A standard Resque worker can be started using:
 
 Runs analysers over audio files. This action analyses an entire single audio file.
 
-Resque jobs can be enqueued from [baw-server](https://github.com/QutBioacoustics/baw-server).
+**Option 1**: Resque jobs can be queued from [baw-server](https://github.com/QutBioacoustics/baw-server).
 
-A directory can be analysed manually by setting the `analyser_id` and `to_do_path` for the analysis action in the settings file.
+**Option 2**: A directory can be analysed manually by setting the `analyser_id` and `to_do_path` for the analysis action in the settings file.
+
 Files can then be processed standalone:
 
     bundle exec rake baw:action:analysis:standalone:from_files['path_to_settings_file']
 
-or enqueued using Resque and processed later by a standard Resque worker:
+or queued using Resque and processed later by a standard Resque worker:
 
     bundle exec rake baw:action:analysis:resque:from_files['path_to_settings_file'] 
 
@@ -60,33 +65,30 @@ or enqueued using Resque and processed later by a standard Resque worker:
 
 Runs checks on original audio recording files. This action checks an entire single audio file.
 
-Gets audio files to check from a csv file in a specific format by specifying the setting `to_do_csv_path` 
-or enumerates existing files in a directory by specifying the setting `to_do_folder_path`. 
+**Option 1**: Gets audio files to check from a csv file in a specific format by specifying the setting `to_do_csv_path`.
 
 The files can be processed standalone:
 
-    bundle exec rake baw:action:audio_check:standalone:from_csv['path_to_settings_file'] 
-    bundle exec rake baw:action:audio_check:standalone:from_files['path_to_settings_file'] 
+    bundle exec rake baw:action:audio_check:standalone:from_csv['path_to_settings_file']
 
-or enqueued using Resque and processed later by a standard Resque worker:
+or queued using Resque and processed later by a standard Resque worker:
 
-    bundle exec rake baw:action:audio_check:resque:from_csv['path_to_settings_file'] 
-    bundle exec rake baw:action:audio_check:resque:from_files['path_to_settings_file'] 
+    bundle exec rake baw:action:audio_check:resque:from_csv['path_to_settings_file']
 
 ### Harvest
 
 Harvests audio files to be accessible by [baw-server](https://github.com/QutBioacoustics/baw-server) 
 via the file storage system.
 
-Audio files can be harvested by specifying the setting `to_do_path`. 
+**Option 1**: Audio files can be harvested by specifying the setting `to_do_path`.
 The `progressive_upload_directory` is treated specially: files in that directory do not require a config file as long as
-their file names are in a recognised format.
+their file names are in a recognised format (which includes `utc offset` and `uploader id`).
 
 Audio files can be processed standalone:
 
     bundle exec rake baw:action:harvest:standalone:from_files['path_to_settings_file'] 
 
-or enqueued using Resque and processed later by a standard Resque worker:
+or queued using Resque and processed later by a standard Resque worker:
 
     bundle exec rake baw:action:harvest:resque:from_files['path_to_settings_file'] 
 
@@ -94,7 +96,7 @@ or enqueued using Resque and processed later by a standard Resque worker:
 
 Cuts audio files and generates spectrograms.
 
-Resque jobs can be enqueued on demand from [baw-server](https://github.com/QutBioacoustics/baw-server)
+**Option 1**: Resque jobs can be queued on demand from [baw-server](https://github.com/QutBioacoustics/baw-server)
 and processed later by a Resque worker.
 
 ## File Storage

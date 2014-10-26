@@ -20,6 +20,8 @@ Time.zone = 'UTC'
 # Bioacoustics Workbench workers.
 # Workers that can process various long-running or intensive tasks.
 module BawWorkers
+  autoload :MultiLogger, 'baw-workers/multi_logger'
+  autoload :Config, 'baw-workers/config'
   autoload :Exceptions, 'baw-workers/exceptions'
   autoload :Validation, 'baw-workers/validation'
   autoload :ActionCommon, 'baw-workers/action_common'

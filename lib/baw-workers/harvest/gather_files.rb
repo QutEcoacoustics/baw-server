@@ -3,6 +3,8 @@ module BawWorkers
     # Get a list of files to be harvested.
     class GatherFiles
 
+      attr_accessor :logger, :file_info_helper
+
       # Create a new BawWorkers::Harvest::GatherFiles.
       # @param [Logger] logger
       # @param [BawWorkers::FileInfo] file_info_helper
@@ -16,6 +18,8 @@ module BawWorkers
         @ext_include = ext_include #Settings.available_formats.audio
         @ext_exclude = %w(completed log yml)
         @config_file_name = config_file_name
+
+        @class_name = self.class.name
       end
 
       # Get attributes for a single file.
@@ -73,7 +77,7 @@ module BawWorkers
 
         else
           msg = "Could not find workers.harvester.to_do_path path(s): #{dirs}"
-          @logger.error(get_class_name) { msg }
+          @logger.error(@class_name) { msg }
           fail Exceptions::HarvesterConfigurationError, msg
         end
 
@@ -99,7 +103,7 @@ module BawWorkers
             output_upload_dir.push(dir)
 
           else
-            @logger.warn(get_class_name) {
+            @logger.warn(@class_name) {
               "Directory #{dir} did not contain a config file and is not the progressive upload directory."
             }
 
@@ -128,7 +132,7 @@ module BawWorkers
               file_info = file_properties(item, folder_settings)
               aggregate.push(file_info)
             rescue => e
-              @logger.error(get_class_name) {
+              @logger.error(@class_name) {
                 "Error getting properties for file #{item}: #{e.message} => #{e.backtrace}"
               }
             end
@@ -137,7 +141,7 @@ module BawWorkers
           aggregate
         end
 
-        @logger.info(get_class_name) {
+        @logger.info(@class_name) {
           "Found valid directory #{dir}. #{filtered_files.size} of #{all_files.size} files included."
         }
 
@@ -153,7 +157,7 @@ module BawWorkers
 
         if basic_info.empty?
           msg = "Could not get basic info for #{file}."
-          @logger.error(get_class_name) { msg }
+          @logger.error(@class_name) { msg }
           fail BawWorkers::Exceptions::HarvesterError, msg
         end
 
@@ -165,13 +169,13 @@ module BawWorkers
 
         if file_name_info.empty?
           msg = "Could not get info from file name for #{file}."
-          @logger.error(get_class_name) { msg }
+          @logger.error(@class_name) { msg }
           fail BawWorkers::Exceptions::HarvesterError, msg
         end
 
         info = basic_info.merge(folder_settings).merge(file_name_info)
 
-        @logger.info(get_class_name) {
+        @logger.info(@class_name) {
           "File #{file} details #{info}"
         }
 
@@ -192,7 +196,7 @@ module BawWorkers
 
         else
           # log any unexpected skipped extensions
-          @logger.warn(get_class_name) {
+          @logger.warn(@class_name) {
             "Excluding #{file}. Extension #{ext} was not in include list #{@ext_include} and not in exclude list #{@ext_exclude}."
           }
 
@@ -207,27 +211,27 @@ module BawWorkers
       def info_from_name(file_name, utc_offset = nil)
 
         additional_info = parse_all_info_filename(file_name)
-        @logger.debug(get_class_name) {
+        @logger.debug(@class_name) {
           "Results from parse_all_info_filename for #{file_name}: #{additional_info}."
         }
 
         if additional_info.empty?
           additional_info = parse_datetime_offset_filename(file_name)
-          @logger.debug(get_class_name) {
+          @logger.debug(@class_name) {
             "Results from parse_datetime_offset_filename for #{file_name}: #{additional_info}."
           }
         end
 
         if additional_info.empty? && !utc_offset.blank?
           additional_info = parse_datetime_filename(file_name, utc_offset)
-          @logger.debug(get_class_name) {
+          @logger.debug(@class_name) {
             "Results from parse_datetime_filename for #{file_name}: #{additional_info}."
           }
         end
 
         if additional_info.empty? && !utc_offset.blank?
           additional_info = parse_datetime_suffix_filename(file_name, utc_offset)
-          @logger.debug(get_class_name) {
+          @logger.debug(@class_name) {
             "Results from parse_datetime_suffix_filename for #{file_name}: #{additional_info}."
           }
         end
@@ -248,7 +252,7 @@ module BawWorkers
         # valid: p1_s2_u3_d20140101_t235959Z.mp3, p000_s00000_u00000_d00000000_t000000Z.0, p9999_s9_u9999999_d99999999_t999999Z.dnsb48364JSFDSD
         file_name.scan(/^p(\d+)_s(\d+)_u(\d+)_d(\d{4})(\d{2})(\d{2})_t(\d{2})(\d{2})(\d{2})Z\.([a-zA-Z0-9]+)$/) do |project_id, site_id, uploader_id, year, month, day, hour, min, sec, extension|
           raw = {project_id: project_id, site_id: site_id, uploader_id: uploader_id, year: year, month: month, day: day, hour: hour, min: min, sec: sec, ext: extension}
-          @logger.debug(get_class_name) { "Raw parse from parse_all_info_filename for #{file_name}: #{raw}." }
+          @logger.debug(@class_name) { "Raw parse from parse_all_info_filename for #{file_name}: #{raw}." }
 
           result[:recorded_date] = DateTime.new(year.to_i, month.to_i, day.to_i, hour.to_i, min.to_i, sec.to_i, '+0').iso8601(3)
           result[:extension] = extension
@@ -269,7 +273,7 @@ module BawWorkers
         # valid: prefix_20140101_235959.mp3, a_00000000_000000.a, a_99999999_999999.dnsb48364JSFDSD
         file_name.scan(/^(.*)(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})(\d{2})\.([a-zA-Z0-9]+)$/) do |prefix, year, month, day, hour, min, sec, extension|
           raw = {prefix: prefix, year: year, month: month, day: day, hour: hour, min: min, sec: sec, ext: extension}
-          @logger.debug(get_class_name) { "Raw parse from parse_datetime_filename for #{file_name}: #{raw}." }
+          @logger.debug(@class_name) { "Raw parse from parse_datetime_filename for #{file_name}: #{raw}." }
 
           result[:recorded_date] = DateTime.new(year.to_i, month.to_i, day.to_i, hour.to_i, min.to_i, sec.to_i, utc_offset).iso8601(3)
           result[:prefix] = prefix.blank? ? prefix : prefix.trim('_', '')
@@ -287,7 +291,7 @@ module BawWorkers
         # valid: prefix_20140101_235959+10.mp3, a_00000000_000000+00.a, a_99999999_999999+9999.dnsb48364JSFDSD
         file_name.scan(/^(.*)(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})(\d{2})([+-]\d{2,4})\.([a-zA-Z0-9]+)$/) do |prefix, year, month, day, hour, min, sec, offset, extension|
           raw = {prefix: prefix, year: year, month: month, day: day, hour: hour, min: min, sec: sec, offset: offset, ext: extension}
-          @logger.debug(get_class_name) { "Raw parse from parse_datetime_offset_filename for #{file_name}: #{raw}." }
+          @logger.debug(@class_name) { "Raw parse from parse_datetime_offset_filename for #{file_name}: #{raw}." }
 
           result[:recorded_date] = DateTime.new(year.to_i, month.to_i, day.to_i, hour.to_i, min.to_i, sec.to_i, offset).iso8601(3)
           result[:prefix] = prefix.blank? ? prefix : prefix.trim('_', '')
@@ -306,7 +310,7 @@ module BawWorkers
         # valid: SERF_20130314_000021_000.wav, a_20130314_000021_a.a, a_99999999_999999_a.dnsb48364JSFDSD
         file_name.scan(/^(.*)(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})(\d{2})_(.*?)\.([a-zA-Z0-9]+)$/) do |prefix, year, month, day, hour, min, sec, suffix, extension|
           raw = {prefix: prefix, year: year, month: month, day: day, hour: hour, min: min, sec: sec, suffix: suffix, ext: extension}
-          @logger.debug(get_class_name) { "Raw parse from parse_datetime_suffix_filename for #{file_name}: #{raw}." }
+          @logger.debug(@class_name) { "Raw parse from parse_datetime_suffix_filename for #{file_name}: #{raw}." }
 
           result[:recorded_date] = DateTime.new(year.to_i, month.to_i, day.to_i, hour.to_i, min.to_i, sec.to_i, utc_offset).iso8601(3)
           result[:prefix] = prefix.blank? ? prefix : prefix.trim('_', '')
@@ -328,7 +332,7 @@ module BawWorkers
         folder_settings = {}
 
         if File.exists?(folder_settings_file)
-          @logger.debug(get_class_name) {
+          @logger.debug(@class_name) {
             "Found folder settings file #{folder_settings_file}."
           }
 
@@ -346,10 +350,10 @@ module BawWorkers
           check_folder_settings_value(folder_settings_file, 'uploader_id', folder_settings[:uploader_id], lambda { |value| settings_value_numeric?(value) })
           check_folder_settings_value(folder_settings_file, 'utc_offset', folder_settings[:utc_offset], lambda { |value| settings_value_time_offset?(value) })
 
-          @logger.debug(get_class_name) { "Folder settings: #{folder_settings}." }
+          @logger.debug(@class_name) { "Folder settings: #{folder_settings}." }
 
         else
-          @logger.warn(get_class_name) { "Folder settings file #{folder_settings_file} does not exist." }
+          @logger.warn(@class_name) { "Folder settings file #{folder_settings_file} does not exist." }
         end
         folder_settings
       end
@@ -379,10 +383,6 @@ module BawWorkers
       # @return [Boolean]
       def settings_value_time_offset?(value)
         !value.blank? && (value.start_with?('+') || value.start_with?('-')) && (value[1..-1] =~ /^\d+$/)
-      end
-
-      def get_class_name
-        self.class.name
       end
 
     end

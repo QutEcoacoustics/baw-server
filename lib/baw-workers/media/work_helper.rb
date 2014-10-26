@@ -35,39 +35,39 @@ module BawWorkers
 
       def create_audio_segment(modify_parameters = {})
         cache_audio_info = @audio_cache.path_info(modify_parameters)
-        target_existing = cache_audio_info.existing
+        target_existing = cache_audio_info[:existing]
 
         if target_existing.blank?
           original_audio_info = @audio_original.path_info(modify_parameters)
 
           check_original_paths(
-              original_audio_info.possible,
-              original_audio_info.existing,
+              original_audio_info[:possible],
+              original_audio_info[:existing],
               modify_parameters)
 
           # create in temp dir to prevent access while creating
-          temp_target_existing = File.join(@temp_dir, cache_audio_info.file_names.first)
+          temp_target_existing = File.join(@temp_dir, cache_audio_info[:file_names].first)
 
           # ensure the subdirectories exist
           FileUtils.mkpath(File.dirname(temp_target_existing))
 
           # create the audio segment
           @audio.modify(
-              original_audio_info.existing.first,
+              original_audio_info[:existing].first,
               temp_target_existing,
               modify_parameters)
 
           # copy to target dirs when finished creating temp file
-          @file_info.copy_to_many(temp_target_existing, cache_audio_info.possible)
+          @file_info.copy_to_many(temp_target_existing, cache_audio_info[:possible])
 
           # delete temp file
           FileUtils.rm(temp_target_existing)
 
           # update existing paths after cutting audio
           target_existing = check_cached_audio_paths(
-              cache_audio_info.file_names.first,
-              original_audio_info.existing,
-              original_audio_info.possible,
+              cache_audio_info[:file_names].first,
+              original_audio_info[:existing],
+              original_audio_info[:possible],
               modify_parameters)
         end
 
@@ -76,7 +76,7 @@ module BawWorkers
 
       def generate_spectrogram(modify_parameters = {})
         cache_spectrogram_info = @spectrogram_cache.path_info(modify_parameters)
-        target_existing = cache_spectrogram_info.existing
+        target_existing = cache_spectrogram_info[:existing]
 
         if target_existing.blank?
           # create the cached audio segment (it must be a wav file)
@@ -89,7 +89,7 @@ module BawWorkers
           source_existing = create_audio_segment(cached_wav_audio_parameters)
 
           # create in temp dir to prevent access while creating
-          temp_target_existing = File.join(@temp_dir, cache_spectrogram_info.file_names.first)
+          temp_target_existing = File.join(@temp_dir, cache_spectrogram_info[:file_names].first)
 
           # create the spectrogram image in target
           # only needs the window, window_function, colour,
@@ -113,16 +113,16 @@ module BawWorkers
               spectrogram_parameters)
 
           # copy to target dirs when finished creating temp file
-          @file_info.copy_to_many(temp_target_existing, cache_spectrogram_info.possible)
+          @file_info.copy_to_many(temp_target_existing, cache_spectrogram_info[:possible])
 
           # delete temp file
           FileUtils.rm(temp_target_existing)
 
           # update existing paths after generating spectrogram
           target_existing = check_cached_spectrogram_paths(
-              cache_spectrogram_info.file_names.first,
+              cache_spectrogram_info[:file_names].first,
               source_existing,
-              cache_spectrogram_info.possible,
+              cache_spectrogram_info[:possible],
               modify_parameters)
         end
 

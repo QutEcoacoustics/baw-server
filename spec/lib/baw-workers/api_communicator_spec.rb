@@ -3,15 +3,10 @@ require 'spec_helper'
 describe BawWorkers::ApiCommunicator do
   include_context 'media_file'
 
-  let(:api) {
-    BawWorkers::ApiCommunicator.new(
-        BawWorkers::Settings.logger,
-        BawWorkers::Settings.api,
-        BawWorkers::Settings.endpoints)
-  }
+  let(:api) { BawWorkers::Config.api_communicator }
   let(:api_different) {
     BawWorkers::ApiCommunicator.new(
-        BawWorkers::Settings.logger,
+        BawWorkers::Config.logger_worker,
         BawWorkers::Settings.api.dup.merge({'password' => 'different password'}),
         BawWorkers::Settings.endpoints)
   }
@@ -75,7 +70,7 @@ describe BawWorkers::ApiCommunicator do
   context 'check project access ' do
     it 'should succeed with valid credentials' do
       auth_token = 'auth_token_string'
-      endpoint_access = domain + Settings.endpoints.audio_recording_uploader
+      endpoint_access = domain + BawWorkers::Settings.endpoints.audio_recording_uploader
       body = {}
       access_request = stub_request(:get, "http://localhost:3030/projects/1/sites/1/audio_recordings/check_uploader/1").
           with(headers: {'Accept' => 'application/json', 'Authorization' => 'Token token="auth_token_string"', 'Content-Type' => 'application/json', 'User-Agent' => 'Ruby'}).
@@ -87,7 +82,7 @@ describe BawWorkers::ApiCommunicator do
 
     it 'should fail with invalid credentials' do
       auth_token = 'auth_token_string_wrong'
-      endpoint_access = domain + Settings.endpoints.audio_recording_uploader
+      endpoint_access = domain + BawWorkers::Settings.endpoints.audio_recording_uploader
       body = {}
       access_request = stub_request(:get, "http://localhost:3030/projects/1/sites/1/audio_recordings/check_uploader/1").
           with(headers: {'Accept' => 'application/json', 'Authorization' => 'Token token="auth_token_string_wrong"', 'Content-Type' => 'application/json', 'User-Agent' => 'Ruby'}).

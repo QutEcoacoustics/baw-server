@@ -5,13 +5,13 @@ describe BawWorkers::Harvest::GatherFiles do
 
   let(:config_file_name) { BawWorkers::Settings.actions.harvest.config_file_name}
 
-  let(:file_info) {BawWorkers::FileInfo.new(BawWorkers::Settings.logger, BawWorkers::Settings.audio_helper)}
+  let(:file_info) {BawWorkers::Config.file_info}
 
   let(:gather_files) {
     BawWorkers::Harvest::GatherFiles.new(
-        BawWorkers::Settings.logger,
+        BawWorkers::Config.logger_worker,
         file_info,
-        Settings.available_formats.audio,
+        BawWorkers::Settings.available_formats.audio,
         config_file_name
     )
   }

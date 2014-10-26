@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe BawWorkers::Storage::DatasetCache do
 
-  let(:dataset_cache) { BawWorkers::Storage::DatasetCache.new(BawWorkers::Settings.paths.cached_datasets) }
+  let(:dataset_cache) { BawWorkers::Config.dataset_cache_helper }
 
   let(:saved_search_id) { 1 }
   let(:dataset_id) { 1 }
@@ -22,7 +22,7 @@ describe BawWorkers::Storage::DatasetCache do
   end
 
   it 'paths match settings' do
-    expect(dataset_cache.possible_dirs).to match_array Settings.paths.cached_datasets
+    expect(dataset_cache.possible_dirs).to match_array BawWorkers::Settings.paths.cached_datasets
   end
 
   it 'creates the correct name' do
@@ -33,7 +33,7 @@ describe BawWorkers::Storage::DatasetCache do
   end
 
   it 'creates the correct full path' do
-    expected = [File.join(Settings.paths.cached_datasets[0], cached_dataset_file_name)]
+    expected = [File.join(BawWorkers::Settings.paths.cached_datasets[0], cached_dataset_file_name)]
     expect(dataset_cache.possible_paths(opts)).to eq expected
   end
 end
