@@ -81,8 +81,7 @@ module BawWorkers
       end
 
       def set_settings_source(settings_file)
-        BawWorkers::Settings.set_source(BawWorkers::Settings, settings_file)
-        BawWorkers::Settings.set_namespace(BawWorkers::Settings, 'settings')
+        BawWorkers::Settings.configure(settings_file, 'settings')
       end
 
       def set_logger_levels

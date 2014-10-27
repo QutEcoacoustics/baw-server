@@ -18,8 +18,7 @@ describe 'baw:worker:setup' do
 
       run_rake_task(rake_task_name, default_settings_file)
 
-      expect(program_stdout_content).to include('baw-workers/lib/settings/settings.default.yml loaded.')
-      expect(program_stdout_content).to include('===> BawWorkers::Settings namespace set to settings.')
+      expect(program_stdout_content).to match(/===> BawWorkers::Settings: 'settings' loaded from [^ ]+baw-workers\/lib\/settings\/settings\.default\.yml\./)
 
       expect(worker_log_content).to include('Resque worker will poll queues example.')
       expect(worker_log_content).to include('Logging at level 1.')
@@ -36,8 +35,7 @@ describe 'baw:worker:setup' do
 
       run_rake_task(rake_task_name, default_settings_file)
 
-      expect(program_stdout_content).to include('baw-workers/lib/settings/settings.default.yml loaded.')
-      expect(program_stdout_content).to include('===> BawWorkers::Settings namespace set to settings.')
+      expect(program_stdout_content).to match(/===> BawWorkers::Settings: 'settings' loaded from [^ ]+baw-workers\/lib\/settings\/settings\.default\.yml\./)
 
       expect(worker_log_content).to include('Resque worker will poll queues example.')
       expect(worker_log_content).to include('Logging at level 1.')
