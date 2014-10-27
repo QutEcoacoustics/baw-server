@@ -9,27 +9,24 @@ class Settings < Settingslogic
   settings_file_default = "#{Rails.root}/config/settings/default.yml"
   settings_file_env = "#{Rails.root}/config/settings/#{Rails.env}.yml"
 
-  source settings_file_default
-  namespace Rails.env
+  # set default settings source
+  BawWorkers::Settings.set_source(Settings, settings_file_default)
+  BawWorkers::Settings.set_source(BawWorkers::Settings, settings_file_default)
 
-  def self.instance_merge(settings)
-    instance.deep_merge!(settings)
-  end
 
-  # allow environment specific settings in separate yml files:
+  # merge environment specific settings in separate yml files
   if File.exist?(settings_file_env)
-    # load default settings file
-    BawWorkers::Settings.set_source(settings_file_default)
-    BawWorkers::Settings.set_namespace(Rails.env)
+    # for baw-server
+    BawWorkers::Settings.instance_merge(Settings, settings_file_env, Rails.env)
+    BawWorkers::Settings.set_namespace(Settings, Rails.env)
 
-    # merge settings from env settings file
-    env_settings = Settings.new(settings_file_env)
-    Settings.instance_merge(env_settings)
-    BawWorkers::Settings.instance_merge(env_settings)
-
-    puts "===> baw-server file #{settings_file_env} loaded."
+    # for baw-workers
+    BawWorkers::Settings.instance_merge(BawWorkers::Settings, settings_file_env, Rails.env)
+    BawWorkers::Settings.set_namespace(BawWorkers::Settings, Rails.env)
   else
-    puts "===> baw-server file #{settings_file_env} not found."
+    puts "===> environment specific settings file #{settings_file_env} not found."
+    BawWorkers::Settings.set_namespace(Settings, 'defaults')
+    BawWorkers::Settings.set_namespace(BawWorkers::Settings, 'defaults')
   end
 
   # Create or return an existing Api::Response.

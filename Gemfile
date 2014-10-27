@@ -88,7 +88,8 @@ gem 'exception_notification', '~> 4.0.1'
 
 # MEDIA
 # -------------------------------------
-gem 'baw-audio-tools', git: 'https://github.com/QutBioacoustics/baw-audio-tools.git', ref: '07af4484af'
+# set to a specific commit when releasing to master branch
+gem 'baw-audio-tools', git: 'https://github.com/QutBioacoustics/baw-audio-tools.git' #, ref: '07af4484af'
 gem 'rack-rewrite', '~> 1.5.0'
 
 # ASYNC JOBS
@@ -96,7 +97,8 @@ gem 'rack-rewrite', '~> 1.5.0'
 gem 'resque', '~> 1.25.2'
 gem 'resque-job-stats', git: 'https://github.com/echannel/resque-job-stats.git', ref: '8932c036ae'
 gem 'resque-status'
-gem 'baw-workers', git: 'https://github.com/QutBioacoustics/baw-workers.git', ref: '0223c5a1b5'
+# set to a specific commit when releasing to master branch
+gem 'baw-workers', git: 'https://github.com/QutBioacoustics/baw-workers.git' #, ref: '0223c5a1b5'
 gem 'fire_poll', '~> 1.2.0'
 
 # Gems restricted by environment and/or platform
