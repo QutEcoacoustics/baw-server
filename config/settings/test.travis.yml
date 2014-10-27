@@ -7,9 +7,9 @@ test:
   host:
     name: localhost
     port: 3030
-  resque:
-    queues:
-      media: media_travis
+  actions:
+    media:
+      queue: media_travis
   db:
     adapter: postgresql
     encoding: unicode
@@ -26,17 +26,12 @@ test:
   secret_token: 286c3a382cc5f94bc4003023f9486845
   paths:
     image_magick_dir: <%= Rails.root %>/vendor/bin/imagemagick
-    original_audios:
-      - <%= Rails.root %>/tmp/_original_audio
-    cached_spectrograms:
-      - <%= Rails.root %>/tmp/_cached_spectrogram
-    cached_audios:
-      - <%= Rails.root %>/tmp/_cached_audio
   audio_tools:
     ffmpeg_executable: ffmpeg
     ffprobe_executable: ffprobe
     mp3splt_executable: mp3splt
     sox_executable: sox
     wavpack_executable: wvunpack
+    shntool_executable: shntool
     imagemagick_convert_executable: convert
     imagemagick_identify_executable: identify

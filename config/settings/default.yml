@@ -12,9 +12,13 @@ defaults: &defaults
       port: 6379
       password: password
     namespace: 'resque'
+    log_level: 'Logger::INFO'
   actions:
     media:
+      # name of queue to append jobs onto
       queue: media_default
+      # dry run only valid when running rake task - ignored by Resque workers
+      dry_run: false
   media_request_processor: local # options are local or resque
   smtp:
     # see http://guides.rubyonrails.org/action_mailer_basics.html#action-mailer-configuration
@@ -77,9 +81,12 @@ defaults: &defaults
       - <%= Rails.root %>/tmp/_analysis_run
     cached_datasets:
       - <%= Rails.root %>/tmp/_cached_dataset
+    cached_analysis_jobs:
+      - /home/ubuntu/bioacoustics/qcif_storage/data_stag/cached_analysis_jobs
     harvester_base: <%= Rails.root %>/tmp/_harvester_to_do
-    modules_log_file: <%= Rails.root %>/tmp/_modules_log.log
-    workers_log_file: <%= Rails.root %>/tmp/workers_log.log
+    worker_log_file: <%= Rails.root %>/tmp/worker.log
+    mailer_log_file: <%= Rails.root %>/tmp/mailer.log
+    audio_tools_log_file: <%= Rails.root %>/tmp/audio_tools.log
     temp_dir: <%= Rails.root %>/tmp
   harvester_config_file: harvest.yml
   harvester:
@@ -88,6 +95,13 @@ defaults: &defaults
   admin_user:
     email: address+admin@example.com
     password: password
+  mailer:
+    # this gets set directly to the mailer.
+    # See http://api.rubyonrails.org/classes/ActionMailer/Base.html#class-ActionMailer::Base-label-Configuration+options
+    smtp:
+      address: localhost
+      port: 25
+    log_level: 'Logger::INFO'
   cached_audio_defaults:
     extension: mp3
     channel: 0
@@ -101,12 +115,8 @@ defaults: &defaults
     window: 512
     window_function: Hamming
     colour: 'g'
-    ppms: 0.045
     max_duration_seconds: 120.0
     min_duration_seconds: 0.5
-  cached_dataset_defaults:
-    storage_format: txt
-    one_item_per_line: true
   available_formats:
     text:
       - json
@@ -124,9 +134,11 @@ defaults: &defaults
     mp3splt_executable: mp3splt
     sox_executable: sox
     wavpack_executable: wvunpack
+    shntool_executable: shntool
     imagemagick_convert_executable: convert
     imagemagick_identify_executable: identify
     max_duration_seconds: 300
+    log_level: 'Logger::INFO'
   audio_tools_timeout_sec: 20
   # max overlap (default 5): maximum amount an audio recording can be trimmed at the end
   audio_recording_max_overlap_sec: 5
@@ -141,7 +153,7 @@ defaults: &defaults
     parent_site_link: '/'
   analytics:
     domain: example.com
-    ua: UA-XXXXXX
+    ua: 'UA-XXXXXX'
   recaptcha:
     public_key: set recaptcha public key
     private_key: set recaptcha private key
