@@ -15,7 +15,7 @@ module BawWorkers
         puts "===> #{settings_class.to_s}: loaded file #{settings_file}."
         settings_class.source(settings_file)
       end
-
+instance
       # Set the Settings namespace for a settings class.
       # @param [Class] settings_class
       # @param [String] namespace
@@ -33,6 +33,8 @@ module BawWorkers
       def instance_merge(settings_class, settings_file, settings_namespace)
         puts "===> #{settings_class.to_s}: merged file #{settings_file}."
         env_settings = Settings.new(settings_file, settings_namespace)
+        # todo this needs to be `settings_class.instance.deep_merge!(env_settings)`
+        # but can't access instance as it is a private methd
         settings_class.deep_merge!(env_settings)
       end
 
