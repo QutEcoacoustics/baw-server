@@ -12,7 +12,7 @@ module BawWorkers
       # @param [String] settings_file
       # @return [void]
       def set_source(settings_class, settings_file)
-        puts "===> #{settings_class.to_s} file #{settings_file} loaded."
+        puts "===> #{settings_class.to_s}: loaded file #{settings_file}."
         settings_class.source(settings_file)
       end
 
@@ -21,17 +21,19 @@ module BawWorkers
       # @param [String] namespace
       # @return [void]
       def set_namespace(settings_class, namespace)
-        puts "===> #{settings_class.to_s} namespace set to #{namespace}."
+        puts "===> #{settings_class.to_s}: namespace set to #{namespace}."
         settings_class.namespace(namespace)
       end
 
-      # Merge another Settingslogic instance with this Settingslogic instance.
+      # Merge another settings file..
       # @param [Class] settings_class
-      # @param [Settingslogic] new_settings
+      # @param [String] settings_file
+      # @param [String] settings_namespace
       # @return [void]
-      def instance_merge(settings_class, new_settings)
-        puts "===> #{settings_class.to_s} merged additional settings."
-        settings_class.deep_merge!(new_settings)
+      def instance_merge(settings_class, settings_file, settings_namespace)
+        puts "===> #{settings_class.to_s}: merged file #{settings_file}."
+        env_settings = Settings.new(settings_file, settings_namespace)
+        settings_class.deep_merge!(env_settings)
       end
 
     end
