@@ -26,12 +26,12 @@ module BawWorkers
       end
 
       # Merge another Settingslogic instance with this Settingslogic instance.
-      # @param [Settingslogic] settings_instance
+      # @param [Class] settings_class
       # @param [Settingslogic] new_settings
       # @return [void]
-      def instance_merge(settings_instance, new_settings)
-        puts "===> #{settings_instance.class.to_s} merged additional settings."
-        settings_instance.deep_merge!(new_settings)
+      def instance_merge(settings_class, new_settings)
+        puts "===> #{settings_class.to_s} merged additional settings."
+        settings_class.deep_merge!(new_settings)
       end
 
     end
