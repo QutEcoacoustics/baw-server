@@ -139,6 +139,9 @@ module BawWorkers
 
         self.file_info = FileInfo.new(BawWorkers::Config.logger_audio_tools, BawWorkers::Config.audio_helper)
 
+      end
+
+      def set_api
         self.api_communicator = BawWorkers::ApiCommunicator.new(
             BawWorkers::Config.logger_worker,
             BawWorkers::Settings.api,

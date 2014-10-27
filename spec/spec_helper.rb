@@ -115,6 +115,7 @@ RSpec.configure do |config|
     BawWorkers::Config.set_logger_levels
     BawWorkers::Config.set_mailer
     BawWorkers::Config.set_common
+    BawWorkers::Config.set_api
     BawWorkers::Config.set_rspec
   end
 

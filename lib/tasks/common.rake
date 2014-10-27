@@ -36,6 +36,7 @@ namespace :baw do
         BawWorkers::Config.set_logger_levels
         BawWorkers::Config.set_mailer
         BawWorkers::Config.set_common
+        BawWorkers::Config.set_api
 
       end
 
@@ -52,6 +53,7 @@ namespace :baw do
         BawWorkers::Config.set_logger_levels
         BawWorkers::Config.set_mailer
         BawWorkers::Config.set_common
+        BawWorkers::Config.set_api
       end
 
       BawWorkers::Config.logger_worker.info('rake_task:baw:common:init_resque_worker') {
