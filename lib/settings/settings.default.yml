@@ -81,15 +81,24 @@ settings:
     smtp:
       address: localhost
       port: 25
+      #domain: domain.com
+      #user_name: username
+      #authentication: login
+      #password: password
+    emails:
+      email_prefix: '[prefix]'
+      sender_address: address@example.com
+      required_recipients:
+       - address@example.com
     log_level: 'Logger::INFO'
   cached_audio_defaults:
-    storage_format: mp3
+    extension: mp3
     channel: 0
     sample_rate: 22050
     max_duration_seconds: 300.0
     min_duration_seconds: 0.5
   cached_spectrogram_defaults:
-    storage_format: png
+    extension: png
     channel: 0
     sample_rate: 22050
     window: 512

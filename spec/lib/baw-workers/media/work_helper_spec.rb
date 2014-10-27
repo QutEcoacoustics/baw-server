@@ -59,7 +59,7 @@ describe BawWorkers::Media::WorkHelper do
            end_offset: duration_seconds,
            channel: 0,
            sample_rate: sample_rate,
-           format: BawWorkers::Settings.cached_audio_defaults.storage_format
+           format: BawWorkers::Settings.cached_audio_defaults.extension
           })
     }.to raise_error(BawAudioTools::Exceptions::AudioFileNotFoundError, /Could not find original audio in/)
   end
@@ -98,15 +98,15 @@ describe BawWorkers::Media::WorkHelper do
               end_offset: BawWorkers::Settings.cached_audio_defaults.min_duration_seconds,
               channel: BawWorkers::Settings.cached_audio_defaults.channel,
               sample_rate: BawWorkers::Settings.cached_audio_defaults.sample_rate,
-              format: BawWorkers::Settings.cached_audio_defaults.storage_format
+              format: BawWorkers::Settings.cached_audio_defaults.extension
           })
       file_name = "#{uuid}_0.0_#{BawWorkers::Settings.cached_audio_defaults.min_duration_seconds}_"+
-          "#{BawWorkers::Settings.cached_audio_defaults.channel}_#{BawWorkers::Settings.cached_audio_defaults.sample_rate}.#{BawWorkers::Settings.cached_audio_defaults.storage_format}"
+          "#{BawWorkers::Settings.cached_audio_defaults.channel}_#{BawWorkers::Settings.cached_audio_defaults.sample_rate}.#{BawWorkers::Settings.cached_audio_defaults.extension}"
       expect(existing_paths).to include(File.join(BawWorkers::Settings.paths.cached_audios, '54', file_name))
       expect(existing_paths.size).to eq(1)
 
       info = work_helper.audio.info(existing_paths.first)
-      expect(info[:media_type]).to eq("audio/#{BawWorkers::Settings.cached_audio_defaults.storage_format}")
+      expect(info[:media_type]).to eq("audio/#{BawWorkers::Settings.cached_audio_defaults.extension}")
       expect(info[:sample_rate]).to be_within(0.0).of(BawWorkers::Settings.cached_audio_defaults.sample_rate)
       expect(info[:channels]).to eq(1) # number of channels
       expect(info[:duration_seconds]).to be_within(duration_range).of(BawWorkers::Settings.cached_audio_defaults.min_duration_seconds)
@@ -153,17 +153,17 @@ describe BawWorkers::Media::WorkHelper do
               window_function: BawWorkers::Settings.cached_spectrogram_defaults.window_function,
               colour: BawWorkers::Settings.cached_spectrogram_defaults.colour,
               sample_rate: BawWorkers::Settings.cached_spectrogram_defaults.sample_rate,
-              format: BawWorkers::Settings.cached_spectrogram_defaults.storage_format
+              format: BawWorkers::Settings.cached_spectrogram_defaults.extension
           })
       file_name = "#{uuid}_0.0_#{BawWorkers::Settings.cached_spectrogram_defaults.min_duration_seconds}_"+
           "#{BawWorkers::Settings.cached_spectrogram_defaults.channel}_#{BawWorkers::Settings.cached_spectrogram_defaults.sample_rate}_"+
           "#{BawWorkers::Settings.cached_spectrogram_defaults.window}_#{BawWorkers::Settings.cached_spectrogram_defaults.window_function}_"+
-          "#{BawWorkers::Settings.cached_spectrogram_defaults.colour}.#{BawWorkers::Settings.cached_spectrogram_defaults.storage_format}"
+          "#{BawWorkers::Settings.cached_spectrogram_defaults.colour}.#{BawWorkers::Settings.cached_spectrogram_defaults.extension}"
       expect(existing_paths).to include(File.join(BawWorkers::Settings.paths.cached_spectrograms, '54', file_name))
       expect(existing_paths.size).to eq(1)
 
       info = work_helper.spectrogram.info(existing_paths.first)
-      expect(info[:media_type]).to eq("image/#{BawWorkers::Settings.cached_spectrogram_defaults.storage_format}")
+      expect(info[:media_type]).to eq("image/#{BawWorkers::Settings.cached_spectrogram_defaults.extension}")
       expect(info[:height]).to eq(BawWorkers::Settings.cached_spectrogram_defaults.window / 2)
 
       pixels_per_second =
