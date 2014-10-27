@@ -188,7 +188,7 @@ class AudioRecording < ActiveRecord::Base
   end
 
   def self.check_storage
-    audio_original = BawWorkers::Settings.original_audio_helper
+    audio_original = BawWorkers::Config.original_audio_helper
     existing_dirs = audio_original.existing_dirs
 
     if existing_dirs.empty?

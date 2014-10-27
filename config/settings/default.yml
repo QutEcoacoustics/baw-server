@@ -84,9 +84,9 @@ defaults: &defaults
     cached_analysis_jobs:
       - /home/ubuntu/bioacoustics/qcif_storage/data_stag/cached_analysis_jobs
     harvester_base: <%= Rails.root %>/tmp/_harvester_to_do
-    worker_log_file: <%= Rails.root %>/tmp/worker.log
-    mailer_log_file: <%= Rails.root %>/tmp/mailer.log
-    audio_tools_log_file: <%= Rails.root %>/tmp/audio_tools.log
+    worker_log_file: <%= Rails.root %>/log/worker.<%= Rails.env %>.log
+    mailer_log_file: <%= Rails.root %>/log/mailer.<%= Rails.env %>.log
+    audio_tools_log_file: <%= Rails.root %>/log/audio_tools.<%= Rails.env %>.log
     temp_dir: <%= Rails.root %>/tmp
   harvester_config_file: harvest.yml
   harvester:

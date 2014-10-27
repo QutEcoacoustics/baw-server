@@ -184,7 +184,7 @@ class ApplicationController < ActionController::Base
 
     unless options[:error_info].blank?
       json_response[:meta][:error] = {} unless json_response[:meta].include?(:error)
-      json_response[:meta].error.merge!(options[:error_info])
+      json_response[:meta][:error].merge!(options[:error_info])
     end
 
     # method_name = __method__

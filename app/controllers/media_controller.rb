@@ -89,7 +89,7 @@ class MediaController < ApplicationController
     default_spectrogram = Settings.cached_spectrogram_defaults
 
     # parse request
-    metadata = Api::MediaMetadata.new(BawWorkers::Settings.audio_helper, default_audio, default_spectrogram)
+    metadata = Api::MediaMetadata.new(BawWorkers::Config.audio_helper, default_audio, default_spectrogram)
 
     # validate common request parameters
     metadata.check_request_parameters(audio_recording, request_params)
@@ -137,8 +137,8 @@ class MediaController < ApplicationController
     rails_request = request
 
     # get pre-defined settings
-    audio_cached = BawWorkers::Settings.audio_cache_helper
-    spectrogram_cached = BawWorkers::Settings.spectrogram_cache_helper
+    audio_cached = BawWorkers::Config.audio_cache_helper
+    spectrogram_cached = BawWorkers::Config.spectrogram_cache_helper
     range_request = Settings.range_request
 
     # validate duration min and max defaults against request parameters
@@ -174,7 +174,7 @@ class MediaController < ApplicationController
     is_processed_by_resque = Settings.process_media_resque?
     processor = Settings.media_request_processor
 
-    existing_files = files_info.existing
+    existing_files = files_info[:existing]
 
     if existing_files.blank? && is_processed_locally
       add_header_generated_local
@@ -213,7 +213,7 @@ class MediaController < ApplicationController
   # @param [Object] generation_request
   # @return [String] path to existing file
   def create_media_local(media_category, generation_request)
-    BawWorkers::Media::Action.make_media_request(media_category, generation_request, Rails.logger)
+    BawWorkers::Media::Action.make_media_request(media_category, generation_request)
   end
 
 
@@ -224,7 +224,7 @@ class MediaController < ApplicationController
   # @return [Array<String>] path to existing file
   def create_media_resque(media_category, files_info, generation_request)
     BawWorkers::Media::Action.action_enqueue(media_category, generation_request)
-    poll_media(files_info.possible, Settings.audio_tools_timeout_sec)
+    poll_media(files_info[:possible], Settings.audio_tools_timeout_sec)
   end
 
   # this will block the request and wait until the resource is available

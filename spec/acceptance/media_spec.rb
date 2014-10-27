@@ -711,7 +711,7 @@ resource 'Media' do
     end
 
   end
- 
+
   context 'range request' do
     header 'Range', 'bytes=0-'
 

@@ -11,13 +11,26 @@ class NameyWamey
 
     start_offset_float = start_offset.to_f
     end_offset_float = end_offset.to_f
-    abs_start = audio_recording.recorded_date.dup.advance(seconds: start_offset_float).strftime('%Y%m%d_%H%M%S')
+    abs_start = audio_recording[:recorded_date].dup.advance(seconds: start_offset_float).strftime('%Y%m%d_%H%M%S')
     duration = end_offset_float - start_offset_float
-    site_name = audio_recording.site.name.gsub(' ', '_')
-    site_id = audio_recording.site.id.to_s
+
+    if audio_recording.is_a?(Hash)
+      site = audio_recording[:site]
+    else
+      site = audio_recording.site
+    end
+
+    if site.is_a?(Hash)
+      site_name = site[:name].gsub(' ', '_')
+      site_id = site[:id].to_s
+    else
+      site_name = site.name.gsub(' ', '_')
+      site_id = site.id.to_s
+    end
+
     extra_options_formatted = self.get_extra_options(extra_options)
 
-    "#{site_name}_#{site_id}_#{audio_recording.id}_#{abs_start}_#{duration}#{extra_options_formatted}.#{extension.trim('.', '')}"
+    "#{site_name}_#{site_id}_#{audio_recording[:id]}_#{abs_start}_#{duration}#{extra_options_formatted}.#{extension.trim('.', '')}"
   end
 
   # Suggest a file name based on project, extra options and extension.
@@ -28,7 +41,15 @@ class NameyWamey
   def self.create_project_name(project, extra_options, extension)
     extra_options_formatted = self.get_extra_options(extra_options)
 
-    "#{project.name}_#{project.id}#{extra_options_formatted}.#{extension.trim('.', '')}"
+    if project.is_a?(Hash)
+      id = project[:id]
+      name = project[:name]
+    else
+      id = project.id
+      name = project.name
+    end
+
+    "#{name}_#{id}#{extra_options_formatted}.#{extension.trim('.', '')}"
   end
 
   # Suggest a file name based on project, site, extra options and extension.
@@ -39,7 +60,24 @@ class NameyWamey
   # @return [string] suggested file name
   def self.create_site_name(project, site, extra_options, extension)
     extra_options_formatted = self.get_extra_options(extra_options)
-    "#{project.name}_#{project.id}_#{site.name}_#{site.id}#{extra_options_formatted}.#{extension.trim('.', '')}"
+
+    if project.is_a?(Hash)
+      project_id = project[:id]
+      project_name = project[:name]
+    else
+      project_id = project.id
+      project_name = project.name
+    end
+
+    if project.is_a?(Hash)
+      site_id = project[:id]
+      site_name = project[:name]
+    else
+      site_id = project.id
+      site_name = project.name
+    end
+
+    "#{project_name}_#{project_id}_#{site_name}_#{site_id}#{extra_options_formatted}.#{extension.trim('.', '')}"
   end
 
   def self.trim(string_value, chars_to_replace, char_to_insert)

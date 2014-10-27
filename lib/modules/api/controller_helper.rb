@@ -48,7 +48,7 @@ module Api
 
     def respond_index
       items = get_resource_plural.map { |item|
-        item.as_json(only: item.class.filter_settings.render_fields)
+        item.as_json(only: item.class.filter_settings[:render_fields])
       }
       built_response = Settings.api_response.build(:ok, items)
       render json: built_response, status: :ok, layout: false
@@ -57,14 +57,14 @@ module Api
     # also used for update_success and new
     def respond_show
       item_resource = get_resource
-      item = item_resource.as_json(only: item_resource.class.filter_settings.render_fields)
+      item = item_resource.as_json(only: item_resource.class.filter_settings[:render_fields])
       built_response = Settings.api_response.build(:ok, item)
       render json: built_response, status: :ok, layout: false
     end
 
     def respond_create_success(location = nil)
       item_resource = get_resource
-      item = item_resource.as_json(only: item_resource.class.filter_settings.render_fields)
+      item = item_resource.as_json(only: item_resource.class.filter_settings[:render_fields])
       built_response = Settings.api_response.build(:created, item)
       render json: built_response, status: :created, location: location.blank? ? get_resource : location, layout: false
     end

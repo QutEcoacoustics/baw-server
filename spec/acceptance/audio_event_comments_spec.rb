@@ -12,7 +12,7 @@ resource 'AudioEventComments' do
 
   # default format
   let(:format) { 'json' }
-
+ 
   before(:each) do
     @user = FactoryGirl.create(:user)
     @admin_user = FactoryGirl.create(:admin)

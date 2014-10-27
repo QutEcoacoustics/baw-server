@@ -27,6 +27,62 @@ module AWB
     # add all dirs recursively from lib/modules
     config.autoload_paths += Dir["#{config.root}/lib/modules/**/"]
 
+    # Custom setup
+    # enable garbage collection profiling (reported in New Relic)
+    GC::Profiler.enable
+
+    require "#{File.dirname(__FILE__)}/../app/models/settings"
+
+    # validate server Settings file
+    Settings.validate
+
+    # resque setup
+    Resque.redis = Settings.resque.connection
+    Resque.redis.namespace = Settings.resque.namespace
+
+    # logging
+    # By default, each log is created under Rails.root/log/ and the log file name is <component_name>.<environment_name>.log.
+
+    # The default Rails log level is warn in production env and info in any other env.
+    current_log_level = Rails.env.production? ? Logger::WARN : Logger::INFO
+
+    rails_logger = BawWorkers::MultiLogger.new(Logger.new(Rails.root.join('log', "rails.#{Rails.env}.log")))
+    rails_logger.level = current_log_level
+
+    mailer_logger = BawWorkers::MultiLogger.new(Logger.new(Settings.paths.mailer_log_file))
+    mailer_logger.level = Logger.const_get(Settings.mailer.log_level)
+
+    active_record_logger = BawWorkers::MultiLogger.new(Logger.new(Rails.root.join('log', "activerecord.#{Rails.env}.log")))
+    active_record_logger.level = current_log_level
+
+    resque_logger = BawWorkers::MultiLogger.new(Logger.new(Settings.paths.worker_log_file))
+    resque_logger.level = Logger.const_get(Settings.resque.log_level)
+
+    audio_tools_logger = BawWorkers::MultiLogger.new(Logger.new(Settings.paths.audio_tools_log_file))
+    audio_tools_logger.level = Logger.const_get(Settings.audio_tools.log_level)
+
+    # core rails logging
+    config.logger = rails_logger
+
+    # action mailer logging
+    config.action_mailer.logger = mailer_logger
+    BawWorkers::Config.logger_mailer = mailer_logger
+
+    # activerecord logging
+    ActiveRecord::Base.logger =active_record_logger
+
+    # resque logging
+    Resque.logger = resque_logger
+    BawWorkers::Config.logger_worker = resque_logger
+
+    # audio tools logging
+    BawWorkers::Config.logger_audio_tools = audio_tools_logger
+
+    # BawWorkers setup
+    BawWorkers::Config.set_common
+
+    # end custom setup
+
     # Only load the plugins named here, in the order given (default is alphabetical).
     # :all can be used as a placeholder for all plugins not explicitly named.
     # config.plugins = [ :exception_notification, :ssl_requirement, :all ]
@@ -102,51 +158,6 @@ module AWB
       rewrite /^\/listen.*/i, '/system/listen_to/index.html'
       rewrite /^\/birdwalks.*/i, '/system/listen_to/index.html'
       rewrite /^\/library.*/i, '/system/listen_to/index.html'
-    end
-
-    config.after_initialize do
-      # validate Settings file
-      Settings.validate
-
-      # set resque connection
-      Resque.redis = Settings.resque.connection
-
-      # set resque namespace
-      Resque.redis.namespace = Settings.resque.namespace
-
-      # enable garbage collection profiling (reported in New Relic)
-      GC::Profiler.enable
-
-      # logging
-      # By default, each log is created under Rails.root/log/ and the log file name is environment_name.log.
-      # The default Rails log level is info in production env and debug in any other env.
-
-      current_log_level = Rails.env.production? ? Logger::INFO : Logger::DEBUG
-      log_rotation_frequency = 'weekly'
-
-      # core rails logging
-      config.logger = Logger.new(Rails.root.join('log', "#{Rails.env}.log"), log_rotation_frequency)
-      config.logger.formatter = BawAudioTools::CustomFormatter.new
-      config.logger.level = current_log_level
-
-      # action mailer logging
-      config.action_mailer.logger = Logger.new(Rails.root.join('log', "#{Rails.env}.mailer.log"), log_rotation_frequency)
-      config.action_mailer.logger.formatter = BawAudioTools::CustomFormatter.new
-      config.action_mailer.logger.level = current_log_level
-
-      # activerecord logging
-      ActiveRecord::Base.logger = Logger.new(Rails.root.join('log', "#{Rails.env}.activerecord.log"), log_rotation_frequency)
-      ActiveRecord::Base.logger.formatter = BawAudioTools::CustomFormatter.new
-      ActiveRecord::Base.logger.level = current_log_level
-
-      # resque logging
-      Resque.logger = Logger.new(Rails.root.join('log', "#{Rails.env}.resque.log"), log_rotation_frequency)
-      Resque.logger.formatter = BawAudioTools::CustomFormatter.new
-      Resque.logger.level = current_log_level
-
-      # audio tools logging
-      BawAudioTools::Logging.set_logger(Logger.new(Rails.root.join('log', "#{Rails.env}.audiotools.log"), log_rotation_frequency))
-      BawAudioTools::Logging.set_level(current_log_level)
     end
 
   end

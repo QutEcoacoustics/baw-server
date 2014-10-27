@@ -131,7 +131,7 @@ def do_checks(expected_status, opts = {})
 
     # RSpec also provides a =~ matcher for arrays that disregards differences in
     # the ordering between the actual and expected array.
-    actual_ids = actual_response_parsed['data'].map { |x| x.include?('id') ? x.id : nil }
+    actual_ids = actual_response_parsed['data'].map { |x| x.include?('id') ? x['id'] : nil }
     actual_ids.should =~ expected_unordered_ids
 
     # actual_response_parsed.each_index do |index|
