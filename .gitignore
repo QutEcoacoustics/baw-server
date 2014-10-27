@@ -17,6 +17,3 @@ test/version_tmp
 tmp
 .idea/
 vendor/
-lib/settings/settings.test.yml
-lib/settings.dev.yml
-audio_tools.log
