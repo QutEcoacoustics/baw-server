@@ -1,5 +1,5 @@
 class ProjectMailer < ActionMailer::Base
-  default from: Settings.emails.sender_address
+  default from: Settings.mailer.emails.sender_address
 
   def project_access_request(sender_user, project_ids, reason)
     @sender_user = sender_user
@@ -31,9 +31,9 @@ class ProjectMailer < ActionMailer::Base
 
     user_projects.each do |key, value|
       # emails get sent to project owner plus required recipients (e.g. admins)
-      emails = [value[:email]] + Settings.emails.required_recipients
+      emails = [value[:email]] + Settings.mailer.emails.required_recipients
       @owner_name = value[:user_name]
-      subject = "#{Settings.emails.email_prefix} [Project Access Request] #{@sender_user.user_name} is requesting access to one or more projects."
+      subject = "#{Settings.mailer.emails.email_prefix} [Project Access Request] #{@sender_user.user_name} is requesting access to one or more projects."
       @projects = value[:projects]
       mail(to: emails, subject: subject).deliver
     end

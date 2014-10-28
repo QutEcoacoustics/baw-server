@@ -7,7 +7,7 @@ GIT
 
 GIT
   remote: https://github.com/QutBioacoustics/baw-workers.git
-  revision: 499b7145ac94938333ce643228e8f8cfc03b42d2
+  revision: 7fc1b2d862e2019f512ebd281af29f6a697345e7
   specs:
     baw-workers (0.4.0)
       actionmailer (>= 3.2)
@@ -374,7 +374,7 @@ GEM
       colorize
       net-scp (>= 1.1.2)
       net-ssh (>= 2.8.0)
-    temple (0.6.9)
+    temple (0.6.10)
     term-ansicolor (1.3.0)
       tins (~> 1.0)
     terminal-table (1.4.5)

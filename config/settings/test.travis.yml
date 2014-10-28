@@ -17,8 +17,6 @@ test:
     pool: 5
     username: postgres
     password: ''
-  emails:
-    email_prefix: '[BAW travis test]'
   devise:
     pepper: 2a1dd780abf48819876cd0b74b5a988b
     expire_auth_token_on_timeout: false
@@ -26,6 +24,9 @@ test:
   secret_token: 286c3a382cc5f94bc4003023f9486845
   paths:
     image_magick_dir: <%= Rails.root %>/vendor/bin/imagemagick
+  mailer:
+    emails:
+      email_prefix: '[BAW travis test]'
   audio_tools:
     ffmpeg_executable: ffmpeg
     ffprobe_executable: ffprobe
