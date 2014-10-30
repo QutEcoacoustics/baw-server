@@ -6,27 +6,6 @@ describe BawAudioTools::AudioBase do
   include_context 'temp media files'
   include_context 'test audio files'
 
-  context 'audio tool utilities' do
-    it 'check timeout is enforced' do
-      command = 'sleep 120'
-      expect {
-        audio_base.execute(command)
-      }.to raise_error(BawAudioTools::Exceptions::AudioToolTimedOutError, /#{command}/)
-    end
-
-    it 'check timeout does not impact successful execution' do
-      sleep_duration = 1
-      command = "sleep #{sleep_duration}"
-
-      result = audio_base.execute(command)
-
-      expect(result[:time_taken]).to be_within(sleep_range).of(sleep_duration)
-      expect(result[:stdout]).to be_blank
-      expect(result[:stderr]).to be_blank
-      expect(result[:command]).to eq(command)
-    end
-  end
-
   context 'when getting audio file information' do
     it 'runs to completion when given an existing file' do
       audio_base.info(audio_file_stereo)

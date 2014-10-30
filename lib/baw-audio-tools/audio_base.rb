@@ -1,5 +1,3 @@
-require 'open3'
-
 module BawAudioTools
   class AudioBase
 
@@ -12,8 +10,8 @@ module BawAudioTools
     # Create a new BawAudioTools::AudioBase.
     # @param [Hash] audio_defaults
     # @param [Logger] logger
-    # @param [String] temp_dir
-    # @param [Integer] timeout_sec
+    # @param [BawAudioTools::RunExternalProgram] run_program
+
     # @param [Hash] opts the available audio tools
     # @option opts [BawAudioTools::AudioFfmpeg] :ffmpeg
     # @option opts [BawAudioTools::AudioMp3splt] :mp3splt
@@ -21,11 +19,11 @@ module BawAudioTools
     # @option opts [BawAudioTools::AudioWavpack] :wavpack
     # @option opts [BawAudioTools::AudioShntool] :shntool
     # @return [BawAudioTools::AudioBase]
-    def initialize(audio_defaults, logger, temp_dir, timeout_sec, opts = {})
+    def initialize(audio_defaults, logger, temp_dir, run_program, opts = {})
       @audio_defaults = audio_defaults
       @logger = logger
       @temp_dir = temp_dir
-      @timeout_sec = timeout_sec
+      @run_program = run_program
 
       @audio_ffmpeg = opts[:ffmpeg]
       @audio_mp3splt = opts[:mp3splt]
@@ -58,7 +56,9 @@ module BawAudioTools
           shntool: BawAudioTools::AudioShntool.new(opts[:shntool], temp_dir)
       }
 
-      BawAudioTools::AudioBase.new(audio_defaults, logger, temp_dir, timeout_sec, audio_tool_opts)
+      run_program = BawAudioTools::RunExternalProgram.new(timeout_sec, logger)
+
+      BawAudioTools::AudioBase.new(audio_defaults, logger, temp_dir, run_program, audio_tool_opts)
     end
 
     # Construct path to a temp file with extension that does not exist.
@@ -81,7 +81,7 @@ module BawAudioTools
       fail Exceptions::FileEmptyError, "Source exists, but has no content: #{source}" if File.size(source) < 1
 
       ffmpeg_info_cmd = @audio_ffmpeg.info_command(source)
-      ffmpeg_info_output = execute(ffmpeg_info_cmd)
+      ffmpeg_info_output = @run_program.execute(ffmpeg_info_cmd)
 
       ffmpeg_info = @audio_ffmpeg.parse_ffprobe_output(source, ffmpeg_info_output)
 
@@ -106,11 +106,11 @@ module BawAudioTools
           info_flattened[:duration_seconds] < four_minutes_in_sec
 
         #sox_info_cmd = @audio_sox.info_command_info(source)
-        #sox_info_output = execute(sox_info_cmd)
+        #sox_info_output = @run_program.execute(sox_info_cmd)
         #sox_info = @audio_sox.parse_info_output(sox_info_output[:stdout])
 
         sox_stat_cmd = @audio_sox.info_command_stat(source)
-        sox_stat_output = execute(sox_stat_cmd)
+        sox_stat_output = @run_program.execute(sox_stat_cmd)
         sox_stat = @audio_sox.parse_info_output(sox_stat_output)
 
         @audio_sox.check_for_errors(sox_stat_output)
@@ -157,7 +157,7 @@ module BawAudioTools
       if info_flattened[:media_type] == 'audio/wavpack'
         # only get wavpack info for wavpack files
         wavpack_info_cmd = @audio_wavpack.info_command(source)
-        wavpack_info_output = execute(wavpack_info_cmd)
+        wavpack_info_output = @run_program.execute(wavpack_info_cmd)
         wavpack_info = @audio_wavpack.parse_info_output(wavpack_info_output[:stdout])
         wavpack_error = @audio_wavpack.parse_error_output(wavpack_info_output[:stderr])
         @audio_wavpack.check_for_errors(wavpack_info_output)
@@ -170,7 +170,7 @@ module BawAudioTools
         #elsif info_flattened[:media_type] == 'audio/wav'
         #  # only get shntool info for wav files
         #  shntool_info_cmd = @audio_shntool.info_command(source)
-        #  shntool_info_output = execute(shntool_info_cmd)
+        #  shntool_info_output = @run_program.execute(shntool_info_cmd)
         #  shntool_info = @audio_shntool.parse_info_output(shntool_info_output[:stdout])
         #  @audio_shntool.check_for_errors(shntool_info_output)
         #
@@ -201,12 +201,12 @@ module BawAudioTools
       if File.extname(source) != '.wv'
         # ffmpeg for everything except wavpack
         ffmpeg_integrity_cmd = @audio_ffmpeg.integrity_command(source)
-        ffmpeg_integrity_output = execute(ffmpeg_integrity_cmd, false)
+        ffmpeg_integrity_output = @run_program.execute(ffmpeg_integrity_cmd, false)
         output = @audio_ffmpeg.check_integrity_output(ffmpeg_integrity_output)
       else
         # wavpack for wv files
         wvpack_integrity_cmd = @audio_wavpack.integrity_command(source)
-        wvpack_integrity_output = execute(wvpack_integrity_cmd, false)
+        wvpack_integrity_output = @run_program.execute(wvpack_integrity_cmd, false)
         output = @audio_wavpack.check_integrity_output(wvpack_integrity_output)
       end
 
@@ -229,65 +229,7 @@ module BawAudioTools
       modify_worker(source_info, source, target, modify_parameters)
     end
 
-    def execute(command, raise_program_exit_error = true)
 
-      if OS.windows?
-        #if command.include? '&& move'
-        # if windows and contains a 'move' command, need to ensure relative path has '\' separators
-        command = command.gsub('/', '\\')
-        #else
-        #command = command.gsub('\\', '/')
-        #end
-      end
-
-      stdout_str = ''
-      stderr_str = ''
-      status = nil
-      timed_out = nil
-      killed = nil
-      exceptions = []
-
-      time = Benchmark.realtime do
-        begin
-          run_with_timeout(command, timeout: @timeout_sec) do |output, error, thread, timed_out_return, killed_return, exceptions|
-            #thread_success = thread.value.success?
-            stdout_str = output
-            stderr_str = error
-            status = thread.value
-            timed_out = timed_out_return
-            killed = killed_return
-            exceptions = exceptions
-          end
-        rescue Exception => e
-          @logger.fatal(@class_name) { e }
-          raise e
-        end
-      end
-
-      status_msg = "status=#{status.exitstatus};killed=#{killed};"
-      timeout_msg = "time_out_sec=#{@timeout_sec};time_taken_sec=#{time};timed_out=#{timed_out};"
-      exceptions_msg = "exceptions=#{exceptions.inspect};"
-      output_msg = "\n\tStandard output: #{stdout_str}\n\tStandard Error: #{stderr_str}"
-      msg = "External Program: #{status_msg}#{timeout_msg}#{exceptions_msg}command=#{command}#{output_msg}"
-
-      if (!stderr_str.blank? && !status.success?) || timed_out || killed
-        @logger.warn(@class_name) { msg }
-      else
-        @logger.debug(@class_name) { msg }
-      end
-
-      fail Exceptions::AudioToolTimedOutError, msg if timed_out || killed
-      fail Exceptions::AudioToolError, msg if !stderr_str.blank? && !status.success? && raise_program_exit_error
-
-      {
-          command: command,
-          stdout: stdout_str,
-          stderr: stderr_str,
-          time_taken: time,
-          exit_code: status.exitstatus,
-          execute_msg: msg
-      }
-    end
 
     def tempfile_content(tempfile)
       tempfile.rewind
@@ -345,6 +287,10 @@ module BawAudioTools
       [8000, 11025, 12000, 16000, 22050, 24000, 32000, 44100, 48000]
     end
 
+    def execute(cmd)
+      @run_program.execute(cmd)
+    end
+
     private
 
     # @param [Hash] source_info
@@ -373,18 +319,18 @@ module BawAudioTools
           # Convert to wav first to avoid problems with other formats
           temp_file_1 = temp_file('wav')
           cmd = @audio_ffmpeg.modify_command(source, source_info, temp_file_1, start_offset, end_offset)
-          execute(cmd)
+          @run_program.execute(cmd)
           check_target(temp_file_1)
 
           # resample using sox.
           temp_file_2 = temp_file('wav')
           cmd = @audio_sox.modify_command(temp_file_1, info(temp_file_1), temp_file_2, nil, nil, channel, sample_rate)
-          execute(cmd)
+          @run_program.execute(cmd)
           check_target(temp_file_2)
 
           # convert to requested format after resampling
           cmd = @audio_ffmpeg.modify_command(temp_file_2, info(temp_file_2), target)
-          execute(cmd)
+          @run_program.execute(cmd)
           check_target(temp_file_1)
 
           File.delete temp_file_1
@@ -392,7 +338,7 @@ module BawAudioTools
         else
           # use ffmpeg for anything else
           cmd = @audio_ffmpeg.modify_command(source, source_info, target, start_offset, end_offset, channel, sample_rate)
-          execute(cmd)
+          @run_program.execute(cmd)
           check_target(target)
         end
 
@@ -401,17 +347,17 @@ module BawAudioTools
 
     def modify_wavpack(source, source_info, target, start_offset, end_offset)
       cmd = @audio_wavpack.modify_command(source, source_info, target, start_offset, end_offset)
-      execute(cmd)
+      @run_program.execute(cmd)
     end
 
     def modify_mp3splt(source, source_info, target, start_offset, end_offset)
       cmd = @audio_mp3splt.modify_command(source, source_info, target, start_offset, end_offset)
-      execute(cmd)
+      @run_program.execute(cmd)
     end
 
     #def modify_shntool(source, source_info, target, start_offset, end_offset)
     #  cmd = @audio_shntool.modify_command(source, source_info, target, start_offset, end_offset)
-    #  execute(cmd)
+    #  @run_program.execute(cmd)
     #end
 
     # @param [string] extension
@@ -438,102 +384,6 @@ module BawAudioTools
     end
 
 
-    # https://gist.github.com/mgarrick/3108185
-    # Runs a specified shell command in a separate thread.
-    # If it exceeds the given timeout in seconds, kills it.
-    # Passes stdout, stderr, thread, and a boolean indicating a timeout occurred to the passed in block.
-    # Uses Kernel.select to wait up to the tick length (in seconds) between
-    # checks on the command's status
-    #
-    # If you've got a cleaner way of doing this, I'd be interested to see it.
-    # If you think you can do it with Ruby's Timeout module, think again.
 
-    # @param [Hash] command
-    def run_with_timeout(*command)
-      options = command.extract_options!.reverse_merge(timeout: 60, tick: 1, cleanup_sleep: 0.1, buffer_size: 10240)
-
-      timeout = options[:timeout]
-      cleanup_sleep = options[:cleanup_sleep]
-
-      output = ''
-      error = ''
-
-      # Start task in another thread, which spawns a process
-      Open3.popen3(*command) do |stdin, stdout, stderr, thread|
-        # Get the pid of the spawned process
-        pid = thread[:pid]
-        start = Time.now
-
-        exceptions = []
-        while (time_remaining = (Time.now - start) < timeout) && thread.alive?
-          exceptions.push read_to_stream(stdout, stderr, output, error, options)
-        end
-
-        # read to stream a final time to ensure all stdout and stderr have been captured
-        # program may have exited so quickly that some was not caught before the while loop
-        # was processed again
-        exceptions.push read_to_stream(stdout, stderr, output, error, options)
-
-        # Give Ruby time to clean up the other thread
-        sleep cleanup_sleep
-
-        killed = false
-
-        if thread.alive?
-          # We need to kill the process, because killing the thread leaves
-          # the process alive but detached, annoyingly enough.
-          Process.kill('KILL', pid)
-
-          killed = true
-        end
-
-        yield output, error, thread, !time_remaining, killed, exceptions.flatten
-      end
-    end
-
-
-    def read_windows(stream, readable, buffer_size)
-      # can't use read_nonblock with pipes in windows (only sockets)
-      # https://bugs.ruby-lang.org/issues/5954
-      # throw a proper error, then!!! ('Errno::EBADF: Bad file descriptor' is useless)
-      stream << readable.readpartial(buffer_size)
-    end
-
-    def read_linux(stream, readable, buffer_size)
-      stream << readable.read_nonblock(buffer_size)
-    end
-
-    def read_to_stream(stdout, stderr, output, error, options)
-      tick = options[:tick]
-      buffer_size = options[:buffer_size]
-      exceptions = []
-      is_windows = OS.windows?
-
-      # Wait up to `tick` seconds for output/error data
-      readables, writeables, = Kernel.select([stdout, stderr], nil, nil, tick)
-      unless readables.blank?
-        readables.each do |readable|
-          stream = readable == stdout ? output : error
-          begin
-            if is_windows
-              read_windows(stream, readable, buffer_size)
-            else
-              read_linux(stream, readable, buffer_size)
-            end
-          rescue IO::WaitReadable, EOFError => e
-            # Need to read all of both streams
-            # Keep going until thread dies
-            exceptions.push(e)
-          end
-        end
-
-        # readables, writeables, = Kernel.select([stdout, stderr], nil, nil, tick)
-        # next if readables.blank?
-        # output << readables[0].readpartial(buffer_size)
-        # error << readables[1].readpartial(buffer_size)
-      end
-
-      exceptions
-    end
   end
 end

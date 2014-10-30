@@ -6,6 +6,7 @@ require 'baw-audio-tools/OS'
 
 module BawAudioTools
   autoload :Exceptions, 'baw-audio-tools/exceptions'
+  autoload :RunExternalProgram, 'baw-audio-tools/run_external_program'
 
   autoload :AudioFfmpeg, 'baw-audio-tools/audio_ffmpeg'
   autoload :AudioMp3splt, 'baw-audio-tools/audio_mp3splt'
