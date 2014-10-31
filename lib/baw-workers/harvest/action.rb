@@ -71,11 +71,8 @@ module BawWorkers
 
           # enqueue to resque
           to_do_path = BawWorkers::Settings.actions.harvest.to_do_path
-          progressive_upload_directory = BawWorkers::Settings.actions.harvest.progressive_upload_directory
 
-          file_hashes = gather_files.process_dir(to_do_path, progressive_upload_directory)
-
-          file_hashes
+          gather_files.directory(to_do_path)
         end
 
       end

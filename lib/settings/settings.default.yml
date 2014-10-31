@@ -43,7 +43,6 @@ settings:
       dry_run: false
       to_do_path: ./tmp/_harvester_to_do_path
       config_file_name: harvest.yml
-      progressive_upload_directory: ./tmp/_progressive-upload/
     media:
       # name of queue to append jobs onto
       queue: media_default
@@ -128,5 +127,5 @@ settings:
     imagemagick_convert_executable: convert
     imagemagick_identify_executable: identify
     max_duration_seconds: 300
-    log_level: 'Logger::INFO'
+    log_level: 'Logger::WARN'
   audio_tools_timeout_sec: 20

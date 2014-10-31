@@ -137,7 +137,7 @@ module BawWorkers
 
         self.temp_dir = File.expand_path(BawWorkers::Settings.paths.temp_dir)
 
-        self.file_info = FileInfo.new(BawWorkers::Config.logger_audio_tools, BawWorkers::Config.audio_helper)
+        self.file_info = FileInfo.new(BawWorkers::Config.audio_helper)
 
       end
 

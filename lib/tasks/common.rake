@@ -41,7 +41,7 @@ namespace :baw do
       end
 
       BawWorkers::Config.logger_worker.info('rake_task:baw:common:init_resque_worker') {
-        "Logging at level #{BawWorkers::Config.logger_worker.level}."
+        "Resque worker starting. Logging at level #{BawWorkers::Config.logger_worker.level}."
       }
 
     end
@@ -49,7 +49,7 @@ namespace :baw do
     desc 'Configure rake task'
     task :init_rake_task, [:settings_file] => [:init_settings] do |t, args|
       if ENV['RUNNING_RSPEC'] != 'yes'
-        BawWorkers::Config.set_logger_files
+        BawWorkers::Config.set_logger_console_and_file
         BawWorkers::Config.set_logger_levels
         BawWorkers::Config.set_mailer
         BawWorkers::Config.set_common
@@ -57,7 +57,7 @@ namespace :baw do
       end
 
       BawWorkers::Config.logger_worker.info('rake_task:baw:common:init_resque_worker') {
-        "Logging at level #{BawWorkers::Config.logger_worker.level}."
+        "Rake task starting. Logging at level #{BawWorkers::Config.logger_worker.level}."
       }
 
     end

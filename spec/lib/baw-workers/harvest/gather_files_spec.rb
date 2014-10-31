@@ -72,14 +72,12 @@ describe BawWorkers::Harvest::GatherFiles do
     it 'should error if the file does not exist' do
       file_name = 'blah.ext'
       expect(File.exists?(file_name)).to be_falsey
-      expect{
-        gather_files.info_from_name(file_name, '+03')
-      }.to raise_error(ArgumentError, /Could not parse file name/)
+      expect(file_info.advanced(file_name, '+03')).to be_blank
     end
 
     it 'should parse a date and time without offset file name correctly' do
       file_name = 'site_name_20140301_085031.mp3'
-      result = gather_files.info_from_name(file_name, '+11')
+      result = file_info.advanced(file_name, '+11')
 
       expect(result[:recorded_date]).to eq(DateTime.new(2014, 3, 1, 8, 50, 31, '+11').iso8601(3))
       expect(result[:utc_offset]).to eq('+11')
@@ -89,7 +87,7 @@ describe BawWorkers::Harvest::GatherFiles do
 
     it 'should parse a date and time without offset without prefix file name correctly' do
       file_name = '20140301_085031.mp3'
-      result = gather_files.info_from_name(file_name, '+11')
+      result = file_info.advanced(file_name, '+11')
 
       expect(result[:recorded_date]).to eq(DateTime.new(2014, 3, 1, 8, 50, 31, '+11').iso8601(3))
       expect(result[:utc_offset]).to eq('+11')
@@ -99,7 +97,7 @@ describe BawWorkers::Harvest::GatherFiles do
 
     it 'should parse a date and time with offset file name correctly' do
       file_name = 'site_name_20140301_085031+11.mp3'
-      result = gather_files.info_from_name(file_name)
+      result = file_info.advanced(file_name)
 
       expect(result[:recorded_date]).to eq(DateTime.new(2014, 3, 1, 8, 50, 31, '+11').iso8601(3))
       expect(result[:utc_offset]).to eq('+11')
@@ -109,7 +107,7 @@ describe BawWorkers::Harvest::GatherFiles do
 
     it 'should parse a date and time with offset without prefix file name correctly' do
       file_name = '20140301_085031+11.mp3'
-      result = gather_files.info_from_name(file_name)
+      result = file_info.advanced(file_name)
 
       expect(result[:recorded_date]).to eq(DateTime.new(2014, 3, 1, 8, 50, 31, '+11').iso8601(3))
       expect(result[:utc_offset]).to eq('+11')
@@ -119,14 +117,12 @@ describe BawWorkers::Harvest::GatherFiles do
 
     it 'should fail to parse a file without a matching file name' do
       file_name = 'my_audio_file.mp3'
-      expect{
-        gather_files.info_from_name(file_name, '+0')
-      }.to raise_error(ArgumentError, /Could not parse file name/)
+      expect(file_info.advanced(file_name, '+0')).to be_blank
     end
 
     it 'should parse a regular ALL THE INFO! file name correctly' do
       file_name = 'p143_s254_u1045_d20140228_t235959Z.wav'
-      result = gather_files.info_from_name(file_name)
+      result = file_info.advanced(file_name)
 
       expect(result[:recorded_date]).to eq(DateTime.new(2014, 2, 28, 23, 59, 59, '+0').iso8601(3))
       expect(result[:utc_offset]).to eq('+0')
@@ -138,7 +134,7 @@ describe BawWorkers::Harvest::GatherFiles do
 
     it 'should parse a prefixed and suffixed file name correctly' do
       file_name = 'SERF_20130314_000021_000.wav'
-      result = gather_files.info_from_name(file_name, '+0')
+      result = file_info.advanced(file_name, '+0')
 
       expect(result[:recorded_date]).to eq(DateTime.new(2013, 3, 14, 0, 0, 21, '+0').iso8601(3))
       expect(result[:utc_offset]).to eq('+0')
@@ -184,31 +180,27 @@ describe BawWorkers::Harvest::GatherFiles do
 
   context 'settings values' do
     it 'should fail if value is not numeric' do
-      sub_folder = File.join(to_do_dir, 'one')
-      FileUtils.mkpath(sub_folder)
-      expect {
-        gather_files.check_folder_settings_value('test', 'numeric value', '4', lambda { |value| gather_files.settings_value_numeric?(value) })
-      }.to raise_error(BawWorkers::Exceptions::HarvesterConfigurationError, /Folder settings file test must contain a valid numeric value, '4' is not valid./)
+      expect(file_info.numeric?('10')).to be_falsey
     end
 
     it 'should succeed if value is numeric' do
-      sub_folder = File.join(to_do_dir, 'one')
-      FileUtils.mkpath(sub_folder)
-      gather_files.check_folder_settings_value('test', 'numeric value', 4, lambda { |value| gather_files.settings_value_numeric?(value) })
+      expect(file_info.numeric?(4)).to be_truthy
     end
 
     it 'should fail if value is not a time offset' do
-      sub_folder = File.join(to_do_dir, 'one')
-      FileUtils.mkpath(sub_folder)
-      expect {
-        gather_files.check_folder_settings_value('test', 'numeric value', '4', lambda { |value| gather_files.settings_value_time_offset?(value) })
-      }.to raise_error(BawWorkers::Exceptions::HarvesterConfigurationError, /Folder settings file test must contain a valid numeric value, '4' is not valid./)
+      expect(file_info.time_offset?('4')).to be_falsey
     end
 
     it 'should succeed if value is a time offset' do
-      sub_folder = File.join(to_do_dir, 'one')
-      FileUtils.mkpath(sub_folder)
-      gather_files.check_folder_settings_value('test', 'numeric value', '+10', lambda { |value| gather_files.settings_value_time_offset?(value) })
+      expect(file_info.time_offset?('+10')).to be_truthy
+    end
+
+    it 'should succeed if value is a time offset' do
+      expect(file_info.time_offset?('+1000')).to be_truthy
+    end
+
+    it 'should succeed if value is a time offset' do
+      expect(file_info.time_offset?('+10:00')).to be_truthy
     end
   end
 
@@ -244,7 +236,7 @@ describe BawWorkers::Harvest::GatherFiles do
       sub_folder = File.join(to_do_dir, 'one')
       FileUtils.mkpath(File.join(sub_folder, 'two', 'three'))
       FileUtils.mkpath(File.join(sub_folder, 'two', 'four'))
-      expect(gather_files.process_dir(to_do_dir, 'four')).to be_empty
+      expect(gather_files.directory(to_do_dir)).to be_empty
     end
 
     it 'should skip log files' do
@@ -252,14 +244,14 @@ describe BawWorkers::Harvest::GatherFiles do
       FileUtils.mkpath(sub_folder)
       FileUtils.touch(File.join(sub_folder, 'amazing_thingo.log'))
       FileUtils.touch(File.join(sub_folder, 'my_file_pls.log'))
-      expect(gather_files.process_dir(to_do_dir, 'something')).to be_empty
+      expect(gather_files.directory(to_do_dir)).to be_empty
     end
 
     it 'should skip folder settings file' do
       sub_folder = File.join(to_do_dir, 'one')
       FileUtils.mkpath(sub_folder)
       FileUtils.cp(folder_example, File.join(sub_folder, 'harvest.yml'))
-      expect(gather_files.process_dir(to_do_dir, 'something')).to be_empty
+      expect(gather_files.directory(to_do_dir)).to be_empty
     end
 
     it 'should include other files' do
@@ -294,7 +286,7 @@ describe BawWorkers::Harvest::GatherFiles do
       FileUtils.cp(audio_file_mono, File.join(sub_folder, 'a_20130314_000021_a.a'))
       FileUtils.cp(audio_file_mono, File.join(sub_folder, 'a_99999999_999999_a.dnsb48364JSFDSD'))
 
-      expect(gather_files.process_dir(to_do_dir, sub_folder2).size).to eq(4)
+      expect(gather_files.directory(to_do_dir).size).to eq(4)
     end
   end
 
