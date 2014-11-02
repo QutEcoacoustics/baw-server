@@ -95,7 +95,7 @@ describe BawWorkers::AudioCheck::Action do
       it 'with a params that is not a hash' do
         expect {
           BawWorkers::AudioCheck::Action.action_perform('not a hash')
-        }.to raise_error(ArgumentError, /Media request params was a 'String'\. It must be a 'Hash'\./)
+        }.to raise_error(ArgumentError, /Param was a 'String'\. It must be a 'Hash'\./)
       end
 
       it 'with a params missing required value' do

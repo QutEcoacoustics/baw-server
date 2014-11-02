@@ -51,27 +51,6 @@ module BawWorkers
           BawWorkers::Settings.actions.media.queue
         end
 
-        # Get the available media types this action can create.
-        # @return [Array<Symbol>] The available media types.
-        def valid_media_types
-          [:audio, :spectrogram]
-        end
-
-        # Get helper class instance.
-        # @return [BawWorkers::Media::WorkHelper]
-        def action_helper
-          BawWorkers::Media::WorkHelper.new(
-              BawWorkers::Config.audio_helper,
-              BawWorkers::Config.spectrogram_helper,
-              BawWorkers::Config.original_audio_helper,
-              BawWorkers::Config.audio_cache_helper,
-              BawWorkers::Config.spectrogram_cache_helper,
-              BawWorkers::Config.file_info,
-              BawWorkers::Config.logger_worker,
-              BawWorkers::Config.temp_dir
-          )
-        end
-
         # Perform work. Used by Resque.
         # @param [Symbol] media_type
         # @param [Hash] media_request_params
@@ -101,6 +80,27 @@ module BawWorkers
             "Job enqueue returned '#{result}' using type #{media_type} with #{media_request_params}."
           }
           result
+        end
+
+        # Get the available media types this action can create.
+        # @return [Array<Symbol>] The available media types.
+        def valid_media_types
+          [:audio, :spectrogram]
+        end
+
+        # Get helper class instance.
+        # @return [BawWorkers::Media::WorkHelper]
+        def action_helper
+          BawWorkers::Media::WorkHelper.new(
+              BawWorkers::Config.audio_helper,
+              BawWorkers::Config.spectrogram_helper,
+              BawWorkers::Config.original_audio_helper,
+              BawWorkers::Config.audio_cache_helper,
+              BawWorkers::Config.spectrogram_cache_helper,
+              BawWorkers::Config.file_info,
+              BawWorkers::Config.logger_worker,
+              BawWorkers::Config.temp_dir
+          )
         end
 
         # Create specified media type by applying media request params.

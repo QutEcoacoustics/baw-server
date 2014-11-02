@@ -30,18 +30,17 @@ module BawWorkers
           BawWorkers::Settings.actions.harvest.queue
         end
 
-
         # Perform work. Used by Resque.
         # @param [Hash] harvest_params
         # @return [Array<Hash>] array of hashes representing operations performed
         def action_perform(harvest_params)
           begin
-            # TODO
-            result = true
+            result = action_single_file.run(harvest_params, false)
           rescue Exception => e
             BawWorkers::Config.logger_worker.error(self.name) { e }
             raise e
           end
+
           result
         end
 
@@ -50,7 +49,6 @@ module BawWorkers
         # @return [Boolean] True if job was queued, otherwise false. +nil+
         #   if the job was rejected by a before_enqueue hook.
         def action_enqueue(harvest_params)
-
           result = BawWorkers::Harvest::Action.create(harvest_params: harvest_params)
           BawWorkers::Config.logger_worker.info(self.name) {
             "Job enqueue returned '#{result}' using #{harvest_params}."
@@ -58,21 +56,28 @@ module BawWorkers
           result
         end
 
+        # Create a BawWorkers::Harvest::GatherFiles instance.
+        # @return [BawWorkers::Harvest::GatherFiles]
         def action_gather_files
-          # top level directory to harvest
           config_file_name = BawWorkers::Settings.actions.harvest.config_file_name
           valid_audio_formats = BawWorkers::Settings.available_formats.audio
 
-          gather_files = BawWorkers::Harvest::GatherFiles.new(
+          BawWorkers::Harvest::GatherFiles.new(
               BawWorkers::Config.logger_worker,
               BawWorkers::Config.file_info,
               valid_audio_formats,
               config_file_name)
+        end
 
-          # enqueue to resque
-          to_do_path = BawWorkers::Settings.actions.harvest.to_do_path
-
-          gather_files.run(to_do_path)
+        # Create a BawWorkers::Harvest::SingleFile instance.
+        # @return [BawWorkers::Harvest::SingleFile]
+        def action_single_file
+          BawWorkers::Harvest::SingleFile.new(
+              BawWorkers::Config.logger_worker,
+              BawWorkers::Config.file_info,
+              BawWorkers::Config.api_communicator,
+              BawWorkers::Config.original_audio_helper
+          )
         end
 
       end

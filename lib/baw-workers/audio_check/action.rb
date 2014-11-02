@@ -30,21 +30,12 @@ module BawWorkers
           BawWorkers::Settings.actions.audio_check.queue
         end
 
-        def action_audio_check
-          BawWorkers::AudioCheck::WorkHelper.new(
-              BawWorkers::Config.logger_worker,
-              BawWorkers::Config.file_info,
-              BawWorkers::Config.api_communicator)
-        end
-
         # Perform work. Used by Resque.
         # @param [Hash] audio_params
         # @return [Array<Hash>] array of hashes representing operations performed
         def action_perform(audio_params)
-          audio_file_check = action_audio_check
-
           begin
-            result = audio_file_check.run(audio_params, BawWorkers::Settings.actions.audio_check.dry_run)
+            result = action_audio_check.run(audio_params, false)
           rescue Exception => e
             BawWorkers::Config.logger_worker.error(self.name) { e }
             raise e
@@ -65,6 +56,13 @@ module BawWorkers
             "Job enqueue returned '#{result}' using #{audio_params}."
           }
           result
+        end
+
+        def action_audio_check
+          BawWorkers::AudioCheck::WorkHelper.new(
+              BawWorkers::Config.logger_worker,
+              BawWorkers::Config.file_info,
+              BawWorkers::Config.api_communicator)
         end
 
       end

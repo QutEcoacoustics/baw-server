@@ -114,7 +114,7 @@ describe BawWorkers::Media::Action do
     it 'when params is not a hash' do
       expect {
         BawWorkers::Media::Action.action_perform(:audio, 'not a hash')
-      }.to raise_error(ArgumentError, /Media request params was a 'String'\. It must be a 'Hash'\./)
+      }.to raise_error(ArgumentError, /Param was a 'String'\. It must be a 'Hash'\./)
     end
 
     it 'when media type is invalid' do

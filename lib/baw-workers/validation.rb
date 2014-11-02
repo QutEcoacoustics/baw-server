@@ -12,7 +12,7 @@ module BawWorkers
       end
 
       def validate_hash(hash)
-        fail ArgumentError, "Media request params was a '#{hash.class}'. It must be a 'Hash'. '#{hash}'." unless hash.is_a?(Hash)
+        fail ArgumentError, "Param was a '#{hash.class}'. It must be a 'Hash'. '#{hash}'." unless hash.is_a?(Hash)
       end
 
       def symbolize_hash_keys(hash)
