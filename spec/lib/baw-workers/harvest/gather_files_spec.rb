@@ -209,7 +209,7 @@ describe BawWorkers::Harvest::GatherFiles do
       sub_folder = File.join(to_do_dir, 'settings_do_not_exist')
       FileUtils.mkpath(sub_folder)
       file = File.join(sub_folder, config_file_name)
-      expect(gather_files.get_folder_settings(file)).to be_empty
+      expect(gather_files.run(file)).to be_empty
     end
 
     it 'should success if file does exist' do
@@ -217,15 +217,19 @@ describe BawWorkers::Harvest::GatherFiles do
       sub_folder = File.expand_path File.join('..', 'tmp', '_workers.harvester.to_do_path', 'harvest_file_exists')
 
       FileUtils.mkpath(sub_folder)
-      FileUtils.copy(folder_example, File.join(sub_folder, 'harvest.yml'))
-      FileUtils.copy(audio_file, File.join(sub_folder, 'test-audio-mono.ogg'))
+      dir_config = File.join(sub_folder, 'harvest.yml')
+      FileUtils.copy(folder_example, dir_config)
 
-      settings = gather_files.get_folder_settings(folder_example)
-      expect(settings).not_to be_empty
-      expect(settings[:project_id]).to eq(10)
-      expect(settings[:site_id]).to eq(20)
-      expect(settings[:uploader_id]).to eq(30)
-      expect(settings[:utc_offset]).to eq('+10')
+      audio_file_config = File.join(sub_folder, 'test_20141010_101010.ogg')
+      FileUtils.copy(audio_file, audio_file_config)
+
+      settings = gather_files.run(audio_file_config)
+      expect(settings.size).to eq(1)
+      expect(settings[0]).not_to be_empty
+      expect(settings[0][:project_id]).to eq(10)
+      expect(settings[0][:site_id]).to eq(20)
+      expect(settings[0][:uploader_id]).to eq(30)
+      expect(settings[0][:utc_offset]).to eq('+10')
       #FileUtils.rm(sub_folder)
     end
   end
@@ -236,7 +240,7 @@ describe BawWorkers::Harvest::GatherFiles do
       sub_folder = File.join(to_do_dir, 'one')
       FileUtils.mkpath(File.join(sub_folder, 'two', 'three'))
       FileUtils.mkpath(File.join(sub_folder, 'two', 'four'))
-      expect(gather_files.directory(to_do_dir)).to be_empty
+      expect(gather_files.run(to_do_dir)).to be_empty
     end
 
     it 'should skip log files' do
@@ -244,14 +248,14 @@ describe BawWorkers::Harvest::GatherFiles do
       FileUtils.mkpath(sub_folder)
       FileUtils.touch(File.join(sub_folder, 'amazing_thingo.log'))
       FileUtils.touch(File.join(sub_folder, 'my_file_pls.log'))
-      expect(gather_files.directory(to_do_dir)).to be_empty
+      expect(gather_files.run(to_do_dir)).to be_empty
     end
 
     it 'should skip folder settings file' do
       sub_folder = File.join(to_do_dir, 'one')
       FileUtils.mkpath(sub_folder)
       FileUtils.cp(folder_example, File.join(sub_folder, 'harvest.yml'))
-      expect(gather_files.directory(to_do_dir)).to be_empty
+      expect(gather_files.run(to_do_dir)).to be_empty
     end
 
     it 'should include other files' do
@@ -286,7 +290,7 @@ describe BawWorkers::Harvest::GatherFiles do
       FileUtils.cp(audio_file_mono, File.join(sub_folder, 'a_20130314_000021_a.a'))
       FileUtils.cp(audio_file_mono, File.join(sub_folder, 'a_99999999_999999_a.dnsb48364JSFDSD'))
 
-      expect(gather_files.directory(to_do_dir).size).to eq(4)
+      expect(gather_files.run(to_do_dir).size).to eq(4)
     end
   end
 

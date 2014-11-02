@@ -133,8 +133,8 @@ describe BawWorkers::Harvest::SingleFile do
       .to_return(status: 200)
 
       # execute - process a single file
-      file_info_hash = gather_files.file(dest_audio_file)
-      single_file.run(file_info_hash, false)
+      file_info_hash = gather_files.run(dest_audio_file)
+      single_file.run(file_info_hash[0], false)
 
       # verify - requests made in the correct order
       stub_login.should have_been_made.once

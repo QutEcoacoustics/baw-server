@@ -26,6 +26,8 @@ module BawWorkers
       # @return [Array<String>] existing target paths
       def run(file_info_hash, is_dry_run)
 
+        file_info_hash.deep_symbolize_keys!
+
         project_id = file_info_hash[:project_id]
         site_id = file_info_hash[:site_id]
         uploader_id = file_info_hash[:uploader_id]

@@ -91,13 +91,11 @@ module BawWorkers
     # @return [Hash] file properties
     def advanced(source, utc_offset = nil)
       file_name = File.basename(source)
-      if utc_offset.blank?
-        info = file_name_all(file_name)
-        info = file_name_datetime_offset(file_name) if info.empty?
-      else
-        info = file_name_datetime(file_name, utc_offset)
-        info = file_name_datetime_suffix(file_name, utc_offset) if info.empty?
-      end
+
+      info = file_name_all(file_name)
+      info = file_name_datetime_offset(file_name) if info.empty?
+      info = file_name_datetime(file_name, utc_offset) if info.empty? && !utc_offset.blank?
+      info = file_name_datetime_suffix(file_name, utc_offset) if info.empty? && !utc_offset.blank?
 
       info
     end
@@ -105,10 +103,15 @@ module BawWorkers
     # Check that this file's extension is valid.
     # @param [String] file
     # @param [Array<String>] ext_include
+    # @param [Array<String>] ext_exclude
     # @return [Boolean] valid extension
-    def valid_ext?(file, ext_include)
+    def valid_ext?(file, ext_include, ext_exclude = nil)
       ext = File.extname(file).trim('.', '').downcase
-      ext_include.include?(ext)
+
+      is_excluded_ext = false
+      is_excluded_ext = ext_exclude.include?(ext) unless ext_exclude.blank?
+
+      ext_include.include?(ext) && !is_excluded_ext
     end
 
     # Get info from upload dir file name.

@@ -72,7 +72,7 @@ module BawWorkers
           # enqueue to resque
           to_do_path = BawWorkers::Settings.actions.harvest.to_do_path
 
-          gather_files.directory(to_do_path)
+          gather_files.run(to_do_path)
         end
 
       end

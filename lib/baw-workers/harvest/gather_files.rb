@@ -20,176 +20,174 @@ module BawWorkers
         @class_name = self.class.name
       end
 
-      # Get file properties for a directory.
-      # @param [String] input directory path
-      # @param [Boolean] recurse
+      # Get file properties for a file, directory, or array of files or directories.
+      # @param [String] input file, directory, or array of files or directories
+      # @param [Boolean] recurse look in sub folders
       # @return [Array<Hash>] file properties
-      def directory(input, recurse = true)
-        unless File.directory?(input)
-          msg = "'#{input}' is not a directory."
-          @logger.error(@class_name) { msg }
-          fail ArgumentError, msg
+      def run(input, recurse = true)
+        results = []
+
+        @logger.info(@class_name) { 'Gathering files...' }
+
+        if input.is_a?(String)
+          results = process(input, recurse)
+        elsif input.is_a?(Array)
+          input.each { |item| results.push(*process(item, recurse)) }
+        else
+          msg = "'#{input}' must be a string or an array of strings."
+          @logger.warn(@class_name) { msg }
         end
-        result = directories([input], recurse)
 
-        @logger.info(@class_name) {
-          "Finished directory #{input}."
-        }
+        @logger.info(@class_name) { "...finished with #{results.size} files." }
 
-        @logger.debug(@class_name) {
-          "Directory result: #{result}."
-        }
-
-        result
+        results
       end
 
-      # Get file properties for multiple directories.
-      # @param [Array<String>] input directory paths
-      # @param [Boolean] recurse
-      # @return [Array<Hash>] file properties
-      def directories(input, recurse = true)
-        unless input.is_a?(Array)
-          msg = "'#{input}' is not an array."
-          @logger.error(@class_name) { msg }
-          fail ArgumentError, msg
-        end
+      private
 
+      def process(input_string, recurse = true)
+        results = []
 
-        # get all directories
-        dirs = input.map { |dir|
-          if File.directory?(dir)
-            expanded_dir = File.expand_path(dir)
-            if recurse
-              # include the top level directory
-              found_dirs = Dir.glob(File.join(expanded_dir, '**')).concat([expanded_dir])
-              @logger.debug(@class_name) { "Found directories '#{found_dirs.join(', ')}'." }
-              found_dirs
-            else
-              @logger.debug(@class_name) { "Found directory #{expanded_dir}." }
-              [expanded_dir]
-            end
+        if input_string.is_a?(String) && File.file?(input_string)
+          @logger.info(@class_name) { "Found file #{input_string}." }
+          results.push(file(input_string))
+        elsif input_string.is_a?(String) && File.directory?(input_string)
+          if recurse
+            path = File.expand_path(input_string)
+            found_dirs = Dir.glob(File.join(path, '**')).concat([path]).uniq
+
+            @logger.info(@class_name) { "Looking recursively. Found #{found_dirs.size} directories in #{path}." }
+            @logger.debug(@class_name) { "Directories in #{path}: '#{found_dirs.join(', ')}'." }
+
+            found_dirs.each { |dir| results.push(*directory(dir)) }
           else
-            @logger.warn(@class_name) { "'#{dir}' is not a directory." }
-            []
+            results = directory(input_string)
           end
-        }.flatten
-
-        # check that at least one directory was found.
-        if dirs.size < 1
-          msg = "Could not find harvester to do path(s): #{input}"
-          @logger.error(@class_name) { msg }
-          fail ArgumentError, msg
         end
 
-        # get properties for all valid audio files
-        all_files = []
-        dirs.each do |dir|
-          items_in_dir = Dir.glob(File.join(dir, '*'))
-          files_in_dir = items_in_dir.select { |f| File.file?(f) }
-          @logger.debug(@class_name) { "Found files '#{files_in_dir.join(', ')}'." }
-          file_props = files(files_in_dir)
-          all_files.push(*file_props)
-        end
-
-        @logger.info(@class_name) {
-          "Finished #{input.size} directories. Included #{dirs.size} looking #{recurse ? 'recursively' : 'at top only'}."
-        }
-
-        @logger.debug(@class_name) {
-          "Finished '#{input.join(', ')}' directories '#{dirs.join(', ')}': #{all_files}."
-        }
-
-        all_files
+        results
       end
 
-      # Get properties for a file.
-      # @param [String] input file path
-      # @return [Hash] file properties if it is a valid audio file
-      def file(input)
-        unless File.file?(input)
-          msg = "'#{input}' is not a file."
+      # Get file properties for a directory. Does not recurse.
+      # @param [String] path directory
+      # @return [Array<Hash>] file properties
+      def directory(path)
+        unless File.directory?(path)
+          msg = "'#{path}' is not a directory."
           @logger.error(@class_name) { msg }
           fail ArgumentError, msg
         end
-        result = files([input].flatten)
-        output = (result.size == 1) ? result[0] : {}
 
-        @logger.info(@class_name) {
-          "Finished file #{input}."
-        }
+        path = File.expand_path(path)
 
-        @logger.debug(@class_name) {
-          "File result: #{output}."
-        }
+        files_in_dir = files_in_directory(path)
 
-        output
+        dir_settings = get_folder_settings(File.join(path, @config_file_name))
+
+        files = []
+        files_in_dir.each do |item|
+          file_result = file(item, dir_settings)
+          files.push(file_result) unless file_result.blank?
+        end
+
+        @logger.info(@class_name) { "Gathered info for #{files.size} valid files in #{path}." }
+
+        files
       end
 
-      # Get properties for all valid audio files in this directory.
-      # @param [Array<String>] input file paths
-      # @return [Array<Hash>] valid files
-      def files(input)
-        unless input.is_a?(Array)
-          msg = "'#{input}' is not an array."
+      # Get file properties for a single file.
+      # @param [String] path file
+      # @param [Hash] dir_settings
+      # @return [Hash] file properties
+      def file(path, dir_settings = {})
+        unless File.file?(path)
+          msg = "'#{path}' is not a file."
           @logger.error(@class_name) { msg }
           fail ArgumentError, msg
         end
 
-        folder_settings = get_folder_settings(File.join(input, @config_file_name))
+        path = File.expand_path(path)
 
-        @logger.debug(@class_name) { "Checking files: '#{input.join(', ')}'." }
+        unless @file_info_helper.valid_ext?(path, @ext_include)
+          @logger.debug(@class_name) { "Invalid extension: #{path}." }
+          return {}
+        end
 
-        # filter files to only valid audio files
-        filtered_files = input.reduce([]) do |aggregate, item|
+        @logger.debug(@class_name) { "Valid extension: #{path}." }
 
-          if File.file?(item) && @file_info_helper.valid_ext?(item, @ext_include)
-            @logger.debug(@class_name) {
-              "Valid file: #{item}."
-            }
-            basic_info = @file_info_helper.basic(item)
-            advanced_info = @file_info_helper.advanced(item, folder_settings[:utc_offset])
+        dir_settings = get_folder_settings(File.join(File.dirname(path), @config_file_name)) if dir_settings.blank?
 
-            if basic_info.blank? || advanced_info.blank?
-              @logger.warn(@class_name) {
-                "Could not get properties for file #{item}: Basic: #{basic_info}. Advanced: #{advanced_info}."
-              }
-            else
-              result = basic_info.merge(advanced_info)
-              @logger.debug(@class_name) { "Got properties for file #{item}: #{result}." }
-              aggregate.push(result)
-            end
+        basic_info, advanced_info = file_info(path, dir_settings[:utc_offset])
+
+        if basic_info.blank? || advanced_info.blank?
+          {}
+        else
+          basic_info.merge(dir_settings).merge(advanced_info)
+        end
+      end
+
+      # Get info for file.
+      # @param [String] file
+      # @param [String] utc_offset
+      # @return [Array] basic_info, advanced_info
+      def file_info(file, utc_offset)
+        basic_info, advanced_info = nil
+
+        begin
+          basic_info = @file_info_helper.basic(file)
+          advanced_info = @file_info_helper.advanced(file, utc_offset)
+
+          msg_props = "properties for file #{file} using offset #{utc_offset}: Basic: #{basic_info}. Advanced: #{advanced_info}."
+
+          if basic_info.blank? || advanced_info.blank?
+            @logger.debug(@class_name) { "Could not get #{msg_props}" }
           else
-            @logger.info(@class_name) {
-              "Invalid file: #{item}."
-            }
+            @logger.debug(@class_name) { "Successfully got #{msg_props}" }
           end
 
-          aggregate
+        rescue => e
+          @logger.error(@class_name) {
+            "Problem getting details for #{file} using utc offset '#{utc_offset}': #{format_error(e)}"
+          }
         end
 
-        @logger.info(@class_name) {
-          "Finished files. Included #{filtered_files.size} of #{input.size} files."
-        }
+        [basic_info, advanced_info]
+      end
 
-        @logger.debug(@class_name) {
-          "Finished files '#{input.join(', ')}': #{filtered_files}."
-        }
+      # Get all files in a directory.
+      # @param [String] path directory
+      # @return [Array<String>] files
+      def files_in_directory(path)
+        items_in_dir = Dir.glob(File.join(path, '*'))
+        files_in_dir = items_in_dir.select { |f| File.file?(f) }
 
-        filtered_files
+        msg = "Looking in #{path}. Found #{files_in_dir.size} files."
+        @logger.info(@class_name) { msg }  if files_in_dir.size > 0
+        @logger.warn(@class_name) { msg } if files_in_dir.size < 1
+        @logger.debug(@class_name) { "Files in #{path}: '#{files_in_dir.join(', ')}'." }
+
+        files_in_dir
       end
 
       # Get folder settings.
       # If the config file does not exist, that's ok,
       # some files might have that info in their file names
       # so the settings file might not exist
-      # @param [string] input
+      # @param [string] file
       # @return [Hash]
-      def get_folder_settings(input)
-        return {} unless File.exists?(input)
-        return {} unless File.size?(input)
+      def get_folder_settings(file)
+        unless File.file?(file)
+          @logger.warn(@class_name) { "Harvest directory config file was not found '#{file}'." }
+          return {}
+        end
+
+        unless File.size?(file)
+          @logger.warn(@class_name) { "Harvest directory config file had no content '#{file}'." }
+          return {}
+        end
 
         begin
-          config = YAML.load_file(input)
+          config = YAML.load_file(file)
 
           folder_settings = {
               project_id: config['project_id'],
@@ -198,17 +196,29 @@ module BawWorkers
               utc_offset: config['utc_offset']
           }
 
-          return {} unless @file_info_helper.numeric?(folder_settings[:project_id])
-          return {} unless @file_info_helper.numeric?(folder_settings[:site_id])
-          return {} unless @file_info_helper.numeric?(folder_settings[:uploader_id])
-          return {} unless @file_info_helper.time_offset?(folder_settings[:utc_offset])
+          if @file_info_helper.numeric?(folder_settings[:project_id]) &&
+              @file_info_helper.numeric?(folder_settings[:site_id]) &&
+              @file_info_helper.numeric?(folder_settings[:uploader_id]) &&
+              @file_info_helper.time_offset?(folder_settings[:utc_offset])
+            @logger.debug(@class_name) { "Harvest directory settings loaded from config file #{file}." }
+            folder_settings
+          else
+            @logger.warn(@class_name) { "Harvest directory config file was not valid '#{file}'. Could not get all settings." }
+            {}
+          end
 
-          folder_settings
-        rescue
+        rescue => e
+          @logger.warn(@class_name) { "Harvest directory config file was not valid '#{file}'. #{format_error(e)}" }
           {}
         end
       end
 
+      # Format error.
+      # @param [Exception] e error
+      # @return [String] formatted error
+      def format_error(e)
+        "Error: #{e}\nBacktrace: #{e.backtrace.first(8).join("\n")}"
+      end
     end
   end
 end
