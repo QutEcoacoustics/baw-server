@@ -85,7 +85,7 @@ settings:
       #authentication: login
       #password: password
     emails:
-      email_prefix: '[prefix]'
+      email_prefix: '[worker exception prefix]'
       sender_address: address@example.com
       required_recipients:
        - address@example.com

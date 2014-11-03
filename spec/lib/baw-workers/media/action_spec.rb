@@ -112,15 +112,20 @@ describe BawWorkers::Media::Action do
     context 'raises error' do
 
     it 'when params is not a hash' do
+
       expect {
         BawWorkers::Media::Action.action_perform(:audio, 'not a hash')
       }.to raise_error(ArgumentError, /Param was a 'String'\. It must be a 'Hash'\./)
+
+      expect(ActionMailer::Base.deliveries.count).to eq(1)
     end
 
     it 'when media type is invalid' do
       expect {
         BawWorkers::Media::Action.action_perform(:not_valid_param, {})
       }.to raise_error(ArgumentError, /Media type 'not_valid_param' is not in list of valid media types/)
+
+      expect(ActionMailer::Base.deliveries.count).to eq(1)
     end
 
     it 'when recorded date is invalid' do
@@ -144,6 +149,8 @@ describe BawWorkers::Media::Action do
       expect {
         BawWorkers::Media::Action.action_perform(:audio, media_request_params)
       }.to raise_error(ArgumentError, /Provided value for datetime_with_offset is not valid/)
+
+      expect(ActionMailer::Base.deliveries.count).to eq(1)
     end
 
     end
@@ -154,12 +161,16 @@ describe BawWorkers::Media::Action do
         expect {
           BawWorkers::Media::Action.action_perform(:spectrogram, {})
         }.to raise_error(ArgumentError, /Must provide a value for datetime_with_offset/)
+
+        expect(ActionMailer::Base.deliveries.count).to eq(1)
       end
 
       it 'raises error with some bad params' do
         expect {
           BawWorkers::Media::Action.action_perform(:spectrogram, {datetime_with_offset: Time.zone.now})
         }.to raise_error(ArgumentError, /Required parameter missing: uuid/)
+
+        expect(ActionMailer::Base.deliveries.count).to eq(1)
       end
 
       it 'is successful with correct parameters' do
@@ -190,6 +201,7 @@ describe BawWorkers::Media::Action do
         expect(target_existing_paths.size).to eq(1)
         expect(target_existing_paths[0]).to eq(expected_paths[0])
 
+        expect(ActionMailer::Base.deliveries.count).to eq(0)
       end
 
     end
@@ -200,12 +212,16 @@ describe BawWorkers::Media::Action do
         expect {
           BawWorkers::Media::Action.action_perform(:audio, {})
         }.to raise_error(ArgumentError, /Must provide a value for datetime_with_offset/)
+
+        expect(ActionMailer::Base.deliveries.count).to eq(1)
       end
 
       it 'raises error with some bad params' do
         expect {
           BawWorkers::Media::Action.action_perform(:audio, {datetime_with_offset: Time.zone.now})
         }.to raise_error(ArgumentError, /Required parameter missing: uuid/)
+
+        expect(ActionMailer::Base.deliveries.count).to eq(1)
       end
 
       it 'is successful with correct parameters' do
@@ -233,6 +249,7 @@ describe BawWorkers::Media::Action do
         expect(target_existing_paths.size).to eq(1)
         expect(target_existing_paths[0]).to eq(expected_paths[0])
 
+        expect(ActionMailer::Base.deliveries.count).to eq(0)
       end
 
       it 'runs a worker that processes the media_test queue' do

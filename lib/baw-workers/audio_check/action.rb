@@ -35,9 +35,15 @@ module BawWorkers
         # @return [Array<Hash>] array of hashes representing operations performed
         def action_perform(audio_params)
           begin
-            result = action_audio_check.run(audio_params, false)
+            result = action_audio_check.run(audio_params, BawWorkers::Settings.actions.audio_check.dry_run)
           rescue Exception => e
             BawWorkers::Config.logger_worker.error(self.name) { e }
+            BawWorkers::Mail::Mailer.send_worker_error_email(
+                BawWorkers::AudioCheck::Action,
+                audio_params,
+                queue,
+                e
+            )
             raise e
           end
 

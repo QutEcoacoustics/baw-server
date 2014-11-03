@@ -35,9 +35,15 @@ module BawWorkers
         # @return [Array<Hash>] array of hashes representing operations performed
         def action_perform(harvest_params)
           begin
-            result = action_single_file.run(harvest_params, false)
+            result = action_single_file.run(harvest_params, BawWorkers::Settings.actions.harvest.dry_run)
           rescue Exception => e
             BawWorkers::Config.logger_worker.error(self.name) { e }
+            BawWorkers::Mail::Mailer.send_worker_error_email(
+                BawWorkers::Harvest::Action,
+                harvest_params,
+                queue,
+                e
+            )
             raise e
           end
 

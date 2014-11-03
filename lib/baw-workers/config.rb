@@ -76,6 +76,12 @@ module BawWorkers
         ActionMailer::Base.delivery_method = :test
         ActionMailer::Base.smtp_settings = nil
 
+        # ActionMailer::Base.delivery_method = :file
+        # ActionMailer::Base.file_settings =
+        #     {
+        #         location: File.expand_path(File.join(File.dirname(__FILE__), '..', 'tmp', 'mail'))
+        #     }
+
         Resque.redis = Redis.new
         Resque.redis.namespace = Settings.resque.namespace
       end

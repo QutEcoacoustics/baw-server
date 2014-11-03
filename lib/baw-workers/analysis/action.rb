@@ -39,6 +39,12 @@ module BawWorkers
             # todo
           rescue Exception => e
             BawWorkers::Config.logger_worker.error(self.name) { e }
+            BawWorkers::Mail::Mailer.send_worker_error_email(
+                BawWorkers::Analysis::Action,
+                analysis_params,
+                queue,
+                e
+            )
             raise e
           end
         end
@@ -48,9 +54,9 @@ module BawWorkers
         # @return [Boolean] True if job was queued, otherwise false. +nil+
         #   if the job was rejected by a before_enqueue hook.
         def action_enqueue(analysis_params)
-          result = BawWorkers::Media::Action.create(analysis_params: analysis_params)
+          result = BawWorkers::Analysis::Action.create(analysis_params: analysis_params)
           BawWorkers::Config.logger_worker.info(self.name) {
-            "Job enqueue returned '#{result}' using type #{media_type} with #{analysis_params}."
+            "Job enqueue returned '#{result}' using #{analysis_params}."
           }
           result
         end

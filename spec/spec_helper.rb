@@ -124,6 +124,10 @@ RSpec.configure do |config|
     BawWorkers::Config.set_to_console
   end
 
+  config.before(:each) do
+    ActionMailer::Base.deliveries.clear
+  end
+
   config.after(:each) do
     if Dir.exists?(BawWorkers::Settings.actions.harvest.to_do_path)
       FileUtils.rm_rf(BawWorkers::Settings.actions.harvest.to_do_path)

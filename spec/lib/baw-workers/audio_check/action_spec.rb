@@ -56,7 +56,7 @@ describe BawWorkers::AudioCheck::Action do
 
     it 'does not enqueue the same payload into the same queue more than once' do
 
-      queued_query = { audio_params: test_params  }
+      queued_query = {audio_params: test_params}
 
       expect(Resque.size(queue_name)).to eq(0)
       expect(BawWorkers::ResqueApi.job_queued?(BawWorkers::AudioCheck::Action, queued_query)).to eq(false)
@@ -96,12 +96,16 @@ describe BawWorkers::AudioCheck::Action do
         expect {
           BawWorkers::AudioCheck::Action.action_perform('not a hash')
         }.to raise_error(ArgumentError, /Param was a 'String'\. It must be a 'Hash'\./)
+
+        expect(ActionMailer::Base.deliveries.count).to eq(1)
       end
 
       it 'with a params missing required value' do
         expect {
           BawWorkers::AudioCheck::Action.action_perform(test_params.except('original_format'))
         }.to raise_error(ArgumentError, /Audio params must include original_format/)
+
+        expect(ActionMailer::Base.deliveries.count).to eq(1)
       end
 
       it 'with correct parameters when file does not exist' do
@@ -112,6 +116,7 @@ describe BawWorkers::AudioCheck::Action do
           BawWorkers::AudioCheck::Action.action_perform(original_params)
         }.to raise_error(BawAudioTools::Exceptions::FileNotFoundError, /No existing files for.*?7bb0c719-143f-4373-a724-8138219006d9.*?\.ogg/)
 
+        expect(ActionMailer::Base.deliveries.count).to eq(1)
       end
 
       it 'when file hash is incorrect' do
@@ -133,6 +138,8 @@ describe BawWorkers::AudioCheck::Action do
         expect {
           BawWorkers::AudioCheck::Action.action_perform(original_params)
         }.to raise_error(BawAudioTools::Exceptions::FileCorruptError, /File hashes DO NOT match for.*?:file_hash=>:fail/)
+
+        expect(ActionMailer::Base.deliveries.count).to eq(1)
       end
 
       it 'when file extension is incorrect' do
@@ -154,6 +161,8 @@ describe BawWorkers::AudioCheck::Action do
         expect {
           BawWorkers::AudioCheck::Action.action_perform(original_params)
         }.to raise_error(BawAudioTools::Exceptions::FileNotFoundError, /No existing files for/)
+
+        expect(ActionMailer::Base.deliveries.count).to eq(1)
       end
 
       it 'when file hashes do not match' do
@@ -181,6 +190,8 @@ describe BawWorkers::AudioCheck::Action do
         expect {
           BawWorkers::AudioCheck::Action.action_perform(original_params)
         }.to raise_error(BawAudioTools::Exceptions::FileCorruptError, /File hashes DO NOT match for/)
+
+        expect(ActionMailer::Base.deliveries.count).to eq(1)
       end
 
       it 'when file integrity is uncertain' do
@@ -201,6 +212,8 @@ describe BawWorkers::AudioCheck::Action do
         expect {
           BawWorkers::AudioCheck::Action.action_perform(original_params)
         }.to raise_error(BawAudioTools::Exceptions::FileCorruptError, /Ffmpeg output contained warning/)
+
+        expect(ActionMailer::Base.deliveries.count).to eq(1)
       end
 
       it 'when file hash is empty and other properties do not match' do
@@ -225,6 +238,7 @@ describe BawWorkers::AudioCheck::Action do
           BawWorkers::AudioCheck::Action.action_perform(original_params)
         }.to raise_error(BawAudioTools::Exceptions::FileCorruptError, /File hash and other properties DO NOT match.*?:file_hash=>:fail.*?:duration_seconds=>:fail/)
 
+        expect(ActionMailer::Base.deliveries.count).to eq(1)
       end
 
       it 'when recorded date is in incorrect format' do
@@ -248,6 +262,7 @@ describe BawWorkers::AudioCheck::Action do
           BawWorkers::AudioCheck::Action.action_perform(original_params)
         }.to raise_error(ArgumentError, /recorded_date must be a UTC time \(i\.e\. end with Z\), given/)
 
+        expect(ActionMailer::Base.deliveries.count).to eq(1)
       end
 
     end
@@ -277,6 +292,8 @@ describe BawWorkers::AudioCheck::Action do
         expect(File.expand_path(original_possible_paths.second)).to eq(result[0][:moved_path])
 
         expect(File.exist?(original_possible_paths.first)).to be_falsey
+
+        expect(ActionMailer::Base.deliveries.count).to eq(0)
       end
 
       it 'with correct parameters for file with new style name' do
@@ -304,6 +321,7 @@ describe BawWorkers::AudioCheck::Action do
 
         expect(File.exist?(original_possible_paths.first)).to be_falsey
 
+        expect(ActionMailer::Base.deliveries.count).to eq(0)
       end
 
       it 'with correct parameters when both old and new files exist' do
@@ -338,6 +356,7 @@ describe BawWorkers::AudioCheck::Action do
         expect(result[0][:moved_path]).to be_falsey
         expect(result[1][:moved_path]).to be_falsey
 
+        expect(ActionMailer::Base.deliveries.count).to eq(0)
       end
 
 
@@ -398,6 +417,8 @@ describe BawWorkers::AudioCheck::Action do
 
         expect(result[0][:api_response]).to eq(:success)
 
+        expect(ActionMailer::Base.deliveries.count).to eq(0)
+
       end
 
       it 'when file hash not given, and only file hash needs to be updated' do
@@ -443,7 +464,7 @@ describe BawWorkers::AudioCheck::Action do
         expect(File.exist?(original_possible_paths.first)).to be_falsey
 
         expect(result[0][:api_response]).to eq(:success)
-
+        expect(ActionMailer::Base.deliveries.count).to eq(0)
       end
 
       context 'in dry run mode' do
@@ -509,6 +530,7 @@ describe BawWorkers::AudioCheck::Action do
           update_request.should_not have_been_requested
 
           expect(result[0][:api_response]).to eq(:noaction)
+          expect(ActionMailer::Base.deliveries.count).to eq(0)
         end
       end
 
