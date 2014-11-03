@@ -138,7 +138,7 @@ class Ability
       can [:show, :audio_events], User
 
       # index permissions are enforced in the controller action
-      can [:index, :new, :create, :new_access_request, :submit_access_request], Project
+      can [:index, :new, :create, :new_access_request, :submit_access_request, :filter], Project
       can [:index, :filter], Site
       can [:index], Dataset
       can [:index, :new], Job

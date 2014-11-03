@@ -182,6 +182,7 @@ class SitesController < ApplicationController
   end
 
   def api_custom_response(site)
+    # TODO: does this needs to know about and change based on projections?
     # TODO: this causes a deprecation warning for writing arbitrary attributes to a model
     site[:project_ids] = Site.where(id: site.id).first.projects.select(:id)
 

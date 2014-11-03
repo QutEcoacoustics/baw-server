@@ -188,4 +188,19 @@ resource 'Projects' do
     standard_request_options('UPDATE (as unconfirmed user)', :forbidden, {expected_json_path: 'meta/error/links/confirm your account'})
   end
 
+  # Filter (#filter)
+  # ================
+ 
+  post '/projects/filter' do
+    let(:raw_post) {
+      {
+          projection: {
+              include: [:id, :name]
+          }
+      }.to_json
+    }
+    let(:authentication_token) { reader_token }
+    standard_request_options('FILTER (as reader)', :ok, {expected_json_path: 'data/0/name', data_item_count: 1})
+  end
+
 end
