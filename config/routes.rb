@@ -43,6 +43,7 @@ AWB::Application.routes.draw do
   # Resource Routes
   # ===============
 
+  # placed above related resource so it does not conflict with (resource)/:id => (resource)#show
   match 'bookmarks/filter' => 'bookmarks#filter', via: [:get, :post], defaults: {format: 'json'}
   resources :bookmarks, except: [:edit]
 
@@ -102,6 +103,9 @@ AWB::Application.routes.draw do
   #     userAccounts: '/user_accounts/{userId}'
   # }
 
+  # placed above related resource so it does not conflict with (resource)/:id => (resource)#show
+  match 'projects/filter' => 'projects#filter', via: [:get, :post], defaults: {format: 'json'}
+
   # routes for projects and nested resources
   resources :projects do
     member do
@@ -140,7 +144,7 @@ AWB::Application.routes.draw do
     resources :jobs, only: [:index], defaults: {format: 'json'}
   end
 
-  # placed here so it does not conflict with audio_recordings/:id => audio_recordings#show
+  # placed above related resource so it does not conflict with (resource)/:id => (resource)#show
   match 'audio_recordings/filter' => 'audio_recordings#filter', via: [:get, :post], defaults: {format: 'json'}
 
   # API audio recording item
@@ -167,6 +171,7 @@ AWB::Application.routes.draw do
 
   # API audio_event create
   resources :audio_events, only: [], defaults: {format: 'json'} do
+    # placed above related resource so it does not conflict with (resource)/:id => (resource)#show
     match 'comments/filter' => 'audio_event_comments#filter', via: [:get, :post], defaults: {format: 'json'}
     resources :audio_event_comments, except: [:edit], defaults: {format: 'json'}, path: :comments, as: :comments
     collection do
@@ -191,7 +196,7 @@ AWB::Application.routes.draw do
   get '/projects/:project_id/audio_events/download' => 'audio_events#download', defaults: {format: 'csv'}, as: :download_project_audio_events
   get '/projects/:project_id/sites/:site_id/audio_events/download' => 'audio_events#download', defaults: {format: 'csv'}, as: :download_site_audio_events
 
-  # placed here so it does not conflict with sites/:id => sites#show
+  # placed above related resource so it does not conflict with (resource)/:id => (resource)#show
   match 'sites/filter' => 'sites#filter', via: [:get, :post], defaults: {format: 'json'}
 
   # shallow path to sites

@@ -31,6 +31,7 @@ class User < ActiveRecord::Base
                     default_url: '/images/user/user_:style.png'
 
   # relations
+  # TODO tidy up user project accessing - too many ways to do the same thing
   has_many :accessible_projects, through: :permissions, source: :project
   has_many :readable_projects, through: :permissions, source: :project, conditions: 'permissions.level = reader'
   has_many :writable_projects, through: :permissions, source: :project, conditions: 'permissions.level = writer'
@@ -118,6 +119,7 @@ class User < ActiveRecord::Base
   after_create :special_after_create_actions
 
   def projects
+    # TODO tidy up user project accessing - too many ways to do the same thing
     (self.created_projects.includes(:sites, :creator) + self.accessible_projects.includes(:sites, :creator)).uniq.sort { |a, b| a.name.downcase <=> b.name.downcase }
   end
 
@@ -138,6 +140,7 @@ class User < ActiveRecord::Base
   end
 
   def accessible_projects_all
+    # TODO tidy up user project accessing - too many ways to do the same thing
     # .includes() for left outer join
     # .joins for inner join
     creator_id_check = 'projects.creator_id = ?'
@@ -147,7 +150,7 @@ class User < ActiveRecord::Base
 
   def accessible_sites
     user_sites = self.projects.map { |project| project.sites.map { |site| site.id } }.to_a.uniq
-    Site.where(id: user_sites)
+    Site.where(id: user_sites).order('sites.name DESC')
   end
 
   def accessible_audio_events

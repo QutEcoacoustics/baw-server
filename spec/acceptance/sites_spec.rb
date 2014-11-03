@@ -44,7 +44,7 @@ resource 'Sites' do
 
     let(:authentication_token) { writer_token }
 
-    standard_request('LIST (as writer)', 200, '0/longitude', true)
+    standard_request_options('LIST (as writer)', :ok, {expected_json_path: 'data/0/custom_longitude', data_item_count: 1})
   end
 
   get '/projects/:project_id/sites' do
@@ -52,7 +52,7 @@ resource 'Sites' do
 
     let(:authentication_token) { reader_token }
 
-    standard_request('LIST (as reader)', 200, '0/longitude', true)
+    standard_request_options('LIST (as reader)', :ok, {expected_json_path: 'data/0/custom_latitude', data_item_count: 1})
   end
 
   get '/projects/:project_id/sites' do
@@ -60,7 +60,7 @@ resource 'Sites' do
 
     let(:authentication_token) { "Token token=\"INVALID TOKEN\"" }
 
-    standard_request('LIST (with invalid token)', 401, nil, true)
+    standard_request_options('LIST (with invalid token)', :unauthorized, {expected_json_path: 'meta/error/links/sign in'})
   end
 
 
@@ -80,7 +80,7 @@ resource 'Sites' do
 
     let(:raw_post) { {'site' => post_attributes}.to_json }
 
-    standard_request('CREATE (as writer)', 201, 'longitude', true)
+    standard_request_options('CREATE (as writer)', :created, {expected_json_path: 'data/project_ids'})
 
   end
 
@@ -97,7 +97,7 @@ resource 'Sites' do
 
     let(:raw_post) { {'site' => post_attributes}.to_json }
 
-    standard_request('CREATE (as reader)', 403, nil, true)
+    standard_request_options('CREATE (as reader)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
 
   end
 
@@ -114,7 +114,7 @@ resource 'Sites' do
 
     let(:raw_post) { {'site' => post_attributes}.to_json }
 
-    standard_request('CREATE (with invalid token)', 401, nil, true)
+    standard_request_options('CREATE (with invalid token)', :unauthorized, {expected_json_path: 'meta/error/links/sign in'})
 
   end
 
@@ -135,7 +135,7 @@ resource 'Sites' do
     #puts ActiveSupport::JSON.decode(response_body)
     #response_json = JSON.parse(response_body).to_s
     #response_body.should have_json_path('name')
-    standard_request('SHOW (as writer)', 200, 'longitude', true)
+    standard_request_options('SHOW (as writer)', :ok, {expected_json_path: 'data/location_obfuscated'})
   end
 
   get '/projects/:project_id/sites/:id' do
@@ -144,7 +144,7 @@ resource 'Sites' do
 
     let(:authentication_token) { reader_token }
 
-    standard_request('SHOW (as reader)', 200, 'longitude', true)
+    standard_request_options('SHOW (as reader)', :ok, {expected_json_path: 'data/description'})
   end
 
   get '/projects/:project_id/sites/:id' do
@@ -153,7 +153,7 @@ resource 'Sites' do
 
     let(:authentication_token) { "Token token=\"INVALID TOKEN\"" }
 
-    standard_request('SHOW (with invalid token)', 401, nil, true)
+    standard_request_options('SHOW (with invalid token)', :unauthorized, {expected_json_path: 'meta/error/links/sign in'})
   end
 
   # shallow routes
@@ -162,7 +162,7 @@ resource 'Sites' do
 
     let(:authentication_token) { writer_token }
 
-    standard_request('SHOW (as writer)', 200, 'project_ids', true)
+    standard_request_options('SHOW (as writer)', :ok, {expected_json_path: 'data/project_ids'})
   end
 
   get '/sites/:id' do
@@ -170,7 +170,7 @@ resource 'Sites' do
 
     let(:authentication_token) { reader_token }
 
-    standard_request('SHOW (as reader)', 200, 'longitude', true)
+    standard_request_options('SHOW (as reader)', :ok, {expected_json_path: 'data/custom_longitude'})
   end
 
   get '/sites/:id' do
@@ -178,7 +178,7 @@ resource 'Sites' do
 
     let(:authentication_token) { "Token token=\"INVALID TOKEN\"" }
 
-    standard_request('SHOW (with invalid token)', 401, nil, true)
+    standard_request_options('SHOW (with invalid token)', :unauthorized, {expected_json_path: 'meta/error/links/sign in'})
   end
 
   # latitude and longitude obfuscation
@@ -230,7 +230,7 @@ resource 'Sites' do
     #puts ActiveSupport::JSON.decode(response_body)
     #response_json = JSON.parse(response_body).to_s
     #response_body.should have_json_path('name')
-    standard_request('UPDATE (as writer)', 204, nil, true)
+    standard_request_options('UPDATE (as writer)', :ok, {expected_json_path: 'data/description'})
   end
 
   put '/projects/:project_id/sites/:id' do
@@ -249,9 +249,9 @@ resource 'Sites' do
 
     #puts "Existing sites: #{Site.all.inspect}"
 
-    standard_request('UPDATE (as reader)', 403, nil, true)
+    standard_request_options('UPDATE (as reader)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
   end
-
+ 
   put '/projects/:project_id/sites/:id' do
     parameter :name, 'Name of site', scope: :site, :required => true
     parameter :longitude, 'Longitude of site', scope: :site, :required => true
@@ -266,7 +266,7 @@ resource 'Sites' do
 
     let(:authentication_token) { "Token token=\"INVALID TOKEN\"" }
 
-    standard_request('UPDATE (with invalid token)', 401, nil, true)
+    standard_request_options('UPDATE (with invalid token)', :unauthorized, {expected_json_path: 'meta/error/links/sign in'})
   end
 
   #####################

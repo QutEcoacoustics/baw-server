@@ -159,14 +159,27 @@ def check_site_lat_long_response(description, expected_status, should_be_obfusca
   example "#{description} - #{expected_status}", document: false do
     do_request
     status.should eq(expected_status), "Requested #{path} expecting status #{expected_status} but got status #{status}. Response body was #{response_body}"
-    response_body.should have_json_path('location_obfuscated'), response_body.to_s
+    response_body.should have_json_path('data/location_obfuscated'), response_body.to_s
     #response_body.should have_json_type(Boolean).at_path('location_obfuscated'), response_body.to_s
     site = JSON.parse(response_body)
+    lat = site['data']['custom_latitude']
+    long = site['data']['custom_longitude']
 
     #'Accurate to with a kilometre (± 1000m)'
 
-    lat = site['latitude']
-    long = site['longitude']
+    stored_site = Site.where(id: site['data']['id']).first
+    stored_site_lat = stored_site.latitude.to_s
+    stored_site_long = stored_site.longitude.to_s
+
+    if site['data']['location_obfuscated']
+      # assume that jitter will not result in the same number twice
+      expect(stored_site_lat).not_to eq(lat)
+      expect(stored_site_long).not_to eq(long)
+    else
+      # numbers should be the same
+      expect(stored_site_lat).to eq(lat)
+      expect(stored_site_long).to eq(long)
+    end
 
     if should_be_obfuscated
       min = 3

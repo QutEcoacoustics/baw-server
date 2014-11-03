@@ -10,14 +10,14 @@ resource 'Projects' do
   header 'Content-Type', 'application/json'
   header 'Authorization', :authentication_token
 
-  let(:format) {'json'}
+  let(:format) { 'json' }
 
   # prepare ids needed for paths in requests below
-  let(:id) {@write_permission.project.id}
+  let(:id) { @write_permission.project.id }
 
   # prepare authentication_token for different users
-  let(:writer_token)          {"Token token=\"#{@write_permission.user.authentication_token}\"" }
-  let(:reader_token)          {"Token token=\"#{@read_permission.user.authentication_token}\"" }
+  let(:writer_token) { "Token token=\"#{@write_permission.user.authentication_token}\"" }
+  let(:reader_token) { "Token token=\"#{@read_permission.user.authentication_token}\"" }
 
   # Create post parameters from factory
   let(:post_attributes) { FactoryGirl.attributes_for(:project) }
@@ -36,17 +36,17 @@ resource 'Projects' do
   ################################
   get '/projects' do
     let(:authentication_token) { writer_token }
-    standard_request('LIST (as confirmed_user)' ,200,'0/name', true)
+    standard_request_options('LIST (as confirmed_user)', :ok, {expected_json_path: 'data/0/name', data_item_count: 1})
   end
 
   get '/projects' do
     let(:authentication_token) { "Token token=\"#{FactoryGirl.create(:unconfirmed_user).authentication_token}\"" }
-    standard_request('LIST (as unconfirmed user)', 403, nil, true)
+    standard_request_options('LIST (as unconfirmed user)', :forbidden, {expected_json_path: 'meta/error/links/confirm your account'})
   end
 
   get '/projects' do
     let(:authentication_token) { "Token token=\"INVALID TOKEN\"" }
-    standard_request('LIST (with invalid token)', 401, nil, true)
+    standard_request_options('LIST (with invalid token)', :unauthorized, {expected_json_path: 'meta/error/links/confirm your account'})
   end
 
   ################################
@@ -60,7 +60,7 @@ resource 'Projects' do
     let(:raw_post) { {'project' => post_attributes}.to_json }
 
     let(:authentication_token) { writer_token }
-    standard_request('CREATE (as confirmed user writer)', 201, 'name', true)
+    standard_request_options('CREATE (as confirmed user writer)', :created, {expected_json_path: 'data/name'})
 
   end
 
@@ -72,7 +72,7 @@ resource 'Projects' do
     let(:raw_post) { {'project' => post_attributes}.to_json }
 
     let(:authentication_token) { "Token token=\"#{FactoryGirl.create(:unconfirmed_user).authentication_token}\"" }
-    standard_request('CREATE (as unconfirmed user)', 403, nil, true)
+    standard_request_options('CREATE (as unconfirmed user)', :forbidden, {expected_json_path: 'meta/error/links/confirm your account'})
 
   end
 
@@ -84,7 +84,7 @@ resource 'Projects' do
     let(:raw_post) { {'project' => post_attributes}.to_json }
 
     let(:authentication_token) { reader_token }
-    standard_request('CREATE (as reader)', 201, 'name', true)
+    standard_request_options('CREATE (as reader)', :created, {expected_json_path: 'data/name'})
 
   end
 
@@ -96,7 +96,7 @@ resource 'Projects' do
     let(:raw_post) { {'project' => post_attributes}.to_json }
 
     let(:authentication_token) { "Token token=\"INVALID TOKEN\"" }
-    standard_request('CREATE (with invalid token)', 401, nil, true)
+    standard_request_options('CREATE (with invalid token)', :unauthorized, {expected_json_path: 'meta/error/links/sign in'})
 
   end
 
@@ -107,28 +107,28 @@ resource 'Projects' do
     parameter :id, 'Requested project ID (in path/route)', required: true
 
     let(:authentication_token) { writer_token }
-    standard_request('SHOW (as writer)' ,200,'name', true)
+    standard_request_options('SHOW (as writer)', :ok, {expected_json_path: 'data/name'})
 
   end
   get '/projects/:id' do
     parameter :id, 'Requested project ID (in path/route)', required: true
 
     let(:authentication_token) { reader_token }
-    standard_request('SHOW (as reader)' ,200,'name', true)
+    standard_request_options('SHOW (as reader)', :ok, {expected_json_path: 'data/name'})
   end
 
   get '/projects' do
     parameter :id, 'Requested project ID (in path/route)', required: true
 
     let(:authentication_token) { "Token token=\"#{FactoryGirl.create(:unconfirmed_user).authentication_token}\"" }
-    standard_request('SHOW (as unconfirmed user)', 403, nil, true)
+    standard_request_options('SHOW (as unconfirmed user)', :forbidden, {expected_json_path: 'meta/error/links/confirm your account'})
   end
 
   get '/projects/:id' do
     parameter :id, 'Requested project ID (in path/route)', required: true
 
     let(:authentication_token) { "Token token=\"INVALID TOKEN\"" }
-    standard_request('SHOW (with invalid token)' ,401, nil, true)
+    standard_request_options('SHOW (with invalid token)', :unauthorized, {expected_json_path: 'meta/error/links/sign in'})
 
   end
 
@@ -145,7 +145,7 @@ resource 'Projects' do
 
     let(:authentication_token) { writer_token }
 
-    standard_request('UPDATE (as writer)' ,204, nil, true)
+    standard_request_options('UPDATE (as writer)', :ok, {expected_json_path: 'data/name'})
   end
 
   put '/projects/:id' do
@@ -158,7 +158,7 @@ resource 'Projects' do
 
     let(:authentication_token) { reader_token }
 
-    standard_request('UPDATE (as reader)' ,403,nil, true)
+    standard_request_options('UPDATE (as reader)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
   end
 
   put '/projects/:id' do
@@ -171,7 +171,7 @@ resource 'Projects' do
 
     let(:authentication_token) { "Token token=\"INVALID TOKEN\"" }
 
-    standard_request('UPDATE (with invalid token)' ,401, nil, true)
+    standard_request_options('UPDATE (with invalid token)', :unauthorized, {expected_json_path: 'meta/error/links/sign in'})
   end
 
 
@@ -185,7 +185,7 @@ resource 'Projects' do
 
     let(:authentication_token) { "Token token=\"#{FactoryGirl.create(:unconfirmed_user).authentication_token}\"" }
 
-    standard_request('UPDATE (as unconfirmed user)' ,403, nil, true)
+    standard_request_options('UPDATE (as unconfirmed user)', :forbidden, {expected_json_path: 'meta/error/links/confirm your account'})
   end
 
 end

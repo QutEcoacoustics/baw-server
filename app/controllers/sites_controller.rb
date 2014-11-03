@@ -21,18 +21,24 @@ class SitesController < ApplicationController
 
     respond_to do |format|
       #format.html # index.html.erb
-      format.json { render json: @sites }
+      format.json {
+        @sites, constructed_options = Settings.api_response.response_index(
+            params,
+            get_user_sites,
+            Site,
+            Site.filter_settings
+        )
+        respond_index
+      }
     end
   end
 
   # GET /sites/1.json
   def show_shallow
 
-    @site.update_location_obfuscated(current_user)
-
     # only responds to json requests
     respond_to do |format|
-      format.json { render json: @site, methods: [:project_ids, :location_obfuscated], except: :notes }
+      format.json { respond_show }
     end
   end
 
@@ -41,13 +47,14 @@ class SitesController < ApplicationController
   def show
     @site_audio_recordings = @site.audio_recordings.where(status: 'ready').order('recorded_date DESC').paginate(page: params[:page], per_page: 30)
 
-    @site.update_location_obfuscated(current_user)
+
 
     respond_to do |format|
       format.html {
+        @site.update_location_obfuscated(current_user)
         add_breadcrumb @site.name, [@project, @site]
       }
-      format.json { render json: @site, methods: [:project_ids, :location_obfuscated], except: :notes }
+      format.json { respond_show }
     end
   end
 
@@ -66,7 +73,7 @@ class SitesController < ApplicationController
         end
         add_breadcrumb 'New Site'
       }
-      format.json { render json: @site }
+      format.json { respond_show }
     end
   end
 
@@ -88,16 +95,16 @@ class SitesController < ApplicationController
     respond_to do |format|
       if @site.save
         format.html { redirect_to [@project, @site], notice: 'Site was successfully created.' }
-        format.json { render json: @site, status: :created, location: [@project, @site] }
+        format.json { respond_create_success([@project, @site]) }
       else
         format.html {
           add_breadcrumb @site.name, [@project, @site]
           @markers = @site.to_gmaps4rails do |site, marker|
             marker.infowindow 'Drag&Drop to site location'
           end
-          render action: "new"
+          render action: 'new'
         }
-        format.json { render json: @site.errors, status: :unprocessable_entity }
+        format.json { respond_change_fail }
       end
     end
   end
@@ -110,13 +117,13 @@ class SitesController < ApplicationController
     respond_to do |format|
       if @site.update_attributes(params[:site])
         format.html { redirect_to [@project, @site], notice: 'Site was successfully updated.' }
-        format.json { head :no_content }
+        format.json { respond_show }
       else
         format.html {
           add_breadcrumb @site.name, [@project, @site]
-          render action: "edit"
+          render action: 'edit'
         }
-        format.json { render json: @site.errors, status: :unprocessable_entity }
+        format.json { respond_change_fail }
       end
     end
   end
@@ -128,7 +135,7 @@ class SitesController < ApplicationController
 
     respond_to do |format|
       format.html { redirect_to project_sites_url(@project) }
-      format.json { head :no_content }
+      format.json { respond_destroy }
     end
   end
 
@@ -150,16 +157,14 @@ class SitesController < ApplicationController
   def filter
     filter_response = Settings.api_response.response_filter(
         params,
-        current_user.is_admin? ? Site.scoped : current_user.accessible_sites,
+        get_user_sites,
         Site,
         Site.filter_settings
     )
 
     # always display project_ids
     filter_response[:data] = filter_response[:data].each { |site|
-      # TODO: this causes a deprecation warning for writing arbitrary attributes to a model
-      site[:project_ids] = Site.where(id: site.id).first.projects.select(:id)
-      site
+      api_custom_response(site)
     }
 
     render_api_response(filter_response)
@@ -175,4 +180,28 @@ class SitesController < ApplicationController
     @site = Site.new
     @site.projects << @project
   end
+
+  def api_custom_response(site)
+    # TODO: this causes a deprecation warning for writing arbitrary attributes to a model
+    site[:project_ids] = Site.where(id: site.id).first.projects.select(:id)
+
+    site.update_location_obfuscated(current_user)
+    site[:location_obfuscated] = site.location_obfuscated
+
+    site[:custom_latitude] = site.latitude
+    site[:custom_longitude] = site.longitude
+
+    [site, [:project_ids, :location_obfuscated, :custom_latitude, :custom_longitude]]
+  end
+
+  def get_user_sites
+    if current_user.has_role? :admin
+      sites = Site.includes(:creator).order('lower(name) ASC')
+    else
+      sites = current_user.accessible_sites
+    end
+
+    sites
+  end
+
 end
