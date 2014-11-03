@@ -7,7 +7,7 @@ GIT
 
 GIT
   remote: https://github.com/QutBioacoustics/baw-workers.git
-  revision: 494931db02b9b1503695a288d9786e11267d85f8
+  revision: 37df3a14d334747cc3e4e49fa0b26a47252b10af
   specs:
     baw-workers (0.4.0)
       actionmailer (>= 3.2)
@@ -216,7 +216,7 @@ GEM
     json_spec (1.1.4)
       multi_json (~> 1.0)
       rspec (>= 2.0, < 4.0)
-    launchy (2.4.2)
+    launchy (2.4.3)
       addressable (~> 2.3)
     libv8 (3.16.14.7)
     listen (2.7.11)
