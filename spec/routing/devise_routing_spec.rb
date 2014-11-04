@@ -30,6 +30,7 @@ describe UserAccountsController do
     it { expect(get('/security/sign_in')).to route_to('sessions#new', format: 'json') }
     it { expect(post('/security/sign_in')).to route_to('sessions#create', format: 'json') }
     it { expect(get('/security/sign_out')).to route_to('sessions#destroy', format: 'json') }
+    it { expect(get('/security/token')).to route_to('sessions#show_custom', format: 'json') }
 
   end
 end

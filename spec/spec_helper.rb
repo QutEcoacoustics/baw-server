@@ -95,12 +95,13 @@ RSpec.configure do |config|
     DatabaseCleaner.strategy = :transaction
     DatabaseCleaner.clean_with(:truncation)
     begin
-      DatabaseCleaner.start
-      puts '===> FactoryGirl lint started.'
-      FactoryGirl.lint
-      puts '===> FactoryGirl lint completed.'
+      # DatabaseCleaner.start
+      # puts '===> FactoryGirl lint started.'
+      # FactoryGirl.lint
+      # puts '===> FactoryGirl lint completed.'
     ensure
       DatabaseCleaner.clean
+      puts '===> Database cleaner run.'
     end
     # Redirect stderr and stdout
     $stderr = File.new(File.join(File.dirname(__FILE__), '..', 'tmp', 'rspec_stderr.txt'), 'w')

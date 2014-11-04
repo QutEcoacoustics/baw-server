@@ -44,8 +44,8 @@ gem 'recaptcha', '~> 0.3.6', require: 'recaptcha/rails'
 # USERS & PERMISSIONS
 # -------------------------------------
 # https://github.com/plataformatec/devise/blob/master/CHANGELOG.md
-# using devise 3.0.x because 3.1 introduces breaking changes
-gem 'devise', '< 3.1'
+# http://joanswork.com/devise-3-1-update/
+gem 'devise', '3.4.1'
 gem 'cancancan', '~> 1.9.2'
 gem 'role_model', '~> 0.8.1'
 

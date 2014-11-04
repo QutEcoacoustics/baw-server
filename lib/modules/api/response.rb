@@ -312,6 +312,14 @@ module Api
           confirm: {
               text: 'confirm your account',
               url: url_helpers.new_user_confirmation_path
+          },
+          reset_password: {
+              text: 'reset your password',
+              url: url_helpers.new_user_password_path
+          },
+          resend_unlock: {
+              text: 'resend unlock instructions',
+              url: url_helpers.new_user_unlock_path
           }
       }
     end

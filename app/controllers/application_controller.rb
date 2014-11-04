@@ -1,5 +1,17 @@
 class ApplicationController < ActionController::Base
+  include Api::ApiAuth
+
   layout :api_or_html
+
+  # custom user authentication
+  before_filter :authenticate_user_custom!
+
+  # This is Devise's authentication
+  #before_filter :authenticate_user!
+
+  # https://github.com/plataformatec/devise/blob/master/test/rails_app/app/controllers/application_controller.rb
+  # before_filter :current_user, unless: :devise_controller?
+  # before_filter :authenticate_user!, if: :devise_controller?
 
   # CanCan - always check authorization
   check_authorization unless: :devise_controller?

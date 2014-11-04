@@ -23,6 +23,13 @@ AWB::Application.routes.draw do
              only: [:sessions],
              skip_helpers: true
 
+  # provide a way to get the current user's auth token
+  # will most likely use cookies, since there is no point using a token to get the token...
+  # the devise_scope is needed due to
+  # https://github.com/plataformatec/devise/issues/2840#issuecomment-43262839
+  devise_scope :security_user do
+    get '/security/token' => 'sessions#show_custom', defaults: {format: 'json'}
+  end
   # when a user goes to my account, render user_account/show view for that user
   get '/my_account/' => 'user_accounts#my_account'
 

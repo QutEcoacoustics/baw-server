@@ -2,6 +2,12 @@
 # Many of these configuration options can be set straight in your model.
 Devise.setup do |config|
 
+  # Added with Devise 3.1
+  # The secret key used by Devise. Devise uses this key to generate
+  # random tokens. Changing this key will render invalid all existing
+  # confirmation, reset password and unlock tokens in the database.
+  config.secret_key = Settings.devise.secret_key
+
   # ==> Mailer Configuration
   # Configure the e-mail address which will be shown in Devise::Mailer,
   # note that it will be overwritten if you use your own mailer class with default "from" parameter.
@@ -186,10 +192,6 @@ Devise.setup do |config|
   # Require the `devise-encryptable` gem when using anything other than bcrypt
   # config.encryptor = :sha512
 
-  # ==> Configuration for :token_authenticatable
-  # Defines name of the authentication token params key
-  config.token_authentication_key = :auth_token
-
   # ==> Scopes configuration
   # Turn scoped views on. Before rendering "sessions/new", it will first check for
   # "users/sessions/new". It's turned off by default because it's slower if you
@@ -245,26 +247,4 @@ Devise.setup do |config|
   # When using omniauth, Devise cannot automatically set Omniauth path,
   # so you need to do it manually. For the users scope, it would be:
   # config.omniauth_path_prefix = "/my_engine/users/auth"
-end
-
-
-# enable devise to get auth token in header
-# https://groups.google.com/forum/?fromgroups#!topic/plataformatec-devise/o3Gqgl0yUZo
-# expects header with name "Authorization" and value 'Token token="tokenvalue"'
-require 'devise/strategies/token_authenticatable'
-module Devise
-  module Strategies
-    class TokenAuthenticatable < Authenticatable
-      def params_auth_hash
-        return_params = if params[scope].kind_of?(Hash) && params[scope].has_key?(authentication_keys.first)
-                          params[scope]
-                        else
-                          params
-                        end
-        token = ActionController::HttpAuthentication::Token.token_and_options(request)
-        return_params.merge!(:auth_token => token[0]) if token
-        return_params
-      end
-    end
-  end
 end

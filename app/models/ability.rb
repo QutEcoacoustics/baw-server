@@ -37,6 +37,9 @@ class Ability
 
     user ||= User.new # guest user (not logged in)
 
+    # for api security endpoints
+    can [:show, :destroy], :api_security if user.confirmed?
+
     if user.has_role? :admin
       # admin abilities
       can :manage, :all
