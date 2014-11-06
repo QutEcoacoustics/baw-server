@@ -64,7 +64,7 @@ settings:
     audio_tools_log_file: ./tmp/audio_tools.log
     temp_dir: ./tmp/
   endpoints:
-    login: /security/sign_in
+    login: /security
     audio_recording: /audio_recordings/:id
     audio_recording_create: /projects/:project_id/sites/:site_id/audio_recordings
     audio_recording_uploader: /projects/:project_id/sites/:site_id/audio_recordings/check_uploader/:uploader_id

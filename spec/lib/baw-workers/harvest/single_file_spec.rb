@@ -112,7 +112,7 @@ describe BawWorkers::Harvest::SingleFile do
           }
       )
 
-      stub_login = stub_request(:post, "http://localhost:3030/security/sign_in")
+      stub_login = stub_request(:post, "http://localhost:3030/security")
       .with(body: request_login_body.to_json, headers: request_headers_base)
       .to_return(status: 200, body: response_login_body.to_json)
 

@@ -384,7 +384,7 @@ describe BawWorkers::AudioCheck::Action do
         auth_token = 'auth token I am'
         email = 'address@example.com'
         password = 'password'
-        login_request = stub_request(:post, "http://localhost:3030/security/sign_in").
+        login_request = stub_request(:post, "http://localhost:3030/security").
             with(:body => "{\"email\":\""+email+"\",\"password\":\""+password+"\"}",
                  :headers => {'Accept' => 'application/json', 'Content-Type' => 'application/json', 'User-Agent' => 'Ruby'}).
             to_return(status: 200, body: '{"success":true,"auth_token":"'+auth_token+'","email":"'+email+'"}')
@@ -442,7 +442,7 @@ describe BawWorkers::AudioCheck::Action do
         auth_token = 'auth token I am'
         email = 'address@example.com'
         password = 'password'
-        login_request = stub_request(:post, "http://localhost:3030/security/sign_in").
+        login_request = stub_request(:post, 'http://localhost:3030/security').
             with(:body => "{\"email\":\""+email+"\",\"password\":\""+password+"\"}",
                  :headers => {'Accept' => 'application/json', 'Content-Type' => 'application/json', 'User-Agent' => 'Ruby'}).
             to_return(status: 200, body: '{"success":true,"auth_token":"'+auth_token+'","email":"'+email+'"}')
@@ -492,7 +492,7 @@ describe BawWorkers::AudioCheck::Action do
           auth_token = 'auth token I am'
           email = 'address@example.com'
           password = 'password'
-          login_request = stub_request(:post, "http://localhost:3030/security/sign_in").
+          login_request = stub_request(:post, "http://localhost:3030/security").
               with(:body => "{\"email\":\""+email+"\",\"password\":\""+password+"\"}",
                    :headers => {'Accept' => 'application/json', 'Content-Type' => 'application/json', 'User-Agent' => 'Ruby'}).
               to_return(status: 200, body: '{"success":true,"auth_token":"'+auth_token+'","email":"'+email+'"}')
