@@ -7,7 +7,7 @@ require 'action_dispatch/http/mime_type'
 
 # audio mime types
 Mime::Type.register 'audio/wav', :wav, ['audio/x-wav', 'audio/vnd.wave', 'audio/L16'], ['wave']
-Mime::Type.register 'audio/mp3', :mp3, ['audio/mpeg'], ['mp1', 'mp2', 'mp3', 'mpg','mpeg','mpeg3']
+Mime::Type.register 'audio/mpeg', :mp3, ['audio/mp3'], ['mp1', 'mp2', 'mp3', 'mpg','mpeg','mpeg3']
 Mime::Type.register 'audio/webm', :webm, ['audio/webma'], ['webma']
 Mime::Type.register 'audio/ogg', :ogg, ['audio/oga'], ['oga']
 Mime::Type.register 'audio/asf', :asf, ['audio/x-ms-asf', 'audio/x-ms-wma', 'audio/wma','video/x-ms-asf'], ['wma']
