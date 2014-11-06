@@ -1,10 +1,11 @@
 # Handles Restful API Authentication only
 # @see http://www.cocoahunter.com/blog/2013/02/13/restful-api-authentication/
+# @see controllers/devise/sessions_controller.rb
 class SessionsController < Devise::SessionsController
   include Api::ApiAuth
 
   # custom user authentication
-  before_filter :authenticate_user_custom!, except: [:create]
+  before_filter :authenticate_user_custom!, except: [:new, :create]
 
   # This is Devise's authentication
   before_filter :authenticate_user!
@@ -14,31 +15,44 @@ class SessionsController < Devise::SessionsController
 
   skip_before_filter :verify_authenticity_token, if: :json_request?
 
-  check_authorization except: [:create]
+  check_authorization except: [:new, :create]
 
   respond_to :json
 
-  def show_custom
+  # GET /security/new
+  # devise sessions controller
+  def new
+    response_wrapper(
+        :ok,
+        {
+            email: nil,
+            login: nil,
+            password: nil
+        })
+  end
+
+  # GET /security
+  def show
     authorize! :show, :api_security
 
     if signed_in?
       response_wrapper(
           :ok,
           {
-              auth_token:  current_user.authentication_token,
-              email: current_user.email,
+              auth_token: current_user.authentication_token,
+              #email: current_user.email,
               user_name: current_user.user_name
           })
-      else
+    else
       response_wrapper(
           :unauthorized,
           nil,
-          'You were not logged in.',
+          I18n.t('devise.failure.unauthenticated'),
           [:sign_in, :sign_up])
     end
   end
 
-  # Request to log in.
+  # POST /security
   def create
     sign_in_params = get_sign_in_params
     result = do_sign_in(sign_in_params)
@@ -54,29 +68,34 @@ class SessionsController < Devise::SessionsController
           :ok,
           {
               auth_token: sign_in_params[:resource].authentication_token,
-              email: sign_in_params[:resource].email,
-              user_name: sign_in_params[:resource].user_name
-          },
-          'You have been signed in.')
+              #email: sign_in_params[:resource].email,
+              user_name: sign_in_params[:resource].user_name,
+              message: I18n.t('devise.sessions.signed_in')
+          })
     end
 
   end
 
+  # DELETE /security
   def destroy
     authorize! :destroy, :api_security
 
     if signed_in?
+      user_name = current_user.user_name
       sign_out(current_user)
       response_wrapper(
           :ok,
+          {
+              user_name: user_name,
+              message: I18n.t('devise.sessions.signed_out')
+          },
           nil,
-          'You have been signed out.',
           [:sign_in, :sign_up])
-      else
+    else
       response_wrapper(
-          :unprocessable_entity,
+          :unauthorized,
           nil,
-          'You were not logged in, so you cannot sign out.',
+          I18n.t('devise.failure.unauthenticated'),
           [:sign_in, :sign_up])
     end
   end
