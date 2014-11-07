@@ -105,7 +105,7 @@ namespace :baw do
         BawWorkers::Config.logger_worker.info('rake_task:baw:worker:current') {
           worker_details = running_workers.map { |worker|
             host, pid, queues = worker.split(':')
-            {host: host, pid: pid, queues: queues.join('|')}
+            {host: host, pid: pid, queues: queues}
           }.join(',')
 
           "Resque worker details: #{worker_details}."
