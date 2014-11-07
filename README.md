@@ -96,8 +96,20 @@ The `output_log_file` and `error_log_file` settings will only be used when a Res
 
 Each action has some settings specific to that action.
 An action is the actual processing that job arguments will be used to carry out.
-Every action has a `queue` and `dry_run` setting. The `queue` is the name of the queue 
 
+Every action has a `queue` and `dry_run` setting. 
+
+ - The `queue` is the name of the queue the action will add jobs to when running as a Resque enqueue worker. 
+ - Specifiying `dry_run`: `true` will run the action excluding any operation that modify files or change data via an API call.
+ - See the Actions section below for more information about action-specific settings.
+
+#### `settings.endpoints` and `settings.api`
+
+These settings must match the equivalent [baw-server](https://github.com/QutBioacoustics/baw-server) settings.
+
+#### `log_level` settings
+
+Each `log_lvel` setting is independent of the others.
 
 ### Examples for running a worker
 
