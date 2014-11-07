@@ -235,8 +235,8 @@ class MediaController < ApplicationController
   # @param [Number] wait_max
   # @return [Array<String>] existing files
   def poll_media(expected_files, wait_max)
-    timeout_sec_dir_list = 2.0
-    run_ext_program = BawAudioTools::RunExternalProgram.new(timeout_sec_dir_list, Rails.logger)
+    #timeout_sec_dir_list = 2.0
+    #run_ext_program = BawAudioTools::RunExternalProgram.new(timeout_sec_dir_list, Rails.logger)
     poll_delay = 0.5
 
     poll("Took longer than #{wait_max} seconds for resque to fulfil media request.", wait_max, poll_delay) do
@@ -245,15 +245,18 @@ class MediaController < ApplicationController
       expected_files.each do |file|
         # get a valid directory path, and 'refresh' it by getting a file list with -l (executes stat() in linux).
         # This helps avoid problems with nfs directory list caching.
+        # only list the file, as the dirs might have quite a few files
+        # could also use the external program runner
+        # run_ext_program.execute("ls -la \"#{dir}\"") if File.directory?(dir)
+        # can also be done by setting the attribute cache time for the nfs mount
+        # e.g. 'actimeo=3'
         # @see NFS man page
-        unless file.nil?
-          dir = File.dirname(file)
-          run_ext_program.execute("ls -la \"#{dir}\"") if File.directory?(dir)
-        end
 
-        # now check if file exists
-        existing_files.push(file) if File.file?(file)
+        dir = File.dirname(file) unless file.nil?
+        `ls -la \"#{dir}\"` if !file.nil? && File.directory?(dir)
+        existing_files.push(file) if !file.nil? && File.file?(file)
       end
+
       existing_files = existing_files.compact
       existing_files.empty? ? false : existing_files
     end
