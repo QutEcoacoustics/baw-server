@@ -124,10 +124,12 @@ class MediaController < ApplicationController
     headers['Content-Length'] = json_result_size
 
     if rails_request.head?
-      head_response(:ok, {
-          content_length: json_result_size,
-          content_type: current[:media_type]
-      })
+      head_response(
+          :ok,
+          {
+              content_length: json_result_size,
+              content_type: current[:media_type]
+          })
     else
       render json: json_result, content_length: json_result_size
     end
@@ -233,13 +235,27 @@ class MediaController < ApplicationController
   # @param [Number] wait_max
   # @return [Array<String>] existing files
   def poll_media(expected_files, wait_max)
-    FirePoll.poll("Took longer than #{wait_max} seconds for resque to fulfil media request.", wait_max) do
+    timeout_sec_dir_list = 2.0
+    run_ext_program = BawAudioTools::RunExternalProgram.new(timeout_sec_dir_list, Rails.logger)
+    poll_delay = 0.5
+
+    poll("Took longer than #{wait_max} seconds for resque to fulfil media request.", wait_max, poll_delay) do
       existing_files = []
+
       expected_files.each do |file|
-        existing_files.push(file) if File.exists?(file)
+        # get a valid directory path, and 'refresh' it by getting a file list with -l (executes stat() in linux).
+        # This helps avoid problems with nfs directory list caching.
+        # @see NFS man page
+        unless file.nil?
+          dir = File.dirname(file)
+          run_ext_program.execute("ls -la \"#{dir}\"") if File.directory?(dir)
+        end
+
+        # now check if file exists
+        existing_files.push(file) if File.file?(file)
       end
       existing_files = existing_files.compact
-      existing_files.blank? ? false : existing_files
+      existing_files.empty? ? false : existing_files
     end
   end
 
@@ -374,11 +390,11 @@ class MediaController < ApplicationController
   def head_response_inline(response_code, response_headers, content_type, suggested_name)
     # return response code and headers with no content
     head_response response_code, response_headers.merge(
-        content_type: content_type,
-        content_transfer_encoding: 'binary',
-        content_disposition: "inline; filename=\"#{suggested_name}\"",
-        filename: suggested_name
-    )
+                                   content_type: content_type,
+                                   content_transfer_encoding: 'binary',
+                                   content_disposition: "inline; filename=\"#{suggested_name}\"",
+                                   filename: suggested_name
+                               )
   end
 
   def add_header_length(length)
@@ -403,6 +419,29 @@ class MediaController < ApplicationController
 
   def add_header_elapsed(elapsed_seconds)
     headers['X-Media-Elapsed-Seconds'] = elapsed_seconds.to_s
+  end
+
+  # Based on Firepoll gem: for knowing when something is ready
+  # @param [String] msg a custom message raised when polling fails
+  # @param [Numeric] seconds number of seconds to poll, default is two seconds
+  # @param [Numeric] delay number of seconds to sleep, default is tenth of a second
+  # @yield a block that determines whether polling should continue
+  # @yield return false if polling should continue
+  # @yield return true if polling is complete
+  # @raise [RuntimeError] when polling fails
+  # @return the return value of the passed block
+  def poll(msg=nil, seconds=2.0, delay=0.1)
+    seconds ||= 2.0 # 5 seconds overall patience
+    give_up_at = Time.now + seconds # pick a time to stop being patient
+    delay ||= 0.1 # wait a tenth of a second before re-attempting
+
+    while Time.now < give_up_at do
+      result = yield
+      return result if result
+      sleep delay
+    end
+    msg ||= "polling failed after #{seconds} seconds"
+    raise msg
   end
 
 end

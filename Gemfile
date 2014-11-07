@@ -99,7 +99,6 @@ gem 'resque-job-stats', git: 'https://github.com/echannel/resque-job-stats.git',
 gem 'resque-status'
 # set to a specific commit when releasing to master branch
 gem 'baw-workers', git: 'https://github.com/QutBioacoustics/baw-workers.git' #, ref: '0223c5a1b5'
-gem 'fire_poll', '~> 1.2.0'
 
 # Gems restricted by environment and/or platform
 # ====================================================
