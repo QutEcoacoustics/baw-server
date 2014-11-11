@@ -404,6 +404,8 @@ class ApplicationController < ActionController::Base
 
   def set_then_reset_user_stamper
     begin
+      # TODO: this causes a deprecation warning if nil is 
+      # given to Devise::Strategies::DatabaseAuthenticatable#validate
       User.stamper = self.current_user
       yield
     ensure
