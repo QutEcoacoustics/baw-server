@@ -57,6 +57,7 @@ class Site < ActiveRecord::Base
     self.projects.collect { |project| project.id }
   end
 
+  # overrides getting, does not change setting
   def latitude
     value = read_attribute(:latitude)
     if self.location_obfuscated && !value.blank?
@@ -66,6 +67,7 @@ class Site < ActiveRecord::Base
     end
   end
 
+  # overrides getting, does not change setting
   def longitude
     value = read_attribute(:longitude)
     if self.location_obfuscated && !value.blank?

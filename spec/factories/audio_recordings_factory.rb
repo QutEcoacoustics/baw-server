@@ -7,7 +7,7 @@ FactoryGirl.define do
     sample_rate_hertz 22050
     channels 2
     bit_rate_bps 64000
-    media_type 'audio/mp3'
+    media_type 'audio/mpeg'
     data_length_bytes 3800
     sequence(:notes) { |n| "note number #{n}" }
     sequence(:original_file_name) { |n| "original name #{n}.mp3" }
@@ -25,7 +25,7 @@ FactoryGirl.define do
     end
 
     trait :with_audio_events do
-      ignore do
+      transient do
         audio_event_count 1
       end
       after(:create) do |audio_recording, evaluator|
@@ -35,7 +35,7 @@ FactoryGirl.define do
     end
 
     trait :with_bookmarks do
-      ignore do
+      transient do
         bookmark_count 1
       end
       after(:create) do |audio_recording, evaluator|

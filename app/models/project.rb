@@ -38,4 +38,19 @@ class Project < ActiveRecord::Base
 
   # scopes
   scope :none, where('1 = 0') # for getting an empty set
+
+  # Define filter api settings
+  def self.filter_settings
+    {
+        valid_fields: [:id, :name, :description, :created_at, :creator_id],
+        render_fields: [:id, :name, :description, :creator_id],
+        text_fields: [:name, :description],
+        controller: :projects,
+        action: :filter,
+        defaults: {
+            order_by: :name,
+            direction: :desc
+        }
+    }
+  end
 end

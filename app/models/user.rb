@@ -5,7 +5,7 @@ class User < ActiveRecord::Base
   # and :omniauthable
   devise :database_authenticatable, :registerable,
          :recoverable, :rememberable, :trackable, :validatable,
-         :token_authenticatable, :confirmable, :lockable, :timeoutable
+         :confirmable, :lockable, :timeoutable
 
   # http://www.phase2technology.com/blog/authentication-permissions-and-roles-in-rails-with-devise-cancan-and-role-model/
   include RoleModel
@@ -13,6 +13,9 @@ class User < ActiveRecord::Base
   attr_accessible :user_name, :email, :password, :password_confirmation, :remember_me,
                   :roles, :roles_mask, :preferences,
                   :image, :login
+
+  # user must always have an authentication token
+  before_save :ensure_authentication_token
 
   # Virtual attribute for authenticating by either :user_name or :email
   # This is in addition to real persisted fields.
@@ -31,6 +34,7 @@ class User < ActiveRecord::Base
                     default_url: '/images/user/user_:style.png'
 
   # relations
+  # TODO tidy up user project accessing - too many ways to do the same thing
   has_many :accessible_projects, through: :permissions, source: :project
   has_many :readable_projects, through: :permissions, source: :project, conditions: 'permissions.level = reader'
   has_many :writable_projects, through: :permissions, source: :project, conditions: 'permissions.level = writer'
@@ -118,6 +122,7 @@ class User < ActiveRecord::Base
   after_create :special_after_create_actions
 
   def projects
+    # TODO tidy up user project accessing - too many ways to do the same thing
     (self.created_projects.includes(:sites, :creator) + self.accessible_projects.includes(:sites, :creator)).uniq.sort { |a, b| a.name.downcase <=> b.name.downcase }
   end
 
@@ -138,6 +143,7 @@ class User < ActiveRecord::Base
   end
 
   def accessible_projects_all
+    # TODO tidy up user project accessing - too many ways to do the same thing
     # .includes() for left outer join
     # .joins for inner join
     creator_id_check = 'projects.creator_id = ?'
@@ -147,7 +153,7 @@ class User < ActiveRecord::Base
 
   def accessible_sites
     user_sites = self.projects.map { |project| project.sites.map { |site| site.id } }.to_a.uniq
-    Site.where(id: user_sites)
+    Site.where(id: user_sites).order('sites.name DESC')
   end
 
   def accessible_audio_events
@@ -323,6 +329,17 @@ class User < ActiveRecord::Base
     Time.zone.now - self.created_at
   end
 
+  def ensure_authentication_token
+    if authentication_token.blank?
+      self.authentication_token = generate_authentication_token
+    end
+  end
+
+  def reset_authentication_token!
+    self.authentication_token = generate_authentication_token
+    save
+  end
+
   # Change the behaviour of the auth action to use :login rather than :email.
   # Because we want to change the behavior of the login action, we have to overwrite
   # the find_for_database_authentication method. The method's stack works like this:
@@ -341,6 +358,13 @@ class User < ActiveRecord::Base
       .first
     else
       where(conditions).first
+    end
+  end
+
+  # @see http://stackoverflow.com/a/19071745/31567
+  def self.find_by_authentication_token(authentication_token = nil)
+    if authentication_token
+      where(authentication_token: authentication_token).first
     end
   end
 
@@ -365,6 +389,13 @@ class User < ActiveRecord::Base
     # WARNING: if this raises an error, the user will not be created and the page will be redirected to the home page
     # notify us of new user sign ups
     PublicMailer.new_user_message(self, DataClass::NewUserInfo.new(name: self.user_name, email: self.email))
+  end
+
+  def generate_authentication_token
+    loop do
+      token = Devise.friendly_token
+      break token unless User.where(authentication_token: token).first
+    end
   end
 
 end

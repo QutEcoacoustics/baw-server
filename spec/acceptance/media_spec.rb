@@ -330,6 +330,8 @@ resource 'Media' do
     example 'MEDIA (as reader) checking modified json format - 200', document: true do
       do_request
       status.should eq(200), "expected status #{200} but was #{status}. Response body was #{response_body}"
+      response_body.should include('audio/mpeg')
+      response_body.should_not include('audio/mp3')
 
       # not sure how to test that duration_seconds returns an unquoted number
       #parsed = JsonSpec::Helpers::parse_json(response_body)
@@ -343,6 +345,15 @@ resource 'Media' do
     let(:format) { 'mp3' }
     example 'MEDIA (audio get request mp3 as reader with shallow path) - 200', document: document_media_requests do
       using_original_audio(audio_recording, 'audio/mp3')
+    end
+  end
+
+  get '/audio_recordings/:audio_recording_id/media.:format' do
+    standard_media_parameters
+    let(:authentication_token) { reader_token }
+    let(:format) { 'mp3' }
+    example 'MEDIA (audio get request mpeg as reader with shallow path) - 200', document: document_media_requests do
+      using_original_audio(audio_recording, 'audio/mpeg')
     end
   end
 
@@ -408,7 +419,7 @@ resource 'Media' do
     let(:authentication_token) { reader_token }
     let(:format) { 'mp3' }
     example 'MEDIA (audio head request mp3 as reader with shallow path) - 200', document: true do
-      using_original_audio(audio_recording, 'audio/mp3', false, false, true)
+      using_original_audio(audio_recording, 'audio/mpeg', false, false, true)
     end
   end
 
@@ -693,14 +704,14 @@ resource 'Media' do
         request = do_request
 
         # assertions
-        media_type = 'audio/mp3'
+        media_type = 'audio/mpeg'
         validate_media_response(media_type)
         using_original_audio_custom(options, request, audio_recording, media_type)
       end
     end
 
   end
- 
+
   context 'range request' do
     header 'Range', 'bytes=0-'
 
@@ -709,7 +720,7 @@ resource 'Media' do
       let(:authentication_token) { reader_token }
       let(:format) { 'mp3' }
       example 'MEDIA (audio get request mp3 as reader with shallow path using range request) - 200', document: document_media_requests do
-        using_original_audio(audio_recording, 'audio/mp3')
+        using_original_audio(audio_recording, 'audio/mpeg')
 
         expect(response_headers).to include('Accept-Ranges')
         expect(response_headers['Accept-Ranges']).to eq('bytes')

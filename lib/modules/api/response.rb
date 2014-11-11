@@ -151,7 +151,7 @@ module Api
         error_links = error_links_hash
         link_ids.each do |id|
           link_info = error_links[id]
-          result[link_info.text] = link_info.url
+          result[link_info[:text]] = link_info[:url]
         end
       end
       result
@@ -204,8 +204,8 @@ module Api
     def add_paging_and_sorting(new_query, filter_settings, filter_query)
       # basic options
       opts = {
-          controller: filter_settings.controller,
-          action: filter_settings.action,
+          controller: filter_settings[:controller],
+          action: filter_settings[:action],
           filter_text: filter_query.qsp_text_filter,
           filter_generic_keys: filter_query.qsp_generic_filters
       }
@@ -224,8 +224,8 @@ module Api
 
         # update options
         opts.merge!(
-            page: filter_query.paging.page,
-            items: filter_query.paging.items,
+            page: filter_query.paging[:page],
+            items: filter_query.paging[:items],
             count: count,
             total: total
         )
@@ -239,8 +239,8 @@ module Api
 
         # update options
         opts.merge!(
-            order_by: filter_query.sorting.order_by,
-            direction: filter_query.sorting.direction
+            order_by: filter_query.sorting[:order_by],
+            direction: filter_query.sorting[:direction]
         )
       end
 
@@ -312,6 +312,14 @@ module Api
           confirm: {
               text: 'confirm your account',
               url: url_helpers.new_user_confirmation_path
+          },
+          reset_password: {
+              text: 'reset your password',
+              url: url_helpers.new_user_password_path
+          },
+          resend_unlock: {
+              text: 'resend unlock instructions',
+              url: url_helpers.new_user_unlock_path
           }
       }
     end

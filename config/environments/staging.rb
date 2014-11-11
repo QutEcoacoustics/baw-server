@@ -50,11 +50,7 @@ AWB::Application.configure do
       }
 
   config.action_mailer.delivery_method = :smtp
-
-  config.action_mailer.smtp_settings =
-      {
-          address: Settings.smtp.address
-      }
+  config.action_mailer.smtp_settings = Settings.mailer.smtp.deep_symbolize_keys
 
   # Enable threaded mode
   # config.threadsafe!

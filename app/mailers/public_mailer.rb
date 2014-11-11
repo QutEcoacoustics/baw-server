@@ -1,5 +1,5 @@
 class PublicMailer < ActionMailer::Base
-  default from: Settings.emails.sender_address
+  default from: Settings.mailer.emails.sender_address
 
   # @param [User] logged_in_user
   # @param [DataClass::ContactUs] model
@@ -47,8 +47,8 @@ class PublicMailer < ActionMailer::Base
 
     # email gets sent to required recipients (e.g. admins)
     mail(
-        to: Settings.emails.required_recipients,
-        subject: "#{Settings.emails.email_prefix} [#{subject_prefix}] Form submission from #{@info[:sender_name]}."
+        to: Settings.mailer.emails.required_recipients,
+        subject: "#{Settings.mailer.emails.email_prefix} [#{subject_prefix}] Form submission from #{@info[:sender_name]}."
     ).deliver
   end
 
