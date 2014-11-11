@@ -3,7 +3,7 @@ module BawAudioTools
 
     attr_reader :audio_defaults, :logger, :temp_dir, :timeout_sec,
                 :audio_ffmpeg, :audio_mp3splt, :audio_sox,
-                :audio_wavpack, :audio_shntool
+                :audio_wavpack, :audio_shntool, :audio_wav2png
 
     public
 
@@ -18,6 +18,7 @@ module BawAudioTools
     # @option opts [BawAudioTools::AudioSox] :sox
     # @option opts [BawAudioTools::AudioWavpack] :wavpack
     # @option opts [BawAudioTools::AudioShntool] :shntool
+    # @option opts [BawAudioTools::AudioWaveform] :wav2png
     # @return [BawAudioTools::AudioBase]
     def initialize(audio_defaults, logger, temp_dir, run_program, opts = {})
       @audio_defaults = audio_defaults
@@ -30,6 +31,7 @@ module BawAudioTools
       @audio_sox = opts[:sox]
       @audio_wavpack = opts[:wavpack]
       @audio_shntool = opts[:shntool]
+      @audio_wav2png = opts[:wav2png]
 
       @class_name = self.class.name
     end
@@ -46,6 +48,7 @@ module BawAudioTools
     # @option opts [String] :sox path to executable
     # @option opts [String] :wavpack path to executable
     # @option opts [String] :shntool path to executable
+    # @option opts [String] :wav2png path to executable
     # @return [BawAudioTools::AudioBase]
     def self.from_executables(audio_defaults, logger, temp_dir, timeout_sec, opts = {})
       audio_tool_opts = {
@@ -53,7 +56,8 @@ module BawAudioTools
           mp3splt: BawAudioTools::AudioMp3splt.new(opts[:mp3splt], temp_dir),
           sox: BawAudioTools::AudioSox.new(opts[:sox], temp_dir),
           wavpack: BawAudioTools::AudioWavpack.new(opts[:wavpack], temp_dir),
-          shntool: BawAudioTools::AudioShntool.new(opts[:shntool], temp_dir)
+          shntool: BawAudioTools::AudioShntool.new(opts[:shntool], temp_dir),
+          wav2png: BawAudioTools::AudioWaveform.new(opts[:wav2png], temp_dir)
       }
 
       run_program = BawAudioTools::RunExternalProgram.new(timeout_sec, logger)

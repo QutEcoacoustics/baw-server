@@ -14,10 +14,16 @@ before_install:
 - rm ffmpeg-git-20140817-64bit-static.tar.gz
 - sudo mv ffmpeg /usr/local/bin
 - sudo mv ffprobe /usr/local/bin
+- sudo apt-get -y install make g++ libsndfile1-dev libpng++-dev libpng12-dev libboost-program-options-dev --fix-missing
+- git clone https://github.com/beschulz/wav2png.git
+- cd ./wav2png/build
+- make all
+- sudo mv ../bin/Linux/wav2png /usr/local/bin
 - echo "...testing for audio tools..."
 - ffmpeg -version
 - mp3splt -version
 - sox --version
+- wav2png --version
 - echo "...audio tools installed."
 script:
 - bundle exec rspec

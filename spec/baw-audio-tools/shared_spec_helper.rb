@@ -32,7 +32,8 @@ shared_context 'audio base' do
             mp3splt: audio_tools.mp3splt_executable,
             sox: audio_tools.sox_executable,
             wavpack: audio_tools.wavpack_executable,
-            shntool: audio_tools.shntool_executable
+            shntool: audio_tools.shntool_executable,
+            wav2png: audio_tools.wav2png_executable
         })
   }
 end

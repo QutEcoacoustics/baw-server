@@ -113,6 +113,7 @@ RSpec.configure do |config|
               sox_executable: 'sox',
               wavpack_executable: 'wvunpack',
               shntool_executable: 'shntool',
+              wav2png_executable: 'wav2png',
               imagemagick_convert_executable: 'convert',
               imagemagick_identify_executable: 'identify'
           }),

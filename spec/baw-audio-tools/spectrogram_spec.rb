@@ -10,11 +10,11 @@ describe BawAudioTools::Spectrogram do
     audio_tools = RSpec.configuration.test_settings.audio_tools
 
     BawAudioTools::Spectrogram.from_executables(
-      audio_base,
-      audio_tools.imagemagick_convert_executable,
-      audio_tools.imagemagick_identify_executable,
-      RSpec.configuration.test_settings.cached_spectrogram_defaults,
-      temp_dir) }
+        audio_base,
+        audio_tools.imagemagick_convert_executable,
+        audio_tools.imagemagick_identify_executable,
+        RSpec.configuration.test_settings.cached_spectrogram_defaults,
+        temp_dir) }
 
   context 'getting info about image' do
     it 'returns all required information' do
@@ -44,4 +44,17 @@ describe BawAudioTools::Spectrogram do
     end
 
   end
+
+  context 'generating waveform' do
+    it 'runs to completion when given an existing audio file' do
+
+      source = temp_media_file_1+'.wav'
+      audio_base.modify(audio_file_mono, source)
+
+      target = temp_media_file_1+'.png'
+      spectrogram.modify(source, target, {colour: 'w', sample_rate: 22050})
+    end
+
+  end
+
 end
