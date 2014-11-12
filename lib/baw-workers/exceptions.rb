@@ -9,5 +9,6 @@ module BawWorkers
     class HarvesterAudioToolError < HarvesterIOError; end
     class HarvesterEndpointError < HarvesterError; end
     class HarvesterAnalysisError < HarvesterError; end
+    class AnalysisCacheError < StandardError; end
   end
 end

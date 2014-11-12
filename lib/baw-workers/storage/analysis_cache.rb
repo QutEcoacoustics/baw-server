@@ -22,9 +22,14 @@ module BawWorkers
       # @param [Hash] opts
       # @return [String] file name for stored file
       def file_name(opts = {})
+        validate_analysis_id(opts)
         validate_result_file_name(opts)
 
-        opts[:result_file_name].gsub(FILE_NAME_NOT_ALLOWED, @separator).downcase
+        analysis_dir = opts[:analysis_id].gsub(FILE_NAME_NOT_ALLOWED, @separator).downcase
+        file_only = opts[:result_file_name].gsub(FILE_NAME_NOT_ALLOWED, @separator).downcase
+
+        # in this case, a file name is a partial path composed of analysis_id and file name
+        File.join(analysis_dir, file_only)
       end
 
       # Get file names
@@ -39,13 +44,14 @@ module BawWorkers
       # @return [String] partial path to analysis result file.
       def partial_path(opts = {})
         validate_uuid(opts)
-        validate_analysis_id(opts)
+
+        # TODO: might want to include a sub-dir named by date & time?
+        # TODO: a sub-dir named by date & time would enable multiple results from the same analysis type
 
         first = opts[:uuid][0, 2].downcase
         second = opts[:uuid].downcase
-        third = opts[:analysis_id].gsub(FILE_NAME_NOT_ALLOWED, @separator).downcase
 
-        File.join(first, second, third)
+        File.join(first, second)
       end
 
     end
