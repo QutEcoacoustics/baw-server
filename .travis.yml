@@ -8,7 +8,6 @@ before_install:
 - echo "Installing audio tools..."
 - sudo apt-get update -qq
 - sudo apt-get -y install imagemagick wavpack libsox-fmt-all sox shntool mp3splt libav-tools --fix-missing
-- mkdir tmp
 - wget https://github.com/QutBioacoustics/baw-audio-tools/releases/download/v0.1.0/ffmpeg-git-20140817-64bit-static.tar.gz
 - tar xvzf ffmpeg-git-20140817-64bit-static.tar.gz
 - rm ffmpeg-git-20140817-64bit-static.tar.gz
@@ -16,9 +15,8 @@ before_install:
 - sudo mv ffprobe /usr/local/bin
 - sudo apt-get -y install make g++ libsndfile1-dev libpng++-dev libpng12-dev libboost-program-options-dev --fix-missing
 - git clone https://github.com/beschulz/wav2png.git
-- cd ./wav2png/build
-- make all
-- sudo mv ../bin/Linux/wav2png /usr/local/bin
+- ./wav2png/build/make all
+- sudo mv ./wav2png/bin/Linux/wav2png /usr/local/bin
 - echo "...testing for audio tools..."
 - ffmpeg -version
 - mp3splt -version
@@ -26,7 +24,6 @@ before_install:
 - wav2png --version
 - echo "...audio tools installed."
 script:
-- bundle install
 - bundle exec rspec
 env:
   global:
