@@ -23,6 +23,7 @@ before_install:
 - sox --version
 - wav2png --version
 - echo "...audio tools installed."
+- mkdir tmp
 script:
 - bundle exec rspec
 env:
