@@ -1,13 +1,13 @@
 GIT
   remote: https://github.com/QutBioacoustics/baw-audio-tools.git
-  revision: 0b017e528326b29a24d539d054bdc30894fab604
+  revision: 62f86e45e892ff306923107210c4cb2ccc0b993b
   specs:
     baw-audio-tools (0.3.0)
       activesupport (>= 3.2)
 
 GIT
   remote: https://github.com/QutBioacoustics/baw-workers.git
-  revision: 837edb09fad3713d2d440c96a7203b9743a81317
+  revision: 5f7881247719c3c657f456743cf13023680c2ab2
   specs:
     baw-workers (0.4.0)
       actionmailer (>= 3.2)
