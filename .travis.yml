@@ -15,7 +15,7 @@ before_install:
 - sudo mv ffprobe /usr/local/bin
 - sudo apt-get -y install make g++ libsndfile1-dev libpng++-dev libpng12-dev libboost-program-options-dev --fix-missing
 - git clone https://github.com/beschulz/wav2png.git
-- ./wav2png/build/make all
+- make -C ./wav2png/build all
 - sudo mv ./wav2png/bin/Linux/wav2png /usr/local/bin
 - echo "...testing for audio tools..."
 - ffmpeg -version
