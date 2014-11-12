@@ -152,10 +152,12 @@ module BawAudioTools
             else
               read_linux(stream, readable, buffer_size)
             end
-          rescue IO::WaitReadable, EOFError => e
+          rescue IO::WaitReadable => e
             # Need to read all of both streams
             # Keep going until thread dies
             exceptions.push(e)
+          rescue EOFError => e
+            # ignore EOFErrors
           end
         end
 
