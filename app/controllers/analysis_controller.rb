@@ -28,7 +28,7 @@ class AnalysisController < ApplicationController
     # check audio_recording authorisation
     audio_recording = authorise_custom(request_params, current_user)
 
-    file_paths = BawWorkers::Settings.analysis_cache_helper.existing_paths(
+    file_paths = BawWorkers::Config.analysis_cache_helper.existing_paths(
         {
             uuid: audio_recording.uuid,
             analysis_id: request_params[:analysis_id],
