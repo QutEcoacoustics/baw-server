@@ -206,4 +206,8 @@ describe AudioRecording do
     ar = FactoryGirl.create(:audio_recording, duration_seconds: Settings.audio_recording_min_duration_sec + 1)
     expect(ar.valid?).to be_true
   end
+
+  it 'should allow data_length_bytes of more than int32 max' do
+    FactoryGirl.create(:audio_recording, data_length_bytes: 2147483648)
+  end
 end
