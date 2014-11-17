@@ -136,7 +136,8 @@ module BawWorkers
 
         def action_validate(media_type, media_request_params)
           BawWorkers::Validation.validate_hash(media_request_params)
-          media_type_sym, params_sym = BawWorkers::Validation.symbolize(media_type, media_request_params)
+          media_type_sym = media_type.to_sym
+          params_sym = BawWorkers::Validation.deep_symbolize_keys(media_request_params)
           BawWorkers::Validation.validate_contains(media_type_sym, valid_media_types)
           [media_type_sym, params_sym]
         end

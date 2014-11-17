@@ -1,16 +1,14 @@
 require 'spec_helper'
 
 describe BawWorkers::Analysis::WorkHelper do
-  include_context 'media_file'
-
-  let(:analysis_cache) { BawWorkers::Storage::AnalysisCache.new(BawWorkers::Settings.paths.cached_analysis_jobs) }
+  include_context 'shared_test_helpers'
 
   let(:work_helper) {
 
     BawWorkers::Analysis::WorkHelper.new(
         analysis_cache,
         BawWorkers::Config.logger_worker,
-        BawWorkers::Config.temp_dir
+        custom_temp
     )
   }
 

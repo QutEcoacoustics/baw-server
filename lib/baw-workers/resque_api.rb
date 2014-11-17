@@ -63,7 +63,7 @@ module BawWorkers
       # @return [Array<Hash>]
       def jobs_queued_in_of_with(queue, klass, args = {})
         item = BawWorkers::ResqueJobId.create_payload(klass, args)
-        jobs_queued_in(queue).select { |job| job['class'] == item['class'] && compare_args(job['args'],item['args']) }
+        jobs_queued_in(queue).select { |job| job['class'] == item['class'] && compare_args(job['args'], item['args']) }
       end
 
       # Get queued jobs of this type.
@@ -80,7 +80,7 @@ module BawWorkers
       # @return [Array<Hash>]
       def jobs_queued_of_with(klass, args = {})
         item = BawWorkers::ResqueJobId.create_payload(klass, args)
-        jobs_queued.select { |job| job['class'] == item['class'] && compare_args(job['args'],item['args']) }
+        jobs_queued.select { |job| job['class'] == item['class'] && compare_args(job['args'], item['args']) }
       end
 
       # Get the currently running jobs.
@@ -105,7 +105,7 @@ module BawWorkers
       # @return [Array<Hash>]
       def jobs_running_of_with(klass, args = {})
         item = BawWorkers::ResqueJobId.create_payload(klass, args)
-        jobs_running.select { |job| job['class'] == item['class'] && compare_args(job['args'],item['args']) }
+        jobs_running.select { |job| job['class'] == item['class'] && compare_args(job['args'], item['args']) }
       end
 
       # Get all jobs.
@@ -137,10 +137,77 @@ module BawWorkers
         mod_b = b[1].is_a?(Array) ? b[1] : b[1].to_a[0]
 
         # sort the arrays by the first item of the sub-array
-        mod_a = mod_a.sort{ |a1, b1| a1[0] <=> b1[0]}
-        mod_b = mod_b.sort{ |a1, b1| a1[0] <=> b1[0]}
+        mod_a = mod_a.sort { |a1, b1| a1[0] <=> b1[0] }
+        mod_b = mod_b.sort { |a1, b1| a1[0] <=> b1[0] }
 
         mod_a == mod_b
+      end
+
+      # List all running workers.
+      # @return [Array] details of running workers
+      def workers_running
+        workers = Resque.workers
+        running_workers = []
+
+        if workers.size > 0
+
+          BawWorkers::Config.logger_worker.info(self.name) {
+            "There are #{workers.size} Resque workers currently running."
+          }
+
+          workers.each do |worker|
+            running_workers.push(worker.to_s)
+          end
+
+          BawWorkers::Config.logger_worker.info(self.name) {
+            worker_details = running_workers.map { |worker|
+              host, pid, queues = worker.split(':')
+              {host: host, pid: pid, queues: queues}
+            }.join(',')
+
+            "Resque worker details: #{worker_details}."
+          }
+
+        else
+          BawWorkers::Config.logger_worker.info(self.name) {
+            'No Resque workers currently running.'
+          }
+        end
+
+        running_workers
+      end
+
+      # Quit all running workers.
+      # @return [Array<Integer>] worker pids
+      def workers_stop_all
+        pids = []
+        Resque.workers.each do |worker|
+          pids.concat(worker.worker_pids)
+        end
+
+        pids = pids.uniq
+
+        BawWorkers::Config.logger_worker.info(self.name) {
+          "Pids of running Resque workers: '#{pids.join(',')}'."
+        }
+
+        unless pids.empty?
+          syscmd = "kill -s QUIT #{pids.join(' ')}"
+
+          BawWorkers::Config.logger_worker.warn(self.name) {
+            "Running syscmd to kill all workers: '#{syscmd}'"
+          }
+
+          system(syscmd)
+        end
+
+        pids
+      end
+
+      # Shared configuration for Resque workers.
+      # @return [Hash] setup configuration
+      def workers_setup
+
       end
 
     end

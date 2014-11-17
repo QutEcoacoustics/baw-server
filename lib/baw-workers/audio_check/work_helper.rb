@@ -236,7 +236,7 @@ module BawWorkers
                  :file_hash, :original_format]
 
         BawWorkers::Validation.validate_hash(audio_params)
-        audio_params_sym = BawWorkers::Validation.symbolize_hash_keys(audio_params)
+        audio_params_sym = BawWorkers::Validation.deep_symbolize_keys(audio_params)
 
         props.each do |prop|
           fail ArgumentError, "Audio params must include #{prop}." unless audio_params_sym.include?(prop)

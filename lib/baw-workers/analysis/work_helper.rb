@@ -43,6 +43,19 @@ module BawWorkers
         }
       end
 
+      def self.validate(value)
+        props = [:uuid, :command_format]
+
+        BawWorkers::Validation.validate_hash(value)
+        audio_params_sym = BawWorkers::Validation.deep_symbolize_keys(value)
+
+        props.each do |prop|
+          fail ArgumentError, "Audio params must include #{prop}." unless audio_params_sym.include?(prop)
+        end
+
+        audio_params_sym
+      end
+
       private
 
       # Execute a command with working directory information.
@@ -52,7 +65,11 @@ module BawWorkers
       def execute(command, output_dir)
         timeout_sec = 1 * 60 * 60 # 1 hour
         log_file = File.join(output_dir, 'worker.log')
-        logger = Logger.new(log_file)
+
+        open_file = File.open(log_file, 'a+')
+        open_file.sync = true
+
+        logger = BawWorkers::MultiLogger.new(Logger.new(open_file))
         external_program = BawAudioTools::RunExternalProgram.new(timeout_sec, logger)
         external_program.execute(command, false)
       end

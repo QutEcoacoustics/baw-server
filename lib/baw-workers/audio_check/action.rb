@@ -30,7 +30,7 @@ module BawWorkers
           BawWorkers::Settings.actions.audio_check.queue
         end
 
-        # Perform work. Used by Resque.
+        # Perform check on a single audio file. Used by Resque.
         # @param [Hash] audio_params
         # @return [Array<Hash>] array of hashes representing operations performed
         def action_perform(audio_params)
@@ -50,6 +50,27 @@ module BawWorkers
           result
         end
 
+        # Perform check on multiple audio files from a csv file.
+        # @param [String] csv_file
+        # @return [Array<Hash>] array of hashes representing operations performed
+        def action_perform_rake(csv_file)
+          successes = []
+          failures = []
+          BawWorkers::AudioCheck::CsvHelper.read_audio_recording_csv(csv_file) do |audio_params|
+            begin
+              result = BawWorkers::AudioCheck::Action.action_perform(audio_params)
+              successes.push({params: audio_params, result: result})
+            rescue Exception => e
+              failures.push({params: audio_params, exception: e})
+            end
+          end
+
+          {
+              successes: successes,
+              failures: failures
+          }
+        end
+
         # Enqueue an audio file check request.
         # @param [Hash] audio_params
         # @return [Boolean] True if job was queued, otherwise false. +nil+
@@ -62,6 +83,27 @@ module BawWorkers
             "Job enqueue returned '#{result}' using #{audio_params}."
           }
           result
+        end
+
+        # Enqueue multiple audio file check requests from a csv file.
+        # @param [String] csv_file
+        # @return [Hash]
+        def action_enqueue_rake(csv_file)
+          successes = []
+          failures = []
+          BawWorkers::AudioCheck::CsvHelper.read_audio_recording_csv(csv_file) do |audio_params|
+            begin
+              result = BawWorkers::AudioCheck::Action.action_enqueue(audio_params)
+              successes.push({params: audio_params, result: result})
+            rescue Exception => e
+              failures.push({params: audio_params, exception: e})
+            end
+          end
+
+          {
+              successes: successes,
+              failures: failures
+          }
         end
 
         def action_audio_check

@@ -52,6 +52,17 @@ Dir[File.join(File.dirname(__FILE__), 'support', '**', '*.rb')].each { |file| re
 # include rake tasks
 require 'rake'
 
+def reset_settings
+  # ensure each test has a completely clean slate to start
+  tmp_logs_dir = File.expand_path('./tmp/logs/')
+  tmp_custom_dir = File.expand_path('./tmp/custom_temp_dir')
+
+  FileUtils.rm_rf(tmp_logs_dir)
+  FileUtils.rm_rf(tmp_custom_dir)
+
+  FileUtils.mkpath([tmp_logs_dir, tmp_custom_dir])
+end
+
 RSpec.configure do |config|
   config.run_all_when_everything_filtered = true
   config.filter_run :focus
@@ -70,18 +81,9 @@ RSpec.configure do |config|
 
   Zonebie.set_random_timezone
 
-  # provide access to tmp dir, default settings file, stdout, and stderr files
-  config.add_setting :tmp_dir
-  config.tmp_dir = File.expand_path(File.join(File.dirname(__FILE__), '..', 'tmp'))
-
+  # provide access to default settings file
   config.add_setting :default_settings_path
   config.default_settings_path = File.expand_path(File.join(File.dirname(__FILE__), '..', 'lib', 'settings', 'settings.default.yml'))
-
-  config.add_setting :program_stdout
-  config.program_stdout = File.join(config.tmp_dir, 'program_stdout.log')
-
-  config.add_setting :program_stderr
-  config.program_stderr = File.join(config.tmp_dir, 'program_stderr.log')
 
   # indicate that webmock requests were successful
   WebMock.after_request do |request_signature, response|
@@ -91,47 +93,30 @@ RSpec.configure do |config|
   end
 
   config.before(:suite) do
-    # delete then create temp dir
-    FileUtils.rm_rf(config.tmp_dir)
-    FileUtils.mkpath(config.tmp_dir)
-
     # include rake tasks and environment task
     Dir[File.join(File.dirname(__FILE__), '..', 'lib', 'tasks', '*.rake')].each do |file|
       Rake.application.rake_require File.join('tasks', File.basename(file, File.extname(file)))
     end
     Rake::Task.define_task(:environment)
 
-    # redirect stdout and stderr to files
-    BawWorkers::Config.set_console_to_file(config.program_stdout, config.program_stderr)
-
-    # load settings
-    BawWorkers::Config.set_settings_source(config.default_settings_path)
-
-    # ensure harvester to do path exists
-    FileUtils.mkpath(BawWorkers::Settings.actions.harvest.to_do_path)
-
-    # configure common classes
-    BawWorkers::Config.set_logger_files
-    BawWorkers::Config.set_logger_levels
-    BawWorkers::Config.set_mailer
-    BawWorkers::Config.set_common
-    BawWorkers::Config.set_api
-    BawWorkers::Config.set_rspec
   end
 
   config.after(:suite) do
     # redirect stdout and stderr to console
-    BawWorkers::Config.set_to_console
+    # this ensures that the green dots and red Fs from rspec are sent to the console
+    $stdout = STDOUT
+    $stderr = STDERR
   end
 
   config.before(:each) do
-    ActionMailer::Base.deliveries.clear
+
+    reset_settings
+
+    BawWorkers::Config.run(settings_file: config.default_settings_path, redis: true, resque_worker: false)
   end
 
   config.after(:each) do
-    if Dir.exists?(BawWorkers::Settings.actions.harvest.to_do_path)
-      FileUtils.rm_rf(BawWorkers::Settings.actions.harvest.to_do_path)
-    end
+    ActionMailer::Base.deliveries.clear
   end
 
 end

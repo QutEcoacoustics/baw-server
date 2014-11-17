@@ -2,6 +2,8 @@ require 'active_support/all'
 require 'logger'
 require 'net/http'
 require 'pathname'
+require 'yaml'
+require 'fileutils'
 
 require 'baw-audio-tools'
 

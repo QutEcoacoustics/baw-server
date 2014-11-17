@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe BawWorkers::Media::Action do
-  include_context 'media_file'
+  include_context 'shared_test_helpers'
 
   let(:queue_name) { BawWorkers::Settings.actions.media.queue }
 

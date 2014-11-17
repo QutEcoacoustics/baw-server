@@ -50,6 +50,21 @@ module BawWorkers
           result
         end
 
+        # Harvest specified folder.
+        # @param [String] to_do_path
+        # @return [Hash] array of hashes representing operations performed
+        def action_perform_rake(to_do_path)
+          gather_files = action_gather_files
+          file_hashes = gather_files.run(to_do_path)
+
+          results = {path: to_do_path, results: []}
+          file_hashes.each do |file_hash|
+            result = BawWorkers::AudioCheck::Action.action_perform(file_hash)
+            results[:results].push({file_info: file_hash, result: result})
+          end
+          results
+        end
+
         # Enqueue a single file for harvesting.
         # @param [Hash] harvest_params
         # @return [Boolean] True if job was queued, otherwise false. +nil+
@@ -60,6 +75,21 @@ module BawWorkers
             "Job enqueue returned '#{result}' using #{harvest_params}."
           }
           result
+        end
+
+        # Enqueue multiple files for harvesting.
+        # @param [String] to_do_path
+        # @return [Array<Hash>] array of hashes representing operations performed
+        def action_enqueue_rake(to_do_path)
+          gather_files = action_gather_files
+          file_hashes = gather_files.run(to_do_path)
+
+          results = {path: to_do_path, results: []}
+          file_hashes.each do |file_hash|
+            result = BawWorkers::AudioCheck::Action.action_enqueue(file_hash)
+            results[:results].push({file_hash: file_hash, result: result})
+          end
+          results
         end
 
         # Create a BawWorkers::Harvest::GatherFiles instance.

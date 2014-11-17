@@ -3,47 +3,8 @@ require 'resque/tasks'
 require 'baw-workers'
 
 namespace :baw do
+
   namespace :worker do
-
-    # Set up the worker parameters. Takes one argument: settings_file
-    desc 'Run setup for Resque worker'
-    task :setup, [:settings_file] => %w(baw:common:init_resque_worker baw:common:init_redis) do |t, args|
-
-      if BawWorkers::Settings.resque.background_pid_file.blank?
-        BawWorkers::Config.logger_worker.info('rake_task:baw:worker:setup') {
-          'Resque worker will run in foreground.'
-        }
-      else
-        BawWorkers::Config.logger_worker.info('rake_task:baw:worker:setup') {
-          "Resque worker will run in background with pid file #{BawWorkers::Settings.resque.background_pid_file}."
-        }
-        ENV['PIDFILE'] = BawWorkers::Settings.resque.background_pid_file
-        ENV['BACKGROUND'] = 'yes'
-      end
-
-      queues = BawWorkers::Settings.resque.queues_to_process.join(',')
-
-      BawWorkers::Config.logger_worker.info('rake_task:baw:worker:setup') {
-        "Resque worker will poll queues #{queues}."
-      }
-
-      ENV['QUEUES'] = queues
-
-      # set resque verbose on
-      ENV['VERBOSE '] = '1'
-      ENV['VVERBOSE '] = '1'
-
-      BawWorkers::Config.logger_worker.info('rake_task:baw:worker:setup') {
-        "Resque worker will poll every #{BawWorkers::Settings.resque.polling_interval_seconds} seconds."
-      }
-
-      ENV['INTERVAL'] = BawWorkers::Settings.resque.polling_interval_seconds.to_s
-
-      # use new signal handling
-      # http://hone.heroku.com/resque/2012/08/21/resque-signals.html
-      #ENV['TERM_CHILD'] = '1'
-
-    end
 
     # run a worker. Passes parameter to prerequisite 'setup_worker'. Takes one argument: settings_file
     # start examples:
@@ -52,9 +13,13 @@ namespace :baw do
     # stopping workers:
     # kill -s QUIT $(/home/user/folder/workers/media.pid)
     desc 'Run a resque:work with the specified settings file.'
-    task :run, [:settings_file] => [:setup] do |t, args|
+    task :setup, [:settings_file] do |t, args|
+      BawWorkers::Config.run(settings_file: args.settings_file, redis: true, resque_worker: true)
+    end
 
-      BawWorkers::Config.logger_worker.info('rake_task:baw:worker:stop_all') {
+    desc 'Run a resque:work with the specified settings file.'
+    task :run, [:settings_file] => [:setup] do |t, args|
+      BawWorkers::Config.logger_worker.info('rake_task:baw:worker:run') {
         'Resque worker starting...'
       }
 
@@ -62,61 +27,77 @@ namespace :baw do
       Rake::Task['resque:work'].invoke
     end
 
-    desc 'Quit running workers'
-    task :stop_all, [:settings_file] => [:current] do |t, args|
-
-      pids = []
-      Resque.workers.each do |worker|
-        pids.concat(worker.worker_pids)
-      end
-
-      pids = pids.uniq
-
-      BawWorkers::Config.logger_worker.info('rake_task:baw:worker:stop_all') {
-        "Pids of running Resque workers: #{pids.join(',')}."
-      }
-
-      unless pids.empty?
-        syscmd = "kill -s QUIT #{pids.join(' ')}"
-
-        BawWorkers::Config.logger_worker.warn('rake_task:baw:worker:stop_all') {
-          "Running syscmd to kill all workers: #{syscmd}"
-        }
-
-        system(syscmd)
-      end
+    desc 'List running workers'
+    task :current, [:settings_file] do |t, args|
+      BawWorkers::Config.run(settings_file: args.settings_file, redis: true, resque_worker: false)
+      BawWorkers::ResqueApi.workers_running
     end
 
-    desc 'List running workers'
-    task :current, [:settings_file] => %w(baw:common:init_resque_worker baw:common:init_redis) do |t, args|
-      workers = Resque.workers
-
-      if workers.size > 0
-
-        BawWorkers::Config.logger_worker.info('rake_task:baw:worker:current') {
-          "There are #{workers.size} Resque workers currently running."
-        }
-
-        running_workers = []
-        workers.each do |worker|
-          running_workers.push(worker.to_s)
-        end
-
-        BawWorkers::Config.logger_worker.info('rake_task:baw:worker:current') {
-          worker_details = running_workers.map { |worker|
-            host, pid, queues = worker.split(':')
-            {host: host, pid: pid, queues: queues}
-          }.join(',')
-
-          "Resque worker details: #{worker_details}."
-        }
-
-      else
-        BawWorkers::Config.logger_worker.info('rake_task:baw:worker:current') {
-          'No Resque workers currently running.'
-        }
-      end
+    desc 'Quit running workers'
+    task :stop_all, [:settings_file] do |t, args|
+      BawWorkers::Config.run(settings_file: args.settings_file, redis: true, resque_worker: false)
+      BawWorkers::ResqueApi.workers_running
+      BawWorkers::ResqueApi.workers_stop_all
     end
 
   end
+
+  namespace :analysis do
+    namespace :resque do
+      desc 'Enqueue files to analyse using Resque'
+      task :from_files, [:settings_file, :analysis_config_file] do |t, args|
+        BawWorkers::Config.run(settings_file: args.settings_file, redis: true, resque_worker: false)
+        BawWorkers::Analysis::Action.action_enqueue_rake(args.analysis_config_file)
+      end
+    end
+    namespace :standalone do
+      desc 'Analyse audio files directly'
+      task :from_files, [:settings_file, :analysis_config_file] do |t, args|
+        BawWorkers::Config.run(settings_file: args.settings_file, redis: false, resque_worker: false)
+        BawWorkers::Analysis::Action.action_perform_rake(args.analysis_config_file)
+      end
+    end
+  end
+
+  namespace :audio_check do
+    namespace :resque do
+      desc 'Enqueue audio recording file checks from a csv file to be processed using Resque worker'
+      task :from_csv, [:settings_file, :csv_file] do |t, args|
+        BawWorkers::Config.run(settings_file: args.settings_file, redis: true, resque_worker: false)
+        BawWorkers::AudioCheck::Action.action_enqueue_rake(args.csv_file)
+      end
+    end
+    namespace :standalone do
+      desc 'Enqueue audio recording file checks from a csv file to be processed directly'
+      task :from_csv, [:settings_file, :csv_file] do |t, args|
+        BawWorkers::Config.run(settings_file: args.settings_file, redis: false, resque_worker: false)
+        BawWorkers::AudioCheck::Action.action_perform_rake(args.csv_file)
+      end
+    end
+  end
+
+  namespace :harvest do
+    namespace :resque do
+      desc 'Enqueue files to harvest using Resque'
+      task :from_files, [:settings_file, :harvest_dir] do |t, args|
+        BawWorkers::Config.run(settings_file: args.settings_file, redis: true, resque_worker: false)
+        BawWorkers::Harvest::Action.action_enqueue_rake(args.harvest_dir)
+      end
+    end
+    namespace :standalone do
+      desc 'Harvest audio files directly'
+      task :from_files, [:settings_file, :harvest_dir] do |t, args|
+        BawWorkers::Config.run(settings_file: args.settings_file, redis: false, resque_worker: false)
+        BawWorkers::Harvest::Action.action_perform_rake(args.harvest_dir)
+      end
+    end
+  end
+
+  namespace :media do
+    # No rake tasks - media cutting and spectrogram generation is done on demand for now
+    # If eager generation is needed, rake tasks can be made to enqueue jobs or run standalone
+    # Consider defaults and offsets: from start of file, or from time of day e.g. 22:54:00 / 22:54:30 for 30 second segments?
+    # This could be created for eager caching
+  end
+
 end

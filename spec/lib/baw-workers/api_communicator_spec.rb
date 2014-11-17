@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe BawWorkers::ApiCommunicator do
-  include_context 'media_file'
+  include_context 'shared_test_helpers'
 
   let(:api) { BawWorkers::Config.api_communicator }
   let(:api_different) {

@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe BawWorkers::Harvest::SingleFile do
-  include_context 'media_file'
+  include_context 'shared_test_helpers'
 
   let(:file_info) { BawWorkers::Config.file_info }
 
@@ -35,7 +35,7 @@ describe BawWorkers::Harvest::SingleFile do
 
     it 'should succeed with valid file and settings' do
       # set up audio file and folder config
-      sub_folder = File.expand_path File.join('..', 'tmp', '_workers.harvester.to_do_path', 'harvest_file_exists')
+      sub_folder = File.expand_path File.join(harvest_to_do_path, 'harvest_file_exists')
       FileUtils.mkpath(sub_folder)
 
       source_audio_file = File.expand_path File.join('.', 'spec', 'example_media', 'test-audio-mono.ogg')

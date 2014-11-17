@@ -32,17 +32,19 @@ module BawWorkers
         end
 
 
-        # Perform work. Used by resque.
+        # Perform analysis on a single file. Used by resque.
         # @param [Hash] analysis_params
+        # @return [Hash] result information
         def action_perform(analysis_params)
+          analysis_params_sym = BawWorkers::Analysis::WorkHelper.validate(analysis_params)
           runner = action_helper
           begin
-            runner.run(analysis_params)
+            runner.run(analysis_params_sym)
           rescue Exception => e
             BawWorkers::Config.logger_worker.error(self.name) { e }
             BawWorkers::Mail::Mailer.send_worker_error_email(
                 BawWorkers::Analysis::Action,
-                analysis_params,
+                analysis_params_sym,
                 queue,
                 e
             )
@@ -50,16 +52,34 @@ module BawWorkers
           end
         end
 
+        # Perform analysis on a single file.
+        # @param [String] single_file_config
+        # @return [Hash] result information
+        def action_perform_rake(single_file_config)
+          config = YAML.load_file(single_file_config)
+          BawWorkers::Analysis::Action.action_perform(config)
+        end
+
         # Enqueue an analysis request.
         # @param [Hash] analysis_params
         # @return [Boolean] True if job was queued, otherwise false. +nil+
         #   if the job was rejected by a before_enqueue hook.
         def action_enqueue(analysis_params)
-          result = BawWorkers::Analysis::Action.create(analysis_params: analysis_params)
+          analysis_params_sym = BawWorkers::Analysis::WorkHelper.validate(analysis_params)
+          result = BawWorkers::Analysis::Action.create(analysis_params: analysis_params_sym)
           BawWorkers::Config.logger_worker.info(self.name) {
-            "Job enqueue returned '#{result}' using #{analysis_params}."
+            "Job enqueue returned '#{result}' using #{analysis_params_sym}."
           }
           result
+        end
+
+        # Enqueue an analysis request using a single file via an analysis config file.
+        # @param [String] single_file_config
+        # @return [Boolean] True if job was queued, otherwise false. +nil+
+        #   if the job was rejected by a before_enqueue hook.
+        def action_enqueue_rake(single_file_config)
+          config = YAML.load_file(single_file_config)
+          BawWorkers::Analysis::Action.action_enqueue(config)
         end
 
         # Create a BawWorkers::Analysis::WorkHelper instance.

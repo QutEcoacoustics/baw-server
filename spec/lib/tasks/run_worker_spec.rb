@@ -1,48 +1,58 @@
 require 'spec_helper'
 require 'fakeredis'
 
-describe 'baw:worker:setup' do
-  include_context 'rake_tests'
-  include_context 'rspect_output_files'
+describe 'rake tasks' do
+  include_context 'shared_test_helpers'
 
   context 'rake task' do
 
-    before(:each) do
-      #File.truncate(worker_log_file, 0) if File.exists?(worker_log_file)
-    end
-
     it 'runs the setup task for bg worker' do
+      # simulate running a resque worker
+      reset_settings
+      BawWorkers::Config.run(settings_file: RSpec.configuration.default_settings_path, redis: true, resque_worker: true)
 
-      store_pid_file = BawWorkers::Settings.resque.background_pid_file
-      BawWorkers::Settings.resque['background_pid_file'] = './tmp/resque_worker.pid'
-
-      run_rake_task(rake_task_name, default_settings_file)
-
-      expect(program_stdout_content).to match(/===> BawWorkers::Settings: 'settings' loaded from [^ ]+baw-workers\/lib\/settings\/settings\.default\.yml\./)
-
-      expect(worker_log_content).to include('Resque worker will poll queues example.')
-      expect(worker_log_content).to include('Logging at level 1.')
-      expect(worker_log_content).to include('Resque worker will poll every 5 seconds.')
-      expect(worker_log_content).to include('Resque worker will run in background with pid file ./tmp/resque_worker.pid.')
-
-      BawWorkers::Settings.resque['background_pid_file'] = store_pid_file
+      expect(worker_log_content).to match(/"test":true,"file":"[^"]+\/baw-workers\/lib\/settings\/settings.default.yml","namespace":"settings"/)
+      expect(worker_log_content).to include('"redis":{"configured":true,"namespace":"resque","connection":"fake"')
+      expect(worker_log_content).to include('"resque_worker":{"running":true,"mode":"bg","pid_file":"./tmp/logs/resque_worker.pid","queues":"example","poll_interval":5}')
+      expect(worker_log_content).to include('"logging":{"file_only":true,"worker":1,"mailer":1,"audio_tools":2}')
     end
 
     it 'runs the setup task for fg worker' do
 
-      store_pid_file = BawWorkers::Settings.resque.background_pid_file
-      BawWorkers::Settings.resque['background_pid_file'] = nil
+      reset_settings
 
-      run_rake_task(rake_task_name, default_settings_file)
+      # change settings file to set to foreground.
+      original_yaml = YAML.load_file(RSpec.configuration.default_settings_path)
+      original_yaml['settings']['resque']['background_pid_file'] = nil
+      new_file = File.expand_path(File.join(temporary_dir, 'fg_worker.yml'))
+      File.write(new_file, YAML.dump(original_yaml))
 
-      expect(program_stdout_content).to match(/===> BawWorkers::Settings: 'settings' loaded from [^ ]+baw-workers\/lib\/settings\/settings\.default\.yml\./)
+      # simulate running a resque worker
 
-      expect(worker_log_content).to include('Resque worker will poll queues example.')
-      expect(worker_log_content).to include('Logging at level 1.')
-      expect(worker_log_content).to include('Resque worker will run in foreground.')
-      expect(worker_log_content).to include('Resque worker will poll every 5 seconds.')
+      BawWorkers::Config.run(settings_file: new_file, redis: true, resque_worker: true)
 
-      BawWorkers::Settings.resque['background_pid_file'] = store_pid_file
+      expect(worker_log_content).to match(/"test":true,"file":"#{new_file}","namespace":"settings"/)
+      expect(worker_log_content).to include('"redis":{"configured":true,"namespace":"resque","connection":"fake"')
+      expect(worker_log_content).to include('"resque_worker":{"running":true,"mode":"fg","pid_file":null,"queues":"example","poll_interval":5}')
+      expect(worker_log_content).to include('"logging":{"file_only":true,"worker":1,"mailer":1,"audio_tools":2}')
     end
+
+    it 'runs stop_all task' do
+      # simulate running the stop_all rake task
+      BawWorkers::ResqueApi.workers_running
+      BawWorkers::ResqueApi.workers_stop_all
+
+      expect(worker_log_content).to include('No Resque workers currently running.')
+      expect(worker_log_content).to include("Pids of running Resque workers: ''.")
+    end
+
+    it 'runs current task' do
+      # simulate running the current rake task
+      BawWorkers::ResqueApi.workers_running
+
+      expect(worker_log_content).to include('No Resque workers currently running.')
+      expect(worker_log_content).to_not include("Pids of running Resque workers: ''.")
+    end
+
   end
 end

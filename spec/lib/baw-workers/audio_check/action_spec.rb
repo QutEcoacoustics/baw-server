@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe BawWorkers::AudioCheck::Action do
-  include_context 'media_file'
+  include_context 'shared_test_helpers'
 
   let(:queue_name) { BawWorkers::Settings.actions.audio_check.queue }
 
@@ -535,5 +535,31 @@ describe BawWorkers::AudioCheck::Action do
       end
 
     end
+  end
+
+  it 'runs standalone with errors' do
+    csv_file = copy_test_audio_check_csv
+
+    BawWorkers::AudioCheck::CsvHelper.read_audio_recording_csv(csv_file) do |audio_params|
+      audio_params[:datetime_with_offset] = audio_params[:recorded_date]
+      create_original_audio(audio_params, audio_file_mono, false)
+      # FileUtils.touch(File.join(audio_original.possible_dirs[0], '83/837df827-2be2-43ef-8f48-60fa0ee6ad37_930712-1552.asf'))
+    end
+
+    result = BawWorkers::AudioCheck::Action.action_perform_rake(csv_file)
+
+    expect(worker_log_content).to include('File hash and other properties DO NOT match')
+    expect(result[:successes].size).to eq(0)
+    expect(result[:failures].size).to eq(24)
+  end
+
+  it 'runs successfully using resque' do
+    csv_file = copy_test_audio_check_csv
+
+    result = BawWorkers::AudioCheck::Action.action_enqueue_rake(csv_file)
+
+    expect(worker_log_content).to match(/INFO-BawWorkers::AudioCheck::Action-.+\] Job enqueue returned/)
+    expect(result[:successes].size).to eq(24)
+    expect(result[:failures].size).to eq(0)
   end
 end

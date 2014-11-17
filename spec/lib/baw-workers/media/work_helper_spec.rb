@@ -1,8 +1,7 @@
-require 'fileutils'
 require 'spec_helper'
 
 describe BawWorkers::Media::WorkHelper do
-  include_context 'media_file'
+  include_context 'shared_test_helpers'
 
   let(:work_helper) {
     BawWorkers::Media::WorkHelper.new(
@@ -13,7 +12,7 @@ describe BawWorkers::Media::WorkHelper do
         BawWorkers::Config.spectrogram_cache_helper,
         BawWorkers::Config.file_info,
         BawWorkers::Config.logger_worker,
-        BawWorkers::Config.temp_dir
+        custom_temp
     )
   }
 

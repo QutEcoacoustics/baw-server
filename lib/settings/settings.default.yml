@@ -14,11 +14,11 @@ settings:
     polling_interval_seconds: 5
     # specify background_pid_file to have a Resque worker run in the background
     # otherwise it will run in the foreground
-    background_pid_file: ./tmp/resque_worker.pid
+    background_pid_file: ./tmp/logs/resque_worker.pid
     # output and error log files are only used when a Resque worker is running
     # in the background
-    output_log_file: ./tmp/program_stdout.log
-    error_log_file: ./tmp/program_stderr.log
+    output_log_file: ./tmp/logs/program_stdout.log
+    error_log_file: ./tmp/logs/program_stderr.log
   actions:
     analysis:
       # name of queue to append jobs onto
@@ -35,13 +35,13 @@ settings:
       queue: maintenance_default
       # dry run only valid when running rake task - ignored by Resque workers
       dry_run: false
-      to_do_csv_path: ./tmp/_audio_check_to_do.csv
+      to_do_csv_path: ./tmp/custom_temp_dir/_audio_check_to_do.csv
     harvest:
       # name of queue to append jobs onto
       queue: harvest_default
       # dry run only valid when running rake task - ignored by Resque workers
       dry_run: false
-      to_do_path: ./tmp/_harvester_to_do_path
+      to_do_path: ./tmp/custom_temp_dir/_harvester_to_do_path
       config_file_name: harvest.yml
     media:
       # name of queue to append jobs onto
@@ -50,19 +50,19 @@ settings:
       dry_run: false
   paths:
     original_audios:
-      - ./tmp/_original_audio
+      - ./tmp/custom_temp_dir/_original_audio
     cached_spectrograms:
-      - ./tmp/_cached_spectrogram
+      - ./tmp/custom_temp_dir/_cached_spectrogram
     cached_audios:
-      - ./tmp/_cached_audio
+      - ./tmp/custom_temp_dir/_cached_audio
     cached_datasets:
-      - ./tmp/_cached_dataset
+      - ./tmp/custom_temp_dir/_cached_dataset
     cached_analysis_jobs:
-      - ./tmp/_cached_analysis_jobs
-    worker_log_file: ./tmp/worker.log
-    mailer_log_file: ./tmp/mailer.log
-    audio_tools_log_file: ./tmp/audio_tools.log
-    temp_dir: ./tmp/
+      - ./tmp/custom_temp_dir/_cached_analysis_jobs
+    worker_log_file: ./tmp/logs/worker.log
+    mailer_log_file: ./tmp/logs/mailer.log
+    audio_tools_log_file: ./tmp/logs/audio_tools.log
+    temp_dir: ./tmp/custom_temp_dir
   endpoints:
     login: /security
     audio_recording: /audio_recordings/:id

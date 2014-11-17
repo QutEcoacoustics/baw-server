@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe BawWorkers::Harvest::GatherFiles do
-  include_context 'media_file'
+  include_context 'shared_test_helpers'
 
   let(:config_file_name) { BawWorkers::Settings.actions.harvest.config_file_name}
 
@@ -213,8 +213,8 @@ describe BawWorkers::Harvest::GatherFiles do
     end
 
     it 'should success if file does exist' do
-      audio_file = File.expand_path File.join('.', 'spec', 'example_media', 'test-audio-mono.ogg')
-      sub_folder = File.expand_path File.join('..', 'tmp', '_workers.harvester.to_do_path', 'harvest_file_exists')
+      audio_file = File.expand_path audio_file_mono
+      sub_folder = File.expand_path File.join(harvest_to_do_path, 'harvest_file_exists')
 
       FileUtils.mkpath(sub_folder)
       dir_config = File.join(sub_folder, 'harvest.yml')
