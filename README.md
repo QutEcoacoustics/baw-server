@@ -114,28 +114,31 @@ Each `log_lvel` setting is independent of the others.
 ### Examples for running a worker
 
 
-Replace `'<settings_file>'` with the full path to the settings file to use for the worker.
+Replace `'settings_file'` with the full path to the settings file to use for the worker.
+Other parameters are described in the `Actions` section below.
 
 #### Standalone
 
-    bundle exec rake baw:action:analysis:standalone:from_files['<settings_file>']
-    bundle exec rake baw:action:audio_check:standalone:from_csv['<settings_file>']
-    bundle exec rake baw:action:harvest:standalone:from_files['<settings_file>']
+    bundle exec rake baw:analysis:standalone:from_files[settings_file,analysis_config_file]  # Analyse audio files directly
+    bundle exec rake baw:audio_check:standalone:from_csv[settings_file,csv_file]             # Enqueue audio recording file checks from a csv file to be processed directly
+    bundle exec rake baw:harvest:standalone:from_files[settings_file,harvest_dir]            # Harvest audio files directly
     # media action can only be run as a Resque dequeue worker
-    
 
 #### Resque enqueue
 
-    bundle exec rake baw:action:analysis:resque:from_files['<settings_file>']
-    bundle exec rake baw:action:audio_check:resque:from_csv['<settings_file>']
-    bundle exec rake baw:action:harvest:resque:from_files['<settings_file>']
+    bundle exec rake baw:analysis:resque:from_files[settings_file,analysis_config_file]      # Enqueue files to analyse using Resque
+    bundle exec rake baw:audio_check:resque:from_csv[settings_file,csv_file]                 # Enqueue audio recording file checks from a csv file to be processed using Resque worker
+    bundle exec rake baw:harvest:resque:from_files[settings_file,harvest_dir]                # Enqueue files to harvest using Resque
     # media action can only be run as a Resque dequeue worker
     
 #### Resque dequeue
 
 A Resque dequeue worker can process any queue with any type of job.
 
-    bundle exec rake baw:worker:run['<settings_file>'] 
+    bundle exec rake baw:worker:current[settings_file]                                       # List running workers
+    bundle exec rake baw:worker:run[settings_file]                                           # Run a resque:work with the specified settings file
+    bundle exec rake baw:worker:setup[settings_file]                                         # Run a resque:work with the specified settings file
+    bundle exec rake baw:worker:stop_all[settings_file]                                      # Quit running workers
 
 ## Actions
 
@@ -146,20 +149,20 @@ This project provides four actions. Actions are classes that implement a potenti
 Runs analysers over audio files. This action analyses an entire single audio file.
 
  1. Resque jobs can be queued from [baw-server](https://github.com/QutBioacoustics/baw-server) and processed later by a Resque dequeue worker.
- 1. A directory can be analysed manually by setting the `analyser_id` and `to_do_path` for the analysis action in the settings file.
+ 1. A directory can be analysed manually by providing the settings for a single audio file in yaml format for the the `analysis_config_file` parameter.
 
 ### Audio Check
 
 Runs checks on original audio recording files. This action checks an entire single audio file.
 
- - Gets audio files to check from a csv file in a specific format by specifying the setting `to_do_csv_path`.
+ - Gets audio files to check from a csv file in a specific format by specifying `csv_file`.
 
 ### Harvest
 
 Harvests audio files to be accessible by [baw-server](https://github.com/QutBioacoustics/baw-server) via the file storage system. 
 
  - The harvester will recognise valid audio files in two ways: file name in a recognised format, and optionally a directory config file. Depending on the file name format used, a directory config file may or may not be required.
- - Audio files can be harvested by specifying the setting `to_do_path` and the `config_file_name`.
+ - Audio files can be harvested by specifying the parameter `harvest_dir` and the `config_file_name` in the settings file.
 
 ### Media
 

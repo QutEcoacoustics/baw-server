@@ -6,6 +6,7 @@ describe BawWorkers::Analysis::WorkHelper do
   let(:work_helper) {
 
     BawWorkers::Analysis::WorkHelper.new(
+        audio_original,
         analysis_cache,
         BawWorkers::Config.logger_worker,
         custom_temp
@@ -21,19 +22,23 @@ describe BawWorkers::Analysis::WorkHelper do
   end
 
   it 'has parameters' do
-    result = work_helper.run(
-        {
-            command_format: '%{program_name} %{analysis_type} -source %{source_file} -config %{config_file} -output %{output_dir} -tempdir %{temp_dir}',
-            uuid: '00' + 'a' * 34,
-            program_name: 'time',
-            analysis_type: 'analysis_type',
-            source_file: 'source_file',
-            config_file: 'config_file',
-            output_dir: 'output_dir',
-            temp_dir: 'temp_dir'
-        })
+    analysis_params = {
+        command_format: 'ls -la analysis_type -source %{source_file} -config config_file -output %{output_dir} -tempdir %{temp_dir}',
+        uuid: '00' + 'a' * 34,
+        datetime_with_offset: Time.zone.parse('2014-11-18T16:05:00Z'),
+        original_format: 'wav'
+    }
+
+    # create file
+    target_file = audio_original.possible_paths(analysis_params)[1]
+    FileUtils.mkpath(File.dirname(target_file))
+    FileUtils.cp(audio_file_mono, target_file)
+
+    result = work_helper.run(analysis_params)
     expect(result).to_not be_blank
     expect(result.to_json).to include('_cached_analysis_jobs/00/00aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
+    expect(result.to_json).to include(analysis_params[:command_format])
+    expect(result.to_json).to include(analysis_params[:original_format])
   end
 
 end

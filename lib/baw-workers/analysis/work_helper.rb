@@ -3,11 +3,13 @@ module BawWorkers
     class WorkHelper
 
       # Create a new BawWorkers::Analysis::WorkHelper.
+      # @param [BawWorkers::Storage::AudioOriginal] original_store
       # @param [BawWorkers::Storage::AnalysisCache] analysis_cache
       # @param [Logger] logger
       # @param [String] temp_dir
       # @return [BawWorkers::Analysis::WorkHelper]
-      def initialize(analysis_cache, logger, temp_dir)
+      def initialize(original_store, analysis_cache, logger, temp_dir)
+        @original_store = original_store
         @analysis_cache = analysis_cache
         @logger = logger
         @temp_dir = temp_dir
@@ -28,18 +30,42 @@ module BawWorkers
 
         FileUtils.mkpath([working_dir, temp_dir])
 
+        # Get path to original audio file
+        if opts.include?(:datetime_with_offset) && !opts[:datetime_with_offset].blank? && !opts[:datetime_with_offset].is_a?(ActiveSupport::TimeWithZone)
+          opts[:datetime_with_offset] = Time.zone.parse(opts[:datetime_with_offset])
+        end
+
+        possible_original_files = @original_store.possible_paths(opts)
+        existing_original_files = @original_store.existing_paths(opts)
+
+        if existing_original_files.size < 1
+          msg = "No original audio files found in #{possible_original_files.join(', ')} using #{opts.to_json}."
+          fail BawAudioTools::Exceptions::AudioFileNotFoundError, msg
+        end
+
         # TODO: copy program to temp dir
         # each worker will have a unique temp dir
         # this might need to have content copied from an
         # analysis programs storage location
 
-        command = opts[:command_format] % opts
+        # merge source_file, output_dir, and temp_dir into opts
+        command_to_run = opts[:command_format]
+        if !command_to_run.include?('%{source_file}') || !command_to_run.include?('%{output_dir}') || !command_to_run.include?('%{temp_dir}')
+          fail ArgumentError, 'Command line must include placeholders for %{source_file}, %{output_dir}, and %{temp_dir}.'
+        end
+
+        modified_opts = opts.merge({
+                        source_file: "\"#{File.expand_path(existing_original_files[0])}\"",
+                        output_dir: "\"#{File.expand_path(working_dir)}\"",
+                        temp_dir: "\"#{File.expand_path(temp_dir)}\"",
+                    })
+
+        command = command_to_run % modified_opts
         execute_result = execute(command, working_dir)
 
         {
             execution_result: execute_result,
-            working_dir: working_dir,
-            temp_dir: temp_dir
+            arguments: modified_opts
         }
       end
 

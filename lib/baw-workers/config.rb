@@ -30,7 +30,9 @@ module BawWorkers
           opts[:settings_file] = File.join(File.dirname(__FILE__), '..', 'settings', 'settings.default.yml')
         end
 
-        settings_file = opts[:settings_file]
+        fail BawAudioTools::Exceptions::FileNotFoundError, "Settings file could not be found: '#{opts[:settings_file]}'." unless File.file?(opts[:settings_file])
+
+        settings_file = File.expand_path(opts[:settings_file])
         settings_namespace = 'settings'
 
         BawWorkers::Settings.configure(settings_file, settings_namespace)
@@ -188,7 +190,7 @@ module BawWorkers
                 configured: is_redis,
                 namespace: is_redis ? Resque.redis.namespace.to_s : nil,
                 connection: is_redis ? (is_test ? 'fake' : BawWorkers::Settings.resque.connection) : nil,
-                info: Resque.info
+                info: is_redis ? Resque.info : nil
             },
             resque_worker: {
                 running: is_resque_worker,

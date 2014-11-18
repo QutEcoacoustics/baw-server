@@ -54,6 +54,8 @@ module BawWorkers
         # @param [String] csv_file
         # @return [Array<Hash>] array of hashes representing operations performed
         def action_perform_rake(csv_file)
+          validate_path(csv_file)
+
           successes = []
           failures = []
           BawWorkers::AudioCheck::CsvHelper.read_audio_recording_csv(csv_file) do |audio_params|
@@ -89,6 +91,8 @@ module BawWorkers
         # @param [String] csv_file
         # @return [Hash]
         def action_enqueue_rake(csv_file)
+          validate_path(csv_file)
+
           successes = []
           failures = []
           BawWorkers::AudioCheck::CsvHelper.read_audio_recording_csv(csv_file) do |audio_params|
