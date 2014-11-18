@@ -2,6 +2,7 @@ module BawAudioTools
   class AudioFfmpeg
 
     WARN_INDICATOR = '\[[^ ]+ @ [^ ]+\] '
+    WARN_ANALYSE_DURATION = 'max_analyze_duration [0-9]+ reached at .+'
     WARN_ESTIMATE_DURATION = 'Estimating duration from bitrate, this may be inaccurate'
     # e.g. [mp3 @ 0x2935600] overread, skip -6 enddists: -4 -4
     # e.g. [mp3 @ 0x3314600] overread, skip -5 enddists: -2 -2
@@ -10,6 +11,7 @@ module BawAudioTools
     REGEX_WARN_INDICATOR = /#{WARN_INDICATOR}/
     REGEX_WARN_DURATION = /#{WARN_INDICATOR}#{WARN_ESTIMATE_DURATION}/
     REGEX_WARN_OVER_READ = /#{WARN_INDICATOR}#{WARN_OVER_READ}/
+    REGEX_WARN_ANALYSE_DURATION = /#{WARN_INDICATOR}#{WARN_ANALYSE_DURATION}/
 
 
     # @param [String] ffmpeg_executable
@@ -83,8 +85,12 @@ module BawAudioTools
           mod_stderr = find_remove_warning(mod_stderr, REGEX_WARN_OVER_READ)
         end
 
+        if has_regex?(mod_stderr, REGEX_WARN_ANALYSE_DURATION)
+          mod_stderr = find_remove_warning(mod_stderr, REGEX_WARN_ANALYSE_DURATION)
+        end
+
         if !mod_stderr.blank? && mod_stderr.match(REGEX_WARN_INDICATOR)
-          fail Exceptions::FileCorruptError, "Ffmpeg output contained warning.\n\t#{execute_msg[:execute_msg]}"
+          fail Exceptions::FileCorruptError, "Ffmpeg output contained warning (e.g. [mp3 @ 0x2935600]).\n\t#{execute_msg[:execute_msg]}"
         end
 
       end

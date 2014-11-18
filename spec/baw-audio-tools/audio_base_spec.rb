@@ -41,6 +41,28 @@ describe BawAudioTools::AudioBase do
       expect(info).to include(:max_amplitude)
       expect(info.size).to eq(8)
     end
+
+    it 'ignores low level warnings for ffmpeg' do
+      input =
+          "[wav @ 0x1d35020] max_analyze_duration 5000000 reached at 5015510 microseconds
+[wav @ 0x1d35020] Estimating duration from bitrate, this may be inaccurate
+[mp3 @ 0x2935600] overread, skip -6 enddists: -4 -4"
+      expect {
+        audio_base.audio_ffmpeg.check_for_errors({stderr: input})
+      }.to_not raise_error
+    end
+
+    it 'fails on unknown warnings for ffmpeg' do
+      input =
+          "[wav @ 0x1d35020] max_analyze_duration 5000000 reached at 5015510 microseconds
+[wav @ 0x1d35020] Estimating duration from bitrate, this may be inaccurate
+[mp3 @ 0x2935600] overread, skip -6 enddists: -4 -4
+[wav @ 0x1d35020] this one is not known"
+      expect {
+        audio_base.audio_ffmpeg.check_for_errors({stderr: input})
+      }.to raise_error(BawAudioTools::Exceptions::FileCorruptError, /Ffmpeg output contained warning/)
+    end
+
   end
 
   context 'when modifying audio file' do
@@ -350,7 +372,7 @@ describe BawAudioTools::AudioBase do
       end
     end
   end
- 
+
   context 'verifying integrity' do
     context 'succeeds' do
       it 'processing valid .wv file' do
