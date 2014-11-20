@@ -37,9 +37,15 @@ module BawWorkers
         # @return [Hash] result information
         def action_perform(analysis_params)
           analysis_params_sym = BawWorkers::Analysis::WorkHelper.validate(analysis_params)
+
+          BawWorkers::Config.logger_worker.info(self.name) {
+            "Started performing analysis using '#{analysis_params_sym}'."
+          }
+
           runner = action_helper
+          result = nil
           begin
-            runner.run(analysis_params_sym)
+            result = runner.run(analysis_params_sym)
           rescue Exception => e
             BawWorkers::Config.logger_worker.error(self.name) { e }
             BawWorkers::Mail::Mailer.send_worker_error_email(
@@ -50,6 +56,12 @@ module BawWorkers
             )
             raise e
           end
+
+          BawWorkers::Config.logger_worker.info(self.name) {
+            "Completed performing analysis with result '#{result}'."
+          }
+
+          result
         end
 
         # Perform analysis on a single file.

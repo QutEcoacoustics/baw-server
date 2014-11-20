@@ -9,20 +9,24 @@ module BawWorkers
         to = BawWorkers::Settings.mailer.emails.required_recipients
         from = BawWorkers::Settings.mailer.emails.sender_address
         job = {job_class: klass, job_args: args, job_queue: queue_name}
-        error_hash = {error_message: error.message, error_backtrace: error.backtrace}
-        mail_ready = error_notification(to, from, job, error_hash)
+
+        mail_ready = error_notification(to, from, job, error)
         mail_ready.deliver
       end
 
       def error_notification(to, from, job, error)
+        fail ArgumentError, "Error is not a ruby error object #{error.inspect}." unless error.is_a?(StandardError)
+        fail ArgumentError, "From is not a string #{from.inspect}." unless from.is_a?(String)
+        fail ArgumentError, "To is not a string or Array #{to.inspect}." unless (to.is_a?(String) || to.is_a?(Array))
+        fail ArgumentError, "Job is not a hash #{job.inspect}." unless job.is_a?(Hash)
 
         details = {
             host: Socket.gethostname,
             job_class: job.blank? || !job.include?(:job_class) ? '(no job class available)' : job[:job_class],
             job_args: job.blank? || !job.include?(:job_args) ? '(no job args available)' : job[:job_args],
             job_queue: job.blank? || !job.include?(:job_queue) ? '(job queue not available)' : job[:job_queue],
-            error_message: error.blank? || !error.include?(:message) ? '(no message available)' : error[:message],
-            error_backtrace: error.blank? || !error.include?(:backtrace) ? '(no backtrace available)' : error[:backtrace],
+            error_message: error.blank? ? '(no message available)' : error.message,
+            error_backtrace: error.blank? ? ['(no backtrace available)'] : error.backtrace,
             generated_timestamp: Time.zone.now
         }
 
@@ -45,7 +49,7 @@ The error was:
 
 Error: #{details[:error_message]}
 
-Backtrace: #{details[:error_backtrace]}
+Backtrace: #{details[:error_backtrace].join("\n")}
 
 This email was generated at #{details[:generated_timestamp]}.
 
@@ -69,7 +73,7 @@ Regards, #{details[:host]}"
 
 <p>Error: #{details[:error_message]}</p>
 
-<pre>Backtrace: <code>#{details[:error_backtrace]}</code></pre>
+<pre>Backtrace: <code>#{details[:error_backtrace].join('<br>')}</code></pre>
 
 <p>This email was generated at #{details[:generated_timestamp]}.</p>
 

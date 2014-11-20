@@ -23,10 +23,11 @@ describe BawWorkers::Analysis::WorkHelper do
 
   it 'has parameters' do
     analysis_params = {
-        command_format: 'ls -la analysis_type -source %{source_file} -config config_file -output %{output_dir} -tempdir %{temp_dir}',
+        command_format: 'ls -la analysis_type -source %{source_file} -config %{config_file} -output %{output_dir} -tempdir %{temp_dir}',
         uuid: '00' + 'a' * 34,
         datetime_with_offset: '2014-11-18T16:05:00Z',
-        original_format: 'wav'
+        original_format: 'wav',
+        config_file: 'blah'
     }
 
     # create file
@@ -40,6 +41,7 @@ describe BawWorkers::Analysis::WorkHelper do
     result = work_helper.run(analysis_params)
     expect(result).to_not be_blank
     expect(result.to_json).to include('_cached_analysis_jobs/00/00aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
+    expect(result.to_json).to include('/tmp/custom_temp_dir/blah')
     expect(result.to_json).to include(analysis_params[:command_format])
     expect(result.to_json).to include(analysis_params[:original_format])
   end

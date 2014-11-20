@@ -117,9 +117,9 @@ module BawWorkers
         ActionMailer::Base.logger = BawWorkers::Config.logger_mailer
         ActionMailer::Base.raise_delivery_errors = true
         ActionMailer::Base.perform_deliveries = true
-        ActionMailer::Base.view_paths = [
-            File.expand_path(File.join(File.dirname(__FILE__), 'mail'))
-        ]
+        # ActionMailer::Base.view_paths = [
+        #     File.expand_path(File.join(File.dirname(__FILE__), 'mail'))
+        # ]
 
         if is_test
           ActionMailer::Base.delivery_method = :test

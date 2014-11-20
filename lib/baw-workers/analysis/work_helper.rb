@@ -55,11 +55,21 @@ module BawWorkers
         end
 
         modified_opts = opts.merge({
-                        source_file: "\"#{File.expand_path(existing_original_files[0])}\"",
-                        output_dir: "\"#{File.expand_path(working_dir)}\"",
-                        temp_dir: "\"#{File.expand_path(temp_dir)}\"",
-                    })
+                                       source_file: "\"#{File.expand_path(existing_original_files[0])}\"",
+                                       output_dir: "\"#{File.expand_path(working_dir)}\"",
+                                       temp_dir: "\"#{File.expand_path(temp_dir)}\""
+                                   })
 
+        # expand relative paths
+        if opts.include?(:executable_program)
+          modified_opts[:executable_program] = File.expand_path(modified_opts[:executable_program], BawWorkers::Settings.paths.working_dir)
+        end
+
+        if opts.include?(:config_file)
+          modified_opts[:config_file] = File.expand_path(modified_opts[:config_file], BawWorkers::Settings.paths.working_dir)
+        end
+
+        # format command and execute it
         command = command_to_run % modified_opts
         execute_result = execute(command, working_dir)
 
@@ -97,7 +107,10 @@ module BawWorkers
 
         logger = BawWorkers::MultiLogger.new(Logger.new(open_file))
         external_program = BawAudioTools::RunExternalProgram.new(timeout_sec, logger)
-        external_program.execute(command, false)
+
+        Dir.chdir(BawWorkers::Settings.paths.working_dir) do
+          external_program.execute(command, false)
+        end
       end
 
       # create the audio recording uuid folder in the cached analysis jobs directory

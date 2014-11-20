@@ -3,14 +3,26 @@ require 'socket'
 
 describe BawWorkers::Mail::Mailer do
   context 'test email' do
-    let(:to) {'test1@example.com'}
-    let(:from) {'test2@example.com'}
+    let(:to) { 'test1@example.com' }
+    let(:from) { 'test2@example.com' }
     let(:job) { {job_class: :job_class_message, job_args: :job_args_message, job_queue: :job_queue_message} }
-    let(:error) { {message: :test3, backtrace: :test4} }
+
+    let(:error) {
+
+      error = nil
+      begin
+        0 / 0
+      rescue => e
+        error = e
+      end
+
+      error
+    }
+
     let(:mail) { BawWorkers::Mail::Mailer.error_notification(to, from, job, error) }
 
     it 'renders the subject' do
-      expect(mail.subject).to eql("[#{Socket.gethostname}][worker exception prefix] #{error[:message]}")
+      expect(mail.subject).to eql("[#{Socket.gethostname}][worker exception prefix] #{error.message}")
     end
 
     it 'renders the receiver email' do
@@ -22,11 +34,11 @@ describe BawWorkers::Mail::Mailer do
     end
 
     it 'assigns job and error values' do
-      expect(mail.body.encoded).to match(job[:job_class].to_s)
-      expect(mail.body.encoded).to match(job[:job_args].to_s)
-      expect(mail.body.encoded).to match(job[:job_queue].to_s)
-      expect(mail.body.encoded).to match(error[:message].to_s)
-      expect(mail.body.encoded).to match(error[:backtrace].to_s)
+      expect(mail.body.encoded).to include(job[:job_class].to_s)
+      expect(mail.body.encoded).to include(job[:job_args].to_s)
+      expect(mail.body.encoded).to include(job[:job_queue].to_s)
+      expect(mail.body.encoded).to include(error.message)
+      expect(mail.body.encoded).to include(error.backtrace[0])
     end
 
     it 'sends an email' do
