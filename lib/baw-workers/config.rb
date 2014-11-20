@@ -126,7 +126,7 @@ module BawWorkers
           ActionMailer::Base.smtp_settings = nil
         else
           ActionMailer::Base.delivery_method = :smtp
-          ActionMailer::Base.smtp_settings = BawWorkers::Settings.mailer.smtp
+          ActionMailer::Base.smtp_settings = BawWorkers::Validation.deep_symbolize_keys(BawWorkers::Settings.mailer.smtp)
         end
 
         # configure complex attributes
