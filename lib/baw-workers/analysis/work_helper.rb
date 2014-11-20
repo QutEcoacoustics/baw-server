@@ -32,7 +32,7 @@ module BawWorkers
 
         # Get path to original audio file
         if opts.include?(:datetime_with_offset) && !opts[:datetime_with_offset].blank? && !opts[:datetime_with_offset].is_a?(ActiveSupport::TimeWithZone)
-          opts[:datetime_with_offset] = Time.zone.parse(opts[:datetime_with_offset])
+          opts[:datetime_with_offset] = Time.zone.parse(opts[:datetime_with_offset].to_s)
         end
 
         possible_original_files = @original_store.possible_paths(opts)

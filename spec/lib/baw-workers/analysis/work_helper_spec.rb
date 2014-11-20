@@ -25,12 +25,15 @@ describe BawWorkers::Analysis::WorkHelper do
     analysis_params = {
         command_format: 'ls -la analysis_type -source %{source_file} -config config_file -output %{output_dir} -tempdir %{temp_dir}',
         uuid: '00' + 'a' * 34,
-        datetime_with_offset: Time.zone.parse('2014-11-18T16:05:00Z'),
+        datetime_with_offset: '2014-11-18T16:05:00Z',
         original_format: 'wav'
     }
 
     # create file
-    target_file = audio_original.possible_paths(analysis_params)[1]
+    possible_path_params = analysis_params.dup
+    possible_path_params[:datetime_with_offset] = Time.zone.parse(possible_path_params[:datetime_with_offset])
+
+    target_file = audio_original.possible_paths(possible_path_params)[1]
     FileUtils.mkpath(File.dirname(target_file))
     FileUtils.cp(audio_file_mono, target_file)
 
