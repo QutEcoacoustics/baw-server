@@ -55,9 +55,9 @@ module BawWorkers
         end
 
         modified_opts = opts.merge({
-                                       source_file: "\"#{File.expand_path(existing_original_files[0])}\"",
-                                       output_dir: "\"#{File.expand_path(working_dir)}\"",
-                                       temp_dir: "\"#{File.expand_path(temp_dir)}\""
+                                       source_file: "#{File.expand_path(existing_original_files[0])}",
+                                       output_dir: "#{File.expand_path(working_dir)}",
+                                       temp_dir: "#{File.expand_path(temp_dir)}"
                                    })
 
         # expand relative paths
