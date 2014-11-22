@@ -79,7 +79,7 @@ module AWB
     BawWorkers::Config.logger_audio_tools = audio_tools_logger
 
     # BawWorkers setup
-    BawWorkers::Config.set_common
+    BawWorkers::Config.run_web(rails_logger, mailer_logger, resque_logger, audio_tools_logger, Settings, Rails.env.test?)
 
     # end custom setup
 
