@@ -99,7 +99,7 @@ module BawWorkers
         BawWorkers::Config.logger_audio_tools.level = BawWorkers::Settings.audio_tools.log_level.constantize
 
         # then configure attributes that depend on other attributes
-        BawWorkers::Config.file_info = FileInfo.new(BawWorkers::Config.audio_helper)
+
         Resque.logger = BawWorkers::Config.logger_worker
 
         # configure Resque
@@ -156,6 +156,8 @@ module BawWorkers
             BawWorkers::Settings.api,
             BawWorkers::Settings.endpoints)
 
+        BawWorkers::Config.file_info = FileInfo.new(BawWorkers::Config.audio_helper)
+
         # configure resque worker
         if is_resque_worker
 
@@ -211,6 +213,96 @@ module BawWorkers
         BawWorkers::Config.logger_worker.warn('BawWorkers::Config') { result.to_json }
       end
 
+      def run_web(core_logger, mailer_logger, resque_logger, audio_tools_logger, settings, is_test)
+        
+        # configure basic attributes first
+        BawWorkers::Config.temp_dir = File.expand_path(settings.paths.temp_dir)
+
+        BawWorkers::Config.original_audio_helper = BawWorkers::Storage::AudioOriginal.new(settings.paths.original_audios)
+        BawWorkers::Config.audio_cache_helper = BawWorkers::Storage::AudioCache.new(settings.paths.cached_audios)
+        BawWorkers::Config.spectrogram_cache_helper = BawWorkers::Storage::SpectrogramCache.new(settings.paths.cached_spectrograms)
+        BawWorkers::Config.dataset_cache_helper = BawWorkers::Storage::DatasetCache.new(settings.paths.cached_datasets)
+        BawWorkers::Config.analysis_cache_helper = BawWorkers::Storage::AnalysisCache.new(settings.paths.cached_analysis_jobs)
+
+        # configure logging
+        BawWorkers::Config.logger_worker = core_logger
+        BawWorkers::Config.logger_mailer = mailer_logger
+        BawWorkers::Config.logger_audio_tools = audio_tools_logger
+
+        # then configure attributes that depend on other attributes
+        Resque.logger = resque_logger
+
+        # configure Resque
+          if is_test
+            # use fake redis
+            Resque.redis = Redis.new
+          else
+            Resque.redis = settings.resque.connection
+          end
+          Resque.redis.namespace = settings.resque.namespace
+
+        # configure mailer
+        ActionMailer::Base.logger = BawWorkers::Config.logger_mailer
+        ActionMailer::Base.raise_delivery_errors = true
+        ActionMailer::Base.perform_deliveries = true
+
+        if is_test
+          ActionMailer::Base.delivery_method = :test
+          ActionMailer::Base.smtp_settings = nil
+        else
+          ActionMailer::Base.delivery_method = :smtp
+          ActionMailer::Base.smtp_settings = BawWorkers::Validation.deep_symbolize_keys(settings.mailer.smtp)
+        end
+
+        # configure complex attributes
+        BawWorkers::Config.audio_helper = BawAudioTools::AudioBase.from_executables(
+            settings.cached_audio_defaults,
+            BawWorkers::Config.logger_audio_tools,
+            BawWorkers::Config.temp_dir,
+            settings.audio_tools_timeout_sec,
+            {
+                ffmpeg: settings.audio_tools.ffmpeg_executable,
+                ffprobe: settings.audio_tools.ffprobe_executable,
+                mp3splt: settings.audio_tools.mp3splt_executable,
+                sox: settings.audio_tools.sox_executable,
+                wavpack: settings.audio_tools.wavpack_executable,
+                shntool: settings.audio_tools.shntool_executable
+            })
+
+        BawWorkers::Config.spectrogram_helper = BawAudioTools::Spectrogram.from_executables(
+            BawWorkers::Config.audio_helper,
+            settings.audio_tools.imagemagick_convert_executable,
+            settings.audio_tools.imagemagick_identify_executable,
+            settings.cached_spectrogram_defaults,
+            BawWorkers::Config.temp_dir)
+
+        BawWorkers::Config.file_info = FileInfo.new(BawWorkers::Config.audio_helper)
+
+        BawWorkers::Config.api_communicator = BawWorkers::ApiCommunicator.new(
+            BawWorkers::Config.logger_worker,
+            settings.api,
+            settings.endpoints)
+
+        result = {
+            settings: {
+                test: is_test
+            },
+            redis: {
+                namespace: Resque.redis.namespace.to_s,
+                connection: is_test ? 'fake' : settings.resque.connection,
+                info: Resque.info
+            },
+            logging: {
+                worker: BawWorkers::Config.logger_worker.level,
+                mailer: BawWorkers::Config.logger_mailer.level,
+                audio_tools: BawWorkers::Config.logger_audio_tools.level,
+                resque: Resque.logger.level
+            }
+        }
+
+        BawWorkers::Config.logger_worker.warn('BawWorkers::Config') { result.to_json }
+      end
+      
     end
   end
 end
