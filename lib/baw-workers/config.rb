@@ -278,11 +278,6 @@ module BawWorkers
 
         BawWorkers::Config.file_info = FileInfo.new(BawWorkers::Config.audio_helper)
 
-        BawWorkers::Config.api_communicator = BawWorkers::ApiCommunicator.new(
-            BawWorkers::Config.logger_worker,
-            settings.api,
-            settings.endpoints)
-
         result = {
             settings: {
                 test: is_test
