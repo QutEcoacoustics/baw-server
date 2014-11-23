@@ -87,7 +87,7 @@ class AudioEvent < ActiveRecord::Base
     query = AudioEvent.filter_audio_recording(query, params)
     query = AudioEvent.filter_paging(query, params)
 
-    query = query.select('audio_events.*, audio_recording.recorded_date, sites.name, sites.id, user.user_name, user.id')
+    query = query.select('"audio_events".*, "audio_recording"."recorded_date", "sites"."name", "sites"."id", "user"."user_name", "user"."id"')
     Rails.logger.info "AudioEvent filtered: #{query.to_sql}"
     query
   end
@@ -288,7 +288,7 @@ class AudioEvent < ActiveRecord::Base
         # remove the association, otherwise it tries to create it and fails (as it already exists)
         tagging.tag = nil
         tagging.tag_id = existing_tag.id
-        self.tags.reject! { |x| x.text == existing_tag.text}
+        #self.tags.reject! { |x| x.text == existing_tag.text}
       end
     end
 

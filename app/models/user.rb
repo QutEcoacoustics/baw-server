@@ -129,7 +129,7 @@ class User < ActiveRecord::Base
   def inaccessible_projects
     user_projects = self.projects.map { |project| project.id }.to_a
 
-    query = Project.scoped
+    query = Project.all
 
     unless user_projects.blank?
       query = query.where('id NOT IN (?)', user_projects)
@@ -367,7 +367,7 @@ class User < ActiveRecord::Base
       where(authentication_token: authentication_token).first
     end
   end
- 
+
   # Store the current_user id in the thread so it can be accessed by models
   def self.stamper=(object)
     object_stamper = object.is_a?(ActiveRecord::Base) ? object.send("#{object.class.primary_key}".to_sym) : object

@@ -172,7 +172,7 @@ resource 'Media' do
 
     example 'MEDIA (as reader) checking default json format - 200', document: true do
       do_request
-      status.should eq(200), "expected status #{200} but was #{status}. Response body was #{response_body}"
+      expect(status).to eq(200), "expected status #{200} but was #{status}. Response body was #{response_body}"
 
       json_paths = [
           'meta',
@@ -265,7 +265,7 @@ resource 'Media' do
 
     example 'MEDIA (as reader) checking modified json format - 200', document: true do
       do_request
-      status.should eq(200), "expected status #{200} but was #{status}. Response body was #{response_body}"
+      expect(status).to eq(200), "expected status #{200} but was #{status}. Response body was #{response_body}"
 
       json_paths = [
           'meta',
@@ -340,9 +340,9 @@ resource 'Media' do
 
     example 'MEDIA (as reader) checking modified json format - 200', document: true do
       do_request
-      status.should eq(200), "expected status #{200} but was #{status}. Response body was #{response_body}"
-      response_body.should include('audio/mpeg')
-      response_body.should_not include('audio/mp3')
+      expect(status).to eq(200), "expected status #{200} but was #{status}. Response body was #{response_body}"
+      expect(response_body).to include('audio/mpeg')
+      expect(response_body).not_to include('audio/mp3')
 
       # not sure how to test that duration_seconds returns an unquoted number
       #parsed = JsonSpec::Helpers::parse_json(response_body)

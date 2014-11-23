@@ -31,7 +31,7 @@ gem 'sass-rails', '~> 4.0.3'
 # Use Uglifier as compressor for JavaScript assets
 gem 'uglifier', '>= 1.3.0'
 # Use CoffeeScript for .js.coffee assets and views
-gem 'coffee-rails', '~> 4.0.0'
+gem 'coffee-rails', '~> 4.1.0'
 # See https://github.com/sstephenson/execjs#readme for more supported runtimes
 # gem 'therubyracer',  platforms: :ruby
 
@@ -157,6 +157,7 @@ group :development, :test do
   gem 'rspec-rails'
   gem 'guard'
   gem 'listen'
+  gem 'fakeredis', require: 'fakeredis/rspec'
   #gem 'debugger'
 end
 
@@ -169,13 +170,13 @@ group :test do
   gem 'rspec'
   gem 'simplecov',  require: false
   gem 'shoulda-matchers'
+  gem 'rspec-collection_matchers'
   gem 'launchy'
   gem 'json_spec'
   gem 'database_cleaner'
   gem 'webmock'
   gem 'coveralls', require: false
   gem 'codeclimate-test-reporter', require: nil
-  gem 'fakeredis', require: 'fakeredis/rspec'
 
   # bundle exec rake doc:rails generates the API under doc/api.
   gem 'sdoc', '~> 0.4.0'

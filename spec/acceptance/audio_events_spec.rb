@@ -12,7 +12,7 @@ def library_request(settings = {})
   example "#{description} - #{expected_status}", :document => document do
     do_request
 
-    status.should eq(expected_status), "Requested #{path} expecting status #{expected_status} but got status #{status}. Response body was #{response_body}"
+    expect(status).to eq(expected_status), "Requested #{path} expecting status #{expected_status} but got status #{status}. Response body was #{response_body}"
 
     unless expected_json_path.blank?
       response_body.should have_json_path(expected_json_path), "could not find #{expected_json_path} in #{response_body}"
@@ -166,10 +166,10 @@ resource 'AudioEvents' do
 
     example 'LIST (with offsets as reader) - 200', :document => true do
       do_request
-      status.should == 200
-      response_body.should have_json_path('1/start_time_seconds')
+      expect(status).to eq(200)
+      expect(response_body).to have_json_path('1/start_time_seconds')
       # should only return four
-      response_body.should have_json_size(4)
+      expect(response_body).to have_json_size(4)
       # TODO: check the values of the events that are returned
     end
   end

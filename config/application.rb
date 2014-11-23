@@ -76,7 +76,7 @@ module AWB
     BawWorkers::Config.logger_audio_tools = audio_tools_logger
 
     # BawWorkers setup
-    BawWorkers::Config.run_web(rails_logger, mailer_logger, resque_logger, audio_tools_logger, Settings, Rails.env.test?)
+    BawWorkers::Config.run_web(rails_logger, mailer_logger, resque_logger, audio_tools_logger, Settings, Rails.env.test? || Rails.env.development?)
 
     # end custom setup
 
@@ -95,6 +95,9 @@ module AWB
     # in your app. As such, your models will need to explicitly whitelist or blacklist accessible
     # parameters by using an attr_accessible or attr_protected declaration.
     config.active_record.whitelist_attributes = true
+
+    # Raise exception on mass assignment protection for Active Record models
+    config.active_record.mass_assignment_sanitizer = :strict
 
     # Set Time.zone default to the specified zone and make Active Record auto-convert to this zone.
     # Run "rake -D time" for a list of tasks for finding time zone names. Default is UTC.

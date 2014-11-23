@@ -18,7 +18,7 @@ class Dataset < ActiveRecord::Base
   has_and_belongs_to_many :sites, uniq: true
   has_many :jobs, inverse_of: :dataset
 
-  before_save :generate_dataset_result
+  #before_save :generate_dataset_result
 
   has_attached_file :dataset_result
 
@@ -193,7 +193,7 @@ class Dataset < ActiveRecord::Base
     time_format_string = '%H:%M:%S'
     date_and_time_format_string = date_format_string+'T'+time_format_string
 
-    recordings = audio_recording.scoped
+    recordings = audio_recording.all
 
     # sites
     unless dataset_metadata.site_ids.blank?
@@ -232,6 +232,6 @@ class Dataset < ActiveRecord::Base
     end
 
     #puts recordings.explain
-    recordings.select([:id, :uuid, :duration_seconds, :recorded_date])
+    recordings.select(:id, :uuid, :duration_seconds, :recorded_date)
   end
 end

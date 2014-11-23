@@ -316,7 +316,7 @@ EXTRACT(DAY FROM recorded_date) as extracted_day')
         error_class = error_class_string.constantize
 
         case error_class_string
-          when 'ActiveResource::BadRequest'
+          when 'ActionController::BadRequest'
             fail error_class.new(response)
 
           when 'ActiveRecord::RecordNotUnique'

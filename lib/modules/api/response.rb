@@ -214,13 +214,13 @@ module Api
       if filter_query.has_paging_params?
 
         # execute a count against entire set without paging
-        total = new_query.count
+        total = new_query.size
 
         # add paging
         new_query = filter_query.query_paging(new_query)
 
         # execute a count for this page only
-        count = new_query.count
+        count = new_query.size
 
         # update options
         opts.merge!(
