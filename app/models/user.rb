@@ -389,7 +389,7 @@ class User < ActiveRecord::Base
     # WARNING: if this raises an error, the user will not be created and the page will be redirected to the home page
     # notify us of new user sign ups
     user_info_hash = {name: self.user_name, email: self.email}
-    user_info = DataClass::NewUserInfo.new
+    user_info = DataClass::NewUserInfo.new(user_info_hash)
     PublicMailer.new_user_message(self, user_info)
   end
 

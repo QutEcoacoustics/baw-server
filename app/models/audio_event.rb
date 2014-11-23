@@ -76,6 +76,7 @@ class AudioEvent < ActiveRecord::Base
     #.joins(:tags, :owner, audio_recording: {site: {projects: :permissions}})
 
     # eager load tags and projects
+    # @see http://stackoverflow.com/questions/24397640/rails-nested-includes-on-active-records
     query = AudioEvent
     .includes([:creator, :tags, audio_recording: {site: {projects: :permissions}}])
     .check_permissions(user)
@@ -296,7 +297,7 @@ class AudioEvent < ActiveRecord::Base
     # if self.taggings is empty, and self.tags is not, create the taggings based on the tags
     if self.taggings.blank? && !self.tags.blank?
       self.tags.each do |tag|
-        self.taggings.push(Tagging.new(tag_id:tag.id))
+        self.taggings.push(Tagging.new(tag_id: tag.id))
       end
     end
 
