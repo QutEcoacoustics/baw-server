@@ -103,12 +103,12 @@ module Api
     # @param [Object] item_resource
     # @return [String] json
     def respond_modify(item_resource)
-      extra_fields = []
+      extra_hash = {}
       if defined?(api_custom_response) == 'method'
-        item_resource, extra_fields = api_custom_response(item_resource)
+        item_resource, extra_hash = api_custom_response(item_resource)
       end
       fields = item_resource.class.filter_settings[:render_fields]
-      item_resource.as_json(only: fields + extra_fields)
+      item_resource.as_json(only: fields).merge(extra_hash)
     end
 
   end

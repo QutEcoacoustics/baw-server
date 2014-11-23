@@ -78,7 +78,8 @@ class AudioEvent < ActiveRecord::Base
     # eager load tags and projects
     # @see http://stackoverflow.com/questions/24397640/rails-nested-includes-on-active-records
     query = AudioEvent
-    .includes([:creator, :tags, audio_recording: {site: {projects: :permissions}}])
+    .includes(:creator, :tags, audio_recording: [{site: [{projects: :permissions}]}])
+    .joins(:creator, :tags, audio_recording: [{site: [{projects: :permissions}]}])
     .check_permissions(user)
 
     query = AudioEvent.filter_reference(query, params)
@@ -88,7 +89,7 @@ class AudioEvent < ActiveRecord::Base
     query = AudioEvent.filter_audio_recording(query, params)
     query = AudioEvent.filter_paging(query, params)
 
-    query = query.select('"audio_events".*, "audio_recording"."recorded_date", "sites"."name", "sites"."id", "user"."user_name", "user"."id"')
+    query = query.select('"audio_events".*, "audio_recordings"."recorded_date", "sites"."name", "sites"."id", "users"."user_name", "users"."id"')
     Rails.logger.info "AudioEvent filtered: #{query.to_sql}"
     query
   end

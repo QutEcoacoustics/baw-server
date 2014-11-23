@@ -14,6 +14,6 @@ describe TagsController, :type => :routing do
     it { expect(put('/tags/1')).to route_to('errors#route_error', requested_route: 'tags/1') }
     it { expect(delete('/tags/1')).to route_to('errors#route_error', requested_route: 'tags/1') }
 
-    it { expect(get('/tags?filter=koala,bellow')).to route_to('tags#index', format: 'json')}
+    it { expect(get('/tags?filter=koala,bellow')).to route_to('tags#index', format: 'json', filter: 'koala,bellow')}
   end
 end

@@ -183,16 +183,17 @@ class SitesController < ApplicationController
 
   def api_custom_response(site)
     # TODO: does this needs to know about and change based on projections?
-    # TODO: this causes a deprecation warning for writing arbitrary attributes to a model
-    site.project_ids = Site.where(id: site.id).first.projects.select(:id)
 
     site.update_location_obfuscated(current_user)
-    site.location_obfuscated = site.location_obfuscated
 
-    site.custom_latitude = site.latitude
-    site.custom_longitude = site.longitude
+    site_hash = site.serializable_hash
 
-    [site, [:project_ids, :location_obfuscated, :custom_latitude, :custom_longitude]]
+    site_hash[:project_ids] = Site.where(id: site.id).first.projects.select(:id)
+    site_hash[:location_obfuscated] = site.location_obfuscated
+    site_hash[:custom_latitude] = site.latitude
+    site_hash[:custom_longitude] = site.longitude
+
+    [site, site_hash]
   end
 
   def get_user_sites
