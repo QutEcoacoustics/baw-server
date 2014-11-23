@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe RangeRequest do
+describe RangeRequest, :type => :model do
 
   let(:range_request) { RangeRequest.new }
 
@@ -96,24 +96,24 @@ describe RangeRequest do
   it 'should succeed with: [] without: [single range, multiple ranges, modified, match, match range]' do
     info = range_request.build_response(range_options, mock_request)
     expect(info[:response_code]).to eq(RangeRequest::HTTP_CODE_OK)
-    expect(info[:response_is_range]).to be_false
-    expect(info[:is_multipart]).to be_false
+    expect(info[:response_is_range]).to be_falsey
+    expect(info[:is_multipart]).to be_falsey
   end
 
   it 'should succeed with: [single range] without: [multiple ranges,modified, match, match range]' do
     mock_request.headers[RangeRequest::HTTP_HEADER_RANGE] = 'bytes=0-10'
     info = range_request.build_response(range_options, mock_request)
     expect(info[:response_code]).to eq(RangeRequest::HTTP_CODE_PARTIAL_CONTENT)
-    expect(info[:response_is_range]).to be_true
-    expect(info[:is_multipart]).to be_false
+    expect(info[:response_is_range]).to be_truthy
+    expect(info[:is_multipart]).to be_falsey
   end
 
   it 'should succeed with: [multiple ranges] without: [single range, modified, match, match range]' do
     mock_request.headers[RangeRequest::HTTP_HEADER_RANGE] = 'bytes=,-,-500,0-10,50-,'
     info = range_request.build_response(range_options, mock_request)
     expect(info[:response_code]).to eq(RangeRequest::HTTP_CODE_PARTIAL_CONTENT)
-    expect(info[:response_is_range]).to be_true
-    expect(info[:is_multipart]).to be_true
+    expect(info[:response_is_range]).to be_truthy
+    expect(info[:is_multipart]).to be_truthy
 
     expect(info[:range_start_bytes][0]).to eq(0)
     expect(info[:range_end_bytes][0]).to eq(range_request.max_range_size)
@@ -139,16 +139,16 @@ describe RangeRequest do
     mock_request.headers[RangeRequest::HTTP_HEADER_IF_MODIFIED_SINCE] = audio_file_mono_modified_time.advance(seconds: -100).httpdate
     info = range_request.build_response(range_options, mock_request)
     expect(info[:response_code]).to eq(RangeRequest::HTTP_CODE_OK)
-    expect(info[:response_is_range]).to be_false
-    expect(info[:is_multipart]).to be_false
+    expect(info[:response_is_range]).to be_falsey
+    expect(info[:is_multipart]).to be_falsey
   end
 
   it 'should succeed with if-modified-since later than file modified time' do
     mock_request.headers[RangeRequest::HTTP_HEADER_IF_MODIFIED_SINCE] = audio_file_mono_modified_time.advance(seconds: 100).httpdate
     info = range_request.build_response(range_options, mock_request)
     expect(info[:response_code]).to eq(RangeRequest::HTTP_CODE_NOT_MODIFIED)
-    expect(info[:response_is_range]).to be_false
-    expect(info[:is_multipart]).to be_false
+    expect(info[:response_is_range]).to be_falsey
+    expect(info[:is_multipart]).to be_falsey
   end
 
   it 'should succeed with if-modified-since matching file modified time' do
@@ -173,16 +173,16 @@ describe RangeRequest do
     }
 
     expect(info[:response_code]).to eq(RangeRequest::HTTP_CODE_NOT_MODIFIED), info_msg.to_json
-    expect(info[:response_is_range]).to be_false
-    expect(info[:is_multipart]).to be_false
+    expect(info[:response_is_range]).to be_falsey
+    expect(info[:is_multipart]).to be_falsey
   end
 
   it 'should succeed with if-modified-since invalid time' do
     mock_request.headers[RangeRequest::HTTP_HEADER_IF_MODIFIED_SINCE] = 'blah blah blah'
     info = range_request.build_response(range_options, mock_request)
     expect(info[:response_code]).to eq(RangeRequest::HTTP_CODE_OK)
-    expect(info[:response_is_range]).to be_false
-    expect(info[:is_multipart]).to be_false
+    expect(info[:response_is_range]).to be_falsey
+    expect(info[:is_multipart]).to be_falsey
   end
 
   it 'should succeed with a single range not modified' do
@@ -190,8 +190,8 @@ describe RangeRequest do
     mock_request.headers[RangeRequest::HTTP_HEADER_RANGE] = 'bytes=50-100'
     info = range_request.build_response(range_options, mock_request)
     expect(info[:response_code]).to eq(RangeRequest::HTTP_CODE_PARTIAL_CONTENT)
-    expect(info[:response_is_range]).to be_true
-    expect(info[:is_multipart]).to be_false
+    expect(info[:response_is_range]).to be_truthy
+    expect(info[:is_multipart]).to be_falsey
     expect(info[:range_start_bytes][0]).to eq(50)
     expect(info[:range_end_bytes][0]).to eq(100)
   end
@@ -201,8 +201,8 @@ describe RangeRequest do
     mock_request.headers[RangeRequest::HTTP_HEADER_RANGE] = 'bytes=50-100'
     info = range_request.build_response(range_options, mock_request)
     expect(info[:response_code]).to eq(RangeRequest::HTTP_CODE_OK)
-    expect(info[:response_is_range]).to be_false
-    expect(info[:is_multipart]).to be_false
+    expect(info[:response_is_range]).to be_falsey
+    expect(info[:is_multipart]).to be_falsey
   end
 
   it 'should succeed with a If-Unmodified-Since after file last modified time' do
@@ -210,8 +210,8 @@ describe RangeRequest do
     mock_request.headers[RangeRequest::HTTP_HEADER_RANGE] = 'bytes=50-100'
     info = range_request.build_response(range_options, mock_request)
     expect(info[:response_code]).to eq(RangeRequest::HTTP_CODE_PARTIAL_CONTENT)
-    expect(info[:response_is_range]).to be_true
-    expect(info[:is_multipart]).to be_false
+    expect(info[:response_is_range]).to be_truthy
+    expect(info[:is_multipart]).to be_falsey
     expect(info[:range_start_bytes][0]).to eq(50)
     expect(info[:range_end_bytes][0]).to eq(100)
   end
@@ -221,8 +221,8 @@ describe RangeRequest do
     mock_request.headers[RangeRequest::HTTP_HEADER_RANGE] = 'bytes=50-100'
     info = range_request.build_response(range_options, mock_request)
     expect(info[:response_code]).to eq(RangeRequest::HTTP_CODE_PRECONDITION_FAILED)
-    expect(info[:response_is_range]).to be_false
-    expect(info[:is_multipart]).to be_false
+    expect(info[:response_is_range]).to be_falsey
+    expect(info[:is_multipart]).to be_falsey
   end
 
   it 'should succeed with a single range and matching if-match header' do
@@ -230,8 +230,8 @@ describe RangeRequest do
     mock_request.headers[RangeRequest::HTTP_HEADER_RANGE] = 'bytes=50-100'
     info = range_request.build_response(range_options, mock_request)
     expect(info[:response_code]).to eq(RangeRequest::HTTP_CODE_PARTIAL_CONTENT)
-    expect(info[:response_is_range]).to be_true
-    expect(info[:is_multipart]).to be_false
+    expect(info[:response_is_range]).to be_truthy
+    expect(info[:is_multipart]).to be_falsey
     expect(info[:range_start_bytes][0]).to eq(50)
     expect(info[:range_end_bytes][0]).to eq(100)
   end
@@ -241,8 +241,8 @@ describe RangeRequest do
     mock_request.headers[RangeRequest::HTTP_HEADER_RANGE] = 'bytes=50-100'
     info = range_request.build_response(range_options, mock_request)
     expect(info[:response_code]).to eq(RangeRequest::HTTP_CODE_PARTIAL_CONTENT)
-    expect(info[:response_is_range]).to be_true
-    expect(info[:is_multipart]).to be_false
+    expect(info[:response_is_range]).to be_truthy
+    expect(info[:is_multipart]).to be_falsey
     expect(info[:range_start_bytes][0]).to eq(50)
     expect(info[:range_end_bytes][0]).to eq(100)
   end
@@ -252,8 +252,8 @@ describe RangeRequest do
     mock_request.headers[RangeRequest::HTTP_HEADER_RANGE] = 'bytes=50-100'
     info = range_request.build_response(range_options, mock_request)
     expect(info[:response_code]).to eq(RangeRequest::HTTP_CODE_PRECONDITION_FAILED)
-    expect(info[:response_is_range]).to be_false
-    expect(info[:is_multipart]).to be_false
+    expect(info[:response_is_range]).to be_falsey
+    expect(info[:is_multipart]).to be_falsey
     expect(info[:range_start_bytes].size).to eq(0)
   end
 
@@ -262,8 +262,8 @@ describe RangeRequest do
     mock_request.headers[RangeRequest::HTTP_HEADER_RANGE] = 'bytes=50-100'
     info = range_request.build_response(range_options, mock_request)
     expect(info[:response_code]).to eq(RangeRequest::HTTP_CODE_NOT_MODIFIED)
-    expect(info[:response_is_range]).to be_false
-    expect(info[:is_multipart]).to be_false
+    expect(info[:response_is_range]).to be_falsey
+    expect(info[:is_multipart]).to be_falsey
     expect(info[:range_start_bytes].size).to eq(0)
   end
 
@@ -272,8 +272,8 @@ describe RangeRequest do
     mock_request.headers[RangeRequest::HTTP_HEADER_RANGE] = 'bytes=50-100'
     info = range_request.build_response(range_options, mock_request)
     expect(info[:response_code]).to eq(RangeRequest::HTTP_CODE_NOT_MODIFIED)
-    expect(info[:response_is_range]).to be_false
-    expect(info[:is_multipart]).to be_false
+    expect(info[:response_is_range]).to be_falsey
+    expect(info[:is_multipart]).to be_falsey
     expect(info[:range_start_bytes].size).to eq(0)
   end
 
@@ -282,8 +282,8 @@ describe RangeRequest do
     mock_request.headers[RangeRequest::HTTP_HEADER_RANGE] = 'bytes=50-100'
     info = range_request.build_response(range_options, mock_request)
     expect(info[:response_code]).to eq(RangeRequest::HTTP_CODE_PARTIAL_CONTENT)
-    expect(info[:response_is_range]).to be_true
-    expect(info[:is_multipart]).to be_false
+    expect(info[:response_is_range]).to be_truthy
+    expect(info[:is_multipart]).to be_falsey
     expect(info[:range_start_bytes][0]).to eq(50)
     expect(info[:range_end_bytes][0]).to eq(100)
   end

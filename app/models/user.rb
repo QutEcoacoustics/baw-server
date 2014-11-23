@@ -388,8 +388,9 @@ class User < ActiveRecord::Base
   def special_after_create_actions
     # WARNING: if this raises an error, the user will not be created and the page will be redirected to the home page
     # notify us of new user sign ups
-    user_info = {name: self.user_name, email: self.email}
-    PublicMailer.new_user_message(self, DataClass::NewUserInfo.new(user_info))
+    user_info_hash = {name: self.user_name, email: self.email}
+    user_info = DataClass::NewUserInfo.new
+    PublicMailer.new_user_message(self, user_info)
   end
 
   def generate_authentication_token

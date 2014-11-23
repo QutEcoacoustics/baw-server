@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe TagsController do
+describe TagsController, :type => :routing do
   describe :routing do
 
     it { expect(get('/projects/1/sites/2/audio_recordings/3/audio_events/4/tags')).to route_to('errors#route_error', requested_route: 'projects/1/sites/2/audio_recordings/3/audio_events/4/tags') }

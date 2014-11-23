@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe DatasetsController do
+describe DatasetsController, :type => :routing do
   describe :routing do
 
     it { expect(post('/projects/1/datasets')).to route_to('datasets#create', project_id: '1') }

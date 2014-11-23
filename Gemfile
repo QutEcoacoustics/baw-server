@@ -83,7 +83,7 @@ gem 'pg'
 
 # MODELS
 # -------------------------------------
-gem 'validates_timeliness'
+gem 'jc-validates_timeliness'
 
 # https://github.com/delynn/userstamp
 # no changes in a long time, and we are very dependant on how this works

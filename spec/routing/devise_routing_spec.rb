@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe SessionsController do
+describe SessionsController, :type => :routing do
   describe :routing do
 
     it { expect(get('/my_account/sign_in')).to route_to('devise/sessions#new') }

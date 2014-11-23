@@ -3,17 +3,17 @@ class Project < ActiveRecord::Base
   include UserChange
 
   attr_accessible :description, :image, :name, :notes, :urn #,
-                  #:sign_in_level, :anonymous_level
+  #:sign_in_level, :anonymous_level
 
   # relationships
   belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_projects
   belongs_to :updater, class_name: 'User', foreign_key: :updater_id, inverse_of: :updated_projects
   belongs_to :deleter, class_name: 'User', foreign_key: :deleter_id, inverse_of: :deleted_projects
-
+ 
   has_many :permissions, inverse_of: :project
   accepts_nested_attributes_for :permissions
-  has_many :readers, through: :permissions, source: :user, conditions: "permissions.level = 'reader'", uniq: true
-  has_many :writers, through: :permissions, source: :user, conditions: "permissions.level = 'writer'", uniq: true
+  has_many :readers, -> { where("permissions.level = 'reader'").uniq }, through: :permissions, source: :user
+  has_many :writers, -> { where("permissions.level = 'writer'").uniq }, through: :permissions, source: :user
   has_and_belongs_to_many :sites, uniq: true
   has_many :datasets, inverse_of: :project
   has_many :jobs, through: :datasets

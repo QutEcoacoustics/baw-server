@@ -20,9 +20,9 @@ def standard_request(description, expected_status, expected_json_path = nil, doc
 
     message_prefix = "Requested #{the_request_method} #{the_request_path} expecting"
 
-    status.should eq(expected_status), "#{message_prefix} status #{expected_status} but got status #{status}. Response body was #{actual_response}"
+    expect(status).to eq(expected_status), "#{message_prefix} status #{expected_status} but got status #{status}. Response body was #{actual_response}"
 
-    actual_response.should have_json_path(expected_json_path), "#{message_prefix} to find '#{expected_json_path}' in '#{actual_response}'" unless expected_json_path.blank?
+    expect(actual_response).to have_json_path(expected_json_path), "#{message_prefix} to find '#{expected_json_path}' in '#{actual_response}'" unless expected_json_path.blank?
     # this check ensures that there is an assertion when the content is not blank.
     #expect(actual_response).to be_blank, "#{message_prefix} blank response, but got #{actual_response}" if response_body_content.blank? && expected_json_path.blank?
     expect(actual_response).to include(response_body_content), "#{message_prefix} to find '#{response_body_content}' in '#{actual_response}'" unless response_body_content.blank?
@@ -114,7 +114,7 @@ def do_checks(expected_status, opts = {})
 
   # this check ensures that there is an assertion when the content is not blank.
   expect(actual_response).to be_blank, "#{message_prefix} blank response, but got #{actual_response}" if opts[:response_body_content].blank? && opts[:expected_json_path].blank?
-  expect((data_format == :hash && data_present && actual_response_parsed_size == 1) || !data_present).to be_true, "#{message_prefix} no items in response, but got #{actual_response_parsed_size} items in #{actual_response} (type #{data_format})" if opts[:data_item_count].blank?
+  expect((data_format == :hash && data_present && actual_response_parsed_size == 1) || !data_present).to be_truthy, "#{message_prefix} no items in response, but got #{actual_response_parsed_size} items in #{actual_response} (type #{data_format})" if opts[:data_item_count].blank?
 
   expect(actual_response_parsed_size).to eq(opts[:data_item_count]), "#{message_prefix} count to be #{opts[:data_item_count]} but got #{actual_response_parsed_size} items in #{actual_response} (type #{data_format})" unless opts[:data_item_count].blank?
 
@@ -132,7 +132,7 @@ def do_checks(expected_status, opts = {})
     # RSpec also provides a =~ matcher for arrays that disregards differences in
     # the ordering between the actual and expected array.
     actual_ids = actual_response_parsed['data'].map { |x| x.include?('id') ? x['id'] : nil }
-    actual_ids.should =~ expected_unordered_ids
+    expect(actual_ids).to match(expected_unordered_ids)
 
     # actual_response_parsed.each_index do |index|
     #   expect(actual_response_parsed[index]['audio_event_id'])
@@ -220,7 +220,7 @@ end
 
 def check_hash_matches(expected, actual)
   expected.each do |expected_json_path|
-    actual.should have_json_path(expected_json_path), "Expected #{expected_json_path} in #{actual}"
+    expect(actual).to have_json_path(expected_json_path), "Expected #{expected_json_path} in #{actual}"
   end
 
   parsed = JsonSpec::Helpers::parse_json(actual)
@@ -269,15 +269,15 @@ def create_media_options(audio_recording)
 end
 
 def validate_media_response(content_type, check_accept_header = true)
-  status.should eq(200), "expected status 200 but was #{status}. Response body was #{response_body}"
-  response_headers['Content-Type'].should include(content_type)
-  response_headers['Accept-Ranges'].should eq('bytes') if check_accept_header
+  expect(status).to eq(200), "expected status 200 but was #{status}. Response body was #{response_body}"
+  expect(response_headers['Content-Type']).to include(content_type)
+  expect(response_headers['Accept-Ranges']).to eq('bytes') if check_accept_header
 
-  response_headers['Content-Transfer-Encoding'].should eq('binary') unless content_type == 'application/json'
-  response_headers['Content-Transfer-Encoding'].should be_nil if content_type == 'application/json'
+  expect(response_headers['Content-Transfer-Encoding']).to eq('binary') unless content_type == 'application/json'
+  expect(response_headers['Content-Transfer-Encoding']).to be_nil if content_type == 'application/json'
 
-  response_headers['Content-Disposition'].should start_with('inline; filename=') unless content_type == 'application/json'
-  response_headers['Content-Disposition'].should be_nil if content_type == 'application/json'
+  expect(response_headers['Content-Disposition']).to start_with('inline; filename=') unless content_type == 'application/json'
+  expect(response_headers['Content-Disposition']).to be_nil if content_type == 'application/json'
 end
 
 def check_common_request_items(audio_recording, content_type, check_accept_header = true)
@@ -309,7 +309,7 @@ def using_original_audio_custom(options, request, audio_recording, check_accept_
 
   # assert
   if actual_head_request || expected_head_request
-    response_body.size.should eq(0)
+    expect(response_body.size).to eq(0)
     if is_image
       options[:format] = default_spectrogram.extension
       options[:channel] = default_spectrogram.channel.to_i
@@ -320,7 +320,7 @@ def using_original_audio_custom(options, request, audio_recording, check_accept_
 
       cache_spectrogram_possible_paths = spectrogram_cache.possible_paths(options)
 
-      response_headers['Content-Length'].to_i.should eq(File.size(cache_spectrogram_possible_paths.first)) if check_content_length
+      expect(response_headers['Content-Length'].to_i).to eq(File.size(cache_spectrogram_possible_paths.first)) if check_content_length
     elsif is_audio
       options[:format] = default_audio.extension
       options[:channel] = default_audio.channel.to_i
@@ -328,9 +328,9 @@ def using_original_audio_custom(options, request, audio_recording, check_accept_
 
       cache_audio_possible_paths = audio_cache.possible_paths(options)
 
-      response_headers['Content-Length'].to_i.should eq(File.size(cache_audio_possible_paths.first)) if check_content_length
+      expect(response_headers['Content-Length'].to_i).to eq(File.size(cache_audio_possible_paths.first)) if check_content_length
     elsif response_headers['Content-Type'].include? 'application/json'
-      response_headers['Content-Length'].to_i.should be > 0
+      expect(response_headers['Content-Length'].to_i).to be > 0
       # TODO: files should not exist?
     else
       fail "Unrecognised content type: #{response_headers['Content-Type']}"
@@ -339,7 +339,7 @@ def using_original_audio_custom(options, request, audio_recording, check_accept_
     begin
       temp_file = File.join(Settings.paths.temp_dir, 'temp-media_controller_response')
       File.open(temp_file, 'wb') { |f| f.write(response_body) }
-      response_headers['Content-Length'].to_i.should eq(File.size(temp_file))
+      expect(response_headers['Content-Length'].to_i).to eq(File.size(temp_file))
     ensure
       File.delete temp_file if File.exists? temp_file
     end

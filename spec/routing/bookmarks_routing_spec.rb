@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe BookmarksController do
+describe BookmarksController, :type => :routing do
   describe :routing do
 
     it { expect(get('/bookmarks')).to route_to('bookmarks#index') }

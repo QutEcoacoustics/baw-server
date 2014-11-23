@@ -124,7 +124,7 @@ RSpec.configure do |config|
     FileUtils.rm_rf(Dir["#{Rails.root}/tmp/paperclip/[^.]*"])
   end
 
-  config.before(:each) do
+  config.before(:each) do |example|
     ActionMailer::Base.deliveries.clear
     DatabaseCleaner.start
     example_description = example.description

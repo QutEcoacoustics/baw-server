@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe 'MANAGE Scripts as admin user' do 
+describe 'MANAGE Scripts as admin user', :type => :feature do 
   before(:each) do
     admin = FactoryGirl.create(:admin)
     @script = FactoryGirl.create(:script)
@@ -10,13 +10,13 @@ describe 'MANAGE Scripts as admin user' do
   it 'lists all scripts' do
     # Run the generator again with the --webrat flag if you want to use webrat methods/matchers
     visit scripts_path
-    page.should have_content('Scripts')
+    expect(page).to have_content('Scripts')
   end
 
   it 'shows script account details' do
     script = FactoryGirl.create(:script)
     visit script_path(script)
-    page.should have_content(script.name)
+    expect(page).to have_content(script.name)
   end
 
   it 'creates script when filling out form correctly' do
@@ -31,14 +31,14 @@ describe 'MANAGE Scripts as admin user' do
     attach_file('script[data_file]', 'public/files/script/settings_file.txt')
 
     click_button 'Create Script'
-    page.should have_content('test name')
+    expect(page).to have_content('test name')
   end
 
   it 'Fails to create new script when filling out form incomplete' do
     visit new_script_path
     click_button 'Create Script'
     #save_and_open_page
-    page.should have_content('Please review the problems below:')
+    expect(page).to have_content('Please review the problems below:')
   end
 
   it 'updates script when filling out form correctly' do
@@ -54,13 +54,13 @@ describe 'MANAGE Scripts as admin user' do
     attach_file('script[data_file]', 'public/files/script/settings_file.txt')
 
     click_button 'Update Script'
-    page.should have_content('test name')
+    expect(page).to have_content('test name')
   end
 
   it 'shows script account details' do
     script = FactoryGirl.create(:script)
     visit edit_script_path(script)
-    page.should have_content(script.name)
+    expect(page).to have_content(script.name)
   end
 
   #it 'deletes a script' do
@@ -70,7 +70,7 @@ describe 'MANAGE Scripts as admin user' do
   #end
 end
 
-describe 'MANAGE Scripts as user' do
+describe 'MANAGE Scripts as user', :type => :feature do
   before(:each) do
     user = FactoryGirl.create(:user)
       login_as user, scope: :user
@@ -79,13 +79,13 @@ describe 'MANAGE Scripts as user' do
   it 'denies access' do
     script = FactoryGirl.create(:script)
     visit scripts_path
-    page.should have_content(I18n.t('devise.failure.unauthorized'))
+    expect(page).to have_content(I18n.t('devise.failure.unauthorized'))
     visit script_path(script)
-    page.should have_content(I18n.t('devise.failure.unauthorized'))
+    expect(page).to have_content(I18n.t('devise.failure.unauthorized'))
     visit new_script_path
-    page.should have_content(I18n.t('devise.failure.unauthorized'))
+    expect(page).to have_content(I18n.t('devise.failure.unauthorized'))
     visit edit_script_path(script)
-    page.should have_content(I18n.t('devise.failure.unauthorized'))
+    expect(page).to have_content(I18n.t('devise.failure.unauthorized'))
   end
 
 

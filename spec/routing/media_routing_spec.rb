@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe MediaController do
+describe MediaController, :type => :routing do
   describe :routing do
 
     it { expect(get('/projects/1/sites/2/audio_recordings/3/media.json')).to route_to('errors#route_error', requested_route: 'projects/1/sites/2/audio_recordings/3/media', format: 'json') }
