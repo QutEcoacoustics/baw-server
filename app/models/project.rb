@@ -36,9 +36,6 @@ class Project < ActiveRecord::Base
   validates_format_of :urn, with: /\Aurn:[a-z0-9][a-z0-9-]{0,31}:[a-z0-9()+,\-.:=@;$_!*'%\/?#]+\z/, message: 'urn %{value} is not valid, must be in format urn:<name>:<path>', allow_blank: true, allow_nil: true
   validates_attachment_content_type :image, content_type: /\Aimage\/(jpg|jpeg|pjpeg|png|x-png|gif)\z/, message: 'file type %{value} is not allowed (only jpeg/png/gif images)'
 
-  # scopes
-  scope :none, where('1 = 0') # for getting an empty set
-
   # Define filter api settings
   def self.filter_settings
     {

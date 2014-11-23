@@ -23,7 +23,7 @@ class ApplicationController < ActionController::Base
   # Ruby and Rails errors - do not reveal information about the error
   rescue_from ActiveRecord::RecordNotFound, with: :record_not_found_response
   rescue_from ActiveRecord::RecordNotUnique, with: :record_not_unique_response
-  rescue_from ActiveResource::BadRequest, with: :bad_request_response
+  rescue_from ActionController::BadRequest, with: :bad_request_response
 
   # Custom errors - these use the message in the error
   # RoutingArgumentError - error handling for routes that take a combination of attributes
@@ -42,7 +42,9 @@ class ApplicationController < ActionController::Base
   # error handling for cancan authorisation checks
   rescue_from CanCan::AccessDenied, with: :access_denied_response
 
-  protect_from_forgery
+  # Prevent CSRF attacks by raising an exception.
+  # For APIs, you may want to use :null_session instead.
+  protect_from_forgery with: :exception
 
   skip_before_filter :verify_authenticity_token, if: :json_request?
 

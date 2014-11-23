@@ -36,8 +36,8 @@ class User < ActiveRecord::Base
   # relations
   # TODO tidy up user project accessing - too many ways to do the same thing
   has_many :accessible_projects, through: :permissions, source: :project
-  has_many :readable_projects, through: :permissions, source: :project, conditions: 'permissions.level = reader'
-  has_many :writable_projects, through: :permissions, source: :project, conditions: 'permissions.level = writer'
+  has_many :readable_projects, -> { where('permissions.level = reader') }, through: :permissions, source: :project
+  has_many :writable_projects, -> { where('permissions.level = writer') }, through: :permissions, source: :project
 
   # relations for creator, updater, deleter, and others.
   has_many :created_audio_events, class_name: 'AudioEvent', foreign_key: :creator_id, inverse_of: :creator
@@ -60,8 +60,8 @@ class User < ActiveRecord::Base
   has_many :created_bookmarks, class_name: 'Bookmark', foreign_key: :creator_id, inverse_of: :creator
   has_many :updated_bookmarks, class_name: 'Bookmark', foreign_key: :updater_id, inverse_of: :updater
 
-  has_many :created_datasets, class_name: 'Dataset', foreign_key: :creator_id, inverse_of: :creator, include: :project
-  has_many :updated_datasets, class_name: 'Dataset', foreign_key: :updater_id, inverse_of: :updater, include: :project
+  has_many :created_datasets, -> { includes :project}, class_name: 'Dataset', foreign_key: :creator_id, inverse_of: :creator
+  has_many :updated_datasets, -> { includes :project}, class_name: 'Dataset', foreign_key: :updater_id, inverse_of: :updater
 
   has_many :created_jobs, class_name: 'Job', foreign_key: :creator_id, inverse_of: :creator
   has_many :updated_jobs, class_name: 'Job', foreign_key: :updater_id, inverse_of: :updater
@@ -388,7 +388,8 @@ class User < ActiveRecord::Base
   def special_after_create_actions
     # WARNING: if this raises an error, the user will not be created and the page will be redirected to the home page
     # notify us of new user sign ups
-    PublicMailer.new_user_message(self, DataClass::NewUserInfo.new(name: self.user_name, email: self.email))
+    user_info = {name: self.user_name, email: self.email}
+    PublicMailer.new_user_message(self, DataClass::NewUserInfo.new(user_info))
   end
 
   def generate_authentication_token
