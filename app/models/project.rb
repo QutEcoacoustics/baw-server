@@ -9,7 +9,7 @@ class Project < ActiveRecord::Base
   belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_projects
   belongs_to :updater, class_name: 'User', foreign_key: :updater_id, inverse_of: :updated_projects
   belongs_to :deleter, class_name: 'User', foreign_key: :deleter_id, inverse_of: :deleted_projects
- 
+
   has_many :permissions, inverse_of: :project
   accepts_nested_attributes_for :permissions
   has_many :readers, -> { where("permissions.level = 'reader'").uniq }, through: :permissions, source: :user
@@ -22,6 +22,7 @@ class Project < ActiveRecord::Base
   has_attached_file :image,
                     styles: {span4: '300x300#', span3: '220x220#', span2: '140x140#', span1: '60x60#', spanhalf: '30x30#'},
                     default_url: '/images/project/project_:style.png'
+
 
   # add deleted_at and deleter_id
   acts_as_paranoid

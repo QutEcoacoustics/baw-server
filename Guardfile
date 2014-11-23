@@ -1,7 +1,7 @@
 # More info at https://github.com/guard/guard#readme
 notification :off
 
-guard :rspec, cmd: 'bundle exec rspec --format progress --color --deprecation-out rspec-deprecation.txt' do
+guard :rspec, cmd: 'bundle exec rspec --format progress --color' do
   watch(%r{^spec/.+_spec\.rb$})
   watch('spec/spec_helper.rb')                         { 'spec' }
 

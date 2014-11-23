@@ -22,7 +22,7 @@ resource 'Media' do
     @admin_user = FactoryGirl.create(:admin)
   end
 
-  after(:all) do
+  after(:each) do
     remove_media_dirs
   end
 

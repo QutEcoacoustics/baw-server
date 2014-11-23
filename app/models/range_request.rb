@@ -306,7 +306,7 @@ class RangeRequest
 
         # to ensure a new hash is used
         # http://thingsaaronmade.com/blog/ruby-shallow-copy-surprise.html
-        request_headers: {}.merge!(rails_request.headers),
+        request_headers: {}.merge!(rails_request.headers.to_h),
 
         file_path: file_path,
         file_size: file_size,
