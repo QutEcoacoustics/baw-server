@@ -95,7 +95,8 @@ module Api
       current_ability.attributes_for(action_name.to_sym, resource_class).each do |key, value|
         get_resource.send("#{key}=", value)
       end
-      get_resource.attributes = params[resource_name.to_sym]
+      capture_params = params[resource_name.to_sym]
+      get_resource.attributes = capture_params if !capture_params.blank? && capture_params.is_a?(Hash)
       authorize! action_name.to_sym, get_resource
     end
 

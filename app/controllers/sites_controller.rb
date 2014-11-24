@@ -162,9 +162,9 @@ class SitesController < ApplicationController
         Site.filter_settings
     )
 
-    # always display project_ids
-    filter_response[:data] = filter_response[:data].each { |site|
-      api_custom_response(site)
+    # include custom response components
+    filter_response[:data] = filter_response[:data].map { |site|
+      respond_modify(site)
     }
 
     render_api_response(filter_response)
@@ -186,7 +186,7 @@ class SitesController < ApplicationController
 
     site.update_location_obfuscated(current_user)
 
-    site_hash = site.serializable_hash
+    site_hash = {}
 
     site_hash[:project_ids] = Site.where(id: site.id).first.projects.select(:id)
     site_hash[:location_obfuscated] = site.location_obfuscated
