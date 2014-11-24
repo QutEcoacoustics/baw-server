@@ -1089,11 +1089,24 @@ resource 'AudioEvents' do
     example 'CREATE (with tags_attributes (one existing tag text, one new) as writer) - 201', :document => true do
       explanation 'this should create an audiorecording, including two taggings, one with the newly created tag and one with an existing tag'
       tag_count = Tag.count
-      do_request
+      request = do_request
 
-      do_checks(:created, {expected_json_path: 'taggings/1/tag'}) # expecting two 'taggings'
+      # expecting two 'taggings'
 
-      expect(response_body).to have_json_path('start_time_seconds')
+      # check response
+      opts =
+          {
+              expected_status: :created,
+              expected_method: :post,
+              expected_response_content_type: 'application/json',
+              document: document_media_requests
+          }
+
+      opts = acceptance_checks_shared(request, opts)
+
+      opts.merge!({expected_json_path: 'taggings/1/tag', response_body_content:'start_time_seconds'})
+      acceptance_checks_json(opts)
+
       # only one tag should have been created, so new tag count should be one more than old tag count
       expect(tag_count).to eq(Tag.count - 1)
     end
@@ -1123,14 +1136,26 @@ resource 'AudioEvents' do
     #standard_request('CREATE (with tags_attributes (one existing, one new) as writer)', 201, nil, true)
     example 'CREATE (with existing tag_ids as writer) - 201', :document => true do
       tag_count = Tag.count
-      do_request
+      request = do_request
 
-      do_checks(:created, {expected_json_path: 'taggings/1/tag'})  # expecting two 'taggings'
+      # expecting two 'taggings'
 
-      expect(response_body).to have_json_path('start_time_seconds')
+      # check response
+      opts =
+          {
+              expected_status: :created,
+              expected_method: :post,
+              expected_response_content_type: 'application/json',
+              document: document_media_requests
+          }
+
+      opts = acceptance_checks_shared(request, opts)
+
+      opts.merge!({expected_json_path: 'taggings/1/tag', response_body_content:'start_time_seconds'})
+      acceptance_checks_json(opts)
+
+      # only one tag should have been created, so new tag count should be one more than old tag count
       expect(tag_count).to eq(Tag.count)
-
-      response_body.should have_json_path('start_time_seconds')
     end
   end
 

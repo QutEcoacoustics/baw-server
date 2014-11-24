@@ -39,6 +39,7 @@ def standard_request(description, expected_status, expected_json_path = nil, doc
 end
 
 # Execute the example.
+# @param [String] http_method
 # @param [String] description
 # @param [Symbol] expected_status
 # @param [Hash] opts the options for additional information.
@@ -49,19 +50,146 @@ end
 # @option opts [Symbol]  :data_item_count        (nil) Number of items in a json response
 # @option opts [Hash]    :property_match         (nil) Properties to match
 # @return [void]
-def standard_request_options(description, expected_status, opts = {})
+def standard_request_options(http_method, description, expected_status, opts = {})
   opts.reverse_merge!({document: true})
 
   # 406 when you can't send what they want, 415 when they send what you don't want
 
-  example "#{description} - #{expected_status}", :document => opts[:document] do
-    do_request
-    do_checks(expected_status, opts)
+  example "#{http_method} #{description} - #{expected_status}", :document => opts[:document] do
+    request = do_request
+    opts.merge!(
+        {
+            expected_status: expected_status,
+            expected_method: http_method
+        })
+
+    opts = acceptance_checks_shared(request, opts)
+    acceptance_checks_json(opts)
+  end
+end
+
+# Execute the media request example.
+# @param [String] http_method
+# @param [String] description
+# @param [Symbol] expected_status
+# @param [Hash] opts the options for additional information.
+# @option opts [String]  :content_type           ('text/plain') Expected content type.
+# @option opts [Boolean] :document               (true) Include in api spec documentation.
+# @option opts [Boolean] :check_accept_header    (true) Check the Accept header.
+# @option opts [Boolean] :check_content_length   (true) Check the Content-Length header.
+# @option opts [Boolean] :is_head_request        (true) Expecting a head request.
+# @option opts [Boolean] :is_head_request        (true) Expecting a range request.
+# @return [void]
+def media_request_options(http_method, description, expected_status, opts = {})
+  opts.reverse_merge!({document: true})
+
+  example "#{http_method} #{description} - #{expected_status}", document: opts[:document] do
+    options = create_media_options(audio_recording)
+    request = do_request
+
+    opts.merge!(
+        {
+            expected_status: expected_status,
+            expected_method: http_method
+        })
+
+    opts = acceptance_checks_shared(request, opts)
+
+    opts.merge!({audio_recording: options})
+    acceptance_checks_media(opts)
   end
 end
 
 # Check response.
-# @param [Symbol] expected_status
+# @param [Object] request
+# @param [Hash] opts the options for additional information.
+# @option opts [String, Symbol] :expected_status                 (nil) Expected http status.
+# @option opts [String]         :expected_method                 (nil) Expected http method.
+# @option opts [Boolean]        :expected_response_has_content   (nil) Is the response expected to have content?
+# @option opts [String]         :expected_response_content_type  (nil) What is the expected response content type?
+# @option opts [Boolean]        :is_expected_head_request        (nil) Is the request expected to be a HEAD request?
+# @return [void]
+def acceptance_checks_shared(request, opts = {})
+  opts.reverse_merge!(
+      {
+          expected_status: :ok,
+          expected_method: :get,
+
+          expected_response_has_content: true,
+          expected_response_content_type: 'application/json',
+
+          # @option opts [String]         :expected_request_content_type   (nil) What is the expected request content type?
+          #expected_request_content_type: 'application/json',
+          is_expected_head_request: false
+      })
+
+  # !! - forces the boolean context, but returns the proper boolean value
+  # don't document because it returns binary data that can't be json encoded
+  is_documentation_run = !!(ENV['GENERATE_DOC'])
+
+  if response_headers.include?('Content-Type') && response_headers['Content-Type'].start_with?('application/json')
+    actual_response = response_body
+  elsif !response_headers.include?('Content-Type')
+    actual_response = nil
+  else
+    actual_response = 'content to replace binary data'
+  end
+
+
+  # info hash
+  opts.merge!(
+      {
+          is_documentation_run: is_documentation_run,
+
+          actual_method: method, # Rubymine might think this is an error - it's fine, there are so many methods named 'method' :/
+          actual_status: status.is_a?(Symbol) ? status : Settings.api_response.status_symbol(status),
+          actual_query_string: query_string,
+          actual_path: path,
+
+          actual_response: actual_response,
+          actual_response_has_content: !actual_response.nil?,
+          actual_response_headers: response_headers,
+          actual_response_content_type: response_headers['Content-Type'],
+
+          #actual_request_content_type: request_headers['Content-Type'],
+          #actual_request_headers: request_headers,
+
+          is_actual_head_request: !is_documentation_run && !request.blank? && opts[:actual_method] == 'HEAD',
+
+          expected_status: opts[:expected_status].is_a?(Symbol) ? opts[:expected_status] : Settings.api_response.status_symbol(opts[:expected_status]),
+      })
+
+  opts[:msg] = "Requested #{opts[:actual_method]} #{opts[:actual_path]}. Information hash: #{opts}"
+
+  # expectations
+  expect(opts[:actual_status]).to eq(opts[:expected_status]), "Mismatch: status. #{opts[:msg]}"
+  expect(opts[:actual_method]).to eq(opts[:expected_method]), "Mismatch: HTTP method. #{opts[:msg]}"
+  expect(opts[:is_actual_head_request]).to eq(opts[:expected_method] == :head), "Mismatch: is head request. #{opts[:msg]}"
+  expect(opts[:is_actual_head_request]).to eq(opts[:is_expected_head_request]), "Mismatch: is head request. #{opts[:msg]}"
+
+  #expect(opts[:expected_request_content_type]).to eq(opts[:actual_request_content_type]), "Mismatch: request content type. #{opts[:msg]}"
+  expect(opts[:actual_response_has_content]).to eq(opts[:expected_response_has_content]), "Mismatch: response has content. #{opts[:msg]}"
+  if opts[:actual_response_content_type].blank?
+    expect(opts[:expected_response_content_type]).to be_nil, "Mismatch: response content type. #{opts[:msg]}"
+  elsif opts.include?(:actual_response_content_type)
+      expect(opts[:actual_response_content_type]).to include(opts[:expected_response_content_type]), "Mismatch: response content type. #{opts[:msg]}"
+  end
+
+  if !opts[:actual_response_content_type].blank? && opts[:actual_response_content_type] == 'application/json'
+    expect(opts[:actual_response_headers]['Content-Transfer-Encoding']).to be_nil, "Mismatch: content transfer encoding. #{opts[:msg]}"
+    expect(opts[:actual_response_headers]['Content-Disposition']).to be_nil, "Mismatch: content disposition. #{opts[:msg]}"
+  end
+
+  if !opts[:actual_response_content_type].blank? && (opts[:actual_response_content_type].start_with?('image/') ||
+      opts[:actual_response_content_type].start_with?('audio/'))
+    expect(opts[:actual_response_headers]['Content-Transfer-Encoding']).to eq('binary'), "Mismatch: content transfer encoding. #{opts[:msg]}"
+    expect(opts[:actual_response_headers]['Content-Disposition']).to start_with('inline; filename='), "Mismatch: content disposition. #{opts[:msg]}"
+  end
+
+  opts
+end
+
+# Check json response.
 # @param [Hash] opts the options for additional information.
 # @option opts [String] :expected_json_path    (nil) Expected json path.
 # @option opts [Symbol] :response_body_content (nil) Content that must be in the response body.
@@ -69,7 +197,7 @@ end
 # @option opts [Symbol] :data_item_count       (nil) Number of items in a json response
 # @option opts [Hash]   :property_match        (nil) Properties to match
 # @return [void]
-def do_checks(expected_status, opts = {})
+def acceptance_checks_json(opts = {})
   opts.reverse_merge!(
       {
           expected_json_path: nil,
@@ -79,16 +207,15 @@ def do_checks(expected_status, opts = {})
           property_match: nil
       })
 
-  actual_response = response_body
-  actual_response_parsed = actual_response.blank? ? nil : JsonSpec::Helpers::parse_json(actual_response)
-  data_present = !actual_response.blank? &&
+  actual_response_parsed = opts[:actual_response].blank? ? nil : JsonSpec::Helpers::parse_json(opts[:actual_response])
+  data_present = !opts[:actual_response].blank? &&
       !actual_response_parsed.blank? &&
-      actual_response_parsed.include?('data') &&
-      !actual_response_parsed['data'].blank?
+          actual_response_parsed.include?('data') &&
+          !actual_response_parsed['data'].blank?
 
-  data_included = !actual_response.blank? &&
+  data_included = !opts[:actual_response].blank? &&
       !actual_response_parsed.blank? &&
-      actual_response_parsed.include?('data')
+          actual_response_parsed.include?('data')
 
 
   if data_included && actual_response_parsed['data'].is_a?(Array)
@@ -102,48 +229,28 @@ def do_checks(expected_status, opts = {})
     data_format = nil
   end
 
-  the_request_method = method
-  the_request_path = path
-  actual_status_code = status
-  actual_status = Settings.api_response.status_symbol(actual_status_code)
-  expected_status_code = Settings.api_response.status_symbol(expected_status)
-
-  message_prefix = "Requested #{the_request_method} #{the_request_path} expecting"
-
-  expect(expected_status).to eq(actual_status), "#{message_prefix} status #{expected_status} but got status #{actual_status}. Response body was #{actual_response}"
+  message_prefix = "Requested #{opts[:actual_method]} #{opts[:actual_path]} expecting"
 
   # this check ensures that there is an assertion when the content is not blank.
-  expect(actual_response).to be_blank, "#{message_prefix} blank response, but got #{actual_response}" if opts[:response_body_content].blank? && opts[:expected_json_path].blank?
-  expect((data_format == :hash && data_present && actual_response_parsed_size == 1) || !data_present).to be_truthy, "#{message_prefix} no items in response, but got #{actual_response_parsed_size} items in #{actual_response} (type #{data_format})" if opts[:data_item_count].blank?
+  expect(opts[:actual_response]).to be_blank, "#{message_prefix} blank response, but got #{opts[:actual_response]}" if opts[:response_body_content].blank? && opts[:expected_json_path].blank?
+  expect((data_format == :hash && data_present && actual_response_parsed_size == 1) || !data_present).to be_truthy, "#{message_prefix} no items in response, but got #{actual_response_parsed_size} items in #{opts[:actual_response]} (type #{data_format})" if opts[:data_item_count].blank?
 
-  expect(actual_response_parsed_size).to eq(opts[:data_item_count]), "#{message_prefix} count to be #{opts[:data_item_count]} but got #{actual_response_parsed_size} items in #{actual_response} (type #{data_format})" unless opts[:data_item_count].blank?
+  expect(actual_response_parsed_size).to eq(opts[:data_item_count]), "#{message_prefix} count to be #{opts[:data_item_count]} but got #{actual_response_parsed_size} items in #{opts[:actual_response]} (type #{data_format})" unless opts[:data_item_count].blank?
 
-  expect(actual_response).to include(opts[:response_body_content]), "#{message_prefix} to find '#{opts[:response_body_content]}' in '#{actual_response}'" unless opts[:response_body_content].blank?
-  expect(actual_response).to_not include(opts[:invalid_content]), "#{message_prefix} not to find '#{opts[:response_body_content]}' in '#{actual_response}'" unless opts[:invalid_content].blank?
+  expect(opts[:actual_response]).to include(opts[:response_body_content]), "#{message_prefix} to find '#{opts[:response_body_content]}' in '#{opts[:actual_response]}'" unless opts[:response_body_content].blank?
+  expect(opts[:actual_response]).to_not include(opts[:invalid_content]), "#{message_prefix} not to find '#{opts[:response_body_content]}' in '#{opts[:actual_response]}'" unless opts[:invalid_content].blank?
 
-  expect(actual_response).to have_json_path(opts[:expected_json_path]), "#{message_prefix} to find '#{opts[:expected_json_path]}' in '#{actual_response}'" unless opts[:expected_json_path].blank?
+  expect(opts[:actual_response]).to have_json_path(opts[:expected_json_path]), "#{message_prefix} to find '#{opts[:expected_json_path]}' in '#{opts[:actual_response]}'" unless opts[:expected_json_path].blank?
 
   if defined?(expected_unordered_ids) &&
       !expected_unordered_ids.blank? &&
-      expected_unordered_ids.is_a?(Array) &&
-      data_present &&
-      actual_response_parsed['data'].is_a?(Array)
+          expected_unordered_ids.is_a?(Array) &&
+          data_present &&
+          actual_response_parsed['data'].is_a?(Array)
 
-    # RSpec also provides a =~ matcher for arrays that disregards differences in
-    # the ordering between the actual and expected array.
     actual_ids = actual_response_parsed['data'].map { |x| x.include?('id') ? x['id'] : nil }
     expect(actual_ids).to match_array(expected_unordered_ids)
 
-    # actual_response_parsed.each_index do |index|
-    #   expect(actual_response_parsed[index]['audio_event_id'])
-    #   .to eq(opts[:unordered_ids][index]),
-    #       "Result body index #{index} in #{opts[:unordered_ids]}: #{actual_response_parsed}"
-    # end
-    # opts[:unordered_ids].each_index do |index|
-    #   expect(opts[:unordered_ids][index])
-    #   .to eq(actual_response_parsed[index]['audio_event_id']),
-    #       "Audio Event Order index #{index} in #{opts[:unordered_ids]}: #{actual_response_parsed}"
-    # end
   end
 
   unless opts[:property_match].nil?
@@ -152,7 +259,98 @@ def do_checks(expected_status, opts = {})
       expect(actual_response_parsed['data'][key.to_s].to_s).to eq(value.to_s)
     end
   end
+end
 
+# Check media response.
+# @param [Hash] opts the options for additional information.
+# @option opts [Boolean] :accepts_range_request    (nil) Is a range request expected?
+# @return [void]
+def acceptance_checks_media(opts = {})
+  opts.reverse_merge!(
+      {
+          is_range_request: false,
+          expected_response_media_from_header: 'Generated Locally'
+      })
+
+  is_image = opts[:actual_response_headers]['Content-Type'].include? 'image'
+  default_spectrogram = Settings.cached_spectrogram_defaults
+
+  is_audio = opts[:actual_response_headers]['Content-Type'].include? 'audio'
+  default_audio = Settings.cached_audio_defaults
+
+  is_json = opts[:actual_response_headers]['Content-Type'].include? 'application/json'
+
+  if is_audio
+    expect(opts[:actual_response_headers]).to include('Accept-Ranges'), "Missing header: accept ranges. #{opts[:msg]}"
+    expect(opts[:actual_response_headers]['Accept-Ranges']).to eq('bytes'), "Mismatch: accept ranges. #{opts[:msg]}"
+  else
+    expect(opts[:actual_response_headers]['Accept-Ranges']).to be_nil, "Mismatch: accept ranges. #{opts[:msg]}"
+  end
+
+  expect(opts[:actual_response_headers]).to include('Content-Length'), "Missing header: content length. #{opts[:msg]}"
+  expect(opts[:actual_response_headers]['Content-Length']).to_not be_blank, "Mismatch: content length. #{opts[:msg]}"
+
+  expect(opts[:actual_response_headers]).to include('X-Media-Response-From'), "Missing header: media response from. #{opts[:msg]}"
+
+  expect(opts[:actual_response_headers]['X-Media-Response-From']).to eq(opts[:expected_response_media_from_header]), "Mismatch: media response from. #{opts[:msg]}"
+
+
+  expect(opts[:actual_response_headers]).to include('X-Media-Response-Start'), "Missing header: media response start. #{opts[:msg]}"
+
+  if opts[:is_range_request]
+    expect(opts[:actual_response_headers]).to include('Content-Range'), "Missing header: content range. #{opts[:msg]}"
+    expect(opts[:actual_response_headers]['Content-Range']).to include('bytes 0-'), "Mismatch: content range. #{opts[:msg]}"
+  else
+    expect(opts[:actual_response_headers]['Content-Range']).to be_nil, "Mismatch: content range. #{opts[:msg]}"
+  end
+
+
+  # assert
+  if opts[:is_actual_head_request] || opts[:is_expected_head_request]
+    expect(opts[:actual_response].size).to eq(0), "Mismatch: actual response size. #{opts[:msg]}"
+    options = opts[:audio_recording] || {}
+    if is_image
+      options[:format] = default_spectrogram.extension
+      options[:channel] = default_spectrogram.channel.to_i
+      options[:sample_rate] = default_spectrogram.sample_rate.to_i
+      options[:window] = default_spectrogram.window.to_i
+      options[:window_function] = default_spectrogram.window_function
+      options[:colour] = default_spectrogram.colour.to_s
+
+      cache_spectrogram_possible_paths = spectrogram_cache.possible_paths(options)
+
+      if opts[:expected_response_has_content]
+        expect(opts[:actual_response_headers]['Content-Length'].to_i).to eq(File.size(cache_spectrogram_possible_paths.first)),
+                                                                         "Mismatch: response image length. #{opts[:msg]}"
+      end
+    elsif is_audio
+      options[:format] = default_audio.extension
+      options[:channel] = default_audio.channel.to_i
+      options[:sample_rate] = default_audio.sample_rate.to_i
+
+      cache_audio_possible_paths = audio_cache.possible_paths(options)
+
+      if opts[:expected_response_has_content]
+        expect(opts[:actual_response_headers]['Content-Length'].to_i).to eq(File.size(cache_audio_possible_paths.first)),
+                                                                         "Mismatch: response audio length. #{opts[:msg]}"
+      end
+    elsif is_json
+      expect(opts[:actual_response_headers]['Content-Length'].to_i).to be > 0,
+                                                                       "Mismatch: actual media json length. #{opts[:msg]}"
+      # TODO: files should not exist?
+    else
+      fail "Unrecognised content type: #{opts[:actual_response_headers]['Content-Type']}"
+    end
+  else
+    begin
+      temp_file = File.join(Settings.paths.temp_dir, 'temp-media_controller_response')
+      File.open(temp_file, 'wb') { |f| f.write(response_body) }
+      expect(opts[:actual_response_headers]['Content-Length'].to_i).to eq(File.size(temp_file)),
+                                                                       "Mismatch: actual media length. #{opts[:msg]}"
+    ensure
+      File.delete temp_file if File.exists? temp_file
+    end
+  end
 end
 
 def check_site_lat_long_response(description, expected_status, should_be_obfuscated = true)
@@ -185,14 +383,14 @@ def check_site_lat_long_response(description, expected_status, should_be_obfusca
       min = 3
       max = 6
       expect(lat.to_s.split('.').last.size)
-      .to satisfy { |v| v >= min && v <= max },
-          "expected latitude to be obfuscated to between #{min} to #{max} places, "+
-              "got #{lat.to_s.split('.').last.size} from #{lat}"
+          .to satisfy { |v| v >= min && v <= max },
+              "expected latitude to be obfuscated to between #{min} to #{max} places, "+
+                  "got #{lat.to_s.split('.').last.size} from #{lat}"
 
       expect(long.to_s.split('.').last.size)
-      .to satisfy { |v| v >= min && v <= max },
-          "expected longitude to be obfuscated to between #{min} to #{max} places, "+
-              "got #{long.to_s.split('.').last.size} from #{long}"
+          .to satisfy { |v| v >= min && v <= max },
+              "expected longitude to be obfuscated to between #{min} to #{max} places, "+
+                  "got #{long.to_s.split('.').last.size} from #{long}"
     end
   end
 end
@@ -266,84 +464,6 @@ def create_media_options(audio_recording)
   FileUtils.cp audio_file_mono, original_possible_paths.first
 
   options
-end
-
-def validate_media_response(content_type, check_accept_header = true)
-  expect(status).to eq(200), "expected status 200 but was #{status}. Response body was #{response_body}"
-  expect(response_headers['Content-Type']).to include(content_type)
-  expect(response_headers['Accept-Ranges']).to eq('bytes') if check_accept_header
-
-  expect(response_headers['Content-Transfer-Encoding']).to eq('binary') unless content_type == 'application/json'
-  expect(response_headers['Content-Transfer-Encoding']).to be_nil if content_type == 'application/json'
-
-  expect(response_headers['Content-Disposition']).to start_with('inline; filename=') unless content_type == 'application/json'
-  expect(response_headers['Content-Disposition']).to be_nil if content_type == 'application/json'
-end
-
-def check_common_request_items(audio_recording, content_type, check_accept_header = true)
-
-  options = create_media_options(audio_recording)
-
-  request = do_request
-
-
-  [options, request]
-end
-
-def using_original_audio(audio_recording, content_type, check_accept_header = true, check_content_length = true, expected_head_request = false)
-  options, request = check_common_request_items(audio_recording, content_type, check_accept_header)
-  using_original_audio_custom(options, request, audio_recording, check_accept_header, check_content_length, expected_head_request)
-end
-
-def using_original_audio_custom(options, request, audio_recording, check_accept_header = true, check_content_length = true, expected_head_request = false)
-  is_image = response_headers['Content-Type'].include? 'image'
-  default_spectrogram = Settings.cached_spectrogram_defaults
-
-  is_audio = response_headers['Content-Type'].include? 'audio'
-  default_audio = Settings.cached_audio_defaults
-
-  # !! - forces the boolean context, but returns the proper boolean value
-  is_documentation_run = !!(ENV['GENERATE_DOC'])
-
-  actual_head_request = !is_documentation_run && !request.blank? && !request[0].blank? && request[0][:request_method] == 'HEAD'
-
-  # assert
-  if actual_head_request || expected_head_request
-    expect(response_body.size).to eq(0)
-    if is_image
-      options[:format] = default_spectrogram.extension
-      options[:channel] = default_spectrogram.channel.to_i
-      options[:sample_rate] = default_spectrogram.sample_rate.to_i
-      options[:window] = default_spectrogram.window.to_i
-      options[:window_function] = default_spectrogram.window_function
-      options[:colour] = default_spectrogram.colour.to_s
-
-      cache_spectrogram_possible_paths = spectrogram_cache.possible_paths(options)
-
-      expect(response_headers['Content-Length'].to_i).to eq(File.size(cache_spectrogram_possible_paths.first)) if check_content_length
-    elsif is_audio
-      options[:format] = default_audio.extension
-      options[:channel] = default_audio.channel.to_i
-      options[:sample_rate] = default_audio.sample_rate.to_i
-
-      cache_audio_possible_paths = audio_cache.possible_paths(options)
-
-      expect(response_headers['Content-Length'].to_i).to eq(File.size(cache_audio_possible_paths.first)) if check_content_length
-    elsif response_headers['Content-Type'].include? 'application/json'
-      expect(response_headers['Content-Length'].to_i).to be > 0
-      # TODO: files should not exist?
-    else
-      fail "Unrecognised content type: #{response_headers['Content-Type']}"
-    end
-  else
-    begin
-      temp_file = File.join(Settings.paths.temp_dir, 'temp-media_controller_response')
-      File.open(temp_file, 'wb') { |f| f.write(response_body) }
-      expect(response_headers['Content-Length'].to_i).to eq(File.size(temp_file))
-    ensure
-      File.delete temp_file if File.exists? temp_file
-    end
-  end
 end
 
 def emulate_resque_worker_with_job(job_class, job_args, opts={})

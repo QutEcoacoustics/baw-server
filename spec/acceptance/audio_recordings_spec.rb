@@ -751,7 +751,7 @@ resource 'AudioRecordings' do
     let(:raw_post) { changed_details.to_json }
 
     let(:authentication_token) { harvester_token }
-    standard_request_options('UPDATE (as harvester) standard properties', :ok, {expected_json_path: 'data/duration_seconds', property_match: changed_details})
+    standard_request_options(:put, 'UPDATE (as harvester) standard properties', :ok, {expected_json_path: 'data/duration_seconds', property_match: changed_details})
 
   end
 
@@ -775,7 +775,7 @@ resource 'AudioRecordings' do
     let(:raw_post) { changed_details.to_json }
 
     let(:authentication_token) { harvester_token }
-    standard_request_options('UPDATE (as harvester) file hash only', :ok, {expected_json_path: 'data/duration_seconds'})
+    standard_request_options(:put, 'UPDATE (as harvester) file hash only', :ok, {expected_json_path: 'data/duration_seconds'})
 
   end
 
@@ -807,6 +807,7 @@ resource 'AudioRecordings' do
 
     let(:authentication_token) { harvester_token }
     standard_request_options(
+        :put,
         'UPDATE (as harvester) file hash and other properties',
         :unprocessable_entity,
         {expected_json_path: 'meta/error/info/file_hash'})
@@ -831,7 +832,7 @@ resource 'AudioRecordings' do
         }
     }.to_json }
     let(:authentication_token) { reader_token }
-    standard_request_options('FILTER (as reader matching)', :ok, {expected_json_path: 'data/0/sample_rate_hertz', data_item_count: 1})
+    standard_request_options(:post, 'FILTER (as reader matching)', :ok, {expected_json_path: 'data/0/sample_rate_hertz', data_item_count: 1})
   end
 
   post '/audio_recordings/filter' do
@@ -849,7 +850,7 @@ resource 'AudioRecordings' do
         }
     }.to_json }
     let(:authentication_token) { reader_token }
-    standard_request_options('FILTER (as reader no match)', :ok, {expected_json_path: 'meta/message', data_item_count: 0})
+    standard_request_options(:post, 'FILTER (as reader no match)', :ok, {expected_json_path: 'meta/message', data_item_count: 0})
   end
 
   post '/audio_recordings/filter' do
@@ -870,7 +871,7 @@ resource 'AudioRecordings' do
         }
     }.to_json }
     let(:authentication_token) { reader_token }
-    standard_request_options('FILTER (as reader with paging)', :ok, {expected_json_path: 'meta/paging/page', data_item_count: 0})
+    standard_request_options(:post, 'FILTER (as reader with paging)', :ok, {expected_json_path: 'meta/paging/page', data_item_count: 0})
   end
 
   post '/audio_recordings/filter' do
@@ -883,7 +884,7 @@ resource 'AudioRecordings' do
            {"orderBy" => "createdAt", "direction" => "desc"}}
       .to_json }
     let(:authentication_token) { reader_token }
-    standard_request_options('FILTER (as reader with paging, sorting, projection)', :ok, {expected_json_path: 'meta/paging/current', data_item_count: 1})
+    standard_request_options(:post, 'FILTER (as reader with paging, sorting, projection)', :ok, {expected_json_path: 'meta/paging/current', data_item_count: 1})
   end
 
 end

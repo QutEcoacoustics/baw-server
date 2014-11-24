@@ -350,97 +350,141 @@ resource 'Media' do
     end
   end
 
-  get '/audio_recordings/:audio_recording_id/media.:format' do
+  get '/audio_recordings/:audio_recording_id/media.:format?start_offset=:start_offset&end_offset=:end_offset' do
     standard_media_parameters
     let(:authentication_token) { reader_token }
     let(:format) { 'mp3' }
-    example 'MEDIA (audio get request mp3 as reader with shallow path) - 200', document: document_media_requests do
-      using_original_audio(audio_recording, 'audio/mp3')
-    end
+
+    media_request_options(
+        :get,
+        'MEDIA (audio get request mp3 as reader with shallow path)',
+        :ok,
+        {
+            document: document_media_requests,
+            expected_response_content_type:  'audio/mpeg'
+        })
   end
 
-  get '/audio_recordings/:audio_recording_id/media.:format' do
-    standard_media_parameters
-    let(:authentication_token) { reader_token }
-    let(:format) { 'mp3' }
-    example 'MEDIA (audio get request mpeg as reader with shallow path) - 200', document: document_media_requests do
-      using_original_audio(audio_recording, 'audio/mpeg')
-    end
-  end
-
-  get '/audio_recordings/:audio_recording_id/media.:format' do
+  get '/audio_recordings/:audio_recording_id/media.:format?start_offset=:start_offset&end_offset=:end_offset' do
     standard_media_parameters
     let(:authentication_token) { reader_token }
     let(:format) { 'wav' }
-    example 'MEDIA (audio get request wav as reader with shallow path) - 200', document: document_media_requests do
-      using_original_audio(audio_recording, 'audio/wav')
-    end
+
+    media_request_options(
+        :get,
+        'MEDIA (audio get request wav as reader with shallow path)',
+        :ok,
+        {
+            document: document_media_requests,
+            expected_response_content_type:  'audio/wav'
+        })
   end
 
-  get '/audio_recordings/:audio_recording_id/media.:format' do
+  get '/audio_recordings/:audio_recording_id/media.:format?start_offset=:start_offset&end_offset=:end_offset' do
     standard_media_parameters
     let(:authentication_token) { reader_token }
     let(:format) { 'ogg' }
-    example 'MEDIA (audio get request ogg as reader with shallow path) - 200', document: document_media_requests do
-      using_original_audio(audio_recording, 'audio/ogg')
-    end
+
+    media_request_options(
+        :get,
+        'MEDIA (audio get request ogg as reader with shallow path)',
+        :ok,
+        {
+            document: document_media_requests,
+            expected_response_content_type:  'audio/ogg'
+        })
   end
 
-  get '/audio_recordings/:audio_recording_id/media.:format' do
+  get '/audio_recordings/:audio_recording_id/media.:format?start_offset=:start_offset&end_offset=:end_offset' do
     standard_media_parameters
     let(:authentication_token) { reader_token }
     let(:format) { 'webm' }
-    example 'MEDIA (audio get request webm as reader with shallow path) - 200', document: document_media_requests do
-      using_original_audio(audio_recording, 'audio/webm')
-    end
+
+    media_request_options(
+        :get,
+        'MEDIA (audio get request webm as reader with shallow path)',
+        :ok,
+        {
+            document: document_media_requests,
+            expected_response_content_type:  'audio/webm'
+        })
   end
 
-  get '/audio_recordings/:audio_recording_id/media.:format' do
+  get '/audio_recordings/:audio_recording_id/media.:format?start_offset=:start_offset&end_offset=:end_offset' do
     standard_media_parameters
     let(:authentication_token) { reader_token }
     let(:format) { 'flac' }
-    example 'MEDIA (audio get request flac as reader with shallow path) - 200', document: document_media_requests do
-      using_original_audio(audio_recording, 'audio/x-flac')
-    end
+
+    media_request_options(
+        :get,
+        'MEDIA (audio get request flac as reader with shallow path)',
+        :ok,
+        {
+            document: document_media_requests,
+            expected_response_content_type:  'audio/x-flac'
+        })
   end
 
-  get '/audio_recordings/:audio_recording_id/media.:format' do
+  get '/audio_recordings/:audio_recording_id/media.:format?start_offset=:start_offset&end_offset=:end_offset' do
     standard_media_parameters
     let(:authentication_token) { reader_token }
     let(:format) { 'png' }
-    example 'MEDIA (spectrogram get request as reader with shallow path) - 200', document: document_media_requests do
-      using_original_audio(audio_recording, 'image/png', false)
-    end
+
+    media_request_options(
+        :get,
+        'MEDIA (spectrogram get request as reader with shallow path)',
+        :ok,
+        {
+            document: document_media_requests,
+            expected_response_content_type:  'image/png'
+        })
   end
 
   # head requests
 
-  head '/audio_recordings/:audio_recording_id/media.:format' do
+  head '/audio_recordings/:audio_recording_id/media.:format?start_offset=:start_offset&end_offset=:end_offset' do
     standard_media_parameters
     let(:authentication_token) { reader_token }
     let(:format) { 'json' }
-    # don't document because it returns binary data that can't be json encoded
-    example 'MEDIA (json head request as reader with shallow path) - 200', document: true do
-      using_original_audio(audio_recording, 'application/json', false, true, true)
-    end
+
+    media_request_options(
+        :head,
+        'MEDIA (json head request as reader with shallow path)',
+        :ok,
+        {
+            document: document_media_requests,
+            expected_response_content_type:  'application/json'
+        })
   end
 
-  head '/audio_recordings/:audio_recording_id/media.:format' do
+  head '/audio_recordings/:audio_recording_id/media.:format?start_offset=:start_offset&end_offset=:end_offset' do
     standard_media_parameters
     let(:authentication_token) { reader_token }
     let(:format) { 'mp3' }
-    example 'MEDIA (audio head request mp3 as reader with shallow path) - 200', document: true do
-      using_original_audio(audio_recording, 'audio/mpeg', false, false, true)
-    end
+
+    media_request_options(
+        :head,
+        'MEDIA (audio head request mp3 as reader with shallow path)',
+        :ok,
+        {
+            document: document_media_requests,
+            expected_response_content_type:  'audio/mpeg'
+        })
   end
 
-  head '/audio_recordings/:audio_recording_id/media.:format' do
+  head '/audio_recordings/:audio_recording_id/media.:format?start_offset=:start_offset&end_offset=:end_offset' do
     standard_media_parameters
     let(:authentication_token) { reader_token }
     let(:format) { 'png' }
-    example 'MEDIA (spectrogram head request as reader with shallow path) - 200', document: true do
-      using_original_audio(audio_recording, 'image/png', false, true, true)
-    end
+
+    media_request_options(
+        :head,
+        'MEDIA (spectrogram head request as reader with shallow path)',
+        :ok,
+        {
+            document: document_media_requests,
+            expected_response_content_type:  'image/png'
+        })
   end
 
   # test audio_event_id
@@ -692,7 +736,7 @@ resource 'Media' do
       let(:authentication_token) { reader_token }
       let(:format) { 'mp3' }
 
-      example 'MEDIA (audio get request mp3 as reader with shallow path) - 200', document: document_media_requests do
+      example ':get MEDIA (audio get request mp3 as reader with shallow path process using resque)', document: document_media_requests do
         remove_media_dirs
 
         options = create_media_options(audio_recording)
@@ -714,10 +758,20 @@ resource 'Media' do
         # run a second request, which should use the cached file to complete the request
         request = do_request
 
-        # assertions
-        media_type = 'audio/mpeg'
-        validate_media_response(media_type)
-        using_original_audio_custom(options, request, audio_recording, media_type)
+        # check response
+        opts =
+            {
+                expected_status: :ok,
+                expected_method: :get,
+                expected_response_content_type: 'audio/mpeg',
+                document: document_media_requests,
+                expected_response_media_from_header:'Cache'
+            }
+
+        opts = acceptance_checks_shared(request, opts)
+
+        opts.merge!({audio_recording: options})
+        acceptance_checks_media(opts)
       end
     end
 
@@ -730,23 +784,16 @@ resource 'Media' do
       standard_media_parameters
       let(:authentication_token) { reader_token }
       let(:format) { 'mp3' }
-      example 'MEDIA (audio get request mp3 as reader with shallow path using range request) - 200', document: document_media_requests do
-        using_original_audio(audio_recording, 'audio/mpeg')
 
-        expect(response_headers).to include('Accept-Ranges')
-        expect(response_headers['Accept-Ranges']).to eq('bytes')
-
-        expect(response_headers).to include('Content-Range')
-        expect(response_headers['Content-Range']).to include('bytes 0-')
-
-        expect(response_headers).to include('Content-Length')
-        expect(response_headers['Content-Length']).to_not be_blank
-
-        expect(response_headers).to include('X-Media-Response-From')
-        expect(response_headers['X-Media-Response-From']).to eq('Generated Locally')
-
-        expect(response_headers).to include('X-Media-Response-Start')
-      end
+      media_request_options(
+          :get,
+          'MEDIA (audio get request mp3 as reader with shallow path using range request)',
+          :partial_content,
+          {
+              document: document_media_requests,
+              expected_response_content_type: 'audio/mpeg',
+              is_range_request: true
+          })
     end
   end
 
