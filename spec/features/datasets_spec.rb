@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe 'CRUD Datasets as valid user with write permission' do
+describe 'CRUD Datasets as valid user with write permission', :type => :feature do
   before(:each) do
     #Capybara.current_driver = :webkit  # needed to test javascript UI with capybara, but couldn't get it to work
     @permission = FactoryGirl.create(:write_permission)
@@ -15,17 +15,17 @@ describe 'CRUD Datasets as valid user with write permission' do
   it 'does not list all datasets' do
     visit project_path(@project)
     #save_and_open_page
-    page.should_not have_content('Datasets')
-    page.should_not have_content(@dataset.name)
+    expect(page).not_to have_content('Datasets')
+    expect(page).not_to have_content(@dataset.name)
   end
 
   it 'shows dataset details' do
     visit project_dataset_path(@project, @dataset)
     #save_and_open_page
-    page.should have_content(@dataset.name)
-    page.should have_link('Edit Dataset')
-    page.should have_link('Add New Dataset')
-    page.should_not have_link('Delete')
+    expect(page).to have_content(@dataset.name)
+    expect(page).to have_link('Edit Dataset')
+    expect(page).to have_link('Add New Dataset')
+    expect(page).not_to have_link('Delete')
   end
 
   it 'creates new dataset when filling out form correctly' do
@@ -46,15 +46,15 @@ describe 'CRUD Datasets as valid user with write permission' do
     select 'General', from: 'dataset[types_of_tags][]'
     select 'Common name', from: 'dataset[types_of_tags][]'
     click_button 'Create Dataset'
-    page.should have_content('test name')
-    page.should have_content('Dataset was successfully created.')
+    expect(page).to have_content('test name')
+    expect(page).to have_content('Dataset was successfully created.')
   end
 
   it 'Fails to create new dataset when filling out form incomplete' do
     visit new_project_dataset_path(@project)
     click_button 'Create Dataset'
     #save_and_open_page
-    page.should have_content('Please review the problems below:')
+    expect(page).to have_content('Please review the problems below:')
   end
 
   it 'updates dataset when filling out form correctly' do
@@ -62,7 +62,7 @@ describe 'CRUD Datasets as valid user with write permission' do
     #save_and_open_page
     fill_in 'dataset[name]', with: 'test name'
     click_button 'Update Dataset'
-    page.should have_content('test name')
+    expect(page).to have_content('test name')
   end
 
   it 'shows errors when updating form incorrectly' do
@@ -70,8 +70,8 @@ describe 'CRUD Datasets as valid user with write permission' do
     #save_and_open_page
     fill_in 'dataset[name]', with: ''
     click_button 'Update Dataset'
-    page.should have_content('Please review the problems below:')
-    page.should have_content('can\'t be blank')
+    expect(page).to have_content('Please review the problems below:')
+    expect(page).to have_content('can\'t be blank')
   end
 
   it 'successfully deletes the dataset' do
@@ -79,13 +79,13 @@ describe 'CRUD Datasets as valid user with write permission' do
     #save_and_open_page
     page.has_xpath? "//a[@href=\"/projects/#{@project.id}/datasets/#{@dataset.id}\" and @data-method=\"delete\" and @data-confirm=\"Are you sure?\"]"
     expect { page.driver.delete project_dataset_path(@project, @dataset) }.to change(Dataset, :count).by(-1)
-    page.driver.response.should be_redirect
+    expect(page.driver.response).to be_redirect
     #visit page.driver.response.location
     #save_and_open_page
   end
 end
 
-describe 'CRUD Datasets as valid user with read permission' do
+describe 'CRUD Datasets as valid user with read permission', :type => :feature do
   before(:each) do
     @permission = FactoryGirl.create(:read_permission)
     @project = @permission.project
@@ -98,30 +98,30 @@ describe 'CRUD Datasets as valid user with read permission' do
 
   it 'does not list all datasets' do
     visit project_path(@project)
-    page.should_not have_content('Datasets')
-    page.should_not have_content(@dataset.name)
+    expect(page).not_to have_content('Datasets')
+    expect(page).not_to have_content(@dataset.name)
   end
 
   it 'shows dataset details' do
     visit project_dataset_path(@project, @dataset)
-    page.should have_content(@dataset.name)
-    page.should_not have_link('Edit Dataset')
-    page.should_not have_link('Add New Dataset')
-    page.should_not have_link('Delete')
+    expect(page).to have_content(@dataset.name)
+    expect(page).not_to have_link('Edit Dataset')
+    expect(page).not_to have_link('Add New Dataset')
+    expect(page).not_to have_link('Delete')
   end
 
   it 'rejects access to create project dataset' do
     visit new_project_dataset_path(@project)
-    page.should have_content(I18n.t('devise.failure.unauthorized'))
+    expect(page).to have_content(I18n.t('devise.failure.unauthorized'))
   end
 
   it 'rejects access to update project dataset' do
     visit edit_project_dataset_path(@project, @dataset)
-    page.should have_content(I18n.t('devise.failure.unauthorized'))
+    expect(page).to have_content(I18n.t('devise.failure.unauthorized'))
   end
 end
 
-describe 'CRUD Datasets as valid user with no permission' do
+describe 'CRUD Datasets as valid user with no permission', :type => :feature do
   before(:each) do
     @permission = FactoryGirl.create(:read_permission)
     @project = @permission.project
@@ -135,29 +135,29 @@ describe 'CRUD Datasets as valid user with no permission' do
 
   it 'lists all datasets' do
     visit project_path(@project)
-    page.should have_content(I18n.t('devise.failure.unauthorized'))
+    expect(page).to have_content(I18n.t('devise.failure.unauthorized'))
   end
 
   it 'shows dataset details' do
     visit project_dataset_path(@project, @dataset)
-    page.should have_content(I18n.t('devise.failure.unauthorized'))
-    page.should_not have_link('Edit Dataset')
-    page.should_not have_link('Add New Dataset')
-    page.should_not have_link('Delete')
+    expect(page).to have_content(I18n.t('devise.failure.unauthorized'))
+    expect(page).not_to have_link('Edit Dataset')
+    expect(page).not_to have_link('Add New Dataset')
+    expect(page).not_to have_link('Delete')
   end
 
   it 'rejects access to create project dataset' do
     visit new_project_dataset_path(@project)
-    page.should have_content(I18n.t('devise.failure.unauthorized'))
+    expect(page).to have_content(I18n.t('devise.failure.unauthorized'))
   end
 
   it 'rejects access to update project dataset' do
     visit edit_project_dataset_path(@project, @dataset)
-    page.should have_content(I18n.t('devise.failure.unauthorized'))
+    expect(page).to have_content(I18n.t('devise.failure.unauthorized'))
   end
 end
 
-describe 'Delete Dataset as admin user' do
+describe 'Delete Dataset as admin user', :type => :feature do
   before(:each) do
     @permission = FactoryGirl.create(:write_permission)
     @project = @permission.project
@@ -173,7 +173,7 @@ describe 'Delete Dataset as admin user' do
   it 'successfully deletes the entity' do
     visit project_dataset_path(@project, @dataset)
     #save_and_open_page
-    page.should have_link('Delete Dataset')
+    expect(page).to have_link('Delete Dataset')
     page.has_xpath? "//a[@href=\"/projects/#{@project.id}/datasets/#{@dataset.id}\" and @data-method=\"delete\" and @data-confirm=\"Are you sure?\"]"
 
     expect { first(:link, 'Delete').click }.to change(Dataset, :count).by(-1)

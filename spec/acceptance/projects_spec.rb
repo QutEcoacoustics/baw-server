@@ -36,17 +36,17 @@ resource 'Projects' do
   ################################
   get '/projects' do
     let(:authentication_token) { writer_token }
-    standard_request_options('LIST (as confirmed_user)', :ok, {expected_json_path: 'data/0/name', data_item_count: 1})
+    standard_request_options(:get, 'LIST (as confirmed_user)', :ok, {expected_json_path: 'data/0/name', data_item_count: 1})
   end
 
   get '/projects' do
     let(:authentication_token) { "Token token=\"#{FactoryGirl.create(:unconfirmed_user).authentication_token}\"" }
-    standard_request_options('LIST (as unconfirmed user)', :forbidden, {expected_json_path: 'meta/error/links/confirm your account'})
+    standard_request_options(:get, 'LIST (as unconfirmed user)', :forbidden, {expected_json_path: 'meta/error/links/confirm your account'})
   end
 
   get '/projects' do
     let(:authentication_token) { "Token token=\"INVALID TOKEN\"" }
-    standard_request_options('LIST (with invalid token)', :unauthorized, {expected_json_path: 'meta/error/links/confirm your account'})
+    standard_request_options(:get, 'LIST (with invalid token)', :unauthorized, {expected_json_path: 'meta/error/links/confirm your account'})
   end
 
   ################################
@@ -60,7 +60,7 @@ resource 'Projects' do
     let(:raw_post) { {'project' => post_attributes}.to_json }
 
     let(:authentication_token) { writer_token }
-    standard_request_options('CREATE (as confirmed user writer)', :created, {expected_json_path: 'data/name'})
+    standard_request_options(:post, 'CREATE (as confirmed user writer)', :created, {expected_json_path: 'data/name'})
 
   end
 
@@ -72,7 +72,7 @@ resource 'Projects' do
     let(:raw_post) { {'project' => post_attributes}.to_json }
 
     let(:authentication_token) { "Token token=\"#{FactoryGirl.create(:unconfirmed_user).authentication_token}\"" }
-    standard_request_options('CREATE (as unconfirmed user)', :forbidden, {expected_json_path: 'meta/error/links/confirm your account'})
+    standard_request_options(:post, 'CREATE (as unconfirmed user)', :forbidden, {expected_json_path: 'meta/error/links/confirm your account'})
 
   end
 
@@ -84,7 +84,7 @@ resource 'Projects' do
     let(:raw_post) { {'project' => post_attributes}.to_json }
 
     let(:authentication_token) { reader_token }
-    standard_request_options('CREATE (as reader)', :created, {expected_json_path: 'data/name'})
+    standard_request_options(:post, 'CREATE (as reader)', :created, {expected_json_path: 'data/name'})
 
   end
 
@@ -96,7 +96,7 @@ resource 'Projects' do
     let(:raw_post) { {'project' => post_attributes}.to_json }
 
     let(:authentication_token) { "Token token=\"INVALID TOKEN\"" }
-    standard_request_options('CREATE (with invalid token)', :unauthorized, {expected_json_path: 'meta/error/links/sign in'})
+    standard_request_options(:post, 'CREATE (with invalid token)', :unauthorized, {expected_json_path: 'meta/error/links/sign in'})
 
   end
 
@@ -107,28 +107,28 @@ resource 'Projects' do
     parameter :id, 'Requested project ID (in path/route)', required: true
 
     let(:authentication_token) { writer_token }
-    standard_request_options('SHOW (as writer)', :ok, {expected_json_path: 'data/name'})
+    standard_request_options(:get, 'SHOW (as writer)', :ok, {expected_json_path: 'data/name'})
 
   end
   get '/projects/:id' do
     parameter :id, 'Requested project ID (in path/route)', required: true
 
     let(:authentication_token) { reader_token }
-    standard_request_options('SHOW (as reader)', :ok, {expected_json_path: 'data/name'})
+    standard_request_options(:get, 'SHOW (as reader)', :ok, {expected_json_path: 'data/name'})
   end
 
   get '/projects' do
     parameter :id, 'Requested project ID (in path/route)', required: true
 
     let(:authentication_token) { "Token token=\"#{FactoryGirl.create(:unconfirmed_user).authentication_token}\"" }
-    standard_request_options('SHOW (as unconfirmed user)', :forbidden, {expected_json_path: 'meta/error/links/confirm your account'})
+    standard_request_options(:get, 'SHOW (as unconfirmed user)', :forbidden, {expected_json_path: 'meta/error/links/confirm your account'})
   end
 
   get '/projects/:id' do
     parameter :id, 'Requested project ID (in path/route)', required: true
 
     let(:authentication_token) { "Token token=\"INVALID TOKEN\"" }
-    standard_request_options('SHOW (with invalid token)', :unauthorized, {expected_json_path: 'meta/error/links/sign in'})
+    standard_request_options(:get, 'SHOW (with invalid token)', :unauthorized, {expected_json_path: 'meta/error/links/sign in'})
 
   end
 
@@ -145,7 +145,7 @@ resource 'Projects' do
 
     let(:authentication_token) { writer_token }
 
-    standard_request_options('UPDATE (as writer)', :ok, {expected_json_path: 'data/name'})
+    standard_request_options(:put, 'UPDATE (as writer)', :ok, {expected_json_path: 'data/name'})
   end
 
   put '/projects/:id' do
@@ -158,7 +158,7 @@ resource 'Projects' do
 
     let(:authentication_token) { reader_token }
 
-    standard_request_options('UPDATE (as reader)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
+    standard_request_options(:put, 'UPDATE (as reader)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
   end
 
   put '/projects/:id' do
@@ -171,7 +171,7 @@ resource 'Projects' do
 
     let(:authentication_token) { "Token token=\"INVALID TOKEN\"" }
 
-    standard_request_options('UPDATE (with invalid token)', :unauthorized, {expected_json_path: 'meta/error/links/sign in'})
+    standard_request_options(:put, 'UPDATE (with invalid token)', :unauthorized, {expected_json_path: 'meta/error/links/sign in'})
   end
 
 
@@ -185,7 +185,7 @@ resource 'Projects' do
 
     let(:authentication_token) { "Token token=\"#{FactoryGirl.create(:unconfirmed_user).authentication_token}\"" }
 
-    standard_request_options('UPDATE (as unconfirmed user)', :forbidden, {expected_json_path: 'meta/error/links/confirm your account'})
+    standard_request_options(:put, 'UPDATE (as unconfirmed user)', :forbidden, {expected_json_path: 'meta/error/links/confirm your account'})
   end
 
   # Filter (#filter)
@@ -200,7 +200,7 @@ resource 'Projects' do
       }.to_json
     }
     let(:authentication_token) { reader_token }
-    standard_request_options('FILTER (as reader)', :ok, {expected_json_path: 'data/0/name', data_item_count: 1})
+    standard_request_options(:post, 'FILTER (as reader)', :ok, {expected_json_path: 'data/0/name', data_item_count: 1})
   end
 
 end

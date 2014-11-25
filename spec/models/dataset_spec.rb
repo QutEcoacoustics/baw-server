@@ -1,23 +1,23 @@
 require 'spec_helper'
 
-describe Dataset do
+describe Dataset, :type => :model do
   it 'has a valid factory' do
-    create(:dataset).should be_valid
+    expect(create(:dataset)).to be_valid
   end
   #it { should have_many(:progresses) }
-  it { should belong_to(:creator).with_foreign_key(:creator_id) }
-  it { should belong_to(:updater).with_foreign_key(:updater_id) }
+  it { is_expected.to belong_to(:creator).with_foreign_key(:creator_id) }
+  it { is_expected.to belong_to(:updater).with_foreign_key(:updater_id) }
 
 
   it 'should not allow duplicate names for the same user (case-insensitive)' do
     create(:dataset, {creator_id: 3, name: 'I love the smell of napalm in the morning.'})
     ss = build(:dataset, {creator_id: 3, name: 'I LOVE the smell of napalm in the morning.'})
-    ss.should_not be_valid
-    ss.should have(1).error_on(:name)
+    expect(ss).not_to be_valid
+    expect(ss.error_on(:name).size).to eq(1)
 
     ss.name = 'I love the smell of napalm in the morning. It smells like victory.'
     ss.save
-    ss.should be_valid
+    expect(ss).to be_valid
 
   end
 
@@ -25,12 +25,12 @@ describe Dataset do
     ss1 = create(:dataset, {creator_id: 3, name: 'You talkin\' to me?'})
 
     ss2 = build(:dataset, {creator_id: 1, name: 'You TALKIN\' to me?'})
-    ss2.creator_id.should_not eql(ss1.creator_id), "The same user is present for both cases, invalid test!"
-    ss2.should be_valid
+    expect(ss2.creator_id).not_to eql(ss1.creator_id), "The same user is present for both cases, invalid test!"
+    expect(ss2).to be_valid
 
     ss3 = build(:dataset, {creator_id: 2, name: 'You talkin\' to me?'})
-    ss3.creator_id.should_not eql(ss1.creator_id), "The same user is present for both cases, invalid test!"
-    ss3.should be_valid
+    expect(ss3.creator_id).not_to eql(ss1.creator_id), "The same user is present for both cases, invalid test!"
+    expect(ss3).to be_valid
   end
 
   it 'should not be an error to give a start date before the end date' do

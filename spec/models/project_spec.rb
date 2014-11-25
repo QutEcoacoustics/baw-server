@@ -1,19 +1,19 @@
 require 'spec_helper'
 
-describe Project do
+describe Project, :type => :model do
   it 'has a valid factory' do
-    FactoryGirl.create(:project).should be_valid
+    expect(FactoryGirl.create(:project)).to be_valid
   end
 
-  it { should have_many :permissions }
-  it { should have_and_belong_to_many :sites }
+  it { is_expected.to have_many :permissions }
+  it { is_expected.to have_and_belong_to_many :sites }
 
-  it { should belong_to(:creator).with_foreign_key(:creator_id) }
-  it { should belong_to(:updater).with_foreign_key(:updater_id) }
-  it { should belong_to(:deleter).with_foreign_key(:deleter_id) }
+  it { is_expected.to belong_to(:creator).with_foreign_key(:creator_id) }
+  it { is_expected.to belong_to(:updater).with_foreign_key(:updater_id) }
+  it { is_expected.to belong_to(:deleter).with_foreign_key(:deleter_id) }
 
   it 'is invalid without an name' do
-    FactoryGirl.build(:project, name: nil).should_not be_valid
+    expect(FactoryGirl.build(:project, name: nil)).not_to be_valid
   end
   it 'is invalid without a creator' do
     expect {
@@ -21,7 +21,7 @@ describe Project do
     }.to raise_error(ActiveRecord::RecordInvalid, /Creator must exist as an object or foreign key/)
   end
   it 'is invalid without a created_at' do
-    FactoryGirl.create(:project, created_at: nil).should_not be_a_new(Project)
+    expect(FactoryGirl.create(:project, created_at: nil)).not_to be_a_new(Project)
   end
 
   # this should pass, but the paperclip implementation of validate_attachment_content_type is buggy.

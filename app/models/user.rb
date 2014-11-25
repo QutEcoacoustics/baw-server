@@ -36,8 +36,8 @@ class User < ActiveRecord::Base
   # relations
   # TODO tidy up user project accessing - too many ways to do the same thing
   has_many :accessible_projects, through: :permissions, source: :project
-  has_many :readable_projects, through: :permissions, source: :project, conditions: 'permissions.level = reader'
-  has_many :writable_projects, through: :permissions, source: :project, conditions: 'permissions.level = writer'
+  has_many :readable_projects, -> { where('permissions.level = reader') }, through: :permissions, source: :project
+  has_many :writable_projects, -> { where('permissions.level = writer') }, through: :permissions, source: :project
 
   # relations for creator, updater, deleter, and others.
   has_many :created_audio_events, class_name: 'AudioEvent', foreign_key: :creator_id, inverse_of: :creator
@@ -60,8 +60,8 @@ class User < ActiveRecord::Base
   has_many :created_bookmarks, class_name: 'Bookmark', foreign_key: :creator_id, inverse_of: :creator
   has_many :updated_bookmarks, class_name: 'Bookmark', foreign_key: :updater_id, inverse_of: :updater
 
-  has_many :created_datasets, class_name: 'Dataset', foreign_key: :creator_id, inverse_of: :creator, include: :project
-  has_many :updated_datasets, class_name: 'Dataset', foreign_key: :updater_id, inverse_of: :updater, include: :project
+  has_many :created_datasets, -> { includes :project}, class_name: 'Dataset', foreign_key: :creator_id, inverse_of: :creator
+  has_many :updated_datasets, -> { includes :project}, class_name: 'Dataset', foreign_key: :updater_id, inverse_of: :updater
 
   has_many :created_jobs, class_name: 'Job', foreign_key: :creator_id, inverse_of: :creator
   has_many :updated_jobs, class_name: 'Job', foreign_key: :updater_id, inverse_of: :updater
@@ -129,7 +129,7 @@ class User < ActiveRecord::Base
   def inaccessible_projects
     user_projects = self.projects.map { |project| project.id }.to_a
 
-    query = Project.scoped
+    query = Project.all
 
     unless user_projects.blank?
       query = query.where('id NOT IN (?)', user_projects)
@@ -148,7 +148,11 @@ class User < ActiveRecord::Base
     # .joins for inner join
     creator_id_check = 'projects.creator_id = ?'
     permissions_check = '(permissions.user_id = ? AND permissions.level IN (\'reader\', \'writer\'))'
-    Project.includes(:permissions, :sites, :creator).where("(#{creator_id_check} OR #{permissions_check})", self.id, self.id).order('projects.name DESC')
+    Project
+        .includes(:permissions, :sites, :creator)
+        .where("(#{creator_id_check} OR #{permissions_check})", self.id, self.id)
+        .references(:permissions, :sites, :creator)
+        .order('projects.name DESC')
   end
 
   def accessible_sites
@@ -388,7 +392,9 @@ class User < ActiveRecord::Base
   def special_after_create_actions
     # WARNING: if this raises an error, the user will not be created and the page will be redirected to the home page
     # notify us of new user sign ups
-    PublicMailer.new_user_message(self, DataClass::NewUserInfo.new(name: self.user_name, email: self.email))
+    user_info_hash = {name: self.user_name, email: self.email}
+    user_info = DataClass::NewUserInfo.new(user_info_hash)
+    PublicMailer.new_user_message(self, user_info)
   end
 
   def generate_authentication_token

@@ -95,7 +95,8 @@ module Api
       current_ability.attributes_for(action_name.to_sym, resource_class).each do |key, value|
         get_resource.send("#{key}=", value)
       end
-      get_resource.attributes = params[resource_name.to_sym]
+      capture_params = params[resource_name.to_sym]
+      get_resource.attributes = capture_params if !capture_params.blank? && capture_params.is_a?(Hash)
       authorize! action_name.to_sym, get_resource
     end
 
@@ -103,12 +104,12 @@ module Api
     # @param [Object] item_resource
     # @return [String] json
     def respond_modify(item_resource)
-      extra_fields = []
+      extra_hash = {}
       if defined?(api_custom_response) == 'method'
-        item_resource, extra_fields = api_custom_response(item_resource)
+        item_resource, extra_hash = api_custom_response(item_resource)
       end
       fields = item_resource.class.filter_settings[:render_fields]
-      item_resource.as_json(only: fields + extra_fields)
+      item_resource.as_json(only: fields).merge(extra_hash)
     end
 
   end

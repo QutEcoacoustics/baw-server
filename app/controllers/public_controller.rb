@@ -159,8 +159,8 @@ EXTRACT(DAY FROM recorded_date) as extracted_day')
           {
               count: ar.grouped_count,
               extracted_year: ar.extracted_year,
-              extracted_month: ar.extracted_month.rjust(2, '0'),
-              extracted_day: ar.extracted_day.rjust(2, '0')
+              extracted_month: ar.extracted_month.to_s.rjust(2, '0'),
+              extracted_day: ar.extracted_day.to_s.rjust(2, '0')
           }
         }
         render json: audio_recordings_grouped }
@@ -316,7 +316,7 @@ EXTRACT(DAY FROM recorded_date) as extracted_day')
         error_class = error_class_string.constantize
 
         case error_class_string
-          when 'ActiveResource::BadRequest'
+          when 'ActionController::BadRequest'
             fail error_class.new(response)
 
           when 'ActiveRecord::RecordNotUnique'
