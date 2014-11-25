@@ -77,8 +77,6 @@ end
 # @option opts [Boolean] :document               (true) Include in api spec documentation.
 # @option opts [Boolean] :check_accept_header    (true) Check the Accept header.
 # @option opts [Boolean] :check_content_length   (true) Check the Content-Length header.
-# @option opts [Boolean] :is_head_request        (true) Expecting a head request.
-# @option opts [Boolean] :is_head_request        (true) Expecting a range request.
 # @return [void]
 def media_request_options(http_method, description, expected_status, opts = {})
   opts.reverse_merge!({document: true})
@@ -107,7 +105,6 @@ end
 # @option opts [String]         :expected_method                 (nil) Expected http method.
 # @option opts [Boolean]        :expected_response_has_content   (nil) Is the response expected to have content?
 # @option opts [String]         :expected_response_content_type  (nil) What is the expected response content type?
-# @option opts [Boolean]        :is_expected_head_request        (nil) Is the request expected to be a HEAD request?
 # @return [void]
 def acceptance_checks_shared(request, opts = {})
   opts.reverse_merge!(
@@ -119,42 +116,35 @@ def acceptance_checks_shared(request, opts = {})
           expected_response_content_type: 'application/json',
 
           # @option opts [String]         :expected_request_content_type   (nil) What is the expected request content type?
-          #expected_request_content_type: 'application/json',
-          is_expected_head_request: false
+          #expected_request_content_type: 'application/json'
       })
+
+  # Rubymine might think this is an error - it's fine, there are so many methods named 'method' :/
+  http_method = method
 
   # !! - forces the boolean context, but returns the proper boolean value
   # don't document because it returns binary data that can't be json encoded
-  is_documentation_run = !!(ENV['GENERATE_DOC'])
+  #is_documentation_run = !!(ENV['GENERATE_DOC'])
 
-  if response_headers.include?('Content-Type') && response_headers['Content-Type'].start_with?('application/json')
-    actual_response = response_body
-  elsif !response_headers.include?('Content-Type')
-    actual_response = nil
-  else
-    actual_response = 'content to replace binary data'
-  end
-
+  actual_response = response_body
 
   # info hash
   opts.merge!(
       {
-          is_documentation_run: is_documentation_run,
+          #is_documentation_run: is_documentation_run,
 
-          actual_method: method, # Rubymine might think this is an error - it's fine, there are so many methods named 'method' :/
+          actual_method: http_method,
           actual_status: status.is_a?(Symbol) ? status : Settings.api_response.status_symbol(status),
           actual_query_string: query_string,
           actual_path: path,
 
           actual_response: actual_response,
-          actual_response_has_content: !actual_response.nil?,
+          actual_response_has_content: !actual_response.empty?,
           actual_response_headers: response_headers,
           actual_response_content_type: response_headers['Content-Type'],
 
           #actual_request_content_type: request_headers['Content-Type'],
           #actual_request_headers: request_headers,
-
-          is_actual_head_request: !is_documentation_run && !request.blank? && opts[:actual_method] == 'HEAD',
 
           expected_status: opts[:expected_status].is_a?(Symbol) ? opts[:expected_status] : Settings.api_response.status_symbol(opts[:expected_status]),
       })
@@ -164,8 +154,6 @@ def acceptance_checks_shared(request, opts = {})
   # expectations
   expect(opts[:actual_status]).to eq(opts[:expected_status]), "Mismatch: status. #{opts[:msg]}"
   expect(opts[:actual_method]).to eq(opts[:expected_method]), "Mismatch: HTTP method. #{opts[:msg]}"
-  expect(opts[:is_actual_head_request]).to eq(opts[:expected_method] == :head), "Mismatch: is head request. #{opts[:msg]}"
-  expect(opts[:is_actual_head_request]).to eq(opts[:is_expected_head_request]), "Mismatch: is head request. #{opts[:msg]}"
 
   #expect(opts[:expected_request_content_type]).to eq(opts[:actual_request_content_type]), "Mismatch: request content type. #{opts[:msg]}"
   expect(opts[:actual_response_has_content]).to eq(opts[:expected_response_has_content]), "Mismatch: response has content. #{opts[:msg]}"
@@ -290,12 +278,13 @@ def acceptance_checks_media(opts = {})
   expect(opts[:actual_response_headers]).to include('Content-Length'), "Missing header: content length. #{opts[:msg]}"
   expect(opts[:actual_response_headers]['Content-Length']).to_not be_blank, "Mismatch: content length. #{opts[:msg]}"
 
-  expect(opts[:actual_response_headers]).to include('X-Media-Response-From'), "Missing header: media response from. #{opts[:msg]}"
-
-  expect(opts[:actual_response_headers]['X-Media-Response-From']).to eq(opts[:expected_response_media_from_header]), "Mismatch: media response from. #{opts[:msg]}"
-
-
-  expect(opts[:actual_response_headers]).to include('X-Media-Response-Start'), "Missing header: media response start. #{opts[:msg]}"
+  if is_json
+    expect(opts[:actual_response_headers]).to_not include('X-Media-Response-From'), "Invalid header: media response from. #{opts[:msg]}"
+    expect(opts[:actual_response_headers]).to_not include('X-Media-Response-Start'), "Invalid header: media response start. #{opts[:msg]}"
+  else
+    expect(opts[:actual_response_headers]).to include('X-Media-Response-From'), "Missing header: media response from. #{opts[:msg]}"
+    expect(opts[:actual_response_headers]).to include('X-Media-Response-Start'), "Missing header: media response start. #{opts[:msg]}"
+  end
 
   if opts[:is_range_request]
     expect(opts[:actual_response_headers]).to include('Content-Range'), "Missing header: content range. #{opts[:msg]}"
@@ -304,9 +293,8 @@ def acceptance_checks_media(opts = {})
     expect(opts[:actual_response_headers]['Content-Range']).to be_nil, "Mismatch: content range. #{opts[:msg]}"
   end
 
-
   # assert
-  if opts[:is_actual_head_request] || opts[:is_expected_head_request]
+  if opts[:actual_method] == :head || opts[:expected_method] == :head
     expect(opts[:actual_response].size).to eq(0), "Mismatch: actual response size. #{opts[:msg]}"
     options = opts[:audio_recording] || {}
     if is_image

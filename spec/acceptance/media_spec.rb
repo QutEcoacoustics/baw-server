@@ -361,7 +361,7 @@ resource 'Media' do
         :ok,
         {
             document: document_media_requests,
-            expected_response_content_type:  'audio/mpeg'
+            expected_response_content_type: 'audio/mpeg'
         })
   end
 
@@ -376,7 +376,7 @@ resource 'Media' do
         :ok,
         {
             document: document_media_requests,
-            expected_response_content_type:  'audio/wav'
+            expected_response_content_type: 'audio/wav'
         })
   end
 
@@ -391,7 +391,7 @@ resource 'Media' do
         :ok,
         {
             document: document_media_requests,
-            expected_response_content_type:  'audio/ogg'
+            expected_response_content_type: 'audio/ogg'
         })
   end
 
@@ -406,7 +406,7 @@ resource 'Media' do
         :ok,
         {
             document: document_media_requests,
-            expected_response_content_type:  'audio/webm'
+            expected_response_content_type: 'audio/webm'
         })
   end
 
@@ -421,7 +421,7 @@ resource 'Media' do
         :ok,
         {
             document: document_media_requests,
-            expected_response_content_type:  'audio/x-flac'
+            expected_response_content_type: 'audio/x-flac'
         })
   end
 
@@ -436,7 +436,7 @@ resource 'Media' do
         :ok,
         {
             document: document_media_requests,
-            expected_response_content_type:  'image/png'
+            expected_response_content_type: 'image/png'
         })
   end
 
@@ -453,7 +453,8 @@ resource 'Media' do
         :ok,
         {
             document: document_media_requests,
-            expected_response_content_type:  'application/json'
+            expected_response_content_type: 'application/json',
+            expected_response_has_content: false
         })
   end
 
@@ -468,7 +469,8 @@ resource 'Media' do
         :ok,
         {
             document: document_media_requests,
-            expected_response_content_type:  'audio/mpeg'
+            expected_response_content_type: 'audio/mpeg',
+            expected_response_has_content: false
         })
   end
 
@@ -483,7 +485,8 @@ resource 'Media' do
         :ok,
         {
             document: document_media_requests,
-            expected_response_content_type:  'image/png'
+            expected_response_content_type: 'image/png',
+            expected_response_has_content: false
         })
   end
 
@@ -765,7 +768,7 @@ resource 'Media' do
                 expected_method: :get,
                 expected_response_content_type: 'audio/mpeg',
                 document: document_media_requests,
-                expected_response_media_from_header:'Cache'
+                expected_response_media_from_header: 'Cache'
             }
 
         opts = acceptance_checks_shared(request, opts)

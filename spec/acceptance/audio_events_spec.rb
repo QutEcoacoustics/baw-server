@@ -28,13 +28,13 @@ def library_request(settings = {})
         !parsed_response_body.blank? && parsed_response_body.respond_to?(:each_index)
       parsed_response_body.each_index do |index|
         expect(parsed_response_body[index]['audio_event_id'])
-        .to eq(ordered_audio_recordings[index]),
-            "Result body index #{index} in #{ordered_audio_recordings}: #{parsed_response_body}"
+            .to eq(ordered_audio_recordings[index]),
+                "Result body index #{index} in #{ordered_audio_recordings}: #{parsed_response_body}"
       end
       ordered_audio_recordings.each_index do |index|
         expect(ordered_audio_recordings[index])
-        .to eq(parsed_response_body[index]['audio_event_id']),
-            "Audio Event Order index #{index} in #{ordered_audio_recordings}: #{parsed_response_body}"
+            .to eq(parsed_response_body[index]['audio_event_id']),
+                "Audio Event Order index #{index} in #{ordered_audio_recordings}: #{parsed_response_body}"
       end
     end
 
@@ -1104,7 +1104,7 @@ resource 'AudioEvents' do
 
       opts = acceptance_checks_shared(request, opts)
 
-      opts.merge!({expected_json_path: 'taggings/1/tag', response_body_content:'start_time_seconds'})
+      opts.merge!({expected_json_path: 'taggings/1/tag', response_body_content: 'start_time_seconds'})
       acceptance_checks_json(opts)
 
       # only one tag should have been created, so new tag count should be one more than old tag count
@@ -1151,7 +1151,7 @@ resource 'AudioEvents' do
 
       opts = acceptance_checks_shared(request, opts)
 
-      opts.merge!({expected_json_path: 'taggings/1/tag', response_body_content:'start_time_seconds'})
+      opts.merge!({expected_json_path: 'taggings/1/tag', response_body_content: 'start_time_seconds'})
       acceptance_checks_json(opts)
 
       # only one tag should have been created, so new tag count should be one more than old tag count

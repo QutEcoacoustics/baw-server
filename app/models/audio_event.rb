@@ -48,15 +48,15 @@ class AudioEvent < ActiveRecord::Base
   scope :select_start_absolute, lambda { select('audio_recordings.recorded_date + CAST(audio_events.start_time_seconds || \' seconds\' as interval) as start_time_absolute') }
   scope :select_end_absolute, lambda { select('audio_recordings.recorded_date + CAST(audio_events.end_time_seconds || \' seconds\' as interval) as end_time_absolute') }
   scope :check_permissions, lambda { |user|
-    if user.is_admin?
-      where('1 = 1') # don't change query
-    else
-      creator_id_check = 'projects.creator_id = ?'
-      permissions_check = 'permissions.user_id = ? AND permissions.level IN (\'reader\', \'writer\')'
-      reference_audio_event_check = 'audio_events.is_reference IS TRUE'
-      where("((#{creator_id_check}) OR (#{permissions_check}) OR (#{reference_audio_event_check}))", user.id, user.id)
-    end
-  }
+                            if user.is_admin?
+                              where('1 = 1') # don't change query
+                            else
+                              creator_id_check = 'projects.creator_id = ?'
+                              permissions_check = 'permissions.user_id = ? AND permissions.level IN (\'reader\', \'writer\')'
+                              reference_audio_event_check = 'audio_events.is_reference IS TRUE'
+                              where("((#{creator_id_check}) OR (#{permissions_check}) OR (#{reference_audio_event_check}))", user.id, user.id)
+                            end
+                          }
 
   # @param [User] user
   # @param [Hash] params
@@ -77,10 +77,12 @@ class AudioEvent < ActiveRecord::Base
 
     # eager load tags and projects
     # @see http://stackoverflow.com/questions/24397640/rails-nested-includes-on-active-records
+    # Note that includes works with association names while references needs the actual table name.
+    # @see http://api.rubyonrails.org/classes/ActiveRecord/QueryMethods.html#method-i-includes
     query = AudioEvent
-    .includes(:creator, :tags, audio_recording: [{site: [{projects: :permissions}]}])
-    .joins(:creator, :tags, audio_recording: [{site: [{projects: :permissions}]}])
-    .check_permissions(user)
+                .includes(:creator, :tags, audio_recording: [{site: [{projects: :permissions}]}])
+                .references(:users, :tags, :audio_recordings, :sites, :projects, :permissions)
+                .check_permissions(user)
 
     query = AudioEvent.filter_reference(query, params)
     query = AudioEvent.filter_tags(query, params)
@@ -222,8 +224,9 @@ class AudioEvent < ActiveRecord::Base
 
   def self.csv_filter(user, filter_params)
     query = AudioEvent
-    .includes([:creator, :tags, audio_recording: {site: {projects: :permissions}}])
-    .check_permissions(user)
+                .includes(:creator, :tags, audio_recording: [{site: [{projects: :permissions}]}])
+                .references(:users, :tags, :audio_recordings, :sites, :projects, :permissions)
+                .check_permissions(user)
 
     if filter_params[:project_id] || filter_params[:projectId]
       query = query.where(projects: {id: (filter_params[:project_id] || filter_params[:projectId]).to_i})
@@ -281,26 +284,36 @@ class AudioEvent < ActiveRecord::Base
   end
 
   def set_tags
-    # must use taggings here, can't use the through association to tags
-    # as taggings does not get the changes
+
+    # for each tagging, check if a tag with that text already exists
+    # if one does, delete that tagging and add the existing tag
+
+    tag_ids_to_add = []
+
     self.taggings.each do |tagging|
       tag = tagging.tag
       existing_tag = Tag.where(text: tag.text).first
+
       unless existing_tag.blank?
-        # remove the association, otherwise it tries to create it and fails (as it already exists)
-        tagging.tag = nil
-        tagging.tag_id = existing_tag.id
-        #self.tags.reject! { |x| x.text == existing_tag.text}
+        #remove the tag association, otherwise it tries to create the tag and fails (as the tag already exists)
+        self.tags.each do |audio_event_tag|
+          # The collection.delete method removes one or more objects from the collection by setting their foreign keys to NULL.
+          self.tags.delete(audio_event_tag) if existing_tag.text == audio_event_tag.text
+        end
+
+        # remove the tagging association
+        self.taggings.delete(tagging)
+
+        # record the tag id
+        tag_ids_to_add.push(existing_tag.id)
       end
     end
 
-    # cater for tag_ids
-    # if self.taggings is empty, and self.tags is not, create the taggings based on the tags
-    if self.taggings.blank? && !self.tags.blank?
-      self.tags.each do |tag|
-        self.taggings.push(Tagging.new(tag_id: tag.id))
-      end
+    # add the tagging using the existing tag id
+    tag_ids_to_add.each do |tag_id|
+      self.taggings << Tagging.new(tag_id: tag_id)
     end
 
   end
+
 end

@@ -148,7 +148,11 @@ class User < ActiveRecord::Base
     # .joins for inner join
     creator_id_check = 'projects.creator_id = ?'
     permissions_check = '(permissions.user_id = ? AND permissions.level IN (\'reader\', \'writer\'))'
-    Project.includes(:permissions, :sites, :creator).where("(#{creator_id_check} OR #{permissions_check})", self.id, self.id).order('projects.name DESC')
+    Project
+        .includes(:permissions, :sites, :creator)
+        .where("(#{creator_id_check} OR #{permissions_check})", self.id, self.id)
+        .references(:permissions, :sites, :creator)
+        .order('projects.name DESC')
   end
 
   def accessible_sites
