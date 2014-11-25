@@ -280,6 +280,12 @@ class RangeRequest
     file_modified_time = File.mtime(file_path).getutc
     file_size = File.size(file_path)
 
+    # convert request headers to a hash
+    request_headers_hash = {}
+    rails_request.headers.each do |key, value|
+      request_headers_hash[key] = value
+    end
+
     info = {
         # Indicates if the HTTP request is for multiple ranges.
         is_multipart: false,
@@ -306,7 +312,7 @@ class RangeRequest
 
         # to ensure a new hash is used
         # http://thingsaaronmade.com/blog/ruby-shallow-copy-surprise.html
-        request_headers: {}.merge!(rails_request.headers.to_h),
+        request_headers: {}.merge!(request_headers_hash),
 
         file_path: file_path,
         file_size: file_size,

@@ -783,7 +783,7 @@ resource 'Media' do
   context 'range request' do
     header 'Range', 'bytes=0-'
 
-    get '/audio_recordings/:audio_recording_id/media.:format' do
+    get '/audio_recordings/:audio_recording_id/media.:format?start_offset=:start_offset&end_offset=:end_offset' do
       standard_media_parameters
       let(:authentication_token) { reader_token }
       let(:format) { 'mp3' }
@@ -796,6 +796,23 @@ resource 'Media' do
               document: document_media_requests,
               expected_response_content_type: 'audio/mpeg',
               is_range_request: true
+          })
+    end
+
+    head '/audio_recordings/:audio_recording_id/media.:format?start_offset=:start_offset&end_offset=:end_offset' do
+      standard_media_parameters
+      let(:authentication_token) { reader_token }
+      let(:format) { 'mp3' }
+
+      media_request_options(
+          :head,
+          'MEDIA (audio get request mp3 as reader with shallow path using range request)',
+          :partial_content,
+          {
+              document: document_media_requests,
+              expected_response_content_type: 'audio/mpeg',
+              is_range_request: true,
+              expected_response_has_content: false
           })
     end
   end
