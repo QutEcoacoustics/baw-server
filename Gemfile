@@ -23,6 +23,7 @@ gem 'rails-observers'
 gem 'actionpack-page_caching'
 gem 'actionpack-action_caching'
 gem 'activerecord-deprecated_finders'
+gem 'activesupport-json_encoder', github: 'rails/activesupport-json_encoder'
 
 # UI HELPERS
 # -------------------------------------

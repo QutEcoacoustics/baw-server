@@ -251,7 +251,7 @@ resource 'Sites' do
 
     standard_request_options(:put, 'UPDATE (as reader)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
   end
- 
+
   put '/projects/:project_id/sites/:id' do
     parameter :name, 'Name of site', scope: :site, :required => true
     parameter :longitude, 'Longitude of site', scope: :site, :required => true

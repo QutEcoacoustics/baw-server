@@ -3,11 +3,7 @@ require File.expand_path('../boot', __FILE__)
 require 'rails/all'
 
 # some patches need to be applied before gems load
-require "#{File.dirname(__FILE__)}/../lib/patches/enable_stampable_deleter"
-require "#{File.dirname(__FILE__)}/../lib/patches/big_decimal"
-require "#{File.dirname(__FILE__)}/../lib/patches/float"
 require "#{File.dirname(__FILE__)}/../lib/patches/random"
-require "#{File.dirname(__FILE__)}/../lib/patches/deep_dup"
 
 # Require the gems listed in Gemfile, including any gems
 # you've limited to :test, :development, or :production.
