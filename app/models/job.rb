@@ -29,6 +29,8 @@ class Job < ActiveRecord::Base
   #validates :process_new, :inclusion => { :in => [true, false] }, allow_nil: true
   #validate :data_set_cannot_process_new
 
+  #serialize :script_settings, Hash
+
   private
 
   # custom validation methods

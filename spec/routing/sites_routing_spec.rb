@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe SitesController do
+describe SitesController, :type => :routing do
   describe :routing do
 
     it { expect(get('projects/1/sites/1/upload_instructions')).to route_to('sites#upload_instructions', id: '1', project_id: '1') }

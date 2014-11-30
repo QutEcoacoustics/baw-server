@@ -3,7 +3,7 @@ class Project < ActiveRecord::Base
   include UserChange
 
   attr_accessible :description, :image, :name, :notes, :urn #,
-                  #:sign_in_level, :anonymous_level
+  #:sign_in_level, :anonymous_level
 
   # relationships
   belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_projects
@@ -12,8 +12,8 @@ class Project < ActiveRecord::Base
 
   has_many :permissions, inverse_of: :project
   accepts_nested_attributes_for :permissions
-  has_many :readers, through: :permissions, source: :user, conditions: "permissions.level = 'reader'", uniq: true
-  has_many :writers, through: :permissions, source: :user, conditions: "permissions.level = 'writer'", uniq: true
+  has_many :readers, -> { where("permissions.level = 'reader'").uniq }, through: :permissions, source: :user
+  has_many :writers, -> { where("permissions.level = 'writer'").uniq }, through: :permissions, source: :user
   has_and_belongs_to_many :sites, uniq: true
   has_many :datasets, inverse_of: :project
   has_many :jobs, through: :datasets
@@ -22,6 +22,7 @@ class Project < ActiveRecord::Base
   has_attached_file :image,
                     styles: {span4: '300x300#', span3: '220x220#', span2: '140x140#', span1: '60x60#', spanhalf: '30x30#'},
                     default_url: '/images/project/project_:style.png'
+
 
   # add deleted_at and deleter_id
   acts_as_paranoid
@@ -35,9 +36,6 @@ class Project < ActiveRecord::Base
   #validates :urn, uniqueness: {case_sensitive: false}, allow_blank: true, allow_nil: true
   validates_format_of :urn, with: /\Aurn:[a-z0-9][a-z0-9-]{0,31}:[a-z0-9()+,\-.:=@;$_!*'%\/?#]+\z/, message: 'urn %{value} is not valid, must be in format urn:<name>:<path>', allow_blank: true, allow_nil: true
   validates_attachment_content_type :image, content_type: /\Aimage\/(jpg|jpeg|pjpeg|png|x-png|gif)\z/, message: 'file type %{value} is not allowed (only jpeg/png/gif images)'
-
-  # scopes
-  scope :none, where('1 = 0') # for getting an empty set
 
   # Define filter api settings
   def self.filter_settings

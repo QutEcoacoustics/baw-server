@@ -85,8 +85,8 @@ resource 'Tags' do
       end
 
       do_request
-      status.should == 200
-      response_body.should have_json_path('2/is_taxanomic')
+      expect(status).to eq(200)
+      expect(response_body).to have_json_path('2/is_taxanomic')
     end
   end
 

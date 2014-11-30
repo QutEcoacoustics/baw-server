@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe AudioRecordingsController do
+describe AudioRecordingsController, :type => :routing do
   describe :routing do
 
     it { expect(get('/projects/1/sites/2/audio_recordings/check_uploader/4')).to route_to('audio_recordings#check_uploader', project_id: '1', site_id: '2', uploader_id: '4', format: 'json') }

@@ -44,7 +44,7 @@ resource 'Sites' do
 
     let(:authentication_token) { writer_token }
 
-    standard_request_options('LIST (as writer)', :ok, {expected_json_path: 'data/0/custom_longitude', data_item_count: 1})
+    standard_request_options(:get, 'LIST (as writer)', :ok, {expected_json_path: 'data/0/custom_longitude', data_item_count: 1})
   end
 
   get '/projects/:project_id/sites' do
@@ -52,7 +52,7 @@ resource 'Sites' do
 
     let(:authentication_token) { reader_token }
 
-    standard_request_options('LIST (as reader)', :ok, {expected_json_path: 'data/0/custom_latitude', data_item_count: 1})
+    standard_request_options(:get, 'LIST (as reader)', :ok, {expected_json_path: 'data/0/custom_latitude', data_item_count: 1})
   end
 
   get '/projects/:project_id/sites' do
@@ -60,7 +60,7 @@ resource 'Sites' do
 
     let(:authentication_token) { "Token token=\"INVALID TOKEN\"" }
 
-    standard_request_options('LIST (with invalid token)', :unauthorized, {expected_json_path: 'meta/error/links/sign in'})
+    standard_request_options(:get, 'LIST (with invalid token)', :unauthorized, {expected_json_path: 'meta/error/links/sign in'})
   end
 
 
@@ -80,7 +80,7 @@ resource 'Sites' do
 
     let(:raw_post) { {'site' => post_attributes}.to_json }
 
-    standard_request_options('CREATE (as writer)', :created, {expected_json_path: 'data/project_ids'})
+    standard_request_options(:post, 'CREATE (as writer)', :created, {expected_json_path: 'data/project_ids'})
 
   end
 
@@ -97,7 +97,7 @@ resource 'Sites' do
 
     let(:raw_post) { {'site' => post_attributes}.to_json }
 
-    standard_request_options('CREATE (as reader)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
+    standard_request_options(:post, 'CREATE (as reader)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
 
   end
 
@@ -114,7 +114,7 @@ resource 'Sites' do
 
     let(:raw_post) { {'site' => post_attributes}.to_json }
 
-    standard_request_options('CREATE (with invalid token)', :unauthorized, {expected_json_path: 'meta/error/links/sign in'})
+    standard_request_options(:post, 'CREATE (with invalid token)', :unauthorized, {expected_json_path: 'meta/error/links/sign in'})
 
   end
 
@@ -135,7 +135,7 @@ resource 'Sites' do
     #puts ActiveSupport::JSON.decode(response_body)
     #response_json = JSON.parse(response_body).to_s
     #response_body.should have_json_path('name')
-    standard_request_options('SHOW (as writer)', :ok, {expected_json_path: 'data/location_obfuscated'})
+    standard_request_options(:get, 'SHOW (as writer)', :ok, {expected_json_path: 'data/location_obfuscated'})
   end
 
   get '/projects/:project_id/sites/:id' do
@@ -144,7 +144,7 @@ resource 'Sites' do
 
     let(:authentication_token) { reader_token }
 
-    standard_request_options('SHOW (as reader)', :ok, {expected_json_path: 'data/description'})
+    standard_request_options(:get, 'SHOW (as reader)', :ok, {expected_json_path: 'data/description'})
   end
 
   get '/projects/:project_id/sites/:id' do
@@ -153,7 +153,7 @@ resource 'Sites' do
 
     let(:authentication_token) { "Token token=\"INVALID TOKEN\"" }
 
-    standard_request_options('SHOW (with invalid token)', :unauthorized, {expected_json_path: 'meta/error/links/sign in'})
+    standard_request_options(:get, 'SHOW (with invalid token)', :unauthorized, {expected_json_path: 'meta/error/links/sign in'})
   end
 
   # shallow routes
@@ -162,7 +162,7 @@ resource 'Sites' do
 
     let(:authentication_token) { writer_token }
 
-    standard_request_options('SHOW (as writer)', :ok, {expected_json_path: 'data/project_ids'})
+    standard_request_options(:get, 'SHOW (as writer)', :ok, {expected_json_path: 'data/project_ids'})
   end
 
   get '/sites/:id' do
@@ -170,7 +170,7 @@ resource 'Sites' do
 
     let(:authentication_token) { reader_token }
 
-    standard_request_options('SHOW (as reader)', :ok, {expected_json_path: 'data/custom_longitude'})
+    standard_request_options(:get, 'SHOW (as reader)', :ok, {expected_json_path: 'data/custom_longitude'})
   end
 
   get '/sites/:id' do
@@ -178,7 +178,7 @@ resource 'Sites' do
 
     let(:authentication_token) { "Token token=\"INVALID TOKEN\"" }
 
-    standard_request_options('SHOW (with invalid token)', :unauthorized, {expected_json_path: 'meta/error/links/sign in'})
+    standard_request_options(:get, 'SHOW (with invalid token)', :unauthorized, {expected_json_path: 'meta/error/links/sign in'})
   end
 
   # latitude and longitude obfuscation
@@ -230,7 +230,7 @@ resource 'Sites' do
     #puts ActiveSupport::JSON.decode(response_body)
     #response_json = JSON.parse(response_body).to_s
     #response_body.should have_json_path('name')
-    standard_request_options('UPDATE (as writer)', :ok, {expected_json_path: 'data/description'})
+    standard_request_options(:put, 'UPDATE (as writer)', :ok, {expected_json_path: 'data/description'})
   end
 
   put '/projects/:project_id/sites/:id' do
@@ -249,9 +249,9 @@ resource 'Sites' do
 
     #puts "Existing sites: #{Site.all.inspect}"
 
-    standard_request_options('UPDATE (as reader)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
+    standard_request_options(:put, 'UPDATE (as reader)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
   end
- 
+
   put '/projects/:project_id/sites/:id' do
     parameter :name, 'Name of site', scope: :site, :required => true
     parameter :longitude, 'Longitude of site', scope: :site, :required => true
@@ -266,7 +266,7 @@ resource 'Sites' do
 
     let(:authentication_token) { "Token token=\"INVALID TOKEN\"" }
 
-    standard_request_options('UPDATE (with invalid token)', :unauthorized, {expected_json_path: 'meta/error/links/sign in'})
+    standard_request_options(:put, 'UPDATE (with invalid token)', :unauthorized, {expected_json_path: 'meta/error/links/sign in'})
   end
 
   #####################
@@ -284,7 +284,7 @@ resource 'Sites' do
         'projection' => {
             'include' => ['id', 'name']}
     }.to_json }
-    standard_request_options('FILTER (as reader)', :ok, {expected_json_path: 'data/0/project_ids', data_item_count: 1})
+    standard_request_options(:post, 'FILTER (as reader)', :ok, {expected_json_path: 'data/0/project_ids', data_item_count: 1})
   end
 
 end
