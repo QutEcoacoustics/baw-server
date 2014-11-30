@@ -28,7 +28,7 @@ resource 'Analysis' do
     @admin_user = FactoryGirl.create(:admin)
   end
 
-  after(:all) do
+  after(:each) do
     remove_media_dirs
   end
 
@@ -58,6 +58,7 @@ resource 'Analysis' do
     let(:authentication_token) { admin_token }
     let(:format) { 'csv' }
     standard_request_options(
+        :get,
         'MEDIA (as admin)',
         :not_found,
         {
@@ -73,6 +74,7 @@ resource 'Analysis' do
     let(:authentication_token) { admin_token }
     let(:format) { 'json' }
     standard_request_options(
+        :get,
         'MEDIA (as admin)',
         :unprocessable_entity,
         {
