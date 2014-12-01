@@ -69,7 +69,7 @@ defaults: &defaults
     cached_datasets:
       - <%= Rails.root %>/tmp/_cached_dataset
     cached_analysis_jobs:
-      - /home/ubuntu/bioacoustics/qcif_storage/data_stag/cached_analysis_jobs
+      - <%= Rails.root %>/tmp/_cached_analysis_jobs
     worker_log_file: <%= Rails.root %>/log/worker.<%= Rails.env %>.log
     mailer_log_file: <%= Rails.root %>/log/mailer.<%= Rails.env %>.log
     audio_tools_log_file: <%= Rails.root %>/log/audio_tools.<%= Rails.env %>.log
@@ -130,6 +130,7 @@ defaults: &defaults
     sox_executable: sox
     wavpack_executable: wvunpack
     shntool_executable: shntool
+    wav2png_executable: wav2png
     imagemagick_convert_executable: convert
     imagemagick_identify_executable: identify
     max_duration_seconds: 300

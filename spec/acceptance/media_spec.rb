@@ -42,6 +42,7 @@ resource 'Media' do
   let(:audio_original) { BawWorkers::Storage::AudioOriginal.new(BawWorkers::Settings.paths.original_audios) }
   let(:audio_cache) { BawWorkers::Storage::AudioCache.new(BawWorkers::Settings.paths.cached_audios) }
   let(:spectrogram_cache) { BawWorkers::Storage::SpectrogramCache.new(BawWorkers::Settings.paths.cached_spectrograms) }
+  let(:analysis_cache) { BawWorkers::Storage::AnalysisCache.new(BawWorkers::Settings.paths.cached_analysis_jobs) }
 
   # prepare authentication_token for different users
   let(:admin_token) { "Token token=\"#{@admin_user.authentication_token}\"" }
@@ -54,8 +55,6 @@ resource 'Media' do
   # MEDIA GET - long path
   ################################
   get '/audio_recordings/:audio_recording_id/media.:format' do
-    parameter :project_id, 'Requested project ID (in path/route)', required: true
-    parameter :site_id, 'Requested site ID (in path/route)', required: true
     standard_media_parameters
     let(:authentication_token) { admin_token }
     let(:format) { 'json' }
@@ -63,8 +62,6 @@ resource 'Media' do
   end
 
   get 'audio_recordings/:audio_recording_id/media.:format' do
-    parameter :project_id, 'Requested project ID (in path/route)', required: true
-    parameter :site_id, 'Requested site ID (in path/route)', required: true
     standard_media_parameters
     let(:authentication_token) { writer_token }
     let(:format) { 'json' }
@@ -72,8 +69,6 @@ resource 'Media' do
   end
 
   get '/audio_recordings/:audio_recording_id/media.:format' do
-    parameter :project_id, 'Requested project ID (in path/route)', required: true
-    parameter :site_id, 'Requested site ID (in path/route)', required: true
     standard_media_parameters
     let(:authentication_token) { reader_token }
     let(:format) { 'json' }
@@ -81,8 +76,6 @@ resource 'Media' do
   end
 
   get '/audio_recordings/:audio_recording_id/media.:format' do
-    parameter :project_id, 'Requested project ID (in path/route)', required: true
-    parameter :site_id, 'Requested site ID (in path/route)', required: true
     standard_media_parameters
     let(:authentication_token) { reader_token }
     let(:format) { 'mp4' }
@@ -90,8 +83,6 @@ resource 'Media' do
   end
 
   get '/audio_recordings/:audio_recording_id/media.:format' do
-    parameter :project_id, 'Requested project ID (in path/route)', required: true
-    parameter :site_id, 'Requested site ID (in path/route)', required: true
     standard_media_parameters
     let(:authentication_token) { unconfirmed_token }
     let(:format) { 'json' }
@@ -99,8 +90,6 @@ resource 'Media' do
   end
 
   get '/audio_recordings/:audio_recording_id/media.:format' do
-    parameter :project_id, 'Requested project ID (in path/route)', required: true
-    parameter :site_id, 'Requested site ID (in path/route)', required: true
     standard_media_parameters
     let(:authentication_token) { invalid_token }
     let(:format) { 'json' }

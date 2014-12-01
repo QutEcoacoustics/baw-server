@@ -287,4 +287,25 @@ resource 'Sites' do
     standard_request_options(:post, 'FILTER (as reader)', :ok, {expected_json_path: 'data/0/project_ids', data_item_count: 1})
   end
 
+  post '/sites/filter' do
+    let(:authentication_token) { writer_token }
+    let(:raw_post) { {
+        'filter' => {
+            'id' => {
+                'in' => ['1', '2', '3', '4', id.to_s]
+            }
+        },
+        'projection' => {
+            'include' => ['id', 'name']}
+    }.to_json }
+    standard_request_options(:post, 'FILTER (as reader)', :ok,
+                             {
+                                 expected_json_path: 'data/0/project_ids/0',
+                                 data_item_count: 1,
+                                 regex_match: /"project_ids"\:\[[0-9]+\]/,
+                                 response_body_content: "\"project_ids\":[",
+                                 invalid_content: "\"project_ids\":[{\"id\":"
+                             })
+  end
+
 end

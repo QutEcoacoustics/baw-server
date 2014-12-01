@@ -189,6 +189,22 @@ resource 'AudioEvents' do
   end
 
   ################################
+  # LIBRARY Paged
+  ################################
+
+  get '/audio_events/library/paged?reference=true' do
+    let(:authentication_token) { writer_token }
+
+    before do
+      FactoryGirl.create(:audio_event,
+                         audio_recording: @write_permission.project.sites[0].audio_recordings[0],
+                         start_time_seconds: 23, end_time_seconds: 25, is_reference: true)
+    end
+
+    standard_request('LIBRARY PAGED (as writer)', 200, 'entries/0/start_time_seconds', true)
+  end
+
+  ################################
   # LIBRARY
   ################################
   get '/audio_events/library' do

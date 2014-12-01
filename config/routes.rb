@@ -216,6 +216,7 @@ Rails.application.routes.draw do
   # API audio recording item
   resources :audio_recordings, only: [:index, :show, :new, :update], defaults: {format: 'json'} do
     match 'media.:format' => 'media#show', defaults: {format: 'json'}, as: :media, via: [:get, :head]
+    match 'analysis.:format' => 'analysis#show', defaults: {format: 'json'}, as: :analysis, via: [:get, :head]
     resources :audio_events, except: [:edit], defaults: {format: 'json'} do
       collection do
         get 'download', defaults: {format: 'csv'}
