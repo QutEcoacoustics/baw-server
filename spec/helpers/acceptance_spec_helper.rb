@@ -60,7 +60,7 @@ def standard_request_options(http_method, description, expected_status, opts = {
 
     if defined?(include_test_file) && include_test_file
       uuid = audio_recording.uuid
-      path = "./tmp/_cached_analysis_jobs/#{uuid[0, 2].downcase}/#{uuid.downcase}/test/test.csv"
+      path = "./tmp/_cached_analysis_jobs/#{uuid[0, 2].downcase}/#{uuid.downcase}/Test/test-CASE.csv"
 
       FileUtils.mkpath File.dirname(path)
       File.open(path, 'w') {|f| f.write('{"content":"This is some content."}') }
