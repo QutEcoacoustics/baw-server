@@ -134,6 +134,7 @@ module AWB
       rewrite /^\/listen.*/i, '/system/listen_to/index.html'
       rewrite /^\/birdwalks.*/i, '/system/listen_to/index.html'
       rewrite /^\/library.*/i, '/system/listen_to/index.html'
+      rewrite /^\/demo.*/i, '/system/listen_to/index.html'
     end
 
   end
