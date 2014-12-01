@@ -116,8 +116,10 @@ module BawWorkers
         logger = BawWorkers::MultiLogger.new(Logger.new(open_file))
         external_program = BawAudioTools::RunExternalProgram.new(timeout_sec, logger)
 
+        FileUtils.mkpath(BawWorkers::Settings.paths.working_dir) unless File.directory?(BawWorkers::Settings.paths.working_dir)
+
         Dir.chdir(BawWorkers::Settings.paths.working_dir) do
-          external_program.execute(command, false)
+          external_program.execute(command, true)
         end
       end
 
