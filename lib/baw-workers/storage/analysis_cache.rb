@@ -25,8 +25,8 @@ module BawWorkers
         validate_analysis_id(opts)
         validate_result_file_name(opts)
 
-        analysis_dir = opts[:analysis_id].gsub(FILE_NAME_NOT_ALLOWED, @separator).downcase
-        file_only = opts[:result_file_name].gsub(FILE_NAME_NOT_ALLOWED, @separator).downcase
+        analysis_dir = opts[:analysis_id].gsub(FILE_NAME_NOT_ALLOWED, @separator)
+        file_only = opts[:result_file_name].gsub(FILE_NAME_NOT_ALLOWED, @separator)
 
         # in this case, a file name is a partial path composed of analysis_id and file name
         File.join(analysis_dir, file_only)

@@ -15,7 +15,7 @@ describe BawWorkers::Storage::AnalysisCache do
   let(:result_file_name_invalid_normalised) { 'result_file_name_invalid-04a_bKE_-.5_____LQ_' }
 
   let(:cached_analysis_file_name_given_parameters) {
-    File.join(analysis_id.gsub(normalise_regex, '_').downcase, result_file_name.downcase) }
+    File.join(analysis_id.gsub(normalise_regex, '_'), result_file_name) }
 
   let(:normalise_regex) {/[^0-9a-zA-Z_\-\.]/}
   let(:partial_path) {
@@ -29,8 +29,8 @@ describe BawWorkers::Storage::AnalysisCache do
   let(:opts) {
     {
         uuid: uuid.downcase,
-        analysis_id: analysis_id.downcase,
-        result_file_name: result_file_name.downcase
+        analysis_id: analysis_id,
+        result_file_name: result_file_name
     }
   }
 
@@ -67,7 +67,7 @@ describe BawWorkers::Storage::AnalysisCache do
 
     first = uuid[0, 2].downcase
     second = uuid.downcase
-    third = analysis_id_invalid_normalised.downcase
+    third = analysis_id_invalid_normalised
 
     mod_partial_path = File.join(first, second, third)
 
@@ -77,7 +77,7 @@ describe BawWorkers::Storage::AnalysisCache do
         result_file_name: result_file_name_invalid
     }
 
-    expected = [File.join(BawWorkers::Settings.paths.cached_analysis_jobs[0], mod_partial_path, result_file_name_invalid_normalised.downcase)]
+    expected = [File.join(BawWorkers::Settings.paths.cached_analysis_jobs[0], mod_partial_path, result_file_name_invalid_normalised)]
     expect(analysis_cache.possible_paths_file(mod_opts, analysis_cache.file_name({result_file_name: result_file_name_invalid, analysis_id: analysis_id_invalid}))).to eq expected
   end
 

@@ -55,12 +55,12 @@ require 'rake'
 def reset_settings
   # ensure each test has a completely clean slate to start
   tmp_logs_dir = File.expand_path('./tmp/logs/')
-  tmp_custom_dir = File.expand_path('./tmp/custom_temp_dir')
+  tmp_custom_dir = File.expand_path('./tmp/custom_temp_dir/temp')
+  tmp_working_dir = File.expand_path('./tmp/custom_temp_dir/working')
 
-  FileUtils.rm_rf(tmp_logs_dir)
-  FileUtils.rm_rf(tmp_custom_dir)
+  FileUtils.rm_rf('./tmp/')
 
-  FileUtils.mkpath([tmp_logs_dir, tmp_custom_dir])
+  FileUtils.mkpath([tmp_logs_dir, tmp_custom_dir, tmp_working_dir])
 end
 
 RSpec.configure do |config|

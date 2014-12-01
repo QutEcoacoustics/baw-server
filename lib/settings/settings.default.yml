@@ -62,8 +62,8 @@ settings:
     worker_log_file: ./tmp/logs/worker.log
     mailer_log_file: ./tmp/logs/mailer.log
     audio_tools_log_file: ./tmp/logs/audio_tools.log
-    temp_dir: ./tmp/custom_temp_dir
-    working_dir: ./tmp/custom_temp_dir
+    temp_dir: ./tmp/custom_temp_dir/temp
+    working_dir: ./tmp/custom_temp_dir/working
   endpoints:
     login: /security
     audio_recording: /audio_recordings/:id

@@ -22,8 +22,16 @@ module BawWorkers
       # @option opts [String] :audio_recording_uuid (nil) audio recording uuid
       # @return [Hash] result information
       def run(opts = {})
-        validate(opts, :command_format)
-        validate(opts, :uuid)
+        validate_custom_hash(opts,
+                 [
+                     :command_format,
+                     :uuid,
+                     :id,
+                     :datetime_with_offset,
+                     :original_format,
+                     :executable_program,
+                     :config_file
+                 ])
 
         working_dir = create_working_dir(opts[:uuid])
         temp_dir = create_temp_dir(opts[:uuid])
@@ -134,11 +142,15 @@ module BawWorkers
         File.expand_path(File.join(@temp_dir, sub_dir))
       end
 
-      def validate(hash, key)
-        raise ArgumentError, 'Hash must not be blank.' if hash.blank?
-        raise ArgumentError, 'Key must not be blank.' if key.blank?
-        raise ArgumentError, "Hash must include key '#{key}'." unless hash.include?(key)
-        raise ArgumentError, "Value in hash for #{key} must not be blank." if hash[key].blank?
+      def validate_custom_hash(hash, keys)
+        fail ArgumentError, 'Hash must not be blank.' if hash.blank?
+        fail ArgumentError, 'Keys must not be empty.' if keys.blank?
+        fail ArgumentError, 'Keys must be an array.' unless keys.is_a?(Array)
+
+        keys.each do |key|
+          fail ArgumentError, "Hash must include key '#{key}'." unless hash.include?(key)
+          fail ArgumentError, "Value in hash for #{key} must not be blank." if hash[key].blank?
+        end
       end
 
     end
