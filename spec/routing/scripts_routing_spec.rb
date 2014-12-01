@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe ScriptsController do
+describe ScriptsController, :type => :routing do
   describe :routing do
 
     it { expect(get('/scripts/1/versions')).to route_to('scripts#versions', id: '1') }

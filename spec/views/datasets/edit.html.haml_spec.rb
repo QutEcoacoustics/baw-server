@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe 'datasets/edit' do
+describe 'datasets/edit', :type => :view do
   before(:each) do
     @permission = FactoryGirl.create(:write_permission)
     @project = @permission.project

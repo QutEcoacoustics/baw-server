@@ -2,9 +2,8 @@ class Site < ActiveRecord::Base
   # ensures that creator_id, updater_id, deleter_id are set
   include UserChange
 
-  attr_accessible :name, :latitude, :longitude, :description, :image, :project_ids, :notes
-
-  attr_reader :location_obfuscated
+  attr_accessible :name, :latitude, :longitude, :description, :image, :notes
+  attr_accessor :project_ids,:custom_latitude, :custom_longitude, :location_obfuscated
 
   # relations
   has_and_belongs_to_many :projects, uniq: true
@@ -57,6 +56,7 @@ class Site < ActiveRecord::Base
     self.projects.collect { |project| project.id }
   end
 
+  # overrides getting, does not change setting
   def latitude
     value = read_attribute(:latitude)
     if self.location_obfuscated && !value.blank?
@@ -66,6 +66,7 @@ class Site < ActiveRecord::Base
     end
   end
 
+  # overrides getting, does not change setting
   def longitude
     value = read_attribute(:longitude)
     if self.location_obfuscated && !value.blank?

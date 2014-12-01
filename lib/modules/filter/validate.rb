@@ -172,6 +172,28 @@ module Filter
       fail CustomErrors::FilterArgumentError, "Value must be an Array or Arel::SelectManager, got #{value}" unless value.is_a?(Array) || value.is_a?(Arel::SelectManager)
     end
 
+    # Validate array items. Do not validate if value is not an Array.
+    # @param [Array] value
+    # @raise [FilterArgumentError] if Array contents are not valid.
+    # @return [void]
+    def validate_array_items(value)
+      # if value is not an array, or there are no items, let it through
+      if value.respond_to?(:all?) && value.count > 0
+        # all items must be the same type. Assume the first item is the correct type.
+        type_compare_item = value[0].class
+        type_compare = value.all? { |item| item.is_a?(type_compare_item) }
+        fail CustomErrors::FilterArgumentError, 'Array values must be a single consistent type.' unless type_compare
+
+        # restrict length of strings
+        if type_compare_item.is_a?(String)
+          max_string_length = 120
+          string_length = value.all? { |item| item.size <= max_string_length  }
+          fail CustomErrors::FilterArgumentError, "Array values that are strings must be #{max_string_length} characters or less." unless string_length
+        end
+
+      end
+    end
+
     # Validate a hash.
     # @param [Array] value
     # @raise [FilterArgumentError] if value is not a valid Hash.

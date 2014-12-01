@@ -31,7 +31,7 @@ class AudioEventsController < ApplicationController
     response_hash = library_format(current_user, params)
 
     total_query = AudioEvent.filtered(current_user, params).offset(nil).limit(nil)
-    total = total_query.count
+    total = total_query.distinct(false).uniq(false).except(:select).count
 
     paged_info = {
         page: params[:page],

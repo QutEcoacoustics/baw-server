@@ -16,11 +16,11 @@ FactoryGirl.define do
     end
 
     # the after(:create) yields two values; the instance itself and the
-    # evaluator, which stores all values from the factory, including ignored
+    # evaluator, which stores all values from the factory, including transient
     # attributes; `create_list`'s second argument is the number of records
     # to create and we make sure the instance is associated properly to the list of items
     trait :with_audio_recordings do
-      ignore do
+      transient do
         audio_recording_count 1
       end
       after(:create) do |site, evaluator|

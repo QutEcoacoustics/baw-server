@@ -15,7 +15,7 @@ FactoryGirl.define do
     end
 
     trait :with_tags do
-      ignore do
+      transient do
         audio_event_count 1
       end
       after(:create) do |audio_event, evaluator|
@@ -25,7 +25,7 @@ FactoryGirl.define do
     end
 
     trait :with_comments do
-      ignore do
+      transient do
         audio_event_count 1
       end
       after(:create) do |audio_event, evaluator|

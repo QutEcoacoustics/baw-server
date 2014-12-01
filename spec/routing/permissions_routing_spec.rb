@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe PermissionsController do
+describe PermissionsController, :type => :routing do
   describe :routing do
 
     it { expect(get('/user_accounts/1/permissions')).to  route_to('errors#route_error', requested_route: 'user_accounts/1/permissions') }

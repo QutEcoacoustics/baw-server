@@ -327,8 +327,8 @@ describe Filter::Query do
       }
       complex_result = "SELECT\"audio_recordings\".\"recorded_date\",\"audio_recordings\".\"site_id\" \
 FROM\"audio_recordings\" \
-WHERE\"audio_recordings\".\"site_id\"=5 \
-AND(\"audio_recordings\".\"deleted_at\"ISNULL) \
+WHERE(\"audio_recordings\".\"deleted_at\"ISNULL) \
+AND\"audio_recordings\".\"site_id\"=5 \
 ORDERBY\"audio_recordings\".\"recorded_date\"DESCLIMIT500OFFSET0"
       compare_filter_sql(request_body_obj, complex_result)
     end
@@ -352,8 +352,8 @@ ORDERBY\"audio_recordings\".\"recorded_date\"DESCLIMIT500OFFSET0"
           "SELECT\"audio_recordings\".\"id\", \
 \"audio_recordings\".\"duration_seconds\" \
 FROM\"audio_recordings\" \
-WHERE\"audio_recordings\".\"site_id\"=5 \
-AND(\"audio_recordings\".\"deleted_at\"ISNULL) \
+WHERE(\"audio_recordings\".\"deleted_at\"ISNULL) \
+AND\"audio_recordings\".\"site_id\"=5 \
 ORDERBY\"audio_recordings\".\"recorded_date\"DESCLIMIT500OFFSET0"
       compare_filter_sql(request_body_obj, complex_result)
     end

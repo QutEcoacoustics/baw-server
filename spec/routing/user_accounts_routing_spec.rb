@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe UserAccountsController do
+describe UserAccountsController, :type => :routing do
   describe :routing do
 
     it { expect(get('/user_accounts')).to route_to('user_accounts#index') }

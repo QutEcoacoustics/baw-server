@@ -1,8 +1,60 @@
 require 'resque/server'
 
-AWB::Application.routes.draw do
+Rails.application.routes.draw do
+  # The priority is based upon order of creation: first created -> highest priority.
+  # See how all your routes lay out with "rake routes".
 
-  # See how all your routes lay out with "rake routes"
+  # You can have the root of your site routed with "root"
+  # root 'welcome#index'
+
+  # Example of regular route:
+  #   get 'products/:id' => 'catalog#view'
+
+  # Example of named route that can be invoked with purchase_url(id: product.id)
+  #   get 'products/:id/purchase' => 'catalog#purchase', as: :purchase
+
+  # Example resource route (maps HTTP verbs to controller actions automatically):
+  #   resources :products
+
+  # Example resource route with options:
+  #   resources :products do
+  #     member do
+  #       get 'short'
+  #       post 'toggle'
+  #     end
+  #
+  #     collection do
+  #       get 'sold'
+  #     end
+  #   end
+
+  # Example resource route with sub-resources:
+  #   resources :products do
+  #     resources :comments, :sales
+  #     resource :seller
+  #   end
+
+  # Example resource route with more complex sub-resources:
+  #   resources :products do
+  #     resources :comments
+  #     resources :sales do
+  #       get 'recent', on: :collection
+  #     end
+  #   end
+
+  # Example resource route with concerns:
+  #   concern :toggleable do
+  #     post 'toggle'
+  #   end
+  #   resources :posts, concerns: :toggleable
+  #   resources :photos, concerns: :toggleable
+
+  # Example resource route within a namespace:
+  #   namespace :admin do
+  #     # Directs /admin/products/* to Admin::ProductsController
+  #     # (app/controllers/admin/products_controller.rb)
+  #     resources :products
+  #   end
 
   # The priority is based upon order of creation:
   # first created -> highest priority.
@@ -11,17 +63,31 @@ AWB::Application.routes.draw do
   # ======================
 
   # standard devise for website authentication
+  # NOTE: the sign in route is used by baw-workers to log in, ensure any changes are reflected in baw-workers.
   devise_for :users, path: :my_account
 
   # devise for RESTful API Authentication, see Api/sessions_controller.rb
-  # /security/sign_in is used by the harvester, do not change!
   devise_for :users,
              controllers: {sessions: 'sessions'},
              as: :security,
              path: :security,
              defaults: {format: 'json'},
-             only: [:sessions],
+             only: [],
              skip_helpers: true
+
+  # provide a way to get the current user's auth token
+  # will most likely use cookies, since there is no point using a token to get the token...
+  # the devise_scope is needed due to
+  # https://github.com/plataformatec/devise/issues/2840#issuecomment-43262839
+  devise_scope :security_user do
+    # no index
+    post '/security' => 'sessions#create', defaults: {format: 'json'}
+    get '/security/new' => 'sessions#new', defaults: {format: 'json'}
+    get '/security/user' => 'sessions#show', defaults: {format: 'json'} # 'user' represents the current user id
+    # no edit view
+    # no update
+    delete '/security' => 'sessions#destroy', defaults: {format: 'json'}
+  end
 
   # when a user goes to my account, render user_account/show view for that user
   get '/my_account/' => 'user_accounts#my_account'
@@ -43,6 +109,7 @@ AWB::Application.routes.draw do
   # Resource Routes
   # ===============
 
+  # placed above related resource so it does not conflict with (resource)/:id => (resource)#show
   match 'bookmarks/filter' => 'bookmarks#filter', via: [:get, :post], defaults: {format: 'json'}
   resources :bookmarks, except: [:edit]
 
@@ -102,6 +169,9 @@ AWB::Application.routes.draw do
   #     userAccounts: '/user_accounts/{userId}'
   # }
 
+  # placed above related resource so it does not conflict with (resource)/:id => (resource)#show
+  match 'projects/filter' => 'projects#filter', via: [:get, :post], defaults: {format: 'json'}
+
   # routes for projects and nested resources
   resources :projects do
     member do
@@ -140,12 +210,13 @@ AWB::Application.routes.draw do
     resources :jobs, only: [:index], defaults: {format: 'json'}
   end
 
-  # placed here so it does not conflict with audio_recordings/:id => audio_recordings#show
+  # placed above related resource so it does not conflict with (resource)/:id => (resource)#show
   match 'audio_recordings/filter' => 'audio_recordings#filter', via: [:get, :post], defaults: {format: 'json'}
 
   # API audio recording item
   resources :audio_recordings, only: [:index, :show, :new, :update], defaults: {format: 'json'} do
-    get 'media.:format' => 'media#show', defaults: {format: 'json'}, as: :media
+    match 'media.:format' => 'media#show', defaults: {format: 'json'}, as: :media, via: [:get, :head]
+    match 'analysis.:format' => 'analysis#show', defaults: {format: 'json'}, as: :analysis, via: [:get, :head]
     resources :audio_events, except: [:edit], defaults: {format: 'json'} do
       collection do
         get 'download', defaults: {format: 'csv'}
@@ -167,6 +238,7 @@ AWB::Application.routes.draw do
 
   # API audio_event create
   resources :audio_events, only: [], defaults: {format: 'json'} do
+    # placed above related resource so it does not conflict with (resource)/:id => (resource)#show
     match 'comments/filter' => 'audio_event_comments#filter', via: [:get, :post], defaults: {format: 'json'}
     resources :audio_event_comments, except: [:edit], defaults: {format: 'json'}, path: :comments, as: :comments
     collection do
@@ -191,7 +263,7 @@ AWB::Application.routes.draw do
   get '/projects/:project_id/audio_events/download' => 'audio_events#download', defaults: {format: 'csv'}, as: :download_project_audio_events
   get '/projects/:project_id/sites/:site_id/audio_events/download' => 'audio_events#download', defaults: {format: 'csv'}, as: :download_site_audio_events
 
-  # placed here so it does not conflict with sites/:id => sites#show
+  # placed above related resource so it does not conflict with (resource)/:id => (resource)#show
   match 'sites/filter' => 'sites#filter', via: [:get, :post], defaults: {format: 'json'}
 
   # shallow path to sites
@@ -237,6 +309,6 @@ AWB::Application.routes.draw do
   mount Raddocs::App => '/doc'
 
   # for error pages (add via: :all for rails 4)
-  match '*requested_route', to: 'errors#route_error'
+  match '*requested_route', to: 'errors#route_error', via: :all
 
 end

@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe "User account actions" do
+describe "User account actions", :type => :feature do
   # from: http://guides.rubyonrails.org/testing.html
   # The ActionMailer::Base.deliveries array is only reset automatically in
   # ActionMailer::TestCase tests. If you want to have a clean slate outside Action
@@ -21,10 +21,10 @@ describe "User account actions" do
     click_button "Send me reset password instructions"
 
     # back to sign in page, use token from email to go to reset password page
-    current_path.should eq('/my_account/sign_in')
-    page.should have_content("You will receive an email with instructions about how to reset your password in a few minutes.")
+    expect(current_path).to eq('/my_account/sign_in')
+    expect(page).to have_content("You will receive an email with instructions about how to reset your password in a few minutes.")
 
-    last_email.to.should include(user.email)
+    expect(last_email.to).to include(user.email)
 
     # extract token from mail body
     mail_body = last_email.body.to_s
@@ -37,15 +37,15 @@ describe "User account actions" do
     fill_in "user_password_confirmation", :with => "foobar1"
     find(:xpath, '/descendant::input[@type="submit"]').click
 
-    page.should have_content('Please review the problems below')
-    page.should have_content("doesn't match confirmation")
+    expect(page).to have_content('Please review the problems below')
+    expect(page).to have_content("doesn't match confirmation")
 
     # fill in correctly
     fill_in "user_password", :with => "foobar11"
     fill_in "user_password_confirmation", :with => "foobar11"
     find(:xpath, '/descendant::input[@type="submit"]').click
-    current_path.should eq('/')
-    page.should have_content('Your password was changed successfully. You are now signed in.')
+    expect(current_path).to eq('/')
+    expect(page).to have_content('Your password was changed successfully. You are now signed in.')
   end
 
   context 'log in' do
@@ -172,7 +172,7 @@ describe "User account actions" do
 end
 
 
-describe 'MANAGE User Accounts as admin user' do
+describe 'MANAGE User Accounts as admin user', :type => :feature do
   before(:each) do
     admin = FactoryGirl.create(:admin)
     login_as admin, scope: :user
@@ -181,14 +181,14 @@ describe 'MANAGE User Accounts as admin user' do
   it 'lists all users' do
     # Run the generator again with the --webrat flag if you want to use webrat methods/matchers
     visit user_accounts_path
-    page.should have_content('User Accounts')
+    expect(page).to have_content('User Accounts')
   end
 
   it 'shows user account details' do
     user = FactoryGirl.create(:user)
     FactoryGirl.create(:bookmark, creator: user)
     visit user_account_path(user)
-    page.should have_content(user.user_name)
+    expect(page).to have_content(user.user_name)
   end
 
   it 'updates user_account when filling out form correctly' do
@@ -198,7 +198,7 @@ describe 'MANAGE User Accounts as admin user' do
     fill_in 'user[email]', with: 'test@example.com'
     attach_file('user[image]', 'public/images/user/user-512.png')
     click_button 'Update User'
-    page.should have_content('test name')
+    expect(page).to have_content('test name')
   end
 
   it 'cannot delete account' do
@@ -218,12 +218,12 @@ describe 'MANAGE User Accounts as admin user' do
     project = FactoryGirl.create(:project)
     permission = FactoryGirl.create(:permission, user_id: user.id, project_id: project.id)
     visit projects_user_account_path(user)
-    page.should have_content('Number of Sites')
-    page.should have_content(project.name)
+    expect(page).to have_content('Number of Sites')
+    expect(page).to have_content(project.name)
   end
 end
 
-describe 'MANAGE User Accounts as user' do
+describe 'MANAGE User Accounts as user', :type => :feature do
   before(:each) do
     user = FactoryGirl.create(:user)
     login_as user, scope: :user
@@ -232,16 +232,16 @@ describe 'MANAGE User Accounts as user' do
   it 'denies access' do
     user = FactoryGirl.create(:user)
     visit user_accounts_path
-    page.should have_content(I18n.t('devise.failure.unauthorized'))
+    expect(page).to have_content(I18n.t('devise.failure.unauthorized'))
     visit edit_user_account_path(user)
-    page.should have_content(I18n.t('devise.failure.unauthorized'))
+    expect(page).to have_content(I18n.t('devise.failure.unauthorized'))
   end
 
   it 'shows user account details' do
     user = FactoryGirl.create(:user)
     FactoryGirl.create(:bookmark, creator: user)
     visit user_account_path(user)
-    page.should have_content(user.user_name)
+    expect(page).to have_content(user.user_name)
   end
 
   it 'should not link to user comments for other user page' do
@@ -285,6 +285,6 @@ describe 'MANAGE User Accounts as user' do
   it 'denies access to user projects page' do
     user = FactoryGirl.create(:user)
     visit projects_user_account_path(user)
-    page.should have_content(I18n.t('devise.failure.unauthorized'))
+    expect(page).to have_content(I18n.t('devise.failure.unauthorized'))
   end
 end

@@ -188,7 +188,7 @@ class AudioRecording < ActiveRecord::Base
   end
 
   def self.check_storage
-    audio_original = BawWorkers::Settings.original_audio_helper
+    audio_original = BawWorkers::Config.original_audio_helper
     existing_dirs = audio_original.existing_dirs
 
     if existing_dirs.empty?
@@ -247,6 +247,14 @@ class AudioRecording < ActiveRecord::Base
   end
 
   def check_overlapping
+
+    # validate model first, as this check can occur before attribute validations are run
+
+    errors.add(:recorded_date, 'must have a value') if self.recorded_date.blank?
+    errors.add(:duration_seconds, 'must have a value') if self.duration_seconds.blank?
+    errors.add(:site_id, 'must have a value') if self.site_id.blank?
+    return if errors.count > 0
+
     # recordings are overlapping if:
     # do not have the same id,
     # do have same site

@@ -32,7 +32,6 @@ SimpleCov.start 'rails'
 
 require File.expand_path('../../config/environment', __FILE__)
 require 'rspec/rails'
-require 'rspec/autorun'
 
 require 'capybara/rails'
 require 'capybara/rspec'
@@ -59,6 +58,10 @@ RSpec.configure do |config|
 
   # Remove this line if you're not using ActiveRecord or ActiveRecord fixtures
   # config.fixture_path = "#{::Rails.root}/spec/fixtures"
+
+  config.expect_with :rspec do |c|
+    c.syntax = [:should, :expect]
+  end
 
   config.include Devise::TestHelpers, type: :controller
 
@@ -95,12 +98,13 @@ RSpec.configure do |config|
     DatabaseCleaner.strategy = :transaction
     DatabaseCleaner.clean_with(:truncation)
     begin
-      DatabaseCleaner.start
-      puts '===> FactoryGirl lint started.'
-      FactoryGirl.lint
-      puts '===> FactoryGirl lint completed.'
+      # DatabaseCleaner.start
+      # puts '===> FactoryGirl lint started.'
+      # FactoryGirl.lint
+      # puts '===> FactoryGirl lint completed.'
     ensure
       DatabaseCleaner.clean
+      puts '===> Database cleaner run.'
     end
     # Redirect stderr and stdout
     $stderr = File.new(File.join(File.dirname(__FILE__), '..', 'tmp', 'rspec_stderr.txt'), 'w')
@@ -120,7 +124,7 @@ RSpec.configure do |config|
     FileUtils.rm_rf(Dir["#{Rails.root}/tmp/paperclip/[^.]*"])
   end
 
-  config.before(:each) do
+  config.before(:each) do |example|
     ActionMailer::Base.deliveries.clear
     DatabaseCleaner.start
     example_description = example.description

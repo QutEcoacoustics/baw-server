@@ -16,7 +16,7 @@ class AudioEventCommentsController < ApplicationController
     #@audio_event_comments = AudioEventComment.accessible_by
     @audio_event_comments, constructed_options = Settings.api_response.response_index(
         params,
-        current_user.is_admin? ? AudioEventComment.scoped : current_user.accessible_comments,
+        current_user.is_admin? ? AudioEventComment.all : current_user.accessible_comments,
         AudioEventComment,
         AudioEventComment.filter_settings
     )
@@ -71,7 +71,7 @@ class AudioEventCommentsController < ApplicationController
   def filter
     filter_response = Settings.api_response.response_filter(
         params,
-        current_user.is_admin? ? AudioEventComment.scoped : current_user.accessible_comments,
+        current_user.is_admin? ? AudioEventComment.all : current_user.accessible_comments,
         AudioEventComment,
         AudioEventComment.filter_settings
     )

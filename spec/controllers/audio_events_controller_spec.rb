@@ -87,7 +87,7 @@ require 'spec_helper'
 # end
 
 
-describe AudioEventsController do
+describe AudioEventsController, :type => :controller do
 
   # This should return the minimal set of attributes required to create a valid
   # UserAccount. As you add validations to UserAccount, be sure to

@@ -11,23 +11,22 @@ defaults: &defaults
       host: localhost
       port: 6379
       password: password
-    namespace: 'resque'
+      db: 0
+    namespace: resque
+    log_level: 'Logger::INFO'
   actions:
+    harvest:
+      # name of queue to append jobs onto
+      queue: harvest_default
+      dry_run: false
+      to_do_path: ./tmp/_harvester_to_do_path
+      config_file_name: harvest.yml
+      progressive_upload_directory: ./tmp/_progressive-upload/
     media:
+      # name of queue to append jobs onto
       queue: media_default
+      dry_run: false
   media_request_processor: local # options are local or resque
-  smtp:
-    # see http://guides.rubyonrails.org/action_mailer_basics.html#action-mailer-configuration
-    ######################################################
-    # these values are read for config.action_mailer.smtp_settings in
-    # File environments/{environment_name}.rb
-    ######################################################
-    address: smtp.address
-    port: smtp.port
-    domain: domain.com
-    user_name: username
-    authentication: login
-    password: password
   db:
     ######################################################
     # these values are read by config/database.yml
@@ -40,11 +39,6 @@ defaults: &defaults
     username: root
     password:
     host: localhost
-  emails:
-    email_prefix: '[prefix]'
-    sender_address: address@example.com
-    required_recipients:
-     - address@example.com
   devise:
     ######################################################
     # these values are read for config.{key} in
@@ -57,12 +51,9 @@ defaults: &defaults
   # File secret_token.rb #
   ######################################################
   secret_token: some long secret token - at least 30 chars, all random
+  secret_key_base: some long secret token - at least 30 chars, all random
   paths:
     image_magick_dir: <%= Rails.root %>/tmp/_image-magick
-    ######################################################
-    # these paths must align with the paths used by the harvester defined in
-    # File lib/external/harvester/default.yml
-    ######################################################
     original_audios:
       - <%= Rails.root %>/tmp/_original_audio
     cached_spectrograms:
@@ -77,17 +68,35 @@ defaults: &defaults
       - <%= Rails.root %>/tmp/_analysis_run
     cached_datasets:
       - <%= Rails.root %>/tmp/_cached_dataset
-    harvester_base: <%= Rails.root %>/tmp/_harvester_to_do
-    modules_log_file: <%= Rails.root %>/tmp/_modules_log.log
-    workers_log_file: <%= Rails.root %>/tmp/workers_log.log
+    cached_analysis_jobs:
+      - <%= Rails.root %>/tmp/_cached_analysis_jobs
+    worker_log_file: <%= Rails.root %>/log/worker.<%= Rails.env %>.log
+    mailer_log_file: <%= Rails.root %>/log/mailer.<%= Rails.env %>.log
+    audio_tools_log_file: <%= Rails.root %>/log/audio_tools.<%= Rails.env %>.log
     temp_dir: <%= Rails.root %>/tmp
-  harvester_config_file: harvest.yml
   harvester:
     email: address+harvester@example.com
     password: password
   admin_user:
     email: address+admin@example.com
     password: password
+  mailer:
+    # smtp gets set directly to config.action_mailer.smtp_settings in File environments/{environment_name}.rb
+    # See http://api.rubyonrails.org/classes/ActionMailer/Base.html#class-ActionMailer::Base-label-Configuration+options
+    # see http://guides.rubyonrails.org/action_mailer_basics.html#action-mailer-configuration
+    smtp:
+      address: localhost
+      port: 25
+      #domain: domain.com
+      #user_name: username
+      #authentication: login
+      #password: password
+    emails:
+      email_prefix: '[prefix]'
+      sender_address: address@example.com
+      required_recipients:
+       - address@example.com
+    log_level: 'Logger::INFO'
   cached_audio_defaults:
     extension: mp3
     channel: 0
@@ -101,12 +110,8 @@ defaults: &defaults
     window: 512
     window_function: Hamming
     colour: 'g'
-    ppms: 0.045
     max_duration_seconds: 120.0
     min_duration_seconds: 0.5
-  cached_dataset_defaults:
-    storage_format: txt
-    one_item_per_line: true
   available_formats:
     text:
       - json
@@ -124,9 +129,12 @@ defaults: &defaults
     mp3splt_executable: mp3splt
     sox_executable: sox
     wavpack_executable: wvunpack
+    shntool_executable: shntool
+    wav2png_executable: wav2png
     imagemagick_convert_executable: convert
     imagemagick_identify_executable: identify
     max_duration_seconds: 300
+    log_level: 'Logger::INFO'
   audio_tools_timeout_sec: 20
   # max overlap (default 5): maximum amount an audio recording can be trimmed at the end
   audio_recording_max_overlap_sec: 5
@@ -141,7 +149,7 @@ defaults: &defaults
     parent_site_link: '/'
   analytics:
     domain: example.com
-    ua: UA-XXXXXX
+    ua: 'UA-XXXXXX'
   recaptcha:
     public_key: set recaptcha public key
     private_key: set recaptcha private key
