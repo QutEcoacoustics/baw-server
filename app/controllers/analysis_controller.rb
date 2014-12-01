@@ -36,12 +36,14 @@ class AnalysisController < ApplicationController
         })
 
     # return the first path that exists
-    if file_paths.size > 1 && !is_head_request
+    if file_paths.size > 0 && !is_head_request
       # return the file
       file_path = file_paths[0]
-      send_file(file_path, url_based_filename: true)
+      ext = File.extname(file_path).trim('.','')
+      mime_type = Mime::Type.lookup_by_extension(ext)
+      send_file(file_path, url_based_filename: true, type: mime_type.to_s, content_length: File.size(file_path))
 
-    elsif file_paths.size > 1 && is_head_request
+    elsif file_paths.size > 0 && is_head_request
       file_path = file_paths[0]
       ext = File.extname(file_path).trim('.','')
       mime_type = Mime::Type.lookup_by_extension(ext)

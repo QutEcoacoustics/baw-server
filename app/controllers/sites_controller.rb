@@ -188,7 +188,7 @@ class SitesController < ApplicationController
 
     site_hash = {}
 
-    site_hash[:project_ids] = Site.where(id: site.id).first.projects.select(:id)
+    site_hash[:project_ids] = Site.where(id: site.id).first.projects.pluck(:id)
     site_hash[:location_obfuscated] = site.location_obfuscated
     site_hash[:custom_latitude] = site.latitude
     site_hash[:custom_longitude] = site.longitude

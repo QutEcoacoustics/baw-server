@@ -52,14 +52,12 @@ resource 'Analysis' do
   let(:invalid_token) { "Token token=\"blah blah blah\"" }
 
   get '/audio_recordings/:audio_recording_id/analysis.:format' do
-    parameter :project_id, 'Requested project ID (in path/route)', required: true
-    parameter :site_id, 'Requested site ID (in path/route)', required: true
     standard_analysis_parameters
     let(:authentication_token) { admin_token }
     let(:format) { 'csv' }
     standard_request_options(
         :get,
-        'MEDIA (as admin)',
+        'ANALYSIS (as admin, requesting csv)',
         :not_found,
         {
             expected_json_path: 'meta/error/details',
@@ -68,18 +66,51 @@ resource 'Analysis' do
   end
 
   get '/audio_recordings/:audio_recording_id/analysis.:format' do
-    parameter :project_id, 'Requested project ID (in path/route)', required: true
-    parameter :site_id, 'Requested site ID (in path/route)', required: true
     standard_analysis_parameters
     let(:authentication_token) { admin_token }
     let(:format) { 'json' }
     standard_request_options(
         :get,
-        'MEDIA (as admin)',
+        'ANALYSIS (as admin, requesting json)',
         :unprocessable_entity,
         {
             expected_json_path: 'meta/error/details',
             response_body_content: "Request format 'json' must match requested file extension 'csv'."
+        })
+  end
+
+  get '/audio_recordings/:audio_recording_id/analysis.:format?file_name=:file_name&analysis_id=:analysis_id' do
+
+    standard_analysis_parameters
+    let(:authentication_token) { admin_token }
+    let(:format) { 'csv' }
+    let(:include_test_file) { true}
+
+    standard_request_options(
+        :get,
+        'ANALYSIS (as admin)',
+        :ok,
+        {
+            expected_response_content_type: 'text/csv',
+            expected_response_has_content: true,
+            response_body_content: '{"content":"This is some content."}'
+        })
+  end
+
+  head '/audio_recordings/:audio_recording_id/analysis.:format?file_name=:file_name&analysis_id=:analysis_id' do
+
+    standard_analysis_parameters
+    let(:authentication_token) { admin_token }
+    let(:format) { 'csv' }
+    let(:include_test_file) { true}
+
+    standard_request_options(
+        :head,
+        'ANALYSIS (as admin)',
+        :ok,
+        {
+            expected_response_content_type: 'text/csv',
+            expected_response_has_content: false
         })
   end
 end

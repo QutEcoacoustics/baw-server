@@ -49,6 +49,7 @@ end
 # @option opts [Symbol]  :invalid_content        (nil) Content that must not be in the response body.
 # @option opts [Symbol]  :data_item_count        (nil) Number of items in a json response
 # @option opts [Hash]    :property_match         (nil) Properties to match
+# @option opts [Hash]    :file_exists            (nil) Check if file exists
 # @return [void]
 def standard_request_options(http_method, description, expected_status, opts = {})
   opts.reverse_merge!({document: true})
@@ -56,6 +57,15 @@ def standard_request_options(http_method, description, expected_status, opts = {
   # 406 when you can't send what they want, 415 when they send what you don't want
 
   example "#{http_method} #{description} - #{expected_status}", :document => opts[:document] do
+
+    if defined?(include_test_file) && include_test_file
+      uuid = audio_recording.uuid
+      path = "./tmp/_cached_analysis_jobs/#{uuid[0, 2].downcase}/#{uuid.downcase}/test/test.csv"
+
+      FileUtils.mkpath File.dirname(path)
+      File.open(path, 'w') {|f| f.write('{"content":"This is some content."}') }
+    end
+
     request = do_request
     opts.merge!(
         {
@@ -156,7 +166,7 @@ def acceptance_checks_shared(request, opts = {})
   expect(opts[:actual_method]).to eq(opts[:expected_method]), "Mismatch: HTTP method. #{opts[:msg]}"
 
   #expect(opts[:expected_request_content_type]).to eq(opts[:actual_request_content_type]), "Mismatch: request content type. #{opts[:msg]}"
-  expect(opts[:actual_response_has_content]).to eq(opts[:expected_response_has_content]), "Mismatch: response has content. #{opts[:msg]}"
+  expect(opts[:actual_response_has_content]).to eq(opts[:expected_response_has_content]), "Mismatch: response has content. #{opts[:actual_response]} #{opts[:msg]}"
   if opts[:actual_response_content_type].blank?
     expect(opts[:expected_response_content_type]).to be_nil, "Mismatch: response content type. #{opts[:msg]}"
   elsif opts.include?(:actual_response_content_type)
@@ -184,6 +194,7 @@ end
 # @option opts [Symbol] :invalid_content       (nil) Content that must not be in the response body.
 # @option opts [Symbol] :data_item_count       (nil) Number of items in a json response
 # @option opts [Hash]   :property_match        (nil) Properties to match
+# @option opts [Regex]  :regex_match           (nil) Regex that must match content
 # @return [void]
 def acceptance_checks_json(opts = {})
   opts.reverse_merge!(
@@ -192,7 +203,8 @@ def acceptance_checks_json(opts = {})
           response_body_content: nil,
           invalid_content: nil,
           data_item_count: nil,
-          property_match: nil
+          property_match: nil,
+          regex_match: nil
       })
 
   actual_response_parsed = opts[:actual_response].blank? ? nil : JsonSpec::Helpers::parse_json(opts[:actual_response])
@@ -247,6 +259,11 @@ def acceptance_checks_json(opts = {})
       expect(actual_response_parsed['data'][key.to_s].to_s).to eq(value.to_s)
     end
   end
+
+  unless opts[:regex_match].nil?
+    expect(opts[:actual_response]).to match(opts[:regex_match])
+  end
+
 end
 
 # Check media response.
