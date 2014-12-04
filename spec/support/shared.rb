@@ -29,7 +29,7 @@ shared_context 'shared_test_helpers' do
   let(:worker_log_content) {  File.read(worker_log_file) }
 
   let(:default_settings_file) { RSpec.configuration.default_settings_path }
-  let(:harvest_to_do_path) { File.expand_path(BawWorkers::Settings.actions.harvest.to_do_path) }
+  let(:harvest_to_do_path) { File.expand_path('./tmp/custom_temp_dir/_harvester_to_do_path') }
   let(:custom_temp) { BawWorkers::Config.temp_dir }
 
   # easy access to config & settings

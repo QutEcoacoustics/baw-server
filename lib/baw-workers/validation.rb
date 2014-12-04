@@ -27,6 +27,19 @@ module BawWorkers
         end
       end
 
+      # Check that the value for dry_run is valid.
+      # @param [String] dry_run
+      # @returns [Boolean] true for a dry_run, false for real.
+      def check_dry_run(dry_run)
+        # options are 'dry_run' or 'real'. If not either of these, raise an erorr.
+        fail ArgumentError, "dry_run must be 'dry_run' or 'real', given '#{dry_run}'." if dry_run.blank? || !%w(real dry_run).include?(dry_run)
+        if dry_run == 'real'
+          false
+        else
+          true
+        end
+      end
+
       # from ActiveSupport 4
       # Returns a new hash with all keys converted to symbols, as long as
       # they respond to +to_sym+. This includes the keys from the root hash
@@ -37,7 +50,7 @@ module BawWorkers
       #   hash.deep_symbolize_keys
       #   # => {:person=>{:name=>"Rob", :age=>"28"}}
       def deep_symbolize_keys(hash)
-        deep_transform_keys(hash){ |key| key.to_sym rescue key }
+        deep_transform_keys(hash) { |key| key.to_sym rescue key }
       end
 
       # from ActiveSupport 4
@@ -62,7 +75,7 @@ module BawWorkers
               result[yield(key)] = _deep_transform_keys_in_object(value, &block)
             end
           when Array
-            object.map {|e| _deep_transform_keys_in_object(e, &block) }
+            object.map { |e| _deep_transform_keys_in_object(e, &block) }
           else
             object
         end

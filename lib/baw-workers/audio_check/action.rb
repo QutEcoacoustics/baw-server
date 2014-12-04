@@ -34,8 +34,16 @@ module BawWorkers
         # @param [Hash] audio_params
         # @return [Array<Hash>] array of hashes representing operations performed
         def action_perform(audio_params)
+          action_run(audio_params, false)
+        end
+
+        # Run the job.
+        # @param [Hash] audio_params
+        # @param [Boolean] is_dry_run
+        # @return [Array<Hash>] array of hashes representing operations performed
+        def action_run(audio_params, is_dry_run)
           begin
-            result = action_audio_check.run(audio_params, BawWorkers::Settings.actions.audio_check.dry_run)
+            result = action_audio_check.run(audio_params, is_dry_run)
           rescue Exception => e
             BawWorkers::Config.logger_worker.error(self.name) { e }
             BawWorkers::Mail::Mailer.send_worker_error_email(
@@ -53,7 +61,7 @@ module BawWorkers
         # Perform check on multiple audio files from a csv file.
         # @param [String] csv_file
         # @return [Array<Hash>] array of hashes representing operations performed
-        def action_perform_rake(csv_file)
+        def action_perform_rake(csv_file, is_dry_run)
           validate_path(csv_file)
 
           successes = []
@@ -90,7 +98,7 @@ module BawWorkers
         # Enqueue multiple audio file check requests from a csv file.
         # @param [String] csv_file
         # @return [Hash]
-        def action_enqueue_rake(csv_file)
+        def action_enqueue_rake(csv_file, is_dry_run)
           validate_path(csv_file)
 
           successes = []

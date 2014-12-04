@@ -546,7 +546,7 @@ describe BawWorkers::AudioCheck::Action do
       # FileUtils.touch(File.join(audio_original.possible_dirs[0], '83/837df827-2be2-43ef-8f48-60fa0ee6ad37_930712-1552.asf'))
     end
 
-    result = BawWorkers::AudioCheck::Action.action_perform_rake(csv_file)
+    result = BawWorkers::AudioCheck::Action.action_perform_rake(csv_file, false)
 
     expect(worker_log_content).to include('File hash and other properties DO NOT match')
     expect(result[:successes].size).to eq(0)
@@ -556,7 +556,7 @@ describe BawWorkers::AudioCheck::Action do
   it 'runs successfully using resque' do
     csv_file = copy_test_audio_check_csv
 
-    result = BawWorkers::AudioCheck::Action.action_enqueue_rake(csv_file)
+    result = BawWorkers::AudioCheck::Action.action_enqueue_rake(csv_file, false)
 
     expect(worker_log_content).to match(/INFO-BawWorkers::AudioCheck::Action-.+\] Job enqueue returned/)
     expect(result[:successes].size).to eq(24)

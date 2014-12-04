@@ -25,8 +25,6 @@ describe BawWorkers::Harvest::SingleFile do
     )
   }
 
-  let(:to_do_dir) { BawWorkers::Settings.actions.harvest.to_do_path }
-
   let(:example_audio) { audio_file_mono }
 
   let(:folder_example) { File.expand_path File.join(File.dirname(__FILE__), 'folder_example.yml') }
