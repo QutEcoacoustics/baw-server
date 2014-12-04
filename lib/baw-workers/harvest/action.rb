@@ -39,11 +39,16 @@ module BawWorkers
 
         # Perform work. Used by Resque.
         # @param [Hash] harvest_params
-        # @param [Boolean] is_dry_run
+        # @param [Boolean] is_real_run
         # @return [Array<Hash>] array of hashes representing operations performed
-        def action_run(harvest_params, is_dry_run)
+        def action_run(harvest_params, is_real_run)
+
+          BawWorkers::Config.logger_worker.info(self.name) {
+            "Started harvest #{is_real_run ? 'real run' : 'dry run' } using '#{harvest_params}'."
+          }
+
           begin
-            result = action_single_file.run(harvest_params, is_dry_run)
+            result = action_single_file.run(harvest_params, is_real_run)
           rescue Exception => e
             BawWorkers::Config.logger_worker.error(self.name) { e }
             BawWorkers::Mail::Mailer.send_worker_error_email(
@@ -55,19 +60,24 @@ module BawWorkers
             raise e
           end
 
+          BawWorkers::Config.logger_worker.info(self.name) {
+            "Completed harvest with result '#{result}'."
+          }
+
           result
         end
 
         # Harvest specified folder.
         # @param [String] to_do_path
+        # @param [Boolean] is_real_run
         # @return [Hash] array of hashes representing operations performed
-        def action_perform_rake(to_do_path, is_dry_run)
+        def action_perform_rake(to_do_path, is_real_run)
           gather_files = action_gather_files
           file_hashes = gather_files.run(to_do_path)
 
           results = {path: to_do_path, results: []}
           file_hashes.each do |file_hash|
-            result = BawWorkers::Harvest::Action.action_run(file_hash, is_dry_run)
+            result = BawWorkers::Harvest::Action.action_run(file_hash, is_real_run)
             results[:results].push({file_info: file_hash, result: result})
           end
           results
@@ -87,19 +97,20 @@ module BawWorkers
 
         # Enqueue multiple files for harvesting.
         # @param [String] to_do_path
+        # @param [Boolean] is_real_run
         # @return [Array<Hash>] array of hashes representing operations performed
-        def action_enqueue_rake(to_do_path, is_dry_run)
+        def action_enqueue_rake(to_do_path, is_real_run)
           gather_files = action_gather_files
           file_hashes = gather_files.run(to_do_path)
 
           results = {path: to_do_path, results: []}
 
-          unless is_dry_run
+
             file_hashes.each do |file_hash|
-              result = BawWorkers::Harvest::Action.action_enqueue(file_hash)
+              result = nil
+              result = BawWorkers::Harvest::Action.action_enqueue(file_hash) if is_real_run
               results[:results].push({file_hash: file_hash, result: result})
             end
-          end
 
           results
         end

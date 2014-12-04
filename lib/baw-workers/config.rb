@@ -86,10 +86,9 @@ module BawWorkers
         else
           # all other times, log to console as well
           $stdout.sync = true
-          stdout_logger = Logger.new($stdout)
-          BawWorkers::Config.logger_worker.attach(stdout_logger)
-          BawWorkers::Config.logger_mailer.attach(stdout_logger)
-          BawWorkers::Config.logger_audio_tools.attach(stdout_logger)
+          BawWorkers::Config.logger_worker.attach(Logger.new($stdout))
+          BawWorkers::Config.logger_mailer.attach(Logger.new($stdout))
+          BawWorkers::Config.logger_audio_tools.attach(Logger.new($stdout))
 
         end
 

@@ -39,7 +39,7 @@ module BawWorkers
           analysis_params_sym = BawWorkers::Analysis::WorkHelper.validate(analysis_params)
 
           BawWorkers::Config.logger_worker.info(self.name) {
-            "Started performing analysis using '#{analysis_params_sym}'."
+            "Started analysis using '#{analysis_params_sym}'."
           }
 
           runner = action_helper
@@ -58,7 +58,7 @@ module BawWorkers
           end
 
           BawWorkers::Config.logger_worker.info(self.name) {
-            "Completed performing analysis with result '#{result}'."
+            "Completed analysis with result '#{result}'."
           }
 
           result

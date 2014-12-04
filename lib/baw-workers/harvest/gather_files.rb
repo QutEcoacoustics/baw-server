@@ -52,17 +52,19 @@ module BawWorkers
           @logger.info(@class_name) { "Found file #{input_string}." }
           results.push(file(input_string))
         elsif input_string.is_a?(String) && File.directory?(input_string)
-          if recurse
-            path = File.expand_path(input_string)
-            found_dirs = Dir.glob(File.join(path, '**')).concat([path]).uniq
+          path = File.expand_path(input_string)
+          results = directory(path)
 
-            @logger.info(@class_name) { "Looking recursively. Found #{found_dirs.size} directories in #{path}." }
+          if recurse
+            found_dirs = Dir.glob(File.join(path, '*/'))
+
+            @logger.debug(@class_name) { "Looking recursively. Found #{found_dirs.size} directories in #{path}." }
             @logger.debug(@class_name) { "Directories in #{path}: '#{found_dirs.join(', ')}'." }
 
-            found_dirs.each { |dir| results.push(*directory(dir)) }
-          else
-            results = directory(input_string)
+            found_dirs.each { |dir| results.push(*process(dir)) }
           end
+        else
+          @logger.warn(@class_name) { "Not a recognised file or directory: #{input_string}." }
         end
 
         results
@@ -90,7 +92,11 @@ module BawWorkers
           files.push(file_result) unless file_result.blank?
         end
 
-        @logger.info(@class_name) { "Gathered info for #{files.size} valid files in #{path}." }
+        if files.size > 0
+          @logger.info(@class_name) { "Gathered info for #{files.size} valid files in #{path}." }
+        else
+          @logger.debug(@class_name) { "No valid files in #{path}." }
+        end
 
         files
       end
@@ -140,7 +146,7 @@ module BawWorkers
           msg_props = "properties for file #{file} using offset #{utc_offset}: Basic: #{basic_info}. Advanced: #{advanced_info}."
 
           if basic_info.blank? || advanced_info.blank?
-            @logger.debug(@class_name) { "Could not get #{msg_props}" }
+            @logger.info(@class_name) { "Could not get #{msg_props}" }
           else
             @logger.debug(@class_name) { "Successfully got #{msg_props}" }
           end
@@ -162,8 +168,8 @@ module BawWorkers
         files_in_dir = items_in_dir.select { |f| File.file?(f) }
 
         msg = "Looking in #{path}. Found #{files_in_dir.size} files."
-        @logger.info(@class_name) { msg }  if files_in_dir.size > 0
-        @logger.warn(@class_name) { msg } if files_in_dir.size < 1
+        @logger.debug(@class_name) { msg } if files_in_dir.size > 0
+        @logger.debug(@class_name) { msg } if files_in_dir.size < 1
         @logger.debug(@class_name) { "Files in #{path}: '#{files_in_dir.join(', ')}'." }
 
         files_in_dir
@@ -177,7 +183,7 @@ module BawWorkers
       # @return [Hash]
       def get_folder_settings(file)
         unless File.file?(file)
-          @logger.warn(@class_name) { "Harvest directory config file was not found '#{file}'." }
+          @logger.debug(@class_name) { "Harvest directory config file was not found '#{file}'." }
           return {}
         end
 

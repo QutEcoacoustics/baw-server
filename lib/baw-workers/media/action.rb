@@ -56,6 +56,11 @@ module BawWorkers
         # @param [Hash] media_request_params
         # @return [Array<String>] target existing paths
         def action_perform(media_type, media_request_params)
+
+          BawWorkers::Config.logger_worker.info(self.name) {
+            "Started media #{media_type} using '#{media_request_params}'."
+          }
+
           begin
             media_type_sym, params_sym = action_validate(media_type, media_request_params)
             result = make_media_request(media_type_sym, params_sym)
@@ -69,6 +74,10 @@ module BawWorkers
             )
             raise e
           end
+
+          BawWorkers::Config.logger_worker.info(self.name) {
+            "Completed media with result '#{result}'."
+          }
 
           result
         end

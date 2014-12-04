@@ -22,9 +22,9 @@ module BawWorkers
 
       # Process a single audio file.
       # @param [Hash] file_info_hash
-      # @param [Boolean] is_dry_run
+      # @param [Boolean] is_real_run
       # @return [Array<String>] existing target paths
-      def run(file_info_hash, is_dry_run)
+      def run(file_info_hash, is_real_run)
 
         file_info_hash.deep_symbolize_keys!
 
@@ -34,13 +34,7 @@ module BawWorkers
         file_path = file_info_hash[:file_path]
         file_format = File.extname(file_path).trim('.', '')
 
-        # get auth token
-        # -----------------------------
-        auth_token = get_auth_token
-
-        # Check uploader project access
-        # -----------------------------
-        access_result = get_access_result(project_id, site_id, uploader_id, auth_token)
+        @logger.info(@class_name) { "Processing #{file_path}..." }
 
         # construct file_info_hash for new audio recording request
         # -----------------------------
@@ -50,12 +44,20 @@ module BawWorkers
 
         # stop here if it is a dry run, shouldn't create a new recording
         # -----------------------------
-        if is_dry_run
+        unless is_real_run
           @logger.info(@class_name) {
-            "Finished successful dry run for #{file_path}: #{audio_info_hash}"
+            "...finished dry run for #{file_path}: #{audio_info_hash}"
           }
-          return
+          return []
         end
+
+        # get auth token
+        # -----------------------------
+        auth_token = get_auth_token
+
+        # Check uploader project access
+        # -----------------------------
+        access_result = get_access_result(project_id, site_id, uploader_id, auth_token)
 
         # send request to create new audio recording entry on website
         # -----------------------------
@@ -113,7 +115,7 @@ module BawWorkers
           raise e
         end
 
-        @logger.info(@class_name) { "Finished processing #{file_path}." }
+        @logger.info(@class_name) { "Finished processing #{file_path}: #{audio_info_hash}" }
         existing_target_paths
       end
 

@@ -27,17 +27,13 @@ module BawWorkers
         end
       end
 
-      # Check that the value for dry_run is valid.
-      # @param [String] dry_run
-      # @returns [Boolean] true for a dry_run, false for real.
-      def check_dry_run(dry_run)
-        # options are 'dry_run' or 'real'. If not either of these, raise an erorr.
-        fail ArgumentError, "dry_run must be 'dry_run' or 'real', given '#{dry_run}'." if dry_run.blank? || !%w(real dry_run).include?(dry_run)
-        if dry_run == 'real'
-          false
-        else
-          true
-        end
+      # Check that the value for real_run is valid.
+      # @param [String] real_run
+      # @returns [Boolean] true for a real run, false for dry run.
+      def check_real_run(real_run)
+        # options are 'dry_run' or 'real_run'. If not either of these, raise an erorr.
+        fail ArgumentError, "real_run must be 'dry_run' or 'real_run', given '#{real_run}'." if real_run.blank? || !%w(real_run dry_run).include?(real_run)
+        (real_run == 'real_run') ? true : false
       end
 
       # from ActiveSupport 4

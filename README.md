@@ -107,7 +107,7 @@ These settings must match the equivalent [baw-server](https://github.com/QutBioa
 
 #### `log_level` settings
 
-Each `log_lvel` setting is independent of the others.
+Each `log_level` setting is independent of the others.
 
 ### Examples for running a worker
 

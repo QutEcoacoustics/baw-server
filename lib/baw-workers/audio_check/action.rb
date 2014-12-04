@@ -34,16 +34,21 @@ module BawWorkers
         # @param [Hash] audio_params
         # @return [Array<Hash>] array of hashes representing operations performed
         def action_perform(audio_params)
-          action_run(audio_params, false)
+          action_run(audio_params, true)
         end
 
         # Run the job.
         # @param [Hash] audio_params
-        # @param [Boolean] is_dry_run
+        # @param [Boolean] is_real_run
         # @return [Array<Hash>] array of hashes representing operations performed
-        def action_run(audio_params, is_dry_run)
+        def action_run(audio_params, is_real_run)
+
+          BawWorkers::Config.logger_worker.info(self.name) {
+            "Started audio check #{is_real_run ? 'real run' : 'dry run' } using '#{audio_params}'."
+          }
+
           begin
-            result = action_audio_check.run(audio_params, is_dry_run)
+            result = action_audio_check.run(audio_params, is_real_run)
           rescue Exception => e
             BawWorkers::Config.logger_worker.error(self.name) { e }
             BawWorkers::Mail::Mailer.send_worker_error_email(
@@ -55,20 +60,25 @@ module BawWorkers
             raise e
           end
 
+          BawWorkers::Config.logger_worker.info(self.name) {
+            "Completed audio check with result '#{result}'."
+          }
+
           result
         end
 
         # Perform check on multiple audio files from a csv file.
         # @param [String] csv_file
+        # @param [Boolean] is_real_run
         # @return [Array<Hash>] array of hashes representing operations performed
-        def action_perform_rake(csv_file, is_dry_run)
+        def action_perform_rake(csv_file, is_real_run)
           validate_path(csv_file)
 
           successes = []
           failures = []
           BawWorkers::AudioCheck::CsvHelper.read_audio_recording_csv(csv_file) do |audio_params|
             begin
-              result = BawWorkers::AudioCheck::Action.action_perform(audio_params)
+              result = BawWorkers::AudioCheck::Action.action_run(audio_params, is_real_run)
               successes.push({params: audio_params, result: result})
             rescue Exception => e
               failures.push({params: audio_params, exception: e})
@@ -97,15 +107,17 @@ module BawWorkers
 
         # Enqueue multiple audio file check requests from a csv file.
         # @param [String] csv_file
+        # @param [Boolean] is_real_run
         # @return [Hash]
-        def action_enqueue_rake(csv_file, is_dry_run)
+        def action_enqueue_rake(csv_file, is_real_run)
           validate_path(csv_file)
 
           successes = []
           failures = []
           BawWorkers::AudioCheck::CsvHelper.read_audio_recording_csv(csv_file) do |audio_params|
             begin
-              result = BawWorkers::AudioCheck::Action.action_enqueue(audio_params)
+              result = nil
+              result = BawWorkers::AudioCheck::Action.action_enqueue(audio_params) if is_real_run
               successes.push({params: audio_params, result: result})
             rescue Exception => e
               failures.push({params: audio_params, exception: e})
