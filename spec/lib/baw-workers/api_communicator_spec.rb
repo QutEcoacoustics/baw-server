@@ -17,11 +17,13 @@ describe BawWorkers::ApiCommunicator do
   context 'login request' do
     it 'should succeed with valid credentials' do
       auth_token_server = 'auth_token_string'
+      email = 'address@example.com'
+      password = 'different password'
       endpoint_login = domain + BawWorkers::Settings.endpoints.login
-      body = {email: 'address@example.com', password: 'different password'}
+      body = get_api_security_request(email, password)
       login_request = stub_request(:post, endpoint_login)
       .with(body: body)
-      .to_return(body: '{"success":true,"auth_token":"'+auth_token_server+'","email":"address@example.com"}')
+      .to_return(body: get_api_security_response(email, auth_token_server).to_json)
 
       auth_token = api_different.request_login
 
@@ -32,15 +34,16 @@ describe BawWorkers::ApiCommunicator do
 
     it 'should throw error with invalid credentials' do
       auth_token = 'auth_token_string'
+      email = 'address@example.com'
+      password = 'different password'
       endpoint_login = domain + BawWorkers::Settings.endpoints.login
-      body = {email: 'address@example.com', password: 'different password'}
 
       login_request = stub_request(:post, endpoint_login)
-      .with(body: {email: 'address@example.com', password: 'password'})
-      .to_return(body: '{"success":true,"auth_token":"'+auth_token+'","email":"address@example.com"}')
+      .with(body: get_api_security_request(email, 'password'))
+      .to_return(body: get_api_security_response(email, auth_token).to_json)
 
       incorrect_request = stub_request(:post, endpoint_login)
-      .with(body: {email: 'address@example.com', password: 'different password'})
+      .with(body: get_api_security_request(email, password))
       .to_return(status: 403)
 
       auth_token = api_different.request_login

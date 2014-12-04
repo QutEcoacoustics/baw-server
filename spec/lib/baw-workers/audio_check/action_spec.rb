@@ -385,9 +385,9 @@ describe BawWorkers::AudioCheck::Action do
         email = 'address@example.com'
         password = 'password'
         login_request = stub_request(:post, "http://localhost:3030/security").
-            with(:body => "{\"email\":\""+email+"\",\"password\":\""+password+"\"}",
+            with(:body => get_api_security_request(email, password),
                  :headers => {'Accept' => 'application/json', 'Content-Type' => 'application/json', 'User-Agent' => 'Ruby'}).
-            to_return(status: 200, body: '{"success":true,"auth_token":"'+auth_token+'","email":"'+email+'"}')
+            to_return(status: 200, body: get_api_security_response(email, auth_token).to_json)
 
 
         expected_request_body = {
@@ -443,9 +443,9 @@ describe BawWorkers::AudioCheck::Action do
         email = 'address@example.com'
         password = 'password'
         login_request = stub_request(:post, 'http://localhost:3030/security').
-            with(:body => "{\"email\":\""+email+"\",\"password\":\""+password+"\"}",
+            with(:body => get_api_security_request(email, password),
                  :headers => {'Accept' => 'application/json', 'Content-Type' => 'application/json', 'User-Agent' => 'Ruby'}).
-            to_return(status: 200, body: '{"success":true,"auth_token":"'+auth_token+'","email":"'+email+'"}')
+            to_return(status: 200, body: get_api_security_response(email, auth_token).to_json)
 
         stub_request(:put, "http://localhost:3030/audio_recordings/id").
             with(:body => expected_request_body.to_json,
@@ -493,9 +493,9 @@ describe BawWorkers::AudioCheck::Action do
           email = 'address@example.com'
           password = 'password'
           login_request = stub_request(:post, "http://localhost:3030/security").
-              with(:body => "{\"email\":\""+email+"\",\"password\":\""+password+"\"}",
+              with(:body => get_api_security_request(email, password),
                    :headers => {'Accept' => 'application/json', 'Content-Type' => 'application/json', 'User-Agent' => 'Ruby'}).
-              to_return(status: 200, body: '{"success":true,"auth_token":"'+auth_token+'","email":"'+email+'"}')
+              to_return(status: 200, body: get_api_security_response(email, auth_token).to_json)
 
 
           expected_request_body = {

@@ -84,7 +84,7 @@ module BawWorkers
           "HTTP success: Got auth_token: #{login_response.body}."
         }
         json_resp = JSON.parse(login_response.body)
-        json_resp['auth_token']
+        json_resp['data']['auth_token']
       else
         @logger.error(@class_name) {
           "HTTP fail: Problem getting auth_token: #{login_response}."

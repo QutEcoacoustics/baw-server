@@ -45,6 +45,10 @@ shared_context 'shared_test_helpers' do
   let(:file_info) { BawWorkers::Config.file_info }
   let(:api) { BawWorkers::Config.api_communicator }
 
+  let(:api_security_response) {
+
+  }
+
   def create_original_audio(options, example_file_name, new_name_style = false)
 
     # ensure :datetime_with_offset is an ActiveSupport::TimeWithZone object
@@ -140,5 +144,26 @@ shared_context 'shared_test_helpers' do
   #
   #   #Rake::Task.define_task(:environment)
   # end
+
+  def get_api_security_response(user_name, auth_token)
+    {
+        meta: {
+            status: 200,
+            message: 'OK'
+        },
+        data: {
+            auth_token: auth_token,
+            user_name: user_name,
+            message: 'Signed in successfully.'
+        }
+    }
+  end
+
+  def get_api_security_request(email, password)
+    {
+        email: email,
+        password: password
+    }
+  end
 
 end

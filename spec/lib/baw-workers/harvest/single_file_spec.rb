@@ -48,7 +48,8 @@ describe BawWorkers::Harvest::SingleFile do
       FileUtils.copy(source_audio_file, dest_audio_file)
 
       # stub web requests
-      user = 'address@example.com'
+      email = 'address@example.com'
+      user_name = 'example_user'
       password = 'password'
       auth_token = 'auth token this is'
 
@@ -57,8 +58,8 @@ describe BawWorkers::Harvest::SingleFile do
       uuid = 'fb4af424-04c1-4739-96e3-23f8dc719665'
       original_format = 'ogg'
 
-      request_login_body = {email: user, password: password}
-      response_login_body = {success: true, auth_token: auth_token, email: user}
+      request_login_body = get_api_security_request(email, password)
+      response_login_body =  get_api_security_response(user_name, auth_token)
       request_headers_base = {'Accept' => 'application/json', 'Content-Type' => 'application/json', 'User-Agent' => 'Ruby'}
       request_headers = request_headers_base.merge('Authorization' => "Token token=\"#{auth_token}\"")
       request_create_body = {
