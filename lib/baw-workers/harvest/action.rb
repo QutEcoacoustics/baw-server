@@ -73,7 +73,7 @@ module BawWorkers
         # @return [Hash] array of hashes representing operations performed
         def action_perform_rake(to_do_path, is_real_run)
           # returns results from action_gather_and_process
-          action_gather_and_process(to_do_path) do |file_hash|
+          action_gather_and_process(to_do_path, is_real_run) do |file_hash|
             if is_real_run
               BawWorkers::Harvest::Action.action_run(file_hash, is_real_run)
             else
@@ -100,7 +100,7 @@ module BawWorkers
         # @return [Array<Hash>] array of hashes representing operations performed
         def action_enqueue_rake(to_do_path, is_real_run)
           # returns results from action_gather_and_process
-          action_gather_and_process(to_do_path) do |file_hash|
+          action_gather_and_process(to_do_path, is_real_run) do |file_hash|
             if is_real_run
               BawWorkers::Harvest::Action.action_enqueue(file_hash)
             else
@@ -164,7 +164,7 @@ module BawWorkers
           summary
         end
 
-        def action_gather_and_process(to_do_path)
+        def action_gather_and_process(to_do_path, is_real_run)
           gather_files = action_gather_files
           file_hashes = gather_files.run(to_do_path)
 
@@ -176,8 +176,9 @@ module BawWorkers
           end
 
           summary = action_summary(results)
+
           BawWorkers::Config.logger_worker.info(self.name) {
-            "Summary for #{to_do_path}: #{summary.to_json}"
+            "Summary of harvest #{is_real_run ? 'real run' : 'dry run' } for #{to_do_path}: #{summary.to_json}"
           }
 
           results
