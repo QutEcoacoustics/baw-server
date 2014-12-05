@@ -85,7 +85,7 @@ module BawWorkers
 
           summary = action_summary(results)
           BawWorkers::Config.logger_worker.info(self.name) {
-            "Summary: #{summary}"
+            "Summary for #{to_do_path}: #{summary.to_json}"
           }
 
           results
@@ -122,7 +122,7 @@ module BawWorkers
 
           summary = action_summary(results)
           BawWorkers::Config.logger_worker.info(self.name) {
-            "Summary: #{summary}"
+            "Summary for #{to_do_path}: #{summary.to_json}"
           }
 
           results
@@ -159,13 +159,21 @@ module BawWorkers
           summary = {}
 
           files.each do |file|
-            file_dir = File.dirname(file[:file_info][:file_path]).to_s
-            file_ext = file[:file_info][:extension].to_s
-            relative_dir = Pathname.new(file_dir).relative_path_from(base_path)
+            file_info = file[:file_info]
 
-            summary[file_dir] = {} unless summary.include?(file_dir)
-            summary[file_dir][file_ext] = 0 unless summary[file_dir].include?(file_ext)
-            summary[file_dir][file_ext] += 1
+            if file_info.blank?
+              BawWorkers::Config.logger_worker.warn(self.name) {
+                "Incomplete info from base dir #{base_path} for #{file_info}."
+              }
+            else
+            file_dir = File.dirname(file_info[:file_path]).to_s
+            file_ext = file_info[:extension].to_s
+            relative_dir = Pathname.new(file_dir).relative_path_from(base_path).to_s
+
+            summary[relative_dir] = {} unless summary.include?(relative_dir)
+            summary[relative_dir][file_ext] = 0 unless summary[relative_dir].include?(file_ext)
+            summary[relative_dir][file_ext] += 1
+            end
           end
 
           summary
