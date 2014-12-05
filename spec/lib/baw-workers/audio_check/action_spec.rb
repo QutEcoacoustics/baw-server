@@ -515,7 +515,7 @@ describe BawWorkers::AudioCheck::Action do
           # act
           #result = BawWorkers::AudioCheck::Action.action_perform(original_params)
 
-          result = audio_file_check.run(original_params, true)
+          result = audio_file_check.run(original_params, false)
           # assert
           expect(result.size).to eq(1)
 
@@ -556,7 +556,7 @@ describe BawWorkers::AudioCheck::Action do
   it 'runs successfully using resque' do
     csv_file = copy_test_audio_check_csv
 
-    result = BawWorkers::AudioCheck::Action.action_enqueue_rake(csv_file, false)
+    result = BawWorkers::AudioCheck::Action.action_enqueue_rake(csv_file, true)
 
     expect(worker_log_content).to match(/INFO-BawWorkers::AudioCheck::Action-.+\] Job enqueue returned/)
     expect(result[:successes].size).to eq(24)
