@@ -29,10 +29,12 @@ module BawWorkers
 
         @logger.info(@class_name) { 'Gathering files.' }
 
-        if input.is_a?(String)
-          results = process(input, recurse)
-        elsif input.is_a?(Array)
-          input.each { |item| results.push(*process(item, recurse)) }
+        input_array = []
+        input_array = [input] if input.is_a?(String)
+        input_array = input if input.is_a?(Array)
+
+        if input_array.size > 0
+          input_array.each { |item| results.push(*process(item, recurse)) }
         else
           msg = "'#{input}' must be a string or an array of strings."
           @logger.warn(@class_name) { msg }

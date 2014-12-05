@@ -155,6 +155,10 @@ module BawWorkers
           base_path = Pathname.new(results[:path])
           files = results[:results]
 
+          BawWorkers::Config.logger_worker.debug(self.name) {
+            "Full results: #{results}"
+          }
+
           summary = {}
 
           files.each do |file|
