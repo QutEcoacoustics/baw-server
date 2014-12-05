@@ -113,12 +113,11 @@ module BawWorkers
 
           results = {path: to_do_path, results: []}
 
-
-            file_hashes.each do |file_hash|
-              result = nil
-              result = BawWorkers::Harvest::Action.action_enqueue(file_hash) if is_real_run
-              results[:results].push({file_hash: file_hash, result: result})
-            end
+          file_hashes.each do |file_hash|
+            result = nil
+            result = BawWorkers::Harvest::Action.action_enqueue(file_hash) if is_real_run
+            results[:results].push({file_hash: file_hash, result: result})
+          end
 
           summary = action_summary(results)
           BawWorkers::Config.logger_worker.info(self.name) {
@@ -163,16 +162,16 @@ module BawWorkers
 
             if file_info.blank?
               BawWorkers::Config.logger_worker.warn(self.name) {
-                "Incomplete info from base dir #{base_path} for #{file_info}."
+                "Incomplete info from base dir '#{base_path}' for '#{file_info}'."
               }
             else
-            file_dir = File.dirname(file_info[:file_path]).to_s
-            file_ext = file_info[:extension].to_s
-            relative_dir = Pathname.new(file_dir).relative_path_from(base_path).to_s
+              file_dir = File.dirname(file_info[:file_path]).to_s
+              file_ext = file_info[:extension].to_s
+              relative_dir = Pathname.new(file_dir).relative_path_from(base_path).to_s
 
-            summary[relative_dir] = {} unless summary.include?(relative_dir)
-            summary[relative_dir][file_ext] = 0 unless summary[relative_dir].include?(file_ext)
-            summary[relative_dir][file_ext] += 1
+              summary[relative_dir] = {} unless summary.include?(relative_dir)
+              summary[relative_dir][file_ext] = 0 unless summary[relative_dir].include?(file_ext)
+              summary[relative_dir][file_ext] += 1
             end
           end
 

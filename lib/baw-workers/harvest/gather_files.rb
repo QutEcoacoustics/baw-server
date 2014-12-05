@@ -53,7 +53,7 @@ module BawWorkers
           results.push(file(input_string))
         elsif input_string.is_a?(String) && File.directory?(input_string)
           path = File.expand_path(input_string)
-          results = directory(path)
+          results.push(*directory(path))
 
           if recurse
             found_dirs = Dir.glob(File.join(path, '*/'))
@@ -115,19 +115,21 @@ module BawWorkers
         path = File.expand_path(path)
 
         unless @file_info_helper.valid_ext?(path, @ext_include)
-          @logger.debug(@class_name) { "Invalid extension: #{path}." }
+          @logger.debug(@class_name) { "Invalid extension #{path}." }
           return {}
         end
 
-        @logger.debug(@class_name) { "Valid extension: #{path}." }
+        @logger.debug(@class_name) { "Valid extension #{path}." }
 
         dir_settings = get_folder_settings(File.join(File.dirname(path), @config_file_name)) if dir_settings.blank?
 
         basic_info, advanced_info = file_info(path, dir_settings[:utc_offset])
 
         if basic_info.blank? || advanced_info.blank?
+          @logger.debug(@class_name) { "Not enough information for #{path}." }
           {}
         else
+          @logger.debug(@class_name) { "Complete information found for #{path}." }
           basic_info.merge(dir_settings).merge(advanced_info)
         end
       end
