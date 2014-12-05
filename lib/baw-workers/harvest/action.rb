@@ -34,7 +34,7 @@ module BawWorkers
         # @param [Hash] harvest_params
         # @return [Array<Hash>] array of hashes representing operations performed
         def action_perform(harvest_params)
-          action_run(harvest_params, false)
+          action_run(harvest_params, true)
         end
 
         # Perform work. Used by Resque.
