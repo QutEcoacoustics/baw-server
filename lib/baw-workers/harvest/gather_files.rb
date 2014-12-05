@@ -27,7 +27,7 @@ module BawWorkers
       def run(input, recurse = true)
         results = []
 
-        @logger.info(@class_name) { 'Gathering files...' }
+        @logger.info(@class_name) { 'Gathering files.' }
 
         if input.is_a?(String)
           results = process(input, recurse)
@@ -38,7 +38,7 @@ module BawWorkers
           @logger.warn(@class_name) { msg }
         end
 
-        @logger.info(@class_name) { "...finished with #{results.size} files." }
+        @logger.info(@class_name) { "Finished gathering files. Found #{results.size} file(s)." }
 
         results
       end

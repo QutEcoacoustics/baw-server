@@ -75,11 +75,19 @@ module BawWorkers
           gather_files = action_gather_files
           file_hashes = gather_files.run(to_do_path)
 
+          # list the directories and file extensions in each directory
+
           results = {path: to_do_path, results: []}
           file_hashes.each do |file_hash|
-            result = BawWorkers::Harvest::Action.action_run(file_hash, is_real_run)
+            result = BawWorkers::Harvest::Action.action_run(file_hash, is_real_run) if is_real_run
             results[:results].push({file_info: file_hash, result: result})
           end
+
+          summary = action_summary(results)
+          BawWorkers::Config.logger_worker.info(self.name) {
+            "Summary: #{summary}"
+          }
+
           results
         end
 
@@ -112,6 +120,11 @@ module BawWorkers
               results[:results].push({file_hash: file_hash, result: result})
             end
 
+          summary = action_summary(results)
+          BawWorkers::Config.logger_worker.info(self.name) {
+            "Summary: #{summary}"
+          }
+
           results
         end
 
@@ -137,6 +150,25 @@ module BawWorkers
               BawWorkers::Config.api_communicator,
               BawWorkers::Config.original_audio_helper
           )
+        end
+
+        def action_summary(results)
+          base_path = Pathname.new(results[:path])
+          files = results[:results]
+
+          summary = {}
+
+          files.each do |file|
+            file_dir = File.dirname(file[:file_info][:file_path]).to_s
+            file_ext = file[:file_info][:extension].to_s
+            relative_dir = Pathname.new(file_dir).relative_path_from(base_path)
+
+            summary[file_dir] = {} unless summary.include?(file_dir)
+            summary[file_dir][file_ext] = 0 unless summary[file_dir].include?(file_ext)
+            summary[file_dir][file_ext] += 1
+          end
+
+          summary
         end
 
       end
