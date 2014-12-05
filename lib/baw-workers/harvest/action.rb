@@ -72,23 +72,14 @@ module BawWorkers
         # @param [Boolean] is_real_run
         # @return [Hash] array of hashes representing operations performed
         def action_perform_rake(to_do_path, is_real_run)
-          gather_files = action_gather_files
-          file_hashes = gather_files.run(to_do_path)
-
-          # list the directories and file extensions in each directory
-
-          results = {path: to_do_path, results: []}
-          file_hashes.each do |file_hash|
-            result = BawWorkers::Harvest::Action.action_run(file_hash, is_real_run) if is_real_run
-            results[:results].push({file_info: file_hash, result: result})
+          # returns results from action_gather_and_process
+          action_gather_and_process(to_do_path) do |file_hash|
+            if is_real_run
+              BawWorkers::Harvest::Action.action_run(file_hash, is_real_run)
+            else
+              nil
+            end
           end
-
-          summary = action_summary(results)
-          BawWorkers::Config.logger_worker.info(self.name) {
-            "Summary for #{to_do_path}: #{summary.to_json}"
-          }
-
-          results
         end
 
         # Enqueue a single file for harvesting.
@@ -108,23 +99,14 @@ module BawWorkers
         # @param [Boolean] is_real_run
         # @return [Array<Hash>] array of hashes representing operations performed
         def action_enqueue_rake(to_do_path, is_real_run)
-          gather_files = action_gather_files
-          file_hashes = gather_files.run(to_do_path)
-
-          results = {path: to_do_path, results: []}
-
-          file_hashes.each do |file_hash|
-            result = nil
-            result = BawWorkers::Harvest::Action.action_enqueue(file_hash) if is_real_run
-            results[:results].push({file_hash: file_hash, result: result})
+          # returns results from action_gather_and_process
+          action_gather_and_process(to_do_path) do |file_hash|
+            if is_real_run
+              BawWorkers::Harvest::Action.action_enqueue(file_hash)
+            else
+              nil
+            end
           end
-
-          summary = action_summary(results)
-          BawWorkers::Config.logger_worker.info(self.name) {
-            "Summary for #{to_do_path}: #{summary.to_json}"
-          }
-
-          results
         end
 
         # Create a BawWorkers::Harvest::GatherFiles instance.
@@ -162,7 +144,7 @@ module BawWorkers
           summary = {}
 
           files.each do |file|
-            file_info = file[:file_info]
+            file_info = file[:info]
 
             if file_info.blank?
               BawWorkers::Config.logger_worker.warn(self.name) {
@@ -180,6 +162,25 @@ module BawWorkers
           end
 
           summary
+        end
+
+        def action_gather_and_process(to_do_path)
+          gather_files = action_gather_files
+          file_hashes = gather_files.run(to_do_path)
+
+          results = {path: to_do_path, results: []}
+
+          file_hashes.each do |file_hash|
+            result = yield file_hash if block_given?
+            results[:results].push({info: file_hash, result: result})
+          end
+
+          summary = action_summary(results)
+          BawWorkers::Config.logger_worker.info(self.name) {
+            "Summary for #{to_do_path}: #{summary.to_json}"
+          }
+
+          results
         end
 
       end
