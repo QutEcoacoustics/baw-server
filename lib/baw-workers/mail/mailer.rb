@@ -1,5 +1,6 @@
 require 'socket'
 require 'action_mailer'
+require 'rack/utils'
 
 module BawWorkers
   module Mail
@@ -34,7 +35,6 @@ module BawWorkers
                               subject: "[#{details[:host]}]#{BawWorkers::Settings.mailer.emails.email_prefix} #{details[:error_message]}") do |format|
           format.text do
             render text: "Hello,
-
 A resque worker running on #{details[:host]} encountered a problem.
 
 The running job was:
@@ -52,32 +52,31 @@ Error: #{details[:error_message]}
 Backtrace: #{details[:error_backtrace].join("\n")}
 
 This email was generated at #{details[:generated_timestamp]}.
-
 Regards, #{details[:host]}"
           end
 
           format.html do
             render html: "<p>Hello,</p>
 
-<p>A resque worker running on #{details[:host]} encountered a problem.</p>
+<p>A resque worker running on #{Rack::Utils.escape_html(details[:host])} encountered a problem.</p>
 
 <p>The running job was:</p>
 
-<p>Queue: #{details[:job_queue]}</p>
+<p>Queue: #{Rack::Utils.escape_html(details[:job_queue])}</p>
 
-<p>Class: #{details[:job_class]}</p>
+<p>Class: #{Rack::Utils.escape_html(details[:job_class])}</p>
 
-<p>Arguments: #{details[:job_args]}</p>
+<p>Arguments: #{Rack::Utils.escape_html(details[:job_args])}</p>
 
 <p>The error was:</p>
 
-<p>Error: #{details[:error_message]}</p>
+<p>Error: #{Rack::Utils.escape_html(details[:error_message])}</p>
 
-<pre>Backtrace: <code>#{details[:error_backtrace].join('<br>')}</code></pre>
+<pre>Backtrace: <code>#{details[:error_backtrace].map { |i| Rack::Utils.escape_html(i) + '<br>'}.join('')}</code></pre>
 
-<p>This email was generated at #{details[:generated_timestamp]}.</p>
+<p>This email was generated at #{Rack::Utils.escape_html(details[:generated_timestamp])}.</p>
 
-<p>Regards, #{details[:host]}</p>"
+<p>Regards, #{Rack::Utils.escape_html(details[:host])}</p>".html_safe
           end
         end
 

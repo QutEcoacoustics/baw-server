@@ -1,5 +1,6 @@
 require 'spec_helper'
 require 'socket'
+require 'rack/utils'
 
 describe BawWorkers::Mail::Mailer do
   context 'test email' do
@@ -39,6 +40,14 @@ describe BawWorkers::Mail::Mailer do
       expect(mail.body.encoded).to include(job[:job_queue].to_s)
       expect(mail.body.encoded).to include(error.message)
       expect(mail.body.encoded).to include(error.backtrace[0])
+
+      expect(mail.body.encoded).to include(Rack::Utils.escape_html(job[:job_class].to_s))
+      expect(mail.body.encoded).to include(Rack::Utils.escape_html(job[:job_args].to_s))
+      expect(mail.body.encoded).to include(Rack::Utils.escape_html(job[:job_queue].to_s))
+      expect(mail.body.encoded).to include(Rack::Utils.escape_html(error.message))
+      expect(mail.body.encoded).to include(Rack::Utils.escape_html(error.backtrace[0]))
+
+      expect(mail.body.encoded).to include('<p>')
     end
 
     it 'sends an email' do
