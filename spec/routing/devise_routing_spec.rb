@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe UserAccountsController do
+describe SessionsController, :type => :routing do
   describe :routing do
 
     it { expect(get('/my_account/sign_in')).to route_to('devise/sessions#new') }
@@ -27,9 +27,10 @@ describe UserAccountsController do
     it { expect(get('/my_account/unlock/new')).to route_to('devise/unlocks#new') }
     it { expect(get('/my_account/unlock')).to route_to('devise/unlocks#show') }
 
-    it { expect(get('/security/sign_in')).to route_to('sessions#new', format: 'json') }
-    it { expect(post('/security/sign_in')).to route_to('sessions#create', format: 'json') }
-    it { expect(get('/security/sign_out')).to route_to('sessions#destroy', format: 'json') }
+    it { expect(get('/security/new')).to route_to('sessions#new', format: 'json') }
+    it { expect(post('/security')).to route_to('sessions#create', format: 'json') }
+    it { expect(delete('/security')).to route_to('sessions#destroy', format: 'json') }
+    it { expect(get('/security/user')).to route_to('sessions#show', format: 'json') }
 
   end
 end

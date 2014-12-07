@@ -1,22 +1,27 @@
 class ProjectsController < ApplicationController
+  include Api::ControllerHelper
+
   add_breadcrumb 'Home', :root_path
 
-  load_and_authorize_resource
+  load_and_authorize_resource :project
 
   # GET /projects
   # GET /projects.json
   def index
-    if current_user.has_role? :admin
-      @projects = Project.includes(:creator).order('lower(name) ASC')
-    else
-      @projects = current_user.projects.sort { |a, b| a.name <=> b.name }
-    end
-
     respond_to do |format|
       format.html {
+        @projects = get_user_projects
         add_breadcrumb 'Projects', projects_path
       }
-      format.json { render json: @projects }
+      format.json {
+        @projects, constructed_options = Settings.api_response.response_index(
+            params,
+            get_user_projects,
+            Project,
+            Project.filter_settings
+        )
+        respond_index
+      }
     end
   end
 
@@ -34,7 +39,7 @@ class ProjectsController < ApplicationController
         end
 
       }
-      format.json { render json: @project }
+      format.json { respond_show }
     end
   end
 
@@ -44,9 +49,9 @@ class ProjectsController < ApplicationController
     respond_to do |format|
       format.html {
         add_breadcrumb 'Projects', projects_path
-        add_breadcrumb @project.name, @project
+        add_breadcrumb 'New Project'
       }
-      format.json { render json: @project }
+      format.json { respond_show }
     end
   end
 
@@ -54,6 +59,7 @@ class ProjectsController < ApplicationController
   def edit
     add_breadcrumb 'Projects', projects_path
     add_breadcrumb @project.name, @project
+    add_breadcrumb 'Edit'
   end
 
   # POST /projects
@@ -62,14 +68,14 @@ class ProjectsController < ApplicationController
     respond_to do |format|
       if @project.save
         format.html { redirect_to @project, notice: 'Project was successfully created.' }
-        format.json { render json: @project, status: :created, location: @project }
+        format.json { respond_create_success }
       else
         format.html {
           add_breadcrumb 'Projects', projects_path
           add_breadcrumb @project.name, @project
           render action: 'new'
         }
-        format.json { render json: @project.errors, status: :unprocessable_entity }
+        format.json { respond_change_fail }
       end
     end
   end
@@ -80,14 +86,14 @@ class ProjectsController < ApplicationController
     respond_to do |format|
       if @project.update_attributes(params[:project])
         format.html { redirect_to @project, notice: 'Project was successfully updated.' }
-        format.json { head :no_content }
+        format.json { respond_show }
       else
         format.html {
           add_breadcrumb 'Projects', projects_path
           add_breadcrumb @project.name, @project
           render action: 'edit'
         }
-        format.json { render json: @project.errors, status: :unprocessable_entity }
+        format.json { respond_change_fail }
       end
     end
   end
@@ -143,7 +149,7 @@ class ProjectsController < ApplicationController
 
     respond_to do |format|
       format.html { redirect_to projects_url }
-      format.json { head :no_content }
+      format.json { respond_destroy }
     end
   end
 
@@ -181,4 +187,30 @@ class ProjectsController < ApplicationController
       end
     end
   end
+
+  # POST /sites/filter.json
+  # GET /sites/filter.json
+  def filter
+    filter_response = Settings.api_response.response_filter(
+        params,
+        get_user_projects,
+        Project,
+        Project.filter_settings
+    )
+
+    render_api_response(filter_response)
+  end
+
+  private
+
+  def get_user_projects
+    if current_user.has_role? :admin
+      projects = Project.includes(:creator).order('lower(name) ASC')
+    else
+      projects = current_user.projects.sort { |a, b| a.name <=> b.name }
+    end
+
+    projects
+  end
+
 end

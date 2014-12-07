@@ -24,17 +24,17 @@ longitudes = [
     {200 => false}
 ]
 
-describe Site do
+describe Site, :type => :model do
   it 'has a valid factory' do
-    FactoryGirl.create(:site).should be_valid
+    expect(FactoryGirl.create(:site)).to be_valid
   end
   it 'is invalid without a name' do
-    FactoryGirl.build(:site, :name => nil).should_not be_valid
+    expect(FactoryGirl.build(:site, :name => nil)).not_to be_valid
   end
   it 'requires a name with at least two characters' do
     s = FactoryGirl.build(:site, :name => 's')
-    s.should_not be_valid
-    s.should have(1).error_on(:name)
+    expect(s).not_to be_valid
+    expect(s.error_on(:name).size).to eq(1)
   end
 
   it 'should obfuscate lat/longs properly' do
@@ -52,9 +52,9 @@ describe Site do
     latitudes.each { |value, pass|
       site.latitude = value
       if pass then
-        site.should be_valid
+        expect(site).to be_valid
       else
-        site.should_not be_valid
+        expect(site).not_to be_valid
       end
     }
   end
@@ -64,17 +64,17 @@ describe Site do
     longitudes.each { |value, pass|
       site.longitude = value
       if pass then
-        site.should be_valid
+        expect(site).to be_valid
       else
-        site.should_not be_valid
+        expect(site).not_to be_valid
       end
     }
   end
-  it {should have_and_belong_to_many :projects}
+  it {is_expected.to have_and_belong_to_many :projects}
 
-  it { should belong_to(:creator).with_foreign_key(:creator_id) }
-  it { should belong_to(:updater).with_foreign_key(:updater_id) }
-  it { should belong_to(:deleter).with_foreign_key(:deleter_id) }
+  it { is_expected.to belong_to(:creator).with_foreign_key(:creator_id) }
+  it { is_expected.to belong_to(:updater).with_foreign_key(:updater_id) }
+  it { is_expected.to belong_to(:deleter).with_foreign_key(:deleter_id) }
 
   # this should pass, but the paperclip implementation of validate_attachment_content_type is buggy.
   # it { should validate_attachment_content_type(:image).

@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe ProjectsController do
+describe ProjectsController, :type => :routing do
   describe :routing do
 
     it { expect(post('/projects/1/update_permissions')).to route_to('projects#update_permissions', id: '1') }

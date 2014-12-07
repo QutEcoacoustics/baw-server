@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe 'checking reactions to errors' do
+describe 'checking reactions to errors', :type => :feature do
 
 
   context 'production with exceptions_app' do
@@ -92,7 +92,7 @@ describe 'checking reactions to errors' do
     end
 
     it 'displays the correct page on AR bad request error' do
-      visit '/test_exceptions?exception_class=ActiveResource::BadRequest'
+      visit '/test_exceptions?exception_class=ActionController::BadRequest'
       expect(current_path).to eq('/test_exceptions')
       expect(page).to have_content('The request was not valid')
       expect(page).not_to have_content('::')

@@ -89,7 +89,7 @@ class MediaController < ApplicationController
     default_spectrogram = Settings.cached_spectrogram_defaults
 
     # parse request
-    metadata = Api::MediaMetadata.new(BawWorkers::Settings.audio_helper, default_audio, default_spectrogram)
+    metadata = Api::MediaMetadata.new(BawWorkers::Config.audio_helper, default_audio, default_spectrogram)
 
     # validate common request parameters
     metadata.check_request_parameters(audio_recording, request_params)
@@ -124,10 +124,12 @@ class MediaController < ApplicationController
     headers['Content-Length'] = json_result_size
 
     if rails_request.head?
-      head_response(:ok, {
-          content_length: json_result_size,
-          content_type: current[:media_type]
-      })
+      head_response(
+          :ok,
+          {
+              content_length: json_result_size,
+              content_type: current[:media_type]
+          })
     else
       render json: json_result, content_length: json_result_size
     end
@@ -137,8 +139,8 @@ class MediaController < ApplicationController
     rails_request = request
 
     # get pre-defined settings
-    audio_cached = BawWorkers::Settings.audio_cache_helper
-    spectrogram_cached = BawWorkers::Settings.spectrogram_cache_helper
+    audio_cached = BawWorkers::Config.audio_cache_helper
+    spectrogram_cached = BawWorkers::Config.spectrogram_cache_helper
     range_request = Settings.range_request
 
     # validate duration min and max defaults against request parameters
@@ -174,7 +176,7 @@ class MediaController < ApplicationController
     is_processed_by_resque = Settings.process_media_resque?
     processor = Settings.media_request_processor
 
-    existing_files = files_info.existing
+    existing_files = files_info[:existing]
 
     if existing_files.blank? && is_processed_locally
       add_header_generated_local
@@ -223,8 +225,8 @@ class MediaController < ApplicationController
   # @param [Object] generation_request
   # @return [Array<String>] path to existing file
   def create_media_resque(media_category, files_info, generation_request)
-    BawWorkers::Media::Action.enqueue(media_category, generation_request)
-    poll_media(files_info.possible, Settings.audio_tools_timeout_sec)
+    BawWorkers::Media::Action.action_enqueue(media_category, generation_request)
+    poll_media(files_info[:possible], Settings.audio_tools_timeout_sec)
   end
 
   # this will block the request and wait until the resource is available
@@ -233,13 +235,30 @@ class MediaController < ApplicationController
   # @param [Number] wait_max
   # @return [Array<String>] existing files
   def poll_media(expected_files, wait_max)
-    FirePoll.poll("Took longer than #{wait_max} seconds for resque to fulfil media request.", wait_max) do
+    #timeout_sec_dir_list = 2.0
+    #run_ext_program = BawAudioTools::RunExternalProgram.new(timeout_sec_dir_list, Rails.logger)
+    poll_delay = 0.5
+
+    poll("Took longer than #{wait_max} seconds for resque to fulfil media request.", wait_max, poll_delay) do
       existing_files = []
+
       expected_files.each do |file|
-        existing_files.push(file) if File.exists?(file)
+        # get a valid directory path, and 'refresh' it by getting a file list with -l (executes stat() in linux).
+        # This helps avoid problems with nfs directory list caching.
+        # only list the file, as the dirs might have quite a few files
+        # could also use the external program runner
+        # run_ext_program.execute("ls -la \"#{dir}\"") if File.directory?(dir)
+        # can also be done by setting the attribute cache time for the nfs mount
+        # e.g. 'actimeo=3'
+        # @see NFS man page
+
+        dir = File.dirname(file) unless file.nil?
+        `ls -la \"#{dir}\"` if !file.nil? && File.directory?(dir)
+        existing_files.push(file) if !file.nil? && File.file?(file)
       end
+
       existing_files = existing_files.compact
-      existing_files.blank? ? false : existing_files
+      existing_files.empty? ? false : existing_files
     end
   end
 
@@ -374,11 +393,11 @@ class MediaController < ApplicationController
   def head_response_inline(response_code, response_headers, content_type, suggested_name)
     # return response code and headers with no content
     head_response response_code, response_headers.merge(
-        content_type: content_type,
-        content_transfer_encoding: 'binary',
-        content_disposition: "inline; filename=\"#{suggested_name}\"",
-        filename: suggested_name
-    )
+                                   content_type: content_type,
+                                   content_transfer_encoding: 'binary',
+                                   content_disposition: "inline; filename=\"#{suggested_name}\"",
+                                   filename: suggested_name
+                               )
   end
 
   def add_header_length(length)
@@ -403,6 +422,29 @@ class MediaController < ApplicationController
 
   def add_header_elapsed(elapsed_seconds)
     headers['X-Media-Elapsed-Seconds'] = elapsed_seconds.to_s
+  end
+
+  # Based on Firepoll gem: for knowing when something is ready
+  # @param [String] msg a custom message raised when polling fails
+  # @param [Numeric] seconds number of seconds to poll, default is two seconds
+  # @param [Numeric] delay number of seconds to sleep, default is tenth of a second
+  # @yield a block that determines whether polling should continue
+  # @yield return false if polling should continue
+  # @yield return true if polling is complete
+  # @raise [RuntimeError] when polling fails
+  # @return the return value of the passed block
+  def poll(msg=nil, seconds=2.0, delay=0.1)
+    seconds ||= 2.0 # 5 seconds overall patience
+    give_up_at = Time.now + seconds # pick a time to stop being patient
+    delay ||= 0.1 # wait a tenth of a second before re-attempting
+
+    while Time.now < give_up_at do
+      result = yield
+      return result if result
+      sleep delay
+    end
+    msg ||= "polling failed after #{seconds} seconds"
+    raise msg
   end
 
 end

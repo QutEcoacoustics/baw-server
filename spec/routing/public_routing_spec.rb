@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe PublicController do
+describe PublicController, :type => :routing do
   describe :routing do
 
     it { expect(get('/')).to route_to('public#index') }

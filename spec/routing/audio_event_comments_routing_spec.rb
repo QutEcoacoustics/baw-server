@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe AudioEventCommentsController do
+describe AudioEventCommentsController, :type => :routing do
     describe :routing do
 
       it { expect(get('/user_accounts/1/audio_event_comments')).to route_to('user_accounts#audio_event_comments', id: '1') }

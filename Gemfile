@@ -12,18 +12,43 @@ source 'https://rubygems.org'
 
 # RAILS
 # -------------------------------------
-# using rails 3.2.x because upgrading to rails 4 involves lots of breaking changes
-gem 'rails', '< 4'
+
+gem 'rails', '4.1.8'
 gem 'rack-cors', '~> 0.2.9', require: 'rack/cors'
+
+# RAILS 3 compatibility gems
+# -------------------------------------
+gem 'protected_attributes'
+gem 'rails-observers'
+gem 'actionpack-page_caching'
+gem 'actionpack-action_caching'
+gem 'activerecord-deprecated_finders'
+gem 'activesupport-json_encoder', github: 'rails/activesupport-json_encoder'
 
 # UI HELPERS
 # -------------------------------------
-gem 'haml', '~> 4.0.5'
-gem 'haml-rails', '~> 0.4' # from 0.5 activesupport > 3.2 is required
-gem 'jquery-rails', '~> 3.1.0'
-gem 'simple_form', '< 3' #https://github.com/plataformatec/simple_form
-gem 'paperclip', '~> 4.2.0'
-gem 'breadcrumbs_on_rails', '~> 2.3.0'
+# Use SCSS for stylesheets
+gem 'sass-rails', '~> 4.0.3'
+# Use Uglifier as compressor for JavaScript assets
+gem 'uglifier', '>= 1.3.0'
+# Use CoffeeScript for .js.coffee assets and views
+gem 'coffee-rails', '~> 4.1.0'
+# See https://github.com/sstephenson/execjs#readme for more supported runtimes
+# gem 'therubyracer',  platforms: :ruby
+
+# Use jquery as the JavaScript library
+gem 'jquery-rails'
+# Turbolinks makes following links in your web application faster. Read more: https://github.com/rails/turbolinks
+#gem 'turbolinks'
+# Build JSON APIs with ease. Read more: https://github.com/rails/jbuilder
+gem 'jbuilder', '~> 2.0'
+
+gem 'haml'
+gem 'haml-rails'
+
+gem 'simple_form' #https://github.com/plataformatec/simple_form
+gem 'paperclip'
+gem 'breadcrumbs_on_rails'
 # kept below version 2 due to huge breaking changes
 gem 'gmaps4rails', '~> 1.5.6'
 
@@ -34,30 +59,32 @@ gem 'gmaps4rails', '~> 1.5.6'
 # git grep --full-name --name-only '.fa-play' $(git rev-list --all) > font-awesome-find.txt
 gem 'twitter-bootstrap-rails', git: 'https://github.com/seyhunak/twitter-bootstrap-rails.git', ref: '38476dbd7f'
 
-gem 'bootstrap-timepicker-rails', '~> 0.1.3'
-gem 'bootstrap-datepicker-rails', '~> 1.3.0.2'
+gem 'bootstrap-timepicker-rails'
+gem 'bootstrap-datepicker-rails'
 # for rails 3, 4
-gem 'will_paginate', '~> 3.0'
-gem 'dotiw', '~> 1.1.1'
-gem 'recaptcha', '~> 0.3.6', require: 'recaptcha/rails'
+gem 'will_paginate'
+gem 'dotiw', git: 'https://github.com/radar/dotiw.git', ref: 'e01191d'
+gem 'recaptcha',  require: 'recaptcha/rails'
 
 # USERS & PERMISSIONS
 # -------------------------------------
 # https://github.com/plataformatec/devise/blob/master/CHANGELOG.md
-# using devise 3.0.x because 3.1 introduces breaking changes
-gem 'devise', '< 3.1'
-gem 'cancancan', '~> 1.9.2'
-gem 'role_model', '~> 0.8.1'
+# http://joanswork.com/devise-3-1-update/
+gem 'devise'
+gem 'cancancan'
+gem 'role_model'
+# Use ActiveModel has_secure_password
+gem 'bcrypt', '~> 3.1.7'
 
 # Database gems
 # -------------------------------------
 # don't change the database gems - causes:
 # Please install the <db> adapter: `gem install activerecord-<db>-adapter` (<db> is not part of the bundle. Add it to Gemfile.)
-gem 'pg', '~> 0.17.1'
+gem 'pg'
 
 # MODELS
 # -------------------------------------
-gem 'validates_timeliness', '~> 3.0.14'
+gem 'jc-validates_timeliness'
 
 # https://github.com/delynn/userstamp
 # no changes in a long time, and we are very dependant on how this works
@@ -69,92 +96,89 @@ gem 'validates_timeliness', '~> 3.0.14'
 # we need the changes since version 0.8.0. Reassess when there is a new release.
 gem 'enumerize', git: 'https://github.com/brainspec/enumerize.git'
 
-gem 'uuidtools', '~> 2.1.4'
-gem 'acts_as_paranoid', '~> 0.4.2'
+gem 'uuidtools'
+gem 'acts_as_paranoid', git: 'https://github.com/ActsAsParanoid/acts_as_paranoid.git', branch: :master
 
 # SETTINGS
 # -------------------------------------
-gem 'settingslogic', '~> 2.0.9'
+gem 'settingslogic'
 require 'rbconfig'
 
 # TESTING & Documentation
 # -------------------------------------
-gem 'rspec_api_documentation', '~> 3.1.0'
-gem 'raddocs', '~> 0.4.0'
+gem 'rspec_api_documentation'
+gem 'raddocs'
 
 # MONITORING
 # -------------------------------------
-gem 'exception_notification', '~> 4.0.1'
+gem 'exception_notification'
 
 # MEDIA
 # -------------------------------------
-gem 'baw-audio-tools', git: 'https://github.com/QutBioacoustics/baw-audio-tools.git'
-gem 'rack-rewrite', '~> 1.5.0'
+# set to a specific commit when releasing to master branch
+gem 'baw-audio-tools', git: 'https://github.com/QutBioacoustics/baw-audio-tools.git' #, ref: '07af4484af'
+gem 'rack-rewrite'
 
 # ASYNC JOBS
 # ------------------------------------
-gem 'resque', '~> 1.25.2'
+gem 'resque'
 gem 'resque-job-stats', git: 'https://github.com/echannel/resque-job-stats.git', ref: '8932c036ae'
-gem 'baw-workers', git: 'https://github.com/QutBioacoustics/baw-workers.git'
-gem 'fire_poll', '~> 1.2.0'
+gem 'resque-status'
+# set to a specific commit when releasing to master branch
+gem 'baw-workers', git: 'https://github.com/QutBioacoustics/baw-workers.git' #, ref: '0223c5a1b5'
 
 # Gems restricted by environment and/or platform
 # ====================================================
 
-group :assets do
-  # Gems used only for assets and not required
-  # in production environments by default.
-  # keep consistent with Rails version
-  gem 'coffee-rails', '~> 3.2'
-  gem 'sass-rails', '~> 3.2.6'
-  # must be '>= 1.0.3' or greater to run successfully
-  gem 'uglifier', '~> 2.5.0'
-end
-
 group :production, :staging do
   # See https://github.com/sstephenson/execjs#readme for more supported runtimes
-  gem 'therubyracer', '>= 0.11.3', platforms: :ruby, require: 'v8'
-  gem 'newrelic_rpm', '~> 3.9.0'
+  gem 'therubyracer', platforms: :ruby, require: 'v8'
+  gem 'newrelic_rpm'
 end
 
 group :development do
-  gem 'quiet_assets', '~> 1.0.2'
+  gem 'quiet_assets'
   # capistrano gems
-  gem 'capistrano', '~> 3.2.1'
-  gem 'capistrano-bundler', '~> 1.1.2'
-  gem 'capistrano-rvm', '~> 0.1.1'
-  gem 'capistrano-rails', '~> 1.1.1'
-  gem 'capistrano-newrelic', '~> 0.0.8'
+  gem 'capistrano'
+  gem 'capistrano-bundler'
+  gem 'capistrano-rvm'
+  gem 'capistrano-rails'
+  gem 'capistrano-newrelic'
 
-  gem 'rack-mini-profiler', '~> 0.9.1'
+  gem 'rack-mini-profiler'
   #gem 'scrap'
-  gem 'rails-i18n-debug', '~> 1.0.1'
+  gem 'rails-i18n-debug'
   gem 'brakeman', :require => false
+  # Spring speeds up development by keeping your application running in the background. Read more: https://github.com/rails/spring
+  gem 'spring'
 end
 
 group :development, :test do
-  gem 'bullet', '~> 4.13.0'
-  gem 'rspec-rails', '~> 2.14.2'
-  # fixed at lower version due to windows issues in higher versions
-  gem 'guard', '~> 2.6.1'
-  gem 'listen', '~> 2.7.9'
-  #gem 'wdm', '>= 0.1.0', platforms: [:mswin, :mingw]
+  gem 'bullet'
+  gem 'rspec-rails'
+  gem 'guard'
+  gem 'listen'
+  gem 'fakeredis', require: 'fakeredis/rspec'
+  #gem 'debugger'
 end
 
 group :test do
-  gem 'factory_girl_rails', '~> 4.4.1'
-  gem 'capybara', '~> 2.4.0'
-  gem 'thin', '~> 1.6.2'
-  gem 'guard-rspec', '~> 3.1.0'
-  gem 'rspec', '~> 2.14'
-  # fixed version due to unresolved bug in higher versions
-  gem 'simplecov', '~> 0.7.1', require: false
-  gem 'shoulda-matchers', '~> 2.6.1'
-  gem 'launchy', '~> 2.4.2'
-  gem 'json_spec', '~> 1.1.1'
-  gem 'database_cleaner', '~> 1.2'
-  gem 'webmock', '~> 1.18.0'
-  gem 'coveralls', '~> 0.7.0', require: false
+  gem 'factory_girl_rails'
+  gem 'capybara'
+  gem 'thin'
+  gem 'guard-rspec'
+  gem 'guard-yard'
+  gem 'rspec'
+  gem 'simplecov',  require: false
+  gem 'shoulda-matchers'
+  gem 'rspec-collection_matchers'
+  gem 'launchy'
+  gem 'json_spec'
+  gem 'database_cleaner'
+  gem 'webmock'
+  gem 'coveralls', require: false
   gem 'codeclimate-test-reporter', require: nil
-  gem 'fakeredis', require: 'fakeredis/rspec'
+
+  # bundle exec rake doc:rails generates the API under doc/api.
+  gem 'sdoc', '~> 0.4.0'
 end

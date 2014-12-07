@@ -56,7 +56,7 @@ resource 'Errors' do
     standard_request('ERROR', 422, 'meta/error/details', true, 'The request could not be understood')
   end
 
-  get '/test_exceptions?exception_class=ActiveResource::BadRequest' do
+  get '/test_exceptions?exception_class=ActionController::BadRequest' do
     standard_request('ERROR', 400, 'meta/error/details', true, 'The request was not valid')
   end
 

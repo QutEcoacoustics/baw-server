@@ -48,7 +48,7 @@ module Api
 
     def respond_index
       items = get_resource_plural.map { |item|
-        item.as_json(only: item.class.filter_settings.render_fields)
+        respond_modify(item)
       }
       built_response = Settings.api_response.build(:ok, items)
       render json: built_response, status: :ok, layout: false
@@ -57,14 +57,18 @@ module Api
     # also used for update_success and new
     def respond_show
       item_resource = get_resource
-      item = item_resource.as_json(only: item_resource.class.filter_settings.render_fields)
+
+      item = respond_modify(item_resource)
+
       built_response = Settings.api_response.build(:ok, item)
       render json: built_response, status: :ok, layout: false
     end
 
     def respond_create_success(location = nil)
       item_resource = get_resource
-      item = item_resource.as_json(only: item_resource.class.filter_settings.render_fields)
+
+      item = respond_modify(item_resource)
+
       built_response = Settings.api_response.build(:created, item)
       render json: built_response, status: :created, location: location.blank? ? get_resource : location, layout: false
     end
@@ -91,8 +95,21 @@ module Api
       current_ability.attributes_for(action_name.to_sym, resource_class).each do |key, value|
         get_resource.send("#{key}=", value)
       end
-      get_resource.attributes = params[resource_name.to_sym]
+      capture_params = params[resource_name.to_sym]
+      get_resource.attributes = capture_params if !capture_params.blank? && capture_params.is_a?(Hash)
       authorize! action_name.to_sym, get_resource
+    end
+
+    # Allow extra fields to be added to response.
+    # @param [Object] item_resource
+    # @return [String] json
+    def respond_modify(item_resource)
+      extra_hash = {}
+      if defined?(api_custom_response) == 'method'
+        item_resource, extra_hash = api_custom_response(item_resource)
+      end
+      fields = item_resource.class.filter_settings[:render_fields]
+      item_resource.as_json(only: fields).merge(extra_hash)
     end
 
   end

@@ -22,7 +22,7 @@ module Filter
     # @return [ActiveRecord::Relation] query that will get all records
     def relation_all(model)
       validate_model(model)
-      model.scoped
+      model.all
     end
 
     # Get the Arel::Table for this model.

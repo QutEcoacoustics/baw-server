@@ -56,7 +56,7 @@ resource 'Permissions' do
     let(:project_id) { @project_1.id }
     let(:expected_unordered_ids) { Permission.where(project_id: @project_1.id).pluck(:id) }
     let(:authentication_token) { admin_token }
-    standard_request_options('LIST (as admin)', :ok, {expected_json_path: 'data/0/level', data_item_count: 2})
+    standard_request_options(:get, 'LIST (as admin)', :ok, {expected_json_path: 'data/0/level', data_item_count: 2})
   end
 
   get '/projects/:project_id/permissions' do
@@ -64,7 +64,7 @@ resource 'Permissions' do
     let(:project_id) { @project_1.id }
     let(:expected_unordered_ids) { Permission.where(project_id: @project_1.id).pluck(:id) }
     let(:authentication_token) { user_write_1_token }
-    standard_request_options('LIST (as write 1)', :ok, {expected_json_path: 'data/0/level', data_item_count: 2})
+    standard_request_options(:get, 'LIST (as write 1)', :ok, {expected_json_path: 'data/0/level', data_item_count: 2})
   end
 
   get '/projects/:project_id/permissions' do
@@ -72,7 +72,7 @@ resource 'Permissions' do
     let(:project_id) { @project_1.id }
     let(:expected_unordered_ids) { Permission.where(user_id: @user_read_1.id).pluck(:id) }
     let(:authentication_token) { user_read_1_token }
-    standard_request_options('LIST (as read 1)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
+    standard_request_options(:get, 'LIST (as read 1)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
   end
 
   get '/projects/:project_id/permissions' do
@@ -80,7 +80,7 @@ resource 'Permissions' do
     let(:project_id) { @project_1.id }
     let(:expected_unordered_ids) { Permission.where(user_id: @user_write_2.id).pluck(:id) }
     let(:authentication_token) { user_write_2_token }
-    standard_request_options('LIST (as write 2)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
+    standard_request_options(:get, 'LIST (as write 2)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
   end
 
   get '/projects/:project_id/permissions' do
@@ -88,7 +88,7 @@ resource 'Permissions' do
     let(:project_id) { @project_1.id }
     let(:expected_unordered_ids) { Permission.where(user_id: @user_read_2.id).pluck(:id) }
     let(:authentication_token) { user_read_2_token }
-    standard_request_options('LIST (as read 2)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
+    standard_request_options(:get, 'LIST (as read 2)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
   end
 
   get '/projects/:project_id/permissions' do
@@ -96,7 +96,7 @@ resource 'Permissions' do
     let(:project_id) { @project_1.id }
     let(:expected_unordered_ids) { Permission.where(user_id: @other_user.id).pluck(:id) }
     let(:authentication_token) { other_user_token }
-    standard_request_options('LIST (as other token)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
+    standard_request_options(:get, 'LIST (as other token)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
   end
 
   get '/projects/:project_id/permissions' do
@@ -104,7 +104,7 @@ resource 'Permissions' do
     let(:project_id) { @project_1.id }
     let(:expected_unordered_ids) { Permission.where(user_id: @unconfirmed_user.id).pluck(:id) }
     let(:authentication_token) { unconfirmed_token }
-    standard_request_options('LIST (as unconfirmed_token)', :forbidden, {expected_json_path: 'meta/error/links/confirm your account'})
+    standard_request_options(:get, 'LIST (as unconfirmed_token)', :forbidden, {expected_json_path: 'meta/error/links/confirm your account'})
   end
 
   get '/projects/:project_id/permissions' do
@@ -112,7 +112,7 @@ resource 'Permissions' do
     let(:project_id) { @project_1.id }
     let(:expected_unordered_ids) { [] }
     let(:authentication_token) { invalid_token }
-    standard_request_options('CREATE (as invalid user)', :unauthorized, {expected_json_path: 'meta/error/links/sign in'})
+    standard_request_options(:get, 'LIST (as invalid user)', :unauthorized, {expected_json_path: 'meta/error/links/sign in'})
   end
 
   ################################
@@ -123,7 +123,7 @@ resource 'Permissions' do
     let(:project_id) { @project_1.id }
     let(:raw_post) { {permission: post_attributes}.to_json }
     let(:authentication_token) { admin_token }
-    standard_request_options('CREATE (as admin)', :created, {expected_json_path: 'data/level'})
+    standard_request_options(:post, 'CREATE (as admin)', :created, {expected_json_path: 'data/level'})
   end
 
   post '/projects/:project_id/permissions' do
@@ -131,7 +131,7 @@ resource 'Permissions' do
     let(:project_id) { @project_1.id }
     let(:raw_post) { {permission: post_attributes}.to_json }
     let(:authentication_token) { user_write_1_token }
-    standard_request_options('CREATE (as write 1)', :created, {expected_json_path: 'data/level'})
+    standard_request_options(:post, 'CREATE (as write 1)', :created, {expected_json_path: 'data/level'})
   end
 
   post '/projects/:project_id/permissions' do
@@ -139,7 +139,7 @@ resource 'Permissions' do
     let(:project_id) { @project_1.id }
     let(:raw_post) { {permission: post_attributes}.to_json }
     let(:authentication_token) { user_read_1_token }
-    standard_request_options('CREATE (as read 1)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
+    standard_request_options(:post, 'CREATE (as read 1)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
   end
 
   post '/projects/:project_id/permissions' do
@@ -147,7 +147,7 @@ resource 'Permissions' do
     let(:project_id) { @project_1.id }
     let(:raw_post) { {permission: post_attributes}.to_json }
     let(:authentication_token) { user_write_2_token }
-    standard_request_options('CREATE (as write 1)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
+    standard_request_options(:post, 'CREATE (as write 1)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
   end
 
   post '/projects/:project_id/permissions' do
@@ -155,7 +155,7 @@ resource 'Permissions' do
     let(:project_id) { @project_1.id }
     let(:raw_post) { {permission: post_attributes}.to_json }
     let(:authentication_token) { user_read_2_token }
-    standard_request_options('CREATE (as read 1)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
+    standard_request_options(:post, 'CREATE (as read 1)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
   end
 
   post '/projects/:project_id/permissions' do
@@ -163,7 +163,7 @@ resource 'Permissions' do
     let(:project_id) { @project_1.id }
     let(:raw_post) { {permission: post_attributes}.to_json }
     let(:authentication_token) { other_user_token }
-    standard_request_options('CREATE (as other token)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
+    standard_request_options(:post, 'CREATE (as other token)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
   end
 
   post '/projects/:project_id/permissions' do
@@ -171,7 +171,7 @@ resource 'Permissions' do
     let(:project_id) { @project_1.id }
     let(:raw_post) { {permission: post_attributes}.to_json }
     let(:authentication_token) { unconfirmed_token }
-    standard_request_options('CREATE (as unconfirmed user)', :forbidden, {expected_json_path: 'meta/error/links/confirm your account'})
+    standard_request_options(:post, 'CREATE (as unconfirmed user)', :forbidden, {expected_json_path: 'meta/error/links/confirm your account'})
   end
 
   post '/projects/:project_id/permissions' do
@@ -179,7 +179,7 @@ resource 'Permissions' do
     let(:project_id) { @project_1.id }
     let(:raw_post) { {permission: post_attributes}.to_json }
     let(:authentication_token) { invalid_token }
-    standard_request_options('CREATE (as invalid user)', :unauthorized, {expected_json_path: 'meta/error/links/sign in'})
+    standard_request_options(:post, 'CREATE (as invalid user)', :unauthorized, {expected_json_path: 'meta/error/links/sign in'})
   end
 
   ################################
@@ -191,7 +191,7 @@ resource 'Permissions' do
     let(:project_id) { @project_1.id }
     let(:id) { @permission_write_1.id }
     let(:authentication_token) { admin_token }
-    standard_request_options('SHOW (as admin)', :ok, {expected_json_path: 'data/level'})
+    standard_request_options(:get, 'SHOW (as admin)', :ok, {expected_json_path: 'data/level'})
   end
 
   get '/projects/:project_id/permissions/:id' do
@@ -200,7 +200,7 @@ resource 'Permissions' do
     let(:project_id) { @project_1.id }
     let(:id) { @permission_write_1.id }
     let(:authentication_token) { user_write_1_token }
-    standard_request_options('SHOW (as write 1)', :ok, {expected_json_path: 'data/level'})
+    standard_request_options(:get, 'SHOW (as write 1)', :ok, {expected_json_path: 'data/level'})
   end
 
   get '/projects/:project_id/permissions/:id' do
@@ -209,7 +209,7 @@ resource 'Permissions' do
     let(:project_id) { @project_1.id }
     let(:id) { @permission_write_1.id }
     let(:authentication_token) { user_read_1_token }
-    standard_request_options('SHOW (as read 1)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
+    standard_request_options(:get, 'SHOW (as read 1)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
   end
 
   get '/projects/:project_id/permissions/:id' do
@@ -218,7 +218,7 @@ resource 'Permissions' do
     let(:project_id) { @project_1.id }
     let(:id) { @permission_write_1.id }
     let(:authentication_token) { user_write_2_token }
-    standard_request_options('SHOW (as write 2)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
+    standard_request_options(:get, 'SHOW (as write 2)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
   end
 
   get '/projects/:project_id/permissions/:id' do
@@ -227,7 +227,7 @@ resource 'Permissions' do
     let(:project_id) { @project_1.id }
     let(:id) { @permission_write_1.id }
     let(:authentication_token) { user_read_2_token }
-    standard_request_options('SHOW (as read 2)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
+    standard_request_options(:get, 'SHOW (as read 2)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
   end
 
   get '/projects/:project_id/permissions/:id' do
@@ -236,7 +236,7 @@ resource 'Permissions' do
     let(:project_id) { @project_1.id }
     let(:id) { @permission_write_1.id }
     let(:authentication_token) { other_user_token }
-    standard_request_options('SHOW (as other user)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
+    standard_request_options(:get, 'SHOW (as other user)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
   end
 
   get '/projects/:project_id/permissions/:id' do
@@ -245,7 +245,7 @@ resource 'Permissions' do
     let(:project_id) { @project_1.id }
     let(:id) { @permission_write_1.id }
     let(:authentication_token) { unconfirmed_token }
-    standard_request_options('SHOW (as unconfirmed user)', :forbidden, {expected_json_path: 'meta/error/links/confirm your account'})
+    standard_request_options(:get, 'SHOW (as unconfirmed user)', :forbidden, {expected_json_path: 'meta/error/links/confirm your account'})
   end
 
   get '/projects/:project_id/permissions/:id' do
@@ -254,7 +254,7 @@ resource 'Permissions' do
     let(:project_id) { @project_1.id }
     let(:id) { @permission_write_1.id }
     let(:authentication_token) { invalid_token }
-    standard_request_options('UPDATE (as invalid user)', :unauthorized, {expected_json_path: 'meta/error/links/sign in'})
+    standard_request_options(:get, 'SHOW (as invalid user)', :unauthorized, {expected_json_path: 'meta/error/links/sign in'})
   end
 
   ################################
@@ -266,7 +266,7 @@ resource 'Permissions' do
     let(:project_id) { @project_1.id }
     let(:id) { @permission_write_1.id }
     let(:authentication_token) { admin_token }
-    standard_request_options('DESTROY (as admin)', :no_content)
+    standard_request_options(:delete, 'DESTROY (as admin)', :no_content, {expected_response_has_content:false, expected_response_content_type: nil})
   end
 
   delete '/projects/:project_id/permissions/:id' do
@@ -275,7 +275,7 @@ resource 'Permissions' do
     let(:project_id) { @project_1.id }
     let(:id) { @permission_write_1.id }
     let(:authentication_token) { user_write_1_token }
-    standard_request_options('DESTROY (as write 1)', :no_content)
+    standard_request_options(:delete, 'DESTROY (as write 1)', :no_content, {expected_response_has_content:false, expected_response_content_type: nil})
   end
 
   delete '/projects/:project_id/permissions/:id' do
@@ -284,7 +284,7 @@ resource 'Permissions' do
     let(:project_id) { @project_1.id }
     let(:id) { @permission_write_1.id }
     let(:authentication_token) { user_read_1_token }
-    standard_request_options('DESTROY (as read 1)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
+    standard_request_options(:delete, 'DESTROY (as read 1)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
   end
 
   delete '/projects/:project_id/permissions/:id' do
@@ -293,7 +293,7 @@ resource 'Permissions' do
     let(:project_id) { @project_1.id }
     let(:id) { @permission_write_1.id }
     let(:authentication_token) { user_write_2_token }
-    standard_request_options('DESTROY (as write 2)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
+    standard_request_options(:delete, 'DESTROY (as write 2)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
   end
 
   delete '/projects/:project_id/permissions/:id' do
@@ -302,7 +302,7 @@ resource 'Permissions' do
     let(:project_id) { @project_1.id }
     let(:id) { @permission_write_1.id }
     let(:authentication_token) { user_read_2_token }
-    standard_request_options('DESTROY (as read 2)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
+    standard_request_options(:delete, 'DESTROY (as read 2)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
   end
 
   delete '/projects/:project_id/permissions/:id' do
@@ -311,7 +311,7 @@ resource 'Permissions' do
     let(:project_id) { @project_1.id }
     let(:id) { @permission_write_1.id }
     let(:authentication_token) { other_user_token }
-    standard_request_options('DESTROY (as other user)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
+    standard_request_options(:delete, 'DESTROY (as other user)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
   end
 
   delete '/projects/:project_id/permissions/:id' do
@@ -320,7 +320,7 @@ resource 'Permissions' do
     let(:project_id) { @project_1.id }
     let(:id) { @permission_write_1.id }
     let(:authentication_token) { unconfirmed_token }
-    standard_request_options('DESTROY (as unconfirmed user)', :forbidden, {expected_json_path: 'meta/error/links/confirm your account'})
+    standard_request_options(:delete, 'DESTROY (as unconfirmed user)', :forbidden, {expected_json_path: 'meta/error/links/confirm your account'})
   end
 
   delete '/projects/:project_id/permissions/:id' do
@@ -329,7 +329,7 @@ resource 'Permissions' do
     let(:project_id) { @project_1.id }
     let(:id) { @permission_write_1.id }
     let(:authentication_token) { invalid_token }
-    standard_request_options('DESTROY (as invalid user)', :unauthorized, {expected_json_path: 'meta/error/links/sign in'})
+    standard_request_options(:delete, 'DESTROY (as invalid user)', :unauthorized, {expected_json_path: 'meta/error/links/sign in'})
   end
 
 end

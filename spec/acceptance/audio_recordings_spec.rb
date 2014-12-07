@@ -273,8 +273,8 @@ def test_overlap
 
         # ensure current state of audio recordings in db matches output
         if status_code == 201
-          status.should eq(201), "expected status 201 but was #{status}. Response body was #{response_body}"
-          response_body.should have_json_path('bit_rate_bps'), "could not find bit_rate_bps in #{response_body}"
+          expect(status).to eq(201), "expected status 201 but was #{status}. Response body was #{response_body}"
+          expect(response_body).to have_json_path('bit_rate_bps'), "could not find bit_rate_bps in #{response_body}"
 
           new_audio_recording_id = JSON.parse(response_body)['id']
           new_recording = AudioRecording.where(id: new_audio_recording_id).first
@@ -285,9 +285,9 @@ def test_overlap
           expect(new_recording.notes).to include('duration_adjustment_for_overlap') if expected_post_item[:modification_made]
 
         elsif status_code == 422
-          status.should eq(422), "expected status 422 but was #{status}. Response body was #{response_body}"
-          response_body.should have_json_path('recorded_date/0/problem'), "could not find 'problem' in #{response_body}"
-          response_body.should have_json_path('recorded_date/0/overlapping_audio_recordings/0/overlap_amount'), "could not find 'overlap_amount' in #{response_body}"
+          expect(status).to eq(422), "expected status 422 but was #{status}. Response body was #{response_body}"
+          expect(response_body).to have_json_path('recorded_date/0/problem'), "could not find 'problem' in #{response_body}"
+          expect(response_body).to have_json_path('recorded_date/0/overlapping_audio_recordings/0/overlap_amount'), "could not find 'overlap_amount' in #{response_body}"
 
           # ensure posted audio recording does not exist
           expect(AudioRecording.where(file_hash: posted_item_attrs[:file_hash]).count)
@@ -475,12 +475,12 @@ resource 'AudioRecordings' do
     # Execute request with ids defined in above let(:id) statements
     example 'CREATE (as harvester) - 201', document: true do
       do_request
-      status.should eq(201), "expected status 201 but was #{status}. Response body was #{response_body}"
-      response_body.should have_json_path('bit_rate_bps'), "could not find bit_rate_bps in #{response_body}"
+      expect(status).to eq(201), "expected status 201 but was #{status}. Response body was #{response_body}"
+      expect(response_body).to have_json_path('bit_rate_bps'), "could not find bit_rate_bps in #{response_body}"
 
       new_audio_recording_id = JSON.parse(response_body)['id']
 
-      AudioRecording.where(id: new_audio_recording_id).first.status.should eq('new')
+      expect(AudioRecording.where(id: new_audio_recording_id).first.status).to eq('new')
     end
 
   end
@@ -538,13 +538,13 @@ resource 'AudioRecordings' do
                          status: :aborted)
 
       do_request
-      status.should eq(201), "expected status 201 but was #{status}. Response body was #{response_body}"
-      response_body.should have_json_path('bit_rate_bps'), "could not find bit_rate_bps in #{response_body}"
+      expect(status).to eq(201), "expected status 201 but was #{status}. Response body was #{response_body}"
+      expect(response_body).to have_json_path('bit_rate_bps'), "could not find bit_rate_bps in #{response_body}"
 
       new_audio_recording_id = JSON.parse(response_body)['id']
 
-      AudioRecording.where(id: new_audio_recording_id).count.should eq(1)
-      AudioRecording.where(id: new_audio_recording_id).first.status.should eq('new')
+      expect(AudioRecording.where(id: new_audio_recording_id).count).to eq(1)
+      expect(AudioRecording.where(id: new_audio_recording_id).first.status).to eq('new')
     end
   end
 
@@ -751,7 +751,7 @@ resource 'AudioRecordings' do
     let(:raw_post) { changed_details.to_json }
 
     let(:authentication_token) { harvester_token }
-    standard_request_options('UPDATE (as harvester) standard properties', :ok, {expected_json_path: 'data/duration_seconds', property_match: changed_details})
+    standard_request_options(:put, 'UPDATE (as harvester) standard properties', :ok, {expected_json_path: 'data/duration_seconds', property_match: changed_details})
 
   end
 
@@ -775,7 +775,7 @@ resource 'AudioRecordings' do
     let(:raw_post) { changed_details.to_json }
 
     let(:authentication_token) { harvester_token }
-    standard_request_options('UPDATE (as harvester) file hash only', :ok, {expected_json_path: 'data/duration_seconds'})
+    standard_request_options(:put, 'UPDATE (as harvester) file hash only', :ok, {expected_json_path: 'data/duration_seconds'})
 
   end
 
@@ -807,6 +807,7 @@ resource 'AudioRecordings' do
 
     let(:authentication_token) { harvester_token }
     standard_request_options(
+        :put,
         'UPDATE (as harvester) file hash and other properties',
         :unprocessable_entity,
         {expected_json_path: 'meta/error/info/file_hash'})
@@ -831,7 +832,7 @@ resource 'AudioRecordings' do
         }
     }.to_json }
     let(:authentication_token) { reader_token }
-    standard_request_options('FILTER (as reader matching)', :ok, {expected_json_path: 'data/0/sample_rate_hertz', data_item_count: 1})
+    standard_request_options(:post, 'FILTER (as reader matching)', :ok, {expected_json_path: 'data/0/sample_rate_hertz', data_item_count: 1})
   end
 
   post '/audio_recordings/filter' do
@@ -849,7 +850,7 @@ resource 'AudioRecordings' do
         }
     }.to_json }
     let(:authentication_token) { reader_token }
-    standard_request_options('FILTER (as reader no match)', :ok, {expected_json_path: 'meta/message', data_item_count: 0})
+    standard_request_options(:post, 'FILTER (as reader no match)', :ok, {expected_json_path: 'meta/message', data_item_count: 0})
   end
 
   post '/audio_recordings/filter' do
@@ -870,7 +871,7 @@ resource 'AudioRecordings' do
         }
     }.to_json }
     let(:authentication_token) { reader_token }
-    standard_request_options('FILTER (as reader with paging)', :ok, {expected_json_path: 'meta/paging/page', data_item_count: 0})
+    standard_request_options(:post, 'FILTER (as reader with paging)', :ok, {expected_json_path: 'meta/paging/page', data_item_count: 0})
   end
 
   post '/audio_recordings/filter' do
@@ -883,7 +884,7 @@ resource 'AudioRecordings' do
            {"orderBy" => "createdAt", "direction" => "desc"}}
       .to_json }
     let(:authentication_token) { reader_token }
-    standard_request_options('FILTER (as reader with paging, sorting, projection)', :ok, {expected_json_path: 'meta/paging/current', data_item_count: 1})
+    standard_request_options(:post, 'FILTER (as reader with paging, sorting, projection)', :ok, {expected_json_path: 'meta/paging/current', data_item_count: 1})
   end
 
 end
