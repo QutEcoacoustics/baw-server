@@ -53,9 +53,9 @@ class AudioRecordingsController < ApplicationController
     uploader_id = params[:audio_recording][:uploader_id].to_i
     user_exists = User.exists?(uploader_id)
     user = User.where(id: uploader_id).first
-    highest_permission = user.highest_permission(@project)
+    has_writer_access = AccessLevel.access?(user, @project, :writer)
 
-    if !user_exists || highest_permission < AccessLevel::WRITE
+    if !user_exists || !has_writer_access
       render json: {error: 'uploader does not have access to this project'}.to_json, status: :unprocessable_entity
     elsif check_and_correct_overlap(@audio_recording) && @audio_recording.save
       render json: @audio_recording, status: :created, location: @audio_recording
@@ -112,9 +112,9 @@ class AudioRecordingsController < ApplicationController
         uploader_id = params[:uploader_id].to_i
         user_exists = User.exists?(uploader_id)
         user = User.where(id: uploader_id).first
-        highest_permission = user.highest_permission(@project)
+        has_writer_access = AccessLevel.access?(user, @project, :writer)
 
-        if !user_exists || highest_permission < AccessLevel::WRITE
+        if !user_exists || !has_writer_access
           render json: {error: 'uploader does not have access to this project'}.to_json, status: :ok
         else
           head :no_content

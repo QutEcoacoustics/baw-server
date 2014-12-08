@@ -58,9 +58,8 @@
   = render layout: '/shared/right_sidebar_user_times', locals: { item: @project } do
     = sidebar_metadata('Notes', @project.notes)
     = sidebar_metadata('Urn', @project.urn)
-    - permission = current_user.get_permission(@project)
-    - unless permission.blank?
-      = sidebar_metadata('Your access level', permission.level)
+    - permission = AccessLevel.level(current_user, @project)
+    = sidebar_metadata('Your access level', AccessLevel.obj_to_display(permission))
 
 - content_for :title, "Project #{@project.name}"
 

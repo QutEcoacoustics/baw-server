@@ -22,20 +22,20 @@
                       type: 'radio',
                       name: "[user_ids][#{user.id}][permissions][level]",
                       value: '',
-                      checked: !user.has_permission?(@project)}
+                      checked: AccessLevel.access?(user, @project, :none)}
           %td
             %input{id: "user_#{user.id}_permissions_level_reader",
                       type: 'radio',
                       name: "[user_ids][#{user.id}][permissions][level]",
                       value: 'reader',
-                      checked: user.can_read?(@project)}
+                      checked: AccessLevel.access?(user, @project, :reader)}
 
           %td
             %input{id: "user_#{user.id}_permissions_level_writer",
                       type: 'radio',
                       name: "[user_ids][#{user.id}][permissions][level]",
                       value: 'writer',
-                      checked: user.can_write?(@project)}
+                      checked: AccessLevel.access?(user, @project, :writer)}
   .form-actions
     = p.submit 'Update Permissions', class: 'btn'
 

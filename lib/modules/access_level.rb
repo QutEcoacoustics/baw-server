@@ -11,19 +11,19 @@ class AccessLevel
       {
           owner: {
               display: 'Owner',
-              description: 'Created the project or was assigned as owner.'
+              description: 'created the project or is assigned as owner'
           },
           writer: {
               display: 'Writer',
-              description: 'Has write permission to the project.'
+              description: 'has write permission to the project'
           },
           reader: {
               display: 'Reader',
-              description: 'Has read permission to the project.'
+              description: 'has read permission to the project'
           },
           none: {
               display: 'None',
-              description: 'Has no permissions to the project.'
+              description: 'has no permissions to the project'
           }
       }
     end
@@ -229,7 +229,7 @@ class AccessLevel
       user.has_role?(:admin)
     end
 
-    # Is this user a guest? (a guest = nil user object)
+    # Is this user a guest? A guest is a nil user object or unconfirmed user).
     # @param [User] user
     # @return [Boolean]
     def is_guest?(user)
@@ -256,7 +256,9 @@ class AccessLevel
         true
       else
         # standard user
-        # being the creator of a project gives :owner access level
+        # being the creator of a project gives :owner access level,
+        # so if is_creator? is true, then result will be true
+        # except when checking :none access level.
         if level == :none
           # must all be none, otherwise it is not none (it is reader, writer, or owner)
           # e.g. asking for :none, sign_in_level is :reader, permission_level is :none, is_creator? is false (=> false)
@@ -320,14 +322,17 @@ class AccessLevel
 
       elsif is_admin?(user)
         # admin has access to everything
-        Project.scoped
+        Project.all
 
       else
         # standard user
-        if access_levels.size == 1 && access_levels[0] == :none
+        if access_levels.size == 1 && access_levels.include?(:none)
           # get projects this user cannot access
 
-          # TODO
+          # projects the user did not create and projects user has no permissions to
+          user.inaccessible_projects
+
+          # TODO: needs to account for sign_in_level and anonymous_level
 
         else
           # projects this user can access that the given levels
@@ -336,6 +341,8 @@ class AccessLevel
                          .order('projects.name DESC')
 
           # use access_levels in permissions check
+          # this will only ever include :reader, :writer, or :owner
+          # @see Permission
           access_levels_check = access_levels.map { |item| "'#{item}'" }.join(', ')
           permissions_check = "(permissions.user_id = ? AND permissions.level IN (#{access_levels_check}))"
           sign_in_check = "projects.sign_in_level IN (#{access_levels_check})"

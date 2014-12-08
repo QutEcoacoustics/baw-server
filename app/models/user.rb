@@ -60,8 +60,8 @@ class User < ActiveRecord::Base
   has_many :created_bookmarks, class_name: 'Bookmark', foreign_key: :creator_id, inverse_of: :creator
   has_many :updated_bookmarks, class_name: 'Bookmark', foreign_key: :updater_id, inverse_of: :updater
 
-  has_many :created_datasets, -> { includes :project}, class_name: 'Dataset', foreign_key: :creator_id, inverse_of: :creator
-  has_many :updated_datasets, -> { includes :project}, class_name: 'Dataset', foreign_key: :updater_id, inverse_of: :updater
+  has_many :created_datasets, -> { includes :project }, class_name: 'Dataset', foreign_key: :creator_id, inverse_of: :creator
+  has_many :updated_datasets, -> { includes :project }, class_name: 'Dataset', foreign_key: :updater_id, inverse_of: :updater
 
   has_many :created_jobs, class_name: 'Job', foreign_key: :creator_id, inverse_of: :creator
   has_many :updated_jobs, class_name: 'Job', foreign_key: :updater_id, inverse_of: :updater
@@ -162,8 +162,8 @@ class User < ActiveRecord::Base
 
   def accessible_audio_events
     AudioEvent
-    .includes(:audio_recording, :creator)
-    .where(audio_recording_id: accessible_audio_recordings.select(:id))
+        .includes(:audio_recording, :creator)
+        .where(audio_recording_id: accessible_audio_recordings.select(:id))
   end
 
   def accessible_audio_recordings
@@ -178,114 +178,6 @@ class User < ActiveRecord::Base
 
   def accessible_bookmarks
     Bookmark.where(creator_id: self.id)
-  end
-
-  # helper methods for permission checks
-
-  # @param [Project] project
-  def can_read?(project)
-    !get_read_permission(project).blank? || creator?(project)
-  end
-
-  # @param [Project] project
-  def can_write?(project)
-    !get_write_permission(project).blank? || creator?(project)
-  end
-
-  # @param [Array<Project>] projects
-  # @return [boolean]
-  def can_write_any?(projects)
-    projects.each do |project|
-      if self.can_write?(project)
-        return true
-      end
-    end
-    false
-  end
-
-  # @param [Array<Project>] projects
-  # @return [boolean]
-  def can_read_any?(projects)
-    projects.each do |project|
-      if self.can_read?(project)
-        return true
-      end
-    end
-    false
-  end
-
-  # @param [Project] project
-  def highest_permission(project)
-    # low to high: none, read, write, creator/owner, admin
-    if self.has_role? :admin
-      AccessLevel::ADMIN
-    elsif creator?(project)
-      AccessLevel::OWNER
-    elsif self.can_write? project
-      AccessLevel::WRITE
-    elsif self.can_read? project
-      AccessLevel::READ
-    else
-      AccessLevel::NONE
-    end
-  end
-
-  # @param [Array<Project>] projects
-  def highest_permission_any(projects)
-    highest = 0
-    projects.each do |project|
-      permission = self.highest_permission(project)
-      if permission > highest
-        highest = permission
-      end
-    end
-    highest
-  end
-
-  # Check if user has any permission on given project.
-  # @param [Project] project
-  # @return [Boolean] true if user has any permission on project.
-  def has_permission?(project)
-    !get_permission(project).blank? || creator?(project)
-  end
-
-  # @param [Array<Project>] projects
-  def has_permission_any?(projects)
-    projects.each do |project|
-      if self.has_permission?(project)
-        return true
-      end
-    end
-    false
-  end
-
-  # True if this user is the creator of project.
-  # @param [Project] project
-  # @return [Boolean]
-  def creator?(project)
-    project.creator == self
-  end
-
-  # True if this user is the updater of project.
-  # @param [Project] project
-  # @return [Boolean]
-  def updater?(project)
-    project.updater == self
-  end
-
-  # @param [Project] project
-  def get_read_permission(project)
-    Permission.where(user_id: self.id, project_id: project.id, level: 'reader').first
-  end
-
-  # @param [Project] project
-  def get_write_permission(project)
-    Permission.where(user_id: self.id, project_id: project.id, level: 'writer').first
-  end
-
-  # @param [Project] project
-  def get_permission(project)
-    Permission.where(user_id: self.id, project_id: project.id).first
   end
 
   # Get the number of projects this user has access to.
@@ -358,8 +250,8 @@ class User < ActiveRecord::Base
     login = conditions.delete(:login)
     if login
       where(conditions)
-      .where(['lower(user_name) = :value OR lower(email) = :value', {value: login.downcase}])
-      .first
+          .where(['lower(user_name) = :value OR lower(email) = :value', {value: login.downcase}])
+          .first
     else
       where(conditions).first
     end

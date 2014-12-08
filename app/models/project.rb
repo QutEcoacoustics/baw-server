@@ -21,10 +21,13 @@ class Project < ActiveRecord::Base
   has_many :datasets, inverse_of: :project
   has_many :jobs, through: :datasets
 
-  AVAILABLE_PROJECT_LEVELS_SYMBOLS = [:none, :writer, :reader]
-  AVAILABLE_PROJECT_LEVELS = AVAILABLE_PROJECT_LEVELS_SYMBOLS.map { |item| item.to_s }
-  enumerize :sign_in_level, in: AVAILABLE_PROJECT_LEVELS, predicates: true
-  enumerize :anonymous_level, in: AVAILABLE_PROJECT_LEVELS, predicates: true
+  SIGN_IN_LEVELS_SYM = [:none, :reader, :writer, :owner]
+  SIGN_IN_LEVELS = SIGN_IN_LEVELS_SYM.map { |item| item.to_s }
+  enumerize :sign_in_level, in: SIGN_IN_LEVELS, predicates: true
+
+  ANON_LEVELS_SYM = [:none, :reader, :writer]
+  ANON_LEVELS = ANON_LEVELS_SYM.map { |item| item.to_s }
+  enumerize :anonymous_level, in: ANON_LEVELS, predicates: true
 
   #plugins
   has_attached_file :image,

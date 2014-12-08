@@ -49,10 +49,10 @@ ActiveRecord::Schema.define(version: 20141115234848) do
   create_table "audio_events_tags", force: true do |t|
     t.integer  "audio_event_id", null: false
     t.integer  "tag_id",         null: false
-    t.datetime "created_at",     null: false
-    t.datetime "updated_at",     null: false
     t.integer  "creator_id",     null: false
     t.integer  "updater_id"
+    t.datetime "created_at",     null: false
+    t.datetime "updated_at",     null: false
   end
 
   add_index "audio_events_tags", ["audio_event_id", "tag_id"], name: "index_audio_events_tags_on_audio_event_id_and_tag_id", unique: true, using: :btree
@@ -87,10 +87,10 @@ ActiveRecord::Schema.define(version: 20141115234848) do
     t.integer  "audio_recording_id"
     t.decimal  "offset_seconds",     precision: 10, scale: 4
     t.string   "name"
-    t.datetime "created_at",                                  null: false
-    t.datetime "updated_at",                                  null: false
     t.integer  "creator_id",                                  null: false
     t.integer  "updater_id"
+    t.datetime "created_at",                                  null: false
+    t.datetime "updated_at",                                  null: false
     t.text     "description"
     t.string   "category"
   end
@@ -149,11 +149,11 @@ ActiveRecord::Schema.define(version: 20141115234848) do
   end
 
   create_table "projects", force: true do |t|
-    t.string   "name",               null: false
+    t.string   "name",                                null: false
     t.text     "description"
     t.string   "urn"
     t.text     "notes"
-    t.integer  "creator_id",         null: false
+    t.integer  "creator_id",                          null: false
     t.integer  "updater_id"
     t.integer  "deleter_id"
     t.datetime "deleted_at"
@@ -161,8 +161,10 @@ ActiveRecord::Schema.define(version: 20141115234848) do
     t.string   "image_content_type"
     t.integer  "image_file_size"
     t.datetime "image_updated_at"
-    t.datetime "created_at",         null: false
-    t.datetime "updated_at",         null: false
+    t.datetime "created_at",                          null: false
+    t.datetime "updated_at",                          null: false
+    t.string   "anonymous_level",    default: "none", null: false
+    t.string   "sign_in_level",      default: "none", null: false
   end
 
   create_table "projects_sites", id: false, force: true do |t|
@@ -214,10 +216,10 @@ ActiveRecord::Schema.define(version: 20141115234848) do
     t.string   "type_of_tag",  default: "general", null: false
     t.boolean  "retired",      default: false,     null: false
     t.text     "notes"
-    t.datetime "created_at",                       null: false
-    t.datetime "updated_at",                       null: false
     t.integer  "creator_id",                       null: false
     t.integer  "updater_id"
+    t.datetime "created_at",                       null: false
+    t.datetime "updated_at",                       null: false
   end
 
   create_table "users", force: true do |t|

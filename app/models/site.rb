@@ -77,8 +77,8 @@ class Site < ActiveRecord::Base
   end
 
   def update_location_obfuscated(current_user)
-    highest_permission = current_user.highest_permission_any(self.projects)
-    @location_obfuscated = highest_permission < AccessLevel::OWNER
+    does_user_own_any_project = AccessLevel.access_any?(current_user, self.projects, :owner)
+    @location_obfuscated = does_user_own_any_project
   end
 
   def self.add_location_jitter(value, min, max)
