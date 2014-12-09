@@ -34,10 +34,7 @@ class User < ActiveRecord::Base
                     default_url: '/images/user/user_:style.png'
 
   # relations
-  # TODO tidy up user project accessing - too many ways to do the same thing
-  has_many :accessible_projects, through: :permissions, source: :project
-  has_many :readable_projects, -> { where('permissions.level = reader') }, through: :permissions, source: :project
-  has_many :writable_projects, -> { where('permissions.level = writer') }, through: :permissions, source: :project
+  # no relations specified for projects - see AccessLevel class
 
   # relations for creator, updater, deleter, and others.
   has_many :created_audio_events, class_name: 'AudioEvent', foreign_key: :creator_id, inverse_of: :creator
@@ -167,7 +164,7 @@ class User < ActiveRecord::Base
   end
 
   def accessible_audio_recordings
-    user_sites = self.projects.map { |project| project.sites.map { |site| site.id } }.to_a.uniq
+    user_sites = self.projects.map { |project| project.sites.map { |site| site.pluck(:id) } }.to_a.uniq
     AudioRecording.where(site_id: user_sites)
   end
 

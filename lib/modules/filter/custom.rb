@@ -20,13 +20,32 @@ module Filter
       compose_eq(relation_table(Project), :creator_id, [:creator_id], creator_id)
     end
 
+    # Build project sign in level condition.
+    # @param [Symbol] level
+    # @return [Arel::Nodes::Node] condition
+    def compose_project_sign_in_level(level)
+      levels = AccessLevel.decompose(level).map {|l| l.to_s}
+      # creator_id_check = 'projects.sign_in_level  IN ()'
+      compose_in(relation_table(Project), :sign_in_level, [:sign_in_level], levels)
+    end
+
+    # Build project sign in level condition.
+    # @param [Symbol] level
+    # @return [Arel::Nodes::Node] condition
+    def compose_project_anonymous_level(level)
+      levels = AccessLevel.decompose(level).map {|l| l.to_s}
+      # creator_id_check = 'projects.anonymous_level IN ()'
+      compose_in(relation_table(Project), :anonymous_level, [:anonymous_level], levels)
+    end
+
     # Build user permissions condition.
     # @param [Integer] user_id
     # @return [Arel::Nodes::Node] condition
-    def compose_user_permissions(user_id)
+    def compose_user_permissions(user_id, level)
+      levels = AccessLevel.decompose(level).map {|l| l.to_s}
       # permissions_check = 'permissions.user_id = ? AND permissions.level IN (\'reader\', \'writer\')'
       user_permissions = compose_eq(relation_table(Permission), :user_id, [:user_id], user_id)
-      permission_level = compose_in(relation_table(Permission), :level, [:level], %w(reader writer))
+      permission_level = compose_in(relation_table(Permission), :level, [:level], levels)
       compose_and(user_permissions, permission_level)
     end
 
@@ -41,15 +60,20 @@ module Filter
     # Build permission check condition.
     # @param [Integer] user_id
     # @param [Boolean] is_reference
+    # @param [Symbol] min_access_level
     # @return [Arel::Nodes::Node] condition
-    def compose_permission_check(user_id, is_reference)
+    def compose_permission_check(user_id, is_reference, min_access_level)
+      level = AccessLevel.validate(min_access_level)
       # where("((#{creator_id_check}) OR (#{permissions_check}) OR (#{reference_audio_event_check}))", user.id, user.id)
       compose_or(
-          compose_or(
-              compose_project_creator(user_id),
-              compose_user_permissions(user_id)
-          ),
-          compose_audio_event_reference(is_reference)
+        compose_or(
+            compose_or(
+                compose_project_creator(user_id),
+                compose_user_permissions(user_id, level)
+            ),
+            compose_audio_event_reference(is_reference)
+        ),
+        compose_project_sign_in_level(level)
       )
     end
 

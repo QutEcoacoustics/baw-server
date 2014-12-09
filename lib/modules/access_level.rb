@@ -32,21 +32,14 @@ class AccessLevel
     # @param [Object] value
     # @return [Symbol]
     def obj_to_sym(value)
-      valid = values.keys
-      value_sym = value.to_sym
-      fail ArgumentError, "Access level '#{value}' is not in available levels '#{valid}'." unless valid.include?(value_sym)
-
-      value_sym
+      validate(value)
     end
 
     # Convert an access level to a string and check it is valid.
     # @param [Object] value
     # @return [String]
     def obj_to_str(value)
-      valid = values.keys
-      value_sym = value.to_sym
-      fail ArgumentError, "Access level #{value} is not in available levels #{valid}." unless valid.include?(value_sym)
-
+      value_sym = validate(value)
       value_sym.to_s
     end
 
@@ -54,7 +47,7 @@ class AccessLevel
     # @param [Object] value
     # @return [String]
     def obj_to_display(value)
-      value_sym = obj_to_sym(value)
+      value_sym = validate(value)
       values[value_sym][:display]
     end
 
@@ -62,7 +55,7 @@ class AccessLevel
     # @param [Object] value
     # @return [String]
     def obj_to_description(value)
-      value_sym = obj_to_sym(value)
+      value_sym = validate(value)
       values[value_sym][:description]
     end
 
@@ -72,8 +65,30 @@ class AccessLevel
     # @return [Boolean]
     def check(requested, actual)
       access_levels = decompose(actual)
-      requested_sym = obj_to_sym(requested)
+      requested_sym = validate(requested)
       access_levels.include?(requested_sym)
+    end
+
+    # Validate array of access levels.
+    # @param [Array<Symbol>] value
+    # @return [void]
+    def validate_array(value)
+      if value.respond_to?(:each)
+        value.each { |i| validate(i) }
+      else
+        fail ArgumentError, "Value must be a collection of items, got #{value.class}."
+      end
+    end
+
+    # Validate access level.
+    # @param [Object] value
+    # @return [void]
+    def validate(value)
+      valid = values.keys
+      value_sym = value.to_sym
+      fail ArgumentError, "Access level '#{value}' is not in available levels '#{valid}'." unless valid.include?(value_sym)
+
+      value_sym
     end
 
     # Get an array of access levels for this access level.
@@ -102,6 +117,8 @@ class AccessLevel
     # @param [Array<Symbol>] levels
     # @return [Symbol]
     def highest(levels)
+      validate_array(levels)
+
       # set to lowest to begin
       highest = :none
       levels.each do |level|
@@ -119,6 +136,8 @@ class AccessLevel
     # @param [Array<Symbol>] levels
     # @return [Symbol]
     def lowest(levels)
+      validate_array(levels)
+
       # set to highest to begin
       lowest = :owner
       levels.each do |level|
@@ -139,7 +158,7 @@ class AccessLevel
     # =====================================
 
     # permissions can come from a Permission, project.signed_in_level,
-    # project.anonymous_level, user.roles/user.has_role?
+    # project.anonymous_level, user/admin, creator
 
     # Assumes that a guest user will be nil or not confirmed.
 
@@ -149,16 +168,10 @@ class AccessLevel
     # @param [Object] level
     # @return [Boolean]
     def permission_level?(user, project, level)
-      return false if is_guest?(user)
-      has_permission = Permission.where(user_id: user.id, project_id: project.id, level: obj_to_str(level)).exists?
-      # TODO: why does the none level need to be reversed?
-      if level == :none && has_permission
-        false
-      elsif level == :none && !has_permission
-        true
-      else
-        has_permission
-      end
+      level_requested = validate(level)
+      level_actual = permission_level(user, project)
+
+      check(level_requested, level_actual)
     end
 
     # Get Permission access level for this user and project.
@@ -166,7 +179,9 @@ class AccessLevel
     # @param [Project] project
     # @return [Symbol]
     def permission_level(user, project)
+      fail ArgumentError, 'Project must be provided.' if project.blank?
       return :none if is_guest?(user)
+
       first_item = Permission.where(user_id: user.id, project_id: project.id).first
       first_item.blank? ? :none : obj_to_sym(first_item.level)
     end
@@ -175,6 +190,7 @@ class AccessLevel
     # @param [Project] project
     # @return [Symbol]
     def sign_in_level(project)
+      fail ArgumentError, 'Project must be provided.' if project.blank?
       obj_to_sym(project.sign_in_level)
     end
 
@@ -182,6 +198,7 @@ class AccessLevel
     # @param [Project] project
     # @return [Symbol]
     def anonymous_level(project)
+      fail ArgumentError, 'Project must be provided.' if project.blank?
       obj_to_sym(project.anonymous_level)
     end
 
@@ -190,35 +207,9 @@ class AccessLevel
     # @param [Project] project
     # @return [Boolean]
     def is_creator?(user, project)
+      fail ArgumentError, 'Project must be provided.' if project.blank?
       return false if is_guest?(user)
       project.creator == user
-    end
-
-    # Is this user the updater of project?
-    # @param [User] user
-    # @param [Project] project
-    # @return [Boolean]
-    def is_updater?(user, project)
-      return false if is_guest?(user)
-      project.updater == user
-    end
-
-    # Is this user the deleter of project?
-    # @param [User] user
-    # @param [Project] project
-    # @return [Boolean]
-    def is_deleter?(user, project)
-      return false if is_guest?(user)
-      project.deleter == user
-    end
-
-    # Is this user an owner of this project?
-    # @param [User] user
-    # @param [Project] project
-    # @return [Boolean]
-    def is_owner?(user, project)
-      return false if is_guest?(user)
-      permission_level?(user, project, :owner)
     end
 
     # Is this user an admin?
@@ -229,7 +220,7 @@ class AccessLevel
       user.has_role?(:admin)
     end
 
-    # Is this user a guest? A guest is a nil user object or unconfirmed user).
+    # Is this user a guest? A guest is a nil user object or unconfirmed user.
     # @param [User] user
     # @return [Boolean]
     def is_guest?(user)
@@ -248,6 +239,9 @@ class AccessLevel
     # @param [Symbol] level
     # @return [Boolean]
     def access?(user, project, level)
+      fail ArgumentError, 'Project must be provided.' if project.blank?
+      validate(level)
+
       if is_guest?(user)
         # only anon permissions apply
         check(level, anonymous_level(project))
@@ -262,15 +256,20 @@ class AccessLevel
         if level == :none
           # must all be none, otherwise it is not none (it is reader, writer, or owner)
           # e.g. asking for :none, sign_in_level is :reader, permission_level is :none, is_creator? is false (=> false)
-          check(level, sign_in_level(project)) &&
-              check(level, permission_level(user, project)) &&
-              !is_creator?(user, project)
-        else
+          sign_in_check = check(level, sign_in_level(project))
+          permission_check = check(level, permission_level(user, project))
+          creator_check = is_creator?(user, project)
+
+          sign_in_check && permission_check && !creator_check
+        else # :reader, :writer, :owner
           # any can be true - some might be false (lower levels)
           # e.g. asking for :writer, sign_in_level is :reader, permission_level is :writer, is_creator? is false (=> true)
-          check(level, sign_in_level(project)) ||
-              check(level, permission_level(user, project)) ||
-              is_creator?(user, project)
+
+          sign_in_check = check(level, sign_in_level(project))
+          permission_check = check(level, permission_level(user, project))
+          creator_check = is_creator?(user, project)
+
+          sign_in_check || permission_check || creator_check
         end
       end
     end
@@ -305,11 +304,12 @@ class AccessLevel
     # =====================================
 
 
-    # All projects this user has this access level for.
+    # All projects that this user has at least this access level for.
     # @param [User] user
     # @param [Symbol] level
     # @return [ActiveRecord::Relation]
     def projects(user, level)
+      validate(level)
 
       access_levels = decompose(level)
 
