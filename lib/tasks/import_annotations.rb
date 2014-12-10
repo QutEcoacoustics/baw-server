@@ -51,7 +51,7 @@ namespace :baw do
         end
 
         audio_events_tags_params = {}
-        
+
         # provide the parameters to yield
         yield audio_event_params, audio_events_tags_params if block_given?
       end
