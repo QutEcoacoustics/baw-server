@@ -84,6 +84,7 @@ class AccessLevel
     # @param [Object] value
     # @return [void]
     def validate(value)
+      fail ArgumentError, 'Access level must not be blank.' if value.blank?
       valid = values.keys
       value_sym = value.to_sym
       fail ArgumentError, "Access level '#{value}' is not in available levels '#{valid}'." unless valid.include?(value_sym)
@@ -303,6 +304,28 @@ class AccessLevel
     # Project(s) / access level(s)
     # =====================================
 
+    def sql_fragment_sign_in(access_levels)
+      access_levels_check = access_levels.map { |item| "'#{item}'" }.join(', ')
+      "projects.sign_in_level IN (#{access_levels_check})"
+    end
+
+    def sql_fragment_permissions_check(access_levels)
+      access_levels_check = access_levels.map { |item| "'#{item}'" }.join(', ')
+      "(permissions.user_id = ? AND permissions.level IN (#{access_levels_check}))"
+    end
+
+    # being the creator of a project gives :owner access level
+    def sql_fragment_creator_id_check
+      'projects.creator_id = ?'
+    end
+
+    def sql_fragment_permissions_exist
+      'SELECT 1 FROM permissions AS per_check WHERE per_check.user_id = ?'
+    end
+
+    def sql_fragment_creator_id_exist
+      'SELECT 1 FROM projects AS p_check WHERE p_check.creator_id = ?'
+    end
 
     # All projects that this user has at least this access level for.
     # @param [User] user
@@ -313,54 +336,53 @@ class AccessLevel
 
       access_levels = decompose(level)
 
+      query =
+          Project
+              .includes(:permissions, :sites, :creator)
+              .references(:permissions, :sites, :creator)
+              .order('lower(projects.name) DESC')
+
       if is_guest?(user)
         # only anon permissions apply
-        Project
-            .includes(:permissions, :sites, :creator)
-            .where(anonymous_level: access_levels)
-            .order('projects.name DESC')
+        query.where(anonymous_level: access_levels)
 
       elsif is_admin?(user)
         # admin has access to everything
-        Project.all
+        query.all
 
       else
+
+        # permissions.level can be :reader, :writer, or :owner
+        # sign_in_level can be :none, :reader, :writer, or :owner
+        # @see Permission
+        sign_in_check = sql_fragment_sign_in(access_levels)
+
         # standard user
         if access_levels.size == 1 && access_levels.include?(:none)
           # get projects this user cannot access
-
-          # projects the user did not create and projects user has no permissions to
-          user.inaccessible_projects
-
-          # TODO: needs to account for sign_in_level and anonymous_level
+          # if user is creator or user has any permissions set
+          # then user does not have :none permission
+          # all must be true for this user to have :none access level to the project
+          where_clause = "(NOT EXISTS (#{sql_fragment_creator_id_exist}) AND NOT EXISTS (#{sql_fragment_permissions_exist}) AND #{sign_in_check})"
+          query.where(where_clause, user.id, user.id)
 
         else
-          # projects this user can access that the given levels
-          projects = Project
-                         .includes(:permissions, :sites, :creator)
-                         .order('projects.name DESC')
+          # projects this user can access at the given access levels
+          permissions_check = sql_fragment_permissions_check(access_levels)
 
-          # use access_levels in permissions check
-          # this will only ever include :reader, :writer, or :owner
-          # @see Permission
-          access_levels_check = access_levels.map { |item| "'#{item}'" }.join(', ')
-          permissions_check = "(permissions.user_id = ? AND permissions.level IN (#{access_levels_check}))"
-          sign_in_check = "projects.sign_in_level IN (#{access_levels_check})"
-
-          if access_levels.include?(:owner)
-            # being the creator of a project gives :owner access level
-            creator_id_check = 'projects.creator_id = ?'
-            where_clause = "(#{creator_id_check} OR #{permissions_check} OR #{sign_in_check})"
-            projects.where(where_clause, user.id, user.id)
-          else
-
-            where_clause = "(#{permissions_check} OR #{sign_in_check})"
-            projects.where(where_clause, user.id)
-          end
-
+          # any one of these being true will allow the specified access level to the project
+          where_clause = "(#{sql_fragment_creator_id_check} OR #{permissions_check} OR #{sign_in_check})"
+          query.where(where_clause, user.id, user.id)
         end
       end
+    end
 
+    def accessible_projects(user)
+      projects(user, :reader)
+    end
+
+    def inaccessible_projects(user)
+      projects(user, :none)
     end
 
     # Get the highest access level this user has for this project.

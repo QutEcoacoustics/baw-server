@@ -51,8 +51,8 @@ class Project < ActiveRecord::Base
   # Define filter api settings
   def self.filter_settings
     {
-        valid_fields: [:id, :name, :description, :created_at, :creator_id],
-        render_fields: [:id, :name, :description, :creator_id],
+        valid_fields: [:id, :name, :description, :sign_in_level, :anonymous_level, :created_at, :creator_id],
+        render_fields: [:id, :name, :description, :sign_in_level, :anonymous_level, :creator_id],
         text_fields: [:name, :description],
         controller: :projects,
         action: :filter,

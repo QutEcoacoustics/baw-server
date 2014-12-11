@@ -176,12 +176,14 @@ Rails.application.routes.draw do
   resources :projects do
     member do
       post 'update_permissions'
+      get 'additional_permissions'
+      post 'update_additional_permissions'
     end
     collection do
       get 'new_access_request'
       post 'submit_access_request'
     end
-    # HTML project permissions list
+    # HTML and API project permissions list
     resources :permissions, only: [:index]
     # API project permission item
     resources :permissions, except: [:index, :edit, :update], defaults: {format: 'json'}

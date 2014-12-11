@@ -117,7 +117,7 @@ describe AccessLevel do
     it 'succeeds getting permission for user with read permission' do
       user = FactoryGirl.create(:user)
       project = FactoryGirl.create(:project)
-      permission = FactoryGirl.create(:read_permission, user: user, project: project)
+      permission = FactoryGirl.create(:permission, user: user, project: project, level: 'reader')
       result = AccessLevel.permission_level(user, project)
       expect(result).to eq(:reader)
     end
@@ -125,7 +125,7 @@ describe AccessLevel do
     it 'succeeds checking permission for user with read permission' do
       user = FactoryGirl.create(:user)
       project = FactoryGirl.create(:project)
-      permission = FactoryGirl.create(:read_permission, user: user, project: project)
+      permission = FactoryGirl.create(:permission, user: user, project: project, level: 'reader')
       result = AccessLevel.permission_level?(user, project, :reader)
       expect(result).to be_truthy
     end
@@ -133,7 +133,7 @@ describe AccessLevel do
     it 'fails checking writer permission for user with read permission' do
       user = FactoryGirl.create(:user)
       project = FactoryGirl.create(:project)
-      permission = FactoryGirl.create(:read_permission, user: user, project: project)
+      permission = FactoryGirl.create(:permission, user: user, project: project, level: 'reader')
       result = AccessLevel.permission_level?(user, project, :writer)
       expect(result).to be_falsey
     end
@@ -141,7 +141,7 @@ describe AccessLevel do
     it 'succeeds getting permission for user with write permission' do
       user = FactoryGirl.create(:user)
       project = FactoryGirl.create(:project)
-      permission = FactoryGirl.create(:write_permission, user: user, project: project)
+      permission = FactoryGirl.create(:permission, user: user, project: project, level: 'writer')
       result = AccessLevel.permission_level(user, project)
       expect(result).to eq(:writer)
     end
@@ -149,7 +149,7 @@ describe AccessLevel do
     it 'succeeds checking permission for user with write permission' do
       user = FactoryGirl.create(:user)
       project = FactoryGirl.create(:project)
-      permission = FactoryGirl.create(:write_permission, user: user, project: project)
+      permission = FactoryGirl.create(:permission, user: user, project: project, level: 'writer')
       result = AccessLevel.permission_level?(user, project, :writer)
       expect(result).to be_truthy
     end
@@ -157,7 +157,7 @@ describe AccessLevel do
     it 'succeeds checking reader permission for user with write permission' do
       user = FactoryGirl.create(:user)
       project = FactoryGirl.create(:project)
-      permission = FactoryGirl.create(:write_permission, user: user, project: project)
+      permission = FactoryGirl.create(:permission, user: user, project: project, level: 'writer')
       result = AccessLevel.permission_level?(user, project, :reader)
       expect(result).to be_truthy
     end
@@ -165,7 +165,7 @@ describe AccessLevel do
     it 'succeeds checking reader permission for user with owner permission' do
       user = FactoryGirl.create(:user)
       project = FactoryGirl.create(:project)
-      permission = FactoryGirl.create(:permission, user: user, project: project, level: :owner)
+      permission = FactoryGirl.create(:permission, user: user, project: project, level: 'owner')
       result = AccessLevel.permission_level?(user, project, :reader)
       expect(result).to be_truthy
     end
@@ -327,7 +327,82 @@ describe AccessLevel do
 
   context 'check user project access level' do
     it 'fails when nil' do
-      AccessLevel.projects(nil, nil)
+      expect {
+        AccessLevel.projects(nil, nil)
+      }.to raise_error(ArgumentError, /Access level must not be blank\./)
+    end
+  end
+
+  context 'error occurs when' do
+    it 'decomposes an invalid value' do
+      expect {
+        AccessLevel.decompose(:blah_blah)
+      }.to raise_error(ArgumentError, /Access level 'blah_blah' is not in available levels/)
+    end
+
+    it 'validates something that is not an array' do
+      expect {
+        AccessLevel.validate_array(:blah_blah)
+      }.to raise_error(ArgumentError, /Value must be a collection of items, got Symbol/)
+    end
+
+    it 'checks permission for nil project' do
+      expect {
+        AccessLevel.permission_level(nil, nil)
+      }.to raise_error(ArgumentError, 'Project must be provided.')
+    end
+
+    it 'checks access for nil project' do
+      expect {
+        AccessLevel.access?(nil, nil, :none)
+      }.to raise_error(ArgumentError, 'Project must be provided.')
+    end
+
+  end
+
+  context 'truth table' do
+
+    # :owner level for sign_in_level and anonymous_level
+    # is not permitted - this is tested elsewhere
+
+    [:none, :reader, :writer].each do |sign_in_level|
+      [:none, :reader, :writer].each do |anonymous_level|
+        [:none, :reader, :writer, :owner].each do |permission_level|
+          %w(anon user admin).each do |user_type|
+            [:none, :reader, :writer, :owner].each do |requested_level|
+              it "Requested #{requested_level}, User #{user_type}, Permission #{permission_level}, Signed In #{sign_in_level}, Anonymous #{anonymous_level}" do
+
+                user = nil # user_type == 'anon'
+                if user_type == 'user'
+                  user = FactoryGirl.create(:user)
+                elsif user_type == 'admin'
+                  user = FactoryGirl.create(:admin)
+                end
+
+                project = FactoryGirl.create(:project, sign_in_level: sign_in_level, anonymous_level: anonymous_level)
+
+                if user_type != 'anon' && permission_level != :none && !user.blank?
+                  FactoryGirl.create(:permission, user: user, project: project, level: permission_level)
+                end
+
+                result = AccessLevel.access?(user, project, requested_level)
+
+                if user_type == 'admin'
+                  expect(result).to be_truthy
+                elsif user_type == 'user'
+                  highest = AccessLevel.highest([sign_in_level, permission_level])
+                  highest_decomposed = AccessLevel.decompose(highest)
+                  expect(highest_decomposed.include?(requested_level)).to eq(result)
+                elsif user_type == 'anon'
+                  anon_decomposed = AccessLevel.decompose(anonymous_level)
+                  expect(anon_decomposed.include?(requested_level)).to eq(result)
+                end
+
+              end
+            end
+          end
+        end
+      end
     end
   end
 
@@ -367,31 +442,5 @@ describe AccessLevel do
     expect(AccessLevel.obj_to_description(:none)).to eq('has no permissions to the project')
   end
 
-  context 'error occurs when' do
-    it 'decomposes an invalid value' do
-      expect {
-        AccessLevel.decompose(:blah_blah)
-      }.to raise_error(ArgumentError, /Access level 'blah_blah' is not in available levels/)
-    end
-
-    it 'validates something that is not an array' do
-      expect {
-        AccessLevel.validate_array(:blah_blah)
-      }.to raise_error(ArgumentError, /Value must be a collection of items, got Symbol/)
-    end
-
-    it 'checks permission for nil project' do
-      expect {
-        AccessLevel.permission_level(nil, nil)
-      }.to raise_error(ArgumentError, 'Project must be provided.')
-    end
-
-    it 'checks access for nil project' do
-      expect {
-        AccessLevel.access?(nil, nil, :none)
-      }.to raise_error(ArgumentError, 'Project must be provided.')
-    end
-
-  end
 
 end

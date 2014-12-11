@@ -53,7 +53,7 @@ class Site < ActiveRecord::Base
   #scope :site_projects, lambda{ |project_ids| includes(:projects).where(:projects => {:id => project_ids} ) }
 
   def project_ids
-    self.projects.collect { |project| project.id }
+    self.projects.pluck(:id)
   end
 
   # overrides getting, does not change setting

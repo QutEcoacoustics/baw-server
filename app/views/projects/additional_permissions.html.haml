@@ -1,0 +1,20 @@
+%h1= "#{@project.name} - Access Defaults"
+
+%p
+  Project is owned by
+  = link_to @project.creator.user_name, user_account_path(@project.creator)
+
+%p
+  You can also
+  =link_to 'edit individual user access levels', project_permissions_path(@project)
+  for this project.
+
+%hr
+
+= simple_form_for :project, url: update_additional_permissions_project_path(@project) do |p|
+  = p.input :sign_in_level, as: :select, collection: Project::SIGN_IN_LEVELS, include_blank: false
+  = p.input :anonymous_level, as: :select, collection: Project::ANON_LEVELS, include_blank: false
+  .form-actions
+    = p.submit 'Update Defaults', class: 'btn'
+
+- content_for :title, "Permissions for Project #{@project.name}"

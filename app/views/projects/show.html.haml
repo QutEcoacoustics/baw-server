@@ -60,6 +60,9 @@
     = sidebar_metadata('Urn', @project.urn)
     - permission = AccessLevel.level(current_user, @project)
     = sidebar_metadata('Your access level', AccessLevel.obj_to_display(permission))
+    - if permission == :owner
+      = sidebar_metadata('User access level', AccessLevel.obj_to_display(@project.sign_in_level))
+      = sidebar_metadata('Anonymous access level', AccessLevel.obj_to_display(@project.anonymous_level))
 
 - content_for :title, "Project #{@project.name}"
 
@@ -68,7 +71,8 @@
     - if can? :edit, @project
       %li= link_to 'Edit Project Details', edit_project_path(@project),  title: "Change this project's details", data: {toggle: 'tooltip',  placement: 'right'}
     - if can? :update_permissions, @project
-      %li= link_to 'Edit Permissions', project_permissions_path(@project),  title: "Edit project's access permissions", data: {toggle: 'tooltip',  placement: 'right'}
+      %li= link_to 'Edit Permissions', project_permissions_path(@project),  title: 'Edit user permissions', data: {toggle: 'tooltip',  placement: 'right'}
+      %li= link_to 'Edit Access Defaults', additional_permissions_project_path(@project),  title: 'Edit default access permissions', data: {toggle: 'tooltip',  placement: 'right'}
     - if can? :destroy, @project
       %li= link_to 'Delete Project', @project, :method => :delete, data: { confirm: 'Are you sure?', toggle: 'tooltip',  placement: 'right' }, title: 'Delete project'
     - if can? :edit, @project

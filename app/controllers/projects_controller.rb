@@ -142,10 +142,43 @@ class ProjectsController < ApplicationController
     end
   end
 
+  def additional_permissions
+    if cannot? :update_permissions, @project
+      fail CanCan::AccessDenied.new(I18n.t('devise.failure.unauthorized'), :additional_permissions, Permission)
+    end
+
+    respond_to do |format|
+      format.html {
+        add_breadcrumb 'Projects', projects_path
+        add_breadcrumb @project.name, @project
+        add_breadcrumb 'Additional Permissions', additional_permissions_project_path(@project)
+      } # index.html.erb
+      format.json {
+        @project, constructed_options = Settings.api_response.response_index(
+            params,
+            Project.where(id: @project.id),
+            Project,
+            Project.filter_settings
+        )
+        respond_index
+      }
+    end
+  end
+
+  def update_additional_permissions
+    respond_to do |format|
+      if @project.update_attributes(params[:project])
+        format.html { redirect_to additional_permissions_project_path(@project), notice: 'Access defaults were successfully updated.' }
+      else
+        format.html { redirect_to additional_permissions_project_path(@project), alert: 'Access defaults were not updated.' }
+      end
+    end
+  end
+
   # DELETE /projects/1
   # DELETE /projects/1.json
   def destroy
-    @project.destroy
+    Project.destroy(@project.id)
 
     respond_to do |format|
       format.html { redirect_to projects_url }
@@ -155,7 +188,7 @@ class ProjectsController < ApplicationController
 
   # GET /projects/request_access
   def new_access_request
-    @all_projects = current_user.inaccessible_projects
+    @all_projects = AccessLevel.inaccessible_projects(current_user)
     respond_to do |format|
       format.html {
         add_breadcrumb 'Projects', projects_path
@@ -204,13 +237,7 @@ class ProjectsController < ApplicationController
   private
 
   def get_user_projects
-    if current_user.has_role? :admin
-      projects = Project.includes(:creator).order('lower(name) ASC')
-    else
-      projects = current_user.projects.sort { |a, b| a.name <=> b.name }
-    end
-
-    projects
+    AccessLevel.accessible_projects(current_user)
   end
 
 end

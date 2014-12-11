@@ -4,6 +4,13 @@
   Project is owned by
   = link_to @project.creator.user_name, user_account_path(@project.creator)
 
+%p
+  You can also
+  =link_to 'edit default access levels', additional_permissions_project_path(@project)
+  for this project.
+
+%hr
+
 = simple_form_for :permission, url: update_permissions_project_path(@project) do |p|
   %table.table.table-striped
     %thead
@@ -22,20 +29,20 @@
                       type: 'radio',
                       name: "[user_ids][#{user.id}][permissions][level]",
                       value: '',
-                      checked: AccessLevel.access?(user, @project, :none)}
+                      checked: AccessLevel.permission_level?(user, @project, :none)}
           %td
             %input{id: "user_#{user.id}_permissions_level_reader",
                       type: 'radio',
                       name: "[user_ids][#{user.id}][permissions][level]",
                       value: 'reader',
-                      checked: AccessLevel.access?(user, @project, :reader)}
+                      checked: AccessLevel.permission_level?(user, @project, :reader)}
 
           %td
             %input{id: "user_#{user.id}_permissions_level_writer",
                       type: 'radio',
                       name: "[user_ids][#{user.id}][permissions][level]",
                       value: 'writer',
-                      checked: AccessLevel.access?(user, @project, :writer)}
+                      checked: AccessLevel.permission_level?(user, @project, :writer)}
   .form-actions
     = p.submit 'Update Permissions', class: 'btn'
 

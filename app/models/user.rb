@@ -119,58 +119,34 @@ class User < ActiveRecord::Base
   after_create :special_after_create_actions
 
   def projects
-    # TODO tidy up user project accessing - too many ways to do the same thing
-    (self.created_projects.includes(:sites, :creator) + self.accessible_projects.includes(:sites, :creator)).uniq.sort { |a, b| a.name.downcase <=> b.name.downcase }
-  end
-
-  def inaccessible_projects
-    user_projects = self.projects.map { |project| project.id }.to_a
-
-    query = Project.all
-
-    unless user_projects.blank?
-      query = query.where('id NOT IN (?)', user_projects)
-    end
-
-    query.order(:name).uniq
+    # .sort { |a, b| a.name.downcase <=> b.name.downcase }
+    AccessLevel.accessible_projects(self)
   end
 
   def recently_updated_projects
-    accessible_projects_all.uniq.limit(10)
-  end
-
-  def accessible_projects_all
-    # TODO tidy up user project accessing - too many ways to do the same thing
-    # .includes() for left outer join
-    # .joins for inner join
-    creator_id_check = 'projects.creator_id = ?'
-    permissions_check = '(permissions.user_id = ? AND permissions.level IN (\'reader\', \'writer\'))'
-    Project
-        .includes(:permissions, :sites, :creator)
-        .where("(#{creator_id_check} OR #{permissions_check})", self.id, self.id)
-        .references(:permissions, :sites, :creator)
-        .order('projects.name DESC')
+    AccessLevel.accessible_projects(self).reorder('projects.updated_at DESC').limit(10)
   end
 
   def accessible_sites
-    user_sites = self.projects.map { |project| project.sites.map { |site| site.id } }.to_a.uniq
+    user_sites = self.projects.map { |project| project.sites.pluck(:id) }.uniq
     Site.where(id: user_sites).order('sites.name DESC')
   end
 
   def accessible_audio_events
     AudioEvent
         .includes(:audio_recording, :creator)
-        .where(audio_recording_id: accessible_audio_recordings.select(:id))
+        .references(:audio_recording, :creator)
+        .where(audio_recording_id: accessible_audio_recordings.pluck(:id))
   end
 
   def accessible_audio_recordings
-    user_sites = self.projects.map { |project| project.sites.map { |site| site.pluck(:id) } }.to_a.uniq
+    user_sites = self.projects.map { |project| project.sites.pluck(:id) }.uniq
     AudioRecording.where(site_id: user_sites)
   end
 
   def accessible_comments
-    audio_events = AudioEvent.where(audio_recording_id: accessible_audio_recordings.select(:id))
-    AudioEventComment.where(audio_event_id: audio_events).select(:id)
+    audio_events = AudioEvent.where(audio_recording_id: accessible_audio_recordings.pluck(:id))
+    AudioEventComment.where(audio_event_id: audio_events)
   end
 
   def accessible_bookmarks

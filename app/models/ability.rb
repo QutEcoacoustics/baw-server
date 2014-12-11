@@ -54,7 +54,7 @@ class Ability
       can [:show], Project do |project|
         AccessLevel.access?(user, project, :reader)
       end
-      can [:edit, :update, :update_permissions], Project do |project|
+      can [:edit, :update, :update_permissions, :additional_permissions, :update_additional_permissions], Project do |project|
         AccessLevel.access?(user, project, :writer)
       end
 
