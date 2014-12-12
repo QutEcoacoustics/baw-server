@@ -103,7 +103,7 @@ class Ability
       # audio event comment
       # anyone can view or create comments on reference audio events
       # anyone with read or write permissions on the project can create comments
-      can [:show, :create], AudioEventComment do |audio_event_comment|
+      can [:show, :create, :update], AudioEventComment do |audio_event_comment|
         user.has_permission_any?(audio_event_comment.audio_event.audio_recording.site.projects) || audio_event_comment.audio_event.is_reference
       end
 
@@ -129,7 +129,7 @@ class Ability
       can [:my_account, :modify_preferences], User, id: user.id
 
       # users can only change or delete their own
-      can [:edit, :update, :destroy], AudioEventComment, creator_id: user.id
+      can [:edit, :destroy], AudioEventComment, creator_id: user.id
       can [:edit, :update, :destroy, :show], Bookmark, creator_id: user.id
       can [:edit, :update, :destroy], Job, creator_id: user.id
 

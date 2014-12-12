@@ -4,14 +4,14 @@ class AudioEventCommentsController < ApplicationController
 # order matters for before_filter and load_and_authorize_resource!
   load_and_authorize_resource :audio_event
 
-  # this is necessary so that the ability has access to permission.project
+# this is necessary so that the ability has access to permission.project
   before_filter :build_audio_event_comment, only: [:new, :create]
 
   load_and_authorize_resource :audio_event_comment, through: :audio_event, through_association: :comments
   respond_to :json
 
-  # GET /audio_event_comments
-  # GET /audio_event_comments.json
+# GET /audio_event_comments
+# GET /audio_event_comments.json
   def index
     #@audio_event_comments = AudioEventComment.accessible_by
     @audio_event_comments, constructed_options = Settings.api_response.response_index(
@@ -23,21 +23,21 @@ class AudioEventCommentsController < ApplicationController
     respond_index
   end
 
-  # GET /audio_event_comments/1
-  # GET /audio_event_comments/1.json
+# GET /audio_event_comments/1
+# GET /audio_event_comments/1.json
   def show
     respond_show
   end
 
-  # GET /audio_event_comments/new
-  # GET /audio_event_comments/new.json
+# GET /audio_event_comments/new
+# GET /audio_event_comments/new.json
   def new
     attributes_and_authorize
     respond_show
   end
 
-  # POST /audio_event_comments
-  # POST /audio_event_comments.json
+# POST /audio_event_comments
+# POST /audio_event_comments.json
   def create
     attributes_and_authorize
 
@@ -49,20 +49,30 @@ class AudioEventCommentsController < ApplicationController
 
   end
 
-  # PUT /audio_event_comments/1
-  # PUT /audio_event_comments/1.json
+# PUT /audio_event_comments/1
+# PUT /audio_event_comments/1.json
   def update
+    # allow any logged in user to flag an audio comment
+    # only the user that created the audio comment (or admin) can update any other attribute
+    if @audio_event_comment.creator.id == current_user.id ||
+        current_user.has_role?(:admin) ||
+        (params.include?(:audio_event_comment) && (['flag'] - params[:audio_event_comment].keys).empty?)
 
-    if @audio_event_comment.update_attributes(params[:audio_event_comment])
-      respond_show
+      if @audio_event_comment.update_attributes(params[:audio_event_comment])
+        respond_show
+      else
+        respond_change_fail
+      end
+
     else
-      respond_change_fail
+      # nope
+      fail CanCan::AccessDenied.new(I18n.t('devise.failure.unauthorized'), :update, AudioEventComment)
     end
 
   end
 
-  # DELETE /audio_event_comments/1
-  # DELETE /audio_event_comments/1.json
+# DELETE /audio_event_comments/1
+# DELETE /audio_event_comments/1.json
   def destroy
     @audio_event_comment.destroy
     respond_destroy
