@@ -64,6 +64,8 @@ resource 'AudioEventComments' do
   let(:invalid_token) { "Token token=\"weeeeeeeee0123456789splat\"" }
 
   let(:post_attributes) { {comment: 'new comment content'} }
+  let(:post_attributes_flag_report) { {flag: 'report'} }
+  let(:post_attributes_flag_nil) { {flag: nil} }
 
   ################################
   # LIST
@@ -354,6 +356,26 @@ resource 'AudioEventComments' do
     let(:raw_post) { {audio_event_comment: post_attributes}.to_json }
     let(:authentication_token) { user_token }
     standard_request_options(:put, 'UPDATE (as user updating comment created by writer)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
+  end
+
+  put '/audio_events/:audio_event_id/comments/:id' do
+    parameter :audio_event_id, 'Requested audio event id (in path/route)', required: true
+    parameter :id, 'Requested audio event comment id (in path/route)', required: true
+    let(:audio_event_id) { @comment_writer.audio_event_id }
+    let(:id) { @comment_writer.id }
+    let(:raw_post) { {audio_event_comment: post_attributes_flag_report}.to_json }
+    let(:authentication_token) { user_token }
+    standard_request_options(:put, 'UPDATE (as user updating flag to report for comment created by writer)', :ok, {expected_json_path: 'data/flag', response_body_content: 'report'})
+  end
+
+  put '/audio_events/:audio_event_id/comments/:id' do
+    parameter :audio_event_id, 'Requested audio event id (in path/route)', required: true
+    parameter :id, 'Requested audio event comment id (in path/route)', required: true
+    let(:audio_event_id) { @comment_writer.audio_event_id }
+    let(:id) { @comment_writer.id }
+    let(:raw_post) { {audio_event_comment: post_attributes_flag_nil}.to_json }
+    let(:authentication_token) { user_token }
+    standard_request_options(:put, 'UPDATE (as user updating flag to nil for comment created by writer)', :ok, {expected_json_path: 'data/flag', response_body_content: '"flag":null'})
   end
 
   ################################
