@@ -208,7 +208,7 @@ resource 'AudioEventComments' do
     let(:audio_event_id) { @comment_user.audio_event_id }
     let(:id) { @comment_user.id }
     let(:authentication_token) { reader_token }
-    standard_request_options(:get, 'SHOW (as reader)', :ok, {expected_json_path: 'data/comment'})
+    standard_request_options(:get, 'SHOW (as reader)', :ok, {expected_json_path: ['data/created_at', 'data/comment']})
   end
 
   get '/audio_events/:audio_event_id/comments/:id' do
@@ -217,7 +217,7 @@ resource 'AudioEventComments' do
     let(:audio_event_id) { @comment_user.audio_event_id }
     let(:id) { @comment_user.id }
     let(:authentication_token) { admin_token }
-    standard_request_options(:get, 'SHOW (as admin)', :ok, {expected_json_path: 'data/comment'})
+    standard_request_options(:get, 'SHOW (as admin)', :ok, {expected_json_path: ['data/updated_at', 'data/comment']})
   end
 
   get '/audio_events/:audio_event_id/comments/:id' do
