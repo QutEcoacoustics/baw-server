@@ -3,6 +3,12 @@ require 'spec_helper'
 describe AccessLevel do
 
   context 'decomposes to the correct levels' do
+    it 'from blah' do
+      expect {
+        AccessLevel.equal_or_greater(:blah)
+      }.to raise_error(ArgumentError, /Access level 'blah' is not in available levels '\[:owner, :writer, :reader, :none\]'\./)
+    end
+
     it 'from none' do
       result = AccessLevel.decompose(:none)
       expect(result).to eq([:none])
@@ -21,6 +27,35 @@ describe AccessLevel do
     it 'from owner' do
       result = AccessLevel.decompose(:owner)
       expect(result).to eq([:reader, :writer, :owner])
+    end
+
+  end
+
+  context 'at least returns the correct levels' do
+    it 'from blah' do
+      expect {
+        AccessLevel.equal_or_greater(:blah)
+      }.to raise_error(ArgumentError, /Access level 'blah' is not in available levels '\[:owner, :writer, :reader, :none\]'\./)
+    end
+
+    it 'from none' do
+      result = AccessLevel.equal_or_greater(:none)
+      expect(result).to eq([:none])
+    end
+
+    it 'from reader' do
+      result = AccessLevel.equal_or_greater(:reader)
+      expect(result).to eq([:reader, :writer, :owner])
+    end
+
+    it 'from writer' do
+      result = AccessLevel.equal_or_greater(:writer)
+      expect(result).to eq([:writer, :owner])
+    end
+
+    it 'from owner' do
+      result = AccessLevel.equal_or_greater(:owner)
+      expect(result).to eq([:owner])
     end
 
   end
@@ -392,10 +427,12 @@ describe AccessLevel do
                 elsif user_type == 'user'
                   highest = AccessLevel.highest([sign_in_level, permission_level])
                   highest_decomposed = AccessLevel.decompose(highest)
-                  expect(highest_decomposed.include?(requested_level)).to eq(result)
+                  expected = highest_decomposed.include?(requested_level)
+                  expect(expected).to eq(result), "highest: #{highest_decomposed}, requested: #{requested_level}, expected: #{expected}, result: #{result}"
                 elsif user_type == 'anon'
                   anon_decomposed = AccessLevel.decompose(anonymous_level)
-                  expect(anon_decomposed.include?(requested_level)).to eq(result)
+                  expected = anon_decomposed.include?(requested_level)
+                  expect(expected).to eq(result), "anon: #{anon_decomposed}, requested: #{requested_level}, expected: #{expected}, result: #{result}"
                 end
 
               end

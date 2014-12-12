@@ -96,9 +96,7 @@ class AccessLevel
     # @param [Symbol] actual
     # @return [Array<Symbol>]
     def decompose(actual)
-
       actual_sym = obj_to_sym(actual)
-
       case actual_sym
         when :owner
           [:reader, :writer, :owner]
@@ -109,9 +107,28 @@ class AccessLevel
         when :none
           [:none]
         else
-          [:none]
+          fail ArgumentError, "Can not decompose #{actual}, must be one of #{values.keys.join(', ')}."
       end
 
+    end
+
+    # Get an array of access levels that are equal or greater.
+    # @param [Symbol] actual
+    # @return [Array<Symbol>]
+    def equal_or_greater(actual)
+      actual_sym = obj_to_sym(actual)
+      case actual_sym
+        when :owner
+          [:owner]
+        when :writer
+          [:writer, :owner]
+        when :reader
+          [:reader, :writer, :owner]
+        when :none
+          [:none]
+        else
+          fail ArgumentError, "Can not get equal or greater for #{actual}, must be one of #{values.keys.join(', ')}."
+      end
     end
 
     # Get the highest access level.
@@ -334,7 +351,7 @@ class AccessLevel
     def projects(user, level)
       validate(level)
 
-      access_levels = decompose(level)
+      at_least_levels = equal_or_greater(level)
 
       query =
           Project
@@ -344,21 +361,21 @@ class AccessLevel
 
       if is_guest?(user)
         # only anon permissions apply
-        query.where(anonymous_level: access_levels)
+        query.where(anonymous_level: at_least_levels)
 
       elsif is_admin?(user)
         # admin has access to everything
-        query.all
+        query
 
       else
 
         # permissions.level can be :reader, :writer, or :owner
         # sign_in_level can be :none, :reader, :writer, or :owner
         # @see Permission
-        sign_in_check = sql_fragment_sign_in(access_levels)
+        sign_in_check = sql_fragment_sign_in(at_least_levels)
 
         # standard user
-        if access_levels.size == 1 && access_levels.include?(:none)
+        if at_least_levels.size == 1 && at_least_levels.include?(:none)
           # get projects this user cannot access
           # if user is creator or user has any permissions set
           # then user does not have :none permission
@@ -368,7 +385,7 @@ class AccessLevel
 
         else
           # projects this user can access at the given access levels
-          permissions_check = sql_fragment_permissions_check(access_levels)
+          permissions_check = sql_fragment_permissions_check(at_least_levels)
 
           # any one of these being true will allow the specified access level to the project
           where_clause = "(#{sql_fragment_creator_id_check} OR #{permissions_check} OR #{sign_in_check})"

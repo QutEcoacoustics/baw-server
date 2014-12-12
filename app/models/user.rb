@@ -127,9 +127,17 @@ class User < ActiveRecord::Base
     AccessLevel.accessible_projects(self).reorder('projects.updated_at DESC').limit(10)
   end
 
+  def accessible_site_ids
+    self.projects.joins(:sites).pluck('sites.id').uniq
+  end
+
   def accessible_sites
-    user_sites = self.projects.map { |project| project.sites.pluck(:id) }.uniq
-    Site.where(id: user_sites).order('sites.name DESC')
+    user_sites = accessible_site_ids
+    if user_sites.empty?
+      Site.none
+    else
+      Site.where(id: user_sites).order('sites.name DESC')
+    end
   end
 
   def accessible_audio_events
@@ -140,8 +148,12 @@ class User < ActiveRecord::Base
   end
 
   def accessible_audio_recordings
-    user_sites = self.projects.map { |project| project.sites.pluck(:id) }.uniq
-    AudioRecording.where(site_id: user_sites)
+    user_sites = accessible_site_ids
+    if user_sites.empty?
+      AudioRecording.none
+    else
+      AudioRecording.where(site_id: user_sites)
+    end
   end
 
   def accessible_comments
