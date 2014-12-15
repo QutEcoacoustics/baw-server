@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20141115234848) do
+ActiveRecord::Schema.define(version: 20141215014939) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -139,21 +139,23 @@ ActiveRecord::Schema.define(version: 20141115234848) do
   end
 
   create_table "permissions", force: true do |t|
-    t.integer  "creator_id", null: false
-    t.string   "level",      null: false
-    t.integer  "project_id", null: false
-    t.integer  "user_id",    null: false
+    t.integer  "creator_id",                     null: false
+    t.string   "level",                          null: false
+    t.integer  "project_id",                     null: false
+    t.integer  "user_id"
     t.integer  "updater_id"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "created_at",                     null: false
+    t.datetime "updated_at",                     null: false
+    t.boolean  "logged_in_user", default: false, null: false
+    t.boolean  "anonymous_user", default: false, null: false
   end
 
   create_table "projects", force: true do |t|
-    t.string   "name",                                null: false
+    t.string   "name",               null: false
     t.text     "description"
     t.string   "urn"
     t.text     "notes"
-    t.integer  "creator_id",                          null: false
+    t.integer  "creator_id",         null: false
     t.integer  "updater_id"
     t.integer  "deleter_id"
     t.datetime "deleted_at"
@@ -161,10 +163,8 @@ ActiveRecord::Schema.define(version: 20141115234848) do
     t.string   "image_content_type"
     t.integer  "image_file_size"
     t.datetime "image_updated_at"
-    t.datetime "created_at",                          null: false
-    t.datetime "updated_at",                          null: false
-    t.string   "anonymous_level",    default: "none", null: false
-    t.string   "sign_in_level",      default: "none", null: false
+    t.datetime "created_at",         null: false
+    t.datetime "updated_at",         null: false
   end
 
   create_table "projects_sites", id: false, force: true do |t|

@@ -4,7 +4,7 @@ class Permission < ActiveRecord::Base
   # ensures that creator_id, updater_id, deleter_id are set
   include UserChange
 
-  attr_accessible :level, :project_id, :user_id
+  attr_accessible :level, :project_id, :user_id, :logged_in_user, :anonymous_user
 
   belongs_to :project, inverse_of: :permissions
   belongs_to :user
@@ -17,12 +17,16 @@ class Permission < ActiveRecord::Base
 
   # association validations
   validates :project, existence: true
-  validates :user, existence: true
   validates :creator, existence: true
 
   # attribute validations
-  validates_uniqueness_of :level, scope: [:user_id, :project_id, :level]
-  validates_presence_of :level, :user, :creator, :project
+  validates :level, uniqueness: { scope: [:user_id, :project_id] }
+  validates :level, uniqueness: { scope: [:logged_in_user, :project_id] }
+  validates :level, uniqueness: { scope: [:anonymous_user, :project_id] }
+  validates_presence_of :level, :creator, :project
+  validates :level, inclusion: { in: AVAILABLE_LEVELS, message: '%{value} is not a valid level'}
+
+  validate :mutually_exclusive_settings
 
   # Define filter api settings
   def self.filter_settings
@@ -37,5 +41,29 @@ class Permission < ActiveRecord::Base
             direction: :asc
         }
     }
+  end
+
+  private
+
+  def mutually_exclusive_settings
+    anonymous_user_value = self.anonymous_user # true or false
+    logged_in_user_value = self.logged_in_user # true or false
+    user_id_value = !self.user_id.nil? # integer or nil
+
+    values = [anonymous_user_value, logged_in_user_value, user_id_value]
+
+    # count the number of true values
+    is_true_count = values.count(true)
+
+
+    # there should be only one non-null value
+    if is_true_count != 1
+      msg = 'A permission can store only one of ' +
+          "'anonymous_user' (set to #{self.anonymous_user}), "+
+          "'logged_in_user' (set to #{self.logged_in_user}), "+
+          "and 'user_id' (set to #{self.user_id})."
+      fail ActiveRecord::RecordNotUnique, msg
+    end
+
   end
 end

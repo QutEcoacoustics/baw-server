@@ -3,8 +3,7 @@ class Project < ActiveRecord::Base
   # ensures that creator_id, updater_id, deleter_id are set
   include UserChange
 
-  attr_accessible :description, :image, :name, :notes, :urn,
-                  :sign_in_level, :anonymous_level
+  attr_accessible :description, :image, :name, :notes, :urn
 
   # relationships
   belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_projects
@@ -20,14 +19,6 @@ class Project < ActiveRecord::Base
   has_and_belongs_to_many :sites, uniq: true
   has_many :datasets, inverse_of: :project
   has_many :jobs, through: :datasets
-
-  SIGN_IN_LEVELS_SYM = [:none, :reader, :writer, :owner]
-  SIGN_IN_LEVELS = SIGN_IN_LEVELS_SYM.map { |item| item.to_s }
-  enumerize :sign_in_level, in: SIGN_IN_LEVELS, predicates: true
-
-  ANON_LEVELS_SYM = [:none, :reader, :writer]
-  ANON_LEVELS = ANON_LEVELS_SYM.map { |item| item.to_s }
-  enumerize :anonymous_level, in: ANON_LEVELS, predicates: true
 
   #plugins
   has_attached_file :image,
@@ -51,8 +42,8 @@ class Project < ActiveRecord::Base
   # Define filter api settings
   def self.filter_settings
     {
-        valid_fields: [:id, :name, :description, :sign_in_level, :anonymous_level, :created_at, :creator_id],
-        render_fields: [:id, :name, :description, :sign_in_level, :anonymous_level, :creator_id],
+        valid_fields: [:id, :name, :description, :created_at, :creator_id],
+        render_fields: [:id, :name, :description, :creator_id],
         text_fields: [:name, :description],
         controller: :projects,
         action: :filter,
