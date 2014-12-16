@@ -12,8 +12,8 @@
 %hr
 
 = simple_form_for :project, url: update_additional_permissions_project_path(@project) do |p|
-  = p.input :sign_in_level, as: :select, collection: Project::SIGN_IN_LEVELS, include_blank: false
-  = p.input :anonymous_level, as: :select, collection: Project::ANON_LEVELS, include_blank: false
+  = p.input :logged_in_user, as: :select, collection: Permission::AVAILABLE_LEVELS, include_blank: false
+  = p.input :anonymous_user, as: :select, collection: Permission::AVAILABLE_LEVELS, include_blank: false
   .form-actions
     = p.submit 'Update Defaults', class: 'btn'
 

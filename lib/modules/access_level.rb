@@ -175,6 +175,20 @@ class AccessLevel
     # (do not take higher levels into account when getting access level)
     # =====================================
 
+    # TODO: needs to separate out different permissions
+
+    #
+    def permissions(project, user = nil)
+      fail ArgumentError, 'Project must be provided.' if project.blank?
+
+      if user.nil?
+        permissions = Permission.where(project_id: project.id)
+      else
+        permissions = Permission.where(project_id: project.id, user_id: user.id)
+      end
+      permissions
+    end
+
     # permissions can come from a Permission, project.signed_in_level,
     # project.anonymous_level, user/admin, creator
 
@@ -202,32 +216,6 @@ class AccessLevel
 
       first_item = Permission.where(user_id: user.id, project_id: project.id).first
       first_item.blank? ? :none : obj_to_sym(first_item.level)
-    end
-
-    # Get the signed in access level for this project.
-    # @param [Project] project
-    # @return [Symbol]
-    def sign_in_level(project)
-      fail ArgumentError, 'Project must be provided.' if project.blank?
-      obj_to_sym(project.sign_in_level)
-    end
-
-    # Get the anonymous access level for this project.
-    # @param [Project] project
-    # @return [Symbol]
-    def anonymous_level(project)
-      fail ArgumentError, 'Project must be provided.' if project.blank?
-      obj_to_sym(project.anonymous_level)
-    end
-
-    # Is this user the creator of project?
-    # @param [User] user
-    # @param [Project] project
-    # @return [Boolean]
-    def is_creator?(user, project)
-      fail ArgumentError, 'Project must be provided.' if project.blank?
-      return false if is_guest?(user)
-      project.creator == user
     end
 
     # Is this user an admin?
