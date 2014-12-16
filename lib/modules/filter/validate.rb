@@ -177,8 +177,13 @@ module Filter
     # @raise [FilterArgumentError] if Array contents are not valid.
     # @return [void]
     def validate_array_items(value)
-      # if value is not an array, or there are no items, let it through
-      if value.respond_to?(:all?) && value.count > 0
+      # must be a collection of items
+      if !value.respond_to?(:each) || !value.respond_to?(:all?) || !value.respond_to?(:any?) || !value.respond_to?(:count)
+        fail CustomErrors::FilterArgumentError, "Must be a collection of items, got #{value.class}."
+      end
+
+      # if there are no items, let it through
+      if value.count > 0
         # all items must be the same type. Assume the first item is the correct type.
         type_compare_item = value[0].class
         type_compare = value.all? { |item| item.is_a?(type_compare_item) }
@@ -187,9 +192,16 @@ module Filter
         # restrict length of strings
         if type_compare_item.is_a?(String)
           max_string_length = 120
-          string_length = value.all? { |item| item.size <= max_string_length  }
+          string_length = value.all? { |item| item.size <= max_string_length }
           fail CustomErrors::FilterArgumentError, "Array values that are strings must be #{max_string_length} characters or less." unless string_length
         end
+
+        # array contents cannot be Arrays or Hashes
+        array_check = value.any? { |item| item.is_a?(Array) }
+        fail CustomErrors::FilterArgumentError, 'Array values cannot be arrays.' if array_check
+
+        hash_check = value.any? { |item| item.is_a?(Hash) }
+        fail CustomErrors::FilterArgumentError, 'Array values cannot be hashes.' if hash_check
 
       end
     end

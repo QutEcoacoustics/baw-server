@@ -35,8 +35,8 @@ class AudioEventComment < ActiveRecord::Base
   # Define filter api settings
   def self.filter_settings
     {
-        valid_fields: [:id, :audio_event_id, :comment, :flag, :flag_explain, :flagged_at, :created_at, :creator_id],
-        render_fields: [:id, :audio_event_id, :comment, :flag, :creator_id],
+        valid_fields: [:id, :audio_event_id, :comment, :flag, :flag_explain, :flagged_at, :created_at, :creator_id, :updated_at],
+        render_fields: [:id, :audio_event_id, :comment, :flag, :creator_id, :updated_at, :created_at],
         text_fields: [:comment, :flag, :flag_explain],
         controller: :audio_event_comments,
         action: :filter,

@@ -63,7 +63,7 @@ def standard_request_options(http_method, description, expected_status, opts = {
       path = "./tmp/_cached_analysis_jobs/#{uuid[0, 2].downcase}/#{uuid.downcase}/Test/test-CASE.csv"
 
       FileUtils.mkpath File.dirname(path)
-      File.open(path, 'w') {|f| f.write('{"content":"This is some content."}') }
+      File.open(path, 'w') { |f| f.write('{"content":"This is some content."}') }
     end
 
     request = do_request
@@ -170,7 +170,7 @@ def acceptance_checks_shared(request, opts = {})
   if opts[:actual_response_content_type].blank?
     expect(opts[:expected_response_content_type]).to be_nil, "Mismatch: response content type. #{opts[:msg]}"
   elsif opts.include?(:actual_response_content_type)
-      expect(opts[:actual_response_content_type]).to include(opts[:expected_response_content_type]), "Mismatch: response content type. #{opts[:msg]}"
+    expect(opts[:actual_response_content_type]).to include(opts[:expected_response_content_type]), "Mismatch: response content type. #{opts[:msg]}"
   end
 
   if !opts[:actual_response_content_type].blank? && opts[:actual_response_content_type] == 'application/json'
@@ -240,7 +240,20 @@ def acceptance_checks_json(opts = {})
   expect(opts[:actual_response]).to include(opts[:response_body_content]), "#{message_prefix} to find '#{opts[:response_body_content]}' in '#{opts[:actual_response]}'" unless opts[:response_body_content].blank?
   expect(opts[:actual_response]).to_not include(opts[:invalid_content]), "#{message_prefix} not to find '#{opts[:response_body_content]}' in '#{opts[:actual_response]}'" unless opts[:invalid_content].blank?
 
-  expect(opts[:actual_response]).to have_json_path(opts[:expected_json_path]), "#{message_prefix} to find '#{opts[:expected_json_path]}' in '#{opts[:actual_response]}'" unless opts[:expected_json_path].blank?
+  unless opts[:expected_json_path].blank?
+
+    expected_json_path_array = []
+    if opts[:expected_json_path].is_a?(Array)
+      expected_json_path_array = opts[:expected_json_path]
+    else
+      opts[:expected_json_path] = [opts[:expected_json_path]]
+    end
+
+    opts[:expected_json_path].each do |expected_json_path_item|
+      expect(opts[:actual_response]).to have_json_path(expected_json_path_item), "#{message_prefix} to find '#{expected_json_path_item}' in '#{opts[:actual_response]}'"
+    end
+
+  end
 
   if defined?(expected_unordered_ids) &&
       !expected_unordered_ids.blank? &&
