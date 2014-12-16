@@ -7,7 +7,7 @@ describe "User account actions", :type => :feature do
   # Mailer tests, you can reset it manually with: ActionMailer::Base.deliveries.clear
   before { ActionMailer::Base.deliveries.clear }
 
-  let(:last_email){ ActionMailer::Base.deliveries.last }
+  let(:last_email) { ActionMailer::Base.deliveries.last }
 
   it "emails user when requesting password reset" do
     # create user and go to forgot password page
@@ -90,6 +90,132 @@ describe "User account actions", :type => :feature do
 
       expect(current_path).to eq(new_user_session_path)
       expect(page).to have_content('Invalid login or password.')
+    end
+
+  end
+
+  context 'sign up' do
+    it 'should succeed with valid values' do
+      #user = FactoryGirl.create(:user)
+      user_name = 'tester_tester'
+      email = 'test.email@example.com'
+      password = 'password123'
+      visit new_user_registration_url
+
+      fill_in 'User name', with: user_name
+      fill_in 'Password', with: password, match: :prefer_exact
+      fill_in 'Password confirmation', with: password
+      fill_in 'Email', with: email
+      click_button 'Sign up'
+
+      #expect(current_path).to eq(root_path)
+      expect(page).to have_content('Welcome! You have signed up successfully.')
+      expect(User.count).to eq(1)
+      expect(User.first.user_name).to eq(user_name)
+    end
+
+    it 'should fail when invalid' do
+      #user = FactoryGirl.create(:user)
+      user_name = 'tester_tester!@'
+      email = 'test.email@example.com'
+      password = 'password123'
+      visit new_user_registration_url
+
+      fill_in 'User name', with: user_name
+      fill_in 'Password', with: password, match: :prefer_exact
+      fill_in 'Password confirmation', with: password
+      fill_in 'Email', with: email
+      click_button 'Sign up'
+
+      #expect(current_path).to eq(root_path)
+      expect(page).to have_content('Only letters, numbers, spaces ( ), underscores (_) and dashes (-) are valid')
+      expect(User.count).to eq(0)
+    end
+  end
+
+  context 'edit account info' do
+
+    before(:each) do
+      @old_password = 'old password'
+      @user = FactoryGirl.create(:user, password: @old_password)
+      login_as @user, scope: :user
+    end
+
+    it 'should succeed with valid values' do
+      new_password = 'new password'
+      new_email = 'test11123@example.com'
+      new_user_name = 'test_name_1'
+
+      visit edit_user_registration_path
+      fill_in 'user_user_name', with: new_user_name
+      fill_in 'user_email', with: new_email
+      fill_in 'user[password]', with: new_password
+      fill_in 'user[password_confirmation]', with: new_password
+      fill_in 'user[current_password]', with: @old_password
+      attach_file('user[image]', 'public/images/user/user_span1.png')
+      click_button 'Update'
+
+      expect(page).to have_content(new_user_name)
+      expect(page).to have_content('You updated your account successfully, but we need to verify your new email address. Please check your email and click on the confirm link to finalize confirming your new email address.')
+      expect(current_path).to eq(root_path)
+
+      visit edit_user_registration_path
+      #expect(page).to have_content('user_span1.png')
+      expect(page.find('div.controls img')['src']).to include('user_span1.png')
+      expect(page).to have_content(new_user_name)
+      expect(page).to have_content('Currently waiting confirmation for: '+new_email)
+
+      logout
+
+      visit root_url
+      first(:link, 'Login').click
+
+      expect(current_url).to eq(new_user_session_url)
+      fill_in 'Login', with: new_user_name
+      fill_in 'Password', with: new_password
+      click_button 'Sign in'
+
+      expect(current_path).to eq(root_path)
+      expect(page).to have_content('Signed in successfully.')
+    end
+
+    it 'should fail when invalid' do
+      new_password = 'new password'
+      new_email = 'test11123@example.com'
+      new_user_name = 'test_name_1'
+
+      visit edit_user_registration_path
+      fill_in 'user_user_name', with: new_user_name
+      fill_in 'user_email', with: new_email
+      fill_in 'user[password]', with: new_password
+      fill_in 'user[password_confirmation]', with: new_password
+      fill_in 'user[current_password]', with: @old_password + 'a'
+      attach_file('user[image]', 'public/images/user/user_span1.png')
+      click_button 'Update'
+
+      expect(page).to have_content('Current password (required)is invalid')
+      expect(current_path).to eq(user_registration_path)
+
+      visit edit_user_registration_path
+      expect(page).to_not have_content('user_span1.png')
+      expect(page).to_not have_content(new_user_name)
+      expect(page).to_not have_content('Currently waiting confirmation for: '+new_email)
+
+      expect(page).to have_content(@user.user_name)
+      expect(page).to_not have_content(@user.email)
+
+      logout
+
+      visit root_url
+      first(:link, 'Login').click
+
+      expect(current_url).to eq(new_user_session_url)
+      fill_in 'Login', with: @user.email
+      fill_in 'Password', with: @old_password
+      click_button 'Sign in'
+
+      expect(current_path).to eq(root_path)
+      expect(page).to have_content('Signed in successfully.')
     end
 
   end
