@@ -24,7 +24,7 @@ module Filter
     # @param [Symbol] level
     # @return [Arel::Nodes::Node] condition
     def compose_project_sign_in_level(level)
-      levels = AccessLevel.decompose(level).map {|l| l.to_s}
+      levels = AccessLevel.equal_or_lower(level).map {|l| l.to_s}
       # creator_id_check = 'projects.sign_in_level  IN ()'
       compose_in(relation_table(Project), :sign_in_level, [:sign_in_level], levels)
     end
@@ -33,7 +33,7 @@ module Filter
     # @param [Symbol] level
     # @return [Arel::Nodes::Node] condition
     def compose_project_anonymous_level(level)
-      levels = AccessLevel.decompose(level).map {|l| l.to_s}
+      levels = AccessLevel.equal_or_lower(level).map {|l| l.to_s}
       # creator_id_check = 'projects.anonymous_level IN ()'
       compose_in(relation_table(Project), :anonymous_level, [:anonymous_level], levels)
     end
@@ -42,7 +42,7 @@ module Filter
     # @param [Integer] user_id
     # @return [Arel::Nodes::Node] condition
     def compose_user_permissions(user_id, level)
-      levels = AccessLevel.decompose(level).map {|l| l.to_s}
+      levels = AccessLevel.equal_or_lower(level).map {|l| l.to_s}
       # permissions_check = 'permissions.user_id = ? AND permissions.level IN (\'reader\', \'writer\')'
       user_permissions = compose_eq(relation_table(Permission), :user_id, [:user_id], user_id)
       permission_level = compose_in(relation_table(Permission), :level, [:level], levels)

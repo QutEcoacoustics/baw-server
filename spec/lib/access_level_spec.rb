@@ -10,22 +10,22 @@ describe AccessLevel do
     end
 
     it 'from none' do
-      result = AccessLevel.decompose(:none)
+      result = AccessLevel.equal_or_lower(:none)
       expect(result).to eq([:none])
     end
 
     it 'from reader' do
-      result = AccessLevel.decompose(:reader)
+      result = AccessLevel.equal_or_lower(:reader)
       expect(result).to eq([:reader])
     end
 
     it 'from writer' do
-      result = AccessLevel.decompose(:writer)
+      result = AccessLevel.equal_or_lower(:writer)
       expect(result).to eq([:reader, :writer])
     end
 
     it 'from owner' do
-      result = AccessLevel.decompose(:owner)
+      result = AccessLevel.equal_or_lower(:owner)
       expect(result).to eq([:reader, :writer, :owner])
     end
 
@@ -371,7 +371,7 @@ describe AccessLevel do
   context 'error occurs when' do
     it 'decomposes an invalid value' do
       expect {
-        AccessLevel.decompose(:blah_blah)
+        AccessLevel.equal_or_lower(:blah_blah)
       }.to raise_error(ArgumentError, /Access level 'blah_blah' is not in available levels/)
     end
 
@@ -426,11 +426,11 @@ describe AccessLevel do
                   expect(result).to be_truthy
                 elsif user_type == 'user'
                   highest = AccessLevel.highest([sign_in_level, permission_level])
-                  highest_decomposed = AccessLevel.decompose(highest)
+                  highest_decomposed = AccessLevel.equal_or_lower(highest)
                   expected = highest_decomposed.include?(requested_level)
                   expect(expected).to eq(result), "highest: #{highest_decomposed}, requested: #{requested_level}, expected: #{expected}, result: #{result}"
                 elsif user_type == 'anon'
-                  anon_decomposed = AccessLevel.decompose(anonymous_level)
+                  anon_decomposed = AccessLevel.equal_or_lower(anonymous_level)
                   expected = anon_decomposed.include?(requested_level)
                   expect(expected).to eq(result), "anon: #{anon_decomposed}, requested: #{requested_level}, expected: #{expected}, result: #{result}"
                 end

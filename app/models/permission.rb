@@ -11,9 +11,7 @@ class Permission < ActiveRecord::Base
   belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_permissions
   belongs_to :updater, class_name: 'User', foreign_key: :updater_id, inverse_of: :updated_permissions
 
-  AVAILABLE_LEVELS_SYMBOLS = [:writer, :reader, :owner]
-  AVAILABLE_LEVELS = AVAILABLE_LEVELS_SYMBOLS.map { |item| item.to_s }
-  enumerize :level, in: AVAILABLE_LEVELS, predicates: true
+  enumerize :level, in: AccessLevel.permission_strings, predicates: true
 
   # association validations
   validates :project, existence: true
@@ -24,7 +22,7 @@ class Permission < ActiveRecord::Base
   validates :level, uniqueness: { scope: [:logged_in_user, :project_id] }
   validates :level, uniqueness: { scope: [:anonymous_user, :project_id] }
   validates_presence_of :level, :creator, :project
-  validates :level, inclusion: { in: AVAILABLE_LEVELS, message: '%{value} is not a valid level'}
+  validates :level, inclusion: { in: AccessLevel.permission_strings, message: '%{value} is not a valid level'}
 
   validate :mutually_exclusive_settings
 
