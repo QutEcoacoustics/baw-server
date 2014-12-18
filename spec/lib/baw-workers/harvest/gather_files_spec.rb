@@ -288,7 +288,16 @@ describe BawWorkers::Harvest::GatherFiles do
       FileUtils.cp(audio_file_mono, File.join(sub_folder, 'a_20130314_000021_a.a'))
       FileUtils.cp(audio_file_mono, File.join(sub_folder, 'a_99999999_999999_a.dnsb48364JSFDSD'))
 
-      expect(gather_files.run(harvest_to_do_path).size).to eq(4)
+      results = BawWorkers::Harvest::Action.action_gather_and_process(harvest_to_do_path, true) do |file_hash|
+        expect(file_hash).to include(:uploader_id)
+        expect(file_hash).to include(:data_length_bytes)
+      end
+
+      expect(results[:results].size).to eq(4)
+      expect(results).to include(:summary)
+      expect(results[:summary]).to include('one')
+      expect(results[:summary].size).to eq(1)
+      expect(results[:summary]['one']).to include('project_id')
     end
   end
 

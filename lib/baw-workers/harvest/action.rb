@@ -156,8 +156,22 @@ module BawWorkers
               relative_dir = Pathname.new(file_dir).relative_path_from(base_path).to_s
 
               summary[relative_dir] = {} unless summary.include?(relative_dir)
+
               summary[relative_dir][file_ext] = 0 unless summary[relative_dir].include?(file_ext)
               summary[relative_dir][file_ext] += 1
+
+              summary[relative_dir]['project_id'] = [] unless summary[relative_dir].include?('project_id')
+              summary[relative_dir]['project_id'].push(file_info[:project_id].to_i) unless summary[relative_dir]['project_id'].include?(file_info[:project_id].to_i)
+
+              summary[relative_dir]['site_id'] = [] unless summary[relative_dir].include?('site_id')
+              summary[relative_dir]['site_id'].push(file_info[:site_id].to_i) unless summary[relative_dir]['site_id'].include?(file_info[:site_id].to_i)
+
+              summary[relative_dir]['uploader_id'] = [] unless summary[relative_dir].include?('uploader_id')
+              summary[relative_dir]['uploader_id'].push(file_info[:uploader_id].to_i) unless summary[relative_dir]['uploader_id'].include?(file_info[:uploader_id].to_i)
+
+              summary[relative_dir]['utc_offset'] = [] unless summary[relative_dir].include?('utc_offset')
+              summary[relative_dir]['utc_offset'].push(file_info[:utc_offset].to_i) unless summary[relative_dir]['utc_offset'].include?(file_info[:utc_offset].to_i)
+
             end
           end
 
@@ -181,7 +195,7 @@ module BawWorkers
             "Summary of harvest #{is_real_run ? 'real run' : 'dry run' } for #{to_do_path}: #{summary.to_json}"
           }
 
-          results
+          {results: results[:results], path: to_do_path, summary: summary}
         end
 
       end
