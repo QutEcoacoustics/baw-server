@@ -82,7 +82,7 @@ class UserAccountsController < ApplicationController
 
   # GET /user_accounts/1/projects
   def projects
-    @user_projects = AccessLevel.accessible_projects(@user)
+    @user_projects = AccessLevel.projects_accessible(@user)
     .reorder('projects.updated_at DESC')
     .paginate(
         page: params[:page].blank? ? 1 : params[:page],

@@ -26,9 +26,9 @@ guard :rspec, cmd: 'bundle exec rspec --format progress --color' do
   watch(%r{^spec/factories/(.+)_(factory).rb$})        { |m| %W(spec/features/#{m[1]}s_spec.rb spec/features/#{m[1]}_spec.rb spec/acceptance/#{m[1]}s_spec.rb spec/acceptance/#{m[1]}_spec.rb spec/models/#{m[1]}s_spec.rb spec/models/#{m[1]}_spec.rb)}
 end
 
-# guard :yard, port: 8808, stdout: './tmp/yard-out.log', stderr: './tmp/yard-err.log' do
-#   watch(%r{lib/.+\.rb})
-# end
+guard :yard, port: 8808, stdout: './tmp/yard-out.log', stderr: './tmp/yard-err.log' do
+  watch(%r{lib/.+\.rb})
+end
 
 def possible_files(path_template, name)
   base = path_template % { name:name, number:''}

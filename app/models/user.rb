@@ -120,11 +120,11 @@ class User < ActiveRecord::Base
 
   def projects
     # .sort { |a, b| a.name.downcase <=> b.name.downcase }
-    AccessLevel.accessible_projects(self)
+    AccessLevel.projects_accessible(self)
   end
 
   def recently_updated_projects
-    AccessLevel.accessible_projects(self).reorder('projects.updated_at DESC').limit(10)
+    AccessLevel.projects_accessible(self).reorder('projects.updated_at DESC').limit(10)
   end
 
   def accessible_site_ids

@@ -188,7 +188,7 @@ class ProjectsController < ApplicationController
 
   # GET /projects/request_access
   def new_access_request
-    @all_projects = AccessLevel.inaccessible_projects(current_user)
+    @all_projects = AccessLevel.projects_inaccessible(current_user)
     respond_to do |format|
       format.html {
         add_breadcrumb 'Projects', projects_path
@@ -237,7 +237,7 @@ class ProjectsController < ApplicationController
   private
 
   def get_user_projects
-    AccessLevel.accessible_projects(current_user)
+    AccessLevel.projects_accessible(current_user)
   end
 
 end
