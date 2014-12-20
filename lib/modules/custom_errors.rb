@@ -38,4 +38,5 @@ module CustomErrors
       @message
     end
   end
+  class InvalidAttributeValuesError < StandardError; end
 end

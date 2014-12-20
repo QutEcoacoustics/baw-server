@@ -91,8 +91,8 @@ class AccessLevel
       fail ArgumentError, 'Access level array must not be blank.' if levels.blank?
       if levels.respond_to?(:each)
         levels_sym = levels.uniq.map { |i| validate(i) }
-        if levels.include?(:none) && levels.size > 1
-          fail ArgumentError, "Level array cannot contain none with other levels, got '#{levels.join(', ')}'."
+        if levels_sym.include?(:none) && levels_sym.size > 1
+          fail ArgumentError, "Level array cannot contain none with other levels, got '#{levels_sym.join(', ')}'."
         else
           levels_sym
         end
@@ -329,7 +329,7 @@ class AccessLevel
 
       if is_guest?(user)
         # only anon permissions apply
-        query.where(anonymous_user: true)
+        query.where('permissions.anonymous_user = TRUE')
       elsif is_admin?(user)
         # admin has access to everything, so if level is none, no projects will be returned.
         level_sym == :none ? Project.none : query

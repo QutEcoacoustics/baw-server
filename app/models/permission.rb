@@ -11,20 +11,20 @@ class Permission < ActiveRecord::Base
   belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_permissions
   belongs_to :updater, class_name: 'User', foreign_key: :updater_id, inverse_of: :updated_permissions
 
-  enumerize :level, in: AccessLevel.permission_strings, predicates: true
+  # also validates level to be one of in:
+  enumerize :level, in: AccessLevel.permission_strings, predicates: true, message: '%{value} is not a valid level'
 
   # association validations
   validates :project, existence: true
   validates :creator, existence: true
 
   # attribute validations
-  validates :level, uniqueness: { scope: [:user_id, :project_id] }
-  validates :level, uniqueness: { scope: [:logged_in_user, :project_id] }
-  validates :level, uniqueness: { scope: [:anonymous_user, :project_id] }
+  validates :level, uniqueness: {scope: [:user_id, :project_id], message: '%{value} is not a valid level'}
+  validates :level, uniqueness: {scope: [:logged_in_user, :project_id], message: '%{value} is not a valid level'}
+  validates :level, uniqueness: {scope: [:anonymous_user, :project_id], message: '%{value} is not a valid level'}
   validates_presence_of :level, :creator, :project
-  validates :level, inclusion: { in: AccessLevel.permission_strings, message: '%{value} is not a valid level'}
 
-  validate :mutually_exclusive_settings
+  validate :mutually_exclusive_settings, :invalid_permissions
 
   # Define filter api settings
   def self.filter_settings
@@ -48,20 +48,26 @@ class Permission < ActiveRecord::Base
     logged_in_user_value = self.logged_in_user # true or false
     user_id_value = !self.user_id.nil? # integer or nil
 
-    values = [anonymous_user_value, logged_in_user_value, user_id_value]
-
-    # count the number of true values
-    is_true_count = values.count(true)
-
-
-    # there should be only one non-null value
-    if is_true_count != 1
-      msg = 'A permission can store only one of ' +
-          "'anonymous_user' (set to #{self.anonymous_user}), "+
-          "'logged_in_user' (set to #{self.logged_in_user}), "+
-          "and 'user_id' (set to #{self.user_id})."
-      fail ActiveRecord::RecordNotUnique, msg
+    if !anonymous_user_value && !logged_in_user_value && !user_id_value
+      errors.add(:user_id, 'must be set if anonymous user and logged in user are false')
+    elsif anonymous_user_value && logged_in_user_value
+      errors.add(:anonymous_user, 'can\'t be true when logged in user is true')
+      errors.add(:logged_in_user, 'can\'t be true when anonymous user is true')
+    elsif anonymous_user_value && user_id_value
+      errors.add(:anonymous_user, 'can\'t be true when user id is set')
+      errors.add(:user_id, 'can\'t be true when anonymous user is true')
+    elsif logged_in_user_value && user_id_value
+      errors.add(:logged_in_user, 'can\'t be true when user id is set')
+      errors.add(:user_id, 'can\'t be true when logged in user is true')
     end
 
+  end
+
+  def invalid_permissions
+    level_value = self.level
+
+    # only users can be owners
+    errors.add(:anonymous_user, 'can\'t be true when level is :owner') if level_value == 'owner' && self.anonymous_user
+    errors.add(:logged_in_user, 'can\'t be true when level is :owner') if level_value == 'owner' && self.logged_in_user
   end
 end

@@ -85,7 +85,7 @@ describe AccessLevel do
 
   end
 
-  context 'equal ot greater to the correct levels' do
+  context 'equal or greater to the correct levels' do
     it 'from blah' do
       expect {
         AccessLevel.equal_or_greater(:blah)
@@ -236,82 +236,109 @@ describe AccessLevel do
 
   end
 
-  context 'truth table' do
+  it 'requires a project for access? method' do
+    expect {
+      AccessLevel.access?(nil, nil, :none)
+    }.to raise_error(ArgumentError, /Project was not valid, got /)
+  end
 
-    # :owner level for sign_in_level and anonymous_level
-    # is not permitted - this is tested elsewhere
+  it 'tests all combinations of access?(user, project, level)' do
 
-    [:none, :reader, :writer, :owner].each do |requested_level|
-      %w(anon_user different_user same_user admin_user).each do |requested_user|
-        %w(same_project different_project).each do |requested_project|
-          [:none, :reader, :writer, :owner].each do |actual_level|
-            [true, false].each do |actual_logged_in|
-              [true, false].each do |actual_anonymous|
-                %w(anon_user user admin_user).each do |permission_user|
-                  it "Requested #{requested_user}:#{requested_level}:#{requested_project} | Actual #{permission_user}:#{actual_level}:Logged In #{actual_logged_in}:Anonymous #{actual_anonymous}" do
+    # create all possible combinations of permissions
+    admin = FactoryGirl.create(:admin)
+    combinations = []
 
-                    # create permission using actual_level, actual_logged_in, actual_anonymous, permission_user
-                    actual_project = FactoryGirl.create(:project)
+    [:none, :reader, :writer, :owner].each do |level|
+      [true, false].each do |logged_in|
+        [true, false].each do |anonymous|
+          %w(guest user).each do |user_type|
 
-                    if permission_user == 'anon_user'
-                      actual_user = nil
-                    elsif permission_user == 'user'
-                      actual_user = FactoryGirl.create(:user)
-                    elsif permission_user == 'admin_user'
-                      actual_user = FactoryGirl.create(:admin)
-                    else
-                      actual_user = nil
-                    end
 
-                    permission = FactoryGirl.build(:permission, user: actual_user, project: actual_project, level: actual_level, logged_in_user: actual_logged_in, anonymous_user: actual_anonymous)
-
-                    true_count = [actual_logged_in, actual_anonymous, !actual_user.nil?].count(true)
-                    if true_count != 1
-                      expect {
-                        permission.save!
-                      }.to raise_error(ActiveRecord::RecordNotUnique, /A permission can store only one of/)
-                    elsif actual_level == :none
-                      expect {
-                        permission.save!
-                      }.to raise_error(ActiveRecord::RecordInvalid, /Validation failed: Level is not included in the list, Level none is not a valid level/)
-                    else
-                      permission.save!
-                    end
-
-                    # check permission using requested level, requested user, requested_project
-                    if requested_user == 'anon_user'
-                      expected_user = nil
-                    elsif permission_user == 'same_user'
-                      expected_user = actual_user
-                    elsif permission_user == 'different_user'
-                      expected_user = FactoryGirl.create(:user)
-                    elsif permission_user == 'admin_user'
-                      expected_user = FactoryGirl.create(:admin)
-                    else
-                      expected_user = nil
-                    end
-
-                    if requested_project == 'same_project'
-                      expected_project = actual_project
-                    elsif requested_project == 'different_project'
-                      expected_project = FactoryGirl.create(:project)
-                    else
-                      expected_project = nil
-                    end
-
-                    result = AccessLevel.access?(expected_user, expected_project, requested_level)
-
-                    # assertions
-
-                  end
-                end
-              end
+            if user_type == 'user'
+              user = FactoryGirl.create(:user)
+            else # user_type == 'anon_user'
+              user = nil
             end
+
+            project = FactoryGirl.create(:project)
+            true_count = [logged_in, anonymous, !user.nil?].count(true)
+
+            #msg = "#{level}: logged_in #{logged_in}; anonymous #{anonymous}; user #{!user.nil?}"
+
+            if level == :none
+              expect {
+                permission = FactoryGirl.create(:permission, user: user, project: project, level: level, logged_in_user: logged_in, anonymous_user: anonymous)
+              }.to raise_error(ActiveRecord::RecordInvalid, /Validation failed: Level is not included in the list/)
+            elsif true_count > 1
+              expect {
+                permission = FactoryGirl.create(:permission, user: user, project: project, level: level, logged_in_user: logged_in, anonymous_user: anonymous)
+              }.to raise_error(ActiveRecord::RecordInvalid, /can't be true when anonymous user is true|can't be true when logged in user is true|can't be true when user id is set/)
+            elsif true_count < 1
+              expect {
+                permission = FactoryGirl.create(:permission, user: user, project: project, level: level, logged_in_user: logged_in, anonymous_user: anonymous)
+              }.to raise_error(ActiveRecord::RecordInvalid, /User must be set if anonymous user and logged in user are false/)
+            elsif (logged_in || anonymous) && level == :owner
+              expect {
+                permission = FactoryGirl.create(:permission, user: user, project: project, level: level, logged_in_user: logged_in, anonymous_user: anonymous)
+              }.to raise_error(ActiveRecord::RecordInvalid, /can't be true when level is :owner/)
+            else
+              permission = FactoryGirl.create(:permission, user: user, project: project, level: level, logged_in_user: logged_in, anonymous_user: anonymous)
+            end
+
+            user_hash = {
+                project: project,
+                user: user,
+                permission: permission,
+                level: level,
+                logged_in: logged_in,
+                anonymous: anonymous
+            }
+
+            combinations.push(user_hash)
+
+            admin_hash = {
+                project: project.reload,
+                user: admin,
+                permission: permission,
+                level: level,
+                logged_in: logged_in,
+                anonymous: anonymous
+            }
+
+            combinations.push(admin_hash)
+
           end
         end
       end
     end
+
+    combinations.each do |combination|
+      msg = "user #{combination[:user].nil? ? nil : combination[:user].role_symbols }, project #{combination[:project].id}, #{combination[:level]}, logged in #{combination[:logged_in]}, anonymous #{combination[:anonymous]}"
+      Rails.logger.info "New Combination. #{msg}"
+
+      access_result = AccessLevel.access?(combination[:user], combination[:project], combination[:level])
+      get_permissions = Permission.where(project_id: combination[:project].id, user_id: combination[:user].nil? ? nil : combination[:user].id)
+      Rails.logger.info "Access test '#{access_result}': #{get_permissions.to_yaml}"
+
+      projects_result = AccessLevel.projects(combination[:user], combination[:level]).map { |p| p.id}.to_a.sort
+
+      Rails.logger.info "Projects test '#{projects_result.join(', ')}'"
+
+
+#       msg = "project #{combination[:project].id}, user #{combination[:user].nil? ? nil : combination[:user].id},
+# permission #{combination[:permission].nil? ? nil : combination[:permission].id}, level #{combination[:level]},
+# logged in #{combination[:logged_in]}, anonymous #{combination[:anonymous]}"
+#
+#       if combination[:level] != :none && [combination[:anonymous], combination[:logged_in], !combination[:user].nil?].count(true) > 1
+#         expect(result).to be_falsey, msg
+#       else
+#         expect(result).to be_truthy, msg
+#       end
+
+
+    end
   end
 
-
 end
+
+
