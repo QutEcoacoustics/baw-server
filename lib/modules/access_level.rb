@@ -231,6 +231,24 @@ class AccessLevel
       end
     end
 
+    def level(user, project)
+      fail ArgumentError, "Project was not valid, got '#{project.inspect}'." if project.blank? || !project.is_a?(Project)
+
+      if is_guest?(user)
+        # check for guest first, since user can be nil
+        # only anonymous permissions apply
+        level_anonymous(project)
+      elsif is_admin?(user)
+        # if level was not none, then true otherwise false
+        :owner
+      else
+        user_permission = level_user(project, user)
+        logged_in_permission = level_logged_in(project)
+        highest_level = highest([user_permission, logged_in_permission])
+        highest_level
+      end
+    end
+
     # Is this user an admin?
     # @param [User] user
     # @return [Boolean]
@@ -346,12 +364,14 @@ class AccessLevel
           # all must be true for this user to have :none access level to the project
           # projects.level cannot be :none
 
-          Project.find_by_sql("SELECT * FROM projects
+          ids = Project.connection.select_all("SELECT projects.id FROM projects
 WHERE
     (NOT EXISTS (SELECT 1 FROM permissions AS per_user WHERE per_user.user_id = #{user.id} AND per_user.project_id = projects.id))
     AND
     (NOT EXISTS (SELECT 1 FROM permissions AS per_logged_in WHERE per_logged_in.logged_in_user = TRUE AND per_logged_in.project_id = projects.id))
 ORDER BY #{order_clause}")
+
+          Project.where(id: ids.map{ |i| i['id']})
 
         else
           # get all projects this user can access
@@ -359,13 +379,15 @@ ORDER BY #{order_clause}")
           # OR project has logged in permission set to equal or higher
           # then user can access the project
 
-          Project.find_by_sql("SELECT * FROM projects
+          ids = Project.connection.select_all("SELECT projects.id FROM projects
 INNER JOIN permissions on projects.id = permissions.project_id
 WHERE
     (permissions.level IN ('#{equal_or_greater_levels.join('\', \'')}') AND permissions.project_id = projects.id AND permissions.user_id = #{user.id})
     OR
     (permissions.level IN ('#{equal_or_greater_levels.join('\', \'')}') AND permissions.project_id = projects.id AND permissions.logged_in_user = TRUE)
 ORDER BY #{order_clause}")
+
+          Project.where(id: ids.map{ |i| i['id']})
 
         end
       end

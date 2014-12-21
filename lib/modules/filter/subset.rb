@@ -84,7 +84,6 @@ module Filter
     # @param [Array] values
     # @return [Arel::Nodes::Node] condition
     def compose_in(table, column_name, allowed, values)
-      validate_levels(values)
       validate_table_column(table, column_name, allowed)
       validate_array_items(values)
       table[column_name].in(values)

@@ -12,16 +12,19 @@ class Permission < ActiveRecord::Base
   belongs_to :updater, class_name: 'User', foreign_key: :updater_id, inverse_of: :updated_permissions
 
   # also validates level to be one of in:
-  enumerize :level, in: AccessLevel.permission_strings, predicates: true, message: '%{value} is not a valid level'
+  enumerize :level, in: AccessLevel.permission_strings, predicates: true, message: '\'%{value.inspect}\' is not a valid level'
 
   # association validations
   validates :project, existence: true
   validates :creator, existence: true
 
   # attribute validations
-  validates :level, uniqueness: {scope: [:user_id, :project_id], message: '%{value} is not a valid level'}
-  validates :level, uniqueness: {scope: [:logged_in_user, :project_id], message: '%{value} is not a valid level'}
-  validates :level, uniqueness: {scope: [:anonymous_user, :project_id], message: '%{value} is not a valid level'}
+  # CREATE UNIQUE INDEX permissions_idx ON permissions(project_id, user_id) WHERE user_id IS NOT NULL
+  validates :project_id, uniqueness: {scope: [:user_id], message: '\'%{value}\' does not have a unique user id'}, unless: Proc.new { |a| a.user_id.blank? }
+  # CREATE UNIQUE INDEX permissions_idx ON permissions(project_id, logged_in_user) WHERE logged_in_user = TRUE
+  validates :project_id, uniqueness: {scope: [:logged_in_user], message: '\'%{value}\' does not have a unique logged in user setting'}, if: Proc.new { |a| a.logged_in_user }
+  # CREATE UNIQUE INDEX permissions_idx ON permissions(project_id, anonymous_user) WHERE anonymous_user = TRUE
+  validates :project_id, uniqueness: {scope: [:anonymous_user], message: '\'%{value}\' does not have a unique anonymous user setting'}, if: Proc.new { |a| a.anonymous_user }
   validates_presence_of :level, :creator, :project
 
   validate :mutually_exclusive_settings, :invalid_permissions
