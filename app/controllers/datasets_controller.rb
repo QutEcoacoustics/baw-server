@@ -3,15 +3,15 @@ class DatasetsController < ApplicationController
 
   add_breadcrumb 'Home', :root_path
 
-  # order matters for before_filter and load_and_authorize_resource!
+  # order matters for before_action and load_and_authorize_resource!
   load_and_authorize_resource :project
 
   # this is necessary so that the ability has access to dataset.projects
-  before_filter :build_project_dataset, only: [:new, :create]
+  before_action :build_project_dataset, only: [:new, :create]
 
   load_and_authorize_resource :dataset, through: :project
 
-  before_filter :add_project_breadcrumb
+  before_action :add_project_breadcrumb
   
   # GET /projects/:id/datasets
   # GET /projects/:id/datasets.json

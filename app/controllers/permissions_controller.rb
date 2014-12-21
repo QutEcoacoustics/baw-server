@@ -3,15 +3,15 @@ class PermissionsController < ApplicationController
 
   add_breadcrumb 'Home', :root_path
 
-  # order matters for before_filter and load_and_authorize_resource!
+  # order matters for before_action and load_and_authorize_resource!
   load_and_authorize_resource :project
 
   # this is necessary so that the ability has access to permission.project
-  before_filter :build_project_permission, only: [:new, :create]
+  before_action :build_project_permission, only: [:new, :create]
 
   load_and_authorize_resource :permission, through: :project
 
-  before_filter :add_project_breadcrumb, only: [:index]
+  before_action :add_project_breadcrumb, only: [:index]
 
   respond_to :json
 

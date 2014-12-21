@@ -176,7 +176,7 @@ class ProjectsController < ApplicationController
 
     respond_to do |format|
       if valid_request
-        ProjectMailer.project_access_request(current_user, params[:access_request][:projects], params[:access_request][:reason])
+        ProjectMailer.project_access_request(current_user, params[:access_request][:projects], params[:access_request][:reason]).deliver_now
         format.html { redirect_to projects_path, notice: 'Access request successfully submitted.' }
       else
         format.html {

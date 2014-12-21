@@ -3,16 +3,16 @@ class SitesController < ApplicationController
 
   add_breadcrumb 'Home', :root_path
 
-  # order matters for before_filter and load_and_authorize_resource!
+  # order matters for before_action and load_and_authorize_resource!
   load_and_authorize_resource :project, except: [:show_shallow, :filter]
 
   # this is necessary so that the ability has access to site.projects
-  before_filter :build_project_site, only: [:new, :create]
+  before_action :build_project_site, only: [:new, :create]
 
   load_and_authorize_resource :site, through: :project, except: [:show_shallow, :filter]
   load_and_authorize_resource :site, only: [:show_shallow, :filter]
 
-  before_filter :add_project_breadcrumb, except: [:show_shallow, :filter]
+  before_action :add_project_breadcrumb, except: [:show_shallow, :filter]
 
   # GET /project/1/sites
   # GET /project/1/sites.json

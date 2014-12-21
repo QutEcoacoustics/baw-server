@@ -83,6 +83,12 @@ module AWB
     # Activate observers that should always be running.
     # config.active_record.observers = :cacher, :garbage_collector, :forum_observer
 
+    # Currently, Active Record suppresses errors raised within `after_rollback`/`after_commit`
+    # callbacks and only print them to the logs. In the next version, these errors will no
+    # longer be suppressed. Instead, the errors will propagate normally just like in other
+    # Active Record callbacks.
+    config.active_record.raise_in_transactional_callbacks = true
+
     # check that locales are valid - new default in rails 3.2.14
     config.i18n.enforce_available_locales = true
 
