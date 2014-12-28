@@ -6,6 +6,9 @@ class ApplicationController < ActionController::Base
   # custom user authentication
   before_filter :authenticate_user_custom!
 
+  # devise strong params set up
+  before_action :configure_permitted_parameters, if: :devise_controller?
+
   # This is Devise's authentication
   #before_filter :authenticate_user!
 
@@ -240,6 +243,11 @@ class ApplicationController < ActionController::Base
     end
 
     redirect_target
+  end
+
+  def configure_permitted_parameters
+    devise_parameter_sanitizer.for(:sign_up) { |u| u.permit(:user_name, :email, :password, :password_confirmation) }
+    devise_parameter_sanitizer.for(:account_update) { |u| u.permit(:user_name, :email, :password, :password_confirmation, :current_password, :image) }
   end
 
   private

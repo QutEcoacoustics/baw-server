@@ -131,7 +131,7 @@ class Ability
       can [:my_account, :modify_preferences], User, id: user.id
 
       # users can only change or delete their own
-      can [:edit, :update, :destroy], AudioEventComment, creator_id: user.id
+      can [:edit, :destroy], AudioEventComment, creator_id: user.id
       can [:edit, :update, :destroy, :show], Bookmark, creator_id: user.id
       can [:edit, :update, :destroy], Job, creator_id: user.id
 
