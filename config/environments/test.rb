@@ -1,5 +1,5 @@
 Rails.application.configure do
-  # Settings specified here will take precedence over those in config/application.rb
+  # Settings specified here will take precedence over those in config/application.rb.
 
   # The test environment is used exclusively to run your application's
   # test suite. You never need to work with it otherwise. Remember that
@@ -12,12 +12,12 @@ Rails.application.configure do
   # preloads Rails for running tests, you may have to set it to true.
   config.eager_load = false
 
-  # Configure static asset server for tests with Cache-Control for performance.
-  config.serve_static_files  = true
+  # Configure static file server for tests with Cache-Control for performance.
+  config.serve_static_files   = true
   config.static_cache_control = 'public, max-age=3600'
 
   # Show full error reports and disable caching.
-  config.consider_all_requests_local = true
+  config.consider_all_requests_local       = true
   config.action_controller.perform_caching = false
 
   # Raise exceptions instead of rendering exception templates.
@@ -36,6 +36,9 @@ Rails.application.configure do
       }
   config.action_mailer.delivery_method = :test
   config.action_mailer.perform_deliveries = true
+
+  # Randomize the order test cases are executed.
+  config.active_support.test_order = :random
 
   # Print deprecation notices to the stderr.
   config.active_support.deprecation = :stderr
@@ -56,8 +59,6 @@ Rails.application.configure do
     end
   end
 
-
-
   config.after_initialize do
     # detect n+1 queries
     Bullet.enable = false
@@ -74,4 +75,3 @@ Rails.application.configure do
   end
 
 end
-
