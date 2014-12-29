@@ -135,7 +135,7 @@ resource 'Sites' do
     #puts ActiveSupport::JSON.decode(response_body)
     #response_json = JSON.parse(response_body).to_s
     #response_body.should have_json_path('name')
-    standard_request_options(:get, 'SHOW (as writer)', :ok, {expected_json_path: 'data/location_obfuscated'})
+    standard_request_options(:get, 'SHOW (nested route, as writer)', :ok, {expected_json_path: 'data/location_obfuscated'})
   end
 
   get '/projects/:project_id/sites/:id' do
@@ -144,7 +144,7 @@ resource 'Sites' do
 
     let(:authentication_token) { reader_token }
 
-    standard_request_options(:get, 'SHOW (as reader)', :ok, {expected_json_path: 'data/description'})
+    standard_request_options(:get, 'SHOW (nested route, as reader)', :ok, {expected_json_path: 'data/description'})
   end
 
   get '/projects/:project_id/sites/:id' do
@@ -153,7 +153,7 @@ resource 'Sites' do
 
     let(:authentication_token) { "Token token=\"INVALID TOKEN\"" }
 
-    standard_request_options(:get, 'SHOW (with invalid token)', :unauthorized, {expected_json_path: 'meta/error/links/sign in'})
+    standard_request_options(:get, 'SHOW (nested route, with invalid token)', :unauthorized, {expected_json_path: 'meta/error/links/sign in'})
   end
 
   # shallow routes
@@ -274,7 +274,7 @@ resource 'Sites' do
   #####################
 
   post '/sites/filter' do
-    let(:authentication_token) { writer_token }
+    let(:authentication_token) { reader_token }
     let(:raw_post) { {
         'filter' => {
             'id' => {
@@ -284,7 +284,14 @@ resource 'Sites' do
         'projection' => {
             'include' => ['id', 'name']}
     }.to_json }
-    standard_request_options(:post, 'FILTER (as reader)', :ok, {expected_json_path: 'data/0/project_ids', data_item_count: 1})
+    standard_request_options(:post, 'FILTER (as reader)', :ok,
+                             {
+                                 expected_json_path: 'data/0/project_ids/0',
+                                 data_item_count: 1,
+                                 regex_match: /"project_ids"\:\[[0-9]+\]/,
+                                 response_body_content: "\"project_ids\":[",
+                                 invalid_content: "\"project_ids\":[{\"id\":"
+                             })
   end
 
   post '/sites/filter' do
@@ -298,7 +305,7 @@ resource 'Sites' do
         'projection' => {
             'include' => ['id', 'name']}
     }.to_json }
-    standard_request_options(:post, 'FILTER (as reader)', :ok,
+    standard_request_options(:post, 'FILTER (as writer)', :ok,
                              {
                                  expected_json_path: 'data/0/project_ids/0',
                                  data_item_count: 1,

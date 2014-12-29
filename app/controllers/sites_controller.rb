@@ -23,7 +23,7 @@ class SitesController < ApplicationController
       #format.html # index.html.erb
       format.json {
         @sites, constructed_options = Settings.api_response.response_index(
-            params,
+            api_filter_params,
             get_user_sites,
             Site,
             Site.filter_settings
@@ -45,9 +45,7 @@ class SitesController < ApplicationController
   # GET /project/1/sites/1
   # GET /project/1/sites/1.json
   def show
-    @site_audio_recordings = @site.audio_recordings.where(status: 'ready').order('recorded_date DESC').paginate(page: params[:page], per_page: 30)
-
-
+    @site_audio_recordings = @site.audio_recordings.where(status: 'ready').order('recorded_date DESC').paginate(page: site_show_params[:page], per_page: 30)
 
     respond_to do |format|
       format.html {
@@ -62,7 +60,7 @@ class SitesController < ApplicationController
   # GET /project/1/sites/new.json
   def new
 
-    attributes_and_authorize
+    do_authorize!
 
     @site.longitude = 152
     @site.latitude = -27
@@ -90,7 +88,7 @@ class SitesController < ApplicationController
   # POST /project/1/sites.json
   def create
 
-    attributes_and_authorize
+    attributes_and_authorize(site_params)
 
     respond_to do |format|
       if @site.save
@@ -115,7 +113,7 @@ class SitesController < ApplicationController
     @site.projects << @project unless @site.projects.include?(@project) # to avoid duplicates in the Projects_Sites table
 
     respond_to do |format|
-      if @site.update_attributes(params[:site])
+      if @site.update_attributes(site_params)
         format.html { redirect_to [@project, @site], notice: 'Site was successfully updated.' }
         format.json { respond_show }
       else
@@ -156,7 +154,7 @@ class SitesController < ApplicationController
   # GET /sites/filter.json
   def filter
     filter_response = Settings.api_response.response_filter(
-        params,
+        api_filter_params,
         get_user_sites,
         Site,
         Site.filter_settings
@@ -204,6 +202,14 @@ class SitesController < ApplicationController
     end
 
     sites
+  end
+
+  def site_params
+    params.require(:site).permit(:name, :latitude, :longitude, :description, :image, :notes)
+  end
+
+  def site_show_params
+    params.permit(:id, :project_id, site: {})
   end
 
 end

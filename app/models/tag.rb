@@ -4,9 +4,6 @@ class Tag < ActiveRecord::Base
   # ensures that creator_id, updater_id, deleter_id are set
   include UserChange
 
-  # attr
-  attr_accessible :is_taxanomic, :text, :type_of_tag, :retired, :notes
-
   # relations
   has_many :taggings, inverse_of: :tag
   has_many :audio_events, through: :taggings

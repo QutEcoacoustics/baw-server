@@ -37,4 +37,10 @@ class TagsController < ApplicationController
       render json: @tag.errors, status: :unprocessable_entity
     end
   end
+
+  private
+
+  def tag_params
+    params.require(:tag).permit(:is_taxanomic, :text, :type_of_tag, :retired, :notes)
+  end
 end

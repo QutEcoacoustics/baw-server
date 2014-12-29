@@ -39,14 +39,16 @@ class UserAccountsController < ApplicationController
   # PUT /users/1.json
   def update
 
+    the_params = user_update_params.dup
+
     # https://github.com/plataformatec/devise/wiki/How-To%3a-Allow-users-to-edit-their-account-without-providing-a-password
-    if params[:user][:password].blank?
-      params[:user].delete('password')
-      params[:user].delete('password_confirmation')
+    if the_params[:password].blank?
+      the_params.delete('password')
+      the_params.delete('password_confirmation')
     end
 
     respond_to do |format|
-      if @user.update_attributes(params[:user])
+      if @user.update_attributes(the_params)
         format.html { redirect_to user_account_path(@user), notice: 'User was successfully updated.' }
         format.json { head :no_content }
       else
@@ -62,8 +64,10 @@ class UserAccountsController < ApplicationController
     @user = current_user
     prefs_specified = false
 
-    if !params.blank? && !params[:user_account].blank?
-      @user.preferences = params[:user_account]
+    the_params = user_account_params
+
+    if !the_params.blank? && !the_params[:user_account].blank?
+      @user.preferences = the_params[:user_account]
       prefs_specified = true
     end
 
@@ -85,7 +89,7 @@ class UserAccountsController < ApplicationController
     @user_projects = @user.accessible_projects_all.uniq
     .order('projects.updated_at DESC')
     .paginate(
-        page: params[:page].blank? ? 1 : params[:page],
+        page: paging_params[:page].blank? ? 1 : paging_params[:page],
         per_page: 30
     )
     respond_to do |format|
@@ -99,7 +103,7 @@ class UserAccountsController < ApplicationController
     @user_bookmarks = @user.accessible_bookmarks.uniq
     .order('bookmarks.updated_at DESC')
     .paginate(
-        page: params[:page].blank? ? 1 : params[:page],
+        page: paging_params[:page].blank? ? 1 : paging_params[:page],
         per_page: 30
     )
     respond_to do |format|
@@ -113,7 +117,7 @@ class UserAccountsController < ApplicationController
     @user_audio_event_comments = @user.created_audio_event_comments.includes(:audio_event).uniq
     .order('audio_event_comments.updated_at DESC')
     .paginate(
-        page: params[:page].blank? ? 1 : params[:page],
+        page: paging_params[:page].blank? ? 1 : paging_params[:page],
         per_page: 30
     )
     respond_to do |format|
@@ -126,13 +130,37 @@ class UserAccountsController < ApplicationController
     @user_annotations = @user.accessible_audio_events.uniq
     .order('audio_events.updated_at DESC')
     .paginate(
-        page: params[:page].blank? ? 1 : params[:page],
+        page: paging_params[:page].blank? ? 1 : paging_params[:page],
         per_page: 30
     )
     respond_to do |format|
       format.html # audio_events.html.erb
       format.json { render json: @user_annotations }
     end
+  end
+
+  private
+
+  def user_params
+    params.require(:user).permit(
+        :user_name, :email, :password, :password_confirmation, :remember_me,
+        :roles, :roles_mask, :preferences,
+        :image, :login)
+  end
+
+  def user_update_params
+    params.require(:user).permit(
+        :id, :user_name, :email,
+        :password, :password_confirmation,
+        :roles_mask, :image)
+  end
+
+  def paging_params
+    params.permit(:page, :id)
+  end
+
+  def user_account_params
+    params.permit(user_account:{})
   end
 
 end

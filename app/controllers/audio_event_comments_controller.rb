@@ -15,7 +15,7 @@ class AudioEventCommentsController < ApplicationController
   def index
     #@audio_event_comments = AudioEventComment.accessible_by
     @audio_event_comments, constructed_options = Settings.api_response.response_index(
-        params,
+        api_filter_params,
         current_user.is_admin? ? AudioEventComment.all : current_user.accessible_comments,
         AudioEventComment,
         AudioEventComment.filter_settings
@@ -32,14 +32,15 @@ class AudioEventCommentsController < ApplicationController
 # GET /audio_event_comments/new
 # GET /audio_event_comments/new.json
   def new
-    attributes_and_authorize
+    do_authorize!
+
     respond_show
   end
 
 # POST /audio_event_comments
 # POST /audio_event_comments.json
   def create
-    attributes_and_authorize
+    attributes_and_authorize(audio_event_comment_params)
 
     if @audio_event_comment.save
       respond_create_success(audio_event_comment_url(@audio_event, @audio_event_comment))
@@ -56,9 +57,10 @@ class AudioEventCommentsController < ApplicationController
     # only the user that created the audio comment (or admin) can update any other attribute
     if @audio_event_comment.creator.id == current_user.id ||
         current_user.has_role?(:admin) ||
-        (params.include?(:audio_event_comment) && (['flag'] - params[:audio_event_comment].keys).empty?)
+        (audio_event_comment_update_params.include?(:audio_event_comment) &&
+            ([:flag] - audio_event_comment_update_params[:audio_event_comment].keys).empty?)
 
-      if @audio_event_comment.update_attributes(params[:audio_event_comment])
+      if @audio_event_comment.update_attributes(audio_event_comment_params)
         respond_show
       else
         respond_change_fail
@@ -80,7 +82,7 @@ class AudioEventCommentsController < ApplicationController
 
   def filter
     filter_response = Settings.api_response.response_filter(
-        params,
+        api_filter_params,
         current_user.is_admin? ? AudioEventComment.all : current_user.accessible_comments,
         AudioEventComment,
         AudioEventComment.filter_settings
@@ -93,6 +95,14 @@ class AudioEventCommentsController < ApplicationController
   def build_audio_event_comment
     @audio_event_comment = AudioEventComment.new
     @audio_event_comment.audio_event = @audio_event
+  end
+
+  def audio_event_comment_params
+    params.require(:audio_event_comment).permit(:audio_event_id, :comment, :flag, :flag_explain)
+  end
+
+  def audio_event_comment_update_params
+    params.permit(:format, :audio_event_id, :id, {audio_event_comment: [:flag, :comment]})
   end
 
 end

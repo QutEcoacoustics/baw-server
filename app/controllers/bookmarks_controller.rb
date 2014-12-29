@@ -6,7 +6,7 @@ class BookmarksController < ApplicationController
 
   def index
     @bookmarks, constructed_options = Settings.api_response.response_index(
-        params,
+        api_filter_params,
         current_user.accessible_bookmarks,
         Bookmark,
         Bookmark.filter_settings
@@ -31,7 +31,7 @@ class BookmarksController < ApplicationController
   end
 
   def update
-    if @bookmark.update_attributes(params[:bookmark])
+    if @bookmark.update_attributes(bookmark_params)
       respond_show
     else
       respond_change_fail
@@ -45,12 +45,18 @@ class BookmarksController < ApplicationController
 
   def filter
     filter_response = Settings.api_response.response_filter(
-        params,
+        api_filter_params,
         current_user.accessible_bookmarks,
         Bookmark,
         Bookmark.filter_settings
     )
     render_api_response(filter_response)
+  end
+
+  private
+
+  def bookmark_params
+    params.require(:bookmark).permit(:audio_recording_id, :name, :description, :offset_seconds, :category)
   end
 
 end

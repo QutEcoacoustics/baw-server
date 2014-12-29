@@ -43,8 +43,16 @@ Rails.application.configure do
   # Print deprecation notices to the stderr.
   config.active_support.deprecation = :stderr
 
+  # By default parameter keys that are not explicitly permitted will be logged in the development
+  # and test environment. In other environments these parameters will simply be filtered out
+  # and ignored. Additionally, this behaviour can be changed by changing the
+  # config.action_controller.action_on_unpermitted_parameters property in your environment files.
+  # If set to :log the unpermitted attributes will be logged, if set to :raise an exception will
+  # be raised.
+  config.action_controller.action_on_unpermitted_parameters = :raise
+
   # Raises error for missing translations
-  # config.action_view.raise_on_missing_translations = true
+  config.action_view.raise_on_missing_translations = true
 
   # Paperclip default location in tmp, so it can be cleared after test suite is run
   Paperclip::Attachment.default_options[:path] = ':rails_root/tmp/paperclip:url'

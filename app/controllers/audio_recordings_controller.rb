@@ -47,10 +47,10 @@ class AudioRecordingsController < ApplicationController
   # POST /audio_recordings.json
   # this is used by the harvester, do not change!
   def create
-    @audio_recording = match_existing_or_create_new(params)
+    @audio_recording = match_existing_or_create_new
     @audio_recording.site = @site
 
-    uploader_id = params[:audio_recording][:uploader_id].to_i
+    uploader_id = audio_recording_params[:uploader_id].to_i
     user_exists = User.exists?(uploader_id)
     user = User.where(id: uploader_id).first
     highest_permission = user.highest_permission(@project)
@@ -66,7 +66,7 @@ class AudioRecordingsController < ApplicationController
 
   def update
 
-    relevant_params = params[:audio_recording]
+    relevant_params = audio_recording_params
 
     # can either be one or more of valid_keys, or file_hash only
     file_hash = :file_hash
@@ -135,7 +135,7 @@ class AudioRecordingsController < ApplicationController
   # GET /audio_recordings/filter.json
   def filter
     filter_response = Settings.api_response.response_filter(
-        params,
+        api_filter_params,
         current_user.is_admin? ? AudioRecording.all : current_user.accessible_audio_recordings,
         AudioRecording,
         AudioRecording.filter_settings
@@ -192,15 +192,16 @@ class AudioRecordingsController < ApplicationController
     end
   end
 
-  def match_existing_or_create_new(params)
+  def match_existing_or_create_new
+    the_params = audio_recording_params
     match = AudioRecording.where(
-        original_file_name: params[:audio_recording][:original_file_name],
-        file_hash: params[:audio_recording][:file_hash],
-        recorded_date: Time.zone.parse(params[:audio_recording][:recorded_date]).utc,
-        data_length_bytes: params[:audio_recording][:data_length_bytes],
-        media_type: params[:audio_recording][:media_type],
-        duration_seconds: params[:audio_recording][:duration_seconds].round(4),
-        site_id: params[:audio_recording][:site_id],
+        original_file_name: the_params[:original_file_name],
+        file_hash: the_params[:file_hash],
+        recorded_date: Time.zone.parse(the_params[:recorded_date]).utc,
+        data_length_bytes: the_params[:data_length_bytes],
+        media_type: the_params[:media_type],
+        duration_seconds:the_params[:duration_seconds].round(4),
+        site_id: the_params[:site_id],
         status: 'aborted'
     )
 
@@ -209,7 +210,7 @@ class AudioRecordingsController < ApplicationController
       found.status = :new
       found
     else
-      AudioRecording.new(params[:audio_recording])
+      AudioRecording.new(the_params)
     end
   end
 
@@ -271,6 +272,14 @@ class AudioRecordingsController < ApplicationController
   def create_overlap_notes(overlap_amount, other_audio_recording_uuid)
     "\n\"duration_adjustment_for_overlap\"=\"Change made #{Time.zone.now.utc.iso8601}: " +
         "overlap of #{overlap_amount} seconds with audio_recording with uuid #{other_audio_recording_uuid}.\""
+  end
+
+  def audio_recording_params
+    params.require(:audio_recording).permit(
+        :bit_rate_bps, :channels, :data_length_bytes, :original_file_name,
+        :duration_seconds, :file_hash, :media_type, :notes,
+        :recorded_date, :sample_rate_hertz, :status, :uploader_id,
+        :site_id, :creator_id)
   end
 
 end

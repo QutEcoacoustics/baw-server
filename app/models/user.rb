@@ -10,10 +10,6 @@ class User < ActiveRecord::Base
   # http://www.phase2technology.com/blog/authentication-permissions-and-roles-in-rails-with-devise-cancan-and-role-model/
   include RoleModel
 
-  attr_accessible :user_name, :email, :password, :password_confirmation, :remember_me,
-                  :roles, :roles_mask, :preferences,
-                  :image, :login
-
   # user must always have an authentication token
   before_save :ensure_authentication_token
 

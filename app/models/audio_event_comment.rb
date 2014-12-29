@@ -3,8 +3,6 @@ class AudioEventComment < ActiveRecord::Base
   # ensures that creator_id, updater_id, deleter_id are set
   include UserChange
 
-  attr_accessible :audio_event_id, :comment, :flag, :flag_explain
-
   belongs_to :audio_event, inverse_of: :comments
   belongs_to :creator, class_name: 'User', foreign_key: 'creator_id', inverse_of: :created_audio_event_comments
   belongs_to :updater, class_name: 'User', foreign_key: 'updater_id', inverse_of: :updated_audio_event_comments

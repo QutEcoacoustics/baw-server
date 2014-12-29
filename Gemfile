@@ -14,17 +14,17 @@ source 'https://rubygems.org'
 # -------------------------------------
 
 gem 'rails', '~> 4.2.0'
-gem 'rack-cors', '~> 0.2.9', require: 'rack/cors'
+gem 'rack-cors', '~> 0.3.1', require: 'rack/cors'
 gem 'responders', '~> 2.0'
 
 # RAILS 3 compatibility gems
 # -------------------------------------
-gem 'protected_attributes'
-gem 'rails-observers'
-gem 'actionpack-page_caching'
-gem 'actionpack-action_caching'
-gem 'activerecord-deprecated_finders'
-gem 'activesupport-json_encoder', github: 'rails/activesupport-json_encoder'
+# gem 'protected_attributes'
+# gem 'rails-observers'
+# gem 'actionpack-page_caching'
+# gem 'actionpack-action_caching'
+# gem 'activerecord-deprecated_finders'
+# gem 'activesupport-json_encoder', github: 'rails/activesupport-json_encoder'
 
 # UI HELPERS
 # -------------------------------------
@@ -157,12 +157,12 @@ group :development do
   gem 'web-console'
 
   # for cleaning up Rails apps
-  gem 'traceroute', require: false
-  gem 'scrap', require: false
-  gem 'brakeman', require: false
-  gem 'rails_best_practices'
-  gem 'rubocop', require: false
-  #gem 'rubycritic', require: false
+  # gem 'traceroute', require: false
+  # gem 'scrap', require: false
+  # gem 'brakeman', require: false
+  # gem 'rails_best_practices'
+  # gem 'rubocop', require: false
+  ## gem 'rubycritic', require: false
 end
 
 group :development, :test do
@@ -188,7 +188,7 @@ group :test do
   gem 'json_spec'
   gem 'database_cleaner'
   gem 'webmock'
-  gem 'coveralls', require: false
+  gem 'coveralls', '~> 0.7.2', require: false
   gem 'codeclimate-test-reporter', require: nil
 
   # bundle exec rake doc:rails generates the API under doc/api.

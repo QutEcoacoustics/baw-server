@@ -15,7 +15,7 @@ class ProjectsController < ApplicationController
       }
       format.json {
         @projects, constructed_options = Settings.api_response.response_index(
-            params,
+            api_filter_params,
             get_user_projects,
             Project,
             Project.filter_settings
@@ -84,7 +84,7 @@ class ProjectsController < ApplicationController
   # PUT /projects/1.json
   def update
     respond_to do |format|
-      if @project.update_attributes(params[:project])
+      if @project.update_attributes(project_params)
         format.html { redirect_to @project, notice: 'Project was successfully updated.' }
         format.json { respond_show }
       else
@@ -106,7 +106,7 @@ class ProjectsController < ApplicationController
     # loop through all users to see if their permission has been updated or revoked
     User.all.each do |user|
       # if the user's permission has been set, create permission
-      if params[:user_ids].has_key?(user.id.to_s)
+      if update_params.has_key?(user.id.to_s)
         @permission = Permission.where(project_id: @project.id, user_id: user.id).first
         if @permission.blank?
           @permission = Permission.new
@@ -116,10 +116,10 @@ class ProjectsController < ApplicationController
         else
           @permission.updater = current_user
         end
-        if params[:user_ids][user.id.to_s][:permissions][:level].blank?
+        if update_params[user.id.to_s][:permissions][:level].blank?
           @permission.destroy
         else
-          @permission.level = params[:user_ids][user.id.to_s][:permissions][:level]
+          @permission.level = update_params[user.id.to_s][:permissions][:level]
 
           unless @permission.save
             no_error = false
@@ -167,16 +167,16 @@ class ProjectsController < ApplicationController
 
   # POST /projects/request_access
   def submit_access_request
-    valid_request = params[:access_request].include?(:projects) &&
-        params[:access_request][:projects].is_a?(Array) &&
-        params[:access_request][:projects].size > 1 &&
-        params[:access_request].include?(:reason) &&
-        params[:access_request][:reason].is_a?(String) &&
-        params[:access_request][:reason].size > 0
+    valid_request = access_request_params.include?(:projects) &&
+        access_request_params[:projects].is_a?(Array) &&
+        access_request_params[:projects].size > 1 &&
+        access_request_params.include?(:reason) &&
+        access_request_params[:reason].is_a?(String) &&
+        access_request_params[:reason].size > 0
 
     respond_to do |format|
       if valid_request
-        ProjectMailer.project_access_request(current_user, params[:access_request][:projects], params[:access_request][:reason]).deliver_now
+        ProjectMailer.project_access_request(current_user, access_request_params[:projects], access_request_params[:reason]).deliver_now
         format.html { redirect_to projects_path, notice: 'Access request successfully submitted.' }
       else
         format.html {
@@ -192,7 +192,7 @@ class ProjectsController < ApplicationController
   # GET /sites/filter.json
   def filter
     filter_response = Settings.api_response.response_filter(
-        params,
+        api_filter_params,
         get_user_projects,
         Project,
         Project.filter_settings
@@ -211,6 +211,18 @@ class ProjectsController < ApplicationController
     end
 
     projects
+  end
+
+  def project_params
+    params.require(:project).permit(:description, :image, :name, :notes, :urn)
+  end
+
+  def access_request_params
+    params.require(:access_request).permit({projects: []}, :reason)
+  end
+
+  def update_params
+    params.require(:user_ids).permit!
   end
 
 end
