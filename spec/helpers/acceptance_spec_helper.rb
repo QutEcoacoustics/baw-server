@@ -115,6 +115,8 @@ end
 # @option opts [String]         :expected_method                 (nil) Expected http method.
 # @option opts [Boolean]        :expected_response_has_content   (nil) Is the response expected to have content?
 # @option opts [String]         :expected_response_content_type  (nil) What is the expected response content type?
+# @option opts [Hash]           :expected_response_header_values (nil) The expected response headers and values (keys and values are strings)
+# @option opts [Hash]           :expected_request_header_values  (nil) The expected request headers and values (keys and values are strings)
 # @return [void]
 def acceptance_checks_shared(request, opts = {})
   opts.reverse_merge!(
@@ -154,7 +156,7 @@ def acceptance_checks_shared(request, opts = {})
           actual_response_content_type: response_headers['Content-Type'],
 
           #actual_request_content_type: request_headers['Content-Type'],
-          #actual_request_headers: request_headers,
+          actual_request_headers: request[0][:request_headers],
 
           expected_status: opts[:expected_status].is_a?(Symbol) ? opts[:expected_status] : Settings.api_response.status_symbol(opts[:expected_status]),
       })
@@ -182,6 +184,24 @@ def acceptance_checks_shared(request, opts = {})
       opts[:actual_response_content_type].start_with?('audio/'))
     expect(opts[:actual_response_headers]['Content-Transfer-Encoding']).to eq('binary'), "Mismatch: content transfer encoding. #{opts[:msg]}"
     expect(opts[:actual_response_headers]['Content-Disposition']).to start_with('inline; filename='), "Mismatch: content disposition. #{opts[:msg]}"
+  end
+
+  unless opts[:expected_request_header_values].blank?
+    expected_request_headers = opts[:expected_request_header_values]
+    actual_request_headers = opts[:actual_request_headers]
+    expected_request_headers.each do |key, value|
+      expect(actual_request_headers.keys).to include(key), "Did not find '#{key}' in request headers: #{actual_request_headers.keys.join(', ')}."
+      expect(actual_request_headers[key]).to eq(value), "Value '#{actual_request_headers[key].inspect}' for '#{key}' in request headers did not match expected value #{value.inspect}."
+    end
+  end
+
+  unless opts[:expected_response_header_values].blank?
+    expected_response_headers = opts[:expected_response_header_values]
+    actual_response_headers = opts[:actual_response_headers]
+    expected_response_headers.each do |key, value|
+      expect(actual_response_headers).to include(key), "Did not find '#{key}' in response headers: #{actual_response_headers.keys.join(', ')}."
+      expect(actual_response_headers[key]).to eq(value), "Value '#{actual_response_headers[key].inspect}' for '#{key}' in response headers did not match expected value #{value.inspect}."
+    end
   end
 
   opts
@@ -512,4 +532,9 @@ def emulate_resque_worker(queue, verbose, fork)
     job = worker.reserve
     worker.perform(job)
   end
+end
+
+def process_custom(method, path, params = {}, headers ={})
+  do_request(method, path, params, headers)
+  document_example(method.to_s.upcase, path)
 end

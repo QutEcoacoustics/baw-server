@@ -371,7 +371,7 @@ class ApplicationController < ActionController::Base
         "Could not find the requested page: #{error.message}",
         error,
         'routing_argument_error_response',
-        error_info: {original_route: request.env['PATH_INFO']}
+        error_info: {original_route: request.env['PATH_INFO'], original_http_method: request.method}
     )
   end
 
