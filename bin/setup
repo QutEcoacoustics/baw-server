@@ -12,30 +12,24 @@ Dir.chdir APP_ROOT do
   system 'gem install bundler --conservative --no-ri --no-rdoc'
   system 'bundle check || bundle install'
 
-
-  # puts "\n== Copying sample files =="
-  # unless File.exist?("config/database.yml")
-  #   system "cp config/database.yml.sample config/database.yml"
-  # end
-
-  puts "\n== Preparing database =="
-  system 'bin/rake db:setup'
-
   puts "\n== Removing logs, tempfiles, docs, and test results =="
   system 'rm -f log/*'
   system 'rm -rf tmp/*'
   system 'rm -rf coverage'
   system 'rm -rf doc'
 
-  # puts "\n== Restarting application server =="
-  # system 'touch tmp/restart.txt'
+  puts "\n== Creating files for deploying website =="
+  system 'bundle exec cap install'
 
-  puts "\n== Running rspec tests =="
-  system 'bin/rspec --format progress --color'
+  puts "\n== Manual Setup =="
+  puts '1. Create config/settings/development.yml and config/settings/test.yml based on config/settings/default.yml'
+  puts '2. Install and configure Postgresql'
+  puts '3. Prepare the local development database:`bin/rake db:setup RAILS_ENV=development`'
+  puts '4. Prepare the local test database:`bin/rake db:setup RAILS_ENV=test`'
+  puts '5. Run rspec tests: `bin/rspec --format progress --color` or for development work start guard: `bundle exec guard`'
+  puts '6. Generate API documentation: `bin/rake docs:generate GENERATE_DOC=true`'
+  puts '7. Start development server: `thin start`'
+  puts '8. Use Capistrano to deploy app (see https://github.com/capistrano/capistrano )'
+  puts '9. Create production settings file config/settings/production.yml based on config/settings/default.yml'
 
-  puts "\n== Generating API documentation =="
-  system 'bin/rake docs:generate GENERATE_DOC=true'
-
-  puts "\n== Configuration =="
-  puts "\n===> Create config/settings/development.yml and config/settings/test.yml based on config/settings/default.yml <=="
 end
