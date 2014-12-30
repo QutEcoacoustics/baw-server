@@ -27,6 +27,18 @@ And then execute:
 
     $ bundle install
 
+## Dependencies
+
+You may need to install some additional tools for working with audio and images, and for processing long-running tasks.
+
+ - [ImageMagick](http://www.imagemagick.org/) is used by [paperclip](https://github.com/thoughtbot/paperclip).
+ - [WavPack](http://www.wavpack.com/) is used to expand compressed `.wv` files.
+ - [SoX](http://sox.sourceforge.net/) is used to create spectrograms and resample audio.
+ - [shnTool](http://www.etree.org/shnutils/shntool/) is a tool for quickly segmenting large `.wav` files.
+ - [mp3splt](http://mp3splt.sourceforge.net/mp3splt_page/home.php) is a tool for quickly segmenting large `.mp3` files.
+ - [ffmpeg](http://www.ffmpeg.org/) is used for audio conversion and gathering audio file information.
+ - [redis](http://redis.io/) is used by [Resque](https://github.com/resque/resque/tree/v1.25.2) to manage long-running tasks.
+
 ## File Storage
 
 There are classes for working with file storage paths:
