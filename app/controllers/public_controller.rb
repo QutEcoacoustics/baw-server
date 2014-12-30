@@ -2,13 +2,15 @@ class PublicController < ApplicationController
   layout 'public'
 
   skip_authorization_check only: [
-      :index, :status, :website_status, :audio_recording_catalogue,
-      :recent_annotations, :recent_audio_recordings,
+      :index, :status, :website_status,
+      :audio_recording_catalogue,
+      :credits, :disclaimers, :ethics_statement,
+
       :new_contact_us, :create_contact_us,
       :new_bug_report, :create_bug_report,
       :new_data_request, :create_data_request,
-      :credits, :ethics_statement, :disclaimers,
-      :test_exceptions
+
+      :test_exceptions, :cors_preflight
   ]
 
   def index
@@ -334,6 +336,13 @@ EXTRACT(DAY FROM recorded_date) as extracted_day')
     end
   end
 
+  def cors_preflight
+    # Authentication and authorisation are not checked
+    # this method caters for all MALFORMED OPTIONS requests.
+    # it will not be used for valid OPTIONS requests
+    # valid OPTIONS requests will be caught by the rails-cors gem (see application.rb)
+    fail CustomErrors::BadRequestError, "CORS preflight request to '#{params[:requested_route]}' was not valid. Required headers: Origin, Access-Control-Request-Method. Optional headers: Access-Control-Request-Headers."
+  end
 
   private
 

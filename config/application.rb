@@ -115,23 +115,58 @@ module AWB
     # for generating documentation from tests
     Raddocs.configuration.docs_dir = "doc/api"
 
-    # allow any origin, with any header, to access the array of methods
-    config.middleware.use Rack::Cors do
-      allow do
-        origins '*'
-        resource '*', headers: :any, methods: [:get, :post, :put, :delete, :options]
-      end
-    end
-
     # middleware to rewrite angular urls
     # insert at the start of the Rack stack.
-    config.middleware.insert_before(0, Rack::Rewrite) do
+    config.middleware.insert_before 0, Rack::Rewrite do
       # angular routing system will use the url that was originally requested
       # rails just needs to load the index.html
       rewrite /^\/listen.*/i, '/system/listen_to/index.html'
       rewrite /^\/birdwalks.*/i, '/system/listen_to/index.html'
       rewrite /^\/library.*/i, '/system/listen_to/index.html'
       rewrite /^\/demo.*/i, '/system/listen_to/index.html'
+    end
+
+    # allow any origin, with any header, to access the array of methods
+    # insert as first middleware, after other changes.
+    # this ensures static files, caching, and auth will include CORS headers
+    config.middleware.insert_before 0, 'Rack::Cors', debug: true, logger: (-> { Rails.logger }) do
+      allow do
+
+        # 'Access-Control-Allow-Origin' (origins):
+        origins Settings.host.cors_origins
+
+        # 'Access-Control-Max-Age' (max_age): "indicates how long the results of a preflight request can be cached"
+        # -> not specifying to avoid debugging problems
+
+        # 'Access-Control-Allow-Credentials' (credentials): "Indicates whether or not the response to the request
+        # can be exposed when the credentials flag is true.  When used as part of a response to a preflight request,
+        # this indicates whether or not the actual request can be made using credentials.  Note that simple GET
+        # requests are not preflighted, and so if a request is made for a resource with credentials, if this header
+        # is not returned with the resource, the response is ignored by the browser and not returned to web content."
+        # -> specifying true to enable authentication on preflight and actual requests.
+
+        # 'Access-Control-Allow-Methods' (methods): "Specifies the method or methods allowed when accessing the
+        # resource.  This is used in response to a preflight request."
+        # -> including patch, head, options in addition to usual suspects
+
+        # 'Access-Control-Allow-Headers' (headers): "Used in response to a preflight request to indicate which HTTP
+        # headers can be used when making the actual request."
+        # -> allow any header to be sent by client
+
+        # 'Access-Control-Expose-Headers' (expose): "lets a server whitelist headers that browsers are allowed to access"
+        # auto-allowed headers: Cache-Control, Content-Language, Content-Type, Expires, Last-Modified, Pragma
+        # http://www.w3.org/TR/cors/#simple-response-header
+        # -> we have some custom headers that we want to access, plus content-length
+        # -> TODO: this will need to be updated when generating and waiting time are separated to two headers rather than one
+
+        resource '*', # applies to all resources
+                 headers: :any,
+                 methods: [:get, :post, :put, :patch, :head, :delete, :options],
+                 credentials: true,
+                 expose: %w(Content-Length X-Media-Elapsed-Seconds X-Media-Response-From X-Media-Response-Start)
+
+
+      end
     end
 
   end

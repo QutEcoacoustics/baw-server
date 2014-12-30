@@ -152,4 +152,16 @@ end
 
 RspecApiDocumentation.configure do |config_rspec_api|
   config_rspec_api.format = :json
+
+  # patch to enable options request
+  module RspecApiDocumentation
+    class ClientBase
+      def http_options_verb(*args)
+        process :options, *args
+      end
+    end
+  end
+
+  RspecApiDocumentation::DSL::Resource::ClassMethods.define_action :http_options_verb
+
 end
