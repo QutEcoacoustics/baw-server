@@ -5,15 +5,15 @@ class SessionsController < Devise::SessionsController
   include Api::ApiAuth
 
   # custom user authentication
-  before_filter :authenticate_user_custom!, except: [:new, :create]
+  before_action :authenticate_user_custom!, except: [:new, :create]
 
   # This is Devise's authentication
-  before_filter :authenticate_user!
+  before_action :authenticate_user!
 
   # remove Devise's default destroy response
-  skip_before_filter :verify_signed_out_user
+  skip_before_action :verify_signed_out_user
 
-  skip_before_filter :verify_authenticity_token, if: :json_request?
+  skip_before_action :verify_authenticity_token, if: :json_request?
 
   check_authorization except: [:new, :create]
 

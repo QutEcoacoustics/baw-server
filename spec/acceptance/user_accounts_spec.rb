@@ -144,21 +144,27 @@ resource 'Users' do
   end
 
   put '/my_account/prefs' do
-    let(:raw_post) { {somethingNewForTestingAdmin: [1, 2, 3, 4]}.to_json }
+    let(:raw_post) { '{"volume":1,"muted":false}' }
     let(:authentication_token) { admin_token }
     standard_request('modify admin preferences', 204, nil, true)
   end
 
   put '/my_account/prefs' do
-    let(:raw_post) { {somethingNewForTestingReader: [1, 2, 3, 4]}.to_json }
+    let(:raw_post) { '{"volume":1,"muted":false}' }
     let(:authentication_token) { reader_token }
     standard_request('modify reader preferences', 204, nil, true)
   end
 
   put '/my_account/prefs' do
-    let(:raw_post) { {somethingNewForTestingWriter: [1, 2, 3, 4]}.to_json }
+    let(:raw_post) { '{"volume":1,"muted":false}' }
     let(:authentication_token) { writer_token }
     standard_request('modify writer preferences', 204, nil, true)
+  end
+
+  put '/my_account/prefs' do
+    let(:raw_post) { '{"volume":1,"muted":false}' }
+    let(:authentication_token) { "Token token=\"INVALID TOKEN\"" }
+    standard_request('modify preferences as in valid user', 401, nil, true)
   end
 
 end

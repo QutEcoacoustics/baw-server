@@ -1,5 +1,5 @@
 Rails.application.configure do
-  # Settings specified here will take precedence over those in config/application.rb
+  # Settings specified here will take precedence over those in config/application.rb.
 
   # The test environment is used exclusively to run your application's
   # test suite. You never need to work with it otherwise. Remember that
@@ -12,12 +12,12 @@ Rails.application.configure do
   # preloads Rails for running tests, you may have to set it to true.
   config.eager_load = false
 
-  # Configure static asset server for tests with Cache-Control for performance.
-  config.serve_static_assets  = true
+  # Configure static file server for tests with Cache-Control for performance.
+  config.serve_static_files   = true
   config.static_cache_control = 'public, max-age=3600'
 
   # Show full error reports and disable caching.
-  config.consider_all_requests_local = true
+  config.consider_all_requests_local       = true
   config.action_controller.perform_caching = false
 
   # Raise exceptions instead of rendering exception templates.
@@ -37,11 +37,22 @@ Rails.application.configure do
   config.action_mailer.delivery_method = :test
   config.action_mailer.perform_deliveries = true
 
+  # Randomize the order test cases are executed.
+  config.active_support.test_order = :random
+
   # Print deprecation notices to the stderr.
   config.active_support.deprecation = :stderr
 
+  # By default parameter keys that are not explicitly permitted will be logged in the development
+  # and test environment. In other environments these parameters will simply be filtered out
+  # and ignored. Additionally, this behaviour can be changed by changing the
+  # config.action_controller.action_on_unpermitted_parameters property in your environment files.
+  # If set to :log the unpermitted attributes will be logged, if set to :raise an exception will
+  # be raised.
+  config.action_controller.action_on_unpermitted_parameters = :raise
+
   # Raises error for missing translations
-  # config.action_view.raise_on_missing_translations = true
+  config.action_view.raise_on_missing_translations = true
 
   # Paperclip default location in tmp, so it can be cleared after test suite is run
   Paperclip::Attachment.default_options[:path] = ':rails_root/tmp/paperclip:url'
@@ -55,8 +66,6 @@ Rails.application.configure do
       puts "WARN: cannot find image magick path #{im_dir}"
     end
   end
-
-
 
   config.after_initialize do
     # detect n+1 queries
@@ -74,4 +83,3 @@ Rails.application.configure do
   end
 
 end
-

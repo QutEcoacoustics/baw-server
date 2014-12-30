@@ -2,9 +2,6 @@ class Project < ActiveRecord::Base
   # ensures that creator_id, updater_id, deleter_id are set
   include UserChange
 
-  attr_accessible :description, :image, :name, :notes, :urn #,
-  #:sign_in_level, :anonymous_level
-
   # relationships
   belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_projects
   belongs_to :updater, class_name: 'User', foreign_key: :updater_id, inverse_of: :updated_projects

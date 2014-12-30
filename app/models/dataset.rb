@@ -5,10 +5,6 @@ class Dataset < ActiveRecord::Base
   # ensures that creator_id, updater_id, deleter_id are set
   include UserChange
 
-  attr_accessible :description, :end_date, :end_time, :filters, :name, :number_of_samples, :number_of_tags,
-                  :start_date, :start_time, :types_of_tags, :site_ids, :tag_text_filters, :tag_text_filters_list,
-                  :has_time, :has_date
-
   # custom fields to set dates and times to nil if not selected in form
   attr_accessor :has_time, :has_date, :selected_types_of_tags, :json_dataset_result_info
 

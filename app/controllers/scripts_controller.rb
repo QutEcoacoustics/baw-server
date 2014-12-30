@@ -75,7 +75,7 @@ class ScriptsController < ApplicationController
       end
     end
 
-    @new_script = Script.new(params[:script])
+    @new_script = Script.new(script_params)
 
     @new_script.update_from = @script
 
@@ -97,5 +97,12 @@ class ScriptsController < ApplicationController
     end
   end
 
+  private
+
+  def script_params
+    params.require(:script).permit(
+        :analysis_identifier, :data_file, :description,
+        :name, :notes, :settings_file, :verified, :version)
+  end
 
 end

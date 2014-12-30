@@ -210,7 +210,7 @@ EXTRACT(DAY FROM recorded_date) as extracted_day')
 
     respond_to do |format|
       if recaptcha_valid && model_valid
-        PublicMailer.contact_us_message(current_user, @contact_us, request)
+        PublicMailer.contact_us_message(current_user, @contact_us, request).deliver_now
         format.html {
           redirect_to contact_us_path,
                       notice: "Thank you for contacting us. If you've asked us to contact you or " +
@@ -244,7 +244,7 @@ EXTRACT(DAY FROM recorded_date) as extracted_day')
 
     respond_to do |format|
       if recaptcha_valid && model_valid
-        PublicMailer.bug_report_message(current_user, @bug_report, request)
+        PublicMailer.bug_report_message(current_user, @bug_report, request).deliver_now
         format.html {
           redirect_to bug_report_path,
                       notice: 'Thank you, your report was successfully submitted.
@@ -297,7 +297,7 @@ EXTRACT(DAY FROM recorded_date) as extracted_day')
 
     respond_to do |format|
       if recaptcha_valid && model_valid
-        PublicMailer.data_request_message(current_user, @data_request, request)
+        PublicMailer.data_request_message(current_user, @data_request, request).deliver_now
         format.html {
           redirect_to data_request_path,
                       notice: 'Your request was successfully submitted. We will be in contact shortly.'

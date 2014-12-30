@@ -35,7 +35,11 @@ class ProjectMailer < ActionMailer::Base
       @owner_name = value[:user_name]
       subject = "#{Settings.mailer.emails.email_prefix} [Project Access Request] #{@sender_user.user_name} is requesting access to one or more projects."
       @projects = value[:projects]
-      mail(to: emails, subject: subject).deliver
+      mail(
+          to: emails,
+          subject: subject,
+          template_path: 'project_mailer',
+          template_name: 'project_access_request')
     end
   end
 end

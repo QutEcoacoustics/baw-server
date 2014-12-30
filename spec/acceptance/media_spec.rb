@@ -581,7 +581,12 @@ resource 'Media' do
     let(:authentication_token) { reader_token }
     let(:format) { 'json' }
 
-    standard_request('CATALOGUE (as reader with invalid project)', 404, 'meta/error/details', true)
+    standard_request_options(:get, 'CATALOGUE (as reader with invalid project)', :not_found,
+                             {
+                                 expected_json_path: 'meta/error/details',
+                                 expected_error_class: RangeError,
+                                 expected_error_regexp: /99999998888 is out of range for ActiveRecord::ConnectionAdapters::PostgreSQL::OID::Integer with limit 4/
+                             })
   end
 
   get '/audio_recording_catalogue?siteId=9999998888' do
@@ -589,7 +594,12 @@ resource 'Media' do
     let(:authentication_token) { reader_token }
     let(:format) { 'json' }
 
-    standard_request('CATALOGUE (as reader with invalid site)', 404, 'meta/error/details', true)
+    standard_request_options(:get, 'CATALOGUE (as reader with invalid site)', :not_found,
+                             {
+                                 expected_json_path: 'meta/error/details',
+                                 expected_error_class: RangeError,
+                                 expected_error_regexp: /9999998888 is out of range for ActiveRecord::ConnectionAdapters::PostgreSQL::OID::Integer with limit 4/
+                             })
   end
 
   get '/audio_recording_catalogue?projectId=:project_id&siteId=:site_id' do

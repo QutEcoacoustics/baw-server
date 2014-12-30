@@ -50,6 +50,8 @@ end
 # @option opts [Symbol]  :data_item_count        (nil) Number of items in a json response
 # @option opts [Hash]    :property_match         (nil) Properties to match
 # @option opts [Hash]    :file_exists            (nil) Check if file exists
+# @option opts [Class]   :expected_error_class   (nil) The expected error class
+# @option opts [Regexp]  :expected_error_regexp  (nil) The expected error regular expression
 # @return [void]
 def standard_request_options(http_method, description, expected_status, opts = {})
   opts.reverse_merge!({document: true})
@@ -66,15 +68,31 @@ def standard_request_options(http_method, description, expected_status, opts = {
       File.open(path, 'w') { |f| f.write('{"content":"This is some content."}') }
     end
 
-    request = do_request
-    opts.merge!(
-        {
-            expected_status: expected_status,
-            expected_method: http_method
-        })
+    expected_error_class = opts[:expected_error_class]
+    expected_error_regexp = opts[:expected_error_regexp]
+    problem = (expected_error_class.blank? && !expected_error_regexp.blank?) ||
+        (!expected_error_class.blank? && expected_error_regexp.blank?)
 
-    opts = acceptance_checks_shared(request, opts)
-    acceptance_checks_json(opts)
+    fail "Specify both expected_error_class and expected_error_regexp" if problem
+
+    if !expected_error_class.blank? && !expected_error_regexp.blank?
+      expect {
+        do_request
+      }.to raise_error(expected_error_class, expected_error_regexp)
+    else
+      request = do_request
+
+      opts.merge!(
+          {
+              expected_status: expected_status,
+              expected_method: http_method
+          })
+
+      opts = acceptance_checks_shared(request, opts)
+      acceptance_checks_json(opts)
+
+    end
+
   end
 end
 
@@ -156,7 +174,7 @@ def acceptance_checks_shared(request, opts = {})
           actual_response_content_type: response_headers['Content-Type'],
 
           #actual_request_content_type: request_headers['Content-Type'],
-          actual_request_headers: request[0][:request_headers],
+          actual_request_headers: (request.nil? || request.size < 1) ? nil : request[0][:request_headers],
 
           expected_status: opts[:expected_status].is_a?(Symbol) ? opts[:expected_status] : Settings.api_response.status_symbol(opts[:expected_status]),
       })

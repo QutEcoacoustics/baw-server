@@ -83,17 +83,14 @@ module AWB
     # Activate observers that should always be running.
     # config.active_record.observers = :cacher, :garbage_collector, :forum_observer
 
+    # Currently, Active Record suppresses errors raised within `after_rollback`/`after_commit`
+    # callbacks and only print them to the logs. In the next version, these errors will no
+    # longer be suppressed. Instead, the errors will propagate normally just like in other
+    # Active Record callbacks.
+    config.active_record.raise_in_transactional_callbacks = true
+
     # check that locales are valid - new default in rails 3.2.14
     config.i18n.enforce_available_locales = true
-
-    # Enforce whitelist mode for mass assignment.
-    # This will create an empty whitelist of attributes available for mass-assignment for all models
-    # in your app. As such, your models will need to explicitly whitelist or blacklist accessible
-    # parameters by using an attr_accessible or attr_protected declaration.
-    config.active_record.whitelist_attributes = true
-
-    # Raise exception on mass assignment protection for Active Record models
-    config.active_record.mass_assignment_sanitizer = :strict
 
     # Set Time.zone default to the specified zone and make Active Record auto-convert to this zone.
     # Run "rake -D time" for a list of tasks for finding time zone names. Default is UTC.

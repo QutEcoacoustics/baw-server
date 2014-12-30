@@ -4,17 +4,17 @@ class ApplicationController < ActionController::Base
   layout :api_or_html
 
   # custom user authentication
-  before_filter :authenticate_user_custom!
+  before_action :authenticate_user_custom!
 
   # devise strong params set up
   before_action :configure_permitted_parameters, if: :devise_controller?
 
   # This is Devise's authentication
-  #before_filter :authenticate_user!
+  #before_action :authenticate_user!
 
   # https://github.com/plataformatec/devise/blob/master/test/rails_app/app/controllers/application_controller.rb
-  # before_filter :current_user, unless: :devise_controller?
-  # before_filter :authenticate_user!, if: :devise_controller?
+  # before_action :current_user, unless: :devise_controller?
+  # before_action :authenticate_user!, if: :devise_controller?
 
   # CanCan - always check authorization
   check_authorization unless: :devise_controller?
@@ -49,13 +49,13 @@ class ApplicationController < ActionController::Base
   # For APIs, you may want to use :null_session instead.
   protect_from_forgery with: :exception
 
-  skip_before_filter :verify_authenticity_token, if: :json_request?
+  skip_before_action :verify_authenticity_token, if: :json_request?
 
-  after_filter :set_csrf_cookie_for_ng, :resource_representation_caching_fixes
+  after_action :set_csrf_cookie_for_ng, :resource_representation_caching_fixes
 
   # set and reset user stamper for each request
   # based on https://github.com/theepan/userstamp/tree/bf05d832ee27a717ea9455d685c83ae2cfb80310
-  around_filter :set_then_reset_user_stamper
+  around_action :set_then_reset_user_stamper
 
   protected
 

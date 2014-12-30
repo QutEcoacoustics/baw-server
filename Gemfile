@@ -13,22 +13,23 @@ source 'https://rubygems.org'
 # RAILS
 # -------------------------------------
 
-gem 'rails', '4.1.8'
+gem 'rails', '~> 4.2.0'
 gem 'rack-cors', '~> 0.3.1', require: 'rack/cors'
+gem 'responders', '~> 2.0'
 
 # RAILS 3 compatibility gems
 # -------------------------------------
-gem 'protected_attributes'
-gem 'rails-observers'
-gem 'actionpack-page_caching'
-gem 'actionpack-action_caching'
-gem 'activerecord-deprecated_finders'
-gem 'activesupport-json_encoder', github: 'rails/activesupport-json_encoder'
+# gem 'protected_attributes'
+# gem 'rails-observers'
+# gem 'actionpack-page_caching'
+# gem 'actionpack-action_caching'
+# gem 'activerecord-deprecated_finders'
+# gem 'activesupport-json_encoder', github: 'rails/activesupport-json_encoder'
 
 # UI HELPERS
 # -------------------------------------
 # Use SCSS for stylesheets
-gem 'sass-rails', '~> 4.0.3'
+gem 'sass-rails'
 # Use Uglifier as compressor for JavaScript assets
 gem 'uglifier', '>= 1.3.0'
 # Use CoffeeScript for .js.coffee assets and views
@@ -50,7 +51,7 @@ gem 'simple_form' #https://github.com/plataformatec/simple_form
 gem 'paperclip'
 gem 'breadcrumbs_on_rails'
 # kept below version 2 due to huge breaking changes
-gem 'gmaps4rails', '~> 1.5.6'
+gem 'gmaps4rails', '< 2'
 
 # https://github.com/seyhunak/twitter-bootstrap-rails
 # huge changes since last release (2.2.8 in Aug 2013), and not sure about rails 3.2 vs 4 support.
@@ -146,11 +147,24 @@ group :development do
   gem 'capistrano-newrelic'
 
   gem 'rack-mini-profiler'
-  #gem 'scrap'
+
   gem 'rails-i18n-debug'
-  gem 'brakeman', :require => false
+
   # Spring speeds up development by keeping your application running in the background. Read more: https://github.com/rails/spring
   gem 'spring'
+
+  # Run `rails console` in the browser. Read more: https://github.com/rails/web-console
+  gem 'web-console'
+
+  # for cleaning up Rails apps
+  # gem 'traceroute', require: false
+  # gem 'scrap', require: false
+  # gem 'brakeman', require: false
+  # gem 'rails_best_practices'
+  # gem 'rubocop', require: false
+  # gem 'rubycritic', require: false
+  # gem 'metric_fu', require: false
+  # gem install traceroute scrap brakeman rails_best_practices rubocop rubycritic metric_fu --no-ri --no-rdoc
 end
 
 group :development, :test do
@@ -176,7 +190,7 @@ group :test do
   gem 'json_spec'
   gem 'database_cleaner'
   gem 'webmock'
-  gem 'coveralls', require: false
+  gem 'coveralls', '~> 0.7.2', require: false
   gem 'codeclimate-test-reporter', require: nil
 
   # bundle exec rake doc:rails generates the API under doc/api.

@@ -49,11 +49,11 @@ class TaggingsController < ApplicationController
   # POST /taggings.json
   def create
     # @audio_recording, @audio_event and @tagging are initialised/preloaded by load_resource/load_and_authorize_resource
-    if params[:tagging] && params[:tagging][:tag_attributes] && params[:tagging][:tag_attributes][:text]
-      @tag = Tag.where(text: params[:tagging][:tag_attributes][:text]).first
+    if tagging_params && tagging_params[:tag_attributes] && tagging_params[:tag_attributes][:text]
+      @tag = Tag.where(text: tagging_params[:tag_attributes][:text]).first
       if @tag.blank?
         # if the tag with the name does not already exist, create it via tag_attributes
-        @tag = Tag.new(params[:tagging][:tag_attributes])
+        @tag = Tag.new(tagging_params[:tag_attributes])
         unless @tag.save
           render json: @tag.errors, status: :unprocessable_entity and return
         end
@@ -61,7 +61,7 @@ class TaggingsController < ApplicationController
       @tagging.tag = @tag
     else
       # tag attributes are directly available
-      @tagging = Tagging.new(params[:tagging])
+      @tagging = Tagging.new(tagging_params)
     end
 
     @tagging.audio_event = @audio_event
@@ -88,5 +88,11 @@ class TaggingsController < ApplicationController
     respond_to do |format|
       format.json { no_content_as_json }
     end
+  end
+
+  private
+
+  def tagging_params
+    params.require(:tagging).permit(:audio_event_id, :tag_id, tag_attributes: [:is_taxanomic, :text, :type_of_tag, :retired, :notes])
   end
 end
