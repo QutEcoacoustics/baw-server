@@ -1,7 +1,4 @@
-#source 'http://production.cf.rubygems.org'
 source 'https://rubygems.org'
-#source 'https://au-m.rubygems.org'
-#source 'https://aws-eu-cache01.rubygems.org'
 
 # Available groups:
 # development - only for local dev machines
