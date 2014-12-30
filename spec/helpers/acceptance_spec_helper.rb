@@ -174,7 +174,7 @@ def acceptance_checks_shared(request, opts = {})
           actual_response_content_type: response_headers['Content-Type'],
 
           #actual_request_content_type: request_headers['Content-Type'],
-          actual_request_headers: request[0][:request_headers],
+          actual_request_headers: (request.nil? || request.size < 1) ? nil : request[0][:request_headers],
 
           expected_status: opts[:expected_status].is_a?(Symbol) ? opts[:expected_status] : Settings.api_response.status_symbol(opts[:expected_status]),
       })
