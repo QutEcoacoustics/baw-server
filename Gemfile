@@ -162,7 +162,9 @@ group :development do
   # gem 'brakeman', require: false
   # gem 'rails_best_practices'
   # gem 'rubocop', require: false
-  ## gem 'rubycritic', require: false
+  # gem 'rubycritic', require: false
+  # gem 'metric_fu', require: false
+  # gem install traceroute scrap brakeman rails_best_practices rubocop rubycritic metric_fu --no-ri --no-rdoc
 end
 
 group :development, :test do
