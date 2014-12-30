@@ -62,24 +62,13 @@ class UserAccountsController < ApplicationController
   def modify_preferences
 
     @user = current_user
-    prefs_specified = false
-
-    the_params = user_account_params
-
-    if !the_params.blank? && !the_params[:user_account].blank?
-      @user.preferences = the_params[:user_account]
-      prefs_specified = true
-    end
+    @user.preferences = user_account_params
 
     respond_to do |format|
-      if prefs_specified
-        if @user.save
-          format.json { head :no_content }
-        else
-          format.json { render json: @user.errors, status: :unprocessable_entity }
-        end
+      if @user.save
+        format.json { head :no_content }
       else
-        format.json { render json: {error: 'must include user preferences in body as json'}, status: :unprocessable_entity }
+        format.json { render json: @user.errors, status: :unprocessable_entity }
       end
     end
   end
@@ -87,11 +76,11 @@ class UserAccountsController < ApplicationController
   # GET /user_accounts/1/projects
   def projects
     @user_projects = @user.accessible_projects_all.uniq
-    .order('projects.updated_at DESC')
-    .paginate(
-        page: paging_params[:page].blank? ? 1 : paging_params[:page],
-        per_page: 30
-    )
+                         .order('projects.updated_at DESC')
+                         .paginate(
+                             page: paging_params[:page].blank? ? 1 : paging_params[:page],
+                             per_page: 30
+                         )
     respond_to do |format|
       format.html # projects.html.erb
       format.json { render json: @user_projects }
@@ -101,11 +90,11 @@ class UserAccountsController < ApplicationController
   # GET /user_accounts/1/bookmarks
   def bookmarks
     @user_bookmarks = @user.accessible_bookmarks.uniq
-    .order('bookmarks.updated_at DESC')
-    .paginate(
-        page: paging_params[:page].blank? ? 1 : paging_params[:page],
-        per_page: 30
-    )
+                          .order('bookmarks.updated_at DESC')
+                          .paginate(
+                              page: paging_params[:page].blank? ? 1 : paging_params[:page],
+                              per_page: 30
+                          )
     respond_to do |format|
       format.html # bookmarks.html.erb
       format.json { render json: @user_bookmarks }
@@ -115,11 +104,11 @@ class UserAccountsController < ApplicationController
   # GET /user_accounts/1/audio_event_comments
   def audio_event_comments
     @user_audio_event_comments = @user.created_audio_event_comments.includes(:audio_event).uniq
-    .order('audio_event_comments.updated_at DESC')
-    .paginate(
-        page: paging_params[:page].blank? ? 1 : paging_params[:page],
-        per_page: 30
-    )
+                                     .order('audio_event_comments.updated_at DESC')
+                                     .paginate(
+                                         page: paging_params[:page].blank? ? 1 : paging_params[:page],
+                                         per_page: 30
+                                     )
     respond_to do |format|
       format.html # audio_event_comments.html.erb
       format.json { render json: @user_audio_event_comments }
@@ -128,11 +117,11 @@ class UserAccountsController < ApplicationController
 
   def audio_events
     @user_annotations = @user.accessible_audio_events.uniq
-    .order('audio_events.updated_at DESC')
-    .paginate(
-        page: paging_params[:page].blank? ? 1 : paging_params[:page],
-        per_page: 30
-    )
+                            .order('audio_events.updated_at DESC')
+                            .paginate(
+                                page: paging_params[:page].blank? ? 1 : paging_params[:page],
+                                per_page: 30
+                            )
     respond_to do |format|
       format.html # audio_events.html.erb
       format.json { render json: @user_annotations }
@@ -160,7 +149,7 @@ class UserAccountsController < ApplicationController
   end
 
   def user_account_params
-    params.permit(user_account:{})
+    params.require(:user_account).permit!
   end
 
 end

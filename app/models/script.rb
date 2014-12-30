@@ -2,8 +2,6 @@ class Script < ActiveRecord::Base
   # ensures that creator_id, updater_id, deleter_id are set
   include UserChange
 
-  #attr_accessible :analysis_identifier, :data_file, :description, :name, :notes, :settings_file, :verified, :version
-
   has_attached_file :settings_file
   has_attached_file :data_file
 

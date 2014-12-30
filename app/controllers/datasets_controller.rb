@@ -37,7 +37,7 @@ class DatasetsController < ApplicationController
   # GET /projects/:id/datasets/new.json
   def new
 
-    attributes_and_authorize
+    do_authorize!
 
     respond_to do |format|
       format.html {
@@ -57,7 +57,7 @@ class DatasetsController < ApplicationController
   # POST /projects/:id/datasets.json
   def create
 
-    attributes_and_authorize
+    attributes_and_authorize(dataset_params)
 
     respond_to do |format|
       if @dataset.save
@@ -74,7 +74,7 @@ class DatasetsController < ApplicationController
   # PUT /projects/:id/datasets/1.json
   def update
     respond_to do |format|
-      if @dataset.update_attributes(params[:dataset])
+      if @dataset.update_attributes(dataset_params)
         format.html { redirect_to [@project, @dataset], notice: 'Dataset was successfully updated.' }
         format.json { head :no_content }
       else
@@ -107,5 +107,16 @@ class DatasetsController < ApplicationController
   def build_project_dataset
     @dataset = Dataset.new
     @dataset.project = @project
+  end
+
+  def dataset_params
+    params.require(:dataset).permit(
+        :description, :end_date, :end_time,
+        :filters, :name,
+        :number_of_samples, :number_of_tags,
+        :start_date, :start_time, {types_of_tags: [] },
+        {site_ids: []}, :tag_text_filters,
+        :tag_text_filters_list,
+        :has_time, :has_date)
   end
 end

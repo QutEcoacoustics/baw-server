@@ -55,19 +55,20 @@ class AudioEventCommentsController < ApplicationController
   def update
     # allow any logged in user to flag an audio comment
     # only the user that created the audio comment (or admin) can update any other attribute
-    if @audio_event_comment.creator.id == current_user.id ||
-        current_user.has_role?(:admin) ||
+    is_creator = @audio_event_comment.creator.id == current_user.id
+    is_admin = current_user.has_role?(:admin)
+    is_changing_only_flag =
         (audio_event_comment_update_params.include?(:audio_event_comment) &&
-            ([:flag] - audio_event_comment_update_params[:audio_event_comment].keys).empty?)
+        ([:flag] - audio_event_comment_update_params[:audio_event_comment].symbolize_keys.keys).empty?)
 
+    if is_creator || is_admin || is_changing_only_flag
       if @audio_event_comment.update_attributes(audio_event_comment_params)
         respond_show
       else
         respond_change_fail
       end
-
     else
-      # nope
+      # otherwise, not allowed to update the comment
       fail CanCan::AccessDenied.new(I18n.t('devise.failure.unauthorized'), :update, AudioEventComment)
     end
 

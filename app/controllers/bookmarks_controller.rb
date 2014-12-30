@@ -19,10 +19,14 @@ class BookmarksController < ApplicationController
   end
 
   def new
+    do_authorize!
+
     respond_show
   end
 
   def create
+    attributes_and_authorize(bookmark_params)
+
     if @bookmark.save
       respond_create_success
     else
