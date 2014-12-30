@@ -14,7 +14,7 @@ class ErrorsController < ApplicationController
         'Could not find the requested page.',
         nil,
         'route_error',
-        error_info: {original_route: params[:requested_route]}
+        error_info: {original_route: params[:requested_route], original_http_method: request.method}
     )
 
   end
