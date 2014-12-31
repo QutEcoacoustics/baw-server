@@ -148,6 +148,16 @@ RSpec.configure do |config|
     $stdout = original_stdout
   end
 
+  # http://www.relishapp.com/rspec/rspec-rails/v/3-1/docs/upgrade
+  ActiveRecord::Migration.maintain_test_schema!
+
+  # enable options requests in feature tests
+  module ActionDispatch::Integration::RequestHelpers
+    def options(path, parameters = nil, headers_or_env = nil)
+      process :options, path, parameters, headers_or_env
+    end
+  end
+
 end
 
 RspecApiDocumentation.configure do |config_rspec_api|

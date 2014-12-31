@@ -33,9 +33,10 @@ describe AudioRecording, :type => :model do
   it 'fails validation when uploader is nil' do
     test_item = FactoryGirl.build(:audio_recording)
     test_item.uploader = nil
-    expect(subject.error_on(:uploader).size).to eq(1)
-    #expect(subject.errors_on(:uploader)).to include('must exist as an object or foreign key')
-    expect(subject.errors_on(:uploader).to_s).to match(/must exist as an object or foreign key/)
+
+    expect(subject.valid?).to be_falsey
+    expect(subject.errors[:uploader].size).to eq(1)
+    expect(subject.errors[:uploader].to_s).to match(/must exist as an object or foreign key/)
   end
 
   context 'validation' do

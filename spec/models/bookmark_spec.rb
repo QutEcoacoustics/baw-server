@@ -29,7 +29,8 @@ describe Bookmark, :type => :model do
     create(:bookmark, {creator_id: 3, name: 'I love the smell of napalm in the morning.'})
     ss = build(:bookmark, {creator_id: 3, name: 'I LOVE the smell of napalm in the morning.'})
     expect(ss).not_to be_valid
-    expect(ss).to have(1).errors_on(:name)
+    expect(ss.valid?).to be_falsey
+    expect(ss.errors[:name].size).to eq(1)
 
     ss.name = 'I love the smell of napalm in the morning. It smells like victory.'
     ss.save
@@ -53,7 +54,8 @@ describe Bookmark, :type => :model do
     create(:bookmark, {creator_id: 3, name: 'I love the smell of napalm in the morning.'})
     ss = build(:bookmark, {creator_id: 3, name: 'I LOVE the smell of napalm in the morning.'})
     expect(ss).not_to be_valid
-    expect(ss).to have(1).errors_on(:name)
+    expect(ss.valid?).to be_falsey
+    expect(ss.errors[:name].size).to eq(1)
 
     ss.name = 'I love the smell of napalm in the morning. It smells like victory.'
     ss.save

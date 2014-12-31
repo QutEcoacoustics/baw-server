@@ -41,7 +41,8 @@ describe Tag, :type => :model do
     create(:tag, text: 'Rabbit')
     t = build(:tag, text: 'rabbiT')
     expect(t).not_to be_valid
-    expect(t.error_on(:text).size).to eq(1)
+    expect(t.valid?).to be_falsey
+    expect(t.errors[:text].size).to eq(1)
   end
 
   it 'should be not valid without a type_of_tag field specified' do

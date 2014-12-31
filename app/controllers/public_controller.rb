@@ -13,6 +13,9 @@ class PublicController < ApplicationController
       :test_exceptions, :cors_preflight
   ]
 
+  # ensure that invalid CORS preflight requests get useful responses
+  skip_before_action :verify_authenticity_token, only: :cors_preflight
+
   def index
     base_path = "#{Rails.root}/public"
     image_base = '/system/home/'

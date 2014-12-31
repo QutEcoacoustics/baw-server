@@ -34,7 +34,8 @@ describe Site, :type => :model do
   it 'requires a name with at least two characters' do
     s = FactoryGirl.build(:site, :name => 's')
     expect(s).not_to be_valid
-    expect(s.error_on(:name).size).to eq(1)
+    expect(s.valid?).to be_falsey
+    expect(s.errors[:name].size).to eq(1)
   end
 
   it 'should obfuscate lat/longs properly' do

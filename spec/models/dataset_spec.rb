@@ -13,7 +13,9 @@ describe Dataset, :type => :model do
     create(:dataset, {creator_id: 3, name: 'I love the smell of napalm in the morning.'})
     ss = build(:dataset, {creator_id: 3, name: 'I LOVE the smell of napalm in the morning.'})
     expect(ss).not_to be_valid
-    expect(ss.error_on(:name).size).to eq(1)
+
+    expect(ss.valid?).to be_falsey
+    expect(ss.errors[:name].size).to eq(1)
 
     ss.name = 'I love the smell of napalm in the morning. It smells like victory.'
     ss.save

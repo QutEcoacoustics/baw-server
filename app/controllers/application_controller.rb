@@ -209,6 +209,14 @@ class ApplicationController < ActionController::Base
     log_original_error(method_name, error, json_response)
 
     respond_to do |format|
+      # format.all will be used for Accept: */* as it is first in the list
+      # http://blogs.thewehners.net/josh/posts/354-obscure-rails-bug-respond_to-formatany
+      format.all {
+        render json: json_response, status: status_symbol, content_type: 'application/json'
+      }
+      format.json {
+        render json: json_response, status: status_symbol
+      }
       format.html {
 
         status_code = Settings.api_response.status_code(status_symbol)
@@ -223,9 +231,6 @@ class ApplicationController < ActionController::Base
           render template: 'errors/generic', status: status_symbol
         end
       }
-      format.json { render json: json_response, status: status_symbol }
-      # http://blogs.thewehners.net/josh/posts/354-obscure-rails-bug-respond_to-formatany
-      format.all { render json: json_response, status: status_symbol, content_type: 'application/json' }
     end
   end
 

@@ -159,11 +159,15 @@ group :development do
   # for cleaning up Rails apps
   # gem 'traceroute', require: false
   # gem 'scrap', require: false
-  # gem 'brakeman', require: false
   # gem 'rails_best_practices'
   # gem 'rubocop', require: false
   # gem 'rubycritic', require: false
   # gem 'metric_fu', require: false
+
+  # security checkers
+  # gem 'codesake-dawn', require: false
+  # gem 'brakeman', require: false
+
   # gem install traceroute scrap brakeman rails_best_practices rubocop rubycritic metric_fu --no-ri --no-rdoc
 end
 
@@ -185,7 +189,6 @@ group :test do
   gem 'rspec'
   gem 'simplecov',  require: false
   gem 'shoulda-matchers'
-  gem 'rspec-collection_matchers'
   gem 'launchy'
   gem 'json_spec'
   gem 'database_cleaner'

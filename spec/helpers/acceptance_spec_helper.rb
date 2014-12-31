@@ -208,18 +208,27 @@ def acceptance_checks_shared(request, opts = {})
     expected_request_headers = opts[:expected_request_header_values]
     actual_request_headers = opts[:actual_request_headers]
     expected_request_headers.each do |key, value|
-      expect(actual_request_headers.keys).to include(key), "Did not find '#{key}' in request headers: #{actual_request_headers.keys.join(', ')}."
-      expect(actual_request_headers[key]).to eq(value), "Value '#{actual_request_headers[key].inspect}' for '#{key}' in request headers did not match expected value #{value.inspect}."
+      expect(actual_request_headers.keys).to include(key), "Mismatch: Did not find '#{key}' in request headers: #{actual_request_headers.keys.join(', ')}."
+      expect(actual_request_headers[key]).to eq(value), "Mismatch: Value '#{actual_request_headers[key].inspect}' for '#{key}' in request headers did not match expected value #{value.inspect}."
     end
+
+    difference = actual_request_headers.keys - expected_request_headers.keys
+    expect(difference).to be_empty, "Mismatch: request headers differ by #{difference}: \nExpected: #{expected_request_headers} \nActual: #{actual_request_headers}"
+
+
   end
 
   unless opts[:expected_response_header_values].blank?
     expected_response_headers = opts[:expected_response_header_values]
     actual_response_headers = opts[:actual_response_headers]
+
     expected_response_headers.each do |key, value|
-      expect(actual_response_headers).to include(key), "Did not find '#{key}' in response headers: #{actual_response_headers.keys.join(', ')}."
-      expect(actual_response_headers[key]).to eq(value), "Value '#{actual_response_headers[key].inspect}' for '#{key}' in response headers did not match expected value #{value.inspect}."
+      expect(actual_response_headers).to include(key), "Mismatch: Did not find '#{key}' in response headers: #{actual_response_headers.keys.join(', ')}."
+      expect(actual_response_headers[key]).to eq(value), "Mismatch: Value '#{actual_response_headers[key].inspect}' for '#{key}' in response headers did not match expected value #{value.inspect}."
     end
+
+    difference = actual_response_headers.keys - expected_response_headers.keys
+    expect(difference).to be_empty, "Mismatch: response headers differ by #{difference}: \nExpected: #{expected_response_headers} \nActual: #{actual_response_headers}"
   end
 
   opts
