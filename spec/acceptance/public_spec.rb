@@ -170,7 +170,7 @@ resource 'Public' do
 
       context 'without Access-Control-Request-Headers' do
         # this seems to be accepted by the rails-cors gem
-        header 'Origin', 'http://0.0.0.0:3000'
+        header 'Origin', 'http://192.168.0.10:3000'
         header 'Access-Control-Request-Method', 'GET'
         http_options_verb '/projects' do
           standard_request_options(
@@ -182,7 +182,7 @@ resource 'Public' do
                   expected_response_content_type: 'text/plain',
                   expected_response_header_values:
                       {
-                          'Access-Control-Allow-Origin' => 'http://0.0.0.0:3000',
+                          'Access-Control-Allow-Origin' => 'http://192.168.0.10:3000',
                           'Access-Control-Expose-Headers' => expose_headers,
                           'Access-Control-Allow-Credentials' => 'true',
                           'Access-Control-Allow-Methods' => allow_methods,
@@ -191,7 +191,7 @@ resource 'Public' do
                       },
                   expected_request_header_values:
                       {
-                          'Origin' => 'http://0.0.0.0:3000',
+                          'Origin' => 'http://192.168.0.10:3000',
                           'Access-Control-Request-Method' => 'GET',
 
                           # defaults and framework-specified headers
