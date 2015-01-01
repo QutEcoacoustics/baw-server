@@ -88,8 +88,11 @@ describe BawWorkers::Media::Action do
       expect(Resque.enqueued?(BawWorkers::Media::Action, queued_query)).to eq(true)
 
       found = BawWorkers::ResqueApi.jobs_of_with(BawWorkers::Media::Action, queued_query)
+
       job_id = BawWorkers::ResqueJobId.create_id_props(BawWorkers::Media::Action, queued_query)
-      status = Resque::Plugins::Status::Hash.get(job_id)
+      # status = Resque::Plugins::Status::Hash.get(job_id)
+
+      status = BawWorkers::Media::Action.get_job_status(:audio, test_media_request_params)
 
       expect(found.size).to eq(1)
       expect(found[0]['class']).to eq(BawWorkers::Media::Action.to_s)

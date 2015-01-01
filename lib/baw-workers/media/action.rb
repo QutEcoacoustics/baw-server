@@ -151,6 +151,15 @@ module BawWorkers
           [media_type_sym, params_sym]
         end
 
+        # Get a Resque::Status hash for if a media job has a matching payload.
+        # @param [Symbol] media_type
+        # @param [Hash] media_request_params
+        # @return [Resque::Plugins::Status::Hash] status
+        def get_job_status(media_type, media_request_params)
+          media_type_sym, params_sym = action_validate(media_type, media_request_params)
+          payload = {media_type: media_type_sym, media_request_params: params_sym}
+          BawWorkers::ResqueApi.status(BawWorkers::Media::Action, payload)
+        end
 
       end
 

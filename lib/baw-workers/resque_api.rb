@@ -204,10 +204,13 @@ module BawWorkers
         pids
       end
 
-      # Shared configuration for Resque workers.
-      # @return [Hash] setup configuration
-      def workers_setup
-
+      # Get a Resque::Status hash for the matching action job and payload.
+      # @param [Class] action_class
+      # @param [Hash] args
+      # @return [Resque::Plugins::Status::Hash] status
+      def status(action_class, args = {})
+        job_id = BawWorkers::ResqueJobId.create_id_props(action_class, args)
+        Resque::Plugins::Status::Hash.get(job_id)
       end
 
     end
