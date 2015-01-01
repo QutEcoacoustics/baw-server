@@ -39,7 +39,7 @@ SimpleCov.start
 require 'zonebie'
 require 'fakeredis'
 require 'fakeredis/rspec'
-require 'active_support/core_ext'
+require 'active_support/all'
 require 'webmock/rspec'
 
 require 'baw-workers'

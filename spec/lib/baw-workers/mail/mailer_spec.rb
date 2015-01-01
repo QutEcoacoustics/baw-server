@@ -51,7 +51,7 @@ describe BawWorkers::Mail::Mailer do
     end
 
     it 'sends an email' do
-      expect { mail.deliver }.to change { ActionMailer::Base.deliveries.count }.by(1)
+      expect { mail.deliver_now }.to change { ActionMailer::Base.deliveries.count }.by(1)
     end
 
   end

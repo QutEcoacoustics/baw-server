@@ -6,13 +6,13 @@ module BawWorkers
   module Mail
     class Mailer < ActionMailer::Base
 
-      def send_worker_error_email(klass, args, queue_name, error)
+      def self.send_worker_error_email(klass, args, queue_name, error)
         to = BawWorkers::Settings.mailer.emails.required_recipients
         from = BawWorkers::Settings.mailer.emails.sender_address
         job = {job_class: klass, job_args: args, job_queue: queue_name}
 
-        mail_ready = error_notification(to, from, job, error)
-        mail_ready.deliver
+        mail_ready = BawWorkers::Mail::Mailer.error_notification(to, from, job, error)
+        mail_ready.deliver_now
       end
 
       def error_notification(to, from, job, error)
