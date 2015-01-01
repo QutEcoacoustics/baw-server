@@ -2,6 +2,9 @@ class MediaController < ApplicationController
   skip_authorization_check only: [:show]
 
   def show
+    # start timing request
+    overall_start = Time.now
+
     # normalise params and get access to rails request instance
     request_params = CleanParams.perform(params.dup)
 
@@ -42,7 +45,8 @@ class MediaController < ApplicationController
           category: category,
           defaults: defaults,
           format: requested_format,
-          media_type: requested_media_type
+          media_type: requested_media_type,
+          timing_overall_start: overall_start
       }
 
       supported_media_response(audio_recording, audio_event, media_info, request_params)
@@ -121,7 +125,7 @@ class MediaController < ApplicationController
     json_result = wrapped.to_json
     json_result_size = json_result.size.to_s
 
-    headers['Content-Length'] = json_result_size
+    add_header_length(json_result_size)
 
     if rails_request.head?
       head_response(
@@ -138,6 +142,10 @@ class MediaController < ApplicationController
   def media_response(audio_recording, metadata, original, current, media_info)
     rails_request = request
 
+    # start timing request
+    time_start = media_info[:timing_overall_start]
+    add_header_started(time_start)
+
     # get pre-defined settings
     audio_cached = BawWorkers::Config.audio_cache_helper
     spectrogram_cached = BawWorkers::Config.spectrogram_cache_helper
@@ -149,28 +157,25 @@ class MediaController < ApplicationController
     # get parameters for creating/retrieving cache
     generation_request = metadata.generation_request(original, current)
 
-    # start timing request
-    time_start = Time.now
-
     if media_info[:category] == :audio
       # check if audio file exists in cache
       cached_audio_info = audio_cached.path_info(generation_request)
       media_category = :audio
 
-      existing_files = create_media(media_category, cached_audio_info, generation_request, time_start)
-      response_local_audio(audio_recording, generation_request, existing_files, rails_request, range_request)
+      existing_files, time_waiting_start = create_media(media_category, cached_audio_info, generation_request)
+      response_local_audio(audio_recording, generation_request, existing_files, rails_request, range_request, time_start, time_waiting_start)
     elsif media_info[:category] == :image
       # check if spectrogram image file exists in cache
       cached_spectrogram_info = spectrogram_cached.path_info(generation_request)
       media_category = :spectrogram
 
-      existing_files = create_media(media_category, cached_spectrogram_info, generation_request, time_start)
-      response_local_spectrogram(audio_recording, generation_request, existing_files, rails_request, range_request)
+      existing_files, time_waiting_start = create_media(media_category, cached_spectrogram_info, generation_request)
+      response_local_spectrogram(audio_recording, generation_request, existing_files, rails_request, range_request, time_start, time_waiting_start)
     end
 
   end
 
-  def create_media(media_category, files_info, generation_request, time_start)
+  def create_media(media_category, files_info, generation_request)
     # determine where media cutting and/ort spectrogram generation will occur
     is_processed_locally = Settings.process_media_locally?
     is_processed_by_resque = Settings.process_media_resque?
@@ -178,20 +183,26 @@ class MediaController < ApplicationController
 
     existing_files = files_info[:existing]
 
+    time_start_waiting = nil
+
     if existing_files.blank? && is_processed_locally
       add_header_generated_local
       existing_files = create_media_local(media_category, generation_request)
 
     elsif  existing_files.blank? && is_processed_by_resque
       add_header_generated_remote
-      existing_files = create_media_resque(media_category, files_info, generation_request)
+      job_status = create_media_resque(media_category, generation_request)
+
+      time_start_waiting = Time.now
+
+      expected_files = files_info[:possible]
+      poll_locations = MediaPoll.prepare_locations(expected_files)
+      existing_files = MediaPoll.refresh_files(poll_locations)
 
     elsif !existing_files.blank?
       add_header_cache
-
+      add_header_processing_elapsed(0)
     end
-
-    time_stop = Time.now
 
     # check that there is at least one existing file
     existing_files = existing_files.compact # remove nils
@@ -203,11 +214,8 @@ class MediaController < ApplicationController
       fail BawAudioTools::Exceptions::AudioToolError, "#{msg1} #{msg2} #{msg3} #{msg4}"
     end
 
-    # add timing headers
-    add_header_started(time_start)
-    add_header_elapsed(time_stop - time_start)
-
-    existing_files
+    time_start_waiting = Time.now if time_start_waiting.nil?
+    [existing_files, time_start_waiting]
   end
 
   # Create a media request locally.
@@ -215,54 +223,35 @@ class MediaController < ApplicationController
   # @param [Object] generation_request
   # @return [String] path to existing file
   def create_media_local(media_category, generation_request)
-    BawWorkers::Media::Action.make_media_request(media_category, generation_request)
+
+    start_time = Time.now
+    target_existing_paths = BawWorkers::Media::Action.make_media_request(media_category, generation_request)
+    end_time = Time.now
+
+    add_header_processing_elapsed(end_time - start_time)
+
+    target_existing_paths
   end
 
 
   # Create a media request using resque.
   # @param [Symbol] media_category
-  # @param [Hash] files_info
   # @param [Object] generation_request
-  # @return [Array<String>] path to existing file
-  def create_media_resque(media_category, files_info, generation_request)
+  # @return [Resque::Plugins::Status::Hash] job status
+  def create_media_resque(media_category, generation_request)
+
+    start_time = Time.now
     BawWorkers::Media::Action.action_enqueue(media_category, generation_request)
-    poll_media(files_info[:possible], Settings.audio_tools_timeout_sec)
+    #existing_files = MediaPoll.poll_media(expected_files, Settings.audio_tools_timeout_sec)
+    job_status = MediaPoll.poll_resque(media_category, generation_request, Settings.audio_tools_timeout_sec)
+    end_time = Time.now
+
+    add_header_processing_elapsed(end_time - start_time)
+
+    job_status
   end
 
-  # this will block the request and wait until the resource is available
-  # waits up to wait_max seconds
-  # @param [Array<String>] expected_files
-  # @param [Number] wait_max
-  # @return [Array<String>] existing files
-  def poll_media(expected_files, wait_max)
-    #timeout_sec_dir_list = 2.0
-    #run_ext_program = BawAudioTools::RunExternalProgram.new(timeout_sec_dir_list, Rails.logger)
-    poll_delay = 0.5
-
-    poll("Took longer than #{wait_max} seconds for resque to fulfil media request.", wait_max, poll_delay) do
-      existing_files = []
-
-      expected_files.each do |file|
-        # get a valid directory path, and 'refresh' it by getting a file list with -l (executes stat() in linux).
-        # This helps avoid problems with nfs directory list caching.
-        # only list the file, as the dirs might have quite a few files
-        # could also use the external program runner
-        # run_ext_program.execute("ls -la \"#{dir}\"") if File.directory?(dir)
-        # can also be done by setting the attribute cache time for the nfs mount
-        # e.g. 'actimeo=3'
-        # @see NFS man page
-
-        dir = File.dirname(file) unless file.nil?
-        `ls -la \"#{dir}\"` if !file.nil? && File.directory?(dir)
-        existing_files.push(file) if !file.nil? && File.file?(file)
-      end
-
-      existing_files = existing_files.compact
-      existing_files.empty? ? false : existing_files
-    end
-  end
-
-  def response_local_spectrogram(audio_recording, generation_request, existing_files, rails_request, range_request)
+  def response_local_spectrogram(audio_recording, generation_request, existing_files, rails_request, range_request, time_start, time_waiting_start)
 
     options = generation_request
 
@@ -272,7 +261,12 @@ class MediaController < ApplicationController
     existing_file = existing_files.first
     content_length = File.size(existing_file)
 
-    add_header_length(File.size(existing_file))
+    add_header_length(content_length)
+
+    # add overall time taken and waiting time elapsed header
+    time_stop = Time.now
+    add_header_total_elapsed(time_stop - time_start)
+    add_header_waiting_elapsed(time_stop - time_waiting_start)
 
     if rails_request.head?
       head_response_inline(:ok, {content_length: content_length}, options[:media_type], suggested_file_name)
@@ -289,8 +283,9 @@ class MediaController < ApplicationController
     end
   end
 
-  def response_local_audio(audio_recording, generation_request, existing_files, rails_request, range_request)
+  def response_local_audio(audio_recording, generation_request, existing_files, rails_request, range_request, time_start, time_waiting_start)
     # headers[RangeRequest::HTTP_HEADER_ACCEPT_RANGES] = RangeRequest::HTTP_HEADER_ACCEPT_RANGES_BYTES
+    # content length is added by RangeRequest
 
     download_options = {
         media_type: generation_request[:media_type],
@@ -305,14 +300,14 @@ class MediaController < ApplicationController
         end_offset: generation_request[:end_offset]
     }
 
-    download_file(download_options, rails_request, range_request)
+    download_file(download_options, rails_request, range_request, time_start, time_waiting_start)
   end
 
   # Respond with audio range request.
   # @param [Hash] options
   # @param [ActionDispatch::Request] rails_request
   # @param [RangeRequest] range_request
-  def download_file(options, rails_request, range_request)
+  def download_file(options, rails_request, range_request, time_start, time_waiting_start)
     #raise ArgumentError, 'File does not exist on disk' if full_path.blank?
     # are HEAD requests supported?
     # more info: http://patshaughnessy.net/2010/10/11/activerecord-with-large-result-sets-part-2-streaming-data
@@ -329,6 +324,11 @@ class MediaController < ApplicationController
     is_range = info[:response_is_range]
 
     info[:response_has_content] = false if is_head_request
+
+    # add overall time taken header
+    time_stop = Time.now
+    add_header_total_elapsed(time_stop - time_start)
+    add_header_waiting_elapsed(time_stop - time_waiting_start)
 
     if has_content && is_range
       buffer = write_to_response_stream(info, range_request)
@@ -405,46 +405,35 @@ class MediaController < ApplicationController
   end
 
   def add_header_cache
-    headers['X-Media-Response-From'] = 'Cache'
+    headers[MediaPoll::HEADER_KEY_RESPONSE_FROM] = MediaPoll::HEADER_VALUE_RESPONSE_CACHE
   end
 
   def add_header_generated_remote
-    headers['X-Media-Response-From'] = 'Generated Remotely'
+    headers[MediaPoll::HEADER_KEY_RESPONSE_FROM] = MediaPoll::HEADER_VALUE_RESPONSE_REMOTE
   end
 
   def add_header_generated_local
-    headers['X-Media-Response-From'] = 'Generated Locally'
+    headers[MediaPoll::HEADER_KEY_RESPONSE_FROM] = MediaPoll::HEADER_VALUE_RESPONSE_LOCAL
   end
 
+  # request received
   def add_header_started(start_datetime)
-    headers['X-Media-Response-Start'] = start_datetime.httpdate
+    headers[MediaPoll::HEADER_KEY_RESPONSE_START] = start_datetime.httpdate
   end
 
-  def add_header_elapsed(elapsed_seconds)
-    headers['X-Media-Elapsed-Seconds'] = elapsed_seconds.to_s
+  # from request received to data sent to client
+  def add_header_total_elapsed(elapsed_seconds)
+    headers[MediaPoll::HEADER_KEY_ELAPSED_TOTAL] = elapsed_seconds.to_s
   end
 
-  # Based on Firepoll gem: for knowing when something is ready
-  # @param [String] msg a custom message raised when polling fails
-  # @param [Numeric] seconds number of seconds to poll, default is two seconds
-  # @param [Numeric] delay number of seconds to sleep, default is tenth of a second
-  # @yield a block that determines whether polling should continue
-  # @yield return false if polling should continue
-  # @yield return true if polling is complete
-  # @raise [RuntimeError] when polling fails
-  # @return the return value of the passed block
-  def poll(msg=nil, seconds=2.0, delay=0.1)
-    seconds ||= 2.0 # 5 seconds overall patience
-    give_up_at = Time.now + seconds # pick a time to stop being patient
-    delay ||= 0.1 # wait a tenth of a second before re-attempting
+  # from job queue/generation start to job finished/generation finished
+  def add_header_processing_elapsed(elapsed_seconds)
+    headers[MediaPoll::HEADER_KEY_ELAPSED_PROCESSING] = elapsed_seconds.to_s
+  end
 
-    while Time.now < give_up_at do
-      result = yield
-      return result if result
-      sleep delay
-    end
-    msg ||= "polling failed after #{seconds} seconds"
-    raise msg
+  # from job finished/generation finished to data sent to client
+  def add_header_waiting_elapsed(elapsed_seconds)
+    headers[MediaPoll::HEADER_KEY_ELAPSED_WAITING] = elapsed_seconds.to_s
   end
 
 end

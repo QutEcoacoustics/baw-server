@@ -356,11 +356,9 @@ def acceptance_checks_media(opts = {})
   expect(opts[:actual_response_headers]['Content-Length']).to_not be_blank, "Mismatch: content length. #{opts[:msg]}"
 
   if is_json
-    expect(opts[:actual_response_headers]).to_not include('X-Media-Response-From'), "Invalid header: media response from. #{opts[:msg]}"
-    expect(opts[:actual_response_headers]).to_not include('X-Media-Response-Start'), "Invalid header: media response start. #{opts[:msg]}"
+    expect(opts[:actual_response_headers]).to_not include(*MediaPoll::HEADERS_EXPOSED - ['Content-Length']), "One or more of these headers was present when it should not be #{MediaPoll::HEADERS_EXPOSED} #{opts[:msg]}"
   else
-    expect(opts[:actual_response_headers]).to include('X-Media-Response-From'), "Missing header: media response from. #{opts[:msg]}"
-    expect(opts[:actual_response_headers]).to include('X-Media-Response-Start'), "Missing header: media response start. #{opts[:msg]}"
+    expect(opts[:actual_response_headers]).to include(*MediaPoll::HEADERS_EXPOSED), "Missing one or more of these headers #{MediaPoll::HEADERS_EXPOSED} #{opts[:msg]}"
   end
 
   if opts[:is_range_request]

@@ -5,7 +5,7 @@ require 'helpers/acceptance_spec_helper'
 # https://github.com/zipmark/rspec_api_documentation
 resource 'Public' do
 
-  expose_headers = %w(Content-Length X-Media-Elapsed-Seconds X-Media-Response-From X-Media-Response-Start).join(', ')
+  expose_headers = MediaPoll::HEADERS_EXPOSED.join(', ')
   allow_methods = %w(GET POST PUT PATCH HEAD DELETE OPTIONS).join(', ')
 
   # have to specify content type header, otherwise it gets set to application/x-www-form-urlencoded

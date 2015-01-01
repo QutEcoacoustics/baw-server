@@ -36,6 +36,7 @@ class ApplicationController < ActionController::Base
   rescue_from CustomErrors::NotAcceptableError, with: :not_acceptable_error_response
   rescue_from CustomErrors::UnprocessableEntityError, with: :unprocessable_entity_error_response
   rescue_from CustomErrors::FilterArgumentError, with: :filter_argument_error_response
+  rescue_from CustomErrors::AudioGenerationError, with: :audio_generation_error_response
 
   # Don't rescue this, it is the base for 406 and 415
   #rescue_from CustomErrors::RequestedMediaTypeError, with: :requested_media_type_error_response
@@ -396,6 +397,15 @@ class ApplicationController < ActionController::Base
         error,
         'filter_argument_error_response',
         {error_info: error.filter_segment}
+    )
+  end
+
+  def audio_generation_error_response(error)
+    render_error(
+        :internal_server_error,
+        "Audio generation failed: #{error.message}",
+        error,
+        'audio_generation_error_response'
     )
   end
 

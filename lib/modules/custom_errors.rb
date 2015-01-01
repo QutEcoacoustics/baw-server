@@ -38,4 +38,5 @@ module CustomErrors
       @message
     end
   end
+  class AudioGenerationError < RuntimeError; end
 end

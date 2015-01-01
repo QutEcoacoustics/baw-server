@@ -163,7 +163,7 @@ module AWB
                  headers: :any,
                  methods: [:get, :post, :put, :patch, :head, :delete, :options],
                  credentials: true,
-                 expose: %w(Content-Length X-Media-Elapsed-Seconds X-Media-Response-From X-Media-Response-Start)
+                 expose: MediaPoll::HEADERS_EXPOSED
 
 
       end

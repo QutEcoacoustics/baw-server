@@ -159,7 +159,7 @@ group :development do
   # for cleaning up Rails apps
   # gem 'traceroute', require: false
   # gem 'scrap', require: false
-  # gem 'rails_best_practices'
+  # gem 'rails_best_practices', require: false
   # gem 'rubocop', require: false
   # gem 'rubycritic', require: false
   # gem 'metric_fu', require: false
@@ -168,7 +168,11 @@ group :development do
   # gem 'codesake-dawn', require: false
   # gem 'brakeman', require: false
 
-  # gem install traceroute scrap brakeman rails_best_practices rubocop rubycritic metric_fu --no-ri --no-rdoc
+  # database checks
+  # gem 'lol_dba', require: false
+  # gem 'consistency_fail', require: false
+
+  # gem install traceroute --no-ri --no-rdoc
 end
 
 group :development, :test do
