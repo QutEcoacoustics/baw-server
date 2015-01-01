@@ -76,9 +76,13 @@ class MediaPoll
 
         # job did not complete successfully
         if status.killed? || status.failed?
-          status_msg = "Status #{(status.nil? ? '(not available)' : "#{status.uuid}: #{status.time} #{status.status} - #{status.message}")}"
+          status_info = {
+              uuid: status.uuid,
+              time: status.time,
+              status: status.status
+          }
           msg = 'Resque job finished with error.'
-          fail CustomErrors::AudioGenerationError, "#{msg} #{status_msg}"
+          fail CustomErrors::AudioGenerationError.new(msg, status_info)
         end
 
         status.completed? # job completed successfully
