@@ -25,5 +25,10 @@ describe PublicController, :type => :routing do
     it { expect(get('/ethics_statement')).to route_to('public#ethics_statement') }
     it { expect(get('/disclaimers')).to route_to('public#disclaimers') }
 
+    # CORS tests (invalid, as they do not have correct headers)
+    it { expect(options: '/projects').to route_to(controller: 'public', action: 'cors_preflight', requested_route: 'projects') }
+    it { expect(options: '/sites').to route_to(controller: 'public', action: 'cors_preflight', requested_route: 'sites') }
+    it { expect(options: '/blah_blah').to route_to(controller: 'public', action: 'cors_preflight', requested_route: 'blah_blah') }
+    it { expect(options: '/projects/1/sites/2/audio_recordings/3').to route_to(controller: 'public', action: 'cors_preflight', requested_route: 'projects/1/sites/2/audio_recordings/3') }
   end
 end

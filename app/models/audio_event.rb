@@ -2,9 +2,6 @@ class AudioEvent < ActiveRecord::Base
   # ensures that creator_id, updater_id, deleter_id are set
   include UserChange
 
-  attr_accessible :audio_recording_id, :start_time_seconds, :end_time_seconds, :low_frequency_hertz, :high_frequency_hertz, :is_reference,
-                  :tags_attributes, :tag_ids
-
   # relations
   belongs_to :audio_recording, inverse_of: :audio_events
   has_many :taggings, inverse_of: :audio_event

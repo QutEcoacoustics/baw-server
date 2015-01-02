@@ -4,17 +4,17 @@ class ApplicationController < ActionController::Base
   layout :api_or_html
 
   # custom user authentication
-  before_filter :authenticate_user_custom!
+  before_action :authenticate_user_custom!
 
   # devise strong params set up
   before_action :configure_permitted_parameters, if: :devise_controller?
 
   # This is Devise's authentication
-  #before_filter :authenticate_user!
+  #before_action :authenticate_user!
 
   # https://github.com/plataformatec/devise/blob/master/test/rails_app/app/controllers/application_controller.rb
-  # before_filter :current_user, unless: :devise_controller?
-  # before_filter :authenticate_user!, if: :devise_controller?
+  # before_action :current_user, unless: :devise_controller?
+  # before_action :authenticate_user!, if: :devise_controller?
 
   # CanCan - always check authorization
   check_authorization unless: :devise_controller?
@@ -36,6 +36,8 @@ class ApplicationController < ActionController::Base
   rescue_from CustomErrors::NotAcceptableError, with: :not_acceptable_error_response
   rescue_from CustomErrors::UnprocessableEntityError, with: :unprocessable_entity_error_response
   rescue_from CustomErrors::FilterArgumentError, with: :filter_argument_error_response
+  rescue_from CustomErrors::AudioGenerationError, with: :audio_generation_error_response
+  rescue_from BawAudioTools::Exceptions::AudioToolError, with: :audio_tool_error_response
 
   # Don't rescue this, it is the base for 406 and 415
   #rescue_from CustomErrors::RequestedMediaTypeError, with: :requested_media_type_error_response
@@ -49,13 +51,13 @@ class ApplicationController < ActionController::Base
   # For APIs, you may want to use :null_session instead.
   protect_from_forgery with: :exception
 
-  skip_before_filter :verify_authenticity_token, if: :json_request?
+  skip_before_action :verify_authenticity_token, if: :json_request?
 
-  after_filter :set_csrf_cookie_for_ng, :resource_representation_caching_fixes
+  after_action :set_csrf_cookie_for_ng, :resource_representation_caching_fixes
 
   # set and reset user stamper for each request
   # based on https://github.com/theepan/userstamp/tree/bf05d832ee27a717ea9455d685c83ae2cfb80310
-  around_filter :set_then_reset_user_stamper
+  around_action :set_then_reset_user_stamper
 
   protected
 
@@ -209,6 +211,14 @@ class ApplicationController < ActionController::Base
     log_original_error(method_name, error, json_response)
 
     respond_to do |format|
+      # format.all will be used for Accept: */* as it is first in the list
+      # http://blogs.thewehners.net/josh/posts/354-obscure-rails-bug-respond_to-formatany
+      format.all {
+        render json: json_response, status: status_symbol, content_type: 'application/json'
+      }
+      format.json {
+        render json: json_response, status: status_symbol
+      }
       format.html {
 
         status_code = Settings.api_response.status_code(status_symbol)
@@ -223,9 +233,6 @@ class ApplicationController < ActionController::Base
           render template: 'errors/generic', status: status_symbol
         end
       }
-      format.json { render json: json_response, status: status_symbol }
-      # http://blogs.thewehners.net/josh/posts/354-obscure-rails-bug-respond_to-formatany
-      format.all { render json: json_response, status: status_symbol, content_type: 'application/json' }
     end
   end
 
@@ -371,7 +378,7 @@ class ApplicationController < ActionController::Base
         "Could not find the requested page: #{error.message}",
         error,
         'routing_argument_error_response',
-        error_info: {original_route: request.env['PATH_INFO']}
+        error_info: {original_route: request.env['PATH_INFO'], original_http_method: request.method}
     )
   end
 
@@ -391,6 +398,25 @@ class ApplicationController < ActionController::Base
         error,
         'filter_argument_error_response',
         {error_info: error.filter_segment}
+    )
+  end
+
+  def audio_generation_error_response(error)
+    render_error(
+        :internal_server_error,
+        "Audio generation failed: #{error.message}",
+        error,
+        'audio_generation_error_response',
+        {error_info: error.job_info}
+    )
+  end
+
+  def audio_tool_error_response(error)
+    render_error(
+        :internal_server_error,
+        "Audio generation failed: #{error.message}",
+        error,
+        'audio_tool_error_response'
     )
   end
 

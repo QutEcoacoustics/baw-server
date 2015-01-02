@@ -160,7 +160,7 @@ module Filter
     # @raise [FilterArgumentError] if model is not an ActiveRecord::Base
     # @return [void]
     def validate_model(model)
-      fail CustomErrors::FilterArgumentError, "Model must respond to scoped, got #{model}" unless model.respond_to?(:scoped)
+      fail CustomErrors::FilterArgumentError, "Model must respond to all, got #{model.class}" unless model.respond_to?(:all)
     end
 
     # Validate an array.

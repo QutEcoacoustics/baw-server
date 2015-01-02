@@ -10,10 +10,6 @@ class User < ActiveRecord::Base
   # http://www.phase2technology.com/blog/authentication-permissions-and-roles-in-rails-with-devise-cancan-and-role-model/
   include RoleModel
 
-  attr_accessible :user_name, :email, :password, :password_confirmation, :remember_me,
-                  :roles, :roles_mask, :preferences,
-                  :image, :login
-
   # user must always have an authentication token
   before_save :ensure_authentication_token
 
@@ -271,7 +267,7 @@ class User < ActiveRecord::Base
     # notify us of new user sign ups
     user_info_hash = {name: self.user_name, email: self.email}
     user_info = DataClass::NewUserInfo.new(user_info_hash)
-    PublicMailer.new_user_message(self, user_info)
+    PublicMailer.new_user_message(self, user_info).deliver_now
   end
 
   def generate_authentication_token

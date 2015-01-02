@@ -4,9 +4,6 @@
 # Environment specific settings expected in config/settings/{environment_name}.yml
 # Add overwrites in here
 test:
-  host:
-    name: localhost
-    port: 3030
   actions:
     media:
       queue: media_travis

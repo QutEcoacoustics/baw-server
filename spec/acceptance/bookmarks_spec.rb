@@ -42,6 +42,8 @@ resource 'Bookmarks' do
   let(:unconfirmed_token) { "Token token=\"#{@unconfirmed_user.authentication_token}\"" }
   let(:invalid_token) { "Token token=\"weeeeeeeee0123456789splat\"" }
 
+  let(:post_attributes) { FactoryGirl.attributes_for(:bookmark) }
+
   # List (#index)
   # ============
 
@@ -347,6 +349,7 @@ resource 'Bookmarks' do
 
     let(:authentication_token) { reader_token }
     let(:id) { @bookmark.id }
+    let(:raw_post) { {'bookmark' => post_attributes}.to_json }
     standard_request_options(:put, 'UPDATE (as reader)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
   end
 
@@ -355,6 +358,7 @@ resource 'Bookmarks' do
 
     let(:authentication_token) { user_token }
     let(:id) { @bookmark.id }
+    let(:raw_post) { {'bookmark' => post_attributes}.to_json }
     standard_request_options(:put, 'UPDATE (as user)', :ok, {expected_json_path: 'data/category'})
   end
 

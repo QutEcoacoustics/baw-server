@@ -483,7 +483,7 @@ AND\"audio_recordings\".\"site_id\">9876 \
 AND\"audio_recordings\".\"site_id\"IN(1,2,3) \
 AND\"audio_recordings\".\"site_id\">=100 \
 AND\"audio_recordings\".\"site_id\"<200 \
-AND\"audio_recordings\".\"status\">=4567 \
+AND\"audio_recordings\".\"status\">='4567' \
 AND\"audio_recordings\".\"status\"ILIKE'%containtext%' \
 AND\"audio_recordings\".\"status\"ILIKE'startswithtext%' \
 AND\"audio_recordings\".\"status\"ILIKE'%endswithtext' \
@@ -491,17 +491,17 @@ AND\"audio_recordings\".\"status\">='123' \
 AND\"audio_recordings\".\"status\"<='128' \
 AND(\"audio_recordings\".\"duration_seconds\"!=40 \
 ORNOT(\"audio_recordings\".\"channels\"<=9999))) \
-AND((((((((\"audio_recordings\".\"recorded_date\"ILIKE'%Hello%' \
+AND(((((((\"audio_recordings\".\"recorded_date\"ILIKE'%Hello%' \
 OR\"audio_recordings\".\"media_type\"ILIKE'%world') \
 OR\"audio_recordings\".\"duration_seconds\"=60) \
 OR\"audio_recordings\".\"duration_seconds\"<=70) \
 OR\"audio_recordings\".\"duration_seconds\"=50) \
 OR\"audio_recordings\".\"duration_seconds\">=80) \
 OR\"audio_recordings\".\"channels\"=1) \
-OR\"audio_recordings\".\"channels\"<=8888)) \
+OR\"audio_recordings\".\"channels\"<=8888) \
 AND(NOT(\"audio_recordings\".\"duration_seconds\"!=140)) \
-AND((\"audio_recordings\".\"media_type\"ILIKE'%testing\\_testing%' \
-OR\"audio_recordings\".\"status\"ILIKE'%testing\\_testing%')) \
+AND(\"audio_recordings\".\"media_type\"ILIKE'%testing\\_testing%' \
+OR\"audio_recordings\".\"status\"ILIKE'%testing\\_testing%') \
 AND(\"audio_recordings\".\"status\"='hello' \
 AND\"audio_recordings\".\"channels\"=28) \
 ORDERBY\"audio_recordings\".\"duration_seconds\"DESCLIMIT10OFFSET0"

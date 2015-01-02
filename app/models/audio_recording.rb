@@ -8,13 +8,7 @@ class AudioRecording < ActiveRecord::Base
   # ensures that creator_id, updater_id, deleter_id are set
   include UserChange
 
-  # attr
-  attr_accessible :bit_rate_bps, :channels, :data_length_bytes, :original_file_name,
-                  :duration_seconds, :file_hash, :media_type, :notes,
-                  :recorded_date, :sample_rate_hertz, :status, :uploader_id,
-                  :site_id
   attr_reader :overlapping
-  attr_protected :uuid
 
   # relations
   belongs_to :site, inverse_of: :audio_recordings

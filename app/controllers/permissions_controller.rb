@@ -3,15 +3,15 @@ class PermissionsController < ApplicationController
 
   add_breadcrumb 'Home', :root_path
 
-  # order matters for before_filter and load_and_authorize_resource!
+  # order matters for before_action and load_and_authorize_resource!
   load_and_authorize_resource :project
 
   # this is necessary so that the ability has access to permission.project
-  before_filter :build_project_permission, only: [:new, :create]
+  before_action :build_project_permission, only: [:new, :create]
 
   load_and_authorize_resource :permission, through: :project
 
-  before_filter :add_project_breadcrumb, only: [:index]
+  before_action :add_project_breadcrumb, only: [:index]
 
   respond_to :json
 
@@ -35,7 +35,7 @@ class PermissionsController < ApplicationController
       } # index.html.erb
       format.json {
         @permissions, constructed_options = Settings.api_response.response_index(
-            params,
+            api_filter_params,
             Permission.where(project_id: @project.id),
             Permission,
             Permission.filter_settings
@@ -52,13 +52,14 @@ class PermissionsController < ApplicationController
 
   # GET /permissions/new.json
   def new
-    attributes_and_authorize
+    do_authorize!
+
     respond_show
   end
 
   # POST /permissions.json
   def create
-    attributes_and_authorize
+    attributes_and_authorize(permission_params)
 
     if @permission.save
       respond_create_success(project_permission_url(@project, @permission))
@@ -76,7 +77,7 @@ class PermissionsController < ApplicationController
 
   def filter
     filter_response = Settings.api_response.response_filter(
-        params,
+        api_filter_params,
         Permission.where(project_id: @project.id),
         AudioEventComment,
         AudioEventComment.filter_settings
@@ -93,6 +94,10 @@ class PermissionsController < ApplicationController
   def build_project_permission
     @permission = Permission.new
     @permission.project = @project
+  end
+
+  def permission_params
+    params.require(:permission).permit(:level, :project_id, :user_id)
   end
 
 end

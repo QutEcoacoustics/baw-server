@@ -310,6 +310,9 @@ Rails.application.routes.draw do
   # provide access to API documentation
   mount Raddocs::App => '/doc'
 
+  # enable CORS preflight requests
+  match '*requested_route', to: 'public#cors_preflight', via: :options
+
   # for error pages (add via: :all for rails 4)
   match '*requested_route', to: 'errors#route_error', via: :all
 

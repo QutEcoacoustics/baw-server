@@ -581,7 +581,12 @@ resource 'Media' do
     let(:authentication_token) { reader_token }
     let(:format) { 'json' }
 
-    standard_request('CATALOGUE (as reader with invalid project)', 404, 'meta/error/details', true)
+    standard_request_options(:get, 'CATALOGUE (as reader with invalid project)', :not_found,
+                             {
+                                 expected_json_path: 'meta/error/details',
+                                 expected_error_class: RangeError,
+                                 expected_error_regexp: /99999998888 is out of range for ActiveRecord::ConnectionAdapters::PostgreSQL::OID::Integer with limit 4/
+                             })
   end
 
   get '/audio_recording_catalogue?siteId=9999998888' do
@@ -589,7 +594,12 @@ resource 'Media' do
     let(:authentication_token) { reader_token }
     let(:format) { 'json' }
 
-    standard_request('CATALOGUE (as reader with invalid site)', 404, 'meta/error/details', true)
+    standard_request_options(:get, 'CATALOGUE (as reader with invalid site)', :not_found,
+                             {
+                                 expected_json_path: 'meta/error/details',
+                                 expected_error_class: RangeError,
+                                 expected_error_regexp: /9999998888 is out of range for ActiveRecord::ConnectionAdapters::PostgreSQL::OID::Integer with limit 4/
+                             })
   end
 
   get '/audio_recording_catalogue?projectId=:project_id&siteId=:site_id' do
@@ -739,7 +749,8 @@ resource 'Media' do
         # we're restricted to a single thread, so can't run request and worker at once (they both block)
         expect {
           do_request
-        }.to raise_error(RuntimeError, /Took longer than 2 seconds for resque to fulfil media request/)
+        #}.to raise_error(RuntimeError, 'Media file was not found within 2 seconds.')
+        }.to raise_error(RuntimeError, "Resque did not complete media request within 2 seconds. Status: '(none)'.")
 
         # store request that's in queue
         expect(Resque.size(queue_name)).to eq(1)

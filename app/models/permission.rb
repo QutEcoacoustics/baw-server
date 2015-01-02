@@ -4,8 +4,6 @@ class Permission < ActiveRecord::Base
   # ensures that creator_id, updater_id, deleter_id are set
   include UserChange
 
-  attr_accessible :level, :project_id, :user_id, :logged_in_user, :anonymous_user
-
   belongs_to :project, inverse_of: :permissions
   belongs_to :user
   belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_permissions

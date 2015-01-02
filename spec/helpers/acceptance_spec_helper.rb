@@ -50,6 +50,8 @@ end
 # @option opts [Symbol]  :data_item_count        (nil) Number of items in a json response
 # @option opts [Hash]    :property_match         (nil) Properties to match
 # @option opts [Hash]    :file_exists            (nil) Check if file exists
+# @option opts [Class]   :expected_error_class   (nil) The expected error class
+# @option opts [Regexp]  :expected_error_regexp  (nil) The expected error regular expression
 # @return [void]
 def standard_request_options(http_method, description, expected_status, opts = {})
   opts.reverse_merge!({document: true})
@@ -66,15 +68,31 @@ def standard_request_options(http_method, description, expected_status, opts = {
       File.open(path, 'w') { |f| f.write('{"content":"This is some content."}') }
     end
 
-    request = do_request
-    opts.merge!(
-        {
-            expected_status: expected_status,
-            expected_method: http_method
-        })
+    expected_error_class = opts[:expected_error_class]
+    expected_error_regexp = opts[:expected_error_regexp]
+    problem = (expected_error_class.blank? && !expected_error_regexp.blank?) ||
+        (!expected_error_class.blank? && expected_error_regexp.blank?)
 
-    opts = acceptance_checks_shared(request, opts)
-    acceptance_checks_json(opts)
+    fail "Specify both expected_error_class and expected_error_regexp" if problem
+
+    if !expected_error_class.blank? && !expected_error_regexp.blank?
+      expect {
+        do_request
+      }.to raise_error(expected_error_class, expected_error_regexp)
+    else
+      request = do_request
+
+      opts.merge!(
+          {
+              expected_status: expected_status,
+              expected_method: http_method
+          })
+
+      opts = acceptance_checks_shared(request, opts)
+      acceptance_checks_json(opts)
+
+    end
+
   end
 end
 
@@ -115,6 +133,8 @@ end
 # @option opts [String]         :expected_method                 (nil) Expected http method.
 # @option opts [Boolean]        :expected_response_has_content   (nil) Is the response expected to have content?
 # @option opts [String]         :expected_response_content_type  (nil) What is the expected response content type?
+# @option opts [Hash]           :expected_response_header_values (nil) The expected response headers and values (keys and values are strings)
+# @option opts [Hash]           :expected_request_header_values  (nil) The expected request headers and values (keys and values are strings)
 # @return [void]
 def acceptance_checks_shared(request, opts = {})
   opts.reverse_merge!(
@@ -154,7 +174,7 @@ def acceptance_checks_shared(request, opts = {})
           actual_response_content_type: response_headers['Content-Type'],
 
           #actual_request_content_type: request_headers['Content-Type'],
-          #actual_request_headers: request_headers,
+          actual_request_headers: (request.nil? || request.size < 1) ? nil : request[0][:request_headers],
 
           expected_status: opts[:expected_status].is_a?(Symbol) ? opts[:expected_status] : Settings.api_response.status_symbol(opts[:expected_status]),
       })
@@ -182,6 +202,33 @@ def acceptance_checks_shared(request, opts = {})
       opts[:actual_response_content_type].start_with?('audio/'))
     expect(opts[:actual_response_headers]['Content-Transfer-Encoding']).to eq('binary'), "Mismatch: content transfer encoding. #{opts[:msg]}"
     expect(opts[:actual_response_headers]['Content-Disposition']).to start_with('inline; filename='), "Mismatch: content disposition. #{opts[:msg]}"
+  end
+
+  unless opts[:expected_request_header_values].blank?
+    expected_request_headers = opts[:expected_request_header_values]
+    actual_request_headers = opts[:actual_request_headers]
+    expected_request_headers.each do |key, value|
+      expect(actual_request_headers.keys).to include(key), "Mismatch: Did not find '#{key}' in request headers: #{actual_request_headers.keys.join(', ')}."
+      expect(actual_request_headers[key]).to eq(value), "Mismatch: Value '#{actual_request_headers[key].inspect}' for '#{key}' in request headers did not match expected value #{value.inspect}."
+    end
+
+    difference = actual_request_headers.keys - expected_request_headers.keys
+    expect(difference).to be_empty, "Mismatch: request headers differ by #{difference}: \nExpected: #{expected_request_headers} \nActual: #{actual_request_headers}"
+
+
+  end
+
+  unless opts[:expected_response_header_values].blank?
+    expected_response_headers = opts[:expected_response_header_values]
+    actual_response_headers = opts[:actual_response_headers]
+
+    expected_response_headers.each do |key, value|
+      expect(actual_response_headers).to include(key), "Mismatch: Did not find '#{key}' in response headers: #{actual_response_headers.keys.join(', ')}."
+      expect(actual_response_headers[key]).to eq(value), "Mismatch: Value '#{actual_response_headers[key].inspect}' for '#{key}' in response headers did not match expected value #{value.inspect}."
+    end
+
+    difference = actual_response_headers.keys - expected_response_headers.keys
+    expect(difference).to be_empty, "Mismatch: response headers differ by #{difference}: \nExpected: #{expected_response_headers} \nActual: #{actual_response_headers}"
   end
 
   opts
@@ -309,11 +356,9 @@ def acceptance_checks_media(opts = {})
   expect(opts[:actual_response_headers]['Content-Length']).to_not be_blank, "Mismatch: content length. #{opts[:msg]}"
 
   if is_json
-    expect(opts[:actual_response_headers]).to_not include('X-Media-Response-From'), "Invalid header: media response from. #{opts[:msg]}"
-    expect(opts[:actual_response_headers]).to_not include('X-Media-Response-Start'), "Invalid header: media response start. #{opts[:msg]}"
+    expect(opts[:actual_response_headers]).to_not include(*MediaPoll::HEADERS_EXPOSED - ['Content-Length']), "One or more of these headers was present when it should not be #{MediaPoll::HEADERS_EXPOSED} #{opts[:msg]}"
   else
-    expect(opts[:actual_response_headers]).to include('X-Media-Response-From'), "Missing header: media response from. #{opts[:msg]}"
-    expect(opts[:actual_response_headers]).to include('X-Media-Response-Start'), "Missing header: media response start. #{opts[:msg]}"
+    expect(opts[:actual_response_headers]).to include(*MediaPoll::HEADERS_EXPOSED), "Missing one or more of these headers #{MediaPoll::HEADERS_EXPOSED} #{opts[:msg]}"
   end
 
   if opts[:is_range_request]
@@ -512,4 +557,9 @@ def emulate_resque_worker(queue, verbose, fork)
     job = worker.reserve
     worker.perform(job)
   end
+end
+
+def process_custom(method, path, params = {}, headers ={})
+  do_request(method, path, params, headers)
+  document_example(method.to_s.upcase, path)
 end
