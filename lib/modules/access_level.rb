@@ -48,7 +48,7 @@ class AccessLevel
     # @param [Object] level
     # @return [String]
     def obj_to_str(level)
-      value_sym = validate(level)
+      value_sym = validate_level(level)
       value_sym.to_s
     end
 
@@ -56,7 +56,7 @@ class AccessLevel
     # @param [Object] level
     # @return [String]
     def obj_to_display(level)
-      value_sym = validate(level)
+      value_sym = validate_level(level)
       values[value_sym][:display]
     end
 
@@ -64,24 +64,24 @@ class AccessLevel
     # @param [Object] value
     # @return [String]
     def obj_to_description(value)
-      value_sym = validate(value)
+      value_sym = validate_level(value)
       values[value_sym][:description]
     end
 
     # check if requested access level(s) is allowed based on actual access level(s).
+    # If actual is a higher level than requested, it is allowed.
     # @param [Symbol, Array<Symbol>] requested
     # @param [Symbol, Array<Symbol>] actual
     # @return [Boolean]
     def is_allowed?(requested, actual)
-      requested_array = requested.is_a?(Array) ? validate_levels(requested) : [validate(requested)]
-      actual_array = actual.is_a?(Array) ? validate_levels(actual) : [validate(actual)]
+      requested_array = requested.is_a?(Array) ? validate_levels(requested) : [validate_level(requested)]
+      actual_array = actual.is_a?(Array) ? validate_levels(actual) : [validate_level(actual)]
 
       actual_highest = highest(actual_array)
       actual_equal_or_lower = equal_or_lower(actual_highest)
 
-      # for check to succeed, all levels in requested_array
-      # must be present in actual_equal_or_lower
-      (requested_array.uniq - actual_equal_or_lower.uniq).empty?
+      requested_highest = highest(requested_array)
+      actual_equal_or_lower.include?(requested_highest)
     end
 
     # Validate array of access levels.
@@ -90,7 +90,7 @@ class AccessLevel
     def validate_levels(levels)
       fail ArgumentError, 'Access level array must not be blank.' if levels.blank?
       if levels.respond_to?(:each)
-        levels_sym = levels.uniq.map { |i| validate(i) }
+        levels_sym = levels.map { |i| validate_level(i) }.uniq
         if levels_sym.include?(:none) && levels_sym.size > 1
           fail ArgumentError, "Level array cannot contain none with other levels, got '#{levels_sym.join(', ')}'."
         else
@@ -104,7 +104,7 @@ class AccessLevel
     # Validate access level.
     # @param [Object] level
     # @return [void]
-    def validate(level)
+    def validate_level(level)
       fail ArgumentError, 'Access level must not be blank.' if level.blank?
       valid = values.keys
       value_sym = level.to_sym
@@ -113,11 +113,20 @@ class AccessLevel
       value_sym
     end
 
+    def validate_project(project)
+      fail ArgumentError, "Project was not valid, got '#{project.class}'." if project.blank? || !project.is_a?(Project)
+    end
+
+    def validate_user(user)
+      # user can be nil
+      fail ArgumentError, "User was not valid, got '#{user.class}'." if !user.blank? && !user.is_a?(User)
+    end
+
     # Get an array of access levels that are equal or lower.
     # @param [Symbol] level
     # @return [Array<Symbol>]
     def equal_or_lower(level)
-      level_sym = validate(level)
+      level_sym = validate_level(level)
       case level_sym
         when :owner
           [:reader, :writer, :owner]
@@ -137,7 +146,7 @@ class AccessLevel
     # @param [Symbol] level
     # @return [Array<Symbol>]
     def equal_or_greater(level)
-      level_sym = validate(level)
+      level_sym = validate_level(level)
       case level_sym
         when :owner
           [:owner]
@@ -156,37 +165,37 @@ class AccessLevel
     # @param [Array<Symbol>] levels
     # @return [Symbol]
     def highest(levels)
-      validate_levels(levels)
+      levels_sym = validate_levels(levels)
 
-      return :owner if levels.include?(:owner)
-      return :writer if levels.include?(:writer)
-      return :reader if levels.include?(:reader)
-      return :none if levels.include?(:none)
+      return :owner if levels_sym.include?(:owner)
+      return :writer if levels_sym.include?(:writer)
+      return :reader if levels_sym.include?(:reader)
+      return :none if levels_sym.include?(:none)
     end
 
     # Get the lowest access level.
     # @param [Array<Symbol>] levels
     # @return [Symbol]
     def lowest(levels)
-      validate_levels(levels)
+      levels_sym = validate_levels(levels)
 
-      return :none if levels.include?(:none)
-      return :reader if levels.include?(:reader)
-      return :writer if levels.include?(:writer)
-      return :owner if levels.include?(:owner)
+      return :none if levels_sym.include?(:none)
+      return :reader if levels_sym.include?(:reader)
+      return :writer if levels_sym.include?(:writer)
+      return :owner if levels_sym.include?(:owner)
     end
 
     # Get access level for anonymous users for this project.
     # @param [Project] project
     # @return [Symbol] level
     def level_anonymous(project)
-      fail ArgumentError, "Project was not valid, got '#{project.inspect}'." if project.blank? || !project.is_a?(Project)
+      validate_project(project)
 
       levels = Permission
                    .where(project_id: project.id, user_id: nil, logged_in_user: nil, anonymous_user: true)
                    .pluck(:level)
       if levels.size > 1
-        fail ActiveRecord::RecordNotUnique, "Found more than one permission matching project #{project.id}, anonymous user #{permission_strings}."
+        fail ActiveRecord::RecordNotUnique, "Found more than one permission matching project #{project.id}, anonymous user: true."
       elsif levels.size < 1
         :none
       else
@@ -198,13 +207,13 @@ class AccessLevel
     # @param [Project] project
     # @return [Symbol] level
     def level_logged_in(project)
-      fail ArgumentError, "Project was not valid, got '#{project.inspect}'." if project.blank? || !project.is_a?(Project)
+      validate_project(project)
 
       levels = Permission
                    .where(project_id: project.id, user_id: nil, logged_in_user: true, anonymous_user: nil)
                    .pluck(:level)
       if levels.size > 1
-        fail ActiveRecord::RecordNotUnique, "Found more than one permission matching project #{project.id}, logged in user #{permission_strings}."
+        fail ActiveRecord::RecordNotUnique, "Found more than one permission matching project #{project.id}, logged in user: true."
       elsif levels.size < 1
         :none
       else
@@ -212,12 +221,13 @@ class AccessLevel
       end
     end
 
-    # Get access level for this user for this project.
+    # Get access level for this user for this project (only checks Permission).
+    # @param [User] user
     # @param [Project] project
     # @return [Symbol] level
-    def level_user(project, user)
-      fail ArgumentError, "Project was not valid, got '#{project.inspect}'." if project.blank? || !project.is_a?(Project)
-      fail ArgumentError, "User was not valid, got '#{user.inspect}'." if user.blank? || !user.is_a?(User)
+    def level_user(user, project)
+      validate_project(project)
+      validate_user(user)
 
       levels = Permission
                    .where(project_id: project.id, user_id: user.id, logged_in_user: nil, anonymous_user: nil)
@@ -231,22 +241,49 @@ class AccessLevel
       end
     end
 
+    # Get access level for this user for this project (checks anon, logged in, permission, user role).
     def level(user, project)
-      fail ArgumentError, "Project was not valid, got '#{project.inspect}'." if project.blank? || !project.is_a?(Project)
+      validate_project(project)
+      validate_user(user)
 
       if is_guest?(user)
         # check for guest first, since user can be nil
         # only anonymous permissions apply
         level_anonymous(project)
       elsif is_admin?(user)
-        # if level was not none, then true otherwise false
+        # admin has owner permission to all projects
         :owner
       else
-        user_permission = level_user(project, user)
+        user_permission = level_user(user, project)
         logged_in_permission = level_logged_in(project)
-        highest_level = highest([user_permission, logged_in_permission])
-        highest_level
+        highest([user_permission, logged_in_permission])
       end
+    end
+
+    # Get access level for this user for this project (checks anon, logged in, permission, user role).
+    # Does no db queries.
+    def manual_level(user, project, anonymous_level, logged_in_level)
+      validate_project(project)
+      validate_user(user)
+      anonymous_level_sym = validate_level(anonymous_level)
+      logged_in_level_sym = validate_level(logged_in_level)
+
+      if is_guest?(user)
+        anonymous_level_sym
+      elsif is_admin?(user)
+        :owner
+      else
+        user_permission = user.permissions
+                              .select { |permission| permission.project_id == project.id}
+                              .map{ |permission| permission.level}
+
+        if user_permission.size > 0
+          highest(user_permission)
+        else
+          logged_in_level_sym
+        end
+      end
+
     end
 
     # Is this user an admin?
@@ -261,7 +298,7 @@ class AccessLevel
     # @param [User] user
     # @return [Boolean]
     def is_guest?(user)
-      fail ArgumentError, "User was not valid, got '#{user.class}'." if !user.blank? && !user.is_a?(User)
+      validate_user(user)
       user.blank? || !user.confirmed?
     end
 
@@ -287,22 +324,10 @@ class AccessLevel
     # @param [Symbol] level
     # @return [Boolean]
     def access?(user, project, level)
-      fail ArgumentError, "Project was not valid, got '#{project.inspect}'." if project.blank? || !project.is_a?(Project)
-      level_sym = validate(level)
+      requested_level = validate_level(level)
+      actual_level = level(user, project)
 
-      if is_guest?(user)
-        # check for guest first, since user can be nil
-        # only anonymous permissions apply
-        is_allowed?(level_sym, level_anonymous(project))
-      elsif is_admin?(user)
-        # if level was not none, then true otherwise false
-        permission_symbols.include?(level_sym)
-      else
-        user_permission = level_user(project, user)
-        logged_in_permission = level_logged_in(project)
-        highest_level = highest([user_permission, logged_in_permission])
-        is_allowed?(level_sym, highest_level)
-      end
+      is_allowed?(requested_level, actual_level)
     end
 
     # Does this user have this access level to any of these projects?
@@ -334,7 +359,8 @@ class AccessLevel
     # @param [Symbol] level
     # @return [ActiveRecord::Relation]
     def projects(user, level)
-      level_sym = validate(level)
+      validate_user(user)
+      level_sym = validate_level(level)
       equal_or_greater_levels = equal_or_greater(level_sym)
 
       order_clause = 'lower(projects.name) DESC'
@@ -371,7 +397,7 @@ WHERE
     (NOT EXISTS (SELECT 1 FROM permissions AS per_logged_in WHERE per_logged_in.logged_in_user = TRUE AND per_logged_in.project_id = projects.id))
 ORDER BY #{order_clause}")
 
-          Project.where(id: ids.map{ |i| i['id']})
+          Project.where(id: ids.map { |i| i['id'] })
 
         else
           # get all projects this user can access
@@ -387,7 +413,7 @@ WHERE
     (permissions.level IN ('#{equal_or_greater_levels.join('\', \'')}') AND permissions.project_id = projects.id AND permissions.logged_in_user = TRUE)
 ORDER BY #{order_clause}")
 
-          Project.where(id: ids.map{ |i| i['id']})
+          Project.where(id: ids.map { |i| i['id'] })
 
         end
       end
@@ -407,8 +433,6 @@ ORDER BY #{order_clause}")
     def projects_inaccessible(user)
       projects(user, :none)
     end
-
-
 
   end
 end

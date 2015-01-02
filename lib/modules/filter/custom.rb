@@ -63,7 +63,7 @@ module Filter
     # @param [Symbol] min_access_level
     # @return [Arel::Nodes::Node] condition
     def compose_permission_check(user_id, is_reference, min_access_level)
-      level = AccessLevel.validate(min_access_level)
+      level = AccessLevel.validate_level(min_access_level)
       # where("((#{creator_id_check}) OR (#{permissions_check}) OR (#{reference_audio_event_check}))", user.id, user.id)
       compose_or(
         compose_or(

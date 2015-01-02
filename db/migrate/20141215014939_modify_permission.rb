@@ -14,16 +14,28 @@ class ModifyPermission < ActiveRecord::Migration
     # generate owner entries from project.creator_id
     # the records are created by admin
     Project.all.each do |project|
-      permission = Permission.new(level: 'owner', project_id: project.id, user_id: project.creator_id)
-      exists = Permission.where(level: 'owner', project_id: project.id, user_id: project.creator_id).exists?
 
-      if exists
-        puts "Permission already exists #{permission.to_json}."
-      else
+      existing_permissions = Permission.where(project_id: project.id, user_id: project.creator_id)
+      existing_permissions_count = existing_permissions.count
+
+      fail RuntimeError, "More than one permission! #{existing_permissions.all.to_json}" if existing_permissions_count > 1
+
+      if existing_permissions_count == 0
+        permission = Permission.new(level: 'owner', project_id: project.id, user_id: project.creator_id)
+
         permission.creator = admin
         permission.updater = admin
+
         permission.save!
         puts "Permission created #{permission.to_json}."
+      else
+        existing_permission = existing_permissions.first
+
+        existing_permission.level = 'owner'
+        existing_permission.updater = admin
+
+        existing_permission.save!
+        puts "Permission updated #{existing_permission.to_json}."
       end
 
     end
@@ -35,6 +47,9 @@ class ModifyPermission < ActiveRecord::Migration
 
     add_column :projects, :anonymous_level, :string, default: 'none', null: false
     add_column :projects, :sign_in_level, :string, default: 'none', null: false
+
+    # remove owner Permissions - ownership is specified by project.creator_id
+    Permission.where(level: 'owner').destroy_all
   end
 
 end

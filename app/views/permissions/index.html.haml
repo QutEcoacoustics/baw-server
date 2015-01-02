@@ -12,6 +12,8 @@
 %hr
 
 = simple_form_for :permission, url: update_permissions_project_path(@project) do |p|
+  - project_logged_in = AccessLevel.level_logged_in(@project)
+  - project_anon = AccessLevel.level_logged_in(@project)
   %table.table.table-striped
     %thead
       %tr
@@ -19,30 +21,38 @@
         %th No Access
         %th Read
         %th Read & Write
+        %th Owner
     %tbody
-    - User.users.order('lower(user_name) ASC').each do |user|
-      - unless @project.creator == user
-        %tr{user_id: user.id}
-          %td= link_to user.user_name, user_account_path(user)
-          %td
-            %input{id: "user_#{user.id}_permissions_level_none",
-                      type: 'radio',
-                      name: "[user_ids][#{user.id}][permissions][level]",
-                      value: '',
-                      checked: AccessLevel.permission_level?(user, @project, :none)}
-          %td
-            %input{id: "user_#{user.id}_permissions_level_reader",
-                      type: 'radio',
-                      name: "[user_ids][#{user.id}][permissions][level]",
-                      value: 'reader',
-                      checked: AccessLevel.permission_level?(user, @project, :reader)}
+    - User.users.includes(:permissions).order('lower(user_name) ASC').each do |user|
+      - user_level = AccessLevel.manual_level(user, @project, project_anon, project_logged_in)
+      - a= 1
+      %tr{user_id: user.id}
+        %td= link_to user.user_name, user_account_path(user)
+        %td
+          %input{id: "user_#{user.id}_permissions_level_none",
+                    type: 'radio',
+                    name: "[user_ids][#{user.id}][permissions][level]",
+                    value: '',
+                    checked: :none == user_level}
+        %td
+          %input{id: "user_#{user.id}_permissions_level_reader",
+                    type: 'radio',
+                    name: "[user_ids][#{user.id}][permissions][level]",
+                    value: 'reader',
+                    checked: :reader == user_level}
 
-          %td
-            %input{id: "user_#{user.id}_permissions_level_writer",
-                      type: 'radio',
-                      name: "[user_ids][#{user.id}][permissions][level]",
-                      value: 'writer',
-                      checked: AccessLevel.permission_level?(user, @project, :writer)}
+        %td
+          %input{id: "user_#{user.id}_permissions_level_writer",
+                    type: 'radio',
+                    name: "[user_ids][#{user.id}][permissions][level]",
+                    value: 'writer',
+                    checked: :writer == user_level}
+        %td
+          %input{id: "user_#{user.id}_permissions_level_owner",
+                    type: 'radio',
+                    name: "[user_ids][#{user.id}][permissions][level]",
+                    value: 'owner',
+                    checked: :owner == user_level}
   .form-actions
     = p.submit 'Update Permissions', class: 'btn'
 

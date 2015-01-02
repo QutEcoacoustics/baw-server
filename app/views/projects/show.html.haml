@@ -61,8 +61,8 @@
     - permission = AccessLevel.level(current_user, @project)
     = sidebar_metadata('Your access level', AccessLevel.obj_to_display(permission))
     - if permission == :owner
-      = sidebar_metadata('User access level', AccessLevel.obj_to_display(@project.sign_in_level))
-      = sidebar_metadata('Anonymous access level', AccessLevel.obj_to_display(@project.anonymous_level))
+      = sidebar_metadata('Logged in user access level', AccessLevel.level_logged_in(@project))
+      = sidebar_metadata('Anonymous access level', AccessLevel.level_anonymous(@project))
 
 - content_for :title, "Project #{@project.name}"
 
