@@ -315,4 +315,23 @@ resource 'Sites' do
                              })
   end
 
+  post '/sites/filter' do
+    let(:authentication_token) { writer_token }
+    let(:raw_post) { {
+        'filter' => {
+            'projectIds' => {
+                'in' => [@write_permission.project.id.to_s]
+            }
+        }
+    }.to_json }
+    standard_request_options(:post, 'FILTER (site ids in, as writer)', :ok,
+                             {
+                                 expected_json_path: 'data/0/project_ids/0',
+                                 data_item_count: 1,
+                                 regex_match: /"project_ids"\:\[[0-9]+\]/,
+                                 response_body_content: "\"project_ids\":[",
+                                 invalid_content: "\"project_ids\":[{\"id\":"
+                             })
+  end
+
 end
