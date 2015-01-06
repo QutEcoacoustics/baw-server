@@ -145,6 +145,7 @@ group :development do
   gem 'capistrano-rvm'
   gem 'capistrano-rails'
   gem 'capistrano-newrelic'
+  gem 'capistrano-passenger'
 
   gem 'rack-mini-profiler'
 
