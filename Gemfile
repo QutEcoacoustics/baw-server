@@ -195,7 +195,7 @@ group :test do
   gem 'shoulda-matchers'
   gem 'launchy'
   gem 'json_spec'
-  gem 'database_cleaner'
+  gem 'database_cleaner', '1.3.0' # major bugs in v1.4.0, see https://github.com/DatabaseCleaner/database_cleaner/issues/317
   gem 'webmock'
   gem 'coveralls', '~> 0.7.2', require: false
   gem 'codeclimate-test-reporter', require: nil
