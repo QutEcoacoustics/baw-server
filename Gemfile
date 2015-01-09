@@ -35,7 +35,7 @@ gem 'uglifier', '>= 1.3.0'
 # Use CoffeeScript for .js.coffee assets and views
 gem 'coffee-rails', '~> 4.1.0'
 # See https://github.com/sstephenson/execjs#readme for more supported runtimes
-# gem 'therubyracer',  platforms: :ruby
+gem 'therubyracer', platforms: :ruby, require: 'v8'
 
 # Use jquery as the JavaScript library
 gem 'jquery-rails'
@@ -105,14 +105,10 @@ gem 'acts_as_paranoid', git: 'https://github.com/ActsAsParanoid/acts_as_paranoid
 gem 'settingslogic'
 require 'rbconfig'
 
-# TESTING & Documentation
-# -------------------------------------
-gem 'rspec_api_documentation'
-gem 'raddocs'
-
 # MONITORING
 # -------------------------------------
 gem 'exception_notification'
+gem 'newrelic_rpm'
 
 # MEDIA
 # -------------------------------------
@@ -131,14 +127,10 @@ gem 'baw-workers', git: 'https://github.com/QutBioacoustics/baw-workers.git' #, 
 # Gems restricted by environment and/or platform
 # ====================================================
 
-group :production, :staging do
-  # See https://github.com/sstephenson/execjs#readme for more supported runtimes
-  gem 'therubyracer', platforms: :ruby, require: 'v8'
-  gem 'newrelic_rpm'
-end
-
-group :development do
+# gems that are only required on development machines or for testings
+group :development, :test do
   gem 'quiet_assets'
+
   # capistrano gems
   gem 'capistrano'
   gem 'capistrano-bundler'
@@ -148,14 +140,29 @@ group :development do
   gem 'capistrano-passenger'
 
   gem 'rack-mini-profiler'
-
   gem 'rails-i18n-debug'
+  gem 'bullet'
 
   # Spring speeds up development by keeping your application running in the background. Read more: https://github.com/rails/spring
   gem 'spring'
 
   # Run `rails console` in the browser. Read more: https://github.com/rails/web-console
   gem 'web-console'
+
+  # bundle exec rake doc:rails generates the API under doc/api.
+  gem 'sdoc', '~> 0.4.0'
+
+  gem 'thin'
+
+  gem 'notiffany'
+  gem 'guard'
+  gem 'guard-rspec'
+  gem 'guard-yard'
+
+  gem 'fakeredis', require: 'fakeredis/rspec'
+
+  gem 'rspec_api_documentation'
+  gem 'raddocs'
 
   # for cleaning up Rails apps
   # gem 'traceroute', require: false
@@ -173,24 +180,13 @@ group :development do
   # gem 'lol_dba', require: false
   # gem 'consistency_fail', require: false
 
-  # gem install traceroute --no-ri --no-rdoc
-end
-
-group :development, :test do
-  gem 'bullet'
-  gem 'rspec-rails'
-  gem 'guard'
-  gem 'listen'
-  gem 'fakeredis', require: 'fakeredis/rspec'
   #gem 'debugger'
-end
+  # gem install traceroute --no-ri --no-rdoc
 
-group :test do
+  gem 'rspec-rails'
   gem 'factory_girl_rails'
   gem 'capybara'
-  gem 'thin'
-  gem 'guard-rspec'
-  gem 'guard-yard'
+
   gem 'rspec'
   gem 'simplecov',  require: false
   gem 'shoulda-matchers'
@@ -200,7 +196,4 @@ group :test do
   gem 'webmock'
   gem 'coveralls', '~> 0.7.2', require: false
   gem 'codeclimate-test-reporter', require: nil
-
-  # bundle exec rake doc:rails generates the API under doc/api.
-  gem 'sdoc', '~> 0.4.0'
 end

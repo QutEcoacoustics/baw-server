@@ -277,11 +277,6 @@ Rails.application.routes.draw do
   get '/website_status/' => 'public#website_status'
   get '/audio_recording_catalogue/' => 'public#audio_recording_catalogue'
 
-  # exceptions testing route - only available in test env
-  if ENV['RAILS_ENV'] == 'test'
-    get '/test_exceptions' => 'public#test_exceptions'
-  end
-
   # feedback and contact forms
   get '/contact_us' => 'public#new_contact_us'
   post '/contact_us' => 'public#create_contact_us'
@@ -310,6 +305,11 @@ Rails.application.routes.draw do
 
   # enable CORS preflight requests
   match '*requested_route', to: 'public#cors_preflight', via: :options
+
+  # exceptions testing route - only available in test env
+  if ENV['RAILS_ENV'] == 'test'
+    match '/test_exceptions', to: 'errors#test_exceptions', via: :all
+  end
 
   # for error pages (add via: :all for rails 4)
   match '*requested_route', to: 'errors#route_error', via: :all

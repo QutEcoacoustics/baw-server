@@ -157,7 +157,6 @@ module AWB
         # auto-allowed headers: Cache-Control, Content-Language, Content-Type, Expires, Last-Modified, Pragma
         # http://www.w3.org/TR/cors/#simple-response-header
         # -> we have some custom headers that we want to access, plus content-length
-        # -> TODO: this will need to be updated when generating and waiting time are separated to two headers rather than one
 
         resource '*', # applies to all resources
                  headers: :any,

@@ -134,6 +134,7 @@ end
 # @option opts [Boolean]        :expected_response_has_content   (nil) Is the response expected to have content?
 # @option opts [String]         :expected_response_content_type  (nil) What is the expected response content type?
 # @option opts [Hash]           :expected_response_header_values (nil) The expected response headers and values (keys and values are strings)
+# @option opts [Boolean]        :expected_response_header_values_match (true) Should the response headers match the provided hash exactly?
 # @option opts [Hash]           :expected_request_header_values  (nil) The expected request headers and values (keys and values are strings)
 # @return [void]
 def acceptance_checks_shared(request, opts = {})
@@ -147,6 +148,8 @@ def acceptance_checks_shared(request, opts = {})
 
           # @option opts [String]         :expected_request_content_type   (nil) What is the expected request content type?
           #expected_request_content_type: 'application/json'
+
+          expected_response_header_values_match: true
       })
 
   # Rubymine might think this is an error - it's fine, there are so many methods named 'method' :/
@@ -227,8 +230,10 @@ def acceptance_checks_shared(request, opts = {})
       expect(actual_response_headers[key]).to eq(value), "Mismatch: Value '#{actual_response_headers[key].inspect}' for '#{key}' in response headers did not match expected value #{value.inspect}."
     end
 
+    if opts[:expected_response_header_values_match]
     difference = actual_response_headers.keys - expected_response_headers.keys
     expect(difference).to be_empty, "Mismatch: response headers differ by #{difference}: \nExpected: #{expected_response_headers} \nActual: #{actual_response_headers}"
+      end
   end
 
   opts
