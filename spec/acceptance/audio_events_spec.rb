@@ -62,8 +62,8 @@ resource 'AudioEvents' do
   end
 
   # prepare ids needed for paths in requests below
-  let(:project_id) { @write_permission.project.id }
-  let(:site_id) { @write_permission.project.sites.order(:id).first.id }
+  #let(:project_id) { @write_permission.project.id }
+  #let(:site_id) { @write_permission.project.sites.order(:id).first.id }
   let(:audio_recording_id) { @write_permission.project.sites.order(:id).first.audio_recordings.order(:id).first.id }
   #  freq diff 5600, duration diff 0.6, start_time_seconds 5.2, low_frequency_hertz 400, high_frequency_hertz 6000, end_time_seconds 5.8
   let(:id) { @write_permission.project.sites.order(:id).first.audio_recordings.order(:id).first.audio_events.order(:id).first.id }
@@ -74,6 +74,7 @@ resource 'AudioEvents' do
   let(:other_user_token) { "Token token=\"#{FactoryGirl.create(:user).authentication_token}\"" }
   let(:unconfirmed_token) { "Token token=\"#{FactoryGirl.create(:unconfirmed_user).authentication_token}\"" }
   let(:admin_token) { "Token token=\"#{@admin_user.authentication_token}\"" }
+  let(:invalid_token) { "Token token=\"blah_blah_blah\"" }
 
   # Create post parameters from factory
   let(:post_attributes) { FactoryGirl.attributes_for(:audio_event) }
@@ -175,9 +176,6 @@ resource 'AudioEvents' do
   end
 
   get '/audio_recordings/:audio_recording_id/audio_events' do
-
-    parameter :project_id, 'Requested project ID (in path/route)', required: true
-    parameter :site_id, 'Requested site ID (in path/route)', required: true
     parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
     parameter :start_offset, 'Request audio events within offset bounds (start)'
     parameter :end_offset, 'Request audio events within offset bounds (end)'
@@ -945,9 +943,6 @@ resource 'AudioEvents' do
   # SHOW
   ################################
   get '/audio_recordings/:audio_recording_id/audio_events/:id' do
-
-    parameter :project_id, 'Requested project ID (in path/route)', required: true
-    parameter :site_id, 'Requested site ID (in path/route)', required: true
     parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
     parameter :id, 'Requested audio event id (in path/route)', required: true
 
@@ -957,9 +952,6 @@ resource 'AudioEvents' do
   end
 
   get '/audio_recordings/:audio_recording_id/audio_events/:id' do
-
-    parameter :project_id, 'Requested project ID (in path/route)', required: true
-    parameter :site_id, 'Requested site ID (in path/route)', required: true
     parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
     parameter :id, 'Requested audio event id (in path/route)', required: true
 
@@ -969,7 +961,6 @@ resource 'AudioEvents' do
   end
 
   get '/audio_recordings/:audio_recording_id/audio_events/:id' do
-
     parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
     parameter :id, 'Requested audio event id (in path/route)', required: true
 
@@ -979,7 +970,6 @@ resource 'AudioEvents' do
   end
 
   get '/audio_recordings/:audio_recording_id/audio_events/:id' do
-
     parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
     parameter :id, 'Requested audio event id (in path/route)', required: true
 
@@ -998,9 +988,6 @@ resource 'AudioEvents' do
   end
 
   get '/audio_recordings/:audio_recording_id/audio_events/:id' do
-
-    parameter :project_id, 'Requested project ID (in path/route)', required: true
-    parameter :site_id, 'Requested site ID (in path/route)', required: true
     parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
     parameter :id, 'Requested audio event id (in path/route)', required: true
 
@@ -1013,8 +1000,6 @@ resource 'AudioEvents' do
   # CREATE
   ################################
   post '/audio_recordings/:audio_recording_id/audio_events' do
-    parameter :project_id, 'Requested project ID (in path/route)', required: true
-    parameter :site_id, 'Requested site ID (in path/route)', required: true
     parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
 
     parameter :start_time_seconds, 'start_time in seconds, has to be lower than end_time', scope: :audio_event, required: true
@@ -1049,8 +1034,6 @@ resource 'AudioEvents' do
   end
 
   post '/audio_recordings/:audio_recording_id/audio_events' do
-    parameter :project_id, 'Requested project ID (in path/route)', required: true
-    parameter :site_id, 'Requested site ID (in path/route)', required: true
     parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
 
     parameter :start_time_seconds, 'start_time in seconds, has to be lower than end_time', scope: :audio_event, required: true
@@ -1068,8 +1051,6 @@ resource 'AudioEvents' do
   end
 
   post '/audio_recordings/:audio_recording_id/audio_events' do
-    parameter :project_id, 'Requested project ID (in path/route)', required: true
-    parameter :site_id, 'Requested site ID (in path/route)', required: true
     parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
 
     parameter :start_time_seconds, 'start_time in seconds, has to be lower than end_time', scope: :audio_event, required: true
@@ -1087,8 +1068,6 @@ resource 'AudioEvents' do
   end
 
   post '/audio_recordings/:audio_recording_id/audio_events' do
-    parameter :project_id, 'Requested project ID (in path/route)', required: true
-    parameter :site_id, 'Requested site ID (in path/route)', required: true
     parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
 
     parameter :start_time_seconds, 'start_time in seconds, has to be lower than end_time', scope: :audio_event, required: true
@@ -1129,8 +1108,6 @@ resource 'AudioEvents' do
   end
 
   post '/audio_recordings/:audio_recording_id/audio_events' do
-    parameter :project_id, 'Requested project ID (in path/route)', required: true
-    parameter :site_id, 'Requested site ID (in path/route)', required: true
     parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
 
     parameter :start_time_seconds, 'start_time in seconds, has to be lower than end_time', scope: :audio_event, required: true
@@ -1179,9 +1156,8 @@ resource 'AudioEvents' do
   # UPDATE
   ################################
   put '/audio_recordings/:audio_recording_id/audio_events/:id' do
-    parameter :project_id, 'Requested project ID (in path/route)', required: true
-    parameter :site_id, 'Requested site ID (in path/route)', required: true
     parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
+    parameter :id, 'Requested audio event id (in path/route)', required: true
 
     parameter :start_time_seconds, 'start_time in seconds, has to be lower than end_time', scope: :audio_event, required: true
     parameter :end_time_seconds, 'end_time in seconds, has to be higher than start_time', scope: :audio_event
@@ -1198,6 +1174,7 @@ resource 'AudioEvents' do
 
   put '/audio_recordings/:audio_recording_id/audio_events/:id' do
     parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
+    parameter :id, 'Requested audio event id (in path/route)', required: true
 
     parameter :start_time_seconds, 'start_time in seconds, has to be lower than end_time', scope: :audio_event, required: true
     parameter :end_time_seconds, 'end_time in seconds, has to be higher than start_time', scope: :audio_event
@@ -1213,9 +1190,8 @@ resource 'AudioEvents' do
   end
 
   put '/audio_recordings/:audio_recording_id/audio_events/:id' do
-    parameter :project_id, 'Requested project ID (in path/route)', required: true
-    parameter :site_id, 'Requested site ID (in path/route)', required: true
     parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
+    parameter :id, 'Requested audio event id (in path/route)', required: true
 
     parameter :start_time_seconds, 'start_time in seconds, has to be lower than end_time', scope: :audio_event, required: true
     parameter :end_time_seconds, 'end_time in seconds, has to be higher than start_time', scope: :audio_event
@@ -1231,9 +1207,8 @@ resource 'AudioEvents' do
   end
 
   put '/audio_recordings/:audio_recording_id/audio_events/:id' do
-    parameter :project_id, 'Requested project ID (in path/route)', required: true
-    parameter :site_id, 'Requested site ID (in path/route)', required: true
     parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
+    parameter :id, 'Requested audio event id (in path/route)', required: true
 
     parameter :start_time_seconds, 'start_time in seconds, has to be lower than end_time', scope: :audio_event, required: true
     parameter :end_time_seconds, 'end_time in seconds, has to be higher than start_time', scope: :audio_event
@@ -1247,4 +1222,57 @@ resource 'AudioEvents' do
 
     standard_request('UPDATE (as unconfirmed user)', 403, nil, true)
   end
+
+  ################################
+  # DELETE
+  ################################
+
+  delete '/audio_recordings/:audio_recording_id/audio_events/:id' do
+    parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
+    parameter :id, 'Requested audio event id (in path/route)', required: true
+
+    let(:authentication_token) { writer_token }
+    standard_request_options(:delete, 'DELETE (as writer user)', :no_content, {expected_response_has_content: false, expected_response_content_type: nil})
+  end
+
+  delete '/audio_recordings/:audio_recording_id/audio_events/:id' do
+    parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
+    parameter :id, 'Requested audio event id (in path/route)', required: true
+
+    let(:authentication_token) { reader_token }
+    standard_request_options(:delete, 'DELETE (as reader user)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
+  end
+
+  delete '/audio_recordings/:audio_recording_id/audio_events/:id' do
+    parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
+    parameter :id, 'Requested audio event id (in path/route)', required: true
+
+    let(:authentication_token) { other_user_token }
+    standard_request_options(:delete, 'DELETE (as other user)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
+  end
+
+  delete '/audio_recordings/:audio_recording_id/audio_events/:id' do
+    parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
+    parameter :id, 'Requested audio event id (in path/route)', required: true
+
+    let(:authentication_token) { unconfirmed_token }
+    standard_request_options(:delete, 'DELETE (as unconfirmed user)', :forbidden, {expected_json_path: 'meta/error/links/confirm your account'})
+  end
+
+  delete '/audio_recordings/:audio_recording_id/audio_events/:id' do
+    parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
+    parameter :id, 'Requested audio event id (in path/route)', required: true
+
+    let(:authentication_token) { admin_token }
+    standard_request_options(:delete, 'DELETE (as admin user)', :no_content, {expected_response_has_content: false, expected_response_content_type: nil})
+  end
+
+  delete '/audio_recordings/:audio_recording_id/audio_events/:id' do
+    parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
+    parameter :id, 'Requested audio event id (in path/route)', required: true
+
+    let(:authentication_token) { invalid_token }
+    standard_request_options(:delete, 'DELETE (with invalid token)', :unauthorized, {expected_json_path: 'meta/error/links/sign in'})
+  end
+
 end

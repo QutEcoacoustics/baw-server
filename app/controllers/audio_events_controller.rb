@@ -98,9 +98,9 @@ class AudioEventsController < ApplicationController
   # DELETE /audio_events/1
   # DELETE /audio_events/1.json
   def destroy
-    @audio_event = AudioEvent.find(audio_event_params[:id])
+    destroy_result = @audio_event.destroy
     add_archived_at_header(@audio_event)
-    respond_with @audio_event.destroy
+    respond_with destroy_result
   end
 
 
