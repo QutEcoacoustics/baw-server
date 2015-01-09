@@ -63,7 +63,7 @@ class ApplicationController < ActionController::Base
 
   def add_archived_at_header(model)
     if model.respond_to?(:deleted_at) && !model.deleted_at.blank?
-      response.headers['X-Archived-At'] = model.deleted_at
+      response.headers['X-Archived-At'] = model.deleted_at.httpdate # must be a string, can't just pass a Date or Time
     end
   end
 
