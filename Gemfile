@@ -110,6 +110,12 @@ require 'rbconfig'
 gem 'exception_notification'
 gem 'newrelic_rpm'
 
+# Documentation & UI
+# -------------------------------------
+# these gems are required here to serve /doc url
+gem 'rspec_api_documentation'
+gem 'raddocs'
+
 # MEDIA
 # -------------------------------------
 # set to a specific commit when releasing to master branch
@@ -161,8 +167,7 @@ group :development, :test do
 
   gem 'fakeredis', require: 'fakeredis/rspec'
 
-  gem 'rspec_api_documentation'
-  gem 'raddocs'
+
 
   # for cleaning up Rails apps
   # gem 'traceroute', require: false
