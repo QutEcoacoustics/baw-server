@@ -16,7 +16,7 @@ GIT
 
 GIT
   remote: https://github.com/QutBioacoustics/baw-workers.git
-  revision: 8e220f845802655950e1c6ac206918f1adc49b11
+  revision: 3b867e248d3562a99408b87a1bea4a25a7d24758
   specs:
     baw-workers (0.4.0)
       actionmailer (>= 4)
@@ -204,7 +204,7 @@ GEM
       pry (>= 0.9.12)
       shellany (~> 0.0)
       thor (>= 0.18.1)
-    guard-compat (1.2.0)
+    guard-compat (1.2.1)
     guard-rspec (4.5.0)
       guard (~> 2.1)
       guard-compat (~> 1.1)
