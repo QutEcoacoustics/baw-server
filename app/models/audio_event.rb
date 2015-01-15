@@ -55,6 +55,29 @@ class AudioEvent < ActiveRecord::Base
                             end
                           }
 
+  # Define filter api settings
+  def self.filter_settings
+    {
+        valid_fields: [:id, :audio_recording_id,
+                       :start_time_seconds, :end_time_seconds,
+                       :low_frequency_hertz, :high_frequency_hertz,
+                       :is_reference,
+                       :created_at, :creator_id, :updated_at],
+        render_fields: [:id, :audio_recording_id, :comment, :flag,
+                        :start_time_seconds, :end_time_seconds,
+                        :low_frequency_hertz, :high_frequency_hertz,
+                        :is_reference,
+                        :creator_id, :updated_at, :created_at],
+        text_fields: [],
+        controller: :audio_events,
+        action: :filter,
+        defaults: {
+            order_by: :created_at,
+            direction: :desc
+        }
+    }
+  end
+
   # @param [User] user
   # @param [Hash] params
   def self.filtered(user, params)

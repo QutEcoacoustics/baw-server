@@ -1275,4 +1275,30 @@ resource 'AudioEvents' do
     standard_request_options(:delete, 'DELETE (with invalid token)', :unauthorized, {expected_json_path: 'meta/error/links/sign in'})
   end
 
+  #####################
+  # Filter
+  #####################
+
+  post '/audio_recordings/:audio_recording_id/audio_events/filter' do
+    parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
+    let(:authentication_token) { reader_token }
+    let(:raw_post) { {
+        'filter' => {
+            'start_time_seconds' => {
+                'in' => ['5.2', '7', '100', '4']
+            }
+        },
+        'projection' => {
+            'include' => ['id', 'start_time_seconds']}
+    }.to_json }
+    standard_request_options(:post, 'FILTER (as reader)', :ok)
+                             # ,{
+                             #     expected_json_path: 'data/0/project_ids/0',
+                             #     data_item_count: 1,
+                             #     regex_match: /"project_ids"\:\[[0-9]+\]/,
+                             #     response_body_content: "\"project_ids\":[",
+                             #     invalid_content: "\"project_ids\":[{\"id\":"
+                             # })
+  end
+
 end

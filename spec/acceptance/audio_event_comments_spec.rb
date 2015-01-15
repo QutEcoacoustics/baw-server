@@ -454,4 +454,23 @@ resource 'AudioEventComments' do
     standard_request_options(:delete, 'DESTROY (as user deleting comment created by writer)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
   end
 
+  #####################
+  # Filter
+  #####################
+
+  post '/audio_events/:audio_event_id/comments/filter' do
+    parameter :audio_event_id, 'Requested audio event id (in path/route)', required: true
+    let(:authentication_token) { reader_token }
+    let(:raw_post) { {
+        'filter' => {
+            'comment' => {
+                'contains' => 'comment text'
+            }
+        },
+        'projection' => {
+            'include' => ['id', 'audio_event_id', 'comment']}
+    }.to_json }
+    standard_request_options(:post, 'FILTER (as reader)', :ok)
+  end
+
 end

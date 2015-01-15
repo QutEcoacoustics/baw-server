@@ -3,7 +3,7 @@ class ProjectsController < ApplicationController
 
   add_breadcrumb 'Home', :root_path
 
-  load_and_authorize_resource :project
+  load_and_authorize_resource
 
   # GET /projects
   # GET /projects.json
@@ -146,6 +146,7 @@ class ProjectsController < ApplicationController
   # DELETE /projects/1.json
   def destroy
     @project.destroy
+    add_archived_at_header(@project)
 
     respond_to do |format|
       format.html { redirect_to projects_url }
