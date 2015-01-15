@@ -29,7 +29,7 @@ describe BawWorkers::Analysis::WorkHelper do
         original_format: 'wav',
         config_file: 'blah',
         id: 123456,
-        executable_program: ' echo'
+        executable_program: 'echo'
     }
 
     # create file
@@ -42,16 +42,30 @@ describe BawWorkers::Analysis::WorkHelper do
 
     FileUtils.mkpath(BawWorkers::Settings.paths.working_dir)
 
-    result = nil
-    expect {
-      result = work_helper.run(analysis_params)
-    }.to raise_error(BawAudioTools::Exceptions::AudioToolError, /echo "analysis_type \-source/)
+    FileUtils.cp('/bin/echo', File.join(BawWorkers::Settings.paths.working_dir,'echo'))
 
-    # expect(result).to_not be_blank
-    # expect(result.to_json).to include('_cached_analysis_jobs/00/00aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
-    # expect(result.to_json).to include('/tmp/custom_temp_dir/temp/00aaa')
-    # expect(result.to_json).to include('analysis_type -source %{source_file} -config %{config_file} -output %{output_dir} -tempdir %{temp_dir}')
-    # expect(result.to_json).to include(analysis_params[:original_format])
+    result = work_helper.run(analysis_params)
+
+    expected_1 = '/baw-workers/tmp/custom_temp_dir/working/echo \"analysis_type -source '
+    expected_2 = '/baw-workers/tmp/custom_temp_dir/_original_audio/00/00aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa_20141118-160500Z.wav -config '
+    expected_3 = '/baw-workers/tmp/custom_temp_dir/working/blah -output '
+    expected_4 = '/baw-workers/tmp/custom_temp_dir/_cached_analysis_jobs/00/00aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -tempdir '
+    expected_5 = '/baw-workers/tmp/custom_temp_dir/temp/00aaaaaaaaaaaaa_'
+
+    result_string = result.to_s
+    expect(result_string).to include(expected_1)
+    expect(result_string).to include(expected_2)
+    expect(result_string).to include(expected_3)
+    expect(result_string).to include(expected_4)
+    expect(result_string).to include(expected_5)
+
+    expect(result).to_not be_blank
+
+    result_json = result.to_json
+    expect(result_json).to include('_cached_analysis_jobs/00/00aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
+    expect(result_json).to include('/tmp/custom_temp_dir/temp/00aaa')
+    expect(result_json).to include('analysis_type -source %{source_file} -config %{config_file} -output %{output_dir} -tempdir %{temp_dir}')
+    expect(result_json).to include(analysis_params[:original_format])
   end
 
 end

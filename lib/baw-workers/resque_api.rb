@@ -130,17 +130,16 @@ module BawWorkers
       end
 
       def compare_args(a, b)
+        # test payload hash first - must match to continue
         return false unless a[0].is_a?(String) && b[0].is_a?(String) && a[0] == b[0]
 
-        # if a[1] or b[1] are a hash, convert to array
-        mod_a = a[1].is_a?(Array) ? a[1] : a[1].to_a[0]
-        mod_b = b[1].is_a?(Array) ? b[1] : b[1].to_a[0]
+        # convert array a to the same format as array b
+        a_array = []
+        a[1].each_pair do |key, value|
+          a_array.push([key, value])
+        end
 
-        # sort the arrays by the first item of the sub-array
-        mod_a = mod_a.sort { |a1, b1| a1[0] <=> b1[0] }
-        mod_b = mod_b.sort { |a1, b1| a1[0] <=> b1[0] }
-
-        mod_a == mod_b
+        BawWorkers::Validation.compare(a_array, b[1..-1])
       end
 
       # List all running workers.

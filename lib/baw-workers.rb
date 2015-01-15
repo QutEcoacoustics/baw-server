@@ -58,6 +58,10 @@ module BawWorkers
     autoload :WorkHelper, 'baw-workers/media/work_helper'
   end
 
+  module Mirror
+    autoload :Action, 'baw-workers/mirror/action'
+  end
+
   module Storage
     autoload :Common, 'baw-workers/storage/common'
     autoload :AnalysisCache, 'baw-workers/storage/analysis_cache'

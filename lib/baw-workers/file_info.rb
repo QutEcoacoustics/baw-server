@@ -196,7 +196,7 @@ module BawWorkers
     # @param [string] value
     # @return [Boolean]
     def time_offset?(value)
-      !value.blank? &&  ((value =~ /^(\+|\-)\d{1,2}(:?\d{2})?$/) != nil)
+      !value.blank? && ((value =~ /^(\+|\-)\d{1,2}(:?\d{2})?$/) != nil)
     end
 
 

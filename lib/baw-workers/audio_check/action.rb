@@ -72,7 +72,7 @@ module BawWorkers
         # @param [Boolean] is_real_run
         # @return [Array<Hash>] array of hashes representing operations performed
         def action_perform_rake(csv_file, is_real_run)
-          validate_path(csv_file)
+          BawWorkers::Validation.validate_file(csv_file)
 
           successes = []
           failures = []
@@ -110,7 +110,7 @@ module BawWorkers
         # @param [Boolean] is_real_run
         # @return [Hash]
         def action_enqueue_rake(csv_file, is_real_run)
-          validate_path(csv_file)
+          BawWorkers::Validation.validate_file(csv_file)
 
           successes = []
           failures = []

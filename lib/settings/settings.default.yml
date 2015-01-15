@@ -33,6 +33,8 @@ settings:
     media:
       # name of queue to append jobs onto
       queue: media_default
+    mirror:
+      queue: mirror_default
   paths:
     original_audios:
       - ./tmp/custom_temp_dir/_original_audio

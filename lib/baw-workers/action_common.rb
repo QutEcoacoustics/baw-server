@@ -29,14 +29,6 @@ module BawWorkers
         end
       end
 
-      # validate a file path
-      def validate_path(value)
-        fail ArgumentError, 'File path cannot be empty.' if value.blank?
-        fail ArgumentError, "Could not find file #{value}." unless File.file?(value)
-        File.expand_path(value)
-      end
-
     end
-
   end
 end

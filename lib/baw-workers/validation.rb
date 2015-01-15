@@ -1,3 +1,5 @@
+require 'pathname'
+
 module BawWorkers
   # Common validation methods.
   class Validation
@@ -15,6 +17,35 @@ module BawWorkers
         fail ArgumentError, "Param was a '#{hash.class}'. It must be a 'Hash'. '#{hash}'." unless hash.is_a?(Hash)
       end
 
+      PATH_REGEXP = /\A(?:[0-9a-zA-Z_\-\.\/])+\z/
+
+      def validate_file(value, check_exists = true)
+        fail ArgumentError, 'File path cannot be empty.' if value.blank?
+        fail ArgumentError, "File path is not valid #{value}." unless PATH_REGEXP === value
+
+        file = Pathname.new(value).cleanpath
+
+        fail ArgumentError, "File path must be absolute #{value}." if file.relative?
+        fail ArgumentError, "Could not find file #{value}." if check_exists && !file.file?
+
+        file.to_s
+      end
+
+      def validate_files(value, check_exists = true)
+        is_array = value.is_a?(Array)
+        is_string = value.is_a?(String)
+        is_pathname = value.is_a?(Pathname)
+
+        if is_string
+          [validate_file(value, check_exists)]
+        elsif is_pathname
+          [validate_file(value.to_s, check_exists)]
+        elsif is_array
+          value.map{ |i| validate_file(i.to_s, check_exists)}
+        end
+
+      end
+
       def check_datetime(value)
         # ensure datetime_with_offset is an ActiveSupport::TimeWithZone
         if value.is_a?(ActiveSupport::TimeWithZone)
@@ -29,11 +60,39 @@ module BawWorkers
 
       # Check that the value for real_run is valid.
       # @param [String] real_run
-      # @returns [Boolean] true for a real run, false for dry run.
+      # @return [Boolean] true for a real run, false for dry run.
       def check_real_run(real_run)
         # options are 'dry_run' or 'real_run'. If not either of these, raise an erorr.
         fail ArgumentError, "real_run must be 'dry_run' or 'real_run', given '#{real_run}'." if real_run.blank? || !%w(real_run dry_run).include?(real_run)
         (real_run == 'real_run') ? true : false
+      end
+
+      # Compare actual and expected objects.
+      # @see https://github.com/amogil/rspec-deep-ignore-order-matcher/blob/master/lib/rspec-deep-ignore-order-matcher.rb
+      def compare(actual, expected)
+        if expected.is_a?(Array) && actual.is_a?(Array)
+          compare_array(actual, expected)
+        elsif expected.is_a?(Hash) && actual.is_a?(Hash)
+          compare_hash(actual, expected)
+        else
+          expected == actual
+        end
+      end
+
+      def compare_array(actual, expected)
+        exp = expected.clone
+        actual.each do |a|
+          index = exp.find_index { |e| compare(a, e) }
+          return false if index.nil?
+          exp.delete_at(index)
+        end
+        exp.length == 0
+      end
+
+      def compare_hash(actual, expected)
+        return false unless (actual.keys - expected.keys).length == 0
+        actual.each { |key, value| return false unless compare(value, expected[key]) }
+        true
       end
 
       # from ActiveSupport 4
