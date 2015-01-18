@@ -461,16 +461,24 @@ resource 'AudioEventComments' do
   post '/audio_events/:audio_event_id/comments/filter' do
     parameter :audio_event_id, 'Requested audio event id (in path/route)', required: true
     let(:authentication_token) { reader_token }
+    let(:audio_event_id) { @comment_user.audio_event_id }
     let(:raw_post) { {
         'filter' => {
             'comment' => {
-                'contains' => 'comment text'
+                'contains' => 'comment'
             }
         },
         'projection' => {
-            'include' => ['id', 'audio_event_id', 'comment']}
+            'include' => ['id', 'audio_event_id', 'comment']
+        }
     }.to_json }
-    standard_request_options(:post, 'FILTER (as reader)', :ok)
+    standard_request_options(:post, 'FILTER (as reader)', :ok, {
+                                      expected_json_path: 'meta/filter/comment',
+                                      data_item_count: 3,
+                                      regex_match: /"comment"\:"the writer comment text"/,
+                                      response_body_content: "\"comment\":\"comment text",
+                                      invalid_content: "\"project_ids\":[{\"id\":"
+                                  })
   end
 
 end

@@ -879,7 +879,8 @@ resource 'AudioRecordings' do
       {"paging" =>
            {'items' => 10, "page" => 1},
        "projection" => {
-           "include" => ["id", "siteId", "durationSeconds", "recordedDate", "createdAt"]},
+           "include" => ["id", "siteId", "durationSeconds", "recordedDate", "createdAt"]
+       },
        "sorting" =>
            {"orderBy" => "createdAt", "direction" => "desc"}}
       .to_json }

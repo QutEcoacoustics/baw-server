@@ -282,7 +282,7 @@ module Filter
     # @param [Array<Symbol>] valid_fields
     # @return [Array<Arel::Attributes::Attribute>] projections
     def build_projection(key, value, table, valid_fields)
-      fail CustomErrors::FilterArgumentError.new('Must not contain duplicate fields.', {"#{key}" => value}) if value.uniq.length != value.length
+      fail CustomErrors::FilterArgumentError.new('Must not contain duplicate fields.', {"#{key}" => value}) if !value.blank? && value.uniq.length != value.length
 
       columns = []
       case key

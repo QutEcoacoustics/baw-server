@@ -2,6 +2,11 @@
 
 ## Not Released
 
+ - 2015-01-18
+    - delete actions improved, archive headers added and fixed
+    - standardised controller authorisation
+    - added audio event filter action
+
  - 2015-01-06
     - Fixed CORS responses.
     - Added ability to poll Resque for job completion rather than polling filesystem.

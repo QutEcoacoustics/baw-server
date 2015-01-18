@@ -1281,6 +1281,7 @@ resource 'AudioEvents' do
 
   post '/audio_recordings/:audio_recording_id/audio_events/filter' do
     parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
+
     let(:authentication_token) { reader_token }
     let(:raw_post) { {
         'filter' => {
@@ -1289,16 +1290,38 @@ resource 'AudioEvents' do
             }
         },
         'projection' => {
-            'include' => ['id', 'start_time_seconds']}
+            'include' => ['id', 'start_time_seconds', 'audio_recording_id', 'creator_id']
+        }
     }.to_json }
-    standard_request_options(:post, 'FILTER (as reader)', :ok)
-                             # ,{
-                             #     expected_json_path: 'data/0/project_ids/0',
-                             #     data_item_count: 1,
-                             #     regex_match: /"project_ids"\:\[[0-9]+\]/,
-                             #     response_body_content: "\"project_ids\":[",
-                             #     invalid_content: "\"project_ids\":[{\"id\":"
-                             # })
+    standard_request_options(:post, 'FILTER (as reader)', :ok,
+                             {
+                                 expected_json_path: 'data/0/start_time_seconds',
+                                 data_item_count: 1,
+                                 regex_match: /"in"\:\[\"5.2\",\"7\",\"100\",\"[0-9]+\"\]/,
+                                 response_body_content: "\"start_time_seconds\":",
+                                 invalid_content: "\"project_ids\":[{\"id\":"
+                             })
+  end
+
+  post '/audio_recordings/:audio_recording_id/audio_events/filter' do
+    parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
+
+    let(:authentication_token) { reader_token }
+    let(:raw_post) { {
+        'filter' => {
+            'start_time_seconds' => {
+                'in' => ['5.2', '7', '100', '4']
+            }
+        }
+    }.to_json }
+    standard_request_options(:post, 'FILTER (no projection, as reader)', :ok,
+                             {
+                                 expected_json_path: 'data/0/high_frequency_hertz',
+                                 data_item_count: 1,
+                                 regex_match: /"in"\:\[\"5.2\",\"7\",\"100\",\"[0-9]+\"\]/,
+                                 response_body_content: "\"low_frequency_hertz\":\"400.0\"",
+                                 invalid_content: "\"project_ids\":[{\"id\":"
+                             })
   end
 
 end

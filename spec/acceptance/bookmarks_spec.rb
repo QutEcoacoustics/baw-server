@@ -386,16 +386,19 @@ resource 'Bookmarks' do
 
   post '/bookmarks/filter' do
     let(:raw_post) { {
-        filter: {
-            and: {
-                offset_seconds: {
-                    less_than: 123456
+        'filter' => {
+            'and' => {
+                'offset_seconds' => {
+                    'less_than' => 123456
                 },
-                description: {
-                    contains: 'description'
+                'description' => {
+                    'contains' => 'description'
                 }
             }
-        }
+        },
+       'projection' => {
+           'include' => ['category']
+       }
     }.to_json }
     let(:authentication_token) { user_token }
     standard_request_options(:post, 'FILTER (as reader)', :ok, {expected_json_path: 'data/0/category', data_item_count: 1})
