@@ -27,6 +27,7 @@ module Filter
       @initial_query = !query.nil? && query.is_a?(ActiveRecord::Relation) ? query : relation_all(model)
       @valid_fields = filter_settings[:valid_fields].map(&:to_sym)
       @text_fields = filter_settings[:text_fields].map(&:to_sym)
+      @render_fields = filter_settings[:render_fields].map(&:to_sym)
       @filter_settings = filter_settings
 
       @parameters = CleanParams.perform(parameters)
@@ -150,7 +151,7 @@ module Filter
     # @param [ActiveRecord::Relation] query
     # @return [ActiveRecord::Relation] query
     def query_projection_default(query)
-      apply_projections(query, build_projections({include: @filter_settings[:render_fields]}, @table, @valid_fields))
+      apply_projections(query, build_projections({include: @render_fields}, @table, @valid_fields))
     end
 
     # Add text filter to a query.

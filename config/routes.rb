@@ -213,10 +213,14 @@ Rails.application.routes.draw do
   # placed above related resource so it does not conflict with (resource)/:id => (resource)#show
   match 'audio_recordings/filter' => 'audio_recordings#filter', via: [:get, :post], defaults: {format: 'json'}
 
+
   # API audio recording item
   resources :audio_recordings, only: [:index, :show, :new, :update], defaults: {format: 'json'} do
     match 'media.:format' => 'media#show', defaults: {format: 'json'}, as: :media, via: [:get, :head]
     match 'analysis.:format' => 'analysis#show', defaults: {format: 'json'}, as: :analysis, via: [:get, :head]
+
+    match 'audio_events/filter' => 'audio_events#filter', via: [:get, :post], defaults: {format: 'json'}
+
     resources :audio_events, except: [:edit], defaults: {format: 'json'} do
       collection do
         get 'download', defaults: {format: 'csv'}

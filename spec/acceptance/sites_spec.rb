@@ -303,7 +303,8 @@ resource 'Sites' do
             }
         },
         'projection' => {
-            'include' => ['id', 'name']}
+            'include' => ['id', 'name']
+        }
     }.to_json }
     standard_request_options(:post, 'FILTER (as writer)', :ok,
                              {

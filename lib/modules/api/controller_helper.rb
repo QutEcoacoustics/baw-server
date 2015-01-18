@@ -90,7 +90,7 @@ module Api
     end
 
     def attributes_and_authorize(custom_params = nil)
-      # need to do what cancan would otherwise do due to before_filter creating instance variable, so cancan
+      # need to do what cancan would otherwise do due to before_action creating instance variable, so cancan
       # assumes already authorized
       # see https://github.com/CanCanCommunity/cancancan/wiki/Controller-Authorization-Example
       current_ability.attributes_for(action_name.to_sym, resource_class).each do |key, value|

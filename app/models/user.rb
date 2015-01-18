@@ -169,7 +169,7 @@ class User < ActiveRecord::Base
 
   def accessible_comments
     audio_events = AudioEvent.where(audio_recording_id: accessible_audio_recordings.select(:id))
-    AudioEventComment.where(audio_event_id: audio_events).select(:id)
+    AudioEventComment.where(audio_event_id: audio_events)
   end
 
   def accessible_bookmarks

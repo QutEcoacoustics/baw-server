@@ -137,6 +137,9 @@ class Ability
       # any confirmed user can access these actions
       # --------------------------------------
 
+      # new is usually available publicly
+      # filter permissions are checked as part of filter query
+
       # any confirmed user can view any other user's profile (read-only) and annotations  (the links may not work due to permissions)
       can [:show, :audio_events], User
 
@@ -151,7 +154,7 @@ class Ability
 
       can [:index, :new, :filter], AudioRecording
       # any user can access the library, permissions are checked in the action
-      can [:index, :new, :library], AudioEvent
+      can [:index, :new, :library, :filter], AudioEvent
       can [:index, :new, :filter], AudioEventComment
 
       can [:index, :new, :filter], Bookmark
