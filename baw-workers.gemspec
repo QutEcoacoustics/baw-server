@@ -26,7 +26,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'guard-rspec', '~> 4.5'
   spec.add_development_dependency 'guard-yard', '~> 2.1'
   spec.add_development_dependency 'simplecov', '~> 0.9'
-  spec.add_development_dependency 'coveralls', '~> 0.7'
+  spec.add_development_dependency 'coveralls', '~> 0.7.3'
   spec.add_development_dependency 'codeclimate-test-reporter', '~> 0.4'
   spec.add_development_dependency 'webmock', '~> 1.20'
   spec.add_development_dependency 'zonebie', '~> 0.5'
@@ -37,8 +37,8 @@ Gem::Specification.new do |spec|
   # runtime dependencies
   spec.add_runtime_dependency 'resque', '~> 1.25'
   spec.add_runtime_dependency 'settingslogic', '~> 2.0'
-  spec.add_runtime_dependency 'activesupport', '>= 4'
+  spec.add_runtime_dependency 'activesupport', '~> 4.2'
   spec.add_runtime_dependency 'resque_solo', '~> 0.1'
   spec.add_runtime_dependency 'resque-status', '~> 0.4'
-  spec.add_runtime_dependency 'actionmailer', '>= 4'
+  spec.add_runtime_dependency 'actionmailer', '~> 4.2'
 end
