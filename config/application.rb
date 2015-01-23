@@ -33,6 +33,9 @@ module AWB
     Resque.redis = Settings.resque.connection
     Resque.redis.namespace = Settings.resque.namespace
 
+    # resque job status expiry for job status entries
+    Resque::Plugins::Status::Hash.expire_in = (24 * 60 * 60) # 24hrs / 1 day in seconds
+
     # logging
     # By default, each log is created under Rails.root/log/ and the log file name is <component_name>.<environment_name>.log.
 
@@ -157,7 +160,6 @@ module AWB
         # auto-allowed headers: Cache-Control, Content-Language, Content-Type, Expires, Last-Modified, Pragma
         # http://www.w3.org/TR/cors/#simple-response-header
         # -> we have some custom headers that we want to access, plus content-length
-        # -> TODO: this will need to be updated when generating and waiting time are separated to two headers rather than one
 
         resource '*', # applies to all resources
                  headers: :any,

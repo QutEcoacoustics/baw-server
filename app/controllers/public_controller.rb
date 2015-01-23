@@ -10,7 +10,7 @@ class PublicController < ApplicationController
       :new_bug_report, :create_bug_report,
       :new_data_request, :create_data_request,
 
-      :test_exceptions, :cors_preflight
+      :cors_preflight
   ]
 
   # ensure that invalid CORS preflight requests get useful responses
@@ -309,32 +309,6 @@ EXTRACT(DAY FROM recorded_date) as extracted_day')
         format.html {
           render action: 'new_data_request'
         }
-      end
-    end
-  end
-
-  def test_exceptions
-    if ENV['RAILS_ENV'] == 'test'
-      if params.include?(:exception_class)
-        msg = 'Purposeful exception raised for testing.'
-        error_class_string = params[:exception_class]
-        error_class = error_class_string.constantize
-
-        case error_class_string
-          when 'ActionController::BadRequest'
-            fail error_class.new(response)
-
-          when 'ActiveRecord::RecordNotUnique'
-            fail error_class.new(msg, nil)
-
-          when 'CustomErrors::UnsupportedMediaTypeError',
-              'CustomErrors::NotAcceptableError'
-            fail error_class.new(msg, {format: :a_format})
-
-          else
-            fail error_class, msg
-        end
-
       end
     end
   end

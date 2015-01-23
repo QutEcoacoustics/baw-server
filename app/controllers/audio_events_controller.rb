@@ -1,11 +1,11 @@
 require 'csv'
 
 class AudioEventsController < ApplicationController
+  include Api::ControllerHelper
 
   load_and_authorize_resource :audio_recording, except: [:show, :library, :library_paged, :download]
   load_and_authorize_resource :audio_event, through: :audio_recording, except: [:show, :library, :library_paged, :download]
   skip_authorization_check only: [:show, :library, :library_paged]
-  respond_to :json, except: [:download]
 
   # GET /audio_events
   # GET /audio_events.json
@@ -98,11 +98,21 @@ class AudioEventsController < ApplicationController
   # DELETE /audio_events/1
   # DELETE /audio_events/1.json
   def destroy
-    @audio_event = AudioEvent.find(audio_event_params[:id])
+    @audio_event.destroy
     add_archived_at_header(@audio_event)
-    respond_with @audio_event.destroy
+    head :no_content
   end
 
+  def filter
+    filter_response = Settings.api_response.response_filter(
+        api_filter_params,
+        # TODO: allow access to reference audio events as well.
+        current_user.is_admin? ? AudioEvent.all : current_user.accessible_audio_events,
+        AudioEvent,
+        AudioEvent.filter_settings
+    )
+    render_api_response(filter_response)
+  end
 
   def download
 

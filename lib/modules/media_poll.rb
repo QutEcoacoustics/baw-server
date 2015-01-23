@@ -144,6 +144,24 @@ class MediaPoll
       existing_files.compact
     end
 
+    def check_files(poll_locations)
+      existing_files = []
+
+      poll_locations.each do |location|
+        dir = location[:dir]
+        file = location[:file]
+
+        # once one file exists, break out of this loop and return true
+        if File.exists?(file) && File.file?(file)
+          existing_files.push(file)
+          break
+        end
+
+      end
+
+      existing_files.compact
+    end
+
     private
 
     # Based on Firepoll gem: for knowing when something is ready

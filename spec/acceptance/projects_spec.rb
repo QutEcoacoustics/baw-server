@@ -190,12 +190,17 @@ resource 'Projects' do
 
   # Filter (#filter)
   # ================
- 
+
   post '/projects/filter' do
     let(:raw_post) {
       {
-          projection: {
-              include: [:id, :name]
+          'filter' => {
+              'id' => {
+                  'in' => [@read_permission.project.id]
+              }
+          },
+          'projection' => {
+              'include' => [:id, :name]
           }
       }.to_json
     }

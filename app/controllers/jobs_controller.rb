@@ -89,6 +89,7 @@ class JobsController < ApplicationController
   # DELETE /jobs/1.json
   def destroy
     @job.destroy
+    add_archived_at_header(@job)
 
     respond_to do |format|
       format.html { redirect_to @project }

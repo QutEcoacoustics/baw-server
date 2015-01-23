@@ -1,6 +1,6 @@
 class ErrorsController < ApplicationController
 
-  skip_authorization_check only: [:route_error, :uncaught_error]
+  skip_authorization_check only: [:route_error, :uncaught_error, :test_exceptions]
 
   # see application_controller.rb for error handling for specific exceptions.
   # see routes.rb for the catch-all route for routing errors.
@@ -58,5 +58,30 @@ class ErrorsController < ApplicationController
 
   end
 
+  def test_exceptions
+    if ENV['RAILS_ENV'] == 'test'
+      if params.include?(:exception_class)
+        msg = 'Purposeful exception raised for testing.'
+        error_class_string = params[:exception_class]
+        error_class = error_class_string.constantize
+
+        case error_class_string
+          when 'ActionController::BadRequest'
+            fail error_class.new(response)
+
+          when 'ActiveRecord::RecordNotUnique'
+            fail error_class.new(msg, nil)
+
+          when 'CustomErrors::UnsupportedMediaTypeError',
+              'CustomErrors::NotAcceptableError'
+            fail error_class.new(msg, {format: :a_format})
+
+          else
+            fail error_class, msg
+        end
+
+      end
+    end
+  end
 
 end

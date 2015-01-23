@@ -2,7 +2,6 @@ class BookmarksController < ApplicationController
   include Api::ControllerHelper
 
   load_and_authorize_resource
-  respond_to :json
 
   def index
     @bookmarks, constructed_options = Settings.api_response.response_index(
@@ -19,14 +18,10 @@ class BookmarksController < ApplicationController
   end
 
   def new
-    do_authorize!
-
     respond_show
   end
 
   def create
-    attributes_and_authorize(bookmark_params)
-
     if @bookmark.save
       respond_create_success
     else

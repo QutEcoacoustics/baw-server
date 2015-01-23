@@ -59,7 +59,7 @@ class SitesController < ApplicationController
   # GET /project/1/sites/new
   # GET /project/1/sites/new.json
   def new
-
+    # required due to before_action building model, which causes cancan to assume already authorised
     do_authorize!
 
     @site.longitude = 152
@@ -87,7 +87,7 @@ class SitesController < ApplicationController
   # POST /project/1/sites
   # POST /project/1/sites.json
   def create
-
+    # required due to before_action building model, which causes cancan to assume already authorised
     attributes_and_authorize(site_params)
 
     respond_to do |format|
@@ -130,6 +130,7 @@ class SitesController < ApplicationController
   # DELETE /project/1/sites/1.json
   def destroy
     @site.destroy
+    add_archived_at_header(@site)
 
     respond_to do |format|
       format.html { redirect_to project_sites_url(@project) }

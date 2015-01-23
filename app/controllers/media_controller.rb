@@ -195,9 +195,12 @@ class MediaController < ApplicationController
 
       time_start_waiting = Time.now
 
+
       expected_files = files_info[:possible]
       poll_locations = MediaPoll.prepare_locations(expected_files)
-      existing_files = MediaPoll.refresh_files(poll_locations)
+
+      # don't do ls poll - causes high CPU usage
+      existing_files = MediaPoll.check_files(poll_locations)
 
     elsif !existing_files.blank?
       add_header_cache
@@ -210,8 +213,7 @@ class MediaController < ApplicationController
       msg1 = "Could not create #{media_category}"
       msg2 = "using #{processor}"
       msg3 = "from request #{generation_request}"
-      msg4 = "for #{files_info}"
-      fail BawAudioTools::Exceptions::AudioToolError, "#{msg1} #{msg2} #{msg3} #{msg4}"
+      fail BawAudioTools::Exceptions::AudioToolError, "#{msg1} #{msg2} #{msg3}"
     end
 
     time_start_waiting = Time.now if time_start_waiting.nil?

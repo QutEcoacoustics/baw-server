@@ -112,21 +112,24 @@ module Api
         current_link = paging_link(
             controller, action,
             opts[:page], opts[:items],
-            opts[:filter_text], opts[:filter_generic_keys])
+            opts[:filter_text], opts[:filter_generic_keys],
+            opts[:additional_params])
 
         previous_link = paging_link(
             controller, action,
             restrict_to_bounds(opts[:page] - 1),
             opts[:items],
             opts[:filter_text],
-            opts[:filter_generic_keys]
+            opts[:filter_generic_keys],
+            opts[:additional_params]
         )
         next_link = paging_link(
             controller, action,
             restrict_to_bounds(opts[:page] + 1, 1, max_page),
             opts[:items],
             opts[:filter_text],
-            opts[:filter_generic_keys]
+            opts[:filter_generic_keys],
+            opts[:additional_params]
         )
 
         result[:meta][:paging][:current] = current_link
@@ -193,6 +196,7 @@ module Api
       # build complete api response
       opts[:filter] = filter_query.filter unless filter_query.filter.blank?
       opts[:projection] = filter_query.projection unless filter_query.projection.blank?
+      opts[:additional_params] = params.except(model.to_s.underscore.to_sym, :filter, :projection, :action, :controller, :format)
       result = build(status_symbol, data, opts)
 
       # return result
@@ -276,14 +280,17 @@ module Api
     # @param [Integer] items
     # @param [String] filter_text
     # @param [Hash] filter_generic_keys
+    # @param [Hash] additional_params
     # @return [string] paging link
-    def paging_link(controller, action, page = nil, items = nil, filter_text = nil, filter_generic_keys = {})
+    def paging_link(controller, action, page = nil, items = nil, filter_text = nil, filter_generic_keys = {}, additional_params = {})
       additional_info = {}
       additional_info[:controller] = controller unless controller.blank?
       additional_info[:action] = action unless action.blank?
       additional_info[:page] = page unless page.blank?
       additional_info[:items] = items unless items.blank?
       additional_info[:filter_partial_match] = filter_text unless filter_text.blank?
+      additional_info.merge!(additional_params) unless additional_params.blank?
+
       unless filter_generic_keys.blank?
         filter_generic_keys.each do |key, value|
           additional_info[key] = value

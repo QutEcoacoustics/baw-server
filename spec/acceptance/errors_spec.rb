@@ -72,4 +72,26 @@ resource 'Errors' do
     standard_request('ERROR', 400, 'meta/error/details', true, 'Filter parameters were not valid')
   end
 
+  head '/test_exceptions?exception_class=BawAudioTools::Exceptions::AudioToolError' do
+    standard_request_options(:head, 'ERROR AudioToolError', :internal_server_error,
+                             {
+                                 expected_response_has_content: false,
+                                 expected_response_header_values_match: false,
+                                 expected_response_header_values:
+                                     {
+                                         'X-Error-Type' => 'BawAudioTools::Exceptions::AudioToolError'
+                                     }
+                             })
+    # 'meta/error/details', true, 'Filter parameters were not valid'
+  end
+
+  get '/test_exceptions?exception_class=BawAudioTools::Exceptions::AudioToolError' do
+    standard_request_options(:get, 'ERROR AudioToolError', :internal_server_error,
+                             {
+                                 expected_json_path: 'meta/error/details',
+                                 response_body_content: 'Internal Server Error'
+                             })
+    # 'meta/error/details', true, 'Filter parameters were not valid'
+  end
+
 end

@@ -63,7 +63,7 @@ class ApplicationController < ActionController::Base
 
   def add_archived_at_header(model)
     if model.respond_to?(:deleted_at) && !model.deleted_at.blank?
-      response.headers['X-Archived-At'] = model.deleted_at
+      response.headers['X-Archived-At'] = model.deleted_at.httpdate # must be a string, can't just pass a Date or Time
     end
   end
 
@@ -206,9 +206,23 @@ class ApplicationController < ActionController::Base
       json_response[:meta][:error].merge!(options[:error_info])
     end
 
+    # notify of exception for head requests only
+    if request.head?
+      ExceptionNotifier.notify_exception(
+          error,
+          env: request.env,
+          data: {
+              method_name: method_name,
+              json_response: json_response
+          })
+    end
+
     # method_name = __method__
     # caller[0]
     log_original_error(method_name, error, json_response)
+
+    # add custom header
+    headers['X-Error-Type'] = error.class.to_s
 
     respond_to do |format|
       # format.all will be used for Accept: */* as it is first in the list
