@@ -10,8 +10,8 @@ GIT
 
 GIT
   remote: https://github.com/QutBioacoustics/baw-audio-tools.git
-  revision: e512f649278f6b1019b539e347720b2fb8962587
-  ref: e512f649278f
+  revision: 7fa18e8a31074bf968276f2f9a76779f4e133e89
+  ref: 7fa18e8a31
   branch: master
   specs:
     baw-audio-tools (0.3.0)
@@ -19,13 +19,13 @@ GIT
 
 GIT
   remote: https://github.com/QutBioacoustics/baw-workers.git
-  revision: 4d2fc83566fcee1118472b54a70af931ffe4b0fd
-  ref: 4d2fc83566fcee
+  revision: ab54881a2f0d9e8f0c24c5f2d0bc3e25acf9f57d
+  ref: ab54881a2f
   branch: master
   specs:
     baw-workers (0.5.0)
-      actionmailer (>= 4)
-      activesupport (>= 4)
+      actionmailer (~> 4.2)
+      activesupport (~> 4.2)
       resque (~> 1.25)
       resque-status (~> 0.4)
       resque_solo (~> 0.1)
@@ -51,8 +51,8 @@ GIT
 
 GIT
   remote: https://github.com/radar/dotiw.git
-  revision: e01191dd6b0aed9f5f63429230cb93a30dbdd250
-  ref: e01191d
+  revision: e09bcb369071359418699cd5dd4a2e226df117dc
+  ref: e09bcb3690
   branch: master
   specs:
     dotiw (2.0)

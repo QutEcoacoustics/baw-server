@@ -58,13 +58,15 @@ gem 'gmaps4rails', '~> 1.5.6'
 # used these commands to get lists of commits, then compared the commits to find the most recent matching commit
 # git grep --full-name --name-only 'bootstrap-affix.js v2.3.2' $(git rev-list --all) > tbsr-2.3.2-find.txt
 # git grep --full-name --name-only '.fa-play' $(git rev-list --all) > font-awesome-find.txt
+
+# Don't update this, as site still uses bootstrap v2. Need to update this when bootstrap is updated.
 gem 'twitter-bootstrap-rails', git: 'https://github.com/seyhunak/twitter-bootstrap-rails.git', branch: :master, ref: '38476dbd7f'
 
 gem 'bootstrap-timepicker-rails', '~> 0.1.3'
 gem 'bootstrap-datepicker-rails', '~> 1.3.1.1'
 # for rails 3, 4
 gem 'will_paginate', '~> 3.0.7'
-gem 'dotiw', git: 'https://github.com/radar/dotiw.git', branch: :master, ref: 'e01191d'
+gem 'dotiw', git: 'https://github.com/radar/dotiw.git', branch: :master, ref: 'e09bcb3690'
 gem 'recaptcha', '~> 0.3.6',  require: 'recaptcha/rails'
 
 # USERS & PERMISSIONS
@@ -119,7 +121,7 @@ gem 'raddocs', '~> 0.4.0'
 # MEDIA
 # -------------------------------------
 # set to a specific commit when releasing to master branch
-gem 'baw-audio-tools', git: 'https://github.com/QutBioacoustics/baw-audio-tools.git', branch: :master, ref: 'e512f649278f'
+gem 'baw-audio-tools', git: 'https://github.com/QutBioacoustics/baw-audio-tools.git', branch: :master, ref: '7fa18e8a31'
 gem 'rack-rewrite', '~> 1.5.1'
 
 # ASYNC JOBS
@@ -128,7 +130,7 @@ gem 'resque', '~> 1.25.2'
 gem 'resque-job-stats', git: 'https://github.com/echannel/resque-job-stats.git', branch: :master, ref: '8932c036ae'
 gem 'resque-status', '~> 0.4.3'
 # set to a specific commit when releasing to master branch
-gem 'baw-workers', git: 'https://github.com/QutBioacoustics/baw-workers.git', branch: :master, ref: '4d2fc83566fcee'
+gem 'baw-workers', git: 'https://github.com/QutBioacoustics/baw-workers.git', branch: :master, ref: 'ab54881a2f'
 
 # Gems restricted by environment and/or platform
 # ====================================================
