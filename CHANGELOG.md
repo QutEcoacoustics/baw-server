@@ -2,6 +2,10 @@
 
 ## Not Released
 
+
+ - 2015-01-24
+    - Fixed annotation library not filtering using query string parameters.
+
  - 2015-01-18
     - delete actions improved, archive headers added and fixed
     - standardised controller authorisation
