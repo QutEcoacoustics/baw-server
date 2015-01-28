@@ -1,13 +1,21 @@
 %h1= "#{@project.name} - Permissions"
 
 %p
-  Project is owned by
-  = link_to @project.creator.user_name, user_account_path(@project.creator)
-
-%p
-  You can also
+  You can
   =link_to 'edit default access levels', additional_permissions_project_path(@project)
   for this project.
+
+%p
+  Project Owners:
+  =AccessLevel.users(@project, :owner).map{ |p| link_to(p.user.user_name, user_account_path(p.user)) }.join(', ')
+
+%p
+  Project Writers:
+  =AccessLevel.users(@project, :writer).map{ |p| link_to(p.user.user_name, user_account_path(p.user))}.join(', ')
+
+%p
+  Project Readers:
+  =AccessLevel.users(@project, :reader).map{ |p| link_to(p.user.user_name, user_account_path(p.user)) }.join(', ')
 
 %hr
 

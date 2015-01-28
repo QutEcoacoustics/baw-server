@@ -452,5 +452,14 @@ ORDER BY #{order_clause}")
       projects(user, :none)
     end
 
+    # Get all users who have the specified permission level.
+    def users(project, level)
+      validate_project(project)
+      validate_level(level)
+      Permission
+          .includes(:user)
+          .where(level: level, project:project, logged_in_user: false, anonymous_user: false)
+    end
+
   end
 end
