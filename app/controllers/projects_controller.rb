@@ -65,8 +65,13 @@ class ProjectsController < ApplicationController
   # POST /projects
   # POST /projects.json
   def create
+
     respond_to do |format|
       if @project.save
+
+        # ensure creator has owner permissions
+        Permission.create!(project: @project, user:current_user, level: :owner, logged_in_user:false, anonymous_user:false)
+
         format.html { redirect_to @project, notice: 'Project was successfully created.' }
         format.json { respond_create_success }
       else

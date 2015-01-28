@@ -91,10 +91,19 @@ class AccessLevel
       fail ArgumentError, 'Access level array must not be blank.' if levels.blank?
       if levels.respond_to?(:each)
         levels_sym = levels.map { |i| validate_level(i) }.uniq
-        if levels_sym.include?(:none) && levels_sym.size > 1
-          fail ArgumentError, "Level array cannot contain none with other levels, got '#{levels_sym.join(', ')}'."
-        else
-          levels_sym
+        validate_level_combination(levels_sym)
+        levels_sym
+      else
+        fail ArgumentError, "Must be an array of symbols, got '#{levels.class}'."
+      end
+    end
+
+    def validate_level_combination(levels)
+      if levels.respond_to?(:each)
+        if (levels.include?(:none) || levels.include?('none')) && levels.size > 1
+          # none cannot be with other levels because this can be ambiguois, and points to a problem with how the
+          # permissions were obtained.
+          fail ArgumentError, "Level array cannot contain none with other levels, got '#{levels.join(', ')}'."
         end
       else
         fail ArgumentError, "Must be an array of symbols, got '#{levels.class}'."
@@ -192,14 +201,14 @@ class AccessLevel
       validate_project(project)
 
       levels = Permission
-                   .where(project_id: project.id, user_id: nil, logged_in_user: nil, anonymous_user: true)
+                   .where(project_id: project.id, user_id: nil, logged_in_user: false, anonymous_user: true)
                    .pluck(:level)
       if levels.size > 1
         fail ActiveRecord::RecordNotUnique, "Found more than one permission matching project #{project.id}, anonymous user: true."
       elsif levels.size < 1
         :none
       else
-        levels[0]
+        levels[0].to_sym
       end
     end
 
@@ -210,14 +219,14 @@ class AccessLevel
       validate_project(project)
 
       levels = Permission
-                   .where(project_id: project.id, user_id: nil, logged_in_user: true, anonymous_user: nil)
+                   .where(project_id: project.id, user_id: nil, logged_in_user: true, anonymous_user: false)
                    .pluck(:level)
       if levels.size > 1
         fail ActiveRecord::RecordNotUnique, "Found more than one permission matching project #{project.id}, logged in user: true."
       elsif levels.size < 1
         :none
       else
-        levels[0]
+        levels[0].to_sym
       end
     end
 
@@ -230,14 +239,14 @@ class AccessLevel
       validate_user(user)
 
       levels = Permission
-                   .where(project_id: project.id, user_id: user.id, logged_in_user: nil, anonymous_user: nil)
+                   .where(project_id: project.id, user_id: user.id, logged_in_user: false, anonymous_user: false)
                    .pluck(:level)
       if levels.size > 1
         fail ActiveRecord::RecordNotUnique, "Found more than one permission matching project #{project.id}, user #{user.id}."
       elsif levels.size < 1
         :none
       else
-        levels[0]
+        levels[0].to_sym
       end
     end
 
@@ -256,7 +265,16 @@ class AccessLevel
       else
         user_permission = level_user(user, project)
         logged_in_permission = level_logged_in(project)
-        highest([user_permission, logged_in_permission])
+        permissions = [user_permission, logged_in_permission]
+
+        # this is necessary as :none and other levels can't be in the same array.
+        # if other permissions are present, including :none doesn't make any sense.
+        if permissions.include?(:none)
+          permissions = permissions - [:none]
+          return :none if permissions.size < 1
+        end
+
+        highest(permissions)
       end
     end
 
@@ -274,8 +292,8 @@ class AccessLevel
         :owner
       else
         user_permission = user.permissions
-                              .select { |permission| permission.project_id == project.id}
-                              .map{ |permission| permission.level}
+                              .select { |permission| permission.project_id == project.id }
+                              .map { |permission| permission.level }
 
         if user_permission.size > 0
           highest(user_permission)

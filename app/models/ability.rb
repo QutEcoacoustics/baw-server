@@ -102,7 +102,7 @@ class Ability
 
       # audio event comment
       # anyone can view or create comments on reference audio events
-      # anyone with read or write permissions on the project can create comments
+      # anyone with read or write or own permissions on the project can create comments
       can [:show, :create], AudioEventComment do |audio_event_comment|
         access_level = AccessLevel.access_any?(user, audio_event_comment.audio_event.audio_recording.site.projects, :reader)
         is_audio_event_ref = audio_event_comment.audio_event.is_reference
@@ -130,7 +130,7 @@ class Ability
       # There's no way to specify any other user id.
       can [:my_account, :modify_preferences], User, id: user.id
 
-      # users can only change or delete their own
+      # users can only delete their own comments
       can [:edit, :destroy], AudioEventComment, creator_id: user.id
       can [:edit, :update, :destroy, :show], Bookmark, creator_id: user.id
       can [:edit, :update, :destroy], Job, creator_id: user.id
@@ -157,7 +157,8 @@ class Ability
       can [:index, :new, :filter], AudioRecording
       # any user can access the library, permissions are checked in the action
       can [:index, :new, :library, :filter], AudioEvent
-      can [:index, :new, :filter], AudioEventComment
+      # list, filter, update permissions are checked in the action
+      can [:index, :new, :filter, :update], AudioEventComment
 
       can [:index, :new, :filter], Bookmark
       # anyone can create tags
