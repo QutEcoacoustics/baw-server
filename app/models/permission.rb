@@ -18,7 +18,7 @@ class Permission < ActiveRecord::Base
 
   # attribute validations
   # CREATE UNIQUE INDEX permissions_idx ON permissions(project_id, user_id) WHERE user_id IS NOT NULL
-  validates :project_id, uniqueness: {scope: [:user_id], message: '\'%{value}\' does not have a unique user id'}, unless: Proc.new { |a| a.user_id.blank? }
+  validates :project_id, uniqueness: {scope: [:user_id], message: '\'%{value}\' does not have a unique user id'}, unless: Proc.new { |a| a.user_id.nil? || a.user.nil? }
   # CREATE UNIQUE INDEX permissions_idx ON permissions(project_id, logged_in_user) WHERE logged_in_user = TRUE
   validates :project_id, uniqueness: {scope: [:logged_in_user], message: '\'%{value}\' does not have a unique logged in user setting'}, if: Proc.new { |a| a.logged_in_user }
   # CREATE UNIQUE INDEX permissions_idx ON permissions(project_id, anonymous_user) WHERE anonymous_user = TRUE
@@ -40,6 +40,30 @@ class Permission < ActiveRecord::Base
             direction: :asc
         }
     }
+  end
+
+  def self.modify_project_permission(project, property, level)
+    level_s = level.to_s
+    permission = Permission.where(project: project,
+                                  user: nil,
+                                  logged_in_user: property == :logged_in_user,
+                                  anonymous_user: property == :anonymous_user).first
+
+    if level_s == 'none'
+      # return result of destroy method or true
+      permission.destroy unless permission.nil?
+      true if permission.nil?
+    else
+      permission = Permission.create(
+          project:project,
+          level: level_s,
+          user: nil,
+          logged_in_user: property == :logged_in_user,
+          anonymous_user: property == :anonymous_user) if permission.nil?
+      permission.level = level_s unless permission.nil?
+      # return result of save method
+      permission.save
+    end
   end
 
   private

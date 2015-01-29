@@ -171,8 +171,15 @@ class ProjectsController < ApplicationController
   end
 
   def update_additional_permissions
+    if cannot? :update_additional_permissions, @project
+      fail CanCan::AccessDenied.new(I18n.t('devise.failure.unauthorized'), :update_additional_permissions, Permission)
+    end
+
+    logged_in_user_success = Permission.modify_project_permission(@project,:logged_in_user, update_additional_permissions_params[:permissions][:logged_in_user])
+    anonymous_user_success = Permission.modify_project_permission(@project,:anonymous_user, update_additional_permissions_params[:permissions][:anonymous_user])
+
     respond_to do |format|
-      if @project.update_attributes(params[:project])
+      if logged_in_user_success && anonymous_user_success
         format.html { redirect_to additional_permissions_project_path(@project), notice: 'Access defaults were successfully updated.' }
       else
         format.html { redirect_to additional_permissions_project_path(@project), alert: 'Access defaults were not updated.' }
@@ -255,6 +262,10 @@ class ProjectsController < ApplicationController
 
   def update_params
     params.require(:user_ids).permit!
+  end
+
+  def update_additional_permissions_params
+    params.require(:project).permit(permissions: [:logged_in_user, :anonymous_user])
   end
 
 end

@@ -3,19 +3,32 @@
 %p
   You can
   =link_to 'edit default access levels', additional_permissions_project_path(@project)
-  for this project.
+  for this project. Currently, anonymous users have
+  = AccessLevel.level_anonymous(@project)
+  permissions and logged in users have
+  = AccessLevel.level_logged_in(@project)
+  permissions.
 
 %p
   Project Owners:
-  =AccessLevel.users(@project, :owner).map{ |p| link_to(p.user.user_name, user_account_path(p.user)) }.join(', ')
+  - owners = AccessLevel.users(@project, :owner)
+  - owners.each do |permission|
+    = link_to(permission.user.user_name, user_account_path(permission.user))
+    = ',' unless permission == owners.last
 
 %p
   Project Writers:
-  =AccessLevel.users(@project, :writer).map{ |p| link_to(p.user.user_name, user_account_path(p.user))}.join(', ')
+  - writers = AccessLevel.users(@project, :writer)
+  - AccessLevel.users(@project, :writer).each do |permission|
+    = link_to(permission.user.user_name, user_account_path(permission.user))
+    = ',' unless permission == writers.last
 
-%p
+  %p
   Project Readers:
-  =AccessLevel.users(@project, :reader).map{ |p| link_to(p.user.user_name, user_account_path(p.user)) }.join(', ')
+  - readers = AccessLevel.users(@project, :reader)
+  - AccessLevel.users(@project, :reader).each do |permission|
+    = link_to(permission.user.user_name, user_account_path(permission.user))
+    = ',' unless permission == readers.last
 
 %hr
 
