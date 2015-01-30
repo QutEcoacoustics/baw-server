@@ -9,12 +9,11 @@
 
 - project_level_anonymous = AccessLevel.level_anonymous(@project)
 - project_level_logged_in = AccessLevel.level_logged_in(@project)
-- possible_permissions = ['none','reader','writer']
 
 = simple_form_for :project, url: update_additional_permissions_project_path(@project) do |pr|
   = pr.simple_fields_for :permissions do |pe|
-    = pe.input :logged_in_user, as: :select, collection: possible_permissions, include_blank: false, selected: project_level_logged_in
-    = pe.input :anonymous_user, as: :select, collection: possible_permissions, include_blank: false, selected: project_level_anonymous
+    = pe.input :logged_in_user, as: :select, collection: ['none','reader','writer'], include_blank: false, selected: project_level_logged_in
+    = pe.input :anonymous_user, as: :select, collection: ['none','reader'], include_blank: false, selected: project_level_anonymous
   .form-actions
     = pr.submit 'Update Defaults', class: 'btn'
 

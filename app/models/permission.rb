@@ -55,7 +55,7 @@ class Permission < ActiveRecord::Base
       true if permission.nil?
     else
       permission = Permission.create(
-          project:project,
+          project: project,
           level: level_s,
           user: nil,
           logged_in_user: property == :logged_in_user,
@@ -89,10 +89,22 @@ class Permission < ActiveRecord::Base
   end
 
   def invalid_permissions
-    level_value = self.level
 
-    # only users can be owners
-    errors.add(:anonymous_user, 'can\'t be true when level is :owner') if level_value == 'owner' && self.anonymous_user
-    errors.add(:logged_in_user, 'can\'t be true when level is :owner') if level_value == 'owner' && self.logged_in_user
+    if errors.empty?
+
+      level_value = self.level.to_s
+      is_anon = self.anonymous_user
+      is_logged_in = self.logged_in_user
+      is_user = !self.user.nil?
+
+      # individual users can be reader, writer, owner (or none)
+      errors.add(:level, 'for user must be one of reader, writer, owner') if !is_anon && !is_logged_in && is_user && !['reader', 'writer', 'owner'].include?(level_value)
+
+      # logged in users can be reader or writer (or none)
+      errors.add(:level, 'for logged in user must be one of reader, writer') if !is_anon && is_logged_in && !is_user && !['reader', 'writer'].include?(level_value)
+
+      # anonymous users can be reader (or none)
+      errors.add(:level, 'for anonymous user must be reader') if is_anon && !is_logged_in && !is_user && !['reader'].include?(level_value)
+    end
   end
 end

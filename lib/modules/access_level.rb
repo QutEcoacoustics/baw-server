@@ -381,7 +381,7 @@ class AccessLevel
       level_sym = validate_level(level)
       equal_or_greater_levels = equal_or_greater(level_sym)
 
-      order_clause = 'lower(projects.name) DESC'
+      order_clause = 'lower(projects.name) ASC'
 
       query =
           Project

@@ -3,7 +3,10 @@
 %p
   You can
   =link_to 'edit default access levels', additional_permissions_project_path(@project)
-  for this project. Currently, anonymous users have
+  for this project.
+
+%p
+  Currently anonymous users have
   = AccessLevel.level_anonymous(@project)
   permissions and logged in users have
   = AccessLevel.level_logged_in(@project)
@@ -16,25 +19,9 @@
     = link_to(permission.user.user_name, user_account_path(permission.user))
     = ',' unless permission == owners.last
 
-%p
-  Project Writers:
-  - writers = AccessLevel.users(@project, :writer)
-  - AccessLevel.users(@project, :writer).each do |permission|
-    = link_to(permission.user.user_name, user_account_path(permission.user))
-    = ',' unless permission == writers.last
-
-  %p
-  Project Readers:
-  - readers = AccessLevel.users(@project, :reader)
-  - AccessLevel.users(@project, :reader).each do |permission|
-    = link_to(permission.user.user_name, user_account_path(permission.user))
-    = ',' unless permission == readers.last
-
 %hr
 
 = simple_form_for :permission, url: update_permissions_project_path(@project) do |p|
-  - project_logged_in = AccessLevel.level_logged_in(@project)
-  - project_anon = AccessLevel.level_logged_in(@project)
   %table.table.table-striped
     %thead
       %tr
@@ -45,8 +32,7 @@
         %th Owner
     %tbody
     - User.users.includes(:permissions).order('lower(user_name) ASC').each do |user|
-      - user_level = AccessLevel.manual_level(user, @project, project_anon, project_logged_in)
-      - a= 1
+      - user_level = AccessLevel.level_user(user, @project) # only checks permissions for user and project - logged_in and anon are not relevant here
       %tr{user_id: user.id}
         %td= link_to user.user_name, user_account_path(user)
         %td

@@ -277,10 +277,14 @@ describe AccessLevel do
               expect {
                 permission = FactoryGirl.create(:permission, user: user, project: project, level: level, logged_in_user: logged_in, anonymous_user: anonymous)
               }.to raise_error(ActiveRecord::RecordInvalid, /User must be set if anonymous user and logged in user are false/)
-            elsif (logged_in || anonymous) && level == :owner
+            elsif logged_in && ![:reader, :writer].include?(level)
               expect {
                 permission = FactoryGirl.create(:permission, user: user, project: project, level: level, logged_in_user: logged_in, anonymous_user: anonymous)
-              }.to raise_error(ActiveRecord::RecordInvalid, /can't be true when level is :owner/)
+              }.to raise_error(ActiveRecord::RecordInvalid, /Level for logged in user must be one of reader\, writer/)
+            elsif anonymous && :reader != level
+              expect {
+                permission = FactoryGirl.create(:permission, user: user, project: project, level: level, logged_in_user: logged_in, anonymous_user: anonymous)
+              }.to raise_error(ActiveRecord::RecordInvalid, /for anonymous user must be reader/)
             else
               permission = FactoryGirl.create(:permission, user: user, project: project, level: level, logged_in_user: logged_in, anonymous_user: anonymous)
             end
@@ -320,7 +324,7 @@ describe AccessLevel do
       get_permissions = Permission.where(project_id: combination[:project].id, user_id: combination[:user].nil? ? nil : combination[:user].id)
       Rails.logger.info "Access test '#{access_result}': #{get_permissions.to_yaml}"
 
-      projects_result = AccessLevel.projects(combination[:user], combination[:level]).map { |p| p.id}.to_a.sort
+      projects_result = AccessLevel.projects(combination[:user], combination[:level]).map { |p| p.id }.to_a.sort
 
       Rails.logger.info "Projects test '#{projects_result.join(', ')}'"
 
