@@ -58,9 +58,11 @@
   = render layout: '/shared/right_sidebar_user_times', locals: { item: @project } do
     = sidebar_metadata('Notes', @project.notes)
     = sidebar_metadata('Urn', @project.urn)
-    - permission = current_user.get_permission(@project)
-    - unless permission.blank?
-      = sidebar_metadata('Your access level', permission.level)
+    - permission = AccessLevel.level(current_user, @project)
+    = sidebar_metadata('Your access level', AccessLevel.obj_to_display(permission))
+    - if permission == :owner
+      = sidebar_metadata('Logged in user access level', AccessLevel.level_logged_in(@project))
+      = sidebar_metadata('Anonymous access level', AccessLevel.level_anonymous(@project))
 
 - content_for :title, "Project #{@project.name}"
 
@@ -69,7 +71,8 @@
     - if can? :edit, @project
       %li= link_to 'Edit Project Details', edit_project_path(@project),  title: "Change this project's details", data: {toggle: 'tooltip',  placement: 'right'}
     - if can? :update_permissions, @project
-      %li= link_to 'Edit Permissions', project_permissions_path(@project),  title: "Edit project's access permissions", data: {toggle: 'tooltip',  placement: 'right'}
+      %li= link_to 'Edit Permissions', project_permissions_path(@project),  title: 'Edit user permissions', data: {toggle: 'tooltip',  placement: 'right'}
+      %li= link_to 'Edit Access Defaults', additional_permissions_project_path(@project),  title: 'Edit default access permissions', data: {toggle: 'tooltip',  placement: 'right'}
     - if can? :destroy, @project
       %li= link_to 'Delete Project', @project, :method => :delete, data: { confirm: 'Are you sure?', toggle: 'tooltip',  placement: 'right' }, title: 'Delete project'
     - if can? :edit, @project

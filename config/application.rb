@@ -40,7 +40,7 @@ module AWB
     # By default, each log is created under Rails.root/log/ and the log file name is <component_name>.<environment_name>.log.
 
     # The default Rails log level is warn in production env and info in any other env.
-    current_log_level = Rails.env.production? ? Logger::WARN : Logger::INFO
+    current_log_level = Rails.env.production? ? Logger::INFO : Logger::DEBUG
 
     rails_logger = BawWorkers::MultiLogger.new(Logger.new(Rails.root.join('log', "rails.#{Rails.env}.log")))
     rails_logger.level = current_log_level

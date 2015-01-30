@@ -68,10 +68,10 @@ describe 'CRUD Projects as valid user with write permission', :type => :feature 
 
 end
 
-describe 'CRUD Projects as valid user and project creator', :type => :feature do
+describe 'CRUD Projects as valid user and project owner', :type => :feature do
   before(:each) do
-    @permission = FactoryGirl.create(:write_permission)
-    login_as @permission.project.creator, scope: :user
+    @permission = FactoryGirl.create(:own_permission)
+    login_as @permission.user, scope: :user
   end
 
   it 'lists all projects' do

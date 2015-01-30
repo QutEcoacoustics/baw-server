@@ -52,7 +52,7 @@ class Site < ActiveRecord::Base
   #scope :site_projects, lambda{ |project_ids| includes(:projects).where(:projects => {:id => project_ids} ) }
 
   def project_ids
-    self.projects.collect { |project| project.id }
+    self.projects.pluck(:id)
   end
 
   # overrides getting, does not change setting
@@ -76,8 +76,8 @@ class Site < ActiveRecord::Base
   end
 
   def update_location_obfuscated(current_user)
-    highest_permission = current_user.highest_permission_any(self.projects)
-    @location_obfuscated = highest_permission < AccessLevel::OWNER
+    does_user_own_any_project = AccessLevel.access_any?(current_user, self.projects, :owner)
+    @location_obfuscated = does_user_own_any_project
   end
 
   def self.add_location_jitter(value, min, max)

@@ -38,6 +38,7 @@ module CustomErrors
       @message
     end
   end
+  class InvalidAttributeValuesError < StandardError; end
   class AudioGenerationError < RuntimeError
     attr_reader :job_info
     def initialize(message = nil, job_info = nil)

@@ -5,12 +5,12 @@
 #
 
 if User.where(user_name:'Admin').first.blank?
-  harvester = User.new(user_name: 'Admin',
+  admin = User.new(user_name: 'Admin',
                        email: Settings.admin_user.email,
                        password: Settings.admin_user.password)
-  harvester.roles = [:admin]
-  harvester.skip_confirmation!
-  harvester.save!(validate: false)
+  admin.roles = [:admin]
+  admin.skip_confirmation!
+  admin.save!(validate: false)
 end
 
 if User.where(user_name:'Harvester').first.blank?

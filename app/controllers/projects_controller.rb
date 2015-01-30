@@ -65,8 +65,13 @@ class ProjectsController < ApplicationController
   # POST /projects
   # POST /projects.json
   def create
+
     respond_to do |format|
       if @project.save
+
+        # ensure creator has owner permissions
+        Permission.create!(project: @project, user:current_user, level: :owner, logged_in_user:false, anonymous_user:false)
+
         format.html { redirect_to @project, notice: 'Project was successfully created.' }
         format.json { respond_create_success }
       else
@@ -142,11 +147,50 @@ class ProjectsController < ApplicationController
     end
   end
 
+  def additional_permissions
+    if cannot? :update_permissions, @project
+      fail CanCan::AccessDenied.new(I18n.t('devise.failure.unauthorized'), :additional_permissions, Permission)
+    end
+
+    respond_to do |format|
+      format.html {
+        add_breadcrumb 'Projects', projects_path
+        add_breadcrumb @project.name, @project
+        add_breadcrumb 'Additional Permissions', additional_permissions_project_path(@project)
+      } # index.html.erb
+      format.json {
+        @project, constructed_options = Settings.api_response.response_index(
+            params,
+            Project.where(id: @project.id),
+            Project,
+            Project.filter_settings
+        )
+        respond_index
+      }
+    end
+  end
+
+  def update_additional_permissions
+    if cannot? :update_additional_permissions, @project
+      fail CanCan::AccessDenied.new(I18n.t('devise.failure.unauthorized'), :update_additional_permissions, Permission)
+    end
+
+    logged_in_user_success = Permission.modify_project_permission(@project,:logged_in_user, update_additional_permissions_params[:permissions][:logged_in_user])
+    anonymous_user_success = Permission.modify_project_permission(@project,:anonymous_user, update_additional_permissions_params[:permissions][:anonymous_user])
+
+    respond_to do |format|
+      if logged_in_user_success && anonymous_user_success
+        format.html { redirect_to additional_permissions_project_path(@project), notice: 'Access defaults were successfully updated.' }
+      else
+        format.html { redirect_to additional_permissions_project_path(@project), alert: 'Access defaults were not updated.' }
+      end
+    end
+  end
+
   # DELETE /projects/1
   # DELETE /projects/1.json
   def destroy
     @project.destroy
-    add_archived_at_header(@project)
 
     respond_to do |format|
       format.html { redirect_to projects_url }
@@ -156,7 +200,7 @@ class ProjectsController < ApplicationController
 
   # GET /projects/request_access
   def new_access_request
-    @all_projects = current_user.inaccessible_projects
+    @all_projects = AccessLevel.projects_inaccessible(current_user)
     respond_to do |format|
       format.html {
         add_breadcrumb 'Projects', projects_path
@@ -205,13 +249,7 @@ class ProjectsController < ApplicationController
   private
 
   def get_user_projects
-    if current_user.has_role? :admin
-      projects = Project.includes(:creator).order('lower(name) ASC')
-    else
-      projects = current_user.projects.sort { |a, b| a.name <=> b.name }
-    end
-
-    projects
+    AccessLevel.projects_accessible(current_user)
   end
 
   def project_params
@@ -224,6 +262,10 @@ class ProjectsController < ApplicationController
 
   def update_params
     params.require(:user_ids).permit!
+  end
+
+  def update_additional_permissions_params
+    params.require(:project).permit(permissions: [:logged_in_user, :anonymous_user])
   end
 
 end

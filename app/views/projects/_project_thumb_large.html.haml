@@ -4,7 +4,7 @@
     .caption.span7
       %h4= project.name
       %p= truncate(project.description, length: 50, separator: ' ')
-    - if current_user.can_write?(project)
+    - if AccessLevel.access?(current_user, project, :writer)
       %i.fa.fa-unlock(title="You have read & write access" data-toggle='tooltip' data-placement='top')
-    - elsif current_user.can_read?(project)
+    - elsif AccessLevel.access?(current_user, project, :reader)
       %i.fa.fa-lock(title="You have read only access" data-toggle='tooltip' data-placement='top')

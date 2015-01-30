@@ -9,18 +9,23 @@ class Permission < ActiveRecord::Base
   belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_permissions
   belongs_to :updater, class_name: 'User', foreign_key: :updater_id, inverse_of: :updated_permissions
 
-
-  AVAILABLE_LEVELS = [:writer, :reader]
-  enumerize :level, in: AVAILABLE_LEVELS, predicates: true
+  # also validates level to be one of in:
+  enumerize :level, in: AccessLevel.permission_strings, predicates: true, message: '\'%{value.inspect}\' is not a valid level'
 
   # association validations
   validates :project, existence: true
-  validates :user, existence: true
   validates :creator, existence: true
 
   # attribute validations
-  validates_uniqueness_of :level, scope: [:user_id, :project_id, :level]
-  validates_presence_of :level, :user, :creator, :project
+  # CREATE UNIQUE INDEX permissions_idx ON permissions(project_id, user_id) WHERE user_id IS NOT NULL
+  validates :project_id, uniqueness: {scope: [:user_id], message: '\'%{value}\' does not have a unique user id'}, unless: Proc.new { |a| a.user_id.nil? || a.user.nil? }
+  # CREATE UNIQUE INDEX permissions_idx ON permissions(project_id, logged_in_user) WHERE logged_in_user = TRUE
+  validates :project_id, uniqueness: {scope: [:logged_in_user], message: '\'%{value}\' does not have a unique logged in user setting'}, if: Proc.new { |a| a.logged_in_user }
+  # CREATE UNIQUE INDEX permissions_idx ON permissions(project_id, anonymous_user) WHERE anonymous_user = TRUE
+  validates :project_id, uniqueness: {scope: [:anonymous_user], message: '\'%{value}\' does not have a unique anonymous user setting'}, if: Proc.new { |a| a.anonymous_user }
+  validates_presence_of :level, :creator, :project
+
+  validate :mutually_exclusive_settings, :invalid_permissions
 
   # Define filter api settings
   def self.filter_settings
@@ -35,5 +40,71 @@ class Permission < ActiveRecord::Base
             direction: :asc
         }
     }
+  end
+
+  def self.modify_project_permission(project, property, level)
+    level_s = level.to_s
+    permission = Permission.where(project: project,
+                                  user: nil,
+                                  logged_in_user: property == :logged_in_user,
+                                  anonymous_user: property == :anonymous_user).first
+
+    if level_s == 'none'
+      # return result of destroy method or true
+      permission.destroy unless permission.nil?
+      true if permission.nil?
+    else
+      permission = Permission.create(
+          project: project,
+          level: level_s,
+          user: nil,
+          logged_in_user: property == :logged_in_user,
+          anonymous_user: property == :anonymous_user) if permission.nil?
+      permission.level = level_s unless permission.nil?
+      # return result of save method
+      permission.save
+    end
+  end
+
+  private
+
+  def mutually_exclusive_settings
+    anonymous_user_value = self.anonymous_user # true or false
+    logged_in_user_value = self.logged_in_user # true or false
+    user_id_value = !self.user_id.nil? # integer or nil
+
+    if !anonymous_user_value && !logged_in_user_value && !user_id_value
+      errors.add(:user_id, 'must be set if anonymous user and logged in user are false')
+    elsif anonymous_user_value && logged_in_user_value
+      errors.add(:anonymous_user, 'can\'t be true when logged in user is true')
+      errors.add(:logged_in_user, 'can\'t be true when anonymous user is true')
+    elsif anonymous_user_value && user_id_value
+      errors.add(:anonymous_user, 'can\'t be true when user id is set')
+      errors.add(:user_id, 'can\'t be true when anonymous user is true')
+    elsif logged_in_user_value && user_id_value
+      errors.add(:logged_in_user, 'can\'t be true when user id is set')
+      errors.add(:user_id, 'can\'t be true when logged in user is true')
+    end
+
+  end
+
+  def invalid_permissions
+
+    if errors.empty?
+
+      level_value = self.level.to_s
+      is_anon = self.anonymous_user
+      is_logged_in = self.logged_in_user
+      is_user = !self.user.nil?
+
+      # individual users can be reader, writer, owner (or none)
+      errors.add(:level, 'for user must be one of reader, writer, owner') if !is_anon && !is_logged_in && is_user && !['reader', 'writer', 'owner'].include?(level_value)
+
+      # logged in users can be reader or writer (or none)
+      errors.add(:level, 'for logged in user must be one of reader, writer') if !is_anon && is_logged_in && !is_user && !['reader', 'writer'].include?(level_value)
+
+      # anonymous users can be reader (or none)
+      errors.add(:level, 'for anonymous user must be reader') if is_anon && !is_logged_in && !is_user && !['reader'].include?(level_value)
+    end
   end
 end

@@ -30,10 +30,7 @@ class User < ActiveRecord::Base
                     default_url: '/images/user/user_:style.png'
 
   # relations
-  # TODO tidy up user project accessing - too many ways to do the same thing
-  has_many :accessible_projects, through: :permissions, source: :project
-  has_many :readable_projects, -> { where('permissions.level = reader') }, through: :permissions, source: :project
-  has_many :writable_projects, -> { where('permissions.level = writer') }, through: :permissions, source: :project
+  # no relations specified for projects - see AccessLevel class
 
   # relations for creator, updater, deleter, and others.
   has_many :created_audio_events, class_name: 'AudioEvent', foreign_key: :creator_id, inverse_of: :creator
@@ -56,8 +53,8 @@ class User < ActiveRecord::Base
   has_many :created_bookmarks, class_name: 'Bookmark', foreign_key: :creator_id, inverse_of: :creator
   has_many :updated_bookmarks, class_name: 'Bookmark', foreign_key: :updater_id, inverse_of: :updater
 
-  has_many :created_datasets, -> { includes :project}, class_name: 'Dataset', foreign_key: :creator_id, inverse_of: :creator
-  has_many :updated_datasets, -> { includes :project}, class_name: 'Dataset', foreign_key: :updater_id, inverse_of: :updater
+  has_many :created_datasets, -> { includes :project }, class_name: 'Dataset', foreign_key: :creator_id, inverse_of: :creator
+  has_many :updated_datasets, -> { includes :project }, class_name: 'Dataset', foreign_key: :updater_id, inverse_of: :updater
 
   has_many :created_jobs, class_name: 'Job', foreign_key: :creator_id, inverse_of: :creator
   has_many :updated_jobs, class_name: 'Job', foreign_key: :updater_id, inverse_of: :updater
@@ -118,170 +115,50 @@ class User < ActiveRecord::Base
   after_create :special_after_create_actions
 
   def projects
-    # TODO tidy up user project accessing - too many ways to do the same thing
-    (self.created_projects.includes(:sites, :creator) + self.accessible_projects.includes(:sites, :creator)).uniq.sort { |a, b| a.name.downcase <=> b.name.downcase }
-  end
-
-  def inaccessible_projects
-    user_projects = self.projects.map { |project| project.id }.to_a
-
-    query = Project.all
-
-    unless user_projects.blank?
-      query = query.where('id NOT IN (?)', user_projects)
-    end
-
-    query.order(:name).uniq
+    # .sort { |a, b| a.name.downcase <=> b.name.downcase }
+    AccessLevel.projects_accessible(self)
   end
 
   def recently_updated_projects
-    accessible_projects_all.uniq.limit(10)
+    AccessLevel.projects_accessible(self).reorder('projects.updated_at DESC').limit(10)
   end
 
-  def accessible_projects_all
-    # TODO tidy up user project accessing - too many ways to do the same thing
-    # .includes() for left outer join
-    # .joins for inner join
-    creator_id_check = 'projects.creator_id = ?'
-    permissions_check = '(permissions.user_id = ? AND permissions.level IN (\'reader\', \'writer\'))'
-    Project
-        .includes(:permissions, :sites, :creator)
-        .where("(#{creator_id_check} OR #{permissions_check})", self.id, self.id)
-        .references(:permissions, :sites, :creator)
-        .order('projects.name DESC')
+  def accessible_site_ids
+    self.projects.joins(:sites).pluck('sites.id').uniq
   end
 
   def accessible_sites
-    user_sites = self.projects.map { |project| project.sites.map { |site| site.id } }.to_a.uniq
-    Site.where(id: user_sites).order('sites.name DESC')
+    user_sites = accessible_site_ids
+    if user_sites.empty?
+      Site.none
+    else
+      Site.where(id: user_sites).order('sites.name DESC')
+    end
   end
 
   def accessible_audio_events
     AudioEvent
-    .includes(:audio_recording, :creator)
-    .where(audio_recording_id: accessible_audio_recordings.select(:id))
+        .includes(:audio_recording, :creator)
+        .references(:audio_recording, :creator)
+        .where(audio_recording_id: accessible_audio_recordings.pluck(:id))
   end
 
   def accessible_audio_recordings
-    user_sites = self.projects.map { |project| project.sites.map { |site| site.id } }.to_a.uniq
-    AudioRecording.where(site_id: user_sites)
+    user_sites = accessible_site_ids
+    if user_sites.empty?
+      AudioRecording.none
+    else
+      AudioRecording.where(site_id: user_sites)
+    end
   end
 
   def accessible_comments
-    audio_events = AudioEvent.where(audio_recording_id: accessible_audio_recordings.select(:id))
+    audio_events = AudioEvent.where(audio_recording_id: accessible_audio_recordings.pluck(:id))
     AudioEventComment.where(audio_event_id: audio_events)
   end
 
   def accessible_bookmarks
     Bookmark.where(creator_id: self.id)
-  end
-
-  # helper methods for permission checks
-
-  # @param [Project] project
-  def can_read?(project)
-    !get_read_permission(project).blank? || creator?(project)
-  end
-
-  # @param [Project] project
-  def can_write?(project)
-    !get_write_permission(project).blank? || creator?(project)
-  end
-
-  # @param [Array<Project>] projects
-  # @return [boolean]
-  def can_write_any?(projects)
-    projects.each do |project|
-      if self.can_write?(project)
-        return true
-      end
-    end
-    false
-  end
-
-  # @param [Array<Project>] projects
-  # @return [boolean]
-  def can_read_any?(projects)
-    projects.each do |project|
-      if self.can_read?(project)
-        return true
-      end
-    end
-    false
-  end
-
-  # @param [Project] project
-  def highest_permission(project)
-    # low to high: none, read, write, creator/owner, admin
-    if self.has_role? :admin
-      AccessLevel::ADMIN
-    elsif creator?(project)
-      AccessLevel::OWNER
-    elsif self.can_write? project
-      AccessLevel::WRITE
-    elsif self.can_read? project
-      AccessLevel::READ
-    else
-      AccessLevel::NONE
-    end
-  end
-
-  # @param [Array<Project>] projects
-  def highest_permission_any(projects)
-    highest = 0
-    projects.each do |project|
-      permission = self.highest_permission(project)
-      if permission > highest
-        highest = permission
-      end
-    end
-    highest
-  end
-
-  # Check if user has any permission on given project.
-  # @param [Project] project
-  # @return [Boolean] true if user has any permission on project.
-  def has_permission?(project)
-    !get_permission(project).blank? || creator?(project)
-  end
-
-  # @param [Array<Project>] projects
-  def has_permission_any?(projects)
-    projects.each do |project|
-      if self.has_permission?(project)
-        return true
-      end
-    end
-    false
-  end
-
-  # True if this user is the creator of project.
-  # @param [Project] project
-  # @return [Boolean]
-  def creator?(project)
-    project.creator == self
-  end
-
-  # True if this user is the updater of project.
-  # @param [Project] project
-  # @return [Boolean]
-  def updater?(project)
-    project.updater == self
-  end
-
-  # @param [Project] project
-  def get_read_permission(project)
-    Permission.where(user_id: self.id, project_id: project.id, level: 'reader').first
-  end
-
-  # @param [Project] project
-  def get_write_permission(project)
-    Permission.where(user_id: self.id, project_id: project.id, level: 'writer').first
-  end
-
-  # @param [Project] project
-  def get_permission(project)
-    Permission.where(user_id: self.id, project_id: project.id).first
   end
 
   # Get the number of projects this user has access to.
@@ -354,8 +231,8 @@ class User < ActiveRecord::Base
     login = conditions.delete(:login)
     if login
       where(conditions)
-      .where(['lower(user_name) = :value OR lower(email) = :value', {value: login.downcase}])
-      .first
+          .where(['lower(user_name) = :value OR lower(email) = :value', {value: login.downcase}])
+          .first
     else
       where(conditions).first
     end

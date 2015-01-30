@@ -16,6 +16,7 @@ resource 'Sites' do
   let(:id) { @write_permission.project.sites[0].id }
 
   # prepare authentication_token for different users
+  let(:owner_token) { "Token token=\"#{@own_permission.user.authentication_token}\"" }
   let(:writer_token) { "Token token=\"#{@write_permission.user.authentication_token}\"" }
   let(:reader_token) { "Token token=\"#{@read_permission.user.authentication_token}\"" }
   let(:admin_token) { "Token token=\"#{@admin.authentication_token}\"" }
@@ -30,8 +31,9 @@ resource 'Sites' do
     # a @read_permission.user with read access, as well as
     # a site, audio_recording and audio_event having off the project (see permission_factory.rb)
     #puts 'Creating permissions for Sites spec...'
-    @write_permission = FactoryGirl.create(:write_permission) # has to be 'write' so that the uploader has access
-    @read_permission = FactoryGirl.create(:read_permission, project: @write_permission.project)
+    @own_permission = FactoryGirl.create(:own_permission)
+    @write_permission = FactoryGirl.create(:write_permission, project: @own_permission.project)
+    @read_permission = FactoryGirl.create(:read_permission, project: @own_permission.project)
     @admin = FactoryGirl.create(:admin)
     #puts '...permissions created for Sites spec.'
   end
@@ -196,8 +198,8 @@ resource 'Sites' do
 
   get '/sites/:id' do
     parameter :id, 'Requested site ID (in path/route)', required: true
-    let(:authentication_token) { "Token token=\"#{@write_permission.project.creator.authentication_token}\"" }
-    check_site_lat_long_response('latitude and longitude should NOT be obfuscated for project creator', 200, false)
+    let(:authentication_token) { owner_token }
+    check_site_lat_long_response('latitude and longitude should NOT be obfuscated for project owner', 200, false)
   end
 
   get '/sites/:id' do

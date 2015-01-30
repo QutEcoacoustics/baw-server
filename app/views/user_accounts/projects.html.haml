@@ -31,7 +31,7 @@
         %tr
           %td= link_to project.name, project_path(project)
           %td= project.sites.size
-          %td= AccessLevel.value_to_name(@user.highest_permission(project))
+          %td= AccessLevel.obj_to_display(AccessLevel.level(@user,project))
           %td.nolink
             = link_to project_path(project), class: 'btn btn-mini' do
               %i{class: 'fa fa-home'}

@@ -15,7 +15,7 @@ class Ability
     #-------------|---------------------|-----------|----------------------------------------
     # GET         | /projects           | :index    | NO             | display a list of all projects
     # GET         | /projects/new       | :new      | NO             | return an HTML form/json properties for creating a new project
-    # POST        | /projects           | :create   | YES             | create a new project
+    # POST        | /projects           | :create   | YES            | create a new project
     # GET         | /projects/:id       | :show     | YES            | display a specific project
     # GET         | /projects/:id/edit  | :edit     | YES            | return an HTML form for editing a project (not relevant to json API)
     # PUT         | /projects/:id       | :update   | YES            | update a specific project
@@ -52,64 +52,66 @@ class Ability
       # project
       # only admin can delete projects
       can [:show], Project do |project|
-        user.has_permission?(project)
+        AccessLevel.access?(user, project, :reader)
       end
-      can [:edit, :update, :update_permissions], Project do |project|
-        user.can_write?(project)
+      can [:edit, :update, :update_permissions, :additional_permissions, :update_additional_permissions], Project do |project|
+        AccessLevel.access?(user, project, :writer)
       end
 
       # site
       # only admin can delete sites
       can [:show, :show_shallow], Site do |site|
-        user.has_permission_any?(site.projects)
+        AccessLevel.access_any?(user, site.projects, :reader)
       end
       can [:new, :create, :edit, :update], Site do |site|
-        user.can_write_any?(site.projects)
+        AccessLevel.access_any?(user, site.projects, :writer)
       end
 
       # data set
       can [:show, :show_shallow], Dataset do |dataset|
-        user.has_permission?(dataset.project)
+        AccessLevel.access?(user, dataset.project, :reader)
       end
       can [:new, :create, :edit, :update, :destroy], Dataset do |dataset|
-        user.can_write?(dataset.project)
+        AccessLevel.access?(user, dataset.project, :writer)
       end
 
       # job
       can [:show, :create], Job do |job|
-        user.has_permission?(job.dataset.project)
+        AccessLevel.access?(user, job.dataset.project, :reader)
       end
 
       # permission
       # :edit and :update are not allowed
       # :show, :create, :delete are only used by json api
       can [:show, :new, :create, :destroy], Permission do |permission|
-        user.can_write?(permission.project)
+        AccessLevel.access?(user, permission.project, :writer)
       end
 
       # audio recording
       can [:show], AudioRecording do |audio_recording|
-        user.has_permission_any?(audio_recording.site.projects)
+        AccessLevel.access_any?(user, audio_recording.site.projects, :reader)
       end
 
       # audio event
       can [:show, :download], AudioEvent do |audio_event|
-        user.has_permission_any?(audio_event.audio_recording.site.projects)
+        AccessLevel.access_any?(user, audio_event.audio_recording.site.projects, :reader)
       end
       can [:create, :edit, :update, :destroy], AudioEvent do |audio_event|
-        user.can_write_any?(audio_event.audio_recording.site.projects)
+        AccessLevel.access_any?(user, audio_event.audio_recording.site.projects, :writer)
       end
 
       # audio event comment
       # anyone can view or create comments on reference audio events
-      # anyone with read or write permissions on the project can create comments
-      can [:show, :create, :update], AudioEventComment do |audio_event_comment|
-        user.has_permission_any?(audio_event_comment.audio_event.audio_recording.site.projects) || audio_event_comment.audio_event.is_reference
+      # anyone with read or write or own permissions on the project can create comments
+      can [:show, :create], AudioEventComment do |audio_event_comment|
+        access_level = AccessLevel.access_any?(user, audio_event_comment.audio_event.audio_recording.site.projects, :reader)
+        is_audio_event_ref = audio_event_comment.audio_event.is_reference
+        access_level || is_audio_event_ref
       end
 
       # bookmark
       can [:create], Bookmark do |bookmark|
-        user.has_permission_any?(bookmark.audio_recording.site.projects)
+        AccessLevel.access_any?(user, bookmark.audio_recording.site.projects, :reader)
       end
 
       # script
@@ -128,7 +130,7 @@ class Ability
       # There's no way to specify any other user id.
       can [:my_account, :modify_preferences], User, id: user.id
 
-      # users can only change or delete their own
+      # users can only delete their own comments
       can [:edit, :destroy], AudioEventComment, creator_id: user.id
       can [:edit, :update, :destroy, :show], Bookmark, creator_id: user.id
       can [:edit, :update, :destroy], Job, creator_id: user.id
@@ -155,7 +157,8 @@ class Ability
       can [:index, :new, :filter], AudioRecording
       # any user can access the library, permissions are checked in the action
       can [:index, :new, :library, :filter], AudioEvent
-      can [:index, :new, :filter], AudioEventComment
+      # list, filter, update permissions are checked in the action
+      can [:index, :new, :filter, :update], AudioEventComment
 
       can [:index, :new, :filter], Bookmark
       # anyone can create tags

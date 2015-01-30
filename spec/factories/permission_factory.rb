@@ -24,7 +24,7 @@ FactoryGirl.define do
     creator
     user
     project
-    level { ['reader', 'writer'].sample }
+    level { ['reader', 'writer', 'owner'].sample }
   end
 
   factory :read_permission, class: Permission do
@@ -36,6 +36,13 @@ FactoryGirl.define do
 
   factory :write_permission, class: Permission do
     level 'writer'
+    creator
+    user # this is the user for which the permission is checked
+    association :project, factory: :project_with_sites_and_datasets
+  end
+
+  factory :own_permission, class: Permission do
+    level 'owner'
     creator
     user # this is the user for which the permission is checked
     association :project, factory: :project_with_sites_and_datasets

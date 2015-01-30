@@ -75,12 +75,12 @@ class UserAccountsController < ApplicationController
 
   # GET /user_accounts/1/projects
   def projects
-    @user_projects = @user.accessible_projects_all.uniq
-                         .order('projects.updated_at DESC')
-                         .paginate(
-                             page: paging_params[:page].blank? ? 1 : paging_params[:page],
-                             per_page: 30
-                         )
+    @user_projects = AccessLevel.projects_accessible(@user)
+    .reorder('projects.updated_at DESC')
+    .paginate(
+        page: paging_params[:page].blank? ? 1 : paging_params[:page],
+        per_page: 30
+    )
     respond_to do |format|
       format.html # projects.html.erb
       format.json { render json: @user_projects }

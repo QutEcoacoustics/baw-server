@@ -124,7 +124,7 @@ class PublicController < ApplicationController
               fail CustomErrors::ItemNotFoundError, 'Project not found from audio_recording_catalogue'
             end
 
-            if current_user.blank? || !current_user.can_read?(project)
+            if current_user.blank? || !AccessLevel.access?(current_user, project, :reader)
               fail CanCan::AccessDenied, 'Project access denied from audio_recording_catalogue'
             end
           end
@@ -137,7 +137,7 @@ class PublicController < ApplicationController
             end
 
             projects = Site.where(id: params[:siteId]).first.projects
-            if current_user.blank? || !current_user.can_read_any?(projects)
+            if current_user.blank? || !AccessLevel.access_any?(current_user, projects, :reader)
               fail CanCan::AccessDenied, 'Site access denied from audio_recording_catalogue'
             end
           end

@@ -1,4 +1,5 @@
 class Project < ActiveRecord::Base
+  extend Enumerize
   # ensures that creator_id, updater_id, deleter_id are set
   include UserChange
 
@@ -9,8 +10,10 @@ class Project < ActiveRecord::Base
 
   has_many :permissions, inverse_of: :project
   accepts_nested_attributes_for :permissions
+
   has_many :readers, -> { where("permissions.level = 'reader'").uniq }, through: :permissions, source: :user
   has_many :writers, -> { where("permissions.level = 'writer'").uniq }, through: :permissions, source: :user
+
   has_and_belongs_to_many :sites, uniq: true
   has_many :datasets, inverse_of: :project
   has_many :jobs, through: :datasets
