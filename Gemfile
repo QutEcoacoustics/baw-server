@@ -4,5 +4,5 @@ source 'https://rubygems.org'
 gemspec
 
 # added here because gemspec doesn't support getting gems from urls
-gem 'baw-audio-tools', git: 'https://github.com/QutBioacoustics/baw-audio-tools.git', branch: :master, ref: 'e512f649278f'
+gem 'baw-audio-tools', git: 'https://github.com/QutBioacoustics/baw-audio-tools.git', branch: :master, ref: '3750e2fc9a'
 gem 'resque-job-stats', git: 'https://github.com/echannel/resque-job-stats.git', branch: :master, ref: '8932c036ae'
