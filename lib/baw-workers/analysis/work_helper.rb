@@ -1,3 +1,6 @@
+require 'csv'
+require 'yaml'
+
 module BawWorkers
   module Analysis
     class WorkHelper
@@ -19,7 +22,7 @@ module BawWorkers
       # opts can contains other parameters specific to the analysis being run.
       # @param [Hash] opts
       # @option opts [String] :command_format (nil) command line format string
-      # @option opts [String] :audio_recording_uuid (nil) audio recording uuid
+      # @option opts [String] :uuid (nil) audio recording uuid
       # @return [Hash] result information
       def run(opts = {})
         validate_custom_hash(opts,
@@ -85,6 +88,61 @@ module BawWorkers
             execution_result: execute_result,
             arguments: modified_opts
         }
+      end
+
+      # Read a csv file containing audio recording info, and create analysis config files using a template yml file.
+      # e.g. bundle exec baw:analysis:standalone:from_csv[settings_file,csv_file,template_file]
+      # @param [String] csv_file
+      # @param [String] template_file
+      # @return [Array<Hash>] analysis config files
+      def csv_to_config(csv_file, template_file)
+        csv_path = BawWorkers::Validation.validate_file(csv_file)
+        template_path = BawWorkers::Validation.validate_file(template_file)
+
+        index_to_key_map = {
+            id: 0,
+            datetime_with_offset: 1,
+            uuid: 2,
+            original_file_name: 3,
+            media_type: 4,
+            original_format: 5
+        }
+
+        template = YAML.load_file(template_path)
+
+        results = []
+
+        CSV.foreach(csv_path, {headers: true, return_headers: false}) do |row|
+
+          # get values from row, put into hash that matches what check action expects
+          audio_params = index_to_key_map.inject({}) do |hash, (k, v)|
+            hash.merge(k.to_sym => row[k.to_s])
+          end
+
+          # set uuid, id, datetime_with_offset, original_format in template
+          info = template.deep_dup
+
+          info[:uuid] = audio_params[:uuid]
+          info[:id] = audio_params[:id].to_i
+          info[:datetime_with_offset] = Time.parse(audio_params[:datetime_with_offset]).in_time_zone.iso8601
+          info[:original_format] = audio_params[:original_format]
+
+          # special case for original_format
+          # get original_format from original_file_name
+          original_file_name = audio_params[:original_file_name]
+          original_extension = original_file_name.blank? ? '' : File.extname(original_file_name).trim('.', '').downcase
+          info[:original_format] = original_extension if audio_params[:original_format].blank?
+
+          # get extension from media_type
+          info[:original_format] = Mime::Type.lookup(audio_params[:media_type].downcase).to_sym.to_s if audio_params[:original_format].blank?
+
+          puts audio_params
+
+          # add info hash to results
+          results.push(info)
+        end
+
+        results
       end
 
       def self.validate(value)

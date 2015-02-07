@@ -73,6 +73,23 @@ module BawWorkers
           BawWorkers::Analysis::Action.action_perform(config)
         end
 
+        # Perform analysis using details from a csv file.
+        # @param [String] csv_file
+        # @param [String] template_file
+        # @return [Hash] result information
+        def action_perform_rake_csv(csv_file, template_file)
+          csv_path = BawWorkers::Validation.validate_file(csv_file)
+          template_path = BawWorkers::Validation.validate_file(template_file)
+          audio_recording_configs = action_helper.csv_to_config(csv_path, template_path)
+
+          results = []
+          audio_recording_configs.each do |audio_recording_config|
+            results.push(BawWorkers::Analysis::Action.action_perform(audio_recording_config))
+          end
+
+          results
+        end
+
         # Enqueue an analysis request.
         # @param [Hash] analysis_params
         # @return [Boolean] True if job was queued, otherwise false. +nil+
@@ -94,6 +111,23 @@ module BawWorkers
           path = BawWorkers::Validation.validate_file(single_file_config)
           config = YAML.load_file(path)
           BawWorkers::Analysis::Action.action_enqueue(config)
+        end
+
+        # Enqueue an analysis request using information from a csv file.
+        # @param [String] csv_file
+        # @param [String] template_file
+        # @return [<Array<Boolean>] True if job was queued, otherwise false. +nil+
+        #   if the job was rejected by a before_enqueue hook.
+        def action_enqueue_rake_csv(csv_file, template_file)
+          csv_path = BawWorkers::Validation.validate_file(csv_file)
+          template_path = BawWorkers::Validation.validate_file(template_file)
+          audio_recording_configs = action_helper.csv_to_config(csv_path, template_path)
+
+          results = []
+          audio_recording_configs.each do |audio_recording_config|
+            results.push(BawWorkers::Analysis::Action.action_enqueue(audio_recording_config))
+          end
+          results
         end
 
         # Create a BawWorkers::Analysis::WorkHelper instance.
