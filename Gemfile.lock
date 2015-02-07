@@ -1,7 +1,7 @@
 GIT
   remote: https://github.com/ActsAsParanoid/acts_as_paranoid.git
   revision: ddcd1915179c73f74985af6bc8935321ca2fe08d
-  ref: ddcd1915179c7
+  ref: ddcd191517
   branch: master
   specs:
     acts_as_paranoid (0.5.0.beta1)
@@ -10,8 +10,8 @@ GIT
 
 GIT
   remote: https://github.com/QutBioacoustics/baw-audio-tools.git
-  revision: 7fa18e8a31074bf968276f2f9a76779f4e133e89
-  ref: 7fa18e8a31
+  revision: 3750e2fc9a25016da694a752347ead6841ec135a
+  ref: 3750e2fc9a
   branch: master
   specs:
     baw-audio-tools (0.3.0)
@@ -19,8 +19,8 @@ GIT
 
 GIT
   remote: https://github.com/QutBioacoustics/baw-workers.git
-  revision: ab54881a2f0d9e8f0c24c5f2d0bc3e25acf9f57d
-  ref: ab54881a2f
+  revision: cac9715c7371e52928496f037239155ed8e8bed7
+  ref: cac9715c73
   branch: master
   specs:
     baw-workers (0.5.0)
@@ -33,8 +33,8 @@ GIT
 
 GIT
   remote: https://github.com/brainspec/enumerize.git
-  revision: 29c349a335c190ad289f6fc899a5e342e6bd9c99
-  ref: 29c349a335c190
+  revision: 4ab7d30d625bb86623ca474c4d121b25054ba4ce
+  ref: 4ab7d30d62
   branch: master
   specs:
     enumerize (0.9.0)
@@ -51,8 +51,8 @@ GIT
 
 GIT
   remote: https://github.com/radar/dotiw.git
-  revision: e09bcb369071359418699cd5dd4a2e226df117dc
-  ref: e09bcb3690
+  revision: ef3e01e34419b163638a5ac22c321c8375cb1501
+  ref: ef3e01e344
   branch: master
   specs:
     dotiw (2.0)
@@ -109,9 +109,9 @@ GEM
       minitest (~> 5.1)
       thread_safe (~> 0.3, >= 0.3.4)
       tzinfo (~> 1.1)
-    addressable (2.3.6)
+    addressable (2.3.7)
     arel (6.0.0)
-    bcrypt (3.1.9)
+    bcrypt (3.1.10)
     binding_of_caller (0.7.2)
       debug_inspector (>= 0.0.1)
     bootstrap-datepicker-rails (1.3.1.1)
@@ -120,7 +120,7 @@ GEM
       railties (>= 3.0)
     breadcrumbs_on_rails (2.3.0)
     builder (3.2.2)
-    bullet (4.14.2)
+    bullet (4.14.4)
       activesupport (>= 3.0.0)
       uniform_notifier (>= 1.6.0)
     cancancan (1.10.1)
@@ -165,9 +165,9 @@ GEM
     coffee-script (2.3.0)
       coffee-script-source
       execjs
-    coffee-script-source (1.8.0)
+    coffee-script-source (1.9.0)
     colorize (0.7.5)
-    coveralls (0.7.3)
+    coveralls (0.7.9)
       multi_json (~> 1.10)
       rest-client (~> 1.7)
       simplecov (~> 0.9.1)
@@ -188,11 +188,11 @@ GEM
     diff-lcs (1.2.5)
     docile (1.1.5)
     erubis (2.7.0)
-    eventmachine (1.0.4)
+    eventmachine (1.0.6)
     exception_notification (4.0.1)
       actionmailer (>= 3.0.4)
       activesupport (>= 3.0.4)
-    execjs (2.2.2)
+    execjs (2.3.0)
     factory_girl (4.5.0)
       activesupport (>= 3.0.0)
     factory_girl_rails (4.5.0)
@@ -202,7 +202,7 @@ GEM
       redis (~> 3.0)
     ffi (1.9.6)
     formatador (0.2.5)
-    globalid (0.3.0)
+    globalid (0.3.2)
       activesupport (>= 4.1.0)
     gmaps4rails (1.5.6)
     guard (2.11.1)
@@ -224,7 +224,7 @@ GEM
       yard (>= 0.7.0)
     haml (4.0.6)
       tilt
-    haml-rails (0.7.0)
+    haml-rails (0.8.2)
       actionpack (>= 4.0.1)
       activesupport (>= 4.0.1)
       haml (>= 3.1, < 5.0)
@@ -278,7 +278,7 @@ GEM
     newrelic_rpm (3.9.9.275)
     nokogiri (1.6.6.2)
       mini_portile (~> 0.6.0)
-    notiffany (0.0.3)
+    notiffany (0.0.4)
       nenv (~> 0.1)
       shellany (~> 0.0)
     orm_adapter (0.5.0)
@@ -343,8 +343,8 @@ GEM
     redis-namespace (1.5.1)
       redis (~> 3.0, >= 3.0.4)
     ref (1.0.5)
-    responders (2.0.2)
-      railties (>= 4.2.0.alpha, < 5)
+    responders (2.1.0)
+      railties (>= 4.2.0, < 5)
     resque (1.25.2)
       mono_logger (~> 1.0)
       multi_json (~> 1.0)
@@ -359,26 +359,27 @@ GEM
       mime-types (>= 1.16, < 3.0)
       netrc (~> 0.7)
     role_model (0.8.1)
-    rspec (3.1.0)
-      rspec-core (~> 3.1.0)
-      rspec-expectations (~> 3.1.0)
-      rspec-mocks (~> 3.1.0)
-    rspec-core (3.1.7)
-      rspec-support (~> 3.1.0)
-    rspec-expectations (3.1.2)
+    rspec (3.2.0)
+      rspec-core (~> 3.2.0)
+      rspec-expectations (~> 3.2.0)
+      rspec-mocks (~> 3.2.0)
+    rspec-core (3.2.0)
+      rspec-support (~> 3.2.0)
+    rspec-expectations (3.2.0)
       diff-lcs (>= 1.2.0, < 2.0)
-      rspec-support (~> 3.1.0)
-    rspec-mocks (3.1.3)
-      rspec-support (~> 3.1.0)
-    rspec-rails (3.1.0)
-      actionpack (>= 3.0)
-      activesupport (>= 3.0)
-      railties (>= 3.0)
-      rspec-core (~> 3.1.0)
-      rspec-expectations (~> 3.1.0)
-      rspec-mocks (~> 3.1.0)
-      rspec-support (~> 3.1.0)
-    rspec-support (3.1.2)
+      rspec-support (~> 3.2.0)
+    rspec-mocks (3.2.0)
+      diff-lcs (>= 1.2.0, < 2.0)
+      rspec-support (~> 3.2.0)
+    rspec-rails (3.2.0)
+      actionpack (>= 3.0, <= 4.2)
+      activesupport (>= 3.0, <= 4.2)
+      railties (>= 3.0, <= 4.2)
+      rspec-core (~> 3.2.0)
+      rspec-expectations (~> 3.2.0)
+      rspec-mocks (~> 3.2.0)
+      rspec-support (~> 3.2.0)
+    rspec-support (3.2.1)
     rspec_api_documentation (4.3.0)
       activesupport (>= 3.0.0)
       json (~> 1.4, >= 1.4.6)
@@ -387,7 +388,7 @@ GEM
     ruby_parser (3.6.4)
       sexp_processor (~> 4.1)
     safe_yaml (1.0.4)
-    sass (3.4.10)
+    sass (3.4.11)
     sass-rails (5.0.1)
       railties (>= 4.0.0, < 5.0)
       sass (~> 3.1)
@@ -400,7 +401,7 @@ GEM
     settingslogic (2.0.9)
     sexp_processor (4.4.5)
     shellany (0.0.1)
-    shoulda-matchers (2.7.0)
+    shoulda-matchers (2.8.0)
       activesupport (>= 3.0.0)
     simple_form (3.1.0)
       actionpack (~> 4.0)
@@ -415,7 +416,7 @@ GEM
       rack-protection (~> 1.4)
       tilt (~> 1.3, >= 1.3.4)
     slop (3.6.0)
-    spring (1.2.0)
+    spring (1.3.0)
     sprockets (2.12.3)
       hike (~> 1.2)
       multi_json (~> 1.0)
@@ -444,7 +445,7 @@ GEM
     timeliness (0.3.7)
     timers (4.0.1)
       hitimes
-    tins (1.3.3)
+    tins (1.3.4)
     tzinfo (1.2.2)
       thread_safe (~> 0.1)
     uglifier (2.7.0)
@@ -499,12 +500,12 @@ DEPENDENCIES
   exception_notification (~> 4.0.1)
   factory_girl_rails (~> 4.5.0)
   fakeredis (~> 0.5.0)
-  gmaps4rails (~> 1.5.6)
+  gmaps4rails (< 2)
   guard (~> 2.11.1)
   guard-rspec (~> 4.5.0)
   guard-yard (~> 2.1.4)
   haml (~> 4.0.6)
-  haml-rails (~> 0.7.0)
+  haml-rails (~> 0.8)
   jbuilder (~> 2.2.3)
   jc-validates_timeliness (~> 3.1.1)
   jquery-rails (~> 4.0.3)
@@ -527,16 +528,16 @@ DEPENDENCIES
   resque-job-stats!
   resque-status (~> 0.4.3)
   role_model (~> 0.8.1)
-  rspec (~> 3.1.0)
-  rspec-rails (~> 3.1.0)
+  rspec (~> 3.2.0)
+  rspec-rails (~> 3.2.0)
   rspec_api_documentation (~> 4.3.0)
   sass-rails (~> 5.0.1)
   sdoc (~> 0.4.0)
   settingslogic (~> 2.0.9)
-  shoulda-matchers (~> 2.7.0)
+  shoulda-matchers (~> 2.8.0)
   simple_form (~> 3.1.0)
   simplecov (~> 0.9.1)
-  spring (~> 1.2.0)
+  spring (~> 1.3.0)
   therubyracer (~> 0.12.1)
   thin (~> 1.6.3)
   twitter-bootstrap-rails!

@@ -45,13 +45,13 @@ gem 'jquery-rails', '~> 4.0.3'
 gem 'jbuilder', '~> 2.2.3'
 
 gem 'haml', '~> 4.0.6'
-gem 'haml-rails', '~> 0.7.0'
+gem 'haml-rails', '~> 0.8'
 
 gem 'simple_form', '~> 3.1.0'
 gem 'paperclip', '~> 4.2.1'
 gem 'breadcrumbs_on_rails', '~> 2.3.0'
 # kept below version 2 due to huge breaking changes
-gem 'gmaps4rails', '~> 1.5.6'
+gem 'gmaps4rails', '< 2'
 
 # https://github.com/seyhunak/twitter-bootstrap-rails
 # huge changes since last release (2.2.8 in Aug 2013), and not sure about rails 3.2 vs 4 support.
@@ -66,7 +66,7 @@ gem 'bootstrap-timepicker-rails', '~> 0.1.3'
 gem 'bootstrap-datepicker-rails', '~> 1.3.1.1'
 # for rails 3, 4
 gem 'will_paginate', '~> 3.0.7'
-gem 'dotiw', git: 'https://github.com/radar/dotiw.git', branch: :master, ref: 'e09bcb3690'
+gem 'dotiw', git: 'https://github.com/radar/dotiw.git', branch: :master, ref: 'ef3e01e344'
 gem 'recaptcha', '~> 0.3.6',  require: 'recaptcha/rails'
 
 # USERS & PERMISSIONS
@@ -97,10 +97,10 @@ gem 'jc-validates_timeliness', '~> 3.1.1'
 
 # https://github.com/brainspec/enumerize
 # we need the changes since version 0.8.0. Reassess when there is a new release.
-gem 'enumerize', git: 'https://github.com/brainspec/enumerize.git', branch: :master, ref: '29c349a335c190'
+gem 'enumerize', git: 'https://github.com/brainspec/enumerize.git', branch: :master, ref: '4ab7d30d62'
 
 gem 'uuidtools', '~> 2.1.5'
-gem 'acts_as_paranoid', git: 'https://github.com/ActsAsParanoid/acts_as_paranoid.git', branch: :master, ref: 'ddcd1915179c7'
+gem 'acts_as_paranoid', git: 'https://github.com/ActsAsParanoid/acts_as_paranoid.git', branch: :master, ref: 'ddcd191517'
 
 # SETTINGS
 # -------------------------------------
@@ -121,7 +121,7 @@ gem 'raddocs', '~> 0.4.0'
 # MEDIA
 # -------------------------------------
 # set to a specific commit when releasing to master branch
-gem 'baw-audio-tools', git: 'https://github.com/QutBioacoustics/baw-audio-tools.git', branch: :master, ref: '7fa18e8a31'
+gem 'baw-audio-tools', git: 'https://github.com/QutBioacoustics/baw-audio-tools.git', branch: :master, ref: '3750e2fc9a'
 gem 'rack-rewrite', '~> 1.5.1'
 
 # ASYNC JOBS
@@ -130,7 +130,7 @@ gem 'resque', '~> 1.25.2'
 gem 'resque-job-stats', git: 'https://github.com/echannel/resque-job-stats.git', branch: :master, ref: '8932c036ae'
 gem 'resque-status', '~> 0.4.3'
 # set to a specific commit when releasing to master branch
-gem 'baw-workers', git: 'https://github.com/QutBioacoustics/baw-workers.git', branch: :master, ref: 'ab54881a2f'
+gem 'baw-workers', git: 'https://github.com/QutBioacoustics/baw-workers.git', branch: :master, ref: 'cac9715c73'
 
 # Gems restricted by environment and/or platform
 # ====================================================
@@ -152,7 +152,7 @@ group :development, :test do
   gem 'bullet', '~> 4.14.1'
 
   # Spring speeds up development by keeping your application running in the background. Read more: https://github.com/rails/spring
-  gem 'spring', '~> 1.2.0'
+  gem 'spring', '~> 1.3.0'
 
   # Run `rails console` in the browser. Read more: https://github.com/rails/web-console
   gem 'web-console', '~> 2.0.0'
@@ -190,13 +190,13 @@ group :development, :test do
   #gem 'debugger'
   # gem install traceroute --no-ri --no-rdoc
 
-  gem 'rspec-rails', '~> 3.1.0'
+  gem 'rspec-rails', '~> 3.2.0'
   gem 'factory_girl_rails', '~> 4.5.0'
   gem 'capybara', '~> 2.4.4'
 
-  gem 'rspec', '~> 3.1.0'
+  gem 'rspec', '~> 3.2.0'
   gem 'simplecov', '~> 0.9.1', require: false
-  gem 'shoulda-matchers', '~> 2.7.0'
+  gem 'shoulda-matchers', '~> 2.8.0'
   gem 'launchy', '~> 2.4.3'
   gem 'json_spec', '~> 1.1.4'
   gem 'database_cleaner', '1.3.0' # major bugs in v1.4.0, see https://github.com/DatabaseCleaner/database_cleaner/issues/317
