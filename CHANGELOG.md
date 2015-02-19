@@ -1,7 +1,8 @@
 # Changelog
 
 ## Not Released
-
+ - 2015-02-07
+    - added rake task to export audio recordings to csv
 
  - 2015-01-24
     - Fixed annotation library not filtering using query string parameters.
