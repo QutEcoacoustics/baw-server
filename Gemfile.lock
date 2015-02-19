@@ -32,15 +32,6 @@ GIT
       settingslogic (~> 2.0)
 
 GIT
-  remote: https://github.com/brainspec/enumerize.git
-  revision: 4ab7d30d625bb86623ca474c4d121b25054ba4ce
-  ref: 4ab7d30d62
-  branch: master
-  specs:
-    enumerize (0.9.0)
-      activesupport (>= 3.2)
-
-GIT
   remote: https://github.com/echannel/resque-job-stats.git
   revision: 8932c036ae0eb272476c3f4e5aace4233aa0fa2f
   ref: 8932c036ae
@@ -51,8 +42,8 @@ GIT
 
 GIT
   remote: https://github.com/radar/dotiw.git
-  revision: ef3e01e34419b163638a5ac22c321c8375cb1501
-  ref: ef3e01e344
+  revision: 89d936adc644c29b11c460f7ee56ee2357ffad26
+  ref: 89d936adc6
   branch: master
   specs:
     dotiw (2.0)
@@ -135,7 +126,7 @@ GEM
     capistrano-newrelic (0.0.8)
       capistrano (~> 3.0)
       newrelic_rpm
-    capistrano-passenger (0.0.1)
+    capistrano-passenger (0.0.2)
       capistrano (~> 3.0)
     capistrano-rails (1.1.2)
       capistrano (~> 3.1)
@@ -165,7 +156,7 @@ GEM
     coffee-script (2.3.0)
       coffee-script-source
       execjs
-    coffee-script-source (1.9.0)
+    coffee-script-source (1.9.1)
     colorize (0.7.5)
     coveralls (0.7.9)
       multi_json (~> 1.10)
@@ -187,8 +178,10 @@ GEM
       warden (~> 1.2.3)
     diff-lcs (1.2.5)
     docile (1.1.5)
+    enumerize (0.10.0)
+      activesupport (>= 3.2)
     erubis (2.7.0)
-    eventmachine (1.0.6)
+    eventmachine (1.0.7)
     exception_notification (4.0.1)
       actionmailer (>= 3.0.4)
       activesupport (>= 3.0.4)
@@ -202,10 +195,10 @@ GEM
       redis (~> 3.0)
     ffi (1.9.6)
     formatador (0.2.5)
-    globalid (0.3.2)
+    globalid (0.3.3)
       activesupport (>= 4.1.0)
     gmaps4rails (1.5.6)
-    guard (2.11.1)
+    guard (2.12.1)
       formatador (>= 0.2.4)
       listen (~> 2.7)
       lumberjack (~> 1.0)
@@ -238,7 +231,7 @@ GEM
       nokogiri (~> 1.6.0)
       ruby_parser (~> 3.5)
     i18n (0.7.0)
-    jbuilder (2.2.6)
+    jbuilder (2.2.7)
       activesupport (>= 3.0.0, < 5)
       multi_json (~> 1.2)
     jc-validates_timeliness (3.1.1)
@@ -275,10 +268,10 @@ GEM
       net-ssh (>= 2.6.5)
     net-ssh (2.9.2)
     netrc (0.10.2)
-    newrelic_rpm (3.9.9.275)
+    newrelic_rpm (3.10.0.279)
     nokogiri (1.6.6.2)
       mini_portile (~> 0.6.0)
-    notiffany (0.0.4)
+    notiffany (0.0.5)
       nenv (~> 0.1)
       shellany (~> 0.0)
     orm_adapter (0.5.0)
@@ -339,7 +332,7 @@ GEM
     rdoc (4.2.0)
       json (~> 1.4)
     recaptcha (0.3.6)
-    redis (3.2.0)
+    redis (3.2.1)
     redis-namespace (1.5.1)
       redis (~> 3.0, >= 3.0.4)
     ref (1.0.5)
@@ -358,7 +351,7 @@ GEM
     rest-client (1.7.2)
       mime-types (>= 1.16, < 3.0)
       netrc (~> 0.7)
-    role_model (0.8.1)
+    role_model (0.8.2)
     rspec (3.2.0)
       rspec-core (~> 3.2.0)
       rspec-expectations (~> 3.2.0)
@@ -388,7 +381,7 @@ GEM
     ruby_parser (3.6.4)
       sexp_processor (~> 4.1)
     safe_yaml (1.0.4)
-    sass (3.4.11)
+    sass (3.4.12)
     sass-rails (5.0.1)
       railties (>= 4.0.0, < 5.0)
       sass (~> 3.1)
@@ -406,17 +399,17 @@ GEM
     simple_form (3.1.0)
       actionpack (~> 4.0)
       activemodel (~> 4.0)
-    simplecov (0.9.1)
+    simplecov (0.9.2)
       docile (~> 1.1.0)
       multi_json (~> 1.0)
-      simplecov-html (~> 0.8.0)
-    simplecov-html (0.8.0)
+      simplecov-html (~> 0.9.0)
+    simplecov-html (0.9.0)
     sinatra (1.4.5)
       rack (~> 1.4)
       rack-protection (~> 1.4)
       tilt (~> 1.3, >= 1.3.4)
     slop (3.6.0)
-    spring (1.3.0)
+    spring (1.3.2)
     sprockets (2.12.3)
       hike (~> 1.2)
       multi_json (~> 1.0)
@@ -451,7 +444,7 @@ GEM
     uglifier (2.7.0)
       execjs (>= 0.3.0)
       json (>= 1.8.0)
-    uniform_notifier (1.6.2)
+    uniform_notifier (1.7.0)
     uuidtools (2.1.5)
     vegas (0.1.11)
       rack (>= 1.0.0)
@@ -496,12 +489,12 @@ DEPENDENCIES
   database_cleaner (= 1.3.0)
   devise (~> 3.4.1)
   dotiw!
-  enumerize!
+  enumerize (~> 0.10.0)
   exception_notification (~> 4.0.1)
   factory_girl_rails (~> 4.5.0)
   fakeredis (~> 0.5.0)
   gmaps4rails (< 2)
-  guard (~> 2.11.1)
+  guard (~> 2.12.1)
   guard-rspec (~> 4.5.0)
   guard-yard (~> 2.1.4)
   haml (~> 4.0.6)
@@ -511,7 +504,7 @@ DEPENDENCIES
   jquery-rails (~> 4.0.3)
   json_spec (~> 1.1.4)
   launchy (~> 2.4.3)
-  newrelic_rpm (~> 3.9.9)
+  newrelic_rpm (~> 3.10.0)
   notiffany (~> 0.0.3)
   paperclip (~> 4.2.1)
   pg (~> 0.18.1)

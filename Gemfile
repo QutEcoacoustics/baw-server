@@ -66,7 +66,7 @@ gem 'bootstrap-timepicker-rails', '~> 0.1.3'
 gem 'bootstrap-datepicker-rails', '~> 1.3.1.1'
 # for rails 3, 4
 gem 'will_paginate', '~> 3.0.7'
-gem 'dotiw', git: 'https://github.com/radar/dotiw.git', branch: :master, ref: 'ef3e01e344'
+gem 'dotiw', git: 'https://github.com/radar/dotiw.git', branch: :master, ref: '89d936adc6'
 gem 'recaptcha', '~> 0.3.6',  require: 'recaptcha/rails'
 
 # USERS & PERMISSIONS
@@ -97,7 +97,7 @@ gem 'jc-validates_timeliness', '~> 3.1.1'
 
 # https://github.com/brainspec/enumerize
 # we need the changes since version 0.8.0. Reassess when there is a new release.
-gem 'enumerize', git: 'https://github.com/brainspec/enumerize.git', branch: :master, ref: '4ab7d30d62'
+gem 'enumerize', '~> 0.10.0'
 
 gem 'uuidtools', '~> 2.1.5'
 gem 'acts_as_paranoid', git: 'https://github.com/ActsAsParanoid/acts_as_paranoid.git', branch: :master, ref: 'ddcd191517'
@@ -110,7 +110,7 @@ require 'rbconfig'
 # MONITORING
 # -------------------------------------
 gem 'exception_notification', '~> 4.0.1'
-gem 'newrelic_rpm', '~> 3.9.9'
+gem 'newrelic_rpm', '~> 3.10.0'
 
 # Documentation & UI
 # -------------------------------------
@@ -163,7 +163,7 @@ group :development, :test do
   gem 'thin', '~> 1.6.3'
 
   gem 'notiffany', '~> 0.0.3'
-  gem 'guard', '~> 2.11.1'
+  gem 'guard', '~> 2.12.1'
   gem 'guard-rspec', '~> 4.5.0'
   gem 'guard-yard', '~> 2.1.4'
 
