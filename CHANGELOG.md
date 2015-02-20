@@ -1,6 +1,10 @@
 # Changelog
 
-## Not Released
+## [Release 0.13.0](https://github.com/QutBioacoustics/baw-server/releases/tag/0.13.0) (2015-02-20)
+
+ - 2015-02-20
+    - fixed problems with polling for media
+
  - 2015-02-07
     - added rake task to export audio recordings to csv
 
