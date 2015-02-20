@@ -199,8 +199,16 @@ class MediaController < ApplicationController
       expected_files = files_info[:possible]
       poll_locations = MediaPoll.prepare_locations(expected_files)
 
-      # don't do ls poll - causes high CPU usage
+      # now check if files exists - check fs, do ls, check fs
+      # CAUTION: ls can cause high CPU usage
+
+      # first fs check
       existing_files = MediaPoll.check_files(poll_locations)
+
+      if existing_files.blank?
+        # just to be sure, do an ls and another check before failing.
+        existing_files = MediaPoll.refresh_files(poll_locations)
+      end
 
     elsif !existing_files.blank?
       add_header_cache
