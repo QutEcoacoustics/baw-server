@@ -186,6 +186,22 @@ resource 'AudioEvents' do
 
   end
 
+  get '/audio_recordings/:audio_recording_id/audio_events' do
+
+    parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
+    parameter :start_offset, 'Request audio events within offset bounds (start)'
+    parameter :end_offset, 'Request audio events within offset bounds (end)'
+
+    let(:authentication_token) { reader_token }
+
+    standard_request_options(:get, 'LIST (as reader with shallow path testing quoted numbers)', :ok,
+                             {
+                                 expected_json_path: '0/start_time_seconds',
+                                 response_body_content: '"start_time_seconds":5.2,"end_time_seconds":5.8,"low_frequency_hertz":400.0,"high_frequency_hertz":6000.0'
+                             })
+
+  end
+
   ################################
   # LIBRARY
   ################################
@@ -1728,6 +1744,20 @@ resource 'AudioEvents' do
     standard_request('SHOW (as unconfirmed user)', 403, nil, true)
   end
 
+  get '/audio_recordings/:audio_recording_id/audio_events/:id' do
+    parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
+    parameter :id, 'Requested audio event id (in path/route)', required: true
+
+    let(:authentication_token) { reader_token }
+
+
+    standard_request_options(:get, 'SHOW (as reader with shallow path testing quoted numbers)', :ok,
+                             {
+                                 expected_json_path:'start_time_seconds',
+                                 response_body_content: '"start_time_seconds":5.2,"end_time_seconds":5.8,"high_frequency_hertz":6000.0,"low_frequency_hertz":400.0'
+                             })
+  end
+
   ################################
   # CREATE
   ################################
@@ -2051,7 +2081,7 @@ resource 'AudioEvents' do
                                  expected_json_path: 'data/0/high_frequency_hertz',
                                  data_item_count: 1,
                                  regex_match: /"in"\:\[\"5.2\",\"7\",\"100\",\"[0-9]+\"\]/,
-                                 response_body_content: "\"low_frequency_hertz\":\"400.0\"",
+                                 response_body_content: "\"low_frequency_hertz\":400.0",
                                  invalid_content: "\"project_ids\":[{\"id\":"
                              })
   end

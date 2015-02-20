@@ -434,17 +434,17 @@ def check_site_lat_long_response(description, expected_status, should_be_obfusca
     #'Accurate to with a kilometre (± 1000m)'
 
     stored_site = Site.where(id: site['data']['id']).first
-    stored_site_lat = stored_site.latitude.to_s
-    stored_site_long = stored_site.longitude.to_s
+    stored_site_lat = stored_site.latitude
+    stored_site_long = stored_site.longitude
 
     if site['data']['location_obfuscated']
       # assume that jitter will not result in the same number twice
-      expect(stored_site_lat).not_to eq(lat)
-      expect(stored_site_long).not_to eq(long)
+      expect(stored_site_lat).not_to be_within(0.00001).of(lat)
+      expect(stored_site_long).not_to be_within(0.00001).of(long)
     else
       # numbers should be the same
-      expect(stored_site_lat).to eq(lat)
-      expect(stored_site_long).to eq(long)
+      expect(stored_site_lat).to be_within(0.00001).of(lat)
+      expect(stored_site_long).to be_within(0.00001).of(long)
     end
 
     if should_be_obfuscated

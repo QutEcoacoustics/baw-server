@@ -430,6 +430,20 @@ resource 'AudioRecordings' do
 
   end
 
+  get '/audio_recordings/:id' do
+
+    parameter :id, 'Requested audio recording id (in path/route)', required: true
+
+    let(:authentication_token) { writer_token }
+
+    standard_request_options(:get, 'SHOW (as writer, with shallow path testing quoted numbers)', :ok,
+                             {
+                                 expected_json_path: 'duration_seconds',
+                                 response_body_content: 'duration_seconds":60000.0'
+                             })
+
+  end
+
   ################################
   # NEW
   ################################
@@ -883,7 +897,7 @@ resource 'AudioRecordings' do
        },
        "sorting" =>
            {"orderBy" => "createdAt", "direction" => "desc"}}
-      .to_json }
+          .to_json }
     let(:authentication_token) { reader_token }
     standard_request_options(:post, 'FILTER (as reader with paging, sorting, projection)', :ok, {expected_json_path: 'meta/paging/current', data_item_count: 1})
   end

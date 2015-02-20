@@ -1,4 +1,11 @@
 GIT
+  remote: git://github.com/rails/activesupport-json_encoder.git
+  revision: f02fb52c02609b3157e9288e1502dc6a4fe3b1fd
+  specs:
+    activesupport-json_encoder (1.1.0)
+      activesupport (>= 4.1.0, < 5.0)
+
+GIT
   remote: https://github.com/ActsAsParanoid/acts_as_paranoid.git
   revision: ddcd1915179c73f74985af6bc8935321ca2fe08d
   ref: ddcd191517
@@ -467,6 +474,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  activesupport-json_encoder!
   acts_as_paranoid!
   baw-audio-tools!
   baw-workers!
