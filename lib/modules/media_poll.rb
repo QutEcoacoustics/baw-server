@@ -96,14 +96,16 @@ class MediaPoll
     # @return [Array<Hash>] valid files to poll
     def prepare_locations(files)
       poll_locations = []
-      regex_check = /\A(?:[0-9a-zA-Z_-]+\/?)+\z/
+      regex_check = /\A(?:\/?[0-9a-zA-Z_\-\.]+)+\z/
       files.each do |raw_file|
         next if raw_file.nil?
         next unless regex_check === raw_file
 
         file = Pathname.new(raw_file).cleanpath
         next if file.relative?
-        next unless file.file?
+
+        # this checks the filesystem, not just the string
+        #next unless file.file?
 
         poll_locations.push(
             {

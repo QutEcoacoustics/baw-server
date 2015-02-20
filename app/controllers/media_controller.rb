@@ -195,9 +195,11 @@ class MediaController < ApplicationController
 
       time_start_waiting = Time.now
 
-
       expected_files = files_info[:possible]
+      Rails.logger.info "Expected files in media_controller#create_media: #{expected_files}"
+
       poll_locations = MediaPoll.prepare_locations(expected_files)
+      Rails.logger.info "Filtered expected files in media_controller#create_media: #{poll_locations}"
 
       # now check if files exists - check fs, do ls, check fs
       # CAUTION: ls can cause high CPU usage
