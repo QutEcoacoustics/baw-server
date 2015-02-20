@@ -1,19 +1,19 @@
 require 'csv'
 
 class AudioEventsController < ApplicationController
+  include Api::ControllerHelper
 
   load_and_authorize_resource :audio_recording, except: [:show, :library, :library_paged, :download]
   load_and_authorize_resource :audio_event, through: :audio_recording, except: [:show, :library, :library_paged, :download]
   skip_authorization_check only: [:show, :library, :library_paged]
-  respond_to :json, except: [:download]
 
   # GET /audio_events
   # GET /audio_events.json
   def index
     if @audio_recording
       events = @audio_recording.audio_events
-      events = events.end_after(params[:start_offset]) if params[:start_offset]
-      events = events.start_before(params[:end_offset]) if params[:end_offset]
+      events = events.end_after(audio_event_index_params[:start_offset]) if audio_event_index_params[:start_offset]
+      events = events.start_before(audio_event_index_params[:end_offset]) if audio_event_index_params[:end_offset]
       render json: events.to_json(include: {taggings: {include: :tag}})
     else
       render json: {error: 'An audio recording must be specified.'}, status: :bad_request
@@ -22,20 +22,22 @@ class AudioEventsController < ApplicationController
 
   def library
     authorize! :library, AudioEvent
-    response_hash = library_format(current_user, params)
+    audio_event_library_params_cleaned = CleanParams.perform(audio_event_library_params)
+    response_hash = library_format(current_user, audio_event_library_params_cleaned)
     render json: response_hash
   end
 
   def library_paged
     authorize! :library, AudioEvent
-    response_hash = library_format(current_user, params)
+    audio_event_library_params_cleaned = CleanParams.perform(audio_event_library_params)
+    response_hash = library_format(current_user, audio_event_library_params_cleaned)
 
-    total_query = AudioEvent.filtered(current_user, params).offset(nil).limit(nil)
+    total_query = AudioEvent.filtered(current_user, audio_event_library_params_cleaned).offset(nil).limit(nil)
     total = total_query.distinct(false).uniq(false).except(:select).count
 
     paged_info = {
-        page: params[:page],
-        items: params[:items],
+        page: audio_event_library_params_cleaned[:page],
+        items: audio_event_library_params_cleaned[:items],
         total: total,
         entries: response_hash
     }
@@ -57,7 +59,7 @@ class AudioEventsController < ApplicationController
     # allow logged-in users to access reference audio events
     # they would otherwise not have access to
 
-    request_params = params.dup.symbolize_keys
+    request_params = audio_event_show_params.dup.symbolize_keys
     request_params[:audio_event_id] = request_params[:id]
 
     audio_recording = auth_custom_audio_recording(request_params)
@@ -87,7 +89,7 @@ class AudioEventsController < ApplicationController
   # PUT /audio_events/1
   # PUT /audio_events/1.json
   def update
-    @audio_event.attributes = params[:audio_event]
+    @audio_event.attributes = audio_event_params
     if @audio_event.save
       render json: @audio_event.to_json(include: :taggings), status: :created
     else
@@ -98,53 +100,64 @@ class AudioEventsController < ApplicationController
   # DELETE /audio_events/1
   # DELETE /audio_events/1.json
   def destroy
-    @audio_event = AudioEvent.find(params[:id])
+    @audio_event.destroy
     add_archived_at_header(@audio_event)
-    respond_with @audio_event.destroy
+    head :no_content
   end
 
+  def filter
+    filter_response = Settings.api_response.response_filter(
+        api_filter_params,
+        # TODO: allow access to reference audio events as well.
+        current_user.is_admin? ? AudioEvent.all : current_user.accessible_audio_events,
+        AudioEvent,
+        AudioEvent.filter_settings
+    )
+    render_api_response(filter_response)
+  end
 
   def download
 
+    download_params_cleaned = CleanParams.perform(audio_event_download_params)
+
     # first check what is available to authorise this request
     is_authorized = false
-    if params[:project_id] || params[:projectId]
-      project = Project.where(id: (params[:project_id] || params[:projectId])).first
+    if download_params_cleaned[:project_id]
+      project = Project.where(id: (download_params_cleaned[:project_id])).first
       authorize! :show, project unless project.blank?
       is_authorized = true unless project.blank?
     else
       project = nil
     end
 
-    if params[:site_id] || params[:siteId]
-      site = Site.where(id: (params[:site_id] || params[:siteId])).first
+    if download_params_cleaned[:site_id]
+      site = Site.where(id: (download_params_cleaned[:site_id])).first
       authorize! :show, site unless site.blank?
       is_authorized = true unless site.blank?
     else
       site = nil
     end
 
-    if params[:audio_recording_id] || params[:audioRecordingId] || params[:recording_id] || params[:recordingId]
+    if download_params_cleaned[:audio_recording_id] || download_params_cleaned[:recording_id] || download_params_cleaned[:audiorecording_id]
       audio_recording = AudioRecording.where(
           id:
-              (params[:audio_recording_id] ||
-                  params[:audioRecordingId] ||
-                  params[:recording_id] ||
-                  params[:recordingId]).to_i).first
+              (download_params_cleaned[:audio_recording_id] ||
+                  download_params_cleaned[:recording_id] ||
+                  download_params_cleaned[:audiorecording_id]).to_i).first
       authorize! :show, audio_recording unless audio_recording.blank?
       is_authorized = true unless audio_recording.blank?
     else
       audio_recording = nil
     end
 
-    if params[:start_offset] || params[:startOffset]
-      start_offset = params[:start_offset] || params[:startOffset]
+    if download_params_cleaned[:start_offset]
+      start_offset = download_params_cleaned[:start_offset]
     else
       start_offset = nil
     end
 
-    if params[:end_offset] || params[:endOffset]
-      end_offset = params[:end_offset] || params[:endOffset]
+    if download_params_cleaned[:end_offset]
+      end_offset = download_params_cleaned[:end_offset]
     else
       end_offset = nil
     end
@@ -170,7 +183,7 @@ class AudioEventsController < ApplicationController
       file_name = NameyWamey.create_audio_recording_name(audio_recording, start_offset, end_offset, '', '')
     end
 
-    @formatted_annotations = download_format AudioEvent.csv_filter(current_user, params).limit(1000)
+    @formatted_annotations = download_format AudioEvent.csv_filter(current_user, download_params_cleaned).limit(1000)
 
     respond_to do |format|
       format.csv { render_csv("#{file_name.trim('.', '')}-#{file_name_append}") }
@@ -306,4 +319,51 @@ class AudioEventsController < ApplicationController
 
     audio_event_hash
   end
+
+  def audio_event_params
+    params.require(:audio_event).permit(
+        :audio_recording_id,
+        :start_time_seconds, :end_time_seconds,
+        :low_frequency_hertz, :high_frequency_hertz,
+        :is_reference,
+        tags_attributes: [:is_taxanomic, :text, :type_of_tag, :retired, :notes],
+        tag_ids: [])
+  end
+
+  def audio_event_index_params
+    params.permit(
+        :start_offset, :end_offset,
+        :format, :audio_recording_id, audio_event: {})
+  end
+
+  def audio_event_download_params
+    params.permit(
+        :audio_recording_id, :audioRecordingId, :audiorecording_id, :audiorecordingId, :recording_id, :recordingId,
+        :project_id, :projectId,
+        :site_id, :siteId,
+        :start_offset, :startOffset,
+        :end_offset, :endOffset,
+        :format)
+  end
+
+  def audio_event_library_params
+    params.permit(
+        :reference,
+        :tagsPartial, :tags_partial,
+        :audio_recording_id, :audioRecordingId, :audiorecording_id, :audiorecordingId, :recording_id, :recordingId,
+        :freqMin, :freq_min,
+        :freqMax, :freq_max,
+        :annotationDuration, :annotation_duration,
+        :userId, :user_id,
+        :page,
+        :items,
+        :format,
+        audio_event: {}
+    )
+  end
+
+  def audio_event_show_params
+    params.permit(:id, :project_id, :site_id, :format, :audio_recording_id, audio_event: {})
+  end
+
 end

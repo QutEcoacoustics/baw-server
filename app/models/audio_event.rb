@@ -2,9 +2,6 @@ class AudioEvent < ActiveRecord::Base
   # ensures that creator_id, updater_id, deleter_id are set
   include UserChange
 
-  attr_accessible :audio_recording_id, :start_time_seconds, :end_time_seconds, :low_frequency_hertz, :high_frequency_hertz, :is_reference,
-                  :tags_attributes, :tag_ids
-
   # relations
   belongs_to :audio_recording, inverse_of: :audio_events
   has_many :taggings, inverse_of: :audio_event
@@ -58,6 +55,29 @@ class AudioEvent < ActiveRecord::Base
                             end
                           }
 
+  # Define filter api settings
+  def self.filter_settings
+    {
+        valid_fields: [:id, :audio_recording_id,
+                       :start_time_seconds, :end_time_seconds,
+                       :low_frequency_hertz, :high_frequency_hertz,
+                       :is_reference,
+                       :created_at, :creator_id, :updated_at],
+        render_fields: [:id, :audio_recording_id,
+                        :start_time_seconds, :end_time_seconds,
+                        :low_frequency_hertz, :high_frequency_hertz,
+                        :is_reference,
+                        :creator_id, :updated_at, :created_at],
+        text_fields: [],
+        controller: :audio_events,
+        action: :filter,
+        defaults: {
+            order_by: :created_at,
+            direction: :desc
+        }
+    }
+  end
+
   # @param [User] user
   # @param [Hash] params
   def self.filtered(user, params)
@@ -99,8 +119,8 @@ class AudioEvent < ActiveRecord::Base
   # @param [ActiveRecord::Relation] query
   # @param [Hash] params
   def self.filter_tags(query, params)
-    if params.include?(:tagsPartial) && !params[:tagsPartial].blank?
-      tags_partial = CSV.parse(params[:tagsPartial], col_sep: ',').flatten.map { |item| item.trim(' ', '') }.join('|').downcase
+    if params.include?(:tags_partial) && !params[:tags_partial].blank?
+      tags_partial = CSV.parse(params[:tags_partial], col_sep: ',').flatten.map { |item| item.trim(' ', '') }.join('|').downcase
       tags_query = AudioEvent.joins(:tags).where('lower(tags.text) SIMILAR TO ?', "%(#{tags_partial})%").select('audio_events.id')
       query.where(id: tags_query)
     else
@@ -145,22 +165,22 @@ class AudioEvent < ActiveRecord::Base
   # @param [ActiveRecord::Relation] query
   # @param [Hash] params
   def self.filter_distance(query, params)
-    if params.include?(:freqMin) || params.include?(:freqMax) || params.include?(:annotationDuration)
+    if params.include?(:freq_min) || params.include?(:freq_max) || params.include?(:annotation_duration)
       compare_items = []
       compare_text = []
 
-      if params.include?(:freqMin)
-        compare_items.push(params[:freqMin].to_f)
+      if params.include?(:freq_min)
+        compare_items.push(params[:freq_min].to_f)
         compare_text.push('power(audio_events.low_frequency_hertz - ?, 2)')
       end
 
-      if params.include?(:freqMax)
-        compare_items.push(params[:freqMax].to_f)
+      if params.include?(:freq_max)
+        compare_items.push(params[:freq_max].to_f)
         compare_text.push('power(audio_events.high_frequency_hertz - ?, 2)')
       end
 
-      if params.include?(:annotationDuration)
-        compare_items.push(params[:annotationDuration].to_f)
+      if params.include?(:annotation_duration)
+        compare_items.push(params[:annotation_duration].to_f)
         compare_text.push('power((audio_events.end_time_seconds - audio_events.start_time_seconds) - ?, 2)')
       end
 
@@ -194,10 +214,10 @@ class AudioEvent < ActiveRecord::Base
   # @param [ActiveRecord::Relation] query
   # @param [Hash] params
   def self.filter_user(query, params)
-    if params.include?(:userId)
+    if params.include?(:user_id)
       creator_id_check = 'audio_events.creator_id = ?'
       updater_id_check = 'audio_events.updater_id = ?'
-      user_id = params[:userId].to_i
+      user_id = params[:user_id].to_i
       query.where("(#{creator_id_check} OR #{updater_id_check})", user_id, user_id)
     else
       query
@@ -207,8 +227,8 @@ class AudioEvent < ActiveRecord::Base
   # @param [ActiveRecord::Relation] query
   # @param [Hash] params
   def self.filter_audio_recording(query, params)
-    if params.include?(:audioRecordingId)
-      audio_recording_id = params[:audioRecordingId].to_i
+    if params.include?(:audio_recording_id) || params.include?(:audio_recording_id) || params.include?(:audiorecording_id)
+      audio_recording_id = (params[:audio_recording_id] || params[:audio_recording_id] || params[:audiorecording_id]).to_i
       query.where(audio_recording_id: audio_recording_id)
     else
       query
@@ -228,24 +248,24 @@ class AudioEvent < ActiveRecord::Base
                 .references(:users, :tags, :audio_recordings, :sites, :projects, :permissions)
                 .check_permissions(user)
 
-    if filter_params[:project_id] || filter_params[:projectId]
-      query = query.where(projects: {id: (filter_params[:project_id] || filter_params[:projectId]).to_i})
+    if filter_params[:project_id]
+      query = query.where(projects: {id: (filter_params[:project_id]).to_i})
     end
 
-    if filter_params[:site_id] || filter_params[:siteId]
-      query = query.where(sites: {id: (filter_params[:site_id] || filter_params[:siteId]).to_i})
+    if filter_params[:site_id]
+      query = query.where(sites: {id: (filter_params[:site_id]).to_i})
     end
 
-    if filter_params[:audio_recording_id] || filter_params[:audioRecordingId] || filter_params[:recording_id] || filter_params[:recordingId]
-      query = query.where(audio_recordings: {id: (filter_params[:audio_recording_id] || filter_params[:audioRecordingId] || filter_params[:recording_id] || filter_params[:recordingId]).to_i})
+    if filter_params[:audio_recording_id] || filter_params[:audiorecording_d] || filter_params[:recording_id]
+      query = query.where(audio_recordings: {id: (filter_params[:audio_recording_id] || filter_params[:audiorecording_d] || filter_params[:recording_id]).to_i})
     end
 
-    if filter_params[:start_offset] || filter_params[:startOffset]
-      query = query.end_after(filter_params[:start_offset] || filter_params[:startOffset])
+    if filter_params[:start_offset]
+      query = query.end_after(filter_params[:start_offset])
     end
 
-    if filter_params[:end_offset] || filter_params[:endOffset]
-      query = query.start_before(filter_params[:end_offset] || filter_params[:endOffset])
+    if filter_params[:end_offset]
+      query = query.start_before(filter_params[:end_offset])
     end
 
     query.order('audio_events.id DESC')

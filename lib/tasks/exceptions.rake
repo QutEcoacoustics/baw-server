@@ -1,6 +1,7 @@
 # run using rake baw:exceptions:list
 namespace :baw do
   namespace :exceptions do
+    desc 'List all available exception classes.'
     task :list => :environment do
       exceptions = []
 

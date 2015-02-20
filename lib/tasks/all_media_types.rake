@@ -1,6 +1,8 @@
 # run using rake baw:media_types:list
 namespace :baw do
   namespace :media_types do
+
+    desc 'List supported media types.'
     task :list => :environment do
 
       available_text_formats = Settings.available_formats.text

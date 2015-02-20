@@ -2,8 +2,6 @@ class Bookmark < ActiveRecord::Base
   # ensures that creator_id, updater_id, deleter_id are set
   include UserChange
 
-  attr_accessible :audio_recording_id, :name, :description, :offset_seconds, :category
-
   # relations
   belongs_to :audio_recording, inverse_of: :bookmarks
 

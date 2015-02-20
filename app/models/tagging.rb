@@ -4,9 +4,6 @@ class Tagging < ActiveRecord::Base
 
   self.table_name = 'audio_events_tags'
 
-  # attr
-  attr_accessible :audio_event_id, :tag_id, :tag_attributes
-
   # relations
   belongs_to :audio_event, inverse_of: :taggings # inverse_of allows CanCan to make permissions work properly
   belongs_to :tag, inverse_of: :taggings # inverse_of allows CanCan to make permissions work properly

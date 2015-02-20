@@ -7,11 +7,16 @@ guard :rspec, cmd: 'bundle exec rspec --format progress --color' do
 
   # Rails specs
   watch(%r{^app/models/(.+)\.rb$})                     { |m| "spec/models/#{m[1]}_spec.rb" }
-  watch(%r{^app/controllers/(.+)_(controller)\.rb$})   { |m| possible_files('spec/controllers/%{name}_%{number}controller_spec.rb', m[1]) + possible_files('spec/acceptance/%{name}_%{number}spec.rb', m[1]) }
+  watch(%r{^app/controllers/(.+)_(controller)\.rb$})   { |m|
+    possible_files('spec/controllers/%{name}_%{number}controller_spec.rb', m[1]) +
+        possible_files('spec/acceptance/%{name}_%{number}spec.rb', m[1]) +
+        ['lib/api_documentation_spec.rb'] }
+
   watch(%r{^spec/support/(.+)\.rb$})                   { 'spec' }
   watch('config/routes.rb')                            { 'spec/routing' }
   watch('app/controllers/application_controller.rb')   { 'spec/acceptance' }
   watch('app/models/ability.rb')                       { 'spec/acceptance' }
+  watch('lib/api_documentation_spec.rb')               { 'spec/acceptance' }
 
   # Capybara features specs
   watch(%r{^app/views/(.+)/.*\.(erb|haml)$})           { |m| "spec/features/#{m[1]}_spec.rb" }
@@ -23,7 +28,14 @@ guard :rspec, cmd: 'bundle exec rspec --format progress --color' do
   watch(%r{^lib/modules/(.+)\.rb$})                    { |m| "spec/lib/#{m[1]}_spec.rb" }
 
   # changes to factories
-  watch(%r{^spec/factories/(.+)_(factory).rb$})        { |m| %W(spec/features/#{m[1]}s_spec.rb spec/features/#{m[1]}_spec.rb spec/acceptance/#{m[1]}s_spec.rb spec/acceptance/#{m[1]}_spec.rb spec/models/#{m[1]}s_spec.rb spec/models/#{m[1]}_spec.rb)}
+  watch(%r{^spec/factories/(.+)_(factory).rb$})        { |m| [
+      "spec/features/#{m[1]}s_spec.rb",
+      "spec/features/#{m[1]}_spec.rb",
+      "spec/acceptance/#{m[1]}s_spec.rb",
+      "spec/acceptance/#{m[1]}_spec.rb",
+      "spec/models/#{m[1]}s_spec.rb",
+      "spec/models/#{m[1]}_spec.rb",
+      'lib/api_documentation_spec.rb']}
 end
 
 # guard :yard, port: 8808, stdout: './tmp/yard-out.log', stderr: './tmp/yard-err.log' do

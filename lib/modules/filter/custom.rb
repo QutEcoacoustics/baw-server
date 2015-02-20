@@ -65,6 +65,8 @@ module Filter
       #tags_query = AudioEvent.joins(:tags).where('lower(tags.text) SIMILAR TO ?', "%(#{tags_partial})%").select('audio_events.id')
 
       validate_table_column(table, column_name, text_allowed)
+      validate_array(text_array)
+      validate_array_items(text_array)
       sanitized_value = text_array.map { |item| sanitize_similar_to_value(item.trim(' ', '')) }.join('|').downcase
       contains_value = "%(#{sanitized_value})%"
       lower_value = "lower(#{table.name}.#{column_name})"

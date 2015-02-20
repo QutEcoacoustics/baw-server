@@ -3,6 +3,7 @@ module Api
     extend ActiveSupport::Concern
 
     # based on https://codelation.com/blog/rails-restful-api-just-add-water
+    private
 
     # The singular name for the resource class based on the controller
     # @return [String]
@@ -88,15 +89,19 @@ module Api
       render json: content, status: status_symbol, content_type: 'application/json'
     end
 
-    def attributes_and_authorize
-      # need to do what cancan would otherwise do due to before_filter creating instance variable, so cancan
+    def attributes_and_authorize(custom_params = nil)
+      # need to do what cancan would otherwise do due to before_action creating instance variable, so cancan
       # assumes already authorized
       # see https://github.com/CanCanCommunity/cancancan/wiki/Controller-Authorization-Example
       current_ability.attributes_for(action_name.to_sym, resource_class).each do |key, value|
         get_resource.send("#{key}=", value)
       end
-      capture_params = params[resource_name.to_sym]
+      capture_params = custom_params.nil? ? params[resource_name.to_sym] : custom_params
       get_resource.attributes = capture_params if !capture_params.blank? && capture_params.is_a?(Hash)
+      do_authorize!
+    end
+
+    def do_authorize!
       authorize! action_name.to_sym, get_resource
     end
 
@@ -110,6 +115,11 @@ module Api
       end
       fields = item_resource.class.filter_settings[:render_fields]
       item_resource.as_json(only: fields).merge(extra_hash)
+    end
+
+    def api_filter_params
+      # for filter api, all validation is done in modules rather than in strong parameters.
+      params.permit!
     end
 
   end

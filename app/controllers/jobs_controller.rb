@@ -3,15 +3,15 @@ class JobsController < ApplicationController
 
   add_breadcrumb 'Home', :root_path
 
-  # order matters for before_filter and load_and_authorize_resource!
+  # order matters for before_action and load_and_authorize_resource!
   load_and_authorize_resource :project
 
   # this is necessary so that the ability has access to job.dataset.projects
-  before_filter :build_project_job, only: [:new, :create]
+  before_action :build_project_job, only: [:new, :create]
 
   load_and_authorize_resource :job, through: :project
 
-  before_filter :add_project_breadcrumb
+  before_action :add_project_breadcrumb
 
   # GET /jobs
   # GET /jobs.json
@@ -37,7 +37,7 @@ class JobsController < ApplicationController
   # GET /jobs/new
   # GET /jobs/new.json
   def new
-    attributes_and_authorize
+    do_authorize!
 
     respond_to do |format|
       format.html {
@@ -58,7 +58,7 @@ class JobsController < ApplicationController
   # POST /jobs.json
   def create
 
-    attributes_and_authorize
+    attributes_and_authorize(job_params)
 
     respond_to do |format|
       if @job.save
@@ -75,7 +75,7 @@ class JobsController < ApplicationController
   # PUT /jobs/1.json
   def update
     respond_to do |format|
-      if @job.update_attributes(params[:job])
+      if @job.update_attributes(job_params)
         format.html { redirect_to [@project, @job.dataset, @job], notice: 'Analysis job was successfully updated.' }
         format.json { head :no_content }
       else
@@ -89,6 +89,7 @@ class JobsController < ApplicationController
   # DELETE /jobs/1.json
   def destroy
     @job.destroy
+    add_archived_at_header(@job)
 
     respond_to do |format|
       format.html { redirect_to @project }
@@ -108,5 +109,11 @@ class JobsController < ApplicationController
     @dataset.project = @project
     @job = Job.new
     @job.dataset = @dataset
+  end
+
+  def job_params
+    params.require(:job).permit(
+        :script_id, :dataset_id, :annotation_name,
+        :name, :description, :script_settings)
   end
 end

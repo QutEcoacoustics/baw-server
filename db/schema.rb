@@ -16,7 +16,7 @@ ActiveRecord::Schema.define(version: 20141115234848) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
-  create_table "audio_event_comments", force: true do |t|
+  create_table "audio_event_comments", force: :cascade do |t|
     t.integer  "audio_event_id", null: false
     t.text     "comment",        null: false
     t.string   "flag"
@@ -31,7 +31,7 @@ ActiveRecord::Schema.define(version: 20141115234848) do
     t.datetime "updated_at",     null: false
   end
 
-  create_table "audio_events", force: true do |t|
+  create_table "audio_events", force: :cascade do |t|
     t.integer  "audio_recording_id",                                            null: false
     t.decimal  "start_time_seconds",   precision: 10, scale: 4,                 null: false
     t.decimal  "end_time_seconds",     precision: 10, scale: 4
@@ -46,7 +46,7 @@ ActiveRecord::Schema.define(version: 20141115234848) do
     t.datetime "updated_at",                                                    null: false
   end
 
-  create_table "audio_events_tags", force: true do |t|
+  create_table "audio_events_tags", force: :cascade do |t|
     t.integer  "audio_event_id", null: false
     t.integer  "tag_id",         null: false
     t.datetime "created_at",     null: false
@@ -57,7 +57,7 @@ ActiveRecord::Schema.define(version: 20141115234848) do
 
   add_index "audio_events_tags", ["audio_event_id", "tag_id"], name: "index_audio_events_tags_on_audio_event_id_and_tag_id", unique: true, using: :btree
 
-  create_table "audio_recordings", force: true do |t|
+  create_table "audio_recordings", force: :cascade do |t|
     t.string   "uuid",               limit: 36,                                           null: false
     t.integer  "uploader_id",                                                             null: false
     t.datetime "recorded_date",                                                           null: false
@@ -83,7 +83,7 @@ ActiveRecord::Schema.define(version: 20141115234848) do
   add_index "audio_recordings", ["created_at", "updated_at"], name: "audio_recordings_created_updated_at", using: :btree
   add_index "audio_recordings", ["site_id"], name: "index_audio_recordings_on_site_id", using: :btree
 
-  create_table "bookmarks", force: true do |t|
+  create_table "bookmarks", force: :cascade do |t|
     t.integer  "audio_recording_id"
     t.decimal  "offset_seconds",     precision: 10, scale: 4
     t.string   "name"
@@ -95,7 +95,7 @@ ActiveRecord::Schema.define(version: 20141115234848) do
     t.string   "category"
   end
 
-  create_table "datasets", force: true do |t|
+  create_table "datasets", force: :cascade do |t|
     t.string   "name",                        null: false
     t.time     "start_time"
     t.time     "end_time"
@@ -118,12 +118,12 @@ ActiveRecord::Schema.define(version: 20141115234848) do
     t.text     "tag_text_filters"
   end
 
-  create_table "datasets_sites", id: false, force: true do |t|
+  create_table "datasets_sites", id: false, force: :cascade do |t|
     t.integer "dataset_id", null: false
     t.integer "site_id",    null: false
   end
 
-  create_table "jobs", force: true do |t|
+  create_table "jobs", force: :cascade do |t|
     t.string   "name",            null: false
     t.string   "annotation_name"
     t.text     "script_settings"
@@ -138,7 +138,7 @@ ActiveRecord::Schema.define(version: 20141115234848) do
     t.text     "description"
   end
 
-  create_table "permissions", force: true do |t|
+  create_table "permissions", force: :cascade do |t|
     t.integer  "creator_id", null: false
     t.string   "level",      null: false
     t.integer  "project_id", null: false
@@ -148,7 +148,7 @@ ActiveRecord::Schema.define(version: 20141115234848) do
     t.datetime "updated_at", null: false
   end
 
-  create_table "projects", force: true do |t|
+  create_table "projects", force: :cascade do |t|
     t.string   "name",               null: false
     t.text     "description"
     t.string   "urn"
@@ -165,12 +165,12 @@ ActiveRecord::Schema.define(version: 20141115234848) do
     t.datetime "updated_at",         null: false
   end
 
-  create_table "projects_sites", id: false, force: true do |t|
+  create_table "projects_sites", id: false, force: :cascade do |t|
     t.integer "project_id", null: false
     t.integer "site_id",    null: false
   end
 
-  create_table "scripts", force: true do |t|
+  create_table "scripts", force: :cascade do |t|
     t.string   "name",                                                               null: false
     t.string   "description"
     t.text     "notes"
@@ -190,7 +190,7 @@ ActiveRecord::Schema.define(version: 20141115234848) do
     t.datetime "created_at",                                                         null: false
   end
 
-  create_table "sites", force: true do |t|
+  create_table "sites", force: :cascade do |t|
     t.string   "name",                                       null: false
     t.decimal  "longitude",          precision: 9, scale: 6
     t.decimal  "latitude",           precision: 9, scale: 6
@@ -208,7 +208,7 @@ ActiveRecord::Schema.define(version: 20141115234848) do
     t.text     "description"
   end
 
-  create_table "tags", force: true do |t|
+  create_table "tags", force: :cascade do |t|
     t.string   "text",                             null: false
     t.boolean  "is_taxanomic", default: false,     null: false
     t.string   "type_of_tag",  default: "general", null: false
@@ -220,7 +220,7 @@ ActiveRecord::Schema.define(version: 20141115234848) do
     t.integer  "updater_id"
   end
 
-  create_table "users", force: true do |t|
+  create_table "users", force: :cascade do |t|
     t.string   "email",                              null: false
     t.string   "user_name",                          null: false
     t.string   "encrypted_password",                 null: false

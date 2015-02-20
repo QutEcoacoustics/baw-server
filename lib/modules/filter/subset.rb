@@ -86,7 +86,7 @@ module Filter
     def compose_in(table, column_name, allowed, values)
       validate_array(values)
       validate_table_column(table, column_name, allowed)
-      validate_array_items(values)
+      validate_array_items(values) if values.is_a?(Array)
       table[column_name].in(values)
     end
 

@@ -213,10 +213,14 @@ Rails.application.routes.draw do
   # placed above related resource so it does not conflict with (resource)/:id => (resource)#show
   match 'audio_recordings/filter' => 'audio_recordings#filter', via: [:get, :post], defaults: {format: 'json'}
 
+
   # API audio recording item
   resources :audio_recordings, only: [:index, :show, :new, :update], defaults: {format: 'json'} do
     match 'media.:format' => 'media#show', defaults: {format: 'json'}, as: :media, via: [:get, :head]
     match 'analysis.:format' => 'analysis#show', defaults: {format: 'json'}, as: :analysis, via: [:get, :head]
+
+    match 'audio_events/filter' => 'audio_events#filter', via: [:get, :post], defaults: {format: 'json'}
+
     resources :audio_events, except: [:edit], defaults: {format: 'json'} do
       collection do
         get 'download', defaults: {format: 'csv'}
@@ -277,11 +281,6 @@ Rails.application.routes.draw do
   get '/website_status/' => 'public#website_status'
   get '/audio_recording_catalogue/' => 'public#audio_recording_catalogue'
 
-  # exceptions testing route - only available in test env
-  if ENV['RAILS_ENV'] == 'test'
-    get '/test_exceptions' => 'public#test_exceptions'
-  end
-
   # feedback and contact forms
   get '/contact_us' => 'public#new_contact_us'
   post '/contact_us' => 'public#create_contact_us'
@@ -307,6 +306,14 @@ Rails.application.routes.draw do
 
   # provide access to API documentation
   mount Raddocs::App => '/doc'
+
+  # enable CORS preflight requests
+  match '*requested_route', to: 'public#cors_preflight', via: :options
+
+  # exceptions testing route - only available in test env
+  if ENV['RAILS_ENV'] == 'test'
+    match '/test_exceptions', to: 'errors#test_exceptions', via: :all
+  end
 
   # for error pages (add via: :all for rails 4)
   match '*requested_route', to: 'errors#route_error', via: :all

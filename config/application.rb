@@ -4,6 +4,7 @@ require 'rails/all'
 
 # some patches need to be applied before gems load
 require "#{File.dirname(__FILE__)}/../lib/patches/random"
+require "#{File.dirname(__FILE__)}/../lib/patches/big_decimal"
 
 # Require the gems listed in Gemfile, including any gems
 # you've limited to :test, :development, or :production.
@@ -32,6 +33,9 @@ module AWB
     # resque setup
     Resque.redis = Settings.resque.connection
     Resque.redis.namespace = Settings.resque.namespace
+
+    # resque job status expiry for job status entries
+    Resque::Plugins::Status::Hash.expire_in = (24 * 60 * 60) # 24hrs / 1 day in seconds
 
     # logging
     # By default, each log is created under Rails.root/log/ and the log file name is <component_name>.<environment_name>.log.
@@ -83,17 +87,17 @@ module AWB
     # Activate observers that should always be running.
     # config.active_record.observers = :cacher, :garbage_collector, :forum_observer
 
+    # Currently, Active Record suppresses errors raised within `after_rollback`/`after_commit`
+    # callbacks and only print them to the logs. In the next version, these errors will no
+    # longer be suppressed. Instead, the errors will propagate normally just like in other
+    # Active Record callbacks.
+    config.active_record.raise_in_transactional_callbacks = true
+
     # check that locales are valid - new default in rails 3.2.14
     config.i18n.enforce_available_locales = true
 
-    # Enforce whitelist mode for mass assignment.
-    # This will create an empty whitelist of attributes available for mass-assignment for all models
-    # in your app. As such, your models will need to explicitly whitelist or blacklist accessible
-    # parameters by using an attr_accessible or attr_protected declaration.
-    config.active_record.whitelist_attributes = true
-
-    # Raise exception on mass assignment protection for Active Record models
-    config.active_record.mass_assignment_sanitizer = :strict
+    # this is only respected by the activesupport-json_encoder gem.
+    ActiveSupport.encode_big_decimal_as_string = false
 
     # Set Time.zone default to the specified zone and make Active Record auto-convert to this zone.
     # Run "rake -D time" for a list of tasks for finding time zone names. Default is UTC.
@@ -118,23 +122,57 @@ module AWB
     # for generating documentation from tests
     Raddocs.configuration.docs_dir = "doc/api"
 
-    # allow any origin, with any header, to access the array of methods
-    config.middleware.use Rack::Cors do
-      allow do
-        origins '*'
-        resource '*', headers: :any, methods: [:get, :post, :put, :delete, :options]
-      end
-    end
-
     # middleware to rewrite angular urls
     # insert at the start of the Rack stack.
-    config.middleware.insert_before(0, Rack::Rewrite) do
+    config.middleware.insert_before 0, Rack::Rewrite do
       # angular routing system will use the url that was originally requested
       # rails just needs to load the index.html
       rewrite /^\/listen.*/i, '/system/listen_to/index.html'
       rewrite /^\/birdwalks.*/i, '/system/listen_to/index.html'
       rewrite /^\/library.*/i, '/system/listen_to/index.html'
       rewrite /^\/demo.*/i, '/system/listen_to/index.html'
+    end
+
+    # allow any origin, with any header, to access the array of methods
+    # insert as first middleware, after other changes.
+    # this ensures static files, caching, and auth will include CORS headers
+    config.middleware.insert_before 0, 'Rack::Cors', debug: true, logger: (-> { Rails.logger }) do
+      allow do
+
+        # 'Access-Control-Allow-Origin' (origins):
+        origins Settings.host.cors_origins
+
+        # 'Access-Control-Max-Age' (max_age): "indicates how long the results of a preflight request can be cached"
+        # -> not specifying to avoid debugging problems
+
+        # 'Access-Control-Allow-Credentials' (credentials): "Indicates whether or not the response to the request
+        # can be exposed when the credentials flag is true.  When used as part of a response to a preflight request,
+        # this indicates whether or not the actual request can be made using credentials.  Note that simple GET
+        # requests are not preflighted, and so if a request is made for a resource with credentials, if this header
+        # is not returned with the resource, the response is ignored by the browser and not returned to web content."
+        # -> specifying true to enable authentication on preflight and actual requests.
+
+        # 'Access-Control-Allow-Methods' (methods): "Specifies the method or methods allowed when accessing the
+        # resource.  This is used in response to a preflight request."
+        # -> including patch, head, options in addition to usual suspects
+
+        # 'Access-Control-Allow-Headers' (headers): "Used in response to a preflight request to indicate which HTTP
+        # headers can be used when making the actual request."
+        # -> allow any header to be sent by client
+
+        # 'Access-Control-Expose-Headers' (expose): "lets a server whitelist headers that browsers are allowed to access"
+        # auto-allowed headers: Cache-Control, Content-Language, Content-Type, Expires, Last-Modified, Pragma
+        # http://www.w3.org/TR/cors/#simple-response-header
+        # -> we have some custom headers that we want to access, plus content-length
+
+        resource '*', # applies to all resources
+                 headers: :any,
+                 methods: [:get, :post, :put, :patch, :head, :delete, :options],
+                 credentials: true,
+                 expose: MediaPoll::HEADERS_EXPOSED
+
+
+      end
     end
 
   end

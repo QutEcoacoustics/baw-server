@@ -2,14 +2,19 @@ class PublicController < ApplicationController
   layout 'public'
 
   skip_authorization_check only: [
-      :index, :status, :website_status, :audio_recording_catalogue,
-      :recent_annotations, :recent_audio_recordings,
+      :index, :status, :website_status,
+      :audio_recording_catalogue,
+      :credits, :disclaimers, :ethics_statement,
+
       :new_contact_us, :create_contact_us,
       :new_bug_report, :create_bug_report,
       :new_data_request, :create_data_request,
-      :credits, :ethics_statement, :disclaimers,
-      :test_exceptions
+
+      :cors_preflight
   ]
+
+  # ensure that invalid CORS preflight requests get useful responses
+  skip_before_action :verify_authenticity_token, only: :cors_preflight
 
   def index
     base_path = "#{Rails.root}/public"
@@ -208,7 +213,7 @@ EXTRACT(DAY FROM recorded_date) as extracted_day')
 
     respond_to do |format|
       if recaptcha_valid && model_valid
-        PublicMailer.contact_us_message(current_user, @contact_us, request)
+        PublicMailer.contact_us_message(current_user, @contact_us, request).deliver_now
         format.html {
           redirect_to contact_us_path,
                       notice: "Thank you for contacting us. If you've asked us to contact you or " +
@@ -242,7 +247,7 @@ EXTRACT(DAY FROM recorded_date) as extracted_day')
 
     respond_to do |format|
       if recaptcha_valid && model_valid
-        PublicMailer.bug_report_message(current_user, @bug_report, request)
+        PublicMailer.bug_report_message(current_user, @bug_report, request).deliver_now
         format.html {
           redirect_to bug_report_path,
                       notice: 'Thank you, your report was successfully submitted.
@@ -295,7 +300,7 @@ EXTRACT(DAY FROM recorded_date) as extracted_day')
 
     respond_to do |format|
       if recaptcha_valid && model_valid
-        PublicMailer.data_request_message(current_user, @data_request, request)
+        PublicMailer.data_request_message(current_user, @data_request, request).deliver_now
         format.html {
           redirect_to data_request_path,
                       notice: 'Your request was successfully submitted. We will be in contact shortly.'
@@ -308,32 +313,13 @@ EXTRACT(DAY FROM recorded_date) as extracted_day')
     end
   end
 
-  def test_exceptions
-    if ENV['RAILS_ENV'] == 'test'
-      if params.include?(:exception_class)
-        msg = 'Purposeful exception raised for testing.'
-        error_class_string = params[:exception_class]
-        error_class = error_class_string.constantize
-
-        case error_class_string
-          when 'ActionController::BadRequest'
-            fail error_class.new(response)
-
-          when 'ActiveRecord::RecordNotUnique'
-            fail error_class.new(msg, nil)
-
-          when 'CustomErrors::UnsupportedMediaTypeError',
-              'CustomErrors::NotAcceptableError'
-            fail error_class.new(msg, {format: :a_format})
-
-          else
-            fail error_class, msg
-        end
-
-      end
-    end
+  def cors_preflight
+    # Authentication and authorisation are not checked
+    # this method caters for all MALFORMED OPTIONS requests.
+    # it will not be used for valid OPTIONS requests
+    # valid OPTIONS requests will be caught by the rails-cors gem (see application.rb)
+    fail CustomErrors::BadRequestError, "CORS preflight request to '#{params[:requested_route]}' was not valid. Required headers: Origin, Access-Control-Request-Method. Optional headers: Access-Control-Request-Headers."
   end
-
 
   private
 

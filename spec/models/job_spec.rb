@@ -24,23 +24,26 @@ describe Job, :type => :model do
     create(:job, name: 'There ain\'t room enough in this town for two of us sonny!')
     as2 = build(:job, name: 'THERE AIN\'T ROOM ENOUGH IN THIS TOWN FOR TWO OF US SONNY!')
     expect(as2).not_to be_valid
-    expect(as2.error_on(:name).size).to eq(1)
+    expect(as2.valid?).to be_falsey
+    expect(as2.errors[:name].size).to eq(1)
   end
 
   it 'fails validation when dataset is nil' do
     test_item = FactoryGirl.build(:job)
     test_item.dataset = nil
-    expect(subject.error_on(:dataset).size).to eq(1)
-    #expect(subject.errors_on(:dataset)).to include('must exist as an object or foreign key')
-    expect(subject.errors_on(:dataset).to_s).to match(/must exist as an object or foreign key/)
+
+    expect(subject.valid?).to be_falsey
+    expect(subject.errors[:dataset].size).to eq(1)
+    expect(subject.errors[:dataset].to_s).to match(/must exist as an object or foreign key/)
   end
 
   it 'fails validation when script is nil' do
     test_item = FactoryGirl.build(:job)
     test_item.script = nil
-    expect(subject.error_on(:script).size).to eq(1)
-    #expect(subject.errors_on(:script)).to include('must exist as an object or foreign key')
-    expect(subject.errors_on(:script).to_s).to match(/must exist as an object or foreign key/)
+
+    expect(subject.valid?).to be_falsey
+    expect(subject.errors[:script].size).to eq(1)
+    expect(subject.errors[:script].to_s).to match(/must exist as an object or foreign key/)
   end
   
   it { is_expected.to validate_presence_of(:script_settings) }

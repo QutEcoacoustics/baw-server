@@ -98,10 +98,10 @@ RSpec.configure do |config|
     DatabaseCleaner.strategy = :transaction
     DatabaseCleaner.clean_with(:truncation)
     begin
-      # DatabaseCleaner.start
-      # puts '===> FactoryGirl lint started.'
-      # FactoryGirl.lint
-      # puts '===> FactoryGirl lint completed.'
+      DatabaseCleaner.start
+      puts '===> FactoryGirl lint started.'
+      FactoryGirl.lint
+      puts '===> FactoryGirl lint completed.'
     ensure
       DatabaseCleaner.clean
       puts '===> Database cleaner run.'
@@ -148,8 +148,30 @@ RSpec.configure do |config|
     $stdout = original_stdout
   end
 
+  # http://www.relishapp.com/rspec/rspec-rails/v/3-1/docs/upgrade
+  ActiveRecord::Migration.maintain_test_schema!
+
+  # enable options requests in feature tests
+  module ActionDispatch::Integration::RequestHelpers
+    def options(path, parameters = nil, headers_or_env = nil)
+      process :options, path, parameters, headers_or_env
+    end
+  end
+
 end
 
 RspecApiDocumentation.configure do |config_rspec_api|
   config_rspec_api.format = :json
+
+  # patch to enable options request
+  module RspecApiDocumentation
+    class ClientBase
+      def http_options_verb(*args)
+        process :options, *args
+      end
+    end
+  end
+
+  RspecApiDocumentation::DSL::Resource::ClassMethods.define_action :http_options_verb
+
 end
