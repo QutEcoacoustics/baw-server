@@ -63,3 +63,4 @@
       %li= link_to 'Upload Audio', upload_instructions_project_site_path(@project, @site),  title: "Upload new audio to this site", data: {toggle: 'tooltip',  placement: 'right'}
     - if can? :show, @site
       %li= link_to 'Annotations (csv)', "#{data_request_path}?annotation_download[project_id]=#{@project.id}&annotation_download[site_id]=#{@site.id}&annotation_download[name]=#{CGI::escape(@site.name)}",  title: "Download annotations for this site", data: {toggle: 'tooltip',  placement: 'right'}
+      %li= link_to 'Visualise', "/visualize?siteId=#{@site.id}", title: 'Visualise and browse the audio in this site', data: {toggle: 'tooltip',  placement: 'right'}
