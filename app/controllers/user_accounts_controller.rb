@@ -47,6 +47,23 @@ class UserAccountsController < ApplicationController
       the_params.delete('password_confirmation')
     end
 
+    # don't send confirmation email - change email straight away.
+    @user.skip_reconfirmation!
+
+    # confirm or un-confirm if relevant button was clicked
+    if params[:commit] == 'Remove Confirmation'
+      @user.confirmed_at = nil
+      @user.save!
+    end
+
+    if params[:commit] == 'Confirm User'
+      @user.confirm!
+    end
+
+    if params[:commit] == 'Resend Confirmation'
+      @user.resend_confirmation_instructions
+    end
+
     respond_to do |format|
       if @user.update_attributes(the_params)
         format.html { redirect_to user_account_path(@user), notice: 'User was successfully updated.' }

@@ -1,0 +1,20 @@
+- humaned = user_attribute_name.to_s.humanize
+- paramed = user_attribute_name.to_s.parameterize
+- symed = user_attribute_name
+- value = @user[symed]
+.control-group.optional{class:paramed}
+  %label.optional.control-label{class:paramed, for: paramed}= humaned
+  .controls
+    %span{id: paramed}
+      - unless value.blank?
+        - if value.is_a?(Time)
+          = value.iso8601
+          %small
+            ="(#{time_ago_in_words(value)} ago)"
+        - elsif symed == :roles_mask
+          = User.roles_from_mask(value).each { |item| item.to_s.humanize }.join(', ')
+        - else
+          = @user[symed]
+      - else
+        %small
+          (no value)
