@@ -201,7 +201,7 @@ class SitesController < ApplicationController
 
   def get_user_sites
     if current_user.has_role? :admin
-      sites = Site.includes(:creator).order('lower(name) ASC')
+      sites = Site.order('lower(name) ASC')
     else
       sites = current_user.accessible_sites
     end
