@@ -163,7 +163,6 @@ class User < ActiveRecord::Base
   end
 
   def accessible_audio_recordings
-    user_sites = self.projects.map { |project| project.sites.map { |site| site.id } }.to_a.uniq
     user_sites = self.projects.map { |project|
       fail "One or more sites were blank: #{project.sites.inspect}" if project.sites.any? { |site| site.nil? }
 
