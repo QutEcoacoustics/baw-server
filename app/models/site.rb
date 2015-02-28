@@ -76,7 +76,7 @@ class Site < ActiveRecord::Base
   end
 
   def update_location_obfuscated(current_user)
-    highest_permission = current_user.highest_permission_any(self.projects)
+    highest_permission = current_user.highest_permission_any(self.projects.includes(:creator))
     @location_obfuscated = highest_permission < AccessLevel::OWNER
   end
 

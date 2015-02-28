@@ -45,7 +45,11 @@ class SitesController < ApplicationController
   # GET /project/1/sites/1
   # GET /project/1/sites/1.json
   def show
-    @site_audio_recordings = @site.audio_recordings.where(status: 'ready').order('recorded_date DESC').paginate(page: site_show_params[:page], per_page: 30)
+    @site_audio_recordings = @site
+                                 .audio_recordings
+                                 .where(status: 'ready')
+                                 .order('recorded_date DESC')
+                                 .paginate(page: params[:page], per_page: 30)
 
     respond_to do |format|
       format.html {
