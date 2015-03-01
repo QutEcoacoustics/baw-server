@@ -119,6 +119,10 @@ class Site < ActiveRecord::Base
     modified_value
   end
 
+  def tzinfo_tz
+    'Australia - Brisbane'
+  end
+
   # Define filter api settings
   def self.filter_settings
     {

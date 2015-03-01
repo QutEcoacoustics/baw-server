@@ -18,6 +18,8 @@
 //= require bootstrap-datepicker
 //= require gmaps4rails/gmaps4rails.base
 //= require gmaps4rails/gmaps4rails.googlemaps
+//= require moment-with-locales.min
+//= require moment-timezone-with-data.min
 //= require bootstrap
 //= require shared
 //= require public

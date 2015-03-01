@@ -336,6 +336,10 @@ class User < ActiveRecord::Base
     Time.zone.now - self.created_at
   end
 
+  def tzinfo_tz
+    'Australia - Brisbane'
+  end
+
   def ensure_authentication_token
     if authentication_token.blank?
       self.authentication_token = generate_authentication_token
