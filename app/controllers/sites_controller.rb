@@ -4,15 +4,15 @@ class SitesController < ApplicationController
   add_breadcrumb 'Home', :root_path
 
   # order matters for before_action and load_and_authorize_resource!
-  load_and_authorize_resource :project, except: [:show_shallow, :filter]
+  load_and_authorize_resource :project, except: [:show_shallow, :filter, :orphans]
 
   # this is necessary so that the ability has access to site.projects
   before_action :build_project_site, only: [:new, :create]
 
-  load_and_authorize_resource :site, through: :project, except: [:show_shallow, :filter]
-  load_and_authorize_resource :site, only: [:show_shallow, :filter]
+  load_and_authorize_resource :site, through: :project, except: [:show_shallow, :filter, :orphans]
+  load_and_authorize_resource :site, only: [:show_shallow, :filter, :orphans]
 
-  before_action :add_project_breadcrumb, except: [:show_shallow, :filter]
+  before_action :add_project_breadcrumb, except: [:show_shallow, :filter, :orphans]
 
   # GET /project/1/sites
   # GET /project/1/sites.json
@@ -153,6 +153,20 @@ class SitesController < ApplicationController
 
   def harvest
     render file: 'sites/_harvest.yml.erb', content_type: 'text/yaml', layout: false
+  end
+
+  # GET /sites/orphans
+  def orphans
+    @sites = Site.find_by_sql("SELECT * FROM sites s
+WHERE s.id NOT IN (SELECT site_id FROM projects_sites)
+ORDER BY s.name")
+
+    respond_to do |format|
+      format.html {
+        add_breadcrumb 'Orphan Sites'
+      }
+    end
+
   end
 
   # POST /sites/filter.json

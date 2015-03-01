@@ -1,0 +1,23 @@
+%h1 Orphan Sites
+
+- if @sites.empty?
+  %p
+    No orphan sites.
+- else
+  %p
+    There are #{@sites.count} orphan sites. It is very difficult to access sites that are not in a project.
+  %ul
+    - NaturalSort.sort(@sites, :name).each do |site|
+      %li
+        = link_to site.name, shallow_site_path(site)
+        - ar_max = site.audio_recordings.maximum('recorded_date')
+        - display_max = ar_max.nil? ? 'unknown' : ar_max.to_formatted_s(:db)
+        - ar_min = site.audio_recordings.minimum('recorded_date')
+        - display_min = ar_min.nil? ? 'unknown' : ar_min.to_formatted_s(:db)
+        - ar_ids = site.audio_recordings.pluck(:id)
+        - total_annotations = AudioEvent.where(audio_recording_id: ar_ids).count
+        %small
+          #{site.audio_recordings.count} audio recordings between #{display_min} to #{display_max} with #{total_annotations} annotations
+        %ul.nav.nav-pills
+          - site.audio_recordings.each do |audio_recordings|
+            %li= link_to audio_recordings.id, "/listen/#{audio_recordings.id}"
