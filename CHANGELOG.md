@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased Changes
+## [Release 0.13.1](https://github.com/QutBioacoustics/baw-server/releases/tag/0.13.1) (2015-03-02)
 
  - 2015-02-28
    - Fix: site paging
