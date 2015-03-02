@@ -270,8 +270,11 @@ Rails.application.routes.draw do
   # placed above related resource so it does not conflict with (resource)/:id => (resource)#show
   match 'sites/filter' => 'sites#filter', via: [:get, :post], defaults: {format: 'json'}
 
+  # path for orphaned sites
+  get 'sites/orphans' => 'sites#orphans'
+
   # shallow path to sites
-  get '/sites/:id' => 'sites#show_shallow', defaults: {format: 'json'}
+  get '/sites/:id' => 'sites#show_shallow', defaults: {format: 'json'}, as: 'shallow_site'
 
   # route to the home page of site
   root to: 'public#index'

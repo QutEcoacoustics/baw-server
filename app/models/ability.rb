@@ -121,8 +121,10 @@ class Ability
       # actions users can only take on entries related to them or that they own
       # --------------------------------------
 
-      # users can only view their own comments and projects list (admins can view any user's projects/comments)
-      can [:edit, :update, :projects, :audio_event_comments, :bookmarks], User, id: user.id
+      # users can only view their own projects, comments, bookmarks (admins can view any user's projects/comments/bookmarks)
+      # :edit and :update are not in here, as they are the Admin interface for editing any user
+      # normal users edit their profile using devise/registrations#edit
+      can [:projects, :audio_event_comments, :bookmarks], User, id: user.id
 
       # not sure about the ones that work with current_user - won't the check always be true?
       # There's no way to specify any other user id.

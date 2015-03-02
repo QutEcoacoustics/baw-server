@@ -116,7 +116,7 @@ resource 'Users' do
     let(:id) { writer_id }
     let(:raw_post) { {user: post_attributes}.to_json }
     let(:authentication_token) { writer_token }
-    standard_request('UPDATE (as same user - writer)', 204, nil, true)
+    standard_request('UPDATE (as same user - writer)', 403, nil, true)
   end
 
   put '/user_accounts/:id' do
@@ -124,7 +124,7 @@ resource 'Users' do
     let(:id) { reader_id }
     let(:raw_post) { {user: post_attributes}.to_json }
     let(:authentication_token) { reader_token }
-    standard_request('UPDATE (as same user - reader)', 204, nil, true)
+    standard_request('UPDATE (as same user - reader)', 403, nil, true)
   end
 
   put '/user_accounts/:id' do

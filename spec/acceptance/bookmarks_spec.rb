@@ -338,7 +338,10 @@ resource 'Bookmarks' do
 
     let(:authentication_token) { user_token }
     let(:id) { @bookmark.id }
-    standard_request_options(:get, 'SHOW (as user)', :ok, {expected_json_path: 'data/offset_seconds'})
+    standard_request_options(:get, 'SHOW (as user)', :ok, {
+                                     expected_json_path: 'data/offset_seconds',
+                                     response_body_content: '"offset_seconds":4.0'
+                                 })
   end
 
   # Update (#update)
