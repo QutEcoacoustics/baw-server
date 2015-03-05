@@ -33,8 +33,28 @@
     var helpInfo = $('##{help_id}');
     if(mappingValue){
       appendedInfo.text(mappingValue);
-      var origTime = moment().tz(enteredValue.replace(' - ', '/'));
-      helpInfo.text('Currently: '+origTime.format("dddd, MMMM Do YYYY, h:mm:ss a z Z"));
+
+      var momentTimezoneName = enteredValue;
+
+      // to make this match with moment js
+      // replace dashes with slashes
+      var momentTimezoneName = momentTimezoneName.replace(' - ', '/');
+      var momentTimezoneName = momentTimezoneName.replace("'", '');
+
+      // move place name after comma
+      var commaIndex = momentTimezoneName.indexOf(', ');
+      if (commaIndex >= 0){
+        var toMove = momentTimezoneName.substring(commaIndex + 2);
+        momentTimezoneName = momentTimezoneName.replace('/', '/' + toMove + '/');
+        momentTimezoneName = momentTimezoneName.substring(0,momentTimezoneName.indexOf(', '));
+      }
+
+      // replace spaces with underscores
+      var momentTimezoneName = momentTimezoneName.replace(' ', '_');
+
+      var origTime = moment().tz(momentTimezoneName);
+      var formatted = origTime.format("dddd, MMMM Do YYYY, h:mm:ss a z Z")
+      helpInfo.text('Currently: ' + formatted);
     } else {
       appendedInfo.text('(no match)');
       helpInfo.text('(no match)');
