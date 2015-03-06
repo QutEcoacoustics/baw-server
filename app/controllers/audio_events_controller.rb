@@ -89,8 +89,7 @@ class AudioEventsController < ApplicationController
   # PUT /audio_events/1
   # PUT /audio_events/1.json
   def update
-    @audio_event.attributes = audio_event_params
-    if @audio_event.save
+    if @audio_event.update(audio_event_params)
       render json: @audio_event.to_json(include: :taggings), status: :created
     else
       render json: @audio_event.errors, status: :unprocessable_entity
