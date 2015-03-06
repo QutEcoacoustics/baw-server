@@ -22,7 +22,7 @@ Gem::Specification.new do |spec|
   # dev dependencies
   spec.add_development_dependency 'bundler', '~> 1.7'
   spec.add_development_dependency 'rake', '~> 10.4'
-  spec.add_development_dependency 'guard', '~> 2.11'
+  spec.add_development_dependency 'guard', '~> 2.12'
   spec.add_development_dependency 'guard-rspec', '~> 4.5'
   spec.add_development_dependency 'guard-yard', '~> 2.1'
   spec.add_development_dependency 'simplecov', '~> 0.9'
