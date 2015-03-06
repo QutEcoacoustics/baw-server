@@ -121,7 +121,7 @@ gem 'raddocs', '~> 0.4.0'
 # MEDIA
 # -------------------------------------
 # set to a specific commit when releasing to master branch
-gem 'baw-audio-tools', git: 'https://github.com/QutBioacoustics/baw-audio-tools.git', branch: :master, ref: '3750e2fc9a'
+gem 'baw-audio-tools', git: 'https://github.com/QutBioacoustics/baw-audio-tools.git', branch: :master, ref: '3ea03c6b65'
 gem 'rack-rewrite', '~> 1.5.1'
 
 # ASYNC JOBS
@@ -130,7 +130,7 @@ gem 'resque', '~> 1.25.2'
 gem 'resque-job-stats', git: 'https://github.com/echannel/resque-job-stats.git', branch: :master, ref: '8932c036ae'
 gem 'resque-status', '~> 0.4.3'
 # set to a specific commit when releasing to master branch
-gem 'baw-workers', git: 'https://github.com/QutBioacoustics/baw-workers.git', branch: :master, ref: 'cac9715c73'
+gem 'baw-workers', git: 'https://github.com/QutBioacoustics/baw-workers.git', branch: :master, ref: '9b51d7a82a'
 
 # Gems restricted by environment and/or platform
 # ====================================================
@@ -155,7 +155,7 @@ group :development, :test do
   gem 'spring', '~> 1.3.0'
 
   # Run `rails console` in the browser. Read more: https://github.com/rails/web-console
-  gem 'web-console', '~> 2.0.0'
+  #gem 'web-console', '~> 2.1.1'
 
   # bundle exec rake doc:rails generates the API under doc/api.
   gem 'sdoc', '~> 0.4.0'

@@ -17,8 +17,8 @@ GIT
 
 GIT
   remote: https://github.com/QutBioacoustics/baw-audio-tools.git
-  revision: 3750e2fc9a25016da694a752347ead6841ec135a
-  ref: 3750e2fc9a
+  revision: 3ea03c6b650b3cde41911fd3214bf6657771b4df
+  ref: 3ea03c6b65
   branch: master
   specs:
     baw-audio-tools (0.3.0)
@@ -26,8 +26,8 @@ GIT
 
 GIT
   remote: https://github.com/QutBioacoustics/baw-workers.git
-  revision: cac9715c7371e52928496f037239155ed8e8bed7
-  ref: cac9715c73
+  revision: 9b51d7a82ac3c995cec5385b91997a0a6b242ef7
+  ref: 9b51d7a82a
   branch: master
   specs:
     baw-workers (0.5.0)
@@ -110,8 +110,6 @@ GEM
     addressable (2.3.7)
     arel (6.0.0)
     bcrypt (3.1.10)
-    binding_of_caller (0.7.2)
-      debug_inspector (>= 0.0.1)
     bootstrap-datepicker-rails (1.3.1.1)
       railties (>= 3.0)
     bootstrap-timepicker-rails (0.1.3)
@@ -130,7 +128,7 @@ GEM
     capistrano-bundler (1.1.4)
       capistrano (~> 3.1)
       sshkit (~> 1.2)
-    capistrano-newrelic (0.0.8)
+    capistrano-newrelic (0.0.9)
       capistrano (~> 3.0)
       newrelic_rpm
     capistrano-passenger (0.0.2)
@@ -152,7 +150,7 @@ GEM
       timers (~> 4.0.0)
     climate_control (0.0.3)
       activesupport (>= 3.0)
-    cocaine (0.5.5)
+    cocaine (0.5.7)
       climate_control (>= 0.0.3, < 1.0)
     codeclimate-test-reporter (0.4.7)
       simplecov (>= 0.7.1, < 1.0.0)
@@ -175,7 +173,6 @@ GEM
       safe_yaml (~> 1.0.0)
     daemons (1.1.9)
     database_cleaner (1.3.0)
-    debug_inspector (0.0.2)
     devise (3.4.1)
       bcrypt (~> 3.0)
       orm_adapter (~> 0.1)
@@ -185,14 +182,14 @@ GEM
       warden (~> 1.2.3)
     diff-lcs (1.2.5)
     docile (1.1.5)
-    enumerize (0.10.0)
+    enumerize (0.10.1)
       activesupport (>= 3.2)
     erubis (2.7.0)
     eventmachine (1.0.7)
     exception_notification (4.0.1)
       actionmailer (>= 3.0.4)
       activesupport (>= 3.0.4)
-    execjs (2.3.0)
+    execjs (2.4.0)
     factory_girl (4.5.0)
       activesupport (>= 3.0.0)
     factory_girl_rails (4.5.0)
@@ -238,7 +235,7 @@ GEM
       nokogiri (~> 1.6.0)
       ruby_parser (~> 3.5)
     i18n (0.7.0)
-    jbuilder (2.2.8)
+    jbuilder (2.2.9)
       activesupport (>= 3.0.0, < 5)
       multi_json (~> 1.2)
     jc-validates_timeliness (3.1.1)
@@ -268,7 +265,7 @@ GEM
     mini_portile (0.6.2)
     minitest (5.5.1)
     mono_logger (1.1.0)
-    multi_json (1.10.1)
+    multi_json (1.11.0)
     mustache (0.99.8)
     nenv (0.2.0)
     net-scp (1.2.1)
@@ -426,7 +423,7 @@ GEM
       actionpack (>= 3.0)
       activesupport (>= 3.0)
       sprockets (>= 2.8, < 4.0)
-    sshkit (1.6.1)
+    sshkit (1.7.1)
       colorize (>= 0.7.0)
       net-scp (>= 1.1.2)
       net-ssh (>= 2.8.0)
@@ -445,7 +442,7 @@ GEM
     timeliness (0.3.7)
     timers (4.0.1)
       hitimes
-    tins (1.3.4)
+    tins (1.3.5)
     tzinfo (1.2.2)
       thread_safe (~> 0.1)
     uglifier (2.7.1)
@@ -457,11 +454,6 @@ GEM
       rack (>= 1.0.0)
     warden (1.2.3)
       rack (>= 1.0)
-    web-console (2.0.0)
-      activemodel (~> 4.0)
-      binding_of_caller (>= 0.7.2)
-      railties (~> 4.0)
-      sprockets-rails (>= 2.0, < 4.0)
     webmock (1.20.4)
       addressable (>= 2.3.6)
       crack (>= 0.3.2)
@@ -544,6 +536,5 @@ DEPENDENCIES
   twitter-bootstrap-rails!
   uglifier (>= 1.3.0)
   uuidtools (~> 2.1.5)
-  web-console (~> 2.0.0)
   webmock (~> 1.20.4)
   will_paginate (~> 3.0.7)
