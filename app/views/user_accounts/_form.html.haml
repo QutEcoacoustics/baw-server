@@ -28,7 +28,7 @@
     - [:confirmed_at,:reset_password_sent_at, :remember_created_at, :sign_in_count,
     :current_sign_in_at, :last_sign_in_at, :current_sign_in_ip, :last_sign_in_ip,
     :confirmation_sent_at, :failed_attempts,:locked_at, :created_at, :updated_at,
-    :roles_mask, :image_updated_at].each do |item|
+    :roles_mask, :image_updated_at, :tzinfo_tz, :rails_tz].each do |item|
       = render partial: "user_accounts/static_info", locals: {user_attribute_name: item, user: @user}
     .control_group
       = f.label :image

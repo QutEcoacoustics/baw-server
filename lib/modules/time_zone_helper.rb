@@ -28,6 +28,24 @@ class TimeZoneHelper
       ]
     end
 
+    def to_identifier(friendly_name)
+      found = TZInfo::Timezone.all.select { |tz| friendly_name == tz.friendly_identifier}
+      if found.size == 1
+        found[0].identifier
+      else
+        nil
+      end
+    end
+
+    def to_friendly(identifier)
+      found = TZInfo::Timezone.all.select { |tz| identifier == tz.identifier}
+      if found.size == 1
+        found[0].friendly_identifier
+      else
+        nil
+      end
+    end
+
     # Get the TZInfo Timezone equivalent to the Ruby TimeZone.
     # @param [string] ruby_tz_name
     # @return [TZInfo::Timezone] TZInfo Timezone

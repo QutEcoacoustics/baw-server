@@ -224,7 +224,7 @@ ORDER BY s.name")
   end
 
   def site_params
-    params.require(:site).permit(:name, :latitude, :longitude, :description, :image, :notes)
+    params.require(:site).permit(:name, :latitude, :longitude, :description, :image, :notes, :tzinfo_tz)
   end
 
   def site_show_params
