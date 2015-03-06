@@ -312,13 +312,15 @@ class AudioEvent < ActiveRecord::Base
 
     self.taggings.each do |tagging|
       tag = tagging.tag
-      existing_tag = Tag.where(text: tag.text).first
+      # ensure string comparison is case insensitive
+      existing_tag = Tag.where('lower(text) = ?', tag.text.downcase).first
 
       unless existing_tag.blank?
         #remove the tag association, otherwise it tries to create the tag and fails (as the tag already exists)
         self.tags.each do |audio_event_tag|
           # The collection.delete method removes one or more objects from the collection by setting their foreign keys to NULL.
-          self.tags.delete(audio_event_tag) if existing_tag.text == audio_event_tag.text
+          # ensure string comparison is case insensitive
+          self.tags.delete(audio_event_tag) if existing_tag.text.downcase == audio_event_tag.text.downcase
         end
 
         # remove the tagging association
