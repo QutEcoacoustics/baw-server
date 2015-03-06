@@ -2,17 +2,18 @@ module BawAudioTools
   class AudioFfmpeg
 
     WARN_INDICATOR = '\[[^ ]+ @ [^ ]+\] '
-    WARN_ANALYSE_DURATION = 'max_analyze_duration [0-9]+ reached at .+'
+    WARN_ANALYSE_DURATION = 'max_analyze_duration [0-9]+ reached at [0-9]+'
     WARN_ESTIMATE_DURATION = 'Estimating duration from bitrate, this may be inaccurate'
     # e.g. [mp3 @ 0x2935600] overread, skip -6 enddists: -4 -4
     # e.g. [mp3 @ 0x3314600] overread, skip -5 enddists: -2 -2
     WARN_OVER_READ = 'overread, skip -?[0-9]+ enddists: -?[0-9]+ -?[0-9]+'
+    WARN_CHANNEL_LAYOUT = "Channel layout '.+' with [0-9]+ channels does not match specified number of channels [0-9]+: ignoring specified channel layout"
 
     REGEX_WARN_INDICATOR = /#{WARN_INDICATOR}/
     REGEX_WARN_DURATION = /#{WARN_INDICATOR}#{WARN_ESTIMATE_DURATION}/
     REGEX_WARN_OVER_READ = /#{WARN_INDICATOR}#{WARN_OVER_READ}/
     REGEX_WARN_ANALYSE_DURATION = /#{WARN_INDICATOR}#{WARN_ANALYSE_DURATION}/
-
+    REGEX_WARN_CHANNEL_LAYOUT = /#{WARN_INDICATOR}#{WARN_CHANNEL_LAYOUT}/
 
     # @param [String] ffmpeg_executable
     # @param [String] ffprobe_executable
@@ -87,6 +88,10 @@ module BawAudioTools
 
         if has_regex?(mod_stderr, REGEX_WARN_ANALYSE_DURATION)
           mod_stderr = find_remove_warning(mod_stderr, REGEX_WARN_ANALYSE_DURATION)
+        end
+
+        if has_regex?(mod_stderr, REGEX_WARN_CHANNEL_LAYOUT)
+          mod_stderr = find_remove_warning(mod_stderr, REGEX_WARN_CHANNEL_LAYOUT)
         end
 
         if !mod_stderr.blank? && mod_stderr.match(REGEX_WARN_INDICATOR)
