@@ -2,6 +2,10 @@
 
 ## [Release 0.13.1](https://github.com/QutBioacoustics/baw-server/releases/tag/0.13.1) (2015-03-02)
 
+ - 2015-03-06
+   - Fix: ignored ffmpeg warning for channel layout
+   - Fix: case insensitive compare when chaning audio event tags
+
  - 2015-02-28
    - Fix: site paging
    - Fix: Admin changing user's email
