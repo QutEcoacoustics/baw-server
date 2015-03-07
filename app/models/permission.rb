@@ -19,7 +19,7 @@ class Permission < ActiveRecord::Base
   validates :creator, existence: true
 
   # attribute validations
-  validates_uniqueness_of :level, scope: [:user_id, :project_id, :level]
+  validates_uniqueness_of :level, scope: [:user_id, :project_id]
   validates_presence_of :level, :user, :creator, :project
 
   # Define filter api settings
