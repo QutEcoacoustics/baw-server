@@ -26,8 +26,9 @@ describe Bookmark, :type => :model do
   end
 
   it 'should not allow duplicate names for the same user (case-insensitive)' do
-    create(:bookmark, {creator_id: 3, name: 'I love the smell of napalm in the morning.'})
-    ss = build(:bookmark, {creator_id: 3, name: 'I LOVE the smell of napalm in the morning.'})
+    user = create(:user)
+    create(:bookmark, {creator: user, name: 'I love the smell of napalm in the morning.'})
+    ss = build(:bookmark, {creator: user, name: 'I LOVE the smell of napalm in the morning.'})
     expect(ss).not_to be_valid
     expect(ss.valid?).to be_falsey
     expect(ss.errors[:name].size).to eq(1)
@@ -39,20 +40,24 @@ describe Bookmark, :type => :model do
   end
 
   it 'should allow duplicate names for different users (case-insensitive)' do
-    ss1 = create(:bookmark, {creator_id: 3, name: 'You talkin\' to me?'})
+    user1 = create(:user)
+    user2 = create(:user)
+    user3 = create(:user)
+    ss1 = create(:bookmark, {creator: user1, name: 'You talkin\' to me?'})
 
-    ss2 = build(:bookmark, {creator_id: 1, name: 'You TALKIN\' to me?'})
+    ss2 = build(:bookmark, {creator: user2, name: 'You TALKIN\' to me?'})
     expect(ss2.creator_id).not_to eql(ss1.creator_id), "The same user is present for both cases, invalid test!"
     expect(ss2).to be_valid
 
-    ss3 = build(:bookmark, {creator_id: 2, name: 'You talkin\' to me?'})
+    ss3 = build(:bookmark, {creator: user3, name: 'You talkin\' to me?'})
     expect(ss3.creator_id).not_to eql(ss1.creator_id), "The same user is present for both cases, invalid test!"
     expect(ss3).to be_valid
   end
 
   it 'should not allow duplicate names for the same user (case-insensitive)' do
-    create(:bookmark, {creator_id: 3, name: 'I love the smell of napalm in the morning.'})
-    ss = build(:bookmark, {creator_id: 3, name: 'I LOVE the smell of napalm in the morning.'})
+    user = create(:user)
+    create(:bookmark, {creator: user, name: 'I love the smell of napalm in the morning.'})
+    ss = build(:bookmark, {creator: user, name: 'I LOVE the smell of napalm in the morning.'})
     expect(ss).not_to be_valid
     expect(ss.valid?).to be_falsey
     expect(ss.errors[:name].size).to eq(1)
@@ -64,13 +69,16 @@ describe Bookmark, :type => :model do
   end
 
   it 'should allow duplicate names for different users (case-insensitive)' do
-    ss1 = create(:bookmark, {creator_id: 3, name: 'You talkin\' to me?'})
+    user1 = create(:user)
+    user2 = create(:user)
+    user3 = create(:user)
+    ss1 = create(:bookmark, {creator: user1, name: 'You talkin\' to me?'})
 
-    ss2 = build(:bookmark, {creator_id: 1, name: 'You TALKIN\' to me?'})
+    ss2 = build(:bookmark, {creator: user2, name: 'You TALKIN\' to me?'})
     expect(ss2.creator_id).not_to eql(ss1.creator_id), "The same user is present for both cases, invalid test!"
     expect(ss2).to be_valid
 
-    ss3 = build(:bookmark, {creator_id: 2, name: 'You talkin\' to me?'})
+    ss3 = build(:bookmark, {creator: user3, name: 'You talkin\' to me?'})
     expect(ss3.creator_id).not_to eql(ss1.creator_id), "The same user is present for both cases, invalid test!"
     expect(ss3).to be_valid
   end

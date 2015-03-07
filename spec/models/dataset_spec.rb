@@ -10,8 +10,9 @@ describe Dataset, :type => :model do
 
 
   it 'should not allow duplicate names for the same user (case-insensitive)' do
-    create(:dataset, {creator_id: 3, name: 'I love the smell of napalm in the morning.'})
-    ss = build(:dataset, {creator_id: 3, name: 'I LOVE the smell of napalm in the morning.'})
+    user = create(:user)
+    create(:dataset, {creator: user, name: 'I love the smell of napalm in the morning.'})
+    ss = build(:dataset, {creator: user, name: 'I LOVE the smell of napalm in the morning.'})
     expect(ss).not_to be_valid
 
     expect(ss.valid?).to be_falsey
@@ -24,63 +25,75 @@ describe Dataset, :type => :model do
   end
 
   it 'should allow duplicate names for different users (case-insensitive)' do
-    ss1 = create(:dataset, {creator_id: 3, name: 'You talkin\' to me?'})
+    user1 = create(:user)
+    user2 = create(:user)
+    user3 = create(:user)
+    ss1 = create(:dataset, {creator: user1, name: 'You talkin\' to me?'})
 
-    ss2 = build(:dataset, {creator_id: 1, name: 'You TALKIN\' to me?'})
+    ss2 = build(:dataset, {creator: user2, name: 'You TALKIN\' to me?'})
     expect(ss2.creator_id).not_to eql(ss1.creator_id), "The same user is present for both cases, invalid test!"
     expect(ss2).to be_valid
 
-    ss3 = build(:dataset, {creator_id: 2, name: 'You talkin\' to me?'})
+    ss3 = build(:dataset, {creator: user3, name: 'You talkin\' to me?'})
     expect(ss3.creator_id).not_to eql(ss1.creator_id), "The same user is present for both cases, invalid test!"
     expect(ss3).to be_valid
   end
 
   it 'should not be an error to give a start date before the end date' do
-    d = create(:dataset, {creator_id: 1, start_date: '2013-12-01', end_date: '2013-12-10'})
+    user = create(:user)
+    d = create(:dataset, {creator: user, start_date: '2013-12-01', end_date: '2013-12-10'})
     expect(d).to be_valid
   end
 
   it 'should not be an error to give equal start and end dates' do
-    d = create(:dataset, {creator_id: 1, start_date: '2013-12-01', end_date: '2013-12-01'})
+    user = create(:user)
+    d = create(:dataset, {creator: user, start_date: '2013-12-01', end_date: '2013-12-01'})
     expect(d).to be_valid
   end
 
   it 'should be an error to give a start date after the end date' do
+    user = create(:user)
     expect {
-      create(:dataset, {creator_id: 1, start_date: '2013-12-01', end_date: '2013-11-15'})
+      create(:dataset, {creator: user, start_date: '2013-12-01', end_date: '2013-11-15'})
     }.to raise_error(ActiveRecord::RecordInvalid, "Validation failed: Start date must be before end date")
   end
 
   it 'should not be an error to give a start time before the end time' do
-    d = create(:dataset, {creator_id: 1, start_time: '11:30', end_time: '13:45'})
+    user = create(:user)
+    d = create(:dataset, {creator: user, start_time: '11:30', end_time: '13:45'})
     expect(d).to be_valid
   end
 
   it 'should be an error to give equal start and end times' do
+    user = create(:user)
     expect {
-      create(:dataset, {creator_id: 1, start_time: '11:30', end_time: '11:30'})
+      create(:dataset, {creator: user, start_time: '11:30', end_time: '11:30'})
     }.to raise_error(ActiveRecord::RecordInvalid, "Validation failed: Start time must not be equal to end time")
   end
 
   it 'should not be an error to give a start time after the end time' do
+    user = create(:user)
     # times can wrap around, so a time range overnight can be specified
-    d = create(:dataset, {creator_id: 1, start_time: '11:45', end_time: '10:20'})
+    d = create(:dataset, {creator: user, start_time: '11:45', end_time: '10:20'})
     expect(d).to be_valid
   end
 
   it 'should not be an error when tag_text_filters is an empty array' do
-    d = create(:dataset, {creator_id: 1, tag_text_filters: []})
+    user = create(:user)
+    d = create(:dataset, {creator: user, tag_text_filters: []})
     expect(d).to be_valid
   end
 
   it 'should not be an error when tag_text_filters is an array' do
-    d = create(:dataset, {creator_id: 1, tag_text_filters: %w(one two)})
+    user = create(:user)
+    d = create(:dataset, {creator: user, tag_text_filters: %w(one two)})
     expect(d).to be_valid
   end
 
   it 'should be an error when tag_text_filters is not an array' do
+    user = create(:user)
     expect {
-      create(:dataset, {creator_id: 1, tag_text_filters: {}})
+      create(:dataset, {creator: user, tag_text_filters: {}})
     }.to raise_error(ActiveRecord::SerializationTypeMismatch, 'Attribute was supposed to be a Array, but was a Hash. -- {}')
   end
 
