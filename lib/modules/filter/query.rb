@@ -23,6 +23,7 @@ module Filter
       @key_prefix = 'filter_'
       @default_page = 1
       @default_items = 500
+      @max_items = 500
       @table = relation_table(model)
       @initial_query = !query.nil? && query.is_a?(ActiveRecord::Relation) ? query : relation_all(model)
       @valid_fields = filter_settings[:valid_fields].map(&:to_sym)
@@ -50,7 +51,8 @@ module Filter
       @paging = parse_paging(
           @parameters,
           @default_page,
-          @default_items)
+          @default_items,
+          @max_items)
       @sorting = parse_sorting(
           @parameters,
           filter_settings[:defaults][:order_by],
@@ -216,6 +218,7 @@ module Filter
     # @return [ActiveRecord::Relation] query
     def query_paging(query)
       return query unless has_paging_params?
+      return query if is_paging_disabled?
       apply_paging(query, @paging[:offset], @paging[:limit])
     end
 
@@ -230,6 +233,10 @@ module Filter
 
     def has_paging_params?
       !@paging[:page].blank? && !@paging[:items].blank?
+    end
+
+    def is_paging_disabled?
+      @paging[:disable_paging]
     end
 
     def has_sort_params?
