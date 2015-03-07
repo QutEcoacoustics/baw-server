@@ -236,7 +236,7 @@ module Filter
     end
 
     def is_paging_disabled?
-      @paging[:disable_paging]
+      @paging[:disable_paging] == 'true' || @paging[:disable_paging] == true
     end
 
     def has_sort_params?

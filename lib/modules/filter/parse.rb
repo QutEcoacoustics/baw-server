@@ -33,14 +33,14 @@ module Filter
       items = default_items if items.blank?
 
       # parse disable paging settings
-      if disable_paging == 'true'
+      if disable_paging == 'true' || disable_paging == true
         disable_paging = true
       else
         disable_paging = false
       end
 
       # ensure items is always less than max_items
-      items = max_items if items.to_i > max_items
+      fail CustomErrors::UnprocessableEntityError, "Number of items requested #{items} exceeded maximum #{max_items}." if items.to_i > max_items
 
       # calculate offset if able
       offset = (page - 1) * items
