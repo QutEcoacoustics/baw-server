@@ -10,7 +10,7 @@ module Filter
     include Custom
 
     attr_reader :key_prefix, :max_limit, :initial_query, :table, :valid_fields, :text_fields, :filter_settings,
-                :parameters, :filter, :projection, :qsp_text_filter, :qsp_generic_filters,
+                :parameters, :filter, :projection, :projection_built, :qsp_text_filter, :qsp_generic_filters,
                 :paging, :sorting
 
     # Convert a json POST body to an arel query.
@@ -38,6 +38,12 @@ module Filter
 
       @projection = @parameters[:projection]
       @projection = nil if @projection.blank?
+
+      if has_projection_params?
+        @projection_built = build_projections(@projection, @table, @valid_fields)
+      else
+        @projection_built = build_projections({include: @render_fields}, @table, @valid_fields)
+      end
 
       @qsp_text_filter = parse_qsp_text(@parameters)
       @qsp_generic_filters = parse_qsp(nil, @parameters, @key_prefix, @valid_fields)
