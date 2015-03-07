@@ -59,6 +59,9 @@ class ApplicationController < ActionController::Base
   # based on https://github.com/theepan/userstamp/tree/bf05d832ee27a717ea9455d685c83ae2cfb80310
   around_action :set_then_reset_user_stamper
 
+  # update users last activity log every 10 minutes
+  before_action :set_last_seen_at, if: Proc.new { user_signed_in? && (session[:last_seen_at] == nil || session[:last_seen_at] < 10.minutes.ago) }
+
   protected
 
   def add_archived_at_header(model)
@@ -473,6 +476,11 @@ class ApplicationController < ActionController::Base
     ensure
       User.stamper = nil
     end
+  end
+
+  def set_last_seen_at
+    current_user.update_attribute(:last_seen_at, Time.zone.now)
+    session[:last_seen_at] = Time.zone.now
   end
 
 end
