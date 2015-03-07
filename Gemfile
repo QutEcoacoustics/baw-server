@@ -60,6 +60,7 @@ gem 'gmaps4rails', '< 2'
 # git grep --full-name --name-only '.fa-play' $(git rev-list --all) > font-awesome-find.txt
 
 # Don't update this, as site still uses bootstrap v2. Need to update this when bootstrap is updated.
+# https://github.com/seyhunak/twitter-bootstrap-rails/tree/38476dbd7f9a99179388bffb101826d844029949
 gem 'twitter-bootstrap-rails', git: 'https://github.com/seyhunak/twitter-bootstrap-rails.git', branch: :master, ref: '38476dbd7f'
 
 gem 'bootstrap-timepicker-rails', '~> 0.1.3'
@@ -68,6 +69,10 @@ gem 'bootstrap-datepicker-rails', '~> 1.3.1.1'
 gem 'will_paginate', '~> 3.0.7'
 gem 'dotiw', git: 'https://github.com/radar/dotiw.git', branch: :master, ref: '89d936adc6'
 gem 'recaptcha', '~> 0.3.6',  require: 'recaptcha/rails'
+
+# for proper timezone support
+gem 'tzinfo', '~> 1.2.2'
+gem 'tzinfo-data', '~> 1.2015.1'
 
 # USERS & PERMISSIONS
 # -------------------------------------

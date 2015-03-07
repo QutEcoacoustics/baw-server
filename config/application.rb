@@ -105,6 +105,11 @@ module AWB
     #config.time_zone - 'UTC'
     config.time_zone = 'Brisbane'
 
+    # config.active_record.default_timezone determines whether to use Time.local (if set to :local)
+    # or Time.utc (if set to :utc) when pulling dates and times from the database.
+    # The default is :utc.
+    #config.active_record.default_timezone = :utc
+
     # The default locale is :en and all translations from config/locales/*.rb,yml are auto loaded.
     config.i18n.load_path += Dir[Rails.root.join('config', 'locales', '**', '*.{rb,yml}')]
     config.i18n.default_locale = 'en-AU'

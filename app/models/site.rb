@@ -46,6 +46,8 @@ class Site < ActiveRecord::Base
 
   validates_attachment_content_type :image, content_type: /^image\/(jpg|jpeg|pjpeg|png|x-png|gif)$/, message: 'file type %{value} is not allowed (only jpeg/png/gif images)'
 
+  before_save :set_rails_tz, if: Proc.new { |site| site.tzinfo_tz_changed? }
+
   # commonly used queries
   #scope :specified_sites, lambda { |site_ids| where('id in (:ids)', { :ids => site_ids } ) }
   #scope :sites_in_project, lambda { |project_ids| where(Project.specified_projects, { :ids => project_ids } ) }
@@ -133,4 +135,13 @@ class Site < ActiveRecord::Base
         }
     }
   end
+
+  def set_rails_tz
+    tzInfo_id = TimeZoneHelper.to_identifier(self.tzinfo_tz)
+    rails_tz_string = TimeZoneHelper.tzinfo_to_ruby(tzInfo_id)
+    unless rails_tz_string.blank?
+      self.rails_tz = rails_tz_string
+    end
+  end
+
 end

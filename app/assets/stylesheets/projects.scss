@@ -14,11 +14,11 @@ $baseFontSize: 14px;
 
 .project_thumbnail {
   position: relative;
-  i {
+  i.project_permission_icon {
     color: $grayDark;
     position: absolute;
     right: 10px;
-    bottom: 10px;
+    top: 10px;
     font-size: $baseFontSize * 1.75;
   }
 }

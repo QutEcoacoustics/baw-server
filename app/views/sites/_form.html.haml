@@ -8,12 +8,14 @@
         = f.input :description, input_html: {rows: '6', class: 'span12' }
         = f.input :latitude, input_html: { class: 'span12', max: 90, min: -90 }
         = f.input :longitude, input_html: { class: 'span12', max: 180, min: -180 }
-        .control_group
+        .control_group.file.optional{class: :site_image}
           = f.label :image
           .controls
             - unless @site.image_file_name.blank?
-              = image_tag @site.image.url(:span1)
-            = f.file_field :image
+              = image_tag @site.image.url, class: 'file optional span4'
+            = f.file_field :image, class: 'span8'
+        .clearfix
+        = render partial: '/shared/time_zone_select_custom', locals: { f: f, attribute_name: :tzinfo_tz, model_name: :site }
     .span6= gmaps(markers: {data: @markers, options: { draggable: true  } },
     map_options: gmaps_default_options )
   .row-fluid

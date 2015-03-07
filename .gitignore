@@ -37,10 +37,6 @@ external_modules.log
 # ignore test coverage files
 /coverage/
 
-# ignore vendor binary files
-/vendor/bin/*
-/vendor
-
 # ignore generated api documentation
 /doc
 /.yardoc/

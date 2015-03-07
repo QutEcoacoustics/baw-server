@@ -117,6 +117,8 @@ class User < ActiveRecord::Base
 
   after_create :special_after_create_actions
 
+  before_save :set_rails_tz, if: Proc.new { |user| user.tzinfo_tz_changed? }
+
   def projects
     # TODO tidy up user project accessing - too many ways to do the same thing
     (self.created_projects.includes(:sites, :creator) + self.accessible_projects.includes(:sites, :creator)).uniq.sort { |a, b| a.name.downcase <=> b.name.downcase }
@@ -404,6 +406,14 @@ class User < ActiveRecord::Base
     loop do
       token = Devise.friendly_token
       break token unless User.where(authentication_token: token).first
+    end
+  end
+
+  def set_rails_tz
+    tzInfo_id = TimeZoneHelper.to_identifier(self.tzinfo_tz)
+    rails_tz_string = TimeZoneHelper.tzinfo_to_ruby(tzInfo_id)
+    unless rails_tz_string.blank?
+      self.rails_tz = rails_tz_string
     end
   end
 

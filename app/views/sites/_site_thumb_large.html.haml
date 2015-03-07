@@ -1,7 +1,12 @@
 %li.span12
-  = link_to [@project, site] , class: 'thumbnail right-caption span12' do
+  .thumbnail.right-caption.span12
     = image_tag site.image.url(:span1)
     .caption
-      %h3= site.name
+      %h3= link_to site.name, [@project, site]
+    %ul.nav.nav-pills.nav-stacked.pull-right{style: 'margin-bottom:0'}
+      %li
+        %a{href: "/visualize?siteId=#{site.id}"}
+          %i.fa.fa-eye
+          Visualise
 
 
