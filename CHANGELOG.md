@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+ - 2015-03-07
+   - Added last_seen_at column for users.
+
 ## [Release 0.13.1](https://github.com/QutBioacoustics/baw-server/releases/tag/0.13.1) (2015-03-02)
 
  - 2015-03-06
