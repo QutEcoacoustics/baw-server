@@ -5,6 +5,7 @@
  - 2015-03-07
    - Added last_seen_at column for users.
    - Added ability to disable paging for filters and enforced max item count.
+   - Added foreign keys
 
 ## [Release 0.13.1](https://github.com/QutBioacoustics/baw-server/releases/tag/0.13.1) (2015-03-02)
 
