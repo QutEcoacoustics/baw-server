@@ -235,7 +235,9 @@ GEM
       nokogiri (~> 1.6.0)
       ruby_parser (~> 3.5)
     i18n (0.7.0)
-    jbuilder (2.2.9)
+    immigrant (0.3.0)
+      activerecord (>= 3.0)
+    jbuilder (2.2.11)
       activesupport (>= 3.0.0, < 5)
       multi_json (~> 1.2)
     jc-validates_timeliness (3.1.1)
@@ -499,6 +501,7 @@ DEPENDENCIES
   guard-yard (~> 2.1.4)
   haml (~> 4.0.6)
   haml-rails (~> 0.8)
+  immigrant
   jbuilder (~> 2.2.3)
   jc-validates_timeliness (~> 3.1.1)
   jquery-rails (~> 4.0.3)
