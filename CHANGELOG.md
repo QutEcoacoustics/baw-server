@@ -3,9 +3,11 @@
 ## Unreleased
 
  - 2015-03-07
-   - Added last_seen_at column for users.
-   - Added ability to disable paging for filters and enforced max item count.
-   - Added foreign keys
+   - Added last_seen_at column for users (#167)
+   - Added ability to disable paging for filters and enforced max item count (#160)
+   - Added foreign keys (#151)
+   - Added Timezone setting for sites and users (#116)
+   - Added links to visualise page (#164)
 
 ## [Release 0.13.1](https://github.com/QutBioacoustics/baw-server/releases/tag/0.13.1) (2015-03-02)
 

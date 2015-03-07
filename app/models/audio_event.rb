@@ -284,6 +284,16 @@ class AudioEvent < ActiveRecord::Base
     "/library/#{self.audio_recording_id}/audio_events/#{self.id}"
   end
 
+  def self.in_site(site)
+    AudioEvent.find_by_sql(["SELECT ae.*
+FROM audio_events ae
+INNER JOIN audio_recordings ar ON ae.audio_recording_id = ar.id
+INNER JOIN sites s ON ar.site_id = s.id
+WHERE s.id = :site_id
+ORDER BY ae.updated_at DESC
+LIMIT 5", {site_id: site.id}])
+  end
+
   private
 
   # custom validation methods
