@@ -7,13 +7,13 @@
     .span6{style:'text-align:center'}
       %p
         Projects:
-        = number_with_delimiter(@user.get_project_count)
+        = number_with_delimiter(Access::Query.projects_accessible(@user).count)
       %p
         Tags:
-        = number_with_delimiter(@user.get_tag_count, delimiter: ' ')
+        = number_with_delimiter(Access::Query.taggings_modified(@user).count, delimiter: ' ')
       %p
         Bookmarks:
-        = number_with_delimiter(@user.get_bookmark_count, delimiter: ' ')
+        = number_with_delimiter(Access::Query.bookmarks_modified(@user).count, delimiter: ' ')
       %p
         Last seen
         - last_seen = @user.get_last_seen
@@ -21,13 +21,13 @@
     .span6{style:'text-align:center'}
       %p
         Sites:
-        = number_with_delimiter(@user.get_site_count)
+        = number_with_delimiter(Access::Query.sites(@user, Access::Core.levels_allow).count)
       %p
         Annotations:
-        = number_with_delimiter(@user.get_annotation_count, delimiter: ' ')
+        = number_with_delimiter(Access::Query.audio_events_modified(@user).count, delimiter: ' ')
       %p
         Comments:
-        = number_with_delimiter(@user.get_comment_count, delimiter: ' ')
+        = number_with_delimiter(Access::Query.audio_event_comments_modified(@user).count, delimiter: ' ')
       %p
         Member for
         - signed_up_date = @user.created_at

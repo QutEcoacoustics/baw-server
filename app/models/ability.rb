@@ -40,11 +40,11 @@ class Ability
     # for api security endpoints
     can [:show, :destroy], :api_security if user.confirmed?
 
-    if user.has_role? :admin
+    if Access::Check.is_admin?(user)
       # admin abilities
       can :manage, :all
 
-    elsif user.has_role?(:user) && user.confirmed?
+    elsif Access::Check.is_standard_user?(user)
 
       # user must have read or write permission on the associated project
       # --------------------------------------
@@ -52,64 +52,69 @@ class Ability
       # project
       # only admin can delete projects
       can [:show], Project do |project|
-        user.has_permission?(project)
+        Access::Check.can?(user, :reader, project)
       end
       can [:edit, :update, :update_permissions], Project do |project|
-        user.can_write?(project)
+        Access::Check.can?(user, :writer, project)
       end
 
       # site
       # only admin can delete sites
       can [:show, :show_shallow], Site do |site|
-        user.has_permission_any?(site.projects)
+        # can't add .includes here - it breaks when validating projects due to ActiveRecord::AssociationRelation
+        Access::Check.can_any?(user, :reader, site.projects)
       end
       can [:new, :create, :edit, :update], Site do |site|
-        user.can_write_any?(site.projects)
+        # can't add .includes here - it breaks when validating projects due to ActiveRecord::AssociationRelation
+        # .all would have worked. I tried .where(nil), that didn't work either :/
+        # https://github.com/rails/rails/issues/12756
+        # https://github.com/plataformatec/has_scope/issues/41
+        Access::Check.can_any?(user, :writer, site.projects)
       end
 
       # data set
       can [:show, :show_shallow], Dataset do |dataset|
-        user.has_permission?(dataset.project)
+        Access::Check.can?(user, :reader, dataset.project)
       end
       can [:new, :create, :edit, :update, :destroy], Dataset do |dataset|
-        user.can_write?(dataset.project)
+        Access::Check.can?(user, :writer, dataset.project)
       end
 
       # job
       can [:show, :create], Job do |job|
-        user.has_permission?(job.dataset.project)
+        Access::Check.can?(user, :reader, job.dataset.project)
       end
 
       # permission
       # :edit and :update are not allowed
       # :show, :create, :delete are only used by json api
       can [:show, :new, :create, :destroy], Permission do |permission|
-        user.can_write?(permission.project)
+        Access::Check.can?(user, :writer, permission.project)
       end
 
       # audio recording
       can [:show], AudioRecording do |audio_recording|
-        user.has_permission_any?(audio_recording.site.projects)
+        Access::Check.can_any?(user, :reader, audio_recording.site.projects)
       end
 
       # audio event
       can [:show, :download], AudioEvent do |audio_event|
-        user.has_permission_any?(audio_event.audio_recording.site.projects)
+        Access::Check.can_any?(user, :reader, audio_event.audio_recording.site.projects)
       end
       can [:create, :edit, :update, :destroy], AudioEvent do |audio_event|
-        user.can_write_any?(audio_event.audio_recording.site.projects)
+        Access::Check.can_any?(user, :writer, audio_event.audio_recording.site.projects)
       end
 
       # audio event comment
       # anyone can view or create comments on reference audio events
       # anyone with read or write permissions on the project can create comments
       can [:show, :create, :update], AudioEventComment do |audio_event_comment|
-        user.has_permission_any?(audio_event_comment.audio_event.audio_recording.site.projects) || audio_event_comment.audio_event.is_reference
+        Access::Check.can_any?(user, :reader, audio_event_comment.audio_event.audio_recording.site.projects) || audio_event_comment.audio_event.is_reference
       end
 
       # bookmark
       can [:create], Bookmark do |bookmark|
-        user.has_permission_any?(bookmark.audio_recording.site.projects)
+        Access::Check.can_any?(user, :reader, bookmark.audio_recording.site.projects)
       end
 
       # script
@@ -163,7 +168,7 @@ class Ability
       # anyone can create tags
       can [:index, :new, :create, :show], Tag
 
-    elsif user.has_role? :harvester
+    elsif Access::Check.is_harvester?(user)
       # harvester user is used by baw-harvester and baw-workers
       # baw-harvester: :new, :create, :check_uploader, :update_status
       # baw-workers: :update

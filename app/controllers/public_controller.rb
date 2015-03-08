@@ -56,7 +56,7 @@ class PublicController < ApplicationController
     #storage_msg = AudioRecording.check_storage
 
     online_window = 2.hours.ago
-    users_online = User.where('current_sign_in_at > ? OR last_sign_in_at > ?', online_window, online_window).count
+    users_online = User.where('last_seen_at > ? OR current_sign_in_at > ? OR last_sign_in_at > ?', online_window, online_window, online_window).count
     users_total = User.count
 
     month_ago = 1.month.ago
@@ -113,7 +113,7 @@ class PublicController < ApplicationController
       #format.html
       format.json {
 
-        if !current_user.blank? && current_user.is_admin?
+        if Access::Check.is_admin?(current_user)
 
         else
 
@@ -124,7 +124,7 @@ class PublicController < ApplicationController
               fail CustomErrors::ItemNotFoundError, 'Project not found from audio_recording_catalogue'
             end
 
-            if current_user.blank? || !current_user.can_read?(project)
+            if current_user.blank? || Access::Check.can?(current_user, :none, project)
               fail CanCan::AccessDenied, 'Project access denied from audio_recording_catalogue'
             end
           end
@@ -137,7 +137,7 @@ class PublicController < ApplicationController
             end
 
             projects = Site.where(id: params[:siteId]).first.projects
-            if current_user.blank? || !current_user.can_read_any?(projects)
+            if current_user.blank? || Access::Check.can_any?(current_user, :none, projects)
               fail CanCan::AccessDenied, 'Site access denied from audio_recording_catalogue'
             end
           end
@@ -328,10 +328,8 @@ EXTRACT(DAY FROM recorded_date) as extracted_day')
 
     if current_user.blank?
       @recent_audio_recordings = AudioRecording.order(order_by_coalesce).limit(7)
-    elsif current_user.has_role? :admin
-      @recent_audio_recordings = AudioRecording.includes(site: :projects).order(order_by_coalesce).limit(10)
     else
-      @recent_audio_recordings = current_user.accessible_audio_recordings.includes(site: :projects).order(order_by_coalesce).limit(10)
+      @recent_audio_recordings = Access::Query.audio_recordings(current_user, Access::Core.levels_allow).includes(site: :projects).order(order_by_coalesce).limit(10)
     end
 
   end
@@ -340,11 +338,19 @@ EXTRACT(DAY FROM recorded_date) as extracted_day')
     order_by_coalesce = 'COALESCE(audio_events.updated_at, audio_events.created_at) DESC'
 
     if current_user.blank?
-      @recent_audio_events = AudioEvent.order(order_by_coalesce).limit(7)
-    elsif current_user.has_role? :admin
-      @recent_audio_events = AudioEvent.includes([:creator, audio_recording: {site: :projects}]).order(order_by_coalesce).limit(10)
+      @recent_audio_events = AudioEvent
+                                 .order(order_by_coalesce)
+                                 .limit(7)
+    elsif Access::Check.is_admin?(current_user)
+      @recent_audio_events = AudioEvent
+                                 .includes([:creator, audio_recording: {site: :projects}])
+                                 .order(order_by_coalesce)
+                                 .limit(10)
     else
-      @recent_audio_events = current_user.accessible_audio_events.includes([:updater, audio_recording: :site]).order(order_by_coalesce).limit(10)
+      @recent_audio_events = Access::Query
+                                 .audio_events(current_user, Access::Core.levels_allow)
+                                 .includes([:updater, audio_recording: :site])
+                                 .order(order_by_coalesce).limit(10)
     end
 
   end

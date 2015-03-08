@@ -58,9 +58,10 @@
   = render layout: '/shared/right_sidebar_user_times', locals: { item: @project } do
     = sidebar_metadata('Notes', @project.notes)
     = sidebar_metadata('Urn', @project.urn)
-    - permission = current_user.get_permission(@project)
-    - unless permission.blank?
-      = sidebar_metadata('Your access level', permission.level)
+    - level = Access::Query.level_project(current_user, @project)
+    - unless level.blank?
+      - level_name = Access::Core.get_level_name(level)
+      = sidebar_metadata('Your access level', level_name)
 
 - content_for :title, "Project #{@project.name}"
 

@@ -62,7 +62,7 @@ class AnalysisController < ApplicationController
   def authorise_custom(request_params, user)
 
     # Can't do anything if not logged in, not in user or admin role, or not confirmed
-    if user.blank? || (!user.has_role?(:user) && !user.has_role?(:admin)) || !user.confirmed?
+    if user.blank? || (!Access::Check.is_standard_user?(user) && !Access::Check.is_admin?(user)) || !user.confirmed?
       fail CanCan::AccessDenied, 'Anonymous users, non-admin and non-users, or unconfirmed users cannot access analysis data.'
     end
 

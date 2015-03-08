@@ -107,8 +107,7 @@ class AudioEventsController < ApplicationController
   def filter
     filter_response = Settings.api_response.response_filter(
         api_filter_params,
-        # TODO: allow access to reference audio events as well.
-        current_user.is_admin? ? AudioEvent.all : current_user.accessible_audio_events,
+        Access::Query.audio_events(current_user, Access::Core.levels_allow),
         AudioEvent,
         AudioEvent.filter_settings
     )

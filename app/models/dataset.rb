@@ -11,7 +11,7 @@ class Dataset < ActiveRecord::Base
   belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_datasets
   belongs_to :updater, class_name: 'User', foreign_key: :updater_id, inverse_of: :updated_datasets
   belongs_to :project, inverse_of: :datasets
-  has_and_belongs_to_many :sites, uniq: true
+  has_and_belongs_to_many :sites, -> { uniq }
   has_many :jobs, inverse_of: :dataset
 
   #before_save :generate_dataset_result

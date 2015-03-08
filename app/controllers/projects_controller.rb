@@ -10,7 +10,7 @@ class ProjectsController < ApplicationController
   def index
     respond_to do |format|
       format.html {
-        @projects = get_user_projects
+        @projects = get_user_projects.includes(:creator).references(:creator)
         add_breadcrumb 'Projects', projects_path
       }
       format.json {
@@ -156,7 +156,7 @@ class ProjectsController < ApplicationController
 
   # GET /projects/request_access
   def new_access_request
-    @all_projects = current_user.inaccessible_projects
+    @all_projects = Access::Query.projects_inaccessible(current_user)
     respond_to do |format|
       format.html {
         add_breadcrumb 'Projects', projects_path
@@ -205,13 +205,7 @@ class ProjectsController < ApplicationController
   private
 
   def get_user_projects
-    if current_user.has_role? :admin
-      projects = Project.includes(:creator).order('lower(name) ASC')
-    else
-      projects = current_user.projects.sort { |a, b| a.name <=> b.name }
-    end
-
-    projects
+    Access::Query.projects_accessible(current_user).order('lower(name) ASC')
   end
 
   def project_params

@@ -12,47 +12,6 @@ module Filter
 
     private
 
-    # Build project creator condition.
-    # @param [Integer] creator_id
-    # @return [Arel::Nodes::Node] condition
-    def compose_project_creator(creator_id)
-      # creator_id_check = 'projects.creator_id = ?'
-      compose_eq(relation_table(Project), :creator_id, [:creator_id], creator_id)
-    end
-
-    # Build user permissions condition.
-    # @param [Integer] user_id
-    # @return [Arel::Nodes::Node] condition
-    def compose_user_permissions(user_id)
-      # permissions_check = 'permissions.user_id = ? AND permissions.level IN (\'reader\', \'writer\')'
-      user_permissions = compose_eq(relation_table(Permission), :user_id, [:user_id], user_id)
-      permission_level = compose_in(relation_table(Permission), :level, [:level], %w(reader writer))
-      compose_and(user_permissions, permission_level)
-    end
-
-    # Build project creator condition.
-    # @param [Boolean] is_reference
-    # @return [Arel::Nodes::Node] condition
-    def compose_audio_event_reference(is_reference)
-      # reference_audio_event_check = 'audio_events.is_reference IS TRUE'
-      compose_eq(relation_table(AudioEvent), :is_reference, [:is_reference], is_reference)
-    end
-
-    # Build permission check condition.
-    # @param [Integer] user_id
-    # @param [Boolean] is_reference
-    # @return [Arel::Nodes::Node] condition
-    def compose_permission_check(user_id, is_reference)
-      # where("((#{creator_id_check}) OR (#{permissions_check}) OR (#{reference_audio_event_check}))", user.id, user.id)
-      compose_or(
-          compose_or(
-              compose_project_creator(user_id),
-              compose_user_permissions(user_id)
-          ),
-          compose_audio_event_reference(is_reference)
-      )
-    end
-
     # Create SIMILAR TO condition for text.
     # @param [Arel::Table] table
     # @param [Symbol] column_name

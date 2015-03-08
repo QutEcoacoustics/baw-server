@@ -14,9 +14,7 @@
 
   %tbody
   - @users.each do |user|
-    - last_seen = user.last_seen_at unless user.last_seen_at.blank?
-    - last_seen = user.current_sign_in_at unless user.current_sign_in_at.blank?
-    - last_seen = user.last_sign_in_at
+    - last_seen = user.get_last_seen
     %tr
       %td= link_to "#{user.user_name} (#{user.role_symbols.join(', ')})", user_account_path(user)
       %td= last_seen.blank? ? '?' : last_seen.iso8601

@@ -44,16 +44,6 @@ class AudioEvent < ActiveRecord::Base
   # postgres-specific
   scope :select_start_absolute, lambda { select('audio_recordings.recorded_date + CAST(audio_events.start_time_seconds || \' seconds\' as interval) as start_time_absolute') }
   scope :select_end_absolute, lambda { select('audio_recordings.recorded_date + CAST(audio_events.end_time_seconds || \' seconds\' as interval) as end_time_absolute') }
-  scope :check_permissions, lambda { |user|
-                            if user.is_admin?
-                              where('1 = 1') # don't change query
-                            else
-                              creator_id_check = 'projects.creator_id = ?'
-                              permissions_check = 'permissions.user_id = ? AND permissions.level IN (\'reader\', \'writer\')'
-                              reference_audio_event_check = 'audio_events.is_reference IS TRUE'
-                              where("((#{creator_id_check}) OR (#{permissions_check}) OR (#{reference_audio_event_check}))", user.id, user.id)
-                            end
-                          }
 
   # Define filter api settings
   def self.filter_settings
@@ -93,16 +83,7 @@ class AudioEvent < ActiveRecord::Base
     # userId: int (optional)
     # audioRecordingId: int (optional)
 
-    #.joins(:tags, :owner, audio_recording: {site: {projects: :permissions}})
-
-    # eager load tags and projects
-    # @see http://stackoverflow.com/questions/24397640/rails-nested-includes-on-active-records
-    # Note that includes works with association names while references needs the actual table name.
-    # @see http://api.rubyonrails.org/classes/ActiveRecord/QueryMethods.html#method-i-includes
-    query = AudioEvent
-                .includes(:creator, :tags, audio_recording: [{site: [{projects: :permissions}]}])
-                .references(:users, :tags, :audio_recordings, :sites, :projects, :permissions)
-                .check_permissions(user)
+    query = Access::Query.audio_events(user, Access::Core.levels_allow)
 
     query = AudioEvent.filter_reference(query, params)
     query = AudioEvent.filter_tags(query, params)
@@ -243,10 +224,7 @@ class AudioEvent < ActiveRecord::Base
   end
 
   def self.csv_filter(user, filter_params)
-    query = AudioEvent
-                .includes(:creator, :tags, audio_recording: [{site: [{projects: :permissions}]}])
-                .references(:users, :tags, :audio_recordings, :sites, :projects, :permissions)
-                .check_permissions(user)
+    query = Access::Query.audio_events(user, :reader)
 
     if filter_params[:project_id]
       query = query.where(projects: {id: (filter_params[:project_id]).to_i})

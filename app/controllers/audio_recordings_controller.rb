@@ -53,9 +53,11 @@ class AudioRecordingsController < ApplicationController
     uploader_id = audio_recording_params[:uploader_id].to_i
     user_exists = User.exists?(uploader_id)
     user = User.where(id: uploader_id).first
-    highest_permission = user.highest_permission(@project)
+    actual_level = Access::Query.level_project(user, @project)
+    requested_level = :writer
+    is_allowed = Access::Check.allowed?(requested_level, actual_level)
 
-    if !user_exists || highest_permission < AccessLevel::WRITE
+    if !user_exists || !is_allowed
       render json: {error: 'uploader does not have access to this project'}.to_json, status: :unprocessable_entity
     elsif check_and_correct_overlap(@audio_recording) && @audio_recording.save
       render json: @audio_recording, status: :created, location: @audio_recording
@@ -107,14 +109,17 @@ class AudioRecordingsController < ApplicationController
     if current_user.blank?
       render json: {error: 'not logged in'}.to_json, status: :unauthorized
     else
-      if current_user.has_role? :harvester
+      if Access::Check.is_harvester?(current_user)
         # auth check is skipped, so auth is checked manually here
         uploader_id = params[:uploader_id].to_i
         user_exists = User.exists?(uploader_id)
         user = User.where(id: uploader_id).first
-        highest_permission = user.highest_permission(@project)
 
-        if !user_exists || highest_permission < AccessLevel::WRITE
+        actual_level = Access::Query.level_project(user, @project)
+        requested_level = :writer
+        is_allowed = Access::Check.allowed?(requested_level, actual_level)
+
+        if !user_exists || !is_allowed
           render json: {error: 'uploader does not have access to this project'}.to_json, status: :ok
         else
           head :no_content
@@ -136,7 +141,7 @@ class AudioRecordingsController < ApplicationController
   def filter
     filter_response = Settings.api_response.response_filter(
         api_filter_params,
-        current_user.is_admin? ? AudioRecording.all : current_user.accessible_audio_recordings,
+        Access::Query.audio_recordings(current_user, Access::Core.levels_allow),
         AudioRecording,
         AudioRecording.filter_settings
     )
@@ -149,7 +154,7 @@ class AudioRecordingsController < ApplicationController
     # auth is checked manually here - not sure if this is necessary or not
     if current_user.blank?
       render json: {error: 'not logged in'}.to_json, status: :unauthorized
-    elsif current_user.has_role? :harvester
+    elsif Access::Check.is_harvester?(current_user)
       update_status_params_check
     else
       render json: {error: 'only harvester can check uploader permissions'}.to_json, status: :forbidden

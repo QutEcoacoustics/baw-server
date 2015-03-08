@@ -5,40 +5,42 @@
     %h1= @site.name
     %p= @site.description
 
-- duration_sum = @site.audio_recordings.sum(:duration_seconds)
-- recorded_min = @site.audio_recordings.minimum(:recorded_date)
-- recorded_min = recorded_min.in_time_zone(@site.rails_tz) unless @site.rails_tz.blank?
-- recorded_max = @site.audio_recordings.maximum(:recorded_date)
-- recorded_max = recorded_max.in_time_zone(@site.rails_tz) unless @site.rails_tz.blank?
-- recorded_diff = recorded_max - recorded_min
-- last_added = @site.audio_recordings.maximum(:updated_at)
-
 %h3
   Audio Recordings
 
 .row-fluid
   .span6
-    %p
-      This site contains recordings from #{recorded_min.to_formatted_s(:readable_full_without_seconds)}
-      to #{recorded_max.to_formatted_s(:readable_full_without_seconds)}.
-    %p
-      This site covers
-      = distance_of_time recorded_diff
-      and there are recordings for
-      = distance_of_time duration_sum
-      of that time.
+    - if @site.audio_recordings.blank?
+      %p
+        This site does not contain any audio recordings.
+    - else
+      - duration_sum = @site.audio_recordings.sum(:duration_seconds)
+      - recorded_min = @site.audio_recordings.minimum(:recorded_date)
+      - recorded_min = recorded_min.in_time_zone(@site.rails_tz) unless @site.rails_tz.blank?
+      - recorded_max = @site.audio_recordings.maximum(:recorded_date)
+      - recorded_max = recorded_max.in_time_zone(@site.rails_tz) unless @site.rails_tz.blank?
+      - recorded_diff = recorded_max - recorded_min
+      %p
+        This site contains recordings from #{recorded_min.to_formatted_s(:readable_full_without_seconds)}
+        to #{recorded_max.to_formatted_s(:readable_full_without_seconds)}.
+      %p
+        This site covers
+        = distance_of_time recorded_diff
+        and there are recordings for
+        = distance_of_time duration_sum
+        of that time.
 
-    %ul.nav.nav-pills.nav-stacked{style: 'margin-bottom:0'}
-      %li.text-center
-        %a{href: "/visualize?siteId=#{@site.id}"}
-          %i.fa.fa-eye
-          Visualise
+      %ul.nav.nav-pills.nav-stacked{style: 'margin-bottom:0'}
+        %li.text-center
+          %a{href: "/visualize?siteId=#{@site.id}"}
+            %i.fa.fa-eye
+            Visualise
 
-    %h4 Recent Annotations
-    %ul.nav.nav-pills.nav-stacked{style: 'margin-bottom:0'}
-      - AudioEvent.in_site(@site).each do |ae|
-        %li
-          = link_to "#{ae.updated_at.to_formatted_s(:readable_full_without_seconds)} by #{ae.updater.user_name}", ae.get_listen_path
+      %h4 Recent Annotations
+      %ul.nav.nav-pills.nav-stacked{style: 'margin-bottom:0'}
+        - AudioEvent.in_site(@site).each do |ae|
+          %li
+            = link_to "#{ae.updated_at.to_formatted_s(:readable_full_without_seconds)} by #{ae.updater.nil? ? '(unknown)' : ae.updater.user_name}", ae.get_listen_path
 
   - if @site.latitude.blank? || @site.longitude.blank?
     .span6.map-placeholder
@@ -46,31 +48,14 @@
   - else
     .span6= gmaps(markers: {data: @site.to_gmaps4rails}, map_options: {zoom: 7, auto_zoom: true})
     = yield :scripts
-  -#.span12
-  -#  %h3 Recent Audio Recordings
-  -#  %table.table.table-striped(data-provides='rowlink')
-  -#    %thead
-  -#      %tr
-  -#        %th Recording Start Date
-  -#        %th Duration
-  -#        %th
-  -#
-  -#    %tbody
-  -#    - @site.audio_recordings.order(recorded_date: :desc).first(10).each do |audio_recording|
-  -#      %tr
-  -#        %td= link_to audio_recording.recorded_date.to_formatted_s(:readable_full), "/listen/#{audio_recording.id}"
-  -#        %td= "about #{distance_of_time_in_words(audio_recording.duration_seconds, 0, nil, {except: ['seconds']})}"
-  -#        %td.nolink
-  -#          = link_to "/listen/#{audio_recording.id}", target: '_self', class: 'btn btn-mini' do
-  -#            %i{class: 'fa fa-play'}
-  -#            Play
 
 
 - content_for :right_sidebar do
   = render layout: '/shared/right_sidebar_user_times', locals: { item: @site } do
-    - permission = current_user.get_permission(@project)
-    - unless permission.blank?
-      = sidebar_metadata('Your access level', permission.level)
+    - level = Access::Query.level_project(current_user, @project)
+    - unless level.blank?
+      - level_name = Access::Core.get_level_name(level)
+      = sidebar_metadata('Your access level', level_name)
 
 - content_for :title, "Project #{@project.name} | Site #{@site.name}"
 

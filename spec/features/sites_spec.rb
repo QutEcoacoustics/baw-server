@@ -23,7 +23,8 @@ describe 'CRUD Sites as valid user with write permission', :type => :feature do
   end
 
   it 'creates new site when filling out form correctly' do
-    visit new_project_site_path(@project)
+    url = new_project_site_path(@project)
+    visit url
     #save_and_open_page
     fill_in 'site[name]', with: 'test name'
     fill_in 'site[description]', with: 'description'
@@ -34,9 +35,10 @@ describe 'CRUD Sites as valid user with write permission', :type => :feature do
   end
 
   it 'Fails to create new site when filling out form incomplete' do
-    visit new_project_site_path(@project)
-    click_button 'Create Site'
+    url = new_project_site_path(@project)
+    visit url
     #save_and_open_page
+    click_button 'Create Site'
     expect(page).to have_content('Please review the problems below:')
   end
 

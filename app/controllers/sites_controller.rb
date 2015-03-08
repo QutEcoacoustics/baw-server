@@ -205,7 +205,7 @@ ORDER BY s.name")
 
     site_hash = {}
 
-    site_hash[:project_ids] = Site.where(id: site.id).first.projects.pluck(:id)
+    site_hash[:project_ids] = Site.find(site.id).projects.pluck(:id)
     site_hash[:location_obfuscated] = site.location_obfuscated
     site_hash[:custom_latitude] = site.latitude
     site_hash[:custom_longitude] = site.longitude
@@ -214,10 +214,10 @@ ORDER BY s.name")
   end
 
   def get_user_sites
-    if current_user.has_role? :admin
+    if Access::Check.is_admin?(current_user)
       sites = Site.order('lower(name) ASC')
     else
-      sites = current_user.accessible_sites
+      sites = Access::Query.sites(current_user, Access::Core.levels_allow)
     end
 
     sites

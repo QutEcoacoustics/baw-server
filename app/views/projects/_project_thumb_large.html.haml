@@ -4,9 +4,9 @@
     .caption.span7
       %h4= link_to project.name, project
       %p= truncate(project.description, length: 50, separator: ' ')
-    - if current_user.can_write?(project)
+    - if Access::Check.can?(current_user, :writer, project)
       %i.project_permission_icon.fa.fa-unlock(title="You have read & write access" data-toggle='tooltip' data-placement='top')
-    - elsif current_user.can_read?(project)
+    - elsif Access::Check.can?(current_user, :reader, project)
       %i.project_permission_icon.fa.fa-lock(title="You have read only access" data-toggle='tooltip' data-placement='top')
     %ul.nav.nav-pills.nav-stacked.pull-right{style: 'margin-bottom:0'}
       %li
