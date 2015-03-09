@@ -89,7 +89,6 @@ gem 'bcrypt', '~> 3.1.9'
 # don't change the database gems - causes:
 # Please install the <db> adapter: `gem install activerecord-<db>-adapter` (<db> is not part of the bundle. Add it to Gemfile.)
 gem 'pg', '~> 0.18.1'
-gem 'immigrant'
 
 # MODELS
 # -------------------------------------
