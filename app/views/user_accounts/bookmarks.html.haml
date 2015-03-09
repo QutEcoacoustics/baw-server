@@ -24,7 +24,7 @@
       %tbody
       - @user_bookmarks.each do |bookmark|
         %tr
-          %td= link_to bookmark.name, bookmark.get_listen_path
+          %td= link_to bookmark.name, make_listen_path(bookmark)
           %td= bookmark.category
           %td= bookmark.description
           %td.nolink

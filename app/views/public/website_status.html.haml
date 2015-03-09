@@ -47,8 +47,8 @@
             - priority_tag = Tag.get_priority_tag(tags) || Tag.new(text:'(none)')
             - unless current_user.blank?
               - site_link = "/projects/#{audio_event.audio_recording.site.projects[0].id}/sites/#{audio_event.audio_recording.site.id}"
-              - audio_link = audio_event.get_listen_path
-              - annotation_link = audio_event.get_library_path
+              - audio_link = make_listen_path(audio_event)
+              - annotation_link = make_library_path(audio_event)
             - if current_user.blank?
               %td{title: tags_text}= priority_tag.text
             - else

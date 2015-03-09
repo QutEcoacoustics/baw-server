@@ -23,7 +23,7 @@
       - @user_annotations.each do |audio_event|
         - if !audio_event.blank? && !audio_event.audio_recording.blank?
           %tr
-            - audio_link = audio_event.get_listen_path
+            - audio_link = make_listen_path(audio_event)
             - audio_recording_exists = !audio_event.audio_recording.blank?
             - if audio_recording_exists
               %td= link_to (audio_event.end_time_seconds - audio_event.start_time_seconds), audio_link, target: '_self'

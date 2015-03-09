@@ -1,7 +1,7 @@
 class Site < ActiveRecord::Base
   # ensures that creator_id, updater_id, deleter_id are set
   include UserChange
-  
+
   attr_accessor :project_ids, :custom_latitude, :custom_longitude, :location_obfuscated
 
   # relations
@@ -52,6 +52,31 @@ class Site < ActiveRecord::Base
   #scope :specified_sites, lambda { |site_ids| where('id in (:ids)', { :ids => site_ids } ) }
   #scope :sites_in_project, lambda { |project_ids| where(Project.specified_projects, { :ids => project_ids } ) }
   #scope :site_projects, lambda{ |project_ids| includes(:projects).where(:projects => {:id => project_ids} ) }
+
+  def get_bookmark
+    Bookmark.where(audio_recording: self.audio_recordings).order(:updated_at).first
+  end
+
+  def most_recent_recording
+    self.audio_recordings.order(recorded_date: :desc).first
+  end
+
+  def get_bookmark_or_recording
+    bookmark = get_bookmark
+    if bookmark.blank?
+      {
+          audio_recording:most_recent_recording,
+          start_offset_seconds: nil,
+          source: :audio_recording
+      }
+    else
+      {
+          audio_recording:bookmark.audio_recording,
+          start_offset_seconds: bookmark.offset_seconds,
+          source: :bookmark
+      }
+    end
+  end
 
   # overrides getting, does not change setting
   def latitude

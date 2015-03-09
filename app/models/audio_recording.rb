@@ -218,10 +218,6 @@ class AudioRecording < ActiveRecord::Base
     }
   end
 
-  def get_listen_path
-    "/listen/#{self.id}"
-  end
-
   private
   def set_uuid
     self.uuid = UUIDTools::UUID.random_create.to_s

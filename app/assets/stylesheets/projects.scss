@@ -21,6 +21,12 @@ $baseFontSize: 14px;
     top: 10px;
     font-size: $baseFontSize * 1.75;
   }
+
+  ul.nav {
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
+  }
 }
 
 select[multiple] {

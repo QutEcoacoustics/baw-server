@@ -80,7 +80,7 @@
     -# if can? :edit, @project
       %li= link_to 'Add New Job', new_project_job_path(@project),  title: "Add a new analysis job to this project", data: {toggle: 'tooltip',  placement: 'right'}
     - if can? :show, @project
-      %li= link_to 'Visualise', "/visualize?projectId=#{@project.id}", title: 'Visualise and browse the audio in this project', data: {toggle: 'tooltip',  placement: 'right'}
+      %li= link_to 'Visualise', make_visualise_path(@project), title: 'Browse the audio in this project', data: {toggle: 'tooltip',  placement: 'right'}
 
 -# include markerwithlabel.js
 %script

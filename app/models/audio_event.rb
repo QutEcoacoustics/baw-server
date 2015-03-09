@@ -249,19 +249,6 @@ class AudioEvent < ActiveRecord::Base
     query.order('audio_events.id DESC')
   end
 
-  def get_listen_path
-    segment_duration_seconds = 30
-    offset_start_rounded = (self.start_time_seconds / segment_duration_seconds).floor * segment_duration_seconds
-    offset_end_rounded = (self.end_time_seconds / segment_duration_seconds).floor * segment_duration_seconds
-    offset_end_rounded += (offset_start_rounded == offset_end_rounded ? segment_duration_seconds : 0)
-
-    "#{self.audio_recording.get_listen_path}?start=#{offset_start_rounded}&end=#{offset_end_rounded}"
-  end
-
-  def get_library_path
-    "/library/#{self.audio_recording_id}/audio_events/#{self.id}"
-  end
-
   def self.in_site(site)
     AudioEvent.find_by_sql(["SELECT ae.*
 FROM audio_events ae
@@ -269,7 +256,7 @@ INNER JOIN audio_recordings ar ON ae.audio_recording_id = ar.id
 INNER JOIN sites s ON ar.site_id = s.id
 WHERE s.id = :site_id
 ORDER BY ae.updated_at DESC
-LIMIT 5", {site_id: site.id}])
+LIMIT 6", {site_id: site.id}])
   end
 
   private

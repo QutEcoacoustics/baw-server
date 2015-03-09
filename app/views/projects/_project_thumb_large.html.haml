@@ -2,14 +2,18 @@
   .thumbnail.right-caption.span12.project_thumbnail
     .span4= image_tag project.image.url(:span2)
     .caption.span7
-      %h4= link_to project.name, project
+      %h4= project.name
       %p= truncate(project.description, length: 50, separator: ' ')
     - if Access::Check.can?(current_user, :writer, project)
       %i.project_permission_icon.fa.fa-unlock(title="You have read & write access" data-toggle='tooltip' data-placement='top')
     - elsif Access::Check.can?(current_user, :reader, project)
       %i.project_permission_icon.fa.fa-lock(title="You have read only access" data-toggle='tooltip' data-placement='top')
-    %ul.nav.nav-pills.nav-stacked.pull-right{style: 'margin-bottom:0'}
+    %ul.nav.nav-pills{style: 'margin-bottom:0'}
       %li
-        %a{href: "/visualize?projectId=#{project.id}"}
+        %a{href: project_path(project)}
+          %i.fa.fa-info-circle
+          Details
+      %li
+        %a{href: make_visualise_path(project)}
           %i.fa.fa-eye
           Visualise

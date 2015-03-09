@@ -2,10 +2,19 @@
   .thumbnail.right-caption.span12
     = image_tag site.image.url(:span1)
     .caption
-      %h3= link_to site.name, [@project, site]
-    %ul.nav.nav-pills.nav-stacked.pull-right{style: 'margin-bottom:0'}
+      %h3= site.name
+    %ul.nav.nav-pills.pull-right{style: 'margin-bottom:0'}
       %li
-        %a{href: "/visualize?siteId=#{site.id}"}
+        %a{href: project_site_path(@project, site)}
+          %i.fa.fa-info-circle
+          Details
+      %li
+        - play_details = site.get_bookmark_or_recording
+        %a{href: make_listen_path(play_details[:audio_recording], play_details[:start_offset_seconds])}
+          %i.fa.fa-play-circle
+          Play
+      %li
+        %a{href: make_visualise_path(site)}
           %i.fa.fa-eye
           Visualise
 

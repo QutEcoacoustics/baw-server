@@ -5,6 +5,10 @@
     %h1= @site.name
     %p= @site.description
 
+- play_details = @site.get_bookmark_or_recording
+- unless play_details[:audio_recording].blank?
+  - play_link = make_listen_path(play_details[:audio_recording], play_details[:start_offset_seconds])
+
 %h3
   Audio Recordings
 
@@ -30,9 +34,13 @@
         = distance_of_time duration_sum
         of that time.
 
-      %ul.nav.nav-pills.nav-stacked{style: 'margin-bottom:0'}
-        %li.text-center
-          %a{href: "/visualize?siteId=#{@site.id}"}
+      %ul.nav.nav-pills{style: 'margin-bottom:0'}
+        %li
+          %a{href: play_link}
+            %i.fa.fa-play-circle
+            Play
+        %li
+          %a{href: make_visualise_path(@site)}
             %i.fa.fa-eye
             Visualise
 
@@ -40,7 +48,10 @@
       %ul.nav.nav-pills.nav-stacked{style: 'margin-bottom:0'}
         - AudioEvent.in_site(@site).each do |ae|
           %li
-            = link_to "#{ae.updated_at.to_formatted_s(:readable_full_without_seconds)} by #{ae.updater.nil? ? '(unknown)' : ae.updater.user_name}", ae.get_listen_path
+            - tag = ae.tags.first
+            - tag_text = tag.blank? ? '(not tagged)' : tag.text
+            - user = ae.updater.blank? ? ae.updater : ae.creator
+            = link_to "\"#{tag_text}\" by #{user.blank? ? '(unknown)' : user.user_name}", make_listen_path(ae)
 
   - if @site.latitude.blank? || @site.longitude.blank?
     .span6.map-placeholder
@@ -48,7 +59,6 @@
   - else
     .span6= gmaps(markers: {data: @site.to_gmaps4rails}, map_options: {zoom: 7, auto_zoom: true})
     = yield :scripts
-
 
 - content_for :right_sidebar do
   = render layout: '/shared/right_sidebar_user_times', locals: { item: @site } do
@@ -71,4 +81,5 @@
       %li= link_to 'Upload Audio', upload_instructions_project_site_path(@project, @site),  title: "Upload new audio to this site", data: {toggle: 'tooltip',  placement: 'right'}
     - if can? :show, @site
       %li= link_to 'Annotations (csv)', "#{data_request_path}?annotation_download[project_id]=#{@project.id}&annotation_download[site_id]=#{@site.id}&annotation_download[name]=#{CGI::escape(@site.name)}",  title: "Download annotations for this site", data: {toggle: 'tooltip',  placement: 'right'}
-      %li= link_to 'Visualise', "/visualize?siteId=#{@site.id}", title: 'Visualise and browse the audio in this site', data: {toggle: 'tooltip',  placement: 'right'}
+      %li= link_to 'Visualise', make_visualise_path(@site), title: 'Visualise and browse the audio in this site', data: {toggle: 'tooltip',  placement: 'right'}
+      %li= link_to 'Play', play_link, title: 'Play audio in this site', data: {toggle: 'tooltip',  placement: 'right'}
