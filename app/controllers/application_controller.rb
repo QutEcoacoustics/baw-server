@@ -60,7 +60,10 @@ class ApplicationController < ActionController::Base
   around_action :set_then_reset_user_stamper
 
   # update users last activity log every 10 minutes
-  before_action :set_last_seen_at, if: Proc.new { user_signed_in? && (session[:last_seen_at] == nil || session[:last_seen_at] < 10.minutes.ago) }
+  before_action :set_last_seen_at,
+                if: Proc.new { user_signed_in? &&
+                    (session[:last_seen_at].blank? || Time.zone.at(session[:last_seen_at].to_i) < 10.minutes.ago)
+                    }
 
   protected
 
@@ -480,7 +483,7 @@ class ApplicationController < ActionController::Base
 
   def set_last_seen_at
     current_user.update_attribute(:last_seen_at, Time.zone.now)
-    session[:last_seen_at] = Time.zone.now
+    session[:last_seen_at] = Time.zone.now.to_i
   end
 
 end
