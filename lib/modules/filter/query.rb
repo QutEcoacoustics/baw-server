@@ -22,7 +22,7 @@ module Filter
       # might need this at some point: Rack::Utils.parse_nested_query
       @key_prefix = 'filter_'
       @default_page = 1
-      @default_items = 500
+      @default_items = 25
       @max_items = 500
       @table = relation_table(model)
       @initial_query = !query.nil? && query.is_a?(ActiveRecord::Relation) ? query : relation_all(model)
