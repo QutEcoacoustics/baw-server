@@ -1,9 +1,11 @@
 %li.span6
   .thumbnail.right-caption.span12.project_thumbnail
-    .span4= image_tag project.image.url(:span2)
+    .span4
+      %a{href: project_path(project)}
+        = image_tag project.image.url(:span2), alt: project.name
     .caption.span7
-      %h4= project.name
-      %p= truncate(project.description, length: 50, separator: ' ')
+      %h4= link_to(truncate(project.name, length: 20, separator: ' '), project_path(project), {title: project.name})
+      %p= truncate(project.description, length: 40, separator: ' ')
     - if Access::Check.can?(current_user, :writer, project)
       %i.project_permission_icon.fa.fa-unlock(title="You have read & write access" data-toggle='tooltip' data-placement='top')
     - elsif Access::Check.can?(current_user, :reader, project)

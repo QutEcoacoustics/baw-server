@@ -22,10 +22,11 @@ h3 {
   .caption {
     h3 {
       overflow: hidden;
+
     }
   }
 }
-.thumbnail.right-caption > img {
+.thumbnail.right-caption > a img {
   float: left;
   margin-right: 9px;
 }
@@ -38,6 +39,7 @@ h3 {
   padding: 0px 4px;
   h3 {
     margin: 0px;
+    float:left;
   }
 }
 

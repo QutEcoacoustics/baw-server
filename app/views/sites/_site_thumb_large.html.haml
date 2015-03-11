@@ -1,8 +1,9 @@
 %li.span12
   .thumbnail.right-caption.span12
-    = image_tag site.image.url(:span1)
+    %a{href: project_site_path(@project, site)}
+      = image_tag site.image.url(:span1), alt: site.name
     .caption
-      %h3= site.name
+      %h3= link_to truncate(site.name, length: 20, separator: ' '), project_site_path(@project, site)
     %ul.nav.nav-pills.pull-right{style: 'margin-bottom:0'}
       %li
         %a{href: project_site_path(@project, site)}
