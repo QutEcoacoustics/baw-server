@@ -36,7 +36,7 @@
                 = link_to audio_link, target: '_self', class: 'btn btn-mini' do
                   %i{class: 'fa fa-play'}
                   Play
-                = link_to audio_event.get_library_path, target: '_self', class: 'btn btn-mini' do
+                = link_to make_library_path(audio_event), target: '_self', class: 'btn btn-mini' do
                   %i{class: 'fa fa-flag'}
                   Annotation
 
