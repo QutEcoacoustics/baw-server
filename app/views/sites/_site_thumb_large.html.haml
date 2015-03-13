@@ -9,11 +9,16 @@
         %a{href: project_site_path(@project, site)}
           %i.fa.fa-info-circle
           Details
-      %li
-        - play_details = site.get_bookmark_or_recording
-        %a{href: make_listen_path(play_details[:audio_recording], play_details[:start_offset_seconds])}
-          %i.fa.fa-play-circle
-          Play
+      - play_details = site.get_bookmark_or_recording
+      - unless play_details.nil?
+        %li
+          %a{href: make_listen_path(play_details[:audio_recording], play_details[:start_offset_seconds])}
+            %i.fa.fa-play-circle
+            Play
+      - else
+        %li
+          %a{href: '#', title: 'No audio recordings in this site', data: {toggle: 'tooltip',  placement: 'top'}}
+            No audio
       %li
         %a{href: make_visualise_path(site)}
           %i.fa.fa-eye

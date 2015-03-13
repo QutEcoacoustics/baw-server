@@ -6,8 +6,7 @@
     %p= @site.description
 
 - play_details = @site.get_bookmark_or_recording
-- unless play_details[:audio_recording].blank?
-  - play_link = make_listen_path(play_details[:audio_recording], play_details[:start_offset_seconds])
+- play_link = play_details.blank? ? nil : make_listen_path(play_details[:audio_recording], play_details[:start_offset_seconds])
 
 %h3
   Audio Recordings
@@ -35,10 +34,16 @@
         of that time.
 
       %ul.nav.nav-pills{style: 'margin-bottom:0'}
-        %li
-          %a{href: play_link}
-            %i.fa.fa-play-circle
-            Play
+        - if play_link.blank?
+          %li
+            %a{href: '#', title: 'No audio recordings in this site', data: {toggle: 'tooltip',  placement: 'top'}}
+              No audio
+        - else
+          %li
+            %a{href: play_link}
+              %i.fa.fa-play-circle
+              Play
+
         %li
           %a{href: make_visualise_path(@site)}
             %i.fa.fa-eye
@@ -82,4 +87,5 @@
     - if can? :show, @site
       %li= link_to 'Annotations (csv)', "#{data_request_path}?annotation_download[project_id]=#{@project.id}&annotation_download[site_id]=#{@site.id}&annotation_download[name]=#{CGI::escape(@site.name)}",  title: "Download annotations for this site", data: {toggle: 'tooltip',  placement: 'right'}
       %li= link_to 'Visualise', make_visualise_path(@site), title: 'Visualise and browse the audio in this site', data: {toggle: 'tooltip',  placement: 'right'}
-      %li= link_to 'Play', play_link, title: 'Play audio in this site', data: {toggle: 'tooltip',  placement: 'right'}
+      - unless play_link.blank?
+        %li= link_to 'Play', play_link, title: 'Play audio in this site', data: {toggle: 'tooltip',  placement: 'right'}
