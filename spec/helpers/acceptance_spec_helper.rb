@@ -290,7 +290,18 @@ def acceptance_checks_json(opts = {})
   expect(actual_response_parsed_size).to eq(opts[:data_item_count]), "#{message_prefix} count to be #{opts[:data_item_count]} but got #{actual_response_parsed_size} items in #{opts[:actual_response]} (type #{data_format})" unless opts[:data_item_count].blank?
 
   expect(opts[:actual_response]).to include(opts[:response_body_content]), "#{message_prefix} to find '#{opts[:response_body_content]}' in '#{opts[:actual_response]}'" unless opts[:response_body_content].blank?
-  expect(opts[:actual_response]).to_not include(opts[:invalid_content]), "#{message_prefix} not to find '#{opts[:response_body_content]}' in '#{opts[:actual_response]}'" unless opts[:invalid_content].blank?
+
+  unless opts[:invalid_content].blank?
+    if opts[:invalid_content].respond_to?(:each)
+      opts[:invalid_content].each do |invalid_content_item|
+        expect(opts[:actual_response]).to_not include(invalid_content_item), "#{message_prefix} not to find '#{invalid_content_item}' in '#{opts[:actual_response]}'"
+      end
+    else
+      expect(opts[:actual_response]).to_not include(opts[:invalid_content]), "#{message_prefix} not to find '#{opts[:invalid_content]}' in '#{opts[:actual_response]}'"
+    end
+
+  end
+
 
   unless opts[:expected_json_path].blank?
 

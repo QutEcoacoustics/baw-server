@@ -899,7 +899,10 @@ resource 'AudioRecordings' do
            {"orderBy" => "createdAt", "direction" => "desc"}}
           .to_json }
     let(:authentication_token) { reader_token }
-    standard_request_options(:post, 'FILTER (as reader with paging, sorting, projection)', :ok, {expected_json_path: 'meta/paging/current', data_item_count: 1})
+    standard_request_options(:post, 'FILTER (as reader with paging, sorting, projection)', :ok, {
+                                      expected_json_path: 'meta/paging/current',
+                                      data_item_count: 1,
+                                      invalid_content: ['"status":', '"notes"']})
   end
 
 end

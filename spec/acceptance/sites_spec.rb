@@ -290,7 +290,7 @@ resource 'Sites' do
                                  data_item_count: 1,
                                  regex_match: /"project_ids"\:\[[0-9]+\]/,
                                  response_body_content: "\"project_ids\":[",
-                                 invalid_content: "\"project_ids\":[{\"id\":"
+                                 invalid_content: ["\"project_ids\":[{\"id\":", '"description":']
                              })
   end
 
@@ -312,7 +312,7 @@ resource 'Sites' do
                                  data_item_count: 1,
                                  regex_match: /"project_ids"\:\[[0-9]+\]/,
                                  response_body_content: "\"project_ids\":[",
-                                 invalid_content: "\"project_ids\":[{\"id\":"
+                                 invalid_content: ["\"project_ids\":[{\"id\":", '"description":']
                              })
   end
 
