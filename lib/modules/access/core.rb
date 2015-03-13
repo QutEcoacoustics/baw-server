@@ -248,7 +248,8 @@ module Access
           else
 
             # include reference audio_events when querying for audio_events only, at any level
-            check_reference_audio_events = query.model.model_name.name == 'AudioEvent'
+            model_name = query.model.model_name.name
+            check_reference_audio_events = (model_name == 'AudioEvent' || model_name == 'AudioEventComment')
             reference_audio_events = check_reference_audio_events ? ' OR (audio_events.is_reference IS TRUE)' : ''
 
             query
