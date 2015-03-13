@@ -260,7 +260,7 @@ module Access
           is_guest = Access::Check.is_guest?(user)
           Rails.logger.warn "User '#{user.user_name}' (#{user.id}) who is#{is_guest ? '' : ' not'} a guest with roles '#{user.role_symbols.join(', ')}' has no access."
 
-          # any other role has no access (using .none to be chainable)
+          # any other role has no access (using .none to be chain-able)
           query.none
         end
 

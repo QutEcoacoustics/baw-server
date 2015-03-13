@@ -7,12 +7,13 @@
     - Added links to play audio and visualise projects and sites [#164](https://github.com/QutBioacoustics/baw-server/issues/164) [#172](https://github.com/QutBioacoustics/baw-server/issues/172)
     - Changed filter default items per page to 25 [#171](https://github.com/QutBioacoustics/baw-server/issues/171)
     - added ability to opt out of filter paging [#160](https://github.com/QutBioacoustics/baw-server/issues/160)
+    - Made it more obvious that confirming an account involves checking email [#149](https://github.com/QutBioacoustics/baw-server/issues/149)
 
  - 2015-03-09
     - More changes to project and site pages [#164](https://github.com/QutBioacoustics/baw-server/issues/164)
 
  - 2015-03-08
-    - Improved site lat/long obfuscation calculation
+    - Improved site lat/long obfuscation calculation [#91](https://github.com/QutBioacoustics/baw-server/issues/91)
     - Refactored permission code to prepare for project logged in and anon permissions (this was a quite large and sweeping change) [#99](https://github.com/QutBioacoustics/baw-server/issues/99)
 
  - 2015-03-07
