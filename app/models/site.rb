@@ -63,18 +63,21 @@ class Site < ActiveRecord::Base
 
   def get_bookmark_or_recording
     bookmark = get_bookmark
-    if bookmark.blank?
+    recording = most_recent_recording
+    if !bookmark.blank?
+      {
+          audio_recording:bookmark.audio_recording,
+          start_offset_seconds: bookmark.offset_seconds,
+          source: :bookmark
+      }
+      elsif !recording.blank?
       {
           audio_recording:most_recent_recording,
           start_offset_seconds: nil,
           source: :audio_recording
       }
     else
-      {
-          audio_recording:bookmark.audio_recording,
-          start_offset_seconds: bookmark.offset_seconds,
-          source: :bookmark
-      }
+      nil
     end
   end
 
