@@ -258,7 +258,10 @@ module Access
           end
         else
           is_guest = Access::Check.is_guest?(user)
-          fail ArgumentError, "User #{user.id} who is #{is_guest ? '' : 'not'} a guest with roles #{user.role_symbols.join(', ')} has no access."
+          Rails.logger.warn "User '#{user.user_name}' (#{user.id}) who is#{is_guest ? '' : ' not'} a guest with roles '#{user.role_symbols.join(', ')}' has no access."
+
+          # any other role has no access (using .none to be chainable)
+          query.none
         end
 
       end
