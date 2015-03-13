@@ -902,7 +902,9 @@ resource 'AudioRecordings' do
     standard_request_options(:post, 'FILTER (as reader with paging, sorting, projection)', :ok, {
                                       expected_json_path: 'meta/paging/current',
                                       data_item_count: 1,
-                                      invalid_content: ['"status":', '"notes"']})
+                                      invalid_content: ['"status":', '"notes"'],
+                                      response_body_content: 'http://localhost:3000/audio_recordings/filter?items=10\u0026page=1\u0026direction=desc\u0026orderBy=createdAt'
+                                  })
   end
 
 end
