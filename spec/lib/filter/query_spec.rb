@@ -337,7 +337,7 @@ describe Filter::Query do
 FROM\"audio_recordings\" \
 WHERE(\"audio_recordings\".\"deleted_at\"ISNULL) \
 AND\"audio_recordings\".\"site_id\"=5 \
-ORDERBY\"audio_recordings\".\"recorded_date\"DESCLIMIT500OFFSET0"
+ORDERBY\"audio_recordings\".\"recorded_date\"DESCLIMIT25OFFSET0"
       compare_filter_sql(request_body_obj, complex_result)
     end
 
@@ -362,7 +362,7 @@ ORDERBY\"audio_recordings\".\"recorded_date\"DESCLIMIT500OFFSET0"
 FROM\"audio_recordings\" \
 WHERE(\"audio_recordings\".\"deleted_at\"ISNULL) \
 AND\"audio_recordings\".\"site_id\"=5 \
-ORDERBY\"audio_recordings\".\"recorded_date\"DESCLIMIT500OFFSET0"
+ORDERBY\"audio_recordings\".\"recorded_date\"DESCLIMIT25OFFSET0"
       compare_filter_sql(request_body_obj, complex_result)
     end
 
