@@ -264,6 +264,7 @@ module Filter
 
     # Build projections from a hash.
     # @param [Hash] hash
+    # @param [Arel::Table] table
     # @param [Array<Symbol>] valid_fields
     # @return [Array<Arel::Attributes::Attribute>] projections
     def build_projections(hash, table, valid_fields)
@@ -279,6 +280,7 @@ module Filter
     # Build projection to include or exclude.
     # @param [Symbol] key
     # @param [Hash<Symbol>] value
+    # @param [Arel::Table] table
     # @param [Array<Symbol>] valid_fields
     # @return [Array<Arel::Attributes::Attribute>] projections
     def build_projection(key, value, table, valid_fields)
@@ -298,12 +300,17 @@ module Filter
       end
 
       columns.map { |item|
-        #project_column(table, item, valid_fields)
-        validate_table_column(table, item, valid_fields)
-        table[item]
+        project_column(table, item, valid_fields)
       }
     end
 
+    # Build special project ids 'in' filter.
+    # @param [Symbol] field
+    # @param [Symbol] filter_name
+    # @param [Object] filter_value
+    # @param [Arel::Table] table
+    # @param [Array<Symbol>] valid_fields
+    # @return [Arel::Nodes::Node] condition
     def build_condition_special(field, filter_name, filter_value, table, valid_fields)
       # construct special conditions
       if table.name == 'sites' && field == :project_ids

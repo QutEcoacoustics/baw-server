@@ -4,6 +4,7 @@ module Filter
     include Comparison
     include Core
     include Subset
+    include Projection
     include Parse
     include Build
     include Validate
@@ -25,6 +26,8 @@ module Filter
       @default_items = 25
       @max_items = 500
       @table = relation_table(model)
+
+      # `.all' adds 'id' to the select!!
       @initial_query = !query.nil? && query.is_a?(ActiveRecord::Relation) ? query : relation_all(model)
       @valid_fields = filter_settings[:valid_fields].map(&:to_sym)
       @text_fields = filter_settings[:text_fields].map(&:to_sym)
