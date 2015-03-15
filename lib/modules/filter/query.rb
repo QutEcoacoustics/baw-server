@@ -309,7 +309,7 @@ module Filter
     # @param [Integer] limit
     # @return [ActiveRecord::Relation] the modified query
     def apply_paging(query, offset, limit)
-      validate_paging(offset, limit, @default_items)
+      validate_paging(offset, limit)
       query.offset(offset).limit(limit)
     end
 

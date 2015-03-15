@@ -208,16 +208,14 @@ module Filter
     end
 
     # Create regular expression condition.
-    # Not available just now, maybe in Arel 6?
     # @param [Arel::Table] table
     # @param [Symbol] column_name
     # @param [Array<Symbol>] allowed
     # @param [Object] value
     # @return [Arel::Nodes::Node] condition
     def compose_regex(table, column_name, allowed, value)
-      fail NotImplementedError
       validate_table_column(table, column_name, allowed)
-      table[column_name] =~ value
+      Arel::Nodes::Regexp.new(table[column_name], Arel::Nodes.build_quoted(value))
     end
 
     # Create negated regular expression condition.
@@ -228,7 +226,8 @@ module Filter
     # @param [Object] value
     # @return [Arel::Nodes::Node] condition
     def compose_not_regex(table, column_name, allowed, value)
-      compose_regex(table, column_name, allowed, value).not
+      validate_table_column(table, column_name, allowed)
+      Arel::Nodes::NotRegexp.new(table[column_name], Arel::Nodes.build_quoted(value))
     end
 
   end

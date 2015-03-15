@@ -28,7 +28,7 @@ class SitesController < ApplicationController
             Site,
             Site.filter_settings
         )
-        respond_index
+        respond_index(constructed_options)
       }
     end
   end
@@ -214,13 +214,7 @@ ORDER BY s.name")
   end
 
   def get_user_sites
-    if Access::Check.is_admin?(current_user)
-      sites = Site.order('lower(name) ASC')
-    else
-      sites = Access::Query.sites(current_user, Access::Core.levels_allow)
-    end
-
-    sites
+    Access::Query.sites(current_user, Access::Core.levels_allow).order('lower(sites.name) ASC')
   end
 
   def site_params

@@ -37,46 +37,22 @@ module Filter
     # Validate paging values.
     # @param [Integer] offset
     # @param [Integer] limit
-    # @param [Integer] max_limit
     # @return [void]
-    def validate_paging(offset, limit, max_limit)
-      if !offset.blank? && !limit.blank?
-        # allow both to be nil, but if one is nil and the other is not, that is an error.
-        fail CustomErrors::FilterArgumentError, "Offset must be an integer, got #{offset}" if offset.blank? || offset != offset.to_i
-        fail CustomErrors::FilterArgumentError, "Limit must be an integer, got #{limit}" if limit.blank? || limit != limit.to_i
-        fail CustomErrors::FilterArgumentError, "Max must be an integer, got #{max_limit}" if max_limit.blank? || max_limit != max_limit.to_i
-
-        offset_i = offset.to_i
-        limit_i = limit.to_i
-        max_limit_i = max_limit.to_i
-
-        fail CustomErrors::FilterArgumentError, "Offset must be 0 or greater, got #{offset_i}" if offset_i < 0
-        fail CustomErrors::FilterArgumentError, "Limit must be greater than 0, got #{limit_i}" if limit_i < 1
-        fail CustomErrors::FilterArgumentError, "Max must be greater than 0, got #{max_limit_i}" if max_limit_i < 1
-      end
+    def validate_paging(offset, limit)
+      validate_integer(offset, 0)
+      validate_integer(limit, 1)
     end
 
-    # Validate paging values.
-    # @param [Integer] page
-    # @param [Integer] items
-    # @param [Integer] max_items
-    # @return [void]
-    def validate_paging_external(page, items, max_items)
-      if !page.blank? && !items.blank?
-        # allow both to be nil, but if one is nil and the other is not, that is an error.
-        fail CustomErrors::FilterArgumentError, "Page must be an integer, got #{page}" if page.blank? || page != page.to_i
-        fail CustomErrors::FilterArgumentError, "Items must be an integer, got #{items}" if items.blank? || items != items.to_i
-        fail CustomErrors::FilterArgumentError, "Max must be an integer, got #{max_items}" if max_items.blank? || max_items != max_items.to_i
+    def validate_integer(value, min = nil, max = nil)
+      fail CustomErrors::FilterArgumentError, 'Value must not be blank' if value.blank?
+      fail CustomErrors::FilterArgumentError, "Value must be an integer, got #{value}" if value.blank? || value != value.to_i
 
-        page_i = page.to_i
-        items_i = items.to_i
-        max_items_i = max_items.to_i
+      value_i = value.to_i
 
-        fail CustomErrors::FilterArgumentError, "Page must be greater than 0, got #{page_i}" if page_i < 1
-        fail CustomErrors::FilterArgumentError, "Items must be greater than 0, got #{items_i}" if items_i < 1
-        fail CustomErrors::FilterArgumentError, "Max must be greater than 0, got #{max_items_i}" if max_items_i < 1
-      end
+      fail CustomErrors::FilterArgumentError, "Value must be #{min} or greater, got #{value_i}" if !min.blank? && value_i < min
+      fail CustomErrors::FilterArgumentError, "Value must be #{max} or less, got #{value_i}" if !max.blank? && value_i > max
     end
+
 
     # Validate query, table, and column values.
     # @param [Arel::Query] query
@@ -160,7 +136,7 @@ module Filter
     # @raise [FilterArgumentError] if model is not an ActiveRecord::Base
     # @return [void]
     def validate_model(model)
-      fail CustomErrors::FilterArgumentError, "Model must respond to all, got #{model.class}" unless model.respond_to?(:all)
+      fail CustomErrors::FilterArgumentError, "Model must be an ActiveRecord::Base, got #{model.base_class}" unless model < ActiveRecord::Base
     end
 
     # Validate an array.
@@ -169,7 +145,7 @@ module Filter
     # @return [void]
     def validate_array(value)
       fail CustomErrors::FilterArgumentError, "Value must not be null, got #{value}" if value.blank?
-      fail CustomErrors::FilterArgumentError, "Value must be an Array or Arel::SelectManager, got #{value}" unless value.is_a?(Array) || value.is_a?(Arel::SelectManager)
+      fail CustomErrors::FilterArgumentError, "Value must be an Array or Arel::SelectManager, got #{value.class}" unless value.is_a?(Array) || value.is_a?(Arel::SelectManager)
     end
 
     # Validate array items. Do not validate if value is not an Array.

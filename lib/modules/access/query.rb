@@ -99,7 +99,7 @@ module Access
         # .joins uses inner join
         # need to use left outer join for permissions, as there might not be a permission, but the project
         # should be included because the user created it
-        query = Project.includes(:permissions).references(:permissions)
+        query = Project.all
 
         Access::Core.query_project_access(user, levels, query)
       end
@@ -120,10 +120,7 @@ module Access
         user = Access::Core.validate_user(user)
         levels = Access::Core.validate_levels(levels)
 
-        query = Site
-                    .includes(projects: [:permissions])
-                    .joins(:projects)
-                    .references(:permissions)
+        query = Site.joins(:projects)
 
         Access::Core.query_project_access(user, levels, query)
       end
@@ -136,10 +133,7 @@ module Access
         user = Access::Core.validate_user(user)
         levels = Access::Core.validate_levels(levels)
 
-        query = AudioRecording
-                    .includes(site: [{projects: [:permissions]}])
-                    .joins(site: :projects)
-                    .references(:permissions)
+        query = AudioRecording.joins(site: :projects)
 
         Access::Core.query_project_access(user, levels, query)
       end
@@ -156,10 +150,7 @@ module Access
         # @see http://stackoverflow.com/questions/24397640/rails-nested-includes-on-active-records
         # Note that includes works with association names while references needs the actual table name.
         # @see http://api.rubyonrails.org/classes/ActiveRecord/QueryMethods.html#method-i-includes
-        query = AudioEvent
-                    .includes([:creator, :tags, audio_recording: [{site: [{projects: [:permissions]}]}]])
-                    .joins(audio_recording: [site: [:projects]])
-                    .references(:users, :tags, :permissions)
+        query = AudioEvent.joins(audio_recording: [site: [:projects]])
 
         Access::Core.query_project_access(user, levels, query)
       end
@@ -172,10 +163,7 @@ module Access
         user = Access::Core.validate_user(user)
         levels = Access::Core.validate_levels(levels)
 
-        query = AudioEventComment
-            .includes(audio_event: [audio_recording: [site: [{projects: [:permissions]}]]])
-            .joins(audio_event: [audio_recording: [site: [:projects]]])
-            .references(:permissions)
+        query = AudioEventComment.joins(audio_event: [audio_recording: [site: [:projects]]])
 
         Access::Core.query_project_access(user, levels, query)
       end

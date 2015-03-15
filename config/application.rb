@@ -17,9 +17,10 @@ module AWB
     # -- all .rb files in that directory are automatically loaded.
 
     # Custom directories with classes and modules you want to be autoloadable.
-    config.autoload_paths += %W(#{config.root}/lib/validators)
-    # add all dirs recursively from lib/modules
-    config.autoload_paths += Dir["#{config.root}/lib/modules/**/"]
+    config.autoload_paths << config.root.join('lib', 'validators')
+
+    # add /lib/modules and everything underneath it.
+    config.autoload_paths << config.root.join('lib', 'modules')
 
     # Custom setup
     # enable garbage collection profiling (reported in New Relic)

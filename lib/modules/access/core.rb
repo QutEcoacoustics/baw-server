@@ -247,14 +247,30 @@ module Access
                     user.id)
           else
 
-            # include reference audio_events when querying for audio_events only, at any level
-            model_name = query.model.model_name.name
-            check_reference_audio_events = (model_name == 'AudioEvent' || model_name == 'AudioEventComment')
-            reference_audio_events = check_reference_audio_events ? ' OR (audio_events.is_reference IS TRUE)' : ''
+            # see http://jpospisil.com/2014/06/16/the-definitive-guide-to-arel-the-sql-manager-for-ruby.html
 
-            query
-                .where("((projects.creator_id = ?) OR (permissions.user_id = ? AND permissions.level IN (?))#{reference_audio_events})",
-                       user.id, user.id, levels)
+            projects_creator_fragment = Project.where(creator: user).select(:id)
+            permissions_fragment = Permission.where(user: user, level: levels).select(:project_id)
+            audio_event_reference_fragment = AudioEvent.where(is_reference: true).select(:id)
+
+            pt = Project.arel_table
+            condition_pt = pt[:id].in(projects_creator_fragment.arel).or(pt[:id].in(permissions_fragment.arel))
+
+            ae = AudioEvent.arel_table
+            condition_ae = ae[:id].in(audio_event_reference_fragment.arel)
+
+            # include reference audio_events when:
+            # - query is for audio_events or audio_event_comments
+            model_name = query.model.model_name.name
+            check_reference_audio_events = model_name == 'AudioEvent' || model_name == 'AudioEventComment'
+
+            if check_reference_audio_events
+              query.where(condition_pt.or(condition_ae))
+            else
+              query.where(condition_pt)
+            end
+
+            #query
           end
         else
           is_guest = Access::Check.is_guest?(user)

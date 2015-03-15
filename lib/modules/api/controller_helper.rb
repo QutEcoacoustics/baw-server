@@ -47,11 +47,11 @@ module Api
       end
     end
 
-    def respond_index
+    def respond_index(opts = {})
       items = get_resource_plural.map { |item|
         respond_modify(item)
       }
-      built_response = Settings.api_response.build(:ok, items)
+      built_response = Settings.api_response.build(:ok, items, opts)
       render json: built_response, status: :ok, layout: false
     end
 

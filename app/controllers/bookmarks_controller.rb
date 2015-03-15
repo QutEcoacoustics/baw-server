@@ -10,7 +10,7 @@ class BookmarksController < ApplicationController
         Bookmark,
         Bookmark.filter_settings
     )
-    respond_index
+    respond_index(constructed_options)
   end
 
   def show

@@ -28,9 +28,19 @@ module Filter
       items = params[:paging][:items] if items.blank? && !params[:paging].blank?
       disable_paging = params[:paging][:disable_paging] if disable_paging.blank? && !params[:paging].blank?
 
+      # page and items are mutually exclusive with disable_paging
+      fail CustomErrors::UnprocessableEntityError, 'Page and items are mutually exclusive with disable_paging' if (!page.blank? || !items.blank?) && !disable_paging.blank?
+
       # set defaults if no setting was found
       page = default_page if page.blank?
       items = default_items if items.blank?
+
+      # ensure integer
+      page = page.to_i
+      items = items.to_i
+
+      # ensure items is always less than max_items
+      fail CustomErrors::UnprocessableEntityError, "Number of items per page requested #{items} exceeded maximum #{max_items}." if items > max_items
 
       # parse disable paging settings
       if disable_paging == 'true' || disable_paging == true
@@ -39,19 +49,9 @@ module Filter
         disable_paging = false
       end
 
-      # ensure items is always less than max_items
-      fail CustomErrors::UnprocessableEntityError, "Number of items requested #{items} exceeded maximum #{max_items}." if items.to_i > max_items
-
-      # calculate offset if able
+      # calculate offset and limit
       offset = (page - 1) * items
       limit = items
-      #page = (values.offset / values.limit) + 1
-
-      # ensure integer
-      offset = offset.to_i
-      limit = limit.to_i
-      page = page.to_i
-      items = items.to_i
 
       # will always set all options
       {offset: offset, limit: limit, page: page, items: items, disable_paging: disable_paging}
@@ -69,7 +69,7 @@ module Filter
 
       # POST body
       order_by = params[:sorting][:order_by] if order_by.blank? && !params[:sorting].blank?
-      direction = params[:sorting][:direction] if order_by.blank? && !params[:sorting].blank?
+      direction = params[:sorting][:direction] if direction.blank? && !params[:sorting].blank?
 
       # set defaults if necessary
       order_by = default_order_by if order_by.blank?

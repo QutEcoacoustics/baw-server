@@ -515,6 +515,60 @@ AND\"audio_recordings\".\"channels\"=28) \
 ORDERBY\"audio_recordings\".\"duration_seconds\"DESCLIMIT10OFFSET0"
 
       compare_filter_sql(complex_sample, complex_result)
+
+      @permission = FactoryGirl.create(:write_permission)
+      user = @permission.user
+      user_id = user.id
+
+      complex_result_2 =
+          "SELECT\"audio_recordings\".\"recorded_date\",\"audio_recordings\".\"site_id\", \
+\"audio_recordings\".\"duration_seconds\",\"audio_recordings\".\"media_type\" \
+FROM\"audio_recordings\" \
+INNERJOIN\"sites\"ON\"sites\".\"id\"=\"audio_recordings\".\"site_id\"AND(\"sites\".\"deleted_at\"ISNULL) \
+INNERJOIN\"projects_sites\"ON\"projects_sites\".\"site_id\"=\"sites\".\"id\" \
+INNERJOIN\"projects\"ON\"projects\".\"id\"=\"projects_sites\".\"project_id\"AND(\"projects\".\"deleted_at\"ISNULL) \
+WHERE(\"audio_recordings\".\"deleted_at\"ISNULL) \
+AND(\"projects\".\"id\"IN(SELECT\"projects\".\"id\"FROM\"projects\"WHERE(\"projects\".\"deleted_at\"ISNULL)AND\"projects\".\"creator_id\"=#{user_id}) \
+OR\"projects\".\"id\"IN(SELECT\"permissions\".\"project_id\"FROM\"permissions\"WHERE\"permissions\".\"user_id\"=#{user_id}AND\"permissions\".\"level\"IN('reader','writer','owner'))) \
+AND(\"audio_recordings\".\"site_id\"<123456 \
+AND\"audio_recordings\".\"site_id\">9876 \
+AND\"audio_recordings\".\"site_id\"IN(1,2,3) \
+AND\"audio_recordings\".\"site_id\">=100 \
+AND\"audio_recordings\".\"site_id\"<200 \
+AND\"audio_recordings\".\"status\">='4567' \
+AND\"audio_recordings\".\"status\"ILIKE'%containtext%' \
+AND\"audio_recordings\".\"status\"ILIKE'startswithtext%' \
+AND\"audio_recordings\".\"status\"ILIKE'%endswithtext' \
+AND\"audio_recordings\".\"status\">='123' \
+AND\"audio_recordings\".\"status\"<='128' \
+AND(\"audio_recordings\".\"duration_seconds\"!=40 \
+ORNOT(\"audio_recordings\".\"channels\"<=9999))) \
+AND(((((((\"audio_recordings\".\"recorded_date\"ILIKE'%Hello%' \
+OR\"audio_recordings\".\"media_type\"ILIKE'%world') \
+OR\"audio_recordings\".\"duration_seconds\"=60) \
+OR\"audio_recordings\".\"duration_seconds\"<=70) \
+OR\"audio_recordings\".\"duration_seconds\"=50) \
+OR\"audio_recordings\".\"duration_seconds\">=80) \
+OR\"audio_recordings\".\"channels\"=1) \
+OR\"audio_recordings\".\"channels\"<=8888) \
+AND(NOT(\"audio_recordings\".\"duration_seconds\"!=140)) \
+AND(\"audio_recordings\".\"media_type\"ILIKE'%testing\\_testing%' \
+OR\"audio_recordings\".\"status\"ILIKE'%testing\\_testing%') \
+AND(\"audio_recordings\".\"status\"='hello' \
+AND\"audio_recordings\".\"channels\"=28) \
+ORDERBY\"audio_recordings\".\"duration_seconds\"DESCLIMIT10OFFSET0"
+
+
+
+      filter_query = Filter::Query.new(
+          complex_sample,
+          Access::Query.audio_recordings(user, Access::Core.levels_allow),
+          AudioRecording,
+          AudioRecording.filter_settings
+      )
+
+      expect(filter_query.query_full.to_sql.gsub(/\s+/, '')).to eq(complex_result_2.gsub(/\s+/, ''))
+
     end
   end
 end

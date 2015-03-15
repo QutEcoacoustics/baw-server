@@ -215,8 +215,8 @@ module Filter
           compose_ends_with(table, field, valid_fields, filter_value)
         when :not_ends_with, :not_end_with, :does_not_end_with
           compose_not_ends_with(table, field, valid_fields, filter_value)
-        #when :regex - not implemented in Arel 3.
-        #  compose_regex(@table, field, @valid_columns, filter_value)
+        when :regex
+          compose_regex(table, field, valid_fields, filter_value)
 
         else
           fail CustomErrors::FilterArgumentError.new("Unrecognised filter #{filter_name}.")
@@ -251,7 +251,7 @@ module Filter
     def build_generic(filter_hash, table, valid_fields)
       conditions = []
       filter_hash.each do |key, value|
-        conditions.push(build_condition(key, :eq, value, table, valid_fields))
+        conditions.push(compose_eq(table, key, valid_fields, value))
       end
 
       if conditions.size > 1

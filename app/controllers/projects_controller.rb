@@ -20,7 +20,7 @@ class ProjectsController < ApplicationController
             Project,
             Project.filter_settings
         )
-        respond_index
+        respond_index(constructed_options)
       }
     end
   end
@@ -205,7 +205,7 @@ class ProjectsController < ApplicationController
   private
 
   def get_user_projects
-    Access::Query.projects_accessible(current_user).order('lower(name) ASC')
+    Access::Query.projects_accessible(current_user).order('lower(projects.name) ASC')
   end
 
   def project_params

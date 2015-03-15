@@ -83,7 +83,7 @@ class AudioEvent < ActiveRecord::Base
     # userId: int (optional)
     # audioRecordingId: int (optional)
 
-    query = Access::Query.audio_events(user, Access::Core.levels_allow)
+    query = Access::Query.audio_events(user, Access::Core.levels_allow).joins(:creator, :tags)
 
     query = AudioEvent.filter_reference(query, params)
     query = AudioEvent.filter_tags(query, params)
@@ -224,7 +224,7 @@ class AudioEvent < ActiveRecord::Base
   end
 
   def self.csv_filter(user, filter_params)
-    query = Access::Query.audio_events(user, :reader)
+    query = Access::Query.audio_events(user, :reader).joins(:creator, :tags)
 
     if filter_params[:project_id]
       query = query.where(projects: {id: (filter_params[:project_id]).to_i})

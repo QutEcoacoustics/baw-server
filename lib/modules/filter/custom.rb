@@ -66,5 +66,23 @@ module Filter
       end
     end
 
+    # Compose special project ids 'in' filter.
+    # @param [Symbol] field
+    # @param [Symbol] filter_name
+    # @param [Object] filter_value
+    # @param [Arel::Table] table
+    # @param [Array<Symbol>] valid_fields
+    # @return [Arel::Nodes::Node] condition
+    def compose_sites_from_projects(field, filter_name, filter_value, table, valid_fields)
+      # construct special conditions
+      if table.name == 'sites' && field == :project_ids
+        # filter by many-to-many projects <-> sites
+        fail CustomErrors::FilterArgumentError.new("Project_ids permits only 'in' filter, got #{filter_name}.") unless filter_name == :in
+        projects_sites_table = Arel::Table.new(:projects_sites)
+        special_value = Arel::Table.new(:projects_sites).project(:site_id).where(compose_in(projects_sites_table, :project_id, [:project_id], filter_value))
+        compose_in(table, :id, valid_fields, special_value)
+      end
+    end
+
   end
 end

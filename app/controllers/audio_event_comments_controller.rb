@@ -15,11 +15,11 @@ class AudioEventCommentsController < ApplicationController
     #@audio_event_comments = AudioEventComment.accessible_by
     @audio_event_comments, constructed_options = Settings.api_response.response_index(
         api_filter_params,
-        Access::Query.audio_event_comments(current_user, Access::Core.levels_allow),
+        get_audio_event_comments,
         AudioEventComment,
         AudioEventComment.filter_settings
     )
-    respond_index
+    respond_index(constructed_options)
   end
 
 # GET /audio_event_comments/1
@@ -84,7 +84,7 @@ class AudioEventCommentsController < ApplicationController
   def filter
     filter_response = Settings.api_response.response_filter(
         api_filter_params,
-        Access::Query.audio_event_comments(current_user, Access::Core.levels_allow),
+        get_audio_event_comments,
         AudioEventComment,
         AudioEventComment.filter_settings
     )
@@ -104,6 +104,10 @@ class AudioEventCommentsController < ApplicationController
 
   def audio_event_comment_update_params
     params.permit(:format, :audio_event_id, :id, {audio_event_comment: [:flag, :comment]})
+  end
+
+  def get_audio_event_comments
+    Access::Query.audio_event_comments(current_user, Access::Core.levels_allow)
   end
 
 end

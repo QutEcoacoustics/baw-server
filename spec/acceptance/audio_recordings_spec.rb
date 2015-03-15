@@ -291,7 +291,7 @@ def test_overlap
 
           # ensure posted audio recording does not exist
           expect(AudioRecording.where(file_hash: posted_item_attrs[:file_hash]).count)
-          .to eq(0), "all file_hashes #{AudioRecording.select(:file_hash).all}, input posted #{posted_item_attrs[:file_hash]}"
+              .to eq(0), "all file_hashes #{AudioRecording.select(:file_hash).all}, input posted #{posted_item_attrs[:file_hash]}"
         else
           raise "unknown status code #{status_code}"
         end
@@ -846,7 +846,10 @@ resource 'AudioRecordings' do
         }
     }.to_json }
     let(:authentication_token) { reader_token }
-    standard_request_options(:post, 'FILTER (as reader matching)', :ok, {expected_json_path: 'data/0/sample_rate_hertz', data_item_count: 1})
+    standard_request_options(:post, 'FILTER (as reader matching)', :ok, {
+                                      expected_json_path: 'data/0/sample_rate_hertz',
+                                      data_item_count: 1
+                                  })
   end
 
   post '/audio_recordings/filter' do
@@ -864,7 +867,10 @@ resource 'AudioRecordings' do
         }
     }.to_json }
     let(:authentication_token) { reader_token }
-    standard_request_options(:post, 'FILTER (as reader no match)', :ok, {expected_json_path: 'meta/message', data_item_count: 0})
+    standard_request_options(:post, 'FILTER (as reader no match)', :ok, {
+                                      expected_json_path: 'meta/message',
+                                      data_item_count: 0
+                                  })
   end
 
   post '/audio_recordings/filter' do
@@ -885,7 +891,60 @@ resource 'AudioRecordings' do
         }
     }.to_json }
     let(:authentication_token) { reader_token }
-    standard_request_options(:post, 'FILTER (as reader with paging)', :ok, {expected_json_path: 'meta/paging/page', data_item_count: 0})
+    standard_request_options(:post, 'FILTER (as reader with paging)', :ok, {
+                                      expected_json_path: 'meta/paging/page',
+                                      data_item_count: 0,
+                                      response_body_content: '/audio_recordings/filter?direction=desc\u0026items=30\u0026order_by=recorded_date\u0026page=1'
+                                  })
+  end
+
+  post '/audio_recordings/filter' do
+    let(:raw_post) { {
+        filter: {
+            and: {
+                site_id: {
+                    less_than: 123456
+                },
+                duration_seconds: {
+                    not_eq: 40
+                }
+            }
+        },
+        sorting: {
+            order_by: :channels,
+            direction: :asc
+        }
+    }.to_json }
+    let(:authentication_token) { reader_token }
+    standard_request_options(:post, 'FILTER (as reader with sorting)', :ok, {
+                                      expected_json_path: 'meta/sorting/direction',
+                                      data_item_count: 1,
+                                      response_body_content: '/audio_recordings/filter?direction=asc\u0026items=25\u0026order_by=channels\u0026page=1'
+                                  })
+  end
+
+  post '/audio_recordings/filter' do
+    let(:raw_post) { {
+        filter: {
+            and: {
+                site_id: {
+                    less_than: 123456
+                },
+                duration_seconds: {
+                    not_eq: 40
+                }
+            }
+        },
+        projection: {
+            include: [:id, :site_id, :duration_seconds, :recorded_date, :created_at]
+        }
+    }.to_json }
+    let(:authentication_token) { reader_token }
+    standard_request_options(:post, 'FILTER (as reader with projection)', :ok, {
+                                      expected_json_path: 'meta/projection/include',
+                                      data_item_count: 1,
+                                      response_body_content: '/audio_recordings/filter?direction=desc\u0026items=25\u0026order_by=recorded_date\u0026page=1'
+                                  })
   end
 
   post '/audio_recordings/filter' do
@@ -899,11 +958,11 @@ resource 'AudioRecordings' do
            {"orderBy" => "createdAt", "direction" => "desc"}}
           .to_json }
     let(:authentication_token) { reader_token }
-    standard_request_options(:post, 'FILTER (as reader with paging, sorting, projection)', :ok, {
-                                      expected_json_path: 'meta/paging/current',
+    standard_request_options(:post, 'FILTER (as reader checking camel case)', :ok, {
+                                      expected_json_path: 'meta/projection/include',
                                       data_item_count: 1,
-                                      invalid_content: ['"status":', '"notes"'],
-                                      response_body_content: 'http://localhost:3000/audio_recordings/filter?items=10\u0026page=1\u0026direction=desc\u0026orderBy=createdAt'
+                                      invalid_data_content: (AudioRecording.filter_settings[:render_fields] - [:id, :site_id, :duration_seconds, :recorded_date, :created_at]).map { |i| "\"#{i.to_s}\":" },
+                                      response_body_content: '/audio_recordings/filter?direction=desc\u0026items=10\u0026order_by=created_at\u0026page=1'
                                   })
   end
 
