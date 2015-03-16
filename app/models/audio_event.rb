@@ -64,7 +64,32 @@ class AudioEvent < ActiveRecord::Base
         defaults: {
             order_by: :created_at,
             direction: :desc
-        }
+        },
+        valid_associations: [
+            {
+                join: AudioRecording,
+                on: AudioEvent.arel_table[:audio_recording_id].eq(AudioRecording.arel_table[:id]),
+                available: true
+            },
+            {
+                join: AudioEventComment,
+                on: AudioEvent.arel_table[:id].eq(AudioEventComment.arel_table[:audio_event_id]),
+                available: true
+            },
+            {
+                join: Tagging,
+                on: AudioEvent.arel_table[:id].eq(Tagging.arel_table[:audio_event_id]),
+                available: false,
+                associations: [
+                    {
+                        join: Tag,
+                        on: Tagging.arel_table[:tag_id].eq(Tag.arel_table[:id]),
+                        available: true
+                    }
+                ]
+
+            }
+        ]
     }
   end
 

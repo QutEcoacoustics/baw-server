@@ -214,7 +214,39 @@ class AudioRecording < ActiveRecord::Base
         defaults: {
             order_by: :recorded_date,
             direction: :desc
-        }
+        },
+        valid_associations: [
+            {
+                join: AudioEvent,
+                on: AudioRecording.arel_table[:id].eq(AudioEvent.arel_table[:audio_recording_id]),
+                available: true,
+                associations: [
+                    {
+                        join: Tagging,
+                        on: AudioEvent.arel_table[:id].eq(Tagging.arel_table[:audio_event_id]),
+                        available: false,
+                        associations: [
+                            {
+                                join: Tag,
+                                on: Tagging.arel_table[:tag_id].eq(Tag.arel_table[:id]),
+                                available: true
+                            }
+                        ]
+
+                    }
+                ]
+            },
+            {
+                join: Site,
+                on: AudioRecording.arel_table[:site_id].eq(Site.arel_table[:id]),
+                available: true
+            },
+            {
+                join: Bookmark,
+                on: AudioRecording.arel_table[:id].eq(Bookmark.arel_table[:audio_recording_id]),
+                available: true
+            }
+        ]
     }
   end
 

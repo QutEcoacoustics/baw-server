@@ -11,6 +11,7 @@ describe UserAccountsController, :type => :routing do
     it { expect(put('/user_accounts/1')).to route_to('user_accounts#update', id: '1') }
     it { expect(delete('/user_accounts/1')).to route_to('errors#route_error', requested_route: 'user_accounts/1') }
 
+    # used by client
     it { expect(get('/my_account/')).to route_to('user_accounts#my_account') }
     it { expect(put('/my_account/prefs')).to route_to('user_accounts#modify_preferences') }
 

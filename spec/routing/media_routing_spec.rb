@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe MediaController, :type => :routing do
   describe :routing do
-
+    # also used by client
     it { expect(get('/projects/1/sites/2/audio_recordings/3/media.json')).to route_to('errors#route_error', requested_route: 'projects/1/sites/2/audio_recordings/3/media', format: 'json') }
     it { expect(get('/projects/1/sites/2/audio_recordings/3/media.png')).to route_to('errors#route_error', requested_route: 'projects/1/sites/2/audio_recordings/3/media', format: 'png') }
     it { expect(get('/projects/1/sites/2/audio_recordings/3/media.mp3')).to route_to('errors#route_error', requested_route: 'projects/1/sites/2/audio_recordings/3/media', format: 'mp3') }

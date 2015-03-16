@@ -308,13 +308,13 @@ describe Filter::Query do
     end
 
     it 'occurs with a deformed \'in\' filter' do
-      filter_params = {'filter' => {'siteId' => {'in' => [{'customLatitude' => nil,'customLongitude' => nil,'description' => nil,'id' => 508,'locationObfuscated' => true,'name' => 'Site 1','projectIds' => [397],'links' => ['http://example.com/projects/397/sites/508']},{'customLatitude' => nil,'customLongitude' => nil,'description' => nil,'id' => 400,'locationObfuscated' => true,'name' => 'Site 2','projectIds' => [397],'links' => ['http://example.com/projects/397/sites/400']},{'customLatitude' => nil,'customLongitude' => nil,'description' => nil,'id' => 402,'locationObfuscated' => true,'name' => 'Site 3','projectIds' => [397],'links' => ['http://example.com/projects/397/sites/402']},{'customLatitude' => nil,'customLongitude' => nil,'description' => nil,'id' => 399,'locationObfuscated' => true,'name' => 'Site 4','projectIds' => [397,469],'links' => ['http://example.com/projects/397/sites/399','http://example.com/projects/469/sites/399']},{'customLatitude' => nil,'customLongitude' => nil,'description' => nil,'id' => 401,'locationObfuscated' => true,'name' => 'Site 5','projectIds' => [397],'links' => ['http://example.com/projects/397/sites/401']},{'customLatitude' => nil,'customLongitude' => nil,'description' => nil,'id' => 398,'locationObfuscated' => true,'name' => 'Site 6','projectIds' => [397,469],'links' => ['http://example.com/projects/397/sites/398','http://example.com/projects/469/sites/398']}]}},'projection' => {'include' => ['id','siteId','durationSeconds','recordedDate']}}
-      
+      filter_params = {'filter' => {'siteId' => {'in' => [{'customLatitude' => nil, 'customLongitude' => nil, 'description' => nil, 'id' => 508, 'locationObfuscated' => true, 'name' => 'Site 1', 'projectIds' => [397], 'links' => ['http://example.com/projects/397/sites/508']}, {'customLatitude' => nil, 'customLongitude' => nil, 'description' => nil, 'id' => 400, 'locationObfuscated' => true, 'name' => 'Site 2', 'projectIds' => [397], 'links' => ['http://example.com/projects/397/sites/400']}, {'customLatitude' => nil, 'customLongitude' => nil, 'description' => nil, 'id' => 402, 'locationObfuscated' => true, 'name' => 'Site 3', 'projectIds' => [397], 'links' => ['http://example.com/projects/397/sites/402']}, {'customLatitude' => nil, 'customLongitude' => nil, 'description' => nil, 'id' => 399, 'locationObfuscated' => true, 'name' => 'Site 4', 'projectIds' => [397, 469], 'links' => ['http://example.com/projects/397/sites/399', 'http://example.com/projects/469/sites/399']}, {'customLatitude' => nil, 'customLongitude' => nil, 'description' => nil, 'id' => 401, 'locationObfuscated' => true, 'name' => 'Site 5', 'projectIds' => [397], 'links' => ['http://example.com/projects/397/sites/401']}, {'customLatitude' => nil, 'customLongitude' => nil, 'description' => nil, 'id' => 398, 'locationObfuscated' => true, 'name' => 'Site 6', 'projectIds' => [397, 469], 'links' => ['http://example.com/projects/397/sites/398', 'http://example.com/projects/469/sites/398']}]}}, 'projection' => {'include' => ['id', 'siteId', 'durationSeconds', 'recordedDate']}}
+
       expect {
         create_filter(filter_params).query_full
       }.to raise_error(CustomErrors::FilterArgumentError, 'Array values cannot be hashes.')
     end
-    
+
   end
 
   context 'projection' do
@@ -358,7 +358,7 @@ ORDERBY\"audio_recordings\".\"recorded_date\"DESCLIMIT25OFFSET0"
       }
       complex_result =
           "SELECT\"audio_recordings\".\"id\", \
-\"audio_recordings\".\"duration_seconds\" \
+          \"audio_recordings\".\"duration_seconds\" \
 FROM\"audio_recordings\" \
 WHERE(\"audio_recordings\".\"deleted_at\"ISNULL) \
 AND\"audio_recordings\".\"site_id\"=5 \
@@ -484,7 +484,7 @@ ORDERBY\"audio_recordings\".\"recorded_date\"DESCLIMIT25OFFSET0"
 
       complex_result =
           "SELECT\"audio_recordings\".\"recorded_date\",\"audio_recordings\".\"site_id\", \
-\"audio_recordings\".\"duration_seconds\",\"audio_recordings\".\"media_type\" \
+          \"audio_recordings\".\"duration_seconds\",\"audio_recordings\".\"media_type\" \
 FROM\"audio_recordings\"WHERE(\"audio_recordings\".\"deleted_at\"ISNULL) \
 AND(\"audio_recordings\".\"site_id\"<123456 \
 AND\"audio_recordings\".\"site_id\">9876 \
@@ -522,7 +522,7 @@ ORDERBY\"audio_recordings\".\"duration_seconds\"DESCLIMIT10OFFSET0"
 
       complex_result_2 =
           "SELECT\"audio_recordings\".\"recorded_date\",\"audio_recordings\".\"site_id\", \
-\"audio_recordings\".\"duration_seconds\",\"audio_recordings\".\"media_type\" \
+          \"audio_recordings\".\"duration_seconds\",\"audio_recordings\".\"media_type\" \
 FROM\"audio_recordings\" \
 INNERJOIN\"sites\"ON\"sites\".\"id\"=\"audio_recordings\".\"site_id\"AND(\"sites\".\"deleted_at\"ISNULL) \
 INNERJOIN\"projects_sites\"ON\"projects_sites\".\"site_id\"=\"sites\".\"id\" \
@@ -559,7 +559,6 @@ AND\"audio_recordings\".\"channels\"=28) \
 ORDERBY\"audio_recordings\".\"duration_seconds\"DESCLIMIT10OFFSET0"
 
 
-
       filter_query = Filter::Query.new(
           complex_sample,
           Access::Query.audio_recordings(user, Access::Core.levels_allow),
@@ -569,6 +568,37 @@ ORDERBY\"audio_recordings\".\"duration_seconds\"DESCLIMIT10OFFSET0"
 
       expect(filter_query.query_full.to_sql.gsub(/\s+/, '')).to eq(complex_result_2.gsub(/\s+/, ''))
 
+    end
+  end
+
+  context 'with joins' do
+
+    it 'simple audio_recordings query' do
+      request_body_obj = {
+          projection: {
+              exclude: [
+                  :uuid, :recorded_date, :site_id,
+                  :sample_rate_hertz, :channels, :bit_rate_bps, :media_type,
+                  :data_length_bytes, :status, :created_at, :updated_at
+              ]
+          },
+          filter: {
+              'site_id' => {
+                  eq: 5
+              },
+              'audio_events.is_reference' => {
+                  eq: true
+              }
+          }
+      }
+      complex_result =
+          "SELECT\"audio_recordings\".\"id\", \
+          \"audio_recordings\".\"duration_seconds\" \
+FROM\"audio_recordings\" \
+WHERE(\"audio_recordings\".\"deleted_at\"ISNULL) \
+AND\"audio_recordings\".\"site_id\"=5 \
+ORDERBY\"audio_recordings\".\"recorded_date\"DESCLIMIT25OFFSET0"
+      compare_filter_sql(request_body_obj, complex_result)
     end
   end
 end

@@ -28,8 +28,12 @@ describe SessionsController, :type => :routing do
     it { expect(get('/my_account/unlock')).to route_to('devise/unlocks#show') }
 
     it { expect(get('/security/new')).to route_to('sessions#new', format: 'json') }
-    it { expect(post('/security')).to route_to('sessions#create', format: 'json') }
     it { expect(delete('/security')).to route_to('sessions#destroy', format: 'json') }
+
+    # used by harvester
+    it { expect(post('/security')).to route_to('sessions#create', format: 'json') }
+
+    # used by client
     it { expect(get('/security/user')).to route_to('sessions#show', format: 'json') }
 
   end

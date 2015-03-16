@@ -133,7 +133,7 @@ module Filter
     # @return [ActiveRecord::Relation] query
     def query_filter(query)
       if has_filter_params?
-        apply_conditions(query, build_top(@filter, @table, @valid_fields))
+        apply_conditions(query, build_top(@filter, @table, @filter_settings))
       else
         query
       end
@@ -170,6 +170,7 @@ module Filter
     # @return [ActiveRecord::Relation] query
     def query_filter_text(query)
       return query unless has_qsp_text?
+      # only text fields on the /filter model can be used - can't filter on other table fields
       text_condition = build_text(@qsp_text_filter, @text_fields, @table, @valid_fields)
       apply_condition(query, text_condition)
     end
@@ -179,6 +180,7 @@ module Filter
     # @param [String] filter_text
     # @return [ActiveRecord::Relation] query
     def query_filter_text_custom(query, filter_text)
+      # only text fields on the /filter model can be used - can't filter on other table fields
       text_condition = build_text(filter_text, @text_fields, @table, @valid_fields)
       apply_condition(query, text_condition)
     end
@@ -188,6 +190,7 @@ module Filter
     # @return [ActiveRecord::Relation] query
     def query_filter_generic(query)
       return query unless has_qsp_generic?
+      # only fields on the /filter model can be used - can't filter on other table fields
       apply_condition(query, build_generic(@qsp_generic_filters, @table, @valid_fields))
     end
 
@@ -196,6 +199,7 @@ module Filter
     # @param [Hash] filter_hash
     # @return [ActiveRecord::Relation] query
     def query_filter_generic_custom(query, filter_hash)
+      # only fields on the /filter model can be used - can't filter on other table fields
       apply_condition(query, build_generic(filter_hash, @table, @valid_fields))
     end
 

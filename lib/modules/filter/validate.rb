@@ -76,6 +76,13 @@ module Filter
       validate_column_name(column_name, allowed)
     end
 
+    def validate_association(model, models_allowed)
+      validate_model(model)
+
+      fail CustomErrors::FilterArgumentError, "Models allowed must be an Array, got #{models_allowed}" unless models_allowed.is_a?(Array)
+      fail CustomErrors::FilterArgumentError, "Model must be in #{models_allowed}, got #{model}" unless models_allowed.include?(model)
+    end
+
     # Validate query and hash values.
     # @param [ActiveRecord::Relation] query
     # @param [Hash] hash
@@ -242,6 +249,30 @@ module Filter
 
       value_f = filtered.to_f
       fail CustomErrors::FilterArgumentError, "Value must be greater than 0, got #{value_f}" if value_f <= 0
+
+    end
+
+    def validate_filter_settings(value)
+      validate_hash(value)
+
+      validate_array(value[:valid_fields])
+      validate_array_items(value[:valid_fields])
+
+      validate_array(value[:render_fields])
+      validate_array_items(value[:render_fields])
+
+      validate_array(value[:text_fields])
+      validate_array_items(value[:text_fields])
+
+      fail CustomErrors::FilterArgumentError, 'Controller name must be a symbol.' unless value[:controller].is_a?(Symbol)
+      fail CustomErrors::FilterArgumentError, 'Action name must be a symbol.' unless value[:action].is_a?(Symbol)
+
+      validate_hash(value[:defaults])
+
+      fail CustomErrors::FilterArgumentError, 'Order by must be a symbol.' unless value[:defaults][:order_by].is_a?(Symbol)
+      fail CustomErrors::FilterArgumentError, 'Direction must be a symbol.' unless value[:defaults][:direction].is_a?(Symbol)
+
+      validate_array(value[:valid_associations])
 
     end
 

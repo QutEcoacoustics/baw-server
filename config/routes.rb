@@ -118,10 +118,11 @@ Rails.application.routes.draw do
   # audio_recording_update: /audio_recordings/:id
 
   # routes used by harvester:
-  # endpoint_login: /security/sign_in
-  # endpoint_create: /projects/:project_id/sites/:site_id/audio_recordings
-  # endpoint_check_uploader: /projects/:project_id/sites/:site_id/audio_recordings/check_uploader/:uploader_id
-  # endpoint_update_status: /audio_recordings/:id/update_status
+  # login: /security
+  # audio_recording: /audio_recordings/:id
+  # audio_recording_create: /projects/:project_id/sites/:site_id/audio_recordings
+  # audio_recording_uploader: /projects/:project_id/sites/:site_id/audio_recordings/check_uploader/:uploader_id
+  # audio_recording_update_status: /audio_recordings/:id/update_status
 
   # endpoints used by client:
   # routes: {
