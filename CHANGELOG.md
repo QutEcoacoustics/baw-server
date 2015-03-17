@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+ - 2015-03-17
+    - Enhancement: filter api now supports filtering by neighbouring models [#176](https://github.com/QutBioacoustics/baw-server/issues/176)
+
+ - 2015-03-16
+    - Regression fixed: paging link format [#169](https://github.com/QutBioacoustics/baw-server/issues/169)
+    - Regression fixed: Projections options now respected [#170](https://github.com/QutBioacoustics/baw-server/issues/170)
+
  - 2015-03-13
     - Small UI bug fixes
     - Added links to play audio and visualise projects and sites [#164](https://github.com/QutBioacoustics/baw-server/issues/164) [#172](https://github.com/QutBioacoustics/baw-server/issues/172)

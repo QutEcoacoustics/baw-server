@@ -166,7 +166,7 @@ class Ability
 
       can [:index, :new, :filter], Bookmark
       # anyone can create tags
-      can [:index, :new, :create, :show], Tag
+      can [:index, :new, :create, :show, :filter], Tag
 
     elsif Access::Check.is_harvester?(user)
       # harvester user is used by baw-harvester and baw-workers

@@ -236,6 +236,10 @@ Rails.application.routes.draw do
     end
   end
 
+
+  # placed above related resource so it does not conflict with (resource)/:id => (resource)#show
+  match 'tags/filter' => 'tags#filter', via: [:get, :post], defaults: {format: 'json'}
+
   # API tags
   resources :tags, only: [:index, :show, :create, :new], defaults: {format: 'json'}
 
