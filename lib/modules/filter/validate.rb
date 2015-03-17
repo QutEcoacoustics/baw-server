@@ -63,7 +63,7 @@ module Filter
     def validate_query_table_column(query, table, column_name, allowed)
       validate_query(query)
       validate_table(table)
-      validate_column_name(column_name, allowed)
+      validate_name(column_name, allowed)
     end
 
     # Validate table and column values.
@@ -73,7 +73,7 @@ module Filter
     # @return [void]
     def validate_table_column(table, column_name, allowed)
       validate_table(table)
-      validate_column_name(column_name, allowed)
+      validate_name(column_name, allowed)
     end
 
     def validate_association(model, models_allowed)
@@ -126,16 +126,16 @@ module Filter
       fail CustomErrors::FilterArgumentError, "Condition must be Arel::Attributes::Attribute, got #{projection}" unless projection.is_a?(Arel::Attributes::Attribute)
     end
 
-    # Validate column name value.
-    # @param [Symbol] column_name
+    # Validate name value.
+    # @param [Symbol] name
     # @param [Array<Symbol>] allowed
-    # @raise [FilterArgumentError] if column name is not a symbol in allowed
+    # @raise [FilterArgumentError] if name is not a symbol in allowed
     # @return [void]
-    def validate_column_name(column_name, allowed)
-      fail CustomErrors::FilterArgumentError, "Column name must not be null, got #{column_name}" if column_name.blank?
-      fail CustomErrors::FilterArgumentError, "Column name must be a symbol, got #{column_name}" unless column_name.is_a?(Symbol)
+    def validate_name(name, allowed)
+      fail CustomErrors::FilterArgumentError, "Name must not be null, got #{name}" if name.blank?
+      fail CustomErrors::FilterArgumentError, "Name must be a symbol, got #{name}" unless name.is_a?(Symbol)
       fail CustomErrors::FilterArgumentError, "Allowed must be an Array, got #{allowed}" unless allowed.is_a?(Array)
-      fail CustomErrors::FilterArgumentError, "Column name must be in #{allowed}, got #{column_name}" unless allowed.include?(column_name)
+      fail CustomErrors::FilterArgumentError, "Name must be in #{allowed}, got #{name}" unless allowed.include?(name)
     end
 
     # Validate model value.

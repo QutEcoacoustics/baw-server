@@ -583,22 +583,52 @@ ORDERBY\"audio_recordings\".\"duration_seconds\"DESCLIMIT10OFFSET0"
               ]
           },
           filter: {
-              'site_id' => {
+              'sites.id' => {
                   eq: 5
               },
               'audio_events.is_reference' => {
                   eq: true
+              },
+              'tags.text' => {
+                  contains: 'koala'
               }
           }
       }
       complex_result =
+          "SELECTDISTINCT\"audio_recordings\".\"id\",\"audio_recordings\".\"duration_seconds\" \
+FROM\"audio_recordings\" \
+LEFTOUTERJOIN\"audio_events\"ON\"audio_recordings\".\"id\"=\"audio_events\".\"audio_recording_id\" \
+LEFTOUTERJOIN\"audio_events_tags\"ON\"audio_events\".\"id\"=\"audio_events_tags\".\"audio_event_id\" \
+LEFTOUTERJOIN\"tags\"ON\"audio_events_tags\".\"tag_id\"=\"tags\".\"id\" \
+WHERE(\"audio_recordings\".\"deleted_at\"ISNULL) \
+AND\"sites\".\"id\"=5 \
+AND\"audio_events\".\"is_reference\"='t' \
+AND(\"tags\".\"text\"ILIKE'%koala%') \
+ORDERBY\"audio_recordings\".\"recorded_date\"DESC \
+LIMIT25OFFSET0"
+      compare_filter_sql(request_body_obj, complex_result)
+
+      @permission = FactoryGirl.create(:write_permission)
+      user = @permission.user
+      user_id = user.id
+
+      complex_result_2 =
           "SELECT\"audio_recordings\".\"id\", \
           \"audio_recordings\".\"duration_seconds\" \
 FROM\"audio_recordings\" \
 WHERE(\"audio_recordings\".\"deleted_at\"ISNULL) \
 AND\"audio_recordings\".\"site_id\"=5 \
 ORDERBY\"audio_recordings\".\"recorded_date\"DESCLIMIT25OFFSET0"
-      compare_filter_sql(request_body_obj, complex_result)
+
+      filter_query = Filter::Query.new(
+          request_body_obj,
+          Access::Query.audio_recordings(user, Access::Core.levels_allow),
+          AudioRecording,
+          AudioRecording.filter_settings
+      )
+
+      expect(filter_query.query_full.to_sql.gsub(/\s+/, '')).to eq(complex_result_2.gsub(/\s+/, ''))
+
     end
   end
 end

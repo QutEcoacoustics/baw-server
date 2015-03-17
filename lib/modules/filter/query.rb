@@ -6,13 +6,13 @@ module Filter
     include Subset
     include Projection
     include Parse
-    include Build
     include Validate
     include Custom
 
-    attr_reader :key_prefix, :max_limit, :initial_query, :table, :valid_fields, :text_fields, :filter_settings,
-                :parameters, :filter, :projection, :projection_built, :qsp_text_filter, :qsp_generic_filters,
-                :paging, :sorting
+    attr_reader :key_prefix, :max_items, :initial_query, :table,
+                :valid_fields, :text_fields, :filter_settings,
+                :parameters, :filter, :projection, :qsp_text_filter,
+                :qsp_generic_filters, :paging, :sorting
 
     # Convert a json POST body to an arel query.
     # @param [Hash] parameters
@@ -34,6 +34,8 @@ module Filter
       @render_fields = filter_settings[:render_fields].map(&:to_sym)
       @filter_settings = filter_settings
 
+      @build = Build.new(@table, filter_settings)
+
       @parameters = CleanParams.perform(parameters)
       validate_hash(@parameters)
 
@@ -43,13 +45,11 @@ module Filter
       @projection = @parameters[:projection]
       @projection = nil if @projection.blank?
 
-      if has_projection_params?
-        @projection_built = build_projections(@projection, @table, @valid_fields)
-      else
-        @projection_built = build_projections({include: @render_fields}, @table, @valid_fields)
-      end
-
       @qsp_text_filter = parse_qsp_text(@parameters)
+
+
+
+
       @qsp_generic_filters = parse_qsp(nil, @parameters, @key_prefix, @valid_fields)
       @paging = parse_paging(
           @parameters,
@@ -133,7 +133,14 @@ module Filter
     # @return [ActiveRecord::Relation] query
     def query_filter(query)
       if has_filter_params?
-        apply_conditions(query, build_top(@filter, @table, @filter_settings))
+        conditions, joins = @build.parse(@filter)
+
+        # add distinct if there are joins
+        query = query.distinct if joins.size > 0
+
+        query = apply_conditions(query, conditions)
+        query = apply_joins(query, joins) if joins.size > 0
+        query
       else
         query
       end
@@ -144,7 +151,7 @@ module Filter
     # @return [ActiveRecord::Relation] query
     def query_projection(query)
       if has_projection_params?
-        apply_projections(query, build_projections(@projection, @table, @valid_fields))
+        apply_projections(query, @build.projections(@projection))
       else
         query_projection_default(query)
       end
@@ -155,14 +162,14 @@ module Filter
     # @param [Array<Symbol>] filter_projection
     # @return [ActiveRecord::Relation] query
     def query_projection_custom(query, filter_projection)
-      apply_projections(query, build_projections({include: filter_projection}, @table, @valid_fields))
+      apply_projections(query, @build.projections({include: filter_projection}))
     end
 
     # Add default projections to a query.
     # @param [ActiveRecord::Relation] query
     # @return [ActiveRecord::Relation] query
     def query_projection_default(query)
-      apply_projections(query, build_projections({include: @render_fields}, @table, @valid_fields))
+      apply_projections(query, @build.projections({include: @render_fields}))
     end
 
     # Add text filter to a query.
@@ -171,7 +178,7 @@ module Filter
     def query_filter_text(query)
       return query unless has_qsp_text?
       # only text fields on the /filter model can be used - can't filter on other table fields
-      text_condition = build_text(@qsp_text_filter, @text_fields, @table, @valid_fields)
+      text_condition = @build.contains_text(@qsp_text_filter)
       apply_condition(query, text_condition)
     end
 
@@ -181,7 +188,7 @@ module Filter
     # @return [ActiveRecord::Relation] query
     def query_filter_text_custom(query, filter_text)
       # only text fields on the /filter model can be used - can't filter on other table fields
-      text_condition = build_text(filter_text, @text_fields, @table, @valid_fields)
+      text_condition = @build.contains_text(filter_text)
       apply_condition(query, text_condition)
     end
 
@@ -191,7 +198,7 @@ module Filter
     def query_filter_generic(query)
       return query unless has_qsp_generic?
       # only fields on the /filter model can be used - can't filter on other table fields
-      apply_condition(query, build_generic(@qsp_generic_filters, @table, @valid_fields))
+      apply_condition(query, @build.generic_equals(@qsp_generic_filters))
     end
 
     # Add generic equality filters to a query.
@@ -200,7 +207,7 @@ module Filter
     # @return [ActiveRecord::Relation] query
     def query_filter_generic_custom(query, filter_hash)
       # only fields on the /filter model can be used - can't filter on other table fields
-      apply_condition(query, build_generic(filter_hash, @table, @valid_fields))
+      apply_condition(query, @build.generic_equals(filter_hash))
     end
 
     # Add sorting to query.
@@ -287,6 +294,26 @@ module Filter
       validate_query(query)
       validate_condition(condition)
       query.where(condition)
+    end
+
+    # Add joins to a query.
+    # @param [ActiveRecord::Relation] query
+    # @param [Array<String>] joins
+    # @return [ActiveRecord::Relation] the modified query
+    def apply_joins(query, joins)
+      joins.each do |join|
+        query = apply_join(query, join)
+      end
+      query
+    end
+
+    # Add join to a query.
+    # @param [ActiveRecord::Relation] query
+    # @param [String] join
+    # @return [ActiveRecord::Relation] the modified query
+    def apply_join(query, join)
+      validate_query(query)
+      query.joins(join)
     end
 
     # Append sorting to a query.
