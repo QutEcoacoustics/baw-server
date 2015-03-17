@@ -320,7 +320,7 @@ resource 'Sites' do
     let(:authentication_token) { writer_token }
     let(:raw_post) { {
         'filter' => {
-            'projectIds' => {
+            'projects.id' => {
                 'in' => [@write_permission.project.id.to_s]
             }
         }

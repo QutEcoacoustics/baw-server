@@ -261,8 +261,8 @@ module Filter
       validate_array(value[:render_fields])
       validate_array_items(value[:render_fields])
 
-      validate_array(value[:text_fields])
-      validate_array_items(value[:text_fields])
+      validate_array(value[:text_fields]) unless value[:text_fields].blank?
+      validate_array_items(value[:text_fields]) unless value[:text_fields].blank?
 
       fail CustomErrors::FilterArgumentError, 'Controller name must be a symbol.' unless value[:controller].is_a?(Symbol)
       fail CustomErrors::FilterArgumentError, 'Action name must be a symbol.' unless value[:action].is_a?(Symbol)
@@ -272,7 +272,7 @@ module Filter
       fail CustomErrors::FilterArgumentError, 'Order by must be a symbol.' unless value[:defaults][:order_by].is_a?(Symbol)
       fail CustomErrors::FilterArgumentError, 'Direction must be a symbol.' unless value[:defaults][:direction].is_a?(Symbol)
 
-      validate_array(value[:valid_associations])
+      #validate_array(value[:valid_associations])
 
     end
 

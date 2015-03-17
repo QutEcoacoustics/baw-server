@@ -133,14 +133,8 @@ module Filter
     # @return [ActiveRecord::Relation] query
     def query_filter(query)
       if has_filter_params?
-        conditions, joins = @build.parse(@filter)
-
-        # add distinct if there are joins
-        query = query.distinct if joins.size > 0
-
-        query = apply_conditions(query, conditions)
-        query = apply_joins(query, joins) if joins.size > 0
-        query
+        conditions = @build.parse(@filter)
+        apply_conditions(query, conditions)
       else
         query
       end

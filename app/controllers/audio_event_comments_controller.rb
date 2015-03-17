@@ -2,12 +2,12 @@ class AudioEventCommentsController < ApplicationController
   include Api::ControllerHelper
 
   # order matters for before_action and load_and_authorize_resource!
-  load_and_authorize_resource :audio_event
+  load_and_authorize_resource :audio_event, except: [:filter]
 
   # this is necessary so that the ability has access to permission.project
   before_action :build_audio_event_comment, only: [:new, :create]
 
-  load_and_authorize_resource :audio_event_comment, through: :audio_event, through_association: :comments
+  load_and_authorize_resource :audio_event_comment, through: :audio_event, through_association: :comments, except: [:filter]
 
 # GET /audio_event_comments
 # GET /audio_event_comments.json
@@ -82,6 +82,7 @@ class AudioEventCommentsController < ApplicationController
   end
 
   def filter
+    authorize! :filter, AudioEventComment
     filter_response = Settings.api_response.response_filter(
         api_filter_params,
         get_audio_event_comments,

@@ -16,11 +16,11 @@ describe AudioEventCommentsController, :type => :routing do
 
       it { expect(get('/audio_event_comments')).to route_to('errors#route_error', requested_route: 'audio_event_comments') }
 
-      it { expect(get('/audio_events/1/comments/filter')).to route_to('audio_event_comments#filter',audio_event_id: '1', format: 'json') }
-      it { expect(post('/audio_events/1/comments/filter')).to route_to('audio_event_comments#filter', audio_event_id: '1', format: 'json') }
-
       # used by client
       it { expect(get('/audio_events/1/comments/2')).to route_to('audio_event_comments#show', audio_event_id: '1', id: '2', format: 'json') }
+
+      it { expect(get('/audio_event_comments/filter')).to route_to('audio_event_comments#filter', format: 'json') }
+      it { expect(post('/audio_event_comments/filter')).to route_to('audio_event_comments#filter', format: 'json') }
 
     end
 end

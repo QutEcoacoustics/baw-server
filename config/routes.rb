@@ -213,14 +213,12 @@ Rails.application.routes.draw do
 
   # placed above related resource so it does not conflict with (resource)/:id => (resource)#show
   match 'audio_recordings/filter' => 'audio_recordings#filter', via: [:get, :post], defaults: {format: 'json'}
-
+  match 'audio_events/filter' => 'audio_events#filter', via: [:get, :post], defaults: {format: 'json'}
 
   # API audio recording item
   resources :audio_recordings, only: [:index, :show, :new, :update], defaults: {format: 'json'} do
     match 'media.:format' => 'media#show', defaults: {format: 'json'}, as: :media, via: [:get, :head]
     match 'analysis.:format' => 'analysis#show', defaults: {format: 'json'}, as: :analysis, via: [:get, :head]
-
-    match 'audio_events/filter' => 'audio_events#filter', via: [:get, :post], defaults: {format: 'json'}
 
     resources :audio_events, except: [:edit], defaults: {format: 'json'} do
       collection do
@@ -241,10 +239,12 @@ Rails.application.routes.draw do
   # API tags
   resources :tags, only: [:index, :show, :create, :new], defaults: {format: 'json'}
 
+  # placed above related resource so it does not conflict with (resource)/:id => (resource)#show
+  match 'audio_event_comments/filter' => 'audio_event_comments#filter', via: [:get, :post], defaults: {format: 'json'}
+
   # API audio_event create
   resources :audio_events, only: [], defaults: {format: 'json'} do
-    # placed above related resource so it does not conflict with (resource)/:id => (resource)#show
-    match 'comments/filter' => 'audio_event_comments#filter', via: [:get, :post], defaults: {format: 'json'}
+
     resources :audio_event_comments, except: [:edit], defaults: {format: 'json'}, path: :comments, as: :comments
     collection do
       get 'library'

@@ -172,7 +172,22 @@ class Site < ActiveRecord::Base
         defaults: {
             order_by: :name,
             direction: :asc
-        }
+        },
+        valid_associations: [
+            {
+                join: Arel::Table.new(:projects_sites),
+                on: Site.arel_table[:id].eq(Arel::Table.new(:projects_sites)[:site_id]),
+                available: false,
+                associations: [
+                    {
+                        join: Project,
+                        on: Arel::Table.new(:projects_sites)[:project_id].eq(Project.arel_table[:id]),
+                        available: true
+                    }
+                ]
+
+            }
+        ]
     }
   end
 

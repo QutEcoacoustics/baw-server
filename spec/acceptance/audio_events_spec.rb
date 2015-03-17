@@ -2041,9 +2041,7 @@ resource 'AudioEvents' do
   # Filter
   #####################
 
-  post '/audio_recordings/:audio_recording_id/audio_events/filter' do
-    parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
-
+  post '/audio_events/filter' do
     let(:authentication_token) { reader_token }
     let(:raw_post) { {
         'filter' => {
@@ -2065,9 +2063,7 @@ resource 'AudioEvents' do
                              })
   end
 
-  post '/audio_recordings/:audio_recording_id/audio_events/filter' do
-    parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
-
+  post '/audio_events/filter' do
     let(:authentication_token) { reader_token }
     let(:raw_post) { {
         'filter' => {

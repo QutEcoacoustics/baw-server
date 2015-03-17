@@ -158,30 +158,21 @@ module Filter
 
     end
 
-    # Parse a filter hash.
+    # Parse a filter.
     # @param [Hash] filter_hash
     # @return [Hash]
     def parse(filter_hash)
-      conditions, joins = parse_filter(filter_hash)
-
-      # using .where in Rails will do 'AND' by default
-      #final_conditions = combiner_one(:and, conditions)
-
-      # add joins to final_conditions
-      join_sql = []
-      joins.each do |j|
-        left_outer_join = AudioRecording.arel_table.join(j[:join].arel_table, Arel::Nodes::OuterJoin).on(j[:on])
-        sources = left_outer_join.join_sources
-        fail CustomErrors::FilterArgumentError.new("SQL contained more than one join: #{sources}") if sources.size != 1
-        join_sql.push(sources[0].to_sql)
-      end
-
-      [conditions, join_sql]
+      parse_filter(filter_hash)
     end
 
     private
 
-    def parse_filter(primary, secondary = nil, extra = nil, joins = [])
+    # Parse a filter hash.
+    # @param [Hash, Symbol] primary
+    # @param [Hash, Object] secondary
+    # @param [nil, Hash] extra
+    # @return [Arel::Nodes::Node, Array<Arel::Nodes::Node>]
+    def parse_filter(primary, secondary = nil, extra = nil)
 
       if primary.is_a?(Hash)
         fail CustomErrors::FilterArgumentError.new("Filter hash must have at least 1 entry, got #{primary.size}.", {hash: primary}) if primary.blank? || primary.size < 1
@@ -190,15 +181,15 @@ module Filter
         conditions = []
 
         primary.each do |key, value|
-          condition, joins = parse_filter(key, value, secondary, joins)
-          if condition.is_a?(Array)
-            conditions.push(*condition)
+          result = parse_filter(key, value, secondary)
+          if result.is_a?(Array)
+            conditions.push(*result)
           else
-            conditions.push(condition)
+            conditions.push(result)
           end
         end
 
-        [conditions, joins]
+        conditions
 
       elsif primary.is_a?(Symbol)
 
@@ -206,26 +197,33 @@ module Filter
           when :and, :or
             combiner = primary
             filter_hash = secondary
-            condition, joins = parse_filter(filter_hash, nil, nil, joins)
-            [combiner_one(combiner, condition), joins]
+            result = parse_filter(filter_hash)
+            combiner_one(combiner, result)
           when :not
             #combiner = primary
             filter_hash = secondary
-            condition, joins = parse_filter(filter_hash, nil, nil, joins)
 
-            if condition.respond_to?(:map)
-              negated_conditions = condition.map { |c| compose_not(c) }
+            #fail CustomErrors::FilterArgumentError.new("'Not' must have a single combiner or field name, got #{filter_hash.size}", {hash: filter_hash}) if filter_hash.size != 1
+
+            result = parse_filter(filter_hash)
+
+            #fail CustomErrors::FilterArgumentError.new("'Not' must have a single filter, got #{hash.size}.", {hash: filter_hash}) if result.size != 1
+
+            if result.respond_to?(:map)
+              negated_conditions = result.map { |c| compose_not(c) }
             else
-              negated_conditions = [compose_not(condition)]
+              negated_conditions = [compose_not(result)]
             end
+            negated_conditions
 
-            [negated_conditions, joins]
           when *@valid_fields.dup.push(/\./)
             field = primary
             field_conditions = secondary
             info = parse_table_field(@table, field, @filter_settings)
-            condition, joins = parse_filter(field_conditions, info, nil, joins)
-            [condition, joins]
+            result = parse_filter(field_conditions, info)
+
+            build_subquery(info, result)
+
           when *@valid_conditions
             filter_name = primary
             filter_value = secondary
@@ -233,17 +231,9 @@ module Filter
 
             table = info[:arel_table]
             column_name = info[:field_name]
-            model = info[:model]
             valid_fields = info[:filter_settings][:valid_fields]
 
-            # add join table to joins array if necessary
-            additional_joins, match = build_joins(model, @valid_associations)
-
-            current_models = joins.map { |j| j[:join]}
-            new_joins = additional_joins.select { |j| !current_models.include?(j[:join]) }
-            joins.push(*new_joins)
-
-            [condition(filter_name, table, column_name, valid_fields, filter_value), joins]
+            condition(filter_name, table, column_name, valid_fields, filter_value)
           else
             fail CustomErrors::FilterArgumentError.new("Unrecognised combiner or field name: #{primary}.")
         end
@@ -314,6 +304,37 @@ module Filter
       end
     end
 
+    def build_subquery(info, conditions)
+
+      current_table = info[:arel_table]
+      model = info[:model]
+
+      if current_table != @table
+        subquery = @table.project(@table[:id])
+
+        # add conditions to subquery
+        if conditions.respond_to?(:each)
+          conditions.each { |c| subquery = subquery.where(c) }
+        else
+          subquery = subquery.where(result)
+        end
+
+        # add relevant joins
+        joins, match = build_joins(model, @valid_associations)
+
+        joins.each do |j|
+          table = j[:join]
+          # assume this is an arel_table if it doesn't respond to .arel_table
+          arel_table = table.respond_to?(:arel_table) ? table.arel_table : table
+          subquery = subquery.join(arel_table, Arel::Nodes::OuterJoin).on(j[:on])
+        end
+
+        compose_in(@table, :id, [:id], subquery)
+      else
+        conditions
+      end
+
+    end
 
     # Build table field from field symbol.
     # @param [Arel::Table] table
