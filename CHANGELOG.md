@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## [Release 0.14.0](https://github.com/QutBioacoustics/baw-server/releases/tag/0.14.0) (2015-03-22)
 
  - 2015-03-22
     - Removed audio event library endpoint [#128](https://github.com/QutBioacoustics/baw-server/issues/128)
