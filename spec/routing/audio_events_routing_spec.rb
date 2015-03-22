@@ -28,8 +28,8 @@ describe AudioEventsController, :type => :routing do
     it { expect(get('/audio_recordings/3/audio_events/download')).to route_to('audio_events#download', audio_recording_id: '3', format: 'csv') }
     it { expect(get('/audio_recordings/3/audio_events/download.csv')).to route_to('audio_events#download', audio_recording_id: '3', format: 'csv') }
 
-    it { expect(get('/audio_events/library')).to route_to('audio_events#library', format: 'json') }
-    it { expect(get('/audio_events/library/paged')).to route_to('audio_events#library_paged', format: 'json') }
+    it { expect(get('/audio_events/library')).to route_to('errors#route_error', requested_route: 'audio_events/library') }
+    it { expect(get('/audio_events/library/paged')).to route_to('errors#route_error', requested_route: 'audio_events/library/paged') }
 
     it { expect(get('/audio_events/filter')).to route_to('audio_events#filter',format: 'json') }
     it { expect(post('/audio_events/filter')).to route_to('audio_events#filter', format: 'json') }
