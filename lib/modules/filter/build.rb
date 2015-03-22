@@ -20,6 +20,7 @@ module Filter
       @valid_fields = filter_settings[:valid_fields].map(&:to_sym)
       @text_fields = filter_settings[:text_fields].map(&:to_sym)
       @valid_associations = filter_settings[:valid_associations]
+      @field_mappings = filter_settings[:field_mappings]
 
       @valid_conditions = [
           # comparison
@@ -233,7 +234,14 @@ module Filter
             column_name = info[:field_name]
             valid_fields = info[:filter_settings][:valid_fields]
 
-            condition(filter_name, table, column_name, valid_fields, filter_value)
+            custom_condition = build_custom_condition(column_name)
+
+            if custom_condition.blank?
+              condition(filter_name, table, column_name, valid_fields, filter_value)
+            else
+              condition_node(filter_name, custom_condition, filter_value)
+            end
+
           else
             fail CustomErrors::FilterArgumentError.new("Unrecognised combiner or field name: #{primary}.")
         end
@@ -295,8 +303,72 @@ module Filter
           compose_ends_with(table, column_name, valid_fields, filter_value)
         when :not_ends_with, :not_end_with, :does_not_end_with
           compose_not_ends_with(table, column_name, valid_fields, filter_value)
-        when :regex
+        when :regex, :regex_match, :matches
           compose_regex(table, column_name, valid_fields, filter_value)
+        when :not_regex, :not_regex_match, :does_not_match, :not_match
+          compose_not_regex(table, column_name, valid_fields, filter_value)
+
+        # unknown
+        else
+          fail CustomErrors::FilterArgumentError.new("Unrecognised filter #{filter_name}.")
+      end
+    end
+
+    # Build a condition.
+    # @param [Symbol] filter_name
+    # @param [Arel::Nodes::Node, Arel::Attributes::Attribute, String] node
+    # @param [Object] filter_value
+    # @return [Arel::Nodes::Node] condition
+    def condition_node(filter_name, node, filter_value)
+      case filter_name
+
+        # comparisons
+        when :eq, :equal
+          compose_eq_node(node, filter_value)
+        when :not_eq, :not_equal
+          compose_not_eq_node(node, filter_value)
+        when :lt, :less_than
+          compose_lt_node(node, filter_value)
+        when :not_lt, :not_less_than
+          compose_not_lt_node(node, filter_value)
+        when :gt, :greater_than
+          compose_gt_node(node, filter_value)
+        when :not_gt, :not_greater_than
+          compose_not_gt_node(node, filter_value)
+        when :lteq, :less_than_or_equal
+          compose_lteq_node(node, filter_value)
+        when :not_lteq, :not_less_than_or_equal
+          compose_not_lteq_node(node, filter_value)
+        when :gteq, :greater_than_or_equal
+          compose_gteq_node(node, filter_value)
+        when :not_gteq, :not_greater_than_or_equal
+          compose_not_gteq_node(node, filter_value)
+
+        # subsets
+        when :range, :in_range
+          compose_range_options_node(node, filter_value)
+        when :not_range, :not_in_range
+          compose_not_range_options_node(node, filter_value)
+        when :in
+          compose_in_node(node, filter_value)
+        when :not_in
+          compose_not_in_node(node, filter_value)
+        when :contains, :contain
+          compose_contains_node(node, filter_value)
+        when :not_contains, :not_contain, :does_not_contain
+          compose_not_contains_node(node, filter_value)
+        when :starts_with, :start_with
+          compose_starts_with_node(node, filter_value)
+        when :not_starts_with, :not_start_with, :does_not_start_with
+          compose_not_starts_with_node(node, filter_value)
+        when :ends_with, :end_with
+          compose_ends_with_node(node, filter_value)
+        when :not_ends_with, :not_end_with, :does_not_end_with
+          compose_not_ends_with_node(node, filter_value)
+        when :regex, :regex_match, :matches
+          compose_regex_node(node, filter_value)
+        when :not_regex, :not_regex_match, :does_not_match, :not_match
+          compose_not_regex_node(node, filter_value)
 
         # unknown
         else
@@ -445,6 +517,21 @@ module Filter
       end
 
       [[], false]
+    end
+
+    def build_custom_condition(column_name)
+
+      mappings = {}
+      unless @field_mappings.blank?
+        @field_mappings.each { |m| mappings[m[:name]] = m[:value] }
+      end
+
+      value = mappings[column_name]
+      if mappings.keys.include?(column_name) && !value.blank?
+        value
+      else
+        nil
+      end
     end
 
   end

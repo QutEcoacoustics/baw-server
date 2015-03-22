@@ -16,9 +16,18 @@ module Filter
     # @return [Arel::Nodes::Node] condition
     def compose_contains(table, column_name, allowed, value)
       validate_table_column(table, column_name, allowed)
+      compose_contains_node(table[column_name],value)
+    end
+
+    # Create contains condition.
+    # @param [Arel::Nodes::Node, Arel::Attributes::Attribute, String] node
+    # @param [Object] value
+    # @return [Arel::Nodes::Node] condition
+    def compose_contains_node(node, value)
+      validate_node_or_attribute(node)
       sanitized_value = sanitize_like_value(value)
       contains_value = "%#{sanitized_value}%"
-      table[column_name].matches(contains_value)
+      node.matches(contains_value)
     end
 
     # Create not contains condition.
@@ -31,6 +40,14 @@ module Filter
       compose_contains(table, column_name, allowed, value).not
     end
 
+    # Create not contains condition.
+    # @param [Arel::Nodes::Node, Arel::Attributes::Attribute, String] node
+    # @param [Object] value
+    # @return [Arel::Nodes::Node] condition
+    def compose_not_contains_node(node, value)
+      compose_contains_node(node, value).not
+    end
+
     # Create starts_with condition.
     # @param [Arel::Table] table
     # @param [Symbol] column_name
@@ -39,9 +56,18 @@ module Filter
     # @return [Arel::Nodes::Node] condition
     def compose_starts_with(table, column_name, allowed, value)
       validate_table_column(table, column_name, allowed)
+      compose_starts_with_node(table[column_name], value)
+    end
+
+    # Create starts_with condition.
+    # @param [Arel::Nodes::Node, Arel::Attributes::Attribute, String] node
+    # @param [Object] value
+    # @return [Arel::Nodes::Node] condition
+    def compose_starts_with_node(node, value)
+      validate_node_or_attribute(node)
       sanitized_value = sanitize_like_value(value)
       contains_value = "#{sanitized_value}%"
-      table[column_name].matches(contains_value)
+      node.matches(contains_value)
     end
 
     # Create not starts_with condition.
@@ -54,6 +80,14 @@ module Filter
       compose_starts_with(table, column_name, allowed, value).not
     end
 
+    # Create not starts_with condition.
+    # @param [Arel::Nodes::Node, Arel::Attributes::Attribute, String] node
+    # @param [Object] value
+    # @return [Arel::Nodes::Node] condition
+    def compose_not_starts_with_node(node, value)
+      compose_starts_with_node(node, value).not
+    end
+
     # Create ends_with condition.
     # @param [Arel::Table] table
     # @param [Symbol] column_name
@@ -62,9 +96,18 @@ module Filter
     # @return [Arel::Nodes::Node] condition
     def compose_ends_with(table, column_name, allowed, value)
       validate_table_column(table, column_name, allowed)
+      compose_ends_with_node(table[column_name], value)
+    end
+
+    # Create ends_with condition.
+    # @param [Arel::Nodes::Node, Arel::Attributes::Attribute, String] node
+    # @param [Object] value
+    # @return [Arel::Nodes::Node] condition
+    def compose_ends_with_node(node, value)
+      validate_node_or_attribute(node)
       sanitized_value = sanitize_like_value(value)
       contains_value = "%#{sanitized_value}"
-      table[column_name].matches(contains_value)
+      node.matches(contains_value)
     end
 
     # Create not ends_with condition.
@@ -77,6 +120,14 @@ module Filter
       compose_ends_with(table, column_name, allowed, value).not
     end
 
+    # Create not ends_with condition.
+    # @param [Arel::Nodes::Node, Arel::Attributes::Attribute, String] node
+    # @param [Object] value
+    # @return [Arel::Nodes::Node] condition
+    def compose_not_ends_with_node(node, value)
+      compose_ends_with_node(node, value).not
+    end
+
     # Create IN condition.
     # @param [Arel::Table] table
     # @param [Symbol] column_name
@@ -84,10 +135,19 @@ module Filter
     # @param [Array] values
     # @return [Arel::Nodes::Node] condition
     def compose_in(table, column_name, allowed, values)
-      validate_array(values)
       validate_table_column(table, column_name, allowed)
+      compose_in_node(table[column_name], values)
+    end
+
+    # Create IN condition.
+    # @param [Arel::Nodes::Node, Arel::Attributes::Attribute, String] node
+    # @param [Array] values
+    # @return [Arel::Nodes::Node] condition
+    def compose_in_node(node, values)
+      validate_node_or_attribute(node)
+      validate_array(values)
       validate_array_items(values) if values.is_a?(Array)
-      table[column_name].in(values)
+      node.in(values)
     end
 
     # Create NOT IN condition.
@@ -100,6 +160,14 @@ module Filter
       compose_in(table, column_name, allowed, values).not
     end
 
+    # Create NOT IN condition.
+    # @param [Arel::Nodes::Node, Arel::Attributes::Attribute, String] node
+    # @param [Array] values
+    # @return [Arel::Nodes::Node] condition
+    def compose_not_in_node(node, values)
+      compose_in_node(node, values).not
+    end
+
     # Create IN condition using range.
     # @param [Arel::Table] table
     # @param [Symbol] column_name
@@ -107,22 +175,32 @@ module Filter
     # @param [Hash] hash
     # @return [Arel::Nodes::Node] condition
     def compose_range_options(table, column_name, allowed, hash)
+      validate_table_column(table, column_name, allowed)
+      compose_range_options_node(table[column_name], hash)
+    end
+
+
+    # Create IN condition using range.
+    # @param [Arel::Nodes::Node, Arel::Attributes::Attribute, String] node
+    # @param [Hash] hash
+    # @return [Arel::Nodes::Node] condition
+    def compose_range_options_node(node, hash)
       from = hash[:from]
       to = hash[:to]
       interval = hash[:interval]
 
       if !from.blank? && !to.blank? && !interval.blank?
-        fail CustomErrors::FilterArgumentError.new("Range filter must use either ('from' and 'to') or ('interval'), not both.", {field: column_name, hash: hash})
+        fail CustomErrors::FilterArgumentError.new("Range filter must use either ('from' and 'to') or ('interval'), not both.", {hash: hash})
       elsif from.blank? && !to.blank?
-        fail CustomErrors::FilterArgumentError.new("Range filter missing 'from'.", {field: column_name, hash: hash})
+        fail CustomErrors::FilterArgumentError.new("Range filter missing 'from'.", {hash: hash})
       elsif !from.blank? && to.blank?
-        fail CustomErrors::FilterArgumentError.new("Range filter missing 'to'.", {field: column_name, hash: hash})
+        fail CustomErrors::FilterArgumentError.new("Range filter missing 'to'.", {hash: hash})
       elsif !from.blank? && !to.blank?
-        compose_range(table, column_name, allowed, from, to)
+        compose_range_node(node, from, to)
       elsif !interval.blank?
-        compose_range_string(table, column_name, allowed, interval)
+        compose_range_string_node(node, interval)
       else
-        fail CustomErrors::FilterArgumentError.new("Range filter was not valid (#{hash})", {field: column_name, hash: hash})
+        fail CustomErrors::FilterArgumentError.new("Range filter was not valid (#{hash})", {hash: hash})
       end
     end
 
@@ -136,6 +214,14 @@ module Filter
       compose_range_options(table, column_name, allowed, hash).not
     end
 
+    # Create NOT IN condition using range.
+    # @param [Arel::Nodes::Node, Arel::Attributes::Attribute, String] node
+    # @param [Hash] hash
+    # @return [Arel::Nodes::Node] condition
+    def compose_not_range_options_node(node, hash)
+      compose_range_options_node(node, hash).not
+    end
+
     # Create IN condition using range.
     # @param [Arel::Table] table
     # @param [Symbol] column_name
@@ -144,6 +230,15 @@ module Filter
     # @return [Arel::Nodes::Node] condition
     def compose_range_string(table, column_name, allowed, range_string)
       validate_table_column(table, column_name, allowed)
+      compose_range_string_node(table[column_name], range_string)
+    end
+
+    # Create IN condition using range.
+    # @param [Arel::Nodes::Node, Arel::Attributes::Attribute, String] node
+    # @param [String] range_string
+    # @return [Arel::Nodes::Node] condition
+    def compose_range_string_node(node, range_string)
+      validate_node_or_attribute(node)
 
       range_regex = /(\[|\()(.*),(.*)(\)|\])/i
       matches = range_string.match(range_regex)
@@ -159,15 +254,15 @@ module Filter
 
       # build using gt, lt, gteq, lteq
       if start_exclude
-      start_condition = table[column_name].gt(start_value)
+        start_condition = node.gt(start_value)
       else
-        start_condition =table[column_name].gteq(start_value)
+        start_condition =node.gteq(start_value)
       end
 
       if end_exclude
-        end_condition = table[column_name].lt(end_value)
+        end_condition = node.lt(end_value)
       else
-        end_condition =table[column_name].lteq(end_value)
+        end_condition =node.lteq(end_value)
       end
 
       start_condition.and(end_condition)
@@ -183,6 +278,14 @@ module Filter
       compose_range_string(table, column_name, allowed, range_string).not
     end
 
+    # Create NOT IN condition using range.
+    # @param [Arel::Nodes::Node, Arel::Attributes::Attribute, String] node
+    # @param [String] range_string
+    # @return [Arel::Nodes::Node] condition
+    def compose_not_range_string_node(node, range_string)
+      compose_range_string_node(node, range_string).not
+    end
+
     # Create IN condition using from (inclusive) and to (exclusive).
     # @param [Arel::Table] table
     # @param [Symbol] column_name
@@ -192,8 +295,18 @@ module Filter
     # @return [Arel::Nodes::Node] condition
     def compose_range(table, column_name, allowed, from, to)
       validate_table_column(table, column_name, allowed)
+      compose_range_node(table[column_name], from, to)
+    end
+
+    # Create IN condition using from (inclusive) and to (exclusive).
+    # @param [Arel::Nodes::Node, Arel::Attributes::Attribute, String] node
+    # @param [Object] from
+    # @param [Object] to
+    # @return [Arel::Nodes::Node] condition
+    def compose_range_node(node, from, to)
+      validate_node_or_attribute(node)
       range = Range.new(from, to, true)
-      table[column_name].in(range)
+      node.in(range)
     end
 
     # Create NOT IN condition using from (inclusive) and to (exclusive).
@@ -207,6 +320,15 @@ module Filter
       compose_range(table, column_name, allowed, from, to).not
     end
 
+    # Create NOT IN condition using from (inclusive) and to (exclusive).
+    # @param [Arel::Nodes::Node, Arel::Attributes::Attribute, String] node
+    # @param [Object] from
+    # @param [Object] to
+    # @return [Arel::Nodes::Node] condition
+    def compose_not_range_node(node, from, to)
+      compose_range_node(node, from, to).not
+    end
+
     # Create regular expression condition.
     # @param [Arel::Table] table
     # @param [Symbol] column_name
@@ -215,7 +337,16 @@ module Filter
     # @return [Arel::Nodes::Node] condition
     def compose_regex(table, column_name, allowed, value)
       validate_table_column(table, column_name, allowed)
-      Arel::Nodes::Regexp.new(table[column_name], Arel::Nodes.build_quoted(value))
+      compose_regex_node(table[column_name], value)
+    end
+
+    # Create regular expression condition.
+    # @param [Arel::Nodes::Node, Arel::Attributes::Attribute, String] node
+    # @param [Object] value
+    # @return [Arel::Nodes::Node] condition
+    def compose_regex_node(node, value)
+      validate_node_or_attribute(node)
+      Arel::Nodes::Regexp.new(node, Arel::Nodes.build_quoted(value))
     end
 
     # Create negated regular expression condition.
@@ -227,7 +358,17 @@ module Filter
     # @return [Arel::Nodes::Node] condition
     def compose_not_regex(table, column_name, allowed, value)
       validate_table_column(table, column_name, allowed)
-      Arel::Nodes::NotRegexp.new(table[column_name], Arel::Nodes.build_quoted(value))
+      compose_not_regex_node(table[column_name], value)
+    end
+
+    # Create negated regular expression condition.
+    # Not available just now, maybe in Arel 6?
+    # @param [Arel::Nodes::Node, Arel::Attributes::Attribute, String] node
+    # @param [Object] value
+    # @return [Arel::Nodes::Node] condition
+    def compose_not_regex_node(node, value)
+      validate_node_or_attribute(node)
+      Arel::Nodes::NotRegexp.new(node, Arel::Nodes.build_quoted(value))
     end
 
   end

@@ -422,7 +422,8 @@ ORDERBY\"audio_recordings\".\"recorded_date\"DESCLIMIT25OFFSET0"
                           ends_with: 'ends with text',
                           range: {
                               interval: '[123, 128]'
-                          }
+                          },
+
                       },
                       or: {
                           duration_seconds: {
@@ -731,4 +732,65 @@ LIMIT25OFFSET0"
 
     end
   end
+
+  context 'calculated field' do
+    it 'works for audio_event.duration_seconds' do
+      request_body_obj = {
+          filter: {
+              duration_seconds: {
+                  gt: 3
+              }
+          }
+      }
+
+      @permission = FactoryGirl.create(:write_permission)
+      user = @permission.user
+      user_id = user.id
+
+      filter_query = Filter::Query.new(
+          request_body_obj,
+          Access::Query.audio_events(user, Access::Core.levels_allow),
+          AudioEvent,
+          AudioEvent.filter_settings
+      )
+
+      expected_sql =
+          "SELECT\"audio_events\".\"id\",\"audio_events\".\"audio_recording_id\", \
+\"audio_events\".\"start_time_seconds\",\"audio_events\".\"end_time_seconds\", \
+          \"audio_events\".\"low_frequency_hertz\",\"audio_events\".\"high_frequency_hertz\", \
+          \"audio_events\".\"is_reference\",\"audio_events\".\"creator_id\", \
+          \"audio_events\".\"updated_at\",\"audio_events\".\"created_at\" \
+FROM\"audio_events\" \
+INNERJOIN\"audio_recordings\"ON\"audio_recordings\".\"id\"=\"audio_events\".\"audio_recording_id\" \
+AND(\"audio_recordings\".\"deleted_at\"ISNULL) \
+INNERJOIN\"sites\"ON\"sites\".\"id\"=\"audio_recordings\".\"site_id\" \
+AND(\"sites\".\"deleted_at\"ISNULL) \
+INNERJOIN\"projects_sites\"ON\"projects_sites\".\"site_id\"=\"sites\".\"id\" \
+INNERJOIN\"projects\"ON\"projects\".\"id\"=\"projects_sites\".\"project_id\" \
+AND(\"projects\".\"deleted_at\"ISNULL) \
+WHERE(\"audio_events\".\"deleted_at\"ISNULL) \
+AND((\"projects\".\"id\"IN( \
+SELECT\"projects\".\"id\" \
+FROM\"projects\" \
+WHERE(\"projects\".\"deleted_at\"ISNULL) \
+AND\"projects\".\"creator_id\"=#{user_id}) \
+OR\"projects\".\"id\"IN( \
+SELECT\"permissions\".\"project_id\" \
+FROM\"permissions\" \
+WHERE\"permissions\".\"user_id\"=#{user_id} \
+AND\"permissions\".\"level\"IN('reader','writer','owner'))) \
+OR\"audio_events\".\"id\"IN( \
+SELECT\"audio_events\".\"id\" \
+FROM\"audio_events\" \
+WHERE(\"audio_events\".\"deleted_at\"ISNULL) \
+AND\"audio_events\".\"is_reference\"='t')) \
+AND((\"audio_events\".\"end_time_seconds\"-\"audio_events\".\"start_time_seconds\")>3) \
+ORDERBY\"audio_events\".\"created_at\"DESC \
+LIMIT25OFFSET0"
+
+      expect(filter_query.query_full.to_sql.gsub(/\s+/, '')).to eq(expected_sql.gsub(/\s+/, ''))
+
+    end
+  end
+
 end

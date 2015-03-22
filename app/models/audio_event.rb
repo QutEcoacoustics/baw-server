@@ -52,7 +52,8 @@ class AudioEvent < ActiveRecord::Base
                        :start_time_seconds, :end_time_seconds,
                        :low_frequency_hertz, :high_frequency_hertz,
                        :is_reference,
-                       :created_at, :creator_id, :updated_at],
+                       :created_at, :creator_id, :updated_at,
+                       :duration_seconds],
         render_fields: [:id, :audio_recording_id,
                         :start_time_seconds, :end_time_seconds,
                         :low_frequency_hertz, :high_frequency_hertz,
@@ -65,6 +66,12 @@ class AudioEvent < ActiveRecord::Base
             order_by: :created_at,
             direction: :desc
         },
+        field_mappings: [
+            {
+                name: :duration_seconds,
+                value: (AudioEvent.arel_table[:end_time_seconds] - AudioEvent.arel_table[:start_time_seconds])
+            }
+        ],
         valid_associations: [
             {
                 join: AudioRecording,
@@ -90,161 +97,6 @@ class AudioEvent < ActiveRecord::Base
 
             }
         ]
-    }
-  end
-
-  # @param [User] user
-  # @param [Hash] params
-  def self.filtered(user, params)
-    # get a paged collection of all audio_events the current user can access
-    ### option params ###
-    # reference: [true, false] (optional)
-    # tagsPartial: comma separated text (optional)
-    # freqMin: double (optional)
-    # freqMax: double (optional)
-    # annotationDuration: double (optional)
-    # page: int (optional)
-    # items: int (optional)
-    # userId: int (optional)
-    # audioRecordingId: int (optional)
-
-    query = Access::Query.audio_events(user, Access::Core.levels_allow).joins(:creator, :tags)
-
-    query = AudioEvent.filter_reference(query, params)
-    query = AudioEvent.filter_tags(query, params)
-    query = AudioEvent.filter_distance(query, params)
-    query = AudioEvent.filter_user(query, params)
-    query = AudioEvent.filter_audio_recording(query, params)
-    query = AudioEvent.filter_paging(query, params)
-
-    query = query.select('"audio_events".*, "audio_recordings"."recorded_date", "sites"."name", "sites"."id", "users"."user_name", "users"."id"')
-    Rails.logger.info "AudioEvent filtered: #{query.to_sql}"
-    query
-  end
-
-  # @param [ActiveRecord::Relation] query
-  # @param [Hash] params
-  def self.filter_tags(query, params)
-    if params.include?(:tags_partial) && !params[:tags_partial].blank?
-      tags_partial = CSV.parse(params[:tags_partial], col_sep: ',').flatten.map { |item| item.trim(' ', '') }.join('|').downcase
-      tags_query = AudioEvent.joins(:tags).where('lower(tags.text) SIMILAR TO ?', "%(#{tags_partial})%").select('audio_events.id')
-      query.where(id: tags_query)
-    else
-      query
-    end
-  end
-
-  # @param [ActiveRecord::Relation] query
-  # @param [Hash] params
-  def self.filter_reference(query, params)
-    if params.include?(:reference) && params[:reference] == 'true'
-      query.where(is_reference: true)
-    elsif params.include?(:reference) && params[:reference] == 'false'
-      query.where(is_reference: false)
-    else
-      query
-    end
-  end
-
-  # @param [Hash] params
-  # @param [Symbol] params_symbol
-  # @param [Integer] min
-  # @param [Integer] max
-  def self.filter_count(params, params_symbol, default = 1, min = 1, max = nil)
-    value = default
-    if params.include?(params_symbol)
-      value = params[params_symbol].to_i
-    end
-
-    if value < min
-      value = min
-    end
-
-    if !max.blank? && value > max
-      value = max
-    end
-
-    value
-  end
-
-  # Postgres-specific queries
-  # @param [ActiveRecord::Relation] query
-  # @param [Hash] params
-  def self.filter_distance(query, params)
-    if params.include?(:freq_min) || params.include?(:freq_max) || params.include?(:annotation_duration)
-      compare_items = []
-      compare_text = []
-
-      if params.include?(:freq_min)
-        compare_items.push(params[:freq_min].to_f)
-        compare_text.push('power(audio_events.low_frequency_hertz - ?, 2)')
-      end
-
-      if params.include?(:freq_max)
-        compare_items.push(params[:freq_max].to_f)
-        compare_text.push('power(audio_events.high_frequency_hertz - ?, 2)')
-      end
-
-      if params.include?(:annotation_duration)
-        compare_items.push(params[:annotation_duration].to_f)
-        compare_text.push('power((audio_events.end_time_seconds - audio_events.start_time_seconds) - ?, 2)')
-      end
-
-      dangerous_sql = 'sqrt('+compare_text.join(' + ')+')'
-      sanitized_sql = sanitize_sql([dangerous_sql, compare_items].flatten, self.table_name)
-      query.select(sanitized_sql + ' as distance_calc').order(sanitized_sql)
-    else
-      query.order('audio_events.created_at DESC')
-    end
-  end
-
-  # @param [ActiveRecord::Relation] query
-  # @param [Hash] params
-  def self.filter_paging(query, params)
-
-    defaults = AudioEvent.filter_paging_defaults
-
-    page = defaults[:page]
-    if params.include?(:page)
-      page = params[:page].to_i
-    end
-
-    items = defaults[:items]
-    if params.include?(:items)
-      items = params[:items].to_i
-    end
-
-    query.offset((page - 1) * items).limit(items)
-  end
-
-  # @param [ActiveRecord::Relation] query
-  # @param [Hash] params
-  def self.filter_user(query, params)
-    if params.include?(:user_id)
-      creator_id_check = 'audio_events.creator_id = ?'
-      updater_id_check = 'audio_events.updater_id = ?'
-      user_id = params[:user_id].to_i
-      query.where("(#{creator_id_check} OR #{updater_id_check})", user_id, user_id)
-    else
-      query
-    end
-  end
-
-  # @param [ActiveRecord::Relation] query
-  # @param [Hash] params
-  def self.filter_audio_recording(query, params)
-    if params.include?(:audio_recording_id) || params.include?(:audio_recording_id) || params.include?(:audiorecording_id)
-      audio_recording_id = (params[:audio_recording_id] || params[:audio_recording_id] || params[:audiorecording_id]).to_i
-      query.where(audio_recording_id: audio_recording_id)
-    else
-      query
-    end
-  end
-
-  def self.filter_paging_defaults
-    {
-        page: 1,
-        items: 20
     }
   end
 

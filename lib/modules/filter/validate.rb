@@ -126,6 +126,11 @@ module Filter
       fail CustomErrors::FilterArgumentError, "Condition must be Arel::Attributes::Attribute, got #{projection}" unless projection.is_a?(Arel::Attributes::Attribute)
     end
 
+    def validate_node_or_attribute(value)
+      check = value.is_a?(Arel::Nodes::Node) || value.is_a?(String) || value.is_a?(Arel::Attributes::Attribute)
+      fail CustomErrors::FilterArgumentError, "Value must be Arel::Nodes::Node or String or Arel::Attributes::Attribute, got #{value}" unless check
+    end
+
     # Validate name value.
     # @param [Symbol] name
     # @param [Array<Symbol>] allowed
