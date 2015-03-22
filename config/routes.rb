@@ -140,7 +140,6 @@ Rails.application.routes.draw do
   #         list: "/audio_recordings/{recordingId}/audio_events",
   #         show: "/audio_recordings/{recordingId}/audio_events/{audioEventId}",
   #         csv: "/audio_recordings/{recordingId}/audio_events/download.{format}",
-  #         library: "/audio_events/library/paged"
   #     },
   #     tagging: {
   #         list: "/audio_recordings/{recordingId}/audio_events/{audioEventId}/taggings",
@@ -250,10 +249,6 @@ Rails.application.routes.draw do
   resources :audio_events, only: [], defaults: {format: 'json'} do
 
     resources :audio_event_comments, except: [:edit], defaults: {format: 'json'}, path: :comments, as: :comments
-    collection do
-      get 'library'
-      get 'library/paged' => 'audio_events#library_paged', as: :library_paged
-    end
   end
 
   # custom routes for scripts
@@ -320,10 +315,11 @@ Rails.application.routes.draw do
 
   # exceptions testing route - only available in test env
   if ENV['RAILS_ENV'] == 'test'
-    match '/test_exceptions', to: 'errors#test_exceptions', via: :all
+    # via: :all seems to not work any more >:(
+    match '/test_exceptions', to: 'errors#test_exceptions', via:  [:get, :head, :post, :put, :delete, :options, :trace, :patch]
   end
 
-  # for error pages (add via: :all for rails 4)
-  match '*requested_route', to: 'errors#route_error', via: :all
+  # for error pages
+  match '*requested_route', to: 'errors#route_error', via: [:get, :head, :post, :put, :delete, :options, :trace, :patch]
 
 end

@@ -20,32 +20,6 @@ class AudioEventsController < ApplicationController
     end
   end
 
-  def library
-    authorize! :library, AudioEvent
-    audio_event_library_params_cleaned = CleanParams.perform(audio_event_library_params)
-    response_hash = library_format(current_user, audio_event_library_params_cleaned)
-    render json: response_hash
-  end
-
-  def library_paged
-    authorize! :library, AudioEvent
-    audio_event_library_params_cleaned = CleanParams.perform(audio_event_library_params)
-    response_hash = library_format(current_user, audio_event_library_params_cleaned)
-
-    total_query = AudioEvent.filtered(current_user, audio_event_library_params_cleaned).offset(nil).limit(nil)
-    total = total_query.distinct(false).uniq(false).except(:select).count
-
-    paged_info = {
-        page: audio_event_library_params_cleaned[:page],
-        items: audio_event_library_params_cleaned[:items],
-        total: total,
-        entries: response_hash
-    }
-
-    render json: paged_info
-
-  end
-
   # GET /audio_events/1
   # GET /audio_events/1.json
   def show
@@ -242,24 +216,6 @@ class AudioEventsController < ApplicationController
     list
   end
 
-  # @param [User] current_user
-  # @param [Hash] request_params
-  def library_format(current_user, request_params)
-    request_params[:page] = AudioEvent.filter_count(request_params, :page, 1, 1)
-    request_params[:items] = AudioEvent.filter_count(request_params, :items, 10, 1, 30)
-
-    query = AudioEvent.filtered(current_user, request_params)
-
-    response_hash = []
-
-    query.map do |audio_event|
-      audio_event_hash = json_format(audio_event)
-      response_hash.push(audio_event_hash)
-    end
-
-    response_hash
-  end
-
   # @param [AudioEvent] audio_event
   def json_format(audio_event)
 
@@ -343,22 +299,6 @@ class AudioEventsController < ApplicationController
         :start_offset, :startOffset,
         :end_offset, :endOffset,
         :format)
-  end
-
-  def audio_event_library_params
-    params.permit(
-        :reference,
-        :tagsPartial, :tags_partial,
-        :audio_recording_id, :audioRecordingId, :audiorecording_id, :audiorecordingId, :recording_id, :recordingId,
-        :freqMin, :freq_min,
-        :freqMax, :freq_max,
-        :annotationDuration, :annotation_duration,
-        :userId, :user_id,
-        :page,
-        :items,
-        :format,
-        audio_event: {}
-    )
   end
 
   def audio_event_show_params
