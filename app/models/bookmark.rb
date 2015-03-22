@@ -17,14 +17,6 @@ class Bookmark < ActiveRecord::Base
   validates :audio_recording_id, presence: true
   validates :name, presence: true, uniqueness: {case_sensitive: false, scope: :creator_id, message: 'should be unique per user'}
 
-  def get_listen_path
-    segment_duration_seconds = 30
-    offset_start_rounded = (self.offset_seconds / segment_duration_seconds).floor * segment_duration_seconds
-    offset_end_rounded = offset_start_rounded + segment_duration_seconds
-
-    "#{self.audio_recording.get_listen_path}?start=#{offset_start_rounded}&end=#{offset_end_rounded}"
-  end
-
   # Define filter api settings
   def self.filter_settings
     {

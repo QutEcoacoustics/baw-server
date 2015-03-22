@@ -1,12 +1,12 @@
 class Site < ActiveRecord::Base
   # ensures that creator_id, updater_id, deleter_id are set
   include UserChange
-  
+
   attr_accessor :project_ids, :custom_latitude, :custom_longitude, :location_obfuscated
 
   # relations
-  has_and_belongs_to_many :projects, uniq: true
-  has_and_belongs_to_many :datasets, uniq: true
+  has_and_belongs_to_many :projects, -> { uniq }
+  has_and_belongs_to_many :datasets, -> { uniq }
   has_many :audio_recordings, inverse_of: :site
 
   belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_sites
@@ -22,7 +22,7 @@ class Site < ActiveRecord::Base
   LONGITUDE_MIN = -180
   LONGITUDE_MAX = 180
 
-  JITTER_RANGE = 0.0002
+  JITTER_RANGE = 0.0005
 
   # add deleted_at and deleter_id
   acts_as_paranoid
@@ -46,13 +46,39 @@ class Site < ActiveRecord::Base
 
   validates_attachment_content_type :image, content_type: /^image\/(jpg|jpeg|pjpeg|png|x-png|gif)$/, message: 'file type %{value} is not allowed (only jpeg/png/gif images)'
 
+  before_save :set_rails_tz, if: Proc.new { |site| site.tzinfo_tz_changed? }
+
   # commonly used queries
   #scope :specified_sites, lambda { |site_ids| where('id in (:ids)', { :ids => site_ids } ) }
   #scope :sites_in_project, lambda { |project_ids| where(Project.specified_projects, { :ids => project_ids } ) }
   #scope :site_projects, lambda{ |project_ids| includes(:projects).where(:projects => {:id => project_ids} ) }
 
-  def project_ids
-    self.projects.collect { |project| project.id }
+  def get_bookmark
+    Bookmark.where(audio_recording: self.audio_recordings).order(:updated_at).first
+  end
+
+  def most_recent_recording
+    self.audio_recordings.order(recorded_date: :desc).first
+  end
+
+  def get_bookmark_or_recording
+    bookmark = get_bookmark
+    recording = most_recent_recording
+    if !bookmark.blank?
+      {
+          audio_recording:bookmark.audio_recording,
+          start_offset_seconds: bookmark.offset_seconds,
+          source: :bookmark
+      }
+      elsif !recording.blank?
+      {
+          audio_recording:most_recent_recording,
+          start_offset_seconds: nil,
+          source: :audio_recording
+      }
+    else
+      nil
+    end
   end
 
   # overrides getting, does not change setting
@@ -76,27 +102,43 @@ class Site < ActiveRecord::Base
   end
 
   def update_location_obfuscated(current_user)
-    highest_permission = current_user.highest_permission_any(self.projects.includes(:creator))
-    @location_obfuscated = highest_permission < AccessLevel::OWNER
+    is_owner = Access::Check.can_any?(current_user, :owner, self.projects.includes(:creator))
+
+    # obfuscate if level is less than owner
+    @location_obfuscated = !is_owner
   end
 
   def self.add_location_jitter(value, min, max)
-    # truncate to 4 decimal places, then add random jitter
-    # that has been truncated to 5 decimal places
-    # http://en.wikipedia.org/wiki/Decimal_degrees#Precision
-    # add or subtract between ~4m - ~20m jitter
 
-    truncate_decimals_4 = 10000.0
-    truncated_value = (value * truncate_decimals_4).floor / truncate_decimals_4
+    # multiply by 10,000 to get to ~10m accuracy
+    accuracy = 10000
+    multiplied = (value * accuracy).floor.to_i
 
-    truncate_decimals_5 = 100000.0
-    random_jitter = rand(-Site::JITTER_RANGE..Site::JITTER_RANGE)
-    truncated_jitter = (random_jitter * truncate_decimals_5).floor / truncate_decimals_5
+    # get a range for potential jitter
 
-    modified_value = truncated_value + truncated_jitter
+    max_diff =(Site::JITTER_RANGE * accuracy).floor.to_i
+    range_min = multiplied - max_diff
+    range_max = multiplied + max_diff
 
-    # ensure range is maintained (damn floating point in-exactness)
-    modified_value = modified_value.round(5)
+    # included range (inclusive range)
+    range = (range_min..range_max).to_a
+
+    excluded_diff = 1
+    excluded_min = multiplied - excluded_diff
+    excluded_max = multiplied + excluded_diff
+
+    # excluded numbers (inclusive range)
+    excluded = (excluded_min..excluded_max).to_a
+
+    # create array of available numbers with middle range excluded
+    available = range - excluded
+
+    # select a random value from the available array of ints
+    selected = available.sample
+
+    # round to ensure precision is maintained (damn floating point in-exactness)
+    # can't usually get more accurate than 5 decimal places anyway
+    modified_value = (selected / accuracy).round(5)
 
     # ensure range is maintained (damn floating point in-exactness)
     if modified_value > (value + Site::JITTER_RANGE)
@@ -130,7 +172,31 @@ class Site < ActiveRecord::Base
         defaults: {
             order_by: :name,
             direction: :asc
-        }
+        },
+        valid_associations: [
+            {
+                join: Arel::Table.new(:projects_sites),
+                on: Site.arel_table[:id].eq(Arel::Table.new(:projects_sites)[:site_id]),
+                available: false,
+                associations: [
+                    {
+                        join: Project,
+                        on: Arel::Table.new(:projects_sites)[:project_id].eq(Project.arel_table[:id]),
+                        available: true
+                    }
+                ]
+
+            }
+        ]
     }
   end
+
+  def set_rails_tz
+    tzInfo_id = TimeZoneHelper.to_identifier(self.tzinfo_tz)
+    rails_tz_string = TimeZoneHelper.tzinfo_to_ruby(tzInfo_id)
+    unless rails_tz_string.blank?
+      self.rails_tz = rails_tz_string
+    end
+  end
+
 end

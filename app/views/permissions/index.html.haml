@@ -22,20 +22,20 @@
                       type: 'radio',
                       name: "[user_ids][#{user.id}][permissions][level]",
                       value: '',
-                      checked: !user.has_permission?(@project)}
+                      checked: Access::Check.can?(user, :none, @project)}
           %td
             %input{id: "user_#{user.id}_permissions_level_reader",
                       type: 'radio',
                       name: "[user_ids][#{user.id}][permissions][level]",
                       value: 'reader',
-                      checked: user.can_read?(@project)}
+                      checked: Access::Check.can?(user, :reader, @project)}
 
           %td
             %input{id: "user_#{user.id}_permissions_level_writer",
                       type: 'radio',
                       name: "[user_ids][#{user.id}][permissions][level]",
                       value: 'writer',
-                      checked: user.can_write?(@project)}
+                      checked: Access::Check.can?(user, :writer, @project)}
   .form-actions
     = p.submit 'Update Permissions', class: 'btn'
 

@@ -8,12 +8,14 @@ class Project < ActiveRecord::Base
   belongs_to :deleter, class_name: 'User', foreign_key: :deleter_id, inverse_of: :deleted_projects
 
   has_many :permissions, inverse_of: :project
-  accepts_nested_attributes_for :permissions
   has_many :readers, -> { where("permissions.level = 'reader'").uniq }, through: :permissions, source: :user
   has_many :writers, -> { where("permissions.level = 'writer'").uniq }, through: :permissions, source: :user
-  has_and_belongs_to_many :sites, uniq: true
+  has_many :owners,  -> { where("permissions.level = 'owner'").uniq }, through: :permissions, source: :user
+  has_and_belongs_to_many :sites, -> { uniq }
   has_many :datasets, inverse_of: :project
   has_many :jobs, through: :datasets
+
+  accepts_nested_attributes_for :permissions
 
   #plugins
   has_attached_file :image,

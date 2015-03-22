@@ -5,7 +5,6 @@ FactoryGirl.define do
     sequence(:email) { |n| "user#{n}@example.com" }
     sequence(:authentication_token) { |n| "some random token #{n}" }
     sequence(:password) { |n| "password #{n}" }
-    sequence(:id) { |n| n }
 
     roles_mask { 2 } # user role
 

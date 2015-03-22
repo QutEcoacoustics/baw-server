@@ -23,13 +23,13 @@
       %tbody
       - @user_audio_event_comments.each do |aec|
         %tr
-          %td= link_to aec.comment, aec.audio_event.get_library_path
+          %td= link_to aec.comment, make_library_path(aec.audio_event)
           %td= AudioEventComment.where(audio_event_id: aec.audio_event_id).count
           %td.nolink
-            = link_to aec.audio_event.get_library_path, class: 'btn btn-mini' do
+            = link_to make_library_path(aec.audio_event), class: 'btn btn-mini' do
               %i{class: 'fa fa-flag'}
               Annotation
-            = link_to aec.audio_event.get_listen_path, class: 'btn btn-mini' do
+            = link_to make_listen_path(aec.audio_event), class: 'btn btn-mini' do
               %i{class: 'fa fa-play'}
               Play
 

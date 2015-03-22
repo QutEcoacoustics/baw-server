@@ -37,46 +37,22 @@ module Filter
     # Validate paging values.
     # @param [Integer] offset
     # @param [Integer] limit
-    # @param [Integer] max_limit
     # @return [void]
-    def validate_paging(offset, limit, max_limit)
-      if !offset.blank? && !limit.blank?
-        # allow both to be nil, but if one is nil and the other is not, that is an error.
-        fail CustomErrors::FilterArgumentError, "Offset must be an integer, got #{offset}" if offset.blank? || offset != offset.to_i
-        fail CustomErrors::FilterArgumentError, "Limit must be an integer, got #{limit}" if limit.blank? || limit != limit.to_i
-        fail CustomErrors::FilterArgumentError, "Max must be an integer, got #{max_limit}" if max_limit.blank? || max_limit != max_limit.to_i
-
-        offset_i = offset.to_i
-        limit_i = limit.to_i
-        max_limit_i = max_limit.to_i
-
-        fail CustomErrors::FilterArgumentError, "Offset must be 0 or greater, got #{offset_i}" if offset_i < 0
-        fail CustomErrors::FilterArgumentError, "Limit must be greater than 0, got #{limit_i}" if limit_i < 1
-        fail CustomErrors::FilterArgumentError, "Max must be greater than 0, got #{max_limit_i}" if max_limit_i < 1
-      end
+    def validate_paging(offset, limit)
+      validate_integer(offset, 0)
+      validate_integer(limit, 1)
     end
 
-    # Validate paging values.
-    # @param [Integer] page
-    # @param [Integer] items
-    # @param [Integer] max_items
-    # @return [void]
-    def validate_paging_external(page, items, max_items)
-      if !page.blank? && !items.blank?
-        # allow both to be nil, but if one is nil and the other is not, that is an error.
-        fail CustomErrors::FilterArgumentError, "Page must be an integer, got #{page}" if page.blank? || page != page.to_i
-        fail CustomErrors::FilterArgumentError, "Items must be an integer, got #{items}" if items.blank? || items != items.to_i
-        fail CustomErrors::FilterArgumentError, "Max must be an integer, got #{max_items}" if max_items.blank? || max_items != max_items.to_i
+    def validate_integer(value, min = nil, max = nil)
+      fail CustomErrors::FilterArgumentError, 'Value must not be blank' if value.blank?
+      fail CustomErrors::FilterArgumentError, "Value must be an integer, got #{value}" if value.blank? || value != value.to_i
 
-        page_i = page.to_i
-        items_i = items.to_i
-        max_items_i = max_items.to_i
+      value_i = value.to_i
 
-        fail CustomErrors::FilterArgumentError, "Page must be greater than 0, got #{page_i}" if page_i < 1
-        fail CustomErrors::FilterArgumentError, "Items must be greater than 0, got #{items_i}" if items_i < 1
-        fail CustomErrors::FilterArgumentError, "Max must be greater than 0, got #{max_items_i}" if max_items_i < 1
-      end
+      fail CustomErrors::FilterArgumentError, "Value must be #{min} or greater, got #{value_i}" if !min.blank? && value_i < min
+      fail CustomErrors::FilterArgumentError, "Value must be #{max} or less, got #{value_i}" if !max.blank? && value_i > max
     end
+
 
     # Validate query, table, and column values.
     # @param [Arel::Query] query
@@ -87,7 +63,7 @@ module Filter
     def validate_query_table_column(query, table, column_name, allowed)
       validate_query(query)
       validate_table(table)
-      validate_column_name(column_name, allowed)
+      validate_name(column_name, allowed)
     end
 
     # Validate table and column values.
@@ -97,7 +73,14 @@ module Filter
     # @return [void]
     def validate_table_column(table, column_name, allowed)
       validate_table(table)
-      validate_column_name(column_name, allowed)
+      validate_name(column_name, allowed)
+    end
+
+    def validate_association(model, models_allowed)
+      validate_model(model)
+
+      fail CustomErrors::FilterArgumentError, "Models allowed must be an Array, got #{models_allowed}" unless models_allowed.is_a?(Array)
+      fail CustomErrors::FilterArgumentError, "Model must be in #{models_allowed}, got #{model}" unless models_allowed.include?(model)
     end
 
     # Validate query and hash values.
@@ -143,16 +126,21 @@ module Filter
       fail CustomErrors::FilterArgumentError, "Condition must be Arel::Attributes::Attribute, got #{projection}" unless projection.is_a?(Arel::Attributes::Attribute)
     end
 
-    # Validate column name value.
-    # @param [Symbol] column_name
+    def validate_node_or_attribute(value)
+      check = value.is_a?(Arel::Nodes::Node) || value.is_a?(String) || value.is_a?(Arel::Attributes::Attribute)
+      fail CustomErrors::FilterArgumentError, "Value must be Arel::Nodes::Node or String or Arel::Attributes::Attribute, got #{value}" unless check
+    end
+
+    # Validate name value.
+    # @param [Symbol] name
     # @param [Array<Symbol>] allowed
-    # @raise [FilterArgumentError] if column name is not a symbol in allowed
+    # @raise [FilterArgumentError] if name is not a symbol in allowed
     # @return [void]
-    def validate_column_name(column_name, allowed)
-      fail CustomErrors::FilterArgumentError, "Column name must not be null, got #{column_name}" if column_name.blank?
-      fail CustomErrors::FilterArgumentError, "Column name must be a symbol, got #{column_name}" unless column_name.is_a?(Symbol)
+    def validate_name(name, allowed)
+      fail CustomErrors::FilterArgumentError, "Name must not be null, got #{name}" if name.blank?
+      fail CustomErrors::FilterArgumentError, "Name must be a symbol, got #{name}" unless name.is_a?(Symbol)
       fail CustomErrors::FilterArgumentError, "Allowed must be an Array, got #{allowed}" unless allowed.is_a?(Array)
-      fail CustomErrors::FilterArgumentError, "Column name must be in #{allowed}, got #{column_name}" unless allowed.include?(column_name)
+      fail CustomErrors::FilterArgumentError, "Name must be in #{allowed}, got #{name}" unless allowed.include?(name)
     end
 
     # Validate model value.
@@ -160,7 +148,7 @@ module Filter
     # @raise [FilterArgumentError] if model is not an ActiveRecord::Base
     # @return [void]
     def validate_model(model)
-      fail CustomErrors::FilterArgumentError, "Model must respond to all, got #{model.class}" unless model.respond_to?(:all)
+      fail CustomErrors::FilterArgumentError, "Model must be an ActiveRecord::Base, got #{model.base_class}" unless model < ActiveRecord::Base
     end
 
     # Validate an array.
@@ -169,7 +157,7 @@ module Filter
     # @return [void]
     def validate_array(value)
       fail CustomErrors::FilterArgumentError, "Value must not be null, got #{value}" if value.blank?
-      fail CustomErrors::FilterArgumentError, "Value must be an Array or Arel::SelectManager, got #{value}" unless value.is_a?(Array) || value.is_a?(Arel::SelectManager)
+      fail CustomErrors::FilterArgumentError, "Value must be an Array or Arel::SelectManager, got #{value.class}" unless value.is_a?(Array) || value.is_a?(Arel::SelectManager)
     end
 
     # Validate array items. Do not validate if value is not an Array.
@@ -266,6 +254,30 @@ module Filter
 
       value_f = filtered.to_f
       fail CustomErrors::FilterArgumentError, "Value must be greater than 0, got #{value_f}" if value_f <= 0
+
+    end
+
+    def validate_filter_settings(value)
+      validate_hash(value)
+
+      validate_array(value[:valid_fields])
+      validate_array_items(value[:valid_fields])
+
+      validate_array(value[:render_fields])
+      validate_array_items(value[:render_fields])
+
+      validate_array(value[:text_fields]) unless value[:text_fields].blank?
+      validate_array_items(value[:text_fields]) unless value[:text_fields].blank?
+
+      fail CustomErrors::FilterArgumentError, 'Controller name must be a symbol.' unless value[:controller].is_a?(Symbol)
+      fail CustomErrors::FilterArgumentError, 'Action name must be a symbol.' unless value[:action].is_a?(Symbol)
+
+      validate_hash(value[:defaults])
+
+      fail CustomErrors::FilterArgumentError, 'Order by must be a symbol.' unless value[:defaults][:order_by].is_a?(Symbol)
+      fail CustomErrors::FilterArgumentError, 'Direction must be a symbol.' unless value[:defaults][:direction].is_a?(Symbol)
+
+      #validate_array(value[:valid_associations])
 
     end
 

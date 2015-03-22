@@ -2,12 +2,12 @@ class AudioEventCommentsController < ApplicationController
   include Api::ControllerHelper
 
   # order matters for before_action and load_and_authorize_resource!
-  load_and_authorize_resource :audio_event
+  load_and_authorize_resource :audio_event, except: [:filter]
 
   # this is necessary so that the ability has access to permission.project
   before_action :build_audio_event_comment, only: [:new, :create]
 
-  load_and_authorize_resource :audio_event_comment, through: :audio_event, through_association: :comments
+  load_and_authorize_resource :audio_event_comment, through: :audio_event, through_association: :comments, except: [:filter]
 
 # GET /audio_event_comments
 # GET /audio_event_comments.json
@@ -15,11 +15,11 @@ class AudioEventCommentsController < ApplicationController
     #@audio_event_comments = AudioEventComment.accessible_by
     @audio_event_comments, constructed_options = Settings.api_response.response_index(
         api_filter_params,
-        current_user.is_admin? ? AudioEventComment.all : current_user.accessible_comments,
+        get_audio_event_comments,
         AudioEventComment,
         AudioEventComment.filter_settings
     )
-    respond_index
+    respond_index(constructed_options)
   end
 
 # GET /audio_event_comments/1
@@ -55,7 +55,7 @@ class AudioEventCommentsController < ApplicationController
     # allow any logged in user to flag an audio comment
     # only the user that created the audio comment (or admin) can update any other attribute
     is_creator = @audio_event_comment.creator.id == current_user.id
-    is_admin = current_user.has_role?(:admin)
+    is_admin = Access::Check.is_admin?(current_user)
     is_changing_only_flag =
         (audio_event_comment_update_params.include?(:audio_event_comment) &&
         ([:flag] - audio_event_comment_update_params[:audio_event_comment].symbolize_keys.keys).empty?)
@@ -82,9 +82,10 @@ class AudioEventCommentsController < ApplicationController
   end
 
   def filter
+    authorize! :filter, AudioEventComment
     filter_response = Settings.api_response.response_filter(
         api_filter_params,
-        current_user.is_admin? ? AudioEventComment.all : current_user.accessible_comments,
+        get_audio_event_comments,
         AudioEventComment,
         AudioEventComment.filter_settings
     )
@@ -104,6 +105,10 @@ class AudioEventCommentsController < ApplicationController
 
   def audio_event_comment_update_params
     params.permit(:format, :audio_event_id, :id, {audio_event_comment: [:flag, :comment]})
+  end
+
+  def get_audio_event_comments
+    Access::Query.audio_event_comments(current_user, Access::Core.levels_allow)
   end
 
 end

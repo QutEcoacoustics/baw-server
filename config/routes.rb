@@ -118,10 +118,11 @@ Rails.application.routes.draw do
   # audio_recording_update: /audio_recordings/:id
 
   # routes used by harvester:
-  # endpoint_login: /security/sign_in
-  # endpoint_create: /projects/:project_id/sites/:site_id/audio_recordings
-  # endpoint_check_uploader: /projects/:project_id/sites/:site_id/audio_recordings/check_uploader/:uploader_id
-  # endpoint_update_status: /audio_recordings/:id/update_status
+  # login: /security
+  # audio_recording: /audio_recordings/:id
+  # audio_recording_create: /projects/:project_id/sites/:site_id/audio_recordings
+  # audio_recording_uploader: /projects/:project_id/sites/:site_id/audio_recordings/check_uploader/:uploader_id
+  # audio_recording_update_status: /audio_recordings/:id/update_status
 
   # endpoints used by client:
   # routes: {
@@ -139,7 +140,6 @@ Rails.application.routes.draw do
   #         list: "/audio_recordings/{recordingId}/audio_events",
   #         show: "/audio_recordings/{recordingId}/audio_events/{audioEventId}",
   #         csv: "/audio_recordings/{recordingId}/audio_events/download.{format}",
-  #         library: "/audio_events/library/paged"
   #     },
   #     tagging: {
   #         list: "/audio_recordings/{recordingId}/audio_events/{audioEventId}/taggings",
@@ -212,14 +212,12 @@ Rails.application.routes.draw do
 
   # placed above related resource so it does not conflict with (resource)/:id => (resource)#show
   match 'audio_recordings/filter' => 'audio_recordings#filter', via: [:get, :post], defaults: {format: 'json'}
-
+  match 'audio_events/filter' => 'audio_events#filter', via: [:get, :post], defaults: {format: 'json'}
 
   # API audio recording item
   resources :audio_recordings, only: [:index, :show, :new, :update], defaults: {format: 'json'} do
     match 'media.:format' => 'media#show', defaults: {format: 'json'}, as: :media, via: [:get, :head]
     match 'analysis.:format' => 'analysis#show', defaults: {format: 'json'}, as: :analysis, via: [:get, :head]
-
-    match 'audio_events/filter' => 'audio_events#filter', via: [:get, :post], defaults: {format: 'json'}
 
     resources :audio_events, except: [:edit], defaults: {format: 'json'} do
       collection do
@@ -237,18 +235,19 @@ Rails.application.routes.draw do
     end
   end
 
+
+  # placed above related resource so it does not conflict with (resource)/:id => (resource)#show
+  match 'tags/filter' => 'tags#filter', via: [:get, :post], defaults: {format: 'json'}
+
   # API tags
   resources :tags, only: [:index, :show, :create, :new], defaults: {format: 'json'}
 
+  # placed above related resource so it does not conflict with (resource)/:id => (resource)#show
+  match 'audio_event_comments/filter' => 'audio_event_comments#filter', via: [:get, :post], defaults: {format: 'json'}
+
   # API audio_event create
   resources :audio_events, only: [], defaults: {format: 'json'} do
-    # placed above related resource so it does not conflict with (resource)/:id => (resource)#show
-    match 'comments/filter' => 'audio_event_comments#filter', via: [:get, :post], defaults: {format: 'json'}
     resources :audio_event_comments, except: [:edit], defaults: {format: 'json'}, path: :comments, as: :comments
-    collection do
-      get 'library'
-      get 'library/paged' => 'audio_events#library_paged', as: :library_paged
-    end
   end
 
   # custom routes for scripts
@@ -298,7 +297,7 @@ Rails.application.routes.draw do
   get '/credits' => 'public#credits'
 
   # resque front end
-  authenticate :user, lambda { |u| !u.blank? && u.has_role?(:admin) } do
+  authenticate :user, lambda { |u| Access::Check.is_admin?(u) } do
     # add stats tab to web interface from resque-job-stats
     require 'resque-job-stats/server'
     # adds Statuses tab to web interface from resque-status
@@ -315,10 +314,11 @@ Rails.application.routes.draw do
 
   # exceptions testing route - only available in test env
   if ENV['RAILS_ENV'] == 'test'
-    match '/test_exceptions', to: 'errors#test_exceptions', via: :all
+    # via: :all seems to not work any more >:(
+    match '/test_exceptions', to: 'errors#test_exceptions', via:  [:get, :head, :post, :put, :delete, :options, :trace, :patch]
   end
 
-  # for error pages (add via: :all for rails 4)
-  match '*requested_route', to: 'errors#route_error', via: :all
+  # for error pages
+  match '*requested_route', to: 'errors#route_error', via: [:get, :head, :post, :put, :delete, :options, :trace, :patch]
 
 end

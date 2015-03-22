@@ -74,4 +74,44 @@ class Tag < ActiveRecord::Base
     first_common || first_species || first_other
   end
 
+  # Define filter api settings
+  def self.filter_settings
+    {
+        valid_fields: [
+            :id, :text, :is_taxanomic, :type_of_tag, :retired, :notes,
+            :creator_id, :created_at, :updater_id, :updated_at
+        ],
+        render_fields: [:id, :text, :is_taxanomic, :type_of_tag, :retired],
+        text_fields: [:text, :type_of_tag, :notes],
+        controller: :tags,
+        action: :filter,
+        defaults: {
+            order_by: :text,
+            direction: :asc
+        },
+        valid_associations: [
+            {
+                join: Tagging,
+                on: Tag.arel_table[:id].eq(Tagging.arel_table[:tag_id]),
+                available: false,
+                associations: [
+                    {
+                        join: AudioEvent,
+                        on: Tagging.arel_table[:id].eq(AudioEvent.arel_table[:audio_event_id]),
+                        available: true,
+                        associations: [
+                            {
+                                join: AudioRecording,
+                                on: AudioEvent.arel_table[:audio_recording_id].eq(AudioRecording.arel_table[:id]),
+                                available: true,
+                            }
+                        ]
+                    }
+                ]
+
+            }
+        ]
+    }
+  end
+
 end

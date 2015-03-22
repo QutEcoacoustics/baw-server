@@ -1,10 +1,21 @@
 %li.span6
-  = link_to project , class: 'thumbnail right-caption span12 project_thumbnail' do
-    .span4= image_tag project.image.url(:span2)
+  .thumbnail.right-caption.span12.project_thumbnail
+    .span4
+      %a{href: project_path(project)}
+        = image_tag project.image.url(:span2), alt: project.name
     .caption.span7
-      %h4= project.name
-      %p= truncate(project.description, length: 50, separator: ' ')
-    - if current_user.can_write?(project)
-      %i.fa.fa-unlock(title="You have read & write access" data-toggle='tooltip' data-placement='top')
-    - elsif current_user.can_read?(project)
-      %i.fa.fa-lock(title="You have read only access" data-toggle='tooltip' data-placement='top')
+      %h4= link_to(truncate(project.name, length: 20, separator: ' '), project_path(project), {title: project.name})
+      %p= truncate(project.description, length: 40, separator: ' ')
+    - if Access::Check.can?(current_user, :writer, project)
+      %i.project_permission_icon.fa.fa-unlock(title="You have read & write access" data-toggle='tooltip' data-placement='top')
+    - elsif Access::Check.can?(current_user, :reader, project)
+      %i.project_permission_icon.fa.fa-lock(title="You have read only access" data-toggle='tooltip' data-placement='top')
+    %ul.nav.nav-pills{style: 'margin-bottom:0'}
+      %li
+        %a{href: project_path(project)}
+          %i.fa.fa-info-circle
+          Details
+      %li
+        %a{href: make_visualise_path(project)}
+          %i.fa.fa-eye
+          Visualise

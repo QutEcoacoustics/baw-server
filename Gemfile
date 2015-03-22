@@ -60,6 +60,7 @@ gem 'gmaps4rails', '< 2'
 # git grep --full-name --name-only '.fa-play' $(git rev-list --all) > font-awesome-find.txt
 
 # Don't update this, as site still uses bootstrap v2. Need to update this when bootstrap is updated.
+# https://github.com/seyhunak/twitter-bootstrap-rails/tree/38476dbd7f9a99179388bffb101826d844029949
 gem 'twitter-bootstrap-rails', git: 'https://github.com/seyhunak/twitter-bootstrap-rails.git', branch: :master, ref: '38476dbd7f'
 
 gem 'bootstrap-timepicker-rails', '~> 0.1.3'
@@ -68,6 +69,10 @@ gem 'bootstrap-datepicker-rails', '~> 1.3.1.1'
 gem 'will_paginate', '~> 3.0.7'
 gem 'dotiw', git: 'https://github.com/radar/dotiw.git', branch: :master, ref: '89d936adc6'
 gem 'recaptcha', '~> 0.3.6',  require: 'recaptcha/rails'
+
+# for proper timezone support
+gem 'tzinfo', '~> 1.2.2'
+gem 'tzinfo-data', '~> 1.2015.1'
 
 # USERS & PERMISSIONS
 # -------------------------------------
@@ -110,7 +115,7 @@ require 'rbconfig'
 # MONITORING
 # -------------------------------------
 gem 'exception_notification', '~> 4.0.1'
-gem 'newrelic_rpm', '~> 3.10.0'
+gem 'newrelic_rpm', '~> 3.11.0'
 
 # Documentation & UI
 # -------------------------------------
@@ -121,16 +126,16 @@ gem 'raddocs', '~> 0.4.0'
 # MEDIA
 # -------------------------------------
 # set to a specific commit when releasing to master branch
-gem 'baw-audio-tools', git: 'https://github.com/QutBioacoustics/baw-audio-tools.git', branch: :master, ref: '3750e2fc9a'
+gem 'baw-audio-tools', git: 'https://github.com/QutBioacoustics/baw-audio-tools.git', branch: :master, ref: '3ea03c6b65'
 gem 'rack-rewrite', '~> 1.5.1'
 
 # ASYNC JOBS
 # ------------------------------------
 gem 'resque', '~> 1.25.2'
 gem 'resque-job-stats', git: 'https://github.com/echannel/resque-job-stats.git', branch: :master, ref: '8932c036ae'
-gem 'resque-status', '~> 0.4.3'
+gem 'resque-status', '~> 0.5.0'
 # set to a specific commit when releasing to master branch
-gem 'baw-workers', git: 'https://github.com/QutBioacoustics/baw-workers.git', branch: :master, ref: 'cac9715c73'
+gem 'baw-workers', git: 'https://github.com/QutBioacoustics/baw-workers.git', branch: :master, ref: '9b51d7a82a'
 
 # Gems restricted by environment and/or platform
 # ====================================================
@@ -155,7 +160,7 @@ group :development, :test do
   gem 'spring', '~> 1.3.0'
 
   # Run `rails console` in the browser. Read more: https://github.com/rails/web-console
-  gem 'web-console', '~> 2.0.0'
+  #gem 'web-console', '~> 2.1.1'
 
   # bundle exec rake doc:rails generates the API under doc/api.
   gem 'sdoc', '~> 0.4.0'

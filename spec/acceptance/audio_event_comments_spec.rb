@@ -458,10 +458,8 @@ resource 'AudioEventComments' do
   # Filter
   #####################
 
-  post '/audio_events/:audio_event_id/comments/filter' do
-    parameter :audio_event_id, 'Requested audio event id (in path/route)', required: true
+  post '/audio_event_comments/filter' do
     let(:authentication_token) { reader_token }
-    let(:audio_event_id) { @comment_user.audio_event_id }
     let(:raw_post) { {
         'filter' => {
             'comment' => {

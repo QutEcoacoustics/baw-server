@@ -23,7 +23,7 @@
       - @user_annotations.each do |audio_event|
         - if !audio_event.blank? && !audio_event.audio_recording.blank?
           %tr
-            - audio_link = audio_event.get_listen_path
+            - audio_link = make_listen_path(audio_event)
             - audio_recording_exists = !audio_event.audio_recording.blank?
             - if audio_recording_exists
               %td= link_to (audio_event.end_time_seconds - audio_event.start_time_seconds), audio_link, target: '_self'
@@ -36,7 +36,7 @@
                 = link_to audio_link, target: '_self', class: 'btn btn-mini' do
                   %i{class: 'fa fa-play'}
                   Play
-                = link_to audio_event.get_library_path, target: '_self', class: 'btn btn-mini' do
+                = link_to make_library_path(audio_event), target: '_self', class: 'btn btn-mini' do
                   %i{class: 'fa fa-flag'}
                   Annotation
 

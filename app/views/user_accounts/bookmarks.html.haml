@@ -24,11 +24,11 @@
       %tbody
       - @user_bookmarks.each do |bookmark|
         %tr
-          %td= link_to bookmark.name, bookmark.get_listen_path
+          %td= link_to bookmark.name, make_listen_path(bookmark)
           %td= bookmark.category
           %td= bookmark.description
           %td.nolink
-            = link_to  bookmark.get_listen_path, target: '_self', class: 'btn btn-mini' do
+            = link_to  make_listen_path(bookmark), target: '_self', class: 'btn btn-mini' do
               %i{class: 'fa fa-play'}
               Play
 

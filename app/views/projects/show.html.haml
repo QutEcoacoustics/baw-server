@@ -58,9 +58,10 @@
   = render layout: '/shared/right_sidebar_user_times', locals: { item: @project } do
     = sidebar_metadata('Notes', @project.notes)
     = sidebar_metadata('Urn', @project.urn)
-    - permission = current_user.get_permission(@project)
-    - unless permission.blank?
-      = sidebar_metadata('Your access level', permission.level)
+    - level = Access::Query.level_project(current_user, @project)
+    - unless level.blank?
+      - level_name = Access::Core.get_level_name(level)
+      = sidebar_metadata('Your access level', level_name)
 
 - content_for :title, "Project #{@project.name}"
 
@@ -79,7 +80,7 @@
     -# if can? :edit, @project
       %li= link_to 'Add New Job', new_project_job_path(@project),  title: "Add a new analysis job to this project", data: {toggle: 'tooltip',  placement: 'right'}
     - if can? :show, @project
-      %li= link_to 'Visualise', "/visualize?projectId=#{@project.id}", title: 'Visualise and browse the audio in this project', data: {toggle: 'tooltip',  placement: 'right'}
+      %li= link_to 'Visualise', make_visualise_path(@project), title: 'Browse the audio in this project', data: {toggle: 'tooltip',  placement: 'right'}
 
 -# include markerwithlabel.js
 %script

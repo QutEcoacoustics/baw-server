@@ -14,11 +14,11 @@
 
   %tbody
   - @users.each do |user|
-    - last_login = user.current_sign_in_at.blank? ? user.last_sign_in_at : user.current_sign_in_at
+    - last_seen = user.get_last_seen
     %tr
       %td= link_to "#{user.user_name} (#{user.role_symbols.join(', ')})", user_account_path(user)
-      %td= last_login.blank? ? '?' : last_login.iso8601
-      %td= last_login.blank? ? '?' : "#{distance_of_time_in_words(Time.zone.now, last_login, nil, {vague: true})} ago"
+      %td= last_seen.blank? ? '?' : last_seen.iso8601
+      %td= last_seen.blank? ? '?' : "#{distance_of_time_in_words(Time.zone.now, last_seen, nil, {vague: true})} ago"
       %td= user.confirmed? ? 'confirmed' : 'no'
       %td.nolink
         = link_to user_account_path(user), class: 'btn btn-mini' do

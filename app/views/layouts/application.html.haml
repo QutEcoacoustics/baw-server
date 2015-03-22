@@ -19,7 +19,7 @@
     = javascript_include_tag 'application'
 
   %body
-    = render partial: '/navbar'
+    = render partial: '/shared/navbar'
 
     .container
 
@@ -29,6 +29,14 @@
         .span8
           = render_breadcrumbs
           = bootstrap_flash
+
+          - unless current_user.blank?
+            - if !current_user.confirmed?
+              .alert.fade.in.alert-warning
+                %button.close{ 'data-dismiss' => 'alert'} &times;
+                = t 'devise.failure.unconfirmed'
+                = link_to 'Resend confirmation email', new_user_confirmation_path
+
           .row-fluid
             = yield
         .span2

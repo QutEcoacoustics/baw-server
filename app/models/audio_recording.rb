@@ -77,6 +77,8 @@ class AudioRecording < ActiveRecord::Base
   scope :tag_types, lambda { |tag_types| includes(:tags).where('tags.type_of_tag' => tag_types) }
   scope :tag_text, lambda { |tag_text| includes(:tags).where(Tag.arel_table[:text].matches("%#{tag_text}%")) }
 
+  scope :order_by_absolute_end_desc, lambda { order('recorded_date + CAST(duration_seconds || \' seconds\' as interval) DESC')}
+
   # Check if the original file for this audio recording currently exists.
   def original_file_exists?
     self.original_file_paths.length > 0
@@ -214,12 +216,40 @@ class AudioRecording < ActiveRecord::Base
         defaults: {
             order_by: :recorded_date,
             direction: :desc
-        }
-    }
-  end
+        },
+        valid_associations: [
+            {
+                join: AudioEvent,
+                on: AudioRecording.arel_table[:id].eq(AudioEvent.arel_table[:audio_recording_id]),
+                available: true,
+                associations: [
+                    {
+                        join: Tagging,
+                        on: AudioEvent.arel_table[:id].eq(Tagging.arel_table[:audio_event_id]),
+                        available: false,
+                        associations: [
+                            {
+                                join: Tag,
+                                on: Tagging.arel_table[:tag_id].eq(Tag.arel_table[:id]),
+                                available: true
+                            }
+                        ]
 
-  def get_listen_path
-    "/listen/#{self.id}"
+                    }
+                ]
+            },
+            {
+                join: Site,
+                on: AudioRecording.arel_table[:site_id].eq(Site.arel_table[:id]),
+                available: true
+            },
+            {
+                join: Bookmark,
+                on: AudioRecording.arel_table[:id].eq(Bookmark.arel_table[:audio_recording_id]),
+                available: true
+            }
+        ]
+    }
   end
 
   private

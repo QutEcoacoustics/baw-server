@@ -38,7 +38,6 @@ module Api
     # @option opts [Symbol] :action (nil) Action for paging links.
     # @option opts [Integer] :page (nil) Page number when paging.
     # @option opts [Integer] :items (nil) Number of items per page when paging.
-    # @option opts [Integer] :count (nil) Actual number of items on a page when paging.
     # @option opts [Integer] :total (nil) Total items matching.
     # @option opts [String] :filter_text (nil) Text for contains filter.
     # @option opts [Hash] :filter_generic_keys ({}) Property/value pairs for equality filter.
@@ -48,7 +47,7 @@ module Api
           {
               error_links: [], error_details: nil,
               order_by: nil, direction: nil,
-              page: nil, items: nil, count: nil, total: nil,
+              page: nil, items: nil, total: nil,
               filter_text: nil, filter_generic_keys: {}
           })
 
@@ -92,45 +91,23 @@ module Api
       end
 
       # paging: count, total
-      if !opts[:count].blank? && !opts[:total].blank?
+      unless opts[:total].blank?
         result[:meta][:paging] = {} unless result[:meta].include?(:paging)
-        result[:meta][:paging][:count] = opts[:count]
         result[:meta][:paging][:total] = opts[:total]
       end
 
       # max page
-      max_page = nil
       if !opts[:total].blank? && !opts[:items].blank?
-        max_page = result[:meta][:paging][:max_page] = (opts[:total].to_f / opts[:items].to_f).ceil
+        max_page = (opts[:total].to_f / opts[:items].to_f).ceil
+        opts[:max_page] = max_page
+        result[:meta][:paging][:max_page] = max_page
       end
 
       # paging: next/prev links
       if result[:meta].include?(:paging)
-        controller = opts[:controller]
-        action = opts[:action]
-
-        current_link = paging_link(
-            controller, action,
-            opts[:page], opts[:items],
-            opts[:filter_text], opts[:filter_generic_keys],
-            opts[:additional_params])
-
-        previous_link = paging_link(
-            controller, action,
-            restrict_to_bounds(opts[:page] - 1),
-            opts[:items],
-            opts[:filter_text],
-            opts[:filter_generic_keys],
-            opts[:additional_params]
-        )
-        next_link = paging_link(
-            controller, action,
-            restrict_to_bounds(opts[:page] + 1, 1, max_page),
-            opts[:items],
-            opts[:filter_text],
-            opts[:filter_generic_keys],
-            opts[:additional_params]
-        )
+        current_link = paging_link(opts, 0)
+        previous_link = paging_link(opts, -1)
+        next_link = paging_link(opts, 1)
 
         result[:meta][:paging][:current] = current_link
         result[:meta][:paging][:previous] = previous_link == current_link ? nil : previous_link
@@ -167,12 +144,7 @@ module Api
     # @param [Hash] filter_settings
     # @return [ActiveRecord::Relation] query
     def response_index(params, query, model, filter_settings)
-      filter_query = Filter::Query.new(params, query, model, filter_settings)
-
-      # query without paging to get total
-      new_query = filter_query.query_without_filter_paging_sorting
-
-      add_paging_and_sorting(new_query, filter_settings, filter_query)
+      response(params, query, model, filter_settings)
     end
 
     # Create and execute a query based on a filter request.
@@ -183,20 +155,11 @@ module Api
     # @param [Symbol] status_symbol Response status.
     # @return [Hash] api response
     def response_filter(params, query, model, filter_settings, status_symbol = :ok)
-      filter_query = Filter::Query.new(params, query, model, filter_settings)
-
-      # query without paging to get total
-      new_query = filter_query.query_without_paging_sorting
-
-      paged_sorted_query, opts = add_paging_and_sorting(new_query, filter_settings, filter_query)
+      paged_sorted_query, opts = response(params, query, model, filter_settings)
 
       # build response data
-      data = paged_sorted_query.all
+      data = paged_sorted_query
 
-      # build complete api response
-      opts[:filter] = filter_query.filter unless filter_query.filter.blank?
-      opts[:projection] = filter_query.projection unless filter_query.projection.blank?
-      opts[:additional_params] = params.except(model.to_s.underscore.to_sym, :filter, :projection, :action, :controller, :format)
       result = build(status_symbol, data, opts)
 
       # return result
@@ -204,6 +167,29 @@ module Api
     end
 
     private
+
+    # Create and execute a query based on a filter request.
+    # @param [Hash] params
+    # @param [ActiveRecord::Relation] query
+    # @param [ActiveRecord::Base] model
+    # @param [Hash] filter_settings
+    # @return [Array] query, options
+    def response(params, query, model, filter_settings)
+      filter_query = Filter::Query.new(params, query, model, filter_settings)
+
+      # query without paging to get total
+      new_query = filter_query.query_without_paging_sorting
+
+      paged_sorted_query, opts = add_paging_and_sorting(new_query, filter_settings, filter_query)
+
+
+      # build complete api response
+      opts[:filter] = filter_query.filter unless filter_query.filter.blank?
+      opts[:projection] = filter_query.projection unless filter_query.projection.blank?
+      opts[:additional_params] = params.except(model.to_s.underscore.to_sym, :filter, :projection, :action, :controller, :format, :paging, :sorting)
+
+      [paged_sorted_query, opts]
+    end
 
     def add_paging_and_sorting(new_query, filter_settings, filter_query)
       # basic options
@@ -223,14 +209,10 @@ module Api
         # add paging
         new_query = filter_query.query_paging(new_query)
 
-        # execute a count for this page only
-        count = new_query.size
-
         # update options
         opts.merge!(
             page: filter_query.paging[:page],
             items: filter_query.paging[:items],
-            count: count,
             total: total
         )
       end
@@ -273,31 +255,53 @@ module Api
       ((float = Float(v)) && (float % 1.0 == 0) ? float.to_i : float) rescue v
     end
 
-    # Create paging link for an api response.
-    # @param [Symbol] controller
-    # @param [Symbol] action
-    # @param [Integer] page
-    # @param [Integer] items
-    # @param [String] filter_text
-    # @param [Hash] filter_generic_keys
-    # @param [Hash] additional_params
-    # @return [string] paging link
-    def paging_link(controller, action, page = nil, items = nil, filter_text = nil, filter_generic_keys = {}, additional_params = {})
-      additional_info = {}
-      additional_info[:controller] = controller unless controller.blank?
-      additional_info[:action] = action unless action.blank?
-      additional_info[:page] = page unless page.blank?
-      additional_info[:items] = items unless items.blank?
-      additional_info[:filter_partial_match] = filter_text unless filter_text.blank?
-      additional_info.merge!(additional_params) unless additional_params.blank?
+    # @param [Hash] opts the options for additional information.
+    # @option opts [Symbol] :controller (nil) Controller for paging links.
+    # @option opts [Symbol] :action (nil) Action for paging links.
+    # @option opts [Integer] :page (nil) Page number when paging.
+    # @option opts [Integer] :items (nil) Number of items per page when paging.
+    # @option opts [String] :filter_text (nil) Text for contains filter.
+    # @option opts [Hash] :filter_generic_keys ({}) Property/value pairs for equality filter.
+    # @option opts [Hash] :additional_params ({}) Additional property/value pairs.
+    # @param [Integer] page_offset
+    def paging_link(opts, page_offset)
+
+      controller = opts[:controller]
+      action = opts[:action]
+
+      page = opts[:page]
+      items = opts[:items]
+      max_page = opts[:max_page]
+      page = restrict_to_bounds(opts[:page] + page_offset, 1, max_page)
+
+      disable_paging = opts[:disable_paging]
+
+      filter_text = opts[:filter_text]
+      filter_generic_keys = opts[:filter_generic_keys]
+      additional_params = opts[:additional_params]
+
+      order_by = opts[:order_by]
+      direction = opts[:direction]
+
+      link_params = {}
+      link_params[:controller] = controller unless controller.blank?
+      link_params[:action] = action unless action.blank?
+      link_params[:page] = page unless page.blank?
+      link_params[:items] = items unless items.blank?
+      link_params[:disable_paging] = disable_paging unless disable_paging.blank?
+      link_params[:filter_partial_match] = filter_text unless filter_text.blank?
+      link_params[:order_by] = order_by unless order_by.blank?
+      link_params[:direction] = direction unless direction.blank?
+      link_params.merge!(additional_params) unless additional_params.blank?
 
       unless filter_generic_keys.blank?
         filter_generic_keys.each do |key, value|
-          additional_info[key] = value
+          link_params[('filter_' + key.to_s).to_sym] = value
         end
       end
 
-      url_helpers.url_for(additional_info)
+
+      url_helpers.url_for(link_params)
     end
 
     # Get error links hash.

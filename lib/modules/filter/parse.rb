@@ -13,36 +13,48 @@ module Filter
     # @param [Hash] params
     # @param [Integer] default_page
     # @param [Integer] default_items
+    # @param [Integer] max_items
     # @return [Hash] Paging parameters
-    def parse_paging(params, default_page, default_items)
+    def parse_paging(params, default_page, default_items, max_items)
       page, items, offset, limit = nil
 
       # qsp
       page = params[:page]
       items = params[:items]
+      disable_paging = params[:disable_paging]
 
       # POST body
       page = params[:paging][:page] if page.blank? && !params[:paging].blank?
       items = params[:paging][:items] if items.blank? && !params[:paging].blank?
+      disable_paging = params[:paging][:disable_paging] if disable_paging.blank? && !params[:paging].blank?
 
-      # if page or items is set, set the other to default
+      # page and items are mutually exclusive with disable_paging
+      fail CustomErrors::UnprocessableEntityError, 'Page and items are mutually exclusive with disable_paging' if (!page.blank? || !items.blank?) && !disable_paging.blank?
+
+      # set defaults if no setting was found
       page = default_page if page.blank?
       items = default_items if items.blank?
 
-      # calculate offset if able
-      offset = (page - 1) * items
-      limit = items
-      #page = (values.offset / values.limit) + 1
-
       # ensure integer
-      offset = offset.to_i
-      limit = limit.to_i
       page = page.to_i
       items = items.to_i
 
-      # will always return offset, limit, page, items
-      # either all will be nil, or all will be set
-      {offset: offset, limit: limit, page: page, items: items}
+      # ensure items is always less than max_items
+      fail CustomErrors::UnprocessableEntityError, "Number of items per page requested #{items} exceeded maximum #{max_items}." if items > max_items
+
+      # parse disable paging settings
+      if disable_paging == 'true' || disable_paging == true
+        disable_paging = true
+      else
+        disable_paging = false
+      end
+
+      # calculate offset and limit
+      offset = (page - 1) * items
+      limit = items
+
+      # will always set all options
+      {offset: offset, limit: limit, page: page, items: items, disable_paging: disable_paging}
     end
 
     # Parse sort parameters. Will use defaults if not specified.
@@ -57,7 +69,7 @@ module Filter
 
       # POST body
       order_by = params[:sorting][:order_by] if order_by.blank? && !params[:sorting].blank?
-      direction = params[:sorting][:direction] if order_by.blank? && !params[:sorting].blank?
+      direction = params[:sorting][:direction] if direction.blank? && !params[:sorting].blank?
 
       # set defaults if necessary
       order_by = default_order_by if order_by.blank?

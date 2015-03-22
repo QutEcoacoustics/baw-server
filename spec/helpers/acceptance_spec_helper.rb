@@ -1,3 +1,5 @@
+require 'helpers/compare_spec_helper'
+
 def document_media_requests
   # this is here so rspec_api_documentation can be generated
   # any request that returns content that cannot be json serialised (e.g. binary data)
@@ -45,9 +47,10 @@ end
 # @param [Hash] opts the options for additional information.
 # @option opts [String]  :expected_json_path     (nil) Expected json path.
 # @option opts [Boolean] :document               (true) Include in api spec documentation.
-# @option opts [Symbol]  :response_body_content  (nil) Content that must be in the response body.
-# @option opts [Symbol]  :invalid_content        (nil) Content that must not be in the response body.
-# @option opts [Symbol]  :data_item_count        (nil) Number of items in a json response
+# @option opts [String,Array]  :response_body_content  (nil) Content that must be in the response body.
+# @option opts [String,Array]  :invalid_content        (nil) Content that must not be in the response body.
+# @option opts [String,Array]  :invalid_data_content        (nil) Content that must not be in the response data.
+# @option opts [Integer]  :data_item_count        (nil) Number of items in a json response
 # @option opts [Hash]    :property_match         (nil) Properties to match
 # @option opts [Hash]    :file_exists            (nil) Check if file exists
 # @option opts [Class]   :expected_error_class   (nil) The expected error class
@@ -242,8 +245,9 @@ end
 # Check json response.
 # @param [Hash] opts the options for additional information.
 # @option opts [String] :expected_json_path    (nil) Expected json path.
-# @option opts [Symbol] :response_body_content (nil) Content that must be in the response body.
-# @option opts [Symbol] :invalid_content       (nil) Content that must not be in the response body.
+# @option opts [String,Array]  :response_body_content  (nil) Content that must be in the response body.
+# @option opts [String,Array]  :invalid_content        (nil) Content that must not be in the response body.
+# @option opts [String,Array]  :invalid_data_content        (nil) Content that must not be in the response data.
 # @option opts [Symbol] :data_item_count       (nil) Number of items in a json response
 # @option opts [Hash]   :property_match        (nil) Properties to match
 # @option opts [Regex]  :regex_match           (nil) Regex that must match content
@@ -254,6 +258,7 @@ def acceptance_checks_json(opts = {})
           expected_json_path: nil,
           response_body_content: nil,
           invalid_content: nil,
+          invalid_data_content: nil,
           data_item_count: nil,
           property_match: nil,
           regex_match: nil
@@ -290,7 +295,11 @@ def acceptance_checks_json(opts = {})
   expect(actual_response_parsed_size).to eq(opts[:data_item_count]), "#{message_prefix} count to be #{opts[:data_item_count]} but got #{actual_response_parsed_size} items in #{opts[:actual_response]} (type #{data_format})" unless opts[:data_item_count].blank?
 
   expect(opts[:actual_response]).to include(opts[:response_body_content]), "#{message_prefix} to find '#{opts[:response_body_content]}' in '#{opts[:actual_response]}'" unless opts[:response_body_content].blank?
-  expect(opts[:actual_response]).to_not include(opts[:invalid_content]), "#{message_prefix} not to find '#{opts[:response_body_content]}' in '#{opts[:actual_response]}'" unless opts[:invalid_content].blank?
+
+  check_invalid_content(opts, message_prefix)
+
+  check_invalid_data_content(opts, message_prefix, actual_response_parsed)
+
 
   unless opts[:expected_json_path].blank?
 
@@ -325,9 +334,7 @@ def acceptance_checks_json(opts = {})
     end
   end
 
-  unless opts[:regex_match].nil?
-    expect(opts[:actual_response]).to match(opts[:regex_match])
-  end
+  check_regex_match(opts)
 
 end
 

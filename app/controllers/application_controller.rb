@@ -59,6 +59,12 @@ class ApplicationController < ActionController::Base
   # based on https://github.com/theepan/userstamp/tree/bf05d832ee27a717ea9455d685c83ae2cfb80310
   around_action :set_then_reset_user_stamper
 
+  # update users last activity log every 10 minutes
+  before_action :set_last_seen_at,
+                if: Proc.new { user_signed_in? &&
+                    (session[:last_seen_at].blank? || Time.zone.at(session[:last_seen_at].to_i) < 10.minutes.ago)
+                    }
+
   protected
 
   def add_archived_at_header(model)
@@ -268,7 +274,7 @@ class ApplicationController < ActionController::Base
 
   def configure_permitted_parameters
     devise_parameter_sanitizer.for(:sign_up) { |u| u.permit(:user_name, :email, :password, :password_confirmation) }
-    devise_parameter_sanitizer.for(:account_update) { |u| u.permit(:user_name, :email, :password, :password_confirmation, :current_password, :image) }
+    devise_parameter_sanitizer.for(:account_update) { |u| u.permit(:user_name, :email, :password, :password_confirmation, :current_password, :image, :tzinfo_tz) }
   end
 
   private
@@ -473,6 +479,11 @@ class ApplicationController < ActionController::Base
     ensure
       User.stamper = nil
     end
+  end
+
+  def set_last_seen_at
+    current_user.update_attribute(:last_seen_at, Time.zone.now)
+    session[:last_seen_at] = Time.zone.now.to_i
   end
 
 end

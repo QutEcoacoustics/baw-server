@@ -17,9 +17,10 @@ module AWB
     # -- all .rb files in that directory are automatically loaded.
 
     # Custom directories with classes and modules you want to be autoloadable.
-    config.autoload_paths += %W(#{config.root}/lib/validators)
-    # add all dirs recursively from lib/modules
-    config.autoload_paths += Dir["#{config.root}/lib/modules/**/"]
+    config.autoload_paths << config.root.join('lib', 'validators')
+
+    # add /lib/modules and everything underneath it.
+    config.autoload_paths << config.root.join('lib', 'modules')
 
     # Custom setup
     # enable garbage collection profiling (reported in New Relic)
@@ -104,6 +105,11 @@ module AWB
     # config.time_zone = 'Central Time (US & Canada)'
     #config.time_zone - 'UTC'
     config.time_zone = 'Brisbane'
+
+    # config.active_record.default_timezone determines whether to use Time.local (if set to :local)
+    # or Time.utc (if set to :utc) when pulling dates and times from the database.
+    # The default is :utc.
+    #config.active_record.default_timezone = :utc
 
     # The default locale is :en and all translations from config/locales/*.rb,yml are auto loaded.
     config.i18n.load_path += Dir[Rails.root.join('config', 'locales', '**', '*.{rb,yml}')]

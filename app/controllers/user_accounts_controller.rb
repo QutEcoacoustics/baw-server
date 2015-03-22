@@ -5,7 +5,9 @@ class UserAccountsController < ApplicationController
   # GET /users
   # GET /users.json
   def index
-    order = 'CASE WHEN current_sign_in_at IS NULL THEN last_sign_in_at ELSE current_sign_in_at END DESC'
+    order = 'CASE WHEN last_seen_at IS NOT NULL THEN last_seen_at
+WHEN current_sign_in_at IS NOT NULL THEN current_sign_in_at
+ELSE last_sign_in_at END DESC'
     @users = User.order(order).all
 
     respond_to do |format|
@@ -92,7 +94,7 @@ class UserAccountsController < ApplicationController
 
   # GET /user_accounts/1/projects
   def projects
-    @user_projects = @user.accessible_projects_all.uniq
+    @user_projects = Access::Query.projects_accessible(@user).includes(:creator).references(:creator)
                          .order('projects.updated_at DESC')
                          .paginate(
                              page: paging_params[:page].blank? ? 1 : paging_params[:page],
@@ -106,7 +108,7 @@ class UserAccountsController < ApplicationController
 
   # GET /user_accounts/1/bookmarks
   def bookmarks
-    @user_bookmarks = @user.accessible_bookmarks.uniq
+    @user_bookmarks = Access::Query.bookmarks_modified(@user)
                           .order('bookmarks.updated_at DESC')
                           .paginate(
                               page: paging_params[:page].blank? ? 1 : paging_params[:page],
@@ -120,7 +122,7 @@ class UserAccountsController < ApplicationController
 
   # GET /user_accounts/1/audio_event_comments
   def audio_event_comments
-    @user_audio_event_comments = @user.created_audio_event_comments.includes(:audio_event).uniq
+    @user_audio_event_comments = Access::Query.audio_event_comments_modified(@user)
                                      .order('audio_event_comments.updated_at DESC')
                                      .paginate(
                                          page: paging_params[:page].blank? ? 1 : paging_params[:page],
@@ -133,7 +135,7 @@ class UserAccountsController < ApplicationController
   end
 
   def audio_events
-    @user_annotations = @user.accessible_audio_events.uniq
+    @user_annotations = Access::Query.audio_events_modified(@user).includes(:audio_recording).references(:audio_recordings)
                             .order('audio_events.updated_at DESC')
                             .paginate(
                                 page: paging_params[:page].blank? ? 1 : paging_params[:page],

@@ -6,11 +6,11 @@ class BookmarksController < ApplicationController
   def index
     @bookmarks, constructed_options = Settings.api_response.response_index(
         api_filter_params,
-        current_user.accessible_bookmarks,
+        Access::Query.bookmarks_modified(current_user),
         Bookmark,
         Bookmark.filter_settings
     )
-    respond_index
+    respond_index(constructed_options)
   end
 
   def show
@@ -45,7 +45,7 @@ class BookmarksController < ApplicationController
   def filter
     filter_response = Settings.api_response.response_filter(
         api_filter_params,
-        current_user.accessible_bookmarks,
+        Access::Query.bookmarks_modified(current_user),
         Bookmark,
         Bookmark.filter_settings
     )

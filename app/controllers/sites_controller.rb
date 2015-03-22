@@ -28,7 +28,7 @@ class SitesController < ApplicationController
             Site,
             Site.filter_settings
         )
-        respond_index
+        respond_index(constructed_options)
       }
     end
   end
@@ -205,7 +205,7 @@ ORDER BY s.name")
 
     site_hash = {}
 
-    site_hash[:project_ids] = Site.where(id: site.id).first.projects.pluck(:id)
+    site_hash[:project_ids] = Site.find(site.id).projects.pluck(:id)
     site_hash[:location_obfuscated] = site.location_obfuscated
     site_hash[:custom_latitude] = site.latitude
     site_hash[:custom_longitude] = site.longitude
@@ -214,17 +214,11 @@ ORDER BY s.name")
   end
 
   def get_user_sites
-    if current_user.has_role? :admin
-      sites = Site.order('lower(name) ASC')
-    else
-      sites = current_user.accessible_sites
-    end
-
-    sites
+    Access::Query.sites(current_user, Access::Core.levels_allow).order('lower(sites.name) ASC')
   end
 
   def site_params
-    params.require(:site).permit(:name, :latitude, :longitude, :description, :image, :notes)
+    params.require(:site).permit(:name, :latitude, :longitude, :description, :image, :notes, :tzinfo_tz)
   end
 
   def site_show_params

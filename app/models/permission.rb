@@ -5,7 +5,7 @@ class Permission < ActiveRecord::Base
   include UserChange
 
   belongs_to :project, inverse_of: :permissions
-  belongs_to :user
+  belongs_to :user, inverse_of: :permissions
   belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_permissions
   belongs_to :updater, class_name: 'User', foreign_key: :updater_id, inverse_of: :updated_permissions
 
@@ -19,7 +19,7 @@ class Permission < ActiveRecord::Base
   validates :creator, existence: true
 
   # attribute validations
-  validates_uniqueness_of :level, scope: [:user_id, :project_id, :level]
+  validates_uniqueness_of :level, scope: [:user_id, :project_id]
   validates_presence_of :level, :user, :creator, :project
 
   # Define filter api settings
