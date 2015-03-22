@@ -77,6 +77,8 @@ class AudioRecording < ActiveRecord::Base
   scope :tag_types, lambda { |tag_types| includes(:tags).where('tags.type_of_tag' => tag_types) }
   scope :tag_text, lambda { |tag_text| includes(:tags).where(Tag.arel_table[:text].matches("%#{tag_text}%")) }
 
+  scope :order_by_absolute_end_desc, lambda { order('recorded_date + CAST(duration_seconds || \' seconds\' as interval) DESC')}
+
   # Check if the original file for this audio recording currently exists.
   def original_file_exists?
     self.original_file_paths.length > 0

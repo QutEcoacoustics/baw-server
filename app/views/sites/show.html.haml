@@ -18,10 +18,15 @@
         This site does not contain any audio recordings.
     - else
       - duration_sum = @site.audio_recordings.sum(:duration_seconds)
-      - recorded_min = @site.audio_recordings.minimum(:recorded_date)
+
+      - record_min = @site.audio_recordings.order(recorded_date: :asc).first
+      - recorded_min = record_min.recorded_date
       - recorded_min = recorded_min.in_time_zone(@site.rails_tz) unless @site.rails_tz.blank?
-      - recorded_max = @site.audio_recordings.maximum(:recorded_date)
+
+      - record_max = @site.audio_recordings.order('recorded_date + CAST(duration_seconds || \' seconds\' as interval) DESC').first
+      - recorded_max = record_max.recorded_date.advance(seconds: record_max.duration_seconds)
       - recorded_max = recorded_max.in_time_zone(@site.rails_tz) unless @site.rails_tz.blank?
+
       - recorded_diff = recorded_max - recorded_min
       %p
         This site contains recordings from #{recorded_min.to_formatted_s(:readable_full_without_seconds)}
