@@ -315,6 +315,13 @@ describe Filter::Query do
       }.to raise_error(CustomErrors::FilterArgumentError, 'Array values cannot be hashes.')
     end
 
+    it 'occurs for an invalid range filter' do
+      filter_params = {"filter"=>{"durationSeconds"=>{"inRange"=>"(5,6)"}}}
+      expect {
+        create_filter(filter_params).query_full
+      }.to raise_error(CustomErrors::FilterArgumentError, "Range filter must be {'from': 'value', 'to': 'value'} or {'interval': 'value'} got (5,6)")
+    end
+
   end
 
   context 'projection' do
@@ -791,6 +798,7 @@ LIMIT25OFFSET0"
       expect(filter_query.query_full.to_sql.gsub(/\s+/, '')).to eq(expected_sql.gsub(/\s+/, ''))
 
     end
+
   end
 
 end

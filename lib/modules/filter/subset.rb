@@ -185,6 +185,8 @@ module Filter
     # @param [Hash] hash
     # @return [Arel::Nodes::Node] condition
     def compose_range_options_node(node, hash)
+      fail CustomErrors::FilterArgumentError.new("Range filter must be {'from': 'value', 'to': 'value'} or {'interval': 'value'} got #{hash}") unless hash.is_a?(Hash)
+
       from = hash[:from]
       to = hash[:to]
       interval = hash[:interval]
