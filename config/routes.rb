@@ -247,7 +247,6 @@ Rails.application.routes.draw do
 
   # API audio_event create
   resources :audio_events, only: [], defaults: {format: 'json'} do
-
     resources :audio_event_comments, except: [:edit], defaults: {format: 'json'}, path: :comments, as: :comments
   end
 

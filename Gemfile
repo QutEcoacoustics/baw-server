@@ -115,7 +115,7 @@ require 'rbconfig'
 # MONITORING
 # -------------------------------------
 gem 'exception_notification', '~> 4.0.1'
-gem 'newrelic_rpm', '~> 3.10.0'
+gem 'newrelic_rpm', '~> 3.11.0'
 
 # Documentation & UI
 # -------------------------------------
@@ -133,7 +133,7 @@ gem 'rack-rewrite', '~> 1.5.1'
 # ------------------------------------
 gem 'resque', '~> 1.25.2'
 gem 'resque-job-stats', git: 'https://github.com/echannel/resque-job-stats.git', branch: :master, ref: '8932c036ae'
-gem 'resque-status', '~> 0.4.3'
+gem 'resque-status', '~> 0.5.0'
 # set to a specific commit when releasing to master branch
 gem 'baw-workers', git: 'https://github.com/QutBioacoustics/baw-workers.git', branch: :master, ref: '9b51d7a82a'
 

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+ - 2015-03-22
+    - Removed audio event library endpoint [#128](https://github.com/QutBioacoustics/baw-server/issues/128)
+    - Added ability to filter by calculated fields
+
  - 2015-03-17
     - Enhancement: filter api now supports filtering by neighbouring models [#176](https://github.com/QutBioacoustics/baw-server/issues/176)
 
