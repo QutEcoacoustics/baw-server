@@ -12,15 +12,11 @@
 //
 //= require jquery
 //= require jquery_ujs
-//= require twitter/bootstrap
-//= require twitter-bootstrap-extras/bootstrap-rowlink
-//= require bootstrap-timepicker
-//= require bootstrap-datepicker
 //= require gmaps4rails/gmaps4rails.base
 //= require gmaps4rails/gmaps4rails.googlemaps
 //= require moment-with-locales.min
 //= require moment-timezone-with-data.min
-//= require bootstrap
+//= require bootstrap-sprockets
 //= require shared
 //= require public
 //= require functions

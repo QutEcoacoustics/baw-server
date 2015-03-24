@@ -53,18 +53,12 @@ gem 'breadcrumbs_on_rails', '~> 2.3.0'
 # kept below version 2 due to huge breaking changes
 gem 'gmaps4rails', '< 2'
 
-# https://github.com/seyhunak/twitter-bootstrap-rails
-# huge changes since last release (2.2.8 in Aug 2013), and not sure about rails 3.2 vs 4 support.
-# used these commands to get lists of commits, then compared the commits to find the most recent matching commit
-# git grep --full-name --name-only 'bootstrap-affix.js v2.3.2' $(git rev-list --all) > tbsr-2.3.2-find.txt
-# git grep --full-name --name-only '.fa-play' $(git rev-list --all) > font-awesome-find.txt
+# Boostrap UI
+gem 'bootstrap-sass', '~> 3.3.4'
+# for sass variables: http://getbootstrap.com/customize/#less-variables
+# sprockets-rails gem is included via rails dependency
+gem 'font-awesome-sass', '~> 4.3.0'
 
-# Don't update this, as site still uses bootstrap v2. Need to update this when bootstrap is updated.
-# https://github.com/seyhunak/twitter-bootstrap-rails/tree/38476dbd7f9a99179388bffb101826d844029949
-gem 'twitter-bootstrap-rails', git: 'https://github.com/seyhunak/twitter-bootstrap-rails.git', branch: :master, ref: '38476dbd7f'
-
-gem 'bootstrap-timepicker-rails', '~> 0.1.3'
-gem 'bootstrap-datepicker-rails', '~> 1.3.1.1'
 # for rails 3, 4
 gem 'will_paginate', '~> 3.0.7'
 gem 'dotiw', git: 'https://github.com/radar/dotiw.git', branch: :master, ref: '89d936adc6'
