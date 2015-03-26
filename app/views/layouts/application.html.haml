@@ -23,12 +23,13 @@
 
     .container
 
-      .row-fluid
-        .span2
+      .row
+        .col-md-2
           = yield :left_sidebar
-        .span8
-          %ol.breadcrumb
-            = render_breadcrumbs tag: :li, separator: ''
+        .col-md-8
+          - if breadcrumbs.size > 0
+            %ol.breadcrumb
+              = render_breadcrumbs tag: :li, separator: ''
           -#= bootstrap_flash
 
           - unless current_user.blank?
@@ -38,9 +39,9 @@
                 = t 'devise.failure.unconfirmed'
                 = link_to 'Resend confirmation email', new_user_confirmation_path
 
-          .row-fluid
+          .row
             = yield
-        .span2
+        .col-md-2
           = yield :right_sidebar
     
     %footer
