@@ -1,10 +1,34 @@
 %h1 Projects
 
-- @projects.each_slice(2) do |projects|
-  %ul.thumbnails
-    .row-fluid
-      - projects.each do |project|
-        = render partial: 'projects/project_thumb_large', locals: {project: project}
+- @projects.each do |project|
+  .media
+    .media-left
+      %a{href: project_path(project)}
+        %img.media-object{src: project.image.url(:span2), alt: project.name}/
+    .media-body
+      %h4.media-heading
+        %a{href: project_path(project)}= project.name
+      %p= truncate(project.description, length: 180, separator: ' ')
+      %p.text-right
+        %a.btn.btn-default{role: 'button', href: project_path(project)}
+          %i.fa.fa-info-circle
+          Details
+        %a.btn.btn-default{role: 'button', href: make_visualise_path(project)}
+          %i.fa.fa-eye
+          Visualise
+        - if Access::Check.can?(current_user, :owner, project)
+          %a.btn.btn-default{role: 'button', href: project_permissions_path(project), title: 'You are an owner', data: {toggle:'tooltip',  placement: 'top'}}
+            %i.fa.fa-unlock
+            Access
+        - elsif Access::Check.can?(current_user, :writer, project)
+          %a.btn.btn-default{role: 'button', href: project_path(project), title: 'You have read & write access', data: {toggle:'tooltip',  placement: 'top'}}
+            %i.fa.fa-unlock
+            Access
+        - elsif Access::Check.can?(current_user, :reader, project)
+          %a.btn.btn-default{role: 'button', href: project_path(project), title: 'You have read only access', data: {toggle:'tooltip',  placement: 'top'}}
+            %i.fa.fa-lock
+            Access
+
 - if @projects.empty?
   %p
     You do not have access to any projects. Try
