@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+ - 2015-03-28
+    - Many to many associations will now include the ids or full information from the join table [#181](https://github.com/QutBioacoustics/baw-server/issues/181)
+    - Enabled CSRF protection for API
+
 ## [Release 0.14.0](https://github.com/QutBioacoustics/baw-server/releases/tag/0.14.0) (2015-03-22)
 
  - 2015-03-22
