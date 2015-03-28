@@ -79,5 +79,18 @@ module Api
       }
     end
 
+    # CSRF protection is enabled for API.
+    # Set CSRF token into a cookie only when CSRF protection is enabled and user is logged in.
+    # cookies can only be accessed by js from the same origin (protocol, host and port) as the response.
+    # This enforces login via the UI only, since requests without a logged in user won't have access to the CSRF cookie.
+    # http://stackoverflow.com/questions/14734243/rails-csrf-protection-angular-js-protect-from-forgery-makes-me-to-log-out-on
+    # http://stackoverflow.com/questions/7600347/rails-api-design-without-disabling-csrf-protection
+    def set_csrf_cookie
+      csrf_cookie_key = 'XSRF-TOKEN'
+      if protect_against_forgery? && current_user
+        cookies[csrf_cookie_key] = form_authenticity_token
+      end
+    end
+
   end
 end

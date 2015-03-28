@@ -27,6 +27,7 @@ class ApplicationController < ActionController::Base
   rescue_from ActiveRecord::RecordNotFound, with: :record_not_found_response
   rescue_from ActiveRecord::RecordNotUnique, with: :record_not_unique_response
   rescue_from ActionController::BadRequest, with: :bad_request_response
+  rescue_from ActionController::InvalidAuthenticityToken, with: :invalid_csrf_response
 
   # Custom errors - these use the message in the error
   # RoutingArgumentError - error handling for routes that take a combination of attributes
@@ -51,9 +52,7 @@ class ApplicationController < ActionController::Base
   # For APIs, you may want to use :null_session instead.
   protect_from_forgery with: :exception
 
-  skip_before_action :verify_authenticity_token, if: :json_request?
-
-  after_action :set_csrf_cookie_for_ng, :resource_representation_caching_fixes
+  after_action :set_csrf_cookie, :resource_representation_caching_fixes
 
   # set and reset user stamper for each request
   # based on https://github.com/theepan/userstamp/tree/bf05d832ee27a717ea9455d685c83ae2cfb80310
@@ -81,24 +80,11 @@ class ApplicationController < ActionController::Base
     request.format && request.format.json?
   end
 
-  # http://stackoverflow.com/questions/14734243/rails-csrf-protection-angular-js-protect-from-forgery-makes-me-to-log-out-on
-  def set_csrf_cookie_for_ng
-    csrf_cookie_key = 'XSRF-TOKEN'
-    if request.format && request.format.json?
-      cookies[csrf_cookie_key] = form_authenticity_token if protect_against_forgery?
-    end
-  end
-
-  # http://stackoverflow.com/questions/14734243/rails-csrf-protection-angular-js-protect-from-forgery-makes-me-to-log-out-on
-  # cookies can only be accessed by js from the same origin (protocol, host and port) as the response.
-  # WARNING: disable csrf check for json for now.
+  # CSRF protection is enabled for API.
+  # This enforces login via the UI only, since requests without a logged in user won't have access to the CSRF cookie.
   def verified_request?
-    if request.format && request.format.json?
-      true
-    else
-      csrf_header_key = 'X-XSRF-TOKEN'
-      super || form_authenticity_token == request.headers[csrf_header_key]
-    end
+    csrf_header_key = 'X-XSRF-TOKEN'
+    super || valid_authenticity_token?(session, request.headers[csrf_header_key])
   end
 
   # from http://stackoverflow.com/a/94626
@@ -256,12 +242,6 @@ class ApplicationController < ActionController::Base
     end
   end
 
-  def render_api_response(content, status_symbol = :ok)
-    respond_to do |format|
-      format.all { render json: content, status: status_symbol, content_type: 'application/json' }
-    end
-  end
-
   def get_redirect
     if !request.env['HTTP_REFERER'].blank? and request.env['HTTP_REFERER'] != request.env['REQUEST_URI']
       redirect_target = :back
@@ -358,6 +338,15 @@ class ApplicationController < ActionController::Base
         'The request was not valid.',
         error,
         'bad_request_response',
+    )
+  end
+
+  def invalid_csrf_response(error)
+    render_error(
+        :bad_request,
+        'The request could not be verified.',
+        error,
+        'invalid_csrf_response',
     )
   end
 

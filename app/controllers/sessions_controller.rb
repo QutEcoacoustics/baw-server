@@ -13,8 +13,6 @@ class SessionsController < Devise::SessionsController
   # remove Devise's default destroy response
   skip_before_action :verify_signed_out_user
 
-  skip_before_action :verify_authenticity_token, if: :json_request?
-
   check_authorization except: [:new, :create]
 
   respond_to :json
