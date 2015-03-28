@@ -18,6 +18,7 @@ module Filter
       @filter_settings = filter_settings
 
       @valid_fields = filter_settings[:valid_fields].map(&:to_sym)
+      @render_fields = filter_settings[:render_fields].map(&:to_sym)
       @text_fields = filter_settings[:text_fields].map(&:to_sym)
       @valid_associations = filter_settings[:valid_associations]
       @field_mappings = filter_settings[:field_mappings]
@@ -68,7 +69,7 @@ module Filter
     # @param [Hash<Symbol>] value
     # @return [Array<Arel::Attributes::Attribute>] projections
     def projection(key, value)
-      fail CustomErrors::FilterArgumentError.new('Must not contain duplicate fields.', {"#{key}" => value}) if !value.blank? && value.uniq.length != value.length
+      fail CustomErrors::FilterArgumentError.new('Must not contain duplicate fields.', {key.to_s => value}) if !value.blank? && value.uniq.length != value.length
 
       columns = []
       case key
@@ -77,14 +78,15 @@ module Filter
           columns = value.map { |x| CleanParams.clean(x) }
         when :exclude
           fail CustomErrors::FilterArgumentError.new('Exclude must contain at least one field.') if value.blank?
-          columns = @valid_fields.reject { |item| value.include?(item) }.map { |x| CleanParams.clean(x) }
+          columns = @render_fields.reject { |item| value.include?(item) }.map { |x| CleanParams.clean(x) }
           fail CustomErrors::FilterArgumentError.new('Exclude must contain at least one field.') if columns.blank?
         else
           fail CustomErrors::FilterArgumentError.new("Unrecognised projection key #{key}.")
       end
 
+      # create projection that includes each column
       columns.map { |item|
-        project_column(@table, item, @valid_fields)
+        project_column(@table, item, @render_fields)
       }
     end
 
@@ -234,12 +236,12 @@ module Filter
             column_name = info[:field_name]
             valid_fields = info[:filter_settings][:valid_fields]
 
-            custom_condition = build_custom_condition(column_name)
+            custom_field = build_custom_field(column_name)
 
-            if custom_condition.blank?
+            if custom_field.blank?
               condition(filter_name, table, column_name, valid_fields, filter_value)
             else
-              condition_node(filter_name, custom_condition, filter_value)
+              condition_node(filter_name, custom_field, filter_value)
             end
 
           else
@@ -519,7 +521,7 @@ module Filter
       [[], false]
     end
 
-    def build_custom_condition(column_name)
+    def build_custom_field(column_name)
 
       mappings = {}
       unless @field_mappings.blank?

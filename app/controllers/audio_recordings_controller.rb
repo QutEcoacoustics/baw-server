@@ -139,13 +139,14 @@ class AudioRecordingsController < ApplicationController
   # POST /audio_recordings/filter.json
   # GET /audio_recordings/filter.json
   def filter
-    filter_response = Settings.api_response.response_filter(
+    authorize! :filter, AudioRecording
+    filter_response, opts = Settings.api_response.response_advanced(
         api_filter_params,
         Access::Query.audio_recordings(current_user, Access::Core.levels_allow),
         AudioRecording,
         AudioRecording.filter_settings
     )
-    render_api_response(filter_response)
+    respond_filter(filter_response, opts)
   end
 
   private

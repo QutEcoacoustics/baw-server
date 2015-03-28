@@ -157,11 +157,11 @@ class Ability
       can [:index, :new], Job
 
       # index permission is checked in the controller index action
-      can [:index], Permission
+      can [:index, :filter], Permission
 
       can [:index, :new, :filter], AudioRecording
       # any user can access the library, permissions are checked in the action
-      can [:index, :new, :library, :filter], AudioEvent
+      can [:index, :new, :filter], AudioEvent
       can [:index, :new, :filter], AudioEventComment
 
       can [:index, :new, :filter], Bookmark

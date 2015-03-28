@@ -13,13 +13,13 @@ class AudioEventCommentsController < ApplicationController
 # GET /audio_event_comments.json
   def index
     #@audio_event_comments = AudioEventComment.accessible_by
-    @audio_event_comments, constructed_options = Settings.api_response.response_index(
+    @audio_event_comments, opts = Settings.api_response.response_advanced(
         api_filter_params,
         get_audio_event_comments,
         AudioEventComment,
         AudioEventComment.filter_settings
     )
-    respond_index(constructed_options)
+    respond_index(opts)
   end
 
 # GET /audio_event_comments/1
@@ -83,13 +83,13 @@ class AudioEventCommentsController < ApplicationController
 
   def filter
     authorize! :filter, AudioEventComment
-    filter_response = Settings.api_response.response_filter(
+    filter_response, opts = Settings.api_response.response_advanced(
         api_filter_params,
         get_audio_event_comments,
         AudioEventComment,
         AudioEventComment.filter_settings
     )
-    render_api_response(filter_response)
+    respond_filter(filter_response, opts)
   end
 
   private

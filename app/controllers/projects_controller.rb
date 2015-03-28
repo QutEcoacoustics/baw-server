@@ -14,13 +14,13 @@ class ProjectsController < ApplicationController
         add_breadcrumb 'Projects', projects_path
       }
       format.json {
-        @projects, constructed_options = Settings.api_response.response_index(
+        @projects, opts = Settings.api_response.response_advanced(
             api_filter_params,
             get_user_projects,
             Project,
             Project.filter_settings
         )
-        respond_index(constructed_options)
+        respond_index(opts)
       }
     end
   end
@@ -192,14 +192,14 @@ class ProjectsController < ApplicationController
   # POST /sites/filter.json
   # GET /sites/filter.json
   def filter
-    filter_response = Settings.api_response.response_filter(
+    authorize! :filter, Project
+    filter_response, opts = Settings.api_response.response_advanced(
         api_filter_params,
         get_user_projects,
         Project,
         Project.filter_settings
     )
-
-    render_api_response(filter_response)
+    respond_filter(filter_response, opts)
   end
 
   private

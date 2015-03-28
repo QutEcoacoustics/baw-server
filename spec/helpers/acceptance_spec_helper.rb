@@ -294,7 +294,7 @@ def acceptance_checks_json(opts = {})
 
   expect(actual_response_parsed_size).to eq(opts[:data_item_count]), "#{message_prefix} count to be #{opts[:data_item_count]} but got #{actual_response_parsed_size} items in #{opts[:actual_response]} (type #{data_format})" unless opts[:data_item_count].blank?
 
-  expect(opts[:actual_response]).to include(opts[:response_body_content]), "#{message_prefix} to find '#{opts[:response_body_content]}' in '#{opts[:actual_response]}'" unless opts[:response_body_content].blank?
+  check_response_content(opts, message_prefix)
 
   check_invalid_content(opts, message_prefix)
 

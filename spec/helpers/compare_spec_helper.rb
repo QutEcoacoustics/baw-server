@@ -12,6 +12,24 @@ def check_regex_match(opts)
 
 end
 
+def check_response_content(opts, message_prefix)
+
+  actual = opts[:actual_response]
+  expected = opts[:response_body_content]
+
+  unless expected.blank?
+    if expected.respond_to?(:each)
+      expected.each do |expected_content_item|
+        expect(actual).to include(expected_content_item), "#{message_prefix} to find '#{expected_content_item}' in '#{actual}'"
+      end
+    else
+      expect(actual).to include(expected), "#{message_prefix} to find '#{expected}' in '#{actual}'"
+    end
+
+  end
+
+end
+
 def check_invalid_content(opts, message_prefix)
 
   actual = opts[:actual_response]

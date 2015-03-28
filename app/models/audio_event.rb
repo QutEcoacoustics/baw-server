@@ -60,6 +60,15 @@ class AudioEvent < ActiveRecord::Base
                         :is_reference,
                         :creator_id, :updated_at, :created_at],
         text_fields: [],
+        custom_fields: lambda { |audio_event, user|
+          audio_event_hash = {}
+
+          audio_event_hash[:taggings] = Tagging
+                                    .where(audio_event_id: audio_event.id)
+                                    .select(:id, :audio_event_id, :created_at, :updated_at, :creator_id, :updater_id)
+
+          [audio_event, audio_event_hash]
+        },
         controller: :audio_events,
         action: :filter,
         defaults: {

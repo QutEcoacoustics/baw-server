@@ -49,7 +49,7 @@ module Api
 
     def respond_index(opts = {})
       items = get_resource_plural.map { |item|
-        respond_modify(item)
+        Settings.api_response.prepare(item, current_user, opts)
       }
       built_response = Settings.api_response.build(:ok, items, opts)
       render json: built_response, status: :ok, layout: false
@@ -59,7 +59,7 @@ module Api
     def respond_show
       item_resource = get_resource
 
-      item = respond_modify(item_resource)
+      item = Settings.api_response.prepare(item_resource, current_user)
 
       built_response = Settings.api_response.build(:ok, item)
       render json: built_response, status: :ok, layout: false
@@ -68,25 +68,31 @@ module Api
     def respond_create_success(location = nil)
       item_resource = get_resource
 
-      item = respond_modify(item_resource)
+      item = Settings.api_response.prepare(item_resource, current_user)
 
       built_response = Settings.api_response.build(:created, item)
-      render json: built_response, status: :created, location: location.blank? ? get_resource : location, layout: false
+      render json: built_response, status: :created, location: location.blank? ? item_resource : location, layout: false
     end
 
     # used for create_fail and update_fail
     def respond_change_fail
       built_response = Settings.api_response.build(:unprocessable_entity, nil, {error_details: get_resource.errors})
-      render json: built_response, status: :unprocessable_entity
+      render json: built_response, status: :unprocessable_entity, layout: false
     end
 
     def respond_destroy
       built_response = Settings.api_response.build(:no_content, nil)
-      render json: built_response, status: :no_content
+      render json: built_response, status: :no_content, layout: false
     end
 
-    def respond_filter(content, status_symbol)
-      render json: content, status: status_symbol, content_type: 'application/json'
+    def respond_filter(content, opts = {})
+
+      items = content.map { |item|
+        Settings.api_response.prepare(item, current_user, opts)
+      }
+
+      built_response = Settings.api_response.build(:ok, items, opts)
+      render json: built_response, status: :ok, content_type: 'application/json', layout: false
     end
 
     def attributes_and_authorize(custom_params = nil)
@@ -103,18 +109,6 @@ module Api
 
     def do_authorize!
       authorize! action_name.to_sym, get_resource
-    end
-
-    # Allow extra fields to be added to response.
-    # @param [Object] item_resource
-    # @return [String] json
-    def respond_modify(item_resource)
-      extra_hash = {}
-      if defined?(api_custom_response) == 'method'
-        item_resource, extra_hash = api_custom_response(item_resource)
-      end
-      fields = item_resource.class.filter_settings[:render_fields]
-      item_resource.as_json(only: fields).merge(extra_hash)
     end
 
     def api_filter_params

@@ -585,6 +585,29 @@ resource 'AudioEvents' do
             'start_time_seconds' => {
                 'in' => ['5.2', '7', '100', '4']
             }
+        },
+        'projection' => {
+            'include' => ['id', 'start_time_seconds', 'audio_recording_id', 'creator_id']
+        }
+    }.to_json }
+    standard_request_options(:post, 'FILTER (as reader)', :ok,
+                             {
+                                 expected_json_path: 'data/0/start_time_seconds',
+                                 data_item_count: 1,
+                                 regex_match: /"taggings":\[\{"id":\d+,"audio_event_id":\d+,"created_at":"[^"]+","updated_at":"[^"]+","creator_id":\d+,"updater_id":null\}\]/,
+                                 response_body_content: "\"taggings\":[{\"",
+                                 invalid_content: "\"taggings\":[\"",
+                             })
+  end
+
+
+  post '/audio_events/filter' do
+    let(:authentication_token) { reader_token }
+    let(:raw_post) { {
+        'filter' => {
+            'start_time_seconds' => {
+                'in' => ['5.2', '7', '100', '4']
+            }
         }
     }.to_json }
     standard_request_options(:post, 'FILTER (no projection, as reader)', :ok,

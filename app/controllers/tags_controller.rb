@@ -44,14 +44,14 @@ class TagsController < ApplicationController
   # POST /sites/filter.json
   # GET /sites/filter.json
   def filter
-    filter_response = Settings.api_response.response_filter(
+    authorize! :filter, Tag
+    filter_response, opts = Settings.api_response.response_advanced(
         api_filter_params,
         Tag.all,
         Tag,
         Tag.filter_settings
     )
-
-    render_api_response(filter_response)
+    respond_filter(filter_response, opts)
   end
 
   private
