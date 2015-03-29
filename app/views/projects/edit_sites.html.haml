@@ -1,0 +1,43 @@
+%h1 Choose sites for #{@project.name}
+
+%p
+  Select the sites to be part of this project, and click 'Update' at the bottom of this page.
+%p
+  Only the selected sites will be part of this project.
+
+- project_site_ids = @project.sites.pluck(:id)
+
+= simple_form_for @project, url: update_sites_project_path, method: :patch, html: {class: 'form-horizontal', :multipart => true } do |f|
+  = f.error_notification
+
+  .form-inputs
+    %table.table.table-striped
+      %thead
+        %tr
+          %th
+          %th Site Id
+          %th Site Name
+          %th Projects
+          %th Recordings
+      %tbody
+        - @site_info.each do |site|
+          %tr
+            %td
+              = check_box_tag("project[site_ids][#{site['id']}]", site['name'], project_site_ids.include?(site['id'].to_i))
+            %td
+              = site['id']
+            %td
+              = site['name']
+            %td
+              = site['project_count']
+            %td
+              = site['audio_recording_count']
+
+  .form-actions
+    = f.button :submit
+
+- content_for :title, "Edit Sites for #{@project.name}"
+
+- content_for :left_sidebar do
+  = render layout: '/shared/left_sidebar', locals: {title: 'Projects'} do
+    %li= link_to 'Project', project_path(@project),  title: 'Back to project', data: {toggle: 'tooltip',  placement: 'right'}

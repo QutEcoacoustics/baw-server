@@ -176,6 +176,9 @@ Rails.application.routes.draw do
   resources :projects do
     member do
       post 'update_permissions'
+      get 'edit_sites'
+      put 'update_sites'
+      patch 'update_sites'
     end
     collection do
       get 'new_access_request'

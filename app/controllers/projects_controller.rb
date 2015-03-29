@@ -62,6 +62,19 @@ class ProjectsController < ApplicationController
     add_breadcrumb 'Edit'
   end
 
+  # GET /projects/1/edit_sites
+  def edit_sites
+    add_breadcrumb 'Projects', projects_path
+    add_breadcrumb @project.name, @project
+    add_breadcrumb 'Edit Sites'
+
+    @site_info = Site.connection.select_all("SELECT s.id, s.name,
+(SELECT count(*) FROM projects_sites ps WHERE s.id = ps.site_id) AS project_count,
+ (SELECT count(*) FROM audio_recordings ar WHERE s.id = ar.site_id) AS audio_recording_count
+FROM sites s
+ORDER BY project_count ASC, s.name ASC")
+  end
+
   # POST /projects
   # POST /projects.json
   def create
@@ -96,6 +109,30 @@ class ProjectsController < ApplicationController
         format.json { respond_change_fail }
       end
     end
+  end
+
+  # PUT /project/:id/update_sites
+  # PATCH /project/:id/update_sites
+  def update_sites
+
+    old_site_ids = @project.sites.pluck(:id).map(&:to_i)
+    new_site_ids = edit_sites_params[:site_ids].keys.map(&:to_i)
+
+    changed = old_site_ids != new_site_ids
+
+    if changed
+      # to update project / site asociations:
+      # first, delete all associations for this project
+      # then add all specified associations
+
+      @project.site_ids = new_site_ids
+      @project.save!
+
+      redirect_to edit_sites_project_path(@project), notice: 'Sites for this project were updated.'
+    else
+      redirect_to edit_sites_project_path(@project), notice: 'Sites for this project were unchanged.'
+    end
+
   end
 
   # POST /update_permissions
@@ -218,6 +255,10 @@ class ProjectsController < ApplicationController
 
   def update_params
     params.require(:user_ids).permit!
+  end
+
+  def edit_sites_params
+    params.require(:project).permit!
   end
 
 end
