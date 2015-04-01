@@ -299,7 +299,7 @@ Rails.application.routes.draw do
   get '/ethics_statement' => 'public#ethics_statement'
   get '/credits' => 'public#credits'
 
-  # resque front end
+  # resque front end - admin only
   authenticate :user, lambda { |u| Access::Check.is_admin?(u) } do
     # add stats tab to web interface from resque-job-stats
     require 'resque-job-stats/server'
@@ -308,6 +308,9 @@ Rails.application.routes.draw do
     # enable resque web interface
     mount Resque::Server.new, at: '/job_queue_status'
   end
+
+  # Tag management - admin only
+  resources :tags_management, except: [:show]
 
   # provide access to API documentation
   mount Raddocs::App => '/doc'
@@ -321,7 +324,7 @@ Rails.application.routes.draw do
     match '/test_exceptions', to: 'errors#test_exceptions', via:  [:get, :head, :post, :put, :delete, :options, :trace, :patch]
   end
 
-  # for error pages
+  # for error pages - must be last
   match '*requested_route', to: 'errors#route_error', via: [:get, :head, :post, :put, :delete, :options, :trace, :patch]
 
 end

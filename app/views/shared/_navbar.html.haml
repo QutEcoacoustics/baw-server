@@ -14,9 +14,10 @@
       - if Access::Check.is_admin?(current_user)
         = drop_down "#{current_user.user_name}" do
           = menu_item 'Profile', my_account_path
-          = menu_item 'Scripts', scripts_path  if can? :manage, Script
-          = menu_item 'Orphan Sites', sites_orphans_path  if Access::Check.is_admin?(current_user)
-          = menu_item 'User List', user_accounts_path if can? :index, User
+          = menu_item 'Scripts', scripts_path
+          = menu_item 'Orphan Sites', sites_orphans_path
+          = menu_item 'Tag List', tags_management_index_path
+          = menu_item 'User List', user_accounts_path
       - else
         = menu_item "#{current_user.user_name}", my_account_path
       = menu_item 'Logout', destroy_user_session_path

@@ -33,7 +33,7 @@ class Tag < ActiveRecord::Base
   validates :is_taxanomic, inclusion: {in: [true, false]}
   validates :text, uniqueness: {case_sensitive: false}, presence: true
   validates :retired, inclusion: {in: [true, false]}
-  validates_presence_of :type_of_tag
+  validates :type_of_tag, presence: true
   validate :taxonomic_enforced
 
   # http://stackoverflow.com/questions/11569940/inclusion-validation-fails-when-provided-a-symbol-instead-of-a-string
