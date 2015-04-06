@@ -1,3 +1,5 @@
+require 'pathname'
+
 module BawWorkers
   module Storage
     # Provides access to analysis cache storage.
@@ -52,6 +54,25 @@ module BawWorkers
         second = opts[:uuid].downcase
 
         File.join(first, second)
+      end
+
+      # Extract information from a file name.
+      # @param [String] file_path
+      # @return [Hash] info
+      def parse_file_path(file_path)
+        path_parts = Pathname(file_path).each_filename.to_a
+
+        opts = {
+            uuid: path_parts[-3],
+            analysis_id: path_parts[-2],
+            result_file_name: path_parts[-1]
+        }
+
+        validate_uuid(opts)
+        validate_analysis_id(opts)
+        validate_result_file_name(opts)
+
+        opts
       end
 
     end

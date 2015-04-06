@@ -1,3 +1,5 @@
+require 'pathname'
+
 module BawWorkers
   module Storage
     # Provides access to dataset cache storage.
@@ -45,6 +47,28 @@ module BawWorkers
       def partial_path(opts = {})
         # no sub folders
         ''
+      end
+
+      # Extract information from a file name.
+      # @param [String] file_path
+      # @return [Hash] info
+      def parse_file_path(file_path)
+        file_name = File.basename(file_path)
+
+        saved_search_id, other = file_name.split('_')
+        dataset_id, format = other.split('.')
+
+        opts = {
+            saved_search_id: saved_search_id.to_i,
+            dataset_id: dataset_id.to_i,
+            format: format
+        }
+
+        validate_saved_search_id(opts)
+        validate_dataset_id(opts)
+        validate_format(opts)
+
+        opts
       end
 
     end

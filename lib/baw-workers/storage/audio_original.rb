@@ -64,6 +64,53 @@ module BawWorkers
         opts[:uuid][0, 2].downcase
       end
 
+      # Extract information from a file name.
+      # @param [String] file_path
+      # @return [Hash] info
+      def parse_file_path(file_path)
+
+        file_name = File.basename(file_path)
+        file_name_split = file_name.split('_')
+
+        datetime_with_offset, original_format = file_name_split[1].split('.')
+
+        if datetime_with_offset.length == 11
+          # 120302-1505
+          date = Time.utc(
+              "20#{datetime_with_offset[0..1]}",
+              datetime_with_offset[2..3],
+              datetime_with_offset[4..5],
+              datetime_with_offset[7..8],
+              datetime_with_offset[9..10]
+          ).advance(hours: -10).in_time_zone
+        elsif datetime_with_offset.length == 16
+          # 20120302-050537Z
+          date = Time.utc(
+              datetime_with_offset[0..3],
+              datetime_with_offset[4..5],
+              datetime_with_offset[6..7],
+              datetime_with_offset[9..10],
+              datetime_with_offset[11..12],
+              datetime_with_offset[13..14],
+          ).in_time_zone
+        else
+          date = nil
+          fail ArgumentError, "Invalid file name date format: #{file_name}."
+        end
+
+        opts = {
+            uuid: file_name_split[0],
+            datetime_with_offset: date,
+            original_format: original_format
+        }
+
+        validate_uuid(opts)
+        validate_datetime(opts)
+        validate_original_format(opts)
+
+        opts
+      end
+
     end
   end
 end

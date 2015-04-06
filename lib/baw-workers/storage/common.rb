@@ -25,6 +25,7 @@ module BawWorkers
       # @param [Hash] opts
       # @return [Array<String>]
       def possible_paths(opts = {})
+        # file_names is implemented in each store.
         file_names(opts).map { |file_name| possible_paths_file(opts, file_name) }.flatten
       end
 
@@ -33,6 +34,7 @@ module BawWorkers
       # @param [String] file_name
       # @return [Array<String>]
       def possible_paths_file(opts = {}, file_name)
+        # partial_path is implemented in each store.
         @storage_paths.map { |path| File.join(path, partial_path(opts), file_name) }
       end
 
@@ -47,6 +49,7 @@ module BawWorkers
       # @param [Hash] opts
       # @return [Hash]
       def path_info(opts = {})
+        # file_names is implemented in each store.
         {
             file_names: file_names(opts),
             possible: possible_paths(opts),

@@ -109,4 +109,32 @@ describe BawWorkers::Storage::AudioOriginal do
       audio_original.file_name_10(new_opts)
     }.to raise_error(ArgumentError, /datetime_with_offset must be an ActiveSupport::TimeWithZone/)
   end
+
+  it 'parses a valid new file name correctly' do
+    path = audio_original.possible_paths_file(opts, original_file_name_new)
+
+    path_info = audio_original.parse_file_path(path[0])
+
+    expect(path.size).to eq 1
+    expect(path.first).to eq "./tmp/custom_temp_dir/_original_audio/54/5498633d-89a7-4b65-8f4a-96aa0c09c619_20120302-050537Z.mp3"
+
+    expect(path_info[:uuid]).to eq uuid
+    expect(path_info[:datetime_with_offset]).to eq datetime
+    expect(path_info[:original_format]).to eq original_format
+  end
+
+  it 'parses a valid old file name correctly' do
+    path = audio_original.possible_paths_file(opts, original_file_name_old)
+
+    path_info = audio_original.parse_file_path(path[0])
+
+    expect(path.size).to eq 1
+    expect(path.first).to eq "./tmp/custom_temp_dir/_original_audio/54/5498633d-89a7-4b65-8f4a-96aa0c09c619_120302-1505.mp3"
+
+    expect(path_info.keys.size).to eq 3
+    expect(path_info[:uuid]).to eq uuid
+    expect(path_info[:datetime_with_offset]).to eq datetime.change(sec: 0)
+    expect(path_info[:original_format]).to eq original_format
+  end
+
 end

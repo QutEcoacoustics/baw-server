@@ -60,6 +60,41 @@ module BawWorkers
         opts[:uuid][0, 2].downcase
       end
 
+      # Extract information from a file name.
+      # @param [String] file_path
+      # @return [Hash] info
+      def parse_file_path(file_path)
+
+        file_name = File.basename(file_path)
+        file_name_split = file_name.split('_')
+
+        colour, format = file_name_split[7].split('.')
+
+        opts = {
+            uuid: file_name_split[0],
+            start_offset: file_name_split[1].to_f,
+            end_offset: file_name_split[2].to_f,
+            channel: file_name_split[3].to_i,
+            sample_rate: file_name_split[4].to_i,
+            window: file_name_split[5].to_i,
+            window_function: file_name_split[6],
+            colour: colour,
+            format: format
+        }
+
+        validate_uuid(opts)
+        validate_start_offset(opts)
+        validate_end_offset(opts)
+        validate_channel(opts)
+        validate_sample_rate(opts)
+        validate_window(opts)
+        validate_window_function(opts)
+        validate_colour(opts)
+        validate_format(opts)
+
+        opts
+      end
+
     end
   end
 end

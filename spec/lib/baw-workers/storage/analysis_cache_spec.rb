@@ -81,4 +81,18 @@ describe BawWorkers::Storage::AnalysisCache do
     expect(analysis_cache.possible_paths_file(mod_opts, analysis_cache.file_name({result_file_name: result_file_name_invalid, analysis_id: analysis_id_invalid}))).to eq expected
   end
 
+  it 'parses a valid cache file name correctly' do
+    path = analysis_cache.possible_paths_file(opts, cached_analysis_file_name_given_parameters)
+
+    path_info = analysis_cache.parse_file_path(path[0])
+
+    expect(path.size).to eq 1
+    expect(path.first).to eq "./tmp/custom_temp_dir/_cached_analysis_jobs/54/5498633d-89a7-4b65-8f4a-96aa0c09c619/analysis_id_valid.-486NDHF/file_name_valid.4567menfASD-"
+
+    expect(path_info.keys.size).to eq 3
+    expect(path_info[:uuid]).to eq uuid
+    expect(path_info[:analysis_id]).to eq analysis_id
+    expect(path_info[:result_file_name]).to eq result_file_name
+  end
+
 end

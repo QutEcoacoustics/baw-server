@@ -52,6 +52,36 @@ module BawWorkers
         # prepend first two chars of uuid
         opts[:uuid][0, 2].downcase
       end
+
+      # Extract information from a file name.
+      # @param [String] file_path
+      # @return [Hash] info
+      def parse_file_path(file_path)
+
+        file_name = File.basename(file_path)
+        file_name_split = file_name.split('_')
+
+        sample_rate, format = file_name_split[4].split('.')
+
+        opts = {
+            uuid: file_name_split[0],
+            start_offset: file_name_split[1].to_f,
+            end_offset: file_name_split[2].to_f,
+            channel: file_name_split[3].to_i,
+            sample_rate: sample_rate.to_i,
+            format: format,
+        }
+
+        validate_uuid(opts)
+        validate_start_offset(opts)
+        validate_end_offset(opts)
+        validate_channel(opts)
+        validate_sample_rate(opts)
+        validate_format(opts)
+
+        opts
+      end
+
     end
   end
 end

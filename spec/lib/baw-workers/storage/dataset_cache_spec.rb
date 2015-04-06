@@ -36,4 +36,19 @@ describe BawWorkers::Storage::DatasetCache do
     expected = [File.join(BawWorkers::Settings.paths.cached_datasets[0], cached_dataset_file_name)]
     expect(dataset_cache.possible_paths(opts)).to eq expected
   end
+
+  it 'parses a valid cache file name correctly' do
+    path = dataset_cache.possible_paths_file(opts, cached_dataset_file_name)
+
+    path_info = dataset_cache.parse_file_path(path[0])
+
+    expect(path.size).to eq 1
+    expect(path.first).to eq "./tmp/custom_temp_dir/_cached_dataset/1_1.txt"
+
+    expect(path_info.keys.size).to eq 3
+    expect(path_info[:saved_search_id]).to eq saved_search_id
+    expect(path_info[:dataset_id]).to eq dataset_id
+    expect(path_info[:format]).to eq dataset_format
+  end
+
 end
