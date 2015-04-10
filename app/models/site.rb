@@ -167,6 +167,17 @@ class Site < ActiveRecord::Base
         valid_fields: [:id, :name, :description, :created_at, :updated_at, :project_ids],
         render_fields: [:id, :name, :description],
         text_fields: [:description, :name],
+        custom_fields: lambda { |site, user|
+            site.update_location_obfuscated(user)
+
+            site_hash = {}
+            site_hash[:project_ids] = Site.find(site.id).projects.pluck(:id)
+            site_hash[:location_obfuscated] = site.location_obfuscated
+            site_hash[:custom_latitude] = site.latitude
+            site_hash[:custom_longitude] = site.longitude
+
+            [site, site_hash]
+        },
         controller: :sites,
         action: :filter,
         defaults: {

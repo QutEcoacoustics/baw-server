@@ -1,0 +1,22 @@
+- action_new = params[:action] == 'new' || params[:action] == 'create'
+- action_edit = params[:action] == 'edit' || params[:action] == 'update'
+- method_new = :post
+- method_edit = :patch
+
+- if action_new
+  - url = tags_management_index_path
+  - method = method_new
+- elsif action_edit
+  - url = tags_management_path
+  - method = method_edit
+
+= simple_form_for(@tag, url: url, html: {class: 'form-horizontal', :multipart => true, method: method }) do |f|
+  = f.error_notification
+  .form-inputs
+    = f.input :text, required: true , autofocus: true
+    = f.input :is_taxanomic
+    = f.input :type_of_tag, required: true
+    = f.input :retired
+    = f.input :notes
+  .form-actions
+    = f.button :submit

@@ -29,7 +29,7 @@ gem 'activesupport-json_encoder', github: 'rails/activesupport-json_encoder'
 # UI HELPERS
 # -------------------------------------
 # Use SCSS for stylesheets
-gem 'sass-rails', '~> 5.0.1'
+gem 'sass-rails', '~> 5.0.3'
 # Use Uglifier as compressor for JavaScript assets
 gem 'uglifier', '>= 1.3.0'
 # Use CoffeeScript for .js.coffee assets and views
@@ -62,7 +62,7 @@ gem 'font-awesome-sass', '~> 4.3.0'
 # for rails 3, 4
 gem 'will_paginate', '~> 3.0.7'
 gem 'dotiw', git: 'https://github.com/radar/dotiw.git', branch: :master, ref: '89d936adc6'
-gem 'recaptcha', '~> 0.3.6',  require: 'recaptcha/rails'
+gem 'recaptcha', '~> 0.4.0',  require: 'recaptcha/rails'
 
 # for proper timezone support
 gem 'tzinfo', '~> 1.2.2'
@@ -94,9 +94,7 @@ gem 'jc-validates_timeliness', '~> 3.1.1'
 # No longer used - incorporated the gem's functionality directly.
 #gem 'userstamp', git: 'https://github.com/theepan/userstamp.git'
 
-# https://github.com/brainspec/enumerize
-# we need the changes since version 0.8.0. Reassess when there is a new release.
-gem 'enumerize', '~> 0.10.0'
+gem 'enumerize', '~> 0.11.0'
 
 gem 'uuidtools', '~> 2.1.5'
 gem 'acts_as_paranoid', git: 'https://github.com/ActsAsParanoid/acts_as_paranoid.git', branch: :master, ref: 'ddcd191517'
@@ -108,7 +106,7 @@ require 'rbconfig'
 
 # MONITORING
 # -------------------------------------
-gem 'exception_notification', '~> 4.0.1'
+gem 'exception_notification', '~> 4.1.0'
 gem 'newrelic_rpm', '~> 3.11.0'
 
 # Documentation & UI
@@ -139,7 +137,7 @@ group :development, :test do
   gem 'quiet_assets'
 
   # capistrano gems
-  gem 'capistrano', '~> 3.3.5'
+  gem 'capistrano', '~> 3.4.0'
   gem 'capistrano-bundler', '~> 1.1.3'
   gem 'capistrano-rvm', '~> 0.1.2'
   gem 'capistrano-rails', '~> 1.1.2'
@@ -198,8 +196,8 @@ group :development, :test do
   gem 'shoulda-matchers', '~> 2.8.0'
   gem 'launchy', '~> 2.4.3'
   gem 'json_spec', '~> 1.1.4'
-  gem 'database_cleaner', '1.3.0' # major bugs in v1.4.0, see https://github.com/DatabaseCleaner/database_cleaner/issues/317
-  gem 'webmock', '~> 1.20.4'
-  gem 'coveralls', '~> 0.7.3', require: false
+  gem 'database_cleaner', '1.4.1'
+  gem 'webmock', '~> 1.21.0'
+  gem 'coveralls', '~> 0.8.0', require: false
   gem 'codeclimate-test-reporter', '~> 0.4.5', require: nil
 end

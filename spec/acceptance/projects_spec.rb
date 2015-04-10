@@ -211,7 +211,10 @@ resource 'Projects' do
     let(:authentication_token) { reader_token }
     standard_request_options(:post, 'FILTER (as reader)', :ok, {
                                       expected_json_path: ['data/0/name', 'meta/projection/include'],
-                                      data_item_count: 1
+                                      data_item_count: 1,
+                                      regex_match: /"site_ids"\:\[[0-9]+\]/,
+                                      response_body_content: "\"site_ids\":[",
+                                      invalid_content: "\"site_ids\":[{\"id\":"
                                   })
   end
 

@@ -3,9 +3,9 @@ require 'csv'
 class AudioEventsController < ApplicationController
   include Api::ControllerHelper
 
-  load_and_authorize_resource :audio_recording, except: [:show, :library, :library_paged, :download, :filter]
-  load_and_authorize_resource :audio_event, through: :audio_recording, except: [:show, :library, :library_paged, :download, :filter]
-  skip_authorization_check only: [:show, :library, :library_paged]
+  load_and_authorize_resource :audio_recording, except: [:show, :download, :filter]
+  load_and_authorize_resource :audio_event, through: :audio_recording, except: [:show, :download, :filter]
+  skip_authorization_check only: [:show]
 
   # GET /audio_events
   # GET /audio_events.json
@@ -80,13 +80,13 @@ class AudioEventsController < ApplicationController
 
   def filter
     authorize! :filter, AudioEvent
-    filter_response = Settings.api_response.response_filter(
+    filter_response, opts = Settings.api_response.response_advanced(
         api_filter_params,
         Access::Query.audio_events(current_user, Access::Core.levels_allow),
         AudioEvent,
         AudioEvent.filter_settings
     )
-    render_api_response(filter_response)
+    respond_filter(filter_response, opts)
   end
 
   def download

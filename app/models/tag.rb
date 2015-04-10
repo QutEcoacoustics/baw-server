@@ -33,7 +33,7 @@ class Tag < ActiveRecord::Base
   validates :is_taxanomic, inclusion: {in: [true, false]}
   validates :text, uniqueness: {case_sensitive: false}, presence: true
   validates :retired, inclusion: {in: [true, false]}
-  validates_presence_of :type_of_tag
+  validates :type_of_tag, presence: true
   validate :taxonomic_enforced
 
   # http://stackoverflow.com/questions/11569940/inclusion-validation-fails-when-provided-a-symbol-instead-of-a-string
@@ -83,6 +83,15 @@ class Tag < ActiveRecord::Base
         ],
         render_fields: [:id, :text, :is_taxanomic, :type_of_tag, :retired],
         text_fields: [:text, :type_of_tag, :notes],
+        custom_fields: lambda { |tag, user|
+          tag_hash = {}
+
+          tag_hash[:taggings] = Tagging
+                                    .where(tag_id: tag.id)
+                                    .select(:id, :audio_event_id, :created_at, :updated_at, :creator_id, :updater_id)
+
+          [tag, tag_hash]
+        },
         controller: :tags,
         action: :filter,
         defaults: {
