@@ -345,7 +345,7 @@ module BawWorkers
       end
 
       # create and log a single line of CSV from
-      # source file, expected vs actual comparisons, api request responses
+      # source file, expected vs actual comparisons, api request & response.
       # @param [String] file_path
       # @param [Boolean] exists
       # @param [String] moved_path
@@ -362,11 +362,14 @@ module BawWorkers
         # write to csv
         csv_options = {col_sep: ',', force_quotes: true}
 
+        # identifier for CSV log entries
+        csv_id = '[CSV], '
+
         csv_header_line = logged_csv_line[:headers].to_csv(csv_options).strip
-        @logger.fatal(@class_name) { ",#{csv_header_line}" }
+        @logger.fatal(@class_name) { "#{csv_id}#{csv_header_line}" }
 
         csv_value_line = logged_csv_line[:values].to_csv(csv_options).strip
-        @logger.fatal(@class_name) { ",#{csv_value_line}" }
+        @logger.fatal(@class_name) { "#{csv_id}#{csv_value_line}" }
       end
 
       # Rename file with old file name to new file name.

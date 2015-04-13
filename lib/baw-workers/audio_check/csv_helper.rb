@@ -143,6 +143,24 @@ module BawWorkers
           end
         end
 
+        # extract the CSV log lines from a log file.
+        def extract_csv_logs(read_path, write_path)
+          # for lines that start with a datestamp (format: 2015-04-12T23:06:48.295+0000) and log info
+          # keep only if the row then contains '[CSV], '.
+
+          line_start_regexp = /\A\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}\+\d{4} \[[^\]]+\] \[CSV\], /
+
+          File.open(write_path, 'a') do |dest|
+
+            File.open(read_path).each_line do |line|
+              next unless line.match(line_start_regexp)
+              dest.puts line
+            end
+
+          end
+
+        end
+
 
       end
     end

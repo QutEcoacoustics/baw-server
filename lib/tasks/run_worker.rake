@@ -90,6 +90,12 @@ namespace :baw do
         BawWorkers::Config.run(settings_file: args.settings_file, redis: false, resque_worker: false)
         BawWorkers::AudioCheck::Action.action_perform_rake(args.csv_file, is_real_run)
       end
+
+      desc 'Extract CSV lines from a log file'
+      task :extract_csv_from_log, [:log_file, :output_file] do |t, args|
+        BawWorkers::AudioCheck::CsvHelper.extract_csv_logs(args.log_file, args.output_file)
+      end
+
     end
   end
 
