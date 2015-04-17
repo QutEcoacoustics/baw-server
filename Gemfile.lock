@@ -17,8 +17,8 @@ GIT
 
 GIT
   remote: https://github.com/QutBioacoustics/baw-audio-tools.git
-  revision: 3ea03c6b650b3cde41911fd3214bf6657771b4df
-  ref: 3ea03c6b65
+  revision: 62d1fdda406744236b4dc6ccb6c6612904a27d1c
+  ref: 62d1fdda40
   branch: master
   specs:
     baw-audio-tools (0.3.0)
@@ -26,8 +26,8 @@ GIT
 
 GIT
   remote: https://github.com/QutBioacoustics/baw-workers.git
-  revision: 9b51d7a82ac3c995cec5385b91997a0a6b242ef7
-  ref: 9b51d7a82a
+  revision: 2d5de8e3674d50a72df3e669890be0a072972e5d
+  ref: 2d5de8e367
   branch: master
   specs:
     baw-workers (0.5.0)
@@ -130,7 +130,7 @@ GEM
     capistrano-newrelic (0.0.9)
       capistrano (~> 3.0)
       newrelic_rpm
-    capistrano-passenger (0.0.4)
+    capistrano-passenger (0.0.5)
       capistrano (~> 3.0)
     capistrano-rails (1.1.2)
       capistrano (~> 3.1)
@@ -159,7 +159,7 @@ GEM
     coffee-script (2.4.1)
       coffee-script-source
       execjs
-    coffee-script-source (1.9.1)
+    coffee-script-source (1.9.1.1)
     colorize (0.7.5)
     coveralls (0.8.0)
       multi_json (~> 1.10)
@@ -180,7 +180,7 @@ GEM
       warden (~> 1.2.3)
     diff-lcs (1.2.5)
     docile (1.1.5)
-    domain_name (0.5.23)
+    domain_name (0.5.24)
       unf (>= 0.0.5, < 1.0.0)
     enumerize (0.11.0)
       activesupport (>= 3.2)
@@ -227,7 +227,6 @@ GEM
       haml (>= 4.0.6, < 5.0)
       html2haml (>= 1.0.1)
       railties (>= 4.0.1)
-    hike (1.2.3)
     hitimes (1.2.2)
     html2haml (2.0.0)
       erubis (~> 2.7.0)
@@ -237,7 +236,7 @@ GEM
     http-cookie (1.0.2)
       domain_name (~> 0.5)
     i18n (0.7.0)
-    jbuilder (2.2.12)
+    jbuilder (2.2.13)
       activesupport (>= 3.0.0, < 5)
       multi_json (~> 1.2)
     jc-validates_timeliness (3.1.1)
@@ -265,7 +264,7 @@ GEM
     method_source (0.8.2)
     mime-types (2.4.3)
     mini_portile (0.6.2)
-    minitest (5.5.1)
+    minitest (5.6.0)
     mono_logger (1.1.0)
     multi_json (1.11.0)
     mustache (0.99.8)
@@ -385,7 +384,7 @@ GEM
       json (~> 1.4, >= 1.4.6)
       mustache (~> 0.99, >= 0.99.4)
       rspec (>= 3.0.0)
-    ruby_parser (3.6.5)
+    ruby_parser (3.6.6)
       sexp_processor (~> 4.1)
     safe_yaml (1.0.4)
     sass (3.4.13)
@@ -417,11 +416,8 @@ GEM
       tilt (>= 1.3, < 3)
     slop (3.6.0)
     spring (1.3.4)
-    sprockets (2.12.3)
-      hike (~> 1.2)
-      multi_json (~> 1.0)
+    sprockets (3.0.1)
       rack (~> 1.0)
-      tilt (~> 1.1, != 1.3.0)
     sprockets-rails (2.2.4)
       actionpack (>= 3.0)
       activesupport (>= 3.0)
@@ -448,14 +444,14 @@ GEM
     tins (1.3.5)
     tzinfo (1.2.2)
       thread_safe (~> 0.1)
-    tzinfo-data (1.2015.2)
+    tzinfo-data (1.2015.3)
       tzinfo (>= 1.0.0)
     uglifier (2.7.1)
       execjs (>= 0.3.0)
       json (>= 1.8.0)
     unf (0.1.4)
       unf_ext
-    unf_ext (0.0.6)
+    unf_ext (0.0.7)
     uniform_notifier (1.8.0)
     uuidtools (2.1.5)
     vegas (0.1.11)
