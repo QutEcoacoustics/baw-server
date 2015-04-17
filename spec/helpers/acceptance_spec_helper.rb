@@ -199,15 +199,18 @@ def acceptance_checks_shared(request, opts = {})
     expect(opts[:actual_response_content_type]).to include(opts[:expected_response_content_type]), "Mismatch: response content type. #{opts[:msg]}"
   end
 
-  if !opts[:actual_response_content_type].blank? && opts[:actual_response_content_type] == 'application/json'
-    expect(opts[:actual_response_headers]['Content-Transfer-Encoding']).to be_nil, "Mismatch: content transfer encoding. #{opts[:msg]}"
-    expect(opts[:actual_response_headers]['Content-Disposition']).to be_nil, "Mismatch: content disposition. #{opts[:msg]}"
-  end
+  unless opts[:actual_response_content_type].blank?
 
-  if !opts[:actual_response_content_type].blank? && (opts[:actual_response_content_type].start_with?('image/') ||
-      opts[:actual_response_content_type].start_with?('audio/'))
-    expect(opts[:actual_response_headers]['Content-Transfer-Encoding']).to eq('binary'), "Mismatch: content transfer encoding. #{opts[:msg]}"
-    expect(opts[:actual_response_headers]['Content-Disposition']).to start_with('inline; filename='), "Mismatch: content disposition. #{opts[:msg]}"
+    if opts[:actual_response_content_type] == 'application/json' || opts[:actual_response_headers].include?('X-Error-Type')
+      expect(opts[:actual_response_headers]['Content-Transfer-Encoding']).to be_nil, "Mismatch: content transfer encoding. #{opts[:msg]}"
+      expect(opts[:actual_response_headers]['Content-Disposition']).to be_nil, "Mismatch: content disposition. #{opts[:msg]}"
+    end
+
+    if (opts[:actual_response_content_type].start_with?('image/') || opts[:actual_response_content_type].start_with?('audio/')) &&
+        !opts[:actual_response_headers].include?('X-Error-Type')
+      expect(opts[:actual_response_headers]['Content-Transfer-Encoding']).to eq('binary'), "Mismatch: content transfer encoding. #{opts[:msg]}"
+      expect(opts[:actual_response_headers]['Content-Disposition']).to start_with('inline; filename='), "Mismatch: content disposition. #{opts[:msg]}"
+    end
   end
 
   unless opts[:expected_request_header_values].blank?
@@ -368,9 +371,14 @@ def acceptance_checks_media(opts = {})
   expect(opts[:actual_response_headers]['Content-Length']).to_not be_blank, "Mismatch: content length. #{opts[:msg]}"
 
   if is_json
-    expect(opts[:actual_response_headers]).to_not include(*MediaPoll::HEADERS_EXPOSED - ['Content-Length']), "One or more of these headers was present when it should not be #{MediaPoll::HEADERS_EXPOSED} #{opts[:msg]}"
+    not_allowed_headers = MediaPoll::HEADERS_EXPOSED - ['Content-Length']
+    actual_present = opts[:actual_response_headers].keys - (opts[:actual_response_headers].keys - not_allowed_headers)
+    expect(opts[:actual_response_headers].keys).to_not include(*not_allowed_headers), "These headers were present when they should not be #{actual_present} #{opts[:msg]}"
+  elsif opts[:actual_response_headers].keys.include?('X-Error-Type')
+    expected_headers = MediaPoll::HEADERS_EXPOSED - [MediaPoll::HEADER_KEY_ELAPSED_TOTAL, MediaPoll::HEADER_KEY_ELAPSED_PROCESSING, MediaPoll::HEADER_KEY_ELAPSED_WAITING]
+    expect(opts[:actual_response_headers].keys).to include(*expected_headers), "Missing headers: #{expected_headers - opts[:actual_response_headers].keys} #{opts[:msg]}"
   else
-    expect(opts[:actual_response_headers]).to include(*MediaPoll::HEADERS_EXPOSED), "Missing one or more of these headers #{MediaPoll::HEADERS_EXPOSED} #{opts[:msg]}"
+    expect(opts[:actual_response_headers].keys).to include(*MediaPoll::HEADERS_EXPOSED), "Missing headers: #{MediaPoll::HEADERS_EXPOSED - opts[:actual_response_headers].keys} #{opts[:msg]}"
   end
 
   if opts[:is_range_request]

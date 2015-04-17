@@ -32,18 +32,26 @@ class MediaPoll
       #timeout_sec_dir_list = 2.0
       #run_ext_program = BawAudioTools::RunExternalProgram.new(timeout_sec_dir_list, Rails.logger)
 
-      too_long_msg ="Media file was not found within #{wait_max} seconds."
-
       poll_locations = prepare_locations(expected_files)
 
       existing_files = []
 
-      poll(too_long_msg, wait_max, poll_delay) do
+      poll_result = poll(wait_max, poll_delay) do
 
         existing_files = refresh_files(poll_locations)
 
         # return true if polling is complete, false to continue polling.
         !existing_files.empty?
+      end
+
+      # raise error if polling did not return a result
+      if poll_result[:result].nil?
+        msg ="Media file was not found within #{wait_max} seconds."
+        job_info = poll_result.merge({
+                                         poll_locations: poll_locations,
+                                         existing_files: existing_files
+                                     })
+        fail CustomErrors::AudioGenerationError.new(msg, job_info)
       end
 
       existing_files
@@ -58,11 +66,10 @@ class MediaPoll
     # @return [Resque::Plugins::Status::Hash] job status
     def poll_resque(media_type, media_request_params, wait_max, poll_delay = 0.5)
 
-      too_long_msg = "Resque did not complete media request within #{wait_max} seconds."
-
+      # store most recent status when polling ends
       status = nil
 
-      poll(too_long_msg+ ' Status: \'' + (status.nil? ? '(none)' : status) + '\'.', wait_max, poll_delay) do
+      poll_result = poll(wait_max, poll_delay) do
         status = BawWorkers::Media::Action.get_job_status(media_type, media_request_params)
         #current_status = status.status # e.g. Resque::Plugins::Status::STATUS_QUEUED
 
@@ -74,18 +81,21 @@ class MediaPoll
         # true if polling complete, false to continue polling
         # status.queued? || status.working? # job in progress - continue polling or time out
 
-        # job did not complete successfully
-        if status.killed? || status.failed?
-          status_info = {
-              uuid: status.uuid,
-              time: status.time,
-              status: status.status
-          }
-          msg = 'Resque job finished with error.'
-          fail CustomErrors::AudioGenerationError.new(msg, status_info)
-        end
+        # job completed successfully?
+        status.completed?
+      end
 
-        status.completed? # job completed successfully
+      # raise error if polling did not return a result
+      if poll_result[:result].nil?
+        resque_task_status = status.nil? ? '(none)' : status.status
+
+        msg = "Resque did not complete media request within #{wait_max} seconds, result was '#{resque_task_status}'."
+        job_info = poll_result.merge({
+                                         uuid: status.nil? ? nil : status.uuid,
+                                         time: status.nil? ? nil : status.time,
+                                         status: resque_task_status
+                                     })
+        fail CustomErrors::AudioGenerationError.new(msg, job_info)
       end
 
       status
@@ -167,26 +177,40 @@ class MediaPoll
     private
 
     # Based on Firepoll gem: for knowing when something is ready
-    # @param [String] msg a custom message raised when polling fails
     # @param [Numeric] seconds number of seconds to poll, default is two seconds
     # @param [Numeric] delay number of seconds to sleep, default is tenth of a second
     # @yield a block that determines whether polling should continue
     # @yield return false if polling should continue
     # @yield return true if polling is complete
-    # @raise [RuntimeError] when polling fails
     # @return the return value of the passed block
-    def poll(msg=nil, seconds=2.0, delay=0.1)
+    def poll(seconds=2.0, delay=0.1)
       seconds ||= 2.0 # overall patience
-      give_up_at = Time.now + seconds # pick a time to stop being patient
+      poll_start_time = Time.now
+      give_up_at = poll_start_time + seconds # pick a time to stop being patient
       delay ||= 0.1 # wait a tenth of a second before re-attempting
+
+      result_value = {
+          result: nil,
+          max_poll_time: seconds,
+          max_poll_datetime: give_up_at,
+          delay: delay
+      }
 
       while Time.now < give_up_at do
         result = yield
-        return result if result
+
+        if result
+          result_value[:result] = result
+          result_value[:actual_poll_time] = Time.now - poll_start_time
+          return result_value
+        end
+
         sleep delay
       end
-      msg ||= "polling failed after #{seconds} seconds"
-      raise msg
+
+      result_value[:actual_poll_time] = Time.now - poll_start_time
+
+      result_value
     end
 
   end

@@ -746,35 +746,53 @@ resource 'Media' do
         queue_name = Settings.actions.media.queue
 
         # do first request - this purposely fails,
-        # we're restricted to a single thread, so can't run request and worker at once (they both block)
-        expect {
-          do_request
-        #}.to raise_error(RuntimeError, 'Media file was not found within 2 seconds.')
-        }.to raise_error(RuntimeError, "Resque did not complete media request within 2 seconds. Status: '(none)'.")
+        request1 = do_request
+
+        # check response
+        opts1 =
+            {
+                expected_status: :internal_server_error,
+                expected_method: :get,
+                expected_response_content_type: 'audio/mpeg',
+                document: document_media_requests,
+                expected_response_media_from_header: MediaPoll::HEADER_VALUE_RESPONSE_REMOTE,
+                expected_response_has_content: false,
+                expected_response_header_values_match: false,
+                expected_response_header_values: {
+                    'X-Error-Type' => 'Custom Errors/Audio Generation Error'
+                }
+            }
+
+        opts1 = acceptance_checks_shared(request1, opts1)
+
+        acceptance_checks_media(opts1.merge({audio_recording: options}))
 
         # store request that's in queue
         expect(Resque.size(queue_name)).to eq(1)
 
         # run emulated worker - this will process the single job in the queue
+        # we're restricted to a single thread, so can't run request and worker at once (they both block)
         emulate_resque_worker(queue_name, false, true)
 
         # run a second request, which should use the cached file to complete the request
-        request = do_request
+        request2 = do_request
+
+        expect(Resque.size(queue_name)).to eq(0)
 
         # check response
-        opts =
+        opts2 =
             {
                 expected_status: :ok,
                 expected_method: :get,
                 expected_response_content_type: 'audio/mpeg',
                 document: document_media_requests,
-                expected_response_media_from_header: 'Cache'
+                expected_response_media_from_header: MediaPoll::HEADER_VALUE_RESPONSE_CACHE
             }
 
-        opts = acceptance_checks_shared(request, opts)
+        opts2 = acceptance_checks_shared(request2, opts2)
 
-        opts.merge!({audio_recording: options})
-        acceptance_checks_media(opts)
+        opts2.merge!({audio_recording: options})
+        acceptance_checks_media(opts2)
       end
     end
 

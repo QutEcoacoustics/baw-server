@@ -214,13 +214,20 @@ class ApplicationController < ActionController::Base
     log_original_error(method_name, error, json_response)
 
     # add custom header
-    headers['X-Error-Type'] = error.class.to_s
+    headers['X-Error-Type'] = error.class.to_s.titleize
 
     respond_to do |format|
       # format.all will be used for Accept: */* as it is first in the list
       # http://blogs.thewehners.net/josh/posts/354-obscure-rails-bug-respond_to-formatany
       format.all {
-        render json: json_response, status: status_symbol, content_type: 'application/json'
+        actual_format = request.format.to_s
+
+        if actual_format.start_with?('audio') || actual_format.start_with?('image')
+          headers['Accept-Ranges'] = 'bytes'
+          head status_symbol
+        else
+          render json: json_response, status: status_symbol, content_type: 'application/json'
+        end
       }
       format.json {
         render json: json_response, status: status_symbol
