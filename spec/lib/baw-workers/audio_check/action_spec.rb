@@ -387,14 +387,13 @@ describe BawWorkers::AudioCheck::Action do
         auth_token = 'auth token I am'
         email = 'address@example.com'
         password = 'password'
-        cookie = "XSRF-TOKEN=DFvcwhrXYL8AJKl%2BlZznx%2FJFz15%2BHKPQg%2BAXwYsOIHx%2BRxVEHDPya%2Fm%2Bv9BgbcVSsQ6CGi8%2BLLbzBCAtg%3D%3D"
-        set_cookie = "#{cookie}; path=/"
+        xsrf_value = 'DFvcwhrXYL8AJKl%2BlZznx%2FJFz15%2BHKPQg%2BAXwYsOIHx%2BRxVEHDPya%2Fm%2Bv9BgbcVSsQ6CGi8%2BLLbzBCAtg%3D%3D'
+        cookie_value = "XSRF-TOKEN=#{xsrf_value}; path=/"
         login_request = stub_request(:post, "http://localhost:3030/security").
             with(:body => get_api_security_request(email, password),
                  :headers => {'Accept' => 'application/json', 'Content-Type' => 'application/json', 'User-Agent' => 'Ruby'}).
-            to_return(status: 200, body: get_api_security_response(email, auth_token).to_json, headers: {'Set-Cookie' => set_cookie})
-
-
+            to_return(status: 200, body: get_api_security_response(email, auth_token).to_json, headers: {'Set-Cookie' => cookie_value})
+        
         expected_request_body = {
             media_type: audio_file_mono_media_type.to_s,
             sample_rate_hertz: audio_file_mono_sample_rate.to_f,
@@ -408,7 +407,7 @@ describe BawWorkers::AudioCheck::Action do
             with(:body => expected_request_body.to_json,
                  :headers => {'Accept' => 'application/json', 'Authorization' => 'Token token="'+auth_token+'"',
                               'Content-Type' => 'application/json', 'User-Agent' => 'Ruby',
-                              'Cookie' => cookie}).
+                              'X-Xsrf-Token' => xsrf_value}).
             to_return(:status => 200)
 
         # act
