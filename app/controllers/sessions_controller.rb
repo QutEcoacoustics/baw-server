@@ -13,7 +13,11 @@ class SessionsController < Devise::SessionsController
   # remove Devise's default destroy response
   skip_before_action :verify_signed_out_user
 
+  # don't check auth for new and create (since this is how to sign in to the api)
   check_authorization except: [:new, :create]
+
+  # disable authenticity token check on sessions#create and #new so harvester can log in
+  skip_before_action :verify_authenticity_token, only: [:new, :create]
 
   respond_to :json
 
