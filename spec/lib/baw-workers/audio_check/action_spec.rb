@@ -388,12 +388,13 @@ describe BawWorkers::AudioCheck::Action do
         email = 'address@example.com'
         password = 'password'
         xsrf_value = 'DFvcwhrXYL8AJKl%2BlZznx%2FJFz15%2BHKPQg%2BAXwYsOIHx%2BRxVEHDPya%2Fm%2Bv9BgbcVSsQ6CGi8%2BLLbzBCAtg%3D%3D'
+        xsrf_decoded = 'DFvcwhrXYL8AJKl+lZznx/JFz15+HKPQg+AXwYsOIHx+RxVEHDPya/m+v9BgbcVSsQ6CGi8+LLbzBCAtg=='
         cookie_value = "XSRF-TOKEN=#{xsrf_value}; path=/"
         login_request = stub_request(:post, "http://localhost:3030/security").
             with(:body => get_api_security_request(email, password),
                  :headers => {'Accept' => 'application/json', 'Content-Type' => 'application/json', 'User-Agent' => 'Ruby'}).
             to_return(status: 200, body: get_api_security_response(email, auth_token).to_json, headers: {'Set-Cookie' => cookie_value})
-        
+
         expected_request_body = {
             media_type: audio_file_mono_media_type.to_s,
             sample_rate_hertz: audio_file_mono_sample_rate.to_f,
@@ -407,7 +408,7 @@ describe BawWorkers::AudioCheck::Action do
             with(:body => expected_request_body.to_json,
                  :headers => {'Accept' => 'application/json', 'Authorization' => 'Token token="'+auth_token+'"',
                               'Content-Type' => 'application/json', 'User-Agent' => 'Ruby',
-                              'X-Xsrf-Token' => xsrf_value}).
+                              'X-Xsrf-Token' => xsrf_decoded}).
             to_return(:status => 200)
 
         # act

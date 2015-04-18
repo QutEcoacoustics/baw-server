@@ -93,7 +93,10 @@ module BawWorkers
           end
         end
 
-        request['X-XSRF-TOKEN'] = xsrf_cookie unless xsrf_cookie.nil?
+        unless xsrf_cookie.nil?
+          url_decoded = URI.decode_www_form_component(xsrf_cookie)
+          request['X-XSRF-TOKEN'] = url_decoded
+        end
 
       end
 
