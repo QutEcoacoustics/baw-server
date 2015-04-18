@@ -397,6 +397,8 @@ module BawWorkers
           # check if it exists
           new_path_exists = File.exist?(new_path)
 
+          move_performed = false
+
           # logging
           if new_path_exists
             @logger.info(@class_name) {
@@ -409,6 +411,8 @@ module BawWorkers
               }
               # move old name to new name unless it already exists
               FileUtils.move(existing_file, new_path)
+
+              move_performed = File.exist?(new_path)
             else
 
               @logger.info(@class_name) {
@@ -422,7 +426,7 @@ module BawWorkers
           {
               old_file: existing_file,
               new_file: new_path,
-              moved: !new_path_exists
+              moved: move_performed
           }
         end
       end
