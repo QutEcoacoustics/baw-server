@@ -85,27 +85,27 @@ module BawWorkers
 
       msg = "'#{description}'. Url: #{host}:#{port}#{endpoint}"
 
-      @logger.debug(@class_name) {
-        "[HTTP] Sent request for #{msg}, Request: #{request.inspect}"
-      }
-
       response = nil
 
       begin
         #res = Net::HTTP::Proxy('127.0.0.1', '8888').start(host, port) do |http|
         res = Net::HTTP.start(host, port) do |http|
           response = http.request(request)
+
+          @logger.debug(@class_name) {
+            "[HTTP] Sent request for #{msg}, Body: #{request.body}, Headers: #{request.to_hash}"
+          }
+
         end
       rescue StandardError => e
         @logger.error(@class_name) {
-          "[HTTP] Request for #{msg}, Request: #{request.inspect}, Error: #{e}\nBacktrace: #{e.backtrace.join("\n")}"
+          "[HTTP] Request for #{msg}, Body: #{request.body}, Headers: #{request.to_hash}, Error: #{e}\nBacktrace: #{e.backtrace.join("\n")}"
         }
         fail e
       end
 
       @logger.info(@class_name) {
-        response_msg = @logger.debug? ? "Response: #{response.inspect}" : "Code: #{response.code}, Body: #{response.body}"
-        "[HTTP] Received response for #{msg}, #{response_msg}"
+        "[HTTP] Received response for #{msg}, Code: #{response.code}, Body: #{response.body}, Headers: #{response.to_hash}"
       }
 
       response

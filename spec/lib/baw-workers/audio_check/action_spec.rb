@@ -404,7 +404,7 @@ describe BawWorkers::AudioCheck::Action do
             duration_seconds: audio_file_mono_duration_seconds.to_f
         }
 
-        stub_request(:put, "http://localhost:3030/audio_recordings/id").
+        stub_request(:put, "http://localhost:3030/audio_recordings/#{test_params['id']}").
             with(:body => expected_request_body.to_json,
                  :headers => {'Accept' => 'application/json', 'Authorization' => 'Token token="'+auth_token+'"',
                               'Content-Type' => 'application/json', 'User-Agent' => 'Ruby',
@@ -454,7 +454,7 @@ describe BawWorkers::AudioCheck::Action do
                  :headers => {'Accept' => 'application/json', 'Content-Type' => 'application/json', 'User-Agent' => 'Ruby'}).
             to_return(status: 200, body: get_api_security_response(email, auth_token).to_json)
 
-        stub_request(:put, "http://localhost:3030/audio_recordings/id").
+        stub_request(:put, "http://localhost:3030/audio_recordings/#{test_params['id']}").
             with(:body => expected_request_body.to_json,
                  :headers => {'Accept' => 'application/json', 'Authorization' => 'Token token="'+auth_token+'"', 'Content-Type' => 'application/json', 'User-Agent' => 'Ruby'}).
             to_return(:status => 200)
@@ -514,7 +514,7 @@ describe BawWorkers::AudioCheck::Action do
               duration_seconds: audio_file_mono_duration_seconds.to_f
           }
 
-          update_request = stub_request(:put, "http://localhost:3030/audio_recordings/id").
+          update_request = stub_request(:put, "http://localhost:3030/audio_recordings/#{test_params['id']}").
               with(:body => expected_request_body.to_json,
                    :headers => {'Accept' => 'application/json', 'Authorization' => 'Token token="'+auth_token+'"', 'Content-Type' => 'application/json', 'User-Agent' => 'Ruby'}).
               to_return(:status => 200)
