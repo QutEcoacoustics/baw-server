@@ -221,7 +221,7 @@ module BawWorkers
             port = BawWorkers::Settings.api.port
 
             # get auth token
-            auth_token = @api_communicator.request_login
+            security_info = @api_communicator.request_login
 
             # update audio recording metadata
             update_result = @api_communicator.update_audio_recording_details(
@@ -229,7 +229,7 @@ module BawWorkers
                 existing_file,
                 'id',
                 changed_metadata,
-                auth_token
+                security_info
             )
           else
             @logger.info(@class_name) { 'Dry Run: Would have updated properties.' }

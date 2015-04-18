@@ -25,11 +25,11 @@ describe BawWorkers::ApiCommunicator do
       .with(body: body)
       .to_return(body: get_api_security_response(email, auth_token_server).to_json)
 
-      auth_token = api_different.request_login
+      security_info = api_different.request_login
 
       expect(login_request).to have_been_made.once
-      expect(auth_token).to_not be_blank
-      expect(auth_token).to eq(auth_token_server)
+      expect(security_info).to_not be_blank
+      expect(security_info[:auth_token]).to eq(auth_token_server)
     end
 
     it 'should throw error with invalid credentials' do
@@ -46,11 +46,12 @@ describe BawWorkers::ApiCommunicator do
       .with(body: get_api_security_request(email, password))
       .to_return(status: 403)
 
-      auth_token = api_different.request_login
+      security_info = api_different.request_login
 
       expect(login_request).not_to have_been_made
       expect(incorrect_request).to have_been_made.once
-      expect(auth_token).to be_blank
+      expect(security_info[:cookies]).to be_blank
+      expect(security_info[:auth_token]).to be_blank
     end
 
   end
@@ -59,13 +60,13 @@ describe BawWorkers::ApiCommunicator do
 
     it 'should successfully send a basic request' do
       basic_request = stub_request(:get, 'http://localhost:3030/')
-      api.send_request('send basic get request', :get, host, port, '/', '')
+      api.send_request('send basic get request', :get, host, port, '/')
       expect(basic_request).to have_been_made.once
     end
 
     it 'should fail on bad request' do
       endpoint_access = domain + '/does_not_exist'
-      expect { api.send_request('will fail', :get, host, port, endpoint_access, '')
+      expect { api.send_request('will fail', :get, host, port, endpoint_access)
       }.to raise_error
     end
   end
@@ -79,7 +80,7 @@ describe BawWorkers::ApiCommunicator do
           with(headers: {'Accept' => 'application/json', 'Authorization' => 'Token token="auth_token_string"', 'Content-Type' => 'application/json', 'User-Agent' => 'Ruby'}).
           to_return(status: 204)
 
-      expect(api.check_uploader_project_access(1, 1, 1, auth_token)).to be_truthy
+      expect(api.check_uploader_project_access(1, 1, 1, {auth_token: auth_token})).to be_truthy
       expect(access_request).to have_been_made.once
     end
 
@@ -91,7 +92,7 @@ describe BawWorkers::ApiCommunicator do
           with(headers: {'Accept' => 'application/json', 'Authorization' => 'Token token="auth_token_string_wrong"', 'Content-Type' => 'application/json', 'User-Agent' => 'Ruby'}).
           to_return(status: 403)
 
-      expect(api.check_uploader_project_access(1, 1, 1, auth_token)).to be_falsey
+      expect(api.check_uploader_project_access(1, 1, 1, {auth_token: auth_token})).to be_falsey
       expect(access_request).to have_been_made.once
     end
 
@@ -112,7 +113,7 @@ describe BawWorkers::ApiCommunicator do
                  'file',
                  1,
                  {},
-                 auth_token)).to be_truthy
+                 {auth_token: auth_token})).to be_truthy
       expect(access_request).to have_been_made.once
     end
 
@@ -130,7 +131,7 @@ describe BawWorkers::ApiCommunicator do
                  'file',
                  1,
                  {},
-                 auth_token
+                 {auth_token: auth_token}
              )).to be_falsey
       expect(access_request).to have_been_made.once
     end

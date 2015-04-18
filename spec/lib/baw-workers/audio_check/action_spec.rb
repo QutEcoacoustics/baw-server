@@ -387,10 +387,12 @@ describe BawWorkers::AudioCheck::Action do
         auth_token = 'auth token I am'
         email = 'address@example.com'
         password = 'password'
+        cookie = "XSRF-TOKEN=DFvcwhrXYL8AJKl%2BlZznx%2FJFz15%2BHKPQg%2BAXwYsOIHx%2BRxVEHDPya%2Fm%2Bv9BgbcVSsQ6CGi8%2BLLbzBCAtg%3D%3D"
+        set_cookie = "#{cookie}; path=/"
         login_request = stub_request(:post, "http://localhost:3030/security").
             with(:body => get_api_security_request(email, password),
                  :headers => {'Accept' => 'application/json', 'Content-Type' => 'application/json', 'User-Agent' => 'Ruby'}).
-            to_return(status: 200, body: get_api_security_response(email, auth_token).to_json)
+            to_return(status: 200, body: get_api_security_response(email, auth_token).to_json, headers: {'Set-Cookie' => set_cookie})
 
 
         expected_request_body = {
@@ -404,7 +406,9 @@ describe BawWorkers::AudioCheck::Action do
 
         stub_request(:put, "http://localhost:3030/audio_recordings/id").
             with(:body => expected_request_body.to_json,
-                 :headers => {'Accept' => 'application/json', 'Authorization' => 'Token token="'+auth_token+'"', 'Content-Type' => 'application/json', 'User-Agent' => 'Ruby'}).
+                 :headers => {'Accept' => 'application/json', 'Authorization' => 'Token token="'+auth_token+'"',
+                              'Content-Type' => 'application/json', 'User-Agent' => 'Ruby',
+                              'Cookie' => cookie}).
             to_return(:status => 200)
 
         # act

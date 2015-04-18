@@ -53,15 +53,15 @@ module BawWorkers
 
         # get auth token
         # -----------------------------
-        auth_token = get_auth_token
+        security_info = get_security_info
 
         # Check uploader project access
         # -----------------------------
-        access_result = get_access_result(project_id, site_id, uploader_id, auth_token)
+        access_result = get_access_result(project_id, site_id, uploader_id, security_info)
 
         # send request to create new audio recording entry on website
         # -----------------------------
-        response_hash = get_new_audio_recording(file_path, project_id, site_id, audio_info_hash, auth_token)
+        response_hash = get_new_audio_recording(file_path, project_id, site_id, audio_info_hash, security_info)
 
         audio_recording_id = response_hash['id']
         audio_recording_uuid = response_hash['uuid']
@@ -73,13 +73,13 @@ module BawWorkers
         begin
 
           # update audio recording status on website to uploading
-          # description, file_to_process, audio_recording_id, update_hash, auth_token
+          # description, file_to_process, audio_recording_id, update_hash, security_info
           update_status_uploading_result = @api_comm.update_audio_recording_status(
               'record pending file move',
               file_path,
               audio_recording_id,
               create_update_hash(audio_recording_uuid, file_hash, :uploading),
-              auth_token)
+              security_info)
 
           # calculate target storage path using name with utc date
           storage_file_opts = {
@@ -101,7 +101,7 @@ module BawWorkers
               file_path,
               audio_recording_id,
               create_update_hash(audio_recording_uuid, file_hash, :ready),
-              auth_token)
+              security_info)
 
         rescue Exception => e
           msg = "Error after audio recording created on website, status set to aborted. Exception: #{e}"
@@ -111,7 +111,7 @@ module BawWorkers
               file_path,
               audio_recording_id,
               create_update_hash(audio_recording_uuid, file_hash, :aborted),
-              auth_token)
+              security_info)
           raise e
         end
 
@@ -121,20 +121,20 @@ module BawWorkers
 
       private
 
-      def get_auth_token
-        auth_token = @api_comm.request_login
+      def get_security_info
+        security_info = @api_comm.request_login
 
-        if auth_token.blank?
-          msg = 'Could not get valid auth_token'
+        if security_info.blank?
+          msg = 'Could not log in.'
           @logger.error(@class_name) { msg }
           fail BawWorkers::Exceptions::HarvesterEndpointError, msg
         end
 
-        auth_token
+        security_info
       end
 
-      def get_access_result(project_id, site_id, uploader_id, auth_token)
-        access_result = @api_comm.check_uploader_project_access(project_id, site_id, uploader_id, auth_token)
+      def get_access_result(project_id, site_id, uploader_id, security_info)
+        access_result = @api_comm.check_uploader_project_access(project_id, site_id, uploader_id, security_info)
 
         unless access_result
           msg = "Could not get access to project_id #{project_id} for uploader_id #{uploader_id}."
@@ -150,9 +150,9 @@ module BawWorkers
         create_audio_info_hash(file_info_hash, content_info_hash)
       end
 
-      def get_new_audio_recording(file_path, project_id, site_id, audio_info_hash, auth_token)
+      def get_new_audio_recording(file_path, project_id, site_id, audio_info_hash, security_info)
 
-        create_response = @api_comm.create_new_audio_recording(file_path, project_id, site_id, audio_info_hash, auth_token)
+        create_response = @api_comm.create_new_audio_recording(file_path, project_id, site_id, audio_info_hash, security_info)
 
         response_meta = create_response[:response]
         response_hash = create_response[:response_json]
