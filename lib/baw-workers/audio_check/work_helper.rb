@@ -227,7 +227,7 @@ module BawWorkers
             update_result = @api_communicator.update_audio_recording_details(
                 'mismatch between file and database',
                 existing_file,
-                'id',
+                audio_params[:id],
                 changed_metadata,
                 security_info
             )
