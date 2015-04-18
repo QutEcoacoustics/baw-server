@@ -13,7 +13,7 @@ module BawWorkers
 
         def logged_csv_line(file_path, exists, moved_path = nil,
                             compare_hash = nil, api_result_hash = nil,
-                            api_response = nil)
+                            api_response = nil, review_level = :none_all_good)
           csv_headers = [
               :file_path, :exists,
 
@@ -34,11 +34,13 @@ module BawWorkers
               :actual_sample_rate_hertz, :actual_channels, :actual_bit_rate_bps,
               :actual_data_length_bytes, :actual_duration_seconds,
 
-              :api_media_type,
+              :api_file_hash, :api_media_type,
               :api_sample_rate_hertz, :api_channels, :api_bit_rate_bps,
               :api_data_length_bytes, :api_duration_seconds,
 
-              :api_response
+              :api_response,
+
+              :review_level
           ]
 
           csv_values = []
@@ -86,19 +88,22 @@ module BawWorkers
           end
 
           # add values from api results
-          unless api_result_hash.blank?
-            csv_values[30] = api_result_hash.include?(:media_type) ? :updated : :noaction
-            csv_values[31] = api_result_hash.include?(:sample_rate_hertz) ? :updated : :noaction
-            csv_values[32] = api_result_hash.include?(:channels) ? :updated : :noaction
-            csv_values[33] = api_result_hash.include?(:bit_rate_bps) ? :updated : :noaction
-            csv_values[34] = api_result_hash.include?(:data_length_bytes) ? :updated : :noaction
-            csv_values[35] = api_result_hash.include?(:duration_seconds) ? :updated : :noaction
-          end
+          api_result_hash_blank = api_result_hash.blank?
+
+          csv_values[30] = api_result_hash_blank ? :notsent : api_result_hash.include?(:file_hash) ? :updated : :noaction
+          csv_values[31] = api_result_hash_blank ? :notsent : api_result_hash.include?(:media_type) ? :updated : :noaction
+          csv_values[32] = api_result_hash_blank ? :notsent : api_result_hash.include?(:sample_rate_hertz) ? :updated : :noaction
+          csv_values[33] = api_result_hash_blank ? :notsent : api_result_hash.include?(:channels) ? :updated : :noaction
+          csv_values[34] = api_result_hash_blank ? :notsent : api_result_hash.include?(:bit_rate_bps) ? :updated : :noaction
+          csv_values[35] = api_result_hash_blank ? :notsent : api_result_hash.include?(:data_length_bytes) ? :updated : :noaction
+          csv_values[36] = api_result_hash_blank ? :notsent : api_result_hash.include?(:duration_seconds) ? :updated : :noaction
 
           # record response from api request
-          unless api_response.nil?
-            csv_values[36] = api_response
-          end
+          api_response_value = api_response.nil? ? :invalid : api_response
+          csv_values[37] = api_response_value
+
+          # review level
+          csv_values[38] = review_level
 
           {
               headers: csv_headers,

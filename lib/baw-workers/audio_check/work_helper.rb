@@ -47,6 +47,25 @@ module BawWorkers
           # LOW LEVEL PROBLEM: rename old file names to new file names
           file_move_info = rename_file(existing_file, original_paths[:name_utc], is_real_run)
 
+          # calculate review level
+          good_api_results = [:dry_run, :notrequired, :success]
+          attribute_change_success = good_api_results.include?(single_result[:api_result])
+
+          was_file_moved = file_move_info[:moved]
+          attributes_changed = single_result[:api_result_hash].size > 0
+
+          review_level = :none_all_good
+
+          if was_file_moved && !attributes_changed && attribute_change_success
+            review_level = :low_file_moved
+          elsif was_file_moved && attributes_changed && attribute_change_success
+            review_level = :low_file_moved_and_attributes_updated
+          elsif was_file_moved && attributes_changed && !attribute_change_success
+            review_level = :medium_file_moved_and_failed_updating_attributes
+          elsif !was_file_moved && attributes_changed && !attribute_change_success
+            review_level = :medium_failed_updating_attributes
+          end
+
           # record new file location
           result_hash =
               {
@@ -55,7 +74,8 @@ module BawWorkers
                   moved_path: file_move_info[:moved] ? file_move_info[:new_file] : nil,
                   compare_hash: single_result[:compare_hash],
                   api_result_hash: single_result[:api_result_hash],
-                  api_response: single_result[:api_result]
+                  api_response: single_result[:api_result],
+                  review_level: review_level
               }
 
           result.push(result_hash)
@@ -68,6 +88,7 @@ module BawWorkers
               result_hash[:compare_hash],
               result_hash[:api_result_hash],
               result_hash[:api_response],
+              result_hash[:review_level]
           )
         end
 
@@ -143,7 +164,7 @@ module BawWorkers
           @logger.error(@class_name) { msg }
 
           # write row of csv into log file
-          log_csv_line(existing_file, true, nil, compare_hash)
+          log_csv_line(existing_file, true, nil, compare_hash, nil, nil, :high_file_hashes_do_not_match)
 
           fail BawAudioTools::Exceptions::FileCorruptError, msg
         end
@@ -179,7 +200,7 @@ module BawWorkers
             @logger.error(@class_name) { msg }
 
             # write row of csv into log file
-            log_csv_line(existing_file, true, nil, compare_hash)
+            log_csv_line(existing_file, true, nil, compare_hash, nil, nil, :medium_multiple_properties_do_not_match)
 
             fail BawAudioTools::Exceptions::FileCorruptError, msg
           else
@@ -219,11 +240,16 @@ module BawWorkers
           }
         end
 
+        api_result_value = :unknown
+        api_result_value = :notrequired if changed_metadata.size < 1
+        api_result_value = :dry_run if changed_metadata.size > 0 && !is_real_run
+        api_result_value = :sent_with_unknown_response if changed_metadata.size > 0 && is_real_run
+        api_result_value = update_result ? :success : :error unless update_result.nil?
+
         {
             compare_hash: compare_hash,
             api_result_hash: changed_metadata,
-            # nil, true, false
-            api_result: (update_result.nil? ? :noaction : update_result ? :success : :error)
+            api_result: api_result_value
         }
       end
 
@@ -338,7 +364,7 @@ module BawWorkers
           @logger.error(@class_name) { msg }
 
           # write row of csv into log file
-          log_csv_line(original_paths[:possible][0], false)
+          log_csv_line(original_paths[:possible][0], false, nil, nil, nil, nil, :high_original_file_does_not_exist)
 
           fail BawAudioTools::Exceptions::FileNotFoundError, msg
         end
@@ -351,13 +377,14 @@ module BawWorkers
       # @param [String] moved_path
       # @param [Hash] compare_hash
       # @param [Hash] api_result_hash
+      # @param [Symbol] review_level
       # @return [void]
       def log_csv_line(file_path, exists, moved_path = nil,
-                       compare_hash = nil, api_result_hash = nil, api_response = nil)
+                       compare_hash = nil, api_result_hash = nil, api_response = nil, review_level = :none_all_good)
 
         logged_csv_line = BawWorkers::AudioCheck::CsvHelper.logged_csv_line(
             file_path, exists, moved_path,
-            compare_hash, api_result_hash, api_response)
+            compare_hash, api_result_hash, api_response, review_level)
 
         # write to csv
         csv_options = {col_sep: ',', force_quotes: true}
@@ -379,56 +406,51 @@ module BawWorkers
       # @return [Hash] action applied to existing file
       def rename_file(existing_file, file_name_utc, is_real_run)
 
-        existing_name = File.basename(existing_file, File.extname(existing_file))
+        # create all needed information
+        existing_path = existing_file
+        existing_name = File.basename(existing_path)
+        existing_name_without_ext = File.basename(existing_path, File.extname(existing_path))
+        existing_dir = File.dirname(existing_path)
+        existing_is_new = existing_name_without_ext.end_with?('Z')
 
-        # dodgy way of detecting new file name, but seems the most effective
-        if existing_name.end_with?('Z')
+        new_name = file_name_utc
+        new_path = File.join(existing_dir, new_name)
+        new_name_without_ext = File.basename(new_name, File.extname(new_name))
+        new_dir = existing_dir
+
+        # check each possible situation
+        if existing_is_new && File.exist?(new_path)
+          # existing file is already new format, nothing to change
+          {
+              new_file: existing_path,
+              moved: false
+          }
+        elsif !existing_is_new && File.exist?(new_path) && File.exist?(existing_path)
+          # both new and old formats exist, do nothing
+
+          @logger.info(@class_name) {
+            "Found equivalent old and new file names, no action performed. Old: #{existing_path} New: #{new_path}."
+          }
 
           {
-              old_file: existing_file,
-              new_file: existing_file,
+              new_file: new_path,
               moved: false
           }
         else
+          # file is in old format, file in new format does not exist
 
-          # create corresponding new file name
-          new_path = File.join(File.dirname(existing_file), file_name_utc)
+          @logger.info(@class_name) { "Moving #{existing_path} to #{new_path}." }  if is_real_run
+          FileUtils.move(existing_path, new_path) if is_real_run
 
-          # check if it exists
-          new_path_exists = File.exist?(new_path)
+          @logger.info(@class_name) { "Dry Run: Would have moved #{existing_path} to #{new_path}." } unless is_real_run
 
-          move_performed = false
-
-          # logging
-          if new_path_exists
-            @logger.info(@class_name) {
-              "Found equivalent old and new file names, no action performed. Old: #{existing_file} New: #{new_path}."
-            }
-          else
-            if is_real_run
-              @logger.info(@class_name) {
-                "Moving #{existing_file} to #{new_path}."
-              }
-              # move old name to new name unless it already exists
-              FileUtils.move(existing_file, new_path)
-
-              move_performed = File.exist?(new_path)
-            else
-
-              @logger.info(@class_name) {
-                "Dry Run: Would have moved #{existing_file} to #{new_path}."
-              }
-            end
-
-          end
-
-          # result details
           {
-              old_file: existing_file,
               new_file: new_path,
-              moved: move_performed
+              moved: true
           }
+
         end
+
       end
 
     end
