@@ -63,26 +63,31 @@ module BawWorkers
     # @return [Net::HTTP::Response] The response.
     def send_request(description, method, host, port, endpoint, security_info = {auth_token: nil, cookies: nil}, body = nil)
 
-      if method == :get
-        request = Net::HTTP::Get.new(endpoint)
-      elsif method == :put
-        request = Net::HTTP::Put.new(endpoint)
-      elsif method == :post
-        request = Net::HTTP::Post.new(endpoint)
-      elsif method == :head
-        request = Net::HTTP::Head.new(endpoint)
-      elsif method == :patch
-        request = Net::HTTP::Patch.new(endpoint)
-      else
-        fail BawWorkers::Exceptions::HarvesterError, "Unrecognised HTTP method #{method}."
+      case method
+        when :get
+          request = Net::HTTP::Get.new(endpoint)
+        when :put
+          request = Net::HTTP::Put.new(endpoint)
+        when :post
+          request = Net::HTTP::Post.new(endpoint)
+        when :head
+          request = Net::HTTP::Head.new(endpoint)
+        when :patch
+          request = Net::HTTP::Patch.new(endpoint)
+        else
+          fail ArgumentError, "Unrecognised HTTP method #{method}."
       end
 
       request['Content-Type'] = 'application/json'
       request['Accept'] = 'application/json'
       request['Authorization'] = "Token token=\"#{security_info[:auth_token]}\"" if security_info && security_info.include?(:auth_token) && !security_info[:auth_token].nil?
-
+      
       # extract XSRF-TOKEN from cookie, and put into X-XSRF-TOKEN header
       if security_info && security_info.include?(:cookies) && !security_info[:cookies].nil?
+
+        # include cookies if any were set
+        request['Cookie'] = security_info[:cookies]
+
         cookie_strings = security_info[:cookies].split('; ')
         xsrf_cookie = nil
         key_string = 'XSRF-TOKEN='
