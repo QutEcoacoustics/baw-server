@@ -88,7 +88,8 @@ module BawWorkers
               result_hash[:compare_hash],
               result_hash[:api_result_hash],
               result_hash[:api_response],
-              result_hash[:review_level]
+              result_hash[:review_level],
+              audio_params_sym[:id]
           )
         end
 
@@ -164,7 +165,11 @@ module BawWorkers
           @logger.error(@class_name) { msg }
 
           # write row of csv into log file
-          log_csv_line(existing_file, true, nil, compare_hash, nil, nil, :high_file_hashes_do_not_match)
+          log_csv_line(
+              existing_file, true, nil,
+              compare_hash, nil, nil,
+              :high_file_hashes_do_not_match,
+              audio_params[:id])
 
           fail BawAudioTools::Exceptions::FileCorruptError, msg
         end
@@ -200,7 +205,10 @@ module BawWorkers
             @logger.error(@class_name) { msg }
 
             # write row of csv into log file
-            log_csv_line(existing_file, true, nil, compare_hash, nil, nil, :medium_multiple_properties_do_not_match)
+            log_csv_line(existing_file, true, nil,
+                         compare_hash, nil, nil,
+                         :medium_multiple_properties_do_not_match,
+                         audio_params[:id])
 
             fail BawAudioTools::Exceptions::FileCorruptError, msg
           else
@@ -364,7 +372,10 @@ module BawWorkers
           @logger.error(@class_name) { msg }
 
           # write row of csv into log file
-          log_csv_line(original_paths[:possible][0], false, nil, nil, nil, nil, :high_original_file_does_not_exist)
+          log_csv_line(original_paths[:possible][0], false, nil,
+                       nil, nil, nil,
+                       :high_original_file_does_not_exist,
+                       audio_params[:id])
 
           fail BawAudioTools::Exceptions::FileNotFoundError, msg
         end
@@ -380,11 +391,15 @@ module BawWorkers
       # @param [Symbol] review_level
       # @return [void]
       def log_csv_line(file_path, exists, moved_path = nil,
-                       compare_hash = nil, api_result_hash = nil, api_response = nil, review_level = :none_all_good)
+                       compare_hash = nil, api_result_hash = nil,
+                       api_response = nil, review_level = :none_all_good,
+                       audio_recording_id)
 
         logged_csv_line = BawWorkers::AudioCheck::CsvHelper.logged_csv_line(
             file_path, exists, moved_path,
-            compare_hash, api_result_hash, api_response, review_level)
+            compare_hash, api_result_hash,
+            api_response, review_level,
+            audio_recording_id)
 
         # write to csv
         csv_options = {col_sep: ',', force_quotes: true}

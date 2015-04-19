@@ -13,7 +13,8 @@ module BawWorkers
 
         def logged_csv_line(file_path, exists, moved_path = nil,
                             compare_hash = nil, api_result_hash = nil,
-                            api_response = nil, review_level = :none_all_good)
+                            api_response = nil, review_level = :none_all_good,
+                            audio_recording_id)
           csv_headers = [
               :file_path, :exists,
 
@@ -40,7 +41,9 @@ module BawWorkers
 
               :api_response,
 
-              :review_level
+              :review_level,
+
+              :audio_recording_id
           ]
 
           csv_values = []
@@ -102,8 +105,8 @@ module BawWorkers
           api_response_value = api_response.nil? ? :invalid : api_response
           csv_values[37] = api_response_value
 
-          # review level
           csv_values[38] = review_level
+          csv_values[39] = audio_recording_id
 
           {
               headers: csv_headers,

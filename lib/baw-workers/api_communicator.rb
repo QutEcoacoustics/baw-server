@@ -81,7 +81,7 @@ module BawWorkers
       request['Content-Type'] = 'application/json'
       request['Accept'] = 'application/json'
       request['Authorization'] = "Token token=\"#{security_info[:auth_token]}\"" if security_info && security_info.include?(:auth_token) && !security_info[:auth_token].nil?
-      
+
       # extract XSRF-TOKEN from cookie, and put into X-XSRF-TOKEN header
       if security_info && security_info.include?(:cookies) && !security_info[:cookies].nil?
 
