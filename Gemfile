@@ -14,7 +14,7 @@ source 'https://rubygems.org'
 # -------------------------------------
 
 gem 'rails', '~> 4.2.0'
-gem 'rack-cors', '~> 0.3.1', require: 'rack/cors'
+gem 'rack-cors', '~> 0.4.0', require: 'rack/cors'
 gem 'responders', '~> 2.0'
 
 # RAILS 3 compatibility gems
@@ -172,7 +172,7 @@ group :development, :test do
 
   gem 'fakeredis', '~> 0.5.0', require: 'fakeredis/rspec'
 
-
+  gem 'zonebie'
 
   # for cleaning up Rails apps
   # gem 'traceroute', require: false
@@ -198,12 +198,12 @@ group :development, :test do
   gem 'capybara', '~> 2.4.4'
 
   gem 'rspec', '~> 3.2.0'
-  gem 'simplecov', '~> 0.9.1', require: false
+  gem 'simplecov', '~> 0.10.0', require: false
   gem 'shoulda-matchers', '~> 2.8.0'
   gem 'launchy', '~> 2.4.3'
   gem 'json_spec', '~> 1.1.4'
   gem 'database_cleaner', '1.4.1'
   gem 'webmock', '~> 1.21.0'
-  gem 'coveralls', '~> 0.8.0', require: false
+  gem 'coveralls', '~> 0.8.1', require: false
   gem 'codeclimate-test-reporter', '~> 0.4.5', require: nil
 end
