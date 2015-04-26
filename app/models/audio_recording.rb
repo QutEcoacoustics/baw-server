@@ -258,87 +258,40 @@ class AudioRecording < ActiveRecord::Base
   end
 
   def check_duplicate_file_hashes
-    # self.id will be nil; self will not be in database yet
-    query = AudioRecording.where(file_hash: self.file_hash)
-    unless self.id.blank?
-      query = query.where('id <> ?', self.id)
-    end
-    count = query.count
-    if count > 0
-      ids = query.select(:id).to_a.map { |item| item.id }
-      errors.add(:file_hash, "has already been taken by id #{ids}.")
+
+    if self.file_hash == 'SHA256::'
+      # short-circuit the invalid hash 'SHA256::'
+      # TODO: ignore file_hash of 'SHA256::' for now
+      #errors.add(:file_hash, 'is not valid and needs to be updated.')
+    else
+      # check that no other audio recording has the same file_hash
+      query = AudioRecording.where(file_hash: self.file_hash)
+
+      unless self.id.blank?
+        query = query.where('id <> ?', self.id)
+      end
+
+      count = query.count
+      if count > 0
+        ids = query.pluck(:id)
+        errors.add(:file_hash, "has already been taken by id #{ids}.")
+      end
+
     end
   end
 
   def check_overlapping
 
     # validate model first, as this check can occur before attribute validations are run
-
-    errors.add(:recorded_date, 'must have a value') if self.recorded_date.blank?
-    errors.add(:duration_seconds, 'must have a value') if self.duration_seconds.blank?
-    errors.add(:site_id, 'must have a value') if self.site_id.blank?
+    AudioRecordingOverlap.validate(self)
     return if errors.count > 0
 
-    # recordings are overlapping if:
-    # do not have the same id,
-    # do have same site
-    # start is before .recorded_date.advance(seconds: self.duration_seconds)
-    # and end is before self.recorded_date
-    # self.id will be nil; self will not be in database yet
-    if self.recorded_date.respond_to?(:advance)
-      end_time = self.recorded_date.advance(seconds: self.duration_seconds)
-      query = AudioRecording
-      .where(site_id: self.site_id)
-      .start_before_not_equal(end_time)
-      .end_after_not_equal(self.recorded_date)
-      unless self.id.blank?
-        query = query.where('id <> ?', self.id)
-      end
-      count = query.count
-      if count > 0
+    overlaps = AudioRecordingOverlap.get(self, Settings.audio_recording_max_overlap_sec)
 
-        new_recorded_date = self.recorded_date
-        new_end_date = self.recorded_date.advance(seconds: self.duration_seconds)
-
-        overlapping = query.map { |a|
-
-          existing_recorded_data = a.recorded_date
-          existing_audio_end = a.recorded_date.advance(seconds: a.duration_seconds)
-
-          if new_recorded_date < existing_recorded_data
-            # overlap is at end of new, start of existing
-            overlap_amount = new_end_date - existing_recorded_data
-            overlap_location = 'start of existing, end of new'
-          else
-            # overlap is at start of new, end of existing
-            overlap_amount = existing_audio_end - new_recorded_date
-            overlap_location = 'start of new, end of existing'
-          end
-
-          {
-              uuid: a.uuid,
-              id: a.id,
-              recorded_date: a.recorded_date,
-              duration: a.duration_seconds,
-              end_date: existing_audio_end,
-              overlap_amount: overlap_amount,
-              overlap_location: overlap_location
-          }
-        }
-
-        message = {
-            problem: 'audio recordings that overlap in the same site (calculated from recording_start and duration_seconds) are not permitted',
-            overlapping_audio_recordings: overlapping
-        }
-
-        # define overlapping so it can be accessed in the controller
-        @overlapping = overlapping
-
-        # add errors entry to this model instance to record overlap problems
-        errors.add(:recorded_date, message)
-        self
-      end
+    if overlaps[:overlap][:items].size > 0
+      errors.add(:recorded_date, overlaps[:overlap])
     end
+
   end
 
 end

@@ -286,8 +286,8 @@ def test_overlap
 
         elsif status_code == 422
           expect(status).to eq(422), "expected status 422 but was #{status}. Response body was #{response_body}"
-          expect(response_body).to have_json_path('recorded_date/0/problem'), "could not find 'problem' in #{response_body}"
-          expect(response_body).to have_json_path('recorded_date/0/overlapping_audio_recordings/0/overlap_amount'), "could not find 'overlap_amount' in #{response_body}"
+          expect(response_body).to have_json_path('recorded_date/0/message'), "could not find 'message' in #{response_body}"
+          expect(response_body).to have_json_path('recorded_date/0/items/0/overlap_amount'), "could not find 'overlap_amount' in #{response_body}"
 
           # ensure posted audio recording does not exist
           expect(AudioRecording.where(file_hash: posted_item_attrs[:file_hash]).count)
