@@ -52,6 +52,7 @@ class ApplicationController < ActionController::Base
   # For APIs, you may want to use :null_session instead.
   protect_from_forgery with: :exception
 
+  # for responses, ensure CSRF cookie is set and fix problems with Vary header
   after_action :set_csrf_cookie, :resource_representation_caching_fixes
 
   # set and reset user stamper for each request
@@ -84,7 +85,7 @@ class ApplicationController < ActionController::Base
   # This enforces login via the UI only, since requests without a logged in user won't have access to the CSRF cookie.
   def verified_request?
     csrf_header_key = 'X-XSRF-TOKEN'
-    super || valid_authenticity_token?(session, request.headers[csrf_header_key])
+    super || valid_authenticity_token?(session, request.headers[csrf_header_key]) || api_auth_success?
   end
 
   # from http://stackoverflow.com/a/94626
