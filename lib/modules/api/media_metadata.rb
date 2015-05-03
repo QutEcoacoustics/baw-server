@@ -252,7 +252,8 @@ module Api
       # end
 
       # check window size
-      if request_params.include?(:window_size) && !window_options.include?(request_params[:window_size].to_i)
+      if request_params.include?(:window_size) && (!window_options.include?(request_params[:window_size].to_i) ||
+              (request_params[:window_size].to_i.to_s != request_params[:window_size].to_s))
         msg = "window_size parameter (#{request_params[:window_size]}) must be valid (#{window_options})."
         fail CustomErrors::UnprocessableEntityError, msg
       end
@@ -264,14 +265,16 @@ module Api
       end
 
       # check sample rate
-      if request_params.include?(:sample_rate) && !valid_sample_rates.include?(request_params[:sample_rate].to_i)
+      if request_params.include?(:sample_rate) && (!valid_sample_rates.include?(request_params[:sample_rate].to_i) ||
+          (request_params[:sample_rate].to_i.to_s != request_params[:sample_rate].to_s))
         msg = "sample_rate parameter (#{request_params[:sample_rate]}) must be valid (#{valid_sample_rates})."
         fail CustomErrors::UnprocessableEntityError, msg
       end
 
       # check channel
       valid_channels = [*0..audio_recording.channels]
-      if request_params.include?(:channel) && !valid_channels.include?(request_params[:channel].to_i)
+      if request_params.include?(:channel) && (!valid_channels.include?(request_params[:channel].to_i) ||
+          (request_params[:channel].to_i.to_s != request_params[:channel].to_s))
         msg = "channel parameter (#{request_params[:channel]}) must be valid (#{valid_channels})."
         fail CustomErrors::UnprocessableEntityError, msg
       end

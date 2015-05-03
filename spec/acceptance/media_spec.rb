@@ -723,6 +723,41 @@ resource 'Media' do
                      'meta/error/details', 'colour parameter')
   end
 
+  # ensure integer parameters are checked
+  get '/audio_recordings/:audio_recording_id/media.:format?start_offset=:start_offset&end_offset=:end_offset&sample_rate=22050user_token=ANAUTHTOKEN' do
+    standard_media_parameters
+    let(:authentication_token) { reader_token }
+    let(:format) { 'json' }
+    standard_request_options(:get, 'MEDIA (as reader invalid sample rate)', :unprocessable_entity,
+                             {
+                                 expected_json_path: 'meta/error/details',
+                                 response_body_content: 'The request could not be understood: sample_rate parameter (22050user_token=ANAUTHTOKEN) must be valid'
+                             })
+  end
+
+  get '/audio_recordings/:audio_recording_id/media.:format?start_offset=:start_offset&end_offset=:end_offset&window_size=512user_token=ANAUTHTOKEN' do
+    standard_media_parameters
+    let(:authentication_token) { reader_token }
+    let(:format) { 'json' }
+    standard_request_options(:get, 'MEDIA (as reader invalid window size)', :unprocessable_entity,
+                             {
+                                 expected_json_path: 'meta/error/details',
+                                 response_body_content: 'The request could not be understood: window_size parameter (512user_token=ANAUTHTOKEN) must be valid'
+                             })
+  end
+
+  get '/audio_recordings/:audio_recording_id/media.:format?start_offset=:start_offset&end_offset=:end_offset&channel=0user_token=ANAUTHTOKEN' do
+    standard_media_parameters
+    let(:authentication_token) { reader_token }
+    let(:format) { 'json' }
+    standard_request_options(:get, 'MEDIA (as reader invalid sample rate)', :unprocessable_entity,
+                             {
+                                 expected_json_path: 'meta/error/details',
+                                 response_body_content: 'The request could not be understood: channel parameter (0user_token=ANAUTHTOKEN) must be valid'
+                             })
+  end
+
+  # test remote audio and spectrogram generation
   context 'remote media generation' do
     around(:each) do |example|
       Settings[:media_request_processor] = Settings::MEDIA_PROCESSOR_RESQUE
