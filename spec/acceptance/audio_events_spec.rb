@@ -594,7 +594,13 @@ resource 'AudioEvents' do
                              {
                                  expected_json_path: 'data/0/start_time_seconds',
                                  data_item_count: 1,
-                                 regex_match: /"taggings":\[\{"id":\d+,"audio_event_id":\d+,"created_at":"[^"]+","updated_at":"[^"]+","creator_id":\d+,"updater_id":null\}\]/,
+                                 regex_match: [
+                                     /"taggings":\[\{"id":\d+,"audio_event_id":\d+,/,
+                                     /"created_at":"[^"]+"/,
+                                     /"updated_at":"[^"]+"/,
+                                     /"creator_id":\d+/,
+                                     /"updater_id":null/
+                                 ],
                                  response_body_content: "\"taggings\":[{\"",
                                  invalid_content: "\"taggings\":[\"",
                              })
