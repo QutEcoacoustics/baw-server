@@ -3,8 +3,9 @@
   = menu_group do
     = menu_item Settings.organisation_names.parent_site_name, Settings.organisation_names.parent_site_link
     = menu_item Settings.organisation_names.site_long_name, root_path, class: 'brand'
-    = menu_item 'Projects', projects_path if can? :index, Project
-    = menu_item 'Annotation Library', '/library' if can? :index, Project
+    = menu_item 'Projects', projects_path
+    = menu_item 'Listen', '/listen'
+    = menu_item 'Library', '/library'
     = menu_item 'Contact Us', contact_us_path
   = menu_group pull: :right do
     - if current_user.blank?
