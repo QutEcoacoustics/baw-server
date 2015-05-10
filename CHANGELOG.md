@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+ - 2015-05-10
+    - project and site names can be longer [#177](https://github.com/QutBioacoustics/baw-server/issues/177)
+    - modified nav bar links [#178](https://github.com/QutBioacoustics/baw-server/issues/178)
+
+ - 2015-04-29
+    - CSRF check disabled for api requests authenticated using a token
+    - more strict checks for media request parameters [#187](https://github.com/QutBioacoustics/baw-server/issues/187)
+
  - 2015-04-26
     - Improved audio recording overlap check [#184](https://github.com/QutBioacoustics/baw-server/issues/184)
     - removed obsolete access level class
