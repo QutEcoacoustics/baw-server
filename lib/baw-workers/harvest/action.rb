@@ -170,7 +170,7 @@ module BawWorkers
               summary[relative_dir]['uploader_id'].push(file_info[:uploader_id].to_i) unless summary[relative_dir]['uploader_id'].include?(file_info[:uploader_id].to_i)
 
               summary[relative_dir]['utc_offset'] = [] unless summary[relative_dir].include?('utc_offset')
-              summary[relative_dir]['utc_offset'].push(file_info[:utc_offset].to_i) unless summary[relative_dir]['utc_offset'].include?(file_info[:utc_offset].to_i)
+              summary[relative_dir]['utc_offset'].push(file_info[:utc_offset]) unless summary[relative_dir]['utc_offset'].include?(file_info[:utc_offset])
 
             end
           end
