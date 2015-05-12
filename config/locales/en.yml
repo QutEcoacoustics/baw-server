@@ -28,13 +28,6 @@ en:
       short: "%H:%M"
       long:  "%Y/%m/%d %H:%M"
   enumerize:
-    dataset:
-      filters:
-        wind: "Wind"
-        rain: "Rain"
-      types_of_tags:
-        human: "Human"
-        computer: "Computer"
   will_paginate:
     previous_label: "&#8592; Previous"
     next_label: "Next &#8594;"

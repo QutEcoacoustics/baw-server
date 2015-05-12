@@ -25,18 +25,8 @@ FactoryGirl.define do
       end
     end
 
-    trait :with_datasets do
-      transient do
-        dataset_count 1
-      end
-      after(:create) do |project, evaluator|
-        raise 'Creator was blank' if  evaluator.creator.blank?
-        create_list(:dataset, evaluator.dataset_count, project: project, creator: evaluator.creator)
-      end
-    end
 
     factory :project_with_sites, traits: [:with_sites]
-    factory :project_with_sites_and_datasets, traits: [:with_sites, :with_datasets]
 
   end
 end

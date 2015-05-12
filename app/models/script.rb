@@ -46,7 +46,7 @@ class Script < ActiveRecord::Base
   def version_increase
     unless update_from.blank?
       unless version > update_from.version
-        errors.add(:version, "must't be higher then previous version #{update_from.version}")
+        errors.add(:version, "must not be higher than previous version #{update_from.version}")
       end
     end
   end

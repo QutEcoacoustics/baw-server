@@ -6,7 +6,6 @@
 #      :name => "Name",
 #      :description => "Description",
 #      :notes => "MyText",
-#      :dataset_id => 1,
 #      :script_id => 2,
 #      :creator_id => 3,
 #      :updater_id => 4,
@@ -20,7 +19,6 @@
 #    rendered.should match(/Name/)
 #    rendered.should match(/Description/)
 #    rendered.should match(/MyText/)
-#    rendered.should match(/1/)
 #    rendered.should match(/2/)
 #    rendered.should match(/3/)
 #    rendered.should match(/4/)

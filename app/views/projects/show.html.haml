@@ -26,27 +26,6 @@
     Add New Site
 
 -#.row-fluid
-  %h3= 'Datasets'
-  - unless @project.datasets.empty?
-    %table.table.table-striped(data-provides='rowlink')
-      %thead
-        %tr
-          %th Name
-          %th Description
-
-      %tbody
-      - @project.datasets.each do |dataset|
-        %tr
-          %td= link_to dataset.name, project_dataset_path(dataset.project, dataset)
-          %td= render partial: 'datasets/summary', locals: {dataset: dataset}
-        %tr
-          %td{colspan:'2'}= render partial: 'datasets/summary_text', locals: {dataset: dataset}
-
-  = link_to new_project_dataset_path(@project), title: 'Add a new dataset to this project',
-  data: {toggle: 'tooltip',  placement: 'right'}, class: 'btn-create-site btn' do
-    Add New Dataset
-
--#.row-fluid
   %h3= 'Jobs'
   - unless @project.jobs.empty?
     = render partial: 'jobs/jobs_table', locals: {jobs: @project.jobs}
@@ -77,8 +56,6 @@
       %li= link_to 'Delete Project', @project, :method => :delete, data: { confirm: 'Are you sure?', toggle: 'tooltip',  placement: 'right' }, title: 'Delete project'
     - if can? :edit, @project
       %li= link_to 'Add New Site', new_project_site_path(@project),  title: "Add a new site to this project", data: {toggle: 'tooltip',  placement: 'right'}
-    -# if can? :edit, @project
-      %li= link_to 'Add New Dataset', new_project_dataset_path(@project),  title: "Add a new dataset to this project", data: {toggle: 'tooltip',  placement: 'right'}
     -# if can? :edit, @project
       %li= link_to 'Add New Job', new_project_job_path(@project),  title: "Add a new analysis job to this project", data: {toggle: 'tooltip',  placement: 'right'}
     - if can? :show, @project

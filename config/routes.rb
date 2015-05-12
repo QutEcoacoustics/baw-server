@@ -204,11 +204,6 @@ Rails.application.routes.draw do
     # API project sites list
 
     resources :sites, only: [:index], defaults: {format: 'json'}
-    resources :datasets, except: [:index] do
-      resources :jobs, only: [:show]
-      resources :jobs, only: [:index], defaults: {format: 'json'}
-    end
-    resources :datasets, only: [:index], defaults: {format: 'json'}
     resources :jobs, except: [:index, :show]
     resources :jobs, only: [:index], defaults: {format: 'json'}
   end

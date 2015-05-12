@@ -8,8 +8,7 @@ class Job < ActiveRecord::Base
   belongs_to :deleter, class_name: 'User', foreign_key: :deleter_id, inverse_of: :deleted_jobs
 
   belongs_to :script, inverse_of: :jobs
-  belongs_to :dataset, inverse_of: :jobs
-  has_one :project, through: :dataset  # using has_one instead of belongs_to to use :through
+  has_many :projects, through: :custom_jobs_projects  # using has_one instead of belongs_to to use :through
 
   # add deleted_at and deleter_id
   acts_as_paranoid
@@ -17,7 +16,6 @@ class Job < ActiveRecord::Base
 
   # association validations
   validates :script, existence: true
-  validates :dataset, existence: true
   validates :creator, existence: true
 
   # attribute validations
