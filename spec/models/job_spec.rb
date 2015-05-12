@@ -28,15 +28,6 @@ describe Job, :type => :model do
     expect(as2.errors[:name].size).to eq(1)
   end
 
-  it 'fails validation when dataset is nil' do
-    test_item = FactoryGirl.build(:job)
-    test_item.dataset = nil
-
-    expect(subject.valid?).to be_falsey
-    expect(subject.errors[:dataset].size).to eq(1)
-    expect(subject.errors[:dataset].to_s).to match(/must exist as an object or foreign key/)
-  end
-
   it 'fails validation when script is nil' do
     test_item = FactoryGirl.build(:job)
     test_item.script = nil
@@ -49,11 +40,6 @@ describe Job, :type => :model do
   it { is_expected.to validate_presence_of(:script_settings) }
   it 'is invalid without a script_settings' do
     expect(build(:job, script_settings: nil)).not_to be_valid
-  end
-
-
-  it 'is invalid without a dataset' do
-    expect(build(:job, dataset_id: nil)).not_to be_valid
   end
 
   it 'is invalid without a script' do

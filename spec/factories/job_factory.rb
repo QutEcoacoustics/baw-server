@@ -8,7 +8,6 @@ FactoryGirl.define do
 
     creator
     script
-    dataset
 
   end
 end

@@ -31,13 +31,13 @@ FactoryGirl.define do
     level 'reader'
     creator
     user # this is the user for which the permission is checked
-    association :project, factory: :project_with_sites_and_datasets
+    association :project, factory: :project_with_sites
   end
 
   factory :write_permission, class: Permission do
     level 'writer'
     creator
     user # this is the user for which the permission is checked
-    association :project, factory: :project_with_sites_and_datasets
+    association :project, factory: :project_with_sites
   end
 end

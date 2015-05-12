@@ -7,5 +7,5 @@
   %tbody
   - jobs.each do |jobs|
     %tr
-      %td= link_to jobs.name, project_dataset_job_path(@project, jobs.dataset, jobs)
+      %td= link_to jobs.name, project_job_path(@project, jobs)
       %td= jobs.annotation_name

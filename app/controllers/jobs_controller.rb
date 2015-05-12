@@ -6,7 +6,7 @@ class JobsController < ApplicationController
   # order matters for before_action and load_and_authorize_resource!
   load_and_authorize_resource :project
 
-  # this is necessary so that the ability has access to job.dataset.projects
+  # this is necessary so that the ability has access to job.projects
   before_action :build_project_job, only: [:new, :create]
 
   load_and_authorize_resource :job, through: :project
@@ -27,7 +27,6 @@ class JobsController < ApplicationController
   def show
     respond_to do |format|
       format.html {
-        add_breadcrumb "Dataset: #{@job.dataset.name}", project_dataset_path(@project, @job.dataset)
         add_breadcrumb "Job: #{@job.name}", [@project, @job]
       }
       format.json { render json: @job }
@@ -49,8 +48,7 @@ class JobsController < ApplicationController
 
   # GET /jobs/1/edit
   def edit
-    add_breadcrumb "Dataset: #{@job.dataset.name}", project_dataset_path(@project, @job.dataset)
-    add_breadcrumb "Job: #{@job.name}", [@project,  @job.dataset, @job]
+    add_breadcrumb "Job: #{@job.name}", [@project,  @job]
     add_breadcrumb 'Edit', edit_project_job_path(@project, @job)
   end
 
@@ -76,7 +74,7 @@ class JobsController < ApplicationController
   def update
     respond_to do |format|
       if @job.update_attributes(job_params)
-        format.html { redirect_to [@project, @job.dataset, @job], notice: 'Analysis job was successfully updated.' }
+        format.html { redirect_to [@project, @job], notice: 'Analysis job was successfully updated.' }
         format.json { head :no_content }
       else
         format.html { render action: "edit" }
@@ -105,15 +103,12 @@ class JobsController < ApplicationController
   end
 
   def build_project_job
-    @dataset = Dataset.new
-    @dataset.project = @project
     @job = Job.new
-    @job.dataset = @dataset
   end
 
   def job_params
     params.require(:job).permit(
-        :script_id, :dataset_id, :annotation_name,
+        :script_id, :annotation_name,
         :name, :description, :script_settings)
   end
 end

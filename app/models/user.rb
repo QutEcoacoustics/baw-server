@@ -57,9 +57,6 @@ class User < ActiveRecord::Base
   has_many :created_bookmarks, class_name: 'Bookmark', foreign_key: :creator_id, inverse_of: :creator
   has_many :updated_bookmarks, class_name: 'Bookmark', foreign_key: :updater_id, inverse_of: :updater
 
-  has_many :created_datasets, -> { includes :project }, class_name: 'Dataset', foreign_key: :creator_id, inverse_of: :creator
-  has_many :updated_datasets, -> { includes :project }, class_name: 'Dataset', foreign_key: :updater_id, inverse_of: :updater
-
   has_many :created_jobs, class_name: 'Job', foreign_key: :creator_id, inverse_of: :creator
   has_many :updated_jobs, class_name: 'Job', foreign_key: :updater_id, inverse_of: :updater
   has_many :deleted_jobs, class_name: 'Job', foreign_key: :deleter_id, inverse_of: :deleter

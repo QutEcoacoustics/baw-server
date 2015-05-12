@@ -23,6 +23,6 @@
     - if can? :edit, @project
       %li= link_to 'Edit Job',edit_project_job_path(@project, @job),  title: "Edit analysis job's parameters", data: {toggle: 'tooltip',  placement: 'right'}
     - if can? :destroy, @project
-      %li= link_to 'Delete Job', [@project, @job], :method => :delete, data: { confirm: 'Are you sure?', toggle: 'tooltip',  placement: 'right' }, title: 'Delete dataset'
+      %li= link_to 'Delete Job', [@project, @job], :method => :delete, data: { confirm: 'Are you sure?', toggle: 'tooltip',  placement: 'right' }, title: 'Delete job'
     - if can? :edit, @project
       %li= link_to 'Add New Job', new_project_job_path(@project),  title: "Add a new analysis job to this project", data: {toggle: 'tooltip',  placement: 'right'}

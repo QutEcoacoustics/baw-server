@@ -165,7 +165,6 @@ describe 'Delete Site as admin user', :type => :feature do
 
     expect { first(:link, 'Delete').click }.to change(Site, :count).by(-1)
 
-    #expect { page.driver.delete project_dataset_path(@project, @dataset) }.to change(Dataset, :count).by(-1)
     #page.driver.response.should be_redirect
 
     #visit page.driver.response.location
