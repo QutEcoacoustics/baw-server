@@ -14,7 +14,6 @@ module BawWorkers
                     :original_audio_helper,
                     :audio_cache_helper,
                     :spectrogram_cache_helper,
-                    :dataset_cache_helper,
                     :analysis_cache_helper,
                     :file_info,
                     :api_communicator
@@ -52,7 +51,6 @@ module BawWorkers
         BawWorkers::Config.original_audio_helper = BawWorkers::Storage::AudioOriginal.new(BawWorkers::Settings.paths.original_audios)
         BawWorkers::Config.audio_cache_helper = BawWorkers::Storage::AudioCache.new(BawWorkers::Settings.paths.cached_audios)
         BawWorkers::Config.spectrogram_cache_helper = BawWorkers::Storage::SpectrogramCache.new(BawWorkers::Settings.paths.cached_spectrograms)
-        BawWorkers::Config.dataset_cache_helper = BawWorkers::Storage::DatasetCache.new(BawWorkers::Settings.paths.cached_datasets)
         BawWorkers::Config.analysis_cache_helper = BawWorkers::Storage::AnalysisCache.new(BawWorkers::Settings.paths.cached_analysis_jobs)
 
         # configure logging
@@ -220,7 +218,6 @@ module BawWorkers
         BawWorkers::Config.original_audio_helper = BawWorkers::Storage::AudioOriginal.new(settings.paths.original_audios)
         BawWorkers::Config.audio_cache_helper = BawWorkers::Storage::AudioCache.new(settings.paths.cached_audios)
         BawWorkers::Config.spectrogram_cache_helper = BawWorkers::Storage::SpectrogramCache.new(settings.paths.cached_spectrograms)
-        BawWorkers::Config.dataset_cache_helper = BawWorkers::Storage::DatasetCache.new(settings.paths.cached_datasets)
         BawWorkers::Config.analysis_cache_helper = BawWorkers::Storage::AnalysisCache.new(settings.paths.cached_analysis_jobs)
 
         # configure logging

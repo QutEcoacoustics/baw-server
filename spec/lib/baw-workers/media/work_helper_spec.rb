@@ -45,7 +45,6 @@ describe BawWorkers::Media::WorkHelper do
     FileUtils.rm_rf(BawWorkers::Settings.paths.original_audios)
     FileUtils.rm_rf(BawWorkers::Settings.paths.cached_audios)
     FileUtils.rm_rf(BawWorkers::Settings.paths.cached_spectrograms)
-    FileUtils.rm_rf(BawWorkers::Settings.paths.cached_datasets)
   end
 
   it 'raises exception when original audio not found' do

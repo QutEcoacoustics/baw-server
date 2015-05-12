@@ -67,7 +67,6 @@ module BawWorkers
     autoload :AnalysisCache, 'baw-workers/storage/analysis_cache'
     autoload :AudioCache, 'baw-workers/storage/audio_cache'
     autoload :AudioOriginal, 'baw-workers/storage/audio_original'
-    autoload :DatasetCache, 'baw-workers/storage/dataset_cache'
     autoload :SpectrogramCache, 'baw-workers/storage/spectrogram_cache'
   end
 
