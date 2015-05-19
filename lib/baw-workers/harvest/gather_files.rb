@@ -155,7 +155,7 @@ module BawWorkers
             @logger.debug(@class_name) { "Successfully got #{msg_props}" }
           end
 
-        rescue => e
+        rescue StandardError => e
           @logger.error(@class_name) {
             "Problem getting details for #{file} using utc offset '#{utc_offset}': #{format_error(e)}"
           }
@@ -217,7 +217,7 @@ module BawWorkers
             {}
           end
 
-        rescue => e
+        rescue StandardError=> e
           @logger.warn(@class_name) { "Harvest directory config file was not valid '#{file}'. #{format_error(e)}" }
           {}
         end

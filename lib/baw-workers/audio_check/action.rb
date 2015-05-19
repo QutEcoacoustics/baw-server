@@ -81,7 +81,7 @@ module BawWorkers
             begin
               result = BawWorkers::AudioCheck::Action.action_run(audio_params, is_real_run)
               successes.push({params: audio_params, result: result})
-            rescue Exception => e
+            rescue StandardError => e
               failures.push({params: audio_params, exception: e})
             end
           end
@@ -120,7 +120,7 @@ module BawWorkers
               result = nil
               result = BawWorkers::AudioCheck::Action.action_enqueue(audio_params) if is_real_run
               successes.push({params: audio_params, result: result})
-            rescue Exception => e
+            rescue StandardError => e
               failures.push({params: audio_params, exception: e})
             end
           end

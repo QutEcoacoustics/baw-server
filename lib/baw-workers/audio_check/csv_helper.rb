@@ -1,10 +1,7 @@
 require 'csv'
 
 # Postgresql query to export csv file
-# COPY (SELECT id, uuid, recorded_date || 'Z', duration_seconds,
-# sample_rate_hertz, channels,bit_rate_bps, media_type, data_length_bytes,
-# file_hash, original_file_name FROM "audio_recordings"
-#      ) TO '/tmp/audio_recordings_to_check.csv' DELIMITER ',' CSV HEADER;
+# COPY (SELECT id, uuid, recorded_date || 'Z' as recorded_date, duration_seconds, sample_rate_hertz, channels,bit_rate_bps, media_type, data_length_bytes, file_hash, original_file_name FROM "audio_recordings") TO '/tmp/staging_audio_recordings.csv' DELIMITER ',' CSV HEADER;
 
 module BawWorkers
   module AudioCheck
