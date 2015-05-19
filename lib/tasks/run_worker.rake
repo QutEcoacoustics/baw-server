@@ -1,6 +1,7 @@
 require 'rake'
 require 'resque/tasks'
 require 'baw-workers'
+require 'csv'
 
 namespace :baw do
 
@@ -89,6 +90,12 @@ namespace :baw do
         is_real_run = BawWorkers::Validation.check_real_run(args.real_run)
         BawWorkers::Config.run(settings_file: args.settings_file, redis: false, resque_worker: false)
         BawWorkers::AudioCheck::Action.action_perform_rake(args.csv_file, is_real_run)
+      end
+
+      desc 'Test reading csv files'
+      task :test_csv, [:audio_recordings_csv, :hash_csv, :result_csv] do |t, args|
+        BawWorkers::AudioCheck::CsvHelper.write_audio_recordings_csv(
+            args.audio_recordings_csv, args.hash_csv, args.result_csv)
       end
 
       desc 'Extract CSV lines from a log file'

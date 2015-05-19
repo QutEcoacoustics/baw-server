@@ -139,7 +139,7 @@ module BawWorkers
 
             # special case for original_format
             # get original_format from original_file_name
-            original_file_name = audio_params.delete(:original_file_name)
+            original_file_name = audio_params[:original_file_name]
             original_extension = original_file_name.blank? ? '' : File.extname(original_file_name).trim('.', '').downcase
             audio_params[:original_format] = original_extension
 
@@ -149,6 +149,95 @@ module BawWorkers
             # provide the audio parameters to yield
             yield audio_params if block_given?
           end
+        end
+
+        def read_audio_file_hash_csv(csv_file)
+          index_to_key_map = {
+              file_hash: 0,
+              uuid: 1
+          }
+
+          # load csv file
+          CSV.foreach(csv_file, {headers: false, return_headers: false}) do |row|
+
+            audio_params = {}
+
+            # get values from row, put into hash that matches what check action expects
+            if row && !row[0].blank? && !row[1].blank?
+              audio_params = {file_hash: row[0].strip, uuid: row[1].strip}
+            end
+
+            # provide the audio parameters to yield
+            yield audio_params if block_given?
+          end
+        end
+
+        def write_audio_recordings_csv(original_csv, hash_csv, result_csv)
+
+          audio_info = {}
+
+          BawWorkers::AudioCheck::CsvHelper.read_audio_recording_csv(original_csv) do |audio_params|
+            audio_info[audio_params[:uuid]] = audio_params
+            print '.'
+          end
+
+          BawWorkers::AudioCheck::CsvHelper.read_audio_file_hash_csv(hash_csv) do |hash_params|
+
+            new_hash = hash_params[:file_hash]
+            new_uuid = hash_params[:uuid]
+            prefix = 'SHA256::'
+
+            if audio_info.include?(new_uuid)
+              file_hash = audio_info[new_uuid][:file_hash]
+              if file_hash.blank? || file_hash == prefix
+                audio_info[new_uuid][:file_hash] = "#{prefix}#{new_hash}"
+                print ','
+              else
+                print ' '
+              end
+            else
+              audio_info[new_uuid] = {}
+              audio_info[new_uuid][:file_hash] = "#{prefix}#{new_hash}"
+              audio_info[new_uuid][:uuid] = new_uuid
+              print ';'
+            end
+
+          end
+
+          # write to csv
+          csv_options = {col_sep: ',', force_quotes: true}
+
+          index_to_key_map = {
+              id: 0,
+              uuid: 1,
+              recorded_date: 2,
+              duration_seconds: 3,
+              sample_rate_hertz: 4,
+              channels: 5,
+              bit_rate_bps: 6,
+              media_type: 7,
+              data_length_bytes: 8,
+              file_hash: 9,
+              original_file_name: 10
+          }
+
+          column_order = []
+          index_to_key_map.each do |key, value|
+            column_order[value] = key
+          end
+
+          CSV.open(result_csv, 'w', csv_options) do |writer|
+            audio_info.each do |key, value|
+
+              row_values = []
+              column_order.each do |attr|
+                row_values.push(value[attr])
+              end
+
+              writer << row_values
+            end
+          end
+
         end
 
         # extract the CSV log lines from a log file.
