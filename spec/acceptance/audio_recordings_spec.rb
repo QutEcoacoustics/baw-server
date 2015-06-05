@@ -209,6 +209,33 @@ def test_overlap
                }
            ]
        }
+      },
+      { # real example 1
+        inputs: {
+            post_item: {
+                recorded_date: Time.zone.parse('2014-10-23T00:01:00+1000'),
+                duration_seconds: 7200.003
+            },
+            existing_items: [
+                {
+                    recorded_date: Time.zone.parse('2014-10-22T20:01:00+1000'),
+                    duration_seconds: 7200.003
+                }
+            ]
+        },
+        outputs: {
+            status_code: 201,
+            post_item: {
+                recorded_date: Time.zone.parse('2014-10-23T00:01:00+1000'),
+                duration_seconds: 7200.003
+            },
+            existing_items: [
+                {
+                    recorded_date: Time.zone.parse('2014-10-22T20:01:00+1000'),
+                    duration_seconds: 7200.003
+                }
+            ]
+        }
       }
   ]
 
@@ -531,7 +558,6 @@ resource 'AudioRecordings' do
                                                      media_type: media_type,
                                                      duration_seconds: duration_seconds,
                                                      site_id: site_id,
-                                                     status: :new,
                                                      uploader_id: @write_permission.user.id) }
 
     let(:raw_post) { {'audio_recording' => ar_attributes}.to_json }
