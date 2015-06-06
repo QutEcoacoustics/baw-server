@@ -4,11 +4,23 @@
     %p There's been an issue.
     %p You could go back and try again.
   - else
-    %h1= @details[:phrase]
+    %h1
+      = @details[:phrase]
+      %small
+        = @details[:status_code]
     %p= @details[:message]
     - @details[:links].each do |key, value|
       %p
         %a{href: value}= key
+    - if @details[:supported_media]
+      %ul
+      - @details[:supported_media].each do |category, items|
+        %li= category
+        %ul
+          - if category == :text
+            %li= ".html (text/html)"
+          - items.each do |item|
+            %li=".#{item.to_sym} (#{item})"
 
 .span6
   = image_tag 'bird_watcher.jpg'

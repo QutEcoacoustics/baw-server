@@ -215,7 +215,7 @@ class ApplicationController < ActionController::Base
     log_original_error(method_name, error, json_response)
 
     # add custom header
-    headers['X-Error-Type'] = error.class.to_s.titleize
+    headers['X-Error-Type'] = error.class.to_s.titleize unless error.nil?
 
     respond_to do |format|
       # format.all will be used for Accept: */* as it is first in the list
@@ -243,7 +243,18 @@ class ApplicationController < ActionController::Base
         if options[:redirect]
           redirect_to get_redirect, alert: "#{status_message}: #{detail_message}"
         else
-          @details = {code: status_code, phrase: status_message, message: detail_message, links: response_links}
+          @details = {
+              code: status_code,
+              phrase: status_message,
+              message: detail_message,
+              links: response_links,
+              supported_media: []
+          }
+
+          if options[:error_info] && options[:error_info][:available_formats]
+            @details[:supported_media] = options[:error_info][:available_formats]
+          end
+
           render template: 'errors/generic', status: status_symbol
         end
       }

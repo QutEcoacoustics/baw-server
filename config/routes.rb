@@ -324,6 +324,9 @@ Rails.application.routes.draw do
     match '/test_exceptions', to: 'errors#test_exceptions', via:  [:get, :head, :post, :put, :delete, :options, :trace, :patch]
   end
 
+  # routes directly to error pages
+  match '/errors/:name', to: 'errors#show', via: [:get, :head, :post, :put, :delete, :options, :trace, :patch]
+
   # for error pages - must be last
   match '*requested_route', to: 'errors#route_error', via: [:get, :head, :post, :put, :delete, :options, :trace, :patch]
 

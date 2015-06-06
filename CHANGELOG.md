@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+ - 2015-06-06
+    - Provide distinct urls for different error pages for the client app [#206](https://github.com/QutBioacoustics/baw-server/issues/206)
+
  - 2015-05-10
     - project and site names can be longer [#177](https://github.com/QutBioacoustics/baw-server/issues/177)
     - modified nav bar links [#178](https://github.com/QutBioacoustics/baw-server/issues/178)
