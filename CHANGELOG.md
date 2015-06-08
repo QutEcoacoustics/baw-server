@@ -4,6 +4,7 @@
 
  - 2015-06-08
     - change annotation csv download to a flat result set [#204](https://github.com/QutBioacoustics/baw-server/issues/204)
+    - added upload instructions page [#186](https://github.com/QutBioacoustics/baw-server/issues/186)
 
  - 2015-06-06
     - Provide distinct urls for different error pages for the client app [#206](https://github.com/QutBioacoustics/baw-server/issues/206)
