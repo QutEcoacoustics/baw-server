@@ -69,12 +69,12 @@ class NameyWamey
         project_name = project.name
       end
 
-      if project.is_a?(Hash)
-        site_id = project[:id]
-        site_name = project[:name]
+      if site.is_a?(Hash)
+        site_id = site[:id]
+        site_name = site[:name]
       else
-        site_id = project.id
-        site_name = project.name
+        site_id = site.id
+        site_name = site.name
       end
 
       "#{project_name}_#{project_id}_#{site_name}_#{site_id}#{extra_options_formatted}.#{extension.trim('.', '')}"
