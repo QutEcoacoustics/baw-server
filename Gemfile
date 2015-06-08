@@ -48,7 +48,7 @@ gem 'haml', '~> 4.0.6'
 gem 'haml-rails', '~> 0.8'
 
 gem 'simple_form', '~> 3.1.0'
-gem 'paperclip', '~> 4.2.1'
+gem 'paperclip', '~> 4.2.0'
 gem 'breadcrumbs_on_rails', '~> 2.3.0'
 # kept below version 2 due to huge breaking changes
 gem 'gmaps4rails', '< 2'
@@ -113,7 +113,7 @@ require 'rbconfig'
 # MONITORING
 # -------------------------------------
 gem 'exception_notification', '~> 4.1.0'
-gem 'newrelic_rpm', '~> 3.11.0'
+gem 'newrelic_rpm', '~> 3.12.0'
 
 # Documentation & UI
 # -------------------------------------
@@ -193,7 +193,7 @@ group :development, :test do
   #gem 'debugger'
   # gem install traceroute --no-ri --no-rdoc
 
-  gem 'rspec-rails', '~> 3.2.0'
+  gem 'rspec-rails', '~> 3.2.3'
   gem 'factory_girl_rails', '~> 4.5.0'
   gem 'capybara', '~> 2.4.4'
 
