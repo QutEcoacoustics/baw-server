@@ -11,7 +11,10 @@
     %p= @details[:message]
     - @details[:links].each do |key, value|
       %p
-        %a{href: value}= key
+        - if @details[:redirect_to_url]
+          %a{href: "#{value}?redirect_to=#{ERB::Util.url_encode(@details[:redirect_to_url])}"}= key
+        - else
+          %a{href: value}= key
     - if @details[:supported_media]
       %ul
       - @details[:supported_media].each do |category, items|

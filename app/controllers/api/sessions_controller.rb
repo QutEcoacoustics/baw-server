@@ -1,7 +1,7 @@
 # Handles Restful API Authentication only
 # @see http://www.cocoahunter.com/blog/2013/02/13/restful-api-authentication/
 # @see controllers/devise/sessions_controller.rb
-class SessionsController < Devise::SessionsController
+class Api::SessionsController < Devise::SessionsController
   include Api::ApiAuth
 
   # custom user authentication

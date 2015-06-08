@@ -64,11 +64,13 @@ Rails.application.routes.draw do
 
   # standard devise for website authentication
   # NOTE: the sign in route is used by baw-workers to log in, ensure any changes are reflected in baw-workers.
-  devise_for :users, path: :my_account
+  devise_for :users,
+             path: :my_account,
+             controllers: {sessions: 'users/sessions', registrations: 'users/registrations'}
 
   # devise for RESTful API Authentication, see Api/sessions_controller.rb
   devise_for :users,
-             controllers: {sessions: 'sessions'},
+             controllers: {sessions: 'api/sessions'},
              as: :security,
              path: :security,
              defaults: {format: 'json'},
@@ -81,12 +83,12 @@ Rails.application.routes.draw do
   # https://github.com/plataformatec/devise/issues/2840#issuecomment-43262839
   devise_scope :security_user do
     # no index
-    post '/security' => 'sessions#create', defaults: {format: 'json'}
-    get '/security/new' => 'sessions#new', defaults: {format: 'json'}
-    get '/security/user' => 'sessions#show', defaults: {format: 'json'} # 'user' represents the current user id
+    post '/security' => 'api/sessions#create', defaults: {format: 'json'}
+    get '/security/new' => 'api/sessions#new', defaults: {format: 'json'}
+    get '/security/user' => 'api/sessions#show', defaults: {format: 'json'} # 'user' represents the current user id
     # no edit view
     # no update
-    delete '/security' => 'sessions#destroy', defaults: {format: 'json'}
+    delete '/security' => 'api/sessions#destroy', defaults: {format: 'json'}
   end
 
   # when a user goes to my account, render user_account/show view for that user

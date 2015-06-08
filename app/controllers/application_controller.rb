@@ -3,18 +3,16 @@ class ApplicationController < ActionController::Base
 
   layout :api_or_html
 
-  # custom user authentication
+  # custom authentication for api only
   before_action :authenticate_user_custom!
 
   # devise strong params set up
   before_action :configure_permitted_parameters, if: :devise_controller?
 
-  # This is Devise's authentication
-  #before_action :authenticate_user!
-
   # https://github.com/plataformatec/devise/blob/master/test/rails_app/app/controllers/application_controller.rb
-  # before_action :current_user, unless: :devise_controller?
-  # before_action :authenticate_user!, if: :devise_controller?
+  # devise's generated methods
+  before_action :current_user, unless: :devise_controller?
+  before_action :authenticate_user!, if: :devise_controller?
 
   # CanCan - always check authorization
   check_authorization unless: :devise_controller?
@@ -63,7 +61,7 @@ class ApplicationController < ActionController::Base
   before_action :set_last_seen_at,
                 if: Proc.new { user_signed_in? &&
                     (session[:last_seen_at].blank? || Time.zone.at(session[:last_seen_at].to_i) < 10.minutes.ago)
-                    }
+                }
 
   protected
 
@@ -184,7 +182,7 @@ class ApplicationController < ActionController::Base
   end
 
   def render_error(status_symbol, detail_message, error, method_name, options = {})
-    options = {redirect: false, links_object: nil, error_info: nil}.merge(options)
+    options = {links_object: nil, error_info: nil}.merge(options)
 
     json_response = Settings.api_response.build(
         status_symbol,
@@ -240,40 +238,48 @@ class ApplicationController < ActionController::Base
 
         response_links = Settings.api_response.response_error_links(options[:links_object])
 
-        if options[:redirect]
-          redirect_to get_redirect, alert: "#{status_message}: #{detail_message}"
-        else
-          @details = {
-              code: status_code,
-              phrase: status_message,
-              message: detail_message,
-              links: response_links,
-              supported_media: []
-          }
+        @details = {
+            code: status_code,
+            phrase: status_message,
+            message: detail_message,
+            links: response_links,
+            supported_media: []
+        }
 
-          if options[:error_info] && options[:error_info][:available_formats]
-            @details[:supported_media] = options[:error_info][:available_formats]
-          end
-
-          render template: 'errors/generic', status: status_symbol
+        if options[:error_info] && options[:error_info][:available_formats]
+          @details[:supported_media] = options[:error_info][:available_formats]
         end
+
+        # get a redirect path
+        redirect_to =  params[:redirect_to] || request.fullpath || request.path || nil
+
+        if redirect_to
+
+          # store the path where the cancan error was thrown
+          # devise will redirect to this when the user signs in
+          store_location_for(:user, redirect_to)
+
+          # use stored_location_for to ensure the redirect is safe (i.e. doesn't go to another website)
+          @details[:redirect_to_url] = stored_location_for(:user)
+        end
+
+
+        render template: 'errors/generic', status: status_symbol
       }
     end
-  end
-
-  def get_redirect
-    if !request.env['HTTP_REFERER'].blank? and request.env['HTTP_REFERER'] != request.env['REQUEST_URI']
-      redirect_target = :back
-    else
-      redirect_target = root_path
-    end
-
-    redirect_target
   end
 
   def configure_permitted_parameters
     devise_parameter_sanitizer.for(:sign_up) { |u| u.permit(:user_name, :email, :password, :password_confirmation) }
     devise_parameter_sanitizer.for(:account_update) { |u| u.permit(:user_name, :email, :password, :password_confirmation, :current_password, :image, :tzinfo_tz) }
+  end
+
+  def after_sign_in_path_for(resource)
+    super
+  end
+
+  def store_location(path)
+    super
   end
 
   private
@@ -376,8 +382,7 @@ class ApplicationController < ActionController::Base
           I18n.t('devise.failure.unauthorized'),
           error,
           'access_denied_response - forbidden',
-          redirect: false,
-          links_object: [:permissions])
+          {links_object: [:permissions]})
 
     elsif current_user && !current_user.confirmed?
       render_error(
@@ -385,17 +390,16 @@ class ApplicationController < ActionController::Base
           I18n.t('devise.failure.unconfirmed'),
           error,
           'access_denied_response - unconfirmed',
-          redirect: false,
-          links_object: [:confirm])
+          {links_object: [:confirm]})
 
     else
+
       render_error(
           :unauthorized,
           I18n.t('devise.failure.unauthenticated'),
           error,
           'access_denied_response - unauthorised',
-          redirect: false,
-          links_object: [:sign_in, :sign_up, :confirm])
+          {links_object: [:sign_in, :sign_up, :confirm]})
 
     end
   end
