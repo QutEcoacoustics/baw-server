@@ -23,6 +23,7 @@ describe PublicController, :type => :routing do
 
     it { expect(get('/credits')).to route_to('public#credits') }
     it { expect(get('/ethics_statement')).to route_to('public#ethics_statement') }
+    it { expect(get('/data_upload')).to route_to('public#data_upload') }
     it { expect(get('/disclaimers')).to route_to('public#disclaimers') }
 
     # CORS tests (invalid, as they do not have correct headers)

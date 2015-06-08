@@ -40,3 +40,6 @@ external_modules.log
 # ignore generated api documentation
 /doc
 /.yardoc/
+
+# ignore private static pages
+/app/views/public/_*

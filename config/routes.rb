@@ -297,6 +297,7 @@ Rails.application.routes.draw do
   # static info pages
   get '/disclaimers' => 'public#disclaimers'
   get '/ethics_statement' => 'public#ethics_statement'
+  get '/data_upload' => 'public#data_upload'
   get '/credits' => 'public#credits'
 
   # resque front end - admin only

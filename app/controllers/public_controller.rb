@@ -2,9 +2,13 @@ class PublicController < ApplicationController
   layout 'public'
 
   skip_authorization_check only: [
-      :index, :status, :website_status,
+      :index, :status,
+      :website_status,
       :audio_recording_catalogue,
-      :credits, :disclaimers, :ethics_statement,
+      :credits,
+      :disclaimers,
+      :ethics_statement,
+      :data_upload,
 
       :new_contact_us, :create_contact_us,
       :new_bug_report, :create_bug_report,
@@ -188,6 +192,12 @@ EXTRACT(DAY FROM recorded_date) as extracted_day')
 
   # GET /ethics_statement
   def ethics_statement
+    respond_to do |format|
+      format.html
+    end
+  end
+
+  def data_upload
     respond_to do |format|
       format.html
     end
