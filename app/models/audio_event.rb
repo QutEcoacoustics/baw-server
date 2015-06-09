@@ -124,47 +124,55 @@ class AudioEvent < ActiveRecord::Base
 
     format_date = Arel::Nodes.build_quoted('YYYY-MM-DD')
     format_time = Arel::Nodes.build_quoted('HH24:MI:SS.MS')
-    audio_event_start_time_interval = Arel::Nodes::SqlLiteral.new(
+    audio_event_start_abs =
+        Arel::Nodes::SqlLiteral.new(
         '"audio_recordings"."recorded_date" + CAST("audio_events"."start_time_seconds" || \' seconds\' as interval)')
+
+    projects_agg = Arel::Nodes::SqlLiteral.new(
+        'string_agg(CAST("projects"."id" as varchar) || \':\' || "projects"."name", \'|\')')
+    simple_tags_agg = Arel::Nodes::SqlLiteral.new(
+        'string_agg(CAST("tags"."id" as varchar) || \':\' || "tags"."text", \'|\')')
+    simple_tags_ids = Arel::Nodes::SqlLiteral.new(
+        'string_agg(CAST("tags"."id" as varchar), \'|\')')
+    other_tags_agg = Arel::Nodes::SqlLiteral.new(
+        'string_agg(CAST("tags"."id" as varchar) || \':\' || "tags"."text" || \':\' || "tags"."type_of_tag", \'|\')')
+    other_tags_ids = Arel::Nodes::SqlLiteral.new(
+        'string_agg(CAST("tags"."id" as varchar), \'|\')')
+
     url_base = "http://#{Settings.host.name}/"
 
     projects_aggregate =
         projects_sites
             .join(projects).on(projects[:id].eq(projects_sites[:project_id]))
             .where(projects_sites[:site_id].eq(sites[:id]))
-            .project(
-                Arel::Nodes::SqlLiteral.new(
-                    'string_agg(CAST("projects"."id" as varchar) || \':\' || "projects"."name", \'|\')')
-            )
+            .project(projects_agg)
 
-    simple_tags_agg = 'string_agg(CAST("tags"."id" as varchar) || \':\' || "tags"."text", \'|\')'
-    tags_common_aggregate =
+    tags_common =
         tags
             .join(audio_events_tags).on(audio_events_tags[:tag_id].eq(tags[:id]))
             .where(audio_events_tags[:audio_event_id].eq(audio_events[:id]))
             .where(tags[:type_of_tag].eq('common_name'))
-            .project(
-                Arel::Nodes::SqlLiteral.new(simple_tags_agg)
-            )
 
-    tags_species_aggregate =
+    tags_common_aggregate = tags_common.clone.project(simple_tags_agg)
+    tags_common_ids = tags_common.clone.project(simple_tags_ids)
+
+    tags_species =
         tags
             .join(audio_events_tags).on(audio_events_tags[:tag_id].eq(tags[:id]))
             .where(audio_events_tags[:audio_event_id].eq(audio_events[:id]))
             .where(tags[:type_of_tag].eq('species_name'))
-            .project(
-                Arel::Nodes::SqlLiteral.new(simple_tags_agg)
-            )
 
-    tags_others_aggregate =
+    tags_species_aggregate = tags_species.clone.project(simple_tags_agg)
+    tags_species_ids = tags_species.clone.project(simple_tags_ids)
+
+    tags_others =
         tags
             .join(audio_events_tags).on(audio_events_tags[:tag_id].eq(tags[:id]))
             .where(audio_events_tags[:audio_event_id].eq(audio_events[:id]))
             .where(tags[:type_of_tag].in(['species_name', 'common_name']).not)
-            .project(
-                Arel::Nodes::SqlLiteral.new(
-                    'string_agg(CAST("tags"."id" as varchar) || \':\' || "tags"."text" || \':\' || "tags"."type_of_tag", \'|\')')
-            )
+
+    tags_others_aggregate = tags_others.clone.project(other_tags_agg)
+    tags_others_ids = tags_others.clone.project(other_tags_ids)
 
     query =
         audio_events
@@ -185,9 +193,9 @@ class AudioEvent < ActiveRecord::Base
                 sites[:id].as('site_id'),
                 sites[:name].as('site_name'),
 
-                Arel::Nodes::NamedFunction.new('to_char', [audio_event_start_time_interval, format_date]).as('event_start_date_utc'),
-                Arel::Nodes::NamedFunction.new('to_char', [audio_event_start_time_interval, format_time]).as('event_start_time_utc'),
-                audio_event_start_time_interval.as('event_start_datetime_utc'),
+                Arel::Nodes::NamedFunction.new('to_char', [audio_event_start_abs, format_date]).as('event_start_date_utc'),
+                Arel::Nodes::NamedFunction.new('to_char', [audio_event_start_abs, format_time]).as('event_start_time_utc'),
+                audio_event_start_abs.as('event_start_datetime_utc'),
 
                 audio_events[:start_time_seconds].as('event_start_seconds'),
                 audio_events[:end_time_seconds].as('event_end_seconds'),
@@ -196,9 +204,14 @@ class AudioEvent < ActiveRecord::Base
                 audio_events[:high_frequency_hertz].as('high_frequency_hertz'),
                 audio_events[:is_reference].as('is_reference'),
 
-                tags_common_aggregate.as('common_tags'),
-                tags_species_aggregate.as('species_tags'),
+                tags_common_aggregate.as('common_name_tags'),
+                tags_common_ids.as('common_name_tag_ids'),
+
+                tags_species_aggregate.as('species_name_tags'),
+                tags_species_ids.as('species_name_tag_ids'),
+
                 tags_others_aggregate.as('other_tags'),
+                tags_others_ids.as('other_tag_ids'),
 
                 Arel::Nodes::SqlLiteral.new(
                     "'#{url_base}" + 'listen/\'|| "audio_recordings"."id" || \'?start=\' || ' +
