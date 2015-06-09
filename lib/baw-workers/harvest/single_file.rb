@@ -158,7 +158,18 @@ module BawWorkers
         response_hash = create_response[:response_json]
 
         if response_hash.blank?
+
           msg = "Request to create audio recording from #{file_path} failed: Code #{response_meta.code}, Message: #{response_meta.message}, Body: #{response_meta.body}"
+
+          # rename file if it is too short
+          if response_meta.code == '422' &&
+              response_meta.body.include?('duration_seconds') &&
+              response_meta.body.include?('must be greater than or equal to')
+
+            new_file_path = rename_short_file(file_path)
+            msg += ", File renamed to #{new_file_path}."
+          end
+
           @logger.error(@class_name) { msg }
           fail BawWorkers::Exceptions::HarvesterEndpointError, msg
         end
@@ -244,6 +255,27 @@ module BawWorkers
         end
 
         check_target_paths
+      end
+
+      # Rename non-harvested file if it is too short.
+      # @param [String] file_path
+      # @return [Array<String>] new file name
+      def rename_short_file(file_path)
+
+        renamed_source_file = file_path + '.error_duration'
+        File.rename(file_path, renamed_source_file)
+
+        if File.exists?(renamed_source_file)
+          @logger.info(@class_name) {
+            "Invalid source file #{file_path} was successfully renamed to #{renamed_source_file}."
+          }
+        else
+          @logger.warn(@class_name) {
+            "Invalid source file #{file_path} was not renamed."
+          }
+        end
+
+        renamed_source_file
       end
 
     end
