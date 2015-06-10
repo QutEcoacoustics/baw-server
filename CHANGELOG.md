@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## [Release 0.15.0](https://github.com/QutBioacoustics/baw-server/releases/tag/0.15.0) (2015-06-10)
+
  - 2015-06-08
     - change annotation csv download to a flat result set [#204](https://github.com/QutBioacoustics/baw-server/issues/204)
     - added upload instructions page [#186](https://github.com/QutBioacoustics/baw-server/issues/186)
