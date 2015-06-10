@@ -67,7 +67,7 @@ gem 'bootstrap-timepicker-rails', '~> 0.1.3'
 gem 'bootstrap-datepicker-rails', '~> 1.4.0'
 # for rails 3, 4
 gem 'will_paginate', '~> 3.0.7'
-gem 'dotiw', git: 'https://github.com/radar/dotiw.git', branch: :master, ref: '89d936adc6'
+gem 'dotiw','~> 3.0.1'
 gem 'recaptcha', '~> 0.4.0',  require: 'recaptcha/rails'
 
 # for proper timezone support
@@ -133,7 +133,7 @@ gem 'resque', '~> 1.25.2'
 gem 'resque-job-stats', git: 'https://github.com/echannel/resque-job-stats.git', branch: :master, ref: '8932c036ae'
 gem 'resque-status', '~> 0.5.0'
 # set to a specific commit when releasing to master branch
-gem 'baw-workers', git: 'https://github.com/QutBioacoustics/baw-workers.git', branch: :master, ref: '2d5de8e367'
+gem 'baw-workers', git: 'https://github.com/QutBioacoustics/baw-workers.git', branch: :master, ref: '260b9d256c'
 
 # Gems restricted by environment and/or platform
 # ====================================================

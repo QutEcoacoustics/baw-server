@@ -26,8 +26,8 @@ GIT
 
 GIT
   remote: https://github.com/QutBioacoustics/baw-workers.git
-  revision: 2d5de8e3674d50a72df3e669890be0a072972e5d
-  ref: 2d5de8e367
+  revision: 260b9d256c6c84964caa6640c7bb02735b96f9f2
+  ref: 260b9d256c
   branch: master
   specs:
     baw-workers (0.5.0)
@@ -46,16 +46,6 @@ GIT
   specs:
     resque-job-stats (0.3.0)
       resque (>= 1.17)
-
-GIT
-  remote: https://github.com/radar/dotiw.git
-  revision: 89d936adc644c29b11c460f7ee56ee2357ffad26
-  ref: 89d936adc6
-  branch: master
-  specs:
-    dotiw (2.0)
-      actionpack (>= 3)
-      i18n
 
 GIT
   remote: https://github.com/seyhunak/twitter-bootstrap-rails.git
@@ -182,11 +172,14 @@ GEM
     docile (1.1.5)
     domain_name (0.5.24)
       unf (>= 0.0.5, < 1.0.0)
+    dotiw (3.0.1)
+      actionpack (>= 3)
+      i18n
     enumerize (0.11.0)
       activesupport (>= 3.2)
     erubis (2.7.0)
     eventmachine (1.0.7)
-    exception_notification (4.1.0)
+    exception_notification (4.1.1)
       actionmailer (>= 3.0.4)
       activesupport (>= 3.0.4)
     execjs (2.5.2)
@@ -202,7 +195,7 @@ GEM
     globalid (0.3.5)
       activesupport (>= 4.1.0)
     gmaps4rails (1.5.6)
-    guard (2.12.5)
+    guard (2.12.6)
       formatador (>= 0.2.4)
       listen (~> 2.7)
       lumberjack (~> 1.0)
@@ -493,7 +486,7 @@ DEPENDENCIES
   coveralls (~> 0.8.1)
   database_cleaner (= 1.4.1)
   devise (~> 3.4.1)
-  dotiw!
+  dotiw (~> 3.0.1)
   enumerize (~> 0.11.0)
   exception_notification (~> 4.1.0)
   factory_girl_rails (~> 4.5.0)
