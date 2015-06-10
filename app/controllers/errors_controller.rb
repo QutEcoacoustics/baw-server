@@ -1,11 +1,63 @@
 class ErrorsController < ApplicationController
 
-  skip_authorization_check only: [:route_error, :uncaught_error, :test_exceptions]
+  skip_authorization_check only: [:route_error, :uncaught_error, :test_exceptions, :show]
 
   # see application_controller.rb for error handling for specific exceptions.
   # see routes.rb for the catch-all route for routing errors.
   # see application.rb for the exceptions_app settings.
 
+  def show
+
+    error_code_or_id = params[:name]
+
+    status_symbol = :bad_request
+    detail_message = 'There was a problem with your request. Perhaps go back and try again?'
+    error = nil
+    method_name = 'errors_show'
+    additional_info = {error_info: {original_http_method: request.method}}
+
+    case error_code_or_id
+      when 400, '400', 'bad_request'
+        status_symbol = :bad_request
+      when 401, '401', 'unauthorized', 'unauthorised'
+        status_symbol = :unauthorized
+        detail_message = I18n.t('devise.failure.unauthenticated')
+        additional_info[:links_object] = [:sign_in, :sign_up, :confirm]
+      when 403, '403', 'forbidden'
+        status_symbol = :forbidden
+        detail_message = I18n.t('devise.failure.unauthorized')
+        additional_info[:links_object] = [:permissions, :confirm]
+      when 404, '404', 'not_found'
+        status_symbol = :not_found
+        detail_message = 'Could not find the requested page.'
+      when 406, '406', 'not_acceptable'
+        status_symbol = :not_acceptable
+        detail_message = 'We cold not provide the format you asked for. Perhaps try a different file extension?'
+        additional_info[:error_info][:available_formats] = Settings.supported_media_types
+      when 409, '409', 'conflict'
+        status_symbol = :conflict
+        detail_message = 'There was a conflict in the request. This could be due to duplicate '+
+            'items that need to be unique or multiple edits at the same time.'
+      when 410, '410', 'gone'
+        status_symbol = :gone
+        detail_message = 'This content is no longer available.'
+      when 415, '415', 'unsupported_media_type'
+        status_symbol = :unsupported_media_type
+        detail_message = 'The format of your request is not supported. Perhaps try a different format?'
+        additional_info[:error_info][:available_formats] = Settings.supported_media_types
+      when 416, '416', 'range_not_satisfiable'
+        status_symbol = :range_not_satisfiable
+        detail_message = 'That range is not available. Check that the range is within the file.'
+      when 429, '429', 'too_many_requests'
+        status_symbol = :too_many_requests
+        detail_message = "There have been too many requests. Take it easy, we're doing our best here."
+      else
+
+    end
+
+    render_error(status_symbol, detail_message, error, method_name, additional_info)
+
+  end
 
   def route_error
 
@@ -74,7 +126,7 @@ class ErrorsController < ApplicationController
 
           when 'CustomErrors::UnsupportedMediaTypeError',
               'CustomErrors::NotAcceptableError'
-            fail error_class.new(msg, {format: :a_format})
+            fail error_class.new(msg, Settings.supported_media_types)
 
           else
             fail error_class, msg

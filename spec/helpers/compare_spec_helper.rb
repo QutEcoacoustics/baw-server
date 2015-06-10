@@ -5,9 +5,34 @@ def check_regex_match(opts)
   actual = opts[:actual_response]
   expected = opts[:regex_match]
 
-  if opts.has_key?(:regex_match) && !expected.blank?
-    fail ArgumentError, 'Must include :actual_response to check :regex_match' unless opts.has_key?(:actual_response)
-    expect(actual).to match(expected)
+  unless expected.blank?
+    fail ArgumentError, 'Must include :actual_response to check :regex_match' if actual.blank?
+
+    if expected.respond_to?(:each)
+      expected.each do |expected_regex_match|
+        expect(actual).to match(expected_regex_match)
+      end
+    else
+      expect(actual).to match(expected)
+    end
+  end
+
+end
+
+def check_response_content(opts, message_prefix)
+
+  actual = opts[:actual_response]
+  expected = opts[:response_body_content]
+
+  unless expected.blank?
+    if expected.respond_to?(:each)
+      expected.each do |expected_content_item|
+        expect(actual).to include(expected_content_item), "#{message_prefix} to find '#{expected_content_item}' in '#{actual}'"
+      end
+    else
+      expect(actual).to include(expected), "#{message_prefix} to find '#{expected}' in '#{actual}'"
+    end
+
   end
 
 end

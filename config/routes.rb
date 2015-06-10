@@ -64,11 +64,13 @@ Rails.application.routes.draw do
 
   # standard devise for website authentication
   # NOTE: the sign in route is used by baw-workers to log in, ensure any changes are reflected in baw-workers.
-  devise_for :users, path: :my_account
+  devise_for :users,
+             path: :my_account,
+             controllers: {sessions: 'users/sessions', registrations: 'users/registrations'}
 
   # devise for RESTful API Authentication, see Api/sessions_controller.rb
   devise_for :users,
-             controllers: {sessions: 'sessions'},
+             controllers: {sessions: 'api/sessions'},
              as: :security,
              path: :security,
              defaults: {format: 'json'},
@@ -81,12 +83,12 @@ Rails.application.routes.draw do
   # https://github.com/plataformatec/devise/issues/2840#issuecomment-43262839
   devise_scope :security_user do
     # no index
-    post '/security' => 'sessions#create', defaults: {format: 'json'}
-    get '/security/new' => 'sessions#new', defaults: {format: 'json'}
-    get '/security/user' => 'sessions#show', defaults: {format: 'json'} # 'user' represents the current user id
+    post '/security' => 'api/sessions#create', defaults: {format: 'json'}
+    get '/security/new' => 'api/sessions#new', defaults: {format: 'json'}
+    get '/security/user' => 'api/sessions#show', defaults: {format: 'json'} # 'user' represents the current user id
     # no edit view
     # no update
-    delete '/security' => 'sessions#destroy', defaults: {format: 'json'}
+    delete '/security' => 'api/sessions#destroy', defaults: {format: 'json'}
   end
 
   # when a user goes to my account, render user_account/show view for that user
@@ -176,6 +178,9 @@ Rails.application.routes.draw do
   resources :projects do
     member do
       post 'update_permissions'
+      get 'edit_sites'
+      put 'update_sites'
+      patch 'update_sites'
     end
     collection do
       get 'new_access_request'
@@ -294,9 +299,10 @@ Rails.application.routes.draw do
   # static info pages
   get '/disclaimers' => 'public#disclaimers'
   get '/ethics_statement' => 'public#ethics_statement'
+  get '/data_upload' => 'public#data_upload'
   get '/credits' => 'public#credits'
 
-  # resque front end
+  # resque front end - admin only
   authenticate :user, lambda { |u| Access::Check.is_admin?(u) } do
     # add stats tab to web interface from resque-job-stats
     require 'resque-job-stats/server'
@@ -305,6 +311,9 @@ Rails.application.routes.draw do
     # enable resque web interface
     mount Resque::Server.new, at: '/job_queue_status'
   end
+
+  # Tag management - admin only
+  resources :tags_management, except: [:show]
 
   # provide access to API documentation
   mount Raddocs::App => '/doc'
@@ -318,7 +327,10 @@ Rails.application.routes.draw do
     match '/test_exceptions', to: 'errors#test_exceptions', via:  [:get, :head, :post, :put, :delete, :options, :trace, :patch]
   end
 
-  # for error pages
+  # routes directly to error pages
+  match '/errors/:name', to: 'errors#show', via: [:get, :head, :post, :put, :delete, :options, :trace, :patch]
+
+  # for error pages - must be last
   match '*requested_route', to: 'errors#route_error', via: [:get, :head, :post, :put, :delete, :options, :trace, :patch]
 
 end

@@ -1,0 +1,7 @@
+- content_for :title, 'Upload Audio'
+
+- if File.exists? "#{Rails.root}/app/views/public/_data_upload.html.haml"
+  = render partial: 'public/data_upload'
+- else
+  %h1 Upload Audio
+  %p No upload instructions are available.

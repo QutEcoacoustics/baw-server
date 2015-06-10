@@ -34,13 +34,13 @@ class PermissionsController < ApplicationController
         add_breadcrumb 'Permissions', project_permissions_path(@project)
       } # index.html.erb
       format.json {
-        @permissions, constructed_options = Settings.api_response.response_index(
+        @permissions, opts = Settings.api_response.response_advanced(
             api_filter_params,
             Permission.where(project_id: @project.id),
             Permission,
             Permission.filter_settings
         )
-        respond_index
+        respond_index(opts)
       }
     end
   end
@@ -76,13 +76,14 @@ class PermissionsController < ApplicationController
   end
 
   def filter
-    filter_response = Settings.api_response.response_filter(
+    authorize! :filter, Permission
+    filter_response, opts = Settings.api_response.response_advanced(
         api_filter_params,
         Permission.where(project_id: @project.id),
         AudioEventComment,
         AudioEventComment.filter_settings
     )
-    render_api_response(filter_response)
+    respond_filter(filter_response, opts)
   end
 
   private

@@ -60,6 +60,15 @@ class AudioEvent < ActiveRecord::Base
                         :is_reference,
                         :creator_id, :updated_at, :created_at],
         text_fields: [],
+        custom_fields: lambda { |audio_event, user|
+          audio_event_hash = {}
+
+          audio_event_hash[:taggings] = Tagging
+                                            .where(audio_event_id: audio_event.id)
+                                            .select(:id, :audio_event_id, :created_at, :updated_at, :creator_id, :updater_id)
+
+          [audio_event, audio_event_hash]
+        },
         controller: :audio_events,
         action: :filter,
         defaults: {
@@ -100,30 +109,149 @@ class AudioEvent < ActiveRecord::Base
     }
   end
 
-  def self.csv_filter(user, filter_params)
-    query = Access::Query.audio_events(user, :reader).joins(:creator, :tags)
+  # Project audio events to the format for CSV download
+  # @return  [Arel::Nodes::Node] audio event csv query
+  def self.csv_query(project, site, audio_recording, start_offset, end_offset)
 
-    if filter_params[:project_id]
-      query = query.where(projects: {id: (filter_params[:project_id]).to_i})
+    audio_events = AudioEvent.arel_table
+    users = User.arel_table
+    audio_recordings = AudioRecording.arel_table
+    sites = Site.arel_table
+    projects = Project.arel_table
+    projects_sites = Arel::Table.new(:projects_sites)
+    audio_events_tags = Tagging.arel_table
+    tags = Tag.arel_table
+
+    format_date = Arel::Nodes.build_quoted('YYYY-MM-DD')
+    format_time = Arel::Nodes.build_quoted('HH24:MI:SS.MS')
+    audio_event_start_abs =
+        Arel::Nodes::SqlLiteral.new(
+        '"audio_recordings"."recorded_date" + CAST("audio_events"."start_time_seconds" || \' seconds\' as interval)')
+
+    projects_agg = Arel::Nodes::SqlLiteral.new(
+        'string_agg(CAST("projects"."id" as varchar) || \':\' || "projects"."name", \'|\')')
+    simple_tags_agg = Arel::Nodes::SqlLiteral.new(
+        'string_agg(CAST("tags"."id" as varchar) || \':\' || "tags"."text", \'|\')')
+    simple_tags_ids = Arel::Nodes::SqlLiteral.new(
+        'string_agg(CAST("tags"."id" as varchar), \'|\')')
+    other_tags_agg = Arel::Nodes::SqlLiteral.new(
+        'string_agg(CAST("tags"."id" as varchar) || \':\' || "tags"."text" || \':\' || "tags"."type_of_tag", \'|\')')
+    other_tags_ids = Arel::Nodes::SqlLiteral.new(
+        'string_agg(CAST("tags"."id" as varchar), \'|\')')
+
+    url_base = "http://#{Settings.host.name}/"
+
+    projects_aggregate =
+        projects_sites
+            .join(projects).on(projects[:id].eq(projects_sites[:project_id]))
+            .where(projects_sites[:site_id].eq(sites[:id]))
+            .project(projects_agg)
+
+    tags_common =
+        tags
+            .join(audio_events_tags).on(audio_events_tags[:tag_id].eq(tags[:id]))
+            .where(audio_events_tags[:audio_event_id].eq(audio_events[:id]))
+            .where(tags[:type_of_tag].eq('common_name'))
+
+    tags_common_aggregate = tags_common.clone.project(simple_tags_agg)
+    tags_common_ids = tags_common.clone.project(simple_tags_ids)
+
+    tags_species =
+        tags
+            .join(audio_events_tags).on(audio_events_tags[:tag_id].eq(tags[:id]))
+            .where(audio_events_tags[:audio_event_id].eq(audio_events[:id]))
+            .where(tags[:type_of_tag].eq('species_name'))
+
+    tags_species_aggregate = tags_species.clone.project(simple_tags_agg)
+    tags_species_ids = tags_species.clone.project(simple_tags_ids)
+
+    tags_others =
+        tags
+            .join(audio_events_tags).on(audio_events_tags[:tag_id].eq(tags[:id]))
+            .where(audio_events_tags[:audio_event_id].eq(audio_events[:id]))
+            .where(tags[:type_of_tag].in(['species_name', 'common_name']).not)
+
+    tags_others_aggregate = tags_others.clone.project(other_tags_agg)
+    tags_others_ids = tags_others.clone.project(other_tags_ids)
+
+    query =
+        audio_events
+            .join(users).on(users[:id].eq(audio_events[:creator_id]))
+            .join(audio_recordings).on(audio_recordings[:id].eq(audio_events[:audio_recording_id]))
+            .join(sites).on(sites[:id].eq(audio_recordings[:site_id]))
+            .order(audio_events[:id].desc)
+            .project(
+                audio_events[:id].as('audio_event_id'),
+                audio_recordings[:id].as('audio_recording_id'),
+                audio_recordings[:uuid].as('audio_recording_uuid'),
+
+                Arel::Nodes::NamedFunction.new('to_char', [audio_events[:created_at], format_date]).as('created_at_date_utc'),
+                Arel::Nodes::NamedFunction.new('to_char', [audio_events[:created_at], format_time]).as('created_at_time_utc'),
+                audio_events[:created_at].as('event_created_at_datetime_utc'),
+
+                projects_aggregate.as('projects'),
+                sites[:id].as('site_id'),
+                sites[:name].as('site_name'),
+
+                Arel::Nodes::NamedFunction.new('to_char', [audio_event_start_abs, format_date]).as('event_start_date_utc'),
+                Arel::Nodes::NamedFunction.new('to_char', [audio_event_start_abs, format_time]).as('event_start_time_utc'),
+                audio_event_start_abs.as('event_start_datetime_utc'),
+
+                audio_events[:start_time_seconds].as('event_start_seconds'),
+                audio_events[:end_time_seconds].as('event_end_seconds'),
+                Arel::Nodes::InfixOperation.new(:-, audio_events[:end_time_seconds], audio_events[:start_time_seconds]).as('event_duration_seconds'),
+                audio_events[:low_frequency_hertz].as('low_frequency_hertz'),
+                audio_events[:high_frequency_hertz].as('high_frequency_hertz'),
+                audio_events[:is_reference].as('is_reference'),
+
+                tags_common_aggregate.as('common_name_tags'),
+                tags_common_ids.as('common_name_tag_ids'),
+
+                tags_species_aggregate.as('species_name_tags'),
+                tags_species_ids.as('species_name_tag_ids'),
+
+                tags_others_aggregate.as('other_tags'),
+                tags_others_ids.as('other_tag_ids'),
+
+                Arel::Nodes::SqlLiteral.new(
+                    "'#{url_base}" + 'listen/\'|| "audio_recordings"."id" || \'?start=\' || ' +
+                        '(floor("audio_events"."start_time_seconds" / 30) * 30) || ' +
+                        '\'&end=\' || ((floor("audio_events"."start_time_seconds" / 30) * 30) + 30)')
+                    .as('listen_url'),
+
+                Arel::Nodes::SqlLiteral.new(
+                    "'#{url_base}" + 'library/\' || "audio_recordings"."id" || \'/audio_events/\' || audio_events.id')
+                    .as('library_url'),
+            )
+
+    if project
+
+      site_ids = sites
+          .join(projects_sites).on(sites[:id].eq(projects_sites[:site_id]))
+          .join(projects).on(projects[:id].eq(projects_sites[:project_id]))
+          .where(projects[:id].eq(project.id))
+          .project(sites[:id]).distinct
+
+      query = query.where(sites[:id].in(site_ids))
     end
 
-    if filter_params[:site_id]
-      query = query.where(sites: {id: (filter_params[:site_id]).to_i})
+    if site
+      query = query.where(sites[:id].eq(site.id))
     end
 
-    if filter_params[:audio_recording_id] || filter_params[:audiorecording_d] || filter_params[:recording_id]
-      query = query.where(audio_recordings: {id: (filter_params[:audio_recording_id] || filter_params[:audiorecording_d] || filter_params[:recording_id]).to_i})
+    if audio_recording
+      query = query.where(audio_recordings[:id].eq(audio_recording.id))
     end
 
-    if filter_params[:start_offset]
-      query = query.end_after(filter_params[:start_offset])
+    if start_offset
+      query = query.where(audio_events[:end_time_seconds].gteq(start_offset))
     end
 
-    if filter_params[:end_offset]
-      query = query.start_before(filter_params[:end_offset])
+    if end_offset
+      query = query.where(audio_events[:start_time_seconds].lteq(end_offset))
     end
 
-    query.order('audio_events.id DESC')
+    query
   end
 
   def self.in_site(site)

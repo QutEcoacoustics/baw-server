@@ -1,5 +1,48 @@
 # Changelog
 
+## Unreleased
+
+## [Release 0.15.0](https://github.com/QutBioacoustics/baw-server/releases/tag/0.15.0) (2015-06-10)
+
+ - 2015-06-08
+    - change annotation csv download to a flat result set [#204](https://github.com/QutBioacoustics/baw-server/issues/204)
+    - added upload instructions page [#186](https://github.com/QutBioacoustics/baw-server/issues/186)
+    - added ability to redirect after logging in and fixed some Devise issues [#205](https://github.com/QutBioacoustics/baw-server/issues/205)
+
+ - 2015-06-06
+    - Provide distinct urls for different error pages for the client app [#206](https://github.com/QutBioacoustics/baw-server/issues/206)
+
+ - 2015-05-10
+    - project and site names can be longer [#177](https://github.com/QutBioacoustics/baw-server/issues/177)
+    - modified nav bar links [#178](https://github.com/QutBioacoustics/baw-server/issues/178)
+
+ - 2015-04-29
+    - CSRF check disabled for api requests authenticated using a token
+    - more strict checks for media request parameters [#187](https://github.com/QutBioacoustics/baw-server/issues/187)
+
+ - 2015-04-26
+    - Improved audio recording overlap check [#184](https://github.com/QutBioacoustics/baw-server/issues/184)
+    - removed obsolete access level class
+    - swapped .where(1 = 0) for .none
+    - added zonebie for testing and updated gems
+
+ - 2015-04-18
+    - Fixes #168 by Responds with a head response on media generation error [#168] (https://github.com/QutBioacoustics/baw-server/issues/168)
+    - Resque polling returns more information
+    - Added X-Error-Type and X-Archived-At to CORS allowed headers
+    - ensure harvester can log in after enabling CSRF for api
+
+ - 2015-04-02
+    - Added controller, views, and routes for managing tags for [#175](https://github.com/QutBioacoustics/baw-server/issues/175)
+
+ - 2015-03-29
+    - Added page to assign sites to a project [#153](https://github.com/QutBioacoustics/baw-server/issues/153)
+    - added commented changes for logged_in and anonymous access [#99](https://github.com/QutBioacoustics/baw-server/issues/99)
+
+ - 2015-03-28
+    - Many to many associations will now include the ids or full information from the join table [#181](https://github.com/QutBioacoustics/baw-server/issues/181)
+    - Enabled CSRF protection for API
+
 ## [Release 0.14.0](https://github.com/QutBioacoustics/baw-server/releases/tag/0.14.0) (2015-03-22)
 
  - 2015-03-22

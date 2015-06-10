@@ -209,6 +209,33 @@ def test_overlap
                }
            ]
        }
+      },
+      { # real example 1
+        inputs: {
+            post_item: {
+                recorded_date: Time.zone.parse('2014-10-23T00:01:00+1000'),
+                duration_seconds: 7200.003
+            },
+            existing_items: [
+                {
+                    recorded_date: Time.zone.parse('2014-10-22T20:01:00+1000'),
+                    duration_seconds: 7200.003
+                }
+            ]
+        },
+        outputs: {
+            status_code: 201,
+            post_item: {
+                recorded_date: Time.zone.parse('2014-10-23T00:01:00+1000'),
+                duration_seconds: 7200.003
+            },
+            existing_items: [
+                {
+                    recorded_date: Time.zone.parse('2014-10-22T20:01:00+1000'),
+                    duration_seconds: 7200.003
+                }
+            ]
+        }
       }
   ]
 
@@ -286,8 +313,8 @@ def test_overlap
 
         elsif status_code == 422
           expect(status).to eq(422), "expected status 422 but was #{status}. Response body was #{response_body}"
-          expect(response_body).to have_json_path('recorded_date/0/problem'), "could not find 'problem' in #{response_body}"
-          expect(response_body).to have_json_path('recorded_date/0/overlapping_audio_recordings/0/overlap_amount'), "could not find 'overlap_amount' in #{response_body}"
+          expect(response_body).to have_json_path('recorded_date/0/message'), "could not find 'message' in #{response_body}"
+          expect(response_body).to have_json_path('recorded_date/0/items/0/overlap_amount'), "could not find 'overlap_amount' in #{response_body}"
 
           # ensure posted audio recording does not exist
           expect(AudioRecording.where(file_hash: posted_item_attrs[:file_hash]).count)
@@ -531,7 +558,6 @@ resource 'AudioRecordings' do
                                                      media_type: media_type,
                                                      duration_seconds: duration_seconds,
                                                      site_id: site_id,
-                                                     status: :new,
                                                      uploader_id: @write_permission.user.id) }
 
     let(:raw_post) { {'audio_recording' => ar_attributes}.to_json }

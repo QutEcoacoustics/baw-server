@@ -22,13 +22,13 @@ class SitesController < ApplicationController
     respond_to do |format|
       #format.html # index.html.erb
       format.json {
-        @sites, constructed_options = Settings.api_response.response_index(
+        @sites, opts = Settings.api_response.response_advanced(
             api_filter_params,
             get_user_sites,
             Site,
             Site.filter_settings
         )
-        respond_index(constructed_options)
+        respond_index(opts)
       }
     end
   end
@@ -172,19 +172,14 @@ ORDER BY s.name")
   # POST /sites/filter.json
   # GET /sites/filter.json
   def filter
-    filter_response = Settings.api_response.response_filter(
+    authorize! :filter, Site
+    filter_response, opts = Settings.api_response.response_advanced(
         api_filter_params,
         get_user_sites,
         Site,
         Site.filter_settings
     )
-
-    # include custom response components
-    filter_response[:data] = filter_response[:data].map { |site|
-      respond_modify(site)
-    }
-
-    render_api_response(filter_response)
+    respond_filter(filter_response, opts)
   end
 
   private
@@ -196,21 +191,6 @@ ORDER BY s.name")
   def build_project_site
     @site = Site.new
     @site.projects << @project
-  end
-
-  def api_custom_response(site)
-    # TODO: does this needs to know about and change based on projections?
-
-    site.update_location_obfuscated(current_user)
-
-    site_hash = {}
-
-    site_hash[:project_ids] = Site.find(site.id).projects.pluck(:id)
-    site_hash[:location_obfuscated] = site.location_obfuscated
-    site_hash[:custom_latitude] = site.latitude
-    site_hash[:custom_longitude] = site.longitude
-
-    [site, site_hash]
   end
 
   def get_user_sites

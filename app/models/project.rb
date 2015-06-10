@@ -42,6 +42,12 @@ class Project < ActiveRecord::Base
         valid_fields: [:id, :name, :description, :created_at, :creator_id],
         render_fields: [:id, :name, :description, :creator_id],
         text_fields: [:name, :description],
+        custom_fields: lambda { |project, user|
+          project_hash = {}
+          project_hash[:site_ids] = Project.find(project.id).sites.pluck(:id)
+
+          [project, project_hash]
+        },
         controller: :projects,
         action: :filter,
         defaults: {

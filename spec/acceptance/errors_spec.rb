@@ -79,7 +79,7 @@ resource 'Errors' do
                                  expected_response_header_values_match: false,
                                  expected_response_header_values:
                                      {
-                                         'X-Error-Type' => 'BawAudioTools::Exceptions::AudioToolError'
+                                         'X-Error-Type' => 'Baw Audio Tools/Exceptions/Audio Tool Error'
                                      }
                              })
     # 'meta/error/details', true, 'Filter parameters were not valid'

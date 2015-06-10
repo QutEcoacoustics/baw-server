@@ -36,7 +36,7 @@ class MediaController < ApplicationController
       supported_types = Settings.supported_media_types
       msg = "Requested format #{requested_format} (#{requested_media_type}) is not acceptable. " +
           'It must be one of available_formats.'
-      fail CustomErrors::NotAcceptableError.new(supported_types), msg
+      fail CustomErrors::NotAcceptableError.new(msg, supported_types)
     elsif is_supported_format && is_audio_ready
 
       category, defaults = Settings.media_category(requested_format)

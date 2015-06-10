@@ -240,21 +240,36 @@ module Access
 
             query
                 .where(
-                    '(NOT EXISTS (SELECT 1 FROM projects invert_pt WHERE invert_pt.creator_id = ?))',
+                    '(NOT EXISTS (SELECT 1 FROM projects AS invert_pt WHERE invert_pt.creator_id = ?))',
                     user.id)
                 .where(
-                    '(NOT EXISTS (SELECT 1 FROM permissions invert_pm WHERE invert_pm.user_id = ? AND invert_pm.project_id = projects.id))',
+                    '(NOT EXISTS (SELECT 1 FROM permissions AS invert_pm WHERE invert_pm.user_id = ? AND invert_pm.project_id = projects.id))',
                     user.id)
+
+            # after adding logged_in and anonymous permissions.
+            # query
+            #     .where(
+            #         '(NOT EXISTS (SELECT 1 FROM permissions invert_pm_logged_in WHERE invert_pm_logged_in.logged_in = TRUE AND invert_pm_logged_in.project_id = projects.id))')
+            #     .where(
+            #         '(NOT EXISTS (SELECT 1 FROM permissions invert_pm WHERE invert_pm.user_id = ? AND invert_pm.project_id = projects.id))',
+            #         user.id)
+
           else
 
             # see http://jpospisil.com/2014/06/16/the-definitive-guide-to-arel-the-sql-manager-for-ruby.html
 
             projects_creator_fragment = Project.where(creator: user).select(:id)
-            permissions_fragment = Permission.where(user: user, level: levels).select(:project_id)
+            permissions_user_fragment = Permission.where(user: user, level: levels).select(:project_id)
+            #permissions_user_fragment = Permission.where(user: user, level: levels, logged_in: false, anonymous: false).select(:project_id)
+            #permissions_logged_in_fragment = Permission.where(user: nil, level: levels, logged_in: true, anonymous: false).select(:project_id)
             audio_event_reference_fragment = AudioEvent.where(is_reference: true).select(:id)
 
             pt = Project.arel_table
-            condition_pt = pt[:id].in(projects_creator_fragment.arel).or(pt[:id].in(permissions_fragment.arel))
+            condition_pt = pt[:id].in(projects_creator_fragment.arel).or(pt[:id].in(permissions_user_fragment.arel))
+
+            # after adding logged_in and anonymous permissions.
+            # pt = Project.arel_table
+            # condition_pt = pt[:id].in(permissions_logged_in_fragment.arel).or(pt[:id].in(permissions_user_fragment.arel))
 
             ae = AudioEvent.arel_table
             condition_ae = ae[:id].in(audio_event_reference_fragment.arel)

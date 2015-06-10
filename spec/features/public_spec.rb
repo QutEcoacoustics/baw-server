@@ -152,6 +152,13 @@ describe 'public website forms', :type => :feature do
       expect(current_path).to eq(disclaimers_path)
       expect(page).to have_content('without express or implied warranty')
     end
+
+    it 'shows the data_upload page' do
+      visit data_upload_path
+      expect(current_path).to eq(data_upload_path)
+      expect(page).to have_content('Upload Audio')
+    end
+
   end
 
   context 'website status' do

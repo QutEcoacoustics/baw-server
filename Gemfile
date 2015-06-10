@@ -14,7 +14,7 @@ source 'https://rubygems.org'
 # -------------------------------------
 
 gem 'rails', '~> 4.2.0'
-gem 'rack-cors', '~> 0.3.1', require: 'rack/cors'
+gem 'rack-cors', '~> 0.4.0', require: 'rack/cors'
 gem 'responders', '~> 2.0'
 
 # RAILS 3 compatibility gems
@@ -29,7 +29,7 @@ gem 'activesupport-json_encoder', github: 'rails/activesupport-json_encoder'
 # UI HELPERS
 # -------------------------------------
 # Use SCSS for stylesheets
-gem 'sass-rails', '~> 5.0.1'
+gem 'sass-rails', '~> 5.0.3'
 # Use Uglifier as compressor for JavaScript assets
 gem 'uglifier', '>= 1.3.0'
 # Use CoffeeScript for .js.coffee assets and views
@@ -48,7 +48,7 @@ gem 'haml', '~> 4.0.6'
 gem 'haml-rails', '~> 0.8'
 
 gem 'simple_form', '~> 3.1.0'
-gem 'paperclip', '~> 4.2.1'
+gem 'paperclip', '~> 4.2.0'
 gem 'breadcrumbs_on_rails', '~> 2.3.0'
 # kept below version 2 due to huge breaking changes
 gem 'gmaps4rails', '< 2'
@@ -64,11 +64,11 @@ gem 'gmaps4rails', '< 2'
 gem 'twitter-bootstrap-rails', git: 'https://github.com/seyhunak/twitter-bootstrap-rails.git', branch: :master, ref: '38476dbd7f'
 
 gem 'bootstrap-timepicker-rails', '~> 0.1.3'
-gem 'bootstrap-datepicker-rails', '~> 1.3.1.1'
+gem 'bootstrap-datepicker-rails', '~> 1.4.0'
 # for rails 3, 4
 gem 'will_paginate', '~> 3.0.7'
-gem 'dotiw', git: 'https://github.com/radar/dotiw.git', branch: :master, ref: '89d936adc6'
-gem 'recaptcha', '~> 0.3.6',  require: 'recaptcha/rails'
+gem 'dotiw','~> 3.0.1'
+gem 'recaptcha', '~> 0.4.0',  require: 'recaptcha/rails'
 
 # for proper timezone support
 gem 'tzinfo', '~> 1.2.2'
@@ -100,9 +100,7 @@ gem 'jc-validates_timeliness', '~> 3.1.1'
 # No longer used - incorporated the gem's functionality directly.
 #gem 'userstamp', git: 'https://github.com/theepan/userstamp.git'
 
-# https://github.com/brainspec/enumerize
-# we need the changes since version 0.8.0. Reassess when there is a new release.
-gem 'enumerize', '~> 0.10.0'
+gem 'enumerize', '~> 0.11.0'
 
 gem 'uuidtools', '~> 2.1.5'
 gem 'acts_as_paranoid', git: 'https://github.com/ActsAsParanoid/acts_as_paranoid.git', branch: :master, ref: 'ddcd191517'
@@ -114,8 +112,8 @@ require 'rbconfig'
 
 # MONITORING
 # -------------------------------------
-gem 'exception_notification', '~> 4.0.1'
-gem 'newrelic_rpm', '~> 3.11.0'
+gem 'exception_notification', '~> 4.1.0'
+gem 'newrelic_rpm', '~> 3.12.0'
 
 # Documentation & UI
 # -------------------------------------
@@ -126,7 +124,7 @@ gem 'raddocs', '~> 0.4.0'
 # MEDIA
 # -------------------------------------
 # set to a specific commit when releasing to master branch
-gem 'baw-audio-tools', git: 'https://github.com/QutBioacoustics/baw-audio-tools.git', branch: :master, ref: '3ea03c6b65'
+gem 'baw-audio-tools', git: 'https://github.com/QutBioacoustics/baw-audio-tools.git', branch: :master, ref: '62d1fdda40'
 gem 'rack-rewrite', '~> 1.5.1'
 
 # ASYNC JOBS
@@ -135,7 +133,7 @@ gem 'resque', '~> 1.25.2'
 gem 'resque-job-stats', git: 'https://github.com/echannel/resque-job-stats.git', branch: :master, ref: '8932c036ae'
 gem 'resque-status', '~> 0.5.0'
 # set to a specific commit when releasing to master branch
-gem 'baw-workers', git: 'https://github.com/QutBioacoustics/baw-workers.git', branch: :master, ref: '9b51d7a82a'
+gem 'baw-workers', git: 'https://github.com/QutBioacoustics/baw-workers.git', branch: :master, ref: '260b9d256c'
 
 # Gems restricted by environment and/or platform
 # ====================================================
@@ -145,7 +143,7 @@ group :development, :test do
   gem 'quiet_assets'
 
   # capistrano gems
-  gem 'capistrano', '~> 3.3.5'
+  gem 'capistrano', '~> 3.4.0'
   gem 'capistrano-bundler', '~> 1.1.3'
   gem 'capistrano-rvm', '~> 0.1.2'
   gem 'capistrano-rails', '~> 1.1.2'
@@ -174,7 +172,7 @@ group :development, :test do
 
   gem 'fakeredis', '~> 0.5.0', require: 'fakeredis/rspec'
 
-
+  gem 'zonebie'
 
   # for cleaning up Rails apps
   # gem 'traceroute', require: false
@@ -195,17 +193,17 @@ group :development, :test do
   #gem 'debugger'
   # gem install traceroute --no-ri --no-rdoc
 
-  gem 'rspec-rails', '~> 3.2.0'
+  gem 'rspec-rails', '~> 3.2.3'
   gem 'factory_girl_rails', '~> 4.5.0'
   gem 'capybara', '~> 2.4.4'
 
   gem 'rspec', '~> 3.2.0'
-  gem 'simplecov', '~> 0.9.1', require: false
+  gem 'simplecov', '~> 0.10.0', require: false
   gem 'shoulda-matchers', '~> 2.8.0'
   gem 'launchy', '~> 2.4.3'
   gem 'json_spec', '~> 1.1.4'
-  gem 'database_cleaner', '1.3.0' # major bugs in v1.4.0, see https://github.com/DatabaseCleaner/database_cleaner/issues/317
-  gem 'webmock', '~> 1.20.4'
-  gem 'coveralls', '~> 0.7.3', require: false
+  gem 'database_cleaner', '1.4.1'
+  gem 'webmock', '~> 1.21.0'
+  gem 'coveralls', '~> 0.8.1', require: false
   gem 'codeclimate-test-reporter', '~> 0.4.5', require: nil
 end

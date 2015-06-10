@@ -17,6 +17,7 @@ resource 'Sessions' do
     @admin_user = FactoryGirl.create(:admin)
     @other_user = FactoryGirl.create(:user)
     @unconfirmed_user = FactoryGirl.create(:unconfirmed_user)
+    @harvester_user = FactoryGirl.create(:harvester)
 
     @write_permission = FactoryGirl.create(:write_permission, creator: @user)
     @writer_user = @write_permission.user
@@ -78,6 +79,15 @@ resource 'Sessions' do
 
     let(:raw_post) { {login: @reader_user.email, password: @reader_user_password}.to_json }
     standard_request_options(:post, 'Sign In (reader using login: email)', :ok, {response_body_content: I18n.t('devise.sessions.signed_in'), expected_json_path: 'data/auth_token'})
+  end
+
+  post '/security' do
+    parameter :email, 'User email (must provide one of email or login)', required: false
+    parameter :login, 'User name or email (must provide one of email or login)', required: false
+    parameter :password, 'User password', required: true
+
+    let(:raw_post) { {email: @harvester_user.email, password: @harvester_user.password}.to_json }
+    standard_request_options(:post, 'Sign In (harvester using login: email)', :ok, {response_body_content: I18n.t('devise.sessions.signed_in'), expected_json_path: 'data/auth_token'})
   end
 
   # Sign out (#destroy)

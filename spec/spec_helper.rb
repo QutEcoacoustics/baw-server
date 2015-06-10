@@ -86,6 +86,8 @@ RSpec.configure do |config|
   #     --seed 1234
   config.order = 'random'
 
+  Zonebie.set_random_timezone
+
   # mixin core methods
   config.include FactoryGirl::Syntax::Methods
   #config.include Rails.application.routes.url_helpers

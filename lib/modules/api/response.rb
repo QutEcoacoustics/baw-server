@@ -24,6 +24,38 @@ module Api
       Rack::Utils::HTTP_STATUS_CODES[status_code(status_symbol)]
     end
 
+    # Add custom fields to an item.
+    # @param [Object] item A single item from the response.
+    # @param [Object] user current_user
+    # @param [Hash] opts the options for additional information.
+    # @return [Hash] prepared item
+    def prepare(item, user, opts = {})
+      fail CustomErrors::FilterArgumentError, "Item must be an ActiveRecord::Base, got #{item.class}" unless item.is_a?(ActiveRecord::Base)
+
+      filter_settings = item.class.filter_settings
+      custom_fields = filter_settings[:custom_fields]
+      custom_fields_is_lambda = !custom_fields.blank? && custom_fields.lambda?
+      default_fields = filter_settings[:render_fields]
+      has_projection = opts[:projection]
+
+      item_new = item
+      extra_hash = {}
+
+      # add custom fields if filter_settings specifies a lambda for custom fields
+      if custom_fields_is_lambda
+        item_new, extra_hash = custom_fields.call(item, user)
+      end
+
+      # project using filter projection (already in query for items) or default fields
+      if has_projection
+        base_json = item_new.as_json
+      else
+        base_json = item_new.as_json(only: default_fields)
+      end
+
+      base_json.merge(extra_hash)
+    end
+
     # Build an api response hash.
     # @param [Symbol] status_symbol Response status.
     # @param [Object] data Data for response.
@@ -41,6 +73,7 @@ module Api
     # @option opts [Integer] :total (nil) Total items matching.
     # @option opts [String] :filter_text (nil) Text for contains filter.
     # @option opts [Hash] :filter_generic_keys ({}) Property/value pairs for equality filter.
+    # @return [Hash] data
     def build(status_symbol = :ok, data = nil, opts = {})
       # initialise with defaults
       opts.reverse_merge!(
@@ -143,27 +176,8 @@ module Api
     # @param [ActiveRecord::Base] model
     # @param [Hash] filter_settings
     # @return [ActiveRecord::Relation] query
-    def response_index(params, query, model, filter_settings)
+    def response_advanced(params, query, model, filter_settings)
       response(params, query, model, filter_settings)
-    end
-
-    # Create and execute a query based on a filter request.
-    # @param [Hash] params
-    # @param [ActiveRecord::Relation] query
-    # @param [ActiveRecord::Base] model
-    # @param [Hash] filter_settings
-    # @param [Symbol] status_symbol Response status.
-    # @return [Hash] api response
-    def response_filter(params, query, model, filter_settings, status_symbol = :ok)
-      paged_sorted_query, opts = response(params, query, model, filter_settings)
-
-      # build response data
-      data = paged_sorted_query
-
-      result = build(status_symbol, data, opts)
-
-      # return result
-      result
     end
 
     private
@@ -193,9 +207,13 @@ module Api
 
     def add_paging_and_sorting(new_query, filter_settings, filter_query)
       # basic options
+
+      param_controller = filter_query.parameters[:controller]
+      param_action = filter_query.parameters[:action]
+
       opts = {
-          controller: filter_settings[:controller],
-          action: filter_settings[:action],
+          controller: param_controller.blank? ? filter_settings[:controller] : param_controller,
+          action: param_action.blank? ? filter_settings[:action] : param_action,
           filter_text: filter_query.qsp_text_filter,
           filter_generic_keys: filter_query.qsp_generic_filters
       }
@@ -299,7 +317,6 @@ module Api
           link_params[('filter_' + key.to_s).to_sym] = value
         end
       end
-
 
       url_helpers.url_for(link_params)
     end
