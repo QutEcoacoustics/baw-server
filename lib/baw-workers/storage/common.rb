@@ -71,22 +71,44 @@ module BawWorkers
         "Provided parameters: #{opts}"
       end
 
-      def validate_result_file_name(opts = {})
-        provided = validate_msg_provided(opts)
-        fail ArgumentError, "#{validate_msg_base} result_file_name. #{provided}" unless opts.include? :result_file_name
-        fail ArgumentError, "result_file_name must not be blank. #{provided}" if opts[:result_file_name].blank?
+      def validate_uuid_regex
+        /\A[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\Z/i
       end
+
+      def validate_get_clean_path(path)
+
+        # replace ~ and .. first
+        safer_path = path.gsub('~', '_')
+        safer_path = safer_path.gsub('..', '_')
+        safer_path = safer_path.gsub('/./', '/_/')
+        safer_path = safer_path.gsub('\\.\\', '\\_\\')
+        safer_path = safer_path.gsub(/\.\z/, '_')
+
+        # expands to absolute path (also expands ~) (expands using root folder as base path)
+        expanded = File.expand_path(safer_path, '/')
+        # ensures . and .. are expanded
+        cleaned = Pathname.new(expanded).cleanpath
+
+        # underscore is an invalid char so it is collapsed into one char.
+        invalid_chars = /[^0-9a-z\-\.]+/i
+
+        path_components = []
+        Pathname(cleaned).each_filename do |path_component|
+          cleaned_component = path_component.gsub(invalid_chars, '_')
+          path_components.push(cleaned_component)
+        end
+
+        File.join(*path_components)
+      end
+
+      # original
 
       def validate_uuid(opts = {})
         provided = validate_msg_provided(opts)
         fail ArgumentError, "#{validate_msg_base} uuid. #{provided}" unless opts.include? :uuid
         fail ArgumentError, "uuid must not be blank. #{provided}" if opts[:uuid].blank?
-      end
 
-      def validate_format(opts = {})
-        provided = validate_msg_provided(opts)
-        fail ArgumentError, "#{validate_msg_base} format. #{provided}" unless opts.include? :format
-        fail ArgumentError, "format must not be blank. #{provided}" if opts[:format].blank?
+        fail ArgumentError, "uuid must be in hexidecimal format xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx. #{provided}" unless opts[:uuid] =~ validate_uuid_regex
       end
 
       def validate_datetime(opts = {})
@@ -102,11 +124,7 @@ module BawWorkers
         fail ArgumentError, "original_format must not be blank. #{provided}" if opts[:original_format].blank?
       end
 
-      def validate_analysis_id(opts = {})
-        provided = validate_msg_provided(opts)
-        fail ArgumentError, "#{validate_msg_base} analysis_id. #{provided}" unless opts.include? :analysis_id
-        fail ArgumentError, "analysis_id must not be blank. #{provided}" if opts[:analysis_id].blank?
-      end
+      # audio cache
 
       def validate_start_offset(opts = {})
         provided = validate_msg_provided(opts)
@@ -139,6 +157,14 @@ module BawWorkers
         end
       end
 
+      def validate_format(opts = {})
+        provided = validate_msg_provided(opts)
+        fail ArgumentError, "#{validate_msg_base} format. #{provided}" unless opts.include? :format
+        fail ArgumentError, "format must not be blank. #{provided}" if opts[:format].blank?
+      end
+
+      # spectrogram cache
+
       def validate_window(opts = {})
         provided = validate_msg_provided(opts)
         fail ArgumentError, "#{validate_msg_base} window. #{provided}" unless opts.include? :window
@@ -165,6 +191,36 @@ module BawWorkers
           fail ArgumentError, "window_function must be in #{BawAudioTools::AudioSox.window_function_options}: #{opts[:window_function]}. #{provided}"
         end
       end
+
+      # analysis cache
+
+      def validate_job_id(opts = {})
+        provided = validate_msg_provided(opts)
+        fail ArgumentError, "#{validate_msg_base} job_id. #{provided}" unless opts.include? :job_id
+        fail ArgumentError, "job_id must not be blank. #{provided}" if opts[:job_id].blank?
+
+        job_id = opts[:job_id].to_s.strip.downcase
+        if job_id != BawWorkers::Storage::AnalysisCache::JOB_ID_SYSTEM
+          fail ArgumentError, "job_id #{validate_msg_eq_or_gt} 1: #{opts[:job_id]}. #{provided}" unless job_id.to_i >= 1
+          fail ArgumentError, "job_id must be an integer: #{opts[:job_id]}. #{provided}" unless job_id.to_i.to_s == job_id
+        end
+
+      end
+
+      def validate_file_name(opts = {})
+        provided = validate_msg_provided(opts)
+        fail ArgumentError, "#{validate_msg_base} file_name. #{provided}" unless opts.include? :file_name
+        fail ArgumentError, "file_name must not be blank. #{provided}" if opts[:file_name].blank?
+      end
+
+      def validate_sub_folders(opts = {})
+        provided = validate_msg_provided(opts)
+        fail ArgumentError, "#{validate_msg_base} sub_folders. #{provided}" unless opts.include? :sub_folders
+        fail ArgumentError, "sub_folders must not be blank. #{provided}" if opts[:sub_folders].blank?
+        fail ArgumentError, "sub_folders must be an Array. #{provided}" unless opts[:sub_folders].is_a?(Array)
+      end
+
+      # data set cache
 
       def validate_saved_search_id(opts = {})
         provided = validate_msg_provided(opts)

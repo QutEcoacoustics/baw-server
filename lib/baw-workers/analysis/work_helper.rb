@@ -28,15 +28,19 @@ module BawWorkers
         validate_custom_hash(opts,
                  [
                      :command_format,
+                     :executable_program,
+                     :config_file,
+
                      :uuid,
                      :id,
                      :datetime_with_offset,
                      :original_format,
-                     :executable_program,
-                     :config_file
+
+                     :job_id,
+                     :sub_folders
                  ])
 
-        working_dir = create_working_dir(opts[:uuid])
+        working_dir = create_working_dir(opts)
         temp_dir = create_temp_dir(opts[:uuid])
 
         FileUtils.mkpath([working_dir, temp_dir])
@@ -182,10 +186,10 @@ module BawWorkers
       end
 
       # create the audio recording uuid folder in the cached analysis jobs directory
-      # @param [String] uuid
+      # @param [Hash] opts
       # @return [String] full dir
-      def create_working_dir(uuid)
-        working_dirs = @analysis_cache.possible_paths_file({uuid: uuid}, '')
+      def create_working_dir(opts)
+        working_dirs = @analysis_cache.possible_paths_file(opts, '')
         fail BawWorkers::Exceptions::AnalysisCacheError, 'No valid analysis cache directories found.' if working_dirs.size < 1
 
         File.expand_path(working_dirs[0])
