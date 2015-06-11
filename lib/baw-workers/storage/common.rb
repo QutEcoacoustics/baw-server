@@ -89,8 +89,8 @@ module BawWorkers
         # ensures . and .. are expanded
         cleaned = Pathname.new(expanded).cleanpath
 
-        # underscore is an invalid char so it is collapsed into one char.
-        invalid_chars = /[^0-9a-z\-\.]+/i
+        # replace all invalid chars with an underscore. Don't collapse as double underscore has special meaning.
+        invalid_chars = /[^0-9a-z\-\.]/i
 
         path_components = []
         Pathname(cleaned).each_filename do |path_component|

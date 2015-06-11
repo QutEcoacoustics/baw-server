@@ -15,15 +15,15 @@ describe BawWorkers::Storage::AnalysisCache do
   let(:sub_folder_valid_2) { 'sub_folder_valid2.-486NDHF' }
 
   let(:sub_folder_invalid_1) { 'sub_folder_invalid1-04a bKE_-.5:+@ *LQ<' }
-  let(:sub_folder_invalid_1_normalised) { 'sub_folder_invalid1-04a_bKE_-.5_LQ_' }
+  let(:sub_folder_invalid_1_normalised) { 'sub_folder_invalid1-04a_bKE_-.5_____LQ_' }
 
   let(:sub_folder_invalid_2) { 'sub_folder_invalid2-04a bKE_-.5:+!?$LQ#' }
-  let(:sub_folder_invalid_2_normalised) { 'sub_folder_invalid2-04a_bKE_-.5_LQ_' }
+  let(:sub_folder_invalid_2_normalised) { 'sub_folder_invalid2-04a_bKE_-.5_____LQ_' }
 
   let(:file_name_valid) { 'file_name_valid.4567menfASD-' }
 
   let(:file_name_invalid) { 'result_file_name_invalid-04a bKE_-.5:+@?*LQ<' }
-  let(:file_name_invalid_normalised) { 'result_file_name_invalid-04a_bKE_-.5_LQ_' }
+  let(:file_name_invalid_normalised) { 'result_file_name_invalid-04a_bKE_-.5_____LQ_' }
 
   let(:cached_analysis_file_name_given_parameters) { file_name_valid }
 
