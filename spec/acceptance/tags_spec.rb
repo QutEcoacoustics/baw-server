@@ -199,4 +199,21 @@ resource 'Tags' do
                              })
   end
 
+  post '/tags/filter' do
+    let(:authentication_token) { writer_token }
+    let(:raw_post) { {
+        'filter' => {
+            'audio_events.id' => {
+                'in' => [9999, audio_event_id]
+            }
+        }
+    }.to_json }
+    standard_request_options(:post, 'FILTER (as writer, audio_events id )', :ok,
+                             {
+                                 expected_json_path: 'data/0/text',
+                                 data_item_count: 1,
+                                 response_body_content: ['audio_events.id', "\"filter\":{\"audio_events.id\":{\"in\":[9999,"]
+                             })
+  end
+
 end
