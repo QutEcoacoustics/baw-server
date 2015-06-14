@@ -63,9 +63,9 @@ module BawWorkers
         # -----------------------------
         response_hash = get_new_audio_recording(file_path, project_id, site_id, audio_info_hash, security_info)
 
-        audio_recording_id = response_hash['id']
-        audio_recording_uuid = response_hash['uuid']
-        audio_recording_recorded_date = response_hash['recorded_date']
+        audio_recording_id = response_hash['data']['id']
+        audio_recording_uuid = response_hash['data']['uuid']
+        audio_recording_recorded_date = response_hash['data']['recorded_date']
 
 
         # catch any errors after audio is created so status can be updated

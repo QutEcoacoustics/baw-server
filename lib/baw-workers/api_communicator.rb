@@ -154,7 +154,7 @@ module BawWorkers
         cookies = cookies_array.join('; ')
       end
 
-      if login_response.code == '200' && !login_response.body.blank?
+      if login_response.code.to_i == 200 && !login_response.body.blank?
         @logger.info(@class_name) {
           '[HTTP] Got auth token in response body.'
         }
@@ -182,7 +182,7 @@ module BawWorkers
       response = send_request("Update audio recording metadata - #{description}", :put, host, port, endpoint, security_info, update_hash)
       msg = "Code #{response.code}, Id: #{audio_recording_id}, Hash: '#{update_hash}', File: '#{file_to_process}'"
 
-      if response.code == '200' || response.code == '204'
+      if response.code.to_i == 200 || response.code.to_i == 204
         @logger.info(@class_name) {
           "[HTTP] Audio recording metadata update '#{description}' succeeded. #{msg}"
         }
@@ -253,10 +253,10 @@ module BawWorkers
       msg = "Project: #{project_id}, Site: #{site_id}, File: #{file_to_process}, Params: #{audio_info_hash}"
 
       response = send_request('Create audio recording', :post, host, port, endpoint, security_info, audio_info_hash)
-      if response.code == '201'
+      if response.code.to_i == 201
         response_json = JSON.parse(response.body)
         @logger.info(@class_name) {
-          "[HTTP] Created new audio recording. Id: #{response_json['id']}, #{msg}"
+          "[HTTP] Created new audio recording. Id: #{response_json['data']['id']}, #{msg}"
         }
         {response: response, response_json: response_json}
       else
@@ -278,7 +278,7 @@ module BawWorkers
       endpoint = endpoint_audio_recording_update_status.gsub(':id', audio_recording_id.to_s)
       response = send_request("Update audio recording status - #{description}", :put, host, port, endpoint, security_info, update_hash)
       msg = "'#{description}'. Code #{response.code}, File: '#{file_to_process}', Id: #{audio_recording_id}, Hash: '#{update_hash}'"
-      if response.code == '200' || response.code == '204'
+      if response.code.to_i == 200 || response.code.to_i == 204
         @logger.info(@class_name) {
           "[HTTP] Audio recording status updated for #{msg}"
         }

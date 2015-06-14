@@ -5,7 +5,7 @@ describe BawWorkers::Harvest::SingleFile do
 
   let(:file_info) { BawWorkers::Config.file_info }
 
-  let(:api_comm) { BawWorkers::Config.api_communicator}
+  let(:api_comm) { BawWorkers::Config.api_communicator }
 
   let(:gather_files) {
     BawWorkers::Harvest::GatherFiles.new(
@@ -57,7 +57,7 @@ describe BawWorkers::Harvest::SingleFile do
       original_format = 'ogg'
 
       request_login_body = get_api_security_request(email, password)
-      response_login_body =  get_api_security_response(user_name, auth_token)
+      response_login_body = get_api_security_response(user_name, auth_token)
       request_headers_base = {'Accept' => 'application/json', 'Content-Type' => 'application/json', 'User-Agent' => 'Ruby'}
       request_headers = request_headers_base.merge('Authorization' => "Token token=\"#{auth_token}\"")
       request_create_body = {
@@ -74,29 +74,31 @@ describe BawWorkers::Harvest::SingleFile do
           original_file_name: 'test_20141012_181455.ogg'
       }
       response_create_body = {
-          uploader_id: 30,
-          recorded_date: '2014-10-12T08:14:55Z',
-          site_id: 20,
-          duration_seconds: 70.0,
-          sample_rate_hertz: 44100,
-          channels: 1,
-          bit_rate_bps: 239920,
-          media_type: 'audio/ogg',
-          data_length_bytes: 822281,
-          file_hash: file_hash,
-          status: 'new',
-          original_file_name: 'test_20141012_181455.ogg',
+          meta: {
+              status: 201,
+              message: 'Created'
+          },
+          data: {
+              recorded_date: '2014-10-12T08:14:55Z',
+              site_id: 20,
+              duration_seconds: 70.0,
+              sample_rate_hertz: 44100,
+              channels: 1,
+              bit_rate_bps: 239920,
+              media_type: 'audio/ogg',
+              data_length_bytes: 822281,
+              file_hash: file_hash,
+              status: 'new',
+              original_file_name: 'test_20141012_181455.ogg',
 
-          created_at: "2014-10-13T05:21:13Z",
-          creator_id: 1208,
-          deleted_at: nil,
-          deleter_id: nil,
-          id: 177,
-          notes: "note number 183",
-          updated_at: "2014-10-13T05:21:13Z",
-          updater_id: nil,
-          uuid: uuid
+              created_at: "2014-10-13T05:21:13Z",
+              id: 177,
+              notes: "note number 183",
+              updated_at: "2014-10-13T05:21:13Z",
+              uuid: uuid
+          }
       }
+
       request_update_status_body = {
           uuid: uuid,
           file_hash: file_hash,
@@ -112,24 +114,24 @@ describe BawWorkers::Harvest::SingleFile do
       )
 
       stub_login = stub_request(:post, "http://localhost:3030/security")
-      .with(body: request_login_body.to_json, headers: request_headers_base)
-      .to_return(status: 200, body: response_login_body.to_json)
+                       .with(body: request_login_body.to_json, headers: request_headers_base)
+                       .to_return(status: 200, body: response_login_body.to_json)
 
       stub_uploader_check = stub_request(:get, "http://localhost:3030/projects/10/sites/20/audio_recordings/check_uploader/30")
-      .with(headers: request_headers)
-      .to_return(status: 204)
+                                .with(headers: request_headers)
+                                .to_return(status: 204)
 
       stub_create = stub_request(:post, "http://localhost:3030/projects/10/sites/20/audio_recordings")
-      .with(body: request_create_body.to_json, headers: request_headers)
-      .to_return(status: 201, body: response_create_body.to_json)
+                        .with(body: request_create_body.to_json, headers: request_headers)
+                        .to_return(status: 201, body: response_create_body.to_json)
 
       stub_uploading_status = stub_request(:put, "http://localhost:3030/audio_recordings/177/update_status")
-      .with(body: request_update_status_body.merge(status: 'uploading'), headers: request_headers)
-      .to_return(status: 200)
+                                  .with(body: request_update_status_body.merge(status: 'uploading'), headers: request_headers)
+                                  .to_return(status: 200)
 
       stub_ready_status = stub_request(:put, "http://localhost:3030/audio_recordings/177/update_status")
-      .with(body: request_update_status_body.merge(status: 'ready'), headers: request_headers)
-      .to_return(status: 200)
+                              .with(body: request_update_status_body.merge(status: 'ready'), headers: request_headers)
+                              .to_return(status: 200)
 
       # execute - process a single file
       file_info_hash = gather_files.run(dest_audio_file)
@@ -179,7 +181,7 @@ describe BawWorkers::Harvest::SingleFile do
       original_format = 'ogg'
 
       request_login_body = get_api_security_request(email, password)
-      response_login_body =  get_api_security_response(user_name, auth_token)
+      response_login_body = get_api_security_response(user_name, auth_token)
       request_headers_base = {'Accept' => 'application/json', 'Content-Type' => 'application/json', 'User-Agent' => 'Ruby'}
       request_headers = request_headers_base.merge('Authorization' => "Token token=\"#{auth_token}\"")
       request_create_body = {
@@ -196,8 +198,18 @@ describe BawWorkers::Harvest::SingleFile do
           original_file_name: 'test_20141012_181455.ogg'
       }
       response_create_body = {
-              duration_seconds: ['must be greater than or equal to 30']
+          meta: {
+              status: 422,
+              message: "Unprocessable Entity",
+              error: {
+                  details: "Record could not be saved",
+                  info: {
+                      duration_seconds:
+                          ["must be greater than or equal to 10"]
+                  }}},
+          data: nil
       }
+
 
       possible_paths = audio_original.possible_paths(
           {
@@ -223,8 +235,12 @@ describe BawWorkers::Harvest::SingleFile do
       # execute - process a single file
       file_info_hash = gather_files.run(dest_audio_file)
       expect {
-      single_file.run(file_info_hash[0], true)
-      }.to raise_error(BawWorkers::Exceptions::HarvesterEndpointError, /test_20141012_181455\.ogg failed: Code 422, Message: , Body: \{"duration_seconds":\["must be greater than or equal to 30"\]\}/)
+        single_file.run(file_info_hash[0], true)
+      }.to raise_error(
+               BawWorkers::Exceptions::HarvesterEndpointError,
+               /test_20141012_181455.ogg failed: Code 422, Message: , Body: \{"meta":\{"status":422,"message":"Unprocessable Entity","error":\{"details":"Record could not be saved","info":\{"duration_seconds":\["must be greater than or equal to 10"\]\}\}\},"data":null\}, File renamed to/)
+
+
 
       # verify - requests made in the correct order
       stub_login.should have_been_made.once
