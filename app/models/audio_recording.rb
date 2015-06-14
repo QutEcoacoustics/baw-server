@@ -58,7 +58,7 @@ class AudioRecording < ActiveRecord::Base
   validates :media_type, presence: true
   validates :data_length_bytes, presence: true, numericality: {only_integer: true, greater_than: 0}
   validates :file_hash, presence: true, uniqueness: {case_sensitive: false}
-  validate :check_duplicate_file_hashes, :check_overlapping
+  validate :check_duplicate_file_hashes
 
   before_validation :set_uuid, on: :create
 
@@ -183,6 +183,42 @@ class AudioRecording < ActiveRecord::Base
     can_be_accessed
   end
 
+  # check for and correct any overlaps.
+  # this method runs validations.
+  # this method depends on a number of attributes being valid.
+  # @return [Boolean, Hash] false if not valid, otherwise hash of overlap info
+  def fix_overlaps
+
+    # only run if the record is valid
+    return false if self.invalid?
+
+    max_overlap_sec = Settings.audio_recording_max_overlap_sec
+
+    # correct any overlaps
+    AudioRecordingOverlap.fix(self, max_overlap_sec)
+  end
+
+  def self.build_by_file_hash(recording_params)
+    match = AudioRecording.where(
+        original_file_name: recording_params[:original_file_name],
+        file_hash: recording_params[:file_hash],
+        recorded_date: Time.zone.parse(recording_params[:recorded_date]).utc,
+        data_length_bytes: recording_params[:data_length_bytes],
+        media_type: recording_params[:media_type],
+        duration_seconds:recording_params[:duration_seconds].round(4),
+        site_id: recording_params[:site_id],
+        status: 'aborted'
+    )
+
+    if match.count == 1
+      found = match.first
+      found.status = 'new'
+      found
+    else
+      AudioRecording.new(recording_params)
+    end
+  end
+
   def self.check_storage
     audio_original = BawWorkers::Config.original_audio_helper
     existing_dirs = audio_original.existing_dirs
@@ -268,7 +304,9 @@ class AudioRecording < ActiveRecord::Base
       query = AudioRecording.where(file_hash: self.file_hash)
 
       unless self.id.blank?
-        query = query.where('id <> ?', self.id)
+        # a persisted model will have an id (.persisted?)
+        # a new record will not have an id (.new_record?)
+        query = query.where(AudioRecording.arel_table[:id].not_eq(self.id))
       end
 
       count = query.count
@@ -278,20 +316,6 @@ class AudioRecording < ActiveRecord::Base
       end
 
     end
-  end
-
-  def check_overlapping
-
-    # validate model first, as this check can occur before attribute validations are run
-    AudioRecordingOverlap.validate(self)
-    return if errors.count > 0
-
-    overlaps = AudioRecordingOverlap.get(self, Settings.audio_recording_max_overlap_sec)
-
-    if overlaps[:overlap][:items].size > 0
-      errors.add(:recorded_date, overlaps[:overlap])
-    end
-
   end
 
 end

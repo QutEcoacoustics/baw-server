@@ -182,20 +182,9 @@ class ApplicationController < ActionController::Base
   end
 
   def render_error(status_symbol, detail_message, error, method_name, options = {})
-    options = {links_object: nil, error_info: nil}.merge(options)
+    options.merge!(error_details: detail_message)
 
-    json_response = Settings.api_response.build(
-        status_symbol,
-        nil,
-        {
-            error_details: detail_message,
-            error_links: options[:links_object]
-        })
-
-    unless options[:error_info].blank?
-      json_response[:meta][:error] = {} unless json_response[:meta].include?(:error)
-      json_response[:meta][:error].merge!(options[:error_info])
-    end
+    json_response = Settings.api_response.build(status_symbol, nil, options)
 
     # notify of exception for head requests only
     if request.head?
@@ -236,7 +225,7 @@ class ApplicationController < ActionController::Base
         status_code = Settings.api_response.status_code(status_symbol)
         status_message = Settings.api_response.status_phrase(status_symbol).humanize
 
-        response_links = Settings.api_response.response_error_links(options[:links_object])
+        response_links = Settings.api_response.response_error_links(options[:error_links])
 
         @details = {
             code: status_code,
@@ -325,7 +314,7 @@ class ApplicationController < ActionController::Base
         "The format of the request is not supported: #{error.message}",
         error,
         'unsupported_media_type_error_response',
-        error_info: {available_formats: error.available_formats_info}
+        {error_info: {available_formats: error.available_formats_info}}
     )
   end
 
@@ -340,12 +329,12 @@ class ApplicationController < ActionController::Base
         "None of the acceptable response formats are available: #{error.message}",
         error,
         'not_acceptable_error_response',
-        error_info: {available_formats: error.available_formats_info}
+        {error_info: {available_formats: error.available_formats_info}}
     )
   end
 
   def unprocessable_entity_error_response(error)
-    options = error.additional_details.nil? ? {} : {error_info: {info: error.additional_details}}
+    options = error.additional_details.nil? ? {} : {error_info: error.additional_details}
     render_error(
         :unprocessable_entity,
         "The request could not be understood: #{error.message}",
@@ -382,7 +371,7 @@ class ApplicationController < ActionController::Base
           I18n.t('devise.failure.unauthorized'),
           error,
           'access_denied_response - forbidden',
-          {links_object: [:permissions]})
+          {error_links: [:permissions]})
 
     elsif current_user && !current_user.confirmed?
       render_error(
@@ -390,7 +379,7 @@ class ApplicationController < ActionController::Base
           I18n.t('devise.failure.unconfirmed'),
           error,
           'access_denied_response - unconfirmed',
-          {links_object: [:confirm]})
+          {error_links: [:confirm]})
 
     else
 
@@ -399,7 +388,7 @@ class ApplicationController < ActionController::Base
           I18n.t('devise.failure.unauthenticated'),
           error,
           'access_denied_response - unauthorised',
-          {links_object: [:sign_in, :sign_up, :confirm]})
+          {error_links: [:sign_in, :sign_up, :confirm]})
 
     end
   end
@@ -410,7 +399,7 @@ class ApplicationController < ActionController::Base
         "Could not find the requested page: #{error.message}",
         error,
         'routing_argument_error_response',
-        error_info: {original_route: request.env['PATH_INFO'], original_http_method: request.method}
+        {error_info: {original_route: request.env['PATH_INFO'], original_http_method: request.method}}
     )
   end
 

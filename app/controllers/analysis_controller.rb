@@ -30,9 +30,10 @@ class AnalysisController < ApplicationController
 
     file_paths = BawWorkers::Config.analysis_cache_helper.existing_paths(
         {
+            job_id: 'system', # TODO this is not provided at the moment, it will be once analyses are organised by job.
             uuid: audio_recording.uuid,
-            analysis_id: request_params[:analysis_id],
-            result_file_name: request_params[:file_name]
+            sub_folders: [request_params[:analysis_id]],
+            file_name: request_params[:file_name],
         })
 
     # return the first path that exists

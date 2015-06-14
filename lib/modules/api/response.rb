@@ -78,7 +78,7 @@ module Api
       # initialise with defaults
       opts.reverse_merge!(
           {
-              error_links: [], error_details: nil,
+              error_links: [], error_details: nil, error_info: nil,
               order_by: nil, direction: nil,
               page: nil, items: nil, total: nil,
               filter_text: nil, filter_generic_keys: {}
@@ -103,8 +103,8 @@ module Api
       end
 
       # error information
-      if !opts[:error_details].blank? || !opts[:error_links].blank?
-        result[:meta][:error] = response_error(opts[:error_details], opts[:error_links])
+      if !opts[:error_details].blank? || !opts[:error_links].blank? || !opts[:error_info].blank?
+        result[:meta][:error] = response_error(opts)
       end
 
       # sort info
@@ -151,10 +151,11 @@ module Api
       result
     end
 
-    def response_error(details, link_ids)
+    def response_error(opts)
       error_hash = {}
-      error_hash[:details] = details unless details.blank?
-      error_hash[:links] = response_error_links(link_ids) unless link_ids.blank?
+      error_hash[:details] = opts[:error_details] unless opts[:error_details].blank? # string
+      error_hash[:links] = response_error_links(opts[:error_links]) unless opts[:error_links].blank? # array
+      error_hash[:info] = opts[:error_info] unless [:error_info].blank? # hash or string or array
       error_hash
     end
 

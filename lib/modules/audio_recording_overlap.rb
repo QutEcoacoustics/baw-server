@@ -6,30 +6,11 @@ class AudioRecordingOverlap
 
   class << self
 
-    # Validate audio recording attributes.
-    # @param [AudioRecording] audio_recording
-    # @return [AudioRecording]
-    def validate(audio_recording)
-      audio_recording.errors.add(:recorded_date, 'must have a value') if audio_recording.recorded_date.blank?
-      audio_recording.errors.add(:recorded_date, 'must be a date time') unless audio_recording.recorded_date.respond_to?(:advance)
-
-      audio_recording.errors.add(:duration_seconds, 'must have a value') if audio_recording.duration_seconds.blank?
-      audio_recording.errors.add(:duration_seconds, 'must be a number') unless audio_recording.duration_seconds.is_a?(Numeric)
-
-      audio_recording.errors.add(:site_id, 'must have a value') if audio_recording.site_id.blank?
-      audio_recording.errors.add(:site_id, 'must be an integer') unless audio_recording.site_id.is_a?(Fixnum)
-
-      audio_recording
-    end
-
     # Get other audio recordings that overlap.
     # @param [AudioRecording] audio_recording
     # @param [Numeric] max_overlap_seconds maximum amount an audio recording can be trimmed at the end
     # @return [Hash, nil] overlap info, nil if audio_recording has errors
     def get(audio_recording, max_overlap_seconds)
-      validate(audio_recording)
-      return nil if audio_recording.errors.size > 0
-
       query = overlap_query(audio_recording)
       result_count = query.count
 
@@ -65,24 +46,14 @@ class AudioRecordingOverlap
     # @param [AudioRecording] audio_recording
     # @return [Integer, nil] overlap count, nil if audio_recording has errors
     def count(audio_recording)
-      validate(audio_recording)
-      return nil if audio_recording.errors.size > 0
-
-      query = overlap_query(audio_recording)
-
-      query.count
+      overlap_query(audio_recording).count
     end
 
     # Do any other audio recordings overlap?
     # @param [AudioRecording] audio_recording
     # @return [Boolean, nil] true if any overlaps, nil if audio_recording has errors
     def any?(audio_recording)
-      validate(audio_recording)
-      return nil if audio_recording.errors.size > 0
-
-      query = overlap_query(audio_recording)
-
-      query.any?
+      overlap_query(audio_recording).any?
     end
 
     # Find and fix overlapping audio recordings.
@@ -90,9 +61,6 @@ class AudioRecordingOverlap
     # @param [Numeric] max_overlap_seconds maximum amount an audio recording can be trimmed at the end
     # @return [Hash, nil] overlap info, nil if audio_recording has errors
     def fix(audio_recording, max_overlap_seconds)
-      validate(audio_recording)
-      return nil if audio_recording.errors.size > 0
-
       query = overlap_query(audio_recording)
       result_count = query.count
 
@@ -113,15 +81,13 @@ class AudioRecordingOverlap
       }
 
       if result_count > MAX_OVERLAP_COUNT
-
         result[:overlap][:too_many] = true
-
       else
 
         query.each do |existing_recording|
           overlap_info = get_overlap_info(audio_recording, existing_recording)
 
-          fix_result = fix_overlap(audio_recording, existing_recording, max_overlap_seconds)
+          fix_result = fix_overlap(audio_recording, existing_recording, overlap_info, max_overlap_seconds)
 
           overlap_info[:fixed] = fix_result[:fixed]
           overlap_info[:errors] = fix_result[:save_errors] if fix_result[:save_errors].size > 0
@@ -169,93 +135,115 @@ class AudioRecordingOverlap
       query
     end
 
-    # Get overlap info for one audio recording.
+    # Get overlap info for one existing audio recording.
     # @param [AudioRecording] new_recording
     # @param [AudioRecording] existing_recording
     # @return [Hash] overlap info
     def get_overlap_info(new_recording, existing_recording)
 
-      recorded_b_start = existing_recording.recorded_date
-      recording_b_end = existing_recording.recorded_date.dup.advance(seconds: existing_recording.duration_seconds)
+      recording_new_start = new_recording.recorded_date
+      recording_new_end = get_end_date(new_recording)
 
-      if new_recording.recorded_date < recorded_b_start
-        # overlap is at end of new, start of existing
-        overlap_amount = get_end_date(new_recording) - recorded_b_start
+      recording_existing_start = existing_recording.recorded_date
+      recording_existing_end = get_end_date(existing_recording)
+
+      can_fix = false
+
+      if recording_new_start < recording_existing_start && recording_new_end < recording_existing_end
+        # overlap is at start of existing, end of new
+        overlap_amount = recording_new_end - recording_existing_start
         overlap_location = 'start of existing, end of new'
-      else
+        can_fix = true
+      elsif recording_new_start > recording_existing_start && recording_new_end > recording_existing_end
         # overlap is at start of new, end of existing
-        overlap_amount = recording_b_end - new_recording.recorded_date
+        overlap_amount = recording_existing_end - recording_new_start
         overlap_location = 'start of new, end of existing'
+        can_fix = true
+      else
+        min_end = [recording_new_end,recording_existing_end].min
+        max_start = [recording_new_start, recording_existing_start].max
+
+        if max_start > min_end
+          overlap_amount = 0.0
+        else
+          overlap_amount = min_end - max_start
+        end
+
+        overlap_location = 'no overlap or recordings overlap completely'
+        can_fix = false
       end
 
       {
           uuid: existing_recording.uuid,
           id: existing_recording.id,
-          recorded_date: existing_recording.recorded_date,
+          recorded_date: recording_existing_start,
           duration: existing_recording.duration_seconds.to_s,
-          end_date: recording_b_end,
+          end_date: recording_existing_end,
           overlap_amount: overlap_amount,
           overlap_location: overlap_location,
+          can_fix: can_fix,
           fixed: false
       }
     end
 
     # Correct overlap and record changes in notes field for both audio recordings.
-    # @param [AudioRecording] audio_recording_a
-    # @param [AudioRecording] audio_recording_b
+    # @param [AudioRecording] a
+    # @param [AudioRecording] b
+    # @param [Hash] overlap_info
     # @param [Numeric] max_overlap_seconds maximum amount an audio recording can be trimmed at the end
     # @return [Boolean] true if fix succeeded, otherwise false
-    def fix_overlap(audio_recording_a, audio_recording_b, max_overlap_seconds)
-      existing_audio_recording_start = audio_recording_b.recorded_date
-      existing_audio_recording_end = get_end_date(audio_recording_b)
-      existing_audio_recording_id = audio_recording_b.id
-      existing_audio_recording_uuid = audio_recording_b.uuid
+    def fix_overlap(a, b, overlap_info, max_overlap_seconds)
 
-      new_audio_recording_start = audio_recording_a.recorded_date
-      new_audio_recording_end = get_end_date(audio_recording_a)
+      # don't assume that either audio_recording is saved
+      # so, can't use id.
+      # assume both recordings have been validated.
+
+      # decide which audio recording to modify
+      if a.recorded_date > b.recorded_date
+        earlier = b
+        later = a
+      else
+        earlier = a
+        later = b
+      end
+
+      # calculate information needed later
+      earlier_end = get_end_date(earlier)
+      later_start = later.recorded_date
+      overlap_amount = earlier_end - later_start
 
       result = {fixed: nil, save_errors: []}
 
-      if existing_audio_recording_start > new_audio_recording_start
-        # if overlap is within threshold, modify new_audio_recording
-        overlap_amount = new_audio_recording_end - existing_audio_recording_start
-        if overlap_amount <= max_overlap_seconds
-          audio_recording_a.duration_seconds = audio_recording_a.duration_seconds - overlap_amount
-          notes = audio_recording_a.notes.blank? ? '' : audio_recording_a.notes
-          audio_recording_a.notes = notes + create_overlap_notes(overlap_amount, existing_audio_recording_uuid)
-          result[:fixed] = true
-        else
-          result[:fixed] = false
-        end
-
-
-      elsif existing_audio_recording_start < new_audio_recording_start
-        # if overlap is within threshold, modify existing audio recording
-        overlap_amount = existing_audio_recording_end - new_audio_recording_start
-        if overlap_amount <= max_overlap_seconds
-          existing = AudioRecording.where(id: existing_audio_recording_id).first
-          existing.duration_seconds = existing.duration_seconds - overlap_amount
-          notes = existing.notes.blank? ? '' : existing.notes
-          existing.notes = notes + create_overlap_notes(overlap_amount, audio_recording_a.uuid)
-
-          result[:fixed] = existing.save
-          result[:save_errors] = existing.errors if existing.errors.size > 0
-
-        else
-          result[:fixed] = false
-        end
+      if overlap_amount <= max_overlap_seconds && overlap_info[:can_fix]
+        # correct the overlap by modifying the duration of the earlier recording
+        result = modify_duration(earlier, later, overlap_amount)
       end
 
       result
     end
 
-    # Construct overlap no tes.
+    def modify_duration(modified, other, overlap_amount)
+      new_duration = modified.duration_seconds - overlap_amount
+      current_duration = modified.duration_seconds
+      modified.duration_seconds = new_duration
+
+      notes = modified.notes.blank? ? '' : modified.notes
+      modified.notes = notes + create_overlap_notes(overlap_amount, current_duration, new_duration, other.uuid)
+
+      {
+          fixed: modified.save,
+          save_errors: modified.errors.dup
+      }
+
+    end
+
+    # Construct overlap notes.
     # @param [Numeric] overlap_amount
     # @param [string] other_uuid
     # @return [String]
-    def create_overlap_notes(overlap_amount, other_uuid)
+    def create_overlap_notes(overlap_amount, current_duration, new_duration, other_uuid)
       "\n\"duration_adjustment_for_overlap\"=\"Change made #{Time.zone.now.utc.iso8601}: " +
-          "overlap of #{overlap_amount} seconds with audio_recording with uuid #{other_uuid}.\""
+          "overlap of #{overlap_amount} seconds (duration: old: #{current_duration}, new: #{new_duration}) with audio_recording with uuid #{other_uuid}.\""
     end
 
     # Get the end date for an audio recording.

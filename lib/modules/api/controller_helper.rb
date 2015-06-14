@@ -76,13 +76,28 @@ module Api
 
     # used for create_fail and update_fail
     def respond_change_fail
-      built_response = Settings.api_response.build(:unprocessable_entity, nil, {error_details: get_resource.errors})
+      built_response = Settings.api_response.build(
+          :unprocessable_entity,
+          nil,
+          {
+              error_details: 'Record could not be saved',
+              error_info: get_resource.errors
+          })
       render json: built_response, status: :unprocessable_entity, layout: false
     end
 
     def respond_destroy
       built_response = Settings.api_response.build(:no_content, nil)
       render json: built_response, status: :no_content, layout: false
+    end
+
+    def respond_error(status_symbol, message, opts = {})
+      render_error(
+          status_symbol,
+          message,
+          nil,
+          'respond_error',
+          opts)
     end
 
     def respond_filter(content, opts = {})

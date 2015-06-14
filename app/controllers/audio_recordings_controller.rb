@@ -47,7 +47,7 @@ class AudioRecordingsController < ApplicationController
   # POST /audio_recordings.json
   # this is used by the harvester, do not change!
   def create
-    @audio_recording = match_existing_or_create_new
+    @audio_recording = AudioRecording.build_by_file_hash(audio_recording_params)
     @audio_recording.site = @site
 
     uploader_id = audio_recording_params[:uploader_id].to_i
@@ -57,15 +57,42 @@ class AudioRecordingsController < ApplicationController
     requested_level = :writer
     is_allowed = Access::Check.allowed?(requested_level, actual_level)
 
+
     if !user_exists || !is_allowed
-      render json: {error: 'uploader does not have access to this project'}.to_json, status: :unprocessable_entity
-    elsif check_and_correct_overlap(@audio_recording) && @audio_recording.save
-      render json: @audio_recording, status: :created, location: @audio_recording
+      respond_error(
+          :unprocessable_entity,
+          'uploader does not exist or does not have access to this project',
+          {error_info: {
+              project_id: @project.nil? ? nil : @project.id,
+              user_id: user.nil? ? nil : user.id
+          }}
+      )
     else
-      render json: @audio_recording.errors, status: :unprocessable_entity
+
+      # check for overlaps and attempt to fix
+      overlap_result = @audio_recording.fix_overlaps
+
+      too_many = overlap_result ? overlap_result[:overlap][:too_many] : false
+      not_fixed = overlap_result ? overlap_result[:overlap][:items].any? { |info| !info[:fixed] } : false
+
+      Rails.logger.warn overlap_result
+
+      if too_many
+        respond_error(:unprocessable_entity, 'Too many overlapping recordings', {error_info: overlap_result})
+      elsif not_fixed
+        respond_error(:unprocessable_entity, 'Some overlaps could not be fixed', {error_info: overlap_result})
+      elsif @audio_recording.save
+        respond_create_success
+      else
+        # @audio_recording.errors.any?
+        respond_change_fail
+      end
+
     end
+
   end
 
+  # this is used by the harvester, do not change!
   def update
 
     relevant_params = audio_recording_params
@@ -104,12 +131,11 @@ class AudioRecordingsController < ApplicationController
   # this is used by the harvester, do not change!
   def check_uploader
     # current user should be the harvester
-    # uploader_id must have read access to the project
+    # uploader_id must have write access to the project
 
     if current_user.blank?
-      render json: {error: 'not logged in'}.to_json, status: :unauthorized
-    else
-      if Access::Check.is_harvester?(current_user)
+      fail CanCan::AccessDenied.new(I18n.t('devise.failure.unauthenticated'), :check_uploader, AudioRecording)
+    elsif Access::Check.is_harvester?(current_user)
         # auth check is skipped, so auth is checked manually here
         uploader_id = params[:uploader_id].to_i
         user_exists = User.exists?(uploader_id)
@@ -120,13 +146,25 @@ class AudioRecordingsController < ApplicationController
         is_allowed = Access::Check.allowed?(requested_level, actual_level)
 
         if !user_exists || !is_allowed
-          render json: {error: 'uploader does not have access to this project'}.to_json, status: :ok
+          respond_error(
+              :forbidden,
+              'uploader does not exist or does not have access to this project',
+              {error_info: {
+                  project_id: @project.nil? ? nil : @project.id,
+                  user_id: user.nil? ? nil : user.id
+              }}
+          )
         else
           head :no_content
         end
       else
-        render json: {error: 'only harvester can check uploader permissions'}.to_json, status: :forbidden
-      end
+        respond_error(
+            :forbidden,
+            'only harvester can check uploader permissions',
+            {error_info: {
+                project_id: @project.nil? ? nil : @project.id
+            }}
+        )
     end
   end
 
@@ -154,27 +192,46 @@ class AudioRecordingsController < ApplicationController
   def update_status_user_check
     # auth is checked manually here - not sure if this is necessary or not
     if current_user.blank?
-      render json: {error: 'not logged in'}.to_json, status: :unauthorized
+      fail CanCan::AccessDenied.new(I18n.t('devise.failure.unauthenticated'), :update_status_user_check, AudioRecording)
     elsif Access::Check.is_harvester?(current_user)
       update_status_params_check
     else
-      render json: {error: 'only harvester can check uploader permissions'}.to_json, status: :forbidden
+      respond_error(:forbidden, 'only harvester can update audio recordings')
     end
   end
 
   def update_status_params_check
+    opts = {error_info: {audio_recording_id: params[:id]}}
+
     if @audio_recording.blank?
-      render json: {error: "Could not find Audio Recording with id #{params[:id]}"}.to_json, status: :not_found
+      respond_error(
+          :not_found,
+          "Could not find Audio Recording with id #{params[:id]}",
+          {error_info: {audio_recording_id: params[:id]}})
     elsif !params.include?(:file_hash)
-      render json: {error: 'Must include file hash'}.to_json, status: :unprocessable_entity
+      respond_error(:unprocessable_entity, 'Must include file hash')
     elsif @audio_recording.file_hash != params[:file_hash]
-      render json: {error: 'Incorrect file hash'}.to_json, status: :unprocessable_entity
+      respond_error(
+          :unprocessable_entity,
+          'Incorrect file hash',
+          {error_info: {audio_recording: {id: params[:id], file_hash: {
+              stored: @audio_recording.file_hash,
+              request: params[:file_hash]
+          }}}}
+      )
     elsif !params.include?(:uuid)
-      render json: {error: 'Must include uuid'}.to_json, status: :unprocessable_entity
+      respond_error(:unprocessable_entity, 'Must include uuid')
     elsif @audio_recording.uuid != params[:uuid]
-      render json: {error: 'Incorrect uuid'}.to_json, status: :unprocessable_entity
+      respond_error(
+          :unprocessable_entity,
+          'Incorrect uuid',
+          {error_info: {audio_recording: {id: params[:id], uuid: {
+              stored: @audio_recording.uuid,
+              request: params[:uuid]
+          }}}}
+      )
     elsif !params.include?(:status)
-      render json: {error: 'Must include status'}.to_json, status: :unprocessable_entity
+      respond_error(:unprocessable_entity, 'Must include status')
     else
       update_status_available_check
     end
@@ -185,51 +242,27 @@ class AudioRecordingsController < ApplicationController
     if AudioRecording::AVAILABLE_STATUSES_SYMBOLS.include?(new_status)
       update_status_audio_recording(new_status)
     else
-      render json: {error: "Status #{new_status} is not in available status list #{AudioRecording::AVAILABLE_STATUSES_SYMBOLS}."}.to_json, status: :unprocessable_entity
+      respond_error(
+          :unprocessable_entity,
+          "Status #{new_status} is not in available status list",
+          {error_info: {audio_recording: {
+              id: params[:id],
+              status: {
+                  stored: @audio_recording.status,
+                  request: new_status
+              }},
+                        available_statuses: AudioRecording::AVAILABLE_STATUSES}}
+      )
     end
   end
 
   def update_status_audio_recording(status)
     @audio_recording.status = status
-    if @audio_recording.save!
+    if @audio_recording.save
       head :no_content
     else
-      render json: @audio_recording.errors, status: :unprocessable_entity
+      respond_change_fail
     end
-  end
-
-  def match_existing_or_create_new
-    the_params = audio_recording_params
-    match = AudioRecording.where(
-        original_file_name: the_params[:original_file_name],
-        file_hash: the_params[:file_hash],
-        recorded_date: Time.zone.parse(the_params[:recorded_date]).utc,
-        data_length_bytes: the_params[:data_length_bytes],
-        media_type: the_params[:media_type],
-        duration_seconds:the_params[:duration_seconds].round(4),
-        site_id: the_params[:site_id],
-        status: 'aborted'
-    )
-
-    if match.count == 1
-      found = match.first
-      found.status = :new
-      found
-    else
-      AudioRecording.new(the_params)
-    end
-  end
-
-  # check and correct overlap. New audio recording is not yet saved.
-  # if changes are successfully made by this check, then the
-  # check_overlapping validation on audio_recording will succeed.
-  # @param [AudioRecording] new_audio_recording
-  # @return [Boolean] true if overlaps were checked and corrected, otherwise false
-  def check_and_correct_overlap(new_audio_recording)
-    if AudioRecordingOverlap.any?(new_audio_recording)
-      AudioRecordingOverlap.fix(new_audio_recording, Settings.audio_recording_max_overlap_sec)
-    end
-    true
   end
 
   def audio_recording_params

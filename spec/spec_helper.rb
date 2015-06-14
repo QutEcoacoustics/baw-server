@@ -162,8 +162,10 @@ RSpec.configure do |config|
 
 end
 
+ENV['DOC_FORMAT'] ||= 'json'
+
 RspecApiDocumentation.configure do |config_rspec_api|
-  config_rspec_api.format = :json
+  config_rspec_api.format = ENV['DOC_FORMAT']
 
   # patch to enable options request
   module RspecApiDocumentation
