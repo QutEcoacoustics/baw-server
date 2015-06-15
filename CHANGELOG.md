@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+ - 2015-06-15
+    - added `:tag_id` to taggings for `audio_event`.
+
  - 2015-06-14
     - bug fix for tags filter [#210](https://github.com/QutBioacoustics/baw-server/issues/210)
     - bug fix for audio recording overlap check (again) More information provided on error. [#184](https://github.com/QutBioacoustics/baw-server/issues/184)
