@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## [Release 0.15.1](https://github.com/QutBioacoustics/baw-server/releases/tag/0.15.1) (2015-06-16)
+
  - 2015-06-15
     - added `:tag_id` to taggings for `audio_event`.
 
