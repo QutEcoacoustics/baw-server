@@ -95,41 +95,91 @@ describe AudioRecording, :type => :model do
       site = FactoryGirl.create(:site, id: 1001)
       ar1 = FactoryGirl.create(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:03+10:00", site_id: 1001, file_hash: "1")
       ar2 = FactoryGirl.build(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:51:03+10:00", site_id: 1001, file_hash: "2")
-      expect(ar2).to be_valid
+
+      result = ar2.fix_overlaps
+      expect(result[:overlap][:count]).to eq(0)
+      expect(result[:overlap][:items]).to be_empty
     end
 
     it 'should allow non overlapping dates - (second before first)' do
       site = FactoryGirl.create(:site, id: 1001)
       ar1 = FactoryGirl.create(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:51:03+10:00", site_id: 1001, file_hash: "1")
       ar2 = FactoryGirl.build(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:03+10:00", site_id: 1001, file_hash: "2")
-      expect(ar2).to be_valid
+
+      result = ar2.fix_overlaps
+      expect(result[:overlap][:count]).to eq(0)
+      expect(result[:overlap][:items]).to be_empty
     end
 
     it 'should not allow overlapping dates - exact' do
       site = FactoryGirl.create(:site, id: 1001)
       ar1 = FactoryGirl.create(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:03+10:00", site_id: 1001, file_hash: "1")
       ar2 = FactoryGirl.build(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:03+10:00", site_id: 1001, file_hash: "2")
-      expect(ar2).not_to be_valid
+
+      result = ar2.fix_overlaps
+      expect(result[:overlap][:count]).to eq(1)
+      expect(result[:overlap][:items].size).to eq(1)
+      expect(result[:overlap][:items][0][:fixed]).to be_falsey
+      expect(result[:overlap][:items][0][:overlap_amount]).to eq(60.0)
+      expect(result[:overlap][:items][0][:overlap_location]).to eq('no overlap or recordings overlap completely')
+      expect(result[:overlap][:items][0][:can_fix]).to be_falsey
+
     end
+
     it 'should not allow overlapping dates - shift forwards' do
+      site = FactoryGirl.create(:site, id: 1001)
+      ar1 = FactoryGirl.create(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:48+10:00", site_id: 1001, file_hash: "1")
+      ar2 = FactoryGirl.build(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:04+10:00", site_id: 1001, file_hash: "2")
+
+      result = ar2.fix_overlaps
+      expect(result[:overlap][:count]).to eq(1)
+      expect(result[:overlap][:items].size).to eq(1)
+      expect(result[:overlap][:items][0][:fixed]).to be_falsey
+      expect(result[:overlap][:items][0][:overlap_amount]).to eq(16.0)
+      expect(result[:overlap][:items][0][:overlap_location]).to eq('start of existing, end of new')
+      expect(result[:overlap][:items][0][:can_fix]).to be_truthy
+    end
+
+    it 'should not allow overlapping dates - shift forwards (overlap both ends)' do
       site = FactoryGirl.create(:site, id: 1001)
       ar1 = FactoryGirl.create(:audio_recording, duration_seconds: 30.0, recorded_date: "2014-02-07T17:50:20+10:00", site_id: 1001, file_hash: "1")
       ar2 = FactoryGirl.build(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:10+10:00", site_id: 1001, file_hash: "2")
-      expect(ar2).not_to be_valid
+
+      result = ar2.fix_overlaps
+      expect(result[:overlap][:count]).to eq(1)
+      expect(result[:overlap][:items].size).to eq(1)
+      expect(result[:overlap][:items][0][:fixed]).to be_falsey
+      expect(result[:overlap][:items][0][:overlap_amount]).to eq(30.0)
+      expect(result[:overlap][:items][0][:overlap_location]).to eq('no overlap or recordings overlap completely')
+      expect(result[:overlap][:items][0][:can_fix]).to be_falsey
     end
 
     it 'should not allow overlapping dates - shift backwards' do
       site = FactoryGirl.create(:site, id: 1001)
       ar1 = FactoryGirl.create(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:04+10:00", site_id: 1001, file_hash: "1")
       ar2 = FactoryGirl.build(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:48+10:00", site_id: 1001, file_hash: "2")
-      expect(ar2).not_to be_valid
+
+      result = ar2.fix_overlaps
+      expect(result[:overlap][:count]).to eq(1)
+      expect(result[:overlap][:items].size).to eq(1)
+      expect(result[:overlap][:items][0][:fixed]).to be_falsey
+      expect(result[:overlap][:items][0][:overlap_amount]).to eq(16.0)
+      expect(result[:overlap][:items][0][:overlap_location]).to eq('start of new, end of existing')
+      expect(result[:overlap][:items][0][:can_fix]).to be_truthy
     end
 
     it 'should not allow overlapping dates - shift backwards (1 sec overlap)' do
       site = FactoryGirl.create(:site, id: 1001)
       ar1 = FactoryGirl.create(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:00+10:00", site_id: 1001, file_hash: "1")
       ar2 = FactoryGirl.build(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:59+10:00", site_id: 1001, file_hash: "2")
-      expect(ar2).not_to be_valid
+
+      result = ar2.fix_overlaps
+      expect(result[:overlap][:count]).to eq(1)
+      expect(result[:overlap][:items].size).to eq(1)
+      expect(result[:overlap][:items][0][:fixed]).to be_truthy
+      expect(result[:overlap][:items][0][:overlap_amount]).to eq(1.0)
+      expect(result[:overlap][:items][0][:overlap_location]).to eq('start of new, end of existing')
+      expect(result[:overlap][:items][0][:can_fix]).to be_truthy
     end
 
     it 'should allow overlapping dates - edges exact (first before second)' do
@@ -138,7 +188,10 @@ describe AudioRecording, :type => :model do
       ar2 = FactoryGirl.build(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:51:00+10:00", site_id: 1001, file_hash: "2")
       expect(ar1.recorded_date.advance(seconds: ar1.duration_seconds)).to eq(Time.zone.parse("2014-02-07T17:51:00+10:00"))
       expect(ar2.recorded_date.advance(seconds: ar2.duration_seconds)).to eq(Time.zone.parse("2014-02-07T17:52:00+10:00"))
-      expect(ar2).to be_valid
+
+      result = ar2.fix_overlaps
+      expect(result[:overlap][:count]).to eq(0)
+      expect(result[:overlap][:items]).to be_empty
     end
 
     it 'should allow overlapping dates - edges exact (second before first)' do
@@ -147,7 +200,10 @@ describe AudioRecording, :type => :model do
       ar2 = FactoryGirl.build(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:00+10:00", site_id: 1001, file_hash: "2")
       expect(ar1.recorded_date.advance(seconds: ar1.duration_seconds)).to eq(Time.zone.parse("2014-02-07T17:52:00+10:00"))
       expect(ar2.recorded_date.advance(seconds: ar2.duration_seconds)).to eq(Time.zone.parse("2014-02-07T17:51:00+10:00"))
-      expect(ar2).to be_valid
+
+      result = ar2.fix_overlaps
+      expect(result[:overlap][:count]).to eq(0)
+      expect(result[:overlap][:items]).to be_empty
     end
 
   end
@@ -158,21 +214,32 @@ describe AudioRecording, :type => :model do
       FactoryGirl.create(:site, id: 1002)
       ar1 = FactoryGirl.create(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:03+10:00", site_id: 1001, file_hash: "1")
       ar2 = FactoryGirl.build(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:03+10:00", site_id: 1002, file_hash: "2")
-      expect(ar2).to be_valid
+
+      result = ar2.fix_overlaps
+      expect(result[:overlap][:count]).to eq(0)
+      expect(result[:overlap][:items]).to be_empty
     end
+
     it 'should allow overlapping dates - shift forwards' do
       FactoryGirl.create(:site, id: 1001)
       FactoryGirl.create(:site, id: 1002)
       ar1 = FactoryGirl.create(:audio_recording, duration_seconds: 30.0, recorded_date: "2014-02-07T17:50:20+10:00", site_id: 1001, file_hash: "1")
       ar2 = FactoryGirl.build(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:10+10:00", site_id: 1002, file_hash: "2")
-      expect(ar2).to be_valid
+
+      result = ar2.fix_overlaps
+      expect(result[:overlap][:count]).to eq(0)
+      expect(result[:overlap][:items]).to be_empty
     end
+
     it 'should allow overlapping dates - shift backwards' do
       FactoryGirl.create(:site, id: 1001)
       FactoryGirl.create(:site, id: 1002)
       ar1 = FactoryGirl.create(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:03+10:00", site_id: 1001, file_hash: "1")
       ar2 = FactoryGirl.build(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:30+10:00", site_id: 1002, file_hash: "2")
-      expect(ar2).to be_valid
+
+      result = ar2.fix_overlaps
+      expect(result[:overlap][:count]).to eq(0)
+      expect(result[:overlap][:items]).to be_empty
     end
 
     it 'should allow overlapping dates - edges exact' do
@@ -182,7 +249,10 @@ describe AudioRecording, :type => :model do
       ar2 = FactoryGirl.build(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:51:00+10:00", site_id: 1002, file_hash: "2")
       expect(ar1.recorded_date.advance(seconds: ar1.duration_seconds)).to eq(Time.zone.parse("2014-02-07T17:51:00+10:00"))
       expect(ar2.recorded_date.advance(seconds: ar2.duration_seconds)).to eq(Time.zone.parse("2014-02-07T17:52:00+10:00"))
-      expect(ar2).to be_valid
+
+      result = ar2.fix_overlaps
+      expect(result[:overlap][:count]).to eq(0)
+      expect(result[:overlap][:items]).to be_empty
     end
   end
 

@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## [Release 0.15.1](https://github.com/QutBioacoustics/baw-server/releases/tag/0.15.1) (2015-06-16)
+
+ - 2015-06-15
+    - added `:tag_id` to taggings for `audio_event`.
+
+ - 2015-06-14
+    - bug fix for tags filter [#210](https://github.com/QutBioacoustics/baw-server/issues/210)
+    - bug fix for audio recording overlap check (again) More information provided on error. [#184](https://github.com/QutBioacoustics/baw-server/issues/184)
+    - Harvester endpoints converted to standard API.
+    - Normalised error responses.
+    - Using new analysis paths, see QutBioacoustics/baw-workers#20
+
 ## [Release 0.15.0](https://github.com/QutBioacoustics/baw-server/releases/tag/0.15.0) (2015-06-10)
 
  - 2015-06-08

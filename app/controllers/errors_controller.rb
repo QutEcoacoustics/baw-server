@@ -22,11 +22,11 @@ class ErrorsController < ApplicationController
       when 401, '401', 'unauthorized', 'unauthorised'
         status_symbol = :unauthorized
         detail_message = I18n.t('devise.failure.unauthenticated')
-        additional_info[:links_object] = [:sign_in, :sign_up, :confirm]
+        additional_info[:error_links] = [:sign_in, :sign_up, :confirm]
       when 403, '403', 'forbidden'
         status_symbol = :forbidden
         detail_message = I18n.t('devise.failure.unauthorized')
-        additional_info[:links_object] = [:permissions, :confirm]
+        additional_info[:error_links] = [:permissions, :confirm]
       when 404, '404', 'not_found'
         status_symbol = :not_found
         detail_message = 'Could not find the requested page.'
@@ -66,7 +66,7 @@ class ErrorsController < ApplicationController
         'Could not find the requested page.',
         nil,
         'route_error',
-        error_info: {original_route: params[:requested_route], original_http_method: request.method}
+        {error_info: {original_route: params[:requested_route], original_http_method: request.method}}
     )
 
   end

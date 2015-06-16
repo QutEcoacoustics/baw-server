@@ -78,7 +78,7 @@ gem 'tzinfo-data', '~> 1.2015.1'
 # -------------------------------------
 # https://github.com/plataformatec/devise/blob/master/CHANGELOG.md
 # http://joanswork.com/devise-3-1-update/
-gem 'devise', '~> 3.4.1'
+gem 'devise', '~> 3.5.1'
 gem 'cancancan', '~> 1.10.1'
 gem 'role_model', '~> 0.8.1'
 # Use ActiveModel has_secure_password
@@ -118,7 +118,7 @@ gem 'newrelic_rpm', '~> 3.12.0'
 # Documentation & UI
 # -------------------------------------
 # these gems are required here to serve /doc url
-gem 'rspec_api_documentation', '~> 4.3.0'
+gem 'rspec_api_documentation', '~> 4.4.0'
 gem 'raddocs', '~> 0.4.0'
 
 # MEDIA
@@ -133,7 +133,7 @@ gem 'resque', '~> 1.25.2'
 gem 'resque-job-stats', git: 'https://github.com/echannel/resque-job-stats.git', branch: :master, ref: '8932c036ae'
 gem 'resque-status', '~> 0.5.0'
 # set to a specific commit when releasing to master branch
-gem 'baw-workers', git: 'https://github.com/QutBioacoustics/baw-workers.git', branch: :master, ref: '260b9d256c'
+gem 'baw-workers', git: 'https://github.com/QutBioacoustics/baw-workers.git', branch: :master, ref: '3441452a86'
 
 # Gems restricted by environment and/or platform
 # ====================================================
@@ -148,7 +148,7 @@ group :development, :test do
   gem 'capistrano-rvm', '~> 0.1.2'
   gem 'capistrano-rails', '~> 1.1.2'
   gem 'capistrano-newrelic', '~> 0.0.8'
-  gem 'capistrano-passenger', '~> 0.0.1'
+  gem 'capistrano-passenger', '~> 0.1.0'
 
   gem 'rack-mini-profiler', '~> 0.9.2'
   gem 'rails-i18n-debug', '~> 1.0.1'
@@ -193,11 +193,11 @@ group :development, :test do
   #gem 'debugger'
   # gem install traceroute --no-ri --no-rdoc
 
-  gem 'rspec-rails', '~> 3.2.3'
+  gem 'rspec-rails', '~> 3.3.0'
   gem 'factory_girl_rails', '~> 4.5.0'
   gem 'capybara', '~> 2.4.4'
 
-  gem 'rspec', '~> 3.2.0'
+  gem 'rspec', '~> 3.3.0'
   gem 'simplecov', '~> 0.10.0', require: false
   gem 'shoulda-matchers', '~> 2.8.0'
   gem 'launchy', '~> 2.4.3'

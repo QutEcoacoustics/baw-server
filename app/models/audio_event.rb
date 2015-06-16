@@ -65,7 +65,7 @@ class AudioEvent < ActiveRecord::Base
 
           audio_event_hash[:taggings] = Tagging
                                             .where(audio_event_id: audio_event.id)
-                                            .select(:id, :audio_event_id, :created_at, :updated_at, :creator_id, :updater_id)
+                                            .select(:id, :audio_event_id, :tag_id, :created_at, :updated_at, :creator_id, :updater_id)
 
           [audio_event, audio_event_hash]
         },
