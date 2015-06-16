@@ -91,10 +91,10 @@ describe BawWorkers::Harvest::SingleFile do
               status: 'new',
               original_file_name: 'test_20141012_181455.ogg',
 
-              created_at: "2014-10-13T05:21:13Z",
+              created_at: '2014-10-13T05:21:13Z',
               id: 177,
-              notes: "note number 183",
-              updated_at: "2014-10-13T05:21:13Z",
+              notes: 'note number 183',
+              updated_at: '2014-10-13T05:21:13Z',
               uuid: uuid
           }
       }
@@ -113,23 +113,23 @@ describe BawWorkers::Harvest::SingleFile do
           }
       )
 
-      stub_login = stub_request(:post, "http://localhost:3030/security")
+      stub_login = stub_request(:post, 'http://localhost:3030/security')
                        .with(body: request_login_body.to_json, headers: request_headers_base)
                        .to_return(status: 200, body: response_login_body.to_json)
 
-      stub_uploader_check = stub_request(:get, "http://localhost:3030/projects/10/sites/20/audio_recordings/check_uploader/30")
+      stub_uploader_check = stub_request(:get, 'http://localhost:3030/projects/10/sites/20/audio_recordings/check_uploader/30')
                                 .with(headers: request_headers)
                                 .to_return(status: 204)
 
-      stub_create = stub_request(:post, "http://localhost:3030/projects/10/sites/20/audio_recordings")
+      stub_create = stub_request(:post, 'http://localhost:3030/projects/10/sites/20/audio_recordings')
                         .with(body: request_create_body.to_json, headers: request_headers)
                         .to_return(status: 201, body: response_create_body.to_json)
 
-      stub_uploading_status = stub_request(:put, "http://localhost:3030/audio_recordings/177/update_status")
+      stub_uploading_status = stub_request(:put, 'http://localhost:3030/audio_recordings/177/update_status')
                                   .with(body: request_update_status_body.merge(status: 'uploading'), headers: request_headers)
                                   .to_return(status: 200)
 
-      stub_ready_status = stub_request(:put, "http://localhost:3030/audio_recordings/177/update_status")
+      stub_ready_status = stub_request(:put, 'http://localhost:3030/audio_recordings/177/update_status')
                               .with(body: request_update_status_body.merge(status: 'ready'), headers: request_headers)
                               .to_return(status: 200)
 
@@ -200,12 +200,12 @@ describe BawWorkers::Harvest::SingleFile do
       response_create_body = {
           meta: {
               status: 422,
-              message: "Unprocessable Entity",
+              message: 'Unprocessable Entity',
               error: {
-                  details: "Record could not be saved",
+                  details: 'Record could not be saved',
                   info: {
                       duration_seconds:
-                          ["must be greater than or equal to 10"]
+                          ['must be greater than or equal to 10']
                   }}},
           data: nil
       }
@@ -219,15 +219,15 @@ describe BawWorkers::Harvest::SingleFile do
           }
       )
 
-      stub_login = stub_request(:post, "http://localhost:3030/security")
+      stub_login = stub_request(:post, 'http://localhost:3030/security')
                        .with(body: request_login_body.to_json, headers: request_headers_base)
                        .to_return(status: 200, body: response_login_body.to_json)
 
-      stub_uploader_check = stub_request(:get, "http://localhost:3030/projects/10/sites/20/audio_recordings/check_uploader/30")
+      stub_uploader_check = stub_request(:get, 'http://localhost:3030/projects/10/sites/20/audio_recordings/check_uploader/30')
                                 .with(headers: request_headers)
                                 .to_return(status: 204)
 
-      stub_create = stub_request(:post, "http://localhost:3030/projects/10/sites/20/audio_recordings")
+      stub_create = stub_request(:post, 'http://localhost:3030/projects/10/sites/20/audio_recordings')
                         .with(body: request_create_body.to_json, headers: request_headers)
                         .to_return(status: 422, body: response_create_body.to_json)
 
@@ -239,8 +239,6 @@ describe BawWorkers::Harvest::SingleFile do
       }.to raise_error(
                BawWorkers::Exceptions::HarvesterEndpointError,
                /test_20141012_181455.ogg failed: Code 422, Message: , Body: \{"meta":\{"status":422,"message":"Unprocessable Entity","error":\{"details":"Record could not be saved","info":\{"duration_seconds":\["must be greater than or equal to 10"\]\}\}\},"data":null\}, File renamed to/)
-
-
 
       # verify - requests made in the correct order
       stub_login.should have_been_made.once
