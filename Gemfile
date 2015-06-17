@@ -13,7 +13,7 @@ source 'https://rubygems.org'
 # RAILS
 # -------------------------------------
 
-gem 'rails', '~> 4.2.0'
+gem 'rails', '~> 4.2.2'
 gem 'rack-cors', '~> 0.4.0', require: 'rack/cors'
 gem 'responders', '~> 2.0'
 
@@ -38,17 +38,17 @@ gem 'coffee-rails', '~> 4.1.0'
 gem 'therubyracer', '~> 0.12.1', platforms: :ruby, require: 'v8'
 
 # Use jquery as the JavaScript library
-gem 'jquery-rails', '~> 4.0.3'
+gem 'jquery-rails', '~> 4.0.4'
 # Turbolinks makes following links in your web application faster. Read more: https://github.com/rails/turbolinks
 #gem 'turbolinks'
 # Build JSON APIs with ease. Read more: https://github.com/rails/jbuilder
-gem 'jbuilder', '~> 2.2.3'
+gem 'jbuilder', '~> 2.3.0'
 
 gem 'haml', '~> 4.0.6'
 gem 'haml-rails', '~> 0.8'
 
 gem 'simple_form', '~> 3.1.0'
-gem 'paperclip', '~> 4.2.0'
+gem 'paperclip', '~> 4.2.3'
 gem 'breadcrumbs_on_rails', '~> 2.3.0'
 # kept below version 2 due to huge breaking changes
 gem 'gmaps4rails', '< 2'
@@ -79,7 +79,7 @@ gem 'tzinfo-data', '~> 1.2015.1'
 # https://github.com/plataformatec/devise/blob/master/CHANGELOG.md
 # http://joanswork.com/devise-3-1-update/
 gem 'devise', '~> 3.5.1'
-gem 'cancancan', '~> 1.10.1'
+gem 'cancancan', '~> 1.11.0'
 gem 'role_model', '~> 0.8.1'
 # Use ActiveModel has_secure_password
 gem 'bcrypt', '~> 3.1.9'
@@ -124,7 +124,7 @@ gem 'raddocs', '~> 0.4.0'
 # MEDIA
 # -------------------------------------
 # set to a specific commit when releasing to master branch
-gem 'baw-audio-tools', git: 'https://github.com/QutBioacoustics/baw-audio-tools.git', branch: :master, ref: '62d1fdda40'
+gem 'baw-audio-tools', git: 'https://github.com/QutBioacoustics/baw-audio-tools.git', branch: :master, ref: 'b0e285b15b'
 gem 'rack-rewrite', '~> 1.5.1'
 
 # ASYNC JOBS
@@ -133,7 +133,7 @@ gem 'resque', '~> 1.25.2'
 gem 'resque-job-stats', git: 'https://github.com/echannel/resque-job-stats.git', branch: :master, ref: '8932c036ae'
 gem 'resque-status', '~> 0.5.0'
 # set to a specific commit when releasing to master branch
-gem 'baw-workers', git: 'https://github.com/QutBioacoustics/baw-workers.git', branch: :master, ref: '3441452a86'
+gem 'baw-workers', git: 'https://github.com/QutBioacoustics/baw-workers.git', branch: :master, ref: '55702a9cf1'
 
 # Gems restricted by environment and/or platform
 # ====================================================
