@@ -25,7 +25,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'guard', '~> 2.12'
   spec.add_development_dependency 'guard-rspec', '~> 4.5'
   spec.add_development_dependency 'guard-yard', '~> 2.1'
-  spec.add_development_dependency 'simplecov', '~> 0.9'
+  spec.add_development_dependency 'simplecov', '~> 0.10'
   spec.add_development_dependency 'coveralls', '~> 0.8'
   spec.add_development_dependency 'codeclimate-test-reporter', '~> 0.4'
   spec.add_development_dependency 'zonebie', '~> 0.5'
