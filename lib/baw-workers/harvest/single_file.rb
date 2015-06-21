@@ -23,8 +23,9 @@ module BawWorkers
       # Process a single audio file.
       # @param [Hash] file_info_hash
       # @param [Boolean] is_real_run
+      # @param [Boolean] copy_on_success
       # @return [Array<String>] existing target paths
-      def run(file_info_hash, is_real_run)
+      def run(file_info_hash, is_real_run, copy_on_success = false)
 
         file_info_hash.deep_symbolize_keys!
 
@@ -102,6 +103,22 @@ module BawWorkers
               audio_recording_id,
               create_update_hash(audio_recording_uuid, file_hash, :ready),
               security_info)
+
+          # enqueue task to copy harvested file
+          if copy_on_success
+            source = File.expand_path(existing_target_paths[0])
+
+            copy_base_path = BawWorkers::Settings.actions.harvest.copy_base_path
+            raw_destination = File.join(copy_base_path, create_relative_path(storage_file_opts))
+            destination = File.expand_path(raw_destination)
+
+            BawWorkers::Mirror::Action.action_enqueue(source, [destination])
+
+            @logger.info(@class_name) { "Enqueued mirror task with source #{source} and destination #{destination}" }
+          end
+
+          # enqueue task to run analysis
+          # BawWorkers::Analysis::Action.
 
         rescue Exception => e
           msg = "Error after audio recording created on website, status set to aborted. Exception: #{e}"
@@ -276,6 +293,12 @@ module BawWorkers
         end
 
         renamed_source_file
+      end
+
+      def create_relative_path(storage_file_opts)
+        partial_path = @original_audio.partial_path(storage_file_opts)
+        file_name = @original_audio.file_name_utc(storage_file_opts)
+        File.join(partial_path, file_name)
       end
 
     end

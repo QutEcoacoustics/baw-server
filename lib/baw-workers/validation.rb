@@ -67,6 +67,15 @@ module BawWorkers
         (real_run == 'real_run') ? true : false
       end
 
+      # Check that the value for copy_on_success is valid.
+      # @param [String] copy_on_success
+      # @return [Boolean] true to copy on success, false to not copy.
+      def check_copy_on_success(copy_on_success)
+        # options are 'dry_run' or 'real_run'. If not either of these, raise an erorr.
+        fail ArgumentError, "copy_on_success must be 'no_copy' or 'copy_on_success', given '#{copy_on_success}'." if copy_on_success.blank? || !%w(no_copy copy_on_success).include?(copy_on_success)
+        (copy_on_success == 'copy_on_success') ? true : false
+      end
+
       # Compare actual and expected objects.
       # @see https://github.com/amogil/rspec-deep-ignore-order-matcher/blob/master/lib/rspec-deep-ignore-order-matcher.rb
       def compare(actual, expected)

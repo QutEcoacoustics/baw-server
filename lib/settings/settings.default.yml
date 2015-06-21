@@ -30,6 +30,8 @@ settings:
       # name of queue to append jobs onto
       queue: harvest_default
       config_file_name: harvest.yml
+      # top level directory for mirroring harvested files, used by dequeue workers only
+      copy_base_path: ./tmp/custom_temp_dir/temp/copy_base_path
     media:
       # name of queue to append jobs onto
       queue: media_default
