@@ -1,28 +1,9 @@
 module BawWorkers
   module Harvest
     # Harvests audio files to be accessible via baw-server.
-    class Action
+    class Action < BawWorkers::ActionBase
 
-      # Ensure that there is only one job with the same payload per queue.
-      include Resque::Plugins::UniqueJob
-
-      # a set of keys starting with 'stats:jobs:queue_name' inside your Resque redis namespace
-      extend Resque::Plugins::JobStats
-
-      # track specific job instances and their status
-      include Resque::Plugins::Status
-
-      # include common methods
-      include BawWorkers::ActionCommon
-
-      # All methods do not require a class instance.
       class << self
-
-        # Delay when the unique job key is deleted (i.e. when enqueued? becomes false).
-        # @return [Fixnum]
-        def lock_after_execution_period
-          30
-        end
 
         # Get the queue for this action. Used by Resque.
         # @return [Symbol] The queue.
@@ -200,10 +181,8 @@ module BawWorkers
 
       end
 
-      # Perform method used by resque-status.
-      def perform
-        harvest_params = options['harvest_params']
-        self.class.action_perform(harvest_params)
+      def perform_options_keys
+        ['harvest_params']
       end
 
     end

@@ -26,7 +26,7 @@ module BawWorkers
   autoload :Config, 'baw-workers/config'
   autoload :Exceptions, 'baw-workers/exceptions'
   autoload :Validation, 'baw-workers/validation'
-  autoload :ActionCommon, 'baw-workers/action_common'
+  autoload :ActionBase, 'baw-workers/action_base'
   autoload :ApiCommunicator, 'baw-workers/api_communicator'
   autoload :FileInfo, 'baw-workers/file_info'
   autoload :ResqueApi, 'baw-workers/resque_api'

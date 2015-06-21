@@ -1,36 +1,16 @@
 module BawWorkers
   module Analysis
     # Runs analysis scripts on audio files.
-    class Action
-
-      # Ensure that there is only one job with the same payload per queue.
-      include Resque::Plugins::UniqueJob
-
-      # a set of keys starting with 'stats:jobs:queue_name' inside your Resque redis namespace
-      extend Resque::Plugins::JobStats
-
-      # track specific job instances and their status
-      include Resque::Plugins::Status
-
-      # include common methods
-      # must be the last include/extend so it can override methods
-      include BawWorkers::ActionCommon
+    class Action < BawWorkers::ActionBase
 
       # All methods do not require a class instance.
       class << self
-
-        # Delay when the unique job key is deleted (i.e. when enqueued? becomes false).
-        # @return [Fixnum]
-        def lock_after_execution_period
-          30
-        end
 
         # Get the queue for this action. Used by Resque.
         # @return [Symbol] The queue.
         def queue
           BawWorkers::Settings.actions.analysis.queue
         end
-
 
         # Perform analysis on a single file. Used by resque.
         # @param [Hash] analysis_params
@@ -152,10 +132,8 @@ module BawWorkers
 
       end
 
-      # Perform method used by resque-status.
-      def perform
-        analysis_params = options['analysis_params']
-        self.class.action_perform(analysis_params)
+      def perform_options_keys
+        ['analysis_params']
       end
 
     end
