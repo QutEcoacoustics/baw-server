@@ -71,6 +71,9 @@ module BawWorkers
 
         # catch any errors after audio is created so status can be updated
         # -----------------------------
+
+        harvest_completed_successfully = false
+
         begin
 
           # update audio recording status on website to uploading
@@ -104,6 +107,25 @@ module BawWorkers
               create_update_hash(audio_recording_uuid, file_hash, :ready),
               security_info)
 
+          harvest_completed_successfully = true
+
+        rescue Exception => e
+          msg = "Error after audio recording created on website, status set to aborted. Exception: #{e}"
+          @logger.error(@class_name) { msg }
+          @api_comm.update_audio_recording_status(
+              'record error in harvesting',
+              file_path,
+              audio_recording_id,
+              create_update_hash(audio_recording_uuid, file_hash, :aborted),
+              security_info)
+          raise e
+        end
+
+        # do this outside 'atomic' functionality above so that if
+        # anything here fails, the harvest is still successful.
+        # only run this if harvest was successful
+        if harvest_completed_successfully
+
           # enqueue task to copy harvested file
           if copy_on_success
             source = File.expand_path(existing_target_paths[0])
@@ -119,17 +141,6 @@ module BawWorkers
 
           # enqueue task to run analysis
           # BawWorkers::Analysis::Action.
-
-        rescue Exception => e
-          msg = "Error after audio recording created on website, status set to aborted. Exception: #{e}"
-          @logger.error(@class_name) { msg }
-          @api_comm.update_audio_recording_status(
-              'record error in harvesting',
-              file_path,
-              audio_recording_id,
-              create_update_hash(audio_recording_uuid, file_hash, :aborted),
-              security_info)
-          raise e
         end
 
         @logger.info(@class_name) { "Finished processing #{file_path}: #{audio_info_hash}" }
