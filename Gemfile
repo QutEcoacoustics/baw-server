@@ -48,7 +48,7 @@ gem 'haml', '~> 4.0.6'
 gem 'haml-rails', '~> 0.8'
 
 gem 'simple_form', '~> 3.1.0'
-gem 'paperclip', '~> 4.2.3'
+gem 'paperclip', '~> 4.3.0'
 gem 'breadcrumbs_on_rails', '~> 2.3.0'
 # kept below version 2 due to huge breaking changes
 gem 'gmaps4rails', '< 2'
@@ -167,7 +167,7 @@ group :development, :test do
 
   gem 'notiffany', '~> 0.0.3'
   gem 'guard', '~> 2.12.1'
-  gem 'guard-rspec', '~> 4.5.0'
+  gem 'guard-rspec', '~> 4.6.0'
   gem 'guard-yard', '~> 2.1.4'
 
   gem 'fakeredis', '~> 0.5.0', require: 'fakeredis/rspec'

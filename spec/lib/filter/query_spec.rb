@@ -571,7 +571,7 @@ WHERE(\"audio_recordings\".\"deleted_at\"ISNULL) \
 AND(\"projects\".\"id\"IN( \
 SELECT\"projects\".\"id\" \
 FROM\"projects\" \
-WHERE(\"projects\".\"deleted_at\"ISNULL) \
+WHERE\"projects\".\"deleted_at\"ISNULL \
 AND\"projects\".\"creator_id\"=#{user_id})OR\"projects\".\"id\"IN( \
 SELECT\"permissions\".\"project_id\" \
 FROM\"permissions\" \
@@ -702,7 +702,7 @@ WHERE(\"audio_recordings\".\"deleted_at\"ISNULL) \
 AND(\"projects\".\"id\"IN( \
 SELECT\"projects\".\"id\" \
 FROM\"projects\" \
-WHERE(\"projects\".\"deleted_at\"ISNULL) \
+WHERE\"projects\".\"deleted_at\"ISNULL \
 AND\"projects\".\"creator_id\"=#{user_id})OR\"projects\".\"id\"IN( \
 SELECT\"permissions\".\"project_id\" \
 FROM\"permissions\" \
@@ -779,7 +779,7 @@ WHERE(\"audio_events\".\"deleted_at\"ISNULL) \
 AND((\"projects\".\"id\"IN( \
 SELECT\"projects\".\"id\" \
 FROM\"projects\" \
-WHERE(\"projects\".\"deleted_at\"ISNULL) \
+WHERE\"projects\".\"deleted_at\"ISNULL \
 AND\"projects\".\"creator_id\"=#{user_id}) \
 OR\"projects\".\"id\"IN( \
 SELECT\"permissions\".\"project_id\" \
@@ -789,7 +789,7 @@ AND\"permissions\".\"level\"IN('reader','writer','owner'))) \
 OR\"audio_events\".\"id\"IN( \
 SELECT\"audio_events\".\"id\" \
 FROM\"audio_events\" \
-WHERE(\"audio_events\".\"deleted_at\"ISNULL) \
+WHERE\"audio_events\".\"deleted_at\"ISNULL \
 AND\"audio_events\".\"is_reference\"='t')) \
 AND((\"audio_events\".\"end_time_seconds\"-\"audio_events\".\"start_time_seconds\")>3) \
 ORDERBY\"audio_events\".\"created_at\"DESC \

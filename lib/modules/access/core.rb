@@ -258,21 +258,23 @@ module Access
 
             # see http://jpospisil.com/2014/06/16/the-definitive-guide-to-arel-the-sql-manager-for-ruby.html
 
-            projects_creator_fragment = Project.where(creator: user).select(:id)
-            permissions_user_fragment = Permission.where(user: user, level: levels).select(:project_id)
-            #permissions_user_fragment = Permission.where(user: user, level: levels, logged_in: false, anonymous: false).select(:project_id)
-            #permissions_logged_in_fragment = Permission.where(user: nil, level: levels, logged_in: true, anonymous: false).select(:project_id)
-            audio_event_reference_fragment = AudioEvent.where(is_reference: true).select(:id)
-
+            # build up in Arel
             pt = Project.arel_table
-            condition_pt = pt[:id].in(projects_creator_fragment.arel).or(pt[:id].in(permissions_user_fragment.arel))
+            ae = AudioEvent.arel_table
+            pm = Permission.arel_table
+
+            # need to add the 'deleted_at IS NULL' check by hand
+            projects_creator_fragment = pt.where(pt[:deleted_at].eq(nil)).where(pt[:creator_id].eq(user.id)).project(pt[:id])
+            permissions_user_fragment = pm.where(pm[:user_id].eq(user.id)).where(pm[:level].in(levels)).project(pm[:project_id])
+            condition_pt = pt[:id].in(projects_creator_fragment).or(pt[:id].in(permissions_user_fragment))
 
             # after adding logged_in and anonymous permissions.
-            # pt = Project.arel_table
+            # permissions_user_fragment = Permission.where(user: user, level: levels, logged_in: false, anonymous: false).select(:project_id)
+            # permissions_logged_in_fragment = Permission.where(user: nil, level: levels, logged_in: true, anonymous: false).select(:project_id)
             # condition_pt = pt[:id].in(permissions_logged_in_fragment.arel).or(pt[:id].in(permissions_user_fragment.arel))
 
-            ae = AudioEvent.arel_table
-            condition_ae = ae[:id].in(audio_event_reference_fragment.arel)
+            audio_event_reference_fragment = ae.where(ae[:deleted_at].eq(nil)).where(ae[:is_reference].eq(true)).project(ae[:id])
+            condition_ae = ae[:id].in(audio_event_reference_fragment)
 
             # include reference audio_events when:
             # - query is for audio_events or audio_event_comments

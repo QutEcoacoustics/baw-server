@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+ - 2015-06-27
+    - Removed taggings that were included in the tags filter [#218](https://github.com/QutBioacoustics/baw-server/issues/218)
+    - Changed access query to use Arel instead of ActiveRecord due to regression in ActiveRecord 4.2.3.
+
 ## [Release 0.15.1](https://github.com/QutBioacoustics/baw-server/releases/tag/0.15.1) (2015-06-16)
 
  - 2015-06-15
