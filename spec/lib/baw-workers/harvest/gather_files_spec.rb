@@ -3,9 +3,9 @@ require 'spec_helper'
 describe BawWorkers::Harvest::GatherFiles do
   include_context 'shared_test_helpers'
 
-  let(:config_file_name) { BawWorkers::Settings.actions.harvest.config_file_name}
+  let(:config_file_name) { BawWorkers::Settings.actions.harvest.config_file_name }
 
-  let(:file_info) {BawWorkers::Config.file_info}
+  let(:file_info) { BawWorkers::Config.file_info }
 
   let(:gather_files) {
     BawWorkers::Harvest::GatherFiles.new(
@@ -19,8 +19,8 @@ describe BawWorkers::Harvest::GatherFiles do
   let(:example_audio) { audio_file_mono }
 
 
-  let(:folder_example){ File.expand_path File.join(File.dirname(__FILE__), 'folder_example.yml')}
- 
+  let(:folder_example) { File.expand_path File.join(File.dirname(__FILE__), 'folder_example.yml') }
+
   context 'parse file name' do
 
 =begin
@@ -64,7 +64,6 @@ describe BawWorkers::Harvest::GatherFiles do
     p1_s1_u1_d20140301_t000000Z.ext
     p745_s2745_u951108_d20140228_t235959Z.ext
 =end
-
 
 
     it 'should error if the file does not exist' do
@@ -241,6 +240,18 @@ describe BawWorkers::Harvest::GatherFiles do
       expect(gather_files.run(harvest_to_do_path)).to be_empty
     end
 
+    it 'should error on read-only directories' do
+      sub_folder = File.join(harvest_to_do_path, 'one')
+      three = File.join(sub_folder, 'two', 'three')
+      four = File.join(sub_folder, 'two', 'four')
+      FileUtils.mkpath(three)
+      FileUtils.mkpath(four, mode: 0400)
+      expect {
+        gather_files.run(harvest_to_do_path)
+      }.to raise_error(ArgumentError, /Found read-only directory /)
+      FileUtils.rm_rf(sub_folder, secure: true)
+    end
+
     it 'should skip log files' do
       sub_folder = File.join(harvest_to_do_path, 'one')
       FileUtils.mkpath(sub_folder)
@@ -258,7 +269,6 @@ describe BawWorkers::Harvest::GatherFiles do
 
     it 'should include other files' do
       sub_folder = File.join(harvest_to_do_path, 'one')
-      sub_folder2 = File.join(sub_folder, 'two')
       FileUtils.mkpath(sub_folder)
       FileUtils.cp(folder_example, File.join(sub_folder, 'harvest.yml'))
       FileUtils.touch(File.join(sub_folder, 'amazing_thingo.log'))
@@ -299,6 +309,48 @@ describe BawWorkers::Harvest::GatherFiles do
       expect(results[:summary].size).to eq(1)
       expect(results[:summary]['one']).to include('project_id')
     end
+
+    it 'should error on read-only directory' do
+      sub_folder = File.join(harvest_to_do_path, 'one')
+      FileUtils.mkpath(sub_folder)
+      FileUtils.cp(folder_example, File.join(sub_folder, 'harvest.yml'))
+      FileUtils.touch(File.join(sub_folder, 'amazing_thingo.log'))
+      FileUtils.mkpath(File.join(sub_folder, 'read_only'), mode: 0400)
+
+      FileUtils.touch(File.join(sub_folder, 'a file.txt'))
+      FileUtils.cp(audio_file_mono, File.join(sub_folder, 'some sound.mp3'))
+      FileUtils.cp(audio_file_mono, File.join(sub_folder, 'around your head.flac'))
+      FileUtils.cp(audio_file_mono, File.join(sub_folder, 'around your head.wav'))
+      FileUtils.cp(audio_file_mono, File.join(sub_folder, 'around your head.ogg'))
+      FileUtils.cp(audio_file_mono, File.join(sub_folder, 'around your head.webm'))
+      FileUtils.cp(audio_file_mono, File.join(sub_folder, 'around your head.asf'))
+
+      FileUtils.cp(audio_file_mono, File.join(sub_folder, 'p1_s2_u3_d20140101_t235959Z.mp3'))
+      FileUtils.cp(audio_file_mono, File.join(sub_folder, 'p000_s00000_u00000_d00000000_t000000Z.0'))
+      FileUtils.cp(audio_file_mono, File.join(sub_folder, 'p9999_s9_u9999999_d99999999_t999999Z.ogg'))
+
+      FileUtils.cp(audio_file_mono, File.join(sub_folder, 'prefix_20140101_235959.mp3'))
+      FileUtils.cp(audio_file_mono, File.join(sub_folder, 'a_00000000_000000.a'))
+      FileUtils.cp(audio_file_mono, File.join(sub_folder, 'a_99999999_999999.dnsb48364JSFDSD'))
+
+      FileUtils.cp(audio_file_mono, File.join(sub_folder, 'prefix_20140101_235959+10.mp3'))
+      FileUtils.cp(audio_file_mono, File.join(sub_folder, 'a_00000000_000000+00.a'))
+      FileUtils.cp(audio_file_mono, File.join(sub_folder, 'a_99999999_999999+9999.dnsb48364JSFDSD'))
+
+      FileUtils.cp(audio_file_mono, File.join(sub_folder, 'SERF_20130314_000021_000.wav'))
+      FileUtils.cp(audio_file_mono, File.join(sub_folder, 'a_20130314_000021_a.a'))
+      FileUtils.cp(audio_file_mono, File.join(sub_folder, 'a_99999999_999999_a.dnsb48364JSFDSD'))
+
+      expect {
+        BawWorkers::Harvest::Action.action_gather_and_process(harvest_to_do_path, true) do |file_hash|
+          expect(file_hash).to include(:uploader_id)
+          expect(file_hash).to include(:data_length_bytes)
+        end
+      }.to raise_error(ArgumentError, /Found read-only directory /)
+
+      FileUtils.rm_rf(sub_folder, secure: true)
+    end
+
   end
 
 end

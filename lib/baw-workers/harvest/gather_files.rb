@@ -84,6 +84,15 @@ module BawWorkers
 
         path = File.expand_path(path)
 
+        is_writable = File.writable?(path)
+        is_writable_real = File.writable_real?(path)
+
+        if !is_writable || !is_writable_real
+          msg = "Found read-only directory '#{path}'."
+          @logger.error(@class_name) { msg }
+          fail ArgumentError, msg
+        end
+
         files_in_dir = files_in_directory(path)
 
         dir_settings = get_folder_settings(File.join(path, @config_file_name))
