@@ -7,9 +7,10 @@ describe BawWorkers::Analysis::Action do
 
   let(:analysis_params) {
     {
-        command_format: '%{executable_program} "analysis_type -source %{source_file} -config %{config_file} -output %{output_dir} -tempdir %{temp_dir}"',
-        config_file: 'blah',
-        executable_program: 'echo',
+        command_format: '%{file_executable} "analysis_type -source %{source_file} -config %{config_file} -output %{output_dir} -tempdir %{temp_dir}"',
+        config: 'blah',
+        file_executable: 'echo',
+        copy_paths: [],
 
         uuid: 'f7229504-76c5-4f88-90fc-b7c3f5a8732e',
         id: 123456,
@@ -38,14 +39,16 @@ describe BawWorkers::Analysis::Action do
                 "analysis_params"=>
                     {
                         "command_format"=>
-                            "%{executable_program} \"analysis_type -source %{source_file} -config %{config_file} -output %{output_dir} -tempdir %{temp_dir}\"",
+                            "%{file_executable} \"analysis_type -source %{source_file} -config %{config_file} -output %{output_dir} -tempdir %{temp_dir}\"",
                         "uuid"=>"f7229504-76c5-4f88-90fc-b7c3f5a8732e",
                         "job_id"=>20,
                         "sub_folders"=>['hello', 'here_i_am'],
                         "datetime_with_offset"=>"2014-11-18T16:05:00Z",
                         "original_format"=>"wav",
-                        "config_file"=>"blah", "id"=>123456,
-                        "executable_program"=>"echo"
+                        "config"=>"blah",
+                        "id"=>123456,
+                        "file_executable"=>"echo",
+                        "copy_paths"=>[]
                     }
             }
         ]

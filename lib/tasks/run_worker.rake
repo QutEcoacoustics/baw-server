@@ -78,7 +78,7 @@ namespace :baw do
       desc 'Enqueue audio recording file checks from a csv file to be processed using Resque worker'
       task :from_csv, [:settings_file, :csv_file, :real_run] do |t, args|
         args.with_defaults(real_run: 'dry_run')
-        is_real_run = BawWorkers::Validation.check_real_run(args.real_run)
+        is_real_run = BawWorkers::Validation.is_real_run?(args.real_run)
         BawWorkers::Config.run(settings_file: args.settings_file, redis: true, resque_worker: false)
         BawWorkers::AudioCheck::Action.action_enqueue_rake(args.csv_file, is_real_run)
       end
@@ -87,7 +87,7 @@ namespace :baw do
       desc 'Directly run audio recording file checks from a csv file'
       task :from_csv, [:settings_file, :csv_file, :real_run] do |t, args|
         args.with_defaults(real_run: 'dry_run')
-        is_real_run = BawWorkers::Validation.check_real_run(args.real_run)
+        is_real_run = BawWorkers::Validation.is_real_run?(args.real_run)
         BawWorkers::Config.run(settings_file: args.settings_file, redis: false, resque_worker: false)
         BawWorkers::AudioCheck::Action.action_perform_rake(args.csv_file, is_real_run)
       end
@@ -111,8 +111,8 @@ namespace :baw do
       desc 'Enqueue files to harvest using Resque'
       task :from_files, [:settings_file, :harvest_dir, :real_run, :copy_on_success] do |t, args|
         args.with_defaults(real_run: 'dry_run')
-        is_real_run = BawWorkers::Validation.check_real_run(args.real_run)
-        copy_on_success = BawWorkers::Validation.check_copy_on_success(args.copy_on_success)
+        is_real_run = BawWorkers::Validation.is_real_run?(args.real_run)
+        copy_on_success = BawWorkers::Validation.should_copy_on_success?(args.copy_on_success)
         BawWorkers::Config.run(settings_file: args.settings_file, redis: true, resque_worker: false)
         BawWorkers::Harvest::Action.action_enqueue_rake(args.harvest_dir, is_real_run, copy_on_success)
       end
@@ -121,8 +121,8 @@ namespace :baw do
       desc 'Directly harvest audio files'
       task :from_files, [:settings_file, :harvest_dir, :real_run, :copy_on_success] do |t, args|
         args.with_defaults(real_run: 'dry_run')
-        is_real_run = BawWorkers::Validation.check_real_run(args.real_run)
-        copy_on_success = BawWorkers::Validation.check_copy_on_success(args.copy_on_success)
+        is_real_run = BawWorkers::Validation.is_real_run?(args.real_run)
+        copy_on_success = BawWorkers::Validation.should_copy_on_success?(args.copy_on_success)
         BawWorkers::Config.run(settings_file: args.settings_file, redis: false, resque_worker: false)
         BawWorkers::Harvest::Action.action_perform_rake(args.harvest_dir, is_real_run, copy_on_success)
       end

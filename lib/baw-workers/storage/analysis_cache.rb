@@ -26,7 +26,7 @@ module BawWorkers
       def file_name(opts = {})
         validate_file_name(opts)
 
-        validate_get_clean_path(opts[:file_name])
+        BawWorkers::Validation.normalise_path(opts[:file_name], nil)
       end
 
       # Get file names
@@ -52,7 +52,8 @@ module BawWorkers
         sub_folder = File.join(*opts[:sub_folders])
 
         partial_path = File.join(job_id, guid_chars, guid, sub_folder)
-        validate_get_clean_path(partial_path)
+
+        BawWorkers::Validation.normalise_path(partial_path, nil)
       end
 
       # Extract information from a file name.
@@ -69,7 +70,7 @@ module BawWorkers
         relative_path = file_path.sub(base_dirs_matched.first, '')
 
         # clean file_path so it is more likely to match
-        relative_path_clean = validate_get_clean_path(relative_path)
+        relative_path_clean =  BawWorkers::Validation.normalise_path(relative_path, nil)
 
         # extract parts of path
         path_parts = Pathname(relative_path_clean).each_filename.to_a

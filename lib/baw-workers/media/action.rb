@@ -84,7 +84,7 @@ module BawWorkers
         def make_media_request(media_type, media_request_params)
           media_type_sym, params_sym = action_validate(media_type, media_request_params)
 
-          params_sym[:datetime_with_offset] = BawWorkers::Validation.check_datetime(params_sym[:datetime_with_offset])
+          params_sym[:datetime_with_offset] = BawWorkers::Validation.normalise_datetime(params_sym[:datetime_with_offset])
 
           target_existing_paths = []
           case media_type_sym
@@ -93,7 +93,7 @@ module BawWorkers
             when :spectrogram
               target_existing_paths = action_helper.generate_spectrogram(params_sym)
             else
-              BawWorkers::Validation.validate_contains(media_type_sym, valid_media_types)
+              BawWorkers::Validation.check_hash_contains(media_type_sym, valid_media_types)
           end
 
           BawWorkers::Config.logger_worker.info(self.name) {
@@ -104,10 +104,10 @@ module BawWorkers
         end
 
         def action_validate(media_type, media_request_params)
-          BawWorkers::Validation.validate_hash(media_request_params)
+          BawWorkers::Validation.check_hash(media_request_params)
           media_type_sym = media_type.to_sym
           params_sym = BawWorkers::Validation.deep_symbolize_keys(media_request_params)
-          BawWorkers::Validation.validate_contains(media_type_sym, valid_media_types)
+          BawWorkers::Validation.check_hash_contains(media_type_sym, valid_media_types)
           [media_type_sym, params_sym]
         end
 

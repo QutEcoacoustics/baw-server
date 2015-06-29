@@ -9,6 +9,8 @@ module BawWorkers
                     :logger_audio_tools,
                     :mailer,
                     :temp_dir,
+                    :worker_top_dir,
+                    :programs_dir,
                     :spectrogram_helper,
                     :audio_helper,
                     :original_audio_helper,
@@ -48,6 +50,8 @@ module BawWorkers
 
         # configure basic attributes first
         BawWorkers::Config.temp_dir = File.expand_path(BawWorkers::Settings.paths.temp_dir)
+        BawWorkers::Config.worker_top_dir = File.dirname(settings_file)
+        BawWorkers::Config.programs_dir = File.join(BawWorkers::Config.worker_top_dir, 'programs')
 
         BawWorkers::Config.original_audio_helper = BawWorkers::Storage::AudioOriginal.new(BawWorkers::Settings.paths.original_audios)
         BawWorkers::Config.audio_cache_helper = BawWorkers::Storage::AudioCache.new(BawWorkers::Settings.paths.cached_audios)
@@ -60,7 +64,7 @@ module BawWorkers
         BawWorkers::Config.logger_mailer = MultiLogger.new
         BawWorkers::Config.logger_audio_tools = MultiLogger.new
 
-        # always log to dedicate log files
+        # always log to dedicated log files
         worker_open = File.open(BawWorkers::Settings.paths.worker_log_file, 'a+')
         worker_open.sync = true
         BawWorkers::Config.logger_worker.attach(Logger.new(worker_open))

@@ -270,7 +270,7 @@ module BawWorkers
                  :bit_rate_bps, :media_type, :data_length_bytes,
                  :file_hash, :original_format]
 
-        BawWorkers::Validation.validate_hash(audio_params)
+        BawWorkers::Validation.check_hash(audio_params)
         audio_params_sym = BawWorkers::Validation.deep_symbolize_keys(audio_params)
 
         props.each do |prop|

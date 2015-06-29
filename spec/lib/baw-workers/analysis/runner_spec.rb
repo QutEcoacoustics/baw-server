@@ -1,15 +1,15 @@
 require 'spec_helper'
 
-describe BawWorkers::Analysis::WorkHelper do
+describe BawWorkers::Analysis::Runner do
   include_context 'shared_test_helpers'
 
-  let(:work_helper) {
-
-    BawWorkers::Analysis::WorkHelper.new(
+  let(:runner) {
+    BawWorkers::Analysis::Runner.new(
         audio_original,
         analysis_cache,
         BawWorkers::Config.logger_worker,
-        custom_temp
+        BawWorkers::Config.worker_top_dir,
+        BawWorkers::Config.programs_dir
     )
   }
 
@@ -17,15 +17,16 @@ describe BawWorkers::Analysis::WorkHelper do
     FileUtils.rm_rf(BawWorkers::Settings.paths.cached_analysis_jobs)
   end
 
-  it 'has no parameters' do
-    expect { work_helper.run }.to raise_error(ArgumentError, /Hash must not be blank\./)
+  it 'prepare has no parameters' do
+    expect { runner.prepare }.to raise_error(ArgumentError, /Hash must not be blank\./)
   end
 
   it 'has parameters' do
     analysis_params = {
-        command_format: '%{executable_program} "analysis_type -source %{source_file} -config %{config_file} -output %{output_dir} -tempdir %{temp_dir}"',
-        config_file: 'blah',
-        executable_program: 'echo',
+        command_format: '%{file_executable} "analysis_type -source %{source_file} -config %{config_file} -output %{output_dir} -tempdir %{temp_dir}"',
+        config: 'blah',
+        file_executable: 'echo',
+        copy_paths: [],
 
         uuid: 'f7229504-76c5-4f88-90fc-b7c3f5a8732e',
         id: 123456,
@@ -48,7 +49,8 @@ describe BawWorkers::Analysis::WorkHelper do
 
     FileUtils.cp('/bin/echo', File.join(BawWorkers::Settings.paths.working_dir,'echo'))
 
-    result = work_helper.run(analysis_params)
+    prepared_opts = runner.prepare(analysis_params)
+    result = runner.execute(prepared_opts, analysis_params)
 
     expected_1 = '/baw-workers/tmp/custom_temp_dir/working/echo \"analysis_type -source '
     expected_2 = '/baw-workers/tmp/custom_temp_dir/_original_audio/f7/f7229504-76c5-4f88-90fc-b7c3f5a8732e_20141118-160500Z.wav -config '

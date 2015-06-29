@@ -38,6 +38,14 @@ module BawWorkers
         @storage_paths.map { |path| File.join(path, partial_path(opts), file_name) }
       end
 
+      # Get all possible full directory paths.
+      # @param [Hash] opts
+      # @return [Array<String>]
+      def possible_paths_dir(opts = {})
+        # partial_path is implemented in each store.
+        @storage_paths.map { |path| File.join(path, partial_path(opts)) }
+      end
+
       # Get all existing full paths for an audio recording.
       # @param [Hash] opts
       # @return [Array<String>]
@@ -71,36 +79,6 @@ module BawWorkers
         "Provided parameters: #{opts}"
       end
 
-      def validate_uuid_regex
-        /\A[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\Z/i
-      end
-
-      def validate_get_clean_path(path)
-
-        # replace ~ and .. first
-        safer_path = path.gsub('~', '_')
-        safer_path = safer_path.gsub('..', '_')
-        safer_path = safer_path.gsub('/./', '/_/')
-        safer_path = safer_path.gsub('\\.\\', '\\_\\')
-        safer_path = safer_path.gsub(/\.\z/, '_')
-
-        # expands to absolute path (also expands ~) (expands using root folder as base path)
-        expanded = File.expand_path(safer_path, '/')
-        # ensures . and .. are expanded
-        cleaned = Pathname.new(expanded).cleanpath
-
-        # replace all invalid chars with an underscore. Don't collapse as double underscore has special meaning.
-        invalid_chars = /[^0-9a-z\-\.]/i
-
-        path_components = []
-        Pathname(cleaned).each_filename do |path_component|
-          cleaned_component = path_component.gsub(invalid_chars, '_')
-          path_components.push(cleaned_component)
-        end
-
-        File.join(*path_components)
-      end
-
       # original
 
       def validate_uuid(opts = {})
@@ -108,7 +86,7 @@ module BawWorkers
         fail ArgumentError, "#{validate_msg_base} uuid. #{provided}" unless opts.include? :uuid
         fail ArgumentError, "uuid must not be blank. #{provided}" if opts[:uuid].blank?
 
-        fail ArgumentError, "uuid must be in hexidecimal format xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx. #{provided}" unless opts[:uuid] =~ validate_uuid_regex
+        fail ArgumentError, "uuid must be in hexidecimal format xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx. #{provided}" unless BawWorkers::Validation.is_uuid?(opts[:uuid])
       end
 
       def validate_datetime(opts = {})
