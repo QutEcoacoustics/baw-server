@@ -628,11 +628,7 @@ resource 'AudioEvents' do
 
   post '/audio_events/filter' do
     let(:authentication_token) { reader_token }
-    let(:raw_post) { {
-        "filter":{"start_time_seconds":{"in":['5.2', '7', '100', '4']}},
-        "paging":{"items":10,"page":1},
-        "sorting":{"orderBy":"durationSeconds","direction":"desc"}
-    }.to_json }
+    let(:raw_post) { '{"filter":{"start_time_seconds":{"in":["5.2", "7", "100", "4"]}},"paging":{"items":10,"page":1},"sorting":{"orderBy":"durationSeconds","direction":"desc"}}' }
     standard_request_options(:post, 'FILTER (sort by custom field, as reader)', :ok,
                              {
                                  expected_json_path: 'meta/sorting/order_by',
