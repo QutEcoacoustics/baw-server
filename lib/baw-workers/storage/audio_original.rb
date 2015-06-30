@@ -21,7 +21,7 @@ module BawWorkers
       # @deprecated
       # @param [Hash] opts
       # @return [string] file name
-      def file_name_10(opts = {})
+      def file_name_10(opts)
         validate_uuid(opts)
         validate_datetime(opts)
         validate_original_format(opts)
@@ -36,7 +36,7 @@ module BawWorkers
       # Create a file name. This filename is always explicitly in UTC.
       # @param [Hash] opts
       # @return [string] file name
-      def file_name_utc(opts = {})
+      def file_name_utc(opts)
         validate_uuid(opts)
         validate_datetime(opts)
         validate_original_format(opts)
@@ -51,14 +51,14 @@ module BawWorkers
       # Get file names.
       # @param [Hash] opts
       # @return [Array<String>]
-      def file_names(opts = {})
+      def file_names(opts)
         [file_name_10(opts), file_name_utc(opts)]
       end
 
       # Construct the partial path to an original audio file.
       # @param [Hash] opts
       # @return [String] partial path to original audio file.
-      def partial_path(opts = {})
+      def partial_path(opts)
         validate_uuid(opts)
 
         opts[:uuid][0, 2].downcase

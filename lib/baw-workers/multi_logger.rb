@@ -210,8 +210,8 @@ module BawWorkers
     class CustomFormatter < Logger::Formatter
 
       def call(severity, time, progname, msg)
-        sev = '%5s' % severity
-        pid = '%06d' % $$
+        sev = sprintf('%5s', severity)
+        pid = sprintf('%06d', $$)
         # e.g. 2014-04-07T09:49:13.290+0000 [ WARN--024611] <msg>
         # msg2str is the internal helper that handles strings and exceptions correctly
         "#{format_datetime(time)}#{time.strftime('%z')} [#{sev}-#{progname}-#{pid}] #{msg2str(msg)}\n"
@@ -222,7 +222,7 @@ module BawWorkers
       def format_datetime(time)
         if @datetime_format.nil?
           #time.strftime("%Y-%m-%dT%H:%M:%S.") << "%06d " % time.usec
-          time.strftime('%Y-%m-%dT%H:%M:%S.') << '%03d' % time.usec.to_s[0..2].rjust(3)
+          time.strftime('%Y-%m-%dT%H:%M:%S.') << sprintf('%03d', time.usec.to_s[0..2].rjust(3))
         else
           time.strftime(@datetime_format)
         end

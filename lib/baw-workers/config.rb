@@ -27,7 +27,7 @@ module BawWorkers
       # @option opts [Boolean] :redis (false) is redis needed?
       # @option opts [Boolean] :resque_worker (false) are we running in the context of a Resque worker?
       # @return [Hash] configuration result
-      def run(opts = {})
+      def run(opts)
         if !opts.include?(:settings_file) || opts[:settings_file].blank?
           opts[:settings_file] = File.join(File.dirname(__FILE__), '..', 'settings', 'settings.default.yml')
         end

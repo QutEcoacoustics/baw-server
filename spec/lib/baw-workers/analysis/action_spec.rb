@@ -7,7 +7,7 @@ describe BawWorkers::Analysis::Action do
 
   let(:analysis_params) {
     {
-        command_format: '%{file_executable} "analysis_type -source %{file_source} -config %{file_config} -output %{dir_output} -tempdir %{dir_temp}"',
+        command_format: '<{file_executable}> "analysis_type -source <{file_source}> -config <{file_config}> -output <{dir_output}> -tempdir <{dir_temp}>"',
         config: 'blah',
         file_executable: 'echo',
         copy_paths: [],
@@ -39,7 +39,7 @@ describe BawWorkers::Analysis::Action do
                 "analysis_params"=>
                     {
                         "command_format"=>
-                            "%{file_executable} \"analysis_type -source %{file_source} -config %{file_config} -output %{dir_output} -tempdir %{dir_temp}\"",
+                            "<{file_executable}> \"analysis_type -source <{file_source}> -config <{file_config}> -output <{dir_output}> -tempdir <{dir_temp}>\"",
                         "uuid"=>"f7229504-76c5-4f88-90fc-b7c3f5a8732e",
                         "job_id"=>20,
                         "sub_folders"=>['hello', 'here_i_am'],
@@ -152,11 +152,12 @@ describe BawWorkers::Analysis::Action do
 
     result = BawWorkers::Analysis::Action.action_perform(analysis_params)
 
-    expected_1 = '/baw-workers/tmp/custom_temp_dir/working/echo \"analysis_type -source '
+    expected_1 = 'z/programs/echo \"analysis_type -source '
     expected_2 = '/baw-workers/tmp/custom_temp_dir/_original_audio/f7/f7229504-76c5-4f88-90fc-b7c3f5a8732e_20141118-160500Z.wav -config '
-    expected_3 = '/baw-workers/tmp/custom_temp_dir/working/blah -output '
-    expected_4 = '/baw-workers/tmp/custom_temp_dir/_cached_analysis_jobs/20/f7/f7229504-76c5-4f88-90fc-b7c3f5a8732e/hello/here_i_am -tempdir '
-    expected_5 = '/baw-workers/tmp/custom_temp_dir/temp/f7229504-76c5-4_'
+    expected_3 = 'z/run.config -output '
+    expected_4 = '/tmp/custom_temp_dir/_cached_analysis_jobs/20/f7/f7229504-76c5-4f88-90fc-b7c3f5a8732e -tempdir '
+    expected_5 = 'z/temp'
+    expected_6 = '/runs/20_123456_'
 
     result_string = result.to_s
     expect(result_string).to include(expected_1)
@@ -164,6 +165,7 @@ describe BawWorkers::Analysis::Action do
     expect(result_string).to include(expected_3)
     expect(result_string).to include(expected_4)
     expect(result_string).to include(expected_5)
+    expect(result_string).to include(expected_6)
   end
 
 end

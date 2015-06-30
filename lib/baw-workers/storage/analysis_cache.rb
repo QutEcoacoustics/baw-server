@@ -23,7 +23,7 @@ module BawWorkers
       # Get the file name
       # @param [Hash] opts
       # @return [String] file name for stored file
-      def file_name(opts = {})
+      def file_name(opts)
         validate_file_name(opts)
 
         BawWorkers::Validation.normalise_path(opts[:file_name], nil)
@@ -32,14 +32,14 @@ module BawWorkers
       # Get file names
       # @param [Hash] opts
       # @return [Array<String>]
-      def file_names(opts = {})
+      def file_names(opts)
         [file_name(opts)]
       end
 
       # Construct the partial path to an analysis result file.
       # @param [Hash] opts
       # @return [String] partial path to analysis result file.
-      def partial_path(opts = {})
+      def partial_path(opts)
         validate_job_id(opts)
         validate_uuid(opts)
         validate_sub_folders(opts)

@@ -24,7 +24,7 @@ module BawWorkers
       # Get all possible full paths for an audio recording.
       # @param [Hash] opts
       # @return [Array<String>]
-      def possible_paths(opts = {})
+      def possible_paths(opts)
         # file_names is implemented in each store.
         file_names(opts).map { |file_name| possible_paths_file(opts, file_name) }.flatten
       end
@@ -41,7 +41,7 @@ module BawWorkers
       # Get all possible full directory paths.
       # @param [Hash] opts
       # @return [Array<String>]
-      def possible_paths_dir(opts = {})
+      def possible_paths_dir(opts)
         # partial_path is implemented in each store.
         @storage_paths.map { |path| File.join(path, partial_path(opts)) }
       end
@@ -49,14 +49,14 @@ module BawWorkers
       # Get all existing full paths for an audio recording.
       # @param [Hash] opts
       # @return [Array<String>]
-      def existing_paths(opts = {})
+      def existing_paths(opts)
         possible_paths(opts).select { |file| File.exists? file }
       end
 
       # Get file name, possible paths, existing paths.
       # @param [Hash] opts
       # @return [Hash]
-      def path_info(opts = {})
+      def path_info(opts)
         # file_names is implemented in each store.
         {
             file_names: file_names(opts),
@@ -75,13 +75,13 @@ module BawWorkers
         'must be equal to or greater than'
       end
 
-      def validate_msg_provided(opts = {})
+      def validate_msg_provided(opts)
         "Provided parameters: #{opts}"
       end
 
       # original
 
-      def validate_uuid(opts = {})
+      def validate_uuid(opts)
         provided = validate_msg_provided(opts)
         fail ArgumentError, "#{validate_msg_base} uuid. #{provided}" unless opts.include? :uuid
         fail ArgumentError, "uuid must not be blank. #{provided}" if opts[:uuid].blank?
@@ -89,14 +89,14 @@ module BawWorkers
         fail ArgumentError, "uuid must be in hexidecimal format xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx. #{provided}" unless BawWorkers::Validation.is_uuid?(opts[:uuid])
       end
 
-      def validate_datetime(opts = {})
+      def validate_datetime(opts)
         provided = validate_msg_provided(opts)
         fail ArgumentError, "#{validate_msg_base} datetime_with_offset. #{provided}" unless opts.include? :datetime_with_offset
         fail ArgumentError, "datetime_with_offset must not be blank. #{provided}" if opts[:datetime_with_offset].blank?
         fail ArgumentError, "datetime_with_offset must be an ActiveSupport::TimeWithZone object. #{provided}" unless opts[:datetime_with_offset].is_a?(ActiveSupport::TimeWithZone)
       end
 
-      def validate_original_format(opts = {})
+      def validate_original_format(opts)
         provided = validate_msg_provided(opts)
         fail ArgumentError, "#{validate_msg_base} original_format. #{provided}" unless opts.include? :original_format
         fail ArgumentError, "original_format must not be blank. #{provided}" if opts[:original_format].blank?
@@ -104,13 +104,13 @@ module BawWorkers
 
       # audio cache
 
-      def validate_start_offset(opts = {})
+      def validate_start_offset(opts)
         provided = validate_msg_provided(opts)
         fail ArgumentError, "#{validate_msg_base} start_offset. #{provided}" unless opts.include? :start_offset
         fail ArgumentError, "start_offset #{validate_msg_eq_or_gt} 0: #{opts[:end_offset]}. #{provided}" unless opts[:start_offset].to_f >= 0.0
       end
 
-      def validate_end_offset(opts = {})
+      def validate_end_offset(opts)
         provided = validate_msg_provided(opts)
         fail ArgumentError, "#{validate_msg_base} end_offset. #{provided}" unless opts.include? :end_offset
 
@@ -119,14 +119,14 @@ module BawWorkers
         end
       end
 
-      def validate_channel(opts = {})
+      def validate_channel(opts)
         provided = validate_msg_provided(opts)
         fail ArgumentError, "#{validate_msg_base} channel. #{provided}" unless opts.include? :channel
         fail ArgumentError, "channel #{validate_msg_eq_or_gt} 0: #{opts[:channel]}. #{provided}" unless opts[:channel].to_i >= 0
         fail ArgumentError, "channel must be an integer: #{opts[:channel]}. #{provided}" unless opts[:channel].to_i.to_s == opts[:channel].to_s
       end
 
-      def validate_sample_rate(opts = {})
+      def validate_sample_rate(opts)
         provided = validate_msg_provided(opts)
         fail ArgumentError, "#{validate_msg_base} sample_rate. #{provided}" unless opts.include? :sample_rate
 
@@ -135,7 +135,7 @@ module BawWorkers
         end
       end
 
-      def validate_format(opts = {})
+      def validate_format(opts)
         provided = validate_msg_provided(opts)
         fail ArgumentError, "#{validate_msg_base} format. #{provided}" unless opts.include? :format
         fail ArgumentError, "format must not be blank. #{provided}" if opts[:format].blank?
@@ -143,7 +143,7 @@ module BawWorkers
 
       # spectrogram cache
 
-      def validate_window(opts = {})
+      def validate_window(opts)
         provided = validate_msg_provided(opts)
         fail ArgumentError, "#{validate_msg_base} window. #{provided}" unless opts.include? :window
 
@@ -152,7 +152,7 @@ module BawWorkers
         end
       end
 
-      def validate_colour(opts = {})
+      def validate_colour(opts)
         provided = validate_msg_provided(opts)
         fail ArgumentError, "#{validate_msg_base} colour. #{provided}" unless opts.include? :colour
 
@@ -161,7 +161,7 @@ module BawWorkers
         end
       end
 
-      def validate_window_function(opts = {})
+      def validate_window_function(opts)
         provided = validate_msg_provided(opts)
         fail ArgumentError, "#{validate_msg_base} window function. #{provided}" unless opts.include? :window_function
 
@@ -172,7 +172,7 @@ module BawWorkers
 
       # analysis cache
 
-      def validate_job_id(opts = {})
+      def validate_job_id(opts)
         provided = validate_msg_provided(opts)
         fail ArgumentError, "#{validate_msg_base} job_id. #{provided}" unless opts.include? :job_id
         fail ArgumentError, "job_id must not be blank. #{provided}" if opts[:job_id].blank?
@@ -185,13 +185,13 @@ module BawWorkers
 
       end
 
-      def validate_file_name(opts = {})
+      def validate_file_name(opts)
         provided = validate_msg_provided(opts)
         fail ArgumentError, "#{validate_msg_base} file_name. #{provided}" unless opts.include? :file_name
         fail ArgumentError, "file_name must not be blank. #{provided}" if opts[:file_name].blank?
       end
 
-      def validate_sub_folders(opts = {})
+      def validate_sub_folders(opts)
         provided = validate_msg_provided(opts)
         fail ArgumentError, "#{validate_msg_base} sub_folders. #{provided}" unless opts.include? :sub_folders
         fail ArgumentError, "sub_folders must not be nil. #{provided}" if opts[:sub_folders].nil?
@@ -200,13 +200,13 @@ module BawWorkers
 
       # data set cache
 
-      def validate_saved_search_id(opts = {})
+      def validate_saved_search_id(opts)
         provided = validate_msg_provided(opts)
         fail ArgumentError, "#{validate_msg_base} saved_search_id. #{provided}" unless opts.include? :saved_search_id
         fail ArgumentError, "saved_search_id must be greater than 0: #{opts[:saved_search_id]}. #{provided}" unless opts[:saved_search_id].to_i > 0
       end
 
-      def validate_dataset_id(opts = {})
+      def validate_dataset_id(opts)
         provided = validate_msg_provided(opts)
         fail ArgumentError, "#{validate_msg_base} dataset_id. #{provided}" unless opts.include? :dataset_id
         fail ArgumentError, "dataset_id must be greater than 0: #{opts[:dataset_id]}. #{provided}" unless opts[:dataset_id].to_i > 0

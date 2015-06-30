@@ -126,7 +126,7 @@ module BawWorkers
       # @option raw_opts [ActiveSupport::TimeWithZone, String] :datetime_with_offset (nil) audio_recording recorded date
       # @option raw_opts [String] :original_format (nil) audio_recording original_format
       # @return [Hash] analysis task payload
-      def build(raw_opts = {})
+      def build(raw_opts)
 
         # normalise config
         raw_opts[:config] = get_config(raw_opts)
@@ -138,7 +138,7 @@ module BawWorkers
         opts[:recorded_date] = get_recorded_date(opts)
 
         # validate command placeholders
-        check_command_format(opts)
+        BawWorkers::Analysis::Runner.check_command_format(opts)
 
         # return the analysis payload
         {
@@ -158,7 +158,7 @@ module BawWorkers
       # Get the recorded date as a ActiveSupport::TimeWithZone.
       # @param [Hash] opts
       # @return [ActiveSupport::TimeWithZone] recording start datetime
-      def get_recorded_date(opts = {})
+      def get_recorded_date(opts)
         begin
           parsed = BawWorkers::Validation.normalise_datetime(opts[:datetime_with_offset])
         rescue => e
@@ -172,7 +172,7 @@ module BawWorkers
       # Get the config string.
       # @param [Hash] raw_opts
       # @return [String] config/settings for executable
-      def get_config(raw_opts = {})
+      def get_config(raw_opts)
         fail ArgumentError, 'Must provide only one of config_file or config_string.' if raw_opts[:config_file] && raw_opts[:config_string]
         fail ArgumentError, 'Must provide one of config_file or config_string.' if !raw_opts[:config_file] && !raw_opts[:config_string]
 
@@ -184,27 +184,10 @@ module BawWorkers
         fail ArgumentError, msg
       end
 
-      # Ensure command format has required placeholders
-      # @param [Hash] opts
-      # @return [void]
-      def self.check_command_format(opts = {})
-        command_format = opts[:command_format]
-
-        BawWorkers::Analysis::Payload::COMMAND_PLACEHOLDERS.each do |command_placeholder|
-
-          placeholder = "%{#{command_placeholder}}"
-          unless command_format.include?(placeholder)
-            all_placeholders = BawWorkers::Analysis::Payload::COMMAND_PLACEHOLDERS.join(', ')
-            fail ArgumentError, "Command #{command_format} did not contain #{placeholder}, must contain #{all_placeholders}."
-          end
-
-        end
-      end
-
       # Normalise opts so that keys are Symbols and check all required keys are present.
       # @param [Hash] opts
       # @return [Hash] normalised opts
-      def self.normalise_opts(opts = {})
+      def self.normalise_opts(opts)
         normalised_keys = BawWorkers::Validation.deep_symbolize_keys(opts)
         BawWorkers::Validation.check_custom_hash(normalised_keys, BawWorkers::Analysis::Payload::OPTS_FIELDS)
         normalised_keys

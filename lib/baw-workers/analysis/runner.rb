@@ -41,7 +41,7 @@ module BawWorkers
       # Prepare for a new run.
       # @param [Hash] opts
       # @return [Hash] settings for running worker
-      def prepare(opts = {})
+      def prepare(opts)
         BawWorkers::Validation.check_custom_hash(opts, BawWorkers::Analysis::Payload::OPTS_FIELDS)
 
         opts[:datetime_with_offset] = BawWorkers::Validation.normalise_datetime(opts[:datetime_with_offset])
@@ -65,8 +65,8 @@ module BawWorkers
 
         # format command string
         BawWorkers::Validation.check_custom_hash(command_opts, BawWorkers::Analysis::Payload::COMMAND_PLACEHOLDERS)
-        BawWorkers::Analysis::Payload.check_command_format(opts)
-        command_opts[:command] = opts[:command_format] % command_opts
+        BawWorkers::Analysis::Runner.check_command_format(opts)
+        command_opts[:command] = BawWorkers::Analysis::Runner.format_command(opts, command_opts)
 
         # include path to worker log file
         command_opts[:file_run_log] = run_info[:file_run_log]
@@ -81,7 +81,7 @@ module BawWorkers
       def execute(prepared_opts, opts)
         BawWorkers::Validation.check_custom_hash(prepared_opts, BawWorkers::Analysis::Payload::COMMAND_PLACEHOLDERS)
         BawWorkers::Validation.check_custom_hash(opts, BawWorkers::Analysis::Payload::OPTS_FIELDS)
-        BawWorkers::Analysis::Payload.check_command_format(opts)
+        BawWorkers::Analysis::Runner.check_command_format(opts)
 
         timeout_sec = 1 * 60 * 60 # 1 hour
         log_file = prepared_opts[:file_run_log]
@@ -122,13 +122,16 @@ module BawWorkers
         # copy files after command is executed
         result[:copy_results] = copy_custom(dir_run, dir_output, opts)
 
+        # include command format
+        result[:command_format] = opts[:command_format]
+
         result
       end
 
       # Create directory for a run.
       # @param [Hash] opts
       # @return [Hash] paths
-      def create_run_info(opts = {})
+      def create_run_info(opts)
         BawWorkers::Validation.check_custom_hash(opts, BawWorkers::Analysis::Payload::OPTS_FIELDS)
 
         normalise_regex = /[^a-z0-9]/i
@@ -150,7 +153,7 @@ module BawWorkers
       # Create directory for run results.
       # @param [Hash] opts
       # @return [String] output dir
-      def create_output_dir(opts = {})
+      def create_output_dir(opts)
         BawWorkers::Validation.check_custom_hash(opts, BawWorkers::Analysis::Payload::OPTS_FIELDS)
 
         analysis_store_opts = {
@@ -171,7 +174,7 @@ module BawWorkers
       # Save config to file.
       # @param [String] dir_run
       # @param [Hash] opts
-      # @return [void]
+      # @return [String] config file path
       def create_config_file(dir_run, opts = {})
         BawWorkers::Validation.check_custom_hash(opts, BawWorkers::Analysis::Payload::OPTS_FIELDS)
 
@@ -179,12 +182,14 @@ module BawWorkers
         config_file = File.join(dir_run, BawWorkers::Analysis::Runner::FILE_CONFIG)
 
         File.open(config_file, 'w') { |file| file.write(config_content) }
+
+        config_file
       end
 
       # Get absolute path to source file.
       # @param [Hash] opts
       # @return [String] source file
-      def get_file_source(opts = {})
+      def get_file_source(opts)
         BawWorkers::Validation.check_custom_hash(opts, BawWorkers::Analysis::Payload::OPTS_FIELDS)
 
         file_sources = @original_store.existing_paths(opts)
@@ -253,6 +258,65 @@ module BawWorkers
         copy_results
       end
 
+      # Ensure command format has required placeholders
+      # @param [Hash] opts
+      # @return [void]
+      def self.check_command_format(opts)
+        command_format = opts[:command_format]
+
+        # custom placeholders as don't want to accidentally allow sprintf too much power
+        # can only contain placeholders for COMMAND_PLACEHOLDERS, but does not need to contain them all.
+
+        # placeholder: <{PLACEHOLDER}>
+        # find placeholders and remove surrounding chars
+        command_placeholders = BawWorkers::Analysis::Runner.extract_command_placeholders(opts)
+        allowed_placeholders = BawWorkers::Analysis::Payload::COMMAND_PLACEHOLDERS
+
+        command_placeholders.each do |command_placeholder|
+          unless allowed_placeholders.include?(command_placeholder)
+            all_placeholders = allowed_placeholders.join(', ')
+            fail ArgumentError, "Command #{command_format} can only contain #{all_placeholders}."
+          end
+        end
+
+      end
+
+      # Format command string.
+      # @param [Hash] opts
+      # @param [Hash] command_opts
+      # @return [String] formatted command
+      def self.format_command(opts, command_opts)
+        command_format = opts[:command_format].dup
+
+        command_placeholders = BawWorkers::Analysis::Runner.extract_command_placeholders(opts)
+        allowed_placeholders = BawWorkers::Analysis::Payload::COMMAND_PLACEHOLDERS
+
+        command_placeholders.each do |command_placeholder|
+
+          if !command_opts.include?(command_placeholder) ||
+              command_opts[command_placeholder].blank?
+            fail ArgumentError, "Value not supplied for placeholder #{command_placeholder} in #{command_format}."
+          end
+
+          unless allowed_placeholders.include?(command_placeholder)
+            fail ArgumentError, "Placeholder #{command_placeholder} is not allowed in #{command_format}."
+          end
+
+          placeholder_value = command_opts[command_placeholder]
+          command_format.gsub!("<{#{command_placeholder}}>", placeholder_value)
+        end
+
+        command_format
+      end
+
+      private
+
+      def self.extract_command_placeholders(opts)
+        command_format = opts[:command_format]
+        # placeholder: <{PLACEHOLDER}>
+        # find placeholders and remove surrounding chars
+        command_format.scan(/<{.*?}>/i).map { |placeholder| placeholder[2..-3].downcase.to_sym}
+      end
 
     end
   end
