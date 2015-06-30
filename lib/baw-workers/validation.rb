@@ -122,6 +122,7 @@ module BawWorkers
 
           # ensure top level dir does not have any path traversal or anything else
           safer_top_level_dir = normalise_path(top_level_dir)
+          safer_top_level_dir = File.expand_path(safer_top_level_dir)
 
           # expands to absolute path (also expands ~)
           safer_path = File.expand_path(safer_path, safer_top_level_dir)

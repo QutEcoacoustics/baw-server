@@ -150,10 +150,6 @@ describe BawWorkers::Analysis::Action do
     FileUtils.mkpath(File.dirname(target_file))
     FileUtils.cp(audio_file_mono, target_file)
 
-    FileUtils.mkpath(BawWorkers::Settings.paths.working_dir)
-
-    FileUtils.cp('/bin/echo', File.join(BawWorkers::Settings.paths.working_dir,'echo'))
-
     result = BawWorkers::Analysis::Action.action_perform(analysis_params)
 
     expected_1 = '/baw-workers/tmp/custom_temp_dir/working/echo \"analysis_type -source '

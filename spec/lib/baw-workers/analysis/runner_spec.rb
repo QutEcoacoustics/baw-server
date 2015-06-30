@@ -23,7 +23,7 @@ describe BawWorkers::Analysis::Runner do
 
   it 'has parameters' do
     analysis_params = {
-        command_format: '%{file_executable} "analysis_type -source %{file_source} -config %{dir_output} -output %{dir_run} -tempdir %{dir_temp}"',
+        command_format: '%{file_executable} "analysis_type -source %{file_source} -config %{file_config} -output %{dir_output} -tempdir %{dir_temp}"',
         config: 'blah',
         file_executable: 'echo',
         copy_paths: [],
@@ -44,10 +44,6 @@ describe BawWorkers::Analysis::Runner do
     target_file = audio_original.possible_paths(possible_path_params)[1]
     FileUtils.mkpath(File.dirname(target_file))
     FileUtils.cp(audio_file_mono, target_file)
-
-    FileUtils.mkpath(BawWorkers::Settings.paths.working_dir)
-
-    FileUtils.cp('/bin/echo', File.join(BawWorkers::Settings.paths.working_dir,'echo'))
 
     prepared_opts = runner.prepare(analysis_params)
     result = runner.execute(prepared_opts, analysis_params)

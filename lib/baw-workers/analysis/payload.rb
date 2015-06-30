@@ -28,6 +28,8 @@ module BawWorkers
           :file_source,
           # absolute path to executable
           :file_executable,
+          # absolute path to the config file
+          :file_config,
           # absolute path to output dir (is also created)
           :dir_output,
           # absolute path to temp dir (is also created)

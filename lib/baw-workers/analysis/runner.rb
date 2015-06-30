@@ -18,6 +18,9 @@ module BawWorkers
       # File name for worker log file.
       FILE_LOG = 'worker.log'
 
+      # directory name for programs that can be run
+      DIR_PROGRAMS = 'programs'
+
       # Create a new Support class.
       # @param [BawWorkers::Storage::AudioOriginal] original_store
       # @param [BawWorkers::Storage::AnalysisCache] analysis_cache
@@ -48,10 +51,14 @@ module BawWorkers
         dir_run = run_info[:dir_run]
         dir_run_temp = run_info[:dir_run_temp]
 
+        # copy programs directory to run dir
+        dir_run_programs = copy_programs(dir_run)
+
         command_opts = {
             file_source: get_file_source(opts),
-            file_executable: get_file_executable(opts),
+            file_executable: get_file_executable(dir_run_programs, opts),
             dir_output: create_output_dir(opts),
+            file_config: create_config_file(dir_run, opts),
             dir_run: dir_run,
             dir_temp: dir_run_temp
         }
@@ -63,9 +70,6 @@ module BawWorkers
 
         # include path to worker log file
         command_opts[:file_run_log] = run_info[:file_run_log]
-
-        # copy programs directory to run dir
-        copy_programs(dir_run)
 
         command_opts
       end
@@ -98,6 +102,7 @@ module BawWorkers
           Dir.chdir(dir_run)
           result = external_program.execute(command, true)
         rescue => e
+          error = e
           logger.error(@class_name) { "Error executing #{command}: #{e.inspect}." }
           result[:error] = error
         else
@@ -156,7 +161,7 @@ module BawWorkers
 
         dirs_output = @analysis_cache.possible_paths_dir(analysis_store_opts)
 
-        dir_output = BawWorkers::Validation.normalise_path(dirs_output.first, nil)
+        dir_output = File.expand_path(BawWorkers::Validation.normalise_path(dirs_output.first, nil))
 
         FileUtils.mkpath([dir_output])
 
@@ -191,26 +196,31 @@ module BawWorkers
           fail BawAudioTools::Exceptions::AudioFileNotFoundError, msg
         end
 
-        BawWorkers::Validation.normalise_path(file_sources.first, nil)
+        File.expand_path(BawWorkers::Validation.normalise_path(file_sources.first, nil))
       end
 
       # Get absolute path to executable.
+      # @param [String] dir_run_programs
       # @param [Hash] opts
       # @return [String] executable path
-      def get_file_executable(opts = {})
+      def get_file_executable(dir_run_programs, opts = {})
         BawWorkers::Validation.check_custom_hash(opts, BawWorkers::Analysis::Payload::OPTS_FIELDS)
 
         file_executable_relative = opts[:file_executable]
-        BawWorkers::Validation.normalise_path(file_executable_relative, @dir_programs)
+        BawWorkers::Validation.normalise_path(file_executable_relative, dir_run_programs)
       end
 
       # Copy programs directory to run directory.
       # @param [String] dir_run
-      # @return [void]
+      # @return [String] programs dir for a run
       def copy_programs(dir_run)
         src = BawWorkers::Validation.normalise_path(@dir_programs, @dir_worker_top)
+        fail ArgumentError, "programs path does not exist #{src}" unless Dir.exists?(src)
+
         dest = BawWorkers::Validation.normalise_path(dir_run, @dir_worker_top)
-        FileUtils.cp_r("#{src}/.", dest)
+        FileUtils.cp_r("#{src}", dest)
+
+        File.join(dest, BawWorkers::Analysis::Runner::DIR_PROGRAMS)
       end
 
       # Copy custom paths to run dir
@@ -232,7 +242,7 @@ module BawWorkers
           begin
             src = BawWorkers::Validation.normalise_path(path, dir_run)
             dest = BawWorkers::Validation.normalise_path(path, dir_output)
-            File.cp(src, dest)
+            FileUtils.cp(src, dest)
           rescue => e
             error = e
           end
