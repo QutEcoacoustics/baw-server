@@ -194,7 +194,7 @@ module BawWorkers
       def validate_sub_folders(opts = {})
         provided = validate_msg_provided(opts)
         fail ArgumentError, "#{validate_msg_base} sub_folders. #{provided}" unless opts.include? :sub_folders
-        fail ArgumentError, "sub_folders must not be blank. #{provided}" if opts[:sub_folders].blank?
+        fail ArgumentError, "sub_folders must not be nil. #{provided}" if opts[:sub_folders].nil?
         fail ArgumentError, "sub_folders must be an Array. #{provided}" unless opts[:sub_folders].is_a?(Array)
       end
 

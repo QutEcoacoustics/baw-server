@@ -31,9 +31,7 @@ module BawWorkers
           # absolute path to output dir (is also created)
           :dir_output,
           # absolute path to temp dir (is also created)
-          :dir_temp,
-          # absolute path to run dir (is also created)
-          :dir_run
+          :dir_temp
       ]
 
       # Create a new BawWorkers::Analysis::Payload.
@@ -187,7 +185,7 @@ module BawWorkers
       # Ensure command format has required placeholders
       # @param [Hash] opts
       # @return [void]
-      def check_command_format(opts = {})
+      def self.check_command_format(opts = {})
         command_format = opts[:command_format]
 
         BawWorkers::Analysis::Payload::COMMAND_PLACEHOLDERS.each do |command_placeholder|
@@ -195,9 +193,7 @@ module BawWorkers
           placeholder = "%{#{command_placeholder}}"
           unless command_format.include?(placeholder)
             all_placeholders = BawWorkers::Analysis::Payload::COMMAND_PLACEHOLDERS.join(', ')
-            msg = "Command #{command_format} did not contain #{placeholder}, must contain #{all_placeholders}."
-            @logger.error(@class_name) { msg }
-            fail ArgumentError, msg
+            fail ArgumentError, "Command #{command_format} did not contain #{placeholder}, must contain #{all_placeholders}."
           end
 
         end

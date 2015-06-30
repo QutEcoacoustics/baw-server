@@ -58,6 +58,7 @@ module BawWorkers
 
         # format command string
         BawWorkers::Validation.check_custom_hash(command_opts, BawWorkers::Analysis::Payload::COMMAND_PLACEHOLDERS)
+        BawWorkers::Analysis::Payload.check_command_format(opts)
         command_opts[:command] = opts[:command_format] % command_opts
 
         # include path to worker log file
@@ -76,6 +77,7 @@ module BawWorkers
       def execute(prepared_opts, opts)
         BawWorkers::Validation.check_custom_hash(prepared_opts, BawWorkers::Analysis::Payload::COMMAND_PLACEHOLDERS)
         BawWorkers::Validation.check_custom_hash(opts, BawWorkers::Analysis::Payload::OPTS_FIELDS)
+        BawWorkers::Analysis::Payload.check_command_format(opts)
 
         timeout_sec = 1 * 60 * 60 # 1 hour
         log_file = prepared_opts[:file_run_log]
@@ -208,7 +210,7 @@ module BawWorkers
       def copy_programs(dir_run)
         src = BawWorkers::Validation.normalise_path(@dir_programs, @dir_worker_top)
         dest = BawWorkers::Validation.normalise_path(dir_run, @dir_worker_top)
-        File.cp_r(src, dest)
+        FileUtils.cp_r("#{src}/.", dest)
       end
 
       # Copy custom paths to run dir

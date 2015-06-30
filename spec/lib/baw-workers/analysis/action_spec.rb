@@ -7,7 +7,7 @@ describe BawWorkers::Analysis::Action do
 
   let(:analysis_params) {
     {
-        command_format: '%{file_executable} "analysis_type -source %{source_file} -config %{config_file} -output %{output_dir} -tempdir %{temp_dir}"',
+        command_format: '%{file_executable} "analysis_type -source %{file_source} -config %{file_config} -output %{dir_output} -tempdir %{dir_temp}"',
         config: 'blah',
         file_executable: 'echo',
         copy_paths: [],
@@ -39,7 +39,7 @@ describe BawWorkers::Analysis::Action do
                 "analysis_params"=>
                     {
                         "command_format"=>
-                            "%{file_executable} \"analysis_type -source %{source_file} -config %{config_file} -output %{output_dir} -tempdir %{temp_dir}\"",
+                            "%{file_executable} \"analysis_type -source %{file_source} -config %{file_config} -output %{dir_output} -tempdir %{dir_temp}\"",
                         "uuid"=>"f7229504-76c5-4f88-90fc-b7c3f5a8732e",
                         "job_id"=>20,
                         "sub_folders"=>['hello', 'here_i_am'],

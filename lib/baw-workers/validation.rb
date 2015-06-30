@@ -5,7 +5,7 @@ module BawWorkers
   class Validation
 
     PATH_REGEXP = /\A(?:[0-9a-zA-Z_\-\.\/])+\z/
-    INVALID_CHARS_REGEXP = /[^0-9a-z\-\._]/i
+    INVALID_CHARS_REGEXP = /[^0-9a-z\-\._\\\/]/i
     TOP_DIR_VALID_CHARS_REGEXP = /[0-9a-z\-_]/i
     UUID_REGEXP = /\A[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\z/i
 
@@ -82,7 +82,7 @@ module BawWorkers
 
       #
       def normalise_file(value, check_exists = true)
-        file = Pathname.new(normalise_path(value, nil)).cleanpath
+        file = Pathname.new(normalise_path(value)).cleanpath
         fail ArgumentError, "Could not find file #{file}." if check_exists && !file.file?
         file.to_s
       end
@@ -104,47 +104,42 @@ module BawWorkers
       def normalise_path(path, top_level_dir = nil)
         fail ArgumentError, 'Path cannot be empty.' if path.blank?
 
-        # expands to absolute path (also expands ~)
-        if top_level_dir.blank?
-          expanded = File.expand_path(path)
-        else
+        # first replace '..', '~', '//', '\\', '/./', '\.\'
+        # ensure no double or more slashes
+        replace_char = '_'
+
+        safer_path = path.dup
+        safer_path = safer_path.gsub('..', replace_char)
+        safer_path = safer_path.gsub('~', replace_char)
+        safer_path = safer_path.gsub(/\/+/i, '/')
+        safer_path = safer_path.gsub(/\\+/i, '\\')
+        safer_path = safer_path.gsub('/.', "#{File::SEPARATOR}#{replace_char}")
+        safer_path = safer_path.gsub('\\.', "#{File::SEPARATOR}#{replace_char}")
+
+        safer_path = replace_char if safer_path == '.' || safer_path == '..'
+
+        unless top_level_dir.blank?
+
           # ensure top level dir does not have any path traversal or anything else
-          safer_top_level_dir = top_level_dir.gsub(TOP_DIR_VALID_CHARS_REGEXP, '_')
-          expanded = File.expand_path(path, safer_top_level_dir)
+          safer_top_level_dir = normalise_path(top_level_dir)
+
+          # expands to absolute path (also expands ~)
+          safer_path = File.expand_path(safer_path, safer_top_level_dir)
+
+          # ensure path starts with top_level_dir
+          unless safer_path.start_with?(safer_top_level_dir)
+            fail ArgumentError, "Path #{path} with base directory #{top_level_dir} was normalised to #{safer_path} using #{safer_top_level_dir}. It is not valid."
+          end
+
+          fail ArgumentError, "Path must start with / but got #{safer_path}." unless safer_path.start_with?('/')
+
         end
 
         # ensures . and .. are expanded
-        cleaned = Pathname.new(expanded).cleanpath
-
-        # ensure path is now absolute
-        fail ArgumentError, "File path must be absolute #{cleaned}." unless cleaned.absolute?
+        cleaned = Pathname.new(safer_path).cleanpath
 
         # replace all invalid chars with an underscore. Don't collapse as double underscore has special meaning.
-        path_components = []
-        Pathname(cleaned).each_filename do |path_component|
-          cleaned_component = path_component.gsub(INVALID_CHARS_REGEXP, '_')
-          path_components.push(cleaned_component)
-        end
-
-        final_path = File.join(*path_components)
-
-        # ensure final_path and safer_top_level_dir do not have doubled slashes
-        final_path = final_path.gsub(/\/+/i, '/')
-        final_path = final_path.gsub(/\\+/i, '\\')
-
-        safer_top_level_dir = safer_top_level_dir.gsub(/\/+/i, '/') unless safer_top_level_dir.blank?
-        safer_top_level_dir = safer_top_level_dir.gsub(/\\+/i, '\\') unless safer_top_level_dir.blank?
-
-        # ensure no path traversal
-        final_path = final_path.gsub('..', '_')
-        safer_top_level_dir = safer_top_level_dir.gsub('..', '_') unless safer_top_level_dir.blank?
-
-        # ensure path starts with top_level_dir
-        if !safer_top_level_dir.blank? && !final_path.start_with?(safer_top_level_dir)
-          fail ArgumentError, "Path #{path} was normalised to #{final_path} using #{top_level_dir}. It is not valid."
-        end
-
-        final_path
+        cleaned.to_s.gsub(INVALID_CHARS_REGEXP, '_')
       end
 
       # Ensure value is a ActiveSupport::TimeWithZone.

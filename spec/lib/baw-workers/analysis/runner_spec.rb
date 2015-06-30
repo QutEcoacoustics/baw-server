@@ -23,7 +23,7 @@ describe BawWorkers::Analysis::Runner do
 
   it 'has parameters' do
     analysis_params = {
-        command_format: '%{file_executable} "analysis_type -source %{source_file} -config %{config_file} -output %{output_dir} -tempdir %{temp_dir}"',
+        command_format: '%{file_executable} "analysis_type -source %{file_source} -config %{dir_output} -output %{dir_run} -tempdir %{dir_temp}"',
         config: 'blah',
         file_executable: 'echo',
         copy_paths: [],
