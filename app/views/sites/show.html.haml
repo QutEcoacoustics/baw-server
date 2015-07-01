@@ -13,7 +13,7 @@
 
 .row-fluid
   .span6
-    - if @site.audio_recordings.blank?
+    - if !@site.audio_recordings.any?
       %p
         This site does not contain any audio recordings.
     - else

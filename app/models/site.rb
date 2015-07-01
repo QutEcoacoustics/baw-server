@@ -72,7 +72,7 @@ class Site < ActiveRecord::Base
       }
       elsif !recording.blank?
       {
-          audio_recording:most_recent_recording,
+          audio_recording:recording,
           start_offset_seconds: nil,
           source: :audio_recording
       }
