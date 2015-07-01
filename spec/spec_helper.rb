@@ -79,6 +79,9 @@ def reset_settings
   # copy echo into programs dir
   FileUtils.cp('/bin/echo', File.join(tmp_programs_dir,'echo'))
 
+  touch_path = %x(which touch).strip
+  FileUtils.cp(touch_path, File.join(tmp_programs_dir,'touch'))
+
   [tmp_logs_dir, custom_dir]
 end
 

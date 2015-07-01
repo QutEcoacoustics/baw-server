@@ -28,7 +28,7 @@ describe BawWorkers::Analysis::Action do
 
   let(:analysis_query_normalised) { BawWorkers::ResqueJobId.normalise(analysis_query) }
 
-  let(:analysis_params_id) { BawWorkers::ResqueJobId.create_id_props(BawWorkers::Analysis::Action, analysis_query)}
+  let(:analysis_params_id) { BawWorkers::ResqueJobId.create_id_props(BawWorkers::Analysis::Action, analysis_query) }
 
   let(:expected_payload) {
     {
@@ -36,19 +36,19 @@ describe BawWorkers::Analysis::Action do
         "args" => [
             analysis_params_id,
             {
-                "analysis_params"=>
+                "analysis_params" =>
                     {
-                        "command_format"=>
+                        "command_format" =>
                             "<{file_executable}> \"analysis_type -source <{file_source}> -config <{file_config}> -output <{dir_output}> -tempdir <{dir_temp}>\"",
-                        "uuid"=>"f7229504-76c5-4f88-90fc-b7c3f5a8732e",
-                        "job_id"=>20,
-                        "sub_folders"=>['hello', 'here_i_am'],
-                        "datetime_with_offset"=>"2014-11-18T16:05:00Z",
-                        "original_format"=>"wav",
-                        "config"=>"blah",
-                        "id"=>123456,
-                        "file_executable"=>"echo",
-                        "copy_paths"=>[]
+                        "uuid" => "f7229504-76c5-4f88-90fc-b7c3f5a8732e",
+                        "job_id" => 20,
+                        "sub_folders" => ['hello', 'here_i_am'],
+                        "datetime_with_offset" => "2014-11-18T16:05:00Z",
+                        "original_format" => "wav",
+                        "config" => "blah",
+                        "id" => 123456,
+                        "file_executable" => "echo",
+                        "copy_paths" => []
                     }
             }
         ]
@@ -132,9 +132,9 @@ describe BawWorkers::Analysis::Action do
 
       expect(job_id).to_not be_nil
 
-      expect(status.status ).to eq('queued')
-      expect(status.uuid ).to eq(job_id)
-      expect(status.options ).to eq(analysis_query_normalised)
+      expect(status.status).to eq('queued')
+      expect(status.uuid).to eq(job_id)
+      expect(status.options).to eq(analysis_query_normalised)
 
     end
 
@@ -142,30 +142,54 @@ describe BawWorkers::Analysis::Action do
 
   it 'successfully runs an analysis on a file' do
 
-    # create file
-    possible_path_params = analysis_params.dup
-    possible_path_params[:datetime_with_offset] = Time.zone.parse(possible_path_params[:datetime_with_offset])
+    # params
+    uuid = 'f7229504-76c5-4f88-90fc-b7c3f5a8732e'
 
-    target_file = audio_original.possible_paths(possible_path_params)[1]
+    audio_recording_params =
+        {
+            uuid: uuid,
+            id: 123456,
+            datetime_with_offset: Time.zone.parse('2014-11-18T16:05:00Z'),
+            original_format: 'ogg'
+        }
+
+    job_output_params =
+        {
+            uuid: uuid,
+            job_id: 20,
+            sub_folders: [],
+            file_name: 'empty_file.txt'
+        }
+
+    custom_analysis_params =
+        {
+            command_format: 'touch empty_file.txt; echo "analysis_type -source <{file_source}> -config <{file_config}> -output <{dir_output}> -tempdir <{dir_temp}>"',
+            config: 'blah',
+            file_executable: 'touch empty_file.txt; echo',
+            copy_paths: ['empty_file.txt']
+        }
+            .merge(audio_recording_params)
+            .merge(job_output_params)
+
+    # prepare audio file
+    target_file = audio_original.possible_paths(audio_recording_params)[1]
     FileUtils.mkpath(File.dirname(target_file))
     FileUtils.cp(audio_file_mono, target_file)
 
-    result = BawWorkers::Analysis::Action.action_perform(analysis_params)
+    # Run analysis
+    result = BawWorkers::Analysis::Action.action_perform(custom_analysis_params)
 
-    expected_1 = 'z/programs/echo \"analysis_type -source '
-    expected_2 = '/baw-workers/tmp/custom_temp_dir/_original_audio/f7/f7229504-76c5-4f88-90fc-b7c3f5a8732e_20141118-160500Z.wav -config '
-    expected_3 = 'z/run.config -output '
-    expected_4 = '/tmp/custom_temp_dir/_cached_analysis_jobs/20/f7/f7229504-76c5-4f88-90fc-b7c3f5a8732e -tempdir '
-    expected_5 = 'z/temp'
-    expected_6 = '/runs/20_123456_'
+    # ensure the new file exists
+    output_file = analysis_cache.possible_paths(job_output_params)[0]
+    expect(File.exists?(output_file)).to be_truthy, output_file
 
-    result_string = result.to_s
-    expect(result_string).to include(expected_1)
-    expect(result_string).to include(expected_2)
-    expect(result_string).to include(expected_3)
-    expect(result_string).to include(expected_4)
-    expect(result_string).to include(expected_5)
-    expect(result_string).to include(expected_6)
+    # make sure log and config are copied to correct location
+    worker_log_file = analysis_cache.possible_paths(job_output_params.merge({file_name: BawWorkers::Analysis::Runner::FILE_LOG}))[0]
+    config_file = analysis_cache.possible_paths(job_output_params.merge({file_name: BawWorkers::Analysis::Runner::FILE_CONFIG}))[0]
+
+    expect(File.exists?(worker_log_file)).to be_truthy
+    expect(File.exists?(config_file)).to be_truthy
+
   end
 
 end
