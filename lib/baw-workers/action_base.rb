@@ -70,6 +70,10 @@ module BawWorkers
         fail NotImplementedError, 'Must implement `queue` method.'
       end
 
+      # Name for logging.
+      def logger_name
+        self.name
+      end
 
     end
 

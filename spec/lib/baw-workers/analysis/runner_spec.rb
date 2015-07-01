@@ -1,15 +1,15 @@
 require 'spec_helper'
 
-describe BawWorkers::Analysis::WorkHelper do
+describe BawWorkers::Analysis::Runner do
   include_context 'shared_test_helpers'
 
-  let(:work_helper) {
-
-    BawWorkers::Analysis::WorkHelper.new(
+  let(:runner) {
+    BawWorkers::Analysis::Runner.new(
         audio_original,
         analysis_cache,
         BawWorkers::Config.logger_worker,
-        custom_temp
+        BawWorkers::Config.worker_top_dir,
+        BawWorkers::Config.programs_dir
     )
   }
 
@@ -17,15 +17,16 @@ describe BawWorkers::Analysis::WorkHelper do
     FileUtils.rm_rf(BawWorkers::Settings.paths.cached_analysis_jobs)
   end
 
-  it 'has no parameters' do
-    expect { work_helper.run }.to raise_error(ArgumentError, /Hash must not be blank\./)
+  it 'prepare has no parameters' do
+    expect { runner.prepare({}) }.to raise_error(ArgumentError, /Hash must not be blank\./)
   end
 
   it 'has parameters' do
     analysis_params = {
-        command_format: '%{executable_program} "analysis_type -source %{source_file} -config %{config_file} -output %{output_dir} -tempdir %{temp_dir}"',
-        config_file: 'blah',
-        executable_program: 'echo',
+        command_format: '<{file_executable}> "analysis_type -source <{file_source}> -config <{file_config}> -output <{dir_output}> -tempdir <{dir_temp}>"',
+        config: 'blah',
+        file_executable: 'echo',
+        copy_paths: [],
 
         uuid: 'f7229504-76c5-4f88-90fc-b7c3f5a8732e',
         id: 123456,
@@ -44,17 +45,15 @@ describe BawWorkers::Analysis::WorkHelper do
     FileUtils.mkpath(File.dirname(target_file))
     FileUtils.cp(audio_file_mono, target_file)
 
-    FileUtils.mkpath(BawWorkers::Settings.paths.working_dir)
+    prepared_opts = runner.prepare(analysis_params)
+    result = runner.execute(prepared_opts, analysis_params)
 
-    FileUtils.cp('/bin/echo', File.join(BawWorkers::Settings.paths.working_dir,'echo'))
-
-    result = work_helper.run(analysis_params)
-
-    expected_1 = '/baw-workers/tmp/custom_temp_dir/working/echo \"analysis_type -source '
+    expected_1 = 'z/programs/echo \"analysis_type -source '
     expected_2 = '/baw-workers/tmp/custom_temp_dir/_original_audio/f7/f7229504-76c5-4f88-90fc-b7c3f5a8732e_20141118-160500Z.wav -config '
-    expected_3 = '/baw-workers/tmp/custom_temp_dir/working/blah -output '
-    expected_4 = '/baw-workers/tmp/custom_temp_dir/_cached_analysis_jobs/15/f7/f7229504-76c5-4f88-90fc-b7c3f5a8732e/something/another -tempdir '
-    expected_5 = '/baw-workers/tmp/custom_temp_dir/temp/f7229504-76c5-4_'
+    expected_3 = 'z/run.config -output '
+    expected_4 = '/baw-workers/tmp/custom_temp_dir/_cached_analysis_jobs/15/f7/f7229504-76c5-4f88-90fc-b7c3f5a8732e -tempdir '
+    expected_5 = 'z/temp'
+    expected_6 = '/runs/15_123456_'
 
     result_string = result.to_s
     expect(result_string).to include(expected_1)
@@ -62,13 +61,14 @@ describe BawWorkers::Analysis::WorkHelper do
     expect(result_string).to include(expected_3)
     expect(result_string).to include(expected_4)
     expect(result_string).to include(expected_5)
+    expect(result_string).to include(expected_6)
 
     expect(result).to_not be_blank
 
     result_json = result.to_json
-    expect(result_json).to include('_cached_analysis_jobs/15/f7/f7229504-76c5-4f88-90fc-b7c3f5a8732e/something/another')
-    expect(result_json).to include('/tmp/custom_temp_dir/temp/f7229504-76c5-4')
-    expect(result_json).to include('analysis_type -source %{source_file} -config %{config_file} -output %{output_dir} -tempdir %{temp_dir}')
+    expect(result_json).to include('_cached_analysis_jobs/15/f7/f7229504-76c5-4f88-90fc-b7c3f5a8732e')
+    expect(result_json).to include('z/temp')
+    expect(result_json).to include('analysis_type -source \\u003c{file_source}\\u003e -config \\u003c{file_config}\\u003e -output \\u003c{dir_output}\\u003e -tempdir \\u003c{dir_temp}\\u003e')
     expect(result_json).to include(analysis_params[:original_format])
   end
 

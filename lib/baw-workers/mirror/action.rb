@@ -57,8 +57,8 @@ module BawWorkers
 
         # Validate that source and destinations are paths, and are compatible with each other.
         def action_validate(source, destinations)
-          source_file = BawWorkers::Validation.validate_file(source)
-          dest_files = BawWorkers::Validation.validate_files(destinations, false).compact
+          source_file = BawWorkers::Validation.normalise_file(source)
+          dest_files = BawWorkers::Validation.normalise_files(destinations, false).compact
 
           [source_file, dest_files]
         end

@@ -22,7 +22,7 @@ module BawWorkers
       # Get the file name
       # @param [Hash] opts
       # @return [String] file name for stored file
-      def file_name(opts = {})
+      def file_name(opts)
         validate_saved_search_id(opts)
         validate_dataset_id(opts)
         validate_format(opts)
@@ -37,14 +37,14 @@ module BawWorkers
       # Get file names
       # @param [Hash] opts
       # @return [Array<String>]
-      def file_names(opts = {})
+      def file_names(opts)
         [file_name(opts)]
       end
 
       # Construct the partial path.
       # @param [Hash] opts
       # @return [String] partial path
-      def partial_path(opts = {})
+      def partial_path(opts)
         # no sub folders
         ''
       end

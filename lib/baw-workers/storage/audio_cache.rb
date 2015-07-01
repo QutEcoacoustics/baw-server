@@ -19,7 +19,7 @@ module BawWorkers
       # Get the file name
       # @param [Hash] opts
       # @return [String] file name for stored file
-      def file_name(opts = {})
+      def file_name(opts)
         validate_uuid(opts)
         validate_start_offset(opts)
         validate_end_offset(opts)
@@ -39,14 +39,14 @@ module BawWorkers
       # Get file names
       # @param [Hash] opts
       # @return [Array<String>]
-      def file_names(opts = {})
+      def file_names(opts)
         [file_name(opts)]
       end
 
       # Construct the partial path to an audio cache file.
       # @param [Hash] opts
       # @return [String] partial path to audio cache  file.
-      def partial_path(opts = {})
+      def partial_path(opts)
         validate_uuid(opts)
 
         # prepend first two chars of uuid

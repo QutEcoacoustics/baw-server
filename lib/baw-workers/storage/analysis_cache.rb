@@ -23,23 +23,23 @@ module BawWorkers
       # Get the file name
       # @param [Hash] opts
       # @return [String] file name for stored file
-      def file_name(opts = {})
+      def file_name(opts)
         validate_file_name(opts)
 
-        validate_get_clean_path(opts[:file_name])
+        BawWorkers::Validation.normalise_path(opts[:file_name], nil)
       end
 
       # Get file names
       # @param [Hash] opts
       # @return [Array<String>]
-      def file_names(opts = {})
+      def file_names(opts)
         [file_name(opts)]
       end
 
       # Construct the partial path to an analysis result file.
       # @param [Hash] opts
       # @return [String] partial path to analysis result file.
-      def partial_path(opts = {})
+      def partial_path(opts)
         validate_job_id(opts)
         validate_uuid(opts)
         validate_sub_folders(opts)
@@ -52,7 +52,8 @@ module BawWorkers
         sub_folder = File.join(*opts[:sub_folders])
 
         partial_path = File.join(job_id, guid_chars, guid, sub_folder)
-        validate_get_clean_path(partial_path)
+
+        BawWorkers::Validation.normalise_path(partial_path, nil)
       end
 
       # Extract information from a file name.
@@ -69,7 +70,7 @@ module BawWorkers
         relative_path = file_path.sub(base_dirs_matched.first, '')
 
         # clean file_path so it is more likely to match
-        relative_path_clean = validate_get_clean_path(relative_path)
+        relative_path_clean =  BawWorkers::Validation.normalise_path(relative_path, nil)
 
         # extract parts of path
         path_parts = Pathname(relative_path_clean).each_filename.to_a
