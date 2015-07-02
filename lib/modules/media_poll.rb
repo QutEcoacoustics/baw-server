@@ -109,7 +109,7 @@ class MediaPoll
 
       poll_result = poll(wait_max, poll_delay) do
         resque_status = BawWorkers::Media::Action.get_job_status(media_type, media_request_params)
-        existing_files = refresh_files(poll_locations)
+        existing_files = check_files(poll_locations)
 
         # return true if polling is complete, false to continue polling.
         completed = false
