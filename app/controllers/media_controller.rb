@@ -191,11 +191,13 @@ class MediaController < ApplicationController
 
     elsif  existing_files.blank? && is_processed_by_resque
       add_header_generated_remote
-      job_status = create_media_resque(media_category, generation_request)
+
+      expected_files = files_info[:possible]
+      create_result = create_media_resque(expected_files, media_category, generation_request)
 
       time_start_waiting = Time.now
 
-      expected_files = files_info[:possible]
+
       Rails.logger.info "Expected files in media_controller#create_media: #{expected_files}"
 
       poll_locations = MediaPoll.prepare_locations(expected_files)
@@ -250,17 +252,21 @@ class MediaController < ApplicationController
   # @param [Symbol] media_category
   # @param [Object] generation_request
   # @return [Resque::Plugins::Status::Hash] job status
-  def create_media_resque(media_category, generation_request)
+  def create_media_resque(expected_files, media_category, generation_request)
 
     start_time = Time.now
     BawWorkers::Media::Action.action_enqueue(media_category, generation_request)
     #existing_files = MediaPoll.poll_media(expected_files, Settings.audio_tools_timeout_sec)
-    job_status = MediaPoll.poll_resque(media_category, generation_request, Settings.audio_tools_timeout_sec)
+    poll_result = MediaPoll.poll_resque_and_media(
+        expected_files,
+        media_category,
+        generation_request,
+        Settings.audio_tools_timeout_sec)
     end_time = Time.now
 
     add_header_processing_elapsed(end_time - start_time)
 
-    job_status
+    poll_result
   end
 
   def response_local_spectrogram(audio_recording, generation_request, existing_files, rails_request, range_request, time_start, time_waiting_start)

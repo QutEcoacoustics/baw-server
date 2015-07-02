@@ -101,6 +101,48 @@ class MediaPoll
       status
     end
 
+    def poll_resque_and_media(expected_files, media_type, media_request_params, wait_max, poll_delay = 0.5)
+      poll_locations = prepare_locations(expected_files)
+      existing_files = []
+
+      resque_status = nil
+
+      poll_result = poll(wait_max, poll_delay) do
+        resque_status = BawWorkers::Media::Action.get_job_status(media_type, media_request_params)
+        existing_files = refresh_files(poll_locations)
+
+        # return true if polling is complete, false to continue polling.
+        completed = false
+
+        completed = true if !resque_status.blank? && resque_status.completed?
+        completed = true unless existing_files.empty?
+
+        completed
+      end
+
+      # raise error if polling did not return a result
+      if poll_result[:result].nil?
+        resque_task_status = resque_status.nil? ? '(none)' : resque_status.status
+
+        msg = "Polling expired after #{wait_max} seconds with #{poll_delay} seconds delay." +
+            "Could not find media file and resque job status was '#{resque_task_status}'."
+        job_info = poll_result.merge({
+                                         uuid: resque_status.nil? ? nil : resque_status.uuid,
+                                         time: resque_status.nil? ? nil : resque_status.time,
+                                         status: resque_task_status,
+                                         poll_locations: poll_locations,
+                                         existing_files: existing_files
+                                     })
+        fail CustomErrors::AudioGenerationError.new(msg, job_info)
+      end
+
+      {
+          existing_files: existing_files,
+          resque_status: resque_status
+      }
+    end
+
+
     # prepare list of directories and files to poll
     # @param [Array<String>] files
     # @return [Array<Hash>] valid files to poll
