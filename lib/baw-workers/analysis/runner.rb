@@ -214,7 +214,7 @@ module BawWorkers
       # @param [String] dir_run
       # @return [String] programs dir for a run
       def copy_programs(dir_run)
-        src = BawWorkers::Validation.normalise_path(@dir_programs, @dir_worker_top)
+        src = @dir_programs
         fail ArgumentError, "programs path does not exist #{src}" unless Dir.exists?(src)
 
         dest = BawWorkers::Validation.normalise_path(dir_run, @dir_worker_top)
