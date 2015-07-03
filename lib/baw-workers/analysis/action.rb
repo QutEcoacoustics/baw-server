@@ -69,7 +69,12 @@ module BawWorkers
 
           results = []
           payloads.each do |payload|
-            results.push(BawWorkers::Analysis::Action.action_perform(payload))
+            begin
+              result = BawWorkers::Analysis::Action.action_perform(payload)
+              results.push(result)
+            rescue => e
+              BawWorkers::Config.logger_worker.error(logger_name) { e }
+            end
           end
 
           results
@@ -110,7 +115,12 @@ module BawWorkers
 
           results = []
           payloads.each do |payload|
-            results.push(BawWorkers::Analysis::Action.action_enqueue(payload))
+            begin
+              result = BawWorkers::Analysis::Action.action_enqueue(payload)
+              results.push(result)
+            rescue => e
+              BawWorkers::Config.logger_worker.error(logger_name) { e }
+            end
           end
           results
         end
