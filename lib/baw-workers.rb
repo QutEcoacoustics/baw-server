@@ -31,6 +31,7 @@ module BawWorkers
   autoload :FileInfo, 'baw-workers/file_info'
   autoload :ResqueApi, 'baw-workers/resque_api'
   autoload :ResqueJobId, 'baw-workers/resque_job_id'
+  autoload :ReadCsv, 'baw-workers/read_csv'
 
   module Analysis
     autoload :Action, 'baw-workers/analysis/action'

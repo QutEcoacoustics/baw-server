@@ -58,7 +58,7 @@ module BawWorkers
 
           successes = []
           failures = []
-          BawWorkers::AudioCheck::CsvHelper.read_audio_recording_csv(csv_file) do |audio_params|
+          BawWorkers::ReadCsv.read_audio_recording_csv(csv_file) do |audio_params|
             begin
               result = BawWorkers::AudioCheck::Action.action_run(audio_params, is_real_run)
               successes.push({params: audio_params, result: result})
@@ -96,7 +96,7 @@ module BawWorkers
 
           successes = []
           failures = []
-          BawWorkers::AudioCheck::CsvHelper.read_audio_recording_csv(csv_file) do |audio_params|
+          BawWorkers::ReadCsv.read_audio_recording_csv(csv_file) do |audio_params|
             begin
               result = nil
               result = BawWorkers::AudioCheck::Action.action_enqueue(audio_params) if is_real_run

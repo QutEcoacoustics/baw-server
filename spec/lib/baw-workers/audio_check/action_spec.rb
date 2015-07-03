@@ -547,7 +547,7 @@ describe BawWorkers::AudioCheck::Action do
   it 'runs standalone with errors' do
     csv_file = copy_test_audio_check_csv
 
-    BawWorkers::AudioCheck::CsvHelper.read_audio_recording_csv(csv_file) do |audio_params|
+    BawWorkers::ReadCsv.read_audio_recording_csv(csv_file) do |audio_params|
       audio_params[:datetime_with_offset] = audio_params[:recorded_date]
       create_original_audio(audio_params, audio_file_mono, false)
       # FileUtils.touch(File.join(audio_original.possible_dirs[0], '83/837df827-2be2-43ef-8f48-60fa0ee6ad37_930712-1552.asf'))

@@ -63,35 +63,9 @@ module BawWorkers
         config_string = File.read(config_path)
         job_id = command_info['job_id']
 
-        index_to_key_map = {
-            id: 0,
-            datetime_with_offset: 1,
-            uuid: 2,
-            original_file_name: 3,
-            media_type: 4,
-            original_format: 5
-        }
-
         results = []
 
-        CSV.foreach(csv_path, {headers: true, return_headers: false}) do |row|
-
-          # get values from row, put into hash that matches what check action expects
-          audio_params = index_to_key_map.inject({}) do |hash, (key, value)|
-            hash.merge(key.to_sym => row[key.to_s])
-          end
-
-          # try a few ways to get original_format
-          original_format = audio_params[:original_format]
-
-          if original_format.blank?
-            original_file_name = audio_params[:original_file_name]
-            original_extension = original_file_name.blank? ? '' : File.extname(original_file_name).trim('.', '').downcase
-            original_format = original_extension
-          end
-
-          original_format = Mime::Type.lookup(audio_params[:media_type].downcase).to_sym.to_s if original_format.blank?
-
+        BawWorkers::ReadCsv.read_audio_recording_csv(csv_path) do |audio_params|
           opts = {
               command_format: command_format,
               file_executable: file_executable,
@@ -102,7 +76,7 @@ module BawWorkers
               uuid: audio_params[:uuid],
               id: audio_params[:id],
               datetime_with_offset: audio_params[:datetime_with_offset],
-              original_format: original_format
+              original_format: audio_params[:original_format]
           }
 
           # add analysis payload to results

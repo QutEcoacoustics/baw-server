@@ -1,7 +1,6 @@
 require 'rake'
 require 'resque/tasks'
 require 'baw-workers'
-require 'csv'
 
 namespace :baw do
 
