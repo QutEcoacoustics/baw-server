@@ -109,7 +109,7 @@ module BawWorkers
 
           harvest_completed_successfully = true
 
-        rescue Exception => e
+        rescue => e
           msg = "Error after audio recording created on website, status set to aborted. Exception: #{e}"
           @logger.error(@class_name) { msg }
           @api_comm.update_audio_recording_status(

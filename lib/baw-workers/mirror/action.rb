@@ -24,7 +24,7 @@ module BawWorkers
           begin
             source_file, destination_files = action_validate(source, destinations)
             result = BawWorkers::Config.file_info.copy_to_many(source_file, destination_files)
-          rescue Exception => e
+          rescue => e
             BawWorkers::Config.logger_worker.error(self.name) { e }
             BawWorkers::Mail::Mailer.send_worker_error_email(
                 BawWorkers::Mirror::Action,

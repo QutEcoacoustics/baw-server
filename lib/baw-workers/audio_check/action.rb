@@ -30,7 +30,7 @@ module BawWorkers
 
           begin
             result = action_audio_check.run(audio_params, is_real_run)
-          rescue Exception => e
+          rescue => e
             BawWorkers::Config.logger_worker.error(self.name) { e }
             # don't send emails, we will use logs.
             # BawWorkers::Mail::Mailer.send_worker_error_email(

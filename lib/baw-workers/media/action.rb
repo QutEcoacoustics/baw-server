@@ -24,7 +24,7 @@ module BawWorkers
           begin
             media_type_sym, params_sym = action_validate(media_type, media_request_params)
             result = make_media_request(media_type_sym, params_sym)
-          rescue Exception => e
+          rescue => e
             BawWorkers::Config.logger_worker.error(self.name) { e }
             BawWorkers::Mail::Mailer.send_worker_error_email(
                 BawWorkers::Media::Action,

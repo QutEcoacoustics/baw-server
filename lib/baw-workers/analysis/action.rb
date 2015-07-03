@@ -30,7 +30,7 @@ module BawWorkers
             prepared_opts = runner.prepare(analysis_params_sym)
             all_opts = analysis_params_sym.merge(prepared_opts)
             result = runner.execute(prepared_opts, analysis_params_sym)
-          rescue Exception => e
+          rescue => e
             BawWorkers::Config.logger_worker.error(logger_name) { e }
             BawWorkers::Mail::Mailer.send_worker_error_email(
                 BawWorkers::Analysis::Action,

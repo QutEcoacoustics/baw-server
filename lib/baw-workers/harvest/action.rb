@@ -38,7 +38,7 @@ module BawWorkers
             end
 
             result = action_single_file.run(harvest_params, is_real_run, copy_on_success)
-          rescue Exception => e
+          rescue => e
             BawWorkers::Config.logger_worker.error(self.name) { e }
             BawWorkers::Mail::Mailer.send_worker_error_email(
                 BawWorkers::Harvest::Action,
