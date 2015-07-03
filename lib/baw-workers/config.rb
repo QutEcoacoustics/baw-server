@@ -51,7 +51,7 @@ module BawWorkers
         # configure basic attributes first
         BawWorkers::Config.temp_dir = File.expand_path(BawWorkers::Settings.paths.temp_dir)
         BawWorkers::Config.worker_top_dir = File.dirname(settings_file)
-        BawWorkers::Config.programs_dir = File.join(BawWorkers::Config.worker_top_dir, BawWorkers::Analysis::Runner::DIR_PROGRAMS)
+        BawWorkers::Config.programs_dir = File.expand_path(BawWorkers::Settings.paths.programs_dir)
 
         BawWorkers::Config.original_audio_helper = BawWorkers::Storage::AudioOriginal.new(BawWorkers::Settings.paths.original_audios)
         BawWorkers::Config.audio_cache_helper = BawWorkers::Storage::AudioCache.new(BawWorkers::Settings.paths.cached_audios)

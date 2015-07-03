@@ -52,9 +52,9 @@ namespace :baw do
       end
 
       desc 'Enqueue files to analyse using Resque from a csv file'
-      task :from_csv, [:settings_file, :csv_file, :template_file] do |t, args|
+      task :from_csv, [:settings_file, :csv_file, :config_file, :command_file] do |t, args|
         BawWorkers::Config.run(settings_file: args.settings_file, redis: true, resque_worker: false)
-        BawWorkers::Analysis::Action.action_enqueue_rake_csv(args.csv_file, args.template_file)
+        BawWorkers::Analysis::Action.action_enqueue_rake_csv(args.csv_file, args.config_file, args.command_file)
       end
 
     end
@@ -66,9 +66,9 @@ namespace :baw do
       end
 
       desc 'Directly analyse audio files from csv file'
-      task :from_csv, [:settings_file, :csv_file, :template_file] do |t, args|
+      task :from_csv, [:settings_file, :csv_file, :config_file, :command_file] do |t, args|
         BawWorkers::Config.run(settings_file: args.settings_file, redis: false, resque_worker: false)
-        BawWorkers::Analysis::Action.action_perform_rake_csv(args.csv_file, args.template_file)
+        BawWorkers::Analysis::Action.action_perform_rake_csv(args.csv_file, args.config_file, args.command_file)
       end
     end
   end

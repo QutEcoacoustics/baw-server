@@ -53,7 +53,7 @@ settings:
     mailer_log_file: ./tmp/logs/mailer.log
     audio_tools_log_file: ./tmp/logs/audio_tools.log
     temp_dir: ./tmp/custom_temp_dir/temp
-    working_dir: ./tmp/custom_temp_dir/working
+    programs_dir: ./tmp/programs
   endpoints:
     login: /security
     audio_recording: /audio_recordings/:id

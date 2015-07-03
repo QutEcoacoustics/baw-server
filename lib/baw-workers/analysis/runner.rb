@@ -4,18 +4,10 @@ module BawWorkers
     # Run an Analysis action.
     class Runner
 
-      # worker_top_dir: 01, 02, 03, etc...
-      # copy programs folder into working dir from <worker_top_dir>/programs
-      # working_dir_per_job: <worker_top_dir>/runs/<job_id>_<audio_recording_id>_<timestamp>/
-      # <working_dir_per_job>/temp
-      # <working_dir_per_job>/programs
-      # store log in <working_dir_per_job>
-      # store config file in <working_dir_per_job>
-
-      # File name for config file.
+      # File name for config file per run.
       FILE_CONFIG = 'run.config'
 
-      # File name for worker log file.
+      # File name for worker log file per run.
       FILE_LOG = 'worker.log'
 
       # directory name for programs that can be run
@@ -98,6 +90,9 @@ module BawWorkers
         result = {}
 
         begin
+
+          logger.info(@class_name) { "Executing #{command}." }
+
           # change to run dir
           Dir.chdir(dir_run)
           result = external_program.execute(command, true)
@@ -225,7 +220,8 @@ module BawWorkers
         dest = BawWorkers::Validation.normalise_path(dir_run, @dir_worker_top)
         FileUtils.cp_r("#{src}", dest)
 
-        File.join(dest, BawWorkers::Analysis::Runner::DIR_PROGRAMS)
+        dir_run_programs = File.join(dest, BawWorkers::Analysis::Runner::DIR_PROGRAMS)
+        BawWorkers::Validation.normalise_path(dir_run_programs, @dir_worker_top)
       end
 
       # Copy custom paths to run dir
