@@ -242,7 +242,10 @@ module BawWorkers
 
           begin
             src = BawWorkers::Validation.normalise_path(path, dir_run)
-            dest = BawWorkers::Validation.normalise_path(path, dir_output)
+
+            # copy file to top level of output dir
+            dest_file_name = File.basename(path)
+            dest = BawWorkers::Validation.normalise_path(dest_file_name, dir_output)
             FileUtils.cp(src, dest)
           rescue => e
             error = e
