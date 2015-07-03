@@ -132,7 +132,7 @@ module BawWorkers
         raw_opts[:config] = get_config(raw_opts)
 
         # validate opts
-        opts = normalise_opts(raw_opts)
+        opts = BawWorkers::Analysis::Payload.normalise_opts(raw_opts)
 
         # normalise recorded date
         opts[:recorded_date] = get_recorded_date(opts)
