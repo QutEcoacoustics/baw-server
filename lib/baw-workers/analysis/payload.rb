@@ -60,7 +60,7 @@ module BawWorkers
         command_format = command_info['command_format']
         file_executable = command_info['file_executable']
         copy_paths = command_info['copy_paths']
-        config = File.read(config_path)
+        config_string = File.read(config_path)
         job_id = command_info['job_id']
 
         index_to_key_map = {
@@ -96,7 +96,7 @@ module BawWorkers
               command_format: command_format,
               file_executable: file_executable,
               copy_paths: copy_paths,
-              config: config,
+              config_string: config_string,
               job_id: job_id,
 
               uuid: audio_params[:uuid],
