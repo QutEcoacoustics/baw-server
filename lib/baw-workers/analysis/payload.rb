@@ -75,7 +75,7 @@ module BawWorkers
 
               uuid: audio_params[:uuid],
               id: audio_params[:id],
-              datetime_with_offset: audio_params[:datetime_with_offset],
+              datetime_with_offset: audio_params[:recorded_date],
               original_format: audio_params[:original_format]
           }
 
@@ -105,11 +105,11 @@ module BawWorkers
         # normalise config
         raw_opts[:config] = get_config(raw_opts)
 
+        # normalise recorded date
+        raw_opts[:datetime_with_offset] = get_datetime_with_offset(raw_opts)
+
         # validate opts
         opts = BawWorkers::Analysis::Payload.normalise_opts(raw_opts)
-
-        # normalise recorded date
-        opts[:recorded_date] = get_recorded_date(opts)
 
         # validate command placeholders
         BawWorkers::Analysis::Runner.check_command_format(opts)
@@ -132,7 +132,7 @@ module BawWorkers
       # Get the recorded date as a ActiveSupport::TimeWithZone.
       # @param [Hash] opts
       # @return [ActiveSupport::TimeWithZone] recording start datetime
-      def get_recorded_date(opts)
+      def get_datetime_with_offset(opts)
         begin
           parsed = BawWorkers::Validation.normalise_datetime(opts[:datetime_with_offset])
         rescue => e
