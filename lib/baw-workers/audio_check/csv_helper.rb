@@ -218,6 +218,54 @@ module BawWorkers
 
         end
 
+        # Compare csv file and files.
+        # @return [Hash]
+        def compare_csv_db(csv_file)
+          original_audio = BawWorkers::Config.original_audio_helper
+
+          files = []
+
+          original_audio.existing_files do |file|
+            file_name = File.basename(file).downcase
+            files.push(file_name)
+          end
+
+          db = []
+
+          BawWorkers::ReadCsv.read_audio_recording_csv(csv_file) do |audio_params|
+            opts =
+                {
+                    uuid: audio_params[:uuid],
+                    datetime_with_offset: BawWorkers::Validation.normalise_datetime(audio_params[:recorded_date]),
+                    original_format: audio_params[:original_format]
+                }
+            file_names = original_audio.file_names(opts).map{ |file_name| file_name.downcase }
+            db.push(*file_names)
+          end
+
+          name = 'baw:worker:audio_check:standalone:compare'
+
+          intersection = files & db
+          BawWorkers::Config.logger_worker.warn(name) {
+            "Intersection (#{intersection.size}): #{intersection.join(', ')}"
+          }
+
+          files_without_db_entry = files - db
+          BawWorkers::Config.logger_worker.warn(name) {
+            "Files without db entry (#{files_without_db_entry.size}): #{files_without_db_entry.join(', ')}"
+          }
+
+          db_entries_without_file = db - files
+          BawWorkers::Config.logger_worker.warn(name) {
+            "Db entries without no files (#{db_entries_without_file.size}): #{db_entries_without_file.join(', ')}"
+          }
+
+          {
+              intersection: intersection,
+              files_without_db_entry: files_without_db_entry,
+              db_entries_without_file: db_entries_without_file
+          }
+        end
 
       end
     end

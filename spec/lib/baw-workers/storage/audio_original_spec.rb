@@ -137,4 +137,34 @@ describe BawWorkers::Storage::AudioOriginal do
     expect(path_info[:original_format]).to eq original_format
   end
 
+  it 'correctly enumerates no files in an empty storage directory' do
+    files = []
+    audio_original.existing_files { |file| files.push(file) }
+
+    expect(files).to be_empty
+  end
+
+  it 'enumerates all files in the storage directory' do
+
+    paths = audio_original.possible_paths(opts)
+    paths.each do |path|
+      FileUtils.mkpath(File.dirname(path))
+      FileUtils.touch(path)
+    end
+
+    files = []
+    audio_original.existing_files do |file|
+      info = audio_original.parse_file_path(file)
+      files.push(info.merge({file:file}))
+    end
+
+    expect(files.size).to eq(2)
+
+    expect(files[0][:uuid]).to eq(uuid)
+    expect(files[1][:uuid]).to eq(uuid)
+
+    expect(files[0][:original_format]).to eq(original_format)
+    expect(files[1][:original_format]).to eq(original_format)
+  end
+
 end

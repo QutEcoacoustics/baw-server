@@ -1,4 +1,6 @@
 require 'active_support/concern'
+require 'find'
+
 module BawWorkers
   module Storage
     # Common storage functionality.
@@ -63,6 +65,25 @@ module BawWorkers
             possible: possible_paths(opts),
             existing: existing_paths(opts)
         }
+      end
+
+      # Enumerate through all existing files using a block.
+      # @return [void]
+      def existing_files
+        existing_dirs.each do |dir|
+          Find.find(dir) do |path|
+            if FileTest.directory?(path)
+              if File.basename(path)[0] == ?.
+                # Don't look any further into directories that start with a dot.
+                Find.prune
+              else
+                next
+              end
+            else
+              yield path if block_given?
+            end
+          end
+        end
       end
 
       private

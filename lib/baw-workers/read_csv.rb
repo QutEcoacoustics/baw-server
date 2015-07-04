@@ -4,6 +4,8 @@ module BawWorkers
   class ReadCsv
     class << self
 
+      # Enumerate through rows in an audio recording csv file using a block.
+      # @return [void]
       def read_audio_recording_csv(csv_file)
         index_to_key_map = {
             id: 0,
@@ -19,7 +21,7 @@ module BawWorkers
             original_file_name: 10
         }
 
-        audio_params_array = []
+        #audio_params_array = []
 
         # load csv file
         CSV.foreach(csv_file, {headers: true, return_headers: false}) do |row|
@@ -42,13 +44,13 @@ module BawWorkers
 
           audio_params[:original_format] = original_format
 
-          audio_params_array.push(audio_params)
+          #audio_params_array.push(audio_params)
 
           # provide the audio parameters to yield
           yield audio_params if block_given?
         end
 
-        audio_params_array
+        #audio_params_array
       end
 
     end

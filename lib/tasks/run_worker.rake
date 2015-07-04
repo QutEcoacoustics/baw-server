@@ -102,6 +102,11 @@ namespace :baw do
         BawWorkers::AudioCheck::CsvHelper.extract_csv_logs(args.log_file, args.output_file)
       end
 
+      desc 'Confirm database and audio files match'
+      task :compare, [:settings_file, :csv_file] do | t, args|
+        BawWorkers::Config.run(settings_file: args.settings_file, redis: false, resque_worker: false)
+        BawWorkers::AudioCheck::CsvHelper.compare_csv_db(args.csv_file)
+      end
     end
   end
 
