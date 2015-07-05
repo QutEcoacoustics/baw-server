@@ -223,15 +223,19 @@ module BawWorkers
         def compare_csv_db(csv_file)
           original_audio = BawWorkers::Config.original_audio_helper
 
+          # gather all existing files
           files = []
-
           original_audio.existing_files do |file|
             file_name = File.basename(file).downcase
             files.push(file_name)
           end
 
-          db = []
+          intersection = []
+          # actually copy the array without keeping any references
+          files_without_db_entry = Marshal.load(Marshal.dump(files))
+          db_entries_without_file = []
 
+          # compare with details in db
           BawWorkers::ReadCsv.read_audio_recording_csv(csv_file) do |audio_params|
             opts =
                 {
@@ -240,24 +244,35 @@ module BawWorkers
                     original_format: audio_params[:original_format]
                 }
             file_names = original_audio.file_names(opts).map{ |file_name| file_name.downcase }
-            db.push(*file_names)
+            utc_file_name = file_names[1]
+
+            match_result = files & file_names
+            is_match = match_result.any?
+
+            # add file names that exist on disk to intersection if one or more exist
+            intersection.push(*match_result) if is_match
+
+            # remove file names from files_without_db_entry if there is a match on disk
+            match_result.each do |match|
+              files_without_db_entry.delete(match)
+            end
+
+            # add utc file name to db_entries_without_file if no file matches on disk
+            db_entries_without_file.push(utc_file_name) unless is_match
           end
 
           name = 'baw:worker:audio_check:standalone:compare'
 
-          intersection = files & db
           BawWorkers::Config.logger_worker.warn(name) {
-            "Intersection (#{intersection.size}): #{intersection.join(', ')}"
+            "Exact intersection (#{intersection.size}): #{intersection.join(', ')}"
           }
 
-          files_without_db_entry = files - db
           BawWorkers::Config.logger_worker.warn(name) {
-            "Files without db entry (#{files_without_db_entry.size}): #{files_without_db_entry.join(', ')}"
+            "Existing files without db entry (#{files_without_db_entry.size}): #{files_without_db_entry.join(', ')}"
           }
 
-          db_entries_without_file = db - files
           BawWorkers::Config.logger_worker.warn(name) {
-            "Db entries without no files (#{db_entries_without_file.size}): #{db_entries_without_file.join(', ')}"
+            "Db entries with no files (only utc file names are included) (#{db_entries_without_file.size}): #{db_entries_without_file.join(', ')}"
           }
 
           {
