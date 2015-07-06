@@ -189,7 +189,7 @@ class MediaController < ApplicationController
       add_header_generated_local
       existing_files = create_media_local(media_category, generation_request)
 
-    elsif  existing_files.blank? && is_processed_by_resque
+    elsif existing_files.blank? && is_processed_by_resque
       add_header_generated_remote
 
       expected_files = files_info[:possible]
@@ -257,11 +257,7 @@ class MediaController < ApplicationController
     start_time = Time.now
     BawWorkers::Media::Action.action_enqueue(media_category, generation_request)
     #existing_files = MediaPoll.poll_media(expected_files, Settings.audio_tools_timeout_sec)
-    poll_result = MediaPoll.poll_resque_and_media(
-        expected_files,
-        media_category,
-        generation_request,
-        Settings.audio_tools_timeout_sec)
+    poll_result = MediaPoll.poll_resque(media_category, generation_request, Settings.audio_tools_timeout_sec)
     end_time = Time.now
 
     add_header_processing_elapsed(end_time - start_time)
