@@ -94,10 +94,15 @@ Rails.application.routes.draw do
   # when a user goes to my account, render user_account/show view for that user
   get '/my_account/' => 'user_accounts#my_account'
 
+
+
   # for updating only preferences for only the currently logged in user
   put '/my_account/prefs/' => 'user_accounts#modify_preferences'
 
   #TODO: this will be changed from :user_accounts to :users at some point
+  # user accounts filter, placed above to not conflict with /user_accounts/:id
+  match 'user_accounts/filter' => 'user_accounts#filter', via: [:get, :post], defaults: {format: 'json'}
+
   # user list and user profile
   resources :user_accounts, only: [:index, :show, :edit, :update], constraints: {id: /[0-9]+/} do
     member do

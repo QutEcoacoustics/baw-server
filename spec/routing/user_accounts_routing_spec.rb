@@ -15,5 +15,8 @@ describe UserAccountsController, :type => :routing do
     it { expect(get('/my_account/')).to route_to('user_accounts#my_account') }
     it { expect(put('/my_account/prefs')).to route_to('user_accounts#modify_preferences') }
 
+    it { expect(get('/user_accounts/filter')).to route_to('user_accounts#filter', format: 'json') }
+    it { expect(post('/user_accounts/filter')).to route_to('user_accounts#filter', format: 'json') }
+
   end
 end
