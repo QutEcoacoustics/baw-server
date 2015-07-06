@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+ - 2015-07-06
+    - enable sorting on custom fields [#220](https://github.com/QutBioacoustics/baw-server/issues/220)
+    - fixed site page loading slowly [#222](https://github.com/QutBioacoustics/baw-server/issues/222)
+    - attempted to fix media polling issues, still unresolved [#217](https://github.com/QutBioacoustics/baw-server/issues/217)
+    - update user_accounts endpoint to API spec [#223] (https://github.com/QutBioacoustics/baw-server/issues/223)
+
  - 2015-06-27
     - Removed taggings that were included in the tags filter [#218](https://github.com/QutBioacoustics/baw-server/issues/218)
     - Changed access query to use Arel instead of ActiveRecord due to regression in ActiveRecord 4.2.3.
