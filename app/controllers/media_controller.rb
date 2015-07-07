@@ -193,26 +193,19 @@ class MediaController < ApplicationController
       add_header_generated_remote
 
       expected_files = files_info[:possible]
-      create_result = create_media_resque(expected_files, media_category, generation_request)
+
+      Rails.logger.debug "media_controller#create_media: Begin remote processing for #{expected_files}"
+      job_status = create_media_resque(expected_files, media_category, generation_request)
 
       time_start_waiting = Time.now
 
+      Rails.logger.debug " media_controller#create_media: Expected files #{expected_files}"
 
-      Rails.logger.info "Expected files in media_controller#create_media: #{expected_files}"
+      # poll disk for audio
+      # will throw with a timeout if file does not appear on disk
+      existing_files = MediaPoll.poll_media(expected_files, Settings.audio_tools_timeout_sec)
 
-      poll_locations = MediaPoll.prepare_locations(expected_files)
-      Rails.logger.info "Filtered expected files in media_controller#create_media: #{poll_locations}"
-
-      # now check if files exists - check fs, do ls, check fs
-      # CAUTION: ls can cause high CPU usage
-
-      # first fs check
-      existing_files = MediaPoll.check_files(poll_locations)
-
-      if existing_files.blank?
-        # just to be sure, do an ls and another check before failing.
-        existing_files = MediaPoll.refresh_files(poll_locations)
-      end
+      Rails.logger.debug "media_controller#create_media: Actual files after disk poll #{existing_files}"
 
     elsif !existing_files.blank?
       add_header_cache
@@ -221,7 +214,12 @@ class MediaController < ApplicationController
 
     # check that there is at least one existing file
     existing_files = existing_files.compact # remove nils
+
     if existing_files.blank?
+      # NB: this branch should never execute, as poll_media should throw if no files are found
+      # and other branches make existing_file.blank? impossible
+      Rails.logger.debug "media_controller#create_media: No files matched, existing_files= #{existing_files}"
+      
       msg1 = "Could not create #{media_category}"
       msg2 = "using #{processor}"
       msg3 = "from request #{generation_request}"
@@ -257,7 +255,11 @@ class MediaController < ApplicationController
     start_time = Time.now
     BawWorkers::Media::Action.action_enqueue(media_category, generation_request)
     #existing_files = MediaPoll.poll_media(expected_files, Settings.audio_tools_timeout_sec)
-    poll_result = MediaPoll.poll_resque(media_category, generation_request, Settings.audio_tools_timeout_sec)
+    poll_result = MediaPoll.poll_resque_and_media(
+        expected_files,
+        media_category,
+        generation_request,
+        Settings.audio_tools_timeout_sec)
     end_time = Time.now
 
     add_header_processing_elapsed(end_time - start_time)

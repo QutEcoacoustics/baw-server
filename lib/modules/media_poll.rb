@@ -33,12 +33,15 @@ class MediaPoll
       #run_ext_program = BawAudioTools::RunExternalProgram.new(timeout_sec_dir_list, Rails.logger)
 
       poll_locations = prepare_locations(expected_files)
+      Rails.logger.debug "MediaPoll#poll_media: PRE-poll files #{expected_files}"
 
       existing_files = []
 
       poll_result = poll(wait_max, poll_delay) do
 
         existing_files = refresh_files(poll_locations)
+
+        Rails.logger.debug "MediaPoll#poll_media: poll matched files #{existing_files}"
 
         # return true if polling is complete, false to continue polling.
         !existing_files.empty?
@@ -54,6 +57,7 @@ class MediaPoll
         fail CustomErrors::AudioGenerationError.new(msg, job_info)
       end
 
+      Rails.logger.debug "MediaPoll#poll_media: POST-poll matched file #{existing_files} after #{poll_result[:actual_poll_time]}"
       existing_files
     end
 
@@ -101,21 +105,22 @@ class MediaPoll
       status
     end
 
+    # TO MARK: the changes in this method are yours from prod edits...
     def poll_resque_and_media(expected_files, media_type, media_request_params, wait_max, poll_delay = 0.5)
-      poll_locations = prepare_locations(expected_files)
-      existing_files = []
+      #poll_locations = prepare_locations(expected_files)
+      #existing_files = []
 
       resque_status = nil
 
       poll_result = poll(wait_max, poll_delay) do
         resque_status = BawWorkers::Media::Action.get_job_status(media_type, media_request_params)
-        existing_files = check_files(poll_locations)
+        #existing_files = refresh_files(poll_locations)
 
         # return true if polling is complete, false to continue polling.
         completed = false
 
         completed = true if !resque_status.blank? && resque_status.completed?
-        completed = true unless existing_files.empty?
+        #completed = true unless existing_files.empty?
 
         completed
       end
@@ -129,19 +134,18 @@ class MediaPoll
         job_info = poll_result.merge({
                                          uuid: resque_status.nil? ? nil : resque_status.uuid,
                                          time: resque_status.nil? ? nil : resque_status.time,
-                                         status: resque_task_status,
-                                         poll_locations: poll_locations,
-                                         existing_files: existing_files
+                                         status: resque_task_status
+                                         #poll_locations: poll_locations,
+                                         #existing_files: existing_files
                                      })
         fail CustomErrors::AudioGenerationError.new(msg, job_info)
       end
 
       {
-          existing_files: existing_files,
+          #existing_files: existing_files,
           resque_status: resque_status
       }
     end
-
 
     # prepare list of directories and files to poll
     # @param [Array<String>] files
@@ -185,10 +189,13 @@ class MediaPoll
         # can also be done by setting the attribute cache time for the nfs mount
         # e.g. 'actimeo=3'
         # @see NFS man page
-        system "ls -la \"#{dir}\""
+        # NEVER TURN THIS ON
+        #########system "ls -la \"#{dir}\""
 
         # once one file exists, break out of this loop and return true
+        Rails.logger.debug "MediaPoll#refresh_files: checking #{file}"
         if File.exists?(file) && File.file?(file)
+          Rails.logger.debug "MediaPoll#refresh_files: FOUND #{file}"
           existing_files.push(file)
           break
         end
