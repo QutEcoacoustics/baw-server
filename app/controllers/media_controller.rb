@@ -182,6 +182,7 @@ class MediaController < ApplicationController
     processor = Settings.media_request_processor
 
     existing_files = files_info[:existing]
+    expected_files = files_info[:possible]
 
     time_start_waiting = nil
 
@@ -192,20 +193,18 @@ class MediaController < ApplicationController
     elsif existing_files.blank? && is_processed_by_resque
       add_header_generated_remote
 
-      expected_files = files_info[:possible]
-
-      Rails.logger.debug "media_controller#create_media: Begin remote processing for #{expected_files}"
+      Rails.logger.debug "media_controller#create_media: Begin remote processing to create #{expected_files}"
       job_status = create_media_resque(expected_files, media_category, generation_request)
 
       time_start_waiting = Time.now
 
-      Rails.logger.debug " media_controller#create_media: Expected files #{expected_files}"
+      Rails.logger.debug " media_controller#create_media: Submitted processing job for #{expected_files}"
 
       # poll disk for audio
       # will throw with a timeout if file does not appear on disk
       existing_files = MediaPoll.poll_media(expected_files, Settings.audio_tools_timeout_sec)
 
-      Rails.logger.debug "media_controller#create_media: Actual files after disk poll #{existing_files}"
+      Rails.logger.debug "media_controller#create_media: Actual files from disk poll after remote processing #{existing_files}"
 
     elsif !existing_files.blank?
       add_header_cache
@@ -218,7 +217,7 @@ class MediaController < ApplicationController
     if existing_files.blank?
       # NB: this branch should never execute, as poll_media should throw if no files are found
       # and other branches make existing_file.blank? impossible
-      Rails.logger.debug "media_controller#create_media: No files matched, existing_files= #{existing_files}"
+      Rails.logger.debug "media_controller#create_media: No files matched, existing files: #{existing_files}, expected files: #{expected_files}"
       
       msg1 = "Could not create #{media_category}"
       msg2 = "using #{processor}"

@@ -33,15 +33,15 @@ class MediaPoll
       #run_ext_program = BawAudioTools::RunExternalProgram.new(timeout_sec_dir_list, Rails.logger)
 
       poll_locations = prepare_locations(expected_files)
-      Rails.logger.debug "MediaPoll#poll_media: PRE-poll files #{expected_files}"
+      Rails.logger.debug "MediaPoll#poll_media: Before polling for files #{expected_files}"
 
       existing_files = []
 
       poll_result = poll(wait_max, poll_delay) do
 
-        existing_files = refresh_files(poll_locations)
+        existing_files = get_existing_files(poll_locations)
 
-        Rails.logger.debug "MediaPoll#poll_media: poll matched files #{existing_files}"
+        Rails.logger.debug "MediaPoll#poll_media: Poll matched files #{existing_files}"
 
         # return true if polling is complete, false to continue polling.
         !existing_files.empty?
@@ -86,8 +86,10 @@ class MediaPoll
         # status.queued? || status.working? # job in progress - continue polling or time out
 
         # job completed successfully?
-        status.completed?
+        !status.blank? && status.completed?
       end
+
+      Rails.logger.debug "MediaPoll#poll_resque: Result from resque poll was #{status}."
 
       # raise error if polling did not return a result
       if poll_result[:result].nil?
@@ -105,22 +107,21 @@ class MediaPoll
       status
     end
 
-    # TO MARK: the changes in this method are yours from prod edits...
     def poll_resque_and_media(expected_files, media_type, media_request_params, wait_max, poll_delay = 0.5)
-      #poll_locations = prepare_locations(expected_files)
-      #existing_files = []
+      poll_locations = prepare_locations(expected_files)
+      existing_files = []
 
       resque_status = nil
 
       poll_result = poll(wait_max, poll_delay) do
         resque_status = BawWorkers::Media::Action.get_job_status(media_type, media_request_params)
-        #existing_files = refresh_files(poll_locations)
+        existing_files = get_existing_files(poll_locations)
 
         # return true if polling is complete, false to continue polling.
         completed = false
 
         completed = true if !resque_status.blank? && resque_status.completed?
-        #completed = true unless existing_files.empty?
+        completed = true unless existing_files.empty?
 
         completed
       end
@@ -129,20 +130,19 @@ class MediaPoll
       if poll_result[:result].nil?
         resque_task_status = resque_status.nil? ? '(none)' : resque_status.status
 
-        msg = "Polling expired after #{wait_max} seconds with #{poll_delay} seconds delay." +
-            "Could not find media file and resque job status was '#{resque_task_status}'."
+        msg = "Polling expired after #{wait_max} seconds with #{poll_delay} seconds delay with resque job status '#{resque_task_status}'. Could not find media files."
         job_info = poll_result.merge({
                                          uuid: resque_status.nil? ? nil : resque_status.uuid,
                                          time: resque_status.nil? ? nil : resque_status.time,
-                                         status: resque_task_status
-                                         #poll_locations: poll_locations,
-                                         #existing_files: existing_files
+                                         status: resque_task_status,
+                                         poll_locations: poll_locations,
+                                         existing_files: existing_files
                                      })
         fail CustomErrors::AudioGenerationError.new(msg, job_info)
       end
 
       {
-          #existing_files: existing_files,
+          existing_files: existing_files,
           resque_status: resque_status
       }
     end
@@ -174,11 +174,11 @@ class MediaPoll
       poll_locations
     end
 
-    def refresh_files(poll_locations)
+    def get_existing_files(poll_locations)
       existing_files = []
 
       poll_locations.each do |location|
-        dir = location[:dir]
+        #dir = location[:dir]
         file = location[:file]
 
         # get a valid directory path, and 'refresh' it by getting a file list with -l (executes stat() in linux).
@@ -191,29 +191,14 @@ class MediaPoll
         # @see NFS man page
         # NEVER TURN THIS ON
         #########system "ls -la \"#{dir}\""
+        # could try file instead, but not sure (would only ls file rather than the entire directory)
+        # not sure this would help, as need to stat() on dir, not file, to get the nfs cache to refresh?
+        ######system "ls -la \"#{file}\""
 
         # once one file exists, break out of this loop and return true
-        Rails.logger.debug "MediaPoll#refresh_files: checking #{file}"
+        Rails.logger.debug "MediaPoll#get_existing_files: checking #{file}"
         if File.exists?(file) && File.file?(file)
-          Rails.logger.debug "MediaPoll#refresh_files: FOUND #{file}"
-          existing_files.push(file)
-          break
-        end
-
-      end
-
-      existing_files.compact
-    end
-
-    def check_files(poll_locations)
-      existing_files = []
-
-      poll_locations.each do |location|
-        dir = location[:dir]
-        file = location[:file]
-
-        # once one file exists, break out of this loop and return true
-        if File.exists?(file) && File.file?(file)
+          Rails.logger.debug "MediaPoll#get_existing_files: FOUND #{file}"
           existing_files.push(file)
           break
         end
