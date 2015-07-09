@@ -15,7 +15,7 @@ source 'https://rubygems.org'
 
 gem 'rails', '~> 4.2.2'
 gem 'rack-cors', '~> 0.4.0', require: 'rack/cors'
-gem 'responders', '~> 2.0'
+gem 'responders', '~> 2.1.0'
 
 # RAILS 3 compatibility gems
 # -------------------------------------
@@ -38,14 +38,14 @@ gem 'coffee-rails', '~> 4.1.0'
 gem 'therubyracer', '~> 0.12.1', platforms: :ruby, require: 'v8'
 
 # Use jquery as the JavaScript library
-gem 'jquery-rails', '~> 4.0.4'
+gem 'jquery-rails', '~> 4.0.0'
 # Turbolinks makes following links in your web application faster. Read more: https://github.com/rails/turbolinks
 #gem 'turbolinks'
 # Build JSON APIs with ease. Read more: https://github.com/rails/jbuilder
 gem 'jbuilder', '~> 2.3.0'
 
 gem 'haml', '~> 4.0.6'
-gem 'haml-rails', '~> 0.8'
+gem 'haml-rails', '~> 0.9.0'
 
 gem 'simple_form', '~> 3.1.0'
 gem 'paperclip', '~> 4.3.0'
@@ -79,7 +79,7 @@ gem 'tzinfo-data', '~> 1.2015.1'
 # https://github.com/plataformatec/devise/blob/master/CHANGELOG.md
 # http://joanswork.com/devise-3-1-update/
 gem 'devise', '~> 3.5.1'
-gem 'cancancan', '~> 1.11.0'
+gem 'cancancan', '~> 1.12.0'
 gem 'role_model', '~> 0.8.1'
 # Use ActiveModel has_secure_password
 gem 'bcrypt', '~> 3.1.9'
