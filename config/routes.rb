@@ -211,14 +211,15 @@ Rails.application.routes.draw do
     # API project sites list
 
     resources :sites, only: [:index], defaults: {format: 'json'}
-    resources :datasets, except: [:index] do
-      resources :jobs, only: [:show]
-      resources :jobs, only: [:index], defaults: {format: 'json'}
-    end
-    resources :datasets, only: [:index], defaults: {format: 'json'}
-    resources :jobs, except: [:index, :show]
-    resources :jobs, only: [:index], defaults: {format: 'json'}
+
   end
+
+  # placed above related resource so it does not conflict with (resource)/:id => (resource)#show
+  match 'analysis_jobs/filter' => 'analysis_jobs#filter', via: [:get, :post], defaults: {format: 'json'}
+  match 'saved_searches/filter' => 'saved_searches#filter', via: [:get, :post], defaults: {format: 'json'}
+
+  # API only for analysis_jobs and saved_searches
+  resources :analysis_jobs, :saved_searches, except: [:edit], defaults: {format: 'json'}
 
   # placed above related resource so it does not conflict with (resource)/:id => (resource)#show
   match 'audio_recordings/filter' => 'audio_recordings#filter', via: [:get, :post], defaults: {format: 'json'}

@@ -1,6 +1,6 @@
 FactoryGirl.define do
 
-  factory :job do
+  factory :analysis_job do
     sequence(:name) { |n| "job name #{n}" }
     sequence(:annotation_name) { |n| "annotation name #{n}" }
     sequence(:script_settings) { |n|  {job_settings: "number #{n}"}.to_json }
@@ -8,7 +8,7 @@ FactoryGirl.define do
 
     creator
     script
-    dataset
+    saved_search
 
   end
 end

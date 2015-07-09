@@ -12,8 +12,8 @@ class Project < ActiveRecord::Base
   has_many :writers, -> { where("permissions.level = 'writer'").uniq }, through: :permissions, source: :user
   has_many :owners,  -> { where("permissions.level = 'owner'").uniq }, through: :permissions, source: :user
   has_and_belongs_to_many :sites, -> { uniq }
-  has_many :datasets, inverse_of: :project
-  has_many :jobs, through: :datasets
+  has_and_belongs_to_many :saved_searches, inverse_of: :projects
+  has_many :analysis_jobs, through: :saved_searches
 
   accepts_nested_attributes_for :permissions
 

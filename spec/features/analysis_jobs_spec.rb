@@ -5,10 +5,10 @@ describe 'CRUD Jobs as valid user with write permission', :type => :feature do
     @permission = FactoryGirl.create(:write_permission)
     @project = @permission.project
     @site = @project.sites[0]
-    @dataset = FactoryGirl.create(:dataset, project: @project) do |dataset|
-      dataset.sites << @site
+    @saved_search = FactoryGirl.create(:saved_search, project: @project) do |saved_search|
+      saved_search.projects << @project
     end
-    @job = FactoryGirl.create(:job, dataset: @dataset, creator: @permission.user)
+    @job = FactoryGirl.create(:analysis_job, saved_search: @saved_search, creator: @permission.user)
     @script = @job.script
     login_as @permission.user, scope: :user
   end
@@ -34,7 +34,6 @@ describe 'CRUD Jobs as valid user with write permission', :type => :feature do
     #save_and_open_page
     fill_in 'job[name]', with: 'test name'
     fill_in 'job[annotation_name]', with: 'test annotation name'
-    select @dataset.name, from: 'job[dataset_id]'
     select @script.name, from: 'job[script_id]'
     fill_in 'job[script_settings]', with: 'test name'
     fill_in 'job[description]', with: 'description'

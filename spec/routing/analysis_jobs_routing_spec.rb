@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe JobsController, :type => :routing do
+describe AnalysisJobsController, :type => :routing do
   describe :routing do
 
     it { expect(get('/projects/1/datasets/2/jobs/3')).to route_to('jobs#show', project_id: '1', dataset_id: '2', id: '3') }

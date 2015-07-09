@@ -11,10 +11,25 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20150307010121) do
+ActiveRecord::Schema.define(version: 20150709141712) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
+
+  create_table "analysis_jobs", force: :cascade do |t|
+    t.string   "name",            limit: 255, null: false
+    t.string   "annotation_name", limit: 255
+    t.text     "script_settings"
+    t.integer  "script_id",                   null: false
+    t.integer  "creator_id",                  null: false
+    t.integer  "updater_id"
+    t.integer  "deleter_id"
+    t.datetime "deleted_at"
+    t.datetime "created_at",                  null: false
+    t.datetime "updated_at",                  null: false
+    t.text     "description"
+    t.integer  "saved_search_id",             null: false
+  end
 
   create_table "audio_event_comments", force: :cascade do |t|
     t.integer  "audio_event_id",             null: false
@@ -96,49 +111,6 @@ ActiveRecord::Schema.define(version: 20150307010121) do
     t.string   "category",           limit: 255
   end
 
-  create_table "datasets", force: :cascade do |t|
-    t.string   "name",                        limit: 255, null: false
-    t.time     "start_time"
-    t.time     "end_time"
-    t.date     "start_date"
-    t.date     "end_date"
-    t.string   "filters",                     limit: 255
-    t.integer  "number_of_samples"
-    t.integer  "number_of_tags"
-    t.string   "types_of_tags",               limit: 255
-    t.text     "description"
-    t.integer  "creator_id",                              null: false
-    t.integer  "updater_id"
-    t.integer  "project_id",                              null: false
-    t.datetime "created_at",                              null: false
-    t.datetime "updated_at",                              null: false
-    t.string   "dataset_result_file_name",    limit: 255
-    t.string   "dataset_result_content_type", limit: 255
-    t.integer  "dataset_result_file_size"
-    t.datetime "dataset_result_updated_at"
-    t.text     "tag_text_filters"
-  end
-
-  create_table "datasets_sites", id: false, force: :cascade do |t|
-    t.integer "dataset_id", null: false
-    t.integer "site_id",    null: false
-  end
-
-  create_table "jobs", force: :cascade do |t|
-    t.string   "name",            limit: 255, null: false
-    t.string   "annotation_name", limit: 255
-    t.text     "script_settings"
-    t.integer  "dataset_id",                  null: false
-    t.integer  "script_id",                   null: false
-    t.integer  "creator_id",                  null: false
-    t.integer  "updater_id"
-    t.integer  "deleter_id"
-    t.datetime "deleted_at"
-    t.datetime "created_at",                  null: false
-    t.datetime "updated_at",                  null: false
-    t.text     "description"
-  end
-
   create_table "permissions", force: :cascade do |t|
     t.integer  "creator_id",                                 null: false
     t.string   "level",          limit: 255,                 null: false
@@ -168,9 +140,24 @@ ActiveRecord::Schema.define(version: 20150307010121) do
     t.datetime "updated_at",                     null: false
   end
 
+  create_table "projects_saved_searches", id: false, force: :cascade do |t|
+    t.integer "project_id",      null: false
+    t.integer "saved_search_id", null: false
+  end
+
   create_table "projects_sites", id: false, force: :cascade do |t|
     t.integer "project_id", null: false
     t.integer "site_id",    null: false
+  end
+
+  create_table "saved_searches", force: :cascade do |t|
+    t.string   "name",         null: false
+    t.text     "description"
+    t.text     "stored_query", null: false
+    t.integer  "creator_id",   null: false
+    t.datetime "created_at",   null: false
+    t.integer  "deleter_id"
+    t.datetime "deleted_at"
   end
 
   create_table "scripts", force: :cascade do |t|
@@ -264,6 +251,11 @@ ActiveRecord::Schema.define(version: 20150307010121) do
   add_index "users", ["email"], name: "index_users_on_email", unique: true, using: :btree
   add_index "users", ["user_name"], name: "users_user_name_unique", unique: true, using: :btree
 
+  add_foreign_key "analysis_jobs", "saved_searches", name: "analysis_jobs_saved_search_id_fk"
+  add_foreign_key "analysis_jobs", "scripts", name: "analysis_jobs_script_id_fk"
+  add_foreign_key "analysis_jobs", "users", column: "creator_id", name: "analysis_jobs_creator_id_fk"
+  add_foreign_key "analysis_jobs", "users", column: "deleter_id", name: "analysis_jobs_deleter_id_fk"
+  add_foreign_key "analysis_jobs", "users", column: "updater_id", name: "analysis_jobs_updater_id_fk"
   add_foreign_key "audio_event_comments", "audio_events", name: "audio_event_comments_audio_event_id_fk"
   add_foreign_key "audio_event_comments", "users", column: "creator_id", name: "audio_event_comments_creator_id_fk"
   add_foreign_key "audio_event_comments", "users", column: "deleter_id", name: "audio_event_comments_deleter_id_fk"
@@ -285,16 +277,6 @@ ActiveRecord::Schema.define(version: 20150307010121) do
   add_foreign_key "bookmarks", "audio_recordings", name: "bookmarks_audio_recording_id_fk"
   add_foreign_key "bookmarks", "users", column: "creator_id", name: "bookmarks_creator_id_fk"
   add_foreign_key "bookmarks", "users", column: "updater_id", name: "bookmarks_updater_id_fk"
-  add_foreign_key "datasets", "projects", name: "datasets_project_id_fk"
-  add_foreign_key "datasets", "users", column: "creator_id", name: "datasets_creator_id_fk"
-  add_foreign_key "datasets", "users", column: "updater_id", name: "datasets_updater_id_fk"
-  add_foreign_key "datasets_sites", "datasets", name: "datasets_sites_dataset_id_fk"
-  add_foreign_key "datasets_sites", "sites", name: "datasets_sites_site_id_fk"
-  add_foreign_key "jobs", "datasets", name: "jobs_dataset_id_fk"
-  add_foreign_key "jobs", "scripts", name: "jobs_script_id_fk"
-  add_foreign_key "jobs", "users", column: "creator_id", name: "jobs_creator_id_fk"
-  add_foreign_key "jobs", "users", column: "deleter_id", name: "jobs_deleter_id_fk"
-  add_foreign_key "jobs", "users", column: "updater_id", name: "jobs_updater_id_fk"
   add_foreign_key "permissions", "projects", name: "permissions_project_id_fk"
   add_foreign_key "permissions", "users", column: "creator_id", name: "permissions_creator_id_fk"
   add_foreign_key "permissions", "users", column: "updater_id", name: "permissions_updater_id_fk"
@@ -302,8 +284,12 @@ ActiveRecord::Schema.define(version: 20150307010121) do
   add_foreign_key "projects", "users", column: "creator_id", name: "projects_creator_id_fk"
   add_foreign_key "projects", "users", column: "deleter_id", name: "projects_deleter_id_fk"
   add_foreign_key "projects", "users", column: "updater_id", name: "projects_updater_id_fk"
+  add_foreign_key "projects_saved_searches", "projects", name: "projects_saved_searches_project_id_fk"
+  add_foreign_key "projects_saved_searches", "saved_searches", name: "projects_saved_searches_saved_search_id_fk"
   add_foreign_key "projects_sites", "projects", name: "projects_sites_project_id_fk"
   add_foreign_key "projects_sites", "sites", name: "projects_sites_site_id_fk"
+  add_foreign_key "saved_searches", "users", column: "creator_id", name: "saved_searches_creator_id_fk"
+  add_foreign_key "saved_searches", "users", column: "deleter_id", name: "saved_searches_deleter_id_fk"
   add_foreign_key "scripts", "scripts", column: "updated_by_script_id", name: "scripts_updated_by_script_id_fk"
   add_foreign_key "scripts", "users", column: "creator_id", name: "scripts_creator_id_fk"
   add_foreign_key "sites", "users", column: "creator_id", name: "sites_creator_id_fk"

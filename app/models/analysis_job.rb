@@ -1,15 +1,15 @@
-class Job < ActiveRecord::Base
+class AnalysisJob < ActiveRecord::Base
 
   # ensures that creator_id, updater_id, deleter_id are set
   include UserChange
 
-  belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_jobs
-  belongs_to :updater, class_name: 'User', foreign_key: :updater_id, inverse_of: :updated_jobs
-  belongs_to :deleter, class_name: 'User', foreign_key: :deleter_id, inverse_of: :deleted_jobs
+  belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_analysis_jobs
+  belongs_to :updater, class_name: 'User', foreign_key: :updater_id, inverse_of: :updated_analysis_jobs
+  belongs_to :deleter, class_name: 'User', foreign_key: :deleter_id, inverse_of: :deleted_analysis_jobs
 
-  belongs_to :script, inverse_of: :jobs
-  belongs_to :dataset, inverse_of: :jobs
-  has_one :project, through: :dataset  # using has_one instead of belongs_to to use :through
+  belongs_to :script, inverse_of: :analysis_jobs
+  belongs_to :saved_search, inverse_of: :analysis_jobs
+  has_many :projects, through: :saved_search
 
   # add deleted_at and deleter_id
   acts_as_paranoid
@@ -17,7 +17,7 @@ class Job < ActiveRecord::Base
 
   # association validations
   validates :script, existence: true
-  validates :dataset, existence: true
+  validates :saved_search, existence: true
   validates :creator, existence: true
 
   # attribute validations

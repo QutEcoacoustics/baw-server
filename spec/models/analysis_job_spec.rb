@@ -1,9 +1,9 @@
 require 'spec_helper'
 
 
-describe Job, :type => :model do
+describe AnalysisJob, :type => :model do
   it 'has a valid factory' do
-    expect(create(:job)).to be_valid
+    expect(create(:analysis_job)).to be_valid
   end
   #it {should have_many(:analysis_items)}
 
@@ -13,32 +13,23 @@ describe Job, :type => :model do
 
   it { is_expected.to validate_presence_of(:name) }
   it 'is invalid without a name' do
-    expect(build(:job, name: nil)).not_to be_valid
+    expect(build(:analysis_job, name: nil)).not_to be_valid
   end
   it 'should ensure the name is no more than 255 characters' do
     test_string = 'a' * 256
-    expect(build(:job, name: test_string)).not_to be_valid
-    expect(build(:job, name: test_string[0..-2])).to be_valid
+    expect(build(:analysis_job, name: test_string)).not_to be_valid
+    expect(build(:analysis_job, name: test_string[0..-2])).to be_valid
   end
   it 'should ensure name is unique  (case-insensitive)' do
-    create(:job, name: 'There ain\'t room enough in this town for two of us sonny!')
-    as2 = build(:job, name: 'THERE AIN\'T ROOM ENOUGH IN THIS TOWN FOR TWO OF US SONNY!')
+    create(:analysis_job, name: 'There ain\'t room enough in this town for two of us sonny!')
+    as2 = build(:analysis_job, name: 'THERE AIN\'T ROOM ENOUGH IN THIS TOWN FOR TWO OF US SONNY!')
     expect(as2).not_to be_valid
     expect(as2.valid?).to be_falsey
     expect(as2.errors[:name].size).to eq(1)
   end
 
-  it 'fails validation when dataset is nil' do
-    test_item = FactoryGirl.build(:job)
-    test_item.dataset = nil
-
-    expect(subject.valid?).to be_falsey
-    expect(subject.errors[:dataset].size).to eq(1)
-    expect(subject.errors[:dataset].to_s).to match(/must exist as an object or foreign key/)
-  end
-
   it 'fails validation when script is nil' do
-    test_item = FactoryGirl.build(:job)
+    test_item = FactoryGirl.build(:analysis_job)
     test_item.script = nil
 
     expect(subject.valid?).to be_falsey
@@ -48,16 +39,11 @@ describe Job, :type => :model do
   
   it { is_expected.to validate_presence_of(:script_settings) }
   it 'is invalid without a script_settings' do
-    expect(build(:job, script_settings: nil)).not_to be_valid
-  end
-
-
-  it 'is invalid without a dataset' do
-    expect(build(:job, dataset_id: nil)).not_to be_valid
+    expect(build(:analysis_job, script_settings: nil)).not_to be_valid
   end
 
   it 'is invalid without a script' do
-    expect(build(:job, script_id: nil)).not_to be_valid
+    expect(build(:analysis_job, script_id: nil)).not_to be_valid
   end
 
   #

@@ -72,17 +72,9 @@ class Ability
         Access::Check.can_any?(user, :writer, site.projects)
       end
 
-      # data set
-      can [:show, :show_shallow], Dataset do |dataset|
-        Access::Check.can?(user, :reader, dataset.project)
-      end
-      can [:new, :create, :edit, :update, :destroy], Dataset do |dataset|
-        Access::Check.can?(user, :writer, dataset.project)
-      end
-
       # job
-      can [:show, :create], Job do |job|
-        Access::Check.can?(user, :reader, job.dataset.project)
+      can [:show, :create], AnalysisJob do |analysis_job|
+        Access::Check.can_any?(user, :reader, analysis_job.saved_search.projects)
       end
 
       # permission
@@ -138,7 +130,7 @@ class Ability
       # users can only change or delete their own
       can [:edit, :destroy], AudioEventComment, creator_id: user.id
       can [:edit, :update, :destroy, :show], Bookmark, creator_id: user.id
-      can [:edit, :update, :destroy], Job, creator_id: user.id
+      can [:edit, :update, :destroy], AnalysisJob, creator_id: user.id
 
       # --------------------------------------
       # any confirmed user can access these actions
@@ -153,8 +145,7 @@ class Ability
       # index permissions are enforced in the controller action
       can [:index, :new, :create, :new_access_request, :submit_access_request, :filter], Project
       can [:index, :filter], Site
-      can [:index], Dataset
-      can [:index, :new], Job
+      can [:index, :new], AnalysisJob
 
       # index permission is checked in the controller index action
       can [:index, :filter], Permission

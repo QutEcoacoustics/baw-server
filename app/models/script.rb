@@ -11,7 +11,7 @@ class Script < ActiveRecord::Base
   belongs_to :updated_by, class_name: 'Script', foreign_key: :updated_by_script_id
   has_one :update_from, class_name: 'Script', foreign_key: :updated_by_script_id
   has_one :latest_update, -> { order('created_at DESC') }, class_name: 'Script', foreign_key: :original_script_id
-  has_many :jobs, inverse_of: :script
+  has_many :analysis_jobs, inverse_of: :script
 
   # association validations
   validates :creator, existence: true
