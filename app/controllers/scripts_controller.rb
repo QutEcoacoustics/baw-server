@@ -1,18 +1,27 @@
 class ScriptsController < ApplicationController
+  include Api::ControllerHelper
+
   add_breadcrumb 'Home', :root_path
 
-  load_and_authorize_resource :script
+  load_and_authorize_resource
 
   # GET /scripts
   # GET /scripts.json
   def index
-    @scripts = Script.latest_versions
-
     respond_to do |format|
       format.html {
+        @scripts = get_scripts
         add_breadcrumb 'Scripts', scripts_path
       }
-      format.json { render json: @scripts }
+      format.json {
+        @saved_searches, opts = Settings.api_response.response_advanced(
+            api_filter_params,
+            get_scripts,
+            Script,
+            Script.filter_settings
+        )
+        respond_index(opts)
+      }
     end
   end
 
@@ -24,7 +33,7 @@ class ScriptsController < ApplicationController
         add_breadcrumb 'Scripts', scripts_path
         add_breadcrumb @script.display_name, @script
       }
-      format.json { render json: @script }
+      format.json { respond_show }
     end
   end
 
@@ -37,7 +46,7 @@ class ScriptsController < ApplicationController
         add_breadcrumb 'Scripts', scripts_path
         add_breadcrumb 'New', new_script_path
       }
-      format.json { render json: @script }
+      format.json { respond_show }
     end
   end
 
@@ -57,10 +66,10 @@ class ScriptsController < ApplicationController
     respond_to do |format|
       if @script.save
         format.html { redirect_to @script, notice: 'Script was successfully created.' }
-        format.json { render json: @script, status: :created, location: @script }
+        format.json { respond_create_success }
       else
-        format.html { render action: "new" }
-        format.json { render json: @script.errors, status: :unprocessable_entity }
+        format.html { render action: 'new' }
+        format.json { respond_change_fail }
       end
     end
   end
@@ -70,8 +79,8 @@ class ScriptsController < ApplicationController
   def update
     unless @script.is_latest_version?
       respond_to do |format|
-        format.html { redirect_to edit_script_path(@script.latest_version) , notice: 'You have been redirected to update the latest version of this Script.'}
-        format.json { render json: @script, status: :unprocessable_entity }
+        format.html { redirect_to edit_script_path(@script.latest_version), notice: 'You have been redirected to update the latest version of this Script.' }
+        format.json { respond_change_fail }
       end
     end
 
@@ -82,7 +91,7 @@ class ScriptsController < ApplicationController
     respond_to do |format|
       if @new_script.save && @script.save
         format.html { redirect_to @new_script, notice: 'A new version of the Script was successfully created.' }
-        format.json { head :no_content }
+        format.json { respond_show }
       else
         format.html {
           @old_script = @script
@@ -90,11 +99,24 @@ class ScriptsController < ApplicationController
           add_breadcrumb 'Scripts', scripts_path
           add_breadcrumb @script.display_name, @script
           add_breadcrumb 'New Version', edit_script_path(@old_script)
-          render action: "update"
+          render action: 'update'
         }
-        format.json { render json: @script.errors, status: :unprocessable_entity }
+        format.json { respond_change_fail }
       end
     end
+  end
+
+  # POST /scripts/filter.json
+  # GET /scripts/filter.json
+  def filter
+    authorize! :filter, Script
+    filter_response, opts = Settings.api_response.response_advanced(
+        api_filter_params,
+        get_scripts,
+        Script,
+        Script.filter_settings
+    )
+    respond_filter(filter_response, opts)
   end
 
   private
@@ -103,6 +125,10 @@ class ScriptsController < ApplicationController
     params.require(:script).permit(
         :analysis_identifier, :data_file, :description,
         :name, :notes, :settings_file, :verified, :version)
+  end
+
+  def get_scripts
+    Script.latest_versions
   end
 
 end

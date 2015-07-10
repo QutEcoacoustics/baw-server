@@ -94,12 +94,10 @@ Rails.application.routes.draw do
   # when a user goes to my account, render user_account/show view for that user
   get '/my_account/' => 'user_accounts#my_account'
 
-
-
   # for updating only preferences for only the currently logged in user
   put '/my_account/prefs/' => 'user_accounts#modify_preferences'
 
-  #TODO: this will be changed from :user_accounts to :users at some point
+  # TODO: this will be changed from :user_accounts to :users at some point
   # user accounts filter, placed above to not conflict with /user_accounts/:id
   match 'user_accounts/filter' => 'user_accounts#filter', via: [:get, :post], defaults: {format: 'json'}
 
@@ -110,6 +108,8 @@ Rails.application.routes.draw do
       get 'bookmarks'
       get 'audio_events'
       get 'audio_event_comments'
+      get 'saved_searches'
+      get 'analysis_jobs'
     end
   end
 
@@ -261,6 +261,9 @@ Rails.application.routes.draw do
     resources :audio_event_comments, except: [:edit], defaults: {format: 'json'}, path: :comments, as: :comments
   end
 
+  # placed above related resource so it does not conflict with (resource)/:id => (resource)#show
+  match 'scripts/filter' => 'scripts#filter', via: [:get, :post], defaults: {format: 'json'}
+
   # custom routes for scripts
   resources :scripts, except: [:update, :destroy] do
     member do
@@ -330,7 +333,7 @@ Rails.application.routes.draw do
   # exceptions testing route - only available in test env
   if ENV['RAILS_ENV'] == 'test'
     # via: :all seems to not work any more >:(
-    match '/test_exceptions', to: 'errors#test_exceptions', via:  [:get, :head, :post, :put, :delete, :options, :trace, :patch]
+    match '/test_exceptions', to: 'errors#test_exceptions', via: [:get, :head, :post, :put, :delete, :options, :trace, :patch]
   end
 
   # routes directly to error pages

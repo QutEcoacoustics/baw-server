@@ -87,7 +87,7 @@ class SavedSearchesController < ApplicationController
   end
 
   def get_saved_searches
-    Access::Query.saved_esearches(current_user, Access::Core.levels_allow)
+    Access::Query.saved_searches(current_user, Access::Core.levels_allow)
   end
 
 end

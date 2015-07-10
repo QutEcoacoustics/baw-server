@@ -149,6 +149,32 @@ ELSE last_sign_in_at END DESC'
     end
   end
 
+  def saved_searches
+    @user_saved_searches = Access::Query.saved_searches_modified(@user)
+                            .order('saved_searches.created_at DESC')
+                            .paginate(
+                                page: paging_params[:page].blank? ? 1 : paging_params[:page],
+                                per_page: 30
+                            )
+    respond_to do |format|
+      format.html # saved_searches.html.erb
+      format.json { render json: @user_saved_searches }
+    end
+  end
+
+  def analysis_jobs
+    @user_analysis_jobs = Access::Query.analysis_jobs_modified(@user)
+                               .order('analysis_jobs.updated_at DESC')
+                               .paginate(
+                                   page: paging_params[:page].blank? ? 1 : paging_params[:page],
+                                   per_page: 30
+                               )
+    respond_to do |format|
+      format.html # analysis_jobs.html.erb
+      format.json { render json: @user_saved_searches }
+    end
+  end
+
   def filter
     authorize! :filter, User
     filter_response, opts = Settings.api_response.response_advanced(

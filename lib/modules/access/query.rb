@@ -241,6 +241,32 @@ module Access
         Access::Core.query_project_access(user, levels, query)
       end
 
+      # Get all analysis jobs for which this user has this user has these access levels.
+      # @param [User] user
+      # @param [Symbol, Array<Symbol>] levels
+      # @return [ActiveRecord::Relation] analysis jobs
+      def analysis_jobs(user, levels)
+        user = Access::Core.validate_user(user)
+        levels = Access::Core.validate_levels(levels)
+
+        query = AudioEventComment.joins(saved_searches: [projects_saved_searches: [:projects]])
+
+        Access::Core.query_project_access(user, levels, query)
+      end
+
+      # Get all saved searches for which this user has this user has these access levels.
+      # @param [User] user
+      # @param [Symbol, Array<Symbol>] levels
+      # @return [ActiveRecord::Relation] saved searches
+      def saved_searches(user, levels)
+        user = Access::Core.validate_user(user)
+        levels = Access::Core.validate_levels(levels)
+
+        query = AudioEventComment.joins(projects_saved_searches: [:projects])
+
+        Access::Core.query_project_access(user, levels, query)
+      end
+
       def taggings_modified(user)
         user = Access::Core.validate_user(user)
         Tagging.where('(audio_events_tags.creator_id = ? OR audio_events_tags.updater_id = ?)', user.id, user.id)
@@ -259,6 +285,16 @@ module Access
       def audio_event_comments_modified(user)
         user = Access::Core.validate_user(user)
         AudioEventComment.where('(audio_event_comments.creator_id = ? OR audio_event_comments.updater_id = ?)', user.id, user.id)
+      end
+
+      def saved_searches_modified(user)
+        user = Access::Core.validate_user(user)
+        SavedSearch.where('(saved_searches.creator_id = ?)', user.id)
+      end
+
+      def analysis_jobs_modified(user)
+        user = Access::Core.validate_user(user)
+        AnalysisJob.where('(analysis_jobs.creator_id = ? OR analysis_jobs.updater_id = ?)', user.id, user.id)
       end
 
     end

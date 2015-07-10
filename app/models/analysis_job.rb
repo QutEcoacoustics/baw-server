@@ -21,21 +21,49 @@ class AnalysisJob < ActiveRecord::Base
   validates :creator, existence: true
 
   # attribute validations
-  validates :name, presence: true, length: { minimum: 2, maximum: 255 }, uniqueness: { case_sensitive: false }
+  validates :name, presence: true, length: {minimum: 2, maximum: 255}, uniqueness: {case_sensitive: false}
   validates :script_settings, presence: true
 
-  #validates :process_new, :inclusion => { :in => [true, false] }, allow_nil: true
-  #validate :data_set_cannot_process_new
+  def self.filter_settings
+    {
+        valid_fields: [:id, :name, :description, :created_at, :creator_id, :updated_at, :updater_id],
+        render_fields: [:id, :name, :description, :created_at, :creator_id, :updated_at, :updater_id],
+        text_fields: [],
+        custom_fields: lambda { |analysis_job, user|
+          analysis_job_hash = {}
 
-  #serialize :script_settings, Hash
+          analysis_job_hash[:saved_search] =
+              SavedSearch
+                  .where(id: analysis_job.saved_search_id)
+                  .pluck(*SavedSearch.filter_settings[:render_fields])
+                  .first
+          analysis_job_hash[:script] =
+              Script
+                  .where(id: analysis_job.script_id)
+                  .pluck(*Script.filter_settings[:render_fields])
+                  .first
 
-  private
-
-  # custom validation methods
-  #def data_set_cannot_process_new
-  #  return if process_new.nil?
-  #
-  #  errors.add(:level, 'An analysis job that references a data set cannot process new recordings.') if self.data_set_identifier && self.process_new
-  #end
-  #
+          [analysis_job, analysis_job_hash]
+        },
+        controller: :audio_events,
+        action: :filter,
+        defaults: {
+            order_by: :name,
+            direction: :asc
+        },
+        field_mappings: [],
+        valid_associations: [
+            {
+                join: SavedSearch,
+                on: AnalysisJob.arel_table[:saved_search_id].eq(SavedSearch.arel_table[:id]),
+                available: true
+            },
+            {
+                join: Script,
+                on: AnalysisJob.arel_table[:script_id].eq(Script.arel_table[:id]),
+                available: true
+            }
+        ]
+    }
+  end
 end

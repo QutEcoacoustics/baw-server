@@ -64,6 +64,8 @@ class AnalysisJobsController < ApplicationController
     respond_destroy
   end
 
+  # POST /analysis_jobs/filter.json
+  # GET /analysis_jobs/filter.json
   def filter
     authorize! :filter, AnalysisJob
     filter_response, opts = Settings.api_response.response_advanced(
