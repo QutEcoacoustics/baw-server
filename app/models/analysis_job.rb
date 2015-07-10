@@ -9,7 +9,7 @@ class AnalysisJob < ActiveRecord::Base
 
   belongs_to :script, inverse_of: :analysis_jobs
   belongs_to :saved_search, inverse_of: :analysis_jobs
-  has_many :projects, through: :saved_search
+  has_many :projects, through: :saved_searches
 
   # add deleted_at and deleter_id
   acts_as_paranoid
@@ -23,6 +23,20 @@ class AnalysisJob < ActiveRecord::Base
   # attribute validations
   validates :name, presence: true, length: {minimum: 2, maximum: 255}, uniqueness: {case_sensitive: false}
   validates :script_settings, presence: true
+
+  # job status values - completed just means all processing has finished, whether it succeeds or not.
+  AVAILABLE_JOB_STATUS_SYMBOLS = [:new, :preparing, :processing, :suspended, :completed]
+  AVAILABLE_JOB_STATUS = AVAILABLE_JOB_STATUS_SYMBOLS.map { |item| item.to_s }
+
+  AVAILABLE_JOB_STATUS_DISPLAY = [
+      {id: :new, name: 'New'},
+      {id: :preparing, name: 'Preparing'},
+      {id: :processing, name: 'Processing'},
+      {id: :suspended, name: 'Suspended'},
+      {id: :completed, name: 'Completed'},
+  ]
+
+  enumerize :job_status, in: AVAILABLE_JOB_STATUS, predicates: true
 
   def self.filter_settings
     {

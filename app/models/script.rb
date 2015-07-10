@@ -2,27 +2,21 @@ class Script < ActiveRecord::Base
   # ensures that creator_id, updater_id, deleter_id are set
   include UserChange
 
-  has_attached_file :settings_file
-  has_attached_file :data_file
-
   # relationships
   belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_scripts
-  
   belongs_to :updated_by, class_name: 'Script', foreign_key: :updated_by_script_id
+
   has_one :update_from, class_name: 'Script', foreign_key: :updated_by_script_id
   has_one :latest_update, -> { order('created_at DESC') }, class_name: 'Script', foreign_key: :original_script_id
+
   has_many :analysis_jobs, inverse_of: :script
 
   # association validations
   validates :creator, existence: true
 
   # attribute validations
-  validates :name, presence: true
-  validates :analysis_identifier, presence: true
+  validates :name, :analysis_identifier, :executable_command, :executable_settings, presence: true, length: {minimum: 2}
   validate :version, :version_increase, on: :create
-
-  validates :settings_file, presence: true
-  validates_attachment_content_type :settings_file, content_type: 'text/plain'
 
   # scopes
   scope :latest_versions, -> { where(updated_by_script_id: nil) }
