@@ -221,6 +221,10 @@ Rails.application.routes.draw do
   # API only for analysis_jobs and saved_searches
   resources :analysis_jobs, :saved_searches, except: [:edit], defaults: {format: 'json'}
 
+  # route for custom and system results
+  match 'analysis_jobs/:analysis_job_id/audio_recordings/:audio_recording_id/*results_path' => 'analysis#show',
+        defaults: {format: 'json'}, as: :analysis_results, via: [:get, :head], format: false
+
   # placed above related resource so it does not conflict with (resource)/:id => (resource)#show
   match 'audio_recordings/filter' => 'audio_recordings#filter', via: [:get, :post], defaults: {format: 'json'}
   match 'audio_events/filter' => 'audio_events#filter', via: [:get, :post], defaults: {format: 'json'}
@@ -228,8 +232,6 @@ Rails.application.routes.draw do
   # API audio recording item
   resources :audio_recordings, only: [:index, :show, :new, :update], defaults: {format: 'json'} do
     match 'media.:format' => 'media#show', defaults: {format: 'json'}, as: :media, via: [:get, :head]
-    match 'analysis.:format' => 'analysis#show', defaults: {format: 'json'}, as: :analysis, via: [:get, :head]
-
     resources :audio_events, except: [:edit], defaults: {format: 'json'} do
       collection do
         get 'download', defaults: {format: 'csv'}
