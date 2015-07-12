@@ -123,8 +123,9 @@ class ScriptsController < ApplicationController
 
   def script_params
     params.require(:script).permit(
-        :analysis_identifier, :data_file, :description,
-        :name, :notes, :settings_file, :verified, :version)
+        :name, :description, :analysis_identifier,
+        :version, :verified,
+        :executable_command, :executable_settings)
   end
 
   def get_scripts

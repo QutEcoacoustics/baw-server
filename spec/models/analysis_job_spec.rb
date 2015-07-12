@@ -37,13 +37,17 @@ describe AnalysisJob, :type => :model do
     expect(subject.errors[:script].to_s).to match(/must exist as an object or foreign key/)
   end
   
-  it { is_expected.to validate_presence_of(:script_settings) }
-  it 'is invalid without a script_settings' do
-    expect(build(:analysis_job, script_settings: nil)).not_to be_valid
+  it { is_expected.to validate_presence_of(:custom_settings) }
+  it 'is invalid without a custom_settings' do
+    expect(build(:analysis_job, custom_settings: nil)).not_to be_valid
   end
 
   it 'is invalid without a script' do
     expect(build(:analysis_job, script_id: nil)).not_to be_valid
+  end
+
+  it 'is invalid without a saved_search' do
+    expect(build(:analysis_job, saved_search: nil)).not_to be_valid
   end
 
   #

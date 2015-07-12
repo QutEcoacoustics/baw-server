@@ -230,7 +230,6 @@ class Ability
       can [:show, :audio_events, :filter], User
 
       # users can only view their own projects, comments, bookmarks (admins can view any user's projects/comments/bookmarks)
-
       can [:projects, :audio_event_comments, :bookmarks], User, id: user.id
 
       # users get their own account and preferences from these actions

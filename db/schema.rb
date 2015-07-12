@@ -11,24 +11,31 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20150709141712) do
+ActiveRecord::Schema.define(version: 20150710082554) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
   create_table "analysis_jobs", force: :cascade do |t|
-    t.string   "name",            limit: 255, null: false
-    t.string   "annotation_name", limit: 255
-    t.text     "script_settings"
-    t.integer  "script_id",                   null: false
-    t.integer  "creator_id",                  null: false
+    t.string   "name",                         limit: 255,                                          null: false
+    t.string   "annotation_name",              limit: 255
+    t.text     "custom_settings",                                                                   null: false
+    t.integer  "script_id",                                                                         null: false
+    t.integer  "creator_id",                                                                        null: false
     t.integer  "updater_id"
     t.integer  "deleter_id"
     t.datetime "deleted_at"
-    t.datetime "created_at",                  null: false
-    t.datetime "updated_at",                  null: false
+    t.datetime "created_at",                                                                        null: false
+    t.datetime "updated_at",                                                                        null: false
     t.text     "description"
-    t.integer  "saved_search_id",             null: false
+    t.integer  "saved_search_id",                                                                   null: false
+    t.datetime "started_at"
+    t.string   "overall_status",                                                    default: "new", null: false
+    t.datetime "overall_status_modified_at",                                                        null: false
+    t.text     "overall_progress",                                                                  null: false
+    t.datetime "overall_progress_modified_at",                                                      null: false
+    t.integer  "overall_count",                                                                     null: false
+    t.decimal  "overall_duration_seconds",                 precision: 14, scale: 4,                 null: false
   end
 
   create_table "audio_event_comments", force: :cascade do |t|
@@ -161,23 +168,16 @@ ActiveRecord::Schema.define(version: 20150709141712) do
   end
 
   create_table "scripts", force: :cascade do |t|
-    t.string   "name",                       limit: 255,                                         null: false
-    t.string   "description",                limit: 255
-    t.text     "notes"
-    t.string   "settings_file_file_name",    limit: 255
-    t.string   "settings_file_content_type", limit: 255
-    t.integer  "settings_file_file_size"
-    t.datetime "settings_file_updated_at"
-    t.string   "data_file_file_name",        limit: 255
-    t.string   "data_file_content_type",     limit: 255
-    t.integer  "data_file_file_size"
-    t.datetime "data_file_updated_at"
-    t.string   "analysis_identifier",        limit: 255,                                         null: false
-    t.decimal  "version",                                precision: 4, scale: 2, default: 0.1,   null: false
-    t.boolean  "verified",                                                       default: false
+    t.string   "name",                 limit: 255,                                         null: false
+    t.string   "description",          limit: 255
+    t.string   "analysis_identifier",  limit: 255,                                         null: false
+    t.decimal  "version",                          precision: 4, scale: 2, default: 0.1,   null: false
+    t.boolean  "verified",                                                 default: false
     t.integer  "updated_by_script_id"
-    t.integer  "creator_id",                                                                     null: false
-    t.datetime "created_at",                                                                     null: false
+    t.integer  "creator_id",                                                               null: false
+    t.datetime "created_at",                                                               null: false
+    t.text     "executable_command",                                                       null: false
+    t.text     "executable_settings",                                                      null: false
   end
 
   create_table "sites", force: :cascade do |t|

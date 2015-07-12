@@ -14,8 +14,8 @@ class ChangeScripts < ActiveRecord::Migration
         remove_column :scripts, :data_file_file_size
         remove_column :scripts, :data_file_updated_at
 
-        add_column :scripts, :executable_command, :text
-        add_column :scripts, :executable_settings, :text
+        add_column :scripts, :executable_command, :text, null: false
+        add_column :scripts, :executable_settings, :text, null: false
       end
       direction.down do
         add_column :scripts, :notes, :text
@@ -30,8 +30,8 @@ class ChangeScripts < ActiveRecord::Migration
         add_column :scripts, :data_file_file_size, :integer
         add_column :scripts, :data_file_updated_at, :datetime
 
-        remove_column :scripts, :executable_command, :text
-        remove_column :scripts, :executable_settings, :text
+        remove_column :scripts, :executable_command, :text, null: false
+        remove_column :scripts, :executable_settings, :text, null: false
       end
     end
   end

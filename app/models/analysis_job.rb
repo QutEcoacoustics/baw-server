@@ -1,4 +1,5 @@
 class AnalysisJob < ActiveRecord::Base
+  extend Enumerize
 
   # ensures that creator_id, updater_id, deleter_id are set
   include UserChange
@@ -15,6 +16,11 @@ class AnalysisJob < ActiveRecord::Base
   acts_as_paranoid
   validates_as_paranoid
 
+  # store progress as json in a text column
+  # this stores jason in the form
+  # { queued: 5, working: 10, success: 4, failed: 3, total: 22}
+  serialize :overall_progress, JSON
+
   # association validations
   validates :script, existence: true
   validates :saved_search, existence: true
@@ -22,7 +28,12 @@ class AnalysisJob < ActiveRecord::Base
 
   # attribute validations
   validates :name, presence: true, length: {minimum: 2, maximum: 255}, uniqueness: {case_sensitive: false}
-  validates :script_settings, presence: true
+  validates :custom_settings, :overall_progress, presence: true
+  # overall_count is the number of audio_recordings/resque jobs. These should be equal.
+  validates :overall_count, presence: true, numericality: {only_integer: true, greater_than: 0}
+  validates :overall_duration_seconds, presence: true, numericality: {only_integer: false, greater_than: 0}
+  validates :started_at, :overall_status_modified_at, :overall_progress_modified_at,
+            presence: true, timeliness: {on_or_before: lambda { Time.zone.now }, type: :datetime}
 
   # job status values - completed just means all processing has finished, whether it succeeds or not.
   AVAILABLE_JOB_STATUS_SYMBOLS = [:new, :preparing, :processing, :suspended, :completed]
@@ -36,7 +47,7 @@ class AnalysisJob < ActiveRecord::Base
       {id: :completed, name: 'Completed'},
   ]
 
-  enumerize :job_status, in: AVAILABLE_JOB_STATUS, predicates: true
+  enumerize :overall_status, in: AVAILABLE_JOB_STATUS, predicates: true
 
   def self.filter_settings
     {

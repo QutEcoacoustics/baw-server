@@ -85,8 +85,18 @@ class AnalysisJobsController < ApplicationController
 
   def analysis_jobs_params
     params.require(:job).permit(
-        :script_id, :saved_search_id, :annotation_name,
-        :name, :description, :script_settings)
+        :script_id, :saved_search_id,
+        :name,
+        :description,
+        :annotation_name,
+        :custom_settings,
+        :started_at,
+        :overall_status,
+        :overall_status_modified_at,
+        :overall_progress,
+        :overall_progress_modified_at,
+        :overall_count,
+        :overall_duration_seconds)
   end
 
   def get_analysis_jobs
