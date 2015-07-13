@@ -201,7 +201,11 @@ module Api
       # build complete api response
       opts[:filter] = filter_query.filter unless filter_query.filter.blank?
       opts[:projection] = filter_query.projection unless filter_query.projection.blank?
-      opts[:additional_params] = params.except(model.to_s.underscore.to_sym, :filter, :projection, :action, :controller, :format, :paging, :sorting)
+      opts[:additional_params] = filter_query.parameters.except(
+          model.to_s.underscore.to_sym,
+          :filter, :projection,
+          :action, :controller,
+          :format, :paging, :sorting)
 
       [paged_sorted_query, opts]
     end

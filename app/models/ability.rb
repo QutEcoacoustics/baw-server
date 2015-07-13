@@ -66,11 +66,13 @@ class Ability
 
       # must have read permission or higher to view project
       can [:show], Project do |project|
+        check_model(project)
         Access::Check.can?(user, :reader, project)
       end
 
       # must have write permission or higher to edit, update, update_permission
       can [:edit, :update, :update_permissions], Project do |project|
+        check_model(project)
         Access::Check.can?(user, :writer, project)
       end
 
@@ -83,6 +85,7 @@ class Ability
       # :edit and :update are done via project instead
 
       can [:show, :new, :create, :destroy], Permission do |permission|
+        check_model(permission)
         Access::Check.can?(user, :writer, permission.project)
       end
 
@@ -95,12 +98,14 @@ class Ability
 
       # must have read permission or higher to view site
       can [:show, :show_shallow], Site do |site|
+        check_model(site)
         # can't add .includes here - it breaks when validating projects due to ActiveRecord::AssociationRelation
         Access::Check.can_any?(user, :reader, site.projects)
       end
 
       # must have write permission or higher to new, create, edit, update
       can [:new, :create, :edit, :update], Site do |site|
+        check_model(site)
         # can't add .includes here - it breaks when validating projects due to ActiveRecord::AssociationRelation
         # .all would have worked. I tried .where(nil), that didn't work either :/
         # https://github.com/rails/rails/issues/12756
@@ -119,6 +124,7 @@ class Ability
 
       # must have read permission or higher to view audio recording
       can [:show], AudioRecording do |audio_recording|
+        check_model(audio_recording)
         Access::Check.can_any?(user, :reader, audio_recording.site.projects)
       end
 
@@ -130,11 +136,13 @@ class Ability
 
       # must have read permission or higher to view or download audio event
       can [:show, :download], AudioEvent do |audio_event|
+        check_model(audio_event)
         Access::Check.can_any?(user, :reader, audio_event.audio_recording.site.projects)
       end
 
       # must have write permission or higher to create, update, destroy
       can [:create, :update, :destroy], AudioEvent do |audio_event|
+        check_model(audio_event)
         Access::Check.can_any?(user, :writer, audio_event.audio_recording.site.projects)
       end
 
@@ -150,6 +158,7 @@ class Ability
       # can view or create comments
       # can also update flag, any other attribute is restricted in action to creator
       can [:show, :create, :update], AudioEventComment do |audio_event_comment|
+        check_model(audio_event_comment)
         is_ref = audio_event_comment.audio_event.is_reference
         projects = audio_event_comment.audio_event.audio_recording.site.projects
         Access::Check.can_any?(user, :reader, projects) || is_ref
@@ -166,6 +175,7 @@ class Ability
 
       # must have read permission or higher on project to create bookmark
       can [:create], Bookmark do |bookmark|
+        check_model(bookmark)
         Access::Check.can_any?(user, :reader, bookmark.audio_recording.site.projects)
       end
 
@@ -180,6 +190,7 @@ class Ability
 
       # must have read permission or higher on any saved_search projects to create analysis job
       can [:show, :create], AnalysisJob do |analysis_job|
+        check_model(analysis_job)
         Access::Check.can_any?(user, :reader, analysis_job.saved_search.projects)
       end
 
@@ -193,9 +204,12 @@ class Ability
       # ----------------------------
       # cannot be updated
 
-      # must have read permission or higher on any projects to create saved search
+      # must have read permission or higher on all projects to create saved search
+      # or be the creator of the saved search
       can [:show, :create], SavedSearch do |saved_search|
-        Access::Check.can_any?(user, :reader, saved_search.projects)
+        check_model(saved_search)
+        is_creator = saved_search.creator_id == user.id
+        is_creator || Access::Check.can_all?(user, :reader, saved_search.projects)
       end
 
       # only creator can destroy their own saved searches
@@ -241,4 +255,11 @@ class Ability
 
     end
   end
+
+  private
+
+  def check_model(model)
+    fail ArgumentError, 'Must have an instance of the model.' if model.nil?
+  end
+
 end

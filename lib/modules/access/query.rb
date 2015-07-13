@@ -10,6 +10,10 @@ module Access
         level_projects(user, [project])
       end
 
+      # Get highest access level for this user for these projects (checks Permission and Project creator).
+      # @param [User] user
+      # @param [Array<Project>] projects
+      # @return [Symbol] level
       def level_projects(user, projects)
         projects = Access::Core.validate_projects(projects)
         user = Access::Core.validate_user(user)
@@ -26,6 +30,37 @@ module Access
           levels = [permission_user_lvl, creator_lvl].flatten.compact
 
           levels.blank? ? :none : Access::Core.highest(levels)
+        elsif Access::Check.is_guest?(user)
+          #permission_anon_lvl = level_permissions_anon(projects)
+          #permission_anon_lvl.blank? ? :none : Access::Core.highest([permission_anon_lvl].flatten)
+          # remove :none once additional permissions are added
+          :none
+        else
+          # guest, harvester, or invalid role
+          :none
+        end
+      end
+
+      # Get lowest access level for this user for these projects (checks Permission and Project creator).
+      # @param [User] user
+      # @param [Array<Project>] projects
+      # @return [Symbol] level
+      def level_projects_lowest(user, projects)
+        projects = Access::Core.validate_projects(projects)
+        user = Access::Core.validate_user(user)
+
+        # check based on role
+        if Access::Check.is_admin?(user)
+          :owner
+        elsif Access::Check.is_standard_user?(user)
+          creator_lvl = level_project_creators(user, projects)
+          permission_user_lvl = level_permissions_user(user, projects)
+          #permission_logged_in_lvl = level_permissions_logged_in(projects)
+
+          #levels = [permission_user_lvl, permission_logged_in_lvl].flatten.compact
+          levels = [permission_user_lvl, creator_lvl].flatten.compact
+
+          levels.blank? ? :none : Access::Core.lowest(levels)
         elsif Access::Check.is_guest?(user)
           #permission_anon_lvl = level_permissions_anon(projects)
           #permission_anon_lvl.blank? ? :none : Access::Core.highest([permission_anon_lvl].flatten)
@@ -249,7 +284,7 @@ module Access
         user = Access::Core.validate_user(user)
         levels = Access::Core.validate_levels(levels)
 
-        query = AudioEventComment.joins(saved_searches: [projects_saved_searches: [:projects]])
+        query = AnalysisJob.joins(saved_searches: [:projects])
 
         Access::Core.query_project_access(user, levels, query)
       end
@@ -262,7 +297,7 @@ module Access
         user = Access::Core.validate_user(user)
         levels = Access::Core.validate_levels(levels)
 
-        query = AudioEventComment.joins(projects_saved_searches: [:projects])
+        query = SavedSearch.joins(:projects)
 
         Access::Core.query_project_access(user, levels, query)
       end

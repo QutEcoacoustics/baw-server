@@ -38,22 +38,13 @@ class SavedSearchesController < ApplicationController
   def create
     attributes_and_authorize(saved_search_params)
 
+    @saved_search.projects = @saved_search.extract_projects(current_user)
+
     if @saved_search.save
       respond_create_success(saved_search_url(@saved_search))
     else
       respond_change_fail
     end
-
-  end
-
-  # PUT /saved_searches/1
-  # PUT /saved_searches/1.json
-  def update
-      if @saved_search.update_attributes(saved_search_params)
-        respond_show
-      else
-        respond_change_fail
-      end
 
   end
 

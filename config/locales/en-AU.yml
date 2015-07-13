@@ -126,6 +126,9 @@ en-AU:
         one: is the wrong length (should be 1 character)
         other: is the wrong length (should be %{count} characters)
       existence: must exist as an object or foreign key for %{record}
+      invalid_date: invalid date
+      invalid_datetime: is not a valid datetime
+      on_or_before: must be on or before current datetime
     template:
       body: ! 'There were problems with the following fields:'
       header:
@@ -197,21 +200,3 @@ en-AU:
       long: ! '%d %B, %Y %H:%M'
       short: ! '%d %b %H:%M'
     pm: pm
-  # remove these aliases after 'activemodel' and 'activerecord' namespaces are removed from Rails repository
-  activemodel:
-    errors:
-      models:
-        bug_report:
-          attributes:
-            date:
-             invalid_date: 'invalid date'
-      <<: *errors
-  activerecord:
-    errors:
-      models:
-        audio_recording:
-          attributes:
-            recorded_date:
-              invalid_datetime: 'invalid datetime'
-              on_or_before: 'must be on or before current datetime'
-      <<: *errors

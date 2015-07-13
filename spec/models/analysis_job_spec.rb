@@ -1,7 +1,6 @@
 require 'spec_helper'
 
-
-describe AnalysisJob, :type => :model do
+describe AnalysisJob, type: :model do
   it 'has a valid factory' do
     expect(create(:analysis_job)).to be_valid
   end

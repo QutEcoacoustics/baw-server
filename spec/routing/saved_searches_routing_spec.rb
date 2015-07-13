@@ -11,7 +11,7 @@ describe SavedSearchesController, :type => :routing do
 
     it { expect(get('/saved_searches/2/edit')).to route_to('errors#route_error', requested_route: 'saved_searches/2/edit') }
 
-    it { expect(put('/saved_searches/2')).to route_to('saved_searches#update', id: '2', format: 'json') }
+    it { expect(put('/saved_searches/2')).to route_to('errors#route_error', requested_route: 'saved_searches/2') }
     it { expect(delete('/saved_searches/2')).to route_to('saved_searches#destroy', id: '2', format: 'json') }
 
     # used by client

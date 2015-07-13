@@ -277,22 +277,7 @@ class AudioRecording < ActiveRecord::Base
             {
                 join: AudioEvent,
                 on: AudioRecording.arel_table[:id].eq(AudioEvent.arel_table[:audio_recording_id]),
-                available: true,
-                associations: [
-                    {
-                        join: Tagging,
-                        on: AudioEvent.arel_table[:id].eq(Tagging.arel_table[:audio_event_id]),
-                        available: false,
-                        associations: [
-                            {
-                                join: Tag,
-                                on: Tagging.arel_table[:tag_id].eq(Tag.arel_table[:id]),
-                                available: true
-                            }
-                        ]
-
-                    }
-                ]
+                available: true
             },
             {
                 join: Site,

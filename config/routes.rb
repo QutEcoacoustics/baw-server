@@ -219,7 +219,8 @@ Rails.application.routes.draw do
   match 'saved_searches/filter' => 'saved_searches#filter', via: [:get, :post], defaults: {format: 'json'}
 
   # API only for analysis_jobs and saved_searches
-  resources :analysis_jobs, :saved_searches, except: [:edit], defaults: {format: 'json'}
+  resources :analysis_jobs, except: [:edit], defaults: {format: 'json'}
+  resources  :saved_searches, except: [:edit, :update], defaults: {format: 'json'}
 
   # route for custom and system results
   match 'analysis_jobs/:analysis_job_id/audio_recordings/:audio_recording_id/*results_path' => 'analysis#show',

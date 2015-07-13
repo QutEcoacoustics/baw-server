@@ -67,8 +67,8 @@ gem 'bootstrap-timepicker-rails', '~> 0.1.3'
 gem 'bootstrap-datepicker-rails', '~> 1.4.0'
 # for rails 3, 4
 gem 'will_paginate', '~> 3.0.7'
-gem 'dotiw','~> 3.0.1'
-gem 'recaptcha', '~> 0.4.0',  require: 'recaptcha/rails'
+gem 'dotiw', '~> 3.0.1'
+gem 'recaptcha', '~> 0.4.0', require: 'recaptcha/rails'
 
 # for proper timezone support
 gem 'tzinfo', '~> 1.2.2'
@@ -168,7 +168,9 @@ group :development, :test do
   gem 'notiffany', '~> 0.0.3'
   gem 'guard', '~> 2.12.1'
   gem 'guard-rspec', '~> 4.6.0'
-  gem 'guard-yard', '~> 2.1.4'
+  gem 'guard-yard', '~> 2.1.4', require: false
+  gem 'rubocop', require: false
+  gem 'haml-lint', require: false
 
   gem 'fakeredis', '~> 0.5.0', require: 'fakeredis/rspec'
 

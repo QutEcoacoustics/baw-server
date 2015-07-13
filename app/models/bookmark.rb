@@ -29,7 +29,14 @@ class Bookmark < ActiveRecord::Base
         defaults: {
             order_by: :created_at,
             direction: :desc
-        }
+        },
+        valid_associations: [
+             {
+                join: AudioRecording,
+                on: AudioRecording.arel_table[:id].eq(Bookmark.arel_table[:audio_recording_id]),
+                available: true
+            }
+        ]
     }
   end
 

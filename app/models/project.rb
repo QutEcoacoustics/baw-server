@@ -53,7 +53,40 @@ class Project < ActiveRecord::Base
         defaults: {
             order_by: :name,
             direction: :desc
-        }
+        },
+        valid_associations: [
+            {
+                join: Permission,
+                on: Permission.arel_table[:project_id].eq(Project.arel_table[:id]),
+                available: true
+            },
+            {
+                join: Arel::Table.new(:projects_sites),
+                on: Project.arel_table[:id].eq(Arel::Table.new(:projects_sites)[:project_id]),
+                available: false,
+                associations: [
+                    {
+                        join: Site,
+                        on: Arel::Table.new(:projects_sites)[:site_id].eq(Site.arel_table[:id]),
+                        available: true
+                    }
+                ]
+
+            },
+            {
+                join: Arel::Table.new(:projects_saved_searches),
+                on: Project.arel_table[:id].eq(Arel::Table.new(:projects_saved_searches)[:project_id]),
+                available: false,
+                associations: [
+                    {
+                        join: SavedSearch,
+                        on: Arel::Table.new(:projects_saved_searches)[:saved_search_id].eq(SavedSearch.arel_table[:id]),
+                        available: true
+                    }
+                ]
+
+            }
+        ]
     }
   end
 end

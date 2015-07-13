@@ -196,7 +196,12 @@ class Site < ActiveRecord::Base
                     }
                 ]
 
-            }
+            },
+            {
+                join: AudioRecording,
+                on: AudioRecording.arel_table[:site_id].eq(Site.arel_table[:id]),
+                available: true
+            },
         ]
     }
   end
