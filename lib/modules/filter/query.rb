@@ -12,7 +12,7 @@ module Filter
     attr_reader :key_prefix, :max_items, :initial_query, :table,
                 :valid_fields, :text_fields, :filter_settings,
                 :parameters, :filter, :projection, :qsp_text_filter,
-                :qsp_generic_filters, :paging, :sorting
+                :qsp_generic_filters, :paging, :sorting, :build
 
     # Convert a json POST body to an arel query.
     # @param [Hash] parameters
