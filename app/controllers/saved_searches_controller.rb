@@ -74,7 +74,11 @@ class SavedSearchesController < ApplicationController
   end
 
   def saved_search_params
-    params.require(:saved_search).permit(:id, :name, :description, :stored_query)
+    # can't permit arbitrary hash
+    # https://github.com/rails/rails/issues/9454#issuecomment-14167664
+    params.require(:saved_search).permit(:id, :name, :description).tap do |allowed_params|
+      allowed_params[:stored_query] = params[:saved_search][:stored_query] if params[:saved_search][:stored_query]
+    end
   end
 
   def get_saved_searches

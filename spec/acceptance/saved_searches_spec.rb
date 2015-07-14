@@ -17,6 +17,7 @@ resource 'SavedSearches' do
     @admin_user = FactoryGirl.create(:admin)
     @writer_user = FactoryGirl.create(:user)
     @reader_user = FactoryGirl.create(:user)
+    @other_user = FactoryGirl.create(:user)
     @unconfirmed_user = FactoryGirl.create(:unconfirmed_user)
 
     @write_permission = FactoryGirl.create(:write_permission, creator: @admin_user, user: @writer_user)
@@ -36,10 +37,12 @@ resource 'SavedSearches' do
   let(:admin_token) { "Token token=\"#{@admin_user.authentication_token}\"" }
   let(:writer_token) { "Token token=\"#{@writer_user.authentication_token}\"" }
   let(:reader_token) { "Token token=\"#{@reader_user.authentication_token}\"" }
+  let(:other_token) { "Token token=\"#{@other_user.authentication_token}\"" }
   let(:unconfirmed_token) { "Token token=\"#{@unconfirmed_user.authentication_token}\"" }
   let(:invalid_token) { "Token token=\"weeeeeeeee0123456789splat\"" }
 
-  let(:post_attributes) { {name: 'saved search name'} }
+  let(:example_stored_query) { {uuid: {eq: 'blah blah'}} }
+  let(:post_attributes) { {name: 'saved search name', stored_query: example_stored_query } }
 
   ################################
   # LIST
@@ -51,12 +54,17 @@ resource 'SavedSearches' do
 
   get '/saved_searches' do
     let(:authentication_token) { reader_token }
-    standard_request_options(:get, 'LIST (as reader)', :ok, {expected_json_path: 'data/0/stored_query', data_item_count: 3})
+    standard_request_options(:get, 'LIST (as reader)', :ok, {expected_json_path: 'data/0/stored_query', data_item_count: 1})
+  end
+
+  get '/saved_searches' do
+    let(:authentication_token) { reader_token }
+    standard_request_options(:get, 'LIST (as other)', :ok, {response_body_content: '"total":1,', data_item_count: 0})
   end
 
   get '/saved_searches' do
     let(:authentication_token) { admin_token }
-    standard_request_options(:get, 'LIST (as admin)', :ok, {expected_json_path: 'data/0/stored_query', data_item_count: 5})
+    standard_request_options(:get, 'LIST (as admin)', :ok, {expected_json_path: 'data/0/stored_query', data_item_count: 1})
   end
 
   get '/saved_searches' do
@@ -116,14 +124,14 @@ resource 'SavedSearches' do
     parameter :id, 'Requested saved search id (in path/route)', required: true
     let(:id) { @saved_search.id }
     let(:authentication_token) { reader_token }
-    standard_request_options(:get, 'SHOW (as reader)', :ok, {expected_json_path: %w(data/created_at data/stored_query)})
+    standard_request_options(:get, 'SHOW (as reader)', :ok, {expected_json_path: %w(data/analysis_job_ids data/stored_query)})
   end
 
   get '/saved_searches/:id' do
     parameter :id, 'Requested saved search id (in path/route)', required: true
     let(:id) { @saved_search.id }
     let(:authentication_token) { admin_token }
-    standard_request_options(:get, 'SHOW (as admin)', :ok, {expected_json_path: %w(data/updated_at data/stored_query)})
+    standard_request_options(:get, 'SHOW (as admin)', :ok, {expected_json_path: %w(data/analysis_job_ids data/stored_query)})
   end
 
   get '/saved_searches/:id' do
@@ -165,8 +173,8 @@ resource 'SavedSearches' do
   delete '/saved_searches/:id' do
     parameter :id, 'Requested saved search id (in path/route)', required: true
     let(:id) { @saved_search.id }
-    let(:authentication_token) { writer_token }
-    standard_request_options(:delete, 'DESTROY (as writer)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
+    let(:authentication_token) { other_token }
+    standard_request_options(:delete, 'DESTROY (as other)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
   end
 
   delete '/saved_searches/:id' do
@@ -186,8 +194,8 @@ resource 'SavedSearches' do
   delete '/saved_searches/:id' do
     parameter :id, 'Requested saved search id (in path/route)', required: true
     let(:id) { @saved_search.id }
-    let(:authentication_token) { admin_token }
-    standard_request_options(:delete, 'DESTROY (as user)', :no_content, {expected_response_has_content: false, expected_response_content_type: nil})
+    let(:authentication_token) { writer_token }
+    standard_request_options(:delete, 'DESTROY (as writer)', :no_content, {expected_response_has_content: false, expected_response_content_type: nil})
   end
 
   delete '/saved_searches/:id' do
@@ -213,7 +221,7 @@ resource 'SavedSearches' do
     let(:raw_post) { {
         filter: {
             stored_query: {
-                contains: 'comment'
+                eq: example_stored_query.to_json
             }
         },
         projection: {
@@ -222,9 +230,8 @@ resource 'SavedSearches' do
     }.to_json }
     standard_request_options(:post, 'FILTER (as reader)', :ok, {
                                       expected_json_path: 'meta/filter/stored_query',
-                                      data_item_count: 3,
-                                      regex_match: /"stored_query":"the writer stored query"/,
-                                      response_body_content: "\"stored_query\":\"comment text"
+                                      data_item_count: 1,
+                                      response_body_content: '"stored_query":{"uuid":{"eq":"blah blah"}'
                                   })
   end
 

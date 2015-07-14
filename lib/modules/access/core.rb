@@ -144,6 +144,7 @@ module Access
       # @param [Array<Project>] projects
       # @return [Array<Project>] projects
       def validate_projects(projects)
+        fail ArgumentError, 'No projects provided.' if projects.blank?
         projects.to_a.map { |p| validate_project(p) }
       end
 

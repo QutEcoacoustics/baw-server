@@ -209,7 +209,13 @@ class Ability
       can [:show, :create], SavedSearch do |saved_search|
         check_model(saved_search)
         is_creator = saved_search.creator_id == user.id
-        is_creator || Access::Check.can_all?(user, :reader, saved_search.projects)
+        has_projects = saved_search.projects.size > 0
+
+        if has_projects
+          is_creator || Access::Check.can_all?(user, :reader, saved_search.projects)
+        else
+          is_creator
+        end
       end
 
       # only creator can destroy their own saved searches

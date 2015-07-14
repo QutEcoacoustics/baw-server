@@ -26,7 +26,7 @@ class AnalysisController < ApplicationController
     else
       # file or directory exists
       dirs = paths.select { |p| File.directory?(p) }
-      files = paths.select { |p| File.file(p) }
+      files = paths.select { |p| File.file?(p) }
 
       # if paths contains both ... uh, I have no idea. Just fail.
       # also fail if no paths are files or dirs ... I don't know if that's possible or not.

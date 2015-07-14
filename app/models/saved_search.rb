@@ -72,9 +72,9 @@ class SavedSearch < ActiveRecord::Base
         AudioRecording,
         AudioRecording.filter_settings)
 
-    query = filter_query.build.build_exists(Site.arel_table, Project.arel_table, nil, {}, false).project(:id)
-    query = AudioRecording.arel_table.join(Site.arel_table).on(AudioRecording.arel_table[:site_id].eq(query))
-    Rails.logger.warn query.to_sql
+    # query = filter_query.build.build_exists(Site.arel_table, Project.arel_table, nil, {}, false).project(:id)
+    # query = AudioRecording.arel_table.join(Site.arel_table).on(AudioRecording.arel_table[:site_id].eq(query))
+    # Rails.logger.warn query.to_sql
 
     init_query = filter_query.initial_query
     filter_query.query_filter(init_query)
