@@ -24,18 +24,19 @@ module ApplicationHelper
     {zoom: 7, auto_zoom: false}
   end
 
-  def custom_form_for(object, *args, &block)
-    options = args.extract_options!
-    simple_form_for(object, *(args << options.merge(builder: ApplicationHelper::CustomFormBuilder)), &block)
+  # https://gist.github.com/suryart/7418454
+  def bootstrap_class_for flash_type
+    { success: "alert-success", error: "alert-danger", alert: "alert-warning", notice: "alert-info" }[flash_type] || flash_type.to_s
   end
 
-  # https://github.com/plataformatec/simple_form#custom-form-builder
-  class CustomFormBuilder < SimpleForm::FormBuilder
-    def input(attribute_name, options = {}, &block)
-      options[:input_html] = {} if options[:input_html].blank?
-      options[:input_html].merge! class: 'custom'
-      super
+  def flash_messages(opts = {})
+    flash.each do |msg_type, message|
+      concat(content_tag(:div, message, class: "alert #{bootstrap_class_for(msg_type)} fade in") do
+               concat content_tag(:button, 'x', class: 'close', data: { dismiss: 'alert' })
+               concat message
+             end)
     end
+    nil
   end
 
   # for constructing links to the angular site

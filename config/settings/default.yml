@@ -150,7 +150,14 @@ defaults: &defaults
     organisation_name: Audio Group
     github_issues_url: 'url to github issues page'
     parent_site_name: Parent Site
-    parent_site_link: '/'
+    parent_site_link: 'http://example.com'
+    custom_menu:
+      header_title: Custom Menu
+      items:
+        - title: Item 1
+          url: '/item1'
+        - title: Item 2
+          url: '/item2'
   analytics:
     domain: example.com
     ua: 'UA-XXXXXX'

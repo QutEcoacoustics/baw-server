@@ -30,7 +30,8 @@
           - if breadcrumbs.size > 0
             %ol.breadcrumb
               = render_breadcrumbs tag: :li, separator: ''
-          -#= bootstrap_flash
+
+          = flash_messages
 
           - unless current_user.blank?
             - if !current_user.confirmed?

@@ -59,6 +59,9 @@ RSpec.configure do |config|
   # Remove this line if you're not using ActiveRecord or ActiveRecord fixtures
   # config.fixture_path = "#{::Rails.root}/spec/fixtures"
 
+  # stop on first failure
+  config.fail_fast = true
+
   config.expect_with :rspec do |c|
     c.syntax = [:should, :expect]
   end
@@ -87,6 +90,7 @@ RSpec.configure do |config|
   config.order = 'random'
 
   Zonebie.set_random_timezone
+  puts "===> Time zone offset is #{Time.zone.utc_offset}."
 
   # mixin core methods
   config.include FactoryGirl::Syntax::Methods
