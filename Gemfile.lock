@@ -94,6 +94,7 @@ GEM
     bootstrap-sass (3.3.5.1)
       autoprefixer-rails (>= 5.0.0.1)
       sass (>= 3.3.0)
+    bootstrap_form (2.3.0)
     breadcrumbs_on_rails (2.3.0)
     builder (3.2.2)
     bullet (4.14.7)
@@ -472,6 +473,7 @@ DEPENDENCIES
   baw-workers!
   bcrypt (~> 3.1.9)
   bootstrap-sass (~> 3.3.4)
+  bootstrap_form (~> 2.3.0)
   breadcrumbs_on_rails (~> 2.3.0)
   bullet (~> 4.14.1)
   cancancan (~> 1.12.0)

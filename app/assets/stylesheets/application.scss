@@ -5,11 +5,11 @@
 $nav-link-padding: 5px 15px;
 
 @import "bootstrap-sprockets";
-@import "bootstrap/variables";
 @import "bootstrap";
 
 @import "bootstrap_and_overrides";
 @import "gmaps4rails.css";
+@import "rails_bootstrap_forms.css";
 @import "common";
 @import "projects";
 @import "sites";
