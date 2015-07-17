@@ -53,7 +53,7 @@ gem 'breadcrumbs_on_rails', '~> 2.3.0'
 # kept below version 2 due to huge breaking changes
 gem 'gmaps4rails', '< 2'
 
-# Boostrap UI
+# Bootstrap UI
 gem 'bootstrap-sass', '~> 3.3.4'
 # for sass variables: http://getbootstrap.com/customize/#less-variables
 # sprockets-rails gem is included via rails dependency
@@ -146,7 +146,7 @@ group :development, :test do
   gem 'capistrano-passenger', '~> 0.1.0'
 
   gem 'rack-mini-profiler', '~> 0.9.2'
-  gem 'rails-i18n-debug', '~> 1.0.1'
+  gem 'i18n-tasks', '~> 0.8.5'
   gem 'bullet', '~> 4.14.1'
 
   # Spring speeds up development by keeping your application running in the background. Read more: https://github.com/rails/spring
