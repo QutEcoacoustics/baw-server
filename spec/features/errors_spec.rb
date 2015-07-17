@@ -143,6 +143,50 @@ describe 'checking reactions to errors', :type => :feature do
       expect(response_headers['Content-Type']).to match %r(text/html)
     end
 
+
+    context 'displays the correct page when directly requested for' do
+
+      it 'arbitary error page' do
+        visit '/errors/blah%20blah'
+        expect(current_path).to eq('/errors/blah%20blah')
+        expect(page).to have_content('Bad request')
+        expect(page).to have_content('There was a problem with your request. Perhaps go back and try again?')
+        expect(page).not_to have_content('::')
+        expect(page.status_code).to eq(400)
+        expect(response_headers['Content-Type']).to match %r(text/html)
+      end
+
+      it 'bad request' do
+        visit '/errors/bad_request'
+        expect(current_path).to eq('/errors/bad_request')
+        expect(page).to have_content('Bad request')
+        expect(page).to have_content('There was a problem with your request. Perhaps go back and try again?')
+        expect(page).not_to have_content('::')
+        expect(page.status_code).to eq(400)
+        expect(response_headers['Content-Type']).to match %r(text/html)
+      end
+
+      it '400' do
+        visit '/errors/400'
+        expect(current_path).to eq('/errors/400')
+        expect(page).to have_content('Bad request')
+        expect(page).to have_content('There was a problem with your request. Perhaps go back and try again?')
+        expect(page).not_to have_content('::')
+        expect(page.status_code).to eq(400)
+        expect(response_headers['Content-Type']).to match %r(text/html)
+      end
+
+      it '404' do
+        visit '/errors/404'
+        expect(current_path).to eq('/errors/404')
+        expect(page).to have_content('Not found')
+        expect(page).to have_content('Could not find the requested page.')
+        expect(page).not_to have_content('::')
+        expect(page.status_code).to eq(404)
+        expect(response_headers['Content-Type']).to match %r(text/html)
+      end
+
+    end
   end
 
 end

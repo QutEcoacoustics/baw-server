@@ -23,7 +23,14 @@ class User < ActiveRecord::Base
     @login || self.user_name || self.email
   end
 
-  roles :admin, :user, :harvester # do not change the order, it matters!
+  # if you want to use a different integer attribute to store the
+  # roles in, set it with roles_attribute :my_roles_attribute,
+  # :roles_mask is the default name
+  roles_attribute :roles_mask
+
+  # declare the valid roles -- do not change the order if you add more
+  # roles later, always append them at the end!
+  roles :admin, :user, :harvester
 
   has_attached_file :image,
                     styles: {span4: '300x300#', span3: '220x220#', span2: '140x140#', span1: '60x60#', spanhalf: '30x30#'},
@@ -34,7 +41,7 @@ class User < ActiveRecord::Base
   #has_many :accessible_projects, through: :permissions, source: :project
   has_many :readable_projects, -> { where("permissions.level = 'reader'") }, through: :permissions, source: :project
   has_many :writable_projects, -> { where("permissions.level = 'writer'") }, through: :permissions, source: :project
-  has_many :owned_projects,    -> { where("permissions.level = 'owner'") },  through: :permissions, source: :project
+  has_many :owned_projects, -> { where("permissions.level = 'owner'") }, through: :permissions, source: :project
 
   # relations for creator, updater, deleter, and others.
   has_many :created_audio_events, class_name: 'AudioEvent', foreign_key: :creator_id, inverse_of: :creator
@@ -183,6 +190,47 @@ class User < ActiveRecord::Base
   # Retrieves the existing stamper (current_user id) for the current request.
   def self.stamper
     Thread.current["#{self.to_s.downcase}_#{self.object_id}_stamper"]
+  end
+
+  # Define filter api settings
+  def self.filter_settings
+    {
+        valid_fields: [:id, :user_name, :tzinfo_tz, :rails_tz, :last_seen_at, :created_at, :updated_at],
+        render_fields: [:id, :user_name, :tzinfo_tz, :rails_tz],
+        text_fields: [:user_name],
+        custom_fields: lambda { |user, currentUser|
+          is_admin = Access::Check.is_admin?(currentUser)
+          is_same_user = user == currentUser
+
+          user_hash =
+              {
+                  image_urls:
+                      [
+                          {size: :extralarge, url: user.image.url(:span4), width: 300, height: 300},
+                          {size: :large, url: user.image.url(:span3), width: 220, height: 220},
+                          {size: :medium, url: user.image.url(:span2), width: 140, height: 140},
+                          {size: :small, url: user.image.url(:span1), width: 60, height: 60},
+                          {size: :tiny, url: user.image.url(:spanhalf), width: 30, height: 30}
+                      ]
+              }
+
+          if is_admin || is_same_user
+            user_hash[:last_seen_at] = user.last_seen_at
+            user_hash[:preferences] = user.preferences
+          end
+
+          user_hash[:is_confirmed] = user.confirmed? if is_admin
+
+          [user, user_hash]
+        },
+        controller: :user_accounts,
+        action: :filter,
+        defaults: {
+            order_by: :user_name,
+            direction: :asc
+        },
+        valid_associations: []
+    }
   end
 
   private

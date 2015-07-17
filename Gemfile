@@ -13,9 +13,9 @@ source 'https://rubygems.org'
 # RAILS
 # -------------------------------------
 
-gem 'rails', '~> 4.2.0'
-gem 'rack-cors', '~> 0.3.1', require: 'rack/cors'
-gem 'responders', '~> 2.0'
+gem 'rails', '~> 4.2.2'
+gem 'rack-cors', '~> 0.4.0', require: 'rack/cors'
+gem 'responders', '~> 2.1.0'
 
 # RAILS 3 compatibility gems
 # -------------------------------------
@@ -38,17 +38,17 @@ gem 'coffee-rails', '~> 4.1.0'
 gem 'therubyracer', '~> 0.12.1', platforms: :ruby, require: 'v8'
 
 # Use jquery as the JavaScript library
-gem 'jquery-rails', '~> 4.0.3'
+gem 'jquery-rails', '~> 4.0.0'
 # Turbolinks makes following links in your web application faster. Read more: https://github.com/rails/turbolinks
 #gem 'turbolinks'
 # Build JSON APIs with ease. Read more: https://github.com/rails/jbuilder
-gem 'jbuilder', '~> 2.2.3'
+gem 'jbuilder', '~> 2.3.0'
 
 gem 'haml', '~> 4.0.6'
-gem 'haml-rails', '~> 0.8'
+gem 'haml-rails', '~> 0.9.0'
 
 gem 'simple_form', '~> 3.1.0'
-gem 'paperclip', '~> 4.2.1'
+gem 'paperclip', '~> 4.3.0'
 gem 'breadcrumbs_on_rails', '~> 2.3.0'
 # kept below version 2 due to huge breaking changes
 gem 'gmaps4rails', '< 2'
@@ -61,7 +61,7 @@ gem 'font-awesome-sass', '~> 4.3.0'
 
 # for rails 3, 4
 gem 'will_paginate', '~> 3.0.7'
-gem 'dotiw', git: 'https://github.com/radar/dotiw.git', branch: :master, ref: '89d936adc6'
+gem 'dotiw','~> 3.0.1'
 gem 'recaptcha', '~> 0.4.0',  require: 'recaptcha/rails'
 
 # for proper timezone support
@@ -72,8 +72,8 @@ gem 'tzinfo-data', '~> 1.2015.1'
 # -------------------------------------
 # https://github.com/plataformatec/devise/blob/master/CHANGELOG.md
 # http://joanswork.com/devise-3-1-update/
-gem 'devise', '~> 3.4.1'
-gem 'cancancan', '~> 1.10.1'
+gem 'devise', '~> 3.5.1'
+gem 'cancancan', '~> 1.12.0'
 gem 'role_model', '~> 0.8.1'
 # Use ActiveModel has_secure_password
 gem 'bcrypt', '~> 3.1.9'
@@ -107,18 +107,18 @@ require 'rbconfig'
 # MONITORING
 # -------------------------------------
 gem 'exception_notification', '~> 4.1.0'
-gem 'newrelic_rpm', '~> 3.11.0'
+gem 'newrelic_rpm', '~> 3.12.0'
 
 # Documentation & UI
 # -------------------------------------
 # these gems are required here to serve /doc url
-gem 'rspec_api_documentation', '~> 4.3.0'
+gem 'rspec_api_documentation', '~> 4.4.0'
 gem 'raddocs', '~> 0.4.0'
 
 # MEDIA
 # -------------------------------------
 # set to a specific commit when releasing to master branch
-gem 'baw-audio-tools', git: 'https://github.com/QutBioacoustics/baw-audio-tools.git', branch: :master, ref: '3ea03c6b65'
+gem 'baw-audio-tools', git: 'https://github.com/QutBioacoustics/baw-audio-tools.git', branch: :master, ref: 'b0e285b15b'
 gem 'rack-rewrite', '~> 1.5.1'
 
 # ASYNC JOBS
@@ -127,7 +127,7 @@ gem 'resque', '~> 1.25.2'
 gem 'resque-job-stats', git: 'https://github.com/echannel/resque-job-stats.git', branch: :master, ref: '8932c036ae'
 gem 'resque-status', '~> 0.5.0'
 # set to a specific commit when releasing to master branch
-gem 'baw-workers', git: 'https://github.com/QutBioacoustics/baw-workers.git', branch: :master, ref: '9b51d7a82a'
+gem 'baw-workers', git: 'https://github.com/QutBioacoustics/baw-workers.git', branch: :master, ref: '55702a9cf1'
 
 # Gems restricted by environment and/or platform
 # ====================================================
@@ -142,7 +142,7 @@ group :development, :test do
   gem 'capistrano-rvm', '~> 0.1.2'
   gem 'capistrano-rails', '~> 1.1.2'
   gem 'capistrano-newrelic', '~> 0.0.8'
-  gem 'capistrano-passenger', '~> 0.0.1'
+  gem 'capistrano-passenger', '~> 0.1.0'
 
   gem 'rack-mini-profiler', '~> 0.9.2'
   gem 'rails-i18n-debug', '~> 1.0.1'
@@ -161,12 +161,12 @@ group :development, :test do
 
   gem 'notiffany', '~> 0.0.3'
   gem 'guard', '~> 2.12.1'
-  gem 'guard-rspec', '~> 4.5.0'
+  gem 'guard-rspec', '~> 4.6.0'
   gem 'guard-yard', '~> 2.1.4'
 
   gem 'fakeredis', '~> 0.5.0', require: 'fakeredis/rspec'
 
-
+  gem 'zonebie'
 
   # for cleaning up Rails apps
   # gem 'traceroute', require: false
@@ -187,17 +187,17 @@ group :development, :test do
   #gem 'debugger'
   # gem install traceroute --no-ri --no-rdoc
 
-  gem 'rspec-rails', '~> 3.2.0'
+  gem 'rspec-rails', '~> 3.3.0'
   gem 'factory_girl_rails', '~> 4.5.0'
   gem 'capybara', '~> 2.4.4'
 
-  gem 'rspec', '~> 3.2.0'
-  gem 'simplecov', '~> 0.9.1', require: false
+  gem 'rspec', '~> 3.3.0'
+  gem 'simplecov', '~> 0.10.0', require: false
   gem 'shoulda-matchers', '~> 2.8.0'
   gem 'launchy', '~> 2.4.3'
   gem 'json_spec', '~> 1.1.4'
   gem 'database_cleaner', '1.4.1'
   gem 'webmock', '~> 1.21.0'
-  gem 'coveralls', '~> 0.8.0', require: false
+  gem 'coveralls', '~> 0.8.1', require: false
   gem 'codeclimate-test-reporter', '~> 0.4.5', require: nil
 end

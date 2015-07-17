@@ -139,7 +139,7 @@ resource 'Media' do
     standard_media_parameters
     let(:authentication_token) { reader_token }
     let(:format) { 'mp4' }
-    standard_request('MEDIA (invalid format (mp4), as reader with shallow path)', 406, 'meta/error/available_formats', true)
+    standard_request('MEDIA (invalid format (mp4), as reader with shallow path)', 406, 'meta/error/info/available_formats', true)
   end
 
   get '/audio_recordings/:audio_recording_id/media.:format' do
@@ -147,7 +147,7 @@ resource 'Media' do
     let(:authentication_token) { reader_token }
     let(:format) { 'zjfyrdnd' }
     # can't respond with the format requested
-    standard_request('MEDIA (invalid format (zjfyrdnd), as reader with shallow path)', 406, 'meta/error/available_formats', true)
+    standard_request('MEDIA (invalid format (zjfyrdnd), as reader with shallow path)', 406, 'meta/error/info/available_formats', true)
   end
 
   get '/audio_recordings/:audio_recording_id/media.:format' do
@@ -723,6 +723,41 @@ resource 'Media' do
                      'meta/error/details', 'colour parameter')
   end
 
+  # ensure integer parameters are checked
+  get '/audio_recordings/:audio_recording_id/media.:format?start_offset=:start_offset&end_offset=:end_offset&sample_rate=22050user_token=ANAUTHTOKEN' do
+    standard_media_parameters
+    let(:authentication_token) { reader_token }
+    let(:format) { 'json' }
+    standard_request_options(:get, 'MEDIA (as reader invalid sample rate)', :unprocessable_entity,
+                             {
+                                 expected_json_path: 'meta/error/details',
+                                 response_body_content: 'The request could not be understood: sample_rate parameter (22050user_token=ANAUTHTOKEN) must be valid'
+                             })
+  end
+
+  get '/audio_recordings/:audio_recording_id/media.:format?start_offset=:start_offset&end_offset=:end_offset&window_size=512user_token=ANAUTHTOKEN' do
+    standard_media_parameters
+    let(:authentication_token) { reader_token }
+    let(:format) { 'json' }
+    standard_request_options(:get, 'MEDIA (as reader invalid window size)', :unprocessable_entity,
+                             {
+                                 expected_json_path: 'meta/error/details',
+                                 response_body_content: 'The request could not be understood: window_size parameter (512user_token=ANAUTHTOKEN) must be valid'
+                             })
+  end
+
+  get '/audio_recordings/:audio_recording_id/media.:format?start_offset=:start_offset&end_offset=:end_offset&channel=0user_token=ANAUTHTOKEN' do
+    standard_media_parameters
+    let(:authentication_token) { reader_token }
+    let(:format) { 'json' }
+    standard_request_options(:get, 'MEDIA (as reader invalid sample rate)', :unprocessable_entity,
+                             {
+                                 expected_json_path: 'meta/error/details',
+                                 response_body_content: 'The request could not be understood: channel parameter (0user_token=ANAUTHTOKEN) must be valid'
+                             })
+  end
+
+  # test remote audio and spectrogram generation
   context 'remote media generation' do
     around(:each) do |example|
       Settings[:media_request_processor] = Settings::MEDIA_PROCESSOR_RESQUE
@@ -746,35 +781,53 @@ resource 'Media' do
         queue_name = Settings.actions.media.queue
 
         # do first request - this purposely fails,
-        # we're restricted to a single thread, so can't run request and worker at once (they both block)
-        expect {
-          do_request
-        #}.to raise_error(RuntimeError, 'Media file was not found within 2 seconds.')
-        }.to raise_error(RuntimeError, "Resque did not complete media request within 2 seconds. Status: '(none)'.")
+        request1 = do_request
+
+        # check response
+        opts1 =
+            {
+                expected_status: :internal_server_error,
+                expected_method: :get,
+                expected_response_content_type: 'audio/mpeg',
+                document: document_media_requests,
+                expected_response_media_from_header: MediaPoll::HEADER_VALUE_RESPONSE_REMOTE,
+                expected_response_has_content: false,
+                expected_response_header_values_match: false,
+                expected_response_header_values: {
+                    'X-Error-Type' => 'Custom Errors/Audio Generation Error'
+                }
+            }
+
+        opts1 = acceptance_checks_shared(request1, opts1)
+
+        acceptance_checks_media(opts1.merge({audio_recording: options}))
 
         # store request that's in queue
         expect(Resque.size(queue_name)).to eq(1)
 
         # run emulated worker - this will process the single job in the queue
+        # we're restricted to a single thread, so can't run request and worker at once (they both block)
         emulate_resque_worker(queue_name, false, true)
 
         # run a second request, which should use the cached file to complete the request
-        request = do_request
+        request2 = do_request
+
+        expect(Resque.size(queue_name)).to eq(0)
 
         # check response
-        opts =
+        opts2 =
             {
                 expected_status: :ok,
                 expected_method: :get,
                 expected_response_content_type: 'audio/mpeg',
                 document: document_media_requests,
-                expected_response_media_from_header: 'Cache'
+                expected_response_media_from_header: MediaPoll::HEADER_VALUE_RESPONSE_CACHE
             }
 
-        opts = acceptance_checks_shared(request, opts)
+        opts2 = acceptance_checks_shared(request2, opts2)
 
-        opts.merge!({audio_recording: options})
-        acceptance_checks_media(opts)
+        opts2.merge!({audio_recording: options})
+        acceptance_checks_media(opts2)
       end
     end
 

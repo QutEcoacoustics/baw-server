@@ -86,6 +86,8 @@ RSpec.configure do |config|
   #     --seed 1234
   config.order = 'random'
 
+  Zonebie.set_random_timezone
+
   # mixin core methods
   config.include FactoryGirl::Syntax::Methods
   #config.include Rails.application.routes.url_helpers
@@ -160,8 +162,10 @@ RSpec.configure do |config|
 
 end
 
+ENV['DOC_FORMAT'] ||= 'json'
+
 RspecApiDocumentation.configure do |config_rspec_api|
-  config_rspec_api.format = :json
+  config_rspec_api.format = ENV['DOC_FORMAT']
 
   # patch to enable options request
   module RspecApiDocumentation

@@ -3,18 +3,16 @@ class ApplicationController < ActionController::Base
 
   layout :api_or_html
 
-  # custom user authentication
+  # custom authentication for api only
   before_action :authenticate_user_custom!
 
   # devise strong params set up
   before_action :configure_permitted_parameters, if: :devise_controller?
 
-  # This is Devise's authentication
-  #before_action :authenticate_user!
-
   # https://github.com/plataformatec/devise/blob/master/test/rails_app/app/controllers/application_controller.rb
-  # before_action :current_user, unless: :devise_controller?
-  # before_action :authenticate_user!, if: :devise_controller?
+  # devise's generated methods
+  before_action :current_user, unless: :devise_controller?
+  before_action :authenticate_user!, if: :devise_controller?
 
   # CanCan - always check authorization
   check_authorization unless: :devise_controller?
@@ -52,6 +50,7 @@ class ApplicationController < ActionController::Base
   # For APIs, you may want to use :null_session instead.
   protect_from_forgery with: :exception
 
+  # for responses, ensure CSRF cookie is set and fix problems with Vary header
   after_action :set_csrf_cookie, :resource_representation_caching_fixes
 
   # set and reset user stamper for each request
@@ -62,7 +61,7 @@ class ApplicationController < ActionController::Base
   before_action :set_last_seen_at,
                 if: Proc.new { user_signed_in? &&
                     (session[:last_seen_at].blank? || Time.zone.at(session[:last_seen_at].to_i) < 10.minutes.ago)
-                    }
+                }
 
   protected
 
@@ -84,7 +83,7 @@ class ApplicationController < ActionController::Base
   # This enforces login via the UI only, since requests without a logged in user won't have access to the CSRF cookie.
   def verified_request?
     csrf_header_key = 'X-XSRF-TOKEN'
-    super || valid_authenticity_token?(session, request.headers[csrf_header_key])
+    super || valid_authenticity_token?(session, request.headers[csrf_header_key]) || api_auth_success?
   end
 
   # from http://stackoverflow.com/a/94626
@@ -183,20 +182,9 @@ class ApplicationController < ActionController::Base
   end
 
   def render_error(status_symbol, detail_message, error, method_name, options = {})
-    options = {redirect: false, links_object: nil, error_info: nil}.merge(options)
+    options.merge!(error_details: detail_message)
 
-    json_response = Settings.api_response.build(
-        status_symbol,
-        nil,
-        {
-            error_details: detail_message,
-            error_links: options[:links_object]
-        })
-
-    unless options[:error_info].blank?
-      json_response[:meta][:error] = {} unless json_response[:meta].include?(:error)
-      json_response[:meta][:error].merge!(options[:error_info])
-    end
+    json_response = Settings.api_response.build(status_symbol, nil, options)
 
     # notify of exception for head requests only
     if request.head?
@@ -214,13 +202,20 @@ class ApplicationController < ActionController::Base
     log_original_error(method_name, error, json_response)
 
     # add custom header
-    headers['X-Error-Type'] = error.class.to_s
+    headers['X-Error-Type'] = error.class.to_s.titleize unless error.nil?
 
     respond_to do |format|
       # format.all will be used for Accept: */* as it is first in the list
       # http://blogs.thewehners.net/josh/posts/354-obscure-rails-bug-respond_to-formatany
       format.all {
-        render json: json_response, status: status_symbol, content_type: 'application/json'
+        actual_format = request.format.to_s
+
+        if actual_format.start_with?('audio') || actual_format.start_with?('image')
+          headers['Accept-Ranges'] = 'bytes'
+          head status_symbol
+        else
+          render json: json_response, status: status_symbol, content_type: 'application/json'
+        end
       }
       format.json {
         render json: json_response, status: status_symbol
@@ -230,31 +225,50 @@ class ApplicationController < ActionController::Base
         status_code = Settings.api_response.status_code(status_symbol)
         status_message = Settings.api_response.status_phrase(status_symbol).humanize
 
-        response_links = Settings.api_response.response_error_links(options[:links_object])
+        response_links = Settings.api_response.response_error_links(options[:error_links])
 
-        if options[:redirect]
-          redirect_to get_redirect, alert: "#{status_message}: #{detail_message}"
-        else
-          @details = {code: status_code, phrase: status_message, message: detail_message, links: response_links}
-          render template: 'errors/generic', status: status_symbol
+        @details = {
+            code: status_code,
+            phrase: status_message,
+            message: detail_message,
+            links: response_links,
+            supported_media: []
+        }
+
+        if options[:error_info] && options[:error_info][:available_formats]
+          @details[:supported_media] = options[:error_info][:available_formats]
         end
+
+        # get a redirect path
+        redirect_to =  params[:redirect_to] || request.fullpath || request.path || nil
+
+        if redirect_to
+
+          # store the path where the cancan error was thrown
+          # devise will redirect to this when the user signs in
+          store_location_for(:user, redirect_to)
+
+          # use stored_location_for to ensure the redirect is safe (i.e. doesn't go to another website)
+          @details[:redirect_to_url] = stored_location_for(:user)
+        end
+
+
+        render template: 'errors/generic', status: status_symbol
       }
     end
-  end
-
-  def get_redirect
-    if !request.env['HTTP_REFERER'].blank? and request.env['HTTP_REFERER'] != request.env['REQUEST_URI']
-      redirect_target = :back
-    else
-      redirect_target = root_path
-    end
-
-    redirect_target
   end
 
   def configure_permitted_parameters
     devise_parameter_sanitizer.for(:sign_up) { |u| u.permit(:user_name, :email, :password, :password_confirmation) }
     devise_parameter_sanitizer.for(:account_update) { |u| u.permit(:user_name, :email, :password, :password_confirmation, :current_password, :image, :tzinfo_tz) }
+  end
+
+  def after_sign_in_path_for(resource)
+    super
+  end
+
+  def store_location(path)
+    super
   end
 
   private
@@ -300,7 +314,7 @@ class ApplicationController < ActionController::Base
         "The format of the request is not supported: #{error.message}",
         error,
         'unsupported_media_type_error_response',
-        error_info: {available_formats: error.available_formats_info}
+        {error_info: {available_formats: error.available_formats_info}}
     )
   end
 
@@ -315,12 +329,12 @@ class ApplicationController < ActionController::Base
         "None of the acceptable response formats are available: #{error.message}",
         error,
         'not_acceptable_error_response',
-        error_info: {available_formats: error.available_formats_info}
+        {error_info: {available_formats: error.available_formats_info}}
     )
   end
 
   def unprocessable_entity_error_response(error)
-    options = error.additional_details.nil? ? {} : {error_info: {info: error.additional_details}}
+    options = error.additional_details.nil? ? {} : {error_info: error.additional_details}
     render_error(
         :unprocessable_entity,
         "The request could not be understood: #{error.message}",
@@ -357,8 +371,7 @@ class ApplicationController < ActionController::Base
           I18n.t('devise.failure.unauthorized'),
           error,
           'access_denied_response - forbidden',
-          redirect: false,
-          links_object: [:permissions])
+          {error_links: [:permissions]})
 
     elsif current_user && !current_user.confirmed?
       render_error(
@@ -366,17 +379,16 @@ class ApplicationController < ActionController::Base
           I18n.t('devise.failure.unconfirmed'),
           error,
           'access_denied_response - unconfirmed',
-          redirect: false,
-          links_object: [:confirm])
+          {error_links: [:confirm]})
 
     else
+
       render_error(
           :unauthorized,
           I18n.t('devise.failure.unauthenticated'),
           error,
           'access_denied_response - unauthorised',
-          redirect: false,
-          links_object: [:sign_in, :sign_up, :confirm])
+          {error_links: [:sign_in, :sign_up, :confirm]})
 
     end
   end
@@ -387,7 +399,7 @@ class ApplicationController < ActionController::Base
         "Could not find the requested page: #{error.message}",
         error,
         'routing_argument_error_response',
-        error_info: {original_route: request.env['PATH_INFO'], original_http_method: request.method}
+        {error_info: {original_route: request.env['PATH_INFO'], original_http_method: request.method}}
     )
   end
 

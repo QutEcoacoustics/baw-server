@@ -594,7 +594,13 @@ resource 'AudioEvents' do
                              {
                                  expected_json_path: 'data/0/start_time_seconds',
                                  data_item_count: 1,
-                                 regex_match: /"taggings":\[\{"id":\d+,"audio_event_id":\d+,"created_at":"[^"]+","updated_at":"[^"]+","creator_id":\d+,"updater_id":null\}\]/,
+                                 regex_match: [
+                                     /"taggings":\[\{"id":\d+,"audio_event_id":\d+,/,
+                                     /"created_at":"[^"]+"/,
+                                     /"updated_at":"[^"]+"/,
+                                     /"creator_id":\d+/,
+                                     /"updater_id":null/
+                                 ],
                                  response_body_content: "\"taggings\":[{\"",
                                  invalid_content: "\"taggings\":[\"",
                              })
@@ -616,6 +622,19 @@ resource 'AudioEvents' do
                                  data_item_count: 1,
                                  regex_match: /"in"\:\[\"5.2\",\"7\",\"100\",\"[0-9]+\"\]/,
                                  response_body_content: "\"low_frequency_hertz\":400.0",
+                                 invalid_content: "\"project_ids\":[{\"id\":"
+                             })
+  end
+
+  post '/audio_events/filter' do
+    let(:authentication_token) { reader_token }
+    let(:raw_post) { '{"filter":{"start_time_seconds":{"in":["5.2", "7", "100", "4"]}},"paging":{"items":10,"page":1},"sorting":{"orderBy":"durationSeconds","direction":"desc"}}' }
+    standard_request_options(:post, 'FILTER (sort by custom field, as reader)', :ok,
+                             {
+                                 expected_json_path: 'meta/sorting/order_by',
+                                 data_item_count: 1,
+                                 regex_match: /"in"\:\[\"5.2\",\"7\",\"100\",\"[0-9]+\"\]/,
+                                 response_body_content: ["\"low_frequency_hertz\":400.0", "\"order_by\":\"duration_seconds\""],
                                  invalid_content: "\"project_ids\":[{\"id\":"
                              })
   end

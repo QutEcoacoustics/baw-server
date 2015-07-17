@@ -2,6 +2,65 @@
 
 ## Unreleased
 
+ - 2015-07-06
+    - enable sorting on custom fields [#220](https://github.com/QutBioacoustics/baw-server/issues/220)
+    - fixed site page loading slowly [#222](https://github.com/QutBioacoustics/baw-server/issues/222)
+    - attempted to fix media polling issues, still unresolved [#217](https://github.com/QutBioacoustics/baw-server/issues/217)
+    - update user_accounts endpoint to API spec [#223] (https://github.com/QutBioacoustics/baw-server/issues/223)
+
+ - 2015-06-27
+    - Removed taggings that were included in the tags filter [#218](https://github.com/QutBioacoustics/baw-server/issues/218)
+    - Changed access query to use Arel instead of ActiveRecord due to regression in ActiveRecord 4.2.3.
+
+## [Release 0.15.1](https://github.com/QutBioacoustics/baw-server/releases/tag/0.15.1) (2015-06-16)
+
+ - 2015-06-15
+    - added `:tag_id` to taggings for `audio_event`.
+
+ - 2015-06-14
+    - bug fix for tags filter [#210](https://github.com/QutBioacoustics/baw-server/issues/210)
+    - bug fix for audio recording overlap check (again) More information provided on error. [#184](https://github.com/QutBioacoustics/baw-server/issues/184)
+    - Harvester endpoints converted to standard API.
+    - Normalised error responses.
+    - Using new analysis paths, see QutBioacoustics/baw-workers#20
+
+## [Release 0.15.0](https://github.com/QutBioacoustics/baw-server/releases/tag/0.15.0) (2015-06-10)
+
+ - 2015-06-08
+    - change annotation csv download to a flat result set [#204](https://github.com/QutBioacoustics/baw-server/issues/204)
+    - added upload instructions page [#186](https://github.com/QutBioacoustics/baw-server/issues/186)
+    - added ability to redirect after logging in and fixed some Devise issues [#205](https://github.com/QutBioacoustics/baw-server/issues/205)
+
+ - 2015-06-06
+    - Provide distinct urls for different error pages for the client app [#206](https://github.com/QutBioacoustics/baw-server/issues/206)
+
+ - 2015-05-10
+    - project and site names can be longer [#177](https://github.com/QutBioacoustics/baw-server/issues/177)
+    - modified nav bar links [#178](https://github.com/QutBioacoustics/baw-server/issues/178)
+
+ - 2015-04-29
+    - CSRF check disabled for api requests authenticated using a token
+    - more strict checks for media request parameters [#187](https://github.com/QutBioacoustics/baw-server/issues/187)
+
+ - 2015-04-26
+    - Improved audio recording overlap check [#184](https://github.com/QutBioacoustics/baw-server/issues/184)
+    - removed obsolete access level class
+    - swapped .where(1 = 0) for .none
+    - added zonebie for testing and updated gems
+
+ - 2015-04-18
+    - Fixes #168 by Responds with a head response on media generation error [#168] (https://github.com/QutBioacoustics/baw-server/issues/168)
+    - Resque polling returns more information
+    - Added X-Error-Type and X-Archived-At to CORS allowed headers
+    - ensure harvester can log in after enabling CSRF for api
+
+ - 2015-04-02
+    - Added controller, views, and routes for managing tags for [#175](https://github.com/QutBioacoustics/baw-server/issues/175)
+
+ - 2015-03-29
+    - Added page to assign sites to a project [#153](https://github.com/QutBioacoustics/baw-server/issues/153)
+    - added commented changes for logged_in and anonymous access [#99](https://github.com/QutBioacoustics/baw-server/issues/99)
+
  - 2015-03-28
     - Many to many associations will now include the ids or full information from the join table [#181](https://github.com/QutBioacoustics/baw-server/issues/181)
     - Enabled CSRF protection for API

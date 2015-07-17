@@ -169,10 +169,9 @@ resource 'Tags' do
                              {
                                  expected_json_path: 'data/0/type_of_tag',
                                  data_item_count: 1,
-                                 regex_match: /"taggings":\[\{"id":\d+,"audio_event_id":\d+,"created_at":"[^"]+","updated_at":"[^"]+","creator_id":\d+,"updater_id":null\}\]/,
-                                 response_body_content: "\"taggings\":[{\"",
-                                 invalid_content: "\"taggings\":[\"",
-                             })
+                                 response_body_content: "general",
+                                 invalid_content: "\"taggings\":[{\""
+                              })
   end
 
 
@@ -190,6 +189,40 @@ resource 'Tags' do
                                  expected_json_path: 'data/0/text',
                                  data_item_count: 1,
                                  response_body_content: ['tag text', "\"filter\":{\"text\":{\"contains\":\"tag text\"}}"]
+                             })
+  end
+
+  post '/tags/filter' do
+    let(:authentication_token) { writer_token }
+    let(:raw_post) { {
+        'filter' => {
+            'audio_events.id' => {
+                'in' => [9999, audio_event_id]
+            }
+        }
+    }.to_json }
+    standard_request_options(:post, 'FILTER (as writer, audio_events.id )', :ok,
+                             {
+                                 expected_json_path: 'data/0/text',
+                                 data_item_count: 1,
+                                 response_body_content: ['audio_events.id', "\"filter\":{\"audio_events.id\":{\"in\":[9999,"]
+                             })
+  end
+
+  post '/tags/filter' do
+    let(:authentication_token) { writer_token }
+    let(:raw_post) { {
+        'filter' => {
+            'AudioEvents.Id' => {
+                'in' => [9999, audio_event_id]
+            }
+        }
+    }.to_json }
+    standard_request_options(:post, 'FILTER (as writer, AudioEvents.Id )', :ok,
+                             {
+                                 expected_json_path: 'data/0/text',
+                                 data_item_count: 1,
+                                 response_body_content: ['audio_events.id', "\"filter\":{\"audio_events.id\":{\"in\":[9999,"]
                              })
   end
 

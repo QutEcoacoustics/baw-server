@@ -168,6 +168,21 @@ module Filter
       parse_filter(filter_hash)
     end
 
+    def build_custom_field(column_name)
+
+      mappings = {}
+      unless @field_mappings.blank?
+        @field_mappings.each { |m| mappings[m[:name]] = m[:value] }
+      end
+
+      value = mappings[column_name]
+      if mappings.keys.include?(column_name) && !value.blank?
+        value
+      else
+        nil
+      end
+    end
+
     private
 
     # Parse a filter hash.
@@ -519,21 +534,6 @@ module Filter
       end
 
       [[], false]
-    end
-
-    def build_custom_field(column_name)
-
-      mappings = {}
-      unless @field_mappings.blank?
-        @field_mappings.each { |m| mappings[m[:name]] = m[:value] }
-      end
-
-      value = mappings[column_name]
-      if mappings.keys.include?(column_name) && !value.blank?
-        value
-      else
-        nil
-      end
     end
 
   end

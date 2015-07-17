@@ -58,7 +58,7 @@ class AudioRecording < ActiveRecord::Base
   validates :media_type, presence: true
   validates :data_length_bytes, presence: true, numericality: {only_integer: true, greater_than: 0}
   validates :file_hash, presence: true, uniqueness: {case_sensitive: false}
-  validate :check_duplicate_file_hashes, :check_overlapping
+  validate :check_duplicate_file_hashes
 
   before_validation :set_uuid, on: :create
 
@@ -73,11 +73,31 @@ class AudioRecording < ActiveRecord::Base
   scope :has_tags, lambda { |tags| includes(:tags).where('tags.text IN ?', tags) }
   scope :does_not_have_tag, lambda { |tag| includes(:tags).where('tags.text <> ?', tag) }
   scope :does_not_have_tags, lambda { |tags| includes(:tags).where('tags.text NOT IN ?', tags) }
-  scope :tag_count, lambda { |num_tags| includes(:tags).where('audio_events_tags.tag_id' => Tagging.select(:tag_id).group(:tag_id).having('count(tag_id) > ?', num_tags)) }
-  scope :tag_types, lambda { |tag_types| includes(:tags).where('tags.type_of_tag' => tag_types) }
-  scope :tag_text, lambda { |tag_text| includes(:tags).where(Tag.arel_table[:text].matches("%#{tag_text}%")) }
+  scope :tag_count, lambda { |num_tags|
 
-  scope :order_by_absolute_end_desc, lambda { order('recorded_date + CAST(duration_seconds || \' seconds\' as interval) DESC')}
+                    #   'audio_events_tags.tag_id' => Tagging.select(:tag_id).group(:tag_id).having('count(tag_id) > ?', num_tags))
+
+                    tagging_arel = Tagging.arel_table
+                    grouping = tagging_arel
+                                   .project(tagging_arel[:tag_id])
+                                   .group(tagging_arel[:tag_id])
+                                   .having(tagging_arel[:tag_id].count.gt(num_tags.to_i))
+
+                    audio_events_arel = AudioEvent.arel_table
+                    condition = audio_events_arel[:tag_id].in(grouping)
+
+                    includes(:tags).where(condition)
+                  }
+  scope :tag_types, lambda { |tag_types|
+                    tags_arel = Tag.arel_table
+                    condition = tags_arel[:type_of_tag].in(tag_types)
+                    includes(:tags).where(condition) }
+  scope :tag_text, lambda { |tag_text|
+                   sanitized_value = tag_text.gsub(/[\\_%\|]/) { |x| "\\#{x}" }
+                   contains_value = "#{sanitized_value}%"
+                   includes(:tags).where(Tag.arel_table[:text].matches(contains_value))
+                 }
+  scope :order_by_absolute_end_desc, lambda { order('recorded_date + CAST(duration_seconds || \' seconds\' as interval) DESC') }
 
   # Check if the original file for this audio recording currently exists.
   def original_file_exists?
@@ -183,6 +203,42 @@ class AudioRecording < ActiveRecord::Base
     can_be_accessed
   end
 
+  # check for and correct any overlaps.
+  # this method runs validations.
+  # this method depends on a number of attributes being valid.
+  # @return [Boolean, Hash] false if not valid, otherwise hash of overlap info
+  def fix_overlaps
+
+    # only run if the record is valid
+    return false if self.invalid?
+
+    max_overlap_sec = Settings.audio_recording_max_overlap_sec
+
+    # correct any overlaps
+    AudioRecordingOverlap.fix(self, max_overlap_sec)
+  end
+
+  def self.build_by_file_hash(recording_params)
+    match = AudioRecording.where(
+        original_file_name: recording_params[:original_file_name],
+        file_hash: recording_params[:file_hash],
+        recorded_date: Time.zone.parse(recording_params[:recorded_date]).utc,
+        data_length_bytes: recording_params[:data_length_bytes],
+        media_type: recording_params[:media_type],
+        duration_seconds: recording_params[:duration_seconds].round(4),
+        site_id: recording_params[:site_id],
+        status: 'aborted'
+    )
+
+    if match.count == 1
+      found = match.first
+      found.status = 'new'
+      found
+    else
+      AudioRecording.new(recording_params)
+    end
+  end
+
   def self.check_storage
     audio_original = BawWorkers::Config.original_audio_helper
     existing_dirs = audio_original.existing_dirs
@@ -258,86 +314,27 @@ class AudioRecording < ActiveRecord::Base
   end
 
   def check_duplicate_file_hashes
-    # self.id will be nil; self will not be in database yet
-    query = AudioRecording.where(file_hash: self.file_hash)
-    unless self.id.blank?
-      query = query.where('id <> ?', self.id)
-    end
-    count = query.count
-    if count > 0
-      ids = query.select(:id).to_a.map { |item| item.id }
-      errors.add(:file_hash, "has already been taken by id #{ids}.")
-    end
-  end
 
-  def check_overlapping
+    if self.file_hash == 'SHA256::'
+      # short-circuit the invalid hash 'SHA256::'
+      # TODO: ignore file_hash of 'SHA256::' for now
+      #errors.add(:file_hash, 'is not valid and needs to be updated.')
+    else
+      # check that no other audio recording has the same file_hash
+      query = AudioRecording.where(file_hash: self.file_hash)
 
-    # validate model first, as this check can occur before attribute validations are run
-
-    errors.add(:recorded_date, 'must have a value') if self.recorded_date.blank?
-    errors.add(:duration_seconds, 'must have a value') if self.duration_seconds.blank?
-    errors.add(:site_id, 'must have a value') if self.site_id.blank?
-    return if errors.count > 0
-
-    # recordings are overlapping if:
-    # do not have the same id,
-    # do have same site
-    # start is before .recorded_date.advance(seconds: self.duration_seconds)
-    # and end is before self.recorded_date
-    # self.id will be nil; self will not be in database yet
-    if self.recorded_date.respond_to?(:advance)
-      end_time = self.recorded_date.advance(seconds: self.duration_seconds)
-      query = AudioRecording
-      .where(site_id: self.site_id)
-      .start_before_not_equal(end_time)
-      .end_after_not_equal(self.recorded_date)
       unless self.id.blank?
-        query = query.where('id <> ?', self.id)
+        # a persisted model will have an id (.persisted?)
+        # a new record will not have an id (.new_record?)
+        query = query.where(AudioRecording.arel_table[:id].not_eq(self.id))
       end
+
       count = query.count
       if count > 0
-
-        new_recorded_date = self.recorded_date
-        new_end_date = self.recorded_date.advance(seconds: self.duration_seconds)
-
-        overlapping = query.map { |a|
-
-          existing_recorded_data = a.recorded_date
-          existing_audio_end = a.recorded_date.advance(seconds: a.duration_seconds)
-
-          if new_recorded_date < existing_recorded_data
-            # overlap is at end of new, start of existing
-            overlap_amount = new_end_date - existing_recorded_data
-            overlap_location = 'start of existing, end of new'
-          else
-            # overlap is at start of new, end of existing
-            overlap_amount = existing_audio_end - new_recorded_date
-            overlap_location = 'start of new, end of existing'
-          end
-
-          {
-              uuid: a.uuid,
-              id: a.id,
-              recorded_date: a.recorded_date,
-              duration: a.duration_seconds,
-              end_date: existing_audio_end,
-              overlap_amount: overlap_amount,
-              overlap_location: overlap_location
-          }
-        }
-
-        message = {
-            problem: 'audio recordings that overlap in the same site (calculated from recording_start and duration_seconds) are not permitted',
-            overlapping_audio_recordings: overlapping
-        }
-
-        # define overlapping so it can be accessed in the controller
-        @overlapping = overlapping
-
-        # add errors entry to this model instance to record overlap problems
-        errors.add(:recorded_date, message)
-        self
+        ids = query.pluck(:id)
+        errors.add(:file_hash, "has already been taken by id #{ids}.")
       end
+
     end
   end
 

@@ -176,9 +176,7 @@ module AWB
                  headers: :any,
                  methods: [:get, :post, :put, :patch, :head, :delete, :options],
                  credentials: true,
-                 expose: MediaPoll::HEADERS_EXPOSED
-
-
+                 expose: MediaPoll::HEADERS_EXPOSED + %w(X-Archived-At X-Error-Type)
       end
     end
 

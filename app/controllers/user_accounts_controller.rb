@@ -1,4 +1,5 @@
 class UserAccountsController < ApplicationController
+  include Api::ControllerHelper
 
   load_and_authorize_resource :user, parent: false
 
@@ -11,7 +12,8 @@ ELSE last_sign_in_at END DESC'
     @users = User.order(order).all
 
     respond_to do |format|
-      format.html # no json API to list users
+      format.html
+      # no json API to list users
     end
   end
 
@@ -20,7 +22,7 @@ ELSE last_sign_in_at END DESC'
   def show
     respond_to do |format|
       format.html # show.html.erb
-      format.json { render json: @user }
+      format.json { respond_show }
     end
   end
 
@@ -28,7 +30,7 @@ ELSE last_sign_in_at END DESC'
     @user = current_user
     respond_to do |format|
       format.html { render template: 'user_accounts/show' }
-      format.json { render json: @user }
+      format.json { respond_show }
     end
   end
 
@@ -69,10 +71,10 @@ ELSE last_sign_in_at END DESC'
     respond_to do |format|
       if @user.update_attributes(the_params)
         format.html { redirect_to user_account_path(@user), notice: 'User was successfully updated.' }
-        format.json { head :no_content }
+        format.json { respond_show }
       else
         format.html { render action: 'edit' }
-        format.json { render json: @user.errors, status: :unprocessable_entity }
+        format.json { respond_change_fail }
       end
     end
   end
@@ -85,9 +87,9 @@ ELSE last_sign_in_at END DESC'
 
     respond_to do |format|
       if @user.save
-        format.json { head :no_content }
+        format.json { respond_show }
       else
-        format.json { render json: @user.errors, status: :unprocessable_entity }
+        format.json { respond_change_fail }
       end
     end
   end
@@ -147,7 +149,23 @@ ELSE last_sign_in_at END DESC'
     end
   end
 
+  def filter
+    authorize! :filter, User
+    filter_response, opts = Settings.api_response.response_advanced(
+        api_filter_params,
+        User.all,
+        User,
+        User.filter_settings
+    )
+    respond_filter(filter_response, opts)
+  end
+
   private
+
+  # override resource name
+  def resource_name
+    'user'
+  end
 
   def user_params
     params.require(:user).permit(

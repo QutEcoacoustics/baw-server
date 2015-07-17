@@ -25,11 +25,11 @@ resource 'Errors' do
   end
 
   get '/does_not_exist' do
-    standard_request('ROUTE (does not exist)', 404, 'meta/error/original_route', true, 'does_not_exist')
+    standard_request('ROUTE (does not exist)', 404, 'meta/error/info/original_route', true, 'does_not_exist')
   end
 
   get '/does_not_exist/42' do
-    standard_request('ROUTE (does not exist with id)', 404, 'meta/error/original_route', true, 'does_not_exist/42')
+    standard_request('ROUTE (does not exist with id)', 404, 'meta/error/info/original_route', true, 'does_not_exist/42')
   end
 
   get '/test_exceptions?exception_class=ActiveRecord::RecordNotFound' do
@@ -65,7 +65,7 @@ resource 'Errors' do
   end
 
   get '/test_exceptions?exception_class=CustomErrors::RoutingArgumentError' do
-    standard_request('ERROR', 404, 'meta/error/original_route', true, 'Could not find the requested page')
+    standard_request('ERROR', 404, 'meta/error/info/original_route', true, 'Could not find the requested page')
   end
 
   get '/test_exceptions?exception_class=CustomErrors::FilterArgumentError' do
@@ -79,19 +79,17 @@ resource 'Errors' do
                                  expected_response_header_values_match: false,
                                  expected_response_header_values:
                                      {
-                                         'X-Error-Type' => 'BawAudioTools::Exceptions::AudioToolError'
+                                         'X-Error-Type' => 'Baw Audio Tools/Exceptions/Audio Tool Error'
                                      }
                              })
-    # 'meta/error/details', true, 'Filter parameters were not valid'
   end
 
   get '/test_exceptions?exception_class=BawAudioTools::Exceptions::AudioToolError' do
     standard_request_options(:get, 'ERROR AudioToolError', :internal_server_error,
                              {
                                  expected_json_path: 'meta/error/details',
-                                 response_body_content: 'Internal Server Error'
+                                 response_body_content: ['Internal Server Error', 'Purposeful exception raised for testing']
                              })
-    # 'meta/error/details', true, 'Filter parameters were not valid'
   end
 
 end

@@ -44,8 +44,8 @@ class Settings < BawWorkers::Settings
       # see http://nvie.com/posts/a-successful-git-branching-model/
       {
           major: 0,
-          minor: 14,
-          patch: 0,
+          minor: 15,
+          patch: 1,
           pre: '',
           build: ''
       }

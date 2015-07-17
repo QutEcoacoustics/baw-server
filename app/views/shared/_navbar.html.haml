@@ -10,14 +10,20 @@
       %a.navbar-brand{href: root_path, class: ('active' if current_page?(root_path))}= Settings.organisation_names.site_long_name
     #navbar.navbar-collapse.collapse
       %ul.nav.navbar-nav
-        %li{:class => ('active' if current_page?(projects_path))}
-          %a{:href => projects_path} Projects
-        %li{:class => ('active' if request.original_fullpath == "/listen")}
-          %a{:href => "/listen"} Listen
-        %li{:class => ('active' if request.original_fullpath == "/library")}
-          %a{:href => "/library"} Library
-        %li{:class => ('active' if current_page?(contact_us_path))}
-          %a{:href => contact_us_path} Contact Us
+        %li{class: ('active' if current_page?(projects_path))}
+          %a{href: projects_path} Projects
+        %li{class: ('active' if request.original_fullpath == "/listen")}
+          %a{href: "/listen"} Listen
+        %li{class: ('active' if request.original_fullpath == "/library")}
+          %a{href: "/library"} Library
+        %li{class: 'dropdown'}
+          %a.dropdown-toggle{"aria-expanded" => "false", "data-toggle" => "dropdown", :href => "#", :role => "button"}
+            = Settings.organisation_names.custom_menu.header_title
+            %span.caret
+            %ul.dropdown-menu{:role => "menu"}
+              - Settings.organisation_names.custom_menu.items.each do |entry|
+                %li
+                  %a{href: URI.join(Settings.organisation_names.parent_site_link, entry['url']) }= entry['title']
       %ul.nav.navbar-nav.navbar-right
         - if current_user.blank?
           %li
@@ -41,6 +47,8 @@
                   %a{:href => sites_orphans_path} Orphan Sites
                 %li
                   %a{:href => scripts_path} Scripts
+                %li
+                  %a{:href => tags_management_index_path} Tag Management
           - else
             %li{:class => ('active' if current_page?(my_account_path))}
               %a{:href => my_account_path}= current_user.user_name

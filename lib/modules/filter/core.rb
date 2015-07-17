@@ -14,7 +14,7 @@ module Filter
     # @return [ActiveRecord::Relation] query that will get zero records
     def relation_none(model)
       validate_model(model)
-      model.where('1 = 0')
+      model.none
     end
 
     # Get the ActiveRecord::Relation that represents all records.

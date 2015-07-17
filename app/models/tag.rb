@@ -83,15 +83,6 @@ class Tag < ActiveRecord::Base
         ],
         render_fields: [:id, :text, :is_taxanomic, :type_of_tag, :retired],
         text_fields: [:text, :type_of_tag, :notes],
-        custom_fields: lambda { |tag, user|
-          tag_hash = {}
-
-          tag_hash[:taggings] = Tagging
-                                    .where(tag_id: tag.id)
-                                    .select(:id, :audio_event_id, :created_at, :updated_at, :creator_id, :updater_id)
-
-          [tag, tag_hash]
-        },
         controller: :tags,
         action: :filter,
         defaults: {
@@ -106,7 +97,7 @@ class Tag < ActiveRecord::Base
                 associations: [
                     {
                         join: AudioEvent,
-                        on: Tagging.arel_table[:id].eq(AudioEvent.arel_table[:audio_event_id]),
+                        on: Tagging.arel_table[:audio_event_id].eq(AudioEvent.arel_table[:id]),
                         available: true,
                         associations: [
                             {

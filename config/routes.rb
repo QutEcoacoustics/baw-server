@@ -64,11 +64,13 @@ Rails.application.routes.draw do
 
   # standard devise for website authentication
   # NOTE: the sign in route is used by baw-workers to log in, ensure any changes are reflected in baw-workers.
-  devise_for :users, path: :my_account
+  devise_for :users,
+             path: :my_account,
+             controllers: {sessions: 'users/sessions', registrations: 'users/registrations'}
 
   # devise for RESTful API Authentication, see Api/sessions_controller.rb
   devise_for :users,
-             controllers: {sessions: 'sessions'},
+             controllers: {sessions: 'api/sessions'},
              as: :security,
              path: :security,
              defaults: {format: 'json'},
@@ -81,21 +83,26 @@ Rails.application.routes.draw do
   # https://github.com/plataformatec/devise/issues/2840#issuecomment-43262839
   devise_scope :security_user do
     # no index
-    post '/security' => 'sessions#create', defaults: {format: 'json'}
-    get '/security/new' => 'sessions#new', defaults: {format: 'json'}
-    get '/security/user' => 'sessions#show', defaults: {format: 'json'} # 'user' represents the current user id
+    post '/security' => 'api/sessions#create', defaults: {format: 'json'}
+    get '/security/new' => 'api/sessions#new', defaults: {format: 'json'}
+    get '/security/user' => 'api/sessions#show', defaults: {format: 'json'} # 'user' represents the current user id
     # no edit view
     # no update
-    delete '/security' => 'sessions#destroy', defaults: {format: 'json'}
+    delete '/security' => 'api/sessions#destroy', defaults: {format: 'json'}
   end
 
   # when a user goes to my account, render user_account/show view for that user
   get '/my_account/' => 'user_accounts#my_account'
 
+
+
   # for updating only preferences for only the currently logged in user
   put '/my_account/prefs/' => 'user_accounts#modify_preferences'
 
   #TODO: this will be changed from :user_accounts to :users at some point
+  # user accounts filter, placed above to not conflict with /user_accounts/:id
+  match 'user_accounts/filter' => 'user_accounts#filter', via: [:get, :post], defaults: {format: 'json'}
+
   # user list and user profile
   resources :user_accounts, only: [:index, :show, :edit, :update], constraints: {id: /[0-9]+/} do
     member do
@@ -297,6 +304,7 @@ Rails.application.routes.draw do
   # static info pages
   get '/disclaimers' => 'public#disclaimers'
   get '/ethics_statement' => 'public#ethics_statement'
+  get '/data_upload' => 'public#data_upload'
   get '/credits' => 'public#credits'
 
   # resque front end - admin only
@@ -323,6 +331,9 @@ Rails.application.routes.draw do
     # via: :all seems to not work any more >:(
     match '/test_exceptions', to: 'errors#test_exceptions', via:  [:get, :head, :post, :put, :delete, :options, :trace, :patch]
   end
+
+  # routes directly to error pages
+  match '/errors/:name', to: 'errors#show', via: [:get, :head, :post, :put, :delete, :options, :trace, :patch]
 
   # for error pages - must be last
   match '*requested_route', to: 'errors#route_error', via: [:get, :head, :post, :put, :delete, :options, :trace, :patch]

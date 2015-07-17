@@ -148,7 +148,7 @@ class Ability
       # filter permissions are checked as part of filter query
 
       # any confirmed user can view any other user's profile (read-only) and annotations  (the links may not work due to permissions)
-      can [:show, :audio_events], User
+      can [:show, :audio_events, :filter], User
 
       # index permissions are enforced in the controller action
       can [:index, :new, :create, :new_access_request, :submit_access_request, :filter], Project
