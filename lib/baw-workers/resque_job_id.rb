@@ -10,7 +10,7 @@ module BawWorkers
       def create_payload(klass, args = {})
         resque_status_id = create_id_props(klass, args)
         payload = {class: normalise_class(klass), args: [resque_status_id] + normalise_args(args)}
-        Resque.decode(Resque.encode(payload))
+        normalise(payload)
       end
 
       # Get an id from payload (name of class, args hash).

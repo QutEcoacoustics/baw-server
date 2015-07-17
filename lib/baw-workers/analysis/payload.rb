@@ -119,7 +119,7 @@ module BawWorkers
             command_format: opts[:command_format].to_s,
             file_executable: opts[:file_executable].to_s,
             copy_paths: opts[:copy_paths],
-            config: opts[:config_string].to_s,
+            config: opts[:config].to_s,
             job_id: opts[:job_id].to_s,
 
             uuid: opts[:uuid].to_s,
