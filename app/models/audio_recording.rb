@@ -138,6 +138,8 @@ class AudioRecording < ActiveRecord::Base
     end
   end
 
+
+
   def check_file_hash
     # ensure this audio recording needs to be checked
     return if self.status != 'to_check'
@@ -277,7 +279,22 @@ class AudioRecording < ActiveRecord::Base
             {
                 join: AudioEvent,
                 on: AudioRecording.arel_table[:id].eq(AudioEvent.arel_table[:audio_recording_id]),
-                available: true
+                available: true,
+                associations: [
+                    {
+                        join: Tagging,
+                        on: AudioEvent.arel_table[:id].eq(Tagging.arel_table[:audio_event_id]),
+                        available: false,
+                        associations: [
+                            {
+                                join: Tag,
+                                on: Tagging.arel_table[:tag_id].eq(Tag.arel_table[:id]),
+                                available: true
+                            }
+                        ]
+
+                    }
+                ]
             },
             {
                 join: Site,

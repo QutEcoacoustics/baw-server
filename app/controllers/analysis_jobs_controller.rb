@@ -36,8 +36,10 @@ class AnalysisJobsController < ApplicationController
   # POST /analysis_job
   # POST /analysis_job.json
   def create
-
     attributes_and_authorize(analysis_jobs_params)
+
+    # This may need to be async depending on how fast it runs
+    @analysis_job.enqueue_work(current_user)
 
     if @analysis_job.save
       respond_create_success(analysis_job_url(@analysis_job))

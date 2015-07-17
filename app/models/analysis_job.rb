@@ -18,7 +18,7 @@ class AnalysisJob < ActiveRecord::Base
 
   # store progress as json in a text column
   # this stores jason in the form
-  # { queued: 5, working: 10, success: 4, failed: 3, total: 22}
+  # { queued: 5, working: 10, successful: 4, failed: 3, total: 22}
   serialize :overall_progress, JSON
 
   # association validations
@@ -90,5 +90,31 @@ class AnalysisJob < ActiveRecord::Base
             }
         ]
     }
+  end
+
+  def enqueue_work(user)
+    # adding logging and timing
+
+    # execute associated saved_search
+    audio_recordings_query = self.saved_search.execute_query(current_user)
+
+
+    # create payload for each audio_recording
+    audio_recordings_query.find_each(batch_size: 1000) do |audio_recording|
+      payload =
+          {
+              command_format: self.script.exectuable_command,
+              file_executable: opts[:file_executable].to_s,
+              copy_paths: opts[:copy_paths],
+              config: self.custom_settings,
+              job_id: self.id,
+
+              uuid:audio_recording.uuid,
+              id: audio_recording.id,
+              datetime_with_offset: audio_recording.recorded_date.iso8601(3),
+              original_format: ''
+          }
+    end
+
   end
 end

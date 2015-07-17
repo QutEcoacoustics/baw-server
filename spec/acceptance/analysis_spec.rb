@@ -68,7 +68,7 @@ resource 'Analysis' do
     let(:analysis_job_id) { 'system' }
     let(:results_path) { 'Test/test-case.csv' }
     let(:include_test_file) { true }
-    
+
     standard_request_options(
         :get,
         'ANALYSIS (as admin, requesting file case sensitivity that does exist)',
@@ -109,6 +109,43 @@ resource 'Analysis' do
     standard_request_options(
         :head,
         'ANALYSIS (as admin, requesting HEAD file that does exist)',
+        :ok,
+        {
+            expected_response_content_type: 'text/csv',
+            expected_response_has_content: false
+        })
+  end
+
+  get '/analysis_jobs/:analysis_job_id/audio_recordings/:audio_recording_id/:results_path' do
+
+    standard_analysis_parameters
+    let(:authentication_token) { admin_token }
+    let(:analysis_job_id) { 'system' }
+    let(:results_path) { 'Test' }
+    let(:include_test_file) { true }
+
+    standard_request_options(
+        :get,
+        'ANALYSIS (as admin, requesting GET directory that does exist)',
+        :ok,
+        {
+            expected_response_content_type: 'text/csv',
+            expected_response_has_content: true,
+            response_body_content: '{"content":"This is some content."}'
+        })
+  end
+
+  head '/analysis_jobs/:analysis_job_id/audio_recordings/:audio_recording_id/:results_path' do
+
+    standard_analysis_parameters
+    let(:authentication_token) { admin_token }
+    let(:analysis_job_id) { 'system' }
+    let(:results_path) { 'Test' }
+    let(:include_test_file) { true }
+
+    standard_request_options(
+        :head,
+        'ANALYSIS (as admin, requesting HEAD directory that does exist)',
         :ok,
         {
             expected_response_content_type: 'text/csv',

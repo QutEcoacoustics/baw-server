@@ -38,6 +38,7 @@ class SavedSearchesController < ApplicationController
   def create
     attributes_and_authorize(saved_search_params)
 
+    # This may need to be async depending on how fast it runs
     @saved_search.projects = @saved_search.extract_projects(current_user)
 
     if @saved_search.save
