@@ -95,16 +95,13 @@ class User < ActiveRecord::Base
   serialize :preferences, JSON
 
   # validations
-  validates :user_name, presence: true,
-            uniqueness: {
-                case_sensitive: false
-            },
+  validates :user_name,
+            presence: true,
+            uniqueness: {case_sensitive: false},
             format: {
                 with: /\A[a-zA-Z0-9 _-]+\z/,
                 message: 'Only letters, numbers, spaces ( ), underscores (_) and dashes (-) are valid.'
-            }
-
-  validates :user_name,
+            },
             exclusion: {
                 in: %w(admin harvester analysis_runner root superuser administrator admins administrators)
             },

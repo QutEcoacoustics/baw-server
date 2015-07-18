@@ -1,8 +1,8 @@
 %h2 Resend confirmation instructions
-= simple_form_for(resource, as: resource_name, url: confirmation_path(resource_name), wrapper: :horizontal_form,
-  html: { class: 'form-horizontal', method: :post }) do |f|
-  = f.error_notification
+= simple_form_for(resource, as: resource_name, url: confirmation_path(resource_name), wrapper: :vertical_form,
+error_notification_class: 'alert alert-info', html: { class: 'form-horizontal', method: :post }) do |f|
+  = f.error_notification message: t('devise.confirmations.send_paranoid_instructions')
   = f.full_error :confirmation_token
-  = f.input :email, required: true, autofocus: true, hint: 'blah'
+  = f.input :login, required: true, autofocus: true, hint: 'enter your user name or email'
   = f.button :submit, "Resend confirmation instructions"
 
