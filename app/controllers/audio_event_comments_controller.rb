@@ -15,7 +15,7 @@ class AudioEventCommentsController < ApplicationController
     #@audio_event_comments = AudioEventComment.accessible_by
     @audio_event_comments, opts = Settings.api_response.response_advanced(
         api_filter_params,
-        get_audio_event_comments,
+        get_audio_event_comments.where(audio_events: { id: @audio_event.id}),
         AudioEventComment,
         AudioEventComment.filter_settings
     )
