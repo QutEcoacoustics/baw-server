@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+ - 2015-07-08
+    - Changes to media polling to reduce the number of errors raised. 
+
  - 2015-07-06
     - enable sorting on custom fields [#220](https://github.com/QutBioacoustics/baw-server/issues/220)
     - fixed site page loading slowly [#222](https://github.com/QutBioacoustics/baw-server/issues/222)
