@@ -327,11 +327,11 @@ module Api
     def error_links_hash
       {
           sign_in: {
-              text: 'sign in',
+              text: t('.sign_in', default: 'Sign in'),
               url: url_helpers.new_user_session_path
           },
           sign_up: {
-              text: 'sign up',
+              text: t('.sign_up', default: 'Sign up'),
               url: url_helpers.new_user_registration_path
           },
           permissions: {
@@ -339,7 +339,7 @@ module Api
               url: url_helpers.new_access_request_projects_path
           },
           confirm: {
-              text: 'confirm your account',
+              text: t('devise.failure.unconfirmed', default: 'confirm your account'),
               url: url_helpers.new_user_confirmation_path
           },
           reset_password: {
