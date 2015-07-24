@@ -327,27 +327,27 @@ module Api
     def error_links_hash
       {
           sign_in: {
-              text: t('.sign_in', default: 'Sign in'),
+              text: I18n.t('devise.sessions.new.sign_in'),
               url: url_helpers.new_user_session_path
           },
           sign_up: {
-              text: t('.sign_up', default: 'Sign up'),
+              text: I18n.t('devise.registrations.new.sign_up'),
               url: url_helpers.new_user_registration_path
           },
           permissions: {
-              text: 'request permissions',
+              text: I18n.t('models.permissions.request_permissions'),
               url: url_helpers.new_access_request_projects_path
           },
           confirm: {
-              text: t('devise.failure.unconfirmed', default: 'confirm your account'),
+              text: I18n.t('devise.shared.links.confirm_account'),
               url: url_helpers.new_user_confirmation_path
           },
           reset_password: {
-              text: 'reset your password',
+              text: I18n.t('devise.shared.links.reset_password'),
               url: url_helpers.new_user_password_path
           },
           resend_unlock: {
-              text: 'resend unlock instructions',
+              text: I18n.t('devise.shared.links.unlock_account'),
               url: url_helpers.new_user_unlock_path
           }
       }

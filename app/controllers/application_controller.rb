@@ -1,7 +1,7 @@
 class ApplicationController < ActionController::Base
   include Api::ApiAuth
 
-  layout :api_or_html
+  layout :select_layout
 
   # custom authentication for api only
   before_action :authenticate_user_custom!
@@ -463,9 +463,11 @@ class ApplicationController < ActionController::Base
     Rails.logger.warn msg
   end
 
-  def api_or_html
+  def select_layout
     if json_request?
       'api'
+    elsif devise_controller?
+      'devise'
     else
       'application'
     end

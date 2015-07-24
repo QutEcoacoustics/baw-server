@@ -1,0 +1,24 @@
+- content_for(:left_sidebar) do
+  %li= link_to t('baw.shared.links.home.title'), root_path,  title: t('baw.shared.links.home.description'), data: {toggle: 'tooltip',  placement: 'right'}
+  - if current_user.blank?
+    %li= link_to t('devise.shared.links.sign_in'), new_user_session_path, title: t('devise.shared.links.sign_in'), data: {toggle: 'tooltip',  placement: 'right'}
+    - if devise_mapping.registerable?
+      %li= link_to t('devise.shared.links.sign_up'), new_user_registration_path, title: t('baw.shared.links.register.description'), data: {toggle: 'tooltip',  placement: 'right'}
+  -  if can? :index, Project
+    %li= link_to t('baw.shared.links.projects.title'), projects_path, title: t('baw.shared.links.projects.description'), data: {toggle: 'tooltip',  placement: 'right'}
+  - unless current_user.blank?
+    %li= link_to t('baw.shared.links.profile.title'), my_account_path, title: t('baw.shared.links.profile.description'), data: {toggle: 'tooltip',  placement: 'right'}
+    %li= link_to t('baw.shared.links.annotations.title'), audio_events_user_account_path(current_user), title: t('baw.shared.links.annotations.description'), data: {toggle: 'tooltip',  placement: 'right'}
+  - if devise_mapping.recoverable?
+    %li= link_to t('devise.shared.links.reset_password'), new_password_path(resource_name), title: t('baw.shared.links.reset_password.description'), data: {toggle: 'tooltip',  placement: 'right'}
+  - if devise_mapping.confirmable?
+    %li= link_to t('devise.shared.links.confirm_account'), new_confirmation_path(resource_name), title: t('baw.shared.links.confirm_account.description'), data: {toggle: 'tooltip',  placement: 'right'}
+  - if devise_mapping.lockable? && resource_class.unlock_strategy_enabled?(:email)
+    %li= link_to t('devise.shared.links.unlock_account'), new_unlock_path(resource_name), title: t('baw.shared.links.unlock_account.description'), data: {toggle: 'tooltip',  placement: 'right'}
+  - if devise_mapping.omniauthable?
+    - resource_class.omniauth_providers.each do |provider|
+      %li= link_to  t('devise.shared.links.sign_in_with_provider', provider: provider.to_s.titleize), omniauth_authorize_path(resource_name, provider),
+      title: t('baw.shared.links.sign_in_with_provider.description', provider: provider.to_s.titleize),
+      data: {toggle: 'tooltip',  placement: 'right'}
+
+= render template:'layouts/application'

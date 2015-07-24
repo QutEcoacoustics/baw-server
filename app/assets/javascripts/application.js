@@ -17,6 +17,7 @@
 //= require moment-with-locales.min
 //= require moment-timezone-with-data.min
 //= require bootstrap-sprockets
+//= require bootstrap-datetimepicker.min
 //= require shared
 //= require public
 //= require functions

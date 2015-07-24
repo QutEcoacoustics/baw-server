@@ -1,9 +1,8 @@
-%h2 Log in
-= simple_form_for(resource, as: resource_name, url: session_path(resource_name)) do |f|
-  .form-inputs
-    = f.input :email, required: false, autofocus: true
-    = f.input :password, required: false
-    = f.input :remember_me, as: :boolean if devise_mapping.rememberable?
-  .form-actions
-    = f.button :submit, "Log in"
-= render "devise/shared/links"
+%h2= t('devise.sessions.new.sign_in')
+= simple_form_for(resource, as: resource_name, url: session_path(resource_name), html: { class: 'form-horizontal', method: :post }) do |f|
+  = field_set_tag do
+    = f.input :login, required: true, autofocus: true, hint: t('devise.confirmations.new.login_hint'), placeholder: 'Login'
+    = f.input :password, required: true
+    - if devise_mapping.rememberable?
+      = f.input :remember_me, as: :boolean, wrapper: :horizontal_boolean
+    = f.button :submit_cancel, t('devise.shared.links.sign_in'), class: 'btn-default'

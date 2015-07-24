@@ -18,5 +18,5 @@
       %td= link_to_if script.settings_file_file_name,  script.settings_file_file_name, script.settings_file.url
       %td= link_to_if script.data_file_file_name,  script.data_file_file_name, script.data_file.url
       %td.nolink
-        = link_to edit_script_path(script), class: 'btn btn-mini btn-edit' do
+        = link_to edit_script_path(script), class: 'btn btn-default btn-xs' do
           Create new version

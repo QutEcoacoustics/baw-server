@@ -1,73 +1,62 @@
-!!! 5
-%html(lang="en")
-  %head
-    %meta(charset="utf-8")
-    %meta(http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1")
-    %meta(name="viewport" content="width=device-width, initial-scale=1.0")
-    %title= Settings.organisation_names.site_long_name + (content_for?(:title) ? " | #{yield(:title)}" : '')
-    = csrf_meta_tags
-    / Le HTML5 shim, for IE6-8 support of HTML elements
-    /[if lt IE 9]
-      = javascript_include_tag '//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.6.1/html5shiv.js'
-    = stylesheet_link_tag 'application', media: 'all'
-    %link(href="images/apple-touch-icon-144x144.png" rel="apple-touch-icon-precomposed" sizes="144x144")
-    %link(href="images/apple-touch-icon-114x114.png" rel="apple-touch-icon-precomposed" sizes="114x114")
-    %link(href="images/apple-touch-icon-72x72.png" rel="apple-touch-icon-precomposed" sizes="72x72")
-    %link(href="images/apple-touch-icon.png" rel="apple-touch-icon-precomposed")
-    %link(href="/favicon.ico" rel="shortcut icon")
-    -## TODO: move under the footer again but keep gmaps js for required controllers up here
-    = javascript_include_tag 'application'
+- content_for(:additional_head_items) do
+  = javascript_include_tag 'application'
+- content_for(:content) do
+  = render 'shared/navbar'
 
-  %body
-    = render partial: '/shared/navbar'
+  .container
 
-    .container
+    .row
+      .col-md-2
+        - if content_for?(:left_sidebar)
+          .sidebar-nav
+            %ul.nav.nav-pills.nav-stacked
+              = yield(:left_sidebar)
+      .col-md-8
+        - if breadcrumbs.size > 0
+          %ol.breadcrumb
+            = render_breadcrumbs tag: :li, separator: ''
 
-      .row
-        .col-md-2
-          = yield :left_sidebar
-        .col-md-8
-          - if breadcrumbs.size > 0
-            %ol.breadcrumb
-              = render_breadcrumbs tag: :li, separator: ''
+        = flash_messages
 
-          = flash_messages
+        - unless current_user.blank?
+          - if !current_user.confirmed?
+            .alert.fade.in.alert-warning
+              %button.close{ 'data-dismiss' => 'alert'} &times;
+              = t 'devise.failure.unconfirmed'
+              = link_to t('devise.confirmations.new.resend_confirmation_instructions'), new_user_confirmation_path
 
-          - unless current_user.blank?
-            - if !current_user.confirmed?
-              .alert.fade.in.alert-warning
-                %button.close{ 'data-dismiss' => 'alert'} &times;
-                = t 'devise.failure.unconfirmed'
-                = link_to 'Resend confirmation email', new_user_confirmation_path
+        .row
+          = yield
+      .col-md-2
+        - if content_for?(:right_sidebar)
+          = sidebar_metadata_users('Created by', [{user: item.creator, subtext: distance_of_time_in_words(Time.zone.now, item.created_at, nil, {vague: true}) + ' ago' }])
+          = sidebar_metadata_users('Modified by', [{user: item.updater, subtext: distance_of_time_in_words(Time.zone.now, item.updated_at, nil, {vague: true}) + ' ago' }])
+          = yield(:right_sidebar)
 
-          .row
-            = yield
-        .col-md-2
-          = yield :right_sidebar
-    
-    %footer
-      %ul.nav.nav-pills
-        %li.disabled
-          %a
-            &copy; QUT
-            =Time.zone.now.year
-        %li.disabled
-          %a= "#{Rails.env} ver #{Settings.version_string}"
-        %li= link_to 'Statistics', website_status_path
-        %li= link_to 'Contact Us', contact_us_path
-        %li= link_to 'Disclaimers', disclaimers_path
-        %li= link_to 'Credits', credits_path
-        %li= link_to 'Ethics Statement', ethics_statement_path
+  %footer
+    %ul.nav.nav-pills
+      %li.disabled
+        %a
+          &copy; QUT
+          =Time.zone.now.year
+      %li.disabled
+        %a= "#{Rails.env} ver #{Settings.version_string}"
+      %li= link_to t('baw.shared.links.website_status.title'), website_status_path
+      %li= link_to t('baw.shared.links.contact_us.title'), contact_us_path
+      %li= link_to t('baw.shared.links.disclaimers.title'), disclaimers_path
+      %li= link_to t('baw.shared.links.credits.title'), credits_path
+      %li= link_to t('baw.shared.links.ethics_statement.title'), ethics_statement_path
 
-    /
-      Javascripts
-      \==================================================
-    / Placed at the end of the document so the pages load faster
-    :javascript
-      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
-      ga('create', '#{Settings.analytics.ua}', '#{Settings.analytics.domain}');
-      ga('send', 'pageview');
+  /
+    Javascripts
+    \==================================================
+  / Placed at the end of the document so the pages load faster
+  :javascript
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+    ga('create', '#{Settings.analytics.ua}', '#{Settings.analytics.domain}');
+    ga('send', 'pageview');
 
+= render template:'layouts/base'

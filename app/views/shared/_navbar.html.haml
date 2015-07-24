@@ -11,11 +11,11 @@
     #navbar.navbar-collapse.collapse
       %ul.nav.navbar-nav
         %li{class: ('active' if current_page?(projects_path))}
-          %a{href: projects_path} Projects
+          %a{href: projects_path}= t('baw.shared.links.projects.title')
         %li{class: ('active' if request.original_fullpath == "/listen")}
-          %a{href: "/listen"} Listen
+          %a{href: "/listen"}= t('baw.shared.links.listen.title')
         %li{class: ('active' if request.original_fullpath == "/library")}
-          %a{href: "/library"} Library
+          %a{href: "/library"}= t('baw.shared.links.library.title')
         %li{class: 'dropdown'}
           %a.dropdown-toggle{"aria-expanded" => "false", "data-toggle" => "dropdown", :href => "#", :role => "button"}
             = Settings.organisation_names.custom_menu.header_title
@@ -27,9 +27,9 @@
       %ul.nav.navbar-nav.navbar-right
         - if current_user.blank?
           %li
-            %a{:href => new_user_registration_path} Sign up
+            %a{:href => new_user_registration_path}= t('devise.registrations.new.sign_up')
           %li
-            %a{:href => new_user_session_path} Login
+            %a{:href => new_user_session_path}= t('devise.sessions.new.sign_in')
         - else
           - if Access::Check.is_admin?(current_user)
             %li{:class => (current_page?(my_account_path)) ? 'dropdown active' : 'dropdown'}
@@ -38,19 +38,19 @@
                 %span.caret
               %ul.dropdown-menu{:role => "menu"}
                 %li
-                  %a{:href => my_account_path} Profile
+                  %a{:href => my_account_path}= t('baw.shared.links.profile.title')
                 %li.divider
-                %li.dropdown-header Administration
+                %li.dropdown-header= t('baw.shared.links.admin_area.title')
                 %li
-                  %a{:href => user_accounts_path} User List
+                  %a{:href => user_accounts_path}= t('baw.shared.links.user_list.title')
                 %li
-                  %a{:href => sites_orphans_path} Orphan Sites
+                  %a{:href => sites_orphans_path}= t('baw.shared.links.orphan_sites.title')
                 %li
-                  %a{:href => scripts_path} Scripts
+                  %a{:href => scripts_path}= t('baw.shared.links.scripts.title')
                 %li
-                  %a{:href => tags_management_index_path} Tag Management
+                  %a{:href => tags_management_index_path}= t('baw.shared.links.tag_management.title')
           - else
             %li{:class => ('active' if current_page?(my_account_path))}
               %a{:href => my_account_path}= current_user.user_name
           %li
-            %a{:href => destroy_user_session_path} Logout
+            %a{:href => destroy_user_session_path}= t('devise.shared.links.sign_out')

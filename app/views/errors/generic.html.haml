@@ -1,4 +1,4 @@
-.span6
+.col-sm-6
   - if @details.blank?
     %h1 Sorry, something is not right
     %p There's been an issue.
@@ -21,9 +21,9 @@
         %li= category
         %ul
           - if category == :text
-            %li= ".html (text/html)"
+            %li= '.html (text/html)'
           - items.each do |item|
             %li=".#{item.to_sym} (#{item})"
 
-.span6
+.col-sm-6
   = image_tag 'bird_watcher.jpg'

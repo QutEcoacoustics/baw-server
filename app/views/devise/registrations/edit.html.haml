@@ -1,18 +1,16 @@
-%h2
-  Edit #{resource_name.to_s.humanize}
-= simple_form_for(resource, as: resource_name, url: registration_path(resource_name), html: { method: :put }) do |f|
-  = f.error_notification
-  .form-inputs
-    = f.input :email, required: true, autofocus: true
+%h2= t('devise.registrations.edit.title', resource: resource_name.to_s.humanize)
+= simple_form_for(resource, as: resource_name, url: registration_path(resource_name), html: { class: 'form-horizontal', method: :put }) do |f|
+  = field_set_tag do
+    = f.error_notification
+    = f.input :email, required: true, autofocus: true, placeholder: 'Email'
     - if devise_mapping.confirmable? && resource.pending_reconfirmation?
-      %p
-        Currently waiting confirmation for: #{resource.unconfirmed_email}
-    = f.input :password, autocomplete: "off", hint: "leave it blank if you don't want to change it", required: false
+      %p= t('devise.registrations.edit.currently_waiting_confirmation_for_email', email: resource.unconfirmed_email)
+    = f.input :password, autocomplete: 'off', hint: t('devise.registrations.edit.leave_blank_if_you_don_t_want_to_change_it'), required: false
     = f.input :password_confirmation, required: false
-    = f.input :current_password, hint: "we need your current password to confirm your changes", required: true
-  .form-actions
-    = f.button :submit, "Update"
-%h3 Cancel my account
-%p
-  Unhappy? #{link_to "Cancel my account", registration_path(resource_name), data: { confirm: "Are you sure?" }, method: :delete}
-= link_to "Back", :back
+    = f.input :current_password, hint: t('devise.registrations.edit.we_need_your_current_password_to_confirm_your_changes'), required: true
+    = f.button :submit_cancel, t('devise.registrations.edit.update'), class: 'btn-default'
+  %h3 Cancel my account
+  %p
+    = t('devise.registrations.edit.unhappy')
+    = link_to t('devise.registrations.edit.cancel_my_account'), registration_path(resource_name),
+    data: { confirm: t('devise.registrations.edit.are_you_sure') }, method: :delete

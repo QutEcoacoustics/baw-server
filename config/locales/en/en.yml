@@ -1,4 +1,5 @@
-en-AU:
+---
+en:
   date:
     abbr_day_names:
     - Sun
@@ -9,7 +10,7 @@ en-AU:
     - Fri
     - Sat
     abbr_month_names:
-    - 
+    -
     - Jan
     - Feb
     - Mar
@@ -31,11 +32,11 @@ en-AU:
     - Friday
     - Saturday
     formats:
-      default: ! '%d-%m-%Y'
-      long: ! '%d %B, %Y'
-      short: ! '%d %b'
+      default: "%Y-%m-%d"
+      long: "%B %d, %Y"
+      short: "%Y/%m/%d"
     month_names:
-    - 
+    -
     - January
     - February
     - March
@@ -78,16 +79,16 @@ en-AU:
         other: over %{count} years
       x_days:
         one: 1 day
-        other: ! '%{count} days'
+        other: "%{count} days"
       x_minutes:
         one: 1 minute
-        other: ! '%{count} minutes'
+        other: "%{count} minutes"
       x_months:
         one: 1 month
-        other: ! '%{count} months'
+        other: "%{count} months"
       x_seconds:
         one: 1 second
-        other: ! '%{count} seconds'
+        other: "%{count} seconds"
     prompts:
       day: Day
       hour: Hour
@@ -95,12 +96,13 @@ en-AU:
       month: Month
       second: Seconds
       year: Year
-  errors: &errors
-    format: ! '%{attribute} %{message}'
+  errors:
+    format: "%{attribute} %{message}"
     messages:
       accepted: must be accepted
       blank: can't be blank
-      confirmation: doesn't match confirmation
+      present: must be blank
+      confirmation: doesn't match %{attribute}
       empty: can't be empty
       equal_to: must be equal to %{count}
       even: must be even
@@ -114,7 +116,10 @@ en-AU:
       not_a_number: is not a number
       not_an_integer: must be an integer
       odd: must be odd
-      record_invalid: ! 'Validation failed: %{errors}'
+      record_invalid: 'Validation failed: %{errors}'
+      restrict_dependent_destroy:
+        one: Cannot delete record because a dependent %{record} exists
+        many: Cannot delete record because dependent %{record} exist
       taken: has already been taken
       too_long:
         one: is too long (maximum is 1 character)
@@ -125,12 +130,13 @@ en-AU:
       wrong_length:
         one: is the wrong length (should be 1 character)
         other: is the wrong length (should be %{count} characters)
-      existence: must exist as an object or foreign key for %{record}
+      other_than: must be other than %{count}
+      existence: expected %{record} to exist
     template:
-      body: ! 'There were problems with the following fields:'
+      body: 'There were problems with the following fields:'
       header:
         one: 1 error prohibited this %{model} from being saved
-        other: ! '%{count} errors prohibited this %{model} from being saved'
+        other: "%{count} errors prohibited this %{model} from being saved"
   helpers:
     select:
       prompt: Please select
@@ -138,25 +144,37 @@ en-AU:
       create: Create %{model}
       submit: Save %{model}
       update: Update %{model}
+    actions: "Actions"
+    links:
+      back: "Back"
+      cancel: "Cancel"
+      confirm: "Are you sure?"
+      destroy: "Delete"
+      new: "New"
+    titles:
+      edit: "Edit"
+      save: "Save"
+      new: "New"
+      delete: "Delete"
   number:
     currency:
       format:
-        delimiter: ! ','
-        format: ! '%u%n'
+        delimiter: ","
+        format: "%u%n"
         precision: 2
-        separator: .
+        separator: "."
         significant: false
         strip_insignificant_zeros: false
-        unit: $
+        unit: "$"
     format:
-      delimiter: ! ','
+      delimiter: ","
       precision: 3
-      separator: .
+      separator: "."
       significant: false
       strip_insignificant_zeros: false
     human:
       decimal_units:
-        format: ! '%n %u'
+        format: "%n %u"
         units:
           billion: Billion
           million: Million
@@ -170,7 +188,7 @@ en-AU:
         significant: true
         strip_insignificant_zeros: true
       storage_units:
-        format: ! '%n %u'
+        format: "%n %u"
         units:
           byte:
             one: Byte
@@ -182,36 +200,42 @@ en-AU:
     percentage:
       format:
         delimiter: ''
+        format: "%n%"
     precision:
       format:
         delimiter: ''
   support:
     array:
-      last_word_connector: ! ', and '
-      two_words_connector: ! ' and '
-      words_connector: ! ', '
+      last_word_connector: ", and "
+      two_words_connector: " and "
+      words_connector: ", "
   time:
     am: am
     formats:
-      default: ! '%a, %d %b %Y %H:%M:%S %z'
-      long: ! '%d %B, %Y %H:%M'
-      short: ! '%d %b %H:%M'
+      default: "%a, %d %b %Y %H:%M:%S %z"
+      long: "%Y/%m/%d %H:%M"
+      short: "%H:%M"
     pm: pm
-  # remove these aliases after 'activemodel' and 'activerecord' namespaces are removed from Rails repository
-  activemodel:
-    errors:
-      models:
-        bug_report:
-          attributes:
-            date:
-             invalid_date: 'invalid date'
-      <<: *errors
-  activerecord:
-    errors:
-      models:
-        audio_recording:
-          attributes:
-            recorded_date:
-              invalid_datetime: 'invalid datetime'
-              on_or_before: 'must be on or before current datetime'
-      <<: *errors
+  enumerize:
+    dataset:
+      filters:
+        wind: "Wind"
+        rain: "Rain"
+      types_of_tags:
+        human: "Human"
+        computer: "Computer"
+  will_paginate:
+    previous_label: "&#8592; Previous"
+    next_label: "Next &#8594;"
+    page_gap: "&hellip;"
+    page_entries_info:
+      single_page:
+        zero:  "No %{model} found"
+        one:   "Displaying 1 %{model}"
+        other: "Displaying all %{count} %{model}"
+      single_page_html:
+        zero:  "No %{model} found"
+        one:   "Displaying <b>1</b> %{model}"
+        other: "Displaying <b>all&nbsp;%{count}</b> %{model}"
+      multi_page: "Displaying %{model} %{from} - %{to} of %{count} in total"
+      multi_page_html: "Displaying %{model} <b>%{from}&nbsp;-&nbsp;%{to}</b> of <b>%{count}</b> in total"
