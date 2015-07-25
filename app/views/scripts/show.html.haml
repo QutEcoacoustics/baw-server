@@ -17,16 +17,14 @@
       = render partial: 'scripts/script_row', locals: { script: @script.latest_version, current_version: @script}
 
 
-
-
 - content_for :right_sidebar do
-  = sidebar_metadata_users('Created by', [{user: @script.creator, subtext: distance_of_time_in_words(Time.zone.now, @script.created_at, nil, {vague: true}) + ' ago' }])
-  = sidebar_metadata('Analysis Identifier', @script.analysis_identifier)
-  = sidebar_metadata('Settings file', link_to(@script.settings_file_file_name, @script.settings_file.url))
+  = render partial: 'shared/sidebar_metadata_user_created', locals: { user: @script.creator }
+  = render partial: 'shared/sidebar_metadata', locals: {title: 'Analysis Identifier', text: @script.analysis_identifier}
+  = render partial: 'shared/sidebar_metadata', locals: {title: 'Settings file', text: link_to(@script.settings_file_file_name, @script.settings_file.url) }
   - unless @script.data_file_file_name.blank?
-    = sidebar_metadata('Data file', link_to(@script.data_file_file_name, @script.data_file.url))
+    = render partial: 'shared/sidebar_metadata', locals: {title: 'Data file', text: link_to(@script.data_file_file_name, @script.data_file.url)}
 
+- content_for(:left_sidebar_header, 'Scripts')
 - content_for :left_sidebar do
-  = render layout: '/shared/left_sidebar', locals: {title: 'Scripts'} do
-    - if can? :update, @script
-      %li= link_to 'Create new version', edit_script_path(@script),  title: "Create new version of this script", data: {toggle: 'tooltip',  placement: 'right'}
+  - if can? :update, @script
+    %li= link_to 'Create new version', edit_script_path(@script),  title: 'Create new version of this script', data: {toggle: 'tooltip',  placement: 'right'}

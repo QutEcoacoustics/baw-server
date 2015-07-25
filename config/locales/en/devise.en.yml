@@ -11,10 +11,10 @@ en:
     failure:
       already_authenticated: You are already signed in.
       inactive: Your account was not activated yet.
-      invalid: Invalid email or password.
+      invalid: Invalid login or password.
       last_attempt: You have one more attempt before your account will be locked.
       locked: Your account is locked.
-      not_found_in_database: Invalid e-mail or password.
+      not_found_in_database: Invalid login or password.
       timeout: Your session expired, please sign in again to continue.
       unauthenticated: You need to sign in or sign up before continuing.
       unconfirmed: You have to confirm your account before continuing.
@@ -44,7 +44,7 @@ en:
     passwords:
       no_token: You can't access this page without coming from a password reset email. If you do come from a password reset email, please make sure you used the full URL provided.
       send_instructions: You will receive an email with instructions about how to reset your password in a few minutes.
-      send_paranoid_instructions: If your e-mail exists on our database, you will receive a password recovery link on your e-mail
+      send_paranoid_instructions: If your login exists in our database, a password recovery link will be sent to your email address.
       updated: Your password was changed successfully. You are now signed in.
       updated_not_active: Your password was changed successfully.
       new:
@@ -72,7 +72,7 @@ en:
         title: "Edit %{resource}"
         we_need_your_current_password_to_confirm_your_changes: "we need your current password to confirm your changes"
         update: "Update"
-        unhappy: "Unhappy"
+        unhappy: "Unhappy?"
       new:
         sign_up: "Register"
     sessions:
@@ -96,7 +96,7 @@ en:
       send_paranoid_instructions: If your account exists, you will receive an email with instructions about how to unlock it in a few minutes.
       unlocked: Your account has been unlocked successfully. Please sign in to continue.
       new:
-        resend_unlock_instructions: "Resend unlock instructions"
+        resend_unlock_instructions: Resend unlock instructions
   errors:
     messages:
       already_confirmed: was already confirmed, please try signing in
@@ -109,11 +109,11 @@ en:
         other: "%{count} errors prohibited this %{resource} from being saved:"
   activerecord:
     models:
-      user: "User"
+      user: User
     attributes:
       user:
-        email: "Email"
-        password: "Password"
-        password_confirmation: "Password confirmation"
-        current_password: "Current password"
-        remember_me: "Remember me"
+        email: Email
+        password: Password
+        password_confirmation: Password confirmation
+        current_password: Current password
+        remember_me: Remember me

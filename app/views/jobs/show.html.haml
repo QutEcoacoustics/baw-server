@@ -14,15 +14,14 @@
 
 
 - content_for :right_sidebar do
-  = render layout: '/shared/right_sidebar_user_times', locals: { item: @job } do
-    = sidebar_metadata('Annotation Name', @job.annotation_name)
+  = render 'shared/right_sidebar_user_times', locals: { item: @job }
+  = render 'shared/sidebar_metadata', locals: {title: 'Annotation Name', text: @job.annotation_name}
 
 
 - content_for :left_sidebar do
-  = render layout: '/shared/left_sidebar', locals: {title: 'Jobs'} do
-    - if can? :edit, @project
-      %li= link_to 'Edit Job',edit_project_job_path(@project, @job),  title: "Edit analysis job's parameters", data: {toggle: 'tooltip',  placement: 'right'}
-    - if can? :destroy, @project
-      %li= link_to 'Delete Job', [@project, @job], :method => :delete, data: { confirm: 'Are you sure?', toggle: 'tooltip',  placement: 'right' }, title: 'Delete dataset'
-    - if can? :edit, @project
-      %li= link_to 'Add New Job', new_project_job_path(@project),  title: "Add a new analysis job to this project", data: {toggle: 'tooltip',  placement: 'right'}
+  - if can? :edit, @project
+    %li= link_to 'Edit Job',edit_project_job_path(@project, @job),  title: "Edit analysis job's parameters", data: {toggle: 'tooltip',  placement: 'right'}
+  - if can? :destroy, @project
+    %li= link_to 'Delete Job', [@project, @job], :method => :delete, data: { confirm: 'Are you sure?', toggle: 'tooltip',  placement: 'right' }, title: 'Delete dataset'
+  - if can? :edit, @project
+    %li= link_to 'Add New Job', new_project_job_path(@project),  title: "Add a new analysis job to this project", data: {toggle: 'tooltip',  placement: 'right'}

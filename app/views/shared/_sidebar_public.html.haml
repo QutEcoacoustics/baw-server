@@ -1,0 +1,7 @@
+- content_for(:left_sidebar_header, 'General')
+- content_for(:left_sidebar) do
+  = render partial: 'shared/sidebar_base'
+  %li= link_to t('baw.shared.links.data_request.title'), data_request_path,  title: t('baw.shared.links.data_request.description'), data: {toggle: 'tooltip',  placement: 'right'}
+  %li= link_to t('baw.shared.links.upload_audio.title'), data_upload_path,  title: t('baw.shared.links.upload_audio.description'), data: {toggle: 'tooltip',  placement: 'right'}
+  %li= link_to t('baw.shared.links.report_problem.title'), bug_report_path,  title: t('baw.shared.links.report_problem.description'), data: {toggle: 'tooltip',  placement: 'right'}
+  %li= link_to t('baw.shared.links.website_status.title'), website_status_path,  title: t('baw.shared.links.website_status.description'), data: {toggle: 'tooltip',  placement: 'right'}

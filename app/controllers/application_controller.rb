@@ -466,8 +466,6 @@ class ApplicationController < ActionController::Base
   def select_layout
     if json_request?
       'api'
-    elsif devise_controller?
-      'devise'
     else
       'application'
     end

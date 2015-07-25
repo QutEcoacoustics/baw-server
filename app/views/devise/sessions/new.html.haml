@@ -1,4 +1,8 @@
-%h2= t('devise.sessions.new.sign_in')
+- content_for :meta_title, t('devise.shared.links.sign_in')
+- content_for :page_title, t('devise.sessions.new.sign_in')
+
+= render partial: 'shared/sidebar_devise'
+
 = simple_form_for(resource, as: resource_name, url: session_path(resource_name), html: { class: 'form-horizontal', method: :post }) do |f|
   = field_set_tag do
     = f.input :login, required: true, autofocus: true, hint: t('devise.confirmations.new.login_hint'), placeholder: 'Login'

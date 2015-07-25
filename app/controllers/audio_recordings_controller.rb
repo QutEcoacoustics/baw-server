@@ -7,8 +7,6 @@ class AudioRecordingsController < ApplicationController
   load_and_authorize_resource :audio_recording, except: [:check_uploader]
   respond_to :json, except: [:show]
 
-  layout 'player', only: :show
-
   # GET /audio_recordings.json
   def index
 

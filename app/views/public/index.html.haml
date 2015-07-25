@@ -1,4 +1,7 @@
-%h1= Settings.organisation_names.site_long_name
+- content_for :meta_title, 'Home'
+- content_for :page_title, Settings.organisation_names.site_long_name
+
+= render partial: 'shared/sidebar_public'
 
 %p
   Welcome! The
@@ -9,77 +12,65 @@
   Then we enable that information to be put to use by ecologists and other parties interested in conservation.
 
 - if current_user.blank?
-  .alert.fade.in.alert-info
-    To access Projects, Sites, and Audio Recordings and participate in our analysis work you will need to
-    =link_to 'Login', new_user_session_path
-    with an existing account or
-    =link_to 'Sign up', new_user_registration_path
-    for a new account.
+  - msg_text = 'To access Projects, Sites, and Audio Recordings and participate in our analysis work you will need to '
+  - msg_text += link_to t('devise.shared.links.sign_in'), new_user_session_path, class: 'alert-link'
+  - msg_text += ' with an existing account or '
+  - msg_text += link_to t('devise.shared.links.sign_up'), new_user_registration_path, class: 'alert-link'
+  - msg_text += ' for a new account.'
+  = render partial: 'shared/alert', locals: { msg_type: :notice, msg_text: msg_text.html_safe }
+
 - elsif can? :index, Project
-  .alert.fade.in.alert-info
-    To begin, have a look at the
-    =link_to 'Projects', projects_path
-    that are available to you. You can access Audio Recordings through Projects then the Sites they contain.
+  - msg_text = 'To begin, have a look at the '
+  - msg_text += link_to t('baw.shared.links.projects.title'), projects_path, class: 'alert-link'
+  - msg_text += ' that are available to you. You can then access Audio Recordings through the Sites in each Project.'
+  = render partial: 'shared/alert', locals: { msg_type: :notice, msg_text: msg_text.html_safe }
 
 - unless @selected_images.blank?
-  .row-fluid.vertical-offset
-    .span5.text-center
-      .row-fluid
-        %strong
-          = "#{@selected_images[:animal]['commonName']} Sound"
-      .row-fluid
-        %img{src: "#{@selected_images[:image_base]}#{@selected_images[:animal]['baseName'].html_safe+'.jpg'}",
-          alt: "Image of #{@selected_images[:animal]['commonName']}", style: 'height:180px;', class: 'img-polaroid' }
-      .row-fluid
-        %small
-          Faunal vocalisations and other environmental sounds
-      .row-fluid
-        %small.text-muted
-          Photo Source:
-          %a{href: @selected_images[:animal]['animalImageSourceLink'], rel: 'nofollow'}= @selected_images[:animal]['animalImageSourceName']
+  .row
 
-    .span1.text-center.home-arrow.visible-desktop
+    .col-xs-12.col-sm-5.text-center
+      %strong
+        = "#{@selected_images[:animal]['commonName']} Sound"
+      %img.thumbnail.center-block{src: "#{@selected_images[:image_base]}#{@selected_images[:animal]['baseName'].html_safe+'.jpg'}",
+        alt: "Image of #{@selected_images[:animal]['commonName']}", style: 'height: 180px;margin-bottom:5px;' }
+      %small
+        Faunal vocalisations and other environmental sounds
+      %br/
+      %small.text-muted
+        Photo Source:
+        %a{href: @selected_images[:animal]['animalImageSourceLink'], rel: 'nofollow'}= @selected_images[:animal]['animalImageSourceName']
+
+    .col-sm-1.text-center.home-arrow.hidden-xs
       = '&rarr;'.html_safe
 
-    .span5.text-center
-      .row-fluid
-        %strong
-          Acoustic Sensor
-      .row-fluid
-        %img{src: @selected_images[:sensor_tree],
-          alt: 'An acoustic sensor attached to a tree.', style: 'height: 200px;', class: 'img-polaroid' }
-      .row-fluid
-        %small
-          Acoustic sensors record sound in locations of study
+    .col-xs-12.col-sm-5.text-center
+      %strong
+        Acoustic Sensor
+      %img.thumbnail.center-block{src: @selected_images[:sensor_tree],
+        alt: 'An acoustic sensor attached to a tree.', style: 'height: 200px;margin-bottom:5px;' }
+      %small
+        Acoustic sensors record sound in locations of study
 
-    .span1.text-center.home-arrow.visible-desktop
+    .col-sm-1.text-center.home-arrow.hidden-xs
       = '&rarr;'.html_safe
 
-  .row-fluid.vertical-offset
+  .row{style: 'margin-top:20px;'}
 
-    .span5.text-center
-      .row-fluid
-        %strong
-          Annotated Spectrogram
-      .row-fluid
-        %img{src: @selected_images[:example_spectrogram],
-          alt: 'Annotated Spectrogram.', style: 'height: 200px;', class: 'img-polaroid' }
-      .row-fluid
-        %small
-          Animal sounds are identified by people and automated detectors
+    .col-xs-12.col-sm-5.text-center
+      %strong
+        Annotated Spectrogram
+      %img.thumbnail.center-block{src: @selected_images[:example_spectrogram],
+        alt: 'Annotated Spectrogram.', style: 'height: 200px;margin-bottom:5px;' }
+      %small
+        Animal sounds are identified by people and automated detectors
 
-    .span1.text-center.home-arrow.visible-desktop
+    .col-sm-1.text-center.home-arrow.hidden-xs
       = '&rarr;'.html_safe
 
-    .span6.text-center
-      .row-fluid
-        %strong
-          Ecologists
-      .row-fluid
-        %img{src: @selected_images[:ecologist],
-          alt: 'Ecologists.', style: 'height: 200px;', class: 'img-polaroid' }
-      .row-fluid
-        %small
-          Observations of fauna sounds are passed to ecologists to answer environmental questions.
-
-- content_for :title, 'Home'
+    .col-xs-12.col-sm-5.text-center
+      %strong
+        Ecologists
+      %img.thumbnail.center-block{src: @selected_images[:ecologist],
+        alt: 'Ecologists.', style: 'height: 200px;margin-bottom:5px;' }
+      %small
+        Observations of fauna sounds are passed to ecologists to answer environmental questions.

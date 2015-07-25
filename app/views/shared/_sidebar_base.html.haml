@@ -1,0 +1,15 @@
+%li{class: ('active' if current_page?(root_path))}
+  = link_to t('baw.shared.links.home.title'), root_path,  title: t('baw.shared.links.home.description'), data: {toggle: 'tooltip',  placement: 'right'}
+- if current_user.blank?
+  %li{class: ('active' if current_page?(new_user_session_path))}
+    = link_to t('devise.shared.links.sign_in'), new_user_session_path, title: t('devise.shared.links.sign_in'), data: {toggle: 'tooltip',  placement: 'right'}
+  %li{class: ('active' if current_page?(new_user_registration_path))}
+    = link_to t('devise.shared.links.sign_up'), new_user_registration_path, title: t('baw.shared.links.register.description'), data: {toggle: 'tooltip',  placement: 'right'}
+- else
+  %li{class: ('active' if current_page?(my_account_path))}
+    = link_to t('baw.shared.links.profile.title'), my_account_path, title: t('baw.shared.links.profile.description'), data: {toggle: 'tooltip',  placement: 'right'}
+  %li{class: ('active' if current_page?(audio_events_user_account_path(current_user)))}
+    = link_to t('baw.shared.links.annotations.title'), audio_events_user_account_path(current_user), title: t('baw.shared.links.annotations.description'), data: {toggle: 'tooltip',  placement: 'right'}
+- if can? :index, Project
+  %li{class: ('active' if current_page?(projects_path))}
+    = link_to t('baw.shared.links.projects.title'), projects_path, title: t('baw.shared.links.projects.description'), data: {toggle: 'tooltip',  placement: 'right'}

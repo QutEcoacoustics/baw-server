@@ -1,4 +1,7 @@
-%h2= t('devise.registrations.edit.title', resource: resource_name.to_s.humanize)
+- content_for :title, t('devise.registrations.edit.title', resource: resource_name.to_s.humanize)
+
+= render partial: 'shared/sidebar_user'
+
 = simple_form_for(resource, as: resource_name, url: registration_path(resource_name), html: { class: 'form-horizontal', method: :put }) do |f|
   = field_set_tag do
     = f.error_notification

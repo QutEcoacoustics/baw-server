@@ -70,3 +70,5 @@ en:
           description: "Send an email to unlock your account"
         sign_in_with_provider:
           description: "Use %{provider} to sign in"
+        job_status:
+          title: "Job Status"

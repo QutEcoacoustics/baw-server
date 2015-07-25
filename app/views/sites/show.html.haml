@@ -68,7 +68,7 @@
       %span.map-placeholder-text This site does not have a location set.
   - else
     .span6= gmaps(markers: {data: @site.to_gmaps4rails}, map_options: {zoom: 7, auto_zoom: true})
-    = yield :scripts
+    = content_for(:scripts)
 
 - content_for :right_sidebar do
   = render layout: '/shared/right_sidebar_user_times', locals: { item: @site } do

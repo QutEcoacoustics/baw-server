@@ -1,0 +1,6 @@
+- if !title.blank? && !user.blank? && !subtext.blank?
+  .metadata
+    .heading
+      = title
+      %ul.thumbnails
+        = render partial: 'user_accounts/user_thumbnail_small', locals: {user: user, subtext: subtext}

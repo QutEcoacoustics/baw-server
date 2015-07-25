@@ -15,7 +15,7 @@
 
     - if @project.sites.select { |site| !site.longitude.blank? && !site.latitude.blank? }.length > 0
       .span6= gmaps(markers: {data: @markers}, map_options: {zoom: 7, auto_zoom: true})
-      = yield :scripts
+      = content_for(:scripts)
     - else
       .span6.map-placeholder
         %span.map-placeholder-text No locations specified.
@@ -55,36 +55,38 @@
     Add New Job
 
 - content_for :right_sidebar do
-  = render layout: '/shared/right_sidebar_user_times', locals: { item: @project } do
-    = sidebar_metadata('Notes', @project.notes)
-    = sidebar_metadata('Urn', @project.urn)
-    - level = Access::Query.level_project(current_user, @project)
-    - unless level.blank?
-      - level_name = Access::Core.get_level_name(level)
-      = sidebar_metadata('Your access level', level_name)
+  = render partial: 'shared/sidebar_metadata_user_created', locals: { item: @project }
+  = render partial: 'shared/sidebar_metadata_user_updated', locals: { item: @project }
+  = render partial: 'shared/sidebar_metadata', locals: {title: 'Notes', text: @project.notes}
+  = render partial: 'shared/sidebar_metadata', locals: {title: 'Urn', text: @project.urn}
+  - level = Access::Query.level_project(current_user, @project)
+  - unless level.blank?
+    - level_name = Access::Core.get_level_name(level)
+    = render partial: 'shared/sidebar_metadata', locals: {title: 'Your access level', text: level_name}
 
 - content_for :title, "Project #{@project.name}"
 
+
+- content_for :left_sidebar_header, 'Projects'
 - content_for :left_sidebar do
-  = render layout: '/shared/left_sidebar', locals: {title: 'Projects'} do
-    - if can? :edit, @project
-      %li= link_to 'Edit Project Details', edit_project_path(@project),  title: "Change this project's details", data: {toggle: 'tooltip',  placement: 'right'}
-    - if Access::Check.is_admin?(current_user)
-      %li= link_to 'Edit Sites', edit_sites_project_path(@project),  title: "Change this project's sites", data: {toggle: 'tooltip',  placement: 'right'}
-    - if can? :update_permissions, @project
-      %li= link_to 'Edit Permissions', project_permissions_path(@project),  title: "Edit project's access permissions", data: {toggle: 'tooltip',  placement: 'right'}
-    - if can? :destroy, @project
-      %li= link_to 'Delete Project', @project, :method => :delete, data: { confirm: 'Are you sure?', toggle: 'tooltip',  placement: 'right' }, title: 'Delete project'
-    - if can? :edit, @project
-      %li= link_to 'Add New Site', new_project_site_path(@project),  title: 'Add a new site to this project', data: {toggle: 'tooltip',  placement: 'right'}
-    -# if can? :edit, @project
-      %li= link_to 'Add New Dataset', new_project_dataset_path(@project),  title: "Add a new dataset to this project", data: {toggle: 'tooltip',  placement: 'right'}
-    -# if can? :edit, @project
-      %li= link_to 'Add New Job', new_project_job_path(@project),  title: "Add a new analysis job to this project", data: {toggle: 'tooltip',  placement: 'right'}
-    - if can? :show, @project
-      %li= link_to 'Visualise', make_visualise_path(@project), title: 'Browse the audio in this project', data: {toggle: 'tooltip',  placement: 'right'}
-    - if can? :edit, @project
-      %li= link_to 'Upload Audio', data_upload_path,  title: 'Upload audio to this project', data: {toggle: 'tooltip',  placement: 'right'}
+  - if can? :edit, @project
+    %li= link_to 'Edit Project Details', edit_project_path(@project),  title: "Change this project's details", data: {toggle: 'tooltip',  placement: 'right'}
+  - if Access::Check.is_admin?(current_user)
+    %li= link_to 'Edit Sites', edit_sites_project_path(@project),  title: "Change this project's sites", data: {toggle: 'tooltip',  placement: 'right'}
+  - if can? :update_permissions, @project
+    %li= link_to 'Edit Permissions', project_permissions_path(@project),  title: "Edit project's access permissions", data: {toggle: 'tooltip',  placement: 'right'}
+  - if can? :destroy, @project
+    %li= link_to 'Delete Project', @project, :method => :delete, data: { confirm: 'Are you sure?', toggle: 'tooltip',  placement: 'right' }, title: 'Delete project'
+  - if can? :edit, @project
+    %li= link_to 'Add New Site', new_project_site_path(@project),  title: 'Add a new site to this project', data: {toggle: 'tooltip',  placement: 'right'}
+  -# if can? :edit, @project
+    %li= link_to 'Add New Dataset', new_project_dataset_path(@project),  title: "Add a new dataset to this project", data: {toggle: 'tooltip',  placement: 'right'}
+  -# if can? :edit, @project
+    %li= link_to 'Add New Job', new_project_job_path(@project),  title: "Add a new analysis job to this project", data: {toggle: 'tooltip',  placement: 'right'}
+  - if can? :show, @project
+    %li= link_to 'Visualise', make_visualise_path(@project), title: 'Browse the audio in this project', data: {toggle: 'tooltip',  placement: 'right'}
+  - if can? :edit, @project
+    %li= link_to 'Upload Audio', data_upload_path,  title: 'Upload audio to this project', data: {toggle: 'tooltip',  placement: 'right'}
 
 -# include markerwithlabel.js
 %script

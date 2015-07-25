@@ -1,4 +1,8 @@
-%h2= t('devise.unlocks.new.resend_unlock_instructions')
+- content_for :meta_title, t('devise.shared.links.unlock_account')
+- content_for :page_title, t('devise.unlocks.new.resend_unlock_instructions')
+
+= render partial: 'shared/sidebar_devise'
+
 = simple_form_for(resource, as: resource_name, url: unlock_path(resource_name), html: { class: 'form-horizontal', method: :post }) do |f|
   = field_set_tag do
     = f.error_notification
