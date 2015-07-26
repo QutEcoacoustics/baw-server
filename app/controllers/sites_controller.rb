@@ -24,7 +24,7 @@ class SitesController < ApplicationController
       format.json {
         @sites, opts = Settings.api_response.response_advanced(
             api_filter_params,
-            get_user_sites,
+            get_user_sites.where(projects: {id: @project.id}),
             Site,
             Site.filter_settings
         )

@@ -89,9 +89,9 @@ resource 'AudioEventComments' do
   get '/audio_events/:audio_event_id/comments' do
     parameter :audio_event_id, 'Requested audio event id (in path/route)', required: true
     let(:audio_event_id) { @comment_user.audio_event_id }
-    let(:expected_unordered_ids) { AudioEventComment.pluck(:id) }
+    let(:expected_unordered_ids) { AudioEventComment.where(audio_event_id: @comment_user.audio_event_id).pluck(:id) }
     let(:authentication_token) { admin_token }
-    standard_request_options(:get, 'LIST (as admin)', :ok, {expected_json_path: 'data/0/comment', data_item_count: 5})
+    standard_request_options(:get, 'LIST (as admin)', :ok, {expected_json_path: 'data/0/comment', data_item_count: 3})
   end
 
   get '/audio_events/:audio_event_id/comments' do

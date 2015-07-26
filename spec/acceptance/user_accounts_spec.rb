@@ -183,4 +183,25 @@ resource 'Users' do
                                   })
   end
 
+  post '/user_accounts/filter' do
+    let(:raw_post) {
+      {
+          'filter' => {
+              'id' => {
+                  'in' => [writer_id]
+              }
+          },
+          'projection' => {
+              'include' => [:id, :user_name]
+          }
+      }.to_json
+    }
+    let(:authentication_token) { admin_token }
+    standard_request_options(:post, 'FILTER (as admin)', :ok, {
+                                      expected_json_path: ['data/0/user_name', 'meta/projection/include'],
+                                      data_item_count: 1,
+                                      response_body_content: ["\"last_seen_at\":null,\"preferences\":null"]
+                                  })
+  end
+
 end
