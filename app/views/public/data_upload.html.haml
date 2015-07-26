@@ -1,9 +1,9 @@
-- content_for :title, 'Upload Audio'
+- content_for :title, 'Send Audio'
 
 = render partial: 'shared/sidebar_public'
 
 - if File.exists? "#{Rails.root}/app/views/public/_data_upload.html.haml"
   = render partial: 'public/data_upload'
 - else
-  %h1 Upload Audio
-  %p No upload instructions are available.
+  %h1 Send Audio
+  %p No instructions are available.

@@ -1,20 +1,32 @@
+-# locals: (none)
+- content_for(:left_sidebar_header, 'Users')
 - content_for(:left_sidebar) do
-  %li= link_to 'View my profile', my_account_path, title: 'View your account information', data: {toggle: 'tooltip',  placement: 'right'}
-  - if !@user.blank? && current_user == @user
-    %li= link_to 'Edit my profile', edit_user_registration_path, title: 'Edit your account information', data: {toggle: 'tooltip',  placement: 'right'}
-  - if !@user.blank? && current_user != @user
-    %li= link_to 'View user profile', user_account_path(@user), title: 'View this user\'s details', data: {toggle: 'tooltip',  placement: 'right'}
-  - if Access::Check.is_admin?(current_user)
-    %li= link_to 'User List', user_accounts_path, title: 'View a list of all user accounts', data: {toggle: 'tooltip',  placement: 'right'}
-    - if !@user.blank?
-      %li= link_to 'Edit user profile', edit_user_account_path(@user), title: 'Edit this user\'s details', data: {toggle: 'tooltip',  placement: 'right'}
-  - if !@user.blank? && (current_user == @user || Access::Check.is_admin?(current_user))
-    %li= link_to 'Projects', projects_user_account_path(@user), title: "Projects #{@user.user_name} can access", data: {toggle: 'tooltip',  placement: 'right'}
-  - if !@user.blank? && (current_user == @user || Access::Check.is_admin?(current_user))
-    %li= link_to 'Bookmarks', bookmarks_user_account_path(@user), title: "Bookmarks created by #{@user.user_name}", data: {toggle: 'tooltip',  placement: 'right'}
-  - if !@user.blank?
-    %li= link_to 'Annotations', audio_events_user_account_path(@user), title: "Annotations created by #{@user.user_name}", data: {toggle: 'tooltip',  placement: 'right'}
-  - if !@user.blank? && (current_user == @user || Access::Check.is_admin?(current_user))
-    %li= link_to 'Comments', audio_event_comments_user_account_path(@user), title: "Comments by #{@user.user_name}", data: {toggle: 'tooltip',  placement: 'right'}
 
-= render template: 'layouts/application'
+  - is_admin = Access::Check.is_admin?(current_user)
+  - is_own_profile = User.same_user?(current_user, @user)
+  - is_own_profile_path = is_own_profile ? User.profile_paths(@user).any?{ |p| current_page?(p)} : false
+  - is_own_profile_edit_path = is_own_profile ? User.profile_edit_paths(@user).any?{ |p| current_page?(p)} : false
+  - first_word = is_own_profile ? 'My' : 'Their'
+
+  %li{class: ('active' if current_page?(root_path))}
+    = link_to t('baw.shared.links.home.title'), root_path,  title: t('baw.shared.links.home.description'), data: {toggle: 'tooltip',  placement: 'right'}
+
+  %li{class: ('active' if is_own_profile_path)}
+    = link_to t('baw.shared.links.profile.title'), my_account_path, title: t('baw.shared.links.profile.description'), data: {toggle: 'tooltip',  placement: 'right'}
+
+  - if is_own_profile
+    %li{class: ('active' if current_page?(edit_user_registration_path))}
+      = link_to 'Edit my profile', edit_user_registration_path, title: 'Edit your account information', data: {toggle: 'tooltip',  placement: 'right'}
+  - elsif is_admin
+    %li{class: ('active' if current_page?(edit_user_account_path(@user)))}
+      = link_to 'Edit their profile', edit_user_account_path(@user), title: 'Edit account', data: {toggle: 'tooltip',  placement: 'right'}
+
+  - if is_admin || is_own_profile
+    %li{class: ('active' if current_page?(projects_user_account_path(@user)))}
+      = link_to "#{first_word} Projects", projects_user_account_path(@user), title: "Projects #{@user.user_name} can access", data: {toggle: 'tooltip',  placement: 'right'}
+    %li{class: ('active' if current_page?(bookmarks_user_account_path(@user)))}
+      = link_to "#{first_word} Bookmarks", bookmarks_user_account_path(@user), title: "Bookmarks created by #{@user.user_name}", data: {toggle: 'tooltip',  placement: 'right'}
+    %li{class: ('active' if current_page?(audio_events_user_account_path(@user)))}
+      = link_to "#{first_word} Annotations", audio_events_user_account_path(@user), title: "Annotations created by #{@user.user_name}", data: {toggle: 'tooltip',  placement: 'right'}
+    %li{class: ('active' if current_page?(audio_event_comments_user_account_path(@user)))}
+      = link_to "#{first_word} Comments", audio_event_comments_user_account_path(@user), title: "Comments by #{@user.user_name}", data: {toggle: 'tooltip',  placement: 'right'}

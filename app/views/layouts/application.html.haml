@@ -66,10 +66,14 @@
             =Time.zone.now.year
         %li.disabled
           %a= "#{Rails.env} v#{Settings.version_string}"
-        %li= link_to t('baw.shared.links.disclaimers.title'), disclaimers_path
-        %li= link_to t('baw.shared.links.credits.title'), credits_path
-        %li= link_to t('baw.shared.links.ethics_statement.title'), ethics_statement_path
-        %li= link_to t('baw.shared.links.contact_us.title'), contact_us_path
+        %li{class: ('active' if current_page?(disclaimers_path))}
+          = link_to t('baw.shared.links.disclaimers.title'), disclaimers_path
+        %li{class: ('active' if current_page?(credits_path))}
+          = link_to t('baw.shared.links.credits.title'), credits_path
+        %li{class: ('active' if current_page?(ethics_statement_path))}
+          = link_to t('baw.shared.links.ethics_statement.title'), ethics_statement_path
+        %li{class: ('active' if current_page?(contact_us_path))}
+          = link_to t('baw.shared.links.contact_us.title'), contact_us_path
 
     /
     / Javascripts

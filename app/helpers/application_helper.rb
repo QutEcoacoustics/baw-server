@@ -12,7 +12,7 @@ module ApplicationHelper
   end
 
   def format_sidebar_datetime(value)
-    ActionView::Helpers::DateHelper.distance_of_time_in_words(Time.zone.now, value, nil, {vague: true}) + ' ago'
+    distance_of_time_in_words(Time.zone.now, value, nil, {vague: true}) + ' ago'
   end
 
   def gmaps_default_options

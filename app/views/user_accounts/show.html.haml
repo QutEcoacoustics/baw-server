@@ -1,60 +1,56 @@
+- content_for :meta_title, "User #{@user.user_name}"
+- content_for :page_title, @user.user_name
 
-= image_tag @user.image.url(:span3), class: 'span3'
+= render partial: 'shared/sidebar_user'
 
-.span9
-  %h1= @user.user_name
-  .row-fluid
-    .span6{style:'text-align:center'}
-      %p
-        Projects:
-        = number_with_delimiter(Access::Query.projects_accessible(@user).count)
-      %p
-        Tags:
+.col-sm-3
+  = image_tag @user.image.url(:span3), class: 'thumbnail', alt: @user.user_name
+
+.col-sm-1
+
+
+.col-sm-4
+  %ul.list-group
+    %li.list-group-item
+      %i.fa.fa-home
+      Projects
+      %span.badge
+        = number_with_delimiter(Access::Query.projects_accessible(@user).count, delimiter: ' ')
+    %li.list-group-item
+      %i.fa.fa-tags
+      Tags
+      %span.badge
         = number_with_delimiter(Access::Query.taggings_modified(@user).count, delimiter: ' ')
-      %p
-        Bookmarks:
+    %li.list-group-item
+      %i.fa.fa-bookmark
+      Bookmarks
+      %span.badge
         = number_with_delimiter(Access::Query.bookmarks_modified(@user).count, delimiter: ' ')
-      %p
-        Last seen
-        - last_seen = @user.get_last_seen
-        = last_seen.blank? ? '?' : "#{distance_of_time_in_words(Time.zone.now, last_seen, nil, {vague: true})} ago"
-    .span6{style:'text-align:center'}
-      %p
-        Sites:
-        = number_with_delimiter(Access::Query.sites(@user, Access::Core.levels_allow).count)
-      %p
-        Annotations:
+
+  %i.fa.fa-clock-o
+  Last seen
+  - last_seen = @user.get_last_seen
+  = last_seen.blank? ? '?' : "#{distance_of_time_in_words(Time.zone.now, last_seen, nil, {vague: true})} ago"
+
+.col-sm-4
+  %ul.list-group
+    %li.list-group-item
+      %i.fa.fa-map-marker
+      Sites
+      %span.badge
+        =  number_with_delimiter(Access::Query.sites(@user, Access::Core.levels_allow).count, delimiter: ' ')
+    %li.list-group-item
+      %i.fa.fa-bullseye
+      Annotations
+      %span.badge
         = number_with_delimiter(Access::Query.audio_events_modified(@user).count, delimiter: ' ')
-      %p
-        Comments:
+    %li.list-group-item
+      %i.fa.fa-comments
+      Comments
+      %span.badge
         = number_with_delimiter(Access::Query.audio_event_comments_modified(@user).count, delimiter: ' ')
-      %p
-        Member for
-        - signed_up_date = @user.created_at
-        = signed_up_date.blank? ? '?' : "#{distance_of_time_in_words(signed_up_date, Time.zone.now, nil, {vague: true})}"
 
--#.span12
--#  %h3 Datasets
--#
--#  - if @user.datasets.empty?
--#    = 'You have not created any datasets.'
--#  - else
--#    %table.table.table-striped
--#      %thead
--#        %tr
--#          %th Name
--#          %th Project
--#          %th Last Modified
--#          %th Description
--#
--#      %tbody
--#      - @user.datasets.order('updated_at DESC').each do |dataset|
--#        %tr
--#          %td= link_to dataset.name, project_dataset_path(dataset.project, dataset)
--#          %td= link_to dataset.project.name, project_path(dataset.project)
--#          %td
--#            = ActiveSupport::Inflector.ordinalize(dataset.updated_at.strftime("%d").to_i)
--#            = dataset.updated_at.strftime(" %b, %Y %I:%M %p")
--#          %td= render partial: 'datasets/summary', locals: {dataset: dataset}
-
-- content_for :title, "User #{@user.user_name}"
+  %i.fa.fa-user
+  Member for
+  - signed_up_date = @user.created_at
+  = signed_up_date.blank? ? '?' : "#{distance_of_time_in_words(signed_up_date, Time.zone.now, nil, {vague: true})}"

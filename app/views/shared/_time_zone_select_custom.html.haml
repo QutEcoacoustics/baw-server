@@ -1,12 +1,13 @@
+-# locals: f, model_name, attribute_name
 - control_id = "#{model_name}_#{attribute_name}"
 - span_id = "#{control_id}_appended_info"
 - help_id = "#{control_id}_appended_help"
-.control-group.string.optional{class: control_id }
-  = f.label attribute_name, 'Time Zone', class: 'string optional control-label', for: control_id
-  .controls
-    .input-append
-      = f.input_field attribute_name, type: 'text', autocomplete: 'off', class: 'span12'
-      %span.add-on{id: span_id, title: 'Time zone abbreviation and current UTC offset'}
+.form-group.string.optional{class: control_id }
+  = f.label attribute_name, 'Time Zone', class: 'string optional control-label col-sm-3', for: control_id
+  .col-sm-5
+    .input-group
+      = f.input_field attribute_name, type: 'text', autocomplete: 'off', class: 'form-control'
+      %span.input-group-addon{id: span_id, title: 'Time zone abbreviation and current UTC offset'}
         (no match)
     %p.help-block{id: help_id }
 

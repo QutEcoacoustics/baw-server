@@ -1,3 +1,4 @@
+-# locals: (none)
 %nav.navbar.navbar-inverse.navbar-fixed-top
   .container
     .navbar-header
@@ -26,9 +27,9 @@
                   %a{href: URI.join(Settings.organisation_names.parent_site_link, entry['url']) }= entry['title']
       %ul.nav.navbar-nav.navbar-right
         - if current_user.blank?
-          %li
+          %li{class: ('active' if current_page?(new_user_registration_path))}
             %a{href: new_user_registration_path}= t('devise.registrations.new.sign_up')
-          %li
+          %li{class: ('active' if current_page?(new_user_session_path))}
             %a{href: new_user_session_path}= t('devise.sessions.new.sign_in')
         - else
           - if Access::Check.is_admin?(current_user)
@@ -37,17 +38,17 @@
                 = current_user.user_name
                 %span.caret
               %ul.dropdown-menu{role: 'menu'}
-                %li
-                  %a{href: my_account_path}= t('baw.shared.links.profile.title')
+                %li{class: ('active' if current_page?(my_account_path))}
+                  %a{href: my_account_path }= t('baw.shared.links.profile.title')
                 %li.divider
                 %li.dropdown-header= t('baw.shared.links.admin_area.title')
-                %li
+                %li{class: ('active' if current_page?(user_accounts_path))}
                   %a{href: user_accounts_path}= t('baw.shared.links.user_list.title')
-                %li
+                %li{class: ('active' if current_page?(sites_orphans_path))}
                   %a{href: sites_orphans_path}= t('baw.shared.links.orphan_sites.title')
-                %li
+                %li{class: ('active' if current_page?(scripts_path))}
                   %a{href: scripts_path}= t('baw.shared.links.scripts.title')
-                %li
+                %li{ class: ('active' if current_page?(tags_management_index_path))}
                   %a{href: tags_management_index_path}= t('baw.shared.links.tag_management.title')
                 %li
                   %a{href: '/job_queue_status'}= t('baw.shared.links.job_status.title')

@@ -1,21 +1,21 @@
-%h1 Statistics
-
 - content_for :title, 'Statistics'
 
-.row-fluid
-  .span12
+= render partial: 'shared/sidebar_public'
+
+.row
+  .col-sm-12
     %p= "#{number_with_delimiter(@status_info[:users_online])} #{@status_info[:users_online] == 1 ? 'user': 'users'} online of #{number_with_delimiter(@status_info[:users_total])} registered"
     %p= "#{number_with_delimiter(@status_info[:tags_total])} unique tags"
 
-.row-fluid
-  .span6
+.row
+  .col-sm-6
     %h2 Annotations
     %p= "#{number_with_delimiter(@status_info[:annotations_recent])} new #{@status_info[:annotations_recent] == 1 ? 'annotation': 'annotations'} in last month"
     %p= "#{number_with_delimiter(@status_info[:annotations_total])} #{@status_info[:annotations_total] == 1 ? 'annotation': 'annotations'}"
     %p= "#{distance_of_time(@status_info[:annotations_total_duration])} overall annotation duration"
     %p= "#{number_with_delimiter(@status_info[:tags_applied_total])} #{@status_info[:tags_applied_total] == 1 ? 'tag': 'tags'} attached to annotations"
 
-  .span6
+  .col-sm-6
     %h2 Recordings
     %p= "#{number_with_delimiter(@status_info[:audio_recording_recent])} new audio #{@status_info[:audio_recording_recent] == 1 ? 'recording': 'recordings'} in last month"
     %p= "#{number_with_delimiter(@status_info[:audio_recording_total])} audio #{@status_info[:audio_recording_total] == 1 ? 'recording': 'recordings'}"
@@ -24,13 +24,12 @@
 
 %h2 Recent Annotations
 
-.row-fluid
-  .span12
+.row
+  .col-sm-12
     - if @recent_audio_events.empty?
       = 'No recent annotations.'
     - else
-      %table.table.table-striped(data-provides='rowlink')
-
+      %table.table.table-striped.table-hover
         %tr
           %th Tag
           - unless current_user.blank?
@@ -74,13 +73,12 @@
 
 %h2 Recent Audio Recordings
 
-.row-fluid
-  .span12
+.row
+  .col-sm-12
     - if @recent_audio_recordings.empty?
       = 'No recent audio recordings.'
     - else
-      %table.table.table-striped(data-provides='rowlink')
-
+      %table.table.table-striped.table-hover
         %tr
           - unless current_user.blank?
             %th Site
@@ -106,4 +104,3 @@
                 = link_to site_link, target: '_self', class: 'btn btn-mini' do
                   %i{class: 'fa fa-map-marker'}
                   Site
-

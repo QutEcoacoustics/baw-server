@@ -28,8 +28,8 @@ en:
           title: Library
           description: Annotation library
         profile:
-          title: Your Profile
-          description: View your profile
+          title: My Profile
+          description: View my profile
         admin_area:
           title: Administration
           description: Administrator interface
@@ -49,8 +49,8 @@ en:
           title: Home
           description: Home page
         annotations:
-          title: Your Annotations
-          description: View your recent annotations
+          title: My Annotations
+          description: View my recent annotations
         report_problem:
           title: Report Problem
           description: Report a problem

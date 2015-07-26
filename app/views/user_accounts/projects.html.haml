@@ -1,47 +1,48 @@
+- content_for :meta_title, "Projects #{@user.user_name} can access"
+- content_for(:page_title) do
+  Projects
+  %small
+    accessible by
+    = image_tag @user.image.url(:spanhalf), alt: @user.user_name
+    = @user.user_name
 
-= image_tag @user.image.url(:span3), class: 'span3'
+= render partial: 'shared/sidebar_user'
 
-.span9
-  %h1= @user.user_name
+%p
   You can
   = link_to 'request access', new_access_request_projects_path
   to existing projects or
   = link_to 'create', new_project_path
   your own projects.
 
-.span12
-  %h3 Projects
+- if @user_projects.empty?
+  No projects to show.
+- else
+  = page_entries_info @user_projects
+  = will_paginate @user_projects, renderer: BawWillPaginateLinkRenderer
 
-  - if @user_projects.empty?
-    No projects to show.
-  - else
-    = page_entries_info @user_projects
-    = will_paginate @user_projects, renderer: BawWillPaginateLinkRenderer
+  %table.table.table-striped.table-hover
+    %thead
+      %tr
+        %th
+          %i.fa.fa-home
+          Project
+        %th
+          %i.fa.fa-map-marker
+          Sites
+        %th
+          %i.fa.fa-key
+          Permission
 
-    %table.table.table-striped(data-provides='rowlink')
-      %thead
-        %tr
-          %th Project
-          %th Number of Sites
-          %th Permission
-          %th
-
-      %tbody
-      - @user_projects.each do |project|
-        %tr
-          %td= link_to project.name, project_path(project)
-          %td= project.sites.size
+    %tbody
+    - @user_projects.each do |project|
+      %tr
+        %td= link_to project.name, project_path(project)
+        %td= project.sites.size
+        %td
           - actual_level = Access::Query.level_project(@user, project)
-          %td= Access::Core.get_level_name(actual_level)
-          %td.nolink
-            = link_to project_path(project), class: 'btn btn-mini' do
-              %i{class: 'fa fa-home'}
-              Project
-            = link_to project_permissions_path(project), class: 'btn btn-mini' do
-              %i{class: 'fa fa-key'}
-              Permissions
-
-- content_for :title, "Projects #{@user.user_name} can access"
-
-- content_for :left_sidebar do
-  = render partial: 'sidebar_links'
+          - level_name = Access::Core.get_level_name(actual_level)
+          - if Access::Check.allowed?(:writer, actual_level)
+            = link_to level_name, project_permissions_path(project)
+          - else
+            = level_name

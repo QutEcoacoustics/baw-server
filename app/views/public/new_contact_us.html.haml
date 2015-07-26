@@ -1,4 +1,6 @@
-%h1 Contact Us
+- content_for :title, 'Contact Us'
+
+= render partial: 'shared/sidebar_public'
 
 %p
   This form is for general enquiries. We have separate forms to
@@ -10,35 +12,10 @@
 %br
 
 = simple_form_for @contact_us, url: '/contact_us', html: {class: 'form-horizontal' } do |f|
-  = f.error_notification
-
-  .row-fluid
-    .span12.form-inputs
-      = f.input :name,  label: 'Your Name'
-      = f.input :email,  label: 'Contact Email'
-      = f.input :content, as: :text,  input_html: {rows: '8',style: 'width:100%'}, label: 'Message'
-      - if @contact_us.errors.include?(:recaptcha) && @contact_us.errors[:recaptcha].size > 0
-        .control-group.string.required.contact_us_recaptcha.error
-          %label.string.required.control-label{for: :contact_us_recaptcha}
-            Human Test
-            %small (required)
-          .controls
-            = recaptcha_tags({display: {theme: 'clean'}})
-            %span.help-inline
-              = @contact_us.errors[:recaptcha][0]
-      - else
-        .control-group.string.required.contact_us_recaptcha
-          %label.string.required.control-label{for: :contact_us_recaptcha}
-            Human Test
-            %small (required)
-          .controls
-            %span.help-inline
-              We need to know that you're human.
-            = recaptcha_tags({display: {theme: 'clean'}})
-
-
-
-  .form-actions
-    = f.button :submit, 'Submit'
-
-- content_for :title, 'Contact Us'
+  = field_set_tag do
+    = f.error_notification
+    = f.input :name,  label: 'Your Name'
+    = f.input :email,  label: 'Contact Email'
+    = f.input :content, as: :text,  input_html: {rows: '8',style: 'width:100%'}, label: 'Message'
+    = render partial: 'shared/recaptcha', locals: {data_item: @contact_us, data_item_name: 'contact_us'}
+    = f.button :submit_cancel, 'Submit', class: 'btn-default'

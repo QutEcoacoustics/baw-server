@@ -1,6 +1,14 @@
+-# locals: title, user, subtext
 - if !title.blank? && !user.blank? && !subtext.blank?
   .metadata
     .heading
       = title
       %ul.thumbnails
-        = render partial: 'user_accounts/user_thumbnail_small', locals: {user: user, subtext: subtext}
+        %li.col-md-12
+          = link_to user_account_path(user),
+          class: 'thumbnail right-caption span12',
+          title: "View user's details", data: {toggle: 'tooltip',  placement: 'left'} do
+            = image_tag user.image.url(:spanhalf)
+            .caption
+              .user_name= user.user_name
+              .subtext= subtext

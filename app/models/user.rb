@@ -150,6 +150,22 @@ class User < ActiveRecord::Base
     save
   end
 
+  def self.same_user?(user1, user2)
+    if user1.blank? || user2.blank?
+      false
+    else
+      user1 == user2
+    end
+  end
+
+  def self.profile_paths(user)
+    [Api::UrlHelpers.my_account_path, Api::UrlHelpers.user_account_path(user)]
+  end
+
+  def self.profile_edit_paths(user)
+    [Api::UrlHelpers.edit_user_registration_path, Api::UrlHelpers.edit_user_account_path(user)]
+  end
+
   # Change the behaviour of the auth action to use :login rather than :email.
   # Because we want to change the behavior of the login action, we have to overwrite
   # the find_for_database_authentication method. The method's stack works like this:

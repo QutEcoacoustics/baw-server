@@ -1,4 +1,6 @@
-%h1 Report Problem
+- content_for :title, 'Report Problem'
+
+= render partial: 'shared/sidebar_public'
 
 %p
   Complete the form below to report a problem. Alternatively, we have a
@@ -7,41 +9,16 @@
 
 %br
 
-= simple_form_for @bug_report, url: '/bug_report', html: {class: 'form-horizontal' } do |f|
-  = f.error_notification
-
-  .row-fluid
-    .span12.form-inputs
-      = f.input :name, label: 'Your Name'
-      = f.input :email, label: 'Contact Email'
-      = f.input :date, label: 'Date issue occurred', as: :string, order: [:year, :month, :day], input_html: {value: @bug_report.date}
-      = f.input :description, as: :text, input_html: {rows: '4',style: 'width:100%'}, label: 'Steps to reproduce issue'
-      = f.input :content, as: :text, input_html: {rows: '7',style: 'width:100%'}, label: 'What do you expect to happen? What actually happens?'
-      - if @bug_report.errors.include?(:recaptcha) && @bug_report.errors[:recaptcha].size > 0
-        .control-group.string.required.bug_report_recaptcha.error
-          %label.string.required.control-label{for: :bug_report_recaptcha}
-            Human Test
-            %small (required)
-          .controls
-            = recaptcha_tags({display: {theme: 'clean'}})
-            %span.help-inline
-              = @bug_report.errors[:recaptcha][0]
-      - else
-        .control-group.string.required.bug_report_recaptcha
-          %label.string.required.control-label{for: :bug_report_recaptcha}
-            Human Test
-            %small (required)
-          .controls
-            %span.help-inline
-              We need to know that you're human.
-            = recaptcha_tags({display: {theme: 'clean'}})
-
-
-
-  .form-actions
-    = f.button :submit, 'Submit'
-
-- content_for :title, 'Report Problem'
+= simple_form_for @bug_report, url: '/bug_report', html: {class: 'form-horizontal', method: :post } do |f|
+  = field_set_tag do
+    = f.error_notification
+    = f.input :name, label: 'Your Name'
+    = f.input :email, label: 'Contact Email'
+    = f.input :date, label: 'Date issue occurred', as: :string, order: [:year, :month, :day], input_html: {value: @bug_report.date}
+    = f.input :description, as: :text, input_html: {rows: '4',style: 'width:100%'}, label: 'Steps to reproduce issue'
+    = f.input :content, as: :text, input_html: {rows: '7',style: 'width:100%'}, label: 'What do you expect to happen? What actually happens?'
+    = render partial: 'shared/recaptcha', locals: {data_item: @bug_report, data_item_name: 'bug_report'}
+    = f.button :submit_cancel, 'Submit', class: 'btn-default'
 
 :javascript
   $('#bug_report_date').datepicker({format: 'yyyy/mm/dd'});
