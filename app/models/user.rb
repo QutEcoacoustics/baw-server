@@ -201,6 +201,8 @@ class User < ActiveRecord::Base
         custom_fields: lambda { |user, currentUser|
           is_admin = Access::Check.is_admin?(currentUser)
           is_same_user = user == currentUser
+          # do a query for the attributes that may not be in the projection
+          fresh_user = User.find(user.id)
 
           user_hash =
               {
@@ -215,11 +217,12 @@ class User < ActiveRecord::Base
               }
 
           if is_admin || is_same_user
-            user_hash[:last_seen_at] = user.last_seen_at
-            user_hash[:preferences] = user.preferences
+
+            user_hash[:last_seen_at] = fresh_user.last_seen_at
+            user_hash[:preferences] =fresh_user.preferences
           end
 
-          user_hash[:is_confirmed] = user.confirmed? if is_admin
+          user_hash[:is_confirmed] = fresh_user.confirmed? if is_admin
 
           [user, user_hash]
         },

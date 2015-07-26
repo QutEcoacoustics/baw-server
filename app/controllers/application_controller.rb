@@ -483,8 +483,9 @@ class ApplicationController < ActionController::Base
   end
 
   def set_last_seen_at
-    current_user.update_attribute(:last_seen_at, Time.zone.now)
-    session[:last_seen_at] = Time.zone.now.to_i
+    the_time = Time.zone.now
+    current_user.update_attribute(:last_seen_at, the_time)
+    session[:last_seen_at] = the_time.to_i
   end
 
 end
