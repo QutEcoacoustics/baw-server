@@ -1,26 +1,18 @@
-= simple_form_for [@project, @site], html: {:multipart => true } do |f|
-  .row-fluid
-    .span6
-      = f.error_notification
-
-      .form-inputs
-        = f.input :name, input_html: { class: 'span12' }
+-# locals: project, site
+= simple_form_for [project, site], html: {class: 'form-horizontal', multipart: true }, wrapper: :horizontal_form_full_width do |f|
+  = field_set_tag do
+    = f.error_notification
+    .row
+      .col-sm-7
+        = f.input :name
         = f.input :description, input_html: {rows: '6', class: 'span12' }
-        = f.input :latitude, input_html: { class: 'span12', max: 90, min: -90 }
-        = f.input :longitude, input_html: { class: 'span12', max: 180, min: -180 }
-        .control_group.file.optional{class: :site_image}
-          = f.label :image
-          .controls
-            - unless @site.image_file_name.blank?
-              = image_tag @site.image.url, class: 'file optional span4'
-            = f.file_field :image, class: 'span8'
-        .clearfix
-        = render partial: '/shared/time_zone_select_custom', locals: { f: f, attribute_name: :tzinfo_tz, model_name: :site }
-    .span6= gmaps(markers: {data: @markers, options: { draggable: true  } },
-    map_options: gmaps_default_options )
-  .row-fluid
-    .form-actions
-      = f.button :submit
+        = f.input :latitude, input_html: { max: 90, min: -90 }
+        = f.input :longitude, input_html: {  max: 180, min: -180 }
+        = render partial: 'shared/image_upload', locals: { f: f,  model_instance: site, model_name: 'site' }
+        = render partial: '/shared/time_zone_select_custom', locals: { f: f, attribute_name: :tzinfo_tz, model_name: :site, full_width: true }
+      .col-sm-5
+        = gmaps(markers: {data: @markers, options: { draggable: true  } }, map_options: gmaps_default_options )
+    = f.button :submit_cancel, t('devise.registrations.edit.update'), class: 'btn-default'
 
 = content_for(:scripts)
 

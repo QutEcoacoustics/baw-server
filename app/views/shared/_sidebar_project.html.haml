@@ -5,8 +5,7 @@
     = link_to t('baw.shared.links.home.title'), root_path,  title: t('baw.shared.links.home.description'), data: {toggle: 'tooltip',  placement: 'right'}
   %li{class: ('active' if current_page?(projects_path))}
     = link_to t('baw.shared.links.projects.title'), projects_path, title: t('baw.shared.links.projects.description'), data: {toggle: 'tooltip',  placement: 'right'}
-
-  - if current_page?(projects_path)
+  - unless defined?(project)
     %li{class: ('active' if current_page?(new_project_path))}
       = link_to 'New Project', new_project_path,  title: 'Create a new project', data: {toggle: 'tooltip',  placement: 'right'}
     %li{class: ('active' if current_page?(new_access_request_projects_path))}

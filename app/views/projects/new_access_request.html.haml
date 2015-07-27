@@ -1,28 +1,26 @@
-%h1 Request Project Access
-
-= simple_form_for :access_request, url: '/projects/submit_access_request',html: {class: 'form-horizontal'}  do |f|
-  = f.error_notification
-  .row-fluid
-    .span12.form-inputs
-      = f.input :projects, as: :select, required: true, collection: @all_projects, label_method: Proc.new {|item| "#{item.name}: \"#{item.description}\""},
-        value_method: :id, label: 'Projects',
-        include_blank: false, input_html: {  rows: 16, class: 'span12', multiple: true, required: true, style:'height: 200px;' }
-      %span.help-block.span12
-        Select one or more projects by holding
-        %code Ctrl
-        on Windows or
-        %code Command
-        on a Mac, and clicking the project names.
-      %br
-      %br
-      = f.input :reason, as: :text, required: true,
-        placeholder: 'Why would you like to access these projects? Will you need to be able to change project information or create annotations?',
-        input_html: { rows: 8, class: 'span12', required: true }
-  .form-actions
-    = f.button :submit, 'Submit request'
-
 - content_for :title, 'Request Project Access'
 
-- content_for :left_sidebar do
-  = render layout: '/shared/left_sidebar', locals: {title: 'Projects'} do
-    %li= link_to 'New', new_project_path,  title: "Create a new project", data: {toggle: 'tooltip',  placement: 'right'}
+= render partial: 'shared/sidebar_project'
+
+
+= simple_form_for :access_request, url: '/projects/submit_access_request',html: {class: 'form-horizontal'}  do |f|
+  = field_set_tag do
+    = f.error_notification
+    = f.input :projects, as: :select, required: true, collection: @all_projects, label_method: Proc.new {|item| "#{item.name}: \"#{item.description}\""},
+      value_method: :id, label: 'Projects',
+      include_blank: false, input_html: {  rows: 16, class: 'span12', multiple: true, required: true, style:'height: 200px;' }
+    %span.help-block
+      Select one or more projects by holding
+      %code Ctrl
+      on Windows or
+      %code Command
+      on a Mac, and clicking the project names.
+    %br
+    %br
+    = f.input :reason, as: :text, required: true,
+        placeholder: 'Why would you like to access these projects? Will you need to be able to change project information or create annotations?',
+        input_html: { rows: 8, class: 'span12', required: true }
+    = f.button :submit_cancel, t('devise.registrations.edit.update'), class: 'btn-default'
+
+
+

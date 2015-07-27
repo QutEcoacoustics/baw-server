@@ -1,10 +1,12 @@
--# locals: f, model_name, attribute_name
+-# locals: f, model_name, attribute_name, full_width (defaults to false)
 - control_id = "#{model_name}_#{attribute_name}"
 - span_id = "#{control_id}_appended_info"
 - help_id = "#{control_id}_appended_help"
+- unless defined?(full_width)
+  - full_width = false
 .form-group.string.optional{class: control_id }
   = f.label attribute_name, 'Time Zone', class: 'string optional control-label col-sm-3', for: control_id
-  .col-sm-5
+  %div{class: (full_width ? 'col-sm-9' : 'col-sm-5')}
     .input-group
       = f.input_field attribute_name, type: 'text', autocomplete: 'off', class: 'form-control'
       %span.input-group-addon{id: span_id, title: 'Time zone abbreviation and current UTC offset'}
