@@ -1,0 +1,17 @@
+-# locals: f, model_instance, model_name
+.form-group.file.optional{class: "#{model_name}_image"}
+  = f.label :image, 'Image', class: 'col-sm-3 control-label', for: :image
+  .col-sm-5
+    - if model_instance.image_file_name.blank?
+      = f.file_field :image, class: 'file optional'
+    - else
+      .row
+        .col-sm-7
+          New Image
+        .col-sm-5
+          Current Image
+      .row
+        .col-sm-7
+          = f.file_field :image, class: 'file optional'
+        .col-sm-5
+          = image_tag model_instance.image.url(:span1), class: 'thumbnail'

@@ -1,11 +1,6 @@
 - content_for :title, t('baw.shared.links.projects.title')
 
-- content_for(:left_sidebar_header, 'Projects')
-- content_for(:left_sidebar) do
-  = render partial: 'shared/sidebar_base'
-  %li= link_to 'Create New Project', new_project_path,  title: "Create a new project", data: {toggle: 'tooltip',  placement: 'right'}
-  %li= link_to 'Request Access', new_access_request_projects_path,  title: "Request access to a project not listed here", data: {toggle: 'tooltip',  placement: 'right'}
-  %li= link_to 'Send Audio', data_upload_path,  title: 'Information for adding audio', data: {toggle: 'tooltip',  placement: 'right'}
+= render partial: 'shared/sidebar_project'
 
 - @projects.each_slice(2) do |projects|
   .row
@@ -19,20 +14,19 @@
               %a{href: project_path(project)}= project.name
             %p= truncate(project.description, length: 50)
 
-            -
             - if Access::Check.can?(current_user, :owner, project)
-              %i.fa.fa-unlock{title: 'You are an owner', data: {toggle:'tooltip',  placement: 'top'}, style: 'position:absolute; top:10px; right:20px;'}
+              %span.fa.fa-unlock{title: 'You are an owner', data: {toggle:'tooltip',  placement: 'top'}, aria: {hidden: 'true' }, style: 'position:absolute; top:10px; right:20px;'}
             - elsif Access::Check.can?(current_user, :writer, project)
-              %i.fa.fa-unlock{title: 'You have read & write access', data: {toggle:'tooltip',  placement: 'top'}, style: 'position:absolute; top:10px; right:20px;'}
+              %span.fa.fa-unlock{title: 'You have read & write access', data: {toggle:'tooltip',  placement: 'top'}, aria: {hidden: 'true' }, style: 'position:absolute; top:10px; right:20px;'}
             - elsif Access::Check.can?(current_user, :reader, project)
-              %i.fa.fa-lock{title: 'You have read only access', data: {toggle:'tooltip',  placement: 'top'}, style: 'position:absolute; top:10px; right:20px;'}
+              %span.fa.fa-lock{title: 'You have read only access', data: {toggle:'tooltip',  placement: 'top'}, aria: {hidden: 'true' }, style: 'position:absolute; top:10px; right:20px;'}
 
             .btn-group{role: 'group', aria: {label: 'actions'}, style: 'position:absolute; bottom:25px; right:20px;'}
               %a.btn.btn-default{role: 'button', href: project_path(project)}
-                %i.fa.fa-info-circle
+                %span.fa.fa-info-circle{aria: {hidden: 'true' }}
                 Details
               %a.btn.btn-default{role: 'button', href: make_visualise_path(project)}
-                %i.fa.fa-eye
+                %span.fa.fa-eye{aria: {hidden: 'true' }}
                 Visualise
 
 - if @projects.empty?

@@ -27,80 +27,108 @@
 .row
   .col-sm-12
     - if @recent_audio_events.empty?
-      = 'No recent annotations.'
+      No recent annotations.
+    - elsif current_user.blank?
+      %table.table.table-striped.table-hover
+        %thead
+          %tr
+            %th
+              %span.fa.fa-tags{aria: {hidden: 'true' }}
+              Tags
+            %th
+              %span.fa.fa-calendar{aria: {hidden: 'true' }}
+              Updated
+
+        %tbody
+          - @recent_audio_events.each do |audio_event|
+            - tag_instances = audio_event.tags.order(:type_of_tag, :text).to_a
+            - priority_tag = Tag.get_priority_tag(tag_instances) || Tag.new(text:'(none)')
+            %tr
+              %td= truncate(priority_tag.text, length: 50)
+              %td= format_sidebar_datetime(audio_event.updated_at)
     - else
       %table.table.table-striped.table-hover
-        %tr
-          %th Tag
-          - unless current_user.blank?
-            %th Site
-          %th Last Updated
-          - unless current_user.blank?
-            %th User
+        %thead
+          %tr
+            %th
+              %span.fa.fa-map-marker{aria: {hidden: 'true' }}
+              Site
+            %th
+              %span.fa.fa-user{aria: {hidden: 'true' }}
+              User
+            %th
+              %span.fa.fa-calendar{aria: {hidden: 'true' }}
+              Updated
+            %th
+              %span.fa.fa-tags{aria: {hidden: 'true' }}
+              Tags
             %th
 
-        - @recent_audio_events.each do |audio_event|
-          %tr
-            - tags = audio_event.tags.order(:type_of_tag, :text).to_a
-            - tags_text = tags.empty? ? '(none)' : tags.map{ |item| item.text}.join(', ')
-            - priority_tag = Tag.get_priority_tag(tags) || Tag.new(text:'(none)')
-            - unless current_user.blank?
-              - site_link = "/projects/#{audio_event.audio_recording.site.projects[0].id}/sites/#{audio_event.audio_recording.site.id}"
-              - audio_link = make_listen_path(audio_event)
-              - annotation_link = make_library_path(audio_event)
-            - if current_user.blank?
-              %td{title: tags_text}= priority_tag.text
-            - else
-              %td{title: tags_text}= link_to priority_tag.text, audio_link, target: '_self'
-            - unless current_user.blank?
-              %td= audio_event.audio_recording.site.name
-            %td{title: audio_event.created_at}= distance_of_time_in_words(Time.zone.now, audio_event.created_at, nil, {vague: true})+ ' ago'
-            - unless current_user.blank?
-              %td= audio_event.creator.user_name
-              %td.nolink
-                = link_to audio_link, target: '_self', class: 'btn btn-mini' do
-                  %i{class: 'fa fa-play'}
+        %tbody
+          - @recent_audio_events.each do |audio_event|
+            - tags = audio_event.tags.order(:type_of_tag, :text).select(:text).to_a.map{ |item| item.text}.join(', ')
+            - listen_link = make_listen_path(audio_event)
+            - library_link = make_library_path(audio_event)
+            - site_name = audio_event.audio_recording.site.name
+            %tr
+              %td= site_name
+              %td= link_to audio_event.creator.user_name, user_account_path(audio_event.creator_id)
+              %td= format_sidebar_datetime(audio_event.updated_at)
+              %td= truncate(tags, length: 30)
+              %td
+                = link_to listen_link, target: '_self', class: 'btn btn-default btn-xs' do
+                  %span.fa.fa-play{aria: {hidden: 'true'}}
                   Play
-                = link_to user_account_path(audio_event.creator_id), class: 'btn btn-mini' do
-                  %i{class: 'fa fa-user'}
-                  User
-                = link_to annotation_link, class: 'btn btn-mini' do
-                  %i{class: 'fa fa-flag'}
+                = link_to library_link, target: '_self', class: 'btn btn-default btn-xs' do
+                  %span.fa.fa-bullseye{aria: {hidden: 'true'}}
                   Annotation
-                = link_to site_link, target: '_self', class: 'btn btn-mini' do
-                  %i{class: 'fa fa-map-marker'}
-                  Site
 
 %h2 Recent Audio Recordings
 
 .row
   .col-sm-12
     - if @recent_audio_recordings.empty?
-      = 'No recent audio recordings.'
+      No recent audio recordings.
+    - elsif current_user.blank?
+      %table.table.table-striped.table-hover
+        %thead
+          %tr
+            %th
+              %span.fa.fa-clock-o{aria: {hidden: 'true' }}
+              Duration
+            %th
+              %span.fa.fa-calendar{aria: {hidden: 'true' }}
+              Uploaded
+
+        %tbody
+          - @recent_audio_recordings.each do |audio_recording|
+            %tr
+              %td= distance_of_time(audio_recording.duration_seconds)
+              %td= format_sidebar_datetime(audio_recording.created_at)
     - else
       %table.table.table-striped.table-hover
-        %tr
-          - unless current_user.blank?
-            %th Site
-          %th Duration
-          %th Uploaded
-          - unless current_user.blank?
+        %thead
+          %tr
+            %th
+              %span.fa.fa-map-marker{aria: {hidden: 'true' }}
+              Site
+            %th
+              %span.fa.fa-clock-o{aria: {hidden: 'true' }}
+              Duration
+            %th
+              %span.fa.fa-calendar{aria: {hidden: 'true' }}
+              Uploaded
             %th
 
-        - @recent_audio_recordings.each do |audio_recording|
-          %tr
-            - unless current_user.blank?
-              - audio_link = "/listen/#{audio_recording.id}"
-              - site_link = "/projects/#{audio_recording.site.projects[0].id}/sites/#{audio_recording.site.id}"
-            - unless current_user.blank?
-              %td= link_to audio_recording.site.name, audio_link, target: '_self'
-            %td{title: "#{audio_recording.duration_seconds.to_s} seconds"}= distance_of_time(audio_recording.duration_seconds)
-            %td{title: audio_recording.created_at}= distance_of_time_in_words(Time.zone.now, audio_recording.created_at, nil, {vague: true})+ ' ago'
-            - unless current_user.blank?
-              %td.nolink
-                = link_to audio_link, target: '_self', class: 'btn btn-mini' do
-                  %i{class: 'fa fa-play'}
+        %tbody
+          - @recent_audio_recordings.each do |audio_recording|
+            - listen_link = make_listen_path(audio_recording)
+            - site_name = audio_recording.site.name
+            %tr
+              %td= site_name
+              %td= distance_of_time(audio_recording.duration_seconds)
+              %td= format_sidebar_datetime(audio_recording.created_at)
+              %td
+                = link_to listen_link, target: '_self', class: 'btn btn-default btn-xs' do
+                  %span.fa.fa-play{aria: {hidden: 'true'}}
                   Play
-                = link_to site_link, target: '_self', class: 'btn btn-mini' do
-                  %i{class: 'fa fa-map-marker'}
-                  Site

@@ -137,7 +137,7 @@ ELSE last_sign_in_at END DESC'
   end
 
   def audio_events
-    @user_annotations = Access::Query.audio_events_modified(@user).includes(:audio_recording).references(:audio_recordings)
+    @user_annotations = Access::Query.audio_events_modified(@user).includes(audio_recording: [:site]).references(:audio_recordings, :sites)
                             .order('audio_events.updated_at DESC')
                             .paginate(
                                 page: paging_params[:page].blank? ? 1 : paging_params[:page],

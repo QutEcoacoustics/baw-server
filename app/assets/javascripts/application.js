@@ -18,6 +18,8 @@
 //= require moment-timezone-with-data.min
 //= require bootstrap-sprockets
 //= require bootstrap-datetimepicker.min
+//= require typeahead.jquery.min
+//= require typeahead.bundle.min
 //= require shared
 //= require public
 //= require functions

@@ -1,15 +1,19 @@
-%h1 User Accounts
+- content_for :title, 'User List'
 
--# plugin turns a table row into a clickable link
--# http://jasny.github.io/bootstrap/javascript.html#rowlink
+= render partial: 'shared/sidebar_user'
 
-%table.table.table-striped(data-provides='rowlink')
+%table.table.table-striped.table-hover
   %thead
     %tr
-      %th User Name
-      %th Last Login
       %th
-      %th Confirmed?
+        %span.fa.fa-user{aria: {hidden: 'true'}}
+        User
+      %th
+        %span.fa.fa-calendar{aria: {hidden: 'true'}}
+        Last Login
+      %th
+        %span.fa.fa-check-square-o{aria: {hidden: 'true'}}
+        Confirmed?
       %th
 
   %tbody
@@ -17,21 +21,9 @@
     - last_seen = user.get_last_seen
     %tr
       %td= link_to "#{user.user_name} (#{user.role_symbols.join(', ')})", user_account_path(user)
-      %td= last_seen.blank? ? '?' : last_seen.iso8601
-      %td= last_seen.blank? ? '?' : "#{distance_of_time_in_words(Time.zone.now, last_seen, nil, {vague: true})} ago"
+      %td= last_seen.blank? ? '?' : format_sidebar_datetime(last_seen)
       %td= user.confirmed? ? 'confirmed' : 'no'
-      %td.nolink
-        = link_to user_account_path(user), class: 'btn btn-mini' do
-          %i{class: 'fa fa-user'}
-          View
-        = link_to edit_user_account_path(user), class: 'btn btn-mini' do
-          %i{class: 'fa fa-edit'}
+      %td
+        = link_to edit_user_account_path(user), target: '_self', class: 'btn btn-default btn-xs' do
+          %span.fa.fa-edit{aria: {hidden: 'true'}}
           Edit
-        = link_to user_account_path(user), method: :delete, data: { confirm: 'Are you sure?' }, class: 'btn btn-mini' do
-          %i{class: 'fa fa-times '}
-          Delete
-
-- content_for :title, 'Users'
-
-- content_for :left_sidebar do
-  = render partial: 'sidebar_links'

@@ -16,13 +16,25 @@
   var mapping_keys = Object.keys(mapping);
   var mapping_values = Object.keys(mapping).map(function (key) { return mapping[key]; });
 
-  $('##{control_id}').typeahead({
-    'source': Object.keys(mapping),
-    'minLength': 2,
-    'items': 10
+  // init bloodhound
+  var engine = new Bloodhound({
+    local: mapping_keys,
+    queryTokenizer: Bloodhound.tokenizers.whitespace,
+    datumTokenizer: Bloodhound.tokenizers.whitespace
   });
 
-  $('##{control_id}').on('change keydown keypress', function(){
+  // init typeahead
+  $('##{control_id}').typeahead({
+    'highlight': true,
+    'hint': true,
+    'minLength': 2
+    },
+    {
+    'source': engine,
+    'limit': 10
+  });
+
+  $('##{control_id}').on('typeahead:select typeahead:change keydown keypress', function(){
     checkTimeZone();
   });
 

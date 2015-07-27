@@ -102,10 +102,15 @@ class User < ActiveRecord::Base
                 with: /\A[a-zA-Z0-9 _-]+\z/,
                 message: 'Only letters, numbers, spaces ( ), underscores (_) and dashes (-) are valid.'
             },
-            exclusion: {
-                in: %w(admin harvester analysis_runner root superuser administrator admins administrators)
-            },
             if: Proc.new { |user| user.user_name_changed? }
+
+  validate :excluded_login
+
+  def excluded_login
+    reserved_user_names = %w(admin harvester analysis_runner root superuser administrator admins administrators)
+    self.errors.add(:login, 'is reserved') if reserved_user_names.include?(self.login.downcase)
+    self.errors.add(:user_name, 'is reserved') if reserved_user_names.include?(self.user_name.downcase)
+  end
 
   # format, uniqueness, and presence are validated by devise
   # Validatable component

@@ -1,8 +1,59 @@
-%h1= "Edit #{@user.user_name}"
+- content_for :title, "Editing profile for #{@user.user_name}"
 
-= render 'form'
+= render partial: 'shared/sidebar_user'
 
-- content_for :title, "Edit Profile for #{@user.user_name}"
-
-- content_for :left_sidebar do
-  = render partial: 'sidebar_links'
+= simple_form_for(@user, url: user_account_path(@user), html: {class: 'form-horizontal', multipart: true, method: :put }) do |f|
+  = field_set_tag do
+    = f.error_notification
+    = f.input :user_name, required: true, autofocus: true, placeholder: 'User name'
+    = f.input :email, required: true, placeholder: 'Email'
+    = render partial: 'shared/time_zone_select_custom', locals: { f: f, attribute_name: :tzinfo_tz, model_name: 'user' }
+    = f.input :password, autocomplete: 'off', required: false, placeholder: 'Password'
+    .form-group.optional.pending-reconfirmation
+      %label.optional.pending-reconfirmation.control-label.col-sm-3{for: 'pending-reconfirmation'}
+        Email confirmation
+      .col-sm-5
+        %p.form-control-static
+          - if @user.pending_reconfirmation?
+            Currently waiting confirmation for: #{@user.unconfirmed_email}
+            = f.button :submit, 'Resend Confirmation'
+          - else
+            User's email is confirmed.
+    .form-group.optional.confirmed
+      %label.optional.confirmed.control-label.col-sm-3
+        Account confirmation
+      .col-sm-5
+        - if @user.confirmed?
+          Confirmed
+          = f.button :submit, 'Remove Confirmation', class: 'btn-default'
+        - else
+          Not Confirmed
+          = f.button :submit, 'Confirm User', class: 'btn-default'
+    = render partial: 'shared/image_upload', locals: { f: f,  model_instance: @user, model_name: 'user' }
+    %hr/
+    - [:confirmed_at,:reset_password_sent_at, :remember_created_at, :sign_in_count, :last_seen_at,
+    :current_sign_in_at, :last_sign_in_at, :current_sign_in_ip, :last_sign_in_ip,
+    :confirmation_sent_at, :failed_attempts,:locked_at, :created_at, :updated_at,
+    :roles_mask, :image_updated_at, :tzinfo_tz, :rails_tz].each do |item|
+      - human_ed = item.to_s.humanize
+      - param_ed = item.to_s.parameterize
+      - sym_ed = item
+      - value = @user[sym_ed]
+      .form-group.optional{class:param_ed}
+        %label.optional.control-label.col-sm-3{class:param_ed, for: param_ed}
+          = human_ed
+        .col-sm-8
+          %p.form-control-static{id: param_ed}
+            - unless value.blank?
+              - if value.is_a?(Time)
+                = value.iso8601
+                %small
+                  ="(#{time_ago_in_words(value)} ago)"
+              - elsif sym_ed == :roles_mask
+                = User.roles_from_mask(value).each { |item| item.to_s.humanize }.join(', ')
+              - else
+                = @user[sym_ed]
+            - else
+              %small
+                (no value)
+    = f.button :submit_cancel, t('devise.registrations.edit.update'), class: 'btn-default'

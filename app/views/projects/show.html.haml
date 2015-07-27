@@ -1,58 +1,62 @@
-.row-fluid.spacer
-  = image_tag @project.image.url(:span3), class: 'span3'
+- content_for :meta_title, "Project #{@project.name}"
+- content_for :page_title do
+  = @project.name
+  %small
+    Project
 
-  .span9
-    %h1= @project.name
-    %p= @project.description
+= render partial: 'shared/sidebar_project', locals: {project: @project}
 
-.row-fluid
-  %h3= 'Sites'
-  - unless @project.sites.empty?
-    %ul.thumbnails.span6.project_sites
-      - NaturalSort.sort(@project.sites, :name).each do |site|
-        .row-fluid.spacer
-          = render partial: 'sites/site_thumb_large', locals: {site: site}
+.col-sm-12
+  .row
+    .col-sm-4
+      .thumbnail
+        = image_tag @project.image.url(:span3), alt: @project.name
+    .col-sm-8
+      %p= @project.description
+  .row
+    .col-sm-12
+      %h3
+        Sites
 
-    - if @project.sites.select { |site| !site.longitude.blank? && !site.latitude.blank? }.length > 0
-      .span6= gmaps(markers: {data: @markers}, map_options: {zoom: 7, auto_zoom: true})
-      = content_for(:scripts)
-    - else
-      .span6.map-placeholder
-        %span.map-placeholder-text No locations specified.
+  .row
+    .col-sm-6
+      %ul.list-group
+        - NaturalSort.sort(@project.sites, :name).each do |site|
+          %li.list-group-item
+            .media
+              .media-left
+                %a{href: project_site_path(@project, site)}
+                  = image_tag site.image.url(:span1), alt: site.name, class: 'media-object'
+              .media-body
+                %h4.media-heading
+                  = link_to truncate(site.name, length: 45, separator: ' '), project_site_path(@project, site)
+                %ul.nav.nav-pills.pull-right{style: 'margin-bottom:0'}
+                  %li
+                    %a{href: project_site_path(@project, site)}
+                      %span.fa.fa-info-circle{aria: {hidden: 'true'}}
+                      Details
+                  - play_details = site.get_bookmark_or_recording
+                  - unless play_details.nil?
+                    %li
+                      %a{href: make_listen_path(play_details[:audio_recording], play_details[:start_offset_seconds])}
+                        %span.fa.fa-play-circle{aria: {hidden: 'true'}}
+                        Play
+                  - else
+                    %li
+                      %a{href: '#', title: 'No audio recordings in this site', data: {toggle: 'tooltip',  placement: 'top'}}
+                        No audio
+                  %li
+                    %a{href: make_visualise_path(site)}
+                      %span.fa.fa-eye{aria: {hidden: 'true'}}
+                      Visualise
 
-.row-fluid
-  = link_to new_project_site_path(@project), title: 'Add a new site to this project',
-  data: {toggle: 'tooltip',  placement: 'right'}, class: 'btn-create-site btn' do
-    Add New Site
-
--#.row-fluid
-  %h3= 'Datasets'
-  - unless @project.datasets.empty?
-    %table.table.table-striped(data-provides='rowlink')
-      %thead
-        %tr
-          %th Name
-          %th Description
-
-      %tbody
-      - @project.datasets.each do |dataset|
-        %tr
-          %td= link_to dataset.name, project_dataset_path(dataset.project, dataset)
-          %td= render partial: 'datasets/summary', locals: {dataset: dataset}
-        %tr
-          %td{colspan:'2'}= render partial: 'datasets/summary_text', locals: {dataset: dataset}
-
-  = link_to new_project_dataset_path(@project), title: 'Add a new dataset to this project',
-  data: {toggle: 'tooltip',  placement: 'right'}, class: 'btn-create-site btn' do
-    Add New Dataset
-
--#.row-fluid
-  %h3= 'Jobs'
-  - unless @project.jobs.empty?
-    = render partial: 'jobs/jobs_table', locals: {jobs: @project.jobs}
-  = link_to new_project_job_path(@project), title: 'Add a new analysis job to this project',
-  data: {toggle: 'tooltip',  placement: 'right'}, class: 'btn-create-site btn' do
-    Add New Job
+    .col-sm-6
+      - if @project.sites.select { |site| !site.longitude.blank? && !site.latitude.blank? }.length > 0
+        = gmaps(markers: {data: @markers}, map_options: {zoom: 7, auto_zoom: true})
+        = content_for(:scripts)
+      - else
+        .map-placeholder
+          %span.map-placeholder-text No locations specified.
 
 - content_for :right_sidebar do
   = render partial: 'shared/sidebar_metadata_user_created', locals: { item: @project }
@@ -63,30 +67,6 @@
   - unless level.blank?
     - level_name = Access::Core.get_level_name(level)
     = render partial: 'shared/sidebar_metadata', locals: {title: 'Your access level', text: level_name}
-
-- content_for :title, "Project #{@project.name}"
-
-
-- content_for :left_sidebar_header, 'Projects'
-- content_for :left_sidebar do
-  - if can? :edit, @project
-    %li= link_to 'Edit Project Details', edit_project_path(@project),  title: "Change this project's details", data: {toggle: 'tooltip',  placement: 'right'}
-  - if Access::Check.is_admin?(current_user)
-    %li= link_to 'Edit Sites', edit_sites_project_path(@project),  title: "Change this project's sites", data: {toggle: 'tooltip',  placement: 'right'}
-  - if can? :update_permissions, @project
-    %li= link_to 'Edit Permissions', project_permissions_path(@project),  title: "Edit project's access permissions", data: {toggle: 'tooltip',  placement: 'right'}
-  - if can? :destroy, @project
-    %li= link_to 'Delete Project', @project, :method => :delete, data: { confirm: 'Are you sure?', toggle: 'tooltip',  placement: 'right' }, title: 'Delete project'
-  - if can? :edit, @project
-    %li= link_to 'Add New Site', new_project_site_path(@project),  title: 'Add a new site to this project', data: {toggle: 'tooltip',  placement: 'right'}
-  -# if can? :edit, @project
-    %li= link_to 'Add New Dataset', new_project_dataset_path(@project),  title: "Add a new dataset to this project", data: {toggle: 'tooltip',  placement: 'right'}
-  -# if can? :edit, @project
-    %li= link_to 'Add New Job', new_project_job_path(@project),  title: "Add a new analysis job to this project", data: {toggle: 'tooltip',  placement: 'right'}
-  - if can? :show, @project
-    %li= link_to 'Visualise', make_visualise_path(@project), title: 'Browse the audio in this project', data: {toggle: 'tooltip',  placement: 'right'}
-  - if can? :edit, @project
-    %li= link_to 'Upload Audio', data_upload_path,  title: 'Upload audio to this project', data: {toggle: 'tooltip',  placement: 'right'}
 
 -# include markerwithlabel.js
 %script

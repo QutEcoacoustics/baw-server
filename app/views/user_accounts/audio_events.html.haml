@@ -18,36 +18,31 @@
 
     %tr
       %th
-        %i.fa.fa-map-marker
+        %span.fa.fa-map-marker{aria: {hidden: 'true' }}
         Site
       %th
-        %i.fa.fa-clock-o
-        Duration
+        %span.fa.fa-calendar{aria: {hidden: 'true' }}
+        Updated
       %th
-        %i.fa.fa-calendar
-        Annotation Date
-      %th
-        %i.fa.fa-tags
+        %span.fa.fa-tags{aria: {hidden: 'true' }}
         Tags
+      %th
 
     - @user_annotations.each do |audio_event|
-      - if !audio_event.blank?
-        - audio_recording_exists = !audio_event.audio_recording.blank?
+      - if !audio_event.nil? && !audio_event.audio_recording.nil?
         - listen_link = make_listen_path(audio_event)
         - library_link = make_library_path(audio_event)
-        - audio_event_duration = audio_event.end_time_seconds - audio_event.start_time_seconds
         - site_name = audio_event.audio_recording.site.name
         - tags = audio_event.tags.order(:type_of_tag, :text).select(:text).to_a.map{ |item| item.text}.join(', ')
 
         %tr
-          - if audio_recording_exists
-            - start_time = audio_event.audio_recording.recorded_date.advance(seconds: audio_event.start_time_seconds)
-            %td= link_to site_name, listen_link, target: '_self'
-            %td= link_to audio_event_duration, library_link, target: '_self'
-            %td= format_sidebar_datetime(start_time)
-          - else
-            %td= site_name
-            %td= audio_event_duration
-            %td (unknown)
-
-          %td=tags
+          %td= site_name
+          %td= format_sidebar_datetime(audio_event.updated_at)
+          %td= truncate(tags, length: 50)
+          %td
+            = link_to listen_link, target: '_self', class: 'btn btn-default btn-xs' do
+              %span.fa.fa-play{aria: {hidden: 'true'}}
+              Play
+            = link_to library_link, target: '_self', class: 'btn btn-default btn-xs' do
+              %span.fa.fa-bullseye{aria: {hidden: 'true'}}
+              Annotation

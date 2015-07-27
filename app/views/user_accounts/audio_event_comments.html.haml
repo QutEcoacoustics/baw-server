@@ -18,13 +18,13 @@
     %thead
       %tr
         %th
-          %i.fa.fa-map-marker
+          %span.fa.fa-map-marker{aria: {hidden: 'true' }}
           Site
         %th
-          %i.fa.fa-bullseye
-          Annotation
+          %span.fa.fa-calendar{aria: {hidden: 'true' }}
+          Updated
         %th
-          %i.fa.fa-comment
+          %span.fa.fa-comment{aria: {hidden: 'true' }}
           Comment
 
     %tbody
@@ -34,6 +34,13 @@
         - library_link = make_library_path(aec.audio_event)
         - site_name = aec.audio_event.audio_recording.site.name
       %tr
-        %td= link_to site_name, listen_link
-        %td= link_to aec.audio_event.id, library_link
-        %td= aec.comment
+        %td= site_name
+        %td= format_sidebar_datetime(aec.updated_at)
+        %td= truncate(aec.comment, length: 50)
+        %td
+          = link_to listen_link, target: '_self', class: 'btn btn-default btn-xs' do
+            %span.fa.fa-play{aria: {hidden: 'true'}}
+            Play
+          = link_to library_link, target: '_self', class: 'btn btn-default btn-xs' do
+            %span.fa.fa-bullseye{aria: {hidden: 'true'}}
+            Annotation
