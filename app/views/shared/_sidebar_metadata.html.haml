@@ -1,7 +1,4 @@
 -# locals: title, text
 - if !title.blank? && !text.blank?
-  .metadata
-    .heading
-      =title
-    .text
-      =text
+  %h4= title
+  %p= text

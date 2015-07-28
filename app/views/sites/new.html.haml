@@ -1,5 +1,12 @@
-- content_for :title, "New Site for Project #{@project.name}"
+- content_for :meta_title, "Project #{@project.name} | New Site"
+- content_for :page_title, @project.name
 
 = render partial: 'shared/sidebar_project', locals: {project: @project}
+
+- content_for :right_sidebar do
+  = render partial: 'shared/sidebar_metadata_heading', locals: {title: 'Project', icon_class: 'home'}
+
+%h2
+  New Site
 
 = render partial:'form', locals: {project: @project, site: @site}

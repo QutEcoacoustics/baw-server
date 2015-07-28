@@ -1,8 +1,6 @@
 class SitesController < ApplicationController
   include Api::ControllerHelper
 
-  add_breadcrumb 'Home', :root_path
-
   # order matters for before_action and load_and_authorize_resource!
   load_and_authorize_resource :project, except: [:show_shallow, :filter, :orphans]
 
@@ -11,8 +9,6 @@ class SitesController < ApplicationController
 
   load_and_authorize_resource :site, through: :project, except: [:show_shallow, :filter, :orphans]
   load_and_authorize_resource :site, only: [:show_shallow, :filter, :orphans]
-
-  before_action :add_project_breadcrumb, except: [:show_shallow, :filter, :orphans]
 
   # GET /project/1/sites
   # GET /project/1/sites.json
@@ -35,7 +31,6 @@ class SitesController < ApplicationController
 
   # GET /sites/1.json
   def show_shallow
-
     # only responds to json requests
     respond_to do |format|
       format.json { respond_show }
@@ -48,7 +43,6 @@ class SitesController < ApplicationController
     respond_to do |format|
       format.html {
         @site.update_location_obfuscated(current_user)
-        add_breadcrumb @site.name, [@project, @site]
       }
       format.json { respond_show }
     end
@@ -67,7 +61,6 @@ class SitesController < ApplicationController
         @markers = @site.to_gmaps4rails do |site, marker|
           marker.infowindow 'Drag&Drop to site location. Delete Latitude and Longitude to specify no location.'
         end
-        add_breadcrumb 'New Site'
       }
       format.json { respond_show }
     end
@@ -75,8 +68,6 @@ class SitesController < ApplicationController
 
   # GET /project/1/sites/1/edit
   def edit
-    add_breadcrumb @site.name, [@project, @site]
-    add_breadcrumb 'Edit'
     @markers = @site.to_gmaps4rails do |site, marker|
       marker.infowindow 'Drag&Drop to site location'
     end
@@ -94,7 +85,6 @@ class SitesController < ApplicationController
         format.json { respond_create_success([@project, @site]) }
       else
         format.html {
-          add_breadcrumb @site.name, [@project, @site]
           @markers = @site.to_gmaps4rails do |site, marker|
             marker.infowindow 'Drag&Drop to site location'
           end
@@ -116,7 +106,6 @@ class SitesController < ApplicationController
         format.json { respond_show }
       else
         format.html {
-          add_breadcrumb @site.name, [@project, @site]
           render action: 'edit'
         }
         format.json { respond_change_fail }
@@ -138,10 +127,7 @@ class SitesController < ApplicationController
 
   def upload_instructions
     respond_to do |format|
-      format.html {
-        add_breadcrumb @site.name, [@project, @site]
-        add_breadcrumb 'Upload Instructions'
-      }
+      format.html
     end
   end
 
@@ -156,9 +142,7 @@ WHERE s.id NOT IN (SELECT site_id FROM projects_sites)
 ORDER BY s.name")
 
     respond_to do |format|
-      format.html {
-        add_breadcrumb 'Orphan Sites'
-      }
+      format.html
     end
 
   end
@@ -177,10 +161,6 @@ ORDER BY s.name")
   end
 
   private
-  def add_project_breadcrumb
-    add_breadcrumb 'Projects', projects_path
-    add_breadcrumb @project.name, @project
-  end
 
   def build_project_site
     @site = Site.new

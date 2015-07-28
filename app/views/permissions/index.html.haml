@@ -1,10 +1,18 @@
-- content_for :page_title, "#{@project.name} - Permissions"
-- content_for :meta_title, "Permissions for Project #{@project.name}"
+- content_for :meta_title, "Project #{@project.name} | Permissions"
+- content_for :page_title, @project.name
 
 = render partial: 'shared/sidebar_project', locals: {project: @project}
 
 - content_for :right_sidebar do
+  = render partial: 'shared/sidebar_metadata_heading', locals: {title: 'Permissions', icon_class: 'key'}
   = render partial: 'shared/sidebar_metadata', locals: {title: 'Owner', text: link_to(@project.creator.user_name, user_account_path(@project.creator))}
+
+%h2
+  Permissions
+
+%p
+  Set permissions for each user by selecting one of the three options.
+  Then click the 'Update Permissions' button underneath the list of users.
 
 = simple_form_for(:permission, url: update_permissions_project_path(@project), html: { class: 'form-horizontal', method: :post }) do |f|
   = field_set_tag do

@@ -1,0 +1,43 @@
+-# locals: project, site
+- content_for(:left_sidebar_header, 'Sites')
+- content_for(:left_sidebar) do
+  %li{class: ('active' if current_page?(root_path))}
+    = link_to t('baw.shared.links.home.title'), root_path,  title: t('baw.shared.links.home.description'), data: {toggle: 'tooltip',  placement: 'right'}
+  %li{class: ('active' if current_page?(projects_path))}
+    = link_to t('baw.shared.links.projects.title'), projects_path, title: t('baw.shared.links.projects.description'), data: {toggle: 'tooltip',  placement: 'right'}
+  %li{class: ('active' if current_page?(project_path(project)))}
+    = link_to 'View Project', project_path(project), title: 'View project details', data: {toggle: 'tooltip',  placement: 'right'}
+
+  - if can? :edit, project
+    %li{class: ('active' if current_page?(edit_project_path(project)))}
+      = link_to 'Edit Project', edit_project_path(project),  title: 'Edit project details', data: {toggle: 'tooltip',  placement: 'right'}
+
+  %li{class: ('active' if current_page?(project_site_path(project, site)))}
+    = link_to 'View Site', project_site_path(project, site),  title: 'View site details', data: {toggle: 'tooltip',  placement: 'right'}
+  - if can? :edit, site
+    %li{class: ('active' if current_page?(edit_project_site_path(project, site)))}
+      = link_to 'Edit Site',edit_project_site_path(project, site),  title: "Change this site's details", data: {toggle: 'tooltip',  placement: 'right'}
+
+  %li
+    = link_to 'Visualise', make_visualise_path(@site), title: 'Visualise and browse the audio in this site', data: {toggle: 'tooltip',  placement: 'right'}
+
+  - if can? :edit, project
+    %li{class: ('active' if current_page?(data_upload_path))}
+      = link_to 'Send Audio', data_upload_path,  title: 'Information for adding audio', data: {toggle: 'tooltip',  placement: 'right'}
+
+  - if can? :edit, site
+    %li{class: ('active' if current_page?(upload_instructions_project_site_path(@project, @site)))}
+      = link_to 'Harvest Audio', upload_instructions_project_site_path(@project, @site),  title: 'Upload new audio to this site', data: {toggle: 'tooltip',  placement: 'right'}
+
+  %li
+    = link_to 'Annotations (csv)', "#{data_request_path}?annotation_download[project_id]=#{@project.id}&annotation_download[site_id]=#{@site.id}&annotation_download[name]=#{CGI::escape(@site.name)}",  title: "Download annotations for this site", data: {toggle: 'tooltip',  placement: 'right'}
+
+  - play_details = site.get_bookmark_or_recording
+  - play_link = play_details.blank? ? nil : make_listen_path(play_details[:audio_recording], play_details[:start_offset_seconds])
+  - unless play_link.blank?
+    %li
+      = link_to 'Play', play_link, title: 'Play audio in this site', data: {toggle: 'tooltip',  placement: 'right'}
+
+  - if defined?(project) && defined?(site) && Access::Check.is_admin?(current_user)
+    %li
+      = link_to 'Delete Site', [project, site], method: :delete, data: { confirm: 'Are you sure?', toggle: 'tooltip',  placement: 'right' }, title: 'Delete site'

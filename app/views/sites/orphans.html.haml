@@ -1,11 +1,13 @@
-%h1 Orphan Sites
+- content_for :title, 'Site Management'
+
+= render partial: 'shared/sidebar_admin'
 
 - if @sites.empty?
   %p
     No orphan sites.
 - else
   %p
-    There are #{@sites.count} orphan sites. It is very difficult to access sites that are not in a project.
+    There are #{@sites.count} orphan sites. Sites that are not in a project cannot be accessed.
   %p
     To assign orphan sites to a project, go to the project's detail page and click on 'Edit Sites' in the list of links on the left.
 

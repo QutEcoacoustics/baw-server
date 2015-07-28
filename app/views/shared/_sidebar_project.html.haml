@@ -25,10 +25,11 @@
         = link_to 'Edit Permissions', project_permissions_path(project),  title: "Edit project's access permissions", data: {toggle: 'tooltip',  placement: 'right'}
     %li= link_to 'Visualise', make_visualise_path(project), title: 'Browse the audio in this project', data: {toggle: 'tooltip',  placement: 'right'}
 
-  %li{class: ('active' if current_page?(data_upload_path))}
-    = link_to 'Send Audio', data_upload_path,  title: 'Information for adding audio', data: {toggle: 'tooltip',  placement: 'right'}
+  - if defined?(project) && can?(:edit, project)
+    %li{class: ('active' if current_page?(data_upload_path))}
+      = link_to 'Send Audio', data_upload_path,  title: 'Information for adding audio', data: {toggle: 'tooltip',  placement: 'right'}
 
   - if defined?(project) && Access::Check.is_admin?(current_user)
     %li{class: ('active' if current_page?(edit_sites_project_path(project)))}
       = link_to 'Edit Sites', edit_sites_project_path(project),  title: "Change this project's sites", data: {toggle: 'tooltip',  placement: 'right'}
-    %li= link_to 'Delete Project', project, :method => :delete, data: { confirm: 'Are you sure?', toggle: 'tooltip',  placement: 'right' }, title: 'Delete project'
+    %li= link_to 'Delete Project', project, method: :delete, data: { confirm: 'Are you sure?', toggle: 'tooltip',  placement: 'right' }, title: 'Delete project'

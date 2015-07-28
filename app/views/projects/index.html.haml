@@ -2,6 +2,9 @@
 
 = render partial: 'shared/sidebar_project'
 
+- content_for :right_sidebar do
+  = render partial: 'shared/sidebar_metadata_heading', locals: {title: 'Projects', icon_class: 'home'}
+
 - @projects.each_slice(2) do |projects|
   .row
     - projects.each do |project|
@@ -14,20 +17,25 @@
               %a{href: project_path(project)}= project.name
             %p= truncate(project.description, length: 50)
 
-            - if Access::Check.can?(current_user, :owner, project)
-              %span.fa.fa-unlock{title: 'You are an owner', data: {toggle:'tooltip',  placement: 'top'}, aria: {hidden: 'true' }, style: 'position:absolute; top:10px; right:20px;'}
-            - elsif Access::Check.can?(current_user, :writer, project)
-              %span.fa.fa-unlock{title: 'You have read & write access', data: {toggle:'tooltip',  placement: 'top'}, aria: {hidden: 'true' }, style: 'position:absolute; top:10px; right:20px;'}
-            - elsif Access::Check.can?(current_user, :reader, project)
-              %span.fa.fa-lock{title: 'You have read only access', data: {toggle:'tooltip',  placement: 'top'}, aria: {hidden: 'true' }, style: 'position:absolute; top:10px; right:20px;'}
-
-            .btn-group{role: 'group', aria: {label: 'actions'}, style: 'position:absolute; bottom:25px; right:20px;'}
-              %a.btn.btn-default{role: 'button', href: project_path(project)}
-                %span.fa.fa-info-circle{aria: {hidden: 'true' }}
-                Details
-              %a.btn.btn-default{role: 'button', href: make_visualise_path(project)}
-                %span.fa.fa-eye{aria: {hidden: 'true' }}
-                Visualise
+            %ul.nav.nav-pills{style: 'position:absolute; bottom:25px; right:20px;'}
+              %li
+                - level = Access::Query.level_project(current_user, project)
+                - permission_title = 'No access'
+                - permission_title = 'You are an owner' if level == :owner
+                - permission_title = 'You have read & write access' if level == :writer
+                - permission_title = 'You have read only access' if level == :reader
+                - permission_icon = [:owner, :writer].include?(level) ? 'fa-unlock' : 'fa-lock'
+                %a{href: '#', onclick: 'return false;', style: 'cursor: default;',
+                data: {toggle:'tooltip',  placement: 'top'},  title: permission_title}
+                  %span.fa{class: permission_icon, aria: {hidden: 'true' }}
+              %li
+                %a{href: project_path(project)}
+                  %span.fa.fa-info-circle{aria: {hidden: 'true' }}
+                  Details
+              %li
+                %a{href: make_visualise_path(project)}
+                  %span.fa.fa-eye{aria: {hidden: 'true' }}
+                  Visualise
 
 - if @projects.empty?
   %p

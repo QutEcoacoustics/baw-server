@@ -1,6 +1,13 @@
-- content_for :title, "Edit Sites for #{@project.name}"
+- content_for :meta_title, "Project #{@project.name} | Assign Sites"
+- content_for :page_title, @project.name
 
 = render partial: 'shared/sidebar_project', locals: {project: @project}
+
+- content_for :right_sidebar do
+  = render partial: 'shared/sidebar_metadata_heading', locals: {title: 'Project', icon_class: 'home'}
+
+%h2
+  Assign Sites
 
 %p
   Select the sites to be part of this project, and click 'Update' at the bottom of this page.

@@ -37,10 +37,6 @@
                 = content_for(:left_sidebar)
 
         .col-md-8
-          - if breadcrumbs.size > 0
-            %ol.breadcrumb
-              = render_breadcrumbs tag: :li, separator: ''
-
           - if flash.any?
             - flash.each do |msg_type, msg_text|
               = render partial: 'shared/alert_dismissible', locals: {msg_type: msg_type, msg_text: msg_text}
@@ -56,7 +52,8 @@
 
         .col-md-2
           - if content_for?(:right_sidebar)
-            = content_for(:right_sidebar)
+            %nav{role: 'navigation'}
+              = content_for(:right_sidebar)
 
     %footer
       %ul.nav.nav-pills

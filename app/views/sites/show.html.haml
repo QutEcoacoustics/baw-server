@@ -1,98 +1,89 @@
-.row-fluid.spacer
-  = image_tag @site.image.url(:span3), class: 'span3'
+- content_for :meta_title, "Project #{@project.name} | Site #{@site.name}"
+- content_for :page_title, @site.name
 
-  .span9
-    %h1= @site.name
-    %p= @site.description
-
-- play_details = @site.get_bookmark_or_recording
-- play_link = play_details.blank? ? nil : make_listen_path(play_details[:audio_recording], play_details[:start_offset_seconds])
-
-%h3
-  Audio Recordings
-
-.row-fluid
-  .span6
-    - if !@site.audio_recordings.any?
-      %p
-        This site does not contain any audio recordings.
-    - else
-      - duration_sum = @site.audio_recordings.sum(:duration_seconds)
-
-      - record_min = @site.audio_recordings.order(recorded_date: :asc).first
-      - recorded_min = record_min.recorded_date
-      - recorded_min = recorded_min.in_time_zone(@site.rails_tz) unless @site.rails_tz.blank?
-
-      - record_max = @site.audio_recordings.order('recorded_date + CAST(duration_seconds || \' seconds\' as interval) DESC').first
-      - recorded_max = record_max.recorded_date.advance(seconds: record_max.duration_seconds)
-      - recorded_max = recorded_max.in_time_zone(@site.rails_tz) unless @site.rails_tz.blank?
-
-      - recorded_diff = recorded_max - recorded_min
-      %p
-        This site contains recordings from #{recorded_min.to_formatted_s(:readable_full_without_seconds)}
-        to #{recorded_max.to_formatted_s(:readable_full_without_seconds)}.
-      %p
-        This site covers
-        = distance_of_time recorded_diff
-        and there are recordings for
-        = distance_of_time duration_sum
-        of that time.
-
-      %ul.nav.nav-pills{style: 'margin-bottom:0'}
-        - if play_link.blank?
-          %li
-            %a{href: '#', title: 'No audio recordings in this site', data: {toggle: 'tooltip',  placement: 'top'}}
-              No audio
-        - else
-          %li
-            %a{href: play_link}
-              %span.fa.fa-play-circle{aria: {hidden: 'true' }}
-              Play
-
-        %li
-          %a{href: make_visualise_path(@site)}
-            %span.fa.fa-eye{aria: {hidden: 'true' }}
-            Visualise
-
-      %h4 Recent Annotations
-      %ul.nav.nav-pills.nav-stacked{style: 'margin-bottom:0'}
-        - AudioEvent.in_site(@site).each do |ae|
-          %li
-            - tag = ae.tags.first
-            - tag_text = tag.blank? ? '(not tagged)' : tag.text
-            - user = ae.updater.blank? ? ae.updater : ae.creator
-            = link_to "\"#{tag_text}\" by #{user.blank? ? '(unknown)' : user.user_name}", make_listen_path(ae)
-
-  - if @site.latitude.blank? || @site.longitude.blank?
-    .span6.map-placeholder
-      %span.map-placeholder-text This site does not have a location set.
-  - else
-    .span6= gmaps(markers: {data: @site.to_gmaps4rails}, map_options: {zoom: 7, auto_zoom: true})
-    = content_for(:scripts)
+= render partial: 'shared/sidebar_site', locals: {project: @project, site: @site}
 
 - content_for :right_sidebar do
-  = render layout: '/shared/right_sidebar_user_times', locals: { item: @site } do
-    - level = Access::Query.level_project(current_user, @project)
-    - unless level.blank?
-      - level_name = Access::Core.get_level_name(level)
-      = sidebar_metadata('Your access level', level_name)
+  = render partial: 'shared/sidebar_metadata_heading', locals: {title: 'Site', icon_class: 'map-marker'}
+  = render partial: 'shared/sidebar_metadata_user_created', locals: { item: @site }
+  = render partial: 'shared/sidebar_metadata_user_updated', locals: { item: @site }
+  - level = Access::Query.level_project(current_user, @project)
+  - unless level.blank?
+    - level_name = Access::Core.get_level_name(level)
+    = render partial: 'shared/sidebar_metadata', locals: {title: 'Your access level', text: level_name}
 
-- content_for :title, "Project #{@project.name} | Site #{@site.name}"
+.col-sm-12
+  .row
+    .col-sm-4
+      .thumbnail
+        = image_tag @site.image.url(:span3), alt: @site.name
+    .col-sm-8
+      %p= @site.description
+  .row
+    .col-sm-12
+      %h2
+        Audio Recordings
 
-- content_for :left_sidebar do
-  = render layout: '/shared/left_sidebar', locals: {title: 'Sites'} do
-    - if can? :edit, @site
-      %li= link_to 'Edit Site Details',edit_project_site_path(@project, @site),  title: "Change this site's details", data: {toggle: 'tooltip',  placement: 'right'}
-    - if can? :destroy, @site
-      %li= link_to 'Delete Site', [@project, @site], :method => :delete, data: { confirm: 'Are you sure?', toggle: 'tooltip',  placement: 'right' }, title: 'Delete site'
-    -# if can? :edit, @project
-      %li= link_to 'Add New Site', new_project_site_path(@project),  title: "Add a new site to this project", data: {toggle: 'tooltip',  placement: 'right'}
-    - if can? :edit, @site
-      %li= link_to 'Harvest Audio', upload_instructions_project_site_path(@project, @site),  title: 'Upload new audio to this site', data: {toggle: 'tooltip',  placement: 'right'}
-    - if can? :edit, @site
-      %li= link_to 'Upload Audio', data_upload_path,  title: 'Upload audio to this project', data: {toggle: 'tooltip',  placement: 'right'}
-    - if can? :show, @site
-      %li= link_to 'Annotations (csv)', "#{data_request_path}?annotation_download[project_id]=#{@project.id}&annotation_download[site_id]=#{@site.id}&annotation_download[name]=#{CGI::escape(@site.name)}",  title: "Download annotations for this site", data: {toggle: 'tooltip',  placement: 'right'}
-      %li= link_to 'Visualise', make_visualise_path(@site), title: 'Visualise and browse the audio in this site', data: {toggle: 'tooltip',  placement: 'right'}
-      - unless play_link.blank?
-        %li= link_to 'Play', play_link, title: 'Play audio in this site', data: {toggle: 'tooltip',  placement: 'right'}
+  - play_details = @site.get_bookmark_or_recording
+  - play_link = play_details.blank? ? nil : make_listen_path(play_details[:audio_recording], play_details[:start_offset_seconds])
+
+  .row
+    .col-sm-6
+      - if !@site.audio_recordings.any?
+        %p
+          This site does not contain any audio recordings.
+      - else
+        - duration_sum = @site.audio_recordings.sum(:duration_seconds)
+
+        - record_min = @site.audio_recordings.order(recorded_date: :asc).first
+        - recorded_min = record_min.recorded_date
+        - recorded_min = recorded_min.in_time_zone(@site.rails_tz) unless @site.rails_tz.blank?
+
+        - record_max = @site.audio_recordings.order('recorded_date + CAST(duration_seconds || \' seconds\' as interval) DESC').first
+        - recorded_max = record_max.recorded_date.advance(seconds: record_max.duration_seconds)
+        - recorded_max = recorded_max.in_time_zone(@site.rails_tz) unless @site.rails_tz.blank?
+
+        - recorded_diff = recorded_max - recorded_min
+        %p
+          This site contains recordings from #{recorded_min.to_formatted_s(:readable_full_without_seconds)}
+          to #{recorded_max.to_formatted_s(:readable_full_without_seconds)}.
+        %p
+          This site covers
+          = distance_of_time recorded_diff
+          and there are recordings for
+          = distance_of_time duration_sum
+          of that time.
+
+        %ul.nav.nav-pills{style: 'margin-bottom:0'}
+          - if play_link.blank?
+            %li
+              %a{href: '#', title: 'No audio recordings in this site', data: {toggle: 'tooltip',  placement: 'top'}}
+                No audio
+          - else
+            %li
+              %a{href: play_link}
+                %span.fa.fa-play-circle{aria: {hidden: 'true' }}
+                Play
+
+          %li
+            %a{href: make_visualise_path(@site)}
+              %span.fa.fa-eye{aria: {hidden: 'true' }}
+              Visualise
+
+        %h4 Recent Annotations
+        %ul.nav.nav-pills.nav-stacked{style: 'margin-bottom:0'}
+          - AudioEvent.in_site(@site).each do |ae|
+            %li
+              - tag = ae.tags.first
+              - tag_text = tag.blank? ? '(not tagged)' : tag.text
+              - user = ae.updater.blank? ? ae.updater : ae.creator
+              = link_to "\"#{tag_text}\" by #{user.blank? ? '(unknown)' : user.user_name}", make_listen_path(ae)
+
+    - if @site.latitude.blank? || @site.longitude.blank?
+      .col-sm-6.map-placeholder
+        %span.map-placeholder-text
+          This site does not have a location set.
+    - else
+      .col-sm-6
+        = gmaps(markers: {data: @site.to_gmaps4rails}, map_options: {zoom: 7, auto_zoom: true})
+      = content_for(:scripts)

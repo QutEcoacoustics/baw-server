@@ -1,8 +1,6 @@
 class PermissionsController < ApplicationController
   include Api::ControllerHelper
 
-  add_breadcrumb 'Home', :root_path
-
   # order matters for before_action and load_and_authorize_resource!
   load_and_authorize_resource :project
 
@@ -10,8 +8,6 @@ class PermissionsController < ApplicationController
   before_action :build_project_permission, only: [:new, :create]
 
   load_and_authorize_resource :permission, through: :project
-
-  before_action :add_project_breadcrumb, only: [:index]
 
   respond_to :json
 
@@ -29,10 +25,7 @@ class PermissionsController < ApplicationController
     end
 
     respond_to do |format|
-      format.html {
-
-        add_breadcrumb 'Permissions', project_permissions_path(@project)
-      } # index.html.erb
+      format.html
       format.json {
         @permissions, opts = Settings.api_response.response_advanced(
             api_filter_params,
@@ -87,10 +80,6 @@ class PermissionsController < ApplicationController
   end
 
   private
-  def add_project_breadcrumb
-    add_breadcrumb 'Projects', projects_path
-    add_breadcrumb @project.name, @project
-  end
 
   def build_project_permission
     @permission = Permission.new

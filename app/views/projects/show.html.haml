@@ -1,10 +1,17 @@
 - content_for :meta_title, "Project #{@project.name}"
 - content_for :page_title do
   = @project.name
-  %small
-    Project
 
 = render partial: 'shared/sidebar_project', locals: {project: @project}
+
+- content_for :right_sidebar do
+  = render partial: 'shared/sidebar_metadata_heading', locals: {title: 'Project', icon_class: 'home'}
+  = render partial: 'shared/sidebar_metadata_user_created', locals: { item: @project }
+  = render partial: 'shared/sidebar_metadata_user_updated', locals: { item: @project }
+  - level = Access::Query.level_project(current_user, @project)
+  - unless level.blank?
+    - level_name = Access::Core.get_level_name(level)
+    = render partial: 'shared/sidebar_metadata', locals: {title: 'Your access level', text: level_name}
 
 .col-sm-12
   .row
@@ -15,7 +22,7 @@
       %p= @project.description
   .row
     .col-sm-12
-      %h3
+      %h2
         Sites
 
   .row
@@ -29,7 +36,7 @@
                   = image_tag site.image.url(:span1), alt: site.name, class: 'media-object'
               .media-body
                 %h4.media-heading
-                  = link_to truncate(site.name, length: 45, separator: ' '), project_site_path(@project, site)
+                  = link_to truncate(site.name, length: 45), project_site_path(@project, site)
                 %ul.nav.nav-pills.pull-right{style: 'margin-bottom:0'}
                   %li
                     %a{href: project_site_path(@project, site)}
@@ -57,16 +64,6 @@
       - else
         .map-placeholder
           %span.map-placeholder-text No locations specified.
-
-- content_for :right_sidebar do
-  = render partial: 'shared/sidebar_metadata_user_created', locals: { item: @project }
-  = render partial: 'shared/sidebar_metadata_user_updated', locals: { item: @project }
-  = render partial: 'shared/sidebar_metadata', locals: {title: 'Notes', text: @project.notes}
-  = render partial: 'shared/sidebar_metadata', locals: {title: 'Urn', text: @project.urn}
-  - level = Access::Query.level_project(current_user, @project)
-  - unless level.blank?
-    - level_name = Access::Core.get_level_name(level)
-    = render partial: 'shared/sidebar_metadata', locals: {title: 'Your access level', text: level_name}
 
 -# include markerwithlabel.js
 %script

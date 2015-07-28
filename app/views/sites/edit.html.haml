@@ -1,5 +1,12 @@
-%h1 Editing site
+- content_for :meta_title, "Project #{@project.name} | Site #{@site.name} | Edit"
+- content_for :page_title, 'Edit Site'
 
-= render 'form'
+= render partial: 'shared/sidebar_site', locals: {project: @project, site: @site}
 
+- content_for :right_sidebar do
+  = render partial: 'shared/sidebar_metadata_heading', locals: {title: 'Site', icon_class: 'map-marker'}
 
+%p
+  Original name is
+  = "'#{@site.name}'."
+= render partial:'form', locals: {project: @project, site: @site}

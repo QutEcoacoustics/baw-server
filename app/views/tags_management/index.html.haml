@@ -3,8 +3,7 @@
 - content_for :title, 'Tag Management'
 
 - content_for :left_sidebar do
-  = render layout: '/shared/left_sidebar', locals: {title: 'Tag Management'} do
-    %li= link_to 'New Tag', new_tags_management_path,  title: "Create a new tag", data: {toggle: 'tooltip',  placement: 'right'}
+  %li= link_to 'New Tag', new_tags_management_path,  title: "Create a new tag", data: {toggle: 'tooltip',  placement: 'right'}
 
 
 - order_dir_icon = @tags_info[:order_dir] == :asc ? 'caret-down' : 'caret-up'
@@ -13,18 +12,20 @@
 - filter = @tags_info[:filter]
 
 .row
-  .span6
+  .col-sm-6
     = page_entries_info @tags
     = will_paginate @tags, renderer: BawWillPaginateLinkRenderer
 
-  .span6
-    = form_tag(tags_management_index_path, method: :get) do
-      .form-search
-        %input.input-medium.search-query{type: 'text', name: 'filter', id: 'filter', value: @tags_info[:filter]}
+  .col-sm-6
+    = form_tag(tags_management_index_path, method: :get, class: 'form-inline') do
+      .form-group
+        %label.sr-only{for: 'filter'}
+          Filter
+        %input.form-control{type: 'search', placeholder: 'Filter', name: 'filter', id: 'filter', value: @tags_info[:filter]}
         %input{type: 'hidden', name: 'order_by', id: 'order_by', value: order_by}
         %input{type: 'hidden', name: 'order_dir', id: 'order_dir', value: @tags_info[:order_dir] }
-        = submit_tag('Filter', class: 'btn')
-        = submit_tag('Clear', class: 'btn')
+        = submit_tag('Filter', class: 'btn btn-default')
+        = submit_tag('Clear', class: 'btn btn-default')
 
 %table.table.table-striped
   %thead
@@ -73,34 +74,34 @@
         %br
         - if tag.retired
           %span.label.label-warning
-            %i{class: 'fa fa-archive'}
+            %span.fa.fa-archive
             Retired
         - else
           %span.label.label-success
-            %i{class: 'fa fa-flag'}
+            %span.fa.fa-flag
             In use
         - if tag.is_taxanomic
           %span.label.label-default
-            %i{class: 'fa fa-book'}
+            %span.fa.fa-book
             Taxonomic
         - else
-          %span.label.label-inverse
-            %i{class: 'fa fa-users'}
+          %span.label.label-info
+            %span.fa.fa-users
             Folksonomic
         %span.label.label-default
           %i{class: 'fa fa-info-circle'}
           = tag.type_of_tag
-        %span.label{class: taggings_count > 0 ? 'label-inverse' : 'label-default'}
+        %span.label{class: taggings_count > 0 ? 'label-primary' : 'label-default'}
           %i{class: 'fa fa-tags'}
           = taggings_count
       %td= last_change_at.blank? ? '?' : "#{distance_of_time_in_words(Time.zone.now, last_change_at, nil, {vague: true})} ago"
       %td= user.blank? ? '(unknown)' : (link_to(user.user_name, user_account_path(user)))
       %td
-        = link_to edit_tags_management_path(user), class: 'btn btn-mini' do
-          %i{class: 'fa fa-edit'}
+        = link_to edit_tags_management_path(user), class: 'btn btn-default btn-xs' do
+          %span.fa.fa-edit
           Edit
-        = link_to tags_management_path(user), method: :delete, data: { confirm: 'Are you sure?' }, class: 'btn btn-mini' do
-          %i{class: 'fa fa-times '}
+        = link_to tags_management_path(user), method: :delete, data: { confirm: 'Are you sure?' }, class: 'btn btn-default btn-xs' do
+          %span.fa.fa-times
           Delete
 
 - if @tags.empty?

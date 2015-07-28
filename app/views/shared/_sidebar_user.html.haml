@@ -17,9 +17,11 @@
   - if is_own_profile
     %li{class: ('active' if current_page?(edit_user_registration_path))}
       = link_to 'Edit my profile', edit_user_registration_path, title: 'Edit your account information', data: {toggle: 'tooltip',  placement: 'right'}
-  - elsif is_admin && !@user.nil?
+  - elsif !@user.nil?
     %li{class: ('active' if current_page?(user_account_path(@user)))}
-      = link_to 'Their Profile', user_account_path(@user), title: 'Edit account', data: {toggle: 'tooltip',  placement: 'right'}
+      = link_to 'Their Profile', user_account_path(@user), title: "#{@user.user_name}'s profile", data: {toggle: 'tooltip',  placement: 'right'}
+
+  - if is_admin && !@user.nil? && !is_own_profile
     %li{class: ('active' if current_page?(edit_user_account_path(@user)))}
       = link_to 'Edit their profile', edit_user_account_path(@user), title: 'Edit account', data: {toggle: 'tooltip',  placement: 'right'}
 

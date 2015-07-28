@@ -240,9 +240,6 @@ module Access
 
             query
                 .where(
-                    '(NOT EXISTS (SELECT 1 FROM projects AS invert_pt WHERE invert_pt.creator_id = ?))',
-                    user.id)
-                .where(
                     '(NOT EXISTS (SELECT 1 FROM permissions AS invert_pm WHERE invert_pm.user_id = ? AND invert_pm.project_id = projects.id))',
                     user.id)
 

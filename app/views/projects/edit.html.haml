@@ -1,5 +1,12 @@
-- content_for :title, "Editing Project #{@project.name}"
+- content_for :meta_title, "Project #{@project.name} | Edit"
+- content_for :page_title, 'Edit Project'
 
 = render partial: 'shared/sidebar_project', locals: {project: @project}
 
+- content_for :right_sidebar do
+  = render partial: 'shared/sidebar_metadata_heading', locals: {title: 'Project', icon_class: 'home'}
+
+%p
+  Original name is
+  = "'#{@project.name}'."
 = render partial: 'form', locals: {project: @project}
