@@ -106,10 +106,18 @@ module BawWorkers
             end
           end
 
-          {
+          results = {
               successes: successes,
               failures: failures
           }
+
+          BawWorkers::Config.logger_worker.info(self.name) {
+            msg1 = is_real_run ? 'Enqueued jobs.' : 'Dry run without enqueuing jobs.'
+            msg2 = "#{successes.size} jobs successful and #{failures.size} jobs failed"
+            "#{msg1} #{msg2}: #{results}"
+          }
+
+          results
         end
 
         def action_audio_check
