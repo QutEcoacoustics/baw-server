@@ -8,41 +8,42 @@
 
 = render partial: 'shared/sidebar_user'
 
-%p
-  You can
-  = link_to 'request access', new_access_request_projects_path
-  to existing projects or
-  = link_to 'create', new_project_path
-  your own projects.
+.col-sm-12
+  %p
+    You can
+    = link_to 'request access', new_access_request_projects_path
+    to existing projects or
+    = link_to 'create', new_project_path
+    your own projects.
 
-- if @user_projects.empty?
-  No projects to show.
-- else
-  = page_entries_info @user_projects
-  = will_paginate @user_projects, renderer: BawWillPaginateLinkRenderer
+  - if @user_projects.empty?
+    No projects to show.
+  - else
+    %p= page_entries_info @user_projects
+    = paginate @user_projects
 
-  %table.table.table-striped.table-hover
-    %thead
-      %tr
-        %th
-          %span.fa.fa-home{aria: {hidden: 'true' }}
-          Project
-        %th
-          %span.fa.fa-map-marker{aria: {hidden: 'true' }}
-          Sites
-        %th
-          %span.fa.fa-key{aria: {hidden: 'true' }}
-          Permission
+    %table.table.table-striped.table-hover
+      %thead
+        %tr
+          %th
+            %span.fa.fa-home{aria: {hidden: 'true' }}
+            Project
+          %th
+            %span.fa.fa-map-marker{aria: {hidden: 'true' }}
+            Sites
+          %th
+            %span.fa.fa-key{aria: {hidden: 'true' }}
+            Permission
 
-    %tbody
-    - @user_projects.each do |project|
-      %tr
-        %td= link_to project.name, project_path(project)
-        %td= project.sites.size
-        %td
-          - actual_level = Access::Query.level_project(@user, project)
-          - level_name = Access::Core.get_level_name(actual_level)
-          - if Access::Check.allowed?(:writer, actual_level)
-            = link_to level_name, project_permissions_path(project)
-          - else
-            = level_name
+      %tbody
+      - @user_projects.each do |project|
+        %tr
+          %td= link_to project.name, project_path(project)
+          %td= project.sites.size
+          %td
+            - actual_level = Access::Query.level_project(@user, project)
+            - level_name = Access::Core.get_level_name(actual_level)
+            - if Access::Check.allowed?(:writer, actual_level)
+              = link_to level_name, project_permissions_path(project)
+            - else
+              = level_name

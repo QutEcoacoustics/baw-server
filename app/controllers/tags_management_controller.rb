@@ -42,12 +42,7 @@ class TagsManagementController < ApplicationController
       query = query.where(text.or(type_of_tag).or(notes).or(user_name))
     end
 
-    @tags = query
-                .order(order_by => order_dir, :text => :asc)
-                .paginate(
-                    page: page,
-                    per_page: 30
-                )
+    @tags = query.order(order_by => order_dir, :text => :asc).page(page)
   end
 
   # GET /tags_management/new

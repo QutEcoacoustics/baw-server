@@ -60,7 +60,7 @@ RSpec.configure do |config|
   # config.fixture_path = "#{::Rails.root}/spec/fixtures"
 
   # stop on first failure
-  config.fail_fast = true
+  #config.fail_fast = true
 
   config.expect_with :rspec do |c|
     c.syntax = [:should, :expect]

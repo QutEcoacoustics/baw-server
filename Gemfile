@@ -60,7 +60,7 @@ gem 'bootstrap-sass', '~> 3.3.4'
 gem 'font-awesome-sass', '~> 4.3.0'
 
 # for rails 3, 4
-gem 'will_paginate', '~> 3.0.7'
+gem 'kaminari'
 gem 'dotiw','~> 3.0.1'
 gem 'recaptcha', '~> 0.4.0',  require: 'recaptcha/rails'
 
@@ -198,7 +198,11 @@ group :development, :test do
   gem 'launchy', '~> 2.4.3'
   gem 'json_spec', '~> 1.1.4'
   gem 'database_cleaner', '1.4.1'
-  gem 'webmock', '~> 1.21.0'
+
   gem 'coveralls', '~> 0.8.1', require: false
   gem 'codeclimate-test-reporter', '~> 0.4.5', require: nil
+end
+
+group :test do
+  gem 'webmock', '~> 1.21.0'
 end

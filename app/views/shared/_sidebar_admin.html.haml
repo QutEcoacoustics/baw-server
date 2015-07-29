@@ -1,8 +1,8 @@
 -# locals: (none)
 - content_for(:left_sidebar_header, 'Admin')
 - content_for(:left_sidebar) do
-  %li{class: ('active' if current_page?(root_path))}
-    = link_to t('baw.shared.links.home.title'), root_path
+  %li{class: ('active' if current_page?(admin_dashboard_path))}
+    = link_to 'Admin Home', admin_dashboard_path
   %li{class: ('active' if current_page?(user_accounts_path))}
     = link_to t('baw.shared.links.user_list.title'), user_accounts_path
   %li{class: ('active' if current_page?(sites_orphans_path))}

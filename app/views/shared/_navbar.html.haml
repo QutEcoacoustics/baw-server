@@ -33,8 +33,8 @@
             %a{href: new_user_session_path}= t('devise.sessions.new.sign_in')
         - else
           - if Access::Check.is_admin?(current_user)
-            %li
-              %a{href: user_accounts_path}
+            %li{class: ('active' if current_page?(admin_dashboard_path))}
+              %a{href: admin_dashboard_path}
                 %span.fa.fa-cog
           %li{class: ('active' if current_page?(my_account_path))}
             %a{href: my_account_path}

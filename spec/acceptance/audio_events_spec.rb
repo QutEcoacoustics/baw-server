@@ -517,7 +517,7 @@ resource 'AudioEvents' do
     parameter :id, 'Requested audio event id (in path/route)', required: true
 
     let(:authentication_token) { reader_token }
-    standard_request_options(:delete, 'DELETE (as reader user)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
+    standard_request_options(:delete, 'DELETE (as reader user)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
   end
 
   delete '/audio_recordings/:audio_recording_id/audio_events/:id' do
@@ -525,7 +525,7 @@ resource 'AudioEvents' do
     parameter :id, 'Requested audio event id (in path/route)', required: true
 
     let(:authentication_token) { other_user_token }
-    standard_request_options(:delete, 'DELETE (as other user)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
+    standard_request_options(:delete, 'DELETE (as other user)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
   end
 
   delete '/audio_recordings/:audio_recording_id/audio_events/:id' do
@@ -533,7 +533,7 @@ resource 'AudioEvents' do
     parameter :id, 'Requested audio event id (in path/route)', required: true
 
     let(:authentication_token) { unconfirmed_token }
-    standard_request_options(:delete, 'DELETE (as unconfirmed user)', :forbidden, {expected_json_path: 'meta/error/links/confirm your account'})
+    standard_request_options(:delete, 'DELETE (as unconfirmed user)', :forbidden, {expected_json_path: get_json_error_path(:confirm)})
   end
 
   delete '/audio_recordings/:audio_recording_id/audio_events/:id' do
@@ -549,7 +549,7 @@ resource 'AudioEvents' do
     parameter :id, 'Requested audio event id (in path/route)', required: true
 
     let(:authentication_token) { invalid_token }
-    standard_request_options(:delete, 'DELETE (with invalid token)', :unauthorized, {expected_json_path: 'meta/error/links/sign in'})
+    standard_request_options(:delete, 'DELETE (with invalid token)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
   end
 
   #####################

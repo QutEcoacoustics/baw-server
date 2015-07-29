@@ -1,7 +1,8 @@
-%h1 New tag
+- content_for :title, 'New Tag'
+
+= render partial: 'shared/sidebar_tags_management'
+
+- content_for :right_sidebar do
+  = render partial: 'shared/sidebar_metadata_heading', locals: {title: 'Tags', icon_class: 'tags'}
 
 = render 'form'
-
-- content_for :left_sidebar do
-  = render layout: '/shared/left_sidebar', locals: {title: 'Tag Management'} do
-    %li= link_to 'Tag List', tags_management_index_path,  title: "Back to tag list", data: {toggle: 'tooltip',  placement: 'right'}

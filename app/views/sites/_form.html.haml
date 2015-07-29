@@ -12,7 +12,7 @@
         = render partial: '/shared/time_zone_select_custom', locals: { f: f, attribute_name: :tzinfo_tz, model_name: :site, full_width: true }
       .col-sm-5
         = gmaps(markers: {data: @markers, options: { draggable: true  } }, map_options: gmaps_default_options )
-    = f.button :submit_cancel, 'Create', class: 'btn-default'
+    = f.button :submit_cancel, 'Submit', class: 'btn-default'
 
 = content_for(:scripts)
 

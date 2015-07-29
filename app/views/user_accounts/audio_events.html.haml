@@ -11,8 +11,8 @@
 - if @user_annotations.empty?
   = 'No annotations created.'
 - else
-  = page_entries_info @user_annotations
-  = will_paginate @user_annotations, renderer: BawWillPaginateLinkRenderer
+  %p= page_entries_info @user_annotations
+  = paginate @user_annotations
 
   %table.table.table-striped.table-hover
 

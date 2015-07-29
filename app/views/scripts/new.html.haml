@@ -1,8 +1,9 @@
-%h1 New Script
+- content_for :title, 'New Script'
+
+= render partial: 'shared/sidebar_script'
+
+- content_for :right_sidebar do
+  = render partial: 'shared/sidebar_metadata_heading', locals: {title: 'Script', icon_class: 'file-text-o'}
 
 = simple_form_for @script, html: {class: 'form-horizontal', multipart: true, method: :post } do |f|
-  = render partial: 'form', locals: {f: f}
-
-- content_for :left_sidebar do
-  = render layout: '/shared/left_sidebar', locals: {title: 'Projects'} do
-    %li= link_to 'Scripts', scripts_path,  title: "Back to scripts overview", data: {toggle: 'tooltip',  placement: 'right'}
+  = render partial: 'form', locals: {f: f, script: @script}

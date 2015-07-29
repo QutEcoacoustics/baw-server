@@ -1,24 +1,26 @@
-= f.error_notification
-
-.form-inputs
+-# locals: f, script
+= field_set_tag do
+  = f.error_notification
   = f.input :name
   = f.input :description, input_html: {rows: '3'}
   = f.input :notes, input_html: {rows: '3'}
   = f.input :analysis_identifier
   = f.input :version
-  .control_group
-    = f.label :settings_file
-    .controls
-      - unless @script.settings_file_file_name.blank?
-        = link_to "Current #{@script.settings_file_file_name}", @script.settings_file.url
-      = f.file_field :settings_file
-  .control_group
-    = f.label :data_file
-    .controls
-      - unless @script.data_file_file_name.blank?
-        = link_to "Current #{@script.data_file_file_name}", @script.data_file.url
-      = f.file_field :data_file
-  = f.input :verified
-
-.form-actions
-  = f.button :submit
+  = f.input :settings_file, wrapper: :horizontal_file_input
+  - unless script.settings_file_file_name.blank?
+    .form-group
+      %label.col-sm-3.control-label
+        Current settings file
+      .col-sm-5
+        %p
+          = link_to script.settings_file_file_name, script.settings_file.url
+  = f.input :data_file, wrapper: :horizontal_file_input
+  - unless script.data_file_file_name.blank?
+    .form-group
+      %label.col-sm-3.control-label
+        Current data file
+      .col-sm-5
+        %p
+          = link_to script.data_file_file_name, script.data_file.url
+  = f.input :verified, wrapper: :horizontal_boolean
+  = f.button :submit_cancel, 'Submit', class: 'btn btn-default'

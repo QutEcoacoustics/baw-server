@@ -156,7 +156,7 @@ describe 'public website forms', :type => :feature do
     it 'shows the data_upload page' do
       visit data_upload_path
       expect(current_path).to eq(data_upload_path)
-      expect(page).to have_content('Upload Audio')
+      expect(page).to have_content(I18n.t('baw.shared.links.upload_audio.title'))
     end
 
   end

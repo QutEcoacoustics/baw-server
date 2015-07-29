@@ -320,6 +320,10 @@ Rails.application.routes.draw do
   # Tag management - admin only
   resources :tags_management, except: [:show]
 
+  # admin dashboard
+  get '/admin' => 'admin#index', as: :admin_dashboard
+
+
   # provide access to API documentation
   mount Raddocs::App => '/doc'
 

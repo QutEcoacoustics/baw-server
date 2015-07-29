@@ -27,7 +27,7 @@
 
   - if defined?(project) && can?(:edit, project)
     %li{class: ('active' if current_page?(data_upload_path))}
-      = link_to 'Send Audio', data_upload_path,  title: 'Information for adding audio', data: {toggle: 'tooltip',  placement: 'right'}
+      = link_to t('baw.shared.links.upload_audio.title'), data_upload_path,  title: t('baw.shared.links.upload_audio.description'), data: {toggle: 'tooltip',  placement: 'right'}
 
   - if defined?(project) && Access::Check.is_admin?(current_user)
     %li{class: ('active' if current_page?(edit_sites_project_path(project)))}

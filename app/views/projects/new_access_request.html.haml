@@ -10,7 +10,7 @@
     = f.error_notification
     = f.input :projects, as: :select, required: true, collection: @all_projects, label_method: Proc.new {|item| "#{item.name}: \"#{item.description}\""},
       value_method: :id, label: 'Projects',
-      include_blank: false, input_html: {  rows: 16, class: 'span12', multiple: true, required: true, style:'height: 200px;' }
+      include_blank: false, input_html: {  rows: 16, multiple: true, required: true, style:'height: 200px;' }
     %span.help-block
       Select one or more projects by holding
       %code Ctrl
@@ -22,7 +22,7 @@
     = f.input :reason, as: :text, required: true,
         placeholder: 'Why would you like to access these projects? Will you need to be able to change project information or create annotations?',
         input_html: { rows: 8, class: 'span12', required: true }
-    = f.button :submit_cancel, t('devise.registrations.edit.update'), class: 'btn-default'
+    = f.button :submit_cancel, 'Submit request', class: 'btn-default'
 
 
 

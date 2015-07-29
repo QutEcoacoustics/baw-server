@@ -1,11 +1,23 @@
-%h1= @script.display_name
+- content_for :meta_title, "Script #{@script.display_name}"
+- content_for :page_title, @script.display_name
+
+= render partial: 'shared/sidebar_script', locals: {script: @script}
+
+- content_for :right_sidebar do
+  = render partial: 'shared/sidebar_metadata_heading', locals: {title: 'Script', icon_class: 'file-text-o'}
+  = render partial: 'shared/sidebar_metadata_user_created', locals: { item: @script }
+  = render partial: 'shared/sidebar_metadata', locals: {title: 'Analysis Identifier', text: @script.analysis_identifier}
+  = render partial: 'shared/sidebar_metadata', locals: {title: 'Settings file', text: link_to(@script.settings_file_file_name, @script.settings_file.url) }
+  - unless @script.data_file_file_name.blank?
+    = render partial: 'shared/sidebar_metadata', locals: {title: 'Data file', text: link_to(@script.data_file_file_name, @script.data_file.url)}
+
 %p= @script.description
 %p= @script.notes
 
-- unless @script.update_from.blank? && @script.updated_by.blank?
+- if !@script.update_from.blank? && !@script.updated_by.blank?
   %h3 Versions
 
-  %table.table.table-striped.table-condensed(data-provides='rowlink')
+  %table.table.table-striped.table-hover
     %thead
       %tr
         %th Name
@@ -15,16 +27,3 @@
         %th Data file
     %tbody
       = render partial: 'scripts/script_row', locals: { script: @script.latest_version, current_version: @script}
-
-
-- content_for :right_sidebar do
-  = render partial: 'shared/sidebar_metadata_user_created', locals: { user: @script.creator }
-  = render partial: 'shared/sidebar_metadata', locals: {title: 'Analysis Identifier', text: @script.analysis_identifier}
-  = render partial: 'shared/sidebar_metadata', locals: {title: 'Settings file', text: link_to(@script.settings_file_file_name, @script.settings_file.url) }
-  - unless @script.data_file_file_name.blank?
-    = render partial: 'shared/sidebar_metadata', locals: {title: 'Data file', text: link_to(@script.data_file_file_name, @script.data_file.url)}
-
-- content_for(:left_sidebar_header, 'Scripts')
-- content_for :left_sidebar do
-  - if can? :update, @script
-    %li= link_to 'Create new version', edit_script_path(@script),  title: 'Create new version of this script', data: {toggle: 'tooltip',  placement: 'right'}

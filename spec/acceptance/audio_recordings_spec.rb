@@ -402,7 +402,7 @@ resource 'AudioRecordings' do
     parameter :site_id, 'Requested site ID (in path/route)', required: true
 
     let(:authentication_token) { "Token token=\"INVALID\"" }
-    standard_request('LIST (with invalid token)', 401, 'meta/error/links/sign in', true)
+    standard_request('LIST (with invalid token)', 401, get_json_error_path(:sign_up), true)
   end
 
   ################################
@@ -435,7 +435,7 @@ resource 'AudioRecordings' do
 
     let(:authentication_token) { no_access_token }
 
-    standard_request('SHOW (as no access, with shallow path)', 403, 'meta/error/links/request permissions', true)
+    standard_request('SHOW (as no access, with shallow path)', 403, get_json_error_path(:permissions), true)
   end
 
   get '/audio_recordings/:id' do
@@ -627,7 +627,7 @@ resource 'AudioRecordings' do
 
     standard_request_options(:post, 'CREATE (as writer)', :forbidden,
                              {
-                                 expected_json_path: 'meta/error/links/request permissions',
+                                 expected_json_path: get_json_error_path(:permissions),
                                  respond_body_content: I18n.t('devise.failure.unauthorized')
                              }
     )
@@ -644,7 +644,7 @@ resource 'AudioRecordings' do
 
     standard_request_options(:post, 'CREATE (as reader)', :forbidden,
                              {
-                                 expected_json_path: 'meta/error/links/request permissions',
+                                 expected_json_path: get_json_error_path(:permissions),
                                  respond_body_content: '"You do not have sufficient permissions to access this page."'
                              }
     )
@@ -871,7 +871,7 @@ resource 'AudioRecordings' do
 
     standard_request_options(:put, 'UPDATE STATUS (writer)', :forbidden,
                              {
-                                 expected_json_path: 'meta/error/links/request permissions',
+                                 expected_json_path: get_json_error_path(:permissions),
                                  respond_body_content: I18n.t('devise.failure.unauthorized')
                              }
     )
@@ -894,7 +894,7 @@ resource 'AudioRecordings' do
     let(:authentication_token) { reader_token }
     standard_request_options(:put, 'UPDATE STATUS (as reader)', :forbidden,
                              {
-                                 expected_json_path: 'meta/error/links/request permissions',
+                                 expected_json_path: get_json_error_path(:permissions),
                                  respond_body_content: I18n.t('devise.failure.unauthorized')
                              }
     )

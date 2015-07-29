@@ -77,12 +77,12 @@ resource 'Bookmarks' do
 
   get '/bookmarks' do
     let(:authentication_token) { unconfirmed_token }
-    standard_request_options(:get, 'LIST (as unconfirmed user)', :forbidden, {expected_json_path: 'meta/error/links/confirm your account'})
+    standard_request_options(:get, 'LIST (as unconfirmed user)', :forbidden, {expected_json_path: get_json_error_path(:confirm)})
   end
 
   get '/bookmarks' do
     let(:authentication_token) { invalid_token }
-    standard_request_options(:get, 'LIST (with invaild token)', :unauthorized, {expected_json_path: 'meta/error/links/sign in'})
+    standard_request_options(:get, 'LIST (with invaild token)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
   end
 
   # List bookmarks filtered by name
@@ -128,7 +128,7 @@ resource 'Bookmarks' do
       FactoryGirl.create(:bookmark, name: 'the_unexpected_name', creator: @unconfirmed_user)
     }
 
-    standard_request_options(:get, 'LIST matching name (as unconfirmed user)', :forbidden, {expected_json_path: 'meta/error/links/confirm your account'})
+    standard_request_options(:get, 'LIST matching name (as unconfirmed user)', :forbidden, {expected_json_path: get_json_error_path(:confirm)})
   end
 
   get '/bookmarks?filter_name=the_expected_name' do
@@ -139,7 +139,7 @@ resource 'Bookmarks' do
       FactoryGirl.create(:bookmark, name: 'the_unexpected_name', creator: @user)
     }
 
-    standard_request_options(:get, 'LIST matching name (with invalid token)', :unauthorized, {expected_json_path: 'meta/error/links/sign in'})
+    standard_request_options(:get, 'LIST matching name (with invalid token)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
   end
 
   # List bookmarks filtered by category
@@ -185,7 +185,7 @@ resource 'Bookmarks' do
       FactoryGirl.create(:bookmark, category: 'the_unexpected_category', creator: @unconfirmed_user)
     }
 
-    standard_request_options(:get, 'LIST matching category (as unconfirmed user)', :forbidden, {expected_json_path: 'meta/error/links/confirm your account'})
+    standard_request_options(:get, 'LIST matching category (as unconfirmed user)', :forbidden, {expected_json_path: get_json_error_path(:confirm)})
   end
 
   get '/bookmarks?filter_category=the_expected_category' do
@@ -196,7 +196,7 @@ resource 'Bookmarks' do
       FactoryGirl.create(:bookmark, category: 'the_unexpected_category', creator: @user)
     }
 
-    standard_request_options(:get, 'LIST matching category (with invalid token)', :unauthorized, {expected_json_path: 'meta/error/links/sign in'})
+    standard_request_options(:get, 'LIST matching category (with invalid token)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
   end
 
   # Create (#create)
@@ -265,7 +265,7 @@ resource 'Bookmarks' do
     let(:authentication_token) { other_user_token }
 
     # fails because other user does not have any access to @bookmark.audio_recording_id
-    standard_request_options(:post, 'CREATE (as other user)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
+    standard_request_options(:post, 'CREATE (as other user)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
   end
 
   post '/bookmarks' do
@@ -278,7 +278,7 @@ resource 'Bookmarks' do
     let(:raw_post) { {bookmark: FactoryGirl.attributes_for(:bookmark, audio_recording_id: @bookmark.audio_recording_id, creator: @unconfirmed_user)}.to_json }
     let(:authentication_token) { unconfirmed_token }
 
-    standard_request_options(:post, 'CREATE (as unconfirmed user)', :forbidden, {expected_json_path: 'meta/error/links/confirm your account'})
+    standard_request_options(:post, 'CREATE (as unconfirmed user)', :forbidden, {expected_json_path: get_json_error_path(:confirm)})
   end
 
   post '/bookmarks' do
@@ -291,7 +291,7 @@ resource 'Bookmarks' do
     let(:raw_post) { {bookmark: FactoryGirl.attributes_for(:bookmark, audio_recording_id: @bookmark.audio_recording_id, creator: @user)}.to_json }
     let(:authentication_token) { invalid_token }
 
-    standard_request_options(:post, 'CREATE (with invalid token)', :unauthorized, {expected_json_path: 'meta/error/links/sign in'})
+    standard_request_options(:post, 'CREATE (with invalid token)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
   end
 
   # New Item (#new)
@@ -314,12 +314,12 @@ resource 'Bookmarks' do
 
   get '/bookmarks/new' do
     let(:authentication_token) { unconfirmed_token }
-    standard_request_options(:get, 'NEW (as reader)', :forbidden, {expected_json_path: 'meta/error/links/confirm your account'})
+    standard_request_options(:get, 'NEW (as reader)', :forbidden, {expected_json_path: get_json_error_path(:confirm)})
   end
 
   get '/bookmarks/new' do
     let(:authentication_token) { invalid_token }
-    standard_request_options(:get, 'NEW (as reader)', :unauthorized, {expected_json_path: 'meta/error/links/sign in'})
+    standard_request_options(:get, 'NEW (as reader)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
   end
 
   # Existing Item (#show)
@@ -330,7 +330,7 @@ resource 'Bookmarks' do
 
     let(:authentication_token) { reader_token }
     let(:id) { @bookmark.id }
-    standard_request_options(:get, 'SHOW (as reader)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
+    standard_request_options(:get, 'SHOW (as reader)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
   end
 
   get '/bookmarks/:id' do
@@ -353,7 +353,7 @@ resource 'Bookmarks' do
     let(:authentication_token) { reader_token }
     let(:id) { @bookmark.id }
     let(:raw_post) { {'bookmark' => post_attributes}.to_json }
-    standard_request_options(:put, 'UPDATE (as reader)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
+    standard_request_options(:put, 'UPDATE (as reader)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
   end
 
   put '/bookmarks/:id' do
@@ -373,7 +373,7 @@ resource 'Bookmarks' do
 
     let(:authentication_token) { reader_token }
     let(:id) { @bookmark.id }
-    standard_request_options(:delete, 'DESTROY (as reader)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
+    standard_request_options(:delete, 'DESTROY (as reader)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
   end
 
   delete '/bookmarks/:id' do
