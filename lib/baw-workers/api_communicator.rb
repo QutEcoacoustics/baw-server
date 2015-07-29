@@ -107,7 +107,7 @@ module BawWorkers
 
       request.body = body.to_json unless body.blank?
 
-      msg = "'#{description}'. Url: #{host}:#{port}#{endpoint}"
+      msg = "#{method} '#{description}'. Url: #{host}:#{port}#{endpoint}"
 
       response = nil
 
