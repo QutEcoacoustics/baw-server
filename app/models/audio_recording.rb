@@ -57,8 +57,15 @@ class AudioRecording < ActiveRecord::Base
   validates :bit_rate_bps, numericality: {only_integer: true, greater_than: 0}
   validates :media_type, presence: true
   validates :data_length_bytes, presence: true, numericality: {only_integer: true, greater_than: 0}
-  validates :file_hash, presence: true, uniqueness: {case_sensitive: false}
-  validate :check_duplicate_file_hashes
+  # file hash validations
+  # on create, ensure present, case insensitive unique, starts with 'SHA256::', and exactly 72 chars
+  validates :file_hash, presence: true, uniqueness: {case_sensitive: false}, length: { is: 72 },
+            format: { with: /\ASHA256::.{64}\z/, message: 'must start with "SHA256::" with 64 char hash'},
+            on: :create
+  # on update would usually be the same, but for the audio check this needs to ignore
+  validates :file_hash, presence: true, uniqueness: {case_sensitive: false}, length: { is: 72 },
+            format: { with: /\ASHA256::.{64}\z/, message: 'must start with "SHA256::" with 64 char hash'},
+            on: :update, unless: :missing_hash_value?
 
   before_validation :set_uuid, on: :create
 
@@ -336,6 +343,10 @@ class AudioRecording < ActiveRecord::Base
       end
 
     end
+  end
+
+  def missing_hash_value?
+    file_hash == 'SHA256::'
   end
 
 end

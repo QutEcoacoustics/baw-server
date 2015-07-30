@@ -543,7 +543,7 @@ resource 'AudioRecordings' do
     parameter :original_file_name, '', scope: :audio_recording, :required => true
     parameter :uploader_id, 'The id of the user who uploaded the audio recording. User must have write access to the project.', scope: :audio_recording, :required => true
 
-    file_hash = "SHA256::c110884206d25a83dd6d4c741861c429c10f99df9102863dde772f149387d891"
+    file_hash = MiscHelper.new.create_sha_256_hash('c110884206d25a83dd6d4c741861c429c10f99df9102863dde772f149387d891')
     original_file_name = 'testing.mp3'
     recorded_date = '2014-01-01 12:00:00Z'
     data_length_bytes = 9999
@@ -949,7 +949,7 @@ resource 'AudioRecordings' do
     let(:id) { update_harvester_audio_recording.id }
 
     changed_details = {
-        file_hash: 'SHA256::something'
+        file_hash: MiscHelper.new.create_sha_256_hash
     }
 
     let(:raw_post) { changed_details.to_json }

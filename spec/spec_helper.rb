@@ -37,6 +37,7 @@ require 'capybara/rails'
 require 'capybara/rspec'
 
 require 'database_cleaner'
+require 'helpers/misc_helper'
 
 require 'webmock/rspec'
 require 'paperclip/matchers'
