@@ -1,5 +1,3 @@
-require 'helpers/misc_helper'
-
 FactoryGirl.define do
 
   factory :audio_recording do

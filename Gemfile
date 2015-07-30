@@ -160,7 +160,7 @@ group :development, :test do
   gem 'thin', '~> 1.6.3'
 
   gem 'notiffany', '~> 0.0.3'
-  gem 'guard', '~> 2.12.1'
+  gem 'guard', '~> 2.13.0'
   gem 'guard-rspec', '~> 4.6.0'
   gem 'guard-yard', '~> 2.1.4'
 
