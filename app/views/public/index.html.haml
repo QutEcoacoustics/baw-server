@@ -1,7 +1,7 @@
 - content_for :meta_title, 'Home'
 - content_for :page_title, Settings.organisation_names.site_long_name
 
-= render partial: 'shared/sidebar_public'
+= render partial: 'shared/sidebar_public', locals: {user_show: @user, user_current: current_user}
 
 %p
   Welcome! The

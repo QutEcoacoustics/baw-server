@@ -16,7 +16,7 @@
 
 - project_site_ids = @project.sites.pluck(:id)
 
-= simple_form_for @project, url: update_sites_project_path, method: :patch, html: {class: 'form-horizontal', :multipart => true } do |f|
+= simple_form_for @project, url: update_sites_project_path, method: :patch, html: {class: 'form-horizontal'} do |f|
   = field_set_tag do
     = f.error_notification
     %table.table.table-striped

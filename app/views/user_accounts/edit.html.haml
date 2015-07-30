@@ -1,6 +1,6 @@
 - content_for :title, "Editing profile for #{@user.user_name}"
 
-= render partial: 'shared/sidebar_user'
+= render partial: 'shared/sidebar_user', locals: {user_show: @user, user_current: current_user}
 
 = simple_form_for(@user, url: user_account_path(@user), html: {class: 'form-horizontal', multipart: true, method: :put }) do |f|
   = field_set_tag do

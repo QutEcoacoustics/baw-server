@@ -63,9 +63,14 @@ class ScriptsController < ApplicationController
       end
     end
 
-    @new_script = Script.new(script_params)
+    new_script_params = script_params
+
+    @new_script = Script.new(new_script_params)
 
     @new_script.update_from = @script
+
+    @new_script.settings_file = @script.settings_file if @script.settings_file? && !new_script_params[:settings_file]
+    @new_script.data_file = @script.data_file if @script.data_file? && !new_script_params[:data_file]
 
     respond_to do |format|
       if @new_script.save && @script.save

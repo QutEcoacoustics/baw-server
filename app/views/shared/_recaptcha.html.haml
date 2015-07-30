@@ -10,7 +10,7 @@
     = recaptcha_tags({display: {theme: 'clean'}})
     - if recaptcha_has_errors
       %p.help-block
-        = @bug_report.errors[:recaptcha][0]
+        = data_item.errors[:recaptcha][0]
     - else
       %p.help-block
         We need to know that you're human.

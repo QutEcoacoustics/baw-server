@@ -19,18 +19,18 @@
       = link_to 'Edit Site',edit_project_site_path(project, site),  title: "Change this site's details", data: {toggle: 'tooltip',  placement: 'right'}
 
   %li
-    = link_to 'Visualise', make_visualise_path(@site), title: 'Visualise and browse the audio in this site', data: {toggle: 'tooltip',  placement: 'right'}
+    = link_to 'Visualise', make_visualise_path(site), title: 'Visualise and browse the audio in this site', data: {toggle: 'tooltip',  placement: 'right'}
 
   - if can? :edit, project
     %li{class: ('active' if current_page?(data_upload_path))}
       = link_to t('baw.shared.links.upload_audio.title'), data_upload_path,  title: t('baw.shared.links.upload_audio.description'), data: {toggle: 'tooltip',  placement: 'right'}
 
   - if can? :edit, site
-    %li{class: ('active' if current_page?(upload_instructions_project_site_path(@project, @site)))}
-      = link_to 'Harvest Audio', upload_instructions_project_site_path(@project, @site),  title: 'Upload new audio to this site', data: {toggle: 'tooltip',  placement: 'right'}
+    %li{class: ('active' if current_page?(upload_instructions_project_site_path(project, site)))}
+      = link_to 'Harvest Audio', upload_instructions_project_site_path(project, site),  title: 'Upload new audio to this site', data: {toggle: 'tooltip',  placement: 'right'}
 
   %li
-    = link_to 'Annotations (csv)', "#{data_request_path}?annotation_download[project_id]=#{@project.id}&annotation_download[site_id]=#{@site.id}&annotation_download[name]=#{CGI::escape(@site.name)}",  title: "Download annotations for this site", data: {toggle: 'tooltip',  placement: 'right'}
+    = link_to 'Annotations (csv)', "#{data_request_path}?annotation_download[project_id]=#{project.id}&annotation_download[site_id]=#{site.id}&annotation_download[name]=#{CGI::escape(site.name)}",  title: "Download annotations for this site", data: {toggle: 'tooltip',  placement: 'right'}
 
   - play_details = site.get_bookmark_or_recording
   - play_link = play_details.blank? ? nil : make_listen_path(play_details[:audio_recording], play_details[:start_offset_seconds])

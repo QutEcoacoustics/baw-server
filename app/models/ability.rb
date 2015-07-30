@@ -64,7 +64,7 @@ class Ability
         # can't add .includes here - it breaks when validating projects due to ActiveRecord::AssociationRelation
         Access::Check.can_any?(user, :reader, site.projects)
       end
-      can [:new, :create, :edit, :update], Site do |site|
+      can [:new, :create, :edit, :update, :upload_instructions], Site do |site|
         # can't add .includes here - it breaks when validating projects due to ActiveRecord::AssociationRelation
         # .all would have worked. I tried .where(nil), that didn't work either :/
         # https://github.com/rails/rails/issues/12756
@@ -129,7 +129,7 @@ class Ability
       # users can only view their own projects, comments, bookmarks (admins can view any user's projects/comments/bookmarks)
       # :edit and :update are not in here, as they are the Admin interface for editing any user
       # normal users edit their profile using devise/registrations#edit
-      can [:projects, :audio_event_comments, :bookmarks], User, id: user.id
+      can [:projects, :audio_events, :audio_event_comments, :bookmarks], User, id: user.id
 
       # not sure about the ones that work with current_user - won't the check always be true?
       # There's no way to specify any other user id.
@@ -147,8 +147,8 @@ class Ability
       # new is usually available publicly
       # filter permissions are checked as part of filter query
 
-      # any confirmed user can view any other user's profile (read-only) and annotations  (the links may not work due to permissions)
-      can [:show, :audio_events, :filter], User
+      # any confirmed user can view any other user's profile (read-only)
+      can [:show, :filter], User
 
       # index permissions are enforced in the controller action
       can [:index, :new, :create, :new_access_request, :submit_access_request, :filter], Project

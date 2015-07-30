@@ -1,7 +1,7 @@
--# locals: (none)
+-# locals: user_show, user_current
 - content_for(:left_sidebar_header, 'General')
 - content_for(:left_sidebar) do
-  = render partial: 'shared/sidebar_base'
+  = render partial: 'shared/sidebar_base', locals: {user_show: user_show, user_current: user_current}
   %li{class: ('active' if current_page?(data_request_path))}
     = link_to t('baw.shared.links.data_request.title'), data_request_path,  title: t('baw.shared.links.data_request.description'), data: {toggle: 'tooltip',  placement: 'right'}
   %li{class: ('active' if current_page?(data_upload_path))}

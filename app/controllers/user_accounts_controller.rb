@@ -97,7 +97,7 @@ ELSE last_sign_in_at END DESC'
   # GET /user_accounts/1/projects
   def projects
     @user_projects = Access::Query.projects_accessible(@user).includes(:creator).references(:creator)
-                         .order('projects.updated_at DESC')
+                         .order('projects.name ASC')
                          .page(paging_params[:page].blank? ? 1 : paging_params[:page])
     respond_to do |format|
       format.html # projects.html.erb

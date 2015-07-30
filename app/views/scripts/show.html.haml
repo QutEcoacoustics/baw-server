@@ -14,16 +14,12 @@
 %p= @script.description
 %p= @script.notes
 
-- if !@script.update_from.blank? && !@script.updated_by.blank?
-  %h3 Versions
+- unless @script.updated_by_script_id.blank?
+  %h3 Next Version
+  - newer_script = Script.find(@script.updated_by_script_id)
+  = link_to newer_script.display_name, newer_script
 
-  %table.table.table-striped.table-hover
-    %thead
-      %tr
-        %th Name
-        %th Version
-        %th Analysis identifier
-        %th Settings file
-        %th Data file
-    %tbody
-      = render partial: 'scripts/script_row', locals: { script: @script.latest_version, current_version: @script}
+- if Script.where(updated_by_script_id: @script.id).any?
+  %h3 Previous Version
+  - newer_script = Script.where(updated_by_script_id: @script.id).first
+  = link_to newer_script.display_name, newer_script

@@ -1,6 +1,6 @@
 - content_for :title, 'Report Problem'
 
-= render partial: 'shared/sidebar_public'
+= render partial: 'shared/sidebar_public', locals: {user_show: @user, user_current: current_user}
 
 %p
   Complete the form below to report a problem. Alternatively, we have a

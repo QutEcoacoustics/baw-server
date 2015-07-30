@@ -9,7 +9,7 @@ describe "User account actions", :type => :feature do
 
   let(:last_email) { ActionMailer::Base.deliveries.last }
 
-  it "emails user when requesting password reset" do
+  it 'emails user when requesting password reset' do
     # create user and go to forgot password page
     user = FactoryGirl.create(:user)
     visit root_url
@@ -18,7 +18,7 @@ describe "User account actions", :type => :feature do
     click_link I18n.t('devise.shared.links.reset_password')
 
     fill_in 'Login', with: user.email
-    click_button "Send me reset password instructions"
+    click_button 'Send me reset password instructions'
 
     # back to sign in page, use token from email to go to reset password page
     expect(current_path).to eq('/my_account/sign_in')
@@ -30,15 +30,16 @@ describe "User account actions", :type => :feature do
     mail_body = last_email.body.to_s
     token = mail_body[/#{:reset_password.to_s}_token=([^"]+)/, 1]
 
-    visit edit_user_password_path(token) # http://stackoverflow.com/a/18262856/31567
+    visit edit_user_password_path(reset_password_token: token) # http://stackoverflow.com/a/18262856/31567
 
     # fill in incorrectly
+    #save_and_open_page
     fill_in "user_password", :with => "foobar"
     fill_in "user_password_confirmation", :with => "foobar1"
     find(:xpath, '/descendant::input[@type="submit"]').click
 
     expect(page).to have_content('Please review the problems below')
-    expect(page).to have_content("doesn't match confirmation")
+    expect(page).to have_content("doesn't match")
 
     # fill in correctly
     fill_in "user_password", :with => "foobar11"
@@ -161,7 +162,7 @@ describe "User account actions", :type => :feature do
 
       visit edit_user_registration_path
       #expect(page).to have_content('user_span1.png')
-      expect(page.find('div.controls img')['src']).to include('user_span1.png')
+      expect(page.find('div img')['src']).to include('user_span1.png')
       expect(page).to have_content(new_user_name)
       expect(page).to have_content('Currently waiting confirmation for: '+new_email)
 

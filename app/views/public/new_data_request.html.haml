@@ -1,6 +1,6 @@
 - content_for :title, 'Data Request'
 
-= render partial: 'shared/sidebar_public'
+= render partial: 'shared/sidebar_public', locals: {user_show: @user, user_current: current_user}
 
 - unless @annotation_download.blank?
   %h4

@@ -30,13 +30,13 @@ describe 'MANAGE Scripts as admin user', :type => :feature do
     attach_file('script[settings_file]', 'public/files/script/settings_file.txt')
     attach_file('script[data_file]', 'public/files/script/settings_file.txt')
 
-    click_button 'Create Script'
+    click_button 'Submit'
     expect(page).to have_content('test name')
   end
 
   it 'Fails to create new script when filling out form incomplete' do
     visit new_script_path
-    click_button 'Create Script'
+    click_button 'Submit'
     #save_and_open_page
     expect(page).to have_content('Please review the problems below:')
   end
@@ -53,7 +53,7 @@ describe 'MANAGE Scripts as admin user', :type => :feature do
     attach_file('script[settings_file]', 'public/files/script/settings_file.txt')
     attach_file('script[data_file]', 'public/files/script/settings_file.txt')
 
-    click_button 'Update Script'
+    click_button 'Submit'
     expect(page).to have_content('test name')
   end
 

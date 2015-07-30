@@ -1,21 +1,21 @@
--# locals: (none)
+-# locals: devise_mapping_o, resource_class_o, resource_name_o, user_show, user_current
 - content_for(:left_sidebar_header, 'Accounts')
 - content_for(:left_sidebar) do
-  = render partial: 'shared/sidebar_base'
-  - if devise_mapping.omniauthable?
-    - resource_class.omniauth_providers.each do |provider|
-      %li{class: ('active' if current_page?(omniauth_authorize_path(resource_name, provider)))}
-        = link_to  t('devise.shared.links.sign_in_with_provider', provider: provider.to_s.titleize), omniauth_authorize_path(resource_name, provider),
+  = render partial: 'shared/sidebar_base', locals: {user_show: user_show, user_current: user_current}
+  - if devise_mapping_o.omniauthable?
+    - resource_class_o.omniauth_providers.each do |provider|
+      %li{class: ('active' if current_page?(omniauth_authorize_path(resource_name_o, provider)))}
+        = link_to  t('devise.shared.links.sign_in_with_provider', provider: provider.to_s.titleize), omniauth_authorize_path(resource_name_o, provider),
       title: t('baw.shared.links.sign_in_with_provider.description', provider: provider.to_s.titleize),
       data: {toggle: 'tooltip',  placement: 'right'}
-  - if devise_mapping.recoverable? && current_user.blank?
-    %li{class: ('active' if current_page?(new_password_path(resource_name)))}
-      = link_to t('devise.shared.links.reset_password'), new_password_path(resource_name), title: t('baw.shared.links.reset_password.description'), data: {toggle: 'tooltip',  placement: 'right'}
-  - if devise_mapping.confirmable?
-    %li{class: ('active' if current_page?(new_confirmation_path(resource_name)))}
-      = link_to t('devise.shared.links.confirm_account'), new_confirmation_path(resource_name), title: t('baw.shared.links.confirm_account.description'), data: {toggle: 'tooltip',  placement: 'right'}
-  - if devise_mapping.lockable? && resource_class.unlock_strategy_enabled?(:email) && current_user.blank?
-    %li{class: ('active' if current_page?(new_unlock_path(resource_name)))}
-      = link_to t('devise.shared.links.unlock_account'), new_unlock_path(resource_name), title: t('baw.shared.links.unlock_account.description'), data: {toggle: 'tooltip',  placement: 'right'}
+  - if devise_mapping_o.recoverable? && user_current.blank?
+    %li{class: ('active' if current_page?(new_password_path(resource_name_o)))}
+      = link_to t('devise.shared.links.reset_password'), new_password_path(resource_name_o), title: t('baw.shared.links.reset_password.description'), data: {toggle: 'tooltip',  placement: 'right'}
+  - if devise_mapping_o.confirmable?
+    %li{class: ('active' if current_page?(new_confirmation_path(resource_name_o)))}
+      = link_to t('devise.shared.links.confirm_account'), new_confirmation_path(resource_name_o), title: t('baw.shared.links.confirm_account.description'), data: {toggle: 'tooltip',  placement: 'right'}
+  - if devise_mapping_o.lockable? && resource_class_o.unlock_strategy_enabled?(:email) && user_current.blank?
+    %li{class: ('active' if current_page?(new_unlock_path(resource_name_o)))}
+      = link_to t('devise.shared.links.unlock_account'), new_unlock_path(resource_name_o), title: t('baw.shared.links.unlock_account.description'), data: {toggle: 'tooltip',  placement: 'right'}
 
 

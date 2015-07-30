@@ -1,4 +1,4 @@
--# locals: (none)
+-# locals: user_show, user_current
 %li{class: ('active' if current_page?(root_path))}
   = link_to t('baw.shared.links.home.title'), root_path,  title: t('baw.shared.links.home.description'), data: {toggle: 'tooltip',  placement: 'right'}
 - if can? :index, Project

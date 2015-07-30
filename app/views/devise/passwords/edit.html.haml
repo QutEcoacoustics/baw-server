@@ -1,12 +1,18 @@
 - content_for :title, t('devise.passwords.edit.change_your_password')
 
-= render partial: 'shared/sidebar_user'
+= render partial: 'shared/sidebar_devise',
+locals: { devise_mapping_o: devise_mapping,
+resource_class_o: resource_class,
+resource_name_o: resource_name,
+user_show: resource,
+user_current: current_user}
 
 = simple_form_for(resource, as: resource_name, url: password_path(resource_name), html: { class: 'form-horizontal', method: :put }) do |f|
   = field_set_tag do
     = f.error_notification
     = f.input :reset_password_token, as: :hidden
     = f.full_error :reset_password_token
-    = f.input :password, label: t('devise.passwords.edit.new_password'), required: true, autofocus: true, hint: t('devise.passwords.edit.hint_password_length',  minimum_password_length: @minimum_password_length) if @minimum_password_length
+    = f.input :password, label: t('devise.passwords.edit.new_password'), required: true, autofocus: true,
+    hint: t('devise.passwords.edit.hint_password_length',  minimum_password_length: resource_class.password_length.min)
     = f.input :password_confirmation, label: t('devise.passwords.edit.confirm_new_password'), required: true
     = f.button :submit_cancel, t('devise.passwords.edit.change_my_password'), class: 'btn-default'

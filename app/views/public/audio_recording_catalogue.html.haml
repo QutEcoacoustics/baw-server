@@ -1,6 +1,6 @@
 - content_for :title, 'Audio Recording Catalogue'
 
-= render partial: 'shared/sidebar_public'
+= render partial: 'shared/sidebar_public', locals: {user_show: @user, user_current: current_user}
 
 %p Select a Project and optionally a Site to display, then click 'Display'.
 %p Years not shown contain no recordings for the selections.

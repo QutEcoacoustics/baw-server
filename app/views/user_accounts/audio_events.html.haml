@@ -6,7 +6,7 @@
     = image_tag @user.image.url(:spanhalf), alt: @user.user_name
     = @user.user_name
 
-= render partial: 'shared/sidebar_user'
+= render partial: 'shared/sidebar_user', locals: {user_show: @user, user_current: current_user}
 
 - if @user_annotations.empty?
   = 'No annotations created.'
