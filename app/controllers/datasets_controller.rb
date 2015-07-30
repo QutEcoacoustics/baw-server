@@ -1,8 +1,6 @@
 class DatasetsController < ApplicationController
   include Api::ControllerHelper
 
-  add_breadcrumb 'Home', :root_path
-
   # order matters for before_action and load_and_authorize_resource!
   load_and_authorize_resource :project
 
@@ -10,8 +8,6 @@ class DatasetsController < ApplicationController
   before_action :build_project_dataset, only: [:new, :create]
 
   load_and_authorize_resource :dataset, through: :project
-
-  before_action :add_project_breadcrumb
   
   # GET /projects/:id/datasets
   # GET /projects/:id/datasets.json
@@ -26,9 +22,7 @@ class DatasetsController < ApplicationController
   # GET /projects/:id/datasets/1.json
   def show
     respond_to do |format|
-      format.html {
-        add_breadcrumb @dataset.name, [@project, @dataset]
-      }
+      format.html
       format.json { render json: @dataset }
     end
   end
@@ -40,17 +34,13 @@ class DatasetsController < ApplicationController
     do_authorize!
 
     respond_to do |format|
-      format.html {
-        add_breadcrumb 'New Dataset'
-      }
+      format.html
       format.json { render json: @dataset }
     end
   end
 
   # GET /projects/:id/datasets/1/edit
   def edit
-    add_breadcrumb @dataset.name, [@project, @dataset]
-    add_breadcrumb 'Edit'
   end
 
   # POST /projects/:id/datasets
@@ -79,7 +69,6 @@ class DatasetsController < ApplicationController
         format.json { head :no_content }
       else
         format.html {
-          add_breadcrumb @dataset.name, [@project, @dataset]
           render action: "edit"
         }
         format.json { render json: @dataset.errors, status: :unprocessable_entity }
@@ -99,10 +88,6 @@ class DatasetsController < ApplicationController
   end
 
   private
-  def add_project_breadcrumb
-    add_breadcrumb 'Projects', projects_path
-    add_breadcrumb @project.name, @project
-  end
 
   def build_project_dataset
     @dataset = Dataset.new

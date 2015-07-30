@@ -1,6 +1,4 @@
 class PublicController < ApplicationController
-  layout 'public'
-
   skip_authorization_check only: [
       :index, :status,
       :website_status,
@@ -114,7 +112,7 @@ class PublicController < ApplicationController
   def audio_recording_catalogue
 
     respond_to do |format|
-      #format.html
+      format.html
       format.json {
 
         if Access::Check.is_admin?(current_user)

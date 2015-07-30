@@ -1,8 +1,6 @@
 class JobsController < ApplicationController
   include Api::ControllerHelper
 
-  add_breadcrumb 'Home', :root_path
-
   # order matters for before_action and load_and_authorize_resource!
   load_and_authorize_resource :project
 
@@ -10,8 +8,6 @@ class JobsController < ApplicationController
   before_action :build_project_job, only: [:new, :create]
 
   load_and_authorize_resource :job, through: :project
-
-  before_action :add_project_breadcrumb
 
   # GET /jobs
   # GET /jobs.json
@@ -26,10 +22,7 @@ class JobsController < ApplicationController
   # GET /jobs/1.json
   def show
     respond_to do |format|
-      format.html {
-        add_breadcrumb "Dataset: #{@job.dataset.name}", project_dataset_path(@project, @job.dataset)
-        add_breadcrumb "Job: #{@job.name}", [@project, @job]
-      }
+      format.html
       format.json { render json: @job }
     end
   end
@@ -40,18 +33,13 @@ class JobsController < ApplicationController
     do_authorize!
 
     respond_to do |format|
-      format.html {
-        add_breadcrumb 'New Script'
-      }
+      format.html
       format.json { render json: @job }
     end
   end
 
   # GET /jobs/1/edit
   def edit
-    add_breadcrumb "Dataset: #{@job.dataset.name}", project_dataset_path(@project, @job.dataset)
-    add_breadcrumb "Job: #{@job.name}", [@project,  @job.dataset, @job]
-    add_breadcrumb 'Edit', edit_project_job_path(@project, @job)
   end
 
   # POST /jobs
@@ -98,11 +86,6 @@ class JobsController < ApplicationController
   end
 
   private
-
-  def add_project_breadcrumb
-    add_breadcrumb 'Projects', projects_path
-    add_breadcrumb @project.name, @project
-  end
 
   def build_project_job
     @dataset = Dataset.new

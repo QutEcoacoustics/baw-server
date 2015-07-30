@@ -13,7 +13,7 @@
     .span6
       = gmaps(markers: {data: @project.sites.to_gmaps4rails},
       map_options: gmaps_default_options)
-      = yield :scripts
+      = content_for(:scripts)
 
   .row-fluid
     .span6

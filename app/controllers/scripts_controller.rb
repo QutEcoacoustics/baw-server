@@ -1,5 +1,4 @@
 class ScriptsController < ApplicationController
-  add_breadcrumb 'Home', :root_path
 
   load_and_authorize_resource :script
 
@@ -9,9 +8,7 @@ class ScriptsController < ApplicationController
     @scripts = Script.latest_versions
 
     respond_to do |format|
-      format.html {
-        add_breadcrumb 'Scripts', scripts_path
-      }
+      format.html
       format.json { render json: @scripts }
     end
   end
@@ -20,10 +17,7 @@ class ScriptsController < ApplicationController
   # GET /scripts/1.json
   def show
     respond_to do |format|
-      format.html {
-        add_breadcrumb 'Scripts', scripts_path
-        add_breadcrumb @script.display_name, @script
-      }
+      format.html
       format.json { render json: @script }
     end
   end
@@ -33,10 +27,7 @@ class ScriptsController < ApplicationController
   # GET /scripts/new.json
   def new
     respond_to do |format|
-      format.html {
-        add_breadcrumb 'Scripts', scripts_path
-        add_breadcrumb 'New', new_script_path
-      }
+      format.html
       format.json { render json: @script }
     end
   end
@@ -46,9 +37,6 @@ class ScriptsController < ApplicationController
     unless @script.is_latest_version?
       redirect_to edit_script_path(@script.latest_version), notice: 'You have been redirected to update the latest version of this Script.'
     end
-    add_breadcrumb 'Scripts', scripts_path
-    add_breadcrumb @script.display_name, @script
-    add_breadcrumb 'New Version', edit_script_path(@script)
   end
 
   # POST /scripts
@@ -59,7 +47,7 @@ class ScriptsController < ApplicationController
         format.html { redirect_to @script, notice: 'Script was successfully created.' }
         format.json { render json: @script, status: :created, location: @script }
       else
-        format.html { render action: "new" }
+        format.html { render action: 'new' }
         format.json { render json: @script.errors, status: :unprocessable_entity }
       end
     end
@@ -75,9 +63,14 @@ class ScriptsController < ApplicationController
       end
     end
 
-    @new_script = Script.new(script_params)
+    new_script_params = script_params
+
+    @new_script = Script.new(new_script_params)
 
     @new_script.update_from = @script
+
+    @new_script.settings_file = @script.settings_file if @script.settings_file? && !new_script_params[:settings_file]
+    @new_script.data_file = @script.data_file if @script.data_file? && !new_script_params[:data_file]
 
     respond_to do |format|
       if @new_script.save && @script.save
@@ -87,10 +80,7 @@ class ScriptsController < ApplicationController
         format.html {
           @old_script = @script
           @script = @new_script # so that it renders the errors
-          add_breadcrumb 'Scripts', scripts_path
-          add_breadcrumb @script.display_name, @script
-          add_breadcrumb 'New Version', edit_script_path(@old_script)
-          render action: "update"
+          render action: 'update'
         }
         format.json { render json: @script.errors, status: :unprocessable_entity }
       end

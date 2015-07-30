@@ -1,4 +1,16 @@
-%h1= 'Audio Harvest Instructions'
+- content_for :meta_title, "Project #{@project.name} | Site #{@site.name} | Audio Harvest Instructions"
+- content_for :page_title, 'Audio Harvest Instructions'
+
+= render partial: 'shared/sidebar_site', locals: {project: @project, site: @site}
+
+- content_for :right_sidebar do
+  = render partial: 'shared/sidebar_metadata_heading', locals: {title: 'Site', icon_class: 'map-marker'}
+
+%p
+  Follow these instructions to upload audio to the site
+  = "'#{@site.name}'"
+  in the project
+  = "'#{@project.name}'."
 
 %h3
   1. Put audio files into one folder
@@ -24,19 +36,30 @@
   4. Create a harvest configuration file
 %p
   The file
-  %strong= "must"
+  %strong
+    must
   be named
   = link_to Settings.actions.harvest.config_file_name, harvest_project_site_path(@project, @site, format: :yml)
-  file and
-  %strong= "must"
-  = "have the following format for uploading to site '#{@site.name}'"
-%pre= render :partial => 'harvest.yml.erb'
+  and
+  %strong
+    must
+  have the following format:
+%pre= render partial: 'harvest.yml.erb'
 
-%h3= "5. Transfer #{Settings.actions.harvest.config_file_name}"
-%p= "It is important to do this as the last step. Once the system recognises the #{Settings.actions.harvest.config_file_name}, it attempts to start harvesting. After the transfer, your audio_upload_folder should be under the following path ON THE SERVER"
+%h3
+  5. Transfer
+  = Settings.actions.harvest.config_file_name
 %p
-  %code= Settings.actions.harvest.to_do_path
-%p= "and look something like the image below:"
+  It is important to do this as the last step.
+  Once the system recognises the
+  = Settings.actions.harvest.config_file_name
+  , it attempts to start harvesting. After the transfer, your audio_upload_folder should be under the following path ON THE SERVER
+%p
+  %code
+    = Settings.actions.harvest.to_do_path
+%p
+  and look something like the image below:
+
 = image_tag 'harvester_upload_folder.png'
 
 %h3
@@ -44,13 +67,15 @@
 %p
   %b
     process.log
-%p= "A process.log file will indicate what the harvester is currently doing."
+%p
+  A process.log file will indicate what the harvester is currently doing
 %p
   %b
     error.log
-%p= "If you find an error.log in your folder, please check it to see if the errors are caused by your #{Settings.actions.harvest.config_file_name}. If so, change the #{Settings.actions.harvest.config_file_name} and transfer it over the existing one. The system recognises that the file has changed and will attempt to harvest the audio files in the folder again."
-
-
-
-
-
+%p
+  If you find an error.log in your folder, please check it to see if the errors are caused by your
+  = Settings.actions.harvest.config_file_name
+  file. If so, change the
+  = Settings.actions.harvest.config_file_name
+  and transfer it over the existing one.
+  The system recognises that the file has changed and will attempt to harvest the audio files in the folder again.

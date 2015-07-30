@@ -1,13 +1,16 @@
-%h2 Resend unlock instructions
-= simple_form_for(resource, :as => resource_name, :url => unlock_path(resource_name), :html => { :method => :post }) do |f|
-  = f.error_notification
-  = f.full_error :unlock_token
-  .form-inputs
-    = f.input :login, required: true, autofocus: true, hint: 'Enter your email or user name.'
-  .form-actions
-    = f.button :submit, 'Resend unlock instructions'
+- content_for :meta_title, t('devise.shared.links.unlock_account')
+- content_for :page_title, t('devise.unlocks.new.resend_unlock_instructions')
 
-- content_for :title, 'Resend unlock instructions'
+= render partial: 'shared/sidebar_devise',
+locals: { devise_mapping_o: devise_mapping,
+resource_class_o: resource_class,
+resource_name_o: resource_name,
+user_show: resource,
+user_current: current_user}
 
-- content_for :left_sidebar do
-  = render partial: 'devise/shared/left_sidebar'
+= simple_form_for(resource, as: resource_name, url: unlock_path(resource_name), html: { class: 'form-horizontal', method: :post }) do |f|
+  = field_set_tag do
+    = f.error_notification
+    = f.full_error :unlock_token
+    = f.input :login, required: true, autofocus: true, hint: t('devise.confirmations.new.login_hint'), placeholder: 'Login'
+    = f.button :submit_cancel, t('devise.unlocks.new.resend_unlock_instructions'), class: 'btn-default'

@@ -1,35 +1,25 @@
-%h2
-  Edit #{resource_name.to_s.humanize}
-= simple_form_for(resource, :as => resource_name, :url => registration_path(resource_name), :html => { class: 'form-horizontal', :multipart => true, :method => :put }) do |f|
-  = f.error_notification
-  .form-inputs
+- content_for :meta_title, "Editing profile for #{resource.user_name}"
+- content_for :page_title, 'Profile Settings'
+
+= render partial: 'shared/sidebar_user', locals: {user_show: resource, user_current: current_user}
+
+= simple_form_for(resource, as: resource_name, url: registration_path(resource_name), html: { class: 'form-horizontal', method: :put }) do |f|
+  = field_set_tag do
+    = f.error_notification
     = f.input :user_name, required: true, autofocus: true
-    = f.input :email, required: true
-    = render partial: '/shared/time_zone_select_custom', locals: { f: f, attribute_name: :tzinfo_tz, model_name: resource_name }
+    = f.input :email, required: true, placeholder: 'Email'
+    = render partial: 'shared/time_zone_select_custom', locals: { f: f, attribute_name: :tzinfo_tz, model_name: resource_name }
     - if devise_mapping.confirmable? && resource.pending_reconfirmation?
-      %p
-        Currently waiting confirmation for: #{resource.unconfirmed_email}
-    = f.input :password, :autocomplete => 'off', :hint => "leave it blank if you don't want to change it", :required => false
-    = f.input :password_confirmation, :required => false
-    = f.input :current_password, :hint => 'we need your current password to confirm your changes', :required => true
-    .control_group
-      = f.label :image
-      .controls
-        - unless resource.image_file_name.blank?
-          = image_tag resource.image.url(:span1)
-        = f.file_field :image
-
-  .form-actions
-    = f.button :submit, 'Update'
-
-- unless Access::Check.is_admin?(current_user)
-  = link_to 'Cancel my account', registration_path(resource_name),
-                     method: :delete,
-                     title: "WARNING: This will permanently delete your account",
-                     data: {confirm: 'Are you sure?', toggle: 'tooltip',  placement: 'right'}
-
-
-- content_for :title, "Edit Profile for #{current_user.user_name}"
-
-- content_for :left_sidebar do
-  = render partial: '/user_accounts/sidebar_links'
+      %p= t('devise.registrations.edit.currently_waiting_confirmation_for_email', email: resource.unconfirmed_email)
+    = f.input :password, autocomplete: 'off', hint: t('devise.registrations.edit.leave_blank_if_you_don_t_want_to_change_it'), required: false
+    = f.input :password_confirmation, required: false
+    = f.input :current_password, hint: t('devise.registrations.edit.we_need_your_current_password_to_confirm_your_changes'), required: true
+    = render partial: 'shared/image_upload', locals: { f: f,  model_instance: resource, model_name: resource_name }
+    = f.button :submit_cancel, t('devise.registrations.edit.update'), class: 'btn-default'
+  %h3 Cancel my account
+  %p
+    = t('devise.registrations.edit.unhappy')
+    = link_to t('devise.registrations.edit.cancel_my_account'), registration_path(resource_name),
+    data: { confirm: t('devise.registrations.edit.are_you_sure'), toggle: 'tooltip',  placement: 'right' },
+    title: 'WARNING: This will permanently delete your account',
+    method: :delete

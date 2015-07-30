@@ -1,0 +1,16 @@
+-# locals: data_item, data_item_name
+- recaptcha_has_errors = data_item.errors.include?(:recaptcha) && data_item.errors[:recaptcha].size > 0
+- recaptcha_label_id = "#{data_item_name}_recaptcha"
+
+.form-group.string.required{class: [recaptcha_label_id, ('error' if recaptcha_has_errors)]}
+  %label.string.required.col-sm-3.control-label{for: recaptcha_label_id.to_sym}
+    %small (required)
+    Human Test
+  .col-sm-5
+    = recaptcha_tags({display: {theme: 'clean'}})
+    - if recaptcha_has_errors
+      %p.help-block
+        = data_item.errors[:recaptcha][0]
+    - else
+      %p.help-block
+        We need to know that you're human.

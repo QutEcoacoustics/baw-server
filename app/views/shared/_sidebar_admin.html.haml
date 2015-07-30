@@ -1,0 +1,15 @@
+-# locals: (none)
+- content_for(:left_sidebar_header, 'Admin')
+- content_for(:left_sidebar) do
+  %li{class: ('active' if current_page?(admin_dashboard_path))}
+    = link_to 'Admin Home', admin_dashboard_path
+  %li{class: ('active' if current_page?(user_accounts_path))}
+    = link_to t('baw.shared.links.user_list.title'), user_accounts_path
+  %li{class: ('active' if current_page?(sites_orphans_path))}
+    = link_to t('baw.shared.links.orphan_sites.title'), sites_orphans_path
+  %li{class: ('active' if current_page?(scripts_path))}
+    = link_to t('baw.shared.links.scripts.title'), scripts_path
+  %li{class: ('active' if current_page?(tags_management_index_path))}
+    = link_to t('baw.shared.links.tag_management.title'), tags_management_index_path
+  %li
+    = link_to t('baw.shared.links.job_status.title'), '/job_queue_status'

@@ -146,7 +146,7 @@ describe 'checking reactions to errors', :type => :feature do
 
     context 'displays the correct page when directly requested for' do
 
-      it 'arbitary error page' do
+      it 'arbitrary error page' do
         visit '/errors/blah%20blah'
         expect(current_path).to eq('/errors/blah%20blah')
         expect(page).to have_content('Bad request')

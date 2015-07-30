@@ -29,7 +29,7 @@ describe 'CRUD Sites as valid user with write permission', :type => :feature do
     fill_in 'site[name]', with: 'test name'
     fill_in 'site[description]', with: 'description'
     attach_file('site[image]', 'public/images/user/user-512.png')
-    click_button 'Create Site'
+    click_button 'Submit'
     expect(page).to have_content('test name')
     expect(page).to have_content('Site was successfully created.')
   end
@@ -38,7 +38,7 @@ describe 'CRUD Sites as valid user with write permission', :type => :feature do
     url = new_project_site_path(@project)
     visit url
     #save_and_open_page
-    click_button 'Create Site'
+    click_button 'Submit'
     expect(page).to have_content('Please review the problems below:')
   end
 
@@ -48,7 +48,7 @@ describe 'CRUD Sites as valid user with write permission', :type => :feature do
     fill_in 'site[name]', with: 'test name'
     fill_in 'site[description]', with: 'description'
     attach_file('site[image]', 'public/images/user/user-512.png')
-    click_button 'Update Site'
+    click_button 'Submit'
     expect(page).to have_content('test name')
   end
 
@@ -56,7 +56,7 @@ describe 'CRUD Sites as valid user with write permission', :type => :feature do
     visit edit_project_site_path(@project, @site)
     #save_and_open_page
     fill_in 'site[name]', with: ''
-    click_button 'Update Site'
+    click_button 'Submit'
     expect(page).to have_content('Please review the problems below:')
     expect(page).to have_content('can\'t be blank')
   end

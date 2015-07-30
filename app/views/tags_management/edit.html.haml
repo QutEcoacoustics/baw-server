@@ -1,7 +1,17 @@
-%h1 Editing tag
+- content_for :title, 'Edit Tag'
+
+= render partial: 'shared/sidebar_tags_management', locals: {tag_to_manage: @tag}
+
+- content_for :right_sidebar do
+  = render partial: 'shared/sidebar_metadata_heading', locals: {title: 'Tags', icon_class: 'tags'}
+  - if @tag.updated_at.nil?
+    = render partial: 'shared/sidebar_metadata_user_created', locals: {item: @tag}
+  - else
+    = render partial: 'shared/sidebar_metadata_user_updated', locals: {item: @tag}
+  = render partial: 'shared/sidebar_metadata', locals: {title: 'Status', text: @tag.retired ? 'Retired' : 'In use'}
+  = render partial: 'shared/sidebar_metadata', locals: {title: 'Classification', text: @tag.is_taxanomic ? 'Taxonomic' : 'Folksonomic'}
+  - display_tag_type = Tag::AVAILABLE_TYPE_OF_TAGS_DISPLAY.select{ |i| i[:id] == @tag.type_of_tag.to_sym}.first
+  = render partial: 'shared/sidebar_metadata', locals: {title: 'Type', text: display_tag_type[:name]}
+  = render partial: 'shared/sidebar_metadata', locals: {title: 'Count', text: @tag.taggings.count}
 
 = render 'form'
-
-- content_for :left_sidebar do
-  = render layout: '/shared/left_sidebar', locals: {title: 'Tag Management'} do
-    %li= link_to 'Tag List', tags_management_index_path,  title: "Back to tag list", data: {toggle: 'tooltip',  placement: 'right'}

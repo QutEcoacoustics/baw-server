@@ -1,13 +1,12 @@
-.span6
+- content_for :meta_title, @details.blank? ? 'Error' : "#{@details[:status_code]} #{@details[:phrase]}"
+- content_for :page_title, @details.blank? ? 'Error' : @details[:phrase]
+
+.col-sm-7
   - if @details.blank?
-    %h1 Sorry, something is not right
+    %p Sorry, something is not right
     %p There's been an issue.
     %p You could go back and try again.
   - else
-    %h1
-      = @details[:phrase]
-      %small
-        = @details[:status_code]
     %p= @details[:message]
     - @details[:links].each do |key, value|
       %p
@@ -21,9 +20,9 @@
         %li= category
         %ul
           - if category == :text
-            %li= ".html (text/html)"
+            %li= '.html (text/html)'
           - items.each do |item|
             %li=".#{item.to_sym} (#{item})"
 
-.span6
-  = image_tag 'bird_watcher.jpg'
+.col-sm-5
+  = image_tag('bird_watcher.jpg', size: '300x300', alt: 'Birder with binoculars')

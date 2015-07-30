@@ -1,10 +1,12 @@
-%h1 Editing project
+- content_for :meta_title, "Project #{@project.name} | Edit"
+- content_for :page_title, 'Edit Project'
 
-= render 'form'
+= render partial: 'shared/sidebar_project', locals: {project: @project}
 
-- content_for :title, "Edit Project #{@project.name}"
+- content_for :right_sidebar do
+  = render partial: 'shared/sidebar_metadata_heading', locals: {title: 'Project', icon_class: 'home'}
 
-- content_for :left_sidebar do
-  = render layout: '/shared/left_sidebar', locals: {title: 'Projects'} do
-    %li= link_to 'Project', project_path(@project),  title: "Back to project view", data: {toggle: 'tooltip',  placement: 'right'}
-
+%p
+  Original name is
+  = "'#{@project.name}'."
+= render partial: 'form', locals: {project: @project}

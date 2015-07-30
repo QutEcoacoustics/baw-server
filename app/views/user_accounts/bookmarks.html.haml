@@ -1,25 +1,28 @@
+- content_for :meta_title, "Bookmarks created by #{@user.user_name}"
+- content_for(:page_title) do
+  Bookmarks
+  %small
+    by
+    = image_tag @user.image.url(:spanhalf), alt: @user.user_name
+    = @user.user_name
 
-= image_tag @user.image.url(:span3), class: 'span3'
+= render partial: 'shared/sidebar_user', locals: {user_show: @user, user_current: current_user}
 
-.span9
-  %h1= @user.user_name
-
-.span12
-  %h3 Bookmarks
-
+.col-sm-12
   - if @user_bookmarks.empty?
     = 'No bookmarks to show.'
   - else
-    = page_entries_info @user_bookmarks
-    = will_paginate @user_bookmarks, renderer: BawWillPaginateLinkRenderer
+    %p= page_entries_info @user_bookmarks
+    = paginate @user_bookmarks
 
-    %table.table.table-striped(data-provides='rowlink')
+    %table.table.table-striped.table-hover
       %thead
         %tr
-          %th Name
+          %th
+            %span.fa.fa-bookmark{aria: {hidden: 'true' }}
+            Name
           %th Category
           %th Description
-          %th
 
       %tbody
       - @user_bookmarks.each do |bookmark|
@@ -27,12 +30,3 @@
           %td= link_to bookmark.name, make_listen_path(bookmark)
           %td= bookmark.category
           %td= bookmark.description
-          %td.nolink
-            = link_to  make_listen_path(bookmark), target: '_self', class: 'btn btn-mini' do
-              %i{class: 'fa fa-play'}
-              Play
-
-- content_for :title, "Bookmarks created by #{@user.user_name}"
-
-- content_for :left_sidebar do
-  = render partial: 'sidebar_links'

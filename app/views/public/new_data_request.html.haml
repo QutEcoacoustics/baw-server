@@ -1,4 +1,6 @@
-%h1 Data Request
+- content_for :title, 'Data Request'
+
+= render partial: 'shared/sidebar_public', locals: {user_show: @user, user_current: current_user}
 
 - unless @annotation_download.blank?
   %h4
@@ -17,35 +19,13 @@
   %br
 
 = simple_form_for @data_request, url: '/data_request', html: {class: 'form-horizontal' } do |f|
-  = f.error_notification
+  = field_set_tag do
+    = f.error_notification
+    = f.input :name, label: 'Your Name'
+    = f.input :email, label: 'Contact Email'
+    = f.input :group, label: 'Organisation'
+    = f.input :group_type, label: 'Organisation Type', include_blank: false
+    = f.input :content, label: 'Request details (include Projects/Sites, dates/times)', as: :text, input_html: {rows: '8',style: 'width:100%'}
+    = render partial: 'shared/recaptcha', locals: {data_item: @data_request, data_item_name: 'data_request'}
+    = f.button :submit_cancel, 'Submit', class: 'btn-default'
 
-  .row-fluid
-    .span12.form-inputs
-      = f.input :name, label: 'Your Name'
-      = f.input :email, label: 'Contact Email'
-      = f.input :group, label: 'Organisation'
-      = f.input :group_type, label: 'Organisation Type', include_blank: false
-      = f.input :content, label: 'Request details (include Projects/Sites, dates/times)', as: :text, input_html: {rows: '8',style: 'width:100%'}
-      - if @data_request.errors.include?(:recaptcha) && @data_request.errors[:recaptcha].size > 0
-        .control-group.string.required.data_request_recaptcha.error
-          %label.string.required.control-label{for: :data_request_recaptcha}
-            Human Test
-            %small (required)
-          .controls
-            = recaptcha_tags({display: {theme: 'clean'}})
-            %span.help-inline
-              = @data_request.errors[:recaptcha][0]
-      - else
-        .control-group.string.required.data_request_recaptcha
-          %label.string.required.control-label{for: :data_request_recaptcha}
-            Human Test
-            %small (required)
-          .controls
-            %span.help-inline
-              We need to know that you're human.
-            = recaptcha_tags({display: {theme: 'clean'}})
-
-  .form-actions
-    = f.button :submit, 'Submit'
-
-- content_for :title, 'Data Request'

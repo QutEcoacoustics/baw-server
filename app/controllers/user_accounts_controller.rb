@@ -97,11 +97,8 @@ ELSE last_sign_in_at END DESC'
   # GET /user_accounts/1/projects
   def projects
     @user_projects = Access::Query.projects_accessible(@user).includes(:creator).references(:creator)
-                         .order('projects.updated_at DESC')
-                         .paginate(
-                             page: paging_params[:page].blank? ? 1 : paging_params[:page],
-                             per_page: 30
-                         )
+                         .order('projects.name ASC')
+                         .page(paging_params[:page].blank? ? 1 : paging_params[:page])
     respond_to do |format|
       format.html # projects.html.erb
       format.json { render json: @user_projects }
@@ -112,10 +109,7 @@ ELSE last_sign_in_at END DESC'
   def bookmarks
     @user_bookmarks = Access::Query.bookmarks_modified(@user)
                           .order('bookmarks.updated_at DESC')
-                          .paginate(
-                              page: paging_params[:page].blank? ? 1 : paging_params[:page],
-                              per_page: 30
-                          )
+                          .page(paging_params[:page].blank? ? 1 : paging_params[:page])
     respond_to do |format|
       format.html # bookmarks.html.erb
       format.json { render json: @user_bookmarks }
@@ -126,10 +120,7 @@ ELSE last_sign_in_at END DESC'
   def audio_event_comments
     @user_audio_event_comments = Access::Query.audio_event_comments_modified(@user)
                                      .order('audio_event_comments.updated_at DESC')
-                                     .paginate(
-                                         page: paging_params[:page].blank? ? 1 : paging_params[:page],
-                                         per_page: 30
-                                     )
+                                     .page(paging_params[:page].blank? ? 1 : paging_params[:page])
     respond_to do |format|
       format.html # audio_event_comments.html.erb
       format.json { render json: @user_audio_event_comments }
@@ -137,12 +128,9 @@ ELSE last_sign_in_at END DESC'
   end
 
   def audio_events
-    @user_annotations = Access::Query.audio_events_modified(@user).includes(:audio_recording).references(:audio_recordings)
+    @user_annotations = Access::Query.audio_events_modified(@user).includes(audio_recording: [:site]).references(:audio_recordings, :sites)
                             .order('audio_events.updated_at DESC')
-                            .paginate(
-                                page: paging_params[:page].blank? ? 1 : paging_params[:page],
-                                per_page: 30
-                            )
+                            .page(paging_params[:page].blank? ? 1 : paging_params[:page])
     respond_to do |format|
       format.html # audio_events.html.erb
       format.json { render json: @user_annotations }
