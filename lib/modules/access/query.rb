@@ -185,6 +185,34 @@ module Access
         projects(user, Access::Core.levels_deny)
       end
 
+      # Get all users that have levels access or higher to project.
+      # @param [Project] project
+      # @param [Symbol, Array<Symbol>] levels
+      # @return [ActiveRecord::Relation] users
+      def users(project, levels)
+        fail NotImplementedError
+
+        levels = Access::Core.validate_levels(levels)
+        project = Access::Core.validate_project(project)
+
+        if levels == [:none]
+          # get all users who have no access to the project
+          # will never include any admins
+          # if project has anon access, will always return empty
+          # if project has logged in access, will return only 'guest'
+          # SQL query for users where not exists permission entries for this project and equal or greater levels
+          # SQL query should check user type, as admins will always have access
+        else
+          # get all users who have at least the lowest of levels access to the project
+          # will always include all admins
+          # needs to account for anon and logged in access settings
+          # SQL query for users where exists permission entries for this project and equal or greater levels
+          # SQL query should check user type, as admins will always have access
+          lowest_level = Access::Core.lowest(levels)
+          equal_or_greater_levels = Access::Core.equal_or_greater(lowest_level)
+        end
+      end
+
       # Get all sites for which this user has these access levels.
       # @param [User] user
       # @param [Symbol, Array<Symbol>] levels

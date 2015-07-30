@@ -21,11 +21,9 @@
   %li
     = link_to 'Visualise', make_visualise_path(site), title: 'Visualise and browse the audio in this site', data: {toggle: 'tooltip',  placement: 'right'}
 
-  - if can? :edit, project
+  - if can? :upload_instructions, site
     %li{class: ('active' if current_page?(data_upload_path))}
       = link_to t('baw.shared.links.upload_audio.title'), data_upload_path,  title: t('baw.shared.links.upload_audio.description'), data: {toggle: 'tooltip',  placement: 'right'}
-
-  - if can? :edit, site
     %li{class: ('active' if current_page?(upload_instructions_project_site_path(project, site)))}
       = link_to 'Harvest Audio', upload_instructions_project_site_path(project, site),  title: 'Upload new audio to this site', data: {toggle: 'tooltip',  placement: 'right'}
 

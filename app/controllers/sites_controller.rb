@@ -132,7 +132,11 @@ class SitesController < ApplicationController
   end
 
   def harvest
-    render file: 'sites/_harvest.yml.erb', content_type: 'text/yaml', layout: false
+    respond_to do |format|
+      format.yml {
+        render file: 'sites/_harvest.yml.haml', content_type: 'text/yaml', layout: false
+      }
+    end
   end
 
   # GET /sites/orphans

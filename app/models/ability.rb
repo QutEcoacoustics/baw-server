@@ -64,12 +64,16 @@ class Ability
         # can't add .includes here - it breaks when validating projects due to ActiveRecord::AssociationRelation
         Access::Check.can_any?(user, :reader, site.projects)
       end
-      can [:new, :create, :edit, :update, :upload_instructions], Site do |site|
+      can [:new, :create, :edit, :update], Site do |site|
         # can't add .includes here - it breaks when validating projects due to ActiveRecord::AssociationRelation
         # .all would have worked. I tried .where(nil), that didn't work either :/
         # https://github.com/rails/rails/issues/12756
         # https://github.com/plataformatec/has_scope/issues/41
         Access::Check.can_any?(user, :writer, site.projects)
+      end
+
+      can [:upload_instructions, :harvest], Site do |site|
+        Access::Check.can_any?(user, :owner, site.projects)
       end
 
       # data set

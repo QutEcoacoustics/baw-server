@@ -1,0 +1,27 @@
+\# the project
+project_id: #{@project.id}
+~''
+\# the site
+site_id: #{@site.id}
+~''
+\# this needs to be set manually
+\# below is a list of uploader_ids that have write access to this project
+\# uncomment the one that you want to set as the uploader of the audio files
+\# |---------- IMPORTANT: Ensure there is no whitespaces left before uploader_id
+\#uploader_id: #{@project.creator.id} # #{@project.creator.user_name}
+- (@project.writers + @project.owners + [@project.creator]).each do |writer|
+  - if defined?(current_user) && current_user && writer == current_user
+    uploader_id: #{writer.id} # #{writer.user_name}
+  - else
+    \#uploader_id: #{writer.id} # #{writer.user_name}
+~''
+\# this is the timezone for all the recordings
+utc_offset: '+10'
+~''
+\# structured metadata to add to each recording.
+\# use this to record information about sensors, etc...
+metadata:
+\#   sensor_type: SM2
+\#   notes:
+\#     - stripped left channel due to bad mic
+\#     - appears to have electronic interference from solar panel
