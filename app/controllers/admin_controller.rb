@@ -1,6 +1,5 @@
 class AdminController < ApplicationController
 
-
   def index
     authorize! :index, :admin
     respond_to do |format|

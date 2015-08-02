@@ -104,7 +104,7 @@ class User < ActiveRecord::Base
             },
             if: Proc.new { |user| user.user_name_changed? }
 
-  validate :excluded_login
+  validate :excluded_login, on: :create
 
   def excluded_login
     reserved_user_names = %w(admin harvester analysis_runner root superuser administrator admins administrators)

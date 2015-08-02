@@ -12,6 +12,7 @@ class TaggingsController < ApplicationController
   # GET /taggings.json
   # GET /taggings/user/1/tags.json
   def index
+    # TODO update to API spec
     if @audio_event
       render json: @audio_event.taggings.to_json(include: [:tag])
     else

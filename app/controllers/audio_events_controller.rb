@@ -10,6 +10,8 @@ class AudioEventsController < ApplicationController
   # GET /audio_events
   # GET /audio_events.json
   def index
+    # TODO: update to the API spec.
+    # Use Access::Query.audio_recording_audio_events(@audio_recording, current_user, , Access::Core.levels_allow)
     if @audio_recording
       events = @audio_recording.audio_events
       events = events.end_after(audio_event_index_params[:start_offset]) if audio_event_index_params[:start_offset]
@@ -82,7 +84,7 @@ class AudioEventsController < ApplicationController
     authorize! :filter, AudioEvent
     filter_response, opts = Settings.api_response.response_advanced(
         api_filter_params,
-        Access::Query.audio_events(current_user, Access::Core.levels_allow),
+        Access::Query.audio_events(current_user),
         AudioEvent,
         AudioEvent.filter_settings
     )

@@ -9,7 +9,7 @@ class AudioRecordingsController < ApplicationController
 
   # GET /audio_recordings.json
   def index
-
+    # TODO update to API spec
     if @site
       @audio_recordings = @site.audio_recordings.order('recorded_date DESC').limit(5)
     else
@@ -51,7 +51,7 @@ class AudioRecordingsController < ApplicationController
     uploader_id = audio_recording_params[:uploader_id].to_i
     user_exists = User.exists?(uploader_id)
     user = User.where(id: uploader_id).first
-    actual_level = Access::Query.level_project(user, @project)
+    actual_level = Access::Level.project(user, @project)
     requested_level = :writer
     is_allowed = Access::Check.allowed?(requested_level, actual_level)
 
@@ -139,7 +139,7 @@ class AudioRecordingsController < ApplicationController
         user_exists = User.exists?(uploader_id)
         user = User.where(id: uploader_id).first
 
-        actual_level = Access::Query.level_project(user, @project)
+        actual_level = Access::Level.project(user, @project)
         requested_level = :writer
         is_allowed = Access::Check.allowed?(requested_level, actual_level)
 
@@ -178,7 +178,7 @@ class AudioRecordingsController < ApplicationController
     authorize! :filter, AudioRecording
     filter_response, opts = Settings.api_response.response_advanced(
         api_filter_params,
-        Access::Query.audio_recordings(current_user, Access::Core.levels_allow),
+        Access::Query.audio_recordings(current_user),
         AudioRecording,
         AudioRecording.filter_settings
     )
