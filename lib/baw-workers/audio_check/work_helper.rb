@@ -317,7 +317,7 @@ module BawWorkers
         correct = :pass
         wrong = :fail
 
-        bit_rate_bps_delta = 1500 # due to difference for asf files of ~ 1300 bps
+        bit_rate_bps_delta = 10000 # due to difference for asf files of 1300-2000 bps (set large to catch only very different bit rates)
         duration_seconds_delta = 0.200 # 200 ms due to estimates of duration for mp3 files
 
         file_hash = existing_file_info[:file_hash].to_s == audio_params[:file_hash].to_s ? correct : wrong
