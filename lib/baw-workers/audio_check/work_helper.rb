@@ -404,14 +404,11 @@ module BawWorkers
         # write to csv
         csv_options = {col_sep: ',', force_quotes: true}
 
-        # identifier for CSV log entries
-        csv_id = '[CSV], '
-
         csv_header_line = logged_csv_line[:headers].to_csv(csv_options).strip
-        @logger.fatal(@class_name) { "#{csv_id}#{csv_header_line}" }
+        @logger.fatal(@class_name) { "[CSV-header], #{csv_header_line}" }
 
         csv_value_line = logged_csv_line[:values].to_csv(csv_options).strip
-        @logger.fatal(@class_name) { "#{csv_id}#{csv_value_line}" }
+        @logger.fatal(@class_name) { "[CSV-data], #{csv_value_line}" }
       end
 
       # Rename file with old file name to new file name.
