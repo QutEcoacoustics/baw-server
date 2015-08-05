@@ -243,10 +243,9 @@ module BawWorkers
                     datetime_with_offset: BawWorkers::Validation.normalise_datetime(audio_params[:recorded_date]),
                     original_format: audio_params[:original_format]
                 }
-            file_names = original_audio.file_names(opts).map{ |file_name| file_name.downcase }
-            utc_file_name = file_names[1]
+            utc_file_name = original_audio.file_names(opts)[1].downcase
 
-            match_result = files & file_names
+            match_result = files & [utc_file_name]
             is_match = match_result.any?
 
             # add file names that exist on disk to intersection if one or more exist
@@ -264,16 +263,16 @@ module BawWorkers
           name = 'baw:worker:audio_check:standalone:compare'
 
           BawWorkers::Config.logger_worker.warn(name) {
-            "Exact intersection (#{intersection.size}): #{intersection.join(', ')}"
+            "Exact intersection (only utc file names are included) (#{intersection.size}): #{intersection.join(', ')}"
           }
 
           BawWorkers::Config.logger_worker.warn(name) {
-            "Existing files without db entry (#{files_without_db_entry.size}): #{files_without_db_entry.join(', ')}"
+            "Existing files without db entry (only utc file names are included) (#{files_without_db_entry.size}): #{files_without_db_entry.join(', ')}"
           }
 
-          BawWorkers::Config.logger_worker.warn(name) {
-            "Db entries with no files (only utc file names are included) (#{db_entries_without_file.size}): #{db_entries_without_file.join(', ')}"
-          }
+          # BawWorkers::Config.logger_worker.warn(name) {
+          #   "Db entries with no files (only utc file names are included) (#{db_entries_without_file.size}): #{db_entries_without_file.join(', ')}"
+          # }
 
           {
               intersection: intersection,
