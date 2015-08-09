@@ -1,4 +1,6 @@
-%h1 Disclaimers
+- content_for :title, 'Disclaimers'
+
+= render partial: 'shared/sidebar_public', locals: {user_show: @user, user_current: current_user}
 
 %p
   We make no representations about the suitability of this information for any purpose. It is provided "as is" without
@@ -20,4 +22,3 @@
   %h1 Privacy Statement
   %p No privacy statement available for this project.
 
-- content_for :title, 'Disclaimers'

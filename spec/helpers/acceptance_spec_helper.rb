@@ -583,3 +583,8 @@ def process_custom(method, path, params = {}, headers ={})
   do_request(method, path, params, headers)
   document_example(method.to_s.upcase, path)
 end
+
+def get_json_error_path(id)
+  item = Settings.api_response.error_links_hash[id.to_sym]
+  "meta/error/links/#{item[:text]}"
+end

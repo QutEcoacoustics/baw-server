@@ -199,7 +199,7 @@ Rails.application.routes.draw do
     resources :sites, except: [:index] do
       member do
         get :upload_instructions
-        get 'harvest' => 'sites#harvest', defaults: {format: 'yml'}, constraints: {format: /(yml)/}
+        get 'harvest' => 'sites#harvest'
       end
       # API project site recording check_uploader
       resources :audio_recordings, only: [:create, :new], defaults: {format: 'json'} do
@@ -326,6 +326,10 @@ Rails.application.routes.draw do
 
   # Tag management - admin only
   resources :tags_management, except: [:show]
+
+  # admin dashboard
+  get '/admin' => 'admin#index', as: :admin_dashboard
+
 
   # provide access to API documentation
   mount Raddocs::App => '/doc'

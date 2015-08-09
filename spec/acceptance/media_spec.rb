@@ -125,14 +125,14 @@ resource 'Media' do
     standard_media_parameters
     let(:authentication_token) { unconfirmed_token }
     let(:format) { 'json' }
-    standard_request('MEDIA (as unconfirmed with shallow path)', 403, 'meta/error/links/confirm your account', true)
+    standard_request('MEDIA (as unconfirmed with shallow path)', 403, get_json_error_path(:confirm), true)
   end
 
   get '/audio_recordings/:audio_recording_id/media.:format' do
     standard_media_parameters
     let(:authentication_token) { invalid_token }
     let(:format) { 'json' }
-    standard_request('MEDIA (as invalid with shallow path)', 401, 'meta/error/links/sign in', true)
+    standard_request('MEDIA (as invalid with shallow path)', 401, get_json_error_path(:sign_up), true)
   end
 
   get '/audio_recordings/:audio_recording_id/media.:format' do
@@ -563,7 +563,7 @@ resource 'Media' do
       @audio_event = FactoryGirl.create(:audio_event, audio_recording_id: @other_audio_recording_id, start_time_seconds: 11, end_time_seconds: 12, is_reference: true)
     end
 
-    standard_request('MEDIA (as reader with shallow path, audio event request not related to audio recording)', 403, 'meta/error/links/request permissions', true)
+    standard_request('MEDIA (as reader with shallow path, audio event request not related to audio recording)', 403, get_json_error_path(:permissions), true)
   end
 
   # test audio_recording_catalogue api

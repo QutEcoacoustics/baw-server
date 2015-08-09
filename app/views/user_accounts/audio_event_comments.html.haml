@@ -1,39 +1,46 @@
+- content_for :meta_title, "Annotation Comments by #{@user.user_name}"
+- content_for(:page_title) do
+  Annotation Comments
+  %small
+    by
+    = image_tag @user.image.url(:spanhalf), alt: @user.user_name
+    = @user.user_name
 
-= image_tag @user.image.url(:span3), class: 'span3'
+= render partial: 'shared/sidebar_user', locals: {user_show: @user, user_current: current_user}
 
-.span9
-  %h1= @user.user_name
+- if @user_audio_event_comments.empty?
+  No annotation comments to show.
+- else
+  %p= page_entries_info @user_audio_event_comments
+  = paginate @user_audio_event_comments
 
-.span12
-  %h3 Annotation Comments
+  %table.table.table-striped.table-hover
+    %thead
+      %tr
+        %th
+          %span.fa.fa-map-marker{aria: {hidden: 'true' }}
+          Site
+        %th
+          %span.fa.fa-calendar{aria: {hidden: 'true' }}
+          Updated
+        %th
+          %span.fa.fa-comment{aria: {hidden: 'true' }}
+          Comment
 
-  - if @user_audio_event_comments.empty?
-    = 'No annotation comments to show.'
-  - else
-    = page_entries_info @user_audio_event_comments
-    = will_paginate @user_audio_event_comments, renderer: BawWillPaginateLinkRenderer
-
-    %table.table.table-striped(data-provides='rowlink')
-      %thead
-        %tr
-          %th Comment
-          %th Annotation Comment Count
-          %th
-
-      %tbody
-      - @user_audio_event_comments.each do |aec|
-        %tr
-          %td= link_to aec.comment, make_library_path(aec.audio_event)
-          %td= AudioEventComment.where(audio_event_id: aec.audio_event_id).count
-          %td.nolink
-            = link_to make_library_path(aec.audio_event), class: 'btn btn-mini' do
-              %i{class: 'fa fa-flag'}
-              Annotation
-            = link_to make_listen_path(aec.audio_event), class: 'btn btn-mini' do
-              %i{class: 'fa fa-play'}
-              Play
-
-- content_for :title, "Comments by #{@user.user_name}"
-
-- content_for :left_sidebar do
-  = render partial: 'sidebar_links'
+    %tbody
+    - @user_audio_event_comments.each do |aec|
+      - if !aec.blank?
+        - listen_link = make_listen_path(aec.audio_event)
+        - library_link = make_library_path(aec.audio_event)
+        - site_name = aec.audio_event.audio_recording.site.name
+      %tr
+        %td= site_name
+        %td= format_sidebar_datetime(aec.updated_at)
+        %td= truncate(aec.comment, length: 50)
+        %td
+          = link_to listen_link, target: '_self', class: 'btn btn-default btn-xs' do
+            %span.fa.fa-play{aria: {hidden: 'true'}}
+            Play
+          = link_to library_link, target: '_self', class: 'btn btn-default btn-xs' do
+            %span.fa.fa-bullseye{aria: {hidden: 'true'}}
+            Annotation

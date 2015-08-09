@@ -29,13 +29,13 @@ describe 'MANAGE Scripts as admin user', :type => :feature do
     fill_in 'script[executable_command]', with: 'command'
     fill_in 'script[executable_settings]', with: 'settings'
 
-    click_button 'Create Script'
+    click_button 'Submit'
     expect(page).to have_content('test name')
   end
 
   it 'Fails to create new script when filling out form incomplete' do
     visit new_script_path
-    click_button 'Create Script'
+    click_button 'Submit'
     #save_and_open_page
     expect(page).to have_content('Please review the problems below:')
   end
@@ -51,7 +51,7 @@ describe 'MANAGE Scripts as admin user', :type => :feature do
     fill_in 'script[executable_command]', with: 'command'
     fill_in 'script[executable_settings]', with: 'settings'
 
-    click_button 'Update Script'
+    click_button 'Submit'
     expect(page).to have_content('test name')
   end
 

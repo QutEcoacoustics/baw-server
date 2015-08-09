@@ -49,26 +49,19 @@ gem 'haml-rails', '~> 0.9.0'
 
 gem 'simple_form', '~> 3.1.0'
 gem 'paperclip', '~> 4.3.0'
-gem 'breadcrumbs_on_rails', '~> 2.3.0'
 # kept below version 2 due to huge breaking changes
 gem 'gmaps4rails', '< 2'
 
-# https://github.com/seyhunak/twitter-bootstrap-rails
-# huge changes since last release (2.2.8 in Aug 2013), and not sure about rails 3.2 vs 4 support.
-# used these commands to get lists of commits, then compared the commits to find the most recent matching commit
-# git grep --full-name --name-only 'bootstrap-affix.js v2.3.2' $(git rev-list --all) > tbsr-2.3.2-find.txt
-# git grep --full-name --name-only '.fa-play' $(git rev-list --all) > font-awesome-find.txt
+# Bootstrap UI
+gem 'bootstrap-sass', '~> 3.3.4'
+# for sass variables: http://getbootstrap.com/customize/#less-variables
+# sprockets-rails gem is included via rails dependency
+gem 'font-awesome-sass', '~> 4.3.0'
 
-# Don't update this, as site still uses bootstrap v2. Need to update this when bootstrap is updated.
-# https://github.com/seyhunak/twitter-bootstrap-rails/tree/38476dbd7f9a99179388bffb101826d844029949
-gem 'twitter-bootstrap-rails', git: 'https://github.com/seyhunak/twitter-bootstrap-rails.git', branch: :master, ref: '38476dbd7f'
-
-gem 'bootstrap-timepicker-rails', '~> 0.1.3'
-gem 'bootstrap-datepicker-rails', '~> 1.4.0'
 # for rails 3, 4
-gem 'will_paginate', '~> 3.0.7'
-gem 'dotiw', '~> 3.0.1'
-gem 'recaptcha', '~> 0.4.0', require: 'recaptcha/rails'
+gem 'kaminari'
+gem 'dotiw','~> 3.0.1'
+gem 'recaptcha', '~> 0.4.0',  require: 'recaptcha/rails'
 
 # for proper timezone support
 gem 'tzinfo', '~> 1.2.2'
@@ -79,6 +72,7 @@ gem 'tzinfo-data', '~> 1.2015.1'
 # https://github.com/plataformatec/devise/blob/master/CHANGELOG.md
 # http://joanswork.com/devise-3-1-update/
 gem 'devise', '~> 3.5.1'
+gem 'devise-i18n'
 gem 'cancancan', '~> 1.12.0'
 gem 'role_model', '~> 0.8.1'
 # Use ActiveModel has_secure_password
@@ -151,7 +145,7 @@ group :development, :test do
   gem 'capistrano-passenger', '~> 0.1.0'
 
   gem 'rack-mini-profiler', '~> 0.9.2'
-  gem 'rails-i18n-debug', '~> 1.0.1'
+  gem 'i18n-tasks', '~> 0.8.5'
   gem 'bullet', '~> 4.14.1'
 
   # Spring speeds up development by keeping your application running in the background. Read more: https://github.com/rails/spring
@@ -166,7 +160,7 @@ group :development, :test do
   gem 'thin', '~> 1.6.3'
 
   gem 'notiffany', '~> 0.0.3'
-  gem 'guard', '~> 2.12.1'
+  gem 'guard', '~> 2.13.0'
   gem 'guard-rspec', '~> 4.6.0'
   gem 'guard-yard', '~> 2.1.4', require: false
   gem 'rubocop', require: false
@@ -205,7 +199,11 @@ group :development, :test do
   gem 'launchy', '~> 2.4.3'
   gem 'json_spec', '~> 1.1.4'
   gem 'database_cleaner', '1.4.1'
-  gem 'webmock', '~> 1.21.0'
+
   gem 'coveralls', '~> 0.8.1', require: false
   gem 'codeclimate-test-reporter', '~> 0.4.5', require: nil
+end
+
+group :test do
+  gem 'webmock', '~> 1.21.0'
 end

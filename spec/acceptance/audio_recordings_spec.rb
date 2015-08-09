@@ -402,7 +402,7 @@ resource 'AudioRecordings' do
     parameter :site_id, 'Requested site ID (in path/route)', required: true
 
     let(:authentication_token) { "Token token=\"INVALID\"" }
-    standard_request('LIST (with invalid token)', 401, 'meta/error/links/sign in', true)
+    standard_request('LIST (with invalid token)', 401, get_json_error_path(:sign_up), true)
   end
 
   ################################
@@ -435,7 +435,7 @@ resource 'AudioRecordings' do
 
     let(:authentication_token) { no_access_token }
 
-    standard_request('SHOW (as no access, with shallow path)', 403, 'meta/error/links/request permissions', true)
+    standard_request('SHOW (as no access, with shallow path)', 403, get_json_error_path(:permissions), true)
   end
 
   get '/audio_recordings/:id' do
@@ -543,7 +543,7 @@ resource 'AudioRecordings' do
     parameter :original_file_name, '', scope: :audio_recording, :required => true
     parameter :uploader_id, 'The id of the user who uploaded the audio recording. User must have write access to the project.', scope: :audio_recording, :required => true
 
-    file_hash = "SHA256::c110884206d25a83dd6d4c741861c429c10f99df9102863dde772f149387d891"
+    file_hash = MiscHelper.new.create_sha_256_hash('c110884206d25a83dd6d4c741861c429c10f99df9102863dde772f149387d891')
     original_file_name = 'testing.mp3'
     recorded_date = '2014-01-01 12:00:00Z'
     data_length_bytes = 9999
@@ -627,7 +627,7 @@ resource 'AudioRecordings' do
 
     standard_request_options(:post, 'CREATE (as writer)', :forbidden,
                              {
-                                 expected_json_path: 'meta/error/links/request permissions',
+                                 expected_json_path: get_json_error_path(:permissions),
                                  respond_body_content: I18n.t('devise.failure.unauthorized')
                              }
     )
@@ -644,7 +644,7 @@ resource 'AudioRecordings' do
 
     standard_request_options(:post, 'CREATE (as reader)', :forbidden,
                              {
-                                 expected_json_path: 'meta/error/links/request permissions',
+                                 expected_json_path: get_json_error_path(:permissions),
                                  respond_body_content: '"You do not have sufficient permissions to access this page."'
                              }
     )
@@ -871,7 +871,7 @@ resource 'AudioRecordings' do
 
     standard_request_options(:put, 'UPDATE STATUS (writer)', :forbidden,
                              {
-                                 expected_json_path: 'meta/error/links/request permissions',
+                                 expected_json_path: get_json_error_path(:permissions),
                                  respond_body_content: I18n.t('devise.failure.unauthorized')
                              }
     )
@@ -894,7 +894,7 @@ resource 'AudioRecordings' do
     let(:authentication_token) { reader_token }
     standard_request_options(:put, 'UPDATE STATUS (as reader)', :forbidden,
                              {
-                                 expected_json_path: 'meta/error/links/request permissions',
+                                 expected_json_path: get_json_error_path(:permissions),
                                  respond_body_content: I18n.t('devise.failure.unauthorized')
                              }
     )
@@ -949,7 +949,7 @@ resource 'AudioRecordings' do
     let(:id) { update_harvester_audio_recording.id }
 
     changed_details = {
-        file_hash: 'SHA256::something'
+        file_hash: MiscHelper.new.create_sha_256_hash
     }
 
     let(:raw_post) { changed_details.to_json }

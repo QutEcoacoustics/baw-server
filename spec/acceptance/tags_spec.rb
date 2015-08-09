@@ -64,7 +64,7 @@ resource 'Tags' do
     parameter :audio_event_id, 'Requested audio event ID (in path/route)', required: true
 
     let(:authentication_token) { unconfirmed_token }
-    standard_request_options(:get, 'LIST for audio_event (as unconfirmed user)', :forbidden, {expected_json_path: 'meta/error/links/confirm your account'})
+    standard_request_options(:get, 'LIST for audio_event (as unconfirmed user)', :forbidden, {expected_json_path: get_json_error_path(:confirm)})
   end
 
   get '/tags' do
@@ -129,7 +129,7 @@ resource 'Tags' do
 
     let(:authentication_token) { unconfirmed_token }
     # TODO: check what the result should be
-    standard_request_options(:post, 'CREATE (as unconfirmed user)', :forbidden, {expected_json_path: 'meta/error/links/confirm your account'})
+    standard_request_options(:post, 'CREATE (as unconfirmed user)', :forbidden, {expected_json_path: get_json_error_path(:confirm)})
   end
 
   #####################

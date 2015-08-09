@@ -61,7 +61,7 @@ resource 'Errors' do
   end
 
   get '/test_exceptions?exception_class=CanCan::AccessDenied' do
-    standard_request('ERROR', 401, 'meta/error/links/confirm your account', true, 'sign_in')
+    standard_request('ERROR', 401, get_json_error_path(:confirm), true, 'sign_in')
   end
 
   get '/test_exceptions?exception_class=CustomErrors::RoutingArgumentError' do

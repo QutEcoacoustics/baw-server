@@ -4,7 +4,8 @@ describe SitesController, :type => :routing do
   describe :routing do
 
     it { expect(get('projects/1/sites/1/upload_instructions')).to route_to('sites#upload_instructions', id: '1', project_id: '1') }
-    it { expect(get('projects/1/sites/1/harvest')).to route_to('sites#harvest', id: '1', project_id: '1', format: 'yml') }
+    it { expect(get('projects/1/sites/1/harvest')).to route_to('sites#harvest', id: '1', project_id: '1') }
+    it { expect(get('projects/1/sites/1/harvest.yml')).to route_to('sites#harvest', id: '1', project_id: '1', format: 'yml') }
 
     it { expect(post('projects/1/sites')).to route_to('sites#create', project_id: '1') }
     it { expect(get('projects/1/sites/new')).to route_to('sites#new', project_id: '1') }

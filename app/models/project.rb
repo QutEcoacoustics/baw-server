@@ -43,8 +43,12 @@ class Project < ActiveRecord::Base
         render_fields: [:id, :name, :description, :creator_id],
         text_fields: [:name, :description],
         custom_fields: lambda { |project, user|
+
+          # do a query for the attributes that may not be in the projection
+          fresh_project = Project.find(project.id)
+
           project_hash = {}
-          project_hash[:site_ids] = Project.find(project.id).sites.pluck(:id)
+          project_hash[:site_ids] = fresh_project.sites.pluck(:id)
 
           [project, project_hash]
         },

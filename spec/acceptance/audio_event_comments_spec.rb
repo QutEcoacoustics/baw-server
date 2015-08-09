@@ -89,9 +89,9 @@ resource 'AudioEventComments' do
   get '/audio_events/:audio_event_id/comments' do
     parameter :audio_event_id, 'Requested audio event id (in path/route)', required: true
     let(:audio_event_id) { @comment_user.audio_event_id }
-    let(:expected_unordered_ids) { AudioEventComment.pluck(:id) }
+    let(:expected_unordered_ids) { AudioEventComment.where(audio_event_id: @comment_user.audio_event_id).pluck(:id) }
     let(:authentication_token) { admin_token }
-    standard_request_options(:get, 'LIST (as admin)', :ok, {expected_json_path: 'data/0/comment', data_item_count: 5})
+    standard_request_options(:get, 'LIST (as admin)', :ok, {expected_json_path: 'data/0/comment', data_item_count: 3})
   end
 
   get '/audio_events/:audio_event_id/comments' do
@@ -114,21 +114,21 @@ resource 'AudioEventComments' do
     parameter :audio_event_id, 'Requested audio event id (in path/route)', required: true
     let(:audio_event_id) { @comment_user.audio_event_id }
     let(:authentication_token) { other_user_token }
-    standard_request_options(:get, 'LIST (as other token, user comment)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
+    standard_request_options(:get, 'LIST (as other token, user comment)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
   end
 
   get '/audio_events/:audio_event_id/comments' do
     parameter :audio_event_id, 'Requested audio event id (in path/route)', required: true
     let(:audio_event_id) { @comment_user.audio_event_id }
     let(:authentication_token) { unconfirmed_token }
-    standard_request_options(:get, 'LIST (as unconfirmed_token)', :forbidden, {expected_json_path: 'meta/error/links/confirm your account'})
+    standard_request_options(:get, 'LIST (as unconfirmed_token)', :forbidden, {expected_json_path: get_json_error_path(:confirm)})
   end
 
   get '/audio_events/:audio_event_id/comments' do
     parameter :audio_event_id, 'Requested audio event id (in path/route)', required: true
     let(:audio_event_id) { @comment_user.audio_event_id }
     let(:authentication_token) { invalid_token }
-    standard_request_options(:get, 'LIST (as invalid user)', :unauthorized, {expected_json_path: 'meta/error/links/sign in'})
+    standard_request_options(:get, 'LIST (as invalid user)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
   end
 
   ################################
@@ -171,7 +171,7 @@ resource 'AudioEventComments' do
     let(:audio_event_id) { @comment_user.audio_event_id }
     let(:raw_post) { {audio_event_comment: post_attributes}.to_json }
     let(:authentication_token) { other_user_token }
-    standard_request_options(:post, 'CREATE (as other token)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
+    standard_request_options(:post, 'CREATE (as other token)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
   end
 
   post '/audio_events/:audio_event_id/comments' do
@@ -179,7 +179,7 @@ resource 'AudioEventComments' do
     let(:audio_event_id) { @comment_user.audio_event_id }
     let(:raw_post) { {audio_event_comment: post_attributes}.to_json }
     let(:authentication_token) { unconfirmed_token }
-    standard_request_options(:post, 'CREATE (as unconfirmed user)', :forbidden, {expected_json_path: 'meta/error/links/confirm your account'})
+    standard_request_options(:post, 'CREATE (as unconfirmed user)', :forbidden, {expected_json_path: get_json_error_path(:confirm)})
   end
 
   post '/audio_events/:audio_event_id/comments' do
@@ -187,7 +187,7 @@ resource 'AudioEventComments' do
     let(:audio_event_id) { @comment_user.audio_event_id }
     let(:raw_post) { {audio_event_comment: post_attributes}.to_json }
     let(:authentication_token) { invalid_token }
-    standard_request_options(:post, 'CREATE (as invalid user)', :unauthorized, {expected_json_path: 'meta/error/links/sign in'})
+    standard_request_options(:post, 'CREATE (as invalid user)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
   end
 
   ################################
@@ -235,7 +235,7 @@ resource 'AudioEventComments' do
     let(:audio_event_id) { @comment_user.audio_event_id }
     let(:id) { @comment_user.id }
     let(:authentication_token) { other_user_token }
-    standard_request_options(:get, 'SHOW (as other user)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
+    standard_request_options(:get, 'SHOW (as other user)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
   end
 
   get '/audio_events/:audio_event_id/comments/:id' do
@@ -244,7 +244,7 @@ resource 'AudioEventComments' do
     let(:audio_event_id) { @comment_writer.audio_event_id }
     let(:id) { @comment_writer.id }
     let(:authentication_token) { other_user_token }
-    standard_request_options(:get, 'SHOW (as other user showing writer comment)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
+    standard_request_options(:get, 'SHOW (as other user showing writer comment)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
   end
 
   get '/audio_events/:audio_event_id/comments/:id' do
@@ -253,7 +253,7 @@ resource 'AudioEventComments' do
     let(:audio_event_id) { @other_comment.audio_event_id }
     let(:id) { @other_comment.id }
     let(:authentication_token) { user_token }
-    standard_request_options(:get, 'SHOW (as user showing other comment)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
+    standard_request_options(:get, 'SHOW (as user showing other comment)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
   end
 
   get '/audio_events/:audio_event_id/comments/:id' do
@@ -262,7 +262,7 @@ resource 'AudioEventComments' do
     let(:audio_event_id) { @comment_user.audio_event_id }
     let(:id) { @comment_user.id }
     let(:authentication_token) { unconfirmed_token }
-    standard_request_options(:get, 'SHOW (as unconfirmed user)', :forbidden, {expected_json_path: 'meta/error/links/confirm your account'})
+    standard_request_options(:get, 'SHOW (as unconfirmed user)', :forbidden, {expected_json_path: get_json_error_path(:confirm)})
   end
 
   get '/audio_events/:audio_event_id/comments/:id' do
@@ -271,7 +271,7 @@ resource 'AudioEventComments' do
     let(:audio_event_id) { @comment_user.audio_event_id }
     let(:id) { @comment_user.id }
     let(:authentication_token) { invalid_token }
-    standard_request_options(:get, 'SHOW (as invalid user)', :unauthorized, {expected_json_path: 'meta/error/links/sign in'})
+    standard_request_options(:get, 'SHOW (as invalid user)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
   end
 
   ################################
@@ -284,7 +284,7 @@ resource 'AudioEventComments' do
     let(:id) { @comment_user.id }
     let(:raw_post) { {audio_event_comment: post_attributes}.to_json }
     let(:authentication_token) { writer_token }
-    standard_request_options(:put, 'UPDATE (as writer)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
+    standard_request_options(:put, 'UPDATE (as writer)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
   end
 
   put '/audio_events/:audio_event_id/comments/:id' do
@@ -294,7 +294,7 @@ resource 'AudioEventComments' do
     let(:id) { @comment_user.id }
     let(:raw_post) { {audio_event_comment: post_attributes}.to_json }
     let(:authentication_token) { reader_token }
-    standard_request_options(:put, 'UPDATE (as reader)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
+    standard_request_options(:put, 'UPDATE (as reader)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
   end
 
   put '/audio_events/:audio_event_id/comments/:id' do
@@ -324,7 +324,7 @@ resource 'AudioEventComments' do
     let(:id) { @comment_user.id }
     let(:raw_post) { {audio_event_comment: post_attributes}.to_json }
     let(:authentication_token) { other_user_token }
-    standard_request_options(:put, 'UPDATE (as other user)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
+    standard_request_options(:put, 'UPDATE (as other user)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
   end
 
   put '/audio_events/:audio_event_id/comments/:id' do
@@ -334,7 +334,7 @@ resource 'AudioEventComments' do
     let(:id) { @comment_user.id }
     let(:raw_post) { {audio_event_comment: post_attributes}.to_json }
     let(:authentication_token) { unconfirmed_token }
-    standard_request_options(:put, 'UPDATE (as unconfirmed user)', :forbidden, {expected_json_path: 'meta/error/links/confirm your account'})
+    standard_request_options(:put, 'UPDATE (as unconfirmed user)', :forbidden, {expected_json_path: get_json_error_path(:confirm)})
   end
 
   put '/audio_events/:audio_event_id/comments/:id' do
@@ -344,7 +344,7 @@ resource 'AudioEventComments' do
     let(:id) { @comment_user.id }
     let(:raw_post) { {audio_event_comment: post_attributes}.to_json }
     let(:authentication_token) { invalid_token }
-    standard_request_options(:put, 'UPDATE (as invalid user)', :unauthorized, {expected_json_path: 'meta/error/links/sign in'})
+    standard_request_options(:put, 'UPDATE (as invalid user)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
   end
 
   # user can only update their own comments
@@ -355,7 +355,7 @@ resource 'AudioEventComments' do
     let(:id) { @comment_writer.id }
     let(:raw_post) { {audio_event_comment: post_attributes}.to_json }
     let(:authentication_token) { user_token }
-    standard_request_options(:put, 'UPDATE (as user updating comment created by writer)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
+    standard_request_options(:put, 'UPDATE (as user updating comment created by writer)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
   end
 
   put '/audio_events/:audio_event_id/comments/:id' do
@@ -387,7 +387,7 @@ resource 'AudioEventComments' do
     let(:audio_event_id) { @comment_user.audio_event_id }
     let(:id) { @comment_user.id }
     let(:authentication_token) { writer_token }
-    standard_request_options(:delete, 'DESTROY (as writer)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
+    standard_request_options(:delete, 'DESTROY (as writer)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
   end
 
   delete '/audio_events/:audio_event_id/comments/:id' do
@@ -396,7 +396,7 @@ resource 'AudioEventComments' do
     let(:audio_event_id) { @comment_user.audio_event_id }
     let(:id) { @comment_user.id }
     let(:authentication_token) { reader_token }
-    standard_request_options(:delete, 'DESTROY (as reader)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
+    standard_request_options(:delete, 'DESTROY (as reader)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
   end
 
   delete '/audio_events/:audio_event_id/comments/:id' do
@@ -423,7 +423,7 @@ resource 'AudioEventComments' do
     let(:audio_event_id) { @comment_user.audio_event_id }
     let(:id) { @comment_user.id }
     let(:authentication_token) { other_user_token }
-    standard_request_options(:delete, 'DESTROY (as other user)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
+    standard_request_options(:delete, 'DESTROY (as other user)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
   end
 
   delete '/audio_events/:audio_event_id/comments/:id' do
@@ -432,7 +432,7 @@ resource 'AudioEventComments' do
     let(:audio_event_id) { @comment_user.audio_event_id }
     let(:id) { @comment_user.id }
     let(:authentication_token) { unconfirmed_token }
-    standard_request_options(:delete, 'DESTROY (as unconfirmed user)', :forbidden, {expected_json_path: 'meta/error/links/confirm your account'})
+    standard_request_options(:delete, 'DESTROY (as unconfirmed user)', :forbidden, {expected_json_path: get_json_error_path(:confirm)})
   end
 
   delete '/audio_events/:audio_event_id/comments/:id' do
@@ -441,7 +441,7 @@ resource 'AudioEventComments' do
     let(:audio_event_id) { @comment_user.audio_event_id }
     let(:id) { @comment_user.id }
     let(:authentication_token) { invalid_token }
-    standard_request_options(:delete, 'DESTROY (as invalid user)', :unauthorized, {expected_json_path: 'meta/error/links/sign in'})
+    standard_request_options(:delete, 'DESTROY (as invalid user)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
   end
 
   # users can only delete their own comments
@@ -451,7 +451,7 @@ resource 'AudioEventComments' do
     let(:audio_event_id) { @comment_writer.audio_event_id }
     let(:id) { @comment_writer.id }
     let(:authentication_token) { user_token }
-    standard_request_options(:delete, 'DESTROY (as user deleting comment created by writer)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
+    standard_request_options(:delete, 'DESTROY (as user deleting comment created by writer)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
   end
 
   #####################

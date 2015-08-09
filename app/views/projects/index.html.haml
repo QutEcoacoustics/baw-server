@@ -1,20 +1,48 @@
-%h1 Projects
+- content_for :title, t('baw.shared.links.projects.title')
+
+= render partial: 'shared/sidebar_project'
+
+- content_for :right_sidebar do
+  = render partial: 'shared/sidebar_metadata_heading', locals: {title: 'Projects', icon_class: 'home'}
 
 - @projects.each_slice(2) do |projects|
-  %ul.thumbnails
-    .row-fluid
-      - projects.each do |project|
-        = render partial: 'projects/project_thumb_large', locals: {project: project}
+  .row
+    - projects.each do |project|
+      .col-sm-6.col-xs-12
+        .thumbnail.clearfix
+          %a.pull-left{href: project_path(project), style:'margin-right:10px;'}
+            %img{src: project.image.url(:span2), alt: project.name}/
+          .caption
+            %h4{style: 'margin-top:0'}
+              %a{href: project_path(project)}= project.name
+            %p= truncate(project.description, length: 50)
+
+            %ul.nav.nav-pills{style: 'position:absolute; bottom:25px; right:20px;'}
+              %li
+                - level = Access::Level.project(current_user, project)
+                - permission_title = 'No access'
+                - permission_title = 'You are an owner' if level == :owner
+                - permission_title = 'You have read & write access' if level == :writer
+                - permission_title = 'You have read only access' if level == :reader
+                - permission_icon = [:owner, :writer].include?(level) ? 'fa-unlock' : 'fa-lock'
+                %a{href: '#', onclick: 'return false;', style: 'cursor: default;',
+                data: {toggle:'tooltip',  placement: 'top'},  title: permission_title}
+                  %span.fa{class: permission_icon, aria: {hidden: 'true' }}
+              %li
+                %a{href: project_path(project)}
+                  %span.fa.fa-info-circle{aria: {hidden: 'true' }}
+                  Details
+              %li
+                %a{href: make_visualise_path(project)}
+                  %span.fa.fa-eye{aria: {hidden: 'true' }}
+                  Visualise
+
 - if @projects.empty?
   %p
     You do not have access to any projects. Try
     = link_to 'requesting access', new_access_request_projects_path
     to a project.
 
-- content_for :title, 'Projects'
 
-- content_for :left_sidebar do
-  = render layout: '/shared/left_sidebar', locals: {title: 'Projects'} do
-    %li= link_to 'Create New Project', new_project_path,  title: "Create a new project", data: {toggle: 'tooltip',  placement: 'right'}
-    %li= link_to 'Request Access', new_access_request_projects_path,  title: "Request access to a project not listed here", data: {toggle: 'tooltip',  placement: 'right'}
-    %li= link_to 'Upload Audio', data_upload_path,  title: 'Information for adding audio', data: {toggle: 'tooltip',  placement: 'right'}
+
+

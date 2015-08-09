@@ -33,7 +33,7 @@ describe 'CRUD Projects as valid user with write permission', :type => :feature 
     fill_in 'project[description]', with: 'description'
     fill_in 'project[notes]', with: 'notes'
     attach_file('project[image]', 'public/images/user/user-512.png')
-    click_button 'Create Project'
+    click_button 'Submit'
     #save_and_open_page
     expect(page).to have_content('test name')
     expect(page).to have_content('Project was successfully created.')
@@ -41,7 +41,7 @@ describe 'CRUD Projects as valid user with write permission', :type => :feature 
 
   it 'Fails to create new project when filling out form incomplete' do
     visit new_project_path
-    click_button 'Create Project'
+    click_button 'Submit'
     #save_and_open_page
     expect(page).to have_content('Please review the problems below:')
   end
@@ -53,7 +53,7 @@ describe 'CRUD Projects as valid user with write permission', :type => :feature 
     fill_in 'project[description]', with: 'description'
     fill_in 'project[notes]', with: 'notes'
     attach_file('project[image]', 'public/images/user/user-512.png')
-    click_button 'Update Project'
+    click_button 'Submit'
     expect(page).to have_content('test name')
   end
 
@@ -61,7 +61,7 @@ describe 'CRUD Projects as valid user with write permission', :type => :feature 
     visit edit_project_path(@permission.project)
     #save_and_open_page
     fill_in 'project[name]', with: ''
-    click_button 'Update Project'
+    click_button 'Submit'
     expect(page).to have_content('Please review the problems below:')
     expect(page).to have_content('can\'t be blank')
   end
@@ -96,7 +96,7 @@ describe 'CRUD Projects as valid user and project creator', :type => :feature do
     fill_in 'project[description]', with: 'description'
     fill_in 'project[notes]', with: 'notes'
     attach_file('project[image]', 'public/images/user/user-512.png')
-    click_button 'Create Project'
+    click_button 'Submit'
     #save_and_open_page
     expect(page).to have_content('test name')
     expect(page).to have_content('Project was successfully created.')
@@ -109,7 +109,7 @@ describe 'CRUD Projects as valid user and project creator', :type => :feature do
     fill_in 'project[description]', with: 'description'
     fill_in 'project[notes]', with: 'notes'
     attach_file('project[image]', 'public/images/user/user-512.png')
-    click_button 'Update Project'
+    click_button 'Submit'
     expect(page).to have_content('test name')
   end
 
@@ -142,7 +142,7 @@ describe 'CRUD Projects as valid user with read permission', :type => :feature d
     fill_in 'project[description]', with: 'description'
     fill_in 'project[notes]', with: 'notes'
     attach_file('project[image]', 'public/images/user/user-512.png')
-    click_button 'Create Project'
+    click_button 'Submit'
     #save_and_open_page
     expect(page).to have_content('test name')
     expect(page).to have_content('Project was successfully created.')
@@ -182,7 +182,7 @@ describe 'CRUD Projects as valid user with no permissions', :type => :feature do
     fill_in 'project[description]', with: 'description'
     fill_in 'project[notes]', with: 'notes'
     attach_file('project[image]', 'public/images/user/user-512.png')
-    click_button 'Create Project'
+    click_button 'Submit'
     #save_and_open_page
     expect(page).to have_content('test name')
     expect(page).to have_content('Project was successfully created.')

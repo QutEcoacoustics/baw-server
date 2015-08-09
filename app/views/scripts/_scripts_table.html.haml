@@ -1,6 +1,4 @@
--# plugin turns a table row into a clickable link
--# http://jasny.github.io/bootstrap/javascript.html#rowlink
-%table.table.table-striped.table-condensed(data-provides='rowlink')
+%table.table.table-striped.table-hover
   %thead
     %tr
       %th Name
@@ -16,5 +14,6 @@
       %td= script.analysis_identifier
       %td= truncate(script.executable_command)
       %td.nolink
-        = link_to edit_script_path(script), class: 'btn btn-mini btn-edit' do
-          Create new version
+        = link_to edit_script_path(script), class: 'btn btn-default btn-xs' do
+          %span.fa.fa-plus-square-o
+          New version

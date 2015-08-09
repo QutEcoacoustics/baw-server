@@ -1,13 +1,11 @@
-= f.error_notification
-
-.form-inputs
+-# locals: f, script
+= field_set_tag do
+  = f.error_notification
   = f.input :name
   = f.input :description, input_html: {rows: '3'}
   = f.input :analysis_identifier
   = f.input :version
   = f.input :executable_command, input_html: {rows: '3'}
   = f.input :executable_settings, input_html: {rows: '3'}
-  = f.input :verified
-
-.form-actions
-  = f.button :submit
+  = f.input :verified, wrapper: :horizontal_boolean
+  = f.button :submit_cancel, 'Submit', class: 'btn btn-default'

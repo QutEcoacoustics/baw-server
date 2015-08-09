@@ -1,7 +1,8 @@
-- content_for :title, 'Upload Audio'
+- content_for :title, t('baw.shared.links.upload_audio.title')
+
+= render partial: 'shared/sidebar_public', locals: {user_show: @user, user_current: current_user}
 
 - if File.exists? "#{Rails.root}/app/views/public/_data_upload.html.haml"
   = render partial: 'public/data_upload'
 - else
-  %h1 Upload Audio
-  %p No upload instructions are available.
+  %p No instructions are available.

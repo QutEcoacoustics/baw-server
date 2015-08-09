@@ -2,6 +2,21 @@
 
 ## Unreleased
 
+ - 2015-08-08
+    - Changed audio tool defaults for media and timeouts
+    - Fix duplication due to projects-sites many to many relation [#226](https://github.com/QutBioacoustics/baw-server/issues/226) [#133](https://github.com/QutBioacoustics/baw-server/issues/219)
+
+ - 2015-07-31
+    - Updated bootstrap from v2.3 to v3.3 [#133](https://github.com/QutBioacoustics/baw-server/issues/133)
+    - Changes to Harvesting and Audio pages [#228](https://github.com/QutBioacoustics/baw-server/issues/228)
+    - Improvements to annotation download csv [#227](https://github.com/QutBioacoustics/baw-server/issues/227)
+
+ - 2015-07-26
+    - Fixed a bug in user_accounts#filter where I tried to access model attributes that weren't loaded
+
+ - 2015-07-08
+    - Changes to media polling to reduce the number of errors raised. 
+
  - 2015-07-06
     - enable sorting on custom fields [#220](https://github.com/QutBioacoustics/baw-server/issues/220)
     - fixed site page loading slowly [#222](https://github.com/QutBioacoustics/baw-server/issues/222)

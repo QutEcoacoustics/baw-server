@@ -181,6 +181,37 @@ module Api
       response(params, query, model, filter_settings)
     end
 
+    # Get error links hash.
+    # @return [Hash] links hash
+    def error_links_hash
+      {
+          sign_in: {
+              text: I18n.t('devise.sessions.new.sign_in'),
+              url: url_helpers.new_user_session_path
+          },
+          sign_up: {
+              text: I18n.t('devise.registrations.new.sign_up'),
+              url: url_helpers.new_user_registration_path
+          },
+          permissions: {
+              text: I18n.t('models.permissions.request_permissions'),
+              url: url_helpers.new_access_request_projects_path
+          },
+          confirm: {
+              text: I18n.t('devise.shared.links.confirm_account'),
+              url: url_helpers.new_user_confirmation_path
+          },
+          reset_password: {
+              text: I18n.t('devise.shared.links.reset_password'),
+              url: url_helpers.new_user_password_path
+          },
+          resend_unlock: {
+              text: I18n.t('devise.shared.links.unlock_account'),
+              url: url_helpers.new_user_unlock_path
+          }
+      }
+    end
+
     private
 
     # Create and execute a query based on a filter request.
@@ -324,37 +355,6 @@ module Api
       end
 
       url_helpers.url_for(link_params)
-    end
-
-    # Get error links hash.
-    # @return [Hash] links hash
-    def error_links_hash
-      {
-          sign_in: {
-              text: 'sign in',
-              url: url_helpers.new_user_session_path
-          },
-          sign_up: {
-              text: 'sign up',
-              url: url_helpers.new_user_registration_path
-          },
-          permissions: {
-              text: 'request permissions',
-              url: url_helpers.new_access_request_projects_path
-          },
-          confirm: {
-              text: 'confirm your account',
-              url: url_helpers.new_user_confirmation_path
-          },
-          reset_password: {
-              text: 'reset your password',
-              url: url_helpers.new_user_password_path
-          },
-          resend_unlock: {
-              text: 'resend unlock instructions',
-              url: url_helpers.new_user_unlock_path
-          }
-      }
     end
 
   end

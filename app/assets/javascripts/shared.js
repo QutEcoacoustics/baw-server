@@ -1,6 +1,3 @@
 $(document).ready(function () {
-    $('a').tooltip();
-});
-$(document).ready(function () {
-    $('i').tooltip();
+    $('body').tooltip({ selector: "[data-toggle~='tooltip']"})
 });

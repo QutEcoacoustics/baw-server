@@ -44,17 +44,17 @@ resource 'Users' do
   ################################
   get '/user_accounts' do
     let(:authentication_token) { writer_token }
-    standard_request_options(:get, 'LIST (as writer)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
+    standard_request_options(:get, 'LIST (as writer)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
   end
 
   get '/user_accounts' do
     let(:authentication_token) { reader_token }
-    standard_request_options(:get, 'LIST (as writer)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
+    standard_request_options(:get, 'LIST (as writer)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
   end
 
   get '/user_accounts' do
     let(:authentication_token) { "Token token=\"INVALID TOKEN\"" }
-    standard_request_options(:get, 'LIST (as writer)', :unauthorized, {expected_json_path: 'meta/error/links/sign in'})
+    standard_request_options(:get, 'LIST (as writer)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
   end
 
   ################################
@@ -83,7 +83,7 @@ resource 'Users' do
     parameter :id, 'Requested user ID (in path/route)', required: true
     let(:id) { writer_id }
     let(:authentication_token) { "Token token=\"INVALID TOKEN\"" }
-    standard_request_options(:get, 'SHOW (with invalid token)', :unauthorized, {expected_json_path: 'meta/error/links/sign in'})
+    standard_request_options(:get, 'SHOW (with invalid token)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
   end
 
   get '/my_account' do
@@ -93,7 +93,7 @@ resource 'Users' do
 
   get '/my_account' do
     let(:authentication_token) { "Token token=\"INVALID TOKEN\"" }
-    standard_request_options(:get, 'MY ACCOUNT (as reader; invalid token)', :unauthorized, {expected_json_path: 'meta/error/links/sign in'})
+    standard_request_options(:get, 'MY ACCOUNT (as reader; invalid token)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
   end
 
   ################################
@@ -104,7 +104,7 @@ resource 'Users' do
     let(:id) { writer_id }
     let(:raw_post) { {user: post_attributes}.to_json }
     let(:authentication_token) { writer_token }
-    standard_request_options(:put, 'UPDATE (as same user - writer)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
+    standard_request_options(:put, 'UPDATE (as same user - writer)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
   end
 
   put '/user_accounts/:id' do
@@ -112,7 +112,7 @@ resource 'Users' do
     let(:id) { reader_id }
     let(:raw_post) { {user: post_attributes}.to_json }
     let(:authentication_token) { reader_token }
-    standard_request_options(:put, 'UPDATE (as same user - reader)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
+    standard_request_options(:put, 'UPDATE (as same user - reader)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
   end
 
   put '/user_accounts/:id' do
@@ -120,7 +120,7 @@ resource 'Users' do
     let(:id) { other_id }
     let(:raw_post) { {user: post_attributes}.to_json }
     let(:authentication_token) { writer_token }
-    standard_request_options(:put, 'UPDATE (as other user)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
+    standard_request_options(:put, 'UPDATE (as other user)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
   end
 
   put '/user_accounts/:id' do
@@ -156,7 +156,7 @@ resource 'Users' do
   put '/my_account/prefs' do
     let(:raw_post) { '{"volume":1,"muted":false}' }
     let(:authentication_token) { "Token token=\"INVALID TOKEN\"" }
-    standard_request_options(:put, 'modify preferences as in valid user', :unauthorized, {expected_json_path: 'meta/error/links/sign in'})
+    standard_request_options(:put, 'modify preferences as in valid user', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
   end
 
   # Filter (#filter)
@@ -180,6 +180,27 @@ resource 'Users' do
                                       expected_json_path: ['data/0/user_name', 'meta/projection/include'],
                                       data_item_count: 1,
                                       response_body_content: ["\"tzinfo_tz\":","\"rails_tz\":"]
+                                  })
+  end
+
+  post '/user_accounts/filter' do
+    let(:raw_post) {
+      {
+          'filter' => {
+              'id' => {
+                  'in' => [writer_id]
+              }
+          },
+          'projection' => {
+              'include' => [:id, :user_name]
+          }
+      }.to_json
+    }
+    let(:authentication_token) { admin_token }
+    standard_request_options(:post, 'FILTER (as admin)', :ok, {
+                                      expected_json_path: ['data/0/user_name', 'meta/projection/include'],
+                                      data_item_count: 1,
+                                      response_body_content: ["\"last_seen_at\":null,\"preferences\":null"]
                                   })
   end
 

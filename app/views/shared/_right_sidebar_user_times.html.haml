@@ -1,3 +1,0 @@
-= sidebar_metadata_users('Created by', [{user: item.creator, subtext: distance_of_time_in_words(Time.zone.now, item.created_at, nil, {vague: true}) + ' ago' }])
-= sidebar_metadata_users('Modified by', [{user: item.updater, subtext: distance_of_time_in_words(Time.zone.now, item.updated_at, nil, {vague: true}) + ' ago' }])
-= yield

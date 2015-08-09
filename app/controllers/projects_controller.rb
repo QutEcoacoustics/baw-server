@@ -1,8 +1,6 @@
 class ProjectsController < ApplicationController
   include Api::ControllerHelper
 
-  add_breadcrumb 'Home', :root_path
-
   load_and_authorize_resource
 
   # GET /projects
@@ -10,13 +8,12 @@ class ProjectsController < ApplicationController
   def index
     respond_to do |format|
       format.html {
-        @projects = get_user_projects.includes(:creator).references(:creator)
-        add_breadcrumb 'Projects', projects_path
+        @projects =  Access::Query.projects_accessible(current_user).includes(:creator).references(:creator)
       }
       format.json {
         @projects, opts = Settings.api_response.response_advanced(
             api_filter_params,
-            get_user_projects,
+            Access::Query.projects_accessible(current_user),
             Project,
             Project.filter_settings
         )
@@ -30,9 +27,6 @@ class ProjectsController < ApplicationController
   def show
     respond_to do |format|
       format.html {
-        add_breadcrumb 'Projects', projects_path
-        add_breadcrumb @project.name, @project
-
         @markers = @project.sites.to_gmaps4rails do |site, marker|
           marker.infowindow site.name
           marker.title site.name
@@ -47,26 +41,18 @@ class ProjectsController < ApplicationController
   # GET /projects/new.json
   def new
     respond_to do |format|
-      format.html {
-        add_breadcrumb 'Projects', projects_path
-        add_breadcrumb 'New Project'
-      }
+      format.html
       format.json { respond_show }
     end
   end
 
   # GET /projects/1/edit
   def edit
-    add_breadcrumb 'Projects', projects_path
-    add_breadcrumb @project.name, @project
-    add_breadcrumb 'Edit'
+
   end
 
   # GET /projects/1/edit_sites
   def edit_sites
-    add_breadcrumb 'Projects', projects_path
-    add_breadcrumb @project.name, @project
-    add_breadcrumb 'Edit Sites'
 
     @site_info = Site.connection.select_all("SELECT s.id, s.name,
 (SELECT count(*) FROM projects_sites ps WHERE s.id = ps.site_id) AS project_count,
@@ -84,8 +70,6 @@ ORDER BY project_count ASC, s.name ASC")
         format.json { respond_create_success }
       else
         format.html {
-          add_breadcrumb 'Projects', projects_path
-          add_breadcrumb @project.name, @project
           render action: 'new'
         }
         format.json { respond_change_fail }
@@ -102,8 +86,6 @@ ORDER BY project_count ASC, s.name ASC")
         format.json { respond_show }
       else
         format.html {
-          add_breadcrumb 'Projects', projects_path
-          add_breadcrumb @project.name, @project
           render action: 'edit'
         }
         format.json { respond_change_fail }
@@ -193,13 +175,9 @@ ORDER BY project_count ASC, s.name ASC")
 
   # GET /projects/request_access
   def new_access_request
-    @all_projects = Access::Query.projects_inaccessible(current_user)
+    @all_projects = Access::Query.projects_inaccessible(current_user).order(name: :asc)
     respond_to do |format|
-      format.html {
-        add_breadcrumb 'Projects', projects_path
-        add_breadcrumb 'Request Project Access', new_access_request_projects_path
-
-      }
+      format.html
     end
   end
 
@@ -218,8 +196,6 @@ ORDER BY project_count ASC, s.name ASC")
         format.html { redirect_to projects_path, notice: 'Access request successfully submitted.' }
       else
         format.html {
-          add_breadcrumb 'Projects', projects_path
-          add_breadcrumb 'Request Project Access', new_access_request_projects_path
           redirect_to new_access_request_projects_path, alert: 'Please select projects and provide reason for access.'
         }
       end
@@ -232,7 +208,7 @@ ORDER BY project_count ASC, s.name ASC")
     authorize! :filter, Project
     filter_response, opts = Settings.api_response.response_advanced(
         api_filter_params,
-        get_user_projects,
+        Access::Query.projects_accessible(current_user),
         Project,
         Project.filter_settings
     )
@@ -240,10 +216,6 @@ ORDER BY project_count ASC, s.name ASC")
   end
 
   private
-
-  def get_user_projects
-    Access::Query.projects_accessible(current_user).order('lower(projects.name) ASC')
-  end
 
   def project_params
     params.require(:project).permit(:description, :image, :name, :notes, :urn)

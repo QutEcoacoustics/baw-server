@@ -1,9 +1,8 @@
 require 'spec_helper'
 
-describe 'Website forms', :type => :feature do
+describe 'Website forms with user', :type => :feature do
   before(:each) do
-    @permission = FactoryGirl.create(:write_permission)
-    @user = FactoryGirl.create(:user) # creating new user with no permission to login
+    @user = FactoryGirl.create(:user)
     login_as @user, scope: :user
   end
 
@@ -120,12 +119,14 @@ describe 'Website forms', :type => :feature do
 
   context 'website status' do
     it 'shows the Statistics page' do
+      # create project, permissions, site, audio_recording, audio_event, tag, comment, bookmark
+      FactoryGirl.create(:write_permission, user: @user)
       visit website_status_path
       expect(current_path).to eq(website_status_path)
       expect(page).to have_content('unique tags')
     end
 
-    it 'shows the Statistics page' do
+    it 'shows the status page' do
       visit status_path
       expect(current_path).to eq(status_path)
       expect(page).to have_content('bad')
@@ -156,7 +157,7 @@ describe 'public website forms', :type => :feature do
     it 'shows the data_upload page' do
       visit data_upload_path
       expect(current_path).to eq(data_upload_path)
-      expect(page).to have_content('Upload Audio')
+      expect(page).to have_content(I18n.t('baw.shared.links.upload_audio.title'))
     end
 
   end
@@ -168,7 +169,7 @@ describe 'public website forms', :type => :feature do
       expect(page).to have_content('unique tags')
     end
 
-    it 'shows the Statistics page' do
+    it 'shows the status page' do
       visit status_path
       expect(current_path).to eq(status_path)
       expect(page).to have_content('bad')

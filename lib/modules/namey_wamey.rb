@@ -30,7 +30,7 @@ class NameyWamey
 
       extra_options_formatted = get_extra_options(extra_options)
 
-      "#{site_name}_#{site_id}_#{audio_recording[:id]}_#{abs_start}_#{duration}#{extra_options_formatted}.#{extension.trim('.', '')}"
+      "#{site_name}_#{site_id}_#{audio_recording[:id]}_#{abs_start}_#{duration}#{extra_options_formatted}.#{extension.trim('.', '')}".parameterize('_')
     end
 
     # Suggest a file name based on project, extra options and extension.
@@ -49,7 +49,7 @@ class NameyWamey
         name = project.name
       end
 
-      "#{name}_#{id}#{extra_options_formatted}.#{extension.trim('.', '')}"
+      "#{name}_#{id}#{extra_options_formatted}.#{extension.trim('.', '')}".parameterize('_')
     end
 
     # Suggest a file name based on project, site, extra options and extension.
@@ -77,7 +77,7 @@ class NameyWamey
         site_name = site.name
       end
 
-      "#{project_name}_#{project_id}_#{site_name}_#{site_id}#{extra_options_formatted}.#{extension.trim('.', '')}"
+      "#{project_name}_#{project_id}_#{site_name}_#{site_id}#{extra_options_formatted}.#{extension.trim('.', '')}".parameterize('_')
     end
 
     def trim(string_value, chars_to_replace, char_to_insert)

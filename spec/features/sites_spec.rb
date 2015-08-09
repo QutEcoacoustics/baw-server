@@ -29,7 +29,7 @@ describe 'CRUD Sites as valid user with write permission', :type => :feature do
     fill_in 'site[name]', with: 'test name'
     fill_in 'site[description]', with: 'description'
     attach_file('site[image]', 'public/images/user/user-512.png')
-    click_button 'Create Site'
+    click_button 'Submit'
     expect(page).to have_content('test name')
     expect(page).to have_content('Site was successfully created.')
   end
@@ -38,7 +38,7 @@ describe 'CRUD Sites as valid user with write permission', :type => :feature do
     url = new_project_site_path(@project)
     visit url
     #save_and_open_page
-    click_button 'Create Site'
+    click_button 'Submit'
     expect(page).to have_content('Please review the problems below:')
   end
 
@@ -48,7 +48,7 @@ describe 'CRUD Sites as valid user with write permission', :type => :feature do
     fill_in 'site[name]', with: 'test name'
     fill_in 'site[description]', with: 'description'
     attach_file('site[image]', 'public/images/user/user-512.png')
-    click_button 'Update Site'
+    click_button 'Submit'
     expect(page).to have_content('test name')
   end
 
@@ -56,7 +56,7 @@ describe 'CRUD Sites as valid user with write permission', :type => :feature do
     visit edit_project_site_path(@project, @site)
     #save_and_open_page
     fill_in 'site[name]', with: ''
-    click_button 'Update Site'
+    click_button 'Submit'
     expect(page).to have_content('Please review the problems below:')
     expect(page).to have_content('can\'t be blank')
   end
@@ -76,7 +76,7 @@ describe 'CRUD Sites as valid user with write permission', :type => :feature do
     expected_url = download_site_audio_events_url(@project, @site)
     expect(current_url).to eq(expected_url)
 
-    expect(page).to have_content('audio_event_id, audio_recording_id, audio_recording_uuid, created_at_date_utc, created_at_time_utc, event_created_at_datetime_utc, projects, site_id, site_name, event_start_date_utc, event_start_time_utc, event_start_datetime_utc, event_start_seconds, event_end_seconds, event_duration_seconds, low_frequency_hertz, high_frequency_hertz, is_reference, common_name_tags, common_name_tag_ids, species_name_tags, species_name_tag_ids, other_tags, other_tag_ids, listen_url, library_url')
+    expect(page).to have_content('audio_event_id, audio_recording_id, audio_recording_uuid, audio_recording_start_date_utc, audio_recording_start_time_utc, audio_recording_start_datetime_utc, event_created_at_date_utc, event_created_at_time_utc, event_created_at_datetime_utc, projects, site_id, site_name, event_start_date_utc, event_start_time_utc, event_start_datetime_utc, event_start_seconds, event_end_seconds, event_duration_seconds, low_frequency_hertz, high_frequency_hertz, is_reference, created_by, updated_by, common_name_tags, common_name_tag_ids, species_name_tags, species_name_tag_ids, other_tags, other_tag_ids, listen_url, library_url')
 
     expect(page.response_headers['Content-Disposition']).to include('attachment; filename="')
     expect(page.response_headers['Content-Type']).to eq('text/csv')

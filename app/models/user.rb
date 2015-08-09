@@ -95,20 +95,22 @@ class User < ActiveRecord::Base
   serialize :preferences, JSON
 
   # validations
-  validates :user_name, presence: true,
-            uniqueness: {
-                case_sensitive: false
-            },
+  validates :user_name,
+            presence: true,
+            uniqueness: {case_sensitive: false},
             format: {
                 with: /\A[a-zA-Z0-9 _-]+\z/,
                 message: 'Only letters, numbers, spaces ( ), underscores (_) and dashes (-) are valid.'
-            }
-
-  validates :user_name,
-            exclusion: {
-                in: %w(admin harvester analysis_runner root superuser administrator admins administrators)
             },
             if: Proc.new { |user| user.user_name_changed? }
+
+  validate :excluded_login, on: :create
+
+  def excluded_login
+    reserved_user_names = %w(admin harvester analysis_runner root superuser administrator admins administrators)
+    self.errors.add(:login, 'is reserved') if reserved_user_names.include?(self.login.downcase)
+    self.errors.add(:user_name, 'is reserved') if reserved_user_names.include?(self.user_name.downcase)
+  end
 
   # format, uniqueness, and presence are validated by devise
   # Validatable component
@@ -151,6 +153,22 @@ class User < ActiveRecord::Base
   def reset_authentication_token!
     self.authentication_token = generate_authentication_token
     save
+  end
+
+  def self.same_user?(user1, user2)
+    if user1.blank? || user2.blank?
+      false
+    else
+      user1 == user2
+    end
+  end
+
+  def self.profile_paths(user)
+    [Api::UrlHelpers.my_account_path, Api::UrlHelpers.user_account_path(user)]
+  end
+
+  def self.profile_edit_paths(user)
+    [Api::UrlHelpers.edit_user_registration_path, Api::UrlHelpers.edit_user_account_path(user)]
   end
 
   # Change the behaviour of the auth action to use :login rather than :email.
@@ -201,6 +219,8 @@ class User < ActiveRecord::Base
         custom_fields: lambda { |user, currentUser|
           is_admin = Access::Check.is_admin?(currentUser)
           is_same_user = user == currentUser
+          # do a query for the attributes that may not be in the projection
+          fresh_user = User.find(user.id)
 
           user_hash =
               {
@@ -215,11 +235,12 @@ class User < ActiveRecord::Base
               }
 
           if is_admin || is_same_user
-            user_hash[:last_seen_at] = user.last_seen_at
-            user_hash[:preferences] = user.preferences
+
+            user_hash[:last_seen_at] = fresh_user.last_seen_at
+            user_hash[:preferences] =fresh_user.preferences
           end
 
-          user_hash[:is_confirmed] = user.confirmed? if is_admin
+          user_hash[:is_confirmed] = fresh_user.confirmed? if is_admin
 
           [user, user_hash]
         },

@@ -163,6 +163,36 @@ module Access
         users.to_a.map { |u| validate_user(u) }
       end
 
+      # Validate audio recording.
+      # @param [AudioRecording] audio_recording
+      # @return [AudioRecording] audio_recording
+      def validate_audio_recording(audio_recording)
+        fail ArgumentError, "AudioRecording was not valid, got '#{audio_recording.class}'." if audio_recording.blank? || !audio_recording.is_a?(AudioRecording)
+        audio_recording
+      end
+
+      # Validate audio recordings.
+      # @param [Array<AudioRecording>] audio_recordings
+      # @return [Array<AudioRecording>] audio_recordings
+      def validate_audio_recordings(audio_recordings)
+        audio_recordings.to_a.map { |u| validate_audio_recording(u) }
+      end
+
+      # Validate audio event.
+      # @param [AudioEvent] audio_event
+      # @return [AudioEvent] audio_event
+      def validate_audio_event(audio_event)
+        fail ArgumentError, "AudioRecording was not valid, got '#{audio_event.class}'." if audio_event.blank? || !audio_event.is_a?(AudioEvent)
+        audio_event
+      end
+
+      # Validate audio events.
+      # @param [Array<AudioEvent>] audio_events
+      # @return [Array<AudioEvent>] audio_events
+      def validate_audio_events(audio_events)
+        audio_events.to_a.map { |u| validate_audio_event(u) }
+      end
+
       # Get an array of access levels that are equal or lower.
       # @param [Symbol] level
       # @return [Array<Symbol>]
@@ -224,80 +254,6 @@ module Access
         return :reader if levels_sym.include?(:reader)
         return :writer if levels_sym.include?(:writer)
         :owner if levels_sym.include?(:owner)
-      end
-
-      # Add project permission restrictions.
-      # @param [User] user
-      # @param [Symbol, Array<Symbol>] levels
-      # @return [ActiveRecord::Relation] modified query
-      def query_project_access(user, levels, query)
-        user = Access::Core.validate_user(user)
-        levels = Access::Core.validate_levels(levels)
-
-        if Access::Check.is_admin?(user)
-          query
-        elsif Access::Check.is_standard_user?(user)
-          if levels == [:none]
-
-            query
-                .where(
-                    '(NOT EXISTS (SELECT 1 FROM projects AS invert_pt WHERE invert_pt.creator_id = ?))',
-                    user.id)
-                .where(
-                    '(NOT EXISTS (SELECT 1 FROM permissions AS invert_pm WHERE invert_pm.user_id = ? AND invert_pm.project_id = projects.id))',
-                    user.id)
-
-            # after adding logged_in and anonymous permissions.
-            # query
-            #     .where(
-            #         '(NOT EXISTS (SELECT 1 FROM permissions invert_pm_logged_in WHERE invert_pm_logged_in.logged_in = TRUE AND invert_pm_logged_in.project_id = projects.id))')
-            #     .where(
-            #         '(NOT EXISTS (SELECT 1 FROM permissions invert_pm WHERE invert_pm.user_id = ? AND invert_pm.project_id = projects.id))',
-            #         user.id)
-
-          else
-
-            # see http://jpospisil.com/2014/06/16/the-definitive-guide-to-arel-the-sql-manager-for-ruby.html
-
-            # build up in Arel
-            pt = Project.arel_table
-            ae = AudioEvent.arel_table
-            pm = Permission.arel_table
-
-            # need to add the 'deleted_at IS NULL' check by hand
-            projects_creator_fragment = pt.where(pt[:deleted_at].eq(nil)).where(pt[:creator_id].eq(user.id)).project(pt[:id])
-            permissions_user_fragment = pm.where(pm[:user_id].eq(user.id)).where(pm[:level].in(levels)).project(pm[:project_id])
-            condition_pt = pt[:id].in(projects_creator_fragment).or(pt[:id].in(permissions_user_fragment))
-
-            # after adding logged_in and anonymous permissions.
-            # permissions_user_fragment = Permission.where(user: user, level: levels, logged_in: false, anonymous: false).select(:project_id)
-            # permissions_logged_in_fragment = Permission.where(user: nil, level: levels, logged_in: true, anonymous: false).select(:project_id)
-            # condition_pt = pt[:id].in(permissions_logged_in_fragment.arel).or(pt[:id].in(permissions_user_fragment.arel))
-
-            audio_event_reference_fragment = ae.where(ae[:deleted_at].eq(nil)).where(ae[:is_reference].eq(true)).project(ae[:id])
-            condition_ae = ae[:id].in(audio_event_reference_fragment)
-
-            # include reference audio_events when:
-            # - query is for audio_events or audio_event_comments
-            model_name = query.model.model_name.name
-            check_reference_audio_events = model_name == 'AudioEvent' || model_name == 'AudioEventComment'
-
-            if check_reference_audio_events
-              query.where(condition_pt.or(condition_ae))
-            else
-              query.where(condition_pt)
-            end
-
-            #query
-          end
-        else
-          is_guest = Access::Check.is_guest?(user)
-          Rails.logger.warn "User '#{user.user_name}' (#{user.id}) who is#{is_guest ? '' : ' not'} a guest with roles '#{user.role_symbols.join(', ')}' has no access."
-
-          # any other role has no access (using .none to be chain-able)
-          query.none
-        end
-
       end
 
     end

@@ -123,7 +123,9 @@ class AudioEvent < ActiveRecord::Base
     tags = Tag.arel_table
 
     format_date = Arel::Nodes.build_quoted('YYYY-MM-DD')
-    format_time = Arel::Nodes.build_quoted('HH24:MI:SS.MS')
+    format_time = Arel::Nodes.build_quoted('HH24:MI:SS')
+    format_iso8601 = Arel::Nodes.build_quoted('YYYY-MM-DD"T"HH24:MI:SS"Z"')
+
     audio_event_start_abs =
         Arel::Nodes::SqlLiteral.new(
         '"audio_recordings"."recorded_date" + CAST("audio_events"."start_time_seconds" || \' seconds\' as interval)')
@@ -185,9 +187,13 @@ class AudioEvent < ActiveRecord::Base
                 audio_recordings[:id].as('audio_recording_id'),
                 audio_recordings[:uuid].as('audio_recording_uuid'),
 
-                Arel::Nodes::NamedFunction.new('to_char', [audio_events[:created_at], format_date]).as('created_at_date_utc'),
-                Arel::Nodes::NamedFunction.new('to_char', [audio_events[:created_at], format_time]).as('created_at_time_utc'),
-                audio_events[:created_at].as('event_created_at_datetime_utc'),
+                Arel::Nodes::NamedFunction.new('to_char', [audio_recordings[:recorded_date], format_date]).as('audio_recording_start_date_utc'),
+                Arel::Nodes::NamedFunction.new('to_char', [audio_recordings[:recorded_date], format_time]).as('audio_recording_start_time_utc'),
+                Arel::Nodes::NamedFunction.new('to_char', [audio_recordings[:recorded_date], format_iso8601]).as('audio_recording_start_datetime_utc'),
+
+                Arel::Nodes::NamedFunction.new('to_char', [audio_events[:created_at], format_date]).as('event_created_at_date_utc'),
+                Arel::Nodes::NamedFunction.new('to_char', [audio_events[:created_at], format_time]).as('event_created_at_time_utc'),
+                Arel::Nodes::NamedFunction.new('to_char', [audio_events[:created_at], format_iso8601]).as('event_created_at_datetime_utc'),
 
                 projects_aggregate.as('projects'),
                 sites[:id].as('site_id'),
@@ -195,7 +201,7 @@ class AudioEvent < ActiveRecord::Base
 
                 Arel::Nodes::NamedFunction.new('to_char', [audio_event_start_abs, format_date]).as('event_start_date_utc'),
                 Arel::Nodes::NamedFunction.new('to_char', [audio_event_start_abs, format_time]).as('event_start_time_utc'),
-                audio_event_start_abs.as('event_start_datetime_utc'),
+                Arel::Nodes::NamedFunction.new('to_char', [audio_event_start_abs, format_iso8601]).as('event_start_datetime_utc'),
 
                 audio_events[:start_time_seconds].as('event_start_seconds'),
                 audio_events[:end_time_seconds].as('event_end_seconds'),
@@ -203,6 +209,8 @@ class AudioEvent < ActiveRecord::Base
                 audio_events[:low_frequency_hertz].as('low_frequency_hertz'),
                 audio_events[:high_frequency_hertz].as('high_frequency_hertz'),
                 audio_events[:is_reference].as('is_reference'),
+                audio_events[:creator_id].as('created_by'),
+                audio_events[:updater_id].as('updated_by'),
 
                 tags_common_aggregate.as('common_name_tags'),
                 tags_common_ids.as('common_name_tag_ids'),

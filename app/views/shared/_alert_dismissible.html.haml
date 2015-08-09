@@ -1,0 +1,6 @@
+-# locals: msg_type, msg_text
+.alert.alert-dismissible{class: bootstrap_class_for(msg_type), role: 'alert'}
+  %button{type: 'button', class: 'close', data: {dismiss: 'alert'}, aria: {label: 'Close'}}
+    %span{aria: {hidden: 'true'}}
+      ='&times;'.html_safe
+  = msg_text

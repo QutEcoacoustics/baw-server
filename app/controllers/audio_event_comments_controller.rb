@@ -15,7 +15,7 @@ class AudioEventCommentsController < ApplicationController
     #@audio_event_comments = AudioEventComment.accessible_by
     @audio_event_comments, opts = Settings.api_response.response_advanced(
         api_filter_params,
-        get_audio_event_comments,
+        Access::Query.audio_event_comments(@audio_event, current_user),
         AudioEventComment,
         AudioEventComment.filter_settings
     )
@@ -85,7 +85,7 @@ class AudioEventCommentsController < ApplicationController
     authorize! :filter, AudioEventComment
     filter_response, opts = Settings.api_response.response_advanced(
         api_filter_params,
-        get_audio_event_comments,
+        Access::Query.comments(current_user),
         AudioEventComment,
         AudioEventComment.filter_settings
     )
@@ -105,10 +105,6 @@ class AudioEventCommentsController < ApplicationController
 
   def audio_event_comment_update_params
     params.permit(:format, :audio_event_id, :id, {audio_event_comment: [:flag, :comment]})
-  end
-
-  def get_audio_event_comments
-    Access::Query.audio_event_comments(current_user, Access::Core.levels_allow)
   end
 
 end

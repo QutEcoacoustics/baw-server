@@ -187,8 +187,8 @@ resource 'Sessions' do
   #     response_body.should have_json_path('meta')
   #     response_body.should have_json_path('meta/status')
   #     response_body.should have_json_path('meta/message')
-  #     response_body.should have_json_path('meta/error/links/sign in')
-  #     response_body.should have_json_path('meta/error/links/confirm your account')
+  #     response_body.should have_json_path(get_json_error_path(:sign_up))
+  #     response_body.should have_json_path(get_json_error_path(:confirm))
   #   end
   # end
   #
@@ -200,7 +200,7 @@ resource 'Sessions' do
   #     response_body.should have_json_path('meta')
   #     response_body.should have_json_path('meta/status')
   #     response_body.should have_json_path('meta/message')
-  #     response_body.should have_json_path('meta/error/links/request permissions')
+  #     response_body.should have_json_path(get_json_error_path(:permissions))
   #   end
   # end
 

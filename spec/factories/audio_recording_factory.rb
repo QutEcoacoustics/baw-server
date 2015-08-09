@@ -1,7 +1,7 @@
 FactoryGirl.define do
 
   factory :audio_recording do
-    sequence(:file_hash) { |n| "SHA256::#{n}"  }
+    sequence(:file_hash) { |n| MiscHelper.new.create_sha_256_hash(n)}
     recorded_date '2012-03-26 07:06:59'
     duration_seconds 60000
     sample_rate_hertz 22050
