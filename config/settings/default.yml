@@ -114,7 +114,7 @@ defaults: &defaults
     window: 512
     window_function: Hamming
     colour: 'g'
-    max_duration_seconds: 120.0
+    max_duration_seconds: 180.0
     min_duration_seconds: 0.5
   available_formats:
     text:
@@ -137,13 +137,13 @@ defaults: &defaults
     wav2png_executable: wav2png
     imagemagick_convert_executable: convert
     imagemagick_identify_executable: identify
-    max_duration_seconds: 300
+    max_duration_seconds: 300.0
     log_level: 'Logger::INFO'
-  audio_tools_timeout_sec: 20
+  audio_tools_timeout_sec: 60.0
   # max overlap (default 5): maximum amount an audio recording can be trimmed at the end
-  audio_recording_max_overlap_sec: 5
+  audio_recording_max_overlap_sec: 5.0
   # min duration (default 10): must be larger than audio_recording_max_overlap_sec
-  audio_recording_min_duration_sec: 10
+  audio_recording_min_duration_sec: 10.0
   organisation_names:
     site_long_name: Audio Workbench
     site_short_name: AWB

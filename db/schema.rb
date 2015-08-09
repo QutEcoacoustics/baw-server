@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20150307010121) do
+ActiveRecord::Schema.define(version: 20150807150417) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -27,9 +27,15 @@ ActiveRecord::Schema.define(version: 20150307010121) do
     t.integer  "updater_id"
     t.integer  "deleter_id"
     t.datetime "deleted_at"
-    t.datetime "created_at",                 null: false
-    t.datetime "updated_at",                 null: false
+    t.datetime "created_at"
+    t.datetime "updated_at"
   end
+
+  add_index "audio_event_comments", ["audio_event_id"], name: "index_audio_event_comments_on_audio_event_id", using: :btree
+  add_index "audio_event_comments", ["creator_id"], name: "index_audio_event_comments_on_creator_id", using: :btree
+  add_index "audio_event_comments", ["deleter_id"], name: "index_audio_event_comments_on_deleter_id", using: :btree
+  add_index "audio_event_comments", ["flagger_id"], name: "index_audio_event_comments_on_flagger_id", using: :btree
+  add_index "audio_event_comments", ["updater_id"], name: "index_audio_event_comments_on_updater_id", using: :btree
 
   create_table "audio_events", force: :cascade do |t|
     t.integer  "audio_recording_id",                                            null: false
@@ -46,6 +52,11 @@ ActiveRecord::Schema.define(version: 20150307010121) do
     t.datetime "updated_at",                                                    null: false
   end
 
+  add_index "audio_events", ["audio_recording_id"], name: "index_audio_events_on_audio_recording_id", using: :btree
+  add_index "audio_events", ["creator_id"], name: "index_audio_events_on_creator_id", using: :btree
+  add_index "audio_events", ["deleter_id"], name: "index_audio_events_on_deleter_id", using: :btree
+  add_index "audio_events", ["updater_id"], name: "index_audio_events_on_updater_id", using: :btree
+
   create_table "audio_events_tags", force: :cascade do |t|
     t.integer  "audio_event_id", null: false
     t.integer  "tag_id",         null: false
@@ -56,6 +67,8 @@ ActiveRecord::Schema.define(version: 20150307010121) do
   end
 
   add_index "audio_events_tags", ["audio_event_id", "tag_id"], name: "index_audio_events_tags_on_audio_event_id_and_tag_id", unique: true, using: :btree
+  add_index "audio_events_tags", ["creator_id"], name: "index_audio_events_tags_on_creator_id", using: :btree
+  add_index "audio_events_tags", ["updater_id"], name: "index_audio_events_tags_on_updater_id", using: :btree
 
   create_table "audio_recordings", force: :cascade do |t|
     t.string   "uuid",                limit: 36,                                           null: false
@@ -82,7 +95,12 @@ ActiveRecord::Schema.define(version: 20150307010121) do
   end
 
   add_index "audio_recordings", ["created_at", "updated_at"], name: "audio_recordings_created_updated_at", using: :btree
+  add_index "audio_recordings", ["creator_id"], name: "index_audio_recordings_on_creator_id", using: :btree
+  add_index "audio_recordings", ["deleter_id"], name: "index_audio_recordings_on_deleter_id", using: :btree
   add_index "audio_recordings", ["site_id"], name: "index_audio_recordings_on_site_id", using: :btree
+  add_index "audio_recordings", ["updater_id"], name: "index_audio_recordings_on_updater_id", using: :btree
+  add_index "audio_recordings", ["uploader_id"], name: "index_audio_recordings_on_uploader_id", using: :btree
+  add_index "audio_recordings", ["uuid"], name: "audio_recordings_uuid_uidx", unique: true, using: :btree
 
   create_table "bookmarks", force: :cascade do |t|
     t.integer  "audio_recording_id"
@@ -95,6 +113,11 @@ ActiveRecord::Schema.define(version: 20150307010121) do
     t.text     "description"
     t.string   "category",           limit: 255
   end
+
+  add_index "bookmarks", ["audio_recording_id"], name: "index_bookmarks_on_audio_recording_id", using: :btree
+  add_index "bookmarks", ["creator_id"], name: "index_bookmarks_on_creator_id", using: :btree
+  add_index "bookmarks", ["name", "creator_id"], name: "bookmarks_name_creator_id_uidx", unique: true, using: :btree
+  add_index "bookmarks", ["updater_id"], name: "index_bookmarks_on_updater_id", using: :btree
 
   create_table "datasets", force: :cascade do |t|
     t.string   "name",                        limit: 255, null: false
@@ -119,10 +142,19 @@ ActiveRecord::Schema.define(version: 20150307010121) do
     t.text     "tag_text_filters"
   end
 
+  add_index "datasets", ["creator_id"], name: "index_datasets_on_creator_id", using: :btree
+  add_index "datasets", ["name", "creator_id"], name: "datasets_name_creator_id_uidx", unique: true, using: :btree
+  add_index "datasets", ["project_id"], name: "index_datasets_on_project_id", using: :btree
+  add_index "datasets", ["updater_id"], name: "index_datasets_on_updater_id", using: :btree
+
   create_table "datasets_sites", id: false, force: :cascade do |t|
     t.integer "dataset_id", null: false
     t.integer "site_id",    null: false
   end
+
+  add_index "datasets_sites", ["dataset_id", "site_id"], name: "index_datasets_sites_on_dataset_id_and_site_id", using: :btree
+  add_index "datasets_sites", ["dataset_id"], name: "index_datasets_sites_on_dataset_id", using: :btree
+  add_index "datasets_sites", ["site_id"], name: "index_datasets_sites_on_site_id", using: :btree
 
   create_table "jobs", force: :cascade do |t|
     t.string   "name",            limit: 255, null: false
@@ -139,17 +171,29 @@ ActiveRecord::Schema.define(version: 20150307010121) do
     t.text     "description"
   end
 
+  add_index "jobs", ["creator_id"], name: "index_jobs_on_creator_id", using: :btree
+  add_index "jobs", ["dataset_id"], name: "index_jobs_on_dataset_id", using: :btree
+  add_index "jobs", ["deleter_id"], name: "index_jobs_on_deleter_id", using: :btree
+  add_index "jobs", ["name"], name: "jobs_name_uidx", unique: true, using: :btree
+  add_index "jobs", ["script_id"], name: "index_jobs_on_script_id", using: :btree
+  add_index "jobs", ["updater_id"], name: "index_jobs_on_updater_id", using: :btree
+
   create_table "permissions", force: :cascade do |t|
-    t.integer  "creator_id",                                 null: false
-    t.string   "level",          limit: 255,                 null: false
-    t.integer  "project_id",                                 null: false
-    t.integer  "user_id"
+    t.integer  "creator_id",             null: false
+    t.string   "level",      limit: 255, null: false
+    t.integer  "project_id",             null: false
+    t.integer  "user_id",                null: false
     t.integer  "updater_id"
-    t.datetime "created_at",                                 null: false
-    t.datetime "updated_at",                                 null: false
-    t.boolean  "logged_in_user",             default: false, null: false
-    t.boolean  "anonymous_user",             default: false, null: false
+    t.datetime "created_at",             null: false
+    t.datetime "updated_at",             null: false
   end
+
+  add_index "permissions", ["creator_id"], name: "index_permissions_on_creator_id", using: :btree
+  add_index "permissions", ["project_id", "level", "user_id"], name: "permissions_level_user_id_project_id_uidx", unique: true, using: :btree
+  add_index "permissions", ["project_id", "user_id"], name: "index_permissions_on_project_id_and_user_id", using: :btree
+  add_index "permissions", ["project_id"], name: "index_permissions_on_project_id", using: :btree
+  add_index "permissions", ["updater_id"], name: "index_permissions_on_updater_id", using: :btree
+  add_index "permissions", ["user_id"], name: "index_permissions_on_user_id", using: :btree
 
   create_table "projects", force: :cascade do |t|
     t.string   "name",               limit: 255, null: false
@@ -168,10 +212,19 @@ ActiveRecord::Schema.define(version: 20150307010121) do
     t.datetime "updated_at",                     null: false
   end
 
+  add_index "projects", ["creator_id"], name: "index_projects_on_creator_id", using: :btree
+  add_index "projects", ["deleter_id"], name: "index_projects_on_deleter_id", using: :btree
+  add_index "projects", ["name"], name: "projects_name_uidx", unique: true, using: :btree
+  add_index "projects", ["updater_id"], name: "index_projects_on_updater_id", using: :btree
+
   create_table "projects_sites", id: false, force: :cascade do |t|
     t.integer "project_id", null: false
     t.integer "site_id",    null: false
   end
+
+  add_index "projects_sites", ["project_id", "site_id"], name: "index_projects_sites_on_project_id_and_site_id", using: :btree
+  add_index "projects_sites", ["project_id"], name: "index_projects_sites_on_project_id", using: :btree
+  add_index "projects_sites", ["site_id"], name: "index_projects_sites_on_site_id", using: :btree
 
   create_table "scripts", force: :cascade do |t|
     t.string   "name",                       limit: 255,                                         null: false
@@ -193,6 +246,10 @@ ActiveRecord::Schema.define(version: 20150307010121) do
     t.datetime "created_at",                                                                     null: false
   end
 
+  add_index "scripts", ["creator_id"], name: "index_scripts_on_creator_id", using: :btree
+  add_index "scripts", ["updated_by_script_id"], name: "index_scripts_on_updated_by_script_id", using: :btree
+  add_index "scripts", ["updated_by_script_id"], name: "scripts_updated_by_script_id_uidx", unique: true, using: :btree
+
   create_table "sites", force: :cascade do |t|
     t.string   "name",               limit: 255,                         null: false
     t.decimal  "longitude",                      precision: 9, scale: 6
@@ -213,6 +270,10 @@ ActiveRecord::Schema.define(version: 20150307010121) do
     t.string   "rails_tz",           limit: 255
   end
 
+  add_index "sites", ["creator_id"], name: "index_sites_on_creator_id", using: :btree
+  add_index "sites", ["deleter_id"], name: "index_sites_on_deleter_id", using: :btree
+  add_index "sites", ["updater_id"], name: "index_sites_on_updater_id", using: :btree
+
   create_table "tags", force: :cascade do |t|
     t.string   "text",         limit: 255,                     null: false
     t.boolean  "is_taxanomic",             default: false,     null: false
@@ -224,6 +285,10 @@ ActiveRecord::Schema.define(version: 20150307010121) do
     t.integer  "creator_id",                                   null: false
     t.integer  "updater_id"
   end
+
+  add_index "tags", ["creator_id"], name: "index_tags_on_creator_id", using: :btree
+  add_index "tags", ["text"], name: "tags_text_uidx", unique: true, using: :btree
+  add_index "tags", ["updater_id"], name: "index_tags_on_updater_id", using: :btree
 
   create_table "users", force: :cascade do |t|
     t.string   "email",                  limit: 255,             null: false
