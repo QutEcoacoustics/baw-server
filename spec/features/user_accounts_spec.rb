@@ -9,45 +9,7 @@ describe "User account actions", :type => :feature do
 
   let(:last_email) { ActionMailer::Base.deliveries.last }
 
-  it 'emails user when requesting password reset' do
-    # create user and go to forgot password page
-    user = FactoryGirl.create(:user)
-    visit root_url
-    find(:xpath, "/descendant::a[@href='/my_account/sign_in'][1]").click
 
-    click_link I18n.t('devise.shared.links.reset_password')
-
-    fill_in 'Login', with: user.email
-    click_button 'Send me reset password instructions'
-
-    # back to sign in page, use token from email to go to reset password page
-    expect(current_path).to eq('/my_account/sign_in')
-    expect(page).to have_content(I18n.t('devise.passwords.send_paranoid_instructions'))
-
-    expect(last_email.to).to include(user.email)
-
-    # extract token from mail body
-    mail_body = last_email.body.to_s
-    token = mail_body[/#{:reset_password.to_s}_token=([^"]+)/, 1]
-
-    visit edit_user_password_path(reset_password_token: token) # http://stackoverflow.com/a/18262856/31567
-
-    # fill in incorrectly
-    #save_and_open_page
-    fill_in "user_password", :with => "foobar"
-    fill_in "user_password_confirmation", :with => "foobar1"
-    find(:xpath, '/descendant::input[@type="submit"]').click
-
-    expect(page).to have_content('Please review the problems below')
-    expect(page).to have_content("doesn't match")
-
-    # fill in correctly
-    fill_in "user_password", :with => "foobar11"
-    fill_in "user_password_confirmation", :with => "foobar11"
-    find(:xpath, '/descendant::input[@type="submit"]').click
-    expect(current_path).to eq('/')
-    expect(page).to have_content('Your password was changed successfully. You are now signed in.')
-  end
 
   context 'log in' do
 
@@ -293,6 +255,88 @@ describe "User account actions", :type => :feature do
       expect(page).to have_content(I18n.t('devise.passwords.send_paranoid_instructions'))
       expect(last_email.to).to include(user.email)
       expect(last_email.body.to_s).to include('change your password')
+    end
+
+    it 'email is sent and password is changed successfully' do
+      # create user and go to forgot password page
+      user = FactoryGirl.create(:user)
+      visit root_url
+      find(:xpath, "/descendant::a[@href='/my_account/sign_in'][1]").click
+
+      click_link I18n.t('devise.shared.links.reset_password')
+
+      fill_in 'Login', with: user.email
+      click_button 'Send me reset password instructions'
+
+      # back to sign in page, use token from email to go to reset password page
+      expect(current_path).to eq('/my_account/sign_in')
+      expect(page).to have_content(I18n.t('devise.passwords.send_paranoid_instructions'))
+
+      expect(last_email.to).to include(user.email)
+
+      # extract token from mail body
+      mail_body = last_email.body.to_s
+      token = mail_body[/#{:reset_password.to_s}_token=([^"]+)/, 1]
+
+      visit edit_user_password_path(reset_password_token: token) # http://stackoverflow.com/a/18262856/31567
+
+      # fill in incorrectly
+      #save_and_open_page
+      fill_in "user_password", :with => "foobar"
+      fill_in "user_password_confirmation", :with => "foobar1"
+      find(:xpath, '/descendant::input[@type="submit"]').click
+
+      expect(page).to have_content('Please review the problems below')
+      expect(page).to have_content("doesn't match")
+
+      # fill in correctly
+      fill_in "user_password", :with => "foobar11"
+      fill_in "user_password_confirmation", :with => "foobar11"
+      find(:xpath, '/descendant::input[@type="submit"]').click
+      expect(current_path).to eq('/')
+      expect(page).to have_content('Your password was changed successfully. You are now signed in.')
+    end
+
+    it 'email is sent and password can be changed for restricted user name' do
+      # create user and go to forgot password page
+      user = FactoryGirl.build(:user, user_name: 'aDmin')
+      user.save!(validate: false)
+
+      visit root_url
+      find(:xpath, "/descendant::a[@href='/my_account/sign_in'][1]").click
+
+      click_link I18n.t('devise.shared.links.reset_password')
+
+      fill_in 'Login', with: user.email
+      click_button 'Send me reset password instructions'
+
+      # back to sign in page, use token from email to go to reset password page
+      expect(current_path).to eq('/my_account/sign_in')
+      expect(page).to have_content(I18n.t('devise.passwords.send_paranoid_instructions'))
+
+      expect(last_email.to).to include(user.email)
+
+      # extract token from mail body
+      mail_body = last_email.body.to_s
+      token = mail_body[/#{:reset_password.to_s}_token=([^"]+)/, 1]
+
+      visit edit_user_password_path(reset_password_token: token) # http://stackoverflow.com/a/18262856/31567
+
+      # fill in incorrectly
+      #save_and_open_page
+      fill_in "user_password", :with => "foobar"
+      fill_in "user_password_confirmation", :with => "foobar1"
+      find(:xpath, '/descendant::input[@type="submit"]').click
+
+      expect(page).to have_content('Please review the problems below')
+      expect(page).to have_content("doesn't match")
+
+      # fill in correctly
+      fill_in "user_password", :with => "foobar11"
+      fill_in "user_password_confirmation", :with => "foobar11"
+      find(:xpath, '/descendant::input[@type="submit"]').click
+      expect(current_path).to eq('/')
+      expect(page).to have_content('Your password was changed successfully. You are now signed in.')
     end
   end
 

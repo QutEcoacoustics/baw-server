@@ -20,7 +20,7 @@ class SitesController < ApplicationController
       format.json {
         @sites, opts = Settings.api_response.response_advanced(
             api_filter_params,
-            get_user_sites.where(projects: {id: @project.id}),
+            Access::Query.project_sites(@project, current_user),
             Site,
             Site.filter_settings
         )
@@ -157,7 +157,7 @@ ORDER BY s.name")
     authorize! :filter, Site
     filter_response, opts = Settings.api_response.response_advanced(
         api_filter_params,
-        get_user_sites,
+        Access::Query.sites(current_user),
         Site,
         Site.filter_settings
     )
@@ -169,10 +169,6 @@ ORDER BY s.name")
   def build_project_site
     @site = Site.new
     @site.projects << @project
-  end
-
-  def get_user_sites
-    Access::Query.sites(current_user, Access::Core.levels_allow).order('lower(sites.name) ASC')
   end
 
   def site_params

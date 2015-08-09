@@ -11,8 +11,11 @@ module ApplicationHelper
     selected_title
   end
 
-  def format_sidebar_datetime(value)
-    distance_of_time_in_words(Time.zone.now, value, nil, {vague: true}) + ' ago'
+  def format_sidebar_datetime(value, options = {})
+    options.reverse_merge!({ ago: true})
+    time_distance = distance_of_time_in_words(Time.zone.now, value, nil, {vague: true})
+    time_distance = time_distance + ' ago' if options[:ago]
+    time_distance
   end
 
   def gmaps_default_options

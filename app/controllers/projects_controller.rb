@@ -8,12 +8,12 @@ class ProjectsController < ApplicationController
   def index
     respond_to do |format|
       format.html {
-        @projects = get_user_projects.includes(:creator).references(:creator)
+        @projects =  Access::Query.projects_accessible(current_user).includes(:creator).references(:creator)
       }
       format.json {
         @projects, opts = Settings.api_response.response_advanced(
             api_filter_params,
-            get_user_projects,
+            Access::Query.projects_accessible(current_user),
             Project,
             Project.filter_settings
         )
@@ -208,7 +208,7 @@ ORDER BY project_count ASC, s.name ASC")
     authorize! :filter, Project
     filter_response, opts = Settings.api_response.response_advanced(
         api_filter_params,
-        get_user_projects,
+        Access::Query.projects_accessible(current_user),
         Project,
         Project.filter_settings
     )
@@ -216,10 +216,6 @@ ORDER BY project_count ASC, s.name ASC")
   end
 
   private
-
-  def get_user_projects
-    Access::Query.projects_accessible(current_user).order('lower(projects.name) ASC')
-  end
 
   def project_params
     params.require(:project).permit(:description, :image, :name, :notes, :urn)

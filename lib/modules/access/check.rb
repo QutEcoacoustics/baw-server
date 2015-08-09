@@ -66,7 +66,7 @@ module Access
       # @return [Boolean]
       def can_any?(user, level, projects)
         requested_level = Access::Core.validate_level(level)
-        actual_level = Access::Query.level_projects(user, projects)
+        actual_level = Access::Level.projects(user, projects)
 
         allowed?(requested_level, actual_level)
       end

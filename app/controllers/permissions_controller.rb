@@ -29,10 +29,9 @@ class PermissionsController < ApplicationController
       format.json {
         @permissions, opts = Settings.api_response.response_advanced(
             api_filter_params,
-            Permission.where(project_id: @project.id),
+            Access::Query.project_permissions(@project),
             Permission,
-            Permission.filter_settings
-        )
+            Permission.filter_settings)
         respond_index(opts)
       }
     end
@@ -66,17 +65,6 @@ class PermissionsController < ApplicationController
   def destroy
     @permission.destroy
     respond_destroy
-  end
-
-  def filter
-    authorize! :filter, Permission
-    filter_response, opts = Settings.api_response.response_advanced(
-        api_filter_params,
-        Permission.where(project_id: @project.id),
-        AudioEventComment,
-        AudioEventComment.filter_settings
-    )
-    respond_filter(filter_response, opts)
   end
 
   private
