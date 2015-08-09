@@ -16,7 +16,7 @@
         %span.fa.fa-user
         Member for
         - signed_up_date = @user.created_at
-        = signed_up_date.blank? ? '?' : format_sidebar_datetime(signed_up_date)
+        = signed_up_date.blank? ? '?' : format_sidebar_datetime(signed_up_date, ago: false)
 
 .col-sm-4
   %ul.list-group
