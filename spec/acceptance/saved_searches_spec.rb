@@ -69,12 +69,12 @@ resource 'SavedSearches' do
 
   get '/saved_searches' do
     let(:authentication_token) { unconfirmed_token }
-    standard_request_options(:get, 'LIST (as unconfirmed_token)', :forbidden, {expected_json_path: 'meta/error/links/confirm your account'})
+    standard_request_options(:get, 'LIST (as unconfirmed_token)', :forbidden, {expected_json_path: get_json_error_path(:confirm)})
   end
 
   get '/saved_searches' do
     let(:authentication_token) { invalid_token }
-    standard_request_options(:get, 'LIST (as invalid user)', :unauthorized, {expected_json_path: 'meta/error/links/sign in'})
+    standard_request_options(:get, 'LIST (as invalid user)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
   end
 
   ################################
@@ -101,13 +101,13 @@ resource 'SavedSearches' do
   post '/saved_searches' do
     let(:raw_post) { {saved_search: post_attributes}.to_json }
     let(:authentication_token) { unconfirmed_token }
-    standard_request_options(:post, 'CREATE (as unconfirmed user)', :forbidden, {expected_json_path: 'meta/error/links/confirm your account'})
+    standard_request_options(:post, 'CREATE (as unconfirmed user)', :forbidden, {expected_json_path: get_json_error_path(:confirm)})
   end
 
   post '/saved_searches' do
     let(:raw_post) { {saved_search: post_attributes}.to_json }
     let(:authentication_token) { invalid_token }
-    standard_request_options(:post, 'CREATE (as invalid user)', :unauthorized, {expected_json_path: 'meta/error/links/sign in'})
+    standard_request_options(:post, 'CREATE (as invalid user)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
   end
 
   ################################
@@ -138,14 +138,14 @@ resource 'SavedSearches' do
     parameter :id, 'Requested saved search id (in path/route)', required: true
     let(:id) { @saved_search.id }
     let(:authentication_token) { unconfirmed_token }
-    standard_request_options(:get, 'SHOW (as unconfirmed user)', :forbidden, {expected_json_path: 'meta/error/links/confirm your account'})
+    standard_request_options(:get, 'SHOW (as unconfirmed user)', :forbidden, {expected_json_path: get_json_error_path(:confirm)})
   end
 
   get '/saved_searches/:id' do
     parameter :id, 'Requested saved search id (in path/route)', required: true
     let(:id) { @saved_search.id }
     let(:authentication_token) { invalid_token }
-    standard_request_options(:get, 'SHOW (as invalid user)', :unauthorized, {expected_json_path: 'meta/error/links/sign in'})
+    standard_request_options(:get, 'SHOW (as invalid user)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
   end
 
   ################################
@@ -174,14 +174,14 @@ resource 'SavedSearches' do
     parameter :id, 'Requested saved search id (in path/route)', required: true
     let(:id) { @saved_search.id }
     let(:authentication_token) { other_token }
-    standard_request_options(:delete, 'DESTROY (as other)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
+    standard_request_options(:delete, 'DESTROY (as other)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
   end
 
   delete '/saved_searches/:id' do
     parameter :id, 'Requested saved search id (in path/route)', required: true
     let(:id) { @saved_search.id }
     let(:authentication_token) { reader_token }
-    standard_request_options(:delete, 'DESTROY (as reader)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
+    standard_request_options(:delete, 'DESTROY (as reader)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
   end
 
   delete '/saved_searches/:id' do
@@ -202,14 +202,14 @@ resource 'SavedSearches' do
     parameter :id, 'Requested saved search id (in path/route)', required: true
     let(:id) { @saved_search.id }
     let(:authentication_token) { unconfirmed_token }
-    standard_request_options(:delete, 'DESTROY (as unconfirmed user)', :forbidden, {expected_json_path: 'meta/error/links/confirm your account'})
+    standard_request_options(:delete, 'DESTROY (as unconfirmed user)', :forbidden, {expected_json_path: get_json_error_path(:confirm)})
   end
 
   delete '/saved_searches/:id' do
     parameter :id, 'Requested saved search id (in path/route)', required: true
     let(:id) { @saved_search.id }
     let(:authentication_token) { invalid_token }
-    standard_request_options(:delete, 'DESTROY (as invalid user)', :unauthorized, {expected_json_path: 'meta/error/links/sign in'})
+    standard_request_options(:delete, 'DESTROY (as invalid user)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
   end
 
   #####################

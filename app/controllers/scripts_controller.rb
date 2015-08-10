@@ -78,9 +78,6 @@ class ScriptsController < ApplicationController
 
     @new_script.update_from = @script
 
-    @new_script.settings_file = @script.settings_file if @script.settings_file? && !new_script_params[:settings_file]
-    @new_script.data_file = @script.data_file if @script.data_file? && !new_script_params[:data_file]
-
     respond_to do |format|
       if @new_script.save && @script.save
         format.html { redirect_to @new_script, notice: 'A new version of the Script was successfully created.' }

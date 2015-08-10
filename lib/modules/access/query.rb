@@ -42,8 +42,8 @@ module Access
         if Access::Check.is_admin?(user)
           :owner
         elsif Access::Check.is_standard_user?(user)
-          creator_lvl = level_project_creators(user, projects)
-          permission_user_lvl = level_permissions_user(user, projects)
+          creator_lvl = Access::Level.project_creators(user, projects)
+          permission_user_lvl = Access::Level.permissions_user(user, projects)
           #permission_logged_in_lvl = level_permissions_logged_in(projects)
 
           #levels = [permission_user_lvl, permission_logged_in_lvl].flatten.compact
@@ -240,9 +240,10 @@ module Access
         user = Access::Core.validate_user(user)
         levels = Access::Core.validate_levels(levels)
 
-        query = AnalysisJob.joins(saved_searches: [:projects])
-
-        Access::Core.query_project_access(user, levels, query)
+        query = AnalysisJob
+                    .joins(saved_searches: [:projects])
+                    .order(updated_at: :desc)
+        Access::Apply.restrictions(user, levels, query)
       end
 
       # Get all saved searches for which this user has this user has these access levels.
@@ -253,9 +254,10 @@ module Access
         user = Access::Core.validate_user(user)
         levels = Access::Core.validate_levels(levels)
 
-        query = SavedSearch.joins(:projects)
+        query = SavedSearch
+                    .joins(:projects)
 
-        Access::Core.query_project_access(user, levels, query)
+        Access::Apply.restrictions(user, levels, query)
       end
 
       def taggings_modified(user)

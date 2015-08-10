@@ -24,7 +24,6 @@ module Access
         # @see http://api.rubyonrails.org/classes/ActiveRecord/QueryMethods.html#method-i-includes
 
         if Access::Check.is_admin?(user)
-
           intersection = Access::Core.levels_deny & levels
           if intersection.empty?
             # admin users have full access to everything at any level
@@ -35,36 +34,28 @@ module Access
           end
 
         elsif Access::Check.is_standard_user?(user)
-
-          # after adding logged_in and anonymous permissions.
-          # query
-          #     .where(
-          #         '(NOT EXISTS (SELECT 1 FROM permissions invert_pm_logged_in WHERE invert_pm_logged_in.logged_in = TRUE AND invert_pm_logged_in.project_id = projects.id))')
-          #     .where(
-          #         '(NOT EXISTS (SELECT 1 FROM permissions invert_pm WHERE invert_pm.user_id = ? AND invert_pm.project_id = projects.id))',
-          #         user.id)
-
-          # after adding logged_in and anonymous permissions.
-          # permissions_user_fragment = Permission.where(user: user, level: levels, logged_in: false, anonymous: false).select(:project_id)
-          # permissions_logged_in_fragment = Permission.where(user: nil, level: levels, logged_in: true, anonymous: false).select(:project_id)
-          # condition_pt = pt[:id].in(permissions_logged_in_fragment.arel).or(pt[:id].in(permissions_user_fragment.arel))
-
           model_name = query.model.model_name.name
           if model_name == 'Project'
             project_restrictions(user, levels, query)
           elsif %w(Site AudioRecording Bookmark AudioEvent AudioEventComment).include?(model_name)
             site_restrictions(user, levels, query)
+          elsif %w(SavedSearch AnalysisJob).include?(model_name)
+            saved_search_restrictions(user, levels, query)
           else
             fail NotImplementedError, "Restrictions are not implemented for #{model_name}."
           end
 
         else
           restrictions_none(user, query)
+
         end
 
       end
 
       def site_restrictions(user, levels, query)
+        user = Access::Core.validate_user(user)
+        levels = Access::Core.validate_levels(levels)
+
         pt = Project.arel_table
         pm = Permission.arel_table
         ps = Arel::Table.new(:projects_sites)
@@ -109,6 +100,19 @@ OR
             AND "audio_events"."id" = ae1.id
         )
 =end
+
+        # after adding logged_in and anonymous permissions.
+        # query
+        #     .where(
+        #         '(NOT EXISTS (SELECT 1 FROM permissions invert_pm_logged_in WHERE invert_pm_logged_in.logged_in = TRUE AND invert_pm_logged_in.project_id = projects.id))')
+        #     .where(
+        #         '(NOT EXISTS (SELECT 1 FROM permissions invert_pm WHERE invert_pm.user_id = ? AND invert_pm.project_id = projects.id))',
+        #         user.id)
+
+        # after adding logged_in and anonymous permissions.
+        # permissions_user_fragment = Permission.where(user: user, level: levels, logged_in: false, anonymous: false).select(:project_id)
+        # permissions_logged_in_fragment = Permission.where(user: nil, level: levels, logged_in: true, anonymous: false).select(:project_id)
+        # condition_pt = pt[:id].in(permissions_logged_in_fragment.arel).or(pt[:id].in(permissions_user_fragment.arel))
 
         # need to add the 'deleted_at IS NULL' check by hand
 
@@ -171,6 +175,9 @@ OR
       end
 
       def project_restrictions(user, levels, query)
+        user = Access::Core.validate_user(user)
+        levels = Access::Core.validate_levels(levels)
+
         pt = Project.arel_table
         pm = Permission.arel_table
         user_id = user.id
@@ -221,19 +228,11 @@ WHERE
         query.where(project_condition)
       end
 
-      def restrictions_none(user, query)
-        # non-standard users (harvester, guest) have no access
-        user_type = '(unknown)'
-        user_type = 'guest' if Access::Check.is_guest?(user)
-        user_type = 'harvester' if Access::Check.is_harvester?(user)
-        msg = "User '#{user.user_name}', id #{user.id}, type #{user_type}, roles '#{user.role_symbols.join(', ')}' denied access in Access::Query.restrictions."
-        Rails.logger.warn msg
 
-        # using .none to be chain-able
-        query.none
-      end
 
       def project_site_restrictions(project, query)
+        project = Access::Core.validate_project(project)
+
         ps = Arel::Table.new(:projects_sites)
         si = Site.arel_table
         project_id = project.id
@@ -260,14 +259,21 @@ WHERE
         query.where(project_condition)
       end
 
+      def saved_search_restrictions(user, levels, query)
+        user = Access::Core.validate_user(user)
+        levels = Access::Core.validate_levels(levels)
+
+
+      end
+
       # Is exists negated? and which levels should be used to search.
       # @param [Array<Symbol>] levels
       # @return [Boolean, Array<Symbol>] exists, levels
       def permission_levels(levels)
         levels = Access::Core.validate_levels(levels)
 
-        is_exists = Access::Core.levels_allow.include?(levels)
-        is_not_exists = Access::Core.levels_deny == levels
+        # is_exists = Access::Core.levels_allow.include?(levels)
+        # is_not_exists = Access::Core.levels_deny == levels
 
         # check if any of the deny levels is in levels
 
@@ -281,6 +287,20 @@ WHERE
         normalised_levels = exists ? levels : Access::Core.levels_allow
 
         [exists, normalised_levels]
+      end
+
+      def restrictions_none(user, query)
+        user = Access::Core.validate_user(user)
+
+        # non-standard users (harvester, guest) have no access
+        user_type = '(unknown)'
+        user_type = 'guest' if Access::Check.is_guest?(user)
+        user_type = 'harvester' if Access::Check.is_harvester?(user)
+        msg = "User '#{user.user_name}', id #{user.id}, type #{user_type}, roles '#{user.role_symbols.join(', ')}' denied access in Access::Query.restrictions."
+        Rails.logger.warn msg
+
+        # using .none to be chain-able
+        query.none
       end
 
     end
