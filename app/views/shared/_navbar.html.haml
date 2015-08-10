@@ -7,8 +7,7 @@
         %span.icon-bar
         %span.icon-bar
         %span.icon-bar
-      %a.navbar-brand{href: Settings.organisation_names.parent_site_link, style: 'font-size:14px;'}= Settings.organisation_names.parent_site_name
-      %a.navbar-brand{href: root_path, class: ('active' if current_page?(root_path))}= Settings.organisation_names.site_long_name
+      %a.navbar-brand{href: root_path, class: ('active' if current_page?(root_path))}= Settings.organisation_names.parent_site_name
     #navbar.navbar-collapse.collapse
       %ul.nav.navbar-nav
         %li{class: ('active' if current_page?(projects_path))}
@@ -25,6 +24,8 @@
               - Settings.organisation_names.custom_menu.items.each do |entry|
                 %li
                   %a{href: URI.join(Settings.organisation_names.parent_site_link, entry['url']) }= entry['title']
+        %li{class: ('active' if current_page?(contact_us_path))}
+          %a{href: contact_us_path}= t('baw.shared.links.contact_us.title')
       %ul.nav.navbar-nav.navbar-right
         - if current_user.blank?
           %li{class: ('active' if current_page?(new_user_registration_path))}
