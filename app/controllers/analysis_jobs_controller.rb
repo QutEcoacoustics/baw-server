@@ -1,13 +1,8 @@
 class AnalysisJobsController < ApplicationController
   include Api::ControllerHelper
 
-  # order matters for before_action and load_and_authorize_resource!
-  load_and_authorize_resource :analysis_job
+  load_and_authorize_resource :analysis_job, except: [:filter]
 
-  # this is necessary so that the ability has access to job.dataset.projects
-  before_action :build_analysis_job, only: [:new, :create]
-
-  # GET /analysis_job
   # GET /analysis_job.json
   def index
     @analysis_jobs, opts = Settings.api_response.response_advanced(
@@ -19,46 +14,43 @@ class AnalysisJobsController < ApplicationController
     respond_index(opts)
   end
 
-  # GET /analysis_job/1
   # GET /analysis_job/1.json
   def show
     respond_show
   end
 
-  # GET /analysis_job/new
   # GET /analysis_job/new.json
   def new
-    do_authorize!
-
     respond_show
   end
 
-  # POST /analysis_job
   # POST /analysis_job.json
   def create
-    attributes_and_authorize(analysis_jobs_params)
-
-    # TODO This may need to be async depending on how fast it runs
-    @analysis_job.enqueue_work(current_user)
-
     if @analysis_job.save
-      respond_create_success(analysis_job_url(@analysis_job))
+
+      # once analysis job is successfully saved,
+      # generate the job items specified by the analysis job
+      # TODO This may need to be an async operation itself depending on how fast it runs
+      #sub_items = @analysis_job.generate_items(current_user)
+      # and enqueue the job items
+      # so that the async processing can begin
+      #enqueue_result = @analysis_job.enqueue_work(current_user, sub_items)
+
+      respond_create_success
     else
       respond_change_fail
     end
   end
 
-  # PUT /analysis_job/1
   # PUT /analysis_job/1.json
   def update
-    if @analysis_job.update_attributes(analysis_jobs_params)
+    if @analysis_job.update_attributes(analysis_job_update_params)
       respond_show
     else
       respond_change_fail
     end
   end
 
-  # DELETE /analysis_job/1
   # DELETE /analysis_job/1.json
   def destroy
     @analysis_job.destroy
@@ -81,24 +73,22 @@ class AnalysisJobsController < ApplicationController
 
   private
 
-  def build_analysis_job
-    @analysis_job = AnalysisJob.new
+  def analysis_job_create_params
+    # When Analysis jobs are created, they must have
+    # a script, saved search, name, and custom settings.
+    # May have a description.
+    params.require(:job).permit(
+        :script_id,
+        :saved_search_id,
+        :name,
+        :custom_settings,
+        :description)
   end
 
-  def analysis_jobs_params
-    params.require(:job).permit(
-        :script_id, :saved_search_id,
-        :name,
-        :description,
-        :annotation_name,
-        :custom_settings,
-        :started_at,
-        :overall_status,
-        :overall_status_modified_at,
-        :overall_progress,
-        :overall_progress_modified_at,
-        :overall_count,
-        :overall_duration_seconds)
+  def analysis_job_update_params
+    # Only name and description can be updated via API.
+    # Other properties are updated by the processing system.
+    params.require(:job).permit(:name, :description)
   end
 
   def get_analysis_jobs
