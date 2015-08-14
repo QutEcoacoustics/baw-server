@@ -16,7 +16,6 @@ test:
     password: ''
   devise:
     pepper: 2a1dd780abf48819876cd0b74b5a988b
-    expire_auth_token_on_timeout: false
     secret_key: 8050140a1d4824520eb759778ada63fe
   secret_token: 286c3a382cc5f94bc4003023f9486845
   paths:

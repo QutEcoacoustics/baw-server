@@ -32,6 +32,7 @@ SimpleCov.start 'rails'
 
 require File.expand_path('../../config/environment', __FILE__)
 require 'rspec/rails'
+require 'rake'
 
 require 'capybara/rails'
 require 'capybara/rspec'
@@ -107,14 +108,21 @@ RSpec.configure do |config|
   config.before(:suite) do
     DatabaseCleaner.strategy = :transaction
     DatabaseCleaner.clean_with(:truncation)
+
+    # run these rake tasks to ensure the db in is a state that matches the schema.rb
+    #bundle exec rake db:drop RAILS_ENV=test
+    #bundle exec rake db:create RAILS_ENV=test
+    #bundle exec rake db:schema:load RAILS_ENV=test
+
     begin
       DatabaseCleaner.start
-      #puts '===> FactoryGirl lint started.'
+      puts '===> Database cleaner: start.'
+      #puts '===> FactoryGirl lint: started.'
       #FactoryGirl.lint
-      #puts '===> FactoryGirl lint completed.'
+      #puts '===> FactoryGirl lint: completed.'
     ensure
       DatabaseCleaner.clean
-      puts '===> Database cleaner run.'
+      puts '===> Database cleaner: cleaned.'
     end
     # Redirect stderr and stdout
     $stderr = File.new(File.join(File.dirname(__FILE__), '..', 'tmp', 'rspec_stderr.txt'), 'w')

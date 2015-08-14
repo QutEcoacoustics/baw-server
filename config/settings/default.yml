@@ -49,7 +49,6 @@ defaults: &defaults
     # File devise.rb #
     ######################################################
     pepper: 128 char random pepper 128 char random pepper
-    expire_auth_token_on_timeout: true
     secret_key: 128 char random pepper 128 char random pepper
   ######################################################
   # File secret_token.rb #
