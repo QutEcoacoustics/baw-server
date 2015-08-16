@@ -3,7 +3,10 @@
 @import "font-awesome";
 
 $grid-float-breakpoint: 992px;
-$nav-link-padding: 5px 10px;
+
+.nav-stacked > li > a {
+  padding: 5px 10px;
+}
 
 @import "bootstrap-sprockets";
 @import "bootstrap";
