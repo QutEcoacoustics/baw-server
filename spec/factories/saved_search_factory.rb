@@ -7,5 +7,17 @@ FactoryGirl.define do
 
     creator
 
+    trait :with_analysis_jobs do
+      transient do
+        analysis_job_count 1
+      end
+      after(:create) do |saved_search, evaluator|
+        raise 'Creator was blank' if  evaluator.creator.blank?
+        create_list(:analysis_job, evaluator.analysis_job_count, saved_search: saved_search, creator: evaluator.creator)
+      end
+    end
+
+    factory :saved_search_with_analysis_jobs, traits: [:with_analysis_jobs]
+
   end
 end

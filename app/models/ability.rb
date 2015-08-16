@@ -225,10 +225,13 @@ class Ability
   end
 
   def to_analysis_job(user)
-    # must have read permission or higher on any saved_search projects to create analysis job
+    # must have read permission or higher on all saved_search projects to create analysis job
     can [:show, :create], AnalysisJob do |analysis_job|
       check_model(analysis_job)
-      Access::Check.can_any?(user, :reader, analysis_job.saved_search.projects)
+      projects = analysis_job.saved_search.projects
+      has_projects = projects.size > 0
+
+      has_projects ? Access::Check.can_all?(user, :reader, projects) : false
     end
 
     # only creator can update, destroy their own analysis jobs
@@ -242,17 +245,12 @@ class Ability
     # cannot be updated
 
     # must have read permission or higher on all projects to create saved search
-    # or be the creator of the saved search
     can [:show, :create], SavedSearch do |saved_search|
       check_model(saved_search)
-      is_creator = saved_search.creator_id == user.id
-      has_projects = saved_search.projects.size > 0
+      projects = saved_search.projects
+      has_projects = projects.size > 0
 
-      if has_projects
-        is_creator || Access::Check.can_all?(user, :reader, saved_search.projects)
-      else
-        is_creator
-      end
+      has_projects ? Access::Check.can_all?(user, :reader, projects) : false
     end
 
     # only creator can destroy their own saved searches

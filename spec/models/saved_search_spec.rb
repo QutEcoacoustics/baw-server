@@ -35,14 +35,14 @@ describe SavedSearch, type: :model do
     user1 = create(:user)
     user2 = create(:user)
     user3 = create(:user)
-    ss1 = create(:saved_search, {creator: user1, name: 'You talkin\' to me?'})
+    ss1 = create(:saved_search, {creator: user1, name: "You talkin' to me?"})
 
-    ss2 = build(:saved_search, {creator: user2, name: 'You TALKIN\' to me?'})
-    expect(ss2.creator_id).not_to eql(ss1.creator_id), "The same user is present for both cases, invalid test!"
+    ss2 = build(:saved_search, {creator: user2, name: "You TALKIN' to me?"})
+    expect(ss2.creator_id).not_to eql(ss1.creator_id), 'The same user is present for both cases, invalid test!'
     expect(ss2).to be_valid
 
-    ss3 = build(:saved_search, {creator: user3, name: 'You talkin\' to me?'})
-    expect(ss3.creator_id).not_to eql(ss1.creator_id), "The same user is present for both cases, invalid test!"
+    ss3 = build(:saved_search, {creator: user3, name: "You talkin' to me?"})
+    expect(ss3.creator_id).not_to eql(ss1.creator_id), 'The same user is present for both cases, invalid test!'
     expect(ss3).to be_valid
   end
 
@@ -56,14 +56,15 @@ describe SavedSearch, type: :model do
 
   it 'should have a valid query' do
     ss = create(:saved_search)
-    ss.build_query(ss.creator)
+    ss.audio_recording_filter(ss.creator)
   end
 
   it 'should return the expected audio recording ids from the query' do
     project_1 = create(:project)
     user = project_1.creator
     site_1 = create(:site, projects: [project_1], creator: user)
-    audio_recording_1 = create(:audio_recording, site: site_1, creator: user, uploader: user)
+
+    create(:audio_recording, site: site_1, creator: user, uploader: user)
 
     project_2 = create(:project, creator: user)
     site_2 = create(:site, projects: [project_2], creator: user)
@@ -71,7 +72,7 @@ describe SavedSearch, type: :model do
 
     ss = create(:saved_search, creator: user, stored_query: {id: {in: [audio_recording_2.id]}})
 
-    result = ss.execute_query(user)
+    result = ss.extract_audio_recordings(user)
 
     expect(result).to be_a(AudioRecording::ActiveRecord_Relation)
     expect(result.size).to eq(1)
@@ -108,7 +109,8 @@ describe SavedSearch, type: :model do
     project_1 = create(:project)
     user = project_1.creator
     site_1 = create(:site, projects: [project_1], creator: user)
-    audio_recording_1 = create(:audio_recording, site: site_1, creator: user, uploader: user)
+
+    create(:audio_recording, site: site_1, creator: user, uploader: user)
 
     project_2 = create(:project, creator: user)
     site_2 = create(:site, projects: [project_2], creator: user)
@@ -136,7 +138,8 @@ describe SavedSearch, type: :model do
     project_1 = create(:project)
     user = project_1.creator
     site_1 = create(:site, projects: [project_1], creator: user)
-    audio_recording_1 = create(:audio_recording, site: site_1, creator: user, uploader: user)
+
+    create(:audio_recording, site: site_1, creator: user, uploader: user)
 
     project_2 = create(:project, creator: user)
     site_2 = create(:site, projects: [project_2], creator: user)
@@ -150,7 +153,7 @@ describe SavedSearch, type: :model do
     expect(SavedSearch.find(ss.id).projects.pluck(:id)[0]).to eq(project_2.id)
   end
 
-  it 'should have an analysis_job if one uses the saved search' do
+  it 'should have an analysis_job if an analysis job uses the saved search' do
     saved_search = create(:saved_search)
     analysis_job = create(:analysis_job, saved_search: saved_search)
 

@@ -21,7 +21,6 @@ FactoryGirl.define do
         evaluator.site_count.times do
           project.sites << FactoryGirl.create(:site_with_audio_recordings, creator: evaluator.creator)
         end
-        #create_list(:site, evaluator.site_count, project: project)
       end
     end
 
@@ -31,7 +30,9 @@ FactoryGirl.define do
       end
       after(:create) do |project, evaluator|
         raise 'Creator was blank' if  evaluator.creator.blank?
-        create_list(:saved_search, evaluator.saved_search_count, projects: [project], creator: evaluator.creator)
+        evaluator.saved_search_count.times do
+          project.saved_searches << FactoryGirl.create(:saved_search_with_analysis_jobs, creator: evaluator.creator)
+        end
       end
     end
 

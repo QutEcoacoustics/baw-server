@@ -49,42 +49,4 @@ describe AnalysisJob, type: :model do
     expect(build(:analysis_job, saved_search: nil)).not_to be_valid
   end
 
-  #
-  #it 'should be valid without a process_new field specified' do
-  #  build(:job, process_new: nil).should be_valid
-  #end
-  #it 'ensures process_new can be true or false' do
-  #  as = build(:job)
-  #  as.should be_valid
-  #  as.process_new = true
-  #  as.should be_valid
-  #  as.process_new = false
-  #  as.should be_valid
-  #end
-
-  #context 'should ensure that process_new and data_set_identifier are mutually exclusive' do
-  #  # 6 cases to consider
-  #  cases =
-  #      [
-  #          {pn: true, dsi: nil, result: true},
-  #          {pn: false, dsi: nil, result: true},
-  #          {pn: nil, dsi: nil, result: true},
-  #          {pn: true, dsi: "hello", result: false},
-  #          {pn: false, dsi: "my", result: true},
-  #          {pn: nil, dsi: "name is barney the dinosaur", result: true}
-  #      ]
-  #  cases.each { |testcase|
-  #    it "should ensure that with {process_new:#{testcase[:pn]}, data_set_identifier:#{testcase[:dsi]}} should be #{'not' if !testcase[:result]} valid" do
-  #      if testcase[:result]
-  #        build(:job, {process_new: testcase[:pn], data_set_identifier:testcase[:dsi]}).should be_valid
-  #      else
-  #        build(:job, {process_new: testcase[:pn], data_set_identifier:testcase[:dsi]}).should_not be_valid
-  #      end
-  #
-  #    end
-  #  }
-  #
-  #end
-
-
 end

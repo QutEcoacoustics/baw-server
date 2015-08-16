@@ -30,7 +30,7 @@ resource 'SavedSearches' do
             }
         }
     }
-    @saved_search = FactoryGirl.create(:saved_search, creator: @writer_user, projects: [@write_permission.project])
+    @saved_search = @write_permission.project.saved_searches.first
   end
 
   # prepare authentication_token for different users
@@ -42,197 +42,210 @@ resource 'SavedSearches' do
   let(:invalid_token) { "Token token=\"weeeeeeeee0123456789splat\"" }
 
   let(:example_stored_query) { {uuid: {eq: 'blah blah'}} }
-  let(:post_attributes) { {name: 'saved search name', stored_query: example_stored_query } }
+  let(:post_attributes) { {name: 'saved search name', stored_query: example_stored_query} }
 
-  ################################
-  # LIST
-  ################################
-  get '/saved_searches' do
-    let(:authentication_token) { writer_token }
-    standard_request_options(:get, 'LIST (as writer)', :ok, {expected_json_path: 'data/0/stored_query', data_item_count: 1})
+  context 'list' do
+
+    get '/saved_searches' do
+      let(:authentication_token) { admin_token }
+      standard_request_options(:get, 'LIST (as admin)', :ok, {expected_json_path: 'data/0/stored_query', data_item_count: 1})
+    end
+
+    get '/saved_searches' do
+      let(:authentication_token) { writer_token }
+      standard_request_options(:get, 'LIST (as writer)', :ok, {expected_json_path: 'data/0/stored_query', data_item_count: 1})
+    end
+
+    get '/saved_searches' do
+      let(:authentication_token) { reader_token }
+      standard_request_options(:get, 'LIST (as reader)', :ok, {expected_json_path: 'data/0/stored_query', data_item_count: 1})
+    end
+
+    get '/saved_searches' do
+      let(:authentication_token) { other_token }
+      standard_request_options(:get, 'LIST (as other)', :ok, {response_body_content: '"total":1,', data_item_count: 0})
+    end
+
+    get '/saved_searches' do
+      let(:authentication_token) { unconfirmed_token }
+      standard_request_options(:get, 'LIST (as unconfirmed_token)', :forbidden, {expected_json_path: get_json_error_path(:confirm)})
+    end
+
+    get '/saved_searches' do
+      let(:authentication_token) { invalid_token }
+      standard_request_options(:get, 'LIST (as invalid user)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
+    end
+
   end
 
-  get '/saved_searches' do
-    let(:authentication_token) { reader_token }
-    standard_request_options(:get, 'LIST (as reader)', :ok, {expected_json_path: 'data/0/stored_query', data_item_count: 1})
+  context 'create' do
+
+    post '/saved_searches' do
+      let(:raw_post) { {saved_search: post_attributes}.to_json }
+      let(:authentication_token) { admin_token }
+      standard_request_options(:post, 'CREATE (as admin)', :created, {expected_json_path: 'data/stored_query'})
+    end
+
+    post '/saved_searches' do
+      let(:raw_post) { {saved_search: post_attributes}.to_json }
+      let(:authentication_token) { writer_token }
+      standard_request_options(:post, 'CREATE (as writer)', :created, {expected_json_path: 'data/stored_query'})
+    end
+
+    post '/saved_searches' do
+      let(:raw_post) { {saved_search: post_attributes}.to_json }
+      let(:authentication_token) { reader_token }
+      standard_request_options(:post, 'CREATE (as reader)', :created, {expected_json_path: 'data/stored_query'})
+    end
+
+    post '/saved_searches' do
+      let(:raw_post) { {saved_search: post_attributes}.to_json }
+      let(:authentication_token) { other_token }
+      standard_request_options(:post, 'CREATE (as other)', :created, {expected_json_path: 'data/stored_query'})
+    end
+
+    post '/saved_searches' do
+      let(:raw_post) { {saved_search: post_attributes}.to_json }
+      let(:authentication_token) { unconfirmed_token }
+      standard_request_options(:post, 'CREATE (as unconfirmed user)', :forbidden, {expected_json_path: get_json_error_path(:confirm)})
+    end
+
+    post '/saved_searches' do
+      let(:raw_post) { {saved_search: post_attributes}.to_json }
+      let(:authentication_token) { invalid_token }
+      standard_request_options(:post, 'CREATE (as invalid user)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
+    end
+
   end
 
-  get '/saved_searches' do
-    let(:authentication_token) { reader_token }
-    standard_request_options(:get, 'LIST (as other)', :ok, {response_body_content: '"total":1,', data_item_count: 0})
+  context 'show' do
+    get '/saved_searches/:id' do
+      parameter :id, 'Requested saved search id (in path/route)', required: true
+      let(:id) { @saved_search.id }
+      let(:authentication_token) { admin_token }
+      standard_request_options(:get, 'SHOW (as admin)', :ok, {expected_json_path: %w(data/analysis_job_ids data/stored_query)})
+    end
+
+    get '/saved_searches/:id' do
+      parameter :id, 'Requested saved search id (in path/route)', required: true
+      let(:id) { @saved_search.id }
+      let(:authentication_token) { writer_token }
+      standard_request_options(:get, 'SHOW (as writer)', :ok, {expected_json_path: 'data/stored_query'})
+    end
+
+    get '/saved_searches/:id' do
+      parameter :id, 'Requested saved search id (in path/route)', required: true
+      let(:id) { @saved_search.id }
+      let(:authentication_token) { reader_token }
+      standard_request_options(:get, 'SHOW (as reader)', :ok, {expected_json_path: %w(data/analysis_job_ids data/stored_query)})
+    end
+
+    get '/saved_searches/:id' do
+      parameter :id, 'Requested saved search id (in path/route)', required: true
+      let(:id) { @saved_search.id }
+      let(:authentication_token) { other_token }
+      standard_request_options(:get, 'SHOW (as other)', :ok, {expected_json_path: %w(data/analysis_job_ids data/stored_query)})
+    end
+
+    get '/saved_searches/:id' do
+      parameter :id, 'Requested saved search id (in path/route)', required: true
+      let(:id) { @saved_search.id }
+      let(:authentication_token) { unconfirmed_token }
+      standard_request_options(:get, 'SHOW (as unconfirmed user)', :forbidden, {expected_json_path: get_json_error_path(:confirm)})
+    end
+
+    get '/saved_searches/:id' do
+      parameter :id, 'Requested saved search id (in path/route)', required: true
+      let(:id) { @saved_search.id }
+      let(:authentication_token) { invalid_token }
+      standard_request_options(:get, 'SHOW (as invalid user)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
+    end
   end
 
-  get '/saved_searches' do
-    let(:authentication_token) { admin_token }
-    standard_request_options(:get, 'LIST (as admin)', :ok, {expected_json_path: 'data/0/stored_query', data_item_count: 1})
+  context 'update' do
+    put '/saved_searches/:id' do
+      parameter :id, 'Requested saved search id (in path/route)', required: true
+      let(:id) { @saved_search.id }
+      let(:raw_post) { {audio_event_comment: post_attributes}.to_json }
+      let(:authentication_token) { writer_token }
+      standard_request_options(:put, 'UPDATE (as writer)', :not_found, {expected_json_path: 'meta/error/info/original_http_method'})
+    end
+
+    patch '/saved_searches/:id' do
+      parameter :id, 'Requested saved search id (in path/route)', required: true
+      let(:id) { @saved_search.id }
+      let(:raw_post) { {audio_event_comment: post_attributes}.to_json }
+      let(:authentication_token) { reader_token }
+      standard_request_options(:patch, 'UPDATE (as reader)', :not_found, {expected_json_path: 'meta/error/info/original_http_method'})
+    end
   end
 
-  get '/saved_searches' do
-    let(:authentication_token) { unconfirmed_token }
-    standard_request_options(:get, 'LIST (as unconfirmed_token)', :forbidden, {expected_json_path: get_json_error_path(:confirm)})
+  context 'delete' do
+
+    delete '/saved_searches/:id' do
+      parameter :id, 'Requested saved search id (in path/route)', required: true
+      let(:id) { @saved_search.id }
+      let(:authentication_token) { admin_token }
+      standard_request_options(:delete, 'DESTROY (as admin)', :no_content, {expected_response_has_content: false, expected_response_content_type: nil})
+    end
+
+    delete '/saved_searches/:id' do
+      parameter :id, 'Requested saved search id (in path/route)', required: true
+      let(:id) { @saved_search.id }
+      let(:authentication_token) { writer_token }
+      standard_request_options(:delete, 'DESTROY (as writer)', :no_content, {expected_response_has_content: false, expected_response_content_type: nil})
+    end
+
+    delete '/saved_searches/:id' do
+      parameter :id, 'Requested saved search id (in path/route)', required: true
+      let(:id) { @saved_search.id }
+      let(:authentication_token) { reader_token }
+      standard_request_options(:delete, 'DESTROY (as reader)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
+    end
+
+    delete '/saved_searches/:id' do
+      parameter :id, 'Requested saved search id (in path/route)', required: true
+      let(:id) { @saved_search.id }
+      let(:authentication_token) { other_token }
+      standard_request_options(:delete, 'DESTROY (as other)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
+    end
+
+    delete '/saved_searches/:id' do
+      parameter :id, 'Requested saved search id (in path/route)', required: true
+      let(:id) { @saved_search.id }
+      let(:authentication_token) { unconfirmed_token }
+      standard_request_options(:delete, 'DESTROY (as unconfirmed user)', :forbidden, {expected_json_path: get_json_error_path(:confirm)})
+    end
+
+    delete '/saved_searches/:id' do
+      parameter :id, 'Requested saved search id (in path/route)', required: true
+      let(:id) { @saved_search.id }
+      let(:authentication_token) { invalid_token }
+      standard_request_options(:delete, 'DESTROY (as invalid user)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
+    end
+
   end
 
-  get '/saved_searches' do
-    let(:authentication_token) { invalid_token }
-    standard_request_options(:get, 'LIST (as invalid user)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
-  end
+  context 'filter' do
 
-  ################################
-  # CREATE
-  ################################
-  post '/saved_searches' do
-    let(:raw_post) { {saved_search: post_attributes}.to_json }
-    let(:authentication_token) { writer_token }
-    standard_request_options(:post, 'CREATE (as writer)', :created, {expected_json_path: 'data/stored_query'})
-  end
-
-  post '/saved_searches' do
-    let(:raw_post) { {saved_search: post_attributes}.to_json }
-    let(:authentication_token) { reader_token }
-    standard_request_options(:post, 'CREATE (as reader)', :created, {expected_json_path: 'data/stored_query'})
-  end
-
-  post '/saved_searches' do
-    let(:raw_post) { {saved_search: post_attributes}.to_json }
-    let(:authentication_token) { admin_token }
-    standard_request_options(:post, 'CREATE (as admin)', :created, {expected_json_path: 'data/stored_query'})
-  end
-
-  post '/saved_searches' do
-    let(:raw_post) { {saved_search: post_attributes}.to_json }
-    let(:authentication_token) { unconfirmed_token }
-    standard_request_options(:post, 'CREATE (as unconfirmed user)', :forbidden, {expected_json_path: get_json_error_path(:confirm)})
-  end
-
-  post '/saved_searches' do
-    let(:raw_post) { {saved_search: post_attributes}.to_json }
-    let(:authentication_token) { invalid_token }
-    standard_request_options(:post, 'CREATE (as invalid user)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
-  end
-
-  ################################
-  # Show
-  ################################
-  get '/saved_searches/:id' do
-    parameter :id, 'Requested saved search id (in path/route)', required: true
-    let(:id) { @saved_search.id }
-    let(:authentication_token) { writer_token }
-    standard_request_options(:get, 'SHOW (as writer)', :ok, {expected_json_path: 'data/stored_query'})
-  end
-
-  get '/saved_searches/:id' do
-    parameter :id, 'Requested saved search id (in path/route)', required: true
-    let(:id) { @saved_search.id }
-    let(:authentication_token) { reader_token }
-    standard_request_options(:get, 'SHOW (as reader)', :ok, {expected_json_path: %w(data/analysis_job_ids data/stored_query)})
-  end
-
-  get '/saved_searches/:id' do
-    parameter :id, 'Requested saved search id (in path/route)', required: true
-    let(:id) { @saved_search.id }
-    let(:authentication_token) { admin_token }
-    standard_request_options(:get, 'SHOW (as admin)', :ok, {expected_json_path: %w(data/analysis_job_ids data/stored_query)})
-  end
-
-  get '/saved_searches/:id' do
-    parameter :id, 'Requested saved search id (in path/route)', required: true
-    let(:id) { @saved_search.id }
-    let(:authentication_token) { unconfirmed_token }
-    standard_request_options(:get, 'SHOW (as unconfirmed user)', :forbidden, {expected_json_path: get_json_error_path(:confirm)})
-  end
-
-  get '/saved_searches/:id' do
-    parameter :id, 'Requested saved search id (in path/route)', required: true
-    let(:id) { @saved_search.id }
-    let(:authentication_token) { invalid_token }
-    standard_request_options(:get, 'SHOW (as invalid user)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
-  end
-
-  ################################
-  # Update
-  ################################
-  put '/saved_searches/:id' do
-    parameter :id, 'Requested saved search id (in path/route)', required: true
-    let(:id) { @saved_search.id }
-    let(:raw_post) { {audio_event_comment: post_attributes}.to_json }
-    let(:authentication_token) { writer_token }
-    standard_request_options(:put, 'UPDATE (as writer)', :not_found, {expected_json_path: 'meta/error/info/original_http_method'})
-  end
-
-  patch '/saved_searches/:id' do
-    parameter :id, 'Requested saved search id (in path/route)', required: true
-    let(:id) { @saved_search.id }
-    let(:raw_post) { {audio_event_comment: post_attributes}.to_json }
-    let(:authentication_token) { reader_token }
-    standard_request_options(:patch, 'UPDATE (as reader)', :not_found, {expected_json_path: 'meta/error/info/original_http_method'})
-  end
-
-  ################################
-  # Destroy
-  ################################
-  delete '/saved_searches/:id' do
-    parameter :id, 'Requested saved search id (in path/route)', required: true
-    let(:id) { @saved_search.id }
-    let(:authentication_token) { other_token }
-    standard_request_options(:delete, 'DESTROY (as other)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
-  end
-
-  delete '/saved_searches/:id' do
-    parameter :id, 'Requested saved search id (in path/route)', required: true
-    let(:id) { @saved_search.id }
-    let(:authentication_token) { reader_token }
-    standard_request_options(:delete, 'DESTROY (as reader)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
-  end
-
-  delete '/saved_searches/:id' do
-    parameter :id, 'Requested saved search id (in path/route)', required: true
-    let(:id) { @saved_search.id }
-    let(:authentication_token) { admin_token }
-    standard_request_options(:delete, 'DESTROY (as admin)', :no_content, {expected_response_has_content: false, expected_response_content_type: nil})
-  end
-
-  delete '/saved_searches/:id' do
-    parameter :id, 'Requested saved search id (in path/route)', required: true
-    let(:id) { @saved_search.id }
-    let(:authentication_token) { writer_token }
-    standard_request_options(:delete, 'DESTROY (as writer)', :no_content, {expected_response_has_content: false, expected_response_content_type: nil})
-  end
-
-  delete '/saved_searches/:id' do
-    parameter :id, 'Requested saved search id (in path/route)', required: true
-    let(:id) { @saved_search.id }
-    let(:authentication_token) { unconfirmed_token }
-    standard_request_options(:delete, 'DESTROY (as unconfirmed user)', :forbidden, {expected_json_path: get_json_error_path(:confirm)})
-  end
-
-  delete '/saved_searches/:id' do
-    parameter :id, 'Requested saved search id (in path/route)', required: true
-    let(:id) { @saved_search.id }
-    let(:authentication_token) { invalid_token }
-    standard_request_options(:delete, 'DESTROY (as invalid user)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
-  end
-
-  #####################
-  # Filter
-  #####################
-
-  post '/saved_searches/filter' do
-    let(:authentication_token) { reader_token }
-    let(:raw_post) { {
-        filter: {
-            stored_query: {
-                eq: example_stored_query.to_json
-            }
-        },
-        projection: {
-            include: %w(id name stored_query)
-        }
-    }.to_json }
-    standard_request_options(:post, 'FILTER (as reader)', :ok, {
-                                      expected_json_path: 'meta/filter/stored_query',
-                                      data_item_count: 1,
-                                      response_body_content: '"stored_query":{"uuid":{"eq":"blah blah"}'
-                                  })
+    post '/saved_searches/filter' do
+      let(:authentication_token) { reader_token }
+      let(:raw_post) { {
+          filter: {
+              stored_query: {
+                  eq: example_stored_query.to_json
+              }
+          },
+          projection: {
+              include: %w(id name stored_query)
+          }
+      }.to_json }
+      standard_request_options(:post, 'FILTER (as reader)', :ok, {
+                                        expected_json_path: 'meta/filter/stored_query',
+                                        data_item_count: 1,
+                                        response_body_content: '"stored_query":{"uuid":{"eq":"blah blah"}'
+                                    })
+    end
   end
 
 end

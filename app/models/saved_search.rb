@@ -21,7 +21,7 @@ class SavedSearch < ActiveRecord::Base
     {
         valid_fields: [:id, :name, :description, :stored_query,:created_at, :creator_id],
         render_fields: [:id, :name, :description, :stored_query,:created_at, :creator_id],
-        text_fields: [],
+        text_fields: [:name, :description],
         custom_fields: lambda { |saved_search, user|
           saved_search_hash = {}
 
@@ -62,9 +62,9 @@ class SavedSearch < ActiveRecord::Base
 
   # Build filter from the stored query.
   # @param [User] user
-  # @return [ActiveRecord::Relation] query
-  def build_query(user)
-    fail ArgumentError, 'Cannot execute the query without a user instance.' if user.blank?
+  # @return [Arel::Nodes::Node, Array<Arel::Nodes::Node>]
+  def audio_recording_filter(user)
+    user = Access::Core.validate_user(user)
 
     filter_query = Filter::Query.new(
         { filter: stored_query },
@@ -72,49 +72,85 @@ class SavedSearch < ActiveRecord::Base
         AudioRecording,
         AudioRecording.filter_settings)
 
+    # debugging
     # query = filter_query.build.build_exists(Site.arel_table, Project.arel_table, nil, {}, false).project(:id)
     # query = AudioRecording.arel_table.join(Site.arel_table).on(AudioRecording.arel_table[:site_id].eq(query))
     # Rails.logger.warn query.to_sql
 
-    init_query = filter_query.initial_query
-    filter_query.query_filter(init_query)
+    # Get parsed filter in Arel form
+    parsed_filter = filter_query.filter
+
+    filter_query.build.parse(parsed_filter)
   end
 
   # Execute filter built from the stored query.
   # @param [User] user
-  # @return [AudioRecording::ActiveRecord_Relation] audio recordings
-  def execute_query(user)
-    query = build_query(user)
+  # @return [Arel::SelectManager] audio recordings
+  def extract_audio_recordings(user)
+    user = Access::Core.validate_user(user)
 
-    # return an array of audio recordings with no select specified
-    query.except(:select)
+    where_clause = audio_recording_filter(user)
+
+    ar = AudioRecording.arel_table
+
+    # return audio recording query with no select specified
+    ar.where(where_clause)
   end
 
   # Get the projects used by the filter in the stored query.
   # @param [User] user
-  # @return [Project::ActiveRecord_Relation] projects
+  # @return [Arel::SelectManager] projects
   def extract_projects(user)
-    query = build_query(user)
+    user = Access::Core.validate_user(user)
 
+    where_clause = audio_recording_filter(user)
 
-   # select * from projects where project id in (select projects.id from projects inner join sites, audio_recordings where audio_recording_id in )
-    sub_query_audio_recording_ids = query.pluck(:id)
+    pt = Project.arel_table
+    ps = Arel::Table.new(:projects_sites)
+    ar = AudioRecording.arel_table
 
-    sub_query_project_ids = Project
-                                .joins(sites: [:audio_recordings])
-                                .where(audio_recordings: {id: sub_query_audio_recording_ids})
-                                .pluck(:id)
+=begin
+SELECT *
+FROM projects
+WHERE EXISTS (
+  SELECT 1
+  FROM projects_sites
+  WHERE
+    "projects"."id" = "projects_sites"."project_id"
+    AND EXISTS (
+      SELECT 1
+      FROM "audio_recordings"
+      WHERE
+        "projects_sites"."site_id" = "audio_recordings"."site_id"
+        AND <where clause built from audio recording filter>
+    )
+  )
+=end
 
+    audio_recordings_exists =
+        ar
+            .where(pt[:deleted_at].eq(nil))
+            .where(ar[:site_id].eq(ps[:site_id]))
+            .where(where_clause)
+            .project(1)
+            .exists
 
-    # return the projects used in the filter
-    Project.where(id: sub_query_project_ids)
+    projects_sites_exist =
+        ps
+            .where(pt[:id].eq(ps[:project_id]))
+            .where(audio_recordings_exists)
+            .project(1)
+            .exists
+
+    pt.where(projects_sites_exist)
   end
 
   # Populate the projects used by the filter in the stored query.
   # @param [User] user
   # @return [void]
   def populate_projects(user)
-    self.projects = extract_projects(user)
+    project_query = extract_projects(user)
+    self.projects = project_query.to_a
     self.save!
   end
 

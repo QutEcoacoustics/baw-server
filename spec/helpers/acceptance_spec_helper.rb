@@ -61,7 +61,7 @@ def standard_request_options(http_method, description, expected_status, opts = {
 
   # 406 when you can't send what they want, 415 when they send what you don't want
 
-  example "#{http_method} #{description} - #{expected_status}", :document => opts[:document] do
+  example "#{http_method} #{description} - #{expected_status}", document: opts[:document] do
 
     if defined?(include_test_file) && include_test_file
       uuid = audio_recording.uuid

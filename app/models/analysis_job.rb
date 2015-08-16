@@ -51,22 +51,29 @@ class AnalysisJob < ActiveRecord::Base
 
   def self.filter_settings
     {
-        valid_fields: [:id, :name, :description, :created_at, :creator_id, :updated_at, :updater_id],
-        render_fields: [:id, :name, :description, :created_at, :creator_id, :updated_at, :updater_id],
+        valid_fields: [:id, :name, :description, :script_id, :saved_search_id, :created_at, :creator_id, :updated_at, :updater_id],
+        render_fields: [:id, :name, :description, :script_id, :saved_search_id, :created_at, :creator_id, :updated_at, :updater_id],
         text_fields: [],
         custom_fields: lambda { |analysis_job, user|
           analysis_job_hash = {}
 
-          analysis_job_hash[:saved_search] =
+          saved_search =
               SavedSearch
                   .where(id: analysis_job.saved_search_id)
-                  .pluck(*SavedSearch.filter_settings[:render_fields])
+                  .select(*SavedSearch.filter_settings[:render_fields])
                   .first
-          analysis_job_hash[:script] =
+
+          analysis_job_hash[:saved_search] = saved_search
+          analysis_job_hash[:saved_search_id] = saved_search.nil? ? nil : saved_search.id
+
+          script =
               Script
                   .where(id: analysis_job.script_id)
-                  .pluck(*Script.filter_settings[:render_fields])
+                  .select(*Script.filter_settings[:render_fields])
                   .first
+
+          analysis_job_hash[:script] = script
+          analysis_job_hash[:script_id] = script.nil? ? nil : script.id
 
           [analysis_job, analysis_job_hash]
         },
@@ -96,7 +103,7 @@ class AnalysisJob < ActiveRecord::Base
     # adding logging and timing
 
     # execute associated saved_search
-    audio_recordings_query = self.saved_search.execute_query(current_user)
+    audio_recordings_query = self.saved_search.extract_audio_recordings(current_user)
 
 
     # create payload for each audio_recording
@@ -109,7 +116,7 @@ class AnalysisJob < ActiveRecord::Base
               config: self.custom_settings,
               job_id: self.id,
 
-              uuid:audio_recording.uuid,
+              uuid: audio_recording.uuid,
               id: audio_recording.id,
               datetime_with_offset: audio_recording.recorded_date.iso8601(3),
               original_format: ''

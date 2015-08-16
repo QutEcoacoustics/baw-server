@@ -42,6 +42,10 @@ require 'helpers/misc_helper'
 
 require 'webmock/rspec'
 require 'paperclip/matchers'
+
+# require all custom rspec matchers
+Dir[File.expand_path(File.join(File.dirname(__FILE__),'support','**','*.rb'))].each {|f| require f}
+
 WebMock.disable_net_connect!(allow_localhost: true, allow: 'codeclimate.com')
 
 # gives us the login_as(@user) method when request object is not present

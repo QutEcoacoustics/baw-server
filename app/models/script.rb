@@ -44,4 +44,22 @@ class Script < ActiveRecord::Base
       end
     end
   end
+
+  def self.filter_settings
+    {
+        valid_fields: [:id, :name, :description, :analysis_identifier, :version, :created_at, :creator_id],
+        render_fields: [:id, :name, :description, :analysis_identifier, :version, :created_at, :creator_id],
+        text_fields: [:name, :description, :analysis_identifier],
+        custom_fields: nil,
+        controller: :scripts,
+        action: :filter,
+        defaults: {
+            order_by: :name,
+            direction: :asc
+        },
+        field_mappings: [],
+        valid_associations: []
+    }
+  end
+
 end

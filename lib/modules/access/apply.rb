@@ -5,6 +5,7 @@ module Access
       # Add project access restrictions from permissions and other sources.
       # @param [User] user
       # @param [Symbol, Array<Symbol>] levels
+      # @param [ActiveRecord::Relation] query
       # @return [ActiveRecord::Relation] modified query
       def restrictions(user, levels, query)
         user = Access::Core.validate_user(user)
@@ -52,6 +53,12 @@ module Access
 
       end
 
+      # Restrict access by joining on sites (one to many)
+      # Access is allowed if there are *any* matches
+      # @param [User] user
+      # @param [Symbol, Array<Symbol>] levels
+      # @param [ActiveRecord::Relation] query
+      # @return [ActiveRecord::Relation]
       def site_restrictions(user, levels, query)
         user = Access::Core.validate_user(user)
         levels = Access::Core.validate_levels(levels)
@@ -174,6 +181,13 @@ OR
         end
       end
 
+      # Restrict access based on projects.
+      # Only used by project queries.
+      # Access is allowed if *any* match.
+      # @param [User] user
+      # @param [Symbol, Array<Symbol>] levels
+      # @param [ActiveRecord::Relation] query
+      # @return [ActiveRecord::Relation]
       def project_restrictions(user, levels, query)
         user = Access::Core.validate_user(user)
         levels = Access::Core.validate_levels(levels)
@@ -228,8 +242,10 @@ WHERE
         query.where(project_condition)
       end
 
-
-
+      # Restrict access using project site table
+      # @param [Project] project
+      # @param [ActiveRecord::Relation] query
+      # @return [ActiveRecord::Relation]
       def project_site_restrictions(project, query)
         project = Access::Core.validate_project(project)
 
@@ -263,7 +279,8 @@ WHERE
         user = Access::Core.validate_user(user)
         levels = Access::Core.validate_levels(levels)
 
-
+        # user must have at least read access to all projects
+        fail NotImplementedError
       end
 
       # Is exists negated? and which levels should be used to search.
