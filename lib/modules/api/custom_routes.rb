@@ -51,7 +51,13 @@ module Api
 
     def matchable_routes(routes)
       routes.collect do |r|
-        ::Route.new(r.verb, r.path[/\/[^( ]+/])
+        method = r.verb
+        method = '' if method.blank?
+
+        path = r.path[/\/[^( ]*/]
+        path = '' if path.blank?
+
+        ::Route.new(method, path)
       end.compact
     end
 
@@ -71,16 +77,20 @@ module Api
 
   class ::Route < Struct.new(:method, :path)
 
-    def eql? other
+    def eql?(other)
       self.hash == other.hash
     end
 
-    def == other
-      method.to_s.downcase == other.method.to_s.downcase and path.downcase == other.path.downcase
+    def ==(other)
+      method.to_s.downcase == other.method.to_s.downcase && path.downcase == other.path.downcase
     end
 
     def hash
       method.to_s.downcase.hash + path.downcase.hash
+    end
+
+    def to_s
+      "#{method} #{path}"
     end
 
   end

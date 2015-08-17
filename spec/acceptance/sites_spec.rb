@@ -60,7 +60,7 @@ resource 'Sites' do
 
     let(:authentication_token) { "Token token=\"INVALID TOKEN\"" }
 
-    standard_request_options(:get, 'LIST (with invalid token)', :unauthorized, {expected_json_path: 'meta/error/links/sign in'})
+    standard_request_options(:get, 'LIST (with invalid token)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
   end
 
 
@@ -97,7 +97,7 @@ resource 'Sites' do
 
     let(:raw_post) { {'site' => post_attributes}.to_json }
 
-    standard_request_options(:post, 'CREATE (as reader)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
+    standard_request_options(:post, 'CREATE (as reader)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
 
   end
 
@@ -114,7 +114,7 @@ resource 'Sites' do
 
     let(:raw_post) { {'site' => post_attributes}.to_json }
 
-    standard_request_options(:post, 'CREATE (with invalid token)', :unauthorized, {expected_json_path: 'meta/error/links/sign in'})
+    standard_request_options(:post, 'CREATE (with invalid token)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
 
   end
 
@@ -153,7 +153,7 @@ resource 'Sites' do
 
     let(:authentication_token) { "Token token=\"INVALID TOKEN\"" }
 
-    standard_request_options(:get, 'SHOW (nested route, with invalid token)', :unauthorized, {expected_json_path: 'meta/error/links/sign in'})
+    standard_request_options(:get, 'SHOW (nested route, with invalid token)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
   end
 
   # shallow routes
@@ -178,7 +178,7 @@ resource 'Sites' do
 
     let(:authentication_token) { "Token token=\"INVALID TOKEN\"" }
 
-    standard_request_options(:get, 'SHOW (with invalid token)', :unauthorized, {expected_json_path: 'meta/error/links/sign in'})
+    standard_request_options(:get, 'SHOW (with invalid token)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
   end
 
   # latitude and longitude obfuscation
@@ -249,7 +249,7 @@ resource 'Sites' do
 
     #puts "Existing sites: #{Site.all.inspect}"
 
-    standard_request_options(:put, 'UPDATE (as reader)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
+    standard_request_options(:put, 'UPDATE (as reader)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
   end
 
   put '/projects/:project_id/sites/:id' do
@@ -266,7 +266,7 @@ resource 'Sites' do
 
     let(:authentication_token) { "Token token=\"INVALID TOKEN\"" }
 
-    standard_request_options(:put, 'UPDATE (with invalid token)', :unauthorized, {expected_json_path: 'meta/error/links/sign in'})
+    standard_request_options(:put, 'UPDATE (with invalid token)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
   end
 
   #####################

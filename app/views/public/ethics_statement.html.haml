@@ -1,7 +1,8 @@
 - content_for :title, 'Ethics Statement'
 
+= render partial: 'shared/sidebar_public', locals: {user_show: @user, user_current: current_user}
+
 - if File.exists? "#{Rails.root}/app/views/public/_ethics.html.haml"
   = render partial: 'public/ethics'
 - else
-  %h1 Ethics Statement
   %p No ethics statement available for this project.

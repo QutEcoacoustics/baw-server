@@ -4,7 +4,7 @@ require 'rails/all'
 
 # some patches need to be applied before gems load
 require "#{File.dirname(__FILE__)}/../lib/patches/random"
-require "#{File.dirname(__FILE__)}/../lib/patches/big_decimal"
+#require "#{File.dirname(__FILE__)}/../lib/patches/big_decimal"
 
 # Require the gems listed in Gemfile, including any gems
 # you've limited to :test, :development, or :production.
@@ -21,6 +21,11 @@ module AWB
 
     # add /lib/modules and everything underneath it.
     config.autoload_paths << config.root.join('lib', 'modules')
+
+    # add patches
+    config.autoload_paths << config.root.join('lib', 'patches','mime_type.rb')
+    config.autoload_paths << config.root.join('lib', 'patches','paperclip_content_matcher.rb')
+    config.autoload_paths << config.root.join('lib', 'patches','rspec_api_documentation.rb')
 
     # Custom setup
     # enable garbage collection profiling (reported in New Relic)
@@ -113,8 +118,8 @@ module AWB
 
     # The default locale is :en and all translations from config/locales/*.rb,yml are auto loaded.
     config.i18n.load_path += Dir[Rails.root.join('config', 'locales', '**', '*.{rb,yml}')]
-    config.i18n.default_locale = 'en-AU'
-    config.i18n.fallbacks = {'en-AU' => 'en'}
+    config.i18n.default_locale = :en
+    config.i18n.available_locales = [:en]
 
     # specify the class to handle exceptions
     config.exceptions_app = ->(env) {

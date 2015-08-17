@@ -2,6 +2,37 @@
 
 ## Unreleased
 
+## [Release 0.17.0](https://github.com/QutBioacoustics/baw-server/releases/tag/0.17.0) (2015-08-17)
+
+ - 2015-08-16
+    - More UI changes to sync with baw-client UI 
+ - 2015-08-10
+    - Updated website navigation bar
+ - 2015-08-08
+    - Changed audio tool defaults for media and timeouts
+    - Fix duplication due to projects-sites many to many relation [#226](https://github.com/QutBioacoustics/baw-server/issues/226) [#219](https://github.com/QutBioacoustics/baw-server/issues/219)
+
+ - 2015-07-31
+    - Updated bootstrap from v2.3 to v3.3 [#133](https://github.com/QutBioacoustics/baw-server/issues/133)
+    - Changes to Harvesting and Audio pages [#228](https://github.com/QutBioacoustics/baw-server/issues/228)
+    - Improvements to annotation download csv [#227](https://github.com/QutBioacoustics/baw-server/issues/227)
+
+ - 2015-07-26
+    - Fixed a bug in `user_accounts#filter`: it tried to access model attributes that weren't loaded
+
+ - 2015-07-08
+    - Changes to media polling to reduce the number of errors raised. 
+
+ - 2015-07-06
+    - enable sorting on custom fields [#220](https://github.com/QutBioacoustics/baw-server/issues/220)
+    - fixed site page loading slowly [#222](https://github.com/QutBioacoustics/baw-server/issues/222)
+    - attempted to fix media polling issues, still unresolved [#217](https://github.com/QutBioacoustics/baw-server/issues/217)
+    - update user_accounts endpoint to API spec [#223] (https://github.com/QutBioacoustics/baw-server/issues/223)
+
+ - 2015-06-27
+    - Removed taggings that were included in the tags filter [#218](https://github.com/QutBioacoustics/baw-server/issues/218)
+    - Changed access query to use Arel instead of ActiveRecord due to regression in ActiveRecord 4.2.3.
+
 ## [Release 0.15.1](https://github.com/QutBioacoustics/baw-server/releases/tag/0.15.1) (2015-06-16)
 
  - 2015-06-15

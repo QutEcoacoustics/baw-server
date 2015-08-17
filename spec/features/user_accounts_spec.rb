@@ -9,56 +9,19 @@ describe "User account actions", :type => :feature do
 
   let(:last_email) { ActionMailer::Base.deliveries.last }
 
-  it "emails user when requesting password reset" do
-    # create user and go to forgot password page
-    user = FactoryGirl.create(:user)
-    visit root_url
-    find(:xpath, "/descendant::a[@href='/my_account/sign_in'][1]").click
 
-    click_link "Forgot password"
-
-    fill_in 'Login', with: user.email
-    click_button "Send me reset password instructions"
-
-    # back to sign in page, use token from email to go to reset password page
-    expect(current_path).to eq('/my_account/sign_in')
-    expect(page).to have_content("You will receive an email with instructions about how to reset your password in a few minutes.")
-
-    expect(last_email.to).to include(user.email)
-
-    # extract token from mail body
-    mail_body = last_email.body.to_s
-    token = mail_body[/#{:reset_password.to_s}_token=([^"]+)/, 1]
-
-    visit edit_user_password_path(reset_password_token: token) # http://stackoverflow.com/a/18262856/31567
-
-    # fill in incorrectly
-    fill_in "user_password", :with => "foobar"
-    fill_in "user_password_confirmation", :with => "foobar1"
-    find(:xpath, '/descendant::input[@type="submit"]').click
-
-    expect(page).to have_content('Please review the problems below')
-    expect(page).to have_content("doesn't match confirmation")
-
-    # fill in correctly
-    fill_in "user_password", :with => "foobar11"
-    fill_in "user_password_confirmation", :with => "foobar11"
-    find(:xpath, '/descendant::input[@type="submit"]').click
-    expect(current_path).to eq('/')
-    expect(page).to have_content('Your password was changed successfully. You are now signed in.')
-  end
 
   context 'log in' do
 
     it 'should succeed when using email' do
       user = FactoryGirl.create(:user)
       visit root_url
-      first(:link, 'Login').click
+      first(:link, I18n.t('devise.shared.links.sign_in')).click
 
       expect(current_url).to eq(new_user_session_url)
       fill_in 'Login', with: user.email
       fill_in 'Password', with: user.password
-      click_button 'Sign in'
+      click_button I18n.t('devise.shared.links.sign_in')
 
       expect(current_path).to eq(root_path)
       expect(page).to have_content('Signed in successfully.')
@@ -67,12 +30,12 @@ describe "User account actions", :type => :feature do
     it 'should succeed when using user_name' do
       user = FactoryGirl.create(:user)
       visit root_url
-      first(:link, 'Login').click
+      first(:link, I18n.t('devise.shared.links.sign_in')).click
 
       expect(current_url).to eq(new_user_session_url)
       fill_in 'Login', with: user.user_name
       fill_in 'Password', with: user.password
-      click_button 'Sign in'
+      click_button I18n.t('devise.shared.links.sign_in')
 
       expect(current_path).to eq(root_path)
       expect(page).to have_content('Signed in successfully.')
@@ -81,12 +44,12 @@ describe "User account actions", :type => :feature do
     it 'should fail when invalid' do
       user = FactoryGirl.create(:user)
       visit root_url
-      first(:link, 'Login').click
+      first(:link, I18n.t('devise.shared.links.sign_in')).click
 
       expect(current_url).to eq(new_user_session_url)
       fill_in 'Login', with: 'user name does not exist'
       fill_in 'Password', with: user.password
-      click_button 'Sign in'
+      click_button I18n.t('devise.shared.links.sign_in')
 
       expect(current_path).to eq(new_user_session_path)
       expect(page).to have_content('Invalid login or password.')
@@ -104,9 +67,9 @@ describe "User account actions", :type => :feature do
 
       fill_in 'User name', with: user_name
       fill_in 'Password', with: password, match: :prefer_exact
-      fill_in 'Password confirmation', with: password
+      fill_in 'Confirm new password', with: password
       fill_in 'Email', with: email
-      click_button 'Sign up'
+      click_button I18n.t('devise.shared.links.sign_up')
 
       #expect(current_path).to eq(root_path)
       expect(page).to have_content('Welcome! You have signed up successfully.')
@@ -123,9 +86,9 @@ describe "User account actions", :type => :feature do
 
       fill_in 'User name', with: user_name
       fill_in 'Password', with: password, match: :prefer_exact
-      fill_in 'Password confirmation', with: password
+      fill_in 'Confirm new password', with: password
       fill_in 'Email', with: email
-      click_button 'Sign up'
+      click_button I18n.t('devise.shared.links.sign_up')
 
       #expect(current_path).to eq(root_path)
       expect(page).to have_content('Only letters, numbers, spaces ( ), underscores (_) and dashes (-) are valid')
@@ -156,24 +119,24 @@ describe "User account actions", :type => :feature do
       click_button 'Update'
 
       expect(page).to have_content(new_user_name)
-      expect(page).to have_content('You updated your account successfully, but we need to verify your new email address. Please check your email and click on the confirm link to finalize confirming your new email address.')
+      expect(page).to have_content(I18n.t('devise.registrations.update_needs_confirmation'))
       expect(current_path).to eq(root_path)
 
       visit edit_user_registration_path
       #expect(page).to have_content('user_span1.png')
-      expect(page.find('div.controls img')['src']).to include('user_span1.png')
+      expect(page.find('.user_image div img')['src']).to include('user_span1.png')
       expect(page).to have_content(new_user_name)
       expect(page).to have_content('Currently waiting confirmation for: '+new_email)
 
       logout
 
       visit root_url
-      first(:link, 'Login').click
+      first(:link, I18n.t('devise.shared.links.sign_in')).click
 
       expect(current_url).to eq(new_user_session_url)
       fill_in 'Login', with: new_user_name
       fill_in 'Password', with: new_password
-      click_button 'Sign in'
+      click_button I18n.t('devise.shared.links.sign_in')
 
       expect(current_path).to eq(root_path)
       expect(page).to have_content('Signed in successfully.')
@@ -193,7 +156,7 @@ describe "User account actions", :type => :feature do
       attach_file('user[image]', 'public/images/user/user_span1.png')
       click_button 'Update'
 
-      expect(page).to have_content('Current password (required)is invalid')
+      expect(page).to have_content('(required) Current passwordis invalid')
       expect(current_path).to eq(user_registration_path)
 
       visit edit_user_registration_path
@@ -207,12 +170,12 @@ describe "User account actions", :type => :feature do
       logout
 
       visit root_url
-      first(:link, 'Login').click
+      first(:link, I18n.t('devise.shared.links.sign_in')).click
 
       expect(current_url).to eq(new_user_session_url)
       fill_in 'Login', with: @user.email
       fill_in 'Password', with: @old_password
-      click_button 'Sign in'
+      click_button I18n.t('devise.shared.links.sign_in')
 
       expect(current_path).to eq(root_path)
       expect(page).to have_content('Signed in successfully.')
@@ -226,15 +189,15 @@ describe "User account actions", :type => :feature do
       user.lock_access!
 
       visit root_url
-      first(:link, 'Login').click
-      first(:link, 'Resend unlock').click
+      first(:link, I18n.t('devise.shared.links.sign_in')).click
+      first(:link, I18n.t('devise.shared.links.unlock_account')).click
 
       expect(current_url).to eq(new_user_unlock_url)
       fill_in 'Login', with: user.user_name
       click_button 'Resend unlock instructions'
 
       expect(current_path).to eq(new_user_session_path)
-      expect(page).to have_content('You will receive an email with instructions about how to unlock your account in a few minutes.')
+      expect(page).to have_content(I18n.t('devise.unlocks.send_paranoid_instructions'))
       expect(last_email.to).to include(user.email)
       expect(last_email.body.to_s).to include('unlock your account')
     end
@@ -244,15 +207,15 @@ describe "User account actions", :type => :feature do
       user.lock_access!
 
       visit root_url
-      first(:link, 'Login').click
-      first(:link, 'Resend unlock').click
+      first(:link, I18n.t('devise.shared.links.sign_in')).click
+      first(:link, I18n.t('devise.shared.links.unlock_account')).click
 
       expect(current_url).to eq(new_user_unlock_url)
       fill_in 'Login', with: user.email
       click_button 'Resend unlock instructions'
 
       expect(current_path).to eq(new_user_session_path)
-      expect(page).to have_content('You will receive an email with instructions about how to unlock your account in a few minutes.')
+      expect(page).to have_content(I18n.t('devise.unlocks.send_paranoid_instructions'))
       expect(last_email.to).to include(user.email)
       expect(last_email.body.to_s).to include('unlock your account')
     end
@@ -264,15 +227,15 @@ describe "User account actions", :type => :feature do
       user.lock_access!
 
       visit root_url
-      first(:link, 'Login').click
-      first(:link, 'Forgot password').click
+      first(:link, I18n.t('devise.shared.links.sign_in')).click
+      first(:link, I18n.t('devise.shared.links.reset_password')).click
 
       expect(current_url).to eq(new_user_password_url)
       fill_in 'Login', with: user.user_name
       click_button 'Send me reset password instructions'
 
       expect(current_path).to eq(new_user_session_path)
-      expect(page).to have_content('email with instructions about how to reset your password')
+      expect(page).to have_content(I18n.t('devise.passwords.send_paranoid_instructions'))
       expect(last_email.to).to include(user.email)
       expect(last_email.body.to_s).to include('change your password')
     end
@@ -281,17 +244,99 @@ describe "User account actions", :type => :feature do
       user.lock_access!
 
       visit root_url
-      first(:link, 'Login').click
-      first(:link, 'Forgot password').click
+      first(:link, I18n.t('devise.shared.links.sign_in')).click
+      first(:link, I18n.t('devise.shared.links.reset_password')).click
 
       expect(current_url).to eq(new_user_password_url)
       fill_in 'Login', with: user.email
       click_button 'Send me reset password instructions'
 
       expect(current_path).to eq(new_user_session_path)
-      expect(page).to have_content('email with instructions about how to reset your password')
+      expect(page).to have_content(I18n.t('devise.passwords.send_paranoid_instructions'))
       expect(last_email.to).to include(user.email)
       expect(last_email.body.to_s).to include('change your password')
+    end
+
+    it 'email is sent and password is changed successfully' do
+      # create user and go to forgot password page
+      user = FactoryGirl.create(:user)
+      visit root_url
+      find(:xpath, "/descendant::a[@href='/my_account/sign_in'][1]").click
+
+      click_link I18n.t('devise.shared.links.reset_password')
+
+      fill_in 'Login', with: user.email
+      click_button 'Send me reset password instructions'
+
+      # back to sign in page, use token from email to go to reset password page
+      expect(current_path).to eq('/my_account/sign_in')
+      expect(page).to have_content(I18n.t('devise.passwords.send_paranoid_instructions'))
+
+      expect(last_email.to).to include(user.email)
+
+      # extract token from mail body
+      mail_body = last_email.body.to_s
+      token = mail_body[/#{:reset_password.to_s}_token=([^"]+)/, 1]
+
+      visit edit_user_password_path(reset_password_token: token) # http://stackoverflow.com/a/18262856/31567
+
+      # fill in incorrectly
+      #save_and_open_page
+      fill_in "user_password", :with => "foobar"
+      fill_in "user_password_confirmation", :with => "foobar1"
+      find(:xpath, '/descendant::input[@type="submit"]').click
+
+      expect(page).to have_content('Please review the problems below')
+      expect(page).to have_content("doesn't match")
+
+      # fill in correctly
+      fill_in "user_password", :with => "foobar11"
+      fill_in "user_password_confirmation", :with => "foobar11"
+      find(:xpath, '/descendant::input[@type="submit"]').click
+      expect(current_path).to eq('/')
+      expect(page).to have_content('Your password was changed successfully. You are now signed in.')
+    end
+
+    it 'email is sent and password can be changed for restricted user name' do
+      # create user and go to forgot password page
+      user = FactoryGirl.build(:user, user_name: 'aDmin')
+      user.save!(validate: false)
+
+      visit root_url
+      find(:xpath, "/descendant::a[@href='/my_account/sign_in'][1]").click
+
+      click_link I18n.t('devise.shared.links.reset_password')
+
+      fill_in 'Login', with: user.email
+      click_button 'Send me reset password instructions'
+
+      # back to sign in page, use token from email to go to reset password page
+      expect(current_path).to eq('/my_account/sign_in')
+      expect(page).to have_content(I18n.t('devise.passwords.send_paranoid_instructions'))
+
+      expect(last_email.to).to include(user.email)
+
+      # extract token from mail body
+      mail_body = last_email.body.to_s
+      token = mail_body[/#{:reset_password.to_s}_token=([^"]+)/, 1]
+
+      visit edit_user_password_path(reset_password_token: token) # http://stackoverflow.com/a/18262856/31567
+
+      # fill in incorrectly
+      #save_and_open_page
+      fill_in "user_password", :with => "foobar"
+      fill_in "user_password_confirmation", :with => "foobar1"
+      find(:xpath, '/descendant::input[@type="submit"]').click
+
+      expect(page).to have_content('Please review the problems below')
+      expect(page).to have_content("doesn't match")
+
+      # fill in correctly
+      fill_in "user_password", :with => "foobar11"
+      fill_in "user_password_confirmation", :with => "foobar11"
+      find(:xpath, '/descendant::input[@type="submit"]').click
+      expect(current_path).to eq('/')
+      expect(page).to have_content('Your password was changed successfully. You are now signed in.')
     end
   end
 
@@ -307,7 +352,7 @@ describe 'MANAGE User Accounts as admin user', :type => :feature do
   it 'lists all users' do
     # Run the generator again with the --webrat flag if you want to use webrat methods/matchers
     visit user_accounts_path
-    expect(page).to have_content('User Accounts')
+    expect(page).to have_content('User List')
   end
 
   it 'shows user account details' do
@@ -336,7 +381,7 @@ describe 'MANAGE User Accounts as admin user', :type => :feature do
   it 'provides link to Projects Bookmarks Annotations Comments' do
     user = FactoryGirl.create(:user)
     visit user_account_path(user)
-    expect(page).to have_content('Projects Bookmarks Annotations Comments')
+    expect(page).to have_content('Their Projects Their Bookmarks Their Annotations Their Comments')
   end
 
   it 'lists user\'s projects' do
@@ -344,7 +389,7 @@ describe 'MANAGE User Accounts as admin user', :type => :feature do
     project = FactoryGirl.create(:project)
     permission = FactoryGirl.create(:permission, user_id: user.id, project_id: project.id)
     visit projects_user_account_path(user)
-    expect(page).to have_content('Number of Sites')
+    expect(page).to have_content('Project Sites Permission')
     expect(page).to have_content(project.name)
   end
 end
@@ -373,39 +418,39 @@ describe 'MANAGE User Accounts as user', :type => :feature do
   it 'should not link to user comments for other user page' do
     user = FactoryGirl.create(:user)
     visit user_account_path(user)
-    expect(find('.nav-list')).to_not have_content('Comments')
+    expect(find('nav[role=navigation]')).to_not have_content('Comments')
   end
 
   it 'should not link to user bookmarks for other user page' do
     user = FactoryGirl.create(:user)
     visit user_account_path(user)
-    expect(find('.nav-list')).to_not have_content('Bookmarks')
+    expect(find('nav[role=navigation]')).to_not have_content('Bookmarks')
   end
 
   it 'should not link to user projects for other user page' do
     user = FactoryGirl.create(:user)
     visit user_account_path(user)
-    expect(find('.nav-list')).to_not have_content('Projects')
+    expect(find('nav[role=navigation]')).to_not have_content('Projects')
   end
 
   it 'should link to user comments for current user page' do
     visit my_account_path
-    expect(find('.nav-list')).to have_content('Comments')
+    expect(find('nav[role=navigation]')).to have_content('Comments')
   end
 
   it 'should link to user bookmarks for current user page' do
     visit my_account_path
-    expect(find('.nav-list')).to have_content('Bookmarks')
+    expect(find('nav[role=navigation]')).to have_content('Bookmarks')
   end
 
   it 'should link to user projects for current user page' do
     visit my_account_path
-    expect(find('.nav-list')).to have_content('Projects')
+    expect(find('nav[role=navigation]')).to have_content('Projects')
   end
 
   it 'should link to user projects for current user page' do
     visit my_account_path
-    expect(find('.nav-list')).to have_content('Annotations')
+    expect(find('nav[role=navigation]')).to have_content('Annotations')
   end
 
   it 'denies access to user projects page' do

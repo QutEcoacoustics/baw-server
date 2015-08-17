@@ -32,11 +32,13 @@ SimpleCov.start 'rails'
 
 require File.expand_path('../../config/environment', __FILE__)
 require 'rspec/rails'
+require 'rake'
 
 require 'capybara/rails'
 require 'capybara/rspec'
 
 require 'database_cleaner'
+require 'helpers/misc_helper'
 
 require 'webmock/rspec'
 require 'paperclip/matchers'
@@ -56,8 +58,14 @@ RSpec.configure do |config|
   # config.mock_with :flexmock
   # config.mock_with :rr
 
+  # ensure gem paths are not shown in the backtrace
+  config.backtrace_exclusion_patterns = [/\/\.rvm\/gems\//]
+
   # Remove this line if you're not using ActiveRecord or ActiveRecord fixtures
   # config.fixture_path = "#{::Rails.root}/spec/fixtures"
+
+  # stop on first failure
+  #config.fail_fast = true
 
   config.expect_with :rspec do |c|
     c.syntax = [:should, :expect]
@@ -87,6 +95,7 @@ RSpec.configure do |config|
   config.order = 'random'
 
   Zonebie.set_random_timezone
+  puts "===> Time zone offset is #{Time.zone.utc_offset}."
 
   # mixin core methods
   config.include FactoryGirl::Syntax::Methods
@@ -99,14 +108,22 @@ RSpec.configure do |config|
   config.before(:suite) do
     DatabaseCleaner.strategy = :transaction
     DatabaseCleaner.clean_with(:truncation)
+
+    # run these rake tasks to ensure the db in is a state that matches the schema.rb
+    #bin/rake db:drop RAILS_ENV=test
+    #bin/rake db:create RAILS_ENV=test
+    #bin/rake db:migrate RAILS_ENV=test
+    #bin/rake db:schema:dump RAILS_ENV=test
+
     begin
       DatabaseCleaner.start
-      #puts '===> FactoryGirl lint started.'
+      puts '===> Database cleaner: start.'
+      #puts '===> FactoryGirl lint: started.'
       #FactoryGirl.lint
-      #puts '===> FactoryGirl lint completed.'
+      #puts '===> FactoryGirl lint: completed.'
     ensure
       DatabaseCleaner.clean
-      puts '===> Database cleaner run.'
+      puts '===> Database cleaner: cleaned.'
     end
     # Redirect stderr and stdout
     $stderr = File.new(File.join(File.dirname(__FILE__), '..', 'tmp', 'rspec_stderr.txt'), 'w')

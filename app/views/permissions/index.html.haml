@@ -1,47 +1,52 @@
-%h1= "#{@project.name} - Permissions"
+- content_for :meta_title, "Project #{@project.name} | Permissions"
+- content_for :page_title, @project.name
+
+= render partial: 'shared/sidebar_project', locals: {project: @project}
+
+- content_for :right_sidebar do
+  = render partial: 'shared/sidebar_metadata_heading', locals: {title: 'Permissions', icon_class: 'key'}
+  = render partial: 'shared/sidebar_metadata', locals: {title: 'Owner', text: link_to(@project.creator.user_name, user_account_path(@project.creator))}
+
+%h2
+  Permissions
 
 %p
-  Project is owned by
-  = link_to @project.creator.user_name, user_account_path(@project.creator)
+  Set permissions for each user by selecting one of the three options.
+  Then click the 'Update Permissions' button underneath the list of users.
 
-= simple_form_for :permission, url: update_permissions_project_path(@project) do |p|
-  %table.table.table-striped
-    %thead
-      %tr
-        %th User
-        %th No Access
-        %th Read
-        %th Read & Write
-    %tbody
-    - User.users.order('lower(user_name) ASC').each do |user|
-      - unless @project.creator == user
-        %tr{user_id: user.id}
-          %td= link_to user.user_name, user_account_path(user)
-          %td
-            %input{id: "user_#{user.id}_permissions_level_none",
-                      type: 'radio',
-                      name: "[user_ids][#{user.id}][permissions][level]",
-                      value: '',
-                      checked: Access::Check.can?(user, :none, @project)}
-          %td
-            %input{id: "user_#{user.id}_permissions_level_reader",
-                      type: 'radio',
-                      name: "[user_ids][#{user.id}][permissions][level]",
-                      value: 'reader',
-                      checked: Access::Check.can?(user, :reader, @project)}
+= simple_form_for(:permission, url: update_permissions_project_path(@project), html: { class: 'form-horizontal', method: :post }) do |f|
+  = field_set_tag do
+    = f.error_notification
+    %table.table.table-striped.table-hover
+      %thead
+        %tr
+          %th User
+          %th No Access
+          %th Read
+          %th Read & Write
+      %tbody
+      - User.users.order('lower(user_name) ASC').each do |user|
+        - unless @project.creator == user
+          %tr{user_id: user.id}
+            %td= link_to user.user_name, user_account_path(user)
+            %td
+              %input{id: "user_#{user.id}_permissions_level_none",
+                        type: 'radio',
+                        name: "[user_ids][#{user.id}][permissions][level]",
+                        value: '',
+                        checked: Access::Check.can?(user, :none, @project)}
+            %td
+              %input{id: "user_#{user.id}_permissions_level_reader",
+                        type: 'radio',
+                        name: "[user_ids][#{user.id}][permissions][level]",
+                        value: 'reader',
+                        checked: Access::Check.can?(user, :reader, @project)}
 
-          %td
-            %input{id: "user_#{user.id}_permissions_level_writer",
-                      type: 'radio',
-                      name: "[user_ids][#{user.id}][permissions][level]",
-                      value: 'writer',
-                      checked: Access::Check.can?(user, :writer, @project)}
-  .form-actions
-    = p.submit 'Update Permissions', class: 'btn'
+            %td
+              %input{id: "user_#{user.id}_permissions_level_writer",
+                        type: 'radio',
+                        name: "[user_ids][#{user.id}][permissions][level]",
+                        value: 'writer',
+                        checked: Access::Check.can?(user, :writer, @project)}
 
-- content_for :title, "Permissions for Project #{@project.name}"
-
--#- content_for :left_sidebar do
--#  = render layout: '/shared/left_sidebar', locals: {title: 'Projects'} do
--#    %li= link_to 'Project', project_path(@project),  title: "Back to project view", data: {toggle: 'tooltip',  placement: 'right'}
-
+    = f.button :submit_cancel, 'Update Permissions', class: 'btn-default'

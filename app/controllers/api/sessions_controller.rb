@@ -54,6 +54,7 @@ class Api::SessionsController < Devise::SessionsController
     end
   end
 
+  # used by harvester, do not change!
   # POST /security
   def create
     sign_in_params = get_sign_in_params

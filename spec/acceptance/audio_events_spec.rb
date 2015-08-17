@@ -517,7 +517,7 @@ resource 'AudioEvents' do
     parameter :id, 'Requested audio event id (in path/route)', required: true
 
     let(:authentication_token) { reader_token }
-    standard_request_options(:delete, 'DELETE (as reader user)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
+    standard_request_options(:delete, 'DELETE (as reader user)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
   end
 
   delete '/audio_recordings/:audio_recording_id/audio_events/:id' do
@@ -525,7 +525,7 @@ resource 'AudioEvents' do
     parameter :id, 'Requested audio event id (in path/route)', required: true
 
     let(:authentication_token) { other_user_token }
-    standard_request_options(:delete, 'DELETE (as other user)', :forbidden, {expected_json_path: 'meta/error/links/request permissions'})
+    standard_request_options(:delete, 'DELETE (as other user)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
   end
 
   delete '/audio_recordings/:audio_recording_id/audio_events/:id' do
@@ -533,7 +533,7 @@ resource 'AudioEvents' do
     parameter :id, 'Requested audio event id (in path/route)', required: true
 
     let(:authentication_token) { unconfirmed_token }
-    standard_request_options(:delete, 'DELETE (as unconfirmed user)', :forbidden, {expected_json_path: 'meta/error/links/confirm your account'})
+    standard_request_options(:delete, 'DELETE (as unconfirmed user)', :forbidden, {expected_json_path: get_json_error_path(:confirm)})
   end
 
   delete '/audio_recordings/:audio_recording_id/audio_events/:id' do
@@ -549,7 +549,7 @@ resource 'AudioEvents' do
     parameter :id, 'Requested audio event id (in path/route)', required: true
 
     let(:authentication_token) { invalid_token }
-    standard_request_options(:delete, 'DELETE (with invalid token)', :unauthorized, {expected_json_path: 'meta/error/links/sign in'})
+    standard_request_options(:delete, 'DELETE (with invalid token)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
   end
 
   #####################
@@ -622,6 +622,19 @@ resource 'AudioEvents' do
                                  data_item_count: 1,
                                  regex_match: /"in"\:\[\"5.2\",\"7\",\"100\",\"[0-9]+\"\]/,
                                  response_body_content: "\"low_frequency_hertz\":400.0",
+                                 invalid_content: "\"project_ids\":[{\"id\":"
+                             })
+  end
+
+  post '/audio_events/filter' do
+    let(:authentication_token) { reader_token }
+    let(:raw_post) { '{"filter":{"start_time_seconds":{"in":["5.2", "7", "100", "4"]}},"paging":{"items":10,"page":1},"sorting":{"orderBy":"durationSeconds","direction":"desc"}}' }
+    standard_request_options(:post, 'FILTER (sort by custom field, as reader)', :ok,
+                             {
+                                 expected_json_path: 'meta/sorting/order_by',
+                                 data_item_count: 1,
+                                 regex_match: /"in"\:\[\"5.2\",\"7\",\"100\",\"[0-9]+\"\]/,
+                                 response_body_content: ["\"low_frequency_hertz\":400.0", "\"order_by\":\"duration_seconds\""],
                                  invalid_content: "\"project_ids\":[{\"id\":"
                              })
   end

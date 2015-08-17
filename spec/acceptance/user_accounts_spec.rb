@@ -39,34 +39,22 @@ resource 'Users' do
     @admin_user = FactoryGirl.create(:admin)
   end
 
-=begin
-                                        user_accounts GET    /user_accounts(.:format)                                                                                                           user_accounts#index
-                                                      POST   /user_accounts(.:format)                                                                                                           user_accounts#create
-                                     new_user_account GET    /user_accounts/new(.:format)                                                                                                       user_accounts#new
-                                    edit_user_account GET    /user_accounts/:id/edit(.:format)                                                                                                  user_accounts#edit
-                                         user_account GET    /user_accounts/:id(.:format)                                                                                                       user_accounts#show
-                                                      PUT    /user_accounts/:id(.:format)                                                                                                       user_accounts#update
-                                                      DELETE /user_accounts/:id(.:format)                                                                                                       user_accounts#destroy
-                                           my_account GET    /my_account(.:format)                                                                                                              user_accounts#my_account
-                                     my_account_prefs PUT    /my_account/prefs(.:format)                                                                                                        user_accounts#modify_preferences
-=end
-
   ################################
   # LIST
   ################################
   get '/user_accounts' do
     let(:authentication_token) { writer_token }
-    standard_request('LIST (as writer)', 403, nil, true)
+    standard_request_options(:get, 'LIST (as writer)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
   end
 
   get '/user_accounts' do
     let(:authentication_token) { reader_token }
-    standard_request('LIST (as reader)', 403, nil, true)
+    standard_request_options(:get, 'LIST (as writer)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
   end
 
   get '/user_accounts' do
     let(:authentication_token) { "Token token=\"INVALID TOKEN\"" }
-    standard_request('LIST (with invalid token)', 401, nil, true)
+    standard_request_options(:get, 'LIST (as writer)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
   end
 
   ################################
@@ -81,31 +69,31 @@ resource 'Users' do
     parameter :id, 'Requested user ID (in path/route)', required: true
     let(:id) { writer_id }
     let(:authentication_token) { writer_token }
-    standard_request('SHOW (as writer)', 200, 'user_name', true)
+    standard_request_options(:get, 'SHOW (as writer)', :ok, {expected_json_path: 'data/user_name' })
   end
 
   get '/user_accounts/:id' do
     parameter :id, 'Requested user ID (in path/route)', required: true
     let(:id) { reader_id }
     let(:authentication_token) { reader_token }
-    standard_request('SHOW (as reader)', 200, 'user_name', true)
+    standard_request_options(:get, 'SHOW (as reader)', :ok, {expected_json_path: 'data/user_name' })
   end
 
   get '/user_accounts/:id' do
     parameter :id, 'Requested user ID (in path/route)', required: true
     let(:id) { writer_id }
     let(:authentication_token) { "Token token=\"INVALID TOKEN\"" }
-    standard_request('SHOW (with invalid token)', 401, nil, true)
+    standard_request_options(:get, 'SHOW (with invalid token)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
   end
 
   get '/my_account' do
     let(:authentication_token) { reader_token }
-    standard_request('MY ACCOUNT (as reader; own account)', 200, 'user_name', true)
+    standard_request_options(:get, 'MY ACCOUNT (as reader; own account)', :ok, {expected_json_path: 'data/user_name' })
   end
 
   get '/my_account' do
     let(:authentication_token) { "Token token=\"INVALID TOKEN\"" }
-    standard_request('MY ACCOUNT (as reader; invalid token)', 401, nil, true)
+    standard_request_options(:get, 'MY ACCOUNT (as reader; invalid token)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
   end
 
   ################################
@@ -116,7 +104,7 @@ resource 'Users' do
     let(:id) { writer_id }
     let(:raw_post) { {user: post_attributes}.to_json }
     let(:authentication_token) { writer_token }
-    standard_request('UPDATE (as same user - writer)', 403, nil, true)
+    standard_request_options(:put, 'UPDATE (as same user - writer)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
   end
 
   put '/user_accounts/:id' do
@@ -124,7 +112,7 @@ resource 'Users' do
     let(:id) { reader_id }
     let(:raw_post) { {user: post_attributes}.to_json }
     let(:authentication_token) { reader_token }
-    standard_request('UPDATE (as same user - reader)', 403, nil, true)
+    standard_request_options(:put, 'UPDATE (as same user - reader)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
   end
 
   put '/user_accounts/:id' do
@@ -132,7 +120,7 @@ resource 'Users' do
     let(:id) { other_id }
     let(:raw_post) { {user: post_attributes}.to_json }
     let(:authentication_token) { writer_token }
-    standard_request('UPDATE (as other user)', 403, nil, true)
+    standard_request_options(:put, 'UPDATE (as other user)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
   end
 
   put '/user_accounts/:id' do
@@ -140,31 +128,80 @@ resource 'Users' do
     let(:id) { reader_id }
     let(:raw_post) { {user: post_attributes}.to_json }
     let(:authentication_token) { admin_token }
-    standard_request('UPDATE (as admin)', 204, nil, true)
+    standard_request_options(:put, 'UPDATE (as admin)', :ok, {expected_json_path: 'data/user_name' })
   end
+
+  ################################
+  # UPDATE PREFERENCES
+  ################################
 
   put '/my_account/prefs' do
     let(:raw_post) { '{"volume":1,"muted":false}' }
     let(:authentication_token) { admin_token }
-    standard_request('modify admin preferences', 204, nil, true)
+    standard_request_options(:put, 'modify admin preferences', :ok, {expected_json_path: 'data/preferences/volume' })
   end
 
   put '/my_account/prefs' do
     let(:raw_post) { '{"volume":1,"muted":false}' }
     let(:authentication_token) { reader_token }
-    standard_request('modify reader preferences', 204, nil, true)
+    standard_request_options(:put, 'modify reader preferences',  :ok, {expected_json_path: 'data/preferences/volume' })
   end
 
   put '/my_account/prefs' do
     let(:raw_post) { '{"volume":1,"muted":false}' }
     let(:authentication_token) { writer_token }
-    standard_request('modify writer preferences', 204, nil, true)
+    standard_request_options(:put, 'modify writer preferences',  :ok, {expected_json_path: 'data/preferences/volume' })
   end
 
   put '/my_account/prefs' do
     let(:raw_post) { '{"volume":1,"muted":false}' }
     let(:authentication_token) { "Token token=\"INVALID TOKEN\"" }
-    standard_request('modify preferences as in valid user', 401, nil, true)
+    standard_request_options(:put, 'modify preferences as in valid user', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
+  end
+
+  # Filter (#filter)
+  # ================
+
+  post '/user_accounts/filter' do
+    let(:raw_post) {
+      {
+          'filter' => {
+              'id' => {
+                  'in' => [writer_id]
+              }
+          },
+          'projection' => {
+              'include' => [:id, :user_name, :tzinfo_tz, :rails_tz]
+          }
+      }.to_json
+    }
+    let(:authentication_token) { reader_token }
+    standard_request_options(:post, 'FILTER (as reader)', :ok, {
+                                      expected_json_path: ['data/0/user_name', 'meta/projection/include'],
+                                      data_item_count: 1,
+                                      response_body_content: ["\"tzinfo_tz\":","\"rails_tz\":"]
+                                  })
+  end
+
+  post '/user_accounts/filter' do
+    let(:raw_post) {
+      {
+          'filter' => {
+              'id' => {
+                  'in' => [writer_id]
+              }
+          },
+          'projection' => {
+              'include' => [:id, :user_name]
+          }
+      }.to_json
+    }
+    let(:authentication_token) { admin_token }
+    standard_request_options(:post, 'FILTER (as admin)', :ok, {
+                                      expected_json_path: ['data/0/user_name', 'meta/projection/include'],
+                                      data_item_count: 1,
+                                      response_body_content: ["\"last_seen_at\":null,\"preferences\":null"]
+                                  })
   end
 
 end

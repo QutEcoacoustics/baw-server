@@ -1,15 +1,19 @@
-%h2 Sign up
-= simple_form_for(resource, :as => resource_name, :url => registration_path(resource_name)) do |f|
-  = f.error_notification
-  .form-inputs
-    = f.input :user_name, required: true, autofocus: true
-    = f.input :password, required: true
-    = f.input :password_confirmation, required: true
-    = f.input :email, required: true
-  .form-actions
-    = f.button :submit, 'Sign up'
+- content_for :meta_title, t('devise.shared.links.sign_up')
+- content_for :page_title, t('devise.registrations.new.sign_up')
 
-- content_for :title, 'Sign Up'
+= render partial: 'shared/sidebar_devise',
+locals: { devise_mapping_o: devise_mapping,
+resource_class_o: resource_class,
+resource_name_o: resource_name,
+user_show: resource,
+user_current: current_user}
 
-- content_for :left_sidebar do
-  = render partial: 'devise/shared/left_sidebar'
+= simple_form_for(resource, as: resource_name, url: registration_path(resource_name), html: { class: 'form-horizontal', method: :post }) do |f|
+  = field_set_tag do
+    = f.error_notification
+    = f.input :user_name, required: true, autofocus: true, placeholder: 'User name'
+    = f.input :email, required: true, autofocus: true, placeholder: 'Email'
+    = f.input :password, label: t('devise.passwords.edit.new_password'), required: true, autofocus: true, placeholder: 'Password',
+      hint: (t('devise.passwords.edit.hint_password_length',  minimum_password_length: @minimum_password_length) if @minimum_password_length)
+    = f.input :password_confirmation, label: t('devise.passwords.edit.confirm_new_password'), required: true, placeholder: 'Confirm password'
+    = f.button :submit_cancel, t('devise.shared.links.sign_up'), class: 'btn-default'

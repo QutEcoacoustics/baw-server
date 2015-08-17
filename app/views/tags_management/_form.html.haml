@@ -10,13 +10,12 @@
   - url = tags_management_path
   - method = method_edit
 
-= simple_form_for(@tag, url: url, html: {class: 'form-horizontal', :multipart => true, method: method }) do |f|
-  = f.error_notification
-  .form-inputs
+= simple_form_for(@tag, url: url, html: {class: 'form-horizontal', method: method }) do |f|
+  = field_set_tag do
+    = f.error_notification
     = f.input :text, required: true , autofocus: true
-    = f.input :is_taxanomic
     = f.input :type_of_tag, required: true
-    = f.input :retired
     = f.input :notes
-  .form-actions
-    = f.button :submit
+    = f.input :retired, wrapper: :horizontal_boolean
+    = f.input :is_taxanomic, wrapper: :horizontal_boolean
+    = f.button :submit_cancel, 'Submit', class: 'btn-default'

@@ -6,7 +6,7 @@ class TagsController < ApplicationController
   # GET /tags.json
   # GET /projects/1/sites/1/audio_recordings/1/audio_events/1/tags.json
   def index
-
+    # TODO update to API spec
     respond_to do |format|
       format.json {
         if params[:audio_event_id]

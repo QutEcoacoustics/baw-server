@@ -12,6 +12,7 @@ class TaggingsController < ApplicationController
   # GET /taggings.json
   # GET /taggings/user/1/tags.json
   def index
+    # TODO update to API spec
     if @audio_event
       render json: @audio_event.taggings.to_json(include: [:tag])
     else
@@ -50,15 +51,15 @@ class TaggingsController < ApplicationController
   def create
     # @audio_recording, @audio_event and @tagging are initialised/preloaded by load_resource/load_and_authorize_resource
     if tagging_params && tagging_params[:tag_attributes] && tagging_params[:tag_attributes][:text]
-      @tag = Tag.where(text: tagging_params[:tag_attributes][:text]).first
-      if @tag.blank?
+      tag = Tag.where(text: tagging_params[:tag_attributes][:text]).first
+      if tag.blank?
         # if the tag with the name does not already exist, create it via tag_attributes
-        @tag = Tag.new(tagging_params[:tag_attributes])
-        unless @tag.save
-          render json: @tag.errors, status: :unprocessable_entity and return
+        tag = Tag.new(tagging_params[:tag_attributes])
+        unless tag.save
+          render json: tag.errors, status: :unprocessable_entity and return
         end
       end
-      @tagging.tag = @tag
+      @tagging.tag = tag
     else
       # tag attributes are directly available
       @tagging = Tagging.new(tagging_params)
@@ -83,7 +84,6 @@ class TaggingsController < ApplicationController
   # DELETE /taggings/1.json
   def destroy
     @tagging.destroy
-    @tag.destroy
 
     respond_to do |format|
       format.json { no_content_as_json }

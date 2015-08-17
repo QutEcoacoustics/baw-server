@@ -115,6 +115,9 @@ class ErrorsController < ApplicationController
       if params.include?(:exception_class)
         msg = 'Purposeful exception raised for testing.'
         error_class_string = params[:exception_class]
+
+        # Unsafe reflection method constantize called with parameter value.
+        # I think this is ok as it's only available in test env.
         error_class = error_class_string.constantize
 
         case error_class_string

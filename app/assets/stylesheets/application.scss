@@ -1,121 +1,17 @@
-/*
- * This is a manifest file that'll automatically include all the stylesheets available in this directory
- * and any sub-directories. You're free to add application-wide styles to this file and they'll appear at
- * the top of the compiled file, but it's generally better to create a new file per style scope.
- *
- *= require bootstrap_and_overrides
- *= require bootstrap-timepicker
- *= require bootstrap-datepicker
- *= require_self
- *= require_tree .
- */
 
+@import "font-awesome-sprockets";
+@import "font-awesome";
 
-h1 {
-  margin-bottom: 30px;
-}
-h3 {
-  margin-top: 30px;
+$grid-float-breakpoint: 992px;
+
+nav > .nav-stacked > li > a {
+  padding: 5px 10px;
 }
 
-.thumbnail {
-  .caption {
-    h3 {
-      overflow: hidden;
+@import "bootstrap-sprockets";
+@import "bootstrap";
 
-    }
-  }
-}
-.thumbnail.right-caption img {
-  float: left;
-  margin-right: 9px;
-}
-
-.thumbnail.right-caption {
-  float: left;
-}
-
-.thumbnail.right-caption > .caption {
-  padding: 0px 4px;
-  h3 {
-    margin: 0px;
-    float:left;
-  }
-}
-
-.metadata {
-  margin-bottom: 10px;
-  line-height: 100%;
-  li {
-    margin-bottom: 0px;
-  }
-  .heading {
-    font-size: 85%;
-    font-weight: bold;
-    line-height: 200%;
-  }
-  .text {
-    font-size: 85%;
-    line-height: 100%;
-  }
-  .user_name {
-    line-height: 120%;
-    font-size: 85%;
-    font-weight: bold;
-  }
-  .subtext {
-    font-size: 70%;
-    line-height: 200%;
-  }
-}
-
-.spacer {
-  margin-bottom: 10px; /* define margin as you see fit */
-}
-
-.bootstrap-timepicker {
-  i {
-    margin: -2px 0 0 -22.5px;
-    pointer-events: none;
-    position: relative;
-  }
-}
-
-
-.btn-edit:before {
-  font-family: FontAwesome;
-  content: '\f044\0009';
-}
-.btn-destroy:before {
-  font-family: FontAwesome;
-  content: '\f00d\0009';
-}
-
-footer {
-  text-align: center;
-  padding: 10px 0;
-  margin-top: 70px;
-  border-top: 1px solid #e5e5e5;
-  background-color: #f5f5f5;
-
-  .nav {
-    width: 840px;
-    margin-left: auto;
-    margin-right: auto;
-  }
-}
-
-
-div.span1.home-arrow {
-  padding-top:100px;
-  height:210px;
-  font-weight: bold;
-  font-size:40px;
-  vertical-align: middle;
-  text-align: center;
-  display: table-cell;
-}
-
-div.row-fluid.vertical-offset {
-  margin-bottom:20px;
-}
+@import "bootstrap-datetimepicker.min.css";
+@import "gmaps4rails.css";
+@import "custom";
+@import "twitter_typeahead";

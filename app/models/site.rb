@@ -72,7 +72,7 @@ class Site < ActiveRecord::Base
       }
       elsif !recording.blank?
       {
-          audio_recording:most_recent_recording,
+          audio_recording:recording,
           start_offset_seconds: nil,
           source: :audio_recording
       }
@@ -170,11 +170,15 @@ class Site < ActiveRecord::Base
         custom_fields: lambda { |site, user|
             site.update_location_obfuscated(user)
 
+            # do a query for the attributes that may not be in the projection
+            fresh_site = Site.find(site.id)
+            fresh_site.update_location_obfuscated(user)
+
             site_hash = {}
-            site_hash[:project_ids] = Site.find(site.id).projects.pluck(:id)
-            site_hash[:location_obfuscated] = site.location_obfuscated
-            site_hash[:custom_latitude] = site.latitude
-            site_hash[:custom_longitude] = site.longitude
+            site_hash[:project_ids] = fresh_site.projects.pluck(:id)
+            site_hash[:location_obfuscated] = fresh_site.location_obfuscated
+            site_hash[:custom_latitude] = fresh_site.latitude
+            site_hash[:custom_longitude] = fresh_site.longitude
 
             [site, site_hash]
         },

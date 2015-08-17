@@ -1,0 +1,5 @@
+---
+en:
+  models:
+    permissions:
+      request_permissions: Request permissions

@@ -57,8 +57,15 @@ class AudioRecording < ActiveRecord::Base
   validates :bit_rate_bps, numericality: {only_integer: true, greater_than: 0}
   validates :media_type, presence: true
   validates :data_length_bytes, presence: true, numericality: {only_integer: true, greater_than: 0}
-  validates :file_hash, presence: true, uniqueness: {case_sensitive: false}
-  validate :check_duplicate_file_hashes
+  # file hash validations
+  # on create, ensure present, case insensitive unique, starts with 'SHA256::', and exactly 72 chars
+  validates :file_hash, presence: true, uniqueness: {case_sensitive: false}, length: { is: 72 },
+            format: { with: /\ASHA256::.{64}\z/, message: 'must start with "SHA256::" with 64 char hash'},
+            on: :create
+  # on update would usually be the same, but for the audio check this needs to ignore
+  validates :file_hash, presence: true, uniqueness: {case_sensitive: false}, length: { is: 72 },
+            format: { with: /\ASHA256::.{64}\z/, message: 'must start with "SHA256::" with 64 char hash'},
+            on: :update, unless: :missing_hash_value?
 
   before_validation :set_uuid, on: :create
 
@@ -73,11 +80,31 @@ class AudioRecording < ActiveRecord::Base
   scope :has_tags, lambda { |tags| includes(:tags).where('tags.text IN ?', tags) }
   scope :does_not_have_tag, lambda { |tag| includes(:tags).where('tags.text <> ?', tag) }
   scope :does_not_have_tags, lambda { |tags| includes(:tags).where('tags.text NOT IN ?', tags) }
-  scope :tag_count, lambda { |num_tags| includes(:tags).where('audio_events_tags.tag_id' => Tagging.select(:tag_id).group(:tag_id).having('count(tag_id) > ?', num_tags)) }
-  scope :tag_types, lambda { |tag_types| includes(:tags).where('tags.type_of_tag' => tag_types) }
-  scope :tag_text, lambda { |tag_text| includes(:tags).where(Tag.arel_table[:text].matches("%#{tag_text}%")) }
+  scope :tag_count, lambda { |num_tags|
 
-  scope :order_by_absolute_end_desc, lambda { order('recorded_date + CAST(duration_seconds || \' seconds\' as interval) DESC')}
+                    #   'audio_events_tags.tag_id' => Tagging.select(:tag_id).group(:tag_id).having('count(tag_id) > ?', num_tags))
+
+                    tagging_arel = Tagging.arel_table
+                    grouping = tagging_arel
+                                   .project(tagging_arel[:tag_id])
+                                   .group(tagging_arel[:tag_id])
+                                   .having(tagging_arel[:tag_id].count.gt(num_tags.to_i))
+
+                    audio_events_arel = AudioEvent.arel_table
+                    condition = audio_events_arel[:tag_id].in(grouping)
+
+                    includes(:tags).where(condition)
+                  }
+  scope :tag_types, lambda { |tag_types|
+                    tags_arel = Tag.arel_table
+                    condition = tags_arel[:type_of_tag].in(tag_types)
+                    includes(:tags).where(condition) }
+  scope :tag_text, lambda { |tag_text|
+                   sanitized_value = tag_text.gsub(/[\\_%\|]/) { |x| "\\#{x}" }
+                   contains_value = "#{sanitized_value}%"
+                   includes(:tags).where(Tag.arel_table[:text].matches(contains_value))
+                 }
+  scope :order_by_absolute_end_desc, lambda { order('recorded_date + CAST(duration_seconds || \' seconds\' as interval) DESC') }
 
   # Check if the original file for this audio recording currently exists.
   def original_file_exists?
@@ -205,7 +232,7 @@ class AudioRecording < ActiveRecord::Base
         recorded_date: Time.zone.parse(recording_params[:recorded_date]).utc,
         data_length_bytes: recording_params[:data_length_bytes],
         media_type: recording_params[:media_type],
-        duration_seconds:recording_params[:duration_seconds].round(4),
+        duration_seconds: recording_params[:duration_seconds].round(4),
         site_id: recording_params[:site_id],
         status: 'aborted'
     )
@@ -316,6 +343,10 @@ class AudioRecording < ActiveRecord::Base
       end
 
     end
+  end
+
+  def missing_hash_value?
+    file_hash == 'SHA256::'
   end
 
 end

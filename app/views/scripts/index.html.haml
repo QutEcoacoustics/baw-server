@@ -1,13 +1,8 @@
-%h1 Scripts
+- content_for :title, 'Scripts'
+
+= render partial: 'shared/sidebar_script'
+
+- content_for :right_sidebar do
+  = render partial: 'shared/sidebar_metadata_heading', locals: {title: 'Script', icon_class: 'file-text-o'}
 
 = render partial: 'scripts/scripts_table', locals: {scripts: @scripts}
-
-= link_to new_script_path, title: 'Add a new analysis script',
-data: {toggle: 'tooltip',  placement: 'right'}, class: 'btn-create-site btn' do
-  Add New Script
-
-
-- content_for :left_sidebar do
-  = render layout: '/shared/left_sidebar', locals: {title: 'Projects'} do
-    - if can? :create, Script
-      %li= link_to 'New Script', new_script_path,  title: "Add a new script", data: {toggle: 'tooltip',  placement: 'right'}

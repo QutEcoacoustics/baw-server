@@ -1,0 +1,74 @@
+---
+en:
+  baw:
+    shared:
+      links:
+        website_status:
+          title: Statistics
+          description: Annotation and audio recording stats
+        contact_us:
+           title: Contact Us
+           description: Contact us
+        disclaimers:
+          title: Disclaimers
+          description: Disclaimers
+        credits:
+         title: Credits
+         description: Credits
+        ethics_statement:
+          title: Ethics Statement
+          description: Ethics statement
+        projects:
+          title: Projects
+          description: View your projects
+        listen:
+          title: Listen
+          description: Listen to audio
+        library:
+          title: Library
+          description: Annotation library
+        profile:
+          title: My Profile
+          description: View my profile
+        admin_area:
+          title: Administration
+          description: Administrator interface
+        user_list:
+          title: User List
+          description: List of users
+        orphan_sites:
+          title: Orphan Sites
+          description: Sites not in a project
+        scripts:
+          title: Scripts
+          description: Scripts
+        tag_management:
+          title: Tags
+          description: Tag management
+        home:
+          title: Home
+          description: Home page
+        annotations:
+          title: My Annotations
+          description: View my recent annotations
+        report_problem:
+          title: Report Problem
+          description: Report a problem
+        data_request:
+          title: Data Request
+          description: Request access to audio data
+        upload_audio:
+          title: Send Audio
+          description: Send us audio recordings to upload
+        register:
+          description: "Create an account"
+        reset_password:
+          description: "Send an email to reset your password"
+        confirm_account:
+          description: "Resend the email to confirm your account"
+        unlock_account:
+          description: "Send an email to unlock your account"
+        sign_in_with_provider:
+          description: "Use %{provider} to sign in"
+        job_status:
+          title: "Job Status"

@@ -1,13 +1,17 @@
-%h2 Resend confirmation instructions
-= simple_form_for(resource, :as => resource_name, :url => confirmation_path(resource_name), :html => { :method => :post }) do |f|
-  = f.error_notification
-  = f.full_error :confirmation_token
-  .form-inputs
-    = f.input :login, required: true, autofocus: true, hint: 'Enter your email or user name.'
-  .form-actions
-    = f.button :submit, 'Resend confirmation instructions'
+- content_for :meta_title, t('devise.shared.links.confirm_account')
+- content_for :page_title, t('devise.confirmations.new.resend_confirmation_instructions')
 
-- content_for :title, 'Resend confirmation instructions'
+= render partial: 'shared/sidebar_devise',
+locals: { devise_mapping_o: devise_mapping,
+resource_class_o: resource_class,
+resource_name_o: resource_name,
+user_show: resource,
+user_current: current_user}
 
-- content_for :left_sidebar do
-  = render partial: 'devise/shared/left_sidebar'
+= simple_form_for(resource, as: resource_name, url: confirmation_path(resource_name), html: { class: 'form-horizontal' }) do |f|
+  = field_set_tag do
+    = f.error_notification
+    = f.full_error :confirmation_token
+    = f.input :login, required: true, autofocus: true, hint: t('devise.confirmations.new.login_hint'), placeholder: 'Login'
+    = f.button :submit_cancel, t('devise.confirmations.new.resend_confirmation_instructions'), class: 'btn-default'
+

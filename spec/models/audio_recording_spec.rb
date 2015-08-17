@@ -4,14 +4,12 @@ describe AudioRecording, :type => :model do
   it 'has a valid factory' do
     ar = create(:audio_recording,
                 recorded_date: Time.zone.now.advance(seconds: -20),
-                file_hash: '1111',
                 duration_seconds: Settings.audio_recording_min_duration_sec)
     expect(ar).to be_valid
   end
   it 'has a valid FactoryGirl factory' do
     ar = FactoryGirl.create(:audio_recording,
                             recorded_date: Time.zone.now.advance(seconds: -10),
-                            file_hash: '2222',
                             duration_seconds: Settings.audio_recording_min_duration_sec)
     expect(ar).to be_valid
   end
@@ -93,8 +91,8 @@ describe AudioRecording, :type => :model do
 
     it 'should allow non overlapping dates - (first before second)' do
       site = FactoryGirl.create(:site, id: 1001)
-      ar1 = FactoryGirl.create(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:03+10:00", site_id: 1001, file_hash: "1")
-      ar2 = FactoryGirl.build(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:51:03+10:00", site_id: 1001, file_hash: "2")
+      ar1 = FactoryGirl.create(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:03+10:00", site_id: 1001)
+      ar2 = FactoryGirl.build(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:51:03+10:00", site_id: 1001)
 
       result = ar2.fix_overlaps
       expect(result[:overlap][:count]).to eq(0)
@@ -103,8 +101,8 @@ describe AudioRecording, :type => :model do
 
     it 'should allow non overlapping dates - (second before first)' do
       site = FactoryGirl.create(:site, id: 1001)
-      ar1 = FactoryGirl.create(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:51:03+10:00", site_id: 1001, file_hash: "1")
-      ar2 = FactoryGirl.build(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:03+10:00", site_id: 1001, file_hash: "2")
+      ar1 = FactoryGirl.create(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:51:03+10:00", site_id: 1001)
+      ar2 = FactoryGirl.build(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:03+10:00", site_id: 1001)
 
       result = ar2.fix_overlaps
       expect(result[:overlap][:count]).to eq(0)
@@ -113,8 +111,8 @@ describe AudioRecording, :type => :model do
 
     it 'should not allow overlapping dates - exact' do
       site = FactoryGirl.create(:site, id: 1001)
-      ar1 = FactoryGirl.create(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:03+10:00", site_id: 1001, file_hash: "1")
-      ar2 = FactoryGirl.build(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:03+10:00", site_id: 1001, file_hash: "2")
+      ar1 = FactoryGirl.create(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:03+10:00", site_id: 1001)
+      ar2 = FactoryGirl.build(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:03+10:00", site_id: 1001)
 
       result = ar2.fix_overlaps
       expect(result[:overlap][:count]).to eq(1)
@@ -128,8 +126,8 @@ describe AudioRecording, :type => :model do
 
     it 'should not allow overlapping dates - shift forwards' do
       site = FactoryGirl.create(:site, id: 1001)
-      ar1 = FactoryGirl.create(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:48+10:00", site_id: 1001, file_hash: "1")
-      ar2 = FactoryGirl.build(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:04+10:00", site_id: 1001, file_hash: "2")
+      ar1 = FactoryGirl.create(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:48+10:00", site_id: 1001)
+      ar2 = FactoryGirl.build(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:04+10:00", site_id: 1001)
 
       result = ar2.fix_overlaps
       expect(result[:overlap][:count]).to eq(1)
@@ -142,8 +140,8 @@ describe AudioRecording, :type => :model do
 
     it 'should not allow overlapping dates - shift forwards (overlap both ends)' do
       site = FactoryGirl.create(:site, id: 1001)
-      ar1 = FactoryGirl.create(:audio_recording, duration_seconds: 30.0, recorded_date: "2014-02-07T17:50:20+10:00", site_id: 1001, file_hash: "1")
-      ar2 = FactoryGirl.build(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:10+10:00", site_id: 1001, file_hash: "2")
+      ar1 = FactoryGirl.create(:audio_recording, duration_seconds: 30.0, recorded_date: "2014-02-07T17:50:20+10:00", site_id: 1001)
+      ar2 = FactoryGirl.build(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:10+10:00", site_id: 1001)
 
       result = ar2.fix_overlaps
       expect(result[:overlap][:count]).to eq(1)
@@ -156,8 +154,8 @@ describe AudioRecording, :type => :model do
 
     it 'should not allow overlapping dates - shift backwards' do
       site = FactoryGirl.create(:site, id: 1001)
-      ar1 = FactoryGirl.create(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:04+10:00", site_id: 1001, file_hash: "1")
-      ar2 = FactoryGirl.build(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:48+10:00", site_id: 1001, file_hash: "2")
+      ar1 = FactoryGirl.create(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:04+10:00", site_id: 1001)
+      ar2 = FactoryGirl.build(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:48+10:00", site_id: 1001)
 
       result = ar2.fix_overlaps
       expect(result[:overlap][:count]).to eq(1)
@@ -170,8 +168,8 @@ describe AudioRecording, :type => :model do
 
     it 'should not allow overlapping dates - shift backwards (1 sec overlap)' do
       site = FactoryGirl.create(:site, id: 1001)
-      ar1 = FactoryGirl.create(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:00+10:00", site_id: 1001, file_hash: "1")
-      ar2 = FactoryGirl.build(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:59+10:00", site_id: 1001, file_hash: "2")
+      ar1 = FactoryGirl.create(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:00+10:00", site_id: 1001)
+      ar2 = FactoryGirl.build(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:59+10:00", site_id: 1001)
 
       result = ar2.fix_overlaps
       expect(result[:overlap][:count]).to eq(1)
@@ -184,8 +182,8 @@ describe AudioRecording, :type => :model do
 
     it 'should allow overlapping dates - edges exact (first before second)' do
       site = FactoryGirl.create(:site, id: 1001)
-      ar1 = FactoryGirl.create(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:00+10:00", site_id: 1001, file_hash: "1")
-      ar2 = FactoryGirl.build(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:51:00+10:00", site_id: 1001, file_hash: "2")
+      ar1 = FactoryGirl.create(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:00+10:00", site_id: 1001)
+      ar2 = FactoryGirl.build(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:51:00+10:00", site_id: 1001)
       expect(ar1.recorded_date.advance(seconds: ar1.duration_seconds)).to eq(Time.zone.parse("2014-02-07T17:51:00+10:00"))
       expect(ar2.recorded_date.advance(seconds: ar2.duration_seconds)).to eq(Time.zone.parse("2014-02-07T17:52:00+10:00"))
 
@@ -196,8 +194,8 @@ describe AudioRecording, :type => :model do
 
     it 'should allow overlapping dates - edges exact (second before first)' do
       site = FactoryGirl.create(:site, id: 1001)
-      ar1 = FactoryGirl.create(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:51:00+10:00", site_id: 1001, file_hash: "1")
-      ar2 = FactoryGirl.build(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:00+10:00", site_id: 1001, file_hash: "2")
+      ar1 = FactoryGirl.create(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:51:00+10:00", site_id: 1001)
+      ar2 = FactoryGirl.build(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:00+10:00", site_id: 1001)
       expect(ar1.recorded_date.advance(seconds: ar1.duration_seconds)).to eq(Time.zone.parse("2014-02-07T17:52:00+10:00"))
       expect(ar2.recorded_date.advance(seconds: ar2.duration_seconds)).to eq(Time.zone.parse("2014-02-07T17:51:00+10:00"))
 
@@ -212,8 +210,8 @@ describe AudioRecording, :type => :model do
     it 'should allow overlapping dates - exact' do
       FactoryGirl.create(:site, id: 1001)
       FactoryGirl.create(:site, id: 1002)
-      ar1 = FactoryGirl.create(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:03+10:00", site_id: 1001, file_hash: "1")
-      ar2 = FactoryGirl.build(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:03+10:00", site_id: 1002, file_hash: "2")
+      ar1 = FactoryGirl.create(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:03+10:00", site_id: 1001)
+      ar2 = FactoryGirl.build(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:03+10:00", site_id: 1002)
 
       result = ar2.fix_overlaps
       expect(result[:overlap][:count]).to eq(0)
@@ -223,8 +221,8 @@ describe AudioRecording, :type => :model do
     it 'should allow overlapping dates - shift forwards' do
       FactoryGirl.create(:site, id: 1001)
       FactoryGirl.create(:site, id: 1002)
-      ar1 = FactoryGirl.create(:audio_recording, duration_seconds: 30.0, recorded_date: "2014-02-07T17:50:20+10:00", site_id: 1001, file_hash: "1")
-      ar2 = FactoryGirl.build(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:10+10:00", site_id: 1002, file_hash: "2")
+      ar1 = FactoryGirl.create(:audio_recording, duration_seconds: 30.0, recorded_date: "2014-02-07T17:50:20+10:00", site_id: 1001)
+      ar2 = FactoryGirl.build(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:10+10:00", site_id: 1002)
 
       result = ar2.fix_overlaps
       expect(result[:overlap][:count]).to eq(0)
@@ -234,8 +232,8 @@ describe AudioRecording, :type => :model do
     it 'should allow overlapping dates - shift backwards' do
       FactoryGirl.create(:site, id: 1001)
       FactoryGirl.create(:site, id: 1002)
-      ar1 = FactoryGirl.create(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:03+10:00", site_id: 1001, file_hash: "1")
-      ar2 = FactoryGirl.build(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:30+10:00", site_id: 1002, file_hash: "2")
+      ar1 = FactoryGirl.create(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:03+10:00", site_id: 1001)
+      ar2 = FactoryGirl.build(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:30+10:00", site_id: 1002)
 
       result = ar2.fix_overlaps
       expect(result[:overlap][:count]).to eq(0)
@@ -245,8 +243,8 @@ describe AudioRecording, :type => :model do
     it 'should allow overlapping dates - edges exact' do
       FactoryGirl.create(:site, id: 1001)
       FactoryGirl.create(:site, id: 1002)
-      ar1 = FactoryGirl.create(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:00+10:00", site_id: 1001, file_hash: "1")
-      ar2 = FactoryGirl.build(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:51:00+10:00", site_id: 1002, file_hash: "2")
+      ar1 = FactoryGirl.create(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:50:00+10:00", site_id: 1001)
+      ar2 = FactoryGirl.build(:audio_recording, duration_seconds: 60.0, recorded_date: "2014-02-07T17:51:00+10:00", site_id: 1002)
       expect(ar1.recorded_date.advance(seconds: ar1.duration_seconds)).to eq(Time.zone.parse("2014-02-07T17:51:00+10:00"))
       expect(ar2.recorded_date.advance(seconds: ar2.duration_seconds)).to eq(Time.zone.parse("2014-02-07T17:52:00+10:00"))
 
@@ -257,7 +255,7 @@ describe AudioRecording, :type => :model do
   end
 
   it 'should not allow duplicate files' do
-    file_hash = "SHA256::c110884206d25a83dd6d4c741861c429c10f99df9102863dde772f149387d891"
+    file_hash = MiscHelper.new.create_sha_256_hash('c110884206d25a83dd6d4c741861c429c10f99df9102863dde772f149387d891')
     FactoryGirl.create(:audio_recording, file_hash: file_hash)
     expect(FactoryGirl.build(:audio_recording, file_hash: file_hash)).not_to be_valid
   end
@@ -280,5 +278,16 @@ describe AudioRecording, :type => :model do
 
   it 'should allow data_length_bytes of more than int32 max' do
     FactoryGirl.create(:audio_recording, data_length_bytes: 2147483648)
+  end
+
+  it 'should (temporarily) allow duplicate empty file hash to be updated to real hash' do
+    ar1 = FactoryGirl.build(:audio_recording, uuid: UUIDTools::UUID.random_create.to_s, file_hash: 'SHA256::')
+    ar1.save(validate: false)
+
+    ar2 = FactoryGirl.build(:audio_recording, uuid: UUIDTools::UUID.random_create.to_s, file_hash: 'SHA256::')
+    ar2.save(validate: false)
+
+    ar2.file_hash = MiscHelper.new.create_sha_256_hash
+    ar2.save!
   end
 end

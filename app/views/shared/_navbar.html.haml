@@ -1,24 +1,45 @@
--# see https://github.com/seyhunak/twitter-bootstrap-rails#navbar-helper
-= nav_bar fixed: :top, responsive: true, inverse: true do
-  = menu_group do
-    = menu_item Settings.organisation_names.parent_site_name, Settings.organisation_names.parent_site_link
-    = menu_item Settings.organisation_names.site_long_name, root_path, class: 'brand'
-    = menu_item 'Projects', projects_path
-    = menu_item 'Listen', '/listen'
-    = menu_item 'Library', '/library'
-    = menu_item 'Contact Us', contact_us_path
-  = menu_group pull: :right do
-    - if current_user.blank?
-      = menu_item 'Sign up', new_user_registration_path
-      = menu_item 'Login', new_user_session_path
-    - else
-      - if Access::Check.is_admin?(current_user)
-        = drop_down "#{current_user.user_name}" do
-          = menu_item 'Profile', my_account_path
-          = menu_item 'Scripts', scripts_path
-          = menu_item 'Orphan Sites', sites_orphans_path
-          = menu_item 'Tag List', tags_management_index_path
-          = menu_item 'User List', user_accounts_path
-      - else
-        = menu_item "#{current_user.user_name}", my_account_path
-      = menu_item 'Logout', destroy_user_session_path
+-# locals: (none)
+%nav.navbar.navbar-inverse.navbar-fixed-top
+  .container
+    .navbar-header
+      %button.navbar-toggle.collapsed{aria: {controls: 'navbar', expanded: 'false'}, data: {target: '#navbar', toggle: 'collapse'}, type: 'button'}
+        %span.sr-only Toggle navigation
+        %span.icon-bar
+        %span.icon-bar
+        %span.icon-bar
+      %a.navbar-brand{href: root_path, class: ('active' if current_page?(root_path))}= Settings.organisation_names.parent_site_name
+    #navbar.navbar-collapse.collapse
+      %ul.nav.navbar-nav
+        %li{class: ('active' if current_page?(projects_path))}
+          %a{href: projects_path}= t('baw.shared.links.projects.title')
+        %li{class: ('active' if request.original_fullpath == '/listen')}
+          %a{href: '/listen'}= t('baw.shared.links.listen.title')
+        %li{class: ('active' if request.original_fullpath == '/library')}
+          %a{href: '/library'}= t('baw.shared.links.library.title')
+        %li{class: 'dropdown'}
+          %a.dropdown-toggle{ aria: {expanded: 'false'}, data: {toggle: 'dropdown'}, href: '#', role: 'button'}
+            = Settings.organisation_names.custom_menu.header_title
+            %span.caret
+            %ul.dropdown-menu{role: 'menu'}
+              - Settings.organisation_names.custom_menu.items.each do |entry|
+                %li
+                  %a{href: URI.join(Settings.organisation_names.parent_site_link, entry['url']) }= entry['title']
+        %li{class: ('active' if current_page?(contact_us_path))}
+          %a{href: contact_us_path}= t('baw.shared.links.contact_us.title')
+      %ul.nav.navbar-nav.navbar-right
+        - if current_user.blank?
+          %li{class: ('active' if current_page?(new_user_registration_path))}
+            %a{href: new_user_registration_path}= t('devise.registrations.new.sign_up')
+          %li{class: ('active' if current_page?(new_user_session_path))}
+            %a{href: new_user_session_path}= t('devise.sessions.new.sign_in')
+        - else
+          - if Access::Check.is_admin?(current_user)
+            %li{class: ('active' if current_page?(admin_dashboard_path))}
+              %a{href: admin_dashboard_path}
+                %span.fa.fa-cog
+          %li{class: ('active' if current_page?(my_account_path))}
+            %a{href: my_account_path}
+              %span= current_user.user_name
+              = image_tag current_user.image.url(:spanhalf), alt: current_user.user_name, class: 'loginWidgetImage'
+          %li
+            %a{href: destroy_user_session_path}= t('devise.shared.links.sign_out')

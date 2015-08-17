@@ -321,10 +321,14 @@ module Filter
       validate_query_table_column(query, table, column_name, allowed)
       validate_sorting(column_name, allowed, direction)
 
+      # allow sorting by field mappings
+      sort_field = @build.build_custom_field(column_name)
+      sort_field = table[column_name] if sort_field.blank?
+
       if direction == :asc
-        query.order(table[column_name].asc)
+        query.order(Arel::Nodes::Ascending.new sort_field)
       elsif direction == :desc
-        query.order(table[column_name].desc)
+        query.order(Arel::Nodes::Descending.new sort_field)
       end
     end
 

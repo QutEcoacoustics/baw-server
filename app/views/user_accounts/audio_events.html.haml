@@ -1,46 +1,48 @@
-= image_tag @user.image.url(:span3), class: 'span3'
+- content_for :meta_title, "Annotations by #{@user.user_name}"
+- content_for(:page_title) do
+  Annotations
+  %small
+    by
+    = image_tag @user.image.url(:spanhalf), alt: @user.user_name
+    = @user.user_name
 
-.span9
-  %h1= @user.user_name
+= render partial: 'shared/sidebar_user', locals: {user_show: @user, user_current: current_user}
 
-.span12
-  %h3 Recent Annotations
+- if @user_annotations.empty?
+  = 'No annotations created.'
+- else
+  %p= page_entries_info @user_annotations
+  = paginate @user_annotations
 
-  - if @user_annotations.empty?
-    = 'No annotations created.'
-  - else
-    = page_entries_info @user_annotations
-    = will_paginate @user_annotations, renderer: BawWillPaginateLinkRenderer
+  %table.table.table-striped.table-hover
 
-    %table.table.table-striped(data-provides='rowlink')
+    %tr
+      %th
+        %span.fa.fa-map-marker{aria: {hidden: 'true' }}
+        Site
+      %th
+        %span.fa.fa-calendar{aria: {hidden: 'true' }}
+        Updated
+      %th
+        %span.fa.fa-tags{aria: {hidden: 'true' }}
+        Tags
+      %th
 
-      %tr
-        %th Duration (seconds)
-        %th Tags
-        %th Last Updated
-        %th
+    - @user_annotations.each do |audio_event|
+      - if !audio_event.nil? && !audio_event.audio_recording.nil?
+        - listen_link = make_listen_path(audio_event)
+        - library_link = make_library_path(audio_event)
+        - site_name = audio_event.audio_recording.site.name
+        - tags = audio_event.tags.order(:type_of_tag, :text).select(:text).to_a.map{ |item| item.text}.join(', ')
 
-      - @user_annotations.each do |audio_event|
-        - if !audio_event.blank? && !audio_event.audio_recording.blank?
-          %tr
-            - audio_link = make_listen_path(audio_event)
-            - audio_recording_exists = !audio_event.audio_recording.blank?
-            - if audio_recording_exists
-              %td= link_to (audio_event.end_time_seconds - audio_event.start_time_seconds), audio_link, target: '_self'
-            - else
-              %td= "#{audio_event.end_time_seconds - audio_event.start_time_seconds}"
-            %td= audio_event.tags.order(:type_of_tag, :text).select(:text).to_a.map{ |item| item.text}.join(', ')
-            %td= distance_of_time_in_words(Time.zone.now, audio_event.updated_at, nil, {vague: true})+ ' ago'
-            - if audio_recording_exists
-              %td.nolink
-                = link_to audio_link, target: '_self', class: 'btn btn-mini' do
-                  %i{class: 'fa fa-play'}
-                  Play
-                = link_to make_library_path(audio_event), target: '_self', class: 'btn btn-mini' do
-                  %i{class: 'fa fa-flag'}
-                  Annotation
-
-- content_for :title, "Annotations by #{@user.user_name}"
-
-- content_for :left_sidebar do
-  = render partial: 'sidebar_links'
+        %tr
+          %td= site_name
+          %td= format_sidebar_datetime(audio_event.updated_at)
+          %td= truncate(tags, length: 50)
+          %td
+            = link_to listen_link, target: '_self', class: 'btn btn-default btn-xs' do
+              %span.fa.fa-play{aria: {hidden: 'true'}}
+              Play
+            = link_to library_link, target: '_self', class: 'btn btn-default btn-xs' do
+              %span.fa.fa-bullseye{aria: {hidden: 'true'}}
+              Annotation
