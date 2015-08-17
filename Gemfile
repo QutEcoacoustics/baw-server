@@ -107,13 +107,13 @@ require 'rbconfig'
 # MONITORING
 # -------------------------------------
 gem 'exception_notification', '~> 4.1.0'
-gem 'newrelic_rpm', '~> 3.12.0'
+gem 'newrelic_rpm', '~> 3.13.0'
 
 # Documentation & UI
 # -------------------------------------
 # these gems are required here to serve /doc url
 gem 'rspec_api_documentation', '~> 4.4.0'
-gem 'raddocs', '~> 0.4.0'
+gem 'raddocs', '~> 0.5.0'
 
 # MEDIA
 # -------------------------------------

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## [Release 0.17.0](https://github.com/QutBioacoustics/baw-server/releases/tag/0.17.0) (2015-08-17)
+
  - 2015-08-16
     - More UI changes to sync with baw-client UI 
  - 2015-08-10
