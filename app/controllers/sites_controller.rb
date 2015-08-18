@@ -57,20 +57,14 @@ class SitesController < ApplicationController
     @site.longitude = 152
     @site.latitude = -27
     respond_to do |format|
-      format.html {
-        @markers = @site.to_gmaps4rails do |site, marker|
-          marker.infowindow 'Drag&Drop to site location. Delete Latitude and Longitude to specify no location.'
-        end
-      }
+      format.html
       format.json { respond_show }
     end
   end
 
   # GET /project/1/sites/1/edit
   def edit
-    @markers = @site.to_gmaps4rails do |site, marker|
-      marker.infowindow 'Drag&Drop to site location'
-    end
+
   end
 
   # POST /project/1/sites
@@ -84,12 +78,7 @@ class SitesController < ApplicationController
         format.html { redirect_to [@project, @site], notice: 'Site was successfully created.' }
         format.json { respond_create_success([@project, @site]) }
       else
-        format.html {
-          @markers = @site.to_gmaps4rails do |site, marker|
-            marker.infowindow 'Drag&Drop to site location'
-          end
-          render action: 'new'
-        }
+        format.html { render action: 'new' }
         format.json { respond_change_fail }
       end
     end

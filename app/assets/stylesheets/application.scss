@@ -4,7 +4,7 @@
 
 $grid-float-breakpoint: 992px;
 
-nav > .nav-stacked > li > a {
+ul.nav-pills > li > a {
   padding: 5px 10px;
 }
 
@@ -12,6 +12,5 @@ nav > .nav-stacked > li > a {
 @import "bootstrap";
 
 @import "bootstrap-datetimepicker.min.css";
-@import "gmaps4rails.css";
 @import "custom";
 @import "twitter_typeahead";

@@ -26,13 +26,7 @@ class ProjectsController < ApplicationController
   # GET /projects/1.json
   def show
     respond_to do |format|
-      format.html {
-        @markers = @project.sites.to_gmaps4rails do |site, marker|
-          marker.infowindow site.name
-          marker.title site.name
-        end
-
-      }
+      format.html
       format.json { respond_show }
     end
   end

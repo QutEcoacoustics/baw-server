@@ -11,9 +11,6 @@
         %legend Sites
         = f.collection_select :site_ids, @project.sites, :id, :name, {prompt: false, include_blank:false }, { class: 'span12', multiple: true }
     .span6
-      = gmaps(markers: {data: @project.sites.to_gmaps4rails},
-      map_options: gmaps_default_options)
-      = content_for(:scripts)
 
   .row-fluid
     .span6

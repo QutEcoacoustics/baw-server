@@ -14,3 +14,4 @@ $.extend({
         return $.getUrlVars()[name];
     }
 });
+
