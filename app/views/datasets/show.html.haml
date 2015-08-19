@@ -10,8 +10,7 @@
     - @dataset.sites.each do |site|
       .row-fluid.spacer
         = render partial: 'sites/site_thumb_large', locals: {site: site}
-  .span6= gmaps(markers: {data: @dataset.sites.to_gmaps4rails}, map_options: gmaps_default_options)
-  = content_for(:scripts)
+  .span6
 
 .row-fluid
   %h3= 'Jobs'

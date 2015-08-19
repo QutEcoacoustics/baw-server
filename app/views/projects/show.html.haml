@@ -13,6 +13,8 @@
     - level_name = Access::Core.get_level_name(level)
     = render partial: 'shared/sidebar_metadata', locals: {title: 'Your access level', text: level_name}
 
+- site_markers = []
+
 .col-sm-12
   .row
     .col-sm-4
@@ -29,6 +31,8 @@
     .col-sm-6
       %ul.list-group
         - NaturalSort.sort(@project.sites, :name).each do |site|
+          - if !site.longitude.blank? && !site.latitude.blank?
+            - site_markers.push({title: site.name, lat: site.latitude, lng: site.longitude})
           %li.list-group-item
             .media
               .media-left
@@ -58,34 +62,8 @@
                       Visualise
 
     .col-sm-6
-      - if @project.sites.select { |site| !site.longitude.blank? && !site.latitude.blank? }.length > 0
-        = gmaps(markers: {data: @markers}, map_options: {zoom: 7, auto_zoom: true})
-        = content_for(:scripts)
+      - if site_markers.size > 0
+        =render partial: 'shared/google_maps', locals: {markers: site_markers}
       - else
         .map-placeholder
           %span.map-placeholder-text No locations specified.
-
--# include markerwithlabel.js
-%script
-  =raw File.read(File.join(File.dirname(__FILE__),'..','..','assets','javascripts','gmaps4rails','markerwithlabel.js'))
-
-:javascript
-  Gmaps.map.callback = function() {
-    for (var i = 0; i <  this.markers.length; ++i) {
-      var oldMarker = Gmaps.map.markers[i].serviceObject;
-      oldMarker.setMap(null);
-      Gmaps.map.clearMarker(Gmaps.map.markers[i]);
-      Gmaps.map.markers[i] = new MarkerWithLabel({
-        position: oldMarker.position,
-        draggable: false,
-        raiseOnDrag: false,
-        map: Gmaps.map.map,
-        labelContent: oldMarker.title,
-        title: oldMarker.title,
-        labelAnchor: new google.maps.Point(-9, 34),
-        labelClass: "labels", // the CSS class for the label
-        labelStyle: {opacity: 1.0}
-      });
-
-    }
-  };

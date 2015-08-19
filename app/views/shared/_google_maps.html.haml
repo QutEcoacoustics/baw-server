@@ -1,0 +1,6 @@
+-# locals: markers ([]), enable_set_location (default: true if no markers specified, false if any markers specified)
+#siteLocationMap{style: 'width:100%; height:400px;'}
+%script{async: true, defer: true, src: "https://maps.googleapis.com/maps/api/js?key=#{Settings.google_maps.api_key}&callback=initMap"}
+
+:javascript
+  var markersArray = #{markers.to_json};

@@ -49,8 +49,6 @@ gem 'haml-rails', '~> 0.9.0'
 
 gem 'simple_form', '~> 3.1.0'
 gem 'paperclip', '~> 4.3.0'
-# kept below version 2 due to huge breaking changes
-gem 'gmaps4rails', '< 2'
 
 # Bootstrap UI
 gem 'bootstrap-sass', '~> 3.3.4'

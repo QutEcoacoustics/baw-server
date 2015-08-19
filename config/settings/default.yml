@@ -165,6 +165,8 @@ defaults: &defaults
     private_key: set recaptcha private key
     # only set proxy if needed
     proxy:
+  google_maps:
+    api_key: your google maps api key
 
 development:
   <<: *defaults
