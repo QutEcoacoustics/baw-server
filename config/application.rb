@@ -93,6 +93,9 @@ module AWB
     # Activate observers that should always be running.
     # config.active_record.observers = :cacher, :garbage_collector, :forum_observer
 
+    # schema format - set to sql to support case-insensitive indexes and other things
+    config.active_record.schema_format = :sql
+
     # Currently, Active Record suppresses errors raised within `after_rollback`/`after_commit`
     # callbacks and only print them to the logs. In the next version, these errors will no
     # longer be suppressed. Instead, the errors will propagate normally just like in other
