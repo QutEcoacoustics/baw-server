@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## [Release 0.17.1](https://github.com/QutBioacoustics/baw-server/releases/tag/0.17.1) (2015-08-19)
+
+ - 2015-08-19
+    - removed gmaps4rails in favour of plain google maps
+    - added indexes for file_hash, uuid, and id to audio_recordings table to improve performance
+
 ## [Release 0.17.0](https://github.com/QutBioacoustics/baw-server/releases/tag/0.17.0) (2015-08-17)
 
  - 2015-08-16
