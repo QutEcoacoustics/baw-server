@@ -54,7 +54,7 @@ gem 'paperclip', '~> 4.3.0'
 gem 'bootstrap-sass', '~> 3.3.4'
 # for sass variables: http://getbootstrap.com/customize/#less-variables
 # sprockets-rails gem is included via rails dependency
-gem 'font-awesome-sass', '~> 4.3.0'
+gem 'font-awesome-sass', '~> 4.4.0'
 
 # for rails 3, 4
 gem 'kaminari'
@@ -92,8 +92,7 @@ gem 'jc-validates_timeliness', '~> 3.1.1'
 # No longer used - incorporated the gem's functionality directly.
 #gem 'userstamp', git: 'https://github.com/theepan/userstamp.git'
 
-gem 'enumerize', '~> 0.11.0'
-
+gem 'enumerize', '~> 1.0'
 gem 'uuidtools', '~> 2.1.5'
 gem 'acts_as_paranoid', git: 'https://github.com/ActsAsParanoid/acts_as_paranoid.git', branch: :master, ref: 'ddcd191517'
 
