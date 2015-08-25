@@ -213,8 +213,8 @@ class User < ActiveRecord::Base
   # Define filter api settings
   def self.filter_settings
     {
-        valid_fields: [:id, :user_name, :tzinfo_tz, :rails_tz, :last_seen_at, :created_at, :updated_at],
-        render_fields: [:id, :user_name, :tzinfo_tz, :rails_tz],
+        valid_fields: [:id, :user_name, :roles_mask, :tzinfo_tz, :rails_tz, :last_seen_at, :created_at, :updated_at],
+        render_fields: [:id, :user_name, :roles_mask, :tzinfo_tz, :rails_tz],
         text_fields: [:user_name],
         custom_fields: lambda { |user, currentUser|
           is_admin = Access::Check.is_admin?(currentUser)
@@ -224,6 +224,7 @@ class User < ActiveRecord::Base
 
           user_hash =
               {
+                  roles_mask_names: fresh_user.roles,
                   image_urls:
                       [
                           {size: :extralarge, url: user.image.url(:span4), width: 300, height: 300},
@@ -237,7 +238,7 @@ class User < ActiveRecord::Base
           if is_admin || is_same_user
 
             user_hash[:last_seen_at] = fresh_user.last_seen_at
-            user_hash[:preferences] =fresh_user.preferences
+            user_hash[:preferences] = fresh_user.preferences
           end
 
           user_hash[:is_confirmed] = fresh_user.confirmed? if is_admin
@@ -276,8 +277,8 @@ class User < ActiveRecord::Base
   end
 
   def set_rails_tz
-    tzInfo_id = TimeZoneHelper.to_identifier(self.tzinfo_tz)
-    rails_tz_string = TimeZoneHelper.tzinfo_to_ruby(tzInfo_id)
+    tz_info_id = TimeZoneHelper.to_identifier(self.tzinfo_tz)
+    rails_tz_string = TimeZoneHelper.tzinfo_to_ruby(tz_info_id)
     unless rails_tz_string.blank?
       self.rails_tz = rails_tz_string
     end
