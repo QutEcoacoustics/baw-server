@@ -85,5 +85,4 @@
           This site does not have a location set.
     - else
       .col-sm-6
-        = gmaps(markers: {data: @site.to_gmaps4rails}, map_options: {zoom: 7, auto_zoom: true})
-      = content_for(:scripts)
+        = render partial: 'shared/google_maps', locals: {markers: [{title: @site.name, lat: @site.latitude, lng: @site.longitude}]}

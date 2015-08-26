@@ -68,7 +68,7 @@ class PublicController < ApplicationController
     annotations_total_duration = 0 if annotations_total_duration.blank?
 
     audio_recording_total = AudioRecording.count
-    audio_recording_recent = AudioRecording.where('created_at > ? OR updated_at > ?', month_ago, month_ago).count
+    audio_recording_recent = AudioRecording.where('created_at > ?', month_ago).count
 
     audio_recording_total_duration = AudioRecording.sum(:duration_seconds)
     audio_recording_total_duration = 0 if audio_recording_total_duration.blank?

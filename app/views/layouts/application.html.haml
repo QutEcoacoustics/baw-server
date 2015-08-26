@@ -27,7 +27,6 @@
     = render 'shared/navbar'
 
     .container
-
       .row
         .col-md-2
           - if content_for?(:left_sidebar)
@@ -58,21 +57,27 @@
               = content_for(:right_sidebar)
 
     %footer
-      %ul.nav.nav-pills
-        %li.disabled
-          %a
-            &copy; QUT
-            =Time.zone.now.year
-        %li.disabled
-          %a= "#{Rails.env} v#{Settings.version_string}"
-        %li{class: ('active' if current_page?(disclaimers_path))}
-          = link_to t('baw.shared.links.disclaimers.title'), disclaimers_path
-        %li{class: ('active' if current_page?(credits_path))}
-          = link_to t('baw.shared.links.credits.title'), credits_path
-        %li{class: ('active' if current_page?(ethics_statement_path))}
-          = link_to t('baw.shared.links.ethics_statement.title'), ethics_statement_path
-        %li{class: ('active' if current_page?(contact_us_path))}
-          = link_to t('baw.shared.links.contact_us.title'), contact_us_path
+      .container
+        .row
+          .col-md-8.col-md-offset-2
+            %ul.nav.nav-pills
+              %li.disabled
+                %a{style: 'cursor:default;'}
+                  &copy; QUT
+                  =Time.zone.now.year
+              %li.disabled
+                %a{style: 'cursor:default;'}
+                  = "#{Rails.env} v#{Settings.version_string}"
+              %li{class: ('active' if current_page?(website_status_path))}
+                = link_to t('baw.shared.links.website_status.title'), website_status_path
+              %li{class: ('active' if current_page?(disclaimers_path))}
+                = link_to t('baw.shared.links.disclaimers.title'), disclaimers_path
+              %li{class: ('active' if current_page?(credits_path))}
+                = link_to t('baw.shared.links.credits.title'), credits_path
+              %li{class: ('active' if current_page?(ethics_statement_path))}
+                = link_to t('baw.shared.links.ethics_statement.title'), ethics_statement_path
+              %li{class: ('active' if current_page?(contact_us_path))}
+                = link_to t('baw.shared.links.contact_us.title'), contact_us_path
 
     /
     / Javascripts

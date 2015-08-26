@@ -1,0 +1,209 @@
+$grayDark: #333;
+$baseFontSize: 14px;
+
+html {
+  /* for sticky footer */
+  position: relative;
+  min-height: 100%;
+}
+
+body {
+  /* Margin bottom by footer height */
+  margin-bottom: 70px;
+  padding-top: 60px;
+}
+
+h1 {
+  margin-bottom: 30px;
+}
+h3 {
+  margin-top: 30px;
+}
+
+#wrapper {
+  min-height: 100%;
+}
+
+.text-muted a {
+  color: #999;
+  text-decoration: underline;
+}
+
+.tooltip {
+  min-width: 150px;
+}
+
+.thumbnail {
+  .caption {
+    h3 {
+      overflow: hidden;
+
+    }
+  }
+}
+.thumbnail.right-caption img {
+  float: left;
+  margin-right: 9px;
+}
+
+.thumbnail.right-caption {
+  float: left;
+}
+
+.thumbnail.right-caption > .caption {
+  padding: 0px 4px;
+  h3 {
+    margin: 0px;
+    float:left;
+  }
+}
+
+.metadata {
+  margin-bottom: 10px;
+  line-height: 100%;
+  li {
+    margin-bottom: 0px;
+  }
+  .heading {
+    font-size: 85%;
+    font-weight: bold;
+    line-height: 200%;
+  }
+  .text {
+    font-size: 85%;
+    line-height: 100%;
+  }
+  .user_name {
+    line-height: 120%;
+    font-size: 85%;
+    font-weight: bold;
+  }
+  .subtext {
+    font-size: 70%;
+    line-height: 200%;
+  }
+}
+
+.spacer {
+  margin-bottom: 10px; /* define margin as you see fit */
+}
+
+.bootstrap-timepicker {
+  i {
+    margin: -2px 0 0 -22.5px;
+    pointer-events: none;
+    position: relative;
+  }
+}
+
+.btn-edit:before {
+  font-family: FontAwesome;
+  content: '\f044\0009';
+}
+.btn-destroy:before {
+  font-family: FontAwesome;
+  content: '\f00d\0009';
+}
+
+.loginWidgetImage {
+  background-color: white;
+  margin: -10px 5px;
+  width: 30px;
+  height: 30px;
+}
+
+/* Home page styles */
+
+.home-arrow {
+  padding-top:100px;
+  height:210px;
+  font-weight: bold;
+  font-size:40px;
+  vertical-align: middle;
+  text-align: center;
+  display: table-cell;
+}
+
+/* end Home page styles */
+
+/* sticky footer styles */
+
+footer {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  /* Set the fixed height of the footer here */
+  height: 60px;
+
+  text-align: center;
+  padding: 10px 0;
+  border-top: 1px solid #e5e5e5;
+  background-color: #f5f5f5;
+
+  .nav {
+    width: 840px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+/* end sticky footer styles */
+
+/* Project styles */
+
+.project_sites {
+  height:400px;
+  overflow:auto;
+}
+
+.project_thumbnail {
+  position: relative;
+  i.project_permission_icon {
+    color: $grayDark;
+    position: absolute;
+    right: 10px;
+    top: 10px;
+    font-size: $baseFontSize * 1.75;
+  }
+
+  ul.nav {
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
+  }
+}
+
+select[multiple] {
+  height: 100px;
+
+}
+
+.labels {
+  font-size: 14px;
+  text-align: center;
+  min-width: 20px;
+  border: 1px solid #555;
+  white-space: nowrap;
+  background-color:white;
+  padding:0 2px;
+}
+
+/* end Project styles */
+
+/* Site styles */
+
+.map-placeholder {
+  border:1px solid black;
+  height:400px;
+  display:block;
+  line-height: 400px;
+  text-align: center;
+}
+
+.map-placeholder-text {
+  display: inline-block;
+  vertical-align: middle;
+  line-height: normal;
+}
+
+/* end Site styles */

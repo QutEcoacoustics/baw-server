@@ -362,7 +362,7 @@
 
 // public
 //console.log(namespace.foobar); // foobar
-//namescpace.sayHello(); // hello world
+//namespace.sayHello(); // hello world
 
 // assigning new properties
 //namespace.foobar2 = "foobar";

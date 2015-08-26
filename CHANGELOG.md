@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## [Release 0.17.1](https://github.com/QutBioacoustics/baw-server/releases/tag/0.17.1) (2015-08-19)
+
+ - 2015-08-19
+    - removed gmaps4rails in favour of plain google maps
+    - added indexes for file_hash, uuid, and id to audio_recordings table to improve performance
+
+## [Release 0.17.0](https://github.com/QutBioacoustics/baw-server/releases/tag/0.17.0) (2015-08-17)
+
+ - 2015-08-16
+    - More UI changes to sync with baw-client UI 
+ - 2015-08-10
+    - Updated website navigation bar
  - 2015-08-08
     - Changed audio tool defaults for media and timeouts
     - Fix duplication due to projects-sites many to many relation [#226](https://github.com/QutBioacoustics/baw-server/issues/226) [#219](https://github.com/QutBioacoustics/baw-server/issues/219)

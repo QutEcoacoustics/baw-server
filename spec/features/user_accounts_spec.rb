@@ -124,7 +124,7 @@ describe "User account actions", :type => :feature do
 
       visit edit_user_registration_path
       #expect(page).to have_content('user_span1.png')
-      expect(page.find('div img')['src']).to include('user_span1.png')
+      expect(page.find('.user_image div img')['src']).to include('user_span1.png')
       expect(page).to have_content(new_user_name)
       expect(page).to have_content('Currently waiting confirmation for: '+new_email)
 

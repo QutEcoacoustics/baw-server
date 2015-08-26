@@ -49,14 +49,12 @@ gem 'haml-rails', '~> 0.9.0'
 
 gem 'simple_form', '~> 3.1.0'
 gem 'paperclip', '~> 4.3.0'
-# kept below version 2 due to huge breaking changes
-gem 'gmaps4rails', '< 2'
 
 # Bootstrap UI
 gem 'bootstrap-sass', '~> 3.3.4'
 # for sass variables: http://getbootstrap.com/customize/#less-variables
 # sprockets-rails gem is included via rails dependency
-gem 'font-awesome-sass', '~> 4.3.0'
+gem 'font-awesome-sass', '~> 4.4.0'
 
 # for rails 3, 4
 gem 'kaminari'
@@ -94,8 +92,7 @@ gem 'jc-validates_timeliness', '~> 3.1.1'
 # No longer used - incorporated the gem's functionality directly.
 #gem 'userstamp', git: 'https://github.com/theepan/userstamp.git'
 
-gem 'enumerize', '~> 0.11.0'
-
+gem 'enumerize', '~> 1.0'
 gem 'uuidtools', '~> 2.1.5'
 gem 'acts_as_paranoid', git: 'https://github.com/ActsAsParanoid/acts_as_paranoid.git', branch: :master, ref: 'ddcd191517'
 
@@ -107,13 +104,13 @@ require 'rbconfig'
 # MONITORING
 # -------------------------------------
 gem 'exception_notification', '~> 4.1.0'
-gem 'newrelic_rpm', '~> 3.12.0'
+gem 'newrelic_rpm', '~> 3.13.0'
 
 # Documentation & UI
 # -------------------------------------
 # these gems are required here to serve /doc url
 gem 'rspec_api_documentation', '~> 4.4.0'
-gem 'raddocs', '~> 0.4.0'
+gem 'raddocs', '~> 0.5.0'
 
 # MEDIA
 # -------------------------------------
@@ -127,7 +124,8 @@ gem 'resque', '~> 1.25.2'
 gem 'resque-job-stats', git: 'https://github.com/echannel/resque-job-stats.git', branch: :master, ref: '8932c036ae'
 gem 'resque-status', '~> 0.5.0'
 # set to a specific commit when releasing to master branch
-gem 'baw-workers', git: 'https://github.com/QutBioacoustics/baw-workers.git', branch: :master, ref: 'c88ae6f8b8'
+gem 'baw-workers', git: 'https://github.com/QutBioacoustics/baw-workers.git', branch: :master, ref: 'a9d9a4d279'
+
 
 # Gems restricted by environment and/or platform
 # ====================================================

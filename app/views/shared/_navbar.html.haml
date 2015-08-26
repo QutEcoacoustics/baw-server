@@ -39,6 +39,7 @@
                 %span.fa.fa-cog
           %li{class: ('active' if current_page?(my_account_path))}
             %a{href: my_account_path}
-              = current_user.user_name
+              %span= current_user.user_name
+              = image_tag current_user.image.url(:spanhalf), alt: current_user.user_name, class: 'loginWidgetImage'
           %li
             %a{href: destroy_user_session_path}= t('devise.shared.links.sign_out')

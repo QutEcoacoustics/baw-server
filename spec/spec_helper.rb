@@ -114,9 +114,10 @@ RSpec.configure do |config|
     DatabaseCleaner.clean_with(:truncation)
 
     # run these rake tasks to ensure the db in is a state that matches the schema.rb
-    #bundle exec rake db:drop RAILS_ENV=test
-    #bundle exec rake db:create RAILS_ENV=test
-    #bundle exec rake db:schema:load RAILS_ENV=test
+    #bin/rake db:drop RAILS_ENV=test
+    #bin/rake db:create RAILS_ENV=test
+    #bin/rake db:migrate RAILS_ENV=test
+    #bin/rake db:schema:dump RAILS_ENV=test
 
     begin
       DatabaseCleaner.start

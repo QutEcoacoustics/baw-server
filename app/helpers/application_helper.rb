@@ -18,10 +18,6 @@ module ApplicationHelper
     time_distance
   end
 
-  def gmaps_default_options
-    {zoom: 7, auto_zoom: false}
-  end
-
   # https://gist.github.com/suryart/7418454
   def bootstrap_class_for(flash_type)
     flash_types = { success: 'alert-success', error: 'alert-danger', alert: 'alert-warning', notice: 'alert-info'}

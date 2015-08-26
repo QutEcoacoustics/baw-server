@@ -2,15 +2,15 @@
 @import "font-awesome-sprockets";
 @import "font-awesome";
 
-@import "bootstrap_and_overrides";
+$grid-float-breakpoint: 992px;
+
+ul.nav-pills > li > a {
+  padding: 5px 10px;
+}
 
 @import "bootstrap-sprockets";
 @import "bootstrap";
 
 @import "bootstrap-datetimepicker.min.css";
-@import "gmaps4rails.css";
-@import "rails_bootstrap_forms.css";
-@import "common";
-@import "projects";
-@import "sites";
-
+@import "custom";
+@import "twitter_typeahead";
