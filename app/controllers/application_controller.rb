@@ -15,7 +15,7 @@ class ApplicationController < ActionController::Base
   before_action :authenticate_user!, if: :devise_controller?
 
   # CanCan - always check authorization
-  check_authorization unless: :devise_controller?
+  check_authorization if: :should_check_authorization?
 
   # see routes.rb for the catch-all route for routing errors.
   # see application.rb for the exceptions_app settings.
@@ -240,7 +240,7 @@ class ApplicationController < ActionController::Base
         end
 
         # get a redirect path
-        redirect_to =  params[:redirect_to] || request.fullpath || request.path || nil
+        redirect_to = params[:redirect_to] || request.fullpath || request.path || nil
 
         if redirect_to
 
@@ -473,7 +473,7 @@ class ApplicationController < ActionController::Base
 
   def set_then_reset_user_stamper
     begin
-      # TODO: this causes a deprecation warning if nil is 
+      # TODO: this causes a deprecation warning if nil is
       # given to Devise::Strategies::DatabaseAuthenticatable#validate
       User.stamper = self.current_user
       yield
@@ -486,6 +486,14 @@ class ApplicationController < ActionController::Base
     the_time = Time.zone.now
     current_user.update_attribute(:last_seen_at, the_time)
     session[:last_seen_at] = the_time.to_i
+  end
+
+  def should_check_authorization?
+    is_devise_controller = devise_controller?
+    #is_rails_admin_controller = self.class.name.include?('RailsAdmin')
+    #&& !is_rails_admin_controller
+
+    !is_devise_controller
   end
 
 end

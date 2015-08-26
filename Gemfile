@@ -75,6 +75,7 @@ gem 'cancancan', '~> 1.12.0'
 gem 'role_model', '~> 0.8.1'
 # Use ActiveModel has_secure_password
 gem 'bcrypt', '~> 3.1.9'
+#gem 'rails_admin', '~> 0.7'
 
 # Database gems
 # -------------------------------------

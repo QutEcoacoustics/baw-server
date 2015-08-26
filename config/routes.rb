@@ -324,6 +324,10 @@ Rails.application.routes.draw do
     mount Resque::Server.new, at: '/job_queue_status'
   end
 
+  # mount rails_admin at site_admin
+  # don't put in `authenticate`, as the controllers don't call `authorize_resource`.
+  #mount RailsAdmin::Engine => '/site_admin', as: 'rails_admin'
+
   # Tag management - admin only
   resources :tags_management, except: [:show]
 
