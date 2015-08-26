@@ -30,6 +30,53 @@ SET default_tablespace = '';
 SET default_with_oids = false;
 
 --
+-- Name: analysis_jobs; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE TABLE analysis_jobs (
+    id integer NOT NULL,
+    name character varying NOT NULL,
+    annotation_name character varying,
+    custom_settings text NOT NULL,
+    script_id integer NOT NULL,
+    creator_id integer NOT NULL,
+    updater_id integer,
+    deleter_id integer,
+    deleted_at timestamp without time zone,
+    created_at timestamp without time zone,
+    updated_at timestamp without time zone,
+    description text,
+    saved_search_id integer NOT NULL,
+    started_at timestamp without time zone,
+    overall_status character varying DEFAULT 'new'::character varying NOT NULL,
+    overall_status_modified_at timestamp without time zone NOT NULL,
+    overall_progress text NOT NULL,
+    overall_progress_modified_at timestamp without time zone NOT NULL,
+    overall_count integer NOT NULL,
+    overall_duration_seconds numeric(14,4) NOT NULL
+);
+
+
+--
+-- Name: analysis_jobs_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE analysis_jobs_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: analysis_jobs_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE analysis_jobs_id_seq OWNED BY analysis_jobs.id;
+
+
+--
 -- Name: audio_event_comments; Type: TABLE; Schema: public; Owner: -; Tablespace: 
 --
 
@@ -230,104 +277,6 @@ ALTER SEQUENCE bookmarks_id_seq OWNED BY bookmarks.id;
 
 
 --
--- Name: datasets; Type: TABLE; Schema: public; Owner: -; Tablespace: 
---
-
-CREATE TABLE datasets (
-    id integer NOT NULL,
-    name character varying NOT NULL,
-    start_time time without time zone,
-    end_time time without time zone,
-    start_date date,
-    end_date date,
-    filters character varying,
-    number_of_samples integer,
-    number_of_tags integer,
-    types_of_tags character varying,
-    description text,
-    creator_id integer NOT NULL,
-    updater_id integer,
-    project_id integer NOT NULL,
-    created_at timestamp without time zone,
-    updated_at timestamp without time zone,
-    dataset_result_file_name character varying,
-    dataset_result_content_type character varying,
-    dataset_result_file_size integer,
-    dataset_result_updated_at timestamp without time zone,
-    tag_text_filters text
-);
-
-
---
--- Name: datasets_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE datasets_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: datasets_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE datasets_id_seq OWNED BY datasets.id;
-
-
---
--- Name: datasets_sites; Type: TABLE; Schema: public; Owner: -; Tablespace: 
---
-
-CREATE TABLE datasets_sites (
-    dataset_id integer NOT NULL,
-    site_id integer NOT NULL
-);
-
-
---
--- Name: jobs; Type: TABLE; Schema: public; Owner: -; Tablespace: 
---
-
-CREATE TABLE jobs (
-    id integer NOT NULL,
-    name character varying NOT NULL,
-    annotation_name character varying,
-    script_settings text,
-    dataset_id integer NOT NULL,
-    script_id integer NOT NULL,
-    creator_id integer NOT NULL,
-    updater_id integer,
-    deleter_id integer,
-    deleted_at timestamp without time zone,
-    created_at timestamp without time zone,
-    updated_at timestamp without time zone,
-    description text
-);
-
-
---
--- Name: jobs_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE jobs_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: jobs_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE jobs_id_seq OWNED BY jobs.id;
-
-
---
 -- Name: permissions; Type: TABLE; Schema: public; Owner: -; Tablespace: 
 --
 
@@ -405,6 +354,16 @@ ALTER SEQUENCE projects_id_seq OWNED BY projects.id;
 
 
 --
+-- Name: projects_saved_searches; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE TABLE projects_saved_searches (
+    project_id integer NOT NULL,
+    saved_search_id integer NOT NULL
+);
+
+
+--
 -- Name: projects_sites; Type: TABLE; Schema: public; Owner: -; Tablespace: 
 --
 
@@ -412,6 +371,41 @@ CREATE TABLE projects_sites (
     project_id integer NOT NULL,
     site_id integer NOT NULL
 );
+
+
+--
+-- Name: saved_searches; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE TABLE saved_searches (
+    id integer NOT NULL,
+    name character varying NOT NULL,
+    description text,
+    stored_query text NOT NULL,
+    creator_id integer NOT NULL,
+    created_at timestamp without time zone NOT NULL,
+    deleter_id integer,
+    deleted_at timestamp without time zone
+);
+
+
+--
+-- Name: saved_searches_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE saved_searches_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: saved_searches_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE saved_searches_id_seq OWNED BY saved_searches.id;
 
 
 --
@@ -431,21 +425,14 @@ CREATE TABLE scripts (
     id integer NOT NULL,
     name character varying NOT NULL,
     description character varying,
-    notes text,
-    settings_file_file_name character varying,
-    settings_file_content_type character varying,
-    settings_file_file_size integer,
-    settings_file_updated_at timestamp without time zone,
-    data_file_file_name character varying,
-    data_file_content_type character varying,
-    data_file_file_size integer,
-    data_file_updated_at timestamp without time zone,
     analysis_identifier character varying NOT NULL,
     version numeric(4,2) DEFAULT 0.1 NOT NULL,
     verified boolean DEFAULT false,
     updated_by_script_id integer,
     creator_id integer NOT NULL,
-    created_at timestamp without time zone NOT NULL
+    created_at timestamp without time zone NOT NULL,
+    executable_command text NOT NULL,
+    executable_settings text NOT NULL
 );
 
 
@@ -613,6 +600,13 @@ ALTER SEQUENCE users_id_seq OWNED BY users.id;
 -- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
+ALTER TABLE ONLY analysis_jobs ALTER COLUMN id SET DEFAULT nextval('analysis_jobs_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: -
+--
+
 ALTER TABLE ONLY audio_event_comments ALTER COLUMN id SET DEFAULT nextval('audio_event_comments_id_seq'::regclass);
 
 
@@ -648,20 +642,6 @@ ALTER TABLE ONLY bookmarks ALTER COLUMN id SET DEFAULT nextval('bookmarks_id_seq
 -- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY datasets ALTER COLUMN id SET DEFAULT nextval('datasets_id_seq'::regclass);
-
-
---
--- Name: id; Type: DEFAULT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY jobs ALTER COLUMN id SET DEFAULT nextval('jobs_id_seq'::regclass);
-
-
---
--- Name: id; Type: DEFAULT; Schema: public; Owner: -
---
-
 ALTER TABLE ONLY permissions ALTER COLUMN id SET DEFAULT nextval('permissions_id_seq'::regclass);
 
 
@@ -670,6 +650,13 @@ ALTER TABLE ONLY permissions ALTER COLUMN id SET DEFAULT nextval('permissions_id
 --
 
 ALTER TABLE ONLY projects ALTER COLUMN id SET DEFAULT nextval('projects_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY saved_searches ALTER COLUMN id SET DEFAULT nextval('saved_searches_id_seq'::regclass);
 
 
 --
@@ -698,6 +685,14 @@ ALTER TABLE ONLY tags ALTER COLUMN id SET DEFAULT nextval('tags_id_seq'::regclas
 --
 
 ALTER TABLE ONLY users ALTER COLUMN id SET DEFAULT nextval('users_id_seq'::regclass);
+
+
+--
+-- Name: analysis_jobs_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+--
+
+ALTER TABLE ONLY analysis_jobs
+    ADD CONSTRAINT analysis_jobs_pkey PRIMARY KEY (id);
 
 
 --
@@ -741,22 +736,6 @@ ALTER TABLE ONLY bookmarks
 
 
 --
--- Name: datasets_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
---
-
-ALTER TABLE ONLY datasets
-    ADD CONSTRAINT datasets_pkey PRIMARY KEY (id);
-
-
---
--- Name: jobs_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
---
-
-ALTER TABLE ONLY jobs
-    ADD CONSTRAINT jobs_pkey PRIMARY KEY (id);
-
-
---
 -- Name: permissions_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
 --
 
@@ -770,6 +749,14 @@ ALTER TABLE ONLY permissions
 
 ALTER TABLE ONLY projects
     ADD CONSTRAINT projects_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: saved_searches_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+--
+
+ALTER TABLE ONLY saved_searches
+    ADD CONSTRAINT saved_searches_pkey PRIMARY KEY (id);
 
 
 --
@@ -802,6 +789,13 @@ ALTER TABLE ONLY tags
 
 ALTER TABLE ONLY users
     ADD CONSTRAINT users_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: analysis_jobs_name_uidx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE UNIQUE INDEX analysis_jobs_name_uidx ON analysis_jobs USING btree (name, creator_id);
 
 
 --
@@ -854,10 +848,38 @@ CREATE UNIQUE INDEX bookmarks_name_creator_id_uidx ON bookmarks USING btree (nam
 
 
 --
--- Name: datasets_name_creator_id_uidx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+-- Name: index_analysis_jobs_on_creator_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
 --
 
-CREATE UNIQUE INDEX datasets_name_creator_id_uidx ON datasets USING btree (name, creator_id);
+CREATE INDEX index_analysis_jobs_on_creator_id ON analysis_jobs USING btree (creator_id);
+
+
+--
+-- Name: index_analysis_jobs_on_deleter_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE INDEX index_analysis_jobs_on_deleter_id ON analysis_jobs USING btree (deleter_id);
+
+
+--
+-- Name: index_analysis_jobs_on_saved_search_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE INDEX index_analysis_jobs_on_saved_search_id ON analysis_jobs USING btree (saved_search_id);
+
+
+--
+-- Name: index_analysis_jobs_on_script_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE INDEX index_analysis_jobs_on_script_id ON analysis_jobs USING btree (script_id);
+
+
+--
+-- Name: index_analysis_jobs_on_updater_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE INDEX index_analysis_jobs_on_updater_id ON analysis_jobs USING btree (updater_id);
 
 
 --
@@ -1001,83 +1023,6 @@ CREATE INDEX index_bookmarks_on_updater_id ON bookmarks USING btree (updater_id)
 
 
 --
--- Name: index_datasets_on_creator_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
---
-
-CREATE INDEX index_datasets_on_creator_id ON datasets USING btree (creator_id);
-
-
---
--- Name: index_datasets_on_project_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
---
-
-CREATE INDEX index_datasets_on_project_id ON datasets USING btree (project_id);
-
-
---
--- Name: index_datasets_on_updater_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
---
-
-CREATE INDEX index_datasets_on_updater_id ON datasets USING btree (updater_id);
-
-
---
--- Name: index_datasets_sites_on_dataset_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
---
-
-CREATE INDEX index_datasets_sites_on_dataset_id ON datasets_sites USING btree (dataset_id);
-
-
---
--- Name: index_datasets_sites_on_dataset_id_and_site_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
---
-
-CREATE INDEX index_datasets_sites_on_dataset_id_and_site_id ON datasets_sites USING btree (dataset_id, site_id);
-
-
---
--- Name: index_datasets_sites_on_site_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
---
-
-CREATE INDEX index_datasets_sites_on_site_id ON datasets_sites USING btree (site_id);
-
-
---
--- Name: index_jobs_on_creator_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
---
-
-CREATE INDEX index_jobs_on_creator_id ON jobs USING btree (creator_id);
-
-
---
--- Name: index_jobs_on_dataset_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
---
-
-CREATE INDEX index_jobs_on_dataset_id ON jobs USING btree (dataset_id);
-
-
---
--- Name: index_jobs_on_deleter_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
---
-
-CREATE INDEX index_jobs_on_deleter_id ON jobs USING btree (deleter_id);
-
-
---
--- Name: index_jobs_on_script_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
---
-
-CREATE INDEX index_jobs_on_script_id ON jobs USING btree (script_id);
-
-
---
--- Name: index_jobs_on_updater_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
---
-
-CREATE INDEX index_jobs_on_updater_id ON jobs USING btree (updater_id);
-
-
---
 -- Name: index_permissions_on_creator_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
 --
 
@@ -1134,6 +1079,27 @@ CREATE INDEX index_projects_on_updater_id ON projects USING btree (updater_id);
 
 
 --
+-- Name: index_projects_saved_searches_on_project_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE INDEX index_projects_saved_searches_on_project_id ON projects_saved_searches USING btree (project_id);
+
+
+--
+-- Name: index_projects_saved_searches_on_project_id_and_saved_search_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE INDEX index_projects_saved_searches_on_project_id_and_saved_search_id ON projects_saved_searches USING btree (project_id, saved_search_id);
+
+
+--
+-- Name: index_projects_saved_searches_on_saved_search_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE INDEX index_projects_saved_searches_on_saved_search_id ON projects_saved_searches USING btree (saved_search_id);
+
+
+--
 -- Name: index_projects_sites_on_project_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
 --
 
@@ -1152,6 +1118,20 @@ CREATE INDEX index_projects_sites_on_project_id_and_site_id ON projects_sites US
 --
 
 CREATE INDEX index_projects_sites_on_site_id ON projects_sites USING btree (site_id);
+
+
+--
+-- Name: index_saved_searches_on_creator_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE INDEX index_saved_searches_on_creator_id ON saved_searches USING btree (creator_id);
+
+
+--
+-- Name: index_saved_searches_on_deleter_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE INDEX index_saved_searches_on_deleter_id ON saved_searches USING btree (deleter_id);
 
 
 --
@@ -1225,13 +1205,6 @@ CREATE UNIQUE INDEX index_users_on_email ON users USING btree (email);
 
 
 --
--- Name: jobs_name_uidx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
---
-
-CREATE UNIQUE INDEX jobs_name_uidx ON jobs USING btree (name);
-
-
---
 -- Name: permissions_level_user_id_project_id_uidx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
 --
 
@@ -1243,6 +1216,13 @@ CREATE UNIQUE INDEX permissions_level_user_id_project_id_uidx ON permissions USI
 --
 
 CREATE UNIQUE INDEX projects_name_uidx ON projects USING btree (name);
+
+
+--
+-- Name: saved_searches_name_creator_id_uidx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE UNIQUE INDEX saved_searches_name_creator_id_uidx ON saved_searches USING btree (name, creator_id);
 
 
 --
@@ -1271,6 +1251,46 @@ CREATE UNIQUE INDEX unique_schema_migrations ON schema_migrations USING btree (v
 --
 
 CREATE UNIQUE INDEX users_user_name_unique ON users USING btree (user_name);
+
+
+--
+-- Name: analysis_jobs_creator_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY analysis_jobs
+    ADD CONSTRAINT analysis_jobs_creator_id_fk FOREIGN KEY (creator_id) REFERENCES users(id);
+
+
+--
+-- Name: analysis_jobs_deleter_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY analysis_jobs
+    ADD CONSTRAINT analysis_jobs_deleter_id_fk FOREIGN KEY (deleter_id) REFERENCES users(id);
+
+
+--
+-- Name: analysis_jobs_saved_search_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY analysis_jobs
+    ADD CONSTRAINT analysis_jobs_saved_search_id_fk FOREIGN KEY (saved_search_id) REFERENCES saved_searches(id);
+
+
+--
+-- Name: analysis_jobs_script_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY analysis_jobs
+    ADD CONSTRAINT analysis_jobs_script_id_fk FOREIGN KEY (script_id) REFERENCES scripts(id);
+
+
+--
+-- Name: analysis_jobs_updater_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY analysis_jobs
+    ADD CONSTRAINT analysis_jobs_updater_id_fk FOREIGN KEY (updater_id) REFERENCES users(id);
 
 
 --
@@ -1442,86 +1462,6 @@ ALTER TABLE ONLY bookmarks
 
 
 --
--- Name: datasets_creator_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY datasets
-    ADD CONSTRAINT datasets_creator_id_fk FOREIGN KEY (creator_id) REFERENCES users(id);
-
-
---
--- Name: datasets_project_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY datasets
-    ADD CONSTRAINT datasets_project_id_fk FOREIGN KEY (project_id) REFERENCES projects(id);
-
-
---
--- Name: datasets_sites_dataset_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY datasets_sites
-    ADD CONSTRAINT datasets_sites_dataset_id_fk FOREIGN KEY (dataset_id) REFERENCES datasets(id);
-
-
---
--- Name: datasets_sites_site_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY datasets_sites
-    ADD CONSTRAINT datasets_sites_site_id_fk FOREIGN KEY (site_id) REFERENCES sites(id);
-
-
---
--- Name: datasets_updater_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY datasets
-    ADD CONSTRAINT datasets_updater_id_fk FOREIGN KEY (updater_id) REFERENCES users(id);
-
-
---
--- Name: jobs_creator_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY jobs
-    ADD CONSTRAINT jobs_creator_id_fk FOREIGN KEY (creator_id) REFERENCES users(id);
-
-
---
--- Name: jobs_dataset_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY jobs
-    ADD CONSTRAINT jobs_dataset_id_fk FOREIGN KEY (dataset_id) REFERENCES datasets(id);
-
-
---
--- Name: jobs_deleter_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY jobs
-    ADD CONSTRAINT jobs_deleter_id_fk FOREIGN KEY (deleter_id) REFERENCES users(id);
-
-
---
--- Name: jobs_script_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY jobs
-    ADD CONSTRAINT jobs_script_id_fk FOREIGN KEY (script_id) REFERENCES scripts(id);
-
-
---
--- Name: jobs_updater_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY jobs
-    ADD CONSTRAINT jobs_updater_id_fk FOREIGN KEY (updater_id) REFERENCES users(id);
-
-
---
 -- Name: permissions_creator_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1570,6 +1510,22 @@ ALTER TABLE ONLY projects
 
 
 --
+-- Name: projects_saved_searches_project_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY projects_saved_searches
+    ADD CONSTRAINT projects_saved_searches_project_id_fk FOREIGN KEY (project_id) REFERENCES projects(id);
+
+
+--
+-- Name: projects_saved_searches_saved_search_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY projects_saved_searches
+    ADD CONSTRAINT projects_saved_searches_saved_search_id_fk FOREIGN KEY (saved_search_id) REFERENCES saved_searches(id);
+
+
+--
 -- Name: projects_sites_project_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1591,6 +1547,22 @@ ALTER TABLE ONLY projects_sites
 
 ALTER TABLE ONLY projects
     ADD CONSTRAINT projects_updater_id_fk FOREIGN KEY (updater_id) REFERENCES users(id);
+
+
+--
+-- Name: saved_searches_creator_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY saved_searches
+    ADD CONSTRAINT saved_searches_creator_id_fk FOREIGN KEY (creator_id) REFERENCES users(id);
+
+
+--
+-- Name: saved_searches_deleter_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY saved_searches
+    ADD CONSTRAINT saved_searches_deleter_id_fk FOREIGN KEY (deleter_id) REFERENCES users(id);
 
 
 --
@@ -1718,6 +1690,14 @@ INSERT INTO schema_migrations (version) VALUES ('20150306224910');
 INSERT INTO schema_migrations (version) VALUES ('20150306235304');
 
 INSERT INTO schema_migrations (version) VALUES ('20150307010121');
+
+INSERT INTO schema_migrations (version) VALUES ('20150709112116');
+
+INSERT INTO schema_migrations (version) VALUES ('20150709141712');
+
+INSERT INTO schema_migrations (version) VALUES ('20150710080933');
+
+INSERT INTO schema_migrations (version) VALUES ('20150710082554');
 
 INSERT INTO schema_migrations (version) VALUES ('20150807150417');
 
