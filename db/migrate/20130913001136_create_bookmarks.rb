@@ -8,7 +8,7 @@ class CreateBookmarks < ActiveRecord::Migration
       t.integer  :creator_id   , :null => false
       t.integer  :updater_id
 
-      t.timestamps
+      t.timestamps null: true
     end
   end
 end

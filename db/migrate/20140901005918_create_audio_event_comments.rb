@@ -14,7 +14,7 @@ class CreateAudioEventComments < ActiveRecord::Migration
       t.integer :deleter_id
       t.datetime :deleted_at
 
-      t.timestamps # :updated_at, :created_at
+      t.timestamps null: true
     end
   end
 end

@@ -12,7 +12,7 @@ class CreateAudioEvents < ActiveRecord::Migration
       t.integer :deleter_id
       t.datetime :deleted_at
 
-      t.timestamps
+      t.timestamps null: true
     end
   end
 end

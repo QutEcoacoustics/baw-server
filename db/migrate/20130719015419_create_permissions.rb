@@ -7,7 +7,7 @@ class CreatePermissions < ActiveRecord::Migration
       t.integer :user_id,     :null => false
       t.integer :updater_id
 
-      t.timestamps
+      t.timestamps null: true
     end
   end
 end
