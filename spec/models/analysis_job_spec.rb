@@ -69,10 +69,16 @@ describe AnalysisJob, type: :model do
 
       result = aj.saved_search_items_extract(user)
 
+      # TODO compare to entire expected payload hash
+
       expect(result.size).to eq(1)
       expect(result[0].is_a?(Hash)).to be_truthy
       expect(result[0][:command_format]).to eq(aj.script.executable_command)
-      expect(result[0]).to eq(1)
+
+    end
+
+    it 'enqueues and processes payloads' do
+      pending
     end
 
   end
