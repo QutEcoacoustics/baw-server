@@ -24,11 +24,10 @@ before_install:
   - mkdir /tmp/ffmpeg
   - wget https://github.com/QutBioacoustics/baw-audio-tools/releases/download/v0.1.0/ffmpeg-git-20140817-64bit-static.tar.gz -O /tmp/ffmpeg/download-ffmpeg.tar.gz
   - tar -xzf /tmp/ffmpeg/download-ffmpeg.tar.gz -C /tmp/ffmpeg/
-  - ls -la /tmp/ffmpeg/
   - export PATH=$PATH:/tmp/ffmpeg/
-  - echo $PATH
 
   # check versions
+  - which ffmpeg
   - ffmpeg -version
   - mp3splt -version
   - sox --version
