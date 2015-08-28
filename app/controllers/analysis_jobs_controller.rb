@@ -28,13 +28,12 @@ class AnalysisJobsController < ApplicationController
   def create
     if @analysis_job.save
 
-      # once analysis job is successfully saved,
-      # generate the job items specified by the analysis job
+      # TODO add logging and timing
       # TODO This may need to be an async operation itself depending on how fast it runs
-      #sub_items = @analysis_job.generate_items(current_user)
-      # and enqueue the job items
+      # once analysis job is successfully saved,
+      # enqueue the job items specified by the analysis job
       # so that the async processing can begin
-      #enqueue_result = @analysis_job.enqueue_work(current_user, sub_items)
+      enqueue_results = @analysis_job.enqueue_items(current_user)
 
       respond_create_success
     else

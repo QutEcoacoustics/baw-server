@@ -49,4 +49,32 @@ describe AnalysisJob, type: :model do
     expect(build(:analysis_job, saved_search: nil)).not_to be_valid
   end
 
+  context 'job items' do
+
+    it 'extracts the correct payloads' do
+      project_1 = create(:project)
+      user = project_1.creator
+      site_1 = create(:site, projects: [project_1], creator: user)
+
+      create(:audio_recording, site: site_1, creator: user, uploader: user)
+
+      project_2 = create(:project, creator: user)
+      site_2 = create(:site, projects: [project_2], creator: user)
+      audio_recording_2 = create(:audio_recording, site: site_2, creator: user, uploader: user)
+
+      ss = create(:saved_search, creator: user, stored_query: {id: {in: [audio_recording_2.id]}})
+      s = create(:script, creator: user, verified: true)
+
+      aj = build(:analysis_job, creator: user, script: s, saved_search: ss, )
+
+      result = aj.saved_search_items_extract(user)
+
+      expect(result.size).to eq(1)
+      expect(result[0].is_a?(Hash)).to be_truthy
+      expect(result[0][:command_format]).to eq(aj.script.executable_command)
+      expect(result[0]).to eq(1)
+    end
+
+  end
+
 end

@@ -56,7 +56,7 @@ describe SavedSearch, type: :model do
 
   it 'should have a valid query' do
     ss = create(:saved_search)
-    ss.audio_recording_filter(ss.creator)
+    ss.audio_recording_conditions(ss.creator)
   end
 
   it 'should return the expected audio recording ids from the query' do
@@ -72,11 +72,11 @@ describe SavedSearch, type: :model do
 
     ss = create(:saved_search, creator: user, stored_query: {id: {in: [audio_recording_2.id]}})
 
-    result = ss.extract_audio_recordings(user)
+    result = ss.audio_recordings_extract(user)
 
-    expect(result).to be_a(AudioRecording::ActiveRecord_Relation)
-    expect(result.size).to eq(1)
-    expect(result[0]).to eq(audio_recording_2)
+    expect(result).to be_a(ActiveRecord::Relation)
+    expect(result.count).to eq(1)
+    expect(result.first).to eq(audio_recording_2)
   end
 
   it 'should populate the projects used in the query' do
@@ -91,11 +91,11 @@ describe SavedSearch, type: :model do
 
     ss = create(:saved_search, creator: user, stored_query:  {id: {in: [audio_recording_2.id]}})
 
-    result = ss.extract_projects(user)
+    result = ss.projects_extract(user)
 
-    expect(result).to be_a(Project::ActiveRecord_Relation)
-    expect(result.size).to eq(1)
-    expect(result[0]).to eq(project_2)
+    expect(result).to be_a(ActiveRecord::Relation)
+    expect(result.count).to eq(1)
+    expect(result.first).to eq(project_2)
   end
 
   it 'should have a project if populated in many to many table' do
@@ -118,11 +118,11 @@ describe SavedSearch, type: :model do
 
     ss = build(:saved_search, creator: user, stored_query: {id: {in: [audio_recording_2.id]}})
 
-    result = ss.extract_projects(user)
+    result = ss.projects_extract(user)
 
-    expect(result).to be_a(Project::ActiveRecord_Relation)
-    expect(result.size).to eq(1)
-    expect(result[0]).to eq(project_2)
+    expect(result).to be_a(ActiveRecord::Relation)
+    expect(result.count).to eq(1)
+    expect(result.first).to eq(project_2)
 
     ss.projects = result
 
@@ -147,7 +147,7 @@ describe SavedSearch, type: :model do
 
     ss = build(:saved_search, creator: user, stored_query: {id: {in: [audio_recording_2.id]}})
 
-    ss.populate_projects(user)
+    ss.projects_populate(user)
 
     expect(SavedSearch.find(ss.id).projects.size).to eq(1)
     expect(SavedSearch.find(ss.id).projects.pluck(:id)[0]).to eq(project_2.id)

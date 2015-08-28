@@ -13,14 +13,14 @@ class SavedSearch < ActiveRecord::Base
   # this is a filter query for audio recordings.
   serialize :stored_query, JSON
 
-  validates :name, presence: true, length: { minimum: 2, maximum: 255 },
+  validates :name, presence: true, length: {minimum: 2, maximum: 255},
             uniqueness: {case_sensitive: false, scope: :creator_id, message: 'should be unique per user'}
   validates :stored_query, presence: true
 
   def self.filter_settings
     {
-        valid_fields: [:id, :name, :description, :stored_query,:created_at, :creator_id],
-        render_fields: [:id, :name, :description, :stored_query,:created_at, :creator_id],
+        valid_fields: [:id, :name, :description, :stored_query, :created_at, :creator_id],
+        render_fields: [:id, :name, :description, :stored_query, :created_at, :creator_id],
         text_fields: [:name, :description],
         custom_fields: lambda { |saved_search, user|
           saved_search_hash = {}
@@ -60,50 +60,42 @@ class SavedSearch < ActiveRecord::Base
     }
   end
 
-  # Build filter from the stored query.
+  # Build Arel conditions from stored_query.
   # @param [User] user
-  # @return [Arel::Nodes::Node, Array<Arel::Nodes::Node>]
-  def audio_recording_filter(user)
+  # @return [Arel::Nodes::Node, Array<Arel::Nodes::Node>] conditions
+  def audio_recording_conditions(user)
     user = Access::Core.validate_user(user)
 
     filter_query = Filter::Query.new(
-        { filter: stored_query },
+        {filter: stored_query},
         Access::Query.audio_recordings(user, Access::Core.levels_allow),
         AudioRecording,
         AudioRecording.filter_settings)
 
-    # debugging
-    # query = filter_query.build.build_exists(Site.arel_table, Project.arel_table, nil, {}, false).project(:id)
-    # query = AudioRecording.arel_table.join(Site.arel_table).on(AudioRecording.arel_table[:site_id].eq(query))
-    # Rails.logger.warn query.to_sql
-
-    # Get parsed filter in Arel form
+    # parse filter from params
     parsed_filter = filter_query.filter
 
+    # Get parsed filter conditions in Arel form
     filter_query.build.parse(parsed_filter)
   end
 
   # Execute filter built from the stored query.
   # @param [User] user
-  # @return [Arel::SelectManager] audio recordings
-  def extract_audio_recordings(user)
+  # @return [ActiveRecord::Relation] audio recordings
+  def audio_recordings_extract(user)
     user = Access::Core.validate_user(user)
 
-    where_clause = audio_recording_filter(user)
+    conditions = audio_recording_conditions(user)
 
-    ar = AudioRecording.arel_table
-
-    # return audio recording query with no select specified
-    ar.where(where_clause)
+    # add conditions to ActiveRecord AudioRecording query
+    append_conditions(AudioRecording.all, conditions)
   end
 
   # Get the projects used by the filter in the stored query.
   # @param [User] user
-  # @return [Arel::SelectManager] projects
-  def extract_projects(user)
+  # @return [ActiveRecord::Relation] projects
+  def projects_extract(user)
     user = Access::Core.validate_user(user)
-
-    where_clause = audio_recording_filter(user)
 
     pt = Project.arel_table
     ps = Arel::Table.new(:projects_sites)
@@ -131,7 +123,12 @@ WHERE EXISTS (
         ar
             .where(pt[:deleted_at].eq(nil))
             .where(ar[:site_id].eq(ps[:site_id]))
-            .where(where_clause)
+
+    conditions = audio_recording_conditions(user)
+    audio_recordings_exists = append_conditions(audio_recordings_exists, conditions)
+
+    audio_recordings_exists =
+        audio_recordings_exists
             .project(1)
             .exists
 
@@ -142,16 +139,26 @@ WHERE EXISTS (
             .project(1)
             .exists
 
-    pt.where(projects_sites_exist)
+    Project.where(projects_sites_exist)
   end
 
   # Populate the projects used by the filter in the stored query.
   # @param [User] user
   # @return [void]
-  def populate_projects(user)
-    project_query = extract_projects(user)
+  def projects_populate(user)
+    user = Access::Core.validate_user(user)
+    project_query = projects_extract(user)
     self.projects = project_query.to_a
     self.save!
+  end
+
+  private
+
+  def append_conditions(query, conditions)
+    conditions.each do |condition|
+      query = query.where(condition)
+    end
+    query
   end
 
 end

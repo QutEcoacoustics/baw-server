@@ -141,7 +141,7 @@ class AudioRecording < ActiveRecord::Base
     if self.original_file_name.blank?
       Mime::Type.lookup(self.media_type).to_sym.to_s
     else
-      File.extname(self.original_file_name)
+      File.extname(self.original_file_name).delete('.')
     end
   end
 

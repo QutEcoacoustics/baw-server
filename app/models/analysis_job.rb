@@ -99,29 +99,66 @@ class AnalysisJob < ActiveRecord::Base
     }
   end
 
-  def enqueue_work(user)
-    # adding logging and timing
+  # Create payloads from audio recordings extracted from saved search.
+  # @param [User] user
+  # @return [Array<Hash>] payloads
+  def saved_search_items_extract(user)
+    user = Access::Core.validate_user(user)
 
-    # execute associated saved_search
-    audio_recordings_query = self.saved_search.extract_audio_recordings(current_user)
+    # execute associated saved_search to get audio_recordings
+    audio_recordings_query = self.saved_search.audio_recordings_extract(user)
 
+    command_format = self.script.executable_command.to_s
+    file_executable = ''
+    copy_paths = nil
+    config_string = self.custom_settings
+    job_id = self.id
 
-    # create payload for each audio_recording
+    # create one payload per each audio_recording
+    payloads = []
     audio_recordings_query.find_each(batch_size: 1000) do |audio_recording|
-      payload =
+      payloads.push(
           {
-              command_format: self.script.exectuable_command,
-              file_executable: opts[:file_executable].to_s,
-              copy_paths: opts[:copy_paths],
-              config: self.custom_settings,
-              job_id: self.id,
+              command_format: command_format,
+              file_executable: file_executable,
+              copy_paths: copy_paths,
+              config_string: config_string,
+              job_id: job_id,
 
               uuid: audio_recording.uuid,
               id: audio_recording.id,
               datetime_with_offset: audio_recording.recorded_date.iso8601(3),
-              original_format: ''
-          }
+              original_format: audio_recording.original_format_calculated
+          })
     end
 
+    payloads
   end
+
+  # Enqueue payloads representing audio recordings from saved search to asnc processing queue.
+  # @param [User] user
+  # @return [Array<Hash>] payloads
+  def enqueue_items(user)
+    payloads = saved_search_items_extract(user)
+
+    results = []
+
+    payloads.each do |payload|
+
+      result = nil
+      error = nil
+
+      begin
+        result = BawWorkers::Analysis::Action.action_enqueue(payload)
+      rescue => e
+        error = e
+        Rails.logger(self.to_s) { e }
+      end
+
+      results.push({payload: payload, result: result, error: error})
+    end
+
+    results
+  end
+
 end

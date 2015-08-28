@@ -28,8 +28,9 @@ class SavedSearchesController < ApplicationController
   def create
     if @saved_search.save
 
+      # TODO add logging and timing
       # TODO This may need to be async depending on how fast it runs
-      #@saved_search.projects = @saved_search.extract_projects(current_user)
+      @saved_search.projects_populate(current_user)
 
       respond_create_success
     else
@@ -63,6 +64,7 @@ class SavedSearchesController < ApplicationController
   def saved_search_params
     # can't permit arbitrary hash
     # https://github.com/rails/rails/issues/9454#issuecomment-14167664
+    # add arbitrary hash for stored_query manually
     params.require(:saved_search).permit(:id, :name, :description).tap do |allowed_params|
       if params[:saved_search][:stored_query]
         allowed_params[:stored_query] = params[:saved_search][:stored_query]
