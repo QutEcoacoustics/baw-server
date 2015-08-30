@@ -5,12 +5,10 @@ require 'helpers/acceptance_spec_helper'
 # https://github.com/zipmark/rspec_api_documentation
 resource 'AnalysisJobs' do
 
-  # set header
   header 'Accept', 'application/json'
   header 'Content-Type', 'application/json'
   header 'Authorization', :authentication_token
 
-  # default format
   let(:format) { 'json' }
 
   before(:each) do

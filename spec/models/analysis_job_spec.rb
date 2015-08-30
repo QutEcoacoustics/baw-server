@@ -78,7 +78,7 @@ describe AnalysisJob, type: :model do
     end
 
     it 'enqueues and processes payloads' do
-      pending
+
     end
 
   end

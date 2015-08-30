@@ -90,7 +90,7 @@ GEM
     ast (2.1.0)
     astrolabe (1.3.1)
       parser (~> 2.2)
-    autoprefixer-rails (5.2.1.2)
+    autoprefixer-rails (5.2.1.3)
       execjs
       json
     bcrypt (3.1.10)
@@ -461,7 +461,7 @@ GEM
       thread_safe (~> 0.1)
     tzinfo-data (1.2015.6)
       tzinfo (>= 1.0.0)
-    uglifier (2.7.1)
+    uglifier (2.7.2)
       execjs (>= 0.3.0)
       json (>= 1.8.0)
     unf (0.1.4)

@@ -415,10 +415,6 @@ class MediaController < ApplicationController
                                )
   end
 
-  def add_header_length(length)
-    headers['Content-Length'] = length.to_s
-  end
-
   def add_header_cache
     headers[MediaPoll::HEADER_KEY_RESPONSE_FROM] = MediaPoll::HEADER_VALUE_RESPONSE_CACHE
   end

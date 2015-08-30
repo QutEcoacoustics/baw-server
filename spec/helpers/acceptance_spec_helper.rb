@@ -63,12 +63,23 @@ def standard_request_options(http_method, description, expected_status, opts = {
 
   example "#{http_method} #{description} - #{expected_status}", document: opts[:document] do
 
-    if defined?(include_test_file) && include_test_file
+    if defined?(test_paths) && test_paths
+      if test_paths == true
+        test_paths = [File.join('Test1', 'Test2', 'test-CASE.csv')]
+      end
       uuid = audio_recording.uuid
-      path = "./tmp/_cached_analysis_jobs/system/#{uuid[0, 2].downcase}/#{uuid.downcase}/Test/test-CASE.csv"
+      top_path = File.join(analysis_cache.possible_dirs[0], 'system', uuid[0, 2].downcase, uuid.downcase)
 
-      FileUtils.mkpath File.dirname(path)
-      File.open(path, 'w') { |f| f.write('{"content":"This is some content."}') }
+      test_paths.each do |path_segment|
+        full_path = File.join(top_path, path_segment)
+        FileUtils.mkpath File.dirname(full_path)
+
+        if File.extname(path_segment).blank? # assume path with extension is a file
+          FileUtils.mkpath full_path
+        else
+          File.open(full_path, 'w') { |f| f.write('"header1", "header2", "header3"\n"content1","content2", "content2"') }
+        end
+      end
     end
 
     expected_error_class = opts[:expected_error_class]
@@ -237,9 +248,9 @@ def acceptance_checks_shared(request, opts = {})
     end
 
     if opts[:expected_response_header_values_match]
-    difference = actual_response_headers.keys - expected_response_headers.keys
-    expect(difference).to be_empty, "Mismatch: response headers differ by #{difference}: \nExpected: #{expected_response_headers} \nActual: #{actual_response_headers}"
-      end
+      difference = actual_response_headers.keys - expected_response_headers.keys
+      expect(difference).to be_empty, "Mismatch: response headers differ by #{difference}: \nExpected: #{expected_response_headers} \nActual: #{actual_response_headers}"
+    end
   end
 
   opts
@@ -270,12 +281,12 @@ def acceptance_checks_json(opts = {})
   actual_response_parsed = opts[:actual_response].blank? ? nil : JsonSpec::Helpers::parse_json(opts[:actual_response])
   data_present = !opts[:actual_response].blank? &&
       !actual_response_parsed.blank? &&
-          actual_response_parsed.include?('data') &&
-          !actual_response_parsed['data'].blank?
+      actual_response_parsed.include?('data') &&
+      !actual_response_parsed['data'].blank?
 
   data_included = !opts[:actual_response].blank? &&
       !actual_response_parsed.blank? &&
-          actual_response_parsed.include?('data')
+      actual_response_parsed.include?('data')
 
 
   if data_included && actual_response_parsed['data'].is_a?(Array)
@@ -321,9 +332,9 @@ def acceptance_checks_json(opts = {})
 
   if defined?(expected_unordered_ids) &&
       !expected_unordered_ids.blank? &&
-          expected_unordered_ids.is_a?(Array) &&
-          data_present &&
-          actual_response_parsed['data'].is_a?(Array)
+      expected_unordered_ids.is_a?(Array) &&
+      data_present &&
+      actual_response_parsed['data'].is_a?(Array)
 
     actual_ids = actual_response_parsed['data'].map { |x| x.include?('id') ? x['id'] : nil }
     expect(actual_ids).to match_array(expected_unordered_ids)

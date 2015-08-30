@@ -71,6 +71,10 @@ class ApplicationController < ActionController::Base
     end
   end
 
+  def add_header_length(length)
+    response.headers['Content-Length'] = length.to_s
+  end
+
   def no_content_as_json
     head :no_content, :content_type => 'application/json'
   end
