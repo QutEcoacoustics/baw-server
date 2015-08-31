@@ -84,7 +84,14 @@ def standard_request_options(http_method, description, expected_status, opts = {
           })
 
       opts = acceptance_checks_shared(request, opts)
-      acceptance_checks_json(opts)
+
+      if opts[:expected_response_content_type] == 'application/json'
+        acceptance_checks_json(opts)
+      else
+        message_prefix = "Requested #{opts[:actual_method]} #{opts[:actual_path]} expecting"
+        check_response_content(opts, message_prefix)
+        check_invalid_content(opts, message_prefix)
+      end
 
     end
 

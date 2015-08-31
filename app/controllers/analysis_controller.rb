@@ -135,11 +135,11 @@ class AnalysisController < ApplicationController
 
     {
         opts: {
-                job_id: job_info[:analysis_job_id],
-                uuid: audio_recording_info[:audio_recording].uuid,
-                sub_folders: results_paths[0..-2],
-                file_name: results_paths[-1]
-            },
+            job_id: job_info[:analysis_job_id],
+            uuid: audio_recording_info[:audio_recording].uuid,
+            sub_folders: results_paths[0..-2],
+            file_name: results_paths[-1]
+        },
         partial_path_opts: {
             job_id: job_info[:analysis_job_id],
             uuid: audio_recording_info[:audio_recording].uuid,
@@ -176,8 +176,10 @@ class AnalysisController < ApplicationController
       # skip dot paths: 'current path' and 'parent path'
       next if item == '.' or item == '..'
 
-      children.push(dir_info(item, results_path)) if File.directory?(item)
-      children.push(file_info(item, results_path)) if File.file?(item) && !File.directory?(item)
+      full_path = File.join(path, item)
+
+      children.push(dir_info(full_path, results_path)) if File.directory?(full_path)
+      children.push(file_info(full_path, results_path)) if File.file?(full_path) && !File.directory?(full_path)
     end
 
     children
@@ -198,15 +200,16 @@ class AnalysisController < ApplicationController
         name: File.basename(path),
         size: File.size(path),
         type: 'file',
-        mime: Mime::Type.lookup_by_extension(File.extname(path))
+        mime: Mime::Type.lookup_by_extension(File.extname(path)[1..-1]).to_s
     }
   end
 
   def normalise_path(path, results_path)
-    if path.end_with?(results_path)
-      results_path
-    else
+    last_index_of = path.rindex("#{File::SEPARATOR}#{results_path}")
+    if last_index_of.nil?
       fail CustomErrors::UnprocessableEntityError, 'There was a problem processing the request.'
+    else
+      path[(last_index_of + 1)..-1]
     end
   end
 

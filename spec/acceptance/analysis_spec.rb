@@ -119,7 +119,7 @@ resource 'Analysis' do
           {
               expected_response_has_content: true,
               expected_json_path: 'meta/status',
-              response_body_content: '{"meta":{"status":200,"message":"OK"},"data":{"path":"Test1/Test2","name":"Test2",type":"directory","children":[]}}'
+              response_body_content: '{"meta":{"status":200,"message":"OK"},"data":{"path":"Test1/Test2","name":"Test2","type":"directory","children":[]}}'
           })
 
     end
@@ -269,6 +269,34 @@ resource 'Analysis' do
               expected_response_has_content: false
           })
     end
+  end
+
+  context 'with lots of directories and files' do
+    let!(:top_dir){
+      create_file(File.join('TopDir', 'one', 'two', 'three', 'four', 'five.txt'), '"five", "text"')
+      create_file(File.join('TopDir', 'one', 'two', 'three', 'four', 'five', 'six.txt'), '"six", "text"')
+      create_dir(File.join('TopDir', 'one1'))
+      create_dir(File.join('TopDir', 'one2'))
+      create_dir(File.join('TopDir', 'one3'))
+      create_dir(File.join('TopDir', 'one4'))
+    }
+
+
+    get test_url do
+      standard_analysis_parameters
+      let(:authentication_token) { admin_token }
+      let(:results_path) { 'TopDir' }
+
+      standard_request_options(
+          :get,
+          'ANALYSIS (as admin, requesting dir with lots of directories and files)',
+          :ok,
+          {
+              response_body_content: '{"meta":{"status":200,"message":"OK"},"data":{"path":"TopDir","name":"TopDir","type":"directory","children":[{"path":"TopDir/one","name":"one","type":"directory","children":[{"path":"TopDir/one/two","name":"two","type":"directory","children":[{"path":"TopDir/one/two/three","name":"three","type":"directory","children":[{"path":"TopDir/one/two/three/four","name":"four","type":"directory","children":[{"path":"TopDir/one/two/three/four/five.txt","name":"five.txt","size":14,"type":"file","mime":"text/plain"},{"path":"TopDir/one/two/three/four/five","name":"five","type":"directory","children":[{"path":"TopDir/one/two/three/four/five/six.txt","name":"six.txt","size":13,"type":"file","mime":"text/plain"}]}]}]}]}]},{"path":"TopDir/one3","name":"one3","type":"directory","children":[]},{"path":"TopDir/one1","name":"one1","type":"directory","children":[]},{"path":"TopDir/one2","name":"one2","type":"directory","children":[]},{"path":"TopDir/one4","name":"one4","type":"directory","children":[]}]}}'
+
+          })
+    end
+
   end
 
 end
