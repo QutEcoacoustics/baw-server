@@ -11,6 +11,26 @@ def standard_analysis_parameters
   let(:raw_post) { params.to_json }
 end
 
+def create_full_path(item)
+  uuid = audio_recording.uuid
+  top_path = File.join(analysis_cache.possible_dirs[0], 'system', uuid[0, 2].downcase, uuid.downcase)
+  File.join(top_path, item)
+end
+
+def create_file(
+    file = File.join('Test1', 'Test2', 'test-CASE.csv'),
+    content = '"header1", "header2", "header3"\n"content1","content2", "content2"')
+
+  full_path = create_full_path(file)
+  FileUtils.mkpath File.dirname(full_path)
+  File.open(full_path, 'w') { |f| f.write(content) }
+end
+
+def create_dir(dir = File.join('Test1', 'Test2'))
+  full_path = create_full_path(dir)
+  FileUtils.mkpath full_path
+end
+
 test_url = '/analysis_jobs/:analysis_job_id/audio_recordings/:audio_recording_id/:results_path'
 
 resource 'Analysis' do
@@ -23,8 +43,6 @@ resource 'Analysis' do
     @write_permission = FactoryGirl.create(:write_permission) # has to be 'write' so that the uploader has access
     @read_permission = FactoryGirl.create(:read_permission, project: @write_permission.project)
     @admin_user = FactoryGirl.create(:admin)
-
-
   end
 
   after(:each) do
@@ -52,167 +70,205 @@ resource 'Analysis' do
   let(:unconfirmed_token) { "Token token=\"#{FactoryGirl.create(:unconfirmed_user).authentication_token}\"" }
   let(:invalid_token) { "Token token=\"blah blah blah\"" }
 
-=begin
-  Analysis endpoint definition:
-  - case-insensitive
-  - for multiple storage locations, will assume identical and pick a file/dir at random.
-  - assumes that there are not file/dir names that differ only by case.
-    If there are, will pick a case-insensitive matching file/dir at random.
-  - uses permissions for audio recordings
-  - responses to get and head requests differ only in inclusion of body content
-=end
-
-  context 'requesting a file' do
-    context 'in the correct case' do
-      context 'that exists' do
-        get test_url do
-          standard_analysis_parameters
-          let(:authentication_token) { admin_token }
-
-          let(:results_path) { 'Test1/Test2/test-CASE.csv' }
-          #let(:test_paths) { false }
-
-          standard_request_options(
-              :get,
-              'ANALYSIS (as admin)',
-              :not_found,
-              {
-                  expected_json_path: 'meta/error/details',
-                  response_body_content: ["Could not find results for job 'system' for recording ", " in 'Test/test-CASE.csv'."]
-              })
-        end
-
-        head '/analysis_jobs/:analysis_job_id/audio_recordings/:audio_recording_id/:results_path' do
-          standard_analysis_parameters
-          let(:authentication_token) { admin_token }
-          let(:analysis_job_id) { 'system' }
-          let(:results_path) { 'Test1/Test2/test-CASE.csv' }
-          #let(:test_paths) { false }
-
-          standard_request_options(
-              :get,
-              'ANALYSIS (as admin, requesting file that does not exist)',
-              :not_found,
-              {
-                  expected_json_path: 'meta/error/details',
-                  response_body_content: ["Could not find results for job 'system' for recording ", " in 'Test/test-CASE.csv'."]
-              })
-        end
-
-      end
+  context 'with empty directory' do
+    before(:each) do
+      create_dir
     end
+
+    get test_url do
+
+      standard_analysis_parameters
+      let(:authentication_token) { admin_token }
+      let(:results_path) { 'Test1/TEST2' }
+
+      standard_request_options(
+          :get,
+          'ANALYSIS (as admin, requesting empty directory incorrect case that does exist)',
+          :not_found,
+          {
+              expected_json_path: 'meta/error/details',
+              response_body_content: ["Could not find results for job 'system' for recording ", " at 'Test1/TEST2'."]
+          })
+    end
+
+    head test_url do
+
+      standard_analysis_parameters
+      let(:authentication_token) { admin_token }
+      let(:results_path) { 'Test1/TEST2' }
+
+      standard_request_options(
+          :head,
+          'ANALYSIS (as admin, requesting empty directory incorrect case that does exist)',
+          :not_found,
+          {
+              expected_response_has_content: false
+          })
+    end
+
+    get test_url do
+
+      standard_analysis_parameters
+      let(:authentication_token) { admin_token }
+      let(:results_path) { 'Test1/Test2' }
+
+      standard_request_options(
+          :get,
+          'ANALYSIS (as admin, requesting empty directory that does exist)',
+          :ok,
+          {
+              expected_response_has_content: true,
+              expected_json_path: 'meta/status',
+              response_body_content: '{"meta":{"status":200,"message":"OK"},"data":{"path":"Test1/Test2","name":"Test2",type":"directory","children":[]}}'
+          })
+
+    end
+
+    head test_url do
+
+      standard_analysis_parameters
+      let(:authentication_token) { admin_token }
+      let(:results_path) { 'Test1/Test2' }
+
+      standard_request_options(
+          :head,
+          'ANALYSIS (as admin, requesting empty directory that does exist)',
+          :ok,
+          {
+              expected_response_has_content: false
+          })
+
+    end
+
   end
 
+  context 'with file' do
+    before(:each) do
+      create_file
+    end
 
-  get '/analysis_jobs/:analysis_job_id/audio_recordings/:audio_recording_id/:results_path' do
-    standard_analysis_parameters
-    let(:authentication_token) { admin_token }
-    let(:analysis_job_id) { 'system' }
-    let(:results_path) { 'Test1/Test2/test-case.csv' }
-    let(:test_paths) { true }
+    get test_url do
+      standard_analysis_parameters
+      let(:authentication_token) { admin_token }
+      let(:results_path) { 'Test1/Test2/test-case.csv' }
 
-    standard_request_options(
-        :get,
-        'ANALYSIS (as admin, requesting file in incorrect case that does exist)',
-        :not_found,
-        {
-            expected_json_path: 'meta/error/details',
-            response_body_content: ["Could not find results for job 'system' for recording ", " in 'Test/test-CASE.csv'."]
-        })
+      standard_request_options(
+          :get,
+          'ANALYSIS (as admin, requesting file in incorrect case that does exist)',
+          :not_found,
+          {
+              expected_json_path: 'meta/error/details',
+              response_body_content: ["Could not find results for job 'system' for recording ", " at 'Test1/Test2/test-case.csv'."]
+          })
+    end
+
+    head test_url do
+      standard_analysis_parameters
+      let(:authentication_token) { admin_token }
+      let(:results_path) { 'Test1/Test2/test-case.csv' }
+
+      standard_request_options(
+          :head,
+          'ANALYSIS (as admin, requesting file in incorrect case that does exist)',
+          :not_found,
+          {
+              expected_response_has_content: false
+          })
+    end
+
+    get test_url do
+
+      standard_analysis_parameters
+      let(:authentication_token) { admin_token }
+      let(:results_path) { 'Test1/Test2/test-CASE.csv' }
+
+      standard_request_options(
+          :get,
+          'ANALYSIS (as admin, requesting file in correct case that does exist)',
+          :ok,
+          {
+              expected_response_content_type: 'text/csv',
+              expected_response_has_content: true,
+              response_body_content: '"header1", "header2", "header3"\n"content1","content2", "content2"'
+          })
+    end
+
+    head test_url do
+
+      standard_analysis_parameters
+      let(:authentication_token) { admin_token }
+      let(:results_path) { 'Test1/Test2/test-CASE.csv' }
+
+      standard_request_options(
+          :head,
+          'ANALYSIS (as admin, requesting file in correct case that does exist)',
+          :ok,
+          {
+              expected_response_has_content: false,
+              expected_response_content_type: 'text/csv'
+          })
+    end
+
   end
 
-  get '/analysis_jobs/:analysis_job_id/audio_recordings/:audio_recording_id/:results_path' do
+  context 'with no file system changes' do
+    get test_url do
+      standard_analysis_parameters
+      let(:authentication_token) { admin_token }
+      let(:results_path) { 'Test1/Test2/test-CASE.csv' }
 
-    standard_analysis_parameters
-    let(:authentication_token) { admin_token }
-    let(:analysis_job_id) { 'system' }
-    let(:results_path) { 'Test1/Test2/test-CASE.csv' }
-    let(:test_paths) { true }
+      standard_request_options(
+          :get,
+          'ANALYSIS (as admin, requesting non-existent file)',
+          :not_found,
+          {
+              expected_json_path: 'meta/error/details',
+              response_body_content: ["Could not find results for job 'system' for recording ", " at 'Test1/Test2/test-CASE.csv'."]
+          })
+    end
 
-    standard_request_options(
-        :get,
-        'ANALYSIS (as admin, requesting GET file in correct case that does exist)',
-        :ok,
-        {
-            expected_response_content_type: 'text/csv',
-            expected_response_has_content: true,
-            response_body_content: '"header1", "header2", "header3"\n"content1","content2", "content2"'
-        })
-  end
+    head test_url do
+      standard_analysis_parameters
+      let(:authentication_token) { admin_token }
+      let(:results_path) { 'Test1/Test2/test-CASE.csv' }
 
-  head '/analysis_jobs/:analysis_job_id/audio_recordings/:audio_recording_id/:results_path' do
+      standard_request_options(
+          :head,
+          'ANALYSIS (as admin, requesting non-existent file)',
+          :not_found,
+          {
+              expected_response_has_content: false
+          })
+    end
 
-    standard_analysis_parameters
-    let(:authentication_token) { admin_token }
-    let(:analysis_job_id) { 'system' }
-    let(:results_path) { 'Test1/Test2/test-CASE.csv' }
-    let(:test_paths) { true }
+    get test_url do
+      standard_analysis_parameters
+      let(:authentication_token) { admin_token }
+      let(:results_path) { 'Test1/Test2' }
 
-    standard_request_options(
-        :head,
-        'ANALYSIS (as admin, requesting HEAD file that does exist)',
-        :ok,
-        {
-            expected_response_content_type: 'text/csv',
-            expected_response_has_content: false
-        })
-  end
+      standard_request_options(
+          :get,
+          'ANALYSIS (as admin, requesting non-existent dir)',
+          :not_found,
+          {
+              expected_json_path: 'meta/error/details',
+              response_body_content: ["Could not find results for job 'system' for recording ", " at 'Test1/Test2'."]
+          })
+    end
 
-  get '/analysis_jobs/:analysis_job_id/audio_recordings/:audio_recording_id/:results_path' do
+    head test_url do
+      standard_analysis_parameters
+      let(:authentication_token) { admin_token }
+      let(:results_path) { 'Test1/Test2' }
 
-    standard_analysis_parameters
-    let(:authentication_token) { admin_token }
-    let(:analysis_job_id) { 'system' }
-    let(:results_path) { 'Test/Test2' }
-    let(:test_paths) { true }
-
-    standard_request_options(
-        :get,
-        'ANALYSIS (as admin, requesting GET directory that does exist)',
-        :ok,
-        {
-            expected_response_content_type: 'text/csv',
-            expected_response_has_content: true,
-            response_body_content: '"header1", "header2", "header3"\n"content1","content2", "content2"'
-        })
-  end
-
-  head '/analysis_jobs/:analysis_job_id/audio_recordings/:audio_recording_id/:results_path' do
-
-    standard_analysis_parameters
-    let(:authentication_token) { admin_token }
-    let(:analysis_job_id) { 'system' }
-    let(:results_path) { 'Test1/Test2' }
-    let(:test_paths) { true }
-
-    standard_request_options(
-        :head,
-        'ANALYSIS (as admin, requesting HEAD directory that does exist)',
-        :ok,
-        {
-            expected_response_content_type: 'text/csv',
-            expected_response_has_content: false
-        })
-  end
-
-  get '/analysis_jobs/:analysis_job_id/audio_recordings/:audio_recording_id/:results_path' do
-
-    standard_analysis_parameters
-    let(:authentication_token) { admin_token }
-    let(:analysis_job_id) { 'system' }
-    let(:results_path) { 'Test1/Test2' }
-    let(:test_paths) { [File.join('Test1', 'Test2')] }
-
-    standard_request_options(
-        :get,
-        'ANALYSIS (as admin, requesting GET directory that does exist)',
-        :ok,
-        {
-            expected_response_content_type: 'text/csv',
-            expected_response_has_content: true,
-            response_body_content: '"header1", "header2", "header3"\n"content1","content2", "content2"'
-        })
-
+      standard_request_options(
+          :head,
+          'ANALYSIS (as admin, requesting non-existent dir)',
+          :not_found,
+          {
+              expected_response_has_content: false
+          })
+    end
   end
 
 end

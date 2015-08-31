@@ -63,25 +63,6 @@ def standard_request_options(http_method, description, expected_status, opts = {
 
   example "#{http_method} #{description} - #{expected_status}", document: opts[:document] do
 
-    if defined?(test_paths) && test_paths
-      if test_paths == true
-        test_paths = [File.join('Test1', 'Test2', 'test-CASE.csv')]
-      end
-      uuid = audio_recording.uuid
-      top_path = File.join(analysis_cache.possible_dirs[0], 'system', uuid[0, 2].downcase, uuid.downcase)
-
-      test_paths.each do |path_segment|
-        full_path = File.join(top_path, path_segment)
-        FileUtils.mkpath File.dirname(full_path)
-
-        if File.extname(path_segment).blank? # assume path with extension is a file
-          FileUtils.mkpath full_path
-        else
-          File.open(full_path, 'w') { |f| f.write('"header1", "header2", "header3"\n"content1","content2", "content2"') }
-        end
-      end
-    end
-
     expected_error_class = opts[:expected_error_class]
     expected_error_regexp = opts[:expected_error_regexp]
     problem = (expected_error_class.blank? && !expected_error_regexp.blank?) ||

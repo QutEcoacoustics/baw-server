@@ -1,5 +1,13 @@
 require 'find'
 
+=begin
+  Analysis endpoint definition:
+  - case-sensitive
+  - for multiple storage locations, will assume identical and pick a file/dir at random.
+  - uses permissions for audio recordings
+  - responses to get and head requests differ only in inclusion of body content
+=end
+
 class AnalysisController < ApplicationController
   skip_authorization_check only: [:show]
 
@@ -28,7 +36,7 @@ class AnalysisController < ApplicationController
     paths = BawWorkers::Config.analysis_cache_helper.existing_paths(analysis_storage_params)
 
     # shared error info
-    msg = "Could not find results for job '#{job_id}' for recording '#{audio_recording.id}' in '#{request_params[:results_path]}'."
+    msg = "Could not find results for job '#{job_id}' for recording '#{audio_recording.id}' at '#{request_params[:results_path]}'."
 
     # do initial checking
     if !is_audio_ready && is_head_request
@@ -38,21 +46,29 @@ class AnalysisController < ApplicationController
       fail CustomErrors::ItemNotFoundError, "Audio recording id #{audio_recording.id} is not ready"
     elsif is_audio_ready && paths.size < 1
       # none of the paths are files or directories that exist, so raise error
-      fail CustomErrors::BadRequestError, msg
+      fail CustomErrors::ItemNotFoundError, msg
     elsif is_audio_ready && paths.size > 0
       # files or directories exist
+
       dirs = paths.select { |p| File.directory?(p) }
       files = paths.select { |p| File.file?(p) }
+
+      request_info[:existing] = {
+          dirs: dirs,
+          files: files
+      }
+
+      request_info[:is_head_request] = is_head_request
 
       # if paths contains both ... uh, I have no idea. Just fail.
       # also fail if no paths are files or dirs ... I don't know if that's possible or not.
       fail CustomErrors::ItemNotFoundError, msg if (dirs.size > 0 && files.size > 0) || (dirs.size < 1 && files.size < 1)
 
       # if all files, assume all the same files and return the first one
-      return_file(files, is_head_request) if dirs.size < 1 && files.size > 0
+      return_file(request_info) if dirs.size < 1 && files.size > 0
 
       # if all dirs, assume all the same and return file list for first existing dir
-      return_dir(dirs, is_head_request) if dirs.size > 0 && files.size < 1
+      return_dir(request_info) if dirs.size > 0 && files.size < 1
     else
       fail CustomErrors::BadRequestError, 'There was a problem with the request.'
     end
@@ -118,8 +134,7 @@ class AnalysisController < ApplicationController
     results_paths = Pathname(results_path).each_filename.to_a
 
     {
-        opts:
-            {
+        opts: {
                 job_id: job_info[:analysis_job_id],
                 uuid: audio_recording_info[:audio_recording].uuid,
                 sub_folders: results_paths[0..-2],
@@ -135,7 +150,10 @@ class AnalysisController < ApplicationController
     }
   end
 
-  def return_file(existing_paths, is_head_request)
+  def return_file(request_info)
+    existing_paths = request_info[:existing][:files]
+    is_head_request = request_info[:is_head_request]
+
     # it is possible to match more than one file (e.g. multiple storage dirs)
     # just return the first existing file
     file_path = existing_paths[0]
@@ -151,78 +169,58 @@ class AnalysisController < ApplicationController
     end
   end
 
-  def dir_listing_start(dir_path)
-    listing = {}
+  def dir_list(path, results_path)
+    children = []
 
-    current_dir = dir_path
-    current_listing = {
-        dir: current_dir,
-        sub_dirs: [],
-        files: []
-    }
+    Dir.foreach(path) do |item|
+      # skip dot paths: 'current path' and 'parent path'
+      next if item == '.' or item == '..'
 
-    Find.find(dir_path) do |path|
-      if FileTest.directory?(path)
-        is_dot_dir = File.basename(path)[0] == ?.
-        is_too_deep = path.scan(%r{/}).size > 4
-        if is_dot_dir || is_too_deep
-          # Don't look any further into this directory.
-          Find.prune
-        else
-          current_listing[:sub_dirs].push(
-              {
-                  dir: File.basename(path),
-                  sub_dirs: [],
-                  files: []
-              })
-          next
-        end
-      else
-        current_listing[:files].push(
-            {
-                name: File.basename(path),
-                size: FileTest.size(path)
-            })
-      end
+      children.push(dir_info(item, results_path)) if File.directory?(item)
+      children.push(file_info(item, results_path)) if File.file?(item) && !File.directory?(item)
     end
 
-    listing
+    children
   end
 
-  def add_file_listing(listing, path)
-    path_components = Pathname(path).each_filename.to_a
-
+  def dir_info(path, results_path)
     {
+        path: normalise_path(path, results_path),
         name: File.basename(path),
-        size: FileTest.size(path)
+        type: 'directory',
+        children: dir_list(path, results_path)
     }
   end
 
-  def add_dir_listing(listing, path)
-    path_components = Pathname(path).each_filename.to_a
-
+  def file_info(path, results_path)
     {
-        dir: File.basename(dir),
-        sub_dirs: [],
-        files: []
+        path: normalise_path(path, results_path),
+        name: File.basename(path),
+        size: File.size(path),
+        type: 'file',
+        mime: Mime::Type.lookup_by_extension(File.extname(path))
     }
   end
 
-
-  def dir_listing(dir)
-    {
-        dir: File.basename(dir),
-        sub_dirs: [],
-        files: []
-    }
+  def normalise_path(path, results_path)
+    if path.end_with?(results_path)
+      results_path
+    else
+      fail CustomErrors::UnprocessableEntityError, 'There was a problem processing the request.'
+    end
   end
 
-  def return_dir(existing_paths, is_head_request)
+  def return_dir(request_info)
+    existing_paths = request_info[:existing][:dirs]
+    is_head_request = request_info[:is_head_request]
+
+
     # it is possible to match more than one dir (e.g. multiple storage dirs)
     # just return a file listing for the first existing dir
     dir_path = existing_paths[0]
 
-    dir_listing = dir_listing_start(dir_path)
+    results_path = File.join(*request_info[:opts][:sub_folders], request_info[:opts][:file_name])
+    dir_listing = dir_info(dir_path, results_path)
 
     wrapped = Settings.api_response.build(:ok, dir_listing)
 
