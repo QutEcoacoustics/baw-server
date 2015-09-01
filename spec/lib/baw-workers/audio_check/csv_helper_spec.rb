@@ -16,7 +16,7 @@ describe BawWorkers::AudioCheck::CsvHelper do
     expected_db_entries_without_file = []
 
     # create expected files
-    is_utc_file_name = true
+    is_utc_file_name = 0
     excluded = nil
     BawWorkers::ReadCsv.read_audio_recording_csv(csv_file) do |audio_params|
       opts =
@@ -35,14 +35,19 @@ describe BawWorkers::AudioCheck::CsvHelper do
         next
       end
 
-      # alternate between utc and +10 tz offset file names
-      is_utc_file_name ? path = paths[1] : path = paths[0]
+      if is_utc_file_name < 2
+        path = paths[0]
+        expected_files_without_db_entry.push(File.basename(path).downcase)
+        expected_db_entries_without_file.push(File.basename(paths[1]).downcase)
+      else
+        path = paths[1]
+      end
 
       FileUtils.mkpath(File.dirname(path))
       FileUtils.touch(path)
-      expected_intersection.push(File.basename(path).downcase)
+      expected_intersection.push(File.basename(path).downcase) if is_utc_file_name >= 2
 
-      is_utc_file_name = !is_utc_file_name
+      is_utc_file_name += 1
     end
 
     # create one additional file
@@ -58,13 +63,13 @@ describe BawWorkers::AudioCheck::CsvHelper do
 
     result = BawWorkers::AudioCheck::CsvHelper.compare_csv_db(csv_file)
 
-    expect(result[:intersection].size).to eq(23)
+    expect(result[:intersection].size).to eq(21)
     expect(result[:intersection]).to match_array(expected_intersection)
 
-    expect(result[:files_without_db_entry].size).to eq(1)
+    expect(result[:files_without_db_entry].size).to eq(3)
     expect(result[:files_without_db_entry]).to match_array(expected_files_without_db_entry)
 
-    expect(result[:db_entries_without_file].size).to eq(1)
+    expect(result[:db_entries_without_file].size).to eq(3)
     expect(result[:db_entries_without_file]).to match_array(expected_db_entries_without_file)
   end
 end

@@ -209,7 +209,7 @@ module BawWorkers
       def validate_file_name(opts)
         provided = validate_msg_provided(opts)
         fail ArgumentError, "#{validate_msg_base} file_name. #{provided}" unless opts.include? :file_name
-        fail ArgumentError, "file_name must not be blank. #{provided}" if opts[:file_name].blank?
+        fail ArgumentError, "file_name must not be nil. #{provided}" if opts[:file_name].nil?
       end
 
       def validate_sub_folders(opts)
