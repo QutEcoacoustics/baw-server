@@ -102,13 +102,13 @@ module BawWorkers
       end
 
       def normalise_path(path, top_level_dir = nil)
-        fail ArgumentError, 'Path cannot be empty.' if path.blank?
+        path = '' if path.nil?
 
         # first replace '..', '~', '//', '\\', '/./', '\.\'
         # ensure no double or more slashes
         replace_char = '_'
 
-        safer_path = path.dup
+        safer_path = path.to_s.dup
         safer_path = safer_path.gsub('..', replace_char)
         safer_path = safer_path.gsub('~', replace_char)
         safer_path = safer_path.gsub(/\/+/i, '/')
