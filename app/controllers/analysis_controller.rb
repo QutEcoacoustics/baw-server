@@ -50,7 +50,7 @@ class AnalysisController < ApplicationController
     elsif is_audio_ready && paths.size > 0
       # files or directories exist
 
-      dirs = paths.select { |p| File.directory?(p) }.map{ |d| d.end_with?("#{File::SEPARATOR}.") ? d[0..-2] : d}
+      dirs = paths.select { |p| File.directory?(p) }.map { |d| d.end_with?("#{File::SEPARATOR}.") ? d[0..-2] : d }
       files = paths.select { |p| File.file?(p) }
 
       request_info[:existing] = {
@@ -172,7 +172,7 @@ class AnalysisController < ApplicationController
     end
   end
 
-  def dir_list(path, results_path)
+  def dir_list(path)
     children = []
 
     Dir.foreach(path) do |item|
@@ -181,39 +181,50 @@ class AnalysisController < ApplicationController
 
       full_path = File.join(path, item)
 
-      children.push(dir_info(full_path, results_path)) if File.directory?(full_path)
-      children.push(file_info(full_path, results_path)) if File.file?(full_path) && !File.directory?(full_path)
+      children.push(dir_info(full_path)) if File.directory?(full_path)
+      children.push(file_info(full_path)) if File.file?(full_path) && !File.directory?(full_path)
     end
 
     children
   end
 
-  def dir_info(path, results_path)
+  def dir_info(path)
+    normalised_path = normalise_path(path)
+    normalised_name = normalised_name(normalised_path)
+
     {
-        path: normalise_path(path, results_path),
-        name: File.basename(path),
+        path: normalised_path,
+        name: normalised_name,
         type: 'directory',
-        children: dir_list(path, results_path)
+        children: dir_list(path)
     }
   end
 
-  def file_info(path, results_path)
+  def file_info(path)
+    normalised_path = normalise_path(path)
+    normalised_name = normalised_name(normalised_path)
+
     {
-        path: normalise_path(path, results_path),
-        name: File.basename(path),
+        path: normalised_path,
+        name: normalised_name,
         size: File.size(path),
         type: 'file',
         mime: Mime::Type.lookup_by_extension(File.extname(path)[1..-1]).to_s
     }
   end
 
-  def normalise_path(path, results_path)
-    # TODO need to normalise using base path, not results path
-    last_index_of = path.rindex("#{File::SEPARATOR}#{results_path}")
-    if last_index_of.nil?
-      fail CustomErrors::UnprocessableEntityError, 'There was a problem processing the request.'
+  def normalised_name(path)
+    path == '/' ? '/' : File.basename(path)
+  end
+
+  def normalise_path(path)
+    analysis_base_paths = BawWorkers::Config.analysis_cache_helper.existing_dirs
+    matching_base_path = analysis_base_paths.select { |abp| path.start_with?(abp) }
+    if matching_base_path.size == 1
+      path_without_base = path.gsub(/#{matching_base_path[0].gsub('/','\/')}\/[^\/]+\/[^\/]+\/[^\/]+\/?/, '')
+      path_without_base.blank? ? '/' : path_without_base
     else
-      path[(last_index_of + 1)..-1]
+      fail CustomErrors::UnprocessableEntityError, 'Incorrect analysis base path.'
     end
   end
 
@@ -225,8 +236,7 @@ class AnalysisController < ApplicationController
     # just return a file listing for the first existing dir
     dir_path = existing_paths[0]
 
-    results_path = File.join(*request_info[:opts][:sub_folders], request_info[:opts][:file_name])
-    dir_listing = dir_info(dir_path, results_path)
+    dir_listing = dir_info(dir_path)
 
     wrapped = Settings.api_response.build(:ok, dir_listing)
 

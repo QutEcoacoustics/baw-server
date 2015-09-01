@@ -59,12 +59,12 @@ class AudioRecording < ActiveRecord::Base
   validates :data_length_bytes, presence: true, numericality: {only_integer: true, greater_than: 0}
   # file hash validations
   # on create, ensure present, case insensitive unique, starts with 'SHA256::', and exactly 72 chars
-  validates :file_hash, presence: true, uniqueness: {case_sensitive: false}, length: { is: 72 },
-            format: { with: /\ASHA256::.{64}\z/, message: 'must start with "SHA256::" with 64 char hash'},
+  validates :file_hash, presence: true, uniqueness: {case_sensitive: false}, length: {is: 72},
+            format: {with: /\ASHA256::.{64}\z/, message: 'must start with "SHA256::" with 64 char hash'},
             on: :create
   # on update would usually be the same, but for the audio check this needs to ignore
-  validates :file_hash, presence: true, uniqueness: {case_sensitive: false}, length: { is: 72 },
-            format: { with: /\ASHA256::.{64}\z/, message: 'must start with "SHA256::" with 64 char hash'},
+  validates :file_hash, presence: true, uniqueness: {case_sensitive: false}, length: {is: 72},
+            format: {with: /\ASHA256::.{64}\z/, message: 'must start with "SHA256::" with 64 char hash'},
             on: :update, unless: :missing_hash_value?
 
   before_validation :set_uuid, on: :create
@@ -143,73 +143,6 @@ class AudioRecording < ActiveRecord::Base
     else
       File.extname(self.original_file_name).delete('.')
     end
-  end
-
-
-
-  def check_file_hash
-    # ensure this audio recording needs to be checked
-    return if self.status != 'to_check'
-
-    # type of hash is at start of hash_to_compare, split using two colons
-    hash_type, compare_hash = self.file_hash.split('::')
-
-    # TODO: use BawWorkers to get hash - only allow SHA256.
-
-    case hash_type
-      when 'MD5'
-        incr_hash = ::Digest::MD5.new
-      else
-        incr_hash = Digest::SHA256.new
-    end
-
-    raise "Audio recording file could not be found: #{self.uuid}" if self.original_file_paths.length < 1
-
-    # assume that all files for a recording are identical. pick the first one
-    File.open(self.original_file_paths.first!) do |file|
-      buffer = ''
-
-      # Read the file 512 bytes at a time
-      until file.eof
-        file.read(512, buffer)
-        incr_hash.update(buffer)
-      end
-    end
-
-    # if hashes do not match, mark audio recording as corrupt
-    if incr_hash.hexdigest.upcase == compare_hash.upcase
-      self.status = 'ready'
-      self.save!
-      logger.info "Audio recording #{self.uuid} file hash was checked and matched. It is now in 'ready' state."
-    else
-      self.status = 'corrupt'
-      self.save!
-      raise "Audio recording file hash did not match stored hash: #{self.uuid} File hash: #{incr_hash.hexdigest.upcase} stored hash: #{compare_hash.upcase}."
-    end
-  end
-
-  # returns true if this audio_recording can be accessed, otherwise false
-  def check_status
-    can_be_accessed = false
-
-    case self.status.to_s
-      when 'new'
-        logger.info "Audio recording #{self.uuid} is in state 'new' and is not yet ready to be accessed."
-      when 'to_check'
-        logger.info "Audio recording #{self.uuid} is in state 'to_check' and will be checked by comparing the file hash and stored hash."
-        self.check_file_hash
-      when 'corrupt'
-        logger.warn "Audio recording #{self.uuid} is in state 'corrupt' and cannot be accessed."
-      when 'ignore'
-        logger.info "Audio recording #{self.uuid} is in state 'ignore' and cannot be accessed."
-      when 'ready'
-        logger.info "Audio recording #{self.uuid} is in state 'ready' and can be accessed."
-        can_be_accessed = true
-      else
-        logger.info "Audio recording #{self.uuid} is in state '#{self.status.to_s}', which is unknown."
-    end
-
-    can_be_accessed
   end
 
   # check for and correct any overlaps.
@@ -320,31 +253,6 @@ class AudioRecording < ActiveRecord::Base
   private
   def set_uuid
     self.uuid = UUIDTools::UUID.random_create.to_s
-  end
-
-  def check_duplicate_file_hashes
-
-    if self.file_hash == 'SHA256::'
-      # short-circuit the invalid hash 'SHA256::'
-      # TODO: ignore file_hash of 'SHA256::' for now
-      #errors.add(:file_hash, 'is not valid and needs to be updated.')
-    else
-      # check that no other audio recording has the same file_hash
-      query = AudioRecording.where(file_hash: self.file_hash)
-
-      unless self.id.blank?
-        # a persisted model will have an id (.persisted?)
-        # a new record will not have an id (.new_record?)
-        query = query.where(AudioRecording.arel_table[:id].not_eq(self.id))
-      end
-
-      count = query.count
-      if count > 0
-        ids = query.pluck(:id)
-        errors.add(:file_hash, "has already been taken by id #{ids}.")
-      end
-
-    end
   end
 
   def missing_hash_value?

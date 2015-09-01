@@ -292,6 +292,7 @@ resource 'Analysis' do
           {
               response_body_content: [
                   '{"meta":{"status":200,"message":"OK"},"data":',
+                  '{"path":"/","name":"/","type":"directory","children":[',
                   '{"path":"TopDir","name":"TopDir","type":"directory","children":[',
                   '{"path":"TopDir/one","name":"one","type":"directory","children":[',
                   '{"path":"TopDir/one/two","name":"two","type":"directory","children":[',
