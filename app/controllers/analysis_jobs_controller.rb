@@ -26,6 +26,9 @@ class AnalysisJobsController < ApplicationController
 
   # POST /analysis_job.json
   def create
+
+    # todo set required attributes to 0.
+
     if @analysis_job.save
 
       # TODO add logging and timing
@@ -34,6 +37,9 @@ class AnalysisJobsController < ApplicationController
       # enqueue the job items specified by the analysis job
       # so that the async processing can begin
       enqueue_results = @analysis_job.enqueue_items(current_user)
+
+      #TODO update analysis_job attributes
+
 
       respond_create_success
     else

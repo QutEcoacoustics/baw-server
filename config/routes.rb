@@ -223,6 +223,8 @@ Rails.application.routes.draw do
   resources  :saved_searches, except: [:edit, :update], defaults: {format: 'json'}
 
   # route for custom and system results
+  match 'analysis_jobs/:analysis_job_id/audio_recordings/:audio_recording_id/' => 'analysis#show',
+        defaults: {format: 'json'}, as: :analysis_results_base, via: [:get, :head], format: false
   match 'analysis_jobs/:analysis_job_id/audio_recordings/:audio_recording_id/*results_path' => 'analysis#show',
         defaults: {format: 'json'}, as: :analysis_results, via: [:get, :head], format: false
 

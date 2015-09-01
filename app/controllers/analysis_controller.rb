@@ -50,7 +50,7 @@ class AnalysisController < ApplicationController
     elsif is_audio_ready && paths.size > 0
       # files or directories exist
 
-      dirs = paths.select { |p| File.directory?(p) }
+      dirs = paths.select { |p| File.directory?(p) }.map{ |d| d.end_with?("#{File::SEPARATOR}.") ? d[0..-2] : d}
       files = paths.select { |p| File.file?(p) }
 
       request_info[:existing] = {
@@ -130,15 +130,18 @@ class AnalysisController < ApplicationController
     audio_recording_info = get_audio_recording_opts(request_params)
 
     # get sub folders
+    request_params[:results_path] = '' unless request_params.include?(:results_path)
     results_path = request_params[:results_path]
     results_paths = Pathname(results_path).each_filename.to_a
+    sub_folders = results_paths[0..-2]
+    file_name = results_paths[-1]
 
     {
         opts: {
             job_id: job_info[:analysis_job_id],
             uuid: audio_recording_info[:audio_recording].uuid,
-            sub_folders: results_paths[0..-2],
-            file_name: results_paths[-1]
+            sub_folders: sub_folders,
+            file_name: file_name.blank? ? '' : file_name
         },
         partial_path_opts: {
             job_id: job_info[:analysis_job_id],
@@ -205,6 +208,7 @@ class AnalysisController < ApplicationController
   end
 
   def normalise_path(path, results_path)
+    # TODO need to normalise using base path, not results path
     last_index_of = path.rindex("#{File::SEPARATOR}#{results_path}")
     if last_index_of.nil?
       fail CustomErrors::UnprocessableEntityError, 'There was a problem processing the request.'
@@ -216,7 +220,6 @@ class AnalysisController < ApplicationController
   def return_dir(request_info)
     existing_paths = request_info[:existing][:dirs]
     is_head_request = request_info[:is_head_request]
-
 
     # it is possible to match more than one dir (e.g. multiple storage dirs)
     # just return a file listing for the first existing dir
