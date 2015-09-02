@@ -13,7 +13,9 @@ FactoryGirl.define do
       end
       after(:create) do |saved_search, evaluator|
         raise 'Creator was blank' if  evaluator.creator.blank?
-        create_list(:analysis_job, evaluator.analysis_job_count, saved_search: saved_search, creator: evaluator.creator)
+        evaluator.analysis_job_count.times do
+          saved_search.analysis_jobs << FactoryGirl.create(:analysis_job, creator: evaluator.creator, saved_search: saved_search)
+        end
       end
     end
 

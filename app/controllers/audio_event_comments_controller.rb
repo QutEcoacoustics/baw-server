@@ -9,10 +9,10 @@ class AudioEventCommentsController < ApplicationController
 
   load_and_authorize_resource :audio_event_comment, through: :audio_event, through_association: :comments, except: [:filter]
 
-# GET /audio_event_comments
-# GET /audio_event_comments.json
+  # GET /audio_events/:audio_event_id/comments
   def index
-    #@audio_event_comments = AudioEventComment.accessible_by
+    do_authorize_class
+
     @audio_event_comments, opts = Settings.api_response.response_advanced(
         api_filter_params,
         Access::Query.audio_event_comments(@audio_event, current_user),
@@ -22,22 +22,19 @@ class AudioEventCommentsController < ApplicationController
     respond_index(opts)
   end
 
-# GET /audio_event_comments/1
-# GET /audio_event_comments/1.json
+  # GET /audio_events/:audio_event_id/comments/:id
   def show
     respond_show
   end
 
-# GET /audio_event_comments/new
-# GET /audio_event_comments/new.json
+  # GET /audio_events/:audio_event_id/comments/new
   def new
     do_authorize!
 
     respond_show
   end
 
-# POST /audio_event_comments
-# POST /audio_event_comments.json
+  # POST /audio_events/:audio_event_id/comments
   def create
     attributes_and_authorize(audio_event_comment_params)
 
@@ -49,8 +46,7 @@ class AudioEventCommentsController < ApplicationController
 
   end
 
-# PUT /audio_event_comments/1
-# PUT /audio_event_comments/1.json
+  # PUT|PATCH /audio_events/:audio_event_id/comments/:id
   def update
     # allow any logged in user to flag an audio comment
     # only the user that created the audio comment (or admin) can update any other attribute
@@ -58,7 +54,7 @@ class AudioEventCommentsController < ApplicationController
     is_admin = Access::Check.is_admin?(current_user)
     is_changing_only_flag =
         (audio_event_comment_update_params.include?(:audio_event_comment) &&
-        ([:flag] - audio_event_comment_update_params[:audio_event_comment].symbolize_keys.keys).empty?)
+            ([:flag] - audio_event_comment_update_params[:audio_event_comment].symbolize_keys.keys).empty?)
 
     if is_creator || is_admin || is_changing_only_flag
       if @audio_event_comment.update_attributes(audio_event_comment_params)
@@ -73,14 +69,14 @@ class AudioEventCommentsController < ApplicationController
 
   end
 
-# DELETE /audio_event_comments/1
-# DELETE /audio_event_comments/1.json
+  # DELETE /audio_events/:audio_event_id/comments/:id
   def destroy
     @audio_event_comment.destroy
     add_archived_at_header(@audio_event_comment)
     respond_destroy
   end
 
+  # GET|POST /audio_event_comments/filter
   def filter
     authorize! :filter, AudioEventComment
     filter_response, opts = Settings.api_response.response_advanced(

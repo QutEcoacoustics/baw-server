@@ -1,10 +1,10 @@
 class AnalysisJobsController < ApplicationController
   include Api::ControllerHelper
 
-  load_and_authorize_resource :analysis_job, except: [:filter]
-
-  # GET /analysis_job.json
+  # GET /analysis_jobs
   def index
+    do_authorize_class
+
     @analysis_jobs, opts = Settings.api_response.response_advanced(
         api_filter_params,
         get_analysis_jobs,
@@ -14,32 +14,37 @@ class AnalysisJobsController < ApplicationController
     respond_index(opts)
   end
 
-  # GET /analysis_job/1.json
+  # GET /analysis_jobs/1
   def show
+    do_load_resource
+    do_authorize_instance
+
     respond_show
   end
 
-  # GET /analysis_job/new.json
+  # GET /analysis_jobs/new
   def new
+    do_new_resource
+    do_set_attributes
+    do_authorize_instance
+
     respond_show
   end
 
-  # POST /analysis_job.json
+  # POST /analysis_jobs
   def create
+    do_new_resource
+    do_set_attributes(analysis_job_create_params)
+    do_authorize_instance
 
-    # todo set required attributes to 0.
+    # ensure analysis_job is valid by initialising status attributes
+    @analysis_job.update_status_attributes
 
     if @analysis_job.save
 
-      # TODO add logging and timing
-      # TODO This may need to be an async operation itself depending on how fast it runs
-      # once analysis job is successfully saved,
-      # enqueue the job items specified by the analysis job
-      # so that the async processing can begin
-      enqueue_results = @analysis_job.enqueue_items(current_user)
-
-      #TODO update analysis_job attributes
-
+      # now create and enqueue job items (which updates status attributes again)
+      # needs to be called after save as it makes use of the analysis_job id.
+      @analysis_job.enqueue_items(current_user)
 
       respond_create_success
     else
@@ -47,8 +52,11 @@ class AnalysisJobsController < ApplicationController
     end
   end
 
-  # PUT /analysis_job/1.json
+  # PUT|PATCH /analysis_jobs/1
   def update
+    do_load_resource
+    do_authorize_instance
+
     if @analysis_job.update_attributes(analysis_job_update_params)
       respond_show
     else
@@ -56,17 +64,20 @@ class AnalysisJobsController < ApplicationController
     end
   end
 
-  # DELETE /analysis_job/1.json
+  # DELETE /analysis_jobs/1
   def destroy
+    do_load_resource
+    do_authorize_instance
+
     @analysis_job.destroy
     add_archived_at_header(@analysis_job)
     respond_destroy
   end
 
-  # POST /analysis_jobs/filter.json
-  # GET /analysis_jobs/filter.json
+  # GET|POST /analysis_jobs/filter
   def filter
-    authorize! :filter, AnalysisJob
+    do_authorize_class
+
     filter_response, opts = Settings.api_response.response_advanced(
         api_filter_params,
         get_analysis_jobs,
@@ -82,7 +93,7 @@ class AnalysisJobsController < ApplicationController
     # When Analysis jobs are created, they must have
     # a script, saved search, name, and custom settings.
     # May have a description.
-    params.require(:job).permit(
+    params.require(:analysis_job).permit(
         :script_id,
         :saved_search_id,
         :name,
@@ -93,7 +104,7 @@ class AnalysisJobsController < ApplicationController
   def analysis_job_update_params
     # Only name and description can be updated via API.
     # Other properties are updated by the processing system.
-    params.require(:job).permit(:name, :description)
+    params.require(:analysis_job).permit(:name, :description)
   end
 
   def get_analysis_jobs

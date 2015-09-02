@@ -10,7 +10,7 @@ class AnalysisJob < ActiveRecord::Base
 
   belongs_to :script, inverse_of: :analysis_jobs
   belongs_to :saved_search, inverse_of: :analysis_jobs
-  has_many :projects, through: :saved_searches
+  has_many :projects, through: :saved_search
 
   # add deleted_at and deleter_id
   acts_as_paranoid
@@ -105,6 +105,9 @@ class AnalysisJob < ActiveRecord::Base
   def saved_search_items_extract(user)
     user = Access::Core.validate_user(user)
 
+    # TODO add logging and timing
+    # TODO This may need to be an async operation itself depending on how fast it runs
+
     # execute associated saved_search to get audio_recordings
     audio_recordings_query = self.saved_search.audio_recordings_extract(user)
 
@@ -139,6 +142,10 @@ class AnalysisJob < ActiveRecord::Base
   # @param [User] user
   # @return [Array<Hash>] payloads
   def enqueue_items(user)
+
+    # TODO add logging and timing
+    # TODO This may need to be an async operation itself depending on how fast it runs
+
     payloads = saved_search_items_extract(user)
 
     results = []
@@ -158,7 +165,61 @@ class AnalysisJob < ActiveRecord::Base
       results.push({payload: payload, result: result, error: error})
     end
 
+    # update status attributes after creating and enqueuing job items
+    #update_status_attributes
+    # overall_count
+    # overall_duration_seconds
+    #started_at
+
     results
+  end
+
+  # Gather current status for this analysis job, and update attributes
+  # Will set all required values. Uses 0 if required values not given.
+  def update_status_attributes(
+      status = nil,
+      queued_count = nil, working_count = nil,
+      successful_count = nil, failed_count = nil)
+
+    # set required attributes to to valid, but non-meaningful values if they are not set
+    self.overall_duration_seconds = 1 if self.overall_duration_seconds.blank?
+    self.started_at = Time.zone.now if self.started_at.blank?
+
+    # status
+    current_status = self.overall_status.blank? ? 'new' : self.overall_status.to_s
+    new_status = status.blank? ? current_status : status.to_s
+
+    self.overall_status = new_status
+    self.overall_status_modified_at = Time.zone.now if current_status != new_status || self.overall_status_modified_at.blank?
+
+    # progress
+    current_progress = self.overall_progress
+
+    current_queued_count = current_progress.blank? ? 0 : current_progress['queued'].to_i
+    current_working_count = current_progress.blank? ? 0 : current_progress['working'].to_i
+    current_successful_count = current_progress.blank? ? 0 : current_progress['successful'].to_i
+    current_failed_count = current_progress.blank? ? 0 : current_progress['failed'].to_i
+
+    new_queued_count = queued_count.blank? ? current_queued_count : queued_count.to_i
+    new_working_count = working_count.blank? ? current_working_count : working_count.to_i
+    new_successful_count = successful_count.blank? ? current_successful_count : successful_count.to_i
+    new_failed_count = failed_count.blank? ? current_failed_count : failed_count.to_i
+
+    calculated_total = new_queued_count + new_working_count + new_successful_count + new_failed_count
+
+    new_progress = {
+        queued: new_queued_count,
+        working: new_working_count,
+        successful: new_successful_count,
+        failed: new_failed_count,
+        total: calculated_total,
+    }
+
+    self.overall_count = calculated_total < 1 ? 1 : calculated_total
+    self.overall_progress = new_progress
+    self.overall_progress_modified_at = Time.zone.now if current_progress != new_progress || self.overall_progress_modified_at.blank?
+
+    self.save
   end
 
 end

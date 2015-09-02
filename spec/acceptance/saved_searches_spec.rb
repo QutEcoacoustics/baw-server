@@ -15,13 +15,13 @@ resource 'SavedSearches' do
 
   before(:each) do
     @admin_user = FactoryGirl.create(:admin)
-    @writer_user = FactoryGirl.create(:user)
-    @reader_user = FactoryGirl.create(:user)
-    @other_user = FactoryGirl.create(:user)
+    @writer_user = FactoryGirl.create(:user, user_name: 'writer')
+    @reader_user = FactoryGirl.create(:user, user_name: 'reader')
+    @other_user = FactoryGirl.create(:user, user_name: 'other')
     @unconfirmed_user = FactoryGirl.create(:unconfirmed_user)
 
-    @write_permission = FactoryGirl.create(:write_permission, creator: @admin_user, user: @writer_user)
-    @read_permission = FactoryGirl.create(:read_permission, creator: @admin_user, user: @reader_user, project: @write_permission.project)
+    @write_permission = FactoryGirl.create(:write_permission, creator: @writer_user, user: @writer_user)
+    @read_permission = FactoryGirl.create(:read_permission, creator: @reader_user, user: @reader_user, project: @write_permission.project)
 
     @saved_search_query = {
         filter: {
@@ -63,7 +63,7 @@ resource 'SavedSearches' do
 
     get '/saved_searches' do
       let(:authentication_token) { other_token }
-      standard_request_options(:get, 'LIST (as other)', :ok, {response_body_content: '"total":1,', data_item_count: 0})
+      standard_request_options(:get, 'LIST (as other)', :ok, {expected_json_path: 'data', data_item_count: 0})
     end
 
     get '/saved_searches' do
@@ -137,14 +137,14 @@ resource 'SavedSearches' do
       parameter :id, 'Requested saved search id (in path/route)', required: true
       let(:id) { @saved_search.id }
       let(:authentication_token) { reader_token }
-      standard_request_options(:get, 'SHOW (as reader)', :ok, {expected_json_path: %w(data/analysis_job_ids data/stored_query)})
+      standard_request_options(:get, 'SHOW (as reader)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
     end
 
     get '/saved_searches/:id' do
       parameter :id, 'Requested saved search id (in path/route)', required: true
       let(:id) { @saved_search.id }
       let(:authentication_token) { other_token }
-      standard_request_options(:get, 'SHOW (as other)', :ok, {expected_json_path: %w(data/analysis_job_ids data/stored_query)})
+      standard_request_options(:get, 'SHOW (as other)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
     end
 
     get '/saved_searches/:id' do

@@ -1,39 +1,49 @@
 class TagsController < ApplicationController
   include Api::ControllerHelper
 
-  load_and_authorize_resource
-
-  # GET /tags.json
-  # GET /projects/1/sites/1/audio_recordings/1/audio_events/1/tags.json
+  # GET /tags
+  # GET /audio_recordings/:audio_recording_id/audio_events/:audio_event_id/tags
   def index
-    # TODO update to API spec
-    respond_to do |format|
-      format.json {
-        if params[:audio_event_id]
-          @audio_event = AudioEvent.where(id: params[:audio_event_id]).first
-          render json: @audio_event.tags.to_json(only: Tag.filter_settings[:render_fields])
-        elsif params[:filter] #single tag, partial match
-          render json: Tag.where("text ILIKE '%?%'", params[:filter]).limit(20).to_json(only: Tag.filter_settings[:render_fields])
-        else
-          render json: Tag.all.to_json(only: Tag.filter_settings[:render_fields])
-        end
-      }
+    do_authorize_class
+
+    if params.include?(:audio_event_id)
+      query = AudioEvent.find(params[:audio_event_id]).tags
+    else
+      query = Tags.all
     end
 
+    @tags, opts = Settings.api_response.response_advanced(
+        api_filter_params,
+        query,
+        Tag,
+        Tag.filter_settings
+    )
+    respond_index(opts)
   end
 
-  # GET /tags/1.json
+  # GET /tags/:id
   def show
+    do_load_resource
+    do_authorize_instance
+
     respond_show
   end
 
-  # GET /tags/new.json
+  # GET /tags/new
   def new
+    do_new_resource
+    do_set_attributes
+    do_authorize_instance
+
     respond_show
   end
 
-  # POST /tags.json
+  # POST /tags
   def create
+    do_new_resource
+    do_set_attributes(tag_params)
+    do_authorize_instance
+
     if @tag.save
       respond_create_success
     else
@@ -41,10 +51,10 @@ class TagsController < ApplicationController
     end
   end
 
-  # POST /sites/filter.json
-  # GET /sites/filter.json
+  # GET|POST /tags/filter
   def filter
-    authorize! :filter, Tag
+    do_authorize_class
+
     filter_response, opts = Settings.api_response.response_advanced(
         api_filter_params,
         Tag.all,

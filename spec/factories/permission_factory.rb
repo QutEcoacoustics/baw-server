@@ -21,23 +21,28 @@ FactoryGirl.define do
   # }
 
   factory :permission do
-    creator
+    level { %w(reader writer).sample }
     user
-    project
-    level { ['reader', 'writer'].sample }
+
+    creator
+
+    trait :reader do
+      level 'reader'
+    end
+
+    trait :writer do
+      level 'reader'
+    end
+
+    after(:build) do |permission, evaluator|
+      if permission.project.blank?
+        permission.project = FactoryGirl.create(:project_with_sites_and_saved_searches, creator: evaluator.creator)
+      end
+    end
+
+    factory :read_permission, traits: [:reader]
+    factory :write_permission, traits: [:writer]
+
   end
 
-  factory :read_permission, class: Permission do
-    level 'reader'
-    creator
-    user # this is the user for which the permission is checked
-    association :project, factory: :project_with_sites_and_saved_searches
-  end
-
-  factory :write_permission, class: Permission do
-    level 'writer'
-    creator
-    user # this is the user for which the permission is checked
-    association :project, factory: :project_with_sites_and_saved_searches
-  end
 end

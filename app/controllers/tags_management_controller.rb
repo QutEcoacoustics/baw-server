@@ -1,12 +1,10 @@
 class TagsManagementController < ApplicationController
-  before_action :set_tag, only: [:edit, :update, :destroy]
-
-  load_and_authorize_resource :tag
 
   before_action :check_admin_user
 
   # GET /tags_management
   def index
+    do_authorize_class
 
     page = paging_params[:page].blank? ? 1 : paging_params[:page].to_i
     order_by = paging_params[:order_by].blank? ? :text : paging_params[:order_by].to_s.to_sym
@@ -47,32 +45,40 @@ class TagsManagementController < ApplicationController
 
   # GET /tags_management/new
   def new
-    @tag = Tag.new
+    do_new_resource
+    do_set_attributes
+    do_authorize_instance
   end
 
-  # GET /tags_management/1/edit
+  # GET /tags_management/:id/edit
   def edit
-
+    do_load_resource
+    do_authorize_instance
   end
 
   # POST /tags_management
   def create
-    @tag = Tag.new(tag_params)
+    do_new_resource
+    do_set_attributes(tag_params)
+    do_authorize_instance
 
     respond_to do |format|
       if @tag.save
-        format.html { redirect_to edit_tags_management_url(@tag), notice: 'Tag was successfully created.' }
+        format.html { redirect_to edit_tags_management_path(@tag), notice: 'Tag was successfully created.' }
       else
         format.html { render :new }
       end
     end
   end
 
-  # PATCH/PUT /tags_management/1
+  # PATCH|PUT /tags_management/:id
   def update
+    do_load_resource
+    do_authorize_instance
+
     respond_to do |format|
       if @tag.update(tag_params)
-        format.html { redirect_to edit_tags_management_url(@tag), notice: 'Tag was successfully updated.' }
+        format.html { redirect_to edit_tags_management_path(@tag), notice: 'Tag was successfully updated.' }
       else
         format.html { render :edit }
       end
@@ -81,16 +87,20 @@ class TagsManagementController < ApplicationController
 
   # DELETE /tags_management/1
   def destroy
+    do_load_resource
+    do_authorize_instance
+
     @tag.destroy
     respond_to do |format|
-      format.html { redirect_to tags_management_index_url, notice: 'Tag was successfully destroyed.' }
+      format.html { redirect_to tags_management_index_path, notice: 'Tag was successfully destroyed.' }
     end
   end
 
   private
 
-  def set_tag
-    @tag = Tag.find(params[:id])
+  # override resource name
+  def resource_name
+    'tag'
   end
 
   def tag_params

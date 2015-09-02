@@ -12,14 +12,14 @@ resource 'AnalysisJobs' do
   let(:format) { 'json' }
 
   before(:each) do
-    @admin_user = FactoryGirl.create(:admin)
-    @writer_user = FactoryGirl.create(:user)
-    @reader_user = FactoryGirl.create(:user)
-    @other_user = FactoryGirl.create(:user)
+    @admin_user = FactoryGirl.create(:admin,)
+    @writer_user = FactoryGirl.create(:user, user_name: 'writer')
+    @reader_user = FactoryGirl.create(:user, user_name: 'reader')
+    @other_user = FactoryGirl.create(:user, user_name: 'other')
     @unconfirmed_user = FactoryGirl.create(:unconfirmed_user)
 
-    @write_permission = FactoryGirl.create(:write_permission, creator: @admin_user, user: @writer_user)
-    @read_permission = FactoryGirl.create(:read_permission, creator: @admin_user, user: @reader_user, project: @write_permission.project)
+    @write_permission = FactoryGirl.create(:write_permission, creator: @writer_user, user: @writer_user)
+    @read_permission = FactoryGirl.create(:read_permission, creator: @reader_user, user: @reader_user, project: @write_permission.project)
 
     @saved_search = @write_permission.project.saved_searches.first
     @analysis_job = @saved_search.analysis_jobs.first
@@ -34,15 +34,41 @@ resource 'AnalysisJobs' do
   let(:unconfirmed_token) { "Token token=\"#{@unconfirmed_user.authentication_token}\"" }
   let(:invalid_token) { "Token token=\"weeeeeeeee0123456789splat\"" }
 
-  let(:post_attributes) {}
+  let(:create_attributes) { FactoryGirl.attributes_for(:analysis_job).merge({ script_id: @script.id, saved_search_id: @saved_search.id}) }
+  let(:update_attributes) { FactoryGirl.attributes_for(:analysis_job).merge({ script_id: @script.id, saved_search_id: @saved_search.id}) }
 
   ################################
   # INDEX
   ################################
 
   get '/analysis_jobs' do
+    let(:authentication_token) { admin_token }
+    standard_request_options(:get, 'INDEX (as admin)', :ok, {expected_json_path: 'data/0/saved_search_id', data_item_count: 1})
+  end
+
+  get '/analysis_jobs' do
     let(:authentication_token) { writer_token }
-    standard_request_options(:get, 'INDEX (as writer)', :ok)
+    standard_request_options(:get, 'INDEX (as writer)', :ok, {expected_json_path: 'data/0/saved_search_id', data_item_count: 1})
+  end
+
+  get '/analysis_jobs' do
+    let(:authentication_token) { reader_token }
+    standard_request_options(:get, 'INDEX (as reader)', :ok, {expected_json_path: 'data/0/saved_search_id', data_item_count: 1})
+  end
+
+  get '/analysis_jobs' do
+    let(:authentication_token) { other_token }
+    standard_request_options(:get, 'INDEX (as other)', :ok, {data_item_count: 0})
+  end
+
+  get '/analysis_jobs' do
+    let(:authentication_token) { unconfirmed_token }
+    standard_request_options(:get, 'INDEX (as unconfirmed user)', :forbidden, {expected_json_path: get_json_error_path(:confirm)})
+  end
+
+  get '/analysis_jobs' do
+    let(:authentication_token) { invalid_token }
+    standard_request_options(:get, 'INDEX (invalid token)', :unauthorized, {expected_json_path: get_json_error_path(:sign_in)})
   end
 
   ################################
@@ -51,9 +77,44 @@ resource 'AnalysisJobs' do
 
   get '/analysis_jobs/:id' do
     parameter :id, 'Requested analysis job id (in path/route)', required: true
-    #let(:id) { @analysis_job.id }
+    let(:id) { @analysis_job.id }
+    let(:authentication_token) { admin_token }
+    standard_request_options(:get, 'SHOW (as admin)', :ok, {expected_json_path: 'data/saved_search_id'})
+  end
+
+  get '/analysis_jobs/:id' do
+    parameter :id, 'Requested analysis job id (in path/route)', required: true
+    let(:id) { @analysis_job.id }
     let(:authentication_token) { writer_token }
-    standard_request_options(:get, 'SHOW (as writer)', :ok)
+    standard_request_options(:get, 'SHOW (as writer)', :ok, {expected_json_path: 'data/saved_search_id'})
+  end
+
+  get '/analysis_jobs/:id' do
+    parameter :id, 'Requested analysis job id (in path/route)', required: true
+    let(:id) { @analysis_job.id }
+    let(:authentication_token) { reader_token }
+    standard_request_options(:get, 'SHOW (as reader)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
+  end
+
+  get '/analysis_jobs/:id' do
+    parameter :id, 'Requested analysis job id (in path/route)', required: true
+    let(:id) { @analysis_job.id }
+    let(:authentication_token) { other_token }
+    standard_request_options(:get, 'SHOW (as other)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
+  end
+
+  get '/analysis_jobs/:id' do
+    parameter :id, 'Requested analysis job id (in path/route)', required: true
+    let(:id) { @analysis_job.id }
+    let(:authentication_token) { unconfirmed_token }
+    standard_request_options(:get, 'SHOW (as unconfirmed user)', :forbidden, {expected_json_path: get_json_error_path(:confirm)})
+  end
+
+  get '/analysis_jobs/:id' do
+    parameter :id, 'Requested analysis job id (in path/route)', required: true
+    let(:id) { @analysis_job.id }
+    let(:authentication_token) { invalid_token }
+    standard_request_options(:get, 'SHOW (invalid token)', :unauthorized, {expected_json_path: get_json_error_path(:sign_in)})
   end
 
   ################################
@@ -61,8 +122,33 @@ resource 'AnalysisJobs' do
   ################################
 
   get '/analysis_jobs/new' do
+    let(:authentication_token) { admin_token }
+    standard_request_options(:get, 'NEW (as admin)', :ok, {expected_json_path: 'data/saved_search_id'})
+  end
+
+  get '/analysis_jobs/new' do
     let(:authentication_token) { writer_token }
     standard_request_options(:get, 'NEW (as writer)', :ok, {expected_json_path: 'data/saved_search_id'})
+  end
+
+  get '/analysis_jobs/new' do
+    let(:authentication_token) { reader_token }
+    standard_request_options(:get, 'NEW (as reader)', :ok, {expected_json_path: 'data/saved_search_id'})
+  end
+
+  get '/analysis_jobs/new' do
+    let(:authentication_token) { other_token }
+    standard_request_options(:get, 'NEW (as other)', :ok, {expected_json_path: 'data/saved_search_id'})
+  end
+
+  get '/analysis_jobs/new' do
+    let(:authentication_token) { unconfirmed_token }
+    standard_request_options(:get, 'NEW (as unconfirmed)',:forbidden, {expected_json_path: get_json_error_path(:confirm)})
+  end
+
+  get '/analysis_jobs/new' do
+    let(:authentication_token) { invalid_token }
+    standard_request_options(:get, 'NEW (invalid token)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
   end
 
   ################################
@@ -70,9 +156,39 @@ resource 'AnalysisJobs' do
   ################################
 
   post '/analysis_jobs' do
-    let(:raw_post) { {analysis_job: post_attributes}.to_json }
+    let(:raw_post) { {analysis_job: create_attributes}.to_json }
+    let(:authentication_token) { admin_token }
+    standard_request_options(:post, 'CREATE (as admin)', :created, {expected_json_path: 'data/saved_search_id'})
+  end
+
+  post '/analysis_jobs' do
+    let(:raw_post) { {analysis_job: create_attributes}.to_json }
     let(:authentication_token) { writer_token }
-    standard_request_options(:post, 'CREATE (as writer)', :created, {expected_json_path: 'data/analysis_identifier'})
+    standard_request_options(:post, 'CREATE (as writer)', :created, {expected_json_path: 'data/saved_search_id'})
+  end
+
+  post '/analysis_jobs' do
+    let(:raw_post) { {analysis_job: create_attributes}.to_json }
+    let(:authentication_token) { reader_token }
+    standard_request_options(:post, 'CREATE (as reader)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
+  end
+
+  post '/analysis_jobs' do
+    let(:raw_post) { {analysis_job: create_attributes}.to_json }
+    let(:authentication_token) { other_token }
+    standard_request_options(:post, 'CREATE (as other)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
+  end
+
+  post '/analysis_jobs' do
+    let(:raw_post) { {analysis_job: create_attributes}.to_json }
+    let(:authentication_token) { unconfirmed_token }
+    standard_request_options(:post, 'CREATE (as unconfirmed user)', :forbidden, {expected_json_path: get_json_error_path(:confirm)})
+  end
+
+  post '/analysis_jobs' do
+    let(:raw_post) { {analysis_job: create_attributes}.to_json }
+    let(:authentication_token) { invalid_token }
+    standard_request_options(:post, 'CREATE (invalid token)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
   end
 
   ################################
@@ -82,17 +198,57 @@ resource 'AnalysisJobs' do
   put '/analysis_jobs/:id' do
     parameter :id, 'Requested analysis job id (in path/route)', required: true
     let(:id) { @analysis_job.id }
-    let(:raw_post) { {analysis_job: post_attributes}.to_json }
-    let(:authentication_token) { writer_token }
-    standard_request_options(:put, 'UPDATE (as writer)', :ok)
+    let(:raw_post) { {analysis_job: update_attributes}.to_json }
+    let(:authentication_token) { admin_token }
+    standard_request_options(:put, 'UPDATE (as admin)', :ok, {expected_json_path: 'data/saved_search_id'})
   end
 
   patch '/analysis_jobs/:id' do
     parameter :id, 'Requested analysis job id (in path/route)', required: true
     let(:id) { @analysis_job.id }
-    let(:raw_post) { {analysis_job: post_attributes}.to_json }
+    let(:raw_post) { {analysis_job: update_attributes}.to_json }
+    let(:authentication_token) { admin_token }
+    standard_request_options(:patch, 'UPDATE (as admin)', :ok, {expected_json_path: 'data/saved_search_id'})
+  end
+
+  put '/analysis_jobs/:id' do
+    parameter :id, 'Requested analysis job id (in path/route)', required: true
+    let(:id) { @analysis_job.id }
+    let(:raw_post) { {analysis_job: update_attributes}.to_json }
     let(:authentication_token) { writer_token }
-    standard_request_options(:put, 'UPDATE (as writer)', :ok)
+    standard_request_options(:put, 'UPDATE (as writer)', :ok, {expected_json_path: 'data/saved_search_id'})
+  end
+
+  put '/analysis_jobs/:id' do
+    parameter :id, 'Requested analysis job id (in path/route)', required: true
+    let(:id) { @analysis_job.id }
+    let(:raw_post) { {analysis_job: update_attributes}.to_json }
+    let(:authentication_token) { reader_token }
+    standard_request_options(:put, 'UPDATE (as reader)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
+  end
+
+  put '/analysis_jobs/:id' do
+    parameter :id, 'Requested analysis job id (in path/route)', required: true
+    let(:id) { @analysis_job.id }
+    let(:raw_post) { {analysis_job: update_attributes}.to_json }
+    let(:authentication_token) { other_token }
+    standard_request_options(:put, 'UPDATE (as other)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
+  end
+
+  put '/analysis_jobs/:id' do
+    parameter :id, 'Requested analysis job id (in path/route)', required: true
+    let(:id) { @analysis_job.id }
+    let(:raw_post) { {analysis_job: update_attributes}.to_json }
+    let(:authentication_token) { unconfirmed_token }
+    standard_request_options(:put, 'UPDATE (as unconfirmed user)', :forbidden, {expected_json_path: get_json_error_path(:confirm)})
+  end
+
+  put '/analysis_jobs/:id' do
+    parameter :id, 'Requested analysis job id (in path/route)', required: true
+    let(:id) { @analysis_job.id }
+    let(:raw_post) { {analysis_job: update_attributes}.to_json }
+    let(:authentication_token) { invalid_token }
+    standard_request_options(:put, 'UPDATE (invalid token)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
   end
 
   ################################
@@ -102,8 +258,43 @@ resource 'AnalysisJobs' do
   delete '/analysis_jobs/:id' do
     parameter :id, 'Requested analysis job id (in path/route)', required: true
     let(:id) { @analysis_job.id }
+    let(:authentication_token) { admin_token }
+    standard_request_options(:delete, 'DESTROY (as admin)', :no_content, {expected_response_has_content: false, expected_response_content_type: nil})
+  end
+
+  delete '/analysis_jobs/:id' do
+    parameter :id, 'Requested analysis job id (in path/route)', required: true
+    let(:id) { @analysis_job.id }
+    let(:authentication_token) { writer_token }
+    standard_request_options(:delete, 'DESTROY (as writer)', :no_content, {expected_response_has_content: false, expected_response_content_type: nil})
+  end
+
+  delete '/analysis_jobs/:id' do
+    parameter :id, 'Requested analysis job id (in path/route)', required: true
+    let(:id) { @analysis_job.id }
+    let(:authentication_token) { reader_token }
+    standard_request_options(:delete, 'DESTROY (as reader)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
+  end
+
+  delete '/analysis_jobs/:id' do
+    parameter :id, 'Requested analysis job id (in path/route)', required: true
+    let(:id) { @analysis_job.id }
     let(:authentication_token) { other_token }
     standard_request_options(:delete, 'DESTROY (as other)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
+  end
+
+  delete '/analysis_jobs/:id' do
+    parameter :id, 'Requested analysis job id (in path/route)', required: true
+    let(:id) { @analysis_job.id }
+    let(:authentication_token) { unconfirmed_token }
+    standard_request_options(:delete, 'DESTROY (unconfirmed user)', :forbidden, {expected_json_path: get_json_error_path(:confirm)})
+  end
+
+  delete '/analysis_jobs/:id' do
+    parameter :id, 'Requested analysis job id (in path/route)', required: true
+    let(:id) { @analysis_job.id }
+    let(:authentication_token) { invalid_token }
+    standard_request_options(:delete, 'DESTROY (invalid token)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
   end
 
   ################################
@@ -117,13 +308,13 @@ resource 'AnalysisJobs' do
 
         },
         projection: {
-            include: %w(id name analysis_identifier)
+            include: %w(id name saved_search_id)
         }
     }.to_json }
     standard_request_options(:post, 'FILTER (as reader)', :ok, {
-                                      expected_json_path: 'meta/filter/analysis_identifier',
+                                      expected_json_path: 'meta/filter/saved_search_id',
                                       data_item_count: 1,
-                                      response_body_content: '"analysis_identifier":"something something"'
+                                      response_body_content: '"saved_search_id":"something something"'
                                   })
   end
 
