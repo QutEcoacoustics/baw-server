@@ -13,6 +13,10 @@ class SavedSearch < ActiveRecord::Base
   # this is a filter query for audio recordings.
   serialize :stored_query, JSON
 
+  # add deleted_at and deleter_id
+  acts_as_paranoid
+  validates_as_paranoid
+
   validates :name, presence: true, length: {minimum: 2, maximum: 255},
             uniqueness: {case_sensitive: false, scope: :creator_id, message: 'should be unique per user'}
   validates :stored_query, presence: true
@@ -146,10 +150,13 @@ WHERE EXISTS (
   # @param [User] user
   # @return [void]
   def projects_populate(user)
+
+    # TODO add logging and timing
+    # TODO This may need to be async depending on how fast it runs
+
     user = Access::Core.validate_user(user)
     project_query = projects_extract(user)
-    self.projects = project_query.to_a
-    self.save!
+    self.projects = project_query
   end
 
   private

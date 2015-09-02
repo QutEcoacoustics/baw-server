@@ -6,11 +6,7 @@ class TaggingsController < ApplicationController
   load_and_authorize_resource :user, only: [:user_index]
   respond_to :json
 
-  # /audio_recordings/:audio_recording_id/audio_events/:audio_event_id/
-
-  # GET /taggings
-  # GET /taggings.json
-  # GET /taggings/user/1/tags.json
+  # GET /audio_recordings/:audio_recording_id/audio_events/:audio_event_id/taggings
   def index
     # TODO update to API spec
     if @audio_event
@@ -34,20 +30,17 @@ class TaggingsController < ApplicationController
     end
   end
 
-  # GET /taggings/1
-  # GET /taggings/1.json
+  # GET /audio_recordings/:audio_recording_id/audio_events/:audio_event_id/taggings/:id
   def show
     respond_with @tagging
   end
 
-  # GET /taggings/new
-  # GET /taggings/new.json
+  # GET /audio_recordings/:audio_recording_id/audio_events/:audio_event_id/taggings/new
   def new
     respond_with @tagging
   end
 
-  # POST /taggings
-  # POST /taggings.json
+  # POST /audio_recordings/:audio_recording_id/audio_events/:audio_event_id/taggings/
   def create
     # @audio_recording, @audio_event and @tagging are initialised/preloaded by load_resource/load_and_authorize_resource
     if tagging_params && tagging_params[:tag_attributes] && tagging_params[:tag_attributes][:text]
@@ -74,14 +67,12 @@ class TaggingsController < ApplicationController
     end
   end
 
-  # PUT /taggings/1
-  # PUT /taggings/1.json
+  # PUT|PATCH /audio_recordings/:audio_recording_id/audio_events/:audio_event_id/taggings/:id
   def update
     respond_with Tagging.update(params[:id], params[:tag])
   end
 
-  # DELETE /taggings/1
-  # DELETE /taggings/1.json
+  ## DELETE /audio_recordings/:audio_recording_id/audio_events/:audio_event_id/taggings/:id
   def destroy
     @tagging.destroy
 

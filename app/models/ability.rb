@@ -89,6 +89,7 @@ class Ability
 
   def check_model(model)
     fail ArgumentError, 'Must have an instance of the model.' if model.nil?
+    fail CustomErrors::UnprocessableEntityError.new('Model was invalid.', model.errors) if model.invalid?
   end
 
   def for_admin
@@ -229,9 +230,9 @@ class Ability
     can [:show, :create], AnalysisJob do |analysis_job|
       check_model(analysis_job)
       projects = analysis_job.saved_search.projects
-      has_projects = projects.size > 0
+      fail CustomErrors::UnprocessableEntityError.new('Analysis Job must have at least one project.') if projects.size < 1
 
-      has_projects ? Access::Check.can_all?(user, :reader, projects) : false
+      Access::Check.can_all?(user, :reader, projects)
     end
 
     # only creator can update, destroy their own analysis jobs
@@ -248,9 +249,9 @@ class Ability
     can [:show, :create], SavedSearch do |saved_search|
       check_model(saved_search)
       projects = saved_search.projects
-      has_projects = projects.size > 0
+      fail CustomErrors::UnprocessableEntityError.new('Saved Search must have at least one project.') if projects.size < 1
 
-      has_projects ? Access::Check.can_all?(user, :reader, projects) : false
+      Access::Check.can_all?(user, :reader, projects)
     end
 
     # only creator can destroy their own saved searches

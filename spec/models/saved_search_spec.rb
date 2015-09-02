@@ -149,6 +149,8 @@ describe SavedSearch, type: :model do
 
     ss.projects_populate(user)
 
+    ss.save
+
     expect(SavedSearch.find(ss.id).projects.size).to eq(1)
     expect(SavedSearch.find(ss.id).projects.pluck(:id)[0]).to eq(project_2.id)
   end

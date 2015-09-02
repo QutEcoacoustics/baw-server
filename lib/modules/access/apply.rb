@@ -279,8 +279,74 @@ WHERE
         user = Access::Core.validate_user(user)
         levels = Access::Core.validate_levels(levels)
 
+        pt = Project.arel_table
+        pm = Permission.arel_table
+        ps = Arel::Table.new(:projects_saved_searches)
+        ss = SavedSearch.arel_table
+        user_id = user.id
+        exists, levels = Access::Apply.permission_levels(levels)
+
+=begin
+SELECT *
+FROM saved_searches
+WHERE
+    EXISTS
+        (SELECT 1
+        FROM projects_saved_searches
+        WHERE
+            "saved_searches"."id" = "projects_saved_searches"."saved_search_id"
+            AND EXISTS (
+                (SELECT 1
+                FROM "projects"
+                WHERE
+                    "projects"."deleted_at" IS NULL
+                    AND "projects"."creator_id" = 7
+                    AND "projects_saved_searches"."project_id" = "projects"."id"
+                )
+                UNION ALL
+                (SELECT 1
+                FROM "permissions"
+                WHERE
+                    "permissions"."user_id" = 7
+                    AND "permissions"."level" IN ('reader', 'writer', 'owner')
+                    AND "projects_saved_searches"."project_id" = "permissions"."project_id"
+                )
+            )
+        )
+
+=end
         # user must have at least read access to all projects
-        fail NotImplementedError
+        # need to add the 'deleted_at IS NULL' check by hand
+
+        project_creator =
+            pt
+                .where(pt[:deleted_at].eq(nil))
+                .where(pt[:creator_id].eq(user_id))
+                .where(ps[:project_id].eq(pt[:id]))
+                .project(1)
+
+        project_permissions =
+            pm
+                .where(pm[:user_id].eq(user_id))
+                .where(pm[:level].in(levels))
+                .where(ps[:project_id].eq(pm[:project_id]))
+                .project(1)
+
+        union_all_projects =
+            project_creator
+                .union(:all, project_permissions)
+
+        projects_exists = Arel::Nodes::Exists.new(union_all_projects)
+
+        saved_search_exist =
+            ps
+                .where(ss[:id].eq(ps[:saved_search_id]))
+                .where(projects_exists)
+                .project(1).exists
+
+        saved_search_exist = saved_search_exist.not unless exists
+
+        query.where(saved_search_exist)
       end
 
       # Is exists negated? and which levels should be used to search.
@@ -309,11 +375,17 @@ WHERE
       def restrictions_none(user, query)
         user = Access::Core.validate_user(user)
 
+        unknown = '(unknown)'
         # non-standard users (harvester, guest) have no access
-        user_type = '(unknown)'
+        user_type = unknown
         user_type = 'guest' if Access::Check.is_guest?(user)
         user_type = 'harvester' if Access::Check.is_harvester?(user)
-        msg = "User '#{user.user_name}', id #{user.id}, type #{user_type}, roles '#{user.role_symbols.join(', ')}' denied access in Access::Query.restrictions."
+
+        user_name = user.blank? ? unknown : user.user_name
+        user_id = user.blank? ? unknown : user.id
+        user_roles = user.blank? ? unknown : user.role_symbols.join(', ')
+
+        msg = "User '#{user_name}', id #{user_id}, type #{user_type}, roles '#{user_roles}' denied access in Access::Query.restrictions."
         Rails.logger.warn msg
 
         # using .none to be chain-able

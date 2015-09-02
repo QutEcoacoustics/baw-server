@@ -300,7 +300,6 @@ Rails.application.routes.draw do
   # site status API
   get '/status/' => 'public#status', defaults: {format: 'json'}
   get '/website_status/' => 'public#website_status'
-  get '/audio_recording_catalogue/' => 'public#audio_recording_catalogue'
 
   # feedback and contact forms
   get '/contact_us' => 'public#new_contact_us'

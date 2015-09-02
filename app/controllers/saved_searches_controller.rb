@@ -1,10 +1,10 @@
 class SavedSearchesController < ApplicationController
   include Api::ControllerHelper
 
-  load_and_authorize_resource :saved_search, except: [:filter]
-
   # GET /saved_searches.json
   def index
+    do_authorize_class
+
     @saved_searches, opts = Settings.api_response.response_advanced(
         api_filter_params,
         get_saved_searches,
@@ -14,24 +14,33 @@ class SavedSearchesController < ApplicationController
     respond_index(opts)
   end
 
-  # GET /saved_searches/1.json
+  # GET /saved_searches/:id
   def show
+    do_load_resource
+    do_authorize_instance
+
     respond_show
   end
 
-  # GET /saved_searches/new.json
+  # GET /saved_searches/new
   def new
+    do_new_resource
+    do_set_attributes
+    do_authorize_instance
+
     respond_show
   end
 
-  # POST /saved_searches.json
+  # POST /saved_searches
   def create
+    do_new_resource
+    do_set_attributes(saved_search_params)
+
+    @saved_search.projects_populate(current_user)
+
+    do_authorize_instance
+
     if @saved_search.save
-
-      # TODO add logging and timing
-      # TODO This may need to be async depending on how fast it runs
-      @saved_search.projects_populate(current_user)
-
       respond_create_success
     else
       respond_change_fail
@@ -39,15 +48,17 @@ class SavedSearchesController < ApplicationController
 
   end
 
-  # DELETE /saved_searches/1.json
+  # DELETE /saved_searches/:id
   def destroy
+    do_load_resource
+    do_authorize_instance
+
     @saved_search.destroy
     add_archived_at_header(@saved_search)
     respond_destroy
   end
 
-  # POST /saved_searches/filter.json
-  # GET /saved_searches/filter.json
+  # GET|POST /saved_searches/filter
   def filter
     authorize! :filter, SavedSearch
     filter_response, opts = Settings.api_response.response_advanced(
