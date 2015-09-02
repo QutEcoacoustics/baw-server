@@ -80,7 +80,7 @@ resource 'Tags' do
 
       do_request
       expect(status).to eq(200)
-      expect(response_body).to have_json_path('2/is_taxanomic')
+      expect(response_body).to have_json_path('data/2/is_taxanomic'), "Failed. Body: #{response_body}"
     end
   end
 

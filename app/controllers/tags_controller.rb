@@ -7,9 +7,11 @@ class TagsController < ApplicationController
     do_authorize_class
 
     if params.include?(:audio_event_id)
-      query = AudioEvent.find(params[:audio_event_id]).tags
+      @audio_event = AudioEvent.find(params[:audio_event_id])
+      authorize! :show, @audio_event
+      query = @audio_event.tags
     else
-      query = Tags.all
+      query = Tag.all
     end
 
     @tags, opts = Settings.api_response.response_advanced(

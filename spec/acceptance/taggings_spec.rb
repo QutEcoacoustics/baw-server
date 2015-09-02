@@ -11,7 +11,7 @@ resource 'Taggings' do
   header 'Authorization', :authentication_token
 
   # default format
-  let(:format)                {'json'}
+  let(:format) { 'json' }
 
   before(:each) do
     # this creates a @write_permission.user with write access to @write_permission.project,
@@ -23,20 +23,20 @@ resource 'Taggings' do
   end
 
   # prepare ids needed for paths in requests below
-  let(:project_id)            {@write_permission.project.id}
-  let(:site_id)               {@write_permission.project.sites[0].id}
-  let(:audio_recording_id)    {@write_permission.project.sites[0].audio_recordings[0].id}
-  let(:audio_event_id)        {@write_permission.project.sites[0].audio_recordings[0].audio_events[0].id}
-  let(:id)                    {@write_permission.project.sites[0].audio_recordings[0].audio_events[0].taggings[0].id}
-  let(:user_id)               {@write_permission.project.sites[0].audio_recordings[0].audio_events[0].taggings[0].creator_id}
+  let(:project_id) { @write_permission.project.id }
+  let(:site_id) { @write_permission.project.sites[0].id }
+  let(:audio_recording_id) { @write_permission.project.sites[0].audio_recordings[0].id }
+  let(:audio_event_id) { @write_permission.project.sites[0].audio_recordings[0].audio_events[0].id }
+  let(:id) { @write_permission.project.sites[0].audio_recordings[0].audio_events[0].taggings[0].id }
+  let(:user_id) { @write_permission.project.sites[0].audio_recordings[0].audio_events[0].taggings[0].creator_id }
 
   # prepare authentication_token for different users
-  let(:writer_token)          {"Token token=\"#{@write_permission.user.authentication_token}\"" }
-  let(:reader_token)          {"Token token=\"#{@read_permission.user.authentication_token}\"" }
-  let(:unconfirmed_token)     {"Token token=\"#{FactoryGirl.create(:unconfirmed_user).authentication_token}\"" }
+  let(:writer_token) { "Token token=\"#{@write_permission.user.authentication_token}\"" }
+  let(:reader_token) { "Token token=\"#{@read_permission.user.authentication_token}\"" }
+  let(:unconfirmed_token) { "Token token=\"#{FactoryGirl.create(:unconfirmed_user).authentication_token}\"" }
 
   # Create post parameters from factory
-  let(:post_attributes) { {tag_id: @existing_tag.id } }
+  let(:post_attributes) { {tag_id: @existing_tag.id} }
   let(:post_nested_attributes) { {'tag_attributes' => FactoryGirl.attributes_for(:tag)} }
   let(:post_invalid_nested_attributes) { {'tag_attributes' => FactoryGirl.attributes_for(:tag, type_of_tag: 'invalid value')} }
 
@@ -82,7 +82,7 @@ resource 'Taggings' do
     parameter :audio_event_id, 'Requested audio event ID (in path/route)', required: true
 
     let(:authentication_token) { writer_token }
-    standard_request('LIST (as writer, with shallow path)', 200, '0/tag_id', true)
+    standard_request('LIST (as writer, with shallow path)', 200, 'data/0/tag_id', true)
   end
 
   get '/audio_recordings/:audio_recording_id/audio_events/:audio_event_id/taggings' do
@@ -103,11 +103,11 @@ resource 'Taggings' do
     standard_request('LIST (as unconfirmed user, with shallow path)', 403, nil, true)
   end
 
-  get '/taggings/user/:user_id/tags' do
+  get '/user_accounts/:user_id/taggings' do
     parameter :user_id, 'Get taggings for user id (in path/route)', required: true
 
     let(:authentication_token) { reader_token }
-    standard_request('LIST (as reader, user taggings)', 200, '0/tag/is_taxanomic', true)
+    standard_request('LIST (as reader, user taggings)', 200, 'data/0/tag/is_taxanomic', true)
   end
 
   ################################

@@ -60,7 +60,8 @@ class SavedSearchesController < ApplicationController
 
   # GET|POST /saved_searches/filter
   def filter
-    authorize! :filter, SavedSearch
+    do_authorize_class
+
     filter_response, opts = Settings.api_response.response_advanced(
         api_filter_params,
         get_saved_searches,

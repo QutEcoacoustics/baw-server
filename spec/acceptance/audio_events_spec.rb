@@ -101,7 +101,7 @@ resource 'AudioEvents' do
 
     let(:authentication_token) { writer_token }
 
-    standard_request('LIST (as writer)', 200, '0/start_time_seconds', true)
+    standard_request('LIST (as writer)', 200, 'data/0/start_time_seconds', true)
 
   end
 
@@ -113,7 +113,7 @@ resource 'AudioEvents' do
 
     let(:authentication_token) { reader_token }
 
-    standard_request('LIST (as reader)', 200, '0/start_time_seconds', true)
+    standard_request('LIST (as reader)', 200, 'data/0/start_time_seconds', true)
 
   end
 
@@ -126,7 +126,7 @@ resource 'AudioEvents' do
 
     let(:authentication_token) { reader_token }
 
-    standard_request('LIST (as reader with shallow path)', 200, '0/start_time_seconds', true)
+    standard_request('LIST (as reader with shallow path)', 200, 'data/0/start_time_seconds', true)
 
   end
 
@@ -168,7 +168,7 @@ resource 'AudioEvents' do
     example 'LIST (with offsets as reader) - 200', :document => true do
       do_request
       expect(status).to eq(200)
-      expect(response_body).to have_json_path('1/start_time_seconds')
+      expect(response_body).to have_json_path('data/1/start_time_seconds')
       # should only return four
       expect(response_body).to have_json_size(4)
       # TODO: check the values of the events that are returned
@@ -196,7 +196,7 @@ resource 'AudioEvents' do
 
     standard_request_options(:get, 'LIST (as reader with shallow path testing quoted numbers)', :ok,
                              {
-                                 expected_json_path: '0/start_time_seconds',
+                                 expected_json_path: 'data/0/start_time_seconds',
                                  response_body_content: '"start_time_seconds":5.2,"end_time_seconds":5.8,"low_frequency_hertz":400.0,"high_frequency_hertz":6000.0'
                              })
 
@@ -376,7 +376,7 @@ resource 'AudioEvents' do
 
       opts = acceptance_checks_shared(request, opts)
 
-      opts.merge!({expected_json_path: 'taggings/1/tag', response_body_content: 'start_time_seconds'})
+      opts.merge!({expected_json_path: 'data/taggings/1/tag', response_body_content: 'start_time_seconds'})
       acceptance_checks_json(opts)
 
       # only one tag should have been created, so new tag count should be one more than old tag count
@@ -421,7 +421,7 @@ resource 'AudioEvents' do
 
       opts = acceptance_checks_shared(request, opts)
 
-      opts.merge!({expected_json_path: 'taggings/1/tag', response_body_content: 'start_time_seconds'})
+      opts.merge!({expected_json_path: 'data/taggings/1/tag', response_body_content: 'start_time_seconds'})
       acceptance_checks_json(opts)
 
       # only one tag should have been created, so new tag count should be one more than old tag count

@@ -134,35 +134,35 @@ class AudioRecordingsController < ApplicationController
     if current_user.blank?
       fail CanCan::AccessDenied.new(I18n.t('devise.failure.unauthenticated'), :check_uploader, AudioRecording)
     elsif Access::Check.is_harvester?(current_user)
-        # auth check is skipped, so auth is checked manually here
-        uploader_id = params[:uploader_id].to_i
-        user_exists = User.exists?(uploader_id)
-        user = User.where(id: uploader_id).first
+      # auth check is skipped, so auth is checked manually here
+      uploader_id = params[:uploader_id].to_i
+      user_exists = User.exists?(uploader_id)
+      user = User.where(id: uploader_id).first
 
-        actual_level = Access::Level.project(user, @project)
-        requested_level = :writer
-        is_allowed = Access::Check.allowed?(requested_level, actual_level)
+      actual_level = Access::Level.project(user, @project)
+      requested_level = :writer
+      is_allowed = Access::Check.allowed?(requested_level, actual_level)
 
-        if !user_exists || !is_allowed
-          respond_error(
-              :forbidden,
-              'uploader does not exist or does not have access to this project',
-              {error_info: {
-                  project_id: @project.nil? ? nil : @project.id,
-                  user_id: user.nil? ? nil : user.id
-              }}
-          )
-        else
-          head :no_content
-        end
-      else
+      if !user_exists || !is_allowed
         respond_error(
             :forbidden,
-            'only harvester can check uploader permissions',
+            'uploader does not exist or does not have access to this project',
             {error_info: {
-                project_id: @project.nil? ? nil : @project.id
+                project_id: @project.nil? ? nil : @project.id,
+                user_id: user.nil? ? nil : user.id
             }}
         )
+      else
+        head :no_content
+      end
+    else
+      respond_error(
+          :forbidden,
+          'only harvester can check uploader permissions',
+          {error_info: {
+              project_id: @project.nil? ? nil : @project.id
+          }}
+      )
     end
   end
 

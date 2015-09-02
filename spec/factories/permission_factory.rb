@@ -31,7 +31,11 @@ FactoryGirl.define do
     end
 
     trait :writer do
-      level 'reader'
+      level 'writer'
+    end
+
+    trait :owner do
+      level 'owner'
     end
 
     after(:build) do |permission, evaluator|
@@ -42,7 +46,7 @@ FactoryGirl.define do
 
     factory :read_permission, traits: [:reader]
     factory :write_permission, traits: [:writer]
-
+    factory :own_permission, traits: [:owner]
   end
 
 end

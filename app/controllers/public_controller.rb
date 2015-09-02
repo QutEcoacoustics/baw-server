@@ -1,18 +1,18 @@
 class PublicController < ApplicationController
   skip_authorization_check only: [
-      :index, :status,
-      :website_status,
-      :credits,
-      :disclaimers,
-      :ethics_statement,
-      :data_upload,
+                               :index, :status,
+                               :website_status,
+                               :credits,
+                               :disclaimers,
+                               :ethics_statement,
+                               :data_upload,
 
-      :new_contact_us, :create_contact_us,
-      :new_bug_report, :create_bug_report,
-      :new_data_request, :create_data_request,
+                               :new_contact_us, :create_contact_us,
+                               :new_bug_report, :create_bug_report,
+                               :new_data_request, :create_data_request,
 
-      :cors_preflight
-  ]
+                               :cors_preflight
+                           ]
 
   # ensure that invalid CORS preflight requests get useful responses
   skip_before_action :verify_authenticity_token, only: :cors_preflight

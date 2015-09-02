@@ -22,7 +22,6 @@ class Bookmark < ActiveRecord::Base
     {
         valid_fields: [:id, :audio_recording_id, :name, :category, :description, :offset_seconds, :created_at, :creator_id],
         render_fields: [:id, :audio_recording_id, :name, :category, :description, :offset_seconds, :creator_id],
-        # :updated_at, :creator_id, :updater_id,
         text_fields: [:name, :description, :category],
         controller: :bookmarks,
         action: :filter,
@@ -31,7 +30,7 @@ class Bookmark < ActiveRecord::Base
             direction: :desc
         },
         valid_associations: [
-             {
+            {
                 join: AudioRecording,
                 on: AudioRecording.arel_table[:id].eq(Bookmark.arel_table[:audio_recording_id]),
                 available: true

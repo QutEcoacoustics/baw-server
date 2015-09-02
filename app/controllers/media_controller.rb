@@ -218,7 +218,7 @@ class MediaController < ApplicationController
       # NB: this branch should never execute, as poll_media should throw if no files are found
       # and other branches make existing_file.blank? impossible
       Rails.logger.debug "media_controller#create_media: No files matched, existing files: #{existing_files}, expected files: #{expected_files}"
-      
+
       msg1 = "Could not create #{media_category}"
       msg2 = "using #{processor}"
       msg3 = "from request #{generation_request}"

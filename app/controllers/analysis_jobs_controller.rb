@@ -35,10 +35,12 @@ class AnalysisJobsController < ApplicationController
   def create
     do_new_resource
     do_set_attributes(analysis_job_create_params)
-    do_authorize_instance
 
     # ensure analysis_job is valid by initialising status attributes
+    # must occur before authorization as CanCanCan ability checks for validity
     @analysis_job.update_status_attributes
+
+    do_authorize_instance
 
     if @analysis_job.save
 

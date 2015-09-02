@@ -240,9 +240,7 @@ module Access
         user = Access::Core.validate_user(user)
         levels = Access::Core.validate_levels(levels)
 
-        query = AnalysisJob
-                    .joins(saved_search: [:projects])
-                    .order(updated_at: :desc)
+        query = AnalysisJob.joins(:saved_search).order(updated_at: :desc)
         Access::Apply.restrictions(user, levels, query)
       end
 
@@ -254,8 +252,7 @@ module Access
         user = Access::Core.validate_user(user)
         levels = Access::Core.validate_levels(levels)
 
-        query = SavedSearch
-                    .joins(:projects)
+        query = SavedSearch.order(created_at: :desc)
 
         Access::Apply.restrictions(user, levels, query)
       end

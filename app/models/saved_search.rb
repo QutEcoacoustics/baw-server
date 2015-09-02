@@ -21,16 +21,23 @@ class SavedSearch < ActiveRecord::Base
             uniqueness: {case_sensitive: false, scope: :creator_id, message: 'should be unique per user'}
   validates :stored_query, presence: true
 
+  validate :has_projects
+
   def self.filter_settings
     {
         valid_fields: [:id, :name, :description, :stored_query, :created_at, :creator_id],
         render_fields: [:id, :name, :description, :stored_query, :created_at, :creator_id],
         text_fields: [:name, :description],
         custom_fields: lambda { |saved_search, user|
+
+          # do a query for the attributes that may not be in the projection
+          # instance or id can be nil
+          fresh_saved_search = (saved_search.nil? || saved_search.id.nil?) ? nil : SavedSearch.find(saved_search.id)
+
           saved_search_hash = {}
 
-          saved_search_hash[:project_ids] = SavedSearch.find(saved_search.id).projects.pluck(:id)
-          saved_search_hash[:analysis_job_ids] = SavedSearch.find(saved_search.id).analysis_jobs.pluck(:id)
+          saved_search_hash[:project_ids] = fresh_saved_search.nil? ? nil : fresh_saved_search.projects.pluck(:id).flatten
+          saved_search_hash[:analysis_job_ids] = fresh_saved_search.nil? ? nil : fresh_saved_search.analysis_jobs.pluck(:id).flatten
 
           [saved_search, saved_search_hash]
         },
@@ -166,6 +173,10 @@ WHERE EXISTS (
       query = query.where(condition)
     end
     query
+  end
+
+  def has_projects
+
   end
 
 end

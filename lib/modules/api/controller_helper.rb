@@ -140,7 +140,7 @@ module Api
       params.permit!
     end
 
-    # Replacement methods for CanCanCan load_and_authorize_resource.
+    # Replacement methods for CanCanCan authorize_resource, load_resource, load_and_authorize_resource.
 
     def do_set_attributes(custom_params = nil)
       # see https://github.com/CanCanCommunity/cancancan/wiki/Controller-Authorization-Example
@@ -163,12 +163,12 @@ module Api
       set_resource_plural(resource_class.accessible_by(current_ability))
     end
 
-    def do_authorize_instance
-      authorize! action_name.to_sym, get_resource
+    def do_authorize_instance(custom_action_name = nil, custom_resource = nil)
+      authorize! (custom_action_name ||action_name).to_sym, (custom_resource || get_resource)
     end
 
-    def do_authorize_class
-      authorize! action_name.to_sym, resource_class
+    def do_authorize_class(custom_action_name = nil, custom_class = nil)
+      authorize! (custom_action_name || action_name).to_sym, (custom_class || resource_class)
     end
 
     def do_authorise_instance_or_class

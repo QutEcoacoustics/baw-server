@@ -7,7 +7,7 @@ class ProjectsController < ApplicationController
 
     respond_to do |format|
       format.html {
-        @projects =  Access::Query.projects_accessible(current_user).includes(:creator).references(:creator)
+        @projects = Access::Query.projects_accessible(current_user).includes(:creator).references(:creator)
       }
       format.json {
         @projects, opts = Settings.api_response.response_advanced(
@@ -169,7 +169,7 @@ ORDER BY project_count ASC, s.name ASC")
     end
   end
 
-    # DELETE /projects/:id
+  # DELETE /projects/:id
   def destroy
     do_load_resource
     do_authorize_instance

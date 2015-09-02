@@ -55,27 +55,35 @@ class AnalysisJob < ActiveRecord::Base
         render_fields: [:id, :name, :description, :script_id, :saved_search_id, :created_at, :creator_id, :updated_at, :updater_id],
         text_fields: [],
         custom_fields: lambda { |analysis_job, user|
+
+          # do a query for the attributes that may not be in the projection
+          fresh_analysis_job = AnalysisJob.find(analysis_job.id)
+
           analysis_job_hash = {}
 
           saved_search =
               SavedSearch
-                  .where(id: analysis_job.saved_search_id)
+                  .where(id: fresh_analysis_job.saved_search_id)
                   .select(*SavedSearch.filter_settings[:render_fields])
                   .first
 
           analysis_job_hash[:saved_search] = saved_search
-          analysis_job_hash[:saved_search_id] = saved_search.nil? ? nil : saved_search.id
 
           script =
               Script
-                  .where(id: analysis_job.script_id)
+                  .where(id: fresh_analysis_job.script_id)
                   .select(*Script.filter_settings[:render_fields])
                   .first
 
           analysis_job_hash[:script] = script
-          analysis_job_hash[:script_id] = script.nil? ? nil : script.id
 
           [analysis_job, analysis_job_hash]
+        },
+        new_spec_fields: lambda { |user|
+          {
+              annotation_name: nil,
+              custom_settings: nil
+          }
         },
         controller: :audio_events,
         action: :filter,

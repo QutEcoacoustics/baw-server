@@ -71,10 +71,10 @@ class Ability
       to_analysis_job(user)
       to_saved_search(user)
       to_tag
+      to_tagging(user)
       to_user(user)
 
       # Script: only admin can do anything with Script
-      # Tagging:uses permissions from other models
 
     elsif Access::Check.is_guest?(user)
       # guest cannot do anything for now
@@ -89,7 +89,7 @@ class Ability
 
   def check_model(model)
     fail ArgumentError, 'Must have an instance of the model.' if model.nil?
-    fail CustomErrors::UnprocessableEntityError.new('Model was invalid.', model.errors) if model.invalid?
+    #fail CustomErrors::UnprocessableEntityError.new('Model was invalid.', model.errors) if model.invalid?
   end
 
   def for_admin
@@ -126,13 +126,10 @@ class Ability
     # :show, :create, :delete are only used by json api
     # :edit and :update are done via project instead
 
-    can [:show, :new, :create, :destroy], Permission do |permission|
+    can [:index, :show, :new, :create, :destroy], Permission do |permission|
       check_model(permission)
       Access::Check.can?(user, :writer, permission.project)
     end
-
-    # actions any logged in user can access
-    can [:index, :filter], Permission
   end
 
   def to_site(user)
@@ -226,11 +223,11 @@ class Ability
   end
 
   def to_analysis_job(user)
-    # must have read permission or higher on all saved_search projects to create analysis job
+    # must have read permission or higher on all saved_search.projects to create analysis job
     can [:show, :create], AnalysisJob do |analysis_job|
       check_model(analysis_job)
       projects = analysis_job.saved_search.projects
-      fail CustomErrors::UnprocessableEntityError.new('Analysis Job must have at least one project.') if projects.size < 1
+      fail CustomErrors::BadRequestError.new('Analysis Job must have at least one project.') if projects.size < 1
 
       Access::Check.can_all?(user, :reader, projects)
     end
@@ -249,7 +246,7 @@ class Ability
     can [:show, :create], SavedSearch do |saved_search|
       check_model(saved_search)
       projects = saved_search.projects
-      fail CustomErrors::UnprocessableEntityError.new('Saved Search must have at least one project.') if projects.size < 1
+      fail CustomErrors::BadRequestError.new('Saved Search must have at least one project.') if projects.size < 1
 
       Access::Check.can_all?(user, :reader, projects)
     end
@@ -267,6 +264,23 @@ class Ability
 
     # actions any logged in user can access
     can [:index, :new, :create, :show, :filter], Tag
+  end
+
+  def to_tagging(user)
+    # must have read permission or higher to show
+    can [:show], Tagging do |tagging|
+      check_model(tagging)
+      Access::Check.can_any?(user, :reader, tagging.audio_event.audio_recording.site.projects)
+    end
+
+    # must have write permission or higher to create, update, destroy
+    can [:create, :update, :destroy], Tagging do |tagging|
+      check_model(tagging)
+      Access::Check.can_any?(user, :writer, tagging.audio_event.audio_recording.site.projects)
+    end
+
+    # actions any logged in user can access
+    can [:index, :user_index, :new, :filter], Tagging
   end
 
   def to_user(user)

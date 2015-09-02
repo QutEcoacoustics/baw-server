@@ -221,7 +221,7 @@ class AnalysisController < ApplicationController
     analysis_base_paths = BawWorkers::Config.analysis_cache_helper.existing_dirs
     matching_base_path = analysis_base_paths.select { |abp| path.start_with?(abp) }
     if matching_base_path.size == 1
-      path_without_base = path.gsub(/#{matching_base_path[0].gsub('/','\/')}\/[^\/]+\/[^\/]+\/[^\/]+\/?/, '')
+      path_without_base = path.gsub(/#{matching_base_path[0].gsub('/', '\/')}\/[^\/]+\/[^\/]+\/[^\/]+\/?/, '')
       path_without_base.blank? ? '/' : path_without_base
     else
       fail CustomErrors::UnprocessableEntityError, 'Incorrect analysis base path.'

@@ -279,7 +279,7 @@ Rails.application.routes.draw do
   end
 
   # taggings made by a user
-  get '/taggings/user/:user_id/tags' => 'taggings#user_index', as: :user_taggings, defaults: {format: 'json'}
+  get '/user_accounts/:user_id/taggings' => 'taggings#user_index', as: :user_taggings, defaults: {format: 'json'}
 
   # audio event csv download routes
   get '/projects/:project_id/audio_events/download' => 'audio_events#download', defaults: {format: 'csv'}, as: :download_project_audio_events

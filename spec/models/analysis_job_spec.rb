@@ -42,7 +42,9 @@ describe AnalysisJob, type: :model do
   end
 
   it 'is invalid without a script' do
-    expect(build(:analysis_job, script_id: nil)).not_to be_valid
+    aj = build(:analysis_job, script_id: nil)
+    aj.script = nil
+    expect(aj).not_to be_valid
   end
 
   it 'is invalid without a saved_search' do

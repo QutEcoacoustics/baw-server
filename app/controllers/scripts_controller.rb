@@ -1,17 +1,14 @@
 class ScriptsController < ApplicationController
   include Api::ControllerHelper
 
-  load_and_authorize_resource
-
   # GET /scripts
-  # GET /scripts.json
   def index
+    do_authorize_class
+
     respond_to do |format|
-      format.html {
-        @scripts = get_scripts
-      }
+      format.html { @scripts = get_scripts}
       format.json {
-        @saved_searches, opts = Settings.api_response.response_advanced(
+        @scripts, opts = Settings.api_response.response_advanced(
             api_filter_params,
             get_scripts,
             Script,
@@ -22,9 +19,11 @@ class ScriptsController < ApplicationController
     end
   end
 
-  # GET /scripts/1
-  # GET /scripts/1.json
+  # GET /scripts/:id
   def show
+    do_load_resource
+    do_authorize_instance
+
     respond_to do |format|
       format.html
       format.json { respond_show }
@@ -33,24 +32,33 @@ class ScriptsController < ApplicationController
 
 
   # GET /scripts/new
-  # GET /scripts/new.json
   def new
+    do_new_resource
+    do_set_attributes
+    do_authorize_instance
+
     respond_to do |format|
       format.html
       format.json { respond_show }
     end
   end
 
-  # GET /scripts/1/edit
+  # GET /scripts/:id/edit
   def edit
+    do_load_resource
+    do_authorize_instance
+
     unless @script.is_latest_version?
       redirect_to edit_script_path(@script.latest_version), notice: 'You have been redirected to update the latest version of this Script.'
     end
   end
 
   # POST /scripts
-  # POST /scripts.json
   def create
+    do_new_resource
+    do_set_attributes(script_params)
+    do_authorize_instance
+
     respond_to do |format|
       if @script.save
         format.html { redirect_to @script, notice: 'Script was successfully created.' }
@@ -62,9 +70,11 @@ class ScriptsController < ApplicationController
     end
   end
 
-  # POST /scripts/1
-  # POST /scripts/1.json
+  # POST /scripts/:id
   def update
+    do_load_resource
+    do_authorize_instance
+
     unless @script.is_latest_version?
       respond_to do |format|
         format.html { redirect_to edit_script_path(@script.latest_version), notice: 'You have been redirected to update the latest version of this Script.' }
@@ -93,10 +103,10 @@ class ScriptsController < ApplicationController
     end
   end
 
-  # POST /scripts/filter.json
-  # GET /scripts/filter.json
+  # GET|POST /scripts/filter
   def filter
-    authorize! :filter, Script
+    do_authorize_class
+
     filter_response, opts = Settings.api_response.response_advanced(
         api_filter_params,
         get_scripts,

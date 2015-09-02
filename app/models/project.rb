@@ -10,7 +10,7 @@ class Project < ActiveRecord::Base
   has_many :permissions, inverse_of: :project
   has_many :readers, -> { where("permissions.level = 'reader'").uniq }, through: :permissions, source: :user
   has_many :writers, -> { where("permissions.level = 'writer'").uniq }, through: :permissions, source: :user
-  has_many :owners,  -> { where("permissions.level = 'owner'").uniq }, through: :permissions, source: :user
+  has_many :owners, -> { where("permissions.level = 'owner'").uniq }, through: :permissions, source: :user
   has_and_belongs_to_many :sites, -> { uniq }
   has_and_belongs_to_many :saved_searches, inverse_of: :projects
   has_many :analysis_jobs, through: :saved_searches
@@ -45,10 +45,11 @@ class Project < ActiveRecord::Base
         custom_fields: lambda { |project, user|
 
           # do a query for the attributes that may not be in the projection
-          fresh_project = Project.find(project.id)
+          # instance or id can be nil
+          fresh_project = (project.nil? || project.id.nil?) ? nil : Project.find(project.id)
 
           project_hash = {}
-          project_hash[:site_ids] = fresh_project.sites.pluck(:id)
+          project_hash[:site_ids] = fresh_project.nil? ? nil : fresh_project.sites.pluck(:id).flatten
 
           [project, project_hash]
         },
