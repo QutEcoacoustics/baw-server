@@ -200,8 +200,10 @@ module Access
         user = Access::Core.validate_user(user)
         levels = Access::Core.validate_levels(levels)
 
-        # need to do an exists query for audio_event to tags many to many table
-        fail NotImplementedError
+        query = Tagging
+                    .joins(audio_event: [audio_recording: [:site]])
+                    .order(updated_at: :desc)
+        Access::Apply.restrictions(user, levels, query)
       end
 
       # Get all taggings of an audio event
@@ -215,21 +217,6 @@ module Access
 
         query = Access::Query.taggings(user, levels)
         query.where(audio_event_id: audio_event.id)
-      end
-
-      # Get all tags of an audio event
-      # for which this user has this user has these access levels.
-      # @param [AudioEvent] audio_event
-      # @param [User] user
-      # @param [Symbol, Array<Symbol>] levels
-      # @return [ActiveRecord::Relation] tags
-      def audio_event_tags(audio_event, user, levels = Access::Core.levels_allow)
-        audio_event = Access::Core.validate_audio_event(audio_event)
-        user = Access::Core.validate_user(user)
-        levels = Access::Core.validate_levels(levels)
-
-        # need to do an exists query for audio_event to tags many to many table
-        fail NotImplementedError
       end
 
       # Get all analysis jobs for which this user has this user has these access levels.

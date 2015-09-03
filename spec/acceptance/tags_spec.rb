@@ -46,7 +46,7 @@ resource 'Tags' do
     parameter :audio_event_id, 'Requested audio event ID (in path/route)', required: true
 
     let(:authentication_token) { writer_token }
-    standard_request_options(:get, 'LIST for audio_event (as writer)', :ok, {expected_json_path: '0/is_taxanomic'})
+    standard_request_options(:get, 'LIST for audio_event (as writer)', :ok, {expected_json_path: 'data/0/is_taxanomic', data_item_count: 1})
   end
 
   get '/audio_recordings/:audio_recording_id/audio_events/:audio_event_id/tags' do
@@ -55,7 +55,7 @@ resource 'Tags' do
     parameter :audio_event_id, 'Requested audio event ID (in path/route)', required: true
 
     let(:authentication_token) { reader_token }
-    standard_request_options(:get, 'LIST for audio_event (as reader)', :ok, {expected_json_path: '0/is_taxanomic'})
+    standard_request_options(:get, 'LIST for audio_event (as reader)', :ok, {expected_json_path: 'data/0/is_taxanomic', data_item_count: 1})
   end
 
   get '/audio_recordings/:audio_recording_id/audio_events/:audio_event_id/tags' do

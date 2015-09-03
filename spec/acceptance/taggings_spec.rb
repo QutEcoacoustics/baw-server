@@ -107,7 +107,7 @@ resource 'Taggings' do
     parameter :user_id, 'Get taggings for user id (in path/route)', required: true
 
     let(:authentication_token) { reader_token }
-    standard_request('LIST (as reader, user taggings)', 200, 'data/0/tag/is_taxanomic', true)
+    standard_request('LIST (as reader, user taggings)', 200, 'data/0/tag_id', true)
   end
 
   ################################
@@ -154,7 +154,7 @@ resource 'Taggings' do
     parameter :id, 'Requested tag ID (in path/route)', required: true
 
     let(:authentication_token) { writer_token }
-    standard_request('SHOW (as writer, with shallow path)', 200, 'tag_id', true)
+    standard_request('SHOW (as writer, with shallow path)', 200, 'data/tag_id', true)
   end
 
   get '/audio_recordings/:audio_recording_id/audio_events/:audio_event_id/taggings/:id' do
@@ -165,7 +165,7 @@ resource 'Taggings' do
     parameter :id, 'Requested tag ID (in path/route)', required: true
 
     let(:authentication_token) { reader_token }
-    standard_request('SHOW (as reader, with shallow path)', 200, 'tag_id', true)
+    standard_request('SHOW (as reader, with shallow path)', 200, 'data/tag_id', true)
   end
 
   get '/audio_recordings/:audio_recording_id/audio_events/:audio_event_id/taggings/:id' do
@@ -258,7 +258,7 @@ resource 'Taggings' do
 
 
     let(:authentication_token) { writer_token }
-    standard_request('CREATE (with tag_id as writer, with shallow path)', 201, 'tag_id', true)
+    standard_request('CREATE (with tag_id as writer, with shallow path)', 201, 'data/tag_id', true)
   end
 
   post '/audio_recordings/:audio_recording_id/audio_events/:audio_event_id/taggings' do
@@ -270,7 +270,7 @@ resource 'Taggings' do
     let(:raw_post) { {'tagging' => post_nested_attributes}.to_json }
 
     let(:authentication_token) { writer_token }
-    standard_request('CREATE (with tag_attributes as writer, with shallow path)', 201, 'tag_id', true)
+    standard_request('CREATE (with tag_attributes as writer, with shallow path)', 201, 'data/tag_id', true)
   end
 
   post '/audio_recordings/:audio_recording_id/audio_events/:audio_event_id/taggings' do
@@ -307,7 +307,7 @@ resource 'Taggings' do
     #  status.should == 200
     #  response_body.should have_json_path('2/is_taxanomic')
     #end
-    standard_request('CREATE (with tag_attributes but existing tag text as writer, with shallow path)', 201, 'tag_id', true)
+    standard_request('CREATE (with tag_attributes but existing tag text as writer, with shallow path)', 201, 'data/tag_id', true)
   end
 
 end

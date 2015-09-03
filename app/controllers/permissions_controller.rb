@@ -5,6 +5,7 @@ class PermissionsController < ApplicationController
   def index
     do_authorize_class
     get_project
+    do_authorize_instance(:update_permissions, @project)
 
     respond_to do |format|
       format.html

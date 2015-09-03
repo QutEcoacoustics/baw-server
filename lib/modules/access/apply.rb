@@ -38,10 +38,12 @@ module Access
           model_name = query.model.model_name.name
           if model_name == 'Project'
             project_restrictions(user, levels, query)
-          elsif %w(Site AudioRecording Bookmark AudioEvent AudioEventComment).include?(model_name)
+          elsif %w(Site AudioRecording Bookmark AudioEvent AudioEventComment Tagging).include?(model_name)
             site_restrictions(user, levels, query)
           elsif %w(SavedSearch AnalysisJob).include?(model_name)
             saved_search_restrictions(user, levels, query)
+          # elsif %w(Tagging).include?(model_name)
+          #   audio_event_restriction(user, levels, query)
           else
             fail NotImplementedError, "Restrictions are not implemented for #{model_name}."
           end
@@ -347,6 +349,10 @@ WHERE
         saved_search_exist = saved_search_exist.not unless exists
 
         query.where(saved_search_exist)
+      end
+
+      def audio_event_restriction(user, levels, query)
+
       end
 
       # Is exists negated? and which levels should be used to search.

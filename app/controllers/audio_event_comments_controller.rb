@@ -5,6 +5,7 @@ class AudioEventCommentsController < ApplicationController
   def index
     do_authorize_class
     get_audio_event
+    do_authorize_instance(:show, @audio_event)
 
     @audio_event_comments, opts = Settings.api_response.response_advanced(
         api_filter_params,
