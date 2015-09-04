@@ -12,6 +12,7 @@
     - added directory listing to analysis endpoint [#208](https://github.com/QutBioacoustics/baw-server/issues/208)
     - major overhaul of controller model loading and authorization
     - updated all rspec tests to use current method of checking json responses
+    - all relevant endpoints now use the [API spec](https://github.com/QutBioacoustics/baw-server/wiki/Rails-API-Spec)
 
 ## [Release 0.17.1](https://github.com/QutBioacoustics/baw-server/releases/tag/0.17.1) (2015-08-19)
 
