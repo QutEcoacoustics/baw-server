@@ -209,6 +209,21 @@ class AudioRecording < ActiveRecord::Base
                         :sample_rate_hertz, :channels, :bit_rate_bps, :media_type,
                         :data_length_bytes, :status, :created_at, :updated_at],
         text_fields: [:media_type, :status],
+        new_spec_fields: lambda {|user|
+          {
+              site_id: nil,
+              uploader_id: nil,
+              sample_rate_hertz: nil,
+              media_type: nil,
+              recorded_date: nil,
+              bit_rate_bps: nil,
+              data_length_bytes: nil,
+              channels: nil,
+              duration_seconds: nil,
+              file_hash: nil,
+              original_file_name: nil
+          }
+        },
         controller: :audio_recordings,
         action: :filter,
         defaults: {

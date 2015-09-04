@@ -384,7 +384,7 @@ resource 'AudioRecordings' do
 
     let(:authentication_token) { reader_token }
 
-    standard_request('LIST (as reader)', 200, '0/bit_rate_bps', true)
+    standard_request_options(:get, 'LIST (as reader)', :ok,{expected_json_path: 'data/0/bit_rate_bps', data_item_count: 1})
 
   end
 
@@ -394,7 +394,7 @@ resource 'AudioRecordings' do
 
     let(:authentication_token) { writer_token }
 
-    standard_request('LIST (as writer)', 200, '0/bit_rate_bps', true)
+    standard_request_options(:get, 'LIST (as writer)', :ok,{expected_json_path: 'data/0/bit_rate_bps', data_item_count: 1})
   end
 
   get '/audio_recordings' do
@@ -402,7 +402,7 @@ resource 'AudioRecordings' do
     parameter :site_id, 'Requested site ID (in path/route)', required: true
 
     let(:authentication_token) { "Token token=\"INVALID\"" }
-    standard_request('LIST (with invalid token)', 401, get_json_error_path(:sign_up), true)
+    standard_request_options(:get, 'LIST (with invalid token)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
   end
 
   ################################
@@ -415,7 +415,7 @@ resource 'AudioRecordings' do
 
     let(:authentication_token) { reader_token }
 
-    standard_request('SHOW (as reader)', 200, 'bit_rate_bps', true)
+    standard_request_options(:get, 'SHOW (as reader)', :ok,{expected_json_path: 'data/bit_rate_bps'})
   end
 
   get '/audio_recordings/:id' do
@@ -425,7 +425,7 @@ resource 'AudioRecordings' do
 
     let(:authentication_token) { writer_token }
 
-    standard_request('SHOW (as writer)', 200, 'bit_rate_bps', true)
+    standard_request_options(:get, 'SHOW (as writer)', :ok, {expected_json_path: 'data/bit_rate_bps'})
 
   end
 
@@ -435,7 +435,7 @@ resource 'AudioRecordings' do
 
     let(:authentication_token) { no_access_token }
 
-    standard_request('SHOW (as no access, with shallow path)', 403, get_json_error_path(:permissions), true)
+    standard_request_options(:get, 'SHOW (as no access, with shallow path)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
   end
 
   get '/audio_recordings/:id' do
@@ -444,7 +444,7 @@ resource 'AudioRecordings' do
 
     let(:authentication_token) { reader_token }
 
-    standard_request('SHOW (as reader, with shallow path)', 200, 'bit_rate_bps', true)
+    standard_request_options(:get, 'SHOW (as reader, with shallow path)', :ok, {expected_json_path: 'data/bit_rate_bps'})
   end
 
   get '/audio_recordings/:id' do
@@ -453,7 +453,7 @@ resource 'AudioRecordings' do
 
     let(:authentication_token) { writer_token }
 
-    standard_request('SHOW (as writer, with shallow path)', 200, 'bit_rate_bps', true)
+    standard_request_options(:get, 'SHOW (as writer, with shallow path)', :ok, {expected_json_path: 'data/bit_rate_bps'})
 
   end
 
@@ -465,7 +465,7 @@ resource 'AudioRecordings' do
 
     standard_request_options(:get, 'SHOW (as writer, with shallow path testing quoted numbers)', :ok,
                              {
-                                 expected_json_path: 'duration_seconds',
+                                 expected_json_path: 'data/duration_seconds',
                                  response_body_content: 'duration_seconds":60000.0'
                              })
 
@@ -478,7 +478,7 @@ resource 'AudioRecordings' do
 
     let(:authentication_token) { harvester_token }
 
-    standard_request('NEW (as harvester)', 200, 'bit_rate_bps', true)
+    standard_request_options(:get, 'NEW (as harvester)', :ok,{expected_json_path: 'data/bit_rate_bps'})
 
   end
 
@@ -486,7 +486,7 @@ resource 'AudioRecordings' do
 
     let(:authentication_token) { writer_token }
 
-    standard_request('NEW (as reader, for api)', 200, 'bit_rate_bps', true)
+    standard_request_options(:get, 'NEW (as reader, for api)', :ok,{expected_json_path: 'data/bit_rate_bps'})
 
   end
 

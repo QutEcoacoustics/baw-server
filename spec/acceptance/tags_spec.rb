@@ -71,7 +71,6 @@ resource 'Tags' do
     let(:authentication_token) { confirmed_token }
 
     # should list 2 tags in the list
-    #standard_request('LIST (as confirmed user)', 200, '0/is_taxanomic', true)
     example 'LIST ALL (as confirmed user) - 200', :document => true do
       # create orphaned tags
       2.times do |i|

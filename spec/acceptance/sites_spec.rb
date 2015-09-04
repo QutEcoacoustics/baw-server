@@ -85,7 +85,7 @@ resource 'Sites' do
     sites_project_id_param
     let(:project_id) { @project.id }
     let(:authentication_token) { other_token }
-    standard_request_options(:get, 'INDEX (as other)', :ok, {response_body_content: ['"total":0,', '"data":[]']})
+    standard_request_options(:get, 'INDEX (as other)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
   end
 
   get '/projects/:project_id/sites' do

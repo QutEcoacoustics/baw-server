@@ -101,7 +101,7 @@ resource 'AudioEvents' do
 
     let(:authentication_token) { writer_token }
 
-    standard_request('LIST (as writer)', 200, 'data/0/start_time_seconds', true)
+    standard_request_options(:get, 'LIST (as writer)', :ok, {expected_json_path: 'data/0/start_time_seconds', data_item_count: 1})
 
   end
 
@@ -113,7 +113,7 @@ resource 'AudioEvents' do
 
     let(:authentication_token) { reader_token }
 
-    standard_request('LIST (as reader)', 200, 'data/0/start_time_seconds', true)
+    standard_request_options(:get ,'LIST (as reader)', :ok,{expected_json_path: 'data/0/start_time_seconds', data_item_count: 1})
 
   end
 
@@ -126,7 +126,7 @@ resource 'AudioEvents' do
 
     let(:authentication_token) { reader_token }
 
-    standard_request('LIST (as reader with shallow path)', 200, 'data/0/start_time_seconds', true)
+    standard_request_options(:get ,'LIST (as reader with shallow path)', :ok,{expected_json_path: 'data/0/start_time_seconds', data_item_count: 1})
 
   end
 
@@ -137,7 +137,7 @@ resource 'AudioEvents' do
 
     let(:authentication_token) { unconfirmed_token }
 
-    standard_request('LIST (as unconfirmed user)', 403, nil, true)
+    standard_request_options(:get ,'LIST (as unconfirmed user)', :forbidden, {expected_json_path: get_json_error_path(:confirm)})
 
   end
 
@@ -171,7 +171,7 @@ resource 'AudioEvents' do
 
     let(:authentication_token) { writer_token }
 
-    standard_request('SHOW (as writer)', 200, 'data/start_time_seconds', true)
+    standard_request_options(:get ,'SHOW (as writer)', :ok,{expected_json_path: 'data/start_time_seconds'})
   end
 
   get '/audio_recordings/:audio_recording_id/audio_events/:id' do
@@ -180,7 +180,7 @@ resource 'AudioEvents' do
 
     let(:authentication_token) { reader_token }
 
-    standard_request('SHOW (as reader)', 200, 'data/start_time_seconds', true)
+    standard_request_options(:get ,'SHOW (as reader)', :ok,{expected_json_path: 'data/start_time_seconds'})
   end
 
   get '/audio_recordings/:audio_recording_id/audio_events/:id' do
@@ -189,7 +189,7 @@ resource 'AudioEvents' do
 
     let(:authentication_token) { reader_token }
 
-    standard_request('SHOW (as reader with shallow path)', 200, 'data/start_time_seconds', true)
+    standard_request_options(:get ,'SHOW (as reader with shallow path)', :ok,{expected_json_path: 'data/start_time_seconds'})
   end
 
   get '/audio_recordings/:audio_recording_id/audio_events/:id' do
@@ -207,7 +207,8 @@ resource 'AudioEvents' do
       @audio_event = FactoryGirl.create(:audio_event, audio_recording_id: @other_audio_recording_id, start_time_seconds: 5, end_time_seconds: 6, is_reference: true)
     end
 
-    standard_request('SHOW (as reader with shallow path for reference audio event with no access to audio recording)', 200, 'data/start_time_seconds', true)
+    standard_request_options(:get ,'SHOW (as reader with shallow path for reference audio event with no access to audio recording)',
+                             :ok,{expected_json_path: 'data/start_time_seconds'})
   end
 
   get '/audio_recordings/:audio_recording_id/audio_events/:id' do
@@ -216,7 +217,7 @@ resource 'AudioEvents' do
 
     let(:authentication_token) { unconfirmed_token }
 
-    standard_request('SHOW (as unconfirmed user)', 403, nil, true)
+    standard_request_options(:get ,'SHOW (as unconfirmed user)', :forbidden, {expected_json_path: get_json_error_path(:confirm)})
   end
 
   get '/audio_recordings/:audio_recording_id/audio_events/:id' do
@@ -250,9 +251,9 @@ resource 'AudioEvents' do
 
     let(:raw_post) { {'audio_event' => post_attributes}.to_json }
 
-    let(:authentication_token) { writer_token }
+    let(:authentication_token) { admin_token }
 
-    standard_request('CREATE (as writer)', 201, nil, true)
+    standard_request_options(:post ,'CREATE (as admin)', :created, {expected_json_path: 'data/is_reference'})
 
   end
 
@@ -269,7 +270,7 @@ resource 'AudioEvents' do
 
     let(:authentication_token) { writer_token }
 
-    standard_request('CREATE (as writer with shallow path)', 201, nil, true)
+    standard_request_options(:post ,'CREATE (as writer)', :created, {expected_json_path: 'data/is_reference'})
 
   end
 
@@ -286,7 +287,7 @@ resource 'AudioEvents' do
 
     let(:authentication_token) { reader_token }
 
-    standard_request('CREATE (as reader)', 403, nil, true)
+    standard_request_options(:post ,'CREATE (as reader)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
 
   end
 
@@ -303,7 +304,7 @@ resource 'AudioEvents' do
 
     let(:authentication_token) { unconfirmed_token }
 
-    standard_request('CREATE (as unconfirmed user)', 403, nil, true)
+    standard_request_options(:post ,'CREATE (as unconfirmed user)', :forbidden, {expected_json_path: get_json_error_path(:confirm)})
 
   end
 
@@ -320,7 +321,7 @@ resource 'AudioEvents' do
     let(:raw_post) { {'audio_event' => post_attributes.merge(post_nested_attributes)}.to_json }
     let(:authentication_token) { writer_token }
 
-    #standard_request('CREATE (with tags_attributes (one existing, one new) as writer)', 201, nil, true)
+    #standard_request_options(: ,'CREATE (with tags_attributes (one existing, one new) as writer)', 201, nil, true)
     example 'CREATE (with tags_attributes (one existing tag text, one new) as writer) - 201', :document => true do
       explanation 'this should create an audiorecording, including two taggings, one with the newly created tag and one with an existing tag'
       tag_count = Tag.count
@@ -366,7 +367,7 @@ resource 'AudioEvents' do
       @tag2 = FactoryGirl.create(:tag)
     end
 
-    #standard_request('CREATE (with tags_attributes (one existing, one new) as writer)', 201, nil, true)
+    #standard_request_options(: ,'CREATE (with tags_attributes (one existing, one new) as writer)', 201, nil, true)
     example 'CREATE (with existing tag_ids as writer) - 201', :document => true do
       tag_count = Tag.count
       request = do_request
@@ -409,7 +410,7 @@ resource 'AudioEvents' do
 
     let(:authentication_token) { writer_token }
 
-    standard_request('UPDATE (as writer)', 200, nil, true)
+    standard_request_options(:put ,'UPDATE (as writer)', :ok, {expected_json_path: 'data/taggings/0/audio_event_id'})
   end
 
   put '/audio_recordings/:audio_recording_id/audio_events/:id' do
@@ -426,7 +427,7 @@ resource 'AudioEvents' do
 
     let(:authentication_token) { writer_token }
 
-    standard_request('UPDATE (as writer with shallow path)', 200, nil, true)
+    standard_request_options(:put ,'UPDATE (as writer with shallow path)', :ok, {expected_json_path: 'data/taggings/0/audio_event_id'})
   end
 
   put '/audio_recordings/:audio_recording_id/audio_events/:id' do
@@ -443,7 +444,7 @@ resource 'AudioEvents' do
 
     let(:authentication_token) { reader_token }
 
-    standard_request('UPDATE (as reader)', 403, nil, true)
+    standard_request_options(:put ,'UPDATE (as reader)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
   end
 
   put '/audio_recordings/:audio_recording_id/audio_events/:id' do
@@ -460,7 +461,7 @@ resource 'AudioEvents' do
 
     let(:authentication_token) { unconfirmed_token }
 
-    standard_request('UPDATE (as unconfirmed user)', 403, nil, true)
+    standard_request_options(:put ,'UPDATE (as unconfirmed user)', :forbidden, {expected_json_path: get_json_error_path(:confirm)})
   end
 
   ################################

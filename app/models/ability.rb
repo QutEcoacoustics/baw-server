@@ -160,6 +160,7 @@ class Ability
     # See permissions for harvester
     # Only admin and harvester can :create, :check_uploader, :update_status, :update
     # permissions are also checked in actions
+    # see also for_harvester
 
     # must have read permission or higher to view audio recording
     can [:show], AudioRecording do |audio_recording|

@@ -5,6 +5,7 @@ class SitesController < ApplicationController
   def index
     do_authorize_class
     get_project
+    do_authorize_instance(:show, @project)
 
     respond_to do |format|
       #format.html # index.html.erb
