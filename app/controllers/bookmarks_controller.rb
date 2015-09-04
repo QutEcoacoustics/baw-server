@@ -1,9 +1,10 @@
 class BookmarksController < ApplicationController
   include Api::ControllerHelper
 
-  load_and_authorize_resource
-
+  # GET /bookmarks
   def index
+    do_authorize_class
+
     @bookmarks, opts = Settings.api_response.response_advanced(
         api_filter_params,
         Access::Query.bookmarks_modified(current_user),
@@ -13,15 +14,29 @@ class BookmarksController < ApplicationController
     respond_index(opts)
   end
 
+  # GET /bookmarks/:id
   def show
+    do_load_resource
+    do_authorize_instance
+
     respond_show
   end
 
+  # GET /bookmarks/new
   def new
+    do_new_resource
+    do_set_attributes
+    do_authorize_instance
+
     respond_show
   end
 
+  # POST /bookmarks
   def create
+    do_new_resource
+    do_set_attributes(bookmark_params)
+    do_authorize_instance
+
     if @bookmark.save
       respond_create_success
     else
@@ -29,7 +44,11 @@ class BookmarksController < ApplicationController
     end
   end
 
+  # PUT|PATCH /bookmarks/:id
   def update
+    do_load_resource
+    do_authorize_instance
+
     if @bookmark.update_attributes(bookmark_params)
       respond_show
     else
@@ -37,13 +56,19 @@ class BookmarksController < ApplicationController
     end
   end
 
+  # DELETE /bookmarks/:id
   def destroy
+    do_load_resource
+    do_authorize_instance
+
     @bookmark.destroy
     respond_destroy
   end
 
+  # GET|POST /bookmarks/filter
   def filter
-    authorize! :filter, Bookmark
+    do_authorize_class
+
     filter_response, opts = Settings.api_response.response_advanced(
         api_filter_params,
         Access::Query.bookmarks_modified(current_user),

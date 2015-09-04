@@ -46,7 +46,7 @@ resource 'Tags' do
     parameter :audio_event_id, 'Requested audio event ID (in path/route)', required: true
 
     let(:authentication_token) { writer_token }
-    standard_request_options(:get, 'LIST for audio_event (as writer)', :ok, {expected_json_path: '0/is_taxanomic'})
+    standard_request_options(:get, 'LIST for audio_event (as writer)', :ok, {expected_json_path: 'data/0/is_taxanomic', data_item_count: 1})
   end
 
   get '/audio_recordings/:audio_recording_id/audio_events/:audio_event_id/tags' do
@@ -55,7 +55,7 @@ resource 'Tags' do
     parameter :audio_event_id, 'Requested audio event ID (in path/route)', required: true
 
     let(:authentication_token) { reader_token }
-    standard_request_options(:get, 'LIST for audio_event (as reader)', :ok, {expected_json_path: '0/is_taxanomic'})
+    standard_request_options(:get, 'LIST for audio_event (as reader)', :ok, {expected_json_path: 'data/0/is_taxanomic', data_item_count: 1})
   end
 
   get '/audio_recordings/:audio_recording_id/audio_events/:audio_event_id/tags' do
@@ -71,7 +71,6 @@ resource 'Tags' do
     let(:authentication_token) { confirmed_token }
 
     # should list 2 tags in the list
-    #standard_request('LIST (as confirmed user)', 200, '0/is_taxanomic', true)
     example 'LIST ALL (as confirmed user) - 200', :document => true do
       # create orphaned tags
       2.times do |i|
@@ -80,7 +79,7 @@ resource 'Tags' do
 
       do_request
       expect(status).to eq(200)
-      expect(response_body).to have_json_path('2/is_taxanomic')
+      expect(response_body).to have_json_path('data/2/is_taxanomic'), "Failed. Body: #{response_body}"
     end
   end
 

@@ -65,10 +65,6 @@ defaults: &defaults
       - <%= Rails.root %>/tmp/_cached_audio
     analysis_scripts:
       - <%= Rails.root %>/tmp/_analysis_script
-    analysis_results:
-      - <%= Rails.root %>/tmp/_analysis_result
-    analysis_runs:
-      - <%= Rails.root %>/tmp/_analysis_run
     cached_datasets:
       - <%= Rails.root %>/tmp/_cached_dataset
     cached_analysis_jobs:

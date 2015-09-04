@@ -41,7 +41,14 @@ class AudioEventComment < ActiveRecord::Base
         defaults: {
             order_by: :created_at,
             direction: :desc
-        }
+        },
+        valid_associations: [
+            {
+                join: AudioEvent,
+                on: AudioEvent.arel_table[:id].eq(AudioEventComment.arel_table[:audio_event_id]),
+                available: true
+            }
+        ]
     }
   end
 end

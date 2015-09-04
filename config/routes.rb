@@ -94,12 +94,10 @@ Rails.application.routes.draw do
   # when a user goes to my account, render user_account/show view for that user
   get '/my_account/' => 'user_accounts#my_account'
 
-
-
   # for updating only preferences for only the currently logged in user
   put '/my_account/prefs/' => 'user_accounts#modify_preferences'
 
-  #TODO: this will be changed from :user_accounts to :users at some point
+  # TODO: this will be changed from :user_accounts to :users at some point
   # user accounts filter, placed above to not conflict with /user_accounts/:id
   match 'user_accounts/filter' => 'user_accounts#filter', via: [:get, :post], defaults: {format: 'json'}
 
@@ -110,6 +108,8 @@ Rails.application.routes.draw do
       get 'bookmarks'
       get 'audio_events'
       get 'audio_event_comments'
+      get 'saved_searches'
+      get 'analysis_jobs'
     end
   end
 
@@ -211,14 +211,22 @@ Rails.application.routes.draw do
     # API project sites list
 
     resources :sites, only: [:index], defaults: {format: 'json'}
-    resources :datasets, except: [:index] do
-      resources :jobs, only: [:show]
-      resources :jobs, only: [:index], defaults: {format: 'json'}
-    end
-    resources :datasets, only: [:index], defaults: {format: 'json'}
-    resources :jobs, except: [:index, :show]
-    resources :jobs, only: [:index], defaults: {format: 'json'}
+
   end
+
+  # placed above related resource so it does not conflict with (resource)/:id => (resource)#show
+  match 'analysis_jobs/filter' => 'analysis_jobs#filter', via: [:get, :post], defaults: {format: 'json'}
+  match 'saved_searches/filter' => 'saved_searches#filter', via: [:get, :post], defaults: {format: 'json'}
+
+  # API only for analysis_jobs and saved_searches
+  resources :analysis_jobs, except: [:edit], defaults: {format: 'json'}
+  resources  :saved_searches, except: [:edit, :update], defaults: {format: 'json'}
+
+  # route for custom and system results
+  match 'analysis_jobs/:analysis_job_id/audio_recordings/:audio_recording_id/' => 'analysis#show',
+        defaults: {format: 'json'}, as: :analysis_results_base, via: [:get, :head], format: false
+  match 'analysis_jobs/:analysis_job_id/audio_recordings/:audio_recording_id/*results_path' => 'analysis#show',
+        defaults: {format: 'json'}, as: :analysis_results, via: [:get, :head], format: false
 
   # placed above related resource so it does not conflict with (resource)/:id => (resource)#show
   match 'audio_recordings/filter' => 'audio_recordings#filter', via: [:get, :post], defaults: {format: 'json'}
@@ -227,8 +235,6 @@ Rails.application.routes.draw do
   # API audio recording item
   resources :audio_recordings, only: [:index, :show, :new, :update], defaults: {format: 'json'} do
     match 'media.:format' => 'media#show', defaults: {format: 'json'}, as: :media, via: [:get, :head]
-    match 'analysis.:format' => 'analysis#show', defaults: {format: 'json'}, as: :analysis, via: [:get, :head]
-
     resources :audio_events, except: [:edit], defaults: {format: 'json'} do
       collection do
         get 'download', defaults: {format: 'csv'}
@@ -260,6 +266,9 @@ Rails.application.routes.draw do
     resources :audio_event_comments, except: [:edit], defaults: {format: 'json'}, path: :comments, as: :comments
   end
 
+  # placed above related resource so it does not conflict with (resource)/:id => (resource)#show
+  match 'scripts/filter' => 'scripts#filter', via: [:get, :post], defaults: {format: 'json'}
+
   # custom routes for scripts
   resources :scripts, except: [:update, :destroy] do
     member do
@@ -270,7 +279,7 @@ Rails.application.routes.draw do
   end
 
   # taggings made by a user
-  get '/taggings/user/:user_id/tags' => 'taggings#user_index', as: :user_taggings, defaults: {format: 'json'}
+  get '/user_accounts/:user_id/taggings' => 'taggings#user_index', as: :user_taggings, defaults: {format: 'json'}
 
   # audio event csv download routes
   get '/projects/:project_id/audio_events/download' => 'audio_events#download', defaults: {format: 'csv'}, as: :download_project_audio_events
@@ -291,7 +300,6 @@ Rails.application.routes.draw do
   # site status API
   get '/status/' => 'public#status', defaults: {format: 'json'}
   get '/website_status/' => 'public#website_status'
-  get '/audio_recording_catalogue/' => 'public#audio_recording_catalogue'
 
   # feedback and contact forms
   get '/contact_us' => 'public#new_contact_us'
@@ -317,6 +325,10 @@ Rails.application.routes.draw do
     mount Resque::Server.new, at: '/job_queue_status'
   end
 
+  # mount rails_admin at site_admin
+  # don't put in `authenticate`, as the controllers don't call `authorize_resource`.
+  #mount RailsAdmin::Engine => '/site_admin', as: 'rails_admin'
+
   # Tag management - admin only
   resources :tags_management, except: [:show]
 
@@ -333,7 +345,7 @@ Rails.application.routes.draw do
   # exceptions testing route - only available in test env
   if ENV['RAILS_ENV'] == 'test'
     # via: :all seems to not work any more >:(
-    match '/test_exceptions', to: 'errors#test_exceptions', via:  [:get, :head, :post, :put, :delete, :options, :trace, :patch]
+    match '/test_exceptions', to: 'errors#test_exceptions', via: [:get, :head, :post, :put, :delete, :options, :trace, :patch]
   end
 
   # routes directly to error pages

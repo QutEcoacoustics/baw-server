@@ -59,7 +59,7 @@ module Access
         can_any?(user, level, [project])
       end
 
-      # Does this user have this access level to this project?
+      # Does this user have this access level to any of these projects?
       # @param [User] user
       # @param [Symbol] level
       # @param [Array<Project>] projects
@@ -67,6 +67,18 @@ module Access
       def can_any?(user, level, projects)
         requested_level = Access::Core.validate_level(level)
         actual_level = Access::Level.projects(user, projects)
+
+        allowed?(requested_level, actual_level)
+      end
+
+      # Does this user have this access level to all of these projects?
+      # @param [User] user
+      # @param [Symbol] level
+      # @param [Array<Project>] projects
+      # @return [Boolean]
+      def can_all?(user, level, projects)
+        requested_level = Access::Core.validate_level(level)
+        actual_level = Access::Query.level_projects_lowest(user, projects)
 
         allowed?(requested_level, actual_level)
       end

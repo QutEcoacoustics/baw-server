@@ -75,6 +75,7 @@ gem 'cancancan', '~> 1.12.0'
 gem 'role_model', '~> 0.8.1'
 # Use ActiveModel has_secure_password
 gem 'bcrypt', '~> 3.1.9'
+#gem 'rails_admin', '~> 0.7'
 
 # Database gems
 # -------------------------------------
@@ -124,7 +125,8 @@ gem 'resque', '~> 1.25.2'
 gem 'resque-job-stats', git: 'https://github.com/echannel/resque-job-stats.git', branch: :master, ref: '8932c036ae'
 gem 'resque-status', '~> 0.5.0'
 # set to a specific commit when releasing to master branch
-gem 'baw-workers', git: 'https://github.com/QutBioacoustics/baw-workers.git', branch: :master, ref: 'a9d9a4d279'
+gem 'baw-workers', git: 'https://github.com/QutBioacoustics/baw-workers.git', branch: :master, ref: '7081bd496c'
+
 
 # Gems restricted by environment and/or platform
 # ====================================================
@@ -159,7 +161,9 @@ group :development, :test do
   gem 'notiffany', '~> 0.0.3'
   gem 'guard', '~> 2.13.0'
   gem 'guard-rspec', '~> 4.6.0'
-  gem 'guard-yard', '~> 2.1.4'
+  gem 'guard-yard', '~> 2.1.4', require: false
+  gem 'rubocop', require: false
+  gem 'haml-lint', require: false
 
   gem 'fakeredis', '~> 0.5.0', require: 'fakeredis/rspec'
 

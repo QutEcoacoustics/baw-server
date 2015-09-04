@@ -3,85 +3,89 @@ require 'csv'
 class AudioEventsController < ApplicationController
   include Api::ControllerHelper
 
-  load_and_authorize_resource :audio_recording, except: [:show, :download, :filter]
-  load_and_authorize_resource :audio_event, through: :audio_recording, except: [:show, :download, :filter]
   skip_authorization_check only: [:show]
 
-  # GET /audio_events
-  # GET /audio_events.json
+  # GET /audio_recordings/:audio_recording_id/audio_events
   def index
-    # TODO: update to the API spec.
-    # Use Access::Query.audio_recording_audio_events(@audio_recording, current_user, , Access::Core.levels_allow)
-    if @audio_recording
-      events = @audio_recording.audio_events
-      events = events.end_after(audio_event_index_params[:start_offset]) if audio_event_index_params[:start_offset]
-      events = events.start_before(audio_event_index_params[:end_offset]) if audio_event_index_params[:end_offset]
-      render json: events.to_json(include: {taggings: {include: :tag}})
-    else
-      render json: {error: 'An audio recording must be specified.'}, status: :bad_request
-    end
+    do_authorize_class
+    get_audio_recording
+
+    @audio_events, opts = Settings.api_response.response_advanced(
+        api_filter_params,
+        Access::Query.audio_recording_audio_events(@audio_recording, current_user),
+        AudioEvent,
+        AudioEvent.filter_settings
+    )
+    respond_index(opts)
   end
 
-  # GET /audio_events/1
-  # GET /audio_events/1.json
+  # GET /audio_recordings/:audio_recording_id/audio_events/:id
   def show
-    #render json: json_format(AudioEvent.where(id:params[:id]).first)
-    #render json: AudioEvent.find(params[:id]).to_json(include: {taggings: {include: :tag}})
-    # options = {
-    #     new: [json_format(AudioEvent.where(id: params[:id]).first)],
-    #     old: AudioEvent.where(id: params[:id]).includes(taggings: :tag)
-    # }
-
     # allow logged-in users to access reference audio events
     # they would otherwise not have access to
 
     request_params = audio_event_show_params.dup.symbolize_keys
     request_params[:audio_event_id] = request_params[:id]
 
-    audio_recording = auth_custom_audio_recording(request_params)
-    audio_event = auth_custom_audio_event(request_params, audio_recording)
+    @audio_recording = auth_custom_audio_recording(request_params)
+    @audio_event = auth_custom_audio_event(request_params, @audio_recording)
 
-    render json: json_format(audio_event)
+    respond_show
   end
 
-  # GET /audio_events/new
-  # GET /audio_events/new.json
+  # GET /audio_recordings/:audio_recording_id/audio_events/new
   def new
-    render json: @audio_event.to_json(only: [:start_time_seconds, :end_time_seconds, :low_frequency_hertz, :high_frequency_hertz, :is_reference])
+    do_new_resource
+    get_audio_recording
+    do_set_attributes
+    do_authorize_instance
+
+    respond_show
   end
 
-  # POST /audio_events
-  # POST /audio_events.json
+  # POST /audio_recordings/:audio_recording_id/audio_events
   def create
-    @audio_event.audio_recording = @audio_recording
+    do_new_resource
+    do_set_attributes(audio_event_params)
+    get_audio_recording
+    do_authorize_instance
 
     if @audio_event.save
-      render json: @audio_event.to_json(include: {taggings: {include: :tag}}), status: :created
+      respond_create_success(audio_recording_audio_event_path(@audio_recording, @audio_event))
     else
-      render json: @audio_event.errors, status: :unprocessable_entity
+      respond_change_fail
     end
   end
 
-  # PUT /audio_events/1
-  # PUT /audio_events/1.json
+  # PUT|PATCH /audio_recordings/:audio_recording_id/audio_events/:id
   def update
+    do_load_resource
+    get_audio_recording
+    do_authorize_instance
+
     if @audio_event.update(audio_event_params)
-      render json: @audio_event.to_json(include: :taggings), status: :created
+      respond_show
     else
-      render json: @audio_event.errors, status: :unprocessable_entity
+      respond_change_fail
     end
   end
 
-  # DELETE /audio_events/1
-  # DELETE /audio_events/1.json
+  # DELETE /audio_recordings/:audio_recording_id/audio_events/:id
   def destroy
+    do_load_resource
+    get_audio_recording
+    do_authorize_instance
+
     @audio_event.destroy
     add_archived_at_header(@audio_event)
-    head :no_content
+
+    respond_destroy
   end
 
+  # GET|POST /audio_events/filter
   def filter
-    authorize! :filter, AudioEvent
+    do_authorize_class
+
     filter_response, opts = Settings.api_response.response_advanced(
         api_filter_params,
         Access::Query.audio_events(current_user),
@@ -91,6 +95,9 @@ class AudioEventsController < ApplicationController
     respond_filter(filter_response, opts)
   end
 
+  # GET /audio_recordings/:audio_recording_id/audio_events/download
+  # GET /projects/:project_id/audio_events/download
+  # GET /projects/:project_id/sites/:site_id/audio_events/download
   def download
 
     params_cleaned = CleanParams.perform(audio_event_download_params)
@@ -271,6 +278,15 @@ class AudioEventsController < ApplicationController
 
   def audio_event_show_params
     params.permit(:id, :project_id, :site_id, :format, :audio_recording_id, audio_event: {})
+  end
+
+  def get_audio_recording
+    @audio_recording = AudioRecording.find(params[:audio_recording_id])
+
+    # avoid the same project assigned more than once to a site
+    if defined?(@audio_event) && @audio_event.audio_recording.blank?
+      @audio_event.audio_recording = @audio_recording
+    end
   end
 
 end

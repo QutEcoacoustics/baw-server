@@ -3,24 +3,9 @@
   = f.error_notification
   = f.input :name
   = f.input :description, input_html: {rows: '3'}
-  = f.input :notes, input_html: {rows: '3'}
   = f.input :analysis_identifier
   = f.input :version
-  = f.input :settings_file, wrapper: :horizontal_file_input
-  - unless script.settings_file_file_name.blank?
-    .form-group
-      %label.col-sm-3.control-label
-        Current settings file
-      .col-sm-5
-        %p
-          = link_to script.settings_file_file_name, script.settings_file.url
-  = f.input :data_file, wrapper: :horizontal_file_input
-  - unless script.data_file_file_name.blank?
-    .form-group
-      %label.col-sm-3.control-label
-        Current data file
-      .col-sm-5
-        %p
-          = link_to script.data_file_file_name, script.data_file.url
+  = f.input :executable_command, input_html: {rows: '3'}
+  = f.input :executable_settings, input_html: {rows: '3'}
   = f.input :verified, wrapper: :horizontal_boolean
   = f.button :submit_cancel, 'Submit', class: 'btn btn-default'

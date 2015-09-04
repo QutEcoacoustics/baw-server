@@ -61,11 +61,16 @@ class AudioEvent < ActiveRecord::Base
                         :creator_id, :updated_at, :created_at],
         text_fields: [],
         custom_fields: lambda { |audio_event, user|
+
+          # do a query for the attributes that may not be in the projection
+          fresh_audio_event = AudioEvent.find(audio_event.id)
+
           audio_event_hash = {}
 
-          audio_event_hash[:taggings] = Tagging
-                                            .where(audio_event_id: audio_event.id)
-                                            .select(:id, :audio_event_id, :tag_id, :created_at, :updated_at, :creator_id, :updater_id)
+          audio_event_hash[:taggings] =
+              Tagging
+                  .where(audio_event_id: fresh_audio_event.id)
+                  .select(:id, :audio_event_id, :tag_id, :created_at, :updated_at, :creator_id, :updater_id)
 
           [audio_event, audio_event_hash]
         },
@@ -128,7 +133,7 @@ class AudioEvent < ActiveRecord::Base
 
     audio_event_start_abs =
         Arel::Nodes::SqlLiteral.new(
-        '"audio_recordings"."recorded_date" + CAST("audio_events"."start_time_seconds" || \' seconds\' as interval)')
+            '"audio_recordings"."recorded_date" + CAST("audio_events"."start_time_seconds" || \' seconds\' as interval)')
 
     projects_agg = Arel::Nodes::SqlLiteral.new(
         'string_agg(CAST("projects"."id" as varchar) || \':\' || "projects"."name", \'|\')')
@@ -235,10 +240,10 @@ class AudioEvent < ActiveRecord::Base
     if project
 
       site_ids = sites
-          .join(projects_sites).on(sites[:id].eq(projects_sites[:site_id]))
-          .join(projects).on(projects[:id].eq(projects_sites[:project_id]))
-          .where(projects[:id].eq(project.id))
-          .project(sites[:id]).distinct
+                     .join(projects_sites).on(sites[:id].eq(projects_sites[:site_id]))
+                     .join(projects).on(projects[:id].eq(projects_sites[:project_id]))
+                     .where(projects[:id].eq(project.id))
+                     .project(sites[:id]).distinct
 
       query = query.where(sites[:id].in(site_ids))
     end

@@ -3,7 +3,7 @@ class CreateJobs < ActiveRecord::Migration
     create_table :jobs do |t|
       t.string :name              , :null => false
       t.string :annotation_name
-      t.text :script_settings
+      t.text :custom_settings
       t.integer :dataset_id       , :null => false
       t.integer :script_id        , :null => false
       t.integer :creator_id       , :null => false

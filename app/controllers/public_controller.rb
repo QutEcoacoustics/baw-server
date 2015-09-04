@@ -1,19 +1,18 @@
 class PublicController < ApplicationController
   skip_authorization_check only: [
-      :index, :status,
-      :website_status,
-      :audio_recording_catalogue,
-      :credits,
-      :disclaimers,
-      :ethics_statement,
-      :data_upload,
+                               :index, :status,
+                               :website_status,
+                               :credits,
+                               :disclaimers,
+                               :ethics_statement,
+                               :data_upload,
 
-      :new_contact_us, :create_contact_us,
-      :new_bug_report, :create_bug_report,
-      :new_data_request, :create_data_request,
+                               :new_contact_us, :create_contact_us,
+                               :new_bug_report, :create_bug_report,
+                               :new_data_request, :create_data_request,
 
-      :cors_preflight
-  ]
+                               :cors_preflight
+                           ]
 
   # ensure that invalid CORS preflight requests get useful responses
   skip_before_action :verify_authenticity_token, only: :cors_preflight
@@ -106,71 +105,6 @@ class PublicController < ApplicationController
     respond_to do |format|
       format.html
       format.json { render json: @status_info }
-    end
-  end
-
-  def audio_recording_catalogue
-
-    respond_to do |format|
-      format.html
-      format.json {
-
-        if Access::Check.is_admin?(current_user)
-
-        else
-
-          unless params[:projectId].blank?
-            project = Project.where(id: params[:projectId]).first
-
-            if project.blank?
-              fail CustomErrors::ItemNotFoundError, 'Project not found from audio_recording_catalogue'
-            end
-
-            if current_user.blank? || Access::Check.can?(current_user, :none, project)
-              fail CanCan::AccessDenied, 'Project access denied from audio_recording_catalogue'
-            end
-          end
-
-          unless params[:siteId].blank?
-            site = Site.where(id: params[:siteId]).first
-
-            if site.blank?
-              fail CustomErrors::ItemNotFoundError, 'Site not found from audio_recording_catalogue'
-            end
-
-            projects = Site.where(id: params[:siteId]).first.projects
-            if current_user.blank? || Access::Check.can_any?(current_user, :none, projects)
-              fail CanCan::AccessDenied, 'Site access denied from audio_recording_catalogue'
-            end
-          end
-        end
-
-        query = AudioRecording.joins(site: :projects)
-        .select(
-            'count(*) as grouped_count,
-EXTRACT(YEAR FROM recorded_date) as extracted_year,
-EXTRACT(MONTH FROM recorded_date) as extracted_month,
-EXTRACT(DAY FROM recorded_date) as extracted_day')
-
-        if !params[:projectId].blank? && !current_user.blank?
-          query = query.where('projects_sites.project_id = ?', params[:projectId])
-        end
-
-        if !params[:siteId].blank? && !current_user.blank?
-          query = query.where(site_id: params[:siteId])
-        end
-
-        audio_recordings_grouped = query
-        .group('extracted_year, extracted_month, extracted_day')
-        .map { |ar|
-          {
-              count: ar.grouped_count,
-              extracted_year: ar.extracted_year,
-              extracted_month: ar.extracted_month.to_s.rjust(2, '0'),
-              extracted_day: ar.extracted_day.to_s.rjust(2, '0')
-          }
-        }
-        render json: audio_recordings_grouped }
     end
   end
 

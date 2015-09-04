@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+ - 2015-09-04
+    - removed dataset model [#189](https://github.com/QutBioacoustics/baw-server/issues/189)
+    - updated job model [#191](https://github.com/QutBioacoustics/baw-server/issues/191)
+    - updated script model [#190](https://github.com/QutBioacoustics/baw-server/issues/190)
+    - created saved search model [#199](https://github.com/QutBioacoustics/baw-server/issues/199)
+    - created way to generate job items from a job and saved search [#198](https://github.com/QutBioacoustics/baw-server/issues/198)
+    - updated analysis endpoint [#196](https://github.com/QutBioacoustics/baw-server/issues/196)
+    - added directory listing to analysis endpoint [#208](https://github.com/QutBioacoustics/baw-server/issues/208)
+    - major overhaul of controller model loading and authorization
+    - updated all rspec tests to use current method of checking json responses
+
 ## [Release 0.17.1](https://github.com/QutBioacoustics/baw-server/releases/tag/0.17.1) (2015-08-19)
 
  - 2015-08-19

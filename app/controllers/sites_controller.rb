@@ -1,19 +1,11 @@
 class SitesController < ApplicationController
   include Api::ControllerHelper
 
-  # order matters for before_action and load_and_authorize_resource!
-  load_and_authorize_resource :project, except: [:show_shallow, :filter, :orphans]
-
-  # this is necessary so that the ability has access to site.projects
-  before_action :build_project_site, only: [:new, :create]
-
-  load_and_authorize_resource :site, through: :project, except: [:show_shallow, :filter, :orphans]
-  load_and_authorize_resource :site, only: [:show_shallow, :filter, :orphans]
-
-  # GET /project/1/sites
-  # GET /project/1/sites.json
+  # GET /projects/:project_id/sites
   def index
-    @sites = @project.sites
+    do_authorize_class
+    get_project
+    do_authorize_instance(:show, @project)
 
     respond_to do |format|
       #format.html # index.html.erb
@@ -29,31 +21,36 @@ class SitesController < ApplicationController
     end
   end
 
-  # GET /sites/1.json
+  # GET /sites/:id
   def show_shallow
-    # only responds to json requests
+    do_load_resource
+    do_authorize_instance
+
     respond_to do |format|
       format.json { respond_show }
     end
   end
 
-  # GET /project/1/sites/1
-  # GET /project/1/sites/1.json
+  # GET /projects/:project_id/sites/:id
   def show
+    do_load_resource
+    get_project
+    do_authorize_instance
+
     respond_to do |format|
-      format.html {
-        @site.update_location_obfuscated(current_user)
-      }
+      format.html { @site.update_location_obfuscated(current_user) }
       format.json { respond_show }
     end
   end
 
-  # GET /project/1/sites/new
-  # GET /project/1/sites/new.json
+  # GET /projects/:project_id/sites/new
   def new
-    # required due to before_action building model, which causes cancan to assume already authorised
-    do_authorize!
+    do_new_resource
+    get_project
+    do_set_attributes
+    do_authorize_instance
 
+    # initialise lat/lng to Brisbane-ish
     @site.longitude = 152
     @site.latitude = -27
     respond_to do |format|
@@ -62,21 +59,24 @@ class SitesController < ApplicationController
     end
   end
 
-  # GET /project/1/sites/1/edit
+  # GET /projects/:project_id/sites/:id/edit
   def edit
-
+    do_load_resource
+    get_project
+    do_authorize_instance
   end
 
-  # POST /project/1/sites
-  # POST /project/1/sites.json
+  # POST /projects/:project_id/sites
   def create
-    # required due to before_action building model, which causes cancan to assume already authorised
-    attributes_and_authorize(site_params)
+    do_new_resource
+    do_set_attributes(site_params)
+    get_project
+    do_authorize_instance
 
     respond_to do |format|
       if @site.save
         format.html { redirect_to [@project, @site], notice: 'Site was successfully created.' }
-        format.json { respond_create_success([@project, @site]) }
+        format.json { respond_create_success(project_site_path(@project, @site)) }
       else
         format.html { render action: 'new' }
         format.json { respond_change_fail }
@@ -84,10 +84,11 @@ class SitesController < ApplicationController
     end
   end
 
-  # PUT /project/1/sites/1
-  # PUT /project/1/sites/1.json
+  # PUT|PATCH /projects/:project_id/sites/:id
   def update
-    @site.projects << @project unless @site.projects.include?(@project) # to avoid duplicates in the Projects_Sites table
+    do_load_resource
+    get_project
+    do_authorize_instance
 
     respond_to do |format|
       if @site.update_attributes(site_params)
@@ -102,9 +103,12 @@ class SitesController < ApplicationController
     end
   end
 
-  # DELETE /project/1/sites/1
-  # DELETE /project/1/sites/1.json
+  # DELETE /projects/:project_id/sites/:id
   def destroy
+    do_load_resource
+    get_project
+    do_authorize_instance
+
     @site.destroy
     add_archived_at_header(@site)
 
@@ -114,13 +118,23 @@ class SitesController < ApplicationController
     end
   end
 
+  # GET /projects/:project_id/sites/:id/upload_instructions
   def upload_instructions
+    do_load_resource
+    get_project
+    do_authorize_instance
+
     respond_to do |format|
       format.html
     end
   end
 
+  # GET /projects/:project_id/sites/:id/harvest
   def harvest
+    do_load_resource
+    get_project
+    do_authorize_instance
+
     respond_to do |format|
       format.yml {
         render file: 'sites/_harvest.yml.haml', content_type: 'text/yaml', layout: false
@@ -130,6 +144,8 @@ class SitesController < ApplicationController
 
   # GET /sites/orphans
   def orphans
+    do_authorize_class
+
     @sites = Site.find_by_sql("SELECT * FROM sites s
 WHERE s.id NOT IN (SELECT site_id FROM projects_sites)
 ORDER BY s.name")
@@ -140,10 +156,10 @@ ORDER BY s.name")
 
   end
 
-  # POST /sites/filter.json
-  # GET /sites/filter.json
+  # GET|POST /sites/filter
   def filter
-    authorize! :filter, Site
+    do_authorize_class
+
     filter_response, opts = Settings.api_response.response_advanced(
         api_filter_params,
         Access::Query.sites(current_user),
@@ -155,9 +171,13 @@ ORDER BY s.name")
 
   private
 
-  def build_project_site
-    @site = Site.new
-    @site.projects << @project
+  def get_project
+    @project = Project.find(params[:project_id])
+
+    # avoid the same project assigned more than once to a site
+    if defined?(@site) && !@site.projects.include?(@project)
+      @site.projects << @project
+    end
   end
 
   def site_params

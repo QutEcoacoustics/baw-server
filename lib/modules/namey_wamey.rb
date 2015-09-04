@@ -81,7 +81,7 @@ class NameyWamey
     end
 
     def trim(string_value, chars_to_replace, char_to_insert)
-      "#{string_value}".gsub(/^[#{chars_to_replace}]+|[#{chars_to_replace}]+$/, char_to_insert)
+      string_value.to_s.gsub(/^[#{chars_to_replace}]+|[#{chars_to_replace}]+$/, char_to_insert)
     end
 
     private

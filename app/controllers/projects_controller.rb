@@ -1,14 +1,13 @@
 class ProjectsController < ApplicationController
   include Api::ControllerHelper
 
-  load_and_authorize_resource
-
   # GET /projects
-  # GET /projects.json
   def index
+    do_authorize_class
+
     respond_to do |format|
       format.html {
-        @projects =  Access::Query.projects_accessible(current_user).includes(:creator).references(:creator)
+        @projects = Access::Query.projects_accessible(current_user).includes(:creator).references(:creator)
       }
       format.json {
         @projects, opts = Settings.api_response.response_advanced(
@@ -22,9 +21,11 @@ class ProjectsController < ApplicationController
     end
   end
 
-  # GET /projects/1
-  # GET /projects/1.json
+  # GET /projects/:id
   def show
+    do_load_resource
+    do_authorize_instance
+
     respond_to do |format|
       format.html
       format.json { respond_show }
@@ -32,21 +33,27 @@ class ProjectsController < ApplicationController
   end
 
   # GET /projects/new
-  # GET /projects/new.json
   def new
+    do_new_resource
+    do_set_attributes
+    do_authorize_instance
+
     respond_to do |format|
       format.html
       format.json { respond_show }
     end
   end
 
-  # GET /projects/1/edit
+  # GET /projects/:id/edit
   def edit
-
+    do_load_resource
+    do_authorize_instance
   end
 
-  # GET /projects/1/edit_sites
+  # GET /projects/:id/edit_sites
   def edit_sites
+    do_load_resource
+    do_authorize_instance
 
     @site_info = Site.connection.select_all("SELECT s.id, s.name,
 (SELECT count(*) FROM projects_sites ps WHERE s.id = ps.site_id) AS project_count,
@@ -56,24 +63,27 @@ ORDER BY project_count ASC, s.name ASC")
   end
 
   # POST /projects
-  # POST /projects.json
   def create
+    do_new_resource
+    do_set_attributes(project_params)
+    do_authorize_instance
+
     respond_to do |format|
       if @project.save
         format.html { redirect_to @project, notice: 'Project was successfully created.' }
         format.json { respond_create_success }
       else
-        format.html {
-          render action: 'new'
-        }
+        format.html { render action: 'new' }
         format.json { respond_change_fail }
       end
     end
   end
 
-  # PUT /projects/1
-  # PUT /projects/1.json
+  # PUT|PATCH /projects/:id
   def update
+    do_load_resource
+    do_authorize_instance
+
     respond_to do |format|
       if @project.update_attributes(project_params)
         format.html { redirect_to @project, notice: 'Project was successfully updated.' }
@@ -87,9 +97,10 @@ ORDER BY project_count ASC, s.name ASC")
     end
   end
 
-  # PUT /project/:id/update_sites
-  # PATCH /project/:id/update_sites
+  # PUT|PATCH /project/:id/update_sites
   def update_sites
+    do_load_resource
+    do_authorize_instance
 
     old_site_ids = @project.sites.pluck(:id).map(&:to_i)
     new_site_ids = edit_sites_params[:site_ids].keys.map(&:to_i)
@@ -111,8 +122,11 @@ ORDER BY project_count ASC, s.name ASC")
 
   end
 
-  # POST /update_permissions
+  # POST /projects/:id/update_permissions
   def update_permissions
+    do_load_resource
+    do_authorize_instance
+
     # 'user_ids'=>{'1'=>{'permissions'=>{'level'=>'read'}},'3'=>{'permissions'=>{'level'=>'write'}}}    params[:project][:users].each do |users_params|
     no_error = true
 
@@ -155,9 +169,11 @@ ORDER BY project_count ASC, s.name ASC")
     end
   end
 
-  # DELETE /projects/1
-  # DELETE /projects/1.json
+  # DELETE /projects/:id
   def destroy
+    do_load_resource
+    do_authorize_instance
+
     @project.destroy
     add_archived_at_header(@project)
 
@@ -167,16 +183,20 @@ ORDER BY project_count ASC, s.name ASC")
     end
   end
 
-  # GET /projects/request_access
+  # GET /projects/new_access_request
   def new_access_request
+    do_authorize_class
+
     @all_projects = Access::Query.projects_inaccessible(current_user).order(name: :asc)
     respond_to do |format|
       format.html
     end
   end
 
-  # POST /projects/request_access
+  # POST /projects/submit_access_request
   def submit_access_request
+    do_authorize_class
+
     valid_request = access_request_params.include?(:projects) &&
         access_request_params[:projects].is_a?(Array) &&
         access_request_params[:projects].size > 1 &&
@@ -196,10 +216,10 @@ ORDER BY project_count ASC, s.name ASC")
     end
   end
 
-  # POST /sites/filter.json
-  # GET /sites/filter.json
+  # GET|POST /projects/filter
   def filter
-    authorize! :filter, Project
+    do_authorize_class
+
     filter_response, opts = Settings.api_response.response_advanced(
         api_filter_params,
         Access::Query.projects_accessible(current_user),

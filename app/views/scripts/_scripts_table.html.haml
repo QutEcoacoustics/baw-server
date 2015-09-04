@@ -4,8 +4,7 @@
       %th Name
       %th Version
       %th ID
-      %th Settings file
-      %th Data file
+      %th Command
       %th
   %tbody
   - scripts.each do |script|
@@ -13,8 +12,7 @@
       %td= link_to script.name, script_path(script)
       %td= script.version
       %td= script.analysis_identifier
-      %td= link_to_if script.settings_file_file_name,  script.settings_file_file_name, script.settings_file.url
-      %td= link_to_if script.data_file_file_name,  script.data_file_file_name, script.data_file.url
+      %td= truncate(script.executable_command)
       %td.nolink
         = link_to edit_script_path(script), class: 'btn btn-default btn-xs' do
           %span.fa.fa-plus-square-o

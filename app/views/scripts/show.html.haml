@@ -7,12 +7,17 @@
   = render partial: 'shared/sidebar_metadata_heading', locals: {title: 'Script', icon_class: 'file-text-o'}
   = render partial: 'shared/sidebar_metadata_user_created', locals: { item: @script }
   = render partial: 'shared/sidebar_metadata', locals: {title: 'Analysis Identifier', text: @script.analysis_identifier}
-  = render partial: 'shared/sidebar_metadata', locals: {title: 'Settings file', text: link_to(@script.settings_file_file_name, @script.settings_file.url) }
-  - unless @script.data_file_file_name.blank?
-    = render partial: 'shared/sidebar_metadata', locals: {title: 'Data file', text: link_to(@script.data_file_file_name, @script.data_file.url)}
 
 %p= @script.description
-%p= @script.notes
+
+%h3 Executable
+%p
+  %em Command:
+  = @script.executable_command
+%p
+  %em Settings:
+  %pre
+    = @script.executable_settings
 
 - unless @script.updated_by_script_id.blank?
   %h3 Next Version

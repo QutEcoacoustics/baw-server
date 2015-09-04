@@ -31,6 +31,7 @@ FactoryGirl.define do
     end
 
     trait :harvester_role do
+      sequence(:user_name) { |n| "harvester_user #{n}" }
       roles_mask { 4 } # harvester role
     end
 

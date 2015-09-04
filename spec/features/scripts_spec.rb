@@ -23,12 +23,11 @@ describe 'MANAGE Scripts as admin user', :type => :feature do
     visit new_script_path
     fill_in 'script[name]', with: 'test name'
     fill_in 'script[description]', with: 'description'
-    fill_in 'script[notes]', with: 'notes'
     fill_in 'script[analysis_identifier]', with: 'analysis.identifier'
     fill_in 'script[version]', with: '0.1'
 
-    attach_file('script[settings_file]', 'public/files/script/settings_file.txt')
-    attach_file('script[data_file]', 'public/files/script/settings_file.txt')
+    fill_in 'script[executable_command]', with: 'command'
+    fill_in 'script[executable_settings]', with: 'settings'
 
     click_button 'Submit'
     expect(page).to have_content('test name')
@@ -46,12 +45,11 @@ describe 'MANAGE Scripts as admin user', :type => :feature do
     visit edit_script_path(script)
     fill_in 'script[name]', with: 'test name'
     fill_in 'script[description]', with: 'description'
-    fill_in 'script[notes]', with: 'notes'
     fill_in 'script[analysis_identifier]', with: 'analysis.identifier'
     fill_in 'script[version]', with: '1.1'
 
-    attach_file('script[settings_file]', 'public/files/script/settings_file.txt')
-    attach_file('script[data_file]', 'public/files/script/settings_file.txt')
+    fill_in 'script[executable_command]', with: 'command'
+    fill_in 'script[executable_settings]', with: 'settings'
 
     click_button 'Submit'
     expect(page).to have_content('test name')

@@ -98,14 +98,7 @@ class Tag < ActiveRecord::Base
                     {
                         join: AudioEvent,
                         on: Tagging.arel_table[:audio_event_id].eq(AudioEvent.arel_table[:id]),
-                        available: true,
-                        associations: [
-                            {
-                                join: AudioRecording,
-                                on: AudioEvent.arel_table[:audio_recording_id].eq(AudioRecording.arel_table[:id]),
-                                available: true,
-                            }
-                        ]
+                        available: true
                     }
                 ]
 

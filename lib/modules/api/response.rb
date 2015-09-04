@@ -33,27 +33,35 @@ module Api
       fail CustomErrors::FilterArgumentError, "Item must be an ActiveRecord::Base, got #{item.class}" unless item.is_a?(ActiveRecord::Base)
 
       filter_settings = item.class.filter_settings
+      item_new = item
+
+      # add new spec fields if filter_settings specifies a lambda for new_spec_fields
+      new_spec_fields = filter_settings[:new_spec_fields]
+      new_spec_fields_is_lambda = !new_spec_fields.blank? && new_spec_fields.lambda?
+      new_spec_fields_hash = {}
+      if new_spec_fields_is_lambda && (item_new.nil? || item_new.id.nil?)
+        new_spec_fields_hash = new_spec_fields.call(user)
+      end
+
+      # add custom fields if filter_settings specifies a lambda for custom_fields
       custom_fields = filter_settings[:custom_fields]
       custom_fields_is_lambda = !custom_fields.blank? && custom_fields.lambda?
-      default_fields = filter_settings[:render_fields]
-      has_projection = opts[:projection]
-
-      item_new = item
-      extra_hash = {}
-
-      # add custom fields if filter_settings specifies a lambda for custom fields
-      if custom_fields_is_lambda
-        item_new, extra_hash = custom_fields.call(item, user)
+      custom_fields_hash = {}
+      if custom_fields_is_lambda && !item_new.nil? && !item_new.id.nil?
+        item_new, custom_fields_hash = custom_fields.call(item, user)
       end
 
       # project using filter projection (already in query for items) or default fields
+      has_projection = opts[:projection]
+      item_new = {} if item_new.nil?
       if has_projection
         base_json = item_new.as_json
       else
+        default_fields = filter_settings[:render_fields]
         base_json = item_new.as_json(only: default_fields)
       end
 
-      base_json.merge(extra_hash)
+      base_json.merge(new_spec_fields_hash).merge(custom_fields_hash)
     end
 
     # Build an api response hash.
@@ -232,7 +240,11 @@ module Api
       # build complete api response
       opts[:filter] = filter_query.filter unless filter_query.filter.blank?
       opts[:projection] = filter_query.projection unless filter_query.projection.blank?
-      opts[:additional_params] = params.except(model.to_s.underscore.to_sym, :filter, :projection, :action, :controller, :format, :paging, :sorting)
+      opts[:additional_params] = filter_query.parameters.except(
+          model.to_s.underscore.to_sym,
+          :filter, :projection,
+          :action, :controller,
+          :format, :paging, :sorting)
 
       [paged_sorted_query, opts]
     end

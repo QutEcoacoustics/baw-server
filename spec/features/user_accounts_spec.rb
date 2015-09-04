@@ -459,3 +459,46 @@ describe 'MANAGE User Accounts as user', :type => :feature do
     expect(page).to have_content(I18n.t('devise.failure.unauthorized'))
   end
 end
+
+describe 'User profile pages' do
+  before(:each) do
+    @user = FactoryGirl.create(:user)
+    login_as @user, scope: :user
+  end
+
+  it 'should link to user projects for current user page' do
+    visit my_account_path
+    click_link 'My Projects'
+    expect(current_path).to eq(projects_user_account_path(@user))
+  end
+
+  it 'should link to user bookmarks for current user page' do
+    visit my_account_path
+    click_link 'My Bookmarks'
+    expect(current_path).to eq(bookmarks_user_account_path(@user))
+  end
+
+  it 'should link to user audio events for current user page' do
+    visit my_account_path
+    click_link 'My Annotations'
+    expect(current_path).to eq(audio_events_user_account_path(@user))
+  end
+
+  it 'should link to user comments for current user page' do
+    visit my_account_path
+    click_link 'My Comments'
+    expect(current_path).to eq(audio_event_comments_user_account_path(@user))
+  end
+
+  # it 'should link to user saved searches for current user page' do
+  #   visit my_account_path
+  #   click_link 'Saved Searches'
+  #   expect(current_path).to eq(saved_searches_user_account_path(@user))
+  # end
+  #
+  # it 'should link to user analysis jobs for current user page' do
+  #   visit my_account_path
+  #   click_link 'Analysis Jobs'
+  #   expect(current_path).to eq(analysis_jobs_user_account_path(@user))
+  # end
+end

@@ -1,52 +1,51 @@
 class AudioRecordingsController < ApplicationController
   include Api::ControllerHelper
 
-  load_resource :project, only: [:check_uploader, :create]
-  load_resource :site, only: [:index, :create]
-  skip_authorization_check only: :check_uploader
-  load_and_authorize_resource :audio_recording, except: [:check_uploader]
-  respond_to :json, except: [:show]
+  # these two methods have custom authorization and include more info in errors
+  skip_authorization_check only: [:check_uploader]
 
-  # GET /audio_recordings.json
+  # GET /audio_recordings
   def index
-    # TODO update to API spec
-    if @site
-      @audio_recordings = @site.audio_recordings.order('recorded_date DESC').limit(5)
-    else
-      @audio_recordings = AudioRecording.order('recorded_date DESC').limit(5)
-    end
+    do_authorize_class
 
-    render json: @audio_recordings
+    @audio_recordings, opts = Settings.api_response.response_advanced(
+        api_filter_params,
+        Access::Query.audio_recordings(current_user),
+        AudioRecording,
+        AudioRecording.filter_settings
+    )
+    respond_index(opts)
   end
 
-  # GET /audio_recordings/1.json
+  # GET /audio_recordings/:id
+
   def show
-    render json: @audio_recording
+    do_load_resource
+    do_authorize_instance
+
+    respond_show
   end
 
-  # GET /audio_recordings/new.json
+  # GET /audio_recordings/new
+  # GET /projects/:project_id/sites/:site_id/audio_recordings/new
   def new
-    required = [
-        :uploader_id,
-        :sample_rate_hertz,
-        :media_type,
-        :recorded_date,
-        :bit_rate_bps,
-        :data_length_bytes,
-        :channels,
-        :duration_seconds,
-        :file_hash,
-        :original_file_name
-    ]
+    do_new_resource
+    get_project_site
+    do_set_attributes
+    do_authorize_instance
 
-    render json: @audio_recording.to_json(only: required)
+    respond_show
   end
 
-  # POST /audio_recordings.json
   # this is used by the harvester, do not change!
+  # POST /projects/:project_id/sites/:site_id/audio_recordings
   def create
+    #do_new_resource - custom new audio_recording
+    #do_set_attributes(audio_recording_params) - custom set attributes
     @audio_recording = AudioRecording.build_by_file_hash(audio_recording_params)
-    @audio_recording.site = @site
+    get_project_site
+
+    do_authorize_instance
 
     uploader_id = audio_recording_params[:uploader_id].to_i
     user_exists = User.exists?(uploader_id)
@@ -54,7 +53,6 @@ class AudioRecordingsController < ApplicationController
     actual_level = Access::Level.project(user, @project)
     requested_level = :writer
     is_allowed = Access::Check.allowed?(requested_level, actual_level)
-
 
     if !user_exists || !is_allowed
       respond_error(
@@ -91,7 +89,10 @@ class AudioRecordingsController < ApplicationController
   end
 
   # this is used by the harvester, do not change!
+  # PUT|PATCH /audio_recordings/:id
   def update
+    do_load_resource
+    do_authorize_instance
 
     relevant_params = audio_recording_params
 
@@ -127,55 +128,63 @@ class AudioRecordingsController < ApplicationController
   end
 
   # this is used by the harvester, do not change!
+  # GET /projects/:project_id/sites/:site_id/audio_recordings/check_uploader/:uploader_id
   def check_uploader
+    #do_authorize_class - custom auth
+    get_project_site
+
     # current user should be the harvester
     # uploader_id must have write access to the project
 
     if current_user.blank?
       fail CanCan::AccessDenied.new(I18n.t('devise.failure.unauthenticated'), :check_uploader, AudioRecording)
     elsif Access::Check.is_harvester?(current_user)
-        # auth check is skipped, so auth is checked manually here
-        uploader_id = params[:uploader_id].to_i
-        user_exists = User.exists?(uploader_id)
-        user = User.where(id: uploader_id).first
+      # auth check is skipped, so auth is checked manually here
+      uploader_id = params[:uploader_id].to_i
+      user_exists = User.exists?(uploader_id)
+      user = User.where(id: uploader_id).first
 
-        actual_level = Access::Level.project(user, @project)
-        requested_level = :writer
-        is_allowed = Access::Check.allowed?(requested_level, actual_level)
+      actual_level = Access::Level.project(user, @project)
+      requested_level = :writer
+      is_allowed = Access::Check.allowed?(requested_level, actual_level)
 
-        if !user_exists || !is_allowed
-          respond_error(
-              :forbidden,
-              'uploader does not exist or does not have access to this project',
-              {error_info: {
-                  project_id: @project.nil? ? nil : @project.id,
-                  user_id: user.nil? ? nil : user.id
-              }}
-          )
-        else
-          head :no_content
-        end
-      else
+      if !user_exists || !is_allowed
         respond_error(
             :forbidden,
-            'only harvester can check uploader permissions',
+            'uploader does not exist or does not have access to this project',
             {error_info: {
-                project_id: @project.nil? ? nil : @project.id
+                project_id: @project.nil? ? nil : @project.id,
+                user_id: user.nil? ? nil : user.id
             }}
         )
+      else
+        head :no_content
+      end
+    else
+      respond_error(
+          :forbidden,
+          'only harvester can check uploader permissions',
+          {error_info: {
+              project_id: @project.nil? ? nil : @project.id
+          }}
+      )
     end
   end
 
-  # this is called by the harvester once the audio file is in the correct location
   # this is used by the harvester, do not change!
+  # this is called by the harvester once the audio file is in the correct location
+  # PUT /audio_recordings/:id/update_status
   def update_status
+    do_load_resource
+    do_authorize_instance
+
     update_status_user_check
   end
 
-  # POST /audio_recordings/filter.json
-  # GET /audio_recordings/filter.json
+  # GET|POST /audio_recordings/filter
   def filter
-    authorize! :filter, AudioRecording
+    do_authorize_class
+
     filter_response, opts = Settings.api_response.response_advanced(
         api_filter_params,
         Access::Query.audio_recordings(current_user),
@@ -269,6 +278,21 @@ class AudioRecordingsController < ApplicationController
         :duration_seconds, :file_hash, :media_type, :notes,
         :recorded_date, :sample_rate_hertz, :status, :uploader_id,
         :site_id, :creator_id)
+  end
+
+  def get_project_site
+    if params.include?(:project_id)
+      @project = Project.find(params[:project_id])
+    end
+
+    if params.include?(:site_id)
+      @site = Site.find(params[:site_id])
+    end
+
+    if defined?(@site) && @site &&
+        defined?(@audio_recording) && @audio_recording.site.blank?
+      @audio_recording.site = @site
+    end
   end
 
 end
