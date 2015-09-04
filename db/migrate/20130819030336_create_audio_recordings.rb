@@ -18,7 +18,7 @@ class CreateAudioRecordings < ActiveRecord::Migration
       t.integer  'creator_id'
       t.integer  'updater_id'
       t.integer  'deleter_id'
-      t.timestamps
+      t.timestamps null: true
       t.datetime 'deleted_at'
 
     end

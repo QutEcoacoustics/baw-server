@@ -11,7 +11,7 @@ class CreateSites < ActiveRecord::Migration
       t.datetime :deleted_at
       t.attachment :image
 
-      t.timestamps
+      t.timestamps null: true
     end
   end
 end

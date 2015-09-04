@@ -1,37 +1,42 @@
 language: ruby
+sudo: false
 rvm:
-  - 2.2.2
+- 2.2.2
 branches:
   only:
   - master
   - develop
-gemfile:
-  - Gemfile
-bundler_args: --without development production staging
+gemfile: Gemfile
+bundler_args: --without development production staging --jobs=3 --retry=3
+addons:
+  apt:
+    packages:
+    - imagemagick
+    - wavpack
+    - libsox-fmt-all
+    - sox
+    - shntool
+    - mp3splt
+    - libav-tools
 before_install:
 
-  # get ffmpeg and ffprobe
+  # download, extract, and add ffmpeg and ffprobe to path
   - mkdir /tmp/ffmpeg
   - wget https://github.com/QutBioacoustics/baw-audio-tools/releases/download/v0.1.0/ffmpeg-git-20140817-64bit-static.tar.gz -O /tmp/ffmpeg/download-ffmpeg.tar.gz
-  - tar -xvf /tmp/ffmpeg/download-ffmpeg.tar.gz
-  - ls -la /tmp/ffmpeg
+  - tar -xzf /tmp/ffmpeg/download-ffmpeg.tar.gz -C /tmp/ffmpeg/
   - export PATH=$PATH:/tmp/ffmpeg/
-  - echo $PATH
-  
-  # install apt-get packages
-  - sudo apt-get update -qq
-  - sudo apt-get -y install imagemagick wavpack libsox-fmt-all sox shntool mp3splt libav-tools --fix-missing
 
   # check versions
+  - which ffmpeg
   - ffmpeg -version
   - mp3splt -version
   - sox --version
 before_script:
-  - yes | cp config/settings/test.travis.yml config/settings/test.yml
-  - psql -c 'create database myapp_test;' -U postgres
+- yes | cp config/settings/test.travis.yml config/settings/test.yml
+- psql -c 'create database myapp_test;' -U postgres
 script:
-  - bundle exec rake db:migrate
-  - bundle exec rake
+- bundle exec rake db:migrate
+- bundle exec rake
 env:
   global:
     # Code climate token encrypted with travis gem (travis encrypt CODECLIMATE_REPO_TOKEN=...)

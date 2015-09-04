@@ -14,7 +14,7 @@ class CreateDatasets < ActiveRecord::Migration
       t.integer :creator_id, :null => false
       t.integer :updater_id
       t.integer :project_id, :null => false
-      t.timestamps
+      t.timestamps null: true
     end
   end
 end
