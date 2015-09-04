@@ -2,7 +2,9 @@ class ChangeAnalysisJobs < ActiveRecord::Migration
   def change
 
     change_table :analysis_jobs do |t|
-      t.rename :script_settings, :custom_settings
+      if column_exists?(:analysis_jobs, :script_settings)
+        t.rename :script_settings, :custom_settings
+      end
 
       t.datetime :started_at
 

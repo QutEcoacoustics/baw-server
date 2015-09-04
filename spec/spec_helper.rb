@@ -118,6 +118,7 @@ RSpec.configure do |config|
     #bin/rake db:create RAILS_ENV=test
     #bin/rake db:migrate RAILS_ENV=test
     #bin/rake db:structure:dump RAILS_ENV=test
+    #bin/rake db:structure:load RAILS_ENV=test
 
     begin
       DatabaseCleaner.start
