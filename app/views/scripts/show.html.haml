@@ -19,12 +19,5 @@
   %pre
     = @script.executable_settings
 
-- unless @script.updated_by_script_id.blank?
-  %h3 Next Version
-  - newer_script = Script.find(@script.updated_by_script_id)
-  = link_to newer_script.display_name, newer_script
-
-- if Script.where(updated_by_script_id: @script.id).any?
-  %h3 Previous Version
-  - newer_script = Script.where(updated_by_script_id: @script.id).first
-  = link_to newer_script.display_name, newer_script
+%h3 All versions of this script
+= render partial: 'scripts/scripts_table', locals: {scripts: @all_script_versions}

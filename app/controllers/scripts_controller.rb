@@ -24,6 +24,8 @@ class ScriptsController < ApplicationController
     do_load_resource
     do_authorize_instance
 
+    @all_script_versions = @script.all_versions
+
     respond_to do |format|
       format.html
       format.json { respond_show }
@@ -86,7 +88,7 @@ class ScriptsController < ApplicationController
 
     @new_script = Script.new(new_script_params)
 
-    @new_script.update_from = @script
+    @new_script.group_id = @script.group_id
 
     respond_to do |format|
       if @new_script.save && @script.save
@@ -126,7 +128,7 @@ class ScriptsController < ApplicationController
   end
 
   def get_scripts
-    Script.latest_versions
+    Script.order(name: :asc).order(created_at: :desc)
   end
 
 end
