@@ -7,9 +7,11 @@
     = link_to t('baw.shared.links.user_list.title'), user_accounts_path
   %li{class: ('active' if current_page?(sites_orphans_path))}
     = link_to t('baw.shared.links.orphan_sites.title'), sites_orphans_path
-  %li{class: ('active' if current_page?(scripts_path))}
-    = link_to t('baw.shared.links.scripts.title'), scripts_path
-  %li{class: ('active' if current_page?(tags_management_index_path))}
-    = link_to t('baw.shared.links.tag_management.title'), tags_management_index_path
+  %li{class: ('active' if current_page?(admin_scripts_path))}
+    = link_to t('baw.shared.links.scripts.title'), admin_scripts_path
+  %li{class: ('active' if current_page?(admin_tags_path))}
+    = link_to t('baw.shared.links.admin_tags.title'), admin_tags_path
+  %li{class: ('active' if current_page?(admin_tag_groups_path))}
+    = link_to t('baw.shared.links.admin_tag_groups.title'), admin_tag_groups_path
   %li
     = link_to t('baw.shared.links.job_status.title'), '/job_queue_status'

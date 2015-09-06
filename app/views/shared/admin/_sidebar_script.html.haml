@@ -1,0 +1,16 @@
+-# locals: script
+- content_for(:left_sidebar_header, 'Scripts')
+- content_for(:left_sidebar) do
+  %li{class: ('active' if current_page?(admin_dashboard_path))}
+    = link_to 'Admin Home', admin_dashboard_path
+  %li{class: ('active' if current_page?(admin_scripts_path))}
+    = link_to 'Script List', admin_scripts_path,  title: 'List of scripts', data: {toggle: 'tooltip',  placement: 'right'}
+  %li{class: ('active' if current_page?(new_admin_script_path))}
+    = link_to 'New Script', new_admin_script_path,  title: 'Create a new script', data: {toggle: 'tooltip',  placement: 'right'}
+  - if defined?(script)
+    - if  can?(:show, script)
+      %li{class: ('active' if current_page?(admin_script_path(script)))}
+        = link_to 'View Script', admin_script_path(script),  title: 'View script details', data: {toggle: 'tooltip',  placement: 'right'}
+    - if can?(:update, script)
+      %li{class: ('active' if current_page?(edit_admin_script_path(script)))}
+        = link_to 'New version', edit_admin_script_path(script),  title: 'Create new version of this script', data: {toggle: 'tooltip',  placement: 'right'}

@@ -4,9 +4,9 @@
   - css_class = ''
 
 %tr{class: css_class}
-  %td= link_to script.name, script_path(script)
+  %td= link_to script.name, admin_script_path(script)
   %td= script.version
   %td= script.analysis_identifier
   %td= truncate(script.executable_command)
 - unless script.update_from.blank?
-  = render partial: 'scripts/script_row', locals: { script: script.update_from, current_version: current_version}
+  = render partial: 'admin/scripts/script_row', locals: { script: script.update_from, current_version: current_version}

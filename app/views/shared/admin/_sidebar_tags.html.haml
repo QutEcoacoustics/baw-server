@@ -1,0 +1,13 @@
+-# locals: tag_to_manage
+- content_for(:left_sidebar_header, 'Tags')
+- content_for(:left_sidebar) do
+  %li{class: ('active' if current_page?(admin_dashboard_path))}
+    = link_to 'Admin Home', admin_dashboard_path
+  %li{class: ('active' if current_page?(admin_tags_path))}
+    = link_to 'Tag List', admin_tags_path,  title: 'Manage tags', data: {toggle: 'tooltip',  placement: 'right'}
+  %li{class: ('active' if current_page?(new_admin_tag_path))}
+    = link_to 'New Tag', new_admin_tag_path,  title: 'Create a new tag', data: {toggle: 'tooltip',  placement: 'right'}
+  - if defined?(tag_to_manage)
+    - if  can?(:show, tag_to_manage)
+      %li{class: ('active' if current_page?(edit_admin_tag_path(tag_to_manage)))}
+        = link_to 'Edit Tag', edit_admin_tag_path(tag_to_manage),  title: 'Modify tag details', data: {toggle: 'tooltip',  placement: 'right'}

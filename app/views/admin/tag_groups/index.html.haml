@@ -1,0 +1,65 @@
+- content_for :title, 'Tag Groups'
+
+= render partial: 'shared/admin/sidebar_tag_groups'
+
+- content_for :right_sidebar do
+  = render partial: 'shared/sidebar_metadata_heading', locals: {title: 'Tag Groups', icon_class: 'tags'}
+
+- order_by = @tag_groups_info[:order_by]
+- filter = @tag_groups_info[:filter]
+- direction = @tag_groups_info[:order_dir]
+- tag_groups = @tag_groups_info[:collection]
+- order_dir_icon = @tag_groups_info[:order_dir] == :asc ? 'caret-down' : 'caret-up'
+- order_by_opposite = @tag_groups_info[:order_dir] == :asc ? :desc : :asc
+
+.col-sm-12
+  .row
+    .col-sm-6
+      %p= page_entries_info tag_groups
+
+    .col-sm-6
+      = form_tag(admin_tag_groups_path, method: :get, class: 'form-inline') do
+        .form-group
+          %label.sr-only{for: 'filter'}
+            Filter
+          %input.form-control{type: 'search', placeholder: 'Filter', name: 'filter', id: 'filter', value: filter}
+          %input{type: 'hidden', name: 'order_by', id: 'order_by', value: order_by}
+          %input{type: 'hidden', name: 'order_dir', id: 'order_dir', value: direction }
+          = submit_tag('Filter', class: 'btn btn-default')
+          = submit_tag('Clear', class: 'btn btn-default')
+  .row
+    .col-sm-12
+      = paginate  tag_groups
+
+  - if tag_groups.empty?
+    No tags to show.
+  - else
+    %table.table.table-striped
+      %thead
+        %tr
+          %th
+            = link_to admin_tag_groups_path order_by: :tag_id, order_dir: order_by_opposite, filter: filter do
+              Tag
+              - if order_by == :tag_id
+                %span.fa{class: "fa-#{order_dir_icon}"}
+          %th
+            = link_to admin_tag_groups_path order_by: :group_identifier, order_dir: order_by_opposite, filter: filter  do
+              Group
+              - if order_by == :group_identifier
+                %span.fa{class: "fa-#{order_dir_icon}"}
+          %th
+
+      %tbody
+      - tag_groups.each do |tag_group|
+        %tr
+          %td
+            = tag_group.tag.text
+          %td
+            = tag_group.group_identifier
+          %td
+            = link_to edit_admin_tag_group_path(tag_group), class: 'btn btn-default btn-xs' do
+              %span.fa.fa-edit
+              Edit
+            = link_to admin_tag_group_path(tag_group), method: :delete, data: { confirm: 'Are you sure?' }, class: 'btn btn-default btn-xs' do
+              %span.fa.fa-times
+              Delete

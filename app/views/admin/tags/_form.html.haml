@@ -4,13 +4,13 @@
 - method_edit = :patch
 
 - if action_new
-  - url = tags_management_index_path
+  - url = admin_tags_path
   - method = method_new
 - elsif action_edit
-  - url = tags_management_path
+  - url = admin_tags_path
   - method = method_edit
 
-= simple_form_for(@tag, url: url, html: {class: 'form-horizontal', method: method }) do |f|
+= simple_form_for([:admin, @tag], url: url, html: {class: 'form-horizontal', method: method }) do |f|
   = field_set_tag do
     = f.error_notification
     = f.input :text, required: true , autofocus: true

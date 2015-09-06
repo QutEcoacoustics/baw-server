@@ -267,16 +267,8 @@ Rails.application.routes.draw do
   end
 
   # placed above related resource so it does not conflict with (resource)/:id => (resource)#show
-  match 'scripts/filter' => 'scripts#filter', via: [:get, :post], defaults: {format: 'json'}
-
-  # custom routes for scripts
-  resources :scripts, except: [:update, :destroy] do
-    member do
-      get 'versions' => 'scripts#versions', as: :versions
-      get 'versions/:version_id' => 'scripts#version', as: :version
-      post :update
-    end
-  end
+  match '/scripts/filter' => 'scripts#filter', via: [:get, :post], defaults: {format: 'json'}
+  get '/scripts' => 'scripts#index', defaults: {format: 'json'}
 
   # taggings made by a user
   get '/user_accounts/:user_id/taggings' => 'taggings#user_index', as: :user_taggings, defaults: {format: 'json'}
@@ -325,16 +317,17 @@ Rails.application.routes.draw do
     mount Resque::Server.new, at: '/job_queue_status'
   end
 
-  # mount rails_admin at site_admin
-  # don't put in `authenticate`, as the controllers don't call `authorize_resource`.
-  #mount RailsAdmin::Engine => '/site_admin', as: 'rails_admin'
+  # for admin-only section of site
+  namespace :admin do
+    get '/' => 'home#index', as: :dashboard
+    resources :tags, :tag_groups
 
-  # Tag management - admin only
-  resources :tags_management, except: [:show]
-
-  # admin dashboard
-  get '/admin' => 'admin#index', as: :admin_dashboard
-
+    resources :scripts, except: [:update] do
+      member do
+        post :update
+      end
+    end
+  end
 
   # provide access to API documentation
   mount Raddocs::App => '/doc'

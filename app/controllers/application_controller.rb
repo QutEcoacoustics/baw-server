@@ -494,10 +494,9 @@ class ApplicationController < ActionController::Base
 
   def should_check_authorization?
     is_devise_controller = devise_controller?
-    #is_rails_admin_controller = self.class.name.include?('RailsAdmin')
-    #&& !is_rails_admin_controller
+    is_admin_controller = respond_to?(:admin_controller?) && admin_controller?
 
-    !is_devise_controller
+    !is_devise_controller && !is_admin_controller
   end
 
 end

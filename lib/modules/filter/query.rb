@@ -47,9 +47,6 @@ module Filter
 
       @qsp_text_filter = parse_qsp_text(@parameters)
 
-
-
-
       @qsp_generic_filters = parse_qsp(nil, @parameters, @key_prefix, @valid_fields)
       @paging = parse_paging(
           @parameters,

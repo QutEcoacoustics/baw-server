@@ -42,9 +42,12 @@ en:
         scripts:
           title: Scripts
           description: Scripts
-        tag_management:
+        admin_tags:
           title: Tags
-          description: Tag management
+          description: Tags
+        admin_tag_groups:
+          title: Tag Groups
+          description: Tag Groups
         home:
           title: Home
           description: Home page

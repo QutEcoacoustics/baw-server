@@ -38,10 +38,6 @@ guard :rspec, cmd: 'bundle exec rspec --format progress --color' do
       'lib/api_documentation_spec.rb']}
 end
 
-# guard :yard, port: 8808, stdout: './tmp/yard-out.log', stderr: './tmp/yard-err.log' do
-#   watch(%r{lib/.+\.rb})
-# end
-
 def possible_files(path_template, name)
   base = path_template % { name:name, number:''}
   numbered = (1..10).map { |i| path_template % { name:name, number:"#{i}_"} }

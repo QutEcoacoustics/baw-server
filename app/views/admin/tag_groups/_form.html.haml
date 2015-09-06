@@ -1,0 +1,19 @@
+-# locals: f, tag_group
+- action_new = params[:action] == 'new' || params[:action] == 'create'
+- action_edit = params[:action] == 'edit' || params[:action] == 'update'
+- method_new = :post
+- method_edit = :patch
+
+- if action_new
+  - url = admin_tag_groups_path
+  - method = method_new
+- elsif action_edit
+  - url = admin_tag_group_path(@tag_group)
+  - method = method_edit
+
+= simple_form_for([:admin, @tag_group], url: url, html: {class: 'form-horizontal', method: method }) do |f|
+  = field_set_tag do
+    = f.error_notification
+    = render partial: 'shared/tag_select_custom', locals: { f: f, attribute_name: :tag, model_name: 'tag_group', attribute_value: @tag_group.tag }
+    = f.input :group_identifier, required: true
+    = f.button :submit_cancel, 'Submit', class: 'btn-default'

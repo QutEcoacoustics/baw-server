@@ -7,6 +7,7 @@ class Tag < ActiveRecord::Base
   # relations
   has_many :taggings, inverse_of: :tag
   has_many :audio_events, through: :taggings
+  has_many :tag_groups, inverse_of: :tag
   belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_tags
   belongs_to :updater, class_name: 'User', foreign_key: :updater_id, inverse_of: :updated_tags
 

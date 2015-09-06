@@ -70,11 +70,10 @@ class Ability
       to_bookmark(user)
       to_analysis_job(user)
       to_saved_search(user)
+      to_script(user)
       to_tag
       to_tagging(user)
       to_user(user)
-
-      # Script: only admin can do anything with Script
 
     elsif Access::Check.is_guest?(user)
       # guest cannot do anything for now
@@ -259,6 +258,13 @@ class Ability
     can [:index, :new, :filter], SavedSearch
   end
 
+  def to_script(user)
+    # only admin can manipulate scripts
+
+    # actions any logged in user can access
+    can [:index, :filter], Script
+  end
+
   def to_tag
     # cannot be updated
     # tag management controller is admin only (checked in before_action)
@@ -292,8 +298,8 @@ class Ability
     # any confirmed user can view any other user's profile (read-only)
     can [:show, :filter], User
 
-    # users can only view their own projects, comments, bookmarks (admins can view any user's projects/comments/bookmarks)
-    can [:projects, :audio_event_comments, :bookmarks], User, id: user.id
+    # users can only view their own projects, comments, bookmarks
+    can [:projects, :bookmarks, :audio_events, :audio_event_comments], User, id: user.id
 
     # users get their own account and preferences from these actions
     can [:my_account, :modify_preferences], User, id: user.id

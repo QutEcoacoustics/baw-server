@@ -88,6 +88,8 @@ class User < ActiveRecord::Base
   has_many :created_tags, class_name: 'Tag', foreign_key: :creator_id, inverse_of: :creator
   has_many :updated_tags, class_name: 'Tag', foreign_key: :updater_id, inverse_of: :updater
 
+  has_many :created_tag_groups, class_name: 'TagGroup', foreign_key: :creator_id, inverse_of: :creator
+
   # scopes
   scope :users, -> { where(roles_mask: 2) }
 

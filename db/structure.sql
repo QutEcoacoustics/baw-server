@@ -501,6 +501,38 @@ ALTER SEQUENCE sites_id_seq OWNED BY sites.id;
 
 
 --
+-- Name: tag_groups; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE TABLE tag_groups (
+    id integer NOT NULL,
+    group_identifier character varying(255) NOT NULL,
+    created_at timestamp without time zone NOT NULL,
+    creator_id integer NOT NULL,
+    tag_id integer NOT NULL
+);
+
+
+--
+-- Name: tag_groups_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE tag_groups_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: tag_groups_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE tag_groups_id_seq OWNED BY tag_groups.id;
+
+
+--
 -- Name: tags; Type: TABLE; Schema: public; Owner: -; Tablespace: 
 --
 
@@ -677,6 +709,13 @@ ALTER TABLE ONLY sites ALTER COLUMN id SET DEFAULT nextval('sites_id_seq'::regcl
 -- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
+ALTER TABLE ONLY tag_groups ALTER COLUMN id SET DEFAULT nextval('tag_groups_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: -
+--
+
 ALTER TABLE ONLY tags ALTER COLUMN id SET DEFAULT nextval('tags_id_seq'::regclass);
 
 
@@ -773,6 +812,14 @@ ALTER TABLE ONLY scripts
 
 ALTER TABLE ONLY sites
     ADD CONSTRAINT sites_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: tag_groups_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+--
+
+ALTER TABLE ONLY tag_groups
+    ADD CONSTRAINT tag_groups_pkey PRIMARY KEY (id);
 
 
 --
@@ -1121,6 +1168,13 @@ CREATE INDEX index_sites_on_updater_id ON sites USING btree (updater_id);
 
 
 --
+-- Name: index_tag_groups_on_tag_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE INDEX index_tag_groups_on_tag_id ON tag_groups USING btree (tag_id);
+
+
+--
 -- Name: index_tags_on_creator_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
 --
 
@@ -1174,6 +1228,13 @@ CREATE UNIQUE INDEX permissions_level_user_id_project_id_uidx ON permissions USI
 --
 
 CREATE UNIQUE INDEX projects_name_uidx ON projects USING btree (name);
+
+
+--
+-- Name: tag_groups_uidx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE UNIQUE INDEX tag_groups_uidx ON tag_groups USING btree (tag_id, group_identifier);
 
 
 --
@@ -1403,6 +1464,14 @@ ALTER TABLE ONLY bookmarks
 
 ALTER TABLE ONLY bookmarks
     ADD CONSTRAINT bookmarks_updater_id_fk FOREIGN KEY (updater_id) REFERENCES users(id);
+
+
+--
+-- Name: fk_rails_1ba11222e1; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY tag_groups
+    ADD CONSTRAINT fk_rails_1ba11222e1 FOREIGN KEY (tag_id) REFERENCES tags(id);
 
 
 --
@@ -1648,4 +1717,6 @@ INSERT INTO schema_migrations (version) VALUES ('20150807150417');
 INSERT INTO schema_migrations (version) VALUES ('20150819005323');
 
 INSERT INTO schema_migrations (version) VALUES ('20150904234334');
+
+INSERT INTO schema_migrations (version) VALUES ('20150905234917');
 
