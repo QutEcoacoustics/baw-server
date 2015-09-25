@@ -1,29 +1,47 @@
 language: ruby
+sudo: false
 rvm:
-- 2.1.3
+- 2.2.3
 branches:
   only:
   - master
+addons:
+  apt:
+    packages:
+    - imagemagick
+    - wavpack
+    - libsox-fmt-all
+    - sox
+    - shntool
+    - mp3splt
+    - libav-tools
+    - make
+    - g++
+    - libsndfile1-dev
+    - libpng++-dev
+    - libpng12-dev
+    - libboost-program-options-dev
 before_install:
-- echo "Installing audio tools..."
-- sudo apt-get update -qq
-- sudo apt-get -y install imagemagick wavpack libsox-fmt-all sox shntool mp3splt libav-tools --fix-missing
-- wget https://github.com/QutBioacoustics/baw-audio-tools/releases/download/v0.1.0/ffmpeg-git-20140817-64bit-static.tar.gz
-- tar xvzf ffmpeg-git-20140817-64bit-static.tar.gz
-- rm ffmpeg-git-20140817-64bit-static.tar.gz
-- sudo mv ffmpeg /usr/local/bin
-- sudo mv ffprobe /usr/local/bin
-- sudo apt-get -y install make g++ libsndfile1-dev libpng++-dev libpng12-dev libboost-program-options-dev --fix-missing
-- git clone https://github.com/beschulz/wav2png.git
-- make -C ./wav2png/build all
-- sudo mv ./wav2png/bin/Linux/wav2png /usr/local/bin
-- echo "...testing for audio tools..."
-- ffmpeg -version
-- mp3splt -version
-- sox --version
-- wav2png --version
-- echo "...audio tools installed."
-- mkdir tmp
+
+  # download, extract, and add ffmpeg and ffprobe to path
+  - mkdir /tmp/ffmpeg
+  - wget http://ffmpeg.gusari.org/static/64bit/ffmpeg.static.64bit.latest.tar.gz -O /tmp/ffmpeg/download-ffmpeg.tar.gz
+  - tar -xzf /tmp/ffmpeg/download-ffmpeg.tar.gz -C /tmp/ffmpeg/
+  - export PATH=/tmp/ffmpeg:$PATH
+
+  # download, extract, and add wav2png to path
+  - mkdir /tmp/wav2png
+  - git clone https://github.com/beschulz/wav2png.git /tmp/wav2pnggit
+  - make -C /tmp/wav2png/wav2pnggit/build all
+  - mv /tmp/wav2png/wav2pnggit/bin/Linux/wav2png /tmp/wav2png/wav2png
+  - export PATH=/tmp/wav2png:$PATH
+
+  # check versions
+  - which ffmpeg
+  - ffmpeg -version
+  - mp3splt -version
+  - sox --version
+  - wav2png --verion
 script:
 - bundle exec rspec
 env:
