@@ -303,17 +303,17 @@ describe BawWorkers::Harvest::GatherFiles do
 
       expect(results.size).to eq(4)
 
-      expect(results[0]).to include(:metadata)
-      expect(results[0][:file_rel_path]).to eq('one/prefix_20140101_235959.mp3')
+      expect(results.find { |item| item.include?(:metadata) &&
+                 item[:file_rel_path] == 'one/prefix_20140101_235959.mp3' }).to_not be_nil
 
-      expect(results[1]).to include(:metadata)
-      expect(results[1][:file_rel_path]).to eq('one/SERF_20130314_000021_000.wav')
+      expect(results.find { |item| item.include?(:metadata) &&
+                 item[:file_rel_path] == 'one/SERF_20130314_000021_000.wav' }).to_not be_nil
 
-      expect(results[2]).to_not include(:metadata)
-      expect(results[2][:file_rel_path]).to eq('one/two/p1_s2_u3_d20140101_t235959Z.mp3')
+      expect(results.find { |item| !item.include?(:metadata) &&
+                 item[:file_rel_path] == 'one/two/p1_s2_u3_d20140101_t235959Z.mp3' }).to_not be_nil
 
-      expect(results[3]).to_not include(:metadata)
-      expect(results[3][:file_rel_path]).to eq('one/two/three/prefix_20140101_235959+10.mp3')
+      expect(results.find { |item| !item.include?(:metadata) &&
+                 item[:file_rel_path] == 'one/two/three/prefix_20140101_235959+10.mp3' }).to_not be_nil
     end
 
     it 'should error on read-only directory' do
