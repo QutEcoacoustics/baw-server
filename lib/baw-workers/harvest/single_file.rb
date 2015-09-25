@@ -206,7 +206,7 @@ module BawWorkers
       end
 
       def create_audio_info_hash(file_info_hash, content_info_hash)
-        {
+        info = {
             uploader_id: file_info_hash[:uploader_id].to_i,
             recorded_date: file_info_hash[:recorded_date],
             site_id: file_info_hash[:site_id].to_i,
@@ -219,6 +219,16 @@ module BawWorkers
             file_hash: content_info_hash[:file_hash].to_s,
             original_file_name: file_info_hash[:file_name].to_s,
         }
+
+        info[:notes] = {
+            relative_path: file_info_hash[:file_rel_path].to_s
+        }
+
+        if file_info_hash[:metadata]
+          info[:notes] = info[:notes].merge(file_info_hash[:metadata])
+        end
+
+        info
       end
 
       # Create hash for updating audio recording attributes.

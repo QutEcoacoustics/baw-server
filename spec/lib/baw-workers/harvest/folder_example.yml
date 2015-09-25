@@ -12,3 +12,11 @@ uploader_id: 30
 
 # this is the timezone for all the recordings
 utc_offset: '+10'
+
+# structured metadata to add to each recording.
+# use this to record information about sensors, etc...
+metadata:
+   sensor_type: SM2
+   information:
+     - stripped left channel due to bad mic
+     - appears to have electronic interference from solar panel

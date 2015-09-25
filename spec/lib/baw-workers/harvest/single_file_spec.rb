@@ -71,7 +71,15 @@ describe BawWorkers::Harvest::SingleFile do
           media_type: 'audio/ogg',
           data_length_bytes: 822281,
           file_hash: file_hash,
-          original_file_name: 'test_20141012_181455.ogg'
+          original_file_name: 'test_20141012_181455.ogg',
+          notes: {
+              relative_path: 'test_20141012_181455.ogg',
+              sensor_type: 'SM2',
+              information: [
+                  'stripped left channel due to bad mic',
+                  'appears to have electronic interference from solar panel'
+              ]
+          }
       }
       response_create_body = {
           meta: {
@@ -195,7 +203,15 @@ describe BawWorkers::Harvest::SingleFile do
           media_type: 'audio/ogg',
           data_length_bytes: 822281,
           file_hash: file_hash,
-          original_file_name: 'test_20141012_181455.ogg'
+          original_file_name: 'test_20141012_181455.ogg',
+          notes: {
+              relative_path: 'test_20141012_181455.ogg',
+              sensor_type: 'SM2',
+              information: [
+                  'stripped left channel due to bad mic',
+                  'appears to have electronic interference from solar panel'
+              ]
+          }
       }
       response_create_body = {
           meta: {
@@ -338,7 +354,15 @@ describe BawWorkers::Harvest::SingleFile do
           media_type: 'audio/ogg',
           data_length_bytes: 296756,
           file_hash: file_hash,
-          original_file_name: 'test_20141012_181455.ogg'
+          original_file_name: 'test_20141012_181455.ogg',
+          notes: {
+              relative_path: 'test_20141012_181455.ogg',
+              sensor_type: 'SM2',
+              information: [
+                  'stripped left channel due to bad mic',
+                  'appears to have electronic interference from solar panel'
+              ]
+          }
       }
       response_create_body = {
           meta: {

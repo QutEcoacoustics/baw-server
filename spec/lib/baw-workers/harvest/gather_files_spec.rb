@@ -209,7 +209,7 @@ describe BawWorkers::Harvest::GatherFiles do
       expect(gather_files.run(file)).to be_empty
     end
 
-    it 'should success if file does exist' do
+    it 'should succeed if file does exist' do
       audio_file = File.expand_path audio_file_mono
       sub_folder = File.expand_path File.join(harvest_to_do_path, 'harvest_file_exists')
 
@@ -220,13 +220,14 @@ describe BawWorkers::Harvest::GatherFiles do
       audio_file_config = File.join(sub_folder, 'test_20141010_101010.ogg')
       FileUtils.copy(audio_file, audio_file_config)
 
-      settings = gather_files.run(audio_file_config)
+      settings = gather_files.run(harvest_to_do_path)
       expect(settings.size).to eq(1)
       expect(settings[0]).not_to be_empty
       expect(settings[0][:project_id]).to eq(10)
       expect(settings[0][:site_id]).to eq(20)
       expect(settings[0][:uploader_id]).to eq(30)
       expect(settings[0][:utc_offset]).to eq('+10')
+      expect(settings[0][:file_rel_path]).to eq('harvest_file_exists/test_20141010_101010.ogg')
       #FileUtils.rm(sub_folder)
     end
   end
@@ -248,7 +249,7 @@ describe BawWorkers::Harvest::GatherFiles do
       FileUtils.mkpath(four, mode: 0400)
       expect {
         gather_files.run(harvest_to_do_path)
-      }.to raise_error(ArgumentError, /Found read-only directory /)
+      }.to raise_error(ArgumentError, /Found read-only directory: /)
       FileUtils.rm_rf(sub_folder, secure: true)
     end
 
@@ -282,32 +283,37 @@ describe BawWorkers::Harvest::GatherFiles do
       FileUtils.cp(audio_file_mono, File.join(sub_folder, 'around your head.webm'))
       FileUtils.cp(audio_file_mono, File.join(sub_folder, 'around your head.asf'))
 
-      FileUtils.cp(audio_file_mono, File.join(sub_folder, 'p1_s2_u3_d20140101_t235959Z.mp3'))
-      FileUtils.cp(audio_file_mono, File.join(sub_folder, 'p000_s00000_u00000_d00000000_t000000Z.0'))
-      FileUtils.cp(audio_file_mono, File.join(sub_folder, 'p9999_s9_u9999999_d99999999_t999999Z.ogg'))
+      FileUtils.cp(audio_file_mono, File.join(sub_folder, 'two', 'p1_s2_u3_d20140101_t235959Z.mp3'))
+      FileUtils.cp(audio_file_mono, File.join(sub_folder, 'two', 'p000_s00000_u00000_d00000000_t000000Z.0'))
+      FileUtils.cp(audio_file_mono, File.join(sub_folder, 'two', 'p9999_s9_u9999999_d99999999_t999999Z.ogg'))
 
       FileUtils.cp(audio_file_mono, File.join(sub_folder, 'prefix_20140101_235959.mp3'))
       FileUtils.cp(audio_file_mono, File.join(sub_folder, 'a_00000000_000000.a'))
       FileUtils.cp(audio_file_mono, File.join(sub_folder, 'a_99999999_999999.dnsb48364JSFDSD'))
 
-      FileUtils.cp(audio_file_mono, File.join(sub_folder, 'prefix_20140101_235959+10.mp3'))
+      FileUtils.cp(audio_file_mono, File.join(sub_folder, 'two', 'three', 'prefix_20140101_235959+10.mp3'))
       FileUtils.cp(audio_file_mono, File.join(sub_folder, 'a_00000000_000000+00.a'))
       FileUtils.cp(audio_file_mono, File.join(sub_folder, 'a_99999999_999999+9999.dnsb48364JSFDSD'))
 
       FileUtils.cp(audio_file_mono, File.join(sub_folder, 'SERF_20130314_000021_000.wav'))
       FileUtils.cp(audio_file_mono, File.join(sub_folder, 'a_20130314_000021_a.a'))
-      FileUtils.cp(audio_file_mono, File.join(sub_folder, 'a_99999999_999999_a.dnsb48364JSFDSD'))
+      FileUtils.cp(audio_file_mono, File.join(sub_folder, 'two', 'three', 'a_99999999_999999_a.dnsb48364JSFDSD'))
 
-      results = BawWorkers::Harvest::Action.action_gather_and_process(harvest_to_do_path, true) do |file_hash|
-        expect(file_hash).to include(:uploader_id)
-        expect(file_hash).to include(:data_length_bytes)
-      end
+      results = gather_files.run(harvest_to_do_path)
 
-      expect(results[:results].size).to eq(4)
-      expect(results).to include(:summary)
-      expect(results[:summary]).to include('one')
-      expect(results[:summary].size).to eq(1)
-      expect(results[:summary]['one']).to include('project_id')
+      expect(results.size).to eq(4)
+
+      expect(results[0]).to include(:metadata)
+      expect(results[0][:file_rel_path]).to eq('one/prefix_20140101_235959.mp3')
+
+      expect(results[1]).to include(:metadata)
+      expect(results[1][:file_rel_path]).to eq('one/SERF_20130314_000021_000.wav')
+
+      expect(results[2]).to_not include(:metadata)
+      expect(results[2][:file_rel_path]).to eq('one/two/p1_s2_u3_d20140101_t235959Z.mp3')
+
+      expect(results[3]).to_not include(:metadata)
+      expect(results[3][:file_rel_path]).to eq('one/two/three/prefix_20140101_235959+10.mp3')
     end
 
     it 'should error on read-only directory' do
@@ -342,11 +348,8 @@ describe BawWorkers::Harvest::GatherFiles do
       FileUtils.cp(audio_file_mono, File.join(sub_folder, 'a_99999999_999999_a.dnsb48364JSFDSD'))
 
       expect {
-        BawWorkers::Harvest::Action.action_gather_and_process(harvest_to_do_path, true) do |file_hash|
-          expect(file_hash).to include(:uploader_id)
-          expect(file_hash).to include(:data_length_bytes)
-        end
-      }.to raise_error(ArgumentError, /Found read-only directory /)
+        gather_files.run(harvest_to_do_path)
+      }.to raise_error(ArgumentError, /Found read-only directory: /)
 
       FileUtils.rm_rf(sub_folder, secure: true)
     end
