@@ -274,10 +274,20 @@ class AudioRecordingsController < ApplicationController
 
   def audio_recording_params
     params.require(:audio_recording).permit(
-        :bit_rate_bps, :channels, :data_length_bytes, :original_file_name,
-        :duration_seconds, :file_hash, :media_type, :notes,
-        :recorded_date, :sample_rate_hertz, :status, :uploader_id,
-        :site_id, :creator_id)
+        :bit_rate_bps,
+        :channels,
+        :data_length_bytes,
+        :original_file_name,
+        :duration_seconds,
+        :file_hash,
+        :media_type,
+        :notes,
+        :recorded_date,
+        :sample_rate_hertz,
+        :status,
+        :uploader_id,
+        :site_id,
+        :creator_id)
   end
 
   def get_project_site

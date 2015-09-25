@@ -549,6 +549,7 @@ resource 'AudioRecordings' do
     data_length_bytes = 9999
     media_type = 'audio/mp3'
     duration_seconds = 45.0
+    notes = { test: ['something']}
 
     let(:ar_attributes) { FactoryGirl.attributes_for(:audio_recording,
                                                      original_file_name: original_file_name,
@@ -557,6 +558,7 @@ resource 'AudioRecordings' do
                                                      data_length_bytes: data_length_bytes,
                                                      media_type: media_type,
                                                      duration_seconds: duration_seconds,
+                                                     notes: notes,
                                                      site_id: site_id,
                                                      uploader_id: @write_permission.user.id) }
 
@@ -585,6 +587,7 @@ resource 'AudioRecordings' do
 
       expect(AudioRecording.where(id: new_audio_recording_id).count).to eq(1)
       expect(AudioRecording.where(id: new_audio_recording_id).first.status).to eq('new')
+      expect(AudioRecording.where(id: new_audio_recording_id).first.notes).to eq(notes)
     end
   end
 

@@ -227,8 +227,8 @@ class AudioRecordingOverlap
       current_duration = modified.duration_seconds
       modified.duration_seconds = new_duration
 
-      notes = modified.notes.blank? ? '' : modified.notes
-      modified.notes = notes + create_overlap_notes(overlap_amount, current_duration, new_duration, other.uuid)
+      notes = modified.notes.blank? ? {} : modified.notes
+      modified.notes = notes.merge(create_overlap_notes(overlap_amount, current_duration, new_duration, other.uuid))
 
       {
           fixed: modified.save,
@@ -242,8 +242,15 @@ class AudioRecordingOverlap
     # @param [string] other_uuid
     # @return [String]
     def create_overlap_notes(overlap_amount, current_duration, new_duration, other_uuid)
-      "\n\"duration_adjustment_for_overlap\"=\"Change made #{Time.zone.now.utc.iso8601}: " +
-          "overlap of #{overlap_amount} seconds (duration: old: #{current_duration}, new: #{new_duration}) with audio_recording with uuid #{other_uuid}.\""
+      {
+          duration_adjustment_for_overlap:{
+              changed_at: Time.zone.now.utc.iso8601,
+              overlap_amount: overlap_amount,
+              duration_old: current_duration,
+              duration_new: new_duration,
+              other_uuid: other_uuid
+          }
+      }
     end
 
     # Get the end date for an audio recording.
