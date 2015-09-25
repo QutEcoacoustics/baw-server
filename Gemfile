@@ -148,7 +148,7 @@ group :development, :test do
   gem 'bullet', '~> 4.14.1'
 
   # Spring speeds up development by keeping your application running in the background. Read more: https://github.com/rails/spring
-  gem 'spring', '~> 1.3.0'
+  gem 'spring', '~> 1.4.0'
 
   # Run `rails console` in the browser. Read more: https://github.com/rails/web-console
   #gem 'web-console', '~> 2.1.1'
@@ -197,7 +197,7 @@ group :development, :test do
   gem 'shoulda-matchers', '~> 2.8.0'
   gem 'launchy', '~> 2.4.3'
   gem 'json_spec', '~> 1.1.4'
-  gem 'database_cleaner', '1.4.1'
+  gem 'database_cleaner', '~> 1.5.0'
 
   gem 'coveralls', '~> 0.8.1', require: false
   gem 'codeclimate-test-reporter', '~> 0.4.5', require: nil

@@ -1,7 +1,7 @@
 language: ruby
 sudo: false
 rvm:
-- 2.2.2
+- 2.2.3
 branches:
   only:
   - master
@@ -22,7 +22,7 @@ before_install:
 
   # download, extract, and add ffmpeg and ffprobe to path
   - mkdir /tmp/ffmpeg
-  - wget https://github.com/QutBioacoustics/baw-audio-tools/releases/download/v0.1.0/ffmpeg-git-20140817-64bit-static.tar.gz -O /tmp/ffmpeg/download-ffmpeg.tar.gz
+  - wget http://ffmpeg.gusari.org/static/64bit/ffmpeg.static.64bit.latest.tar.gz -O /tmp/ffmpeg/download-ffmpeg.tar.gz
   - tar -xzf /tmp/ffmpeg/download-ffmpeg.tar.gz -C /tmp/ffmpeg/
   - export PATH=/tmp/ffmpeg:$PATH
 
