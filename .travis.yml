@@ -31,9 +31,9 @@ before_install:
 
   # download, extract, and add wav2png to path
   - mkdir /tmp/wav2png
-  - git clone https://github.com/beschulz/wav2png.git /tmp/wav2pnggit
-  - make -C /tmp/wav2png/wav2pnggit/build all
-  - mv /tmp/wav2png/wav2pnggit/bin/Linux/wav2png /tmp/wav2png/wav2png
+  - git clone https://github.com/beschulz/wav2png.git /tmp/wav2png_git
+  - make -C /tmp/wav2png_git/wav2png/build all
+  - mv /tmp/wav2png_git/wav2png/bin/Linux/wav2png /tmp/wav2png/wav2png
   - export PATH=/tmp/wav2png:$PATH
 
   # check versions
