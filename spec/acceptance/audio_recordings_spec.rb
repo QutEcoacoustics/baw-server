@@ -86,7 +86,7 @@ def test_overlap
            ]
        }
       },
-      {# new overlaps at start of existing, should not be adjusted as overlap is too much
+      {# new overlaps at start of existing, should not be adjusted as overlap is too much (10 sec)
        inputs: {
            post_item: {
                recorded_date: Time.zone.parse('2000-01-04 12:00:00Z'),
@@ -179,7 +179,7 @@ def test_overlap
            ]
        }
       },
-      {# 3 recordings: too much overlap at one end
+      {# 3 recordings: too much overlap at one end (10 sec)
        inputs: {
            post_item: {
                recorded_date: Time.zone.parse('2000-01-07 12:00:50Z'),
@@ -318,7 +318,7 @@ def test_overlap
 
           # ensure posted audio recording does not exist
           expect(AudioRecording.where(file_hash: posted_item_attrs[:file_hash]).count)
-              .to eq(0), "all file_hashes #{AudioRecording.select(:file_hash).all}, input posted #{posted_item_attrs[:file_hash]}"
+              .to eq(0), "Input should not exist: #{posted_item_attrs}"
         else
           raise "unknown status code #{status_code}"
         end
@@ -549,7 +549,7 @@ resource 'AudioRecordings' do
     data_length_bytes = 9999
     media_type = 'audio/mp3'
     duration_seconds = 45.0
-    notes = { test: ['something']}
+    notes = {'test' => ['something']}
 
     let(:ar_attributes) { FactoryGirl.attributes_for(:audio_recording,
                                                      original_file_name: original_file_name,

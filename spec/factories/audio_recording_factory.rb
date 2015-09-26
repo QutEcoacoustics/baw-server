@@ -1,7 +1,7 @@
 FactoryGirl.define do
 
   factory :audio_recording do
-    sequence(:file_hash) { |n| MiscHelper.new.create_sha_256_hash(n)}
+    sequence(:file_hash) { |n| MiscHelper.new.create_sha_256_hash(n) }
     recorded_date '2012-03-26 07:06:59'
     duration_seconds 60000
     sample_rate_hertz 22050
@@ -9,7 +9,7 @@ FactoryGirl.define do
     bit_rate_bps 64000
     media_type 'audio/mpeg'
     data_length_bytes 3800
-    sequence(:notes) { |n| "note number #{n}" }
+    sequence(:notes) { |n| {test: "note number #{n}"} }
     sequence(:original_file_name) { |n| "original name #{n}.mp3" }
 
     creator
@@ -29,7 +29,7 @@ FactoryGirl.define do
         audio_event_count 1
       end
       after(:create) do |audio_recording, evaluator|
-        raise 'Creator was blank' if  evaluator.creator.blank?
+        raise 'Creator was blank' if evaluator.creator.blank?
         create_list(:audio_event_with_tags_and_comments, evaluator.audio_event_count, audio_recording: audio_recording, creator: evaluator.creator)
       end
     end
@@ -39,7 +39,7 @@ FactoryGirl.define do
         bookmark_count 1
       end
       after(:create) do |audio_recording, evaluator|
-        raise 'Creator was blank' if  evaluator.creator.blank?
+        raise 'Creator was blank' if evaluator.creator.blank?
         create_list(:bookmark, evaluator.bookmark_count, audio_recording: audio_recording, creator: evaluator.creator)
       end
     end

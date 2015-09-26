@@ -220,7 +220,7 @@ class AudioRecording < ActiveRecord::Base
                         :sample_rate_hertz, :channels, :bit_rate_bps, :media_type,
                         :data_length_bytes, :status, :created_at, :updated_at],
         text_fields: [:media_type, :status],
-        new_spec_fields: lambda {|user|
+        new_spec_fields: lambda { |user|
           {
               site_id: nil,
               uploader_id: nil,
@@ -276,10 +276,11 @@ class AudioRecording < ActiveRecord::Base
     }
   end
 
-  private
   def set_uuid
-    self.uuid = UUIDTools::UUID.random_create.to_s
+    self.uuid = UUIDTools::UUID.random_create.to_s if self.uuid.blank?
   end
+
+  private
 
   def missing_hash_value?
     file_hash == 'SHA256::'

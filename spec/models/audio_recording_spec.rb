@@ -16,9 +16,11 @@ describe AudioRecording, :type => :model do
   it 'has a valid FactoryGirl factory' do
     ar = FactoryGirl.create(:audio_recording)
     expect(ar).to be_valid
-
   end
-  it 'creating it with a nil :uuid will regenerate one anyway' do
+
+  it { is_expected.to serialize(:notes) }
+
+  it 'creating it with a nil :uuid will generate one on validation' do
     # so because it is auto generated, setting :uuid to nil won't work here
     expect(FactoryGirl.build(:audio_recording, uuid: nil)).to be_valid
   end
@@ -26,6 +28,24 @@ describe AudioRecording, :type => :model do
     ar = FactoryGirl.create(:audio_recording)
     ar.uuid = nil
     expect(ar).not_to be_valid
+  end
+
+  it 'has a nil uuid when created' do
+    ar = FactoryGirl.build(:audio_recording)
+    expect(ar.uuid).to be_nil
+  end
+
+  it 'has same uuid before and after saved to db' do
+    ar = FactoryGirl.build(:audio_recording)
+    expect(ar.uuid).to be_nil
+
+    ar.valid?
+    expect(ar.uuid).to_not be_nil
+
+    uuid_before = ar.uuid
+    ar.save!
+    uuid_after = ar.uuid
+    expect(uuid_after).to eq(uuid_before)
   end
 
   it 'fails validation when uploader is nil' do
@@ -97,6 +117,10 @@ describe AudioRecording, :type => :model do
       result = ar2.fix_overlaps
       expect(result[:overlap][:count]).to eq(0)
       expect(result[:overlap][:items]).to be_empty
+
+      ar2.save!
+      expect(AudioRecording.find(ar1.id).notes).to_not include('duration_adjustment_for_overlap')
+      expect(AudioRecording.find(ar2.id).notes).to_not include('duration_adjustment_for_overlap')
     end
 
     it 'should allow non overlapping dates - (second before first)' do
@@ -107,6 +131,10 @@ describe AudioRecording, :type => :model do
       result = ar2.fix_overlaps
       expect(result[:overlap][:count]).to eq(0)
       expect(result[:overlap][:items]).to be_empty
+
+      ar2.save!
+      expect(AudioRecording.find(ar1.id).notes).to_not include('duration_adjustment_for_overlap')
+      expect(AudioRecording.find(ar2.id).notes).to_not include('duration_adjustment_for_overlap')
     end
 
     it 'should not allow overlapping dates - exact' do
@@ -122,6 +150,10 @@ describe AudioRecording, :type => :model do
       expect(result[:overlap][:items][0][:overlap_location]).to eq('no overlap or recordings overlap completely')
       expect(result[:overlap][:items][0][:can_fix]).to be_falsey
 
+      # can fix is false
+      ar2.save!
+      expect(AudioRecording.find(ar1.id).notes).to_not include('duration_adjustment_for_overlap')
+      expect(AudioRecording.find(ar2.id).notes).to_not include('duration_adjustment_for_overlap')
     end
 
     it 'should not allow overlapping dates - shift forwards' do
@@ -136,6 +168,11 @@ describe AudioRecording, :type => :model do
       expect(result[:overlap][:items][0][:overlap_amount]).to eq(16.0)
       expect(result[:overlap][:items][0][:overlap_location]).to eq('start of existing, end of new')
       expect(result[:overlap][:items][0][:can_fix]).to be_truthy
+
+      # fixed is false
+      ar2.save!
+      expect(AudioRecording.find(ar1.id).notes).to_not include('duration_adjustment_for_overlap')
+      expect(AudioRecording.find(ar2.id).notes).to_not include('duration_adjustment_for_overlap')
     end
 
     it 'should not allow overlapping dates - shift forwards (overlap both ends)' do
@@ -150,6 +187,11 @@ describe AudioRecording, :type => :model do
       expect(result[:overlap][:items][0][:overlap_amount]).to eq(30.0)
       expect(result[:overlap][:items][0][:overlap_location]).to eq('no overlap or recordings overlap completely')
       expect(result[:overlap][:items][0][:can_fix]).to be_falsey
+
+      # can fix is false
+      ar2.save!
+      expect(AudioRecording.find(ar1.id).notes).to_not include('duration_adjustment_for_overlap')
+      expect(AudioRecording.find(ar2.id).notes).to_not include('duration_adjustment_for_overlap')
     end
 
     it 'should not allow overlapping dates - shift backwards' do
@@ -164,6 +206,11 @@ describe AudioRecording, :type => :model do
       expect(result[:overlap][:items][0][:overlap_amount]).to eq(16.0)
       expect(result[:overlap][:items][0][:overlap_location]).to eq('start of new, end of existing')
       expect(result[:overlap][:items][0][:can_fix]).to be_truthy
+
+      # fixed is false
+      ar2.save!
+      expect(AudioRecording.find(ar1.id).notes).to_not include('duration_adjustment_for_overlap')
+      expect(AudioRecording.find(ar2.id).notes).to_not include('duration_adjustment_for_overlap')
     end
 
     it 'should not allow overlapping dates - shift backwards (1 sec overlap)' do
@@ -178,6 +225,16 @@ describe AudioRecording, :type => :model do
       expect(result[:overlap][:items][0][:overlap_amount]).to eq(1.0)
       expect(result[:overlap][:items][0][:overlap_location]).to eq('start of new, end of existing')
       expect(result[:overlap][:items][0][:can_fix]).to be_truthy
+
+      ar2.save!
+      expect(AudioRecording.find(ar1.id).notes).to include('duration_adjustment_for_overlap')
+      expect(AudioRecording.find(ar1.id).notes['duration_adjustment_for_overlap'].size).to eq(1)
+      expect(AudioRecording.find(ar1.id).notes['duration_adjustment_for_overlap'][0]['overlap_amount']).to eq(1.0)
+      expect(AudioRecording.find(ar1.id).notes['duration_adjustment_for_overlap'][0]['old_duration']).to eq(60.0)
+      expect(AudioRecording.find(ar1.id).notes['duration_adjustment_for_overlap'][0]['new_duration']).to eq(59.0)
+      expect(AudioRecording.find(ar1.id).notes['duration_adjustment_for_overlap'][0]['other_uuid']).to eq(ar2.uuid)
+
+      expect(AudioRecording.find(ar2.id).notes).to_not include('duration_adjustment_for_overlap')
     end
 
     it 'should allow overlapping dates - edges exact (first before second)' do
@@ -190,6 +247,10 @@ describe AudioRecording, :type => :model do
       result = ar2.fix_overlaps
       expect(result[:overlap][:count]).to eq(0)
       expect(result[:overlap][:items]).to be_empty
+
+      ar2.save!
+      expect(AudioRecording.find(ar1.id).notes).to_not include('duration_adjustment_for_overlap')
+      expect(AudioRecording.find(ar2.id).notes).to_not include('duration_adjustment_for_overlap')
     end
 
     it 'should allow overlapping dates - edges exact (second before first)' do
@@ -202,6 +263,10 @@ describe AudioRecording, :type => :model do
       result = ar2.fix_overlaps
       expect(result[:overlap][:count]).to eq(0)
       expect(result[:overlap][:items]).to be_empty
+
+      ar2.save!
+      expect(AudioRecording.find(ar1.id).notes).to_not include('duration_adjustment_for_overlap')
+      expect(AudioRecording.find(ar2.id).notes).to_not include('duration_adjustment_for_overlap')
     end
 
   end
@@ -216,6 +281,10 @@ describe AudioRecording, :type => :model do
       result = ar2.fix_overlaps
       expect(result[:overlap][:count]).to eq(0)
       expect(result[:overlap][:items]).to be_empty
+
+      ar2.save!
+      expect(AudioRecording.find(ar1.id).notes).to_not include('duration_adjustment_for_overlap')
+      expect(AudioRecording.find(ar2.id).notes).to_not include('duration_adjustment_for_overlap')
     end
 
     it 'should allow overlapping dates - shift forwards' do
@@ -227,6 +296,10 @@ describe AudioRecording, :type => :model do
       result = ar2.fix_overlaps
       expect(result[:overlap][:count]).to eq(0)
       expect(result[:overlap][:items]).to be_empty
+
+      ar2.save!
+      expect(AudioRecording.find(ar1.id).notes).to_not include('duration_adjustment_for_overlap')
+      expect(AudioRecording.find(ar2.id).notes).to_not include('duration_adjustment_for_overlap')
     end
 
     it 'should allow overlapping dates - shift backwards' do
@@ -238,6 +311,10 @@ describe AudioRecording, :type => :model do
       result = ar2.fix_overlaps
       expect(result[:overlap][:count]).to eq(0)
       expect(result[:overlap][:items]).to be_empty
+
+      ar2.save!
+      expect(AudioRecording.find(ar1.id).notes).to_not include('duration_adjustment_for_overlap')
+      expect(AudioRecording.find(ar2.id).notes).to_not include('duration_adjustment_for_overlap')
     end
 
     it 'should allow overlapping dates - edges exact' do
@@ -251,6 +328,11 @@ describe AudioRecording, :type => :model do
       result = ar2.fix_overlaps
       expect(result[:overlap][:count]).to eq(0)
       expect(result[:overlap][:items]).to be_empty
+
+      ar2.save!
+      expect(AudioRecording.find(ar1.id).notes).to_not include('duration_adjustment_for_overlap')
+      expect(AudioRecording.find(ar2.id).notes).to_not include('duration_adjustment_for_overlap')
+
     end
   end
 
