@@ -160,7 +160,7 @@ class AudioRecordingOverlap
         overlap_location = 'start of new, end of existing'
         can_fix = true
       else
-        min_end = [recording_new_end,recording_existing_end].min
+        min_end = [recording_new_end, recording_existing_end].min
         max_start = [recording_new_start, recording_existing_start].max
 
         if max_start > min_end
@@ -227,12 +227,25 @@ class AudioRecordingOverlap
       current_duration = modified.duration_seconds
       modified.duration_seconds = new_duration
 
-      notes = modified.notes.blank? ? '' : modified.notes
-      modified.notes = notes + create_overlap_notes(overlap_amount, current_duration, new_duration, other.uuid)
+      # make sure notes has the duration_adjustment_for_overlap array
+      if modified.notes.blank?
+        modified.notes = {}
+      end
+      unless modified.notes.include?('duration_adjustment_for_overlap')
+        modified.notes['duration_adjustment_for_overlap'] = []
+      end
+
+      # add new overlap info to the duration_adjustment_for_overlap array
+      new_overlap_info = create_overlap_notes(overlap_amount, current_duration, new_duration, other.uuid)
+      modified.notes['duration_adjustment_for_overlap'].push(new_overlap_info)
+
+      # provide access to model save result and errors
+      save_result = modified.save
+      save_errors = modified.errors.dup
 
       {
-          fixed: modified.save,
-          save_errors: modified.errors.dup
+          fixed: save_result,
+          save_errors: save_errors
       }
 
     end
@@ -242,8 +255,13 @@ class AudioRecordingOverlap
     # @param [string] other_uuid
     # @return [String]
     def create_overlap_notes(overlap_amount, current_duration, new_duration, other_uuid)
-      "\n\"duration_adjustment_for_overlap\"=\"Change made #{Time.zone.now.utc.iso8601}: " +
-          "overlap of #{overlap_amount} seconds (duration: old: #{current_duration}, new: #{new_duration}) with audio_recording with uuid #{other_uuid}.\""
+      {
+          changed_at: Time.zone.now.utc.iso8601,
+          overlap_amount: overlap_amount,
+          old_duration: current_duration,
+          new_duration: new_duration,
+          other_uuid: other_uuid
+      }
     end
 
     # Get the end date for an audio recording.

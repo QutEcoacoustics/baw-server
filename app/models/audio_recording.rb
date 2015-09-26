@@ -39,6 +39,9 @@ class AudioRecording < ActiveRecord::Base
   AVAILABLE_STATUSES = AVAILABLE_STATUSES_SYMBOLS.map { |item| item.to_s }
   enumerize :status, in: AVAILABLE_STATUSES, predicates: true
 
+  # TODO clean notes column in db
+  serialize :notes, JSON
+
   # association validations
   validates :site, existence: true
   validates :uploader, existence: true
@@ -175,6 +178,14 @@ class AudioRecording < ActiveRecord::Base
     if match.count == 1
       found = match.first
       found.status = 'new'
+
+      # set other attributes which may not have been included
+      # when the previous create request failed
+      found.sample_rate_hertz = recording_params[:sample_rate_hertz].to_i
+      found.channels = recording_params[:channels].to_i
+      found.bit_rate_bps = recording_params[:bit_rate_bps].to_i
+      found.notes = recording_params[:notes]
+
       found
     else
       AudioRecording.new(recording_params)
@@ -209,7 +220,7 @@ class AudioRecording < ActiveRecord::Base
                         :sample_rate_hertz, :channels, :bit_rate_bps, :media_type,
                         :data_length_bytes, :status, :created_at, :updated_at],
         text_fields: [:media_type, :status],
-        new_spec_fields: lambda {|user|
+        new_spec_fields: lambda { |user|
           {
               site_id: nil,
               uploader_id: nil,
@@ -265,10 +276,11 @@ class AudioRecording < ActiveRecord::Base
     }
   end
 
-  private
   def set_uuid
-    self.uuid = UUIDTools::UUID.random_create.to_s
+    self.uuid = UUIDTools::UUID.random_create.to_s if self.uuid.blank?
   end
+
+  private
 
   def missing_hash_value?
     file_hash == 'SHA256::'

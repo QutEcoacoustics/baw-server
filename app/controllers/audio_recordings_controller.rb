@@ -65,6 +65,9 @@ class AudioRecordingsController < ApplicationController
       )
     else
 
+      # ensure audio recording has uuid
+      @audio_recording.set_uuid
+
       # check for overlaps and attempt to fix
       overlap_result = @audio_recording.fix_overlaps
 
@@ -273,11 +276,33 @@ class AudioRecordingsController < ApplicationController
   end
 
   def audio_recording_params
-    params.require(:audio_recording).permit(
-        :bit_rate_bps, :channels, :data_length_bytes, :original_file_name,
-        :duration_seconds, :file_hash, :media_type, :notes,
-        :recorded_date, :sample_rate_hertz, :status, :uploader_id,
-        :site_id, :creator_id)
+
+    permitted_attributes = [
+        :bit_rate_bps,
+        :channels,
+        :data_length_bytes,
+        :original_file_name,
+        :duration_seconds,
+        :file_hash,
+        :media_type,
+        :notes,
+        :recorded_date,
+        :sample_rate_hertz,
+        :status,
+        :uploader_id,
+        :site_id,
+        :creator_id
+    ]
+
+    # can't permit arbitrary hash
+    # https://github.com/rails/rails/issues/9454#issuecomment-14167664
+    # http://guides.rubyonrails.org/action_controller_overview.html#more-examples
+    # add arbitrary hash for notes manually
+    params.require(:audio_recording).permit(*permitted_attributes).tap do |allowed_params|
+      if params[:audio_recording][:notes]
+        allowed_params[:notes] = params[:audio_recording][:notes]
+      end
+    end
   end
 
   def get_project_site
