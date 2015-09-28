@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## [Release 0.17.1-1](https://github.com/QutBioacoustics/baw-server/releases/tag/0.17.1-1) (2015-09-28)
+
+ - 2015-09-28
+    - hotfix to change client urls
+
 ## [Release 0.17.1](https://github.com/QutBioacoustics/baw-server/releases/tag/0.17.1) (2015-08-19)
 
  - 2015-08-19
