@@ -95,6 +95,10 @@ module ApplicationHelper
     "/library/#{ar_id}/audio_events/#{ae_id}"
   end
 
+  def make_library_tag_search_path(tag_text)
+    "/library?reference=all&tagsPartial=#{tag_text}"
+  end
+
   def make_visualise_path(value)
     fail ArgumentError, 'Must provide project or site' if value.blank?
 

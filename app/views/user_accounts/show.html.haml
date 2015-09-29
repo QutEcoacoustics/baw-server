@@ -63,7 +63,7 @@
           - Tag.user_top_tags(@user).each do |item|
             %li.list-group-item
               %span.fa.fa-tag{aria: {hidden: 'true' }}
-              = link_to item['tag_name'], "/library?reference=all&tagsPartial=#{item['tag_name']}"
+              = link_to item['tag_name'], make_library_tag_search_path(item['tag_name'])
               %span.badge
                 = item['tag_count']
 
