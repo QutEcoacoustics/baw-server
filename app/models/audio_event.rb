@@ -268,13 +268,12 @@ class AudioEvent < ActiveRecord::Base
   end
 
   def self.in_site(site)
-    AudioEvent.find_by_sql(["SELECT ae.*
-FROM audio_events ae
-INNER JOIN audio_recordings ar ON ae.audio_recording_id = ar.id
-INNER JOIN sites s ON ar.site_id = s.id
-WHERE s.id = :site_id
-ORDER BY ae.updated_at DESC
-LIMIT 6", {site_id: site.id}])
+    AudioEvent
+        .joins(:audio_recording)
+        .includes(:updater, :creator)
+        .where(audio_recordings: {site_id: site.id})
+        .order(updated_at: :desc)
+        .limit(6)
   end
 
   private
