@@ -31,35 +31,34 @@
     .col-sm-12
       = paginate  tag_groups
 
-  - if tag_groups.empty?
-    No tags to show.
-  - else
-    %table.table.table-striped
-      %thead
-        %tr
-          %th
-            = link_to admin_tag_groups_path order_by: :tag_id, order_dir: order_by_opposite, filter: filter do
-              Tag
-              - if order_by == :tag_id
-                %span.fa{class: "fa-#{order_dir_icon}"}
-          %th
-            = link_to admin_tag_groups_path order_by: :group_identifier, order_dir: order_by_opposite, filter: filter  do
-              Group
-              - if order_by == :group_identifier
-                %span.fa{class: "fa-#{order_dir_icon}"}
-          %th
+      %table.table.table-striped
+        %thead
+          %tr
+            %th
+              = link_to admin_tag_groups_path order_by: :tag_id, order_dir: order_by_opposite, filter: filter do
+                %span.fa.fa-tag{aria: {hidden: 'true'}}
+                Tag
+                - if order_by == :tag_id
+                  %span.fa{class: "fa-#{order_dir_icon}"}
+            %th
+              = link_to admin_tag_groups_path order_by: :group_identifier, order_dir: order_by_opposite, filter: filter  do
+                %span.fa.fa-flag{aria: {hidden: 'true'}}
+                Group
+                - if order_by == :group_identifier
+                  %span.fa{class: "fa-#{order_dir_icon}"}
+            %th
 
-      %tbody
-      - tag_groups.each do |tag_group|
-        %tr
-          %td
-            = tag_group.tag.text
-          %td
-            = tag_group.group_identifier
-          %td
-            = link_to edit_admin_tag_group_path(tag_group), class: 'btn btn-default btn-xs' do
-              %span.fa.fa-edit
-              Edit
-            = link_to admin_tag_group_path(tag_group), method: :delete, data: { confirm: 'Are you sure?' }, class: 'btn btn-default btn-xs' do
-              %span.fa.fa-times
-              Delete
+        %tbody
+        - tag_groups.each do |tag_group|
+          %tr
+            %td
+              = tag_group.tag.text
+            %td
+              = tag_group.group_identifier
+            %td
+              = link_to edit_admin_tag_group_path(tag_group), class: 'btn btn-default btn-xs' do
+                %span.fa.fa-edit
+                Edit
+              = link_to admin_tag_group_path(tag_group), method: :delete, data: { confirm: 'Are you sure?' }, class: 'btn btn-default btn-xs' do
+                %span.fa.fa-times
+                Delete

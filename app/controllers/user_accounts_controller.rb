@@ -8,7 +8,7 @@ class UserAccountsController < ApplicationController
     order = 'CASE WHEN last_seen_at IS NOT NULL THEN last_seen_at
 WHEN current_sign_in_at IS NOT NULL THEN current_sign_in_at
 ELSE last_sign_in_at END DESC'
-    @users = User.order(order).all
+    @users = User.order(order).page(params[:page])
 
     respond_to do |format|
       format.html

@@ -13,5 +13,7 @@
     = link_to t('baw.shared.links.admin_tags.title'), admin_tags_path
   %li{class: ('active' if current_page?(admin_tag_groups_path))}
     = link_to t('baw.shared.links.admin_tag_groups.title'), admin_tag_groups_path
+  %li{class: ('active' if current_page?(admin_audio_recordings_path))}
+    = link_to 'Audio Recordings', admin_audio_recordings_path
   %li
     = link_to t('baw.shared.links.job_status.title'), '/job_queue_status'

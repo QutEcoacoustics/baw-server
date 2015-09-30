@@ -8,9 +8,7 @@
 
 = render partial: 'shared/sidebar_user', locals: {user_show: @user, user_current: current_user}
 
-- if @user_audio_event_comments.empty?
-  No annotation comments to show.
-- else
+.col-sm-12
   %p= page_entries_info @user_audio_event_comments
   = paginate @user_audio_event_comments
 

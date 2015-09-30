@@ -1,0 +1,69 @@
+- content_for :title, 'Audio Recordings'
+
+= render partial: 'shared/admin/sidebar_audio_recordings'
+
+- content_for :right_sidebar do
+  = render partial: 'shared/sidebar_metadata_heading', locals: {title: 'Audio Recordings', icon_class: 'file-audio-o'}
+
+- order_dir_icon = @audio_recordings_info[:order_dir] == :asc ? 'caret-down' : 'caret-up'
+- order_by_opposite = @audio_recordings_info[:order_dir] == :asc ? :desc : :asc
+- order_by = @audio_recordings_info[:order_by]
+
+.col-sm-12
+  .row
+    .col-sm-6
+      %p= page_entries_info @audio_recordings
+
+  .row
+    .col-sm-12
+      = paginate  @audio_recordings
+
+      %table.table.table-striped.table-hover
+        %thead
+          %tr
+            %th
+              = link_to admin_audio_recordings_path order_by: :id, order_dir: order_by_opposite do
+                %span.fa.fa-file-audio-o{aria: {hidden: 'true' }}
+                Id
+                - if order_by == :id
+                  %span.fa{class: "fa-#{order_dir_icon}"}
+            %th
+              = link_to admin_audio_recordings_path order_by: :site, order_dir: order_by_opposite do
+                %span.fa.fa-map-marker{aria: {hidden: 'true' }}
+                Site
+                - if order_by == :site
+                  %span.fa{class: "fa-#{order_dir_icon}"}
+            %th
+              = link_to admin_audio_recordings_path order_by: :duration_seconds, order_dir: order_by_opposite do
+                %span.fa.fa-clock-o{aria: {hidden: 'true' }}
+                Duration
+                - if order_by == :duration_seconds
+                  %span.fa{class: "fa-#{order_dir_icon}"}
+            %th
+              = link_to admin_audio_recordings_path order_by: :recorded_date, order_dir: order_by_opposite do
+                %span.fa.fa-calendar{aria: {hidden: 'true' }}
+                Recorded
+                - if order_by == :recorded_date
+                  %span.fa{class: "fa-#{order_dir_icon}"}
+            %th
+              = link_to admin_audio_recordings_path order_by: :audio_event_count, order_dir: order_by_opposite do
+                %span.fa.fa-bullseye{aria: {hidden: 'true' }}
+                Annotations
+                - if order_by == :audio_event_count
+                  %span.fa{class: "fa-#{order_dir_icon}"}
+            %th
+
+        %tbody
+          - @audio_recordings.each do |audio_recording|
+            - listen_link = make_listen_path(audio_recording)
+            - site_name = audio_recording.site.name
+            %tr
+              %td= link_to audio_recording.id, admin_audio_recording_path(audio_recording)
+              %td= site_name
+              %td= distance_of_time(audio_recording.duration_seconds, highest_measures: 2)
+              %td= format_sidebar_datetime(audio_recording.recorded_date)
+              %td= audio_recording.audio_events.count
+              %td
+                = link_to listen_link, target: '_self', class: 'btn btn-default btn-xs' do
+                  %span.fa.fa-play{aria: {hidden: 'true'}}
+                  Play

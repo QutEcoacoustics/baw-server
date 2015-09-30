@@ -321,6 +321,7 @@ Rails.application.routes.draw do
   namespace :admin do
     get '/' => 'home#index', as: :dashboard
     resources :tags, :tag_groups
+    resources :audio_recordings, only: [:index, :show]
 
     resources :scripts, except: [:update] do
       member do
