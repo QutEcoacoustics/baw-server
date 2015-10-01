@@ -24,7 +24,7 @@ addons:
 before_install:
 
   # download, extract, and add ffmpeg and ffprobe to path
-  - mkdir /tmp/ffmpeg 
+  - mkdir /tmp/ffmpeg
   - wget http://ffmpeg.gusari.org/static/64bit/ffmpeg.static.64bit.latest.tar.gz -O /tmp/ffmpeg/download-ffmpeg.tar.gz
   - tar -xzf /tmp/ffmpeg/download-ffmpeg.tar.gz -C /tmp/ffmpeg/
   - export PATH=/tmp/ffmpeg:$PATH
@@ -41,7 +41,7 @@ before_install:
   - ffmpeg -version
   - mp3splt -version
   - sox --version
-  - wav2png --verion
+  - wav2png --version
 script:
 - bundle exec rspec
 env:
