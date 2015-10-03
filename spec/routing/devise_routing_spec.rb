@@ -1,4 +1,4 @@
-require 'spec_helper'
+require 'rails_helper'
 
 describe Api::SessionsController, :type => :routing do
   describe :routing do

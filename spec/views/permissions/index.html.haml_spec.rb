@@ -1,4 +1,4 @@
-#require 'spec_helper'
+#require 'rails_helper'
 #
 #describe "permissions/index" do
 #  before(:each) do

@@ -1,4 +1,4 @@
-#require 'spec_helper'
+#require 'rails_helper'
 #
 #describe "user_accounts/index" do
 #  before(:each) do

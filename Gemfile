@@ -110,7 +110,7 @@ gem 'newrelic_rpm', '~> 3.13.0'
 # Documentation & UI
 # -------------------------------------
 # these gems are required here to serve /doc url
-gem 'rspec_api_documentation', '~> 4.4.0'
+gem 'rspec_api_documentation', '~> 4.5.0'
 gem 'raddocs', '~> 0.5.0'
 
 # MEDIA
@@ -148,7 +148,7 @@ group :development, :test do
   gem 'bullet', '~> 4.14.1'
 
   # Spring speeds up development by keeping your application running in the background. Read more: https://github.com/rails/spring
-  gem 'spring', '~> 1.4.0'
+  #gem 'spring', '~> 1.4.0'
 
   # Run `rails console` in the browser. Read more: https://github.com/rails/web-console
   #gem 'web-console', '~> 2.1.1'
@@ -194,7 +194,6 @@ group :development, :test do
 
   gem 'rspec', '~> 3.3.0'
   gem 'simplecov', '~> 0.10.0', require: false
-  gem 'shoulda-matchers', '~> 2.8.0'
   gem 'launchy', '~> 2.4.3'
   gem 'json_spec', '~> 1.1.4'
   gem 'database_cleaner', '~> 1.5.0'
@@ -205,4 +204,5 @@ end
 
 group :test do
   gem 'webmock', '~> 1.21.0'
+  gem 'shoulda-matchers', '~> 2.8.0', require: false
 end

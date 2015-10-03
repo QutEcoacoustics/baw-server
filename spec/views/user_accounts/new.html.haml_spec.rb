@@ -1,4 +1,4 @@
-#require 'spec_helper'
+#require 'rails_helper'
 #
 #describe "user_accounts/new" do
 #  before(:each) do

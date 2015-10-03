@@ -1,6 +1,8 @@
-require 'spec_helper'
+require 'rails_helper'
 
 describe Bookmark, :type => :model do
+  subject { FactoryGirl.build(:bookmark) }
+
   it 'has a valid factory' do
     expect(create(:bookmark)).to be_valid
   end
@@ -17,13 +19,15 @@ describe Bookmark, :type => :model do
   end
 
   it { is_expected.to validate_presence_of(:offset_seconds) }
-  it { is_expected.to validate_numericality_of(:offset_seconds) }
+  it { is_expected.to validate_numericality_of(:offset_seconds).is_greater_than_or_equal_to(0) }
   it 'is invalid without offset_seconds specified' do
     expect(build(:bookmark, offset_seconds: nil)).not_to be_valid
   end
   it 'is invalid with offset_seconds set to less than zero' do
     expect(build(:bookmark, offset_seconds: -1)).not_to be_valid
   end
+
+  it { is_expected.to validate_uniqueness_of(:name).case_insensitive.scoped_to(:creator_id).with_message('should be unique per user') }
 
   it 'should not allow duplicate names for the same user (case-insensitive)' do
     user = create(:user)

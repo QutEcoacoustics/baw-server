@@ -1,4 +1,4 @@
-require 'spec_helper'
+require 'rails_helper'
 
 describe 'Website forms with user', :type => :feature do
   before(:each) do

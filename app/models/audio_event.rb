@@ -14,7 +14,6 @@ class AudioEvent < ActiveRecord::Base
 
   accepts_nested_attributes_for :tags
 
-
   # add deleted_at and deleter_id
   acts_as_paranoid
   validates_as_paranoid

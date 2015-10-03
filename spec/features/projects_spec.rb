@@ -1,4 +1,4 @@
-require 'spec_helper'
+require 'rails_helper'
 
 def select_by_value(id, value)
   option_xpath = "//*[@id='#{id}']/option[@value='#{value}']"

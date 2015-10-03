@@ -1,4 +1,4 @@
-require 'spec_helper'
+require 'rails_helper'
 
 describe "User account actions", :type => :feature do
   # from: http://guides.rubyonrails.org/testing.html

@@ -70,7 +70,7 @@ class AudioRecording < ActiveRecord::Base
             format: {with: /\ASHA256::.{64}\z/, message: 'must start with "SHA256::" with 64 char hash'},
             on: :update, unless: :missing_hash_value?
 
-  before_validation :set_uuid, on: :create
+  after_initialize :set_uuid
 
   # postgres-specific
   scope :start_after, lambda { |time| where('recorded_date >= ?', time) }
@@ -277,7 +277,10 @@ class AudioRecording < ActiveRecord::Base
   end
 
   def set_uuid
-    self.uuid = UUIDTools::UUID.random_create.to_s if self.uuid.blank?
+    # only set uuid if uuid attribute is available, is blank, and this is a new object
+    if self.has_attribute?(:uuid) && self.uuid.blank? && self.new_record?
+      self.uuid = UUIDTools::UUID.random_create.to_s
+    end
   end
 
   private

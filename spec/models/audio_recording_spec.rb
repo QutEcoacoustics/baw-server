@@ -1,4 +1,4 @@
-require 'spec_helper'
+require 'rails_helper'
 
 describe AudioRecording, :type => :model do
   it 'has a valid factory' do
@@ -18,31 +18,28 @@ describe AudioRecording, :type => :model do
     expect(ar).to be_valid
   end
 
-  it { is_expected.to serialize(:notes) }
-
-  it 'creating it with a nil :uuid will generate one on validation' do
+  it 'creating it with a nil :uuid will not generate one on validation' do
     # so because it is auto generated, setting :uuid to nil won't work here
-    expect(FactoryGirl.build(:audio_recording, uuid: nil)).to be_valid
+    expect(FactoryGirl.build(:audio_recording, uuid: nil)).not_to be_valid
   end
   it 'is invalid without a uuid' do
     ar = FactoryGirl.create(:audio_recording)
     ar.uuid = nil
+    expect(ar.save).to be_falsey
     expect(ar).not_to be_valid
   end
 
-  it 'has a nil uuid when created' do
+  it 'has a uuid when created' do
     ar = FactoryGirl.build(:audio_recording)
-    expect(ar.uuid).to be_nil
+    expect(ar.uuid).not_to be_nil
   end
 
   it 'has same uuid before and after saved to db' do
     ar = FactoryGirl.build(:audio_recording)
-    expect(ar.uuid).to be_nil
-
-    ar.valid?
+    uuid_before = ar.uuid
+    expect(ar).to be_valid
     expect(ar.uuid).to_not be_nil
 
-    uuid_before = ar.uuid
     ar.save!
     uuid_after = ar.uuid
     expect(uuid_after).to eq(uuid_before)
@@ -59,6 +56,7 @@ describe AudioRecording, :type => :model do
 
   context 'validation' do
     subject { FactoryGirl.build(:audio_recording) }
+
     it { is_expected.to belong_to(:creator).with_foreign_key(:creator_id) }
     it { is_expected.to belong_to(:updater).with_foreign_key(:updater_id) }
     it { is_expected.to belong_to(:deleter).with_foreign_key(:deleter_id) }
@@ -66,45 +64,45 @@ describe AudioRecording, :type => :model do
 
     it { is_expected.to belong_to(:site) }
     it { is_expected.to have_many(:audio_events) }
+    it { is_expected.to have_many(:bookmarks) }
+    it { is_expected.to have_many(:tags) }
+
+    it { is_expected.to accept_nested_attributes_for(:site) }
+    it { is_expected.to serialize(:notes) }
+
+    it { is_expected.to validate_presence_of(:status) }
+    it { is_expected.to validate_inclusion_of(:status).in_array(AudioRecording::AVAILABLE_STATUSES) }
+
+    it { is_expected.to validate_presence_of(:uuid) }
+    it { is_expected.to validate_length_of(:uuid).is_equal_to(36) }
+    it { is_expected.to validate_uniqueness_of(:uuid).case_insensitive }
 
     it { is_expected.to validate_presence_of(:recorded_date) }
     it { is_expected.not_to allow_value(7.days.from_now).for(:recorded_date) }
-    it { is_expected.not_to allow_value(3.0).for(:recorded_date) }
+    it { is_expected.not_to allow_value('something').for(:recorded_date) }
 
     it { is_expected.to validate_presence_of(:duration_seconds) }
-    it { is_expected.to validate_numericality_of(:duration_seconds) }
-    it { is_expected.not_to allow_value(-1).for(:duration_seconds) }
+    it { is_expected.to validate_numericality_of(:duration_seconds).is_greater_than_or_equal_to(Settings.audio_recording_min_duration_sec) }
     it { is_expected.to allow_value(Settings.audio_recording_min_duration_sec).for(:duration_seconds) }
     it { is_expected.not_to allow_value(Settings.audio_recording_min_duration_sec - 0.5).for(:duration_seconds) }
-    it { is_expected.not_to allow_value(0).for(:duration_seconds) }
 
-    it { is_expected.to validate_numericality_of(:sample_rate_hertz) }
-    it { is_expected.not_to allow_value(-1).for(:sample_rate_hertz) }
-    it { is_expected.not_to allow_value(0).for(:sample_rate_hertz) }
-    it { is_expected.not_to allow_value(5.32).for(:sample_rate_hertz) }
+    it { is_expected.to validate_presence_of(:sample_rate_hertz) }
+    it { is_expected.to validate_numericality_of(:sample_rate_hertz).is_greater_than(0).only_integer }
 
-    it { is_expected.to validate_numericality_of(:channels) }
-    it { is_expected.not_to allow_value(-1).for(:channels) }
-    it { is_expected.not_to allow_value(0).for(:channels) }
-    it { is_expected.not_to allow_value(5.32).for(:channels) }
-    it { is_expected.not_to allow_value(5.00).for(:channels) }
-    it { is_expected.to allow_value(5).for(:channels) }
+    it { is_expected.to validate_presence_of(:channels) }
+    it { is_expected.to validate_numericality_of(:channels).is_greater_than(0).only_integer }
 
-    it { is_expected.to validate_numericality_of(:bit_rate_bps) }
-    it { is_expected.not_to allow_value(-1).for(:bit_rate_bps) }
-    it { is_expected.not_to allow_value(0).for(:bit_rate_bps) }
-    it { is_expected.not_to allow_value(5.32).for(:bit_rate_bps) }
-    it { is_expected.not_to allow_value(5.00).for(:bit_rate_bps) }
-    it { is_expected.to allow_value(5).for(:bit_rate_bps) }
+    it { is_expected.to validate_numericality_of(:bit_rate_bps).is_greater_than(0).only_integer }
 
     it { is_expected.to validate_presence_of(:media_type) }
+
     it { is_expected.to validate_presence_of(:data_length_bytes) }
-    it { is_expected.to validate_numericality_of(:data_length_bytes) }
-    it { is_expected.not_to allow_value(-1).for(:data_length_bytes) }
-    it { is_expected.not_to allow_value(0).for(:data_length_bytes) }
-    it { is_expected.not_to allow_value(5.32).for(:data_length_bytes) }
+    it { is_expected.to validate_numericality_of(:data_length_bytes).is_greater_than(0).only_integer }
 
     it { is_expected.to validate_presence_of(:file_hash) }
+    it { is_expected.to validate_length_of(:file_hash).is_equal_to(72) }
+    it { is_expected.to validate_uniqueness_of(:file_hash).case_insensitive.on(:create) }
+    it { is_expected.not_to allow_value('a' * 72).for(:file_hash) }
 
   end
   context 'in same site' do

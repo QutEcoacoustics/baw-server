@@ -1,4 +1,4 @@
-require 'spec_helper'
+require 'rails_helper'
 
 describe 'CRUD Sites as valid user with write permission', :type => :feature do
   before(:each) do

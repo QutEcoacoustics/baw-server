@@ -1,5 +1,5 @@
 ## Enable this when I've figured out how to specify the routes I expect to be covered by rspec_api_documentation tests
-# require 'spec_helper'
+# require 'rails_helper'
 #
 # describe 'rspec api documentation' do
 #

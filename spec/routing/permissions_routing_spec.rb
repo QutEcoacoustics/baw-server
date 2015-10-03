@@ -1,4 +1,4 @@
-require 'spec_helper'
+require 'rails_helper'
 
 describe PermissionsController, :type => :routing do
   describe :routing do

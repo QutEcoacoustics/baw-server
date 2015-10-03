@@ -1,4 +1,4 @@
-require 'spec_helper'
+require 'rails_helper'
 
 def compare_filter_sql(filter, sql_result)
   filter_query = create_filter(filter)
