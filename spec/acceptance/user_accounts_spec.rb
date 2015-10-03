@@ -11,33 +11,20 @@ resource 'Users' do
 
   let(:format) { 'json' }
 
+  create_entire_hierarchy
+  
   # prepare ids needed for paths in requests below
-  let(:writer_id) { @write_permission.user.id }
-  let(:reader_id) { @read_permission.user.id }
-  let(:other_id) { @other_user.user.id }
-  let(:admin_id) { @admin_user.id }
-
-  # prepare authentication_token for different users
-  let(:writer_token) { "Token token=\"#{@write_permission.user.authentication_token}\"" }
-  let(:reader_token) { "Token token=\"#{@read_permission.user.authentication_token}\"" }
-  let(:admin_token) { "Token token=\"#{@admin_user.authentication_token}\"" }
-
+  let(:writer_id) { writer_user.id }
+  let(:reader_id) { reader_user.id }
+  let(:other_id) { other_user.id }
+  let(:admin_id) { admin_user.id }
+  
   # Create post parameters from factory
   let(:post_attributes) {
     post_attrs = FactoryGirl.attributes_for(:user)
     post_attrs.delete(:authentication_token)
     post_attrs
   }
-
-  before(:each) do
-    # this creates a @write_permission.user with write access to @write_permission.project,
-    # a @read_permission.user with read access, as well as
-    # a site, audio_recording and audio_event having off the project (see permission_factory.rb)
-    @write_permission = FactoryGirl.create(:write_permission) # has to be 'write' so that the uploader has access
-    @read_permission = FactoryGirl.create(:read_permission, project: @write_permission.project)
-    @other_user = FactoryGirl.create(:write_permission)
-    @admin_user = FactoryGirl.create(:admin)
-  end
 
   ################################
   # LIST

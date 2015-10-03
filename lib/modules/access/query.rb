@@ -3,24 +3,24 @@ module Access
     class << self
 
       # Get all users that have levels access or higher to project.
-      # @param [Project] project
+      # @param [Project, Array<Project>] projects
       # @param [Symbol, Array<Symbol>] levels
       # @return [ActiveRecord::Relation] users
-      def users(project, levels = Access::Core.levels_allow)
-        fail NotImplementedError
-
+      def users(projects, levels = Access::Core.levels_allow)
+        projects = Access::Core.validate_projects(projects)
         levels = Access::Core.validate_levels(levels)
-        project = Access::Core.validate_project(project)
+        is_none = Access::Core.is_no_level?(levels)
 
-        if levels == [:none]
+        if is_none
           # get all users who have no access to the project
           # will never include any admins
           # if project has anon access, will always return empty
           # if project has logged in access, will return only 'guest'
           # SQL query for users where not exists permission entries for this project and equal or greater levels
           # SQL query should check user type, as admins will always have access
+
         else
-          # get all users who have at least the lowest of levels access to the project
+          # get all users who have at least the lowest level access to the project
           # will always include all admins
           # needs to account for anon and logged in access settings
           # SQL query for users where exists permission entries for this project and equal or greater levels
@@ -28,40 +28,11 @@ module Access
           lowest_level = Access::Core.lowest(levels)
           equal_or_greater_levels = Access::Core.equal_or_greater(lowest_level)
         end
+
+        fail NotImplementedError
       end
 
-      # Get lowest access level for this user for these projects (checks Permission and Project creator).
-      # @param [User] user
-      # @param [Array<Project>] projects
-      # @return [Symbol] level
-      def level_projects_lowest(user, projects)
-        projects = Access::Core.validate_projects(projects)
-        user = Access::Core.validate_user(user)
-
-        # check based on role
-        if Access::Check.is_admin?(user)
-          :owner
-        elsif Access::Check.is_standard_user?(user)
-          creator_lvl = Access::Level.project_creators(user, projects)
-          permission_user_lvl = Access::Level.permissions_user(user, projects)
-          #permission_logged_in_lvl = level_permissions_logged_in(projects)
-
-          #levels = [permission_user_lvl, permission_logged_in_lvl].flatten.compact
-          levels = [permission_user_lvl, creator_lvl].flatten.compact
-
-          levels.blank? ? :none : Access::Core.lowest(levels)
-        elsif Access::Check.is_guest?(user)
-          #permission_anon_lvl = level_permissions_anon(projects)
-          #permission_anon_lvl.blank? ? :none : Access::Core.highest([permission_anon_lvl].flatten)
-          # remove :none once additional permissions are added
-          :none
-        else
-          # guest, harvester, or invalid role
-          :none
-        end
-      end
-
-      # Get access level for this user for this project (only checks Permission).
+      # Get projects for which this user has these levels.
       # @param [User] user
       # @param [Symbol, Array<Symbol>] levels
       # @return [ActiveRecord::Relation] projects
@@ -84,7 +55,7 @@ module Access
       # @param [User] user
       # @return [ActiveRecord::Relation] projects
       def projects_inaccessible(user)
-        projects(user, Access::Core.levels_deny)
+        projects(user, nil)
       end
 
       # Get all permissions.

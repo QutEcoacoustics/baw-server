@@ -25,13 +25,12 @@ module Access
         # @see http://api.rubyonrails.org/classes/ActiveRecord/QueryMethods.html#method-i-includes
 
         if Access::Check.is_admin?(user)
-          intersection = Access::Core.levels_deny & levels
-          if intersection.empty?
-            # admin users have full access to everything at any level
-            query
-          else
+          if Access::Core.is_no_level?(levels)
             # since admin can access everything, any deny level returns nothing
             query.none
+          else
+            # admin users have full access to everything at any level
+            query
           end
 
         elsif Access::Check.is_standard_user?(user)
@@ -361,15 +360,8 @@ WHERE
       def permission_levels(levels)
         levels = Access::Core.validate_levels(levels)
 
-        # is_exists = Access::Core.levels_allow.include?(levels)
-        # is_not_exists = Access::Core.levels_deny == levels
-
-        # check if any of the deny levels is in levels
-
-        intersection = Access::Core.levels_deny & levels
-        # if intersection contains one or more items, then exists must be false
-        # or, exists will be true if none of the deny levels are in levels
-        exists = intersection.empty?
+        # exists is false when no levels are specified
+        exists = !Access::Core.is_no_level?(levels)
 
         # if exists is true, then use the levels that were provided
         # if exists is false, then use all allow levels (as NOT EXISTS will negate it)

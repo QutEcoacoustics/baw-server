@@ -51,41 +51,23 @@ resource 'AudioEvents' do
   # default format
   let(:format) { 'json' }
 
-  before(:each) do
-    # this creates a @write_permission.user with write access to @write_permission.project,
-    # a @read_permission.user with read access, as well as
-    # a site, audio_recording and audio_event having off the project (see permission_factory.rb)
-    @write_permission = FactoryGirl.create(:write_permission) # has to be 'write' so that the uploader has access
-    @read_permission = FactoryGirl.create(:read_permission, project: @write_permission.project)
-    @existing_tag = FactoryGirl.create(:tag, text: 'existing')
-    @admin_user = FactoryGirl.create(:admin)
-  end
-
-  # prepare ids needed for paths in requests below
-  #let(:project_id) { @write_permission.project.id }
-  #let(:site_id) { @write_permission.project.sites.order(:id).first.id }
-  let(:audio_recording_id) { @write_permission.project.sites.order(:id).first.audio_recordings.order(:id).first.id }
-  #  freq diff 5600, duration diff 0.6, start_time_seconds 5.2, low_frequency_hertz 400, high_frequency_hertz 6000, end_time_seconds 5.8
-  let(:id) { @write_permission.project.sites.order(:id).first.audio_recordings.order(:id).first.audio_events.order(:id).first.id }
-
-  # prepare authentication_token for different users
-  let(:writer_token) { "Token token=\"#{@write_permission.user.authentication_token}\"" }
-  let(:reader_token) { "Token token=\"#{@read_permission.user.authentication_token}\"" }
-  let(:other_user_token) { "Token token=\"#{FactoryGirl.create(:user).authentication_token}\"" }
-  let(:unconfirmed_token) { "Token token=\"#{FactoryGirl.create(:unconfirmed_user).authentication_token}\"" }
-  let(:admin_token) { "Token token=\"#{@admin_user.authentication_token}\"" }
-  let(:invalid_token) { "Token token=\"blah_blah_blah\"" }
-
+  create_entire_hierarchy
+  
+  let!(:existing_tag) { FactoryGirl.create(:tag, text: 'existing') }
+  
+  let(:audio_recording_id) { audio_recording.id }
+  let(:id) { audio_event.id }
+  
   # Create post parameters from factory
   let(:post_attributes) { FactoryGirl.attributes_for(:audio_event) }
   let(:post_nested_attributes) {
     {tags_attributes: [
         FactoryGirl.attributes_for(:tag),
         {
-            is_taxanomic: @existing_tag.is_taxanomic,
-            text: @existing_tag.text,
-            type_of_tag: @existing_tag.type_of_tag,
-            retired: @existing_tag.retired
+            is_taxanomic: existing_tag.is_taxanomic,
+            text: existing_tag.text,
+            type_of_tag: existing_tag.type_of_tag,
+            retired: existing_tag.retired
         }
     ]}
   }
@@ -488,7 +470,7 @@ resource 'AudioEvents' do
     parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
     parameter :id, 'Requested audio event id (in path/route)', required: true
 
-    let(:authentication_token) { other_user_token }
+    let(:authentication_token) { other_token }
     standard_request_options(:delete, 'DELETE (as other user)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
   end
 
@@ -619,27 +601,27 @@ resource 'AudioEvents' do
     before do
       #won't be included
       @ar_1 = FactoryGirl.create(:audio_event,
-                                 audio_recording: @write_permission.project.sites[0].audio_recordings[0],
+                                 audio_recording: writer_permission.project.sites[0].audio_recordings[0],
                                  start_time_seconds: 0, end_time_seconds: 1)
       #won't be included
       @ar_2 = FactoryGirl.create(:audio_event,
-                                 audio_recording: @write_permission.project.sites[0].audio_recordings[0],
+                                 audio_recording: writer_permission.project.sites[0].audio_recordings[0],
                                  start_time_seconds: 2.5, end_time_seconds: 5)
       #will be included
       @ar_3 = FactoryGirl.create(:audio_event,
-                                 audio_recording: @write_permission.project.sites[0].audio_recordings[0],
+                                 audio_recording: writer_permission.project.sites[0].audio_recordings[0],
                                  start_time_seconds: 0, end_time_seconds: 2)
       #will be included
       @ar_4 = FactoryGirl.create(:audio_event,
-                                 audio_recording: @write_permission.project.sites[0].audio_recordings[0],
+                                 audio_recording: writer_permission.project.sites[0].audio_recordings[0],
                                  start_time_seconds: 2, end_time_seconds: 4)
       #will be included
       @ar_5 = FactoryGirl.create(:audio_event,
-                                 audio_recording: @write_permission.project.sites[0].audio_recordings[0],
+                                 audio_recording: writer_permission.project.sites[0].audio_recordings[0],
                                  start_time_seconds: 1, end_time_seconds: 2.5)
       #will be included
       @ar_6 = FactoryGirl.create(:audio_event,
-                                 audio_recording: @write_permission.project.sites[0].audio_recordings[0],
+                                 audio_recording: writer_permission.project.sites[0].audio_recordings[0],
                                  start_time_seconds: 1.5, end_time_seconds: 2)
     end
 

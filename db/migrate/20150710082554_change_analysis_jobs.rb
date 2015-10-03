@@ -9,7 +9,7 @@ class ChangeAnalysisJobs < ActiveRecord::Migration
       t.datetime :started_at
 
       # prefixing with overall_ to avoid conflicts with built-in model attributes
-      t.string :overall_status, null: false, default: 'new'
+      t.string :overall_status, null: false, default: 'new', limit: 255
       t.datetime :overall_status_modified_at, null: false
 
       t.text :overall_progress, null: false

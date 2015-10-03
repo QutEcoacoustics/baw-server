@@ -109,7 +109,7 @@ class User < ActiveRecord::Base
   validate :excluded_login, on: :create
 
   def excluded_login
-    reserved_user_names = %w(admin harvester analysis_runner root superuser administrator admins administrators)
+    reserved_user_names = %w(admin harvester analysis_runner root superuser administrator admins administrators owner official officer)
     self.errors.add(:login, 'is reserved') if reserved_user_names.include?(self.login.downcase)
     self.errors.add(:user_name, 'is reserved') if reserved_user_names.include?(self.user_name.downcase)
   end

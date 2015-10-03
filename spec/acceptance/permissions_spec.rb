@@ -56,7 +56,7 @@ resource 'Permissions' do
     let(:project_id) { @project_1.id }
     let(:expected_unordered_ids) { Permission.where(project_id: @project_1.id).pluck(:id) }
     let(:authentication_token) { admin_token }
-    standard_request_options(:get, 'LIST (as admin)', :ok, {expected_json_path: 'data/0/level', data_item_count: 2})
+    standard_request_options(:get, 'LIST (as admin)', :ok, {expected_json_path: 'data/0/level', data_item_count: 3})
   end
 
   get '/projects/:project_id/permissions' do
@@ -64,7 +64,7 @@ resource 'Permissions' do
     let(:project_id) { @project_1.id }
     let(:expected_unordered_ids) { Permission.where(project_id: @project_1.id).pluck(:id) }
     let(:authentication_token) { user_write_1_token }
-    standard_request_options(:get, 'LIST (as write 1)', :ok, {expected_json_path: 'data/0/level', data_item_count: 2})
+    standard_request_options(:get, 'LIST (as write 1)', :ok, {expected_json_path: 'data/0/level', data_item_count: 3})
   end
 
   get '/projects/:project_id/permissions' do

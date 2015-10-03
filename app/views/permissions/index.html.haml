@@ -23,30 +23,38 @@
           %th User
           %th No Access
           %th Read
-          %th Read & Write
+          %th Write
+          %th Own
       %tbody
       - User.users.order('lower(user_name) ASC').each do |user|
-        - unless @project.creator == user
-          %tr{user_id: user.id}
-            %td= link_to user.user_name, user_account_path(user)
-            %td
-              %input{id: "user_#{user.id}_permissions_level_none",
-                        type: 'radio',
-                        name: "[user_ids][#{user.id}][permissions][level]",
-                        value: '',
-                        checked: Access::Check.can?(user, :none, @project)}
-            %td
-              %input{id: "user_#{user.id}_permissions_level_reader",
-                        type: 'radio',
-                        name: "[user_ids][#{user.id}][permissions][level]",
-                        value: 'reader',
-                        checked: Access::Check.can?(user, :reader, @project)}
+        - access_levels = Access::Level.project(user, @project)
+        - access_level = Access::Core.highest(access_levels)
+        %tr{user_id: user.id}
+          %td= link_to user.user_name, user_account_path(user)
+          %td
+            %input{id: "user_#{user.id}_permissions_level_none",
+                      type: 'radio',
+                      name: "[user_ids][#{user.id}][permissions][level]",
+                      value: '',
+                      checked: access_level.blank?}
+          %td
+            %input{id: "user_#{user.id}_permissions_level_reader",
+                      type: 'radio',
+                      name: "[user_ids][#{user.id}][permissions][level]",
+                      value: 'reader',
+                      checked: access_level == :reader}
 
-            %td
-              %input{id: "user_#{user.id}_permissions_level_writer",
-                        type: 'radio',
-                        name: "[user_ids][#{user.id}][permissions][level]",
-                        value: 'writer',
-                        checked: Access::Check.can?(user, :writer, @project)}
+          %td
+            %input{id: "user_#{user.id}_permissions_level_writer",
+                      type: 'radio',
+                      name: "[user_ids][#{user.id}][permissions][level]",
+                      value: 'writer',
+                      checked: access_level == :writer}
+          %td
+            %input{id: "user_#{user.id}_permissions_level_owner",
+                      type: 'radio',
+                      name: "[user_ids][#{user.id}][permissions][level]",
+                      value: 'owner',
+                      checked: access_level == :owner}
 
     = f.button :submit_cancel, 'Update Permissions', class: 'btn-default'

@@ -212,7 +212,7 @@ class MediaController < ApplicationController
     end
 
     # check that there is at least one existing file
-    existing_files = existing_files.compact # remove nils
+    existing_files = existing_files.reject { |i| i.blank? }
 
     if existing_files.blank?
       # NB: this branch should never execute, as poll_media should throw if no files are found

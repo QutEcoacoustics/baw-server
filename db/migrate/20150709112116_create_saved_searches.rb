@@ -63,7 +63,7 @@ class CreateSavedSearches < ActiveRecord::Migration
 
     # add saved_searches table
     create_table :saved_searches do |t|
-      t.string :name, null: false
+      t.string :name, null: false, limit: 255
       t.text :description
       t.text :stored_query, null: false
 

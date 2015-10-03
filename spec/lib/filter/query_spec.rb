@@ -863,7 +863,7 @@ LIMIT25OFFSET0"
 
       filter_query_project2 = Filter::Query.new(
           request_body_obj,
-          Access::Query.project_sites(project3, user, Access::Core.levels_deny),
+          Access::Query.project_sites(project3, user, nil),
           Site,
           Site.filter_settings
       )
@@ -974,7 +974,7 @@ LIMIT25OFFSET0"
 
       filter_query_project2 = Filter::Query.new(
           request_body_obj,
-          Access::Query.audio_event_comments(audio_event2, user, Access::Core.levels_deny),
+          Access::Query.audio_event_comments(audio_event2, user, nil),
           AudioEventComment,
           AudioEventComment.filter_settings
       )

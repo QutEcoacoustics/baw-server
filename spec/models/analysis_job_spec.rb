@@ -10,6 +10,9 @@ describe AnalysisJob, type: :model do
   it { is_expected.to belong_to(:updater).with_foreign_key(:updater_id) }
   it { is_expected.to belong_to(:deleter).with_foreign_key(:deleter_id) }
 
+  # .with_predicates(true).with_multiple(false)
+  it { is_expected.to enumerize(:overall_status).in(*AnalysisJob::AVAILABLE_JOB_STATUS) }
+
   it { is_expected.to validate_presence_of(:name) }
   it 'is invalid without a name' do
     expect(build(:analysis_job, name: nil)).not_to be_valid

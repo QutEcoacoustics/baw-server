@@ -13,25 +13,16 @@ resource 'Media' do
   # default format
   let(:format) { 'json' }
 
-  before(:each) do
-    # this creates a @write_permission.user with write access to @write_permission.project,
-    # a @read_permission.user with read access, as well as
-    # a site, audio_recording and audio_event having off the project (see permission_factory.rb)
-    @write_permission = FactoryGirl.create(:write_permission) # has to be 'write' so that the uploader has access
-    @read_permission = FactoryGirl.create(:read_permission, project: @write_permission.project)
-    @admin_user = FactoryGirl.create(:admin)
-  end
+  create_entire_hierarchy
 
   after(:each) do
     remove_media_dirs
   end
 
   # prepare ids needed for paths in requests below
-  let(:project_id) { @write_permission.project.id }
-  let(:site_id) { @write_permission.project.sites[0].id }
-  let(:audio_recording_id) { @write_permission.project.sites[0].audio_recordings[0].id }
-  let(:audio_recording) { @write_permission.project.sites[0].audio_recordings[0] }
-  let(:audio_event) { @write_permission.project.sites[0].audio_recordings[0].audio_events[0] }
+  let(:project_id) { project.id }
+  let(:site_id) { site.id }
+  let(:audio_recording_id) { audio_recording.id }
 
   let(:audio_file_mono) { File.join(File.dirname(__FILE__), '..', 'media_tools', 'test-audio-mono.ogg') }
   let(:audio_file_mono_media_type) { Mime::Type.lookup('audio/ogg') }
@@ -43,13 +34,6 @@ resource 'Media' do
   let(:audio_cache) { BawWorkers::Storage::AudioCache.new(BawWorkers::Settings.paths.cached_audios) }
   let(:spectrogram_cache) { BawWorkers::Storage::SpectrogramCache.new(BawWorkers::Settings.paths.cached_spectrograms) }
   let(:analysis_cache) { BawWorkers::Storage::AnalysisCache.new(BawWorkers::Settings.paths.cached_analysis_jobs) }
-
-  # prepare authentication_token for different users
-  let(:admin_token) { "Token token=\"#{@admin_user.authentication_token}\"" }
-  let(:writer_token) { "Token token=\"#{@write_permission.user.authentication_token}\"" }
-  let(:reader_token) { "Token token=\"#{@read_permission.user.authentication_token}\"" }
-  let(:unconfirmed_token) { "Token token=\"#{FactoryGirl.create(:unconfirmed_user).authentication_token}\"" }
-  let(:invalid_token) { "Token token=\"blah blah blah\"" }
 
   ################################
   # MEDIA GET - long path
@@ -485,12 +469,12 @@ resource 'Media' do
     standard_media_parameters
     let(:authentication_token) { reader_token }
     let(:format) { 'json' }
-    let(:audio_event_id) { @audio_event.id }
+    let(:audio_event_id) { audio_event.id }
     let(:start_offset) { 4 }
     let(:end_offset) { 7 }
 
     before do
-      @audio_event = FactoryGirl.create(:audio_event, audio_recording_id: audio_recording_id, start_time_seconds: 5, end_time_seconds: 6, is_reference: true)
+      audio_event = FactoryGirl.create(:audio_event, audio_recording_id: audio_recording_id, start_time_seconds: 5, end_time_seconds: 6, is_reference: true)
     end
 
     standard_request_options(:get, 'MEDIA (as reader with shallow path, valid audio event request offsets with read access to audio recording)', :ok, {expected_json_path: 'data/recording/recorded_date'})
@@ -500,16 +484,16 @@ resource 'Media' do
     standard_media_parameters
     let(:authentication_token) { reader_token }
     let(:format) { 'json' }
-    let(:audio_event_id) { @audio_event.id }
+    let(:audio_event_id) { other_audio_event.id }
     let(:start_offset) { 4 }
     let(:end_offset) { 7 }
-    let(:audio_recording_id) { @other_audio_recording_id }
-
-    before do
-      other_permissions = FactoryGirl.create(:write_permission)
-      @other_audio_recording_id = other_permissions.project.sites[0].audio_recordings[0].id
-      @audio_event = FactoryGirl.create(:audio_event, audio_recording_id: @other_audio_recording_id, start_time_seconds: 5, end_time_seconds: 6, is_reference: true)
-    end
+    let(:other_permissions) { FactoryGirl.create(:write_permission) }
+    let(:audio_recording_id) { other_audio_recording_id }
+    let(:other_audio_recording_id) { other_permissions.project.sites[0].audio_recordings[0].id }
+    let(:other_audio_event) { FactoryGirl.create(:audio_event,
+                                                 audio_recording_id: other_audio_recording_id,
+                                                 start_time_seconds: 5, end_time_seconds: 6,
+                                                 is_reference: true) }
 
     standard_request_options(:get, 'MEDIA (as reader with shallow path, valid audio event request offsets with no access to audio recording)', :ok, {expected_json_path: 'data/recording/recorded_date'})
   end
@@ -518,12 +502,12 @@ resource 'Media' do
     standard_media_parameters
     let(:authentication_token) { reader_token }
     let(:format) { 'json' }
-    let(:audio_event_id) { @audio_event.id }
+    let(:audio_event_id) { audio_event.id }
     let(:start_offset) { 120 }
     let(:end_offset) { 150 }
 
     before do
-      @audio_event = FactoryGirl.create(:audio_event, audio_recording_id: audio_recording_id, start_time_seconds: 0, end_time_seconds: 10, is_reference: true)
+      audio_event = FactoryGirl.create(:audio_event, audio_recording_id: audio_recording_id, start_time_seconds: 0, end_time_seconds: 10, is_reference: true)
     end
 
     standard_request_options(:get, 'MEDIA (as reader with shallow path, invalid audio event request offsets)', :forbidden, { expected_json_path: get_json_error_path(:permissions)})
@@ -533,17 +517,13 @@ resource 'Media' do
     standard_media_parameters
     let(:authentication_token) { reader_token }
     let(:format) { 'json' }
-    let(:audio_event_id) { @audio_event.id }
+    let(:audio_event_id) { audio_event.id }
     let(:start_offset) { 20 }
     let(:end_offset) { 23 }
-    let(:audio_recording_id) { @other_audio_recording_id }
-
-    before do
-      other_permissions = FactoryGirl.create(:write_permission)
-      @other_audio_recording_id = other_permissions.project.sites[0].audio_recordings[0].id
-      # note that this audio event is not a reference audio event
-      @audio_event = FactoryGirl.create(:audio_event, audio_recording_id: @other_audio_recording_id, start_time_seconds: 21, end_time_seconds: 22, is_reference: false)
-    end
+    let(:audio_recording_id) { other_audio_recording_id }
+    let(:other_permissions) { FactoryGirl.create(:write_permission) }
+    let(:other_audio_recording_id) {other_permissions.project.sites[0].audio_recordings[0].id }
+    let(:audio_event){FactoryGirl.create(:audio_event, audio_recording_id: other_audio_recording_id, start_time_seconds: 21, end_time_seconds: 22, is_reference: false)}
 
     standard_request_options(:get, 'MEDIA (as reader with shallow path, not a reference audio event)', :forbidden, { expected_json_path: get_json_error_path(:permissions)})
   end
@@ -552,16 +532,15 @@ resource 'Media' do
     standard_media_parameters
     let(:authentication_token) { reader_token }
     let(:format) { 'json' }
-    let(:audio_event_id) { audio_event.id } # pre-existing audio event
+    let(:audio_event_id) { other_audio_event.id } # pre-existing audio event
     let(:start_offset) { 10 }
     let(:end_offset) { 13 }
-    let(:audio_recording_id) { @other_audio_recording_id }
-
-    before do
-      other_permissions = FactoryGirl.create(:write_permission)
-      @other_audio_recording_id = other_permissions.project.sites[0].audio_recordings[0].id
-      @audio_event = FactoryGirl.create(:audio_event, audio_recording_id: @other_audio_recording_id, start_time_seconds: 11, end_time_seconds: 12, is_reference: true)
-    end
+    let(:other_audio_recording_id) { other_permissions.project.sites[0].audio_recordings[0].id }
+    let(:other_permissions) { FactoryGirl.create(:write_permission) }
+    let(:other_audio_event) { FactoryGirl.create(:audio_event,
+                                                 audio_recording_id: other_audio_recording_id,
+                                                 start_time_seconds: 11, end_time_seconds: 12,
+                                                 is_reference: true) }
 
     standard_request_options(:get, 'MEDIA (as reader with shallow path, audio event request not related to audio recording)', :forbidden, { expected_json_path: get_json_error_path(:permissions)})
   end

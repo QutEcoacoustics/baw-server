@@ -17,20 +17,12 @@ module Access
             reader: {
                 name: 'Reader',
                 action: 'read'
-            },
-            none: {
-                name: 'None',
-                action: 'no'
             }
         }
       end
 
       def levels_allow
         [:reader, :writer, :owner]
-      end
-
-      def levels_deny
-        [:none]
       end
 
       # Get a hash with symbols, names, action words for the available roles.
@@ -89,6 +81,23 @@ module Access
         hash[key][attribute]
       end
 
+      # Normalise a level identifier.
+      # @param [Object] level
+      # @return [Symbol, nil] normalised level or nil
+      def normalise_level(level)
+        return nil if level.blank?
+        case level.to_s
+          when 'reader', 'read'
+            :reader
+          when 'writer', 'write'
+            :writer
+          when 'owner', 'own'
+            :owner
+          else
+            nil
+        end
+      end
+
       # Validate access level.
       # @param [Object] level
       # @return [Symbol] level
@@ -103,33 +112,14 @@ module Access
         level_sym
       end
 
-      # Validate array of access levels.
+      # Validate array of access levels. Blank for no levels.
       # @param [Array<Symbol>] levels
       # @return [Array<Symbol>] levels
       def validate_levels(levels)
-        fail ArgumentError, 'Access level array must not be blank.' if levels.blank?
-        levels = [levels] unless levels.respond_to?(:map)
+        return [] if levels.blank?
 
-        levels_sym = levels.map { |i| validate_level(i) }.uniq
-        validate_level_combination(levels_sym)
-        levels_sym
-      end
-
-      # Validate level combination.
-      # @param [Array<Symbol>] levels
-      # @return [Array<Symbol>] levels
-      def validate_level_combination(levels)
-        if levels.respond_to?(:each)
-          if (levels.include?(:none) || levels.include?('none')) && levels.size > 1
-            # none cannot be with other levels because this can be ambiguous, and points to a problem with how the
-            # permissions were obtained.
-            fail ArgumentError, "Level array cannot contain none with other levels, got '#{levels.join(', ')}'."
-          else
-            levels
-          end
-        else
-          fail ArgumentError, "Must be an array of levels, got '#{levels.class}'."
-        end
+        levels = [levels].flatten.reject { |i| i.blank? }
+        levels.uniq.map { |i| validate_level(i) }
       end
 
       # Validate Project.
@@ -205,10 +195,8 @@ module Access
             [:reader, :writer]
           when :reader
             [:reader]
-          when :none
-            [:none]
           else
-            fail ArgumentError, "Can not get equal or lower level for #{level}, must be one of #{values.keys.join(', ')}."
+            fail ArgumentError, "Can not get equal or lower level for '#{level}', must be one of #{values.keys.join(', ')}."
         end
 
       end
@@ -225,10 +213,8 @@ module Access
             [:writer, :owner]
           when :reader
             [:reader, :writer, :owner]
-          when :none
-            [:none]
           else
-            fail ArgumentError, "Can not get equal or greater level for #{level}, must be one of #{values.keys.join(', ')}."
+            fail ArgumentError, "Can not get equal or greater level for '#{level}', must be one of #{values.keys.join(', ')}."
         end
       end
 
@@ -241,7 +227,7 @@ module Access
         return :owner if levels_sym.include?(:owner)
         return :writer if levels_sym.include?(:writer)
         return :reader if levels_sym.include?(:reader)
-        :none if levels_sym.include?(:none)
+        nil
       end
 
       # Get the lowest access level.
@@ -250,10 +236,19 @@ module Access
       def lowest(levels)
         levels_sym = validate_levels(levels)
 
-        return :none if levels_sym.include?(:none)
+        return nil if Access::Core.is_no_level?(levels)
         return :reader if levels_sym.include?(:reader)
         return :writer if levels_sym.include?(:writer)
         :owner if levels_sym.include?(:owner)
+      end
+
+      # Check if these levels equate to no access level.
+      # @param [Object] levels
+      # @return [Boolean] true if is no access level, otherwise false
+      def is_no_level?(levels)
+        levels = validate_levels(levels)
+        level = highest(levels)
+        level.nil?
       end
 
     end

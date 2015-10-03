@@ -37,6 +37,16 @@ class AudioRecording < ActiveRecord::Base
   # aborted - a problem occurred during harvesting or checking, the file needs to be harvested again
   AVAILABLE_STATUSES_SYMBOLS = [:new, :uploading, :to_check, :ready, :corrupt, :aborted]
   AVAILABLE_STATUSES = AVAILABLE_STATUSES_SYMBOLS.map { |item| item.to_s }
+
+  AVAILABLE_STATUSES_DISPLAY = [
+      {id: :new, name: 'New'},
+      {id: :uploading, name: 'Uploading'},
+      {id: :to_check, name: 'Check Required'},
+      {id: :ready, name: 'Ready'},
+      {id: :corrupt, name: 'Corrupt'},
+      {id: :aborted, name: 'Aborted'},
+  ]
+
   enumerize :status, in: AVAILABLE_STATUSES, predicates: true
 
   # TODO clean notes column in db
