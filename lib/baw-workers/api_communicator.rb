@@ -113,7 +113,11 @@ module BawWorkers
 
       begin
         #res = Net::HTTP::Proxy('127.0.0.1', '8888').start(host, port) do |http|
-        res = Net::HTTP.start(host, port) do |http|
+
+        use_ssl = BawWorkers::Settings.endpoints.use_ssl.to_s
+        use_ssl = use_ssl.downcase == 'true' ? true : false
+
+        res = Net::HTTP.start(host, port, use_ssl: use_ssl) do |http|
           response = http.request(request)
 
           @logger.debug(@class_name) {

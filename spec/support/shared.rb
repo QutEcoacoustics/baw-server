@@ -1,5 +1,10 @@
 shared_context 'shared_test_helpers' do
 
+  let(:host) { 'localhost' }
+  let(:port) { 3030 }
+  let(:scheme) { BawWorkers::Settings.endpoints.use_ssl.to_s.downcase == 'true' ? 'https' : 'http'}
+  let(:default_uri) { "#{scheme}://#{host}:#{port}" }
+
   # example files
   let(:example_media_dir) { File.expand_path(File.join(File.dirname(__FILE__), '..', 'example_media')) }
 

@@ -55,6 +55,7 @@ settings:
     temp_dir: ./tmp/custom_temp_dir/temp
     programs_dir: ./tmp/programs
   endpoints:
+    use_ssl: true
     login: /security
     audio_recording: /audio_recordings/:id
     audio_recording_create: /projects/:project_id/sites/:site_id/audio_recordings

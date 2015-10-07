@@ -121,23 +121,23 @@ describe BawWorkers::Harvest::SingleFile do
           }
       )
 
-      stub_login = stub_request(:post, 'http://localhost:3030/security')
+      stub_login = stub_request(:post, "#{default_uri}/security")
                        .with(body: request_login_body.to_json, headers: request_headers_base)
                        .to_return(status: 200, body: response_login_body.to_json)
 
-      stub_uploader_check = stub_request(:get, 'http://localhost:3030/projects/10/sites/20/audio_recordings/check_uploader/30')
+      stub_uploader_check = stub_request(:get, "#{default_uri}/projects/10/sites/20/audio_recordings/check_uploader/30")
                                 .with(headers: request_headers)
                                 .to_return(status: 204)
 
-      stub_create = stub_request(:post, 'http://localhost:3030/projects/10/sites/20/audio_recordings')
+      stub_create = stub_request(:post, "#{default_uri}/projects/10/sites/20/audio_recordings")
                         .with(body: request_create_body.to_json, headers: request_headers)
                         .to_return(status: 201, body: response_create_body.to_json)
 
-      stub_uploading_status = stub_request(:put, 'http://localhost:3030/audio_recordings/177/update_status')
+      stub_uploading_status = stub_request(:put, "#{default_uri}/audio_recordings/177/update_status")
                                   .with(body: request_update_status_body.merge(status: 'uploading'), headers: request_headers)
                                   .to_return(status: 200)
 
-      stub_ready_status = stub_request(:put, 'http://localhost:3030/audio_recordings/177/update_status')
+      stub_ready_status = stub_request(:put, "#{default_uri}/audio_recordings/177/update_status")
                               .with(body: request_update_status_body.merge(status: 'ready'), headers: request_headers)
                               .to_return(status: 200)
 
@@ -253,23 +253,23 @@ describe BawWorkers::Harvest::SingleFile do
 
       possible_paths = audio_original.possible_paths(storage_opts)
 
-      stub_login = stub_request(:post, 'http://localhost:3030/security')
+      stub_login = stub_request(:post, "#{default_uri}/security")
                        .with(body: request_login_body.to_json, headers: request_headers_base)
                        .to_return(status: 200, body: response_login_body.to_json)
 
-      stub_uploader_check = stub_request(:get, 'http://localhost:3030/projects/10/sites/20/audio_recordings/check_uploader/30')
+      stub_uploader_check = stub_request(:get, "#{default_uri}/projects/10/sites/20/audio_recordings/check_uploader/30")
                                 .with(headers: request_headers)
                                 .to_return(status: 204)
 
-      stub_create = stub_request(:post, 'http://localhost:3030/projects/10/sites/20/audio_recordings')
+      stub_create = stub_request(:post, "#{default_uri}/projects/10/sites/20/audio_recordings")
                         .with(body: request_create_body.to_json, headers: request_headers)
                         .to_return(status: 201, body: response_create_body.to_json)
 
-      stub_uploading_status = stub_request(:put, 'http://localhost:3030/audio_recordings/177/update_status')
+      stub_uploading_status = stub_request(:put, "#{default_uri}/audio_recordings/177/update_status")
                                   .with(body: request_update_status_body.merge(status: 'uploading'), headers: request_headers)
                                   .to_return(status: 200)
 
-      stub_ready_status = stub_request(:put, 'http://localhost:3030/audio_recordings/177/update_status')
+      stub_ready_status = stub_request(:put, "#{default_uri}/audio_recordings/177/update_status")
                               .with(body: request_update_status_body.merge(status: 'ready'), headers: request_headers)
                               .to_return(status: 200)
 
@@ -386,15 +386,15 @@ describe BawWorkers::Harvest::SingleFile do
           }
       )
 
-      stub_login = stub_request(:post, 'http://localhost:3030/security')
+      stub_login = stub_request(:post, "#{default_uri}/security")
                        .with(body: request_login_body.to_json, headers: request_headers_base)
                        .to_return(status: 200, body: response_login_body.to_json)
 
-      stub_uploader_check = stub_request(:get, 'http://localhost:3030/projects/10/sites/20/audio_recordings/check_uploader/30')
+      stub_uploader_check = stub_request(:get, "#{default_uri}/projects/10/sites/20/audio_recordings/check_uploader/30")
                                 .with(headers: request_headers)
                                 .to_return(status: 204)
 
-      stub_create = stub_request(:post, 'http://localhost:3030/projects/10/sites/20/audio_recordings')
+      stub_create = stub_request(:post, "#{default_uri}/projects/10/sites/20/audio_recordings")
                         .with(body: request_create_body.to_json, headers: request_headers)
                         .to_return(status: 422, body: response_create_body.to_json)
 
