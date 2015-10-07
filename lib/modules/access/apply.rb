@@ -41,8 +41,8 @@ module Access
             site_restrictions(user, levels, query)
           elsif %w(SavedSearch AnalysisJob).include?(model_name)
             saved_search_restrictions(user, levels, query)
-          # elsif %w(Tagging).include?(model_name)
-          #   audio_event_restriction(user, levels, query)
+            # elsif %w(Tagging).include?(model_name)
+            #   audio_event_restriction(user, levels, query)
           else
             fail NotImplementedError, "Restrictions are not implemented for #{model_name}."
           end
@@ -203,44 +203,13 @@ SELECT *
 FROM projects
 WHERE
     "projects"."deleted_at" IS NULL
-    AND ("projects"."creator_id" = 7
-    OR
-    EXISTS
-        (SELECT 1
-        FROM "permissions"
-        WHERE
-            "permissions"."user_id" = 7
-            AND "permissions"."level" IN ('reader', 'writer', 'owner')
-            AND "projects"."id" = "permissions"."project_id"
-        )
-    )
+    AND <permission_arel>
 =end
 
         # the 'deleted_at IS NULL' check is added by the ActiveRecord query
 
-        if exists
-          project_creator = pt[:creator_id].eq(user_id)
-        else
-          project_creator = pt[:creator_id].not_eq(user_id)
-        end
-
-        project_permissions =
-            pm
-                .where(pm[:user_id].eq(user_id))
-                .where(pm[:level].in(levels))
-                .where(pt[:id].eq(pm[:project_id]))
-                .project(1)
-                .exists
-
-        project_permissions = project_permissions.not unless exists
-
-        if exists
-          project_condition = project_creator.or(project_permissions)
-        else
-          project_condition = project_creator.and(project_permissions)
-        end
-
-        query.where(project_condition)
+        project_permissions = permission_arel(pm, pt, user, user_id, levels, exists)
+        query.where(project_permissions)
       end
 
       # Restrict access using project site table
@@ -251,25 +220,30 @@ WHERE
         project = Access::Core.validate_project(project)
 
         ps = Arel::Table.new(:projects_sites)
+        pt = Arel::Table.new(:projects)
         si = Site.arel_table
         project_id = project.id
 
 =begin
 SELECT *
-FROM sites
+FROM "sites"
 WHERE
     EXISTS
         (SELECT 1
-        FROM projects_sites
+        FROM "projects_sites"
+        INNER JOIN "projects" ON "projects_sites"."project_id" = "project"."id"
         WHERE
             "sites"."id" = "projects_sites"."site_id"
             AND "projects_sites"."project_id" = 10
+            AND "projects"."deleted_at" IS NULL
         )
 =end
         project_condition =
             ps
+                .join(pt).on(ps[:project_id].eq(pt[:id]))
                 .where(si[:id].eq(ps[:site_id]))
                 .where(ps[:project_id].eq(project_id))
+                .where(pt[:deleted_at].eq(nil))
                 .project(1)
                 .exists
 
@@ -388,6 +362,48 @@ WHERE
 
         # using .none to be chain-able
         query.none
+      end
+
+      private
+
+      def permission_arel(pm, pt, user, user_id, levels, exists)
+=begin
+[NOT] EXISTS
+        (SELECT 1
+        FROM "permissions"
+        WHERE
+            "permissions"."level" IN ('reader', 'writer', 'owner')
+            AND "projects"."id" = "permissions"."project_id"
+with either:
+            AND "permissions"."user_id" = 7
+or:
+            AND ("permissions"."allow_anonymous" = TRUE
+                 OR "permissions"."allow_logged_in" = TRUE)
+        )
+=end
+
+        project_permissions =
+            pm
+                .where(pm[:level].in(levels))
+                .where(pt[:id].eq(pm[:project_id]))
+                .where(pt[:deleted_at].eq(nil))
+                .project(1)
+                .exists
+
+        if user.blank?
+          project_permissions =
+              project_permissions
+                  .where(pm[:allow_logged_in].eq(true).or(pm[:allow_anonymous].eq(true)))
+        else
+          project_permissions = project_permissions.where(pm[:user_id].eq(user_id))
+        end
+
+        if exists
+          project_permissions
+        else
+          project_permissions.not
+        end
+
       end
 
     end

@@ -31,7 +31,7 @@
           %span.fa.fa-tags{aria: {hidden: 'true' }}
           Tags
           %span.badge
-            = number_with_delimiter(Access::Query.taggings_modified(@user).count, delimiter: ' ')
+            = number_with_delimiter(Access::Query.audio_events_tags_modified(@user).count, delimiter: ' ')
         %li.list-group-item
           %span.fa.fa-bookmark{aria: {hidden: 'true' }}
           Bookmarks

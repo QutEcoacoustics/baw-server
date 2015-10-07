@@ -182,7 +182,8 @@ Rails.application.routes.draw do
   # routes for projects and nested resources
   resources :projects do
     member do
-      post 'update_permissions'
+      put 'update_permissions'
+      patch 'update_permissions'
       get 'edit_sites'
       put 'update_sites'
       patch 'update_sites'

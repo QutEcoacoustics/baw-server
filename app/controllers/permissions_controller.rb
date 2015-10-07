@@ -51,12 +51,12 @@ class PermissionsController < ApplicationController
     do_authorize_instance
 
     respond_to do |format|
-    if @permission.save
-      format.json { respond_create_success(project_permission_path(@project, @permission)) }
-    else
-      format.json { respond_change_fail }
-    end
+      if @permission.save
+        format.json { respond_create_success(project_permission_path(@project, @permission)) }
+      else
+        format.json { respond_change_fail }
       end
+    end
 
   end
 

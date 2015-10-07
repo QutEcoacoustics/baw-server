@@ -36,9 +36,11 @@ module Access
       # @param [User] user
       # @param [Symbol, Array<Symbol>] levels
       # @return [ActiveRecord::Relation] projects
-      def projects(user, levels = Access::Core.levels_allow)
+      def projects(user, levels)
         user = Access::Core.validate_user(user)
         levels = Access::Core.validate_levels(levels)
+
+
 
         query = Project.order('lower(projects.name) ASC')
         Access::Apply.restrictions(user, levels, query)
@@ -215,7 +217,7 @@ module Access
         Access::Apply.restrictions(user, levels, query)
       end
 
-      def taggings_modified(user)
+      def audio_events_tags_modified(user)
         user = Access::Core.validate_user(user)
         Tagging.where('(audio_events_tags.creator_id = ? OR audio_events_tags.updater_id = ?)', user.id, user.id)
       end

@@ -9,7 +9,7 @@ module Admin
 
       commit = (paging_params[:commit].blank? ? 'filter' : paging_params[:commit]).to_s
 
-      fail 'Invalid order by.' unless [:id, :site, :duration_seconds, :recorded_date, :created_at, :audio_event_count].include?(order_by)
+      fail 'Invalid order by.' unless [:id, :site, :duration_seconds, :recorded_date, :created_at].include?(order_by)
       fail 'Invalid order dir.' unless [:asc, :desc].include?(order_dir)
 
       redirect_to admin_tags_path if commit.downcase == 'clear'
@@ -19,11 +19,14 @@ module Admin
           order_dir: order_dir
       }
 
-      query = AudioRecording.includes(:site).all
-
       # need custom queries to order by site name and audio event count
+      if order_by == :site
+        order_clause = order_dir == :asc ? 'sites.name ASC' : 'sites.name DESC'
+        @audio_recordings = AudioRecording.includes(:site).order(order_clause).page(page)
+      else
+        @audio_recordings = AudioRecording.includes(:site).order(order_by => order_dir).page(page)
+      end
 
-      @audio_recordings = query.order(order_by => order_dir).page(page)
     end
 
     # GET /admin/audio_recordings/:id

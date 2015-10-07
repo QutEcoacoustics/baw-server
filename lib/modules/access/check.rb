@@ -10,12 +10,15 @@ module Access
         user.has_role?(:admin)
       end
 
-      # Is this user a guest? A guest is a nil user object or unconfirmed user.
+      # Is this user a guest?
+      # A guest is nil or a user object assigned as a guest.
       # @param [User] user
       # @return [Boolean]
       def is_guest?(user)
         Access::Core.validate_user(user)
-        user.blank? || !user.confirmed?
+        # in some cases, current_user will be blank
+        # for ability.rb, a user is created with role set as guest
+        user.blank? || user.has_role?(:guest)
       end
 
       # Is this user a standard user?

@@ -45,42 +45,40 @@ class Ability
     #    won't the check always be true? Since there's no way to specify any other user id.
 
     # either current logged in user or guest user (not logged in)
-    user ||= User.new
+    user = create_guest_user if user.blank?
 
-    # for api security endpoints
-    can [:show, :destroy], :api_security if user.confirmed?
+    # guest access is specified per project
+    is_guest = Access::Check.is_guest?(user)
 
-    if Access::Check.is_admin?(user)
-      for_admin
+    # api security endpoints for logged in users
+    can [:show, :destroy], :api_security unless is_guest
 
-    elsif Access::Check.is_harvester?(user)
-      for_harvester
+    # admin can access any action on any controller
+    can :manage, :all if Access::Check.is_admin?(user)
 
-    elsif Access::Check.is_standard_user?(user)
+    # actions used by harvester. See baw-workers project for more information.
+    can [:new, :create, :check_uploader, :update_status, :update], AudioRecording if  Access::Check.is_harvester?(user)
+
+    if Access::Check.is_standard_user?(user) || is_guest
       # available models:
-      # Project, Permission, Site, AudioRecording, AudioEvent, AudioEventComment, Bookmark,
-      # AnalysisJob, SavedSearch, Script, Tag, Tagging, User
+      # Project, Permission, Site, AudioRecording,
+      # AudioEvent, AudioEventComment, Bookmark,
+      # AnalysisJob, SavedSearch, Script, Tag, Tagging,
+      # User
 
-      to_project(user)
+      to_project(user, is_guest)
       to_permission(user)
-      to_site(user)
-      to_audio_recording(user)
-      to_audio_event(user)
-      to_audio_event_comment(user)
-      to_bookmark(user)
-      to_analysis_job(user)
-      to_saved_search(user)
-      to_script(user)
+      to_site(user, is_guest)
+      to_audio_recording(user, is_guest)
+      to_audio_event(user, is_guest)
+      to_audio_event_comment(user, is_guest)
+      to_bookmark(user, is_guest)
+      to_analysis_job(user, is_guest)
+      to_saved_search(user, is_guest)
+      to_script(user, is_guest)
       to_tag
-      to_tagging(user)
-      to_user(user)
-
-    elsif Access::Check.is_guest?(user)
-      # guest cannot do anything for now
-
-    else
-      fail ArgumentError, "Permissions are not defined for user #{user.id}: #{user.role_symbols}"
-
+      to_tagging(user, is_guest)
+      to_user(user, is_guest)
     end
   end
 
@@ -91,18 +89,13 @@ class Ability
     #fail CustomErrors::UnprocessableEntityError.new('Model was invalid.', model.errors) if model.invalid?
   end
 
-  def for_admin
-    # admin can access any action on any controller
-    can :manage, :all
+  def create_guest_user
+    guest = User.new
+    guest.roles << :guest
+    guest
   end
 
-  def for_harvester
-    # actions used for harvesting. See baw-workers.
-    can [:new, :create, :check_uploader, :update_status, :update], AudioRecording
-  end
-
-  def to_project(user)
-    # only admin can :destroy, :edit_sites, :update_sites
+  def to_project(user, is_guest)
     # :update_permissions, :update_sites are html-only
 
     # must have read permission or higher to view project
@@ -111,14 +104,18 @@ class Ability
       Access::Check.can?(user, :reader, project)
     end
 
-    # must have write permission or higher to edit, update, update_permission
-    can [:edit, :update, :update_permissions], Project do |project|
+    # must have owner permission for project to do these actions
+    can [:edit, :update, :update_permissions, :destroy, :edit_sites, :update_sites], Project do |project|
       check_model(project)
-      Access::Check.can?(user, :writer, project)
+      Access::Check.can?(user, :owner, project)
     end
 
     # actions any logged in user can access
-    can [:index, :new, :create, :new_access_request, :submit_access_request, :filter], Project
+    can [:new, :create, :new_access_request, :submit_access_request], Project unless is_guest
+
+    # available to any user, including guest
+    can [:index, :filter], Project
+
   end
 
   def to_permission(user)
@@ -127,11 +124,11 @@ class Ability
 
     can [:index, :show, :new, :create, :destroy], Permission do |permission|
       check_model(permission)
-      Access::Check.can?(user, :writer, permission.project)
+      Access::Check.can?(user, :owner, permission.project)
     end
   end
 
-  def to_site(user)
+  def to_site(user, is_guest)
     # only admin can :destroy, :upload_instructions, :harvest, :orphans
 
     # must have read permission or higher to view site
@@ -151,11 +148,11 @@ class Ability
       Access::Check.can_any?(user, :writer, site.projects)
     end
 
-    # actions any logged in user can access
+    # available to any user, including guest
     can [:index, :filter], Site
   end
 
-  def to_audio_recording(user)
+  def to_audio_recording(user, is_guest)
     # See permissions for harvester
     # Only admin and harvester can :create, :check_uploader, :update_status, :update
     # permissions are also checked in actions
@@ -168,10 +165,13 @@ class Ability
     end
 
     # actions any logged in user can access
-    can [:index, :new, :filter], AudioRecording
+    can [:new], AudioRecording unless is_guest
+
+    # available to any user, including guest
+    can [:index, :filter], AudioRecording
   end
 
-  def to_audio_event(user)
+  def to_audio_event(user, is_guest)
     # must have read permission or higher to view or download audio event
     can [:show, :download], AudioEvent do |audio_event|
       check_model(audio_event)
@@ -185,10 +185,13 @@ class Ability
     end
 
     # actions any logged in user can access
-    can [:index, :new, :filter], AudioEvent
+    can [:new], AudioEvent unless is_guest
+
+    # available to any user, including guest
+    can [:index, :filter], AudioEvent
   end
 
-  def to_audio_event_comment(user)
+  def to_audio_event_comment(user, is_guest)
     # logged in users
     # with read permission or higher on the project
     # or if the audio event is a reference
@@ -205,10 +208,13 @@ class Ability
     can [:destroy], AudioEventComment, creator_id: user.id
 
     # actions any logged in user can access
-    can [:index, :new, :filter], AudioEventComment
+    can [:new], AudioEventComment unless is_guest
+
+    # available to any user, including guest
+    can [:index, :filter], AudioEventComment
   end
 
-  def to_bookmark(user)
+  def to_bookmark(user, is_guest)
     # must have read permission or higher on project to create bookmark
     can [:create], Bookmark do |bookmark|
       check_model(bookmark)
@@ -219,10 +225,10 @@ class Ability
     can [:update, :destroy, :show], Bookmark, creator_id: user.id
 
     # actions any logged in user can access
-    can [:index, :new, :filter], Bookmark
+    can [:index, :new, :filter], Bookmark unless is_guest
   end
 
-  def to_analysis_job(user)
+  def to_analysis_job(user, is_guest)
     # must have read permission or higher on all saved_search.projects to create analysis job
     can [:show, :create], AnalysisJob do |analysis_job|
       check_model(analysis_job)
@@ -236,10 +242,10 @@ class Ability
     can [:update, :destroy], AnalysisJob, creator_id: user.id
 
     # actions any logged in user can access
-    can [:index, :new, :filter], AnalysisJob
+    can [:index, :new, :filter], AnalysisJob unless is_guest
   end
 
-  def to_saved_search(user)
+  def to_saved_search(user, is_guest)
     # cannot be updated
 
     # must have read permission or higher on all projects to create saved search
@@ -255,25 +261,25 @@ class Ability
     can [:destroy], SavedSearch, creator_id: user.id
 
     # actions any logged in user can access
-    can [:index, :new, :filter], SavedSearch
+    can [:index, :new, :filter], SavedSearch unless is_guest
   end
 
-  def to_script(user)
+  def to_script(user, is_guest)
     # only admin can manipulate scripts
 
     # actions any logged in user can access
-    can [:index, :filter], Script
+    can [:index, :filter], Script unless is_guest
   end
 
   def to_tag
     # cannot be updated
     # tag management controller is admin only (checked in before_action)
 
-    # actions any logged in user can access
+    # available to any user, including guest
     can [:index, :new, :create, :show, :filter], Tag
   end
 
-  def to_tagging(user)
+  def to_tagging(user, is_guest)
     # must have read permission or higher to show
     can [:show], Tagging do |tagging|
       check_model(tagging)
@@ -287,22 +293,26 @@ class Ability
     end
 
     # actions any logged in user can access
-    can [:index, :user_index, :new, :filter], Tagging
+    can [:new], Tagging unless is_guest
+
+    # available to any user, including guest
+    can [:index, :user_index, :filter], Tagging
   end
 
-  def to_user(user)
+  def to_user(user, is_guest)
     # admin only: :index, :edit, :update
     # :edit and :update are the Admin interface for editing any user
     # normal users edit their profile using devise/registrations#edit
-
-    # any confirmed user can view any other user's profile (read-only)
-    can [:show, :filter], User
 
     # users can only view their own projects, comments, bookmarks
     can [:projects, :bookmarks, :audio_events, :audio_event_comments], User, id: user.id
 
     # users get their own account and preferences from these actions
     can [:my_account, :modify_preferences], User, id: user.id
+
+    # any logged in user can view any other user's profile (read-only)
+    can [:show, :filter], User  unless is_guest
+
   end
 
 end

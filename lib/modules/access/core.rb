@@ -40,6 +40,10 @@ module Access
             harvester: {
                 name: 'Harvester',
                 action: 'harvest'
+            },
+            guest: {
+                name: 'Guest',
+                action: 'use as guest'
             }
         }
       end

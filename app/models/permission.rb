@@ -24,9 +24,11 @@ class Permission < ActiveRecord::Base
 
   # attribute validations
   validates :level, presence: true
-  validates :user_id, uniqueness:
-                        {scope: :project_id,
-                         message: 'permission has already been set for project'}
+  validates :user_id,
+            uniqueness:
+                {scope: :project_id,
+                 conditions: -> { where('user_id IS NOT NULL') },
+                 message: 'permission has already been set for project'}
   validates :allow_logged_in, uniqueness:
                                 {scope: :project,
                                  conditions: -> { where(allow_logged_in: true) },

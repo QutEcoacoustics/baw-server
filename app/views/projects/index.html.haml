@@ -39,9 +39,17 @@
 
 - if @projects.empty?
   %p
-    You do not have access to any projects. Try
-    = link_to 'requesting access', new_access_request_projects_path
-    to a project.
+    You do not have access to any projects.
+    - if Access::Check.is_guest?(current_user)
+      Please
+      = link_to t('devise.shared.links.sign_in'), new_user_session_path
+      with an existing account or
+      = link_to t('devise.shared.links.sign_up'), new_user_registration_path
+      to access projects.
+    - else
+      Try
+      = link_to 'requesting access', new_access_request_projects_path
+      to a project.
 
 
 

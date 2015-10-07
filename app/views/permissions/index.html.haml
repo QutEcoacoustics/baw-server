@@ -1,60 +1,161 @@
 - content_for :meta_title, "Project #{@project.name} | Permissions"
-- content_for :page_title, @project.name
+- content_for :page_title, "#{@project.name} Permissions"
 
 = render partial: 'shared/sidebar_project', locals: {project: @project}
 
 - content_for :right_sidebar do
   = render partial: 'shared/sidebar_metadata_heading', locals: {title: 'Permissions', icon_class: 'key'}
-  = render partial: 'shared/sidebar_metadata', locals: {title: 'Owner', text: link_to(@project.creator.user_name, user_account_path(@project.creator))}
 
-%h2
-  Permissions
+.col-md-12
 
-%p
-  Set permissions for each user by selecting one of the three options.
-  Then click the 'Update Permissions' button underneath the list of users.
+  - anon_level = Access::Level.permission_anon(@project)
+  - anon_is_none = anon_level.nil?
+  - anon_is_read = anon_level == :reader
 
-= simple_form_for(:permission, url: update_permissions_project_path(@project), html: { class: 'form-horizontal', method: :post }) do |f|
-  = field_set_tag do
-    = f.error_notification
-    %table.table.table-striped.table-hover
-      %thead
-        %tr
-          %th User
-          %th No Access
-          %th Read
-          %th Write
-          %th Own
-      %tbody
-      - User.users.order('lower(user_name) ASC').each do |user|
-        - access_levels = Access::Level.project(user, @project)
-        - access_level = Access::Core.highest(access_levels)
-        %tr{user_id: user.id}
-          %td= link_to user.user_name, user_account_path(user)
-          %td
-            %input{id: "user_#{user.id}_permissions_level_none",
-                      type: 'radio',
-                      name: "[user_ids][#{user.id}][permissions][level]",
-                      value: '',
-                      checked: access_level.blank?}
-          %td
-            %input{id: "user_#{user.id}_permissions_level_reader",
-                      type: 'radio',
-                      name: "[user_ids][#{user.id}][permissions][level]",
-                      value: 'reader',
-                      checked: access_level == :reader}
+  - logged_in_level = Access::Level.permission_logged_in(@project)
+  - logged_in_is_none = logged_in_level.nil?
+  - logged_in_is_read = logged_in_level == :reader
+  - logged_in_is_write = logged_in_level == :writer
 
-          %td
-            %input{id: "user_#{user.id}_permissions_level_writer",
-                      type: 'radio',
-                      name: "[user_ids][#{user.id}][permissions][level]",
-                      value: 'writer',
-                      checked: access_level == :writer}
-          %td
-            %input{id: "user_#{user.id}_permissions_level_owner",
-                      type: 'radio',
-                      name: "[user_ids][#{user.id}][permissions][level]",
-                      value: 'owner',
-                      checked: access_level == :owner}
+  %dl.dl-horizontal
+    %dt
+      Anonymous
+    %dd
+      Any user including site visitors who are not logged in.
 
-    = f.button :submit_cancel, 'Update Permissions', class: 'btn-default'
+    %dt
+      Authenticated
+    %dd
+      Any logged in user.
+
+    %dt
+      Owners
+    %dd
+      Owners can modify and delete the project and any sites in the project.
+
+    %dt
+      Writers
+    %dd
+      Writers can add and change annotations and view audio recordings.
+
+    %dt
+      Readers
+    %dd
+      Readers can view annotations and audio recordings.
+
+  .row
+    .col-md-12
+      = simple_form_for(:permission, url: update_permissions_project_path(@project), html: { method: :patch }) do
+        %table.table.table-striped.table-hover
+          %thead
+            %tr
+              %th
+                %span.fa.fa-user
+                User
+              %th
+                %span.fa.fa-ban
+                No Access
+              %th
+                %span.fa.fa-eye
+                Reader
+              %th
+                %span.fa.fa-pencil
+                Writer
+              %th
+                %span.fa.fa-user-plus
+                Owner
+          %tbody
+            %tr
+              %td
+                %span.fa.fa-unlock-alt
+                Anonymous
+              %td
+                - if anon_is_none
+                  %strong No Access
+                - else
+                  %button.btn.btn-default{type: 'submit', value: 'none',
+                  id: 'project_wide_anonymous_permissions_level_none',
+                  name: '[project_wide][anonymous]'}
+                    Set to No Access
+              %td
+                - if anon_is_read
+                  %strong Reader
+                - else
+                  %button.btn.btn-default{type: 'submit', value: 'reader',
+                  id: 'project_wide_anonymous_permissions_level_reader',
+                  name: '[project_wide][anonymous]'}
+                    Set as reader
+              %td
+                %small.text-muted Not Available
+              %td
+                %small.text-muted Not Available
+            %tr
+              %td
+                %span.fa.fa-lock
+                Authenticated
+              %td
+                - if logged_in_is_none
+                  %strong No Access
+                - else
+                  %button.btn.btn-default{type: 'submit', value: 'none',
+                    id: 'project_wide_logged_in_permissions_level_none',
+                    name: '[project_wide][logged_in]'}
+                    Set to No Access
+              %td
+                - if logged_in_is_read
+                  %strong Reader
+                - else
+                  %button.btn.btn-default{type: 'submit', value: 'reader',
+                    id: 'project_wide_logged_in_permissions_level_reader',
+                    name: '[project_wide][logged_in]'}
+                    Set as Reader
+              %td
+                - if logged_in_is_write
+                  %strong Writer
+                - else
+                  %button.btn.btn-default{type: 'submit', value: 'writer',
+                    id: 'project_wide_logged_in_permissions_level_writer',
+                    name: '[project_wide][logged_in]'}
+                    Set as Writer
+              %td
+                %small.text-muted Not Available
+            - User.users.order('lower(user_name) ASC').each do |user|
+              - user_level = Access::Level.permission_user(user, @project)
+              - user_no_access = user_level.nil?
+              - user_reader = user_level == :reader
+              - user_writer = user_level == :writer
+              - user_owner = user_level == :owner
+              %tr{user_id: user.id}
+                %td= link_to user.user_name, user_account_path(user)
+                %td
+                  - if user_no_access
+                    %strong No Access
+                  - else
+                    %button.btn.btn-default{type: 'submit', value: user.id,
+                    id: 'per_user_none',
+                    name: '[per_user][none]'}
+                      Set to No Access
+                %td
+                  - if user_reader
+                    %strong Reader
+                  - else
+                    %button.btn.btn-default{type: 'submit', value: user.id,
+                    id: 'per_user_reader',
+                    name: '[per_user][reader]'}
+                      Set as Reader
+                %td
+                  - if user_writer
+                    %strong Writer
+                  - else
+                    %button.btn.btn-default{type: 'submit', value: user.id,
+                    id: 'per_user_writer',
+                    name: '[per_user][writer]'}
+                      Set as Writer
+                %td
+                  - if user_owner
+                    %strong Owner
+                  - else
+                    %button.btn.btn-default{type: 'submit', value: user.id,
+                    id: 'per_user_owner',
+                    name: '[per_user][owner]'}
+                      Set as Owner
