@@ -146,7 +146,8 @@ module Access
       # @param [User] user
       # @return [User] user
       def validate_user(user)
-        fail ArgumentError, "User was not valid, got '#{user.class}'." if !user.blank? && !user.is_a?(User)
+        # need to check with nil, as blank queries db and guest users are not in db
+        fail ArgumentError, "User was not valid, got '#{user.class}'." if !user.nil? && !user.respond_to?(:user_name)
         user
       end
 

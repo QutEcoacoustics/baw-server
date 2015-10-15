@@ -29,10 +29,11 @@ class AnalysisController < ApplicationController
     analysis_storage_params = request_info[:opts]
     audio_recording = request_info[:audio_recording_info][:audio_recording]
     analysis_job = request_info[:job_info][:analysis_job]
+    analysis_job_id = request_info[:job_info][:analysis_job_id]
 
     # permissions check
     authorize!(:show, audio_recording)
-    authorize!(:show, analysis_job)
+    authorize!(:show, analysis_job) unless analysis_job.nil?
 
     # can the audio recording be accessed?
     is_audio_ready = audio_recording.status == 'ready'
@@ -40,7 +41,7 @@ class AnalysisController < ApplicationController
     paths = BawWorkers::Config.analysis_cache_helper.existing_paths(analysis_storage_params)
 
     # shared error info
-    msg = "Could not find results for job '#{analysis_job.id}' for recording '#{audio_recording.id}' at '#{request_params[:results_path]}'."
+    msg = "Could not find results for job '#{analysis_job_id}' for recording '#{audio_recording.id}' at '#{request_params[:results_path]}'."
 
     # do initial checking
     if !is_audio_ready && is_head_request
@@ -89,12 +90,7 @@ class AnalysisController < ApplicationController
       job_id = system_job_id
     else
       job_id = request_params[:analysis_job_id].to_i
-
-      if job_id.blank? || job_id < 1
-        fail CustomErrors::UnprocessableEntityError, "Invalid job id #{request_params[:analysis_job_id].to_s}."
-      end
-
-      job = AnalysisJob.where(id: job_id).first
+      job = AnalysisJob.find(job_id)
     end
 
     {
@@ -105,12 +101,7 @@ class AnalysisController < ApplicationController
 
   def get_audio_recording_opts(request_params)
     audio_recording_id = request_params[:audio_recording_id].to_i
-
-    if audio_recording_id.blank? || audio_recording_id < 1
-      fail CustomErrors::UnprocessableEntityError, "Invalid audio recording id #{request_params[:audio_recording_id].to_s}."
-    end
-
-    audio_recording = AudioRecording.where(id: audio_recording_id).first
+    audio_recording = AudioRecording.find(audio_recording_id)
 
     {
         audio_recording: audio_recording,

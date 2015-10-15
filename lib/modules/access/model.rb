@@ -22,17 +22,16 @@ module Access
       # @param [Symbol, Array<Symbol>] levels
       # @return [ActiveRecord::Relation] projects
       def projects(user, levels = Access::Core.levels_allow)
-        # levels can be nil to indicate get projects user has no access to
-        user = Access::Core.validate_user(user)
-        levels = Access::Core.validate_levels(levels)
+        query = Project.order('projects.name ASC')
+        is_admin, query = permission_admin(user, levels, query)
 
-        pt = Project.arel_table
-        pm = Permission.arel_table
-        exists, levels = permission_levels(levels)
-        project_permissions = permission_arel(pm, pt, user, levels, exists)
+        if is_admin
+          query
+        else
+          permissions = permission_projects(user, levels)
+          query.where(permissions)
+        end
 
-        # SELECT projects.* FROM projects WHERE <permission_arel>
-        Project.where(project_permissions).order('projects.name ASC')
       end
 
       # Get permissions for this project.
@@ -52,12 +51,8 @@ module Access
       # @return [ActiveRecord::Relation] sites
       def sites(user, levels = Access::Core.levels_allow, project = nil)
         # project can be nil
-        user = Access::Core.validate_user(user)
-        levels = Access::Core.validate_levels(levels)
-
-        query = Site
-                    .order('lower(sites.name) ASC')
-        restrictions(user, levels, query)
+        query = Site.order('lower(sites.name) ASC')
+        permission_sites(user, levels, query, project)
       end
 
       # Get all audio recordings for which this user has these access levels.
@@ -65,13 +60,11 @@ module Access
       # @param [Symbol, Array<Symbol>] levels
       # @return [ActiveRecord::Relation] audio recordings
       def audio_recordings(user, levels = Access::Core.levels_allow)
-        user = Access::Core.validate_user(user)
-        levels = Access::Core.validate_levels(levels)
-
         query = AudioRecording
                     .joins(:site)
                     .order(recorded_date: :desc)
-        restrictions(user, levels, query)
+
+        permission_sites(user, levels, query)
       end
 
       # Get all audio events for which this user has these access levels.
@@ -80,8 +73,16 @@ module Access
       # @param [AudioRecording] audio_recording
       # @return [ActiveRecord::Relation] audio events
       def audio_events(user, levels = Access::Core.levels_allow, audio_recording = nil)
-        # 2
         # audio_recording can be nil
+        query = AudioEvent
+                    .joins(audio_recording: [:site])
+                    .order(id: :desc)
+
+        if audio_recording
+          query = query.where(audio_recording_id: audio_recording.id)
+        end
+
+        permission_sites(user, levels, query)
       end
 
       # Get all audio events tags for which this user has these access levels.
@@ -90,8 +91,16 @@ module Access
       # @param [AudioEvent] audio_event
       # @return [ActiveRecord::Relation] audio event tags
       def audio_events_tags(user, levels = Access::Core.levels_allow, audio_event = nil)
-        # 1
         # audio event can be nil
+        query = Tagging
+                    .joins(audio_event: [audio_recording: [:site]])
+                    .order(updated_at: :desc)
+
+        if audio_event
+          query = query.where(audio_event_id: audio_event.id)
+        end
+
+        permission_sites(user, levels, query)
       end
 
       # Get all audio events comments for which this user has these access levels.
@@ -100,8 +109,16 @@ module Access
       # @param [AudioEvent] audio_event
       # @return [ActiveRecord::Relation] audio event comments
       def audio_event_comments(user, levels = Access::Core.levels_allow, audio_event = nil)
-        # 1
         # audio_event can be nil
+        query = AudioEventComment
+                    .joins(audio_event: [audio_recording: [:site]])
+                    .order(updated_at: :desc)
+
+        if audio_event
+          query = query.where(audio_event_id: audio_event.id)
+        end
+
+        permission_sites(user, levels, query)
       end
 
       # Get all saved searches for which this user has these access levels.
@@ -109,7 +126,8 @@ module Access
       # @param [Symbol, Array<Symbol>] levels
       # @return [ActiveRecord::Relation] saved searches
       def saved_searches(user, levels = Access::Core.levels_allow)
-        # 1
+        query = SavedSearch.order(updated_at: :desc)
+        permission_saved_searches(user, levels, query)
       end
 
       # Get all analysis jobs for which this user has these access levels.
@@ -117,144 +135,137 @@ module Access
       # @param [Symbol, Array<Symbol>] levels
       # @return [ActiveRecord::Relation] analysis jobs
       def analysis_jobs(user, levels = Access::Core.levels_allow)
-        # 1
+        query = AnalysisJob
+                    .joins(:saved_search)
+                    .order(updated_at: :desc)
+        permission_saved_searches(user, levels, query)
       end
 
       private
 
-      # Add project access restrictions from permissions and other sources.
-      # @param [User] user
-      # @param [Symbol, Array<Symbol>] levels
-      # @param [ActiveRecord::Relation] query
-      # @return [ActiveRecord::Relation] modified query
-      def restrictions(user, levels, query)
-        user = Access::Core.validate_user(user)
-        levels = Access::Core.validate_levels(levels)
+      def permission_admin(user, levels, query)
+        # since admin can access everything, any deny level returns nothing
+        # admin users have owner access to everything
 
-        if Access::Check.is_admin?(user)
-          if Access::Core.is_no_level?(levels)
-            # since admin can access everything, any deny level returns nothing
-            query.none
-          else
-            # admin users have full access to everything at any level
-            query
-          end
-
-        elsif Access::Check.is_standard_user?(user)
-          model_name = query.model.model_name.name
-          if %w(Site AudioRecording Bookmark AudioEvent Tagging AudioEventComment).include?(model_name)
-            site_restrictions(user, levels, query)
-          elsif %w(SavedSearch AnalysisJob).include?(model_name)
-            saved_search_restrictions(user, levels, query)
-          else
-            fail NotImplementedError, "Restrictions are not implemented for #{model_name}."
-          end
-
+        is_admin = Access::Check.is_admin?(user)
+        if is_admin
+          [
+              is_admin,
+              Access::Core.is_no_level?(levels) ? query.none : query
+          ]
         else
-          restrictions_none(user, query)
-
+          [
+              is_admin,
+              query
+          ]
         end
-
       end
 
-      # Restrict access by joining on sites (one to many)
-      # Access is allowed if there are *any* matches
-      # @param [User] user
-      # @param [Symbol, Array<Symbol>] levels
-      # @param [ActiveRecord::Relation] query
-      # @return [ActiveRecord::Relation]
-      def site_restrictions(user, levels, query)
+
+      def permission_projects(user, levels)
         user = Access::Core.validate_user(user)
-        levels = Access::Core.validate_levels(levels)
+
+=begin
+  [NOT] EXISTS
+    (SELECT 1
+    FROM "permissions"
+    WHERE
+      "permissions"."level" IN ('reader', 'writer', 'owner')
+      AND "projects"."id" = "permissions"."project_id"
+      AND "projects"."deleted_at" IS NULL
+      AND ("permissions"."user_id" = :user_id
+          OR "permissions"."allow_anonymous" = TRUE
+          OR "permissions"."allow_logged_in" = TRUE
+          )
+    )
+=end
 
         pt = Project.arel_table
         pm = Permission.arel_table
-        ps = Arel::Table.new(:projects_sites)
-        si = Site.arel_table
-        user_id = user.id
-        exists, levels = Access::Apply.permission_levels(levels)
-
-=begin
-SELECT *
-FROM sites
-WHERE
-    EXISTS
-        (SELECT 1
-        FROM projects_sites
-        WHERE
-            "sites"."id" = "projects_sites"."site_id"
-            AND EXISTS (
-                (SELECT 1
-                FROM "projects"
-                WHERE
-                    "projects"."deleted_at" IS NULL
-                    AND "projects"."creator_id" = 7
-                    AND "projects_sites"."project_id" = "projects"."id"
-                )
-                UNION ALL
-                (SELECT 1
-                FROM "permissions"
-                WHERE
-                    "permissions"."user_id" = 7
-                    AND "permissions"."level" IN ('reader', 'writer', 'owner')
-                    AND "projects_sites"."project_id" = "permissions"."project_id"
-                )
-            )
-        )
-OR
-    EXISTS
-        (SELECT 1
-        FROM "audio_events" ae1
-        WHERE
-            ae1."deleted_at" IS NULL
-            AND ae1."is_reference" = TRUE
-            AND "audio_events"."id" = ae1.id
-        )
-=end
-
-        # after adding logged_in and anonymous permissions.
-        # query
-        #     .where(
-        #         '(NOT EXISTS (SELECT 1 FROM permissions invert_pm_logged_in WHERE invert_pm_logged_in.logged_in = TRUE AND invert_pm_logged_in.project_id = projects.id))')
-        #     .where(
-        #         '(NOT EXISTS (SELECT 1 FROM permissions invert_pm WHERE invert_pm.user_id = ? AND invert_pm.project_id = projects.id))',
-        #         user.id)
-
-        # after adding logged_in and anonymous permissions.
-        # permissions_user_fragment = Permission.where(user: user, level: levels, logged_in: false, anonymous: false).select(:project_id)
-        # permissions_logged_in_fragment = Permission.where(user: nil, level: levels, logged_in: true, anonymous: false).select(:project_id)
-        # condition_pt = pt[:id].in(permissions_logged_in_fragment.arel).or(pt[:id].in(permissions_user_fragment.arel))
-
-        # need to add the 'deleted_at IS NULL' check by hand
-
-        project_creator =
-            pt
-                .where(pt[:deleted_at].eq(nil))
-                .where(pt[:creator_id].eq(user_id))
-                .where(ps[:project_id].eq(pt[:id]))
-                .project(1)
+        levels, exists = calculate_levels(levels)
 
         project_permissions =
             pm
-                .where(pm[:user_id].eq(user_id))
                 .where(pm[:level].in(levels))
-                .where(ps[:project_id].eq(pm[:project_id]))
-                .project(1)
+                .where(pt[:id].eq(pm[:project_id]))
+                .where(pt[:deleted_at].eq(nil))
 
-        union_all_projects =
-            project_creator
-                .union(:all, project_permissions)
+        if user.blank?
+          # only anon permissions allow to guest user
+          project_permissions =
+              project_permissions
+                  .where(pm[:allow_anonymous].eq(true))
+        else
+          # a logged in user can use
+          # - individual permissions
+          # - logged in permissions
+          # - anon permissions
+          project_permissions =
+              project_permissions
+                  .where(pm[:user_id].eq(user.id).or(
+                             pm[:allow_logged_in].eq(true).or(
+                                 pm[:allow_anonymous].eq(true))))
+        end
 
-        projects_exists = Arel::Nodes::Exists.new(union_all_projects)
+        project_permissions = project_permissions.project(1).exists
 
-        sites_exist =
+        exists ? project_permissions : project_permissions.not
+      end
+
+      # many to many join projects and sites
+      def permission_sites(user, levels, query, project = nil)
+
+        is_admin, query = permission_admin(user, levels, query)
+        return query if is_admin
+
+=begin
+  EXISTS
+      (SELECT 1
+      FROM projects_sites
+      INNER JOIN projects ON projects.is = projects_site.project_id
+      WHERE
+          "sites"."id" = "projects_sites"."site_id"
+          AND <permission_projects>
+      )
+=end
+        pt = Project.arel_table
+        ps = Arel::Table.new(:projects_sites)
+        st = Site.arel_table
+        levels, exists = calculate_levels(levels)
+
+        # project permission will never be nil, which is the way it should work
+        # when being used as a part of a subquery rather than the whole subquery
+        permissions = permission_projects(user, levels)
+
+        permissions_by_site =
             ps
-                .where(si[:id].eq(ps[:site_id]))
-                .where(projects_exists)
-                .project(1).exists
+                .join(pt).on(ps[:project_id].eq(pt[:id]))
+                .where(ps[:site_id].eq(st[:id]))
 
-        sites_exist = sites_exist.not unless exists
+        # filter by project if it is specified
+        if project
+          permissions_by_site =
+              permissions_by_site
+                  .where(pt[:id].eq(project.id))
+        end
 
+        permissions_by_site =
+            permissions_by_site
+                .where(permissions)
+                .project(1)
+                .exists
+
+        permissions_by_site = exists ? permissions_by_site : permissions_by_site.not
+=begin
+  EXISTS
+    (SELECT 1
+    FROM "audio_events" ae_ref
+    WHERE
+        ae_ref."deleted_at" IS NULL
+        AND ae_ref."is_reference" = TRUE
+        AND "audio_events"."id" = ae_ref.id
+    )
+=end
         # include reference audio_events when query is for audio_events or audio_event_comments
         model_name = query.model.model_name.name
         check_reference_audio_events = model_name == 'AudioEvent' || model_name == 'AudioEventComment'
@@ -273,208 +284,53 @@ OR
                   .where(ae_refs[:id].eq(ae[:id]))
                   .project(1).exists
 
-          reference_audio_events = reference_audio_events.not unless exists
+          reference_audio_events = exists ? reference_audio_events : reference_audio_events.not
 
           if exists
-            query.where(sites_exist.or(reference_audio_events))
+            query.where(permissions_by_site.or(reference_audio_events))
           else
-            query.where(sites_exist.and(reference_audio_events))
+            query.where(permissions_by_site.and(reference_audio_events))
           end
         else
-          query.where(sites_exist)
+          query.where(permissions_by_site)
         end
+
       end
 
-      # Restrict access using project site table
-      # @param [Project] project
-      # @param [ActiveRecord::Relation] query
-      # @return [ActiveRecord::Relation]
-      def project_site_restrictions(project, query)
-        project = Access::Core.validate_project(project)
-
-        ps = Arel::Table.new(:projects_sites)
-        pt = Arel::Table.new(:projects)
-        si = Site.arel_table
-        project_id = project.id
+      def permission_saved_searches(user, levels, query)
+        is_admin, query = permission_admin(user, levels, query)
+        return query if is_admin
 
 =begin
-SELECT *
-FROM "sites"
-WHERE
-    EXISTS
-        (SELECT 1
-        FROM "projects_sites"
-        INNER JOIN "projects" ON "projects_sites"."project_id" = "project"."id"
-        WHERE
-            "sites"."id" = "projects_sites"."site_id"
-            AND "projects_sites"."project_id" = 10
-            AND "projects"."deleted_at" IS NULL
-        )
+  EXISTS
+      (SELECT 1
+      FROM projects_saved_searches
+      INNER JOIN projects ON projects.id = projects_saved_searches.project_id
+      WHERE
+          "saved_searches"."id" = "projects_saved_searches"."saved_search_id"
+          AND <permission_projects>
+      )
 =end
-        project_condition =
+        pt = Project.arel_table
+        ps = Arel::Table.new(:projects_saved_searches)
+        ss = SavedSearch.arel_table
+        levels, exists = calculate_levels(levels)
+
+        permissions = permission_projects(user, levels)
+
+        permissions_by_saved_search =
             ps
                 .join(pt).on(ps[:project_id].eq(pt[:id]))
-                .where(si[:id].eq(ps[:site_id]))
-                .where(ps[:project_id].eq(project_id))
-                .where(pt[:deleted_at].eq(nil))
+                .where(ps[:saved_search_id].eq(ss[:id]))
+                .where(permissions)
                 .project(1)
                 .exists
 
-        query.where(project_condition)
+        exists ? permissions_by_saved_search : permissions_by_saved_search.not
       end
 
-      def saved_search_restrictions(user, levels, query)
-        user = Access::Core.validate_user(user)
-        levels = Access::Core.validate_levels(levels)
-
-        pt = Project.arel_table
-        pm = Permission.arel_table
-        ps = Arel::Table.new(:projects_saved_searches)
-        ss = SavedSearch.arel_table
-        user_id = user.id
-        exists, levels = permission_levels(levels)
-
-=begin
-SELECT *
-FROM saved_searches
-WHERE
-    EXISTS
-        (SELECT 1
-        FROM projects_saved_searches
-        WHERE
-            "saved_searches"."id" = "projects_saved_searches"."saved_search_id"
-            AND EXISTS (
-                (SELECT 1
-                FROM "projects"
-                WHERE
-                    "projects"."deleted_at" IS NULL
-                    AND "projects"."creator_id" = 7
-                    AND "projects_saved_searches"."project_id" = "projects"."id"
-                )
-                UNION ALL
-                (SELECT 1
-                FROM "permissions"
-                WHERE
-                    "permissions"."user_id" = 7
-                    AND "permissions"."level" IN ('reader', 'writer', 'owner')
-                    AND "projects_saved_searches"."project_id" = "permissions"."project_id"
-                )
-            )
-        )
-
-=end
-        # user must have at least read access to all projects
-        # need to add the 'deleted_at IS NULL' check by hand
-
-        project_creator =
-            pt
-                .where(pt[:deleted_at].eq(nil))
-                .where(pt[:creator_id].eq(user_id))
-                .where(ps[:project_id].eq(pt[:id]))
-                .project(1)
-
-        project_permissions =
-            pm
-                .where(pm[:user_id].eq(user_id))
-                .where(pm[:level].in(levels))
-                .where(ps[:project_id].eq(pm[:project_id]))
-                .project(1)
-
-        union_all_projects =
-            project_creator
-                .union(:all, project_permissions)
-
-        projects_exists = Arel::Nodes::Exists.new(union_all_projects)
-
-        saved_search_exist =
-            ps
-                .where(ss[:id].eq(ps[:saved_search_id]))
-                .where(projects_exists)
-                .project(1).exists
-
-        saved_search_exist = saved_search_exist.not unless exists
-
-        query.where(saved_search_exist)
-      end
-
-      def permission_query(user, levels)
-        user = Access::Core.validate_user(user)
-        levels = Access::Core.validate_levels(levels)
-
-        pt = Project.arel_table
-        pm = Permission.arel_table
-        exists, levels = permission_levels(levels)
-        permission_arel(pm, pt, user, levels, exists)
-      end
-
-      def permission_arel(pm, pt, user, levels, exists)
-=begin
-[NOT] EXISTS
-        (SELECT 1
-        FROM "permissions"
-        WHERE
-            "permissions"."level" IN ('reader', 'writer', 'owner')
-            AND "projects"."id" = "permissions"."project_id"
-            AND "projects"."deleted_at" IS NULL
-            AND ("permissions"."user_id" = :user_id
-                 OR "permissions"."allow_anonymous" = TRUE
-                 OR "permissions"."allow_logged_in" = TRUE
-            )
-        )
-=end
-
-        project_permissions =
-            pm
-                .where(pm[:level].in(levels))
-                .where(pt[:id].eq(pm[:project_id]))
-                .where(pt[:deleted_at].eq(nil))
-
-        if user.blank?
-          project_permissions =
-              project_permissions
-                  .where(pm[:allow_logged_in].eq(true).or(
-                             pm[:allow_anonymous].eq(true)))
-        else
-          project_permissions =
-              project_permissions
-                  .where(pm[:user_id].eq(user.id).or(
-                             pm[:allow_logged_in].eq(true).or(
-                                 pm[:allow_anonymous].eq(true))))
-        end
-
-        project_permissions = project_permissions.project(1).exists
-
-        if exists
-          project_permissions
-        else
-          project_permissions.not
-        end
-      end
-
-      def restrictions_none(user, query)
-        user = Access::Core.validate_user(user)
-
-        unknown = '(unknown)'
-        # non-standard users (harvester, guest) have no access
-        user_type = unknown
-        user_type = 'guest' if Access::Check.is_guest?(user)
-        user_type = 'harvester' if Access::Check.is_harvester?(user)
-
-        user_name = user.blank? ? unknown : user.user_name
-        user_id = user.blank? ? unknown : user.id
-        user_roles = user.blank? ? unknown : user.role_symbols.join(', ')
-
-        msg = "User '#{user_name}', id #{user_id}, type #{user_type}, roles '#{user_roles}' denied access."
-        Rails.logger.warn msg
-
-        # using .none to be chain-able
-        query.none
-      end
-
-      # Is exists negated? and which levels should be used to search.
-      # @param [Array<Symbol>] levels
-      # @return [Boolean, Array<Symbol>] exists, levels
-      def permission_levels(levels)
+      def calculate_levels(levels)
+        # levels can be nil to indicate get projects user has no access
         levels = Access::Core.validate_levels(levels)
 
         # exists is false when no levels are specified
@@ -482,21 +338,9 @@ WHERE
 
         # if exists is true, then use the levels that were provided
         # if exists is false, then use all allow levels (as NOT EXISTS will negate it)
-        normalised_levels = exists ? levels : Access::Core.levels_allow
+        levels = exists ? levels : Access::Core.levels_allow
 
-        [exists, normalised_levels]
-      end
-
-      def permission_admin(user, levels, query)
-        if Access::Check.is_admin?(user)
-          if Access::Core.is_no_level?(levels)
-            # since admin can access everything, any deny level returns nothing
-            query.none
-          else
-            # admin users have full access to everything at any level
-            query
-          end
-          end
+        [levels, exists]
       end
 
     end

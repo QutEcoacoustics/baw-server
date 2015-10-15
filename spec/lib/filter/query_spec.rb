@@ -565,7 +565,7 @@ LIMIT10OFFSET0"
 
       filter_query = Filter::Query.new(
           complex_sample,
-          Access::Query.audio_recordings(user, Access::Core.levels_allow),
+          Access::Model.audio_recordings(user, Access::Core.levels_allow),
           AudioRecording,
           AudioRecording.filter_settings
       )
@@ -633,7 +633,7 @@ LIMIT25OFFSET0"
 
       filter_query = Filter::Query.new(
           request_body_obj,
-          Access::Query.audio_recordings(user, Access::Core.levels_allow),
+          Access::Model.audio_recordings(user, Access::Core.levels_allow),
           AudioRecording,
           AudioRecording.filter_settings
       )
@@ -659,7 +659,7 @@ LIMIT25OFFSET0"
 
       filter_query = Filter::Query.new(
           request_body_obj,
-          Access::Query.audio_events(user, Access::Core.levels_allow),
+          Access::Model.audio_events(user, Access::Core.levels_allow),
           AudioEvent,
           AudioEvent.filter_settings
       )
@@ -691,7 +691,7 @@ LIMIT25OFFSET0"
 
       filter_query = Filter::Query.new(
           request_body_obj,
-          Access::Query.audio_events(user, Access::Core.levels_allow),
+          Access::Model.audio_events(user, Access::Core.levels_allow),
           AudioEvent,
           AudioEvent.filter_settings
       )
@@ -729,7 +729,7 @@ LIMIT25OFFSET0"
 
       filter_query = Filter::Query.new(
           request_body_obj,
-          Access::Query.audio_events(user, Access::Core.levels_allow),
+          Access::Model.audio_events(user, Access::Core.levels_allow),
           AudioEvent,
           AudioEvent.filter_settings
       )
@@ -760,7 +760,7 @@ LIMIT25OFFSET0"
 
       filter_query = Filter::Query.new(
           request_body_obj,
-          Access::Query.comments(user, Access::Core.levels_allow),
+          Access::Model.audio_event_comments(user, Access::Core.levels_allow),
           AudioEventComment,
           AudioEventComment.filter_settings
       )
@@ -785,7 +785,7 @@ LIMIT25OFFSET0"
 
       filter_query_inaccessible = Filter::Query.new(
           request_body_obj,
-          Access::Query.projects_inaccessible(user),
+          Access::Model.projects(user, nil),
           Project,
           Project.filter_settings
       )
@@ -810,7 +810,7 @@ LIMIT25OFFSET0"
 
       filter_query_accessible = Filter::Query.new(
           request_body_obj,
-          Access::Query.projects_accessible(user),
+          Access::Model.projects(user),
           Project,
           Project.filter_settings
       )
@@ -837,7 +837,7 @@ LIMIT25OFFSET0"
 
       filter_query_project2 = Filter::Query.new(
           request_body_obj,
-          Access::Query.project_sites(permission2.project, user, Access::Core.levels_allow),
+          Access::Model.sites(user, Access::Core.levels_allow, permission2.project),
           Site,
           Site.filter_settings
       )
@@ -863,7 +863,7 @@ LIMIT25OFFSET0"
 
       filter_query_project2 = Filter::Query.new(
           request_body_obj,
-          Access::Query.project_sites(project3, user, nil),
+          Access::Model.sites(user, nil, project3),
           Site,
           Site.filter_settings
       )
@@ -887,7 +887,7 @@ LIMIT25OFFSET0"
 
       filter_query_project2 = Filter::Query.new(
           request_body_obj,
-          Access::Query.project_permissions(project2),
+          Access::Model.permissions(project2),
           Permission,
           Permission.filter_settings
       )
@@ -912,7 +912,7 @@ LIMIT25OFFSET0"
 
       filter_query_project2 = Filter::Query.new(
           request_body_obj,
-          Access::Query.audio_recording_audio_events(audio_recording2, user),
+          Access::Model.audio_events(user, Access::Core.levels_allow, audio_recording2),
           AudioEvent,
           AudioEvent.filter_settings
       )
@@ -948,7 +948,7 @@ LIMIT25OFFSET0"
 
       filter_query_project2 = Filter::Query.new(
           request_body_obj,
-          Access::Query.audio_event_comments(audio_event2, user),
+          Access::Model.audio_event_comments(user, Access::Core.levels_allow, audio_event2),
           AudioEventComment,
           AudioEventComment.filter_settings
       )
@@ -974,7 +974,7 @@ LIMIT25OFFSET0"
 
       filter_query_project2 = Filter::Query.new(
           request_body_obj,
-          Access::Query.audio_event_comments(audio_event2, user, nil),
+          Access::Model.audio_event_comments(user, nil, audio_event2),
           AudioEventComment,
           AudioEventComment.filter_settings
       )
