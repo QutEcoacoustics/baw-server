@@ -139,7 +139,7 @@ module Access
       # @return [Array<Project>] projects
       def validate_projects(projects)
         fail ArgumentError, 'No projects provided.' if projects.blank?
-        projects.to_a.map { |p| validate_project(p) }
+        projects.to_a.flatten.map { |p| validate_project(p) }
       end
 
       # Validate User. User can be nil.

@@ -107,8 +107,10 @@ ELSE last_sign_in_at END DESC'
     do_load_resource
     do_authorize_instance
 
-    @user_projects = Access::Query.projects_accessible(@user).includes(:creator).references(:creator)
-                         .order('projects.name ASC')
+    @user_projects = Access::User
+                         .projects(@user)
+                         .includes(:creator)
+                         .references(:creator)
                          .page(paging_params[:page].blank? ? 1 : paging_params[:page])
     respond_to do |format|
       format.html
@@ -120,7 +122,8 @@ ELSE last_sign_in_at END DESC'
     do_load_resource
     do_authorize_instance
 
-    @user_bookmarks = Access::Query.bookmarks_modified(@user)
+    @user_bookmarks = Access::User
+                          .bookmarks(@user)
                           .order('bookmarks.updated_at DESC')
                           .page(paging_params[:page].blank? ? 1 : paging_params[:page])
     respond_to do |format|
@@ -133,8 +136,8 @@ ELSE last_sign_in_at END DESC'
     do_load_resource
     do_authorize_instance
 
-    @user_audio_event_comments = Access::Query.audio_event_comments_modified(@user)
-                                     .order('audio_event_comments.updated_at DESC')
+    @user_audio_event_comments = Access::User
+                                     .audio_event_comments(@user)
                                      .page(paging_params[:page].blank? ? 1 : paging_params[:page])
     respond_to do |format|
       format.html
@@ -146,8 +149,10 @@ ELSE last_sign_in_at END DESC'
     do_load_resource
     do_authorize_instance
 
-    @user_annotations = Access::Query.audio_events_modified(@user).includes(audio_recording: [:site]).references(:audio_recordings, :sites)
-                            .order('audio_events.updated_at DESC')
+    @user_annotations = Access::User
+                            .audio_events(@user)
+                            .includes(audio_recording: [:site])
+                            .references(:audio_recordings, :sites)
                             .page(paging_params[:page].blank? ? 1 : paging_params[:page])
     respond_to do |format|
       format.html
@@ -159,12 +164,10 @@ ELSE last_sign_in_at END DESC'
     do_load_resource
     do_authorize_instance
 
-    @user_saved_searches = Access::Query.saved_searches_modified(@user)
-                               .order('saved_searches.created_at DESC')
-                               .paginate(
-                                   page: paging_params[:page].blank? ? 1 : paging_params[:page],
-                                   per_page: 30
-                               )
+    @user_saved_searches = Access::User
+                               .saved_searches(@user)
+                               .page(paging_params[:page].blank? ? 1 : paging_params[:page]
+    )
     respond_to do |format|
       format.html
     end
@@ -175,12 +178,9 @@ ELSE last_sign_in_at END DESC'
     do_load_resource
     do_authorize_instance
 
-    @user_analysis_jobs = Access::Query.analysis_jobs_modified(@user)
-                              .order('analysis_jobs.updated_at DESC')
-                              .paginate(
-                                  page: paging_params[:page].blank? ? 1 : paging_params[:page],
-                                  per_page: 30
-                              )
+    @user_analysis_jobs = Access::User
+                              .analysis_jobs(@user)
+                              .page(paging_params[:page].blank? ? 1 : paging_params[:page])
     respond_to do |format|
       format.html
     end

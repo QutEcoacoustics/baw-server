@@ -80,7 +80,7 @@ module Access
       # @return [Boolean]
       def can_any?(user, level, projects)
         requested_level = Access::Core.validate_level(level)
-        actual_level = Access::Level.projects(user, projects)
+        actual_level = Access::Level.all(user, projects)
 
         allowed?(requested_level, actual_level)
       end
@@ -100,7 +100,7 @@ module Access
       # @return [Boolean]
       def can_all?(user, level, projects)
         requested_level = Access::Core.validate_level(level)
-        actual_levels = Access::Level.projects(user, projects)
+        actual_levels = Access::Level.all(user, projects)
         lowest_actual_level = Access::Core.lowest(actual_levels)
 
         allowed?(requested_level, lowest_actual_level)

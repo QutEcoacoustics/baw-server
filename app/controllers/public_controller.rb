@@ -1,18 +1,6 @@
 class PublicController < ApplicationController
-  skip_authorization_check only: [
-                               :index, :status,
-                               :website_status,
-                               :credits,
-                               :disclaimers,
-                               :ethics_statement,
-                               :data_upload,
 
-                               :new_contact_us, :create_contact_us,
-                               :new_bug_report, :create_bug_report,
-                               :new_data_request, :create_data_request,
-
-                               :cors_preflight
-                           ]
+  authorize_resource class: false
 
   # ensure that invalid CORS preflight requests get useful responses
   skip_before_action :verify_authenticity_token, only: :cors_preflight
@@ -271,7 +259,10 @@ class PublicController < ApplicationController
     if current_user.blank?
       @recent_audio_recordings = AudioRecording.order(order_by_coalesce).limit(7)
     else
-      @recent_audio_recordings = Access::Query.audio_recordings(current_user, Access::Core.levels_allow).includes(site: :projects).order(order_by_coalesce).limit(10)
+      @recent_audio_recordings = Access::Model
+                                     .audio_recordings(current_user)
+                                     .includes(site: :projects)
+                                     .order(order_by_coalesce).limit(10)
     end
 
   end
@@ -289,8 +280,8 @@ class PublicController < ApplicationController
                                  .order(order_by_coalesce)
                                  .limit(10)
     else
-      @recent_audio_events = Access::Query
-                                 .audio_events(current_user, Access::Core.levels_allow)
+      @recent_audio_events = Access::Model
+                                 .audio_events(current_user)
                                  .includes([:updater, audio_recording: :site])
                                  .order(order_by_coalesce).limit(10)
     end

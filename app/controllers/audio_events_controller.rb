@@ -3,8 +3,6 @@ require 'csv'
 class AudioEventsController < ApplicationController
   include Api::ControllerHelper
 
-  skip_authorization_check only: [:show]
-
   # GET /audio_recordings/:audio_recording_id/audio_events
   def index
     do_authorize_class
@@ -12,7 +10,7 @@ class AudioEventsController < ApplicationController
 
     @audio_events, opts = Settings.api_response.response_advanced(
         api_filter_params,
-        Access::Query.audio_recording_audio_events(@audio_recording, current_user),
+        Access::Model.audio_events(current_user, Access::Core.levels_allow, @audio_recording),
         AudioEvent,
         AudioEvent.filter_settings
     )
@@ -21,14 +19,9 @@ class AudioEventsController < ApplicationController
 
   # GET /audio_recordings/:audio_recording_id/audio_events/:id
   def show
-    # allow logged-in users to access reference audio events
-    # they would otherwise not have access to
-
-    request_params = audio_event_show_params.dup.symbolize_keys
-    request_params[:audio_event_id] = request_params[:id]
-
-    @audio_recording = auth_custom_audio_recording(request_params)
-    @audio_event = auth_custom_audio_event(request_params, @audio_recording)
+    do_load_resource
+    get_audio_recording
+    do_authorize_instance
 
     respond_show
   end
@@ -88,7 +81,7 @@ class AudioEventsController < ApplicationController
 
     filter_response, opts = Settings.api_response.response_advanced(
         api_filter_params,
-        Access::Query.audio_events(current_user),
+        Access::Model.audio_events(current_user),
         AudioEvent,
         AudioEvent.filter_settings
     )

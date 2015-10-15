@@ -9,8 +9,9 @@ require 'find'
 =end
 
 class AnalysisController < ApplicationController
-  skip_authorization_check only: [:show]
 
+  # GET|HEAD /analysis_jobs/:analysis_job_id/audio_recordings/:audio_recording_id
+  # GET|HEAD /analysis_jobs/:analysis_job_id/audio_recordings/:audio_recording_id/*results_path
   def show
     # start timing request
     overall_start = Time.now
@@ -21,14 +22,17 @@ class AnalysisController < ApplicationController
     # should the response include content?
     is_head_request = request.head?
 
-    # permissions are checked in
-    # get_opts -> get_audio_recording_opts -> authorise_custom
+    # get all information required
     request_info = get_opts(request_params)
 
     # extract parameters for analysis response
     analysis_storage_params = request_info[:opts]
     audio_recording = request_info[:audio_recording_info][:audio_recording]
-    job_id = request_info[:job_info][:analysis_job_id]
+    analysis_job = request_info[:job_info][:analysis_job]
+
+    # permissions check
+    authorize!(:show, audio_recording)
+    authorize!(:show, analysis_job)
 
     # can the audio recording be accessed?
     is_audio_ready = audio_recording.status == 'ready'
@@ -36,7 +40,7 @@ class AnalysisController < ApplicationController
     paths = BawWorkers::Config.analysis_cache_helper.existing_paths(analysis_storage_params)
 
     # shared error info
-    msg = "Could not find results for job '#{job_id}' for recording '#{audio_recording.id}' at '#{request_params[:results_path]}'."
+    msg = "Could not find results for job '#{analysis_job.id}' for recording '#{audio_recording.id}' at '#{request_params[:results_path]}'."
 
     # do initial checking
     if !is_audio_ready && is_head_request
@@ -77,16 +81,6 @@ class AnalysisController < ApplicationController
 
   private
 
-  def authorise_custom(request_params, user)
-
-    # Can't do anything if not logged in, not in user or admin role, or not confirmed
-    if user.blank? || (!Access::Check.is_standard_user?(user) && !Access::Check.is_admin?(user)) || !user.confirmed?
-      fail CanCan::AccessDenied, 'Anonymous users, non-admin and non-users, or unconfirmed users cannot access analysis data.'
-    end
-
-    auth_custom_audio_recording(request_params.slice(:audio_recording_id))
-  end
-
   def get_job_opts(request_params)
     system_job_id = 'system'
     job = nil
@@ -116,8 +110,7 @@ class AnalysisController < ApplicationController
       fail CustomErrors::UnprocessableEntityError, "Invalid audio recording id #{request_params[:audio_recording_id].to_s}."
     end
 
-    # check audio_recording authorisation
-    audio_recording = authorise_custom(request_params, current_user)
+    audio_recording = AudioRecording.where(id: audio_recording_id).first
 
     {
         audio_recording: audio_recording,

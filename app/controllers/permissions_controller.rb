@@ -8,11 +8,13 @@ class PermissionsController < ApplicationController
     do_authorize_instance(:update_permissions, @project)
 
     respond_to do |format|
-      format.html
+      format.html {
+        @permissions = Permission.project_list(@project.id)
+      }
       format.json {
         @permissions, opts = Settings.api_response.response_advanced(
             api_filter_params,
-            Access::Query.project_permissions(@project),
+            Access::Model.permissions(current_user, Access::Core.levels_allow, @project),
             Permission,
             Permission.filter_settings)
         respond_index(opts)

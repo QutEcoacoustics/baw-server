@@ -10,7 +10,7 @@ class TaggingsController < ApplicationController
 
     @taggings, opts = Settings.api_response.response_advanced(
         api_filter_params,
-        Access::Query.audio_event_taggings(@audio_event, current_user),
+        Access::Model.audio_events_tags(current_user, Access::Core.levels_allow, @audio_event),
         Tagging,
         Tagging.filter_settings
     )
@@ -25,7 +25,7 @@ class TaggingsController < ApplicationController
 
     @taggings, opts = Settings.api_response.response_advanced(
         api_filter_params,
-        Access::Query.taggings(current_user).where(creator: @user),
+        Access::Model.audio_events_tags(current_user).where(creator: @user),
         Tagging,
         Tagging.filter_settings
     )
@@ -116,7 +116,7 @@ class TaggingsController < ApplicationController
 
     filter_response, opts = Settings.api_response.response_advanced(
         api_filter_params,
-        Access::Query.taggings(current_user),
+        Access::Model.audio_events_tags(current_user),
         Tagging,
         Tagging.filter_settings
     )

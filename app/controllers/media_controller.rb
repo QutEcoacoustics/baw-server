@@ -1,6 +1,8 @@
 class MediaController < ApplicationController
-  skip_authorization_check only: [:show]
 
+  authorize_resource class: false
+
+  # GET|HEAD /audio_recordings/:audio_recording_id/media.:format
   def show
     # start timing request
     overall_start = Time.now

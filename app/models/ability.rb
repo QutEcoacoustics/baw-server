@@ -37,6 +37,12 @@ class Ability
     # WARNING: instance variable in controller index action will not be set if using a block for can definitions
     # because there is no way to determine which records to fetch from the database.
 
+    # WARNING: can't add .includes to permission checks
+    # it breaks when validating projects due to ActiveRecord::AssociationRelation
+    # .all would have worked. I tried .where(nil), that didn't work either :/
+    # https://github.com/rails/rails/issues/12756
+    # https://github.com/plataformatec/has_scope/issues/41
+
     # FYI
     # ----------------------------
     #  - index and filter permissions are checked as part of filter query
@@ -57,7 +63,7 @@ class Ability
     can :manage, :all if Access::Check.is_admin?(user)
 
     # actions used by harvester. See baw-workers project for more information.
-    can [:new, :create, :check_uploader, :update_status, :update], AudioRecording if  Access::Check.is_harvester?(user)
+    can [:new, :create, :check_uploader, :update_status, :update], AudioRecording if Access::Check.is_harvester?(user)
 
     if Access::Check.is_standard_user?(user) || is_guest
       # available models:
@@ -76,9 +82,15 @@ class Ability
       to_analysis_job(user, is_guest)
       to_saved_search(user, is_guest)
       to_script(user, is_guest)
-      to_tag
+      to_tag(user, is_guest)
       to_tagging(user, is_guest)
       to_user(user, is_guest)
+
+      to_analysis(user, is_guest)
+      to_media(user, is_guest)
+      to_error(user, is_guest)
+      to_public(user, is_guest)
+
     end
   end
 
@@ -141,10 +153,6 @@ class Ability
     # must have write permission or higher to new, create, edit, update
     can [:new, :create, :edit, :update], Site do |site|
       check_model(site)
-      # can't add .includes here - it breaks when validating projects due to ActiveRecord::AssociationRelation
-      # .all would have worked. I tried .where(nil), that didn't work either :/
-      # https://github.com/rails/rails/issues/12756
-      # https://github.com/plataformatec/has_scope/issues/41
       Access::Check.can_any?(user, :writer, site.projects)
     end
 
@@ -155,7 +163,6 @@ class Ability
   def to_audio_recording(user, is_guest)
     # See permissions for harvester
     # Only admin and harvester can :create, :check_uploader, :update_status, :update
-    # permissions are also checked in actions
     # see also for_harvester
 
     # must have read permission or higher to view audio recording
@@ -173,9 +180,12 @@ class Ability
 
   def to_audio_event(user, is_guest)
     # must have read permission or higher to view or download audio event
+    # or audio event must be set as a reference audio event
     can [:show, :download], AudioEvent do |audio_event|
       check_model(audio_event)
-      Access::Check.can_any?(user, :reader, audio_event.audio_recording.site.projects)
+      is_ref = audio_event.is_reference
+      projects = audio_event.audio_recording.site.projects
+      Access::Check.can_any?(user, :reader, projects) || is_ref
     end
 
     # must have write permission or higher to create, update, destroy
@@ -229,7 +239,7 @@ class Ability
   end
 
   def to_analysis_job(user, is_guest)
-    # must have read permission or higher on all saved_search.projects to create analysis job
+    # must have read permission or higher on all saved_search.projects to create or show an analysis job
     can [:show, :create], AnalysisJob do |analysis_job|
       check_model(analysis_job)
       projects = analysis_job.saved_search.projects
@@ -271,7 +281,7 @@ class Ability
     can [:index, :filter], Script unless is_guest
   end
 
-  def to_tag
+  def to_tag(user, is_guest)
     # cannot be updated
     # tag management controller is admin only (checked in before_action)
 
@@ -311,8 +321,49 @@ class Ability
     can [:my_account, :modify_preferences], User, id: user.id
 
     # any logged in user can view any other user's profile (read-only)
-    can [:show, :filter], User  unless is_guest
+    can [:show, :filter], User unless is_guest
+  end
 
+  def to_analysis(user, is_guest)
+    # actions any logged in user can access
+    can :show, :analysis unless is_guest
+  end
+
+  def to_media(user, is_guest)
+    # available to any user, including guest
+    can :show, :media
+  end
+
+  def to_error(user, is_guest)
+    # available to any user, including guest
+    can [:route_error, :uncaught_error, :show], :error
+
+    # only available in Rails test env
+    if ENV['RAILS_ENV'] == 'test'
+      can :test_exceptions, :error
+    end
+  end
+
+  def to_public(user, is_guest)
+    # available to any user, including guest
+    can [
+            :index,
+            :status,
+            :website_status,
+            :credits,
+            :disclaimers,
+            :ethics_statement,
+            :data_upload,
+
+            :new_contact_us,
+            :create_contact_us,
+            :new_bug_report,
+            :create_bug_report,
+            :new_data_request,
+            :create_data_request,
+
+            :cors_preflight
+        ], :public
   end
 
 end

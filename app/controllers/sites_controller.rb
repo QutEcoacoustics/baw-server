@@ -12,7 +12,7 @@ class SitesController < ApplicationController
       format.json {
         @sites, opts = Settings.api_response.response_advanced(
             api_filter_params,
-            Access::Query.project_sites(@project, current_user),
+            Access::Model.sites(current_user, Access::Core.levels_allow, @project),
             Site,
             Site.filter_settings
         )
@@ -162,7 +162,7 @@ ORDER BY s.name")
 
     filter_response, opts = Settings.api_response.response_advanced(
         api_filter_params,
-        Access::Query.sites(current_user),
+        Access::Model.sites(current_user),
         Site,
         Site.filter_settings
     )

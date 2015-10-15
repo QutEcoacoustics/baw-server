@@ -2,36 +2,6 @@ module Access
   class Query
     class << self
 
-      # Get all users that have levels access or higher to project.
-      # @param [Project, Array<Project>] projects
-      # @param [Symbol, Array<Symbol>] levels
-      # @return [ActiveRecord::Relation] users
-      def users(projects, levels = Access::Core.levels_allow)
-        projects = Access::Core.validate_projects(projects)
-        levels = Access::Core.validate_levels(levels)
-        is_none = Access::Core.is_no_level?(levels)
-
-        if is_none
-          # get all users who have no access to the project
-          # will never include any admins
-          # if project has anon access, will always return empty
-          # if project has logged in access, will return only 'guest'
-          # SQL query for users where not exists permission entries for this project and equal or greater levels
-          # SQL query should check user type, as admins will always have access
-
-        else
-          # get all users who have at least the lowest level access to the project
-          # will always include all admins
-          # needs to account for anon and logged in access settings
-          # SQL query for users where exists permission entries for this project and equal or greater levels
-          # SQL query should check user type, as admins will always have access
-          lowest_level = Access::Core.lowest(levels)
-          equal_or_greater_levels = Access::Core.equal_or_greater(lowest_level)
-        end
-
-        fail NotImplementedError
-      end
-
       # Get projects for which this user has these levels.
       # @param [User] user
       # @param [Symbol, Array<Symbol>] levels
@@ -217,35 +187,7 @@ module Access
         Access::Apply.restrictions(user, levels, query)
       end
 
-      def audio_events_tags_modified(user)
-        user = Access::Core.validate_user(user)
-        Tagging.where('(audio_events_tags.creator_id = ? OR audio_events_tags.updater_id = ?)', user.id, user.id)
-      end
 
-      def audio_events_modified(user)
-        user = Access::Core.validate_user(user)
-        AudioEvent.where('(audio_events.creator_id = ? OR audio_events.updater_id = ?)', user.id, user.id)
-      end
-
-      def bookmarks_modified(user)
-        user = Access::Core.validate_user(user)
-        Bookmark.where('(bookmarks.creator_id = ? OR bookmarks.updater_id = ?)', user.id, user.id)
-      end
-
-      def audio_event_comments_modified(user)
-        user = Access::Core.validate_user(user)
-        AudioEventComment.where('(audio_event_comments.creator_id = ? OR audio_event_comments.updater_id = ?)', user.id, user.id)
-      end
-
-      def saved_searches_modified(user)
-        user = Access::Core.validate_user(user)
-        SavedSearch.where('(saved_searches.creator_id = ?)', user.id)
-      end
-
-      def analysis_jobs_modified(user)
-        user = Access::Core.validate_user(user)
-        AnalysisJob.where('(analysis_jobs.creator_id = ? OR analysis_jobs.updater_id = ?)', user.id, user.id)
-      end
 
     end
   end

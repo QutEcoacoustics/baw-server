@@ -42,11 +42,21 @@ class Permission < ActiveRecord::Base
   validate :exclusive_attributes
   validate :additional_levels
 
+  def self.project_list(project_id)
+    query = 'SELECT users.id AS user_id, users.user_name,
+(SELECT permissions.level FROM permissions WHERE permissions.project_id = ? AND permissions.user_id = users.id) AS level
+FROM users
+ORDER BY lower(users.user_name) ASC'
+
+    query = sanitize_sql_array([query, project_id])
+    Permission.connection.select_all(query)
+  end
+
   # Define filter api settings
   def self.filter_settings
     {
-        valid_fields: [:id, :project_id, :user_id, :level, :creator_id, :created_at],
-        render_fields: [:id, :project_id, :user_id, :level],
+        valid_fields: [:id, :project_id, :user_id, :level, :allow_anonymous, :allow_logged_in, :creator_id, :created_at],
+        render_fields: [:id, :project_id, :user_id, :level, :allow_anonymous, :allow_logged_in],
         text_fields: [:level],
         controller: :permissions,
         action: :filter,

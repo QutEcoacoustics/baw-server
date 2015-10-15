@@ -8,11 +8,11 @@
 
 .col-md-12
 
-  - anon_level = Access::Level.permission_anon(@project)
+  - anon_level = Access::Level.anonymous(@project)
   - anon_is_none = anon_level.nil?
   - anon_is_read = anon_level == :reader
 
-  - logged_in_level = Access::Level.permission_logged_in(@project)
+  - logged_in_level = Access::Level.logged_in(@project)
   - logged_in_is_none = logged_in_level.nil?
   - logged_in_is_read = logged_in_level == :reader
   - logged_in_is_write = logged_in_level == :writer
@@ -119,19 +119,21 @@
                     Set as Writer
               %td
                 %small.text-muted Not Available
-            - User.users.order('lower(user_name) ASC').each do |user|
-              - user_level = Access::Level.permission_user(user, @project)
+            - @permissions.each do |user|
+              - user_id = user['user_id']
+              - user_name = user['user_name']
+              - user_level = user['level']
               - user_no_access = user_level.nil?
-              - user_reader = user_level == :reader
-              - user_writer = user_level == :writer
-              - user_owner = user_level == :owner
-              %tr{user_id: user.id}
-                %td= link_to user.user_name, user_account_path(user)
+              - user_reader = user_level == 'reader'
+              - user_writer = user_level == 'writer'
+              - user_owner = user_level == 'owner'
+              %tr{user_id: user_id}
+                %td= link_to user_name, user_account_path(user_id)
                 %td
                   - if user_no_access
                     %strong No Access
                   - else
-                    %button.btn.btn-default{type: 'submit', value: user.id,
+                    %button.btn.btn-default{type: 'submit', value: user_id,
                     id: 'per_user_none',
                     name: '[per_user][none]'}
                       Set to No Access
@@ -139,7 +141,7 @@
                   - if user_reader
                     %strong Reader
                   - else
-                    %button.btn.btn-default{type: 'submit', value: user.id,
+                    %button.btn.btn-default{type: 'submit', value: user_id,
                     id: 'per_user_reader',
                     name: '[per_user][reader]'}
                       Set as Reader
@@ -147,7 +149,7 @@
                   - if user_writer
                     %strong Writer
                   - else
-                    %button.btn.btn-default{type: 'submit', value: user.id,
+                    %button.btn.btn-default{type: 'submit', value: user_id,
                     id: 'per_user_writer',
                     name: '[per_user][writer]'}
                       Set as Writer
@@ -155,7 +157,7 @@
                   - if user_owner
                     %strong Owner
                   - else
-                    %button.btn.btn-default{type: 'submit', value: user.id,
+                    %button.btn.btn-default{type: 'submit', value: user_id,
                     id: 'per_user_owner',
                     name: '[per_user][owner]'}
                       Set as Owner
