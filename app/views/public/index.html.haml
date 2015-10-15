@@ -17,6 +17,10 @@
   - msg_text += ' with an existing account or '
   - msg_text += link_to t('devise.shared.links.sign_up'), new_user_registration_path, class: 'alert-link'
   - msg_text += ' for a new account.'
+  - any_anon_access = Permission.where(allow_anonymous: true).any?
+  - msg_text += ' You may have access to demonstration ' if any_anon_access
+  - msg_text += link_to t('baw.shared.links.projects.title'), projects_path, class: 'alert-link' if any_anon_access
+  - msg_text += ' without logging in.' if any_anon_access
   = render partial: 'shared/alert', locals: { msg_type: :notice, msg_text: msg_text.html_safe }
 
 - elsif can? :index, Project

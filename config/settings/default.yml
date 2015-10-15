@@ -143,7 +143,7 @@ defaults: &defaults
     site_long_name: Audio Workbench
     organisation_name: Audio Group
     github_issues_url: 'url to github issues page'
-    parent_site_name: Parent Site
+    parent_site_name: Site Name
     parent_site_link: 'http://example.com'
     custom_menu:
       header_title: Custom Menu

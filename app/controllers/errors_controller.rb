@@ -1,6 +1,6 @@
 class ErrorsController < ApplicationController
 
-  skip_authorization_check only: [:route_error, :uncaught_error, :test_exceptions, :show]
+  authorize_resource class: false
 
   # see application_controller.rb for error handling for specific exceptions.
   # see routes.rb for the catch-all route for routing errors.

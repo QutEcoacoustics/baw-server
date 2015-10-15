@@ -7,12 +7,12 @@ class ProjectsController < ApplicationController
 
     respond_to do |format|
       format.html {
-        @projects = Access::Query.projects_accessible(current_user).includes(:creator).references(:creator)
+        @projects = Access::Model.projects(current_user).includes(:creator).references(:creator)
       }
       format.json {
         @projects, opts = Settings.api_response.response_advanced(
             api_filter_params,
-            Access::Query.projects_accessible(current_user),
+            Access::Model.projects(current_user),
             Project,
             Project.filter_settings
         )
@@ -122,51 +122,43 @@ ORDER BY project_count ASC, s.name ASC")
 
   end
 
-  # POST /projects/:id/update_permissions
+  # PUT|PATCH /projects/:id/update_permissions
   def update_permissions
     do_load_resource
     do_authorize_instance
 
-    # 'user_ids'=>{'1'=>{'permissions'=>{'level'=>'read'}},'3'=>{'permissions'=>{'level'=>'write'}}}    params[:project][:users].each do |users_params|
-    no_error = true
+    request_params = update_permissions_params
 
-    # loop through all users to see if their permission has been updated or revoked
-    User.all.each do |user|
-      # if the user's permission has been set, create permission
-      if update_params.has_key?(user.id.to_s)
-        @permission = Permission.where(project_id: @project.id, user_id: user.id).first
-        if @permission.blank?
-          @permission = Permission.new
-          @permission.project = @project
-          @permission.user = user
-          @permission.creator = current_user
-        else
-          @permission.updater = current_user
-        end
-        if update_params[user.id.to_s][:permissions][:level].blank?
-          @permission.destroy
-        else
-          @permission.level = update_params[user.id.to_s][:permissions][:level]
-
-          unless @permission.save
-            no_error = false
-          end
-        end
-      else # if the user's permission has NOT been set, destroy permission
-        @permission = Permission.where(project_id: @project.id, user_id: user.id).first
-        @permission.destroy unless @permission.blank?
-      end
+    if request_params.include?(:project_wide) && request_params[:project_wide].include?(:logged_in)
+      permission = Permission.where(project: @project, user: nil, allow_logged_in: true, allow_anonymous: false).first
+      permission = Permission.new(project: @project, user: nil, allow_logged_in: true, allow_anonymous: false) if permission.blank?
+      level = request_params[:project_wide][:logged_in].to_s
+    elsif request_params.include?(:project_wide) && request_params[:project_wide].include?(:anonymous)
+      permission = Permission.where(project: @project, user: nil, allow_logged_in: false, allow_anonymous: true).first
+      permission = Permission.new(project: @project, user: nil, allow_logged_in: false, allow_anonymous: true) if permission.blank?
+      level = request_params[:project_wide][:anonymous].to_s
+    elsif request_params.include?(:per_user)
+      user_id = request_params[:per_user].values.first.to_i
+      permission = Permission.where(project: @project, user_id: user_id, allow_logged_in: false, allow_anonymous: false).first
+      permission = Permission.new(project: @project, user_id: user_id, allow_logged_in: false, allow_anonymous: false) if permission.blank?
+      level = request_params[:per_user].keys.first.to_s
+    else
+      permission = nil
+      level = nil
     end
+
+    result = process_permission_update(permission, level)
 
     respond_to do |format|
-      if no_error
+      if result
         format.html { redirect_to project_permissions_path(@project), notice: 'Permissions were successfully updated.' }
-        #format.json { render json: @permission, status: :created, location: @permission }
+        #format.json { render json: permission_to_modify, status: :created, location: permission_to_modify }
       else
         format.html { redirect_to project_permissions_path(@project), alert: 'Permissions were not updated.' }
-        #format.json { render json: @permission.errors, status: :unprocessable_entity }
+        #format.json { render json: permission_to_modify.errors, status: :unprocessable_entity }
       end
     end
+
   end
 
   # DELETE /projects/:id
@@ -187,7 +179,7 @@ ORDER BY project_count ASC, s.name ASC")
   def new_access_request
     do_authorize_class
 
-    @all_projects = Access::Query.projects_inaccessible(current_user).order(name: :asc)
+    @all_projects = Access::Model.projects(current_user, nil).order(name: :asc)
     respond_to do |format|
       format.html
     end
@@ -222,7 +214,7 @@ ORDER BY project_count ASC, s.name ASC")
 
     filter_response, opts = Settings.api_response.response_advanced(
         api_filter_params,
-        Access::Query.projects_accessible(current_user),
+        Access::Model.projects(current_user),
         Project,
         Project.filter_settings
     )
@@ -239,12 +231,21 @@ ORDER BY project_count ASC, s.name ASC")
     params.require(:access_request).permit({projects: []}, :reason)
   end
 
-  def update_params
-    params.require(:user_ids).permit!
+  def update_permissions_params
+    params.permit(project_wide: [:logged_in, :anonymous], per_user: [:none, :reader, :writer, :owner])
   end
 
   def edit_sites_params
     params.require(:project).permit!
+  end
+
+  def process_permission_update(permission, new_level)
+    if new_level.to_s.downcase == 'none'
+      permission.destroy
+    else
+      permission.level = new_level
+      permission.save
+    end
   end
 
 end

@@ -1,16 +1,13 @@
 class AudioRecordingsController < ApplicationController
   include Api::ControllerHelper
 
-  # these two methods have custom authorization and include more info in errors
-  skip_authorization_check only: [:check_uploader]
-
   # GET /audio_recordings
   def index
     do_authorize_class
 
     @audio_recordings, opts = Settings.api_response.response_advanced(
         api_filter_params,
-        Access::Query.audio_recordings(current_user),
+        Access::Model.audio_recordings(current_user),
         AudioRecording,
         AudioRecording.filter_settings
     )
@@ -47,20 +44,18 @@ class AudioRecordingsController < ApplicationController
 
     do_authorize_instance
 
-    uploader_id = audio_recording_params[:uploader_id].to_i
-    user_exists = User.exists?(uploader_id)
-    user = User.where(id: uploader_id).first
-    actual_level = Access::Level.project(user, @project)
-    requested_level = :writer
-    is_allowed = Access::Check.allowed?(requested_level, actual_level)
+    # current user is harvester
+    # check that uploader is able to add audio recordings to site (update)
+    uploader_user = User.find(audio_recording_params[:uploader_id])
+    ability = Ability.new(uploader_user)
 
-    if !user_exists || !is_allowed
+    if ability.can?(:update, @site)
       respond_error(
           :unprocessable_entity,
           'uploader does not exist or does not have access to this project',
           {error_info: {
               project_id: @project.nil? ? nil : @project.id,
-              user_id: user.nil? ? nil : user.id
+              user_id: uploader_user.nil? ? nil : uploader_user.id
           }}
       )
     else
@@ -133,45 +128,28 @@ class AudioRecordingsController < ApplicationController
   # this is used by the harvester, do not change!
   # GET /projects/:project_id/sites/:site_id/audio_recordings/check_uploader/:uploader_id
   def check_uploader
-    #do_authorize_class - custom auth
+    do_authorize_class
     get_project_site
 
-    # current user should be the harvester
-    # uploader_id must have write access to the project
+    # current user is harvester
+    # check that uploader is able to add audio recordings to site (update)
 
-    if current_user.blank?
-      fail CanCan::AccessDenied.new(I18n.t('devise.failure.unauthenticated'), :check_uploader, AudioRecording)
-    elsif Access::Check.is_harvester?(current_user)
-      # auth check is skipped, so auth is checked manually here
-      uploader_id = params[:uploader_id].to_i
-      user_exists = User.exists?(uploader_id)
-      user = User.where(id: uploader_id).first
+    uploader_user = User.find(params[:uploader_id])
+    ability = Ability.new(uploader_user)
 
-      actual_level = Access::Level.project(user, @project)
-      requested_level = :writer
-      is_allowed = Access::Check.allowed?(requested_level, actual_level)
-
-      if !user_exists || !is_allowed
-        respond_error(
-            :forbidden,
-            'uploader does not exist or does not have access to this project',
-            {error_info: {
-                project_id: @project.nil? ? nil : @project.id,
-                user_id: user.nil? ? nil : user.id
-            }}
-        )
-      else
-        head :no_content
-      end
+    if ability.can?(:update, @site)
+      head :no_content
     else
       respond_error(
           :forbidden,
-          'only harvester can check uploader permissions',
+          'uploader does not exist or does not have access to this project',
           {error_info: {
-              project_id: @project.nil? ? nil : @project.id
+              project_id: @project.nil? ? nil : @project.id,
+              user_id: uploader_user.nil? ? nil : uploader_user.id
           }}
       )
     end
+
   end
 
   # this is used by the harvester, do not change!
@@ -190,7 +168,7 @@ class AudioRecordingsController < ApplicationController
 
     filter_response, opts = Settings.api_response.response_advanced(
         api_filter_params,
-        Access::Query.audio_recordings(current_user),
+        Access::Model.audio_recordings(current_user),
         AudioRecording,
         AudioRecording.filter_settings
     )

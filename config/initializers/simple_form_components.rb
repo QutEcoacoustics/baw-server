@@ -51,7 +51,7 @@ module SimpleForm
             options = args.extract_options!
 
             # class
-            options[:class] = [options[:class]].compact
+            options[:class] = [options[:class]].reject { |i| i.blank? }
 
             #
             args << options

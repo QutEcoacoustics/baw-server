@@ -8,11 +8,13 @@ class PermissionsController < ApplicationController
     do_authorize_instance(:update_permissions, @project)
 
     respond_to do |format|
-      format.html
+      format.html {
+        @permissions = Permission.project_list(@project.id)
+      }
       format.json {
         @permissions, opts = Settings.api_response.response_advanced(
             api_filter_params,
-            Access::Query.project_permissions(@project),
+            Access::Model.permissions(@project),
             Permission,
             Permission.filter_settings)
         respond_index(opts)
@@ -51,12 +53,12 @@ class PermissionsController < ApplicationController
     do_authorize_instance
 
     respond_to do |format|
-    if @permission.save
-      format.json { respond_create_success(project_permission_path(@project, @permission)) }
-    else
-      format.json { respond_change_fail }
-    end
+      if @permission.save
+        format.json { respond_create_success(project_permission_path(@project, @permission)) }
+      else
+        format.json { respond_change_fail }
       end
+    end
 
   end
 

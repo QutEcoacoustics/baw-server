@@ -11,13 +11,12 @@
 %p= @script.description
 
 %h3 Executable
-%p
-  %em Command:
-  = @script.executable_command
-%p
-  %em Settings:
-  %pre
-    = @script.executable_settings
+
+%h4 Command
+%pre= @script.executable_command
+
+%h4 Settings
+%pre= @script.executable_settings
 
 %h3 All versions of this script
 = render partial: 'admin/scripts/scripts_table', locals: {scripts: @all_script_versions}

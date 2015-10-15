@@ -9,7 +9,7 @@ class AudioEventCommentsController < ApplicationController
 
     @audio_event_comments, opts = Settings.api_response.response_advanced(
         api_filter_params,
-        Access::Query.audio_event_comments(@audio_event, current_user),
+        Access::Model.audio_event_comments(current_user, Access::Core.levels_allow, @audio_event),
         AudioEventComment,
         AudioEventComment.filter_settings
     )
@@ -93,7 +93,7 @@ class AudioEventCommentsController < ApplicationController
 
     filter_response, opts = Settings.api_response.response_advanced(
         api_filter_params,
-        Access::Query.comments(current_user),
+        Access::Model.audio_event_comments(current_user),
         AudioEventComment,
         AudioEventComment.filter_settings
     )

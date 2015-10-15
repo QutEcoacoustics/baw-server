@@ -79,7 +79,7 @@ class SavedSearch < ActiveRecord::Base
 
     filter_query = Filter::Query.new(
         {filter: stored_query},
-        Access::Query.audio_recordings(user, Access::Core.levels_allow),
+        Access::Model.audio_recordings(user),
         AudioRecording,
         AudioRecording.filter_settings)
 

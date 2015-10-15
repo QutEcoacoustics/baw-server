@@ -26,28 +26,9 @@ resource 'Bookmarks' do
   # default format
   let(:format) { 'json' }
 
-  before(:each) do
-    @admin_user = FactoryGirl.create(:admin)
-    @writer_user = FactoryGirl.create(:user)
-    @reader_user = FactoryGirl.create(:user)
-    @other_user = FactoryGirl.create(:user)
-    @unconfirmed_user = FactoryGirl.create(:unconfirmed_user)
+  create_entire_hierarchy
 
-    @write_permission = FactoryGirl.create(:write_permission, creator: @writer_user, user: @writer_user)
-    @read_permission = FactoryGirl.create(:read_permission, creator: @reader_user, user: @reader_user, project: @write_permission.project)
-
-    @bookmark = @write_permission.project.sites.first.audio_recordings.first.bookmarks.first
-  end
-
-  # prepare authentication_token for different users
-  let(:admin_token) { "Token token=\"#{@admin_user.authentication_token}\"" }
-  let(:writer_token) { "Token token=\"#{@writer_user.authentication_token}\"" }
-  let(:reader_token) { "Token token=\"#{@reader_user.authentication_token}\"" }
-  let(:other_user_token) { "Token token=\"#{@other_user.authentication_token}\"" }
-  let(:unconfirmed_token) { "Token token=\"#{@unconfirmed_user.authentication_token}\"" }
-  let(:invalid_token) { "Token token=\"weeeeeeeee0123456789splat\"" }
-
-  let(:body_attributes) { FactoryGirl.attributes_for(:bookmark, audio_recording_id: @bookmark.audio_recording_id).to_json }
+  let(:body_attributes) { FactoryGirl.attributes_for(:bookmark, audio_recording_id: bookmark.audio_recording_id).to_json }
 
   # List (#index)
   # ============
@@ -71,7 +52,7 @@ resource 'Bookmarks' do
   end
 
   get '/bookmarks' do
-    let(:authentication_token) { other_user_token }
+    let(:authentication_token) { other_token }
     standard_request_options(:get, 'LIST (as other user)', :ok, {response_body_content: '200', data_item_count: 0})
   end
 
@@ -92,8 +73,8 @@ resource 'Bookmarks' do
     let(:authentication_token) { reader_token }
 
     let!(:extra_bookmark) {
-      FactoryGirl.create(:bookmark, name: 'the_expected_name', creator: @reader_user)
-      FactoryGirl.create(:bookmark, name: 'the_unexpected_name', creator: @reader_user)
+      FactoryGirl.create(:bookmark, name: 'the_expected_name', creator: reader_user)
+      FactoryGirl.create(:bookmark, name: 'the_unexpected_name', creator: reader_user)
     }
 
     standard_request_options(:get, 'LIST matching name (as reader)', :ok, {
@@ -108,8 +89,8 @@ resource 'Bookmarks' do
     let(:authentication_token) { writer_token }
 
     let!(:extra_bookmark) {
-      FactoryGirl.create(:bookmark, name: 'the_expected_name', creator: @writer_user)
-      FactoryGirl.create(:bookmark, name: 'the_unexpected_name', creator: @writer_user)
+      FactoryGirl.create(:bookmark, name: 'the_expected_name', creator: writer_user)
+      FactoryGirl.create(:bookmark, name: 'the_unexpected_name', creator: writer_user)
     }
 
     standard_request_options(:get, 'LIST matching name (as writer)', :ok, {
@@ -124,8 +105,8 @@ resource 'Bookmarks' do
     let(:authentication_token) { unconfirmed_token }
 
     let!(:extra_bookmark) {
-      FactoryGirl.create(:bookmark, name: 'the_expected_name', creator: @unconfirmed_user)
-      FactoryGirl.create(:bookmark, name: 'the_unexpected_name', creator: @unconfirmed_user)
+      FactoryGirl.create(:bookmark, name: 'the_expected_name', creator: unconfirmed_user)
+      FactoryGirl.create(:bookmark, name: 'the_unexpected_name', creator: unconfirmed_user)
     }
 
     standard_request_options(:get, 'LIST matching name (as unconfirmed user)', :forbidden, {expected_json_path: get_json_error_path(:confirm)})
@@ -135,8 +116,8 @@ resource 'Bookmarks' do
     let(:authentication_token) { invalid_token }
 
     let!(:extra_bookmark) {
-      FactoryGirl.create(:bookmark, name: 'the_expected_name', creator: @writer_user)
-      FactoryGirl.create(:bookmark, name: 'the_unexpected_name', creator: @writer_user)
+      FactoryGirl.create(:bookmark, name: 'the_expected_name', creator: writer_user)
+      FactoryGirl.create(:bookmark, name: 'the_unexpected_name', creator: writer_user)
     }
 
     standard_request_options(:get, 'LIST matching name (with invalid token)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
@@ -149,8 +130,8 @@ resource 'Bookmarks' do
     let(:authentication_token) { reader_token }
 
     let!(:extra_bookmark) {
-      FactoryGirl.create(:bookmark, category: 'the_expected_category', creator: @reader_user)
-      FactoryGirl.create(:bookmark, category: 'the_unexpected_category', creator: @reader_user)
+      FactoryGirl.create(:bookmark, category: 'the_expected_category', creator: reader_user)
+      FactoryGirl.create(:bookmark, category: 'the_unexpected_category', creator: reader_user)
     }
 
     standard_request_options(:get, 'LIST matching category (as reader)', :ok, {
@@ -165,8 +146,8 @@ resource 'Bookmarks' do
     let(:authentication_token) { writer_token }
 
     let!(:extra_bookmark) {
-      FactoryGirl.create(:bookmark, category: 'the_expected_category', creator: @writer_user)
-      FactoryGirl.create(:bookmark, category: 'the_unexpected_category', creator: @writer_user)
+      FactoryGirl.create(:bookmark, category: 'the_expected_category', creator: writer_user)
+      FactoryGirl.create(:bookmark, category: 'the_unexpected_category', creator: writer_user)
     }
 
     standard_request_options(:get, 'LIST matching category (as writer)', :ok, {
@@ -181,8 +162,8 @@ resource 'Bookmarks' do
     let(:authentication_token) { unconfirmed_token }
 
     let!(:extra_bookmark) {
-      FactoryGirl.create(:bookmark, category: 'the_expected_category', creator: @unconfirmed_user)
-      FactoryGirl.create(:bookmark, category: 'the_unexpected_category', creator: @unconfirmed_user)
+      FactoryGirl.create(:bookmark, category: 'the_expected_category', creator: unconfirmed_user)
+      FactoryGirl.create(:bookmark, category: 'the_unexpected_category', creator: unconfirmed_user)
     }
 
     standard_request_options(:get, 'LIST matching category (as unconfirmed user)', :forbidden, {expected_json_path: get_json_error_path(:confirm)})
@@ -192,8 +173,8 @@ resource 'Bookmarks' do
     let(:authentication_token) { invalid_token }
 
     let!(:extra_bookmark) {
-      FactoryGirl.create(:bookmark, category: 'the_expected_category', creator: @writer_user)
-      FactoryGirl.create(:bookmark, category: 'the_unexpected_category', creator: @writer_user)
+      FactoryGirl.create(:bookmark, category: 'the_expected_category', creator: writer_user)
+      FactoryGirl.create(:bookmark, category: 'the_unexpected_category', creator: writer_user)
     }
 
     standard_request_options(:get, 'LIST matching category (with invalid token)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
@@ -226,7 +207,7 @@ resource 'Bookmarks' do
   post '/bookmarks' do
     bookmarks_body_params
     let(:raw_post) { body_attributes }
-    let(:authentication_token) { other_user_token }
+    let(:authentication_token) { other_token }
     standard_request_options(:post, 'CREATE (as other user)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
   end
 
@@ -263,7 +244,7 @@ resource 'Bookmarks' do
   end
 
   get '/bookmarks/new' do
-    let(:authentication_token) { other_user_token }
+    let(:authentication_token) { other_token }
     standard_request_options(:get, 'NEW (as reader)', :ok, {expected_json_path: 'data/offset_seconds'})
   end
 
@@ -284,7 +265,7 @@ resource 'Bookmarks' do
     parameter :id, 'Requested bookmark ID (in path/route)', required: true
 
     let(:authentication_token) { reader_token }
-    let(:id) { @bookmark.id }
+    let(:id) { bookmark.id }
     standard_request_options(:get, 'SHOW (as reader)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
   end
 
@@ -292,7 +273,7 @@ resource 'Bookmarks' do
     parameter :id, 'Requested bookmark ID (in path/route)', required: true
 
     let(:authentication_token) { writer_token }
-    let(:id) { @bookmark.id }
+    let(:id) { bookmark.id }
     standard_request_options(:get, 'SHOW (as writer)', :ok, {
                                      expected_json_path: 'data/offset_seconds',
                                      response_body_content: '"offset_seconds":4.0'
@@ -306,7 +287,7 @@ resource 'Bookmarks' do
     parameter :id, 'Requested bookmark ID (in path/route)', required: true
 
     let(:authentication_token) { reader_token }
-    let(:id) { @bookmark.id }
+    let(:id) { bookmark.id }
     let(:raw_post) { body_attributes }
     standard_request_options(:put, 'UPDATE (as reader)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
   end
@@ -315,7 +296,7 @@ resource 'Bookmarks' do
     parameter :id, 'Requested bookmark ID (in path/route)', required: true
 
     let(:authentication_token) { writer_token }
-    let(:id) { @bookmark.id }
+    let(:id) { bookmark.id }
     let(:raw_post) { body_attributes }
     standard_request_options(:put, 'UPDATE (as writer)', :ok, {expected_json_path: 'data/category'})
   end
@@ -327,7 +308,7 @@ resource 'Bookmarks' do
     parameter :id, 'Requested bookmark ID (in path/route)', required: true
 
     let(:authentication_token) { reader_token }
-    let(:id) { @bookmark.id }
+    let(:id) { bookmark.id }
     standard_request_options(:delete, 'DESTROY (as reader)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
   end
 
@@ -335,7 +316,7 @@ resource 'Bookmarks' do
     parameter :id, 'Requested bookmark ID (in path/route)', required: true
 
     let(:authentication_token) { writer_token }
-    let(:id) { @bookmark.id }
+    let(:id) { bookmark.id }
     standard_request_options(:delete, 'DESTROY (as writer)', :no_content, {expected_response_has_content:false, expected_response_content_type: nil})
   end
 

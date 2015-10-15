@@ -13,30 +13,20 @@ resource 'Taggings' do
   # default format
   let(:format) { 'json' }
 
-  before(:each) do
-    # this creates a @write_permission.user with write access to @write_permission.project,
-    # a @read_permission.user with read access, as well as
-    # a site, audio_recording and audio_event having off the project (see permission_factory.rb)
-    @write_permission = FactoryGirl.create(:write_permission) # has to be 'write' so that the uploader has access
-    @read_permission = FactoryGirl.create(:read_permission, project: @write_permission.project)
-    @existing_tag = FactoryGirl.create(:tag, text: 'existing')
-  end
+  create_entire_hierarchy
+
+  let!(:existing_tag) { FactoryGirl.create(:tag, text: 'existing')}
 
   # prepare ids needed for paths in requests below
-  let(:project_id) { @write_permission.project.id }
-  let(:site_id) { @write_permission.project.sites[0].id }
-  let(:audio_recording_id) { @write_permission.project.sites[0].audio_recordings[0].id }
-  let(:audio_event_id) { @write_permission.project.sites[0].audio_recordings[0].audio_events[0].id }
-  let(:id) { @write_permission.project.sites[0].audio_recordings[0].audio_events[0].taggings[0].id }
-  let(:user_id) { @write_permission.project.sites[0].audio_recordings[0].audio_events[0].taggings[0].creator_id }
-
-  # prepare authentication_token for different users
-  let(:writer_token) { "Token token=\"#{@write_permission.user.authentication_token}\"" }
-  let(:reader_token) { "Token token=\"#{@read_permission.user.authentication_token}\"" }
-  let(:unconfirmed_token) { "Token token=\"#{FactoryGirl.create(:unconfirmed_user).authentication_token}\"" }
-
+  let(:project_id) { project.id }
+  let(:site_id) { site.id }
+  let(:audio_recording_id) { audio_recording.id }
+  let(:audio_event_id) { audio_event.id }
+  let(:id) { tagging.id }
+  let(:user_id) { tagging.creator_id }
+  
   # Create post parameters from factory
-  let(:post_attributes) { {tag_id: @existing_tag.id} }
+  let(:post_attributes) { {tag_id: existing_tag.id} }
   let(:post_nested_attributes) { {'tag_attributes' => FactoryGirl.attributes_for(:tag)} }
   let(:post_invalid_nested_attributes) { {'tag_attributes' => FactoryGirl.attributes_for(:tag, type_of_tag: 'invalid value')} }
 
@@ -164,7 +154,7 @@ resource 'Taggings' do
     parameter :audio_recording_id, 'Requested audio recording ID (in path/route)', required: true
     parameter :audio_event_id, 'Requested audio event ID (in path/route)', required: true
 
-    let(:raw_post) { {:tagging => {:tag_attributes => {:is_taxanomic => false, :text => @existing_tag.text, :type_of_tag => 'looks like', :retired => false}}}.to_json }
+    let(:raw_post) { {:tagging => {:tag_attributes => {:is_taxanomic => false, :text => existing_tag.text, :type_of_tag => 'looks like', :retired => false}}}.to_json }
 
     let(:authentication_token) { writer_token }
 

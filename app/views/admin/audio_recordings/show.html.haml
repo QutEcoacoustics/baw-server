@@ -26,7 +26,10 @@
           .col-sm-8
             %p.form-control-static{id: param_ed}
               - unless value.blank?
-                - if value.is_a?(Time)
+                - if sym_ed == :id
+                  %span.fa.fa-play
+                  = link_to value, make_listen_path(value)
+                - elsif value.is_a?(Time)
                   = value.iso8601
                   %small
                     ="(#{time_ago_in_words(value)} ago)"

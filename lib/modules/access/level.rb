@@ -1,162 +1,85 @@
 module Access
+  # Query by user and project to get levels.
   class Level
     class << self
-      # Get access level for this user for this project (checks Permission and Project creator).
-      # @param [User] user
-      # @param [Project] project
-      # @return [Symbol] level
-      def project(user, project)
-        projects(user, [project])
-      end
 
-      def projects(user, projects)
-        projects = Access::Core.validate_projects(projects)
+      # Get access levels for this user for these projects.
+      # @param [User] user
+      # @param [Project, Array<Project>] projects
+      # @return [Array<Symbol>] levels
+      def all(user, projects)
+        projects = Access::Core.validate_projects([projects])
         user = Access::Core.validate_user(user)
 
         # check based on role
         if Access::Check.is_admin?(user)
           :owner
         elsif Access::Check.is_standard_user?(user)
-          creator_lvl = project_creators(user, projects)
-          permission_user_lvl = permissions_user(user, projects)
-          #permission_logged_in_lvl = level_permissions_logged_in(projects)
+          permission_user_lvl = user(user, projects)
+          permission_logged_in_lvl = logged_in(projects)
+          permission_anon_lvl = anonymous(projects)
 
-          #levels = [permission_user_lvl, permission_logged_in_lvl].flatten.compact
-          levels = [permission_user_lvl, creator_lvl].flatten.compact
+          levels = [permission_user_lvl, permission_logged_in_lvl, permission_anon_lvl].flatten.reject { |i| i.blank? }.uniq
 
-          levels.blank? ? :none : Access::Core.highest(levels)
+          levels.blank? ? nil : levels
         elsif Access::Check.is_guest?(user)
-          #permission_anon_lvl = level_permissions_anon(projects)
-          #permission_anon_lvl.blank? ? :none : Access::Core.highest([permission_anon_lvl].flatten)
-          # remove :none once additional permissions are added
-          :none
+          permission_anon_lvl = anonymous(projects)
+          levels = [permission_anon_lvl].flatten.reject { |i| i.blank? }.uniq
+          levels.blank? ? nil : levels
         else
-          # guest, harvester, or invalid role
-          :none
-        end
-      end
-
-      # Get access level for this user for this project (only checks Permission).
-      # @param [User] user
-      # @param [Project] project
-      # @return [Symbol, nil] level
-      def permission_user(user, project)
-        project = Access::Core.validate_project(project)
-        user = Access::Core.validate_user(user)
-
-        #.where(project: project, user: user, logged_in: false, anonymous: false)
-        levels = Permission
-                     .where(project: project, user: user)
-                     .pluck(:level)
-
-        if levels.size > 1
-          fail ActiveRecord::RecordNotUnique, "Found more than one permission matching project id #{project.id}, user id #{user.id}."
-        elsif levels.size < 1
+          # harvester or invalid role
           nil
-        else
-          levels.first.to_sym
         end
       end
 
-      # Get access level for this user for these projects (only checks Permission).
+      # Get access levels for this user for this project.
       # @param [User] user
-      # @param [Array<Project>] projects
+      # @param [Project, Array<Project>] projects
       # @return [Symbol, nil] level
-      def permissions_user(user, projects)
-        projects = Access::Core.validate_projects(projects)
+      def user(user, projects)
         user = Access::Core.validate_user(user)
+        levels = permission([projects], user, false, false)
+        if !levels.blank? && levels.size != 1
+          fail ArgumentError, "Expected zero or one permissions for #{user.user_name} for #{project.name}, got #{levels.size}"
+        end
+        levels.blank? ? nil : levels.first
+      end
 
-        # .where(project: projects, user: user, logged_in: false, anonymous: false)
+      # Get access levels for anonymous users for this project.
+      # @param [Project, Array<Project>] projects
+      # @return [Symbol, nil] level
+      def anonymous(projects)
+        levels = permission([projects], nil, false, true)
+        if !levels.blank? && levels.size != 1
+          fail ArgumentError, "Expected zero or one anonymous permissions for #{project.name}, got #{levels.size}"
+        end
+        levels.blank? ? nil : levels.first
+      end
+
+      # Get access levels for logged in users for this project.
+      # @param [Project, Array<Project>] projects
+      # @return [Symbol, nil] level
+      def logged_in(projects)
+        levels =  permission([projects], nil, true, false)
+        if !levels.blank? && levels.size != 1
+          fail ArgumentError, "Expected zero or one logged in permissions for #{project.name}, got #{levels.size}"
+        end
+        levels.blank? ? nil : levels.first
+      end
+
+      private
+
+      def permission(projects, user = nil, allow_logged_in = false, allow_anonymous = false)
+        projects = Access::Core.validate_projects(projects)
         levels = Permission
                      .where(project: projects, user: user)
-                     .pluck(:level).map{ |l| l.to_sym }
-
-        if levels.size < 1
-          nil
-        else
-          Access::Core.highest(levels)
-        end
-      end
-
-      def permission_anon(project)
-        project = Access::Core.validate_project(project)
-
-        levels = Permission
-                     .where(project: project, user: nil, logged_in: false, anonymous: true)
+                     .where(allow_logged_in: allow_logged_in, allow_anonymous: allow_anonymous)
                      .pluck(:level)
-
-        if levels.size > 1
-          fail ActiveRecord::RecordNotUnique, "Found more than one permission matching anonymous permission for project id #{project.id}."
-        elsif levels.size < 1
-          nil
-        else
-          levels[0].to_sym
-        end
+        validated_levels = Access::Core.validate_levels(levels)
+        is_none = Access::Core.is_no_level?(validated_levels)
+        is_none ? nil : validated_levels
       end
 
-      def permissions_anon(projects)
-        projects = Access::Core.validate_projects(projects)
-
-        levels = Permission
-                     .where(project: projects, user: nil, logged_in: false, anonymous: true)
-                     .pluck(:level).map{ |l| l.to_sym }
-
-        if levels.size < 1
-          nil
-        else
-          Access::Core.highest(levels)
-        end
-      end
-
-      def permission_logged_in(project)
-        project = Access::Core.validate_project(project)
-
-        levels = Permission
-                     .where(project: project, user: nil, logged_in: true, anonymous: false)
-                     .pluck(:level)
-
-        if levels.size > 1
-          fail ActiveRecord::RecordNotUnique, "Found more than one permission matching logged in permission for project id #{project.id}."
-        elsif levels.size < 1
-          nil
-        else
-          levels[0].to_sym
-        end
-      end
-
-      def permissions_logged_in(projects)
-        projects = Access::Core.validate_projects(projects)
-
-        levels = Permission
-                     .where(project: projects, user: nil, logged_in: true, anonymous: false)
-                     .pluck(:level).map{ |l| l.to_sym }
-
-        if levels.size < 1
-          nil
-        else
-          Access::Core.highest(levels)
-        end
-      end
-
-      # Get access level for this user for this project (only checks Project creator).
-      # @param [User] user
-      # @param [Project] project
-      # @return [Symbol, nil] level
-      def project_creator(user, project)
-        project_creators(user, [project])
-      end
-
-      # Get access level for this user for these project (only checks Project creator).
-      # @param [User] user
-      # @param [Array<Project>] projects
-      # @return [Symbol, nil] level
-      def project_creators(user, projects)
-        projects = Access::Core.validate_projects(projects)
-        user = Access::Core.validate_user(user)
-
-        is_creator = projects.any? { |p| p.creator == user }
-        is_creator ? :owner : nil
-      end
     end
   end
 end

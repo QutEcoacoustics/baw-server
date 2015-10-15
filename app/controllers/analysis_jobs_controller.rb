@@ -110,7 +110,7 @@ class AnalysisJobsController < ApplicationController
   end
 
   def get_analysis_jobs
-    Access::Query.analysis_jobs(current_user, Access::Core.levels_allow)
+    Access::Model.analysis_jobs(current_user)
   end
 
 end
