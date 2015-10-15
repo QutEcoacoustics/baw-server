@@ -283,10 +283,12 @@ class Ability
 
   def to_tag(user, is_guest)
     # cannot be updated
-    # tag management controller is admin only (checked in before_action)
+
+    # actions any logged in user can access
+    can [:new, :create], Tag unless is_guest
 
     # available to any user, including guest
-    can [:index, :new, :create, :show, :filter], Tag
+    can [:index, :show, :filter], Tag
   end
 
   def to_tagging(user, is_guest)
@@ -303,10 +305,10 @@ class Ability
     end
 
     # actions any logged in user can access
-    can [:new], Tagging unless is_guest
+    can [:new, :user_index], Tagging unless is_guest
 
     # available to any user, including guest
-    can [:index, :user_index, :filter], Tagging
+    can [:index, :filter], Tagging
   end
 
   def to_user(user, is_guest)

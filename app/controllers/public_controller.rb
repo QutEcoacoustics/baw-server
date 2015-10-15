@@ -203,8 +203,8 @@ class PublicController < ApplicationController
       # check permissions
       site_id = params[:annotation_download][:site_id].to_i
       site = Site.where(id: site_id).first
-      access = can?(:show, site)
-      msg = 'You must have access to the site to download annotations.'
+      access = can?(:show, site) && !Access::Check.is_guest?(current_user)
+      msg = 'You must have access to the site and be logged in to download annotations.'
       fail CanCan::AccessDenied.new(msg, :show, site) unless access
 
       @annotation_download = {

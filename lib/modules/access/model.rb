@@ -28,9 +28,8 @@ module Access
 
         pt = Project.arel_table
         pm = Permission.arel_table
-        user_id = user.id
         exists, levels = permission_levels(levels)
-        project_permissions = permission_arel(pm, pt, user, user_id, levels, exists)
+        project_permissions = permission_arel(pm, pt, user, levels, exists)
 
         # SELECT projects.* FROM projects WHERE <permission_arel>
         Project.where(project_permissions).order('projects.name ASC')
@@ -404,12 +403,11 @@ WHERE
 
         pt = Project.arel_table
         pm = Permission.arel_table
-        user_id = user.id
         exists, levels = permission_levels(levels)
-        permission_arel(pm, pt, user, user_id, levels, exists)
+        permission_arel(pm, pt, user, levels, exists)
       end
 
-      def permission_arel(pm, pt, user, user_id, levels, exists)
+      def permission_arel(pm, pt, user, levels, exists)
 =begin
 [NOT] EXISTS
         (SELECT 1
@@ -439,7 +437,7 @@ WHERE
         else
           project_permissions =
               project_permissions
-                  .where(pm[:user_id].eq(user_id).or(
+                  .where(pm[:user_id].eq(user.id).or(
                              pm[:allow_logged_in].eq(true).or(
                                  pm[:allow_anonymous].eq(true))))
         end
