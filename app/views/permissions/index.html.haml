@@ -71,7 +71,8 @@
                 Anonymous
               %td
                 - if anon_is_none
-                  %strong No Access
+                  %strong{id: 'project_wide_anonymous_permissions_level_none'}
+                    No Access
                 - else
                   %button.btn.btn-default{type: 'submit', value: 'none',
                   id: 'project_wide_anonymous_permissions_level_none',
@@ -79,7 +80,8 @@
                     Set to No Access
               %td
                 - if anon_is_read
-                  %strong Reader
+                  %strong{id: 'project_wide_anonymous_permissions_level_reader'}
+                    Reader
                 - else
                   %button.btn.btn-default{type: 'submit', value: 'reader',
                   id: 'project_wide_anonymous_permissions_level_reader',
@@ -95,7 +97,8 @@
                 Authenticated
               %td
                 - if logged_in_is_none
-                  %strong No Access
+                  %strong{id: 'project_wide_logged_in_permissions_level_none'}
+                    No Access
                 - else
                   %button.btn.btn-default{type: 'submit', value: 'none',
                     id: 'project_wide_logged_in_permissions_level_none',
@@ -103,7 +106,8 @@
                     Set to No Access
               %td
                 - if logged_in_is_read
-                  %strong Reader
+                  %strong{id: 'project_wide_logged_in_permissions_level_reader'}
+                    Reader
                 - else
                   %button.btn.btn-default{type: 'submit', value: 'reader',
                     id: 'project_wide_logged_in_permissions_level_reader',
@@ -111,7 +115,8 @@
                     Set as Reader
               %td
                 - if logged_in_is_write
-                  %strong Writer
+                  %strong{id: 'project_wide_logged_in_permissions_level_writer'}
+                    Writer
                 - else
                   %button.btn.btn-default{type: 'submit', value: 'writer',
                     id: 'project_wide_logged_in_permissions_level_writer',
@@ -127,7 +132,7 @@
               - user_reader = user_level == 'reader'
               - user_writer = user_level == 'writer'
               - user_owner = user_level == 'owner'
-              %tr{user_id: user_id}
+              %tr{data: {user: {id: user_id}}}
                 %td= link_to user_name, user_account_path(user_id)
                 %td
                   - if user_no_access

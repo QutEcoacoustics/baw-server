@@ -14,7 +14,7 @@ class PermissionsController < ApplicationController
       format.json {
         @permissions, opts = Settings.api_response.response_advanced(
             api_filter_params,
-            Access::Model.permissions(current_user, Access::Core.levels_allow, @project),
+            Access::Model.permissions(@project),
             Permission,
             Permission.filter_settings)
         respond_index(opts)

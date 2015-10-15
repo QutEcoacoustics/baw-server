@@ -3,7 +3,10 @@ require 'rails_helper'
 describe ProjectsController, :type => :routing do
   describe :routing do
 
-    it { expect(post('/projects/1/update_permissions')).to route_to('projects#update_permissions', id: '1') }
+    it { expect(post('/projects/1/update_permissions')).not_to route_to('projects#update_permissions', id: '1') }
+    it { expect(put('/projects/1/update_permissions')).to route_to('projects#update_permissions', id: '1') }
+    it { expect(patch('/projects/1/update_permissions')).to route_to('projects#update_permissions', id: '1') }
+
     it { expect(get('/projects/new_access_request')).to route_to('projects#new_access_request') }
     it { expect(post('/projects/submit_access_request')).to route_to('projects#submit_access_request') }
 

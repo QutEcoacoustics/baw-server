@@ -35,14 +35,14 @@ module Access
         Project.where(project_permissions).order('projects.name ASC')
       end
 
-      # Get permissions for which this user has these access levels to this project.
-      # @param [User] user
-      # @param [Symbol, Array<Symbol>] levels
+      # Get permissions for this project.
       # @param [Project] project
       # @return [ActiveRecord::Relation] permissions
-      def permissions(user, levels, project)
-        # 1
-        # project cannot be nil
+      def permissions(project)
+        project = Access::Core.validate_project(project)
+        Permission
+            .where(project_id: project.id)
+            .order(updated_at: :desc)
       end
 
       # Get all sites for which this user has these access levels.

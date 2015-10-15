@@ -46,6 +46,10 @@ class Permission < ActiveRecord::Base
     query = 'SELECT users.id AS user_id, users.user_name,
 (SELECT permissions.level FROM permissions WHERE permissions.project_id = ? AND permissions.user_id = users.id) AS level
 FROM users
+WHERE
+  users.user_name <> \'Harvester\'
+  AND users.user_name <> \'Admin\'
+  AND users.roles_mask = 2
 ORDER BY lower(users.user_name) ASC'
 
     query = sanitize_sql_array([query, project_id])
