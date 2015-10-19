@@ -71,7 +71,7 @@ gem 'tzinfo-data', '~> 1.2015.1'
 # http://joanswork.com/devise-3-1-update/
 gem 'devise', '~> 3.5.1'
 gem 'devise-i18n'
-gem 'cancancan', '~> 1.12.0'
+gem 'cancancan', '~> 1.13.1'
 gem 'role_model', '~> 0.8.1'
 # Use ActiveModel has_secure_password
 gem 'bcrypt', '~> 3.1.9'
@@ -105,7 +105,7 @@ require 'rbconfig'
 # MONITORING
 # -------------------------------------
 gem 'exception_notification', '~> 4.1.0'
-gem 'newrelic_rpm', '~> 3.13.0'
+gem 'newrelic_rpm', '~> 3.14.0'
 
 # Documentation & UI
 # -------------------------------------
@@ -203,6 +203,6 @@ group :development, :test do
 end
 
 group :test do
-  gem 'webmock', '~> 1.21.0'
+  gem 'webmock', '~> 1.22.1'
   gem 'shoulda-matchers', '~> 2.8.0', require: false
 end
