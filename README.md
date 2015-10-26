@@ -1,17 +1,16 @@
 # Baw::Workers
 
-Bioacoustics Workbench workers.
+Bioacoustics Workbench workers. Provides workers and file storage. 
+
+Workers can process various long-running or intensive tasks. 
+File storage provides helper methods for calculating paths to original and cached files.
 
 [![Build Status](https://travis-ci.org/QutBioacoustics/baw-workers.png?branch=master)](https://travis-ci.org/QutBioacoustics/baw-workers)
 [![Dependency Status](https://gemnasium.com/QutBioacoustics/baw-workers.png)](https://gemnasium.com/QutBioacoustics/baw-workers)
 [![Code Climate](https://codeclimate.com/github/QutBioacoustics/baw-workers.png)](https://codeclimate.com/github/QutBioacoustics/baw-workers)
 [![Test Coverage](https://codeclimate.com/github/QutBioacoustics/baw-workers/badges/coverage.svg)](https://codeclimate.com/github/QutBioacoustics/baw-workers)
-[![Coverage Status](https://coveralls.io/repos/QutBioacoustics/baw-workers/badge.png)](https://coveralls.io/r/QutBioacoustics/baw-workers)
-[![Inline docs](http://inch-ci.org/github/QutBioacoustics/baw-workers.png?branch=master)](http://inch-ci.org/github/QutBioacoustics/baw-workers)
-
-[Rubydoc](http://rubydoc.info/github/QutBioacoustics/baw-workers/frames) is available.
-
-This project provides workers and file storage. Workers that can process various long-running or intensive tasks. File storage provides helper methods for calculating paths to original and cached files.
+[![Documentation Status](http://inch-ci.org/github/QutBioacoustics/baw-workers.png?branch=master)](http://inch-ci.org/github/QutBioacoustics/baw-workers)
+[![Documentation](https://img.shields.io/badge/docs-rdoc.info-blue.svg)](http://www.rubydoc.info/github/QutBioacoustics/baw-workers)
 
 ## Installation
 
@@ -37,7 +36,27 @@ You may need to install some additional tools for working with audio and images,
  - [shnTool](http://www.etree.org/shnutils/shntool/) is a tool for quickly segmenting large `.wav` files.
  - [mp3splt](http://mp3splt.sourceforge.net/mp3splt_page/home.php) is a tool for quickly segmenting large `.mp3` files.
  - [ffmpeg](http://www.ffmpeg.org/) is used for audio conversion and gathering audio file information.
+ - [wav2png](https://github.com/beschulz/wav2png) is used to generate waveform images.
  - [redis](http://redis.io/) is used by [Resque](https://github.com/resque/resque/tree/v1.25.2) to manage long-running tasks.
+
+Audio tools from apt: imagemagick, wavpack, sox, shntool, mp3splt. Ffmpeg is installed from a binary, and wav2png can be built from source.
+
+    sudo apt-get install make g++ libsndfile1-dev libpng++-dev libpng12-dev libboost-program-options-dev imagemagick wavpack libsox-fmt-all sox shntool mp3splt libav-tools
+
+Build and install wav2png:
+
+    cd ~/Downloads
+    git clone https://github.com/beschulz/wav2png.git
+    make -C ./wav2png/build all
+    sudo mv ./wav2png/bin/Linux/wav2png /usr/local/bin/
+
+Build and install latest ffmpeg:
+
+    cd ~/Downloads
+    wget http://ffmpeg.gusari.org/static/64bit/ffmpeg.static.64bit.latest.tar.gz
+    tar -xvzf ffmpeg.static.64bit.latest.tar.gz
+    sudo mv ./ffmpeg /usr/local/bin/
+    sudo mv ./ffprobe /usr/local/bin/
 
 ## File Storage
 
@@ -183,8 +202,9 @@ and processed later by a Resque dequeue worker.
 
 ## Contributing
 
-1. Fork it (https://github.com/QutBioacoustics/baw-workers)
+1. [Fork this repo](https://github.com/QutBioacoustics/baw-workers/fork)
 2. Create your feature branch (`git checkout -b my-new-feature`)
 3. Commit your changes (`git commit -am 'Add some feature'`)
 4. Push to the branch (`git push origin my-new-feature`)
-5. Create new Pull Request
+5. Create a new [pull request](https://github.com/QutBioacoustics/baw-workers/compare)
+

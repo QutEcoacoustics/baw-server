@@ -11,7 +11,6 @@ require 'simplecov'
 
 if ENV['TRAVIS']
   require 'codeclimate-test-reporter'
-  require 'coveralls'
 
   # code climate
   CodeClimate::TestReporter.configure do |config|
@@ -19,11 +18,7 @@ if ENV['TRAVIS']
   end
   CodeClimate::TestReporter.start
 
-  # coveralls
-  Coveralls.wear!
-
   SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter[
-      Coveralls::SimpleCov::Formatter,
       CodeClimate::TestReporter::Formatter
   ]
 
