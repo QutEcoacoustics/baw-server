@@ -10,9 +10,12 @@ describe BawAudioTools::AudioFfmpeg do
   let(:estimate_duration) { '[mp3 @ 0x3279b60] Estimating duration from bitrate, this may be inaccurate' }
   let(:over_read) { '[mp3 @ 0x1edcb60] overread, skip -7 enddists: -6 -6' }
   let(:channel_layout) { "[mp3 @ 0x327a5c0] Channel layout 'mono' with 1 channels does not match specified number of channels 2: ignoring specified channel layout" }
+  let(:bytes_of_junk) { '[mp3 @ 0x2679c00] Skipping 0 bytes of junk at 0.' }
+
   let(:unknown_warning) { "[wav @ 0x1d35020] hello I'm an unknown warning" }
 
-  let(:error_msg) { "#{analyse_duration}#{estimate_duration}#{over_read}#{channel_layout}" }
+  # join using $/ (new line separator)
+  let(:error_msg) { [analyse_duration, estimate_duration, over_read, channel_layout, bytes_of_junk].join($/) }
 
   it 'removes known warnings' do
     expect {

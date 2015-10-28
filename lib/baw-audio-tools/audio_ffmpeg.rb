@@ -8,12 +8,14 @@ module BawAudioTools
     # e.g. [mp3 @ 0x3314600] overread, skip -5 enddists: -2 -2
     WARN_OVER_READ = 'overread, skip -?[0-9]+ enddists: -?[0-9]+ -?[0-9]+'
     WARN_CHANNEL_LAYOUT = "Channel layout '.+' with [0-9]+ channels does not match specified number of channels [0-9]+: ignoring specified channel layout"
+    WARN_BYTES_OF_JUNK = "Skipping [0-9]+ bytes of junk at [0-9]+\."
 
     REGEX_WARN_INDICATOR = /#{WARN_INDICATOR}/
     REGEX_WARN_DURATION = /#{WARN_INDICATOR}#{WARN_ESTIMATE_DURATION}/
     REGEX_WARN_OVER_READ = /#{WARN_INDICATOR}#{WARN_OVER_READ}/
     REGEX_WARN_ANALYSE_DURATION = /#{WARN_INDICATOR}#{WARN_ANALYSE_DURATION}/
     REGEX_WARN_CHANNEL_LAYOUT = /#{WARN_INDICATOR}#{WARN_CHANNEL_LAYOUT}/
+    REGEX_WARN_BYTES_OF_JUNK = /#{WARN_INDICATOR}#{WARN_BYTES_OF_JUNK}/
 
     # @param [String] ffmpeg_executable
     # @param [String] ffprobe_executable
@@ -92,6 +94,10 @@ module BawAudioTools
 
         if has_regex?(mod_stderr, REGEX_WARN_CHANNEL_LAYOUT)
           mod_stderr = find_remove_warning(mod_stderr, REGEX_WARN_CHANNEL_LAYOUT)
+        end
+
+        if has_regex?(mod_stderr, REGEX_WARN_BYTES_OF_JUNK)
+          mod_stderr = find_remove_warning(mod_stderr, REGEX_WARN_BYTES_OF_JUNK)
         end
 
         if !mod_stderr.blank? && mod_stderr.match(REGEX_WARN_INDICATOR)
