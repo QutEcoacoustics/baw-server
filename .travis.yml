@@ -25,8 +25,8 @@ before_install:
 
   # download, extract, and add ffmpeg and ffprobe to path
   - mkdir /tmp/ffmpeg
-  - wget http://johnvansickle.com/ffmpeg/releases/ffmpeg-release-64bit-static.tar.xz -O /tmp/ffmpeg/download-ffmpeg.tar.gz
-  - tar -xf /tmp/ffmpeg/download-ffmpeg.tar.gz -C /tmp/ffmpeg/
+  - wget http://johnvansickle.com/ffmpeg/releases/ffmpeg-release-64bit-static.tar.xz -O /tmp/ffmpeg/download-ffmpeg.tar.xz
+  - tar -xf /tmp/ffmpeg/download-ffmpeg.tar.xz -C /tmp/ffmpeg/
   - export PATH=/tmp/ffmpeg:$PATH
 
   # download, extract, and add wav2png to path
