@@ -10,6 +10,15 @@ module BawWorkers
       # File name for worker log file per run.
       FILE_LOG = 'worker.log'
 
+      # Overall job success file
+      FILE_SUCCESS = 'job.success'
+
+      # Executable failed
+      FILE_EXECUTABLE_FAILURE = 'job.analysis_failure'
+
+      # Worker began processing job
+      FILE_WORKER_STARTED = 'job.started'
+
       # directory name for programs that can be run
       DIR_PROGRAMS = 'programs'
 
@@ -38,6 +47,12 @@ module BawWorkers
 
         opts[:datetime_with_offset] = BawWorkers::Validation.normalise_datetime(opts[:datetime_with_offset])
 
+        # create started file in output dir
+        dir_output = create_output_dir(opts)
+        started_file = File.join(dir_output, FILE_WORKER_STARTED)
+        FileUtils.touch(started_file)
+
+        # create run dir and info
         run_info = create_run_info(opts)
 
         dir_run = run_info[:dir_run]
@@ -49,7 +64,7 @@ module BawWorkers
         command_opts = {
             file_source: get_file_source(opts),
             file_executable: get_file_executable(dir_run_programs, opts),
-            dir_output: create_output_dir(opts),
+            dir_output: dir_output,
             file_config: create_config_file(dir_run, opts),
             dir_run: dir_run,
             dir_temp: dir_run_temp
@@ -116,6 +131,21 @@ module BawWorkers
 
         # copy files after command is executed
         result[:copy_results] = copy_custom(dir_run, dir_output, opts)
+
+        # create result file
+        if result.include?(:error) && !result[:error].blank?
+          # create failure file
+          executable_failure_file = File.join(dir_output, FILE_EXECUTABLE_FAILURE)
+          FileUtils.touch(executable_failure_file)
+        else
+          # create success file
+          success_file = File.join(dir_output, FILE_SUCCESS)
+          FileUtils.touch(success_file)
+        end
+
+        # remove worker started file
+        started_file = File.join(dir_output, FILE_WORKER_STARTED)
+        File.delete(started_file) if File.exists?(started_file)
 
         # include command format
         result[:command_format] = opts[:command_format]

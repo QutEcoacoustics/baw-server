@@ -183,12 +183,16 @@ describe BawWorkers::Analysis::Action do
     output_file = analysis_cache.possible_paths(job_output_params)[0]
     expect(File.exists?(output_file)).to be_truthy, output_file
 
-    # make sure log and config are copied to correct location
+    # make sure log and config are copied to correct location, and success file exists
     worker_log_file = analysis_cache.possible_paths(job_output_params.merge({file_name: BawWorkers::Analysis::Runner::FILE_LOG}))[0]
     config_file = analysis_cache.possible_paths(job_output_params.merge({file_name: BawWorkers::Analysis::Runner::FILE_CONFIG}))[0]
+    success_file = analysis_cache.possible_paths(job_output_params.merge({file_name: BawWorkers::Analysis::Runner::FILE_SUCCESS}))[0]
+    started_file = analysis_cache.possible_paths(job_output_params.merge({file_name: BawWorkers::Analysis::Runner::FILE_WORKER_STARTED}))[0]
 
     expect(File.exists?(worker_log_file)).to be_truthy
     expect(File.exists?(config_file)).to be_truthy
+    expect(File.exists?(success_file)).to be_truthy
+    expect(File.exists?(started_file)).to be_falsey
 
   end
 
