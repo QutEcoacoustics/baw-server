@@ -21,9 +21,21 @@ end
 def expect_correct_file_name(file_name, expected_hash)
   it file_name do |example|
     file_name = example.metadata[:description]
+
     result = file_info.file_name_datetime(file_name, '+00:00')
     expected_result = expected_hash
     expect(result).to eq(expected_result)
+
+    unless ['20150727T133138Z.wav',
+            'blah_T-suffix20140301-085031-7s:dncv*_-T&^%34jd.ext',
+            'sdncv*_-T&^%34jd_20140301_085031-0630blah_T-suffix.mp3',
+            'sdncv*_-T&^%34jd_20140301_085031+06:30blah_T-suffix.mp3'].include?(file_name)
+      expect {
+        file_info.file_name_datetime(file_name)
+      }.to raise_error(
+               BawWorkers::Exceptions::HarvesterConfigurationError,
+               'No UTC offset provided and file name did not contain a utc offset.')
+    end
   end
 end
 
@@ -238,7 +250,7 @@ describe BawWorkers::FileInfo do
                recorded_date: '2015-07-27T13:31:38.000+00:00',
                prefix: '', separator: 'T', suffix: '',
                extension: 'wav'
-          }
+              }
       }.each do |file_name, expected_hash|
         expect_correct_file_name(file_name, expected_hash)
       end

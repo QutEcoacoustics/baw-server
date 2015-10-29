@@ -160,7 +160,7 @@ module BawWorkers
     # @param [String] file_name
     # @param [String] utc_offset
     # @return [Hash] info from file name
-    def file_name_datetime(file_name, utc_offset)
+    def file_name_datetime(file_name, utc_offset = nil)
       result = {}
       regex = /^(.*)(\d{4})(\d{2})(\d{2})(-|_|T)?(\d{2})(\d{2})(\d{2})([+\-]\d{4}|[+\-]\d{1,2}:\d{2}|[+\-]\d{1,2}|Z)?(.*)\.([a-zA-Z0-9]+)$/
       file_name.scan(regex) do |prefix, year, month, day, separator, hour, minute, second, offset, suffix, extension|
@@ -170,7 +170,10 @@ module BawWorkers
             offset: offset.blank? ? '' : offset,
             ext: extension
         }
-        result[:utc_offset] = offset || utc_offset
+        available_offset = offset || utc_offset
+        fail BawWorkers::Exceptions::HarvesterConfigurationError, 'No UTC offset provided and file name did not contain a utc offset.' if available_offset.blank?
+
+        result[:utc_offset] = available_offset
         result[:recorded_date] = DateTime.new(year.to_i, month.to_i, day.to_i, hour.to_i, minute.to_i, second.to_i, result[:utc_offset]).iso8601(3)
         result[:prefix] = prefix.blank? ? '' : prefix
         result[:separator] = separator.blank? ? '' : separator
