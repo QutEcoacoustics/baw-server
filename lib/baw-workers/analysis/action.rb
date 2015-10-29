@@ -19,7 +19,7 @@ module BawWorkers
           analysis_params_sym = BawWorkers::Analysis::Payload.normalise_opts(analysis_params)
 
           BawWorkers::Config.logger_worker.info(logger_name) {
-            "Started analysis using '#{analysis_params_sym}'."
+            "Started analysis using '#{format_params_for_log(analysis_params_sym)}'."
           }
 
           runner = action_runner
@@ -30,11 +30,20 @@ module BawWorkers
             prepared_opts = runner.prepare(analysis_params_sym)
             all_opts = analysis_params_sym.merge(prepared_opts)
             result = runner.execute(prepared_opts, analysis_params_sym)
+
+            # if result contains error, raise it here, since we need everything in execute
+            # to succeed first (so logs/configs are moved, any available results are retained)
+            raise result[:error] if result.include?(:error) && !result[:error].blank?
           rescue => e
             BawWorkers::Config.logger_worker.error(logger_name) { e }
+
+            args = analysis_params_sym
+            args = all_opts unless all_opts.blank?
+            args = {params: args, results: result} unless result.nil?
+
             BawWorkers::Mail::Mailer.send_worker_error_email(
                 BawWorkers::Analysis::Action,
-                all_opts.blank? ? analysis_params_sym : all_opts,
+                args,
                 queue,
                 e
             )
@@ -43,7 +52,7 @@ module BawWorkers
 
           BawWorkers::Config.logger_worker.info(logger_name) {
             log_opts = all_opts.blank? ? analysis_params_sym : all_opts
-            "Completed analysis with parameters #{log_opts} and result '#{result}'."
+            "Completed analysis with parameters #{format_params_for_log(log_opts)} and result '#{format_params_for_log(result)}'."
           }
 
           result
@@ -88,7 +97,7 @@ module BawWorkers
           analysis_params_sym = BawWorkers::Analysis::Payload.normalise_opts(analysis_params)
           result = BawWorkers::Analysis::Action.create(analysis_params: analysis_params_sym)
           BawWorkers::Config.logger_worker.info(logger_name) {
-            "Job enqueue returned '#{result}' using #{analysis_params_sym}."
+            "Job enqueue returned '#{result}' using #{format_params_for_log(analysis_params_sym)}."
           }
           result
         end
@@ -147,6 +156,19 @@ module BawWorkers
           analysis_params_sym = BawWorkers::Analysis::Payload.normalise_opts(analysis_params)
           payload = {analysis_params: analysis_params_sym}
           BawWorkers::ResqueApi.status(BawWorkers::Analysis::Action, payload)
+        end
+
+        private
+
+        def format_params_for_log(params)
+          if params.blank? || !params.is_a?(Hash)
+            return params
+          end
+          if params.include?(:config)
+            params.except(:config)
+          else
+            params
+          end
         end
 
       end

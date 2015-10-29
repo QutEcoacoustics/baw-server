@@ -211,7 +211,7 @@ describe BawWorkers::AudioCheck::Action do
         # act
         expect {
           BawWorkers::AudioCheck::Action.action_perform(original_params)
-        }.to raise_error(BawAudioTools::Exceptions::FileCorruptError, /Ffmpeg output contained warning/)
+        }.to raise_error(BawAudioTools::Exceptions::AudioToolError, /End of file/)
 
         expect(ActionMailer::Base.deliveries.count).to eq(0)
       end
