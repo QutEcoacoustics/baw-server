@@ -1,7 +1,7 @@
 module BawAudioTools
   class AudioFfmpeg
 
-    WARN_INDICATOR = '\[[^ ]+ @ [^ ]+\] '
+    WARN_INDICATOR = '\[.+ @ 0x[0-9a-f]+\] '
     WARN_ANALYSE_DURATION = 'max_analyze_duration [0-9]+ reached at [0-9]+'
     WARN_ESTIMATE_DURATION = 'Estimating duration from bitrate, this may be inaccurate'
     # e.g. [mp3 @ 0x2935600] overread, skip -6 enddists: -4 -4

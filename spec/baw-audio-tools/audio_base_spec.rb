@@ -26,7 +26,7 @@ describe BawAudioTools::AudioBase do
     it 'gives correct error for corrupt file' do
       expect {
         audio_base.info(audio_file_corrupt)
-      }.to raise_error(BawAudioTools::Exceptions::FileCorruptError)
+      }.to raise_error(BawAudioTools::Exceptions::AudioToolError, /string=End of file/)
     end
 
     it 'returns all required information' do
@@ -87,7 +87,7 @@ describe BawAudioTools::AudioBase do
       expect(info[:sample_rate]).to be_within(0.0).of(22050)
       expect(info[:channels]).to eq(audio_file_stereo_channels)
       expect(info[:duration_seconds]).to be_within(duration_range).of(audio_file_stereo_duration_seconds)
-      expect(info[:bit_rate_bps]).to be >= 128000
+      expect(info[:bit_rate_bps]).to be_within(300).of(128000)
     end
 
   end
@@ -388,7 +388,8 @@ describe BawAudioTools::AudioBase do
         temp_media_file_a = temp_media_file_1+'.mp3'
         result_1 = audio_base.modify(audio_file_stereo, temp_media_file_a)
         result = audio_base.integrity_check(temp_media_file_a)
-        expect(result[:errors].size).to eq(0)
+        expect(result[:errors].size).to eq(1)
+        expect(result[:errors][0][:description]).to eq('Skipping 0 bytes of junk at 253.')
         expect(result[:info][:read][:samples]).to eq(result[:info][:write][:samples])
       end
 
@@ -483,13 +484,13 @@ describe BawAudioTools::AudioBase do
 
         result = audio_base.integrity_check(audio_file_corrupt)
 
-        expect(result[:errors].size).to be > 2
+        expect(result[:errors].size).to be > 1
 
-        expect(result[:errors][0][:id]).to eq('NULL')
+        expect(result[:errors][0][:id]).to eq('Vorbis parser')
         expect(result[:errors][0][:description]).to eq('Invalid Setup header')
 
-        expect(result[:errors][1][:id]).to eq('vorbis')
-        expect(result[:errors][1][:description]).to eq('Extradata missing.')
+        expect(result[:errors][1][:id]).to eq('end of file')
+        expect(result[:errors][1][:description]).to match(/End of file/)
 
         #expect(result[:errors][5][:id]).to eq('error')
         #expect(result[:errors][5][:description]).to include('Error while opening decoder for input stream #0:0 : Invalid data found when processing input')
