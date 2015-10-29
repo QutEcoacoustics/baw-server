@@ -26,37 +26,41 @@ And then execute:
 
     $ bundle install
 
+## Actions
+
+This project provides four actions. Actions are classes that implement a potentially long-running process.
+
+### Analysis
+
+Runs analysers over audio files. This action analyses an entire single audio file.
+
+ 1. Resque jobs can be queued from [baw-server](https://github.com/QutBioacoustics/baw-server) and processed later by a Resque dequeue worker.
+ 1. A directory can be analysed manually by providing the settings for a single audio file in yaml format for the the `analysis_config_file` parameter.
+
+### Audio Check
+
+Runs checks on original audio recording files. This action checks an entire single audio file.
+
+ - Gets audio files to check from a csv file in a specific format by specifying `csv_file`.
+
+### Harvest
+
+Harvests audio files to be accessible by [baw-server](https://github.com/QutBioacoustics/baw-server) via the file storage system. 
+
+ - The harvester will recognise valid audio files in two ways: file name in a recognised format, and optionally a directory config file. Depending on the file name format used, a directory config file may or may not be required.
+ - Audio files can be harvested by specifying the parameter `harvest_dir` and the `config_file_name` in the settings file.
+
+### Media
+
+Cuts audio files and generates spectrograms.
+
+ -  Resque jobs can be queued on demand from [baw-server](https://github.com/QutBioacoustics/baw-server)
+and processed later by a Resque dequeue worker.
+
 ## Dependencies
 
 You may need to install some additional tools for working with audio and images, and for processing long-running tasks.
-
- - [ImageMagick](http://www.imagemagick.org/) is used by [paperclip](https://github.com/thoughtbot/paperclip).
- - [WavPack](http://www.wavpack.com/) is used to expand compressed `.wv` files.
- - [SoX](http://sox.sourceforge.net/) is used to create spectrograms and resample audio.
- - [shnTool](http://www.etree.org/shnutils/shntool/) is a tool for quickly segmenting large `.wav` files.
- - [mp3splt](http://mp3splt.sourceforge.net/mp3splt_page/home.php) is a tool for quickly segmenting large `.mp3` files.
- - [ffmpeg](http://www.ffmpeg.org/) is used for audio conversion and gathering audio file information.
- - [wav2png](https://github.com/beschulz/wav2png) is used to generate waveform images.
- - [redis](http://redis.io/) is used by [Resque](https://github.com/resque/resque/tree/v1.25.2) to manage long-running tasks.
-
-Audio tools from apt: imagemagick, wavpack, sox, shntool, mp3splt. Ffmpeg is installed from a binary, and wav2png can be built from source.
-
-    sudo apt-get install make g++ libsndfile1-dev libpng++-dev libpng12-dev libboost-program-options-dev imagemagick wavpack libsox-fmt-all sox shntool mp3splt libav-tools
-
-Build and install wav2png:
-
-    cd ~/Downloads
-    git clone https://github.com/beschulz/wav2png.git
-    make -C ./wav2png/build all
-    sudo mv ./wav2png/bin/Linux/wav2png /usr/local/bin/
-
-Build and install latest ffmpeg:
-
-    cd ~/Downloads
-    wget http://ffmpeg.gusari.org/static/64bit/ffmpeg.static.64bit.latest.tar.gz
-    tar -xvzf ffmpeg.static.64bit.latest.tar.gz
-    sudo mv ./ffmpeg /usr/local/bin/
-    sudo mv ./ffprobe /usr/local/bin/
+See [baw-audio-tools](https://github.com/QutBioacoustics/baw-audio-tools) for more information.
 
 ## File Storage
 
@@ -142,7 +146,6 @@ Each `log_level` setting is independent of the others.
 
 ### Examples for running a worker
 
-
 Replace `'settings_file'` with the full path to the settings file to use for the worker.
 Other parameters are described in the `Actions` section below.
 
@@ -168,37 +171,6 @@ A Resque dequeue worker can process any queue with any type of job.
     bundle exec rake baw:worker:run[settings_file]                                           # Run a resque:work with the specified settings file
     bundle exec rake baw:worker:setup[settings_file]                                         # Run a resque:work with the specified settings file
     bundle exec rake baw:worker:stop_all[settings_file]                                      # Quit running workers
-
-## Actions
-
-This project provides four actions. Actions are classes that implement a potentially long-running process.
-
-### Analysis
-
-Runs analysers over audio files. This action analyses an entire single audio file.
-
- 1. Resque jobs can be queued from [baw-server](https://github.com/QutBioacoustics/baw-server) and processed later by a Resque dequeue worker.
- 1. A directory can be analysed manually by providing the settings for a single audio file in yaml format for the the `analysis_config_file` parameter.
-
-### Audio Check
-
-Runs checks on original audio recording files. This action checks an entire single audio file.
-
- - Gets audio files to check from a csv file in a specific format by specifying `csv_file`.
-
-### Harvest
-
-Harvests audio files to be accessible by [baw-server](https://github.com/QutBioacoustics/baw-server) via the file storage system. 
-
- - The harvester will recognise valid audio files in two ways: file name in a recognised format, and optionally a directory config file. Depending on the file name format used, a directory config file may or may not be required.
- - Audio files can be harvested by specifying the parameter `harvest_dir` and the `config_file_name` in the settings file.
-
-### Media
-
-Cuts audio files and generates spectrograms.
-
- -  Resque jobs can be queued on demand from [baw-server](https://github.com/QutBioacoustics/baw-server)
-and processed later by a Resque dequeue worker.
 
 ## Contributing
 
