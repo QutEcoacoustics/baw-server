@@ -423,6 +423,48 @@ describe BawWorkers::Harvest::SingleFile do
       FileUtils.rm_rf(sub_folder)
     end
 
+    it 'renames audio file with no content' do
+      # set up audio file and folder config
+      sub_folder = File.expand_path File.join(harvest_to_do_path, 'harvest_file_exists')
+      FileUtils.mkpath(sub_folder)
+
+      dest_audio_file = File.join(sub_folder, 'test_20141012_181455.ogg')
+
+      source_harvest_folder_config = folder_example
+      dest_harvest_folder_config = File.join(sub_folder, 'harvest.yml')
+
+      FileUtils.copy(source_harvest_folder_config, dest_harvest_folder_config)
+      FileUtils.touch(dest_audio_file)
+
+      recorded_date = '2014-10-12T18:14:55.000+10:00'
+      uuid = 'fb4af424-04c1-4739-96e3-23f8dc719665'
+      original_format = 'ogg'
+
+      possible_paths = audio_original.possible_paths(
+          {
+              uuid: uuid,
+              datetime_with_offset: Time.zone.parse(recorded_date),
+              original_format: original_format
+          }
+      )
+
+      # execute - process a single file
+      file_info_hash = gather_files.run(dest_audio_file)
+      expect {
+        single_file.run(file_info_hash[0], true)
+      }.to raise_error(BawAudioTools::Exceptions::FileEmptyError, /File has no content \(length of 0 bytes\) renamed to/)
+
+      # ensure file was not moved to new location
+      expect(File.exists?(possible_paths[1])).to be_falsey
+
+      # ensure source file is renamed to *.error_empty
+      expect(File.exists?(dest_audio_file)).to be_falsey
+      expect(File.exists?(dest_audio_file+'.error_empty')).to be_truthy
+
+      # clean up
+      FileUtils.rm_rf(sub_folder)
+    end
+
   end
 
 end

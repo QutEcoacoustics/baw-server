@@ -37,6 +37,18 @@ module BawWorkers
 
         @logger.info(@class_name) { "Processing #{file_path}..." }
 
+        # check if file is empty or does not exist first
+        # -----------------------------
+        if !File.exists?(file_path)
+          @logger.error(@class_name) { "File was not found #{file_path}" }
+          fail BawAudioTools::Exceptions::FileNotFoundError, msg
+        elsif File.size(file_path) < 1
+          empty_file_new_name = rename_empty_file(file_path)
+          msg = "File has no content (length of 0 bytes) renamed to #{File.basename(empty_file_new_name)} from #{file_path}"
+          @logger.error(@class_name) { msg }
+          fail BawAudioTools::Exceptions::FileEmptyError, msg
+        end
+
         # construct file_info_hash for new audio recording request
         # -----------------------------
         audio_info_hash = get_audio_info_hash(file_info_hash, file_path)
@@ -297,10 +309,23 @@ module BawWorkers
 
       # Rename non-harvested file if it is too short.
       # @param [String] file_path
-      # @return [Array<String>] new file name
+      # @return [String] new file name
       def rename_short_file(file_path)
+        rename_file(file_path, 'error_duration')
+      end
 
-        renamed_source_file = file_path + '.error_duration'
+      # Rename non-harvested file if it has no content.
+      # @param [String] file_path
+      # @return [String] new file name
+      def rename_empty_file(file_path)
+        rename_file(file_path, 'error_empty')
+      end
+
+      # Rename a file by appending a suffix as an extension.
+      # @param [String] file_path
+      # @return [String] new file name
+      def rename_file(file_path, suffix)
+        renamed_source_file = file_path + '.' + suffix
         File.rename(file_path, renamed_source_file)
 
         if File.exists?(renamed_source_file)
@@ -309,7 +334,7 @@ module BawWorkers
           }
         else
           @logger.warn(@class_name) {
-            "Invalid source file #{file_path} was not renamed."
+            "Source file was not found, so not renamed #{file_path}."
           }
         end
 
