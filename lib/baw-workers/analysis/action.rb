@@ -30,10 +30,6 @@ module BawWorkers
             prepared_opts = runner.prepare(analysis_params_sym)
             all_opts = analysis_params_sym.merge(prepared_opts)
             result = runner.execute(prepared_opts, analysis_params_sym)
-
-            # if result contains error, raise it here, since we need everything in execute
-            # to succeed first (so logs/configs are moved, any available results are retained)
-            raise result[:error] if result.include?(:error) && !result[:error].blank?
           rescue => e
             BawWorkers::Config.logger_worker.error(logger_name) { e }
 
@@ -48,6 +44,14 @@ module BawWorkers
                 e
             )
             raise e
+          end
+
+          # if result contains error, raise it here, since we need everything in execute
+          # to succeed first (so logs/configs are moved, any available results are retained)
+          # raising here to not send email when executable fails, logs are in output dir
+          if !result.blank? && result.include?(:error) && !result[:error].blank?
+            BawWorkers::Config.logger_worker.error(logger_name) { result[:error] }
+            raise result[:error]
           end
 
           BawWorkers::Config.logger_worker.info(logger_name) {
