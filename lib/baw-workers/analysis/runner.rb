@@ -90,7 +90,7 @@ module BawWorkers
         BawWorkers::Validation.check_custom_hash(opts, BawWorkers::Analysis::Payload::OPTS_FIELDS)
         BawWorkers::Analysis::Runner.check_command_format(opts)
 
-        timeout_sec = 1 * 60 * 60 # 1 hour
+        timeout_sec = 2 * 60 * 60 # 2 hours
         log_file = prepared_opts[:file_run_log]
         dir_run = prepared_opts[:dir_run]
         dir_output = prepared_opts[:dir_output]
