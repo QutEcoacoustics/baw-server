@@ -22,6 +22,12 @@ module BawWorkers
       # directory name for programs that can be run
       DIR_PROGRAMS = 'programs'
 
+      # directory containing files during run
+      DIR_RUNS = 'runs'
+
+      # temporary directory in each run directory
+      DIR_TEMP = 'temp'
+
       # Create a new Support class.
       # @param [BawWorkers::Storage::AudioOriginal] original_store
       # @param [BawWorkers::Storage::AnalysisCache] analysis_cache
@@ -132,15 +138,20 @@ module BawWorkers
         # copy files after command is executed
         result[:copy_results] = copy_custom(dir_run, dir_output, opts)
 
+        # files created
+        result[:output_files_created] = []
+
         # create result file
         if result.include?(:error) && !result[:error].blank?
           # create failure file
           executable_failure_file = File.join(dir_output, FILE_EXECUTABLE_FAILURE)
           FileUtils.touch(executable_failure_file)
+          result[:output_files_created].push(FILE_EXECUTABLE_FAILURE)
         else
           # create success file
           success_file = File.join(dir_output, FILE_SUCCESS)
           FileUtils.touch(success_file)
+          result[:output_files_created].push(FILE_SUCCESS)
         end
 
         # remove worker started file
@@ -149,6 +160,13 @@ module BawWorkers
 
         # include command format
         result[:command_format] = opts[:command_format]
+
+        # finally delete the run directory
+        result[:dir_run] = dir_run
+        delete_run_dir(dir_run)
+
+        # include the output directory in results
+        result[:dir_output] = dir_output
 
         result
       end
@@ -162,8 +180,8 @@ module BawWorkers
         normalise_regex = /[^a-z0-9]/i
         current_time = Time.zone.now.utc.iso8601.to_s.downcase.gsub(normalise_regex, '_')
 
-        dir_run = File.join(@dir_worker_top, 'runs', "#{opts[:job_id]}_#{opts[:id]}_#{current_time}")
-        dir_run_temp = File.join(dir_run, 'temp')
+        dir_run = File.join(@dir_worker_top, BawWorkers::Analysis::Runner::DIR_RUNS, "#{opts[:job_id]}_#{opts[:id]}_#{current_time}")
+        dir_run_temp = File.join(dir_run,  BawWorkers::Analysis::Runner::DIR_TEMP)
         file_run_log = File.join(dir_run, BawWorkers::Analysis::Runner::FILE_LOG)
 
         FileUtils.mkpath([dir_run, dir_run_temp])
@@ -285,6 +303,17 @@ module BawWorkers
         end
 
         copy_results
+      end
+
+      # Delete the run directory
+      # @param [String] run_dir
+      # @return [void]
+      def delete_run_dir(run_dir)
+        # make sure the dir is underneath the runs dir
+        runs_dir = File.join(@dir_worker_top, BawWorkers::Analysis::Runner::DIR_RUNS)
+        fail ArgumentError, "dir must be in runs dir, given #{run_dir}" unless run_dir.start_with?(runs_dir)
+
+        FileUtils.rm_rf(run_dir)
       end
 
       # Ensure command format has required placeholders

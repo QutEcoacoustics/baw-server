@@ -194,6 +194,9 @@ describe BawWorkers::Analysis::Action do
     expect(File.exists?(success_file)).to be_truthy
     expect(File.exists?(started_file)).to be_falsey
 
+    # deletes the run dir when finished
+    expect(Dir.exists?(result[:dir_run])).to be_falsey
+
   end
 
 end
