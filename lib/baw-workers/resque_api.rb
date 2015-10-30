@@ -203,6 +203,59 @@ module BawWorkers
         pids
       end
 
+      # Clear a queue
+      # @see https://gist.github.com/denmarkin/1228863
+      # @param [String] queue
+      # @return [void]
+      def clear_queue(queue)
+        BawWorkers::Config.logger_worker.warn(self.name) {
+          "Clearing queue #{queue}..."
+        }
+        Resque.remove_queue_with_cleanup(queue)
+      end
+
+      # Clear resque stats
+      # @see https://gist.github.com/denmarkin/1228863
+      # @return [void]
+      def clear_stats
+        BawWorkers::Config.logger_worker.warn(self.name) {
+          'Clearing stats...'
+        }
+        Resque.redis.set 'stat:failed', 0
+        Resque.redis.set 'stat:processed', 0
+      end
+
+      # Retry failed jobs
+      # @see https://gist.github.com/CharlesP/1818418754aec03403b3
+      def retry_failed
+        redis = Resque.redis
+        failure_count = Resque::Failure.count
+        retried_count = 0
+
+        BawWorkers::Config.logger_worker.warn(self.name) {
+          "Retrying failed jobs (total : #{failure_count})."
+        }
+
+        (0...failure_count).each do |i|
+          serialized_job = redis.lindex(:failed, i)
+          job = Resque.decode(serialized_job)
+
+          next if job.nil?
+          if job['exception'] == 'Resque::DirtyExit'
+            retried_count = retried_count +1
+            BawWorkers::Config.logger_worker.warn(self.name) {
+              "Retrying job  #{job['payload']['class']}..."
+            }
+            Resque::Failure.requeue(i)
+            Resque::Failure.remove(i)
+          end
+        end
+
+        BawWorkers::Config.logger_worker.warn(self.name) {
+          "Retried #{retried_count} failed jobs."
+        }
+      end
+
       # Get a Resque::Status hash for the matching action job and payload.
       # @param [Class] action_class
       # @param [Hash] args

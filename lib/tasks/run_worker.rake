@@ -40,6 +40,24 @@ namespace :baw do
       BawWorkers::ResqueApi.workers_stop_all
     end
 
+    desc 'Clear queue'
+    task :clear_queue, [:settings_file, :queue_name] do |t, args|
+      BawWorkers::Config.run(settings_file: args.settings_file, redis: true, resque_worker: false)
+      BawWorkers::ResqueApi.clear_queue(args.queue_name)
+    end
+
+    desc 'Clear stats'
+    task :clear_stats, [:settings_file,] do |t, args|
+      BawWorkers::Config.run(settings_file: args.settings_file, redis: true, resque_worker: false)
+      BawWorkers::ResqueApi.clear_stats
+    end
+
+    desc 'Retry failed jobs'
+    task :retry_failed, [:settings_file,] do |t, args|
+      BawWorkers::Config.run(settings_file: args.settings_file, redis: true, resque_worker: false)
+      BawWorkers::ResqueApi.retry_failed
+    end
+
   end
 
   namespace :analysis do
