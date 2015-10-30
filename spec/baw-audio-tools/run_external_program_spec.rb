@@ -7,9 +7,25 @@ describe BawAudioTools::RunExternalProgram do
     run_program = BawAudioTools::RunExternalProgram.new(3, logger)
 
     command = 'sleep 120'
-    expect {
+    error = nil
+
+    begin
       run_program.execute(command)
-    }.to raise_error(BawAudioTools::Exceptions::AudioToolTimedOutError, /#{command}/)
+    rescue => e
+      error = e
+    end
+
+    expect(error).to be_a(BawAudioTools::Exceptions::AudioToolTimedOutError)
+    expect(error.message).to match(/#{command}/)
+
+    # get pid and check if that pid is still running
+    pid = error.message.match(/;pid=([0-9]+);/).captures[0]
+
+    # 0 = A value of 0 will cause error checking to be performed (with no signal being sent).
+    # This can be used to check the validity of pid.
+    is_running = (!!Process.kill(0, pid) rescue false)
+
+    expect(is_running).to be_falsey
   end
 
   it 'check timeout does not impact successful execution' do
@@ -27,6 +43,6 @@ describe BawAudioTools::RunExternalProgram do
     expect(result[:stderr]).to be_blank
     expect(result[:command]).to eq(command)
     expect(result[:exit_code]).to eq(0)
-    expect(result[:execute_msg]).to match(/External Program: status=0;killed=false;time_out_sec=10;time_taken_sec=1/)
+    expect(result[:execute_msg]).to match(/External Program: status=0;killed=false;pid=[0-9]+;time_out_sec=10;time_taken_sec=1/)
   end
 end

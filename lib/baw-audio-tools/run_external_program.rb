@@ -36,10 +36,11 @@ module BawAudioTools
       timed_out = nil
       killed = nil
       exceptions = []
+      pid = nil
 
       time = Benchmark.realtime do
         begin
-          run_with_timeout(command, timeout: @timeout_sec) do |output, error, thread, timed_out_return, killed_return, exceptions_inner|
+          run_with_timeout(command, timeout: @timeout_sec) do |output, error, thread, timed_out_return, killed_return, exceptions_inner, pid_inner|
             #thread_success = thread.value.success?
             stdout_str = output
             stderr_str = error
@@ -47,6 +48,7 @@ module BawAudioTools
             timed_out = timed_out_return
             killed = killed_return
             exceptions = exceptions_inner
+            pid = pid_inner
           end
         rescue Exception => e
           @logger.fatal(@class_name) { e }
@@ -54,7 +56,7 @@ module BawAudioTools
         end
       end
 
-      status_msg = "status=#{status.exitstatus};killed=#{killed};"
+      status_msg = "status=#{status.exitstatus};killed=#{killed};pid=#{pid};"
       timeout_msg = "time_out_sec=#{@timeout_sec};time_taken_sec=#{time};timed_out=#{timed_out};"
       exceptions_msg = "exceptions=#{exceptions.inspect};"
       output_msg = "\n\tStandard output: #{stdout_str}\n\tStandard Error: #{stderr_str}"
@@ -126,12 +128,17 @@ module BawAudioTools
         if thread.alive?
           # We need to kill the process, because killing the thread leaves
           # the process alive but detached, annoyingly enough.
-          Process.kill('KILL', pid)
+          # Sending TERM (15) instead of KILL (9) to allow clean up rather than
+          # dirty exit
+          Process.kill('TERM', pid)
 
           killed = true
         end
 
-        yield output, error, thread, !time_remaining, killed, exceptions.flatten
+        # Give process time to clean up
+        sleep cleanup_sleep
+
+        yield output, error, thread, !time_remaining, killed, exceptions.flatten, pid
       end
     end
 

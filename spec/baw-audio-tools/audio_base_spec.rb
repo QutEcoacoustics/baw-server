@@ -87,7 +87,7 @@ describe BawAudioTools::AudioBase do
       expect(info[:sample_rate]).to be_within(0.0).of(22050)
       expect(info[:channels]).to eq(audio_file_stereo_channels)
       expect(info[:duration_seconds]).to be_within(duration_range).of(audio_file_stereo_duration_seconds)
-      expect(info[:bit_rate_bps]).to be_within(300).of(128000)
+      expect(info[:bit_rate_bps]).to be_within(400).of(128000)
     end
 
   end
