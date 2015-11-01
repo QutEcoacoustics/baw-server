@@ -9,10 +9,6 @@ The bioacoustic workbench server. Manages the structure and audio data. Provides
 [![Documentation Status](http://inch-ci.org/github/QutBioacoustics/baw-server.png?branch=master)](http://inch-ci.org/github/QutBioacoustics/baw-server)
 [![Documentation](https://img.shields.io/badge/docs-rdoc.info-blue.svg)](http://www.rubydoc.info/github/QutBioacoustics/baw-server)
 
-## Development instructions
-
-
-
 ## Dependencies
 
 Audio processing and other long-running tasks are performed using [baw-workers](https://github.com/QutBioacoustics/baw-workers).
@@ -60,7 +56,7 @@ See the `bin/setup` script for more information.
 
 We deploy using [Capistrano](https://github.com/capistrano/capistrano).
 
-If you want to use background workers, set up [Redis](http://redis.io/).
+If you want to use background workers, you'll need to set up [Redis](http://redis.io/).
 
 ## Licence
 Apache License, Version 2.0
