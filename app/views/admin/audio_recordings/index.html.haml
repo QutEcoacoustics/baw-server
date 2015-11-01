@@ -28,11 +28,8 @@
                 - if order_by == :id
                   %span.fa{class: "fa-#{order_dir_icon}"}
             %th
-              = link_to admin_audio_recordings_path order_by: :site, order_dir: order_by_opposite do
-                %span.fa.fa-map-marker{aria: {hidden: 'true' }}
-                Site
-                - if order_by == :site
-                  %span.fa{class: "fa-#{order_dir_icon}"}
+              %span.fa.fa-map-marker{aria: {hidden: 'true' }}
+              Site
             %th
               = link_to admin_audio_recordings_path order_by: :duration_seconds, order_dir: order_by_opposite do
                 %span.fa.fa-clock-o{aria: {hidden: 'true' }}
@@ -46,11 +43,9 @@
                 - if order_by == :recorded_date
                   %span.fa{class: "fa-#{order_dir_icon}"}
             %th
-              = link_to admin_audio_recordings_path order_by: :audio_event_count, order_dir: order_by_opposite do
-                %span.fa.fa-bullseye{aria: {hidden: 'true' }}
-                Annotations
-                - if order_by == :audio_event_count
-                  %span.fa{class: "fa-#{order_dir_icon}"}
+              %span.fa.fa-bullseye{aria: {hidden: 'true' }}
+              Annotations
+
             %th
 
         %tbody

@@ -115,6 +115,20 @@ ELSE last_sign_in_at END DESC'
     end
   end
 
+  # GET /user_accounts/:id/sites
+  def sites
+    do_load_resource
+    do_authorize_instance
+
+    @user_sites = Access::Query.sites(@user).includes(:creator, :projects).references(:creator, :project)
+        .order('sites.name ASC')
+        .page(paging_params[:page].blank? ? 1 : paging_params[:page])
+
+    respond_to do |format|
+      format.html
+    end
+  end
+
   # GET /user_accounts/:id/bookmarks
   def bookmarks
     do_load_resource

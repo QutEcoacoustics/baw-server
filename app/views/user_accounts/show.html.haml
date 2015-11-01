@@ -3,6 +3,10 @@
 
 = render partial: 'shared/sidebar_user', locals: {user_show: @user, user_current: current_user}
 
+- is_valid_user = defined?(@user) && !@user.nil? && !@user.id.nil?
+- is_admin = Access::Check.is_admin?(current_user)
+- is_own_profile = is_valid_user && User.same_user?(current_user, @user)
+
 .col-sm-4
   .thumbnail
     = image_tag @user.image.url(:span3), alt: @user.user_name
@@ -18,6 +22,15 @@
         - signed_up_date = @user.created_at
         = signed_up_date.blank? ? '?' : format_sidebar_datetime(signed_up_date, ago: false)
 
+  - if is_own_profile
+    .row
+      .col-sm-12
+        .panel.panel-default
+          .panel-heading
+            Download
+          %ul.list-group
+            %li.list-group-item
+              = link_to 'Annotations you\'ve created', make_user_annotations_path(@user.id)
 .col-sm-8
   .row
     .col-sm-6
@@ -66,6 +79,3 @@
               = link_to item['tag_name'], make_library_tag_search_path(item['tag_name'])
               %span.badge
                 = item['tag_count']
-
-
-

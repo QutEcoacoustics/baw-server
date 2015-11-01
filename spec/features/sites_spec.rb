@@ -66,7 +66,7 @@ describe 'CRUD Sites as valid user with write permission', :type => :feature do
     expect(page).to have_content('Annotations (csv)')
     click_link('Annotations (csv)')
 
-    expected_url = "#{data_request_url}?annotation_download[project_id]=#{@project.id}&annotation_download[site_id]=#{@site.id}&annotation_download[name]=#{CGI::escape(@site.name)}"
+    expected_url = "#{data_request_url}?annotation_download[project_id]=#{@project.id}&annotation_download[site_id]=#{@site.id}"
 
     expect(current_url).to eq(expected_url)
     expect(page).to have_content("The CSV file containing annotations for #{@site.name} will download shortly.")

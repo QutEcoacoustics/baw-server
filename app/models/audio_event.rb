@@ -115,7 +115,7 @@ class AudioEvent < ActiveRecord::Base
 
   # Project audio events to the format for CSV download
   # @return  [Arel::Nodes::Node] audio event csv query
-  def self.csv_query(project, site, audio_recording, start_offset, end_offset)
+  def self.csv_query(user, project, site, audio_recording, start_offset, end_offset)
 
     audio_events = AudioEvent.arel_table
     users = User.arel_table
@@ -235,6 +235,10 @@ class AudioEvent < ActiveRecord::Base
                     "'#{url_base}" + 'library/\' || "audio_recordings"."id" || \'/audio_events/\' || audio_events.id')
                     .as('library_url'),
             )
+
+    if user
+      query = query.where(users[:id].eq(user.id))
+    end
 
     if project
 

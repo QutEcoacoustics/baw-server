@@ -212,16 +212,34 @@ class PublicController < ApplicationController
         !params[:annotation_download][:project_id].blank? &&
         !params[:annotation_download][:site_id].blank?
 
-      # check permissions
+      # only accessible if current user has show access to project
+      # and site is in specified project
+      project_id = params[:annotation_download][:project_id].to_i
+      project = Project.find(project_id)
       site_id = params[:annotation_download][:site_id].to_i
-      site = Site.where(id: site_id).first
-      access = can?(:show, site)
-      msg = 'You must have access to the site to download annotations.'
-      fail CanCan::AccessDenied.new(msg, :show, site) unless access
+      site = Site.find(site_id)
+      msg = "You must have access to the site (#{site.id}) and project(s) (#{site.projects.pluck(:id).join(', ')}) to download annotations."
+      fail CanCan::AccessDenied.new(msg, :show, site) unless Access::Check.can?(current_user, :reader, project)
+      fail CanCan::AccessDenied.new(msg, :show, site) unless Access::Check.can_any?(current_user, :reader, site.projects)
+      fail CanCan::AccessDenied.new(msg, :show, site) unless project.sites.pluck(:id).include?(site_id)
 
       @annotation_download = {
-          link: download_site_audio_events_path(params[:annotation_download][:project_id], params[:annotation_download][:site_id]),
+          link: download_site_audio_events_path(project_id, site_id),
           name: site.name
+      }
+
+    elsif !params[:annotation_download].blank? &&
+        !params[:annotation_download][:user_id].blank?
+
+      user_id = params[:annotation_download][:user_id].to_i
+      user = User.find(user_id)
+      is_same_user = User.same_user?(current_user, user)
+      msg = 'Only admins and annotation creators can download annotations created by a user.'
+      fail CanCan::AccessDenied.new(msg, :show, AudioEvent) if !Access::Check.is_admin?(current_user) && !is_same_user
+
+      @annotation_download = {
+          link: download_user_audio_events_path(user_id),
+          name: user.user_name
       }
     end
 
@@ -281,18 +299,18 @@ class PublicController < ApplicationController
 
     if current_user.blank?
       @recent_audio_events = AudioEvent
-                                 .order(order_by_coalesce)
-                                 .limit(7)
+          .order(order_by_coalesce)
+          .limit(7)
     elsif Access::Check.is_admin?(current_user)
       @recent_audio_events = AudioEvent
-                                 .includes([:creator, audio_recording: {site: :projects}])
-                                 .order(order_by_coalesce)
-                                 .limit(10)
+          .includes([:creator, audio_recording: {site: :projects}])
+          .order(order_by_coalesce)
+          .limit(10)
     else
       @recent_audio_events = Access::Query
-                                 .audio_events(current_user, Access::Core.levels_allow)
-                                 .includes([:updater, audio_recording: :site])
-                                 .order(order_by_coalesce).limit(10)
+          .audio_events(current_user, Access::Core.levels_allow)
+          .includes([:updater, audio_recording: :site])
+          .order(order_by_coalesce).limit(10)
     end
 
   end

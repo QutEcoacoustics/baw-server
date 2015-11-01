@@ -28,6 +28,8 @@
   - if is_own_profile || (is_admin && is_valid_user)
     %li{class: ('active' if current_page?(projects_user_account_path(user_show)))}
       = link_to "#{first_word} Projects", projects_user_account_path(user_show), title: "Projects #{user_show.user_name} can access", data: {toggle: 'tooltip',  placement: 'right'}
+    %li{class: ('active' if current_page?(sites_user_account_path(user_show)))}
+      = link_to "#{first_word} Sites", sites_user_account_path(user_show), title: "Sites #{user_show.user_name} can access", data: {toggle: 'tooltip',  placement: 'right'}
     %li{class: ('active' if current_page?(bookmarks_user_account_path(user_show)))}
       = link_to "#{first_word} Bookmarks", bookmarks_user_account_path(user_show), title: "Bookmarks created by #{user_show.user_name}", data: {toggle: 'tooltip',  placement: 'right'}
     %li{class: ('active' if current_page?(audio_events_user_account_path(user_show)))}

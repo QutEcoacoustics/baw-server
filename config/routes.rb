@@ -105,6 +105,7 @@ Rails.application.routes.draw do
   resources :user_accounts, only: [:index, :show, :edit, :update], constraints: {id: /[0-9]+/} do
     member do
       get 'projects'
+      get 'sites'
       get 'bookmarks'
       get 'audio_events'
       get 'audio_event_comments'
@@ -276,6 +277,7 @@ Rails.application.routes.draw do
   # audio event csv download routes
   get '/projects/:project_id/audio_events/download' => 'audio_events#download', defaults: {format: 'csv'}, as: :download_project_audio_events
   get '/projects/:project_id/sites/:site_id/audio_events/download' => 'audio_events#download', defaults: {format: 'csv'}, as: :download_site_audio_events
+  get '/user_accounts/:user_id/audio_events/download' => 'audio_events#download', defaults: {format: 'csv'}, as: :download_user_audio_events
 
   # placed above related resource so it does not conflict with (resource)/:id => (resource)#show
   match 'sites/filter' => 'sites#filter', via: [:get, :post], defaults: {format: 'json'}

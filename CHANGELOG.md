@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+ - 2015-11-01
+    - Added link to download annotations created by a user, and a list of annotation download links per site [#233](https://github.com/QutBioacoustics/baw-server/issues/233)
+
  - 2015-09-04
     - removed dataset model [#189](https://github.com/QutBioacoustics/baw-server/issues/189)
     - updated job model [#191](https://github.com/QutBioacoustics/baw-server/issues/191)

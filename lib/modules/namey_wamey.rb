@@ -80,6 +80,25 @@ class NameyWamey
       "#{project_name}_#{project_id}_#{site_name}_#{site_id}#{extra_options_formatted}.#{extension.trim('.', '')}".parameterize('_')
     end
 
+    # Suggest a file name based on user, extra options and extension.
+    # @param [User] user
+    # @param [Hash|string] extra_options
+    # @param [string] extension
+    # @return [string] suggested file name
+    def create_user_name(user, extra_options, extension)
+      extra_options_formatted = get_extra_options(extra_options)
+
+      if user.is_a?(Hash)
+        user_id = user[:id]
+        user_name = user[:name]
+      else
+        user_id = user.id
+        user_name = user.user_name
+      end
+
+      "#{user_name}_#{user_id}#{extra_options_formatted}.#{extension.trim('.', '')}".parameterize('_')
+    end
+
     def trim(string_value, chars_to_replace, char_to_insert)
       string_value.to_s.gsub(/^[#{chars_to_replace}]+|[#{chars_to_replace}]+$/, char_to_insert)
     end

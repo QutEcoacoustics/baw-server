@@ -113,4 +113,17 @@ module ApplicationHelper
     end
   end
 
+  # create annotation download link for a user
+  def make_user_annotations_path(user_value)
+    user_id = user_value.is_a?(User) ? user_value.id : user_value.to_i
+    "#{data_request_path}?annotation_download[user_id]=#{user_id}"
+  end
+
+  # create annotations download link for a site
+  def make_site_annotations_path(project_value, site_value)
+    project_id = project_value.is_a?(Project) ? project_value.id : project_value.to_i
+    site_id = site_value.is_a?(Site) ? site_value.id : site_value.to_i
+    "#{data_request_path}?annotation_download[project_id]=#{project_id}&annotation_download[site_id]=#{site_id}"
+  end
+
 end

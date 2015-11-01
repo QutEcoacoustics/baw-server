@@ -378,10 +378,10 @@ describe 'MANAGE User Accounts as admin user', :type => :feature do
     expect(page).not_to have_content('Cancel my account')
   end
 
-  it 'provides link to Projects Bookmarks Annotations Comments' do
+  it 'provides link to Projects Sites Bookmarks Annotations Comments' do
     user = FactoryGirl.create(:user)
     visit user_account_path(user)
-    expect(page).to have_content('Their Projects Their Bookmarks Their Annotations Their Comments')
+    expect(page).to have_content('Their Projects Their Sites Their Bookmarks Their Annotations Their Comments')
   end
 
   it 'lists user\'s projects' do
@@ -396,61 +396,79 @@ end
 
 describe 'MANAGE User Accounts as user', :type => :feature do
   before(:each) do
-    user = FactoryGirl.create(:user)
-    login_as user, scope: :user
+    @user = FactoryGirl.create(:user)
+    login_as @user, scope: :user
   end
 
+  let(:other_user){ FactoryGirl.create(:user)}
+
   it 'denies access' do
-    user = FactoryGirl.create(:user)
     visit user_accounts_path
     expect(page).to have_content(I18n.t('devise.failure.unauthorized'))
-    visit edit_user_account_path(user)
+    visit edit_user_account_path(other_user)
     expect(page).to have_content(I18n.t('devise.failure.unauthorized'))
   end
 
   it 'shows user account details' do
-    user = FactoryGirl.create(:user)
-    FactoryGirl.create(:bookmark, creator: user)
-    visit user_account_path(user)
-    expect(page).to have_content(user.user_name)
+    visit user_account_path(other_user)
+    expect(page).to have_content(other_user.user_name)
   end
 
-  it 'should not link to user comments for other user page' do
-    user = FactoryGirl.create(:user)
-    visit user_account_path(user)
-    expect(find('nav[role=navigation]')).to_not have_content('Comments')
+  context 'links available viewing other user page' do
+      it 'should not link to projects' do
+        visit user_account_path(other_user)
+        expect(find('nav[role=navigation]')).to_not have_content('Projects')
+      end
+      it 'should not link to sites' do
+        visit user_account_path(other_user)
+        expect(find('nav[role=navigation]')).to_not have_content('Sites')
+      end
+      it 'should not link to bookmarks' do
+        visit user_account_path(other_user)
+        expect(find('nav[role=navigation]')).to_not have_content('Bookmarks')
+      end
+      it 'should not link to annotations' do
+        visit user_account_path(other_user)
+        expect(find('nav[role=navigation]')).to_not have_content('Annotations')
+      end
+      it 'should not link to comments' do
+        visit user_account_path(other_user)
+        expect(find('nav[role=navigation]')).to_not have_content('Comments')
+      end
   end
 
-  it 'should not link to user bookmarks for other user page' do
-    user = FactoryGirl.create(:user)
-    visit user_account_path(user)
-    expect(find('nav[role=navigation]')).to_not have_content('Bookmarks')
-  end
+  context 'links available viewing current user page' do
 
-  it 'should not link to user projects for other user page' do
-    user = FactoryGirl.create(:user)
-    visit user_account_path(user)
-    expect(find('nav[role=navigation]')).to_not have_content('Projects')
-  end
-
-  it 'should link to user comments for current user page' do
-    visit my_account_path
-    expect(find('nav[role=navigation]')).to have_content('Comments')
-  end
-
-  it 'should link to user bookmarks for current user page' do
-    visit my_account_path
-    expect(find('nav[role=navigation]')).to have_content('Bookmarks')
-  end
-
-  it 'should link to user projects for current user page' do
-    visit my_account_path
-    expect(find('nav[role=navigation]')).to have_content('Projects')
-  end
-
-  it 'should link to user projects for current user page' do
-    visit my_account_path
-    expect(find('nav[role=navigation]')).to have_content('Annotations')
+    it 'should link to projects' do
+      visit my_account_path
+      expect(find('nav[role=navigation]')).to have_content('Projects')
+      click_link 'My Projects'
+      expect(current_path).to eq(projects_user_account_path(@user))
+    end
+    it 'should link to sites' do
+      visit my_account_path
+      expect(find('nav[role=navigation]')).to have_content('Sites')
+      click_link 'My Sites'
+      expect(current_path).to eq(sites_user_account_path(@user))
+    end
+    it 'should link to bookmarks' do
+      visit my_account_path
+      expect(find('nav[role=navigation]')).to have_content('Bookmarks')
+      click_link 'My Bookmarks'
+      expect(current_path).to eq(bookmarks_user_account_path(@user))
+    end
+    it 'should link to annotations' do
+      visit my_account_path
+      expect(find('nav[role=navigation]')).to have_content('Annotations')
+      click_link 'My Annotations'
+      expect(current_path).to eq(audio_events_user_account_path(@user))
+    end
+    it 'should link to comments' do
+      visit my_account_path
+      expect(find('nav[role=navigation]')).to have_content('Comments')
+      click_link 'My Comments'
+      expect(current_path).to eq(audio_event_comments_user_account_path(@user))
+    end
   end
 
   it 'denies access to user projects page' do
@@ -466,28 +484,25 @@ describe 'User profile pages' do
     login_as @user, scope: :user
   end
 
-  it 'should link to user projects for current user page' do
+  it 'downloads csv file successfully' do
     visit my_account_path
-    click_link 'My Projects'
-    expect(current_path).to eq(projects_user_account_path(@user))
-  end
+    expect(page).to have_content("Annotations you've created")
+    click_link("Annotations you've created")
 
-  it 'should link to user bookmarks for current user page' do
-    visit my_account_path
-    click_link 'My Bookmarks'
-    expect(current_path).to eq(bookmarks_user_account_path(@user))
-  end
+    expected_url = "#{data_request_url}?annotation_download[user_id]=#{@user.id}"
 
-  it 'should link to user audio events for current user page' do
-    visit my_account_path
-    click_link 'My Annotations'
-    expect(current_path).to eq(audio_events_user_account_path(@user))
-  end
+    expect(current_url).to eq(expected_url)
+    expect(page).to have_content("The CSV file containing annotations for #{@user.user_name} will download shortly.")
 
-  it 'should link to user comments for current user page' do
-    visit my_account_path
-    click_link 'My Comments'
-    expect(current_path).to eq(audio_event_comments_user_account_path(@user))
+    click_link('here')
+
+    expected_url = download_user_audio_events_url(@user)
+    expect(current_url).to eq(expected_url)
+
+    expect(page).to have_content('audio_event_id, audio_recording_id, audio_recording_uuid, audio_recording_start_date_utc, audio_recording_start_time_utc, audio_recording_start_datetime_utc, event_created_at_date_utc, event_created_at_time_utc, event_created_at_datetime_utc, projects, site_id, site_name, event_start_date_utc, event_start_time_utc, event_start_datetime_utc, event_start_seconds, event_end_seconds, event_duration_seconds, low_frequency_hertz, high_frequency_hertz, is_reference, created_by, updated_by, common_name_tags, common_name_tag_ids, species_name_tags, species_name_tag_ids, other_tags, other_tag_ids, listen_url, library_url')
+
+    expect(page.response_headers['Content-Disposition']).to include('attachment; filename="')
+    expect(page.response_headers['Content-Type']).to eq('text/csv')
   end
 
   # it 'should link to user saved searches for current user page' do

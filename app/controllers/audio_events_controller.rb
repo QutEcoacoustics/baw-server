@@ -104,6 +104,7 @@ class AudioEventsController < ApplicationController
 
     is_authorized = false
 
+    user = nil
     project = nil
     site = nil
     audio_recording = nil
@@ -112,6 +113,15 @@ class AudioEventsController < ApplicationController
 
     # check which params are available to authorise this request
 
+    # user id
+    if params_cleaned[:user_id]
+      user = User.where(id: params_cleaned[:user_id].to_i).first
+      unless user.blank?
+        authorize! :audio_events, user
+        is_authorized = true
+      end
+    end
+
     # project id
     if params_cleaned[:project_id]
       project = Project.where(id: params_cleaned[:project_id].to_i).first
@@ -119,7 +129,6 @@ class AudioEventsController < ApplicationController
         authorize! :show, project
         is_authorized = true
       end
-
     end
 
     # site id
@@ -129,7 +138,6 @@ class AudioEventsController < ApplicationController
         authorize! :show, site
         is_authorized = true
       end
-
     end
 
     # audio recording id
@@ -157,13 +165,17 @@ class AudioEventsController < ApplicationController
     end
 
     unless is_authorized
-      fail CustomErrors::RoutingArgumentError, 'must provide existing audio_recording_id, start_offset, and end_offset or project_id or site_id'
+      fail CustomErrors::RoutingArgumentError, 'must provide existing audio_recording_id, start_offset, and end_offset or project_id or site_id or user_id'
     end
 
     # create file name
     time_now = Time.zone.now
     file_name_append = "#{time_now.strftime('%Y%m%d-%H%M%S')}"
     file_name = 'annotations'
+
+    unless user.blank?
+      file_name = NameyWamey.create_user_name(user, '', '')
+    end
 
     unless project.blank?
       file_name = NameyWamey.create_project_name(project, '', '')
@@ -179,7 +191,7 @@ class AudioEventsController < ApplicationController
 
     # create query
 
-    query = AudioEvent.csv_query(project, site, audio_recording, start_offset, end_offset)
+    query = AudioEvent.csv_query(user, project, site, audio_recording, start_offset, end_offset)
     query_sql = query.to_sql
     @formatted_annotations = AudioEvent.connection.select_all(query_sql)
 
@@ -269,6 +281,7 @@ class AudioEventsController < ApplicationController
   def audio_event_download_params
     params.permit(
         :audio_recording_id, :audioRecordingId, :audiorecording_id, :audiorecordingId, :recording_id, :recordingId,
+        :user_id, :userId,
         :project_id, :projectId,
         :site_id, :siteId,
         :start_offset, :startOffset,

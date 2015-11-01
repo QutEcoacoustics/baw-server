@@ -144,7 +144,7 @@ group :development, :test do
   gem 'capistrano-passenger', '~> 0.1.0'
 
   gem 'rack-mini-profiler', '~> 0.9.2'
-  gem 'i18n-tasks', '~> 0.8.5'
+  gem 'i18n-tasks', '~> 0.9.0'
   gem 'bullet', '~> 4.14.1'
 
   # Spring speeds up development by keeping your application running in the background. Read more: https://github.com/rails/spring
