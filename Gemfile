@@ -13,7 +13,7 @@ source 'https://rubygems.org'
 # RAILS
 # -------------------------------------
 
-gem 'rails', '~> 4.2.2'
+gem 'rails', '~> 4.2.4'
 gem 'rack-cors', '~> 0.4.0', require: 'rack/cors'
 gem 'responders', '~> 2.1.0'
 
@@ -24,7 +24,7 @@ gem 'responders', '~> 2.1.0'
 # gem 'actionpack-page_caching'
 # gem 'actionpack-action_caching'
 # gem 'activerecord-deprecated_finders'
-gem 'activesupport-json_encoder', github: 'rails/activesupport-json_encoder'
+gem 'activesupport-json_encoder', git: 'https://github.com/rails/activesupport-json_encoder.git'
 
 # UI HELPERS
 # -------------------------------------
@@ -110,7 +110,7 @@ gem 'newrelic_rpm', '~> 3.14.0'
 # Documentation & UI
 # -------------------------------------
 # these gems are required here to serve /doc url
-gem 'rspec_api_documentation', '~> 4.5.0'
+gem 'rspec_api_documentation', '~> 4.6.0'
 gem 'raddocs', '~> 0.5.0'
 
 # MEDIA
@@ -204,5 +204,5 @@ end
 
 group :test do
   gem 'webmock', '~> 1.22.1'
-  gem 'shoulda-matchers', '~> 2.8.0', require: false
+  gem 'shoulda-matchers', '< 3.0.0', require: false
 end
