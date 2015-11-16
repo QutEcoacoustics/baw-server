@@ -298,8 +298,8 @@ class Ability
     # any confirmed user can view any other user's profile (read-only)
     can [:show, :filter], User
 
-    # users can only view their own projects, comments, bookmarks
-    can [:projects, :bookmarks, :audio_events, :audio_event_comments], User, id: user.id
+    # users can only view their own:
+    can [:projects, :sites, :bookmarks, :audio_events, :audio_event_comments], User, id: user.id
 
     # users get their own account and preferences from these actions
     can [:my_account, :modify_preferences], User, id: user.id

@@ -162,7 +162,7 @@ group :development, :test do
   gem 'guard', '~> 2.13.0'
   gem 'guard-rspec', '~> 4.6.0'
   gem 'guard-yard', '~> 2.1.4', require: false
-  gem 'rubocop', require: false
+  gem 'rubocop', '~> 0.35.1', require: false
   gem 'haml-lint', require: false
 
   gem 'fakeredis', '~> 0.5.0', require: 'fakeredis/rspec'
@@ -188,17 +188,17 @@ group :development, :test do
   #gem 'debugger'
   # gem install traceroute --no-ri --no-rdoc
 
-  gem 'rspec-rails', '~> 3.3.0'
+  gem 'rspec-rails', '~> 3.4.0'
   gem 'factory_girl_rails', '~> 4.5.0'
   gem 'capybara', '~> 2.5.0'
 
-  gem 'rspec', '~> 3.3.0'
+  gem 'rspec', '~> 3.4.0'
   gem 'simplecov', '~> 0.10.0', require: false
   gem 'launchy', '~> 2.4.3'
   gem 'json_spec', '~> 1.1.4'
   gem 'database_cleaner', '~> 1.5.0'
 
-  gem 'coveralls', '~> 0.8.1', require: false
+  gem 'coveralls', '~> 0.8.5', require: false
   gem 'codeclimate-test-reporter', '~> 0.4.5', require: nil
 end
 
