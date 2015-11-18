@@ -220,6 +220,8 @@ Rails.application.routes.draw do
   match 'saved_searches/filter' => 'saved_searches#filter', via: [:get, :post], defaults: {format: 'json'}
 
   # API only for analysis_jobs and saved_searches
+  match 'analysis_jobs/system' => 'analysis#system_all', # here so it has higher priority
+        defaults: {format: 'json'}, as: :analysis_system_all, via: [:get, :head], format: false
   resources :analysis_jobs, except: [:edit], defaults: {format: 'json'}
   resources  :saved_searches, except: [:edit, :update], defaults: {format: 'json'}
 
@@ -228,6 +230,9 @@ Rails.application.routes.draw do
         defaults: {format: 'json'}, as: :analysis_results_base, via: [:get, :head], format: false
   match 'analysis_jobs/:analysis_job_id/audio_recordings/:audio_recording_id/*results_path' => 'analysis#show',
         defaults: {format: 'json'}, as: :analysis_results, via: [:get, :head], format: false
+
+  match 'analysis_jobs/system/audio_recordings' => 'analysis#system_audio_recordings',
+        defaults: {format: 'json'}, as: :analysis_system_audio_recording, via: [:get, :head], format: false
 
   # placed above related resource so it does not conflict with (resource)/:id => (resource)#show
   match 'audio_recordings/filter' => 'audio_recordings#filter', via: [:get, :post], defaults: {format: 'json'}

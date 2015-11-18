@@ -11,6 +11,8 @@ require 'find'
 class AnalysisController < ApplicationController
   skip_authorization_check only: [:show]
 
+  # GET|HEAD /analysis_jobs/:analysis_job_id/audio_recordings/:audio_recording_id/
+  # GET|HEAD /analysis_jobs/:analysis_job_id/audio_recordings/:audio_recording_id/*results_path
   def show
     # start timing request
     overall_start = Time.now
@@ -73,6 +75,16 @@ class AnalysisController < ApplicationController
       fail CustomErrors::BadRequestError, 'There was a problem with the request.'
     end
 
+  end
+
+  # GET|HEAD /analysis_jobs/system
+  def system_all
+    fail NotImplementedError
+  end
+
+  # GET|HEAD /analysis_jobs/system/audio_recordings
+  def system_audio_recordings
+    fail NotImplementedError
   end
 
   private
@@ -177,7 +189,7 @@ class AnalysisController < ApplicationController
 
     Dir.foreach(path) do |item|
       # skip dot paths: 'current path' and 'parent path'
-      next if item == '.' or item == '..'
+      next if item == '.' || item == '..'
 
       full_path = File.join(path, item)
 
