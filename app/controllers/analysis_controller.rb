@@ -204,6 +204,26 @@ class AnalysisController < ApplicationController
     normalised_path = normalise_path(path)
     normalised_name = normalised_name(normalised_path)
 
+    has_children = false
+    Dir.foreach(path) do |item|
+      # skip dot paths: 'current path' and 'parent path'
+      next if item == '.' || item == '..'
+      has_children = true
+      break
+    end
+
+    {
+        path: normalised_path,
+        name: normalised_name,
+        type: 'directory',
+        has_children: has_children
+    }
+  end
+
+  def dir_info_children(path)
+    normalised_path = normalise_path(path)
+    normalised_name = normalised_name(normalised_path)
+
     {
         path: normalised_path,
         name: normalised_name,
@@ -219,8 +239,8 @@ class AnalysisController < ApplicationController
     {
         path: normalised_path,
         name: normalised_name,
-        size: File.size(path),
         type: 'file',
+        size: File.size(path),
         mime: Mime::Type.lookup_by_extension(File.extname(path)[1..-1]).to_s
     }
   end
@@ -248,7 +268,7 @@ class AnalysisController < ApplicationController
     # just return a file listing for the first existing dir
     dir_path = existing_paths[0]
 
-    dir_listing = dir_info(dir_path)
+    dir_listing = dir_info_children(dir_path)
 
     wrapped = Settings.api_response.build(:ok, dir_listing)
 
