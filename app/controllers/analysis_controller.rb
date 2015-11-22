@@ -187,6 +187,9 @@ class AnalysisController < ApplicationController
   def dir_list(path)
     children = []
 
+    max_items = 50
+    items_count = 0
+
     Dir.foreach(path) do |item|
       # skip dot paths: 'current path' and 'parent path'
       next if item == '.' || item == '..'
@@ -195,6 +198,9 @@ class AnalysisController < ApplicationController
 
       children.push(dir_info(full_path)) if File.directory?(full_path)
       children.push(file_info(full_path)) if File.file?(full_path) && !File.directory?(full_path)
+
+      items_count = items_count + 1
+      break if items_count >= max_items
     end
 
     children
