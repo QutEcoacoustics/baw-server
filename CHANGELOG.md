@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+ - 2015-11-22
+    - analysis job api is no longer recursive [#196](https://github.com/QutBioacoustics/baw-server/issues/196)
+    - Added an option to download the annotations CSV files with a custom timezone offset [#240](https://github.com/QutBioacoustics/baw-server/issues/240)
+
  - 2015-11-01
     - Added link to download annotations created by a user, and a list of annotation download links per site [#233](https://github.com/QutBioacoustics/baw-server/issues/233)
 

@@ -282,11 +282,7 @@ class User < ActiveRecord::Base
   end
 
   def set_rails_tz
-    tz_info_id = TimeZoneHelper.to_identifier(self.tzinfo_tz)
-    rails_tz_string = TimeZoneHelper.tzinfo_to_ruby(tz_info_id)
-    unless rails_tz_string.blank?
-      self.rails_tz = rails_tz_string
-    end
+    TimeZoneHelper.set_rails_tz(self)
   end
 
 end

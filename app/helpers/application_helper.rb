@@ -12,7 +12,7 @@ module ApplicationHelper
   end
 
   def format_sidebar_datetime(value, options = {})
-    options.reverse_merge!({ ago: true})
+    options.reverse_merge!({ago: true})
     time_distance = distance_of_time_in_words(Time.zone.now, value, nil, {vague: true})
     time_distance = time_distance + ' ago' if options[:ago]
     time_distance
@@ -20,8 +20,8 @@ module ApplicationHelper
 
   # https://gist.github.com/suryart/7418454
   def bootstrap_class_for(flash_type)
-    flash_types = { success: 'alert-success', error: 'alert-danger', alert: 'alert-warning', notice: 'alert-info'}
-    flash_type_keys = flash_types.keys.map { |k| k.to_s}
+    flash_types = {success: 'alert-success', error: 'alert-danger', alert: 'alert-warning', notice: 'alert-info'}
+    flash_type_keys = flash_types.keys.map { |k| k.to_s }
 
     flash_type_keys.include?(flash_type.to_s) ? flash_types[flash_type.to_sym] : 'alert-info'
   end
@@ -116,14 +116,16 @@ module ApplicationHelper
   # create annotation download link for a user
   def make_user_annotations_path(user_value)
     user_id = user_value.is_a?(User) ? user_value.id : user_value.to_i
-    "#{data_request_path}?annotation_download[user_id]=#{user_id}"
+    user_tz = user_value.is_a?(User) && !user_value.rails_tz.blank? ? user_value.rails_tz : 'UTC'
+    data_request_path(selected_user_id: user_id, selected_timezone_name: user_tz)
   end
 
   # create annotations download link for a site
   def make_site_annotations_path(project_value, site_value)
     project_id = project_value.is_a?(Project) ? project_value.id : project_value.to_i
     site_id = site_value.is_a?(Site) ? site_value.id : site_value.to_i
-    "#{data_request_path}?annotation_download[project_id]=#{project_id}&annotation_download[site_id]=#{site_id}"
+    site_tz = site_value.is_a?(Site) && !site_value.rails_tz.blank? ? site_value.rails_tz : 'UTC'
+    data_request_path(selected_project_id: project_id, selected_site_id: site_id, selected_timezone_name: site_tz)
   end
 
 end

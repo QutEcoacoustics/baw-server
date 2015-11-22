@@ -164,6 +164,13 @@ class AudioEventsController < ApplicationController
       end_offset = audio_recording.duration_seconds if audio_recording
     end
 
+    # timezone
+    if params_cleaned[:selected_timezone_name]
+      timezone_name = params_cleaned[:selected_timezone_name]
+    else
+      timezone_name = 'UTC'
+    end
+
     unless is_authorized
       fail CustomErrors::RoutingArgumentError, 'must provide existing audio_recording_id, start_offset, and end_offset or project_id or site_id or user_id'
     end
@@ -191,7 +198,7 @@ class AudioEventsController < ApplicationController
 
     # create query
 
-    query = AudioEvent.csv_query(user, project, site, audio_recording, start_offset, end_offset)
+    query = AudioEvent.csv_query(user, project, site, audio_recording, start_offset, end_offset, timezone_name)
     query_sql = query.to_sql
     @formatted_annotations = AudioEvent.connection.select_all(query_sql)
 
@@ -286,6 +293,7 @@ class AudioEventsController < ApplicationController
         :site_id, :siteId,
         :start_offset, :startOffset,
         :end_offset, :endOffset,
+        :selected_timezone_name, :selectedTimezoneName,
         :format)
   end
 

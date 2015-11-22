@@ -115,7 +115,7 @@ class AudioEvent < ActiveRecord::Base
 
   # Project audio events to the format for CSV download
   # @return  [Arel::Nodes::Node] audio event csv query
-  def self.csv_query(user, project, site, audio_recording, start_offset, end_offset)
+  def self.csv_query(user, project, site, audio_recording, start_offset, end_offset, timezone_name)
 
     audio_events = AudioEvent.arel_table
     users = User.arel_table
@@ -126,9 +126,18 @@ class AudioEvent < ActiveRecord::Base
     audio_events_tags = Tagging.arel_table
     tags = Tag.arel_table
 
+    timezone_name = 'UTC' if timezone_name.blank?
+    timezone_offset = ActiveSupport::TimeZone.new(timezone_name)
+    field_suffix_offset = TimeZoneHelper.offset_seconds_to_formatted(timezone_offset.utc_offset)
+    field_suffix = "#{timezone_offset.name}_#{field_suffix_offset.gsub('-', 'neg-').gsub('+', '')}".parameterize.underscore
+
+    timezone_interval = Arel::Nodes::SqlLiteral.new("INTERVAL '#{timezone_offset.utc_offset} seconds'")
+    format_offset = timezone_offset.utc_offset == 0 ? 'Z' : field_suffix_offset
+
+
     format_date = Arel::Nodes.build_quoted('YYYY-MM-DD')
     format_time = Arel::Nodes.build_quoted('HH24:MI:SS')
-    format_iso8601 = Arel::Nodes.build_quoted('YYYY-MM-DD"T"HH24:MI:SS"Z"')
+    format_iso8601 = Arel::Nodes.build_quoted("YYYY-MM-DD\"T\"HH24:MI:SS\"#{format_offset}\"")
 
     audio_event_start_abs =
         Arel::Nodes::SqlLiteral.new(
@@ -191,25 +200,27 @@ class AudioEvent < ActiveRecord::Base
                 audio_recordings[:id].as('audio_recording_id'),
                 audio_recordings[:uuid].as('audio_recording_uuid'),
 
-                Arel::Nodes::NamedFunction.new('to_char', [audio_recordings[:recorded_date], format_date]).as('audio_recording_start_date_utc'),
-                Arel::Nodes::NamedFunction.new('to_char', [audio_recordings[:recorded_date], format_time]).as('audio_recording_start_time_utc'),
-                Arel::Nodes::NamedFunction.new('to_char', [audio_recordings[:recorded_date], format_iso8601]).as('audio_recording_start_datetime_utc'),
+                function_datetime_timezone('to_char', audio_recordings[:recorded_date], timezone_interval, format_date).as("audio_recording_start_date_#{field_suffix}"),
+                function_datetime_timezone('to_char', audio_recordings[:recorded_date], timezone_interval, format_time).as("audio_recording_start_time_#{field_suffix}"),
+                function_datetime_timezone('to_char', audio_recordings[:recorded_date], timezone_interval, format_iso8601).as("audio_recording_start_datetime_#{field_suffix}"),
 
-                Arel::Nodes::NamedFunction.new('to_char', [audio_events[:created_at], format_date]).as('event_created_at_date_utc'),
-                Arel::Nodes::NamedFunction.new('to_char', [audio_events[:created_at], format_time]).as('event_created_at_time_utc'),
-                Arel::Nodes::NamedFunction.new('to_char', [audio_events[:created_at], format_iso8601]).as('event_created_at_datetime_utc'),
+                function_datetime_timezone('to_char', audio_events[:created_at], timezone_interval, format_date).as("event_created_at_date_#{field_suffix}"),
+                function_datetime_timezone('to_char', audio_events[:created_at], timezone_interval, format_time).as("event_created_at_time_#{field_suffix}"),
+                function_datetime_timezone('to_char', audio_events[:created_at], timezone_interval, format_iso8601).as("event_created_at_datetime_#{field_suffix}"),
 
                 projects_aggregate.as('projects'),
                 sites[:id].as('site_id'),
                 sites[:name].as('site_name'),
 
-                Arel::Nodes::NamedFunction.new('to_char', [audio_event_start_abs, format_date]).as('event_start_date_utc'),
-                Arel::Nodes::NamedFunction.new('to_char', [audio_event_start_abs, format_time]).as('event_start_time_utc'),
-                Arel::Nodes::NamedFunction.new('to_char', [audio_event_start_abs, format_iso8601]).as('event_start_datetime_utc'),
+                function_datetime_timezone('to_char', audio_event_start_abs, timezone_interval, format_date).as("event_start_date_#{field_suffix}"),
+                function_datetime_timezone('to_char', audio_event_start_abs, timezone_interval, format_time).as("event_start_time_#{field_suffix}"),
+                function_datetime_timezone('to_char', audio_event_start_abs, timezone_interval, format_iso8601).as("event_start_datetime_#{field_suffix}"),
 
                 audio_events[:start_time_seconds].as('event_start_seconds'),
                 audio_events[:end_time_seconds].as('event_end_seconds'),
-                Arel::Nodes::InfixOperation.new(:-, audio_events[:end_time_seconds], audio_events[:start_time_seconds]).as('event_duration_seconds'),
+
+                infix_operation(:-, audio_events[:end_time_seconds], audio_events[:start_time_seconds]).as('event_duration_seconds'),
+
                 audio_events[:low_frequency_hertz].as('low_frequency_hertz'),
                 audio_events[:high_frequency_hertz].as('high_frequency_hertz'),
                 audio_events[:is_reference].as('is_reference'),
@@ -331,6 +342,19 @@ class AudioEvent < ActiveRecord::Base
       self.taggings << Tagging.new(tag_id: tag_id)
     end
 
+  end
+
+  def self.function_datetime_timezone(function_name, value1, interval, value2)
+    Arel::Nodes::NamedFunction.new(
+        function_name,
+        [
+            infix_operation(:+, value1, interval),
+            value2
+        ])
+  end
+
+  def self.infix_operation(operation, value1, value2)
+    Arel::Nodes::InfixOperation.new(operation, value1, value2)
   end
 
 end

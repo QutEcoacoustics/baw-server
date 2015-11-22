@@ -60,5 +60,26 @@ class TimeZoneHelper
       ActiveSupport::TimeZone::MAPPING.invert[tzinfo_tz_name]
     end
 
+    # Set rails time zone from tzinfo time zone.
+    # @param [Site, User] model
+    # @return [void]
+    def set_rails_tz(model)
+      tz_info_id = TimeZoneHelper.to_identifier(model.tzinfo_tz)
+      rails_tz_string = TimeZoneHelper.tzinfo_to_ruby(tz_info_id)
+      if model.tzinfo_tz.blank? && tz_info_id.nil?
+        model.rails_tz = nil
+      elsif !rails_tz_string.blank?
+        model.rails_tz = rails_tz_string
+      end
+    end
+
+    def offset_seconds_to_formatted(utc_offset_seconds)
+      is_neg = utc_offset_seconds < 0
+      sec = utc_offset_seconds.abs
+      hours = (sec / (60 * 60)).floor.to_s.rjust(2, '0')
+      minutes = ((sec % (60 * 60)) / 60).floor.to_s.rjust(2, '0')
+      "#{is_neg ? '-' : '+'}#{hours}:#{minutes}"
+    end
+
   end
 end

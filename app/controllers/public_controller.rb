@@ -207,41 +207,7 @@ class PublicController < ApplicationController
   def new_data_request
     @data_request = DataClass::DataRequest.new
 
-    @annotation_download = nil
-    if !params[:annotation_download].blank? &&
-        !params[:annotation_download][:project_id].blank? &&
-        !params[:annotation_download][:site_id].blank?
-
-      # only accessible if current user has show access to project
-      # and site is in specified project
-      project_id = params[:annotation_download][:project_id].to_i
-      project = Project.find(project_id)
-      site_id = params[:annotation_download][:site_id].to_i
-      site = Site.find(site_id)
-      msg = "You must have access to the site (#{site.id}) and project(s) (#{site.projects.pluck(:id).join(', ')}) to download annotations."
-      fail CanCan::AccessDenied.new(msg, :show, site) unless Access::Check.can?(current_user, :reader, project)
-      fail CanCan::AccessDenied.new(msg, :show, site) unless Access::Check.can_any?(current_user, :reader, site.projects)
-      fail CanCan::AccessDenied.new(msg, :show, site) unless project.sites.pluck(:id).include?(site_id)
-
-      @annotation_download = {
-          link: download_site_audio_events_path(project_id, site_id),
-          name: site.name
-      }
-
-    elsif !params[:annotation_download].blank? &&
-        !params[:annotation_download][:user_id].blank?
-
-      user_id = params[:annotation_download][:user_id].to_i
-      user = User.find(user_id)
-      is_same_user = User.same_user?(current_user, user)
-      msg = 'Only admins and annotation creators can download annotations created by a user.'
-      fail CanCan::AccessDenied.new(msg, :show, AudioEvent) if !Access::Check.is_admin?(current_user) && !is_same_user
-
-      @annotation_download = {
-          link: download_user_audio_events_path(user_id),
-          name: user.user_name
-      }
-    end
+    annotation_download
 
     respond_to do |format|
       format.html {}
@@ -313,6 +279,61 @@ class PublicController < ApplicationController
           .order(order_by_coalesce).limit(10)
     end
 
+  end
+
+  def annotation_download
+    selected_params = annotation_download_params
+
+    selected_project_id = selected_params[:selected_project_id]
+    selected_site_id = selected_params[:selected_site_id]
+    selected_user_id = selected_params[:selected_user_id]
+    selected_timezone_name = selected_params[:selected_timezone_name]
+
+    @annotation_download = nil
+
+    if !selected_project_id.blank? && !selected_site_id.blank?
+
+      # only accessible if current user has show access to project
+      # and site is in specified project
+      project_id = selected_project_id.to_i
+      project = Project.find(project_id)
+      site_id = selected_site_id.to_i
+      site = Site.find(site_id)
+      msg = "You must have access to the site (#{site.id}) and project(s) (#{site.projects.pluck(:id).join(', ')}) to download annotations."
+      fail CanCan::AccessDenied.new(msg, :show, site) if project.nil? || site.nil?
+      fail CanCan::AccessDenied.new(msg, :show, site) unless Access::Check.can?(current_user, :reader, project)
+      fail CanCan::AccessDenied.new(msg, :show, site) unless Access::Check.can_any?(current_user, :reader, site.projects)
+      fail CanCan::AccessDenied.new(msg, :show, site) unless project.sites.pluck(:id).include?(site_id)
+
+      @annotation_download = {
+          link: download_site_audio_events_path(project_id, site_id, selected_timezone_name: selected_timezone_name),
+          name: site.name,
+          timezone_name: selected_timezone_name
+      }
+
+    elsif !selected_user_id.blank?
+
+      user_id = selected_user_id.to_i
+      user = User.find(user_id)
+      is_same_user = User.same_user?(current_user, user)
+      msg = 'Only admins and annotation creators can download annotations created by a user.'
+      fail CanCan::AccessDenied.new(msg, :show, AudioEvent) if user.nil?
+      fail CanCan::AccessDenied.new(msg, :show, AudioEvent) if !Access::Check.is_admin?(current_user) && !is_same_user
+
+      @annotation_download = {
+          link: download_user_audio_events_path(user_id, selected_timezone_name: selected_timezone_name),
+          name: user.user_name,
+          timezone_name: selected_timezone_name
+      }
+    end
+  end
+
+  def annotation_download_params
+    params.permit(
+        :selected_project_id,
+        :selected_site_id,
+        :selected_user_id,
+        :selected_timezone_name)
   end
 
 end
