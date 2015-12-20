@@ -379,4 +379,31 @@ resource 'Analysis' do
 
   end
 
+  context 'dot files are not included' do
+
+    before do
+      create_file('.test-dot-file', '')
+    end
+
+    get '/analysis_jobs/:analysis_job_id/audio_recordings/:audio_recording_id' do
+      standard_analysis_parameters
+      let(:authentication_token) { admin_token }
+
+      standard_request_options(
+          :get,
+          'ANALYSIS (as admin, requesting top dir ensuring no dot files)',
+          :ok,
+          {
+              response_body_content: [
+                  '{"meta":{"status":200,"message":"OK"},"data":',
+                  '{"path":"/","name":"/","type":"directory","children":['
+              ],
+              invalid_data_content: [
+                  '{"path":".test-dot-file","name":".test-dot-file","type":"file","size":0,"mime":""}'
+              ]
+          })
+    end
+
+  end
+
 end

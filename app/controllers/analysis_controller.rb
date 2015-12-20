@@ -191,8 +191,8 @@ class AnalysisController < ApplicationController
     items_count = 0
 
     Dir.foreach(path) do |item|
-      # skip dot paths: 'current path' and 'parent path'
-      next if item == '.' || item == '..'
+      # skip dot paths ('current path', 'parent path') and hidden files/folders (that start with a dot)
+      next if item == '.' || item == '..' || item.start_with?('.')
 
       full_path = File.join(path, item)
 
@@ -212,8 +212,9 @@ class AnalysisController < ApplicationController
 
     has_children = false
     Dir.foreach(path) do |item|
-      # skip dot paths: 'current path' and 'parent path'
-      next if item == '.' || item == '..'
+      # skip dot paths ('current path', 'parent path') and hidden files/folders (that start with a dot)
+      next if item == '.' || item == '..' || item.start_with?('.')
+
       has_children = true
       break
     end
