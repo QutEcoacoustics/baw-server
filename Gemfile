@@ -54,12 +54,12 @@ gem 'paperclip', '~> 4.3.0'
 gem 'bootstrap-sass', '~> 3.3.4'
 # for sass variables: http://getbootstrap.com/customize/#less-variables
 # sprockets-rails gem is included via rails dependency
-gem 'font-awesome-sass', '~> 4.4.0'
+gem 'font-awesome-sass', '~> 4.5.0'
 
 # for rails 3, 4
 gem 'kaminari'
 gem 'dotiw','~> 3.0.1'
-gem 'recaptcha', '~> 0.4.0',  require: 'recaptcha/rails'
+gem 'recaptcha', '~> 1.0.2',  require: 'recaptcha/rails'
 
 # for proper timezone support
 gem 'tzinfo', '~> 1.2.2'
@@ -141,7 +141,7 @@ group :development, :test do
   gem 'capistrano-rvm', '~> 0.1.2'
   gem 'capistrano-rails', '~> 1.1.2'
   gem 'capistrano-newrelic', '~> 0.0.8'
-  gem 'capistrano-passenger', '~> 0.1.0'
+  gem 'capistrano-passenger', '~> 0.2.0'
 
   gem 'rack-mini-profiler', '~> 0.9.2'
   gem 'i18n-tasks', '~> 0.9.0'
@@ -193,12 +193,12 @@ group :development, :test do
   gem 'capybara', '~> 2.5.0'
 
   gem 'rspec', '~> 3.4.0'
-  gem 'simplecov', '~> 0.10.0', require: false
+  gem 'simplecov', '~> 0.11.1', require: false
   gem 'launchy', '~> 2.4.3'
   gem 'json_spec', '~> 1.1.4'
   gem 'database_cleaner', '~> 1.5.0'
 
-  gem 'coveralls', '~> 0.8.5', require: false
+  gem 'coveralls', '~> 0.8.10', require: false
   gem 'codeclimate-test-reporter', '~> 0.4.5', require: nil
 end
 

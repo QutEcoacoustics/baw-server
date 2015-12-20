@@ -16,15 +16,15 @@ if ENV['TRAVIS']
   # coveralls
   Coveralls.wear!('rails')
 
-  SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter[
+  SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter.new([
       Coveralls::SimpleCov::Formatter,
       CodeClimate::TestReporter::Formatter
-  ]
+  ])
 
 else
-  SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter[
+  SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter.new([
       SimpleCov::Formatter::HTMLFormatter
-  ]
+  ])
 end
 
 # start code coverage

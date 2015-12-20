@@ -5,7 +5,9 @@ Recaptcha.configure do |config|
   # config.proxy = 'http://myproxy.com.au:8080'
   # Uncomment if you want to use the newer version of the API,
   # only works for versions >= 0.3.7:
-  config.api_version = 'v2'
+
+  # only supports v2
+  #config.api_version = 'v2'
 
   # disable recaptcha in development
   config.skip_verify_env.push('development')
