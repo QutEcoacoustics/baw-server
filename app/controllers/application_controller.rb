@@ -186,12 +186,15 @@ class ApplicationController < ActionController::Base
   end
 
   def render_error(status_symbol, detail_message, error, method_name, options = {})
-    options.merge!(error_details: detail_message)
+    options.merge!(error_details: detail_message) # overwrites error_details
+    options.reverse_merge!(should_notify_error: true) # default for should_notify_error is true, value in options will overwrite
+
+    # notify of exception when head requests AND when should_notify_error is true
+    should_notify_error = request.head? && (options.include?(:should_notify_error) && options[:should_notify_error])
 
     json_response = Settings.api_response.build(status_symbol, nil, options)
 
-    # notify of exception for head requests only
-    if request.head?
+    if should_notify_error
       ExceptionNotifier.notify_exception(
           error,
           env: request.env,
@@ -293,7 +296,8 @@ class ApplicationController < ActionController::Base
         :not_found,
         "Could not find the requested item: #{error.message}",
         error,
-        'item_not_found_error_response'
+        'item_not_found_error_response',
+        {should_notify_error: false}
     )
   end
 
