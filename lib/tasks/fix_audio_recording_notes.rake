@@ -1,4 +1,5 @@
 require 'csv'
+require 'json'
 
 # run using e.g.
 # bin/rake baw:audio_recordings:repair_notes RAILS_ENV=staging
@@ -12,6 +13,13 @@ namespace :baw do
       puts ''
       AudioRecording.where('notes IS NOT NULL').order(id: :asc).find_each do |ar| # .where('id > 240000')
         ar_notes = AudioRecording.connection.select_all(AudioRecording.where(id: ar.id).select(:notes).to_sql).first['notes']
+        
+        # don't try to fix things that are already json
+        if valid_json?(ar_notes) do
+          print '-'
+          next
+        end
+        
         note_lines = ar_notes.split(/\r\n|\n\r|\r|\n/).reject { |item| item.blank? }
 
         total_note_lines = note_lines.size
@@ -81,8 +89,8 @@ namespace :baw do
           #print '.'
         end
 =end
-        ar.save!
-        p '.'
+        ar.save!(validate: false)
+        print '.'
       end
 
       puts ''
@@ -180,4 +188,13 @@ def fix_overlap(hash)
   # save infos back to hash
   hash['duration_adjustment_for_overlap'] = infos
 
+end
+
+def valid_json?(json)
+  begin
+    JSON.parse(json)
+    return true
+  rescue JSON::ParserError => e
+    return false
+  end
 end
