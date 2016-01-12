@@ -89,8 +89,7 @@ namespace :baw do
           #print '.'
         end
 =end
-        ar.notes = ar_notes
-        ar.save!(validate: false)
+        ar.update_columns(notes: result_hash.to_json, updated_at: Time.zone.now)
         print '.'
       end
 
