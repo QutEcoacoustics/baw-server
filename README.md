@@ -54,7 +54,8 @@ Documentation can be generated from tests using [rspec_api_documentation](https:
 
 See the `bin/setup` script for more information.
 
-We deploy using [Capistrano](https://github.com/capistrano/capistrano).
+We deploy Ansible (and in particular [Ansistrano/](http://ansistrano.com/)).
+Ansistrano playbooks are currently private but we have plans to release them.
 
 If you want to use background workers, you'll need to set up [Redis](http://redis.io/).
 
