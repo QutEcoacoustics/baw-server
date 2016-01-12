@@ -89,6 +89,7 @@ namespace :baw do
           #print '.'
         end
 =end
+        ar.notes = ar_notes
         ar.save!(validate: false)
         print '.'
       end
