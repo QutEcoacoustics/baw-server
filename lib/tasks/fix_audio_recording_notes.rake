@@ -15,7 +15,7 @@ namespace :baw do
         ar_notes = AudioRecording.connection.select_all(AudioRecording.where(id: ar.id).select(:notes).to_sql).first['notes']
         
         # don't try to fix things that are already json
-        if valid_json?(ar_notes) do
+        if valid_json?(ar_notes)
           print '-'
           next
         end
