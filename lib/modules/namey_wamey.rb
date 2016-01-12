@@ -7,8 +7,7 @@ class NameyWamey
     # @param [Hash|string] extra_options
     # @param [string] extension
     # @return [string] suggested file name
-    def create_audio_recording_name(audio_recording, start_offset, end_offset, extra_options, extension)
-
+    def create_audio_recording_name(audio_recording, start_offset, end_offset, extra_options = '', extension = '')
       start_offset_float = start_offset.to_f
       end_offset_float = end_offset.to_f
       abs_start = audio_recording[:recorded_date].dup.advance(seconds: start_offset_float).strftime('%Y%m%d_%H%M%S')
@@ -28,9 +27,7 @@ class NameyWamey
         site_id = site.id.to_s
       end
 
-      extra_options_formatted = get_extra_options(extra_options)
-
-      "#{site_name}_#{site_id}_#{audio_recording[:id]}_#{abs_start}_#{duration}#{extra_options_formatted}.#{extension.trim('.', '')}".parameterize('_')
+      build_name([site_name, site_id, audio_recording[:id], abs_start, duration], extra_options, extension)
     end
 
     # Suggest a file name based on project, extra options and extension.
@@ -38,9 +35,7 @@ class NameyWamey
     # @param [Hash|string] extra_options
     # @param [string] extension
     # @return [string] suggested file name
-    def create_project_name(project, extra_options, extension)
-      extra_options_formatted = get_extra_options(extra_options)
-
+    def create_project_name(project, extra_options = '', extension = '')
       if project.is_a?(Hash)
         id = project[:id]
         name = project[:name]
@@ -49,7 +44,7 @@ class NameyWamey
         name = project.name
       end
 
-      "#{name}_#{id}#{extra_options_formatted}.#{extension.trim('.', '')}".parameterize('_')
+      build_name([name, id], extra_options, extension)
     end
 
     # Suggest a file name based on project, site, extra options and extension.
@@ -58,9 +53,7 @@ class NameyWamey
     # @param [Hash|string] extra_options
     # @param [string] extension
     # @return [string] suggested file name
-    def create_site_name(project, site, extra_options, extension)
-      extra_options_formatted = get_extra_options(extra_options)
-
+    def create_site_name(project, site, extra_options = '', extension = '')
       if project.is_a?(Hash)
         project_id = project[:id]
         project_name = project[:name]
@@ -77,7 +70,7 @@ class NameyWamey
         site_name = site.name
       end
 
-      "#{project_name}_#{project_id}_#{site_name}_#{site_id}#{extra_options_formatted}.#{extension.trim('.', '')}".parameterize('_')
+      build_name([project_name, project_id, site_name, site_id], extra_options, extension)
     end
 
     # Suggest a file name based on user, extra options and extension.
@@ -85,9 +78,7 @@ class NameyWamey
     # @param [Hash|string] extra_options
     # @param [string] extension
     # @return [string] suggested file name
-    def create_user_name(user, extra_options, extension)
-      extra_options_formatted = get_extra_options(extra_options)
-
+    def create_user_name(user, extra_options = '', extension = '')
       if user.is_a?(Hash)
         user_id = user[:id]
         user_name = user[:name]
@@ -96,7 +87,7 @@ class NameyWamey
         user_name = user.user_name
       end
 
-      "#{user_name}_#{user_id}#{extra_options_formatted}.#{extension.trim('.', '')}".parameterize('_')
+      build_name([user_name, user_id], extra_options, extension)
     end
 
     def trim(string_value, chars_to_replace, char_to_insert)
@@ -112,10 +103,22 @@ class NameyWamey
           extra_options_formatted = "#{value}" if extra_options_formatted.blank?
           extra_options_formatted = "#{extra_options_formatted}_#{value}" unless extra_options_formatted.blank?
         end
+      elsif extra_options.is_a?(Array)
+        extra_options.each do |value|
+          extra_options_formatted = "#{value}" if extra_options_formatted.blank?
+          extra_options_formatted = "#{extra_options_formatted}_#{value}" unless extra_options_formatted.blank?
+        end
       else
         extra_options_formatted = extra_options
       end
       extra_options_formatted.size > 0 ? '_' + extra_options_formatted : extra_options_formatted
+    end
+
+    def build_name(standard, extra, extension)
+      name = standard.join('_') + get_extra_options(extra)
+      name_parameterize = name.parameterize('_')
+
+      name_parameterize + '.' + NameyWamey.trim(extension, '.', '').parameterize('_')
     end
   end
 end

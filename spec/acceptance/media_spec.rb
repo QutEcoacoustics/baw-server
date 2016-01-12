@@ -826,4 +826,25 @@ resource 'Media' do
     end
   end
 
+  context 'content disposition format' do
+    get '/audio_recordings/:audio_recording_id/media.:format?start_offset=:start_offset&end_offset=:end_offset' do
+      standard_media_parameters
+      let(:authentication_token) { reader_token }
+      let(:format) { 'wav' }
+
+
+      media_request_options(
+          :get,
+          'MEDIA (audio get request wav as reader with shallow path)',
+          :ok,
+          {
+              document: document_media_requests,
+              expected_response_content_type: 'audio/wav',
+              expected_partial_response_header_value: {
+                  'Content-Disposition' => '20120326_070700_1_0.wav"'
+              }
+          })
+    end
+  end
+
 end

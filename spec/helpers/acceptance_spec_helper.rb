@@ -197,6 +197,16 @@ def acceptance_checks_shared(request, opts = {})
 
   end
 
+  unless opts[:expected_partial_response_header_value].blank?
+    expected_response_headers = opts[:expected_partial_response_header_value]
+    actual_response_headers = opts[:actual_response_headers]
+
+    expected_response_headers.each do |key, value|
+      expect(actual_response_headers).to include(key), "Mismatch: Did not find '#{key}' in response headers: #{actual_response_headers.keys.join(', ')}."
+      expect(actual_response_headers[key]).to include(value), "Mismatch: Value '#{actual_response_headers[key].inspect}' for '#{key}' in response headers did not include expected value #{value.inspect}."
+    end
+  end
+
   unless opts[:expected_response_header_values].blank?
     expected_response_headers = opts[:expected_response_header_values]
     actual_response_headers = opts[:actual_response_headers]

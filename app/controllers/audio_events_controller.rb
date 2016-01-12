@@ -181,19 +181,19 @@ class AudioEventsController < ApplicationController
     file_name = 'annotations'
 
     unless user.blank?
-      file_name = NameyWamey.create_user_name(user, '', '')
+      file_name = NameyWamey.create_user_name(user)
     end
 
     unless project.blank?
-      file_name = NameyWamey.create_project_name(project, '', '')
+      file_name = NameyWamey.create_project_name(project)
     end
 
     unless site.blank?
-      file_name = NameyWamey.create_site_name(site.projects.first, site, '', '')
+      file_name = NameyWamey.create_site_name(site.projects.first, site)
     end
 
     unless audio_recording.blank?
-      file_name = NameyWamey.create_audio_recording_name(audio_recording, start_offset, end_offset, '', '')
+      file_name = NameyWamey.create_audio_recording_name(audio_recording, start_offset, end_offset)
     end
 
     # create query
