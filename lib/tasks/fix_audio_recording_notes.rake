@@ -1,7 +1,7 @@
 require 'csv'
 
 # run using e.g.
-# bin/rake baw:export:audio_recordings['1028 1029','/tmp/test_export_ar.csv'] RAILS_ENV=development
+# bin/rake baw:audio_recordings:repair_notes RAILS_ENV=staging
 namespace :baw do
   namespace :audio_recordings do
 
@@ -39,6 +39,7 @@ namespace :baw do
 
         fix_overlap(result_hash)
 
+=begin
         # check that all lines are recognised
         single_value_keys = [
             'dep_entity_id', 'dep_entity_name', 'dep_entity_createdby', 'dep_entity_createdby_name',
@@ -79,7 +80,9 @@ namespace :baw do
         else
           #print '.'
         end
-
+=end
+        ar.save!
+        p '.'
       end
 
       puts ''
@@ -161,6 +164,7 @@ def fix_overlap(hash)
 
   end
 
+=begin
   if keys.size > 0 && infos.size != keys.size
     puts ''
     puts keys
@@ -168,6 +172,7 @@ def fix_overlap(hash)
     puts infos
     puts ''
   end
+=end
 
   # remove overlap_strings from hash
   keys.each { |k| hash.delete(k) }
