@@ -20,6 +20,14 @@ namespace :baw do
           next
         end
         
+        # fix a previous mistake we made, RE: storing an escaped JSON string
+        is_escaped, parsed_hash = escaped_json?(ar_notes)
+        if is_escaped
+          ar.update_columns(notes: parsed_hash, updated_at: Time.zone.now)
+          print '*'
+          next
+        end
+        
         note_lines = ar_notes.split(/\r\n|\n\r|\r|\n/).reject { |item| item.blank? }
 
         total_note_lines = note_lines.size
@@ -89,7 +97,9 @@ namespace :baw do
           #print '.'
         end
 =end
-        ar.update_columns(notes: result_hash.to_json, updated_at: Time.zone.now)
+        ar.update_columns(notes: result_hash, updated_at: Time.zone.now)
+        #ar.notes(result_hash)
+        #ar.save!(validate: false)
         print '.'
       end
 
@@ -196,5 +206,14 @@ def valid_json?(json)
     return true
   rescue JSON::ParserError => e
     return false
+  end
+end
+
+def escaped_json?(json)
+  begin
+    obj = JSON.parse(ActiveSupport::JSON.decode(json))
+    return true, obj
+  recuse JSON::ParserError => e
+    return false, nil
   end
 end
