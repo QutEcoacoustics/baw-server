@@ -137,7 +137,7 @@ module Api
         result[:meta][:paging][:total] = opts[:total]
       end
 
-      # max page
+      # paging: max page
       if !opts[:total].blank? && !opts[:items].blank?
         max_page = (opts[:total].to_f / opts[:items].to_f).ceil
         opts[:max_page] = max_page
@@ -270,11 +270,12 @@ module Api
 
         # add paging
         new_query = filter_query.query_paging(new_query)
+        items = filter_query.is_paging_disabled? ? total : filter_query.paging[:items]
 
         # update options
         opts.merge!(
             page: filter_query.paging[:page],
-            items: filter_query.paging[:items],
+            items: items,
             total: total
         )
       end

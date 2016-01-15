@@ -26,7 +26,7 @@ module Filter
       # POST body
       page = params[:paging][:page] if page.blank? && !params[:paging].blank?
       items = params[:paging][:items] if items.blank? && !params[:paging].blank?
-      disable_paging = params[:paging][:disable_paging] if disable_paging.blank? && !params[:paging].blank?
+      disable_paging = params[:paging][:disable_paging] if !params[:paging].blank? && disable_paging.blank?
 
       # page and items are mutually exclusive with disable_paging
       fail CustomErrors::UnprocessableEntityError, 'Page and items are mutually exclusive with disable_paging' if (!page.blank? || !items.blank?) && !disable_paging.blank?
