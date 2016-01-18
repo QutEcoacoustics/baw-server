@@ -510,12 +510,34 @@ resource 'Sites' do
             }
         }
     }.to_json }
-    standard_request_options(:post, 'FILTER (site ids in, as writer)', :ok,
+    standard_request_options(:post, 'FILTER (project ids, as writer)', :ok,
                              {
                                  expected_json_path: 'data/0/project_ids/0',
                                  data_item_count: 1,
                                  regex_match: /"project_ids"\:\[[0-9]+\]/,
                                  response_body_content: "\"project_ids\":[",
+                                 invalid_content: "\"project_ids\":[{\"id\":"
+                             })
+  end
+
+  post '/sites/filter' do
+    let(:authentication_token) { writer_token }
+    let(:raw_post) { {
+        'filter' => {
+            'audio_recordings.id' => {
+                'eq' => @site.audio_recordings.first.id.to_s
+            }
+        },
+        'projection' => {
+            'include' => ['id', 'name']
+        }
+    }.to_json }
+    standard_request_options(:post, 'FILTER (audio recordings id, as writer)', :ok,
+                             {
+                                 expected_json_path: 'data/0/project_ids/0',
+                                 data_item_count: 1,
+                                 regex_match: /"data":\[\{"id":[0-9]+,"name":"site name [0-9]+","project_ids":\[[0-9]+\]/,
+                                 response_body_content: "\"projection\":{\"include\":[\"id\",\"name\"]}",
                                  invalid_content: "\"project_ids\":[{\"id\":"
                              })
   end
