@@ -38,11 +38,11 @@ gem 'coffee-rails', '~> 4.1.0'
 gem 'therubyracer', '~> 0.12.1', platforms: :ruby, require: 'v8'
 
 # Use jquery as the JavaScript library
-gem 'jquery-rails', '~> 4.0.0'
+gem 'jquery-rails', '~> 4.1.0'
 # Turbolinks makes following links in your web application faster. Read more: https://github.com/rails/turbolinks
 #gem 'turbolinks'
 # Build JSON APIs with ease. Read more: https://github.com/rails/jbuilder
-gem 'jbuilder', '~> 2.3.0'
+gem 'jbuilder', '~> 2.4.0'
 
 gem 'haml', '~> 4.0.6'
 gem 'haml-rails', '~> 0.9.0'
@@ -59,7 +59,7 @@ gem 'font-awesome-sass', '~> 4.5.0'
 # for rails 3, 4
 gem 'kaminari'
 gem 'dotiw','~> 3.0.1'
-gem 'recaptcha', '~> 1.0.2',  require: 'recaptcha/rails'
+gem 'recaptcha', '~> 1.1.0',  require: 'recaptcha/rails'
 
 # for proper timezone support
 gem 'tzinfo', '~> 1.2.2'
@@ -145,7 +145,7 @@ group :development, :test do
 
   gem 'rack-mini-profiler', '~> 0.9.2'
   gem 'i18n-tasks', '~> 0.9.0'
-  gem 'bullet', '~> 4.14.1'
+  gem 'bullet', '~> 5.0.0'
 
   # Spring speeds up development by keeping your application running in the background. Read more: https://github.com/rails/spring
   #gem 'spring', '~> 1.4.0'
@@ -162,7 +162,7 @@ group :development, :test do
   gem 'guard', '~> 2.13.0'
   gem 'guard-rspec', '~> 4.6.0'
   gem 'guard-yard', '~> 2.1.4', require: false
-  gem 'rubocop', '~> 0.35.1', require: false
+  gem 'rubocop', '~> 0.36.0', require: false
   gem 'haml-lint', require: false
 
   gem 'fakeredis', '~> 0.5.0', require: 'fakeredis/rspec'
@@ -190,7 +190,7 @@ group :development, :test do
 
   gem 'rspec-rails', '~> 3.4.0'
   gem 'factory_girl_rails', '~> 4.5.0'
-  gem 'capybara', '~> 2.5.0'
+  gem 'capybara', '~> 2.6.1'
 
   gem 'rspec', '~> 3.4.0'
   gem 'simplecov', '~> 0.11.1', require: false
