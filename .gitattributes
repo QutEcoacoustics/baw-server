@@ -5,15 +5,13 @@
 # overriding patterns
 
 # Definitively text files 
-*.txt text
-*.c text
-*.h text
-*.rb  text
-*.gemspec diff=ruby
-*.rb diff=ruby
-*.ru diff=ruby
-Rakefile diff=ruby
-bin/* diff=ruby
+*.txt text eol=lf
+*.rb  text eol=lf
+*.gemspec diff=ruby eol=lf
+*.rb diff=ruby eol=lf
+*.ru diff=ruby eol=lf
+Rakefile diff=ruby eol=lf
+bin/* diff=ruby eol=lf
 
 
 # Ensure those won't be messed up with
