@@ -43,3 +43,5 @@ external_modules.log
 
 # ignore private static pages
 /app/views/public/_*
+
+/.vagrant

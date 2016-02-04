@@ -11,30 +11,65 @@ The bioacoustic workbench server. Manages the structure and audio data. Provides
 
 ## Dependencies
 
+This project's dev environment is managed by [Vagrant](https://www.vagrantup.com/downloads.html) and Ansible. Ensure Vagrant `v1.8.1` or greater is installed on your dev machine.
+
 Audio processing and other long-running tasks are performed using [baw-workers](https://github.com/QutBioacoustics/baw-workers).
 
-You may need to install baw-workers' dependencies.
+## Environment Setup
 
-## Development and Testing
+Clone this repo, then change directory to your cloned directory and on your **host** machine run
 
-Clone this repo, then change directory to your cloned directory and run
+	$ vagrant up
 
-	$ bin/setup
+This will prepare a complete development environment. To see what is involved in the setup, look at the  [`provision/vagrant.yml`](provision/vagrant.yml) and [`bin/setup`](bin/setup) files.
 
-This will do some basic setup and give some information about what to do next.
+### Reprovision
 
-To see the setup instructions again, look at the file [`bin/setup`](bin/setup). 
+To reprovision your environment, on your **host** machine run:
 
-To run the server you'll need to create some configuration files.
+    $ vagrant provision
 
-Create two configuration files based on `/config/settings/default.yml`:
+or
+
+    $ vagrant up --provision
+
+### Destroy you environment
+
+To remove the baw-server development environment completely,  on your **host** machine run:
+
+    $ vagrant destroy
+
+## Development
+
+Start by running, on your **host** machine:
+
+    $ vagrant up
+    $ vagrant ssh
+	# in the dev machine
+	$ cd ~/baw-server
+
+End by suspending the virtual machine:
+
+    # exit the ssh session
+	$ exit
+	# on the host machine:
+    $ vagrant halt
+
+When running the server in `development` or `test` modes, these configuration files will be used:
 
  - `/config/settings/development.yml`
  - `/config/settings/test.yml`
 
-Then create the test database using `rake db:create RAILS_ENV=test`.
-Then migrate and seed the test database using `rake db:migrate db:seed RAILS_ENV=test`.
+They are based on files based on `/config/settings/default.yml`.
 
+### Web Server
+
+To start the development server
+
+    
+    $ thin start
+
+### Tests
 The tests are run using Guard:
 
     $ bundle exec guard
@@ -46,16 +81,30 @@ Tests can also be run with a specified seed using rspec:
 
     $ rspec --seed <number>
 
+## Documentation
+
 Documentation can be generated from tests using [rspec_api_documentation](https://github.com/zipmark/rspec_api_documentation):
 
     $ bin/rake docs:generate GENERATE_DOC=true
 
+## Other commands
+These commands should be executed automatically but are listed because they are helpful to know.
+
+
+- Create the test database: `bin/rake db:create RAILS_ENV=test`
+- Then migrate and seed the test database: `bin/rake db:migrate db:seed RAILS_ENV=test`
+- Prepare the local development database:`bin/rake db:setup RAILS_ENV=development`
+- Run rspec tests: `bin/rspec --format progress --color`
+- Generate API documentation: `bin/rake docs:generate GENERATE_DOC=true`
+
+
 ## Production setup and deploying
 
-See the `bin/setup` script for more information.
+Create production settings file `config/settings/production.yml` based on `config/settings/default.yml`.  
+Create staging settings file `config/settings/staging.yml` based on `config/settings/default.yml`.
 
-We deploy Ansible (and in particular [Ansistrano/](http://ansistrano.com/)).
-Ansistrano playbooks are currently private but we have plans to release them.
+We deploy using Ansible (and in particular [Ansistrano](http://ansistrano.com/)).
+Our Ansible playbooks are currently private but we have plans to release them.
 
 If you want to use background workers, you'll need to set up [Redis](http://redis.io/).
 
