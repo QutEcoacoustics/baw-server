@@ -15,6 +15,10 @@ This project's dev environment is managed by [Vagrant](https://www.vagrantup.com
 
 Audio processing and other long-running tasks are performed using [baw-workers](https://github.com/QutBioacoustics/baw-workers).
 
+## Contributing
+
+See the [git-flow.md](./git-flow.md) document for guidelines on making changes.
+
 ## Environment Setup
 
 Clone this repo, then change directory to your cloned directory and on your **host** machine run
@@ -33,11 +37,13 @@ or
 
     $ vagrant up --provision
 
-### Destroy you environment
+### Destroy your environment
 
-To remove the baw-server development environment completely,  on your **host** machine run:
+If you wish to remove the baw-server development environment completely,  on your **host** machine run:
 
     $ vagrant destroy
+
+This will **completely delete the development VM**.
 
 ## Development
 
@@ -66,7 +72,6 @@ They are based on files based on `/config/settings/default.yml`.
 
 To start the development server
 
-    
     $ thin start
 
 ### Tests
@@ -94,7 +99,7 @@ These commands should be executed automatically but are listed because they are 
 - Create the test database: `bin/rake db:create RAILS_ENV=test`
 - Then migrate and seed the test database: `bin/rake db:migrate db:seed RAILS_ENV=test`
 - Prepare the local development database:`bin/rake db:setup RAILS_ENV=development`
-- Run rspec tests: `bin/rspec --format progress --color`
+- Run rspec tests: `bin/rspec`
 - Generate API documentation: `bin/rake docs:generate GENERATE_DOC=true`
 
 
@@ -107,6 +112,10 @@ We deploy using Ansible (and in particular [Ansistrano](http://ansistrano.com/))
 Our Ansible playbooks are currently private but we have plans to release them.
 
 If you want to use background workers, you'll need to set up [Redis](http://redis.io/).
+
+## Credits
+
+This project was originally created and maintained by [@cofiem](https://github.com/cofiem) - all the amazing things it does are a credit to them.
 
 ## Licence
 Apache License, Version 2.0

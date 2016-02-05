@@ -19,7 +19,7 @@
       rvm1_rubies:
         # use full 'ruby-*' name
         # last ruby listed is the default
-        - "ruby-2.2.2"
+        - "ruby-2.2.4"
   pre_tasks: []
   roles:
     - role: "{{ source_path }}/roles/audio_tools"

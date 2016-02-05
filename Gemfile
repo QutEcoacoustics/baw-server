@@ -133,8 +133,11 @@ gem 'baw-workers', git: 'https://github.com/QutBioacoustics/baw-workers.git', br
 
 # gems that are only required on development machines or for testings
 group :development, :test do
-  gem 'quiet_assets'
+  # allow remote debugging
+  gem 'ruby-debug-ide'
+  gem 'debase'
 
+  gem 'quiet_assets'
 
   gem 'rack-mini-profiler', '~> 0.9.2'
   gem 'i18n-tasks', '~> 0.9.0'

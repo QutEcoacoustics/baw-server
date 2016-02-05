@@ -3,6 +3,16 @@
 
 ansible_files = '/home/vagrant/baw-provision'
 
+
+# http://matthewcooper.net/2015/01/15/automatically-installing-vagrant-plugin-dependencies/
+required_plugins = %w( vagrant-winnfsd )
+required_plugins.each do |plugin|
+  unless Vagrant.has_plugin? plugin || ARGV[0] == 'plugin'
+    command_separator = Vagrant::Util::Platform.windows? ? " & " : ";"
+    exec "vagrant plugin install #{plugin}#{command_separator}vagrant #{ARGV.join(" ")}"
+  end
+end
+
 # All Vagrant configuration is done below. The "2" in Vagrant.configure
 # configures the configuration version (we support older styles for
 # backwards compatibility). Please don't change it unless you know what
@@ -22,13 +32,13 @@ Vagrant.configure(2) do |config|
   # config.vm.box_check_update = false
 
   # Create a forwarded port mapping which allows access to a specific port
-  # within the machine from a port on the host machine. In the example below,
-  # accessing "localhost:8080" will access port 80 on the guest machine.
-  config.vm.network 'forwarded_port', guest: 3000, host: 8080
+  # within the machine from a port on the host machine.
+  config.vm.network 'forwarded_port', guest: 3000, host: 3000
+  config.vm.network 'forwarded_port', guest: 1236, host: 26166
 
-  # Create a private network, which allows host-only access to the machine
-  # using a specific IP.
-  # config.vm.network "private_network", ip: "192.168.33.10"
+  # Create a private network, which allows host-only access to the machine.
+  # A private dhcp network is required for NFS to work (on Windows hosts, at least)
+  config.vm.network "private_network", type: "dhcp"
 
   # Create a public network, which generally matched to bridged network.
   # Bridged networks make the machine appear as another physical device on
@@ -39,7 +49,7 @@ Vagrant.configure(2) do |config|
   # the path on the host to the actual folder. The second argument is
   # the path on the guest to mount the folder. And the optional third
   # argument is a set of non-required options.
-  config.vm.synced_folder './', '/home/vagrant/baw-server'
+  config.vm.synced_folder './', '/home/vagrant/baw-server', type: "nfs"
   config.vm.synced_folder '../baw-private/Ansible', ansible_files
 
   # Provider-specific configuration so you can fine-tune various
