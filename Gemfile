@@ -135,13 +135,6 @@ gem 'baw-workers', git: 'https://github.com/QutBioacoustics/baw-workers.git', br
 group :development, :test do
   gem 'quiet_assets'
 
-  # capistrano gems
-  gem 'capistrano', '~> 3.4.0'
-  gem 'capistrano-bundler', '~> 1.1.3'
-  gem 'capistrano-rvm', '~> 0.1.2'
-  gem 'capistrano-rails', '~> 1.1.2'
-  gem 'capistrano-newrelic', '~> 0.0.8'
-  gem 'capistrano-passenger', '~> 0.2.0'
 
   gem 'rack-mini-profiler', '~> 0.9.2'
   gem 'i18n-tasks', '~> 0.9.0'
