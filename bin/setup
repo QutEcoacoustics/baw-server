@@ -9,6 +9,8 @@ puts "Application located in #{APP_ROOT}."
 Dir.chdir APP_ROOT do
   puts '== Installing dependencies =='
   system 'gem install bundler --conservative --no-ri --no-rdoc'
+  # only this gem fails to install without sudo
+  system 'sudo gem install ruby-debug-ide'
   system 'bundle check || bundle install'
 
   puts "\n== Removing logs, tempfiles, docs, and test results =="

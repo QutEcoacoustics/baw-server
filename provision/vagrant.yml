@@ -12,14 +12,15 @@
   hosts: all
   vars:
     source_path: "/home/vagrant/baw-provision"
-    # rvm
-    rvm:
-      # note: rubies not in this list will automatically be uninstalled
-      # see: /roles/common/tasks/main.yml
-      rvm1_rubies:
-        # use full 'ruby-*' name
-        # last ruby listed is the default
-        - "ruby-2.2.4"
+    baw:
+      # rvm
+      rvm:
+        # note: rubies not in this list will automatically be uninstalled
+        # see: /roles/common/tasks/main.yml
+        rvm1_rubies:
+          # use full 'ruby-*' name
+          # last ruby listed is the default
+          - "ruby-2.2.4"
   pre_tasks: []
   roles:
     - role: "{{ source_path }}/roles/audio_tools"
@@ -27,6 +28,7 @@
         - /tmp/ffmpeg
       tags: ["audio_tools"]
     - role: "{{ source_path }}/roles/ruby"
+      ruby_rvm_extra_user: vagrant
       tags: ["ruby"]
     - role: "{{ source_path }}/external/ANXS.postgresql"
       postgresql_version: "{{ baw_database.version }}"
