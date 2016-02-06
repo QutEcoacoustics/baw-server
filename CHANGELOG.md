@@ -2,10 +2,22 @@
 
 ## Unreleased
 
+## [Release 0.17.2](https://github.com/QutBioacoustics/baw-server/releases/tag/0.17.2) (2016-02-06)
+
+ - 2016-02-06
+   - (chore) added support for Vagrant workflows. Development environments are not setup automatically. [commits](https://github.com/QutBioacoustics/baw-server/compare/814a90e44b635addde83568e01cf8e4ed23a2f8b...e292a2241e14c5374d2fddb1ea9b58e1fd2ab29b)
+ - 2016-01-15
+   - paging meta data fixed when `disable_paging` option is set [#248](https://github.com/QutBioacoustics/baw-server/issues/248)
+ - 2016-01-13
+   - fixed errors for `AudioRecording.notes` field normalization script [commits](https://github.com/QutBioacoustics/baw-server/compare/8f6d356df3df35a6629e32212698aed0992abcea...e984ccfe0cd8737262c8550cec577d435ac1d366)
+ - 2016-01-12
+   - filenames for media downloads are fixed [#247](https://github.com/QutBioacoustics/baw-server/issues/247)
+ - 2015-12-20
+   - disabled email notifications for not found errors [#245](https://github.com/QutBioacoustics/baw-server/issues/245)
+   - filter out dotfiles from analysis job dir list [#244](https://github.com/QutBioacoustics/baw-server/issues/244)
  - 2015-11-22
     - analysis job api is no longer recursive [#196](https://github.com/QutBioacoustics/baw-server/issues/196)
     - Added an option to download the annotations CSV files with a custom timezone offset [#240](https://github.com/QutBioacoustics/baw-server/issues/240)
-
  - 2015-11-01
     - Added link to download annotations created by a user, and a list of annotation download links per site [#233](https://github.com/QutBioacoustics/baw-server/issues/233)
 
