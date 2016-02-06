@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-## [Release 0.17.2](https://github.com/QutBioacoustics/baw-server/releases/tag/0.17.2) (2016-02-06)
+## [Release 0.18.0](https://github.com/QutBioacoustics/baw-server/releases/tag/0.18.0) (2016-02-06)
 
  - 2016-02-06
    - (chore) added support for Vagrant workflows. Development environments are not setup automatically. [commits](https://github.com/QutBioacoustics/baw-server/compare/814a90e44b635addde83568e01cf8e4ed23a2f8b...e292a2241e14c5374d2fddb1ea9b58e1fd2ab29b)
