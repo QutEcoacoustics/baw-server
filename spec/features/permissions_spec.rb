@@ -1,4 +1,4 @@
-require 'spec_helper'
+require 'rails_helper'
 
 describe 'MANAGE Project Permissions as valid user with write permission', :type => :feature do
   before(:each) do
@@ -31,8 +31,10 @@ end
 
 describe 'Deny Project Permissions as valid user with read permission only', :type => :feature do
   before(:each) do
-    @permission = FactoryGirl.create(:read_permission)
-    login_as @permission.user, scope: :user
+    @creator_user = FactoryGirl.create(:user)
+    @login_user = FactoryGirl.create(:user)
+    @permission = FactoryGirl.create(:read_permission, creator: @creator_user, user: @login_user)
+    login_as @login_user, scope: :user
   end
 
   it 'denies access to list project permissions' do

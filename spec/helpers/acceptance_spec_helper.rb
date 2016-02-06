@@ -11,35 +11,6 @@ def document_media_requests
   end
 end
 
-def standard_request(description, expected_status, expected_json_path = nil, document = true, response_body_content = nil, invalid_content = nil)
-  # Execute request with ids defined in above let(:id) statements
-  example "#{description} - #{expected_status}", :document => document do
-    do_request
-
-    actual_response = response_body
-    the_request_method = method
-    the_request_path = path
-
-    message_prefix = "Requested #{the_request_method} #{the_request_path} expecting"
-
-    expect(status).to eq(expected_status), "#{message_prefix} status #{expected_status} but got status #{status}. Response body was #{actual_response}"
-
-    expect(actual_response).to have_json_path(expected_json_path), "#{message_prefix} to find '#{expected_json_path}' in '#{actual_response}'" unless expected_json_path.blank?
-    # this check ensures that there is an assertion when the content is not blank.
-    #expect(actual_response).to be_blank, "#{message_prefix} blank response, but got #{actual_response}" if response_body_content.blank? && expected_json_path.blank?
-    expect(actual_response).to include(response_body_content), "#{message_prefix} to find '#{response_body_content}' in '#{actual_response}'" unless response_body_content.blank?
-    expect(actual_response).to_not include(invalid_content), "#{message_prefix} not to find '#{response_body_content}' in '#{actual_response}'" unless invalid_content.blank?
-
-    # 406 when you can't send what they want, 415 when they send what you don't want
-
-    if block_given?
-      yield(actual_response)
-    end
-
-    actual_response
-  end
-end
-
 # Execute the example.
 # @param [String] http_method
 # @param [String] description
@@ -61,15 +32,7 @@ def standard_request_options(http_method, description, expected_status, opts = {
 
   # 406 when you can't send what they want, 415 when they send what you don't want
 
-  example "#{http_method} #{description} - #{expected_status}", :document => opts[:document] do
-
-    if defined?(include_test_file) && include_test_file
-      uuid = audio_recording.uuid
-      path = "./tmp/_cached_analysis_jobs/system/#{uuid[0, 2].downcase}/#{uuid.downcase}/Test/test-CASE.csv"
-
-      FileUtils.mkpath File.dirname(path)
-      File.open(path, 'w') { |f| f.write('{"content":"This is some content."}') }
-    end
+  example "#{http_method} #{description} - #{expected_status}", document: opts[:document] do
 
     expected_error_class = opts[:expected_error_class]
     expected_error_regexp = opts[:expected_error_regexp]
@@ -92,7 +55,14 @@ def standard_request_options(http_method, description, expected_status, opts = {
           })
 
       opts = acceptance_checks_shared(request, opts)
-      acceptance_checks_json(opts)
+
+      if opts[:expected_response_content_type] == 'application/json'
+        acceptance_checks_json(opts)
+      else
+        message_prefix = "Requested #{opts[:actual_method]} #{opts[:actual_path]} expecting"
+        check_response_content(opts, message_prefix)
+        check_invalid_content(opts, message_prefix)
+      end
 
     end
 
@@ -227,6 +197,16 @@ def acceptance_checks_shared(request, opts = {})
 
   end
 
+  unless opts[:expected_partial_response_header_value].blank?
+    expected_response_headers = opts[:expected_partial_response_header_value]
+    actual_response_headers = opts[:actual_response_headers]
+
+    expected_response_headers.each do |key, value|
+      expect(actual_response_headers).to include(key), "Mismatch: Did not find '#{key}' in response headers: #{actual_response_headers.keys.join(', ')}."
+      expect(actual_response_headers[key]).to include(value), "Mismatch: Value '#{actual_response_headers[key].inspect}' for '#{key}' in response headers did not include expected value #{value.inspect}."
+    end
+  end
+
   unless opts[:expected_response_header_values].blank?
     expected_response_headers = opts[:expected_response_header_values]
     actual_response_headers = opts[:actual_response_headers]
@@ -237,9 +217,9 @@ def acceptance_checks_shared(request, opts = {})
     end
 
     if opts[:expected_response_header_values_match]
-    difference = actual_response_headers.keys - expected_response_headers.keys
-    expect(difference).to be_empty, "Mismatch: response headers differ by #{difference}: \nExpected: #{expected_response_headers} \nActual: #{actual_response_headers}"
-      end
+      difference = actual_response_headers.keys - expected_response_headers.keys
+      expect(difference).to be_empty, "Mismatch: response headers differ by #{difference}: \nExpected: #{expected_response_headers} \nActual: #{actual_response_headers}"
+    end
   end
 
   opts
@@ -270,12 +250,12 @@ def acceptance_checks_json(opts = {})
   actual_response_parsed = opts[:actual_response].blank? ? nil : JsonSpec::Helpers::parse_json(opts[:actual_response])
   data_present = !opts[:actual_response].blank? &&
       !actual_response_parsed.blank? &&
-          actual_response_parsed.include?('data') &&
-          !actual_response_parsed['data'].blank?
+      actual_response_parsed.include?('data') &&
+      !actual_response_parsed['data'].blank?
 
   data_included = !opts[:actual_response].blank? &&
       !actual_response_parsed.blank? &&
-          actual_response_parsed.include?('data')
+      actual_response_parsed.include?('data')
 
 
   if data_included && actual_response_parsed['data'].is_a?(Array)
@@ -321,9 +301,9 @@ def acceptance_checks_json(opts = {})
 
   if defined?(expected_unordered_ids) &&
       !expected_unordered_ids.blank? &&
-          expected_unordered_ids.is_a?(Array) &&
-          data_present &&
-          actual_response_parsed['data'].is_a?(Array)
+      expected_unordered_ids.is_a?(Array) &&
+      data_present &&
+      actual_response_parsed['data'].is_a?(Array)
 
     actual_ids = actual_response_parsed['data'].map { |x| x.include?('id') ? x['id'] : nil }
     expect(actual_ids).to match_array(expected_unordered_ids)

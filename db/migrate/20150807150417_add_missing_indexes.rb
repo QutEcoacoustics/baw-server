@@ -1,6 +1,12 @@
 class AddMissingIndexes < ActiveRecord::Migration
   def change
     # from lol_dba: add indexes on foreign keys
+    add_index :analysis_jobs, :creator_id
+    add_index :analysis_jobs, :updater_id
+    add_index :analysis_jobs, :deleter_id
+    add_index :analysis_jobs, :script_id
+    add_index :analysis_jobs, :saved_search_id
+
     add_index :audio_event_comments, :audio_event_id
     add_index :audio_event_comments, :creator_id
     add_index :audio_event_comments, :updater_id
@@ -24,20 +30,6 @@ class AddMissingIndexes < ActiveRecord::Migration
     add_index :bookmarks, :creator_id
     add_index :bookmarks, :updater_id
 
-    add_index :datasets, :creator_id
-    add_index :datasets, :updater_id
-    add_index :datasets, :project_id
-
-    add_index :datasets_sites, :site_id
-    add_index :datasets_sites, [:dataset_id, :site_id]
-    add_index :datasets_sites, :dataset_id
-
-    add_index :jobs, :creator_id
-    add_index :jobs, :updater_id
-    add_index :jobs, :deleter_id
-    add_index :jobs, :script_id
-    add_index :jobs, :dataset_id
-
     add_index :permissions, [:project_id, :user_id]
     add_index :permissions, :project_id
     add_index :permissions, :user_id
@@ -52,6 +44,13 @@ class AddMissingIndexes < ActiveRecord::Migration
     add_index :projects_sites, [:project_id, :site_id]
     add_index :projects_sites, :site_id
 
+    add_index :saved_searches, :creator_id
+    add_index :saved_searches, :deleter_id
+
+    add_index :projects_saved_searches, :project_id
+    add_index :projects_saved_searches, [:project_id, :saved_search_id]
+    add_index :projects_saved_searches, :saved_search_id
+
     add_index :scripts, :creator_id
     add_index :scripts, :updated_by_script_id
 
@@ -64,8 +63,8 @@ class AddMissingIndexes < ActiveRecord::Migration
 
     # from consistency_fail: add indexes on attributes that are unique
     add_index  :bookmarks, [:name, :creator_id], name: 'bookmarks_name_creator_id_uidx', unique: true, order: {name: :asc}
-    add_index  :datasets, [:name, :creator_id], name: 'datasets_name_creator_id_uidx', unique: true, order: {name: :asc}
-    add_index  :jobs, :name, name: 'jobs_name_uidx', unique: true, order: {name: :asc}
+    add_index  :saved_searches, [:name, :creator_id], name: 'saved_searches_name_creator_id_uidx', unique: true, order: {name: :asc}
+    add_index  :analysis_jobs, [:name, :creator_id], name: 'analysis_jobs_name_uidx', unique: true, order: {name: :asc}
     add_index  :permissions, [:project_id, :level, :user_id], name: 'permissions_level_user_id_project_id_uidx', unique: true, order: {project_id: :asc, user_id: :asc}
     add_index  :projects, :name, name: 'projects_name_uidx', unique: true, order: {name: :asc}
     add_index  :tags, :text, name: 'tags_text_uidx', unique: true, order: {text: :asc}

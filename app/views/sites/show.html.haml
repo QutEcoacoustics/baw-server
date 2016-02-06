@@ -71,13 +71,17 @@
               Visualise
 
         %h4 Recent Annotations
-        %ul.nav.nav-pills.nav-stacked{style: 'margin-bottom:0'}
-          - AudioEvent.in_site(@site).each do |ae|
-            %li
-              - tag = ae.tags.first
-              - tag_text = tag.blank? ? '(not tagged)' : tag.text
-              - user = ae.updater.blank? ? ae.updater : ae.creator
-              = link_to "\"#{tag_text}\" by #{user.blank? ? '(unknown)' : user.user_name}", make_listen_path(ae)
+        - site_audio_events = AudioEvent.in_site(@site)
+        - if site_audio_events.blank?
+          %p There are no annotations in this site.
+        - else
+          %ul.nav.nav-pills.nav-stacked{style: 'margin-bottom:0'}
+            - site_audio_events.each do |ae|
+              %li
+                - tag = ae.tags.first
+                - tag_text = tag.blank? ? '(not tagged)' : tag.text
+                - user = ae.updater.blank? ? ae.updater : ae.creator
+                = link_to "\"#{tag_text}\" by #{user.blank? ? '(unknown)' : user.user_name}", make_listen_path(ae)
 
     - if @site.latitude.blank? || @site.longitude.blank?
       .col-sm-6.map-placeholder

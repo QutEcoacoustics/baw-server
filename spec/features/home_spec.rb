@@ -1,4 +1,4 @@
-require 'spec_helper'
+require 'rails_helper'
 
 describe 'visiting the homepage', :type => :feature do
   before do

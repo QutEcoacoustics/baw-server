@@ -3,6 +3,10 @@
 
 = render partial: 'shared/sidebar_user', locals: {user_show: @user, user_current: current_user}
 
+- is_valid_user = defined?(@user) && !@user.nil? && !@user.id.nil?
+- is_admin = Access::Check.is_admin?(current_user)
+- is_own_profile = is_valid_user && User.same_user?(current_user, @user)
+
 .col-sm-4
   .thumbnail
     = image_tag @user.image.url(:span3), alt: @user.user_name
@@ -18,38 +22,60 @@
         - signed_up_date = @user.created_at
         = signed_up_date.blank? ? '?' : format_sidebar_datetime(signed_up_date, ago: false)
 
-.col-sm-4
-  %ul.list-group
-    %li.list-group-item
-      %span.fa.fa-home{aria: {hidden: 'true' }}
-      Projects
-      %span.badge
-        = number_with_delimiter(Access::Query.projects_accessible(@user).count, delimiter: ' ')
-    %li.list-group-item
-      %span.fa.fa-tags{aria: {hidden: 'true' }}
-      Tags
-      %span.badge
-        = number_with_delimiter(Access::Query.taggings_modified(@user).count, delimiter: ' ')
-    %li.list-group-item
-      %span.fa.fa-bookmark{aria: {hidden: 'true' }}
-      Bookmarks
-      %span.badge
-        = number_with_delimiter(Access::Query.bookmarks_modified(@user).count, delimiter: ' ')
-
-.col-sm-4
-  %ul.list-group
-    %li.list-group-item
-      %span.fa.fa-map-marker{aria: {hidden: 'true' }}
-      Sites
-      %span.badge
-        =  number_with_delimiter(Access::Query.sites(@user, Access::Core.levels_allow).count, delimiter: ' ')
-    %li.list-group-item
-      %span.fa.fa-bullseye{aria: {hidden: 'true' }}
-      Annotations
-      %span.badge
-        = number_with_delimiter(Access::Query.audio_events_modified(@user).count, delimiter: ' ')
-    %li.list-group-item
-      %span.fa.fa-comments{aria: {hidden: 'true' }}
-      Comments
-      %span.badge
-        = number_with_delimiter(Access::Query.audio_event_comments_modified(@user).count, delimiter: ' ')
+  - if is_own_profile
+    .row
+      .col-sm-12
+        .panel.panel-default
+          .panel-heading
+            Download
+          %ul.list-group
+            %li.list-group-item
+              = link_to 'Annotations you\'ve created', make_user_annotations_path(@user.id)
+.col-sm-8
+  .row
+    .col-sm-6
+      %ul.list-group
+        %li.list-group-item
+          %span.fa.fa-home{aria: {hidden: 'true' }}
+          Projects
+          %span.badge
+            = number_with_delimiter(Access::Query.projects_accessible(@user).count, delimiter: ' ')
+        %li.list-group-item
+          %span.fa.fa-tags{aria: {hidden: 'true' }}
+          Tags
+          %span.badge
+            = number_with_delimiter(Access::Query.taggings_modified(@user).count, delimiter: ' ')
+        %li.list-group-item
+          %span.fa.fa-bookmark{aria: {hidden: 'true' }}
+          Bookmarks
+          %span.badge
+            = number_with_delimiter(Access::Query.bookmarks_modified(@user).count, delimiter: ' ')
+    .col-sm-6
+      %ul.list-group
+        %li.list-group-item
+          %span.fa.fa-map-marker{aria: {hidden: 'true' }}
+          Sites
+          %span.badge
+            =  number_with_delimiter(Access::Query.sites(@user, Access::Core.levels_allow).count, delimiter: ' ')
+        %li.list-group-item
+          %span.fa.fa-bullseye{aria: {hidden: 'true' }}
+          Annotations
+          %span.badge
+            = number_with_delimiter(Access::Query.audio_events_modified(@user).count, delimiter: ' ')
+        %li.list-group-item
+          %span.fa.fa-comments{aria: {hidden: 'true' }}
+          Comments
+          %span.badge
+            = number_with_delimiter(Access::Query.audio_event_comments_modified(@user).count, delimiter: ' ')
+  .row
+    .col-sm-12
+      .panel.panel-default
+        .panel-heading
+          Most Popular Tags
+        %ul.list-group
+          - Tag.user_top_tags(@user).each do |item|
+            %li.list-group-item
+              %span.fa.fa-tag{aria: {hidden: 'true' }}
+              = link_to item['tag_name'], make_library_tag_search_path(item['tag_name'])
+              %span.badge
+                = item['tag_count']

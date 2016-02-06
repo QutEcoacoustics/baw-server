@@ -10,10 +10,10 @@ class Project < ActiveRecord::Base
   has_many :permissions, inverse_of: :project
   has_many :readers, -> { where("permissions.level = 'reader'").uniq }, through: :permissions, source: :user
   has_many :writers, -> { where("permissions.level = 'writer'").uniq }, through: :permissions, source: :user
-  has_many :owners,  -> { where("permissions.level = 'owner'").uniq }, through: :permissions, source: :user
+  has_many :owners, -> { where("permissions.level = 'owner'").uniq }, through: :permissions, source: :user
   has_and_belongs_to_many :sites, -> { uniq }
-  has_many :datasets, inverse_of: :project
-  has_many :jobs, through: :datasets
+  has_and_belongs_to_many :saved_searches, inverse_of: :projects
+  has_many :analysis_jobs, through: :saved_searches
 
   accepts_nested_attributes_for :permissions
 
@@ -45,10 +45,11 @@ class Project < ActiveRecord::Base
         custom_fields: lambda { |project, user|
 
           # do a query for the attributes that may not be in the projection
-          fresh_project = Project.find(project.id)
+          # instance or id can be nil
+          fresh_project = (project.nil? || project.id.nil?) ? nil : Project.find(project.id)
 
           project_hash = {}
-          project_hash[:site_ids] = fresh_project.sites.pluck(:id)
+          project_hash[:site_ids] = fresh_project.nil? ? nil : fresh_project.sites.pluck(:id).flatten
 
           [project, project_hash]
         },
@@ -57,7 +58,40 @@ class Project < ActiveRecord::Base
         defaults: {
             order_by: :name,
             direction: :desc
-        }
+        },
+        valid_associations: [
+            {
+                join: Permission,
+                on: Permission.arel_table[:project_id].eq(Project.arel_table[:id]),
+                available: true
+            },
+            {
+                join: Arel::Table.new(:projects_sites),
+                on: Project.arel_table[:id].eq(Arel::Table.new(:projects_sites)[:project_id]),
+                available: false,
+                associations: [
+                    {
+                        join: Site,
+                        on: Arel::Table.new(:projects_sites)[:site_id].eq(Site.arel_table[:id]),
+                        available: true
+                    }
+                ]
+
+            },
+            {
+                join: Arel::Table.new(:projects_saved_searches),
+                on: Project.arel_table[:id].eq(Arel::Table.new(:projects_saved_searches)[:project_id]),
+                available: false,
+                associations: [
+                    {
+                        join: SavedSearch,
+                        on: Arel::Table.new(:projects_saved_searches)[:saved_search_id].eq(SavedSearch.arel_table[:id]),
+                        available: true
+                    }
+                ]
+
+            }
+        ]
     }
   end
 end

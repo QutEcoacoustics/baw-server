@@ -1,55 +1,67 @@
 class TaggingsController < ApplicationController
+  include Api::ControllerHelper
 
-  load_and_authorize_resource :audio_recording, except: [:user_index]
-  load_and_authorize_resource :audio_event, except: [:user_index]
-  load_resource :tagging, except: [:user_index]
-  load_and_authorize_resource :user, only: [:user_index]
-  respond_to :json
-
-  # /audio_recordings/:audio_recording_id/audio_events/:audio_event_id/
-
-  # GET /taggings
-  # GET /taggings.json
-  # GET /taggings/user/1/tags.json
+  # GET /audio_recordings/:audio_recording_id/audio_events/:audio_event_id/taggings
   def index
-    # TODO update to API spec
-    if @audio_event
-      render json: @audio_event.taggings.to_json(include: [:tag])
-    else
-      render json: Tagging.all.to_json(include: [:tag])
-    end
+    do_authorize_class
+    get_audio_recording
+    get_audio_event
+    do_authorize_instance(:show, @audio_event)
+
+    @taggings, opts = Settings.api_response.response_advanced(
+        api_filter_params,
+        Access::Query.audio_event_taggings(@audio_event, current_user),
+        Tagging,
+        Tagging.filter_settings
+    )
+    respond_index(opts)
   end
 
-  # GET /taggings/user/:user_id/tags
+  # GET /user_accounts/:user_id/taggings
   def user_index
-    if params[:user_id]
-      render json: Tagging
-      .includes(:tag, :audio_event)
-      .where('(audio_events_tags.updater_id = ? OR audio_events_tags.creator_id = ?)', params[:user_id], params[:user_id])
-      .order('updated_at DESC, created_at DESC')
-      .limit(10)
-      .to_json(include: [:tag, :audio_event])
-    else
-      raise ActiveRecord::RecordNotFound, 'Could not get taggings.'
-    end
+    do_authorize_class
+    @user = User.find(params[:user_id])
+    do_authorize_instance(:show, @user)
+
+    @taggings, opts = Settings.api_response.response_advanced(
+        api_filter_params,
+        Access::Query.taggings(current_user).where(creator: @user),
+        Tagging,
+        Tagging.filter_settings
+    )
+    respond_index(opts)
   end
 
-  # GET /taggings/1
-  # GET /taggings/1.json
+  # GET /audio_recordings/:audio_recording_id/audio_events/:audio_event_id/taggings/:id
   def show
-    respond_with @tagging
+    do_load_resource
+    get_audio_recording
+    get_audio_event
+    do_authorize_instance
+    do_authorize_instance(:show, @audio_event)
+
+    respond_show
   end
 
-  # GET /taggings/new
-  # GET /taggings/new.json
+  # GET /audio_recordings/:audio_recording_id/audio_events/:audio_event_id/taggings/new
   def new
-    respond_with @tagging
+    do_new_resource
+    do_set_attributes
+    get_audio_recording
+    get_audio_event
+    do_authorize_instance
+
+    respond_show
   end
 
-  # POST /taggings
-  # POST /taggings.json
+  # POST /audio_recordings/:audio_recording_id/audio_events/:audio_event_id/taggings/
   def create
-    # @audio_recording, @audio_event and @tagging are initialised/preloaded by load_resource/load_and_authorize_resource
+    do_new_resource
+    do_set_attributes(tagging_params)
+    get_audio_recording
+    get_audio_event
+    do_authorize_instance
+
     if tagging_params && tagging_params[:tag_attributes] && tagging_params[:tag_attributes][:text]
       tag = Tag.where(text: tagging_params[:tag_attributes][:text]).first
       if tag.blank?
@@ -68,29 +80,68 @@ class TaggingsController < ApplicationController
     @tagging.audio_event = @audio_event
 
     if @tagging.save
-      render json: @tagging, status: :created
+      respond_create_success(audio_recording_audio_event_tagging_path(@audio_recording, @audio_event, @tagging))
     else
-      render json: @tagging.errors, status: :unprocessable_entity
+      respond_change_fail
     end
   end
 
-  # PUT /taggings/1
-  # PUT /taggings/1.json
+  # PUT|PATCH /audio_recordings/:audio_recording_id/audio_events/:audio_event_id/taggings/:id
   def update
-    respond_with Tagging.update(params[:id], params[:tag])
+    do_load_resource
+    get_audio_recording
+    get_audio_event
+    do_authorize_instance
+
+    if @tagging.update_attributes(tagging_params)
+      respond_show
+    else
+      respond_change_fail
+    end
   end
 
-  # DELETE /taggings/1
-  # DELETE /taggings/1.json
+  ## DELETE /audio_recordings/:audio_recording_id/audio_events/:audio_event_id/taggings/:id
   def destroy
+    do_load_resource
+    do_authorize_instance
+
     @tagging.destroy
 
-    respond_to do |format|
-      format.json { no_content_as_json }
-    end
+    respond_destroy
+  end
+
+  # GET|POST /taggings/filter
+  def filter
+    do_authorize_class
+
+    filter_response, opts = Settings.api_response.response_advanced(
+        api_filter_params,
+        Access::Query.taggings(current_user),
+        Tagging,
+        Tagging.filter_settings
+    )
+    respond_filter(filter_response, opts)
   end
 
   private
+
+  # override resource name
+  def resource_name
+    'tagging'
+  end
+
+  def get_audio_recording
+    @audio_recording = AudioRecording.find(params[:audio_recording_id])
+  end
+
+  def get_audio_event
+    @audio_event = AudioEvent.find(params[:audio_event_id])
+
+    # avoid the same project assigned more than once to a site
+    if defined?(@tagging) && @tagging.audio_event.blank?
+      @tagging.audio_event = @audio_event
+    end
+  end
 
   def tagging_params
     params.require(:tagging).permit(:audio_event_id, :tag_id, tag_attributes: [:is_taxanomic, :text, :type_of_tag, :retired, :notes])

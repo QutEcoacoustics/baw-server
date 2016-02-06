@@ -1,4 +1,4 @@
-require 'spec_helper'
+require 'rails_helper'
 
 describe 'CRUD Sites as valid user with write permission', :type => :feature do
   before(:each) do
@@ -62,24 +62,32 @@ describe 'CRUD Sites as valid user with write permission', :type => :feature do
   end
 
   it 'downloads csv file successfully' do
+    @site.tzinfo_tz = 'Australia - Brisbane'
+    @site.save!
+
     visit project_site_path(@project, @site)
     expect(page).to have_content('Annotations (csv)')
     click_link('Annotations (csv)')
 
-    expected_url = "#{data_request_url}?annotation_download[project_id]=#{@project.id}&annotation_download[site_id]=#{@site.id}&annotation_download[name]=#{CGI::escape(@site.name)}"
+    expected_url = "#{data_request_url}?selected_project_id=#{@project.id}&selected_site_id=#{@site.id}&selected_timezone_name=Brisbane"
 
     expect(current_url).to eq(expected_url)
-    expect(page).to have_content("The CSV file containing annotations for #{@site.name} will download shortly.")
+    expect(page).to have_content("Please select the time zone for the CSV file containing annotations for #{@site.name}. Select time zone")
 
-    click_link('here')
+    select('(GMT+10:00) Brisbane', from: 'select_timezone_offset')
+    click_link('Download Annotations')
 
-    expected_url = download_site_audio_events_url(@project, @site)
+    expected_url = download_site_audio_events_url(@project, @site, selected_timezone_name: 'Brisbane')
     expect(current_url).to eq(expected_url)
 
-    expect(page).to have_content('audio_event_id, audio_recording_id, audio_recording_uuid, audio_recording_start_date_utc, audio_recording_start_time_utc, audio_recording_start_datetime_utc, event_created_at_date_utc, event_created_at_time_utc, event_created_at_datetime_utc, projects, site_id, site_name, event_start_date_utc, event_start_time_utc, event_start_datetime_utc, event_start_seconds, event_end_seconds, event_duration_seconds, low_frequency_hertz, high_frequency_hertz, is_reference, created_by, updated_by, common_name_tags, common_name_tag_ids, species_name_tags, species_name_tag_ids, other_tags, other_tag_ids, listen_url, library_url')
+    expect(page).to have_content('audio_event_id, audio_recording_id, audio_recording_uuid, audio_recording_start_date_brisbane_10_00, audio_recording_start_time_brisbane_10_00, audio_recording_start_datetime_brisbane_10_00, event_created_at_date_brisbane_10_00, event_created_at_time_brisbane_10_00, event_created_at_datetime_brisbane_10_00, projects, site_id, site_name, event_start_date_brisbane_10_00, event_start_time_brisbane_10_00, event_start_datetime_brisbane_10_00, event_start_seconds, event_end_seconds, event_duration_seconds, low_frequency_hertz, high_frequency_hertz, is_reference, created_by, updated_by, common_name_tags, common_name_tag_ids, species_name_tags, species_name_tag_ids, other_tags, other_tag_ids, listen_url, library_url')
 
     expect(page.response_headers['Content-Disposition']).to include('attachment; filename="')
     expect(page.response_headers['Content-Type']).to eq('text/csv')
+
+    @site.tzinfo_tz = nil
+    @site.save!
+
   end
 end
 

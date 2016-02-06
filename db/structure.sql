@@ -30,6 +30,53 @@ SET default_tablespace = '';
 SET default_with_oids = false;
 
 --
+-- Name: analysis_jobs; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE TABLE analysis_jobs (
+    id integer NOT NULL,
+    name character varying(255) NOT NULL,
+    annotation_name character varying(255),
+    custom_settings text NOT NULL,
+    script_id integer NOT NULL,
+    creator_id integer NOT NULL,
+    updater_id integer,
+    deleter_id integer,
+    deleted_at timestamp without time zone,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL,
+    description text,
+    saved_search_id integer NOT NULL,
+    started_at timestamp without time zone,
+    overall_status character varying DEFAULT 'new'::character varying NOT NULL,
+    overall_status_modified_at timestamp without time zone NOT NULL,
+    overall_progress text NOT NULL,
+    overall_progress_modified_at timestamp without time zone NOT NULL,
+    overall_count integer NOT NULL,
+    overall_duration_seconds numeric(14,4) NOT NULL
+);
+
+
+--
+-- Name: analysis_jobs_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE analysis_jobs_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: analysis_jobs_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE analysis_jobs_id_seq OWNED BY analysis_jobs.id;
+
+
+--
 -- Name: audio_event_comments; Type: TABLE; Schema: public; Owner: -; Tablespace: 
 --
 
@@ -37,7 +84,7 @@ CREATE TABLE audio_event_comments (
     id integer NOT NULL,
     audio_event_id integer NOT NULL,
     comment text NOT NULL,
-    flag character varying,
+    flag character varying(255),
     flag_explain text,
     flagger_id integer,
     flagged_at timestamp without time zone,
@@ -85,8 +132,8 @@ CREATE TABLE audio_events (
     updater_id integer,
     deleter_id integer,
     deleted_at timestamp without time zone,
-    created_at timestamp without time zone,
-    updated_at timestamp without time zone
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL
 );
 
 
@@ -117,10 +164,10 @@ CREATE TABLE audio_events_tags (
     id integer NOT NULL,
     audio_event_id integer NOT NULL,
     tag_id integer NOT NULL,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL,
     creator_id integer NOT NULL,
-    updater_id integer,
-    created_at timestamp without time zone,
-    updated_at timestamp without time zone
+    updater_id integer
 );
 
 
@@ -157,18 +204,18 @@ CREATE TABLE audio_recordings (
     sample_rate_hertz integer,
     channels integer,
     bit_rate_bps integer,
-    media_type character varying NOT NULL,
+    media_type character varying(255) NOT NULL,
     data_length_bytes bigint NOT NULL,
     file_hash character varying(524) NOT NULL,
-    status character varying DEFAULT 'new'::character varying,
+    status character varying(255) DEFAULT 'new'::character varying,
     notes text,
     creator_id integer NOT NULL,
     updater_id integer,
     deleter_id integer,
-    created_at timestamp without time zone,
-    updated_at timestamp without time zone,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL,
     deleted_at timestamp without time zone,
-    original_file_name character varying,
+    original_file_name character varying(255),
     recorded_utc_offset character varying(20)
 );
 
@@ -200,13 +247,13 @@ CREATE TABLE bookmarks (
     id integer NOT NULL,
     audio_recording_id integer,
     offset_seconds numeric(10,4),
-    name character varying,
+    name character varying(255),
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL,
     creator_id integer NOT NULL,
     updater_id integer,
-    created_at timestamp without time zone,
-    updated_at timestamp without time zone,
     description text,
-    category character varying
+    category character varying(255)
 );
 
 
@@ -230,116 +277,18 @@ ALTER SEQUENCE bookmarks_id_seq OWNED BY bookmarks.id;
 
 
 --
--- Name: datasets; Type: TABLE; Schema: public; Owner: -; Tablespace: 
---
-
-CREATE TABLE datasets (
-    id integer NOT NULL,
-    name character varying NOT NULL,
-    start_time time without time zone,
-    end_time time without time zone,
-    start_date date,
-    end_date date,
-    filters character varying,
-    number_of_samples integer,
-    number_of_tags integer,
-    types_of_tags character varying,
-    description text,
-    creator_id integer NOT NULL,
-    updater_id integer,
-    project_id integer NOT NULL,
-    created_at timestamp without time zone,
-    updated_at timestamp without time zone,
-    dataset_result_file_name character varying,
-    dataset_result_content_type character varying,
-    dataset_result_file_size integer,
-    dataset_result_updated_at timestamp without time zone,
-    tag_text_filters text
-);
-
-
---
--- Name: datasets_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE datasets_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: datasets_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE datasets_id_seq OWNED BY datasets.id;
-
-
---
--- Name: datasets_sites; Type: TABLE; Schema: public; Owner: -; Tablespace: 
---
-
-CREATE TABLE datasets_sites (
-    dataset_id integer NOT NULL,
-    site_id integer NOT NULL
-);
-
-
---
--- Name: jobs; Type: TABLE; Schema: public; Owner: -; Tablespace: 
---
-
-CREATE TABLE jobs (
-    id integer NOT NULL,
-    name character varying NOT NULL,
-    annotation_name character varying,
-    script_settings text,
-    dataset_id integer NOT NULL,
-    script_id integer NOT NULL,
-    creator_id integer NOT NULL,
-    updater_id integer,
-    deleter_id integer,
-    deleted_at timestamp without time zone,
-    created_at timestamp without time zone,
-    updated_at timestamp without time zone,
-    description text
-);
-
-
---
--- Name: jobs_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE jobs_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: jobs_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE jobs_id_seq OWNED BY jobs.id;
-
-
---
 -- Name: permissions; Type: TABLE; Schema: public; Owner: -; Tablespace: 
 --
 
 CREATE TABLE permissions (
     id integer NOT NULL,
     creator_id integer NOT NULL,
-    level character varying NOT NULL,
+    level character varying(255) NOT NULL,
     project_id integer NOT NULL,
     user_id integer NOT NULL,
     updater_id integer,
-    created_at timestamp without time zone,
-    updated_at timestamp without time zone
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL
 );
 
 
@@ -368,20 +317,20 @@ ALTER SEQUENCE permissions_id_seq OWNED BY permissions.id;
 
 CREATE TABLE projects (
     id integer NOT NULL,
-    name character varying NOT NULL,
+    name character varying(255) NOT NULL,
     description text,
-    urn character varying,
+    urn character varying(255),
     notes text,
     creator_id integer NOT NULL,
     updater_id integer,
     deleter_id integer,
     deleted_at timestamp without time zone,
-    image_file_name character varying,
-    image_content_type character varying,
+    image_file_name character varying(255),
+    image_content_type character varying(255),
     image_file_size integer,
     image_updated_at timestamp without time zone,
-    created_at timestamp without time zone,
-    updated_at timestamp without time zone
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL
 );
 
 
@@ -405,6 +354,16 @@ ALTER SEQUENCE projects_id_seq OWNED BY projects.id;
 
 
 --
+-- Name: projects_saved_searches; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE TABLE projects_saved_searches (
+    project_id integer NOT NULL,
+    saved_search_id integer NOT NULL
+);
+
+
+--
 -- Name: projects_sites; Type: TABLE; Schema: public; Owner: -; Tablespace: 
 --
 
@@ -415,11 +374,46 @@ CREATE TABLE projects_sites (
 
 
 --
+-- Name: saved_searches; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE TABLE saved_searches (
+    id integer NOT NULL,
+    name character varying NOT NULL,
+    description text,
+    stored_query text NOT NULL,
+    creator_id integer NOT NULL,
+    created_at timestamp without time zone NOT NULL,
+    deleter_id integer,
+    deleted_at timestamp without time zone
+);
+
+
+--
+-- Name: saved_searches_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE saved_searches_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: saved_searches_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE saved_searches_id_seq OWNED BY saved_searches.id;
+
+
+--
 -- Name: schema_migrations; Type: TABLE; Schema: public; Owner: -; Tablespace: 
 --
 
 CREATE TABLE schema_migrations (
-    version character varying NOT NULL
+    version character varying(255) NOT NULL
 );
 
 
@@ -429,23 +423,16 @@ CREATE TABLE schema_migrations (
 
 CREATE TABLE scripts (
     id integer NOT NULL,
-    name character varying NOT NULL,
-    description character varying,
-    notes text,
-    settings_file_file_name character varying,
-    settings_file_content_type character varying,
-    settings_file_file_size integer,
-    settings_file_updated_at timestamp without time zone,
-    data_file_file_name character varying,
-    data_file_content_type character varying,
-    data_file_file_size integer,
-    data_file_updated_at timestamp without time zone,
-    analysis_identifier character varying NOT NULL,
+    name character varying(255) NOT NULL,
+    description character varying(255),
+    analysis_identifier character varying(255) NOT NULL,
     version numeric(4,2) DEFAULT 0.1 NOT NULL,
     verified boolean DEFAULT false,
-    updated_by_script_id integer,
+    group_id integer,
     creator_id integer NOT NULL,
-    created_at timestamp without time zone NOT NULL
+    created_at timestamp without time zone NOT NULL,
+    executable_command text NOT NULL,
+    executable_settings text NOT NULL
 );
 
 
@@ -474,7 +461,7 @@ ALTER SEQUENCE scripts_id_seq OWNED BY scripts.id;
 
 CREATE TABLE sites (
     id integer NOT NULL,
-    name character varying NOT NULL,
+    name character varying(255) NOT NULL,
     longitude numeric(9,6),
     latitude numeric(9,6),
     notes text,
@@ -482,12 +469,12 @@ CREATE TABLE sites (
     updater_id integer,
     deleter_id integer,
     deleted_at timestamp without time zone,
-    image_file_name character varying,
-    image_content_type character varying,
+    image_file_name character varying(255),
+    image_content_type character varying(255),
     image_file_size integer,
     image_updated_at timestamp without time zone,
-    created_at timestamp without time zone,
-    updated_at timestamp without time zone,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL,
     description text,
     tzinfo_tz character varying(255),
     rails_tz character varying(255)
@@ -514,20 +501,52 @@ ALTER SEQUENCE sites_id_seq OWNED BY sites.id;
 
 
 --
+-- Name: tag_groups; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE TABLE tag_groups (
+    id integer NOT NULL,
+    group_identifier character varying(255) NOT NULL,
+    created_at timestamp without time zone NOT NULL,
+    creator_id integer NOT NULL,
+    tag_id integer NOT NULL
+);
+
+
+--
+-- Name: tag_groups_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE tag_groups_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: tag_groups_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE tag_groups_id_seq OWNED BY tag_groups.id;
+
+
+--
 -- Name: tags; Type: TABLE; Schema: public; Owner: -; Tablespace: 
 --
 
 CREATE TABLE tags (
     id integer NOT NULL,
-    text character varying NOT NULL,
+    text character varying(255) NOT NULL,
     is_taxanomic boolean DEFAULT false NOT NULL,
-    type_of_tag character varying DEFAULT 'general'::character varying NOT NULL,
+    type_of_tag character varying(255) DEFAULT 'general'::character varying NOT NULL,
     retired boolean DEFAULT false NOT NULL,
     notes text,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL,
     creator_id integer NOT NULL,
-    updater_id integer,
-    created_at timestamp without time zone,
-    updated_at timestamp without time zone
+    updater_id integer
 );
 
 
@@ -556,31 +575,31 @@ ALTER SEQUENCE tags_id_seq OWNED BY tags.id;
 
 CREATE TABLE users (
     id integer NOT NULL,
-    email character varying NOT NULL,
-    user_name character varying NOT NULL,
-    encrypted_password character varying NOT NULL,
-    reset_password_token character varying,
+    email character varying(255) DEFAULT NULL::character varying NOT NULL,
+    user_name character varying(255) DEFAULT NULL::character varying NOT NULL,
+    encrypted_password character varying(255) DEFAULT NULL::character varying NOT NULL,
+    reset_password_token character varying(255),
     reset_password_sent_at timestamp without time zone,
     remember_created_at timestamp without time zone,
     sign_in_count integer DEFAULT 0,
     current_sign_in_at timestamp without time zone,
     last_sign_in_at timestamp without time zone,
-    current_sign_in_ip character varying,
-    last_sign_in_ip character varying,
-    confirmation_token character varying,
+    current_sign_in_ip character varying(255),
+    last_sign_in_ip character varying(255),
+    confirmation_token character varying(255),
     confirmed_at timestamp without time zone,
     confirmation_sent_at timestamp without time zone,
-    unconfirmed_email character varying,
+    unconfirmed_email character varying(255),
     failed_attempts integer DEFAULT 0,
-    unlock_token character varying,
+    unlock_token character varying(255),
     locked_at timestamp without time zone,
-    authentication_token character varying,
-    invitation_token character varying,
-    created_at timestamp without time zone,
-    updated_at timestamp without time zone,
+    authentication_token character varying(255),
+    invitation_token character varying(255),
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL,
     roles_mask integer,
-    image_file_name character varying,
-    image_content_type character varying,
+    image_file_name character varying(255),
+    image_content_type character varying(255),
     image_file_size integer,
     image_updated_at timestamp without time zone,
     preferences text,
@@ -607,6 +626,13 @@ CREATE SEQUENCE users_id_seq
 --
 
 ALTER SEQUENCE users_id_seq OWNED BY users.id;
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY analysis_jobs ALTER COLUMN id SET DEFAULT nextval('analysis_jobs_id_seq'::regclass);
 
 
 --
@@ -648,20 +674,6 @@ ALTER TABLE ONLY bookmarks ALTER COLUMN id SET DEFAULT nextval('bookmarks_id_seq
 -- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY datasets ALTER COLUMN id SET DEFAULT nextval('datasets_id_seq'::regclass);
-
-
---
--- Name: id; Type: DEFAULT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY jobs ALTER COLUMN id SET DEFAULT nextval('jobs_id_seq'::regclass);
-
-
---
--- Name: id; Type: DEFAULT; Schema: public; Owner: -
---
-
 ALTER TABLE ONLY permissions ALTER COLUMN id SET DEFAULT nextval('permissions_id_seq'::regclass);
 
 
@@ -670,6 +682,13 @@ ALTER TABLE ONLY permissions ALTER COLUMN id SET DEFAULT nextval('permissions_id
 --
 
 ALTER TABLE ONLY projects ALTER COLUMN id SET DEFAULT nextval('projects_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY saved_searches ALTER COLUMN id SET DEFAULT nextval('saved_searches_id_seq'::regclass);
 
 
 --
@@ -690,6 +709,13 @@ ALTER TABLE ONLY sites ALTER COLUMN id SET DEFAULT nextval('sites_id_seq'::regcl
 -- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
+ALTER TABLE ONLY tag_groups ALTER COLUMN id SET DEFAULT nextval('tag_groups_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: -
+--
+
 ALTER TABLE ONLY tags ALTER COLUMN id SET DEFAULT nextval('tags_id_seq'::regclass);
 
 
@@ -698,6 +724,14 @@ ALTER TABLE ONLY tags ALTER COLUMN id SET DEFAULT nextval('tags_id_seq'::regclas
 --
 
 ALTER TABLE ONLY users ALTER COLUMN id SET DEFAULT nextval('users_id_seq'::regclass);
+
+
+--
+-- Name: analysis_jobs_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+--
+
+ALTER TABLE ONLY analysis_jobs
+    ADD CONSTRAINT analysis_jobs_pkey PRIMARY KEY (id);
 
 
 --
@@ -741,22 +775,6 @@ ALTER TABLE ONLY bookmarks
 
 
 --
--- Name: datasets_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
---
-
-ALTER TABLE ONLY datasets
-    ADD CONSTRAINT datasets_pkey PRIMARY KEY (id);
-
-
---
--- Name: jobs_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
---
-
-ALTER TABLE ONLY jobs
-    ADD CONSTRAINT jobs_pkey PRIMARY KEY (id);
-
-
---
 -- Name: permissions_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
 --
 
@@ -773,6 +791,14 @@ ALTER TABLE ONLY projects
 
 
 --
+-- Name: saved_searches_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+--
+
+ALTER TABLE ONLY saved_searches
+    ADD CONSTRAINT saved_searches_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: scripts_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
 --
 
@@ -786,6 +812,14 @@ ALTER TABLE ONLY scripts
 
 ALTER TABLE ONLY sites
     ADD CONSTRAINT sites_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: tag_groups_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+--
+
+ALTER TABLE ONLY tag_groups
+    ADD CONSTRAINT tag_groups_pkey PRIMARY KEY (id);
 
 
 --
@@ -854,10 +888,31 @@ CREATE UNIQUE INDEX bookmarks_name_creator_id_uidx ON bookmarks USING btree (nam
 
 
 --
--- Name: datasets_name_creator_id_uidx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+-- Name: index_analysis_jobs_on_creator_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
 --
 
-CREATE UNIQUE INDEX datasets_name_creator_id_uidx ON datasets USING btree (name, creator_id);
+CREATE INDEX index_analysis_jobs_on_creator_id ON analysis_jobs USING btree (creator_id);
+
+
+--
+-- Name: index_analysis_jobs_on_deleter_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE INDEX index_analysis_jobs_on_deleter_id ON analysis_jobs USING btree (deleter_id);
+
+
+--
+-- Name: index_analysis_jobs_on_script_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE INDEX index_analysis_jobs_on_script_id ON analysis_jobs USING btree (script_id);
+
+
+--
+-- Name: index_analysis_jobs_on_updater_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE INDEX index_analysis_jobs_on_updater_id ON analysis_jobs USING btree (updater_id);
 
 
 --
@@ -1001,83 +1056,6 @@ CREATE INDEX index_bookmarks_on_updater_id ON bookmarks USING btree (updater_id)
 
 
 --
--- Name: index_datasets_on_creator_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
---
-
-CREATE INDEX index_datasets_on_creator_id ON datasets USING btree (creator_id);
-
-
---
--- Name: index_datasets_on_project_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
---
-
-CREATE INDEX index_datasets_on_project_id ON datasets USING btree (project_id);
-
-
---
--- Name: index_datasets_on_updater_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
---
-
-CREATE INDEX index_datasets_on_updater_id ON datasets USING btree (updater_id);
-
-
---
--- Name: index_datasets_sites_on_dataset_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
---
-
-CREATE INDEX index_datasets_sites_on_dataset_id ON datasets_sites USING btree (dataset_id);
-
-
---
--- Name: index_datasets_sites_on_dataset_id_and_site_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
---
-
-CREATE INDEX index_datasets_sites_on_dataset_id_and_site_id ON datasets_sites USING btree (dataset_id, site_id);
-
-
---
--- Name: index_datasets_sites_on_site_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
---
-
-CREATE INDEX index_datasets_sites_on_site_id ON datasets_sites USING btree (site_id);
-
-
---
--- Name: index_jobs_on_creator_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
---
-
-CREATE INDEX index_jobs_on_creator_id ON jobs USING btree (creator_id);
-
-
---
--- Name: index_jobs_on_dataset_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
---
-
-CREATE INDEX index_jobs_on_dataset_id ON jobs USING btree (dataset_id);
-
-
---
--- Name: index_jobs_on_deleter_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
---
-
-CREATE INDEX index_jobs_on_deleter_id ON jobs USING btree (deleter_id);
-
-
---
--- Name: index_jobs_on_script_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
---
-
-CREATE INDEX index_jobs_on_script_id ON jobs USING btree (script_id);
-
-
---
--- Name: index_jobs_on_updater_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
---
-
-CREATE INDEX index_jobs_on_updater_id ON jobs USING btree (updater_id);
-
-
---
 -- Name: index_permissions_on_creator_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
 --
 
@@ -1162,10 +1140,10 @@ CREATE INDEX index_scripts_on_creator_id ON scripts USING btree (creator_id);
 
 
 --
--- Name: index_scripts_on_updated_by_script_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+-- Name: index_scripts_on_group_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
 --
 
-CREATE INDEX index_scripts_on_updated_by_script_id ON scripts USING btree (updated_by_script_id);
+CREATE INDEX index_scripts_on_group_id ON scripts USING btree (group_id);
 
 
 --
@@ -1187,6 +1165,13 @@ CREATE INDEX index_sites_on_deleter_id ON sites USING btree (deleter_id);
 --
 
 CREATE INDEX index_sites_on_updater_id ON sites USING btree (updater_id);
+
+
+--
+-- Name: index_tag_groups_on_tag_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE INDEX index_tag_groups_on_tag_id ON tag_groups USING btree (tag_id);
 
 
 --
@@ -1228,7 +1213,7 @@ CREATE UNIQUE INDEX index_users_on_email ON users USING btree (email);
 -- Name: jobs_name_uidx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
 --
 
-CREATE UNIQUE INDEX jobs_name_uidx ON jobs USING btree (name);
+CREATE UNIQUE INDEX jobs_name_uidx ON analysis_jobs USING btree (name);
 
 
 --
@@ -1246,10 +1231,10 @@ CREATE UNIQUE INDEX projects_name_uidx ON projects USING btree (name);
 
 
 --
--- Name: scripts_updated_by_script_id_uidx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+-- Name: tag_groups_uidx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
 --
 
-CREATE UNIQUE INDEX scripts_updated_by_script_id_uidx ON scripts USING btree (updated_by_script_id);
+CREATE UNIQUE INDEX tag_groups_uidx ON tag_groups USING btree (tag_id, group_identifier);
 
 
 --
@@ -1271,6 +1256,46 @@ CREATE UNIQUE INDEX unique_schema_migrations ON schema_migrations USING btree (v
 --
 
 CREATE UNIQUE INDEX users_user_name_unique ON users USING btree (user_name);
+
+
+--
+-- Name: analysis_jobs_creator_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY analysis_jobs
+    ADD CONSTRAINT analysis_jobs_creator_id_fk FOREIGN KEY (creator_id) REFERENCES users(id);
+
+
+--
+-- Name: analysis_jobs_deleter_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY analysis_jobs
+    ADD CONSTRAINT analysis_jobs_deleter_id_fk FOREIGN KEY (deleter_id) REFERENCES users(id);
+
+
+--
+-- Name: analysis_jobs_saved_search_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY analysis_jobs
+    ADD CONSTRAINT analysis_jobs_saved_search_id_fk FOREIGN KEY (saved_search_id) REFERENCES saved_searches(id);
+
+
+--
+-- Name: analysis_jobs_script_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY analysis_jobs
+    ADD CONSTRAINT analysis_jobs_script_id_fk FOREIGN KEY (script_id) REFERENCES scripts(id);
+
+
+--
+-- Name: analysis_jobs_updater_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY analysis_jobs
+    ADD CONSTRAINT analysis_jobs_updater_id_fk FOREIGN KEY (updater_id) REFERENCES users(id);
 
 
 --
@@ -1442,83 +1467,11 @@ ALTER TABLE ONLY bookmarks
 
 
 --
--- Name: datasets_creator_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: fk_rails_1ba11222e1; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY datasets
-    ADD CONSTRAINT datasets_creator_id_fk FOREIGN KEY (creator_id) REFERENCES users(id);
-
-
---
--- Name: datasets_project_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY datasets
-    ADD CONSTRAINT datasets_project_id_fk FOREIGN KEY (project_id) REFERENCES projects(id);
-
-
---
--- Name: datasets_sites_dataset_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY datasets_sites
-    ADD CONSTRAINT datasets_sites_dataset_id_fk FOREIGN KEY (dataset_id) REFERENCES datasets(id);
-
-
---
--- Name: datasets_sites_site_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY datasets_sites
-    ADD CONSTRAINT datasets_sites_site_id_fk FOREIGN KEY (site_id) REFERENCES sites(id);
-
-
---
--- Name: datasets_updater_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY datasets
-    ADD CONSTRAINT datasets_updater_id_fk FOREIGN KEY (updater_id) REFERENCES users(id);
-
-
---
--- Name: jobs_creator_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY jobs
-    ADD CONSTRAINT jobs_creator_id_fk FOREIGN KEY (creator_id) REFERENCES users(id);
-
-
---
--- Name: jobs_dataset_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY jobs
-    ADD CONSTRAINT jobs_dataset_id_fk FOREIGN KEY (dataset_id) REFERENCES datasets(id);
-
-
---
--- Name: jobs_deleter_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY jobs
-    ADD CONSTRAINT jobs_deleter_id_fk FOREIGN KEY (deleter_id) REFERENCES users(id);
-
-
---
--- Name: jobs_script_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY jobs
-    ADD CONSTRAINT jobs_script_id_fk FOREIGN KEY (script_id) REFERENCES scripts(id);
-
-
---
--- Name: jobs_updater_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY jobs
-    ADD CONSTRAINT jobs_updater_id_fk FOREIGN KEY (updater_id) REFERENCES users(id);
+ALTER TABLE ONLY tag_groups
+    ADD CONSTRAINT fk_rails_1ba11222e1 FOREIGN KEY (tag_id) REFERENCES tags(id);
 
 
 --
@@ -1570,6 +1523,22 @@ ALTER TABLE ONLY projects
 
 
 --
+-- Name: projects_saved_searches_project_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY projects_saved_searches
+    ADD CONSTRAINT projects_saved_searches_project_id_fk FOREIGN KEY (project_id) REFERENCES projects(id);
+
+
+--
+-- Name: projects_saved_searches_saved_search_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY projects_saved_searches
+    ADD CONSTRAINT projects_saved_searches_saved_search_id_fk FOREIGN KEY (saved_search_id) REFERENCES saved_searches(id);
+
+
+--
 -- Name: projects_sites_project_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1594,6 +1563,22 @@ ALTER TABLE ONLY projects
 
 
 --
+-- Name: saved_searches_creator_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY saved_searches
+    ADD CONSTRAINT saved_searches_creator_id_fk FOREIGN KEY (creator_id) REFERENCES users(id);
+
+
+--
+-- Name: saved_searches_deleter_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY saved_searches
+    ADD CONSTRAINT saved_searches_deleter_id_fk FOREIGN KEY (deleter_id) REFERENCES users(id);
+
+
+--
 -- Name: scripts_creator_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1602,11 +1587,11 @@ ALTER TABLE ONLY scripts
 
 
 --
--- Name: scripts_updated_by_script_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: scripts_group_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY scripts
-    ADD CONSTRAINT scripts_updated_by_script_id_fk FOREIGN KEY (updated_by_script_id) REFERENCES scripts(id);
+    ADD CONSTRAINT scripts_group_id_fk FOREIGN KEY (group_id) REFERENCES scripts(id);
 
 
 --
@@ -1719,7 +1704,19 @@ INSERT INTO schema_migrations (version) VALUES ('20150306235304');
 
 INSERT INTO schema_migrations (version) VALUES ('20150307010121');
 
+INSERT INTO schema_migrations (version) VALUES ('20150709112116');
+
+INSERT INTO schema_migrations (version) VALUES ('20150709141712');
+
+INSERT INTO schema_migrations (version) VALUES ('20150710080933');
+
+INSERT INTO schema_migrations (version) VALUES ('20150710082554');
+
 INSERT INTO schema_migrations (version) VALUES ('20150807150417');
 
 INSERT INTO schema_migrations (version) VALUES ('20150819005323');
+
+INSERT INTO schema_migrations (version) VALUES ('20150904234334');
+
+INSERT INTO schema_migrations (version) VALUES ('20150905234917');
 

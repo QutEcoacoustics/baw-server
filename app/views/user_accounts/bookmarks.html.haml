@@ -9,24 +9,25 @@
 = render partial: 'shared/sidebar_user', locals: {user_show: @user, user_current: current_user}
 
 .col-sm-12
-  - if @user_bookmarks.empty?
-    = 'No bookmarks to show.'
-  - else
-    %p= page_entries_info @user_bookmarks
-    = paginate @user_bookmarks
+  %p= page_entries_info @user_bookmarks
+  = paginate @user_bookmarks
 
-    %table.table.table-striped.table-hover
-      %thead
-        %tr
-          %th
-            %span.fa.fa-bookmark{aria: {hidden: 'true' }}
-            Name
-          %th Category
-          %th Description
+  %table.table.table-striped.table-hover
+    %thead
+      %tr
+        %th
+          %span.fa.fa-bookmark{aria: {hidden: 'true' }}
+          Name
+        %th
+          %span.fa.fa-flag{aria: {hidden: 'true' }}
+          Category
+        %th
+          %span.fa.fa-sticky-note{aria: {hidden: 'true' }}
+          Description
 
-      %tbody
-      - @user_bookmarks.each do |bookmark|
-        %tr
-          %td= link_to bookmark.name, make_listen_path(bookmark)
-          %td= bookmark.category
-          %td= bookmark.description
+    %tbody
+    - @user_bookmarks.each do |bookmark|
+      %tr
+        %td= link_to bookmark.name, make_listen_path(bookmark)
+        %td= bookmark.category
+        %td= bookmark.description

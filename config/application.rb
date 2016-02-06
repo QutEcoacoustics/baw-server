@@ -47,15 +47,19 @@ module AWB
     # By default, each log is created under Rails.root/log/ and the log file name is <component_name>.<environment_name>.log.
 
     # The default Rails log level is warn in production env and info in any other env.
-    current_log_level = Rails.env.production? ? Logger::WARN : Logger::INFO
+    current_log_level = Logger::DEBUG
+    current_log_level = Logger::INFO if Rails.env.staging?
+    current_log_level = Logger::WARN if Rails.env.production?
 
     rails_logger = BawWorkers::MultiLogger.new(Logger.new(Rails.root.join('log', "rails.#{Rails.env}.log")))
+    rails_logger.attach(Logger.new(STDOUT)) if Rails.env.development?
     rails_logger.level = current_log_level
 
     mailer_logger = BawWorkers::MultiLogger.new(Logger.new(Settings.paths.mailer_log_file))
     mailer_logger.level = Logger.const_get(Settings.mailer.log_level)
 
     active_record_logger = BawWorkers::MultiLogger.new(Logger.new(Rails.root.join('log', "activerecord.#{Rails.env}.log")))
+    active_record_logger.attach(Logger.new(STDOUT)) if Rails.env.development?
     active_record_logger.level = current_log_level
 
     resque_logger = BawWorkers::MultiLogger.new(Logger.new(Settings.paths.worker_log_file))
@@ -72,7 +76,7 @@ module AWB
     BawWorkers::Config.logger_mailer = mailer_logger
 
     # activerecord logging
-    ActiveRecord::Base.logger =active_record_logger
+    ActiveRecord::Base.logger = active_record_logger
 
     # resque logging
     Resque.logger = resque_logger

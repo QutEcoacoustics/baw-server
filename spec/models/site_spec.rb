@@ -1,4 +1,4 @@
-require 'spec_helper'
+require 'rails_helper'
 
 latitudes = [
     {-100 => false},

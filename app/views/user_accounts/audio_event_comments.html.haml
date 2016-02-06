@@ -8,9 +8,7 @@
 
 = render partial: 'shared/sidebar_user', locals: {user_show: @user, user_current: current_user}
 
-- if @user_audio_event_comments.empty?
-  No annotation comments to show.
-- else
+.col-sm-12
   %p= page_entries_info @user_audio_event_comments
   = paginate @user_audio_event_comments
 
@@ -33,14 +31,17 @@
         - listen_link = make_listen_path(aec.audio_event)
         - library_link = make_library_path(aec.audio_event)
         - site_name = aec.audio_event.audio_recording.site.name
-      %tr
-        %td= site_name
-        %td= format_sidebar_datetime(aec.updated_at)
-        %td= truncate(aec.comment, length: 50)
-        %td
-          = link_to listen_link, target: '_self', class: 'btn btn-default btn-xs' do
-            %span.fa.fa-play{aria: {hidden: 'true'}}
-            Play
-          = link_to library_link, target: '_self', class: 'btn btn-default btn-xs' do
-            %span.fa.fa-bullseye{aria: {hidden: 'true'}}
-            Annotation
+        %tr
+          %td= site_name
+          %td= format_sidebar_datetime(aec.updated_at)
+          %td= truncate(aec.comment, length: 50)
+          %td
+            = link_to listen_link, target: '_self', class: 'btn btn-default btn-xs' do
+              %span.fa.fa-play{aria: {hidden: 'true'}}
+              Play
+            = link_to library_link, target: '_self', class: 'btn btn-default btn-xs' do
+              %span.fa.fa-bullseye{aria: {hidden: 'true'}}
+              Annotation
+            = link_to library_link, target: '_self', class: 'btn btn-default btn-xs' do
+              %span.fa.fa-comment{aria: {hidden: 'true'}}
+              Comment

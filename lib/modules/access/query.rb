@@ -30,7 +30,38 @@ module Access
         end
       end
 
-      # Get all projects for which this user has these access levels.
+      # Get lowest access level for this user for these projects (checks Permission and Project creator).
+      # @param [User] user
+      # @param [Array<Project>] projects
+      # @return [Symbol] level
+      def level_projects_lowest(user, projects)
+        projects = Access::Core.validate_projects(projects)
+        user = Access::Core.validate_user(user)
+
+        # check based on role
+        if Access::Check.is_admin?(user)
+          :owner
+        elsif Access::Check.is_standard_user?(user)
+          creator_lvl = Access::Level.project_creators(user, projects)
+          permission_user_lvl = Access::Level.permissions_user(user, projects)
+          #permission_logged_in_lvl = level_permissions_logged_in(projects)
+
+          #levels = [permission_user_lvl, permission_logged_in_lvl].flatten.compact
+          levels = [permission_user_lvl, creator_lvl].flatten.compact
+
+          levels.blank? ? :none : Access::Core.lowest(levels)
+        elsif Access::Check.is_guest?(user)
+          #permission_anon_lvl = level_permissions_anon(projects)
+          #permission_anon_lvl.blank? ? :none : Access::Core.highest([permission_anon_lvl].flatten)
+          # remove :none once additional permissions are added
+          :none
+        else
+          # guest, harvester, or invalid role
+          :none
+        end
+      end
+
+      # Get access level for this user for this project (only checks Permission).
       # @param [User] user
       # @param [Symbol, Array<Symbol>] levels
       # @return [ActiveRecord::Relation] projects
@@ -169,8 +200,10 @@ module Access
         user = Access::Core.validate_user(user)
         levels = Access::Core.validate_levels(levels)
 
-        # need to do an exists query for audio_event to tags many to many table
-        fail NotImplementedError
+        query = Tagging
+                    .joins(audio_event: [audio_recording: [:site]])
+                    .order(updated_at: :desc)
+        Access::Apply.restrictions(user, levels, query)
       end
 
       # Get all taggings of an audio event
@@ -186,19 +219,29 @@ module Access
         query.where(audio_event_id: audio_event.id)
       end
 
-      # Get all tags of an audio event
-      # for which this user has this user has these access levels.
-      # @param [AudioEvent] audio_event
+      # Get all analysis jobs for which this user has this user has these access levels.
       # @param [User] user
       # @param [Symbol, Array<Symbol>] levels
-      # @return [ActiveRecord::Relation] tags
-      def audio_event_tags(audio_event, user, levels = Access::Core.levels_allow)
-        audio_event = Access::Core.validate_audio_event(audio_event)
+      # @return [ActiveRecord::Relation] analysis jobs
+      def analysis_jobs(user, levels)
         user = Access::Core.validate_user(user)
         levels = Access::Core.validate_levels(levels)
 
-        # need to do an exists query for audio_event to tags many to many table
-        fail NotImplementedError
+        query = AnalysisJob.joins(:saved_search).order(updated_at: :desc)
+        Access::Apply.restrictions(user, levels, query)
+      end
+
+      # Get all saved searches for which this user has this user has these access levels.
+      # @param [User] user
+      # @param [Symbol, Array<Symbol>] levels
+      # @return [ActiveRecord::Relation] saved searches
+      def saved_searches(user, levels)
+        user = Access::Core.validate_user(user)
+        levels = Access::Core.validate_levels(levels)
+
+        query = SavedSearch.order(created_at: :desc)
+
+        Access::Apply.restrictions(user, levels, query)
       end
 
       def taggings_modified(user)
@@ -219,6 +262,16 @@ module Access
       def audio_event_comments_modified(user)
         user = Access::Core.validate_user(user)
         AudioEventComment.where('(audio_event_comments.creator_id = ? OR audio_event_comments.updater_id = ?)', user.id, user.id)
+      end
+
+      def saved_searches_modified(user)
+        user = Access::Core.validate_user(user)
+        SavedSearch.where('(saved_searches.creator_id = ?)', user.id)
+      end
+
+      def analysis_jobs_modified(user)
+        user = Access::Core.validate_user(user)
+        AnalysisJob.where('(analysis_jobs.creator_id = ? OR analysis_jobs.updater_id = ?)', user.id, user.id)
       end
 
     end

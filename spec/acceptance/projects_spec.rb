@@ -1,4 +1,4 @@
-require 'spec_helper'
+require 'rails_helper'
 require 'rspec_api_documentation/dsl'
 require 'helpers/acceptance_spec_helper'
 
@@ -38,9 +38,9 @@ resource 'Projects' do
   get '/projects' do
     let(:authentication_token) { writer_token }
     standard_request_options(:get, 'LIST (as confirmed_user)', :ok, {
-                                     expected_json_path: 'data/0/name',
-                                     data_item_count: 1
-                                 })
+        expected_json_path: 'data/0/name',
+        data_item_count: 1
+    })
   end
 
   get '/projects' do
@@ -210,21 +210,42 @@ resource 'Projects' do
     }
     let(:authentication_token) { reader_token }
     standard_request_options(:post, 'FILTER (as reader)', :ok, {
-                                      expected_json_path: ['data/0/name', 'meta/projection/include'],
-                                      data_item_count: 1,
-                                      regex_match: /"site_ids"\:\[[0-9]+\]/,
-                                      response_body_content: "\"site_ids\":[",
-                                      invalid_content: "\"site_ids\":[{\"id\":"
-                                  })
+        expected_json_path: ['data/0/name', 'meta/projection/include'],
+        data_item_count: 1,
+        regex_match: /"site_ids"\:\[[0-9]+\]/,
+        response_body_content: "\"site_ids\":[",
+        invalid_content: "\"site_ids\":[{\"id\":"
+    })
   end
 
   get '/projects/filter?direction=desc&filter_name=a&filter_partial_match=partial_match_text&items=35&order_by=createdAt&page=1' do
     let(:authentication_token) { reader_token }
     standard_request_options(:get, 'BASIC FILTER (as reader with filtering, sorting, paging)', :ok, {
-                                     expected_json_path: 'meta/paging/current',
-                                     data_item_count: 0,
-                                     response_body_content: '/projects/filter?direction=desc\u0026filter_name=a\u0026filter_partial_match=partial_match_text\u0026items=35\u0026order_by=createdAt\u0026page=1'
-                                 })
+        expected_json_path: 'meta/paging/current',
+        data_item_count: 0,
+        response_body_content: '/projects/filter?direction=desc\u0026filter_name=a\u0026filter_partial_match=partial_match_text\u0026items=35\u0026order_by=createdAt\u0026page=1'
+    })
+  end
+
+  get '/projects/filter?disable_paging=true' do
+    let(:authentication_token) { writer_token }
+    let!(:more_projects) {
+      # default items per page is 25
+      29.times do
+        FactoryGirl.create(:project, creator: @write_permission.user)
+      end
+    }
+
+    standard_request_options(:get, 'BASIC FILTER (as reader with filtering, paging disabled)', :ok, {
+        expected_json_path: 'meta/paging/current',
+        data_item_count: 30,
+        response_body_content: [
+            '{"meta":{"status":200,"message":"OK","sorting":{"order_by":"name","direction":"desc"},',
+            '"paging":{"page":1,"items":30,"total":30,"max_page":1,',
+            '"current":"http://localhost:3000/projects/filter?direction=desc\u0026disable_paging=true\u0026items=30\u0026order_by=name\u0026page=1",',
+            '"previous":null,"next":null}}'
+        ]
+    })
   end
 
 end

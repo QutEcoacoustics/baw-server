@@ -1,4 +1,4 @@
-require 'spec_helper'
+require 'rails_helper'
 
 describe 'Website forms with user', :type => :feature do
   before(:each) do
@@ -123,7 +123,7 @@ describe 'Website forms with user', :type => :feature do
       FactoryGirl.create(:write_permission, user: @user)
       visit website_status_path
       expect(current_path).to eq(website_status_path)
-      expect(page).to have_content('unique tags')
+      expect(page).to have_content('Unique tags attached to annotations')
     end
 
     it 'shows the status page' do
@@ -166,7 +166,7 @@ describe 'public website forms', :type => :feature do
     it 'shows the Statistics page' do
       visit website_status_path
       expect(current_path).to eq(website_status_path)
-      expect(page).to have_content('unique tags')
+      expect(page).to have_content('Unique tags attached to annotations')
     end
 
     it 'shows the status page' do

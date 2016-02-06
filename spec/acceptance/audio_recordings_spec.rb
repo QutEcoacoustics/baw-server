@@ -1,4 +1,4 @@
-require 'spec_helper'
+require 'rails_helper'
 require 'rspec_api_documentation/dsl'
 require 'helpers/acceptance_spec_helper'
 
@@ -86,7 +86,7 @@ def test_overlap
            ]
        }
       },
-      {# new overlaps at start of existing, should not be adjusted as overlap is too much
+      {# new overlaps at start of existing, should not be adjusted as overlap is too much (10 sec)
        inputs: {
            post_item: {
                recorded_date: Time.zone.parse('2000-01-04 12:00:00Z'),
@@ -179,7 +179,7 @@ def test_overlap
            ]
        }
       },
-      {# 3 recordings: too much overlap at one end
+      {# 3 recordings: too much overlap at one end (10 sec)
        inputs: {
            post_item: {
                recorded_date: Time.zone.parse('2000-01-07 12:00:50Z'),
@@ -318,7 +318,7 @@ def test_overlap
 
           # ensure posted audio recording does not exist
           expect(AudioRecording.where(file_hash: posted_item_attrs[:file_hash]).count)
-              .to eq(0), "all file_hashes #{AudioRecording.select(:file_hash).all}, input posted #{posted_item_attrs[:file_hash]}"
+              .to eq(0), "Input should not exist: #{posted_item_attrs}"
         else
           raise "unknown status code #{status_code}"
         end
@@ -384,7 +384,7 @@ resource 'AudioRecordings' do
 
     let(:authentication_token) { reader_token }
 
-    standard_request('LIST (as reader)', 200, '0/bit_rate_bps', true)
+    standard_request_options(:get, 'LIST (as reader)', :ok,{expected_json_path: 'data/0/bit_rate_bps', data_item_count: 1})
 
   end
 
@@ -394,7 +394,7 @@ resource 'AudioRecordings' do
 
     let(:authentication_token) { writer_token }
 
-    standard_request('LIST (as writer)', 200, '0/bit_rate_bps', true)
+    standard_request_options(:get, 'LIST (as writer)', :ok,{expected_json_path: 'data/0/bit_rate_bps', data_item_count: 1})
   end
 
   get '/audio_recordings' do
@@ -402,7 +402,7 @@ resource 'AudioRecordings' do
     parameter :site_id, 'Requested site ID (in path/route)', required: true
 
     let(:authentication_token) { "Token token=\"INVALID\"" }
-    standard_request('LIST (with invalid token)', 401, get_json_error_path(:sign_up), true)
+    standard_request_options(:get, 'LIST (with invalid token)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
   end
 
   ################################
@@ -415,7 +415,7 @@ resource 'AudioRecordings' do
 
     let(:authentication_token) { reader_token }
 
-    standard_request('SHOW (as reader)', 200, 'bit_rate_bps', true)
+    standard_request_options(:get, 'SHOW (as reader)', :ok,{expected_json_path: 'data/bit_rate_bps'})
   end
 
   get '/audio_recordings/:id' do
@@ -425,7 +425,7 @@ resource 'AudioRecordings' do
 
     let(:authentication_token) { writer_token }
 
-    standard_request('SHOW (as writer)', 200, 'bit_rate_bps', true)
+    standard_request_options(:get, 'SHOW (as writer)', :ok, {expected_json_path: 'data/bit_rate_bps'})
 
   end
 
@@ -435,7 +435,7 @@ resource 'AudioRecordings' do
 
     let(:authentication_token) { no_access_token }
 
-    standard_request('SHOW (as no access, with shallow path)', 403, get_json_error_path(:permissions), true)
+    standard_request_options(:get, 'SHOW (as no access, with shallow path)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
   end
 
   get '/audio_recordings/:id' do
@@ -444,7 +444,7 @@ resource 'AudioRecordings' do
 
     let(:authentication_token) { reader_token }
 
-    standard_request('SHOW (as reader, with shallow path)', 200, 'bit_rate_bps', true)
+    standard_request_options(:get, 'SHOW (as reader, with shallow path)', :ok, {expected_json_path: 'data/bit_rate_bps'})
   end
 
   get '/audio_recordings/:id' do
@@ -453,7 +453,7 @@ resource 'AudioRecordings' do
 
     let(:authentication_token) { writer_token }
 
-    standard_request('SHOW (as writer, with shallow path)', 200, 'bit_rate_bps', true)
+    standard_request_options(:get, 'SHOW (as writer, with shallow path)', :ok, {expected_json_path: 'data/bit_rate_bps'})
 
   end
 
@@ -465,7 +465,7 @@ resource 'AudioRecordings' do
 
     standard_request_options(:get, 'SHOW (as writer, with shallow path testing quoted numbers)', :ok,
                              {
-                                 expected_json_path: 'duration_seconds',
+                                 expected_json_path: 'data/duration_seconds',
                                  response_body_content: 'duration_seconds":60000.0'
                              })
 
@@ -478,7 +478,7 @@ resource 'AudioRecordings' do
 
     let(:authentication_token) { harvester_token }
 
-    standard_request('NEW (as harvester)', 200, 'bit_rate_bps', true)
+    standard_request_options(:get, 'NEW (as harvester)', :ok,{expected_json_path: 'data/bit_rate_bps'})
 
   end
 
@@ -486,7 +486,7 @@ resource 'AudioRecordings' do
 
     let(:authentication_token) { writer_token }
 
-    standard_request('NEW (as reader, for api)', 200, 'bit_rate_bps', true)
+    standard_request_options(:get, 'NEW (as reader, for api)', :ok,{expected_json_path: 'data/bit_rate_bps'})
 
   end
 
@@ -549,6 +549,7 @@ resource 'AudioRecordings' do
     data_length_bytes = 9999
     media_type = 'audio/mp3'
     duration_seconds = 45.0
+    notes = {'test' => ['something']}
 
     let(:ar_attributes) { FactoryGirl.attributes_for(:audio_recording,
                                                      original_file_name: original_file_name,
@@ -557,6 +558,7 @@ resource 'AudioRecordings' do
                                                      data_length_bytes: data_length_bytes,
                                                      media_type: media_type,
                                                      duration_seconds: duration_seconds,
+                                                     notes: notes,
                                                      site_id: site_id,
                                                      uploader_id: @write_permission.user.id) }
 
@@ -585,6 +587,7 @@ resource 'AudioRecordings' do
 
       expect(AudioRecording.where(id: new_audio_recording_id).count).to eq(1)
       expect(AudioRecording.where(id: new_audio_recording_id).first.status).to eq('new')
+      expect(AudioRecording.where(id: new_audio_recording_id).first.notes).to eq(notes)
     end
   end
 

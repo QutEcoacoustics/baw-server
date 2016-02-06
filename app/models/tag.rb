@@ -7,6 +7,7 @@ class Tag < ActiveRecord::Base
   # relations
   has_many :taggings, inverse_of: :tag
   has_many :audio_events, through: :taggings
+  has_many :tag_groups, inverse_of: :tag
   belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_tags
   belongs_to :updater, class_name: 'User', foreign_key: :updater_id, inverse_of: :updated_tags
 
@@ -54,6 +55,18 @@ class Tag < ActiveRecord::Base
 
   end
 
+  def self.user_top_tags(user)
+    query = sanitize_sql_array(
+['select (select tags.text from tags where tags.id = audio_events_tags.tag_id) as tag_name, count(*) as tag_count
+from audio_events_tags
+inner join tags on audio_events_tags.tag_id = tags.id
+where audio_events_tags.creator_id = :user_id
+group by audio_events_tags.tag_id
+order by count(*) DESC
+limit 10', {user_id: user.id}])
+    Tag.connection.select_all(query)
+  end
+
   # @param [Tag] tags
   def self.get_priority_tag(tags)
 
@@ -98,14 +111,7 @@ class Tag < ActiveRecord::Base
                     {
                         join: AudioEvent,
                         on: Tagging.arel_table[:audio_event_id].eq(AudioEvent.arel_table[:id]),
-                        available: true,
-                        associations: [
-                            {
-                                join: AudioRecording,
-                                on: AudioEvent.arel_table[:audio_recording_id].eq(AudioRecording.arel_table[:id]),
-                                available: true,
-                            }
-                        ]
+                        available: true
                     }
                 ]
 

@@ -1,0 +1,14 @@
+#
+# This config file is in the .gitignore so you can make changes to it.
+# If you want to persist changes for an upstream edit, do a `git add -f ...`
+#
+development:
+  # overwrites settings from config/settings/default.yml
+  db:
+     adapter: postgresql
+     encoding: unicode
+     database: baw_local_dev
+     pool: 5
+     username: postgres
+     password: ''
+     host: localhost

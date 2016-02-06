@@ -1,6 +1,25 @@
-require 'spec_helper'
+require 'rails_helper'
 require 'rspec_api_documentation/dsl'
 require 'helpers/acceptance_spec_helper'
+
+def sites_project_id_param
+  parameter :project_id, 'Site project id in request url', required: true
+end
+
+def sites_id_param
+  parameter :id, 'Site id in request url', required: true
+end
+
+def sites_body_params
+  parameter :name, 'Site name in request body', required: true
+  parameter :description, 'Analysis Job annotation name in request body', required: false
+  parameter :longitude, 'Analysis Job custom settings in request body', required: false
+  parameter :latitude, 'Analysis Job description in request body', required: false
+  parameter :notes, 'Analysis Job description in request body', required: false
+  parameter :image, 'Analysis Job description in request body', required: false
+  parameter :tzinfo_tz, 'Analysis Job description in request body', required: false
+  parameter :rails_tz, 'Analysis Job description in request body', required: false
+end
 
 # https://github.com/zipmark/rspec_api_documentation
 resource 'Sites' do
@@ -11,262 +30,428 @@ resource 'Sites' do
 
   let(:format) { 'json' }
 
-  # prepare ids needed for paths in requests below
-  let(:project_id) { @write_permission.project.id }
-  let(:id) { @write_permission.project.sites[0].id }
+  before(:each) do
+    @admin_user = FactoryGirl.create(:admin,)
+    @writer_user = FactoryGirl.create(:user, user_name: 'writer')
+    @reader_user = FactoryGirl.create(:user, user_name: 'reader')
+    @other_user = FactoryGirl.create(:user, user_name: 'other')
+    @unconfirmed_user = FactoryGirl.create(:unconfirmed_user)
+
+    @write_permission = FactoryGirl.create(:write_permission, creator: @writer_user, user: @writer_user)
+    @read_permission = FactoryGirl.create(:read_permission, creator: @reader_user, user: @reader_user, project: @write_permission.project)
+
+    @project = @write_permission.project
+    @site = @write_permission.project.sites[0]
+  end
 
   # prepare authentication_token for different users
-  let(:writer_token) { "Token token=\"#{@write_permission.user.authentication_token}\"" }
-  let(:reader_token) { "Token token=\"#{@read_permission.user.authentication_token}\"" }
-  let(:admin_token) { "Token token=\"#{@admin.authentication_token}\"" }
+  let(:admin_token) { "Token token=\"#{@admin_user.authentication_token}\"" }
+  let(:writer_token) { "Token token=\"#{@writer_user.authentication_token}\"" }
+  let(:reader_token) { "Token token=\"#{@reader_user.authentication_token}\"" }
+  let(:other_token) { "Token token=\"#{@other_user.authentication_token}\"" }
+  let(:unconfirmed_token) { "Token token=\"#{@unconfirmed_user.authentication_token}\"" }
+  let(:invalid_token) { "Token token=\"weeeeeeeee0123456789splat\"" }
 
   # Create post parameters from factory
   let(:post_attributes) { FactoryGirl.attributes_for(:site) }
   let(:post_attributes_with_lat_long) { FactoryGirl.attributes_for(:site_with_lat_long) }
 
+  ################################
+  # INDEX
+  ################################
 
-  before(:each) do
-    # this creates a @write_permission.user with write access to @write_permission.project,
-    # a @read_permission.user with read access, as well as
-    # a site, audio_recording and audio_event having off the project (see permission_factory.rb)
-    #puts 'Creating permissions for Sites spec...'
-    @write_permission = FactoryGirl.create(:write_permission) # has to be 'write' so that the uploader has access
-    @read_permission = FactoryGirl.create(:read_permission, project: @write_permission.project)
-    @admin = FactoryGirl.create(:admin)
-    #puts '...permissions created for Sites spec.'
+  get '/projects/:project_id/sites' do
+    sites_project_id_param
+    let(:project_id) { @project.id }
+    let(:authentication_token) { admin_token }
+    standard_request_options(:get, 'INDEX (as admin)', :ok, {expected_json_path: 'data/0/custom_latitude', data_item_count: 1})
   end
 
-  ################################
-  # LIST
-  ################################
   get '/projects/:project_id/sites' do
-    parameter :project_id, 'project ID (in path/route)', required: true
-
+    sites_project_id_param
+    let(:project_id) { @project.id }
     let(:authentication_token) { writer_token }
-
-    standard_request_options(:get, 'LIST (as writer)', :ok, {expected_json_path: 'data/0/custom_longitude', data_item_count: 1})
+    standard_request_options(:get, 'INDEX (as writer)', :ok, {expected_json_path: 'data/0/custom_latitude', data_item_count: 1})
   end
 
   get '/projects/:project_id/sites' do
-    parameter :project_id, 'project ID (in path/route)', required: true
-
+    sites_project_id_param
+    let(:project_id) { @project.id }
     let(:authentication_token) { reader_token }
-
-    standard_request_options(:get, 'LIST (as reader)', :ok, {expected_json_path: 'data/0/custom_latitude', data_item_count: 1})
+    standard_request_options(:get, 'INDEX (as reader)', :ok, {expected_json_path: 'data/0/custom_latitude', data_item_count: 1})
   end
 
   get '/projects/:project_id/sites' do
-    parameter :project_id, 'project ID (in path/route)', required: true
-
-    let(:authentication_token) { "Token token=\"INVALID TOKEN\"" }
-
-    standard_request_options(:get, 'LIST (with invalid token)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
+    sites_project_id_param
+    let(:project_id) { @project.id }
+    let(:authentication_token) { other_token }
+    standard_request_options(:get, 'INDEX (as other)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
   end
 
+  get '/projects/:project_id/sites' do
+    sites_project_id_param
+    let(:project_id) { @project.id }
+    let(:authentication_token) { unconfirmed_token }
+    standard_request_options(:get, 'INDEX (as unconfirmed user)', :forbidden, {expected_json_path: get_json_error_path(:confirm)})
+  end
+
+  get '/projects/:project_id/sites' do
+    sites_project_id_param
+    let(:project_id) { @project.id }
+    let(:authentication_token) { invalid_token }
+    standard_request_options(:get, 'INDEX (invalid token)', :unauthorized, {expected_json_path: get_json_error_path(:sign_in)})
+  end
+
+  ################################
+  # NEW
+  ################################
+
+  get '/projects/:project_id/sites/new' do
+    let(:project_id) { @project.id }
+    let(:authentication_token) { admin_token }
+    standard_request_options(:get, 'NEW (as admin)', :ok, {expected_json_path: 'data/longitude'})
+  end
+
+  get '/projects/:project_id/sites/new' do
+    let(:project_id) { @project.id }
+    let(:authentication_token) { writer_token }
+    standard_request_options(:get, 'NEW (as writer)', :ok, {expected_json_path: 'data/longitude'})
+  end
+
+  get '/projects/:project_id/sites/new' do
+    let(:project_id) { @project.id }
+    let(:authentication_token) { reader_token }
+    standard_request_options(:get, 'NEW (as reader)',:forbidden, {expected_json_path: get_json_error_path(:permissions)})
+  end
+
+  get '/projects/:project_id/sites/new' do
+    let(:project_id) { @project.id }
+    let(:authentication_token) { other_token }
+    standard_request_options(:get, 'NEW (as other)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
+  end
+
+  get '/projects/:project_id/sites/new' do
+    let(:project_id) { @project.id }
+    let(:authentication_token) { unconfirmed_token }
+    standard_request_options(:get, 'NEW (as unconfirmed)', :forbidden, {expected_json_path: get_json_error_path(:confirm)})
+  end
+
+  get '/projects/:project_id/sites/new' do
+    let(:project_id) { @project.id }
+    let(:authentication_token) { invalid_token }
+    standard_request_options(:get, 'NEW (invalid token)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
+  end
 
   ################################
   # CREATE
   ################################
   post '/projects/:project_id/sites' do
-    parameter :name, 'Name of site', scope: :site, :required => true
-    parameter :longitude, 'Longitude of site', scope: :site, :required => true
-    parameter :latitude, 'Latitude of site', scope: :site, :required => true
-    parameter :description, 'Description of site', scope: :site
-    parameter :notes, 'Notes of site', scope: :site
+    sites_project_id_param
+    sites_body_params
+    let(:project_id) { @project.id }
+    let(:authentication_token) { admin_token }
+    let(:raw_post) { {site: post_attributes}.to_json }
+    standard_request_options(:post, 'CREATE (as admin)', :created, {expected_json_path: 'data/project_ids'})
+  end
 
-    parameter :project_id, 'project ID (in path/route)', required: true
-
+  post '/projects/:project_id/sites' do
+    sites_project_id_param
+    sites_body_params
+    let(:project_id) { @project.id }
     let(:authentication_token) { writer_token }
-
-    let(:raw_post) { {'site' => post_attributes}.to_json }
-
+    let(:raw_post) { {site: post_attributes}.to_json }
     standard_request_options(:post, 'CREATE (as writer)', :created, {expected_json_path: 'data/project_ids'})
-
   end
 
   post '/projects/:project_id/sites' do
-    parameter :name, 'Name of site', scope: :site, :required => true
-    parameter :longitude, 'Longitude of site', scope: :site, :required => true
-    parameter :latitude, 'Latitude of site', scope: :site, :required => true
-    parameter :description, 'Description of site', scope: :site
-    parameter :notes, 'Notes of site', scope: :site
-
-    parameter :project_id, 'project ID (in path/route)', required: true
-
+    sites_project_id_param
+    sites_body_params
+    let(:project_id) { @project.id }
     let(:authentication_token) { reader_token }
-
-    let(:raw_post) { {'site' => post_attributes}.to_json }
-
+    let(:raw_post) { {site: post_attributes}.to_json }
     standard_request_options(:post, 'CREATE (as reader)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
-
   end
 
   post '/projects/:project_id/sites' do
-    parameter :name, 'Name of site', scope: :site, :required => true
-    parameter :longitude, 'Longitude of site', scope: :site, :required => true
-    parameter :latitude, 'Latitude of site', scope: :site, :required => true
-    parameter :description, 'Description of site', scope: :site
-    parameter :notes, 'Notes of site', scope: :site
+    sites_project_id_param
+    sites_body_params
+    let(:project_id) { @project.id }
+    let(:authentication_token) { other_token }
+    let(:raw_post) { {site: post_attributes}.to_json }
+    standard_request_options(:post, 'CREATE (as other)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
+  end
 
-    parameter :project_id, 'project ID (in path/route)', required: true
+  post '/projects/:project_id/sites' do
+    sites_project_id_param
+    sites_body_params
+    let(:project_id) { @project.id }
+    let(:authentication_token) { unconfirmed_token }
+    let(:raw_post) { {site: post_attributes}.to_json }
+    standard_request_options(:post, 'CREATE (with unconfirmed user)', :forbidden, {expected_json_path: get_json_error_path(:confirm)})
+  end
 
-    let(:authentication_token) { "Token token=\"INVALID TOKEN\"" }
-
-    let(:raw_post) { {'site' => post_attributes}.to_json }
-
+  post '/projects/:project_id/sites' do
+    sites_project_id_param
+    sites_body_params
+    let(:project_id) { @project.id }
+    let(:authentication_token) { invalid_token }
+    let(:raw_post) { {site: post_attributes}.to_json }
     standard_request_options(:post, 'CREATE (with invalid token)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
-
   end
 
   ################################
-  # SHOW
+  # NESTED SHOW
   ################################
   get '/projects/:project_id/sites/:id' do
+    sites_project_id_param
+    sites_id_param
+    let(:project_id) { @project.id }
+    let(:id) { @site.id }
+    let(:authentication_token) { admin_token }
+    standard_request_options(:get, 'SHOW (nested route, as admin)', :ok, {expected_json_path: 'data/location_obfuscated'})
+  end
 
-    parameter :project_id, 'project ID (in path/route)', required: true
-    parameter :id, 'Requested site ID (in path/route)', required: true
-
+  get '/projects/:project_id/sites/:id' do
+    sites_project_id_param
+    sites_id_param
+    let(:project_id) { @project.id }
+    let(:id) { @site.id }
     let(:authentication_token) { writer_token }
-
-    # Comparing json does not work here as newlines \n in text fields are translated into arrays
-    #puts @permission.site.to_json
-    #puts ActiveSupport::JSON.decode(@permission.site)
-    #puts JSON.parse(response_body)
-    #puts ActiveSupport::JSON.decode(response_body)
-    #response_json = JSON.parse(response_body).to_s
-    #response_body.should have_json_path('name')
     standard_request_options(:get, 'SHOW (nested route, as writer)', :ok, {expected_json_path: 'data/location_obfuscated'})
   end
 
   get '/projects/:project_id/sites/:id' do
-    parameter :project_id, 'project ID (in path/route)', required: true
-    parameter :id, 'Requested site ID (in path/route)', required: true
-
+    sites_project_id_param
+    sites_id_param
+    let(:project_id) { @project.id }
+    let(:id) { @site.id }
     let(:authentication_token) { reader_token }
-
-    standard_request_options(:get, 'SHOW (nested route, as reader)', :ok, {expected_json_path: 'data/description'})
+    standard_request_options(:get, 'SHOW (nested route, as reader)', :ok, {expected_json_path: 'data/location_obfuscated'})
   end
 
   get '/projects/:project_id/sites/:id' do
-    parameter :project_id, 'project ID (in path/route)', required: true
-    parameter :id, 'Requested site ID (in path/route)', required: true
+    sites_project_id_param
+    sites_id_param
+    let(:project_id) { @project.id }
+    let(:id) { @site.id }
+    let(:authentication_token) { other_token }
+    standard_request_options(:get, 'SHOW (nested route, as other)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
+  end
 
-    let(:authentication_token) { "Token token=\"INVALID TOKEN\"" }
+  get '/projects/:project_id/sites/:id' do
+    sites_project_id_param
+    sites_id_param
+    let(:project_id) { @project.id }
+    let(:id) { @site.id }
+    let(:authentication_token) { unconfirmed_token }
+    standard_request_options(:get, 'SHOW (nested route, as unconfirmed user)', :forbidden, {expected_json_path: get_json_error_path(:confirm)})
+  end
 
+  get '/projects/:project_id/sites/:id' do
+    sites_project_id_param
+    sites_id_param
+    let(:project_id) { @project.id }
+    let(:id) { @site.id }
+    let(:authentication_token) { invalid_token }
     standard_request_options(:get, 'SHOW (nested route, with invalid token)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
   end
 
-  # shallow routes
+  ################################
+  # SHALLOW SHOW
+  ################################
   get '/sites/:id' do
-    parameter :id, 'Requested site ID (in path/route)', required: true
-
-    let(:authentication_token) { writer_token }
-
-    standard_request_options(:get, 'SHOW (as writer)', :ok, {expected_json_path: 'data/project_ids'})
-  end
-
-  get '/sites/:id' do
-    parameter :id, 'Requested site ID (in path/route)', required: true
-
-    let(:authentication_token) { reader_token }
-
-    standard_request_options(:get, 'SHOW (as reader)', :ok, {expected_json_path: 'data/custom_longitude'})
-  end
-
-  get '/sites/:id' do
-    parameter :id, 'Requested site ID (in path/route)', required: true
-
-    let(:authentication_token) { "Token token=\"INVALID TOKEN\"" }
-
-    standard_request_options(:get, 'SHOW (with invalid token)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
-  end
-
-  # latitude and longitude obfuscation
-  get '/sites/:id' do
-    parameter :id, 'Requested site ID (in path/route)', required: true
-    let(:authentication_token) { reader_token }
-    check_site_lat_long_response('latitude and longitude should be obfuscated for read permission', 200)
-  end
-
-  get '/sites/:id' do
-    parameter :id, 'Requested site ID (in path/route)', required: true
-    let(:authentication_token) { writer_token }
-    check_site_lat_long_response('latitude and longitude should be obfuscated for write permission', 200)
-  end
-
-  get '/sites/:id' do
-    parameter :id, 'Requested site ID (in path/route)', required: true
-    let(:authentication_token) { "Token token=\"#{@write_permission.project.creator.authentication_token}\"" }
-    check_site_lat_long_response('latitude and longitude should NOT be obfuscated for project creator', 200, false)
-  end
-
-  get '/sites/:id' do
-    parameter :id, 'Requested site ID (in path/route)', required: true
+    sites_id_param
+    let(:id) { @site.id }
     let(:authentication_token) { admin_token }
-    check_site_lat_long_response('latitude and longitude should NOT be obfuscated for admin', 200, false)
+    standard_request_options(:get, 'SHOW (shallow route, as admin)', :ok, {expected_json_path: 'data/project_ids'})
+  end
+
+  get '/sites/:id' do
+    sites_id_param
+    let(:id) { @site.id }
+    let(:authentication_token) { writer_token }
+    standard_request_options(:get, 'SHOW (shallow route, as writer)', :ok, {expected_json_path: 'data/project_ids'})
+  end
+
+  get '/sites/:id' do
+    sites_id_param
+    let(:id) { @site.id }
+    let(:authentication_token) { reader_token }
+    standard_request_options(:get, 'SHOW (shallow route, as reader)', :ok, {expected_json_path: 'data/custom_longitude'})
+  end
+
+  get '/sites/:id' do
+    sites_id_param
+    let(:id) { @site.id }
+    let(:authentication_token) { other_token }
+    standard_request_options(:get, 'SHOW (shallow route, as reader)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
+  end
+
+  get '/sites/:id' do
+    sites_id_param
+    let(:id) { @site.id }
+    let(:authentication_token) { unconfirmed_token }
+    standard_request_options(:get, 'SHOW (shallow route, as unconfirmed user)', :forbidden, {expected_json_path: get_json_error_path(:confirm)})
+  end
+
+  get '/sites/:id' do
+    sites_id_param
+    let(:id) { @site.id }
+    let(:authentication_token) { invalid_token }
+    standard_request_options(:get, 'SHOW (shallow route, with invalid token)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
+  end
+
+  ################################
+  # latitude and longitude obfuscation
+  ################################
+  get '/sites/:id' do
+    sites_id_param
+    let(:id) { @site.id }
+    let(:authentication_token) { admin_token }
+    check_site_lat_long_response('SHOW (shallow, latitude and longitude should NOT be obfuscated, as admin)', 200, false)
+  end
+
+  get '/projects/:project_id/sites/:id' do
+    sites_project_id_param
+    sites_id_param
+    let(:project_id) { @project.id }
+    let(:id) { @site.id }
+    let(:authentication_token) { writer_token }
+    check_site_lat_long_response('SHOW (nested, latitude and longitude should NOT be obfuscated, as writer)', 200, false)
+  end
+
+  get '/sites/:id' do
+    sites_id_param
+    let(:id) { @site.id }
+    let(:authentication_token) { reader_token }
+    check_site_lat_long_response('SHOW (shallow, latitude and longitude should be obfuscated, as reader)', 200, true)
   end
 
   ################################
   # UPDATE
   ################################
   put '/projects/:project_id/sites/:id' do
-    parameter :name, 'Name of site', scope: :site, :required => true
-    parameter :longitude, 'Longitude of site', scope: :site, :required => true
-    parameter :latitude, 'Latitude of site', scope: :site, :required => true
-    parameter :description, 'Description of site', scope: :site
-    parameter :notes, 'Notes of site', scope: :site
-
-    parameter :project_id, 'project ID (in path/route)', required: true
-    parameter :id, 'Requested site ID (in path/route)', required: true
-
-    let(:raw_post) { {'site' => post_attributes}.to_json }
-
-    let(:authentication_token) { writer_token }
-
-    # Comparing json does not work here as newlines \n in text fields are translated into arrays
-    #puts @permission.site.to_json
-    #puts ActiveSupport::JSON.decode(@permission.site)
-    #puts JSON.parse(response_body)
-    #puts ActiveSupport::JSON.decode(response_body)
-    #response_json = JSON.parse(response_body).to_s
-    #response_body.should have_json_path('name')
-    standard_request_options(:put, 'UPDATE (as writer)', :ok, {expected_json_path: 'data/description'})
+    sites_id_param
+    sites_project_id_param
+    sites_body_params
+    let(:project_id) { @project.id }
+    let(:id) { @site.id }
+    let(:raw_post) { {site: post_attributes}.to_json }
+    let(:authentication_token) { admin_token }
+    standard_request_options(:put, 'UPDATE (as admin)', :ok, {expected_json_path: 'data/custom_longitude'})
   end
 
   put '/projects/:project_id/sites/:id' do
-    parameter :name, 'Name of site', scope: :site, :required => true
-    parameter :longitude, 'Longitude of site', scope: :site, :required => true
-    parameter :latitude, 'Latitude of site', scope: :site, :required => true
-    parameter :description, 'Description of site', scope: :site
-    parameter :notes, 'Notes of site', scope: :site
+    sites_id_param
+    sites_project_id_param
+    sites_body_params
+    let(:project_id) { @project.id }
+    let(:id) { @site.id }
+    let(:raw_post) { {site: post_attributes}.to_json }
+    let(:authentication_token) { writer_token }
+    standard_request_options(:put, 'UPDATE (as writer)', :ok, {expected_json_path: 'data/custom_longitude'})
+  end
 
-    parameter :project_id, 'project ID (in path/route)', required: true
-    parameter :id, 'Requested site ID (in path/route)', required: true
-
-    let(:raw_post) { {'site' => post_attributes}.to_json }
-
+  put '/projects/:project_id/sites/:id' do
+    sites_id_param
+    sites_project_id_param
+    sites_body_params
+    let(:project_id) { @project.id }
+    let(:id) { @site.id }
+    let(:raw_post) { {site: post_attributes}.to_json }
     let(:authentication_token) { reader_token }
-
-    #puts "Existing sites: #{Site.all.inspect}"
-
     standard_request_options(:put, 'UPDATE (as reader)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
   end
 
   put '/projects/:project_id/sites/:id' do
-    parameter :name, 'Name of site', scope: :site, :required => true
-    parameter :longitude, 'Longitude of site', scope: :site, :required => true
-    parameter :latitude, 'Latitude of site', scope: :site, :required => true
-    parameter :description, 'Description of site', scope: :site
-    parameter :notes, 'Notes of site', scope: :site
+    sites_id_param
+    sites_project_id_param
+    sites_body_params
+    let(:project_id) { @project.id }
+    let(:id) { @site.id }
+    let(:raw_post) { {site: post_attributes}.to_json }
+    let(:authentication_token) { other_token }
+    standard_request_options(:put, 'UPDATE (as other user)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
+  end
 
-    parameter :project_id, 'project ID (in path/route)', required: true
-    parameter :id, 'Requested site ID (in path/route)', required: true
+  put '/projects/:project_id/sites/:id' do
+    sites_id_param
+    sites_project_id_param
+    sites_body_params
+    let(:project_id) { @project.id }
+    let(:id) { @site.id }
+    let(:raw_post) { {site: post_attributes}.to_json }
+    let(:authentication_token) { unconfirmed_token }
+    standard_request_options(:put, 'UPDATE (as unconfirmed user)', :forbidden, {expected_json_path: get_json_error_path(:confirm)})
+  end
 
-    let(:raw_post) { {'site' => post_attributes}.to_json }
-
-    let(:authentication_token) { "Token token=\"INVALID TOKEN\"" }
-
+  put '/projects/:project_id/sites/:id' do
+    sites_id_param
+    sites_project_id_param
+    sites_body_params
+    let(:project_id) { @project.id }
+    let(:id) { @site.id }
+    let(:raw_post) { {site: post_attributes}.to_json }
+    let(:authentication_token) { invalid_token }
     standard_request_options(:put, 'UPDATE (with invalid token)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
+  end
+
+  ################################
+  # DESTROY
+  ################################
+
+  delete '/projects/:project_id/sites/:id' do
+    sites_id_param
+    sites_project_id_param
+    let(:id) { @site.id }
+    let(:project_id) { @project.id }
+    let(:authentication_token) { admin_token }
+    standard_request_options(:delete, 'DESTROY (as admin)', :no_content, {expected_response_has_content: false, expected_response_content_type: nil})
+  end
+
+  delete '/projects/:project_id/sites/:id' do
+    sites_id_param
+    sites_project_id_param
+    let(:id) { @site.id }
+    let(:project_id) { @project.id }
+    let(:authentication_token) { writer_token }
+    standard_request_options(:delete, 'DESTROY (as writer)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
+  end
+
+  delete '/projects/:project_id/sites/:id' do
+    sites_id_param
+    sites_project_id_param
+    let(:id) { @site.id }
+    let(:project_id) { @project.id }
+    let(:authentication_token) { reader_token }
+    standard_request_options(:delete, 'DESTROY (as reader)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
+  end
+
+  delete '/projects/:project_id/sites/:id' do
+    sites_id_param
+    sites_project_id_param
+    let(:id) { @site.id }
+    let(:project_id) { @project.id }
+    let(:authentication_token) { other_token }
+    standard_request_options(:delete, 'DESTROY (as other)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
+  end
+
+  delete '/projects/:project_id/sites/:id' do
+    sites_id_param
+    sites_project_id_param
+    let(:id) { @site.id }
+    let(:project_id) { @project.id }
+    let(:authentication_token) { unconfirmed_token }
+    standard_request_options(:delete, 'DESTROY (unconfirmed user)', :forbidden, {expected_json_path: get_json_error_path(:confirm)})
+  end
+
+  delete '/projects/:project_id/sites/:id' do
+    sites_id_param
+    sites_project_id_param
+    let(:id) { @site.id }
+    let(:project_id) { @project.id }
+    let(:authentication_token) { invalid_token }
+    standard_request_options(:delete, 'DESTROY (invalid token)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
   end
 
   #####################
@@ -278,7 +463,7 @@ resource 'Sites' do
     let(:raw_post) { {
         'filter' => {
             'id' => {
-                'in' => ['1', '2', '3', '4', id.to_s]
+                'in' => ['1', '2', '3', '4', @site.id.to_s]
             }
         },
         'projection' => {
@@ -299,7 +484,7 @@ resource 'Sites' do
     let(:raw_post) { {
         'filter' => {
             'id' => {
-                'in' => ['1', '2', '3', '4', id.to_s]
+                'in' => ['1', '2', '3', '4', @site.id.to_s]
             }
         },
         'projection' => {
@@ -325,12 +510,34 @@ resource 'Sites' do
             }
         }
     }.to_json }
-    standard_request_options(:post, 'FILTER (site ids in, as writer)', :ok,
+    standard_request_options(:post, 'FILTER (project ids, as writer)', :ok,
                              {
                                  expected_json_path: 'data/0/project_ids/0',
                                  data_item_count: 1,
                                  regex_match: /"project_ids"\:\[[0-9]+\]/,
                                  response_body_content: "\"project_ids\":[",
+                                 invalid_content: "\"project_ids\":[{\"id\":"
+                             })
+  end
+
+  post '/sites/filter' do
+    let(:authentication_token) { writer_token }
+    let(:raw_post) { {
+        'filter' => {
+            'audio_recordings.id' => {
+                'eq' => @site.audio_recordings.first.id.to_s
+            }
+        },
+        'projection' => {
+            'include' => ['id', 'name']
+        }
+    }.to_json }
+    standard_request_options(:post, 'FILTER (audio recordings id, as writer)', :ok,
+                             {
+                                 expected_json_path: 'data/0/project_ids/0',
+                                 data_item_count: 1,
+                                 regex_match: /"data":\[\{"id":[0-9]+,"name":"site name [0-9]+","project_ids":\[[0-9]+\]/,
+                                 response_body_content: "\"projection\":{\"include\":[\"id\",\"name\"]}",
                                  invalid_content: "\"project_ids\":[{\"id\":"
                              })
   end

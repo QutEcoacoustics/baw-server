@@ -1,9 +1,18 @@
 - content_for :title, 'User List'
 
-= render partial: 'shared/sidebar_admin'
+= render partial: 'shared/admin/sidebar_home'
 
 - content_for :right_sidebar do
   = render partial: 'shared/sidebar_metadata_heading', locals: {title: 'Admin', icon_class: 'cog'}
+
+.col-sm-12
+  .row
+    .col-sm-6
+      %p= page_entries_info @users
+
+  .row
+    .col-sm-12
+      = paginate  @users
 
 %table.table.table-striped.table-hover
   %thead

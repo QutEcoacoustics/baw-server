@@ -1,28 +1,11 @@
 class PermissionsController < ApplicationController
   include Api::ControllerHelper
 
-  # order matters for before_action and load_and_authorize_resource!
-  load_and_authorize_resource :project
-
-  # this is necessary so that the ability has access to permission.project
-  before_action :build_project_permission, only: [:new, :create]
-
-  load_and_authorize_resource :permission, through: :project
-
-  respond_to :json
-
-  # GET /permissions
-  # GET /permissions.json
+  # GET /projects/:project_id/permissions
   def index
-    #@permissions = @project.permissions
-    #@project.permissions.new # this is required for the form to render
-
-    # Only deny access to html, because it basically renders an EDIT page
-    # We need to raise AccessDenied because cancan doesn't allow project read AND permissions deny at the same
-    # time without having a permission object, which in this case we don't have
-    if cannot? :update_permissions, @project
-      fail CanCan::AccessDenied.new(I18n.t('devise.failure.unauthorized'), :index, Permission)
-    end
+    do_authorize_class
+    get_project
+    do_authorize_instance(:update_permissions, @project)
 
     respond_to do |format|
       format.html
@@ -37,41 +20,68 @@ class PermissionsController < ApplicationController
     end
   end
 
-  # GET /permissions/1.json
+  # GET /projects/:project_id/permissions/:id
   def show
-    respond_show
-  end
+    do_load_resource
+    get_project
+    do_authorize_instance
 
-  # GET /permissions/new.json
-  def new
-    do_authorize!
-
-    respond_show
-  end
-
-  # POST /permissions.json
-  def create
-    attributes_and_authorize(permission_params)
-
-    if @permission.save
-      respond_create_success(project_permission_url(@project, @permission))
-    else
-      respond_change_fail
+    respond_to do |format|
+      format.json { respond_show }
     end
+  end
+
+  # GET /projects/:project_id/permissions/new
+  def new
+    do_new_resource
+    get_project
+    do_set_attributes
+    do_authorize_instance
+
+    respond_to do |format|
+      format.json { respond_show }
+    end
+  end
+
+  # POST /projects/:project_id/permissions
+  def create
+    do_new_resource
+    do_set_attributes(permission_params)
+    get_project
+    do_authorize_instance
+
+    respond_to do |format|
+    if @permission.save
+      format.json { respond_create_success(project_permission_path(@project, @permission)) }
+    else
+      format.json { respond_change_fail }
+    end
+      end
 
   end
 
-  # DELETE /permissions/1.json
+  # DELETE /projects/:project_id/permissions/:id
   def destroy
+    do_load_resource
+    get_project
+    do_authorize_instance
+
     @permission.destroy
-    respond_destroy
+
+    respond_to do |format|
+      format.json { respond_destroy }
+    end
   end
 
   private
 
-  def build_project_permission
-    @permission = Permission.new
-    @permission.project = @project
+  def get_project
+    @project = Project.find(params[:project_id])
+
+    # avoid the same project assigned more than once to a site
+    if defined?(@permission) && @permission.project.blank?
+      @permission.project = @project
+    end
   end
 
   def permission_params

@@ -33,7 +33,14 @@ class Permission < ActiveRecord::Base
         defaults: {
             order_by: :project_id,
             direction: :asc
-        }
+        },
+        valid_associations: [
+            {
+                join: Project,
+                on: Permission.arel_table[:project_id].eq(Project.arel_table[:id]),
+                available: true
+            }
+        ]
     }
   end
 end

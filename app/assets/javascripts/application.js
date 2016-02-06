@@ -18,6 +18,7 @@
 //= require bootstrap-datetimepicker.min
 //= require typeahead.jquery.min
 //= require typeahead.bundle.min
+//= require URI.min
 //= require shared
 //= require public
 //= require functions

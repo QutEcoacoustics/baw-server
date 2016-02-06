@@ -183,6 +183,81 @@ module Filter
       end
     end
 
+    # Build an exists query for a many to many join.
+    # This eliminates the potential for duplicate results due to many to many relation.
+    # @param [Arel::Table] result_table Arel table for outer select
+    # @param [Arel::Table] filter_table Arel table for inner select
+    # @param [Arel::Nodes::Node] filter
+    # @param [Hash] opts the options for additional information.
+    # @option opts [Symbol] :result_table_id (result_table.name) id field for result table
+    # @option opts [Symbol] :filter_table_id (filter_table.name) id field for filter table
+    # @option opts [Arel::Table] :many_table (result_table + filter_table) Arel table for many to many
+    # @option opts [Symbol] :many_table_result_id (result_table.name.singular id) many to many id field for result table
+    # @option opts [Symbol] :many_table_filter_id (filter_table.name.singular id) many to many id field for filter table
+    # @param [Boolean] is_negated true for 'NOT EXISTS'
+    # @return [Arel::Nodes::Node] Arel query
+    def build_exists(result_table, filter_table, filter = nil, opts = {}, is_negated = false)
+      validate_table(result_table)
+      validate_table(filter_table)
+
+      validate_node_or_attribute(filter) unless filter.blank?
+      validate_hash(opts) unless opts.blank?
+
+      result_table_name = result_table.name.to_s
+      result_table_id = opts[:result_table_id] || :id
+
+      filter_table_name = filter_table.name.to_s
+      filter_table_id = opts[:filter_table_id] || :id
+
+      many_table = opts[:many_table] || Arel::Table.new([result_table_name, filter_table_name].sort.join('_').to_sym)
+      many_table_result_id = opts[:many_table_result_id] || "#{result_table_name.singularize}_id".to_sym
+      many_table_filter_id = opts[:many_table_filter_id] || "#{filter_table_name.singularize}_id".to_sym
+
+      # e.g. - build_exists(Site.arel_table, Project.arel_table)
+
+      # SELECT s.*
+      # FROM sites s
+      # WHERE [NOT] EXISTS (
+      #   SELECT p.*
+      #   FROM projects p
+      #   INNER JOIN projects_sites ps ON p.id = ps.project_id
+      #   WHERE ps.site_id = s.id
+      #   AND (*filter*)
+      # )
+
+      # SELECT
+      # FROM "sites"
+      # WHERE EXISTS (
+      # SELECT 1
+      # FROM "projects"
+      # INNER JOIN "projects_sites" ON "projects"."id" = "projects_sites"."project_id"
+      # WHERE "projects_sites"."site_id" = "sites"."id"
+      # )
+
+      # SELECT
+      # FROM "sites"
+      # WHERE NOT (
+      # EXISTS (
+      # SELECT 1
+      # FROM "projects"
+      # INNER JOIN "projects_sites" ON "projects"."id" = "projects_sites"."project_id"
+      # WHERE "projects_sites"."site_id" = "sites"."id"
+      # )
+      # )
+
+      query = filter_table
+                  .join(many_table).on(filter_table[filter_table_id].eq(many_table[many_table_filter_id]))
+                  .where(many_table[many_table_result_id].eq(result_table[result_table_id]))
+
+      query = query.where(filter) if filter
+
+      query = query.project(1).exists
+
+      query = query.not if is_negated
+
+      result_table.where(query)
+    end
+
     private
 
     # Parse a filter hash.

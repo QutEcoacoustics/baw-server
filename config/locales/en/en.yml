@@ -130,6 +130,10 @@ en:
       wrong_length:
         one: is the wrong length (should be 1 character)
         other: is the wrong length (should be %{count} characters)
+      existence: must exist as an object or foreign key for %{record}
+      invalid_date: invalid date
+      invalid_datetime: is not a valid datetime
+      on_or_before: must be on or before current datetime
       other_than: must be other than %{count}
       existence: must exist as an object or foreign key
     template:
@@ -220,9 +224,9 @@ en:
   time:
     am: am
     formats:
-      default: "%a, %d %b %Y %H:%M:%S %z"
-      long: "%Y/%m/%d %H:%M"
-      short: "%H:%M"
+      default: ! '%a, %d %b %Y %H:%M:%S %z'
+      long: ! '%d %B, %Y %H:%M'
+      short: ! '%d %b %H:%M'
     pm: pm
   enumerize:
     dataset:

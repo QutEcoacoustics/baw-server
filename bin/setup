@@ -9,6 +9,8 @@ puts "Application located in #{APP_ROOT}."
 Dir.chdir APP_ROOT do
   puts '== Installing dependencies =='
   system 'gem install bundler --conservative --no-ri --no-rdoc'
+  # only this gem fails to install without sudo
+  system 'sudo gem install ruby-debug-ide'
   system 'bundle check || bundle install'
 
   puts "\n== Removing logs, tempfiles, docs, and test results =="
@@ -17,17 +19,12 @@ Dir.chdir APP_ROOT do
   system 'rm -rf coverage'
   system 'rm -rf doc'
 
-  puts "\n== Creating files for deploying website =="
-  system 'bundle exec cap install'
+  puts "\n== Further Setup =="
+  puts "Note: Remember to check config/settings/development.yml and config/settings/test.yml.\n\tThey are based on config/settings/default.yml"
 
-  puts "\n== Manual Setup =="
-  puts '1. Create config/settings/development.yml and config/settings/test.yml based on config/settings/default.yml'
-  puts '2. Install and configure Postgresql'
-  puts '3. Prepare the local development database:`bin/rake db:setup RAILS_ENV=development`'
-  puts '4. Prepare the local test database:`bin/rake db:setup RAILS_ENV=test`'
-  puts '5. Run rspec tests: `bin/rspec --format progress --color` or for development work start guard: `bundle exec guard`'
-  puts '6. Generate API documentation: `bin/rake docs:generate GENERATE_DOC=true`'
-  puts '7. Start development server: `thin start`'
-  puts '8. Use Capistrano to deploy app (see https://github.com/capistrano/capistrano )'
-  puts '9. Create production settings file config/settings/production.yml based on config/settings/default.yml'
+  puts 'Prepare the local development database:`bin/rake db:setup RAILS_ENV=development`'
+  system 'bin/rake db:setup RAILS_ENV=development'
+
+  puts 'Prepare the local test database:`bin/rake db:setup RAILS_ENV=test`'
+  system 'bin/rake db:setup RAILS_ENV=test'
 end

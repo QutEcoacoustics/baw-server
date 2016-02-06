@@ -1,0 +1,9 @@
+- content_for :title, 'Admin Dashboard'
+
+= render partial: 'shared/admin/sidebar_home'
+
+- content_for :right_sidebar do
+  = render partial: 'shared/sidebar_metadata_heading', locals: {title: 'Admin', icon_class: 'cog'}
+
+%p
+  Welcome to the super-secret-site-settings!

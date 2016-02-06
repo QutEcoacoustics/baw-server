@@ -9,7 +9,7 @@ class CreateTags < ActiveRecord::Migration
       t.integer  :creator_id   , :null => false
       t.integer  :updater_id
 
-      t.timestamps
+      t.timestamps null: true
     end
     create_table :audio_events_tags do |t|
       t.integer  :audio_event_id, :null => false
@@ -17,7 +17,7 @@ class CreateTags < ActiveRecord::Migration
       t.integer  :creator_id   ,  :null => false
       t.integer  :updater_id
 
-      t.timestamps
+      t.timestamps null: true
     end
     add_index :audio_events_tags, [:audio_event_id, :tag_id], :unique => true
   end

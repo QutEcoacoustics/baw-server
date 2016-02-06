@@ -2,21 +2,37 @@
 
 = render partial: 'shared/sidebar_public', locals: {user_show: @user, user_current: current_user}
 
-- unless @annotation_download.blank?
-  %h4
-    The CSV file containing annotations for
-    =@annotation_download[:name]
-    will download shortly.
-  %p
-    Some downloads might take a minute or two to be generated. If it does not download after a short time, click
-    %a{href: @annotation_download[:link]} here
-    ='.'
-    If you need more data or a different format, please submit a request using this form.
-  %iframe{width:1, height:1, frameborder:0, src:@annotation_download[:link]}
-- else
+- if @annotation_download.blank?
   %p Use this form to request annotations or other data related to the audio recordings on this website.
+- else
+  %h4
+    Please select the time zone for the CSV file containing annotations for
+    = "#{@annotation_download[:name]}."
+  %form.form-inline
+    .form-group
+      %label{for: 'select_timezone_offset'} Select time zone
+      =select_tag(:download_zone_offset, time_zone_options_for_select(@annotation_download[:timezone_name]),
+        prompt: 'Select a time zone...', id: 'select_timezone_offset', class: 'form-control')
+    %a.btn.btn-default{id: 'download_link', href: @annotation_download[:link]} Download Annotations
+
+  :javascript
+    $(document).ready(function() {
+      $("#select_timezone_offset").change(function(){
+        var selectedTimezoneName = $(this).val();
+        if (selectedTimezoneName != '') {
+          var dlLinkElement = $('#download_link');
+          var newUri = URI(dlLinkElement.attr('href'))
+            .removeSearch('selected_timezone_name')
+            .addSearch('selected_timezone_name', selectedTimezoneName);
+          dlLinkElement.attr('href', newUri);
+        }
+      });
+    });
 
   %br
+
+  %p
+    If you need more data or a different format, please submit a request using this form.
 
 = simple_form_for @data_request, url: '/data_request', html: {class: 'form-horizontal' } do |f|
   = field_set_tag do

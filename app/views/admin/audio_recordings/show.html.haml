@@ -1,0 +1,92 @@
+- content_for :title, 'Audio Recording Details'
+
+= render partial: 'shared/admin/sidebar_audio_recordings', locals: {ar_to_manage: @audio_recording}
+
+- content_for :right_sidebar do
+  = render partial: 'shared/sidebar_metadata_heading', locals: {title: 'Audio Recordings', icon_class: 'file-audio-o'}
+
+.col-sm-12
+
+  = simple_form_for(@audio_recording, url: admin_audio_recording_path(@audio_recording), html: {class: 'form-horizontal', multipart: true, method: :put }) do |f|
+    = field_set_tag do
+      = f.error_notification
+
+      - [:id, :uuid, :uploader_id, :recorded_date, :site_id, :duration_seconds, :sample_rate_hertz,
+      :channels, :bit_rate_bps, :media_type, :data_length_bytes, :file_hash, :status, :notes, :creator_id,
+      :updater_id, :deleter_id, :created_at, :updated_at, :deleted_at, :original_file_name,
+      :recorded_utc_offset].each do |item|
+        - human_ed = item.to_s.humanize
+        - param_ed = item.to_s.parameterize
+        - sym_ed = item
+        - str_ed = item.to_s
+        - value = begin @audio_recording[sym_ed]; rescue => e; "Error: #{e.inspect}"; end
+        .form-group.optional{class:param_ed}
+          %label.optional.control-label.col-sm-3{class:param_ed, for: param_ed}
+            = human_ed
+          .col-sm-8
+            %p.form-control-static{id: param_ed}
+              - unless value.blank?
+                - if value.is_a?(Time)
+                  = value.iso8601
+                  %small
+                    ="(#{time_ago_in_words(value)} ago)"
+                - elsif str_ed.end_with?('er_id') || str_ed.end_with?('or_id')
+                  - user = User.find(value)
+                  = link_to user.user_name, user_account_path(user)
+                  %small
+                    ="(#{value})"
+                - elsif sym_ed == :duration_seconds
+                  = distance_of_time_in_words(value)
+                - elsif sym_ed == :data_length_bytes
+                  =   number_to_human_size(value)
+                - elsif sym_ed == :site_id
+                  = @audio_recording.site.name
+                  %small
+                    ="(#{value})"
+                - elsif sym_ed == :notes
+                  %pre
+                    = value
+                - else
+                  = value
+              - else
+                %small
+                  (no value)
+
+      .form-group.optional{class: 'projects'}
+        %label.optional.control-label.col-sm-3{class:'projects', for: 'projects'}
+          Projects
+        .col-sm-8
+          %p.form-control-static{id: 'projects'}
+            - @audio_recording.site.projects.each do |project|
+              = link_to project.name, project_path(project)
+              &nbsp;
+
+      .form-group.optional{class: 'audio_events'}
+        %label.optional.control-label.col-sm-3{class:'audio_events', for: 'audio_events'}
+          Annotations
+        .col-sm-8
+          %p.form-control-static{id: 'audio_events'}
+            = @audio_recording.audio_events.count
+
+-#= @audio_recording.id
+-#= @audio_recording.uuid
+-#= @audio_recording.uploader_id
+-#= @audio_recording.recorded_date
+-#= @audio_recording.site_id
+-#= @audio_recording.duration_seconds
+-#= @audio_recording.sample_rate_hertz
+-#= @audio_recording.channels
+-#= @audio_recording.bit_rate_bps
+-#= @audio_recording.media_type
+-#= @audio_recording.data_length_bytes
+-#= @audio_recording.file_hash
+-#= @audio_recording.status
+-#= @audio_recording.notes
+-#= @audio_recording.creator_id
+-#= @audio_recording.updater_id
+-#= @audio_recording.deleter_id
+-#= @audio_recording.created_at
+-#= @audio_recording.updated_at
+-#= @audio_recording.deleted_at
+-#= @audio_recording.original_file_name
+-#= @audio_recording.recorded_utc_offset

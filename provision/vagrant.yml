@@ -1,0 +1,54 @@
+---
+
+# An Ansible playbook to provision a dev machine that has been created by vagrant
+#
+# WARNING: this is not ready for widespread use! The roles that we depend on are
+# not yet publicly available. This playbook uses relative paths to find the
+# currently private roles that are in the baw-private repository.
+#
+
+
+- name: Manage deploy server
+  hosts: all
+  vars:
+    source_path: "/home/vagrant/baw-provision"
+    baw:
+      # rvm
+      rvm:
+        # note: rubies not in this list will automatically be uninstalled
+        # see: /roles/common/tasks/main.yml
+        rvm1_rubies:
+          # use full 'ruby-*' name
+          # last ruby listed is the default
+          - "ruby-2.2.4"
+  pre_tasks: []
+  roles:
+    - role: "{{ source_path }}/roles/audio_tools"
+      ffmpeg_aliases:
+        - /tmp/ffmpeg
+      tags: ["audio_tools"]
+    - role: "{{ source_path }}/roles/ruby"
+      ruby_rvm_extra_user: vagrant
+      tags: ["ruby"]
+    - role: "{{ source_path }}/external/ANXS.postgresql"
+      postgresql_version: "{{ baw_database.version }}"
+      postgresql_databases:
+        - name: baw_local_dev
+          owner: postgres          # optional; specify the owner of the database
+      sudo: true
+  tasks:
+    - name: APT | Install tools needed for installing pg gem
+      apt:
+        pkg: libpq-dev
+        state: present
+      sudo: true
+    - name: APT | Install tools needed for working with postgres
+      apt:
+        pkg: postgresql-client
+        state: present
+      sudo: true
+    - name: POSTGRES | Ensure postgres password is blank
+      postgresql_user:
+        db: baw_local_dev
+        user: postgres
+        password: NULL

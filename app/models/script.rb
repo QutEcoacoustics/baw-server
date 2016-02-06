@@ -2,52 +2,91 @@ class Script < ActiveRecord::Base
   # ensures that creator_id, updater_id, deleter_id are set
   include UserChange
 
-  has_attached_file :settings_file
-  has_attached_file :data_file
-
   # relationships
   belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_scripts
-  
-  belongs_to :updated_by, class_name: 'Script', foreign_key: :updated_by_script_id
-  has_one :update_from, class_name: 'Script', foreign_key: :updated_by_script_id
-  has_one :latest_update, -> { order('created_at DESC') }, class_name: 'Script', foreign_key: :original_script_id
-  has_many :jobs, inverse_of: :script
+  has_many :analysis_jobs, inverse_of: :script
 
   # association validations
   validates :creator, existence: true
 
   # attribute validations
-  validates :name, presence: true
-  validates :analysis_identifier, presence: true
-  validate :version, :version_increase, on: :create
+  validates :name, :analysis_identifier, :executable_command, :executable_settings, presence: true, length: {minimum: 2}
+  validate :check_version_increase, on: :create
 
-  validates :settings_file, presence: true
-  validates_attachment_content_type :settings_file, content_type: 'text/plain'
-
-  # scopes
-  scope :latest_versions, -> { where(updated_by_script_id: nil) }
-
-  def latest_version
-    if self.is_latest_version?
-      self
-    else
-      self.updated_by.latest_version
-    end
-  end
-
-  def is_latest_version?
-    self.updated_by.blank?
-  end
+  # for the first script in a group, make sure group_id is set to the script's id
+  after_create :ensure_updated_by_set
 
   def display_name
     "#{self.name} - v. #{self.version}"
   end
 
-  def version_increase
-    unless update_from.blank?
-      unless version > update_from.version
-        errors.add(:version, "must be higher then previous version (#{update_from.version})")
-      end
+  def latest_version
+    Script
+        .where(group_id: self.group_id)
+        .order(version: :desc)
+        .first
+  end
+
+  def is_latest_version?
+    self.id == latest_version.id
+  end
+
+  def most_recent_in_group
+    Script
+        .where(group_id: self.group_id)
+        .order(created_at: :desc)
+        .first
+  end
+
+  def is_most_recent_in_group?
+    self.id == most_recent_in_group.id
+  end
+
+  def master_script
+    Script
+        .where(group_id: self.group_id)
+        .where(id: self.group_id)
+        .first
+  end
+
+  def all_versions
+    Script.where(group_id: self.group_id).order(created_at: :desc)
+  end
+
+  def self.filter_settings
+    {
+        valid_fields: [:id, :name, :description, :analysis_identifier, :version, :created_at, :creator_id],
+        render_fields: [:id, :name, :description, :analysis_identifier, :version, :created_at, :creator_id],
+        text_fields: [:name, :description, :analysis_identifier],
+        custom_fields: nil,
+        controller: :scripts,
+        action: :filter,
+        defaults: {
+            order_by: :name,
+            direction: :asc
+        },
+        field_mappings: [],
+        valid_associations: []
+    }
+  end
+
+  private
+
+  def check_version_increase
+    matching_or_higher_versions =
+        Script
+            .where(group_id: self.group_id)
+            .where('version >= ?', self.version)
+    if matching_or_higher_versions.count > 0
+      errors.add(:version, "must be higher than previous versions (#{matching_or_higher_versions.pluck(:version).flatten.join(', ')})")
     end
   end
+
+  def ensure_updated_by_set
+    if self.group_id.blank?
+      self.group_id = self.id
+      self.save
+    end
+  end
+
 end

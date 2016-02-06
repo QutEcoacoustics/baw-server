@@ -64,12 +64,12 @@ class User < ActiveRecord::Base
   has_many :created_bookmarks, class_name: 'Bookmark', foreign_key: :creator_id, inverse_of: :creator
   has_many :updated_bookmarks, class_name: 'Bookmark', foreign_key: :updater_id, inverse_of: :updater
 
-  has_many :created_datasets, -> { includes :project }, class_name: 'Dataset', foreign_key: :creator_id, inverse_of: :creator
-  has_many :updated_datasets, -> { includes :project }, class_name: 'Dataset', foreign_key: :updater_id, inverse_of: :updater
+  has_many :created_saved_searches, -> { includes :project }, class_name: 'SavedSearch', foreign_key: :creator_id, inverse_of: :creator
+  has_many :deleted_saved_searches, -> { includes :project }, class_name: 'SavedSearch', foreign_key: :deleter_id, inverse_of: :deleter
 
-  has_many :created_jobs, class_name: 'Job', foreign_key: :creator_id, inverse_of: :creator
-  has_many :updated_jobs, class_name: 'Job', foreign_key: :updater_id, inverse_of: :updater
-  has_many :deleted_jobs, class_name: 'Job', foreign_key: :deleter_id, inverse_of: :deleter
+  has_many :created_analysis_jobs, class_name: 'AnalysisJob', foreign_key: :creator_id, inverse_of: :creator
+  has_many :updated_analysis_jobs, class_name: 'AnalysisJob', foreign_key: :updater_id, inverse_of: :updater
+  has_many :deleted_analysis_jobs, class_name: 'AnalysisJob', foreign_key: :deleter_id, inverse_of: :deleter
 
   has_many :permissions, inverse_of: :user
   has_many :created_permissions, class_name: 'Permission', foreign_key: :creator_id, inverse_of: :creator
@@ -87,6 +87,8 @@ class User < ActiveRecord::Base
 
   has_many :created_tags, class_name: 'Tag', foreign_key: :creator_id, inverse_of: :creator
   has_many :updated_tags, class_name: 'Tag', foreign_key: :updater_id, inverse_of: :updater
+
+  has_many :created_tag_groups, class_name: 'TagGroup', foreign_key: :creator_id, inverse_of: :creator
 
   # scopes
   scope :users, -> { where(roles_mask: 2) }
@@ -213,34 +215,38 @@ class User < ActiveRecord::Base
   # Define filter api settings
   def self.filter_settings
     {
-        valid_fields: [:id, :user_name, :tzinfo_tz, :rails_tz, :last_seen_at, :created_at, :updated_at],
-        render_fields: [:id, :user_name, :tzinfo_tz, :rails_tz],
+        valid_fields: [:id, :user_name, :roles_mask, :tzinfo_tz, :rails_tz, :last_seen_at, :created_at, :updated_at],
+        render_fields: [:id, :user_name, :roles_mask, :tzinfo_tz, :rails_tz],
         text_fields: [:user_name],
-        custom_fields: lambda { |user, currentUser|
-          is_admin = Access::Check.is_admin?(currentUser)
-          is_same_user = user == currentUser
+        custom_fields: lambda { |user, custom_current_user|
+          is_admin = Access::Check.is_admin?(custom_current_user)
+          is_same_user = user == custom_current_user
+
           # do a query for the attributes that may not be in the projection
+          # instance or id can be nil
           fresh_user = User.find(user.id)
 
           user_hash =
               {
+                  roles_mask_names: fresh_user.roles,
                   image_urls:
                       [
-                          {size: :extralarge, url: user.image.url(:span4), width: 300, height: 300},
-                          {size: :large, url: user.image.url(:span3), width: 220, height: 220},
-                          {size: :medium, url: user.image.url(:span2), width: 140, height: 140},
-                          {size: :small, url: user.image.url(:span1), width: 60, height: 60},
-                          {size: :tiny, url: user.image.url(:spanhalf), width: 30, height: 30}
+                          {size: :extralarge, url: fresh_user.image.url(:span4), width: 300, height: 300},
+                          {size: :large, url: fresh_user.image.url(:span3), width: 220, height: 220},
+                          {size: :medium, url: fresh_user.image.url(:span2), width: 140, height: 140},
+                          {size: :small, url: fresh_user.image.url(:span1), width: 60, height: 60},
+                          {size: :tiny, url: fresh_user.image.url(:spanhalf), width: 30, height: 30}
                       ]
               }
 
           if is_admin || is_same_user
-
             user_hash[:last_seen_at] = fresh_user.last_seen_at
-            user_hash[:preferences] =fresh_user.preferences
+            user_hash[:preferences] = fresh_user.preferences
           end
 
-          user_hash[:is_confirmed] = fresh_user.confirmed? if is_admin
+          if is_admin
+            user_hash[:is_confirmed] = fresh_user.confirmed?
+          end
 
           [user, user_hash]
         },
@@ -276,11 +282,7 @@ class User < ActiveRecord::Base
   end
 
   def set_rails_tz
-    tzInfo_id = TimeZoneHelper.to_identifier(self.tzinfo_tz)
-    rails_tz_string = TimeZoneHelper.tzinfo_to_ruby(tzInfo_id)
-    unless rails_tz_string.blank?
-      self.rails_tz = rails_tz_string
-    end
+    TimeZoneHelper.set_rails_tz(self)
   end
 
 end

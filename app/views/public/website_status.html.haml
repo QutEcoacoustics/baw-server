@@ -2,133 +2,201 @@
 
 = render partial: 'shared/sidebar_public', locals: {user_show: @user, user_current: current_user}
 
-.row
-  .col-sm-12
-    %p= "#{number_with_delimiter(@status_info[:users_online])} #{@status_info[:users_online] == 1 ? 'user': 'users'} online of #{number_with_delimiter(@status_info[:users_total])} registered"
-    %p= "#{number_with_delimiter(@status_info[:tags_total])} unique tags"
+.col-sm-12
+  .row
+    .col-sm-6
+      %ul.list-group
+        %li.list-group-item
+          %span.fa.fa-home{aria: {hidden: 'true' }}
+          Projects
+          %span.badge
+            = number_with_delimiter(Project.count, delimiter: ' ')
+        %li.list-group-item
+          %span.fa.fa-bullseye{aria: {hidden: 'true' }}
+          Annotations
+          %span.badge
+            = number_with_delimiter(AudioEvent.count, delimiter: ' ')
+        %li.list-group-item
+          %span.fa.fa-tags{aria: {hidden: 'true' }}
+          Available tags
+          %span.badge
+            = number_with_delimiter(@status_info[:tags_total], delimiter: ' ')
 
-.row
-  .col-sm-6
-    %h2 Annotations
-    %p= "#{number_with_delimiter(@status_info[:annotations_recent])} new #{@status_info[:annotations_recent] == 1 ? 'annotation': 'annotations'} in last month"
-    %p= "#{number_with_delimiter(@status_info[:annotations_total])} #{@status_info[:annotations_total] == 1 ? 'annotation': 'annotations'}"
-    %p= "#{distance_of_time(@status_info[:annotations_total_duration])} overall annotation duration"
-    %p= "#{number_with_delimiter(@status_info[:tags_applied_total])} #{@status_info[:tags_applied_total] == 1 ? 'tag': 'tags'} attached to annotations"
+    .col-sm-6
+      %ul.list-group
+        %li.list-group-item
+          %span.fa.fa-map-marker{aria: {hidden: 'true' }}
+          Sites
+          %span.badge
+            =  number_with_delimiter(Site.count, delimiter: ' ')
+        %li.list-group-item
+          %span.fa.fa-file-audio-o{aria: {hidden: 'true' }}
+          Audio recordings
+          %span.badge
+            = number_with_delimiter(@status_info[:audio_recording_total], delimiter: ' ')
+        %li.list-group-item
+          %span.fa.fa-users{aria: {hidden: 'true' }}
+          Users
+          %span.badge
+            = number_with_delimiter(@status_info[:users_total], delimiter: ' ')
 
-  .col-sm-6
-    %h2 Recordings
-    %p= "#{number_with_delimiter(@status_info[:audio_recording_recent])} new audio #{@status_info[:audio_recording_recent] == 1 ? 'recording': 'recordings'} in last month"
-    %p= "#{number_with_delimiter(@status_info[:audio_recording_total])} audio #{@status_info[:audio_recording_total] == 1 ? 'recording': 'recordings'}"
-    %p= "#{distance_of_time(@status_info[:audio_recording_total_duration])} overall audio recording duration"
-    %p= "#{number_to_human_size(@status_info[:audio_recording_total_size])} overall audio recording file size"
+  .row
+    .col-sm-6
+      %ul.list-group
+        %li.list-group-item
+          %span.fa.fa-tags{aria: {hidden: 'true' }}
+          Unique tags attached to annotations
+          %span.badge
+            = number_with_delimiter(Tagging.select(:tag_id).distinct.count, delimiter: ' ')
+        %li.list-group-item
+          %span.fa.fa-tags{aria: {hidden: 'true' }}
+          Tags attached to annotations
+          %span.badge
+            = number_with_delimiter(Tagging.count, delimiter: ' ')
+        %li.list-group-item
+          %span.fa.fa-bullseye{aria: {hidden: 'true' }}
+          New annotations in last month
+          %span.badge
+            = number_with_delimiter(@status_info[:annotations_recent], delimiter: ' ')
+        %li.list-group-item
+          %span.fa.fa-clock-o{aria: {hidden: 'true' }}
+          Overall annotation duration
+          %span.badge
+            = distance_of_time(@status_info[:annotations_total_duration], highest_measures: 2)
+    .col-sm-6
+      %ul.list-group
+        %li.list-group-item
+          %span.fa.fa-users{aria: {hidden: 'true' }}
+          Users Online
+          %span.badge
+            = number_with_delimiter(@status_info[:users_online], delimiter: ' ')
+        %li.list-group-item
+          %span.fa.fa-file-audio-o{aria: {hidden: 'true' }}
+          overall audio recording file size
+          %span.badge
+            = number_to_human_size(@status_info[:audio_recording_total_size], delimiter: ' ')
+        %li.list-group-item
+          %span.fa.fa-file-audio-o{aria: {hidden: 'true' }}
+          New audio recordings in last month
+          %span.badge
+            = number_with_delimiter(@status_info[:audio_recording_recent], delimiter: ' ')
 
-%h2 Recent Annotations
+        %li.list-group-item
+          %span.fa.fa-clock-o{aria: {hidden: 'true' }}
+          Overall audio duration
+          %span.badge
+            = distance_of_time(@status_info[:audio_recording_total_duration], highest_measures: 2)
 
-.row
-  .col-sm-12
-    - if @recent_audio_events.empty?
-      No recent annotations.
-    - elsif current_user.blank?
-      %table.table.table-striped.table-hover
-        %thead
-          %tr
-            %th
-              %span.fa.fa-tags{aria: {hidden: 'true' }}
-              Tags
-            %th
-              %span.fa.fa-calendar{aria: {hidden: 'true' }}
-              Updated
 
-        %tbody
-          - @recent_audio_events.each do |audio_event|
-            - tag_instances = audio_event.tags.order(:type_of_tag, :text).to_a
-            - priority_tag = Tag.get_priority_tag(tag_instances) || Tag.new(text:'(none)')
+  .row
+    %h2 Recent Annotations
+
+  .row
+    .col-sm-12
+      - if @recent_audio_events.empty?
+        No recent annotations.
+      - elsif current_user.blank?
+        %table.table.table-striped.table-hover
+          %thead
             %tr
-              %td= truncate(priority_tag.text, length: 50)
-              %td= format_sidebar_datetime(audio_event.updated_at)
-    - else
-      %table.table.table-striped.table-hover
-        %thead
-          %tr
-            %th
-              %span.fa.fa-map-marker{aria: {hidden: 'true' }}
-              Site
-            %th
-              %span.fa.fa-user{aria: {hidden: 'true' }}
-              User
-            %th
-              %span.fa.fa-calendar{aria: {hidden: 'true' }}
-              Updated
-            %th
-              %span.fa.fa-tags{aria: {hidden: 'true' }}
-              Tags
-            %th
+              %th
+                %span.fa.fa-tags{aria: {hidden: 'true' }}
+                Tags
+              %th
+                %span.fa.fa-calendar{aria: {hidden: 'true' }}
+                Updated
 
-        %tbody
-          - @recent_audio_events.each do |audio_event|
-            - tags = audio_event.tags.order(:type_of_tag, :text).select(:text).to_a.map{ |item| item.text}.join(', ')
-            - listen_link = make_listen_path(audio_event)
-            - library_link = make_library_path(audio_event)
-            - site_name = audio_event.audio_recording.site.name
+          %tbody
+            - @recent_audio_events.each do |audio_event|
+              - tag_instances = audio_event.tags.order(:type_of_tag, :text).to_a
+              - priority_tag = Tag.get_priority_tag(tag_instances) || Tag.new(text:'(none)')
+              %tr
+                %td= truncate(priority_tag.text, length: 50)
+                %td= format_sidebar_datetime(audio_event.updated_at)
+      - else
+        %table.table.table-striped.table-hover
+          %thead
             %tr
-              %td= site_name
-              %td= link_to audio_event.creator.user_name, user_account_path(audio_event.creator_id)
-              %td= format_sidebar_datetime(audio_event.updated_at)
-              %td= truncate(tags, length: 30)
-              %td
-                = link_to listen_link, target: '_self', class: 'btn btn-default btn-xs' do
-                  %span.fa.fa-play{aria: {hidden: 'true'}}
-                  Play
-                = link_to library_link, target: '_self', class: 'btn btn-default btn-xs' do
-                  %span.fa.fa-bullseye{aria: {hidden: 'true'}}
-                  Annotation
+              %th
+                %span.fa.fa-map-marker{aria: {hidden: 'true' }}
+                Site
+              %th
+                %span.fa.fa-user{aria: {hidden: 'true' }}
+                User
+              %th
+                %span.fa.fa-calendar{aria: {hidden: 'true' }}
+                Updated
+              %th
+                %span.fa.fa-tags{aria: {hidden: 'true' }}
+                Tags
+              %th
 
-%h2 Recent Audio Recordings
+          %tbody
+            - @recent_audio_events.each do |audio_event|
+              - tags = audio_event.tags.order(:type_of_tag, :text).select(:text).to_a.map{ |item| item.text}.join(', ')
+              - listen_link = make_listen_path(audio_event)
+              - library_link = make_library_path(audio_event)
+              - site_name = audio_event.audio_recording.site.name
+              %tr
+                %td= site_name
+                %td= link_to audio_event.creator.user_name, user_account_path(audio_event.creator_id)
+                %td= format_sidebar_datetime(audio_event.updated_at)
+                %td= truncate(tags, length: 30)
+                %td
+                  = link_to listen_link, target: '_self', class: 'btn btn-default btn-xs' do
+                    %span.fa.fa-play{aria: {hidden: 'true'}}
+                    Play
+                  = link_to library_link, target: '_self', class: 'btn btn-default btn-xs' do
+                    %span.fa.fa-bullseye{aria: {hidden: 'true'}}
+                    Annotation
 
-.row
-  .col-sm-12
-    - if @recent_audio_recordings.empty?
-      No recent audio recordings.
-    - elsif current_user.blank?
-      %table.table.table-striped.table-hover
-        %thead
-          %tr
-            %th
-              %span.fa.fa-clock-o{aria: {hidden: 'true' }}
-              Duration
-            %th
-              %span.fa.fa-calendar{aria: {hidden: 'true' }}
-              Uploaded
+  .row
+    %h2 Recent Audio Recordings
 
-        %tbody
-          - @recent_audio_recordings.each do |audio_recording|
+  .row
+    .col-sm-12
+      - if @recent_audio_recordings.empty?
+        No recent audio recordings.
+      - elsif current_user.blank?
+        %table.table.table-striped.table-hover
+          %thead
             %tr
-              %td= distance_of_time(audio_recording.duration_seconds)
-              %td= format_sidebar_datetime(audio_recording.created_at)
-    - else
-      %table.table.table-striped.table-hover
-        %thead
-          %tr
-            %th
-              %span.fa.fa-map-marker{aria: {hidden: 'true' }}
-              Site
-            %th
-              %span.fa.fa-clock-o{aria: {hidden: 'true' }}
-              Duration
-            %th
-              %span.fa.fa-calendar{aria: {hidden: 'true' }}
-              Uploaded
-            %th
+              %th
+                %span.fa.fa-clock-o{aria: {hidden: 'true' }}
+                Duration
+              %th
+                %span.fa.fa-calendar{aria: {hidden: 'true' }}
+                Uploaded
 
-        %tbody
-          - @recent_audio_recordings.each do |audio_recording|
-            - listen_link = make_listen_path(audio_recording)
-            - site_name = audio_recording.site.name
+          %tbody
+            - @recent_audio_recordings.each do |audio_recording|
+              %tr
+                %td= distance_of_time(audio_recording.duration_seconds)
+                %td= format_sidebar_datetime(audio_recording.created_at)
+      - else
+        %table.table.table-striped.table-hover
+          %thead
             %tr
-              %td= site_name
-              %td= distance_of_time(audio_recording.duration_seconds)
-              %td= format_sidebar_datetime(audio_recording.created_at)
-              %td
-                = link_to listen_link, target: '_self', class: 'btn btn-default btn-xs' do
-                  %span.fa.fa-play{aria: {hidden: 'true'}}
-                  Play
+              %th
+                %span.fa.fa-map-marker{aria: {hidden: 'true' }}
+                Site
+              %th
+                %span.fa.fa-clock-o{aria: {hidden: 'true' }}
+                Duration
+              %th
+                %span.fa.fa-calendar{aria: {hidden: 'true' }}
+                Uploaded
+              %th
+
+          %tbody
+            - @recent_audio_recordings.each do |audio_recording|
+              - listen_link = make_listen_path(audio_recording)
+              - site_name = audio_recording.site.name
+              %tr
+                %td= site_name
+                %td= distance_of_time(audio_recording.duration_seconds)
+                %td= format_sidebar_datetime(audio_recording.created_at)
+                %td
+                  = link_to listen_link, target: '_self', class: 'btn btn-default btn-xs' do
+                    %span.fa.fa-play{aria: {hidden: 'true'}}
+                    Play

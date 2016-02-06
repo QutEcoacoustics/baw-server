@@ -1,0 +1,11 @@
+-# locals: ar_to_manage
+- content_for(:left_sidebar_header, 'Audio Recordings')
+- content_for(:left_sidebar) do
+  %li{class: ('active' if current_page?(admin_dashboard_path))}
+    = link_to 'Admin Home', admin_dashboard_path
+  %li{class: ('active' if current_page?(admin_audio_recordings_path))}
+    = link_to 'Audio Recordings', admin_audio_recordings_path,  title: 'Manage audio recordings', data: {toggle: 'tooltip',  placement: 'right'}
+  - if defined?(ar_to_manage)
+    - if  can?(:show, ar_to_manage)
+      %li{class: ('active' if current_page?(admin_audio_recording_path(ar_to_manage)))}
+        = link_to 'View Audio Recording', admin_audio_recording_path(ar_to_manage),  title: 'View audio recording details', data: {toggle: 'tooltip',  placement: 'right'}

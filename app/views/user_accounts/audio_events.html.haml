@@ -8,41 +8,40 @@
 
 = render partial: 'shared/sidebar_user', locals: {user_show: @user, user_current: current_user}
 
-- if @user_annotations.empty?
-  = 'No annotations created.'
-- else
+.col-sm-12
   %p= page_entries_info @user_annotations
   = paginate @user_annotations
 
   %table.table.table-striped.table-hover
+    %thead
+      %tr
+        %th
+          %span.fa.fa-map-marker{aria: {hidden: 'true' }}
+          Site
+        %th
+          %span.fa.fa-calendar{aria: {hidden: 'true' }}
+          Updated
+        %th
+          %span.fa.fa-tags{aria: {hidden: 'true' }}
+          Tags
+        %th
 
-    %tr
-      %th
-        %span.fa.fa-map-marker{aria: {hidden: 'true' }}
-        Site
-      %th
-        %span.fa.fa-calendar{aria: {hidden: 'true' }}
-        Updated
-      %th
-        %span.fa.fa-tags{aria: {hidden: 'true' }}
-        Tags
-      %th
+    %tbody
+      - @user_annotations.each do |audio_event|
+        - if !audio_event.nil? && !audio_event.audio_recording.nil?
+          - listen_link = make_listen_path(audio_event)
+          - library_link = make_library_path(audio_event)
+          - site_name = audio_event.audio_recording.site.name
+          - tags = audio_event.tags.order(:type_of_tag, :text).select(:text).to_a.map{ |item| item.text}.join(', ')
 
-    - @user_annotations.each do |audio_event|
-      - if !audio_event.nil? && !audio_event.audio_recording.nil?
-        - listen_link = make_listen_path(audio_event)
-        - library_link = make_library_path(audio_event)
-        - site_name = audio_event.audio_recording.site.name
-        - tags = audio_event.tags.order(:type_of_tag, :text).select(:text).to_a.map{ |item| item.text}.join(', ')
-
-        %tr
-          %td= site_name
-          %td= format_sidebar_datetime(audio_event.updated_at)
-          %td= truncate(tags, length: 50)
-          %td
-            = link_to listen_link, target: '_self', class: 'btn btn-default btn-xs' do
-              %span.fa.fa-play{aria: {hidden: 'true'}}
-              Play
-            = link_to library_link, target: '_self', class: 'btn btn-default btn-xs' do
-              %span.fa.fa-bullseye{aria: {hidden: 'true'}}
-              Annotation
+          %tr
+            %td= site_name
+            %td= format_sidebar_datetime(audio_event.updated_at)
+            %td= truncate(tags, length: 50)
+            %td
+              = link_to listen_link, target: '_self', class: 'btn btn-default btn-xs' do
+                %span.fa.fa-play{aria: {hidden: 'true'}}
+                Play
+              = link_to library_link, target: '_self', class: 'btn btn-default btn-xs' do
+                %span.fa.fa-bullseye{aria: {hidden: 'true'}}
+                Annotation

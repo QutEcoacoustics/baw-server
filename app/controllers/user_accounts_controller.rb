@@ -1,15 +1,14 @@
 class UserAccountsController < ApplicationController
   include Api::ControllerHelper
 
-  load_and_authorize_resource :user, parent: false
-
-  # GET /users
-  # GET /users.json
+  # GET /user_accounts
   def index
+    do_authorize_class
+
     order = 'CASE WHEN last_seen_at IS NOT NULL THEN last_seen_at
 WHEN current_sign_in_at IS NOT NULL THEN current_sign_in_at
 ELSE last_sign_in_at END DESC'
-    @users = User.order(order).all
+    @users = User.order(order).page(params[:page])
 
     respond_to do |format|
       format.html
@@ -17,31 +16,39 @@ ELSE last_sign_in_at END DESC'
     end
   end
 
-  # GET /users/1
-  # GET /users/1.json
+  # GET /user_accounts/:id
   def show
+    do_load_resource
+    do_authorize_instance
+
     respond_to do |format|
       format.html # show.html.erb
       format.json { respond_show }
     end
   end
 
+  # GET /my_account
   def my_account
     @user = current_user
+
+    do_authorize_instance
+
     respond_to do |format|
       format.html { render template: 'user_accounts/show' }
       format.json { respond_show }
     end
   end
 
-  # GET /users/1/edit
+  # GET /user_accounts/:id/edit
   def edit
-
+    do_load_resource
+    do_authorize_instance
   end
 
-  # PUT /users/1
-  # PUT /users/1.json
+  # PUT|PATCH /user_accounts/:id
   def update
+    do_load_resource
+    do_authorize_instance
 
     the_params = user_update_params.dup
 
@@ -79,10 +86,11 @@ ELSE last_sign_in_at END DESC'
     end
   end
 
-  # PUT /my_account/prefs.json
+  # PUT /my_account/prefs
   def modify_preferences
-
     @user = current_user
+    do_authorize_instance
+
     @user.preferences = user_account_params
 
     respond_to do |format|
@@ -94,51 +102,108 @@ ELSE last_sign_in_at END DESC'
     end
   end
 
-  # GET /user_accounts/1/projects
+  # GET /user_accounts/:id/projects
   def projects
+    do_load_resource
+    do_authorize_instance
+
     @user_projects = Access::Query.projects_accessible(@user).includes(:creator).references(:creator)
                          .order('projects.name ASC')
                          .page(paging_params[:page].blank? ? 1 : paging_params[:page])
     respond_to do |format|
-      format.html # projects.html.erb
-      format.json { render json: @user_projects }
+      format.html
     end
   end
 
-  # GET /user_accounts/1/bookmarks
+  # GET /user_accounts/:id/sites
+  def sites
+    do_load_resource
+    do_authorize_instance
+
+    @user_sites = Access::Query.sites(@user).includes(:creator, :projects).references(:creator, :project)
+        .order('sites.name ASC')
+        .page(paging_params[:page].blank? ? 1 : paging_params[:page])
+
+    respond_to do |format|
+      format.html
+    end
+  end
+
+  # GET /user_accounts/:id/bookmarks
   def bookmarks
+    do_load_resource
+    do_authorize_instance
+
     @user_bookmarks = Access::Query.bookmarks_modified(@user)
                           .order('bookmarks.updated_at DESC')
                           .page(paging_params[:page].blank? ? 1 : paging_params[:page])
     respond_to do |format|
-      format.html # bookmarks.html.erb
-      format.json { render json: @user_bookmarks }
+      format.html
     end
   end
 
-  # GET /user_accounts/1/audio_event_comments
+  # GET /user_accounts/:id/audio_event_comments
   def audio_event_comments
+    do_load_resource
+    do_authorize_instance
+
     @user_audio_event_comments = Access::Query.audio_event_comments_modified(@user)
                                      .order('audio_event_comments.updated_at DESC')
                                      .page(paging_params[:page].blank? ? 1 : paging_params[:page])
     respond_to do |format|
-      format.html # audio_event_comments.html.erb
-      format.json { render json: @user_audio_event_comments }
+      format.html
     end
   end
 
+  # GET /user_accounts/:id/audio_events
   def audio_events
+    do_load_resource
+    do_authorize_instance
+
     @user_annotations = Access::Query.audio_events_modified(@user).includes(audio_recording: [:site]).references(:audio_recordings, :sites)
                             .order('audio_events.updated_at DESC')
                             .page(paging_params[:page].blank? ? 1 : paging_params[:page])
     respond_to do |format|
-      format.html # audio_events.html.erb
-      format.json { render json: @user_annotations }
+      format.html
     end
   end
 
+  # GET /user_accounts/:id/saved_searches
+  def saved_searches
+    do_load_resource
+    do_authorize_instance
+
+    @user_saved_searches = Access::Query.saved_searches_modified(@user)
+                               .order('saved_searches.created_at DESC')
+                               .paginate(
+                                   page: paging_params[:page].blank? ? 1 : paging_params[:page],
+                                   per_page: 30
+                               )
+    respond_to do |format|
+      format.html
+    end
+  end
+
+  # GET /user_accounts/:id/analysis_jobs
+  def analysis_jobs
+    do_load_resource
+    do_authorize_instance
+
+    @user_analysis_jobs = Access::Query.analysis_jobs_modified(@user)
+                              .order('analysis_jobs.updated_at DESC')
+                              .paginate(
+                                  page: paging_params[:page].blank? ? 1 : paging_params[:page],
+                                  per_page: 30
+                              )
+    respond_to do |format|
+      format.html
+    end
+  end
+
+  # GET|POST /user_accounts/filter
   def filter
-    authorize! :filter, User
+    do_authorize_class
+
     filter_response, opts = Settings.api_response.response_advanced(
         api_filter_params,
         User.all,

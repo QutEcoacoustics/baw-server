@@ -1,0 +1,13 @@
+-# locals: tag_group_to_manage
+- content_for(:left_sidebar_header, 'Tag Groups')
+- content_for(:left_sidebar) do
+  %li{class: ('active' if current_page?(admin_dashboard_path))}
+    = link_to 'Admin Home', admin_dashboard_path
+  %li{class: ('active' if current_page?(admin_tag_groups_path))}
+    = link_to 'Tag Group List', admin_tag_groups_path,  title: 'Manage tag groups', data: {toggle: 'tooltip',  placement: 'right'}
+  %li{class: ('active' if current_page?(new_admin_tag_group_path))}
+    = link_to 'New Tag Group ', new_admin_tag_group_path,  title: 'Create a new tag group', data: {toggle: 'tooltip',  placement: 'right'}
+  - if defined?(tag_group_to_manage)
+    - if  can?(:show, tag_group_to_manage)
+      %li{class: ('active' if current_page?(edit_admin_tag_group_path(tag_group_to_manage)))}
+        = link_to 'Edit Tag Group ', edit_admin_tag_group_path(tag_group_to_manage),  title: 'Modify tag group details', data: {toggle: 'tooltip',  placement: 'right'}

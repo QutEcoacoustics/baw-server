@@ -1,0 +1,27 @@
+%table.table.table-striped.table-hover
+  %thead
+    %tr
+      %th
+        %span.fa.fa-book{aria: {hidden: 'true'}}
+        Name
+      %th
+        %span.fa.fa-clone{aria: {hidden: 'true'}}
+        Version
+      %th
+        %span.fa.fa-thumb-tack{aria: {hidden: 'true'}}
+        ID
+      %th
+        %span.fa.fa-sticky-note{aria: {hidden: 'true'}}
+        Command
+      %th
+  %tbody
+  - scripts.each do |script|
+    %tr
+      %td= link_to script.name, admin_script_path(script)
+      %td= script.version
+      %td= script.analysis_identifier
+      %td= truncate(script.executable_command)
+      %td
+        = link_to edit_admin_script_path(script), class: 'btn btn-default btn-xs' do
+          %span.fa.fa-plus-square-o
+          New version

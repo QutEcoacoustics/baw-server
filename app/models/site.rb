@@ -6,7 +6,6 @@ class Site < ActiveRecord::Base
 
   # relations
   has_and_belongs_to_many :projects, -> { uniq }
-  has_and_belongs_to_many :datasets, -> { uniq }
   has_many :audio_recordings, inverse_of: :site
 
   belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_sites
@@ -64,13 +63,13 @@ class Site < ActiveRecord::Base
     recording = most_recent_recording
     if !bookmark.blank?
       {
-          audio_recording:bookmark.audio_recording,
+          audio_recording: bookmark.audio_recording,
           start_offset_seconds: bookmark.offset_seconds,
           source: :bookmark
       }
-      elsif !recording.blank?
+    elsif !recording.blank?
       {
-          audio_recording:recording,
+          audio_recording: recording,
           start_offset_seconds: nil,
           source: :audio_recording
       }
@@ -166,19 +165,35 @@ class Site < ActiveRecord::Base
         render_fields: [:id, :name, :description],
         text_fields: [:description, :name],
         custom_fields: lambda { |site, user|
-            site.update_location_obfuscated(user)
 
-            # do a query for the attributes that may not be in the projection
-            fresh_site = Site.find(site.id)
-            fresh_site.update_location_obfuscated(user)
+          site.update_location_obfuscated(user) unless site.nil? || site.id.nil?
 
-            site_hash = {}
-            site_hash[:project_ids] = fresh_site.projects.pluck(:id)
+          # do a query for the attributes that may not be in the projection
+          # instance or id can be nil
+          fresh_site = (site.nil? || site.id.nil?) ? nil : Site.find(site.id)
+
+          fresh_site.update_location_obfuscated(user) unless fresh_site.nil?
+
+          site_hash = {}
+          site_hash[:project_ids] = fresh_site.nil? ? nil : fresh_site.projects.pluck(:id).flatten
+
+          unless fresh_site.nil?
             site_hash[:location_obfuscated] = fresh_site.location_obfuscated
             site_hash[:custom_latitude] = fresh_site.latitude
             site_hash[:custom_longitude] = fresh_site.longitude
+          end
 
-            [site, site_hash]
+          [site, site_hash]
+        },
+        new_spec_fields: lambda { |user|
+          {
+              longitude: nil,
+              latitude: nil,
+              notes: nil,
+              image: nil,
+              tzinfo_tz: nil,
+              rails_tz: nil,
+          }
         },
         controller: :sites,
         action: :filter,
@@ -199,17 +214,18 @@ class Site < ActiveRecord::Base
                     }
                 ]
 
-            }
+            },
+            {
+                join: AudioRecording,
+                on: AudioRecording.arel_table[:site_id].eq(Site.arel_table[:id]),
+                available: true
+            },
         ]
     }
   end
 
   def set_rails_tz
-    tzInfo_id = TimeZoneHelper.to_identifier(self.tzinfo_tz)
-    rails_tz_string = TimeZoneHelper.tzinfo_to_ruby(tzInfo_id)
-    unless rails_tz_string.blank?
-      self.rails_tz = rails_tz_string
-    end
+    TimeZoneHelper.set_rails_tz(self)
   end
 
 end

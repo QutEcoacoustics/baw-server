@@ -1,0 +1,23 @@
+# Auto-detect text files, ensure they use LF.
+* text=auto eol=lf
+
+# ...Unless the name matches the following
+# overriding patterns
+
+# Definitively text files 
+*.txt text eol=lf
+*.rb  text eol=lf
+*.gemspec diff=ruby eol=lf
+*.rb diff=ruby eol=lf
+*.ru diff=ruby eol=lf
+Rakefile diff=ruby eol=lf
+bin/* diff=ruby eol=lf
+
+
+# Ensure those won't be messed up with
+*.jpg binary
+*.data binary
+*.ogg binary
+*.mp3 binary
+*.wav binary
+

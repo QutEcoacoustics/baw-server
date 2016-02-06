@@ -1,0 +1,61 @@
+-# locals: f, model_name, attribute_name, full_width (defaults to false), attribute_value
+- control_id =  "#{model_name}_#{attribute_name}"
+- hidden_control_id = "#{control_id}_hidden"
+- full_width = false unless defined?(full_width)
+- has_error = !f.error(attribute_name).blank?
+.form-group.string.required{class: [control_id , has_error ? 'has-error' : ''] }
+  %label.string.required.control-label.col-sm-3{for: control_id}
+    %small
+      (required)
+    Tag
+  %div{class: (full_width ? 'col-sm-9' : 'col-sm-5')}
+    = f.input_field attribute_name, type: 'text', autocomplete: 'off', class: 'form-control', required: true,
+      value: attribute_value.nil? ? '' : attribute_value.text
+    - if has_error
+      %span.help-block
+        = f.error attribute_name
+    = f.input_field attribute_name, as: :hidden, id: hidden_control_id, name: hidden_control_id, value: attribute_value.nil? ? '' : attribute_value.id
+
+:javascript
+  // init bloodhound
+  var engine = new Bloodhound({
+    remote: {
+        url: '/tags/filter',
+        identify: function(obj) { return obj.id; },
+        transform: function(response){
+          var text_items = response.data.map(function(value, index, array){
+            return {id: value.id, name: value.text};
+          });
+
+          console.log('transform', text_items);
+          return text_items;
+        },
+        prepare: function(query, settings){
+          settings.type = "POST";
+          settings.contentType = "application/json; charset=UTF-8";
+          settings.data = JSON.stringify({"filter":{"text":{"contains":query}}});
+
+          console.log('prepare', query, settings);
+          return settings;
+        }
+      },
+    queryTokenizer: Bloodhound.tokenizers.whitespace,
+    datumTokenizer: Bloodhound.tokenizers.obj.whitespace('name')
+  });
+
+  $('##{control_id}').bind('typeahead:select typeahead:autocomplete', function(ev, suggestion) {
+    console.log('Selection', suggestion);
+    $('##{hidden_control_id}').val(suggestion.id);
+  });
+
+  // init typeahead
+  $('##{control_id}').typeahead({
+    'highlight': true,
+    'hint': true,
+    'minLength': 2
+    },
+    {
+    'source': engine,
+    'limit': 10,
+    'display': 'name'
+  });

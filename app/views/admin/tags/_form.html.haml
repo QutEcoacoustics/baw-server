@@ -1,0 +1,21 @@
+- action_new = params[:action] == 'new' || params[:action] == 'create'
+- action_edit = params[:action] == 'edit' || params[:action] == 'update'
+- method_new = :post
+- method_edit = :patch
+
+- if action_new
+  - url = admin_tags_path
+  - method = method_new
+- elsif action_edit
+  - url = admin_tags_path
+  - method = method_edit
+
+= simple_form_for([:admin, @tag], url: url, html: {class: 'form-horizontal', method: method }) do |f|
+  = field_set_tag do
+    = f.error_notification
+    = f.input :text, required: true , autofocus: true
+    = f.input :type_of_tag, required: true
+    = f.input :notes
+    = f.input :retired, wrapper: :horizontal_boolean
+    = f.input :is_taxanomic, wrapper: :horizontal_boolean
+    = f.button :submit_cancel, 'Submit', class: 'btn-default'

@@ -23,10 +23,24 @@ module Api
       instance_variable_get("@#{resource_name}")
     end
 
+    # Sets the resource instance variable to the given value
+    # @param [Object] value
+    # @return [void]
+    def set_resource(value)
+      instance_variable_set("@#{resource_name}", value)
+    end
+
     # Returns the resource from the created instance variable
     # @return [Object]
     def get_resource_plural
       instance_variable_get("@#{resource_name_plural}")
+    end
+
+    # Sets the resource instance plural variable to the given value
+    # @param [Object] value
+    # @return [void]
+    def set_resource_plural(value)
+      instance_variable_set("@#{resource_name_plural}", value)
     end
 
     # The resource class based on the controller
@@ -74,7 +88,7 @@ module Api
       render json: built_response, status: :created, location: location.blank? ? item_resource : location, layout: false
     end
 
-    # used for create_fail and update_fail
+    # used for create fail and update fail
     def respond_change_fail
       built_response = Settings.api_response.build(
           :unprocessable_entity,
@@ -110,26 +124,57 @@ module Api
       render json: built_response, status: :ok, content_type: 'application/json', layout: false
     end
 
-    def attributes_and_authorize(custom_params = nil)
-      # need to do what cancan would otherwise do due to before_action creating instance variable, so cancan
-      # assumes already authorized
+    # def attributes_and_authorize(custom_params = nil)
+    #   # need to do what cancan would otherwise do due to before_action creating instance variable, so cancan
+    #   # assumes already authorized
+    #
+    #   do_authorize!
+    # end
+
+    # def do_authorize!
+    #   authorize! action_name.to_sym, (get_resource || resource_class)
+    # end
+
+    def api_filter_params
+      # for filter api, all validation is done in modules rather than in strong parameters.
+      params.permit!
+    end
+
+    # Replacement methods for CanCanCan authorize_resource, load_resource, load_and_authorize_resource.
+
+    def do_set_attributes(custom_params = nil)
       # see https://github.com/CanCanCommunity/cancancan/wiki/Controller-Authorization-Example
       current_ability.attributes_for(action_name.to_sym, resource_class).each do |key, value|
         get_resource.send("#{key}=", value)
       end
       capture_params = custom_params.nil? ? params[resource_name.to_sym] : custom_params
       get_resource.attributes = capture_params if !capture_params.blank? && capture_params.is_a?(Hash)
-      do_authorize!
     end
 
-    def do_authorize!
-      authorize! action_name.to_sym, get_resource
+    def do_new_resource
+      set_resource(resource_class.new)
     end
 
-    def api_filter_params
-      # for filter api, all validation is done in modules rather than in strong parameters.
-      params.permit!
+    def do_load_resource
+      set_resource(resource_class.find(params[:id]))
     end
+
+    def do_load_resources
+      set_resource_plural(resource_class.accessible_by(current_ability))
+    end
+
+    def do_authorize_instance(custom_action_name = nil, custom_resource = nil)
+      authorize! (custom_action_name ||action_name).to_sym, (custom_resource || get_resource)
+    end
+
+    def do_authorize_class(custom_action_name = nil, custom_class = nil)
+      authorize! (custom_action_name || action_name).to_sym, (custom_class || resource_class)
+    end
+
+    def do_authorise_instance_or_class
+      authorize! action_name.to_sym, (get_resource || resource_class)
+    end
+
 
   end
 end

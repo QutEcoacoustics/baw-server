@@ -12,7 +12,7 @@ module Filter
     attr_reader :key_prefix, :max_items, :initial_query, :table,
                 :valid_fields, :text_fields, :filter_settings,
                 :parameters, :filter, :projection, :qsp_text_filter,
-                :qsp_generic_filters, :paging, :sorting
+                :qsp_generic_filters, :paging, :sorting, :build
 
     # Convert a json POST body to an arel query.
     # @param [Hash] parameters
@@ -46,9 +46,6 @@ module Filter
       @projection = nil if @projection.blank?
 
       @qsp_text_filter = parse_qsp_text(@parameters)
-
-
-
 
       @qsp_generic_filters = parse_qsp(nil, @parameters, @key_prefix, @valid_fields)
       @paging = parse_paging(

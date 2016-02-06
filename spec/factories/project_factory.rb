@@ -21,22 +21,23 @@ FactoryGirl.define do
         evaluator.site_count.times do
           project.sites << FactoryGirl.create(:site_with_audio_recordings, creator: evaluator.creator)
         end
-        #create_list(:site, evaluator.site_count, project: project)
       end
     end
 
-    trait :with_datasets do
+    trait :with_saved_searches do
       transient do
-        dataset_count 1
+        saved_search_count 1
       end
       after(:create) do |project, evaluator|
         raise 'Creator was blank' if  evaluator.creator.blank?
-        create_list(:dataset, evaluator.dataset_count, project: project, creator: evaluator.creator)
+        evaluator.saved_search_count.times do
+          project.saved_searches << FactoryGirl.create(:saved_search_with_analysis_jobs, creator: evaluator.creator)
+        end
       end
     end
 
     factory :project_with_sites, traits: [:with_sites]
-    factory :project_with_sites_and_datasets, traits: [:with_sites, :with_datasets]
+    factory :project_with_sites_and_saved_searches, traits: [:with_sites, :with_saved_searches]
 
   end
 end

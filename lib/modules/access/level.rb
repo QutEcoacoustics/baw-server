@@ -54,7 +54,7 @@ module Access
         elsif levels.size < 1
           nil
         else
-          levels[0].to_sym
+          levels.first.to_sym
         end
       end
 

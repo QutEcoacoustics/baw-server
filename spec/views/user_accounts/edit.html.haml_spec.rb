@@ -1,4 +1,4 @@
-#require 'spec_helper'
+#require 'rails_helper'
 #
 #describe "user_accounts/edit" do
 #  before(:each) do

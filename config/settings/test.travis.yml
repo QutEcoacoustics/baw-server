@@ -24,8 +24,8 @@ test:
     emails:
       email_prefix: '[BAW travis test]'
   audio_tools:
-    ffmpeg_executable: ffmpeg
-    ffprobe_executable: ffprobe
+    ffmpeg_executable: /tmp/ffmpeg/ffmpeg
+    ffprobe_executable: /tmp/ffmpeg/ffprobe
     mp3splt_executable: mp3splt
     sox_executable: sox
     wavpack_executable: wvunpack

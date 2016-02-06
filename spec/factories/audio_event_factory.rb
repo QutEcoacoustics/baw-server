@@ -6,6 +6,7 @@ FactoryGirl.define do
     low_frequency_hertz 400
     high_frequency_hertz 6000
     end_time_seconds 5.8
+    is_reference false
 
     creator
     audio_recording

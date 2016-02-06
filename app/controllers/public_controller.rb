@@ -1,19 +1,18 @@
 class PublicController < ApplicationController
   skip_authorization_check only: [
-      :index, :status,
-      :website_status,
-      :audio_recording_catalogue,
-      :credits,
-      :disclaimers,
-      :ethics_statement,
-      :data_upload,
+                               :index, :status,
+                               :website_status,
+                               :credits,
+                               :disclaimers,
+                               :ethics_statement,
+                               :data_upload,
 
-      :new_contact_us, :create_contact_us,
-      :new_bug_report, :create_bug_report,
-      :new_data_request, :create_data_request,
+                               :new_contact_us, :create_contact_us,
+                               :new_bug_report, :create_bug_report,
+                               :new_data_request, :create_data_request,
 
-      :cors_preflight
-  ]
+                               :cors_preflight
+                           ]
 
   # ensure that invalid CORS preflight requests get useful responses
   skip_before_action :verify_authenticity_token, only: :cors_preflight
@@ -68,7 +67,7 @@ class PublicController < ApplicationController
     annotations_total_duration = 0 if annotations_total_duration.blank?
 
     audio_recording_total = AudioRecording.count
-    audio_recording_recent = AudioRecording.where('created_at > ? OR updated_at > ?', month_ago, month_ago).count
+    audio_recording_recent = AudioRecording.where('created_at > ?', month_ago).count
 
     audio_recording_total_duration = AudioRecording.sum(:duration_seconds)
     audio_recording_total_duration = 0 if audio_recording_total_duration.blank?
@@ -106,71 +105,6 @@ class PublicController < ApplicationController
     respond_to do |format|
       format.html
       format.json { render json: @status_info }
-    end
-  end
-
-  def audio_recording_catalogue
-
-    respond_to do |format|
-      format.html
-      format.json {
-
-        if Access::Check.is_admin?(current_user)
-
-        else
-
-          unless params[:projectId].blank?
-            project = Project.where(id: params[:projectId]).first
-
-            if project.blank?
-              fail CustomErrors::ItemNotFoundError, 'Project not found from audio_recording_catalogue'
-            end
-
-            if current_user.blank? || Access::Check.can?(current_user, :none, project)
-              fail CanCan::AccessDenied, 'Project access denied from audio_recording_catalogue'
-            end
-          end
-
-          unless params[:siteId].blank?
-            site = Site.where(id: params[:siteId]).first
-
-            if site.blank?
-              fail CustomErrors::ItemNotFoundError, 'Site not found from audio_recording_catalogue'
-            end
-
-            projects = Site.where(id: params[:siteId]).first.projects
-            if current_user.blank? || Access::Check.can_any?(current_user, :none, projects)
-              fail CanCan::AccessDenied, 'Site access denied from audio_recording_catalogue'
-            end
-          end
-        end
-
-        query = AudioRecording.joins(site: :projects)
-        .select(
-            'count(*) as grouped_count,
-EXTRACT(YEAR FROM recorded_date) as extracted_year,
-EXTRACT(MONTH FROM recorded_date) as extracted_month,
-EXTRACT(DAY FROM recorded_date) as extracted_day')
-
-        if !params[:projectId].blank? && !current_user.blank?
-          query = query.where('projects_sites.project_id = ?', params[:projectId])
-        end
-
-        if !params[:siteId].blank? && !current_user.blank?
-          query = query.where(site_id: params[:siteId])
-        end
-
-        audio_recordings_grouped = query
-        .group('extracted_year, extracted_month, extracted_day')
-        .map { |ar|
-          {
-              count: ar.grouped_count,
-              extracted_year: ar.extracted_year,
-              extracted_month: ar.extracted_month.to_s.rjust(2, '0'),
-              extracted_day: ar.extracted_day.to_s.rjust(2, '0')
-          }
-        }
-        render json: audio_recordings_grouped }
     end
   end
 
@@ -273,23 +207,7 @@ EXTRACT(DAY FROM recorded_date) as extracted_day')
   def new_data_request
     @data_request = DataClass::DataRequest.new
 
-    @annotation_download = nil
-    if !params[:annotation_download].blank? &&
-        !params[:annotation_download][:project_id].blank? &&
-        !params[:annotation_download][:site_id].blank?
-
-      # check permissions
-      site_id = params[:annotation_download][:site_id].to_i
-      site = Site.where(id: site_id).first
-      access = can?(:show, site)
-      msg = 'You must have access to the site to download annotations.'
-      fail CanCan::AccessDenied.new(msg, :show, site) unless access
-
-      @annotation_download = {
-          link: download_site_audio_events_path(params[:annotation_download][:project_id], params[:annotation_download][:site_id]),
-          name: site.name
-      }
-    end
+    annotation_download
 
     respond_to do |format|
       format.html {}
@@ -347,20 +265,75 @@ EXTRACT(DAY FROM recorded_date) as extracted_day')
 
     if current_user.blank?
       @recent_audio_events = AudioEvent
-                                 .order(order_by_coalesce)
-                                 .limit(7)
+          .order(order_by_coalesce)
+          .limit(7)
     elsif Access::Check.is_admin?(current_user)
       @recent_audio_events = AudioEvent
-                                 .includes([:creator, audio_recording: {site: :projects}])
-                                 .order(order_by_coalesce)
-                                 .limit(10)
+          .includes([:creator, audio_recording: {site: :projects}])
+          .order(order_by_coalesce)
+          .limit(10)
     else
       @recent_audio_events = Access::Query
-                                 .audio_events(current_user, Access::Core.levels_allow)
-                                 .includes([:updater, audio_recording: :site])
-                                 .order(order_by_coalesce).limit(10)
+          .audio_events(current_user, Access::Core.levels_allow)
+          .includes([:updater, audio_recording: :site])
+          .order(order_by_coalesce).limit(10)
     end
 
+  end
+
+  def annotation_download
+    selected_params = annotation_download_params
+
+    selected_project_id = selected_params[:selected_project_id]
+    selected_site_id = selected_params[:selected_site_id]
+    selected_user_id = selected_params[:selected_user_id]
+    selected_timezone_name = selected_params[:selected_timezone_name]
+
+    @annotation_download = nil
+
+    if !selected_project_id.blank? && !selected_site_id.blank?
+
+      # only accessible if current user has show access to project
+      # and site is in specified project
+      project_id = selected_project_id.to_i
+      project = Project.find(project_id)
+      site_id = selected_site_id.to_i
+      site = Site.find(site_id)
+      msg = "You must have access to the site (#{site.id}) and project(s) (#{site.projects.pluck(:id).join(', ')}) to download annotations."
+      fail CanCan::AccessDenied.new(msg, :show, site) if project.nil? || site.nil?
+      fail CanCan::AccessDenied.new(msg, :show, site) unless Access::Check.can?(current_user, :reader, project)
+      fail CanCan::AccessDenied.new(msg, :show, site) unless Access::Check.can_any?(current_user, :reader, site.projects)
+      fail CanCan::AccessDenied.new(msg, :show, site) unless project.sites.pluck(:id).include?(site_id)
+
+      @annotation_download = {
+          link: download_site_audio_events_path(project_id, site_id, selected_timezone_name: selected_timezone_name),
+          name: site.name,
+          timezone_name: selected_timezone_name
+      }
+
+    elsif !selected_user_id.blank?
+
+      user_id = selected_user_id.to_i
+      user = User.find(user_id)
+      is_same_user = User.same_user?(current_user, user)
+      msg = 'Only admins and annotation creators can download annotations created by a user.'
+      fail CanCan::AccessDenied.new(msg, :show, AudioEvent) if user.nil?
+      fail CanCan::AccessDenied.new(msg, :show, AudioEvent) if !Access::Check.is_admin?(current_user) && !is_same_user
+
+      @annotation_download = {
+          link: download_user_audio_events_path(user_id, selected_timezone_name: selected_timezone_name),
+          name: user.user_name,
+          timezone_name: selected_timezone_name
+      }
+    end
+  end
+
+  def annotation_download_params
+    params.permit(
+        :selected_project_id,
+        :selected_site_id,
+        :selected_user_id,
+        :selected_timezone_name)
   end
 
 end
