@@ -11,6 +11,11 @@ namespace :baw do
       puts ''
       puts "Checking #{AudioRecording.where('notes IS NOT NULL').count} audio recording notes..."
       puts ''
+
+      # ********
+      # WARNING: known BUG - records that have been deleted will not be fixed in this query
+      # Not fixed because only one record was found in production - fixed manually.
+      # ********
       AudioRecording.where('notes IS NOT NULL').order(id: :asc).find_each do |ar| # .where('id > 240000')
         ar_notes = AudioRecording.connection.select_all(AudioRecording.where(id: ar.id).select(:notes).to_sql).first['notes']
         
@@ -213,7 +218,7 @@ def escaped_json?(json)
   begin
     obj = JSON.parse(ActiveSupport::JSON.decode(json))
     return true, obj
-  recuse JSON::ParserError => e
+  rescue JSON::ParserError => e
     return false, nil
   end
 end
