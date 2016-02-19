@@ -47,14 +47,18 @@ defaults: &defaults
     ######################################################
     # these values are read for config.{key} in
     # File devise.rb #
+    # We never want these values to make it production.
+    # Documented for completion here but must be overridden!
     ######################################################
-    pepper: 128 char random pepper 128 char random pepper
-    secret_key: 128 char random pepper 128 char random pepper
+    ##pepper: 128 char random pepper 128 char random pepper
+    ##secret_key: 128 char random pepper 128 char random pepper
   ######################################################
   # File secret_token.rb #
+  # We never want these values to make it production.
+  # Documented for completion here but must be overridden!
   ######################################################
-  secret_token: some long secret token - at least 30 chars, all random
-  secret_key_base: some long secret token - at least 30 chars, all random
+  ##secret_token: some long secret token - at least 30 chars, all random
+  ##secret_key_base: some long secret token - at least 30 chars, all random
   paths:
     image_magick_dir: <%= Rails.root %>/tmp/_image-magick
     original_audios:
