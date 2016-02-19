@@ -189,6 +189,38 @@ resource 'AnalysisJobs' do
     standard_request_options(:post, 'CREATE (invalid token)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
   end
 
+  post '/analysis_jobs' do
+    let(:authentication_token) { writer_token }
+    let(:raw_post) {
+      {
+          "name" => "job test creation",
+          "custom_settings" => "#custom settings 267",
+          "script_id" => 999899,
+          "saved_search_id" => 99989,
+          "format" => "json",
+          "controller" => "analysis_jobs",
+          "action" => "create",
+          "analysis_job" =>
+              {
+                  "name" => "job test creation",
+                  "custom_settings" => "#custom settings 267",
+                  "script_id" => 999899,
+                  "saved_search_id" => 99989
+              }
+
+      }.to_json }
+    let!(:preparation_create){
+      project = Creation::Common.create_project(writer_user)
+      script = FactoryGirl.create(:script, creator: writer_user, id: 999899)
+
+      saved_search = FactoryGirl.create(:saved_search, creator: writer_user, id: 99989)
+      saved_search.projects << project
+      saved_search.save!
+      saved_search
+    }
+    standard_request_options(:post, 'CREATE (as writer, testing projects error)', :created, {expected_json_path: 'data/saved_search_id'})
+  end
+
   ################################
   # UPDATE
   ################################
