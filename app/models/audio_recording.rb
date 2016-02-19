@@ -265,7 +265,22 @@ class AudioRecording < ActiveRecord::Base
             {
                 join: Site,
                 on: AudioRecording.arel_table[:site_id].eq(Site.arel_table[:id]),
-                available: true
+                available: true,
+                associations: [
+                    {
+                        join: Arel::Table.new(:projects_sites),
+                        on: Site.arel_table[:id].eq(Arel::Table.new(:projects_sites)[:site_id]),
+                        available: false,
+                        associations: [
+                            {
+                                join: Project,
+                                on: Arel::Table.new(:projects_sites)[:project_id].eq(Project.arel_table[:id]),
+                                available: true
+                            }
+                        ]
+
+                    }
+                ]
             },
             {
                 join: Bookmark,

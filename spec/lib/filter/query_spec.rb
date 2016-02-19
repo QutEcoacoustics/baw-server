@@ -641,6 +641,67 @@ LIMIT25OFFSET0"
       expect(filter_query.query_full.to_sql.gsub(/\s+/, '')).to eq(complex_result_2.gsub(/\s+/, ''))
 
     end
+
+    it 'audio_recording with projects' do
+      request_body_obj = {
+          filter: {
+              and: {
+                  'projects.id' => {
+                      less_than: 123456
+                  },
+                  duration_seconds: {
+                      not_eq: 40
+                  }
+              }
+          },
+          projection: {
+              include: [:id, :site_id, :duration_seconds, :recorded_date, :created_at]
+          },
+          paging: {
+              items: 20,
+              page: 1
+          },
+          sort: {
+              order_by: "created_at",
+              direction: "desc"
+          }
+      }
+      complex_result =
+          "SELECT\"audio_recordings\".\"id\", \
+          \"audio_recordings\".\"site_id\", \
+          \"audio_recordings\".\"duration_seconds\", \
+          \"audio_recordings\".\"recorded_date\", \
+          \"audio_recordings\".\"created_at\" \
+FROM\"audio_recordings\" \
+WHERE(\"audio_recordings\".\"deleted_at\"ISNULL) \
+AND(\"audio_recordings\".\"id\"IN \
+(SELECT\"audio_recordings\".\"id\"FROM\"audio_recordings\" \
+LEFTOUTERJOIN\"sites\"ON\"audio_recordings\".\"site_id\"=\"sites\".\"id\" \
+LEFTOUTERJOIN\"projects_sites\"ON\"sites\".\"id\"=\"projects_sites\".\"site_id\" \
+LEFTOUTERJOIN\"projects\"ON\"projects_sites\".\"project_id\"=\"projects\".\"id\" \
+WHERE\"projects\".\"id\"<123456) \
+AND\"audio_recordings\".\"duration_seconds\"!=40) \
+ORDERBY\"audio_recordings\".\"recorded_date\" \
+DESCLIMIT20OFFSET0"
+
+      compare_filter_sql(request_body_obj, complex_result)
+
+      user = writer_user
+      user_id = user.id
+
+      complex_result_2 =
+          "SELECT\"audio_recordings\".\"id\",\"audio_recordings\".\"site_id\",\"audio_recordings\".\"duration_seconds\",\"audio_recordings\".\"recorded_date\",\"audio_recordings\".\"created_at\"FROM\"audio_recordings\"INNERJOIN\"sites\"ON\"sites\".\"id\"=\"audio_recordings\".\"site_id\"AND(\"sites\".\"deleted_at\"ISNULL)WHERE(\"audio_recordings\".\"deleted_at\"ISNULL)AND(EXISTS(SELECT1FROM\"projects_sites\"WHERE\"sites\".\"id\"=\"projects_sites\".\"site_id\"ANDEXISTS((SELECT1FROM\"projects\"WHERE\"projects\".\"deleted_at\"ISNULLAND\"projects\".\"creator_id\"=#{user_id}AND\"projects_sites\".\"project_id\"=\"projects\".\"id\"UNIONALLSELECT1FROM\"permissions\"WHERE\"permissions\".\"user_id\"=#{user_id}AND\"permissions\".\"level\"IN('reader','writer','owner')AND\"projects_sites\".\"project_id\"=\"permissions\".\"project_id\"))))AND(\"audio_recordings\".\"id\"IN(SELECT\"audio_recordings\".\"id\"FROM\"audio_recordings\"LEFTOUTERJOIN\"sites\"ON\"audio_recordings\".\"site_id\"=\"sites\".\"id\"LEFTOUTERJOIN\"projects_sites\"ON\"sites\".\"id\"=\"projects_sites\".\"site_id\"LEFTOUTERJOIN\"projects\"ON\"projects_sites\".\"project_id\"=\"projects\".\"id\"WHERE\"projects\".\"id\"<123456)AND\"audio_recordings\".\"duration_seconds\"!=40)ORDERBY\"audio_recordings\".\"recorded_date\"DESCLIMIT20OFFSET0"
+
+      filter_query = Filter::Query.new(
+          request_body_obj,
+          Access::Query.audio_recordings(user, Access::Core.levels_allow),
+          AudioRecording,
+          AudioRecording.filter_settings
+      )
+
+      expect(filter_query.query_full.to_sql.gsub(/\s+/, '')).to eq(complex_result_2.gsub(/\s+/, ''))
+    end
+
   end
 
   context 'calculated field' do

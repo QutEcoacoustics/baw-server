@@ -47,7 +47,8 @@ module Filter
           :not_starts_with, :not_start_with, :does_not_start_with,
           :ends_with, :end_with,
           :not_ends_with, :not_end_with, :does_not_end_with,
-          :regex
+          :regex, :regex_match, :matches,
+          :not_regex, :not_regex_match, :does_not_match, :not_match
       ]
     end
 
