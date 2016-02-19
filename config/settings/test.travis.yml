@@ -18,6 +18,7 @@ test:
     pepper: 2a1dd780abf48819876cd0b74b5a988b
     secret_key: 8050140a1d4824520eb759778ada63fe
   secret_token: 286c3a382cc5f94bc4003023f9486845
+  secret_key_base: 518d86a7849cca95757fe6913582ab3c
   paths:
     image_magick_dir: <%= Rails.root %>/vendor/bin/imagemagick
   mailer:
