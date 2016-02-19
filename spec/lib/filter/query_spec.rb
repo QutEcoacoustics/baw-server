@@ -7,6 +7,8 @@ end
 
 describe Filter::Query do
 
+  create_entire_hierarchy
+
   def create_filter(params)
     Filter::Query.new(
         params,
@@ -554,8 +556,7 @@ LIMIT10OFFSET0"
 
       compare_filter_sql(complex_sample, complex_result)
 
-      @permission = FactoryGirl.create(:write_permission)
-      user = @permission.user
+      user = writer_user
       user_id = user.id
 
       complex_result_2 =
@@ -624,8 +625,7 @@ LIMIT25OFFSET0"
 
       compare_filter_sql(request_body_obj, complex_result)
 
-      @permission = FactoryGirl.create(:write_permission)
-      user = @permission.user
+      user = writer_user
       user_id = user.id
 
       complex_result_2 =
@@ -653,8 +653,7 @@ LIMIT25OFFSET0"
           }
       }
 
-      @permission = FactoryGirl.create(:write_permission)
-      user = @permission.user
+      user = writer_user
       user_id = user.id
 
       filter_query = Filter::Query.new(
@@ -685,8 +684,7 @@ LIMIT25OFFSET0"
           }
       }
 
-      @permission = FactoryGirl.create(:write_permission)
-      user = @permission.user
+      user = writer_user
       user_id = user.id
 
       filter_query = Filter::Query.new(
@@ -709,12 +707,11 @@ LIMIT25OFFSET0"
   context 'ensures a site in more than one project' do
 
     it 'does not duplicate audio_events' do
-      user = FactoryGirl.create(:user)
-      permission = FactoryGirl.create(:write_permission, creator: user, user: user)
+      user = owner_user
 
-      site = permission.project.sites.first
+      site = project.sites.first
 
-      project1 = permission.project
+      project1 = project
       project2 = FactoryGirl.create(:project, creator: user, sites: [site])
       permission2 = FactoryGirl.create(:permission, creator: user, project: project2, user: user, level: 'writer')
 
@@ -740,12 +737,11 @@ LIMIT25OFFSET0"
     end
 
     it 'does not duplicate audio_event_comments' do
-      user = FactoryGirl.create(:user)
-      permission = FactoryGirl.create(:write_permission, creator: user, user: user)
+      user = owner_user
 
-      site = permission.project.sites.first
+      site = project.sites.first
 
-      project1 = permission.project
+      project1 = project
       project2 = FactoryGirl.create(:project, creator: user, sites: [site])
       permission2 = FactoryGirl.create(:permission, creator: user, project: project2, user: user, level: 'writer')
 
@@ -773,9 +769,8 @@ LIMIT25OFFSET0"
 
   context 'gets projects' do
     it 'inaccessible' do
-      user = FactoryGirl.create(:user)
-      permission = FactoryGirl.create(:read_permission, creator: user, user: user)
-      project_no_access = FactoryGirl.create(:project)
+      the_user = owner_user
+      project_no_access = FactoryGirl.create(:project, creator: other_user)
 
       request_body_obj = {
           projection: {
@@ -785,7 +780,7 @@ LIMIT25OFFSET0"
 
       filter_query_inaccessible = Filter::Query.new(
           request_body_obj,
-          Access::Query.projects_inaccessible(user),
+          Access::Query.projects_inaccessible(the_user),
           Project,
           Project.filter_settings
       )
@@ -795,12 +790,11 @@ LIMIT25OFFSET0"
     end
 
     it 'accessible' do
-      user = FactoryGirl.create(:user)
-      permission = FactoryGirl.create(:read_permission, creator: user, user: user)
+      the_user = owner_user
 
-      project_access = permission.project
+      project_access = project
       project_no_access = FactoryGirl.create(:project)
-      access_via_created = FactoryGirl.create(:project, creator: user)
+      access_via_created = FactoryGirl.create(:project, creator: the_user)
 
       request_body_obj = {
           projection: {
@@ -810,7 +804,7 @@ LIMIT25OFFSET0"
 
       filter_query_accessible = Filter::Query.new(
           request_body_obj,
-          Access::Query.projects_accessible(user),
+          Access::Query.projects_accessible(the_user),
           Project,
           Project.filter_settings
       )
@@ -824,10 +818,12 @@ LIMIT25OFFSET0"
   context 'nested indexes properly filtered' do
 
     it 'restricts sites to project' do
-      user = FactoryGirl.create(:user)
-      permission1 = FactoryGirl.create(:read_permission, creator: user, user: user)
-      permission2 = FactoryGirl.create(:read_permission, creator: user, user: user)
-      site2 = permission2.project.sites.first
+      the_user = owner_user
+
+      project_new = FactoryGirl.create(:project, creator: the_user)
+      site2 = FactoryGirl.create(:site, creator: the_user)
+      project_new.sites << site2
+      project_new.save!
 
       request_body_obj = {
           projection: {
@@ -837,7 +833,7 @@ LIMIT25OFFSET0"
 
       filter_query_project2 = Filter::Query.new(
           request_body_obj,
-          Access::Query.project_sites(permission2.project, user, Access::Core.levels_allow),
+          Access::Query.project_sites(project_new, the_user, Access::Core.levels_allow),
           Site,
           Site.filter_settings
       )
@@ -848,12 +844,17 @@ LIMIT25OFFSET0"
     end
 
     it 'restricts sites to those in projects that cannot be accessed' do
-      user = FactoryGirl.create(:user)
-      permission1 = FactoryGirl.create(:read_permission, creator: user, user: user)
-      permission2 = FactoryGirl.create(:read_permission, creator: user, user: user)
-      permission3 = FactoryGirl.create(:read_permission)
-      project3 = permission3.project
-      site3 = project3.sites.first
+      the_user = owner_user
+
+      project2 = FactoryGirl.create(:project, creator: the_user)
+      site2 = FactoryGirl.create(:site, creator: the_user)
+      project2.sites << site2
+      project2.save!
+
+      project3 = FactoryGirl.create(:project, creator: other_user)
+      site3 = FactoryGirl.create(:site, creator: other_user)
+      project3.sites << site3
+      project3.save!
 
       request_body_obj = {
           projection: {
@@ -863,7 +864,7 @@ LIMIT25OFFSET0"
 
       filter_query_project2 = Filter::Query.new(
           request_body_obj,
-          Access::Query.project_sites(project3, user, Access::Core.levels_deny),
+          Access::Query.project_sites(project3, the_user, Access::Core.levels_deny),
           Site,
           Site.filter_settings
       )
@@ -874,9 +875,9 @@ LIMIT25OFFSET0"
     end
 
     it 'restricts permissions to project' do
-      user = FactoryGirl.create(:user)
-      permission1 = FactoryGirl.create(:read_permission, creator: user, user: user)
-      permission2 = FactoryGirl.create(:read_permission, creator: user, user: user)
+      the_user = FactoryGirl.create(:user)
+      permission1 = FactoryGirl.create(:read_permission, creator: the_user, user: the_user)
+      permission2 = FactoryGirl.create(:read_permission, creator: the_user, user: the_user)
       project2 = permission2.project
 
       request_body_obj = {
@@ -898,11 +899,19 @@ LIMIT25OFFSET0"
     end
 
     it 'restricts audio events to audio recording' do
-      user = FactoryGirl.create(:user)
-      permission1 = FactoryGirl.create(:read_permission, creator: user, user: user)
-      permission2 = FactoryGirl.create(:read_permission, creator: user, user: user)
-      audio_recording2 = permission2.project.sites.first.audio_recordings.first
-      audio_event2 = audio_recording2.audio_events.first
+      the_user = owner_user
+
+      project2 = Creation::Common.create_project(the_user)
+      site2 = Creation::Common.create_site(the_user, project2)
+      audio_recording2 = Creation::Common.create_audio_recording(the_user, the_user, site2)
+      audio_event2 = Creation::Common.create_audio_event(the_user, audio_recording2)
+
+      project3 = Creation::Common.create_project(the_user)
+      site3 = Creation::Common.create_site(the_user, project3)
+      audio_recording3 = Creation::Common.create_audio_recording(the_user, the_user, site3)
+      audio_event3 = Creation::Common.create_audio_event(the_user, audio_recording3)
+
+      expect(AudioEvent.count).to eq(3)
 
       request_body_obj = {
           projection: {
@@ -912,7 +921,7 @@ LIMIT25OFFSET0"
 
       filter_query_project2 = Filter::Query.new(
           request_body_obj,
-          Access::Query.audio_recording_audio_events(audio_recording2, user),
+          Access::Query.audio_recording_audio_events(audio_recording2, the_user),
           AudioEvent,
           AudioEvent.filter_settings
       )
@@ -933,12 +942,21 @@ LIMIT25OFFSET0"
     # end
 
     it 'restricts comments to audio event' do
-      user = FactoryGirl.create(:user)
-      permission1 = FactoryGirl.create(:read_permission, creator: user, user: user)
-      permission2 = FactoryGirl.create(:read_permission, creator: user, user: user)
-      audio_recording2 = permission2.project.sites.first.audio_recordings.first
-      audio_event2 = audio_recording2.audio_events.first
-      comment2 = audio_event2.comments.first
+      the_user = owner_user
+      
+      project2 = Creation::Common.create_project(the_user)
+      site2 = Creation::Common.create_site(the_user, project2)
+      audio_recording2 = Creation::Common.create_audio_recording(the_user, the_user, site2)
+      audio_event2 = Creation::Common.create_audio_event(the_user, audio_recording2)
+      comment2 = Creation::Common.create_audio_event_comment(the_user, audio_event2)
+
+      project3 = Creation::Common.create_project(the_user)
+      site3 = Creation::Common.create_site(the_user, project3)
+      audio_recording3 = Creation::Common.create_audio_recording(the_user, the_user, site3)
+      audio_event3 = Creation::Common.create_audio_event(the_user, audio_recording3)
+      comment3 = Creation::Common.create_audio_event_comment(the_user, audio_event3)
+
+      expect(AudioEventComment.count).to eq(3)
 
       request_body_obj = {
           projection: {
@@ -948,7 +966,7 @@ LIMIT25OFFSET0"
 
       filter_query_project2 = Filter::Query.new(
           request_body_obj,
-          Access::Query.audio_event_comments(audio_event2, user),
+          Access::Query.audio_event_comments(audio_event2, the_user),
           AudioEventComment,
           AudioEventComment.filter_settings
       )
@@ -959,12 +977,12 @@ LIMIT25OFFSET0"
     end
 
     it 'restricts comments to audio events in projects that can not be accessed' do
-      user = FactoryGirl.create(:user)
-      permission1 = FactoryGirl.create(:read_permission, creator: user, user: user)
-      permission2 = FactoryGirl.create(:read_permission)
-      audio_recording2 = permission2.project.sites.first.audio_recordings.first
-      audio_event2 = audio_recording2.audio_events.first
-      comment2 = audio_event2.comments.first
+      the_user = owner_user
+      comment1 = FactoryGirl.create(:audio_event_comment, creator: the_user)
+      comment2 = FactoryGirl.create(:audio_event_comment)
+      audio_event2 = comment2.audio_event
+
+      expect(AudioEventComment.count).to eq(3)
 
       request_body_obj = {
           projection: {
@@ -974,7 +992,7 @@ LIMIT25OFFSET0"
 
       filter_query_project2 = Filter::Query.new(
           request_body_obj,
-          Access::Query.audio_event_comments(audio_event2, user, Access::Core.levels_deny),
+          Access::Query.audio_event_comments(audio_event2, the_user, Access::Core.levels_deny),
           AudioEventComment,
           AudioEventComment.filter_settings
       )

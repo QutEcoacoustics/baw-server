@@ -110,6 +110,13 @@ RSpec.configure do |config|
   config.include Paperclip::Shoulda::Matchers
   config.include FactoryGirl::Syntax::Methods
 
+  require File.join(File.dirname(File.expand_path(__FILE__)), 'lib', 'creation.rb')
+  config.include Creation::Example
+  config.extend Creation::ExampleGroup
+
+  require 'enumerize/integrations/rspec'
+  extend Enumerize::Integrations::RSpec
+
   config.before(:suite) do
     DatabaseCleaner.strategy = :transaction
     DatabaseCleaner.clean_with(:truncation)
@@ -119,6 +126,8 @@ RSpec.configure do |config|
     #bin/rake db:create RAILS_ENV=test
     #bin/rake db:migrate RAILS_ENV=test
     #bin/rake db:structure:dump RAILS_ENV=test
+    #bin/rake db:drop RAILS_ENV=test
+    #bin/rake db:create RAILS_ENV=test
     #bin/rake db:structure:load RAILS_ENV=test
 
     begin

@@ -14,6 +14,9 @@ describe Tag, :type => :model do
   it { is_expected.to belong_to(:creator).with_foreign_key(:creator_id) }
   it { is_expected.to belong_to(:updater).with_foreign_key(:updater_id) }
 
+  # .with_predicates(true).with_multiple(false)
+  it { is_expected.to enumerize(:type_of_tag).in(*Tag::AVAILABLE_TYPE_OF_TAGS) }
+
   it 'should not allow nil for is_taxanomic' do
     expect(build(:tag, is_taxanomic: nil)).not_to be_valid
   end

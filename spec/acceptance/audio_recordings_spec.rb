@@ -270,8 +270,8 @@ def test_overlap
           duration_seconds: input_post_item[:duration_seconds],
           site_id: site_id,
           status: :ready,
-          creator_id: @write_permission.user.id,
-          uploader_id: @write_permission.user.id) }
+          creator_id: writer_user.id,
+          uploader_id: writer_user.id) }
 
       let(:raw_post) { {audio_recording: posted_item_attrs}.to_json }
 
@@ -289,8 +289,8 @@ def test_overlap
               duration_seconds: existing[:duration_seconds],
               site_id: site_id,
               status: :ready,
-              creator: @write_permission.user,
-              uploader: @write_permission.user)
+              creator: writer_user,
+              uploader: writer_user)
           # set id so it can be used to retrieve the record
           existing[:id] = existing_item.id
         end
@@ -349,31 +349,17 @@ resource 'AudioRecordings' do
   # default format
   let(:format) { 'json' }
 
-  before(:each) do
-    # this creates a @write_permission.user with write access to @write_permission.project,
-    # a @read_permission.user with read access, as well as
-    # a site, audio_recording and audio_event having off the project (see permission_factory.rb)
-    @write_permission = FactoryGirl.create(:write_permission) # has to be 'write' so that the uploader has access
-    @read_permission = FactoryGirl.create(:read_permission, project: @write_permission.project)
-    @user = FactoryGirl.create(:user)
-    @harvester = FactoryGirl.create(:harvester)
-  end
+  create_entire_hierarchy
 
   # prepare ids needed for paths in requests below
-  let(:project_id) { @write_permission.project.id }
-  let(:site_id) { @write_permission.project.sites[0].id }
-  let(:id) { @write_permission.project.sites[0].audio_recordings[0].id }
-
-  # prepare authentication_token for different users
-  let(:writer_token) { "Token token=\"#{@write_permission.user.authentication_token}\"" }
-  let(:reader_token) { "Token token=\"#{@read_permission.user.authentication_token}\"" }
-  let(:no_access_token) { "Token token=\"#{@user.authentication_token}\"" }
-  let(:harvester_token) { "Token token=\"#{@harvester.authentication_token}\"" }
+  let(:project_id) { project.id }
+  let(:site_id) { site.id }
+  let(:id) { audio_recording.id }
 
 
   # Create post parameters from factory
   # make sure the uploader has write permission to the project
-  let(:post_attributes) { FactoryGirl.attributes_for(:audio_recording, uploader_id: @write_permission.user.id) }
+  let(:post_attributes) { FactoryGirl.attributes_for(:audio_recording, uploader_id: writer_user.id) }
 
   ################################
   # LIST
@@ -384,7 +370,7 @@ resource 'AudioRecordings' do
 
     let(:authentication_token) { reader_token }
 
-    standard_request_options(:get, 'LIST (as reader)', :ok,{expected_json_path: 'data/0/bit_rate_bps', data_item_count: 1})
+    standard_request_options(:get, 'LIST (as reader)', :ok, {expected_json_path: 'data/0/bit_rate_bps', data_item_count: 1})
 
   end
 
@@ -394,7 +380,7 @@ resource 'AudioRecordings' do
 
     let(:authentication_token) { writer_token }
 
-    standard_request_options(:get, 'LIST (as writer)', :ok,{expected_json_path: 'data/0/bit_rate_bps', data_item_count: 1})
+    standard_request_options(:get, 'LIST (as writer)', :ok, {expected_json_path: 'data/0/bit_rate_bps', data_item_count: 1})
   end
 
   get '/audio_recordings' do
@@ -415,7 +401,7 @@ resource 'AudioRecordings' do
 
     let(:authentication_token) { reader_token }
 
-    standard_request_options(:get, 'SHOW (as reader)', :ok,{expected_json_path: 'data/bit_rate_bps'})
+    standard_request_options(:get, 'SHOW (as reader)', :ok, {expected_json_path: 'data/bit_rate_bps'})
   end
 
   get '/audio_recordings/:id' do
@@ -433,7 +419,7 @@ resource 'AudioRecordings' do
 
     parameter :id, 'Requested audio recording id (in path/route)', required: true
 
-    let(:authentication_token) { no_access_token }
+    let(:authentication_token) { other_token }
 
     standard_request_options(:get, 'SHOW (as no access, with shallow path)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
   end
@@ -478,7 +464,7 @@ resource 'AudioRecordings' do
 
     let(:authentication_token) { harvester_token }
 
-    standard_request_options(:get, 'NEW (as harvester)', :ok,{expected_json_path: 'data/bit_rate_bps'})
+    standard_request_options(:get, 'NEW (as harvester)', :ok, {expected_json_path: 'data/bit_rate_bps'})
 
   end
 
@@ -486,7 +472,7 @@ resource 'AudioRecordings' do
 
     let(:authentication_token) { writer_token }
 
-    standard_request_options(:get, 'NEW (as reader, for api)', :ok,{expected_json_path: 'data/bit_rate_bps'})
+    standard_request_options(:get, 'NEW (as reader, for api)', :ok, {expected_json_path: 'data/bit_rate_bps'})
 
   end
 
@@ -509,7 +495,7 @@ resource 'AudioRecordings' do
     parameter :original_file_name, '', scope: :audio_recording, :required => true
     parameter :uploader_id, 'The id of the user who uploaded the audio recording. User must have write access to the project.', scope: :audio_recording, :required => true
 
-    let(:raw_post) { {'audio_recording' => FactoryGirl.attributes_for(:audio_recording, recorded_date: '2013-03-26 07:06:59', uploader_id: @write_permission.user.id)}.to_json }
+    let(:raw_post) { {'audio_recording' => FactoryGirl.attributes_for(:audio_recording, recorded_date: '2013-03-26 07:06:59', uploader_id: writer_user.id)}.to_json }
 
     let(:authentication_token) { harvester_token }
 
@@ -560,7 +546,7 @@ resource 'AudioRecordings' do
                                                      duration_seconds: duration_seconds,
                                                      notes: notes,
                                                      site_id: site_id,
-                                                     uploader_id: @write_permission.user.id) }
+                                                     uploader_id: writer_user.id) }
 
     let(:raw_post) { {'audio_recording' => ar_attributes}.to_json }
 
@@ -608,7 +594,7 @@ resource 'AudioRecordings' do
     parameter :original_file_name, '', scope: :audio_recording, :required => true
     parameter :uploader_id, 'The id of the user who uploaded the audio recording. User must have write access to the project.', scope: :audio_recording, :required => true
 
-    let(:raw_post) { {'audio_recording' => post_attributes.merge(duration_seconds:2.0)}.to_json }
+    let(:raw_post) { {'audio_recording' => post_attributes.merge(duration_seconds: 2.0)}.to_json }
 
     let(:authentication_token) { harvester_token }
 
@@ -681,7 +667,7 @@ resource 'AudioRecordings' do
     # define item to be posted
     let(:posted_item_attrs) {
       {
-          "uploader_id" => @write_permission.user.id,
+          "uploader_id" => writer_user.id,
           "recorded_date" => "2015-01-01T20:48:00.000+10:00",
           "site_id" => site_id.to_s,
           "duration_seconds" => 7200.003,
@@ -710,8 +696,8 @@ resource 'AudioRecordings' do
           duration_seconds: 7200.003,
           site_id: site_id,
           status: :ready,
-          creator: @write_permission.user,
-          uploader: @write_permission.user)
+          creator: writer_user,
+          uploader: writer_user)
 
       do_request
 
@@ -730,7 +716,7 @@ resource 'AudioRecordings' do
     parameter :site_id, 'Requested site ID (in path/route)', required: true
     parameter :uploader_id, 'Uploader id (in path/route)', required: true
 
-    let(:uploader_id) { @write_permission.user.id }
+    let(:uploader_id) { writer_user.id }
     let(:raw_post) { {'audio_recording' => post_attributes}.to_json }
 
     let(:authentication_token) { harvester_token }
@@ -744,7 +730,7 @@ resource 'AudioRecordings' do
     parameter :site_id, 'Requested site ID (in path/route)', required: true
     parameter :uploader_id, 'Uploader id (in path/route)', required: true
 
-    let(:uploader_id) { @write_permission.user.id }
+    let(:uploader_id) { writer_user.id }
     let(:raw_post) { {'audio_recording' => post_attributes}.to_json }
 
     let(:authentication_token) { writer_token }
@@ -761,7 +747,7 @@ resource 'AudioRecordings' do
     parameter :site_id, 'Requested site ID (in path/route)', required: true
     parameter :uploader_id, 'Uploader id (in path/route)', required: true
 
-    let(:uploader_id) { @user.id }
+    let(:uploader_id) { other_user.id }
     let(:raw_post) { {'audio_recording' => post_attributes}.to_json }
 
     let(:authentication_token) { harvester_token }
@@ -1017,9 +1003,9 @@ resource 'AudioRecordings' do
     }.to_json }
     let(:authentication_token) { reader_token }
     standard_request_options(:post, 'FILTER (as reader matching)', :ok, {
-                                      expected_json_path: 'data/0/sample_rate_hertz',
-                                      data_item_count: 1
-                                  })
+        expected_json_path: 'data/0/sample_rate_hertz',
+        data_item_count: 1
+    })
   end
 
   post '/audio_recordings/filter' do
@@ -1038,9 +1024,9 @@ resource 'AudioRecordings' do
     }.to_json }
     let(:authentication_token) { reader_token }
     standard_request_options(:post, 'FILTER (as reader no match)', :ok, {
-                                      expected_json_path: 'meta/message',
-                                      data_item_count: 0
-                                  })
+        expected_json_path: 'meta/message',
+        data_item_count: 0
+    })
   end
 
   post '/audio_recordings/filter' do
@@ -1062,10 +1048,10 @@ resource 'AudioRecordings' do
     }.to_json }
     let(:authentication_token) { reader_token }
     standard_request_options(:post, 'FILTER (as reader with paging)', :ok, {
-                                      expected_json_path: 'meta/paging/page',
-                                      data_item_count: 0,
-                                      response_body_content: '/audio_recordings/filter?direction=desc\u0026items=30\u0026order_by=recorded_date\u0026page=1'
-                                  })
+        expected_json_path: 'meta/paging/page',
+        data_item_count: 0,
+        response_body_content: '/audio_recordings/filter?direction=desc\u0026items=30\u0026order_by=recorded_date\u0026page=1'
+    })
   end
 
   post '/audio_recordings/filter' do
@@ -1087,10 +1073,10 @@ resource 'AudioRecordings' do
     }.to_json }
     let(:authentication_token) { reader_token }
     standard_request_options(:post, 'FILTER (as reader with sorting)', :ok, {
-                                      expected_json_path: 'meta/sorting/direction',
-                                      data_item_count: 1,
-                                      response_body_content: '/audio_recordings/filter?direction=asc\u0026items=25\u0026order_by=channels\u0026page=1'
-                                  })
+        expected_json_path: 'meta/sorting/direction',
+        data_item_count: 1,
+        response_body_content: '/audio_recordings/filter?direction=asc\u0026items=25\u0026order_by=channels\u0026page=1'
+    })
   end
 
   post '/audio_recordings/filter' do
@@ -1111,10 +1097,10 @@ resource 'AudioRecordings' do
     }.to_json }
     let(:authentication_token) { reader_token }
     standard_request_options(:post, 'FILTER (as reader with projection)', :ok, {
-                                      expected_json_path: 'meta/projection/include',
-                                      data_item_count: 1,
-                                      response_body_content: '/audio_recordings/filter?direction=desc\u0026items=25\u0026order_by=recorded_date\u0026page=1'
-                                  })
+        expected_json_path: 'meta/projection/include',
+        data_item_count: 1,
+        response_body_content: '/audio_recordings/filter?direction=desc\u0026items=25\u0026order_by=recorded_date\u0026page=1'
+    })
   end
 
   post '/audio_recordings/filter' do
@@ -1129,11 +1115,11 @@ resource 'AudioRecordings' do
           .to_json }
     let(:authentication_token) { reader_token }
     standard_request_options(:post, 'FILTER (as reader checking camel case)', :ok, {
-                                      expected_json_path: 'meta/projection/include',
-                                      data_item_count: 1,
-                                      invalid_data_content: (AudioRecording.filter_settings[:render_fields] - [:id, :site_id, :duration_seconds, :recorded_date, :created_at]).map { |i| "\"#{i.to_s}\":" },
-                                      response_body_content: '/audio_recordings/filter?direction=desc\u0026items=10\u0026order_by=created_at\u0026page=1'
-                                  })
+        expected_json_path: 'meta/projection/include',
+        data_item_count: 1,
+        invalid_data_content: (AudioRecording.filter_settings[:render_fields] - [:id, :site_id, :duration_seconds, :recorded_date, :created_at]).map { |i| "\"#{i.to_s}\":" },
+        response_body_content: '/audio_recordings/filter?direction=desc\u0026items=10\u0026order_by=created_at\u0026page=1'
+    })
   end
 
 end

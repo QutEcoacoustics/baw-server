@@ -41,7 +41,7 @@ describe Site, :type => :model do
   it 'should obfuscate lat/longs properly' do
 
     10.times {
-      s = FactoryGirl.build(:site_with_lat_long)
+      s = FactoryGirl.build(:site, :with_lat_long)
       expect(Site.add_location_jitter(s.longitude, Site::LONGITUDE_MIN, Site::LONGITUDE_MAX)).to be_within(Site::JITTER_RANGE).of(s.longitude)
       expect(Site.add_location_jitter(s.latitude, Site::LATITUDE_MIN, Site::LATITUDE_MAX)).to be_within(Site::JITTER_RANGE).of(s.latitude)
     }

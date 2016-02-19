@@ -13,26 +13,14 @@ resource 'Tags' do
   # default format
   let(:format) { 'json' }
 
-  before(:each) do
-    # this creates a @write_permission.user with write access to @write_permission.project,
-    # a @read_permission.user with read access, as well as
-    # a site, audio_recording and audio_event having off the project (see permission_factory.rb)
-    @write_permission = FactoryGirl.create(:write_permission) # has to be 'write' so that the uploader has access
-    @read_permission = FactoryGirl.create(:read_permission, project: @write_permission.project)
-  end
+  create_entire_hierarchy
 
   # prepare ids needed for paths in requests below
-  let(:project_id) { @write_permission.project.id }
-  let(:site_id) { @write_permission.project.sites[0].id }
-  let(:audio_recording_id) { @write_permission.project.sites[0].audio_recordings[0].id }
-  let(:audio_event_id) { @write_permission.project.sites[0].audio_recordings[0].audio_events[0].id }
-  let(:id) { @write_permission.project.sites[0].audio_recordings[0].audio_events[0].tags[0].id }
-
-  # prepare authentication_token for different users
-  let(:writer_token) { "Token token=\"#{@write_permission.user.authentication_token}\"" }
-  let(:reader_token) { "Token token=\"#{@read_permission.user.authentication_token}\"" }
-  let(:unconfirmed_token) { "Token token=\"#{FactoryGirl.create(:unconfirmed_user).authentication_token}\"" }
-  let(:confirmed_token) { "Token token=\"#{FactoryGirl.create(:confirmed_user).authentication_token}\"" }
+  let(:project_id) { project.id }
+  let(:site_id) { site.id }
+  let(:audio_recording_id) { audio_recording.id }
+  let(:audio_event_id) { audio_event.id }
+  let(:id) { tag.id }
 
   # Create post parameters from factory
   let(:post_attributes) { FactoryGirl.attributes_for(:tag) }
@@ -68,10 +56,10 @@ resource 'Tags' do
   end
 
   get '/tags' do
-    let(:authentication_token) { confirmed_token }
+    let(:authentication_token) { other_token }
 
     # should list 2 tags in the list
-    example 'LIST ALL (as confirmed user) - 200', :document => true do
+    example 'LIST ALL (as other user) - 200', :document => true do
       # create orphaned tags
       2.times do |i|
         FactoryGirl.create(:tag)
@@ -170,7 +158,7 @@ resource 'Tags' do
                                  data_item_count: 1,
                                  response_body_content: "general",
                                  invalid_content: "\"taggings\":[{\""
-                              })
+                             })
   end
 
 

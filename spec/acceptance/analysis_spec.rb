@@ -36,15 +36,6 @@ test_url = '/analysis_jobs/:analysis_job_id/audio_recordings/:audio_recording_id
 resource 'Analysis' do
   header 'Authorization', :authentication_token
 
-  before(:each) do
-    # this creates a @write_permission.user with write access to @write_permission.project,
-    # a @read_permission.user with read access, as well as
-    # a site, audio_recording and audio_event having off the project (see permission_factory.rb)
-    @write_permission = FactoryGirl.create(:write_permission) # has to be 'write' so that the uploader has access
-    @read_permission = FactoryGirl.create(:read_permission, project: @write_permission.project)
-    @admin_user = FactoryGirl.create(:admin)
-  end
-
   after(:each) do
     remove_media_dirs
   end
@@ -52,23 +43,16 @@ resource 'Analysis' do
   # prepare ids needed for paths in requests below
   let(:analysis_job_id) { 'system' }
 
-  let(:project_id) { @write_permission.project.id }
-  let(:site_id) { @write_permission.project.sites[0].id }
-  let(:audio_recording_id) { @write_permission.project.sites[0].audio_recordings[0].id }
-  let(:audio_recording) { @write_permission.project.sites[0].audio_recordings[0] }
-  let(:audio_event) { @write_permission.project.sites[0].audio_recordings[0].audio_events[0] }
+  create_entire_hierarchy
+
+  let(:project_id) { project.id }
+  let(:site_id) { site.id }
+  let(:audio_recording_id) { audio_recording.id }
 
   let(:audio_original) { BawWorkers::Storage::AudioOriginal.new(BawWorkers::Settings.paths.original_audios) }
   let(:audio_cache) { BawWorkers::Storage::AudioCache.new(BawWorkers::Settings.paths.cached_audios) }
   let(:spectrogram_cache) { BawWorkers::Storage::SpectrogramCache.new(BawWorkers::Settings.paths.cached_spectrograms) }
   let(:analysis_cache) { BawWorkers::Storage::AnalysisCache.new(BawWorkers::Settings.paths.cached_analysis_jobs) }
-
-  # prepare authentication_token for different users
-  let(:admin_token) { "Token token=\"#{@admin_user.authentication_token}\"" }
-  let(:writer_token) { "Token token=\"#{@write_permission.user.authentication_token}\"" }
-  let(:reader_token) { "Token token=\"#{@read_permission.user.authentication_token}\"" }
-  let(:unconfirmed_token) { "Token token=\"#{FactoryGirl.create(:unconfirmed_user).authentication_token}\"" }
-  let(:invalid_token) { "Token token=\"blah blah blah\"" }
 
   context 'with empty directory' do
     before(:each) do
@@ -367,12 +351,12 @@ resource 'Analysis' do
                   '{"path":"TopDir/one/two","name":"two","type":"directory","has_children":true'
               ],
               invalid_data_content: [
-              '{"path":"TopDir/one/two","name":"two","type":"directory","children":[',
-              '{"path":"TopDir/one/two/three","name":"three","type":"directory","children":[',
-              '{"path":"TopDir/one/two/three/four","name":"four","type":"directory","children":[',
-              '{"path":"TopDir/one/two/three/four/five.txt","name":"five.txt","size":14,"type":"file","mime":"text/plain"}',
-              '{"path":"TopDir/one/two/three/four/five","name":"five","type":"directory","children":[',
-              '{"path":"TopDir/one/two/three/four/five/six.txt","name":"six.txt","size":13,"type":"file","mime":"text/plain"}'
+                  '{"path":"TopDir/one/two","name":"two","type":"directory","children":[',
+                  '{"path":"TopDir/one/two/three","name":"three","type":"directory","children":[',
+                  '{"path":"TopDir/one/two/three/four","name":"four","type":"directory","children":[',
+                  '{"path":"TopDir/one/two/three/four/five.txt","name":"five.txt","size":14,"type":"file","mime":"text/plain"}',
+                  '{"path":"TopDir/one/two/three/four/five","name":"five","type":"directory","children":[',
+                  '{"path":"TopDir/one/two/three/four/five/six.txt","name":"six.txt","size":13,"type":"file","mime":"text/plain"}'
               ]
           })
     end

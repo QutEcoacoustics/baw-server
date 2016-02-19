@@ -1,7 +1,7 @@
 FactoryGirl.define do
 
   factory :unconfirmed_user, class: User do
-    sequence(:user_name) { |n| "unconfirmed_user#{n}" }
+    sequence(:user_name) { |n| "unconfirmed_user #{n}" }
     sequence(:email) { |n| "user#{n}@example.com" }
     sequence(:authentication_token) { |n| "some random token #{n}" }
     sequence(:password) { |n| "password #{n}" }
@@ -18,7 +18,7 @@ FactoryGirl.define do
 
     trait :confirmed do
 
-      sequence(:user_name) { |n| "confirmed_user#{n}" }
+      sequence(:user_name) { |n| "confirmed_user #{n}" }
       after(:build) do |user|
         user.confirmation_token = nil
         user.skip_confirmation!
@@ -26,7 +26,7 @@ FactoryGirl.define do
     end
 
     trait :admin_role do
-      sequence(:user_name) { |n| "admin_user#{n}" }
+      sequence(:user_name) { |n| "admin_user #{n}" }
       roles_mask { 1 } # admin role
     end
 

@@ -104,6 +104,9 @@ describe AudioRecording, :type => :model do
     it { is_expected.to validate_uniqueness_of(:file_hash).case_insensitive.on(:create) }
     it { is_expected.not_to allow_value('a' * 72).for(:file_hash) }
 
+    # .with_predicates(true).with_multiple(false)
+    it { is_expected.to enumerize(:status).in(*AudioRecording::AVAILABLE_STATUSES) }
+
   end
   context 'in same site' do
 

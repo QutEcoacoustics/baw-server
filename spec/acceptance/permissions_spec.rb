@@ -266,7 +266,7 @@ resource 'Permissions' do
     let(:project_id) { @project_1.id }
     let(:id) { @permission_write_1.id }
     let(:authentication_token) { admin_token }
-    standard_request_options(:delete, 'DESTROY (as admin)', :no_content, {expected_response_has_content:false, expected_response_content_type: nil})
+    standard_request_options(:delete, 'DESTROY (as admin)', :no_content, {expected_response_has_content: false, expected_response_content_type: nil})
   end
 
   delete '/projects/:project_id/permissions/:id' do
@@ -275,7 +275,7 @@ resource 'Permissions' do
     let(:project_id) { @project_1.id }
     let(:id) { @permission_write_1.id }
     let(:authentication_token) { user_write_1_token }
-    standard_request_options(:delete, 'DESTROY (as write 1)', :no_content, {expected_response_has_content:false, expected_response_content_type: nil})
+    standard_request_options(:delete, 'DESTROY (as write 1)', :no_content, {expected_response_has_content: false, expected_response_content_type: nil})
   end
 
   delete '/projects/:project_id/permissions/:id' do

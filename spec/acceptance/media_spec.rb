@@ -13,25 +13,16 @@ resource 'Media' do
   # default format
   let(:format) { 'json' }
 
-  before(:each) do
-    # this creates a @write_permission.user with write access to @write_permission.project,
-    # a @read_permission.user with read access, as well as
-    # a site, audio_recording and audio_event having off the project (see permission_factory.rb)
-    @write_permission = FactoryGirl.create(:write_permission) # has to be 'write' so that the uploader has access
-    @read_permission = FactoryGirl.create(:read_permission, project: @write_permission.project)
-    @admin_user = FactoryGirl.create(:admin)
-  end
+  create_entire_hierarchy
 
   after(:each) do
     remove_media_dirs
   end
 
   # prepare ids needed for paths in requests below
-  let(:project_id) { @write_permission.project.id }
-  let(:site_id) { @write_permission.project.sites[0].id }
-  let(:audio_recording_id) { @write_permission.project.sites[0].audio_recordings[0].id }
-  let(:audio_recording) { @write_permission.project.sites[0].audio_recordings[0] }
-  let(:audio_event) { @write_permission.project.sites[0].audio_recordings[0].audio_events[0] }
+  let(:project_id) { project.id }
+  let(:site_id) { site.id }
+  let(:audio_recording_id) { audio_recording.id }
 
   let(:audio_file_mono) { File.join(File.dirname(__FILE__), '..', 'media_tools', 'test-audio-mono.ogg') }
   let(:audio_file_mono_media_type) { Mime::Type.lookup('audio/ogg') }
@@ -43,13 +34,6 @@ resource 'Media' do
   let(:audio_cache) { BawWorkers::Storage::AudioCache.new(BawWorkers::Settings.paths.cached_audios) }
   let(:spectrogram_cache) { BawWorkers::Storage::SpectrogramCache.new(BawWorkers::Settings.paths.cached_spectrograms) }
   let(:analysis_cache) { BawWorkers::Storage::AnalysisCache.new(BawWorkers::Settings.paths.cached_analysis_jobs) }
-
-  # prepare authentication_token for different users
-  let(:admin_token) { "Token token=\"#{@admin_user.authentication_token}\"" }
-  let(:writer_token) { "Token token=\"#{@write_permission.user.authentication_token}\"" }
-  let(:reader_token) { "Token token=\"#{@read_permission.user.authentication_token}\"" }
-  let(:unconfirmed_token) { "Token token=\"#{FactoryGirl.create(:unconfirmed_user).authentication_token}\"" }
-  let(:invalid_token) { "Token token=\"blah blah blah\"" }
 
   ################################
   # MEDIA GET - long path
@@ -86,14 +70,14 @@ resource 'Media' do
     standard_media_parameters
     let(:authentication_token) { unconfirmed_token }
     let(:format) { 'json' }
-    standard_request_options(:get, 'MEDIA (as unconfirmed user)', :forbidden, { expected_json_path: get_json_error_path(:confirm)})
+    standard_request_options(:get, 'MEDIA (as unconfirmed user)', :forbidden, {expected_json_path: get_json_error_path(:confirm)})
   end
 
   get '/audio_recordings/:audio_recording_id/media.:format' do
     standard_media_parameters
     let(:authentication_token) { invalid_token }
     let(:format) { 'json' }
-    standard_request_options(:get, 'MEDIA (as invalid token)', :unauthorized, { expected_json_path: get_json_error_path(:sign_up)})
+    standard_request_options(:get, 'MEDIA (as invalid token)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
   end
 
   ################################
@@ -485,12 +469,12 @@ resource 'Media' do
     standard_media_parameters
     let(:authentication_token) { reader_token }
     let(:format) { 'json' }
-    let(:audio_event_id) { @audio_event.id }
+    let(:audio_event_id) { audio_event.id }
     let(:start_offset) { 4 }
     let(:end_offset) { 7 }
 
     before do
-      @audio_event = FactoryGirl.create(:audio_event, audio_recording_id: audio_recording_id, start_time_seconds: 5, end_time_seconds: 6, is_reference: true)
+      audio_event = FactoryGirl.create(:audio_event, audio_recording_id: audio_recording_id, start_time_seconds: 5, end_time_seconds: 6, is_reference: true)
     end
 
     standard_request_options(:get, 'MEDIA (as reader with shallow path, valid audio event request offsets with read access to audio recording)', :ok, {expected_json_path: 'data/recording/recorded_date'})
@@ -500,16 +484,20 @@ resource 'Media' do
     standard_media_parameters
     let(:authentication_token) { reader_token }
     let(:format) { 'json' }
-    let(:audio_event_id) { @audio_event.id }
     let(:start_offset) { 4 }
     let(:end_offset) { 7 }
-    let(:audio_recording_id) { @other_audio_recording_id }
 
-    before do
-      other_permissions = FactoryGirl.create(:write_permission)
-      @other_audio_recording_id = other_permissions.project.sites[0].audio_recordings[0].id
-      @audio_event = FactoryGirl.create(:audio_event, audio_recording_id: @other_audio_recording_id, start_time_seconds: 5, end_time_seconds: 6, is_reference: true)
-    end
+    let(:audio_recording_id) {
+      project = Creation::Common.create_project(other_user)
+      site = Creation::Common.create_site(other_user, project)
+      audio_recording = Creation::Common.create_audio_recording(other_user, other_user, site)
+      audio_recording.id
+    }
+
+    let(:audio_event_id) {
+      audio_event = FactoryGirl.create(:audio_event, audio_recording_id: audio_recording_id, start_time_seconds: 5, end_time_seconds: 6, is_reference: true)
+      audio_event.id
+    }
 
     standard_request_options(:get, 'MEDIA (as reader with shallow path, valid audio event request offsets with no access to audio recording)', :ok, {expected_json_path: 'data/recording/recorded_date'})
   end
@@ -518,52 +506,61 @@ resource 'Media' do
     standard_media_parameters
     let(:authentication_token) { reader_token }
     let(:format) { 'json' }
-    let(:audio_event_id) { @audio_event.id }
+    let(:audio_event_id) { audio_event.id }
     let(:start_offset) { 120 }
     let(:end_offset) { 150 }
 
     before do
-      @audio_event = FactoryGirl.create(:audio_event, audio_recording_id: audio_recording_id, start_time_seconds: 0, end_time_seconds: 10, is_reference: true)
+      audio_event = FactoryGirl.create(:audio_event, audio_recording_id: audio_recording_id, start_time_seconds: 0, end_time_seconds: 10, is_reference: true)
     end
 
-    standard_request_options(:get, 'MEDIA (as reader with shallow path, invalid audio event request offsets)', :forbidden, { expected_json_path: get_json_error_path(:permissions)})
+    standard_request_options(:get, 'MEDIA (as reader with shallow path, invalid audio event request offsets)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
   end
 
   get '/audio_recordings/:audio_recording_id/media.:format?audio_event_id=:audio_event_id&start_offset=:start_offset&end_offset=:end_offset' do
     standard_media_parameters
     let(:authentication_token) { reader_token }
     let(:format) { 'json' }
-    let(:audio_event_id) { @audio_event.id }
     let(:start_offset) { 20 }
     let(:end_offset) { 23 }
-    let(:audio_recording_id) { @other_audio_recording_id }
+    let(:audio_recording_id) {
+      project = Creation::Common.create_project(other_user)
+      site = Creation::Common.create_site(other_user, project)
+      audio_recording = Creation::Common.create_audio_recording(other_user, other_user, site)
+      audio_recording.id
+    }
+    let(:audio_event_id) {
+      audio_event = FactoryGirl.create(:audio_event, audio_recording_id: audio_recording_id, start_time_seconds: 21, end_time_seconds: 22, is_reference: false)
+      audio_event.id
+    }
 
-    before do
-      other_permissions = FactoryGirl.create(:write_permission)
-      @other_audio_recording_id = other_permissions.project.sites[0].audio_recordings[0].id
-      # note that this audio event is not a reference audio event
-      @audio_event = FactoryGirl.create(:audio_event, audio_recording_id: @other_audio_recording_id, start_time_seconds: 21, end_time_seconds: 22, is_reference: false)
-    end
-
-    standard_request_options(:get, 'MEDIA (as reader with shallow path, not a reference audio event)', :forbidden, { expected_json_path: get_json_error_path(:permissions)})
+    standard_request_options(:get, 'MEDIA (as reader with shallow path, not a reference audio event)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
   end
 
   get '/audio_recordings/:audio_recording_id/media.:format?audio_event_id=:audio_event_id&start_offset=:start_offset&end_offset=:end_offset' do
     standard_media_parameters
     let(:authentication_token) { reader_token }
     let(:format) { 'json' }
-    let(:audio_event_id) { audio_event.id } # pre-existing audio event
     let(:start_offset) { 10 }
     let(:end_offset) { 13 }
-    let(:audio_recording_id) { @other_audio_recording_id }
 
-    before do
-      other_permissions = FactoryGirl.create(:write_permission)
-      @other_audio_recording_id = other_permissions.project.sites[0].audio_recordings[0].id
-      @audio_event = FactoryGirl.create(:audio_event, audio_recording_id: @other_audio_recording_id, start_time_seconds: 11, end_time_seconds: 12, is_reference: true)
-    end
+    let(:audio_recording_id) {
+      project = Creation::Common.create_project(other_user)
+      site = Creation::Common.create_site(other_user, project)
+      audio_recording = Creation::Common.create_audio_recording(other_user, other_user, site)
+      audio_recording.id
+    }
 
-    standard_request_options(:get, 'MEDIA (as reader with shallow path, audio event request not related to audio recording)', :forbidden, { expected_json_path: get_json_error_path(:permissions)})
+    let(:audio_event_id) { audio_event.id }
+    let!(:other_audio_event_id) { # so there is an additional audio event
+      audio_event = FactoryGirl.create(:audio_event,
+                                       audio_recording_id: audio_recording_id,
+                                       start_time_seconds: 11, end_time_seconds: 12,
+                                       is_reference: true)
+      audio_event.id
+    }
+
+    standard_request_options(:get, 'MEDIA (as reader with shallow path, audio event request not related to audio recording)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
   end
 
   #
@@ -576,7 +573,7 @@ resource 'Media' do
     let(:format) { 'json' }
     let(:start_offset) { 'number' }
     standard_request_options(:get, 'MEDIA (as reader invalid start_offset)', :unprocessable_entity,
-                     {expected_json_path: 'meta/error/details', response_body_content: 'start_offset parameter must be a decimal number'})
+                             {expected_json_path: 'meta/error/details', response_body_content: 'start_offset parameter must be a decimal number'})
   end
 
   get '/audio_recordings/:audio_recording_id/media.:format?start_offset=:start_offset&end_offset=:end_offset' do
@@ -585,7 +582,7 @@ resource 'Media' do
     let(:format) { 'json' }
     let(:end_offset) { 'number' }
     standard_request_options(:get, 'MEDIA (as reader invalid end_offset)', :unprocessable_entity,
-                     {expected_json_path: 'meta/error/details', response_body_content: 'end_offset parameter must be a decimal number'})
+                             {expected_json_path: 'meta/error/details', response_body_content: 'end_offset parameter must be a decimal number'})
   end
 
   get '/audio_recordings/:audio_recording_id/media.:format?start_offset=:start_offset&end_offset=:end_offset' do
@@ -594,7 +591,7 @@ resource 'Media' do
     let(:format) { 'json' }
     let(:end_offset) { (audio_recording.duration_seconds + 1).to_s }
     standard_request_options(:get, 'MEDIA (as reader end_offset past original duration)', :unprocessable_entity,
-                     {expected_json_path: 'meta/error/details', response_body_content: 'smaller than or equal to the duration of the audio recording'})
+                             {expected_json_path: 'meta/error/details', response_body_content: 'smaller than or equal to the duration of the audio recording'})
   end
 
   get '/audio_recordings/:audio_recording_id/media.:format?start_offset=:start_offset&end_offset=:end_offset' do
@@ -603,7 +600,7 @@ resource 'Media' do
     let(:format) { 'json' }
     let(:end_offset) { '0' }
     standard_request_options(:get, 'MEDIA (as reader end_offset too small)', :unprocessable_entity,
-                     {expected_json_path: 'meta/error/details', response_body_content: 'must be greater than 0.'})
+                             {expected_json_path: 'meta/error/details', response_body_content: 'must be greater than 0.'})
   end
 
   get '/audio_recordings/:audio_recording_id/media.:format?start_offset=:start_offset&end_offset=:end_offset' do
@@ -612,7 +609,7 @@ resource 'Media' do
     let(:format) { 'json' }
     let(:start_offset) { audio_recording.duration_seconds.to_s }
     standard_request_options(:get, 'MEDIA (as reader start_offset past original duration)', :unprocessable_entity,
-                     {expected_json_path: 'meta/error/details', response_body_content: 'smaller than the duration of the audio recording'})
+                             {expected_json_path: 'meta/error/details', response_body_content: 'smaller than the duration of the audio recording'})
   end
 
   get '/audio_recordings/:audio_recording_id/media.:format?start_offset=:start_offset&end_offset=:end_offset' do
@@ -621,7 +618,7 @@ resource 'Media' do
     let(:format) { 'json' }
     let(:start_offset) { '-1' }
     standard_request_options(:get, 'MEDIA (as reader start_offset smaller than 0)', :unprocessable_entity,
-                     {expected_json_path: 'meta/error/details', response_body_content: 'greater than or equal to 0'})
+                             {expected_json_path: 'meta/error/details', response_body_content: 'greater than or equal to 0'})
   end
 
   get '/audio_recordings/:audio_recording_id/media.:format?start_offset=:start_offset&end_offset=:end_offset' do
@@ -631,7 +628,7 @@ resource 'Media' do
     let(:start_offset) { '9' }
     let(:end_offset) { '8' }
     standard_request_options(:get, 'MEDIA (as reader start_offset larger than end_offset)', :unprocessable_entity,
-                     {expected_json_path: 'meta/error/details', response_body_content: 'smaller than end_offset'})
+                             {expected_json_path: 'meta/error/details', response_body_content: 'smaller than end_offset'})
   end
 
   get '/audio_recordings/:audio_recording_id/media.:format?start_offset=:start_offset&end_offset=:end_offset&window_size=:window_size' do
@@ -640,7 +637,7 @@ resource 'Media' do
     let(:format) { 'json' }
     let(:window_size) { 'number' }
     standard_request_options(:get, 'MEDIA (as reader invalid window_size)', :unprocessable_entity,
-                     {expected_json_path: 'meta/error/details', response_body_content: 'window_size parameter'})
+                             {expected_json_path: 'meta/error/details', response_body_content: 'window_size parameter'})
   end
 
   get '/audio_recordings/:audio_recording_id/media.:format?start_offset=:start_offset&end_offset=:end_offset&window_function=:window_function' do
@@ -649,7 +646,7 @@ resource 'Media' do
     let(:format) { 'json' }
     let(:window_function) { 'number' }
     standard_request_options(:get, 'MEDIA (as reader invalid window_function)', :unprocessable_entity,
-                     {expected_json_path: 'meta/error/details', response_body_content: 'window_function parameter'})
+                             {expected_json_path: 'meta/error/details', response_body_content: 'window_function parameter'})
   end
 
   get '/audio_recordings/:audio_recording_id/media.:format?start_offset=:start_offset&end_offset=:end_offset&sample_rate=:sample_rate' do
@@ -658,7 +655,7 @@ resource 'Media' do
     let(:format) { 'json' }
     let(:sample_rate) { '22' }
     standard_request_options(:get, 'MEDIA (as reader invalid sample_rate)', :unprocessable_entity,
-                     {expected_json_path: 'meta/error/details', response_body_content:'sample_rate parameter'})
+                             {expected_json_path: 'meta/error/details', response_body_content: 'sample_rate parameter'})
   end
 
   get '/audio_recordings/:audio_recording_id/media.:format?start_offset=:start_offset&end_offset=:end_offset&channel=:channel' do
@@ -667,7 +664,7 @@ resource 'Media' do
     let(:format) { 'json' }
     let(:channel) { (audio_recording.channels + 1).to_s }
     standard_request_options(:get, 'MEDIA (as reader invalid channel)', :unprocessable_entity,
-                     {expected_json_path: 'meta/error/details', response_body_content:'channel parameter'})
+                             {expected_json_path: 'meta/error/details', response_body_content: 'channel parameter'})
   end
 
   get '/audio_recordings/:audio_recording_id/media.:format?start_offset=:start_offset&end_offset=:end_offset&colour=:colour' do
@@ -676,7 +673,7 @@ resource 'Media' do
     let(:format) { 'json' }
     let(:colour) { 'h' }
     standard_request_options(:get, 'MEDIA (as reader invalid colour)', :unprocessable_entity,
-                     {expected_json_path: 'meta/error/details', response_body_content:'colour parameter'})
+                             {expected_json_path: 'meta/error/details', response_body_content: 'colour parameter'})
   end
 
   # ensure integer parameters are checked
