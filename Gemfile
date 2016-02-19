@@ -63,7 +63,7 @@ gem 'recaptcha', '~> 1.1.0',  require: 'recaptcha/rails'
 
 # for proper timezone support
 gem 'tzinfo', '~> 1.2.2'
-gem 'tzinfo-data', '~> 1.2015.1'
+gem 'tzinfo-data', '~> 1.2016'
 
 # USERS & PERMISSIONS
 # -------------------------------------
@@ -105,12 +105,12 @@ require 'rbconfig'
 # MONITORING
 # -------------------------------------
 gem 'exception_notification', '~> 4.1.0'
-gem 'newrelic_rpm', '~> 3.14.0'
+gem 'newrelic_rpm', '~> 3.15'
 
 # Documentation & UI
 # -------------------------------------
 # these gems are required here to serve /doc url
-gem 'rspec_api_documentation', '~> 4.6.0'
+gem 'rspec_api_documentation', '~> 4.7.0'
 gem 'raddocs', '~> 0.5.0'
 
 # MEDIA
@@ -158,7 +158,7 @@ group :development, :test do
   gem 'guard', '~> 2.13.0'
   gem 'guard-rspec', '~> 4.6.0'
   gem 'guard-yard', '~> 2.1.4', require: false
-  gem 'rubocop', '~> 0.36.0', require: false
+  gem 'rubocop', '~> 0.37.2', require: false
   gem 'haml-lint', require: false
 
   gem 'fakeredis', '~> 0.5.0', require: 'fakeredis/rspec'
@@ -185,7 +185,7 @@ group :development, :test do
   # gem install traceroute --no-ri --no-rdoc
 
   gem 'rspec-rails', '~> 3.4.0'
-  gem 'factory_girl_rails', '~> 4.5.0'
+  gem 'factory_girl_rails', '~>  4.6.0'
   gem 'capybara', '~> 2.6.1'
 
   gem 'rspec', '~> 3.4.0'
@@ -199,6 +199,6 @@ group :development, :test do
 end
 
 group :test do
-  gem 'webmock', '~> 1.22.1'
+  gem 'webmock', '~> 1.23.0'
   gem 'shoulda-matchers', '< 3.0.0', require: false
 end

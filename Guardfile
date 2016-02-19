@@ -26,6 +26,7 @@ guard :rspec, cmd: 'bin/rspec --format progress --color' do
 
   # for lib folder
   watch(%r{^lib/modules/(.+)\.rb$})                    { |m| "spec/lib/#{m[1]}_spec.rb" }
+  watch('spec/lib/creation.rb')                            { |m| 'spec/lib/creation_spec.rb' }
 
   # changes to factories
   watch(%r{^spec/factories/(.+)_(factory).rb$})        { |m| [
