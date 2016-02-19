@@ -54,6 +54,10 @@ Start by running, on your **host** machine:
 	# in the dev machine
 	$ cd ~/baw-server
 
+Sometimes you may need to update dependencies first:
+
+    ~/baw-server$ bundle install
+
 End by suspending the virtual machine:
 
     # exit the ssh session
