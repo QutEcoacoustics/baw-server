@@ -4,6 +4,8 @@
 
  - 2016-02-18
     - check for divide by 0, closes [#251](https://github.com/QutBioacoustics/baw-server/issues/251)
+ - 2016-02-19
+    - refactor specs to be more obvious about what they do and where various functionality is located 
 
 ## [Release 0.18.0](https://github.com/QutBioacoustics/baw-server/releases/tag/0.18.0) (2016-02-06)
 
