@@ -686,4 +686,21 @@ resource 'AudioEvents' do
                              })
   end
 
+  post '/audio_events/filter' do
+    let(:authentication_token) { reader_token }
+    let(:raw_post) { {
+        'filter' => {
+            'audio_events_tags.tag_id' => {
+                'gt' => 0
+            }
+        }
+    }.to_json }
+    standard_request_options(:post, 'FILTER (as reader, for associated table with mismatching name)', :ok,
+                             {
+                                 expected_json_path: 'data/0/taggings/0/audio_event_id',
+                                 data_item_count: 1,
+                                 response_body_content: '"filter":{"audio_events_tags.tag_id":{"gt":0}},"sorting":{"order_by":"created_at","direction":"desc"},"paging":{"page":1,"items":25,"total":1,"max_page":1,"current":"http://localhost:3000/audio_events/filter?direction=desc\u0026items=25\u0026order_by=created_at\u0026page=1"'
+                             })
+  end
+
 end

@@ -247,8 +247,8 @@ module Filter
       # )
 
       query = filter_table
-                  .join(many_table).on(filter_table[filter_table_id].eq(many_table[many_table_filter_id]))
-                  .where(many_table[many_table_result_id].eq(result_table[result_table_id]))
+          .join(many_table).on(filter_table[filter_table_id].eq(many_table[many_table_filter_id]))
+          .where(many_table[many_table_result_id].eq(result_table[result_table_id]))
 
       query = query.where(filter) if filter
 
@@ -514,43 +514,81 @@ module Filter
       field_s = field.to_s
 
       if field_s.include?('.')
-        dot_index = field.to_s.index('.')
-        parsed_table = field[0, dot_index].to_sym
-        parsed_field = field[(dot_index + 1)..field.length].to_sym
-
-        associations = build_associations(@valid_associations, table)
-        models = associations.map { |a| a[:join] }
-        table_names = associations.map { |a| a[:join].table_name.to_sym }
-
-        validate_name(parsed_table, table_names)
-
-        model = parsed_table.to_s.classify.constantize
-
-        validate_association(model, models)
-
-        model_filter_settings = model.filter_settings
-        model_valid_fields = model_filter_settings[:valid_fields].map(&:to_sym)
-        arel_table = relation_table(model)
-
-        validate_table_column(arel_table, parsed_field, model_valid_fields)
-
-        {
-            table_name: parsed_table,
-            field_name: parsed_field,
-            arel_table: arel_table,
-            model: model,
-            filter_settings: model_filter_settings
-        }
+        parse_other_table_field(table, field, filter_settings)
       else
+
+        # table name may not be the same as model / controller name :(
+        model = to_model(table)
+        #controller = (filter_settings[:controller].to_s + '_controller').classify.constantize
+
         {
             table_name: table.name,
             field_name: field,
             arel_table: table,
-            model: table.name.to_s.classify.constantize,
+            model: model,
             filter_settings: filter_settings
         }
       end
 
+    end
+
+    # Build other table field from field symbol.
+    # @param [Arel::Table] table
+    # @param [Symbol] field
+    # @param [Hash] filter_settings
+    # @return [Arel::Table, Symbol, Hash] table, field, filter_settings
+    def parse_other_table_field(table, field, filter_settings)
+      field_s = field.to_s
+      dot_index = field_s.index('.')
+
+      parsed_table = field[0, dot_index].to_sym
+      parsed_field = field[(dot_index + 1)..field.length].to_sym
+
+      associations = build_associations(@valid_associations, table)
+      models = associations.map { |a| a[:join] }
+      table_names = associations.map { |a| a[:join].table_name.to_sym }
+
+      validate_name(parsed_table, table_names)
+
+      model = to_model(parsed_table.to_s)
+
+      validate_association(model, models)
+
+      model_filter_settings = model.filter_settings
+      model_valid_fields = model_filter_settings[:valid_fields].map(&:to_sym)
+      arel_table = relation_table(model)
+
+      validate_table_column(arel_table, parsed_field, model_valid_fields)
+
+      {
+          table_name: parsed_table,
+          field_name: parsed_field,
+          arel_table: arel_table,
+          model: model,
+          filter_settings: model_filter_settings
+      }
+    end
+
+    def to_table(model)
+      model.table_name
+    end
+
+    def to_model(table_name)
+      # first try to just find the model from the table
+      matching_model = table_name.to_s.classify.safe_constantize
+
+      if matching_model.nil?
+        # need to ensure all models are actually loaded
+        Rails.application.eager_load!
+        ActiveRecord::Base.descendants.each do |model|
+          if model.table_name.to_s == table_name.to_s
+            matching_model = model
+            break
+          end
+        end
+      end
+
+      matching_model
     end
 
     # Parse association_allowed hashes and arrays to get names.

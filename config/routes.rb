@@ -237,6 +237,7 @@ Rails.application.routes.draw do
   # placed above related resource so it does not conflict with (resource)/:id => (resource)#show
   match 'audio_recordings/filter' => 'audio_recordings#filter', via: [:get, :post], defaults: {format: 'json'}
   match 'audio_events/filter' => 'audio_events#filter', via: [:get, :post], defaults: {format: 'json'}
+  match 'taggings/filter' => 'taggings#filter', via: [:get, :post], defaults: {format: 'json'}
 
   # API audio recording item
   resources :audio_recordings, only: [:index, :show, :new, :update], defaults: {format: 'json'} do

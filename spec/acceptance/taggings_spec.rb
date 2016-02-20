@@ -173,4 +173,48 @@ resource 'Taggings' do
                              {expected_json_path: 'data/tag_id'})
   end
 
+  #####################
+  # Filter
+  #####################
+
+  post '/taggings/filter' do
+    let(:authentication_token) { reader_token }
+    let(:raw_post) { {
+        'filter' => {
+            'audio_event_id' => {
+                'gt' => 0
+            }
+        },
+        'projection' => {
+            'include' => ['id', 'audio_event_id', 'tag_id', 'created_at']
+        }
+    }.to_json }
+    standard_request_options(:post, 'FILTER (as reader, with projection)', :ok,
+                             {
+                                 expected_json_path: 'data/0/audio_event_id',
+                                 data_item_count: 1,
+                                 response_body_content: '"filter":{"audio_event_id":{"gt":0}},"sorting":{"order_by":"id","direction":"asc"},"paging":{"page":1,"items":25,"total":1,"max_page":1,"current":"http://localhost:3000/taggings/filter?direction=asc\u0026items=25\u0026order_by=id\u0026page=1"'
+                             })
+  end
+
+  post '/taggings/filter' do
+    let(:authentication_token) { reader_token }
+    let(:raw_post) { {
+        'filter' => {
+            'audio_events.is_reference' => {
+                'eq' => false
+            }
+        },
+        'projection' => {
+            'include' => ['id', 'audio_event_id', 'tag_id', 'created_at']
+        }
+    }.to_json }
+    standard_request_options(:post, 'FILTER (as reader, with projection for associated table)', :ok,
+                             {
+                                 expected_json_path: 'data/0/audio_event_id',
+                                 data_item_count: 1,
+                                 response_body_content: '"filter":{"audio_events.is_reference":{"eq":false}},"sorting":{"order_by":"id","direction":"asc"},"paging":{"page":1,"items":25,"total":1,"max_page":1,"current":"http://localhost:3000/taggings/filter?direction=asc\u0026items=25\u0026order_by=id\u0026page=1"'
+                             })
+  end
+
 end
