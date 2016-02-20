@@ -5,7 +5,11 @@
  - 2016-02-18
     - check for divide by 0, closes [#251](https://github.com/QutBioacoustics/baw-server/issues/251)
  - 2016-02-19
-    - refactor specs to be more obvious about what they do and where various functionality is located 
+    - refactor specs to be more obvious about what they do and where various functionality is located
+    - Add ability to filter audio recordings based on project attributes [#253](https://github.com/QutBioacoustics/baw-server/issues/253)
+ - 2016-02-20
+    - partial fix for sorting by calculated fields - some inital queries still include sorting [254](https://github.com/QutBioacoustics/baw-server/issues/254) 
+    - potential fix for problems with filtering by calculated fields [#145](https://github.com/QutBioacoustics/baw-server/issues/145)
 
 ## [Release 0.18.0](https://github.com/QutBioacoustics/baw-server/releases/tag/0.18.0) (2016-02-06)
 

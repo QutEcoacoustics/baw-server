@@ -148,7 +148,6 @@ module Access
 
         query = AudioEvent
                     .joins(audio_recording: [:site])
-                    .order(id: :desc)
         Access::Apply.restrictions(user, levels, query)
       end
 

@@ -644,4 +644,46 @@ resource 'AudioEvents' do
     end
   end
 
+  post '/audio_events/filter' do
+    let(:authentication_token) { reader_token }
+    create_entire_hierarchy
+    let!(:new_audio_event) {
+      audio_event2 = Creation::Common.create_audio_event(reader_user, audio_recording)
+      audio_event2.is_reference = true
+      audio_event2.save!
+
+      audio_event3 = Creation::Common.create_audio_event(reader_user, audio_recording)
+      audio_event3.is_reference = true
+      audio_event3.start_time_seconds = 4.0
+      audio_event3.save!
+
+      audio_event4 = Creation::Common.create_audio_event(reader_user, audio_recording)
+      audio_event4.is_reference = true
+      audio_event4.start_time_seconds = 5.4
+      audio_event4.save!
+    }
+    let(:raw_post) {
+      {
+          "filter" => {
+              "isReference" => {"eq" => true}
+          },
+          "paging" => {"items" => 10, "page" => 1},
+          "sorting" => {
+              "orderBy" => "durationSeconds",
+              "direction" => "desc"},
+          "format" => "json",
+          "controller" => "audio_events",
+          "action" => "filter",
+          "audio_event" => {}
+      }.to_json }
+    standard_request_options(:post, 'FILTER (as reader, ordering by audio_recordings.duration_seconds)', :ok,
+                             {
+                                 expected_json_path: 'data/0/is_reference',
+                                 data_item_count: 3,
+                                 regex_match: [
+                                     /"data":\[\{"id":.+,"audio_recording_id":.+,"start_time_seconds":4.0,"end_time_seconds":5.8,"low_frequency_hertz":400.0,"high_frequency_hertz":6000.0,"is_reference":true,"creator_id":.+,"created_at":".+","updated_at":".+","taggings":\[\]\},\{"id":.+,"audio_recording_id":.+,"start_time_seconds":5.2,"end_time_seconds":5.8,"low_frequency_hertz":400.0,"high_frequency_hertz":6000.0,"is_reference":true,"creator_id":.+,"created_at":".+","updated_at":".+","taggings":\[\]\},\{"id":.+,"audio_recording_id":.+,"start_time_seconds":5.4,"end_time_seconds":5.8,"low_frequency_hertz":400.0,"high_frequency_hertz":6000.0,"is_reference":true,"creator_id":.+,"created_at":".+","updated_at":".+","taggings":\[\]\}\]/
+                                 ],
+                             })
+  end
+
 end
