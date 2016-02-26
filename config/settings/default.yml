@@ -19,6 +19,8 @@ defaults: &defaults
     namespace: resque
     log_level: 'Logger::INFO'
   actions:
+    analysis:
+      queue: analysis_default
     harvest:
       # name of queue to append jobs onto
       queue: harvest_default

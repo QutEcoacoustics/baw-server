@@ -1,4 +1,5 @@
 require 'rails_helper'
+require 'helpers/resque_helper'
 
 describe AnalysisJob, type: :model do
   it 'has a valid factory' do
@@ -38,7 +39,7 @@ describe AnalysisJob, type: :model do
     expect(subject.errors[:script].size).to eq(1)
     expect(subject.errors[:script].to_s).to match(/must exist as an object or foreign key/)
   end
-  
+
   it { is_expected.to validate_presence_of(:custom_settings) }
   it 'is invalid without a custom_settings' do
     expect(build(:analysis_job, custom_settings: nil)).not_to be_valid
@@ -70,20 +71,46 @@ describe AnalysisJob, type: :model do
       ss = create(:saved_search, creator: user, stored_query: {id: {in: [audio_recording_2.id]}})
       s = create(:script, creator: user, verified: true)
 
-      aj = build(:analysis_job, creator: user, script: s, saved_search: ss, )
+      aj = create(:analysis_job, creator: user, script: s, saved_search: ss)
 
-      result = aj.saved_search_items_extract(user)
-
-      # TODO compare to entire expected payload hash
-
+      payload = aj.create_payload(audio_recording_2)
+      result = aj.begin_work(user)
+      
+      # ensure result is as expected
       expect(result.size).to eq(1)
       expect(result[0].is_a?(Hash)).to be_truthy
-      expect(result[0][:command_format]).to eq(aj.script.executable_command)
-
+      expect(result[0][:payload][:command_format]).to eq(aj.script.executable_command)
+      expect(result[0][:error]).to be_blank
+      expect(result[0][:payload]).to eq(payload)
+      expect(result[0][:result].is_a?(String)).to be_truthy
+      expect(result[0][:result].size).to eq(32)
     end
 
     it 'enqueues and processes payloads' do
+      project_1 = create(:project)
+      user = project_1.creator
+      site_1 = create(:site, projects: [project_1], creator: user)
 
+      create(:audio_recording, site: site_1, creator: user, uploader: user)
+
+      project_2 = create(:project, creator: user)
+      site_2 = create(:site, projects: [project_2], creator: user)
+      audio_recording_2 = create(:audio_recording, site: site_2, creator: user, uploader: user)
+
+      ss = create(:saved_search, creator: user, stored_query: {id: {in: [audio_recording_2.id]}})
+      s = create(:script, creator: user, verified: true)
+
+      aj = create(:analysis_job, creator: user, script: s, saved_search: ss)
+
+      payload = aj.create_payload(audio_recording_2)
+      result = aj.begin_work(user)
+
+      queue_name = Settings.actions.analysis.queue
+      expect(Resque.size(queue_name)).to eq(1)
+
+      emulate_resque_worker(queue_name, false, true)
+
+      expect(Resque.size(queue_name)).to eq(0)
     end
 
   end

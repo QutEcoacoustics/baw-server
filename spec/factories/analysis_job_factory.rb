@@ -11,6 +11,7 @@ FactoryGirl.define do
     overall_progress { { queued: 1, working: 0, success: 0, failed: 0, total: 1}.to_json }
     overall_count 1
     overall_duration_seconds 60
+    overall_data_length_bytes 1024
 
     started_at { Time.zone.now }
     overall_status_modified_at { Time.zone.now }

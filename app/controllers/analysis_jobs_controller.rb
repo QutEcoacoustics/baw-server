@@ -35,18 +35,13 @@ class AnalysisJobsController < ApplicationController
   def create
     do_new_resource
     do_set_attributes(analysis_job_create_params)
-
-    # ensure analysis_job is valid by initialising status attributes
-    # must occur before authorization as CanCanCan ability checks for validity
-    @analysis_job.update_status_attributes
-
     do_authorize_instance
 
     if @analysis_job.save
 
       # now create and enqueue job items (which updates status attributes again)
       # needs to be called after save as it makes use of the analysis_job id.
-      @analysis_job.enqueue_items(current_user)
+      @analysis_job.begin_work(current_user)
 
       respond_create_success
     else

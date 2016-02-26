@@ -53,7 +53,8 @@ CREATE TABLE analysis_jobs (
     overall_progress text NOT NULL,
     overall_progress_modified_at timestamp without time zone NOT NULL,
     overall_count integer NOT NULL,
-    overall_duration_seconds numeric(14,4) NOT NULL
+    overall_duration_seconds numeric(14,4) NOT NULL,
+    overall_data_length_bytes bigint DEFAULT 0 NOT NULL
 );
 
 
@@ -1771,4 +1772,6 @@ INSERT INTO schema_migrations (version) VALUES ('20150904234334');
 INSERT INTO schema_migrations (version) VALUES ('20150905234917');
 
 INSERT INTO schema_migrations (version) VALUES ('20160226103516');
+
+INSERT INTO schema_migrations (version) VALUES ('20160226130353');
 

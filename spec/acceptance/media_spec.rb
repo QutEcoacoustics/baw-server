@@ -1,6 +1,7 @@
 require 'rails_helper'
 require 'rspec_api_documentation/dsl'
 require 'helpers/acceptance_spec_helper'
+require 'helpers/resque_helper'
 
 # https://github.com/zipmark/rspec_api_documentation
 resource 'Media' do
