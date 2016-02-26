@@ -1,0 +1,80 @@
+- content_for :title, 'Analysis Job Details'
+
+= render partial: 'shared/admin/sidebar_analysis_jobs', locals: {aj_to_manage: @analysis_job}
+
+- content_for :right_sidebar do
+  = render partial: 'shared/sidebar_metadata_heading', locals: {title: 'Analysis Jobs', icon_class: 'tasks'}
+
+.col-sm-12
+
+  = simple_form_for(@analysis_job, url: admin_analysis_job_path(@analysis_job), html: {class: 'form-horizontal', multipart: true, method: :put }) do |f|
+    = field_set_tag do
+      = f.error_notification
+
+      - [:id, :name, :description, :annotation_name,
+      :creator_id, :updater_id, :deleter_id,
+      :created_at, :updated_at, :deleted_at,
+      :started_at, 
+      :overall_status, :overall_status_modified_at,
+      :overall_progress, :overall_progress_modified_at,
+      :overall_count, :overall_duration_seconds,
+      :script_id, :saved_search_id,
+      :custom_settings].each do |item|
+        - human_ed = item.to_s.humanize
+        - param_ed = item.to_s.parameterize
+        - sym_ed = item
+        - str_ed = item.to_s
+        - value = begin @analysis_job[sym_ed]; rescue => e; "Error: #{e.inspect}"; end
+        .form-group.optional{class:param_ed}
+          %label.optional.control-label.col-sm-3{class:param_ed, for: param_ed}
+            = human_ed
+          .col-sm-8
+            %p.form-control-static{id: param_ed}
+              - unless value.blank?
+                - if value.is_a?(Time)
+                  = value.iso8601
+                  %small
+                    ="(#{time_ago_in_words(value)} ago)"
+                - elsif str_ed.end_with?('er_id') || str_ed.end_with?('or_id')
+                  - user = User.find(value)
+                  = link_to user.user_name, user_account_path(user)
+                  %small
+                    ="(#{value})"
+                - elsif sym_ed == :overall_duration_seconds
+                  = distance_of_time_in_words(value)
+                  %small
+                    = "(#{value})"
+                - elsif sym_ed == :overall_data_length_bytes
+                  = number_to_human_size(value)
+                - elsif sym_ed == :script_id
+                  = link_to @analysis_job.script.name, admin_script_path(@analysis_job.script)
+                  %small
+                    ="(#{value})"
+                - elsif sym_ed == :saved_search_id
+                  = @analysis_job.saved_search.name
+                  %small
+                    ="(#{value})"
+                  %pre
+                    = @analysis_job.saved_search.description
+                  %pre
+                    = @analysis_job.saved_search.stored_query
+                - elsif sym_ed == :overall_progress || sym_ed == :custom_settings
+                  %pre
+                    = value
+                - else
+                  = value
+              - else
+                %small
+                  (no value)
+
+
+      .form-group.optional{class: 'projects'}
+        %label.optional.control-label.col-sm-3{class:'projects', for: 'projects'}
+          Saved Search Projects
+        .col-sm-8
+          %p.form-control-static{id: 'projects'}
+            - @analysis_job.saved_search.projects.each do |project|
+              = link_to project.name, project_path(project)
+              &nbsp;
+            - if @analysis_job.saved_search.projects.blank?
+              No projects

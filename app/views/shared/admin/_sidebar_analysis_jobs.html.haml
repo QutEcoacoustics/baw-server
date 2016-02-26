@@ -1,0 +1,11 @@
+-# locals: aj_to_manage
+- content_for(:left_sidebar_header, 'Analysis Jobs')
+- content_for(:left_sidebar) do
+  %li{class: ('active' if current_page?(admin_dashboard_path))}
+    = link_to 'Admin Home', admin_dashboard_path
+  %li{class: ('active' if current_page?(admin_analysis_jobs_path))}
+    = link_to 'Analysis Jobs', admin_analysis_jobs_path,  title: 'Manage audio recordings', data: {toggle: 'tooltip',  placement: 'right'}
+  - if defined?(aj_to_manage)
+    - if  can?(:show, aj_to_manage)
+      %li{class: ('active' if current_page?(admin_analysis_job_path(aj_to_manage)))}
+        = link_to 'View Analysis Job', admin_analysis_job_path(aj_to_manage),  title: 'View analysis job details', data: {toggle: 'tooltip',  placement: 'right'}
