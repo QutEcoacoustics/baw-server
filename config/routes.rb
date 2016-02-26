@@ -275,7 +275,7 @@ Rails.application.routes.draw do
 
   # placed above related resource so it does not conflict with (resource)/:id => (resource)#show
   match '/scripts/filter' => 'scripts#filter', via: [:get, :post], defaults: {format: 'json'}
-  get '/scripts' => 'scripts#index', defaults: {format: 'json'}
+  resources :scripts, only: [:index, :show], defaults: {format: 'json'}
 
   # taggings made by a user
   get '/user_accounts/:user_id/taggings' => 'taggings#user_index', as: :user_taggings, defaults: {format: 'json'}

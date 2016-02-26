@@ -263,7 +263,7 @@ class Ability
     # only admin can manipulate scripts
 
     # actions any logged in user can access
-    can [:index, :filter], Script
+    can [:index, :show, :filter], Script
   end
 
   def to_tag

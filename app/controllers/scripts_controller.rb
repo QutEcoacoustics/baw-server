@@ -18,6 +18,14 @@ class ScriptsController < ApplicationController
     end
   end
 
+  # GET /admin/scripts/:id
+  def show
+    do_load_resource
+    do_authorize_instance
+
+    respond_show
+  end
+
   # GET|POST /scripts/filter
   def filter
     do_authorize_class

@@ -89,7 +89,8 @@ module Admin
       params.require(:script).permit(
           :name, :description, :analysis_identifier,
           :version, :verified,
-          :executable_command, :executable_settings)
+          :executable_command,
+          :executable_settings, :executable_settings_media_type)
     end
 
     def get_scripts

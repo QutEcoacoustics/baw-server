@@ -30,8 +30,8 @@ class AnalysisJob < ActiveRecord::Base
   validates :name, presence: true, length: {minimum: 2, maximum: 255}, uniqueness: {case_sensitive: false}
   validates :custom_settings, :overall_progress, presence: true
   # overall_count is the number of audio_recordings/resque jobs. These should be equal.
-  validates :overall_count, presence: true, numericality: {only_integer: true, greater_than: 0}
-  validates :overall_duration_seconds, presence: true, numericality: {only_integer: false, greater_than: 0}
+  validates :overall_count, presence: true, numericality: {only_integer: true, greater_than_or_equal_to: 0}
+  validates :overall_duration_seconds, presence: true, numericality: {only_integer: false, greater_than_or_equal_to: 0}
   validates :started_at, :overall_status_modified_at, :overall_progress_modified_at,
             presence: true, timeliness: {on_or_before: lambda { Time.zone.now }, type: :datetime}
 
@@ -189,8 +189,8 @@ class AnalysisJob < ActiveRecord::Base
       queued_count = nil, working_count = nil,
       successful_count = nil, failed_count = nil)
 
-    # set required attributes to to valid, but non-meaningful values if they are not set
-    self.overall_duration_seconds = 1 if self.overall_duration_seconds.blank?
+    # set required attributes to valid values if they are not set
+    self.overall_duration_seconds = 0 if self.overall_duration_seconds.blank?
     self.started_at = Time.zone.now if self.started_at.blank?
 
     # status
@@ -223,9 +223,11 @@ class AnalysisJob < ActiveRecord::Base
         total: calculated_total,
     }
 
-    self.overall_count = calculated_total < 1 ? 1 : calculated_total
     self.overall_progress = new_progress
     self.overall_progress_modified_at = Time.zone.now if current_progress != new_progress || self.overall_progress_modified_at.blank?
+
+    # count
+    self.overall_count = calculated_total < 0 ? 0 : calculated_total
 
     self.save
   end

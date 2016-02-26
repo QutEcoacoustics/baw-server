@@ -10,7 +10,7 @@ class Script < ActiveRecord::Base
   validates :creator, existence: true
 
   # attribute validations
-  validates :name, :analysis_identifier, :executable_command, :executable_settings, presence: true, length: {minimum: 2}
+  validates :name, :analysis_identifier, :executable_command, :executable_settings, :executable_settings_media_type, presence: true, length: {minimum: 2}
   validate :check_version_increase, on: :create
 
   # for the first script in a group, make sure group_id is set to the script's id
@@ -55,9 +55,9 @@ class Script < ActiveRecord::Base
 
   def self.filter_settings
     {
-        valid_fields: [:id, :name, :description, :analysis_identifier, :version, :created_at, :creator_id],
-        render_fields: [:id, :name, :description, :analysis_identifier, :version, :created_at, :creator_id],
-        text_fields: [:name, :description, :analysis_identifier],
+        valid_fields: [:id, :name, :description, :analysis_identifier, :executable_settings_media_type, :version, :created_at, :creator_id],
+        render_fields: [:id, :name, :description, :analysis_identifier, :executable_settings, :executable_settings_media_type, :version, :created_at, :creator_id],
+        text_fields: [:name, :description, :analysis_identifier, :executable_settings_media_type],
         custom_fields: nil,
         controller: :scripts,
         action: :filter,
