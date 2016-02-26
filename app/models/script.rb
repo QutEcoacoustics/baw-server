@@ -53,6 +53,20 @@ class Script < ActiveRecord::Base
     Script.where(group_id: self.group_id).order(created_at: :desc)
   end
 
+  def self.all_most_recent_version
+    Script.find_by_sql(
+        'SELECT s1.*
+FROM scripts s1
+WHERE s1.version = (
+  SELECT max(s2.version)
+  FROM scripts s2
+  WHERE s1.group_id = s2.group_id
+  GROUP BY s2.group_id
+)
+ORDER BY s1.group_id, s1.version;'
+    )
+  end
+
   def self.filter_settings
     {
         valid_fields: [:id, :name, :description, :analysis_identifier, :executable_settings_media_type, :version, :created_at, :creator_id],

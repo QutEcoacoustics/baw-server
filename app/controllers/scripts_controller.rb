@@ -9,7 +9,7 @@ class ScriptsController < ApplicationController
       format.json {
         @scripts, opts = Settings.api_response.response_advanced(
             api_filter_params,
-            get_scripts,
+            get_recent_scripts,
             Script,
             Script.filter_settings
         )
@@ -44,6 +44,10 @@ class ScriptsController < ApplicationController
 
   def get_scripts
     Script.order(name: :asc).order(created_at: :desc)
+  end
+
+  def get_recent_scripts
+    Script.all_most_recent_version
   end
 
 end
