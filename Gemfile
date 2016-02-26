@@ -24,7 +24,7 @@ gem 'responders', '~> 2.1.0'
 # gem 'actionpack-page_caching'
 # gem 'actionpack-action_caching'
 # gem 'activerecord-deprecated_finders'
-gem 'activesupport-json_encoder', git: 'https://github.com/rails/activesupport-json_encoder.git'
+gem 'activesupport-json_encoder', git: 'https://github.com/rails/activesupport-json_encoder.git', branch: :master, ref: 'd874fd9dbf'
 
 # UI HELPERS
 # -------------------------------------
@@ -95,7 +95,7 @@ gem 'jc-validates_timeliness', '~> 3.1.1'
 
 gem 'enumerize', '~> 1.0'
 gem 'uuidtools', '~> 2.1.5'
-gem 'acts_as_paranoid', git: 'https://github.com/ActsAsParanoid/acts_as_paranoid.git', branch: :master, ref: 'ddcd191517'
+gem 'acts_as_paranoid', git: 'https://github.com/ActsAsParanoid/acts_as_paranoid.git', branch: :master, ref: 'ab31723bc1'
 
 # SETTINGS
 # -------------------------------------
@@ -116,7 +116,7 @@ gem 'raddocs', '~> 0.5.0'
 # MEDIA
 # -------------------------------------
 # set to a specific commit when releasing to master branch
-gem 'baw-audio-tools', git: 'https://github.com/QutBioacoustics/baw-audio-tools.git', branch: :master, ref: 'b0e285b15b'
+gem 'baw-audio-tools', git: 'https://github.com/QutBioacoustics/baw-audio-tools.git', branch: :master, ref: 'f4ef9f775d'
 gem 'rack-rewrite', '~> 1.5.1'
 
 # ASYNC JOBS
@@ -125,7 +125,7 @@ gem 'resque', '~> 1.25.2'
 gem 'resque-job-stats', git: 'https://github.com/echannel/resque-job-stats.git', branch: :master, ref: '8932c036ae'
 gem 'resque-status', '~> 0.5.0'
 # set to a specific commit when releasing to master branch
-gem 'baw-workers', git: 'https://github.com/QutBioacoustics/baw-workers.git', branch: :master, ref: '7081bd496c'
+gem 'baw-workers', git: 'https://github.com/QutBioacoustics/baw-workers.git', branch: :master, ref: 'e481170d50'
 
 
 # Gems restricted by environment and/or platform
@@ -134,8 +134,9 @@ gem 'baw-workers', git: 'https://github.com/QutBioacoustics/baw-workers.git', br
 # gems that are only required on development machines or for testings
 group :development, :test do
   # allow remote debugging
-  gem 'ruby-debug-ide'
-  gem 'debase'
+  #gem 'ruby-debug-ide'
+  #gem 'debase'
+  #gem 'traceroute'
 
   gem 'quiet_assets'
 
@@ -199,6 +200,6 @@ group :development, :test do
 end
 
 group :test do
-  gem 'webmock', '~> 1.23.0'
+  gem 'webmock', '~> 1.24.0'
   gem 'shoulda-matchers', '< 3.0.0', require: false
 end
