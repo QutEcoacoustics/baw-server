@@ -71,11 +71,18 @@ describe Site, :type => :model do
       end
     }
   end
-  it {is_expected.to have_and_belong_to_many :projects}
+  it { is_expected.to have_and_belong_to_many :projects }
 
   it { is_expected.to belong_to(:creator).with_foreign_key(:creator_id) }
   it { is_expected.to belong_to(:updater).with_foreign_key(:updater_id) }
   it { is_expected.to belong_to(:deleter).with_foreign_key(:deleter_id) }
+
+  it 'should error on checking orphaned site if site is orphaned' do
+    site = FactoryGirl.create(:site, projects: [])
+    expect {
+      Access::Check.check_orphan_site!(site)
+    }.to raise_error(CustomErrors::OrphanedSiteError)
+  end
 
   # this should pass, but the paperclip implementation of validate_attachment_content_type is buggy.
   # it { should validate_attachment_content_type(:image).

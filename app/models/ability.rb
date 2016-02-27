@@ -137,6 +137,7 @@ class Ability
     # must have read permission or higher to view site
     can [:show, :show_shallow], Site do |site|
       check_model(site)
+      Access::Check.check_orphan_site!(site)
       # can't add .includes here - it breaks when validating projects due to ActiveRecord::AssociationRelation
       Access::Check.can_any?(user, :reader, site.projects)
     end
@@ -144,6 +145,7 @@ class Ability
     # must have write permission or higher to new, create, edit, update
     can [:new, :create, :edit, :update], Site do |site|
       check_model(site)
+      Access::Check.check_orphan_site!(site)
       # can't add .includes here - it breaks when validating projects due to ActiveRecord::AssociationRelation
       # .all would have worked. I tried .where(nil), that didn't work either :/
       # https://github.com/rails/rails/issues/12756
@@ -164,6 +166,7 @@ class Ability
     # must have read permission or higher to view audio recording
     can [:show], AudioRecording do |audio_recording|
       check_model(audio_recording)
+      Access::Check.check_orphan_site!(audio_recording.site)
       Access::Check.can_any?(user, :reader, audio_recording.site.projects)
     end
 
@@ -175,12 +178,14 @@ class Ability
     # must have read permission or higher to view or download audio event
     can [:show, :download], AudioEvent do |audio_event|
       check_model(audio_event)
+      Access::Check.check_orphan_site!(audio_event.audio_recording.site)
       Access::Check.can_any?(user, :reader, audio_event.audio_recording.site.projects)
     end
 
     # must have write permission or higher to create, update, destroy
     can [:create, :update, :destroy], AudioEvent do |audio_event|
       check_model(audio_event)
+      Access::Check.check_orphan_site!(audio_event.audio_recording.site)
       Access::Check.can_any?(user, :writer, audio_event.audio_recording.site.projects)
     end
 
@@ -197,7 +202,9 @@ class Ability
     can [:show, :create, :update], AudioEventComment do |audio_event_comment|
       check_model(audio_event_comment)
       is_ref = audio_event_comment.audio_event.is_reference
-      projects = audio_event_comment.audio_event.audio_recording.site.projects
+      site = audio_event_comment.audio_event.audio_recording.site
+      Access::Check.check_orphan_site!(site)
+      projects = site.projects
       Access::Check.can_any?(user, :reader, projects) || is_ref
     end
 
@@ -212,6 +219,7 @@ class Ability
     # must have read permission or higher on project to create bookmark
     can [:create], Bookmark do |bookmark|
       check_model(bookmark)
+      Access::Check.check_orphan_site!(bookmark.audio_recording.site)
       Access::Check.can_any?(user, :reader, bookmark.audio_recording.site.projects)
     end
 
@@ -278,12 +286,14 @@ class Ability
     # must have read permission or higher to show
     can [:show], Tagging do |tagging|
       check_model(tagging)
+      Access::Check.check_orphan_site!(tagging.audio_event.audio_recording.site)
       Access::Check.can_any?(user, :reader, tagging.audio_event.audio_recording.site.projects)
     end
 
     # must have write permission or higher to create, update, destroy
     can [:create, :update, :destroy], Tagging do |tagging|
       check_model(tagging)
+      Access::Check.check_orphan_site!(tagging.audio_event.audio_recording.site)
       Access::Check.can_any?(user, :writer, tagging.audio_event.audio_recording.site.projects)
     end
 

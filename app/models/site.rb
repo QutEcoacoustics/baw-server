@@ -99,6 +99,7 @@ class Site < ActiveRecord::Base
   end
 
   def update_location_obfuscated(current_user)
+    Access::Check.check_orphan_site!(self)
     is_owner = Access::Check.can_any?(current_user, :owner, self.projects.includes(:creator))
 
     # obfuscate if level is less than owner
@@ -175,6 +176,7 @@ class Site < ActiveRecord::Base
           fresh_site.update_location_obfuscated(user) unless fresh_site.nil?
 
           site_hash = {}
+          Access::Check.check_orphan_site!(fresh_site)
           site_hash[:project_ids] = fresh_site.nil? ? nil : fresh_site.projects.pluck(:id).flatten
 
           unless fresh_site.nil?

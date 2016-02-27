@@ -3,6 +3,7 @@ module CustomErrors
   class RoutingArgumentError < ArgumentError; end
   class ItemNotFoundError < StandardError; end
   class AnalysisJobStartError < StandardError; end
+  class OrphanedSiteError < StandardError; end
   class RequestedMediaTypeError < StandardError
     attr_reader :available_formats_info
     def initialize(message = nil, available_formats_info = nil)
