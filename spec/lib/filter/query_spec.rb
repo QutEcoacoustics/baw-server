@@ -763,6 +763,34 @@ DESCLIMIT20OFFSET0"
 
     end
 
+    it 'audio_recording.recorded_end_date in filter' do
+      request_body_obj = {
+          filter: {
+              recorded_end_date: {
+                  lt: '2016-03-01T02:00:00',
+                  gt: '2016-03-01T01:50:00'
+              }
+          }
+      }
+
+      user = writer_user
+      user_id = user.id
+
+      filter_query = Filter::Query.new(
+          request_body_obj,
+          Access::Query.audio_recordings(user, Access::Core.levels_allow),
+          AudioRecording,
+          AudioRecording.filter_settings
+      )
+
+      expected_sql =
+          "SELECT\"audio_recordings\".\"id\",\"audio_recordings\".\"uuid\",\"audio_recordings\".\"recorded_date\",\"audio_recordings\".\"site_id\",\"audio_recordings\".\"duration_seconds\",\"audio_recordings\".\"sample_rate_hertz\",\"audio_recordings\".\"channels\",\"audio_recordings\".\"bit_rate_bps\",\"audio_recordings\".\"media_type\",\"audio_recordings\".\"data_length_bytes\",\"audio_recordings\".\"status\",\"audio_recordings\".\"created_at\",\"audio_recordings\".\"updated_at\"FROM\"audio_recordings\"INNERJOIN\"sites\"ON\"sites\".\"id\"=\"audio_recordings\".\"site_id\"AND(\"sites\".\"deleted_at\"ISNULL)WHERE(\"audio_recordings\".\"deleted_at\"ISNULL)AND(EXISTS(SELECT1FROM\"projects_sites\"WHERE\"sites\".\"id\"=\"projects_sites\".\"site_id\"ANDEXISTS((SELECT1FROM\"projects\"WHERE\"projects\".\"deleted_at\"ISNULLAND\"projects\".\"creator_id\"=#{user_id}AND\"projects_sites\".\"project_id\"=\"projects\".\"id\"UNIONALLSELECT1FROM\"permissions\"WHERE\"permissions\".\"user_id\"=#{user_id}AND\"permissions\".\"level\"IN('reader','writer','owner')AND\"projects_sites\".\"project_id\"=\"permissions\".\"project_id\"))))AND(\"audio_recordings\".\"recorded_date\"+CAST(\"audio_recordings\".\"duration_seconds\"||'seconds'asinterval)<'2016-03-01T02:00:00')AND(\"audio_recordings\".\"recorded_date\"+CAST(\"audio_recordings\".\"duration_seconds\"||'seconds'asinterval)>'2016-03-01T01:50:00')ORDERBY\"audio_recordings\".\"recorded_date\"DESCLIMIT25OFFSET0"
+
+
+      expect(filter_query.query_full.to_sql.gsub(/\s+/, '')).to eq(expected_sql.gsub(/\s+/, ''))
+
+    end
+
   end
 
   context 'ensures a site in more than one project' do

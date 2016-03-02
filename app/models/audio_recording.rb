@@ -212,7 +212,8 @@ class AudioRecording < ActiveRecord::Base
         valid_fields: [
             :id, :uuid, :recorded_date, :site_id, :duration_seconds,
             :sample_rate_hertz, :channels, :bit_rate_bps, :media_type,
-            :data_length_bytes, :status, :created_at, :updated_at
+            :data_length_bytes, :status, :created_at, :updated_at,
+            :recorded_end_date
         # :uploader_id, :file_hash, , :notes, :creator_id,
         #:updater_id, :deleter_id, :deleted_at, :original_file_name
         ],
@@ -241,6 +242,12 @@ class AudioRecording < ActiveRecord::Base
             order_by: :recorded_date,
             direction: :desc
         },
+        field_mappings: [
+            {
+                name: :recorded_end_date,
+                value: arel_recorded_end_date
+            }
+        ],
         valid_associations: [
             {
                 join: AudioEvent,
@@ -302,6 +309,16 @@ class AudioRecording < ActiveRecord::Base
 
   def missing_hash_value?
     file_hash == 'SHA256::'
+  end
+
+  # Results in:
+  # ("audio_recordings"."recorded_date" + CAST("audio_recordings"."duration_seconds" || 'seconds' as interval)
+  def self.arel_recorded_end_date
+    seconds_as_interval = Arel::Nodes::SqlLiteral.new("' seconds' as interval")
+    infix_op_string_join = Arel::Nodes::InfixOperation.new('||'.to_sym, AudioRecording.arel_table[:duration_seconds], seconds_as_interval)
+    function_cast = Arel::Nodes::NamedFunction.new('CAST', [infix_op_string_join])
+    infix_op_add = Arel::Nodes::InfixOperation.new(:+, AudioRecording.arel_table[:recorded_date], function_cast)
+    infix_op_add
   end
 
 end
