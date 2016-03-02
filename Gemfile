@@ -196,7 +196,7 @@ group :development, :test do
   gem 'database_cleaner', '~> 1.5.0'
 
   gem 'coveralls', '~> 0.8.10', require: false
-  gem 'codeclimate-test-reporter', '~> 0.4.5', require: nil
+  gem 'codeclimate-test-reporter', '~> 0.5.0', require: nil
 end
 
 group :test do
