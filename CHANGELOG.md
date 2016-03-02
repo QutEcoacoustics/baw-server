@@ -2,15 +2,28 @@
 
 ## Unreleased
 
- - 2016-02-18
-    - check for divide by 0, closes [#251](https://github.com/QutBioacoustics/baw-server/issues/251)
- - 2016-02-19
-    - refactor specs to be more obvious about what they do and where various functionality is located
-    - Add ability to filter audio recordings based on project attributes [#253](https://github.com/QutBioacoustics/baw-server/issues/253)
+ - 2016-03-02
+    - Add calculated field recorded_end_date to AudioRecording's filter options [#261](https://github.com/QutBioacoustics/baw-server/issues/261)
+ - 2016-02-27
+    - Added overall_data_length_bytes to analysis_job [#256](https://github.com/QutBioacoustics/baw-server/issues/256)
+    - Also reworked analysis_job lifecycle up to enqueing resque jobs to be more obvious.
+    - All analysis_job attributes are now available in api.
+    - scripts#index is restricted to only most recent version in each script group [#259](https://github.com/QutBioacoustics/baw-server/issues/259)
+    - Added CustomErrors::OrphanedSiteError so it is more obvious [#252](https://github.com/QutBioacoustics/baw-server/issues/252)
+ - 2016-02-26
+    - added basic admin list and view for analysis jobs
+    - Added executable_settings_media_type to scripts table. Exposed scripts#show. [#258](https://github.com/QutBioacoustics/baw-server/issues/258) [#259](https://github.com/QutBioacoustics/baw-server/issues/259)
  - 2016-02-20
     - partial fix for sorting by calculated fields - some inital queries still include sorting [#254](https://github.com/QutBioacoustics/baw-server/issues/254) 
     - potential fix for problems with filtering by calculated fields [#145](https://github.com/QutBioacoustics/baw-server/issues/145)
     - fixed `/taggings/filter` - it was present, but naming mismatches were causing errors
+ - 2016-02-19
+    - refactor specs to be more obvious about what they do and where various functionality is located
+    - Add ability to filter audio recordings based on project attributes [#253](https://github.com/QutBioacoustics/baw-server/issues/253)
+ - 2016-02-18
+    - check for divide by 0, closes [#251](https://github.com/QutBioacoustics/baw-server/issues/251)
+
+
 
 ## [Release 0.18.0](https://github.com/QutBioacoustics/baw-server/releases/tag/0.18.0) (2016-02-06)
 
