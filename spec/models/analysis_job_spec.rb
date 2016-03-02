@@ -102,15 +102,17 @@ describe AnalysisJob, type: :model do
 
       aj = create(:analysis_job, creator: user, script: s, saved_search: ss)
 
-      payload = aj.create_payload(audio_recording_2)
       result = aj.begin_work(user)
 
       queue_name = Settings.actions.analysis.queue
+
       expect(Resque.size(queue_name)).to eq(1)
-
-      emulate_resque_worker(queue_name, false, true)
-
+      worker, job = emulate_resque_worker(queue_name, false, true)
       expect(Resque.size(queue_name)).to eq(0)
+
+      #expect(BawWorkers::ResqueApi.jobs.inspect).to eq(1)
+
+
     end
 
   end
