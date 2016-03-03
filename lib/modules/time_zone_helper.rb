@@ -29,7 +29,7 @@ class TimeZoneHelper
     end
 
     def to_identifier(friendly_name)
-      found = TZInfo::Timezone.all.select { |tz| friendly_name == tz.friendly_identifier}
+      found = TZInfo::Timezone.all.select { |tz| friendly_name == tz.friendly_identifier }
       if found.size == 1
         found[0].identifier
       else
@@ -38,12 +38,26 @@ class TimeZoneHelper
     end
 
     def to_friendly(identifier)
-      found = TZInfo::Timezone.all.select { |tz| identifier == tz.identifier}
+      found = TZInfo::Timezone.all.select { |tz| identifier == tz.identifier }
       if found.size == 1
         found[0].friendly_identifier
       else
         nil
       end
+    end
+
+    # Get the Ruby TimeZone for the name.
+    # @param [string] ruby_tz_name
+    # @return [ActiveSupport::TimeZone] TZInfo Timezone
+    def ruby_tz_class(ruby_tz_name)
+      ruby_tz_name.blank? ? nil : ActiveSupport::TimeZone[ruby_tz_name]
+    end
+
+    # Get the TZInfo Timezone class for the name.
+    # @param [string] tzinfo_tz_name
+    # @return [TZInfo::Timezone]
+    def tzinfo_class(tzinfo_tz_name)
+      tzinfo_tz_name.blank? ? nil : TZInfo::Timezone.get(tzinfo_tz_name)
     end
 
     # Get the TZInfo Timezone equivalent to the Ruby TimeZone.
@@ -79,6 +93,29 @@ class TimeZoneHelper
       hours = (sec / (60 * 60)).floor.to_s.rjust(2, '0')
       minutes = ((sec % (60 * 60)) / 60).floor.to_s.rjust(2, '0')
       "#{is_neg ? '-' : '+'}#{hours}:#{minutes}"
+    end
+
+    def info_hash(model)
+      tzinfo_tz_string = model.tzinfo_tz
+      tzinfo_tz = tzinfo_class(tzinfo_tz_string)
+
+      rails_tz_string = model.rails_tz
+      rails_tz = ruby_tz_class(rails_tz_string)
+
+      tzinfo_tz = ruby_to_tzinfo(rails_tz_string) if !rails_tz.blank? && tzinfo_tz.blank?
+      rails_tz = tzinfo_to_ruby(tzinfo_tz_string) if rails_tz.blank? && !tzinfo_tz.blank?
+
+      if tzinfo_tz
+        {
+            identifier_alt: rails_tz.blank? ? nil : rails_tz.name,
+            identifier: tzinfo_tz.identifier,
+            friendly_identifier: tzinfo_tz.friendly_identifier,
+            utc_offset: rails_tz.blank? ? tzinfo_tz.current_period.utc_offset : rails_tz.utc_offset,
+            utc_total_offset: tzinfo_tz.current_period.utc_total_offset
+        }
+      else
+        nil
+      end
     end
 
   end

@@ -215,10 +215,11 @@ class User < ActiveRecord::Base
   # Define filter api settings
   def self.filter_settings
     {
-        valid_fields: [:id, :user_name, :roles_mask, :tzinfo_tz, :rails_tz, :last_seen_at, :created_at, :updated_at],
-        render_fields: [:id, :user_name, :roles_mask, :tzinfo_tz, :rails_tz],
+        valid_fields: [:id, :user_name, :roles_mask, :last_seen_at, :created_at, :updated_at],
+        render_fields: [:id, :user_name, :roles_mask],
         text_fields: [:user_name],
         custom_fields: lambda { |item, user|
+          # 'item' is the user being processed, 'user' is the currently logged in user
           is_admin = Access::Check.is_admin?(user)
           is_same_user = item == user
 
@@ -228,6 +229,7 @@ class User < ActiveRecord::Base
 
           user_hash =
               {
+                  timezone_information: TimeZoneHelper.info_hash(fresh_user),
                   roles_mask_names: fresh_user.roles,
                   image_urls:
                       [

@@ -150,6 +150,10 @@ resource 'Users' do
   # ================
 
   post '/user_accounts/filter' do
+    let!(:update_site_tz){
+      writer_user.rails_tz = 'Sydney'
+      writer_user.save!
+    }
     let(:raw_post) {
       {
           'filter' => {
@@ -158,15 +162,36 @@ resource 'Users' do
               }
           },
           'projection' => {
-              'include' => [:id, :user_name, :tzinfo_tz, :rails_tz]
+              'include' => [:id, :user_name]
           }
       }.to_json
     }
-    let(:authentication_token) { reader_token }
-    standard_request_options(:post, 'FILTER (as reader)', :ok, {
-        expected_json_path: ['data/0/user_name', 'meta/projection/include'],
+    let(:authentication_token) { writer_token }
+    standard_request_options(:post, 'FILTER (as reader checking timezone info)', :ok, {
+        expected_json_path: ['data/0/user_name', 'meta/projection/include', 'data/0/timezone_information'],
         data_item_count: 1,
-        response_body_content: ["\"tzinfo_tz\":", "\"rails_tz\":"]
+        response_body_content: '"timezone_information":{"identifier_alt":"Sydney","identifier":"Australia/Sydney","friendly_identifier":"Australia - Sydney","utc_offset":'
+    })
+  end
+
+  post '/user_accounts/filter' do
+    let(:raw_post) {
+      {
+          'filter' => {
+              'id' => {
+                  'in' => [writer_id]
+              }
+          },
+          'projection' => {
+              'include' => [:id, :user_name]
+          }
+      }.to_json
+    }
+    let(:authentication_token) { writer_token }
+    standard_request_options(:post, 'FILTER (as reader checking no timezone info)', :ok, {
+        expected_json_path: ['data/0/user_name', 'meta/projection/include', 'data/0/timezone_information'],
+        data_item_count: 1,
+        response_body_content: '"timezone_information":null'
     })
   end
 

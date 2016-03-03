@@ -162,27 +162,25 @@ class Site < ActiveRecord::Base
   # Define filter api settings
   def self.filter_settings
     {
-        valid_fields: [:id, :name, :description, :created_at, :updated_at, :project_ids],
+        valid_fields: [:id, :name, :description, :created_at, :updated_at, :project_ids, :timezone_information],
         render_fields: [:id, :name, :description],
         text_fields: [:description, :name],
         custom_fields: lambda { |item, user|
 
-          item.update_location_obfuscated(user) unless item.nil? || item.id.nil?
-
-          # do a query for the attributes that may not be in the projection
-          # instance or id can be nil
-          fresh_site = (item.nil? || item.id.nil?) ? nil : Site.find(item.id)
-
-          fresh_site.update_location_obfuscated(user) unless fresh_site.nil?
-
+          # item can be nil or a new record
+          is_new_record = item.nil? || item.new_record?
+          fresh_site = is_new_record ? nil : Site.find(item.id)
           site_hash = {}
-          Access::Check.check_orphan_site!(fresh_site)
-          site_hash[:project_ids] = fresh_site.nil? ? nil : fresh_site.projects.pluck(:id).flatten
 
           unless fresh_site.nil?
-            site_hash[:location_obfuscated] = fresh_site.location_obfuscated
-            site_hash[:custom_latitude] = fresh_site.latitude
-            site_hash[:custom_longitude] = fresh_site.longitude
+            fresh_site.update_location_obfuscated(user)
+            site_hash = {
+                project_ids: fresh_site.projects.pluck(:id).flatten,
+                location_obfuscated: fresh_site.location_obfuscated,
+                custom_latitude: fresh_site.latitude,
+                custom_longitude: fresh_site.longitude,
+                timezone_information: TimeZoneHelper.info_hash(fresh_site)
+            }
           end
 
           [item, site_hash]
