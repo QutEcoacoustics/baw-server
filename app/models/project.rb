@@ -42,16 +42,16 @@ class Project < ActiveRecord::Base
         valid_fields: [:id, :name, :description, :created_at, :creator_id],
         render_fields: [:id, :name, :description, :creator_id],
         text_fields: [:name, :description],
-        custom_fields: lambda { |project, user|
+        custom_fields: lambda { |item, user|
 
           # do a query for the attributes that may not be in the projection
           # instance or id can be nil
-          fresh_project = (project.nil? || project.id.nil?) ? nil : Project.find(project.id)
+          fresh_project = (item.nil? || item.id.nil?) ? nil : Project.find(item.id)
 
           project_hash = {}
           project_hash[:site_ids] = fresh_project.nil? ? nil : fresh_project.sites.pluck(:id).flatten
 
-          [project, project_hash]
+          [item, project_hash]
         },
         controller: :projects,
         action: :filter,

@@ -218,13 +218,13 @@ class User < ActiveRecord::Base
         valid_fields: [:id, :user_name, :roles_mask, :tzinfo_tz, :rails_tz, :last_seen_at, :created_at, :updated_at],
         render_fields: [:id, :user_name, :roles_mask, :tzinfo_tz, :rails_tz],
         text_fields: [:user_name],
-        custom_fields: lambda { |user, custom_current_user|
-          is_admin = Access::Check.is_admin?(custom_current_user)
-          is_same_user = user == custom_current_user
+        custom_fields: lambda { |item, user|
+          is_admin = Access::Check.is_admin?(user)
+          is_same_user = item == user
 
           # do a query for the attributes that may not be in the projection
           # instance or id can be nil
-          fresh_user = User.find(user.id)
+          fresh_user = User.find(item.id)
 
           user_hash =
               {
@@ -248,15 +248,14 @@ class User < ActiveRecord::Base
             user_hash[:is_confirmed] = fresh_user.confirmed?
           end
 
-          [user, user_hash]
+          [item, user_hash]
         },
         controller: :user_accounts,
         action: :filter,
         defaults: {
             order_by: :user_name,
             direction: :asc
-        },
-        valid_associations: []
+        }
     }
   end
 

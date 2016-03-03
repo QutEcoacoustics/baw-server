@@ -71,10 +71,10 @@ class AnalysisJob < ActiveRecord::Base
         valid_fields: fields,
         render_fields: fields,
         text_fields: [:name, :description, :annotation_name],
-        custom_fields: lambda { |analysis_job, user|
+        custom_fields: lambda { |item, user|
 
           # do a query for the attributes that may not be in the projection
-          fresh_analysis_job = AnalysisJob.find(analysis_job.id)
+          fresh_analysis_job = AnalysisJob.find(item.id)
 
           analysis_job_hash = {}
 
@@ -94,7 +94,7 @@ class AnalysisJob < ActiveRecord::Base
 
           analysis_job_hash[:script] = script
 
-          [analysis_job, analysis_job_hash]
+          [item, analysis_job_hash]
         },
         new_spec_fields: lambda { |user|
           {
@@ -108,7 +108,6 @@ class AnalysisJob < ActiveRecord::Base
             order_by: :name,
             direction: :asc
         },
-        field_mappings: [],
         valid_associations: [
             {
                 join: SavedSearch,

@@ -15,11 +15,13 @@ module Filter
     # @return [void]
     def initialize(table, filter_settings)
       @table = table
+
+      validate_filter_settings(filter_settings)
       @filter_settings = filter_settings
 
       @valid_fields = filter_settings[:valid_fields].map(&:to_sym)
       @render_fields = filter_settings[:render_fields].map(&:to_sym)
-      @text_fields = filter_settings[:text_fields].map(&:to_sym)
+      @text_fields = filter_settings.include?(:text_fields) ? filter_settings[:text_fields].map(&:to_sym) : []
       @valid_associations = filter_settings[:valid_associations]
       @field_mappings = filter_settings[:field_mappings]
 
@@ -313,7 +315,7 @@ module Filter
           when *@valid_fields.dup.push(/\./)
             field = primary
             field_conditions = secondary
-            info = parse_table_field(@table, field, @filter_settings)
+            info = parse_table_field(@table, field)
             result = parse_filter(field_conditions, info)
 
             build_subquery(info, result)
@@ -504,17 +506,15 @@ module Filter
     # Build table field from field symbol.
     # @param [Arel::Table] table
     # @param [Symbol] field
-    # @param [Hash] filter_settings
     # @return [Arel::Table, Symbol, Hash] table, field, filter_settings
-    def parse_table_field(table, field, filter_settings)
+    def parse_table_field(table, field)
       validate_table(table)
       fail CustomErrors::FilterArgumentError, 'Field name must be a symbol.' unless field.is_a?(Symbol)
-      validate_filter_settings(filter_settings)
 
       field_s = field.to_s
 
       if field_s.include?('.')
-        parse_other_table_field(table, field, filter_settings)
+        parse_other_table_field(table, field)
       else
 
         # table name may not be the same as model / controller name :(
@@ -526,7 +526,7 @@ module Filter
             field_name: field,
             arel_table: table,
             model: model,
-            filter_settings: filter_settings
+            filter_settings: @filter_settings
         }
       end
 
@@ -535,9 +535,8 @@ module Filter
     # Build other table field from field symbol.
     # @param [Arel::Table] table
     # @param [Symbol] field
-    # @param [Hash] filter_settings
     # @return [Arel::Table, Symbol, Hash] table, field, filter_settings
-    def parse_other_table_field(table, field, filter_settings)
+    def parse_other_table_field(table, field)
       field_s = field.to_s
       dot_index = field_s.index('.')
 

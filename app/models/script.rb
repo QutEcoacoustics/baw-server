@@ -72,15 +72,12 @@ ORDER BY s1.group_id, s1.version;'
         valid_fields: [:id, :name, :description, :analysis_identifier, :executable_settings_media_type, :version, :created_at, :creator_id],
         render_fields: [:id, :name, :description, :analysis_identifier, :executable_settings, :executable_settings_media_type, :version, :created_at, :creator_id],
         text_fields: [:name, :description, :analysis_identifier, :executable_settings_media_type],
-        custom_fields: nil,
         controller: :scripts,
         action: :filter,
         defaults: {
             order_by: :name,
             direction: :asc
-        },
-        field_mappings: [],
-        valid_associations: []
+        }
     }
   end
 

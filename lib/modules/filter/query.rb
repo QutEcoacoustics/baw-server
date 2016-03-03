@@ -29,8 +29,10 @@ module Filter
 
       # `.all' adds 'id' to the select!!
       @initial_query = !query.nil? && query.is_a?(ActiveRecord::Relation) ? query : relation_all(model)
+
+      validate_filter_settings(filter_settings)
       @valid_fields = filter_settings[:valid_fields].map(&:to_sym)
-      @text_fields = filter_settings[:text_fields].map(&:to_sym)
+      @text_fields = filter_settings.include?(:text_fields) ? filter_settings[:text_fields].map(&:to_sym) : []
       @render_fields = filter_settings[:render_fields].map(&:to_sym)
       @filter_settings = filter_settings
 

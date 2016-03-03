@@ -165,13 +165,13 @@ class Site < ActiveRecord::Base
         valid_fields: [:id, :name, :description, :created_at, :updated_at, :project_ids],
         render_fields: [:id, :name, :description],
         text_fields: [:description, :name],
-        custom_fields: lambda { |site, user|
+        custom_fields: lambda { |item, user|
 
-          site.update_location_obfuscated(user) unless site.nil? || site.id.nil?
+          item.update_location_obfuscated(user) unless item.nil? || item.id.nil?
 
           # do a query for the attributes that may not be in the projection
           # instance or id can be nil
-          fresh_site = (site.nil? || site.id.nil?) ? nil : Site.find(site.id)
+          fresh_site = (item.nil? || item.id.nil?) ? nil : Site.find(item.id)
 
           fresh_site.update_location_obfuscated(user) unless fresh_site.nil?
 
@@ -185,7 +185,7 @@ class Site < ActiveRecord::Base
             site_hash[:custom_longitude] = fresh_site.longitude
           end
 
-          [site, site_hash]
+          [item, site_hash]
         },
         new_spec_fields: lambda { |user|
           {
