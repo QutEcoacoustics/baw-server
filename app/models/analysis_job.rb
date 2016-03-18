@@ -71,31 +71,6 @@ class AnalysisJob < ActiveRecord::Base
         valid_fields: fields,
         render_fields: fields,
         text_fields: [:name, :description, :annotation_name],
-        custom_fields: lambda { |item, user|
-
-          # do a query for the attributes that may not be in the projection
-          fresh_analysis_job = AnalysisJob.find(item.id)
-
-          analysis_job_hash = {}
-
-          saved_search =
-              SavedSearch
-                  .where(id: fresh_analysis_job.saved_search_id)
-                  .select(*SavedSearch.filter_settings[:render_fields])
-                  .first
-
-          analysis_job_hash[:saved_search] = saved_search
-
-          script =
-              Script
-                  .where(id: fresh_analysis_job.script_id)
-                  .select(*Script.filter_settings[:render_fields])
-                  .first
-
-          analysis_job_hash[:script] = script
-
-          [item, analysis_job_hash]
-        },
         new_spec_fields: lambda { |user|
           {
               annotation_name: nil,

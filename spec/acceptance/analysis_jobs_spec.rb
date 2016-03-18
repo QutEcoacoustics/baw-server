@@ -353,7 +353,8 @@ resource 'AnalysisJobs' do
     standard_request_options(:post, 'FILTER (as reader)', :ok, {
         expected_json_path: 'meta/filter/saved_searches.stored_query',
         data_item_count: 1,
-        response_body_content: '"saved_searches.stored_query":{"contains":"blah"}'
+        response_body_content: ['"saved_searches.stored_query":{"contains":"blah"}'],
+        invalid_content: ['"saved_search":', '"script":']
     })
   end
 
