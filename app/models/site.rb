@@ -21,7 +21,9 @@ class Site < ActiveRecord::Base
   LONGITUDE_MIN = -180
   LONGITUDE_MAX = 180
 
-  JITTER_RANGE = 0.0005
+  # See https://en.wikipedia.org/wiki/Decimal_degrees
+  # (scale of a large town or village)
+  JITTER_RANGE = 0.03
 
   # add deleted_at and deleter_id
   acts_as_paranoid
@@ -121,7 +123,7 @@ class Site < ActiveRecord::Base
     # included range (inclusive range)
     range = (range_min..range_max).to_a
 
-    excluded_diff = 1
+    excluded_diff = (Site::JITTER_RANGE * 0.1 * accuracy).floor.to_i
     excluded_min = multiplied - excluded_diff
     excluded_max = multiplied + excluded_diff
 
@@ -135,8 +137,8 @@ class Site < ActiveRecord::Base
     selected = available.sample
 
     # round to ensure precision is maintained (damn floating point in-exactness)
-    # can't usually get more accurate than 5 decimal places anyway
-    modified_value = (selected / accuracy).round(5)
+    # 3 decimal places is at the scale of an 'individual street, land parcel'
+    modified_value = (selected.to_f / accuracy.to_f).round(4)
 
     # ensure range is maintained (damn floating point in-exactness)
     if modified_value > (value + Site::JITTER_RANGE)

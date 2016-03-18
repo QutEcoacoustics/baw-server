@@ -39,11 +39,30 @@ describe Site, :type => :model do
   end
 
   it 'should obfuscate lat/longs properly' do
+    original_lat = -23.0
+    original_lng = 127.0
+    s = FactoryGirl.build(:site, :with_lat_long)
 
-    10.times {
-      s = FactoryGirl.build(:site, :with_lat_long)
-      expect(Site.add_location_jitter(s.longitude, Site::LONGITUDE_MIN, Site::LONGITUDE_MAX)).to be_within(Site::JITTER_RANGE).of(s.longitude)
-      expect(Site.add_location_jitter(s.latitude, Site::LATITUDE_MIN, Site::LATITUDE_MAX)).to be_within(Site::JITTER_RANGE).of(s.latitude)
+    jitter_range = Site::JITTER_RANGE
+    jitter_exclude_range = Site::JITTER_RANGE * 0.1
+
+    lat_min = Site::LATITUDE_MIN
+    lat_max = Site::LATITUDE_MAX
+    lng_min = Site::LONGITUDE_MIN
+    lng_max = Site::LONGITUDE_MAX
+
+    100.times {
+      s.latitude = original_lat
+      s.longitude = original_lng
+
+      jit_lat = Site.add_location_jitter(s.latitude, lat_min, lat_max)
+      jit_lng = Site.add_location_jitter(s.longitude, lng_min, lng_max)
+
+      expect(jit_lat).to be_within(jitter_range).of(s.latitude)
+      expect(jit_lat).to_not be_within(jitter_exclude_range).of(s.latitude)
+
+      expect(jit_lng).to be_within(jitter_range).of(s.longitude)
+      expect(jit_lng).to_not be_within(jitter_exclude_range).of(s.longitude)
     }
   end
 
