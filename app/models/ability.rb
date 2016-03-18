@@ -132,7 +132,7 @@ class Ability
   end
 
   def to_site(user)
-    # only admin can :destroy, :upload_instructions, :harvest, :orphans
+    # only admin can :destroy, :orphans
 
     # must have read permission or higher to view site
     can [:show, :show_shallow], Site do |site|
@@ -151,6 +151,11 @@ class Ability
       # https://github.com/rails/rails/issues/12756
       # https://github.com/plataformatec/has_scope/issues/41
       Access::Check.can_any?(user, :writer, site.projects)
+    end
+
+    # Only owners can access harvest and upload instruction pages
+    can [:upload_instructions, :harvest], Site do |site|
+      Access::Check.can_any?(user, :owner, site.projects)
     end
 
     # actions any logged in user can access

@@ -89,6 +89,17 @@ describe 'CRUD Sites as valid user with write permission', :type => :feature do
     site.save!
 
   end
+
+  it 'rejects access to view project site harvest' do
+    visit harvest_project_site_path(project, site)
+    expect(page).to have_content(I18n.t('devise.failure.unauthorized'))
+  end
+
+  it 'rejects access to view project site upload' do
+    visit upload_instructions_project_site_path(project, site)
+    expect(page).to have_content(I18n.t('devise.failure.unauthorized'))
+  end
+
 end
 
 describe 'CRUD Sites as valid user with read permission', :type => :feature do
@@ -122,6 +133,16 @@ describe 'CRUD Sites as valid user with read permission', :type => :feature do
     visit edit_project_site_path(project, site)
     expect(page).to have_content(I18n.t('devise.failure.unauthorized'))
   end
+
+  it 'rejects access to view project site harvest' do
+    visit harvest_project_site_path(project, site)
+    expect(page).to have_content(I18n.t('devise.failure.unauthorized'))
+  end
+
+  it 'rejects access to view project site upload' do
+    visit upload_instructions_project_site_path(project, site)
+    expect(page).to have_content(I18n.t('devise.failure.unauthorized'))
+  end
 end
 
 describe 'CRUD Sites as valid user with no permission', :type => :feature do
@@ -152,6 +173,16 @@ describe 'CRUD Sites as valid user with no permission', :type => :feature do
     visit edit_project_site_path(project, site)
     expect(page).to have_content(I18n.t('devise.failure.unauthorized'))
   end
+
+  it 'rejects access to view project site harvest' do
+    visit harvest_project_site_path(project, site)
+    expect(page).to have_content(I18n.t('devise.failure.unauthorized'))
+  end
+
+  it 'rejects access to view project site upload' do
+    visit upload_instructions_project_site_path(project, site)
+    expect(page).to have_content(I18n.t('devise.failure.unauthorized'))
+  end
 end
 
 describe 'Delete Site as admin user', :type => :feature do
@@ -175,6 +206,36 @@ describe 'Delete Site as admin user', :type => :feature do
 
     #visit page.driver.response.location
     #save_and_open_page
+  end
+
+  it 'can access harvester page' do
+    visit harvest_project_site_path(project, site, format: :yml)
+    expect(page).to have_content('# this needs to be set manually')
+  end
+
+  it 'can access upload page' do
+    visit upload_instructions_project_site_path(project, site)
+    expect(page).to have_content('Follow these instructions to upload audio to the site')
+  end
+
+end
+
+describe 'Delete Site as admin user', :type => :feature do
+
+  create_entire_hierarchy
+
+  before(:each) do
+    login_as owner_user, scope: :user
+  end
+
+  it 'can access harvester page' do
+    visit harvest_project_site_path(project, site, format: :yml)
+    expect(page).to have_content('# this needs to be set manually')
+  end
+
+  it 'can access upload page' do
+    visit upload_instructions_project_site_path(project, site)
+    expect(page).to have_content('Follow these instructions to upload audio to the site')
   end
 
 end
