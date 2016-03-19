@@ -15,8 +15,11 @@ site_id: #{@site.id}
   - else
     \#uploader_id: #{writer.id} # #{writer.user_name}
 ~''
-\# this is the timezone for all the recordings
-utc_offset: '+10'
+\# this is the timezone for all the recordings.
+\# the value should be the timezone offset that
+\# the recorder was set to when it started recording.
+\# example: `utc_offset: '+10'` for Brisbane, Australia
+utc_offset: 'INTENTIONALLY_INVALID'
 ~''
 \# structured metadata to add to each recording.
 \# use this to record information about sensors, etc...
