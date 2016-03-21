@@ -287,9 +287,9 @@ resource 'Analysis' do
                   '{"path":"TopDir/one/two","name":"two","type":"directory","children":[',
                   '{"path":"TopDir/one/two/three","name":"three","type":"directory","children":[',
                   '{"path":"TopDir/one/two/three/four","name":"four","type":"directory","children":[',
-                  '{"path":"TopDir/one/two/three/four/five.txt","name":"five.txt","size":14,"type":"file","mime":"text/plain"}',
+                  '{"path":"TopDir/one/two/three/four/five.txt","name":"five.txt","size_bytes":14,"type":"file","mime":"text/plain"}',
                   '{"path":"TopDir/one/two/three/four/five","name":"five","type":"directory","children":[',
-                  '{"path":"TopDir/one/two/three/four/five/six.txt","name":"six.txt","size":13,"type":"file","mime":"text/plain"}',
+                  '{"path":"TopDir/one/two/three/four/five/six.txt","name":"six.txt","size_bytes":13,"type":"file","mime":"text/plain"}',
                   '{"path":"TopDir/one3","name":"one3","type":"directory","children":[]}',
                   '{"path":"TopDir/one1","name":"one1","type":"directory","children":[]}',
                   '{"path":"TopDir/one2","name":"one2","type":"directory","children":[]}',
@@ -323,9 +323,9 @@ resource 'Analysis' do
                   '{"path":"TopDir/one/two","name":"two","type":"directory","children":[',
                   '{"path":"TopDir/one/two/three","name":"three","type":"directory","children":[',
                   '{"path":"TopDir/one/two/three/four","name":"four","type":"directory","children":[',
-                  '{"path":"TopDir/one/two/three/four/five.txt","name":"five.txt","size":14,"type":"file","mime":"text/plain"}',
+                  '{"path":"TopDir/one/two/three/four/five.txt","name":"five.txt","size_bytes":14,"type":"file","mime":"text/plain"}',
                   '{"path":"TopDir/one/two/three/four/five","name":"five","type":"directory","children":[',
-                  '{"path":"TopDir/one/two/three/four/five/six.txt","name":"six.txt","size":13,"type":"file","mime":"text/plain"}',
+                  '{"path":"TopDir/one/two/three/four/five/six.txt","name":"six.txt","size_bytes":13,"type":"file","mime":"text/plain"}',
                   '{"path":"TopDir/one3","name":"one3","type":"directory","children":[]}',
                   '{"path":"TopDir/one1","name":"one1","type":"directory","children":[]}',
                   '{"path":"TopDir/one2","name":"one2","type":"directory","children":[]}',
@@ -354,9 +354,32 @@ resource 'Analysis' do
                   '{"path":"TopDir/one/two","name":"two","type":"directory","children":[',
                   '{"path":"TopDir/one/two/three","name":"three","type":"directory","children":[',
                   '{"path":"TopDir/one/two/three/four","name":"four","type":"directory","children":[',
-                  '{"path":"TopDir/one/two/three/four/five.txt","name":"five.txt","size":14,"type":"file","mime":"text/plain"}',
+                  '{"path":"TopDir/one/two/three/four/five.txt","name":"five.txt","size_bytes":14,"type":"file","mime":"text/plain"}',
                   '{"path":"TopDir/one/two/three/four/five","name":"five","type":"directory","children":[',
-                  '{"path":"TopDir/one/two/three/four/five/six.txt","name":"six.txt","size":13,"type":"file","mime":"text/plain"}'
+                  '{"path":"TopDir/one/two/three/four/five/six.txt","name":"six.txt","size_bytes":13,"type":"file","mime":"text/plain"}'
+              ]
+          })
+    end
+    get test_url do
+      standard_analysis_parameters
+      let(:authentication_token) { admin_token }
+      let(:results_path) { 'TopDir/one/two/three/four' }
+
+      standard_request_options(
+          :get,
+          'ANALYSIS (as admin, requesting sub sub dir with files)',
+          :ok,
+          {
+              response_body_content: [
+                  '{"meta":{"status":200,"message":"OK"},"data":',
+                  '{"path":"TopDir/one/two/three/four","name":"four","type":"directory","children":[',
+                  '{"path":"TopDir/one/two/three/four/five.txt","name":"five.txt","type":"file","size_bytes":14,"mime":"text/plain"}',
+                  '{"path":"TopDir/one/two/three/four/five","name":"five","type":"directory","has_children":true}'
+              ],
+              invalid_data_content: [
+                  '{"path":"TopDir/one/two","name":"two","type":"directory","children":[',
+                  '{"path":"TopDir/one/two/three","name":"three","type":"directory","children":[',
+                  '{"path":"TopDir/one/two/three/four/five/six.txt","name":"six.txt","size_bytes":13,"type":"file","mime":"text/plain"}'
               ]
           })
     end
@@ -383,7 +406,7 @@ resource 'Analysis' do
                   '{"path":"/","name":"/","type":"directory","children":['
               ],
               invalid_data_content: [
-                  '{"path":".test-dot-file","name":".test-dot-file","type":"file","size":0,"mime":""}'
+                  '{"path":".test-dot-file","name":".test-dot-file","type":"file","size_bytes":0,"mime":""}'
               ]
           })
     end
