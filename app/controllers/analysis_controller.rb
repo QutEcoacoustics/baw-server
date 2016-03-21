@@ -247,7 +247,7 @@ class AnalysisController < ApplicationController
         path: normalised_path,
         name: normalised_name,
         type: 'file',
-        size: File.size(path),
+        size_bytes: File.size(path),
         mime: Mime::Type.lookup_by_extension(File.extname(path)[1..-1]).to_s
     }
   end
