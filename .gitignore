@@ -30,6 +30,7 @@ external_modules.log
 
 # ignore temporary files
 /tmp
+/.bundle
 
 # ignore ide settings
 /.idea

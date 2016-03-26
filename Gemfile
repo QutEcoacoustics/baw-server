@@ -59,7 +59,7 @@ gem 'font-awesome-sass', '~> 4.5.0'
 
 # for rails 3, 4
 gem 'kaminari'
-gem 'dotiw','~> 3.0.1'
+gem 'dotiw','~> 3.1.1'
 gem 'recaptcha', '~> 1.1.0',  require: 'recaptcha/rails'
 
 # for proper timezone support
@@ -112,7 +112,7 @@ gem 'newrelic_rpm', '~> 3.15'
 # -------------------------------------
 # these gems are required here to serve /doc url
 gem 'rspec_api_documentation', '~> 4.7.0'
-gem 'raddocs', '~> 0.5.0'
+gem 'raddocs', '~> 1.0.0'
 
 # MEDIA
 # -------------------------------------
@@ -160,7 +160,7 @@ group :development, :test do
   gem 'guard', '~> 2.13.0'
   gem 'guard-rspec', '~> 4.6.0'
   gem 'guard-yard', '~> 2.1.4', require: false
-  gem 'rubocop', '~> 0.37.2', require: false
+  gem 'rubocop', '~> 0.38.0', require: false
   gem 'haml-lint', require: false
 
   gem 'fakeredis', '~> 0.5.0', require: 'fakeredis/rspec'
