@@ -108,6 +108,15 @@ class Site < ActiveRecord::Base
     @location_obfuscated = !is_owner
   end
 
+  def description_html
+    # I don't know why Rubymine complains about Kramdown where ever I use it...
+    ApplicationController.helpers.sanitize Kramdown::Document.new(description).to_html
+  end
+
+  def notes_html
+    ApplicationController.helpers.sanitize Kramdown::Document.new(notes).to_html
+  end
+
   def self.add_location_jitter(value, min, max)
 
     # multiply by 10,000 to get to ~10m accuracy
@@ -181,7 +190,9 @@ class Site < ActiveRecord::Base
                 location_obfuscated: fresh_site.location_obfuscated,
                 custom_latitude: fresh_site.latitude,
                 custom_longitude: fresh_site.longitude,
-                timezone_information: TimeZoneHelper.info_hash(fresh_site)
+                timezone_information: TimeZoneHelper.info_hash(fresh_site),
+                description_html: fresh_site.description_html,
+                notes_html: fresh_site.notes_html
             }
           end
 

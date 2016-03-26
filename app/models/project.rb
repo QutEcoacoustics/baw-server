@@ -36,6 +36,14 @@ class Project < ActiveRecord::Base
   validates_format_of :urn, with: /\Aurn:[a-z0-9][a-z0-9-]{0,31}:[a-z0-9()+,\-.:=@;$_!*'%\/?#]+\z/, message: 'urn %{value} is not valid, must be in format urn:<name>:<path>', allow_blank: true, allow_nil: true
   validates_attachment_content_type :image, content_type: /\Aimage\/(jpg|jpeg|pjpeg|png|x-png|gif)\z/, message: 'file type %{value} is not allowed (only jpeg/png/gif images)'
 
+  def description_html
+    ApplicationController.helpers.sanitize Kramdown::Document.new(description).to_html
+  end
+
+  def notes_html
+    ApplicationController.helpers.sanitize Kramdown::Document.new(notes).to_html
+  end
+
   # Define filter api settings
   def self.filter_settings
     {
@@ -50,6 +58,9 @@ class Project < ActiveRecord::Base
 
           project_hash = {}
           project_hash[:site_ids] = fresh_project.nil? ? nil : fresh_project.sites.pluck(:id).flatten
+
+          project_hash[:description_html]= fresh_project.description_html
+          project_hash[:notes_html] = fresh_project.notes_html
 
           [item, project_hash]
         },

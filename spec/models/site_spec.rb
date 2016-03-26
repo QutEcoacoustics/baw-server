@@ -103,6 +103,18 @@ describe Site, :type => :model do
     }.to raise_error(CustomErrors::OrphanedSiteError)
   end
 
+  it 'generates html for description and notes' do
+    md = "# Header\r\n [a link](https://github.com)."
+    html = "<h1>Header</h1>\n<p><a href=\"https://github.com\">a link</a>.</p>\n"
+    projectHtml = FactoryGirl.create(:site, description: md, notes: md)
+
+    expect(projectHtml.description).to eq(md)
+    expect(projectHtml.description_html).to eq(html)
+
+    expect(projectHtml.notes).to eq(md)
+    expect(projectHtml.notes_html).to eq(html)
+  end
+
   # this should pass, but the paperclip implementation of validate_attachment_content_type is buggy.
   # it { should validate_attachment_content_type(:image).
   #                 allowing('image/gif', 'image/jpeg', 'image/jpg','image/png').
