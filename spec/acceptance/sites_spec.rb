@@ -524,7 +524,7 @@ resource 'Sites' do
 
   post '/sites/filter' do
     let(:authentication_token) { writer_token }
-    let!(:update_site_tz){
+    let!(:update_site_tz) {
       site2 = Creation::Common.create_site(writer_user, project)
       site2.rails_tz = 'Sydney'
       site2.save!
@@ -539,6 +539,26 @@ resource 'Sites' do
                                  expected_json_path: ['data/0/project_ids/0', 'data/0/timezone_information'],
                                  data_item_count: 2,
                                  response_body_content: '"timezone_information":{"identifier_alt":"Sydney","identifier":"Australia/Sydney","friendly_identifier":"Australia - Sydney","utc_offset":'
+                             })
+  end
+
+  post '/sites/filter' do
+    let(:authentication_token) { writer_token }
+    let!(:update_site_tz) {
+      site2 = FactoryGirl.build(:site, creator: writer_user)
+      site2.projects << project
+      site2.tzinfo_tz = 'Australia - Brisbane'
+      site2.save!
+    }
+    let(:raw_post) { {
+        'projection' => {
+            'include' => ['id', 'name']
+        }
+    }.to_json }
+    standard_request_options(:post, 'FILTER (as writer ensuring site timezone is valid)', :ok,
+                             {
+                                 data_item_count: 2,
+                                 response_body_content: ['"timezone_information":{"identifier_alt":"Brisbane","identifier":"Australia/Brisbane","friendly_identifier":"Australia - Brisbane"']
                              })
   end
 

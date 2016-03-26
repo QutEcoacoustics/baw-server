@@ -45,6 +45,7 @@ class Site < ActiveRecord::Base
 
   validates_attachment_content_type :image, content_type: /^image\/(jpg|jpeg|pjpeg|png|x-png|gif)$/, message: 'file type %{value} is not allowed (only jpeg/png/gif images)'
 
+  validate :check_tz
   before_save :set_rails_tz, if: Proc.new { |site| site.tzinfo_tz_changed? }
 
   # commonly used queries
@@ -108,13 +109,13 @@ class Site < ActiveRecord::Base
     @location_obfuscated = !is_owner
   end
 
+  # I don't know why Rubymine complains about Kramdown where ever I use it...
   def description_html
-    # I don't know why Rubymine complains about Kramdown where ever I use it...
-    ApplicationController.helpers.sanitize Kramdown::Document.new(description).to_html
+    CustomRender.render_markdown(self, :description)
   end
 
   def notes_html
-    ApplicationController.helpers.sanitize Kramdown::Document.new(notes).to_html
+    CustomRender.render_markdown(self, :notes)
   end
 
   def self.add_location_jitter(value, min, max)
@@ -239,6 +240,10 @@ class Site < ActiveRecord::Base
 
   def set_rails_tz
     TimeZoneHelper.set_rails_tz(self)
+  end
+
+  def check_tz
+    TimeZoneHelper.validate_tzinfo_tz(self)
   end
 
 end

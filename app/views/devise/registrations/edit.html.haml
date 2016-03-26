@@ -8,7 +8,7 @@
     = f.error_notification
     = f.input :user_name, required: true, autofocus: true
     = f.input :email, required: true, placeholder: 'Email'
-    = render partial: 'shared/time_zone_select_custom', locals: { f: f, attribute_name: :tzinfo_tz, model_name: resource_name }
+    = render partial: 'shared/time_zone_select_custom', locals: { f: f, attribute_name: :tzinfo_tz, model_name: resource_name, model: resource }
     - if devise_mapping.confirmable? && resource.pending_reconfirmation?
       %p= t('devise.registrations.edit.currently_waiting_confirmation_for_email', email: resource.unconfirmed_email)
     = f.input :password, autocomplete: 'off', hint: t('devise.registrations.edit.leave_blank_if_you_don_t_want_to_change_it'), required: false

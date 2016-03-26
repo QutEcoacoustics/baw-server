@@ -115,6 +115,16 @@ describe Site, :type => :model do
     expect(projectHtml.notes_html).to eq(html)
   end
 
+  it 'should error on invalid timezone' do
+    expect {
+      FactoryGirl.create(:site, tzinfo_tz: 'blah')
+    }.to raise_error(ActiveRecord::RecordInvalid, "Validation failed: Tzinfo tz is not a recognised timezone ('blah')")
+  end
+
+  it 'should be valid for a valid timezone' do
+    expect(FactoryGirl.create(:site, tzinfo_tz: 'Australia - Brisbane')).to be_valid
+  end
+
   # this should pass, but the paperclip implementation of validate_attachment_content_type is buggy.
   # it { should validate_attachment_content_type(:image).
   #                 allowing('image/gif', 'image/jpeg', 'image/jpg','image/png').

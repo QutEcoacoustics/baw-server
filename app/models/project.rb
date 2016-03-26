@@ -37,11 +37,11 @@ class Project < ActiveRecord::Base
   validates_attachment_content_type :image, content_type: /\Aimage\/(jpg|jpeg|pjpeg|png|x-png|gif)\z/, message: 'file type %{value} is not allowed (only jpeg/png/gif images)'
 
   def description_html
-    ApplicationController.helpers.sanitize Kramdown::Document.new(description).to_html
+    CustomRender.render_markdown(self, :description)
   end
 
   def notes_html
-    ApplicationController.helpers.sanitize Kramdown::Document.new(notes).to_html
+    CustomRender.render_markdown(self, :notes)
   end
 
   # Define filter api settings

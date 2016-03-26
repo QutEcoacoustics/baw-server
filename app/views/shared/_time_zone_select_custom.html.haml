@@ -1,10 +1,13 @@
--# locals: f, model_name, attribute_name, full_width (defaults to false)
+-# locals: f, model_name, attribute_name, full_width (defaults to false), model
+- has_error = model.errors.any?
 - control_id = "#{model_name}_#{attribute_name}"
+- form_group_class = "#{control_id} #{has_error ? 'has-error' : ''}"
 - span_id = "#{control_id}_appended_info"
 - help_id = "#{control_id}_appended_help"
+- error_id = "#{control_id}_appended_error"
 - unless defined?(full_width)
   - full_width = false
-.form-group.string.optional{class: control_id }
+.form-group.string.optional{class: form_group_class }
   = f.label attribute_name, 'Time Zone', class: 'string optional control-label col-sm-3', for: control_id
   %div{class: (full_width ? 'col-sm-9' : 'col-sm-5')}
     .input-group
@@ -12,6 +15,9 @@
       %span.input-group-addon{id: span_id, title: 'Time zone abbreviation and current UTC offset'}
         (no match)
     %p.help-block{id: help_id }
+    - if has_error
+      %p.help-block{id: error_id}
+        = model.errors[attribute_name].join(', ')
 
 :javascript
   var mapping = #{TimeZoneHelper.mapping_zone_to_offset.to_json}

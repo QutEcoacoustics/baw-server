@@ -9,7 +9,7 @@
         = f.input :latitude, input_html: { max: 90, min: -90 }
         = f.input :longitude, input_html: {  max: 180, min: -180 }
         = render partial: 'shared/image_upload', locals: { f: f,  model_instance: site, model_name: 'site' }
-        = render partial: '/shared/time_zone_select_custom', locals: { f: f, attribute_name: :tzinfo_tz, model_name: :site, full_width: true }
+        = render partial: '/shared/time_zone_select_custom', locals: { f: f, attribute_name: :tzinfo_tz, model_name: :site, full_width: true, model: site }
       .col-sm-5
         = render partial: 'shared/google_maps', locals: {markers: []}
     = f.button :submit_cancel, 'Submit', class: 'btn-default'

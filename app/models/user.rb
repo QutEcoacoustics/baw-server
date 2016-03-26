@@ -129,6 +129,7 @@ class User < ActiveRecord::Base
 
   after_create :special_after_create_actions
 
+  validate :check_tz
   before_save :set_rails_tz, if: Proc.new { |user| user.tzinfo_tz_changed? }
 
   # Get the last time this user was seen.
@@ -284,6 +285,10 @@ class User < ActiveRecord::Base
 
   def set_rails_tz
     TimeZoneHelper.set_rails_tz(self)
+  end
+
+  def check_tz
+    TimeZoneHelper.validate_tzinfo_tz(self)
   end
 
 end

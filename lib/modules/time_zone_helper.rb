@@ -54,10 +54,10 @@ class TimeZoneHelper
     end
 
     # Get the TZInfo Timezone class for the name.
-    # @param [string] tzinfo_tz_name
+    # @param [string] tzinfo_tz_identifier
     # @return [TZInfo::Timezone]
-    def tzinfo_class(tzinfo_tz_name)
-      tzinfo_tz_name.blank? ? nil : TZInfo::Timezone.get(tzinfo_tz_name)
+    def tzinfo_class(tzinfo_tz_identifier)
+      tzinfo_tz_identifier.blank? ? nil : TZInfo::Timezone.get(tzinfo_tz_identifier)
     end
 
     # Get the TZInfo Timezone equivalent to the Ruby TimeZone.
@@ -72,6 +72,31 @@ class TimeZoneHelper
     # @return [string] Ruby Timezone
     def tzinfo_to_ruby(tzinfo_tz_name)
       ActiveSupport::TimeZone::MAPPING.invert[tzinfo_tz_name]
+    end
+
+    # Check if a tzinfo friendly id is valid.
+    # @param [Site, User] model
+    # @return [Boolean]
+    def validate_tzinfo_tz(model)
+      tzinfo_friendly = model.tzinfo_tz
+      is_invalid = to_identifier(tzinfo_friendly).blank?
+      if !model.tzinfo_tz.blank? && is_invalid
+        suggestions = tzinfo_friendly_did_you_mean(tzinfo_friendly)[0..2]
+        msg1 = "is not a recognised timezone ('#{tzinfo_friendly}'"
+        msg2 = suggestions.any? ? " - did you mean '#{suggestions.join("', '")}'?)" : ')'
+        model.errors[:tzinfo_tz] <<  msg1 + msg2
+      end
+    end
+
+    # Get suggestions for a tzinfo friendly name.
+    # @param [String] tzinfo_friendly
+    # @return [Array<String>]
+    def tzinfo_friendly_did_you_mean(tzinfo_friendly)
+      matches = []
+      TZInfo::Timezone.all.each do |tz|
+        matches << tz.friendly_identifier if tz.friendly_identifier.include?(tzinfo_friendly)
+      end
+      matches
     end
 
     # Set rails time zone from tzinfo time zone.
@@ -96,7 +121,8 @@ class TimeZoneHelper
     end
 
     def info_hash(model)
-      tzinfo_tz_string = model.tzinfo_tz
+      # the model stores the tzinfo friendly_identifier
+      tzinfo_tz_string = TimeZoneHelper.to_identifier(model.tzinfo_tz)
       tzinfo_tz = tzinfo_class(tzinfo_tz_string)
 
       rails_tz_string = model.rails_tz
