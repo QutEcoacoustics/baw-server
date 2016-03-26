@@ -103,7 +103,7 @@ resource 'Analysis' do
           {
               expected_response_has_content: true,
               expected_json_path: 'meta/status',
-              response_body_content: '{"meta":{"status":200,"message":"OK"},"data":{"path":"Test1/Test2","name":"Test2","type":"directory","children":[]}}'
+              response_body_content: '{"meta":{"status":200,"message":"OK"},"data":{"path":"/Test1/Test2","name":"Test2","type":"directory","children":[]}}'
           })
 
     end
@@ -277,23 +277,25 @@ resource 'Analysis' do
               response_body_content: [
                   '{"meta":{"status":200,"message":"OK"},"data":',
                   '{"path":"/","name":"/","type":"directory","children":[',
-                  '{"path":"TopDir","name":"TopDir","type":"directory","has_children":true',
+                  '{"path":"/TopDir","name":"TopDir","type":"directory","has_children":true',
               ],
               invalid_data_content: [
                   '{"path":".","name":".","type":"directory","children":[',
+                  '{"path":"/.","name":".","type":"directory","children":[',
                   '{"path":"..","name":"..","type":"directory","children":[',
-                  '{"path":"TopDir","name":"TopDir","type":"directory","children":[',
-                  '{"path":"TopDir/one","name":"one","type":"directory","children":[',
-                  '{"path":"TopDir/one/two","name":"two","type":"directory","children":[',
-                  '{"path":"TopDir/one/two/three","name":"three","type":"directory","children":[',
-                  '{"path":"TopDir/one/two/three/four","name":"four","type":"directory","children":[',
-                  '{"path":"TopDir/one/two/three/four/five.txt","name":"five.txt","size_bytes":14,"type":"file","mime":"text/plain"}',
-                  '{"path":"TopDir/one/two/three/four/five","name":"five","type":"directory","children":[',
-                  '{"path":"TopDir/one/two/three/four/five/six.txt","name":"six.txt","size_bytes":13,"type":"file","mime":"text/plain"}',
-                  '{"path":"TopDir/one3","name":"one3","type":"directory","children":[]}',
-                  '{"path":"TopDir/one1","name":"one1","type":"directory","children":[]}',
-                  '{"path":"TopDir/one2","name":"one2","type":"directory","children":[]}',
-                  '{"path":"TopDir/one4","name":"one4","type":"directory","children":[]}'
+                  '{"path":"/..","name":"..","type":"directory","children":[',
+                  '{"path":"/TopDir","name":"TopDir","type":"directory","children":[',
+                  '{"path":"/TopDir/one","name":"one","type":"directory","children":[',
+                  '{"path":"/TopDir/one/two","name":"two","type":"directory","children":[',
+                  '{"path":"/TopDir/one/two/three","name":"three","type":"directory","children":[',
+                  '{"path":"/TopDir/one/two/three/four","name":"four","type":"directory","children":[',
+                  '{"name":"five.txt","size_bytes":14,"type":"file","mime":"text/plain"}',
+                  '{"path":"/TopDir/one/two/three/four/five","name":"five","type":"directory","children":[',
+                  '{"name":"six.txt","size_bytes":13,"type":"file","mime":"text/plain"}',
+                  '{"path":"/TopDir/one3","name":"one3","type":"directory","children":[]}',
+                  '{"path":"/TopDir/one1","name":"one1","type":"directory","children":[]}',
+                  '{"path":"/TopDir/one2","name":"one2","type":"directory","children":[]}',
+                  '{"path":"/TopDir/one4","name":"one4","type":"directory","children":[]}'
               ]
 
           })
@@ -311,25 +313,25 @@ resource 'Analysis' do
           {
               response_body_content: [
                   '{"meta":{"status":200,"message":"OK"},"data":',
-                  '{"path":"TopDir","name":"TopDir","type":"directory","children":[',
-                  '{"path":"TopDir/one","name":"one","type":"directory","has_children":true',
-                  '{"path":"TopDir/one3","name":"one3","type":"directory","has_children":false}',
-                  '{"path":"TopDir/one1","name":"one1","type":"directory","has_children":false}',
-                  '{"path":"TopDir/one2","name":"one2","type":"directory","has_children":false}',
-                  '{"path":"TopDir/one4","name":"one4","type":"directory","has_children":false}'
+                  '{"path":"/TopDir","name":"TopDir","type":"directory","children":[',
+                  '{"path":"/TopDir/one","name":"one","type":"directory","has_children":true',
+                  '{"path":"/TopDir/one3","name":"one3","type":"directory","has_children":false}',
+                  '{"path":"/TopDir/one1","name":"one1","type":"directory","has_children":false}',
+                  '{"path":"/TopDir/one2","name":"one2","type":"directory","has_children":false}',
+                  '{"path":"/TopDir/one4","name":"one4","type":"directory","has_children":false}'
               ],
               invalid_data_content: [
-                  '{"path":"TopDir/one","name":"one","type":"directory","children":[',
-                  '{"path":"TopDir/one/two","name":"two","type":"directory","children":[',
-                  '{"path":"TopDir/one/two/three","name":"three","type":"directory","children":[',
-                  '{"path":"TopDir/one/two/three/four","name":"four","type":"directory","children":[',
-                  '{"path":"TopDir/one/two/three/four/five.txt","name":"five.txt","size_bytes":14,"type":"file","mime":"text/plain"}',
-                  '{"path":"TopDir/one/two/three/four/five","name":"five","type":"directory","children":[',
-                  '{"path":"TopDir/one/two/three/four/five/six.txt","name":"six.txt","size_bytes":13,"type":"file","mime":"text/plain"}',
-                  '{"path":"TopDir/one3","name":"one3","type":"directory","children":[]}',
-                  '{"path":"TopDir/one1","name":"one1","type":"directory","children":[]}',
-                  '{"path":"TopDir/one2","name":"one2","type":"directory","children":[]}',
-                  '{"path":"TopDir/one4","name":"one4","type":"directory","children":[]}'
+                  '{"path":"/TopDir/one","name":"one","type":"directory","children":[',
+                  '{"path":"/TopDir/one/two","name":"two","type":"directory","children":[',
+                  '{"path":"/TopDir/one/two/three","name":"three","type":"directory","children":[',
+                  '{"path":"/TopDir/one/two/three/four","name":"four","type":"directory","children":[',
+                  '{"name":"five.txt","size_bytes":14,"type":"file","mime":"text/plain"}',
+                  '{"path":"/TopDir/one/two/three/four/five","name":"five","type":"directory","children":[',
+                  '{"name":"six.txt","size_bytes":13,"type":"file","mime":"text/plain"}',
+                  '{"path":"/TopDir/one3","name":"one3","type":"directory","children":[]}',
+                  '{"path":"/TopDir/one1","name":"one1","type":"directory","children":[]}',
+                  '{"path":"/TopDir/one2","name":"one2","type":"directory","children":[]}',
+                  '{"path":"/TopDir/one4","name":"one4","type":"directory","children":[]}'
               ]
 
           })
@@ -347,16 +349,16 @@ resource 'Analysis' do
           {
               response_body_content: [
                   '{"meta":{"status":200,"message":"OK"},"data":',
-                  '{"path":"TopDir/one","name":"one","type":"directory","children":[',
-                  '{"path":"TopDir/one/two","name":"two","type":"directory","has_children":true'
+                  '{"path":"/TopDir/one","name":"one","type":"directory","children":[',
+                  '{"path":"/TopDir/one/two","name":"two","type":"directory","has_children":true'
               ],
               invalid_data_content: [
-                  '{"path":"TopDir/one/two","name":"two","type":"directory","children":[',
-                  '{"path":"TopDir/one/two/three","name":"three","type":"directory","children":[',
-                  '{"path":"TopDir/one/two/three/four","name":"four","type":"directory","children":[',
-                  '{"path":"TopDir/one/two/three/four/five.txt","name":"five.txt","size_bytes":14,"type":"file","mime":"text/plain"}',
-                  '{"path":"TopDir/one/two/three/four/five","name":"five","type":"directory","children":[',
-                  '{"path":"TopDir/one/two/three/four/five/six.txt","name":"six.txt","size_bytes":13,"type":"file","mime":"text/plain"}'
+                  '{"path":"/TopDir/one/two","name":"two","type":"directory","children":[',
+                  '{"path":"/TopDir/one/two/three","name":"three","type":"directory","children":[',
+                  '{"path":"/TopDir/one/two/three/four","name":"four","type":"directory","children":[',
+                  '{"name":"five.txt","size_bytes":14,"type":"file","mime":"text/plain"}',
+                  '{"path":"/TopDir/one/two/three/four/five","name":"five","type":"directory","children":[',
+                  '{"name":"six.txt","size_bytes":13,"type":"file","mime":"text/plain"}'
               ]
           })
     end
@@ -372,14 +374,14 @@ resource 'Analysis' do
           {
               response_body_content: [
                   '{"meta":{"status":200,"message":"OK"},"data":',
-                  '{"path":"TopDir/one/two/three/four","name":"four","type":"directory","children":[',
-                  '{"path":"TopDir/one/two/three/four/five.txt","name":"five.txt","type":"file","size_bytes":14,"mime":"text/plain"}',
-                  '{"path":"TopDir/one/two/three/four/five","name":"five","type":"directory","has_children":true}'
+                  '{"path":"/TopDir/one/two/three/four","name":"four","type":"directory","children":[',
+                  '{"name":"five.txt","type":"file","size_bytes":14,"mime":"text/plain"}',
+                  '{"path":"/TopDir/one/two/three/four/five","name":"five","type":"directory","has_children":true}'
               ],
               invalid_data_content: [
-                  '{"path":"TopDir/one/two","name":"two","type":"directory","children":[',
-                  '{"path":"TopDir/one/two/three","name":"three","type":"directory","children":[',
-                  '{"path":"TopDir/one/two/three/four/five/six.txt","name":"six.txt","size_bytes":13,"type":"file","mime":"text/plain"}'
+                  '{"path":"/TopDir/one/two","name":"two","type":"directory","children":[',
+                  '{"path":"/TopDir/one/two/three","name":"three","type":"directory","children":[',
+                  '{"name":"six.txt","size_bytes":13,"type":"file","mime":"text/plain"}'
               ]
           })
     end
@@ -406,7 +408,7 @@ resource 'Analysis' do
                   '{"path":"/","name":"/","type":"directory","children":['
               ],
               invalid_data_content: [
-                  '{"path":".test-dot-file","name":".test-dot-file","type":"file","size_bytes":0,"mime":""}'
+                  '{"name":".test-dot-file","type":"file","size_bytes":0,"mime":""}'
               ]
           })
     end

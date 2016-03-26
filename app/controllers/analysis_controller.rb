@@ -244,7 +244,6 @@ class AnalysisController < ApplicationController
     normalised_name = normalised_name(normalised_path)
 
     {
-        path: normalised_path,
         name: normalised_name,
         type: 'file',
         size_bytes: File.size(path),
@@ -261,7 +260,7 @@ class AnalysisController < ApplicationController
     matching_base_path = analysis_base_paths.select { |abp| path.start_with?(abp) }
     if matching_base_path.size == 1
       path_without_base = path.gsub(/#{matching_base_path[0].gsub('/', '\/')}\/[^\/]+\/[^\/]+\/[^\/]+\/?/, '')
-      path_without_base.blank? ? '/' : path_without_base
+      path_without_base.blank? ? '/' : "/#{path_without_base}"
     else
       fail CustomErrors::UnprocessableEntityError, 'Incorrect analysis base path.'
     end
