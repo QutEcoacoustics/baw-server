@@ -33,7 +33,6 @@ describe 'CRUD Projects as valid user with write permission', :type => :feature 
     visit new_project_path
     fill_in 'project[name]', with: 'test name'
     fill_in 'project[description]', with: 'description'
-    fill_in 'project[notes]', with: 'notes'
     attach_file('project[image]', 'public/images/user/user-512.png')
     click_button 'Submit'
     #save_and_open_page
@@ -53,7 +52,6 @@ describe 'CRUD Projects as valid user with write permission', :type => :feature 
     #save_and_open_page
     fill_in 'project[name]', with: 'test name'
     fill_in 'project[description]', with: 'description'
-    fill_in 'project[notes]', with: 'notes'
     attach_file('project[image]', 'public/images/user/user-512.png')
     click_button 'Submit'
     expect(page).to have_content('test name')
@@ -98,7 +96,6 @@ describe 'CRUD Projects as valid user and project creator', :type => :feature do
     #save_and_open_page
     fill_in 'project_name', with: 'test name'
     fill_in 'project[description]', with: 'description'
-    fill_in 'project[notes]', with: 'notes'
     attach_file('project[image]', 'public/images/user/user-512.png')
     click_button 'Submit'
     #save_and_open_page
@@ -111,7 +108,6 @@ describe 'CRUD Projects as valid user and project creator', :type => :feature do
     #save_and_open_page
     fill_in 'project[name]', with: 'test name'
     fill_in 'project[description]', with: 'description'
-    fill_in 'project[notes]', with: 'notes'
     attach_file('project[image]', 'public/images/user/user-512.png')
     click_button 'Submit'
     expect(page).to have_content('test name')
@@ -146,7 +142,6 @@ describe 'CRUD Projects as valid user with read permission', :type => :feature d
     visit new_project_path
     fill_in 'project[name]', with: 'test name'
     fill_in 'project[description]', with: 'description'
-    fill_in 'project[notes]', with: 'notes'
     attach_file('project[image]', 'public/images/user/user-512.png')
     click_button 'Submit'
     #save_and_open_page
@@ -187,7 +182,6 @@ describe 'CRUD Projects as valid user with no permissions', :type => :feature do
     visit new_project_path
     fill_in 'project[name]', with: 'test name'
     fill_in 'project[description]', with: 'description'
-    fill_in 'project[notes]', with: 'notes'
     attach_file('project[image]', 'public/images/user/user-512.png')
     click_button 'Submit'
     #save_and_open_page

@@ -4,6 +4,5 @@
     = f.error_notification
     = f.input :name, required: true, label: 'Project Name'
     = f.input :description, input_html: {rows: '3'}
-    = f.input :notes, input_html: {rows: '3'}
     = render partial: 'shared/image_upload', locals: { f: f,  model_instance: project, model_name: 'project' }
     = f.button :submit_cancel, 'Submit', class: 'btn-default'
