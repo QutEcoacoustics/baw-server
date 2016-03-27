@@ -40,10 +40,6 @@ class Project < ActiveRecord::Base
     CustomRender.render_markdown(self, :description)
   end
 
-  def notes_html
-    CustomRender.render_markdown(self, :notes)
-  end
-
   # Define filter api settings
   def self.filter_settings
     {
@@ -60,7 +56,6 @@ class Project < ActiveRecord::Base
           project_hash[:site_ids] = fresh_project.nil? ? nil : fresh_project.sites.pluck(:id).flatten
 
           project_hash[:description_html]= fresh_project.description_html
-          project_hash[:notes_html] = fresh_project.notes_html
 
           [item, project_hash]
         },

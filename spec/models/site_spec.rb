@@ -103,16 +103,14 @@ describe Site, :type => :model do
     }.to raise_error(CustomErrors::OrphanedSiteError)
   end
 
-  it 'generates html for description and notes' do
+  it 'generates html for description' do
     md = "# Header\r\n [a link](https://github.com)."
     html = "<h1>Header</h1>\n<p><a href=\"https://github.com\">a link</a>.</p>\n"
-    projectHtml = FactoryGirl.create(:site, description: md, notes: md)
+    projectHtml = FactoryGirl.create(:site, description: md)
 
     expect(projectHtml.description).to eq(md)
     expect(projectHtml.description_html).to eq(html)
 
-    expect(projectHtml.notes).to eq(md)
-    expect(projectHtml.notes_html).to eq(html)
   end
 
   it 'should error on invalid timezone' do

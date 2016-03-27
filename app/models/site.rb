@@ -109,13 +109,8 @@ class Site < ActiveRecord::Base
     @location_obfuscated = !is_owner
   end
 
-  # I don't know why Rubymine complains about Kramdown where ever I use it...
   def description_html
     CustomRender.render_markdown(self, :description)
-  end
-
-  def notes_html
-    CustomRender.render_markdown(self, :notes)
   end
 
   def self.add_location_jitter(value, min, max)
@@ -192,8 +187,7 @@ class Site < ActiveRecord::Base
                 custom_latitude: fresh_site.latitude,
                 custom_longitude: fresh_site.longitude,
                 timezone_information: TimeZoneHelper.info_hash(fresh_site),
-                description_html: fresh_site.description_html,
-                notes_html: fresh_site.notes_html
+                description_html: fresh_site.description_html
             }
           end
 
