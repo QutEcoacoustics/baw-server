@@ -1,7 +1,7 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
-ansible_files = '/home/vagrant/baw-provision'
+ansible_files = '/home/vagrant/baw-deploy'
 
 
 # http://matthewcooper.net/2015/01/15/automatically-installing-vagrant-plugin-dependencies/

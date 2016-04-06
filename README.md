@@ -82,7 +82,7 @@ When running the server in `development` or `test` modes, these configuration fi
  - `/config/settings/development.yml`
  - `/config/settings/test.yml`
 
-They are based on files based on `/config/settings/default.yml`.
+They are based on `/config/settings/default.yml`.
 
 ### Web Server
 
@@ -128,6 +128,13 @@ We deploy using Ansible (and in particular [Ansistrano](http://ansistrano.com/))
 Our Ansible playbooks are currently private but we have plans to release them.
 
 If you want to use background workers, you'll need to set up [Redis](http://redis.io/).
+
+## Working with RubyMine
+
+If using a remote setup (i.e. vagrant) make sure you set up a
+[remote Ruby SDK using the RVM instructions](https://www.jetbrains.com/help/ruby/2016.1/configuring-remote-ruby-interpreters.html?origin=old_help).
+
+If you need sudo to install a gem (i.e. if Rubymine can't do it) try running `rvm fix-permissions`.
 
 ## Credits
 
