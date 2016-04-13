@@ -31,6 +31,20 @@ def create_dir(dir = File.join('Test1', 'Test2'))
   FileUtils.mkpath full_path
 end
 
+def insert_audio_recording_id(context, opts, array_index = 1)
+  rbc = opts[:response_body_content]
+  hsh = {audio_recording_id: context.audio_recording.id}
+
+  original = rbc.kind_of?(Array) ? rbc[array_index] : rbc
+  new = original % hsh
+
+  if rbc.kind_of?(Array)
+    opts[:response_body_content][array_index] = new
+  else
+    opts[:response_body_content] = new
+  end
+end
+
 test_url = '/analysis_jobs/:analysis_job_id/audio_recordings/:audio_recording_id/:results_path'
 
 resource 'Analysis' do
@@ -103,9 +117,10 @@ resource 'Analysis' do
           {
               expected_response_has_content: true,
               expected_json_path: 'meta/status',
-              response_body_content: '{"meta":{"status":200,"message":"OK"},"data":{"path":"/Test1/Test2","name":"Test2","type":"directory","children":[]}}'
-          })
-
+              response_body_content: '{"meta":{"status":200,"message":"OK"},"data":{"analysis_job_id":"system","audio_recording_id":%{audio_recording_id},"path":"/Test1/Test2","name":"Test2","type":"directory","children":[]}}'
+          },
+          &proc { |context, opts| insert_audio_recording_id context, opts }
+      )
     end
 
     head test_url do
@@ -269,6 +284,7 @@ resource 'Analysis' do
       standard_analysis_parameters
       let(:authentication_token) { admin_token }
 
+      # noinspection RubyLiteralArrayInspection
       standard_request_options(
           :get,
           'ANALYSIS (as admin, requesting top dir with lots of directories and files)',
@@ -276,7 +292,7 @@ resource 'Analysis' do
           {
               response_body_content: [
                   '{"meta":{"status":200,"message":"OK"},"data":',
-                  '{"path":"/","name":"/","type":"directory","children":[',
+                  '{"analysis_job_id":"system","audio_recording_id":%{audio_recording_id},"path":"/","name":"/","type":"directory","children":[',
                   '{"path":"/TopDir","name":"TopDir","type":"directory","has_children":true',
               ],
               invalid_data_content: [
@@ -297,8 +313,9 @@ resource 'Analysis' do
                   '{"path":"/TopDir/one2","name":"one2","type":"directory","children":[]}',
                   '{"path":"/TopDir/one4","name":"one4","type":"directory","children":[]}'
               ]
-
-          })
+          },
+          &proc { |context, opts| insert_audio_recording_id context, opts }
+      )
     end
 
     get test_url do
@@ -313,7 +330,7 @@ resource 'Analysis' do
           {
               response_body_content: [
                   '{"meta":{"status":200,"message":"OK"},"data":',
-                  '{"path":"/TopDir","name":"TopDir","type":"directory","children":[',
+                  '{"analysis_job_id":"system","audio_recording_id":%{audio_recording_id},"path":"/TopDir","name":"TopDir","type":"directory","children":[',
                   '{"path":"/TopDir/one","name":"one","type":"directory","has_children":true',
                   '{"path":"/TopDir/one3","name":"one3","type":"directory","has_children":false}',
                   '{"path":"/TopDir/one1","name":"one1","type":"directory","has_children":false}',
@@ -334,7 +351,9 @@ resource 'Analysis' do
                   '{"path":"/TopDir/one4","name":"one4","type":"directory","children":[]}'
               ]
 
-          })
+          },
+          &proc { |context, opts| insert_audio_recording_id context, opts }
+      )
     end
 
     get test_url do
@@ -349,7 +368,7 @@ resource 'Analysis' do
           {
               response_body_content: [
                   '{"meta":{"status":200,"message":"OK"},"data":',
-                  '{"path":"/TopDir/one","name":"one","type":"directory","children":[',
+                  '{"analysis_job_id":"system","audio_recording_id":%{audio_recording_id},"path":"/TopDir/one","name":"one","type":"directory","children":[',
                   '{"path":"/TopDir/one/two","name":"two","type":"directory","has_children":true'
               ],
               invalid_data_content: [
@@ -360,7 +379,9 @@ resource 'Analysis' do
                   '{"path":"/TopDir/one/two/three/four/five","name":"five","type":"directory","children":[',
                   '{"name":"six.txt","size_bytes":13,"type":"file","mime":"text/plain"}'
               ]
-          })
+          },
+          &proc { |context, opts| insert_audio_recording_id context, opts }
+      )
     end
     get test_url do
       standard_analysis_parameters
@@ -374,7 +395,7 @@ resource 'Analysis' do
           {
               response_body_content: [
                   '{"meta":{"status":200,"message":"OK"},"data":',
-                  '{"path":"/TopDir/one/two/three/four","name":"four","type":"directory","children":[',
+                  '{"analysis_job_id":"system","audio_recording_id":%{audio_recording_id},"path":"/TopDir/one/two/three/four","name":"four","type":"directory","children":[',
                   '{"name":"five.txt","type":"file","size_bytes":14,"mime":"text/plain"}',
                   '{"path":"/TopDir/one/two/three/four/five","name":"five","type":"directory","has_children":true}'
               ],
@@ -383,7 +404,9 @@ resource 'Analysis' do
                   '{"path":"/TopDir/one/two/three","name":"three","type":"directory","children":[',
                   '{"name":"six.txt","size_bytes":13,"type":"file","mime":"text/plain"}'
               ]
-          })
+          },
+          &proc { |context, opts| insert_audio_recording_id context, opts }
+      )
     end
 
   end
@@ -405,12 +428,14 @@ resource 'Analysis' do
           {
               response_body_content: [
                   '{"meta":{"status":200,"message":"OK"},"data":',
-                  '{"path":"/","name":"/","type":"directory","children":['
+                  '{"analysis_job_id":"system","audio_recording_id":%{audio_recording_id},"path":"/","name":"/","type":"directory","children":['
               ],
               invalid_data_content: [
                   '{"name":".test-dot-file","type":"file","size_bytes":0,"mime":""}'
               ]
-          })
+          },
+          &proc { |context, opts| insert_audio_recording_id context, opts }
+      )
     end
 
   end
