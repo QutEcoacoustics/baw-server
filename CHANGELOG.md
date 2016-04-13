@@ -2,6 +2,26 @@
 
 ## Unreleased
 
+ - 2016-04-13
+    - Added analysis_job_id and audio_recording_id to results API
+ - 2016-04-06
+    - Update db seeds, readme, and settings defaults
+ - 2016-03-26
+    - Allow markdown in description fields [#264](https://github.com/QutBioacoustics/baw-server/issues/264)
+    - Update analysis result endpoint to normalise paths [#272](https://github.com/QutBioacoustics/baw-server/issues/272)
+    - Convert to tzinfo identifier when rendering site and user json [#270](https://github.com/QutBioacoustics/baw-server/issues/270)
+ - 2016-03-21
+    - Changed analysis results 'model' size attribute to size_bytes and improved tests
+ - 2016-03-18
+    - allow owner to access site harvest and upload pages [#269](https://github.com/QutBioacoustics/baw-server/issues/269)
+    - removed custom elements in analysis_job api [#267](https://github.com/QutBioacoustics/baw-server/issues/267)
+    - fixed site location jitter [#266](https://github.com/QutBioacoustics/baw-server/issues/266)
+ - 2016-03-14
+    - Updated harvest.yml with notes and safer defaults
+ - 2016-03-04
+    - Expose `sites.tzinfo_tz` field in API [#262](https://github.com/QutBioacoustics/baw-server/issues/262)
+ - 2016-03-03
+    - improved filter settings validation
  - 2016-03-02
     - Add calculated field recorded_end_date to AudioRecording's filter options [#261](https://github.com/QutBioacoustics/baw-server/issues/261)
  - 2016-02-27
