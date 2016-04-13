@@ -93,7 +93,7 @@ To start the development server
 ### Tests
 The tests are run using Guard:
 
-    $ bundle exec guard
+    $ guard --force-polling
     $ [1] guard(main)>
 
 Press enter to execute all tests. Guard will monitor for changes and the relevant tests will be run as files are modified.
@@ -101,6 +101,10 @@ Press enter to execute all tests. Guard will monitor for changes and the relevan
 Tests can also be run with a specified seed using rspec:
 
     $ rspec --seed <number>
+
+### Style
+
+Use this style guide as a reference: https://github.com/bbatsov/ruby-style-guide.
 
 ## Documentation
 

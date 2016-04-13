@@ -4,21 +4,30 @@
 # Examples:
 #
 
-if User.where(user_name:'Admin').first.blank?
-  harvester = User.new(user_name: 'Admin',
-                       email: Settings.admin_user.email,
-                       password: Settings.admin_user.password)
-  harvester.roles = [:admin]
-  harvester.skip_confirmation!
-  harvester.save!(validate: false)
+if User.where(user_name: 'Admin').first.blank?
+  admin = User.new
+else
+  admin = User.where(user_name: 'Admin').first
+end
+admin.user_name = 'Admin'
+admin.email = Settings.admin_user.email
+admin.password = Settings.admin_user.password
+admin.roles = [:admin]
+admin.skip_confirmation!
+admin.save!(validate: false)
+
+
+if User.where(user_name: 'Harvester').first.blank?
+  harvester = User.new
+else
+  harvester = User.where(user_name: 'Harvester').first
 end
 
-if User.where(user_name:'Harvester').first.blank?
-  harvester = User.new(user_name: 'Harvester',
-                              email: Settings.harvester.email,
-                              password: Settings.harvester.password)
-  harvester.roles = [:harvester]
-  harvester.skip_confirmation!
-  harvester.save!(validate: false)
-end
+harvester.user_name = 'Harvester'
+harvester.email = Settings.harvester.email
+harvester.password = Settings.harvester.password
+harvester.roles = [:harvester]
+harvester.skip_confirmation!
+harvester.save!(validate: false)
+
 
