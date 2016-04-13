@@ -26,13 +26,20 @@ end
 # @option opts [Hash]    :file_exists            (nil) Check if file exists
 # @option opts [Class]   :expected_error_class   (nil) The expected error class
 # @option opts [Regexp]  :expected_error_regexp  (nil) The expected error regular expression
+# @param [Proc] opts_mod an optional block that is called when rspec is running - allows dynamic changing of opts with
+#    access to rspec context (i.e. let and let! values)
 # @return [void]
-def standard_request_options(http_method, description, expected_status, opts = {})
+def standard_request_options(http_method, description, expected_status, opts = {}, &opts_mod)
   opts.reverse_merge!({document: true})
 
   # 406 when you can't send what they want, 415 when they send what you don't want
 
   example "#{http_method} #{description} - #{expected_status}", document: opts[:document] do
+
+    # allow for modification of opts, provide context so let and let! values can be accessed
+    if opts_mod
+      opts_mod.call self, opts
+    end
 
     expected_error_class = opts[:expected_error_class]
     expected_error_regexp = opts[:expected_error_regexp]
