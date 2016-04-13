@@ -161,7 +161,7 @@ group :development, :test do
   gem 'guard-rspec', '~> 4.6.0'
   gem 'guard-yard', '~> 2.1.4', require: false
   gem 'rubocop', '~> 0.38.0', require: false
-  gem 'haml-lint', require: false
+  gem 'haml_lint', require: false
 
   gem 'fakeredis', '~> 0.5.0', require: 'fakeredis/rspec'
 
