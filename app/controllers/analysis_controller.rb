@@ -271,12 +271,14 @@ class AnalysisController < ApplicationController
   def return_dir(request_info)
     existing_paths = request_info[:existing][:dirs]
     is_head_request = request_info[:is_head_request]
+    analysis_job_id = request_info[:job_info][:analysis_job_id]
+    audio_recording_id = request_info[:audio_recording_info][:audio_recording_id]
 
     # it is possible to match more than one dir (e.g. multiple storage dirs)
     # just return a file listing for the first existing dir
     dir_path = existing_paths[0]
 
-    dir_listing = dir_info_children(dir_path, request_info[:job_info][:analysis_job_id], request_info[:audio_recording_info][:audio_recording_id])
+    dir_listing = dir_info_children(dir_path, analysis_job_id, audio_recording_id)
 
     wrapped = Settings.api_response.build(:ok, dir_listing)
 
