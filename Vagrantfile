@@ -49,6 +49,8 @@ Vagrant.configure(2) do |config|
   # the path on the host to the actual folder. The second argument is
   # the path on the guest to mount the folder. And the optional third
   # argument is a set of non-required options.
+  config.winnfsd.uid = 1000 # vagrant
+  config.winnfsd.gid = 1000 # vagrant
   config.vm.synced_folder './', '/home/vagrant/baw-server', type: "nfs"
   config.vm.synced_folder '../baw-private/Ansible', ansible_files
 
@@ -61,7 +63,7 @@ Vagrant.configure(2) do |config|
     vb.gui = false
     vb.name = 'baw-server-dev'
     # Customize the amount of memory on the VM:
-    vb.memory = 1024
+    vb.memory = 1536
     vb.cpus = 2
   end
 

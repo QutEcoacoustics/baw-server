@@ -66,15 +66,15 @@ defaults: &defaults
     original_audios:
       - <%= Rails.root %>/tmp/_original_audio
     cached_spectrograms:
-      - <%= Rails.root %>/tmp/_cached_spectrogram
+      - <%= Rails.root %>/tmp/_<%= Rails.env %>_cached_spectrogram
     cached_audios:
-      - <%= Rails.root %>/tmp/_cached_audio
+      - <%= Rails.root %>/tmp/_<%= Rails.env %>_cached_audio
     analysis_scripts:
       - <%= Rails.root %>/tmp/_analysis_script
     cached_datasets:
-      - <%= Rails.root %>/tmp/_cached_dataset
+      - <%= Rails.root %>/tmp/_<%= Rails.env %>_cached_dataset
     cached_analysis_jobs:
-      - <%= Rails.root %>/tmp/_cached_analysis_jobs
+      - <%= Rails.root %>/tmp/_<%= Rails.env %>_analysis_results
     worker_log_file: <%= Rails.root %>/log/worker.<%= Rails.env %>.log
     mailer_log_file: <%= Rails.root %>/log/mailer.<%= Rails.env %>.log
     audio_tools_log_file: <%= Rails.root %>/log/audio_tools.<%= Rails.env %>.log

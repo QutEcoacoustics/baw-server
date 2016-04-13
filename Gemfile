@@ -135,6 +135,7 @@ gem 'baw-workers', git: 'https://github.com/QutBioacoustics/baw-workers.git', br
 # gems that are only required on development machines or for testings
 group :development, :test do
   # allow remote debugging
+  #gem 'ruby-debug19'
   #gem 'ruby-debug-ide'
   #gem 'debase'
   #gem 'traceroute'
