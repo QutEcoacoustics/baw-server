@@ -91,10 +91,13 @@ To start the development server
     $ thin start
 
 ### Tests
-The tests are run using Guard:
+The tests are run using Guard, either:
+
+    $ bin/guard
+
+or in case the listening does not work, force the use of file polling:
 
     $ guard --force-polling
-    $ [1] guard(main)>
 
 Press enter to execute all tests. Guard will monitor for changes and the relevant tests will be run as files are modified.
 
