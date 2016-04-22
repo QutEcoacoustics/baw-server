@@ -69,6 +69,7 @@ class Ability
       to_audio_event_comment(user)
       to_bookmark(user)
       to_analysis_job(user)
+      to_analysis_jobs_item(user)
       to_saved_search(user)
       to_script(user)
       to_tag
@@ -236,6 +237,49 @@ class Ability
   end
 
   def to_analysis_job(user)
+    # must have read permission or higher on all saved_search.projects to create analysis job
+    can [:show, :create], AnalysisJob do |analysis_job|
+      check_model(analysis_job)
+      fail CustomErrors::BadRequestError.new('Analysis Job must have a saved search.') if analysis_job.saved_search.nil?
+      projects = analysis_job.saved_search.projects
+      fail CustomErrors::BadRequestError.new('Saved search must have at least one project.') if projects.size < 1
+
+      Access::Check.can_all?(user, :reader, projects)
+    end
+
+    # only creator can update, destroy their own analysis jobs
+    can [:update, :destroy], AnalysisJob, creator_id: user.id
+
+    # actions any logged in user can access
+    can [:index, :new, :filter], AnalysisJob
+  end
+
+  def to_analysis_jobs_item(user)
+    # I'm assuming actions not included here are denied access automatically
+
+    can[:show], AnalysisJobsItem
+
+
+
+    #################
+
+    # See permissions for harvester
+    # Only admin and harvester can :create, :check_uploader, :update_status, :update
+    # permissions are also checked in actions
+    # see also for_harvester
+
+    # must have read permission or higher to view audio recording
+    can [:show], AudioRecording do |audio_recording|
+      check_model(audio_recording)
+      Access::Check.check_orphan_site!(audio_recording.site)
+      Access::Check.can_any?(user, :reader, audio_recording.site.projects)
+    end
+
+    # actions any logged in user can access
+    can [:index, :filter], AudioRecording
+
+    ################################
+
     # must have read permission or higher on all saved_search.projects to create analysis job
     can [:show, :create], AnalysisJob do |analysis_job|
       check_model(analysis_job)

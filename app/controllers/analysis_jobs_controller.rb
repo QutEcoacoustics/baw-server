@@ -68,6 +68,10 @@ class AnalysisJobsController < ApplicationController
 
     @analysis_job.destroy
     add_archived_at_header(@analysis_job)
+
+    # TODO: delete pending analysis jobs from worker message queue
+    # TODO: change all pending analysis_job_items to :cancelled
+
     respond_destroy
   end
 
