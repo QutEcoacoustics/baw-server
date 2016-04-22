@@ -38,7 +38,7 @@ module Access
           model_name = query.model.model_name.name
           if model_name == 'Project'
             project_restrictions(user, levels, query)
-          elsif %w(Site AudioRecording Bookmark AudioEvent AudioEventComment Tagging).include?(model_name)
+          elsif %w(Site AudioRecording Bookmark AudioEvent AudioEventComment Tagging AnalysisJobsItem).include?(model_name)
             site_restrictions(user, levels, query)
           elsif %w(SavedSearch AnalysisJob).include?(model_name)
             saved_search_restrictions(user, levels, query)
