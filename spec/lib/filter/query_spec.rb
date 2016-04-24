@@ -1316,4 +1316,81 @@ DESCLIMIT20OFFSET0"
 
   end
 
+  context 'available filter items' do
+
+    it 'every item is available' do
+      filter_hash = {
+          filter: {
+              and: {
+                  media_type: {
+                      # comparison
+                      eq: 'm',
+                      equal: 'm',
+                      not_eq: 'm',
+                      not_equal: 'm',
+                      lt: 'm',
+                      less_than: 'm',
+                      not_lt: 'm',
+                      not_less_than: 'm',
+                      gt: 'm',
+                      greater_than: 'm',
+                      not_gt: 'm',
+                      not_greater_than: 'm',
+                      lteq: 'm',
+                      less_than_or_equal: 'm',
+                      not_lteq: 'm',
+                      not_less_than_or_equal: 'm',
+                      gteq: 'm',
+                      greater_than_or_equal: 'm',
+                      not_gteq: 'm',
+                      not_greater_than_or_equal: 'm',
+
+                      # subset
+                      range: {from: 'm', to: 'm'},
+                      in_range: {from: 'm', to: 'm'},
+                      not_range: {from: 'm', to: 'm'},
+                      not_in_range: {from: 'm', to: 'm'},
+                      in: ['m'],
+                      not_in: ['m'],
+                      contains: 'm',
+                      contain: 'm',
+                      not_contains: 'm',
+                      not_contain: 'm',
+                      does_not_contain: 'm',
+                      starts_with: 'm',
+                      start_with: 'm',
+                      not_starts_with: 'm',
+                      not_start_with: 'm',
+                      does_not_start_with: 'm',
+                      ends_with: 'm',
+                      end_with: 'm',
+                      not_ends_with: 'm',
+                      not_end_with: 'm',
+                      does_not_end_with: 'm',
+                      regex: 'm',
+                      regex_match: 'm',
+                      matches: 'm',
+                      not_regex: 'm',
+                      not_regex_match: 'm',
+                      does_not_match: 'm',
+                      not_match: 'm'
+                  }
+              }
+          }
+      }
+
+      filter = Filter::Query.new(
+          filter_hash,
+          Access::Query.audio_recordings(admin_user),
+          AudioRecording,
+          AudioRecording.filter_settings
+      )
+
+      expect(filter.filter).to eq(filter_hash[:filter])
+
+      query = filter.query_full
+      expect(query.pluck(:id)).to match_array([])
+    end
+  end
+
 end
