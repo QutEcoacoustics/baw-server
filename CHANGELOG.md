@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+ - 2016-04-24
+    - Query string parameters for filter are merged with POST filter [#286](https://github.com/QutBioacoustics/baw-server/issues/286)
  - 2016-04-13
     - Added analysis_job_id and audio_recording_id to results API
  - 2016-04-06
@@ -42,8 +44,6 @@
     - Add ability to filter audio recordings based on project attributes [#253](https://github.com/QutBioacoustics/baw-server/issues/253)
  - 2016-02-18
     - check for divide by 0, closes [#251](https://github.com/QutBioacoustics/baw-server/issues/251)
-
-
 
 ## [Release 0.18.0](https://github.com/QutBioacoustics/baw-server/releases/tag/0.18.0) (2016-02-06)
 
