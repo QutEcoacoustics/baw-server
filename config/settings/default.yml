@@ -16,6 +16,7 @@ defaults: &defaults
       port: 6379
       password: password
       db: 0
+      timeout: 5.0
     namespace: resque
     log_level: 'Logger::INFO'
   actions:
