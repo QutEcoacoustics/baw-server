@@ -130,40 +130,6 @@ module Filter
       combined_conditions
     end
 
-    # Build a text condition.
-    # @param [String] text
-    # @return [Arel::Nodes::Node] condition
-    def contains_text(text)
-      conditions = []
-      @text_fields.each do |text_field|
-        condition = compose_contains(@table, text_field, @valid_fields, text)
-        conditions.push(condition)
-      end
-
-      if conditions.size > 1
-        combiner_one(:or, conditions)
-      else
-        conditions[0]
-      end
-    end
-
-    # Build an equality condition that matches specified value to specified fields.
-    # @param [Hash] filter_hash
-    # @return [Arel::Nodes::Node] condition
-    def generic_equals(filter_hash)
-      conditions = []
-      filter_hash.each do |key, value|
-        conditions.push(compose_eq(@table, key, @valid_fields, value))
-      end
-
-      if conditions.size > 1
-        combiner_one(:and, conditions)
-      else
-        conditions[0]
-      end
-
-    end
-
     # Parse a filter.
     # @param [Hash] filter_hash
     # @return [Hash]
@@ -171,6 +137,9 @@ module Filter
       parse_filter(filter_hash)
     end
 
+    # Build a custom field.
+    # @param [Symbol] column_name
+    # @return [Hash] field mapping
     def build_custom_field(column_name)
 
       mappings = {}
