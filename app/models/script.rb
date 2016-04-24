@@ -14,7 +14,7 @@ class Script < ActiveRecord::Base
   validate :check_version_increase, on: :create
 
   # for the first script in a group, make sure group_id is set to the script's id
-  after_create :set_group_id, :set_versions
+  after_create :set_group_id
 
   def display_name
     "#{self.name} - v. #{self.version}"
@@ -22,20 +22,22 @@ class Script < ActiveRecord::Base
 
   def latest_version
     Script
-        .where(group_id: self.group_id)
+        .where(group_id: group_id)
         .order(version: :desc)
         .first
   end
 
   def earliest_version
     Script
-        .where(group_id: self.group_id)
+        .where(group_id: group_id)
         .order(version: :asc)
         .first
   end
 
   def last_version
-    self.read_attribute(:last_version)
+    Script
+        .where(group_id: group_id)
+        .maximum(:version)
   end
 
   def is_last_version?
@@ -43,7 +45,9 @@ class Script < ActiveRecord::Base
   end
 
   def first_version
-    self.read_attribute(:first_version)
+    Script
+        .where(group_id: group_id)
+        .minimum(:version)
   end
 
   def is_first_version?
@@ -65,24 +69,6 @@ class Script < ActiveRecord::Base
 
   # a fake reference to the aliased table defined in the default scope
   @script_group = Arel::Table.new('s2', @arel_engine)
-
-  # HACK: reload item - this is a poor version of Persistence::reload
-  # https://github.com/rails/rails/blob/1f98eb60e59f4f70ef66ac2454ad029f46e3b27c/activerecord/lib/active_record/persistence.rb#L432
-  # The only difference is the `unscoped` method is removed.
-  def reload(options = nil)
-    self.class.connection.clear_query_cache
-
-    fresh_object =
-        if options && options[:lock]
-          self.class.lock(options[:lock]).find(id)
-        else
-          self.class.find(id)
-        end
-
-    @attributes = fresh_object.instance_variable_get('@attributes')
-    @new_record = false
-    self
-  end
 
   def all_versions
     Script.where(group_id: self.group_id).order(created_at: :desc)
@@ -151,14 +137,6 @@ class Script < ActiveRecord::Base
       self.group_id = self.id
       self.save!
     end
-
-  end
-
-  # this is needed because the default scope query is not run when creating
-  # should only be called :after_create
-  def set_versions
-    # HACK: another select has to be run
-    self.reload
   end
 
 end

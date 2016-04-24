@@ -66,14 +66,12 @@ describe Script, :type => :model do
     end
 
     it 'shows when a script is the latest version' do
-      three_versions.each { |s| s.reload }
       expect(three_versions[0].is_last_version?).to be false
       expect(three_versions[1].is_last_version?).to be false
       expect(three_versions[2].is_last_version?).to be true
     end
 
     it 'shows when a script is the earliest version' do
-      three_versions.each { |s| s.reload }
       expect(three_versions[0].is_first_version?).to be true
       expect(three_versions[1].is_first_version?).to be false
       expect(three_versions[2].is_first_version?).to be false

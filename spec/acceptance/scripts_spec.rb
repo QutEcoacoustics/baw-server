@@ -68,14 +68,14 @@ resource 'Scripts' do
     })
   end
 
-  get '/scripts/' do
+  get '/scripts/?filter_is_last_version=:filter_is_last_version' do
     let(:authentication_token) { reader_token }
-    parameter :filter_is_last_version, "Only return the last version for each group"
+    parameter :filter_is_last_version, 'Only return the last version for each group'
     let(:filter_is_last_version) { true }
 
     standard_request_options(
         :get,
-        'INDEX (as reader with querystring for latest version)',
+        'INDEX (as reader with query string for latest version)',
         :ok,
         {
             expected_json_path: [
@@ -83,14 +83,15 @@ resource 'Scripts' do
             ],
             data_item_count: 2,
             response_body_content: [
-                '"is_first_version":{"eq":true}',
+                '"filter":{"is_last_version":{"eq":"true"}}',
+                '"is_first_version":true',
                 '"is_last_version":true',
                 '"version":1.6,"group_id":1234',
                 '"version":%{version},"group_id":%{group_id}',
             ]
         },
         &proc { |context, opts|
-          opts[:response_body_content][3] = opts[:response_body_content][3] % {
+          opts[:response_body_content][4] = opts[:response_body_content][4] % {
               version: context.script[:version],
               group_id: context.script[:group_id]
           }
