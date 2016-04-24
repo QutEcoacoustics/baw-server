@@ -83,32 +83,44 @@ module Filter
     end
 
     # Parse text from parameters.
+    # Any query string parameter will override filters already present.
     # @param [Hash] params
     # @param [Symbol] key
-    # @return [String] condition
-    def parse_qsp_text(params, key = :filter_partial_match)
-      params[key].blank? ? nil : params[key]
+    # @param [Array<Symbol>] text_fields
+    # @return [Hash] filter items
+    def parse_qsp_partial_match_text(params, key, text_fields)
+      value = params[key].blank? ? nil : params[key]
+
+      filter_items = {}
+
+      unless value.blank?
+        text_fields.each do |text_field|
+          filter_items[text_field] = {contains: value}
+        end
+      end
+
+      filter_items
     end
 
     # Get the QSPs from an object.
     # @param [Object] obj
     # @param [Object] value
     # @param [String] key_prefix
-    # @param [Array<Symbol>] valid_fields
     # @param [Hash] found
     # @return [Hash] matching entries
-    def parse_qsp(obj, value, key_prefix, valid_fields, found = {})
+    def parse_qsp(obj, value, key_prefix, found = {})
       if value.is_a?(Hash)
-        found = parse_qsp_hash(value, key_prefix, valid_fields, found)
+        found = parse_qsp_hash(value, key_prefix, found)
       elsif value.is_a?(Array)
-        found = parse_qsp_array(obj, value, key_prefix, valid_fields, found)
+        found = parse_qsp_array(obj, value, key_prefix, found)
       else
         key_s = obj.blank? ? '' : obj.to_s
         is_filter_qsp = key_s.starts_with?(key_prefix)
 
         if is_filter_qsp
-          new_key = CleanParams.clean(key_s[key_prefix.size..-1])
-          found[new_key] = value if valid_fields.include?(new_key)
+          key_without_prefix = key_s[key_prefix.size..-1]
+          new_key = CleanParams.clean(key_without_prefix)
+          found[new_key] = {eq: value}
         end
       end
       found
@@ -117,12 +129,11 @@ module Filter
     # Get the QSPs from a hash.
     # @param [Hash] hash
     # @param [String] key_prefix
-    # @param [Array<Symbol>] valid_fields
     # @param [Hash] found
     # @return [Hash] matching entries
-    def parse_qsp_hash(hash, key_prefix, valid_fields, found = {})
+    def parse_qsp_hash(hash, key_prefix, found = {})
       hash.each do |key, value|
-        found = parse_qsp(key, value, key_prefix, valid_fields, found)
+        found = parse_qsp(key, value, key_prefix, found)
       end
       found
     end
@@ -131,12 +142,11 @@ module Filter
     # @param [Object] key
     # @param [Array] array
     # @param [String] key_prefix
-    # @param [Array<Symbol>] valid_fields
     # @param [Hash] found
     # @return [Hash] matching entries
-    def parse_qsp_array(key, array, key_prefix, valid_fields, found)
+    def parse_qsp_array(key, array, key_prefix, found)
       array.each do |item|
-        found = parse_qsp(key, item, key_prefix, valid_fields, found)
+        found = parse_qsp(key, item, key_prefix, found)
       end
       found
     end
