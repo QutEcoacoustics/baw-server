@@ -27,7 +27,7 @@ module Admin
     def edit
       @script = Script.find(params[:id])
 
-      unless @script.is_latest_version?
+      unless @script.is_last_version?
         redirect_to edit_admin_script_path(@script.latest_version), notice: 'You have been redirected to update the latest version of this Script.'
       end
     end
@@ -51,7 +51,7 @@ module Admin
     def update
       @script = Script.find(params[:id])
 
-      unless @script.is_latest_version?
+      unless @script.is_last_version?
         respond_to do |format|
           format.html { redirect_to edit_admin_script_path(@script.latest_version), notice: 'You have been redirected to update the latest version of this Script.' }
           format.json { respond_change_fail }
