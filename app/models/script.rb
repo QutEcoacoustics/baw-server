@@ -35,9 +35,13 @@ class Script < ActiveRecord::Base
   end
 
   def last_version
-    Script
-        .where(group_id: group_id)
-        .maximum(:version)
+    unless has_attribute?(:last_version)
+      @last_version = Script
+                          .where(group_id: group_id)
+                          .maximum(:version)
+    end
+
+    @last_version ? @last_version : read_attribute(:last_version)
   end
 
   def is_last_version?
@@ -45,9 +49,13 @@ class Script < ActiveRecord::Base
   end
 
   def first_version
-    Script
-        .where(group_id: group_id)
-        .minimum(:version)
+    unless has_attribute?(:first_version)
+      @first_version = Script
+                           .where(group_id: group_id)
+                           .minimum(:version)
+    end
+
+    @first_version ? @first_version : read_attribute(:first_version)
   end
 
   def is_first_version?
