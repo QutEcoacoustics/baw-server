@@ -60,7 +60,7 @@ gem 'font-awesome-sass', '~> 4.5.0'
 # for rails 3, 4
 gem 'kaminari'
 gem 'dotiw','~> 3.1.1'
-gem 'recaptcha', '~> 1.1.0',  require: 'recaptcha/rails'
+gem 'recaptcha', '~> 1.3.0',  require: 'recaptcha/rails'
 
 # for proper timezone support
 gem 'tzinfo', '~> 1.2.2'
@@ -161,7 +161,7 @@ group :development, :test do
   gem 'guard', '~> 2.13.0'
   gem 'guard-rspec', '~> 4.6.0'
   gem 'guard-yard', '~> 2.1.4', require: false
-  gem 'rubocop', '~> 0.38.0', require: false
+  gem 'rubocop', '~> 0.39.0', require: false
   gem 'haml_lint', require: false
 
   gem 'fakeredis', '~> 0.5.0', require: 'fakeredis/rspec'
@@ -188,8 +188,8 @@ group :development, :test do
   # gem install traceroute --no-ri --no-rdoc
 
   gem 'rspec-rails', '~> 3.4.0'
-  gem 'factory_girl_rails', '~>  4.6.0'
-  gem 'capybara', '~> 2.6.1'
+  gem 'factory_girl_rails', '~>  4.7.0'
+  gem 'capybara', '~> 2.7.0'
 
   gem 'rspec', '~> 3.4.0'
   gem 'simplecov', '~> 0.11.1', require: false

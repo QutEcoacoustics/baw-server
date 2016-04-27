@@ -25,7 +25,7 @@ describe 'creation helper' do
 
     expect(SavedSearch.count).to eq(1)
     expect(AnalysisJob.count).to eq(1)
-    expect(Script.count).to eq(1)
+    expect(Script.count(:all)).to eq(1)
 
     expect(Bookmark.count).to eq(1)
     expect(Tag.count).to eq(1)

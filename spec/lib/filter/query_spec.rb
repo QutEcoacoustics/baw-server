@@ -3,6 +3,7 @@ require 'rails_helper'
 def compare_filter_sql(filter, sql_result)
   filter_query = create_filter(filter)
   expect(filter_query.query_full.to_sql.gsub(/\s+/, '')).to eq(sql_result.gsub(/\s+/, ''))
+  filter_query
 end
 
 describe Filter::Query do
@@ -402,110 +403,213 @@ ORDERBY\"audio_recordings\".\"recorded_date\"DESCLIMIT25OFFSET0"
 
   context 'complex query' do
 
-    it 'generates expected SQL' do
-      #Sample POST url and json body
-      #POST /audio_recordings/filter?filter_notes=hello&filter_partial_match=testing_testing
-      #POST /audio_recordings/filter?filter_notes=hello&filter_channels=28&filter_partial_match=testing_testing
+    it 'generates expected filter and SQL' do
 
-      complex_sample =
-          {
-              filter: {
-                  and: {
-                      site_id: {
-                          less_than: 123456,
-                          greater_than: 9876,
-                          in: [
-                              1,
-                              2,
-                              3
-                          ],
-                          range: {
-                              from: 100,
-                              to: 200
-                          }
-                      },
-                      status: {
-                          greater_than_or_equal: 4567,
-                          contains: 'contain text',
-                          starts_with: 'starts with text',
-                          ends_with: 'ends with text',
-                          range: {
-                              interval: '[123, 128]'
-                          },
-
-                      },
-                      or: {
-                          duration_seconds: {
-                              not_eq: 40
-                          },
-                          not: {
-                              channels: {
-                                  less_than_or_equal: 9999
-                              }
-                          }
+      # combined POST body and query string parameters (would not usually happen)
+      posted_filter = {
+          filter: {
+              and: {
+                  site_id: {
+                      less_than: 123456,
+                      greater_than: 9876,
+                      in: [1, 2, 3],
+                      range: {
+                          from: 100,
+                          to: 200
                       }
                   },
-                  'audio_events.is_reference' => {
-                      eq: true
+                  status: {
+                      greater_than_or_equal: '4567',
+                      contains: 'contain text',
+                      starts_with: 'starts with text',
+                      ends_with: 'ends with text',
+                      range: {
+                          interval: '[123, 128]'
+                      },
+                      eq: 'will be overridden'
+                  },
+                  duration_seconds: {
+                      in: [4, 5, 6]
                   },
                   or: {
-                      recorded_date: {
-                          contains: 'Hello'
-                      },
-
-                      media_type: {
-                          ends_with: 'world'
-                      },
-
                       duration_seconds: {
-                          eq: 60,
-                          lteq: 70,
-                          equal: 50,
-                          gteq: 80
+                          not_eq: 40
                       },
-                      channels: {
-                          eq: 1,
-                          less_than_or_equal: 8888
-                      },
-                      'sites.id' => {
-                          eq: 5
-                      }
-                  },
-                  not: {
-                      duration_seconds: {
-                          not_eq: 140
-                      },
-                      'tags.text' => {
-                          contains: 'koala'
+                      not: {
+                          channels: {
+                              less_than_or_equal: 9999
+                          }
                       }
                   }
               },
-              projection: {
-                  include: [
-                      :recorded_date,
-                      :site_id,
-                      :duration_seconds,
-                      :media_type
-                  ]
+              'audio_events.is_reference' => {
+                  eq: true
               },
-              sorting: {
-                  order_by: 'duration_seconds',
-                  direction: 'desc'
-              },
-              paging: {
-                  page: 1,
-                  items: 10,
-              },
-              filter_status: 'hello',
-              filter_channels: 28,
-              filter_partial_match: 'testing_testing'
-          }
+              or: {
+                  recorded_date: {
+                      eq: '2016-04-24 12:00:00'
+                  },
 
-      complex_result =
-          "SELECT\"audio_recordings\".\"recorded_date\",\"audio_recordings\".\"site_id\", \
-          \"audio_recordings\".\"duration_seconds\",\"audio_recordings\".\"media_type\" \
+                  media_type: {
+                      ends_with: 'world'
+                  },
+
+                  duration_seconds: {
+                      eq: 60,
+                      lteq: 70,
+                      equal: 50,
+                      gteq: 80
+                  },
+                  channels: {
+                      eq: 1,
+                      less_than_or_equal: 8888
+                  },
+                  'sites.id' => {
+                      eq: 5
+                  },
+                  status: {
+                      contains: 'will be overridden'
+                  }
+              },
+              not: {
+                  duration_seconds: {
+                      not_eq: 140
+                  },
+                  'tags.text' => {
+                      contains: 'koala'
+                  }
+              }
+          },
+          projection: {
+              include: [
+                  :recorded_date,
+                  :site_id,
+                  :duration_seconds,
+                  :media_type
+              ]
+          },
+          sorting: {
+              order_by: 'duration_seconds',
+              direction: 'desc'
+          },
+          paging: {
+              page: 1,
+              items: 10,
+          },
+          filter_status: 'hello_status',
+          filter_channels: 28,
+          filter_duration_seconds: 123,
+          filter_partial_match: 'testing_testing'
+      }
+
+      expected_filter = {
+          and: {
+              site_id: {
+                  less_than: 123456,
+                  greater_than: 9876,
+                  in: [1, 2, 3],
+                  range: {
+                      from: 100,
+                      to: 200
+                  }
+              },
+              status: {
+                  greater_than_or_equal: '4567',
+                  contains: 'contain text',
+                  starts_with: 'starts with text',
+                  ends_with: 'ends with text',
+                  range: {
+                      interval: '[123, 128]'
+                  },
+                  eq: 'hello_status'
+              },
+              duration_seconds: {
+                  in: [4, 5, 6],
+                  eq: 123
+              },
+              or: {
+                  duration_seconds: {
+                      not_eq: 40
+                  },
+                  not: {
+                      channels: {
+                          less_than_or_equal: 9999
+                      }
+                  }
+              }
+          },
+          'audio_events.is_reference'.to_sym => {
+              eq: true
+          },
+          channels: {
+              eq: 28
+          },
+          or: {
+              recorded_date: {
+                  eq: '2016-04-24 12:00:00'
+              },
+
+              media_type: {
+                  ends_with: 'world',
+                  contains: 'testing_testing'
+              },
+
+              duration_seconds: {
+                  eq: 60,
+                  lteq: 70,
+                  equal: 50,
+                  gteq: 80
+              },
+              channels: {
+                  eq: 1,
+                  less_than_or_equal: 8888
+              },
+              'sites.id'.to_sym => {
+                  eq: 5
+              },
+              status: {
+                  contains: 'testing_testing'
+              }
+          },
+          not: {
+              duration_seconds: {
+                  not_eq: 140
+              },
+              'tags.text'.to_sym => {
+                  contains: 'koala'
+              }
+          }
+      }
+
+      user = writer_user
+      filter_query = Filter::Query.new(
+          posted_filter,
+          Access::Query.audio_recordings(user, Access::Core.levels_allow),
+          AudioRecording,
+          AudioRecording.filter_settings
+      )
+
+      expect(filter_query.filter).to eq(expected_filter)
+
+      user_id = user.id
+      complex_result_2 =
+          "SELECT\"audio_recordings\".\"recorded_date\",\"audio_recordings\".\"site_id\",\"audio_recordings\".\"duration_seconds\",\"audio_recordings\".\"media_type\" \
 FROM\"audio_recordings\" \
+INNERJOIN\"sites\"ON\"sites\".\"id\"=\"audio_recordings\".\"site_id\" \
+AND(\"sites\".\"deleted_at\"ISNULL) \
 WHERE(\"audio_recordings\".\"deleted_at\"ISNULL) \
+AND(EXISTS( \
+SELECT1FROM\"projects_sites\" \
+WHERE\"sites\".\"id\"=\"projects_sites\".\"site_id\" \
+ANDEXISTS(( \
+SELECT1FROM\"projects\" \
+WHERE\"projects\".\"deleted_at\"ISNULL \
+AND\"projects\".\"creator_id\"=#{user_id} \
+AND\"projects_sites\".\"project_id\"=\"projects\".\"id\"UNIONALL \
+SELECT1FROM\"permissions\" \
+WHERE\"permissions\".\"user_id\"=#{user_id} \
+AND\"permissions\".\"level\"IN('reader','writer','owner') \
+AND\"projects_sites\".\"project_id\"=\"permissions\".\"project_id\")))) \
 AND(\"audio_recordings\".\"site_id\"<123456 \
 AND\"audio_recordings\".\"site_id\">9876 \
 AND\"audio_recordings\".\"site_id\"IN(1,2,3) \
@@ -517,15 +621,18 @@ AND\"audio_recordings\".\"status\"ILIKE'startswithtext%' \
 AND\"audio_recordings\".\"status\"ILIKE'%endswithtext' \
 AND\"audio_recordings\".\"status\">='123' \
 AND\"audio_recordings\".\"status\"<='128' \
+AND\"audio_recordings\".\"status\"='hello_status' \
+AND\"audio_recordings\".\"duration_seconds\"IN(4,5,6) \
+AND\"audio_recordings\".\"duration_seconds\"=123 \
 AND(\"audio_recordings\".\"duration_seconds\"!=40 \
 ORNOT(\"audio_recordings\".\"channels\"<=9999))) \
 AND\"audio_recordings\".\"id\"IN( \
-SELECT\"audio_recordings\".\"id\" \
-FROM\"audio_recordings\" \
+SELECT\"audio_recordings\".\"id\"FROM\"audio_recordings\" \
 LEFTOUTERJOIN\"audio_events\"ON\"audio_recordings\".\"id\"=\"audio_events\".\"audio_recording_id\" \
 WHERE\"audio_events\".\"is_reference\"='t') \
-AND((((((((\"audio_recordings\".\"recorded_date\"ILIKE'%Hello%' \
+AND((((((((((\"audio_recordings\".\"recorded_date\"='2016-04-2412:00:00' \
 OR\"audio_recordings\".\"media_type\"ILIKE'%world') \
+OR\"audio_recordings\".\"media_type\"ILIKE'%testing\\_testing%') \
 OR\"audio_recordings\".\"duration_seconds\"=60) \
 OR\"audio_recordings\".\"duration_seconds\"<=70) \
 OR\"audio_recordings\".\"duration_seconds\"=50) \
@@ -537,42 +644,24 @@ SELECT\"audio_recordings\".\"id\" \
 FROM\"audio_recordings\" \
 LEFTOUTERJOIN\"sites\"ON\"audio_recordings\".\"site_id\"=\"sites\".\"id\" \
 WHERE\"sites\".\"id\"=5)) \
-AND( \
-NOT(\"audio_recordings\".\"duration_seconds\"!=140)) \
-AND( \
-NOT(\"audio_recordings\".\"id\"IN( \
+OR\"audio_recordings\".\"status\"ILIKE'%testing\\_testing%') \
+AND(NOT(\"audio_recordings\".\"duration_seconds\"!=140)) \
+AND(NOT(\"audio_recordings\".\"id\"IN( \
 SELECT\"audio_recordings\".\"id\" \
 FROM\"audio_recordings\" \
 LEFTOUTERJOIN\"audio_events\"ON\"audio_recordings\".\"id\"=\"audio_events\".\"audio_recording_id\" \
 LEFTOUTERJOIN\"audio_events_tags\"ON\"audio_events\".\"id\"=\"audio_events_tags\".\"audio_event_id\" \
 LEFTOUTERJOIN\"tags\"ON\"audio_events_tags\".\"tag_id\"=\"tags\".\"id\" \
 WHERE\"tags\".\"text\"ILIKE'%koala%'))) \
-AND(\"audio_recordings\".\"media_type\"ILIKE'%testing\\_testing%' \
-OR\"audio_recordings\".\"status\"ILIKE'%testing\\_testing%') \
-AND(\"audio_recordings\".\"status\"='hello' \
-AND\"audio_recordings\".\"channels\"=28) \
-ORDERBY\"audio_recordings\".\"duration_seconds\"DESC \
+AND\"audio_recordings\".\"channels\"=28 \
+ORDERBY\"audio_recordings\".\"recorded_date\"DESC,\"audio_recordings\".\"duration_seconds\"DESC \
 LIMIT10OFFSET0"
 
-      compare_filter_sql(complex_sample, complex_result)
+      full_query = filter_query.query_full
+      expect(full_query.to_sql.gsub(/\s+/, '')).to eq(complex_result_2.gsub(/\s+/, ''))
 
-      user = writer_user
-      user_id = user.id
-
-      complex_result_2 =
-          "SELECT\"audio_recordings\".\"recorded_date\",\"audio_recordings\".\"site_id\",\"audio_recordings\".\"duration_seconds\",\"audio_recordings\".\"media_type\"FROM\"audio_recordings\"INNERJOIN\"sites\"ON\"sites\".\"id\"=\"audio_recordings\".\"site_id\"AND(\"sites\".\"deleted_at\"ISNULL)WHERE(\"audio_recordings\".\"deleted_at\"ISNULL)AND(EXISTS(SELECT1FROM\"projects_sites\"WHERE\"sites\".\"id\"=\"projects_sites\".\"site_id\"ANDEXISTS((SELECT1FROM\"projects\"WHERE\"projects\".\"deleted_at\"ISNULLAND\"projects\".\"creator_id\"=#{user_id}AND\"projects_sites\".\"project_id\"=\"projects\".\"id\"UNIONALLSELECT1FROM\"permissions\"WHERE\"permissions\".\"user_id\"=#{user_id}AND\"permissions\".\"level\"IN('reader','writer','owner')AND\"projects_sites\".\"project_id\"=\"permissions\".\"project_id\"))))AND(\"audio_recordings\".\"site_id\"<123456AND\"audio_recordings\".\"site_id\">9876AND\"audio_recordings\".\"site_id\"IN(1,2,3)AND\"audio_recordings\".\"site_id\">=100AND\"audio_recordings\".\"site_id\"<200AND\"audio_recordings\".\"status\">='4567'AND\"audio_recordings\".\"status\"ILIKE'%containtext%'AND\"audio_recordings\".\"status\"ILIKE'startswithtext%'AND\"audio_recordings\".\"status\"ILIKE'%endswithtext'AND\"audio_recordings\".\"status\">='123'AND\"audio_recordings\".\"status\"<='128'AND(\"audio_recordings\".\"duration_seconds\"!=40ORNOT(\"audio_recordings\".\"channels\"<=9999)))AND\"audio_recordings\".\"id\"IN(SELECT\"audio_recordings\".\"id\"FROM\"audio_recordings\"LEFTOUTERJOIN\"audio_events\"ON\"audio_recordings\".\"id\"=\"audio_events\".\"audio_recording_id\"WHERE\"audio_events\".\"is_reference\"='t')AND((((((((\"audio_recordings\".\"recorded_date\"ILIKE'%Hello%'OR\"audio_recordings\".\"media_type\"ILIKE'%world')OR\"audio_recordings\".\"duration_seconds\"=60)OR\"audio_recordings\".\"duration_seconds\"<=70)OR\"audio_recordings\".\"duration_seconds\"=50)OR\"audio_recordings\".\"duration_seconds\">=80)OR\"audio_recordings\".\"channels\"=1)OR\"audio_recordings\".\"channels\"<=8888)OR\"audio_recordings\".\"id\"IN(SELECT\"audio_recordings\".\"id\"FROM\"audio_recordings\"LEFTOUTERJOIN\"sites\"ON\"audio_recordings\".\"site_id\"=\"sites\".\"id\"WHERE\"sites\".\"id\"=5))AND(NOT(\"audio_recordings\".\"duration_seconds\"!=140))AND(NOT(\"audio_recordings\".\"id\"IN(SELECT\"audio_recordings\".\"id\"FROM\"audio_recordings\"LEFTOUTERJOIN\"audio_events\"ON\"audio_recordings\".\"id\"=\"audio_events\".\"audio_recording_id\"LEFTOUTERJOIN\"audio_events_tags\"ON\"audio_events\".\"id\"=\"audio_events_tags\".\"audio_event_id\"LEFTOUTERJOIN\"tags\"ON\"audio_events_tags\".\"tag_id\"=\"tags\".\"id\"WHERE\"tags\".\"text\"ILIKE'%koala%')))AND(\"audio_recordings\".\"media_type\"ILIKE'%testing\\_testing%'OR\"audio_recordings\".\"status\"ILIKE'%testing\\_testing%')AND(\"audio_recordings\".\"status\"='hello'AND\"audio_recordings\".\"channels\"=28)ORDERBY\"audio_recordings\".\"recorded_date\"DESC,\"audio_recordings\".\"duration_seconds\"DESCLIMIT10OFFSET0"
-
-
-
-      filter_query = Filter::Query.new(
-          complex_sample,
-          Access::Query.audio_recordings(user, Access::Core.levels_allow),
-          AudioRecording,
-          AudioRecording.filter_settings
-      )
-
-      expect(filter_query.query_full.to_sql.gsub(/\s+/, '')).to eq(complex_result_2.gsub(/\s+/, ''))
-
+      # ensure query can be run (it obvs won't return anything)
+      expect(full_query.pluck(:recorded_date)).to eq([])
     end
   end
 
@@ -1032,7 +1121,7 @@ DESCLIMIT20OFFSET0"
 
     it 'restricts comments to audio event' do
       the_user = owner_user
-      
+
       project2 = Creation::Common.create_project(the_user)
       site2 = Creation::Common.create_site(the_user, project2)
       audio_recording2 = Creation::Common.create_audio_recording(the_user, the_user, site2)
@@ -1091,6 +1180,217 @@ DESCLIMIT20OFFSET0"
       expect(ids_actual).to match_array(ids_expected)
     end
 
+  end
+
+  context 'qsp filter' do
+
+    it 'does not allow fields that do not exist' do
+      filter = Filter::Query.new(
+          {filter_this_is_not_a_field: 'oops'},
+          Script.order(name: :asc).order(created_at: :desc),
+          Script,
+          Script.filter_settings)
+      expect {
+        filter.build.parse(filter.filter)
+      }.to raise_error(CustomErrors::FilterArgumentError, 'Unrecognised combiner or field name: this_is_not_a_field.')
+    end
+
+    it 'allows mapped fields as a generic equality field' do
+      audio_event = FactoryGirl.create(
+          :audio_event,
+          audio_recording: audio_recording,
+          start_time_seconds: 10,
+          end_time_seconds: 88)
+
+      # simluate
+      # GET /audio_recordings/234234/audio_events?start_time_seconds=10&end_time_seconds=88
+
+      filter = Filter::Query.new(
+          {filter_start_time_seconds: 10, filter_end_time_seconds: 88},
+          Access::Query.audio_recording_audio_events(audio_recording, admin_user),
+          AudioEvent,
+          AudioEvent.filter_settings
+      )
+
+      expect(filter.filter).to eq({and: {start_time_seconds: {eq: 10}, end_time_seconds: {eq: 88}}})
+
+      ids_actual = filter.query_full.pluck(:id)
+      ids_expected = [audio_event.id]
+      expect(ids_actual).to match_array(ids_expected)
+    end
+
+    it 'allows generic equality fields' do
+      audio_event = FactoryGirl.create(
+          :audio_event,
+          audio_recording: audio_recording,
+          start_time_seconds: 10,
+          end_time_seconds: 88)
+
+      # simluate
+      # GET /audio_recordings/234234/audio_events?filter_duration_seconds=78
+
+      filter = Filter::Query.new(
+          {filter_duration_seconds: 78},
+          Access::Query.audio_recording_audio_events(audio_recording, admin_user),
+          AudioEvent,
+          AudioEvent.filter_settings
+      )
+
+      expect(filter.filter).to eq({duration_seconds: {eq: 78}})
+
+      ids_actual = filter.query_full.pluck(:id)
+      ids_expected = [audio_event.id]
+      expect(ids_actual).to match_array(ids_expected)
+    end
+
+    it 'allows one text partial match field' do
+      admin_user_name = admin_user.user_name
+
+      filter = Filter::Query.new(
+          {filter_partial_match: admin_user_name},
+          User.all,
+          User,
+          User.filter_settings
+      )
+
+      expect(filter.filter).to eq({user_name: {contains: admin_user_name}})
+
+      ids_actual = filter.query_full.pluck(:id)
+      ids_expected = [admin_user.id]
+      expect(ids_actual).to match_array(ids_expected)
+    end
+
+
+    it 'overrides filter parameters that match generic equality fields' do
+      audio_event = FactoryGirl.create(
+          :audio_event,
+          audio_recording: audio_recording,
+          start_time_seconds: 10,
+          end_time_seconds: 88)
+
+      filter = Filter::Query.new(
+          {filter: {
+              duration_seconds: {eq: 78}, start_time_seconds: {eq: 20}
+          },
+           filter_start_time_seconds: 10, filter_end_time_seconds: 88
+          },
+          Access::Query.audio_recording_audio_events(audio_recording, admin_user),
+          AudioEvent,
+          AudioEvent.filter_settings
+      )
+
+      # defaults to 'and' when no combiner is specified
+      expect(filter.filter).to eq({duration_seconds: {eq: 78}, start_time_seconds: {eq: 10}, end_time_seconds: {eq: 88}})
+
+      ids_actual = filter.query_full.pluck(:id)
+      ids_expected = [audio_event.id]
+      expect(ids_actual).to match_array(ids_expected)
+    end
+
+    it 'overrides filter parameters that match text partial match field' do
+      audio_recording = FactoryGirl.create(
+          :audio_recording,
+          media_type: 'audio/mp3',
+          recorded_date: '2012-03-26 07:06:59',
+          duration_seconds: 120)
+
+      filter = Filter::Query.new(
+          {filter: {
+              duration_seconds: {eq: 100},
+              or: {media_type: {contains: 'wav'}, status: {contains: 'wav'}}
+          },
+           filter_duration_seconds: 120,
+           filter_partial_match: 'mp3'
+          },
+          Access::Query.audio_recordings(admin_user),
+          AudioRecording,
+          AudioRecording.filter_settings
+      )
+
+      expect(filter.filter).to eq({duration_seconds: {eq: 120}, or: {media_type: {contains: 'mp3'}, status: {contains: 'mp3'}}})
+
+      ids_actual = filter.query_full.pluck(:id)
+      ids_expected = [audio_recording.id]
+      expect(ids_actual).to match_array(ids_expected)
+    end
+
+  end
+
+  context 'available filter items' do
+
+    it 'every item is available' do
+      filter_hash = {
+          filter: {
+              and: {
+                  media_type: {
+                      # comparison
+                      eq: 'm',
+                      equal: 'm',
+                      not_eq: 'm',
+                      not_equal: 'm',
+                      lt: 'm',
+                      less_than: 'm',
+                      not_lt: 'm',
+                      not_less_than: 'm',
+                      gt: 'm',
+                      greater_than: 'm',
+                      not_gt: 'm',
+                      not_greater_than: 'm',
+                      lteq: 'm',
+                      less_than_or_equal: 'm',
+                      not_lteq: 'm',
+                      not_less_than_or_equal: 'm',
+                      gteq: 'm',
+                      greater_than_or_equal: 'm',
+                      not_gteq: 'm',
+                      not_greater_than_or_equal: 'm',
+
+                      # subset
+                      range: {from: 'm', to: 'm'},
+                      in_range: {from: 'm', to: 'm'},
+                      not_range: {from: 'm', to: 'm'},
+                      not_in_range: {from: 'm', to: 'm'},
+                      in: ['m'],
+                      not_in: ['m'],
+                      contains: 'm',
+                      contain: 'm',
+                      not_contains: 'm',
+                      not_contain: 'm',
+                      does_not_contain: 'm',
+                      starts_with: 'm',
+                      start_with: 'm',
+                      not_starts_with: 'm',
+                      not_start_with: 'm',
+                      does_not_start_with: 'm',
+                      ends_with: 'm',
+                      end_with: 'm',
+                      not_ends_with: 'm',
+                      not_end_with: 'm',
+                      does_not_end_with: 'm',
+                      regex: 'm',
+                      regex_match: 'm',
+                      matches: 'm',
+                      not_regex: 'm',
+                      not_regex_match: 'm',
+                      does_not_match: 'm',
+                      not_match: 'm'
+                  }
+              }
+          }
+      }
+
+      filter = Filter::Query.new(
+          filter_hash,
+          Access::Query.audio_recordings(admin_user),
+          AudioRecording,
+          AudioRecording.filter_settings
+      )
+
+      expect(filter.filter).to eq(filter_hash[:filter])
+
+      query = filter.query_full
+      expect(query.pluck(:id)).to match_array([])
+    end
   end
 
 end

@@ -210,65 +210,6 @@ class AudioEventsController < ApplicationController
 
   private
 
-  # @param [AudioEvent] audio_event
-  def json_format(audio_event)
-
-    user = audio_event.creator
-    user_name = user.blank? ? '' : user.user_name
-    user_id = user.blank? ? '' : user.id
-
-    audio_event_hash = {
-        audio_event_id: audio_event.id,
-        id: audio_event.id,
-        audio_event_start_date: audio_event.audio_recording.recorded_date.advance(seconds: audio_event.start_time_seconds),
-        audio_recording_id: audio_event.audio_recording_id,
-        audio_recording_duration_seconds: audio_event.audio_recording.duration_seconds,
-        audio_recording_recorded_date: audio_event.audio_recording.recorded_date,
-        site_name: audio_event.audio_recording.site.name,
-        site_id: audio_event.audio_recording.site.id,
-        owner_name: user_name,
-        owner_id: user_id,
-        is_reference: audio_event.is_reference,
-        start_time_seconds: audio_event.start_time_seconds,
-        end_time_seconds: audio_event.end_time_seconds,
-        high_frequency_hertz: audio_event.high_frequency_hertz,
-        low_frequency_hertz: audio_event.low_frequency_hertz,
-        updated_at: audio_event.updated_at,
-        updater_id: audio_event.updater_id,
-        created_at: audio_event.created_at,
-        creator_id: audio_event.creator_id,
-    }
-
-    audio_event_hash[:tags] = audio_event.tags.map do |tag|
-      {
-          id: tag.id,
-          text: tag.text,
-          is_taxanomic: tag.is_taxanomic,
-          retired: tag.retired,
-          type_of_tag: tag.type_of_tag
-      }
-    end
-
-    audio_event_hash[:projects] = audio_event.audio_recording.site.projects.map do |project|
-      {
-          id: project.id,
-          name: project.name
-      }
-    end
-
-    # next and prev are just in order of ids (essentially the order the audio events were created)
-    next_event = AudioEvent.where('id > ?', audio_event.id).order('id ASC').first
-    prev_event = AudioEvent.where('id < ?', audio_event.id).order('id DESC').first
-    audio_event_hash[:paging] = {next_event: {}, prev_event: {}}
-
-    audio_event_hash[:paging][:next_event][:audio_event_id] = next_event.id unless next_event.blank?
-    audio_event_hash[:paging][:next_event][:audio_recording_id] = next_event.audio_recording_id unless next_event.blank?
-    audio_event_hash[:paging][:prev_event][:audio_event_id] = prev_event.id unless prev_event.blank?
-    audio_event_hash[:paging][:prev_event][:audio_recording_id] = prev_event.audio_recording_id unless prev_event.blank?
-
-    audio_event_hash
-  end
-
   def audio_event_params
     params.require(:audio_event).permit(
         :audio_recording_id,
