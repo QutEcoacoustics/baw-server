@@ -74,7 +74,10 @@ Vagrant.configure(2) do |config|
   config.vm.provision 'shell', inline: <<-SHELL
     sudo apt-get update
     # temporary workaround for https://github.com/mitchellh/vagrant/issues/6793
-    sudo apt-get install -y git python-pip python-dev && sudo pip install ansible==1.9.3 && sudo cp /usr/local/bin/ansible /usr/bin/ansible
+    echo "Installing build tools..."
+    sudo apt-get install -y build-essential libffi-dev libssl-dev python-dev
+    echo "Installing git, pip, and ansible..."
+    sudo apt-get install -y git python-pip && sudo pip install ansible==1.9.3 && sudo cp /usr/local/bin/ansible /usr/bin/ansible
   SHELL
   
   config.vm.provision 'ansible_local' do |ansible|

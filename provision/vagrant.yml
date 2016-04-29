@@ -21,6 +21,7 @@
           # use full 'ruby-*' name
           # last ruby listed is the default
           - "ruby-2.2.4"
+    postgresql_version: 9.3
   pre_tasks:
     - debug: var=ansible_ssh_user
   roles:
@@ -34,7 +35,7 @@
       become: true
       tags: ["ruby"]
     - role: "{{ source_path }}/external/ANXS.postgresql"
-      postgresql_version: "{{ baw_database.version }}"
+      postgresql_version: "{{ postgresql_version }}"
       postgresql_databases:
         - name: baw_local_dev
           owner: postgres          # optional; specify the owner of the database
