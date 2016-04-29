@@ -2,6 +2,10 @@ require 'rails_helper'
 require 'rspec_api_documentation/dsl'
 require 'helpers/acceptance_spec_helper'
 
+#
+# This file contains tests for the #show endpoint for the AnalysisJobsItems controller
+#
+
 def standard_analysis_parameters
 
   parameter :analysis_job_id, 'Requested analysis job id (in path/route)', required: true

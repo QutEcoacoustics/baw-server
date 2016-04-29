@@ -231,24 +231,25 @@ module Access
       end
 
       # Get all analysis jobs items for which this user has this user has these access levels.
+      # @param [AnalysisJob] analysis_job
       # @param [User] user
       # @param [Symbol, Array<Symbol>] levels
       # @return [ActiveRecord::Relation] analysis jobs items
-      def analysis_jobs_items(user, levels)
+      def analysis_jobs_items(analysis_job, user, levels)
         user = Access::Core.validate_user(user)
         levels = Access::Core.validate_levels(levels)
 
-        #query = AnalysisJob.joins(:saved_search).order(updated_at: :desc)
-
-        # Custom results endpoint does permissions through audio_recordings so we're emulating that here. It
+        # The original results endpoint does permissions through audio_recordings so we're emulating that here. It
         # ***should*** be functionally equivalent to checking permissions through the
         # AnalysisJob.SavedSearch.Projects relationship.
 
         query = AnalysisJobsItem
-                .joins(:audio_recording)
-                .order(created_at: :desc)
+                    .joins(:audio_recording)
+                    .order(created_at: :desc)
+                    .joins(:analysis_job)
+                    .where(analysis_job: {id: analysis_job.id})
 
-        Access::Apply.restrictions(user, levels, query)
+            Access::Apply.restrictions(user, levels, query)
       end
 
 

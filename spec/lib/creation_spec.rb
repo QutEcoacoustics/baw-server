@@ -43,5 +43,13 @@ describe 'creation helper' do
 
     expect(SavedSearch.first.projects.first.id).to eq(Project.first.id)
     expect(SavedSearch.first.id).to eq(Project.first.saved_searches.first.id)
+
+    expect(AnalysisJob.first.saved_search.first.id).to eq(SavedSearch.first.id)
+    expect(AnalysisJob.first.id).to eq(SavedSearch.first.analysis_jobs.first.id)
+
+    expect(AnalysisJobsItem.first.analysis_job.first.id).to eq(AnalysisJob.first.id)
+    expect(AnalysisJobsItem.first.id).to eq(AnalysisJob.first.analysis_jobs_items.first.id)
+    expect(AnalysisJobsItem.first.audio_recording.first.id).to eq(AudioRecording.first.id)
+    expect(AnalysisJobsItem.first.id).to eq(AudioRecording.first.analysis_jobs_items.first.id)
   end
 end

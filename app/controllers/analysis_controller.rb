@@ -1,5 +1,7 @@
 require 'find'
 
+
+
 =begin
   Analysis endpoint definition:
   - case-sensitive
@@ -8,11 +10,13 @@ require 'find'
   - responses to get and head requests differ only in inclusion of body content
 =end
 
+# @deprecated This class will be merged into AnalysisJobsItem controller
 class AnalysisController < ApplicationController
   skip_authorization_check only: [:show]
 
   # GET|HEAD /analysis_jobs/:analysis_job_id/audio_recordings/:audio_recording_id/
   # GET|HEAD /analysis_jobs/:analysis_job_id/audio_recordings/:audio_recording_id/*results_path
+  # @deprecated
   def show
     # start timing request
     overall_start = Time.now
