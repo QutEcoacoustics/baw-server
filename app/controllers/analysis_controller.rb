@@ -81,15 +81,8 @@ class AnalysisController < ApplicationController
 
   end
 
-  # GET|HEAD /analysis_jobs/system
-  def system_all
-    fail NotImplementedError
-  end
 
-  # GET|HEAD /analysis_jobs/system/audio_recordings
-  def system_audio_recordings
-    fail NotImplementedError
-  end
+
 
   private
 

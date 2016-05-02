@@ -219,6 +219,8 @@ Rails.application.routes.draw do
   match 'analysis_jobs/filter' => 'analysis_jobs#filter', via: [:get, :post], defaults: {format: 'json'}
   match 'saved_searches/filter' => 'saved_searches#filter', via: [:get, :post], defaults: {format: 'json'}
 
+  system_id = AnalysisJobsController.SYSTEM_JOB_ID
+
   # API only for analysis_jobs and saved_searches
   match 'analysis_jobs/system' => 'analysis#system_all', # here so it has higher priority
         defaults: {format: 'json'}, as: :analysis_system_all, via: [:get, :head], format: false
@@ -226,8 +228,9 @@ Rails.application.routes.draw do
   resources  :saved_searches, except: [:edit, :update], defaults: {format: 'json'}
 
   # route for custom and system results
-  match 'analysis_jobs/:analysis_job_id/audio_recordings/:audio_recording_id/' => 'analysis#show',
-        defaults: {format: 'json'}, as: :analysis_results_base, via: [:get, :head], format: false
+  resources :analysis_jobs_items, except: [:new, :create, :delete, :edit], defaults: {format: 'json'}
+  #match 'analysis_jobs/:analysis_job_id/audio_recordings/:audio_recording_id/' => 'analysis#show',
+  #      defaults: {format: 'json'}, as: :analysis_results_base, via: [:get, :head], format: false
   match 'analysis_jobs/:analysis_job_id/audio_recordings/:audio_recording_id/*results_path' => 'analysis#show',
         defaults: {format: 'json'}, as: :analysis_results, via: [:get, :head], format: false
 

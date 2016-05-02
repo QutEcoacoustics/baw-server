@@ -1,6 +1,8 @@
 class AnalysisJobsController < ApplicationController
   include Api::ControllerHelper
 
+  SYSTEM_JOB_ID = 'system'
+
   # GET /analysis_jobs
   def index
     do_authorize_class
@@ -86,6 +88,15 @@ class AnalysisJobsController < ApplicationController
         AnalysisJob.filter_settings
     )
     respond_filter(filter_response, opts)
+  end
+
+  # GET|HEAD /analysis_jobs/system
+  def system_all
+    fail NotImplementedError
+  end
+
+  def system_mutate
+    fail MethodNotAllowedError.new('Cannot update a system job', [:put, :patch, :delete])
   end
 
   private

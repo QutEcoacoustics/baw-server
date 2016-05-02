@@ -235,7 +235,7 @@ module Access
       # @param [User] user
       # @param [Symbol, Array<Symbol>] levels
       # @return [ActiveRecord::Relation] analysis jobs items
-      def analysis_jobs_items(analysis_job, user, levels)
+      def analysis_jobs_items(analysis_job, user, levels = Access::Core.levels_allow)
         user = Access::Core.validate_user(user)
         levels = Access::Core.validate_levels(levels)
 
@@ -246,7 +246,7 @@ module Access
         query = AnalysisJobsItem
                     .joins(:audio_recording)
                     .order(created_at: :desc)
-                    .joins(:analysis_job)
+                    .joins(:analysis_job) # this join ensures only non-deleted results are returned
                     .where(analysis_job: {id: analysis_job.id})
 
             Access::Apply.restrictions(user, levels, query)

@@ -56,7 +56,7 @@ class AnalysisJobsItemsController < ApplicationController
 
     do_authorize_instance
 
-
+    # TODO process results
 
     respond_show
   end
@@ -84,6 +84,7 @@ class AnalysisJobsItemsController < ApplicationController
   # GET|POST  /analysis_jobs/:analysis_job_id/audio_recordings/
   def filter
     do_authorize_class
+    get_opts
     get_analysis_job
 
     filter_response, opts = Settings.api_response.response_advanced(
@@ -95,29 +96,68 @@ class AnalysisJobsItemsController < ApplicationController
     respond_filter(filter_response, opts)
   end
 
+  #
+  # 'system' actions - matched via route
+  #
+
+  SYSTEM_JOB_ID = AnalysisJobsController.SYSTEM_JOB_ID
+
   # GET|HEAD /analysis_jobs/system/audio_recordings/
   def system_index
+    do_authorize_class
+    get_opts
 
+    filter_response, opts = Settings.api_response.response_advanced(
+        api_filter_params,
+        get_virtual_analysis_jobs_items,
+        AudioRecording,
+        AnalysisJobsItem.filter_settings # TODO
+    )
+
+    # TODO transform response
+
+    respond_filter(filter_response, opts)
   end
 
   # GET|HEAD /analysis_jobs/system/audio_recordings/:audio_recording_id
   def system_show
+    get_opts
+
+    audio_recording = AnalysisJob.find(@analysis_job_id)
+# TODO transform response
+
+    do_authorize_instance
+
+# TODO process results
+
+    respond_show
 
   end
 
   # PUT|PATCH /analysis_jobs/system/audio_recordings/:audio_recording_id
   def system_update
-    fail MethodNotAllowedError.new('Cannot update a system job', [:put, :patch])
+    fail MethodNotAllowedError.new('Cannot update a system job\'s analysis jobs items', [:put, :patch])
   end
 
   # GET|POST /analysis_jobs/system/audio_recordings/filter
   def system_filter
+    do_authorize_class
+    get_opts
 
+    filter_response, opts = Settings.api_response.response_advanced(
+        api_filter_params,
+        get_virtual_analysis_jobs_items,
+        AudioRecording,
+        AnalysisJobsItem.filter_settings # TODO
+    )
+
+    # TODO transform response
+
+    respond_filter(filter_response, opts)
   end
 
   private
 
-  SYSTEM_JOB_ID = 'system'
 
   def analysis_jobs_item_update_params
     # Only status can be updated via API
@@ -127,21 +167,25 @@ class AnalysisJobsItemsController < ApplicationController
 
   def get_opts
     @analysis_job_id = params[:analysis_job_id]
-    @is_system_job = params[:analysis_job_id] == SYSTEM_JOB_ID
+    @audio_recording_id = params[:audio_recording_id]
   end
 
   def get_analysis_job
-    @analysis_job = @is_system_job ? nil : AnalysisJob.find(@analysis_job_id)
+    @analysis_job = AnalysisJob.find(@analysis_job_id)
   end
 
   def get_analysis_jobs_items
-    Access::Query.analysis_jobs_items(@analysis_job, current_user, Access::Core.levels_allow)
+    Access::Query.analysis_jobs_items(@analysis_job, current_user)
+  end
+
+  def get_virtual_analysis_jobs_items
+    Access::Query.audio_recordings(current_user)
   end
 
   def do_load_resource
     resource = AnalysisJobsItem.find_by(
         analysis_job_id: @analysis_job_id,
-        audio_recording_id: params[:audio_recording_id]
+        audio_recording_id: @audio_recording_id
     )
     set_resource(resource)
   end
