@@ -96,7 +96,7 @@ class AnalysisJobsController < ApplicationController
   end
 
   def system_mutate
-    fail MethodNotAllowedError.new('Cannot update a system job', [:put, :patch, :delete])
+    fail MethodNotAllowedError.new('Cannot update a system job', except: [:put, :patch, :delete])
   end
 
   private

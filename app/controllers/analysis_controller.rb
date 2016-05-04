@@ -21,6 +21,8 @@ class AnalysisController < ApplicationController
     # start timing request
     overall_start = Time.now
 
+    fail "deprecated"
+
     # normalise params and get access to rails request instance
     request_params = CleanParams.perform(params.dup)
 

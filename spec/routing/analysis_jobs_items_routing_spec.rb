@@ -93,4 +93,5 @@ describe AnalysisJobsItemsController, :type => :routing do
 
 
   end
+
 end
