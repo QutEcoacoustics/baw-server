@@ -21,7 +21,11 @@ module CustomErrors
     attr_reader :additional_details
     def initialize(message = nil, except = [], available_methods = [:get, :post, :put, :patch, :head, :delete, :options])
       @message = message
-      available_methods = available_methods - except
+      @available_methods = available_methods - except
+    end
+
+    def available_methods
+      @available_methods
     end
 
     def to_s

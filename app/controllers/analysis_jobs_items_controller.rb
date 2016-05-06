@@ -31,15 +31,26 @@ class AnalysisJobsItemsController < ApplicationController
     # - IF analysis_job not deleted
     do_authorize_class
     get_opts
-    get_analysis_job
 
+    if @is_system_job
+      @analysis_jobs_items, opts = Settings.api_response.response_advanced(
+          api_filter_params,
+          get_virtual_analysis_jobs_items,
+          AnalysisJobsItem,
+          AnalysisJobsItem.filter_settings
+      )
 
-    @analysis_jobs_items, opts = Settings.api_response.response_advanced(
-        api_filter_params,
-        get_analysis_jobs_items,
-        AnalysisJobItem,
-        AnalysisJobItem.filter_settings
-    )
+    else
+      get_analysis_job
+
+      @analysis_jobs_items, opts = Settings.api_response.response_advanced(
+          api_filter_params,
+          get_analysis_jobs_items,
+          AnalysisJobsItem,
+          AnalysisJobsItem.filter_settings
+      )
+    end
+
     respond_index(opts)
   end
 
@@ -49,14 +60,37 @@ class AnalysisJobsItemsController < ApplicationController
     # - IF has access to audio recording
     # - IF analysis_job not deleted
 
-    get_opts
-
-    do_load_resource
+    request_params = get_opts
 
 
-    do_authorize_instance
+    if @is_system_job
+      # load audio recording instead
+      audio_recording = AudioRecording.find(@audio_recording_id.to_i)
+      do_authorize_instance
+
+      dummy_aji = AnalysisJobsItem.new(audio_recording_id: audio_recording.id)
+      set_resource(dummy_aji)
+
+    else
+      do_load_resource
+
+      audio_recording = AudioRecording.find(@audio_recording_id.to_i)
+
+      do_authorize_instance
+    end
+
+
+
+
+
 
     # TODO process results
+    show_results(request, request_params, {
+        analysis_job_id: @analysis_job_id,
+        audio_recording_id: @audio_recording_id,
+        audio_recording: audio_recording,
+        analysis_jobs_item: get_resource
+    })
 
     respond_show
   end
@@ -71,6 +105,14 @@ class AnalysisJobsItemsController < ApplicationController
   def update
     # TODO: double check permissions
     # - IFF has role :harvester
+
+    get_opts
+
+    if @is_system_job
+      fail CustomErrors::MethodNotAllowedError.new('Cannot update a system job\'s analysis jobs items', [:post, :put, :patch, :delete])
+    end
+
+
     do_load_resource
     do_authorize_instance
 
@@ -85,79 +127,32 @@ class AnalysisJobsItemsController < ApplicationController
   def filter
     do_authorize_class
     get_opts
-    get_analysis_job
 
-    filter_response, opts = Settings.api_response.response_advanced(
-        api_filter_params,
-        get_analysis_jobs_items,
-        AnalysisJobsItem,
-        AnalysisJobsItem.filter_settings
-    )
-    respond_filter(filter_response, opts)
-  end
+    if @is_system_job
+      @analysis_jobs_items, opts = Settings.api_response.response_advanced(
+          api_filter_params,
+          get_virtual_analysis_jobs_items,
+          AnalysisJobsItem,
+          AnalysisJobsItem.filter_settings
+      )
 
-  #
-  # 'system' actions - matched via route
-  #
+    else
+      get_analysis_job
 
-  SYSTEM_JOB_ID = AnalysisJobsController::SYSTEM_JOB_ID
-
-  # GET|HEAD /analysis_jobs/system/audio_recordings/
-  def system_index
-    do_authorize_class
-    get_opts
-
-    filter_response, opts = Settings.api_response.response_advanced(
-        api_filter_params,
-        get_virtual_analysis_jobs_items,
-        AudioRecording,
-        AnalysisJobsItem.filter_settings # TODO
-    )
-
-    # TODO transform response
-
-    respond_filter(filter_response, opts)
-  end
-
-  # GET|HEAD /analysis_jobs/system/audio_recordings/:audio_recording_id
-  def system_show
-    get_opts
-
-    audio_recording = AnalysisJob.find(@analysis_job_id)
-# TODO transform response
-
-    do_authorize_instance
-
-# TODO process results
-
-    respond_show
-
-  end
-
-  # PUT|PATCH /analysis_jobs/system/audio_recordings/:audio_recording_id
-  def system_update
-    fail MethodNotAllowedError.new('Cannot update a system job\'s analysis jobs items', [:put, :patch])
-  end
-
-  # GET|POST /analysis_jobs/system/audio_recordings/filter
-  def system_filter
-    do_authorize_class
-    get_opts
-
-    filter_response, opts = Settings.api_response.response_advanced(
-        api_filter_params,
-        get_virtual_analysis_jobs_items,
-        AudioRecording,
-        AnalysisJobsItem.filter_settings # TODO
-    )
-
-    # TODO transform response
+      @analysis_jobs_items, opts = Settings.api_response.response_advanced(
+          api_filter_params,
+          get_analysis_jobs_items,
+          AnalysisJobsItem,
+          AnalysisJobsItem.filter_settings
+      )
+    end
 
     respond_filter(filter_response, opts)
   end
 
   private
 
+  SYSTEM_JOB_ID = AnalysisJobsController::SYSTEM_JOB_ID
 
   def analysis_jobs_item_update_params
     # Only status can be updated via API
@@ -166,15 +161,15 @@ class AnalysisJobsItemsController < ApplicationController
   end
 
   def get_opts
-
     # normalise params and get access to rails request instance
     request_params = CleanParams.perform(params.dup)
 
-
     if request_params[:analysis_job_id].to_s.downcase == SYSTEM_JOB_ID
-      @analysis_job_id = system_job_id
+      @analysis_job_id = SYSTEM_JOB_ID
+      @is_system_job = true
     else
       @analysis_job_id = request_params[:analysis_job_id].to_i
+      @is_system_job = false
 
       if @analysis_job_id.blank? || @analysis_job_id < 1
         fail CustomErrors::UnprocessableEntityError, "Invalid job id #{request_params[:analysis_job_id].to_s}."
@@ -198,6 +193,8 @@ class AnalysisJobsItemsController < ApplicationController
 
   def get_virtual_analysis_jobs_items
     Access::Query.audio_recordings(current_user)
+
+    # TODO transform response
   end
 
   def get_audio_recording
@@ -207,7 +204,10 @@ class AnalysisJobsItemsController < ApplicationController
     end
 
     @audio_recording = AudioRecording.where(id: request_params[:audio_recording_id]).first
+  end
 
+  def do_authorize_system_instance()
+    authorize! :show, get_resource
   end
 
   def do_load_resource
@@ -253,10 +253,10 @@ class AnalysisJobsItemsController < ApplicationController
     # assertion: audio_recordings not in this job should means should not have entered this method - should have been caught by authorization
 
     # extract parameters for analysis response
-    audio_recording = options.audio_recording
-    analysis_job_id = options.analysis_job_id
+    audio_recording = options[:audio_recording]
+    analysis_job_id = options[:analysis_job_id]
 
-    results_path_hash = get_results_path(request_params, options.analysis_job_id, options.audio_recording)
+    results_path_hash = get_results_path(request_params, analysis_job_id, audio_recording)
     paths = BawWorkers::Config.analysis_cache_helper.existing_paths(results_path_hash)
 
     # shared error info

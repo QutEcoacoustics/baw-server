@@ -215,54 +215,22 @@ Rails.application.routes.draw do
 
   end
 
-  # API only routes for analysis jobs and analysis jobs items - where :id == 'system'
-  system_id = AnalysisJobsController::SYSTEM_JOB_ID
-  constraints(id: system_id) do
-
-    match 'analysis_jobs/:id' => 'analysis_jobs#system_all', # here so it has higher priority
-          defaults: {format: 'json'}, as: :analysis_system_show, via: [:get, :head], format: false,
-          id: system_id
-    match 'analysis_jobs/:id' => 'analysis_jobs#system_mutate',
-          defaults: {format: 'json'}, as: :analysis_system_mutate, via: [:put, :patch, :delete], format: false
-  end
-
-  # system analysis jobs items and results
-  analysis_job_items_base = 'analysis_jobs/:analysis_job_id/audio_recordings'
-  constraints(analysis_job_id: system_id) do
-    # with the amount of customization required it is easier just to list the matches rather than use a resources
-
-    # filter
-    match 'analysis_jobs/:id/audio_recordings/filter' => 'analysis_jobs_items#system_filter',
-          via: [:get, :post], defaults: {format: 'json'}
-
-    # index
-    match analysis_job_items_base => 'analysis_jobs_items#system_index',
-          defaults: {format: 'json'}, as: :analysis_jobs_items_system_index, via: [:get, :head], format: false
-
-    # show - with result path
-    match analysis_job_items_base + '/:audio_recording_id(/*results_path)' => 'analysis_jobs_items#system_show',
-          defaults: {format: 'json'}, as: :analysis_jobs_items_system_show, via: [:get, :head], format: false
-
-    # update
-    match analysis_job_items_base + '/:audio_recording_id/' => 'analysis_jobs_items#system_update',
-          defaults: {format: 'json'}, as: :analysis_jobs_items_system_update, via: [:post, :patch], format: false
-  end
-
   # placed above related resource so it does not conflict with (resource)/:id => (resource)#show
   match 'analysis_jobs/filter' => 'analysis_jobs#filter',
         via: [:get, :post], defaults: {format: 'json'}
-
+  match 'analysis_jobs/:analysis_job_id/audio_recordings/filter' => 'analysis_jobs_items#filter',
+        via: [:get, :post], defaults: {format: 'json'}, as: :analysis_job_analysis_jobs_items_filter
   match 'saved_searches/filter' => 'saved_searches#filter',
         via: [:get, :post], defaults: {format: 'json'}
 
   # route for AnalysisJobsItems and results
-  match analysis_job_items_base + '/:audio_recording_id/*results_path' => 'analysis_jobs_items#show',
+  match 'analysis_jobs/:analysis_job_id/audio_recordings/:audio_recording_id/*results_path' => 'analysis_jobs_items#show',
         defaults: {format: 'json'}, as: :analysis_jobs_items_show, via: [:get, :head], format: false
 
-  # API only for analysis_jobs and saved_searches
+  # API only for analysis_jobs, analysis_jobs_items and saved_searches
   resources :analysis_jobs, except: [:edit], defaults: {format: 'json'} do
-    resources :analysis_jobs_items, only: [:show, :index, :update], defaults: {format: 'json'},
-              as: 'audio_recordings', param: :audio_recording_id
+    resources 'audio_recordings', controller: 'analysis_jobs_items', only: [:show, :index, :update],
+              defaults: {format: 'json'}, param: :audio_recording_id
   end
   resources :saved_searches, except: [:edit, :update], defaults: {format: 'json'}
 

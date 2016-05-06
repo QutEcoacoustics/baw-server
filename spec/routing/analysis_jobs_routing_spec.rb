@@ -17,16 +17,16 @@ describe AnalysisJobsController, :type => :routing do
     it { expect(get('/analysis_jobs/filter')).to route_to('analysis_jobs#filter', format: 'json') }
 
 
-    it { expect(get('/analysis_jobs/system')).to route_to('analysis_jobs#system_all', id: 'system', format: 'json') }
+    # test with 'system' as :id
+    it { expect(get('/analysis_jobs/system')).to route_to('analysis_jobs#show', id: 'system', format: 'json') }
     it {
       expect(get('/analysis_jobs/system/edit')).to \
         route_to('errors#route_error', requested_route: 'analysis_jobs/system/edit')
     }
-    it { expect(put('/analysis_jobs/system')).to route_to('analysis_jobs#system_mutate', id: 'system', format: 'json') }
+    it { expect(put('/analysis_jobs/system')).to route_to('analysis_jobs#update', id: 'system', format: 'json') }
     it {
-      expect(delete('/analysis_jobs/system')).to route_to('analysis_jobs#system_mutate', id: 'system', format: 'json')
+      expect(delete('/analysis_jobs/system')).to route_to('analysis_jobs#destroy', id: 'system', format: 'json')
     }
-
 
   end
 end

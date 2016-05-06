@@ -18,6 +18,8 @@ class AnalysisJobsController < ApplicationController
 
   # GET /analysis_jobs/1
   def show
+    return system_show if is_system?
+
     do_load_resource
     do_authorize_instance
 
@@ -53,6 +55,8 @@ class AnalysisJobsController < ApplicationController
 
   # PUT|PATCH /analysis_jobs/1
   def update
+    return system_mutate if is_system?
+
     do_load_resource
     do_authorize_instance
 
@@ -65,6 +69,8 @@ class AnalysisJobsController < ApplicationController
 
   # DELETE /analysis_jobs/1
   def destroy
+    return system_mutate if is_system?
+
     do_load_resource
     do_authorize_instance
 
@@ -90,16 +96,21 @@ class AnalysisJobsController < ApplicationController
     respond_filter(filter_response, opts)
   end
 
-  # GET|HEAD /analysis_jobs/system
-  def system_all
-    fail NotImplementedError
-  end
-
-  def system_mutate
-    fail MethodNotAllowedError.new('Cannot update a system job', except: [:put, :patch, :delete])
-  end
-
   private
+
+  # GET|HEAD /analysis_jobs/system
+  def system_show
+    fail NotImplementedError.new
+  end
+
+  # PUT|PATCH|DELETE /analysis_jobs/system
+  def system_mutate
+    fail CustomErrors::MethodNotAllowedError.new('Cannot update a system job', [:post, :put, :patch, :delete])
+  end
+
+  def is_system?
+    params[:id] == 'system'
+  end
 
   def analysis_job_create_params
     # When Analysis jobs are created, they must have
@@ -122,5 +133,4 @@ class AnalysisJobsController < ApplicationController
   def get_analysis_jobs
     Access::Query.analysis_jobs(current_user, Access::Core.levels_allow)
   end
-
 end

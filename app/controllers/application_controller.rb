@@ -26,13 +26,14 @@ class ApplicationController < ActionController::Base
   rescue_from ActiveRecord::RecordNotUnique, with: :record_not_unique_response
   rescue_from ActionController::BadRequest, with: :bad_request_response
   rescue_from ActionController::InvalidAuthenticityToken, with: :invalid_csrf_response
+  rescue_from NotImplementedError, with: :not_implemented_response
 
   # Custom errors - these use the message in the error
   # RoutingArgumentError - error handling for routes that take a combination of attributes
   rescue_from CustomErrors::RoutingArgumentError, with: :routing_argument_error_response
   rescue_from CustomErrors::ItemNotFoundError, with: :item_not_found_error_response
   rescue_from CustomErrors::UnsupportedMediaTypeError, with: :unsupported_media_type_error_response
-  rescue_from CustomErrors::NotAcceptableError, with: :method_not_allowed_error_response
+  rescue_from CustomErrors::MethodNotAllowedError, with: :method_not_allowed_error_response
   rescue_from CustomErrors::NotAcceptableError, with: :not_acceptable_error_response
   rescue_from CustomErrors::UnprocessableEntityError, with: :unprocessable_entity_error_response
   rescue_from CustomErrors::FilterArgumentError, with: :filter_argument_error_response
@@ -462,6 +463,15 @@ class ApplicationController < ActionController::Base
         "Audio generation failed: #{error.message}",
         error,
         'audio_tool_error_response'
+    )
+  end
+
+  def not_implemented_response(error)
+    render_error(
+        :not_implemented,
+        'The service is not ready for use',
+        error,
+        'not_implemented_response'
     )
   end
 

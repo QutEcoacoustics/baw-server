@@ -241,14 +241,14 @@ class Ability
   end
 
   def to_analysis_job(user)
-    # must have read permission or higher on all saved_search.projects to create analysis job
+    # must have read permission or higher on ANY saved_search.projects to create analysis job
     can [:show, :create], AnalysisJob do |analysis_job|
       check_model(analysis_job)
       fail CustomErrors::BadRequestError.new('Analysis Job must have a saved search.') if analysis_job.saved_search.nil?
       projects = analysis_job.saved_search.projects
       fail CustomErrors::BadRequestError.new('Saved search must have at least one project.') if projects.size < 1
 
-      Access::Check.can_all?(user, :reader, projects)
+      Access::Check.can_any?(user, :reader, projects)
     end
 
     # only creator can update, destroy their own analysis jobs

@@ -247,9 +247,9 @@ module Access
                     .joins(:audio_recording)
                     .order(created_at: :desc)
                     .joins(:analysis_job) # this join ensures only non-deleted results are returned
-                    .where(analysis_job: {id: analysis_job.id})
+                    .where(analysis_jobs: {id: analysis_job.id})
 
-            Access::Apply.restrictions(user, levels, query)
+        Access::Apply.restrictions(user, levels, query)
       end
 
 

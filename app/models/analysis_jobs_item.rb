@@ -81,7 +81,7 @@ class AnalysisJobsItem < ActiveRecord::Base
         valid_fields: fields,
         render_fields: fields,
         text_fields: [:queue_id],
-        controller: :audio_events,
+        controller: :analysis_jobs_items,
         action: :filter,
         defaults: {
             order_by: :audio_recording_id,
@@ -93,6 +93,33 @@ class AnalysisJobsItem < ActiveRecord::Base
                 on: AnalysisJobsItem.arel_table[:analysis_job_id].eq(AnalysisJob.arel_table[:id]),
                 available: true
             },
+            {
+                join: AudioRecording,
+                on: AnalysisJobsItem.arel_table[:audio_recording_id].eq(AudioRecording.arel_table[:id]),
+                available: true
+            }
+        ]
+    }
+  end
+
+  # Special filter settings
+  def self.filter_settings_system
+
+    fields = [
+        :audio_recording_id
+    ]
+
+    {
+        valid_fields: fields,
+        render_fields: fields,
+        text_fields: [],
+        controller: :analysis_jobs_items,
+        action: :filter,
+        defaults: {
+            order_by: :audio_recording_id,
+            direction: :asc
+        },
+        valid_associations: [
             {
                 join: AudioRecording,
                 on: AnalysisJobsItem.arel_table[:audio_recording_id].eq(AudioRecording.arel_table[:id]),
