@@ -8,7 +8,7 @@ Gem::Specification.new do |spec|
   spec.name          = 'baw-audio-tools'
   spec.version       = BawAudioTools::VERSION
   spec.authors       = ['Mark Cottman-Fields']
-  spec.email         = ['qut.bioacoustics.research+mark@gmail.com']
+  spec.email         = ['cofiem@gmail.com']
   spec.summary       = %q{Bioacoustics Workbench audio tools}
   spec.description   = %q{Contains the audio, spectrogram, and caching tools for the Bioacoustics Workbench project.}
   spec.homepage      = 'https://github.com/QutBioacoustics/baw-audio-tools'
@@ -21,7 +21,7 @@ Gem::Specification.new do |spec|
 
   # dev dependencies
   spec.add_development_dependency 'bundler', '~> 1.7'
-  spec.add_development_dependency 'rake', '~> 10.4'
+  spec.add_development_dependency 'rake', '~> 11.1'
   spec.add_development_dependency 'guard', '~> 2.12'
   spec.add_development_dependency 'guard-rspec', '~> 4.5'
   spec.add_development_dependency 'guard-yard', '~> 2.1'
