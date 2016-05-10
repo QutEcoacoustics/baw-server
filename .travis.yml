@@ -1,7 +1,7 @@
 language: ruby
 sudo: false
 rvm:
-- 2.2.3
+- 2.3.0
 branches:
   only:
   - master
@@ -53,7 +53,7 @@ before_install:
   - wav2png --version
   - wac2wavcmd </dev/null || true
 script:
-- bundle exec rspec
+- bin/rspec
 env:
   global:
     secure: alRlkr6JHTx8Op2G4S65JKot8k9zSuXEHHRu8ZqCk1uOrHVmEbljuN8kQhyNkM5vP4khwqSx64fPn4T8vBQCJ03cdsGQjO3SPR72ZdsYI4NLKD1tTu8yCn0n5w23LzLkY7IE5TwBH5XkuHjh0dGc7COWlc/F5Dnw3+o20Y5G1gA=
