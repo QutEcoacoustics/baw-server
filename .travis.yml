@@ -21,6 +21,7 @@ addons:
     - libpng++-dev
     - libpng12-dev
     - libboost-program-options-dev
+    - unzip
 before_install:
 
   # download, extract, and add ffmpeg and ffprobe to path
@@ -36,12 +37,21 @@ before_install:
   - mv /tmp/wav2png_git/bin/Linux/wav2png /tmp/wav2png/wav2png
   - export PATH=/tmp/wav2png:$PATH
 
+  # download, extract, build, and add wac2wavcmd to path
+  - mkdir /tmp/wac2wav
+  - wget https://github.com/QutBioacoustics/baw-audio-tools/releases/download/v0.1.1/wac2wavcmd-1.0.zip
+  - unzip wac2wavcmd-1.0.zip
+  - make -C ./wac2wavcmd-1.0/
+  - mv ./wac2wavcmd-1.0/wac2wavcmd /tmp/wac2wav/wac2wavcmd
+  - export PATH=/tmp/wac2wav/:$PATH
+
   # check versions
   - which ffmpeg
   - ffmpeg -version
   - mp3splt -version
   - sox --version
   - wav2png --version
+  - /dev/null | wac2wavcmd
 script:
 - bundle exec rspec
 env:
