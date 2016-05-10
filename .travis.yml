@@ -51,7 +51,7 @@ before_install:
   - mp3splt -version
   - sox --version
   - wav2png --version
-  - /dev/null | wac2wavcmd
+  - wac2wavcmd </dev/null || true
 script:
 - bundle exec rspec
 env:
