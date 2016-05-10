@@ -11,7 +11,7 @@ describe 'rake tasks' do
       reset_settings
       BawWorkers::Config.run(settings_file: RSpec.configuration.default_settings_path, redis: true, resque_worker: true)
 
-      expect(worker_log_content).to match(/"test":true,"file":"[^"]+\/baw-workers\/lib\/settings\/settings.default.yml","namespace":"settings"/)
+      expect(worker_log_content).to match(/"test":true,"file":"[^"]+\/baw-workers\/tmp\/settings.default.yml","namespace":"settings"/)
       expect(worker_log_content).to include('"redis":{"configured":true,"namespace":"resque","connection":"fake"')
       expect(worker_log_content).to include('"resque_worker":{"running":true,"mode":"bg","pid_file":"./tmp/logs/resque_worker.pid","queues":"example","poll_interval":5}')
       expect(worker_log_content).to include('"logging":{"file_only":true,"worker":1,"mailer":1,"audio_tools":2}')

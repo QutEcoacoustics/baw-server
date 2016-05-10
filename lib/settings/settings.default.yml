@@ -30,6 +30,8 @@ settings:
       # name of queue to append jobs onto
       queue: harvest_default
       config_file_name: harvest.yml
+      # top level directory for mirroring harvested files, used by dequeue workers only
+      copy_base_path: ./tmp/custom_temp_dir/temp/copy_base_path
     media:
       # name of queue to append jobs onto
       queue: media_default
@@ -49,8 +51,9 @@ settings:
     mailer_log_file: ./tmp/logs/mailer.log
     audio_tools_log_file: ./tmp/logs/audio_tools.log
     temp_dir: ./tmp/custom_temp_dir/temp
-    working_dir: ./tmp/custom_temp_dir/working
+    programs_dir: ./tmp/programs
   endpoints:
+    use_ssl: true
     login: /security
     audio_recording: /audio_recordings/:id
     audio_recording_create: /projects/:project_id/sites/:site_id/audio_recordings

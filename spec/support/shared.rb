@@ -1,5 +1,10 @@
 shared_context 'shared_test_helpers' do
 
+  let(:host) { 'localhost' }
+  let(:port) { 3030 }
+  let(:scheme) { BawWorkers::Settings.endpoints.use_ssl.to_s.downcase == 'true' ? 'https' : 'http'}
+  let(:default_uri) { "#{scheme}://#{host}:#{port}" }
+
   # example files
   let(:example_media_dir) { File.expand_path(File.join(File.dirname(__FILE__), '..', 'example_media')) }
 
@@ -11,6 +16,15 @@ shared_context 'shared_test_helpers' do
   let(:audio_file_mono_duration_seconds) { 70 }
   let(:audio_file_mono_data_length_bytes) { 822281 }
   let(:audio_file_mono_bit_rate_bps) { 239920 }
+
+  let(:audio_file_mono_29) { File.expand_path(File.join(example_media_dir, 'test-audio-mono.ogg')) }
+  let(:audio_file_mono_29_media_type) { Mime::Type.lookup('audio/ogg') }
+  let(:audio_file_mono_29_format) { 'ogg' }
+  let(:audio_file_mono_29_sample_rate) { 44100 }
+  let(:audio_file_mono_29_channels) { 1 }
+  let(:audio_file_mono_29_duration_seconds) { 29.0 }
+  let(:audio_file_mono_29_data_length_bytes) { 296756 }
+  let(:audio_file_mono_29_bit_rate_bps) { 239920 }
 
   let(:duration_range) { 0.11 }
 

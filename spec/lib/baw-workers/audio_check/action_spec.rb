@@ -211,7 +211,7 @@ describe BawWorkers::AudioCheck::Action do
         # act
         expect {
           BawWorkers::AudioCheck::Action.action_perform(original_params)
-        }.to raise_error(BawAudioTools::Exceptions::FileCorruptError, /Ffmpeg output contained warning/)
+        }.to raise_error(BawAudioTools::Exceptions::AudioToolError, /End of file/)
 
         expect(ActionMailer::Base.deliveries.count).to eq(0)
       end
@@ -390,7 +390,7 @@ describe BawWorkers::AudioCheck::Action do
         xsrf_value = 'DFvcwhrXYL8AJKl%2BlZznx%2FJFz15%2BHKPQg%2BAXwYsOIHx%2BRxVEHDPya%2Fm%2Bv9BgbcVSsQ6CGi8%2BLLbzBCAtg%3D%3D'
         xsrf_decoded = 'DFvcwhrXYL8AJKl+lZznx/JFz15+HKPQg+AXwYsOIHx+RxVEHDPya/m+v9BgbcVSsQ6CGi8+LLbzBCAtg=='
         cookie_value = "XSRF-TOKEN=#{xsrf_value}; path=/"
-        login_request = stub_request(:post, "http://localhost:3030/security").
+        login_request = stub_request(:post, "#{default_uri}/security").
             with(:body => get_api_security_request(email, password),
                  :headers => {'Accept' => 'application/json', 'Content-Type' => 'application/json', 'User-Agent' => 'Ruby'}).
             to_return(status: 200, body: get_api_security_response(email, auth_token).to_json, headers: {'Set-Cookie' => cookie_value})
@@ -404,7 +404,7 @@ describe BawWorkers::AudioCheck::Action do
             duration_seconds: audio_file_mono_duration_seconds.to_f
         }
 
-        stub_request(:put, "http://localhost:3030/audio_recordings/#{test_params['id']}").
+        stub_request(:put, "#{default_uri}/audio_recordings/#{test_params['id']}").
             with(:body => expected_request_body.to_json,
                  :headers => {'Accept' => 'application/json', 'Authorization' => 'Token token="'+auth_token+'"',
                               'Content-Type' => 'application/json', 'User-Agent' => 'Ruby',
@@ -449,12 +449,12 @@ describe BawWorkers::AudioCheck::Action do
         auth_token = 'auth token I am'
         email = 'address@example.com'
         password = 'password'
-        login_request = stub_request(:post, 'http://localhost:3030/security').
+        login_request = stub_request(:post, "#{default_uri}/security").
             with(:body => get_api_security_request(email, password),
                  :headers => {'Accept' => 'application/json', 'Content-Type' => 'application/json', 'User-Agent' => 'Ruby'}).
             to_return(status: 200, body: get_api_security_response(email, auth_token).to_json)
 
-        stub_request(:put, "http://localhost:3030/audio_recordings/#{test_params['id']}").
+        stub_request(:put, "#{default_uri}/audio_recordings/#{test_params['id']}").
             with(:body => expected_request_body.to_json,
                  :headers => {'Accept' => 'application/json', 'Authorization' => 'Token token="'+auth_token+'"', 'Content-Type' => 'application/json', 'User-Agent' => 'Ruby'}).
             to_return(:status => 200)
@@ -499,7 +499,7 @@ describe BawWorkers::AudioCheck::Action do
           auth_token = 'auth token I am'
           email = 'address@example.com'
           password = 'password'
-          login_request = stub_request(:post, "http://localhost:3030/security").
+          login_request = stub_request(:post, "#{default_uri}/security").
               with(:body => get_api_security_request(email, password),
                    :headers => {'Accept' => 'application/json', 'Content-Type' => 'application/json', 'User-Agent' => 'Ruby'}).
               to_return(status: 200, body: get_api_security_response(email, auth_token).to_json)
@@ -514,7 +514,7 @@ describe BawWorkers::AudioCheck::Action do
               duration_seconds: audio_file_mono_duration_seconds.to_f
           }
 
-          update_request = stub_request(:put, "http://localhost:3030/audio_recordings/#{test_params['id']}").
+          update_request = stub_request(:put, "#{default_uri}/audio_recordings/#{test_params['id']}").
               with(:body => expected_request_body.to_json,
                    :headers => {'Accept' => 'application/json', 'Authorization' => 'Token token="'+auth_token+'"', 'Content-Type' => 'application/json', 'User-Agent' => 'Ruby'}).
               to_return(:status => 200)
@@ -547,7 +547,7 @@ describe BawWorkers::AudioCheck::Action do
   it 'runs standalone with errors' do
     csv_file = copy_test_audio_check_csv
 
-    BawWorkers::AudioCheck::CsvHelper.read_audio_recording_csv(csv_file) do |audio_params|
+    BawWorkers::ReadCsv.read_audio_recording_csv(csv_file) do |audio_params|
       audio_params[:datetime_with_offset] = audio_params[:recorded_date]
       create_original_audio(audio_params, audio_file_mono, false)
       # FileUtils.touch(File.join(audio_original.possible_dirs[0], '83/837df827-2be2-43ef-8f48-60fa0ee6ad37_930712-1552.asf'))

@@ -23,8 +23,9 @@ module BawWorkers
       # Process a single audio file.
       # @param [Hash] file_info_hash
       # @param [Boolean] is_real_run
+      # @param [Boolean] copy_on_success
       # @return [Array<String>] existing target paths
-      def run(file_info_hash, is_real_run)
+      def run(file_info_hash, is_real_run, copy_on_success = false)
 
         file_info_hash.deep_symbolize_keys!
 
@@ -35,6 +36,18 @@ module BawWorkers
         file_format = File.extname(file_path).trim('.', '')
 
         @logger.info(@class_name) { "Processing #{file_path}..." }
+
+        # check if file is empty or does not exist first
+        # -----------------------------
+        if !File.exists?(file_path)
+          @logger.error(@class_name) { "File was not found #{file_path}" }
+          fail BawAudioTools::Exceptions::FileNotFoundError, msg
+        elsif File.size(file_path) < 1
+          empty_file_new_name = rename_empty_file(file_path)
+          msg = "File has no content (length of 0 bytes) renamed to #{File.basename(empty_file_new_name)} from #{file_path}"
+          @logger.error(@class_name) { msg }
+          fail BawAudioTools::Exceptions::FileEmptyError, msg
+        end
 
         # construct file_info_hash for new audio recording request
         # -----------------------------
@@ -63,13 +76,16 @@ module BawWorkers
         # -----------------------------
         response_hash = get_new_audio_recording(file_path, project_id, site_id, audio_info_hash, security_info)
 
-        audio_recording_id = response_hash['id']
-        audio_recording_uuid = response_hash['uuid']
-        audio_recording_recorded_date = response_hash['recorded_date']
+        audio_recording_id = response_hash['data']['id']
+        audio_recording_uuid = response_hash['data']['uuid']
+        audio_recording_recorded_date = response_hash['data']['recorded_date']
 
 
         # catch any errors after audio is created so status can be updated
         # -----------------------------
+
+        harvest_completed_successfully = false
+
         begin
 
           # update audio recording status on website to uploading
@@ -103,7 +119,9 @@ module BawWorkers
               create_update_hash(audio_recording_uuid, file_hash, :ready),
               security_info)
 
-        rescue Exception => e
+          harvest_completed_successfully = true
+
+        rescue => e
           msg = "Error after audio recording created on website, status set to aborted. Exception: #{e}"
           @logger.error(@class_name) { msg }
           @api_comm.update_audio_recording_status(
@@ -113,6 +131,28 @@ module BawWorkers
               create_update_hash(audio_recording_uuid, file_hash, :aborted),
               security_info)
           raise e
+        end
+
+        # do this outside 'atomic' functionality above so that if
+        # anything here fails, the harvest is still successful.
+        # only run this if harvest was successful
+        if harvest_completed_successfully
+
+          # enqueue task to copy harvested file
+          if copy_on_success
+            source = File.expand_path(existing_target_paths[0])
+
+            copy_base_path = BawWorkers::Settings.actions.harvest.copy_base_path
+            raw_destination = File.join(copy_base_path, create_relative_path(storage_file_opts))
+            destination = File.expand_path(raw_destination)
+
+            BawWorkers::Mirror::Action.action_enqueue(source, [destination])
+
+            @logger.info(@class_name) { "Enqueued mirror task with source #{source} and destination #{destination}" }
+          end
+
+          # enqueue task to run analysis
+          # BawWorkers::Analysis::Action.
         end
 
         @logger.info(@class_name) { "Finished processing #{file_path}: #{audio_info_hash}" }
@@ -158,7 +198,18 @@ module BawWorkers
         response_hash = create_response[:response_json]
 
         if response_hash.blank?
+
           msg = "Request to create audio recording from #{file_path} failed: Code #{response_meta.code}, Message: #{response_meta.message}, Body: #{response_meta.body}"
+
+          # rename file if it is too short
+          if response_meta.code == '422' &&
+              response_meta.body.include?('duration_seconds') &&
+              response_meta.body.include?('must be greater than or equal to')
+
+            new_file_path = rename_short_file(file_path)
+            msg += ", File renamed to #{new_file_path}."
+          end
+
           @logger.error(@class_name) { msg }
           fail BawWorkers::Exceptions::HarvesterEndpointError, msg
         end
@@ -167,7 +218,7 @@ module BawWorkers
       end
 
       def create_audio_info_hash(file_info_hash, content_info_hash)
-        {
+        info = {
             uploader_id: file_info_hash[:uploader_id].to_i,
             recorded_date: file_info_hash[:recorded_date],
             site_id: file_info_hash[:site_id].to_i,
@@ -180,6 +231,16 @@ module BawWorkers
             file_hash: content_info_hash[:file_hash].to_s,
             original_file_name: file_info_hash[:file_name].to_s,
         }
+
+        info[:notes] = {
+            relative_path: file_info_hash[:file_rel_path].to_s
+        }
+
+        if file_info_hash[:metadata]
+          info[:notes] = info[:notes].merge(file_info_hash[:metadata])
+        end
+
+        info
       end
 
       # Create hash for updating audio recording attributes.
@@ -244,6 +305,46 @@ module BawWorkers
         end
 
         check_target_paths
+      end
+
+      # Rename non-harvested file if it is too short.
+      # @param [String] file_path
+      # @return [String] new file name
+      def rename_short_file(file_path)
+        rename_file(file_path, 'error_duration')
+      end
+
+      # Rename non-harvested file if it has no content.
+      # @param [String] file_path
+      # @return [String] new file name
+      def rename_empty_file(file_path)
+        rename_file(file_path, 'error_empty')
+      end
+
+      # Rename a file by appending a suffix as an extension.
+      # @param [String] file_path
+      # @return [String] new file name
+      def rename_file(file_path, suffix)
+        renamed_source_file = file_path + '.' + suffix
+        File.rename(file_path, renamed_source_file)
+
+        if File.exists?(renamed_source_file)
+          @logger.info(@class_name) {
+            "Invalid source file #{file_path} was successfully renamed to #{renamed_source_file}."
+          }
+        else
+          @logger.warn(@class_name) {
+            "Source file was not found, so not renamed #{file_path}."
+          }
+        end
+
+        renamed_source_file
+      end
+
+      def create_relative_path(storage_file_opts)
+        partial_path = @original_audio.partial_path(storage_file_opts)
+        file_name = @original_audio.file_name_utc(storage_file_opts)
+        File.join(partial_path, file_name)
       end
 
     end

@@ -11,7 +11,6 @@ require 'simplecov'
 
 if ENV['TRAVIS']
   require 'codeclimate-test-reporter'
-  require 'coveralls'
 
   # code climate
   CodeClimate::TestReporter.configure do |config|
@@ -19,11 +18,7 @@ if ENV['TRAVIS']
   end
   CodeClimate::TestReporter.start
 
-  # coveralls
-  Coveralls.wear!
-
   SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter[
-      Coveralls::SimpleCov::Formatter,
       CodeClimate::TestReporter::Formatter
   ]
 
@@ -55,12 +50,34 @@ require 'rake'
 def reset_settings
   # ensure each test has a completely clean slate to start
   tmp_logs_dir = File.expand_path('./tmp/logs/')
+  custom_dir = File.expand_path('./tmp/custom_temp_dir')
   tmp_custom_dir = File.expand_path('./tmp/custom_temp_dir/temp')
   tmp_working_dir = File.expand_path('./tmp/custom_temp_dir/working')
+  tmp_programs_dir = File.expand_path('./tmp/programs')
 
   FileUtils.rm_rf('./tmp/')
 
-  FileUtils.mkpath([tmp_logs_dir, tmp_custom_dir, tmp_working_dir])
+  FileUtils.mkpath([tmp_logs_dir, custom_dir, tmp_custom_dir, tmp_working_dir])
+
+  # provide access to default settings file
+  RSpec.configuration.add_setting :default_settings_path
+
+  settings_file_src =  File.expand_path(File.join(File.dirname(__FILE__), '..', 'lib', 'settings', 'settings.default.yml'))
+  settings_file_dest =  File.expand_path(File.join(File.dirname(__FILE__), '..', 'tmp', 'settings.default.yml'))
+
+  FileUtils.cp(settings_file_src, settings_file_dest)
+
+  # create programs dir and copy in echo
+  FileUtils.mkpath(tmp_programs_dir)
+  RSpec.configuration.default_settings_path = settings_file_dest
+
+  # copy echo into programs dir
+  FileUtils.cp('/bin/echo', File.join(tmp_programs_dir,'echo'))
+
+  touch_path = %x(which touch).strip
+  FileUtils.cp(touch_path, File.join(tmp_programs_dir,'touch'))
+
+  [tmp_logs_dir, custom_dir]
 end
 
 RSpec.configure do |config|
@@ -80,10 +97,6 @@ RSpec.configure do |config|
   #config.profile_examples = 20
 
   Zonebie.set_random_timezone
-
-  # provide access to default settings file
-  config.add_setting :default_settings_path
-  config.default_settings_path = File.expand_path(File.join(File.dirname(__FILE__), '..', 'lib', 'settings', 'settings.default.yml'))
 
   # indicate that webmock requests were successful
   WebMock.after_request do |request_signature, response|

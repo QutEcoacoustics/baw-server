@@ -1,28 +1,9 @@
 module BawWorkers
   module Harvest
     # Harvests audio files to be accessible via baw-server.
-    class Action
+    class Action < BawWorkers::ActionBase
 
-      # Ensure that there is only one job with the same payload per queue.
-      include Resque::Plugins::UniqueJob
-
-      # a set of keys starting with 'stats:jobs:queue_name' inside your Resque redis namespace
-      extend Resque::Plugins::JobStats
-
-      # track specific job instances and their status
-      include Resque::Plugins::Status
-
-      # include common methods
-      include BawWorkers::ActionCommon
-
-      # All methods do not require a class instance.
       class << self
-
-        # Delay when the unique job key is deleted (i.e. when enqueued? becomes false).
-        # @return [Fixnum]
-        def lock_after_execution_period
-          30
-        end
 
         # Get the queue for this action. Used by Resque.
         # @return [Symbol] The queue.
@@ -48,8 +29,16 @@ module BawWorkers
           }
 
           begin
-            result = action_single_file.run(harvest_params, is_real_run)
-          rescue Exception => e
+
+            copy_on_success = false
+            if harvest_params.include?(:copy_on_success)
+              copy_on_success = harvest_params[:copy_on_success]
+            elsif harvest_params.include?('copy_on_success')
+              copy_on_success = harvest_params['copy_on_success']
+            end
+
+            result = action_single_file.run(harvest_params, is_real_run, copy_on_success)
+          rescue => e
             BawWorkers::Config.logger_worker.error(self.name) { e }
             BawWorkers::Mail::Mailer.send_worker_error_email(
                 BawWorkers::Harvest::Action,
@@ -70,10 +59,11 @@ module BawWorkers
         # Harvest specified folder.
         # @param [String] to_do_path
         # @param [Boolean] is_real_run
+        # @param [Boolean] copy_on_success
         # @return [Hash] array of hashes representing operations performed
-        def action_perform_rake(to_do_path, is_real_run)
+        def action_perform_rake(to_do_path, is_real_run, copy_on_success = false)
           # returns results from action_gather_and_process
-          action_gather_and_process(to_do_path, is_real_run) do |file_hash|
+          action_gather_and_process(to_do_path, is_real_run, copy_on_success) do |file_hash|
             if is_real_run
               BawWorkers::Harvest::Action.action_run(file_hash, is_real_run)
             else
@@ -97,10 +87,11 @@ module BawWorkers
         # Enqueue multiple files for harvesting.
         # @param [String] to_do_path
         # @param [Boolean] is_real_run
+        # @param [Boolean] copy_on_success
         # @return [Array<Hash>] array of hashes representing operations performed
-        def action_enqueue_rake(to_do_path, is_real_run)
+        def action_enqueue_rake(to_do_path, is_real_run, copy_on_success = false)
           # returns results from action_gather_and_process
-          action_gather_and_process(to_do_path, is_real_run) do |file_hash|
+          action_gather_and_process(to_do_path, is_real_run, copy_on_success) do |file_hash|
             if is_real_run
               BawWorkers::Harvest::Action.action_enqueue(file_hash)
             else
@@ -178,14 +169,22 @@ module BawWorkers
           summary
         end
 
-        def action_gather_and_process(to_do_path, is_real_run)
+        def action_gather_and_process(to_do_path, is_real_run, copy_on_success = false)
           gather_files = action_gather_files
           file_hashes = gather_files.run(to_do_path)
 
           results = {path: to_do_path, results: []}
 
           file_hashes.each do |file_hash|
-            result = yield file_hash if block_given?
+
+            file_hash[:copy_on_success] = copy_on_success
+
+            if block_given?
+              result = yield file_hash
+            else
+              result = nil
+            end
+
             results[:results].push({info: file_hash, result: result})
           end
 
@@ -200,10 +199,8 @@ module BawWorkers
 
       end
 
-      # Perform method used by resque-status.
-      def perform
-        harvest_params = options['harvest_params']
-        self.class.action_perform(harvest_params)
+      def perform_options_keys
+        ['harvest_params']
       end
 
     end

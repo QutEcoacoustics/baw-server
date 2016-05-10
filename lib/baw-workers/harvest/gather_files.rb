@@ -1,3 +1,5 @@
+require 'pathname'
+
 module BawWorkers
   module Harvest
     # Get a list of files to be harvested.
@@ -34,7 +36,15 @@ module BawWorkers
         input_array = input if input.is_a?(Array)
 
         if input_array.size > 0
-          input_array.each { |item| results.push(*process(item, recurse)) }
+          input_array.each do |item|
+            if item.is_a?(String) && File.file?(item)
+              top_dir = File.dirname(item)
+            else
+              top_dir = item
+            end
+
+            results.push(*process(item, top_dir, recurse))
+          end
         else
           msg = "'#{input}' must be a string or an array of strings."
           @logger.warn(@class_name) { msg }
@@ -42,72 +52,84 @@ module BawWorkers
 
         @logger.info(@class_name) { "Finished gathering files. Found #{results.size} file(s)." }
 
-        results
+        results.compact
       end
 
       private
 
-      def process(input_string, recurse = true)
+      def process(path, top_dir, recurse = true)
+        dirs = []
         results = []
 
-        if input_string.is_a?(String) && File.file?(input_string)
-          @logger.info(@class_name) { "Found file #{input_string}." }
-          results.push(file(input_string))
-        elsif input_string.is_a?(String) && File.directory?(input_string)
-          path = File.expand_path(input_string)
-          results.push(*directory(path))
+        path = File.expand_path(path)
 
-          if recurse
-            found_dirs = Dir.glob(File.join(path, '*/'))
+        if path.is_a?(String) && File.file?(path)
+          @logger.info(@class_name) { "Found file #{path}." }
 
-            @logger.debug(@class_name) { "Looking recursively. Found #{found_dirs.size} directories in #{path}." }
-            @logger.debug(@class_name) { "Directories in #{path}: '#{found_dirs.join(', ')}'." }
+          current_dir = File.dirname(path)
+          files = [path]
 
-            found_dirs.each { |dir| results.push(*process(dir)) }
-          end
+        elsif path.is_a?(String) && File.directory?(path)
+          @logger.info(@class_name) { "Found directory #{path}." }
+
+          current_dir = path
+          check_directory(current_dir)
+          files = files_in_directory(current_dir)
+          dirs = directories_in_directory(current_dir) if recurse
+
         else
-          @logger.warn(@class_name) { "Not a recognised file or directory: #{input_string}." }
+          @logger.warn(@class_name) { "Not a recognised file or directory: #{path}." }
+          return results
         end
+
+        dir_settings = get_folder_settings(File.join(current_dir, @config_file_name))
+
+        # process any files found
+        files.each do |file|
+          file_result = file(file, top_dir, dir_settings)
+          results.push(file_result) unless file_result.blank?
+        end
+
+        if results.size > 0
+          @logger.info(@class_name) { "Gathered info for #{results.size} valid files in #{current_dir}." }
+        else
+          @logger.debug(@class_name) { "No valid files in #{current_dir}." }
+        end
+
+        # process any directories found
+        dirs.each { |dir| results.push(*process(dir, top_dir, recurse)) }
 
         results
       end
 
-      # Get file properties for a directory. Does not recurse.
+      # Check properties for a directory.
       # @param [String] path directory
-      # @return [Array<Hash>] file properties
-      def directory(path)
+      # @return [Array<Hash>] directory
+      def check_directory(path)
         unless File.directory?(path)
           msg = "'#{path}' is not a directory."
           @logger.error(@class_name) { msg }
           fail ArgumentError, msg
         end
 
-        path = File.expand_path(path)
+        is_writable = File.writable?(path)
+        is_writable_real = File.writable_real?(path)
 
-        files_in_dir = files_in_directory(path)
-
-        dir_settings = get_folder_settings(File.join(path, @config_file_name))
-
-        files = []
-        files_in_dir.each do |item|
-          file_result = file(item, dir_settings)
-          files.push(file_result) unless file_result.blank?
+        if !is_writable || !is_writable_real
+          msg = "Found read-only directory: '#{path}'."
+          @logger.error(@class_name) { msg }
+          fail ArgumentError, msg
         end
 
-        if files.size > 0
-          @logger.info(@class_name) { "Gathered info for #{files.size} valid files in #{path}." }
-        else
-          @logger.debug(@class_name) { "No valid files in #{path}." }
-        end
-
-        files
+        path
       end
 
       # Get file properties for a single file.
       # @param [String] path file
+      # @param [String] top_dir base directory
       # @param [Hash] dir_settings
       # @return [Hash] file properties
-      def file(path, dir_settings = {})
+      def file(path, top_dir, dir_settings = {})
         unless File.file?(path)
           msg = "'#{path}' is not a file."
           @logger.error(@class_name) { msg }
@@ -117,8 +139,8 @@ module BawWorkers
         path = File.expand_path(path)
 
         unless @file_info_helper.valid_ext?(path, @ext_include)
-          @logger.debug(@class_name) { "Invalid extension #{path}." }
-          return {}
+          @logger.warn(@class_name) { "Invalid extension #{path}." }
+          return
         end
 
         @logger.debug(@class_name) { "Valid extension #{path}." }
@@ -128,11 +150,14 @@ module BawWorkers
         basic_info, advanced_info = file_info(path, dir_settings[:utc_offset])
 
         if basic_info.blank? || advanced_info.blank?
-          @logger.debug(@class_name) { "Not enough information for #{path}." }
+          @logger.warn(@class_name) { "Not enough information for #{path}." }
           {}
         else
           @logger.debug(@class_name) { "Complete information found for #{path}." }
-          basic_info.merge(dir_settings).merge(advanced_info)
+          result = {}
+          result = result.merge(basic_info).merge(dir_settings).merge(advanced_info)
+          result[:file_rel_path] = Pathname.new(path).relative_path_from(Pathname.new(top_dir)).to_s
+          result
         end
       end
 
@@ -155,7 +180,7 @@ module BawWorkers
             @logger.debug(@class_name) { "Successfully got #{msg_props}" }
           end
 
-        rescue => e
+        rescue StandardError => e
           @logger.error(@class_name) {
             "Problem getting details for #{file} using utc offset '#{utc_offset}': #{format_error(e)}"
           }
@@ -171,12 +196,22 @@ module BawWorkers
         items_in_dir = Dir.glob(File.join(path, '*'))
         files_in_dir = items_in_dir.select { |f| File.file?(f) }
 
-        msg = "Looking in #{path}. Found #{files_in_dir.size} files."
-        @logger.debug(@class_name) { msg } if files_in_dir.size > 0
-        @logger.debug(@class_name) { msg } if files_in_dir.size < 1
+        @logger.info(@class_name) { "Found #{files_in_dir.size} files in #{path}." }
         @logger.debug(@class_name) { "Files in #{path}: '#{files_in_dir.join(', ')}'." }
 
         files_in_dir
+      end
+
+      # Get all directories in a directory.
+      # @param [String] path directory
+      # @return [Array<String>] directories
+      def directories_in_directory(path)
+        dirs_in_dir = Dir.glob(File.join(path, '*/'))
+
+        @logger.info(@class_name) { "Found #{dirs_in_dir.size} directories in #{path}." }
+        @logger.debug(@class_name) { "Directories in #{path}: '#{dirs_in_dir.join(', ')}'." }
+
+        dirs_in_dir
       end
 
       # Get folder settings.
@@ -203,7 +238,8 @@ module BawWorkers
               project_id: config['project_id'],
               site_id: config['site_id'],
               uploader_id: config['uploader_id'],
-              utc_offset: config['utc_offset']
+              utc_offset: config['utc_offset'],
+              metadata: config['metadata']
           }
 
           if @file_info_helper.numeric?(folder_settings[:project_id]) &&
@@ -217,7 +253,7 @@ module BawWorkers
             {}
           end
 
-        rescue => e
+        rescue StandardError => e
           @logger.warn(@class_name) { "Harvest directory config file was not valid '#{file}'. #{format_error(e)}" }
           {}
         end

@@ -1,28 +1,9 @@
 module BawWorkers
   module AudioCheck
     # Runs checks on original audio recording files.
-    class Action
+    class Action < BawWorkers::ActionBase
 
-      # Ensure that there is only one job with the same payload per queue.
-      include Resque::Plugins::UniqueJob
-
-      # a set of keys starting with 'stats:jobs:queue_name' inside your Resque redis namespace
-      extend Resque::Plugins::JobStats
-
-      # track specific job instances and their status
-      include Resque::Plugins::Status
-
-      # include common methods
-      include BawWorkers::ActionCommon
-
-      # All methods do not require a class instance.
       class << self
-
-        # Delay when the unique job key is deleted (i.e. when enqueued? becomes false).
-        # @return [Fixnum]
-        def lock_after_execution_period
-          30
-        end
 
         # Get the queue for this action. Used by Resque.
         # @return [Symbol] The queue.
@@ -49,7 +30,7 @@ module BawWorkers
 
           begin
             result = action_audio_check.run(audio_params, is_real_run)
-          rescue Exception => e
+          rescue => e
             BawWorkers::Config.logger_worker.error(self.name) { e }
             # don't send emails, we will use logs.
             # BawWorkers::Mail::Mailer.send_worker_error_email(
@@ -73,15 +54,15 @@ module BawWorkers
         # @param [Boolean] is_real_run
         # @return [Array<Hash>] array of hashes representing operations performed
         def action_perform_rake(csv_file, is_real_run)
-          BawWorkers::Validation.validate_file(csv_file)
+          BawWorkers::Validation.normalise_file(csv_file)
 
           successes = []
           failures = []
-          BawWorkers::AudioCheck::CsvHelper.read_audio_recording_csv(csv_file) do |audio_params|
+          BawWorkers::ReadCsv.read_audio_recording_csv(csv_file) do |audio_params|
             begin
               result = BawWorkers::AudioCheck::Action.action_run(audio_params, is_real_run)
               successes.push({params: audio_params, result: result})
-            rescue Exception => e
+            rescue StandardError => e
               failures.push({params: audio_params, exception: e})
             end
           end
@@ -111,24 +92,32 @@ module BawWorkers
         # @param [Boolean] is_real_run
         # @return [Hash]
         def action_enqueue_rake(csv_file, is_real_run)
-          BawWorkers::Validation.validate_file(csv_file)
+          BawWorkers::Validation.normalise_file(csv_file)
 
           successes = []
           failures = []
-          BawWorkers::AudioCheck::CsvHelper.read_audio_recording_csv(csv_file) do |audio_params|
+          BawWorkers::ReadCsv.read_audio_recording_csv(csv_file) do |audio_params|
             begin
               result = nil
               result = BawWorkers::AudioCheck::Action.action_enqueue(audio_params) if is_real_run
               successes.push({params: audio_params, result: result})
-            rescue Exception => e
+            rescue StandardError => e
               failures.push({params: audio_params, exception: e})
             end
           end
 
-          {
+          results = {
               successes: successes,
               failures: failures
           }
+
+          BawWorkers::Config.logger_worker.info(self.name) {
+            msg1 = is_real_run ? 'Enqueued jobs.' : 'Dry run without enqueuing jobs.'
+            msg2 = "#{successes.size} jobs successful and #{failures.size} jobs failed"
+            "#{msg1} #{msg2}: #{results}"
+          }
+
+          results
         end
 
         def action_audio_check
@@ -140,10 +129,8 @@ module BawWorkers
 
       end
 
-      # Perform method used by resque-status.
-      def perform
-        audio_params = options['audio_params']
-        self.class.action_perform(audio_params)
+      def perform_options_keys
+        ['audio_params']
       end
 
     end

@@ -45,8 +45,8 @@ describe BawWorkers::Mail::Mailer do
       expect(mail.body.encoded).to include(Rack::Utils.escape_html(job[:job_args].to_s))
       expect(mail.body.encoded).to include(Rack::Utils.escape_html(job[:job_queue].to_s))
       expect(mail.body.encoded).to include(Rack::Utils.escape_html(error.message))
-      expect(mail.body.encoded).to include(Rack::Utils.escape_html(error.backtrace[0]))
-
+      expect(mail.body.encoded).to include(Rack::Utils.escape_html(error.backtrace[0][0..10]))
+ 
       expect(mail.body.encoded).to include('<p>')
     end
 

@@ -26,15 +26,17 @@ module BawWorkers
   autoload :Config, 'baw-workers/config'
   autoload :Exceptions, 'baw-workers/exceptions'
   autoload :Validation, 'baw-workers/validation'
-  autoload :ActionCommon, 'baw-workers/action_common'
+  autoload :ActionBase, 'baw-workers/action_base'
   autoload :ApiCommunicator, 'baw-workers/api_communicator'
   autoload :FileInfo, 'baw-workers/file_info'
   autoload :ResqueApi, 'baw-workers/resque_api'
   autoload :ResqueJobId, 'baw-workers/resque_job_id'
+  autoload :ReadCsv, 'baw-workers/read_csv'
 
   module Analysis
     autoload :Action, 'baw-workers/analysis/action'
-    autoload :WorkHelper, 'baw-workers/analysis/work_helper'
+    autoload :Payload, 'baw-workers/analysis/payload'
+    autoload :Runner, 'baw-workers/analysis/runner'
   end
 
   module AudioCheck

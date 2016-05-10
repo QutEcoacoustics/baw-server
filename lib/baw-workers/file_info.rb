@@ -93,9 +93,7 @@ module BawWorkers
       file_name = File.basename(source)
 
       info = file_name_all(file_name)
-      info = file_name_datetime_offset(file_name) if info.empty?
-      info = file_name_datetime(file_name, utc_offset) if info.empty? && !utc_offset.blank?
-      info = file_name_datetime_suffix(file_name, utc_offset) if info.empty? && !utc_offset.blank?
+      info = file_name_datetime(file_name, utc_offset) if info.empty?
 
       info
     end
@@ -114,75 +112,6 @@ module BawWorkers
       ext_include.include?(ext) && !is_excluded_ext
     end
 
-    # Get info from upload dir file name.
-    # @param [String] file_name
-    # @return [Hash] info from file name
-    def file_name_all(file_name)
-      result = {}
-      # valid: p1_s2_u3_d20140101_t235959Z.mp3, p000_s00000_u00000_d00000000_t000000Z.0, p9999_s9_u9999999_d99999999_t999999Z.dnsb48364JSFDSD
-      file_name.scan(/^p(\d+)_s(\d+)_u(\d+)_d(\d{4})(\d{2})(\d{2})_t(\d{2})(\d{2})(\d{2})Z\.([a-zA-Z0-9]+)$/) do |project_id, site_id, uploader_id, year, month, day, hour, min, sec, extension|
-        result[:raw] = {project_id: project_id, site_id: site_id, uploader_id: uploader_id, year: year, month: month, day: day, hour: hour, min: min, sec: sec, ext: extension}
-        result[:recorded_date] = DateTime.new(year.to_i, month.to_i, day.to_i, hour.to_i, min.to_i, sec.to_i, '+0').iso8601(3)
-        result[:extension] = extension
-        result[:project_id] = project_id.to_i
-        result[:site_id] = site_id.to_i
-        result[:uploader_id] = uploader_id.to_i
-        result[:utc_offset] = '+0'
-      end
-      result
-    end
-
-    # Get info from file name using specified utc offset.
-    # @param [String] file_name
-    # @param [String] utc_offset
-    # @return [Hash] info from file name
-    def file_name_datetime(file_name, utc_offset)
-      result = {}
-      # valid: prefix_20140101_235959.mp3, a_00000000_000000.a, a_99999999_999999.dnsb48364JSFDSD
-      file_name.scan(/^(.*)(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})(\d{2})\.([a-zA-Z0-9]+)$/) do |prefix, year, month, day, hour, min, sec, extension|
-        result[:raw] = {prefix: prefix, year: year, month: month, day: day, hour: hour, min: min, sec: sec, ext: extension}
-        result[:recorded_date] = DateTime.new(year.to_i, month.to_i, day.to_i, hour.to_i, min.to_i, sec.to_i, utc_offset).iso8601(3)
-        result[:prefix] = prefix.blank? ? prefix : prefix.trim('_', '')
-        result[:extension] = extension
-        result[:utc_offset] = utc_offset
-      end
-      result
-    end
-
-    # Get info from file name that includes utc offset..
-    # @param [String] file_name
-    # @return [Hash] info from file name
-    def file_name_datetime_offset(file_name)
-      result = {}
-      # valid: prefix_20140101_235959+10.mp3, a_00000000_000000+00.a, a_99999999_999999+9999.dnsb48364JSFDSD
-      file_name.scan(/^(.*)(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})(\d{2})([+-]\d{2,4})\.([a-zA-Z0-9]+)$/) do |prefix, year, month, day, hour, min, sec, offset, extension|
-        result[:raw] = {prefix: prefix, year: year, month: month, day: day, hour: hour, min: min, sec: sec, offset: offset, ext: extension}
-        result[:recorded_date] = DateTime.new(year.to_i, month.to_i, day.to_i, hour.to_i, min.to_i, sec.to_i, offset).iso8601(3)
-        result[:prefix] = prefix.blank? ? prefix : prefix.trim('_', '')
-        result[:extension] = extension
-        result[:utc_offset] = offset
-      end
-      result
-    end
-
-    # Get info from file name with suffix using specified utc offset.
-    # @param [String] file_name
-    # @param [String] utc_offset
-    # @return [Hash] info from file name
-    def file_name_datetime_suffix(file_name, utc_offset)
-      result = {}
-      # valid: SERF_20130314_000021_000.wav, a_20130314_000021_a.a, a_99999999_999999_a.dnsb48364JSFDSD
-      file_name.scan(/^(.*)(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})(\d{2})_(.*?)\.([a-zA-Z0-9]+)$/) do |prefix, year, month, day, hour, min, sec, suffix, extension|
-        result[:raw] = {prefix: prefix, year: year, month: month, day: day, hour: hour, min: min, sec: sec, suffix: suffix, ext: extension}
-        result[:recorded_date] = DateTime.new(year.to_i, month.to_i, day.to_i, hour.to_i, min.to_i, sec.to_i, utc_offset).iso8601(3)
-        result[:prefix] = prefix.blank? ? prefix : prefix.trim('_', '')
-        result[:suffix] = suffix.blank? ? suffix : suffix.trim('_', '')
-        result[:extension] = extension
-        result[:utc_offset] = utc_offset
-      end
-      result
-    end
-
     # Check if a settings value is numeric
     # @param [Object] value
     # @return [Boolean]
@@ -199,6 +128,60 @@ module BawWorkers
       !value.blank? && ((value =~ /^(\+|\-)\d{1,2}(:?\d{2})?$/) != nil)
     end
 
+    # Get info from upload dir file name.
+    # @param [String] file_name
+    # @return [Hash] info from file name
+    def file_name_all(file_name)
+      result = {}
+      regex = /^p(\d+)_s(\d+)_u(\d+)_d(\d{4})(\d{2})(\d{2})_t(\d{2})(\d{2})(\d{2})Z\.([a-zA-Z0-9]+)$/
+      file_name.scan(regex) do |project_id, site_id, uploader_id, year, month, day, hour, min, sec, extension|
+        result[:raw] = {
+            project_id: project_id, site_id: site_id, uploader_id: uploader_id,
+            year: year, month: month, day: day,
+            hour: hour, min: min, sec: sec,
+            offset: 'Z', ext: extension
+        }
+
+        result[:project_id] = project_id.to_i
+        result[:site_id] = site_id.to_i
+        result[:uploader_id] = uploader_id.to_i
+
+        result[:utc_offset] = 'Z'
+        result[:recorded_date] = DateTime.new(year.to_i, month.to_i, day.to_i, hour.to_i, min.to_i, sec.to_i, 'Z').iso8601(3)
+        result[:prefix] = ''
+        result[:separator] = '_'
+        result[:suffix] = ''
+        result[:extension] = extension.blank? ? '' : extension
+      end
+      result
+    end
+
+    # Get info from file name using specified utc offset.
+    # @param [String] file_name
+    # @param [String] utc_offset
+    # @return [Hash] info from file name
+    def file_name_datetime(file_name, utc_offset = nil)
+      result = {}
+      regex = /^(.*)(\d{4})(\d{2})(\d{2})(-|_|T)?(\d{2})(\d{2})(\d{2})([+\-]\d{4}|[+\-]\d{1,2}:\d{2}|[+\-]\d{1,2}|Z)?(.*)\.([a-zA-Z0-9]+)$/
+      file_name.scan(regex) do |prefix, year, month, day, separator, hour, minute, second, offset, suffix, extension|
+        result[:raw] = {
+            year: year, month: month, day: day,
+            hour: hour, min: minute, sec: second,
+            offset: offset.blank? ? '' : offset,
+            ext: extension
+        }
+        available_offset = offset || utc_offset
+        fail BawWorkers::Exceptions::HarvesterConfigurationError, 'No UTC offset provided and file name did not contain a utc offset.' if available_offset.blank?
+
+        result[:utc_offset] = available_offset
+        result[:recorded_date] = DateTime.new(year.to_i, month.to_i, day.to_i, hour.to_i, minute.to_i, second.to_i, result[:utc_offset]).iso8601(3)
+        result[:prefix] = prefix.blank? ? '' : prefix
+        result[:separator] = separator.blank? ? '' : separator
+        result[:suffix] = suffix.blank? ? '' : suffix
+        result[:extension] = extension.blank? ? '' : extension
+      end
+      result
+    end
 
   end
 end

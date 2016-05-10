@@ -10,16 +10,13 @@ describe BawWorkers::ApiCommunicator do
         BawWorkers::Settings.api.dup.merge({'password' => 'different password'}),
         BawWorkers::Settings.endpoints)
   }
-  let(:host) { 'localhost' }
-  let(:port) { 3030 }
-  let(:domain) { "http://#{host}:#{port}" }
 
   context 'login request' do
     it 'should succeed with valid credentials' do
       auth_token_server = 'auth_token_string'
       email = 'address@example.com'
       password = 'different password'
-      endpoint_login = domain + BawWorkers::Settings.endpoints.login
+      endpoint_login = default_uri + BawWorkers::Settings.endpoints.login
       body = get_api_security_request(email, password)
       login_request = stub_request(:post, endpoint_login)
       .with(body: body)
@@ -36,7 +33,7 @@ describe BawWorkers::ApiCommunicator do
       auth_token = 'auth_token_string'
       email = 'address@example.com'
       password = 'different password'
-      endpoint_login = domain + BawWorkers::Settings.endpoints.login
+      endpoint_login = default_uri + BawWorkers::Settings.endpoints.login
 
       login_request = stub_request(:post, endpoint_login)
       .with(body: get_api_security_request(email, 'password'))
@@ -59,13 +56,13 @@ describe BawWorkers::ApiCommunicator do
   context 'sending requests' do
 
     it 'should successfully send a basic request' do
-      basic_request = stub_request(:get, 'http://localhost:3030/')
+      basic_request = stub_request(:get, default_uri)
       api.send_request('send basic get request', :get, host, port, '/')
       expect(basic_request).to have_been_made.once
     end
 
     it 'should fail on bad request' do
-      endpoint_access = domain + '/does_not_exist'
+      endpoint_access = default_uri + '/does_not_exist'
       expect { api.send_request('will fail', :get, host, port, endpoint_access)
       }.to raise_error
     end
@@ -74,9 +71,9 @@ describe BawWorkers::ApiCommunicator do
   context 'check project access ' do
     it 'should succeed with valid credentials' do
       auth_token = 'auth_token_string'
-      endpoint_access = domain + BawWorkers::Settings.endpoints.audio_recording_uploader
+      endpoint_access = default_uri + BawWorkers::Settings.endpoints.audio_recording_uploader
       body = {}
-      access_request = stub_request(:get, "http://localhost:3030/projects/1/sites/1/audio_recordings/check_uploader/1").
+      access_request = stub_request(:get, "#{default_uri}/projects/1/sites/1/audio_recordings/check_uploader/1").
           with(headers: {'Accept' => 'application/json', 'Authorization' => 'Token token="auth_token_string"', 'Content-Type' => 'application/json', 'User-Agent' => 'Ruby'}).
           to_return(status: 204)
 
@@ -86,9 +83,9 @@ describe BawWorkers::ApiCommunicator do
 
     it 'should fail with invalid credentials' do
       auth_token = 'auth_token_string_wrong'
-      endpoint_access = domain + BawWorkers::Settings.endpoints.audio_recording_uploader
+      endpoint_access = default_uri + BawWorkers::Settings.endpoints.audio_recording_uploader
       body = {}
-      access_request = stub_request(:get, "http://localhost:3030/projects/1/sites/1/audio_recordings/check_uploader/1").
+      access_request = stub_request(:get, "#{default_uri}/projects/1/sites/1/audio_recordings/check_uploader/1").
           with(headers: {'Accept' => 'application/json', 'Authorization' => 'Token token="auth_token_string_wrong"', 'Content-Type' => 'application/json', 'User-Agent' => 'Ruby'}).
           to_return(status: 403)
 
@@ -101,9 +98,9 @@ describe BawWorkers::ApiCommunicator do
   context 'update audio recording metadata' do
     it 'should succeed with valid credentials' do
       auth_token = 'auth_token_string'
-      endpoint = domain + BawWorkers::Settings.endpoints.audio_recording_update_status
+      endpoint = default_uri + BawWorkers::Settings.endpoints.audio_recording_update_status
       body = {}
-      access_request = stub_request(:put, "http://localhost:3030/audio_recordings/1").
+      access_request = stub_request(:put, "#{default_uri}/audio_recordings/1").
           with(headers: {'Accept' => 'application/json', 'Authorization' => 'Token token="auth_token_string"',
                          'Content-Type' => 'application/json', 'User-Agent' => 'Ruby'}).
           to_return(status: 204)
@@ -119,9 +116,9 @@ describe BawWorkers::ApiCommunicator do
 
     it 'should fail with invalid credentials' do
       auth_token = 'auth_token_string_wrong'
-      endpoint = domain + BawWorkers::Settings.endpoints.audio_recording_update_status
+      endpoint = default_uri + BawWorkers::Settings.endpoints.audio_recording_update_status
       body = {}
-      access_request = stub_request(:put, 'http://localhost:3030/audio_recordings/1').
+      access_request = stub_request(:put, "#{default_uri}/audio_recordings/1").
           with(headers: {'Accept' => 'application/json', 'Authorization' => 'Token token="auth_token_string_wrong"',
                          'Content-Type' => 'application/json', 'User-Agent' => 'Ruby'}).
           to_return(status: 403)

@@ -270,7 +270,7 @@ module BawWorkers
                  :bit_rate_bps, :media_type, :data_length_bytes,
                  :file_hash, :original_format]
 
-        BawWorkers::Validation.validate_hash(audio_params)
+        BawWorkers::Validation.check_hash(audio_params)
         audio_params_sym = BawWorkers::Validation.deep_symbolize_keys(audio_params)
 
         props.each do |prop|
@@ -317,7 +317,7 @@ module BawWorkers
         correct = :pass
         wrong = :fail
 
-        bit_rate_bps_delta = 1500 # due to difference for asf files of ~ 1300 bps
+        bit_rate_bps_delta = 10000 # due to difference for asf files of 1300-2000 bps (set large to catch only very different bit rates)
         duration_seconds_delta = 0.200 # 200 ms due to estimates of duration for mp3 files
 
         file_hash = existing_file_info[:file_hash].to_s == audio_params[:file_hash].to_s ? correct : wrong
@@ -404,14 +404,11 @@ module BawWorkers
         # write to csv
         csv_options = {col_sep: ',', force_quotes: true}
 
-        # identifier for CSV log entries
-        csv_id = '[CSV], '
-
         csv_header_line = logged_csv_line[:headers].to_csv(csv_options).strip
-        @logger.fatal(@class_name) { "#{csv_id}#{csv_header_line}" }
+        @logger.fatal(@class_name) { "[CSV-header], #{csv_header_line}" }
 
         csv_value_line = logged_csv_line[:values].to_csv(csv_options).strip
-        @logger.fatal(@class_name) { "#{csv_id}#{csv_value_line}" }
+        @logger.fatal(@class_name) { "[CSV-data], #{csv_value_line}" }
       end
 
       # Rename file with old file name to new file name.

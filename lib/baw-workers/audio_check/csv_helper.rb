@@ -1,10 +1,7 @@
 require 'csv'
 
 # Postgresql query to export csv file
-# COPY (SELECT id, uuid, recorded_date || 'Z', duration_seconds,
-# sample_rate_hertz, channels,bit_rate_bps, media_type, data_length_bytes,
-# file_hash, original_file_name FROM "audio_recordings"
-#      ) TO '/tmp/audio_recordings_to_check.csv' DELIMITER ',' CSV HEADER;
+# COPY (SELECT id, uuid, recorded_date || 'Z' as recorded_date, duration_seconds, sample_rate_hertz, channels,bit_rate_bps, media_type, data_length_bytes, file_hash, original_file_name FROM "audio_recordings") TO '/tmp/staging_audio_recordings.csv' DELIMITER ',' CSV HEADER;
 
 module BawWorkers
   module AudioCheck
@@ -114,7 +111,62 @@ module BawWorkers
           }
         end
 
-        def read_audio_recording_csv(csv_file)
+        def read_audio_file_hash_csv(csv_file)
+          index_to_key_map = {
+              file_hash: 0,
+              uuid: 1
+          }
+
+          # load csv file
+          CSV.foreach(csv_file, {headers: false, return_headers: false}) do |row|
+
+            audio_params = {}
+
+            # get values from row, put into hash that matches what check action expects
+            if row && !row[0].blank? && !row[1].blank?
+              audio_params = {file_hash: row[0].strip, uuid: row[1].strip}
+            end
+
+            # provide the audio parameters to yield
+            yield audio_params if block_given?
+          end
+        end
+
+        def write_audio_recordings_csv(original_csv, hash_csv, result_csv)
+
+          audio_info = {}
+
+          BawWorkers::ReadCsv.read_audio_recording_csv(original_csv) do |audio_params|
+            audio_info[audio_params[:uuid]] = audio_params
+            print '.'
+          end
+
+          BawWorkers::AudioCheck::CsvHelper.read_audio_file_hash_csv(hash_csv) do |hash_params|
+
+            new_hash = hash_params[:file_hash]
+            new_uuid = hash_params[:uuid]
+            prefix = 'SHA256::'
+
+            if audio_info.include?(new_uuid)
+              file_hash = audio_info[new_uuid][:file_hash]
+              if file_hash.blank? || file_hash == prefix
+                audio_info[new_uuid][:file_hash] = "#{prefix}#{new_hash}"
+                print ','
+              else
+                print ' '
+              end
+            else
+              audio_info[new_uuid] = {}
+              audio_info[new_uuid][:file_hash] = "#{prefix}#{new_hash}"
+              audio_info[new_uuid][:uuid] = new_uuid
+              print ';'
+            end
+
+          end
+
+          # write to csv
+          csv_options = {col_sep: ',', force_quotes: true}
+
           index_to_key_map = {
               id: 0,
               uuid: 1,
@@ -129,26 +181,23 @@ module BawWorkers
               original_file_name: 10
           }
 
-          # load csv file
-          CSV.foreach(csv_file, {headers: true, return_headers: false}) do |row|
-
-            # get values from row, put into hash that matches what check action expects
-            audio_params = index_to_key_map.inject({}) do |hash, (k, v)|
-              hash.merge(k.to_sym => row[k.to_s])
-            end
-
-            # special case for original_format
-            # get original_format from original_file_name
-            original_file_name = audio_params.delete(:original_file_name)
-            original_extension = original_file_name.blank? ? '' : File.extname(original_file_name).trim('.', '').downcase
-            audio_params[:original_format] = original_extension
-
-            # get extension from media_type
-            audio_params[:original_format] = Mime::Type.lookup(audio_params[:media_type].downcase).to_sym.to_s if audio_params[:original_format].blank?
-
-            # provide the audio parameters to yield
-            yield audio_params if block_given?
+          column_order = []
+          index_to_key_map.each do |key, value|
+            column_order[value] = key
           end
+
+          CSV.open(result_csv, 'w', csv_options) do |writer|
+            audio_info.each do |key, value|
+
+              row_values = []
+              column_order.each do |attr|
+                row_values.push(value[attr])
+              end
+
+              writer << row_values
+            end
+          end
+
         end
 
         # extract the CSV log lines from a log file.
@@ -156,7 +205,7 @@ module BawWorkers
           # for lines that start with a datestamp (format: 2015-04-12T23:06:48.295+0000) and log info
           # keep only if the row then contains '[CSV], '.
 
-          line_start_regexp = /\A\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}\+\d{4} \[[^\]]+\] \[CSV\], /
+          line_start_regexp = /\A\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}\+\d{4} \[[^\]]+\] \[CSV\-data\], /
 
           File.open(write_path, 'a') do |dest|
 
@@ -169,6 +218,68 @@ module BawWorkers
 
         end
 
+        # Compare csv file and files.
+        # @return [Hash]
+        def compare_csv_db(csv_file)
+          original_audio = BawWorkers::Config.original_audio_helper
+
+          # gather all existing files
+          files = []
+          original_audio.existing_files do |file|
+            file_name = File.basename(file).downcase
+            files.push(file_name)
+          end
+
+          intersection = []
+          # actually copy the array without keeping any references
+          files_without_db_entry = Marshal.load(Marshal.dump(files))
+          db_entries_without_file = []
+
+          # compare with details in db
+          BawWorkers::ReadCsv.read_audio_recording_csv(csv_file) do |audio_params|
+            opts =
+                {
+                    uuid: audio_params[:uuid],
+                    datetime_with_offset: BawWorkers::Validation.normalise_datetime(audio_params[:recorded_date]),
+                    original_format: audio_params[:original_format]
+                }
+            utc_file_name = original_audio.file_names(opts)[1].downcase
+
+            match_result = files & [utc_file_name]
+            is_match = match_result.any?
+
+            # add file names that exist on disk to intersection if one or more exist
+            intersection.push(*match_result) if is_match
+
+            # remove file names from files_without_db_entry if there is a match on disk
+            match_result.each do |match|
+              files_without_db_entry.delete(match)
+            end
+
+            # add utc file name to db_entries_without_file if no file matches on disk
+            db_entries_without_file.push(utc_file_name) unless is_match
+          end
+
+          name = 'baw:worker:audio_check:standalone:compare'
+
+          BawWorkers::Config.logger_worker.warn(name) {
+            "Exact intersection (only utc file names are included) (#{intersection.size}): #{intersection.join(', ')}"
+          }
+
+          BawWorkers::Config.logger_worker.warn(name) {
+            "Existing files without db entry (only utc file names are included) (#{files_without_db_entry.size}): #{files_without_db_entry.join(', ')}"
+          }
+
+          # BawWorkers::Config.logger_worker.warn(name) {
+          #   "Db entries with no files (only utc file names are included) (#{db_entries_without_file.size}): #{db_entries_without_file.join(', ')}"
+          # }
+
+          {
+              intersection: intersection,
+              files_without_db_entry: files_without_db_entry,
+              db_entries_without_file: db_entries_without_file
+          }
+        end
 
       end
     end

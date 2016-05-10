@@ -151,7 +151,7 @@ describe BawWorkers::Media::Action do
 
       expect {
         BawWorkers::Media::Action.action_perform(:audio, media_request_params)
-      }.to raise_error(ArgumentError, /Provided value for datetime_with_offset is not valid/)
+      }.to raise_error(ArgumentError, /Could not parse ActiveSupport::TimeWithZone from blah blah blah/)
 
       expect(ActionMailer::Base.deliveries.count).to eq(1)
     end
@@ -163,7 +163,7 @@ describe BawWorkers::Media::Action do
       it 'raises error with no params' do
         expect {
           BawWorkers::Media::Action.action_perform(:spectrogram, {})
-        }.to raise_error(ArgumentError, /Must provide a value for datetime_with_offset/)
+        }.to raise_error(ArgumentError, /Expected value to be a ActiveSupport::TimeWithZone, got blank/)
 
         expect(ActionMailer::Base.deliveries.count).to eq(1)
       end
@@ -214,7 +214,7 @@ describe BawWorkers::Media::Action do
       it 'raises error with no params' do
         expect {
           BawWorkers::Media::Action.action_perform(:audio, {})
-        }.to raise_error(ArgumentError, /Must provide a value for datetime_with_offset/)
+        }.to raise_error(ArgumentError, /Expected value to be a ActiveSupport::TimeWithZone, got blank/)
 
         expect(ActionMailer::Base.deliveries.count).to eq(1)
       end

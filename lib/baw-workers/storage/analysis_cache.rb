@@ -6,7 +6,7 @@ module BawWorkers
     class AnalysisCache
       include BawWorkers::Storage::Common
 
-      FILE_NAME_NOT_ALLOWED = /[^0-9a-zA-Z_\-\.]/
+      JOB_ID_SYSTEM = 'system'
 
       public
 
@@ -23,54 +23,71 @@ module BawWorkers
       # Get the file name
       # @param [Hash] opts
       # @return [String] file name for stored file
-      def file_name(opts = {})
-        validate_analysis_id(opts)
-        validate_result_file_name(opts)
+      def file_name(opts)
+        validate_file_name(opts)
 
-        analysis_dir = opts[:analysis_id].gsub(FILE_NAME_NOT_ALLOWED, @separator)
-        file_only = opts[:result_file_name].gsub(FILE_NAME_NOT_ALLOWED, @separator)
-
-        # in this case, a file name is a partial path composed of analysis_id and file name
-        File.join(analysis_dir, file_only)
+        BawWorkers::Validation.normalise_path(opts[:file_name], nil)
       end
 
       # Get file names
       # @param [Hash] opts
       # @return [Array<String>]
-      def file_names(opts = {})
+      def file_names(opts)
         [file_name(opts)]
       end
 
       # Construct the partial path to an analysis result file.
       # @param [Hash] opts
       # @return [String] partial path to analysis result file.
-      def partial_path(opts = {})
+      def partial_path(opts)
+        validate_job_id(opts)
         validate_uuid(opts)
+        validate_sub_folders(opts)
 
-        # TODO: might want to include a sub-dir named by date & time?
-        # TODO: a sub-dir named by date & time would enable multiple results from the same analysis type
+        # ./<job_id>/<guid first 2 chars>/<full guid>/<subfolder(s)>/
 
-        first = opts[:uuid][0, 2].downcase
-        second = opts[:uuid].downcase
+        job_id = opts[:job_id].to_s.strip.downcase
+        guid_chars = opts[:uuid][0, 2].downcase
+        guid = opts[:uuid].downcase
+        sub_folder = File.join(*opts[:sub_folders])
 
-        File.join(first, second)
+        partial_path = File.join(job_id, guid_chars, guid, sub_folder)
+
+        BawWorkers::Validation.normalise_path(partial_path, nil)
       end
 
       # Extract information from a file name.
       # @param [String] file_path
       # @return [Hash] info
       def parse_file_path(file_path)
-        path_parts = Pathname(file_path).each_filename.to_a
+
+        # check that file_path starts with one of the possible base directories
+        base_dirs = possible_dirs
+        base_dirs_matched = base_dirs.select { |base_dir| file_path.start_with?(base_dir) }
+        fail ArgumentError, "Must start with one of '#{base_dirs.join('\', \'')}': #{file_path} " if base_dirs_matched.size != 1
+
+        # remove base dir from file_path
+        relative_path = file_path.sub(base_dirs_matched.first, '')
+
+        # clean file_path so it is more likely to match
+        relative_path_clean =  BawWorkers::Validation.normalise_path(relative_path, nil)
+
+        # extract parts of path
+        path_parts = Pathname(relative_path_clean).each_filename.to_a
+
+        job_id = path_parts[0].to_i.to_s == path_parts[0].to_s ? path_parts[0].to_i : JOB_ID_SYSTEM
 
         opts = {
-            uuid: path_parts[-3],
-            analysis_id: path_parts[-2],
-            result_file_name: path_parts[-1]
+            job_id: job_id,
+            uuid: path_parts[2],
+            sub_folders: path_parts[3..-2],
+            file_name: path_parts[-1]
         }
 
+        validate_job_id(opts)
         validate_uuid(opts)
-        validate_analysis_id(opts)
-        validate_result_file_name(opts)
+        validate_sub_folders(opts)
+        validate_file_name(opts)
 
         opts
       end

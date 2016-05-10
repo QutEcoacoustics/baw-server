@@ -1,17 +1,16 @@
 # Baw::Workers
 
-Bioacoustics Workbench workers.
+Bioacoustics Workbench workers. Provides workers and file storage. 
+
+Workers can process various long-running or intensive tasks. 
+File storage provides helper methods for calculating paths to original and cached files.
 
 [![Build Status](https://travis-ci.org/QutBioacoustics/baw-workers.png?branch=master)](https://travis-ci.org/QutBioacoustics/baw-workers)
 [![Dependency Status](https://gemnasium.com/QutBioacoustics/baw-workers.png)](https://gemnasium.com/QutBioacoustics/baw-workers)
 [![Code Climate](https://codeclimate.com/github/QutBioacoustics/baw-workers.png)](https://codeclimate.com/github/QutBioacoustics/baw-workers)
 [![Test Coverage](https://codeclimate.com/github/QutBioacoustics/baw-workers/badges/coverage.svg)](https://codeclimate.com/github/QutBioacoustics/baw-workers)
-[![Coverage Status](https://coveralls.io/repos/QutBioacoustics/baw-workers/badge.png)](https://coveralls.io/r/QutBioacoustics/baw-workers)
-[![Inline docs](http://inch-ci.org/github/QutBioacoustics/baw-workers.png?branch=master)](http://inch-ci.org/github/QutBioacoustics/baw-workers)
-
-[Rubydoc](http://rubydoc.info/github/QutBioacoustics/baw-workers/frames) is available.
-
-This project provides workers and file storage. Workers that can process various long-running or intensive tasks. File storage provides helper methods for calculating paths to original and cached files.
+[![Documentation Status](http://inch-ci.org/github/QutBioacoustics/baw-workers.png?branch=master)](http://inch-ci.org/github/QutBioacoustics/baw-workers)
+[![Documentation](https://img.shields.io/badge/docs-rdoc.info-blue.svg)](http://www.rubydoc.info/github/QutBioacoustics/baw-workers)
 
 ## Installation
 
@@ -27,17 +26,41 @@ And then execute:
 
     $ bundle install
 
+## Actions
+
+This project provides four actions. Actions are classes that implement a potentially long-running process.
+
+### Analysis
+
+Runs analysers over audio files. This action analyses an entire single audio file.
+
+ 1. Resque jobs can be queued from [baw-server](https://github.com/QutBioacoustics/baw-server) and processed later by a Resque dequeue worker.
+ 1. A directory can be analysed manually by providing the settings for a single audio file in yaml format for the the `analysis_config_file` parameter.
+
+### Audio Check
+
+Runs checks on original audio recording files. This action checks an entire single audio file.
+
+ - Gets audio files to check from a csv file in a specific format by specifying `csv_file`.
+
+### Harvest
+
+Harvests audio files to be accessible by [baw-server](https://github.com/QutBioacoustics/baw-server) via the file storage system. 
+
+ - The harvester will recognise valid audio files in two ways: file name in a recognised format, and optionally a directory config file. Depending on the file name format used, a directory config file may or may not be required.
+ - Audio files can be harvested by specifying the parameter `harvest_dir` and the `config_file_name` in the settings file.
+
+### Media
+
+Cuts audio files and generates spectrograms.
+
+ -  Resque jobs can be queued on demand from [baw-server](https://github.com/QutBioacoustics/baw-server)
+and processed later by a Resque dequeue worker.
+
 ## Dependencies
 
 You may need to install some additional tools for working with audio and images, and for processing long-running tasks.
-
- - [ImageMagick](http://www.imagemagick.org/) is used by [paperclip](https://github.com/thoughtbot/paperclip).
- - [WavPack](http://www.wavpack.com/) is used to expand compressed `.wv` files.
- - [SoX](http://sox.sourceforge.net/) is used to create spectrograms and resample audio.
- - [shnTool](http://www.etree.org/shnutils/shntool/) is a tool for quickly segmenting large `.wav` files.
- - [mp3splt](http://mp3splt.sourceforge.net/mp3splt_page/home.php) is a tool for quickly segmenting large `.mp3` files.
- - [ffmpeg](http://www.ffmpeg.org/) is used for audio conversion and gathering audio file information.
- - [redis](http://redis.io/) is used by [Resque](https://github.com/resque/resque/tree/v1.25.2) to manage long-running tasks.
+See [baw-audio-tools](https://github.com/QutBioacoustics/baw-audio-tools) for more information.
 
 ## File Storage
 
@@ -123,7 +146,6 @@ Each `log_level` setting is independent of the others.
 
 ### Examples for running a worker
 
-
 Replace `'settings_file'` with the full path to the settings file to use for the worker.
 Other parameters are described in the `Actions` section below.
 
@@ -150,41 +172,11 @@ A Resque dequeue worker can process any queue with any type of job.
     bundle exec rake baw:worker:setup[settings_file]                                         # Run a resque:work with the specified settings file
     bundle exec rake baw:worker:stop_all[settings_file]                                      # Quit running workers
 
-## Actions
-
-This project provides four actions. Actions are classes that implement a potentially long-running process.
-
-### Analysis
-
-Runs analysers over audio files. This action analyses an entire single audio file.
-
- 1. Resque jobs can be queued from [baw-server](https://github.com/QutBioacoustics/baw-server) and processed later by a Resque dequeue worker.
- 1. A directory can be analysed manually by providing the settings for a single audio file in yaml format for the the `analysis_config_file` parameter.
-
-### Audio Check
-
-Runs checks on original audio recording files. This action checks an entire single audio file.
-
- - Gets audio files to check from a csv file in a specific format by specifying `csv_file`.
-
-### Harvest
-
-Harvests audio files to be accessible by [baw-server](https://github.com/QutBioacoustics/baw-server) via the file storage system. 
-
- - The harvester will recognise valid audio files in two ways: file name in a recognised format, and optionally a directory config file. Depending on the file name format used, a directory config file may or may not be required.
- - Audio files can be harvested by specifying the parameter `harvest_dir` and the `config_file_name` in the settings file.
-
-### Media
-
-Cuts audio files and generates spectrograms.
-
- -  Resque jobs can be queued on demand from [baw-server](https://github.com/QutBioacoustics/baw-server)
-and processed later by a Resque dequeue worker.
-
 ## Contributing
 
-1. Fork it (https://github.com/QutBioacoustics/baw-workers)
+1. [Fork this repo](https://github.com/QutBioacoustics/baw-workers/fork)
 2. Create your feature branch (`git checkout -b my-new-feature`)
 3. Commit your changes (`git commit -am 'Add some feature'`)
 4. Push to the branch (`git push origin my-new-feature`)
-5. Create new Pull Request
+5. Create a new [pull request](https://github.com/QutBioacoustics/baw-workers/compare)
+
