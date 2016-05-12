@@ -111,7 +111,7 @@ module BawWorkers
             # use fake redis
             Resque.redis = Redis.new
           else
-            Resque.redis = BawWorkers::Settings.resque.connection
+            Resque.redis = HashWithIndifferentAccess.new(BawWorkers::Settings.resque.connection)
           end
           Resque.redis.namespace = BawWorkers::Settings.resque.namespace
         end

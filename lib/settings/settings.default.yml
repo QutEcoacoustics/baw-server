@@ -48,7 +48,7 @@ settings:
     cached_datasets:
       - ./tmp/custom_temp_dir/_cached_dataset
     cached_analysis_jobs:
-      - ./tmp/custom_temp_dir/_cached_analysis_jobs
+      - ./tmp/custom_temp_dir/_analysis_results
     worker_log_file: ./tmp/logs/worker.log
     mailer_log_file: ./tmp/logs/mailer.log
     audio_tools_log_file: ./tmp/logs/audio_tools.log
