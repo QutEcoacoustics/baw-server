@@ -236,13 +236,13 @@ module BawWorkers
         Resque.logger = resque_logger
 
         # configure Resque
-          if is_test
-            # use fake redis
-            Resque.redis = Redis.new
-          else
-            Resque.redis = settings.resque.connection
-          end
-          Resque.redis.namespace = settings.resque.namespace
+        if is_test
+          # use fake redis
+          Resque.redis = Redis.new
+        else
+          Resque.redis = HashWithIndifferentAccess.new(settings.resque.connection)
+        end
+        Resque.redis.namespace = settings.resque.namespace
 
         # configure mailer
         ActionMailer::Base.logger = BawWorkers::Config.logger_mailer
