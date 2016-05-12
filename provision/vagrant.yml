@@ -36,6 +36,9 @@
       tags: ["ruby"]
     - role: "{{ source_path }}/external/ANXS.postgresql"
       postgresql_version: "{{ postgresql_version }}"
+      # be careful when enabling this: anyone on public network could access db with
+      # no password and admin access!
+      #postgresql_listen_addresses: "*"
       postgresql_databases:
         - name: baw_local_dev
           owner: postgres          # optional; specify the owner of the database
