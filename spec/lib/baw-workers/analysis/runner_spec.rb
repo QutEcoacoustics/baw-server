@@ -56,7 +56,7 @@ describe BawWorkers::Analysis::Runner do
     expected_1 = 'z/programs/echo \"analysis_type -source '
     expected_2 = '/baw-workers/tmp/custom_temp_dir/_original_audio/f7/f7229504-76c5-4f88-90fc-b7c3f5a8732e_20141118-160500Z.wav -config '
     expected_3 = 'z/run.config -output '
-    expected_4 = '/baw-workers/tmp/custom_temp_dir/_cached_analysis_jobs/15/f7/f7229504-76c5-4f88-90fc-b7c3f5a8732e -tempdir '
+    expected_4 = '/baw-workers/tmp/custom_temp_dir/_analysis_results/15/f7/f7229504-76c5-4f88-90fc-b7c3f5a8732e -tempdir '
     expected_5 = 'z/temp'
     expected_6 = '/runs/15_123456_'
 
@@ -71,7 +71,7 @@ describe BawWorkers::Analysis::Runner do
     expect(result).to_not be_blank
 
     result_json = result.to_json
-    expect(result_json).to include('_cached_analysis_jobs/15/f7/f7229504-76c5-4f88-90fc-b7c3f5a8732e')
+    expect(result_json).to include('_analysis_results/15/f7/f7229504-76c5-4f88-90fc-b7c3f5a8732e')
     expect(result_json).to include('z/temp')
     expect(result_json).to include('analysis_type -source \\u003c{file_source}\\u003e -config \\u003c{file_config}\\u003e -output \\u003c{dir_output}\\u003e -tempdir \\u003c{dir_temp}\\u003e')
     expect(result_json).to include(analysis_params[:original_format])
