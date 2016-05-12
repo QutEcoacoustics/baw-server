@@ -37,7 +37,7 @@ class AnalysisJobsItemsController < ApplicationController
           api_filter_params,
           get_virtual_analysis_jobs_items,
           AnalysisJobsItem,
-          AnalysisJobsItem.filter_settings
+          AnalysisJobsItem.filter_settings_system
       )
 
     else
@@ -133,7 +133,7 @@ class AnalysisJobsItemsController < ApplicationController
           api_filter_params,
           get_virtual_analysis_jobs_items,
           AnalysisJobsItem,
-          AnalysisJobsItem.filter_settings
+          AnalysisJobsItem.filter_settings_system
       )
 
     else

@@ -112,7 +112,7 @@ class AnalysisJobsItem < ActiveRecord::Base
     {
         valid_fields: fields,
         render_fields: fields,
-        text_fields: [],
+        #text_fields: ,
         controller: :analysis_jobs_items,
         action: :filter,
         defaults: {

@@ -49,6 +49,7 @@ resource 'AnalysisJobsItems' do
     ).to_json
   }
 
+
   ################################
   # INDEX
   ################################
