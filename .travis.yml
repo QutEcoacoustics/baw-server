@@ -29,7 +29,7 @@ before_install:
   - mp3splt -version
   - sox --version
 script:
-  - bin/rspec
+  - bundle exec rspec
 env:
   global:
     secure: "Kq1sbJ7fwl27/QICiZtzdPe9mmPbnQfgyOujm+stPTmnpHtYU1gfwJtyrw+bBi9INdxiZHTzPjRdLM36zWEysSi8HRySVkVCzG3fgG/AWvmTlqzBigLjlHV0Xhb9YRSb1FgbC2UNcp2YF4FcAdlFkrgRKWNxNGLAy4gyH3E9a3A="
