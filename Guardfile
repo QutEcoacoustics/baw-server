@@ -1,7 +1,7 @@
 # More info at https://github.com/guard/guard#readme
 notification :off
 
-guard :rspec, cmd: 'bin/rspec --format progress --color' do
+guard :rspec, cmd: 'bundle exec rspec --format progress --color' do
   watch(%r{^spec/.+_spec\.rb$})
   watch(%r{^lib/(.+)\.rb$}) { |m| ["spec/#{m[1]}_spec.rb", *((0..9).map { |i| "spec/#{m[1]}_#{i}_spec.rb" })] }
   watch('spec/spec_helper.rb') { 'spec' }
