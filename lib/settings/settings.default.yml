@@ -45,8 +45,6 @@ settings:
       - ./tmp/custom_temp_dir/_cached_spectrogram
     cached_audios:
       - ./tmp/custom_temp_dir/_cached_audio
-    cached_datasets:
-      - ./tmp/custom_temp_dir/_cached_dataset
     cached_analysis_jobs:
       - ./tmp/custom_temp_dir/_analysis_results
     worker_log_file: ./tmp/logs/worker.log

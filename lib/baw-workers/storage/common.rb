@@ -226,13 +226,7 @@ module BawWorkers
         fail ArgumentError, "#{validate_msg_base} saved_search_id. #{provided}" unless opts.include? :saved_search_id
         fail ArgumentError, "saved_search_id must be greater than 0: #{opts[:saved_search_id]}. #{provided}" unless opts[:saved_search_id].to_i > 0
       end
-
-      def validate_dataset_id(opts)
-        provided = validate_msg_provided(opts)
-        fail ArgumentError, "#{validate_msg_base} dataset_id. #{provided}" unless opts.include? :dataset_id
-        fail ArgumentError, "dataset_id must be greater than 0: #{opts[:dataset_id]}. #{provided}" unless opts[:dataset_id].to_i > 0
-      end
-
+      
     end
   end
 end

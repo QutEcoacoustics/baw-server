@@ -15,6 +15,7 @@ Mime::Type.register 'audio/wavpack', :wv, ['audio/wv', 'audio/x-wv', 'audio/x-wa
 Mime::Type.register 'audio/aac', :aac, [], []
 Mime::Type.register 'audio/mp4', :mp4, ['audio/m4a'], ['mov','m4a','3gp','3g2','mj2']
 Mime::Type.register 'audio/x-flac', :flac, ['audio/flac'], []
+Mime::Type.register 'audio/x-waac', :wac, ['audio/waac', 'audio/wac', 'audio/x-wac'], []
 
 # text mime types
 Mime::Type.register 'application/x-yaml', :yml, ['text/yaml', 'text/x-yaml','application/yaml','text/yml', 'text/x-yml','application/yml','application/x-yml'], ['yaml']
