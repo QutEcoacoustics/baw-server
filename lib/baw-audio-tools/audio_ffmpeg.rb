@@ -2,7 +2,7 @@ module BawAudioTools
   class AudioFfmpeg
 
     WARN_INDICATOR = '\[.+ @ 0x[0-9a-f]+\] '
-    WARN_ANALYSE_DURATION = 'max_analyze_duration [0-9]+ reached at [0-9]+'
+    WARN_ANALYSE_DURATION = 'max_analyze_duration [0-9]+ reached at [0-9]+[ a-zA-Z]*'
     WARN_ESTIMATE_DURATION = 'Estimating duration from bitrate, this may be inaccurate'
     # e.g. [mp3 @ 0x2935600] overread, skip -6 enddists: -4 -4
     # e.g. [mp3 @ 0x3314600] overread, skip -5 enddists: -2 -2
@@ -73,42 +73,33 @@ module BawAudioTools
 
     def check_for_errors(execute_msg)
 
-      stdout = execute_msg[:stdout]
+      #stdout = execute_msg[:stdout]
       stderr = execute_msg[:stderr]
 
-      unless stderr.blank?
+      return stderr if stderr.blank?
 
-        mod_stderr = stderr
+      mod_stderr = stderr.dup
 
-        if mod_stderr.include?(WARN_ESTIMATE_DURATION)
-          mod_stderr = find_remove_warning(mod_stderr, REGEX_WARN_DURATION)
+      warn_regex_array = [
+          REGEX_WARN_DURATION, REGEX_WARN_OVER_READ,
+          REGEX_WARN_ANALYSE_DURATION, REGEX_WARN_CHANNEL_LAYOUT,
+          REGEX_WARN_BYTES_OF_JUNK]
+
+      warn_regex_array.each do |warn_regex|
+        if has_regex?(mod_stderr, warn_regex)
+          mod_stderr = find_remove_warning(mod_stderr, warn_regex)
         end
-
-        if has_regex?(mod_stderr, REGEX_WARN_OVER_READ)
-          mod_stderr = find_remove_warning(mod_stderr, REGEX_WARN_OVER_READ)
-        end
-
-        if has_regex?(mod_stderr, REGEX_WARN_ANALYSE_DURATION)
-          mod_stderr = find_remove_warning(mod_stderr, REGEX_WARN_ANALYSE_DURATION)
-        end
-
-        if has_regex?(mod_stderr, REGEX_WARN_CHANNEL_LAYOUT)
-          mod_stderr = find_remove_warning(mod_stderr, REGEX_WARN_CHANNEL_LAYOUT)
-        end
-
-        if has_regex?(mod_stderr, REGEX_WARN_BYTES_OF_JUNK)
-          mod_stderr = find_remove_warning(mod_stderr, REGEX_WARN_BYTES_OF_JUNK)
-        end
-
-        if !mod_stderr.blank? && mod_stderr.match(REGEX_WARN_INDICATOR)
-          fail Exceptions::FileCorruptError, "Ffmpeg output contained warning (e.g. [mp3 @ 0x2935600]).\n\t#{execute_msg[:execute_msg]}"
-        end
-
       end
+
+      if !mod_stderr.blank? && mod_stderr.match(REGEX_WARN_INDICATOR)
+        fail Exceptions::FileCorruptError, "Ffmpeg output contained warning (e.g. [mp3 @ 0x2935600]).\n\t#{execute_msg[:execute_msg]}"
+      end
+
+      mod_stderr
     end
 
     def check_integrity_output(execute_msg)
-      stdout = execute_msg[:stdout]
+      #stdout = execute_msg[:stdout]
       stderr = execute_msg[:stderr]
 
       result = {

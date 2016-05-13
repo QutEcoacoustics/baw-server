@@ -33,7 +33,8 @@ shared_context 'audio base' do
             sox: audio_tools.sox_executable,
             wavpack: audio_tools.wavpack_executable,
             shntool: audio_tools.shntool_executable,
-            wav2png: audio_tools.wav2png_executable
+            wav2png: audio_tools.wav2png_executable,
+            wac2wav: audio_tools.wac2wav_executable
         })
   }
 end
@@ -51,6 +52,8 @@ shared_context 'test audio files' do
   let(:audio_file_stereo_channels) { 2 }
   let(:audio_file_stereo_duration_seconds) { 70 }
 
+
+
   let(:audio_file_empty) { File.join(audio_dir, 'test-audio-empty.ogg') }
   let(:audio_file_corrupt) { File.join(audio_dir, 'test-audio-corrupt.ogg') }
   let(:audio_file_does_not_exist_1) { File.join(audio_dir, 'not-here-1.ogg') }
@@ -58,6 +61,10 @@ shared_context 'test audio files' do
   let(:audio_file_amp_1_channels) { File.join(audio_dir, 'amp-channels-1.ogg') }
   let(:audio_file_amp_2_channels) { File.join(audio_dir, 'amp-channels-2.ogg') }
   let(:audio_file_amp_3_channels) { File.join(audio_dir, 'amp-channels-3.ogg') }
+
+  let(:audio_file_wac_1) { File.join(audio_dir, 'test-wac-1.wac') }
+
+  let(:audio_file_wac_2) { File.join(audio_dir, 'test-wac-2.wac') }
 end
 
 shared_context 'temp media files' do

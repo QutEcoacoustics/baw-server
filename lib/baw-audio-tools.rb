@@ -14,6 +14,7 @@ module BawAudioTools
   autoload :AudioWavpack, 'baw-audio-tools/audio_wavpack'
   autoload :AudioShntool, 'baw-audio-tools/audio_shntool'
   autoload :AudioWaveform, 'baw-audio-tools/audio_waveform'
+  autoload :AudioWac2wav, 'baw-audio-tools/audio_wac2wav'
 
   autoload :AudioBase, 'baw-audio-tools/audio_base'
   autoload :ImageImageMagick, 'baw-audio-tools/image_image_magick'

@@ -39,10 +39,10 @@ before_install:
 
   # download, extract, build, and add wac2wavcmd to path
   - mkdir /tmp/wac2wav
-  - wget https://github.com/QutBioacoustics/baw-audio-tools/releases/download/v0.1.1/wac2wavcmd-1.0.zip
-  - unzip wac2wavcmd-1.0.zip
-  - make -C ./wac2wavcmd-1.0/
-  - mv ./wac2wavcmd-1.0/wac2wavcmd /tmp/wac2wav/wac2wavcmd
+  - wget https://github.com/QutBioacoustics/wac2wavcmd/archive/master.zip
+  - unzip wac2wavcmd-master.zip
+  - make -C ./wac2wavcmd-master/
+  - mv ./wac2wavcmd-master/wac2wavcmd /tmp/wac2wav/wac2wavcmd
   - export PATH=/tmp/wac2wav/:$PATH
 
   # check versions
@@ -53,7 +53,7 @@ before_install:
   - wav2png --version
   - wac2wavcmd </dev/null || true
 script:
-- bundle exec rspec
+- bin/rspec
 env:
   global:
     secure: alRlkr6JHTx8Op2G4S65JKot8k9zSuXEHHRu8ZqCk1uOrHVmEbljuN8kQhyNkM5vP4khwqSx64fPn4T8vBQCJ03cdsGQjO3SPR72ZdsYI4NLKD1tTu8yCn0n5w23LzLkY7IE5TwBH5XkuHjh0dGc7COWlc/F5Dnw3+o20Y5G1gA=

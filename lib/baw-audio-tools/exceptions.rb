@@ -5,6 +5,7 @@ module BawAudioTools
     class FileEmptyError < IOError; end
     class FileNotFoundError < IOError; end
     class FileAlreadyExistsError < IOError; end
+    class FileTooSmallError < IOError; end
     class NotAnAudioFileError < IOError; end
     class NotAnImageFileError < IOError; end
     class AudioFileNotFoundError < FileNotFoundError; end
@@ -15,5 +16,7 @@ module BawAudioTools
     class SegmentRequestTooLong < ArgumentError; end
     class SegmentRequestTooShort < ArgumentError; end
     class CacheRequestError < ArgumentError; end
+    class InvalidTargetMediaTypeError < ArgumentError; end
+    class FileContentExtMismatchError < StandardError; end
   end
 end

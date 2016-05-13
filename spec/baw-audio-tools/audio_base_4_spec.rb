@@ -1,5 +1,6 @@
 require 'spec_helper'
 
+# tests audio channels
 describe BawAudioTools::AudioBase do
   include_context 'common'
   include_context 'audio base'

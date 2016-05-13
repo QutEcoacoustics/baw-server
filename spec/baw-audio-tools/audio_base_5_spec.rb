@@ -1,5 +1,6 @@
 require 'spec_helper'
 
+# tests converting between audio formats
 describe BawAudioTools::AudioBase do
   include_context 'common'
   include_context 'audio base'
@@ -152,5 +153,23 @@ describe BawAudioTools::AudioBase do
     expect(info_2[:sample_rate]).to be_within(0.0).of(audio_file_stereo_sample_rate)
     expect(info_2[:channels]).to eq(audio_file_stereo_channels)
     expect(info_2[:duration_seconds]).to be_within(duration_range).of(audio_file_stereo_duration_seconds)
+  end
+
+  it 'correctly converts from .wac to .wav, then from .wav to .flac' do
+    temp_media_file_a = temp_media_file_1+'.wav'
+    result_1 = audio_base.modify(audio_file_wac_2, temp_media_file_a)
+    info_1 = audio_base.info(temp_media_file_a)
+    expect(info_1[:media_type]).to eq('audio/wav')
+    expect(info_1[:sample_rate]).to be_within(0.0).of(22050)
+    expect(info_1[:channels]).to eq(2)
+    expect(info_1[:duration_seconds]).to be_within(0.3).of(60)
+
+    temp_media_file_b = temp_media_file_2+'.flac'
+    result_2 = audio_base.modify(temp_media_file_a, temp_media_file_b)
+    info_2 = audio_base.info(temp_media_file_b)
+    expect(info_2[:media_type]).to eq('audio/x-flac')
+    expect(info_2[:sample_rate]).to be_within(0.0).of(22050)
+    expect(info_2[:channels]).to eq(2)
+    expect(info_2[:duration_seconds]).to be_within(0.3).of(60)
   end
 end

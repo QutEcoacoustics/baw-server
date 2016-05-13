@@ -38,7 +38,7 @@ module BawAudioTools
     end
 
     def check_for_errors(execute_msg)
-      stdout = execute_msg[:stdout]
+      #stdout = execute_msg[:stdout]
       stderr = execute_msg[:stderr]
 
       if !stderr.blank? && stderr.include?(ERROR_CANNOT_OPEN)
@@ -53,7 +53,7 @@ module BawAudioTools
     end
 
     def check_integrity_output(execute_msg)
-      stdout = execute_msg[:stdout]
+      #stdout = execute_msg[:stdout]
       stderr = execute_msg[:stderr]
 
       result = {

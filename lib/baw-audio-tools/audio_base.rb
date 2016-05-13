@@ -3,7 +3,8 @@ module BawAudioTools
 
     attr_reader :audio_defaults, :logger, :temp_dir, :timeout_sec,
                 :audio_ffmpeg, :audio_mp3splt, :audio_sox,
-                :audio_wavpack, :audio_shntool, :audio_wav2png
+                :audio_wavpack, :audio_shntool, :audio_wav2png,
+                :audio_wac2wav
 
     public
 
@@ -19,6 +20,7 @@ module BawAudioTools
     # @option opts [BawAudioTools::AudioWavpack] :wavpack
     # @option opts [BawAudioTools::AudioShntool] :shntool
     # @option opts [BawAudioTools::AudioWaveform] :wav2png
+    # @option opts [BawAudioTools::AudioWac2wav] :wac2wav
     # @return [BawAudioTools::AudioBase]
     def initialize(audio_defaults, logger, temp_dir, run_program, opts = {})
       @audio_defaults = audio_defaults
@@ -32,6 +34,7 @@ module BawAudioTools
       @audio_wavpack = opts[:wavpack]
       @audio_shntool = opts[:shntool]
       @audio_wav2png = opts[:wav2png]
+      @audio_wac2wav = opts[:wac2wav]
 
       @class_name = self.class.name
     end
@@ -57,7 +60,8 @@ module BawAudioTools
           sox: BawAudioTools::AudioSox.new(opts[:sox], temp_dir),
           wavpack: BawAudioTools::AudioWavpack.new(opts[:wavpack], temp_dir),
           shntool: BawAudioTools::AudioShntool.new(opts[:shntool], temp_dir),
-          wav2png: BawAudioTools::AudioWaveform.new(opts[:wav2png], temp_dir)
+          wav2png: BawAudioTools::AudioWaveform.new(opts[:wav2png], temp_dir),
+          wac2wav: BawAudioTools::AudioWac2wav.new(opts[:wac2wav], temp_dir)
       }
 
       run_program = BawAudioTools::RunExternalProgram.new(timeout_sec, logger)
@@ -84,23 +88,106 @@ module BawAudioTools
       fail Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.exists? source
       fail Exceptions::FileEmptyError, "Source exists, but has no content: #{source}" if File.size(source) < 1
 
-      ffmpeg_info_cmd = @audio_ffmpeg.info_command(source)
-      ffmpeg_info_output = @run_program.execute(ffmpeg_info_cmd)
-
-      ffmpeg_info = @audio_ffmpeg.parse_ffprobe_output(source, ffmpeg_info_output)
-
-      @audio_ffmpeg.check_for_errors(ffmpeg_info_output)
-
-      # extract only necessary information into a flattened hash
-      info_flattened = {
-          media_type: @audio_ffmpeg.get_mime_type(ffmpeg_info),
-          sample_rate: ffmpeg_info['STREAM sample_rate'].to_f,
-          duration_seconds: @audio_ffmpeg.parse_duration(ffmpeg_info['FORMAT duration']).to_f
-      }
+      if File.extname(source) == '.wac'
+        info = info_wac2wav(source)
+      else
+        info = info_ffmpeg(source)
+        clipping_check(source, info)
+      end
 
       # calculate the bit rate in bits per second (bytes * 8 = bits)
-      info_flattened[:bit_rate_bps_calc] = (File.size(source).to_f * 8.0) / info_flattened[:duration_seconds]
+      info[:bit_rate_bps_calc] = (File.size(source).to_f * 8.0) / info[:duration_seconds]
 
+      if info[:media_type] == 'audio/wavpack'
+        # only get wavpack info for wavpack files
+        info = info.merge(info_wavpack(source))
+      # not using shntool for now, partly because it can't process some .wav formats
+      #elsif info[:media_type] == 'audio/wav'
+      #  # only get shntool info for wav files
+      #  info = info.merge(info_shntool(source))
+      end
+
+      @logger.debug(@class_name) {
+        "Info for #{source}: #{info.to_json}"
+      }
+
+      info
+    end
+
+    def info_ffmpeg(source)
+      info_cmd = @audio_ffmpeg.info_command(source)
+      info_output = @run_program.execute(info_cmd)
+
+      info = @audio_ffmpeg.parse_ffprobe_output(source, info_output)
+
+      stderr = @audio_ffmpeg.check_for_errors(info_output)
+
+      {
+          media_type: @audio_ffmpeg.get_mime_type(info),
+          sample_rate: info['STREAM sample_rate'].to_f,
+          duration_seconds: @audio_ffmpeg.parse_duration(info['FORMAT duration']).to_f,
+          bit_rate_bps: (info['STREAM bit_rate'] || info['FORMAT bit_rate']).to_i,
+          data_length_bytes: info['FORMAT size'].to_i,
+          channels: info['STREAM channels'].to_i
+      }
+    end
+
+    def info_wavpack(source)
+      info_cmd = @audio_wavpack.info_command(source)
+      info_output = @run_program.execute(info_cmd)
+      info = @audio_wavpack.parse_info_output(info_output[:stdout])
+      error = @audio_wavpack.parse_error_output(info_output[:stderr])
+      @audio_wavpack.check_for_errors(info_output)
+
+      {
+          bit_rate_bps: info['ave bitrate'].to_f * 1000.0,
+          data_length_bytes: info['file size'].to_f,
+          channels: info['channels'].to_i,
+          duration_seconds: @audio_wavpack.parse_duration(info['duration']).to_f
+      }
+    end
+
+    def info_shntool(source)
+      info_cmd = @audio_shntool.info_command(source)
+      info_output = @run_program.execute(info_cmd)
+      info = @audio_shntool.parse_info_output(info_output[:stdout])
+      @audio_shntool.check_for_errors(info_output)
+
+      {
+          bit_rate_bps: info['Average bytes/sec'].to_f,
+          data_length_bytes: info['Actual file size'].to_f,
+          channels: info['Channels'].to_i,
+          duration_seconds: @audio_shntool.parse_duration(info['Length']).to_f
+      }
+    end
+
+    def info_wac2wav(source)
+      @audio_wac2wav.info(source)
+    end
+
+    def integrity_check(source)
+      fail Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.exists? source
+
+      if File.extname(source) == '.wv'
+        wvpack_integrity_cmd = @audio_wavpack.integrity_command(source)
+        wvpack_integrity_output = @run_program.execute(wvpack_integrity_cmd, false)
+        output = @audio_wavpack.check_integrity_output(wvpack_integrity_output)
+
+      elsif File.extname(source) == '.wac'
+        # info method checks file header, raises error if not a .wac file
+        output = @audio_wac2wav.info(source)
+
+      else
+        # ffmpeg for everything else
+        ffmpeg_integrity_cmd = @audio_ffmpeg.integrity_command(source)
+        ffmpeg_integrity_output = @run_program.execute(ffmpeg_integrity_cmd, false)
+        output = @audio_ffmpeg.check_integrity_output(ffmpeg_integrity_output)
+      end
+
+      output
+    end
+
+    def clipping_check(source, info_flattened)
       # check for clipping, zero signal
       # only if duration less than 4 minutes
       four_minutes_in_sec = 4.0 * 60.0
@@ -157,64 +244,6 @@ module BawAudioTools
         end
 
       end
-
-      if info_flattened[:media_type] == 'audio/wavpack'
-        # only get wavpack info for wavpack files
-        wavpack_info_cmd = @audio_wavpack.info_command(source)
-        wavpack_info_output = @run_program.execute(wavpack_info_cmd)
-        wavpack_info = @audio_wavpack.parse_info_output(wavpack_info_output[:stdout])
-        wavpack_error = @audio_wavpack.parse_error_output(wavpack_info_output[:stderr])
-        @audio_wavpack.check_for_errors(wavpack_info_output)
-
-        info_flattened[:bit_rate_bps] = wavpack_info['ave bitrate'].to_f * 1000.0
-        info_flattened[:data_length_bytes] = wavpack_info['file size'].to_f
-        info_flattened[:channels] = wavpack_info['channels'].to_i
-        info_flattened[:duration_seconds] = @audio_wavpack.parse_duration(wavpack_info['duration']).to_f
-
-        #elsif info_flattened[:media_type] == 'audio/wav'
-        #  # only get shntool info for wav files
-        #  shntool_info_cmd = @audio_shntool.info_command(source)
-        #  shntool_info_output = @run_program.execute(shntool_info_cmd)
-        #  shntool_info = @audio_shntool.parse_info_output(shntool_info_output[:stdout])
-        #  @audio_shntool.check_for_errors(shntool_info_output)
-        #
-        #  info_flattened[:bit_rate_bps] = shntool_info['Average bytes/sec'].to_f
-        #  info_flattened[:data_length_bytes] = shntool_info['Actual file size'].to_f
-        #  info_flattened[:channels] = shntool_info['Channels'].to_i
-        #  info_flattened[:duration_seconds] = @audio_shntool.parse_duration(shntool_info['Length']).to_f
-
-      else
-        # get ffmpeg info for everything else
-        info_flattened[:bit_rate_bps] = ffmpeg_info['STREAM bit_rate'].to_i
-        info_flattened[:bit_rate_bps] = ffmpeg_info['FORMAT bit_rate'].to_i if info_flattened[:bit_rate_bps].blank?
-        info_flattened[:data_length_bytes] = ffmpeg_info['FORMAT size'].to_i
-        info_flattened[:channels] = ffmpeg_info['STREAM channels'].to_i
-        # duration
-      end
-
-      @logger.debug(@class_name) {
-        "Info for #{source}: #{info_flattened.to_json}"
-      }
-
-      info_flattened
-    end
-
-    def integrity_check(source)
-      fail Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.exists? source
-
-      if File.extname(source) != '.wv'
-        # ffmpeg for everything except wavpack
-        ffmpeg_integrity_cmd = @audio_ffmpeg.integrity_command(source)
-        ffmpeg_integrity_output = @run_program.execute(ffmpeg_integrity_cmd, false)
-        output = @audio_ffmpeg.check_integrity_output(ffmpeg_integrity_output)
-      else
-        # wavpack for wv files
-        wvpack_integrity_cmd = @audio_wavpack.integrity_command(source)
-        wvpack_integrity_output = @run_program.execute(wvpack_integrity_cmd, false)
-        output = @audio_wavpack.check_integrity_output(wvpack_integrity_output)
-      end
-
-      output
     end
 
     # Creates a new audio file from source path in target path, modified according to the
@@ -225,6 +254,8 @@ module BawAudioTools
       fail Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.exists? source
       fail Exceptions::FileAlreadyExistsError, "Target exists: #{target}" if File.exists? target
 
+      fail Exceptions::InvalidTargetMediaTypeError, 'Cannot convert to .wac' if File.extname(target) == '.wac'
+
       source_info = info(source)
 
       check_offsets(source_info, @audio_defaults.min_duration_seconds, @audio_defaults.max_duration_seconds, modify_parameters)
@@ -232,7 +263,6 @@ module BawAudioTools
 
       modify_worker(source_info, source, target, modify_parameters)
     end
-
 
 
     def tempfile_content(tempfile)
@@ -283,7 +313,7 @@ module BawAudioTools
       if modify_parameters.include?(:sample_rate)
         sample_rate = modify_parameters[:sample_rate].to_i
         fail Exceptions::InvalidSampleRateError, "Sample rate #{sample_rate} requested for " +
-                                                   "#{File.extname(target)} not in #{AudioBase.valid_sample_rates}." unless AudioBase.valid_sample_rates.include?(sample_rate)
+            "#{File.extname(target)} not in #{AudioBase.valid_sample_rates}." unless AudioBase.valid_sample_rates.include?(sample_rate)
       end
     end
 
@@ -305,6 +335,10 @@ module BawAudioTools
       if source_info[:media_type] == 'audio/wavpack'
         # convert to wave and segment
         audio_tool_segment('wav', :modify_wavpack, source, source_info, target, modify_parameters)
+      elsif source_info[:media_type] == 'audio/x-waac'
+        # convert .wac to .wav
+        modify_wac2wav(source, target, modify_parameters)
+
       elsif source_info[:media_type] == 'audio/mp3' && (modify_parameters.include?(:start_offset) || modify_parameters.include?(:end_offset))
         # segment only, so check for offsets
         audio_tool_segment('mp3', :modify_mp3splt, source, source_info, target, modify_parameters)
@@ -359,6 +393,21 @@ module BawAudioTools
       @run_program.execute(cmd)
     end
 
+    def modify_wac2wav(source, target, modify_parameters)
+      # process the source file, put output to temp file
+      temp_file = temp_file('wav')
+
+      cmd = @audio_wac2wav.modify_command(source, temp_file)
+      @run_program.execute(cmd)
+
+      check_target(temp_file)
+
+      # more processing might be required
+      modify_worker(info(temp_file), temp_file, target, modify_parameters)
+
+      File.delete temp_file
+    end
+
     #def modify_shntool(source, source_info, target, start_offset, end_offset)
     #  cmd = @audio_shntool.modify_command(source, source_info, target, start_offset, end_offset)
     #  @run_program.execute(cmd)
@@ -379,14 +428,13 @@ module BawAudioTools
       # remove start and end offset from new_params (otherwise it will be done again!)
       new_params = {}.merge(modify_parameters)
       new_params.delete :start_offset if new_params.include?(:start_offset)
-      new_params.delete :end_offset if  new_params.include?(:end_offset)
+      new_params.delete :end_offset if new_params.include?(:end_offset)
 
       # more processing might be required
       modify_worker(info(temp_file), temp_file, target, new_params)
 
       File.delete temp_file
     end
-
 
 
   end

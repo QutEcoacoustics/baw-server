@@ -15,7 +15,7 @@ describe BawAudioTools::AudioFfmpeg do
   let(:unknown_warning) { "[wav @ 0x1d35020] hello I'm an unknown warning" }
 
   # join using $/ (new line separator)
-  let(:error_msg) { [analyse_duration, estimate_duration, over_read, channel_layout, bytes_of_junk].join($/) }
+  let(:error_msg) { [analyse_duration, estimate_duration, over_read, channel_layout, bytes_of_junk].shuffle.join($/) }
 
   it 'removes known warnings' do
     expect {
