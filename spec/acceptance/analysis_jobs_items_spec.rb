@@ -38,6 +38,12 @@ resource 'AnalysisJobsItems' do
     Creation::Common.create_analysis_job_item(analysis_job, audio_recording)
   }
 
+  # Create another audio recording that is NOT in any analysis_jobs_items.
+  # Used for testing SYSTEM endpoints.
+  let!(:system_audio_recording) {
+    Creation::Common.create_audio_recording(owner_user, owner_user, site)
+  }
+
   # only the harvester can update
   let!(:harvester_user) { FactoryGirl.create(:harvester) }
   let!(:harvester_token) { Creation::Common.create_user_token(harvester_user) }
@@ -48,7 +54,6 @@ resource 'AnalysisJobsItems' do
                                audio_recording_id: audio_recording.id
     ).to_json
   }
-
 
   ################################
   # INDEX
@@ -122,7 +127,13 @@ resource 'AnalysisJobsItems' do
     let(:analysis_job_id) { 'system' }
     standard_request_options(:get, 'INDEX system (admin token)', :ok, {
         expected_json_path: ['data/0/analysis_job_id', 'data/0/audio_recording_id'],
-        data_item_count: 1
+        data_item_count: 3,
+        response_body_content: ['"audio_recording_id":%{audio_recording_id}']
+    },
+    &proc { |context, opts|
+     opts[:response_body_content][0] = opts[:response_body_content][0] % {
+         audio_recording_id: context.system_audio_recording.id
+     }
     })
   end
 

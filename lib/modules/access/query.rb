@@ -235,7 +235,8 @@ module Access
       # @param [User] user
       # @param [Symbol, Array<Symbol>] levels
       # @return [ActiveRecord::Relation] analysis jobs items
-      def analysis_jobs_items(analysis_job, user, levels = Access::Core.levels_allow)
+      # @param [bool] system_mode Whether or not to do a right outer join to simulate existing analysis_jobs_items
+      def analysis_jobs_items(analysis_job, user, system_mode, levels = Access::Core.levels_allow)
         user = Access::Core.validate_user(user)
         levels = Access::Core.validate_levels(levels)
 
@@ -243,11 +244,15 @@ module Access
         # ***should*** be functionally equivalent to checking permissions through the
         # AnalysisJob.SavedSearch.Projects relationship.
 
+        if system_mode
+          query = AnalysisJobsItem.system_query
+        else
         query = AnalysisJobsItem
                     .joins(:audio_recording)
                     .order(created_at: :desc)
                     .joins(:analysis_job) # this join ensures only non-deleted results are returned
                     .where(analysis_jobs: {id: analysis_job.id})
+        end
 
         Access::Apply.restrictions(user, levels, query)
       end

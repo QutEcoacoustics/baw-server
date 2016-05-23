@@ -157,6 +157,12 @@ class AnalysisJobsItem < ActiveRecord::Base
     end
   end
 
+  def self.system_query
+    joins('RIGHT OUTER JOIN audio_recordings on analysis_jobs_items.audio_recording_id = audio_recordings.id')
+        .select('"audio_recordings"."id" AS "analysis_jobs_items"."audio_recording_id"')
+        .order(created_at: :desc)
+  end
+
   private
 
   def is_new_when_created

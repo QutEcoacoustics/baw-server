@@ -188,14 +188,16 @@ class AnalysisJobsItemsController < ApplicationController
   end
 
   def get_analysis_jobs_items
-    Access::Query.analysis_jobs_items(@analysis_job, current_user)
+    Access::Query.analysis_jobs_items(@analysis_job, current_user, false)
   end
 
   def get_virtual_analysis_jobs_items
-    Access::Query.audio_recordings(current_user)
-
-    # TODO transform response
+    Access::Query.analysis_jobs_items(nil, current_user, true)
   end
+
+  # def transform_virtual_items(analysis_job_items)
+  #
+  # end
 
   def get_audio_recording
     if @audio_recording_id.blank? || @audio_recording_id < 1
@@ -206,7 +208,7 @@ class AnalysisJobsItemsController < ApplicationController
     @audio_recording = AudioRecording.where(id: request_params[:audio_recording_id]).first
   end
 
-  def do_authorize_system_instance()
+  def do_authorize_system_instance
     authorize! :show, get_resource
   end
 

@@ -154,4 +154,52 @@ describe AnalysisJobsItem, type: :model do
     end
 
   end
+
+
+
+  describe 'system query' do
+    it 'returns the same number of audio_recordings as exist in the db' do
+      ar = FactoryGirl.create(:audio_recording)
+      ar1 = FactoryGirl.create(:audio_recording)
+
+      ar_count = AnalysisJobsItem.system_query.count()
+      expect(ar_count).to be 3
+    end
+
+    it 'does not return deleted audio_recordings' do
+      ar = FactoryGirl.create(:audio_recording)
+      AudioRecording.delete(ar.id)
+
+      ar_count_unscoped = AudioRecording.unscoped.count()
+      expect(ar_count_unscoped).to be 3
+
+      ar_count = AnalysisJobsItem.system_query.count()
+      expect(ar_count).to be 1
+    end
+
+    it 'fakes the audio_recording_id field' do
+      results = AnalysisJobsItem.system_query
+
+      expect(results.count).to be 1
+
+      results.each { |item|
+        expect(item.audio_recording_id).not_to be_nil
+      }
+    end
+
+    it 'only returns recordings the user has access too' do
+      ar = FactoryGirl.create(:audio_recording)
+
+      aji = AnalysisJobsItem.first()
+      user = aji.audio_recording.uploader_id
+
+
+      query = Access::Query.analysis_jobs_items(nil, user, true)
+
+      rows = query.all()
+
+      expect(rows.count).to be 1
+      expect(rows[0].audio_recording_id).to be aji.audio_recording_id
+    end
+  end
 end
