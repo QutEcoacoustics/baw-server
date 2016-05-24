@@ -145,22 +145,61 @@ class AnalysisJobsItem < ActiveRecord::Base
       when (new_status == :working and old_status == :queued)
         work_started_at = Time.zone.now
       when (new_status == :successful and old_status == :working),
-           (new_status == :failed and old_status == :working),
-           (new_status == :timed_out and old_status == :working)
+          (new_status == :failed and old_status == :working),
+          (new_status == :timed_out and old_status == :working)
         completed_at = Time.zone.now
       when (new_status == :cancelled and old_status == :new),
-           (new_status == :cancelled and old_status == :queued),
-           (new_status == :cancelled and old_status == :working)
+          (new_status == :cancelled and old_status == :queued),
+          (new_status == :cancelled and old_status == :working)
         completed_at = Time.zone.now
       else
-        fail "AnalysisJobItem#status: Invalid state transition from #{ old_status } to #{ new_status }"
+        #fail "AnalysisJobItem#status: Invalid state transition from #{ old_status } to #{ new_status }"
     end
   end
 
+
+  # Scoped query for getting fake analysis_jobs.
+  # Note: this scope comes with a select built in - you have to be careful about using methods like `count` which assume
+  # No select has been done.
+  # @return [ActiveRecord::Relation]
+  def self.system_query_without_select
+
+    # first do the join in Arel
+    analysis_jobs_items = self.arel_table
+    audio_recordings = AudioRecording.arel_table
+
+    # right outer ensures audio_recordings generate 'fake'(empty) analysis_jobs_items rows
+    # we make sure the join condition always fails - we don't want the outer join to match real rows
+    joined = analysis_jobs_items.join(audio_recordings, Arel::Nodes::RightOuterJoin)
+                 .on(audio_recordings[:id].eq(nil))
+                 .join_sources
+#.on(analysis_jobs_items[:audio_recording_id].eq(audio_recordings[:id]))
+
+    # cast back to active record relation
+    query = joins(joined)
+
+    # filter out real analysis_jobs_items
+    #filtered = query.where(analysis_jobs_items[:id].eq(nil))
+
+    # merge with AudioRecording.all to apply default scope (e.g. where deleted_at IS NULL)
+    query_without_deleted = query.merge(AudioRecording.all)
+
+    query_without_deleted
+  end
+
   def self.system_query
-    joins('RIGHT OUTER JOIN audio_recordings on analysis_jobs_items.audio_recording_id = audio_recordings.id')
-        .select('"audio_recordings"."id" AS "analysis_jobs_items"."audio_recording_id"')
-        .order(created_at: :desc)
+    base_query = system_query_without_select
+
+    # get a list of all other columns - this ensures attributes don't raise a MissingAttributeException
+    columns = (AnalysisJobsItem.column_names - ['audio_recording_id'])
+    literals = columns.map { |c| "\"#{AnalysisJobsItem.table_name}\".\"#{c}\"" }
+
+    # then add an extra select to shift the audio_recording.id into audio_recording_id
+    projections = ["\"audio_recordings\".\"id\" AS \"audio_recording_id\""] + literals
+
+    final_query = base_query.select(*projections)
+
+    final_query
   end
 
   private
@@ -172,7 +211,7 @@ class AnalysisJobsItem < ActiveRecord::Base
   end
 
   def has_queue_id_when_needed
-    if  !(status == :new) && queue_id.blank?
+    if !(status == :new) && queue_id.blank?
       errors.add(:queue_id, 'A queue_id must be provided when status is not new')
     end
   end

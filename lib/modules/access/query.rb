@@ -246,12 +246,13 @@ module Access
 
         if system_mode
           query = AnalysisJobsItem.system_query
+                      .joins(audio_recording: :site)
         else
-        query = AnalysisJobsItem
-                    .joins(:audio_recording)
-                    .order(created_at: :desc)
-                    .joins(:analysis_job) # this join ensures only non-deleted results are returned
-                    .where(analysis_jobs: {id: analysis_job.id})
+          query = AnalysisJobsItem
+                      .joins(audio_recording: :site)
+                      .order(created_at: :desc)
+                      .joins(:analysis_job) # this join ensures only non-deleted results are returned
+                      .where(analysis_jobs: {id: analysis_job.id})
         end
 
         Access::Apply.restrictions(user, levels, query)
