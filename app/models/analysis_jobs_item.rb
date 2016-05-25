@@ -166,7 +166,8 @@ class AnalysisJobsItem < ActiveRecord::Base
 
     # first do the join in Arel
     analysis_jobs_items = self.arel_table
-    audio_recordings = AudioRecording.arel_table
+    # alias audio_recordings so other add on queries don't get confused
+    audio_recordings = Arel::Table.new(:audio_recordings).alias('tmp_audio_recordings_generator')
 
     # right outer ensures audio_recordings generate 'fake'(empty) analysis_jobs_items rows
     # we make sure the join condition always fails - we don't want the outer join to match real rows
@@ -195,7 +196,7 @@ class AnalysisJobsItem < ActiveRecord::Base
     literals = columns.map { |c| "\"#{AnalysisJobsItem.table_name}\".\"#{c}\"" }
 
     # then add an extra select to shift the audio_recording.id into audio_recording_id
-    projections = ["\"audio_recordings\".\"id\" AS \"audio_recording_id\""] + literals
+    projections = ["\"tmp_audio_recordings_generator\".\"id\" AS \"audio_recording_id\""] + literals
 
     final_query = base_query.select(*projections)
 
