@@ -31,6 +31,7 @@ resource 'AnalysisJobsItems' do
   # access to the results
   let!(:second_analysis_jobs_item) {
     project = Creation::Common.create_project(other_user)
+    permission = FactoryGirl.create(:read_permission, creator: owner_user, user: other_user, project: project)
     site = Creation::Common.create_site(other_user, project)
     audio_recording = Creation::Common.create_audio_recording(owner_user, owner_user, site)
     saved_search.projects << project
@@ -98,9 +99,24 @@ resource 'AnalysisJobsItems' do
     analysis_jobs_id_param
     let(:authentication_token) { other_token }
     let(:analysis_job_id) { analysis_job.id }
-    standard_request_options(:get, 'INDEX (as other)', :ok, {
-        response_body_content: ['"total":0,', '"data":[]']
-    })
+    standard_request_options(
+        :get,
+        'INDEX (as other)',
+        :ok,
+        {
+            expected_json_path: ['data/0/analysis_job_id', 'data/0/audio_recording_id'],
+            data_item_count: 1,
+            response_body_content: [
+                '"id":%{id}',
+                '"audio_recording_id":%{audio_recording_id}'
+            ]
+        },
+        &proc { |context, opts|
+          template_array(opts[:response_body_content], {
+              id: context.second_analysis_jobs_item.id,
+              audio_recording_id: context.second_analysis_jobs_item.audio_recording_id
+          })
+        })
   end
 
   get '/analysis_jobs/:analysis_job_id/audio_recordings' do
@@ -130,32 +146,11 @@ resource 'AnalysisJobsItems' do
         data_item_count: 3,
         response_body_content: ['"audio_recording_id":%{audio_recording_id}']
     },
-    &proc { |context, opts|
-     opts[:response_body_content][0] = opts[:response_body_content][0] % {
-         audio_recording_id: context.system_audio_recording.id
-     }
-    })
-  end
-
-  ################################
-  # Index - with weird permissions
-  # Any user should have access to a result if they have access to a project
-  ################################
-
-  get '/analysis_jobs/:analysis_job_id/audio_recordings' do
-    analysis_jobs_id_param
-    # this user has access to both projects
-    let(:authentication_token) { other_token }
-    let(:analysis_job_id) { analysis_job.id }
-    standard_request_options(:get, 'INDEX (as reader)', :ok, {
-        expected_json_path: [
-            'data/0/analysis_job_id',
-            'data/0/audio_recording_id',
-            'data/1/analysis_job_id',
-            'data/1/audio_recording_id'
-        ],
-        data_item_count: 2
-    })
+                             &proc { |context, opts|
+                               opts[:response_body_content][0] = opts[:response_body_content][0] % {
+                                   audio_recording_id: context.system_audio_recording.id
+                               }
+                             })
   end
 
   ################################
@@ -164,7 +159,7 @@ resource 'AnalysisJobsItems' do
 
   get '/analysis_jobs/:analysis_job_id/audio_recordings/:audio_recording_id' do
     analysis_jobs_items_id_param
-    let(:audio_recording_id) { analysis_jobs_item.id }
+    let(:audio_recording_id) { analysis_jobs_item.audio_recording_id }
     let(:analysis_job_id) { analysis_job.id }
 
     let(:authentication_token) { admin_token }
@@ -175,7 +170,7 @@ resource 'AnalysisJobsItems' do
 
   get '/analysis_jobs/:analysis_job_id/audio_recordings/:audio_recording_id' do
     analysis_jobs_items_id_param
-    let(:audio_recording_id) { analysis_jobs_item.id }
+    let(:audio_recording_id) { analysis_jobs_item.audio_recording_id }
     let(:analysis_job_id) { analysis_job.id }
     let(:authentication_token) { writer_token }
     standard_request_options(:get, 'SHOW (as writer)', :ok, {
@@ -185,7 +180,7 @@ resource 'AnalysisJobsItems' do
 
   get '/analysis_jobs/:analysis_job_id/audio_recordings/:audio_recording_id' do
     analysis_jobs_items_id_param
-    let(:audio_recording_id) { analysis_jobs_item.id }
+    let(:audio_recording_id) { analysis_jobs_item.audio_recording_id }
     let(:analysis_job_id) { analysis_job.id }
     let(:authentication_token) { reader_token }
     standard_request_options(:get, 'SHOW (as reader)', :ok, {
@@ -195,7 +190,7 @@ resource 'AnalysisJobsItems' do
 
   get '/analysis_jobs/:analysis_job_id/audio_recordings/:audio_recording_id' do
     analysis_jobs_items_id_param
-    let(:audio_recording_id) { analysis_jobs_item.id }
+    let(:audio_recording_id) { analysis_jobs_item.audio_recording_id }
     let(:analysis_job_id) { analysis_job.id }
     let(:authentication_token) { other_token }
     standard_request_options(:get, 'SHOW (as other)', :forbidden, {
@@ -204,7 +199,7 @@ resource 'AnalysisJobsItems' do
 
   get '/analysis_jobs/:analysis_job_id/audio_recordings/:audio_recording_id' do
     analysis_jobs_items_id_param
-    let(:audio_recording_id) { analysis_jobs_item.id }
+    let(:audio_recording_id) { analysis_jobs_item.audio_recording_id }
     let(:analysis_job_id) { analysis_job.id }
     let(:authentication_token) { unconfirmed_token }
     standard_request_options(:get, 'SHOW (as unconfirmed user)', :forbidden, {expected_json_path: get_json_error_path(:confirm)})
@@ -212,7 +207,7 @@ resource 'AnalysisJobsItems' do
 
   get '/analysis_jobs/:analysis_job_id/audio_recordings/:audio_recording_id' do
     analysis_jobs_items_id_param
-    let(:audio_recording_id) { analysis_jobs_item.id }
+    let(:audio_recording_id) { analysis_jobs_item.audio_recording_id }
     let(:analysis_job_id) { analysis_job.id }
     let(:authentication_token) { invalid_token }
     standard_request_options(:get, 'SHOW (invalid token)', :unauthorized, {expected_json_path: get_json_error_path(:sign_in)})
@@ -220,11 +215,11 @@ resource 'AnalysisJobsItems' do
 
   get '/analysis_jobs/:analysis_job_id/audio_recordings/:audio_recording_id' do
     analysis_jobs_items_id_param
-    let(:audio_recording_id) { analysis_jobs_item.id }
-    let(:analysis_job_id) { analysis_job.id }
+    let(:audio_recording_id) { analysis_jobs_item.audio_recording_id }
+    let(:analysis_job_id) { 'system' }
 
     let(:authentication_token) { admin_token }
-    standard_request_options(:get, 'SHOW (as admin)', :ok, {
+    standard_request_options(:get, 'SHOW system (as admin)', :ok, {
         expected_json_path: ['data/analysis_job_id', 'data/audio_recording_id']
     })
   end
@@ -237,7 +232,7 @@ resource 'AnalysisJobsItems' do
   put '/analysis_jobs/:analysis_job_id/audio_recordings/:audio_recording_id' do
     analysis_jobs_items_id_param
     analysis_jobs_items_body_params
-    let(:audio_recording_id) { analysis_jobs_item.id }
+    let(:audio_recording_id) { analysis_jobs_item.audio_recording_id }
     let(:analysis_job_id) { analysis_job.id }
     let(:raw_post) { body_attributes }
     let(:authentication_token) { admin_token }
@@ -249,7 +244,7 @@ resource 'AnalysisJobsItems' do
   patch '/analysis_jobs/:analysis_job_id/audio_recordings/:audio_recording_id' do
     analysis_jobs_items_id_param
     analysis_jobs_items_body_params
-    let(:audio_recording_id) { analysis_jobs_item.id }
+    let(:audio_recording_id) { analysis_jobs_item.audio_recording_id }
     let(:analysis_job_id) { analysis_job.id }
     let(:raw_post) { body_attributes }
     let(:authentication_token) { harvester_token }
@@ -261,7 +256,7 @@ resource 'AnalysisJobsItems' do
   put '/analysis_jobs/:analysis_job_id/audio_recordings/:audio_recording_id' do
     analysis_jobs_items_id_param
     analysis_jobs_items_body_params
-    let(:audio_recording_id) { analysis_jobs_item.id }
+    let(:audio_recording_id) { analysis_jobs_item.audio_recording_id }
     let(:analysis_job_id) { analysis_job.id }
     let(:raw_post) { body_attributes }
     let(:authentication_token) { writer_token }
@@ -273,7 +268,7 @@ resource 'AnalysisJobsItems' do
   put '/analysis_jobs/:analysis_job_id/audio_recordings/:audio_recording_id' do
     analysis_jobs_items_id_param
     analysis_jobs_items_body_params
-    let(:audio_recording_id) { analysis_jobs_item.id }
+    let(:audio_recording_id) { analysis_jobs_item.audio_recording_id }
     let(:analysis_job_id) { analysis_job.id }
     let(:raw_post) { body_attributes }
     let(:authentication_token) { reader_token }
@@ -285,7 +280,7 @@ resource 'AnalysisJobsItems' do
   put '/analysis_jobs/:analysis_job_id/audio_recordings/:audio_recording_id' do
     analysis_jobs_items_id_param
     analysis_jobs_items_body_params
-    let(:audio_recording_id) { analysis_jobs_item.id }
+    let(:audio_recording_id) { analysis_jobs_item.audio_recording_id }
     let(:analysis_job_id) { analysis_job.id }
     let(:raw_post) { body_attributes }
     let(:authentication_token) { other_token }
@@ -297,7 +292,7 @@ resource 'AnalysisJobsItems' do
   put '/analysis_jobs/:analysis_job_id/audio_recordings/:audio_recording_id' do
     analysis_jobs_items_id_param
     analysis_jobs_items_body_params
-    let(:audio_recording_id) { analysis_jobs_item.id }
+    let(:audio_recording_id) { analysis_jobs_item.audio_recording_id }
     let(:analysis_job_id) { analysis_job.id }
     let(:raw_post) { body_attributes }
     let(:authentication_token) { unconfirmed_token }
@@ -309,7 +304,7 @@ resource 'AnalysisJobsItems' do
   put '/analysis_jobs/:analysis_job_id/audio_recordings/:audio_recording_id' do
     analysis_jobs_items_id_param
     analysis_jobs_items_body_params
-    let(:audio_recording_id) { analysis_jobs_item.id }
+    let(:audio_recording_id) { analysis_jobs_item.audio_recording_id }
     let(:analysis_job_id) { analysis_job.id }
     let(:raw_post) { body_attributes }
     let(:authentication_token) { invalid_token }
@@ -321,7 +316,7 @@ resource 'AnalysisJobsItems' do
   put '/analysis_jobs/:analysis_job_id/audio_recordings/:audio_recording_id' do
     analysis_jobs_items_id_param
     analysis_jobs_items_body_params
-    let(:audio_recording_id) { analysis_jobs_item.id }
+    let(:audio_recording_id) { analysis_jobs_item.audio_recording_id }
     let(:analysis_job_id) { 'system' }
     let(:raw_post) { body_attributes }
     let(:authentication_token) { admin_token }
@@ -343,18 +338,18 @@ resource 'AnalysisJobsItems' do
       {
           filter: {
               status: {
-                  eq: 'working'
+                  eq: 'new'
               }
           },
           projection: {
-              include: %w(analysis_job_id, audio_recording_id, status)
+              include: [:analysis_job_id,  :audio_recording_id,  :status]
           }
       }.to_json
     }
     standard_request_options(:post, 'FILTER (as reader)', :ok, {
         expected_json_path: 'meta/filter/status',
         data_item_count: 1,
-        response_body_content: ['"status":{"eq":"working"']
+        response_body_content: ['"status":{"eq":"new"']
     })
   end
 
@@ -370,14 +365,14 @@ resource 'AnalysisJobsItems' do
               }
           },
           projection: {
-              include: %w(analysis_job_id, audio_recording_id, status)
+              include: [:analysis_job_id,  :audio_recording_id,  :status]
           }
       }.to_json
     }
-    standard_request_options(:post, 'FILTER system (as reader) - using non-existent properties', :not_acceptable, {
-        expected_json_path: ['meta/filter/status', 'meta/error/detail'],
+    standard_request_options(:post, 'FILTER system (as reader) - using nil-only properties', :ok, {
+        expected_json_path: 'meta/filter/status',
         data_item_count: 0,
-        response_body_content: ['"not acceptable"']
+        response_body_content: ['"status":{"eq":"working"']
     })
   end
 
@@ -385,15 +380,16 @@ resource 'AnalysisJobsItems' do
     analysis_jobs_id_param
     let(:authentication_token) { reader_token }
     let(:analysis_job_id) { 'system' }
+
     let(:raw_post) {
       {
           filter: {
-              'audio_recording.duration_seconds': {
-                  gt: 7200
+              'audio_recordings.duration_seconds': {
+                  gt: audio_recording.duration_seconds
               }
           },
           projection: {
-              include: %w(analysis_job_id, audio_recording_id, status)
+              include: [:analysis_job_id,  :audio_recording_id,  :status]
           }
       }.to_json
     }

@@ -26,30 +26,18 @@ class AnalysisJobsItemsController < ApplicationController
 
   # GET|HEAD /analysis_jobs/:analysis_job_id/audio_recordings/
   def index
-    # TODO: double check permissions
-    # - IF has access to audio recording
-    # - IF analysis_job not deleted
     do_authorize_class
-    get_opts
+    do_get_opts
 
-    if @is_system_job
-      @analysis_jobs_items, opts = Settings.api_response.response_advanced(
-          api_filter_params,
-          get_virtual_analysis_jobs_items,
-          AnalysisJobsItem,
-          AnalysisJobsItem.filter_settings_system
-      )
+    do_get_analysis_job
+    query = get_query
 
-    else
-      get_analysis_job
-
-      @analysis_jobs_items, opts = Settings.api_response.response_advanced(
-          api_filter_params,
-          get_analysis_jobs_items,
-          AnalysisJobsItem,
-          AnalysisJobsItem.filter_settings
-      )
-    end
+    @analysis_jobs_items, opts = Settings.api_response.response_advanced(
+        api_filter_params,
+        query,
+        AnalysisJobsItem,
+        AnalysisJobsItem.filter_settings
+    )
 
     respond_index(opts)
   end
@@ -57,42 +45,20 @@ class AnalysisJobsItemsController < ApplicationController
   # GET|HEAD /analysis_jobs/:analysis_job_id/audio_recordings/:audio_recording_id/
   def show
     # TODO: double check permissions
-    # - IF has access to audio recording
     # - IF analysis_job not deleted
 
-    request_params = get_opts
+    request_params = do_get_opts
 
+    do_load_resource
+    do_authorize_instance
+    audio_recording = AudioRecording.find(@audio_recording_id.to_i)
 
-    if @is_system_job
-      # load audio recording instead
-      audio_recording = AudioRecording.find(@audio_recording_id.to_i)
-      do_authorize_instance
-
-      dummy_aji = AnalysisJobsItem.new(audio_recording_id: audio_recording.id)
-      set_resource(dummy_aji)
-
-    else
-      do_load_resource
-
-      audio_recording = AudioRecording.find(@audio_recording_id.to_i)
-
-      do_authorize_instance
-    end
-
-
-
-
-
-
-    # TODO process results
     show_results(request, request_params, {
         analysis_job_id: @analysis_job_id,
         audio_recording_id: @audio_recording_id,
         audio_recording: audio_recording,
         analysis_jobs_item: get_resource
     })
-
-    respond_show
   end
 
   # Creation/deletion via API not needed at present time.
@@ -103,15 +69,13 @@ class AnalysisJobsItemsController < ApplicationController
 
   # PUT|PATCH /analysis_jobs/:analysis_job_id/audio_recordings/:audio_recording_id
   def update
-    # TODO: double check permissions
-    # - IFF has role :harvester
-
-    get_opts
+    do_get_opts
 
     if @is_system_job
-      fail CustomErrors::MethodNotAllowedError.new('Cannot update a system job\'s analysis jobs items', [:post, :put, :patch, :delete])
+      fail CustomErrors::MethodNotAllowedError.new(
+          'Cannot update a system job\'s analysis jobs items',
+          [:post, :put, :patch, :delete])
     end
-
 
     do_load_resource
     do_authorize_instance
@@ -126,28 +90,19 @@ class AnalysisJobsItemsController < ApplicationController
   # GET|POST  /analysis_jobs/:analysis_job_id/audio_recordings/
   def filter
     do_authorize_class
-    get_opts
+    do_get_opts
 
-    if @is_system_job
-      @analysis_jobs_items, opts = Settings.api_response.response_advanced(
-          api_filter_params,
-          get_virtual_analysis_jobs_items,
-          AnalysisJobsItem,
-          AnalysisJobsItem.filter_settings_system
-      )
+    do_get_analysis_job
+    query = get_query
 
-    else
-      get_analysis_job
+    @analysis_jobs_items, opts = Settings.api_response.response_advanced(
+        api_filter_params,
+        query,
+        AnalysisJobsItem,
+        AnalysisJobsItem.filter_settings
+    )
 
-      @analysis_jobs_items, opts = Settings.api_response.response_advanced(
-          api_filter_params,
-          get_analysis_jobs_items,
-          AnalysisJobsItem,
-          AnalysisJobsItem.filter_settings
-      )
-    end
-
-    respond_filter(filter_response, opts)
+    respond_index(opts)
   end
 
   private
@@ -160,7 +115,7 @@ class AnalysisJobsItemsController < ApplicationController
     params.require(:analysis_jobs_item).permit(:status)
   end
 
-  def get_opts
+  def do_get_opts
     # normalise params and get access to rails request instance
     request_params = CleanParams.perform(params.dup)
 
@@ -176,28 +131,22 @@ class AnalysisJobsItemsController < ApplicationController
       end
     end
 
-    @audio_recording_id = request_params[:audio_recording_id].to_i
+    @audio_recording_id = request_params[:audio_recording_id].blank? ? nil : request_params[:audio_recording_id].to_i
 
     request_params
   end
 
-
-  def get_analysis_job
-    @analysis_job = AnalysisJob.find(@analysis_job_id)
-
+  def do_get_analysis_job
+    @analysis_job = AnalysisJob.find(@analysis_job_id) unless @is_system_job
   end
 
-  def get_analysis_jobs_items
-    Access::Query.analysis_jobs_items(@analysis_job, current_user, false)
+  def get_query
+    if @is_system_job
+      Access::Query.analysis_jobs_items(nil, current_user, true)
+    else
+      Access::Query.analysis_jobs_items(@analysis_job, current_user, false)
+    end
   end
-
-  def get_virtual_analysis_jobs_items
-    Access::Query.analysis_jobs_items(nil, current_user, true)
-  end
-
-  # def transform_virtual_items(analysis_job_items)
-  #
-  # end
 
   def get_audio_recording
     if @audio_recording_id.blank? || @audio_recording_id < 1
@@ -208,15 +157,17 @@ class AnalysisJobsItemsController < ApplicationController
     @audio_recording = AudioRecording.where(id: request_params[:audio_recording_id]).first
   end
 
-  def do_authorize_system_instance
-    authorize! :show, get_resource
-  end
 
   def do_load_resource
-    resource = AnalysisJobsItem.find_by(
-        analysis_job_id: @analysis_job_id,
-        audio_recording_id: @audio_recording_id
-    )
+    if @is_system_job
+      resource = AnalysisJobsItem.system_query.find_by(audio_recording_id: @audio_recording_id)
+    else
+      resource = AnalysisJobsItem.find_by(
+          analysis_job_id: @analysis_job_id,
+          audio_recording_id: @audio_recording_id
+      )
+    end
+
     set_resource(resource)
   end
 
@@ -259,10 +210,11 @@ class AnalysisJobsItemsController < ApplicationController
     analysis_job_id = options[:analysis_job_id]
 
     results_path_hash = get_results_path(request_params, analysis_job_id, audio_recording)
+    is_root_path = results_path_hash[:sub_folders].size == 0
     paths = BawWorkers::Config.analysis_cache_helper.existing_paths(results_path_hash)
 
     # shared error info
-    msg = "Could not find results for analysis job '#{analysis_job_id}' for recording '#{audio_recording.id}'" \
+    msg = "Could not find results directory for analysis job '#{analysis_job_id}' for recording '#{audio_recording.id}'" \
       "at '#{request_params[:results_path]}'."
 
     # should the response include content?
@@ -277,21 +229,28 @@ class AnalysisJobsItemsController < ApplicationController
       head :not_found
     elsif !is_audio_ready && !is_head_request
       fail CustomErrors::ItemNotFoundError, "Audio recording id #{audio_recording.id} is not ready"
-    elsif is_audio_ready && paths.size < 1
+    elsif is_audio_ready && paths.size < 1 && !is_root_path
       # none of the paths are files or directories that exist, so raise error
+      # the exception here is the root results folder - it always should 'exist' for the API even if it doesn't on disk
       fail CustomErrors::ItemNotFoundError, msg
-    elsif is_audio_ready && paths.size > 0
-      # files or directories exist
+    elsif is_audio_ready && (paths.size > 0 || is_root_path)
 
-      dirs = paths.select { |p| File.directory?(p) }.map { |d| d.end_with?("#{File::SEPARATOR}.") ? d[0..-2] : d }
-      files = paths.select { |p| File.file?(p) }
-
+      if is_root_path
+        paths = BawWorkers::Config.analysis_cache_helper.possible_paths_dir(results_path_hash)
+        dirs = paths
+        files = []
+      else
+        # files or directories exist
+        dirs = paths.select { |p| File.directory?(p) }.map { |d| d.end_with?(File::SEPARATOR + '.') ? d[0..-2] : d }
+        files = paths.select { |p| File.file?(p) }
+      end
 
       options[:existing] = {
           dirs: dirs,
           files: files
       }
       options[:is_head_request] = is_head_request
+      options[:is_root_path] = is_root_path
 
       # if paths contains both ... uh, I have no idea. Just fail.
       # also fail if no paths are files or dirs ... I don't know if that's possible or not.
@@ -371,16 +330,18 @@ class AnalysisJobsItemsController < ApplicationController
     }
   end
 
-  def dir_info_children(path)
+  def dir_info_children(path, is_root_path)
     normalised_path = normalise_path(path)
     normalised_name = normalised_name(normalised_path)
 
+    children = []
+    children = dir_list(path) unless is_root_path
 
     {
         path: normalised_path,
         name: normalised_name,
         type: 'directory',
-        children: dir_list(path)
+        children: children
     }
   end
 
@@ -413,6 +374,7 @@ class AnalysisJobsItemsController < ApplicationController
 
   def return_dir(request_info)
     existing_paths = request_info[:existing][:dirs]
+    is_root_path = request_info[:is_root_path]
     is_head_request = request_info[:is_head_request]
 
     analysis_jobs_item = request_info[:analysis_jobs_item]
@@ -421,10 +383,10 @@ class AnalysisJobsItemsController < ApplicationController
     # just return a file listing for the first existing dir
     dir_path = existing_paths[0]
 
-    dir_listing = dir_info_children(dir_path)
+    dir_listing = dir_info_children(dir_path, is_root_path)
 
     # merge dir listing with analysis job item
-    dir_listing = analysis_jobs_item.attributed.dup.merge(dir_listing)
+    dir_listing = analysis_jobs_item.attributes.dup.merge(dir_listing)
 
     wrapped = Settings.api_response.build(:ok, dir_listing)
 

@@ -236,21 +236,22 @@ module Access
       # @param [Symbol, Array<Symbol>] levels
       # @return [ActiveRecord::Relation] analysis jobs items
       # @param [bool] system_mode Whether or not to do a right outer join to simulate existing analysis_jobs_items
-      def analysis_jobs_items(analysis_job, user, system_mode, levels = Access::Core.levels_allow)
+      def analysis_jobs_items(analysis_job, user, system_mode = false, levels = Access::Core.levels_allow)
         user = Access::Core.validate_user(user)
         levels = Access::Core.validate_levels(levels)
 
-        # The original results endpoint does permissions through audio_recordings so we're emulating that here. It
-        # ***should*** be functionally equivalent to checking permissions through the
-        # AnalysisJob.SavedSearch.Projects relationship.
+        # The decision has been made to resolve AJobsItem permissions through the AudioRecording relation, rather than
+        # the AnalysisJob.SavedSearch.Projects relationship. It should be functionally equivalent.
 
         if system_mode
           query = AnalysisJobsItem.system_query
                       .joins(audio_recording: :site)
+                      .order(audio_recording_id: :asc)
         else
+          analysis_job = Access::Core.validate_analysis_job(analysis_job)
           query = AnalysisJobsItem
                       .joins(audio_recording: :site)
-                      .order(created_at: :desc)
+                      .order(audio_recording_id: :asc)
                       .joins(:analysis_job) # this join ensures only non-deleted results are returned
                       .where(analysis_jobs: {id: analysis_job.id})
         end

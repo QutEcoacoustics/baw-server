@@ -64,6 +64,7 @@ describe AnalysisJobsItem, type: :model do
 
   describe 'analysis_jobs_item state transitions' do
     [
+        # old, new, []shouldPass|shouldPassAndUpdateField]
         [:new, :new, true],
         [:new, :queued, :queued_at],
         [:new, :working, false],
@@ -127,7 +128,9 @@ describe AnalysisJobsItem, type: :model do
         [nil, :failed, false],
         [nil, :timed_out, false],
         [nil, :cancelled, false],
-        # if all the other combinations hold true this case will never happen anyway
+        # if all the other combinations hold true this case will never happen anyway.
+        # note: nil is a valid value for system queries, but we should never be able to
+        # transition the model to nil (other cases).
         [nil, nil, true]
     ].each do |test_case|
 
@@ -155,13 +158,70 @@ describe AnalysisJobsItem, type: :model do
 
   end
 
+  describe 'security for results is resolved via audio recordings' do
+    # create two separate hierarchies
+    create_entire_hierarchy
+
+    let!(:second_project) {
+      Creation::Common.create_project(other_user)
+    }
+
+    # The second analysis jobs item allows us to test for different permission combinations
+    # In particular we want to ensure that if someone has access to a project, then they have
+    # access to the results
+    let!(:second_analysis_jobs_item) {
+      project = second_project
+      permission = FactoryGirl.create(:read_permission, creator: owner_user, user: other_user, project: project)
+      site = Creation::Common.create_site(other_user, project)
+      audio_recording = Creation::Common.create_audio_recording(owner_user, owner_user, site)
+      saved_search.projects << project
+
+      Creation::Common.create_analysis_job_item(analysis_job, audio_recording)
+    }
+
+    it 'ensures users with access to all projects get all results' do
+      # give the original user permissions to access the second project
+      permission = FactoryGirl.create(:read_permission, creator: owner_user, user: reader_user, project: second_project)
+
+      query = Access::Query.analysis_jobs_items(analysis_job, reader_user)
+
+      rows = query.all
+
+      # should have access to both projects
+      expect(rows.count).to be 2
+      expect(rows[0].id).to be analysis_jobs_item.id
+      expect(rows[1].id).to be second_analysis_jobs_item.id
+    end
+
+    it 'ensures users with access to one project only get some recordings when new projects added' do
+      query = Access::Query.analysis_jobs_items(analysis_job, reader_user)
+
+      rows = query.all
+
+      # should only have access to audio recording from first project
+      # the user does not have access to both projects
+      expect(rows.count).to be 1
+      expect(rows[0].id).to be analysis_jobs_item.id
+    end
+
+    it 'ensures users with access to one projects get only some recordings' do
+      query = Access::Query.analysis_jobs_items(analysis_job, other_user)
+
+      rows = query.all
+
+      # should only have access to the recording from the second project, the user doesn't have access to the original
+      # project.
+      expect(rows.count).to be 1
+      expect(rows[0].id).to be second_analysis_jobs_item.id
+    end
+  end
 
   describe 'system query' do
     it 'returns the same number of audio_recordings as exist in the db' do
       ar = FactoryGirl.create(:audio_recording)
       ar1 = FactoryGirl.create(:audio_recording)
 
-      ar_count = AnalysisJobsItem.system_query_without_select.count
+      ar_count = AnalysisJobsItem.system_query.count
       expect(ar_count).to be 3
     end
 
@@ -179,7 +239,7 @@ describe AnalysisJobsItem, type: :model do
       ar_count = AudioRecording.count
       expect(ar_count).to be 1
 
-      ar_count = AnalysisJobsItem.system_query_without_select.count
+      ar_count = AnalysisJobsItem.system_query.count
       expect(ar_count).to be 1
     end
 
@@ -198,7 +258,7 @@ describe AnalysisJobsItem, type: :model do
       }
     end
 
-    describe "security for system query" do
+    describe 'security for system query' do
       # create two separate hierarchies
       create_entire_hierarchy
 
@@ -217,7 +277,7 @@ describe AnalysisJobsItem, type: :model do
         # augment the system with query with permissions
         query = Access::Query.analysis_jobs_items(nil, user, true)
 
-        rows = query.all()
+        rows = query.all
 
         expect(rows.count).to be 1
         expect(rows[0].audio_recording_id).to be second_recording.id

@@ -61,6 +61,9 @@ class AnalysisJobsItem < ActiveRecord::Base
   def status=(new_status)
     old_status = self.status
 
+    # don't let enumerize set the default value when selecting nil from the database
+    new_status = nil if !new_record? && new_status == :new.to_s && old_status == nil
+
     super(new_status)
 
     update_status_timestamps(self.status, old_status)
@@ -102,34 +105,6 @@ class AnalysisJobsItem < ActiveRecord::Base
     }
   end
 
-  # Special filter settings
-  def self.filter_settings_system
-
-    fields = [
-        :audio_recording_id
-    ]
-
-    {
-        valid_fields: fields,
-        render_fields: fields,
-        #text_fields: ,
-        controller: :analysis_jobs_items,
-        action: :filter,
-        defaults: {
-            order_by: :audio_recording_id,
-            direction: :asc
-        },
-        valid_associations: [
-            {
-                join: AudioRecording,
-                on: AnalysisJobsItem.arel_table[:audio_recording_id].eq(AudioRecording.arel_table[:id]),
-                available: true
-            }
-        ]
-    }
-  end
-
-
   # Update status and modified timestamp if changes are made. Does not persist changes.
   # @param [Symbol] new_status
   # @param [Symbol] old_status
@@ -153,54 +128,42 @@ class AnalysisJobsItem < ActiveRecord::Base
           (new_status == :cancelled and old_status == :working)
         completed_at = Time.zone.now
       else
-        #fail "AnalysisJobItem#status: Invalid state transition from #{ old_status } to #{ new_status }"
+        fail "AnalysisJobItem#status: Invalid state transition from #{ old_status } to #{ new_status }"
     end
   end
 
 
   # Scoped query for getting fake analysis_jobs.
-  # Note: this scope comes with a select built in - you have to be careful about using methods like `count` which assume
-  # No select has been done.
   # @return [ActiveRecord::Relation]
-  def self.system_query_without_select
-
-    # first do the join in Arel
+  def self.system_query
     analysis_jobs_items = self.arel_table
+
     # alias audio_recordings so other add on queries don't get confused
-    audio_recordings = Arel::Table.new(:audio_recordings).alias('tmp_audio_recordings_generator')
+    audio_recordings_inner = Arel::Table.new(:audio_recordings).alias('tmp_audio_recordings_generator')
+
+    # get a list of all other columns - this ensures attributes don't raise a MissingAttributeException
+    columns = (AnalysisJobsItem.column_names - ['audio_recording_id']).map { |c| '"' + table_name + '"."' + c + '"' }
+
+    # then add an extra select to shift the audio_recording.id into audio_recording_id
+    projections = columns.unshift("\"#{audio_recordings_inner.name}\".\"id\" AS \"audio_recording_id\"")
 
     # right outer ensures audio_recordings generate 'fake'(empty) analysis_jobs_items rows
     # we make sure the join condition always fails - we don't want the outer join to match real rows
-    joined = analysis_jobs_items.join(audio_recordings, Arel::Nodes::RightOuterJoin)
-                 .on(audio_recordings[:id].eq(nil))
-                 .join_sources
-#.on(analysis_jobs_items[:audio_recording_id].eq(audio_recordings[:id]))
+    joined = analysis_jobs_items
+                 .project(*projections)
+                 .join(audio_recordings_inner, Arel::Nodes::RightOuterJoin)
+                 .on(audio_recordings_inner[:id].eq(nil))
+
+    # convert to sub-query - hides weird table names
+    subquery = joined.as(analysis_jobs_items.table_name)
 
     # cast back to active record relation
-    query = joins(joined)
+    query = from(subquery)
 
-    # filter out real analysis_jobs_items
-    #filtered = query.where(analysis_jobs_items[:id].eq(nil))
-
-    # merge with AudioRecording.all to apply default scope (e.g. where deleted_at IS NULL)
-    query_without_deleted = query.merge(AudioRecording.all)
+    # merge with AudioRecording to apply default scope (e.g. where deleted_at IS NULL)
+    query_without_deleted = query.joins(:audio_recording)
 
     query_without_deleted
-  end
-
-  def self.system_query
-    base_query = system_query_without_select
-
-    # get a list of all other columns - this ensures attributes don't raise a MissingAttributeException
-    columns = (AnalysisJobsItem.column_names - ['audio_recording_id'])
-    literals = columns.map { |c| "\"#{AnalysisJobsItem.table_name}\".\"#{c}\"" }
-
-    # then add an extra select to shift the audio_recording.id into audio_recording_id
-    projections = ["\"tmp_audio_recordings_generator\".\"id\" AS \"audio_recording_id\""] + literals
-
-    final_query = base_query.select(*projections)
-
-    final_query
   end
 
   private
