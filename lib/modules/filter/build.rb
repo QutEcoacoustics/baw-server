@@ -22,6 +22,7 @@ module Filter
       @valid_fields = filter_settings[:valid_fields].map(&:to_sym)
       @render_fields = filter_settings[:render_fields].map(&:to_sym)
       @text_fields = filter_settings.include?(:text_fields) ? filter_settings[:text_fields].map(&:to_sym) : []
+      @base_association = filter_settings[:base_association]
       @valid_associations = filter_settings[:valid_associations]
       @field_mappings = filter_settings[:field_mappings]
 
@@ -446,7 +447,9 @@ module Filter
       model = info[:model]
 
       if current_table != @table
-        subquery = @table.project(@table[:id])
+        base_query = @base_association.nil? ? @table : @table.from(@base_association.dup.arel.as(@table.table_name))
+        column_to_match_on = @filter_settings[:base_association_key] || :id
+        subquery = base_query.project(@table[column_to_match_on])
 
         # add conditions to subquery
         if conditions.respond_to?(:each)
@@ -465,7 +468,7 @@ module Filter
           subquery = subquery.join(arel_table, Arel::Nodes::OuterJoin).on(j[:on])
         end
 
-        compose_in(@table, :id, [:id], subquery)
+        compose_in(@table, column_to_match_on, [column_to_match_on], subquery)
       else
         conditions
       end

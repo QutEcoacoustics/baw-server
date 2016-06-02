@@ -16,6 +16,7 @@ bin/* diff=ruby eol=lf
 
 # Ensure those won't be messed up with
 *.jpg binary
+*.png binary
 *.data binary
 *.ogg binary
 *.mp3 binary

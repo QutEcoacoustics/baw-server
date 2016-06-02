@@ -318,6 +318,8 @@ module Filter
       validate_closure(value[:custom_fields], [:item, :user]) if value.include?(:custom_fields)
       validate_closure(value[:new_spec_fields], [:user]) if value.include?(:new_spec_fields)
 
+      validate_hash_key(value, :base_association, ActiveRecord::Relation) if value.include?(:base_association)
+      validate_hash_key(value, :base_association_key, Symbol) if value.include?(:base_association)
       validate_filter_associations(value[:valid_associations]) if value.include?(:valid_associations)
 
     end

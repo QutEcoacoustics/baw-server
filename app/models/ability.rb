@@ -69,6 +69,7 @@ class Ability
       to_audio_event_comment(user)
       to_bookmark(user)
       to_analysis_job(user)
+      to_analysis_jobs_item(user)
       to_saved_search(user)
       to_script(user)
       to_tag
@@ -99,6 +100,10 @@ class Ability
   def for_harvester
     # actions used for harvesting. See baw-workers.
     can [:new, :create, :check_uploader, :update_status, :update], AudioRecording
+
+    # omitted: :new, :create,
+    # applied by default: :index, :show, :filter
+    can [ :update ], AnalysisJobsItem
   end
 
   def to_project(user)
@@ -236,14 +241,14 @@ class Ability
   end
 
   def to_analysis_job(user)
-    # must have read permission or higher on all saved_search.projects to create analysis job
+    # must have read permission or higher on ANY saved_search.projects to create analysis job
     can [:show, :create], AnalysisJob do |analysis_job|
       check_model(analysis_job)
       fail CustomErrors::BadRequestError.new('Analysis Job must have a saved search.') if analysis_job.saved_search.nil?
       projects = analysis_job.saved_search.projects
       fail CustomErrors::BadRequestError.new('Saved search must have at least one project.') if projects.size < 1
 
-      Access::Check.can_all?(user, :reader, projects)
+      Access::Check.can_any?(user, :reader, projects)
     end
 
     # only creator can update, destroy their own analysis jobs
@@ -251,6 +256,40 @@ class Ability
 
     # actions any logged in user can access
     can [:index, :new, :filter], AnalysisJob
+  end
+
+  def to_analysis_jobs_item(user)
+    # I'm assuming actions not included here are denied access automatically
+
+    # Only harvester can update - see permissions for harvester in for_harvester.
+
+    can [:show], AnalysisJobsItem do |analysis_job_item|
+      check_model(analysis_job_item)
+
+      if analysis_job_item.analysis_job.nil?
+        fail CustomErrors::BadRequestError.new('Analysis Jobs Item must have a Analysis Job.')
+      end
+
+      if analysis_job_item.audio_recording.nil?
+        fail CustomErrors::BadRequestError.new('Analysis Jobs Item must have a Audio Recording.')
+      end
+
+      Access::Check.can_any?(user, :reader, analysis_job_item.audio_recording.site.projects)
+
+      # if analysis_job_item.analysis_job.nil?
+      #   fail CustomErrors::BadRequestError.new('Analysis Jobs Item must have a Analysis Job.')
+      # end
+      #
+      #
+      # projects = analysis_job_item.analysis_job.saved_search.projects
+      # fail CustomErrors::BadRequestError.new('Saved search must have at least one project.') if projects.size < 1
+      #
+      # Access::Check.can_any?(user, :reader, projects)
+    end
+
+
+    # actions any logged in user can access
+    can [:index, :filter], AnalysisJobsItem
   end
 
   def to_saved_search(user)

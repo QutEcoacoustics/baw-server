@@ -11,6 +11,7 @@ class AnalysisJob < ActiveRecord::Base
   belongs_to :script, inverse_of: :analysis_jobs
   belongs_to :saved_search, inverse_of: :analysis_jobs
   has_many :projects, through: :saved_search
+  has_many :analysis_jobs_items, inverse_of: :analysis_job
 
   # add deleted_at and deleter_id
   acts_as_paranoid
@@ -50,6 +51,14 @@ class AnalysisJob < ActiveRecord::Base
   ]
 
   enumerize :overall_status, in: AVAILABLE_JOB_STATUS, predicates: true
+
+  #
+  # State transition map
+  #
+  # :new → :preparing → :processing → :completed
+  #                           ⇅
+  #                       :suspended
+  #
 
   after_initialize :initialise_job_tracking, if: Proc.new { |analysis_job| analysis_job.new_record? }
 
