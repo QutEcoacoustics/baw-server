@@ -791,6 +791,101 @@ DESCLIMIT20OFFSET0"
       expect(filter_query.query_full.to_sql.gsub(/\s+/, '')).to eq(complex_result_2.gsub(/\s+/, ''))
     end
 
+    it 'analysis_jobs_items - system, using a virtual table' do
+
+      request_body_obj = {
+          filter: {
+              'audio_recordings.duration_seconds': {
+                  gteq: audio_recording.duration_seconds
+              },
+          },
+          projection: {
+              include: [:analysis_job_id, :audio_recording_id, :status]
+          },
+          paging: {
+              items: 20,
+              page: 2
+          }
+      }
+
+      user = writer_user
+      user_id = user.id
+
+      complex_result = <<-SQL
+SELECT
+  "analysis_jobs_items"."analysis_job_id",
+  "analysis_jobs_items"."audio_recording_id",
+  "analysis_jobs_items"."status"
+FROM (SELECT
+  "tmp_audio_recordings_generator"."id" AS "audio_recording_id",
+  "analysis_jobs_items"."id",
+  "analysis_jobs_items"."analysis_job_id",
+  "analysis_jobs_items"."queue_id",
+  "analysis_jobs_items"."status",
+  "analysis_jobs_items"."created_at",
+  "analysis_jobs_items"."queued_at",
+  "analysis_jobs_items"."work_started_at",
+  "analysis_jobs_items"."completed_at"
+FROM "analysis_jobs_items"
+  RIGHT
+  OUTER JOIN "audio_recordings" "tmp_audio_recordings_generator"
+    ON "tmp_audio_recordings_generator"."id" IS NULL
+) analysis_jobs_items INNER
+  JOIN "audio_recordings"
+    ON "audio_recordings"."id" = "analysis_jobs_items"."audio_recording_id"
+       AND ("audio_recordings"."deleted_at" IS NULL)
+  INNER JOIN "sites"
+    ON "sites"."id" = "audio_recordings"."site_id"
+       AND ("sites"."deleted_at" IS NULL)
+WHERE (EXISTS(SELECT 1
+              FROM "projects_sites"
+              WHERE "sites"."id" = "projects_sites"."site_id" AND EXISTS((SELECT 1
+              FROM "projects"
+              WHERE "projects"."deleted_at" IS NULL AND "projects"."creator_id" = #{user_id}
+                AND "projects_sites"."project_id" = "projects"."id"
+              UNION ALL
+              SELECT 1
+              FROM "permissions"
+              WHERE "permissions"."user_id" = #{user_id} AND "permissions"."level" IN ('reader', 'writer', 'owner')
+                AND "projects_sites"."project_id" = "permissions"."project_id"))))
+      AND "analysis_jobs_items"."audio_recording_id" IN (
+      SELECT "analysis_jobs_items"."audio_recording_id"
+        FROM (SELECT "analysis_jobs_items".*
+          FROM (SELECT
+            "tmp_audio_recordings_generator"."id" AS "audio_recording_id",
+            "analysis_jobs_items"."id",
+            "analysis_jobs_items"."analysis_job_id",
+            "analysis_jobs_items"."queue_id",
+            "analysis_jobs_items"."status",
+            "analysis_jobs_items"."created_at",
+            "analysis_jobs_items"."queued_at",
+            "analysis_jobs_items"."work_started_at",
+            "analysis_jobs_items"."completed_at"
+          FROM "analysis_jobs_items"
+            RIGHT OUTER JOIN "audio_recordings" "tmp_audio_recordings_generator"
+              ON "tmp_audio_recordings_generator"."id" IS NULL) analysis_jobs_items
+            INNER JOIN "audio_recordings"
+              ON "audio_recordings"."id" = "analysis_jobs_items"."audio_recording_id"
+                AND ("audio_recordings"."deleted_at" IS NULL)) analysis_jobs_items
+          LEFT OUTER JOIN "audio_recordings"
+            ON "analysis_jobs_items"."audio_recording_id" = "audio_recordings"."id"
+      WHERE "audio_recordings"."duration_seconds" >= 60000.0)
+ORDER BY
+  "analysis_jobs_items"."audio_recording_id" ASC
+LIMIT 20
+OFFSET 20
+SQL
+
+      filter_query = Filter::Query.new(
+          request_body_obj,
+          Access::Query.analysis_jobs_items(nil, user, true),
+          AnalysisJobsItem,
+          AnalysisJobsItem.filter_settings(true)
+      )
+
+      expect(filter_query.query_full.to_sql.gsub(/\s+/, '')).to eq(complex_result.gsub(/\s+/, ''))
+    end
+
   end
 
   context 'calculated field' do
