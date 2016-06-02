@@ -1,7 +1,7 @@
 class AnalysisJobsController < ApplicationController
   include Api::ControllerHelper
 
-  SYSTEM_JOB_ID = 'system'
+  SYSTEM_JOB_ID = AnalysisJobsItem::SYSTEM_JOB_ID
 
   # GET /analysis_jobs
   def index

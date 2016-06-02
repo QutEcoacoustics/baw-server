@@ -258,6 +258,14 @@ describe AnalysisJobsItem, type: :model do
       }
     end
 
+    it 'dummies the analysis_job_id field' do
+      results = AnalysisJobsItem.system_query.all.to_a
+
+      expect(results.size).to be 1
+
+      expect(results[0].analysis_job_id).to eq('system')
+    end
+
     describe 'security for system query' do
       # create two separate hierarchies
       create_entire_hierarchy

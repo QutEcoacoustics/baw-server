@@ -42,6 +42,8 @@ class AnalysisJobsItem < ActiveRecord::Base
 
   enumerize :status, in: AVAILABLE_ITEM_STATUS, predicates: true, default: :new
 
+  SYSTEM_JOB_ID = 'system'
+
   #
   # State transition map
   #                             --> :successful
@@ -70,8 +72,14 @@ class AnalysisJobsItem < ActiveRecord::Base
 
   end
 
+  def analysis_job_id
+    super_id = super()
+    return SYSTEM_JOB_ID if !new_record? && id.nil?
 
-  def self.filter_settings
+    super_id
+  end
+
+  def self.filter_settings(is_system = false)
 
     fields = [
         :id, :analysis_job_id, :audio_recording_id,
@@ -80,7 +88,7 @@ class AnalysisJobsItem < ActiveRecord::Base
         :status
     ]
 
-    {
+    settings = {
         valid_fields: fields,
         render_fields: fields,
         text_fields: [:queue_id],
@@ -103,6 +111,13 @@ class AnalysisJobsItem < ActiveRecord::Base
             }
         ]
     }
+
+    if is_system
+      settings[:base_association] = AnalysisJobsItem.system_query
+      settings[:base_association_key] = :audio_recording_id
+    end
+
+    settings
   end
 
   # Update status and modified timestamp if changes are made. Does not persist changes.

@@ -141,16 +141,21 @@ resource 'AnalysisJobsItems' do
     analysis_jobs_id_param
     let(:authentication_token) { admin_token }
     let(:analysis_job_id) { 'system' }
-    standard_request_options(:get, 'INDEX system (admin token)', :ok, {
-        expected_json_path: ['data/0/analysis_job_id', 'data/0/audio_recording_id'],
-        data_item_count: 3,
-        response_body_content: ['"audio_recording_id":%{audio_recording_id}']
-    },
-                             &proc { |context, opts|
-                               opts[:response_body_content][0] = opts[:response_body_content][0] % {
-                                   audio_recording_id: context.system_audio_recording.id
-                               }
-                             })
+    standard_request_options(
+        :get,
+        'INDEX system (admin token)',
+        :ok,
+        {
+            expected_json_path: ['data/0/analysis_job_id', 'data/0/audio_recording_id'],
+            data_item_count: 3,
+            response_body_content: ['"audio_recording_id":%{audio_recording_id}']
+        },
+        &proc { |context, opts|
+          opts[:response_body_content][0] = opts[:response_body_content][0] % {
+              audio_recording_id: context.system_audio_recording.id
+          }
+        }
+    )
   end
 
   ################################
@@ -342,7 +347,7 @@ resource 'AnalysisJobsItems' do
               }
           },
           projection: {
-              include: [:analysis_job_id,  :audio_recording_id,  :status]
+              include: [:analysis_job_id, :audio_recording_id, :status]
           }
       }.to_json
     }
@@ -365,7 +370,7 @@ resource 'AnalysisJobsItems' do
               }
           },
           projection: {
-              include: [:analysis_job_id,  :audio_recording_id,  :status]
+              include: [:analysis_job_id, :audio_recording_id, :status]
           }
       }.to_json
     }
@@ -385,18 +390,33 @@ resource 'AnalysisJobsItems' do
       {
           filter: {
               'audio_recordings.duration_seconds': {
-                  gt: audio_recording.duration_seconds
+                  gteq: audio_recording.duration_seconds
               }
           },
           projection: {
-              include: [:analysis_job_id,  :audio_recording_id,  :status]
+              include: [:analysis_job_id, :audio_recording_id, :status]
           }
       }.to_json
     }
-    standard_request_options(:post, 'FILTER system (as reader)', :ok, {
-        expected_json_path: 'meta/filter/status',
-        data_item_count: 1,
-        response_body_content: ['"audio_recording.duration_seconds":{"gt":7200']
-    })
+    standard_request_options(
+        :post,
+        'FILTER system (as reader)',
+        :ok,
+        {
+            expected_json_path: 'meta/filter/audio_recordings.duration_seconds/gteq',
+            data_item_count: 2,
+            response_body_content: [
+                '"audio_recordings.duration_seconds":{"gteq":60000.0',
+                '"audio_recording_id":%{audio_recording_id_a}',
+                '"audio_recording_id":%{audio_recording_id_b}'
+            ]
+        },
+        &proc { |context, opts|
+          template_array(opts[:response_body_content], {
+              audio_recording_id_a: context.system_audio_recording.id,
+              audio_recording_id_b: context.analysis_jobs_item.audio_recording_id
+          })
+        }
+    )
   end
 end

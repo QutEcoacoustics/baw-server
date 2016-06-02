@@ -51,7 +51,7 @@ end
 
 test_url = '/analysis_jobs/:analysis_job_id/audio_recordings/:audio_recording_id/:results_path'
 
-resource 'Analysis' do
+resource 'AnalysisJobsItems' do
   header 'Authorization', :authentication_token
 
   after(:each) do
@@ -89,7 +89,7 @@ resource 'Analysis' do
           :not_found,
           {
               expected_json_path: 'meta/error/details',
-              response_body_content: ["Could not find results for job 'system' for recording ", " at 'Test1/TEST2'."]
+              response_body_content: ["Could not find results directory for analysis job 'system' for recording ", " at 'Test1/TEST2'."]
           })
     end
 
@@ -121,9 +121,12 @@ resource 'Analysis' do
           {
               expected_response_has_content: true,
               expected_json_path: 'meta/status',
-              response_body_content: '{"meta":{"status":200,"message":"OK"},"data":{"analysis_job_id":"system","audio_recording_id":%{audio_recording_id},"path":"/Test1/Test2","name":"Test2","type":"directory","children":[]}}'
+              response_body_content: [
+                  '{"meta":{"status":200,"message":"OK"},"data":{"id":null,"analysis_job_id":"system","audio_recording_id":%{audio_recording_id},',
+              '"path":"/Test1/Test2","name":"Test2","type":"directory","children":[]}}'
+              ]
           },
-          &proc { |context, opts| insert_audio_recording_id context, opts }
+          &proc { |context, opts| insert_audio_recording_id context, opts, 0 }
       )
     end
 
@@ -161,7 +164,7 @@ resource 'Analysis' do
           :not_found,
           {
               expected_json_path: 'meta/error/details',
-              response_body_content: ["Could not find results for job 'system' for recording ", " at 'Test1/Test2/test-case.csv'."]
+              response_body_content: ["Could not find results directory for analysis job 'system' for recording ", " at 'Test1/Test2/test-case.csv'."]
           })
     end
 
@@ -226,7 +229,7 @@ resource 'Analysis' do
           :not_found,
           {
               expected_json_path: 'meta/error/details',
-              response_body_content: ["Could not find results for job 'system' for recording ", " at 'Test1/Test2/test-CASE.csv'."]
+              response_body_content: ["Could not find results directory for analysis job 'system' for recording ", " at 'Test1/Test2/test-CASE.csv'."]
           })
     end
 
@@ -255,7 +258,7 @@ resource 'Analysis' do
           :not_found,
           {
               expected_json_path: 'meta/error/details',
-              response_body_content: ["Could not find results for job 'system' for recording ", " at 'Test1/Test2'."]
+              response_body_content: ["Could not find results directory for analysis job 'system' for recording ", " at 'Test1/Test2'."]
           })
     end
 
@@ -296,7 +299,8 @@ resource 'Analysis' do
           {
               response_body_content: [
                   '{"meta":{"status":200,"message":"OK"},"data":',
-                  '{"analysis_job_id":"system","audio_recording_id":%{audio_recording_id},"path":"/","name":"/","type":"directory","children":[',
+                  '{"id":null,"analysis_job_id":"system","audio_recording_id":%{audio_recording_id},',
+                  '"path":"/","name":"/","type":"directory","children":[',
                   '{"path":"/TopDir","name":"TopDir","type":"directory","has_children":true',
               ],
               invalid_data_content: [
@@ -334,7 +338,8 @@ resource 'Analysis' do
           {
               response_body_content: [
                   '{"meta":{"status":200,"message":"OK"},"data":',
-                  '{"analysis_job_id":"system","audio_recording_id":%{audio_recording_id},"path":"/TopDir","name":"TopDir","type":"directory","children":[',
+                  '{"id":null,"analysis_job_id":"system","audio_recording_id":%{audio_recording_id},',
+                  '"path":"/TopDir","name":"TopDir","type":"directory","children":[',
                   '{"path":"/TopDir/one","name":"one","type":"directory","has_children":true',
                   '{"path":"/TopDir/one3","name":"one3","type":"directory","has_children":false}',
                   '{"path":"/TopDir/one1","name":"one1","type":"directory","has_children":false}',
@@ -372,7 +377,8 @@ resource 'Analysis' do
           {
               response_body_content: [
                   '{"meta":{"status":200,"message":"OK"},"data":',
-                  '{"analysis_job_id":"system","audio_recording_id":%{audio_recording_id},"path":"/TopDir/one","name":"one","type":"directory","children":[',
+                  '{"id":null,"analysis_job_id":"system","audio_recording_id":%{audio_recording_id},',
+                  '"path":"/TopDir/one","name":"one","type":"directory","children":[',
                   '{"path":"/TopDir/one/two","name":"two","type":"directory","has_children":true'
               ],
               invalid_data_content: [
@@ -399,7 +405,8 @@ resource 'Analysis' do
           {
               response_body_content: [
                   '{"meta":{"status":200,"message":"OK"},"data":',
-                  '{"analysis_job_id":"system","audio_recording_id":%{audio_recording_id},"path":"/TopDir/one/two/three/four","name":"four","type":"directory","children":[',
+                  '{"id":null,"analysis_job_id":"system","audio_recording_id":%{audio_recording_id},',
+                  '"path":"/TopDir/one/two/three/four","name":"four","type":"directory","children":[',
                   '{"name":"five.txt","type":"file","size_bytes":14,"mime":"text/plain"}',
                   '{"path":"/TopDir/one/two/three/four/five","name":"five","type":"directory","has_children":true}'
               ],
@@ -432,7 +439,8 @@ resource 'Analysis' do
           {
               response_body_content: [
                   '{"meta":{"status":200,"message":"OK"},"data":',
-                  '{"analysis_job_id":"system","audio_recording_id":%{audio_recording_id},"path":"/","name":"/","type":"directory","children":['
+                  '{"id":null,"analysis_job_id":"system","audio_recording_id":%{audio_recording_id},',
+                  '"path":"/","name":"/","type":"directory","children":['
               ],
               invalid_data_content: [
                   '{"name":".test-dot-file","type":"file","size_bytes":0,"mime":""}'
@@ -443,5 +451,4 @@ resource 'Analysis' do
     end
 
   end
-
 end
