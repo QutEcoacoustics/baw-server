@@ -19,8 +19,8 @@ GIT
 
 GIT
   remote: https://github.com/QutBioacoustics/baw-workers.git
-  revision: e481170d509df7b9da5ccc32a652256db4030961
-  ref: e481170d50
+  revision: 3b698ad53061b236b12db1a994ae87b946d7ce50
+  ref: 3b698ad53061b236b12db1a994ae87b946d7ce50
   branch: master
   specs:
     baw-workers (0.5.0)
@@ -341,8 +341,8 @@ GEM
       vegas (~> 0.1.2)
     resque-status (0.5.0)
       resque (~> 1.19)
-    resque_solo (0.1.0)
-      resque (~> 1.25.1)
+    resque_solo (0.2.0)
+      resque (~> 1.25)
     role_model (0.8.2)
     rspec (3.4.0)
       rspec-core (~> 3.4.0)

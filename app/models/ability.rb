@@ -259,8 +259,6 @@ class Ability
   end
 
   def to_analysis_jobs_item(user)
-    # I'm assuming actions not included here are denied access automatically
-
     # Only harvester can update - see permissions for harvester in for_harvester.
 
     can [:show], AnalysisJobsItem do |analysis_job_item|
@@ -275,18 +273,7 @@ class Ability
       end
 
       Access::Check.can_any?(user, :reader, analysis_job_item.audio_recording.site.projects)
-
-      # if analysis_job_item.analysis_job.nil?
-      #   fail CustomErrors::BadRequestError.new('Analysis Jobs Item must have a Analysis Job.')
-      # end
-      #
-      #
-      # projects = analysis_job_item.analysis_job.saved_search.projects
-      # fail CustomErrors::BadRequestError.new('Saved search must have at least one project.') if projects.size < 1
-      #
-      # Access::Check.can_any?(user, :reader, projects)
     end
-
 
     # actions any logged in user can access
     can [:index, :filter], AnalysisJobsItem
