@@ -15,8 +15,23 @@ def analysis_jobs_items_body_params
   parameter :status, 'Analysis Jobs Item status in request body', required: true
 end
 
+def create_root_dir(dir = 'system')
+  analysis_cache = BawWorkers::Storage::AnalysisCache.new(BawWorkers::Settings.paths.cached_analysis_jobs)
+  top_path = File.join(analysis_cache.possible_dirs[0], dir)
+  FileUtils.mkpath top_path
+end
+
 # https://github.com/zipmark/rspec_api_documentation
 resource 'AnalysisJobsItems' do
+
+  before(:all) do
+    create_root_dir
+  end
+
+  after(:all) do
+    analysis_cache = BawWorkers::Storage::AnalysisCache.new(BawWorkers::Settings.paths.cached_analysis_jobs)
+    analysis_cache.existing_dirs.each { |dir| FileUtils.rm_r dir }
+  end
 
   header 'Accept', 'application/json'
   header 'Content-Type', 'application/json'
