@@ -52,9 +52,9 @@ CREATE TABLE analysis_jobs (
     description text,
     saved_search_id integer NOT NULL,
     started_at timestamp without time zone,
-    overall_status character varying DEFAULT 'new'::character varying NOT NULL,
+    overall_status character varying NOT NULL,
     overall_status_modified_at timestamp without time zone NOT NULL,
-    overall_progress text NOT NULL,
+    overall_progress json NOT NULL,
     overall_progress_modified_at timestamp without time zone NOT NULL,
     overall_count integer NOT NULL,
     overall_duration_seconds numeric(14,4) NOT NULL,
@@ -94,7 +94,8 @@ CREATE TABLE analysis_jobs_items (
     created_at timestamp without time zone NOT NULL,
     queued_at timestamp without time zone,
     work_started_at timestamp without time zone,
-    completed_at timestamp without time zone
+    completed_at timestamp without time zone,
+    cancel_started_at timestamp without time zone
 );
 
 
@@ -474,7 +475,8 @@ CREATE TABLE scripts (
     created_at timestamp without time zone NOT NULL,
     executable_command text NOT NULL,
     executable_settings text NOT NULL,
-    executable_settings_media_type character varying(255) DEFAULT 'text/plain'::character varying
+    executable_settings_media_type character varying(255) DEFAULT 'text/plain'::character varying,
+    analysis_action_params json
 );
 
 
@@ -1819,4 +1821,10 @@ INSERT INTO schema_migrations (version) VALUES ('20160226103516');
 INSERT INTO schema_migrations (version) VALUES ('20160226130353');
 
 INSERT INTO schema_migrations (version) VALUES ('20160420030414');
+
+INSERT INTO schema_migrations (version) VALUES ('20160614230504');
+
+INSERT INTO schema_migrations (version) VALUES ('20160712051359');
+
+INSERT INTO schema_migrations (version) VALUES ('20160726014747');
 

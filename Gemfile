@@ -98,6 +98,9 @@ gem 'enumerize', '~> 1.0'
 gem 'uuidtools', '~> 2.1.5'
 gem 'acts_as_paranoid', git: 'https://github.com/ActsAsParanoid/acts_as_paranoid.git', branch: :master, ref: 'ab31723bc1'
 
+# for state machines
+gem 'aasm'
+
 # SETTINGS
 # -------------------------------------
 gem 'settingslogic', '~> 2.0.9'
@@ -204,4 +207,8 @@ end
 group :test do
   gem 'webmock', '~> 1.24.0'
   gem 'shoulda-matchers', '< 3.0.0', require: false
+
+  gem 'rspec-mocks', '~>3.4.1'
+
+  gem 'timecop'
 end

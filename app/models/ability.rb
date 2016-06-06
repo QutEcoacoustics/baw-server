@@ -103,7 +103,7 @@ class Ability
 
     # omitted: :new, :create,
     # applied by default: :index, :show, :filter
-    can [ :update ], AnalysisJobsItem
+    can [ :show, :update ], AnalysisJobsItem
   end
 
   def to_project(user)

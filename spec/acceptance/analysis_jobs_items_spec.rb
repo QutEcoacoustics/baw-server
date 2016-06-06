@@ -65,10 +65,9 @@ resource 'AnalysisJobsItems' do
   let!(:harvester_token) { Creation::Common.create_user_token(harvester_user) }
 
   let(:body_attributes) {
-    FactoryGirl.attributes_for(:analysis_jobs_item,
-                               analysis_job_id: analysis_job.id,
-                               audio_recording_id: audio_recording.id
-    ).to_json
+   {
+       'status': 'queued'
+   }.to_json
   }
 
   ################################
@@ -261,14 +260,14 @@ resource 'AnalysisJobsItems' do
     })
   end
 
-  patch '/analysis_jobs/:analysis_job_id/audio_recordings/:audio_recording_id' do
+  put '/analysis_jobs/:analysis_job_id/audio_recordings/:audio_recording_id' do
     analysis_jobs_items_id_param
     analysis_jobs_items_body_params
     let(:audio_recording_id) { analysis_jobs_item.audio_recording_id }
     let(:analysis_job_id) { analysis_job.id }
     let(:raw_post) { body_attributes }
     let(:authentication_token) { harvester_token }
-    standard_request_options(:patch, 'UPDATE (as harvester)', :ok, {
+    standard_request_options(:put, 'UPDATE (as harvester)', :ok, {
         expected_json_path: 'data/analysis_job_id'
     })
   end

@@ -1,6 +1,9 @@
 class AnalysisJobsItem < ActiveRecord::Base
-  extend Enumerize
+  # allow a state machine to work with this class
+  include AASM
+  include AASMHelpers
 
+  SYSTEM_JOB_ID = 'system'
 
   belongs_to :analysis_job, inverse_of: :analysis_jobs_items
   belongs_to :audio_recording, inverse_of: :analysis_jobs_items
@@ -25,61 +28,6 @@ class AnalysisJobsItem < ActiveRecord::Base
   validates :queued_at, :work_started_at, :completed_at,
             allow_blank: true, allow_nil: true,
             timeliness: {on_or_before: lambda { Time.zone.now }, type: :datetime}
-
-  # item status values - timed out is a special failure case where the worker never reports back
-  AVAILABLE_ITEM_STATUS_SYMBOLS = [:new, :queued, :working, :successful, :failed, :timed_out, :cancelled]
-  AVAILABLE_ITEM_STATUS = AVAILABLE_ITEM_STATUS_SYMBOLS.map { |item| item.to_s }
-
-  AVAILABLE_JOB_STATUS_DISPLAY = [
-      {id: :new, name: 'New'},
-      {id: :queued, name: 'Queued'},
-      {id: :working, name: 'Working'},
-      {id: :successful, name: 'Successful'},
-      {id: :failed, name: 'Failed'},
-      {id: :timed_out, name: 'Timed out'},
-      {id: :cancelled, name: 'Cancelled'},
-  ]
-
-  enumerize :status, in: AVAILABLE_ITEM_STATUS, predicates: true, default: :new
-
-  SYSTEM_JOB_ID = 'system'
-
-  #
-  # State transition map
-  #                             --> :successful
-  #                             |
-  # :new → :queued → :working ----> :failed
-  #   |       |          |      |
-  #   |       |          |      --> :timed_out
-  #   |       |          |
-  #   --------------------------> :cancelled
-  #
-  # IFF #retry implemented (not currently the case), then also:
-  #
-  #   :failed ---------> :queued
-  #                |
-  #   :timed_out ---
-
-  def status=(new_status)
-    old_status = self.status
-
-    # don't let enumerize set the default value when selecting nil from the database
-    new_status = nil if !new_record? && new_status == :new.to_s && old_status == nil
-
-    super(new_status)
-
-    update_status_timestamps(self.status, old_status)
-
-  end
-
-  def analysis_job_id
-    super_id = super()
-
-    # When fake records are returned from system_query their analysis_job_id's are nil.
-    # This patch ensures serialized system records have the analysis_job_id set to 'system' - good practice for
-    # RESTful object. E.g. routing to a resource is done with analysis_job_id; having it set simplifies client logic.
-    !new_record? && id.nil? ? SYSTEM_JOB_ID : super_id
-  end
 
   def self.filter_settings(is_system = false)
 
@@ -156,33 +104,29 @@ class AnalysisJobsItem < ActiveRecord::Base
     settings
   end
 
-  # Update status and modified timestamp if changes are made. Does not persist changes.
-  # @param [Symbol] new_status
-  # @param [Symbol] old_status
-  # @return [void]
-  def update_status_timestamps(new_status, old_status)
-    return if new_status == old_status
+  #
+  # scopes
+  #
 
-    case
-      #when new_status == :new and old_status == :new
-      #  created_at = Time.zone.now  # - created_at handled by rails
-      when (new_status == :queued && old_status == :new)
-        self.queued_at = Time.zone.now
-      when (new_status == :working && old_status == :queued)
-        self.work_started_at = Time.zone.now
-      when (new_status == :successful && old_status == :working),
-           (new_status == :failed and old_status == :working),
-           (new_status == :timed_out && old_status == :working)
-        self.completed_at = Time.zone.now
-      when (new_status == :cancelled && old_status == :new),
-           (new_status == :cancelled && old_status == :queued),
-           (new_status == :cancelled && old_status == :working)
-        self.completed_at = Time.zone.now
-      else
-        fail "AnalysisJobItem#status: Invalid state transition from #{ old_status } to #{ new_status }"
-    end
+  def self.for_analysis_job(analysis_job_id)
+    where(analysis_job_id: analysis_job_id)
   end
 
+  def self.completed_for_analysis_job(analysis_job_id)
+    where(analysis_job_id: analysis_job_id, status: COMPLETED_ITEM_STATUS_SYMBOLS)
+  end
+
+  def self.failed_for_analysis_job(analysis_job_id)
+    where(analysis_job_id: analysis_job_id, status: FAILED_ITEM_STATUS_SYMBOLS)
+  end
+
+  def self.queued_for_analysis_job(analysis_job_id)
+    queued.where(analysis_job_id: analysis_job_id)
+  end
+
+  def self.cancelled_for_analysis_job(analysis_job_id)
+    where(analysis_job_id: analysis_job_id, status: [:cancelling, :cancelled])
+  end
 
   # Scoped query for getting fake analysis_jobs.
   # @return [ActiveRecord::Relation]
@@ -218,16 +162,223 @@ class AnalysisJobsItem < ActiveRecord::Base
     query_without_deleted
   end
 
+  #
+  # public methods
+  #
+
+  attr_reader :enqueue_results
+
+  def status=(new_status)
+    old_status = self.status
+
+    # don't let enumerize set the default value when selecting nil from the database
+    new_status = nil if !new_record? && new_status == :new.to_s && old_status == nil
+
+    super(new_status)
+  end
+
+  def analysis_job_id
+    super_id = super()
+
+    # When fake records are returned from system_query their analysis_job_id's are nil.
+    # This patch ensures serialized system records have the analysis_job_id set to 'system' - good practice for
+    # RESTful object. E.g. routing to a resource is done with analysis_job_id; having it set simplifies client logic.
+    !new_record? && id.nil? ? SYSTEM_JOB_ID : super_id
+  end
+
+
+  #
+  # State transition map
+  #                             --> :successful
+  #                             |
+  # :new → :queued → :working ----> :failed
+  #           |                 |
+  #           |                 --> :timed_out
+  #           |
+  #           ----> :cancelling --> :cancelled
+  #
+  # Retry an item:
+  #
+  # :failed ---------> :queued
+  #              |
+  # :timed_out ---
+  #
+  # During cancellation:
+  #
+  #  :cancelling --> :queued (same queue_id)
+  #
+  # After cancellation:
+  #
+  #  :cancelled --> :queued (new queue_id)
+  #
+  # Avoid race conditions for cancellation: an item can always finish!
+  #
+  # :cancelling ⊕ :cancelled ----> :successful ⊕ :failed ⊕ :timed_out
+  #
+  aasm column: :status, no_direct_assignment: true, whiny_persistence: true do
+    state :new, initial: true
+    state :queued, before_enter: :add_to_queue, enter: :set_queued_at
+    state :working, enter: :set_work_started_at
+    state :successful, enter: :set_completed_at
+    state :failed, enter: :set_completed_at
+    state :timed_out, enter: :set_completed_at
+    state :cancelling, enter: :set_cancel_started_at
+    state :cancelled, enter: :set_completed_at
+
+    event :queue, guards: [:not_system_job] do
+      transitions from: :new, to: :queued
+    end
+
+    event :work, guards: [:not_system_job] do
+      transitions from: :queued, to: :working
+    end
+
+    event :succeed, guards: [:not_system_job] do
+      transitions from: :working, to: :successful
+      transitions from: [:cancelling, :cancelled], to: :successful
+    end
+
+    event :fail, guards: [:not_system_job] do
+      transitions from: :working, to: :failed
+      transitions from: [:cancelling, :cancelled], to: :failed
+    end
+
+    event :time_out, guards: [:not_system_job] do
+      transitions from: :working, to: :timed_out
+      transitions from: [:cancelling, :cancelled], to: :timed_out
+    end
+
+    # https://github.com/aasm/aasm/issues/324
+    # event :complete, guards: [:not_system_job] do
+    #   transitions from: :working, to: :successful
+    #   transitions from: :working, to: :failed
+    #   transitions from: :working, to: :timed_out
+    #   transitions from: [:cancelling, :cancelled], to: :successful
+    #   transitions from: [:cancelling, :cancelled], to: :failed
+    #   transitions from: [:cancelling, :cancelled], to: :timed_out
+    # end
+
+
+    event :cancel, guards: [:not_system_job] do
+      transitions from: :queued, to: :cancelling
+    end
+
+    event :confirm_cancel, guards: [:not_system_job] do
+      transitions from: :cancelling, to: :cancelled
+    end
+
+    event :retry, guards: [:not_system_job] do
+      transitions from: [:failed, :timed_out], to: :queued
+      transitions from: :cancelled, to: :queued
+      transitions from: :cancelling, to: :queued
+    end
+  end
+
+
+  # item status values - timed out is a special failure case where the worker never reports back
+  AVAILABLE_ITEM_STATUS_SYMBOLS = self.aasm.states.map(&:name)
+  AVAILABLE_ITEM_STATUS = AVAILABLE_ITEM_STATUS_SYMBOLS.map { |item| item.to_s }
+
+  AVAILABLE_ITEM_STATUS_DISPLAY = self.aasm.states.map { |x| [x.name, x.display_name] }.to_h
+
+  COMPLETED_ITEM_STATUS_SYMBOLS = [:successful, :failed, :timed_out, :cancelled]
+  FAILED_ITEM_STATUS_SYMBOLS = [:failed, :timed_out, :cancelled]
+
   private
 
+  #
+  # state machine guards
+  #
+
+  def not_system_job
+    analysis_job_id != SYSTEM_JOB_ID
+  end
+
+
+  #
+  # state machine callbacks
+  #
+
+  # Enqueue payloads representing audio recordings from saved search to asynchronous processing queue.
+  def add_to_queue
+    if !queue_id.blank? && cancelling?
+      # cancelling items already have a valid job payload on the queue - do not add again
+      return
+    end
+
+    payload = AnalysisJobsItem::create_action_payload(analysis_job, audio_recording)
+
+    result = nil
+    error = nil
+
+    begin
+      result = BawWorkers::Analysis::Action.action_enqueue(payload)
+
+      # the assumption here is that result is a unique identifier that we can later use to interrogate the message queue
+      self.queue_id = result
+    rescue => e
+      error = e
+      # TODO: swallowing exception? seems bad
+      Rails.logger.error "An error occurred when enqueuing an analysis job item: #{e}"
+    end
+
+    @enqueue_results = {result: result, error: error}
+  end
+
+  def set_queued_at
+    self.queued_at = Time.zone.now
+  end
+
+  def set_work_started_at
+    self.work_started_at = Time.zone.now
+  end
+
+  def set_cancel_started_at
+    self.cancel_started_at = Time.zone.now
+  end
+
+  def set_completed_at
+    self.completed_at = Time.zone.now
+  end
+
+  #
+  # other methods
+  #
+
+  def self.create_action_payload(analysis_job, audio_recording)
+    # common payload info
+    command_format = analysis_job.script.executable_command.to_s
+    config_string = analysis_job.custom_settings.to_s
+    job_id = analysis_job.id.to_i
+
+    # get base options for analysis from the script
+    # Options invariant to the AnalysisJob are stuck in here, like:
+    # - file_executable
+    # - copy_paths
+    payload = analysis_job.script.analysis_action_params.dup
+
+    # merge base
+    payload.merge({
+                      command_format: command_format,
+
+                      config: config_string,
+                      job_id: job_id,
+
+                      uuid: audio_recording.uuid,
+                      id: audio_recording.id,
+                      datetime_with_offset: audio_recording.recorded_date.iso8601(3),
+                      original_format: audio_recording.original_format_calculated
+                  })
+  end
+
   def is_new_when_created
-    unless status == :new
+    unless status == :new.to_s
       errors.add(:status, 'must be new when first created')
     end
   end
 
   def has_queue_id_when_needed
-    if !(status == :new) && queue_id.blank?
+    if !(status == :new.to_s) && queue_id.blank?
       errors.add(:queue_id, 'A queue_id must be provided when status is not new')
     end
   end

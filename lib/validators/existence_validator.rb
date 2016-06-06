@@ -1,3 +1,5 @@
+# WARNING: this validator reloads associations if they are not loaded whenever the model is saved.
+# This causes very inefficient behaviour - particularly for updates.
 class ExistenceValidator < ActiveModel::EachValidator
 
   # Required for Rails 4.2

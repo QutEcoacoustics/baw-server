@@ -5,8 +5,10 @@ FactoryGirl.define do
     audio_recording
 
     queue_id  { SecureRandom.uuid }
-    status "new"
 
+    # Handled by workflow
+    #status "new"
+    #queue_id  { SecureRandom.uuid }
 
   end
 end

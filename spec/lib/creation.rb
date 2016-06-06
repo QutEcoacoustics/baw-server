@@ -28,6 +28,22 @@ module Creation
       prepare_analysis_jobs_item
     end
 
+    # create audio recordings and all parent entities
+    def create_audio_recordings_hierarchy
+      prepare_users
+
+      prepare_project
+
+      # available after permission system is upgraded
+      #prepare_permission_owner
+      prepare_permission_writer
+      prepare_permission_reader
+
+      prepare_site
+
+      prepare_audio_recording
+    end
+
     def prepare_users
       let!(:admin_user) { FactoryGirl.create(:admin) }
       let!(:admin_token) { Common.create_user_token(admin_user) }
@@ -182,8 +198,13 @@ module Creation
         FactoryGirl.create(:comment, creator: creator, audio_event: audio_event)
       end
 
-      def create_saved_search(creator, project)
-        saved_search = FactoryGirl.create(:saved_search, creator: creator)
+      def create_saved_search(creator, project, stored_query = nil)
+        if stored_query.nil?
+          saved_search = FactoryGirl.create(:saved_search, creator: creator)
+        else
+          saved_search = FactoryGirl.create(:saved_search, creator: creator, stored_query: stored_query)
+        end
+
         saved_search.projects << project
         saved_search.save!
         saved_search

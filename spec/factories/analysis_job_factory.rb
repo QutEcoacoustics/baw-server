@@ -14,7 +14,9 @@ FactoryGirl.define do
     overall_data_length_bytes 1024
 
     started_at { Time.zone.now }
-    overall_status_modified_at { Time.zone.now }
+
+    # should be set by the workflow
+    #overall_status_modified_at { Time.zone.now }
     overall_progress_modified_at { Time.zone.now }
 
   end
