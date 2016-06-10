@@ -12,33 +12,33 @@ describe 'Permissions', type: :feature do
       end
 
       def check_row(user, level)
-        row_selector = "tr[data-user-id='#{user.id}']"
-        row = find(row_selector)
+        overall_selector = "tr[data-user-id='#{user.id}'] .overall-permission"
+        overall = find(overall_selector)
 
         level = nil unless [:owner, :writer, :reader].include?(level)
 
-        if level.nil?
-          expect(row).not_to have_content('Set to No Access')
+        if !level.nil?
+          expect(overall).not_to have_content('None')
         else
-          expect(row).to have_content('Set to No Access')
+          expect(overall).to have_content('None')
         end
 
-        if level == :reader
-          expect(row).not_to have_content('Set as Reader')
+        if level != :reader
+          expect(overall).not_to have_content('Reader')
         else
-          expect(row).to have_content('Set as Reader')
+          expect(overall).to have_content('Reader')
         end
 
-        if level == :writer
-          expect(row).not_to have_content('Set as Writer')
+        if level != :writer
+          expect(overall).not_to have_content('Writer')
         else
-          expect(row).to have_content('Set as Writer')
+          expect(overall).to have_content('Writer')
         end
 
-        if level == :owner
-          expect(row).not_to have_content('Set as Owner')
+        if level != :owner
+          expect(overall).not_to have_content('Owner')
         else
-          expect(row).to have_content('Set as Owner')
+          expect(overall).to have_content('Owner')
         end
       end
 
@@ -53,24 +53,17 @@ describe 'Permissions', type: :feature do
             id = nil
         end
 
-        if level.nil?
-          expect(page).to have_no_selector("button##{id}none")
-        else
-          expect(page).to have_selector("button##{id}none")
-        end
+        expect(page).to have_selector("button##{id}none")
+        expect(page).to have_selector("button##{id}reader")
 
-        if level == :reader
-          expect(page).to have_no_selector("button##{id}reader")
-        else
-          expect(page).to have_selector("button##{id}reader")
-        end
+        expect(page).to have_css("button##{id}none[disabled]") if level.nil?
+        expect(page).to have_css("button##{id}reader[disabled]") if level == :reader
+
 
         if permission_type == :logged_in
-          if level == :writer
-            expect(page).to have_no_selector("button##{id}writer")
-          else
-            expect(page).to have_selector("button##{id}writer")
-          end
+          expect(page).to have_selector("button##{id}writer")
+          expect(page).to have_css("button##{id}writer[disabled]") if level == :writer
+
         else
           expect(page).to have_no_selector("button##{id}writer")
         end
@@ -83,13 +76,13 @@ describe 'Permissions', type: :feature do
 
         case new_level
           when :owner
-            row.click_button('Set as Owner')
+            row.click_button('Owner')
           when :writer
-            row.click_button('Set as Writer')
+            row.click_button('Writer')
           when :reader
-            row.click_button('Set as Reader')
+            row.click_button('Reader')
           else
-            row.click_button('Set to No Access')
+            row.click_button('None')
         end
 
         expect(current_path).to eq(project_permissions_path(project))

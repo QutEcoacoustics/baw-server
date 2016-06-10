@@ -88,6 +88,12 @@ h3 {
   margin-bottom: 10px; /* define margin as you see fit */
 }
 
+.inline-spread {
+  display: inline-flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
 .bootstrap-timepicker {
   i {
     margin: -2px 0 0 -22.5px;

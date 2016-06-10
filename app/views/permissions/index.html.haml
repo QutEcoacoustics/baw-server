@@ -30,7 +30,7 @@
     %ul
       %li
         %strong
-          No access
+          No access (none)
         prevents users from viewing anything in this project.
       %li
         %strong
@@ -54,18 +54,18 @@
           Visitors are public (anonymous) users that are either not logged in or have not registered.
 
         .list-group
-          %button.list-group-item{type: 'submit',
+          %button.list-group-item.inline-spread{type: 'submit',
             value: 'none', id: 'project_wide_anonymous_permissions_level_none', name: '[project_wide][anonymous]',
             disabled: (anon_is_none ? 'disabled' : nil)}
             No access (none)
             - if anon_is_none
-              %i.fa.fa-check.pull-right.text-success
-          %button.list-group-item{type: 'submit',
+              %i.fa.fa-check.text-success
+          %button.list-group-item.inline-spread{type: 'submit',
             value: 'reader', id: 'project_wide_anonymous_permissions_level_reader', name: '[project_wide][anonymous]',
             disabled: (anon_is_read ? 'disabled' : nil)}
-            Read access
+            Reader access
             - if anon_is_read
-              %i.fa.fa-check.pull-right.text-success
+              %i.fa.fa-check.text-success
 
       .col-md-6
         %h3
@@ -75,24 +75,24 @@
           Users are people that have registered and have <strong>logged into the website</strong>.
 
         .list-group
-          %button.list-group-item{type: 'submit',
+          %button.list-group-item.inline-spread{type: 'submit',
             value: 'none', id: 'project_wide_logged_in_permissions_level_none', name: '[project_wide][logged_in]',
             disabled: (logged_in_is_none ? 'disabled' : nil)}
             No access (none)
             - if logged_in_is_none
-              %i.fa.fa-check.pull-right.text-success
-          %button.list-group-item{type: 'submit',
+              %i.fa.fa-check.text-success
+          %button.list-group-item.inline-spread{type: 'submit',
             value: 'reader', id: 'project_wide_logged_in_permissions_level_reader', name: '[project_wide][logged_in]',
             disabled: (logged_in_is_read ? 'disabled' : nil)}
-            Read access
+            Reader access
             - if logged_in_is_read
-              %i.fa.fa-check.pull-right.text-success
-          %button.list-group-item{type: 'submit',
+              %i.fa.fa-check.text-success
+          %button.list-group-item.inline-spread{type: 'submit',
             value: 'writer', id: 'project_wide_logged_in_permissions_level_writer', name: '[project_wide][logged_in]',
             disabled: (logged_in_is_write ? 'disabled' : nil)}
-            Write access
+            Writer access
             - if logged_in_is_write
-              %i.fa.fa-check.pull-right.text-success
+              %i.fa.fa-check.text-success
     %h3#individual-users
       Individual Users
 
@@ -100,7 +100,7 @@
       You can assign permissions to individual logged in users. Individual permissions are the most
       important permissions - they override <em>Logged In Users</em> permissions.
     %p
-      <strong>If you only want some users to have access, use section only.</strong>
+      <strong>If you only want some users to have access, use this section only.</strong>
 
 
     %p= page_entries_info @users
@@ -115,19 +115,17 @@
           %th{style: 'width:318px'}
             Individual
           %th.text-center
-          %th.text-center
             Visitors
             %span.fa.fa-question-circle{aria: {hidden: 'true'}, data: {toggle: 'tooltip', placement: 'right'},
               title: "The Visitors user permission (#{anon_level_words}) comes from above."}
-          %th.text-center
           %th.text-center
             Users
             %span.fa.fa-question-circle{aria: {hidden: 'true'}, data: {toggle: 'tooltip', placement: 'right'},
                title: "The User permission (#{logged_in_level_words}), for logged in users  comes from above."}
           %th.text-center
-          %th.text-center
             Overall
-
+            %span.fa.fa-question-circle{aria: {hidden: 'true'}, data: {toggle: 'tooltip', placement: 'right'},
+               title: "The overall permission is a combination of Individual, Visitor, and User permissions"}
       %tbody
         - @users.each do |user|
           - next if Access::Core.is_admin?(user)
@@ -141,39 +139,30 @@
           %tr{data: {user: {id: user.id}}}
             %td= link_to "#{user.user_name}", user_account_path(user)
             %td
-              %button.btn.btn-default.btn-sm{type: 'submit', value: user.id, id: 'per_user_none', name: '[per_user][none]',
+              %button.btn.btn-default.btn-sm.inline-spread{type: 'submit', value: user.id, id: 'per_user_none', name: '[per_user][none]',
                 disabled: (user_level.nil? ? 'disabled' : nil), style: button_style}
                 None
                 - if user_level.nil?
-                  %i.fa.fa-check.pull-right.text-success
+                  %i.fa.fa-check.text-success
 
-              %button.btn.btn-default.btn-sm{type: 'submit', value: user.id, id: 'per_user_reader', name: '[per_user][reader]',
+              %button.btn.btn-default.btn-sm.inline-spread{type: 'submit', value: user.id, id: 'per_user_reader', name: '[per_user][reader]',
                 disabled: (user_level == :reader ? 'disabled' : nil), style: button_style}
-                Read
+                Reader
                 - if user_level == :reader
-                  %i.fa.fa-check.pull-right.text-success
-              %button.btn.btn-default.btn-sm{type: 'submit', value: user.id, id: 'per_user_writer', name: '[per_user][writer]',
+                  %i.fa.fa-check.text-success
+              %button.btn.btn-default.btn-sm.inline-spread{type: 'submit', value: user.id, id: 'per_user_writer', name: '[per_user][writer]',
                 disabled: (user_level == :writer ? 'disabled' : nil), style: button_style}
-                Write
+                Writer
                 - if user_level == :writer
-                  %i.fa.fa-check.pull-right.text-success
-              %button.btn.btn-default.btn-sm{type: 'submit', value: user.id, id: 'per_user_owner', name: '[per_user][owner]',
+                  %i.fa.fa-check.text-success
+              %button.btn.btn-default.btn-sm.inline-spread{type: 'submit', value: user.id, id: 'per_user_owner', name: '[per_user][owner]',
                 disabled: (user_level == :owner ? 'disabled' : nil), style: button_style}
                 Owner
                 - if user_level == :owner
-                  %i.fa.fa-check.pull-right.text-success
-            %td.text-center
-              +
+                  %i.fa.fa-check.text-success
             %td.text-center
               = anon_level_words
             %td.text-center
-              +
-            %td.text-center
               = logged_in_level_words
-            %td.text-center
-              ='='
-            %td.text-center{style: 'white-space: nowrap;'}
+            %td.overall-permission.text-center{style: 'white-space: nowrap;'}
               = "#{level_with_logged_in_level_words}"
-
-
-
