@@ -5,16 +5,18 @@
 
 %p
   Welcome! This is a repository of environmental audio recordings and web-based applications for analysing sounds.
+  It enables us to facilitate
+  = link_to "research into bioacoustics and ecoacoustics.", "http://research.ecosounds.org"
 
 - unless @selected_images.blank?
   .row
     .col-sm-4.text-center
       %strong
-        = "#{@selected_images[:animal]['commonName']} Sound"
+        = "1) #{@selected_images[:animal]['commonName']} Sound"
       %img.thumbnail.center-block{src: "#{@selected_images[:image_base]}#{@selected_images[:animal]['baseName'].html_safe+'.jpg'}",
         alt: "Image of #{@selected_images[:animal]['commonName']}", style: 'width:100%; max-height: 250px; margin-bottom:5px;' }
       %small
-        1) Faunal vocalisations and other human-audible environmental sounds
+        Faunal vocalisations and other human-audible environmental sounds
       %br/
       %small.text-muted
         Photo Source:
@@ -22,19 +24,19 @@
 
     .col-sm-3.text-center
       %strong
-        Acoustic Sensor
+        2) Acoustic Sensor
       %img.thumbnail.center-block{src: @selected_images[:sensor_tree],
         alt: 'An acoustic sensor attached to a tree.', style: 'width:100%; margin-bottom:5px;' }
       %small
-        2) Acoustic sensors record sound in a wide range of environments
+        Acoustic sensors record sound in a wide range of environments
 
     .col-sm-5.text-center
       %strong
-        Annotated Spectrogram
+        3) Annotated Spectrogram
       %img.thumbnail.center-block{src: @selected_images[:example_spectrogram],
         alt: 'Annotated Spectrogram.', style: 'width:100%; margin-bottom:5px;' }
       %small
-        3) Practical identification of animal sounds by people and automated detectors. Ecologists use these to answer environmental questions.
+        Practical identification of animal sounds by people and automated detectors. Ecologists use these to answer environmental questions.
 
 %br
 
@@ -53,14 +55,18 @@
   = render partial: 'shared/alert', locals: { msg_type: :notice, msg_text: msg_text.html_safe }
 
 - unless @random_projects.blank?
-  %h3 A sample of the projects you can access
+  %h3 Some of the projects you can access
   .row
     -  @random_projects.each do |project|
       .col-sm-4
-        .thumbnail
+        .thumbnail.project_thumbnail
           %a{href: project_path(project), style: 'width:100%;'}
             %img{src: project.image.url(:span3), alt: project.name}/
           .caption
             %h4{style: 'margin-top:0'}
               %a{href: project_path(project)}= project.name
-            %p= truncate(project.description, length: 50)
+            %p= truncate(project.description, length: 75)
+
+  .row
+    .pull-right
+      = link_to "More projects...", projects_path

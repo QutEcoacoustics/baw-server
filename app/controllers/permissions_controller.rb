@@ -19,7 +19,7 @@ class PermissionsController < ApplicationController
       format.html {
         redirect_to project_permissions_path(@project) unless result.nil?
         @permissions = Permission.where(project: @project)
-        @users = User.order(:user_name).page(params[:page])
+        @users = User.users.order(:user_name).page(params[:page])
       }
       format.json {
         @permissions, opts = Settings.api_response.response_advanced(

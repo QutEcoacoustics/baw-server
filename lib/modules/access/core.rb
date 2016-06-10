@@ -324,6 +324,16 @@ module Access
         user.blank? || user.has_role?(:guest) || user.id.nil?
       end
 
+      # Is this user an unconfirmed user?
+      # An unconfirmed user has the :user role and has not confirmed their email.
+      # NOT CURRENTLY USED.
+      # @param [User] user
+      # @return [Boolean]
+      def is_unconfirmed_user?(user)
+        return false if Access::Core.is_guest?(user)
+        !user.confirmed?
+      end
+
       # Is this user a standard user?
       # A standard user has the :user role.
       # @param [User] user
