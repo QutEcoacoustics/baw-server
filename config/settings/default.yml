@@ -65,13 +65,13 @@ defaults: &defaults
   paths:
     image_magick_dir: <%= Rails.root %>/tmp/_image-magick
     original_audios:
-      - <%= Rails.root %>/tmp/_original_audio
+      - <%= Rails.root %>/tmp/_<%= Rails.env %>_original_audio
     cached_spectrograms:
       - <%= Rails.root %>/tmp/_<%= Rails.env %>_cached_spectrogram
     cached_audios:
       - <%= Rails.root %>/tmp/_<%= Rails.env %>_cached_audio
     analysis_scripts:
-      - <%= Rails.root %>/tmp/_analysis_script
+      - <%= Rails.root %>/tmp/_<%= Rails.env %>_analysis_script
     cached_datasets:
       - <%= Rails.root %>/tmp/_<%= Rails.env %>_cached_dataset
     cached_analysis_jobs:

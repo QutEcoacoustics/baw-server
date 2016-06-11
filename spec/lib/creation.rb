@@ -25,6 +25,7 @@ module Creation
 
       prepare_saved_search
       prepare_analysis_job
+      prepare_analysis_jobs_item
     end
 
     def prepare_users
@@ -122,6 +123,11 @@ module Creation
       prepare_saved_search
       let!(:analysis_job) { Common.create_analysis_job(writer_user, script, saved_search) }
     end
+
+    def prepare_analysis_jobs_item
+      prepare_analysis_job
+      let!(:analysis_jobs_item) { Common.create_analysis_job_item(analysis_job, audio_recording) }
+    end
   end
 
   # Accessible inside `it` blocks
@@ -185,6 +191,10 @@ module Creation
 
       def create_analysis_job(creator, script, saved_search)
         FactoryGirl.create(:analysis_job, creator: creator, script: script, saved_search: saved_search)
+      end
+
+      def create_analysis_job_item(analysis_job, audio_recording)
+        FactoryGirl.create(:analysis_jobs_item, analysis_job: analysis_job, audio_recording: audio_recording)
       end
 
     end

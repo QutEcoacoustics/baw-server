@@ -11,6 +11,11 @@ def document_media_requests
   end
 end
 
+# updates array items in place
+def template_array(array, hsh)
+  array.map! { |s| s % hsh }
+end
+
 # Execute the example.
 # @param [String] http_method
 # @param [String] description

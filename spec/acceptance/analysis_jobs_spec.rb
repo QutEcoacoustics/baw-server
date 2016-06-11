@@ -109,6 +109,15 @@ resource 'AnalysisJobs' do
     standard_request_options(:get, 'SHOW (invalid token)', :unauthorized, {expected_json_path: get_json_error_path(:sign_in)})
   end
 
+  get '/analysis_jobs/:id' do
+    analysis_jobs_id_param
+    let(:id) { 'system' }
+    let(:authentication_token) { admin_token }
+    standard_request_options(:get, 'SHOW system (as admin)', :not_implemented, {
+        response_body_content: '"error":{"details":"The service is not ready for use"'
+    })
+  end
+
   ################################
   # NEW
   ################################
@@ -288,6 +297,16 @@ resource 'AnalysisJobs' do
     standard_request_options(:put, 'UPDATE (invalid token)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
   end
 
+  put '/analysis_jobs/:id' do
+    analysis_jobs_id_param
+    let(:id) { 'system' }
+    let(:raw_post) { body_attributes }
+    let(:authentication_token) { admin_token }
+    standard_request_options(:put, 'UPDATE system (as admin)', :method_not_allowed, {
+        response_body_content: '"info":{"available_methods":["GET","HEAD","OPTIONS"]}}}'
+    })
+  end
+
   ################################
   # DESTROY
   ################################
@@ -333,6 +352,16 @@ resource 'AnalysisJobs' do
     let(:authentication_token) { invalid_token }
     standard_request_options(:delete, 'DESTROY (invalid token)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
   end
+
+  delete '/analysis_jobs/:id' do
+    analysis_jobs_id_param
+    let(:id) { 'system' }
+    let(:authentication_token) { admin_token }
+    standard_request_options(:delete, 'DESTROY system (as admin)', :method_not_allowed, {
+        response_body_content: '"info":{"available_methods":["GET","HEAD","OPTIONS"]}}}'
+    })
+  end
+
 
   ################################
   # FILTER

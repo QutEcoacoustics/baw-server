@@ -2,12 +2,16 @@
 -- PostgreSQL database dump
 --
 
+-- Dumped from database version 9.3.12
+-- Dumped by pg_dump version 9.5.2
+
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SET check_function_bodies = false;
 SET client_min_messages = warning;
+SET row_security = off;
 
 --
 -- Name: plpgsql; Type: EXTENSION; Schema: -; Owner: -
@@ -30,21 +34,21 @@ SET default_tablespace = '';
 SET default_with_oids = false;
 
 --
--- Name: analysis_jobs; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+-- Name: analysis_jobs; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE analysis_jobs (
     id integer NOT NULL,
-    name character varying NOT NULL,
-    annotation_name character varying,
+    name character varying(255) NOT NULL,
+    annotation_name character varying(255),
     custom_settings text NOT NULL,
     script_id integer NOT NULL,
     creator_id integer NOT NULL,
     updater_id integer,
     deleter_id integer,
     deleted_at timestamp without time zone,
-    created_at timestamp without time zone,
-    updated_at timestamp without time zone,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL,
     description text,
     saved_search_id integer NOT NULL,
     started_at timestamp without time zone,
@@ -78,14 +82,50 @@ ALTER SEQUENCE analysis_jobs_id_seq OWNED BY analysis_jobs.id;
 
 
 --
--- Name: audio_event_comments; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+-- Name: analysis_jobs_items; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE analysis_jobs_items (
+    id integer NOT NULL,
+    analysis_job_id integer NOT NULL,
+    audio_recording_id integer NOT NULL,
+    queue_id character varying(255),
+    status character varying(255) DEFAULT 'new'::character varying NOT NULL,
+    created_at timestamp without time zone NOT NULL,
+    queued_at timestamp without time zone,
+    work_started_at timestamp without time zone,
+    completed_at timestamp without time zone
+);
+
+
+--
+-- Name: analysis_jobs_items_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE analysis_jobs_items_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: analysis_jobs_items_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE analysis_jobs_items_id_seq OWNED BY analysis_jobs_items.id;
+
+
+--
+-- Name: audio_event_comments; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE audio_event_comments (
     id integer NOT NULL,
     audio_event_id integer NOT NULL,
     comment text NOT NULL,
-    flag character varying,
+    flag character varying(255),
     flag_explain text,
     flagger_id integer,
     flagged_at timestamp without time zone,
@@ -93,8 +133,8 @@ CREATE TABLE audio_event_comments (
     updater_id integer,
     deleter_id integer,
     deleted_at timestamp without time zone,
-    created_at timestamp without time zone,
-    updated_at timestamp without time zone
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL
 );
 
 
@@ -118,7 +158,7 @@ ALTER SEQUENCE audio_event_comments_id_seq OWNED BY audio_event_comments.id;
 
 
 --
--- Name: audio_events; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+-- Name: audio_events; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE audio_events (
@@ -133,8 +173,8 @@ CREATE TABLE audio_events (
     updater_id integer,
     deleter_id integer,
     deleted_at timestamp without time zone,
-    created_at timestamp without time zone,
-    updated_at timestamp without time zone
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL
 );
 
 
@@ -158,17 +198,17 @@ ALTER SEQUENCE audio_events_id_seq OWNED BY audio_events.id;
 
 
 --
--- Name: audio_events_tags; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+-- Name: audio_events_tags; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE audio_events_tags (
     id integer NOT NULL,
     audio_event_id integer NOT NULL,
     tag_id integer NOT NULL,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL,
     creator_id integer NOT NULL,
-    updater_id integer,
-    created_at timestamp without time zone,
-    updated_at timestamp without time zone
+    updater_id integer
 );
 
 
@@ -192,7 +232,7 @@ ALTER SEQUENCE audio_events_tags_id_seq OWNED BY audio_events_tags.id;
 
 
 --
--- Name: audio_recordings; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+-- Name: audio_recordings; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE audio_recordings (
@@ -205,18 +245,18 @@ CREATE TABLE audio_recordings (
     sample_rate_hertz integer,
     channels integer,
     bit_rate_bps integer,
-    media_type character varying NOT NULL,
+    media_type character varying(255) NOT NULL,
     data_length_bytes bigint NOT NULL,
     file_hash character varying(524) NOT NULL,
-    status character varying DEFAULT 'new'::character varying,
+    status character varying(255) DEFAULT 'new'::character varying,
     notes text,
     creator_id integer NOT NULL,
     updater_id integer,
     deleter_id integer,
-    created_at timestamp without time zone,
-    updated_at timestamp without time zone,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL,
     deleted_at timestamp without time zone,
-    original_file_name character varying,
+    original_file_name character varying(255),
     recorded_utc_offset character varying(20)
 );
 
@@ -241,20 +281,20 @@ ALTER SEQUENCE audio_recordings_id_seq OWNED BY audio_recordings.id;
 
 
 --
--- Name: bookmarks; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+-- Name: bookmarks; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE bookmarks (
     id integer NOT NULL,
     audio_recording_id integer,
     offset_seconds numeric(10,4),
-    name character varying,
+    name character varying(255),
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL,
     creator_id integer NOT NULL,
     updater_id integer,
-    created_at timestamp without time zone,
-    updated_at timestamp without time zone,
     description text,
-    category character varying
+    category character varying(255)
 );
 
 
@@ -278,18 +318,18 @@ ALTER SEQUENCE bookmarks_id_seq OWNED BY bookmarks.id;
 
 
 --
--- Name: permissions; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+-- Name: permissions; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE permissions (
     id integer NOT NULL,
     creator_id integer NOT NULL,
-    level character varying NOT NULL,
+    level character varying(255) NOT NULL,
     project_id integer NOT NULL,
     user_id integer NOT NULL,
     updater_id integer,
-    created_at timestamp without time zone,
-    updated_at timestamp without time zone
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL
 );
 
 
@@ -313,25 +353,25 @@ ALTER SEQUENCE permissions_id_seq OWNED BY permissions.id;
 
 
 --
--- Name: projects; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+-- Name: projects; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE projects (
     id integer NOT NULL,
-    name character varying NOT NULL,
+    name character varying(255) NOT NULL,
     description text,
-    urn character varying,
+    urn character varying(255),
     notes text,
     creator_id integer NOT NULL,
     updater_id integer,
     deleter_id integer,
     deleted_at timestamp without time zone,
-    image_file_name character varying,
-    image_content_type character varying,
+    image_file_name character varying(255),
+    image_content_type character varying(255),
     image_file_size integer,
     image_updated_at timestamp without time zone,
-    created_at timestamp without time zone,
-    updated_at timestamp without time zone
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL
 );
 
 
@@ -355,7 +395,7 @@ ALTER SEQUENCE projects_id_seq OWNED BY projects.id;
 
 
 --
--- Name: projects_saved_searches; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+-- Name: projects_saved_searches; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE projects_saved_searches (
@@ -365,7 +405,7 @@ CREATE TABLE projects_saved_searches (
 
 
 --
--- Name: projects_sites; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+-- Name: projects_sites; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE projects_sites (
@@ -375,7 +415,7 @@ CREATE TABLE projects_sites (
 
 
 --
--- Name: saved_searches; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+-- Name: saved_searches; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE saved_searches (
@@ -410,23 +450,23 @@ ALTER SEQUENCE saved_searches_id_seq OWNED BY saved_searches.id;
 
 
 --
--- Name: schema_migrations; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+-- Name: schema_migrations; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE schema_migrations (
-    version character varying NOT NULL
+    version character varying(255) NOT NULL
 );
 
 
 --
--- Name: scripts; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+-- Name: scripts; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE scripts (
     id integer NOT NULL,
-    name character varying NOT NULL,
-    description character varying,
-    analysis_identifier character varying NOT NULL,
+    name character varying(255) NOT NULL,
+    description character varying(255),
+    analysis_identifier character varying(255) NOT NULL,
     version numeric(4,2) DEFAULT 0.1 NOT NULL,
     verified boolean DEFAULT false,
     group_id integer,
@@ -458,12 +498,12 @@ ALTER SEQUENCE scripts_id_seq OWNED BY scripts.id;
 
 
 --
--- Name: sites; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+-- Name: sites; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE sites (
     id integer NOT NULL,
-    name character varying NOT NULL,
+    name character varying(255) NOT NULL,
     longitude numeric(9,6),
     latitude numeric(9,6),
     notes text,
@@ -471,12 +511,12 @@ CREATE TABLE sites (
     updater_id integer,
     deleter_id integer,
     deleted_at timestamp without time zone,
-    image_file_name character varying,
-    image_content_type character varying,
+    image_file_name character varying(255),
+    image_content_type character varying(255),
     image_file_size integer,
     image_updated_at timestamp without time zone,
-    created_at timestamp without time zone,
-    updated_at timestamp without time zone,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL,
     description text,
     tzinfo_tz character varying(255),
     rails_tz character varying(255)
@@ -503,7 +543,7 @@ ALTER SEQUENCE sites_id_seq OWNED BY sites.id;
 
 
 --
--- Name: tag_groups; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+-- Name: tag_groups; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE tag_groups (
@@ -535,20 +575,20 @@ ALTER SEQUENCE tag_groups_id_seq OWNED BY tag_groups.id;
 
 
 --
--- Name: tags; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+-- Name: tags; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE tags (
     id integer NOT NULL,
-    text character varying NOT NULL,
+    text character varying(255) NOT NULL,
     is_taxanomic boolean DEFAULT false NOT NULL,
-    type_of_tag character varying DEFAULT 'general'::character varying NOT NULL,
+    type_of_tag character varying(255) DEFAULT 'general'::character varying NOT NULL,
     retired boolean DEFAULT false NOT NULL,
     notes text,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL,
     creator_id integer NOT NULL,
-    updater_id integer,
-    created_at timestamp without time zone,
-    updated_at timestamp without time zone
+    updater_id integer
 );
 
 
@@ -572,36 +612,36 @@ ALTER SEQUENCE tags_id_seq OWNED BY tags.id;
 
 
 --
--- Name: users; Type: TABLE; Schema: public; Owner: -; Tablespace: 
+-- Name: users; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE users (
     id integer NOT NULL,
-    email character varying NOT NULL,
-    user_name character varying NOT NULL,
-    encrypted_password character varying NOT NULL,
-    reset_password_token character varying,
+    email character varying(255) DEFAULT NULL::character varying NOT NULL,
+    user_name character varying(255) DEFAULT NULL::character varying NOT NULL,
+    encrypted_password character varying(255) DEFAULT NULL::character varying NOT NULL,
+    reset_password_token character varying(255),
     reset_password_sent_at timestamp without time zone,
     remember_created_at timestamp without time zone,
     sign_in_count integer DEFAULT 0,
     current_sign_in_at timestamp without time zone,
     last_sign_in_at timestamp without time zone,
-    current_sign_in_ip character varying,
-    last_sign_in_ip character varying,
-    confirmation_token character varying,
+    current_sign_in_ip character varying(255),
+    last_sign_in_ip character varying(255),
+    confirmation_token character varying(255),
     confirmed_at timestamp without time zone,
     confirmation_sent_at timestamp without time zone,
-    unconfirmed_email character varying,
+    unconfirmed_email character varying(255),
     failed_attempts integer DEFAULT 0,
-    unlock_token character varying,
+    unlock_token character varying(255),
     locked_at timestamp without time zone,
-    authentication_token character varying,
-    invitation_token character varying,
-    created_at timestamp without time zone,
-    updated_at timestamp without time zone,
+    authentication_token character varying(255),
+    invitation_token character varying(255),
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL,
     roles_mask integer,
-    image_file_name character varying,
-    image_content_type character varying,
+    image_file_name character varying(255),
+    image_content_type character varying(255),
     image_file_size integer,
     image_updated_at timestamp without time zone,
     preferences text,
@@ -635,6 +675,13 @@ ALTER SEQUENCE users_id_seq OWNED BY users.id;
 --
 
 ALTER TABLE ONLY analysis_jobs ALTER COLUMN id SET DEFAULT nextval('analysis_jobs_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY analysis_jobs_items ALTER COLUMN id SET DEFAULT nextval('analysis_jobs_items_id_seq'::regclass);
 
 
 --
@@ -729,7 +776,15 @@ ALTER TABLE ONLY users ALTER COLUMN id SET DEFAULT nextval('users_id_seq'::regcl
 
 
 --
--- Name: analysis_jobs_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+-- Name: analysis_jobs_items_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY analysis_jobs_items
+    ADD CONSTRAINT analysis_jobs_items_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: analysis_jobs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY analysis_jobs
@@ -737,7 +792,7 @@ ALTER TABLE ONLY analysis_jobs
 
 
 --
--- Name: audio_event_comments_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+-- Name: audio_event_comments_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY audio_event_comments
@@ -745,7 +800,7 @@ ALTER TABLE ONLY audio_event_comments
 
 
 --
--- Name: audio_events_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+-- Name: audio_events_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY audio_events
@@ -753,7 +808,7 @@ ALTER TABLE ONLY audio_events
 
 
 --
--- Name: audio_events_tags_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+-- Name: audio_events_tags_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY audio_events_tags
@@ -761,7 +816,7 @@ ALTER TABLE ONLY audio_events_tags
 
 
 --
--- Name: audio_recordings_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+-- Name: audio_recordings_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY audio_recordings
@@ -769,7 +824,7 @@ ALTER TABLE ONLY audio_recordings
 
 
 --
--- Name: bookmarks_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+-- Name: bookmarks_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY bookmarks
@@ -777,7 +832,7 @@ ALTER TABLE ONLY bookmarks
 
 
 --
--- Name: permissions_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+-- Name: permissions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY permissions
@@ -785,7 +840,7 @@ ALTER TABLE ONLY permissions
 
 
 --
--- Name: projects_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+-- Name: projects_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY projects
@@ -793,7 +848,7 @@ ALTER TABLE ONLY projects
 
 
 --
--- Name: saved_searches_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+-- Name: saved_searches_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY saved_searches
@@ -801,7 +856,7 @@ ALTER TABLE ONLY saved_searches
 
 
 --
--- Name: scripts_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+-- Name: scripts_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY scripts
@@ -809,7 +864,7 @@ ALTER TABLE ONLY scripts
 
 
 --
--- Name: sites_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+-- Name: sites_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY sites
@@ -817,7 +872,7 @@ ALTER TABLE ONLY sites
 
 
 --
--- Name: tag_groups_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+-- Name: tag_groups_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY tag_groups
@@ -825,7 +880,7 @@ ALTER TABLE ONLY tag_groups
 
 
 --
--- Name: tags_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+-- Name: tags_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY tags
@@ -833,7 +888,7 @@ ALTER TABLE ONLY tags
 
 
 --
--- Name: users_pkey; Type: CONSTRAINT; Schema: public; Owner: -; Tablespace: 
+-- Name: users_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY users
@@ -841,469 +896,441 @@ ALTER TABLE ONLY users
 
 
 --
--- Name: analysis_jobs_name_uidx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
---
-
-CREATE UNIQUE INDEX analysis_jobs_name_uidx ON analysis_jobs USING btree (name, creator_id);
-
-
---
--- Name: audio_recordings_created_updated_at; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+-- Name: audio_recordings_created_updated_at; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX audio_recordings_created_updated_at ON audio_recordings USING btree (created_at, updated_at);
 
 
 --
--- Name: audio_recordings_icase_file_hash_id_idx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+-- Name: audio_recordings_icase_file_hash_id_idx; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX audio_recordings_icase_file_hash_id_idx ON audio_recordings USING btree (lower((file_hash)::text), id);
 
 
 --
--- Name: audio_recordings_icase_file_hash_idx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+-- Name: audio_recordings_icase_file_hash_idx; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX audio_recordings_icase_file_hash_idx ON audio_recordings USING btree (lower((file_hash)::text));
 
 
 --
--- Name: audio_recordings_icase_uuid_id_idx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+-- Name: audio_recordings_icase_uuid_id_idx; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX audio_recordings_icase_uuid_id_idx ON audio_recordings USING btree (lower((uuid)::text), id);
 
 
 --
--- Name: audio_recordings_icase_uuid_idx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+-- Name: audio_recordings_icase_uuid_idx; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX audio_recordings_icase_uuid_idx ON audio_recordings USING btree (lower((uuid)::text));
 
 
 --
--- Name: audio_recordings_uuid_uidx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+-- Name: audio_recordings_uuid_uidx; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE UNIQUE INDEX audio_recordings_uuid_uidx ON audio_recordings USING btree (uuid);
 
 
 --
--- Name: bookmarks_name_creator_id_uidx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+-- Name: bookmarks_name_creator_id_uidx; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE UNIQUE INDEX bookmarks_name_creator_id_uidx ON bookmarks USING btree (name, creator_id);
 
 
 --
--- Name: index_analysis_jobs_on_creator_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+-- Name: index_analysis_jobs_items_on_analysis_job_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_analysis_jobs_items_on_analysis_job_id ON analysis_jobs_items USING btree (analysis_job_id);
+
+
+--
+-- Name: index_analysis_jobs_items_on_audio_recording_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_analysis_jobs_items_on_audio_recording_id ON analysis_jobs_items USING btree (audio_recording_id);
+
+
+--
+-- Name: index_analysis_jobs_on_creator_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX index_analysis_jobs_on_creator_id ON analysis_jobs USING btree (creator_id);
 
 
 --
--- Name: index_analysis_jobs_on_deleter_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+-- Name: index_analysis_jobs_on_deleter_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX index_analysis_jobs_on_deleter_id ON analysis_jobs USING btree (deleter_id);
 
 
 --
--- Name: index_analysis_jobs_on_saved_search_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
---
-
-CREATE INDEX index_analysis_jobs_on_saved_search_id ON analysis_jobs USING btree (saved_search_id);
-
-
---
--- Name: index_analysis_jobs_on_script_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+-- Name: index_analysis_jobs_on_script_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX index_analysis_jobs_on_script_id ON analysis_jobs USING btree (script_id);
 
 
 --
--- Name: index_analysis_jobs_on_updater_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+-- Name: index_analysis_jobs_on_updater_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX index_analysis_jobs_on_updater_id ON analysis_jobs USING btree (updater_id);
 
 
 --
--- Name: index_audio_event_comments_on_audio_event_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+-- Name: index_audio_event_comments_on_audio_event_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX index_audio_event_comments_on_audio_event_id ON audio_event_comments USING btree (audio_event_id);
 
 
 --
--- Name: index_audio_event_comments_on_creator_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+-- Name: index_audio_event_comments_on_creator_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX index_audio_event_comments_on_creator_id ON audio_event_comments USING btree (creator_id);
 
 
 --
--- Name: index_audio_event_comments_on_deleter_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+-- Name: index_audio_event_comments_on_deleter_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX index_audio_event_comments_on_deleter_id ON audio_event_comments USING btree (deleter_id);
 
 
 --
--- Name: index_audio_event_comments_on_flagger_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+-- Name: index_audio_event_comments_on_flagger_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX index_audio_event_comments_on_flagger_id ON audio_event_comments USING btree (flagger_id);
 
 
 --
--- Name: index_audio_event_comments_on_updater_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+-- Name: index_audio_event_comments_on_updater_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX index_audio_event_comments_on_updater_id ON audio_event_comments USING btree (updater_id);
 
 
 --
--- Name: index_audio_events_on_audio_recording_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+-- Name: index_audio_events_on_audio_recording_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX index_audio_events_on_audio_recording_id ON audio_events USING btree (audio_recording_id);
 
 
 --
--- Name: index_audio_events_on_creator_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+-- Name: index_audio_events_on_creator_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX index_audio_events_on_creator_id ON audio_events USING btree (creator_id);
 
 
 --
--- Name: index_audio_events_on_deleter_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+-- Name: index_audio_events_on_deleter_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX index_audio_events_on_deleter_id ON audio_events USING btree (deleter_id);
 
 
 --
--- Name: index_audio_events_on_updater_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+-- Name: index_audio_events_on_updater_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX index_audio_events_on_updater_id ON audio_events USING btree (updater_id);
 
 
 --
--- Name: index_audio_events_tags_on_audio_event_id_and_tag_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+-- Name: index_audio_events_tags_on_audio_event_id_and_tag_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE UNIQUE INDEX index_audio_events_tags_on_audio_event_id_and_tag_id ON audio_events_tags USING btree (audio_event_id, tag_id);
 
 
 --
--- Name: index_audio_events_tags_on_creator_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+-- Name: index_audio_events_tags_on_creator_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX index_audio_events_tags_on_creator_id ON audio_events_tags USING btree (creator_id);
 
 
 --
--- Name: index_audio_events_tags_on_updater_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+-- Name: index_audio_events_tags_on_updater_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX index_audio_events_tags_on_updater_id ON audio_events_tags USING btree (updater_id);
 
 
 --
--- Name: index_audio_recordings_on_creator_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+-- Name: index_audio_recordings_on_creator_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX index_audio_recordings_on_creator_id ON audio_recordings USING btree (creator_id);
 
 
 --
--- Name: index_audio_recordings_on_deleter_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+-- Name: index_audio_recordings_on_deleter_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX index_audio_recordings_on_deleter_id ON audio_recordings USING btree (deleter_id);
 
 
 --
--- Name: index_audio_recordings_on_site_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+-- Name: index_audio_recordings_on_site_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX index_audio_recordings_on_site_id ON audio_recordings USING btree (site_id);
 
 
 --
--- Name: index_audio_recordings_on_updater_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+-- Name: index_audio_recordings_on_updater_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX index_audio_recordings_on_updater_id ON audio_recordings USING btree (updater_id);
 
 
 --
--- Name: index_audio_recordings_on_uploader_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+-- Name: index_audio_recordings_on_uploader_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX index_audio_recordings_on_uploader_id ON audio_recordings USING btree (uploader_id);
 
 
 --
--- Name: index_bookmarks_on_audio_recording_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+-- Name: index_bookmarks_on_audio_recording_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX index_bookmarks_on_audio_recording_id ON bookmarks USING btree (audio_recording_id);
 
 
 --
--- Name: index_bookmarks_on_creator_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+-- Name: index_bookmarks_on_creator_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX index_bookmarks_on_creator_id ON bookmarks USING btree (creator_id);
 
 
 --
--- Name: index_bookmarks_on_updater_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+-- Name: index_bookmarks_on_updater_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX index_bookmarks_on_updater_id ON bookmarks USING btree (updater_id);
 
 
 --
--- Name: index_permissions_on_creator_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+-- Name: index_permissions_on_creator_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX index_permissions_on_creator_id ON permissions USING btree (creator_id);
 
 
 --
--- Name: index_permissions_on_project_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+-- Name: index_permissions_on_project_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX index_permissions_on_project_id ON permissions USING btree (project_id);
 
 
 --
--- Name: index_permissions_on_project_id_and_user_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+-- Name: index_permissions_on_project_id_and_user_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX index_permissions_on_project_id_and_user_id ON permissions USING btree (project_id, user_id);
 
 
 --
--- Name: index_permissions_on_updater_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+-- Name: index_permissions_on_updater_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX index_permissions_on_updater_id ON permissions USING btree (updater_id);
 
 
 --
--- Name: index_permissions_on_user_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+-- Name: index_permissions_on_user_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX index_permissions_on_user_id ON permissions USING btree (user_id);
 
 
 --
--- Name: index_projects_on_creator_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+-- Name: index_projects_on_creator_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX index_projects_on_creator_id ON projects USING btree (creator_id);
 
 
 --
--- Name: index_projects_on_deleter_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+-- Name: index_projects_on_deleter_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX index_projects_on_deleter_id ON projects USING btree (deleter_id);
 
 
 --
--- Name: index_projects_on_updater_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+-- Name: index_projects_on_updater_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX index_projects_on_updater_id ON projects USING btree (updater_id);
 
 
 --
--- Name: index_projects_saved_searches_on_project_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
---
-
-CREATE INDEX index_projects_saved_searches_on_project_id ON projects_saved_searches USING btree (project_id);
-
-
---
--- Name: index_projects_saved_searches_on_project_id_and_saved_search_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
---
-
-CREATE INDEX index_projects_saved_searches_on_project_id_and_saved_search_id ON projects_saved_searches USING btree (project_id, saved_search_id);
-
-
---
--- Name: index_projects_saved_searches_on_saved_search_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
---
-
-CREATE INDEX index_projects_saved_searches_on_saved_search_id ON projects_saved_searches USING btree (saved_search_id);
-
-
---
--- Name: index_projects_sites_on_project_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+-- Name: index_projects_sites_on_project_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX index_projects_sites_on_project_id ON projects_sites USING btree (project_id);
 
 
 --
--- Name: index_projects_sites_on_project_id_and_site_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+-- Name: index_projects_sites_on_project_id_and_site_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX index_projects_sites_on_project_id_and_site_id ON projects_sites USING btree (project_id, site_id);
 
 
 --
--- Name: index_projects_sites_on_site_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+-- Name: index_projects_sites_on_site_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX index_projects_sites_on_site_id ON projects_sites USING btree (site_id);
 
 
 --
--- Name: index_saved_searches_on_creator_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
---
-
-CREATE INDEX index_saved_searches_on_creator_id ON saved_searches USING btree (creator_id);
-
-
---
--- Name: index_saved_searches_on_deleter_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
---
-
-CREATE INDEX index_saved_searches_on_deleter_id ON saved_searches USING btree (deleter_id);
-
-
---
--- Name: index_scripts_on_creator_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+-- Name: index_scripts_on_creator_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX index_scripts_on_creator_id ON scripts USING btree (creator_id);
 
 
 --
--- Name: index_scripts_on_group_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+-- Name: index_scripts_on_group_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX index_scripts_on_group_id ON scripts USING btree (group_id);
 
 
 --
--- Name: index_sites_on_creator_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+-- Name: index_sites_on_creator_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX index_sites_on_creator_id ON sites USING btree (creator_id);
 
 
 --
--- Name: index_sites_on_deleter_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+-- Name: index_sites_on_deleter_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX index_sites_on_deleter_id ON sites USING btree (deleter_id);
 
 
 --
--- Name: index_sites_on_updater_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+-- Name: index_sites_on_updater_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX index_sites_on_updater_id ON sites USING btree (updater_id);
 
 
 --
--- Name: index_tag_groups_on_tag_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+-- Name: index_tag_groups_on_tag_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX index_tag_groups_on_tag_id ON tag_groups USING btree (tag_id);
 
 
 --
--- Name: index_tags_on_creator_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+-- Name: index_tags_on_creator_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX index_tags_on_creator_id ON tags USING btree (creator_id);
 
 
 --
--- Name: index_tags_on_updater_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+-- Name: index_tags_on_updater_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX index_tags_on_updater_id ON tags USING btree (updater_id);
 
 
 --
--- Name: index_users_on_authentication_token; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+-- Name: index_users_on_authentication_token; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE UNIQUE INDEX index_users_on_authentication_token ON users USING btree (authentication_token);
 
 
 --
--- Name: index_users_on_confirmation_token; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+-- Name: index_users_on_confirmation_token; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE UNIQUE INDEX index_users_on_confirmation_token ON users USING btree (confirmation_token);
 
 
 --
--- Name: index_users_on_email; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+-- Name: index_users_on_email; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE UNIQUE INDEX index_users_on_email ON users USING btree (email);
 
 
 --
--- Name: permissions_level_user_id_project_id_uidx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+-- Name: jobs_name_uidx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX jobs_name_uidx ON analysis_jobs USING btree (name);
+
+
+--
+-- Name: permissions_level_user_id_project_id_uidx; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE UNIQUE INDEX permissions_level_user_id_project_id_uidx ON permissions USING btree (project_id, level, user_id);
 
 
 --
--- Name: projects_name_uidx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+-- Name: projects_name_uidx; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE UNIQUE INDEX projects_name_uidx ON projects USING btree (name);
 
 
 --
--- Name: saved_searches_name_creator_id_uidx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+-- Name: queue_id_uidx; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX saved_searches_name_creator_id_uidx ON saved_searches USING btree (name, creator_id);
+CREATE UNIQUE INDEX queue_id_uidx ON analysis_jobs_items USING btree (queue_id);
 
 
 --
--- Name: tag_groups_uidx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+-- Name: tag_groups_uidx; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE UNIQUE INDEX tag_groups_uidx ON tag_groups USING btree (tag_id, group_identifier);
 
 
 --
--- Name: tags_text_uidx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+-- Name: tags_text_uidx; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE UNIQUE INDEX tags_text_uidx ON tags USING btree (text);
 
 
 --
--- Name: unique_schema_migrations; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+-- Name: unique_schema_migrations; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE UNIQUE INDEX unique_schema_migrations ON schema_migrations USING btree (version);
 
 
 --
--- Name: users_user_name_unique; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+-- Name: users_user_name_unique; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE UNIQUE INDEX users_user_name_unique ON users USING btree (user_name);
@@ -1523,6 +1550,22 @@ ALTER TABLE ONLY bookmarks
 
 ALTER TABLE ONLY tag_groups
     ADD CONSTRAINT fk_rails_1ba11222e1 FOREIGN KEY (tag_id) REFERENCES tags(id);
+
+
+--
+-- Name: fk_rails_522df5cc92; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY analysis_jobs_items
+    ADD CONSTRAINT fk_rails_522df5cc92 FOREIGN KEY (audio_recording_id) REFERENCES audio_recordings(id);
+
+
+--
+-- Name: fk_rails_86f75840f2; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY analysis_jobs_items
+    ADD CONSTRAINT fk_rails_86f75840f2 FOREIGN KEY (analysis_job_id) REFERENCES analysis_jobs(id);
 
 
 --
@@ -1774,4 +1817,6 @@ INSERT INTO schema_migrations (version) VALUES ('20150905234917');
 INSERT INTO schema_migrations (version) VALUES ('20160226103516');
 
 INSERT INTO schema_migrations (version) VALUES ('20160226130353');
+
+INSERT INTO schema_migrations (version) VALUES ('20160420030414');
 

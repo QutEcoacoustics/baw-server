@@ -193,6 +193,14 @@ module Access
         audio_events.to_a.map { |u| validate_audio_event(u) }
       end
 
+      # Validate analysis job.
+      # @param [Array<AnalysisJob>] analysis_job
+      # @return [Array<AnalysisJob>] analysis_job
+      def validate_analysis_job(analysis_job)
+        fail ArgumentError, "AnalysisJob was not valid, got '#{analysis_job.class}'." if analysis_job.blank? || !analysis_job.is_a?(AnalysisJob)
+        analysis_job
+      end
+
       # Get an array of access levels that are equal or lower.
       # @param [Symbol] level
       # @return [Array<Symbol>]

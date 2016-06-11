@@ -13,7 +13,7 @@ class AudioRecording < ActiveRecord::Base
   # relations
   belongs_to :site, inverse_of: :audio_recordings
   has_many :audio_events, inverse_of: :audio_recording
-  #has_many :analysis_items
+  has_many :analysis_jobs_items, inverse_of: :audio_recording
   has_many :bookmarks, inverse_of: :audio_recording
   has_many :tags, through: :audio_events
 
