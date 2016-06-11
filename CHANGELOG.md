@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+ - 2016-06-11
+   - Feature: Analysis Jobs item tracking - basic support added for tracking each item in an analysis job [#290](https://github.com/QutBioacoustics/baw-server/pull/290)
+   - Enhancement: Filter::Query can now have it's base query customised [931066b](https://github.com/QutBioacoustics/baw-server/commit/931066b5eb30925e34e659bdff91e5b55abce764)
  - 2016-04-24
     - Query string parameters for filter are merged with POST filter [#286](https://github.com/QutBioacoustics/baw-server/issues/286)
  - 2016-04-13

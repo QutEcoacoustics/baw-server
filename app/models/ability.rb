@@ -248,6 +248,10 @@ class Ability
       projects = analysis_job.saved_search.projects
       fail CustomErrors::BadRequestError.new('Saved search must have at least one project.') if projects.size < 1
 
+
+      # can_any? because AnalysisJobsItem and analysis results can be accessed via AudioRecording. Any AnalysisJobsItem
+      # can be accessed if they user has access to the AudioRecording (and thus any project). can_any? here makes access
+      # consistent with AnalysisJobsItem.
       Access::Check.can_any?(user, :reader, projects)
     end
 

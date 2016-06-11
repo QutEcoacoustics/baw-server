@@ -138,15 +138,16 @@ describe AnalysisJobsItem, type: :model do
 
         analysis_jobs_item.write_attribute(:status, test_case[0])
 
-        if test_case[2]
-          if test_case[2].is_a? Symbol
-            first_date = analysis_jobs_item[test_case[2]]
+        date_field = test_case[2]
+        if date_field
+          if date_field.is_a? Symbol
+            first_date = analysis_jobs_item[date_field]
           end
 
           analysis_jobs_item.status = test_case[1]
 
           expect(analysis_jobs_item.status == test_case[1]).to be true
-          expect(analysis_jobs_item[test_case[2]]).to not_be first_date if first_date
+          expect(analysis_jobs_item[date_field]).to_not eq(first_date) if date_field.is_a? Symbol
         else
           expect {
             analysis_jobs_item.status = test_case[1]

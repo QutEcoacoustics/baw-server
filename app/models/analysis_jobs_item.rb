@@ -74,9 +74,11 @@ class AnalysisJobsItem < ActiveRecord::Base
 
   def analysis_job_id
     super_id = super()
-    return SYSTEM_JOB_ID if !new_record? && id.nil?
 
-    super_id
+    # When fake records are returned from system_query their analysis_job_id's are nil.
+    # This patch ensures serialized system records have the analysis_job_id set to 'system' - good practice for
+    # RESTful object. E.g. routing to a resource is done with analysis_job_id; having it set simplifies client logic.
+    !new_record? && id.nil? ? SYSTEM_JOB_ID : super_id
   end
 
   def self.filter_settings(is_system = false)
@@ -102,12 +104,46 @@ class AnalysisJobsItem < ActiveRecord::Base
             {
                 join: AnalysisJob,
                 on: AnalysisJobsItem.arel_table[:analysis_job_id].eq(AnalysisJob.arel_table[:id]),
-                available: true
+                available: true,
+                associations: [
+                    {
+                        join: SavedSearch,
+                        on: AnalysisJob.arel_table[:saved_search_id].eq(SavedSearch.arel_table[:id]),
+                        available: true
+                    },
+                    {
+                        join: Script,
+                        on: AnalysisJob.arel_table[:script_id].eq(Script.arel_table[:id]),
+                        available: true
+                    }
+                ]
             },
             {
                 join: AudioRecording,
                 on: AnalysisJobsItem.arel_table[:audio_recording_id].eq(AudioRecording.arel_table[:id]),
-                available: true
+                available: true,
+                associations: [
+                    {
+                        join: Site,
+                        on: AudioRecording.arel_table[:site_id].eq(Site.arel_table[:id]),
+                        available: true,
+                        associations: [
+                            {
+                                join: Arel::Table.new(:projects_sites),
+                                on: Site.arel_table[:id].eq(Arel::Table.new(:projects_sites)[:site_id]),
+                                available: false,
+                                associations: [
+                                    {
+                                        join: Project,
+                                        on: Arel::Table.new(:projects_sites)[:project_id].eq(Project.arel_table[:id]),
+                                        available: true
+                                    }
+                                ]
+
+                            }
+                        ]
+                    }
+                ]
             }
         ]
     }
@@ -130,18 +166,18 @@ class AnalysisJobsItem < ActiveRecord::Base
     case
       #when new_status == :new and old_status == :new
       #  created_at = Time.zone.now  # - created_at handled by rails
-      when (new_status == :queued and old_status == :new)
-        queued_at = Time.zone.now
-      when (new_status == :working and old_status == :queued)
-        work_started_at = Time.zone.now
-      when (new_status == :successful and old_status == :working),
-          (new_status == :failed and old_status == :working),
-          (new_status == :timed_out and old_status == :working)
-        completed_at = Time.zone.now
-      when (new_status == :cancelled and old_status == :new),
-          (new_status == :cancelled and old_status == :queued),
-          (new_status == :cancelled and old_status == :working)
-        completed_at = Time.zone.now
+      when (new_status == :queued && old_status == :new)
+        self.queued_at = Time.zone.now
+      when (new_status == :working && old_status == :queued)
+        self.work_started_at = Time.zone.now
+      when (new_status == :successful && old_status == :working),
+           (new_status == :failed and old_status == :working),
+           (new_status == :timed_out && old_status == :working)
+        self.completed_at = Time.zone.now
+      when (new_status == :cancelled && old_status == :new),
+           (new_status == :cancelled && old_status == :queued),
+           (new_status == :cancelled && old_status == :working)
+        self.completed_at = Time.zone.now
       else
         fail "AnalysisJobItem#status: Invalid state transition from #{ old_status } to #{ new_status }"
     end
@@ -152,6 +188,7 @@ class AnalysisJobsItem < ActiveRecord::Base
   # @return [ActiveRecord::Relation]
   def self.system_query
     analysis_jobs_items = self.arel_table
+    table_name = analysis_jobs_items.table_name
 
     # alias audio_recordings so other add on queries don't get confused
     audio_recordings_inner = Arel::Table.new(:audio_recordings).alias('tmp_audio_recordings_generator')
@@ -170,7 +207,7 @@ class AnalysisJobsItem < ActiveRecord::Base
                  .on(audio_recordings_inner[:id].eq(nil))
 
     # convert to sub-query - hides weird table names
-    subquery = joined.as(analysis_jobs_items.table_name)
+    subquery = joined.as(table_name)
 
     # cast back to active record relation
     query = from(subquery)
