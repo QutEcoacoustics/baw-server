@@ -42,7 +42,7 @@ gem 'jquery-rails', '~> 4.1.0'
 # Turbolinks makes following links in your web application faster. Read more: https://github.com/rails/turbolinks
 #gem 'turbolinks'
 # Build JSON APIs with ease. Read more: https://github.com/rails/jbuilder
-gem 'jbuilder', '~> 2.4.0'
+gem 'jbuilder', '~> 2.5.0'
 
 gem 'haml', '~> 4.0.6'
 gem 'haml-rails', '~> 0.9.0'
@@ -55,7 +55,7 @@ gem 'kramdown', '~> 1.10.0'
 gem 'bootstrap-sass', '~> 3.3.4'
 # for sass variables: http://getbootstrap.com/customize/#less-variables
 # sprockets-rails gem is included via rails dependency
-gem 'font-awesome-sass', '~> 4.5.0'
+gem 'font-awesome-sass', '~> 4.6.2'
 
 # for rails 3, 4
 gem 'kaminari'
@@ -72,7 +72,7 @@ gem 'tzinfo-data', '~> 1.2016'
 # http://joanswork.com/devise-3-1-update/
 gem 'devise', '~> 3.5.1'
 gem 'devise-i18n'
-gem 'cancancan', '~> 1.13.1'
+gem 'cancancan', '~> 1.15'
 gem 'role_model', '~> 0.8.1'
 # Use ActiveModel has_secure_password
 gem 'bcrypt', '~> 3.1.9'
