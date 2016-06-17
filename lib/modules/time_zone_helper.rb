@@ -120,13 +120,40 @@ class TimeZoneHelper
       "#{is_neg ? '-' : '+'}#{hours}:#{minutes}"
     end
 
-    def info_hash(model)
+    # Parse (and if needed repairs) timezone information from one of our models.
+    # Handles wrong timezone format stored and invalid timezone formats.
+    def parse_model(model)
       # the model stores the tzinfo friendly_identifier
       tzinfo_tz_string = TimeZoneHelper.to_identifier(model.tzinfo_tz)
+      # attempt to parse the identifier form as a backup
+      if tzinfo_tz_string.blank?
+        friendly = TimeZoneHelper.to_friendly(model.tzinfo_tz)
+        unless friendly.blank?
+          tzinfo_tz_string = model.tzinfo_tz
+          # update the column to friendly identifier for consistency
+          # save only this column, skip validation, does not skip callbacks
+          model.update_attribute(:tzinfo_tz, friendly)
+        end
+      end
       tzinfo_tz = tzinfo_class(tzinfo_tz_string)
 
       rails_tz_string = model.rails_tz
       rails_tz = ruby_tz_class(rails_tz_string)
+
+      # if neither tz can be determined, but either model value is set, it is likely that the timezone is corrupt.
+      # Reset to nil.
+      if (tzinfo_tz.nil? && rails_tz.nil?) && (!model.tzinfo_tz.blank? || !model.rails_tz.blank?)
+        # save only those two columns, bypass validations, callbacks, and updated_at
+        # http://apidock.com/rails/ActiveRecord/Persistence/update_columns
+        model.update_columns(tzinfo_tz: nil, rails_tz: nil)
+      end
+
+      [tzinfo_tz, rails_tz, tzinfo_tz_string, rails_tz_string]
+    end
+
+    # Format the timezones to a REST friendly response
+    def info_hash(model)
+      tzinfo_tz, rails_tz, tzinfo_tz_string, rails_tz_string = parse_model(model)
 
       tzinfo_tz = ruby_to_tzinfo(rails_tz_string) if !rails_tz.blank? && tzinfo_tz.blank?
       rails_tz = tzinfo_to_ruby(tzinfo_tz_string) if rails_tz.blank? && !tzinfo_tz.blank?

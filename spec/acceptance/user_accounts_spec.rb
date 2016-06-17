@@ -146,6 +146,18 @@ resource 'Users' do
     standard_request_options(:put, 'modify preferences as in valid user', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
   end
 
+  put '/my_account/prefs' do
+    let(:raw_post) { '{"volume": 1, "muted": false, "auto_play": false, "visualize": {"hide_images": true, "hide_fixed": false}}' }
+    let(:authentication_token) { writer_token }
+    standard_request_options(:put, 'modify writer preferences - complex object', :ok, {
+        expected_json_path: [
+            'data/preferences/volume',
+            'data/preferences/visualize',
+            'data/preferences/visualize/hide_fixed'
+        ]
+    })
+  end
+
   # Filter (#filter)
   # ================
 

@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+ - 2016-06-20
+   - Bug fixes for processing and working with timezone fields. API now automatically fixes up ill-
+     formatted timezone entries in the database.
+
 ## [Release 0.19.0](https://github.com/QutBioacoustics/baw-server/releases/tag/0.19.0) (2016-06-17)
 
  - 2016-06-11
@@ -39,7 +45,7 @@
     - added basic admin list and view for analysis jobs
     - Added executable_settings_media_type to scripts table. Exposed scripts#show. [#258](https://github.com/QutBioacoustics/baw-server/issues/258) [#259](https://github.com/QutBioacoustics/baw-server/issues/259)
  - 2016-02-20
-    - partial fix for sorting by calculated fields - some inital queries still include sorting [#254](https://github.com/QutBioacoustics/baw-server/issues/254) 
+    - partial fix for sorting by calculated fields - some inital queries still include sorting [#254](https://github.com/QutBioacoustics/baw-server/issues/254)
     - potential fix for problems with filtering by calculated fields [#145](https://github.com/QutBioacoustics/baw-server/issues/145)
     - fixed `/taggings/filter` - it was present, but naming mismatches were causing errors
  - 2016-02-19
@@ -93,7 +99,7 @@
 ## [Release 0.17.0](https://github.com/QutBioacoustics/baw-server/releases/tag/0.17.0) (2015-08-17)
 
  - 2015-08-16
-    - More UI changes to sync with baw-client UI 
+    - More UI changes to sync with baw-client UI
  - 2015-08-10
     - Updated website navigation bar
  - 2015-08-08
@@ -109,7 +115,7 @@
     - Fixed a bug in `user_accounts#filter`: it tried to access model attributes that weren't loaded
 
  - 2015-07-08
-    - Changes to media polling to reduce the number of errors raised. 
+    - Changes to media polling to reduce the number of errors raised.
 
  - 2015-07-06
     - enable sorting on custom fields [#220](https://github.com/QutBioacoustics/baw-server/issues/220)
