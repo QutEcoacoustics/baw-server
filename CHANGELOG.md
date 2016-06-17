@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## [Release 0.19.0](https://github.com/QutBioacoustics/baw-server/releases/tag/0.19.0) (2016-06-17)
 
  - 2016-06-11
    - Feature: Analysis Jobs item tracking - basic support added for tracking each item in an analysis job [#290](https://github.com/QutBioacoustics/baw-server/pull/290)
