@@ -45,7 +45,7 @@ class Settings < BawWorkers::Settings
       {
           major: 0,
           minor: 19,
-          patch: 0,
+          patch: 1,
           pre: 0,
           build: ''
       }
