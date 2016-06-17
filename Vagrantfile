@@ -1,7 +1,7 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
-ansible_files = '/home/vagrant/baw-provision'
+ansible_files = '/home/vagrant/baw-deploy'
 
 
 # http://matthewcooper.net/2015/01/15/automatically-installing-vagrant-plugin-dependencies/
@@ -33,8 +33,9 @@ Vagrant.configure(2) do |config|
 
   # Create a forwarded port mapping which allows access to a specific port
   # within the machine from a port on the host machine.
-  config.vm.network 'forwarded_port', guest: 3000, host: 3000
-  config.vm.network 'forwarded_port', guest: 1236, host: 26166
+  config.vm.network 'forwarded_port', guest: 3000, host: 3000 # rails
+  config.vm.network 'forwarded_port', guest: 1236, host: 26166 # debugging
+  config.vm.network 'forwarded_port', guest: 5432, guest_ip: '127.0.0.1', host: 5432 # postgres
 
   # Create a private network, which allows host-only access to the machine.
   # A private dhcp network is required for NFS to work (on Windows hosts, at least)
@@ -49,6 +50,8 @@ Vagrant.configure(2) do |config|
   # the path on the host to the actual folder. The second argument is
   # the path on the guest to mount the folder. And the optional third
   # argument is a set of non-required options.
+  config.winnfsd.uid = 1000 # vagrant
+  config.winnfsd.gid = 1000 # vagrant
   config.vm.synced_folder './', '/home/vagrant/baw-server', type: "nfs"
   config.vm.synced_folder '../baw-private/Ansible', ansible_files
 
@@ -61,7 +64,7 @@ Vagrant.configure(2) do |config|
     vb.gui = false
     vb.name = 'baw-server-dev'
     # Customize the amount of memory on the VM:
-    vb.memory = 1024
+    vb.memory = 1536
     vb.cpus = 2
   end
 
@@ -71,7 +74,10 @@ Vagrant.configure(2) do |config|
   config.vm.provision 'shell', inline: <<-SHELL
     sudo apt-get update
     # temporary workaround for https://github.com/mitchellh/vagrant/issues/6793
-    sudo apt-get install -y git python-pip python-dev && sudo pip install ansible==1.9.3 && sudo cp /usr/local/bin/ansible /usr/bin/ansible
+    echo "Installing build tools..."
+    sudo apt-get install -y build-essential libffi-dev libssl-dev python-dev
+    echo "Installing git, pip, and ansible..."
+    sudo apt-get install -y git python-pip && sudo pip install ansible==1.9.3 && sudo cp /usr/local/bin/ansible /usr/bin/ansible
   SHELL
   
   config.vm.provision 'ansible_local' do |ansible|

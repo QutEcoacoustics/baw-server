@@ -36,22 +36,28 @@ class Project < ActiveRecord::Base
   validates_format_of :urn, with: /\Aurn:[a-z0-9][a-z0-9-]{0,31}:[a-z0-9()+,\-.:=@;$_!*'%\/?#]+\z/, message: 'urn %{value} is not valid, must be in format urn:<name>:<path>', allow_blank: true, allow_nil: true
   validates_attachment_content_type :image, content_type: /\Aimage\/(jpg|jpeg|pjpeg|png|x-png|gif)\z/, message: 'file type %{value} is not allowed (only jpeg/png/gif images)'
 
+  def description_html
+    CustomRender.render_markdown(self, :description)
+  end
+
   # Define filter api settings
   def self.filter_settings
     {
         valid_fields: [:id, :name, :description, :created_at, :creator_id],
         render_fields: [:id, :name, :description, :creator_id],
         text_fields: [:name, :description],
-        custom_fields: lambda { |project, user|
+        custom_fields: lambda { |item, user|
 
           # do a query for the attributes that may not be in the projection
           # instance or id can be nil
-          fresh_project = (project.nil? || project.id.nil?) ? nil : Project.find(project.id)
+          fresh_project = (item.nil? || item.id.nil?) ? nil : Project.find(item.id)
 
           project_hash = {}
           project_hash[:site_ids] = fresh_project.nil? ? nil : fresh_project.sites.pluck(:id).flatten
 
-          [project, project_hash]
+          project_hash[:description_html]= fresh_project.description_html
+
+          [item, project_hash]
         },
         controller: :projects,
         action: :filter,

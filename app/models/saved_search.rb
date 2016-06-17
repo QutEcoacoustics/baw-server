@@ -28,18 +28,18 @@ class SavedSearch < ActiveRecord::Base
         valid_fields: [:id, :name, :description, :stored_query, :created_at, :creator_id],
         render_fields: [:id, :name, :description, :stored_query, :created_at, :creator_id],
         text_fields: [:name, :description],
-        custom_fields: lambda { |saved_search, user|
+        custom_fields: lambda { |item, user|
 
           # do a query for the attributes that may not be in the projection
           # instance or id can be nil
-          fresh_saved_search = (saved_search.nil? || saved_search.id.nil?) ? nil : SavedSearch.find(saved_search.id)
+          fresh_saved_search = (item.nil? || item.id.nil?) ? nil : SavedSearch.find(item.id)
 
           saved_search_hash = {}
 
           saved_search_hash[:project_ids] = fresh_saved_search.nil? ? nil : fresh_saved_search.projects.pluck(:id).flatten
           saved_search_hash[:analysis_job_ids] = fresh_saved_search.nil? ? nil : fresh_saved_search.analysis_jobs.pluck(:id).flatten
 
-          [saved_search, saved_search_hash]
+          [item, saved_search_hash]
         },
         controller: :saved_searches,
         action: :filter,
@@ -47,7 +47,6 @@ class SavedSearch < ActiveRecord::Base
             order_by: :name,
             direction: :asc
         },
-        field_mappings: [],
         valid_associations: [
             {
                 join: AnalysisJob,

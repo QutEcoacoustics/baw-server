@@ -28,8 +28,10 @@ describe 'MANAGE Scripts as admin user', :type => :feature do
 
     fill_in 'script[executable_command]', with: 'command'
     fill_in 'script[executable_settings]', with: 'settings'
+    fill_in 'script[executable_settings_media_type]', with: 'text/plain'
 
     click_button 'Submit'
+    expect(page).to_not have_content('Please review the problems below')
     expect(page).to have_content('test name')
   end
 
@@ -42,17 +44,22 @@ describe 'MANAGE Scripts as admin user', :type => :feature do
 
   it 'updates script when filling out form correctly' do
     script = FactoryGirl.create(:script)
+    new_script_version = (script.version + 1).to_s
     visit edit_admin_script_path(script)
     fill_in 'script[name]', with: 'test name'
     fill_in 'script[description]', with: 'description'
     fill_in 'script[analysis_identifier]', with: 'analysis.identifier'
-    fill_in 'script[version]', with: '1.1'
+    fill_in 'script[version]', with: new_script_version
 
     fill_in 'script[executable_command]', with: 'command'
     fill_in 'script[executable_settings]', with: 'settings'
+    fill_in 'script[executable_settings_media_type]', with: 'application/javascript'
 
     click_button 'Submit'
+    expect(page).to_not have_content('Please review the problems below')
     expect(page).to have_content('test name')
+    expect(page).to have_content(new_script_version)
+    expect(page).to have_content('application/javascript')
   end
 
   it 'shows script account details' do

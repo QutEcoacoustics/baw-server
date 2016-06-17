@@ -11,6 +11,11 @@ def document_media_requests
   end
 end
 
+# updates array items in place
+def template_array(array, hsh)
+  array.map! { |s| s % hsh }
+end
+
 # Execute the example.
 # @param [String] http_method
 # @param [String] description
@@ -26,13 +31,20 @@ end
 # @option opts [Hash]    :file_exists            (nil) Check if file exists
 # @option opts [Class]   :expected_error_class   (nil) The expected error class
 # @option opts [Regexp]  :expected_error_regexp  (nil) The expected error regular expression
+# @param [Proc] opts_mod an optional block that is called when rspec is running - allows dynamic changing of opts with
+#    access to rspec context (i.e. let and let! values)
 # @return [void]
-def standard_request_options(http_method, description, expected_status, opts = {})
+def standard_request_options(http_method, description, expected_status, opts = {}, &opts_mod)
   opts.reverse_merge!({document: true})
 
   # 406 when you can't send what they want, 415 when they send what you don't want
 
   example "#{http_method} #{description} - #{expected_status}", document: opts[:document] do
+
+    # allow for modification of opts, provide context so let and let! values can be accessed
+    if opts_mod
+      opts_mod.call self, opts
+    end
 
     expected_error_class = opts[:expected_error_class]
     expected_error_regexp = opts[:expected_error_regexp]
@@ -422,17 +434,17 @@ def check_site_lat_long_response(description, expected_status, should_be_obfusca
     status.should eq(expected_status), "Requested #{path} expecting status #{expected_status} but got status #{status}. Response body was #{response_body}"
     response_body.should have_json_path('data/location_obfuscated'), response_body.to_s
     #response_body.should have_json_type(Boolean).at_path('location_obfuscated'), response_body.to_s
-    site = JSON.parse(response_body)
-    lat = site['data']['custom_latitude']
-    long = site['data']['custom_longitude']
+    json_ = JSON.parse(response_body)
+    lat = json_['data']['custom_latitude']
+    long = json_['data']['custom_longitude']
 
     #'Accurate to with a kilometre (± 1000m)'
 
-    stored_site = Site.where(id: site['data']['id']).first
+    stored_site = Site.where(id: json_['data']['id']).first
     stored_site_lat = stored_site.latitude
     stored_site_long = stored_site.longitude
 
-    if site['data']['location_obfuscated']
+    if json_['data']['location_obfuscated']
       # assume that jitter will not result in the same number twice
       expect(stored_site_lat).not_to be_within(0.00001).of(lat)
       expect(stored_site_long).not_to be_within(0.00001).of(long)
@@ -528,35 +540,6 @@ def create_media_options(audio_recording)
   FileUtils.cp audio_file_mono, original_possible_paths.first
 
   options
-end
-
-def emulate_resque_worker_with_job(job_class, job_args, opts={})
-  # see http://stackoverflow.com/questions/5141378/how-to-bridge-the-testing-using-resque-with-rspec-examples
-  queue = opts[:queue] || 'test_queue'
-
-  Resque::Job.create(queue, job_class, *job_args)
-
-  emulate_resque_worker(queue, opts[:verbose], opts[:fork])
-end
-
-def emulate_resque_worker(queue, verbose, fork)
-  queue = queue || 'test_queue'
-
-  worker = Resque::Worker.new(queue)
-  worker.very_verbose = true if verbose
-
-  if fork
-    # do a single job then shutdown
-    def worker.done_working
-      super
-      shutdown
-    end
-
-    worker.work(0.5)
-  else
-    job = worker.reserve
-    worker.perform(job)
-  end
 end
 
 def process_custom(method, path, params = {}, headers ={})

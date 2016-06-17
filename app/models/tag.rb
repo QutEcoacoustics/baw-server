@@ -106,7 +106,7 @@ limit 10', {user_id: user.id}])
             {
                 join: Tagging,
                 on: Tag.arel_table[:id].eq(Tagging.arel_table[:tag_id]),
-                available: false,
+                available: true,
                 associations: [
                     {
                         join: AudioEvent,

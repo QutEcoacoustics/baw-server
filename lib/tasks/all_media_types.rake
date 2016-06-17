@@ -15,7 +15,7 @@ namespace :baw do
       print_media_types('Image', available_image_formats)
 
       # list all
-      #puts list_all.join("\n")
+      puts list_all
     end
 
     # Get a sorted array of supported mime types
@@ -32,11 +32,11 @@ namespace :baw do
     end
 
     def list_all
-      media_types = []
-      Mime::EXTENSION_LOOKUP.each do |m|
-        media_types.push m
-      end
-      media_types.sort { |a, b| a.to_s <=> b.to_s }
+      msg = 'All Registered Media Types'
+      puts "\n#{msg}\n#{'-' * (msg.length)}\n"
+      Mime::SET
+          .sort { |a, b| a.to_s <=> b.to_s }
+          .map { |item| item.inspect }.join("\n")
     end
 
     def print_media_types(media_type_category, extensions)

@@ -1,0 +1,70 @@
+- content_for :title, 'Analysis Jobs'
+
+= render partial: 'shared/admin/sidebar_analysis_jobs'
+
+- content_for :right_sidebar do
+  = render partial: 'shared/sidebar_metadata_heading', locals: {title: 'Analysis Jobs', icon_class: 'tasks'}
+
+- order_dir_icon = @analysis_jobs_info[:order_dir] == :asc ? 'caret-down' : 'caret-up'
+- order_by_opposite = @analysis_jobs_info[:order_dir] == :asc ? :desc : :asc
+- order_by = @analysis_jobs_info[:order_by]
+
+.col-sm-12
+  .row
+    .col-sm-6
+      %p= page_entries_info @analysis_jobs
+
+  .row
+    .col-sm-12
+      = paginate  @analysis_jobs
+
+      %table.table.table-striped.table-hover
+        %thead
+          %tr
+            %th
+              = link_to admin_analysis_jobs_path order_by: :id, order_dir: order_by_opposite do
+                %span.fa.fa-thumb-tack{aria: {hidden: 'true' }}
+                Id
+                - if order_by == :id
+                  %span.fa{class: "fa-#{order_dir_icon}"}
+            %th
+              = link_to admin_analysis_jobs_path order_by: :name, order_dir: order_by_opposite do
+                %span.fa.fa-tasks{aria: {hidden: 'true' }}
+                Name
+                - if order_by == :name
+                  %span.fa{class: "fa-#{order_dir_icon}"}
+            %th
+              %span.fa.fa-file-text-o{aria: {hidden: 'true' }}
+              Script
+            %th
+              %span.fa.fa-user{aria: {hidden: 'true' }}
+              Creator
+            %th
+              = link_to admin_analysis_jobs_path order_by: :started_at, order_dir: order_by_opposite do
+                %span.fa.fa-calendar{aria: {hidden: 'true' }}
+                Started
+                - if order_by == :started_at
+                  %span.fa{class: "fa-#{order_dir_icon}"}
+            %th
+              = link_to admin_analysis_jobs_path order_by: :overall_status, order_dir: order_by_opposite do
+                %span.fa.fa-flag{aria: {hidden: 'true' }}
+                Status
+                - if order_by == :overall_status
+                  %span.fa{class: "fa-#{order_dir_icon}"}
+            %th
+              = link_to admin_analysis_jobs_path order_by: :overall_status_modified_at, order_dir: order_by_opposite do
+                %span.fa.fa-calendar{aria: {hidden: 'true' }}
+                Status Updated
+                - if order_by == :overall_status_modified_at
+                  %span.fa{class: "fa-#{order_dir_icon}"}
+
+        %tbody
+          - @analysis_jobs.each do |item|
+            %tr
+              %td= link_to item.id, admin_analysis_job_path(item)
+              %td= item.name
+              %td= link_to item.script.name, admin_script_path(item.script)
+              %td= link_to item.creator.user_name, user_account_path(item.creator)
+              %td= format_sidebar_datetime(item.started_at)
+              %td= item.overall_status
+              %td= format_sidebar_datetime(item.overall_status_modified_at)

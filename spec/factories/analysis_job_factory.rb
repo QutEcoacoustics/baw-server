@@ -6,20 +6,16 @@ FactoryGirl.define do
 
     creator
     saved_search
+    script
 
     overall_progress { { queued: 1, working: 0, success: 0, failed: 0, total: 1}.to_json }
     overall_count 1
     overall_duration_seconds 60
+    overall_data_length_bytes 1024
 
     started_at { Time.zone.now }
     overall_status_modified_at { Time.zone.now }
     overall_progress_modified_at { Time.zone.now }
-
-    after(:build) do |analysis_job, evaluator|
-      if analysis_job.script.blank?
-        analysis_job.script = FactoryGirl.create(:script, creator: evaluator.creator)
-      end
-    end
 
   end
 end

@@ -302,6 +302,7 @@ class PublicController < ApplicationController
       msg = "You must have access to the site (#{site.id}) and project(s) (#{site.projects.pluck(:id).join(', ')}) to download annotations."
       fail CanCan::AccessDenied.new(msg, :show, site) if project.nil? || site.nil?
       fail CanCan::AccessDenied.new(msg, :show, site) unless Access::Check.can?(current_user, :reader, project)
+      Access::Check.check_orphan_site!(site)
       fail CanCan::AccessDenied.new(msg, :show, site) unless Access::Check.can_any?(current_user, :reader, site.projects)
       fail CanCan::AccessDenied.new(msg, :show, site) unless project.sites.pluck(:id).include?(site_id)
 

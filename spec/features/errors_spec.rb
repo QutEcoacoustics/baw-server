@@ -119,11 +119,13 @@ describe 'checking reactions to errors', :type => :feature do
       expect(response_headers['Content-Type']).to match %r(text/html)
     end
 
+    context 'writer user' do
+
+      create_entire_hierarchy
+
     it 'displays the correct page on forbidden error' do
-      permission = FactoryGirl.create(:write_permission)
-      read_user = FactoryGirl.create(:user)
-      login_as read_user, scope: :user
-      url = "/projects/#{permission.project.id}"
+      login_as other_user, scope: :user
+      url = "/projects/#{project.id}"
 
       visit url
       expect(current_path).to eq(url)
@@ -132,6 +134,7 @@ describe 'checking reactions to errors', :type => :feature do
       expect(page).not_to have_content('::')
       expect(page.status_code).to eq(403)
       expect(response_headers['Content-Type']).to match %r(text/html)
+    end
     end
 
     it 'displays the correct page on custom routing error' do

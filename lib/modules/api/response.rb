@@ -139,7 +139,10 @@ module Api
 
       # paging: max page
       if !opts[:total].blank? && !opts[:items].blank?
-        max_page = (opts[:total].to_f / opts[:items].to_f).ceil
+        items = opts[:items].to_f
+        total = opts[:total].to_f
+        # prevent divide by 0 error
+        max_page = items > 0 ? (total / items).ceil : 1
         opts[:max_page] = max_page
         result[:meta][:paging][:max_page] = max_page
       end

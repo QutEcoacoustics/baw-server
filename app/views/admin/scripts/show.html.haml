@@ -15,7 +15,9 @@
   %em Command:
   = @script.executable_command
 %p
-  %em Settings:
+  %em
+    Settings
+    = "(#{@script.executable_settings_media_type}):"
   %pre
     = @script.executable_settings
 

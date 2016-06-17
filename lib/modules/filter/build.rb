@@ -15,11 +15,14 @@ module Filter
     # @return [void]
     def initialize(table, filter_settings)
       @table = table
+
+      validate_filter_settings(filter_settings)
       @filter_settings = filter_settings
 
       @valid_fields = filter_settings[:valid_fields].map(&:to_sym)
       @render_fields = filter_settings[:render_fields].map(&:to_sym)
-      @text_fields = filter_settings[:text_fields].map(&:to_sym)
+      @text_fields = filter_settings.include?(:text_fields) ? filter_settings[:text_fields].map(&:to_sym) : []
+      @base_association = filter_settings[:base_association]
       @valid_associations = filter_settings[:valid_associations]
       @field_mappings = filter_settings[:field_mappings]
 
@@ -47,7 +50,8 @@ module Filter
           :not_starts_with, :not_start_with, :does_not_start_with,
           :ends_with, :end_with,
           :not_ends_with, :not_end_with, :does_not_end_with,
-          :regex
+          :regex, :regex_match, :matches,
+          :not_regex, :not_regex_match, :does_not_match, :not_match
       ]
     end
 
@@ -127,40 +131,6 @@ module Filter
       combined_conditions
     end
 
-    # Build a text condition.
-    # @param [String] text
-    # @return [Arel::Nodes::Node] condition
-    def contains_text(text)
-      conditions = []
-      @text_fields.each do |text_field|
-        condition = compose_contains(@table, text_field, @valid_fields, text)
-        conditions.push(condition)
-      end
-
-      if conditions.size > 1
-        combiner_one(:or, conditions)
-      else
-        conditions[0]
-      end
-    end
-
-    # Build an equality condition that matches specified value to specified fields.
-    # @param [Hash] filter_hash
-    # @return [Arel::Nodes::Node] condition
-    def generic_equals(filter_hash)
-      conditions = []
-      filter_hash.each do |key, value|
-        conditions.push(compose_eq(@table, key, @valid_fields, value))
-      end
-
-      if conditions.size > 1
-        combiner_one(:and, conditions)
-      else
-        conditions[0]
-      end
-
-    end
-
     # Parse a filter.
     # @param [Hash] filter_hash
     # @return [Hash]
@@ -168,6 +138,9 @@ module Filter
       parse_filter(filter_hash)
     end
 
+    # Build a custom field.
+    # @param [Symbol] column_name
+    # @return [Hash] field mapping
     def build_custom_field(column_name)
 
       mappings = {}
@@ -246,8 +219,8 @@ module Filter
       # )
 
       query = filter_table
-                  .join(many_table).on(filter_table[filter_table_id].eq(many_table[many_table_filter_id]))
-                  .where(many_table[many_table_result_id].eq(result_table[result_table_id]))
+          .join(many_table).on(filter_table[filter_table_id].eq(many_table[many_table_filter_id]))
+          .where(many_table[many_table_result_id].eq(result_table[result_table_id]))
 
       query = query.where(filter) if filter
 
@@ -312,7 +285,7 @@ module Filter
           when *@valid_fields.dup.push(/\./)
             field = primary
             field_conditions = secondary
-            info = parse_table_field(@table, field, @filter_settings)
+            info = parse_table_field(@table, field)
             result = parse_filter(field_conditions, info)
 
             build_subquery(info, result)
@@ -474,7 +447,9 @@ module Filter
       model = info[:model]
 
       if current_table != @table
-        subquery = @table.project(@table[:id])
+        base_query = @base_association.nil? ? @table : @table.from(@base_association.arel.as(@table.table_name))
+        column_to_match_on = @filter_settings[:base_association_key] || :id
+        subquery = base_query.project(@table[column_to_match_on])
 
         # add conditions to subquery
         if conditions.respond_to?(:each)
@@ -493,7 +468,7 @@ module Filter
           subquery = subquery.join(arel_table, Arel::Nodes::OuterJoin).on(j[:on])
         end
 
-        compose_in(@table, :id, [:id], subquery)
+        compose_in(@table, column_to_match_on, [column_to_match_on], subquery)
       else
         conditions
       end
@@ -503,53 +478,88 @@ module Filter
     # Build table field from field symbol.
     # @param [Arel::Table] table
     # @param [Symbol] field
-    # @param [Hash] filter_settings
     # @return [Arel::Table, Symbol, Hash] table, field, filter_settings
-    def parse_table_field(table, field, filter_settings)
+    def parse_table_field(table, field)
       validate_table(table)
       fail CustomErrors::FilterArgumentError, 'Field name must be a symbol.' unless field.is_a?(Symbol)
-      validate_filter_settings(filter_settings)
 
       field_s = field.to_s
 
       if field_s.include?('.')
-        dot_index = field.to_s.index('.')
-        parsed_table = field[0, dot_index].to_sym
-        parsed_field = field[(dot_index + 1)..field.length].to_sym
-
-        associations = build_associations(@valid_associations, table)
-        models = associations.map { |a| a[:join] }
-        table_names = associations.map { |a| a[:join].table_name.to_sym }
-
-        validate_name(parsed_table, table_names)
-
-        model = parsed_table.to_s.classify.constantize
-
-        validate_association(model, models)
-
-        model_filter_settings = model.filter_settings
-        model_valid_fields = model_filter_settings[:valid_fields].map(&:to_sym)
-        arel_table = relation_table(model)
-
-        validate_table_column(arel_table, parsed_field, model_valid_fields)
-
-        {
-            table_name: parsed_table,
-            field_name: parsed_field,
-            arel_table: arel_table,
-            model: model,
-            filter_settings: model_filter_settings
-        }
+        parse_other_table_field(table, field)
       else
+
+        # table name may not be the same as model / controller name :(
+        model = to_model(table)
+        #controller = (filter_settings[:controller].to_s + '_controller').classify.constantize
+
         {
             table_name: table.name,
             field_name: field,
             arel_table: table,
-            model: table.name.to_s.classify.constantize,
-            filter_settings: filter_settings
+            model: model,
+            filter_settings: @filter_settings
         }
       end
 
+    end
+
+    # Build other table field from field symbol.
+    # @param [Arel::Table] table
+    # @param [Symbol] field
+    # @return [Arel::Table, Symbol, Hash] table, field, filter_settings
+    def parse_other_table_field(table, field)
+      field_s = field.to_s
+      dot_index = field_s.index('.')
+
+      parsed_table = field[0, dot_index].to_sym
+      parsed_field = field[(dot_index + 1)..field.length].to_sym
+
+      associations = build_associations(@valid_associations, table)
+      models = associations.map { |a| a[:join] }
+      table_names = associations.map { |a| a[:join].table_name.to_sym }
+
+      validate_name(parsed_table, table_names)
+
+      model = to_model(parsed_table.to_s)
+
+      validate_association(model, models)
+
+      model_filter_settings = model.filter_settings
+      model_valid_fields = model_filter_settings[:valid_fields].map(&:to_sym)
+      arel_table = relation_table(model)
+
+      validate_table_column(arel_table, parsed_field, model_valid_fields)
+
+      {
+          table_name: parsed_table,
+          field_name: parsed_field,
+          arel_table: arel_table,
+          model: model,
+          filter_settings: model_filter_settings
+      }
+    end
+
+    def to_table(model)
+      model.table_name
+    end
+
+    def to_model(table_name)
+      # first try to just find the model from the table
+      matching_model = table_name.to_s.classify.safe_constantize
+
+      if matching_model.nil?
+        # need to ensure all models are actually loaded
+        Rails.application.eager_load!
+        ActiveRecord::Base.descendants.each do |model|
+          if model.table_name.to_s == table_name.to_s
+            matching_model = model
+            break
+          end
+        end
+      end
+
+      matching_model
     end
 
     # Parse association_allowed hashes and arrays to get names.

@@ -2,6 +2,8 @@ language: ruby
 sudo: false
 rvm:
 - 2.2.3
+- 2.2.5
+- 2.3.1
 branches:
   only:
   - master
@@ -36,6 +38,7 @@ before_script:
 - psql -c 'create database myapp_test;' -U postgres
 script:
 - bundle exec rake db:migrate
+- bundle exec rake db:seed
 - bundle exec rake
 env:
   global:

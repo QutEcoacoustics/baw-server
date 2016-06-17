@@ -10,11 +10,11 @@ class Script < ActiveRecord::Base
   validates :creator, existence: true
 
   # attribute validations
-  validates :name, :analysis_identifier, :executable_command, :executable_settings, presence: true, length: {minimum: 2}
+  validates :name, :analysis_identifier, :executable_command, :executable_settings, :executable_settings_media_type, presence: true, length: {minimum: 2}
   validate :check_version_increase, on: :create
 
   # for the first script in a group, make sure group_id is set to the script's id
-  after_create :ensure_updated_by_set
+  after_create :set_group_id
 
   def display_name
     "#{self.name} - v. #{self.version}"
@@ -22,32 +22,63 @@ class Script < ActiveRecord::Base
 
   def latest_version
     Script
-        .where(group_id: self.group_id)
+        .where(group_id: group_id)
         .order(version: :desc)
         .first
   end
 
-  def is_latest_version?
-    self.id == latest_version.id
-  end
-
-  def most_recent_in_group
+  def earliest_version
     Script
-        .where(group_id: self.group_id)
-        .order(created_at: :desc)
+        .where(group_id: group_id)
+        .order(version: :asc)
         .first
   end
 
-  def is_most_recent_in_group?
-    self.id == most_recent_in_group.id
+  def last_version
+    if !@last_version && !has_attribute?(:last_version)
+      @last_version = Script
+              .where(group_id: group_id)
+              .maximum(:version)
+    end
+
+    # prioritise value from db query
+    read_attribute(:last_version) || @last_version
   end
 
-  def master_script
-    Script
-        .where(group_id: self.group_id)
-        .where(id: self.group_id)
-        .first
+  def is_last_version?
+    self.version == self.last_version
   end
+
+  def first_version
+    if !@first_version && !has_attribute?(:first_version)
+      @first_version = Script
+          .where(group_id: group_id)
+          .minimum(:version)
+    end
+
+    # prioritise value from db query
+    read_attribute(:first_version) || @first_version
+  end
+
+  def is_first_version?
+    self.version == self.first_version
+  end
+
+  # override the default query for the model
+  def self.default_scope
+    query = <<-SQL
+    INNER JOIN (
+      SELECT "group_id", max("version") AS "last_version", min("version") AS "first_version"
+      FROM "scripts"
+      GROUP BY "group_id"
+    ) s2 on ("scripts"."group_id" = "s2"."group_id")
+    SQL
+
+    joins(query).select('"scripts".*, "s2"."last_version", "s2"."first_version"')
+  end
+
+  # a fake reference to the aliased table defined in the default scope
+  @script_group = Arel::Table.new('s2', @arel_engine)
 
   def all_versions
     Script.where(group_id: self.group_id).order(created_at: :desc)
@@ -55,18 +86,46 @@ class Script < ActiveRecord::Base
 
   def self.filter_settings
     {
-        valid_fields: [:id, :name, :description, :analysis_identifier, :version, :created_at, :creator_id],
-        render_fields: [:id, :name, :description, :analysis_identifier, :version, :created_at, :creator_id],
-        text_fields: [:name, :description, :analysis_identifier],
-        custom_fields: nil,
+        valid_fields: [:id, :group_id, :name, :description, :analysis_identifier, :executable_settings_media_type,
+                       :version, :created_at, :creator_id, :is_last_version, :is_first_version],
+        render_fields: [:id, :group_id, :name, :description, :analysis_identifier, :executable_settings,
+                        :executable_settings_media_type, :version, :created_at, :creator_id],
+        text_fields: [:name, :description, :analysis_identifier, :executable_settings_media_type],
+        custom_fields: lambda { |item, user|
+          virtual_fields = {
+              is_last_version: item.is_last_version?,
+              is_first_version: item.is_first_version?
+          }
+          [item, virtual_fields]
+        },
+        field_mappings: [
+            {
+                name: :is_last_version,
+                value: Arel::Nodes::Grouping.new(
+                    Arel::Nodes::InfixOperation.new(
+                        '='.to_sym,
+                        @script_group[:last_version],
+                        Script.arel_table[:version]
+                    )
+                )
+            },
+            {
+                name: :is_first_version,
+                value: Arel::Nodes::Grouping.new(
+                    Arel::Nodes::InfixOperation.new(
+                        '='.to_sym,
+                        @script_group[:first_version],
+                        Script.arel_table[:version]
+                    )
+                )
+            }
+        ],
         controller: :scripts,
         action: :filter,
         defaults: {
             order_by: :name,
             direction: :asc
-        },
-        field_mappings: [],
-        valid_associations: []
+        }
     }
   end
 
@@ -75,6 +134,7 @@ class Script < ActiveRecord::Base
   def check_version_increase
     matching_or_higher_versions =
         Script
+            .unscoped
             .where(group_id: self.group_id)
             .where('version >= ?', self.version)
     if matching_or_higher_versions.count > 0
@@ -82,10 +142,10 @@ class Script < ActiveRecord::Base
     end
   end
 
-  def ensure_updated_by_set
+  def set_group_id
     if self.group_id.blank?
       self.group_id = self.id
-      self.save
+      self.save!
     end
   end
 

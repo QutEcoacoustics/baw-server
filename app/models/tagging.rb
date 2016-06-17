@@ -27,7 +27,6 @@ class Tagging < ActiveRecord::Base
     {
         valid_fields: [:id, :audio_event_id, :tag_id, :created_at, :updated_at, :creator_id, :updater_id],
         render_fields: [:id, :audio_event_id, :tag_id, :created_at],
-        text_fields: [],
         controller: :taggings,
         action: :filter,
         defaults: {

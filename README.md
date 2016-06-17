@@ -2,12 +2,24 @@
 
 The bioacoustic workbench server. Manages the structure and audio data. Provides an API for client access.
 
-[![Build Status](https://travis-ci.org/QutBioacoustics/baw-server.png?branch=master)](https://travis-ci.org/QutBioacoustics/baw-server)
 [![Dependency Status](https://gemnasium.com/QutBioacoustics/baw-server.png)](https://gemnasium.com/QutBioacoustics/baw-server)
-[![Code Climate](https://codeclimate.com/github/QutBioacoustics/baw-server.png)](https://codeclimate.com/github/QutBioacoustics/baw-server)
-[![Test Coverage](https://codeclimate.com/github/QutBioacoustics/baw-server/badges/coverage.svg)](https://codeclimate.com/github/QutBioacoustics/baw-server)
-[![Documentation Status](http://inch-ci.org/github/QutBioacoustics/baw-server.png?branch=master)](http://inch-ci.org/github/QutBioacoustics/baw-server)
 [![Documentation](https://img.shields.io/badge/docs-rdoc.info-blue.svg)](http://www.rubydoc.info/github/QutBioacoustics/baw-server)
+[![Code Climate](https://codeclimate.com/github/QutBioacoustics/baw-server/badges/gpa.svg)](https://codeclimate.com/github/QutBioacoustics/baw-server)
+[![Test Coverage](https://codeclimate.com/github/QutBioacoustics/baw-server/badges/coverage.svg)](https://codeclimate.com/github/QutBioacoustics/baw-server/coverage)
+
+## Branches
+
+### master (latest release)
+
+[![Build Status](https://travis-ci.org/QutBioacoustics/baw-server.png?branch=master)](https://travis-ci.org/QutBioacoustics/baw-server)
+[![Documentation Status](http://inch-ci.org/github/QutBioacoustics/baw-server.png?branch=master)](http://inch-ci.org/github/QutBioacoustics/baw-server)
+[![Coverage Status](https://coveralls.io/repos/github/QutBioacoustics/baw-server/badge.svg?branch=master)](https://coveralls.io/github/QutBioacoustics/baw-server?branch=master)
+
+### develop (most recent commits)
+
+[![Build Status](https://travis-ci.org/QutBioacoustics/baw-server.png?branch=develop)](https://travis-ci.org/QutBioacoustics/baw-server)
+[![Documentation Status](http://inch-ci.org/github/QutBioacoustics/baw-server.png?branch=develop)](http://inch-ci.org/github/QutBioacoustics/baw-server)
+[![Coverage Status](https://coveralls.io/repos/github/QutBioacoustics/baw-server/badge.svg?branch=develop)](https://coveralls.io/github/QutBioacoustics/baw-server?branch=develop)
 
 ## Dependencies
 
@@ -54,6 +66,10 @@ Start by running, on your **host** machine:
 	# in the dev machine
 	$ cd ~/baw-server
 
+Sometimes you may need to update dependencies first:
+
+    ~/baw-server$ bundle install
+
 End by suspending the virtual machine:
 
     # exit the ssh session
@@ -66,7 +82,7 @@ When running the server in `development` or `test` modes, these configuration fi
  - `/config/settings/development.yml`
  - `/config/settings/test.yml`
 
-They are based on files based on `/config/settings/default.yml`.
+They are based on `/config/settings/default.yml`.
 
 ### Web Server
 
@@ -75,16 +91,23 @@ To start the development server
     $ thin start
 
 ### Tests
-The tests are run using Guard:
+The tests are run using Guard, either:
 
-    $ bundle exec guard
-    $ [1] guard(main)>
+    $ bin/guard
+
+or in case the listening does not work, force the use of file polling:
+
+    $ bin/guard guard --force-polling
 
 Press enter to execute all tests. Guard will monitor for changes and the relevant tests will be run as files are modified.
 
 Tests can also be run with a specified seed using rspec:
 
     $ rspec --seed <number>
+
+### Style
+
+Use this style guide as a reference: https://github.com/bbatsov/ruby-style-guide.
 
 ## Documentation
 
@@ -112,6 +135,13 @@ We deploy using Ansible (and in particular [Ansistrano](http://ansistrano.com/))
 Our Ansible playbooks are currently private but we have plans to release them.
 
 If you want to use background workers, you'll need to set up [Redis](http://redis.io/).
+
+## Working with RubyMine
+
+If using a remote setup (i.e. vagrant) make sure you set up a
+[remote Ruby SDK using the RVM instructions](https://www.jetbrains.com/help/ruby/2016.1/configuring-remote-ruby-interpreters.html?origin=old_help).
+
+If you need sudo to install a gem (i.e. if Rubymine can't do it) try running `rvm fix-permissions`.
 
 ## Credits
 

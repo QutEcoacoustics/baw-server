@@ -12,7 +12,7 @@ module Admin
       fail 'Invalid order by.' unless [:id, :site, :duration_seconds, :recorded_date, :created_at, :audio_event_count].include?(order_by)
       fail 'Invalid order dir.' unless [:asc, :desc].include?(order_dir)
 
-      redirect_to admin_tags_path if commit.downcase == 'clear'
+      redirect_to admin_audio_recordings_path if commit.downcase == 'clear'
 
       @audio_recordings_info = {
           order_by: order_by,

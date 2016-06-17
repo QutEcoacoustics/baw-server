@@ -69,6 +69,7 @@ class Ability
       to_audio_event_comment(user)
       to_bookmark(user)
       to_analysis_job(user)
+      to_analysis_jobs_item(user)
       to_saved_search(user)
       to_script(user)
       to_tag
@@ -99,6 +100,10 @@ class Ability
   def for_harvester
     # actions used for harvesting. See baw-workers.
     can [:new, :create, :check_uploader, :update_status, :update], AudioRecording
+
+    # omitted: :new, :create,
+    # applied by default: :index, :show, :filter
+    can [ :update ], AnalysisJobsItem
   end
 
   def to_project(user)
@@ -132,11 +137,12 @@ class Ability
   end
 
   def to_site(user)
-    # only admin can :destroy, :upload_instructions, :harvest, :orphans
+    # only admin can :destroy, :orphans
 
     # must have read permission or higher to view site
     can [:show, :show_shallow], Site do |site|
       check_model(site)
+      Access::Check.check_orphan_site!(site)
       # can't add .includes here - it breaks when validating projects due to ActiveRecord::AssociationRelation
       Access::Check.can_any?(user, :reader, site.projects)
     end
@@ -144,11 +150,17 @@ class Ability
     # must have write permission or higher to new, create, edit, update
     can [:new, :create, :edit, :update], Site do |site|
       check_model(site)
+      Access::Check.check_orphan_site!(site)
       # can't add .includes here - it breaks when validating projects due to ActiveRecord::AssociationRelation
       # .all would have worked. I tried .where(nil), that didn't work either :/
       # https://github.com/rails/rails/issues/12756
       # https://github.com/plataformatec/has_scope/issues/41
       Access::Check.can_any?(user, :writer, site.projects)
+    end
+
+    # Only owners can access harvest and upload instruction pages
+    can [:upload_instructions, :harvest], Site do |site|
+      Access::Check.can_any?(user, :owner, site.projects)
     end
 
     # actions any logged in user can access
@@ -164,6 +176,7 @@ class Ability
     # must have read permission or higher to view audio recording
     can [:show], AudioRecording do |audio_recording|
       check_model(audio_recording)
+      Access::Check.check_orphan_site!(audio_recording.site)
       Access::Check.can_any?(user, :reader, audio_recording.site.projects)
     end
 
@@ -175,12 +188,14 @@ class Ability
     # must have read permission or higher to view or download audio event
     can [:show, :download], AudioEvent do |audio_event|
       check_model(audio_event)
+      Access::Check.check_orphan_site!(audio_event.audio_recording.site)
       Access::Check.can_any?(user, :reader, audio_event.audio_recording.site.projects)
     end
 
     # must have write permission or higher to create, update, destroy
     can [:create, :update, :destroy], AudioEvent do |audio_event|
       check_model(audio_event)
+      Access::Check.check_orphan_site!(audio_event.audio_recording.site)
       Access::Check.can_any?(user, :writer, audio_event.audio_recording.site.projects)
     end
 
@@ -197,7 +212,9 @@ class Ability
     can [:show, :create, :update], AudioEventComment do |audio_event_comment|
       check_model(audio_event_comment)
       is_ref = audio_event_comment.audio_event.is_reference
-      projects = audio_event_comment.audio_event.audio_recording.site.projects
+      site = audio_event_comment.audio_event.audio_recording.site
+      Access::Check.check_orphan_site!(site)
+      projects = site.projects
       Access::Check.can_any?(user, :reader, projects) || is_ref
     end
 
@@ -212,6 +229,7 @@ class Ability
     # must have read permission or higher on project to create bookmark
     can [:create], Bookmark do |bookmark|
       check_model(bookmark)
+      Access::Check.check_orphan_site!(bookmark.audio_recording.site)
       Access::Check.can_any?(user, :reader, bookmark.audio_recording.site.projects)
     end
 
@@ -223,13 +241,18 @@ class Ability
   end
 
   def to_analysis_job(user)
-    # must have read permission or higher on all saved_search.projects to create analysis job
+    # must have read permission or higher on ANY saved_search.projects to create analysis job
     can [:show, :create], AnalysisJob do |analysis_job|
       check_model(analysis_job)
+      fail CustomErrors::BadRequestError.new('Analysis Job must have a saved search.') if analysis_job.saved_search.nil?
       projects = analysis_job.saved_search.projects
-      fail CustomErrors::BadRequestError.new('Analysis Job must have at least one project.') if projects.size < 1
+      fail CustomErrors::BadRequestError.new('Saved search must have at least one project.') if projects.size < 1
 
-      Access::Check.can_all?(user, :reader, projects)
+
+      # can_any? because AnalysisJobsItem and analysis results can be accessed via AudioRecording. Any AnalysisJobsItem
+      # can be accessed if they user has access to the AudioRecording (and thus any project). can_any? here makes access
+      # consistent with AnalysisJobsItem.
+      Access::Check.can_any?(user, :reader, projects)
     end
 
     # only creator can update, destroy their own analysis jobs
@@ -237,6 +260,27 @@ class Ability
 
     # actions any logged in user can access
     can [:index, :new, :filter], AnalysisJob
+  end
+
+  def to_analysis_jobs_item(user)
+    # Only harvester can update - see permissions for harvester in for_harvester.
+
+    can [:show], AnalysisJobsItem do |analysis_job_item|
+      check_model(analysis_job_item)
+
+      if analysis_job_item.analysis_job.nil?
+        fail CustomErrors::BadRequestError.new('Analysis Jobs Item must have a Analysis Job.')
+      end
+
+      if analysis_job_item.audio_recording.nil?
+        fail CustomErrors::BadRequestError.new('Analysis Jobs Item must have a Audio Recording.')
+      end
+
+      Access::Check.can_any?(user, :reader, analysis_job_item.audio_recording.site.projects)
+    end
+
+    # actions any logged in user can access
+    can [:index, :filter], AnalysisJobsItem
   end
 
   def to_saved_search(user)
@@ -262,7 +306,7 @@ class Ability
     # only admin can manipulate scripts
 
     # actions any logged in user can access
-    can [:index, :filter], Script
+    can [:index, :show, :filter], Script
   end
 
   def to_tag
@@ -277,12 +321,14 @@ class Ability
     # must have read permission or higher to show
     can [:show], Tagging do |tagging|
       check_model(tagging)
+      Access::Check.check_orphan_site!(tagging.audio_event.audio_recording.site)
       Access::Check.can_any?(user, :reader, tagging.audio_event.audio_recording.site.projects)
     end
 
     # must have write permission or higher to create, update, destroy
     can [:create, :update, :destroy], Tagging do |tagging|
       check_model(tagging)
+      Access::Check.check_orphan_site!(tagging.audio_event.audio_recording.site)
       Access::Check.can_any?(user, :writer, tagging.audio_event.audio_recording.site.projects)
     end
 

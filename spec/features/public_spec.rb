@@ -118,9 +118,12 @@ describe 'Website forms with user', :type => :feature do
   end
 
   context 'website status' do
+
+    create_entire_hierarchy
+
     it 'shows the Statistics page' do
       # create project, permissions, site, audio_recording, audio_event, tag, comment, bookmark
-      FactoryGirl.create(:write_permission, user: @user)
+      FactoryGirl.create(:permission, level: 'writer', creator: @user, user: @user)
       visit website_status_path
       expect(current_path).to eq(website_status_path)
       expect(page).to have_content('Unique tags attached to annotations')

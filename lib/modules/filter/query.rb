@@ -22,6 +22,8 @@ module Filter
     def initialize(parameters, query, model, filter_settings)
       # might need this at some point: Rack::Utils.parse_nested_query
       @key_prefix = 'filter_'
+      key_partial_match = :filter_partial_match
+
       @default_page = 1
       @default_items = 25
       @max_items = 500
@@ -29,34 +31,44 @@ module Filter
 
       # `.all' adds 'id' to the select!!
       @initial_query = !query.nil? && query.is_a?(ActiveRecord::Relation) ? query : relation_all(model)
+
+      validate_filter_settings(filter_settings)
       @valid_fields = filter_settings[:valid_fields].map(&:to_sym)
-      @text_fields = filter_settings[:text_fields].map(&:to_sym)
+      @text_fields = filter_settings.include?(:text_fields) ? filter_settings[:text_fields].map(&:to_sym) : []
       @render_fields = filter_settings[:render_fields].map(&:to_sym)
       @filter_settings = filter_settings
+      @default_sort_order = filter_settings[:defaults][:order_by]
+      @default_sort_direction = filter_settings[:defaults][:direction]
 
       @build = Build.new(@table, filter_settings)
 
       @parameters = CleanParams.perform(parameters)
       validate_hash(@parameters)
 
-      @filter = @parameters[:filter]
-      @filter = {} if @filter.blank?
+      @filter = @parameters.include?(:filter) && !@parameters[:filter].blank? ? @parameters[:filter] : {}
+      @projection = @parameters.include?(:projection) && !@parameters[:projection].blank? ? @parameters[:projection] : nil
 
-      @projection = @parameters[:projection]
-      @projection = nil if @projection.blank?
+      # remove key_partial_match key from parameters hash
+      parameters_for_generic = @parameters.dup
+      parameters_for_generic.delete(key_partial_match) if parameters_for_generic.include?(key_partial_match)
 
-      @qsp_text_filter = parse_qsp_text(@parameters)
+      # merge filters from qsp partial text match into POST body filter
+      partial_match_filters = parse_qsp_partial_match_text(@parameters, key_partial_match, @text_fields)
+      add_qsp_to_filter(@filter, partial_match_filters, :or)
 
-      @qsp_generic_filters = parse_qsp(nil, @parameters, @key_prefix, @valid_fields)
-      @paging = parse_paging(
-          @parameters,
-          @default_page,
-          @default_items,
-          @max_items)
-      @sorting = parse_sorting(
-          @parameters,
-          filter_settings[:defaults][:order_by],
-          filter_settings[:defaults][:direction])
+      # merge filters from qsp generic equality match into POST body filter
+      qsp_generic_filters = parse_qsp(nil, parameters_for_generic, key_prefix)
+      add_qsp_to_filter(@filter, qsp_generic_filters, :and)
+
+      # populate properties with qsp filter spec
+      @qsp_text_filter = @parameters[key_partial_match]
+      @qsp_generic_filters = {}
+      qsp_generic_filters.each do |key, value|
+        @qsp_generic_filters[key] = value[:eq]
+      end
+
+      @paging = parse_paging(@parameters, @default_page, @default_items, @max_items)
+      @sorting = parse_sorting(@parameters, @default_sort_order, @default_sort_direction)
     end
 
     # Get the query represented by the parameters sent in new.
@@ -76,12 +88,6 @@ module Filter
       # paging
       query = query_paging(query)
 
-      # add qsp text filters
-      query = query_filter_text(query)
-
-      # add qsp generic_filters
-      query = query_filter_generic(query)
-
       # result
       query
     end
@@ -97,12 +103,6 @@ module Filter
       #filter
       query = query_filter(query)
 
-      # add qsp text filters
-      query = query_filter_text(query)
-
-      # add qsp generic_filters
-      query = query_filter_generic(query)
-
       # result
       query
     end
@@ -114,12 +114,6 @@ module Filter
 
       # restrict to select columns
       query = query_projection(query)
-
-      # add qsp text filters
-      query = query_filter_text(query)
-
-      # add qsp generic_filters
-      query = query_filter_generic(query)
 
       # result
       query
@@ -161,44 +155,6 @@ module Filter
     # @return [ActiveRecord::Relation] query
     def query_projection_default(query)
       apply_projections(query, @build.projections({include: @render_fields}))
-    end
-
-    # Add text filter to a query.
-    # @param [ActiveRecord::Relation] query
-    # @return [ActiveRecord::Relation] query
-    def query_filter_text(query)
-      return query unless has_qsp_text?
-      # only text fields on the /filter model can be used - can't filter on other table fields
-      text_condition = @build.contains_text(@qsp_text_filter)
-      apply_condition(query, text_condition)
-    end
-
-    # Add text filter to a query.
-    # @param [ActiveRecord::Relation] query
-    # @param [String] filter_text
-    # @return [ActiveRecord::Relation] query
-    def query_filter_text_custom(query, filter_text)
-      # only text fields on the /filter model can be used - can't filter on other table fields
-      text_condition = @build.contains_text(filter_text)
-      apply_condition(query, text_condition)
-    end
-
-    # Add generic equality filters to a query.
-    # @param [ActiveRecord::Relation] query
-    # @return [ActiveRecord::Relation] query
-    def query_filter_generic(query)
-      return query unless has_qsp_generic?
-      # only fields on the /filter model can be used - can't filter on other table fields
-      apply_condition(query, @build.generic_equals(@qsp_generic_filters))
-    end
-
-    # Add generic equality filters to a query.
-    # @param [ActiveRecord::Relation] query
-    # @param [Hash] filter_hash
-    # @return [ActiveRecord::Relation] query
-    def query_filter_generic_custom(query, filter_hash)
-      # only fields on the /filter model can be used - can't filter on other table fields
-      apply_condition(query, @build.generic_equals(filter_hash))
     end
 
     # Add sorting to query.
@@ -256,15 +212,45 @@ module Filter
       !@filter.blank?
     end
 
-    def has_qsp_generic?
-      !@qsp_generic_filters.blank?
-    end
-
-    def has_qsp_text?
-      !@qsp_text_filter.blank?
-    end
-
     private
+
+
+    # Add qsp spec to filter
+    # @param [Hash] filter
+    # @param [Hash] additional
+    # @param [Symbol] combiner
+    # @return [void]
+    def add_qsp_to_filter(filter, additional, combiner)
+      fail 'Additional filter items must be a hash.' unless additional.is_a?(Hash)
+      fail 'Filter must be a hash.' unless filter.is_a?(Hash)
+      fail 'Combiner be blank.' if combiner.blank? || !combiner.is_a?(Symbol)
+
+      more_than_one = additional.size > 1
+      combiner_present = filter.include?(combiner)
+      item_without_combiner_exists = filter.keys.any?{ |k| ![:and, :or, :not].include?(k)}
+
+        additional.each do |key, value|
+          match_at_top = filter.include?(key)
+          match_in_combiner = combiner_present && filter[combiner].include?(key)
+
+          if match_at_top
+            filter[key].merge!(value)
+          elsif match_in_combiner
+            filter[combiner][key].merge!(value)
+          elsif !more_than_one && !combiner_present
+            filter[key] = value
+          elsif more_than_one && !combiner_present && !item_without_combiner_exists
+            filter[combiner] = {} unless filter.include?(combiner)
+            filter[combiner][key] = value
+          elsif combiner_present && combiner != :and
+            filter[combiner][key] = value
+          elsif item_without_combiner_exists && combiner == :and
+            filter[key] = value
+          else
+            fail 'Problem adding additional filter items.'
+          end
+        end
+    end
 
     # Add conditions to a query.
     # @param [ActiveRecord::Relation] query
@@ -322,11 +308,14 @@ module Filter
       sort_field = @build.build_custom_field(column_name)
       sort_field = table[column_name] if sort_field.blank?
 
-      if direction == :asc
-        query.order(Arel::Nodes::Ascending.new sort_field)
-      elsif direction == :desc
-        query.order(Arel::Nodes::Descending.new sort_field)
+      if direction == :desc
+        sort_field_by = Arel::Nodes::Descending.new(sort_field)
+      else
+        #direction == :asc
+        sort_field_by = Arel::Nodes::Ascending.new(sort_field)
       end
+
+      query.order(sort_field_by)
     end
 
     # Append paging to a query.

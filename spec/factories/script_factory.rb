@@ -9,6 +9,7 @@ FactoryGirl.define do
     sequence(:version) { |n| n * 0.01}
     sequence(:executable_command) { |n| "executable command #{n}"}
     sequence(:executable_settings) { |n| "executable settings #{n}"}
+    sequence(:executable_settings_media_type) { |n| 'text/plain' }
 
     creator
 

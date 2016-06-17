@@ -37,7 +37,7 @@ module AWB
     Settings.validate
 
     # resque setup
-    Resque.redis = Settings.resque.connection
+    Resque.redis = HashWithIndifferentAccess.new(Settings.resque.connection)
     Resque.redis.namespace = Settings.resque.namespace
 
     # resque job status expiry for job status entries

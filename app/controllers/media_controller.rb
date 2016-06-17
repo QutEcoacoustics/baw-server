@@ -198,7 +198,7 @@ class MediaController < ApplicationController
 
       time_start_waiting = Time.now
 
-      Rails.logger.debug " media_controller#create_media: Submitted processing job for #{expected_files}"
+      Rails.logger.debug "media_controller#create_media: Submitted processing job for #{expected_files}"
 
       # poll disk for audio
       # will throw with a timeout if file does not appear on disk

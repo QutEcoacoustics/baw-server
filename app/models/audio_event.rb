@@ -58,11 +58,10 @@ class AudioEvent < ActiveRecord::Base
                         :low_frequency_hertz, :high_frequency_hertz,
                         :is_reference,
                         :creator_id, :updated_at, :created_at],
-        text_fields: [],
-        custom_fields: lambda { |audio_event, user|
+        custom_fields: lambda { |item, user|
 
           # do a query for the attributes that may not be in the projection
-          fresh_audio_event = AudioEvent.find(audio_event.id)
+          fresh_audio_event = AudioEvent.find(item.id)
 
           audio_event_hash = {}
 
@@ -71,7 +70,7 @@ class AudioEvent < ActiveRecord::Base
                   .where(audio_event_id: fresh_audio_event.id)
                   .select(:id, :audio_event_id, :tag_id, :created_at, :updated_at, :creator_id, :updater_id)
 
-          [audio_event, audio_event_hash]
+          [item, audio_event_hash]
         },
         controller: :audio_events,
         action: :filter,
@@ -99,7 +98,7 @@ class AudioEvent < ActiveRecord::Base
             {
                 join: Tagging,
                 on: AudioEvent.arel_table[:id].eq(Tagging.arel_table[:audio_event_id]),
-                available: false,
+                available: true,
                 associations: [
                     {
                         join: Tag,

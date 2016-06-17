@@ -7,7 +7,7 @@
     = f.error_notification
     = f.input :user_name, required: true, autofocus: true, placeholder: 'User name'
     = f.input :email, required: true, placeholder: 'Email'
-    = render partial: 'shared/time_zone_select_custom', locals: { f: f, attribute_name: :tzinfo_tz, model_name: 'user' }
+    = render partial: 'shared/time_zone_select_custom', locals: { f: f, attribute_name: :tzinfo_tz, model_name: :user, model: @user }
     = f.input :password, autocomplete: 'off', required: false, placeholder: 'Password'
     .form-group.optional.pending-reconfirmation
       %label.optional.pending-reconfirmation.control-label.col-sm-3{for: 'pending-reconfirmation'}

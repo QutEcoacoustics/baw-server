@@ -7,21 +7,23 @@ def select_by_value(id, value)
 end
 
 describe 'CRUD Projects as valid user with write permission', :type => :feature do
+
+  create_entire_hierarchy
+
   before(:each) do
-    @permission = FactoryGirl.create(:write_permission)
-    login_as @permission.user, scope: :user
+    login_as writer_user, scope: :user
   end
 
   it 'lists all projects' do
     visit projects_path
     expect(current_path).to eq(projects_path)
     expect(page).to have_content('Projects')
-    expect(page).to have_content(@permission.project.name)
+    expect(page).to have_content(project.name)
   end
 
   it 'shows project details' do
-    visit project_path(@permission.project)
-    expect(page).to have_content(@permission.project.name)
+    visit project_path(project)
+    expect(page).to have_content(project.name)
     expect(page).to have_link('Edit')
     expect(page).to have_link('Edit Permissions')
     expect(page).not_to have_link('Delete')
@@ -31,7 +33,6 @@ describe 'CRUD Projects as valid user with write permission', :type => :feature 
     visit new_project_path
     fill_in 'project[name]', with: 'test name'
     fill_in 'project[description]', with: 'description'
-    fill_in 'project[notes]', with: 'notes'
     attach_file('project[image]', 'public/images/user/user-512.png')
     click_button 'Submit'
     #save_and_open_page
@@ -47,18 +48,17 @@ describe 'CRUD Projects as valid user with write permission', :type => :feature 
   end
 
   it 'updates project when filling out form correctly' do
-    visit edit_project_path(@permission.project)
+    visit edit_project_path(project)
     #save_and_open_page
     fill_in 'project[name]', with: 'test name'
     fill_in 'project[description]', with: 'description'
-    fill_in 'project[notes]', with: 'notes'
     attach_file('project[image]', 'public/images/user/user-512.png')
     click_button 'Submit'
     expect(page).to have_content('test name')
   end
 
   it 'shows errors when updating form incorrectly' do
-    visit edit_project_path(@permission.project)
+    visit edit_project_path(project)
     #save_and_open_page
     fill_in 'project[name]', with: ''
     click_button 'Submit'
@@ -69,21 +69,23 @@ describe 'CRUD Projects as valid user with write permission', :type => :feature 
 end
 
 describe 'CRUD Projects as valid user and project creator', :type => :feature do
+
+  create_entire_hierarchy
+
   before(:each) do
-    @permission = FactoryGirl.create(:write_permission)
-    login_as @permission.project.creator, scope: :user
+    login_as project.creator, scope: :user
   end
 
   it 'lists all projects' do
     visit projects_path
     expect(current_path).to eq(projects_path)
     expect(page).to have_content('Projects')
-    expect(page).to have_content(@permission.project.name)
+    expect(page).to have_content(project.name)
   end
 
   it 'shows project details' do
-    visit project_path(@permission.project)
-    expect(page).to have_content(@permission.project.name)
+    visit project_path(project)
+    expect(page).to have_content(project.name)
     expect(page).to have_link('Edit')
     expect(page).to have_link('Edit Permissions')
     expect(page).not_to have_link('Delete')
@@ -94,7 +96,6 @@ describe 'CRUD Projects as valid user and project creator', :type => :feature do
     #save_and_open_page
     fill_in 'project_name', with: 'test name'
     fill_in 'project[description]', with: 'description'
-    fill_in 'project[notes]', with: 'notes'
     attach_file('project[image]', 'public/images/user/user-512.png')
     click_button 'Submit'
     #save_and_open_page
@@ -103,11 +104,10 @@ describe 'CRUD Projects as valid user and project creator', :type => :feature do
   end
 
   it 'updates project when filling out form correctly' do
-    visit edit_project_path(@permission.project)
+    visit edit_project_path(project)
     #save_and_open_page
     fill_in 'project[name]', with: 'test name'
     fill_in 'project[description]', with: 'description'
-    fill_in 'project[notes]', with: 'notes'
     attach_file('project[image]', 'public/images/user/user-512.png')
     click_button 'Submit'
     expect(page).to have_content('test name')
@@ -116,21 +116,23 @@ describe 'CRUD Projects as valid user and project creator', :type => :feature do
 end
 
 describe 'CRUD Projects as valid user with read permission', :type => :feature do
+
+  create_entire_hierarchy
+
   before(:each) do
-    @permission = FactoryGirl.create(:read_permission)
-    login_as @permission.user, scope: :user
+    login_as reader_user, scope: :user
   end
 
   it 'lists all projects' do
     visit projects_path
     expect(current_path).to eq(projects_path)
     expect(page).to have_content('Projects')
-    expect(page).to have_content(@permission.project.name)
+    expect(page).to have_content(project.name)
   end
 
   it 'shows project details' do
-    visit project_path(@permission.project)
-    expect(page).to have_content(@permission.project.name)
+    visit project_path(project)
+    expect(page).to have_content(project.name)
     expect(page).not_to have_link('Edit')
     expect(page).not_to have_link('Edit Permissions')
     expect(page).not_to have_link('Delete')
@@ -140,7 +142,6 @@ describe 'CRUD Projects as valid user with read permission', :type => :feature d
     visit new_project_path
     fill_in 'project[name]', with: 'test name'
     fill_in 'project[description]', with: 'description'
-    fill_in 'project[notes]', with: 'notes'
     attach_file('project[image]', 'public/images/user/user-512.png')
     click_button 'Submit'
     #save_and_open_page
@@ -150,17 +151,18 @@ describe 'CRUD Projects as valid user with read permission', :type => :feature d
 
 
   it 'rejects access to update project' do
-    visit edit_project_path(@permission.project)
+    visit edit_project_path(project)
     expect(page).to have_content(I18n.t('devise.failure.unauthorized'))
   end
 
 end
 
 describe 'CRUD Projects as valid user with no permissions', :type => :feature do
+
+  create_entire_hierarchy
+
   before(:each) do
-    @permission = FactoryGirl.create(:write_permission)
-    @user = FactoryGirl.create(:user) # creating new user with no permission to login
-    login_as @user, scope: :user
+    login_as other_user, scope: :user
   end
 
   it 'lists all projects' do
@@ -168,11 +170,11 @@ describe 'CRUD Projects as valid user with no permissions', :type => :feature do
     visit projects_path
     expect(current_path).to eq(projects_path)
     expect(page).to have_content('Projects')
-    expect(page).not_to have_content(@permission.project.name)
+    expect(page).not_to have_content(project.name)
   end
 
   it 'rejects access to show project details' do
-    visit project_path(@permission.project)
+    visit project_path(project)
     expect(page).to have_content(I18n.t('devise.failure.unauthorized'))
   end
 
@@ -180,7 +182,6 @@ describe 'CRUD Projects as valid user with no permissions', :type => :feature do
     visit new_project_path
     fill_in 'project[name]', with: 'test name'
     fill_in 'project[description]', with: 'description'
-    fill_in 'project[notes]', with: 'notes'
     attach_file('project[image]', 'public/images/user/user-512.png')
     click_button 'Submit'
     #save_and_open_page
@@ -189,31 +190,33 @@ describe 'CRUD Projects as valid user with no permissions', :type => :feature do
   end
 
   it 'rejects access to edit project details' do
-    visit edit_project_path(@permission.project)
+    visit edit_project_path(project)
     expect(page).to have_content(I18n.t('devise.failure.unauthorized'))
   end
 
 end
 
 describe 'Delete Projects as admin user', :type => :feature do
+
+  create_entire_hierarchy
+
   before(:each) do
-    admin = FactoryGirl.create(:admin)
-    login_as admin, scope: :user
+    login_as admin_user, scope: :user
   end
 
   it 'deletes a project' do
-    permission = FactoryGirl.create(:write_permission)
-    visit project_path(permission.project)
+    visit project_path(project)
     expect(page).to have_link('Delete Project')
     expect { first(:link, 'Delete').click }.to change(Project, :count).by(-1)
   end
 end
 
 describe 'CRUD Projects as unconfirmed user', :type => :feature do
+
+  create_entire_hierarchy
+
   before(:each) do
-    @user = FactoryGirl.create(:unconfirmed_user) # creating new user unconfirmed user
-    @permission = FactoryGirl.create(:write_permission)
-    login_as @user, scope: :user
+    login_as unconfirmed_user, scope: :user
   end
 
   it 'reject access to list all projects' do
@@ -223,8 +226,8 @@ describe 'CRUD Projects as unconfirmed user', :type => :feature do
   end
 
   it 'rejects access to show project details' do
-    visit project_path(@permission.project)
-    expect(current_path).to eq(project_path(@permission.project))
+    visit project_path(project)
+    expect(current_path).to eq(project_path(project))
     expect(page).to have_content(I18n.t('devise.failure.unconfirmed'))
   end
 
@@ -236,18 +239,20 @@ describe 'CRUD Projects as unconfirmed user', :type => :feature do
   end
 
   it 'rejects access to edit project details' do
-    visit edit_project_path(@permission.project)
-    expect(current_path).to eq(edit_project_path(@permission.project))
+    visit edit_project_path(project)
+    expect(current_path).to eq(edit_project_path(project))
     expect(page).to have_content(I18n.t('devise.failure.unconfirmed'))
   end
 
 end
 
 describe 'request project access', :type => :feature do
+
+  create_entire_hierarchy
+
   before(:each) do
-    @permission = FactoryGirl.create(:write_permission)
-    @user = FactoryGirl.create(:user) # creating new user with no permission to login
-    login_as @user, scope: :user
+
+    login_as other_user, scope: :user
   end
 
   it 'sends emails when form filled out successfully' do
@@ -257,8 +262,8 @@ describe 'request project access', :type => :feature do
     #save_and_open_page
     expect(current_path).to eq(new_access_request_projects_path)
     fill_in 'access_request[reason]', with: 'testing testing'
-    select_by_value('access_request_projects', @permission.project.id)
-    #page.select @permission.project.name, from: 'access_request[projects][]'
+    select_by_value('access_request_projects', project.id)
+    #page.select project.name, from: 'access_request[projects][]'
     click_button 'Submit request'
 
     expect(current_path).to eq(projects_path)
@@ -266,9 +271,9 @@ describe 'request project access', :type => :feature do
 
     expect(ActionMailer::Base.deliveries.size).to eq(1)
     email = ActionMailer::Base.deliveries[0]
-    expect(email).to have_content(@permission.project.name)
-    expect(email).to have_content(@permission.project.creator.user_name)
-    expect(email).to have_content(@user.user_name)
+    expect(email).to have_content(project.name)
+    expect(email).to have_content(project.creator.user_name)
+    expect(email).to have_content(other_user.user_name)
   end
 
   it 'shows error when form not filled out correctly' do
@@ -278,8 +283,8 @@ describe 'request project access', :type => :feature do
     #save_and_open_page
     expect(current_path).to eq(new_access_request_projects_path)
     #fill_in 'access_request[reason]', with: 'testing testing'
-    select_by_value('access_request_projects', @permission.project.id)
-    #page.select @permission.project.name, from: 'access_request[projects][]'
+    select_by_value('access_request_projects', project.id)
+    #page.select project.name, from: 'access_request[projects][]'
     click_button 'Submit request'
 
     expect(current_path).to eq(new_access_request_projects_path)
@@ -295,8 +300,8 @@ describe 'request project access', :type => :feature do
     #save_and_open_page
     expect(current_path).to eq(new_access_request_projects_path)
     fill_in 'access_request[reason]', with: 'testing testing'
-    #select_by_value('access_request_projects', @permission.project.id)
-    #page.select @permission.project.name, from: 'access_request[projects][]'
+    #select_by_value('access_request_projects', project.id)
+    #page.select project.name, from: 'access_request[projects][]'
     click_button 'Submit request'
 
     expect(current_path).to eq(new_access_request_projects_path)

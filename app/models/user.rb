@@ -129,6 +129,7 @@ class User < ActiveRecord::Base
 
   after_create :special_after_create_actions
 
+  validate :check_tz
   before_save :set_rails_tz, if: Proc.new { |user| user.tzinfo_tz_changed? }
 
   # Get the last time this user was seen.
@@ -215,19 +216,21 @@ class User < ActiveRecord::Base
   # Define filter api settings
   def self.filter_settings
     {
-        valid_fields: [:id, :user_name, :roles_mask, :tzinfo_tz, :rails_tz, :last_seen_at, :created_at, :updated_at],
-        render_fields: [:id, :user_name, :roles_mask, :tzinfo_tz, :rails_tz],
+        valid_fields: [:id, :user_name, :roles_mask, :last_seen_at, :created_at, :updated_at],
+        render_fields: [:id, :user_name, :roles_mask],
         text_fields: [:user_name],
-        custom_fields: lambda { |user, custom_current_user|
-          is_admin = Access::Check.is_admin?(custom_current_user)
-          is_same_user = user == custom_current_user
+        custom_fields: lambda { |item, user|
+          # 'item' is the user being processed, 'user' is the currently logged in user
+          is_admin = Access::Check.is_admin?(user)
+          is_same_user = item == user
 
           # do a query for the attributes that may not be in the projection
           # instance or id can be nil
-          fresh_user = User.find(user.id)
+          fresh_user = User.find(item.id)
 
           user_hash =
               {
+                  timezone_information: TimeZoneHelper.info_hash(fresh_user),
                   roles_mask_names: fresh_user.roles,
                   image_urls:
                       [
@@ -248,15 +251,14 @@ class User < ActiveRecord::Base
             user_hash[:is_confirmed] = fresh_user.confirmed?
           end
 
-          [user, user_hash]
+          [item, user_hash]
         },
         controller: :user_accounts,
         action: :filter,
         defaults: {
             order_by: :user_name,
             direction: :asc
-        },
-        valid_associations: []
+        }
     }
   end
 
@@ -283,6 +285,10 @@ class User < ActiveRecord::Base
 
   def set_rails_tz
     TimeZoneHelper.set_rails_tz(self)
+  end
+
+  def check_tz
+    TimeZoneHelper.validate_tzinfo_tz(self)
   end
 
 end

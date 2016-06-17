@@ -1,6 +1,52 @@
 # Changelog
 
-## Unreleased
+## [Release 0.19.0](https://github.com/QutBioacoustics/baw-server/releases/tag/0.19.0) (2016-06-17)
+
+ - 2016-06-11
+   - Feature: Analysis Jobs item tracking - basic support added for tracking each item in an analysis job [#290](https://github.com/QutBioacoustics/baw-server/pull/290)
+   - Enhancement: Filter::Query can now have it's base query customised [931066b](https://github.com/QutBioacoustics/baw-server/commit/931066b5eb30925e34e659bdff91e5b55abce764)
+ - 2016-04-24
+    - Query string parameters for filter are merged with POST filter [#286](https://github.com/QutBioacoustics/baw-server/issues/286)
+ - 2016-04-13
+    - Added analysis_job_id and audio_recording_id to results API
+ - 2016-04-06
+    - Update db seeds, readme, and settings defaults
+ - 2016-03-26
+    - Allow markdown in description fields [#264](https://github.com/QutBioacoustics/baw-server/issues/264)
+    - Update analysis result endpoint to normalise paths [#272](https://github.com/QutBioacoustics/baw-server/issues/272)
+    - Convert to tzinfo identifier when rendering site and user json [#270](https://github.com/QutBioacoustics/baw-server/issues/270)
+ - 2016-03-21
+    - Changed analysis results 'model' size attribute to size_bytes and improved tests
+ - 2016-03-18
+    - allow owner to access site harvest and upload pages [#269](https://github.com/QutBioacoustics/baw-server/issues/269)
+    - removed custom elements in analysis_job api [#267](https://github.com/QutBioacoustics/baw-server/issues/267)
+    - fixed site location jitter [#266](https://github.com/QutBioacoustics/baw-server/issues/266)
+ - 2016-03-14
+    - Updated harvest.yml with notes and safer defaults
+ - 2016-03-04
+    - Expose `sites.tzinfo_tz` field in API [#262](https://github.com/QutBioacoustics/baw-server/issues/262)
+ - 2016-03-03
+    - improved filter settings validation
+ - 2016-03-02
+    - Add calculated field recorded_end_date to AudioRecording's filter options [#261](https://github.com/QutBioacoustics/baw-server/issues/261)
+ - 2016-02-27
+    - Added overall_data_length_bytes to analysis_job [#256](https://github.com/QutBioacoustics/baw-server/issues/256)
+    - Also reworked analysis_job lifecycle up to enqueing resque jobs to be more obvious.
+    - All analysis_job attributes are now available in api.
+    - scripts#index is restricted to only most recent version in each script group [#259](https://github.com/QutBioacoustics/baw-server/issues/259)
+    - Added CustomErrors::OrphanedSiteError so it is more obvious [#252](https://github.com/QutBioacoustics/baw-server/issues/252)
+ - 2016-02-26
+    - added basic admin list and view for analysis jobs
+    - Added executable_settings_media_type to scripts table. Exposed scripts#show. [#258](https://github.com/QutBioacoustics/baw-server/issues/258) [#259](https://github.com/QutBioacoustics/baw-server/issues/259)
+ - 2016-02-20
+    - partial fix for sorting by calculated fields - some inital queries still include sorting [#254](https://github.com/QutBioacoustics/baw-server/issues/254) 
+    - potential fix for problems with filtering by calculated fields [#145](https://github.com/QutBioacoustics/baw-server/issues/145)
+    - fixed `/taggings/filter` - it was present, but naming mismatches were causing errors
+ - 2016-02-19
+    - refactor specs to be more obvious about what they do and where various functionality is located
+    - Add ability to filter audio recordings based on project attributes [#253](https://github.com/QutBioacoustics/baw-server/issues/253)
+ - 2016-02-18
+    - check for divide by 0, closes [#251](https://github.com/QutBioacoustics/baw-server/issues/251)
 
 ## [Release 0.18.0](https://github.com/QutBioacoustics/baw-server/releases/tag/0.18.0) (2016-02-06)
 

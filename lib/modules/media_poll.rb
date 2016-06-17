@@ -205,7 +205,7 @@ class MediaPoll
 
       end
 
-      existing_files.compact
+      existing_files.reject { |i| i.blank? }
     end
 
     private

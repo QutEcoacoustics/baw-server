@@ -2,6 +2,8 @@ module CustomErrors
   public
   class RoutingArgumentError < ArgumentError; end
   class ItemNotFoundError < StandardError; end
+  class AnalysisJobStartError < StandardError; end
+  class OrphanedSiteError < StandardError; end
   class RequestedMediaTypeError < StandardError
     attr_reader :available_formats_info
     def initialize(message = nil, available_formats_info = nil)
@@ -15,6 +17,21 @@ module CustomErrors
   end
   class NotAcceptableError < RequestedMediaTypeError; end
   class UnsupportedMediaTypeError < RequestedMediaTypeError; end
+  class MethodNotAllowedError < StandardError
+    attr_reader :additional_details
+    def initialize(message = nil, except = [], available_methods = [:get, :post, :put, :patch, :head, :delete, :options])
+      @message = message
+      @available_methods = available_methods - except
+    end
+
+    def available_methods
+      @available_methods
+    end
+
+    def to_s
+      @message
+    end
+  end
   class UnprocessableEntityError < StandardError
     attr_reader :additional_details
     def initialize(message = nil, additional_details = nil)

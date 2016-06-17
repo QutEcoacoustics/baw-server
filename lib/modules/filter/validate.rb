@@ -257,8 +257,33 @@ module Filter
 
     end
 
+    # Check that a hash contains a key with expected type of value.
+    # @param [Hash] hash
+    # @param [Object] key
+    # @param [Array<Object>, Object] value_types
+    # @raise [FilterArgumentError] if hash does not contain expected key
+    # @raise [FilterArgumentError] if hash key does not have expected type
+    # @return [void]
+    def validate_hash_key(hash, key, value_types)
+      fail CustomErrors::FilterArgumentError, "Hash must include key #{key}." unless hash.include?(key)
+      value_types_normalised = [value_types].flatten
+      value = hash[key]
+      is_class = value.class === Class
+      is_valid = value_types_normalised.any? { |value_type| is_class ? value < value_type : value.is_a?(value_type) }
+      fail CustomErrors::FilterArgumentError, "Hash key must be one of #{value_types_normalised}, got #{hash[key].class}." unless is_valid
+    end
+
+    def validate_closure(value, parameters = [])
+      fail CustomErrors::FilterArgumentError, "Value must be a lambda or proc, got #{value.class}." unless value.is_a?(Proc)
+      parameters_normalised = value.parameters.map(&:last).map(&:to_sym)
+      fail CustomErrors::FilterArgumentError, "Lambda or proc must have parameters matching #{parameters}, got #{parameters_normalised}." unless parameters_normalised == parameters
+    end
+
+    # Validate the filter_settings for a model.
     def validate_filter_settings(value)
       validate_hash(value)
+
+      # Common filter settings
 
       validate_array(value[:valid_fields])
       validate_array_items(value[:valid_fields])
@@ -266,8 +291,8 @@ module Filter
       validate_array(value[:render_fields])
       validate_array_items(value[:render_fields])
 
-      validate_array(value[:text_fields]) unless value[:text_fields].blank?
-      validate_array_items(value[:text_fields]) unless value[:text_fields].blank?
+      validate_array(value[:text_fields]) if value.include?(:text_fields)
+      validate_array_items(value[:text_fields]) if value.include?(:text_fields)
 
       fail CustomErrors::FilterArgumentError, 'Controller name must be a symbol.' unless value[:controller].is_a?(Symbol)
       fail CustomErrors::FilterArgumentError, 'Action name must be a symbol.' unless value[:action].is_a?(Symbol)
@@ -277,8 +302,38 @@ module Filter
       fail CustomErrors::FilterArgumentError, 'Order by must be a symbol.' unless value[:defaults][:order_by].is_a?(Symbol)
       fail CustomErrors::FilterArgumentError, 'Direction must be a symbol.' unless value[:defaults][:direction].is_a?(Symbol)
 
-      #validate_array(value[:valid_associations])
+      # advanced filter settings
 
+      if value.include?(:field_mappings)
+        validate_array(value[:field_mappings])
+
+        # each field_mapping must be a hash with a :name and :value
+        value[:field_mappings].each do |field_mapping_hash|
+          validate_hash(field_mapping_hash)
+          validate_hash_key(field_mapping_hash, :name, Symbol)
+          validate_hash_key(field_mapping_hash, :value, Arel::Nodes::Node)
+        end
+      end
+
+      validate_closure(value[:custom_fields], [:item, :user]) if value.include?(:custom_fields)
+      validate_closure(value[:new_spec_fields], [:user]) if value.include?(:new_spec_fields)
+
+      validate_hash_key(value, :base_association, ActiveRecord::Relation) if value.include?(:base_association)
+      validate_hash_key(value, :base_association_key, Symbol) if value.include?(:base_association)
+      validate_filter_associations(value[:valid_associations]) if value.include?(:valid_associations)
+
+    end
+
+    def validate_filter_associations(value)
+      value.each do |association|
+        validate_hash_key(association, :join, [ActiveRecord::Base, Arel::Table])
+        validate_hash_key(association, :on, Arel::Nodes::Node)
+        validate_hash_key(association, :available, [TrueClass, FalseClass])
+
+        unless association[:associations].blank?
+          validate_filter_associations(association[:associations])
+        end
+      end
     end
 
   end

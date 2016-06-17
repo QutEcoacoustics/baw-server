@@ -7,7 +7,7 @@ FactoryGirl.define do
 
     creator
 
-    trait :site_with_lat_long do
+    trait :with_lat_long do
       # Random.rand returns "a random integer greater than or equal to zero and less than the argument"
       # between -90 and 90 degrees
       latitude { Random.rand_incl(180.0) - 90.0 }
@@ -30,7 +30,7 @@ FactoryGirl.define do
       end
     end
 
-    factory :site_with_lat_long, traits: [:site_with_lat_long]
-    factory :site_with_audio_recordings, traits: [:site_with_lat_long, :with_audio_recordings]
+    factory :site_with_lat_long, traits: [:with_lat_long]
+    factory :site_with_audio_recordings, traits: [:with_lat_long, :with_audio_recordings]
   end
 end

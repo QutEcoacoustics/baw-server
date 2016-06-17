@@ -11,7 +11,7 @@
 - name: Manage deploy server
   hosts: all
   vars:
-    source_path: "/home/vagrant/baw-provision"
+    source_path: "/home/vagrant/baw-deploy"
     baw:
       # rvm
       rvm:
@@ -21,32 +21,39 @@
           # use full 'ruby-*' name
           # last ruby listed is the default
           - "ruby-2.2.4"
-  pre_tasks: []
+    postgresql_version: 9.3
+  pre_tasks:
+    - debug: var=ansible_ssh_user
   roles:
     - role: "{{ source_path }}/roles/audio_tools"
-      ffmpeg_aliases:
-        - /tmp/ffmpeg
       tags: ["audio_tools"]
     - role: "{{ source_path }}/roles/ruby"
-      ruby_rvm_extra_user: vagrant
+      rvm1_install_flags: ""
+      #rvm1_install_flags: '--auto-dotfiles --user-install'
+      #rvm1_install_path: '/home/{{ ansible_ssh_user }}/.rvm'
+      ruby_rvm_extra_user: ~
+      become: true
       tags: ["ruby"]
     - role: "{{ source_path }}/external/ANXS.postgresql"
-      postgresql_version: "{{ baw_database.version }}"
+      postgresql_version: "{{ postgresql_version }}"
+      # be careful when enabling this: anyone on public network could access db with
+      # no password and admin access!
+      #postgresql_listen_addresses: "*"
       postgresql_databases:
         - name: baw_local_dev
           owner: postgres          # optional; specify the owner of the database
-      sudo: true
+      become: true
   tasks:
     - name: APT | Install tools needed for installing pg gem
       apt:
         pkg: libpq-dev
         state: present
-      sudo: true
+      become: true
     - name: APT | Install tools needed for working with postgres
       apt:
         pkg: postgresql-client
         state: present
-      sudo: true
+      become: true
     - name: POSTGRES | Ensure postgres password is blank
       postgresql_user:
         db: baw_local_dev

@@ -239,7 +239,7 @@ resource 'Public' do
       context 'with Origin that is not allowed' do
         header 'Origin', 'http://localhost-not-allowed:3000'
         header 'Access-Control-Request-Method', 'GET'
-        header 'Access-Control-Request-Headers','Origin, Content-Type, Accept, Authorization, Token'
+        header 'Access-Control-Request-Headers', 'Origin, Content-Type, Accept, Authorization, Token'
         http_options_verb '/projects' do
           standard_request_options(
               :http_options_verb,

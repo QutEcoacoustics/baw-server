@@ -148,7 +148,6 @@ module Access
 
         query = AudioEvent
                     .joins(audio_recording: [:site])
-                    .order(id: :desc)
         Access::Apply.restrictions(user, levels, query)
       end
 
@@ -230,6 +229,36 @@ module Access
         query = AnalysisJob.joins(:saved_search).order(updated_at: :desc)
         Access::Apply.restrictions(user, levels, query)
       end
+
+      # Get all analysis jobs items for which this user has this user has these access levels.
+      # @param [AnalysisJob] analysis_job
+      # @param [User] user
+      # @param [Symbol, Array<Symbol>] levels
+      # @return [ActiveRecord::Relation] analysis jobs items
+      # @param [bool] system_mode Whether or not to do a right outer join to simulate existing analysis_jobs_items
+      def analysis_jobs_items(analysis_job, user, system_mode = false, levels = Access::Core.levels_allow)
+        user = Access::Core.validate_user(user)
+        levels = Access::Core.validate_levels(levels)
+
+        # The decision has been made to resolve AJobsItem permissions through the AudioRecording relation, rather than
+        # the AnalysisJob.SavedSearch.Projects relationship. It should be functionally equivalent.
+
+        if system_mode
+          query = AnalysisJobsItem.system_query
+                      .joins(audio_recording: :site)
+                      .order(audio_recording_id: :asc)
+        else
+          analysis_job = Access::Core.validate_analysis_job(analysis_job)
+          query = AnalysisJobsItem
+                      .joins(audio_recording: :site)
+                      .order(audio_recording_id: :asc)
+                      .joins(:analysis_job) # this join ensures only non-deleted results are returned
+                      .where(analysis_jobs: {id: analysis_job.id})
+        end
+
+        Access::Apply.restrictions(user, levels, query)
+      end
+
 
       # Get all saved searches for which this user has this user has these access levels.
       # @param [User] user

@@ -83,6 +83,13 @@ module Access
         allowed?(requested_level, actual_level)
       end
 
+      # Fail if the site is not in any projects.
+      def check_orphan_site!(site)
+        if !site.nil? && site.projects.size == 0
+          fail CustomErrors::OrphanedSiteError.new("Site #{site.name} (#{site.id}) is not in any projects.")
+        end
+      end
+
     end
   end
 end

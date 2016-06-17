@@ -21,7 +21,9 @@ class Site < ActiveRecord::Base
   LONGITUDE_MIN = -180
   LONGITUDE_MAX = 180
 
-  JITTER_RANGE = 0.0005
+  # See https://en.wikipedia.org/wiki/Decimal_degrees
+  # (scale of a large town or village)
+  JITTER_RANGE = 0.03
 
   # add deleted_at and deleter_id
   acts_as_paranoid
@@ -43,6 +45,7 @@ class Site < ActiveRecord::Base
 
   validates_attachment_content_type :image, content_type: /^image\/(jpg|jpeg|pjpeg|png|x-png|gif)$/, message: 'file type %{value} is not allowed (only jpeg/png/gif images)'
 
+  validate :check_tz
   before_save :set_rails_tz, if: Proc.new { |site| site.tzinfo_tz_changed? }
 
   # commonly used queries
@@ -99,10 +102,15 @@ class Site < ActiveRecord::Base
   end
 
   def update_location_obfuscated(current_user)
+    Access::Check.check_orphan_site!(self)
     is_owner = Access::Check.can_any?(current_user, :owner, self.projects.includes(:creator))
 
     # obfuscate if level is less than owner
     @location_obfuscated = !is_owner
+  end
+
+  def description_html
+    CustomRender.render_markdown(self, :description)
   end
 
   def self.add_location_jitter(value, min, max)
@@ -120,7 +128,7 @@ class Site < ActiveRecord::Base
     # included range (inclusive range)
     range = (range_min..range_max).to_a
 
-    excluded_diff = 1
+    excluded_diff = (Site::JITTER_RANGE * 0.1 * accuracy).floor.to_i
     excluded_min = multiplied - excluded_diff
     excluded_max = multiplied + excluded_diff
 
@@ -134,8 +142,8 @@ class Site < ActiveRecord::Base
     selected = available.sample
 
     # round to ensure precision is maintained (damn floating point in-exactness)
-    # can't usually get more accurate than 5 decimal places anyway
-    modified_value = (selected / accuracy).round(5)
+    # 3 decimal places is at the scale of an 'individual street, land parcel'
+    modified_value = (selected.to_f / accuracy.to_f).round(4)
 
     # ensure range is maintained (damn floating point in-exactness)
     if modified_value > (value + Site::JITTER_RANGE)
@@ -161,29 +169,29 @@ class Site < ActiveRecord::Base
   # Define filter api settings
   def self.filter_settings
     {
-        valid_fields: [:id, :name, :description, :created_at, :updated_at, :project_ids],
+        valid_fields: [:id, :name, :description, :created_at, :updated_at, :project_ids, :timezone_information],
         render_fields: [:id, :name, :description],
         text_fields: [:description, :name],
-        custom_fields: lambda { |site, user|
+        custom_fields: lambda { |item, user|
 
-          site.update_location_obfuscated(user) unless site.nil? || site.id.nil?
-
-          # do a query for the attributes that may not be in the projection
-          # instance or id can be nil
-          fresh_site = (site.nil? || site.id.nil?) ? nil : Site.find(site.id)
-
-          fresh_site.update_location_obfuscated(user) unless fresh_site.nil?
-
+          # item can be nil or a new record
+          is_new_record = item.nil? || item.new_record?
+          fresh_site = is_new_record ? nil : Site.find(item.id)
           site_hash = {}
-          site_hash[:project_ids] = fresh_site.nil? ? nil : fresh_site.projects.pluck(:id).flatten
 
           unless fresh_site.nil?
-            site_hash[:location_obfuscated] = fresh_site.location_obfuscated
-            site_hash[:custom_latitude] = fresh_site.latitude
-            site_hash[:custom_longitude] = fresh_site.longitude
+            fresh_site.update_location_obfuscated(user)
+            site_hash = {
+                project_ids: fresh_site.projects.pluck(:id).flatten,
+                location_obfuscated: fresh_site.location_obfuscated,
+                custom_latitude: fresh_site.latitude,
+                custom_longitude: fresh_site.longitude,
+                timezone_information: TimeZoneHelper.info_hash(fresh_site),
+                description_html: fresh_site.description_html
+            }
           end
 
-          [site, site_hash]
+          [item, site_hash]
         },
         new_spec_fields: lambda { |user|
           {
@@ -226,6 +234,10 @@ class Site < ActiveRecord::Base
 
   def set_rails_tz
     TimeZoneHelper.set_rails_tz(self)
+  end
+
+  def check_tz
+    TimeZoneHelper.validate_tzinfo_tz(self)
   end
 
 end
