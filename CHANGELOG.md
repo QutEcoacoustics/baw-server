@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+ - 2016-06-21
+   - Fixed critical auth bug for analysis results endpoint [#294](https://github.com/QutBioacoustics/baw-server/issues/294)
+
 ## [Release 0.19.0](https://github.com/QutBioacoustics/baw-server/releases/tag/0.19.0) (2016-06-17)
 
  - 2016-06-11
