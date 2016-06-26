@@ -658,7 +658,7 @@ WHERE\"tags\".\"text\"ILIKE'%koala%'))) \
 AND\"audio_recordings\".\"channels\"=28 \
 ORDERBY\"audio_recordings\".\"recorded_date\"DESC,\"audio_recordings\".\"duration_seconds\"DESC \
 LIMIT10OFFSET0"
-      
+
       full_query = filter_query.query_full
       expect(full_query.to_sql.gsub(/\s+/, '')).to eq(complex_result_2.gsub(/\s+/, ''))
       

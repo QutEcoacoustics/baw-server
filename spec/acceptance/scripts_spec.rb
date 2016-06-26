@@ -117,7 +117,8 @@ resource 'Scripts' do
   get '/scripts' do
     standard_request_options(:get, 'INDEX (as anonymous user)', :ok, {
         remove_auth: true,
-        expected_json_path: 'data/0/analysis_identifier', data_item_count: 1
+        expected_json_path: 'data/0/analysis_identifier',
+        data_item_count: 4
     })
   end
 
