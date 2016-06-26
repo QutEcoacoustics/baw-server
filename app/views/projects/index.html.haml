@@ -19,7 +19,8 @@
 
             %ul.nav.nav-pills{style: 'position:absolute; bottom:25px; right:20px;'}
               %li
-                - level = Access::Core.user_levels(current_user, project)
+                - levels = Access::Core.user_levels(current_user, project)
+                - level = Access::Core.highest(levels)
                 - permission_title = 'No access'
                 - permission_title = 'You are an owner' if level == :owner
                 - permission_title = 'You have read & write access' if level == :writer

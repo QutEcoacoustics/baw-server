@@ -66,7 +66,7 @@ class Project < ActiveRecord::Base
         action: :filter,
         defaults: {
             order_by: :name,
-            direction: :desc
+            direction: :asc
         },
         valid_associations: [
             {
@@ -108,11 +108,12 @@ class Project < ActiveRecord::Base
 
   def create_owner_permission
     the_user = self.creator
+    the_admin = User.where(roles_mask: 1).first!
     Permission.find_or_create_by(
         level: 'owner',
         user: the_user,
         project: self,
-        creator: the_user,
+        creator: the_admin,
         allow_logged_in: false,
         allow_anonymous: false)
   end

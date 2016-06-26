@@ -4,7 +4,7 @@ class UserAccountsController < ApplicationController
   # GET /user_accounts
   def index
     do_authorize_class
-
+ 
     order = 'CASE WHEN last_seen_at IS NOT NULL THEN last_seen_at
 WHEN current_sign_in_at IS NOT NULL THEN current_sign_in_at
 ELSE last_sign_in_at END DESC'
@@ -12,7 +12,6 @@ ELSE last_sign_in_at END DESC'
 
     respond_to do |format|
       format.html
-      # no json API to list users
     end
   end
 

@@ -166,9 +166,12 @@ class Ability
       Access::Core.can?(user, :reader, project)
     end
 
+    # TODO: only admin can #edit_sites, #update_sites (update_sites is html-only)
+    # TODO: update_sites will be merged with sites#orphans
+
     # must be owner to do these actions
-    # :update_permissions, :update_sites are html-only
-    can [:edit, :update, :update_permissions, :destroy, :edit_sites, :update_sites], Project do |project|
+    # :update_permissions is html-only
+    can [:edit, :update, :update_permissions, :destroy], Project do |project|
       check_model(project)
       Access::Core.can?(user, :owner, project)
     end
@@ -223,7 +226,7 @@ class Ability
     # GET       /sites/:id                                          sites#show_shallow {:format=>"json"}
 
     # any user, including guest, with reader permissions on project can #show a site and access #new
-    can [:show, :show_shallow, :new], Site do |site|
+    can [:show, :show_shallow], Site do |site|
       check_model(site)
       Access::Core.check_orphan_site!(site)
       # can't add .includes here - it breaks when validating projects due to ActiveRecord::AssociationRelation
@@ -243,6 +246,9 @@ class Ability
       Access::Core.check_orphan_site!(site)
       Access::Core.can_any?(user, :owner, site.projects)
     end
+
+    # actions any logged in user can access
+    can [:new], Site unless is_guest
 
     # available to any user, including guest
     can [:index, :filter], Site
@@ -348,10 +354,13 @@ class Ability
 
       # only logged in users can update or destroy their comments, which must be comments they created
       can [:destroy, :update], AudioEventComment, creator_id: user.id
+
+      # available to any logged in user
+      can [:filter], AudioEventComment
     end
 
     # available to any user, including guest
-    can [:index, :filter], AudioEventComment
+    can [:index], AudioEventComment
   end
 
   def to_bookmark(user, is_guest)
@@ -363,27 +372,21 @@ class Ability
     # PATCH|PUT /bookmarks/:id    bookmarks#update
     # DELETE    /bookmarks/:id    bookmarks#destroy
 
-    # any user, including guest, with reader permissions on project can access #new
-    can [:new], Bookmark do |bookmark|
+    # guests have no access to bookmarks
+    return if is_guest
+
+    can [:create], Bookmark do |bookmark|
       check_model(bookmark)
       Access::Core.check_orphan_site!(bookmark.audio_recording.site)
       Access::Core.can_any?(user, :reader, bookmark.audio_recording.site.projects)
     end
 
-    # guest users can only #new, #index, #filter
-    unless is_guest
-      can [:create], Bookmark do |bookmark|
-        check_model(bookmark)
-        Access::Core.check_orphan_site!(bookmark.audio_recording.site)
-        Access::Core.can_any?(user, :reader, bookmark.audio_recording.site.projects)
-      end
+    # only creator can update, destroy, show their own bookmarks
+    can [:update, :destroy, :show], Bookmark, creator_id: user.id
 
-      # only creator can update, destroy, show their own bookmarks
-      can [:update, :destroy, :show], Bookmark, creator_id: user.id
-    end
+    # available to any logged in user
+    can [:index, :filter, :new], Bookmark
 
-    # available to any user, including guest
-    can [:index, :filter], Bookmark
   end
 
   def to_analysis_job(user, is_guest)
@@ -454,8 +457,10 @@ class Ability
   def to_script(user, is_guest)
     # only admin can manipulate scripts
 
+    can [:show], Script unless is_guest
+
     # available to any user, including guest
-    can [:index, :show, :filter], Script
+    can [:index, :filter], Script
   end
 
   def to_tag(user, is_guest)

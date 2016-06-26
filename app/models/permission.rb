@@ -9,7 +9,6 @@ class Permission < ActiveRecord::Base
   belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_permissions
   belongs_to :updater, class_name: 'User', foreign_key: :updater_id, inverse_of: :updated_permissions
 
-
   AVAILABLE_LEVELS_SYMBOLS = Access::Core.levels
   AVAILABLE_LEVELS = AVAILABLE_LEVELS_SYMBOLS.map { |item| item.to_s }
   enumerize :level, in: AVAILABLE_LEVELS, predicates: true
@@ -64,8 +63,8 @@ class Permission < ActiveRecord::Base
         controller: :permissions,
         action: :filter,
         defaults: {
-            order_by: :project_id,
-            direction: :asc
+            order_by: :created_at,
+            direction: :desc
         },
         valid_associations: [
             {

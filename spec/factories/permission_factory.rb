@@ -26,10 +26,6 @@ FactoryGirl.define do
     allow_logged_in false
     allow_anonymous false
 
-    # requires new permissions system
-    # allow_logged_in false
-    # allow_anonymous false
-
     creator
 
     trait :reader do

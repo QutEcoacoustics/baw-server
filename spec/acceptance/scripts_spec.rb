@@ -100,17 +100,10 @@ resource 'Scripts' do
   end
 
   get '/scripts' do
-    let(:authentication_token) { other_token }
+    let(:authentication_token) { no_access_token }
     standard_request_options(:get, 'INDEX (as other)', :ok, {
         expected_json_path: 'data/0/analysis_identifier',
-        data_item_count: 4
-    })
-  end
-
-  get '/scripts' do
-    let(:authentication_token) { unconfirmed_token }
-    standard_request_options(:get, 'INDEX (as unconfirmed user)', :forbidden, {
-        expected_json_path: get_json_error_path(:confirm)
+        data_item_count: 1
     })
   end
 
@@ -118,6 +111,13 @@ resource 'Scripts' do
     let(:authentication_token) { invalid_token }
     standard_request_options(:get, 'INDEX (invalid token)', :unauthorized, {
         expected_json_path: get_json_error_path(:sign_in)
+    })
+  end
+
+  get '/scripts' do
+    standard_request_options(:get, 'INDEX (as anonymous user)', :ok, {
+        remove_auth: true,
+        expected_json_path: 'data/0/analysis_identifier', data_item_count: 1
     })
   end
 
@@ -166,7 +166,7 @@ resource 'Scripts' do
   get '/scripts/:id' do
     scripts_id_param
     let(:id) { script.id }
-    let(:authentication_token) { other_token }
+    let(:authentication_token) { no_access_token }
     standard_request_options(:get, 'SHOW (as other)', :ok, {
         expected_json_path: ['data/analysis_identifier', 'data/executable_settings']
     })
@@ -175,17 +175,17 @@ resource 'Scripts' do
   get '/scripts/:id' do
     scripts_id_param
     let(:id) { script.id }
-    let(:authentication_token) { unconfirmed_token }
-    standard_request_options(:get, 'SHOW (as unconfirmed user)', :forbidden, {
-        expected_json_path: get_json_error_path(:confirm)
+    let(:authentication_token) { invalid_token }
+    standard_request_options(:get, 'SHOW (with invalid token)', :unauthorized, {
+        expected_json_path: get_json_error_path(:sign_in)
     })
   end
 
   get '/scripts/:id' do
     scripts_id_param
     let(:id) { script.id }
-    let(:authentication_token) { invalid_token }
-    standard_request_options(:get, 'SHOW (invalid token)', :unauthorized, {
+    standard_request_options(:get, 'SHOW (as anonymous user)', :unauthorized, {
+        remove_auth: true,
         expected_json_path: get_json_error_path(:sign_in)
     })
   end

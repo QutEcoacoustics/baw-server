@@ -456,6 +456,45 @@ module Access
         Access::Validate.levels(levels)
       end
 
+      # Get the access levels for this user to the project(s).
+      # This method returns only individual user access levels reflected in the permissions table,
+      # so an admin may not have access to every project.
+      # @param [User] user
+      # @param [Project, Array<Project>] projects
+      # @return [Array<Symbol, nil>]
+      def user_only_levels(user, projects)
+        projects = Access::Validate.projects([projects])
+        fail ArgumentError, 'Must provide a user, nil is not valid.' if Access::Core.is_guest?(user)
+
+        levels = Permission
+            .where(project_id: projects)
+            .where('user_id = ?', user.id)
+            .pluck(:level)
+
+        Access::Validate.levels(levels)
+      end
+
+      # Get the anonymous user access levels for this user to the project(s).
+      # @param [Project, Array<Project>] projects
+      # @return [Array<Symbol, nil>]
+      def anon_levels(projects)
+        user_levels(nil, projects)
+      end
+
+      # Get the access levels for logged in users to the project(s).
+      # @param [Project, Array<Project>] projects
+      # @return [Array<Symbol, nil>]
+      def logged_in_levels(projects)
+        projects = Access::Validate.projects([projects])
+
+        levels = Permission
+            .where(project_id: projects)
+            .where('allow_logged_in IS TRUE')
+            .pluck(:level)
+
+        Access::Validate.levels(levels)
+      end
+
     end
   end
 end

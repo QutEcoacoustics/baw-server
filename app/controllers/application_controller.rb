@@ -27,6 +27,7 @@ class ApplicationController < ActionController::Base
   rescue_from ActionController::BadRequest, with: :bad_request_response
   rescue_from ActionController::InvalidAuthenticityToken, with: :invalid_csrf_response
   rescue_from NotImplementedError, with: :not_implemented_response
+  rescue_from ActionController::UnknownFormat, with: :unknown_format_response
 
   # Custom errors - these use the message in the error
   # RoutingArgumentError - error handling for routes that take a combination of attributes
@@ -406,6 +407,19 @@ class ApplicationController < ActionController::Base
         'The request could not be verified.',
         error,
         'invalid_csrf_response',
+    )
+  end
+
+  def unknown_format_response(error)
+    # similar to 406 - can't send in format requested
+
+    request.format = :json
+
+    render_error(
+        :not_acceptable,
+        "This resource is not available in this format '#{request.format}'.",
+        error,
+        'unknown_format_response'
     )
   end
 

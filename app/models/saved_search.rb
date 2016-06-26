@@ -44,8 +44,8 @@ class SavedSearch < ActiveRecord::Base
         controller: :saved_searches,
         action: :filter,
         defaults: {
-            order_by: :name,
-            direction: :asc
+            order_by: :created_at,
+            direction: :desc
         },
         valid_associations: [
             {

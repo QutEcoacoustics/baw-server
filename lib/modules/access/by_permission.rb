@@ -22,7 +22,7 @@ module Access
       # @param [Symbol, Array<Symbol>] levels
       # @return [ActiveRecord::Relation] projects
       def projects(user, levels = Access::Core.levels)
-        query = Project.order('projects.name ASC')
+        query = Project.all
         is_admin, query = permission_admin(user, levels, query)
 
         if is_admin
@@ -39,20 +39,18 @@ module Access
       # @return [ActiveRecord::Relation] permissions
       def permissions(project)
         project = Access::Validate.project(project)
-        Permission
-            .where(project_id: project.id)
-            .order(updated_at: :desc)
+        Permission.where(project_id: project.id)
       end
 
       # Get all sites for which this user has these access levels.
       # @param [User] user
       # @param [Symbol, Array<Symbol>] levels
-      # @param [Project] project
+      # @param [Array<Integer>] project_ids
       # @return [ActiveRecord::Relation] sites
-      def sites(user, levels = Access::Core.levels, project = nil)
+      def sites(user, levels = Access::Core.levels, project_ids = nil)
         # project can be nil
-        query = Site.order('lower(sites.name) ASC')
-        permission_sites(user, levels, query, project)
+        query = Site.all
+        permission_sites(user, levels, query, project_ids)
       end
 
       # Get all audio recordings for which this user has these access levels.
@@ -60,10 +58,7 @@ module Access
       # @param [Symbol, Array<Symbol>] levels
       # @return [ActiveRecord::Relation] audio recordings
       def audio_recordings(user, levels = Access::Core.levels)
-        query = AudioRecording
-            .joins(:site)
-            .order(recorded_date: :desc)
-
+        query = AudioRecording.joins(:site)
         permission_sites(user, levels, query)
       end
 
@@ -74,15 +69,15 @@ module Access
       # @return [ActiveRecord::Relation] audio events
       def audio_events(user, levels = Access::Core.levels, audio_recording = nil)
         # audio_recording can be nil
-        query = AudioEvent
-            .joins(audio_recording: [:site])
-            .order(id: :desc)
+        query = AudioEvent.joins(audio_recording: [:site])
 
         if audio_recording
           query = query.where(audio_recording_id: audio_recording.id)
+          project_ids = audio_recording.site.projects.pluck(:id)
+          permission_sites(user, levels, query, project_ids)
+        else
+          permission_sites(user, levels, query)
         end
-
-        permission_sites(user, levels, query)
       end
 
       # Get all audio events tags for which this user has these access levels.
@@ -92,15 +87,15 @@ module Access
       # @return [ActiveRecord::Relation] audio event tags
       def audio_events_tags(user, levels = Access::Core.levels, audio_event = nil)
         # audio event can be nil
-        query = Tagging
-            .joins(audio_event: [audio_recording: [:site]])
-            .order(updated_at: :desc)
+        query = Tagging.joins(audio_event: [audio_recording: [:site]])
 
         if audio_event
           query = query.where(audio_event_id: audio_event.id)
+          project_ids = audio_event.audio_recording.site.projects.pluck(:id)
+          permission_sites(user, levels, query, project_ids)
+        else
+          permission_sites(user, levels, query)
         end
-
-        permission_sites(user, levels, query)
       end
 
       # Get all audio events comments for which this user has these access levels.
@@ -110,15 +105,15 @@ module Access
       # @return [ActiveRecord::Relation] audio event comments
       def audio_event_comments(user, levels = Access::Core.levels, audio_event = nil)
         # audio_event can be nil
-        query = AudioEventComment
-            .joins(audio_event: [audio_recording: [:site]])
-            .order(updated_at: :desc)
+        query = AudioEventComment.joins(audio_event: [audio_recording: [:site]])
 
         if audio_event
           query = query.where(audio_event_id: audio_event.id)
+          project_ids = audio_event.audio_recording.site.projects.pluck(:id)
+          permission_sites(user, levels, query, project_ids)
+        else
+          permission_sites(user, levels, query)
         end
-
-        permission_sites(user, levels, query)
       end
 
       # Get all saved searches for which this user has these access levels.
@@ -126,7 +121,7 @@ module Access
       # @param [Symbol, Array<Symbol>] levels
       # @return [ActiveRecord::Relation] saved searches
       def saved_searches(user, levels = Access::Core.levels)
-        query = SavedSearch.order(created_at: :desc)
+        query = SavedSearch.all
         permission_saved_searches(user, levels, query)
       end
 
@@ -135,9 +130,7 @@ module Access
       # @param [Symbol, Array<Symbol>] levels
       # @return [ActiveRecord::Relation] analysis jobs
       def analysis_jobs(user, levels = Access::Core.levels)
-        query = AnalysisJob
-            .joins(:saved_search)
-            .order(updated_at: :desc)
+        query = AnalysisJob.joins(:saved_search)
         permission_saved_searches(user, levels, query)
       end
 
@@ -199,12 +192,9 @@ module Access
           # a logged in user can use
           # - individual permissions
           # - logged in permissions
-          # - anon permissions
           project_permissions =
               project_permissions
-                  .where(pm[:user_id].eq(user.id).or(
-                      pm[:allow_logged_in].eq(true).or(
-                          pm[:allow_anonymous].eq(true))))
+                  .where(pm[:user_id].eq(user.id).or(pm[:allow_logged_in].eq(true)))
         end
 
         project_permissions = project_permissions.project(1).exists
@@ -213,7 +203,12 @@ module Access
       end
 
       # many to many join projects and sites
-      def permission_sites(user, levels, query, project = nil)
+      # @param [User] user
+      # @param [Array<Symbol>] levels
+      # @param [ActiveRecord::Relation] query
+      # @param [Array<Integer>] project_ids
+      # @return [ActiveRecord::Relation]
+      def permission_sites(user, levels, query, project_ids = nil)
 
         is_admin, query = permission_admin(user, levels, query)
         return query if is_admin
@@ -231,7 +226,9 @@ module Access
         pt = Project.arel_table
         ps = Arel::Table.new(:projects_sites)
         st = Site.arel_table
-        levels, exists = calculate_levels(levels)
+        # levels_modified is not used because permission_projects also
+        # calls calculate_levels, which would end up with the inverse results
+        levels_modified, exists = calculate_levels(levels)
 
         # project permission will never be nil, which is the way it should work
         # when being used as a part of a subquery rather than the whole subquery
@@ -243,10 +240,10 @@ module Access
                 .where(ps[:site_id].eq(st[:id]))
 
         # filter by project if it is specified
-        if project
+        if project_ids
           permissions_by_site =
               permissions_by_site
-                  .where(pt[:id].eq(project.id))
+                  .where(pt[:id].in(project_ids))
         end
 
         permissions_by_site =
@@ -254,8 +251,6 @@ module Access
                 .where(permissions)
                 .project(1)
                 .exists
-
-        permissions_by_site = exists ? permissions_by_site : permissions_by_site.not
 =begin
   EXISTS
     (SELECT 1
@@ -326,7 +321,11 @@ module Access
                 .project(1)
                 .exists
 
-        exists ? permissions_by_saved_search : permissions_by_saved_search.not
+        if exists
+          query.where(permissions_by_saved_search)
+        else
+          query.where(permissions_by_saved_search.not)
+        end
       end
 
       def calculate_levels(levels)

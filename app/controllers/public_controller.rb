@@ -36,6 +36,13 @@ class PublicController < ApplicationController
       }
     end
 
+    @random_projects = Access::ByPermission
+        .projects(current_user)
+        .includes(:creator)
+        .references(:creator)
+        .order("RANDOM()")
+        .take(3)
+
     respond_to do |format|
       format.html
       format.json { no_content_as_json }

@@ -1,52 +1,164 @@
 - content_for :meta_title, "Project #{@project.name} | Permissions"
-- content_for :page_title, @project.name
+- content_for :page_title do
+  %em
+    = @project.name
+  Permissions
 
 = render partial: 'shared/sidebar_project', locals: {project: @project}
 
 - content_for :right_sidebar do
   = render partial: 'shared/sidebar_metadata_heading', locals: {title: 'Permissions', icon_class: 'key'}
-  = render partial: 'shared/sidebar_metadata', locals: {title: 'Owner', text: link_to(@project.creator.user_name, user_account_path(@project.creator))}
+  = render partial: 'shared/sidebar_metadata', locals: {title: 'Creator', text: link_to(@project.creator.user_name, user_account_path(@project.creator))}
 
-%h2
-  Permissions
+- anon_level = Access::Core.highest(Access::Core.anon_levels(@project))
+- anon_is_none = anon_level.blank?
+- anon_is_read = anon_level == :reader
+- anon_level_words = anon_is_none ? 'no access' : Access::Core.get_level_name(anon_level).downcase
 
-%p
-  Set permissions for each user by selecting one of the three options.
-  Then click the 'Update Permissions' button underneath the list of users.
+- logged_in_level = Access::Core.highest(Access::Core.logged_in_levels(@project))
+- logged_in_is_none = logged_in_level.blank?
+- logged_in_is_read = logged_in_level == :reader
+- logged_in_is_write = logged_in_level == :writer
+- logged_in_level_words = logged_in_is_none ? 'no access' : Access::Core.get_level_name(logged_in_level).downcase
 
-= simple_form_for(:permission, url: update_permissions_project_path(@project), html: { class: 'form-horizontal', method: :post }) do |f|
-  = field_set_tag do
-    = f.error_notification
+.col-md-12
+  = simple_form_for(:permission, url: project_permissions_path(@project), method: :get, html: {class: 'form-horizontal' }) do
+    %p
+      This page allows you to change who can view or modify this project and the sites it contains.
+      As an owner, you can assign one of four levels of permissions.
+
+    %ul
+      %li
+        %strong
+          No access
+        prevents users from modifying or viewing the project, sites, annotations, or audio recordings.
+      %li
+        %strong
+          Reader
+        allows users to view project and site details, annotations, and audio recordings.
+      %li
+        %strong
+          Writer
+        allows user to add and change annotations, in addition to reader permission.
+      %li
+        %strong
+          Owner
+        allows users to modify and delete the project and modify and delete sites in the project, in addition to writer permission.
+
+    .row
+      .col-md-6
+        %h3
+          Anonymous Users
+          %small
+            = "(currently #{anon_level_words})"
+        %p
+          Anonymous users are people using the website who are not logged in.
+          %br
+          These users currently have
+          %strong
+            = anon_level_words
+          to this project.
+        %p
+          - if !anon_is_none
+            %button.btn.btn-default{type: 'submit', value: 'none', id: 'project_wide_anonymous_permissions_level_none', name: '[project_wide][anonymous]'}
+              Remove reader permission for anonymous users
+          - if !anon_is_read
+            %button.btn.btn-default{type: 'submit', value: 'reader', id: 'project_wide_anonymous_permissions_level_reader', name: '[project_wide][anonymous]'}
+              Give anonymous users reader permission
+
+      .col-md-6
+        %h3
+          Logged In Users
+          %small
+            = "(currently #{logged_in_level_words})"
+        %p
+          Logged in users have an account on this website and have proved the account belongs to them.
+          %br
+          These users currently have
+          %strong
+            = logged_in_level_words
+          to this project.
+        - if !logged_in_is_none
+          %p
+            %button.btn.btn-default{type: 'submit', value: 'none',id: 'project_wide_logged_in_permissions_level_none', name: '[project_wide][logged_in]'}
+              Remove access for logged in users
+        - if !logged_in_is_read
+          %p
+            %button.btn.btn-default{type: 'submit', value: 'reader', id: 'project_wide_logged_in_permissions_level_reader', name: '[project_wide][logged_in]'}
+              Give logged in users reader permission
+        - if !logged_in_is_write
+          %p
+            %button.btn.btn-default{type: 'submit', value: 'writer', id: 'project_wide_logged_in_permissions_level_writer',  name: '[project_wide][logged_in]'}
+              Give logged in users writer permission
+    %h3#individual-users
+      Individual Users
+
+    %p
+      You can assign permissions to individual logged in users.
+      Users' permissions are the highest of the individual permission and Logged In Users permission.
+
+    %p= page_entries_info @users
+    %p= paginate  @users
+
     %table.table.table-striped.table-hover
       %thead
         %tr
-          %th User
-          %th No Access
-          %th Read
-          %th Read & Write
+          %th
+            %span.fa.fa-user{aria: {hidden: 'true'}}
+            User
+          %th
+            No Access
+          %th
+            Reader
+          %th
+            Writer
+          %th
+            Owner
+          %th
+          %th
+            Overall
+
       %tbody
-      - User.users.order('lower(user_name) ASC').each do |user|
-        - unless @project.creator == user
-          %tr{user_id: user.id}
-            %td= link_to user.user_name, user_account_path(user)
+        - @users.each do |user|
+          - next if Access::Core.is_admin?(user)
+          - next if Access::Core.is_harvester?(user)
+          - user_levels = Access::Core.user_only_levels(user, @project)
+          - user_level = Access::Core.highest(user_levels)
+          - level_with_logged_in_level = Access::Core.highest([user_level, logged_in_level])
+          - level_with_logged_in_level_words = level_with_logged_in_level.blank? ? 'No Access' : Access::Core.get_level_name(level_with_logged_in_level)
+          - user_and_logged_levels_match = user_level == level_with_logged_in_level
+          %tr{data: {user: {id: user.id}}}
+            %td= link_to "#{user.user_name} (#{user.role_symbols.join(', ')})", user_account_path(user)
             %td
-              %input{id: "user_#{user.id}_permissions_level_none",
-                        type: 'radio',
-                        name: "[user_ids][#{user.id}][permissions][level]",
-                        value: '',
-                        checked: Access::Core.cannot?(user, @project)}
+              - if user_level.nil?
+                No Access
+              - else
+                %button.btn.btn-default{type: 'submit', value: user.id, id: 'per_user_none', name: '[per_user][none]'}
+                  Set to No Access
             %td
-              %input{id: "user_#{user.id}_permissions_level_reader",
-                        type: 'radio',
-                        name: "[user_ids][#{user.id}][permissions][level]",
-                        value: 'reader',
-                        checked: Access::Core.can?(user, :reader, @project)}
+              - if user_level == :reader
+                Reader
+              - else
+                %button.btn.btn-default{type: 'submit', value: user.id, id: 'per_user_reader', name: '[per_user][reader]'}
+                  Set as Reader
+            %td
+              - if user_level == :writer
+                Writer
+              - else
+                %button.btn.btn-default{type: 'submit', value: user.id, id: 'per_user_writer', name: '[per_user][writer]'}
+                  Set as Writer
+            %td
+              - if user_level == :owner
+                Owner
+              - else
+                %button.btn.btn-default{type: 'submit', value: user.id, id: 'per_user_owner', name: '[per_user][owner]'}
+                  Set as Owner
+            %td
+              ='='
+            %td{style: 'white-space: nowrap;'}
+              != "#{level_with_logged_in_level_words}"
+              - if !user_and_logged_levels_match
+                - title = "The Logged In User permission (#{level_with_logged_in_level}) is overriding this individual user's permission."
+                %span.fa.fa-question-circle{aria: {hidden: 'true'}, data: {toggle: 'tooltip', placement: 'right'}, title: title}
 
-            %td
-              %input{id: "user_#{user.id}_permissions_level_writer",
-                        type: 'radio',
-                        name: "[user_ids][#{user.id}][permissions][level]",
-                        value: 'writer',
-                        checked: Access::Core.can?(user, :writer, @project)}
 
-    = f.button :submit_cancel, 'Update Permissions', class: 'btn-default'

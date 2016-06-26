@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-describe 'Project permissions', type: :feature do
+describe 'Permissions', type: :feature do
   create_entire_hierarchy
 
   context 'as logged in user' do
@@ -14,36 +14,35 @@ describe 'Project permissions', type: :feature do
       def check_row(user, level)
         row_selector = "tr[data-user-id='#{user.id}']"
         row = find(row_selector)
-        row_strong = find(row_selector + ' strong')
 
-        case level
-          when :owner
-            strong_text = 'Owner'
-          when :writer
-            strong_text = 'Writer'
-          when :reader
-            strong_text = 'Reader'
-          else
-            level = nil
-            strong_text = 'No Access'
+        level = nil unless [:owner, :writer, :reader].include?(level)
+
+        if level.nil?
+          expect(row).not_to have_content('Set to No Access')
+        else
+          expect(row).to have_content('Set to No Access')
         end
 
-        expect(row).to have_selector('strong')
-        expect(row_strong).to have_content(strong_text)
+        if level == :reader
+          expect(row).not_to have_content('Set as Reader')
+        else
+          expect(row).to have_content('Set as Reader')
+        end
 
-        expect(row).to have_content('Set to No Access') unless level.nil?
-        expect(row).to have_content('Set as Reader') unless level == :reader
-        expect(row).to have_content('Set as Writer') unless level == :writer
-        expect(row).to have_content('Set as Owner') unless level == :owner
+        if level == :writer
+          expect(row).not_to have_content('Set as Writer')
+        else
+          expect(row).to have_content('Set as Writer')
+        end
+
+        if level == :owner
+          expect(row).not_to have_content('Set as Owner')
+        else
+          expect(row).to have_content('Set as Owner')
+        end
       end
 
       def check_project_row(permission_type, level)
-        # owner can never be set
-        expect(page).to have_no_selector('strong#project_wide_anonymous_permissions_level_owner')
-        expect(page).to have_no_selector('button#project_wide_anonymous_permissions_level_owner')
-
-        expect(page).to have_no_selector('strong#project_wide_logged_in_permissions_level_owner')
-        expect(page).to have_no_selector('button#project_wide_logged_in_permissions_level_owner')
 
         case permission_type
           when :anonymous
@@ -55,31 +54,24 @@ describe 'Project permissions', type: :feature do
         end
 
         if level.nil?
-          expect(page).to have_selector("strong##{id}none")
           expect(page).to have_no_selector("button##{id}none")
         else
-          expect(page).to have_no_selector("strong##{id}none")
           expect(page).to have_selector("button##{id}none")
         end
 
         if level == :reader
-          expect(page).to have_selector("strong##{id}reader")
           expect(page).to have_no_selector("button##{id}reader")
         else
-          expect(page).to have_no_selector("strong##{id}reader")
           expect(page).to have_selector("button##{id}reader")
         end
 
         if permission_type == :logged_in
           if level == :writer
-            expect(page).to have_selector("strong##{id}writer")
             expect(page).to have_no_selector("button##{id}writer")
           else
-            expect(page).to have_no_selector("strong##{id}writer")
             expect(page).to have_selector("button##{id}writer")
           end
         else
-          expect(page).to have_no_selector("strong##{id}writer")
           expect(page).to have_no_selector("button##{id}writer")
         end
       end
@@ -101,7 +93,7 @@ describe 'Project permissions', type: :feature do
         end
 
         expect(current_path).to eq(project_permissions_path(project))
-        expect(page).to have_content('Permissions were successfully updated.')
+        expect(page).to have_content('Permissions successfully updated.')
 
         check_row(user, new_level)
       end
@@ -117,7 +109,7 @@ describe 'Project permissions', type: :feature do
         end
 
         expect(current_path).to eq(project_permissions_path(project))
-        expect(page).to have_content('Permissions were successfully updated.')
+        expect(page).to have_content('Permissions successfully updated.')
 
         check_project_row(permission_type, new_level)
       end
@@ -137,18 +129,17 @@ describe 'Project permissions', type: :feature do
         check_row(owner_user, :owner)
         check_row(writer_user, :writer)
         check_row(reader_user, :reader)
-        check_row(other_user, nil)
-        check_row(unconfirmed_user, nil)
+        check_row(no_access_user, nil)
       end
 
       it 'updates project permissions for a user' do
         visit project_permissions_path(project)
 
         # set other user to writer
-        change_permission(other_user, :writer)
+        change_permission(no_access_user, :writer)
 
         # then set other user back to no access
-        change_permission(other_user, nil)
+        change_permission(no_access_user, nil)
       end
 
       it 'updates project-wide permissions' do

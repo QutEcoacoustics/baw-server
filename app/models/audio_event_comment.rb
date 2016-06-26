@@ -39,7 +39,7 @@ class AudioEventComment < ActiveRecord::Base
         controller: :audio_event_comments,
         action: :filter,
         defaults: {
-            order_by: :created_at,
+            order_by: :updated_at,
             direction: :desc
         },
         valid_associations: [

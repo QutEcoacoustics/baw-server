@@ -24,7 +24,8 @@ describe AudioEvent, :type => :model do
   it { is_expected.to have_many(:tags) }
   it { is_expected.to accept_nested_attributes_for(:tags) }
 
-  it { is_expected.to validate_inclusion_of(:is_reference).in_array([true, false]) }
+  # this test is not possible, since everything is converted to a bool when set to :is_reference...
+  #it { is_expected.to validate_inclusion_of(:is_reference).in_array([true, false]) }
 
   it { is_expected.to validate_presence_of(:start_time_seconds) }
   it { is_expected.to validate_numericality_of(:start_time_seconds).is_greater_than_or_equal_to(0) }

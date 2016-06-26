@@ -12,7 +12,7 @@ class SitesController < ApplicationController
       format.json {
         @sites, opts = Settings.api_response.response_advanced(
             api_filter_params,
-            Access::ByPermission.sites(current_user, Access::Core.levels, @project),
+            Access::ByPermission.sites(current_user, Access::Core.levels, [@project.id]),
             Site,
             Site.filter_settings
         )

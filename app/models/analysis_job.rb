@@ -89,8 +89,8 @@ class AnalysisJob < ActiveRecord::Base
         controller: :audio_events,
         action: :filter,
         defaults: {
-            order_by: :name,
-            direction: :asc
+            order_by: :updated_at,
+            direction: :desc
         },
         valid_associations: [
             {

@@ -124,7 +124,7 @@ describe 'checking reactions to errors', :type => :feature do
       create_entire_hierarchy
 
     it 'displays the correct page on forbidden error' do
-      login_as other_user, scope: :user
+      login_as no_access_user, scope: :user
       url = "/projects/#{project.id}"
 
       visit url

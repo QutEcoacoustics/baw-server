@@ -17,14 +17,14 @@ if ENV['TRAVIS']
   Coveralls.wear!('rails')
 
   SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter.new([
-      Coveralls::SimpleCov::Formatter,
-      CodeClimate::TestReporter::Formatter
-  ])
+                                                                     Coveralls::SimpleCov::Formatter,
+                                                                     CodeClimate::TestReporter::Formatter
+                                                                 ])
 
 else
   SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter.new([
-      SimpleCov::Formatter::HTMLFormatter
-  ])
+                                                                     SimpleCov::Formatter::HTMLFormatter
+                                                                 ])
 end
 
 # start code coverage
@@ -118,8 +118,6 @@ RSpec.configure do |config|
   extend Enumerize::Integrations::RSpec
 
   config.before(:suite) do
-    DatabaseCleaner.strategy = :transaction
-    DatabaseCleaner.clean_with(:truncation)
 
     # run these rake tasks to ensure the db in is a state that matches the schema.rb
     #bin/rake db:drop RAILS_ENV=test
@@ -130,33 +128,51 @@ RSpec.configure do |config|
     #bin/rake db:create RAILS_ENV=test
     #bin/rake db:structure:load RAILS_ENV=test
 
+    if Rails.env == 'test'
+      ActiveRecord::Tasks::DatabaseTasks.drop_current
+      ActiveRecord::Tasks::DatabaseTasks.create_current
+      ActiveRecord::Tasks::DatabaseTasks.load_schema_current
+    end
+
+    # https://github.com/DatabaseCleaner/database_cleaner
+    DatabaseCleaner.strategy = :transaction
+    DatabaseCleaner.clean_with(:truncation)
+
     begin
       DatabaseCleaner.start
       puts '===> Database cleaner: start.'
-        #puts '===> FactoryGirl lint: started.'
-        #FactoryGirl.lint
-        #puts '===> FactoryGirl lint: completed.'
+      #puts '===> FactoryGirl lint: started.'
+      #FactoryGirl.lint
+      #puts '===> FactoryGirl lint: completed.'
     ensure
       DatabaseCleaner.clean
       puts '===> Database cleaner: cleaned.'
     end
+
+    # Load seeds for test db
+    Rails.application.load_seed
   end
 
-  # Request specs cannot use a transaction because Capybara runs in a
-  # separate thread with a different database connection.
   config.before type: :request do
+    # Request specs cannot use a transaction because Capybara runs in a
+    # separate thread with a different database connection.
     DatabaseCleaner.strategy = :truncation
   end
 
-  # Reset so other non-request specs don't have to deal with slow truncation.
   config.after type: :request do
-    # clear paperclip attachments from tmp directory
+    # Reset so other non-request specs don't have to deal with slow truncation.
+    # also, truncation does not keep users created by seeds
     DatabaseCleaner.strategy = :transaction
+
+    # clear paperclip attachments from tmp directory
     FileUtils.rm_rf(Dir["#{Rails.root}/tmp/paperclip/[^.]*"])
   end
 
   config.before(:each) do |example|
+    # ensure any email is cleared
     ActionMailer::Base.deliveries.clear
+
+    # start database cleaner
     DatabaseCleaner.start
     example_description = example.description
     Rails::logger.info "\n\n#{example_description}\n#{'-' * (example_description.length)}"

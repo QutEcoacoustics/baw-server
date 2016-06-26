@@ -50,7 +50,7 @@ module Api
       comparison = false
       if password && resource
         comparison = resource.valid_password?(password)
-      elsif token && resource
+      elsif token
         comparison = valid_token_login?(resource, token)
       end
 
@@ -117,7 +117,6 @@ module Api
 
     def valid_token_login?(resource, token)
       comparison = false
-
 
       if resource && token
         # Notice how we use Devise.secure_compare to compare the token
