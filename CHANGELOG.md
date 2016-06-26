@@ -1,12 +1,17 @@
 # Changelog
 
-## Unreleased
+## [Release 0.19.2](https://github.com/QutBioacoustics/baw-server/releases/tag/0.19.2) (2016-06-26)
 
  - 2016-06-21
    - Fixed critical auth bug for analysis results endpoint [#294](https://github.com/QutBioacoustics/baw-server/issues/294)
  - 2016-06-20
    - Bug fixes for processing and working with timezone fields. API now automatically fixes up ill-
-     formatted timezone entries in the database.
+     formatted timezone entries in the database. [52866cd](https://github.com/QutBioacoustics/baw-server/commit/52866cd371d3438c8c63e8d1b32a4af8796fd895)
+     
+## [Release 0.19.1](https://github.com/QutBioacoustics/baw-server/releases/tag/0.19.1) (2016-06-17)
+
+ - 2016-06-11
+   - Fixed outdated reference to baw-workers[ebeaab5](https://github.com/QutBioacoustics/baw-server/commit/ebeaab569f85bad22325c01628e47118ac7662f6)
      
 ## [Release 0.19.0](https://github.com/QutBioacoustics/baw-server/releases/tag/0.19.0) (2016-06-17)
 
