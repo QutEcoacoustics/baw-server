@@ -108,6 +108,7 @@ describe "User account actions", :type => :feature do
       new_password = 'new password'
       new_email = 'test11123@example.com'
       new_user_name = 'test_name_1'
+      new_time_zone = 'America - New York'
 
       visit edit_user_registration_path
       fill_in 'user_user_name', with: new_user_name
@@ -115,6 +116,7 @@ describe "User account actions", :type => :feature do
       fill_in 'user[password]', with: new_password
       fill_in 'user[password_confirmation]', with: new_password
       fill_in 'user[current_password]', with: @old_password
+      fill_in 'user[tzinfo_tz]', with: new_time_zone
       attach_file('user[image]', 'public/images/user/user_span1.png')
       click_button 'Update'
 
@@ -127,6 +129,12 @@ describe "User account actions", :type => :feature do
       expect(page.find('.user_image div img')['src']).to include('user_span1.png')
       expect(page).to have_content(new_user_name)
       expect(page).to have_content('Currently waiting confirmation for: '+new_email)
+
+      # For some reason the timezone does not show up in the capybara page - i assume because it requires javascript
+      #expect(page).to have_content(new_time_zone)
+      # Instead test the value was persisted correctly.
+      timezone = User.find(@user.id).tzinfo_tz
+      expect(timezone).to eq(new_time_zone)
 
       logout
 

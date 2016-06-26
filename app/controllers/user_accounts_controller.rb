@@ -91,6 +91,9 @@ ELSE last_sign_in_at END DESC'
     @user = current_user
     do_authorize_instance
 
+    # sometimes faulty timezones are stored, repair them
+    TimeZoneHelper.parse_model(@user)
+
     @user.preferences = user_account_params
 
     respond_to do |format|
@@ -229,7 +232,7 @@ ELSE last_sign_in_at END DESC'
 
   def user_update_params
     params.require(:user).permit(
-        :id, :user_name, :email,
+        :id, :user_name, :email, :tzinfo_tz,
         :password, :password_confirmation,
         :roles_mask, :image)
   end

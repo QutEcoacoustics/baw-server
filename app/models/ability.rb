@@ -268,10 +268,6 @@ class Ability
     can [:show], AnalysisJobsItem do |analysis_job_item|
       check_model(analysis_job_item)
 
-      if analysis_job_item.analysis_job.nil?
-        fail CustomErrors::BadRequestError.new('Analysis Jobs Item must have a Analysis Job.')
-      end
-
       if analysis_job_item.audio_recording.nil?
         fail CustomErrors::BadRequestError.new('Analysis Jobs Item must have a Audio Recording.')
       end

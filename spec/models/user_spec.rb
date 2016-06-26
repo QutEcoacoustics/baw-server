@@ -13,6 +13,23 @@ describe User, :type => :model do
     expect(FactoryGirl.create(:user, tzinfo_tz: 'Australia - Brisbane')).to be_valid
   end
 
+  it 'should be valid for a nil tzinfo' do
+    expect(FactoryGirl.create(:user, tzinfo_tz: nil)).to be_valid
+  end
+
+  # see https://github.com/QutBioacoustics/baw-server/issues/270
+  # We store friendly values
+  it 'should not allow bad tz_info' do
+    user = FactoryGirl.create(:user)
+
+    user.tzinfo_tz = 'Australia/Sydney'
+    user.rails_tz = 'Sydney'
+
+    expect {
+      user.save!
+    }.to raise_exception
+  end
+
   #pending "add some examples to (or delete) #{__FILE__}"
 
   # this should pass, but the paperclip implementation of validate_attachment_content_type is buggy.
