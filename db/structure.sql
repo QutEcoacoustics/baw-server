@@ -326,10 +326,14 @@ CREATE TABLE permissions (
     creator_id integer NOT NULL,
     level character varying(255) NOT NULL,
     project_id integer NOT NULL,
-    user_id integer NOT NULL,
+    user_id integer,
     updater_id integer,
-    created_at timestamp without time zone NOT NULL,
-    updated_at timestamp without time zone NOT NULL
+    created_at timestamp without time zone,
+    updated_at timestamp without time zone,
+    allow_logged_in boolean DEFAULT false NOT NULL,
+    allow_anonymous boolean DEFAULT false NOT NULL,
+    CONSTRAINT permissions_exclusive_cols CHECK ((((((user_id IS NOT NULL) AND (NOT allow_logged_in)) AND (NOT allow_anonymous)) OR (((user_id IS NULL) AND allow_logged_in) AND (NOT allow_anonymous))) OR (((user_id IS NULL) AND (NOT allow_logged_in)) AND allow_anonymous)))
+
 );
 
 
@@ -1141,14 +1145,7 @@ CREATE INDEX index_permissions_on_project_id ON permissions USING btree (project
 
 
 --
--- Name: index_permissions_on_project_id_and_user_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_permissions_on_project_id_and_user_id ON permissions USING btree (project_id, user_id);
-
-
---
--- Name: index_permissions_on_updater_id; Type: INDEX; Schema: public; Owner: -
+-- Name: index_permissions_on_updater_id; Type: INDEX; Schema: public; Owner: -; Tablespace:
 --
 
 CREATE INDEX index_permissions_on_updater_id ON permissions USING btree (updater_id);
@@ -1288,10 +1285,24 @@ CREATE UNIQUE INDEX jobs_name_uidx ON analysis_jobs USING btree (name);
 
 
 --
--- Name: permissions_level_user_id_project_id_uidx; Type: INDEX; Schema: public; Owner: -
+-- Name: permissions_project_allow_anonymous_uidx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
 --
 
-CREATE UNIQUE INDEX permissions_level_user_id_project_id_uidx ON permissions USING btree (project_id, level, user_id);
+CREATE UNIQUE INDEX permissions_project_allow_anonymous_uidx ON permissions USING btree (project_id, allow_anonymous) WHERE (allow_anonymous IS TRUE);
+
+
+--
+-- Name: permissions_project_allow_logged_in_uidx; Type: INDEX; Schema: public; Owner: -; Tablespace:
+--
+
+CREATE UNIQUE INDEX permissions_project_allow_logged_in_uidx ON permissions USING btree (project_id, allow_logged_in) WHERE (allow_logged_in IS TRUE);
+
+
+--
+-- Name: permissions_project_user_uidx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE UNIQUE INDEX permissions_project_user_uidx ON permissions USING btree (project_id, user_id) WHERE (user_id IS NOT NULL);
 
 
 --
@@ -1818,5 +1829,8 @@ INSERT INTO schema_migrations (version) VALUES ('20160226103516');
 
 INSERT INTO schema_migrations (version) VALUES ('20160226130353');
 
+INSERT INTO schema_migrations (version) VALUES ('20160306083845');
+
 INSERT INTO schema_migrations (version) VALUES ('20160420030414');
+
 
