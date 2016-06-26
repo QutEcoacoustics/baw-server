@@ -395,7 +395,7 @@ describe 'MANAGE User Accounts as admin user', :type => :feature do
   it 'lists user\'s projects' do
     user = FactoryGirl.create(:user)
     project = FactoryGirl.create(:project)
-    permission = FactoryGirl.create(:permission, user_id: user.id, project_id: project.id)
+    permission = FactoryGirl.create(:write_permission, user_id: user.id, project_id: project.id)
     visit projects_user_account_path(user)
     expect(page).to have_content('Project Sites Permission')
     expect(page).to have_content(project.name)

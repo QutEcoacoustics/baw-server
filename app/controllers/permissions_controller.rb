@@ -12,7 +12,7 @@ class PermissionsController < ApplicationController
       format.json {
         @permissions, opts = Settings.api_response.response_advanced(
             api_filter_params,
-            Access::Query.project_permissions(@project),
+            Access::ByPermission.permissions(@project),
             Permission,
             Permission.filter_settings)
         respond_index(opts)

@@ -21,9 +21,10 @@ FactoryGirl.define do
   # }
 
   factory :permission do
-    level { %w(reader writer).sample }
     user
     project
+    allow_logged_in false
+    allow_anonymous false
 
     # requires new permissions system
     # allow_logged_in false
@@ -43,25 +44,23 @@ FactoryGirl.define do
       level 'owner'
     end
 
-    # requires new permissions system
-    # trait :allow_anonymous do
-    #   user nil
-    #   allow_anonymous true
-    # end
-    #
-    # trait :allow_logged_in do
-    #   user nil
-    #   allow_logged_in true
-    # end
+    trait :allow_anonymous do
+      user nil
+      allow_anonymous true
+    end
+
+    trait :allow_logged_in do
+      user nil
+      allow_logged_in true
+    end
 
     factory :read_permission, traits: [:reader]
     factory :write_permission, traits: [:writer]
     factory :own_permission, traits: [:owner]
 
-    # requires new permissions system
-    # factory :read_anon_permission, traits: [:reader, :allow_anonymous]
-    # factory :read_logged_in_permission, traits: [:reader, :allow_logged_in]
-    # factory :write_logged_in_permission, traits: [:writer, :allow_logged_in]
+    factory :read_anon_permission, traits: [:reader, :allow_anonymous]
+    factory :read_logged_in_permission, traits: [:reader, :allow_logged_in]
+    factory :write_logged_in_permission, traits: [:writer, :allow_logged_in]
 
   end
 

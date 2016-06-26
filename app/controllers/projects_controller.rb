@@ -7,12 +7,12 @@ class ProjectsController < ApplicationController
 
     respond_to do |format|
       format.html {
-        @projects = Access::Query.projects_accessible(current_user).includes(:creator).references(:creator)
+        @projects = Access::ByPermission.projects(current_user).includes(:creator).references(:creator)
       }
       format.json {
         @projects, opts = Settings.api_response.response_advanced(
             api_filter_params,
-            Access::Query.projects_accessible(current_user),
+            Access::ByPermission.projects(current_user),
             Project,
             Project.filter_settings
         )
@@ -187,7 +187,7 @@ ORDER BY project_count ASC, s.name ASC")
   def new_access_request
     do_authorize_class
 
-    @all_projects = Access::Query.projects_inaccessible(current_user).order(name: :asc)
+    @all_projects = Access::ByPermission.projects(current_user, Access::Core.levels_none).order(name: :asc)
     respond_to do |format|
       format.html
     end
@@ -222,7 +222,7 @@ ORDER BY project_count ASC, s.name ASC")
 
     filter_response, opts = Settings.api_response.response_advanced(
         api_filter_params,
-        Access::Query.projects_accessible(current_user),
+        Access::ByPermission.projects(current_user),
         Project,
         Project.filter_settings
     )

@@ -34,19 +34,19 @@
                         type: 'radio',
                         name: "[user_ids][#{user.id}][permissions][level]",
                         value: '',
-                        checked: Access::Check.can?(user, :none, @project)}
+                        checked: Access::Core.cannot?(user, @project)}
             %td
               %input{id: "user_#{user.id}_permissions_level_reader",
                         type: 'radio',
                         name: "[user_ids][#{user.id}][permissions][level]",
                         value: 'reader',
-                        checked: Access::Check.can?(user, :reader, @project)}
+                        checked: Access::Core.can?(user, :reader, @project)}
 
             %td
               %input{id: "user_#{user.id}_permissions_level_writer",
                         type: 'radio',
                         name: "[user_ids][#{user.id}][permissions][level]",
                         value: 'writer',
-                        checked: Access::Check.can?(user, :writer, @project)}
+                        checked: Access::Core.can?(user, :writer, @project)}
 
     = f.button :submit_cancel, 'Update Permissions', class: 'btn-default'

@@ -1,18 +1,18 @@
 class PublicController < ApplicationController
   skip_authorization_check only: [
-                               :index, :status,
-                               :website_status,
-                               :credits,
-                               :disclaimers,
-                               :ethics_statement,
-                               :data_upload,
+      :index, :status,
+      :website_status,
+      :credits,
+      :disclaimers,
+      :ethics_statement,
+      :data_upload,
 
-                               :new_contact_us, :create_contact_us,
-                               :new_bug_report, :create_bug_report,
-                               :new_data_request, :create_data_request,
+      :new_contact_us, :create_contact_us,
+      :new_bug_report, :create_bug_report,
+      :new_data_request, :create_data_request,
 
-                               :cors_preflight
-                           ]
+      :cors_preflight
+  ]
 
   # ensure that invalid CORS preflight requests get useful responses
   skip_before_action :verify_authenticity_token, only: :cors_preflight
@@ -255,7 +255,7 @@ class PublicController < ApplicationController
     if current_user.blank?
       @recent_audio_recordings = AudioRecording.order(order_by_coalesce).limit(7)
     else
-      @recent_audio_recordings = Access::Query.audio_recordings(current_user, Access::Core.levels_allow).includes(site: :projects).order(order_by_coalesce).limit(10)
+      @recent_audio_recordings = Access::ByPermission.audio_recordings(current_user, Access::Core.levels).includes(site: :projects).order(order_by_coalesce).limit(10)
     end
 
   end
@@ -267,14 +267,14 @@ class PublicController < ApplicationController
       @recent_audio_events = AudioEvent
           .order(order_by_coalesce)
           .limit(7)
-    elsif Access::Check.is_admin?(current_user)
+    elsif Access::Core.is_admin?(current_user)
       @recent_audio_events = AudioEvent
           .includes([:creator, audio_recording: {site: :projects}])
           .order(order_by_coalesce)
           .limit(10)
     else
-      @recent_audio_events = Access::Query
-          .audio_events(current_user, Access::Core.levels_allow)
+      @recent_audio_events = Access::ByPermission
+          .audio_events(current_user, Access::Core.levels)
           .includes([:updater, audio_recording: :site])
           .order(order_by_coalesce).limit(10)
     end
@@ -301,9 +301,9 @@ class PublicController < ApplicationController
       site = Site.find(site_id)
       msg = "You must have access to the site (#{site.id}) and project(s) (#{site.projects.pluck(:id).join(', ')}) to download annotations."
       fail CanCan::AccessDenied.new(msg, :show, site) if project.nil? || site.nil?
-      fail CanCan::AccessDenied.new(msg, :show, site) unless Access::Check.can?(current_user, :reader, project)
-      Access::Check.check_orphan_site!(site)
-      fail CanCan::AccessDenied.new(msg, :show, site) unless Access::Check.can_any?(current_user, :reader, site.projects)
+      fail CanCan::AccessDenied.new(msg, :show, site) unless Access::Core.can?(current_user, :reader, project)
+      Access::Core.check_orphan_site!(site)
+      fail CanCan::AccessDenied.new(msg, :show, site) unless Access::Core.can_any?(current_user, :reader, site.projects)
       fail CanCan::AccessDenied.new(msg, :show, site) unless project.sites.pluck(:id).include?(site_id)
 
       @annotation_download = {
@@ -319,7 +319,7 @@ class PublicController < ApplicationController
       is_same_user = User.same_user?(current_user, user)
       msg = 'Only admins and annotation creators can download annotations created by a user.'
       fail CanCan::AccessDenied.new(msg, :show, AudioEvent) if user.nil?
-      fail CanCan::AccessDenied.new(msg, :show, AudioEvent) if !Access::Check.is_admin?(current_user) && !is_same_user
+      fail CanCan::AccessDenied.new(msg, :show, AudioEvent) if !Access::Core.is_admin?(current_user) && !is_same_user
 
       @annotation_download = {
           link: download_user_audio_events_path(user_id, selected_timezone_name: selected_timezone_name),

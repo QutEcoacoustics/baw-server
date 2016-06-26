@@ -29,7 +29,7 @@
     %li{class: ('active' if current_page?(data_upload_path))}
       = link_to t('baw.shared.links.upload_audio.title'), data_upload_path,  title: t('baw.shared.links.upload_audio.description'), data: {toggle: 'tooltip',  placement: 'right'}
 
-  - if defined?(project) && Access::Check.is_admin?(current_user)
+  - if defined?(project) && Access::Core.is_admin?(current_user)
     %li{class: ('active' if current_page?(edit_sites_project_path(project)))}
       = link_to 'Edit Sites', edit_sites_project_path(project),  title: "Change this project's sites", data: {toggle: 'tooltip',  placement: 'right'}
     %li= link_to 'Delete Project', project, method: :delete, data: { confirm: 'Are you sure?', toggle: 'tooltip',  placement: 'right' }, title: 'Delete project'

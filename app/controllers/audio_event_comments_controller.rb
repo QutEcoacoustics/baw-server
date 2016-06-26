@@ -9,7 +9,7 @@ class AudioEventCommentsController < ApplicationController
 
     @audio_event_comments, opts = Settings.api_response.response_advanced(
         api_filter_params,
-        Access::Query.audio_event_comments(@audio_event, current_user),
+        Access::ByPermission.audio_event_comments(current_user, Access::Core.levels, @audio_event),
         AudioEventComment,
         AudioEventComment.filter_settings
     )
@@ -58,7 +58,7 @@ class AudioEventCommentsController < ApplicationController
     # allow any logged in user to flag an audio comment
     # only the user that created the audio comment (or admin) can update any other attribute
     is_creator = @audio_event_comment.creator.id == current_user.id
-    is_admin = Access::Check.is_admin?(current_user)
+    is_admin = Access::Core.is_admin?(current_user)
     is_changing_only_flag =
         (audio_event_comment_update_params.include?(:audio_event_comment) &&
             ([:flag] - audio_event_comment_update_params[:audio_event_comment].symbolize_keys.keys).empty?)
@@ -93,7 +93,7 @@ class AudioEventCommentsController < ApplicationController
 
     filter_response, opts = Settings.api_response.response_advanced(
         api_filter_params,
-        Access::Query.comments(current_user),
+        Access::ByPermission.audio_event_comments(current_user),
         AudioEventComment,
         AudioEventComment.filter_settings
     )

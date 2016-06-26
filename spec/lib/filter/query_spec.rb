@@ -656,10 +656,10 @@ WHERE\"tags\".\"text\"ILIKE'%koala%'))) \
 AND\"audio_recordings\".\"channels\"=28 \
 ORDERBY\"audio_recordings\".\"recorded_date\"DESC,\"audio_recordings\".\"duration_seconds\"DESC \
 LIMIT10OFFSET0"
-
+      
       full_query = filter_query.query_full
       expect(full_query.to_sql.gsub(/\s+/, '')).to eq(complex_result_2.gsub(/\s+/, ''))
-
+      
       # ensure query can be run (it obvs won't return anything)
       expect(full_query.pluck(:recorded_date)).to eq([])
     end
@@ -722,7 +722,7 @@ LIMIT25OFFSET0"
 
       filter_query = Filter::Query.new(
           request_body_obj,
-          Access::Query.audio_recordings(user, Access::Core.levels_allow),
+          Access::ByPermission.audio_recordings(user, Access::Core.levels),
           AudioRecording,
           AudioRecording.filter_settings
       )
@@ -783,7 +783,7 @@ DESCLIMIT20OFFSET0"
 
       filter_query = Filter::Query.new(
           request_body_obj,
-          Access::Query.audio_recordings(user, Access::Core.levels_allow),
+          Access::ByPermission.audio_recordings(user, Access::Core.levels),
           AudioRecording,
           AudioRecording.filter_settings
       )
@@ -903,7 +903,7 @@ SQL
 
       filter_query = Filter::Query.new(
           request_body_obj,
-          Access::Query.audio_events(user, Access::Core.levels_allow),
+          Access::ByPermission.audio_events(user, Access::Core.levels),
           AudioEvent,
           AudioEvent.filter_settings
       )
@@ -934,7 +934,7 @@ SQL
 
       filter_query = Filter::Query.new(
           request_body_obj,
-          Access::Query.audio_events(user, Access::Core.levels_allow),
+          Access::ByPermission.audio_events(user, Access::Core.levels),
           AudioEvent,
           AudioEvent.filter_settings
       )
@@ -962,7 +962,7 @@ SQL
 
       filter_query = Filter::Query.new(
           request_body_obj,
-          Access::Query.audio_recordings(user, Access::Core.levels_allow),
+          Access::ByPermission.audio_recordings(user, Access::Core.levels),
           AudioRecording,
           AudioRecording.filter_settings
       )
@@ -999,7 +999,7 @@ SQL
 
       filter_query = Filter::Query.new(
           request_body_obj,
-          Access::Query.audio_events(user, Access::Core.levels_allow),
+          Access::ByPermission.audio_events(user, Access::Core.levels),
           AudioEvent,
           AudioEvent.filter_settings
       )
@@ -1029,7 +1029,7 @@ SQL
 
       filter_query = Filter::Query.new(
           request_body_obj,
-          Access::Query.comments(user, Access::Core.levels_allow),
+          Access::ByPermission.audio_event_comments(user, Access::Core.levels),
           AudioEventComment,
           AudioEventComment.filter_settings
       )
@@ -1053,7 +1053,7 @@ SQL
 
       filter_query_inaccessible = Filter::Query.new(
           request_body_obj,
-          Access::Query.projects_inaccessible(the_user),
+          Access::ByPermission.projects(the_user, Access::Core.levels_none),
           Project,
           Project.filter_settings
       )
@@ -1077,7 +1077,7 @@ SQL
 
       filter_query_accessible = Filter::Query.new(
           request_body_obj,
-          Access::Query.projects_accessible(the_user),
+          Access::ByPermission.projects(the_user),
           Project,
           Project.filter_settings
       )
@@ -1106,7 +1106,7 @@ SQL
 
       filter_query_project2 = Filter::Query.new(
           request_body_obj,
-          Access::Query.project_sites(project_new, the_user, Access::Core.levels_allow),
+          Access::ByPermission.sites(the_user, Access::Core.levels, project_new),
           Site,
           Site.filter_settings
       )
@@ -1137,7 +1137,7 @@ SQL
 
       filter_query_project2 = Filter::Query.new(
           request_body_obj,
-          Access::Query.project_sites(project3, the_user, Access::Core.levels_deny),
+          Access::ByPermission.sites(the_user, Access::Core.levels_none, project3),
           Site,
           Site.filter_settings
       )
@@ -1161,7 +1161,7 @@ SQL
 
       filter_query_project2 = Filter::Query.new(
           request_body_obj,
-          Access::Query.project_permissions(project2),
+          Access::ByPermission.permissions(project2),
           Permission,
           Permission.filter_settings
       )
@@ -1194,7 +1194,7 @@ SQL
 
       filter_query_project2 = Filter::Query.new(
           request_body_obj,
-          Access::Query.audio_recording_audio_events(audio_recording2, the_user),
+          Access::ByPermission.audio_events(the_user, Access::Core.levels, audio_recording2),
           AudioEvent,
           AudioEvent.filter_settings
       )
@@ -1239,7 +1239,7 @@ SQL
 
       filter_query_project2 = Filter::Query.new(
           request_body_obj,
-          Access::Query.audio_event_comments(audio_event2, the_user),
+          Access::ByPermission.audio_event_comments(the_user, Access::Core.levels, audio_event2),
           AudioEventComment,
           AudioEventComment.filter_settings
       )
@@ -1265,7 +1265,7 @@ SQL
 
       filter_query_project2 = Filter::Query.new(
           request_body_obj,
-          Access::Query.audio_event_comments(audio_event2, the_user, Access::Core.levels_deny),
+          Access::ByPermission.audio_event_comments(the_user, Access::Core.levels_none, audio_event2),
           AudioEventComment,
           AudioEventComment.filter_settings
       )

@@ -1,10 +1,14 @@
+# A module for applying access restrictions.
 module Access
+
+  # Basic level, user, and access methods.
   class Core
+
     class << self
 
       # Get a hash with symbols, names, action words for the available levels.
       # @return [Hash]
-      def levels
+      def levels_hash
         {
             owner: {
                 name: 'Owner',
@@ -17,25 +21,25 @@ module Access
             reader: {
                 name: 'Reader',
                 action: 'read'
-            },
-            none: {
-                name: 'None',
-                action: 'no'
             }
         }
       end
 
-      def levels_allow
-        [:reader, :writer, :owner]
+      # Get all the valid levels.
+      # @return [Array<Symbol>]
+      def levels
+        Access::Core.levels_hash.keys
       end
 
-      def levels_deny
-        [:none]
+      # Get value indicating no access level.
+      # @return [NilClass]
+      def levels_none
+        nil
       end
 
       # Get a hash with symbols, names, action words for the available roles.
       # @return [Hash]
-      def roles
+      def roles_hash
         {
             admin: {
                 name: 'Administrator',
@@ -48,36 +52,50 @@ module Access
             harvester: {
                 name: 'Harvester',
                 action: 'harvest'
+            },
+            guest: {
+                name: 'Guest',
+                action: 'use as guest'
             }
         }
+      end
+
+      # Get all the valid roles.
+      # @return [Array<Symbol>]
+      def roles
+        User.valid_roles
       end
 
       # Get level display name.
       # @param [Symbol] key
       # @return [string] name
       def get_level_name(key)
-        get_hash_value(levels, key, :name)
+        key = Access::Validate.level(key)
+        get_hash_value(Access::Core.levels_hash, key, :name)
       end
 
       # Get level action word.
       # @param [Symbol] key
       # @return [string] action word
       def get_level_action(key)
-        get_hash_value(levels, key, :action)
+        key = Access::Validate.level(key)
+        get_hash_value(Access::Core.levels_hash, key, :action)
       end
 
       # Get role display name.
       # @param [Symbol] key
       # @return [string] name
       def get_role_name(key)
-        get_hash_value(roles, key, :name)
+        key = Access::Validate.role(key)
+        get_hash_value(Access::Core.roles_hash, key, :name)
       end
 
       # Get role action word.
       # @param [Symbol] key
       # @return [string] action word
       def get_role_action(key)
-        get_hash_value(roles, key, :action)
+        key = Access::Validate.role(key)
+        get_hash_value(Access::Core.roles_hash, key, :action)
       end
 
       # Get value from hash of symbols, names, and action words.
@@ -87,6 +105,23 @@ module Access
       # @return [string] value
       def get_hash_value(hash, key, attribute)
         hash[key][attribute]
+      end
+
+      # Normalise a level identifier.
+      # @param [Object] level
+      # @return [Symbol, nil] normalised level or nil
+      def normalise_level(level)
+        return nil if level.blank?
+        case level.to_s
+          when 'reader', 'read'
+            :reader
+          when 'writer', 'write'
+            :writer
+          when 'owner', 'own'
+            :owner
+          else
+            nil
+        end
       end
 
       # Validate access level.
@@ -205,7 +240,7 @@ module Access
       # @param [Symbol] level
       # @return [Array<Symbol>]
       def equal_or_lower(level)
-        level_sym = validate_level(level)
+        level_sym = Access::Validate.level(level)
         case level_sym
           when :owner
             [:reader, :writer, :owner]
@@ -213,19 +248,16 @@ module Access
             [:reader, :writer]
           when :reader
             [:reader]
-          when :none
-            [:none]
           else
-            fail ArgumentError, "Can not get equal or lower level for #{level}, must be one of #{values.keys.join(', ')}."
+            fail ArgumentError, "Can not get equal or lower level for '#{level}', must be one of #{Access::Core.levels.map(&:to_s).join(', ')}."
         end
-
       end
 
       # Get an array of access levels that are equal or greater.
       # @param [Symbol] level
       # @return [Array<Symbol>]
       def equal_or_greater(level)
-        level_sym = validate_level(level)
+        level_sym = Access::Validate.level(level)
         case level_sym
           when :owner
             [:owner]
@@ -233,10 +265,8 @@ module Access
             [:writer, :owner]
           when :reader
             [:reader, :writer, :owner]
-          when :none
-            [:none]
           else
-            fail ArgumentError, "Can not get equal or greater level for #{level}, must be one of #{values.keys.join(', ')}."
+            fail ArgumentError, "Can not get equal or greater level for '#{level}', must be one of #{Access::Core.levels.map(&:to_s).join(', ')}."
         end
       end
 
@@ -244,24 +274,186 @@ module Access
       # @param [Array<Symbol>] levels
       # @return [Symbol]
       def highest(levels)
-        levels_sym = validate_levels(levels)
+        levels_sym = Access::Validate.levels(levels)
 
         return :owner if levels_sym.include?(:owner)
         return :writer if levels_sym.include?(:writer)
         return :reader if levels_sym.include?(:reader)
-        :none if levels_sym.include?(:none)
+        nil
       end
 
       # Get the lowest access level.
       # @param [Array<Symbol>] levels
       # @return [Symbol]
       def lowest(levels)
-        levels_sym = validate_levels(levels)
+        levels_sym = Access::Validate.levels(levels)
 
-        return :none if levels_sym.include?(:none)
+        return nil if Access::Core.is_no_level?(levels)
         return :reader if levels_sym.include?(:reader)
         return :writer if levels_sym.include?(:writer)
         :owner if levels_sym.include?(:owner)
+      end
+
+      # Check if these levels equate to no access level.
+      # @param [Object] levels
+      # @return [Boolean] true if is no access level, otherwise false
+      def is_no_level?(levels)
+        levels = Access::Validate.levels(levels)
+        level = highest(levels)
+        level.nil?
+      end
+
+      # Is this user an admin?
+      # An admin is a user with the :admin role.
+      # @param [User] user
+      # @return [Boolean]
+      def is_admin?(user)
+        return false if Access::Core.is_guest?(user)
+        user.has_role?(:admin)
+      end
+
+      # Is this user a guest?
+      # A guest is a nil user or a user with the :guest role or a user without an id.
+      # An unconfirmed user is not a guest user.
+      # e.g. in some cases, current_user will be blank
+      # e.g. for ability.rb, a user is created with role set as guest
+      # @param [User] user
+      # @return [Boolean]
+      def is_guest?(user)
+        Access::Validate.user(user)
+        user.blank? || user.has_role?(:guest) || user.id.nil?
+      end
+
+      # Is this user a standard user?
+      # A standard user has the :user role.
+      # @param [User] user
+      # @return [Boolean]
+      def is_standard_user?(user)
+        return false if Access::Core.is_guest?(user)
+        user.has_role?(:user)
+      end
+
+      # Is this user a harvester user?
+      # A harvester user has the :harvester role.
+      # @param [User] user
+      # @return [Boolean]
+      def is_harvester?(user)
+        return false if Access::Core.is_guest?(user)
+        user.has_role?(:harvester)
+      end
+
+      # Check if requested access level(s) is allowed based on actual access level(s).
+      # If actual is a higher level than requested, it is allowed.
+      # @param [Symbol, Array<Symbol>] requested_levels
+      # @param [Symbol, Array<Symbol>] actual_levels
+      # @return [Boolean]
+      def allowed?(requested_levels, actual_levels)
+        requested_array = Access::Validate.levels([requested_levels])
+        actual_array = Access::Validate.levels([actual_levels])
+
+        # short circuit checking nils
+        return false if requested_array.blank? || requested_array.compact.blank? ||
+            actual_array.blank? || actual_array.compact.blank?
+
+        actual_highest = Access::Core.highest(actual_array)
+        actual_equal_or_lower = Access::Core.equal_or_lower(actual_highest)
+        requested_highest = Access::Core.highest(requested_array)
+
+        actual_equal_or_lower.include?(requested_highest)
+      end
+
+      # Does this user have this access level to this project?
+      # @param [User] user
+      # @param [Symbol] level
+      # @param [Project] project
+      # @return [Boolean]
+      def can?(user, level, project)
+        can_any?(user, level, [project])
+      end
+
+      # Does this user not have any access to this project?
+      # @param [User] user
+      # @param [Project] project
+      # @return [Boolean]
+      def cannot?(user, project)
+        !can?(user, :reader, project)
+      end
+
+      # Does this user have this access level to any of these projects?
+      # @param [User] user
+      # @param [Symbol] level
+      # @param [Array<Project>] projects
+      # @return [Boolean]
+      def can_any?(user, level, projects)
+        requested_level = Access::Validate.level(level)
+        actual_level = Access::Core.user_levels(user, projects)
+
+        allowed?(requested_level, actual_level)
+      end
+
+      # Does this user not have any access to any of these projects?
+      # @param [User] user
+      # @param [Array<Project>] projects
+      # @return [Boolean]
+      def cannot_any?(user, projects)
+        !can_any?(user, :reader, projects)
+      end
+
+      # Does this user have this access level to all of these projects?
+      # @param [User] user
+      # @param [Symbol] level
+      # @param [Array<Project>] projects
+      # @return [Boolean]
+      def can_all?(user, level, projects)
+        requested_level = Access::Validate.level(level)
+        actual_levels = Access::Core.user_levels(user, projects)
+        actual_level_lowest = Access::Core.lowest(actual_levels)
+
+        allowed?(requested_level, actual_level_lowest)
+      end
+
+      # Does this user not have any access level to all of these projects?
+      # @param [User] user
+      # @param [Array<Project>] projects
+      # @return [Boolean]
+      def cannot_all?(user, projects)
+        !can_all?(user, :reader, projects)
+      end
+
+      # Fail if the site is not in any projects.
+      # @param [Site] site
+      # @return [void]
+      def check_orphan_site!(site)
+        if !site.nil? && site.projects.size == 0
+          fail CustomErrors::OrphanedSiteError.new("Site #{site.name} (#{site.id}) is not in any projects.")
+        end
+      end
+
+      # Get the access levels for this user to the project(s).
+      # This method returns the access levels reflected in the permissions table,
+      # so an admin may not have access to every project.
+      # @param [User] user
+      # @param [Project, Array<Project>] projects
+      # @return [Array<Symbol, nil>]
+      def user_levels(user, projects)
+        projects = Access::Validate.projects([projects])
+
+        # always restricted to specified project(s)
+        levels = Permission.where(project_id: projects)
+
+        if Access::Core.is_guest?(user)
+          # a guest user's permissions are only specified by :allow_logged_in
+          levels = levels.where(user: nil, allow_logged_in: false, allow_anonymous: true)
+        elsif !user.blank?
+          # a logged in user can have their own permissions or
+          # permissions specified by :allow_logged_in
+          levels = levels.where('user_id = ? OR allow_logged_in IS TRUE', user.id)
+        else
+          fail ArgumentError, "Invalid user to retrieve levels: '#{user}'."
+        end
+
+        levels = levels.pluck(:level)
+        Access::Validate.levels(levels)
       end
 
     end

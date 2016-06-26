@@ -65,8 +65,23 @@ class ApplicationController < ActionController::Base
                     (session[:last_seen_at].blank? || Time.zone.at(session[:last_seen_at].to_i) < 10.minutes.ago)
                 }
 
+  # A dummy method to get rid of all the Rubymine errors.
+  # @return [User]
+  def current_user
+    super
+  end
+
+  # A dummy method to get rid of all the Rubymine errors.
+  # @return [Boolean]
+  def user_signed_in?
+    super
+  end
+
   protected
 
+  # Add archived at header to HTTP response
+  # @param [ActiveRecord::Base] model
+  # @return [void]
   def add_archived_at_header(model)
     if model.respond_to?(:deleted_at) && !model.deleted_at.blank?
       response.headers['X-Archived-At'] = model.deleted_at.httpdate # must be a string, can't just pass a Date or Time
@@ -155,6 +170,11 @@ class ApplicationController < ActionController::Base
     audio_event
   end
 
+  # Authorise audio event by audio recording and offsets
+  # @param [Hash] request_params
+  # @param [AudioRecording] audio_recording
+  # @param [AudioEvent] audio_event
+  # @return [void]
   def auth_custom_offsets(request_params, audio_recording, audio_event)
     # check offsets are within range
 

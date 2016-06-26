@@ -192,7 +192,7 @@ class AnalysisJob < ActiveRecord::Base
   # @param [User] user
   # @return [Array<Hash>] payloads
   def begin_work(user)
-    user = Access::Core.validate_user(user)
+    user = Access::Validate.user(user)
 
     # ensure status is 'new' and analysis job has been saved
     if self.overall_status != 'new' || !self.persisted?

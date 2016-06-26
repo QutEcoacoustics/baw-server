@@ -118,12 +118,20 @@ module Api
     def valid_token_login?(resource, token)
       comparison = false
 
+
       if resource && token
         # Notice how we use Devise.secure_compare to compare the token
         # in the database with the token given in the params, mitigating
         # timing attacks.
         comparison = Devise.secure_compare(resource.authentication_token, token)
+
+        # if token is given, but does not match, it is invalid
+        token_was_invalid = !comparison
+      else
+        token_was_invalid = resource.nil? && !token.blank?
       end
+
+      fail CanCan::AccessDenied, "Invalid authentication token '#{token}'." if token_was_invalid
 
       comparison
     end

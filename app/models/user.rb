@@ -30,7 +30,7 @@ class User < ActiveRecord::Base
 
   # declare the valid roles -- do not change the order if you add more
   # roles later, always append them at the end!
-  roles :admin, :user, :harvester
+  roles :admin, :user, :harvester, :guest
 
   has_attached_file :image,
                     styles: {span4: '300x300#', span3: '220x220#', span2: '140x140#', span1: '60x60#', spanhalf: '30x30#'},
@@ -221,7 +221,7 @@ class User < ActiveRecord::Base
         text_fields: [:user_name],
         custom_fields: lambda { |item, user|
           # 'item' is the user being processed, 'user' is the currently logged in user
-          is_admin = Access::Check.is_admin?(user)
+          is_admin = Access::Core.is_admin?(user)
           is_same_user = item == user
 
           # do a query for the attributes that may not be in the projection

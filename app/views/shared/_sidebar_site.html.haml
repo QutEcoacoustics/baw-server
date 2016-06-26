@@ -36,6 +36,6 @@
     %li
       = link_to 'Play', play_link, title: 'Play audio in this site', data: {toggle: 'tooltip',  placement: 'right'}
 
-  - if defined?(project) && defined?(site) && Access::Check.is_admin?(current_user)
+  - if defined?(project) && defined?(site) && Access::Core.is_admin?(current_user)
     %li
       = link_to 'Delete Site', [project, site], method: :delete, data: { confirm: 'Are you sure?', toggle: 'tooltip',  placement: 'right' }, title: 'Delete site'

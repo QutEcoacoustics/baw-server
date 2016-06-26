@@ -317,7 +317,7 @@ Rails.application.routes.draw do
   get '/credits' => 'public#credits'
 
   # resque front end - admin only
-  authenticate :user, lambda { |u| Access::Check.is_admin?(u) } do
+  authenticate :user, lambda { |u| Access::Core.is_admin?(u) } do
     # add stats tab to web interface from resque-job-stats
     require 'resque-job-stats/server'
     # adds Statuses tab to web interface from resque-status
