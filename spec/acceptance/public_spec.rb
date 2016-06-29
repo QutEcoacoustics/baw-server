@@ -43,7 +43,8 @@ resource 'Public' do
                         'Access-Control-Allow-Methods' => allow_methods,
                         'Access-Control-Allow-Headers' => 'accept, content-type',
                         'Access-Control-Max-Age' => "1728000",
-                        'Content-Type' => 'text/plain'
+                        'Content-Type' => 'text/plain',
+                        'Set-Cookie' => '__profilin=p%3Dt; path=/'
                     },
                 expected_request_header_values:
                     {
@@ -95,7 +96,8 @@ resource 'Public' do
                         'Access-Control-Allow-Methods' => allow_methods,
                         'Access-Control-Allow-Headers' => 'accept, content-type',
                         'Access-Control-Max-Age' => "1728000",
-                        'Content-Type' => 'text/plain'
+                        'Content-Type' => 'text/plain',
+                        'Set-Cookie' => '__profilin=p%3Dt; path=/'
                     },
                 expected_request_header_values:
                     {
@@ -150,7 +152,8 @@ resource 'Public' do
                           'Access-Control-Allow-Methods' => allow_methods,
                           'Access-Control-Allow-Headers' => 'Origin, Content-Type, Accept, Authorization, Token',
                           'Access-Control-Max-Age' => "1728000",
-                          'Content-Type' => 'text/plain'
+                          'Content-Type' => 'text/plain',
+                          'Set-Cookie' => '__profilin=p%3Dt; path=/'
                       },
                   expected_request_header_values:
                       {
@@ -187,7 +190,8 @@ resource 'Public' do
                           'Access-Control-Allow-Credentials' => 'true',
                           'Access-Control-Allow-Methods' => allow_methods,
                           'Access-Control-Max-Age' => "1728000",
-                          'Content-Type' => 'text/plain'
+                          'Content-Type' => 'text/plain',
+                          'Set-Cookie' => '__profilin=p%3Dt; path=/' 
                       },
                   expected_request_header_values:
                       {

@@ -15,7 +15,7 @@ source 'https://rubygems.org'
 
 gem 'rails', '~> 4.2.4'
 gem 'rack-cors', '~> 0.4.0', require: 'rack/cors'
-gem 'responders', '~> 2.1.0'
+gem 'responders', '~> 2.2.0'
 
 # RAILS 3 compatibility gems
 # -------------------------------------
@@ -49,7 +49,7 @@ gem 'haml-rails', '~> 0.9.0'
 
 gem 'simple_form', '~> 3.2.0'
 gem 'paperclip', '~> 4.3.0'
-gem 'kramdown', '~> 1.10.0'
+gem 'kramdown', '~> 1.11.0'
 
 # Bootstrap UI
 gem 'bootstrap-sass', '~> 3.3.4'
@@ -70,7 +70,7 @@ gem 'tzinfo-data', '~> 1.2016'
 # -------------------------------------
 # https://github.com/plataformatec/devise/blob/master/CHANGELOG.md
 # http://joanswork.com/devise-3-1-update/
-gem 'devise', '~> 3.5.1'
+gem 'devise', '~> 3.5.10'
 gem 'devise-i18n'
 gem 'cancancan', '~> 1.15'
 gem 'role_model', '~> 0.8.1'
@@ -111,13 +111,13 @@ gem 'newrelic_rpm', '~> 3.15'
 # Documentation & UI
 # -------------------------------------
 # these gems are required here to serve /doc url
-gem 'rspec_api_documentation', '~> 4.7.0'
+gem 'rspec_api_documentation', '~> 4.8.0'
 gem 'raddocs', '~> 1.0.0'
 
 # MEDIA
 # -------------------------------------
 # set to a specific commit when releasing to master branch
-gem 'baw-audio-tools', git: 'https://github.com/QutBioacoustics/baw-audio-tools.git', branch: :master, ref: 'f4ef9f775d'
+gem 'baw-audio-tools', git: 'https://github.com/QutBioacoustics/baw-audio-tools.git', branch: :master, ref: '354d375d6a'
 gem 'rack-rewrite', '~> 1.5.1'
 
 # ASYNC JOBS
@@ -126,7 +126,7 @@ gem 'resque', '~> 1.25.2'
 gem 'resque-job-stats', git: 'https://github.com/echannel/resque-job-stats.git', branch: :master, ref: '8932c036ae'
 gem 'resque-status', '~> 0.5.0'
 # set to a specific commit when releasing to master branch
-gem 'baw-workers', git: 'https://github.com/QutBioacoustics/baw-workers.git', branch: :master, ref: '18943af4b977749b9ec58bb566a8a30861f5fabc'
+gem 'baw-workers', git: 'https://github.com/QutBioacoustics/baw-workers.git', branch: :master, ref: '18943af4b'
 
 
 # Gems restricted by environment and/or platform
@@ -142,9 +142,9 @@ group :development, :test do
 
   gem 'quiet_assets'
 
-  gem 'rack-mini-profiler', '~> 0.9.2'
+  gem 'rack-mini-profiler', '~> 0.10.0'
   gem 'i18n-tasks', '~> 0.9.0'
-  gem 'bullet', '~> 5.0.0'
+  gem 'bullet', '~> 5.1.0'
 
   # Spring speeds up development by keeping your application running in the background. Read more: https://github.com/rails/spring
   #gem 'spring', '~> 1.4.0'
@@ -155,13 +155,13 @@ group :development, :test do
   # bundle exec rake doc:rails generates the API under doc/api.
   gem 'sdoc', '~> 0.4.0'
 
-  gem 'thin', '~> 1.6.3'
+  gem 'thin', '~> 1.7.0'
 
-  gem 'notiffany', '~> 0.0.3'
-  gem 'guard', '~> 2.13.0'
-  gem 'guard-rspec', '~> 4.6.0'
+  gem 'notiffany', '~> 0.1.0'
+  gem 'guard', '~> 2.14.0'
+  gem 'guard-rspec', '~> 4.7.0'
   gem 'guard-yard', '~> 2.1.4', require: false
-  gem 'rubocop', '~> 0.39.0', require: false
+  gem 'rubocop', '~> 0.41.0', require: false
   gem 'haml_lint', require: false
 
   gem 'fakeredis', '~> 0.5.0', require: 'fakeredis/rspec'
@@ -198,10 +198,10 @@ group :development, :test do
   gem 'database_cleaner', '~> 1.5.0'
 
   gem 'coveralls', '~> 0.8.10', require: false
-  gem 'codeclimate-test-reporter', '~> 0.5.0', require: nil
+  gem 'codeclimate-test-reporter', '~> 0.6.0', require: nil
 end
 
 group :test do
-  gem 'webmock', '~> 1.24.0'
+  gem 'webmock', '~> 2.1.0'
   gem 'shoulda-matchers', '< 3.0.0', require: false
 end
