@@ -141,6 +141,11 @@ class Site < ActiveRecord::Base
     # select a random value from the available array of ints
     selected = available.sample
 
+    # ensure the last digit is not zero (0), as this will be removed when converted
+    if selected.to_s.last == '0'
+      selected += 1
+    end
+
     # round to ensure precision is maintained (damn floating point in-exactness)
     # 3 decimal places is at the scale of an 'individual street, land parcel'
     modified_value = (selected.to_f / accuracy.to_f).round(4)

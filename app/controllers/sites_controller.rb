@@ -90,12 +90,15 @@ class SitesController < ApplicationController
     get_project
     do_authorize_instance
 
+    @original_site_name = @site.name
+
     respond_to do |format|
       if @site.update_attributes(site_params)
         format.html { redirect_to [@project, @site], notice: 'Site was successfully updated.' }
         format.json { respond_show }
       else
         format.html {
+
           render action: 'edit'
         }
         format.json { respond_change_fail }

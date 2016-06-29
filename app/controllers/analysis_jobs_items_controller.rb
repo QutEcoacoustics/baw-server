@@ -135,9 +135,9 @@ class AnalysisJobsItemsController < ApplicationController
 
   def get_query
     if @is_system_job
-      Access::Query.analysis_jobs_items(nil, current_user, true)
+      Access::ByPermission.analysis_jobs_items(nil, current_user, true)
     else
-      Access::Query.analysis_jobs_items(@analysis_job, current_user, false)
+      Access::ByPermission.analysis_jobs_items(@analysis_job, current_user, false)
     end
   end
 

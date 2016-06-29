@@ -101,9 +101,9 @@ resource 'Scripts' do
 
   get '/scripts' do
     let(:authentication_token) { no_access_token }
-    standard_request_options(:get, 'INDEX (as other)', :ok, {
+    standard_request_options(:get, 'INDEX (as no access)', :ok, {
         expected_json_path: 'data/0/analysis_identifier',
-        data_item_count: 1
+        data_item_count: 4
     })
   end
 

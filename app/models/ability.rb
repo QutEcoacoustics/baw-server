@@ -234,7 +234,7 @@ class Ability
     end
 
     # must have write permission or higher to create a new site in a project (logged in users only as guest users can only be reader)
-    can [:create], Site do |site|
+    can [:create, :new], Site do |site|
       check_model(site)
       Access::Core.check_orphan_site!(site)
       Access::Core.can_any?(user, :writer, site.projects)
@@ -246,9 +246,6 @@ class Ability
       Access::Core.check_orphan_site!(site)
       Access::Core.can_any?(user, :owner, site.projects)
     end
-
-    # actions any logged in user can access
-    can [:new], Site unless is_guest
 
     # available to any user, including guest
     can [:index, :filter], Site
@@ -424,7 +421,7 @@ class Ability
         fail CustomErrors::BadRequestError.new('Analysis Jobs Item must have a Audio Recording.')
       end
 
-      Access::Check.can_any?(user, :reader, analysis_job_item.audio_recording.site.projects)
+      Access::Core.can_any?(user, :reader, analysis_job_item.audio_recording.site.projects)
     end
 
     # actions any logged in user can access

@@ -107,7 +107,7 @@ resource 'Sites' do
   get '/projects/:project_id/sites/new' do
     let(:project_id) { project.id }
     let(:authentication_token) { writer_token }
-    standard_request_options(:get, 'NEW (as writer)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
+    standard_request_options(:get, 'NEW (as writer)', :ok, {expected_json_path: 'data/longitude'})
   end
 
   get '/projects/:project_id/sites/new' do
@@ -119,7 +119,7 @@ resource 'Sites' do
   get '/projects/:project_id/sites/new' do
     let(:project_id) { project.id }
     let(:authentication_token) { no_access_token }
-    standard_request_options(:get, 'NEW (as other)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
+    standard_request_options(:get, 'NEW (as no access user)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
   end
 
   get '/projects/:project_id/sites/new' do
@@ -160,7 +160,7 @@ resource 'Sites' do
     let(:project_id) { project.id }
     let(:authentication_token) { writer_token }
     let(:raw_post) { {site: post_attributes}.to_json }
-    standard_request_options(:post, 'CREATE (as writer)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
+    standard_request_options(:post, 'CREATE (as writer)', :created, {expected_json_path: 'data/project_ids'})
   end
 
   post '/projects/:project_id/sites' do

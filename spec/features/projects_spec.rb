@@ -24,8 +24,8 @@ describe 'CRUD Projects as valid user with write permission', type: :feature do
   it 'shows project details' do
     visit project_path(project)
     expect(page).to have_content(project.name)
-    expect(page).to have_link('Edit')
-    expect(page).to have_link('Edit Permissions')
+    expect(page).not_to have_link('Edit')
+    expect(page).not_to have_link('Edit Permissions')
     expect(page).not_to have_link('Delete')
   end
 
@@ -49,21 +49,7 @@ describe 'CRUD Projects as valid user with write permission', type: :feature do
 
   it 'updates project when filling out form correctly' do
     visit edit_project_path(project)
-    #save_and_open_page
-    fill_in 'project[name]', with: 'test name'
-    fill_in 'project[description]', with: 'description'
-    attach_file('project[image]', 'public/images/user/user-512.png')
-    click_button 'Submit'
-    expect(page).to have_content('test name')
-  end
-
-  it 'shows errors when updating form incorrectly' do
-    visit edit_project_path(project)
-    #save_and_open_page
-    fill_in 'project[name]', with: ''
-    click_button 'Submit'
-    expect(page).to have_content('Please review the problems below:')
-    expect(page).to have_content('can\'t be blank')
+    expect(page).to have_content(I18n.t('devise.failure.unauthorized'))
   end
 
 end
@@ -88,7 +74,7 @@ describe 'CRUD Projects as valid user and project creator', :type => :feature do
     expect(page).to have_content(project.name)
     expect(page).to have_link('Edit')
     expect(page).to have_link('Edit Permissions')
-    expect(page).not_to have_link('Delete')
+    expect(page).to have_link('Delete Project')
   end
 
   it 'creates new project when filling out form correctly' do
@@ -162,7 +148,7 @@ describe 'CRUD Projects as valid user with no permissions', :type => :feature do
   create_entire_hierarchy
 
   before(:each) do
-    login_as other_user, scope: :user
+    login_as no_access_user, scope: :user
   end
 
   it 'lists all projects' do
@@ -211,40 +197,40 @@ describe 'Delete Projects as admin user', :type => :feature do
   end
 end
 
-describe 'CRUD Projects as unconfirmed user', :type => :feature do
-
-  create_entire_hierarchy
-
-  before(:each) do
-    login_as unconfirmed_user, scope: :user
-  end
-
-  it 'reject access to list all projects' do
-    visit projects_path
-    expect(current_path).to eq(projects_path)
-    expect(page).to have_content(I18n.t('devise.failure.unconfirmed'))
-  end
-
-  it 'rejects access to show project details' do
-    visit project_path(project)
-    expect(current_path).to eq(project_path(project))
-    expect(page).to have_content(I18n.t('devise.failure.unconfirmed'))
-  end
-
-  it 'rejects access to create a new project' do
-    visit new_project_path
-    expect(current_path).to eq(new_project_path)
-    expect(page).to have_content(I18n.t('devise.failure.unconfirmed'))
-
-  end
-
-  it 'rejects access to edit project details' do
-    visit edit_project_path(project)
-    expect(current_path).to eq(edit_project_path(project))
-    expect(page).to have_content(I18n.t('devise.failure.unconfirmed'))
-  end
-
-end
+# describe 'CRUD Projects as unconfirmed user', :type => :feature do
+#
+#   create_entire_hierarchy
+#
+#   before(:each) do
+#     login_as unconfirmed_user, scope: :user
+#   end
+#
+#   it 'reject access to list all projects' do
+#     visit projects_path
+#     expect(current_path).to eq(projects_path)
+#     expect(page).to have_content(I18n.t('devise.failure.unconfirmed'))
+#   end
+#
+#   it 'rejects access to show project details' do
+#     visit project_path(project)
+#     expect(current_path).to eq(project_path(project))
+#     expect(page).to have_content(I18n.t('devise.failure.unconfirmed'))
+#   end
+#
+#   it 'rejects access to create a new project' do
+#     visit new_project_path
+#     expect(current_path).to eq(new_project_path)
+#     expect(page).to have_content(I18n.t('devise.failure.unconfirmed'))
+#
+#   end
+#
+#   it 'rejects access to edit project details' do
+#     visit edit_project_path(project)
+#     expect(current_path).to eq(edit_project_path(project))
+#     expect(page).to have_content(I18n.t('devise.failure.unconfirmed'))
+#   end
+#
+# end
 
 describe 'request project access', :type => :feature do
 
@@ -252,7 +238,7 @@ describe 'request project access', :type => :feature do
 
   before(:each) do
 
-    login_as other_user, scope: :user
+    login_as no_access_user, scope: :user
   end
 
   it 'sends emails when form filled out successfully' do
@@ -273,7 +259,7 @@ describe 'request project access', :type => :feature do
     email = ActionMailer::Base.deliveries[0]
     expect(email).to have_content(project.name)
     expect(email).to have_content(project.creator.user_name)
-    expect(email).to have_content(other_user.user_name)
+    expect(email).to have_content(no_access_user.user_name)
   end
 
   it 'shows error when form not filled out correctly' do

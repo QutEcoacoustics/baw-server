@@ -8,5 +8,8 @@
 
 %p
   Original name is
-  = "'#{@site.name}'."
+  - if defined?(@original_site_name)
+    = "'#{@original_site_name}'."
+  - else
+    = "'#{@site.name}'."
 = render partial:'form', locals: {project: @project, site: @site}

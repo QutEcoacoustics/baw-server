@@ -27,7 +27,7 @@ describe User, :type => :model do
 
     expect {
       user.save!
-    }.to raise_exception
+    }.to raise_exception(ActiveRecord::RecordInvalid, /Validation failed: Tzinfo tz is not a recognised timezone/)
   end
 
   #pending "add some examples to (or delete) #{__FILE__}"
