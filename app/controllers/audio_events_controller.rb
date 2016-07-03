@@ -12,7 +12,7 @@ class AudioEventsController < ApplicationController
 
     @audio_events, opts = Settings.api_response.response_advanced(
         api_filter_params,
-        Access::Query.audio_recording_audio_events(@audio_recording, current_user),
+        Access::ByPermission.audio_events(current_user, Access::Core.levels, @audio_recording),
         AudioEvent,
         AudioEvent.filter_settings
     )
@@ -88,7 +88,7 @@ class AudioEventsController < ApplicationController
 
     filter_response, opts = Settings.api_response.response_advanced(
         api_filter_params,
-        Access::Query.audio_events(current_user),
+        Access::ByPermission.audio_events(current_user),
         AudioEvent,
         AudioEvent.filter_settings
     )

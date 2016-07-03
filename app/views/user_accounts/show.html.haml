@@ -4,7 +4,7 @@
 = render partial: 'shared/sidebar_user', locals: {user_show: @user, user_current: current_user}
 
 - is_valid_user = defined?(@user) && !@user.nil? && !@user.id.nil?
-- is_admin = Access::Check.is_admin?(current_user)
+- is_admin = Access::Core.is_admin?(current_user)
 - is_own_profile = is_valid_user && User.same_user?(current_user, @user)
 
 .col-sm-4
@@ -39,34 +39,34 @@
           %span.fa.fa-home{aria: {hidden: 'true' }}
           Projects
           %span.badge
-            = number_with_delimiter(Access::Query.projects_accessible(@user).count, delimiter: ' ')
+            = number_with_delimiter(Access::ByPermission.projects(@user).count, delimiter: ' ')
         %li.list-group-item
           %span.fa.fa-tags{aria: {hidden: 'true' }}
           Tags
           %span.badge
-            = number_with_delimiter(Access::Query.taggings_modified(@user).count, delimiter: ' ')
+            = number_with_delimiter(Access::ByUserModified.taggings(@user).count, delimiter: ' ')
         %li.list-group-item
           %span.fa.fa-bookmark{aria: {hidden: 'true' }}
           Bookmarks
           %span.badge
-            = number_with_delimiter(Access::Query.bookmarks_modified(@user).count, delimiter: ' ')
+            = number_with_delimiter(Access::ByUserModified.bookmarks(@user).count, delimiter: ' ')
     .col-sm-6
       %ul.list-group
         %li.list-group-item
           %span.fa.fa-map-marker{aria: {hidden: 'true' }}
           Sites
           %span.badge
-            =  number_with_delimiter(Access::Query.sites(@user, Access::Core.levels_allow).count, delimiter: ' ')
+            =  number_with_delimiter(Access::ByPermission.sites(@user).count, delimiter: ' ')
         %li.list-group-item
           %span.fa.fa-bullseye{aria: {hidden: 'true' }}
           Annotations
           %span.badge
-            = number_with_delimiter(Access::Query.audio_events_modified(@user).count, delimiter: ' ')
+            = number_with_delimiter(Access::ByUserModified.audio_events(@user).count, delimiter: ' ')
         %li.list-group-item
           %span.fa.fa-comments{aria: {hidden: 'true' }}
           Comments
           %span.badge
-            = number_with_delimiter(Access::Query.audio_event_comments_modified(@user).count, delimiter: ' ')
+            = number_with_delimiter(Access::ByUserModified.audio_event_comments(@user).count, delimiter: ' ')
   .row
     .col-sm-12
       .panel.panel-default

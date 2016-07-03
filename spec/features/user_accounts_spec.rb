@@ -73,8 +73,8 @@ describe "User account actions", :type => :feature do
 
       #expect(current_path).to eq(root_path)
       expect(page).to have_content('Welcome! You have signed up successfully.')
-      expect(User.count).to eq(1)
-      expect(User.first.user_name).to eq(user_name)
+      expect(User.count).to eq(2 + 1) # users from seed plus new user
+      expect(User.where(user_name: user_name).first.email).to eq(email)
     end
 
     it 'should fail when invalid' do
@@ -92,7 +92,9 @@ describe "User account actions", :type => :feature do
 
       #expect(current_path).to eq(root_path)
       expect(page).to have_content('Only letters, numbers, spaces ( ), underscores (_) and dashes (-) are valid')
-      expect(User.count).to eq(0)
+      expect(User.count).to eq(2) # users from seed
+      expect(User.where(user_name: 'Admin').first.user_name).to eq('Admin')
+      expect(User.where(user_name: 'Harvester').first.user_name).to eq('Harvester')
     end
   end
 
@@ -395,7 +397,7 @@ describe 'MANAGE User Accounts as admin user', :type => :feature do
   it 'lists user\'s projects' do
     user = FactoryGirl.create(:user)
     project = FactoryGirl.create(:project)
-    permission = FactoryGirl.create(:permission, user_id: user.id, project_id: project.id)
+    permission = FactoryGirl.create(:write_permission, user_id: user.id, project_id: project.id)
     visit projects_user_account_path(user)
     expect(page).to have_content('Project Sites Permission')
     expect(page).to have_content(project.name)
@@ -408,39 +410,39 @@ describe 'MANAGE User Accounts as user', :type => :feature do
     login_as @user, scope: :user
   end
 
-  let(:other_user){ FactoryGirl.create(:user)}
+  let(:no_access_user){ FactoryGirl.create(:user)}
 
   it 'denies access' do
     visit user_accounts_path
     expect(page).to have_content(I18n.t('devise.failure.unauthorized'))
-    visit edit_user_account_path(other_user)
+    visit edit_user_account_path(no_access_user)
     expect(page).to have_content(I18n.t('devise.failure.unauthorized'))
   end
 
   it 'shows user account details' do
-    visit user_account_path(other_user)
-    expect(page).to have_content(other_user.user_name)
+    visit user_account_path(no_access_user)
+    expect(page).to have_content(no_access_user.user_name)
   end
 
   context 'links available viewing other user page' do
       it 'should not link to projects' do
-        visit user_account_path(other_user)
+        visit user_account_path(no_access_user)
         expect(find('nav[role=navigation]')).to_not have_content('Projects')
       end
       it 'should not link to sites' do
-        visit user_account_path(other_user)
+        visit user_account_path(no_access_user)
         expect(find('nav[role=navigation]')).to_not have_content('Sites')
       end
       it 'should not link to bookmarks' do
-        visit user_account_path(other_user)
+        visit user_account_path(no_access_user)
         expect(find('nav[role=navigation]')).to_not have_content('Bookmarks')
       end
       it 'should not link to annotations' do
-        visit user_account_path(other_user)
+        visit user_account_path(no_access_user)
         expect(find('nav[role=navigation]')).to_not have_content('Annotations')
       end
       it 'should not link to comments' do
-        visit user_account_path(other_user)
+        visit user_account_path(no_access_user)
         expect(find('nav[role=navigation]')).to_not have_content('Comments')
       end
   end

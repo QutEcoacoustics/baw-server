@@ -3,7 +3,7 @@
 - content_for(:left_sidebar) do
 
   - is_valid_user = defined?(user_show) && !user_show.nil? && !user_show.id.nil?
-  - is_admin = Access::Check.is_admin?(user_current)
+  - is_admin = Access::Core.is_admin?(user_current)
   - is_own_profile = is_valid_user && User.same_user?(user_current, user_show)
   - is_own_profile_path = is_own_profile ? User.profile_paths(user_show).any?{ |p| current_page?(p)} : false
   - first_word = is_own_profile ? 'My' : 'Their'

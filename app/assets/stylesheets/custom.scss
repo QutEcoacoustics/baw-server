@@ -88,6 +88,12 @@ h3 {
   margin-bottom: 10px; /* define margin as you see fit */
 }
 
+.inline-spread {
+  display: inline-flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
 .bootstrap-timepicker {
   i {
     margin: -2px 0 0 -22.5px;
@@ -103,6 +109,10 @@ h3 {
 .btn-destroy:before {
   font-family: FontAwesome;
   content: '\f00d\0009';
+}
+
+button.list-group-item[disabled] {
+  @extend .btn[disabled];
 }
 
 .loginWidgetImage {
@@ -157,20 +167,9 @@ footer {
 }
 
 .project_thumbnail {
-  position: relative;
-  i.project_permission_icon {
-    color: $grayDark;
-    position: absolute;
-    right: 10px;
-    top: 10px;
-    font-size: $baseFontSize * 1.75;
-  }
-
-  ul.nav {
-    position: absolute;
-    right: 10px;
-    bottom: 10px;
-  }
+  overflow-wrap: break-word;
+  word-break: break-all;
+  height: 24em;
 }
 
 select[multiple] {

@@ -171,10 +171,5 @@ module Api
       authorize! (custom_action_name || action_name).to_sym, (custom_class || resource_class)
     end
 
-    def do_authorise_instance_or_class
-      authorize! action_name.to_sym, (get_resource || resource_class)
-    end
-
-
   end
 end

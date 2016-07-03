@@ -4,15 +4,44 @@
 = render partial: 'shared/sidebar_public', locals: {user_show: @user, user_current: current_user}
 
 %p
-  Welcome! The
-  =Settings.organisation_names.site_long_name
-  is a repository of information and audio recording annotations for fauna that make human-audible sounds.
-%p
-  We gather recordings from a wide range of environments and find practical ways to annotate the sounds with information about what's going on in them.
-  Then we enable that information to be put to use by ecologists and other parties interested in conservation.
+  Welcome! This is a repository of environmental audio recordings and web-based applications for analysing sounds.
+  It enables us to facilitate
+  = link_to "research into bioacoustics and ecoacoustics.", "http://research.ecosounds.org"
+
+- unless @selected_images.blank?
+  .row
+    .col-sm-4.text-center
+      %strong
+        = "1) #{@selected_images[:animal]['commonName']} Sound"
+      %img.thumbnail.center-block{src: "#{@selected_images[:image_base]}#{@selected_images[:animal]['baseName'].html_safe+'.jpg'}",
+        alt: "Image of #{@selected_images[:animal]['commonName']}", style: 'width:100%; max-height: 250px; margin-bottom:5px;' }
+      %small
+        Faunal vocalisations and other human-audible environmental sounds
+      %br/
+      %small.text-muted
+        Photo Source:
+        %a{href: @selected_images[:animal]['animalImageSourceLink'], rel: 'nofollow'}= @selected_images[:animal]['animalImageSourceName']
+
+    .col-sm-3.text-center
+      %strong
+        2) Acoustic Sensor
+      %img.thumbnail.center-block{src: @selected_images[:sensor_tree],
+        alt: 'An acoustic sensor attached to a tree.', style: 'width:100%; margin-bottom:5px;' }
+      %small
+        Acoustic sensors record sound in a wide range of environments
+
+    .col-sm-5.text-center
+      %strong
+        3) Annotated Spectrogram
+      %img.thumbnail.center-block{src: @selected_images[:example_spectrogram],
+        alt: 'Annotated Spectrogram.', style: 'width:100%; margin-bottom:5px;' }
+      %small
+        Practical identification of animal sounds by people and automated detectors. Ecologists use these to answer environmental questions.
+
+%br
 
 - if current_user.blank?
-  - msg_text = 'To access Projects, Sites, and Audio Recordings and participate in our analysis work you will need to '
+  - msg_text = 'You can browse some public projects and audio recordings without logging in. To participate in the analysis work you will need to '
   - msg_text += link_to t('devise.shared.links.sign_in'), new_user_session_path, class: 'alert-link'
   - msg_text += ' with an existing account or '
   - msg_text += link_to t('devise.shared.links.sign_up'), new_user_registration_path, class: 'alert-link'
@@ -22,55 +51,22 @@
 - elsif can? :index, Project
   - msg_text = 'To begin, have a look at the '
   - msg_text += link_to t('baw.shared.links.projects.title'), projects_path, class: 'alert-link'
-  - msg_text += ' that are available to you. You can then access Audio Recordings through the Sites in each Project.'
+  - msg_text += ' that are available to you. You can contribute to the analysis work by exploring audio recordings in a site.'
   = render partial: 'shared/alert', locals: { msg_type: :notice, msg_text: msg_text.html_safe }
 
-- unless @selected_images.blank?
+- unless @random_projects.blank?
+  %h3 Some of the projects you can access
   .row
+    -  @random_projects.each do |project|
+      .col-sm-4
+        .thumbnail.project_thumbnail
+          %a{href: project_path(project), style: 'width:100%;'}
+            %img{src: project.image.url(:span3), alt: project.name}/
+          .caption
+            %h4{style: 'margin-top:0'}
+              %a{href: project_path(project)}= project.name
+            %p= truncate(project.description, length: 75)
 
-    .col-xs-12.col-sm-5.text-center
-      %strong
-        = "#{@selected_images[:animal]['commonName']} Sound"
-      %img.thumbnail.center-block{src: "#{@selected_images[:image_base]}#{@selected_images[:animal]['baseName'].html_safe+'.jpg'}",
-        alt: "Image of #{@selected_images[:animal]['commonName']}", style: 'height: 180px;margin-bottom:5px;' }
-      %small
-        Faunal vocalisations and other environmental sounds
-      %br/
-      %small.text-muted
-        Photo Source:
-        %a{href: @selected_images[:animal]['animalImageSourceLink'], rel: 'nofollow'}= @selected_images[:animal]['animalImageSourceName']
-
-    .col-sm-1.text-center.home-arrow.hidden-xs
-      = '&rarr;'.html_safe
-
-    .col-xs-12.col-sm-5.text-center
-      %strong
-        Acoustic Sensor
-      %img.thumbnail.center-block{src: @selected_images[:sensor_tree],
-        alt: 'An acoustic sensor attached to a tree.', style: 'height: 200px;margin-bottom:5px;' }
-      %small
-        Acoustic sensors record sound in locations of study
-
-    .col-sm-1.text-center.home-arrow.hidden-xs
-      = '&rarr;'.html_safe
-
-  .row{style: 'margin-top:20px;'}
-
-    .col-xs-12.col-sm-5.text-center
-      %strong
-        Annotated Spectrogram
-      %img.thumbnail.center-block{src: @selected_images[:example_spectrogram],
-        alt: 'Annotated Spectrogram.', style: 'height: 200px;margin-bottom:5px;' }
-      %small
-        Animal sounds are identified by people and automated detectors
-
-    .col-sm-1.text-center.home-arrow.hidden-xs
-      = '&rarr;'.html_safe
-
-    .col-xs-12.col-sm-5.text-center
-      %strong
-        Ecologists
-      %img.thumbnail.center-block{src: @selected_images[:ecologist],
-        alt: 'Ecologists.', style: 'height: 200px;margin-bottom:5px;' }
-      %small
-        Observations of fauna sounds are passed to ecologists to answer environmental questions.
+  .row
+    .pull-right
+      = link_to "More projects...", projects_path

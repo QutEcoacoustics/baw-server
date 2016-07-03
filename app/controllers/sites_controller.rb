@@ -12,7 +12,7 @@ class SitesController < ApplicationController
       format.json {
         @sites, opts = Settings.api_response.response_advanced(
             api_filter_params,
-            Access::Query.project_sites(@project, current_user),
+            Access::ByPermission.sites(current_user, Access::Core.levels, [@project.id]),
             Site,
             Site.filter_settings
         )
@@ -90,12 +90,15 @@ class SitesController < ApplicationController
     get_project
     do_authorize_instance
 
+    @original_site_name = @site.name
+
     respond_to do |format|
       if @site.update_attributes(site_params)
         format.html { redirect_to [@project, @site], notice: 'Site was successfully updated.' }
         format.json { respond_show }
       else
         format.html {
+
           render action: 'edit'
         }
         format.json { respond_change_fail }
@@ -162,7 +165,7 @@ ORDER BY s.name")
 
     filter_response, opts = Settings.api_response.response_advanced(
         api_filter_params,
-        Access::Query.sites(current_user),
+        Access::ByPermission.sites(current_user),
         Site,
         Site.filter_settings
     )

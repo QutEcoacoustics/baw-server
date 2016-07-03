@@ -2,8 +2,20 @@ require 'rails_helper'
 
 def compare_filter_sql(filter, sql_result)
   filter_query = create_filter(filter)
-  expect(filter_query.query_full.to_sql.gsub(/\s+/, '')).to eq(sql_result.gsub(/\s+/, ''))
+  comparison_ignore_spaces(filter_query.query_full.to_sql, sql_result)
   filter_query
+end
+
+def comparison_ignore_spaces(a, b)
+  a_mod = a.gsub(/\s+/, '')
+  b_mod = b.gsub(/\s+/, '')
+  differences = a_mod.chars.each_with_index.to_a - b_mod.chars.each_with_index.to_a
+
+  key_words = %w(SELECT WHERE AND OR INNER FROM ORDER)
+  map = Hash[*key_words.collect { |v| [v, "\n#{v}"] }.flatten]
+  re = Regexp.new(key_words.map { |x| Regexp.escape(x) }.join('|'))
+
+  expect(differences).to be_empty, "Strings do not match, first difference is at '#{differences.first(3)}'.\nFirst string: #{a_mod.gsub(re, map)}\n\nSecond string: #{b_mod.gsub(re, map)}"
 end
 
 describe Filter::Query do
@@ -343,11 +355,14 @@ describe Filter::Query do
               }
           }
       }
-      complex_result = "SELECT\"audio_recordings\".\"recorded_date\",\"audio_recordings\".\"site_id\" \
-FROM\"audio_recordings\" \
-WHERE(\"audio_recordings\".\"deleted_at\"ISNULL) \
-AND\"audio_recordings\".\"site_id\"=5 \
-ORDERBY\"audio_recordings\".\"recorded_date\"DESCLIMIT25OFFSET0"
+      complex_result = <<-SQL
+SELECT "audio_recordings"."recorded_date", "audio_recordings"."site_id"
+FROM "audio_recordings"
+WHERE ("audio_recordings"."deleted_at" IS NULL)
+AND "audio_recordings"."site_id" = 5
+ORDER BY "audio_recordings"."recorded_date" DESC
+LIMIT 25 OFFSET 0
+      SQL
       compare_filter_sql(request_body_obj, complex_result)
     end
 
@@ -366,13 +381,14 @@ ORDERBY\"audio_recordings\".\"recorded_date\"DESCLIMIT25OFFSET0"
               }
           }
       }
-      complex_result =
-          "SELECT\"audio_recordings\".\"id\", \
-          \"audio_recordings\".\"duration_seconds\" \
-FROM\"audio_recordings\" \
-WHERE(\"audio_recordings\".\"deleted_at\"ISNULL) \
-AND\"audio_recordings\".\"site_id\"=5 \
-ORDERBY\"audio_recordings\".\"recorded_date\"DESCLIMIT25OFFSET0"
+      complex_result = <<-SQL
+SELECT "audio_recordings". "id", "audio_recordings". "duration_seconds"
+FROM "audio_recordings"
+WHERE ("audio_recordings"."deleted_at" IS NULL)
+AND "audio_recordings"."site_id" = 5
+ORDER BY "audio_recordings"."recorded_date" DESC
+LIMIT 25 OFFSET 0
+      SQL
       compare_filter_sql(request_body_obj, complex_result)
     end
 
@@ -584,7 +600,7 @@ ORDERBY\"audio_recordings\".\"recorded_date\"DESCLIMIT25OFFSET0"
       user = writer_user
       filter_query = Filter::Query.new(
           posted_filter,
-          Access::Query.audio_recordings(user, Access::Core.levels_allow),
+          Access::ByPermission.audio_recordings(user, Access::Core.levels),
           AudioRecording,
           AudioRecording.filter_settings
       )
@@ -599,17 +615,18 @@ INNERJOIN\"sites\"ON\"sites\".\"id\"=\"audio_recordings\".\"site_id\" \
 AND(\"sites\".\"deleted_at\"ISNULL) \
 WHERE(\"audio_recordings\".\"deleted_at\"ISNULL) \
 AND(EXISTS( \
-SELECT1FROM\"projects_sites\" \
-WHERE\"sites\".\"id\"=\"projects_sites\".\"site_id\" \
-ANDEXISTS(( \
-SELECT1FROM\"projects\" \
-WHERE\"projects\".\"deleted_at\"ISNULL \
-AND\"projects\".\"creator_id\"=#{user_id} \
-AND\"projects_sites\".\"project_id\"=\"projects\".\"id\"UNIONALL \
-SELECT1FROM\"permissions\" \
-WHERE\"permissions\".\"user_id\"=#{user_id} \
-AND\"permissions\".\"level\"IN('reader','writer','owner') \
-AND\"projects_sites\".\"project_id\"=\"permissions\".\"project_id\")))) \
+SELECT1 \
+FROM\"projects_sites\" \
+INNERJOIN\"projects\"ON\"projects_sites\".\"project_id\"=\"projects\".\"id\" \
+WHERE\"projects_sites\".\"site_id\"=\"sites\".\"id\" \
+ANDEXISTS( \
+SELECT1 \
+FROM\"permissions\" \
+WHERE\"permissions\".\"level\"IN('owner','writer','reader') \
+AND\"projects\".\"id\"=\"permissions\".\"project_id\" \
+AND\"projects\".\"deleted_at\"ISNULL \
+AND(\"permissions\".\"user_id\"=#{user_id} \
+OR\"permissions\".\"allow_logged_in\"='t')))) \
 AND(\"audio_recordings\".\"site_id\"<123456 \
 AND\"audio_recordings\".\"site_id\">9876 \
 AND\"audio_recordings\".\"site_id\"IN(1,2,3) \
@@ -627,7 +644,8 @@ AND\"audio_recordings\".\"duration_seconds\"=123 \
 AND(\"audio_recordings\".\"duration_seconds\"!=40 \
 ORNOT(\"audio_recordings\".\"channels\"<=9999))) \
 AND\"audio_recordings\".\"id\"IN( \
-SELECT\"audio_recordings\".\"id\"FROM\"audio_recordings\" \
+SELECT\"audio_recordings\".\"id\" \
+FROM\"audio_recordings\" \
 LEFTOUTERJOIN\"audio_events\"ON\"audio_recordings\".\"id\"=\"audio_events\".\"audio_recording_id\" \
 WHERE\"audio_events\".\"is_reference\"='t') \
 AND((((((((((\"audio_recordings\".\"recorded_date\"='2016-04-2412:00:00' \
@@ -654,11 +672,11 @@ LEFTOUTERJOIN\"audio_events_tags\"ON\"audio_events\".\"id\"=\"audio_events_tags\
 LEFTOUTERJOIN\"tags\"ON\"audio_events_tags\".\"tag_id\"=\"tags\".\"id\" \
 WHERE\"tags\".\"text\"ILIKE'%koala%'))) \
 AND\"audio_recordings\".\"channels\"=28 \
-ORDERBY\"audio_recordings\".\"recorded_date\"DESC,\"audio_recordings\".\"duration_seconds\"DESC \
+ORDERBY\"audio_recordings\".\"duration_seconds\"DESC \
 LIMIT10OFFSET0"
 
       full_query = filter_query.query_full
-      expect(full_query.to_sql.gsub(/\s+/, '')).to eq(complex_result_2.gsub(/\s+/, ''))
+      comparison_ignore_spaces(full_query.to_sql, complex_result_2)
 
       # ensure query can be run (it obvs won't return anything)
       expect(full_query.pluck(:recorded_date)).to eq([])
@@ -718,16 +736,16 @@ LIMIT25OFFSET0"
       user_id = user.id
 
       complex_result_2 =
-          "SELECT\"audio_recordings\".\"id\",\"audio_recordings\".\"duration_seconds\"FROM\"audio_recordings\"INNERJOIN\"sites\"ON\"sites\".\"id\"=\"audio_recordings\".\"site_id\"AND(\"sites\".\"deleted_at\"ISNULL)WHERE(\"audio_recordings\".\"deleted_at\"ISNULL)AND(EXISTS(SELECT1FROM\"projects_sites\"WHERE\"sites\".\"id\"=\"projects_sites\".\"site_id\"ANDEXISTS((SELECT1FROM\"projects\"WHERE\"projects\".\"deleted_at\"ISNULLAND\"projects\".\"creator_id\"=#{user_id}AND\"projects_sites\".\"project_id\"=\"projects\".\"id\"UNIONALLSELECT1FROM\"permissions\"WHERE\"permissions\".\"user_id\"=#{user_id}AND\"permissions\".\"level\"IN('reader','writer','owner')AND\"projects_sites\".\"project_id\"=\"permissions\".\"project_id\"))))AND\"audio_recordings\".\"id\"IN(SELECT\"audio_recordings\".\"id\"FROM\"audio_recordings\"LEFTOUTERJOIN\"sites\"ON\"audio_recordings\".\"site_id\"=\"sites\".\"id\"WHERE\"sites\".\"id\"=5)AND\"audio_recordings\".\"id\"IN(SELECT\"audio_recordings\".\"id\"FROM\"audio_recordings\"LEFTOUTERJOIN\"audio_events\"ON\"audio_recordings\".\"id\"=\"audio_events\".\"audio_recording_id\"WHERE\"audio_events\".\"is_reference\"='t')AND\"audio_recordings\".\"id\"IN(SELECT\"audio_recordings\".\"id\"FROM\"audio_recordings\"LEFTOUTERJOIN\"audio_events\"ON\"audio_recordings\".\"id\"=\"audio_events\".\"audio_recording_id\"LEFTOUTERJOIN\"audio_events_tags\"ON\"audio_events\".\"id\"=\"audio_events_tags\".\"audio_event_id\"LEFTOUTERJOIN\"tags\"ON\"audio_events_tags\".\"tag_id\"=\"tags\".\"id\"WHERE\"tags\".\"text\"ILIKE'%koala%')ORDERBY\"audio_recordings\".\"recorded_date\"DESCLIMIT25OFFSET0"
+          "SELECT\"audio_recordings\".\"id\",\"audio_recordings\".\"duration_seconds\"FROM\"audio_recordings\"INNERJOIN\"sites\"ON\"sites\".\"id\"=\"audio_recordings\".\"site_id\"AND(\"sites\".\"deleted_at\"ISNULL)WHERE(\"audio_recordings\".\"deleted_at\"ISNULL)AND(EXISTS(SELECT1FROM\"projects_sites\"INNERJOIN\"projects\"ON\"projects_sites\".\"project_id\"=\"projects\".\"id\"WHERE\"projects_sites\".\"site_id\"=\"sites\".\"id\"ANDEXISTS(SELECT1FROM\"permissions\"WHERE\"permissions\".\"level\"IN('owner','writer','reader')AND\"projects\".\"id\"=\"permissions\".\"project_id\"AND\"projects\".\"deleted_at\"ISNULLAND(\"permissions\".\"user_id\"=#{user_id}OR\"permissions\".\"allow_logged_in\"='t'))))AND\"audio_recordings\".\"id\"IN(SELECT\"audio_recordings\".\"id\"FROM\"audio_recordings\"LEFTOUTERJOIN\"sites\"ON\"audio_recordings\".\"site_id\"=\"sites\".\"id\"WHERE\"sites\".\"id\"=5)AND\"audio_recordings\".\"id\"IN(SELECT\"audio_recordings\".\"id\"FROM\"audio_recordings\"LEFTOUTERJOIN\"audio_events\"ON\"audio_recordings\".\"id\"=\"audio_events\".\"audio_recording_id\"WHERE\"audio_events\".\"is_reference\"='t')AND\"audio_recordings\".\"id\"IN(SELECT\"audio_recordings\".\"id\"FROM\"audio_recordings\"LEFTOUTERJOIN\"audio_events\"ON\"audio_recordings\".\"id\"=\"audio_events\".\"audio_recording_id\"LEFTOUTERJOIN\"audio_events_tags\"ON\"audio_events\".\"id\"=\"audio_events_tags\".\"audio_event_id\"LEFTOUTERJOIN\"tags\"ON\"audio_events_tags\".\"tag_id\"=\"tags\".\"id\"WHERE\"tags\".\"text\"ILIKE'%koala%')ORDERBY\"audio_recordings\".\"recorded_date\"DESCLIMIT25OFFSET0"
 
       filter_query = Filter::Query.new(
           request_body_obj,
-          Access::Query.audio_recordings(user, Access::Core.levels_allow),
+          Access::ByPermission.audio_recordings(user, Access::Core.levels),
           AudioRecording,
           AudioRecording.filter_settings
       )
 
-      expect(filter_query.query_full.to_sql.gsub(/\s+/, '')).to eq(complex_result_2.gsub(/\s+/, ''))
+      comparison_ignore_spaces(filter_query.query_full.to_sql, complex_result_2)
 
     end
 
@@ -779,16 +797,16 @@ DESCLIMIT20OFFSET0"
       user_id = user.id
 
       complex_result_2 =
-          "SELECT\"audio_recordings\".\"id\",\"audio_recordings\".\"site_id\",\"audio_recordings\".\"duration_seconds\",\"audio_recordings\".\"recorded_date\",\"audio_recordings\".\"created_at\"FROM\"audio_recordings\"INNERJOIN\"sites\"ON\"sites\".\"id\"=\"audio_recordings\".\"site_id\"AND(\"sites\".\"deleted_at\"ISNULL)WHERE(\"audio_recordings\".\"deleted_at\"ISNULL)AND(EXISTS(SELECT1FROM\"projects_sites\"WHERE\"sites\".\"id\"=\"projects_sites\".\"site_id\"ANDEXISTS((SELECT1FROM\"projects\"WHERE\"projects\".\"deleted_at\"ISNULLAND\"projects\".\"creator_id\"=#{user_id}AND\"projects_sites\".\"project_id\"=\"projects\".\"id\"UNIONALLSELECT1FROM\"permissions\"WHERE\"permissions\".\"user_id\"=#{user_id}AND\"permissions\".\"level\"IN('reader','writer','owner')AND\"projects_sites\".\"project_id\"=\"permissions\".\"project_id\"))))AND(\"audio_recordings\".\"id\"IN(SELECT\"audio_recordings\".\"id\"FROM\"audio_recordings\"LEFTOUTERJOIN\"sites\"ON\"audio_recordings\".\"site_id\"=\"sites\".\"id\"LEFTOUTERJOIN\"projects_sites\"ON\"sites\".\"id\"=\"projects_sites\".\"site_id\"LEFTOUTERJOIN\"projects\"ON\"projects_sites\".\"project_id\"=\"projects\".\"id\"WHERE\"projects\".\"id\"<123456)AND\"audio_recordings\".\"duration_seconds\"!=40)ORDERBY\"audio_recordings\".\"recorded_date\"DESCLIMIT20OFFSET0"
+          "SELECT\"audio_recordings\".\"id\",\"audio_recordings\".\"site_id\",\"audio_recordings\".\"duration_seconds\",\"audio_recordings\".\"recorded_date\",\"audio_recordings\".\"created_at\"FROM\"audio_recordings\"INNERJOIN\"sites\"ON\"sites\".\"id\"=\"audio_recordings\".\"site_id\"AND(\"sites\".\"deleted_at\"ISNULL)WHERE(\"audio_recordings\".\"deleted_at\"ISNULL)AND(EXISTS(SELECT1FROM\"projects_sites\"INNERJOIN\"projects\"ON\"projects_sites\".\"project_id\"=\"projects\".\"id\"WHERE\"projects_sites\".\"site_id\"=\"sites\".\"id\"ANDEXISTS(SELECT1FROM\"permissions\"WHERE\"permissions\".\"level\"IN('owner','writer','reader')AND\"projects\".\"id\"=\"permissions\".\"project_id\"AND\"projects\".\"deleted_at\"ISNULLAND(\"permissions\".\"user_id\"=#{user_id}OR\"permissions\".\"allow_logged_in\"='t'))))AND(\"audio_recordings\".\"id\"IN(SELECT\"audio_recordings\".\"id\"FROM\"audio_recordings\"LEFTOUTERJOIN\"sites\"ON\"audio_recordings\".\"site_id\"=\"sites\".\"id\"LEFTOUTERJOIN\"projects_sites\"ON\"sites\".\"id\"=\"projects_sites\".\"site_id\"LEFTOUTERJOIN\"projects\"ON\"projects_sites\".\"project_id\"=\"projects\".\"id\"WHERE\"projects\".\"id\"<123456)AND\"audio_recordings\".\"duration_seconds\"!=40)ORDERBY\"audio_recordings\".\"recorded_date\"DESCLIMIT20OFFSET0"
 
       filter_query = Filter::Query.new(
           request_body_obj,
-          Access::Query.audio_recordings(user, Access::Core.levels_allow),
+          Access::ByPermission.audio_recordings(user, Access::Core.levels),
           AudioRecording,
           AudioRecording.filter_settings
       )
 
-      expect(filter_query.query_full.to_sql.gsub(/\s+/, '')).to eq(complex_result_2.gsub(/\s+/, ''))
+      comparison_ignore_spaces(filter_query.query_full.to_sql, complex_result_2)
     end
 
     it 'analysis_jobs_items - system, using a virtual table' do
@@ -839,15 +857,16 @@ FROM "analysis_jobs_items"
        AND ("sites"."deleted_at" IS NULL)
 WHERE (EXISTS(SELECT 1
               FROM "projects_sites"
-              WHERE "sites"."id" = "projects_sites"."site_id" AND EXISTS((SELECT 1
-              FROM "projects"
-              WHERE "projects"."deleted_at" IS NULL AND "projects"."creator_id" = #{user_id}
-                AND "projects_sites"."project_id" = "projects"."id"
-              UNION ALL
+              INNERJOIN "projects" ON "projects_sites"."project_id" = "projects"."id"
+              WHERE "projects_sites"."site_id"="sites"."id"
+              AND EXISTS(
               SELECT 1
               FROM "permissions"
-              WHERE "permissions"."user_id" = #{user_id} AND "permissions"."level" IN ('reader', 'writer', 'owner')
-                AND "projects_sites"."project_id" = "permissions"."project_id"))))
+              WHERE "permissions"."level" IN ('owner','writer','reader')
+              AND "projects"."id" = "permissions"."project_id"
+              AND "projects"."deleted_at"ISNULL
+              AND ("permissions"."user_id" = #{user_id}
+              OR "permissions"."allow_logged_in"='t'))))
       AND "analysis_jobs_items"."audio_recording_id" IN (
       SELECT "analysis_jobs_items"."audio_recording_id"
         FROM (SELECT "analysis_jobs_items".*
@@ -874,16 +893,16 @@ ORDER BY
   "analysis_jobs_items"."audio_recording_id" ASC
 LIMIT 20
 OFFSET 20
-SQL
+      SQL
 
       filter_query = Filter::Query.new(
           request_body_obj,
-          Access::Query.analysis_jobs_items(nil, user, true),
+          Access::ByPermission.analysis_jobs_items(nil, user, true),
           AnalysisJobsItem,
           AnalysisJobsItem.filter_settings(true)
       )
 
-      expect(filter_query.query_full.to_sql.gsub(/\s+/, '')).to eq(complex_result.gsub(/\s+/, ''))
+      comparison_ignore_spaces(filter_query.query_full.to_sql, complex_result)
     end
 
   end
@@ -903,16 +922,15 @@ SQL
 
       filter_query = Filter::Query.new(
           request_body_obj,
-          Access::Query.audio_events(user, Access::Core.levels_allow),
+          Access::ByPermission.audio_events(user, Access::Core.levels),
           AudioEvent,
           AudioEvent.filter_settings
       )
 
       expected_sql =
-          "SELECT\"audio_events\".\"id\",\"audio_events\".\"audio_recording_id\",\"audio_events\".\"start_time_seconds\",\"audio_events\".\"end_time_seconds\",\"audio_events\".\"low_frequency_hertz\",\"audio_events\".\"high_frequency_hertz\",\"audio_events\".\"is_reference\",\"audio_events\".\"creator_id\",\"audio_events\".\"updated_at\",\"audio_events\".\"created_at\"FROM\"audio_events\"INNERJOIN\"audio_recordings\"ON\"audio_recordings\".\"id\"=\"audio_events\".\"audio_recording_id\"AND(\"audio_recordings\".\"deleted_at\"ISNULL)INNERJOIN\"sites\"ON\"sites\".\"id\"=\"audio_recordings\".\"site_id\"AND(\"sites\".\"deleted_at\"ISNULL)WHERE(\"audio_events\".\"deleted_at\"ISNULL)AND(EXISTS(SELECT1FROM\"projects_sites\"WHERE\"sites\".\"id\"=\"projects_sites\".\"site_id\"ANDEXISTS((SELECT1FROM\"projects\"WHERE\"projects\".\"deleted_at\"ISNULLAND\"projects\".\"creator_id\"=#{user_id}AND\"projects_sites\".\"project_id\"=\"projects\".\"id\"UNIONALLSELECT1FROM\"permissions\"WHERE\"permissions\".\"user_id\"=#{user_id}AND\"permissions\".\"level\"IN('reader','writer','owner')AND\"projects_sites\".\"project_id\"=\"permissions\".\"project_id\")))OREXISTS(SELECT1FROM\"audio_events\"\"ae_ref\"WHERE\"ae_ref\".\"deleted_at\"ISNULLAND\"ae_ref\".\"is_reference\"='t'AND\"ae_ref\".\"id\"=\"audio_events\".\"id\"))AND((\"audio_events\".\"end_time_seconds\"-\"audio_events\".\"start_time_seconds\")>3)ORDERBY\"audio_events\".\"created_at\"DESCLIMIT25OFFSET0"
+          "SELECT\"audio_events\".\"id\",\"audio_events\".\"audio_recording_id\",\"audio_events\".\"start_time_seconds\",\"audio_events\".\"end_time_seconds\",\"audio_events\".\"low_frequency_hertz\",\"audio_events\".\"high_frequency_hertz\",\"audio_events\".\"is_reference\",\"audio_events\".\"creator_id\",\"audio_events\".\"updated_at\",\"audio_events\".\"created_at\"FROM\"audio_events\"INNERJOIN\"audio_recordings\"ON\"audio_recordings\".\"id\"=\"audio_events\".\"audio_recording_id\"AND(\"audio_recordings\".\"deleted_at\"ISNULL)INNERJOIN\"sites\"ON\"sites\".\"id\"=\"audio_recordings\".\"site_id\"AND(\"sites\".\"deleted_at\"ISNULL)WHERE(\"audio_events\".\"deleted_at\"ISNULL)AND(EXISTS(SELECT1FROM\"projects_sites\"INNERJOIN\"projects\"ON\"projects_sites\".\"project_id\"=\"projects\".\"id\"WHERE\"projects_sites\".\"site_id\"=\"sites\".\"id\"ANDEXISTS(SELECT1FROM\"permissions\"WHERE\"permissions\".\"level\"IN('owner','writer','reader')AND\"projects\".\"id\"=\"permissions\".\"project_id\"AND\"projects\".\"deleted_at\"ISNULLAND(\"permissions\".\"user_id\"=#{user_id}OR\"permissions\".\"allow_logged_in\"='t')))OREXISTS(SELECT1FROM\"audio_events\"\"ae_ref\"WHERE\"ae_ref\".\"deleted_at\"ISNULLAND\"ae_ref\".\"is_reference\"='t'AND\"ae_ref\".\"id\"=\"audio_events\".\"id\"))AND((\"audio_events\".\"end_time_seconds\"-\"audio_events\".\"start_time_seconds\")>3)ORDERBY\"audio_events\".\"created_at\"DESCLIMIT25OFFSET0"
 
-
-      expect(filter_query.query_full.to_sql.gsub(/\s+/, '')).to eq(expected_sql.gsub(/\s+/, ''))
+      comparison_ignore_spaces(filter_query.query_full.to_sql, expected_sql)
 
     end
 
@@ -934,16 +952,16 @@ SQL
 
       filter_query = Filter::Query.new(
           request_body_obj,
-          Access::Query.audio_events(user, Access::Core.levels_allow),
+          Access::ByPermission.audio_events(user, Access::Core.levels),
           AudioEvent,
           AudioEvent.filter_settings
       )
 
       expected_sql =
-          "SELECT\"audio_events\".\"id\",\"audio_events\".\"audio_recording_id\",\"audio_events\".\"start_time_seconds\",\"audio_events\".\"end_time_seconds\",\"audio_events\".\"low_frequency_hertz\",\"audio_events\".\"high_frequency_hertz\",\"audio_events\".\"is_reference\",\"audio_events\".\"creator_id\",\"audio_events\".\"updated_at\",\"audio_events\".\"created_at\"FROM\"audio_events\"INNERJOIN\"audio_recordings\"ON\"audio_recordings\".\"id\"=\"audio_events\".\"audio_recording_id\"AND(\"audio_recordings\".\"deleted_at\"ISNULL)INNERJOIN\"sites\"ON\"sites\".\"id\"=\"audio_recordings\".\"site_id\"AND(\"sites\".\"deleted_at\"ISNULL)WHERE(\"audio_events\".\"deleted_at\"ISNULL)AND(EXISTS(SELECT1FROM\"projects_sites\"WHERE\"sites\".\"id\"=\"projects_sites\".\"site_id\"ANDEXISTS((SELECT1FROM\"projects\"WHERE\"projects\".\"deleted_at\"ISNULLAND\"projects\".\"creator_id\"=#{user_id}AND\"projects_sites\".\"project_id\"=\"projects\".\"id\"UNIONALLSELECT1FROM\"permissions\"WHERE\"permissions\".\"user_id\"=#{user_id}AND\"permissions\".\"level\"IN('reader','writer','owner')AND\"projects_sites\".\"project_id\"=\"permissions\".\"project_id\")))OREXISTS(SELECT1FROM\"audio_events\"\"ae_ref\"WHERE\"ae_ref\".\"deleted_at\"ISNULLAND\"ae_ref\".\"is_reference\"='t'AND\"ae_ref\".\"id\"=\"audio_events\".\"id\"))AND((\"audio_events\".\"end_time_seconds\"-\"audio_events\".\"start_time_seconds\")>3)ORDERBY(\"audio_events\".\"end_time_seconds\"-\"audio_events\".\"start_time_seconds\")ASCLIMIT25OFFSET0"
+          "SELECT\"audio_events\".\"id\",\"audio_events\".\"audio_recording_id\",\"audio_events\".\"start_time_seconds\",\"audio_events\".\"end_time_seconds\",\"audio_events\".\"low_frequency_hertz\",\"audio_events\".\"high_frequency_hertz\",\"audio_events\".\"is_reference\",\"audio_events\".\"creator_id\",\"audio_events\".\"updated_at\",\"audio_events\".\"created_at\"FROM\"audio_events\"INNERJOIN\"audio_recordings\"ON\"audio_recordings\".\"id\"=\"audio_events\".\"audio_recording_id\"AND(\"audio_recordings\".\"deleted_at\"ISNULL)INNERJOIN\"sites\"ON\"sites\".\"id\"=\"audio_recordings\".\"site_id\"AND(\"sites\".\"deleted_at\"ISNULL)WHERE(\"audio_events\".\"deleted_at\"ISNULL)AND(EXISTS(SELECT1FROM\"projects_sites\"INNERJOIN\"projects\"ON\"projects_sites\".\"project_id\"=\"projects\".\"id\"WHERE\"projects_sites\".\"site_id\"=\"sites\".\"id\"ANDEXISTS(SELECT1FROM\"permissions\"WHERE\"permissions\".\"level\"IN('owner','writer','reader')AND\"projects\".\"id\"=\"permissions\".\"project_id\"AND\"projects\".\"deleted_at\"ISNULLAND(\"permissions\".\"user_id\"=#{user_id}OR\"permissions\".\"allow_logged_in\"='t')))OREXISTS(SELECT1FROM\"audio_events\"\"ae_ref\"WHERE\"ae_ref\".\"deleted_at\"ISNULLAND\"ae_ref\".\"is_reference\"='t'AND\"ae_ref\".\"id\"=\"audio_events\".\"id\"))AND((\"audio_events\".\"end_time_seconds\"-\"audio_events\".\"start_time_seconds\")>3)ORDERBY(\"audio_events\".\"end_time_seconds\"-\"audio_events\".\"start_time_seconds\")ASCLIMIT25OFFSET0"
 
 
-      expect(filter_query.query_full.to_sql.gsub(/\s+/, '')).to eq(expected_sql.gsub(/\s+/, ''))
+      comparison_ignore_spaces(filter_query.query_full.to_sql, expected_sql)
 
     end
 
@@ -962,16 +980,16 @@ SQL
 
       filter_query = Filter::Query.new(
           request_body_obj,
-          Access::Query.audio_recordings(user, Access::Core.levels_allow),
+          Access::ByPermission.audio_recordings(user, Access::Core.levels),
           AudioRecording,
           AudioRecording.filter_settings
       )
 
       expected_sql =
-          "SELECT\"audio_recordings\".\"id\",\"audio_recordings\".\"uuid\",\"audio_recordings\".\"recorded_date\",\"audio_recordings\".\"site_id\",\"audio_recordings\".\"duration_seconds\",\"audio_recordings\".\"sample_rate_hertz\",\"audio_recordings\".\"channels\",\"audio_recordings\".\"bit_rate_bps\",\"audio_recordings\".\"media_type\",\"audio_recordings\".\"data_length_bytes\",\"audio_recordings\".\"status\",\"audio_recordings\".\"created_at\",\"audio_recordings\".\"updated_at\"FROM\"audio_recordings\"INNERJOIN\"sites\"ON\"sites\".\"id\"=\"audio_recordings\".\"site_id\"AND(\"sites\".\"deleted_at\"ISNULL)WHERE(\"audio_recordings\".\"deleted_at\"ISNULL)AND(EXISTS(SELECT1FROM\"projects_sites\"WHERE\"sites\".\"id\"=\"projects_sites\".\"site_id\"ANDEXISTS((SELECT1FROM\"projects\"WHERE\"projects\".\"deleted_at\"ISNULLAND\"projects\".\"creator_id\"=#{user_id}AND\"projects_sites\".\"project_id\"=\"projects\".\"id\"UNIONALLSELECT1FROM\"permissions\"WHERE\"permissions\".\"user_id\"=#{user_id}AND\"permissions\".\"level\"IN('reader','writer','owner')AND\"projects_sites\".\"project_id\"=\"permissions\".\"project_id\"))))AND(\"audio_recordings\".\"recorded_date\"+CAST(\"audio_recordings\".\"duration_seconds\"||'seconds'asinterval)<'2016-03-01T02:00:00')AND(\"audio_recordings\".\"recorded_date\"+CAST(\"audio_recordings\".\"duration_seconds\"||'seconds'asinterval)>'2016-03-01T01:50:00')ORDERBY\"audio_recordings\".\"recorded_date\"DESCLIMIT25OFFSET0"
+          "SELECT\"audio_recordings\".\"id\",\"audio_recordings\".\"uuid\",\"audio_recordings\".\"recorded_date\",\"audio_recordings\".\"site_id\",\"audio_recordings\".\"duration_seconds\",\"audio_recordings\".\"sample_rate_hertz\",\"audio_recordings\".\"channels\",\"audio_recordings\".\"bit_rate_bps\",\"audio_recordings\".\"media_type\",\"audio_recordings\".\"data_length_bytes\",\"audio_recordings\".\"status\",\"audio_recordings\".\"created_at\",\"audio_recordings\".\"updated_at\"FROM\"audio_recordings\"INNERJOIN\"sites\"ON\"sites\".\"id\"=\"audio_recordings\".\"site_id\"AND(\"sites\".\"deleted_at\"ISNULL)WHERE(\"audio_recordings\".\"deleted_at\"ISNULL)AND(EXISTS(SELECT1FROM\"projects_sites\"INNERJOIN\"projects\"ON\"projects_sites\".\"project_id\"=\"projects\".\"id\"WHERE\"projects_sites\".\"site_id\"=\"sites\".\"id\"ANDEXISTS(SELECT1FROM\"permissions\"WHERE\"permissions\".\"level\"IN('owner','writer','reader')AND\"projects\".\"id\"=\"permissions\".\"project_id\"AND\"projects\".\"deleted_at\"ISNULLAND(\"permissions\".\"user_id\"=#{user_id}OR\"permissions\".\"allow_logged_in\"='t'))))AND(\"audio_recordings\".\"recorded_date\"+CAST(\"audio_recordings\".\"duration_seconds\"||'seconds'asinterval)<'2016-03-01T02:00:00')AND(\"audio_recordings\".\"recorded_date\"+CAST(\"audio_recordings\".\"duration_seconds\"||'seconds'asinterval)>'2016-03-01T01:50:00')ORDERBY\"audio_recordings\".\"recorded_date\"DESCLIMIT25OFFSET0"
 
 
-      expect(filter_query.query_full.to_sql.gsub(/\s+/, '')).to eq(expected_sql.gsub(/\s+/, ''))
+      comparison_ignore_spaces(filter_query.query_full.to_sql, expected_sql)
 
     end
 
@@ -986,10 +1004,10 @@ SQL
 
       project1 = project
       project2 = FactoryGirl.create(:project, creator: user, sites: [site])
-      permission2 = FactoryGirl.create(:permission, creator: user, project: project2, user: user, level: 'writer')
+
 
       project3 = FactoryGirl.create(:project, creator: user, sites: [site])
-      permission3 = FactoryGirl.create(:permission, creator: user, project: project3, user: user, level: 'writer')
+
 
       request_body_obj = {
           projection: {
@@ -999,7 +1017,7 @@ SQL
 
       filter_query = Filter::Query.new(
           request_body_obj,
-          Access::Query.audio_events(user, Access::Core.levels_allow),
+          Access::ByPermission.audio_events(user, Access::Core.levels),
           AudioEvent,
           AudioEvent.filter_settings
       )
@@ -1016,10 +1034,9 @@ SQL
 
       project1 = project
       project2 = FactoryGirl.create(:project, creator: user, sites: [site])
-      permission2 = FactoryGirl.create(:permission, creator: user, project: project2, user: user, level: 'writer')
+
 
       project3 = FactoryGirl.create(:project, creator: user, sites: [site])
-      permission3 = FactoryGirl.create(:permission, creator: user, project: project3, user: user, level: 'writer')
 
       request_body_obj = {
           projection: {
@@ -1029,7 +1046,7 @@ SQL
 
       filter_query = Filter::Query.new(
           request_body_obj,
-          Access::Query.comments(user, Access::Core.levels_allow),
+          Access::ByPermission.audio_event_comments(user, Access::Core.levels),
           AudioEventComment,
           AudioEventComment.filter_settings
       )
@@ -1043,7 +1060,7 @@ SQL
   context 'gets projects' do
     it 'inaccessible' do
       the_user = owner_user
-      project_no_access = FactoryGirl.create(:project, creator: other_user)
+      project_no_access = FactoryGirl.create(:project, creator: no_access_user)
 
       request_body_obj = {
           projection: {
@@ -1053,7 +1070,7 @@ SQL
 
       filter_query_inaccessible = Filter::Query.new(
           request_body_obj,
-          Access::Query.projects_inaccessible(the_user),
+          Access::ByPermission.projects(the_user, Access::Core.levels_none),
           Project,
           Project.filter_settings
       )
@@ -1077,7 +1094,7 @@ SQL
 
       filter_query_accessible = Filter::Query.new(
           request_body_obj,
-          Access::Query.projects_accessible(the_user),
+          Access::ByPermission.projects(the_user),
           Project,
           Project.filter_settings
       )
@@ -1106,7 +1123,7 @@ SQL
 
       filter_query_project2 = Filter::Query.new(
           request_body_obj,
-          Access::Query.project_sites(project_new, the_user, Access::Core.levels_allow),
+          Access::ByPermission.sites(the_user, Access::Core.levels, [project_new.id]),
           Site,
           Site.filter_settings
       )
@@ -1124,8 +1141,8 @@ SQL
       project2.sites << site2
       project2.save!
 
-      project3 = FactoryGirl.create(:project, creator: other_user)
-      site3 = FactoryGirl.create(:site, creator: other_user)
+      project3 = FactoryGirl.create(:project, creator: no_access_user)
+      site3 = FactoryGirl.create(:site, creator: no_access_user)
       project3.sites << site3
       project3.save!
 
@@ -1135,14 +1152,14 @@ SQL
           }
       }
 
-      filter_query_project2 = Filter::Query.new(
+      filter_query_site = Filter::Query.new(
           request_body_obj,
-          Access::Query.project_sites(project3, the_user, Access::Core.levels_deny),
+          Access::ByPermission.sites(the_user, Access::Core.levels_none, [project3.id]),
           Site,
           Site.filter_settings
       )
 
-      ids_actual = filter_query_project2.query_full.pluck(:id)
+      ids_actual = filter_query_site.query_full.pluck(:id)
       ids_expected = [site3.id]
       expect(ids_actual).to match_array(ids_expected)
     end
@@ -1161,13 +1178,14 @@ SQL
 
       filter_query_project2 = Filter::Query.new(
           request_body_obj,
-          Access::Query.project_permissions(project2),
+          Access::ByPermission.permissions(project2),
           Permission,
           Permission.filter_settings
       )
 
       ids_actual = filter_query_project2.query_full.pluck(:id)
-      ids_expected = [permission2.id]
+      owner_permission = Permission.where(project: project2, level: 'owner').first
+      ids_expected = [permission2.id, owner_permission.id]
       expect(ids_actual).to match_array(ids_expected)
     end
 
@@ -1194,7 +1212,7 @@ SQL
 
       filter_query_project2 = Filter::Query.new(
           request_body_obj,
-          Access::Query.audio_recording_audio_events(audio_recording2, the_user),
+          Access::ByPermission.audio_events(the_user, Access::Core.levels, audio_recording2),
           AudioEvent,
           AudioEvent.filter_settings
       )
@@ -1239,7 +1257,7 @@ SQL
 
       filter_query_project2 = Filter::Query.new(
           request_body_obj,
-          Access::Query.audio_event_comments(audio_event2, the_user),
+          Access::ByPermission.audio_event_comments(the_user, Access::Core.levels, audio_event2),
           AudioEventComment,
           AudioEventComment.filter_settings
       )
@@ -1252,7 +1270,16 @@ SQL
     it 'restricts comments to audio events in projects that can not be accessed' do
       the_user = owner_user
       comment1 = FactoryGirl.create(:audio_event_comment, creator: the_user)
+      site1 = comment1.audio_event.audio_recording.site
+      site1.projects << project
+      site1.save!
+
       comment2 = FactoryGirl.create(:audio_event_comment)
+      project2 = FactoryGirl.create(:project, creator: no_access_user)
+      site2 = comment2.audio_event.audio_recording.site
+      site2.projects << project2
+      site2.save!
+
       audio_event2 = comment2.audio_event
 
       expect(AudioEventComment.count).to eq(3)
@@ -1265,7 +1292,7 @@ SQL
 
       filter_query_project2 = Filter::Query.new(
           request_body_obj,
-          Access::Query.audio_event_comments(audio_event2, the_user, Access::Core.levels_deny),
+          Access::ByPermission.audio_event_comments(the_user, Access::Core.levels_none, audio_event2),
           AudioEventComment,
           AudioEventComment.filter_settings
       )
@@ -1302,7 +1329,7 @@ SQL
 
       filter = Filter::Query.new(
           {filter_start_time_seconds: 10, filter_end_time_seconds: 88},
-          Access::Query.audio_recording_audio_events(audio_recording, admin_user),
+          Access::ByPermission.audio_events(admin_user, Access::Core.levels, audio_recording),
           AudioEvent,
           AudioEvent.filter_settings
       )
@@ -1326,7 +1353,7 @@ SQL
 
       filter = Filter::Query.new(
           {filter_duration_seconds: 78},
-          Access::Query.audio_recording_audio_events(audio_recording, admin_user),
+          Access::ByPermission.audio_events(admin_user, Access::Core.levels, audio_recording),
           AudioEvent,
           AudioEvent.filter_settings
       )
@@ -1369,7 +1396,7 @@ SQL
           },
            filter_start_time_seconds: 10, filter_end_time_seconds: 88
           },
-          Access::Query.audio_recording_audio_events(audio_recording, admin_user),
+          Access::ByPermission.audio_events(admin_user, Access::Core.levels, audio_recording),
           AudioEvent,
           AudioEvent.filter_settings
       )
@@ -1397,7 +1424,7 @@ SQL
            filter_duration_seconds: 120,
            filter_partial_match: 'mp3'
           },
-          Access::Query.audio_recordings(admin_user),
+          Access::ByPermission.audio_recordings(admin_user),
           AudioRecording,
           AudioRecording.filter_settings
       )
@@ -1476,7 +1503,7 @@ SQL
 
       filter = Filter::Query.new(
           filter_hash,
-          Access::Query.audio_recordings(admin_user),
+          Access::ByPermission.audio_recordings(admin_user),
           AudioRecording,
           AudioRecording.filter_settings
       )

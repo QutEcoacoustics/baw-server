@@ -7,12 +7,12 @@ class ProjectsController < ApplicationController
 
     respond_to do |format|
       format.html {
-        @projects = Access::Query.projects_accessible(current_user).includes(:creator).references(:creator)
+        @projects = Access::ByPermission.projects(current_user).includes(:creator).references(:creator)
       }
       format.json {
         @projects, opts = Settings.api_response.response_advanced(
             api_filter_params,
-            Access::Query.projects_accessible(current_user),
+            Access::ByPermission.projects(current_user),
             Project,
             Project.filter_settings
         )
@@ -122,53 +122,6 @@ ORDER BY project_count ASC, s.name ASC")
 
   end
 
-  # POST /projects/:id/update_permissions
-  def update_permissions
-    do_load_resource
-    do_authorize_instance
-
-    # 'user_ids'=>{'1'=>{'permissions'=>{'level'=>'read'}},'3'=>{'permissions'=>{'level'=>'write'}}}    params[:project][:users].each do |users_params|
-    no_error = true
-
-    # loop through all users to see if their permission has been updated or revoked
-    User.all.each do |user|
-      # if the user's permission has been set, create permission
-      if update_params.has_key?(user.id.to_s)
-        @permission = Permission.where(project_id: @project.id, user_id: user.id).first
-        if @permission.blank?
-          @permission = Permission.new
-          @permission.project = @project
-          @permission.user = user
-          @permission.creator = current_user
-        else
-          @permission.updater = current_user
-        end
-        if update_params[user.id.to_s][:permissions][:level].blank?
-          @permission.destroy
-        else
-          @permission.level = update_params[user.id.to_s][:permissions][:level]
-
-          unless @permission.save
-            no_error = false
-          end
-        end
-      else # if the user's permission has NOT been set, destroy permission
-        @permission = Permission.where(project_id: @project.id, user_id: user.id).first
-        @permission.destroy unless @permission.blank?
-      end
-    end
-
-    respond_to do |format|
-      if no_error
-        format.html { redirect_to project_permissions_path(@project), notice: 'Permissions were successfully updated.' }
-        #format.json { render json: @permission, status: :created, location: @permission }
-      else
-        format.html { redirect_to project_permissions_path(@project), alert: 'Permissions were not updated.' }
-        #format.json { render json: @permission.errors, status: :unprocessable_entity }
-      end
-    end
-  end
-
   # DELETE /projects/:id
   def destroy
     do_load_resource
@@ -187,7 +140,7 @@ ORDER BY project_count ASC, s.name ASC")
   def new_access_request
     do_authorize_class
 
-    @all_projects = Access::Query.projects_inaccessible(current_user).order(name: :asc)
+    @all_projects = Access::ByPermission.projects(current_user, Access::Core.levels_none).order(name: :asc)
     respond_to do |format|
       format.html
     end
@@ -222,7 +175,7 @@ ORDER BY project_count ASC, s.name ASC")
 
     filter_response, opts = Settings.api_response.response_advanced(
         api_filter_params,
-        Access::Query.projects_accessible(current_user),
+        Access::ByPermission.projects(current_user),
         Project,
         Project.filter_settings
     )

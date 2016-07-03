@@ -16,4 +16,5 @@ user_current: current_user}
     = f.input :password, label: t('devise.passwords.edit.new_password'), required: true, autofocus: true, placeholder: 'Password',
       hint: (t('devise.passwords.edit.hint_password_length',  minimum_password_length: @minimum_password_length) if @minimum_password_length)
     = f.input :password_confirmation, label: t('devise.passwords.edit.confirm_new_password'), required: true, placeholder: 'Confirm password'
+    = render partial: 'shared/recaptcha', locals: {data_item: resource, data_item_name: resource_name }
     = f.button :submit_cancel, t('devise.shared.links.sign_up'), class: 'btn-default'

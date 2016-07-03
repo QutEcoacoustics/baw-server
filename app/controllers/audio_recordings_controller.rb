@@ -10,7 +10,7 @@ class AudioRecordingsController < ApplicationController
 
     @audio_recordings, opts = Settings.api_response.response_advanced(
         api_filter_params,
-        Access::Query.audio_recordings(current_user),
+        Access::ByPermission.audio_recordings(current_user),
         AudioRecording,
         AudioRecording.filter_settings
     )
@@ -50,9 +50,9 @@ class AudioRecordingsController < ApplicationController
     uploader_id = audio_recording_params[:uploader_id].to_i
     user_exists = User.exists?(uploader_id)
     user = User.where(id: uploader_id).first
-    actual_level = Access::Level.project(user, @project)
+    actual_level = Access::Core.user_levels(user, @project)
     requested_level = :writer
-    is_allowed = Access::Check.allowed?(requested_level, actual_level)
+    is_allowed = Access::Core.allowed?(requested_level, actual_level)
 
     if !user_exists || !is_allowed
       respond_error(
@@ -133,7 +133,7 @@ class AudioRecordingsController < ApplicationController
   # this is used by the harvester, do not change!
   # GET /projects/:project_id/sites/:site_id/audio_recordings/check_uploader/:uploader_id
   def check_uploader
-    #do_authorize_class - custom auth
+    #do_authorize_class - not used, this action does a custom auth
     get_project_site
 
     # current user should be the harvester
@@ -141,15 +141,15 @@ class AudioRecordingsController < ApplicationController
 
     if current_user.blank?
       fail CanCan::AccessDenied.new(I18n.t('devise.failure.unauthenticated'), :check_uploader, AudioRecording)
-    elsif Access::Check.is_harvester?(current_user)
+    elsif Access::Core.is_harvester?(current_user)
       # auth check is skipped, so auth is checked manually here
       uploader_id = params[:uploader_id].to_i
       user_exists = User.exists?(uploader_id)
       user = User.where(id: uploader_id).first
 
-      actual_level = Access::Level.project(user, @project)
+      actual_level = Access::Core.user_levels(user, @project)
       requested_level = :writer
-      is_allowed = Access::Check.allowed?(requested_level, actual_level)
+      is_allowed = Access::Core.allowed?(requested_level, actual_level)
 
       if !user_exists || !is_allowed
         respond_error(
@@ -190,7 +190,7 @@ class AudioRecordingsController < ApplicationController
 
     filter_response, opts = Settings.api_response.response_advanced(
         api_filter_params,
-        Access::Query.audio_recordings(current_user),
+        Access::ByPermission.audio_recordings(current_user),
         AudioRecording,
         AudioRecording.filter_settings
     )
@@ -203,7 +203,7 @@ class AudioRecordingsController < ApplicationController
     # auth is checked manually here - not sure if this is necessary or not
     if current_user.blank?
       fail CanCan::AccessDenied.new(I18n.t('devise.failure.unauthenticated'), :update_status_user_check, AudioRecording)
-    elsif Access::Check.is_harvester?(current_user)
+    elsif Access::Core.is_harvester?(current_user)
       update_status_params_check
     else
       respond_error(:forbidden, 'only harvester can update audio recordings')

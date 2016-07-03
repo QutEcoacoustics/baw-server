@@ -44,8 +44,8 @@ class SavedSearch < ActiveRecord::Base
         controller: :saved_searches,
         action: :filter,
         defaults: {
-            order_by: :name,
-            direction: :asc
+            order_by: :created_at,
+            direction: :desc
         },
         valid_associations: [
             {
@@ -74,11 +74,11 @@ class SavedSearch < ActiveRecord::Base
   # @param [User] user
   # @return [Arel::Nodes::Node, Array<Arel::Nodes::Node>] conditions
   def audio_recording_conditions(user)
-    user = Access::Core.validate_user(user)
+    user = Access::Validate.user(user)
 
     filter_query = Filter::Query.new(
         {filter: stored_query},
-        Access::Query.audio_recordings(user, Access::Core.levels_allow),
+        Access::ByPermission.audio_recordings(user),
         AudioRecording,
         AudioRecording.filter_settings)
 
@@ -93,7 +93,7 @@ class SavedSearch < ActiveRecord::Base
   # @param [User] user
   # @return [ActiveRecord::Relation] audio recordings
   def audio_recordings_extract(user)
-    user = Access::Core.validate_user(user)
+    user = Access::Validate.user(user)
 
     conditions = audio_recording_conditions(user)
 
@@ -105,7 +105,7 @@ class SavedSearch < ActiveRecord::Base
   # @param [User] user
   # @return [ActiveRecord::Relation] projects
   def projects_extract(user)
-    user = Access::Core.validate_user(user)
+    user = Access::Validate.user(user)
 
     pt = Project.arel_table
     ps = Arel::Table.new(:projects_sites)
@@ -160,7 +160,7 @@ WHERE EXISTS (
     # TODO add logging and timing
     # TODO This may need to be async depending on how fast it runs
 
-    user = Access::Core.validate_user(user)
+    user = Access::Validate.user(user)
     project_query = projects_extract(user)
     self.projects = project_query
   end

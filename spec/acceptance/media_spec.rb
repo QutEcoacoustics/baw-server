@@ -48,6 +48,13 @@ resource 'Media' do
 
   get 'audio_recordings/:audio_recording_id/media.:format' do
     standard_media_parameters
+    let(:authentication_token) { owner_token }
+    let(:format) { 'json' }
+    standard_request_options(:get, 'MEDIA (as owner)', :ok, {expected_json_path: 'data/recording/channel_count'})
+  end
+
+  get 'audio_recordings/:audio_recording_id/media.:format' do
+    standard_media_parameters
     let(:authentication_token) { writer_token }
     let(:format) { 'json' }
     standard_request_options(:get, 'MEDIA (as writer)', :ok, {expected_json_path: 'data/recording/channel_count'})
@@ -69,16 +76,22 @@ resource 'Media' do
 
   get '/audio_recordings/:audio_recording_id/media.:format' do
     standard_media_parameters
-    let(:authentication_token) { unconfirmed_token }
+    let(:authentication_token) { no_access_token }
     let(:format) { 'json' }
-    standard_request_options(:get, 'MEDIA (as unconfirmed user)', :forbidden, {expected_json_path: get_json_error_path(:confirm)})
+    standard_request_options(:get, 'MEDIA (as no access user)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
   end
 
   get '/audio_recordings/:audio_recording_id/media.:format' do
     standard_media_parameters
     let(:authentication_token) { invalid_token }
     let(:format) { 'json' }
-    standard_request_options(:get, 'MEDIA (as invalid token)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
+    standard_request_options(:get, 'MEDIA (with invalid token)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
+  end
+
+  get '/audio_recordings/:audio_recording_id/media.:format' do
+    standard_media_parameters
+    let(:format) { 'json' }
+    standard_request_options(:get, 'MEDIA (as anonymous user)', :unauthorized, {remove_auth: true, expected_json_path: get_json_error_path(:sign_up)})
   end
 
   ################################
@@ -108,16 +121,22 @@ resource 'Media' do
 
   get '/audio_recordings/:audio_recording_id/media.:format' do
     standard_media_parameters
-    let(:authentication_token) { unconfirmed_token }
+    let(:authentication_token) { no_access_token }
     let(:format) { 'json' }
-    standard_request_options(:get, 'MEDIA (as unconfirmed with shallow path)', :forbidden, {expected_json_path: get_json_error_path(:confirm)})
+    standard_request_options(:get, 'MEDIA (as no access user with shallow path)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
   end
 
   get '/audio_recordings/:audio_recording_id/media.:format' do
     standard_media_parameters
     let(:authentication_token) { invalid_token }
     let(:format) { 'json' }
-    standard_request_options(:get, 'MEDIA (as invalid with shallow path)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
+    standard_request_options(:get, 'MEDIA (with invalid token with shallow path)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
+  end
+
+  get '/audio_recordings/:audio_recording_id/media.:format' do
+    standard_media_parameters
+    let(:format) { 'json' }
+    standard_request_options(:get, 'MEDIA (as anonymous user with shallow path)', :unauthorized, {remove_auth: true, expected_json_path: get_json_error_path(:sign_up)})
   end
 
   get '/audio_recordings/:audio_recording_id/media.:format' do
@@ -489,9 +508,9 @@ resource 'Media' do
     let(:end_offset) { 7 }
 
     let(:audio_recording_id) {
-      project = Creation::Common.create_project(other_user)
-      site = Creation::Common.create_site(other_user, project)
-      audio_recording = Creation::Common.create_audio_recording(other_user, other_user, site)
+      project = Creation::Common.create_project(no_access_user)
+      site = Creation::Common.create_site(no_access_user, project)
+      audio_recording = Creation::Common.create_audio_recording(no_access_user, no_access_user, site)
       audio_recording.id
     }
 
@@ -525,9 +544,9 @@ resource 'Media' do
     let(:start_offset) { 20 }
     let(:end_offset) { 23 }
     let(:audio_recording_id) {
-      project = Creation::Common.create_project(other_user)
-      site = Creation::Common.create_site(other_user, project)
-      audio_recording = Creation::Common.create_audio_recording(other_user, other_user, site)
+      project = Creation::Common.create_project(no_access_user)
+      site = Creation::Common.create_site(no_access_user, project)
+      audio_recording = Creation::Common.create_audio_recording(no_access_user, no_access_user, site)
       audio_recording.id
     }
     let(:audio_event_id) {
@@ -546,14 +565,14 @@ resource 'Media' do
     let(:end_offset) { 13 }
 
     let(:audio_recording_id) {
-      project = Creation::Common.create_project(other_user)
-      site = Creation::Common.create_site(other_user, project)
-      audio_recording = Creation::Common.create_audio_recording(other_user, other_user, site)
+      project = Creation::Common.create_project(no_access_user)
+      site = Creation::Common.create_site(no_access_user, project)
+      audio_recording = Creation::Common.create_audio_recording(no_access_user, no_access_user, site)
       audio_recording.id
     }
 
     let(:audio_event_id) { audio_event.id }
-    let!(:other_audio_event_id) { # so there is an additional audio event
+    let!(:other_audio_event_id) {# so there is an additional audio event
       audio_event = FactoryGirl.create(:audio_event,
                                        audio_recording_id: audio_recording_id,
                                        start_time_seconds: 11, end_time_seconds: 12,

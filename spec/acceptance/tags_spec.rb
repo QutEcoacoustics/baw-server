@@ -2,6 +2,22 @@ require 'rails_helper'
 require 'rspec_api_documentation/dsl'
 require 'helpers/acceptance_spec_helper'
 
+def tag_id_param
+  parameter :id, 'Requested tag ID (in path/route)', required: true
+end
+
+def tag_extras_id_params
+  parameter :audio_recording_id, 'Requested audio recording ID (in path/route)', required: true
+  parameter :audio_event_id, 'Requested audio event ID (in path/route)', required: true
+end
+
+def tag_body_params
+  parameter :is_taxanomic, 'is taxanomic', scope: :tag, required: true
+  parameter :text, 'text', scope: :tag, required: true
+  parameter :type_of_tag, 'choose from [general, common_name, species_name, looks_like, sounds_like]', scope: :tag, required: true
+  parameter :retired, 'true or false', scope: :tag, required: true
+end
+
 # https://github.com/zipmark/rspec_api_documentation
 resource 'Tags' do
 
@@ -26,97 +42,228 @@ resource 'Tags' do
   let(:post_attributes) { FactoryGirl.attributes_for(:tag) }
 
   ################################
-  # LIST
+  # INDEX
   ################################
-  get '/audio_recordings/:audio_recording_id/audio_events/:audio_event_id/tags' do
-    # Execute request with ids defined in above let(:id) statements
-    parameter :audio_recording_id, 'Requested audio recording ID (in path/route)', required: true
-    parameter :audio_event_id, 'Requested audio event ID (in path/route)', required: true
 
+  get '/audio_recordings/:audio_recording_id/audio_events/:audio_event_id/tags' do
+    tag_extras_id_params
+    let(:authentication_token) { admin_token }
+    standard_request_options(:get, 'LIST for audio_event (as admin)', :ok, {expected_json_path: 'data/0/is_taxanomic', data_item_count: 1})
+  end
+
+  get '/audio_recordings/:audio_recording_id/audio_events/:audio_event_id/tags' do
+    tag_extras_id_params
+    let(:authentication_token) { owner_token }
+    standard_request_options(:get, 'LIST for audio_event (as owner)', :ok, {expected_json_path: 'data/0/is_taxanomic', data_item_count: 1})
+  end
+
+  get '/audio_recordings/:audio_recording_id/audio_events/:audio_event_id/tags' do
+    tag_extras_id_params
     let(:authentication_token) { writer_token }
     standard_request_options(:get, 'LIST for audio_event (as writer)', :ok, {expected_json_path: 'data/0/is_taxanomic', data_item_count: 1})
   end
 
   get '/audio_recordings/:audio_recording_id/audio_events/:audio_event_id/tags' do
-    # Execute request with ids defined in above let(:id) statements
-    parameter :audio_recording_id, 'Requested audio recording ID (in path/route)', required: true
-    parameter :audio_event_id, 'Requested audio event ID (in path/route)', required: true
-
+    tag_extras_id_params
     let(:authentication_token) { reader_token }
     standard_request_options(:get, 'LIST for audio_event (as reader)', :ok, {expected_json_path: 'data/0/is_taxanomic', data_item_count: 1})
   end
 
   get '/audio_recordings/:audio_recording_id/audio_events/:audio_event_id/tags' do
-    # Execute request with ids defined in above let(:id) statements
-    parameter :audio_recording_id, 'Requested audio recording ID (in path/route)', required: true
-    parameter :audio_event_id, 'Requested audio event ID (in path/route)', required: true
+    tag_extras_id_params
+    let(:authentication_token) { no_access_token }
+    standard_request_options(:get, 'LIST for audio_event (as no access user)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
+  end
 
-    let(:authentication_token) { unconfirmed_token }
-    standard_request_options(:get, 'LIST for audio_event (as unconfirmed user)', :forbidden, {expected_json_path: get_json_error_path(:confirm)})
+  get '/audio_recordings/:audio_recording_id/audio_events/:audio_event_id/tags' do
+    tag_extras_id_params
+    let(:authentication_token) { invalid_token }
+    standard_request_options(:get, 'LIST for audio_event (with invalid token)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
+  end
+
+  get '/audio_recordings/:audio_recording_id/audio_events/:audio_event_id/tags' do
+    tag_extras_id_params
+    standard_request_options(:get, 'LIST for audio_event (as anonymous user)', :unauthorized, {remove_auth: true, expected_json_path: get_json_error_path(:sign_in)})
+  end
+
+  ################################
+  # INDEX SHALLOW
+  ################################
+
+  get '/tags' do
+    tag_extras_id_params
+    let(:authentication_token) { admin_token }
+    standard_request_options(:get, 'LIST for audio_event (as admin, shallow route)', :ok, {expected_json_path: 'data/0/is_taxanomic', data_item_count: 1})
   end
 
   get '/tags' do
-    let(:authentication_token) { other_token }
+    tag_extras_id_params
+    let(:authentication_token) { owner_token }
+    standard_request_options(:get, 'LIST for audio_event (as owner, shallow route)', :ok, {expected_json_path: 'data/0/is_taxanomic', data_item_count: 1})
+  end
 
-    # should list 2 tags in the list
-    example 'LIST ALL (as other user) - 200', :document => true do
-      # create orphaned tags
-      2.times do |i|
-        FactoryGirl.create(:tag)
-      end
+  get '/tags' do
+    tag_extras_id_params
+    let(:authentication_token) { writer_token }
+    standard_request_options(:get, 'LIST for audio_event (as writer, shallow route)', :ok, {expected_json_path: 'data/0/is_taxanomic', data_item_count: 1})
+  end
 
-      do_request
-      expect(status).to eq(200)
-      expect(response_body).to have_json_path('data/2/is_taxanomic'), "Failed. Body: #{response_body}"
-    end
+  get '/tags' do
+    tag_extras_id_params
+    let(:authentication_token) { reader_token }
+    standard_request_options(:get, 'LIST for audio_event (as reader, shallow route)', :ok, {expected_json_path: 'data/0/is_taxanomic', data_item_count: 1})
+  end
+
+  get '/tags' do
+    tag_extras_id_params
+    let(:authentication_token) { no_access_token }
+    standard_request_options(:get, 'LIST for audio_event (as no access user, shallow route)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
+  end
+
+  get '/tags' do
+    tag_extras_id_params
+    let(:authentication_token) { invalid_token }
+    standard_request_options(:get, 'LIST for audio_event (with invalid token, shallow route)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
+  end
+
+  get '/tags' do
+    tag_extras_id_params
+    standard_request_options(:get, 'LIST for audio_event (as anonymous user, shallow route)', :unauthorized, {remove_auth: true, expected_json_path: get_json_error_path(:sign_in)})
+  end
+
+  ################################
+  # NEW
+  ################################
+
+  get '/tags/new' do
+    let(:authentication_token) { admin_token }
+    standard_request_options(:get, 'NEW for audio_event (as admin)', :ok, {expected_json_path: 'data/is_taxanomic'})
+  end
+
+  get '/tags/new' do
+    let(:authentication_token) { owner_token }
+    standard_request_options(:get, 'NEW for audio_event (as owner)', :ok, {expected_json_path: 'data/is_taxanomic'})
+  end
+
+  get '/tags/new' do
+    let(:authentication_token) { writer_token }
+    standard_request_options(:get, 'NEW for audio_event (as writer)', :ok, {expected_json_path: 'data/is_taxanomic'})
+  end
+
+  get '/tags/new' do
+    let(:authentication_token) { reader_token }
+    standard_request_options(:get, 'NEW for audio_event (as reader)', :ok, {expected_json_path: 'data/is_taxanomic'})
+  end
+
+  get '/tags/new' do
+    let(:authentication_token) { no_access_token }
+    standard_request_options(:get, 'NEW for audio_event (as no access user)', :ok, {expected_json_path: 'data/is_taxanomic'})
+  end
+
+  get '/tags/new' do
+    let(:authentication_token) { invalid_token }
+    standard_request_options(:get, 'NEW for audio_event (with invalid token)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
+  end
+
+  get '/tags/new' do
+    standard_request_options(:get, 'NEW for audio_event (as anonymous user)', :unauthorized, {remove_auth: true, expected_json_path: get_json_error_path(:sign_in)})
   end
 
   ################################
   # SHOW
   ################################
-  get '/tags/:id' do
-    parameter :id, 'Requested tag ID (in path/route)', required: true
 
-    let(:authentication_token) { writer_token }
-    standard_request_options(:get, 'SHOW (as writer)', :ok, {expected_json_path: 'data/is_taxanomic'}) #, 'is_taxanomic', true)
+  get '/tags/:id' do
+    tag_id_param
+    let(:authentication_token) { admin_token }
+    standard_request_options(:get, 'SHOW (as admin)', :ok, {expected_json_path: 'data/is_taxanomic'})
   end
 
   get '/tags/:id' do
-    parameter :id, 'Requested tag ID (in path/route)', required: true
+    tag_id_param
+    let(:authentication_token) { owner_token }
+    standard_request_options(:get, 'SHOW (as owner)', :ok, {expected_json_path: 'data/is_taxanomic'})
+  end
 
+  get '/tags/:id' do
+    tag_id_param
+    let(:authentication_token) { writer_token }
+    standard_request_options(:get, 'SHOW (as writer)', :ok, {expected_json_path: 'data/is_taxanomic'})
+  end
+
+  get '/tags/:id' do
+    tag_id_param
     let(:authentication_token) { reader_token }
-    standard_request_options(:get, 'SHOW (as reader)', :ok, {expected_json_path: 'data/is_taxanomic'}) #, 'is_taxanomic', true)
+    standard_request_options(:get, 'SHOW (as reader)', :ok, {expected_json_path: 'data/is_taxanomic'})
+  end
+
+  get '/tags/:id' do
+    tag_id_param
+    let(:authentication_token) { no_access_token }
+    standard_request_options(:get, 'SHOW (as no access user)', :ok, {expected_json_path: 'data/is_taxanomic'})
+  end
+
+  get '/tags/:id' do
+    tag_id_param
+    let(:authentication_token) { invalid_token }
+    standard_request_options(:get, 'SHOW (with invalid token)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
+  end
+
+  get '/tags/:id' do
+    tag_id_param
+    standard_request_options(:get, 'SHOW (as anonymous user)', :ok, {remove_auth: true, expected_json_path: 'data/is_taxanomic'})
   end
 
   ################################
   # CREATE
   ################################
+
   post '/tags' do
-    # Documentation in rspec_api_documentation
-    parameter :is_taxanomic, 'is taxanomic', scope: :tag, required: true
-    parameter :text, 'text', scope: :tag, required: true
-    parameter :type_of_tag, 'choose from [general, common_name, species_name, looks_like, sounds_like]', scope: :tag, :required => true
-    parameter :retired, 'true or false', scope: :tag, :required => true
-
+    tag_body_params
     let(:raw_post) { {'tag' => post_attributes}.to_json }
+    let(:authentication_token) { admin_token }
+    standard_request_options(:post, 'CREATE (as admin)', :created, {expected_json_path: 'data/is_taxanomic'})
+  end
 
+  post '/tags' do
+    tag_body_params
+    let(:raw_post) { {'tag' => post_attributes}.to_json }
+    let(:authentication_token) { owner_token }
+    standard_request_options(:post, 'CREATE (as owner)', :created, {expected_json_path: 'data/is_taxanomic'})
+  end
+
+  post '/tags' do
+    tag_body_params
+    let(:raw_post) { {'tag' => post_attributes}.to_json }
     let(:authentication_token) { writer_token }
     standard_request_options(:post, 'CREATE (as writer)', :created, {expected_json_path: 'data/is_taxanomic'})
   end
 
+  post '/tags' do
+    tag_body_params
+    let(:raw_post) { {'tag' => post_attributes}.to_json }
+    let(:authentication_token) { reader_token }
+    standard_request_options(:post, 'CREATE (as reader)', :created, {expected_json_path: 'data/is_taxanomic'})
+  end
 
   post '/tags' do
-    # Documentation in rspec_api_documentation
-    parameter :is_taxanomic, 'is taxanomic', scope: :tag, required: true
-    parameter :text, 'text', scope: :tag, required: true
-    parameter :type_of_tag, 'choose from [general, common_name, species_name, looks_like, sounds_like]', scope: :tag, :required => true
-    parameter :retired, 'true or false', scope: :tag, :required => true
-
+    tag_body_params
     let(:raw_post) { {'tag' => post_attributes}.to_json }
+    let(:authentication_token) { no_access_token }
+    standard_request_options(:post, 'CREATE (as no access user)', :created, {expected_json_path: 'data/is_taxanomic'})
+  end
 
-    let(:authentication_token) { unconfirmed_token }
-    # TODO: check what the result should be
-    standard_request_options(:post, 'CREATE (as unconfirmed user)', :forbidden, {expected_json_path: get_json_error_path(:confirm)})
+  post '/tags' do
+    tag_body_params
+    let(:raw_post) { {'tag' => post_attributes}.to_json }
+    let(:authentication_token) { invalid_token }
+    standard_request_options(:post, 'CREATE (with invalid token)', :unauthorized, {expected_json_path: get_json_error_path(:sign_in)})
+  end
+
+  post '/tags' do
+    tag_body_params
+    let(:raw_post) { {'tag' => post_attributes}.to_json }
+    standard_request_options(:post, 'CREATE (as anonymous user)', :unauthorized, {remove_auth: true, expected_json_path: get_json_error_path(:sign_up)})
   end
 
   #####################

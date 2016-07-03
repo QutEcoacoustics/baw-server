@@ -11,7 +11,7 @@ describe AnalysisJobsItem, type: :model do
   it 'cannot be created when status is not new' do
     expect {
       create(:analysis_jobs_item, status: nil)
-    }.to raise_error
+    }.to raise_error(RuntimeError, /AnalysisJobItem#status: Invalid state transition/)
   end
 
   it 'created_at should be set by rails' do
@@ -151,7 +151,7 @@ describe AnalysisJobsItem, type: :model do
         else
           expect {
             analysis_jobs_item.status = test_case[1]
-          }.to raise_error
+          }.to raise_error(RuntimeError, /AnalysisJobItem#status: Invalid state transition/)
 
         end
       end
@@ -164,7 +164,7 @@ describe AnalysisJobsItem, type: :model do
     create_entire_hierarchy
 
     let!(:second_project) {
-      Creation::Common.create_project(other_user)
+      Creation::Common.create_project(no_access_user)
     }
 
     # The second analysis jobs item allows us to test for different permission combinations
@@ -172,8 +172,7 @@ describe AnalysisJobsItem, type: :model do
     # access to the results
     let!(:second_analysis_jobs_item) {
       project = second_project
-      permission = FactoryGirl.create(:read_permission, creator: owner_user, user: other_user, project: project)
-      site = Creation::Common.create_site(other_user, project)
+      site = Creation::Common.create_site(no_access_user, project)
       audio_recording = Creation::Common.create_audio_recording(owner_user, owner_user, site)
       saved_search.projects << project
 
@@ -184,7 +183,7 @@ describe AnalysisJobsItem, type: :model do
       # give the original user permissions to access the second project
       permission = FactoryGirl.create(:read_permission, creator: owner_user, user: reader_user, project: second_project)
 
-      query = Access::Query.analysis_jobs_items(analysis_job, reader_user)
+      query = Access::ByPermission.analysis_jobs_items(analysis_job, reader_user)
 
       rows = query.all
 
@@ -195,7 +194,7 @@ describe AnalysisJobsItem, type: :model do
     end
 
     it 'ensures users with access to one project only get some recordings when new projects added' do
-      query = Access::Query.analysis_jobs_items(analysis_job, reader_user)
+      query = Access::ByPermission.analysis_jobs_items(analysis_job, reader_user)
 
       rows = query.all
 
@@ -206,7 +205,7 @@ describe AnalysisJobsItem, type: :model do
     end
 
     it 'ensures users with access to one projects get only some recordings' do
-      query = Access::Query.analysis_jobs_items(analysis_job, other_user)
+      query = Access::ByPermission.analysis_jobs_items(analysis_job, no_access_user)
 
       rows = query.all
 
@@ -273,18 +272,17 @@ describe AnalysisJobsItem, type: :model do
 
       # the values from the second will be our case
       let!(:second_recording) {
-        project = Creation::Common.create_project(other_user)
-        permission = FactoryGirl.create(:read_permission, creator: owner_user, user: other_user, project: project)
-        site = Creation::Common.create_site(other_user, project)
+        project = Creation::Common.create_project(no_access_user)
+        site = Creation::Common.create_site(no_access_user, project)
         audio_recording = Creation::Common.create_audio_recording(owner_user, owner_user, site)
         audio_recording
       }
 
       it 'only returns recordings the user has access too' do
-        user = other_user
+        user = no_access_user
 
         # augment the system with query with permissions
-        query = Access::Query.analysis_jobs_items(nil, user, true)
+        query = Access::ByPermission.analysis_jobs_items(nil, user, true)
 
         rows = query.all
 

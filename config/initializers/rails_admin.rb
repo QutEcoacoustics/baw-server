@@ -14,7 +14,7 @@
 #   #config.authorize_with :cancan
 #
 #   # config.authorize_with do
-#   #   fail CanCan::AccessDenied.new(I18n.t('devise.failure.unauthorized')) unless current_user && Access::Check.is_admin?(current_user)
+#   #   fail CanCan::AccessDenied.new(I18n.t('devise.failure.unauthorized')) unless current_user && Access::Core.is_admin?(current_user)
 #   # end
 #
 #   ## == PaperTrail ==

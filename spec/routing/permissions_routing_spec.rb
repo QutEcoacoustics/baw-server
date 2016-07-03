@@ -20,8 +20,5 @@ describe PermissionsController, :type => :routing do
     it { expect(put('/projects/1/permissions/2')).to  route_to('errors#route_error', requested_route: 'projects/1/permissions/2') }
     it { expect(delete('/projects/1/permissions/2')).to  route_to('permissions#destroy', project_id: '1', id: '2', format: 'json') }
 
-
-
-
   end
 end
