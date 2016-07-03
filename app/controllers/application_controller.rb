@@ -289,8 +289,8 @@ class ApplicationController < ActionController::Base
   end
 
   def configure_permitted_parameters
-    devise_parameter_sanitizer.for(:sign_up) { |u| u.permit(:user_name, :email, :password, :password_confirmation) }
-    devise_parameter_sanitizer.for(:account_update) { |u| u.permit(:user_name, :email, :password, :password_confirmation, :current_password, :image, :tzinfo_tz) }
+    devise_parameter_sanitizer.permit(:sign_up, keys: [:user_name, :email, :password, :password_confirmation])
+    devise_parameter_sanitizer.permit(:account_update, keys: [:user_name, :email, :password, :password_confirmation, :current_password, :image, :tzinfo_tz])
   end
 
   def after_sign_in_path_for(resource)

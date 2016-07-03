@@ -70,7 +70,7 @@ gem 'tzinfo-data', '~> 1.2016'
 # -------------------------------------
 # https://github.com/plataformatec/devise/blob/master/CHANGELOG.md
 # http://joanswork.com/devise-3-1-update/
-gem 'devise', '~> 3.5.10'
+gem 'devise', '~> 4.2.0'
 gem 'devise-i18n'
 gem 'cancancan', '~> 1.15'
 gem 'role_model', '~> 0.8.1'

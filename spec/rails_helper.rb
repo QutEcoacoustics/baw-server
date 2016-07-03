@@ -106,7 +106,7 @@ RSpec.configure do |config|
   Zonebie.set_random_timezone
   puts "===> Time zone offset is #{Time.zone.utc_offset}."
 
-  config.include Devise::TestHelpers, type: :controller
+  config.include Devise::Test::ControllerHelpers, type: :controller
   config.include Paperclip::Shoulda::Matchers
   config.include FactoryGirl::Syntax::Methods
 

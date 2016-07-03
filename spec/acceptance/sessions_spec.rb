@@ -2,7 +2,7 @@ require 'rails_helper'
 require 'rspec_api_documentation/dsl'
 require 'helpers/acceptance_spec_helper'
 
-resource 'Sessions' do
+resource 'Sessions' do 
 
   # set header
   header 'Accept', 'application/json'
