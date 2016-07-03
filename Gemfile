@@ -33,7 +33,7 @@ gem 'sass-rails', '~> 5.0.3'
 # Use Uglifier as compressor for JavaScript assets
 gem 'uglifier', '>= 1.3.0'
 # Use CoffeeScript for .js.coffee assets and views
-gem 'coffee-rails', '~> 4.1.0'
+gem 'coffee-rails', '~> 4.2.0'
 # See https://github.com/sstephenson/execjs#readme for more supported runtimes
 gem 'therubyracer', '~> 0.12.1', platforms: :ruby, require: 'v8'
 
@@ -187,17 +187,17 @@ group :development, :test do
   #gem 'debugger'
   # gem install traceroute --no-ri --no-rdoc
 
-  gem 'rspec-rails', '~> 3.4.0'
+  gem 'rspec-rails', '~> 3.5.0'
   gem 'factory_girl_rails', '~>  4.7.0'
   gem 'capybara', '~> 2.7.0'
 
-  gem 'rspec', '~> 3.4.0'
-  gem 'simplecov', '~> 0.11.1', require: false
+  gem 'rspec', '~> 3.5.0'
+  gem 'simplecov', '~> 0.11.0', require: false
   gem 'launchy', '~> 2.4.3'
   gem 'json_spec', '~> 1.1.4'
   gem 'database_cleaner', '~> 1.5.0'
 
-  gem 'coveralls', '~> 0.8.10', require: false
+  gem 'coveralls', '~> 0.8.13', require: false
   gem 'codeclimate-test-reporter', '~> 0.6.0', require: nil
 end
 
