@@ -454,6 +454,8 @@ module Access
         if Access::Core.is_guest?(user)
           # a guest user's permissions are only specified by :allow_logged_in
           levels = levels.where(user: nil, allow_logged_in: false, allow_anonymous: true)
+        elsif Access::Core.is_admin?(user)
+          return Access::Validate.levels([:owner])
         elsif !user.blank?
           # a logged in user can have their own permissions or
           # permissions specified by :allow_logged_in

@@ -39,9 +39,10 @@
         %td
 
           - if is_in_project
-            - actual_level = Access::Core.user_levels(@user, site.projects.includes(:creator).references(:creator))
+            - actual_levels = Access::Core.user_levels(@user, site.projects.includes(:creator).references(:creator))
+            - actual_level = Access::Core.highest(actual_levels)
             - level_name = Access::Core.get_level_name(actual_level)
-            - if Access::Core.allowed?(:writer, actual_level)
+            - if Access::Core.allowed?(:owner, actual_level)
               = link_to level_name, project_permissions_path(site.projects[0])
             - else
               = level_name

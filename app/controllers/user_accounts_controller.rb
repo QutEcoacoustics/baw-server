@@ -67,7 +67,7 @@ ELSE last_sign_in_at END DESC'
     end
 
     if params[:commit] == 'Confirm User'
-      @user.confirm!
+      @user.confirm
     end
 
     if params[:commit] == 'Resend Confirmation'
