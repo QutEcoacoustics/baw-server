@@ -7,7 +7,16 @@ module BawWorkers
       OPTS_FIELDS = [
           # command to run, with placeholders
           :command_format,
-          # relative path to executable
+          # Relative path to executable or script to run.
+          # This value is OPTIONAL.
+          # It exists because when we run analyses, we copy the script/program to run each time.
+          # Because the path changes, we need to be able to template the command with the correct absolute path.
+          # Examples:
+          # command: "mono <{file_executable}> some argument", file_executable: "AP/AP.exe"
+          #   ---> result: "mono /mnt/workers/production/runs/123/programs/AP/AP.exe some argument"
+          # command: "python <{file_executable}> some argument", file_executable: "analysis_v3.py"
+          #   ---> result: "python /mnt/workers/production/runs/123/programs/analysis_v3.py some argument"
+          #
           :file_executable,
           # array of paths to copy after running executable file
           :copy_paths,
