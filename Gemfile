@@ -60,7 +60,7 @@ gem 'font-awesome-sass', '~> 4.6.2'
 # for rails 3, 4
 gem 'kaminari'
 gem 'dotiw','~> 3.1.1'
-gem 'recaptcha', '~> 3.2.0',  require: 'recaptcha/rails'
+gem 'recaptcha', '~> 3.3.0',  require: 'recaptcha/rails'
 
 # for proper timezone support
 gem 'tzinfo', '~> 1.2.2'
@@ -105,7 +105,7 @@ require 'rbconfig'
 
 # MONITORING
 # -------------------------------------
-gem 'exception_notification', '~> 4.1.0'
+gem 'exception_notification', '~> 4.2.0'
 gem 'newrelic_rpm', '~> 3.15'
 
 # Documentation & UI
@@ -192,12 +192,12 @@ group :development, :test do
   gem 'capybara', '~> 2.7.0'
 
   gem 'rspec', '~> 3.5.0'
-  gem 'simplecov', '~> 0.11.0', require: false
+  gem 'simplecov', '~> 0.12.0', require: false
   gem 'launchy', '~> 2.4.3'
   gem 'json_spec', '~> 1.1.4'
   gem 'database_cleaner', '~> 1.5.0'
 
-  gem 'coveralls', '~> 0.8.13', require: false
+  gem 'coveralls', '~> 0.8.14', require: false
   gem 'codeclimate-test-reporter', '~> 0.6.0', require: nil
 end
 
