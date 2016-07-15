@@ -15,7 +15,7 @@
           .caption
             %h4{style: 'margin-top:0'}
               %a{href: project_path(project)}= project.name
-            %p= truncate(project.description, length: 75)
+            %p= truncate(project.description, separator: ' ', length: 60)
 
 - if @projects.empty?
   %p

@@ -7,7 +7,7 @@ class ProjectsController < ApplicationController
 
     respond_to do |format|
       format.html {
-        @projects = Access::ByPermission.projects(current_user).includes(:creator).references(:creator)
+        @projects = Access::ByPermission.projects(current_user).includes(:creator).references(:creator).order(:name)
       }
       format.json {
         @projects, opts = Settings.api_response.response_advanced(
