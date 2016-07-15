@@ -2,7 +2,7 @@ FactoryGirl.define do
 
   factory :site do
     sequence(:name) { |n| "site name #{n}" }
-    sequence(:notes) { |n|  "note number #{n}" }
+    #sequence(:notes) { |n|  {'a note': "note number #{n}"} }
     sequence(:description) { |n| "site description #{n}" }
 
     creator

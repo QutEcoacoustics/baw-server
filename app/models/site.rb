@@ -29,6 +29,9 @@ class Site < ActiveRecord::Base
   acts_as_paranoid
   validates_as_paranoid
 
+  # store notes as json in a text column
+  serialize :notes, JSON
+
   # association validations
   validates :creator, existence: true
 
