@@ -92,11 +92,16 @@ describe 'CRUD Projects as valid user and project creator', :type => :feature do
   it 'updates project when filling out form correctly' do
     visit edit_project_path(project)
     #save_and_open_page
-    fill_in 'project[name]', with: 'test name'
+    fill_in 'project[name]', with: 'test name 123'
+    fill_in 'project[tag_line]', with: 'just a tag line, saying hi'
     fill_in 'project[description]', with: 'description'
     attach_file('project[image]', 'public/images/user/user-512.png')
+    fill_in 'project[topic_tags]', with: 'topic 1, topic 2, topic 3'
+    fill_in 'project[licence_spec]', with: 'I have a licence to trill!'
+    fill_in 'project[attribution_cite]', with: 'By me, of course'
     click_button 'Submit'
-    expect(page).to have_content('test name')
+    expect(page).to have_content('Project was successfully updated.')
+    expect(page).to have_content('test name 123')
   end
 
 end
@@ -340,6 +345,7 @@ describe 'Project', type: :feature do
         fill_in 'project[description]', with: 'description'
         attach_file('project[image]', 'public/images/user/user-512.png')
         click_button 'Submit'
+        expect(page).to have_content('Project was successfully updated.')
         expect(page).to have_content('test name')
       end
 
@@ -388,6 +394,7 @@ describe 'Project', type: :feature do
         fill_in 'project[description]', with: 'description'
         attach_file('project[image]', 'public/images/user/user-512.png')
         click_button 'Submit'
+        expect(page).to have_content('Project was successfully updated.')
         expect(page).to have_content('test name')
       end
 

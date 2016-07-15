@@ -85,7 +85,7 @@ ORDER BY project_count ASC, s.name ASC")
     do_authorize_instance
 
     respond_to do |format|
-      if @project.update_attributes(project_params)
+      if @project.update_custom_attrs(project_params) && @project.update_attributes(project_params)
         format.html { redirect_to @project, notice: 'Project was successfully updated.' }
         format.json { respond_show }
       else
@@ -185,7 +185,7 @@ ORDER BY project_count ASC, s.name ASC")
   private
 
   def project_params
-    params.require(:project).permit(:description, :image, :name, :notes, :urn)
+    params.require(:project).permit(:description, :image, :name, :notes, :urn, :tag_line, :topic_tags, :licence_spec, :attribution_cite)
   end
 
   def access_request_params

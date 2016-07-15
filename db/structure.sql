@@ -35,16 +35,16 @@ SET default_with_oids = false;
 
 CREATE TABLE analysis_jobs (
     id integer NOT NULL,
-    name character varying NOT NULL,
-    annotation_name character varying,
+    name character varying(255) NOT NULL,
+    annotation_name character varying(255),
     custom_settings text NOT NULL,
     script_id integer NOT NULL,
     creator_id integer NOT NULL,
     updater_id integer,
     deleter_id integer,
     deleted_at timestamp without time zone,
-    created_at timestamp without time zone,
-    updated_at timestamp without time zone,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL,
     description text,
     saved_search_id integer NOT NULL,
     started_at timestamp without time zone,
@@ -121,7 +121,7 @@ CREATE TABLE audio_event_comments (
     id integer NOT NULL,
     audio_event_id integer NOT NULL,
     comment text NOT NULL,
-    flag character varying,
+    flag character varying(255),
     flag_explain text,
     flagger_id integer,
     flagged_at timestamp without time zone,
@@ -169,8 +169,8 @@ CREATE TABLE audio_events (
     updater_id integer,
     deleter_id integer,
     deleted_at timestamp without time zone,
-    created_at timestamp without time zone,
-    updated_at timestamp without time zone
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL
 );
 
 
@@ -201,10 +201,10 @@ CREATE TABLE audio_events_tags (
     id integer NOT NULL,
     audio_event_id integer NOT NULL,
     tag_id integer NOT NULL,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL,
     creator_id integer NOT NULL,
-    updater_id integer,
-    created_at timestamp without time zone,
-    updated_at timestamp without time zone
+    updater_id integer
 );
 
 
@@ -241,18 +241,18 @@ CREATE TABLE audio_recordings (
     sample_rate_hertz integer,
     channels integer,
     bit_rate_bps integer,
-    media_type character varying NOT NULL,
+    media_type character varying(255) NOT NULL,
     data_length_bytes bigint NOT NULL,
     file_hash character varying(524) NOT NULL,
-    status character varying DEFAULT 'new'::character varying,
+    status character varying(255) DEFAULT 'new'::character varying,
     notes text,
     creator_id integer NOT NULL,
     updater_id integer,
     deleter_id integer,
-    created_at timestamp without time zone,
-    updated_at timestamp without time zone,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL,
     deleted_at timestamp without time zone,
-    original_file_name character varying,
+    original_file_name character varying(255),
     recorded_utc_offset character varying(20)
 );
 
@@ -284,13 +284,13 @@ CREATE TABLE bookmarks (
     id integer NOT NULL,
     audio_recording_id integer,
     offset_seconds numeric(10,4),
-    name character varying,
+    name character varying(255),
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL,
     creator_id integer NOT NULL,
     updater_id integer,
-    created_at timestamp without time zone,
-    updated_at timestamp without time zone,
     description text,
-    category character varying
+    category character varying(255)
 );
 
 
@@ -320,12 +320,12 @@ ALTER SEQUENCE bookmarks_id_seq OWNED BY bookmarks.id;
 CREATE TABLE permissions (
     id integer NOT NULL,
     creator_id integer NOT NULL,
-    level character varying NOT NULL,
+    level character varying(255) NOT NULL,
     project_id integer NOT NULL,
     user_id integer,
     updater_id integer,
-    created_at timestamp without time zone,
-    updated_at timestamp without time zone,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL,
     allow_logged_in boolean DEFAULT false NOT NULL,
     allow_anonymous boolean DEFAULT false NOT NULL,
     CONSTRAINT permissions_exclusive_cols CHECK ((((((user_id IS NOT NULL) AND (NOT allow_logged_in)) AND (NOT allow_anonymous)) OR (((user_id IS NULL) AND allow_logged_in) AND (NOT allow_anonymous))) OR (((user_id IS NULL) AND (NOT allow_logged_in)) AND allow_anonymous)))
@@ -357,20 +357,22 @@ ALTER SEQUENCE permissions_id_seq OWNED BY permissions.id;
 
 CREATE TABLE projects (
     id integer NOT NULL,
-    name character varying NOT NULL,
+    name character varying(255) NOT NULL,
     description text,
-    urn character varying,
+    urn character varying(255),
     notes text,
     creator_id integer NOT NULL,
     updater_id integer,
     deleter_id integer,
     deleted_at timestamp without time zone,
-    image_file_name character varying,
-    image_content_type character varying,
+    image_file_name character varying(255),
+    image_content_type character varying(255),
     image_file_size integer,
     image_updated_at timestamp without time zone,
-    created_at timestamp without time zone,
-    updated_at timestamp without time zone
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL,
+    licence_spec text,
+    attribution_cite text
 );
 
 
@@ -453,7 +455,7 @@ ALTER SEQUENCE saved_searches_id_seq OWNED BY saved_searches.id;
 --
 
 CREATE TABLE schema_migrations (
-    version character varying NOT NULL
+    version character varying(255) NOT NULL
 );
 
 
@@ -463,9 +465,9 @@ CREATE TABLE schema_migrations (
 
 CREATE TABLE scripts (
     id integer NOT NULL,
-    name character varying NOT NULL,
-    description character varying,
-    analysis_identifier character varying NOT NULL,
+    name character varying(255) NOT NULL,
+    description character varying(255),
+    analysis_identifier character varying(255) NOT NULL,
     version numeric(4,2) DEFAULT 0.1 NOT NULL,
     verified boolean DEFAULT false,
     group_id integer,
@@ -502,7 +504,7 @@ ALTER SEQUENCE scripts_id_seq OWNED BY scripts.id;
 
 CREATE TABLE sites (
     id integer NOT NULL,
-    name character varying NOT NULL,
+    name character varying(255) NOT NULL,
     longitude numeric(9,6),
     latitude numeric(9,6),
     notes text,
@@ -510,12 +512,12 @@ CREATE TABLE sites (
     updater_id integer,
     deleter_id integer,
     deleted_at timestamp without time zone,
-    image_file_name character varying,
-    image_content_type character varying,
+    image_file_name character varying(255),
+    image_content_type character varying(255),
     image_file_size integer,
     image_updated_at timestamp without time zone,
-    created_at timestamp without time zone,
-    updated_at timestamp without time zone,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL,
     description text,
     tzinfo_tz character varying(255),
     rails_tz character varying(255)
@@ -579,15 +581,15 @@ ALTER SEQUENCE tag_groups_id_seq OWNED BY tag_groups.id;
 
 CREATE TABLE tags (
     id integer NOT NULL,
-    text character varying NOT NULL,
+    text character varying(255) NOT NULL,
     is_taxanomic boolean DEFAULT false NOT NULL,
-    type_of_tag character varying DEFAULT 'general'::character varying NOT NULL,
+    type_of_tag character varying(255) DEFAULT 'general'::character varying NOT NULL,
     retired boolean DEFAULT false NOT NULL,
     notes text,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL,
     creator_id integer NOT NULL,
-    updater_id integer,
-    created_at timestamp without time zone,
-    updated_at timestamp without time zone
+    updater_id integer
 );
 
 
@@ -616,31 +618,31 @@ ALTER SEQUENCE tags_id_seq OWNED BY tags.id;
 
 CREATE TABLE users (
     id integer NOT NULL,
-    email character varying NOT NULL,
-    user_name character varying NOT NULL,
-    encrypted_password character varying NOT NULL,
-    reset_password_token character varying,
+    email character varying(255) DEFAULT NULL::character varying NOT NULL,
+    user_name character varying(255) DEFAULT NULL::character varying NOT NULL,
+    encrypted_password character varying(255) DEFAULT NULL::character varying NOT NULL,
+    reset_password_token character varying(255),
     reset_password_sent_at timestamp without time zone,
     remember_created_at timestamp without time zone,
     sign_in_count integer DEFAULT 0,
     current_sign_in_at timestamp without time zone,
     last_sign_in_at timestamp without time zone,
-    current_sign_in_ip character varying,
-    last_sign_in_ip character varying,
-    confirmation_token character varying,
+    current_sign_in_ip character varying(255),
+    last_sign_in_ip character varying(255),
+    confirmation_token character varying(255),
     confirmed_at timestamp without time zone,
     confirmation_sent_at timestamp without time zone,
-    unconfirmed_email character varying,
+    unconfirmed_email character varying(255),
     failed_attempts integer DEFAULT 0,
-    unlock_token character varying,
+    unlock_token character varying(255),
     locked_at timestamp without time zone,
-    authentication_token character varying,
-    invitation_token character varying,
-    created_at timestamp without time zone,
-    updated_at timestamp without time zone,
+    authentication_token character varying(255),
+    invitation_token character varying(255),
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL,
     roles_mask integer,
-    image_file_name character varying,
-    image_content_type character varying,
+    image_file_name character varying(255),
+    image_content_type character varying(255),
     image_file_size integer,
     image_updated_at timestamp without time zone,
     preferences text,
@@ -895,13 +897,6 @@ ALTER TABLE ONLY users
 
 
 --
--- Name: analysis_jobs_name_uidx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
---
-
-CREATE UNIQUE INDEX analysis_jobs_name_uidx ON analysis_jobs USING btree (name, creator_id);
-
-
---
 -- Name: audio_recordings_created_updated_at; Type: INDEX; Schema: public; Owner: -; Tablespace: 
 --
 
@@ -976,13 +971,6 @@ CREATE INDEX index_analysis_jobs_on_creator_id ON analysis_jobs USING btree (cre
 --
 
 CREATE INDEX index_analysis_jobs_on_deleter_id ON analysis_jobs USING btree (deleter_id);
-
-
---
--- Name: index_analysis_jobs_on_saved_search_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
---
-
-CREATE INDEX index_analysis_jobs_on_saved_search_id ON analysis_jobs USING btree (saved_search_id);
 
 
 --
@@ -1189,27 +1177,6 @@ CREATE INDEX index_projects_on_updater_id ON projects USING btree (updater_id);
 
 
 --
--- Name: index_projects_saved_searches_on_project_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
---
-
-CREATE INDEX index_projects_saved_searches_on_project_id ON projects_saved_searches USING btree (project_id);
-
-
---
--- Name: index_projects_saved_searches_on_project_id_and_saved_search_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
---
-
-CREATE INDEX index_projects_saved_searches_on_project_id_and_saved_search_id ON projects_saved_searches USING btree (project_id, saved_search_id);
-
-
---
--- Name: index_projects_saved_searches_on_saved_search_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
---
-
-CREATE INDEX index_projects_saved_searches_on_saved_search_id ON projects_saved_searches USING btree (saved_search_id);
-
-
---
 -- Name: index_projects_sites_on_project_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
 --
 
@@ -1228,20 +1195,6 @@ CREATE INDEX index_projects_sites_on_project_id_and_site_id ON projects_sites US
 --
 
 CREATE INDEX index_projects_sites_on_site_id ON projects_sites USING btree (site_id);
-
-
---
--- Name: index_saved_searches_on_creator_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
---
-
-CREATE INDEX index_saved_searches_on_creator_id ON saved_searches USING btree (creator_id);
-
-
---
--- Name: index_saved_searches_on_deleter_id; Type: INDEX; Schema: public; Owner: -; Tablespace: 
---
-
-CREATE INDEX index_saved_searches_on_deleter_id ON saved_searches USING btree (deleter_id);
 
 
 --
@@ -1322,17 +1275,24 @@ CREATE UNIQUE INDEX index_users_on_email ON users USING btree (email);
 
 
 --
+-- Name: jobs_name_uidx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE UNIQUE INDEX jobs_name_uidx ON analysis_jobs USING btree (name);
+
+
+--
 -- Name: permissions_project_allow_anonymous_uidx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
 --
 
-CREATE UNIQUE INDEX permissions_project_allow_anonymous_uidx ON permissions USING btree (project_id, allow_anonymous) WHERE (allow_anonymous IS TRUE);
+CREATE UNIQUE INDEX permissions_project_allow_anonymous_uidx ON permissions USING btree (project_id, allow_anonymous) WHERE allow_anonymous;
 
 
 --
 -- Name: permissions_project_allow_logged_in_uidx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
 --
 
-CREATE UNIQUE INDEX permissions_project_allow_logged_in_uidx ON permissions USING btree (project_id, allow_logged_in) WHERE (allow_logged_in IS TRUE);
+CREATE UNIQUE INDEX permissions_project_allow_logged_in_uidx ON permissions USING btree (project_id, allow_logged_in) WHERE allow_logged_in;
 
 
 --
@@ -1354,13 +1314,6 @@ CREATE UNIQUE INDEX projects_name_uidx ON projects USING btree (name);
 --
 
 CREATE UNIQUE INDEX queue_id_uidx ON analysis_jobs_items USING btree (queue_id);
-
-
---
--- Name: saved_searches_name_creator_id_uidx; Type: INDEX; Schema: public; Owner: -; Tablespace: 
---
-
-CREATE UNIQUE INDEX saved_searches_name_creator_id_uidx ON saved_searches USING btree (name, creator_id);
 
 
 --
@@ -1869,6 +1822,8 @@ INSERT INTO schema_migrations (version) VALUES ('20150904234334');
 
 INSERT INTO schema_migrations (version) VALUES ('20150905234917');
 
+INSERT INTO schema_migrations (version) VALUES ('20151003042515');
+
 INSERT INTO schema_migrations (version) VALUES ('20160226103516');
 
 INSERT INTO schema_migrations (version) VALUES ('20160226130353');
@@ -1876,4 +1831,6 @@ INSERT INTO schema_migrations (version) VALUES ('20160226130353');
 INSERT INTO schema_migrations (version) VALUES ('20160306083845');
 
 INSERT INTO schema_migrations (version) VALUES ('20160420030414');
+
+INSERT INTO schema_migrations (version) VALUES ('20160715100838');
 

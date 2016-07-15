@@ -2,6 +2,9 @@ class Project < ActiveRecord::Base
   # ensures that creator_id, updater_id, deleter_id are set
   include UserChange
 
+  # for updating notes field, which stores JSON
+  include ModifyNotes
+
   # relationships
   belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_projects
   belongs_to :updater, class_name: 'User', foreign_key: :updater_id, inverse_of: :updated_projects
@@ -17,7 +20,29 @@ class Project < ActiveRecord::Base
 
   accepts_nested_attributes_for :permissions
 
-  #plugins
+  # store notes as json in a text column
+  serialize :notes, JSON
+
+  # attributes that are not backed by db fields
+  attr_accessor :tag_line, :topic_tags
+
+  def tag_line
+    if !self.notes.blank? && self.notes.include?('tag_line')
+      self.notes['tag_line']
+    else
+      ''
+    end
+  end
+
+  def topic_tags
+    if !self.notes.blank? && self.notes.include?('topic_tags')
+      self.notes['topic_tags']
+    else
+      ''
+    end
+  end
+
+  # plugins
   has_attached_file :image,
                     styles: {span4: '300x300#', span3: '220x220#', span2: '140x140#', span1: '60x60#', spanhalf: '30x30#'},
                     default_url: '/images/project/project_:style.png'
@@ -35,7 +60,7 @@ class Project < ActiveRecord::Base
   #validates :urn, uniqueness: {case_sensitive: false}, allow_blank: true, allow_nil: true
   validates_format_of :urn, with: /\Aurn:[a-z0-9][a-z0-9-]{0,31}:[a-z0-9()+,\-.:=@;$_!*'%\/?#]+\z/, message: 'urn %{value} is not valid, must be in format urn:<name>:<path>', allow_blank: true, allow_nil: true
   validates_attachment_content_type :image, content_type: /\Aimage\/(jpg|jpeg|pjpeg|png|x-png|gif)\z/, message: 'file type %{value} is not allowed (only jpeg/png/gif images)'
-  
+
   # make sure the project has a permission entry for the creator after it is created
   after_create :create_owner_permission
 
@@ -43,11 +68,30 @@ class Project < ActiveRecord::Base
     CustomRender.render_markdown(self, :description)
   end
 
+  def update_custom_attrs(hash)
+    has_tag_line = hash.include?('tag_line')
+    content_tag_line = hash['tag_line']
+    has_topic_tags = hash.include?('topic_tags')
+    content_topic_tags = hash['topic_tags']
+
+    if self.notes.blank?
+      self.notes = {}
+    end
+
+    if has_tag_line
+      self.notes['tag_line'] = content_tag_line
+    end
+    if has_topic_tags
+      self.notes['topic_tags'] = content_topic_tags
+    end
+    true
+  end
+
   # Define filter api settings
   def self.filter_settings
     {
-        valid_fields: [:id, :name, :description, :created_at, :creator_id],
-        render_fields: [:id, :name, :description, :creator_id],
+        valid_fields: [:id, :name, :description, :licence_spec, :attribution_cite, :created_at, :creator_id],
+        render_fields: [:id, :name, :description, :licence_spec, :attribution_cite, :creator_id],
         text_fields: [:name, :description],
         custom_fields: lambda { |item, user|
 
@@ -57,8 +101,12 @@ class Project < ActiveRecord::Base
 
           project_hash = {}
           project_hash[:site_ids] = fresh_project.nil? ? nil : fresh_project.sites.pluck(:id).flatten
-
           project_hash[:description_html]= fresh_project.description_html
+
+          unless fresh_project.notes.blank?
+            project_hash[:tag_line] = fresh_project.notes['tag_line'] if fresh_project.notes.include?('tag_line')
+            project_hash[:topic_tags]= fresh_project.notes['topic_tags'] if fresh_project.notes.include?('topic_tags')
+          end
 
           [item, project_hash]
         },

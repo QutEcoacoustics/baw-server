@@ -3,6 +3,10 @@
   = field_set_tag do
     = f.error_notification
     = f.input :name, required: true, label: 'Project Name'
-    = f.input :description, input_html: {rows: '3'}
+    = f.input :tag_line, label: 'Project Tag Line', hint: 'Summarise your project in a few words'
+    = f.input :description, input_html: {rows: '4'}
     = render partial: 'shared/image_upload', locals: { f: f,  model_instance: project, model_name: 'project' }
+    = f.input :topic_tags, label: 'Project Topics', hint: 'Enter descriptive labels, separated by commas'
+    = f.input :licence_spec, label: 'Project Licence', input_html: {rows: '5'}, placeholder: 'Enter the licence name, year, and copyright holder\'s name and a url to the licence.', hint: ('Need help choosing a licence? Try ' + link_to('Creative Commons', 'https://creativecommons.org/choose/') + ' or ' + link_to('ANDS', 'http://www.ands.org.au/working-with-data/enabling-data-reuse/licensing-for-reuse') + '.').html_safe
+    = f.input :attribution_cite, label: 'Attribution/Citation Suggestion', input_html: {rows: '5' }, placeholder: 'Enter the text you would like to be used when anyone refers to this project or the data it contains.'
     = f.button :submit_cancel, 'Submit', class: 'btn-default'

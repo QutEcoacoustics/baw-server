@@ -4,7 +4,7 @@ FactoryGirl.define do
     sequence(:name) { |n| "gen_project#{n}" }
     sequence(:description) { |n| "project description #{n}" }
     sequence(:urn) { |n| "urn:project:example.org/project/#{n}" }
-    sequence(:notes) { |n|  "note number #{n}" }
+    #sequence(:notes) { |n| {'a note': "note number #{n}"} }
 
     creator
 
@@ -17,7 +17,7 @@ FactoryGirl.define do
         site_count 1
       end
       after(:create) do |project, evaluator|
-        raise 'Creator was blank' if  evaluator.creator.blank?
+        raise 'Creator was blank' if evaluator.creator.blank?
         evaluator.site_count.times do
           project.sites << FactoryGirl.create(:site_with_audio_recordings, creator: evaluator.creator)
         end
@@ -29,7 +29,7 @@ FactoryGirl.define do
         saved_search_count 1
       end
       after(:create) do |project, evaluator|
-        raise 'Creator was blank' if  evaluator.creator.blank?
+        raise 'Creator was blank' if evaluator.creator.blank?
         evaluator.saved_search_count.times do
           project.saved_searches << FactoryGirl.create(:saved_search_with_analysis_jobs, creator: evaluator.creator)
         end
