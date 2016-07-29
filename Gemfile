@@ -96,7 +96,8 @@ gem 'jc-validates_timeliness', '~> 3.1.1'
 
 gem 'enumerize', '~> 1.0'
 gem 'uuidtools', '~> 2.1.5'
-gem 'acts_as_paranoid', git: 'https://github.com/ActsAsParanoid/acts_as_paranoid.git', branch: :master, ref: 'ab31723bc1'
+gem 'acts_as_paranoid', git: 'https://github.com/ActsAsParanoid/acts_as_paranoid.git', branch: :master, ref: 'c2db19554ddaedcac0a2b8d6a0563dea83c972c5'
+
 
 # for state machines
 gem 'aasm'
@@ -210,5 +211,6 @@ group :test do
 
   gem 'rspec-mocks', '~>3.4.1'
 
-  gem 'timecop'
+  # use to mock time in tests - currently not needed
+  #gem 'timecop'
 end

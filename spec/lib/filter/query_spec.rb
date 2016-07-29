@@ -345,7 +345,7 @@ describe Filter::Query do
       }
       complex_result = "SELECT\"audio_recordings\".\"recorded_date\",\"audio_recordings\".\"site_id\" \
 FROM\"audio_recordings\" \
-WHERE(\"audio_recordings\".\"deleted_at\"ISNULL) \
+WHERE\"audio_recordings\".\"deleted_at\"ISNULL \
 AND\"audio_recordings\".\"site_id\"=5 \
 ORDERBY\"audio_recordings\".\"recorded_date\"DESCLIMIT25OFFSET0"
       compare_filter_sql(request_body_obj, complex_result)
@@ -370,7 +370,7 @@ ORDERBY\"audio_recordings\".\"recorded_date\"DESCLIMIT25OFFSET0"
           "SELECT\"audio_recordings\".\"id\", \
           \"audio_recordings\".\"duration_seconds\" \
 FROM\"audio_recordings\" \
-WHERE(\"audio_recordings\".\"deleted_at\"ISNULL) \
+WHERE\"audio_recordings\".\"deleted_at\"ISNULL \
 AND\"audio_recordings\".\"site_id\"=5 \
 ORDERBY\"audio_recordings\".\"recorded_date\"DESCLIMIT25OFFSET0"
       compare_filter_sql(request_body_obj, complex_result)
@@ -596,8 +596,8 @@ ORDERBY\"audio_recordings\".\"recorded_date\"DESCLIMIT25OFFSET0"
           "SELECT\"audio_recordings\".\"recorded_date\",\"audio_recordings\".\"site_id\",\"audio_recordings\".\"duration_seconds\",\"audio_recordings\".\"media_type\" \
 FROM\"audio_recordings\" \
 INNERJOIN\"sites\"ON\"sites\".\"id\"=\"audio_recordings\".\"site_id\" \
-AND(\"sites\".\"deleted_at\"ISNULL) \
-WHERE(\"audio_recordings\".\"deleted_at\"ISNULL) \
+AND\"sites\".\"deleted_at\"ISNULL \
+WHERE\"audio_recordings\".\"deleted_at\"ISNULL \
 AND(EXISTS( \
 SELECT1FROM\"projects_sites\" \
 WHERE\"sites\".\"id\"=\"projects_sites\".\"site_id\" \
@@ -691,7 +691,7 @@ LIMIT10OFFSET0"
       complex_result =
           "SELECT\"audio_recordings\".\"id\",\"audio_recordings\".\"duration_seconds\" \
 FROM\"audio_recordings\" \
-WHERE(\"audio_recordings\".\"deleted_at\"ISNULL) \
+WHERE\"audio_recordings\".\"deleted_at\"ISNULL \
 AND\"audio_recordings\".\"id\"IN( \
 SELECT\"audio_recordings\".\"id\" \
 FROM\"audio_recordings\" \
@@ -718,7 +718,7 @@ LIMIT25OFFSET0"
       user_id = user.id
 
       complex_result_2 =
-          "SELECT\"audio_recordings\".\"id\",\"audio_recordings\".\"duration_seconds\"FROM\"audio_recordings\"INNERJOIN\"sites\"ON\"sites\".\"id\"=\"audio_recordings\".\"site_id\"AND(\"sites\".\"deleted_at\"ISNULL)WHERE(\"audio_recordings\".\"deleted_at\"ISNULL)AND(EXISTS(SELECT1FROM\"projects_sites\"WHERE\"sites\".\"id\"=\"projects_sites\".\"site_id\"ANDEXISTS((SELECT1FROM\"projects\"WHERE\"projects\".\"deleted_at\"ISNULLAND\"projects\".\"creator_id\"=#{user_id}AND\"projects_sites\".\"project_id\"=\"projects\".\"id\"UNIONALLSELECT1FROM\"permissions\"WHERE\"permissions\".\"user_id\"=#{user_id}AND\"permissions\".\"level\"IN('reader','writer','owner')AND\"projects_sites\".\"project_id\"=\"permissions\".\"project_id\"))))AND\"audio_recordings\".\"id\"IN(SELECT\"audio_recordings\".\"id\"FROM\"audio_recordings\"LEFTOUTERJOIN\"sites\"ON\"audio_recordings\".\"site_id\"=\"sites\".\"id\"WHERE\"sites\".\"id\"=5)AND\"audio_recordings\".\"id\"IN(SELECT\"audio_recordings\".\"id\"FROM\"audio_recordings\"LEFTOUTERJOIN\"audio_events\"ON\"audio_recordings\".\"id\"=\"audio_events\".\"audio_recording_id\"WHERE\"audio_events\".\"is_reference\"='t')AND\"audio_recordings\".\"id\"IN(SELECT\"audio_recordings\".\"id\"FROM\"audio_recordings\"LEFTOUTERJOIN\"audio_events\"ON\"audio_recordings\".\"id\"=\"audio_events\".\"audio_recording_id\"LEFTOUTERJOIN\"audio_events_tags\"ON\"audio_events\".\"id\"=\"audio_events_tags\".\"audio_event_id\"LEFTOUTERJOIN\"tags\"ON\"audio_events_tags\".\"tag_id\"=\"tags\".\"id\"WHERE\"tags\".\"text\"ILIKE'%koala%')ORDERBY\"audio_recordings\".\"recorded_date\"DESCLIMIT25OFFSET0"
+          "SELECT\"audio_recordings\".\"id\",\"audio_recordings\".\"duration_seconds\"FROM\"audio_recordings\"INNERJOIN\"sites\"ON\"sites\".\"id\"=\"audio_recordings\".\"site_id\"AND\"sites\".\"deleted_at\"ISNULLWHERE\"audio_recordings\".\"deleted_at\"ISNULLAND(EXISTS(SELECT1FROM\"projects_sites\"WHERE\"sites\".\"id\"=\"projects_sites\".\"site_id\"ANDEXISTS((SELECT1FROM\"projects\"WHERE\"projects\".\"deleted_at\"ISNULLAND\"projects\".\"creator_id\"=#{user_id}AND\"projects_sites\".\"project_id\"=\"projects\".\"id\"UNIONALLSELECT1FROM\"permissions\"WHERE\"permissions\".\"user_id\"=#{user_id}AND\"permissions\".\"level\"IN('reader','writer','owner')AND\"projects_sites\".\"project_id\"=\"permissions\".\"project_id\"))))AND\"audio_recordings\".\"id\"IN(SELECT\"audio_recordings\".\"id\"FROM\"audio_recordings\"LEFTOUTERJOIN\"sites\"ON\"audio_recordings\".\"site_id\"=\"sites\".\"id\"WHERE\"sites\".\"id\"=5)AND\"audio_recordings\".\"id\"IN(SELECT\"audio_recordings\".\"id\"FROM\"audio_recordings\"LEFTOUTERJOIN\"audio_events\"ON\"audio_recordings\".\"id\"=\"audio_events\".\"audio_recording_id\"WHERE\"audio_events\".\"is_reference\"='t')AND\"audio_recordings\".\"id\"IN(SELECT\"audio_recordings\".\"id\"FROM\"audio_recordings\"LEFTOUTERJOIN\"audio_events\"ON\"audio_recordings\".\"id\"=\"audio_events\".\"audio_recording_id\"LEFTOUTERJOIN\"audio_events_tags\"ON\"audio_events\".\"id\"=\"audio_events_tags\".\"audio_event_id\"LEFTOUTERJOIN\"tags\"ON\"audio_events_tags\".\"tag_id\"=\"tags\".\"id\"WHERE\"tags\".\"text\"ILIKE'%koala%')ORDERBY\"audio_recordings\".\"recorded_date\"DESCLIMIT25OFFSET0"
 
       filter_query = Filter::Query.new(
           request_body_obj,
@@ -762,7 +762,7 @@ LIMIT25OFFSET0"
           \"audio_recordings\".\"recorded_date\", \
           \"audio_recordings\".\"created_at\" \
 FROM\"audio_recordings\" \
-WHERE(\"audio_recordings\".\"deleted_at\"ISNULL) \
+WHERE\"audio_recordings\".\"deleted_at\"ISNULL \
 AND(\"audio_recordings\".\"id\"IN \
 (SELECT\"audio_recordings\".\"id\"FROM\"audio_recordings\" \
 LEFTOUTERJOIN\"sites\"ON\"audio_recordings\".\"site_id\"=\"sites\".\"id\" \
@@ -779,7 +779,7 @@ DESCLIMIT20OFFSET0"
       user_id = user.id
 
       complex_result_2 =
-          "SELECT\"audio_recordings\".\"id\",\"audio_recordings\".\"site_id\",\"audio_recordings\".\"duration_seconds\",\"audio_recordings\".\"recorded_date\",\"audio_recordings\".\"created_at\"FROM\"audio_recordings\"INNERJOIN\"sites\"ON\"sites\".\"id\"=\"audio_recordings\".\"site_id\"AND(\"sites\".\"deleted_at\"ISNULL)WHERE(\"audio_recordings\".\"deleted_at\"ISNULL)AND(EXISTS(SELECT1FROM\"projects_sites\"WHERE\"sites\".\"id\"=\"projects_sites\".\"site_id\"ANDEXISTS((SELECT1FROM\"projects\"WHERE\"projects\".\"deleted_at\"ISNULLAND\"projects\".\"creator_id\"=#{user_id}AND\"projects_sites\".\"project_id\"=\"projects\".\"id\"UNIONALLSELECT1FROM\"permissions\"WHERE\"permissions\".\"user_id\"=#{user_id}AND\"permissions\".\"level\"IN('reader','writer','owner')AND\"projects_sites\".\"project_id\"=\"permissions\".\"project_id\"))))AND(\"audio_recordings\".\"id\"IN(SELECT\"audio_recordings\".\"id\"FROM\"audio_recordings\"LEFTOUTERJOIN\"sites\"ON\"audio_recordings\".\"site_id\"=\"sites\".\"id\"LEFTOUTERJOIN\"projects_sites\"ON\"sites\".\"id\"=\"projects_sites\".\"site_id\"LEFTOUTERJOIN\"projects\"ON\"projects_sites\".\"project_id\"=\"projects\".\"id\"WHERE\"projects\".\"id\"<123456)AND\"audio_recordings\".\"duration_seconds\"!=40)ORDERBY\"audio_recordings\".\"recorded_date\"DESCLIMIT20OFFSET0"
+          "SELECT\"audio_recordings\".\"id\",\"audio_recordings\".\"site_id\",\"audio_recordings\".\"duration_seconds\",\"audio_recordings\".\"recorded_date\",\"audio_recordings\".\"created_at\"FROM\"audio_recordings\"INNERJOIN\"sites\"ON\"sites\".\"id\"=\"audio_recordings\".\"site_id\"AND\"sites\".\"deleted_at\"ISNULLWHERE\"audio_recordings\".\"deleted_at\"ISNULLAND(EXISTS(SELECT1FROM\"projects_sites\"WHERE\"sites\".\"id\"=\"projects_sites\".\"site_id\"ANDEXISTS((SELECT1FROM\"projects\"WHERE\"projects\".\"deleted_at\"ISNULLAND\"projects\".\"creator_id\"=#{user_id}AND\"projects_sites\".\"project_id\"=\"projects\".\"id\"UNIONALLSELECT1FROM\"permissions\"WHERE\"permissions\".\"user_id\"=#{user_id}AND\"permissions\".\"level\"IN('reader','writer','owner')AND\"projects_sites\".\"project_id\"=\"permissions\".\"project_id\"))))AND(\"audio_recordings\".\"id\"IN(SELECT\"audio_recordings\".\"id\"FROM\"audio_recordings\"LEFTOUTERJOIN\"sites\"ON\"audio_recordings\".\"site_id\"=\"sites\".\"id\"LEFTOUTERJOIN\"projects_sites\"ON\"sites\".\"id\"=\"projects_sites\".\"site_id\"LEFTOUTERJOIN\"projects\"ON\"projects_sites\".\"project_id\"=\"projects\".\"id\"WHERE\"projects\".\"id\"<123456)AND\"audio_recordings\".\"duration_seconds\"!=40)ORDERBY\"audio_recordings\".\"recorded_date\"DESCLIMIT20OFFSET0"
 
       filter_query = Filter::Query.new(
           request_body_obj,
@@ -825,7 +825,8 @@ FROM (SELECT
   "analysis_jobs_items"."created_at",
   "analysis_jobs_items"."queued_at",
   "analysis_jobs_items"."work_started_at",
-  "analysis_jobs_items"."completed_at"
+  "analysis_jobs_items"."completed_at",
+  "analysis_jobs_items"."cancel_started_at"
 FROM "analysis_jobs_items"
   RIGHT
   OUTER JOIN "audio_recordings" "tmp_audio_recordings_generator"
@@ -833,10 +834,10 @@ FROM "analysis_jobs_items"
 ) analysis_jobs_items INNER
   JOIN "audio_recordings"
     ON "audio_recordings"."id" = "analysis_jobs_items"."audio_recording_id"
-       AND ("audio_recordings"."deleted_at" IS NULL)
+       AND "audio_recordings"."deleted_at" IS NULL
   INNER JOIN "sites"
     ON "sites"."id" = "audio_recordings"."site_id"
-       AND ("sites"."deleted_at" IS NULL)
+       AND "sites"."deleted_at" IS NULL
 WHERE (EXISTS(SELECT 1
               FROM "projects_sites"
               WHERE "sites"."id" = "projects_sites"."site_id" AND EXISTS((SELECT 1
@@ -860,13 +861,14 @@ WHERE (EXISTS(SELECT 1
             "analysis_jobs_items"."created_at",
             "analysis_jobs_items"."queued_at",
             "analysis_jobs_items"."work_started_at",
-            "analysis_jobs_items"."completed_at"
+            "analysis_jobs_items"."completed_at",
+            "analysis_jobs_items"."cancel_started_at"
           FROM "analysis_jobs_items"
             RIGHT OUTER JOIN "audio_recordings" "tmp_audio_recordings_generator"
               ON "tmp_audio_recordings_generator"."id" IS NULL) analysis_jobs_items
             INNER JOIN "audio_recordings"
               ON "audio_recordings"."id" = "analysis_jobs_items"."audio_recording_id"
-                AND ("audio_recordings"."deleted_at" IS NULL)) analysis_jobs_items
+                AND "audio_recordings"."deleted_at" IS NULL) analysis_jobs_items
           LEFT OUTER JOIN "audio_recordings"
             ON "analysis_jobs_items"."audio_recording_id" = "audio_recordings"."id"
       WHERE "audio_recordings"."duration_seconds" >= 60000.0)
@@ -909,7 +911,7 @@ SQL
       )
 
       expected_sql =
-          "SELECT\"audio_events\".\"id\",\"audio_events\".\"audio_recording_id\",\"audio_events\".\"start_time_seconds\",\"audio_events\".\"end_time_seconds\",\"audio_events\".\"low_frequency_hertz\",\"audio_events\".\"high_frequency_hertz\",\"audio_events\".\"is_reference\",\"audio_events\".\"creator_id\",\"audio_events\".\"updated_at\",\"audio_events\".\"created_at\"FROM\"audio_events\"INNERJOIN\"audio_recordings\"ON\"audio_recordings\".\"id\"=\"audio_events\".\"audio_recording_id\"AND(\"audio_recordings\".\"deleted_at\"ISNULL)INNERJOIN\"sites\"ON\"sites\".\"id\"=\"audio_recordings\".\"site_id\"AND(\"sites\".\"deleted_at\"ISNULL)WHERE(\"audio_events\".\"deleted_at\"ISNULL)AND(EXISTS(SELECT1FROM\"projects_sites\"WHERE\"sites\".\"id\"=\"projects_sites\".\"site_id\"ANDEXISTS((SELECT1FROM\"projects\"WHERE\"projects\".\"deleted_at\"ISNULLAND\"projects\".\"creator_id\"=#{user_id}AND\"projects_sites\".\"project_id\"=\"projects\".\"id\"UNIONALLSELECT1FROM\"permissions\"WHERE\"permissions\".\"user_id\"=#{user_id}AND\"permissions\".\"level\"IN('reader','writer','owner')AND\"projects_sites\".\"project_id\"=\"permissions\".\"project_id\")))OREXISTS(SELECT1FROM\"audio_events\"\"ae_ref\"WHERE\"ae_ref\".\"deleted_at\"ISNULLAND\"ae_ref\".\"is_reference\"='t'AND\"ae_ref\".\"id\"=\"audio_events\".\"id\"))AND((\"audio_events\".\"end_time_seconds\"-\"audio_events\".\"start_time_seconds\")>3)ORDERBY\"audio_events\".\"created_at\"DESCLIMIT25OFFSET0"
+          "SELECT\"audio_events\".\"id\",\"audio_events\".\"audio_recording_id\",\"audio_events\".\"start_time_seconds\",\"audio_events\".\"end_time_seconds\",\"audio_events\".\"low_frequency_hertz\",\"audio_events\".\"high_frequency_hertz\",\"audio_events\".\"is_reference\",\"audio_events\".\"creator_id\",\"audio_events\".\"updated_at\",\"audio_events\".\"created_at\"FROM\"audio_events\"INNERJOIN\"audio_recordings\"ON\"audio_recordings\".\"id\"=\"audio_events\".\"audio_recording_id\"AND\"audio_recordings\".\"deleted_at\"ISNULLINNERJOIN\"sites\"ON\"sites\".\"id\"=\"audio_recordings\".\"site_id\"AND\"sites\".\"deleted_at\"ISNULLWHERE\"audio_events\".\"deleted_at\"ISNULLAND(EXISTS(SELECT1FROM\"projects_sites\"WHERE\"sites\".\"id\"=\"projects_sites\".\"site_id\"ANDEXISTS((SELECT1FROM\"projects\"WHERE\"projects\".\"deleted_at\"ISNULLAND\"projects\".\"creator_id\"=#{user_id}AND\"projects_sites\".\"project_id\"=\"projects\".\"id\"UNIONALLSELECT1FROM\"permissions\"WHERE\"permissions\".\"user_id\"=#{user_id}AND\"permissions\".\"level\"IN('reader','writer','owner')AND\"projects_sites\".\"project_id\"=\"permissions\".\"project_id\")))OREXISTS(SELECT1FROM\"audio_events\"\"ae_ref\"WHERE\"ae_ref\".\"deleted_at\"ISNULLAND\"ae_ref\".\"is_reference\"='t'AND\"ae_ref\".\"id\"=\"audio_events\".\"id\"))AND((\"audio_events\".\"end_time_seconds\"-\"audio_events\".\"start_time_seconds\")>3)ORDERBY\"audio_events\".\"created_at\"DESCLIMIT25OFFSET0"
 
 
       expect(filter_query.query_full.to_sql.gsub(/\s+/, '')).to eq(expected_sql.gsub(/\s+/, ''))
@@ -940,7 +942,7 @@ SQL
       )
 
       expected_sql =
-          "SELECT\"audio_events\".\"id\",\"audio_events\".\"audio_recording_id\",\"audio_events\".\"start_time_seconds\",\"audio_events\".\"end_time_seconds\",\"audio_events\".\"low_frequency_hertz\",\"audio_events\".\"high_frequency_hertz\",\"audio_events\".\"is_reference\",\"audio_events\".\"creator_id\",\"audio_events\".\"updated_at\",\"audio_events\".\"created_at\"FROM\"audio_events\"INNERJOIN\"audio_recordings\"ON\"audio_recordings\".\"id\"=\"audio_events\".\"audio_recording_id\"AND(\"audio_recordings\".\"deleted_at\"ISNULL)INNERJOIN\"sites\"ON\"sites\".\"id\"=\"audio_recordings\".\"site_id\"AND(\"sites\".\"deleted_at\"ISNULL)WHERE(\"audio_events\".\"deleted_at\"ISNULL)AND(EXISTS(SELECT1FROM\"projects_sites\"WHERE\"sites\".\"id\"=\"projects_sites\".\"site_id\"ANDEXISTS((SELECT1FROM\"projects\"WHERE\"projects\".\"deleted_at\"ISNULLAND\"projects\".\"creator_id\"=#{user_id}AND\"projects_sites\".\"project_id\"=\"projects\".\"id\"UNIONALLSELECT1FROM\"permissions\"WHERE\"permissions\".\"user_id\"=#{user_id}AND\"permissions\".\"level\"IN('reader','writer','owner')AND\"projects_sites\".\"project_id\"=\"permissions\".\"project_id\")))OREXISTS(SELECT1FROM\"audio_events\"\"ae_ref\"WHERE\"ae_ref\".\"deleted_at\"ISNULLAND\"ae_ref\".\"is_reference\"='t'AND\"ae_ref\".\"id\"=\"audio_events\".\"id\"))AND((\"audio_events\".\"end_time_seconds\"-\"audio_events\".\"start_time_seconds\")>3)ORDERBY(\"audio_events\".\"end_time_seconds\"-\"audio_events\".\"start_time_seconds\")ASCLIMIT25OFFSET0"
+          "SELECT\"audio_events\".\"id\",\"audio_events\".\"audio_recording_id\",\"audio_events\".\"start_time_seconds\",\"audio_events\".\"end_time_seconds\",\"audio_events\".\"low_frequency_hertz\",\"audio_events\".\"high_frequency_hertz\",\"audio_events\".\"is_reference\",\"audio_events\".\"creator_id\",\"audio_events\".\"updated_at\",\"audio_events\".\"created_at\"FROM\"audio_events\"INNERJOIN\"audio_recordings\"ON\"audio_recordings\".\"id\"=\"audio_events\".\"audio_recording_id\"AND\"audio_recordings\".\"deleted_at\"ISNULLINNERJOIN\"sites\"ON\"sites\".\"id\"=\"audio_recordings\".\"site_id\"AND\"sites\".\"deleted_at\"ISNULLWHERE\"audio_events\".\"deleted_at\"ISNULLAND(EXISTS(SELECT1FROM\"projects_sites\"WHERE\"sites\".\"id\"=\"projects_sites\".\"site_id\"ANDEXISTS((SELECT1FROM\"projects\"WHERE\"projects\".\"deleted_at\"ISNULLAND\"projects\".\"creator_id\"=#{user_id}AND\"projects_sites\".\"project_id\"=\"projects\".\"id\"UNIONALLSELECT1FROM\"permissions\"WHERE\"permissions\".\"user_id\"=#{user_id}AND\"permissions\".\"level\"IN('reader','writer','owner')AND\"projects_sites\".\"project_id\"=\"permissions\".\"project_id\")))OREXISTS(SELECT1FROM\"audio_events\"\"ae_ref\"WHERE\"ae_ref\".\"deleted_at\"ISNULLAND\"ae_ref\".\"is_reference\"='t'AND\"ae_ref\".\"id\"=\"audio_events\".\"id\"))AND((\"audio_events\".\"end_time_seconds\"-\"audio_events\".\"start_time_seconds\")>3)ORDERBY(\"audio_events\".\"end_time_seconds\"-\"audio_events\".\"start_time_seconds\")ASCLIMIT25OFFSET0"
 
 
       expect(filter_query.query_full.to_sql.gsub(/\s+/, '')).to eq(expected_sql.gsub(/\s+/, ''))
@@ -968,7 +970,7 @@ SQL
       )
 
       expected_sql =
-          "SELECT\"audio_recordings\".\"id\",\"audio_recordings\".\"uuid\",\"audio_recordings\".\"recorded_date\",\"audio_recordings\".\"site_id\",\"audio_recordings\".\"duration_seconds\",\"audio_recordings\".\"sample_rate_hertz\",\"audio_recordings\".\"channels\",\"audio_recordings\".\"bit_rate_bps\",\"audio_recordings\".\"media_type\",\"audio_recordings\".\"data_length_bytes\",\"audio_recordings\".\"status\",\"audio_recordings\".\"created_at\",\"audio_recordings\".\"updated_at\"FROM\"audio_recordings\"INNERJOIN\"sites\"ON\"sites\".\"id\"=\"audio_recordings\".\"site_id\"AND(\"sites\".\"deleted_at\"ISNULL)WHERE(\"audio_recordings\".\"deleted_at\"ISNULL)AND(EXISTS(SELECT1FROM\"projects_sites\"WHERE\"sites\".\"id\"=\"projects_sites\".\"site_id\"ANDEXISTS((SELECT1FROM\"projects\"WHERE\"projects\".\"deleted_at\"ISNULLAND\"projects\".\"creator_id\"=#{user_id}AND\"projects_sites\".\"project_id\"=\"projects\".\"id\"UNIONALLSELECT1FROM\"permissions\"WHERE\"permissions\".\"user_id\"=#{user_id}AND\"permissions\".\"level\"IN('reader','writer','owner')AND\"projects_sites\".\"project_id\"=\"permissions\".\"project_id\"))))AND(\"audio_recordings\".\"recorded_date\"+CAST(\"audio_recordings\".\"duration_seconds\"||'seconds'asinterval)<'2016-03-01T02:00:00')AND(\"audio_recordings\".\"recorded_date\"+CAST(\"audio_recordings\".\"duration_seconds\"||'seconds'asinterval)>'2016-03-01T01:50:00')ORDERBY\"audio_recordings\".\"recorded_date\"DESCLIMIT25OFFSET0"
+          "SELECT\"audio_recordings\".\"id\",\"audio_recordings\".\"uuid\",\"audio_recordings\".\"recorded_date\",\"audio_recordings\".\"site_id\",\"audio_recordings\".\"duration_seconds\",\"audio_recordings\".\"sample_rate_hertz\",\"audio_recordings\".\"channels\",\"audio_recordings\".\"bit_rate_bps\",\"audio_recordings\".\"media_type\",\"audio_recordings\".\"data_length_bytes\",\"audio_recordings\".\"status\",\"audio_recordings\".\"created_at\",\"audio_recordings\".\"updated_at\"FROM\"audio_recordings\"INNERJOIN\"sites\"ON\"sites\".\"id\"=\"audio_recordings\".\"site_id\"AND\"sites\".\"deleted_at\"ISNULLWHERE\"audio_recordings\".\"deleted_at\"ISNULLAND(EXISTS(SELECT1FROM\"projects_sites\"WHERE\"sites\".\"id\"=\"projects_sites\".\"site_id\"ANDEXISTS((SELECT1FROM\"projects\"WHERE\"projects\".\"deleted_at\"ISNULLAND\"projects\".\"creator_id\"=#{user_id}AND\"projects_sites\".\"project_id\"=\"projects\".\"id\"UNIONALLSELECT1FROM\"permissions\"WHERE\"permissions\".\"user_id\"=#{user_id}AND\"permissions\".\"level\"IN('reader','writer','owner')AND\"projects_sites\".\"project_id\"=\"permissions\".\"project_id\"))))AND(\"audio_recordings\".\"recorded_date\"+CAST(\"audio_recordings\".\"duration_seconds\"||'seconds'asinterval)<'2016-03-01T02:00:00')AND(\"audio_recordings\".\"recorded_date\"+CAST(\"audio_recordings\".\"duration_seconds\"||'seconds'asinterval)>'2016-03-01T01:50:00')ORDERBY\"audio_recordings\".\"recorded_date\"DESCLIMIT25OFFSET0"
 
 
       expect(filter_query.query_full.to_sql.gsub(/\s+/, '')).to eq(expected_sql.gsub(/\s+/, ''))
