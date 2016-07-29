@@ -49,9 +49,9 @@ Download and install latest ffmpeg:
     cd ~/Downloads
     mkdir ./ffmpeg
     wget -O download-ffmpeg.tar.xz http://johnvansickle.com/ffmpeg/releases/ffmpeg-release-64bit-static.tar.xz
-    tar -xf ffmpeg/download-ffmpeg.tar.xz  -C ./ffmpeg/ --strip=1
+    tar -xf download-ffmpeg.tar.xz  -C ./ffmpeg/ --strip=1
     sudo mv ./ffmpeg/ffmpeg /usr/local/bin/ffmpeg
-    sudo mv ./ffprobe/ffprobe /usr/local/bin/ffprobe
+    sudo mv ./ffmpeg/ffprobe /usr/local/bin/ffprobe
 
 Download, build, and install wac2wav:
 
