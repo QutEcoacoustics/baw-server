@@ -48,7 +48,7 @@ Download and install latest ffmpeg:
 
     cd ~/Downloads
     mkdir ./ffmpeg
-    wget http://johnvansickle.com/ffmpeg/releases/ffmpeg-release-64bit-static.tar.xz
+    wget -O download-ffmpeg.tar.xz http://johnvansickle.com/ffmpeg/releases/ffmpeg-release-64bit-static.tar.xz
     tar -xf ffmpeg/download-ffmpeg.tar.xz  -C ./ffmpeg/ --strip=1
     sudo mv ./ffmpeg/ffmpeg /usr/local/bin/ffmpeg
     sudo mv ./ffprobe/ffprobe /usr/local/bin/ffprobe
@@ -56,7 +56,7 @@ Download and install latest ffmpeg:
 Download, build, and install wac2wav:
 
     cd ~/Downloads
-    wget https://github.com/QutBioacoustics/wac2wavcmd/archive/master.zip
+    wget -O wac2wavcmd-master.zip https://github.com/QutBioacoustics/wac2wavcmd/archive/master.zip
     unzip wac2wavcmd-master.zip
     cd wac2wavcmd-master
     make
