@@ -229,7 +229,7 @@ ELSE last_sign_in_at END DESC'
 
   def user_update_params
     params.require(:user).permit(
-        :id, :user_name, :email,
+        :id, :user_name, :email, :tzinfo_tz,
         :password, :password_confirmation,
         :roles_mask, :image)
   end

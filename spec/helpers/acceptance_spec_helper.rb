@@ -43,7 +43,7 @@ def standard_request_options(http_method, description, expected_status, opts = {
 
     # allow for modification of opts, provide context so let and let! values can be accessed
     if opts_mod
-      opts_mod.call self, opts
+      opts_mod.call(self, opts)
     end
 
     expected_error_class = opts[:expected_error_class]

@@ -27,7 +27,22 @@ resource 'AnalysisJobs' do
 
   create_entire_hierarchy
 
-  let(:body_attributes) { FactoryGirl.attributes_for(:analysis_job, script_id: script.id, saved_search_id: saved_search.id).to_json }
+  let(:body_attributes) {
+    FactoryGirl
+        .attributes_for(:analysis_job, script_id: script.id, saved_search_id: saved_search.id)
+        .except(:started_at, :overall_progress,
+                :overall_progress_modified_at, :overall_count,
+                :overall_duration_seconds, :overall_data_length_bytes)
+        .to_json
+  }
+
+  let(:body_attributes_update) {
+    FactoryGirl
+        .attributes_for(:analysis_job, script_id: script.id, saved_search_id: saved_search.id)
+        .slice(:name, :description)
+        .to_json
+  }
+
 
   ################################
   # INDEX
@@ -218,7 +233,7 @@ resource 'AnalysisJobs' do
               }
 
       }.to_json }
-    let!(:preparation_create){
+    let!(:preparation_create) {
       project = Creation::Common.create_project(writer_user)
       script = FactoryGirl.create(:script, creator: writer_user, id: 999899)
 
@@ -238,7 +253,7 @@ resource 'AnalysisJobs' do
     analysis_jobs_id_param
     analysis_jobs_body_params
     let(:id) { analysis_job.id }
-    let(:raw_post) { body_attributes }
+    let(:raw_post) { body_attributes_update }
     let(:authentication_token) { admin_token }
     standard_request_options(:put, 'UPDATE (as admin)', :ok, {expected_json_path: 'data/saved_search_id'})
   end
@@ -247,7 +262,7 @@ resource 'AnalysisJobs' do
     analysis_jobs_id_param
     analysis_jobs_body_params
     let(:id) { analysis_job.id }
-    let(:raw_post) { body_attributes }
+    let(:raw_post) { body_attributes_update }
     let(:authentication_token) { admin_token }
     standard_request_options(:patch, 'UPDATE (as admin)', :ok, {expected_json_path: 'data/saved_search_id'})
   end
@@ -256,7 +271,7 @@ resource 'AnalysisJobs' do
     analysis_jobs_id_param
     analysis_jobs_body_params
     let(:id) { analysis_job.id }
-    let(:raw_post) { body_attributes }
+    let(:raw_post) { body_attributes_update }
     let(:authentication_token) { writer_token }
     standard_request_options(:put, 'UPDATE (as writer)', :ok, {expected_json_path: 'data/saved_search_id'})
   end
@@ -311,18 +326,53 @@ resource 'AnalysisJobs' do
   # DESTROY
   ################################
 
+  def mock_processing_state(opts)
+    analysis_job.update_columns(
+        overall_status: 'processing',
+        overall_status_modified_at: Time.zone.now,
+        started_at: Time.zone.now
+    )
+  end
+
   delete '/analysis_jobs/:id' do
     analysis_jobs_id_param
     let(:id) { analysis_job.id }
     let(:authentication_token) { admin_token }
-    standard_request_options(:delete, 'DESTROY (as admin)', :no_content, {expected_response_has_content: false, expected_response_content_type: nil})
+    standard_request_options(
+        :delete,
+        'DESTROY (as admin)',
+        :no_content,
+        {
+            expected_response_has_content: false,
+            expected_response_content_type: nil
+        },
+        &:mock_processing_state
+    )
   end
 
   delete '/analysis_jobs/:id' do
     analysis_jobs_id_param
     let(:id) { analysis_job.id }
     let(:authentication_token) { writer_token }
-    standard_request_options(:delete, 'DESTROY (as writer)', :no_content, {expected_response_has_content: false, expected_response_content_type: nil})
+    standard_request_options(
+        :delete,
+        'DESTROY (as writer, when [:processing|:suspended|:complete])',
+        :no_content,
+        {
+            expected_response_has_content: false,
+            expected_response_content_type: nil
+        },
+        &:mock_processing_state)
+  end
+
+  delete '/analysis_jobs/:id' do
+    analysis_jobs_id_param
+    let(:id) { analysis_job.id }
+    let(:authentication_token) { writer_token }
+    standard_request_options(:delete, 'DESTROY (as writer, when [:new|:preparing])', :conflict, {
+        expected_json_path: 'meta/error/details',
+        response_body_content: '"message":"Conflict"'
+    })
   end
 
   delete '/analysis_jobs/:id' do

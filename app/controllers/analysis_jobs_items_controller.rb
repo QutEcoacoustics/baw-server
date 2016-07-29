@@ -399,7 +399,7 @@ class AnalysisJobsItemsController < ApplicationController
   end
 
   def normalise_path(path)
-    analysis_base_paths = BawWorkers::Config.analysis_cache_helper.existing_dirs
+    analysis_base_paths = BawWorkers::Config.analysis_cache_helper.possible_dirs
     matching_base_path = analysis_base_paths.select { |abp| path.start_with?(abp) }
     if matching_base_path.size == 1
       path_without_base = path.gsub(/#{matching_base_path[0].gsub('/', '\/')}\/[^\/]+\/[^\/]+\/[^\/]+\/?/, '')
