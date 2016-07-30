@@ -51,15 +51,15 @@ describe BawAudioTools::AudioBase do
       }.to_not raise_error
     end
 
-    it 'fails on unknown warnings for ffmpeg' do
+    it 'fails on end of line error for ffmpeg' do
       input =
           "[wav @ 0x1d35020] max_analyze_duration 5000000 reached at 5015510 microseconds
 [wav @ 0x1d35020] Estimating duration from bitrate, this may be inaccurate
 [mp3 @ 0x2935600] overread, skip -6 enddists: -4 -4
-[wav @ 0x1d35020] this one is not known"
+[wav @ 0x1d35020] the end of file"
       expect {
         audio_base.audio_ffmpeg.check_for_errors({stderr: input})
-      }.to raise_error(BawAudioTools::Exceptions::FileCorruptError, /Ffmpeg output contained warning/)
+      }.to raise_error(BawAudioTools::Exceptions::FileCorruptError, /Ffmpeg encountered unexpected end of file/)
     end
 
   end

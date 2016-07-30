@@ -1,21 +1,9 @@
 module BawAudioTools
   class AudioFfmpeg
 
-    WARN_INDICATOR = '\[.+ @ 0x[0-9a-f]+\] '
-    WARN_ANALYSE_DURATION = 'max_analyze_duration [0-9]+ reached at [0-9]+[ a-zA-Z]*'
-    WARN_ESTIMATE_DURATION = 'Estimating duration from bitrate, this may be inaccurate'
-    # e.g. [mp3 @ 0x2935600] overread, skip -6 enddists: -4 -4
-    # e.g. [mp3 @ 0x3314600] overread, skip -5 enddists: -2 -2
-    WARN_OVER_READ = 'overread, skip -?[0-9]+ enddists: -?[0-9]+ -?[0-9]+'
-    WARN_CHANNEL_LAYOUT = "Channel layout '.+' with [0-9]+ channels does not match specified number of channels [0-9]+: ignoring specified channel layout"
-    WARN_BYTES_OF_JUNK = "Skipping [0-9]+ bytes of junk at [0-9]+\."
-
-    REGEX_WARN_INDICATOR = /#{WARN_INDICATOR}/
-    REGEX_WARN_DURATION = /#{WARN_INDICATOR}#{WARN_ESTIMATE_DURATION}/
-    REGEX_WARN_OVER_READ = /#{WARN_INDICATOR}#{WARN_OVER_READ}/
-    REGEX_WARN_ANALYSE_DURATION = /#{WARN_INDICATOR}#{WARN_ANALYSE_DURATION}/
-    REGEX_WARN_CHANNEL_LAYOUT = /#{WARN_INDICATOR}#{WARN_CHANNEL_LAYOUT}/
-    REGEX_WARN_BYTES_OF_JUNK = /#{WARN_INDICATOR}#{WARN_BYTES_OF_JUNK}/
+    ERROR_FRAME_SIZE_1 = "Could not find codec parameters for stream [0-9]+ \\(Audio\\: [a-zA-Z0-9]+\\, [0-9]+ channels\\, [a-zA-Z0-9]+\\)\\: unspecified frame size"
+    ERROR_FRAME_SIZE_2 = "Failed to read frame size: Could not seek to [0-9]+\\."
+    ERROR_END_OF_FILE = 'End of file'
 
     # @param [String] ffmpeg_executable
     # @param [String] ffprobe_executable
@@ -72,30 +60,18 @@ module BawAudioTools
     end
 
     def check_for_errors(execute_msg)
-
       #stdout = execute_msg[:stdout]
       stderr = execute_msg[:stderr]
 
-      return stderr if stderr.blank?
-
-      mod_stderr = stderr.dup
-
-      warn_regex_array = [
-          REGEX_WARN_DURATION, REGEX_WARN_OVER_READ,
-          REGEX_WARN_ANALYSE_DURATION, REGEX_WARN_CHANNEL_LAYOUT,
-          REGEX_WARN_BYTES_OF_JUNK]
-
-      warn_regex_array.each do |warn_regex|
-        if has_regex?(mod_stderr, warn_regex)
-          mod_stderr = find_remove_warning(mod_stderr, warn_regex)
-        end
+      if !stderr.blank? && /#{ERROR_FRAME_SIZE_1}/.match(stderr)
+        fail Exceptions::FileCorruptError, "Ffmpeg could not get frame size (msg type 1).\n\t#{execute_msg[:execute_msg]}"
       end
-
-      if !mod_stderr.blank? && mod_stderr.match(REGEX_WARN_INDICATOR)
-        fail Exceptions::FileCorruptError, "Ffmpeg output contained warning (e.g. [mp3 @ 0x2935600]).\n\t#{execute_msg[:execute_msg]}"
+      if !stderr.blank? && /#{ERROR_FRAME_SIZE_2}/.match(stderr)
+        fail Exceptions::FileCorruptError, "Ffmpeg could not get frame size (msg type 2).\n\t#{execute_msg[:execute_msg]}"
       end
-
-      mod_stderr
+      if !stderr.blank? && /#{ERROR_END_OF_FILE}/i.match(stderr)
+        fail Exceptions::FileCorruptError, "Ffmpeg encountered unexpected end of file.\n\t#{execute_msg[:execute_msg]}"
+      end
     end
 
     def check_integrity_output(execute_msg)
@@ -104,6 +80,7 @@ module BawAudioTools
 
       result = {
           errors: [],
+          warnings: [],
           info: {
               read: {
                   packets: 0, bytes: 0, frames: 0, samples: 0
@@ -120,14 +97,7 @@ module BawAudioTools
         match_result = /\A\[(.+?) @ 0x.+?\] (.*)/.match(line)
         item = nil
         item = check_integrity_item({id: match_result[1], description: match_result[2]}) unless match_result.blank?
-        result[:errors].push(item) unless item.blank?
-
-        # other information
-        error_match = /error/i.match(line)
-        result[:errors].push({id: 'error', description: line}) unless error_match.blank?
-
-        eof_match = /: End of file/i.match(line)
-        result[:errors].push({id: 'end of file', description: line}) unless eof_match.blank?
+        result[:warnings].push(item) unless item.blank?
 
         read_packets_match = /Total: (\d+) packets \((\d+) bytes\) demuxed/.match(line)
         unless read_packets_match.blank?
