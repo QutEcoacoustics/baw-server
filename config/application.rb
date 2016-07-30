@@ -109,9 +109,6 @@ module AWB
     # check that locales are valid - new default in rails 3.2.14
     config.i18n.enforce_available_locales = true
 
-    # this is only respected by the activesupport-json_encoder gem.
-    ActiveSupport.encode_big_decimal_as_string = false
-
     # Set Time.zone default to the specified zone and make Active Record auto-convert to this zone.
     # Run "rake -D time" for a list of tasks for finding time zone names. Default is UTC.
     # config.time_zone = 'Central Time (US & Canada)'
@@ -138,7 +135,7 @@ module AWB
     Paperclip::Attachment.default_options[:url] = '/system/:class/:attachment/:id_partition/:style/:filename'
 
     # for generating documentation from tests
-    Raddocs.configuration.docs_dir = "doc/api"
+    #Raddocs.configuration.docs_dir = "doc/api"
 
     # middleware to rewrite angular urls
     # insert at the start of the Rack stack.

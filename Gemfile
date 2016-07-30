@@ -13,7 +13,7 @@ source 'https://rubygems.org'
 # RAILS
 # -------------------------------------
 
-gem 'rails', '~> 4.2.4'
+gem 'rails', '~> 5.0.0'
 gem 'rack-cors', '~> 0.4.0', require: 'rack/cors'
 gem 'responders', '~> 2.2.0'
 
@@ -24,7 +24,7 @@ gem 'responders', '~> 2.2.0'
 # gem 'actionpack-page_caching'
 # gem 'actionpack-action_caching'
 # gem 'activerecord-deprecated_finders'
-gem 'activesupport-json_encoder', git: 'https://github.com/rails/activesupport-json_encoder.git', branch: :master, ref: 'd874fd9dbf'
+#gem 'activesupport-json_encoder', git: 'https://github.com/rails/activesupport-json_encoder.git', branch: :master, ref: 'd874fd9dbf'
 
 # UI HELPERS
 # -------------------------------------
@@ -32,8 +32,6 @@ gem 'activesupport-json_encoder', git: 'https://github.com/rails/activesupport-j
 gem 'sass-rails', '~> 5.0.3'
 # Use Uglifier as compressor for JavaScript assets
 gem 'uglifier', '>= 1.3.0'
-# Use CoffeeScript for .js.coffee assets and views
-gem 'coffee-rails', '~> 4.2.0'
 # See https://github.com/sstephenson/execjs#readme for more supported runtimes
 gem 'therubyracer', '~> 0.12.1', platforms: :ruby, require: 'v8'
 
@@ -42,7 +40,7 @@ gem 'jquery-rails', '~> 4.1.0'
 # Turbolinks makes following links in your web application faster. Read more: https://github.com/rails/turbolinks
 #gem 'turbolinks'
 # Build JSON APIs with ease. Read more: https://github.com/rails/jbuilder
-gem 'jbuilder', '~> 2.5.0'
+gem 'jbuilder', '~> 2.6.0'
 
 gem 'haml', '~> 4.0.6'
 gem 'haml-rails', '~> 0.9.0'
@@ -86,7 +84,7 @@ gem 'pg', '~> 0.18.1'
 
 # MODELS
 # -------------------------------------
-gem 'jc-validates_timeliness', '~> 3.1.1'
+gem 'validates_timeliness', '~> 4.0.0'
 
 # https://github.com/delynn/userstamp
 # no changes in a long time, and we are very dependant on how this works
@@ -96,7 +94,7 @@ gem 'jc-validates_timeliness', '~> 3.1.1'
 
 gem 'enumerize', '~> 1.0'
 gem 'uuidtools', '~> 2.1.5'
-gem 'acts_as_paranoid', git: 'https://github.com/ActsAsParanoid/acts_as_paranoid.git', branch: :master, ref: 'ab31723bc1'
+gem 'acts_as_paranoid', '~> 0.5.0.rc1'
 
 # SETTINGS
 # -------------------------------------
@@ -112,12 +110,13 @@ gem 'newrelic_rpm', '~> 3.15'
 # -------------------------------------
 # these gems are required here to serve /doc url
 gem 'rspec_api_documentation', '~> 4.8.0'
-gem 'raddocs', '~> 1.0.0'
+#gem 'raddocs', '~> 1.0.0'
+gem 'apitome'
 
 # MEDIA
 # -------------------------------------
 # set to a specific commit when releasing to master branch
-gem 'baw-audio-tools', git: 'https://github.com/QutBioacoustics/baw-audio-tools.git', branch: :master, ref: '354d375d6a'
+gem 'baw-audio-tools', git: 'https://github.com/QutBioacoustics/baw-audio-tools.git', branch: :master, ref: 'e9ad21a'
 gem 'rack-rewrite', '~> 1.5.1'
 
 # ASYNC JOBS
@@ -126,7 +125,7 @@ gem 'resque', '~> 1.25.2'
 gem 'resque-job-stats', git: 'https://github.com/echannel/resque-job-stats.git', branch: :master, ref: '8932c036ae'
 gem 'resque-status', '~> 0.5.0'
 # set to a specific commit when releasing to master branch
-gem 'baw-workers', git: 'https://github.com/QutBioacoustics/baw-workers.git', branch: :master, ref: '18943af4b'
+gem 'baw-workers', git: 'https://github.com/QutBioacoustics/baw-workers.git', branch: :master, ref: '584ab5a'
 
 
 # Gems restricted by environment and/or platform
@@ -140,11 +139,11 @@ group :development, :test do
   #gem 'debase'
   #gem 'traceroute'
 
-  gem 'quiet_assets'
+  #gem 'quiet_assets'
 
   gem 'rack-mini-profiler', '~> 0.10.0'
   gem 'i18n-tasks', '~> 0.9.0'
-  gem 'bullet', '~> 5.1.0'
+  gem 'bullet', '~> 5.2.0'
 
   # Spring speeds up development by keeping your application running in the background. Read more: https://github.com/rails/spring
   #gem 'spring', '~> 1.4.0'
@@ -161,7 +160,7 @@ group :development, :test do
   gem 'guard', '~> 2.14.0'
   gem 'guard-rspec', '~> 4.7.0'
   gem 'guard-yard', '~> 2.1.4', require: false
-  gem 'rubocop', '~> 0.41.0', require: false
+  gem 'rubocop', '~> 0.42.0', require: false
   gem 'haml_lint', require: false
 
   gem 'fakeredis', '~> 0.5.0', require: 'fakeredis/rspec'
@@ -203,5 +202,6 @@ end
 
 group :test do
   gem 'webmock', '~> 2.1.0'
+  # This needs to be less than 3, due to huge changes and a critical bug in v3
   gem 'shoulda-matchers', '< 3.0.0', require: false
 end
