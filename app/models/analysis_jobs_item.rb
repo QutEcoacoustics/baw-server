@@ -317,9 +317,9 @@ class AnalysisJobsItem < ActiveRecord::Base
       # the assumption here is that result is a unique identifier that we can later use to interrogate the message queue
       self.queue_id = result
     rescue => e
-      error = e
-      # TODO: swallowing exception? seems bad
+      # Note: exception used to be swallowed. We might need better error handling here later on.
       Rails.logger.error "An error occurred when enqueuing an analysis job item: #{e}"
+      raise e
     end
 
     @enqueue_results = {result: result, error: error}
@@ -355,7 +355,7 @@ class AnalysisJobsItem < ActiveRecord::Base
     # Options invariant to the AnalysisJob are stuck in here, like:
     # - file_executable
     # - copy_paths
-    payload = analysis_job.script.analysis_action_params.dup
+    payload = analysis_job.script.analysis_action_params.dup.deep_symbolize_keys
 
     # merge base
     payload.merge({

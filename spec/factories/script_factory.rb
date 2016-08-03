@@ -10,7 +10,13 @@ FactoryGirl.define do
     sequence(:executable_command) { |n| "executable command #{n}"}
     sequence(:executable_settings) { |n| "executable settings #{n}"}
     sequence(:executable_settings_media_type) { |n| 'text/plain' }
-    sequence(:analysis_action_params) { |n| {custom_setting: n}}
+    sequence(:analysis_action_params) { |n| {
+        file_executable: './AnalysisPrograms/AnalysisPrograms.exe',
+        copy_paths: [
+            './programs/AnalysisPrograms/Logs/log.txt'
+        ],
+        custom_setting: n
+    }}
 
     creator
 

@@ -112,8 +112,6 @@ class AnalysisJobsItemsController < ApplicationController
     else
       respond_change_fail
     end
-
-
   end
 
   # GET|POST  /analysis_jobs/:analysis_job_id/audio_recordings/
@@ -139,7 +137,6 @@ class AnalysisJobsItemsController < ApplicationController
   def analysis_jobs_item_update_params
     # Only status can be updated via API
     # Other properties are updated by the model/initial processing system
-    #:analysis_job_id, :audio_recording_id, :format
     params.require(:analysis_jobs_item).permit(:status)
   end
 
@@ -165,7 +162,7 @@ class AnalysisJobsItemsController < ApplicationController
   end
 
   def do_get_analysis_job
-    # We use with deleted here because we always needs to be able to load AnalysisJobsItem even if the parent
+    # We use with deleted here because we always need to be able to load AnalysisJobsItem even if the parent
     # AnalysisJob has been deleted.
     @analysis_job = AnalysisJob.with_deleted.find(@analysis_job_id) unless @is_system_job
   end

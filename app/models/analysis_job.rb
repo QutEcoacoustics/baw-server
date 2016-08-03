@@ -97,7 +97,6 @@ class AnalysisJob < ActiveRecord::Base
   def check_progress
     #if (Time.zone.now - analysis_job.overall_progress_modified_at) > OVERALL_PROGRESS_REFRESH_SECONDS
 
-
     # https://github.com/ActsAsParanoid/acts_as_paranoid/issues/45
     was_deleted = deleted?
     if was_deleted
@@ -123,19 +122,20 @@ class AnalysisJob < ActiveRecord::Base
   #    Note: no AnalysisJobsItems have been made and no resque jobs have been enqueued.
   # 2. Then the job must be prepared. Currently synchronous but designed to be asynchronous.
   #    Do this by calling `prepare` which will transition from `new` to `preparing`.
-  #    Note: AnalysisJobsItems are enqueued progressively here. Some actions by be processed and even completed
+  #    Note: AnalysisJobsItems are enqueued progressively here. Some actions may be processed and even completed
   #    before the AnalysisJob even finishes preparing!
   # 3. Transition to `processing`
   #    Note: the processing transition should be automatic
-  # 3. Once all resque jobs have been enqueued, the analysis job will transition to 'processing' status.
-  # 4. Resque jobs will update the analysis job  (via analysis jobs items) as resque jobs change states.
+  #    Once all resque jobs have been enqueued, the analysis job will transition to 'processing' status.
+  # 4. Resque jobs will update the analysis job (via analysis jobs items) as resque jobs change states.
   #    `check_progress` is used to update progress and also is the callback that checks for job completion.
   # 5. When all items have finished processing, the job transitions to `completed`. Users are notified with an email
   #    and the job is marked as completed.
   #
   # Additional states:
   # - Jobs can transition between processing and suspended. When suspended all analysis jobs items are marked as
-  #   `cancelling`. When resumed, all `cancelling` or `cancelled` items are re-added back to the queue.
+  #   `cancelling`. When resumed, all `cancelling` items are marked as `queued` again and all `cancelled` items are
+  #   re-added back to the queue.
   #   Note: We can't add or remove items from the message queue, which is why we need the cancelling/cancelled
   #   distinction.
   # - Jobs can be retried. In this case, the failed items (only) are re-queued and the job is set to `processing`
@@ -261,11 +261,10 @@ class AnalysisJob < ActiveRecord::Base
   # Create payloads from audio recordings extracted from saved search.
   # This method saves persists changes.
   def prepare_job
-    # test: self.creator
-    # test: status == preparing
     user = creator
 
-    # TODO add logging and timing
+    Rails.logger.info 'AnalysisJob::prepare_job: Begin.'
+
     # TODO This may need to be an async operation itself depending on how fast it runs
 
     # counters
@@ -298,7 +297,7 @@ class AnalysisJob < ActiveRecord::Base
     self.overall_data_length_bytes = options[:data_length_bytes_sum]
     self.save!
 
-    options[:results]
+    Rails.logger.info "AnalysisJob::prepare_job: Complete. Queued: #{options[:queued_count]}"
   end
 
   # Suspends an analysis job by cancelling all queued items
@@ -323,7 +322,7 @@ class AnalysisJob < ActiveRecord::Base
     # batch update
     query.find_in_batches(batch_size: AnalysisJob.batch_size) do |items|
       items.each do |item|
-        # transition to cancelled state and save
+        # transition to queued state and save
         item.retry!
       end
     end
@@ -341,7 +340,7 @@ class AnalysisJob < ActiveRecord::Base
     # batch update
     query.find_in_batches(batch_size: AnalysisJob.batch_size) do |items|
       items.each do |item|
-        # transition to cancelled state and save
+        # transition to queued state and save
         item.retry!
       end
     end
@@ -357,7 +356,7 @@ class AnalysisJob < ActiveRecord::Base
   end
 
   # Update progress and modified timestamp if changes are made. Does NOT persist changes.
-  # This callback happens after a model is saved in a new state or loaded from the database.
+  # This callback happens after the AnalysisJob transitions to a new state or when `check_progress` is called.
   # We want all transactions to finish before we update the progresses - since they run a query themselves.
   # @return [void]
   def update_job_progress
