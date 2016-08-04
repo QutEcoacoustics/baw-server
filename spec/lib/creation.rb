@@ -6,8 +6,7 @@ module Creation
 
       prepare_project
 
-      # available after permission system is upgraded
-      #prepare_permission_owner
+      prepare_permission_owner
       prepare_permission_writer
       prepare_permission_reader
 
@@ -45,11 +44,9 @@ module Creation
     end
 
     def prepare_users
-      let!(:admin_user) { FactoryGirl.create(:admin) }
+      # these 7 user types must be used to test every endpoint:
+      let!(:admin_user) { User.where(user_name: 'Admin').first }
       let!(:admin_token) { Common.create_user_token(admin_user) }
-
-      let!(:harvester_user) { FactoryGirl.create(:harvester) }
-      let!(:harvester_token) { Common.create_user_token(harvester_user) }
 
       let!(:owner_user) { FactoryGirl.create(:user, user_name: 'owner user') }
       let!(:owner_token) { Common.create_user_token(owner_user) }
@@ -60,38 +57,47 @@ module Creation
       let!(:reader_user) { FactoryGirl.create(:user, user_name: 'reader') }
       let!(:reader_token) { Common.create_user_token(reader_user) }
 
-      let!(:other_user) { FactoryGirl.create(:user, user_name: 'other') }
-      let!(:other_token) { Common.create_user_token(other_user) }
-
-      let!(:unconfirmed_user) { FactoryGirl.create(:unconfirmed_user) }
-      let!(:unconfirmed_token) { Common.create_user_token(unconfirmed_user) }
+      let!(:no_access_user) { FactoryGirl.create(:user, user_name: 'no_access') }
+      let!(:no_access_token) { Common.create_user_token(no_access_user) }
 
       let!(:invalid_token) { Common.create_user_token }
+
+      # there is also anonymous users who do not have a token
+      # use: standard_request_options({remove_auth: true})
+
+      # harvester is only needed for cases where the api is used by automated systems
+      let!(:harvester_user) { User.where(user_name: 'Harvester').first }
+      let!(:harvester_token) { Common.create_user_token(harvester_user) }
     end
 
     def prepare_project
-      prepare_users
       let!(:project) { Common.create_project(owner_user) }
     end
 
     def prepare_site
-      prepare_project
-      let!(:site) { Common.create_site(writer_user, project) }
+      let!(:site) { Common.create_site(owner_user, project) }
     end
 
     def prepare_permission_owner
-      prepare_project
       let!(:owner_permission) { Permission.where(user: owner_user, project: project, level: 'owner').first! }
     end
 
     def prepare_permission_writer
-      prepare_project
       let!(:writer_permission) { FactoryGirl.create(:write_permission, creator: owner_user, user: writer_user, project: project) }
     end
 
     def prepare_permission_reader
-      prepare_project
       let!(:reader_permission) { FactoryGirl.create(:read_permission, creator: owner_user, user: reader_user, project: project) }
+    end
+
+    def prepare_project_anon
+      let!(:project_anon) { FactoryGirl.create(:project, creator: owner_user, name: 'Anon Project') }
+      let!(:permission_anon) { FactoryGirl.create(:permission, creator: owner_user, user: nil, project: project_anon, allow_anonymous: true, level: 'reader') }
+    end
+
+    def prepare_project_logged_in
+      let!(:project_logged_in) { FactoryGirl.create(:project, creator: owner_user, name: 'Logged In Project') }
+      let!(:permission_logged_in) { FactoryGirl.create(:permission, creator: owner_user, user: nil, project: project_logged_in, allow_logged_in: true, level: 'reader') }
     end
 
     def prepare_tag
@@ -100,17 +106,14 @@ module Creation
     end
 
     def prepare_script
-      prepare_users
       let!(:script) { Common.create_script(admin_user) }
     end
 
     def prepare_audio_recording
-      prepare_site
       let!(:audio_recording) { Common.create_audio_recording(writer_user, writer_user, site) }
     end
 
     def prepare_bookmark
-      prepare_audio_recording
       let!(:bookmark) { Common.create_bookmark(writer_user, audio_recording) }
     end
 
@@ -120,23 +123,18 @@ module Creation
     end
 
     def prepare_audio_events_tags
-      prepare_audio_event
-      prepare_tag
       let!(:tagging) { Common.create_audio_event_tags(writer_user, audio_event, tag) }
     end
 
     def prepare_audio_event_comment
-      prepare_audio_event
       let!(:audio_event_comment) { Common.create_audio_event_comment(writer_user, audio_event) }
     end
 
     def prepare_saved_search
-      prepare_project
       let!(:saved_search) { Common.create_saved_search(writer_user, project) }
     end
 
     def prepare_analysis_job
-      prepare_saved_search
       let!(:analysis_job) { Common.create_analysis_job(writer_user, script, saved_search) }
     end
 
@@ -155,7 +153,7 @@ module Creation
     class << self
 
       def create_user_token(user = nil)
-        token = user.blank? ? '11faketoken11' : user.authentication_token
+        token = user.blank? ? 'NOT_A_VALID_TOKEN' : user.authentication_token
         "Token token=\"#{token}\""
       end
 

@@ -40,6 +40,11 @@ resource 'SavedSearches' do
     end
 
     get '/saved_searches' do
+      let(:authentication_token) { owner_token }
+      standard_request_options(:get, 'LIST (as owner)', :ok, {expected_json_path: 'data/0/stored_query', data_item_count: 1})
+    end
+
+    get '/saved_searches' do
       let(:authentication_token) { writer_token }
       standard_request_options(:get, 'LIST (as writer)', :ok, {expected_json_path: 'data/0/stored_query', data_item_count: 1})
     end
@@ -50,13 +55,8 @@ resource 'SavedSearches' do
     end
 
     get '/saved_searches' do
-      let(:authentication_token) { other_token }
+      let(:authentication_token) { no_access_token }
       standard_request_options(:get, 'LIST (as other)', :ok, {expected_json_path: 'data', data_item_count: 0})
-    end
-
-    get '/saved_searches' do
-      let(:authentication_token) { unconfirmed_token }
-      standard_request_options(:get, 'LIST (as unconfirmed_token)', :forbidden, {expected_json_path: get_json_error_path(:confirm)})
     end
 
     get '/saved_searches' do
@@ -76,6 +76,12 @@ resource 'SavedSearches' do
 
     post '/saved_searches' do
       let(:raw_post) { {saved_search: post_attributes}.to_json }
+      let(:authentication_token) { owner_token }
+      standard_request_options(:post, 'CREATE (as owner)', :created, {expected_json_path: 'data/stored_query', data_item_count: 1})
+    end
+
+    post '/saved_searches' do
+      let(:raw_post) { {saved_search: post_attributes}.to_json }
       let(:authentication_token) { writer_token }
       standard_request_options(:post, 'CREATE (as writer)', :created, {expected_json_path: 'data/stored_query', data_item_count: 1})
     end
@@ -88,14 +94,8 @@ resource 'SavedSearches' do
 
     post '/saved_searches' do
       let(:raw_post) { {saved_search: post_attributes}.to_json }
-      let(:authentication_token) { other_token }
+      let(:authentication_token) { no_access_token }
       standard_request_options(:post, 'CREATE (as other)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
-    end
-
-    post '/saved_searches' do
-      let(:raw_post) { {saved_search: post_attributes}.to_json }
-      let(:authentication_token) { unconfirmed_token }
-      standard_request_options(:post, 'CREATE (as unconfirmed user)', :forbidden, {expected_json_path: get_json_error_path(:confirm)})
     end
 
     post '/saved_searches' do
@@ -117,6 +117,13 @@ resource 'SavedSearches' do
     get '/saved_searches/:id' do
       parameter :id, 'Requested saved search id (in path/route)', required: true
       let(:id) { saved_search.id }
+      let(:authentication_token) { owner_token }
+      standard_request_options(:get, 'SHOW (as owner)', :ok, {expected_json_path: 'data/stored_query', data_item_count: 1})
+    end
+
+    get '/saved_searches/:id' do
+      parameter :id, 'Requested saved search id (in path/route)', required: true
+      let(:id) { saved_search.id }
       let(:authentication_token) { writer_token }
       standard_request_options(:get, 'SHOW (as writer)', :ok, {expected_json_path: 'data/stored_query', data_item_count: 1})
     end
@@ -131,15 +138,8 @@ resource 'SavedSearches' do
     get '/saved_searches/:id' do
       parameter :id, 'Requested saved search id (in path/route)', required: true
       let(:id) { saved_search.id }
-      let(:authentication_token) { other_token }
+      let(:authentication_token) { no_access_token }
       standard_request_options(:get, 'SHOW (as other)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
-    end
-
-    get '/saved_searches/:id' do
-      parameter :id, 'Requested saved search id (in path/route)', required: true
-      let(:id) { saved_search.id }
-      let(:authentication_token) { unconfirmed_token }
-      standard_request_options(:get, 'SHOW (as unconfirmed user)', :forbidden, {expected_json_path: get_json_error_path(:confirm)})
     end
 
     get '/saved_searches/:id' do
@@ -180,7 +180,14 @@ resource 'SavedSearches' do
     delete '/saved_searches/:id' do
       parameter :id, 'Requested saved search id (in path/route)', required: true
       let(:id) { saved_search.id }
-      let(:authentication_token) { writer_token }
+      let(:authentication_token) { owner_token } # only saved_search creator can destroy
+      standard_request_options(:delete, 'DESTROY (as owner)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
+    end
+
+    delete '/saved_searches/:id' do
+      parameter :id, 'Requested saved search id (in path/route)', required: true
+      let(:id) { saved_search.id }
+      let(:authentication_token) { writer_token } # only saved_search creator can destroy
       standard_request_options(:delete, 'DESTROY (as writer)', :no_content, {expected_response_has_content: false, expected_response_content_type: nil})
     end
 
@@ -194,15 +201,8 @@ resource 'SavedSearches' do
     delete '/saved_searches/:id' do
       parameter :id, 'Requested saved search id (in path/route)', required: true
       let(:id) { saved_search.id }
-      let(:authentication_token) { other_token }
+      let(:authentication_token) { no_access_token }
       standard_request_options(:delete, 'DESTROY (as other)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
-    end
-
-    delete '/saved_searches/:id' do
-      parameter :id, 'Requested saved search id (in path/route)', required: true
-      let(:id) { saved_search.id }
-      let(:authentication_token) { unconfirmed_token }
-      standard_request_options(:delete, 'DESTROY (as unconfirmed user)', :forbidden, {expected_json_path: get_json_error_path(:confirm)})
     end
 
     delete '/saved_searches/:id' do

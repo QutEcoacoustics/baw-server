@@ -419,7 +419,7 @@ resource 'AudioRecordings' do
 
     parameter :id, 'Requested audio recording id (in path/route)', required: true
 
-    let(:authentication_token) { other_token }
+    let(:authentication_token) { no_access_token }
 
     standard_request_options(:get, 'SHOW (as no access, with shallow path)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
   end
@@ -747,7 +747,7 @@ resource 'AudioRecordings' do
     parameter :site_id, 'Requested site ID (in path/route)', required: true
     parameter :uploader_id, 'Uploader id (in path/route)', required: true
 
-    let(:uploader_id) { other_user.id }
+    let(:uploader_id) { no_access_user.id }
     let(:raw_post) { {'audio_recording' => post_attributes}.to_json }
 
     let(:authentication_token) { harvester_token }

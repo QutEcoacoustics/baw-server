@@ -183,7 +183,6 @@ Rails.application.routes.draw do
   # routes for projects and nested resources
   resources :projects do
     member do
-      post 'update_permissions'
       get 'edit_sites'
       put 'update_sites'
       patch 'update_sites'
@@ -192,10 +191,9 @@ Rails.application.routes.draw do
       get 'new_access_request'
       post 'submit_access_request'
     end
-    # HTML project permissions list
+    # project permissions
     resources :permissions, only: [:index]
-    # API project permission item
-    resources :permissions, except: [:index, :edit, :update], defaults: {format: 'json'}
+    resources :permissions, except: [:edit, :update, :index], defaults: {format: 'json'}
     # HTML project site item
     resources :sites, except: [:index] do
       member do
@@ -210,9 +208,7 @@ Rails.application.routes.draw do
       end
     end
     # API project sites list
-
     resources :sites, only: [:index], defaults: {format: 'json'}
-
   end
 
   # placed above related resource so it does not conflict with (resource)/:id => (resource)#show
@@ -317,7 +313,7 @@ Rails.application.routes.draw do
   get '/credits' => 'public#credits'
 
   # resque front end - admin only
-  authenticate :user, lambda { |u| Access::Check.is_admin?(u) } do
+  authenticate :user, lambda { |u| Access::Core.is_admin?(u) } do
     # add stats tab to web interface from resque-job-stats
     require 'resque-job-stats/server'
     # adds Statuses tab to web interface from resque-status

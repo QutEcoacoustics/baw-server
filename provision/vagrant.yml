@@ -20,7 +20,7 @@
         rvm1_rubies:
           # use full 'ruby-*' name
           # last ruby listed is the default
-          - "ruby-2.2.4"
+          - "ruby-2.3.1"
     postgresql_version: 9.3
   pre_tasks:
     - debug: var=ansible_ssh_user

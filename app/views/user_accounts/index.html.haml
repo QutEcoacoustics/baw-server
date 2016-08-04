@@ -29,13 +29,13 @@
       %th
 
   %tbody
-  - @users.each do |user|
-    - last_seen = user.get_last_seen
-    %tr
-      %td= link_to "#{user.user_name} (#{user.role_symbols.join(', ')})", user_account_path(user)
-      %td= last_seen.blank? ? '?' : format_sidebar_datetime(last_seen)
-      %td= user.confirmed? ? 'confirmed' : 'no'
-      %td
-        = link_to edit_user_account_path(user), target: '_self', class: 'btn btn-default btn-xs' do
-          %span.fa.fa-edit{aria: {hidden: 'true'}}
-          Edit
+    - @users.each do |user|
+      - last_seen = user.get_last_seen
+      %tr
+        %td= link_to "#{user.user_name} (#{user.role_symbols.join(', ')})", user_account_path(user)
+        %td= last_seen.blank? ? '?' : format_sidebar_datetime(last_seen)
+        %td= user.confirmed? ? 'confirmed' : 'no'
+        %td
+          = link_to edit_user_account_path(user), target: '_self', class: 'btn btn-default btn-xs' do
+            %span.fa.fa-edit{aria: {hidden: 'true'}}
+            Edit

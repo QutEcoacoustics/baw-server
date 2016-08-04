@@ -99,7 +99,7 @@ describe Site, :type => :model do
   it 'should error on checking orphaned site if site is orphaned' do
     site = FactoryGirl.create(:site, projects: [])
     expect {
-      Access::Check.check_orphan_site!(site)
+      Access::Core.check_orphan_site!(site)
     }.to raise_error(CustomErrors::OrphanedSiteError)
   end
 

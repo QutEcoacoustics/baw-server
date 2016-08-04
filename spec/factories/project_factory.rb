@@ -1,9 +1,9 @@
 FactoryGirl.define do
 
   factory :project do
-    sequence(:name) { |n| "project#{n}" }
+    sequence(:name) { |n| "gen_project#{n}" }
     sequence(:description) { |n| "project description #{n}" }
-    sequence(:urn) { |n| "urn:project:ecosounds.org/project/#{n}" }
+    sequence(:urn) { |n| "urn:project:example.org/project/#{n}" }
     sequence(:notes) { |n|  "note number #{n}" }
 
     creator

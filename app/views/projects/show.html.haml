@@ -8,7 +8,8 @@
   = render partial: 'shared/sidebar_metadata_heading', locals: {title: 'Project', icon_class: 'home'}
   = render partial: 'shared/sidebar_metadata_user_created', locals: { item: @project }
   = render partial: 'shared/sidebar_metadata_user_updated', locals: { item: @project }
-  - level = Access::Level.project(current_user, @project)
+  - levels = Access::Core.user_levels(current_user, @project)
+  - level = Access::Core.highest(levels)
   - unless level.blank?
     - level_name = Access::Core.get_level_name(level)
     = render partial: 'shared/sidebar_metadata', locals: {title: 'Your access level', text: level_name}

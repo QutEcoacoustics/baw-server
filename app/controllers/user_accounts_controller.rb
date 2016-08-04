@@ -4,7 +4,7 @@ class UserAccountsController < ApplicationController
   # GET /user_accounts
   def index
     do_authorize_class
-
+ 
     order = 'CASE WHEN last_seen_at IS NOT NULL THEN last_seen_at
 WHEN current_sign_in_at IS NOT NULL THEN current_sign_in_at
 ELSE last_sign_in_at END DESC'
@@ -12,7 +12,6 @@ ELSE last_sign_in_at END DESC'
 
     respond_to do |format|
       format.html
-      # no json API to list users
     end
   end
 
@@ -68,7 +67,7 @@ ELSE last_sign_in_at END DESC'
     end
 
     if params[:commit] == 'Confirm User'
-      @user.confirm!
+      @user.confirm
     end
 
     if params[:commit] == 'Resend Confirmation'
@@ -91,6 +90,9 @@ ELSE last_sign_in_at END DESC'
     @user = current_user
     do_authorize_instance
 
+    # sometimes faulty timezones are stored, repair them
+    TimeZoneHelper.parse_model(@user)
+
     @user.preferences = user_account_params
 
     respond_to do |format|
@@ -107,7 +109,7 @@ ELSE last_sign_in_at END DESC'
     do_load_resource
     do_authorize_instance
 
-    @user_projects = Access::Query.projects_accessible(@user).includes(:creator).references(:creator)
+    @user_projects = Access::ByPermission.projects(@user).includes(:creator).references(:creator)
                          .order('projects.name ASC')
                          .page(paging_params[:page].blank? ? 1 : paging_params[:page])
     respond_to do |format|
@@ -120,7 +122,7 @@ ELSE last_sign_in_at END DESC'
     do_load_resource
     do_authorize_instance
 
-    @user_sites = Access::Query.sites(@user).includes(:creator, :projects).references(:creator, :project)
+    @user_sites = Access::ByPermission.sites(@user).includes(:creator, :projects).references(:creator, :project)
         .order('sites.name ASC')
         .page(paging_params[:page].blank? ? 1 : paging_params[:page])
 
@@ -134,7 +136,7 @@ ELSE last_sign_in_at END DESC'
     do_load_resource
     do_authorize_instance
 
-    @user_bookmarks = Access::Query.bookmarks_modified(@user)
+    @user_bookmarks = Access::ByUserModified.bookmarks(@user)
                           .order('bookmarks.updated_at DESC')
                           .page(paging_params[:page].blank? ? 1 : paging_params[:page])
     respond_to do |format|
@@ -147,7 +149,7 @@ ELSE last_sign_in_at END DESC'
     do_load_resource
     do_authorize_instance
 
-    @user_audio_event_comments = Access::Query.audio_event_comments_modified(@user)
+    @user_audio_event_comments = Access::ByUserModified.audio_event_comments(@user)
                                      .order('audio_event_comments.updated_at DESC')
                                      .page(paging_params[:page].blank? ? 1 : paging_params[:page])
     respond_to do |format|
@@ -160,7 +162,7 @@ ELSE last_sign_in_at END DESC'
     do_load_resource
     do_authorize_instance
 
-    @user_annotations = Access::Query.audio_events_modified(@user).includes(audio_recording: [:site]).references(:audio_recordings, :sites)
+    @user_annotations = Access::ByUserModified.audio_events(@user).includes(audio_recording: [:site]).references(:audio_recordings, :sites)
                             .order('audio_events.updated_at DESC')
                             .page(paging_params[:page].blank? ? 1 : paging_params[:page])
     respond_to do |format|
@@ -173,7 +175,7 @@ ELSE last_sign_in_at END DESC'
     do_load_resource
     do_authorize_instance
 
-    @user_saved_searches = Access::Query.saved_searches_modified(@user)
+    @user_saved_searches = Access::ByUserModified.saved_searches(@user)
                                .order('saved_searches.created_at DESC')
                                .paginate(
                                    page: paging_params[:page].blank? ? 1 : paging_params[:page],
@@ -189,7 +191,7 @@ ELSE last_sign_in_at END DESC'
     do_load_resource
     do_authorize_instance
 
-    @user_analysis_jobs = Access::Query.analysis_jobs_modified(@user)
+    @user_analysis_jobs = Access::ByUserModified.analysis_jobs(@user)
                               .order('analysis_jobs.updated_at DESC')
                               .paginate(
                                   page: paging_params[:page].blank? ? 1 : paging_params[:page],

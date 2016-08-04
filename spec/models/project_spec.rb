@@ -12,7 +12,7 @@ describe Project, :type => :model do
   it { is_expected.to belong_to(:updater).with_foreign_key(:updater_id) }
   it { is_expected.to belong_to(:deleter).with_foreign_key(:deleter_id) }
 
-  it 'is invalid without an name' do
+  it 'is invalid without a name' do
     expect(FactoryGirl.build(:project, name: nil)).not_to be_valid
   end
   it 'is invalid without a creator' do
@@ -21,6 +21,7 @@ describe Project, :type => :model do
     }.to raise_error(ActiveRecord::RecordInvalid, /Creator must exist as an object or foreign key/)
   end
   it 'is invalid without a created_at' do
+
     expect(FactoryGirl.create(:project, created_at: nil)).not_to be_a_new(Project)
   end
 

@@ -65,8 +65,8 @@ class AnalysisJob < ActiveRecord::Base
         controller: :audio_events,
         action: :filter,
         defaults: {
-            order_by: :name,
-            direction: :asc
+            order_by: :updated_at,
+            direction: :desc
         },
         valid_associations: [
             {
@@ -259,9 +259,9 @@ class AnalysisJob < ActiveRecord::Base
   end
 
   # Create payloads from audio recordings extracted from saved search.
-  # This method saves persists changes.
+  # This method persists changes.
   def prepare_job
-    user = creator
+    user = Access::Validate.user(creator)
 
     Rails.logger.info 'AnalysisJob::prepare_job: Begin.'
 

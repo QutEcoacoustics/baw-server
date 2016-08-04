@@ -38,9 +38,10 @@
         %td= link_to project.name, project_path(project)
         %td= project.sites.size
         %td
-          - actual_level = Access::Level.project(@user, project)
+          - actual_levels = Access::Core.user_levels(@user, project)
+          - actual_level = Access::Core.highest(actual_levels)
           - level_name = Access::Core.get_level_name(actual_level)
-          - if Access::Check.allowed?(:writer, actual_level)
+          - if Access::Core.allowed?(:owner, actual_level)
             = link_to level_name, project_permissions_path(project)
           - else
             = level_name

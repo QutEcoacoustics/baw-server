@@ -45,13 +45,14 @@ resource 'AnalysisJobsItems' do
   # In particular we want to ensure that if someone has access to a project, then they have
   # access to the results
   let!(:second_analysis_jobs_item) {
-    project = Creation::Common.create_project(other_user)
-    permission = FactoryGirl.create(:read_permission, creator: owner_user, user: other_user, project: project)
-    site = Creation::Common.create_site(other_user, project)
-    audio_recording = Creation::Common.create_audio_recording(owner_user, owner_user, site)
+    project_aji = Creation::Common.create_project(no_access_user)
+    site_aji = Creation::Common.create_site(no_access_user, project_aji)
+    audio_recording_aji = Creation::Common.create_audio_recording(owner_user, owner_user, site_aji)
+
+    # re-use existing saved_search and analysis_job
     saved_search.projects << project
 
-    Creation::Common.create_analysis_job_item(analysis_job, audio_recording)
+    Creation::Common.create_analysis_job_item(analysis_job, audio_recording_aji)
   }
 
   # Create another audio recording that is NOT in any analysis_jobs_items.
@@ -111,7 +112,7 @@ resource 'AnalysisJobsItems' do
 
   get '/analysis_jobs/:analysis_job_id/audio_recordings' do
     analysis_jobs_id_param
-    let(:authentication_token) { other_token }
+    let(:authentication_token) { no_access_token }
     let(:analysis_job_id) { analysis_job.id }
     standard_request_options(
         :get,
@@ -135,10 +136,11 @@ resource 'AnalysisJobsItems' do
 
   get '/analysis_jobs/:analysis_job_id/audio_recordings' do
     analysis_jobs_id_param
-    let(:authentication_token) { unconfirmed_token }
     let(:analysis_job_id) { analysis_job.id }
-    standard_request_options(:get, 'INDEX (as unconfirmed user)', :forbidden, {
-        expected_json_path: get_json_error_path(:confirm)
+    standard_request_options(:get, 'INDEX (as anonymous user)', :ok, {
+        remove_auth: true,
+        data_item_count: 0,
+        expected_json_path: 'data/'
     })
   end
 
@@ -211,7 +213,7 @@ resource 'AnalysisJobsItems' do
     analysis_jobs_items_id_param
     let(:audio_recording_id) { analysis_jobs_item.audio_recording_id }
     let(:analysis_job_id) { analysis_job.id }
-    let(:authentication_token) { other_token }
+    let(:authentication_token) { no_access_token }
     standard_request_options(:get, 'SHOW (as other)', :forbidden, {
         expected_json_path: get_json_error_path(:permissions)})
   end
@@ -220,8 +222,7 @@ resource 'AnalysisJobsItems' do
     analysis_jobs_items_id_param
     let(:audio_recording_id) { analysis_jobs_item.audio_recording_id }
     let(:analysis_job_id) { analysis_job.id }
-    let(:authentication_token) { unconfirmed_token }
-    standard_request_options(:get, 'SHOW (as unconfirmed user)', :forbidden, {expected_json_path: get_json_error_path(:confirm)})
+    standard_request_options(:get, 'SHOW (as guest user)', :unauthorized, {remove_auth: true, expected_json_path: get_json_error_path(:sign_in)})
   end
 
   get '/analysis_jobs/:analysis_job_id/audio_recordings/:audio_recording_id' do
@@ -302,7 +303,7 @@ resource 'AnalysisJobsItems' do
     let(:audio_recording_id) { analysis_jobs_item.audio_recording_id }
     let(:analysis_job_id) { analysis_job.id }
     let(:raw_post) { body_attributes }
-    let(:authentication_token) { other_token }
+    let(:authentication_token) { no_access_token }
     standard_request_options(:put, 'UPDATE (as other)', :forbidden, {
         expected_json_path: get_json_error_path(:permissions)
     })
@@ -314,9 +315,9 @@ resource 'AnalysisJobsItems' do
     let(:audio_recording_id) { analysis_jobs_item.audio_recording_id }
     let(:analysis_job_id) { analysis_job.id }
     let(:raw_post) { body_attributes }
-    let(:authentication_token) { unconfirmed_token }
-    standard_request_options(:put, 'UPDATE (as unconfirmed user)', :forbidden, {
-        expected_json_path: get_json_error_path(:confirm)
+    standard_request_options(:put, 'UPDATE (as anonymous user)', :unauthorized, {
+        remove_auth: true,
+        expected_json_path: get_json_error_path(:sign_up)
     })
   end
 

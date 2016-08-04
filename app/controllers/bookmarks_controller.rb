@@ -7,7 +7,7 @@ class BookmarksController < ApplicationController
 
     @bookmarks, opts = Settings.api_response.response_advanced(
         api_filter_params,
-        Access::Query.bookmarks_modified(current_user),
+        Access::ByUserModified.bookmarks(current_user),
         Bookmark,
         Bookmark.filter_settings
     )
@@ -71,7 +71,7 @@ class BookmarksController < ApplicationController
 
     filter_response, opts = Settings.api_response.response_advanced(
         api_filter_params,
-        Access::Query.bookmarks_modified(current_user),
+        Access::ByUserModified.bookmarks(current_user),
         Bookmark,
         Bookmark.filter_settings
     )

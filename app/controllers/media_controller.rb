@@ -59,9 +59,9 @@ class MediaController < ApplicationController
 
   def authorise_custom(request_params, user)
 
-    # Can't do anything if not logged in, not in user or admin role, or not confirmed
-    if user.blank? || (!Access::Check.is_standard_user?(user) && !Access::Check.is_admin?(user)) || !user.confirmed?
-      fail CanCan::AccessDenied, 'Anonymous users, non-admin and non-users, or unconfirmed users cannot access media.'
+    # TODO: the access depends on the project access
+    if user.blank? || (!Access::Core.is_standard_user?(user) && !Access::Core.is_admin?(user)) || !user.confirmed?
+      fail CanCan::AccessDenied, 'xxxx'
     end
 
     audio_recording = auth_custom_audio_recording(request_params)

@@ -5,16 +5,18 @@
 - span_id = "#{control_id}_appended_info"
 - help_id = "#{control_id}_appended_help"
 - error_id = "#{control_id}_appended_error"
+- no_match_text = 'Input nearest large city (no match)'
 - unless defined?(full_width)
   - full_width = false
 .form-group.string.optional{class: form_group_class }
   = f.label attribute_name, 'Time Zone', class: 'string optional control-label col-sm-3', for: control_id
   %div{class: (full_width ? 'col-sm-9' : 'col-sm-5')}
     .input-group
-      = f.input_field attribute_name, type: 'text', autocomplete: 'off', class: 'form-control'
+      = f.input_field attribute_name, type: 'text', autocomplete: 'timezone-selection', class: 'form-control'
       %span.input-group-addon{id: span_id, title: 'Time zone abbreviation and current UTC offset'}
         (no match)
     %p.help-block{id: help_id }
+      = no_match_text
     - if has_error
       %p.help-block{id: error_id}
         = model.errors[attribute_name].join(', ')
@@ -78,7 +80,7 @@
       helpInfo.text('Currently: ' + formatted);
     } else {
       appendedInfo.text('(no match)');
-      helpInfo.text('(no match)');
+      helpInfo.text('#{ no_match_text }');
     }
   }
 

@@ -7,7 +7,7 @@
   - url = admin_tags_path
   - method = method_new
 - elsif action_edit
-  - url = admin_tags_path
+  - url = admin_tag_path(@tag)
   - method = method_edit
 
 = simple_form_for([:admin, @tag], url: url, html: {class: 'form-horizontal', method: method }) do |f|

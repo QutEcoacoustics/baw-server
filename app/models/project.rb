@@ -35,6 +35,9 @@ class Project < ActiveRecord::Base
   #validates :urn, uniqueness: {case_sensitive: false}, allow_blank: true, allow_nil: true
   validates_format_of :urn, with: /\Aurn:[a-z0-9][a-z0-9-]{0,31}:[a-z0-9()+,\-.:=@;$_!*'%\/?#]+\z/, message: 'urn %{value} is not valid, must be in format urn:<name>:<path>', allow_blank: true, allow_nil: true
   validates_attachment_content_type :image, content_type: /\Aimage\/(jpg|jpeg|pjpeg|png|x-png|gif)\z/, message: 'file type %{value} is not allowed (only jpeg/png/gif images)'
+  
+  # make sure the project has a permission entry for the creator after it is created
+  after_create :create_owner_permission
 
   def description_html
     CustomRender.render_markdown(self, :description)
@@ -63,7 +66,7 @@ class Project < ActiveRecord::Base
         action: :filter,
         defaults: {
             order_by: :name,
-            direction: :desc
+            direction: :asc
         },
         valid_associations: [
             {
@@ -99,5 +102,19 @@ class Project < ActiveRecord::Base
             }
         ]
     }
+  end
+
+  private
+
+  def create_owner_permission
+    the_user = self.creator
+    the_admin = User.where(roles_mask: 1).first!
+    Permission.find_or_create_by(
+        level: 'owner',
+        user: the_user,
+        project: self,
+        creator: the_admin,
+        allow_logged_in: false,
+        allow_anonymous: false)
   end
 end
