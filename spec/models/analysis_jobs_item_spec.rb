@@ -12,7 +12,7 @@ describe AnalysisJobsItem, type: :model do
   it 'cannot be created when status is not new' do
     expect {
       create(:analysis_jobs_item, status: nil)
-    }.to raise_error(RuntimeError, /AnalysisJobItem#status: Invalid state transition/)
+    }.to raise_error(AASM::NoDirectAssignmentError, /direct assignment of AASM column has been disabled/)
   end
 
   it 'created_at should be set by rails' do

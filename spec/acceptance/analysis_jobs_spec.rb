@@ -129,7 +129,7 @@ resource 'AnalysisJobs' do
   end
 
   get '/analysis_jobs/:id' do
-    analysis_jobs_id_param
+    id_params
     let(:id) { 'system' }
     let(:authentication_token) { admin_token }
     standard_request_options(:get, 'SHOW system (as admin)', :not_implemented, {
@@ -390,20 +390,13 @@ resource 'AnalysisJobs' do
   end
 
   delete '/analysis_jobs/:id' do
-    analysis_jobs_id_param
+    id_params
     let(:id) { analysis_job.id }
     let(:authentication_token) { writer_token }
     standard_request_options(:delete, 'DESTROY (as writer, when [:new|:preparing])', :conflict, {
         expected_json_path: 'meta/error/details',
         response_body_content: '"message":"Conflict"'
     })
-  end
-
-  delete '/analysis_jobs/:id' do
-    id_params
-    let(:id) { analysis_job.id }
-    let(:authentication_token) { writer_token }
-    standard_request_options(:delete, 'DESTROY (as writer)', :no_content, {expected_response_has_content: false, expected_response_content_type: nil})
   end
 
   delete '/analysis_jobs/:id' do

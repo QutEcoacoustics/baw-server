@@ -100,13 +100,14 @@ class PermissionsController < ApplicationController
   end
 
   def update_permissions_params
-    params.permit(project_wide: [:logged_in, :anonymous], per_user: [:none, :reader, :writer, :owner])
+    params.slice(:project_wide, :per_user).permit(project_wide: [:logged_in, :anonymous], per_user: [:none, :reader, :writer, :owner])
   end
 
   def update_permissions
+    return nil if !params.include?(:project_wide) && !params.include?(:per_user)
+
     request_params = update_permissions_params
 
-    return nil if !request_params.include?(:project_wide) && !request_params.include?(:per_user)
     if request_params.include?(:project_wide) && request_params[:project_wide].include?(:logged_in)
       permission = Permission.where(project: @project, user: nil, allow_logged_in: true, allow_anonymous: false).first
       permission = Permission.new(project: @project, user: nil, allow_logged_in: true, allow_anonymous: false) if permission.blank?

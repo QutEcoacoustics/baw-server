@@ -181,7 +181,12 @@ RSpec.configure do |config|
   end
 
   config.after(:each) do
+    is_truncating = DatabaseCleaner.connections[0].strategy.class == DatabaseCleaner::ActiveRecord::Truncation
+
     DatabaseCleaner.clean
+
+    Rails.application.load_seed if is_truncating
+
     #Bullet.perform_out_of_channel_notifications if Bullet.enable? && Bullet.notification?
     #Bullet.end_request if Bullet.enable?
 
