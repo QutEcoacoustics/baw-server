@@ -73,9 +73,41 @@ class AnalysisJobsItemsController < ApplicationController
     end
 
     do_load_resource
+    do_get_analysis_job
     do_authorize_instance
 
-    if @analysis_jobs_item.update_attributes(analysis_jobs_item_update_params)
+    parameters = analysis_jobs_item_update_params
+    desired_state = parameters[:status].to_sym
+
+    client_cancelled = desired_state == :cancelled
+    should_cancel = @analysis_jobs_item.may_confirm_cancel?(desired_state)
+    valid_transition = @analysis_jobs_item.may_transition_to_state(desired_state)
+
+    if valid_transition
+      @analysis_jobs_item.transition_to_state(desired_state)
+    elsif should_cancel
+      @analysis_jobs_item.confirm_cancel(desired_state)
+    end
+
+    saved = @analysis_jobs_item.save
+
+    if saved
+      # update progress statistics and check if job has been completed
+      @analysis_job.check_progress
+    end
+
+    if should_cancel && !client_cancelled && saved
+      # If someone tried to :cancelling-->:working instead of :cancelling-->:cancelled then it is an error
+      # However if client :cancelled when we expected :cancelling-->:cancelled then well behaved
+      respond_error(
+          :unprocessable_entity,
+          "This entity has been cancelled - can not set new state to `#{desired_state}`")
+
+    elsif !valid_transition
+      respond_error(
+          :unprocessable_entity,
+          "Cannot transition from `#{@analysis_jobs_item.status}` to `#{desired_state}`")
+    elsif saved
       respond_show
     else
       respond_change_fail
@@ -130,7 +162,9 @@ class AnalysisJobsItemsController < ApplicationController
   end
 
   def do_get_analysis_job
-    @analysis_job = AnalysisJob.find(@analysis_job_id) unless @is_system_job
+    # We use with deleted here because we always need to be able to load AnalysisJobsItem even if the parent
+    # AnalysisJob has been deleted.
+    @analysis_job = AnalysisJob.with_deleted.find(@analysis_job_id) unless @is_system_job
   end
 
   def get_query
@@ -362,7 +396,7 @@ class AnalysisJobsItemsController < ApplicationController
   end
 
   def normalise_path(path)
-    analysis_base_paths = BawWorkers::Config.analysis_cache_helper.existing_dirs
+    analysis_base_paths = BawWorkers::Config.analysis_cache_helper.possible_dirs
     matching_base_path = analysis_base_paths.select { |abp| path.start_with?(abp) }
     if matching_base_path.size == 1
       path_without_base = path.gsub(/#{matching_base_path[0].gsub('/', '\/')}\/[^\/]+\/[^\/]+\/[^\/]+\/?/, '')

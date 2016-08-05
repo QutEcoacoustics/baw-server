@@ -295,12 +295,14 @@ class AudioRecordingsController < ApplicationController
     ]
 
     # can't permit arbitrary hash
-    # https://github.com/rails/rails/issues/9454#issuecomment-14167664
+    # ~~https://github.com/rails/rails/issues/9454#issuecomment-14167664~~
+    # http://stackoverflow.com/questions/19172893/rails-hashes-with-unknown-keys-and-strong-parameters/24752108#24752108
     # http://guides.rubyonrails.org/action_controller_overview.html#more-examples
     # add arbitrary hash for notes manually
+    properties = params[:audio_recording].delete(:notes)
     params.require(:audio_recording).permit(*permitted_attributes).tap do |allowed_params|
-      if params[:audio_recording][:notes]
-        allowed_params[:notes] = params[:audio_recording][:notes]
+      if properties
+        allowed_params[:notes] = properties
       end
     end
   end

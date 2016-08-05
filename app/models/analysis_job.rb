@@ -1,8 +1,12 @@
 class AnalysisJob < ActiveRecord::Base
-  extend Enumerize
-
   # ensures that creator_id, updater_id, deleter_id are set
   include UserChange
+
+  # allow a state machine to work with this class
+  include AASM
+  include AASMHelpers
+
+  OVERALL_PROGRESS_REFRESH_SECONDS = 30.0
 
   belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_analysis_jobs
   belongs_to :updater, class_name: 'User', foreign_key: :updater_id, inverse_of: :updated_analysis_jobs
@@ -17,10 +21,6 @@ class AnalysisJob < ActiveRecord::Base
   acts_as_paranoid
   validates_as_paranoid
 
-  # store progress as json in a text column
-  # this stores jason in the form
-  # { queued: 5, working: 10, successful: 4, failed: 3, total: 22}
-  serialize :overall_progress, JSON
 
   # association validations
   validates :script, existence: true
@@ -37,30 +37,6 @@ class AnalysisJob < ActiveRecord::Base
             presence: true, timeliness: {on_or_before: lambda { Time.zone.now }, type: :datetime}
   validates :started_at, allow_blank: true, allow_nil: true, timeliness: {on_or_before: lambda { Time.zone.now }, type: :datetime}
   validates :overall_data_length_bytes, presence: true, numericality: {only_integer: true, greater_than_or_equal_to: 0}
-
-  # job status values - completed just means all processing has finished, whether it succeeds or not.
-  AVAILABLE_JOB_STATUS_SYMBOLS = [:new, :preparing, :processing, :suspended, :completed]
-  AVAILABLE_JOB_STATUS = AVAILABLE_JOB_STATUS_SYMBOLS.map { |item| item.to_s }
-
-  AVAILABLE_JOB_STATUS_DISPLAY = [
-      {id: :new, name: 'New'},
-      {id: :preparing, name: 'Preparing'},
-      {id: :processing, name: 'Processing'},
-      {id: :suspended, name: 'Suspended'},
-      {id: :completed, name: 'Completed'},
-  ]
-
-  enumerize :overall_status, in: AVAILABLE_JOB_STATUS, predicates: true
-
-  #
-  # State transition map
-  #
-  # :new → :preparing → :processing → :completed
-  #                           ⇅
-  #                       :suspended
-  #
-
-  after_initialize :initialise_job_tracking, if: Proc.new { |analysis_job| analysis_job.new_record? }
 
   def self.filter_settings
 
@@ -107,163 +83,328 @@ class AnalysisJob < ActiveRecord::Base
     }
   end
 
+  #
+  # public methods
+  #
+
+  def self.batch_size
+    1000
+  end
+
+  # Intended to be called when we know a change in status has happened -
+  # i.e. when an analysis_jobs_item status has changed.
+  # Disabled caching idea because it looks like a premature optimization.
+  def check_progress
+    #if (Time.zone.now - analysis_job.overall_progress_modified_at) > OVERALL_PROGRESS_REFRESH_SECONDS
+
+    # https://github.com/ActsAsParanoid/acts_as_paranoid/issues/45
+    was_deleted = deleted?
+    if was_deleted
+      old_paranoid_value = self.paranoid_value
+      self.paranoid_value = nil
+    end
+
+    # skip validations and callbacks, and do not set updated_at, save value to database
+    update_columns(update_job_progress)
+
+    # finally, after each update, check if we can finally finish the job!
+    if self.may_complete?
+      self.complete!
+    end
+
+    self.paranoid_value = old_paranoid_value if was_deleted
+  end
+
   # analysis_job lifecycle:
-  # 1. when a new analysis job is created, the required attributes will be initialised by `initialise_job_tracking`
-  # the new analysis job can be saved at this point (and is saved if created via create action on controller),
-  # but it has not been started and no resque jobs have been enqueued
-  # 2. Start an analysis job by calling `begin_work`. Calling `begin_work` when :overall_status is not 'new' or analysis job has not been saved is an error
-  # If :overall_status is 'new', the analysis job will immediately transition to 'preparing' status, then create and enqueue resque jobs.
-  # 3. Once all resque jobs have been enqeued, the analysis job will transition to 'processing' status.
-  # 4. resque jobs will update the analysis job as resque jobs change states using `update_job_progress`
-  # TODO more...
+  # 1. When a new analysis job is created, the state will be `before_save`.
+  #    The required attributes will be initialised by `initialize_workflow` and state will be transitioned to `new`.
+  #    The new analysis job should be saved at this point (and is saved if created via create action on controller).
+  #    Note: no AnalysisJobsItems have been made and no resque jobs have been enqueued.
+  # 2. Then the job must be prepared. Currently synchronous but designed to be asynchronous.
+  #    Do this by calling `prepare` which will transition from `new` to `preparing`.
+  #    Note: AnalysisJobsItems are enqueued progressively here. Some actions may be processed and even completed
+  #    before the AnalysisJob even finishes preparing!
+  # 3. Transition to `processing`
+  #    Note: the processing transition should be automatic
+  #    Once all resque jobs have been enqueued, the analysis job will transition to 'processing' status.
+  # 4. Resque jobs will update the analysis job (via analysis jobs items) as resque jobs change states.
+  #    `check_progress` is used to update progress and also is the callback that checks for job completion.
+  # 5. When all items have finished processing, the job transitions to `completed`. Users are notified with an email
+  #    and the job is marked as completed.
+  #
+  # Additional states:
+  # - Jobs can transition between processing and suspended. When suspended all analysis jobs items are marked as
+  #   `cancelling`. When resumed, all `cancelling` items are marked as `queued` again and all `cancelled` items are
+  #   re-added back to the queue.
+  #   Note: We can't add or remove items from the message queue, which is why we need the cancelling/cancelled
+  #   distinction.
+  # - Jobs can be retried. In this case, the failed items (only) are re-queued and the job is set to `processing`
+  #
+  # State transition map
+  #
+  # :before_save → :new → :preparing → :processing → :completed
+  #                           ↑           ↓   ↑          |
+  #                           |        :suspended        |
+  #                           ----------------------------
+  #
+  aasm column: :overall_status, no_direct_assignment: true, whiny_persistence: true do
+    # We don't need to explicitly set display_name - they get humanized by default
+    state :before_save, {initial: true, display_name: 'Before save'}
+    state :new, enter: [:initialise_job_tracking, :update_job_progress]
+    state :preparing, enter: :send_preparing_email, after_enter: [:prepare_job, :process!]
+    state :processing, enter: [:update_job_progress]
+    state :suspended, enter: [:suspend_job, :update_job_progress]
 
+    # completed just means all processing has finished, whether it succeeds or not.
+    state :completed, enter: [:update_job_progress], after_enter: :send_completed_email
 
-  # Update status and modified timestamp if changes are made. Does not persist changes.
-  # @param [Symbol, String] status
-  # @return [void]
-  def update_job_status(status)
-    current_status = self.overall_status.blank? ? 'new' : self.overall_status.to_s
-    new_status = status.blank? ? current_status : status.to_s
+    event :initialize_workflow, unless: :has_status_timestamp? do
+      transitions from: :before_save, to: :new
+    end
 
-    self.overall_status = new_status
-    self.overall_status_modified_at = Time.zone.now if current_status != new_status || self.overall_status_modified_at.blank?
+    # we send email here because initialize_workflow does not guarantee that an id is set.
+    event :prepare, guard: :has_id? do
+      transitions from: :new, to: :preparing
+    end
+
+    # you shouldn't need to call process manually
+    event :process, guard: :are_all_enqueued? do
+      transitions from: :preparing, to: :processing, unless: :all_job_items_completed?
+      transitions from: :preparing, to: :completed, guard: :all_job_items_completed?
+    end
+
+    event :suspend do
+      transitions from: :processing, to: :suspended
+    end
+
+    # Guard against race conditions. Do not allow to resume if there are still analysis_jobs_items that are :queued.
+    event :resume do
+      transitions from: :suspended, to: :processing, guard: :are_all_cancelled?, after: :resume_job
+    end
+
+    # https://github.com/aasm/aasm/issues/324
+    # event :api_update do
+    #   transitions from: :processing, to: :suspended
+    #   transitions from: :suspended, to: :processing, guard: :are_all_cancelled?
+    # end
+
+    event :complete do
+      transitions from: :processing, to: :completed, guard: :all_job_items_completed?
+    end
+
+    # retry just the failures
+    event :retry do
+      transitions from: :completed, to: :processing,
+                  guard: :are_any_job_items_failed?, after: [:retry_job, :send_retry_email]
+    end
+
+    after_all_transitions :update_status_timestamp
   end
 
-  # Update progress and modified timestamp if changes are made. Does not persist changes.
-  # @param [Integer] queued_count
-  # @param [Integer] working_count
-  # @param [Integer] successful_count
-  # @param [Integer] failed_count
-  # @return [void]
-  def update_job_progress(queued_count = nil, working_count = nil, successful_count = nil, failed_count = nil)
-    current_progress = self.overall_progress
+  # job status values
+  AVAILABLE_JOB_STATUS_SYMBOLS = self.aasm.states.map(&:name)
+  AVAILABLE_JOB_STATUS = AVAILABLE_JOB_STATUS_SYMBOLS.map { |item| item.to_s }
 
-    current_queued_count = current_progress.blank? ? 0 : current_progress['queued'].to_i
-    current_working_count = current_progress.blank? ? 0 : current_progress['working'].to_i
-    current_successful_count = current_progress.blank? ? 0 : current_progress['successful'].to_i
-    current_failed_count = current_progress.blank? ? 0 : current_progress['failed'].to_i
+  AVAILABLE_JOB_STATUS_DISPLAY = self.aasm.states.map { |x| [x.name, x.display_name] }.to_h
 
-    new_queued_count = queued_count.blank? ? current_queued_count : queued_count.to_i
-    new_working_count = working_count.blank? ? current_working_count : working_count.to_i
-    new_successful_count = successful_count.blank? ? current_successful_count : successful_count.to_i
-    new_failed_count = failed_count.blank? ? current_failed_count : failed_count.to_i
-
-    calculated_total = new_queued_count + new_working_count + new_successful_count + new_failed_count
-
-    new_progress = {
-        queued: new_queued_count,
-        working: new_working_count,
-        successful: new_successful_count,
-        failed: new_failed_count,
-        total: calculated_total,
-    }
-
-    self.overall_progress = new_progress
-    self.overall_progress_modified_at = Time.zone.now if current_progress != new_progress || self.overall_progress_modified_at.blank?
+  # hook active record callbacks into state machine
+  before_validation(on: :create) do
+    # if valid? is called twice, then overall_status already == :new and this will fail. So add extra may_*? check.
+    initialize_workflow if may_initialize_workflow?
   end
 
-  def create_payload(audio_recording)
 
-    # common payload info
-    command_format = self.script.executable_command.to_s
-    file_executable = ''
-    copy_paths = []
-    config_string = self.custom_settings.to_s
-    job_id = self.id.to_i
+  private
 
-    {
-        command_format: command_format,
+  #
+  # guards for the state machine
+  #
 
-        # TODO: where do file_executable and copy_paths come from?
-        file_executable: file_executable,
-        copy_paths: copy_paths,
+  def has_status_timestamp?
+    !self.overall_status_modified_at.nil?
+  end
 
-        config: config_string,
-        job_id: job_id,
+  def has_id?
+    !self.id.nil?
+  end
 
-        uuid: audio_recording.uuid,
-        id: audio_recording.id,
-        datetime_with_offset: audio_recording.recorded_date.iso8601(3),
-        original_format: audio_recording.original_format_calculated
-    }
+  def are_all_enqueued?
+    self.overall_count == AnalysisJobsItem.for_analysis_job(self.id).count
+  end
+
+  def are_all_cancelled?
+    AnalysisJobsItem.queued_for_analysis_job(self.id).count == 0
+  end
+
+  def all_job_items_completed?
+    AnalysisJobsItem.for_analysis_job(self.id).count == AnalysisJobsItem.completed_for_analysis_job(self.id).count
+  end
+
+  def are_any_job_items_failed?
+    AnalysisJobsItem.failed_for_analysis_job(self.id).count > 0
+  end
+
+  #
+  # callbacks for the state machine
+  #
+
+  def initialise_job_tracking
+    self.overall_count = 0
+    self.overall_duration_seconds = 0
+    self.overall_data_length_bytes = 0
+  end
+
+  def send_preparing_email
+    AnalysisJobMailer.new_job_message(self, nil).deliver_now
   end
 
   # Create payloads from audio recordings extracted from saved search.
-  # @param [User] user
-  # @return [Array<Hash>] payloads
-  def begin_work(user)
-    user = Access::Validate.user(user)
+  # This method persists changes.
+  def prepare_job
+    user = Access::Validate.user(creator)
 
-    # ensure status is 'new' and analysis job has been saved
-    if self.overall_status != 'new' || !self.persisted?
-      msg_status = self.overall_status == 'new' ? '' : " Status must be 'new', but was '#{self.overall_status}'."
-      msg_saved = self.persisted? ? '' : ' Analysis job has not been saved.'
-      fail CustomErrors::AnalysisJobStartError.new("Analysis job cannot start.#{msg_status}#{msg_saved}")
-    end
+    Rails.logger.info 'AnalysisJob::prepare_job: Begin.'
 
-    # TODO add logging and timing
     # TODO This may need to be an async operation itself depending on how fast it runs
 
     # counters
-    count = 0
-    duration_seconds_sum = 0
-    data_length_bytes_sum = 0
-    queued_count = 0
-    failed_count = 0
+    options = {
+        count: 0,
+        duration_seconds_sum: 0,
+        data_length_bytes_sum: 0,
+        queued_count: 0,
+        failed_count: 0,
+        results: [],
+        analysis_job: self
+    }
 
-    # update status and started timestamp
-    update_job_status('preparing')
-    self.started_at = Time.zone.now if self.started_at.blank?
+    self.started_at = Time.zone.now
     self.save!
 
     # query associated saved_search to get audio_recordings
     query = self.saved_search.audio_recordings_extract(user)
 
-    # create one payload per each audio_recording
-    results = []
-    query.find_each(batch_size: 1000) do |audio_recording|
-      payload = create_payload(audio_recording)
+    options = query
+                  .find_in_batches(batch_size: AnalysisJob.batch_size)
+                  .reduce(options, &self.method(:prepare_analysis_job_item))
 
-      # update counters
-      count = count + 1
-      duration_seconds_sum = duration_seconds_sum + audio_recording.duration_seconds
-      data_length_bytes_sum = data_length_bytes_sum + audio_recording.data_length_bytes
 
-      # Enqueue payloads representing audio recordings from saved search to asynchronous processing queue.
-      result = nil
-      error = nil
-
-      begin
-        result = BawWorkers::Analysis::Action.action_enqueue(payload)
-        queued_count = queued_count + 1
-      rescue => e
-        error = e
-        Rails.logger.error "An error occurred when enqueuing an analysis job item: #{e}"
-        failed_count = failed_count + 1
-      end
-
-      results.push({payload: payload, result: result, error: error})
-    end
-
-    # update counters, status, progress
-    update_job_status('processing')
     # don't update progress - resque jobs may already be processing or completed
     # the resque jobs can do the updating
-    self.overall_count = count
-    self.overall_duration_seconds = duration_seconds_sum
-    self.overall_data_length_bytes = data_length_bytes_sum
+
+    self.overall_count = options[:count]
+    self.overall_duration_seconds = options[:duration_seconds_sum]
+    self.overall_data_length_bytes = options[:data_length_bytes_sum]
     self.save!
 
-    results
+    Rails.logger.info "AnalysisJob::prepare_job: Complete. Queued: #{options[:queued_count]}"
   end
 
-  private
+  # Suspends an analysis job by cancelling all queued items
+  def suspend_job
+    # get items
+    query = AnalysisJobsItem.queued_for_analysis_job(id)
 
-  def initialise_job_tracking
-    update_job_status('new')
-    update_job_progress
-    self.overall_count = 0 if self.overall_count.blank?
-    self.overall_duration_seconds = 0 if self.overall_duration_seconds.blank?
-    self.overall_data_length_bytes = 0 if self.overall_data_length_bytes.blank?
+    # batch update
+    query.find_in_batches(batch_size: AnalysisJob.batch_size) do |items|
+      items.each do |item|
+        # transition to cancelled state and save
+        item.cancel!
+      end
+    end
   end
+
+  # Resumes an analysis job by converting cancelling or cancelled items to queued items
+  def resume_job
+    # get items
+    query = AnalysisJobsItem.cancelled_for_analysis_job(id)
+
+    # batch update
+    query.find_in_batches(batch_size: AnalysisJob.batch_size) do |items|
+      items.each do |item|
+        # transition to queued state and save
+        item.retry!
+      end
+    end
+  end
+
+  def send_completed_email
+    AnalysisJobMailer.completed_job_message(self, nil).deliver_now
+  end
+
+  # Retry an analysis job by re-enqueuing all failed items
+  def retry_job
+    # get items
+    query = AnalysisJobsItem.failed_for_analysis_job(id)
+
+    # batch update
+    query.find_in_batches(batch_size: AnalysisJob.batch_size) do |items|
+      items.each do |item|
+        # transition to queued state and save
+        item.retry!
+      end
+    end
+  end
+
+  def send_retry_email
+    AnalysisJobMailer.retry_job_message(self, nil).deliver_now
+  end
+
+  # Update status timestamp whenever a transition occurs. Does not persist changes - happens before aasm save.
+  def update_status_timestamp
+    self.overall_status_modified_at = Time.zone.now
+  end
+
+  # Update progress and modified timestamp if changes are made. Does NOT persist changes.
+  # This callback happens after the AnalysisJob transitions to a new state or when `check_progress` is called.
+  # We want all transactions to finish before we update the progresses - since they run a query themselves.
+  # @return [void]
+  def update_job_progress
+    defaults = AnalysisJobsItem::AVAILABLE_ITEM_STATUS.product([0]).to_h
+    statuses = AnalysisJobsItem.where(analysis_job_id: self.id).group(:status).count
+    statuses[:total] = statuses.map(&:last).reduce(:+) || 0
+
+    statuses = defaults.merge(statuses)
+
+    self.overall_progress = statuses
+    self.overall_progress_modified_at = Time.zone.now
+
+    {overall_progress: self.overall_progress, overall_progress_modified_at: self.overall_progress_modified_at}
+  end
+
+  #
+  # other methods
+  #
+
+  # Process a batch of audio_recordings
+  def prepare_analysis_job_item(options, audio_recordings)
+    audio_recordings.each do |audio_recording|
+
+      # update counters
+      options[:count] += 1
+      options[:duration_seconds_sum] += audio_recording.duration_seconds
+      options[:data_length_bytes_sum] += audio_recording.data_length_bytes
+
+
+      # create new analysis jobs item
+      item = AnalysisJobsItem.new
+      item.analysis_job = self
+      item.audio_recording = audio_recording
+
+      item.save!
+
+      # now try to transition to queued state (and save if transition successful)
+      success = item.queue!
+      raise 'Could not queue AnalysisJobItem' unless success
+
+      options[:queued_count] += 1 if item.enqueue_results[:result]
+      options[:failed_count] += 1 if item.enqueue_results[:error]
+
+      options[:results].push(item.enqueue_results)
+    end
+
+    options
+  end
+
+
 end

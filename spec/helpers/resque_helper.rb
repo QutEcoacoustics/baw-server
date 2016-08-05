@@ -23,7 +23,8 @@ end
 # @param [Boolean] verbose
 # @param [Boolean] fork
 # @return [Array] worker, job
-def emulate_resque_worker(queue, verbose, fork)
+# @param [String] override_class - specify to switch what type actually processes the payload at the last minute. Useful for testing.
+def emulate_resque_worker(queue, verbose, fork, override_class = nil)
   queue = queue || 'test_queue'
 
   worker = Resque::Worker.new(queue)
@@ -49,9 +50,23 @@ def emulate_resque_worker(queue, verbose, fork)
 
   else
     job = worker.reserve
-    finished_job = worker.perform(job)
-    job = finished_job
+
+    if !job.nil?
+      job.payload["class"] = override_class if override_class
+      finished_job = worker.perform(job)
+      job = finished_job
+    end
   end
 
   [worker, job]
+end
+
+class FakeJob
+
+  def self.perform(*job_args)
+    {
+        job_args: job_args,
+        result: Time.now
+    }
+  end
 end

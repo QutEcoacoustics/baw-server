@@ -41,11 +41,12 @@ class AnalysisJobsController < ApplicationController
     do_set_attributes(analysis_job_create_params)
     do_authorize_instance
 
+    # runs first step in analysis_job workflow (`initialize_workflow`) and then saves
     if @analysis_job.save
 
       # now create and enqueue job items (which updates status attributes again)
       # needs to be called after save as it makes use of the analysis_job id.
-      @analysis_job.begin_work(current_user)
+      @analysis_job.prepare!
 
       respond_create_success
     else
@@ -60,7 +61,16 @@ class AnalysisJobsController < ApplicationController
     do_load_resource
     do_authorize_instance
 
-    if @analysis_job.update_attributes(analysis_job_update_params)
+    parameters = analysis_job_update_params
+
+    # allow the API to transition this analysis job to a new state.
+    # Used for suspending and resuming an analysis_job
+    if parameters.key?(:overall_status)
+      @analysis_job.transition_to_state(parameters[:overall_status].to_sym)
+      parameters = parameters.except(:overall_status)
+    end
+
+    if @analysis_job.update_attributes(parameters)
       respond_show
     else
       respond_change_fail
@@ -74,13 +84,23 @@ class AnalysisJobsController < ApplicationController
     do_load_resource
     do_authorize_instance
 
-    @analysis_job.destroy
-    add_archived_at_header(@analysis_job)
+    # only allow deleting from suspended or completed states
+    can_delete = @analysis_job.completed? || @analysis_job.suspended?
 
-    # TODO: delete pending analysis jobs from worker message queue
-    # TODO: change all pending analysis_job_items to :cancelled
+    # also allow from processing, since we can suspend
+    if @analysis_job.processing? && @analysis_job.may_suspend?
+      can_delete = true
+      @analysis_job.suspend!
+    end
 
-    respond_destroy
+    unless can_delete
+      respond_error(:conflict, "Cannot be deleted while `overall_status` is `#{@analysis_job.overall_status}`")
+    else
+      @analysis_job.destroy
+      add_archived_at_header(@analysis_job)
+
+      respond_destroy
+    end
   end
 
   # GET|POST /analysis_jobs/filter
@@ -127,7 +147,7 @@ class AnalysisJobsController < ApplicationController
   def analysis_job_update_params
     # Only name and description can be updated via API.
     # Other properties are updated by the processing system.
-    params.require(:analysis_job).permit(:name, :description)
+    params.require(:analysis_job).permit(:name, :description, :overall_status)
   end
 
   def get_analysis_jobs

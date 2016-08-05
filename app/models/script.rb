@@ -87,10 +87,10 @@ class Script < ActiveRecord::Base
   def self.filter_settings
     {
         valid_fields: [:id, :group_id, :name, :description, :analysis_identifier, :executable_settings_media_type,
-                       :version, :created_at, :creator_id, :is_last_version, :is_first_version],
+                       :version, :created_at, :creator_id, :is_last_version, :is_first_version, :analysis_action_params],
         render_fields: [:id, :group_id, :name, :description, :analysis_identifier, :executable_settings,
                         :executable_settings_media_type, :version, :created_at, :creator_id],
-        text_fields: [:name, :description, :analysis_identifier, :executable_settings_media_type],
+        text_fields: [:name, :description, :analysis_identifier, :executable_settings_media_type, :analysis_action_params],
         custom_fields: lambda { |item, user|
           virtual_fields = {
               is_last_version: item.is_last_version?,

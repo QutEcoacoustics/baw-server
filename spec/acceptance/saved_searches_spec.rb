@@ -24,7 +24,13 @@ resource 'SavedSearches' do
   } }
 
   let(:example_stored_query) { {uuid: {eq: audio_recording.uuid}} }
-  let(:post_attributes) { {name: 'saved search name', stored_query: example_stored_query} }
+  let(:post_attributes) {
+    {
+        name: 'saved search name',
+        description: 'I\'m a description!',
+        stored_query: example_stored_query
+    }
+  }
 
   context 'list' do
 

@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+ - 2016-08-03
+   - Feature: Analysis Jobs items integration. Analysis jobs have been setup and their complete workflows tested and 
+     integrated. See [#300](https://github.com/QutBioacoustics/baw-server/pull/300)
+     
 ## [Release 0.19.2](https://github.com/QutBioacoustics/baw-server/releases/tag/0.19.2) (2016-06-26)
 
  - 2016-06-21
