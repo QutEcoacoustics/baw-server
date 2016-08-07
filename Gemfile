@@ -42,7 +42,7 @@ gem 'jquery-rails', '~> 4.1.0'
 # Turbolinks makes following links in your web application faster. Read more: https://github.com/rails/turbolinks
 #gem 'turbolinks'
 # Build JSON APIs with ease. Read more: https://github.com/rails/jbuilder
-gem 'jbuilder', '~> 2.5.0'
+gem 'jbuilder', '~> 2.6.0'
 
 gem 'haml', '~> 4.0.6'
 gem 'haml-rails', '~> 0.9.0'
@@ -148,7 +148,7 @@ group :development, :test do
 
   gem 'rack-mini-profiler', '~> 0.10.0'
   gem 'i18n-tasks', '~> 0.9.0'
-  gem 'bullet', '~> 5.1.0'
+  gem 'bullet', '~> 5.2.0'
 
   # Spring speeds up development by keeping your application running in the background. Read more: https://github.com/rails/spring
   #gem 'spring', '~> 1.4.0'
@@ -165,7 +165,7 @@ group :development, :test do
   gem 'guard', '~> 2.14.0'
   gem 'guard-rspec', '~> 4.7.0'
   gem 'guard-yard', '~> 2.1.4', require: false
-  gem 'rubocop', '~> 0.41.0', require: false
+  gem 'rubocop', '~> 0.42.0', require: false
   gem 'haml_lint', require: false
 
   gem 'fakeredis', '~> 0.5.0', require: 'fakeredis/rspec'
