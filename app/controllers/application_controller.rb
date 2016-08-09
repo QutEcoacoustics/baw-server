@@ -1,5 +1,6 @@
 class ApplicationController < ActionController::Base
   include Api::ApiAuth
+  include Api::DirectoryRenderer
 
   layout :select_layout
 

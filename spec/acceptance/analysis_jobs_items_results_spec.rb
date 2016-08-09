@@ -49,7 +49,7 @@ def insert_audio_recording_id(context, opts, array_index = 1)
   end
 end
 
-test_url = '/analysis_jobs/:analysis_job_id/audio_recordings/:audio_recording_id/:results_path'
+test_url = '/analysis_jobs/:analysis_job_id/audio_recordings/:audio_recording_id/results/:results_path'
 
 resource 'AnalysisJobsItems' do
 
@@ -78,6 +78,52 @@ resource 'AnalysisJobsItems' do
     let(:current_user) { current_user }
     def token(target)
       target.send((current_user.to_s + '_token').to_sym)
+    end
+
+    context 'with root results, no directory' do
+      get test_url do
+        standard_analysis_parameters
+        let(:authentication_token) {
+          token(self)
+        }
+        let(:results_path) { '' }
+
+        standard_request_options(
+            :get,
+            'ANALYSIS (as ' + current_user.to_s + ', requesting empty root directory)',
+            :ok,
+            {
+                response_body_content: [
+                    '{"meta":{"status":200,"message":"OK"},"data":',
+                    '{"id":null,"analysis_job_id":"system","audio_recording_id":%{audio_recording_id},',
+                    '"path":"/","name":"/","type":"directory","children":['
+                ]
+            },
+            &proc { |context, opts| insert_audio_recording_id context, opts }
+        )
+      end
+
+      # url without '/:results_path'
+      get test_url.chomp('/:results_path') do
+        standard_analysis_parameters
+        let(:authentication_token) {
+          token(self)
+        }
+
+        standard_request_options(
+            :get,
+            'ANALYSIS (as ' + current_user.to_s + ', requesting empty root directory)',
+            :ok,
+            {
+                response_body_content: [
+                    '{"meta":{"status":200,"message":"OK"},"data":',
+                    '{"id":null,"analysis_job_id":"system","audio_recording_id":%{audio_recording_id},',
+                    '"path":"/","name":"/","type":"directory","children":['
+                ]
+            },
+            &proc { |context, opts| insert_audio_recording_id context, opts }
+        )
+      end
     end
 
     context 'with empty directory' do
@@ -297,9 +343,10 @@ resource 'AnalysisJobsItems' do
         create_dir(File.join('TopDir', 'one4'))
       end
 
-      get '/analysis_jobs/:analysis_job_id/audio_recordings/:audio_recording_id' do
+      get test_url do
         standard_analysis_parameters
         let(:authentication_token) { token(self) }
+        let(:results_path) { '' }
 
         # noinspection RubyLiteralArrayInspection
         standard_request_options(
@@ -438,9 +485,10 @@ resource 'AnalysisJobsItems' do
         create_file('.test-dot-file', '')
       end
 
-      get '/analysis_jobs/:analysis_job_id/audio_recordings/:audio_recording_id' do
+      get test_url do
         standard_analysis_parameters
         let(:authentication_token) { token(self) }
+        let(:results_path) { '' }
 
         standard_request_options(
             :get,

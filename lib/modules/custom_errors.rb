@@ -2,6 +2,7 @@ module CustomErrors
   public
   class RoutingArgumentError < ArgumentError; end
   class ItemNotFoundError < StandardError; end
+  class TooManyItemsFoundError < StandardError; end
   class AnalysisJobStartError < StandardError; end
   class OrphanedSiteError < StandardError; end
   class RequestedMediaTypeError < StandardError
