@@ -21,7 +21,7 @@ describe BawWorkers::RedisCommunicator do
   it 'can create or validate and existing base payload' do
     # important: after the first create, the last 4 will be validation, this `create` should
     # have only been called once.
-    BawWorkers::PartialPayload.should_receive(:create).at_most(:once).and_call_original
+    expect(BawWorkers::PartialPayload).to receive(:create).at_most(:once).and_call_original
 
     (1..5).each do
       result = BawWorkers::PartialPayload.create_or_validate({a: 1, b: 2, c: 3}, 'analysis_job:123')
