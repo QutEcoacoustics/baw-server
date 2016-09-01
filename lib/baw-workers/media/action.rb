@@ -123,8 +123,22 @@ module BawWorkers
 
       end
 
+      #
+      # Instance methods
+      #
+
+      # List of keys to pull out of options/payload hash.
+      # @return [Array<String>]
       def perform_options_keys
         %w(media_type media_request_params)
+      end
+
+      # Produces a sensible name for this payload.
+      # Should be unique but does not need to be. Has no operational effect.
+      # This value is only used when the status is updated by resque:status.
+      def name
+        mrp = @options['media_request_params']
+        "Media request: #{@options['media_type']}, [#{mrp['start_offset']}-#{mrp['end_offset']}), format:#{mrp['format']}}"
       end
 
     end

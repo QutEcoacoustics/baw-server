@@ -203,6 +203,14 @@ module BawWorkers
         ['harvest_params']
       end
 
+      # Produces a sensible name for this payload.
+      # Should be unique but does not need to be. Has no operational effect.
+      # This value is only used when the status is updated by resque:status.
+      def name
+        hp = @options[:harvest_params]
+        "Harvest for: #{hp[:file_name]}, size=#{hp[:size]}, site_id=#{hp[:site_id]}"
+      end
+
     end
   end
 end

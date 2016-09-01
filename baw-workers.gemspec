@@ -39,4 +39,5 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency 'resque_solo', '~> 0.1'
   spec.add_runtime_dependency 'resque-status', '~> 0.5'
   spec.add_runtime_dependency 'actionmailer', '~> 4.2'
+  spec.add_runtime_dependency 'redis', '~> 3.2'
 end

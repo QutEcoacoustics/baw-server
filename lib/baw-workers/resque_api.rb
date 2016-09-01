@@ -257,12 +257,26 @@ module BawWorkers
       end
 
       # Get a Resque::Status hash for the matching action job and payload.
+      # Required when you need to regenerate a deterministic key.
       # @param [Class] action_class
       # @param [Hash] args
       # @return [Resque::Plugins::Status::Hash] status
       def status(action_class, args = {})
         job_id = BawWorkers::ResqueJobId.create_id_props(action_class, args)
         Resque::Plugins::Status::Hash.get(job_id)
+      end
+
+      # Get a Resque::Status hash for the provided unique key.
+      # @param [String] unique_key - the key that uniquely identifies this action. Typically a uuid.
+      # @return [Resque::Plugins::Status::Hash] status
+      def status_by_key(unique_key)
+        Resque::Plugins::Status::Hash.get(unique_key)
+      end
+
+      # Get a resque:status' key expire time
+      def status_ttl(unique_key)
+        key = Resque::Plugins::Status::Hash.status_key(unique_key)
+        Resque::Plugins::Status::Hash.redis.ttl(key)
       end
 
     end
