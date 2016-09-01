@@ -40,9 +40,6 @@ module AWB
     Resque.redis = HashWithIndifferentAccess.new(Settings.resque.connection)
     Resque.redis.namespace = Settings.resque.namespace
 
-    # resque job status expiry for job status entries
-    Resque::Plugins::Status::Hash.expire_in = (24 * 60 * 60) # 24hrs / 1 day in seconds
-
     # logging
     # By default, each log is created under Rails.root/log/ and the log file name is <component_name>.<environment_name>.log.
 
