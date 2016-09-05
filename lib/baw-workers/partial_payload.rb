@@ -1,9 +1,9 @@
 module BawWorkers
 
-  class PartialPayloadMissing < StandardError;
+  class PartialPayloadMissingError < StandardError;
   end
 
-  class InconsistentBasePayload < StandardError;
+  class InconsistentBasePayloadError < StandardError;
   end
 
   # Stores Redis string payloads in multiple parts.
@@ -16,10 +16,13 @@ module BawWorkers
     @communicator = BawWorkers::Config.redis_communicator
 
     class << self
+      # The name of the field to embed in the variant payload. `payload_base` should suggest to the uninitiated
+      # that there is a base payload somewhere else that needs to be resolved.
       PARTIAL_PAYLOAD_KEY = "payload_base"
-      REDIS_NAMESPACE = "partial_payload"
-      BASE_PAYLOAD_EXPIRE = 86400 * 365 # 1 year
 
+      REDIS_NAMESPACE = "partial_payload"
+
+      BASE_PAYLOAD_EXPIRE = 86400 * 365 # 1 year
 
       # Store a base payload that should be merged with a partial payload.
       # See the tests for clear examples.
@@ -43,13 +46,13 @@ module BawWorkers
 
       # Store a base payload that should be merged with a partial payload, OR if it already exists, validates that the
       # two payloads are identical.
-      # @param [Hash] base_payload - they base payload to store
+      # @param [Hash] base_payload - the base payload to store
       # @param [Object] key - a unique key used to retrieve the payload
       # @return [Hash] a partial payload hashed. This hash should be merged with your actual payload.
       def create_or_validate(base_payload, key)
         existing_base = get(key)
         if existing_base
-          raise InconsistentBasePayload if existing_base != BawWorkers::ResqueJobId::normalise(base_payload)
+          raise InconsistentBasePayloadError if existing_base != BawWorkers::ResqueJobId::normalise(base_payload)
 
           # return a hash with the absolute redis_key that can be used to retrieve the base payload
           {PARTIAL_PAYLOAD_KEY.to_sym => @communicator.add_namespace(add_namespace(key))}
@@ -77,7 +80,7 @@ module BawWorkers
           base = @communicator.get(redis_key, {no_namespace: true})
 
           if base.nil?
-            raise PartialPayloadMissing.new("Could not retrieve partial payload `#{redis_key}`")
+            raise PartialPayloadMissingError.new("Could not retrieve partial payload `#{redis_key}`")
           end
 
           # RECURSIVE - allow the base payload to have its own base payload
@@ -109,7 +112,7 @@ module BawWorkers
 
       # Delete the base payload.
       # *Does* cascade and delete other linked base payloads.
-      # Throws `PartialPayloadMissing` if a linked base payload can not be found.
+      # Throws `PartialPayloadMissingError` if a linked base payload can not be found.
       # @param [String] key - they key to delete
       # @return [Boolean] True if the delete succeeded.
       def delete_recursive(key)
@@ -120,7 +123,9 @@ module BawWorkers
         partial = @communicator.get(key, {no_namespace: has_namespace})
 
         if partial.nil?
-          raise PartialPayloadMissing.new("Could not retrieve partial payload `#{key}`")
+          # So the stash is in an inconsistent state? what is there to do? little. At least throwing an exception means
+          # we will know about it.
+          raise PartialPayloadMissingError.new("Could not retrieve partial payload `#{key}` during recursive delete")
         end
 
         # now recurse through linked list

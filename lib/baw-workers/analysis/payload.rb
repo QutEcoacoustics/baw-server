@@ -201,13 +201,12 @@ module BawWorkers
           invariant[key] = analysis_params.delete(key)
         end
 
-        # 2. check if invariant payload already exists
-        # 3. if it does, validate it is identical
-        # 4. if it does not, insert it
-
         # e.g. baw-workers:partial_payload:analysis:20-1472601600 (leading namespace added by PartialPayload)
         unique_key = "analysis:" + analysis_params[:job_id].to_s + "-" + group_key
 
+        # 2. check if invariant payload already exists
+        # 3. if it does, validate it is identical
+        # 4. if it does not, insert it
         payload = BawWorkers::PartialPayload.create_or_validate(invariant, unique_key)
 
         # 5. return the lean analysis_params merge with the partial payload key

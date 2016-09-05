@@ -31,7 +31,7 @@ module BawWorkers
       @redis
     end
 
-
+    # Delete a single key.
     # @param [String] key
     # @return [Boolean]
     def delete(key, opts = {})
@@ -39,6 +39,8 @@ module BawWorkers
 
       deleted = @redis.del(key)
 
+      # Technically the server could delete multiple keys. Since we consider this undefined behaviour at this point
+      # in time we throw. In the future we may support deleting multiple keys.
       raise 'Too many keys deleted' if deleted > 1
 
       deleted == 1

@@ -10,6 +10,5 @@ module BawWorkers
     class HarvesterEndpointError < HarvesterError; end
     class HarvesterAnalysisError < HarvesterError; end
     class AnalysisCacheError < StandardError; end
-    class PartialPayloadMissing < StandardError; end
   end
 end

@@ -38,7 +38,7 @@ describe BawWorkers::RedisCommunicator do
 
     expect {
       result = BawWorkers::PartialPayload.create_or_validate({a: 1, b: 2, c: 4}, 'analysis_job:123')
-    }.to raise_error(BawWorkers::InconsistentBasePayload)
+    }.to raise_error(BawWorkers::InconsistentBasePayloadError)
   end
 
 
