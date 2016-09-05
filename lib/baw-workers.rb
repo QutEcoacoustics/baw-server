@@ -11,6 +11,7 @@ require 'resque'
 require 'resque_solo'
 require 'resque-job-stats'
 require 'resque-status'
+require 'baw-workers/resque_status_custom_expire'
 
 require 'baw-workers/version'
 require 'baw-workers/register_mime_types'
@@ -28,6 +29,8 @@ module BawWorkers
   autoload :Validation, 'baw-workers/validation'
   autoload :ActionBase, 'baw-workers/action_base'
   autoload :ApiCommunicator, 'baw-workers/api_communicator'
+  autoload :RedisCommunicator, 'baw-workers/redis_communicator'
+  autoload :PartialPayload, 'baw-workers/partial_payload'
   autoload :FileInfo, 'baw-workers/file_info'
   autoload :ResqueApi, 'baw-workers/resque_api'
   autoload :ResqueJobId, 'baw-workers/resque_job_id'
@@ -70,6 +73,10 @@ module BawWorkers
     autoload :AudioCache, 'baw-workers/storage/audio_cache'
     autoload :AudioOriginal, 'baw-workers/storage/audio_original'
     autoload :SpectrogramCache, 'baw-workers/storage/spectrogram_cache'
+  end
+
+  module Template
+    autoload :Action, 'baw-workers/template/action'
   end
 
 end

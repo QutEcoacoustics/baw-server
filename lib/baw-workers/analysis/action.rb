@@ -95,10 +95,19 @@ module BawWorkers
 
         # Enqueue an analysis request.
         # @param [Hash] analysis_params
-        # @return [Boolean] True if job was queued, otherwise false. +nil+
-        #   if the job was rejected by a before_enqueue hook.
-        def action_enqueue(analysis_params)
+        # @return [String] An unique key for the job (a UUID) if enqueuing was successful.
+        # @param [String] invariant_group_key - a token used to group invariant payloads. Must be provided for partial
+        # payloads to work. Must be common to all payloads in a group.
+        def action_enqueue(analysis_params, invariant_group_key = nil)
+
           analysis_params_sym = BawWorkers::Analysis::Payload.normalise_opts(analysis_params)
+
+          # split and validate the invariant params
+          # no-op id invariant_group_key is blank
+          analysis_params_sym = BawWorkers::Analysis::Payload.validate_and_create_invariant_opts(
+              analysis_params_sym,
+              invariant_group_key)
+
           result = BawWorkers::Analysis::Action.create(analysis_params: analysis_params_sym)
           BawWorkers::Config.logger_worker.info(logger_name) {
             "Job enqueue returned '#{result}' using #{format_params_for_log(analysis_params_sym)}."
@@ -126,10 +135,13 @@ module BawWorkers
 
           payloads = action_payload.from_csv(csv_file, config_file, command_file)
 
+          # enable partial payloads - group everything from this CSV batch together
+          group_key = Date.today.to_time.to_i.to_s
+
           results = []
           payloads.each do |payload|
             begin
-              result = BawWorkers::Analysis::Action.action_enqueue(payload)
+              result = BawWorkers::Analysis::Action.action_enqueue(payload, group_key)
               results.push(result)
             rescue => e
               BawWorkers::Config.logger_worker.error(logger_name) { e }
@@ -174,11 +186,22 @@ module BawWorkers
             params
           end
         end
-
       end
+
+      #
+      # Instance methods
+      #
 
       def perform_options_keys
         ['analysis_params']
+      end
+
+      # Produces a sensible name for this payload.
+      # Should be unique but does not need to be. Has no operational effect.
+      # This value is only used when the status is updated by resque:status.
+      def name
+        ap = @options['analysis_params']
+        "Analysis for #{ap['id']}, job=#{ap['job_id']}"
       end
 
     end

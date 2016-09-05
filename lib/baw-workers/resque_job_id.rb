@@ -4,6 +4,7 @@ module BawWorkers
     class << self
 
       # Create a payload with an id based on the class and args.
+      # WARNING: The order of of values in args is important.
       # @param [String] klass
       # @param [Hash] args
       # @return [Hash] payload
@@ -14,6 +15,7 @@ module BawWorkers
       end
 
       # Get an id from payload (name of class, args hash).
+      # WARNING: The order of of values in args is important.
       # @param [Hash] payload
       # @return [String] id
       def create_id_payload(payload)
@@ -24,6 +26,7 @@ module BawWorkers
       end
 
       # Create an id from class and args.
+      # WARNING: The order of of values in args is important.
       # @param [String] klass
       # @param [Hash] args
       # @return [String] id
@@ -75,8 +78,14 @@ module BawWorkers
       # @param [Array<Hash, Object>] args
       # @return [String] unique id
       def generate(klass, args = [])
+
+        # HACK: I don't know what this ever sorts, but it is important that it doesn't work - sometimes
         args.map! do |arg|
-          arg.is_a?(Hash) ? arg.sort : arg
+          if arg.is_a?(Hash) then
+            arg.sort
+          else
+            arg
+          end
         end
 
         # payload must not include id itself - otherwise id will not match

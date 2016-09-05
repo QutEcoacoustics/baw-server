@@ -18,7 +18,8 @@ module BawWorkers
                     :spectrogram_cache_helper,
                     :analysis_cache_helper,
                     :file_info,
-                    :api_communicator
+                    :api_communicator,
+                    :redis_communicator
 
       # Set up configuration from settings file.
       # @param [Hash] opts
@@ -104,15 +105,10 @@ module BawWorkers
         Resque.logger = BawWorkers::Config.logger_worker
 
         # configure Resque
-        if is_redis
-          if is_test
-            # use fake redis
-            Resque.redis = Redis.new
-          else
-            Resque.redis = HashWithIndifferentAccess.new(BawWorkers::Settings.resque.connection)
-          end
-          Resque.redis.namespace = BawWorkers::Settings.resque.namespace
-        end
+        configure_redis(is_redis, is_test, BawWorkers::Settings)
+
+        # resque job status expiry for job status entries
+        Resque::Plugins::Status::Hash.expire_in = (24 * 60 * 60) # 24hrs / 1 day in seconds
 
         # configure mailer
         ActionMailer::Base.logger = BawWorkers::Config.logger_mailer
@@ -203,6 +199,11 @@ module BawWorkers
                 poll_interval: is_resque_worker ? ENV['INTERVAL'].to_i : nil
 
             },
+            resque: {
+                status: {
+                    expire_in: Resque::Plugins::Status::Hash.expire_in
+                }
+            },
             logging: {
                 file_only: (is_resque_worker && !is_resque_worker_fg) || is_test,
                 worker: BawWorkers::Config.logger_worker.level,
@@ -233,13 +234,10 @@ module BawWorkers
         Resque.logger = resque_logger
 
         # configure Resque
-        if is_test
-          # use fake redis
-          Resque.redis = Redis.new
-        else
-          Resque.redis = HashWithIndifferentAccess.new(settings.resque.connection)
-        end
-        Resque.redis.namespace = settings.resque.namespace
+        configure_redis(true, is_test, settings)
+
+        # resque job status expiry for job status entries
+        Resque::Plugins::Status::Hash.expire_in = (24 * 60 * 60) # 24hrs / 1 day in seconds
 
         # configure mailer
         ActionMailer::Base.logger = BawWorkers::Config.logger_mailer
@@ -287,6 +285,11 @@ module BawWorkers
                 connection: is_test ? 'fake' : settings.resque.connection,
                 info: Resque.info
             },
+            resque: {
+                status: {
+                    expire_in: Resque::Plugins::Status::Hash.expire_in
+                }
+            },
             logging: {
                 worker: BawWorkers::Config.logger_worker.level,
                 mailer: BawWorkers::Config.logger_mailer.level,
@@ -296,6 +299,32 @@ module BawWorkers
         }
 
         BawWorkers::Config.logger_worker.warn('BawWorkers::Config') { result.to_json }
+      end
+
+      private
+
+      # Configures redis connections for both Resque and our own Redis wrapper
+      def configure_redis(needs_redis, is_test, settings)
+        if needs_redis
+          communicator_redis = nil
+
+          if is_test
+            # use fake redis
+            Resque.redis = Redis.new
+            communicator_redis = Redis.new
+          else
+            Resque.redis = HashWithIndifferentAccess.new(settings.resque.connection)
+            communicator_redis = HashWithIndifferentAccess.new(settings.redis.connection)
+          end
+          Resque.redis.namespace = BawWorkers::Settings.resque.namespace
+
+          # Set up standard redis wrapper.
+          BawWorkers::Config.redis_communicator = BawWorkers::RedisCommunicator.new(
+              BawWorkers::Config.logger_worker,
+              communicator_redis
+              # options go here if defined
+          )
+        end
       end
       
     end

@@ -22,13 +22,15 @@ module BawWorkers
     # resque-status achieves this by giving job instances UUID's
     # and allowing the job instances to report their
     # status from within their iterations.
+    # WARNING: our own monkey patch is included in `resque_status_custom_expire.rb`.
     include Resque::Plugins::Status
 
+    # Class methods
     class << self
 
       # Override: Get the key for resque_solo to use in redis.
       def redis_key(payload)
-        BawWorkers::ResqueJobId.create_id_payload(payload)
+          BawWorkers::ResqueJobId.create_id_payload(payload)
       end
 
       # Overrides method used by resque-status.
@@ -74,20 +76,47 @@ module BawWorkers
       def logger_name
         self.name
       end
-
     end
 
+    #
+    # Instance methods
+    #
+
+    # inherited fields from Resque::Plugins::Status
+    # @options, @uuid, status, name
+
     # Get the keys for the perform options hash.
-    # order is important
+    # Order is important
     # @return [Array<String>]
     def perform_options_keys
-      fail NotImplementedError, 'Must implement `perform_options_keys`.'
+      fail NotImplementedError, 'You must implement `perform_options_keys` in your base class.'
     end
 
     # Perform method used by resque-status.
     def perform
+      # To be ***painstakingly clear***: the values we're using in the perform method are actually coming from
+      # the resque:status' payload.options field.
+      # The resque payload itself is not actually used!
+
       values = perform_options_keys.map { |k| options[k] }
+
+      # resolve partial payloads
+      values = values.map { |value| BawWorkers::PartialPayload.resolve(value) }
+
       self.class.action_perform(*values)
+    end
+
+
+    # Produces a sensible friendly name for this payload.
+    # Should be unique but does not need to be. Has no operational effect.
+    # This value is only used when the status is updated by resque:status.
+    #
+    # We've purposely broken resque:status' implementation because it does a `.inspect` on the object which leads
+    # to all the publicly available fields being serialized. This also means that job payloads are effectively
+    # duplicated in a serialized form into the name field.
+    # https://github.com/QutBioacoustics/baw-workers/issues/41
+    def name
+      fail NotImplementedError, 'You must implement `name` in your base class.'
     end
 
   end

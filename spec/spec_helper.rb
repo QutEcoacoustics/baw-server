@@ -18,14 +18,14 @@ if ENV['TRAVIS']
   end
   CodeClimate::TestReporter.start
 
-  SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter[
+  SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter.new(
       CodeClimate::TestReporter::Formatter
-  ]
+  )
 
 else
-  SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter[
+  SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter.new(
       SimpleCov::Formatter::HTMLFormatter
-  ]
+  )
 end
 
 # start code coverage
@@ -76,6 +76,10 @@ def reset_settings
 
   touch_path = %x(which touch).strip
   FileUtils.cp(touch_path, File.join(tmp_programs_dir,'touch'))
+
+  # reset in memory settings
+  BawWorkers::Config.instance_variables.map { |ivar| BawWorkers::Config.instance_variable_set(ivar, nil)}
+  Resque::Plugins::Status::Hash.expire_in = nil
 
   [tmp_logs_dir, custom_dir]
 end

@@ -79,6 +79,13 @@ module BawWorkers
         %w(source destinations)
       end
 
+      # Produces a sensible name for this payload.
+      # Should be unique but does not need to be. Has no operational effect.
+      # This value is only used when the status is updated by resque:status.
+      def name
+        "Mirroring from:#{@options['source']}, to: #{@options['destinations']}"
+      end
+
     end
   end
 end

@@ -4,7 +4,8 @@ module BawWorkers
     # Class that handles creating and evaluating analysis payloads.
     class Payload
 
-      OPTS_FIELDS = [
+      # A list of fields invariant to the payload
+      BASE_FIELDS = [
           # command to run, with placeholders
           :command_format,
           # Relative path to executable or script to run.
@@ -22,14 +23,23 @@ module BawWorkers
           :copy_paths,
           # string containing config/settings for executable
           :config,
-          # identifier for job (integer or 'system')
-          :job_id,
 
+          # Paths to nest output results.
+          # Particularly useful for system jobs the can run multiple analysis and store the output in the same folder.
+          :sub_folders
+      ]
+
+      # The full list of fields expected in the payload
+      OPTS_FIELDS = BASE_FIELDS + [
           # audio recording info
           :uuid,
           :id,
           :datetime_with_offset,
-          :original_format
+          :original_format,
+
+          # identifier for job (integer or 'system')
+          # This field is invariant, but its also useful as a PK so we keep it anyway
+          :job_id
       ]
 
       COMMAND_PLACEHOLDERS = [
@@ -174,6 +184,33 @@ module BawWorkers
         normalised_keys = BawWorkers::Validation.deep_symbolize_keys(opts)
         BawWorkers::Validation.check_custom_hash(normalised_keys, BawWorkers::Analysis::Payload::OPTS_FIELDS)
         normalised_keys
+      end
+
+      # Split apart the variant and invariant parts of the payload.
+      # @param [Hash] analysis_params
+      # @param [String] group_key
+      def self.validate_and_create_invariant_opts(analysis_params, group_key)
+        # 0. verify group key
+        return analysis_params if group_key.blank?
+
+        # 1. split out invariant keys
+        invariant = {}
+        BASE_FIELDS.each do |key|
+          raise "analysis_params is missing required key #{key}" unless analysis_params.has_key?(key)
+
+          invariant[key] = analysis_params.delete(key)
+        end
+
+        # e.g. baw-workers:partial_payload:analysis:20-1472601600 (leading namespace added by PartialPayload)
+        unique_key = "analysis:" + analysis_params[:job_id].to_s + "-" + group_key
+
+        # 2. check if invariant payload already exists
+        # 3. if it does, validate it is identical
+        # 4. if it does not, insert it
+        payload = BawWorkers::PartialPayload.create_or_validate(invariant, unique_key)
+
+        # 5. return the lean analysis_params merge with the partial payload key
+        payload.merge(analysis_params)
       end
 
     end
