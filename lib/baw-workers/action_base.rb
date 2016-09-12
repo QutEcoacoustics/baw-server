@@ -30,7 +30,7 @@ module BawWorkers
 
       # Override: Get the key for resque_solo to use in redis.
       def redis_key(payload)
-          BawWorkers::ResqueJobId.create_id_payload(payload)
+        BawWorkers::ResqueJobId.create_id_payload(payload)
       end
 
       # Overrides method used by resque-status.
@@ -100,10 +100,19 @@ module BawWorkers
 
       values = perform_options_keys.map { |k| options[k] }
 
+      # kill the job if it is in resque:status's kill list
+      at(0, 1, "Begin action")
+
       # resolve partial payloads
       values = values.map { |value| BawWorkers::PartialPayload.resolve(value) }
 
-      self.class.action_perform(*values)
+      begin
+        self.class.action_perform(*values)
+      rescue BawWorkers::Exceptions::ActionCancelledError => ace
+        # catch an action cancelled exception,
+        # transform into resque:status killed exception
+        kill!
+      end
     end
 
 

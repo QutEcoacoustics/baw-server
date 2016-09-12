@@ -23,14 +23,30 @@ module BawWorkers
           }
 
           runner = action_runner
+          status_updater = action_status_updater
           result = nil
           all_opts = nil
+          final_status = nil
 
           begin
+            # check if should cancel, if we should raises Resque::Plugins::Status::Killed
+            status_updater.begin(analysis_params_sym)
+
             prepared_opts = runner.prepare(analysis_params_sym)
             all_opts = analysis_params_sym.merge(prepared_opts)
             result = runner.execute(prepared_opts, analysis_params_sym)
+
+            final_status = status_from_result(result)
+          rescue BawWorkers::Exceptions::ActionCancelledError => ace
+            final_status = :cancelled
+
+            # if killed legitimately don't email
+            BawWorkers::Config.logger_worker.warn(logger_name) {
+              "Analysis cancelled: '#{ace}'"
+            }
+            raise ace
           rescue => e
+            final_status = :failed
             BawWorkers::Config.logger_worker.error(logger_name) { e }
 
             args = analysis_params_sym
@@ -44,6 +60,10 @@ module BawWorkers
                 e
             )
             raise e
+          ensure
+            # run no matter what
+            # update our action tracker
+            status_updater.end(analysis_params_sym, final_status) unless final_status.blank?
           end
 
           # if result contains error, raise it here, since we need everything in execute
@@ -161,6 +181,11 @@ module BawWorkers
               BawWorkers::Config.programs_dir)
         end
 
+        # @return [BawWorkers::Analysis::Status]
+        def action_status_updater
+          BawWorkers::Analysis::Status.new(BawWorkers::Config.api_communicator)
+        end
+
         def action_payload
           BawWorkers::Analysis::Payload.new(BawWorkers::Config.logger_worker)
         end
@@ -186,6 +211,18 @@ module BawWorkers
             params
           end
         end
+
+        # Note, the status symbols returned adhere to the states of an baw-server `AnalysisJobItem`
+        def status_from_result(result)
+          return :failed if result.nil?
+          if result.include?(:error) && !result[:error].nil?
+            return :timed_out if result[:error].is_a?(BawAudioTools::Exceptions::AudioToolTimedOutError)
+            return :failed
+          end
+
+          :successful
+        end
+
       end
 
       #

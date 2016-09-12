@@ -63,6 +63,7 @@ settings:
     audio_recording_create: /projects/:project_id/sites/:site_id/audio_recordings
     audio_recording_uploader: /projects/:project_id/sites/:site_id/audio_recordings/check_uploader/:uploader_id
     audio_recording_update_status: /audio_recordings/:id/update_status
+    analysis_jobs_item_update_status: /analysis_jobs/:analysis_job_id/audio_recordings/:audio_recording_id
   api:
     host: localhost
     port: 3030

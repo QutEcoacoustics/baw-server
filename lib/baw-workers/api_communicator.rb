@@ -32,24 +32,28 @@ module BawWorkers
       @login_details['password'];
     end
 
-    def endpoint_login;
-      @endpoints['login'];
+    def endpoint_login
+      @endpoints['login']
     end
 
-    def endpoint_audio_recording;
-      @endpoints['audio_recording'];
+    def endpoint_audio_recording
+      @endpoints['audio_recording']
     end
 
-    def endpoint_audio_recording_create;
-      @endpoints['audio_recording_create'];
+    def endpoint_audio_recording_create
+      @endpoints['audio_recording_create']
     end
 
-    def endpoint_audio_recording_uploader;
-      @endpoints['audio_recording_uploader'];
+    def endpoint_audio_recording_uploader
+      @endpoints['audio_recording_uploader']
     end
 
-    def endpoint_audio_recording_update_status;
-      @endpoints['audio_recording_update_status'];
+    def endpoint_audio_recording_update_status
+      @endpoints['audio_recording_update_status']
+    end
+
+    def endpoint_analysis_jobs_item_update_status
+      @endpoints['analysis_jobs_item_update_status']
     end
 
     # Send HTTP request.
@@ -125,6 +129,11 @@ module BawWorkers
           }
 
         end
+      rescue Timeout::Error => te
+        @logger.error(@class_name) {
+          "[HTTP] Request TIMED OUT for #{msg}, Body: #{request.body}, Headers: #{request.to_hash}, Error: #{te}\nBacktrace: #{te.backtrace.join("\n")}"
+        }
+        raise te
       rescue StandardError => e
         @logger.error(@class_name) {
           "[HTTP] Request for #{msg}, Body: #{request.body}, Headers: #{request.to_hash}, Error: #{e}\nBacktrace: #{e.backtrace.join("\n")}"
@@ -292,6 +301,82 @@ module BawWorkers
           "[HTTP] Problem updating audio recording status for #{msg}"
         }
         false
+      end
+    end
+
+    # Get the status of an analysis job item
+    # @param [Integer] analysis_job_id
+    # @param [Integer] audio_recording_id
+    # @return [Hash] a hash containing :response,: response_json, and :status
+    def get_analysis_jobs_item_status(analysis_job_id, audio_recording_id, security_info)
+      endpoint = endpoint_analysis_jobs_item_update_status
+                     .gsub(':audio_recording_id', audio_recording_id.to_s)
+                     .gsub(':analysis_job_id', analysis_job_id.to_s)
+
+      response = send_request(
+          "Getting analysis job item status",
+          :get,
+          host,
+          port,
+          endpoint,
+          security_info
+      )
+
+      msg = "analysis_job_id=#{analysis_job_id}, audio_recording_id=#{audio_recording_id}"
+
+      if response.code.to_i == 200
+        response_json = JSON.parse(response.body)
+        @logger.info(@class_name) {
+          "[HTTP] Retrieved status for analysis job item: #{response_json['data']['status']}, #{msg}"
+        }
+        {response: response, failed: false, response_json: response_json, status: response_json['data']['status']}
+      else
+        @logger.error(@class_name) {
+          "[HTTP] Problem retrieving status for analysis job item: #{msg}"
+        }
+        {response: response, failed: true, response_json: nil, status: nil}
+      end
+    end
+
+    # Update the status of an analysis job item
+    # @param [Integer] analysis_job_id
+    # @param [Integer] audio_recording_id
+    # @return [Hash] a hash containing :response,: response_json, and :status
+    # @param [Symbol] status
+    def update_analysis_jobs_item_status(analysis_job_id, audio_recording_id, status, security_info)
+      approved_statuses = [:working, :successful, :failed, :timed_out, :cancelled]
+
+      raise "Cannot set status to `#{status}`" unless approved_statuses.include?(status)
+
+      endpoint = endpoint_analysis_jobs_item_update_status
+                     .gsub(':audio_recording_id', audio_recording_id.to_s)
+                     .gsub(':analysis_job_id', analysis_job_id.to_s)
+      response = send_request(
+          "Update analysis job item status - to `#{status}`",
+          :put,
+          host,
+          port,
+          endpoint,
+          security_info,
+          {
+              "status": status
+          }
+      )
+
+      msg = "analysis_job_id=#{analysis_job_id}, audio_recording_id=#{audio_recording_id}"
+
+      if response.code.to_i == 200 || response.code.to_i == 204
+        response_json = JSON.parse(response.body)
+
+        @logger.info(@class_name) {
+          "[HTTP] Audio recording status updated for #{msg}"
+        }
+        {response: response, failed: false, response_json: response_json, status: response_json['data']['status']}
+      else
+        @logger.error(@class_name) {
+          "[HTTP] Problem updating audio recording status for #{msg}"
+        }
+        {response: response, failed: true, response_json: nil, status: nil}
       end
     end
 
