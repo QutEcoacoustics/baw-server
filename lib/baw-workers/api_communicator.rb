@@ -325,11 +325,12 @@ module BawWorkers
       msg = "analysis_job_id=#{analysis_job_id}, audio_recording_id=#{audio_recording_id}"
 
       if response.code.to_i == 200
-        response_json = JSON.parse(response.body)
+        response_json = response.body.blank? ? nil : JSON.parse(response.body)
+        status = response_json.nil? ? nil : response_json['data']['status']
         @logger.info(@class_name) {
-          "[HTTP] Retrieved status for analysis job item: #{response_json['data']['status']}, #{msg}"
+          "[HTTP] Retrieved status for analysis job item: #{status}, #{msg}"
         }
-        {response: response, failed: false, response_json: response_json, status: response_json['data']['status']}
+        {response: response, failed: false, response_json: response_json, status: status}
       else
         @logger.error(@class_name) {
           "[HTTP] Problem retrieving status for analysis job item: #{msg}"
@@ -366,12 +367,17 @@ module BawWorkers
       msg = "analysis_job_id=#{analysis_job_id}, audio_recording_id=#{audio_recording_id}"
 
       if response.code.to_i == 200 || response.code.to_i == 204
-        response_json = JSON.parse(response.body)
+        response_json = response.body.blank? ? nil : JSON.parse(response.body)
 
         @logger.info(@class_name) {
           "[HTTP] Audio recording status updated for #{msg}"
         }
-        {response: response, failed: false, response_json: response_json, status: response_json['data']['status']}
+        {
+            response: response,
+            failed: false,
+            response_json: response_json,
+            status: response_json.nil? ? nil : response_json['data']['status']
+        }
       else
         @logger.error(@class_name) {
           "[HTTP] Problem updating audio recording status for #{msg}"

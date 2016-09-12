@@ -26,7 +26,7 @@ module BawWorkers
             analysis_job_id,
             audio_recording_id,
             @security_info)
-        cancelled_by_website = cancel_result[:status].to_sym == :cancelling
+        cancelled_by_website = cancel_result[:status].nil? ? false : cancel_result[:status].to_sym == :cancelling
 
 
         # if it has been cancelled
