@@ -27,7 +27,7 @@ module BawWorkers
             job_args: job.blank? || !job.include?(:job_args) ? '(no job args available)' : job[:job_args],
             job_queue: job.blank? || !job.include?(:job_queue) ? '(job queue not available)' : job[:job_queue],
             error_message: error.blank? ? '(no message available)' : error.message,
-            error_backtrace: error.blank? ? ['(no backtrace available)'] : error.backtrace,
+            error_backtrace: error.blank? || error.backtrace.blank? ? ['(no backtrace available)'] : error.backtrace,
             generated_timestamp: Time.zone.now
         }
 

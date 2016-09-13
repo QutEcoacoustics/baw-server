@@ -10,5 +10,7 @@ module BawWorkers
     class HarvesterEndpointError < HarvesterError; end
     class HarvesterAnalysisError < HarvesterError; end
     class AnalysisCacheError < StandardError; end
+    class AnalysisEndpointError < StandardError; end
+    class ActionCancelledError < RuntimeError; end
   end
 end

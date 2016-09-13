@@ -40,6 +40,7 @@ module BawWorkers
     autoload :Action, 'baw-workers/analysis/action'
     autoload :Payload, 'baw-workers/analysis/payload'
     autoload :Runner, 'baw-workers/analysis/runner'
+    autoload :Status, 'baw-workers/analysis/status'
   end
 
   module AudioCheck

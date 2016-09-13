@@ -180,4 +180,24 @@ shared_context 'shared_test_helpers' do
     }
   end
 
+  def expect_requests_made_in_order(*expected_requests)
+    actual_requests = []
+
+    WebMock.after_request do |request_signature|
+      actual_requests.push(request_signature)
+    end
+
+    # run the actual functions
+    yield
+
+    expected_requests.each_index do |index|
+      expected_request = expected_requests[index]
+      expect(expected_request).to have_been_made.once
+
+      matches = expected_request.matches?(actual_requests[index])
+      expect(matches).to be_truthy, "Request order does not match, expected:\n\n#{expected_request}\n\nIn position #{index}, got\n\n#{actual_requests[index]}"
+    end
+
+  end
+
 end

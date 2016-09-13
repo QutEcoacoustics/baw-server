@@ -1,5 +1,6 @@
 require 'spec_helper'
 
+
 describe BawWorkers::Analysis::Action do
   include_context 'shared_test_helpers'
 
@@ -141,7 +142,6 @@ describe BawWorkers::Analysis::Action do
   end
 
   it 'successfully runs an analysis on a file' do
-
     # params
     uuid = 'f7229504-76c5-4f88-90fc-b7c3f5a8732e'
 
@@ -175,6 +175,28 @@ describe BawWorkers::Analysis::Action do
     target_file = audio_original.possible_paths(audio_recording_params)[1]
     FileUtils.mkpath(File.dirname(target_file))
     FileUtils.cp(audio_file_mono, target_file)
+
+    # prepare web requests
+    # they are heavily tested in status_spec.rb so only put light restrictions here
+    l = stub_request(:post, "https://localhost:3030/security").
+    with(:body => "{\"email\":\"address@example.com\",\"password\":\"password\"}",
+         :headers => {'Accept'=>'application/json', 'Accept-Encoding'=>'gzip;q=1.0,deflate;q=0.6,identity;q=0.3', 'Content-Type'=>'application/json', 'User-Agent'=>'Ruby'}).
+        to_return(:status => 200, :body => "", :headers => {})
+    s1 = stub_request(:get, "https://localhost:3030/analysis_jobs/20/audio_recordings/123456").
+        with(:headers => {'Accept'=>'application/json', 'Accept-Encoding'=>'gzip;q=1.0,deflate;q=0.6,identity;q=0.3', 'Content-Type'=>'application/json', 'User-Agent'=>'Ruby'}).
+        to_return(:status => 200, :body => "", :headers => {})
+     s2 = stub_request(:put, "https://localhost:3030/analysis_jobs/20/audio_recordings/123456").
+         with(:body => "{\"status\":\"failed\"}",
+              :headers => {'Accept'=>'application/json', 'Accept-Encoding'=>'gzip;q=1.0,deflate;q=0.6,identity;q=0.3', 'Content-Type'=>'application/json', 'User-Agent'=>'Ruby'}).
+         to_return(:status => 200, :body => "", :headers => {})
+    s3 = stub_request(:put, "https://localhost:3030/analysis_jobs/20/audio_recordings/123456").
+    with(:body => "{\"status\":\"working\"}",
+         :headers => {'Accept'=>'application/json', 'Accept-Encoding'=>'gzip;q=1.0,deflate;q=0.6,identity;q=0.3', 'Content-Type'=>'application/json', 'User-Agent'=>'Ruby'}).
+        to_return(:status => 200, :body => "", :headers => {})
+    s4 = stub_request(:put, "https://localhost:3030/analysis_jobs/20/audio_recordings/123456").
+        with(:body => "{\"status\":\"successful\"}",
+             :headers => {'Accept'=>'application/json', 'Accept-Encoding'=>'gzip;q=1.0,deflate;q=0.6,identity;q=0.3', 'Content-Type'=>'application/json', 'User-Agent'=>'Ruby'}).
+        to_return(:status => 200, :body => "", :headers => {})
 
     # Run analysis
     result = BawWorkers::Analysis::Action.action_perform(custom_analysis_params)
