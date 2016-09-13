@@ -32,7 +32,7 @@ describe BawWorkers::Analysis::Status do
   end
 
   def stub_status_get(status)
-    body = <<~json
+    body = <<-json
       {
           "meta": {
               "status": 200,
@@ -59,7 +59,7 @@ describe BawWorkers::Analysis::Status do
   end
 
   def stub_status_put(new_status, failCount = 0)
-    body = <<~json
+    body = <<-json
       {
           "meta": {
               "status": 200,
