@@ -15,7 +15,7 @@ source 'https://rubygems.org'
 
 gem 'rails', '~> 4.2.4'
 gem 'rack-cors', '~> 0.4.0', require: 'rack/cors'
-gem 'responders', '~> 2.2.0'
+gem 'responders', '~> 2.3.0'
 
 # RAILS 3 compatibility gems
 # -------------------------------------
@@ -31,14 +31,14 @@ gem 'activesupport-json_encoder', git: 'https://github.com/rails/activesupport-j
 # Use SCSS for stylesheets
 gem 'sass-rails', '~> 5.0.3'
 # Use Uglifier as compressor for JavaScript assets
-gem 'uglifier', '>= 1.3.0'
+gem 'uglifier', '~> 3.0.0'
 # Use CoffeeScript for .js.coffee assets and views
 gem 'coffee-rails', '~> 4.2.0'
 # See https://github.com/sstephenson/execjs#readme for more supported runtimes
 gem 'therubyracer', '~> 0.12.1', platforms: :ruby, require: 'v8'
 
 # Use jquery as the JavaScript library
-gem 'jquery-rails', '~> 4.1.0'
+gem 'jquery-rails', '~> 4.2.0'
 # Turbolinks makes following links in your web application faster. Read more: https://github.com/rails/turbolinks
 #gem 'turbolinks'
 # Build JSON APIs with ease. Read more: https://github.com/rails/jbuilder
@@ -47,9 +47,9 @@ gem 'jbuilder', '~> 2.6.0'
 gem 'haml', '~> 4.0.6'
 gem 'haml-rails', '~> 0.9.0'
 
-gem 'simple_form', '~> 3.2.0'
+gem 'simple_form', '~> 3.3.0'
 gem 'paperclip', '~> 5.0.0'
-gem 'kramdown', '~> 1.11.0'
+gem 'kramdown', '~> 1.12.0'
 
 # Bootstrap UI
 gem 'bootstrap-sass', '~> 3.3.4'
@@ -94,7 +94,7 @@ gem 'jc-validates_timeliness', '~> 3.1.1'
 # No longer used - incorporated the gem's functionality directly.
 #gem 'userstamp', git: 'https://github.com/theepan/userstamp.git'
 
-gem 'enumerize', '~> 1.0'
+gem 'enumerize', '~> 2.0'
 gem 'uuidtools', '~> 2.1.5'
 gem 'acts_as_paranoid', git: 'https://github.com/ActsAsParanoid/acts_as_paranoid.git', branch: :master, ref: 'c2db19554ddaedcac0a2b8d6a0563dea83c972c5'
 
@@ -110,7 +110,7 @@ require 'rbconfig'
 # MONITORING
 # -------------------------------------
 gem 'exception_notification', '~> 4.2.0'
-gem 'newrelic_rpm', '~> 3.15'
+gem 'newrelic_rpm', '~> 3.16'
 
 # Documentation & UI
 # -------------------------------------

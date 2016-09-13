@@ -1,6 +1,13 @@
 # Changelog
 
 ## Unreleased
+ - 2016-09-13
+    - Updated gems [TODO]()
+ - 2016-08-10
+    - Removing support for Ruby 2.2.3 [eac760c](https://github.com/QutBioacoustics/baw-server/commit/eac760c4351131a05fdcce6fdd2dce1e8d0a6568)
+ - 2016-08-09
+    - Fix: Split out analysis jobs items API from analysis results API.
+      WARNING: BROKEN REST API. See [#301](https://github.com/QutBioacoustics/baw-server/issues/301)
  - 2016-08-03
    - Feature: Analysis Jobs items integration. Analysis jobs have been setup and their complete workflows tested and 
      integrated. See [#300](https://github.com/QutBioacoustics/baw-server/pull/300)
