@@ -21,8 +21,7 @@ def create_full_path(item)
   File.join(top_path, item)
 end
 
-def create_file(
-    file = File.join('Test1', 'Test2', 'test-CASE.csv'),
+def create_file(file = File.join('Test1', 'Test2', 'test-CASE.csv'),
     content = '"header1", "header2", "header3"\n"content1","content2", "content2"')
 
   full_path = create_full_path(file)
@@ -51,7 +50,7 @@ end
 
 test_url = '/analysis_jobs/:analysis_job_id/audio_recordings/:audio_recording_id/results/:results_path'
 
-resource 'AnalysisJobsItems' do
+resource 'AnalysisJobsItemsResults' do
 
   shared_examples_for 'AnalysisJobsItems results' do |current_user|
 

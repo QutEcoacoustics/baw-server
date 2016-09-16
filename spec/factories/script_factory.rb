@@ -15,6 +15,7 @@ FactoryGirl.define do
         copy_paths: [
             './programs/AnalysisPrograms/Logs/log.txt'
         ],
+        sub_folders: [],
         custom_setting: n
     }}
 

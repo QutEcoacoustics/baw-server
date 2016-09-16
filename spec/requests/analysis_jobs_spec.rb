@@ -40,7 +40,8 @@ describe "Analysis Jobs" do
             file_executable: './AnalysisPrograms/AnalysisPrograms.exe',
             copy_paths: [
                 './programs/AnalysisPrograms/Logs/log.txt'
-            ]
+            ],
+            sub_folders: []
         })
   }
 
