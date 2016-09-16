@@ -1,8 +1,10 @@
 # Changelog
 
 ## Unreleased
+ - 2016-09-16
+    - Added support for partial payloads for analysis jobs items [TODO]
  - 2016-09-13
-    - Updated gems [TODO]()
+    - Updated gems [6e469cf](https://github.com/QutBioacoustics/baw-server/commit/6e469cf4be7e16ce632f5b380e7c9101fea36bdb)
  - 2016-08-10
     - Removing support for Ruby 2.2.3 [eac760c](https://github.com/QutBioacoustics/baw-server/commit/eac760c4351131a05fdcce6fdd2dce1e8d0a6568)
  - 2016-08-09
