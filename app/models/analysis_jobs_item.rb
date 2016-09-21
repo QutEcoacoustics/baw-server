@@ -356,7 +356,7 @@ class AnalysisJobsItem < ActiveRecord::Base
     # Options invariant to the AnalysisJob are stuck in here, like:
     # - file_executable
     # - copy_paths
-    payload = analysis_job.script.analysis_action_params.dup.deep_symbolize_keys
+    payload = (analysis_job.script.analysis_action_params || {}).dup.deep_symbolize_keys
 
     # merge base
     payload.merge({

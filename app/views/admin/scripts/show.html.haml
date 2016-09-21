@@ -21,5 +21,11 @@
   %pre
     = @script.executable_settings
 
+%h3 Default action params
+%p
+  %pre
+    = @script.analysis_action_params
+
+
 %h3 All versions of this script
 = render partial: 'admin/scripts/scripts_table', locals: {scripts: @all_script_versions}

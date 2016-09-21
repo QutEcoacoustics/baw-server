@@ -10,8 +10,11 @@ class Script < ActiveRecord::Base
   validates :creator, existence: true
 
   # attribute validations
-  validates :name, :analysis_identifier, :executable_command, :executable_settings, :executable_settings_media_type, presence: true, length: {minimum: 2}
+  validates :name, :analysis_identifier, :executable_command, :executable_settings, :executable_settings_media_type, :analysis_action_params,
+            presence: true, length: {minimum: 2}
   validate :check_version_increase, on: :create
+
+
 
   # for the first script in a group, make sure group_id is set to the script's id
   after_create :set_group_id
