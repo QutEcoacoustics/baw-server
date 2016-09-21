@@ -54,6 +54,7 @@ Vagrant.configure(2) do |config|
   config.winnfsd.gid = 1000 # vagrant
   config.vm.synced_folder './', '/home/vagrant/baw-server', type: "nfs"
   config.vm.synced_folder '../baw-workers', '/home/vagrant/baw-workers', type: "nfs"
+  config.vm.synced_folder '../baw-audio-tools', '/home/vagrant/baw-audio-tools', type: "nfs"
   config.vm.synced_folder '../baw-private/Ansible', ansible_files
 
   # Provider-specific configuration so you can fine-tune various
