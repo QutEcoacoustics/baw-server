@@ -16,7 +16,15 @@ class JsonValidator < ActiveModel::EachValidator
   end
 
   def validate_each(record, attribute, value)
+    # bypass rail's eager serialization of values
+    if value.is_a?(Hash)
+      return true if record.attributes_before_type_cast[attribute.to_s].is_a?(Hash)
+
+      value = record.attributes_before_type_cast[attribute.to_s]
+    end
+
     value = value.strip if value.is_a?(String)
+
     ActiveSupport::JSON.decode(value)
   rescue MultiJson::LoadError, TypeError => exception
     record.errors.add(attribute, options[:message], exception_message: exception.message)

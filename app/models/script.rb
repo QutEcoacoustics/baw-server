@@ -10,7 +10,9 @@ class Script < ActiveRecord::Base
   validates :creator, existence: true
 
   # attribute validations
-  validates :name, :analysis_identifier, :executable_command, :executable_settings, :executable_settings_media_type, :analysis_action_params,
+  validates :analysis_action_params, json: {message: "Must be valid JSON"}
+
+  validates :name, :analysis_identifier, :executable_command, :executable_settings, :executable_settings_media_type,
             presence: true, length: {minimum: 2}
   validate :check_version_increase, on: :create
 
