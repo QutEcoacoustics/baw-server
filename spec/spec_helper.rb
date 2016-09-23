@@ -16,15 +16,15 @@ if ENV['TRAVIS']
   end
   CodeClimate::TestReporter.start
 
-  SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter[
-      SimpleCov::Formatter::HTMLFormatter,
-      CodeClimate::TestReporter::Formatter
-  ]
+  SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter.new(
+      [SimpleCov::Formatter::HTMLFormatter,
+      CodeClimate::TestReporter::Formatter]
+  )
 
 else
-  SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter[
+  SimpleCov.formatter = SimpleCov::Formatter::MultiFormatternew(
       SimpleCov::Formatter::HTMLFormatter
-  ]
+  )
 end
 
 # start code coverage
