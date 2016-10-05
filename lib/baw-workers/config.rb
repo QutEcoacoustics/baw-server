@@ -212,6 +212,16 @@ module BawWorkers
             }
         }
 
+        # temporary hack - for some reason Resque overrides our default formatter. This is a new behaviour that I
+        # can't replicate in a dev environment. The formatter resque uses is the QuietFormatter and it literally just
+        # writes out an empty string whenever a log statement is run. As near as I can tell this overwrite happens
+        # either in Resque.info or one of the other Resque related functions in the result block above.
+        unless BawWorkers::Config.logger_worker.formatter.is_a?(BawWorkers::MultiLogger::CustomFormatter)
+          BawWorkers::Config.logger_worker.formatter = BawWorkers::MultiLogger::CustomFormatter.new
+
+          BawWorkers::Config.logger_worker.warn('BawWorkers::Config') { "Resque overwrote the default formatter!" }
+        end
+
         BawWorkers::Config.logger_worker.warn('BawWorkers::Config') { result.to_json }
       end
 
