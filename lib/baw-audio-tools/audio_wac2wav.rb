@@ -10,6 +10,9 @@ module BawAudioTools
       fail ArgumentError, "Source is not a wac file: #{source}" unless source.match(/\.wac$/)
       fail Exceptions::AudioFileNotFoundError, "Could not find #{source}." unless File.exist?(source)
 
+      # WAac header format:
+      # https://github.com/QutBioacoustics/wac2wavcmd/blob/master/wac2wavcmd.c#L214
+      # https://github.com/QutBioacoustics/wac2wavcmd/blob/master/wac2wavcmd.c#L40
       header_size = 24 # first 24 bytes are the WAC header
       file_size = File.size(source)
       fail Exceptions::FileTooSmallError, "File was too small to be a WAC file #{source}." if file_size <= header_size
