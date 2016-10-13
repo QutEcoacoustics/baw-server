@@ -26,6 +26,8 @@ shared_context 'shared_test_helpers' do
   let(:audio_file_mono_29_data_length_bytes) { 296756 }
   let(:audio_file_mono_29_bit_rate_bps) { 239920 }
 
+  let(:audio_file_wac) { File.expand_path(File.join(example_media_dir, 'test-wac-1.wac')) }
+
   let(:duration_range) { 0.11 }
 
   let(:audio_file_corrupt) { File.expand_path(File.join(example_media_dir, 'test-audio-corrupt.ogg')) }

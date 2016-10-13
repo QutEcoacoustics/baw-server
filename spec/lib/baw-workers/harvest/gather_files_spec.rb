@@ -149,11 +149,12 @@ describe BawWorkers::Harvest::GatherFiles do
     end
 
     it 'should include other files' do
+      # there should be at least one valid file for all accepted audio file types
       sub_folder = File.join(harvest_to_do_path, 'one')
       FileUtils.mkpath(sub_folder)
       FileUtils.cp(folder_example, File.join(sub_folder, 'harvest.yml'))
       FileUtils.touch(File.join(sub_folder, 'amazing_thingo.log'))
-      FileUtils.mkpath(File.join(sub_folder, 'two', 'three'))
+
 
       FileUtils.touch(File.join(sub_folder, 'a file.txt'))
       FileUtils.cp(audio_file_mono, File.join(sub_folder, 'some sound.mp3'))
@@ -163,6 +164,7 @@ describe BawWorkers::Harvest::GatherFiles do
       FileUtils.cp(audio_file_mono, File.join(sub_folder, 'around your head.webm'))
       FileUtils.cp(audio_file_mono, File.join(sub_folder, 'around your head.asf'))
 
+      FileUtils.mkpath(File.join(sub_folder, 'two'))
       FileUtils.cp(audio_file_mono, File.join(sub_folder, 'two', 'p1_s2_u3_d20140101_t235959Z.mp3'))
       FileUtils.cp(audio_file_mono, File.join(sub_folder, 'two', 'p000_s00000_u00000_d00000000_t000000Z.0'))
       FileUtils.cp(audio_file_mono, File.join(sub_folder, 'two', 'p9999_s9_u9999999_d99999999_t999999Z.ogg'))
@@ -171,7 +173,21 @@ describe BawWorkers::Harvest::GatherFiles do
       FileUtils.cp(audio_file_mono, File.join(sub_folder, 'a_00000000_000000.a'))
       FileUtils.cp(audio_file_mono, File.join(sub_folder, 'a_99999999_999999.dnsb48364JSFDSD'))
 
+      FileUtils.mkpath(File.join(sub_folder, 'two', 'three'))
       FileUtils.cp(audio_file_mono, File.join(sub_folder, 'two', 'three', 'prefix_20140101_235959+10.mp3'))
+
+      FileUtils.mkpath(File.join(sub_folder, 'two', 'four'))
+      FileUtils.cp(audio_file_mono, File.join(sub_folder, 'two', 'four', 'prefix_20140101_235959+10.webm'))
+
+      FileUtils.mkpath(File.join(sub_folder, 'two', 'five'))
+      FileUtils.cp(audio_file_mono, File.join(sub_folder, 'two', 'five', 'prefix_20140101_235959+10.ogg'))
+
+      FileUtils.mkpath(File.join(sub_folder, 'two', 'six'))
+      FileUtils.cp(audio_file_mono, File.join(sub_folder, 'two', 'six', 'prefix_20140101_235959+10.flac'))
+
+      FileUtils.mkpath(File.join(sub_folder, 'two', 'seven'))
+      FileUtils.cp(audio_file_wac,  File.join(sub_folder, 'two', 'seven', 'prefix_20140101_235959+10.wac'))
+      FileUtils.cp(audio_file_wac,  File.join(sub_folder, 'two', 'seven', 'prefix_20140101_235954+10.was'))
       FileUtils.cp(audio_file_mono, File.join(sub_folder, 'a_00000000_000000+00.a'))
       FileUtils.cp(audio_file_mono, File.join(sub_folder, 'a_99999999_999999+9999.dnsb48364JSFDSD'))
 
@@ -181,7 +197,7 @@ describe BawWorkers::Harvest::GatherFiles do
 
       results = gather_files.run(harvest_to_do_path)
 
-      expect(results.size).to eq(4)
+      expect(results.size).to eq(8)
 
       expect(results.find { |item| item.include?(:metadata) &&
                  item[:file_rel_path] == 'one/prefix_20140101_235959.mp3' }).to_not be_nil
@@ -194,6 +210,18 @@ describe BawWorkers::Harvest::GatherFiles do
 
       expect(results.find { |item| !item.include?(:metadata) &&
                  item[:file_rel_path] == 'one/two/three/prefix_20140101_235959+10.mp3' }).to_not be_nil
+
+      expect(results.find { |item| !item.include?(:metadata) &&
+                 item[:file_rel_path] == 'one/two/four/prefix_20140101_235959+10.webm' }).to_not be_nil
+
+      expect(results.find { |item| !item.include?(:metadata) &&
+                 item[:file_rel_path] == 'one/two/five/prefix_20140101_235959+10.ogg' }).to_not be_nil
+
+      expect(results.find { |item| !item.include?(:metadata) &&
+                 item[:file_rel_path] == 'one/two/six/prefix_20140101_235959+10.flac' }).to_not be_nil
+
+      expect(results.find { |item| !item.include?(:metadata) &&
+                 item[:file_rel_path] == 'one/two/seven/prefix_20140101_235959+10.wac' }).to_not be_nil
     end
 
     it 'should error on read-only directory' do

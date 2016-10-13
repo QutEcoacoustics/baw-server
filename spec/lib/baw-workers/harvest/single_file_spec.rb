@@ -31,7 +31,7 @@ describe BawWorkers::Harvest::SingleFile do
 
   context 'entire process' do
 
-    it 'should succeed with valid file and settings' do
+    it 'should succeed with valid ogg file and settings' do
       # set up audio file and folder config
       sub_folder = File.expand_path File.join(harvest_to_do_path, 'harvest_file_exists')
       FileUtils.mkpath(sub_folder)
@@ -98,6 +98,138 @@ describe BawWorkers::Harvest::SingleFile do
               file_hash: file_hash,
               status: 'new',
               original_file_name: 'test_20141012_181455.ogg',
+
+              created_at: '2014-10-13T05:21:13Z',
+              id: 177,
+              notes: 'note number 183',
+              updated_at: '2014-10-13T05:21:13Z',
+              uuid: uuid
+          }
+      }
+
+      request_update_status_body = {
+          uuid: uuid,
+          file_hash: file_hash,
+          status: nil
+      }
+
+      possible_paths = audio_original.possible_paths(
+          {
+              uuid: uuid,
+              datetime_with_offset: Time.zone.parse(recorded_date),
+              original_format: original_format
+          }
+      )
+
+      stub_login = stub_request(:post, "#{default_uri}/security")
+                       .with(body: request_login_body.to_json, headers: request_headers_base)
+                       .to_return(status: 200, body: response_login_body.to_json)
+
+      stub_uploader_check = stub_request(:get, "#{default_uri}/projects/10/sites/20/audio_recordings/check_uploader/30")
+                                .with(headers: request_headers)
+                                .to_return(status: 204)
+
+      stub_create = stub_request(:post, "#{default_uri}/projects/10/sites/20/audio_recordings")
+                        .with(body: request_create_body.to_json, headers: request_headers)
+                        .to_return(status: 201, body: response_create_body.to_json)
+
+      stub_uploading_status = stub_request(:put, "#{default_uri}/audio_recordings/177/update_status")
+                                  .with(body: request_update_status_body.merge(status: 'uploading'), headers: request_headers)
+                                  .to_return(status: 200)
+
+      stub_ready_status = stub_request(:put, "#{default_uri}/audio_recordings/177/update_status")
+                              .with(body: request_update_status_body.merge(status: 'ready'), headers: request_headers)
+                              .to_return(status: 200)
+
+      # execute - process a single file
+      file_info_hash = gather_files.run(dest_audio_file)
+      single_file.run(file_info_hash[0], true)
+
+      # verify - requests made in the correct order
+      stub_login.should have_been_made.once
+      stub_uploader_check.should have_been_made.once
+      stub_create.should have_been_made.once
+      stub_uploading_status.should have_been_made.once
+      stub_ready_status.should have_been_made.once
+
+      # ensure file is moved to correct location
+      expect(File.exists?(possible_paths[1])).to be_truthy
+
+      # ensure source file is renamed to *.completed
+      expect(File.exists?(dest_audio_file)).to be_falsey
+      expect(File.exists?(dest_audio_file+'.completed')).to be_truthy
+
+      # clean up
+      FileUtils.rm_rf(sub_folder)
+    end
+
+    it 'should succeed with valid wac file and settings' do
+      # set up audio file and folder config
+      sub_folder = File.expand_path File.join(harvest_to_do_path, 'harvest_file_exists')
+      FileUtils.mkpath(sub_folder)
+
+      source_audio_file = File.expand_path File.join('.', 'spec', 'example_media', 'test-wac-1.wac')
+      dest_audio_file = File.join(sub_folder, 'test_20141012_181455.wac')
+
+      source_harvest_folder_config = folder_example
+      dest_harvest_folder_config = File.join(sub_folder, 'harvest.yml')
+
+      FileUtils.copy(source_harvest_folder_config, dest_harvest_folder_config)
+      FileUtils.copy(source_audio_file, dest_audio_file)
+
+      # stub web requests
+      email = 'address@example.com'
+      user_name = 'example_user'
+      password = 'password'
+      auth_token = 'auth token this is'
+
+      file_hash = 'SHA256::c6d561c91664a92a1598bda3b79734d5ee29266ad0411ffaea1188f29d5b6439'
+      recorded_date = '2014-10-12T18:14:55.000+10:00'
+      uuid = 'fb4af424-04c1-4739-96e3-23f8dc719665'
+      original_format = 'wac'
+
+      request_login_body = get_api_security_request(email, password)
+      response_login_body = get_api_security_response(user_name, auth_token)
+      request_headers_base = {'Accept' => 'application/json', 'Content-Type' => 'application/json', 'User-Agent' => 'Ruby'}
+      request_headers = request_headers_base.merge('Authorization' => "Token token=\"#{auth_token}\"")
+      request_create_body = {
+          uploader_id: 30,
+          recorded_date: recorded_date,
+          site_id: 20,
+          duration_seconds: 6.577,
+          sample_rate_hertz: 22050,
+          channels: 2,
+          bit_rate_bps: 16,
+          media_type: 'audio/x-waac',
+          data_length_bytes: 394644,
+          file_hash: file_hash,
+          original_file_name: 'test_20141012_181455.wac',
+          notes: {
+              relative_path: 'test_20141012_181455.wac',
+              sensor_type: 'SM2',
+              information: [
+                  'stripped left channel due to bad mic',
+                  'appears to have electronic interference from solar panel'
+              ]
+          }
+      }
+      response_create_body = {
+          meta: {
+              status: 201,
+              message: 'Created'
+          },
+          data: {
+              recorded_date: '2014-10-12T08:14:55Z',
+              site_id: 20,
+              duration_seconds: 6.577,
+              sample_rate_hertz: 22050,
+              channels: 2,
+              bit_rate_bps: 16,
+              media_type: 'audio/x-waac',
+              data_length_bytes: 394644,
+              file_hash: file_hash,
+              status: 'new',
+              original_file_name: 'test_20141012_181455.wac',
 
               created_at: '2014-10-13T05:21:13Z',
               id: 177,
