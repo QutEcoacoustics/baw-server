@@ -22,7 +22,7 @@ if ENV['TRAVIS']
   )
 
 else
-  SimpleCov.formatter = SimpleCov::Formatter::MultiFormatternew(
+  SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter.new(
       SimpleCov::Formatter::HTMLFormatter
   )
 end
