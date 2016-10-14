@@ -33,7 +33,10 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'fakeredis', '~> 0.5'
 
   # runtime dependencies
-  spec.add_runtime_dependency 'resque', '~> 1.25'
+
+  # Resque is hard locked to 1.25.2 because 1.26 has a breaking change with the loggers. When below lands when can bump version.
+  # https://github.com/resque/resque/commit/eaaac2acc209456cdd0dd794d2d3714968cf76e4
+  spec.add_runtime_dependency 'resque', '1.25.2'
   spec.add_runtime_dependency 'settingslogic', '~> 2.0'
   spec.add_runtime_dependency 'activesupport', '>= 4.2'
   spec.add_runtime_dependency 'resque_solo', '~> 0.1'
