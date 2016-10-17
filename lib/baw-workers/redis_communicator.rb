@@ -12,6 +12,8 @@ module BawWorkers
     # @param [Object] settings
     # @return [BawWorkers::RedisCommunicator]
     def initialize(logger, redis_instance, settings = {})
+      fail '`redis_instance` must be a valid Redis instance' unless redis_instance.is_a?(Redis)
+
       @logger = logger
       @redis = redis_instance
       @settings = settings

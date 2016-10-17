@@ -326,7 +326,7 @@ module BawWorkers
             communicator_redis = Redis.new
           else
             Resque.redis = HashWithIndifferentAccess.new(settings.resque.connection)
-            communicator_redis = HashWithIndifferentAccess.new(settings.redis.connection)
+            communicator_redis =  Redis.new(HashWithIndifferentAccess.new(settings.redis.connection))
           end
           Resque.redis.namespace = BawWorkers::Settings.resque.namespace
 
