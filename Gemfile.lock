@@ -19,15 +19,15 @@ GIT
 
 GIT
   remote: https://github.com/QutBioacoustics/baw-workers.git
-  revision: 4de88fb5cd7a9e4c4de12c72592b0b7ef456742f
-  ref: 4de88fb5cd7a9e4c4de12c72592b0b7ef456742f
+  revision: fe0022b4defaf1b39288496150946b6028d998db
+  ref: fe0022b4defaf1b39288496150946b6028d998db
   branch: master
   specs:
     baw-workers (0.5.0)
       actionmailer (~> 4.2)
       activesupport (>= 4.2)
       redis (~> 3.2)
-      resque (~> 1.25)
+      resque (= 1.25.2)
       resque-status (~> 0.5)
       resque_solo (~> 0.1)
       settingslogic (~> 2.0)
@@ -536,4 +536,4 @@ DEPENDENCIES
   zonebie
 
 BUNDLED WITH
-   1.12.5
+   1.13.1
