@@ -320,7 +320,7 @@ class AnalysisJobsItem < ActiveRecord::Base
     rescue => e
       # Note: exception used to be swallowed. We might need better error handling here later on.
       Rails.logger.error "An error occurred when enqueuing an analysis job item: #{e}"
-      raise e
+      raise
     end
 
     @enqueue_results = {result: result, error: error}

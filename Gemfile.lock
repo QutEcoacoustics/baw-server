@@ -19,8 +19,8 @@ GIT
 
 GIT
   remote: https://github.com/QutBioacoustics/baw-workers.git
-  revision: fe0022b4defaf1b39288496150946b6028d998db
-  ref: fe0022b4defaf1b39288496150946b6028d998db
+  revision: f14d46ebebf556a66057cb1abe58d00ff50a864c
+  ref: f14d46ebebf556a66057cb1abe58d00ff50a864c
   branch: master
   specs:
     baw-workers (0.5.0)
