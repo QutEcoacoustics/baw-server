@@ -59,7 +59,7 @@ module BawAudioTools
       status_msg = "status=#{status.exitstatus};killed=#{killed};pid=#{pid};"
       timeout_msg = "time_out_sec=#{@timeout_sec};time_taken_sec=#{time};timed_out=#{timed_out};"
       exceptions_msg = "exceptions=#{exceptions.inspect};"
-      output_msg = "\n\tStandard output: #{stdout_str}\n\tStandard Error: #{stderr_str}"
+      output_msg = "\n\tStandard output: #{stdout_str}\n\tStandard Error: #{stderr_str}\n\n"
       msg = "External Program: #{status_msg}#{timeout_msg}#{exceptions_msg}command=#{command}#{output_msg}"
 
       if (!stderr_str.blank? && !status.success?) || timed_out || killed
@@ -69,7 +69,7 @@ module BawAudioTools
       end
 
       fail Exceptions::AudioToolTimedOutError, msg if timed_out || killed
-      fail Exceptions::AudioToolError, msg if !stderr_str.blank? && !status.success? && raise_exit_error
+      fail Exceptions::AudioToolError, msg if !status.success? && raise_exit_error
 
       {
           command: command,
@@ -77,6 +77,7 @@ module BawAudioTools
           stderr: stderr_str,
           time_taken: time,
           exit_code: status.exitstatus,
+          success: status.success?,
           execute_msg: msg
       }
     end
