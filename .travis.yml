@@ -39,12 +39,7 @@ before_install:
   - export PATH=/tmp/wav2png:$PATH
 
   # download, extract, build, and add wac2wavcmd to path
-  - mkdir /tmp/wac2wav
-  - wget https://github.com/QutBioacoustics/wac2wavcmd/archive/master.zip
-  - unzip master.zip
-  - make -C ./wac2wavcmd-master/
-  - mv ./wac2wavcmd-master/wac2wavcmd /tmp/wac2wav/wac2wavcmd
-  - export PATH=/tmp/wac2wav/:$PATH
+  - source ./bin/install_wac2wav.sh
 
   # check versions
   - which ffmpeg
