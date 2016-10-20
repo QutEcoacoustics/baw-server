@@ -59,3 +59,8 @@
         db: baw_local_dev
         user: postgres
         password: NULL
+    - name: APT | Install zip and unzip
+      apt:
+        pkg: zip
+        state: present
+      become: true
