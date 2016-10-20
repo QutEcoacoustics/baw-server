@@ -2,46 +2,69 @@
 
 = render partial: 'shared/sidebar_public', locals: {user_show: @user, user_current: current_user}
 
-- if @annotation_download.blank?
-  %p Use this form to request annotations or other data related to the audio recordings on this website.
-- else
-  %h4
-    Please select the time zone for the CSV file containing annotations for
-    = "#{@annotation_download[:name]}."
-  %form.form-inline
-    .form-group
-      %label{for: 'select_timezone_offset'} Select time zone
-      =select_tag(:download_zone_offset, time_zone_options_for_select(@annotation_download[:timezone_name]),
-        prompt: 'Select a time zone...', id: 'select_timezone_offset', class: 'form-control')
-    %a.btn.btn-default{id: 'download_link', href: @annotation_download[:link]} Download Annotations
+%div.col-md-12
 
-  :javascript
-    $(document).ready(function() {
-      $("#select_timezone_offset").change(function(){
-        var selectedTimezoneName = $(this).val();
-        if (selectedTimezoneName != '') {
-          var dlLinkElement = $('#download_link');
-          var newUri = URI(dlLinkElement.attr('href'))
-            .removeSearch('selected_timezone_name')
-            .addSearch('selected_timezone_name', selectedTimezoneName);
-          dlLinkElement.attr('href', newUri);
-        }
+  - if @annotation_download.blank?
+    %h2 Annotations Download
+    %p To download a standard CSV of annotations
+    %ol
+      %li Navigate to the project you're interested in
+      %li Then, choose the site you want to download annotations for
+      %li
+        Finally, click the
+        %i Annotations (CSV)
+        link
+  - else
+    %h2 Annotations Download
+    %p
+      Please select the time zone for the CSV file containing annotations for
+      = "#{@annotation_download[:name]}."
+    %form.simple_form.form-horizontal
+      .form-group
+        %label.col-sm-3{for: 'select_timezone_offset'} Select time zone
+        %div.col-sm-5
+          =select_tag(:download_zone_offset, time_zone_options_for_select(@annotation_download[:timezone_name]),
+            prompt: 'Select a time zone...', id: 'select_timezone_offset', class: 'form-control')
+      .form-group
+        .col-sm-offset-3.col-sm-9
+          %a.btn.btn-default{id: 'download_link', href: @annotation_download[:link]} Download Annotations
+
+    :javascript
+      $(document).ready(function() {
+        $("#select_timezone_offset").change(function(){
+          var selectedTimezoneName = $(this).val();
+          if (selectedTimezoneName != '') {
+            var dlLinkElement = $('#download_link');
+            var newUri = URI(dlLinkElement.attr('href'))
+              .removeSearch('selected_timezone_name')
+              .addSearch('selected_timezone_name', selectedTimezoneName);
+            dlLinkElement.attr('href', newUri);
+          }
+        });
       });
-    });
+    %br
 
   %br
-
+  %hr
+  %h2 Custom Data Request
   %p
-    If you need more data or a different format, please submit a request using this form.
+    Use this form to request a customised annotations list or other data related to the audio recordings on this website.
+  %p
+    You
+    %strong do not need
+    to use this form if you need the standard
+    %strong annotations CSV
+    download.
+  %br
 
-= simple_form_for @data_request, url: '/data_request', html: {class: 'form-horizontal' } do |f|
-  = field_set_tag do
-    = f.error_notification
-    = f.input :name, label: 'Your Name'
-    = f.input :email, label: 'Contact Email'
-    = f.input :group, label: 'Organisation'
-    = f.input :group_type, label: 'Organisation Type', include_blank: false
-    = f.input :content, label: 'Request details (include Projects/Sites, dates/times)', as: :text, input_html: {rows: '8',style: 'width:100%'}
-    = render partial: 'shared/recaptcha', locals: {data_item: @data_request, data_item_name: 'data_request'}
-    = f.button :submit_cancel, 'Submit', class: 'btn-default'
+  = simple_form_for @data_request, url: '/data_request', html: {class: 'form-horizontal' } do |f|
+    = field_set_tag do
+      = f.error_notification
+      = f.input :name, label: 'Your Name'
+      = f.input :email, label: 'Contact Email'
+      = f.input :group, label: 'Organisation'
+      = f.input :group_type, label: 'Organisation Type', include_blank: false
+      = f.input :content, label: 'Request details (include Projects/Sites, dates/times, data format)', as: :text, input_html: {rows: '8',style: 'width:100%'}
+      = render partial: 'shared/recaptcha', locals: {data_item: @data_request, data_item_name: 'data_request'}
+      = f.button :submit_cancel, 'Submit', class: 'btn-default'
 
