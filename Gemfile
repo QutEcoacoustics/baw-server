@@ -121,7 +121,7 @@ gem 'raddocs', '~> 1.0.0'
 # MEDIA
 # -------------------------------------
 # set to a specific commit when releasing to master branch
-gem 'baw-audio-tools', git: 'https://github.com/QutBioacoustics/baw-audio-tools.git', branch: :master, ref: '354d375d6a'
+gem 'baw-audio-tools', git: 'https://github.com/QutBioacoustics/baw-audio-tools.git', branch: :master, ref: 'd8b0f4e2796c0c5ba5c2356b029a4019a9db8002'
 gem 'rack-rewrite', '~> 1.5.1'
 
 # ASYNC JOBS
@@ -130,7 +130,7 @@ gem 'resque', '~> 1.25.2'
 gem 'resque-job-stats', git: 'https://github.com/echannel/resque-job-stats.git', branch: :master, ref: '8932c036ae'
 gem 'resque-status', '~> 0.5.0'
 # set to a specific commit when releasing to master branch
-gem 'baw-workers', git: 'https://github.com/QutBioacoustics/baw-workers.git', branch: :master, ref: 'f14d46ebebf556a66057cb1abe58d00ff50a864c'
+gem 'baw-workers', git: 'https://github.com/QutBioacoustics/baw-workers.git', branch: :master, ref: '1924fced235eb4957c2f196f61e63fef00f4e335'
 
 
 # Gems restricted by environment and/or platform
