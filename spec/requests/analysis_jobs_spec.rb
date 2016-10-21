@@ -336,7 +336,7 @@ describe "Analysis Jobs" do
 
         expect(mail['to'].to_s).to include(writer_user.email)
         expect(mail['subject'].value).to include(@analysis_job.name)
-        expect(mail['subject'].value).to include('New analysis job')
+        expect(mail['subject'].value).to include('New job')
         expect(mail.body.raw_source).to include('ID: ' + @analysis_job.id.to_s)
         expect(mail.body.raw_source).to include('localhost:3000/analysis_jobs/' + @analysis_job.id.to_s)
       end
@@ -871,7 +871,7 @@ describe "Analysis Jobs" do
 
         expect(mail['to'].to_s).to include(writer_user.email)
         expect(mail['subject'].value).to include(@analysis_job.name)
-        expect(mail['subject'].value).to include('Completed analysis job')
+        expect(mail['subject'].value).to include('Completed job')
         expect(mail.body.raw_source).to include('ID: ' + @analysis_job.id.to_s)
         expect(mail.body.raw_source).to include('localhost:3000/analysis_jobs/' + @analysis_job.id.to_s)
       end
@@ -951,7 +951,7 @@ describe "Analysis Jobs" do
 
           expect(mail['to'].to_s).to include(writer_user.email)
           expect(mail['subject'].value).to include(@analysis_job.name)
-          expect(mail['subject'].value).to include('Retrying analysis job')
+          expect(mail['subject'].value).to include('Retrying job')
           expect(mail.body.raw_source).to include('ID: ' + @analysis_job.id.to_s)
           expect(mail.body.raw_source).to include('localhost:3000/analysis_jobs/' + @analysis_job.id.to_s)
         end
@@ -981,7 +981,7 @@ describe "Analysis Jobs" do
 
           expect(mail['to'].to_s).to include(writer_user.email)
           expect(mail['subject'].value).to include(@analysis_job.name)
-          expect(mail['subject'].value).to include('Completed analysis job')
+          expect(mail['subject'].value).to include('Completed job')
           expect(mail.body.raw_source).to include('ID: ' + @analysis_job.id.to_s)
           expect(mail.body.raw_source).to include('localhost:3000/analysis_jobs/' + @analysis_job.id.to_s)
         end
