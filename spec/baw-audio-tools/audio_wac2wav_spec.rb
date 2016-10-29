@@ -49,10 +49,10 @@ describe BawAudioTools::AudioWac2wav do
       target = temp_media_file_1+'.wav'
       result = audio_base.modify(source, target)
       info = audio_base.info(target)
-      #expect(info[:media_type]).to eq('audio/ogg')
-      #expect(info[:sample_rate]).to be_within(0.0).of(audio_file_stereo_sample_rate)
-      #expect(info[:channels]).to eq(audio_file_stereo_channels)
-      #expect(info[:duration_seconds]).to be_within(duration_range).of(audio_file_stereo_duration_seconds)
+      expect(info[:media_type]).to eq('audio/wav')
+      expect(info[:sample_rate]).to be_within(0.0).of(22050)
+      expect(info[:channels]).to eq(2)
+      expect(info[:duration_seconds]).to be_within(duration_range).of(6.577)
     end
 
   end
