@@ -97,7 +97,7 @@ RSpec.configure do |config|
       available_formats:
           OpenStruct.new({
               text: %w(json),
-              audio: %w(mp3 webm ogg flac wav),
+              audio: %w(mp3 webm ogg flac wav wac),
               image: %w(png)
           }),
       audio_tools:

@@ -55,5 +55,42 @@ describe BawAudioTools::AudioWac2wav do
       expect(info[:duration_seconds]).to be_within(duration_range).of(6.577)
     end
 
+    it 'converts from wac to flac' do
+      source = audio_file_wac_1
+      target = temp_media_file_1+'.flac'
+      result = audio_base.modify(source, target)
+      info = audio_base.info(target)
+      expect(info[:media_type]).to eq('audio/x-flac')
+      expect(info[:sample_rate]).to be_within(0.0).of(22050)
+      expect(info[:channels]).to eq(2)
+      expect(info[:duration_seconds]).to be_within(duration_range).of(6.577)
+    end
+
+    it 'converts from wac to flac' do
+      source = audio_file_wac_1
+      target = temp_media_file_1+'.mp3'
+      result = audio_base.modify(source, target)
+      info = audio_base.info(target)
+      expect(info[:media_type]).to eq('audio/mp3')
+      expect(info[:sample_rate]).to be_within(0.0).of(22050)
+      expect(info[:channels]).to eq(2)
+      expect(info[:duration_seconds]).to be_within(duration_range).of(6.577)
+    end
+
+    it 'allows converting from .wac to .wav, but not back to .wac' do
+      temp_media_file_a = temp_media_file_1+'.wav'
+      result_1 = audio_base.modify(audio_file_wac_2, temp_media_file_a)
+      info_1 = audio_base.info(temp_media_file_a)
+      expect(info_1[:media_type]).to eq('audio/wav')
+      expect(info_1[:sample_rate]).to be_within(0.0).of(22050)
+      expect(info_1[:channels]).to eq(2)
+      expect(info_1[:duration_seconds]).to be_within(0.3).of(60)
+
+      temp_media_file_b = temp_media_file_2+'.wac'
+      expect {
+        audio_base.modify(temp_media_file_a, temp_media_file_b)
+      }.to raise_error(BawAudioTools::Exceptions::InvalidTargetMediaTypeError, 'Cannot convert to .wac')
+    end
+
   end
 end
