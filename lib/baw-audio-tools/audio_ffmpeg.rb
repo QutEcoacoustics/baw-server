@@ -277,13 +277,21 @@ module BawAudioTools
 
       codec_high_wavpack = 'wavpack'
 
+      # The flac reference implementation may not keep the .wav metadata
+      # https://xiph.org/flac/faq.html#general__no_wave_metadata
+      # The flag --keep-foreign-metadata can be included to store the WAVE non-audio data as well
+      # Note that when a flac file is decoded to WAVE/AIFF the flag must be used again to keep metadata
+      # The ffmpeg implementation of flac encoding / decoding can handle some metadata formats, this is sufficient until
+      # there is something concrete that requires using additional ffmpeg flags or using the reference flac implementation
+      # instead.
+      # The relevant ffmpeg flag is `-map_metadata`. "By default, global metadata is copied from the first input file,
+      # per-stream and per-chapter metadata is copied along with streams/chapters."
       codec_high_flac = 'flac'
 
       # output file. extension used to determine filetype.
       old_target = target
 
       # set the right codec if we know it
-      codec = ''
       extension = File.extname(target).upcase!.reverse.chomp('.').reverse
       case extension
         when 'WAV'
