@@ -122,11 +122,17 @@ module BawAudioTools
 
       stderr = @audio_ffmpeg.check_for_errors(info_output)
 
+      bit_rate_bps = info['STREAM bit_rate']
+      bit_rate_bps_format = info['FORMAT bit_rate']
+      if bit_rate_bps_format && (bit_rate_bps == '' || bit_rate_bps == 'N/A' || bit_rate_bps == '0')
+        bit_rate_bps = bit_rate_bps_format
+      end
+      
       {
           media_type: @audio_ffmpeg.get_mime_type(info),
           sample_rate: info['STREAM sample_rate'].to_f,
           duration_seconds: @audio_ffmpeg.parse_duration(info['FORMAT duration']).to_f,
-          bit_rate_bps: (info['STREAM bit_rate'] || info['FORMAT bit_rate']).to_i,
+          bit_rate_bps: bit_rate_bps.to_i,
           data_length_bytes: info['FORMAT size'].to_i,
           channels: info['STREAM channels'].to_i
       }
