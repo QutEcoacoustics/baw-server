@@ -72,6 +72,11 @@ describe BawWorkers::Storage::AnalysisCache do
     expect(analysis_cache.possible_paths(opts)).to eq expected
   end
 
+  it 'creates the correct root path' do
+    expected = [File.join(analysis_cache_path, job_id.to_s)]
+    expect(analysis_cache.possible_job_paths_dir(opts)).to eq(expected)
+  end
+
   it 'creates the correct full path for a single file with invalid chars using integer job id' do
 
     expected = [File.join(

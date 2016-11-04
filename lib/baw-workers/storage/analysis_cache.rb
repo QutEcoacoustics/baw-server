@@ -56,6 +56,30 @@ module BawWorkers
         BawWorkers::Validation.normalise_path(partial_path, nil)
       end
 
+      # Construct the path to an analysis results root folder.
+      # @param [Hash] opts
+      # @return [String] path to analysis results root folder.
+      def job_path(opts)
+        validate_job_id(opts)
+
+        # ./<job_id>
+
+        job_id = opts[:job_id].to_s.strip.downcase
+
+        partial_path = File.join(job_id)
+
+        BawWorkers::Validation.normalise_path(partial_path, nil)
+      end
+
+      # Get all possible root paths for an analysis job.
+      # @param [Hash] opts
+      # @return [Array<String>]
+      def possible_job_paths_dir(opts)
+        # partial_path is implemented in each store.
+        @storage_paths.map { |path| File.join(path, job_path(opts)) }
+      end
+
+
       # Extract information from a file name.
       # @param [String] file_path
       # @return [Hash] info
