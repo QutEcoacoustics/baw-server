@@ -27,10 +27,10 @@ def check_response_content(opts, message_prefix)
   unless expected.blank?
     if expected.respond_to?(:each)
       expected.each do |expected_content_item|
-        expect(actual).to include(expected_content_item), "#{message_prefix} to find '#{expected_content_item}' in '#{actual}'"
+        expect(actual).to include(expected_content_item), "#{message_prefix} to find:\n\n'#{expected_content_item}'\n\nin:\n\n'#{actual}'"
       end
     else
-      expect(actual).to include(expected), "#{message_prefix} to find '#{expected}' in '#{actual}'"
+      expect(actual).to include(expected), "#{message_prefix} to find:\n\n'#{expected}'\n\nin:\n\n'#{actual}'"
     end
 
   end

@@ -22,7 +22,7 @@ def create_full_path(item)
 end
 
 def create_file(file = File.join('Test1', 'Test2', 'test-CASE.csv'),
-    content = '"header1", "header2", "header3"\n"content1","content2", "content2"')
+                content = '"header1", "header2", "header3"\n"content1","content2", "content2"')
 
   full_path = create_full_path(file)
   FileUtils.mkpath File.dirname(full_path)
@@ -34,21 +34,44 @@ def create_dir(dir = File.join('Test1', 'Test2'))
   FileUtils.mkpath full_path
 end
 
-def insert_audio_recording_id(context, opts, array_index = 1)
-  rbc = opts[:response_body_content]
-  hsh = {audio_recording_id: context.audio_recording.id}
+def template_object(object, key, hash, array_index = nil)
+  return if object.nil? || object[key].nil?
 
-  original = rbc.kind_of?(Array) ? rbc[array_index] : rbc
-  new = original % hsh
-
-  if rbc.kind_of?(Array)
-    opts[:response_body_content][array_index] = new
+  if object[key].kind_of?(Array)
+    object[key].each_index do |index|
+      object[key][index] = object[key][index] % hash if array_index.nil? || array_index == index
+    end
   else
-    opts[:response_body_content] = new
+    object[key] = object[key] % hash
   end
 end
 
-test_url = '/analysis_jobs/:analysis_job_id/audio_recordings/:audio_recording_id/results/:results_path'
+def insert_audio_recording_id(context, opts, array_index = 1)
+  hash = {audio_recording_id: context.audio_recording.id}
+
+  template_object(opts, :response_body_content, hash, array_index)
+end
+
+def insert_audio_recording_ids(context, opts)
+  hash = {
+      audio_recording_id_1: context.analysis_jobs_item.audio_recording_id,
+      audio_recording_id_2: context.second_analysis_jobs_item.audio_recording_id
+  }
+
+  template_object(opts, :response_body_content, hash)
+  template_object(opts, :invalid_data_content, hash)
+end
+
+def paging_helper(total = 0, max_page = 1, page = 1, items = 25, warning = true)
+  ',' + (warning ? '"warning":"Paging results estimated and vary in size",' : '') \
+      + '"paging":{"page":' + page.to_s \
+      + ',"items":' + items.to_s \
+      + ',"total":' + total.to_s \
+      + ',"max_page":' + max_page.to_s \
+      + ',"current":'
+end
+
+test_url = "/analysis_jobs/:analysis_job_id/results/:audio_recording_id/:results_path"
 
 resource 'AnalysisJobsItemsResults' do
 
@@ -65,6 +88,12 @@ resource 'AnalysisJobsItemsResults' do
 
     create_entire_hierarchy
 
+    let!(:second_analysis_jobs_item) {
+      audio_recording_2 = Creation::Common.create_audio_recording(writer_user, writer_user, site)
+
+      Creation::Common.create_analysis_job_item(analysis_job, audio_recording_2)
+    }
+
     let(:project_id) { project.id }
     let(:site_id) { site.id }
     let(:audio_recording_id) { audio_recording.id }
@@ -75,11 +104,70 @@ resource 'AnalysisJobsItemsResults' do
     let(:analysis_cache) { BawWorkers::Storage::AnalysisCache.new(BawWorkers::Settings.paths.cached_analysis_jobs) }
 
     let(:current_user) { current_user }
+
     def token(target)
       target.send((current_user.to_s + '_token').to_sym)
     end
 
-    context 'with root results, no directory' do
+    context 'with root results, fake directories' do
+      # url without '/:audio_recording_id/:results_path'
+      get test_url.chomp('/:audio_recording_id/:results_path') do
+        parameter :analysis_job_id, 'Requested analysis job id (in path/route)', required: true
+        let(:authentication_token) {
+          token(self)
+        }
+
+        standard_request_options(
+            :get,
+            'ANALYSIS (as ' + current_user.to_s + ', requesting root results directory)',
+            :ok,
+            {
+                response_body_content: [
+                    '{"meta":{"status":200,"message":"OK"',
+                    '"paging":{"page":1,"items":25,"total":2,"max_page":1,',
+                    '{"analysis_job_id":"system"',
+                    '"path":"/analysis_jobs/system/results/","name":"results","type":"directory","children":[',
+                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/","name":"%{audio_recording_id_1}","type":"directory","has_children":true',
+                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_2}/","name":"%{audio_recording_id_2}","type":"directory","has_children":true'
+                ]
+            },
+            &proc { |context, opts| insert_audio_recording_ids context, opts }
+        )
+      end
+
+
+      # url without '/:audio_recording_id/:results_path'
+      get test_url.chomp('/:audio_recording_id/:results_path') do
+        parameter :analysis_job_id, 'Requested analysis job id (in path/route)', required: true
+        parameter :page, 'The page of results', required: true
+        parameter :items, 'The page of results', required: true
+
+        let(:authentication_token) {
+          token(self)
+        }
+
+        let(:page) { 2 }
+        let(:items) { 1 }
+
+        standard_request_options(
+            :get,
+            'ANALYSIS (as ' + current_user.to_s + ', requesting root results directory, with paging params)',
+            :ok,
+            {
+                response_body_content: [
+                    '{"meta":{"status":200,"message":"OK"',
+                    '"paging":{"page":2,"items":1,"total":2,"max_page":2,',
+                    '{"analysis_job_id":"system"',
+                    '"path":"/analysis_jobs/system/results/","name":"results","type":"directory","children":[',
+                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_2}/","name":"%{audio_recording_id_2}","type":"directory","has_children":true'
+                ]
+            },
+            &proc { |context, opts| insert_audio_recording_ids context, opts }
+        )
+      end
+    end
+
+    context 'with audio_recording results, no directory' do
       get test_url do
         standard_analysis_parameters
         let(:authentication_token) {
@@ -89,16 +177,17 @@ resource 'AnalysisJobsItemsResults' do
 
         standard_request_options(
             :get,
-            'ANALYSIS (as ' + current_user.to_s + ', requesting empty root directory)',
+            'ANALYSIS (as ' + current_user.to_s + ', requesting audio_recording, empty results_path)',
             :ok,
             {
                 response_body_content: [
-                    '{"meta":{"status":200,"message":"OK"},"data":',
-                    '{"id":null,"analysis_job_id":"system","audio_recording_id":%{audio_recording_id},',
-                    '"path":"/","name":"/","type":"directory","children":['
+                    '{"meta":{"status":200,"message":"OK"',
+                    paging_helper(0, 0, 1, 25, false),
+                    '{"id":null,"analysis_job_id":"system","audio_recording_id":%{audio_recording_id_1},',
+                    '"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/","name":"%{audio_recording_id_1}","type":"directory","children":['
                 ]
             },
-            &proc { |context, opts| insert_audio_recording_id context, opts }
+            &proc { |context, opts| insert_audio_recording_ids context, opts }
         )
       end
 
@@ -111,16 +200,17 @@ resource 'AnalysisJobsItemsResults' do
 
         standard_request_options(
             :get,
-            'ANALYSIS (as ' + current_user.to_s + ', requesting empty root directory)',
+            'ANALYSIS (as ' + current_user.to_s + ', requesting audio_recording, no results_path))',
             :ok,
             {
                 response_body_content: [
-                    '{"meta":{"status":200,"message":"OK"},"data":',
-                    '{"id":null,"analysis_job_id":"system","audio_recording_id":%{audio_recording_id},',
-                    '"path":"/","name":"/","type":"directory","children":['
+                    '{"meta":{"status":200,"message":"OK"',
+                    paging_helper(0, 0, 1, 25, false),
+                    '{"id":null,"analysis_job_id":"system","audio_recording_id":%{audio_recording_id_1},',
+                    '"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/","name":"%{audio_recording_id_1}","type":"directory","children":['
                 ]
             },
-            &proc { |context, opts| insert_audio_recording_id context, opts }
+            &proc { |context, opts| insert_audio_recording_ids context, opts }
         )
       end
     end
@@ -177,11 +267,13 @@ resource 'AnalysisJobsItemsResults' do
                 expected_response_has_content: true,
                 expected_json_path: 'meta/status',
                 response_body_content: [
-                    '{"meta":{"status":200,"message":"OK"},"data":{"id":null,"analysis_job_id":"system","audio_recording_id":%{audio_recording_id},',
-                    '"path":"/Test1/Test2","name":"Test2","type":"directory","children":[]}}'
+                    '{"meta":{"status":200,"message":"OK"',
+                    paging_helper(25),
+                    '"data":{"id":null,"analysis_job_id":"system","audio_recording_id":%{audio_recording_id_1},',
+                    '"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/Test1/Test2/","name":"Test2","type":"directory","children":[]}}'
                 ]
             },
-            &proc { |context, opts| insert_audio_recording_id context, opts, 0 }
+            &proc { |context, opts| insert_audio_recording_ids context, opts }
         )
       end
 
@@ -354,31 +446,75 @@ resource 'AnalysisJobsItemsResults' do
             :ok,
             {
                 response_body_content: [
-                    '{"meta":{"status":200,"message":"OK"},"data":',
-                    '{"id":null,"analysis_job_id":"system","audio_recording_id":%{audio_recording_id},',
-                    '"path":"/","name":"/","type":"directory","children":[',
-                    '{"path":"/TopDir","name":"TopDir","type":"directory","has_children":true',
+                    '{"meta":{"status":200,"message":"OK"',
+                    paging_helper(25),
+                    '{"id":null,"analysis_job_id":"system","audio_recording_id":%{audio_recording_id_1},',
+                    '"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/","name":"%{audio_recording_id_1}","type":"directory","children":[',
+                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/","name":"TopDir","type":"directory","has_children":true',
                 ],
                 invalid_data_content: [
                     '{"path":".","name":".","type":"directory","children":[',
-                    '{"path":"/.","name":".","type":"directory","children":[',
+                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/./","name":".","type":"directory","children":[',
                     '{"path":"..","name":"..","type":"directory","children":[',
-                    '{"path":"/..","name":"..","type":"directory","children":[',
-                    '{"path":"/TopDir","name":"TopDir","type":"directory","children":[',
-                    '{"path":"/TopDir/one","name":"one","type":"directory","children":[',
-                    '{"path":"/TopDir/one/two","name":"two","type":"directory","children":[',
-                    '{"path":"/TopDir/one/two/three","name":"three","type":"directory","children":[',
-                    '{"path":"/TopDir/one/two/three/four","name":"four","type":"directory","children":[',
+                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/../","name":"..","type":"directory","children":[',
+                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/","name":"TopDir","type":"directory","children":[',
+                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one/","name":"one","type":"directory","children":[',
+                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one/two/","name":"two","type":"directory","children":[',
+                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one/two/three/","name":"three","type":"directory","children":[',
+                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one/two/three/four/","name":"four","type":"directory","children":[',
                     '{"name":"five.txt","size_bytes":14,"type":"file","mime":"text/plain"}',
-                    '{"path":"/TopDir/one/two/three/four/five","name":"five","type":"directory","children":[',
+                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one/two/three/four/five/","name":"five","type":"directory","children":[',
                     '{"name":"six.txt","size_bytes":13,"type":"file","mime":"text/plain"}',
-                    '{"path":"/TopDir/one3","name":"one3","type":"directory","children":[]}',
-                    '{"path":"/TopDir/one1","name":"one1","type":"directory","children":[]}',
-                    '{"path":"/TopDir/one2","name":"one2","type":"directory","children":[]}',
-                    '{"path":"/TopDir/one4","name":"one4","type":"directory","children":[]}'
+                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one3/","name":"one3","type":"directory","children":[]}',
+                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one1/","name":"one1","type":"directory","children":[]}',
+                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one2/","name":"one2","type":"directory","children":[]}',
+                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one4/","name":"one4","type":"directory","children":[]}'
                 ]
             },
-            &proc { |context, opts| insert_audio_recording_id context, opts }
+            &proc { |context, opts| insert_audio_recording_ids context, opts }
+        )
+      end
+
+      get test_url do
+        standard_analysis_parameters
+        let(:authentication_token) { token(self) }
+        let(:results_path) { 'TopDir' }
+
+        parameter :page, 'The page of results', required: true
+        parameter :items, 'The number of results per page', required: true
+
+        let(:page) { 3 }
+        let(:items) { 2 }
+
+        # .
+        # ..
+        # one
+        # one1
+        # one2 <--
+        # one3 <--
+        # one4
+        # `nil`
+        standard_request_options(
+            :get,
+            'ANALYSIS (as ' + current_user.to_s + ', requesting sub dir with lots of directories and files, with paging params)',
+            :ok,
+            {
+                response_body_content: [
+                    '{"meta":{"status":200,"message":"OK"',
+                    paging_helper(8, 4, 3, 2),
+                    '{"id":null,"analysis_job_id":"system","audio_recording_id":%{audio_recording_id_1},',
+                    '"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/","name":"TopDir","type":"directory","children":[',
+
+                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one2/","name":"one2","type":"directory","has_children":false}',
+                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one3/","name":"one3","type":"directory","has_children":false}',
+                ],
+                invalid_data_content:[
+                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one/","name":"one","type":"directory","has_children":true',
+                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one1/","name":"one1","type":"directory","has_children":false}',
+                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one4/","name":"one4","type":"directory","has_children":false}'
+                ]
+            },
+            &proc { |context, opts| insert_audio_recording_ids context, opts }
         )
       end
 
@@ -393,31 +529,32 @@ resource 'AnalysisJobsItemsResults' do
             :ok,
             {
                 response_body_content: [
-                    '{"meta":{"status":200,"message":"OK"},"data":',
-                    '{"id":null,"analysis_job_id":"system","audio_recording_id":%{audio_recording_id},',
-                    '"path":"/TopDir","name":"TopDir","type":"directory","children":[',
-                    '{"path":"/TopDir/one","name":"one","type":"directory","has_children":true',
-                    '{"path":"/TopDir/one3","name":"one3","type":"directory","has_children":false}',
-                    '{"path":"/TopDir/one1","name":"one1","type":"directory","has_children":false}',
-                    '{"path":"/TopDir/one2","name":"one2","type":"directory","has_children":false}',
-                    '{"path":"/TopDir/one4","name":"one4","type":"directory","has_children":false}'
+                    '{"meta":{"status":200,"message":"OK"',
+                    paging_helper(25),
+                    '{"id":null,"analysis_job_id":"system","audio_recording_id":%{audio_recording_id_1},',
+                    '"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/","name":"TopDir","type":"directory","children":[',
+                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one/","name":"one","type":"directory","has_children":true',
+                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one3/","name":"one3","type":"directory","has_children":false}',
+                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one1/","name":"one1","type":"directory","has_children":false}',
+                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one2/","name":"one2","type":"directory","has_children":false}',
+                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one4/","name":"one4","type":"directory","has_children":false}'
                 ],
                 invalid_data_content: [
-                    '{"path":"/TopDir/one","name":"one","type":"directory","children":[',
-                    '{"path":"/TopDir/one/two","name":"two","type":"directory","children":[',
-                    '{"path":"/TopDir/one/two/three","name":"three","type":"directory","children":[',
-                    '{"path":"/TopDir/one/two/three/four","name":"four","type":"directory","children":[',
+                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one/","name":"one","type":"directory","children":[',
+                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one/two/","name":"two","type":"directory","children":[',
+                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one/two/three/","name":"three","type":"directory","children":[',
+                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one/two/three/four/","name":"four","type":"directory","children":[',
                     '{"name":"five.txt","size_bytes":14,"type":"file","mime":"text/plain"}',
-                    '{"path":"/TopDir/one/two/three/four/five","name":"five","type":"directory","children":[',
+                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one/two/three/four/five/","name":"five","type":"directory","children":[',
                     '{"name":"six.txt","size_bytes":13,"type":"file","mime":"text/plain"}',
-                    '{"path":"/TopDir/one3","name":"one3","type":"directory","children":[]}',
-                    '{"path":"/TopDir/one1","name":"one1","type":"directory","children":[]}',
-                    '{"path":"/TopDir/one2","name":"one2","type":"directory","children":[]}',
-                    '{"path":"/TopDir/one4","name":"one4","type":"directory","children":[]}'
+                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one3/","name":"one3","type":"directory","children":[]}',
+                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one1/","name":"one1","type":"directory","children":[]}',
+                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one2/","name":"one2","type":"directory","children":[]}',
+                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one4/","name":"one4","type":"directory","children":[]}'
                 ]
 
             },
-            &proc { |context, opts| insert_audio_recording_id context, opts }
+            &proc { |context, opts| insert_audio_recording_ids context, opts }
         )
       end
 
@@ -432,21 +569,22 @@ resource 'AnalysisJobsItemsResults' do
             :ok,
             {
                 response_body_content: [
-                    '{"meta":{"status":200,"message":"OK"},"data":',
-                    '{"id":null,"analysis_job_id":"system","audio_recording_id":%{audio_recording_id},',
-                    '"path":"/TopDir/one","name":"one","type":"directory","children":[',
-                    '{"path":"/TopDir/one/two","name":"two","type":"directory","has_children":true'
+                    '{"meta":{"status":200,"message":"OK"',
+                    paging_helper(25),
+                    '{"id":null,"analysis_job_id":"system","audio_recording_id":%{audio_recording_id_1},',
+                    '"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one/","name":"one","type":"directory","children":[',
+                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one/two/","name":"two","type":"directory","has_children":true'
                 ],
                 invalid_data_content: [
-                    '{"path":"/TopDir/one/two","name":"two","type":"directory","children":[',
-                    '{"path":"/TopDir/one/two/three","name":"three","type":"directory","children":[',
-                    '{"path":"/TopDir/one/two/three/four","name":"four","type":"directory","children":[',
+                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one/two/","name":"two","type":"directory","children":[',
+                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one/two/three/","name":"three","type":"directory","children":[',
+                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one/two/three/four/","name":"four","type":"directory","children":[',
                     '{"name":"five.txt","size_bytes":14,"type":"file","mime":"text/plain"}',
-                    '{"path":"/TopDir/one/two/three/four/five","name":"five","type":"directory","children":[',
+                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one/two/three/four/five/","name":"five","type":"directory","children":[',
                     '{"name":"six.txt","size_bytes":13,"type":"file","mime":"text/plain"}'
                 ]
             },
-            &proc { |context, opts| insert_audio_recording_id context, opts }
+            &proc { |context, opts| insert_audio_recording_ids context, opts }
         )
       end
       get test_url do
@@ -460,23 +598,25 @@ resource 'AnalysisJobsItemsResults' do
             :ok,
             {
                 response_body_content: [
-                    '{"meta":{"status":200,"message":"OK"},"data":',
-                    '{"id":null,"analysis_job_id":"system","audio_recording_id":%{audio_recording_id},',
-                    '"path":"/TopDir/one/two/three/four","name":"four","type":"directory","children":[',
+                    '{"meta":{"status":200,"message":"OK"',
+                    paging_helper(25),
+                    '{"id":null,"analysis_job_id":"system","audio_recording_id":%{audio_recording_id_1},',
+                    '"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one/two/three/four/","name":"four","type":"directory","children":[',
                     '{"name":"five.txt","type":"file","size_bytes":14,"mime":"text/plain"}',
-                    '{"path":"/TopDir/one/two/three/four/five","name":"five","type":"directory","has_children":true}'
+                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one/two/three/four/five/","name":"five","type":"directory","has_children":true}'
                 ],
                 invalid_data_content: [
-                    '{"path":"/TopDir/one/two","name":"two","type":"directory","children":[',
-                    '{"path":"/TopDir/one/two/three","name":"three","type":"directory","children":[',
+                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one/two/","name":"two","type":"directory","children":[',
+                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one/two/three/","name":"three","type":"directory","children":[',
                     '{"name":"six.txt","size_bytes":13,"type":"file","mime":"text/plain"}'
                 ]
             },
-            &proc { |context, opts| insert_audio_recording_id context, opts }
+            &proc { |context, opts| insert_audio_recording_ids context, opts }
         )
       end
 
     end
+
 
     context 'dot files are not included' do
 
@@ -495,15 +635,16 @@ resource 'AnalysisJobsItemsResults' do
             :ok,
             {
                 response_body_content: [
-                    '{"meta":{"status":200,"message":"OK"},"data":',
-                    '{"id":null,"analysis_job_id":"system","audio_recording_id":%{audio_recording_id},',
-                    '"path":"/","name":"/","type":"directory","children":['
+                    '{"meta":{"status":200,"message":"OK"',
+                    paging_helper(25),
+                    '{"id":null,"analysis_job_id":"system","audio_recording_id":%{audio_recording_id_1},',
+                    '"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/","name":"%{audio_recording_id_1}","type":"directory","children":['
                 ],
                 invalid_data_content: [
                     '{"name":".test-dot-file","type":"file","size_bytes":0,"mime":""}'
                 ]
             },
-            &proc { |context, opts| insert_audio_recording_id context, opts }
+            &proc { |context, opts| insert_audio_recording_ids context, opts }
         )
       end
 

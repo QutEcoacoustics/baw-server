@@ -220,8 +220,10 @@ Rails.application.routes.draw do
         via: [:get, :post], defaults: {format: 'json'}
 
   # route for AnalysisJobsItems and results
-  match 'analysis_jobs/:analysis_job_id/audio_recordings/:audio_recording_id/results(/*results_path)' => 'analysis_jobs_results#show',
-        defaults: {format: 'json'}, as: :analysis_jobs_results_show, via: [:get, :head], format: false
+  match 'analysis_jobs/:analysis_job_id/results/' => 'analysis_jobs_results#index',
+        defaults: {format: 'json'}, as: :analysis_jobs_results_index, via: [:get, :head], format: false, action: 'index'
+  match 'analysis_jobs/:analysis_job_id/results/:audio_recording_id(/*results_path)' => 'analysis_jobs_results#show',
+        defaults: {format: 'json'}, as: :analysis_jobs_results_show, via: [:get, :head], format: false, action: 'show'
 
   # API only for analysis_jobs, analysis_jobs_items and saved_searches
   resources :analysis_jobs, except: [:edit], defaults: {format: 'json'} do

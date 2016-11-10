@@ -89,7 +89,8 @@ module Api
               error_links: [], error_details: nil, error_info: nil,
               order_by: nil, direction: nil,
               page: nil, items: nil, total: nil,
-              filter_text: nil, filter_generic_keys: {}
+              filter_text: nil, filter_generic_keys: {},
+              warning: nil
           })
 
       # base hash
@@ -100,6 +101,10 @@ module Api
           },
           data: data
       }
+
+      unless opts[:warning].blank?
+        result[:meta][:warning] = opts[:warning]
+      end
 
       # include projection/filter if given
       unless opts[:projection].blank?

@@ -1,6 +1,7 @@
 module Api
   module ControllerHelper
     extend ActiveSupport::Concern
+    include Api::DirectoryRenderer
 
     # based on https://codelation.com/blog/rails-restful-api-just-add-water
     private

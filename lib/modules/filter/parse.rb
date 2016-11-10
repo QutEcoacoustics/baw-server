@@ -7,6 +7,16 @@ module Filter
     extend ActiveSupport::Concern
     extend Validate
 
+    # Parse paging parameters (stand alone).
+    # @param [Hash] params
+    # @param [Integer] default_page
+    # @param [Integer] default_items
+    # @param [Integer] max_items
+    # @return [Hash] Paging parameters
+    def self.parse_paging_only(params, default_page = 1, default_items = 25, max_items = 500)
+      self.instance_method(:parse_paging).bind(self).call(params, default_page, default_items, max_items)
+    end
+
     private
 
     # Parse paging parameters.
