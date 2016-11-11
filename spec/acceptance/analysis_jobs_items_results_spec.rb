@@ -62,8 +62,8 @@ def insert_audio_recording_ids(context, opts)
   template_object(opts, :invalid_data_content, hash)
 end
 
-def paging_helper(total = 0, max_page = 1, page = 1, items = 25, warning = true)
-  ',' + (warning ? '"warning":"Paging results estimated and vary in size",' : '') \
+def paging_helper(total = 0, max_page = 1, page = 1, items = 25)
+  ',' \
       + '"paging":{"page":' + page.to_s \
       + ',"items":' + items.to_s \
       + ',"total":' + total.to_s \
@@ -182,7 +182,7 @@ resource 'AnalysisJobsItemsResults' do
             {
                 response_body_content: [
                     '{"meta":{"status":200,"message":"OK"',
-                    paging_helper(0, 0, 1, 25, false),
+                    paging_helper(0, 0, 1, 25),
                     '{"id":null,"analysis_job_id":"system","audio_recording_id":%{audio_recording_id_1},',
                     '"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/","name":"%{audio_recording_id_1}","type":"directory","children":['
                 ]
@@ -205,7 +205,7 @@ resource 'AnalysisJobsItemsResults' do
             {
                 response_body_content: [
                     '{"meta":{"status":200,"message":"OK"',
-                    paging_helper(0, 0, 1, 25, false),
+                    paging_helper(0, 0, 1, 25),
                     '{"id":null,"analysis_job_id":"system","audio_recording_id":%{audio_recording_id_1},',
                     '"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/","name":"%{audio_recording_id_1}","type":"directory","children":['
                 ]
@@ -268,7 +268,7 @@ resource 'AnalysisJobsItemsResults' do
                 expected_json_path: 'meta/status',
                 response_body_content: [
                     '{"meta":{"status":200,"message":"OK"',
-                    paging_helper(25),
+                    paging_helper(0, 0),
                     '"data":{"id":null,"analysis_job_id":"system","audio_recording_id":%{audio_recording_id_1},',
                     '"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/Test1/Test2/","name":"Test2","type":"directory","children":[]}}'
                 ]
@@ -447,7 +447,7 @@ resource 'AnalysisJobsItemsResults' do
             {
                 response_body_content: [
                     '{"meta":{"status":200,"message":"OK"',
-                    paging_helper(25),
+                    paging_helper(1),
                     '{"id":null,"analysis_job_id":"system","audio_recording_id":%{audio_recording_id_1},',
                     '"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/","name":"%{audio_recording_id_1}","type":"directory","children":[',
                     '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/","name":"TopDir","type":"directory","has_children":true',
@@ -483,17 +483,14 @@ resource 'AnalysisJobsItemsResults' do
         parameter :page, 'The page of results', required: true
         parameter :items, 'The number of results per page', required: true
 
-        let(:page) { 3 }
+        let(:page) { 2 }
         let(:items) { 2 }
 
-        # .
-        # ..
         # one
         # one1
         # one2 <--
         # one3 <--
         # one4
-        # `nil`
         standard_request_options(
             :get,
             'ANALYSIS (as ' + current_user.to_s + ', requesting sub dir with lots of directories and files, with paging params)',
@@ -501,7 +498,7 @@ resource 'AnalysisJobsItemsResults' do
             {
                 response_body_content: [
                     '{"meta":{"status":200,"message":"OK"',
-                    paging_helper(8, 4, 3, 2),
+                    paging_helper(5, 3, 2, 2),
                     '{"id":null,"analysis_job_id":"system","audio_recording_id":%{audio_recording_id_1},',
                     '"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/","name":"TopDir","type":"directory","children":[',
 
@@ -530,7 +527,7 @@ resource 'AnalysisJobsItemsResults' do
             {
                 response_body_content: [
                     '{"meta":{"status":200,"message":"OK"',
-                    paging_helper(25),
+                    paging_helper(5),
                     '{"id":null,"analysis_job_id":"system","audio_recording_id":%{audio_recording_id_1},',
                     '"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/","name":"TopDir","type":"directory","children":[',
                     '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one/","name":"one","type":"directory","has_children":true',
@@ -570,7 +567,7 @@ resource 'AnalysisJobsItemsResults' do
             {
                 response_body_content: [
                     '{"meta":{"status":200,"message":"OK"',
-                    paging_helper(25),
+                    paging_helper(1),
                     '{"id":null,"analysis_job_id":"system","audio_recording_id":%{audio_recording_id_1},',
                     '"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one/","name":"one","type":"directory","children":[',
                     '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one/two/","name":"two","type":"directory","has_children":true'
@@ -599,7 +596,7 @@ resource 'AnalysisJobsItemsResults' do
             {
                 response_body_content: [
                     '{"meta":{"status":200,"message":"OK"',
-                    paging_helper(25),
+                    paging_helper(2),
                     '{"id":null,"analysis_job_id":"system","audio_recording_id":%{audio_recording_id_1},',
                     '"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one/two/three/four/","name":"four","type":"directory","children":[',
                     '{"name":"five.txt","type":"file","size_bytes":14,"mime":"text/plain"}',
@@ -636,7 +633,7 @@ resource 'AnalysisJobsItemsResults' do
             {
                 response_body_content: [
                     '{"meta":{"status":200,"message":"OK"',
-                    paging_helper(25),
+                    paging_helper(0, 0),
                     '{"id":null,"analysis_job_id":"system","audio_recording_id":%{audio_recording_id_1},',
                     '"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/","name":"%{audio_recording_id_1}","type":"directory","children":['
                 ],

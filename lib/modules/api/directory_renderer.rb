@@ -119,58 +119,39 @@ module Api
       offset = paging[:offset]
       fail 'Disabling paging is not supported for a directory listing' if paging[:disable_paging]
 
+      max_items = 1000
+
       children = []
+      listing = Dir.foreach(path)
+      filtered_count = 0
 
-      listing = Dir.new(path)
-
-      # skip
-      listing.pos = offset
-      unfiltered_count = 0
-
-      # take
-      while unfiltered_count < items
-        # get the item and advance the cursor
-        item = listing.read
-
-        # if item is nil, reached end of stream
-        break if item.nil?
-
-        unfiltered_count += 1
-
+      listing.each do |item|
         # skip dot paths ('current path', 'parent path') and hidden files/folders (that start with a dot)
         next if item == '.' || item == '..' || item.start_with?('.')
 
-        full_path = File.join(path, item)
+        # special case - stop scanning large dirs
+        if filtered_count >= max_items
+          break;
+        end
 
+        filtered_count += 1
+
+        # skip
+        next if filtered_count <= offset
+
+        # break
+        next if children.length >= items
+
+        # take
+        full_path = File.join(path, item)
         children.push(dir_info(full_path, bases)) if File.directory?(full_path)
         children.push(file_info(full_path)) if File.file?(full_path) && !File.directory?(full_path)
       end
 
-      # we can't get total file count, so instead we can only tell if there is more
-      #more_results = listing.read.nil?
-
-      # alternate idea for guessing total - might be inefficient but that probably doesn't matter until it does.
-      # Set the max to the current page (maximum page is at least this page)
-      max_page_index = (unfiltered_count > 0 ? page - 1 : 0) - 1
-      begin
-        # advance a page
-        max_page_index = max_page_index + 1
-
-        # arbitrary limit in case something goes wrong
-        fail 'Directory listing max pages query has exceeded 1000 pages' if max_page_index > 1000
-
-        # seek to offset
-        listing.pos = max_page_index * items
-
-        # read the current position, if nil, no more files
-      end until listing.read.nil?
-
-      paging[:total] = max_page_index * items
-      paging[:warning] = 'Paging results estimated and vary in size'
+      paging[:total] = filtered_count
+      paging[:warning] = "Only first #{max_items} results are available" if filtered_count >= max_items
 
       children
-    ensure
-      listing.close
     end
 
     def dir_info(path, bases)
