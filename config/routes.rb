@@ -133,49 +133,7 @@ Rails.application.routes.draw do
   # audio_recording_update_status: /audio_recordings/:id/update_status
 
   # endpoints used by client:
-  # routes: {
-  #     project: "/projects/{projectId}",
-  #     site: {
-  #         flattened: "/sites/{siteId}",
-  #         nested: "/projects/{projectId}/sites/{siteId}"
-  #     },
-  #     audioRecording: {
-  #         listShort: "/audio_recordings/{recordingId}",
-  #         show: "/audio_recordings/{recordingId}",
-  #         list: "/audio_recordings/"
-  #     },
-  #     audioEvent: {
-  #         list: "/audio_recordings/{recordingId}/audio_events",
-  #         show: "/audio_recordings/{recordingId}/audio_events/{audioEventId}",
-  #         csv: "/audio_recordings/{recordingId}/audio_events/download.{format}",
-  #     },
-  #     tagging: {
-  #         list: "/audio_recordings/{recordingId}/audio_events/{audioEventId}/taggings",
-  #         show: "/audio_recordings/{recordingId}/audio_events/{audioEventId}/taggings/{taggingId}"
-  #     },
-  #     tag: {
-  #         list: '/tags/',
-  #         show: '/tags/{tagId}'
-  #     },
-  #     media: {
-  #         show: "/audio_recordings/{recordingId}/media.{format}"
-  #     },
-  #     security: {
-  #         ping: "/security/sign_in",
-  #         signIn: "/my_account/sign_in"
-  #     },
-  #     user: {
-  #         profile: "/my_account",
-  #         settings: "/my_account/prefs"
-  #     }
-  # },
-  #     links: {
-  #     projects: '/projects',
-  #     home: '/',
-  #     project: '/projects/{projectId}',
-  #     site: '/projects/{projectId}/sites/{siteId}',
-  #     userAccounts: '/user_accounts/{userId}'
-  # }
+  # see:  https://github.com/QutBioacoustics/baw-client/blob/master/src/baw.paths.nobuild.js#L3
 
   # placed above related resource so it does not conflict with (resource)/:id => (resource)#show
   match 'projects/filter' => 'projects#filter', via: [:get, :post], defaults: {format: 'json'}

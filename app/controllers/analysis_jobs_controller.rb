@@ -64,7 +64,7 @@ class AnalysisJobsController < ApplicationController
     parameters = analysis_job_update_params
 
     # allow the API to transition this analysis job to a new state.
-    # Used for suspending and resuming an analysis_job
+    # Used for suspending, resuming, and retrying an analysis_job
     if parameters.key?(:overall_status)
       @analysis_job.transition_to_state(parameters[:overall_status].to_sym)
       parameters = parameters.except(:overall_status)

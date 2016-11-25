@@ -327,7 +327,7 @@ resource 'AnalysisJobs' do
   end
 
   put '/analysis_jobs/:id' do
-    analysis_jobs_id_param
+    id_params
     let(:id) { 'system' }
     let(:raw_post) { body_attributes }
     let(:authentication_token) { admin_token }
@@ -344,6 +344,115 @@ resource 'AnalysisJobs' do
     standard_request_options(:put, 'UPDATE (as anonymous user)', :unauthorized, {
         remove_auth: true,
         expected_json_path: get_json_error_path(:sign_up)})
+  end
+
+  describe 'update special case - retrying the job' do
+    def set_completed
+      # low-level modify factory item's state to make this test work
+      analysis_job.update_column(:overall_status, 'completed')
+      AnalysisJobsItem.update_all status: :failed
+    end
+
+    # special case - retrying the job
+    put '/analysis_jobs/:id' do
+      id_params
+      parameter :overall_status, 'Analysis Job script id in request body', required: true
+      let(:id) {
+        # hack: insert here for correct execution time
+        set_completed
+        analysis_job.id
+      }
+      let(:raw_post) { {analysis_job: {overall_status: 'processing'}}.to_json }
+      let(:authentication_token) { admin_token }
+      standard_request_options(:put, 'UPDATE (retry job, as admin)', :ok, {expected_json_path: 'data/saved_search_id'})
+    end
+
+    # special case - retrying the job
+    put '/analysis_jobs/:id' do
+      id_params
+      parameter :overall_status, 'Analysis Job script id in request body', required: true
+      let(:id) {
+        # hack: insert here for correct execution time
+        set_completed
+        analysis_job.id
+      }
+      let(:raw_post) { {analysis_job: {overall_status: 'processing'}}.to_json }
+      let(:authentication_token) { writer_token }
+      standard_request_options(:put, 'UPDATE (retry job,  writer)', :ok, {expected_json_path: 'data/saved_search_id'})
+    end
+  end
+
+  describe 'update special case - pausing the job' do
+    def set_processing
+      # low-level modify factory item's state to make this test work
+      analysis_job.update_column(:overall_status, 'processing')
+      #AnalysisJobsItem.update_all status: :failed
+    end
+
+    # special case - pausing the job
+    put '/analysis_jobs/:id' do
+      id_params
+      parameter :overall_status, 'Analysis Job script id in request body', required: true
+      let(:id) {
+        # hack: insert here for correct execution time
+        set_processing
+        analysis_job.id
+      }
+      let(:raw_post) { {analysis_job: {overall_status: 'suspended'}}.to_json }
+      let(:authentication_token) { admin_token }
+      standard_request_options(:put, 'UPDATE (pause job, as admin)', :ok, {expected_json_path: 'data/saved_search_id'})
+    end
+
+    # special case - pausing the job
+    put '/analysis_jobs/:id' do
+      id_params
+      parameter :overall_status, 'Analysis Job script id in request body', required: true
+      let(:id) {
+        # hack: insert here for correct execution time
+        set_processing
+        analysis_job.id
+      }
+      let(:raw_post) { {analysis_job: {overall_status: 'suspended'}}.to_json }
+      let(:authentication_token) { writer_token }
+      standard_request_options(:put, 'UPDATE (pause job,  writer)', :ok, {expected_json_path: 'data/saved_search_id'})
+    end
+  end
+
+
+  describe 'update special case - resuming the job' do
+    def set_suspended
+      # low-level modify factory item's state to make this test work
+      analysis_job.update_column(:overall_status, 'suspended')
+      #AnalysisJobsItem.update_all status: :failed
+    end
+
+    # special case - resuming the job
+    put '/analysis_jobs/:id' do
+      id_params
+      parameter :overall_status, 'Analysis Job script id in request body', required: true
+      let(:id) {
+        # hack: insert here for correct execution time
+        set_suspended
+        analysis_job.id
+      }
+      let(:raw_post) { {analysis_job: {overall_status: 'processing'}}.to_json }
+      let(:authentication_token) { admin_token }
+      standard_request_options(:put, 'UPDATE (pause job, as admin)', :ok, {expected_json_path: 'data/saved_search_id'})
+    end
+
+    # special case - resuming the job
+    put '/analysis_jobs/:id' do
+      id_params
+      parameter :overall_status, 'Analysis Job script id in request body', required: true
+      let(:id) {
+        # hack: insert here for correct execution time
+        set_suspended
+        analysis_job.id
+      }
+      let(:raw_post) { {analysis_job: {overall_status: 'processing'}}.to_json }
+      let(:authentication_token) { writer_token }
+      standard_request_options(:put, 'UPDATE (pause job,  writer)', :ok, {expected_json_path: 'data/saved_search_id'})
+    end
   end
 
   ################################
@@ -421,7 +530,7 @@ resource 'AnalysisJobs' do
   end
 
   delete '/analysis_jobs/:id' do
-    analysis_jobs_id_param
+    id_params
     let(:id) { 'system' }
     let(:authentication_token) { admin_token }
     standard_request_options(:delete, 'DESTROY system (as admin)', :method_not_allowed, {

@@ -26,6 +26,14 @@ class AnalysisJobsResultsController < ApplicationController
     do_load_resource
     do_authorize_instance(:show, @analysis_jobs_result)
 
+    if @analysis_jobs_result.nil?
+      respond_error(
+          :not_found,
+          "Could not find Audio Recording with id #{@audio_recording_id}",
+          {error_info: {audio_recording_id: params[@audio_recording_id]}})
+      return
+    end
+
     request_params[:results_path] = '' unless request_params.include?(:results_path)
     @results_path = request_params[:results_path]
 
@@ -50,7 +58,7 @@ class AnalysisJobsResultsController < ApplicationController
   end
 
   def show_items_as_results(is_head_request, analysis_job_items, opts)
-    analysis_job_id = analysis_job_items.first.analysis_job_id
+    analysis_job_id = @analysis_job_id
     result_roots = BawWorkers::Config.analysis_cache_helper.possible_job_paths_dir({job_id: analysis_job_id})
 
     ajis_as_hash = analysis_job_items.map do |item|
