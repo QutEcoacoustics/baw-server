@@ -188,6 +188,7 @@ describe "Analysis Jobs" do
 
     # only the harvester user can update job items!
     @env['HTTP_AUTHORIZATION'] = harvester_token
+    @env['HTTP_ACCEPT'] = 'application/json'
 
     get route, {}, @env
 
@@ -203,6 +204,7 @@ describe "Analysis Jobs" do
 
     # only the harvester user can update job items!
     @env['HTTP_AUTHORIZATION'] = harvester_token
+    @env['HTTP_ACCEPT'] = 'application/json'
 
     put update_route, {
         analysis_jobs_item: {

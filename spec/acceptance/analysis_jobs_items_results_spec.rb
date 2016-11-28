@@ -78,6 +78,7 @@ resource 'AnalysisJobsItemsResults' do
   shared_examples_for 'AnalysisJobsItems results' do |current_user|
 
     header 'Authorization', :authentication_token
+    header 'Accept', 'application/json'
 
     after(:each) do
       remove_media_dirs

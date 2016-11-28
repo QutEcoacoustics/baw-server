@@ -139,8 +139,8 @@ module AWB
 
     def should_route_to_client(rack_env)
       (rack_env['REQUEST_METHOD'] == 'GET' &&
-      !Mime::Type.parse(rack_env['HTTP_ACCEPT']).include?(Mime::JSON) &&
-      File.extname(rack_env['REQUEST_PATH']) == "")
+      !(Mime::Type.parse(rack_env['HTTP_ACCEPT'] || '')).include?(Mime::JSON) &&
+      File.extname(rack_env['REQUEST_PATH'] || '') == '')
     end
 
     # middleware to rewrite angular urls
