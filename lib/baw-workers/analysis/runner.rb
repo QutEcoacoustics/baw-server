@@ -171,9 +171,9 @@ module BawWorkers
         result
       end
 
-      # 2 hours
+      # 4 hours
       def self.timeout_seconds
-        2 * 60 * 60
+        4 * 60 * 60
       end
 
       # Create directory for a run.
