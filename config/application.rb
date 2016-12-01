@@ -137,12 +137,6 @@ module AWB
     # for generating documentation from tests
     Raddocs.configuration.docs_dir = "doc/api"
 
-    def should_route_to_client(rack_env)
-      (rack_env['REQUEST_METHOD'] == 'GET' &&
-      !(Mime::Type.parse(rack_env['HTTP_ACCEPT'] || '')).include?(Mime::JSON) &&
-      File.extname(rack_env['REQUEST_PATH'] || '') == '')
-    end
-
     # middleware to rewrite angular urls
     # insert at the start of the Rack stack.
     config.middleware.insert_before 0, Rack::Rewrite do
@@ -153,7 +147,7 @@ module AWB
       rewrite /^\/library.*/i, '/listen_to/index.html'
       rewrite /^\/demo.*/i, '/listen_to/index.html'
       rewrite /^\/visualize.*/i, '/listen_to/index.html'
-      rewrite /^\/analysis_jobs.*/i, '/listen_to/index.html', if: Application.method(:should_route_to_client)
+      rewrite /^\/audio_analysis.*/i, '/listen_to/index.html'
     end
 
     # allow any origin, with any header, to access the array of methods
