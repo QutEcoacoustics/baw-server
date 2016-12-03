@@ -43,6 +43,11 @@ module Filter
       validate_integer(limit, 1)
     end
 
+    # Check that value is an integer between min and max.
+    # @param [Integer] value
+    # @param [Integer] min
+    # @param [Integer] max
+    # @return [void]
     def validate_integer(value, min = nil, max = nil)
       fail CustomErrors::FilterArgumentError, 'Value must not be blank' if value.blank?
       fail CustomErrors::FilterArgumentError, "Value must be an integer, got #{value}" if value.blank? || value != value.to_i
@@ -53,6 +58,12 @@ module Filter
       fail CustomErrors::FilterArgumentError, "Value must be #{max} or less, got #{value_i}" if !max.blank? && value_i > max
     end
 
+    # Check that value is a string.
+    # @param [String] value
+    # @return [void]
+    def validate_string(value)
+      fail CustomErrors::FilterArgumentError, 'Value must be a string' unless value.is_a?(String)
+    end
 
     # Validate query, table, and column values.
     # @param [Arel::Query] query
@@ -254,7 +265,22 @@ module Filter
 
       value_f = filtered.to_f
       fail CustomErrors::FilterArgumentError, "Value must be greater than 0, got #{value_f}" if value_f <= 0
+    end
 
+    # Check that value is a 'basic class'.
+    # @param [Object] value
+    # @raise [FilterArgumentError] if value is not a 'basic class'
+    # @return [void]
+    def validate_basic_class(node, value)
+      return if value.is_a?(NilClass) || value.is_a?(Integer) || value.is_a?(String) || value.class == Float ||
+          value.class == TrueClass || value.class == FalseClass
+
+      node_descr = node.respond_to?(:name) ? node.name : '(custom item)'
+
+      fail CustomErrors::FilterArgumentError, "The value for #{node_descr} must not be a hash" if value.is_a?(Hash)
+      fail CustomErrors::FilterArgumentError, "The value for #{node_descr} must not be an array" if value.is_a?(Array)
+      fail CustomErrors::FilterArgumentError, "The value for #{node_descr} must not be a set" if value.is_a?(Set)
+      fail CustomErrors::FilterArgumentError, "The value for #{node_descr} must not be a range" if value.is_a?(Range)
     end
 
     # Check that a hash contains a key with expected type of value.
