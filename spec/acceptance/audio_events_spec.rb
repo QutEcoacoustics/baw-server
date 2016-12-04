@@ -658,7 +658,39 @@ resource 'AudioEvents' do
             }
         }
     }.to_json }
-    standard_request_options(:post, 'FILTER (as anonymous user)', :ok, {remove_auth: true, response_body_content: '{"meta":{"status":200,"message":"OK","filter":{"audio_events_tags.tag_id":{"gt":0}},"sorting":{"order_by":"created_at","direction":"desc"},"paging":{"page":1,"items":25,"total":0,"max_page":0,"current":"http://localhost:3000/audio_events/filter?direction=desc\u0026items=25\u0026order_by=created_at\u0026page=0","previous":null,"next":null}},"data":[]}'})
+    standard_request_options(:post, 'FILTER (as anonymous user)', :ok, {
+        remove_auth: true,
+        response_body_content: '{"meta":{"status":200,"message":"OK","filter":{"audio_events_tags.tag_id":{"gt":0}},"sorting":{"order_by":"created_at","direction":"desc"},"paging":{"page":1,"items":25,"total":0,"max_page":0,"current":"http://localhost:3000/audio_events/filter?direction=desc\u0026items=25\u0026order_by=created_at\u0026page=0","previous":null,"next":null}},"data":[]}'})
   end
 
+  post '/audio_events/filter' do
+    let(:authentication_token) { reader_token }
+    let(:raw_post) {
+      {
+          "filter" => {
+              "isReference" => {
+                  "eq" => true
+              },
+              "durationSeconds" => {
+                  "gteq" => {
+                      "from" => 0,
+                      "to" => nil
+                  }
+              },
+              "lowFrequencyHertz" => {
+                  "gteq" => 1100
+              }
+          },
+          "paging" => {
+              "items" => 10,
+              "page" => 1
+          }
+      }.to_json
+    }
+
+    standard_request_options(:post, 'FILTER (as reader, with invalid nil for gteq interval)', :bad_request,
+                             {
+                                  response_body_content: '{"meta":{"status":400,"message":"Bad Request","error":{"details":"Filter parameters were not valid: The value for (custom item) must not be a hash","info":null}},"data":null}'
+                              })
+  end
 end
