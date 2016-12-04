@@ -272,8 +272,8 @@ module Filter
     # @raise [FilterArgumentError] if value is not a 'basic class'
     # @return [void]
     def validate_basic_class(node, value)
-      return if value.is_a?(NilClass) || value.is_a?(Integer) || value.is_a?(String) || value.class == Float ||
-          value.class == TrueClass || value.class == FalseClass
+      return if value.is_a?(NilClass) || value.is_a?(Integer) || value.is_a?(String) || value.is_a?(Float) ||
+          value.is_a?(TrueClass) || value.is_a?(FalseClass)
 
       node_descr = node.respond_to?(:name) ? node.name : '(custom item)'
 
