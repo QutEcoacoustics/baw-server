@@ -146,15 +146,15 @@ module Access
 
         if system_mode
           query = AnalysisJobsItem.system_query
-              .joins(audio_recording: :site)
-              .order(audio_recording_id: :asc)
+                      .joins(audio_recording: :site)
+                      .order(audio_recording_id: :asc)
         else
           analysis_job = Access::Core.validate_analysis_job(analysis_job)
           query = AnalysisJobsItem
-              .joins(audio_recording: :site)
-              .order(audio_recording_id: :asc)
-              .joins(:analysis_job) # this join ensures only non-deleted results are returned
-              .where(analysis_jobs: {id: analysis_job.id})
+                      .joins(audio_recording: :site)
+                      .order(audio_recording_id: :asc)
+                      .joins(:analysis_job) # this join ensures only non-deleted results are returned
+                      .where(analysis_jobs: {id: analysis_job.id})
         end
 
         permission_sites(user, levels, query)
@@ -237,7 +237,6 @@ module Access
       def permission_sites(user, levels, query, project_ids = nil)
 
         is_admin, query = permission_admin(user, levels, query)
-        return query if is_admin
 
 =begin
   EXISTS
@@ -252,13 +251,10 @@ module Access
         pt = Project.arel_table
         ps = Arel::Table.new(:projects_sites)
         st = Site.arel_table
+
         # levels_modified is not used because permission_projects also
         # calls calculate_levels, which would end up with the inverse results
         levels_modified, exists = calculate_levels(levels)
-
-        # project permission will never be nil, which is the way it should work
-        # when being used as a part of a subquery rather than the whole subquery
-        permissions = permission_projects(user, levels)
 
         permissions_by_site =
             ps
@@ -272,11 +268,15 @@ module Access
                   .where(pt[:id].in(project_ids))
         end
 
-        permissions_by_site =
-            permissions_by_site
-                .where(permissions)
-                .project(1)
-                .exists
+        unless is_admin
+          # project permission will never be nil, which is the way it should work
+          # when being used as a part of a subquery rather than the whole subquery
+          permissions = permission_projects(user, levels)
+          permissions_by_site = permissions_by_site.where(permissions)
+        end
+
+        permissions_by_site = permissions_by_site.project(1).exists
+
 =begin
   EXISTS
     (SELECT 1

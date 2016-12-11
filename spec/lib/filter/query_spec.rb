@@ -1413,9 +1413,12 @@ OFFSET 20
       expect(ids_actual).to match_array(ids_expected)
     end
 
-    it 'overrides filter parameters that match text partial match field' do
+    it 'overrides filter parameters that match text partial match field for admin' do
+      # audio_recording needs a site, otherwise it won't be found
+      # in by_permission#permission_sites
       audio_recording = FactoryGirl.create(
           :audio_recording,
+          site: Site.first,
           media_type: 'audio/mp3',
           recorded_date: '2012-03-26 07:06:59',
           duration_seconds: 120)
@@ -1429,6 +1432,36 @@ OFFSET 20
            filter_partial_match: 'mp3'
           },
           Access::ByPermission.audio_recordings(admin_user),
+          AudioRecording,
+          AudioRecording.filter_settings
+      )
+
+      expect(filter.filter).to eq({duration_seconds: {eq: 120}, or: {media_type: {contains: 'mp3'}, status: {contains: 'mp3'}}})
+
+      ids_actual = filter.query_full.pluck(:id)
+      ids_expected = [audio_recording.id]
+      expect(ids_actual).to match_array(ids_expected)
+    end
+
+    it 'overrides filter parameters that match text partial match field for writer' do
+      # audio_recording needs a site, otherwise it won't be found
+      # in by_permission#permission_sites
+      audio_recording = FactoryGirl.create(
+          :audio_recording,
+          site: Site.first,
+          media_type: 'audio/mp3',
+          recorded_date: '2012-03-26 07:06:59',
+          duration_seconds: 120)
+
+      filter = Filter::Query.new(
+          {filter: {
+              duration_seconds: {eq: 100},
+              or: {media_type: {contains: 'wav'}, status: {contains: 'wav'}}
+          },
+           filter_duration_seconds: 120,
+           filter_partial_match: 'mp3'
+          },
+          Access::ByPermission.audio_recordings(writer_user),
           AudioRecording,
           AudioRecording.filter_settings
       )
@@ -1510,6 +1543,42 @@ OFFSET 20
           Access::ByPermission.audio_recordings(admin_user),
           AudioRecording,
           AudioRecording.filter_settings
+      )
+
+      expect(filter.filter).to eq(filter_hash[:filter])
+
+      query = filter.query_full
+      expect(query.pluck(:id)).to match_array([])
+    end
+  end
+
+  context 'project with no sites' do
+    it 'returns no sites for admin' do
+      filter_hash = { filter: { } }
+      project_id = FactoryGirl.create(:project, creator: admin_user).id
+      filter_query = Access::ByPermission.sites(admin_user, Access::Core.levels, project_id)
+      filter = Filter::Query.new(
+          filter_hash,
+          filter_query,
+          Site,
+          Site.filter_settings
+      )
+
+      expect(filter.filter).to eq(filter_hash[:filter])
+
+      query = filter.query_full
+      expect(query.pluck(:id)).to match_array([])
+    end
+
+    it 'returns no sites for regular user' do
+      filter_hash = { filter: { } }
+      project_id = FactoryGirl.create(:project, creator: writer_user).id
+      filter_query = Access::ByPermission.sites(writer_user, Access::Core.levels, project_id)
+      filter = Filter::Query.new(
+          filter_hash,
+          filter_query,
+          Site,
+          Site.filter_settings
       )
 
       expect(filter.filter).to eq(filter_hash[:filter])
