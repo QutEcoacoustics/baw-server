@@ -114,7 +114,23 @@ class AudioEvent < ActiveRecord::Base
 
   # Project audio events to the format for CSV download
   # @return  [Arel::Nodes::Node] audio event csv query
+  # @param [User] user
+  # @param [Project] project
+  # @param [Site] site
+  # @param [AudioRecording] audio_recording
+  # @param [Float] start_offset
+  # @param [Float] end_offset
+  # @param [String] timezone_name
+  # @return [Arel:SelectManager]
   def self.csv_query(user, project, site, audio_recording, start_offset, end_offset, timezone_name)
+
+    # Note: if other modifications are made to the default_scope (like acts_as_paranoid does),
+    # manually constructed queries like this need to be updated to match
+    # (search for ':deleted_at' to find the relevant places)
+
+    # Note: tried using Arel from ActiveRecord
+    # e.g. AudioEvent.all.ast.cores[0].wheres
+    # but was more trouble to use than directly constructing Arel
 
     audio_events = AudioEvent.arel_table
     users = User.arel_table
@@ -158,6 +174,7 @@ class AudioEvent < ActiveRecord::Base
     projects_aggregate =
         projects_sites
             .join(projects).on(projects[:id].eq(projects_sites[:project_id]))
+            .where(projects[:deleted_at].eq(nil))
             .where(projects_sites[:site_id].eq(sites[:id]))
             .project(projects_agg)
 
@@ -190,9 +207,12 @@ class AudioEvent < ActiveRecord::Base
 
     query =
         audio_events
+            .where(audio_events[:deleted_at].eq(nil))
             .join(users).on(users[:id].eq(audio_events[:creator_id]))
             .join(audio_recordings).on(audio_recordings[:id].eq(audio_events[:audio_recording_id]))
+            .where(audio_recordings[:deleted_at].eq(nil))
             .join(sites).on(sites[:id].eq(audio_recordings[:site_id]))
+            .where(sites[:deleted_at].eq(nil))
             .order(audio_events[:id].desc)
             .project(
                 audio_events[:id].as('audio_event_id'),
@@ -246,15 +266,25 @@ class AudioEvent < ActiveRecord::Base
                     .as('library_url'),
             )
 
+    # ensure deleted projects are not included
+    site_ids_for_live_project_ids = projects
+                      .where(projects[:deleted_at].eq(nil))
+                      .join(projects_sites).on(projects[:id].eq(projects_sites[:project_id]))
+                      .where(sites[:id].eq(projects_sites[:site_id]))
+                      .project(sites[:id]).distinct
+
+    query = query.where(sites[:id].in(site_ids_for_live_project_ids))
+
+
     if user
       query = query.where(users[:id].eq(user.id))
     end
 
     if project
-
       site_ids = sites
                      .join(projects_sites).on(sites[:id].eq(projects_sites[:site_id]))
                      .join(projects).on(projects[:id].eq(projects_sites[:project_id]))
+                     .where(projects[:deleted_at].eq(nil))
                      .where(projects[:id].eq(project.id))
                      .project(sites[:id]).distinct
 
