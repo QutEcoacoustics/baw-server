@@ -114,7 +114,23 @@ class AudioEvent < ActiveRecord::Base
 
   # Project audio events to the format for CSV download
   # @return  [Arel::Nodes::Node] audio event csv query
+  # @param [User] user
+  # @param [Project] project
+  # @param [Site] site
+  # @param [AudioRecording] audio_recording
+  # @param [Float] start_offset
+  # @param [Float] end_offset
+  # @param [String] timezone_name
+  # @return [Arel:SelectManager]
   def self.csv_query(user, project, site, audio_recording, start_offset, end_offset, timezone_name)
+
+    # Note: if other modifications are made to the default_scope (like acts_as_paranoid does),
+    # manually constructed queries like this need to be updated to match
+    # (search for ':deleted_at' to find the relevant places)
+
+    # Note: tried using Arel from ActiveRecord
+    # e.g. AudioEvent.all.ast.cores[0].wheres
+    # but was more trouble to use than directly constructing Arel
 
     audio_events = AudioEvent.arel_table
     users = User.arel_table
