@@ -123,18 +123,18 @@ describe 'checking reactions to errors', :type => :feature do
 
       create_entire_hierarchy
 
-    it 'displays the correct page on forbidden error' do
-      login_as no_access_user, scope: :user
-      url = "/projects/#{project.id}"
+      it 'displays the correct page on forbidden error' do
+        login_as no_access_user, scope: :user
+        url = "/projects/#{project.id}"
 
-      visit url
-      expect(current_path).to eq(url)
-      expect(page).to have_content(I18n.t('devise.failure.unauthorized'))
-      expect(page).to have_content('Forbidden')
-      expect(page).not_to have_content('::')
-      expect(page.status_code).to eq(403)
-      expect(response_headers['Content-Type']).to match %r(text/html)
-    end
+        visit url
+        expect(current_path).to eq(url)
+        expect(page).to have_content(I18n.t('devise.failure.unauthorized'))
+        expect(page).to have_content('Forbidden')
+        expect(page).not_to have_content('::')
+        expect(page.status_code).to eq(403)
+        expect(response_headers['Content-Type']).to match %r(text/html)
+      end
     end
 
     it 'displays the correct page on custom routing error' do

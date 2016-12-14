@@ -16,11 +16,17 @@ en:
          title: Credits
          description: Credits
         ethics_statement:
-          title: Ethics Statement
+          title: Ethics
           description: Ethics statement
         projects:
           title: Projects
-          description: View your projects
+          description: View projects I have access too
+        site:
+          title: Site
+          description: The current site
+        audio_analysis:
+          title: Audio Analysis
+          description: View audio analysis jobs
         listen:
           title: Listen
           description: Listen to audio
@@ -51,19 +57,23 @@ en:
         home:
           title: Home
           description: Home page
+        log_in:
+          title: Log in
+          description: Log into the website
         annotations:
           title: My Annotations
           description: View my recent annotations
         report_problem:
           title: Report Problem
-          description: Report a problem
+          description: Report a problem with the website
         data_request:
           title: Data Request
-          description: Request access to audio data
+          description: Request customized data from the website
         upload_audio:
           title: Send Audio
           description: Send us audio recordings to upload
         register:
+          title: Register
           description: "Create an account"
         reset_password:
           description: "Send an email to reset your password"

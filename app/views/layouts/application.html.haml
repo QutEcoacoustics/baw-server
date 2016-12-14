@@ -28,14 +28,14 @@
 
     .container
       .row
-        .col-md-2
-          - if content_for?(:left_sidebar)
-            %nav{role: 'navigation'}
-              %h6
-                %strong.text-uppercase.text-muted
-                  = content_for?(:left_sidebar_header) ? content_for(:left_sidebar_header) : 'Navigation'
-              %ul.nav.nav-pills.nav-stacked
-                = content_for(:left_sidebar)
+        .col-md-2.left-nav-bar
+          %nav{role: 'navigation'}
+            %h6
+              %strong.text-uppercase.text-muted
+                = content_for?(:left_sidebar_header) ? content_for(:left_sidebar_header) : 'Menu'
+            %ul.nav.nav-pills.nav-stacked
+              -# = content_for(:left_sidebar)
+              = render partial: 'shared/sidebar_base', locals: {menu_definition: menu_definition }
 
         .col-md-8
           - if flash.any?
@@ -51,7 +51,7 @@
           .row
             = content_for?(:content) ? content_for(:content) : yield
 
-        .col-md-2
+        .col-md-2.right-nav-bar
           - if content_for?(:right_sidebar)
             %nav{role: 'navigation'}
               = content_for(:right_sidebar)

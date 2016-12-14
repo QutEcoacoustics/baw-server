@@ -26,106 +26,55 @@ module ApplicationHelper
     flash_type_keys.include?(flash_type.to_s) ? flash_types[flash_type.to_sym] : 'alert-info'
   end
 
-  # for constructing links to the angular site
-  def make_listen_path(value, start_offset_sec = nil, end_offset_sec = nil)
-    fail ArgumentError, 'Must specify a value for make_listen_path.' if value.blank?
+  # make our custom url generation methods available to views
+  include Api::CustomUrlHelpers
 
-    # obtain audio recording id
-    if value.is_a?(AudioRecording)
-      ar_id = value.id
-    elsif value.is_a?(AudioEvent)
-      ar_id = value.audio_recording_id
-    elsif value.is_a?(Bookmark)
-      ar_id = value.audio_recording_id
-    else
-      ar_id = value.to_i
+  def menu_definition
+    current_user = controller.current_user
+    has_custom_menu = controller.respond_to?(:nav_menu)
+
+    items = controller.global_nav_menu
+
+    # insert custom_items into the stream
+    if has_custom_menu
+      custom_menu = has_custom_menu ? controller.nav_menu : nil
+      custom_items = custom_menu[:menu_items]
+      custom_insert_point = custom_menu[:anchor_after]
+
+      insert_index = nil
+      insert_index = items.find_index { | menu_item|
+          menu_item[:title] == custom_insert_point
+      } unless custom_insert_point.nil?
+
+      if insert_index.nil?
+        # or add custom items to the end if they didn't find a place
+        items = items + [nil] + custom_items
+      else
+        items = items[0..insert_index] + custom_items + items[insert_index+1..-1]
+      end
     end
 
-    # obtain offsets
-    if value.is_a?(AudioEvent)
-      start_offset_sec = value.start_time_seconds if start_offset_sec.blank?
-      end_offset_sec = value.end_time_seconds if end_offset_sec.blank?
-    elsif value.is_a?(Bookmark)
-      start_offset_sec = value.offset_seconds if start_offset_sec.blank?
-    end
+    # filter items based on their predicate (if it exists)
+    items = items.select { |menu_item|
+      next true if menu_item.nil?
+      next true unless menu_item.include?(:predicate)
 
-    start_offset_sec = end_offset_sec if start_offset_sec.blank? && !end_offset_sec.blank?
-    end_offset_sec = start_offset_sec if end_offset_sec.blank? && !start_offset_sec.blank?
+      next menu_item[:predicate].call(current_user)
+    }
 
-    link = "/listen/#{ar_id}"
+    # finally transform any dynamic hrefs
+    items = items.map { |menu_item|
+      next menu_item if menu_item.nil?
+      next menu_item unless menu_item[:href].respond_to?(:call)
 
-    if start_offset_sec.blank? && end_offset_sec.blank?
-      link
-    else
-      segment_duration_seconds = 30
+      # clone hash so we don't overwrite values
+      new_item = menu_item.dup
+      new_item[:href] = menu_item[:href].call(current_user)
+      next new_item
+    }
 
-      offset_start_rounded = (start_offset_sec / segment_duration_seconds).floor * segment_duration_seconds
-      offset_end_rounded = (end_offset_sec / segment_duration_seconds).floor * segment_duration_seconds
-      offset_end_rounded += (offset_start_rounded == offset_end_rounded ? segment_duration_seconds : 0)
-
-      "#{link}?start=#{offset_start_rounded}&end=#{offset_end_rounded}"
-    end
-
-  end
-
-  def make_library_path(ar_value, ae_value = nil)
-    fail ArgumentError, 'Must provide audio recording id.' if ar_value.blank?
-
-    ar_id, ae_id = nil
-
-    # obtain audio recording id
-    if ar_value.is_a?(AudioRecording)
-      ar_id = ar_value.id
-    elsif ar_value.is_a?(AudioEvent)
-      ar_id = ar_value.audio_recording_id
-      ae_id = ar_value.id
-    else
-      ar_id = ar_value.to_i
-    end
-
-    # obtain audio event id
-    if ae_value.is_a?(AudioEvent)
-      ae_id = ae_value.id
-    elsif !ae_value.blank?
-      ae_id = ae_value.to_i
-    end
-
-    fail ArgumentError, 'Must provide audio event id' if ae_id.blank?
-
-    "/library/#{ar_id}/audio_events/#{ae_id}"
-  end
-
-  def make_library_tag_search_path(tag_text)
-    "/library?reference=all&tagsPartial=#{tag_text}"
-  end
-
-  def make_visualise_path(value)
-    fail ArgumentError, 'Must provide project or site' if value.blank?
-
-    link = '/visualize?'
-
-    if value.is_a?(Project)
-      "#{link}projectId=#{value.id}"
-    elsif value.is_a?(Site)
-      "#{link}siteId=#{value.id}"
-    else
-      fail ArgumentError, "Must provide project or site, got #{value.class}"
-    end
-  end
-
-  # create annotation download link for a user
-  def make_user_annotations_path(user_value)
-    user_id = user_value.is_a?(User) ? user_value.id : user_value.to_i
-    user_tz = user_value.is_a?(User) && !user_value.rails_tz.blank? ? user_value.rails_tz : 'UTC'
-    data_request_path(selected_user_id: user_id, selected_timezone_name: user_tz)
-  end
-
-  # create annotations download link for a site
-  def make_site_annotations_path(project_value, site_value)
-    project_id = project_value.is_a?(Project) ? project_value.id : project_value.to_i
-    site_id = site_value.is_a?(Site) ? site_value.id : site_value.to_i
-    site_tz = site_value.is_a?(Site) && !site_value.rails_tz.blank? ? site_value.rails_tz : 'UTC'
-    data_request_path(selected_project_id: project_id, selected_site_id: site_id, selected_timezone_name: site_tz)
+    # noinspection RubyUnnecessaryReturnStatement
+    return items
   end
 
 end

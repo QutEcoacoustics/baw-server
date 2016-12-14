@@ -13,6 +13,42 @@ body {
   padding-top: 60px;
 }
 
+/**
+ * sidebar menus
+ * These definitions have parallels in https://github.com/QutBioacoustics/baw-client/blob/master/src/app/navigation/_navigation.scss#L1
+ */
+
+.left-nav-bar, .right-nav-bar {
+  ul.nav-pills > li {
+    & > a, & > button {
+      padding: 5px 10px;
+      text-align: left;
+    }
+  }
+
+  a>.fa, a>.glyphicon {
+    color: $text-color;
+  }
+}
+
+.left-nav-bar {
+
+  @for $i from 0 through 4 {
+    .indentation-#{$i} {
+      $step: ($i * 10%);
+      width: 100% - $step;
+      margin-left: $step !important;
+      font-size: 100% - ($step / 2);
+    }
+  }
+}
+
+
+
+/**
+ * End sidebar menus
+ */
+
 h1 {
   margin-bottom: 30px;
 }
