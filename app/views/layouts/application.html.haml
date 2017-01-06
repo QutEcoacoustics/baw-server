@@ -40,7 +40,8 @@
         .col-md-8
           - if flash.any?
             - flash.each do |msg_type, msg_text|
-              = render partial: 'shared/alert_dismissible', locals: {msg_type: msg_type, msg_text: msg_text}
+              - if !["timedout"].include?(msg_type)
+                = render partial: 'shared/alert_dismissible', locals: {msg_type: msg_type, msg_text: msg_text}
 
           - if !current_user.blank? && !current_user.confirmed?
             - msg_text_link = link_to(t('devise.confirmations.new.resend_confirmation_instructions'), new_user_confirmation_path, class: 'alert-link')
