@@ -26,7 +26,7 @@
   %body
     = render 'shared/navbar'
 
-    .container
+    .container#bawMainContent
       .row
         .col-md-2.left-nav-bar
           %nav{role: 'navigation'}
@@ -53,9 +53,8 @@
             = content_for?(:content) ? content_for(:content) : yield
 
         .col-md-2.right-nav-bar
-          - if content_for?(:right_sidebar)
-            %nav{role: 'navigation'}
-              = content_for(:right_sidebar)
+          = render partial: 'shared/info_bar_base', locals: @info_bar
+
 
     %footer
       .container

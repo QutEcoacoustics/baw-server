@@ -1,5 +1,6 @@
 module ApplicationHelper
 
+
   def titles(which_title = :title)
     which_title_sym = which_title.to_s.to_sym
 
@@ -26,55 +27,49 @@ module ApplicationHelper
     flash_type_keys.include?(flash_type.to_s) ? flash_types[flash_type.to_sym] : 'alert-info'
   end
 
-  # make our custom url generation methods available to views
-  include Api::CustomUrlHelpers
-
-  def menu_definition
-    current_user = controller.current_user
-    has_custom_menu = controller.respond_to?(:nav_menu)
-
-    items = controller.global_nav_menu
-
-    # insert custom_items into the stream
-    if has_custom_menu
-      custom_menu = has_custom_menu ? controller.nav_menu : nil
-      custom_items = custom_menu[:menu_items]
-      custom_insert_point = custom_menu[:anchor_after]
-
-      insert_index = nil
-      insert_index = items.find_index { | menu_item|
-          menu_item[:title] == custom_insert_point
-      } unless custom_insert_point.nil?
-
-      if insert_index.nil?
-        # or add custom items to the end if they didn't find a place
-        items = items + [nil] + custom_items
-      else
-        items = items[0..insert_index] + custom_items + items[insert_index+1..-1]
-      end
-    end
-
-    # filter items based on their predicate (if it exists)
-    items = items.select { |menu_item|
-      next true if menu_item.nil?
-      next true unless menu_item.include?(:predicate)
-
-      next menu_item[:predicate].call(current_user)
+  def destroy_button(href, model_name, icon = 'trash')
+    render partial: 'shared/nav_button', locals: {
+        href: href,
+        title: t('helpers.titles.destroy') + ' ' + t('baw.shared.links.' + model_name + '.title').downcase,
+        tooltip: t('helpers.tooltips.destroy', model: model_name),
+        icon: icon,
+        method: :delete,
+        confirm: t('helpers.confirm.destroy', model: model_name)
     }
-
-    # finally transform any dynamic hrefs
-    items = items.map { |menu_item|
-      next menu_item if menu_item.nil?
-      next menu_item unless menu_item[:href].respond_to?(:call)
-
-      # clone hash so we don't overwrite values
-      new_item = menu_item.dup
-      new_item[:href] = menu_item[:href].call(current_user)
-      next new_item
-    }
-
-    # noinspection RubyUnnecessaryReturnStatement
-    return items
   end
+
+  def edit_link(href, model_name, icon = 'pencil')
+    render partial: 'shared/nav_item', locals: {
+        href: href,
+        title: t('helpers.titles.edit') + ' ' + t('baw.shared.links.' + model_name + '.title').downcase,
+        tooltip: t('helpers.tooltips.edit', model: model_name),
+        icon: icon
+    }
+  end
+
+  def new_link(href, model_name, icon = 'plus')
+    render partial: 'shared/nav_item', locals: {
+        href: href,
+        title: t('helpers.titles.new') + ' ' + t('baw.shared.links.' + model_name + '.title').downcase,
+        tooltip: t('helpers.tooltips.new', model: model_name),
+        icon: icon
+    }
+  end
+
+  def listen_link(site)
+    play_details = site.get_bookmark_or_recording
+    play_link = play_details.blank? ? nil : make_listen_path(play_details[:audio_recording], play_details[:start_offset_seconds])
+
+    return nil if play_link.blank?
+
+    render partial: 'shared/nav_item', locals: {
+        href: play_link,
+        title: t('baw.shared.links.listen.title'),
+        tooltip: t('baw.shared.links.listen.description'),
+        icon: 'headphones'
+    }
+  end
+
+
 
 end

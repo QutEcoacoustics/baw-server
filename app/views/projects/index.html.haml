@@ -3,7 +3,7 @@
 = render partial: 'shared/sidebar_project'
 
 - content_for :right_sidebar do
-  = render partial: 'shared/sidebar_metadata_heading', locals: {title: 'Projects', icon_class: 'home'}
+  = render partial: 'shared/sidebar_metadata_heading', locals: {title: 'Projects', icon: 'home'}
 
 - @projects.each_slice(3) do |projects|
   .row

@@ -1,0 +1,12 @@
+-# locals: href, tooltip, icon, title, placement
+- href =  href || ''
+- tooltip =  tooltip || ''
+- icon =  icon && ('fa-' + icon) ||''
+- title = title || ''
+- confirm ||= nil
+- method ||= :post
+%li{class: ''}
+  = button_to href, method: method, title: tooltip,
+    class: 'btn btn-block btn-default', data: {toggle: 'tooltip', confirm: confirm } do
+    %i.fa.fa-fw{ class:  icon }
+    = title

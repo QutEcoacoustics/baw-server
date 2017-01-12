@@ -20,13 +20,13 @@ body {
 
 .left-nav-bar, .right-nav-bar {
   ul.nav-pills > li {
-    & > a, & > button {
-      padding: 5px 10px;
+    & > a, & > button, & > form > button {
+      padding: 5px 5px;
       text-align: left;
     }
   }
 
-  a>.fa, a>.glyphicon {
+  a .fa, a > .glyphicon {
     color: $text-color;
   }
 }
@@ -35,23 +35,37 @@ body {
 
   @for $i from 0 through 4 {
     .indentation-#{$i} {
-      $step: ($i * 10%);
-      width: 100% - $step;
-      margin-left: $step !important;
-      font-size: 100% - ($step / 2);
+      width: calc(100% - #{1em * $i});
+      margin-left: (1em * $i) !important;
+      font-size: 100% - ($i * 3%);
     }
   }
 }
-
-
 
 /**
  * End sidebar menus
  */
 
+.fa-baw-annotation {
+  &:before {
+    content: $fa-var-square-o;
+    position: relative;
+    margin-left: 0.25em;
+  }
+
+  &:after {
+    content: $fa-var-th-large;
+    font-size: (2/3) * 100%;
+    position: relative;
+    top: -2px;
+    left: calc(-1em - (1/3 * 1px));
+  }
+}
+
 h1 {
   margin-bottom: 30px;
 }
+
 h3 {
   margin-top: 30px;
 }
@@ -77,6 +91,7 @@ h3 {
     }
   }
 }
+
 .thumbnail.right-caption img {
   float: left;
   margin-right: 9px;
@@ -90,7 +105,7 @@ h3 {
   padding: 0px 4px;
   h3 {
     margin: 0px;
-    float:left;
+    float: left;
   }
 }
 
@@ -142,6 +157,7 @@ h3 {
   font-family: FontAwesome;
   content: '\f044\0009';
 }
+
 .btn-destroy:before {
   font-family: FontAwesome;
   content: '\f00d\0009';
@@ -161,10 +177,10 @@ button.list-group-item[disabled] {
 /* Home page styles */
 
 .home-arrow {
-  padding-top:100px;
-  height:210px;
+  padding-top: 100px;
+  height: 210px;
   font-weight: bold;
-  font-size:40px;
+  font-size: 40px;
   vertical-align: middle;
   text-align: center;
   display: table-cell;
@@ -198,8 +214,8 @@ footer {
 /* Project styles */
 
 .project_sites {
-  height:400px;
-  overflow:auto;
+  height: 400px;
+  overflow: auto;
 }
 
 .project_thumbnail {
@@ -219,8 +235,8 @@ select[multiple] {
   min-width: 20px;
   border: 1px solid #555;
   white-space: nowrap;
-  background-color:white;
-  padding:0 2px;
+  background-color: white;
+  padding: 0 2px;
 }
 
 /* end Project styles */
@@ -228,9 +244,9 @@ select[multiple] {
 /* Site styles */
 
 .map-placeholder {
-  border:1px solid black;
-  height:400px;
-  display:block;
+  border: 1px solid black;
+  height: 400px;
+  display: block;
   line-height: 400px;
   text-align: center;
 }

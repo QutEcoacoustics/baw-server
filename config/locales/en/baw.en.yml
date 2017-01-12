@@ -21,15 +21,25 @@ en:
         projects:
           title: Projects
           description: View projects I have access too
+        project:
+          title: Project
+          description: The current project
         site:
           title: Site
           description: The current site
+        harvest:
+          short_title: Harvesting
+          title: Harvest instructions
+          description: Upload new audio to this site
         audio_analysis:
           title: Audio Analysis
           description: View audio analysis jobs
         listen:
           title: Listen
-          description: Listen to audio
+          description: Listen (and annotate) from your last playback position
+        visualize:
+          title: Data visualisation
+          description: Visually show this audio data
         library:
           title: Library
           description: Annotation library
@@ -63,6 +73,9 @@ en:
         annotations:
           title: My Annotations
           description: View my recent annotations
+        annotations_download:
+          title: Annotations (CSV)
+          description: Download annotations for this site
         report_problem:
           title: Report Problem
           description: Report a problem with the website

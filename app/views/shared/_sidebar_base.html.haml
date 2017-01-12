@@ -17,13 +17,19 @@
 -#  %li{class: ('active' if current_page?(audio_events_user_account_path(current_user)))}
 -#    = link_to t('baw.shared.links.annotations.title'), audio_events_user_account_path(current_user), title: t('baw.shared.links.annotations.description'), data: {toggle: 'tooltip',  placement: 'right'}
 
+
 - menu_definition.each do |item|
   - if item.nil?
     %hr
   - else
-    %li{class: ['indentation-' + (item[:indentation] || 0).to_s, ('active' if current_page?(item[:href]))]}
-      = link_to item[:href],
-                title: t(item[:tooltip]),
-                data: {toggle: 'tooltip',  placement: 'right'} do
-        %i.fa.fa-fw{class: 'fa-' + (item[:icon] || '')}
-        = t(item[:title])
+    = render partial: 'shared/nav_item', locals: item
+    - if item[:controller] && controller.instance_of?(item[:controller])
+      - if action == :new
+        = new_link( request.original_fullpath)
+      - else if action == :edit
+        = edit_link(request.original_fullpath, 'site')
+
+-# Old style escape (just in case I missed anything)
+- if content_for?(:left_sidebar)
+  %hr
+  = content_for(:left_sidebar)

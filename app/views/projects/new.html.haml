@@ -3,6 +3,6 @@
 = render partial: 'shared/sidebar_project'
 
 - content_for :right_sidebar do
-  = render partial: 'shared/sidebar_metadata_heading', locals: {title: 'Project', icon_class: 'home'}
+  = render partial: 'shared/sidebar_metadata_heading', locals: {title: 'Project', icon: 'home'}
 
 = render partial: 'form', locals: {project: @project}

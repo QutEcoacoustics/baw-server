@@ -3,7 +3,7 @@
 = render partial: 'shared/sidebar_project'
 
 - content_for :right_sidebar do
-  = render partial: 'shared/sidebar_metadata_heading', locals: {title: 'Project', icon_class: 'home'}
+  = render partial: 'shared/sidebar_metadata_heading', locals: {title: 'Project', icon: 'home'}
 
 = simple_form_for :access_request, url: '/projects/submit_access_request',html: {class: 'form-horizontal'}  do |f|
   = field_set_tag do

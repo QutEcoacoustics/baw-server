@@ -79,9 +79,6 @@ class ApplicationController < ActionController::Base
     super
   end
 
-  def global_nav_menu
-    NAV_MENU
-  end
 
   protected
 
@@ -568,84 +565,5 @@ class ApplicationController < ActionController::Base
     !is_devise_controller && !is_admin_controller
   end
 
-  # title and tooltip are translate keys
-  NAV_MENU = [
-      {
-          title: 'baw.shared.links.home.title',
-          href: Api::UrlHelpers.root_path,
-          tooltip: 'baw.shared.links.home.description',
-          icon: 'home',
-      },
-      {
-          title: 'baw.shared.links.log_in.title',
-          href: lambda { |user| Api::UrlHelpers.new_user_session_path },
-          tooltip: 'baw.shared.links.log_in.description',
-          icon: 'sign-in',
-          predicate: lambda { |user| user.blank? },
-      },
-      {
-          title: 'baw.shared.links.profile.title',
-          href: lambda { |user| Api::UrlHelpers.my_account_path },
-          tooltip: 'baw.shared.links.profile.title',
-          icon: 'user',
-          predicate: lambda { |user| !user.blank? },
-      },
-      {
-          title: 'baw.shared.links.register.title',
-          href: Api::UrlHelpers.new_user_registration_path,
-          tooltip: 'baw.shared.links.register.description',
-          icon: 'user-plus',
-          predicate: lambda { |user| user.blank? },
-      },
-      {
-          title: 'baw.shared.links.annotations.title',
-          href: lambda { |user| Api::UrlHelpers.audio_events_user_account_path(user) },
-          tooltip: 'baw.shared.links.annotations.description',
-          icon: 'square-o',
-          predicate: lambda { |user| !user.blank? },
-      },
-      {
-          title: 'baw.shared.links.projects.title',
-          href: Api::UrlHelpers.projects_path,
-          tooltip: 'baw.shared.links.projects.description',
-          icon: 'globe',
-      },
-      {
-          title: 'baw.shared.links.audio_analysis.title',
-          href: Api::UrlHelpers.make_audio_analysis_path,
-          tooltip: 'baw.shared.links.audio_analysis.description',
-          icon: 'server',
-          ribbon: 'beta'
-      },
-      {
-          title: 'baw.shared.links.library.title',
-          href: Api::UrlHelpers.make_library_path,
-          tooltip: 'baw.shared.links.library.description',
-          icon: 'book'
-      },
-      {
-          title: 'baw.shared.links.data_request.title',
-          href: Api::UrlHelpers.data_request_path,
-          tooltip: 'baw.shared.links.data_request.description',
-          icon: 'table',
-      },
-      {
-          title: 'baw.shared.links.upload_audio.title',
-          href: Api::UrlHelpers.data_upload_path,
-          tooltip: 'baw.shared.links.upload_audio.description',
-          icon: 'envelope',
-      },
-      {
-          title: 'baw.shared.links.report_problem.title',
-          href: Api::UrlHelpers.bug_report_path,
-          tooltip: 'baw.shared.links.report_problem.description',
-          icon: 'bug',
-      },
-      {
-          title: 'baw.shared.links.website_status.title',
-          href: Api::UrlHelpers.website_status_path,
-          tooltip: 'baw.shared.links.website_status.description',
-          icon: 'line-chart',
-      }
-  ].freeze
+
 end
