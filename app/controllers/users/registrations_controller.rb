@@ -23,9 +23,13 @@ class Users::RegistrationsController < Devise::RegistrationsController
 # end
 
 # DELETE /resource
-# def destroy
-#   super
-# end
+def destroy
+  if Access::Core.is_standard_user?(resource)
+    super
+  else
+    respond_error(:unprocessable_entity, 'Cannot delete an admin or harvester account.')
+  end
+end
 
 # GET /resource/cancel
 # Forces the session data which is usually expired after sign

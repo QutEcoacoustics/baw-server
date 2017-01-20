@@ -32,6 +32,7 @@
           Not Confirmed
           = f.button :submit, 'Confirm User', class: 'btn-default'
     = render partial: 'shared/image_upload', locals: { f: f,  model_instance: @user, model_name: 'user' }
+    = f.button :submit_cancel, 'Update User', class: 'btn-default'
     %hr/
     - [:confirmed_at,:reset_password_sent_at, :remember_created_at, :sign_in_count, :last_seen_at,
     :current_sign_in_at, :last_sign_in_at, :current_sign_in_ip, :last_sign_in_ip,
@@ -58,4 +59,11 @@
             - else
               %small
                 (no value)
-    = f.button :submit_cancel, 'Update User', class: 'btn-default'
+    - if Access::Core.is_standard_user?(@user)
+      %hr/
+      %h3 Cancel user's account
+      %p
+        = link_to "Delete user's account", user_account_path(@user),
+        data: { confirm: t('devise.registrations.edit.are_you_sure'), toggle: 'tooltip',  placement: 'right' },
+        title: "WARNING: This will permanently delete this user's account",
+        method: :delete

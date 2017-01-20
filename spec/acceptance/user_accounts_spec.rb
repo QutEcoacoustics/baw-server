@@ -177,8 +177,72 @@ resource 'Users' do
   end
 
   ################################
+  # DESTROY
+  ################################
+  delete '/user_accounts/:id' do
+    id_param
+    let(:id) { admin_id }
+    let(:authentication_token) { admin_token }
+    standard_request_options(:delete, 'DESTROY (as admin, same user)', :unprocessable_entity, {
+        expected_json_path: 'meta/error/details',
+        expected_body_content: '"Cannot delete an admin or harvester account."'})
+  end
+
+  delete '/user_accounts/:id' do
+    id_param
+    let(:id) { reader_id }
+    let(:authentication_token) { admin_token }
+    standard_request_options(:delete, 'DESTROY (as admin, different user)', :no_content, {
+        expected_response_has_content: false, expected_response_content_type: nil})
+  end
+
+  delete '/user_accounts/:id' do
+    id_param
+    let(:id) { writer_id }
+    let(:authentication_token) { writer_token } # admin only, users delete using devise/registrations#destroy
+    standard_request_options(:delete, 'DESTROY (as writer, same user)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
+  end
+
+  delete '/user_accounts/:id' do
+    id_param
+    let(:id) { reader_id }
+    let(:authentication_token) { reader_token } # admin only, users delete using devise/registrations#destroy
+    standard_request_options(:delete, 'DESTROY (as reader, same user)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
+  end
+
+  delete '/user_accounts/:id' do
+    id_param
+    let(:id) { no_access_id }
+    let(:authentication_token) { writer_token }
+    standard_request_options(:delete, 'DESTROY (as writer, different user)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
+  end
+
+  delete '/user_accounts/:id' do
+    id_param
+    let(:id) { writer_id }
+    let(:authentication_token) { invalid_token }
+    standard_request_options(:delete, 'DESTROY (with invalid token)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
+  end
+
+  delete '/user_accounts/:id' do
+    id_param
+    let(:id) { writer_id }
+    standard_request_options(:delete, 'DESTROY (as anonymous user)', :unauthorized, {remove_auth: true, expected_json_path: get_json_error_path(:sign_in)})
+  end
+
+  ################################
   # MY ACCOUNT
   ################################
+
+  get '/my_account' do
+    let(:authentication_token) { admin_token }
+    standard_request_options(:get, 'MY ACCOUNT (as admin)', :ok, {expected_json_path: 'data/user_name'})
+  end
+
+  get '/my_account' do
+    let(:authentication_token) { writer_token }
+    standard_request_options(:get, 'MY ACCOUNT (as writer)', :ok, {expected_json_path: 'data/user_name'} )
+  end
 
   get '/my_account' do
     let(:authentication_token) { reader_token }
@@ -192,6 +256,39 @@ resource 'Users' do
 
   get '/my_account' do
     standard_request_options(:get, 'MY ACCOUNT (as anonymous user)', :unauthorized, {remove_auth: true, expected_json_path: get_json_error_path(:sign_up)})
+  end
+
+  delete '/my_account' do
+    let(:authentication_token) { admin_token }
+    standard_request_options(:delete, 'DESTROY (as admin)', :unprocessable_entity, {
+        expected_json_path: 'meta/error/details',
+        expected_body_content: '"Cannot delete an admin or harvester account."'})
+  end
+
+  delete '/my_account' do
+    let(:authentication_token) { harvester_token }
+    standard_request_options(:delete, 'DESTROY (as harvester)', :unprocessable_entity, {
+        expected_json_path: 'meta/error/details',
+        expected_body_content: '"Cannot delete an admin or harvester account."'})
+  end
+
+  delete '/my_account' do
+    let(:authentication_token) { writer_token }
+    standard_request_options(:delete, 'DESTROY (as writer)', :no_content, {expected_json_path: get_json_error_path(:permissions)})
+  end
+
+  delete '/my_account' do
+    let(:authentication_token) { reader_token }
+    standard_request_options(:delete, 'DESTROY (as reader)', :no_content, {expected_json_path: get_json_error_path(:permissions)})
+  end
+
+  delete '/my_account' do
+    let(:authentication_token) { invalid_token }
+    standard_request_options(:delete, 'DESTROY (with invalid token)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
+  end
+
+  delete '/my_account' do
+    standard_request_options(:delete, 'DESTROY (as anonymous user)', :unauthorized, {remove_auth: true, expected_json_path: get_json_error_path(:sign_in)})
   end
 
   ################################

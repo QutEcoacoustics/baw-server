@@ -9,8 +9,6 @@ describe "User account actions", :type => :feature do
 
   let(:last_email) { ActionMailer::Base.deliveries.last }
 
-
-
   context 'log in' do
 
     it 'should succeed when using email' do
@@ -355,8 +353,8 @@ end
 
 describe 'MANAGE User Accounts as admin user', :type => :feature do
   before(:each) do
-    admin = FactoryGirl.create(:admin)
-    login_as admin, scope: :user
+    @admin = FactoryGirl.create(:admin)
+    login_as @admin, scope: :user
   end
 
   it 'lists all users' do
@@ -382,10 +380,24 @@ describe 'MANAGE User Accounts as admin user', :type => :feature do
     expect(page).to have_content('test name')
   end
 
-  it 'cannot delete account' do
-    FactoryGirl.create(:user)
-    visit user_accounts_path
+  it 'cannot delete account from my account page' do
+    visit edit_user_registration_path
     expect(page).not_to have_content('Cancel my account')
+  end
+
+  it 'cannot delete account from user accounts edit page' do
+    visit user_account_path(@admin)
+    expect(page).not_to have_content('Cancel my account')
+  end
+
+  it 'can delete other non-admin user account' do
+    user = FactoryGirl.create(:user)
+    visit edit_user_account_path(user)
+    click_link "Delete user's account"
+    expect(page).to have_content('User was successfully deleted.')
+    expect{
+      User.find(user.id)
+    }.to raise_error(ActiveRecord::RecordNotFound, "Couldn't find User with 'id'=#{user.id}")
   end
 
   it 'provides link to Projects Sites Bookmarks Annotations Comments' do
@@ -481,7 +493,7 @@ describe 'MANAGE User Accounts as user', :type => :feature do
     end
   end
 
-  it 'denies access to user projects page' do
+  it 'denies access to other user projects page' do
     user = FactoryGirl.create(:user)
     visit projects_user_account_path(user)
     expect(page).to have_content(I18n.t('devise.failure.unauthorized'))

@@ -85,6 +85,22 @@ ELSE last_sign_in_at END DESC'
     end
   end
 
+  # DELETE /user_accounts/:id
+  def destroy
+    do_load_resource
+    do_authorize_instance
+
+    if Access::Core.is_standard_user?(@user)
+      @user.destroy
+      respond_to do |format|
+        format.html { redirect_to user_accounts_path, notice: 'User was successfully deleted.' }
+        format.json { respond_destroy }
+      end
+    else
+      respond_error(:unprocessable_entity, 'Cannot delete an admin or harvester account.')
+    end
+  end
+
   # PUT /my_account/prefs
   def modify_preferences
     @user = current_user

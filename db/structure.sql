@@ -2,8 +2,8 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 9.3.12
--- Dumped by pg_dump version 9.5.2
+-- Dumped from database version 9.5.5
+-- Dumped by pg_dump version 9.5.5
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -11,6 +11,7 @@ SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SET check_function_bodies = false;
 SET client_min_messages = warning;
+SET row_security = off;
 
 --
 -- Name: plpgsql; Type: EXTENSION; Schema: -; Owner: -
@@ -332,7 +333,7 @@ CREATE TABLE permissions (
     updated_at timestamp without time zone,
     allow_logged_in boolean DEFAULT false NOT NULL,
     allow_anonymous boolean DEFAULT false NOT NULL,
-    CONSTRAINT permissions_exclusive_cols CHECK ((((((user_id IS NOT NULL) AND (NOT allow_logged_in)) AND (NOT allow_anonymous)) OR (((user_id IS NULL) AND allow_logged_in) AND (NOT allow_anonymous))) OR (((user_id IS NULL) AND (NOT allow_logged_in)) AND allow_anonymous)))
+    CONSTRAINT permissions_exclusive_cols CHECK ((((user_id IS NOT NULL) AND (NOT allow_logged_in) AND (NOT allow_anonymous)) OR ((user_id IS NULL) AND allow_logged_in AND (NOT allow_anonymous)) OR ((user_id IS NULL) AND (NOT allow_logged_in) AND allow_anonymous)))
 );
 
 
@@ -1792,7 +1793,7 @@ ALTER TABLE ONLY tags
 -- PostgreSQL database dump complete
 --
 
-SET search_path TO "$user",public;
+SET search_path TO "$user", public;
 
 INSERT INTO schema_migrations (version) VALUES ('20130715022212');
 

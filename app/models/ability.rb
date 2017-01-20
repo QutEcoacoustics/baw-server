@@ -502,7 +502,7 @@ class Ability
     can [:projects, :sites, :bookmarks, :audio_events, :audio_event_comments], User, id: user.id
 
     # users get their own account and preferences from these actions
-    can [:my_account, :modify_preferences], User, id: user.id
+    can [:my_account, :modify_preferences, :destroy], User, id: user.id
 
     # only logged in users can view a user's profile (read-only)
     can [:show, :filter], User unless is_guest

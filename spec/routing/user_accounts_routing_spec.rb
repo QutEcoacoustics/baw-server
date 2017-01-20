@@ -10,7 +10,7 @@ describe UserAccountsController, :type => :routing do
     it { expect(get('/user_accounts/1')).to route_to('user_accounts#show', id: '1') }
     it { expect(put('/user_accounts/1')).to route_to('user_accounts#update', id: '1') }
     it { expect(patch('/user_accounts/1')).to route_to('user_accounts#update', id: '1') }
-    it { expect(delete('/user_accounts/1')).to route_to('errors#route_error', requested_route: 'user_accounts/1') }
+    it { expect(delete('/user_accounts/1')).to route_to('user_accounts#destroy', id: '1') }
 
     it { expect(get('/user_accounts/1/projects')).to route_to('user_accounts#projects', id: '1') }
     it { expect(get('/user_accounts/1/sites')).to route_to('user_accounts#sites', id: '1') }

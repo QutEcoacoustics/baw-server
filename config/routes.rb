@@ -102,7 +102,7 @@ Rails.application.routes.draw do
   match 'user_accounts/filter' => 'user_accounts#filter', via: [:get, :post], defaults: {format: 'json'}
 
   # user list and user profile
-  resources :user_accounts, only: [:index, :show, :edit, :update], constraints: {id: /[0-9]+/} do
+  resources :user_accounts, only: [:index, :show, :edit, :update, :destroy], constraints: {id: /[0-9]+/} do
     member do
       get 'projects'
       get 'sites'
