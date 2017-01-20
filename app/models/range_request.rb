@@ -413,7 +413,10 @@ class RangeRequest
       end_range = info[:range_end_bytes_max] if end_range > info[:range_end_bytes_max]
       # e.g. bytes=0-499, max_range_size=500 => 499 - 0 + 1 = 500 > 500
       if (end_range - start_range + CONVERT_INDEX_TO_LENGTH) > @max_range_size
-        raise StandardError.new("Range request maximum exceeded")
+        fail CustomErrors::BadRequestError, 'The requested range exceeded the maximum allowed.'
+      end
+      if start_range > end_range
+        fail CustomErrors::BadRequestError, 'The requested range specified a first byte that was greater than the last byte.'
       end
 
       return_value[:range_start_bytes].push(start_range)

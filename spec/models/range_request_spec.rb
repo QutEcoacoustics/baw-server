@@ -155,15 +155,15 @@ describe RangeRequest, :type => :model do
 
   context 'special open end range case' do
     # this test case comes from a real-world production bug: https://github.com/QutBioacoustics/baw-server/issues/318
-    # the second part of a large range request triggers a negative content length and negative gradient in the content
-    # range header.
+    # the second part of a large range request triggers a negative content length and the last part of the content
+    # range header to be less than the first part.
 
 
     # before bug fix:
     # file_size:                                  822281
     # request:                      "Range: bytes 512001-"
     # info[:range_start]:                         512001
-    # info[:range_end]:                           310279       <-- problem, negative range!
+    # info[:range_end]:                           310279       <-- problem, end less than start!
     # info[:response_headers]['Content-Length']: -201721       <-- problem, negative range!
     it 'should succeed with: [single range] special test case, open range greater than max range size' do
       mock_request.headers[RangeRequest::HTTP_HEADER_RANGE] = 'bytes=512001-'
