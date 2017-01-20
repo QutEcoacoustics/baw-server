@@ -13,6 +13,14 @@ describe RangeRequest, :type => :model do
     Digest::SHA256.hexdigest etag_string
  }
 
+  let(:audio_file_mono_long) { File.expand_path(File.join(File.dirname(__FILE__), '..', 'media_tools', 'test-audio-mono-long.ogg')) }
+  let(:audio_file_mono_media_type_long) { Mime::Type.lookup('audio/ogg') }
+  let(:audio_file_mono_size_bytes_long) { 1317526 }
+  let(:audio_file_mono_modified_time_long) { File.mtime(audio_file_mono_long) }
+  let(:audio_file_mono_etag_long) {
+    etag_string = audio_file_mono_long.to_s + '|' + audio_file_mono_modified_time_long.getutc.to_s + '|' + audio_file_mono_size_bytes_long.to_s
+    Digest::SHA256.hexdigest etag_string
+  }
 
   let(:range_options) {
     {
@@ -24,6 +32,19 @@ describe RangeRequest, :type => :model do
         ext: audio_file_mono_media_type.to_sym.to_s,
         file_path: audio_file_mono,
         media_type: audio_file_mono_media_type.to_s
+    }
+  }
+
+  let(:range_options_long) {
+    {
+        start_offset: 11,
+        end_offset: 151,
+        recorded_date: Time.zone.now,
+        site_name: 'site_name',
+        site_id: 42,
+        ext: audio_file_mono_media_type_long.to_sym.to_s,
+        file_path: audio_file_mono_long,
+        media_type: audio_file_mono_media_type_long.to_s
     }
   }
 
@@ -116,23 +137,105 @@ describe RangeRequest, :type => :model do
     expect(info[:is_multipart]).to be_truthy
 
     expect(info[:range_start_bytes][0]).to eq(0)
-    expect(info[:range_end_bytes][0]).to eq(range_request.max_range_size)
+    expect(info[:range_end_bytes][0]).to eq(range_request.max_range_size - 1)
 
     expect(info[:range_start_bytes][1]).to eq(0)
-    expect(info[:range_end_bytes][1]).to eq(range_request.max_range_size)
+    expect(info[:range_end_bytes][1]).to eq(range_request.max_range_size - 1)
 
     # last 654321 bytes (or last max_range_size, which ever is smaller)
-    expect(info[:range_start_bytes][2]).to eq(audio_file_mono_size_bytes - 500 - 1)
+    expect(info[:range_start_bytes][2]).to eq(audio_file_mono_size_bytes - 500)
     expect(info[:range_end_bytes][2]).to eq(audio_file_mono_size_bytes - 1)
 
     expect(info[:range_start_bytes][3]).to eq(0)
     expect(info[:range_end_bytes][3]).to eq(10)
 
     expect(info[:range_start_bytes][4]).to eq(50)
-    expect(info[:range_end_bytes][4]).to eq(range_request.max_range_size + 50)
+    expect(info[:range_end_bytes][4]).to eq(range_request.max_range_size + 50 - 1)
+  end
 
-    expect(info[:range_start_bytes][1]).to eq(0)
-    expect(info[:range_end_bytes][1]).to eq(range_request.max_range_size)
+  context 'special open end range case' do
+    # this test case comes from a real-world production bug: https://github.com/QutBioacoustics/baw-server/issues/318
+    # the second part of a large range request triggers a negative content length and negative gradient in the content
+    # range header.
+
+
+    # before bug fix:
+    # file_size:                                  822281
+    # request:                      "Range: bytes 512001-"
+    # info[:range_start]:                         512001
+    # info[:range_end]:                           310279       <-- problem, negative range!
+    # info[:response_headers]['Content-Length']: -201721       <-- problem, negative range!
+    it 'should succeed with: [single range] special test case, open range greater than max range size' do
+      mock_request.headers[RangeRequest::HTTP_HEADER_RANGE] = 'bytes=512001-'
+      info = range_request.build_response(range_options, mock_request)
+      expect(info[:response_code]).to eq(RangeRequest::HTTP_CODE_PARTIAL_CONTENT)
+      expect(info[:response_is_range]).to be_truthy
+      expect(info[:is_multipart]).to be_falsey
+
+      expect(info[:range_start_bytes][0]).to eq(512001)
+      expect(info[:range_end_bytes][0]).to eq(audio_file_mono_size_bytes - 1)
+
+      expect(info[:response_headers]['Content-Length']).to eq(310280.to_s)
+    end
+
+
+    it 'should succeed with: [single range] special test case, open range greater than max range size, larger file' do
+      mock_request.headers[RangeRequest::HTTP_HEADER_RANGE] = 'bytes=512001-'
+
+      # ensure xxx- range still honors max_range_size
+      # using the LONG file here!
+      info = range_request.build_response(range_options_long, mock_request)
+      expect(info[:response_code]).to eq(RangeRequest::HTTP_CODE_PARTIAL_CONTENT)
+      expect(info[:response_is_range]).to be_truthy
+      expect(info[:is_multipart]).to be_falsey
+
+      expect(info[:range_start_bytes][0]).to eq(512001)
+      # > "abcdefghij"[3..(3+5-1)]
+      # => "defgh"
+      expect(info[:range_end_bytes][0]).to eq(512001 + range_request.max_range_size - 1)
+
+      expect(info[:response_headers]['Content-Length']).to eq(range_request.max_range_size.to_s)
+    end
+
+    it 'should succeed with: [single range] special test case, last bytes greater than max range offset' do
+      mock_request.headers[RangeRequest::HTTP_HEADER_RANGE] = 'bytes=-500'
+      info = range_request.build_response(range_options, mock_request)
+      expect(info[:response_code]).to eq(RangeRequest::HTTP_CODE_PARTIAL_CONTENT)
+      expect(info[:response_is_range]).to be_truthy
+      expect(info[:is_multipart]).to be_falsey
+
+      expect(info[:range_start_bytes][0]).to eq(audio_file_mono_size_bytes - 500) # 821781
+      expect(info[:range_end_bytes][0]).to eq(audio_file_mono_size_bytes - 1)
+
+      expect(info[:response_headers]['Content-Length']).to eq(500.to_s)
+    end
+
+    it 'should succeed with: [single range] special test case, last bytes range greater than max range size' do
+      mock_request.headers[RangeRequest::HTTP_HEADER_RANGE] = 'bytes=-800000'
+      info = range_request.build_response(range_options, mock_request)
+      expect(info[:response_code]).to eq(RangeRequest::HTTP_CODE_PARTIAL_CONTENT)
+      expect(info[:response_is_range]).to be_truthy
+      expect(info[:is_multipart]).to be_falsey
+
+      expect(info[:range_start_bytes][0]).to eq(audio_file_mono_size_bytes - range_request.max_range_size)
+      expect(info[:range_end_bytes][0]).to eq(audio_file_mono_size_bytes - 1)
+
+      expect(info[:response_headers]['Content-Length']).to eq(range_request.max_range_size.to_s)
+    end
+
+    it 'should succeed with: [single range] special test case, entire file' do
+      mock_request.headers[RangeRequest::HTTP_HEADER_RANGE] = 'bytes=0-822280'
+      range_request = RangeRequest.new(1000000)
+      info = range_request.build_response(range_options, mock_request)
+      expect(info[:response_code]).to eq(RangeRequest::HTTP_CODE_PARTIAL_CONTENT)
+      expect(info[:response_is_range]).to be_truthy
+      expect(info[:is_multipart]).to be_falsey
+
+      expect(info[:range_start_bytes][0]).to eq(0)
+      expect(info[:range_end_bytes][0]).to eq(audio_file_mono_size_bytes - 1)
+
+      expect(info[:response_headers]['Content-Length']).to eq(audio_file_mono_size_bytes.to_s)
+    end
   end
 
   it 'should succeed with if-modified-since earlier than file modified time' do

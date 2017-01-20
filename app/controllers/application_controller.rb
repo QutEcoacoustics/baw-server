@@ -67,6 +67,9 @@ class ApplicationController < ActionController::Base
                     (session[:last_seen_at].blank? || Time.zone.at(session[:last_seen_at].to_i) < 10.minutes.ago)
                 }
 
+  # We've had headers misbehave. Validating them here means we can email someone about the problem!
+  after_action :validate_headers
+
   # A dummy method to get rid of all the Rubymine errors.
   # @return [User]
   def current_user
@@ -563,6 +566,15 @@ class ApplicationController < ActionController::Base
     is_admin_controller = respond_to?(:admin_controller?) && admin_controller?
 
     !is_devise_controller && !is_admin_controller
+  end
+
+  def validate_headers
+    if response.headers.has_key?('Content-Length') && response.headers['Content-Length'].to_i < 0
+      raise CustomErrors::BadHeaderError
+    end
+    if response.headers.has_key?(:content_length) && response.headers[:content_length].to_i < 0
+      raise CustomErrors::BadHeaderError
+    end
   end
 
 end

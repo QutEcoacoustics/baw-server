@@ -29,6 +29,7 @@ class RangeRequest
     MULTIPART_HEADER_LENGTH = 49
     MULTIPART_DASH_LINE_BREAK_LENGTH = 8
     CONVERT_INDEX_TO_LENGTH = 1
+    CONVERT_LENGTH_TO_INDEX = -1
     REQUIRED_PARAMETERS = [:start_offset, :end_offset, :recorded_date, :site_id, :site_name, :ext, :file_path, :media_type]
 
 
@@ -303,7 +304,7 @@ class RangeRequest
         range_end_bytes: [],
 
         # the largest possible value for range_end_bytes
-        range_end_bytes_max: file_size - CONVERT_INDEX_TO_LENGTH,
+        range_end_bytes_max: file_size + CONVERT_LENGTH_TO_INDEX,
 
         range_length_max: @max_range_size,
         write_buffer_size: @write_buffer_size,
@@ -359,6 +360,15 @@ class RangeRequest
     #
     # Can also have multiple ranges delimited by commas, as in:
     #      Range: bytes=0-500,600-1000 * Get bytes 0-500 (the first 501 bytes), inclusive plus bytes 600-1000 (401 bytes) inclusive
+    #
+    # https://tools.ietf.org/html/rfc7233#page-4
+    # Byte offsets (start and end) should be inclusive
+    # Byte offsets start at 0
+    # e.g.
+    # The first 500 bytes (byte offsets 0-499, inclusive):
+    #    bytes=0-499
+    # The second 500 bytes (byte offsets 500-999, inclusive):
+    #   bytes=500-999
 
     return_value[:range_start_bytes] = []
     return_value[:range_end_bytes] = []
@@ -368,31 +378,43 @@ class RangeRequest
       start_range = current_range[start_index]
       end_range = current_range[end_index]
 
+      # e.g. "-", ""
+      # NB: these technically aren't legal forms (as far as I can tell)
       if start_range.blank? && end_range.blank?
         # default to 0 - @max_range_size (or whatever is available) of file
         start_range = info[:range_start_bytes_min]
-        end_range = [@max_range_size, info[:range_end_bytes_max]].min
+        end_range = [@max_range_size + CONVERT_LENGTH_TO_INDEX, info[:range_end_bytes_max]].min
 
+      # e.g. "0-1", "0-500", "400-1000"
       elsif !start_range.blank? && !end_range.blank?
         # both supplied
         start_range = start_range.to_i
         end_range = end_range.to_i
 
+      # e.g. "500-", "0-"
       elsif !start_range.blank? && end_range.blank?
         # given a start but no end, get the smallest of remaining length and @max_range_size
         start_range = start_range.to_i
-        end_range = info[:range_end_bytes_max] - start_range.to_i
+        end_range = [start_range + @max_range_size + CONVERT_LENGTH_TO_INDEX, info[:range_end_bytes_max]].min
 
+      # https://tools.ietf.org/html/rfc7233#page-5
+      # assuming a representation of length 10000:
+      # The final 500 bytes (byte offsets 9500-9999, inclusive):
+      #   bytes=-500
+      # e.g. "-200"
       elsif start_range.blank? && !end_range.blank?
         # No beginning specified, get last n bytes of file
-        start_range = info[:range_end_bytes_max] - [end_range.to_i, @max_range_size].min
+        start_range = info[:range_end_bytes_max] + CONVERT_INDEX_TO_LENGTH - [end_range.to_i, @max_range_size].min
         end_range = info[:range_end_bytes_max]
 
       end
 
       start_range = info[:range_start_bytes_min] if start_range < info[:range_start_bytes_min]
       end_range = info[:range_end_bytes_max] if end_range > info[:range_end_bytes_max]
-      end_range = start_range + @max_range_size if (end_range - start_range) > @max_range_size
+      # e.g. bytes=0-499, max_range_size=500 => 499 - 0 + 1 = 500 > 500
+      if (end_range - start_range + CONVERT_INDEX_TO_LENGTH) > @max_range_size
+        raise StandardError.new("Range request maximum exceeded")
+      end
 
       return_value[:range_start_bytes].push(start_range)
       return_value[:range_end_bytes].push(end_range)
