@@ -112,7 +112,7 @@ describe 'checking reactions to errors', :type => :feature do
     it 'displays the correct page on unauthorized error' do
       visit '/test_exceptions?exception_class=CanCan::AccessDenied'
       expect(current_path).to eq('/test_exceptions')
-      expect(page).to have_content('You need to sign in or sign up before continuing')
+      expect(page).to have_content('You need to log in or register before continuing')
       expect(page).to have_content('Unauthorized')
       expect(page).not_to have_content('::')
       expect(page.status_code).to eq(401)

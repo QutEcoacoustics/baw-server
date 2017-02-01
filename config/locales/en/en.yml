@@ -156,7 +156,9 @@ en:
       destroy: "Delete"
       new: "New"
     titles:
-      edit: "Edit "
+      edit:
+        one: "Edit this"
+        other: Edit
       save: "Save"
       new: "New"
       destroy: "Delete this"

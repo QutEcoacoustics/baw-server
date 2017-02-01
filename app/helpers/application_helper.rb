@@ -13,8 +13,10 @@ module ApplicationHelper
   end
 
   def format_sidebar_datetime(value, options = {})
+    return "" if value.nil?
+
     options.reverse_merge!({ago: true})
-    time_distance = distance_of_time_in_words(Time.zone.now, value, nil, {vague: true})
+    time_distance = distance_of_time_in_words(Time.zone.now, value, {vague: true})
     time_distance = time_distance + ' ago' if options[:ago]
     time_distance
   end
@@ -43,9 +45,11 @@ module ApplicationHelper
   end
 
   def edit_link(href, model_name, icon = 'pencil')
+    model_text = t('baw.shared.links.' + model_name + '.title').downcase
+    words = model_text.split.size == 1 && model_text.singularize == model_text ? 1 : 2
     render partial: 'shared/nav_item', locals: {
         href: href,
-        title: t('helpers.titles.edit') + ' ' + t('baw.shared.links.' + model_name + '.title').downcase,
+        title: t('helpers.titles.edit', count: words) + ' ' + model_text,
         tooltip: t('helpers.tooltips.edit', model: model_name),
         icon: icon
     }

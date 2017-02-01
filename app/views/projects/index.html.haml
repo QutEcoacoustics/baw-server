@@ -1,8 +1,8 @@
 - content_for :title, t('baw.shared.links.projects.title')
 - @info_bar = {title: t('baw.shared.links.project.title'),  icon: 'globe'}
+- is_logged_in = !Access::Core.is_guest?(current_user)
 
 - content_for :page_actions do
-  - is_logged_in = !Access::Core.is_guest?(current_user)
   - if is_logged_in
     = new_link(new_project_path, 'project')
     = render partial: 'shared/nav_item', locals: {href: new_access_request_projects_path,
@@ -27,6 +27,13 @@
     You do not have access to any projects. Try
     = link_to 'requesting access', new_access_request_projects_path
     to a project.
+  - if !is_logged_in
+    %p
+      Also, you don't seem to be logged in to the website.
+      Most projects require a user to be logged in before they are shown.
+    %p
+      You can log in here:
+      %a{href: new_user_session_path}= t('devise.sessions.new.sign_in')
 
 
 

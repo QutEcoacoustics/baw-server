@@ -73,8 +73,8 @@ describe 'CRUD Projects as valid user and project creator', :type => :feature do
     visit project_path(project)
     expect(page).to have_content(project.name)
     expect(page).to have_link('Edit')
-    expect(page).to have_link('Edit Permissions')
-    expect(page).to have_link('Delete Project')
+    expect(page).to have_link('Edit permissions')
+    expect(page).to have_button('Delete this project')
   end
 
   it 'creates new project when filling out form correctly' do
@@ -192,8 +192,8 @@ describe 'Delete Projects as admin user', :type => :feature do
 
   it 'deletes a project' do
     visit project_path(project)
-    expect(page).to have_link('Delete Project')
-    expect { first(:link, 'Delete').click }.to change(Project, :count).by(-1)
+    expect(page).to have_button('Delete this project')
+    expect { first(:button, 'Delete').click }.to change(Project, :count).by(-1)
   end
 end
 
@@ -317,11 +317,11 @@ describe 'Project', type: :feature do
       it 'shows project details' do
         visit project_path(project)
         expect(page).to have_content(project.name)
-        expect(page).to have_link('Edit Project')
-        expect(page).to have_link('Add New Site')
-        expect(page).to have_link('Edit Permissions')
-        expect(page).to have_link('Edit Sites')
-        expect(page).to have_link('Delete Project')
+        expect(page).to have_link('Edit this project')
+        expect(page).to have_link('New site')
+        expect(page).to have_link('Edit permissions')
+        expect(page).to have_link('Assign sites')
+        expect(page).to have_button('Delete this project')
       end
 
       it 'creates new project when filling out form correctly' do
@@ -345,8 +345,8 @@ describe 'Project', type: :feature do
 
       it 'deletes a project' do
         visit project_path(project)
-        expect(page).to have_link('Delete Project')
-        expect { first(:link, 'Delete').click }.to change(Project, :count).by(-1)
+        expect(page).to have_button('Delete this project')
+        expect { first(:button, 'Delete').click }.to change(Project, :count).by(-1)
       end
     end
 
@@ -365,11 +365,11 @@ describe 'Project', type: :feature do
       it 'shows project details' do
         visit project_path(project)
         expect(page).to have_content(project.name)
-        expect(page).to have_link('Edit Project')
-        expect(page).not_to have_link('Add New Site')
-        expect(page).to have_link('Edit Permissions')
-        expect(page).not_to have_link('Edit Sites')
-        expect(page).to have_link('Delete Project')
+        expect(page).to have_link('Edit this project')
+        expect(page).not_to have_link('New site')
+        expect(page).to have_link('Edit permissions')
+        expect(page).not_to have_link('Assign sites')
+        expect(page).to have_button('Delete this project')
       end
 
       it 'creates new project when filling out form correctly' do
@@ -393,8 +393,8 @@ describe 'Project', type: :feature do
 
       it 'deletes a project' do
         visit project_path(project)
-        expect(page).to have_link('Delete Project')
-        expect { first(:link, 'Delete').click }.to change(Project, :count).by(-1)
+        expect(page).to have_button('Delete this project')
+        expect { first(:button, 'Delete').click }.to change(Project, :count).by(-1)
       end
     end
 
