@@ -66,6 +66,9 @@ gem 'recaptcha', '~> 3.3.0',  require: 'recaptcha/rails'
 gem 'tzinfo', '~> 1.2.2'
 gem 'tzinfo-data', '~> 1.2016'
 
+# for tying inflections into I18n
+gem 'i18n-inflector-rails', '~>1.0'
+
 # USERS & PERMISSIONS
 # -------------------------------------
 # https://github.com/plataformatec/devise/blob/master/CHANGELOG.md

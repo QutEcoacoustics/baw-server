@@ -156,10 +156,12 @@ en:
       destroy: "Delete"
       new: "New"
     titles:
-      edit: "Edit this"
+      edit: "Edit "
       save: "Save"
       new: "New"
       destroy: "Delete this"
+      editing: "Editing"
+
     tooltips:
       edit: Change the details for this %{model}
       save: Save changes to this %{model}

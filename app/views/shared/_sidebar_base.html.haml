@@ -23,11 +23,6 @@
     %hr
   - else
     = render partial: 'shared/nav_item', locals: item
-    - if item[:controller] && controller.instance_of?(item[:controller])
-      - if action == :new
-        = new_link( request.original_fullpath)
-      - else if action == :edit
-        = edit_link(request.original_fullpath, 'site')
 
 -# Old style escape (just in case I missed anything)
 - if content_for?(:left_sidebar)

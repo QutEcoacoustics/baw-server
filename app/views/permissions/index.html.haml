@@ -3,11 +3,10 @@
   %em
     = @project.name
   Permissions
-
-= render partial: 'shared/sidebar_project', locals: {project: @project}
+- @info_bar = {title: t('baw.shared.links.permissions.title'), icon: 'key'}
+- menu_edit_link(:project, project_permissions_path(@project), 'permissions')
 
 - content_for :right_sidebar do
-  = render partial: 'shared/sidebar_metadata_heading', locals: {title: 'Permissions', icon: 'key'}
   = render partial: 'shared/sidebar_metadata', locals: {title: 'Creator', text: link_to(@project.creator.user_name, user_account_path(@project.creator))}
 
 - anon_level = Access::Core.highest(Access::Core.anon_levels(@project))

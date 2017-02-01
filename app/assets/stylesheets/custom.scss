@@ -19,15 +19,30 @@ body {
  */
 
 .left-nav-bar, .right-nav-bar {
+  // /font-awesome-sass-4.6.2/assets/stylesheets/font-awesome/_fixed-width.scss
+  $fa-fixed-width: (18em / 14);
+
   ul.nav-pills > li {
     & > a, & > button, & > form > button {
-      padding: 5px 5px;
+      padding: 5px (1em/4); // approximately 1 standard space's width
       text-align: left;
+
+      // flex styles are for multi line text
+      display: flex;
+      align-items: baseline;
     }
   }
 
+
+
   a .fa, a > .glyphicon {
     color: $text-color;
+
+    // flex styles are for multi line text
+    flex-basis: $fa-fixed-width;
+    &::after{
+      content: "\00a0"
+    }
   }
 }
 
@@ -50,11 +65,11 @@ body {
   &:before {
     content: $fa-var-square-o;
     position: relative;
-    margin-left: 0.25em;
+    margin-left: 0.1em;
   }
 
   &:after {
-    content: $fa-var-th-large;
+    content: $fa-var-th-large + "\00a0" !important;
     font-size: (2/3) * 100%;
     position: relative;
     top: -2px;

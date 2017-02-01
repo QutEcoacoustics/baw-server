@@ -8,4 +8,5 @@
 %li{class: ['indentation-' + (indentation).to_s, ('active' if current_page?(href))]}
   = link_to href, title: tooltip, data: {toggle: 'tooltip'} do
     %i.fa.fa-fw{ class:  icon }
-    = title
+    %span<
+      = title

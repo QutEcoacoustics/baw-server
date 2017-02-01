@@ -1,12 +1,10 @@
 - content_for :meta_title, t('devise.shared.links.confirm_account')
 - content_for :page_title, t('devise.confirmations.new.resend_confirmation_instructions')
+- @info_bar = {title: t('baw.shared.links.accounts.title'),  icon: 'user'}
+- set_current_menu_item(:login, {href: new_confirmation_path(resource_name),
+  title: t('devise.shared.links.confirm_account'),
+  icon: 'envelope' })
 
-= render partial: 'shared/sidebar_devise',
-locals: { devise_mapping_o: devise_mapping,
-resource_class_o: resource_class,
-resource_name_o: resource_name,
-user_show: resource,
-user_current: current_user}
 
 = simple_form_for(resource, as: resource_name, url: confirmation_path(resource_name), html: { class: 'form-horizontal' }) do |f|
   = field_set_tag do

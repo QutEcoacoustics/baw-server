@@ -47,9 +47,8 @@
             - msg_text_link = link_to(t('devise.confirmations.new.resend_confirmation_instructions'), new_user_confirmation_path, class: 'alert-link')
             = render partial: 'shared/alert_dismissible', locals: { msg_type: :alert, msg_text: "#{t('devise.failure.unconfirmed')} #{msg_text_link}".html_safe }
 
-          %h1=titles(:page_title)
-
           .row
+            %h1=titles(:page_title)
             = content_for?(:content) ? content_for(:content) : yield
 
         .col-md-2.right-nav-bar

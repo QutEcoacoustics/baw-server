@@ -1,6 +1,5 @@
 - content_for :title, t('baw.shared.links.upload_audio.title')
-
-= render partial: 'shared/sidebar_public', locals: {user_show: @user, user_current: current_user}
+- @info_bar = {title: t('baw.shared.links.home.title'),  icon: 'home'}
 
 - if File.exists? "#{Rails.root}/app/views/public/_data_upload.html.haml"
   = render partial: 'public/data_upload'

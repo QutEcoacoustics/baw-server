@@ -24,28 +24,51 @@ en:
         project:
           title: Project
           description: The current project
+        permissions:
+          title: Permissions
+          description: Edit this project's access permissions
+        project_request_access:
+          title: Request access
+          description: Request access to a project not listed here
+          long_title: Request project access
         site:
           title: Site
           description: The current site
+        site_mapping:
+          title: Assign sites
+          description: Change which sites belong to this project
         harvest:
           short_title: Harvesting
-          title: Harvest instructions
+          title: How to harvest
           description: Upload new audio to this site
         audio_analysis:
           title: Audio Analysis
           description: View audio analysis jobs
         listen:
           title: Listen
+          long_title: Listen to audio
           description: Listen (and annotate) from your last playback position
         visualize:
-          title: Data visualisation
-          description: Visually show this audio data
+          title: Explore audio
+          description: Visually show the layout of the audio data
         library:
           title: Library
           description: Annotation library
         profile:
-          title: My Profile
-          description: View my profile
+          title: "@{my:My|their:Their|My} Profile"
+          description: "View @{my:My|their:Their} profile"
+        profile_projects:
+          title: "@{my:My|their:Their} Projects"
+          description: "Projects %{user_name} can access"
+        profile_sites:
+          title: "@{my:My|their:Their} Sites"
+          description: "Sites %{user_name} can access"
+        profile_bookmarks:
+          title: "@{my:My|their:Their} Bookmarks"
+          description: "Bookmarks created by %{user_name}"
+        profile_audio_events:
+          title: "@{my:My|their:Their} Annotations"
+          description: "Annotations created by %{user_name}"
         admin_area:
           title: Administration
           description: Administrator interface
@@ -74,7 +97,7 @@ en:
           title: My Annotations
           description: View my recent annotations
         annotations_download:
-          title: Annotations (CSV)
+          title: Download annotations
           description: Download annotations for this site
         report_problem:
           title: Report Problem
@@ -85,6 +108,10 @@ en:
         upload_audio:
           title: Send Audio
           description: Send us audio recordings to upload
+        accounts:
+          title: Accounts
+        account:
+          title: Account
         register:
           title: Register
           description: "Create an account"

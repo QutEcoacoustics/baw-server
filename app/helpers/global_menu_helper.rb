@@ -6,6 +6,41 @@ module GlobalMenuHelper
   EDIT_PATH = 'edit'
   NEW_PATH = 'new'
 
+  def extra_items
+    @extra_items ||= {}
+  end
+
+  def set_current_menu_item(key, menu_item)
+    extra_items[key] = menu_item
+  end
+
+  def menu_new_link(key, href, model_name = nil)
+
+    set_current_menu_item(key, {
+        href: href,
+        title: t('helpers.titles.new') + ' ' + t('baw.shared.links.' + model_name + '.title').downcase,
+        icon: 'plus'
+    })
+  end
+
+  def menu_edit_link(key, href, model_name = nil)
+    editing_what = model_name.blank? ? '' : ' ' + t('baw.shared.links.' + model_name + '.title').downcase
+    set_current_menu_item(key, {
+        href: href,
+        title: t('helpers.titles.editing') + editing_what,
+        icon: 'pencil'
+    })
+  end
+
+  def menu_default_link(title, icon = nil)
+    set_current_menu_item(title.to_sym, {
+        href: request.original_fullpath,
+        title: t('baw.shared.links.' + title + '.title'),
+        tooltip: t('baw.shared.links.' + title + '.description'),
+        icon: icon
+    })
+  end
+
   def menu_definition
     current_user = controller.current_user
 
@@ -23,36 +58,31 @@ module GlobalMenuHelper
     # finally transform any dynamic hrefs
     items = items.map { |menu_item|
       next menu_item if menu_item.nil?
-      next menu_item unless menu_item[:href].respond_to?(:call)
 
-      # clone hash so we don't overwrite values
-      new_item = menu_item.dup
-      new_item[:href] = instance_exec(current_user, &menu_item[:href])
+      new_item = menu_item
+      if menu_item[:href].respond_to?(:call)
+        # clone hash so we don't overwrite values
+        new_item = menu_item.dup
+        new_item[:href] = instance_exec(current_user, &menu_item[:href])
+      end
+
+      # insert any other items
+      if extra_items.has_key?(new_item[:id])
+        extra = extra_items.delete(new_item[:id])
+        extra[:indentation] = (new_item[:indentation] || 0) + 1
+        next [new_item, extra]
+      end
+
       next new_item
-    }
+    }.flatten
+
+    # lastly append any extra items
+    items = items.concat(extra_items.values)
 
     items
   end
 
-  def insert_new_or_edit(item)
-    if current_page?(item[:href], action: :new)
-      return [item, {
-          href: request.original_fullpath,
-          title: t('helpers.titles.new'),
-          icon: 'plus'
-      }]
-    end
 
-    if current_page?(item[:href], action: :edit)
-      return [item, {
-          href: href,
-          title: t('helpers.titles.edit'),
-          icon: 'pencil'
-      }]
-    end
-
-    item
-  end
 
   # title and tooltip are translate keys
   # :controller is used to make new and edit links work automatically
@@ -64,6 +94,7 @@ module GlobalMenuHelper
           icon: 'home',
       },
       {
+          id: :login,
           title: I18n.t('baw.shared.links.log_in.title'),
           href: -> _ { Api::UrlHelpers.new_user_session_path },
           tooltip: I18n.t('baw.shared.links.log_in.description'),
@@ -71,9 +102,10 @@ module GlobalMenuHelper
           predicate: -> user { user.blank? },
       },
       {
+          id: :my_profile,
           title: I18n.t('baw.shared.links.profile.title'),
           href: -> _ { Api::UrlHelpers.my_account_path },
-          tooltip: I18n.t('baw.shared.links.profile.title'),
+          tooltip: I18n.t('baw.shared.links.profile.description'),
           icon: 'user',
           predicate: -> user { !user.blank? },
       },
@@ -92,19 +124,20 @@ module GlobalMenuHelper
           predicate: -> user { !user.blank? },
       },
       {
+          id: :projects,
           title: I18n.t('baw.shared.links.projects.title'),
           href: Api::UrlHelpers.projects_path,
           tooltip: I18n.t('baw.shared.links.projects.description'),
           icon: 'globe',
       },
       {
+          id: :project,
           title: I18n.t('baw.shared.links.project.title'),
           href: -> _ { Api::UrlHelpers.project_path(@project) },
           tooltip: I18n.t('baw.shared.links.project.description'),
           icon: 'folder-open',
           indentation: 1,
-          predicate: -> _ { @project },
-          controller: ProjectsController
+          predicate: -> _ { @project&.persisted? }
       },
       {
           title: I18n.t('baw.shared.links.site.title'),
@@ -112,8 +145,8 @@ module GlobalMenuHelper
           tooltip: I18n.t('baw.shared.links.site.description'),
           icon: 'map-marker',
           indentation: 2,
-          predicate: -> _ { @site },
-          controller: SitesController
+          predicate: -> _ { @site&.persisted? },
+          id: :site
       },
       {
           title: I18n.t('baw.shared.links.harvest.short_title'),

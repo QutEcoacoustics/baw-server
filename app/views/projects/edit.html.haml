@@ -1,10 +1,7 @@
 - content_for :meta_title, "Project #{@project.name} | Edit"
 - content_for :page_title, 'Edit Project'
-
-= render partial: 'shared/sidebar_project', locals: {project: @project}
-
-- content_for :right_sidebar do
-  = render partial: 'shared/sidebar_metadata_heading', locals: {title: 'Project', icon: 'home'}
+- @info_bar = {model: @project,  icon: 'globe'}
+- menu_edit_link(:project, edit_project_path)
 
 %p
   Original name is

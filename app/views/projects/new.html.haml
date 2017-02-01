@@ -1,8 +1,5 @@
 - content_for :title, 'New Project'
-
-= render partial: 'shared/sidebar_project'
-
-- content_for :right_sidebar do
-  = render partial: 'shared/sidebar_metadata_heading', locals: {title: 'Project', icon: 'home'}
+- @info_bar = {title: t('baw.shared.links.projects.title'),  icon: 'home'}
+- menu_new_link(:projects, new_project_path, 'project')
 
 = render partial: 'form', locals: {project: @project}

@@ -27,6 +27,10 @@ module ApplicationHelper
     flash_type_keys.include?(flash_type.to_s) ? flash_types[flash_type.to_sym] : 'alert-info'
   end
 
+  def nav_item(options)
+    render partial: 'shared/nav_item', locals: options
+  end
+
   def destroy_button(href, model_name, icon = 'trash')
     render partial: 'shared/nav_button', locals: {
         href: href,
@@ -64,7 +68,7 @@ module ApplicationHelper
 
     render partial: 'shared/nav_item', locals: {
         href: play_link,
-        title: t('baw.shared.links.listen.title'),
+        title: t('baw.shared.links.listen.long_title'),
         tooltip: t('baw.shared.links.listen.description'),
         icon: 'headphones'
     }

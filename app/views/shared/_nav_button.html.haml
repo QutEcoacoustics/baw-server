@@ -9,4 +9,5 @@
   = button_to href, method: method, title: tooltip,
     class: 'btn btn-block btn-default', data: {toggle: 'tooltip', confirm: confirm } do
     %i.fa.fa-fw{ class:  icon }
-    = title
+    %span<
+      = title
