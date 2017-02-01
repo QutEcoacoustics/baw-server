@@ -99,6 +99,10 @@ gem 'jc-validates_timeliness', '~> 3.1.1'
 
 gem 'enumerize', '~> 2.0'
 gem 'uuidtools', '~> 2.1.5'
+
+# Note: if other modifications are made to the default_scope
+# there are manually constructed queries that need to be updated to match
+# (search for ':deleted_at' to find the relevant places)
 gem 'acts_as_paranoid', git: 'https://github.com/ActsAsParanoid/acts_as_paranoid.git', branch: :master, ref: 'c2db19554ddaedcac0a2b8d6a0563dea83c972c5'
 
 
