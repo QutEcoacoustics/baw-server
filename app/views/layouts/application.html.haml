@@ -26,35 +26,34 @@
   %body
     = render 'shared/navbar'
 
-    .container
+    .container#bawMainContent
       .row
-        .col-md-2
-          - if content_for?(:left_sidebar)
-            %nav{role: 'navigation'}
-              %h6
-                %strong.text-uppercase.text-muted
-                  = content_for?(:left_sidebar_header) ? content_for(:left_sidebar_header) : 'Navigation'
-              %ul.nav.nav-pills.nav-stacked
-                = content_for(:left_sidebar)
+        .col-md-2.left-nav-bar
+          %nav{role: 'navigation'}
+            %h6
+              %strong.text-uppercase.text-muted
+                = content_for?(:left_sidebar_header) ? content_for(:left_sidebar_header) : 'Menu'
+            %ul.nav.nav-pills.nav-stacked
+              -# = content_for(:left_sidebar)
+              = render partial: 'shared/sidebar_base', locals: {menu_definition: menu_definition }
 
         .col-md-8
           - if flash.any?
             - flash.each do |msg_type, msg_text|
-              = render partial: 'shared/alert_dismissible', locals: {msg_type: msg_type, msg_text: msg_text}
+              - if !["timedout"].include?(msg_type)
+                = render partial: 'shared/alert_dismissible', locals: {msg_type: msg_type, msg_text: msg_text}
 
           - if !current_user.blank? && !current_user.confirmed?
             - msg_text_link = link_to(t('devise.confirmations.new.resend_confirmation_instructions'), new_user_confirmation_path, class: 'alert-link')
             = render partial: 'shared/alert_dismissible', locals: { msg_type: :alert, msg_text: "#{t('devise.failure.unconfirmed')} #{msg_text_link}".html_safe }
 
-          %h1=titles(:page_title)
-
           .row
+            %h1=titles(:page_title)
             = content_for?(:content) ? content_for(:content) : yield
 
-        .col-md-2
-          - if content_for?(:right_sidebar)
-            %nav{role: 'navigation'}
-              = content_for(:right_sidebar)
+        .col-md-2.right-nav-bar
+          = render partial: 'shared/info_bar_base', locals: @info_bar
+
 
     %footer
       .container

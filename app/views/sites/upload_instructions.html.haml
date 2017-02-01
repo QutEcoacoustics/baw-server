@@ -1,10 +1,6 @@
 - content_for :meta_title, "Project #{@project.name} | Site #{@site.name} | Audio Harvest Instructions"
 - content_for :page_title, 'Audio Harvest Instructions'
-
-= render partial: 'shared/sidebar_site', locals: {project: @project, site: @site}
-
-- content_for :right_sidebar do
-  = render partial: 'shared/sidebar_metadata_heading', locals: {title: 'Site', icon_class: 'map-marker'}
+- @info_bar = { title: 'Site', icon: 'map-marker'}
 
 %p
   Follow these instructions to upload audio to the site

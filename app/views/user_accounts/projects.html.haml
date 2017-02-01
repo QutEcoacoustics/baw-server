@@ -5,6 +5,11 @@
     accessible by
     = image_tag @user.image.url(:spanhalf), alt: @user.user_name
     = @user.user_name
+- @info_bar = {title: t('baw.shared.links.profile_projects.title'),  icon: 'globe'}
+- set_current_menu_item(:my_profile, {href: projects_user_account_path(@user),
+      title: t('baw.shared.links.profile_projects.title'),
+      tooltip: t('baw.shared.links.profile_projects.description', user_name: @user.user_name),
+      icon: 'globe' })
 
 = render partial: 'shared/sidebar_user', locals: {user_show: @user, user_current: current_user}
 

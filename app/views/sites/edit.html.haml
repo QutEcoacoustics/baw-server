@@ -1,10 +1,7 @@
 - content_for :meta_title, "Project #{@project.name} | Site #{@site.name} | Edit"
 - content_for :page_title, 'Edit Site'
-
-= render partial: 'shared/sidebar_site', locals: {project: @project, site: @site}
-
-- content_for :right_sidebar do
-  = render partial: 'shared/sidebar_metadata_heading', locals: {title: 'Site', icon_class: 'map-marker'}
+- @info_bar = {model: @site,  icon: 'map-marker'}
+- menu_edit_link(:site, edit_project_site_path)
 
 %p
   Original name is

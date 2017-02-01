@@ -446,6 +446,11 @@ module Access
       # @param [Project, Array<Project>] projects
       # @return [Array<Symbol, nil>]
       def user_levels(user, projects)
+        # moved this case forward to shortcut project query execution
+        if Access::Core.is_admin?(user)
+          return Access::Validate.levels([:owner])
+        end
+
         projects = Access::Validate.projects([projects])
 
         # always restricted to specified project(s)
@@ -454,8 +459,6 @@ module Access
         if Access::Core.is_guest?(user)
           # a guest user's permissions are only specified by :allow_logged_in
           levels = levels.where(user: nil, allow_logged_in: false, allow_anonymous: true)
-        elsif Access::Core.is_admin?(user)
-          return Access::Validate.levels([:owner])
         elsif !user.blank?
           # a logged in user can have their own permissions or
           # permissions specified by :allow_logged_in

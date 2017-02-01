@@ -3,7 +3,7 @@
 = render partial: 'shared/admin/sidebar_home'
 
 - content_for :right_sidebar do
-  = render partial: 'shared/sidebar_metadata_heading', locals: {title: 'Admin', icon_class: 'cog'}
+  = render partial: 'shared/sidebar_metadata_heading', locals: {title: 'Admin', icon: 'cog'}
 
 - if @sites.empty?
   %p
@@ -26,5 +26,5 @@
         %small
           #{site.audio_recordings.count} audio recordings between #{display_min} to #{display_max} with #{total_annotations} annotations
       %ul.nav.nav-pills
-        - site.audio_recordings.each do |audio_recordings|
-          %li= link_to audio_recordings.id, "/listen/#{audio_recordings.id}"
+        - site.audio_recordings.each do |audio_recording|
+          %li= link_to audio_recording.id, make_listen_path(audio_recording)

@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-describe 'Rack rewrite', :type => :feature  do # :type => :routing
+describe 'Rack rewrite', :type => :feature do # :type => :routing
   describe :routing do
 
     client_app_content = 'Client application placeholder This is the page that will be rendered if a client side view needs to be rendered.'

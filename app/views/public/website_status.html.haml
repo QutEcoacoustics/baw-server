@@ -1,6 +1,5 @@
 - content_for :title, 'Statistics'
-
-= render partial: 'shared/sidebar_public', locals: {user_show: @user, user_current: current_user}
+- @info_bar = {title: t('baw.shared.links.home.title'),  icon: 'home'}
 
 .col-sm-12
   .row

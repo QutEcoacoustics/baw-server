@@ -1,11 +1,9 @@
 - content_for :title, t('devise.passwords.edit.change_your_password')
+- @info_bar = {title: t('baw.shared.links.accounts.title'),  icon: 'user'}
+- set_current_menu_item(:login, {href: request.original_fullpath,
+  title: t('devise.passwords.edit.change_your_password'),
+  icon: 'key' })
 
-= render partial: 'shared/sidebar_devise',
-locals: { devise_mapping_o: devise_mapping,
-resource_class_o: resource_class,
-resource_name_o: resource_name,
-user_show: resource,
-user_current: current_user}
 
 = simple_form_for(resource, as: resource_name, url: password_path(resource_name), html: { class: 'form-horizontal', method: :put }) do |f|
   = field_set_tag do

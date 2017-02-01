@@ -82,7 +82,14 @@ class ApplicationController < ActionController::Base
     super
   end
 
+
   protected
+
+  inflection_method :possessive_determiner
+
+  def possessive_determiner
+    current_user&.id != nil && User.same_user?(current_user, @user) ? :my : :their
+  end
 
   # Add archived at header to HTTP response
   # @param [ActiveRecord::Base] model

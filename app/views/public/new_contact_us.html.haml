@@ -1,6 +1,5 @@
 - content_for :title, 'Contact Us'
-
-= render partial: 'shared/sidebar_public', locals: {user_show: @user, user_current: current_user}
+- @info_bar = {title: t('baw.shared.links.home.title'),  icon: 'home'}
 
 %p
   This form is for general enquiries. We have separate forms to

@@ -1,0 +1,20 @@
+-# locals: model, title, icon
+%nav{role: 'navigation'}
+  - model ||= nil
+  - title = title || (model&.class&.model_name) || ""
+  - icon ||= icon || nil
+  = render partial: 'shared/sidebar_metadata_heading', locals: {title: title, icon: icon }
+  - if content_for?(:page_actions)
+    %hr/
+    %ul.nav.nav-pills.nav-stacked
+      = content_for(:page_actions)
+  - if model || content_for?(:right_sidebar)
+    %hr/
+  - if model
+    - if model.has_attribute?(:creator_id)
+      = render partial: 'shared/sidebar_metadata_user_created', locals: { item: model }
+    - if model.has_attribute?(:updater_id)
+      = render partial: 'shared/sidebar_metadata_user_updated', locals: { item: model }
+  -# escape hatch for custom or old content
+  - if content_for?(:right_sidebar)
+    = content_for(:right_sidebar)

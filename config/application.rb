@@ -142,6 +142,9 @@ module AWB
     config.middleware.insert_before 0, Rack::Rewrite do
       # angular routing system will use the url that was originally requested
       # rails just needs to load the index.html
+
+      # ensure you add url helpers in app/helpers/application_helper.rb
+
       rewrite /^\/listen.*/i, '/listen_to/index.html'
       rewrite /^\/birdwalks.*/i, '/listen_to/index.html'
       rewrite /^\/library.*/i, '/listen_to/index.html'

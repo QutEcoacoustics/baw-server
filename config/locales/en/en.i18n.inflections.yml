@@ -1,0 +1,8 @@
+en:
+  i18n:
+    inflections:
+      possessive_determiner:
+        my: "my"
+        their: "their"
+        m: "my"
+        t: "their"
