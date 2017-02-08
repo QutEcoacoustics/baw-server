@@ -85,6 +85,22 @@ ELSE last_sign_in_at END DESC'
     end
   end
 
+  # DELETE /user_accounts/:id
+  def destroy
+    do_load_resource
+    do_authorize_instance
+
+    if Access::Core.is_standard_user?(@user)
+      @user.destroy
+      respond_to do |format|
+        format.html { redirect_to user_accounts_path, notice: t('baw.shared.actions.user_deleted')}
+        format.json { respond_destroy }
+      end
+    else
+      fail CustomErrors::UnprocessableEntityError.new(t('baw.shared.actions.cannot_delete_account'))
+    end
+  end
+
   # PUT /my_account/prefs
   def modify_preferences
     @user = current_user

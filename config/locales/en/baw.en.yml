@@ -125,3 +125,6 @@ en:
           description: "Use %{provider} to sign in"
         job_status:
           title: "Job Status"
+      actions:
+        user_deleted: User was successfully deleted.
+        cannot_delete_account: Cannot delete this account.

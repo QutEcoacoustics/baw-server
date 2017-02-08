@@ -67,11 +67,11 @@ class User < ActiveRecord::Base
   has_many :created_saved_searches, -> { includes :project }, class_name: 'SavedSearch', foreign_key: :creator_id, inverse_of: :creator
   has_many :deleted_saved_searches, -> { includes :project }, class_name: 'SavedSearch', foreign_key: :deleter_id, inverse_of: :deleter
 
-  has_many :created_analysis_jobs, class_name: 'AnalysisJob', foreign_key: :creator_id, inverse_of: :creator
+  has_many :created_analysis_jobs, class_name: 'AnalysisJob', foreign_key: :creator_id, inverse_of: :creator, dependent: :destroy
   has_many :updated_analysis_jobs, class_name: 'AnalysisJob', foreign_key: :updater_id, inverse_of: :updater
   has_many :deleted_analysis_jobs, class_name: 'AnalysisJob', foreign_key: :deleter_id, inverse_of: :deleter
 
-  has_many :permissions, inverse_of: :user
+  has_many :permissions, inverse_of: :user, dependent: :destroy
   has_many :created_permissions, class_name: 'Permission', foreign_key: :creator_id, inverse_of: :creator
   has_many :updated_permissions, class_name: 'Permission', foreign_key: :updater_id, inverse_of: :updater
 
