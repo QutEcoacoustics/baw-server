@@ -31,31 +31,31 @@ gem 'activesupport-json_encoder', git: 'https://github.com/rails/activesupport-j
 # Use SCSS for stylesheets
 gem 'sass-rails', '~> 5.0.3'
 # Use Uglifier as compressor for JavaScript assets
-gem 'uglifier', '~> 3.0.4'
+gem 'uglifier', '~> 3.0.0'
 # Use CoffeeScript for .js.coffee assets and views
 gem 'coffee-rails', '~> 4.2.0'
 # See https://github.com/sstephenson/execjs#readme for more supported runtimes
 gem 'therubyracer', '~> 0.12.1', platforms: :ruby, require: 'v8'
 
 # Use jquery as the JavaScript library
-gem 'jquery-rails', '~> 4.2.2'
+gem 'jquery-rails', '~> 4.2.0'
 # Turbolinks makes following links in your web application faster. Read more: https://github.com/rails/turbolinks
 #gem 'turbolinks'
 # Build JSON APIs with ease. Read more: https://github.com/rails/jbuilder
-gem 'jbuilder', '~> 2.6.1'
+gem 'jbuilder', '~> 2.6.0'
 
 gem 'haml', '~> 4.0.6'
 gem 'haml-rails', '~> 0.9.0'
 
 gem 'simple_form', '~> 3.3.0'
-gem 'paperclip', '~> 5.1.0'
-gem 'kramdown', '~> 1.13.1'
+gem 'paperclip', '~> 5.0.0'
+gem 'kramdown', '~> 1.12.0'
 
 # Bootstrap UI
 gem 'bootstrap-sass', '~> 3.3.4'
 # for sass variables: http://getbootstrap.com/customize/#less-variables
 # sprockets-rails gem is included via rails dependency
-gem 'font-awesome-sass', '~> 4.7.0'
+gem 'font-awesome-sass', '~> 4.6.2'
 
 # for rails 3, 4
 gem 'kaminari'
@@ -64,7 +64,7 @@ gem 'recaptcha', '~> 3.3.0',  require: 'recaptcha/rails'
 
 # for proper timezone support
 gem 'tzinfo', '~> 1.2.2'
-gem 'tzinfo-data', '~> 1.2016.10'
+gem 'tzinfo-data', '~> 1.2016'
 
 # for tying inflections into I18n
 gem 'i18n-inflector-rails', '~>1.0'
@@ -74,7 +74,7 @@ gem 'i18n-inflector-rails', '~>1.0'
 # https://github.com/plataformatec/devise/blob/master/CHANGELOG.md
 # http://joanswork.com/devise-3-1-update/
 gem 'devise', '~> 4.2.0'
-gem 'devise-i18n', '~> 1.1.1'
+gem 'devise-i18n'
 gem 'cancancan', '~> 1.15'
 gem 'role_model', '~> 0.8.1'
 # Use ActiveModel has_secure_password
@@ -85,7 +85,7 @@ gem 'bcrypt', '~> 3.1.9'
 # -------------------------------------
 # don't change the database gems - causes:
 # Please install the <db> adapter: `gem install activerecord-<db>-adapter` (<db> is not part of the bundle. Add it to Gemfile.)
-gem 'pg', '~> 0.19.0'
+gem 'pg', '~> 0.18.1'
 
 # MODELS
 # -------------------------------------
@@ -97,7 +97,7 @@ gem 'jc-validates_timeliness', '~> 3.1.1'
 # No longer used - incorporated the gem's functionality directly.
 #gem 'userstamp', git: 'https://github.com/theepan/userstamp.git'
 
-gem 'enumerize', '~> 2.0.1'
+gem 'enumerize', '~> 2.0'
 gem 'uuidtools', '~> 2.1.5'
 
 # Note: if other modifications are made to the default_scope
@@ -107,7 +107,7 @@ gem 'acts_as_paranoid', git: 'https://github.com/ActsAsParanoid/acts_as_paranoid
 
 
 # for state machines
-gem 'aasm', '~> 4.11.1'
+gem 'aasm'
 
 # SETTINGS
 # -------------------------------------
@@ -117,12 +117,12 @@ require 'rbconfig'
 # MONITORING
 # -------------------------------------
 gem 'exception_notification', '~> 4.2.0'
-gem 'newrelic_rpm', '~> 3.17.2'
+gem 'newrelic_rpm', '~> 3.16'
 
 # Documentation & UI
 # -------------------------------------
 # these gems are required here to serve /doc url
-gem 'rspec_api_documentation', '~> 4.9.0'
+gem 'rspec_api_documentation', '~> 4.8.0'
 gem 'raddocs', '~> 1.0.0'
 
 # MEDIA
@@ -154,8 +154,8 @@ group :development, :test do
   gem 'quiet_assets'
 
   gem 'rack-mini-profiler', '~> 0.10.0'
-  gem 'i18n-tasks', '~> 0.9.8'
-  gem 'bullet', '~> 5.5.0'
+  gem 'i18n-tasks', '~> 0.9.0'
+  gem 'bullet', '~> 5.2.0'
 
   # Spring speeds up development by keeping your application running in the background. Read more: https://github.com/rails/spring
   #gem 'spring', '~> 1.4.0'
@@ -164,18 +164,18 @@ group :development, :test do
   #gem 'web-console', '~> 2.1.1'
 
   # bundle exec rake doc:rails generates the API under doc/api.
-  gem 'sdoc', '~> 0.4.2'
+  gem 'sdoc', '~> 0.4.0'
 
   gem 'thin', '~> 1.7.0'
 
   gem 'notiffany', '~> 0.1.0'
   gem 'guard', '~> 2.14.0'
   gem 'guard-rspec', '~> 4.7.0'
-  gem 'guard-yard', '~> 2.2.0', require: false
-  gem 'rubocop', '~> 0.46.0', require: false
-  gem 'haml_lint', '~> 0.19.0', require: false
+  gem 'guard-yard', '~> 2.1.4', require: false
+  gem 'rubocop', '~> 0.42.0', require: false
+  gem 'haml_lint', require: false
 
-  gem 'fakeredis', '~> 0.6.0', require: 'fakeredis/rspec'
+  gem 'fakeredis', '~> 0.5.0', require: 'fakeredis/rspec'
 
   gem 'zonebie'
 
@@ -199,8 +199,8 @@ group :development, :test do
   # gem install traceroute --no-ri --no-rdoc
 
   gem 'rspec-rails', '~> 3.5.0'
-  gem 'factory_girl_rails', '~>  4.8.0'
-  gem 'capybara', '~> 2.11.0'
+  gem 'factory_girl_rails', '~>  4.7.0'
+  gem 'capybara', '~> 2.7.0'
 
   gem 'rspec', '~> 3.5.0'
   gem 'simplecov', '~> 0.12.0', require: false
@@ -208,12 +208,12 @@ group :development, :test do
   gem 'json_spec', '~> 1.1.4'
   gem 'database_cleaner', '~> 1.5.0'
 
-  gem 'coveralls', '~> 0.8.17', require: false
-  gem 'codeclimate-test-reporter', '~> 1.0.4', require: nil
+  gem 'coveralls', '~> 0.8.14', require: false
+  gem 'codeclimate-test-reporter', '~> 0.6.0', require: nil
 end
 
 group :test do
-  gem 'webmock', '~> 2.3.1'
+  gem 'webmock', '~> 2.1.0'
   gem 'shoulda-matchers', '< 3.0.0', require: false
 
   gem 'rspec-mocks', '~>3.5.0'

@@ -120,6 +120,12 @@ describe "User account actions", :type => :feature do
       attach_file('user[image]', 'public/images/user/user_span1.png')
       click_button 'Update'
 
+      # make sure delete button is not accidentally part of the form!
+      expect(page).to_not have_content(I18n.t('devise.registrations.destroyed'))
+      expect(page).to_not have_content(I18n.t('baw.shared.actions.user_deleted'))
+      expect(page).to_not have_content(I18n.t('simple_form.error_notification.default_message'))
+      expect(User.find(@user.id).user_name).to eq(new_user_name)
+
       expect(page).to have_content(new_user_name)
       expect(page).to have_content(I18n.t('devise.registrations.update_needs_confirmation'))
       expect(current_path).to eq(root_path)
@@ -164,7 +170,13 @@ describe "User account actions", :type => :feature do
       attach_file('user[image]', 'public/images/user/user_span1.png')
       click_button 'Update'
 
+      # make sure delete button is not accidentally part of the form!
+      expect(page).to_not have_content(I18n.t('devise.registrations.destroyed'))
+      expect(page).to_not have_content(I18n.t('baw.shared.actions.user_deleted'))
+      expect(User.find(@user.id).user_name).to eq(@user.user_name)
+
       expect(page).to have_content('(required) Current passwordis invalid')
+      expect(page).to have_content(I18n.t('simple_form.error_notification.default_message'))
       expect(current_path).to eq(user_registration_path)
 
       visit edit_user_registration_path
@@ -365,7 +377,6 @@ describe 'MANAGE User Accounts as admin user', :type => :feature do
 
   it 'shows user account details' do
     user = FactoryGirl.create(:user)
-    FactoryGirl.create(:bookmark, creator: user)
     visit user_account_path(user)
     expect(page).to have_content(user.user_name)
   end
@@ -373,11 +384,20 @@ describe 'MANAGE User Accounts as admin user', :type => :feature do
   it 'updates user_account when filling out form correctly' do
     user = FactoryGirl.create(:user)
     visit edit_user_account_path(user)
+    expect(page).to have_content(user.user_name)
     fill_in 'user[user_name]', with: 'test name'
     fill_in 'user[email]', with: 'test@example.com'
     attach_file('user[image]', 'public/images/user/user-512.png')
     click_button 'Update User'
+
+    # make sure delete button is not accidentally part of the form!
+    expect(page).to_not have_content(I18n.t('devise.registrations.destroyed'))
+    expect(page).to_not have_content(I18n.t('baw.shared.actions.user_deleted'))
+    expect(page).to_not have_content(I18n.t('simple_form.error_notification.default_message'))
+    expect(User.find(user.id).user_name).to eq('test name')
+
     expect(page).to have_content('test name')
+    visit edit_user_account_path(user)
   end
 
   it 'cannot delete account from my account page' do
@@ -393,9 +413,9 @@ describe 'MANAGE User Accounts as admin user', :type => :feature do
   it 'can delete other non-admin user account' do
     user = FactoryGirl.create(:user)
     visit edit_user_account_path(user)
-    click_link "Delete user's account"
-    expect(page).to have_content('User was successfully deleted.')
-    expect{
+    click_button "Delete user's account"
+    expect(page).to have_content(I18n.t('baw.shared.actions.user_deleted'))
+    expect {
       User.find(user.id)
     }.to raise_error(ActiveRecord::RecordNotFound, "Couldn't find User with 'id'=#{user.id}")
   end
@@ -418,16 +438,25 @@ end
 
 describe 'MANAGE User Accounts as user', :type => :feature do
   before(:each) do
-    @user = FactoryGirl.create(:user)
+    @old_password = 'password123456'
+    @user = FactoryGirl.create(:user, password: @old_password)
     login_as @user, scope: :user
   end
 
-  let(:no_access_user){ FactoryGirl.create(:user)}
+  let(:no_access_user) { FactoryGirl.create(:user) }
 
-  it 'denies access' do
+  it 'denies access to user list' do
     visit user_accounts_path
     expect(page).to have_content(I18n.t('devise.failure.unauthorized'))
+  end
+
+  it "denies access to other user's account" do
     visit edit_user_account_path(no_access_user)
+    expect(page).to have_content(I18n.t('devise.failure.unauthorized'))
+  end
+
+  it 'denies access to other user projects page' do
+    visit projects_user_account_path(no_access_user)
     expect(page).to have_content(I18n.t('devise.failure.unauthorized'))
   end
 
@@ -436,28 +465,47 @@ describe 'MANAGE User Accounts as user', :type => :feature do
     expect(page).to have_content(no_access_user.user_name)
   end
 
+  it 'updates user_account when filling out form correctly' do
+    visit edit_user_registration_path
+    expect(page).to have_content(@user.user_name)
+    fill_in 'user[user_name]', with: 'test name 1234'
+    fill_in 'user[current_password]', with: @old_password
+    fill_in 'user[tzinfo_tz]', with: 'Australia - Brisbane'
+    attach_file('user[image]', 'public/images/user/user-512.png')
+    click_button 'Update'
+
+    # make sure delete button is not accidentally part of the form!
+    expect(page).to_not have_content(I18n.t('devise.registrations.destroyed'))
+    expect(page).to_not have_content(I18n.t('baw.shared.actions.user_deleted'))
+    expect(page).to_not have_content(I18n.t('simple_form.error_notification.default_message'))
+    expect(User.find(@user.id).user_name).to eq('test name 1234')
+
+    expect(page).to have_content('test name 1234')
+    expect(page).to have_content(I18n.t('devise.registrations.updated'))
+    expect(current_path).to eq(root_path)
+  end
+
   context 'links available viewing other user page' do
-    # broken - don't know how to fix
-      xit 'should not link to projects' do
-        visit user_account_path(no_access_user)
-        expect(find('nav[role=navigation]')).to_not have_content('Projects')
-      end
-      xit 'should not link to sites' do
-        visit user_account_path(no_access_user)
-        expect(find('nav[role=navigation]')).to_not have_content('Sites')
-      end
-      xit 'should not link to bookmarks' do
-        visit user_account_path(no_access_user)
-        expect(find('nav[role=navigation]')).to_not have_content('Bookmarks')
-      end
-      xit 'should not link to annotations' do
-        visit user_account_path(no_access_user)
-        expect(find('nav[role=navigation]')).to_not have_content('Annotations')
-      end
-      xit 'should not link to comments' do
-        visit user_account_path(no_access_user)
-        expect(find('nav[role=navigation]')).to_not have_content('Comments')
-      end
+    it 'should not link to projects' do
+      visit user_account_path(no_access_user)
+      expect(find('.right-nav-bar nav[role=navigation]')).to_not have_content('Projects')
+    end
+    it 'should not link to sites' do
+      visit user_account_path(no_access_user)
+      expect(find('.right-nav-bar nav[role=navigation]')).to_not have_content('Sites')
+    end
+    it 'should not link to bookmarks' do
+      visit user_account_path(no_access_user)
+      expect(find('.right-nav-bar nav[role=navigation]')).to_not have_content('Bookmarks')
+    end
+    it 'should not link to annotations' do
+      visit user_account_path(no_access_user)
+      expect(find('.right-nav-bar nav[role=navigation]')).to_not have_content('Annotations')
+    end
+    it 'should not link to comments' do
+      visit user_account_path(no_access_user)
+      expect(find('.right-nav-bar nav[role=navigation]')).to_not have_content('Comments')
+    end
   end
 
   context 'links available viewing current user page' do
@@ -488,10 +536,19 @@ describe 'MANAGE User Accounts as user', :type => :feature do
     end
   end
 
-  it 'denies access to other user projects page' do
-    user = FactoryGirl.create(:user)
-    visit projects_user_account_path(user)
-    expect(page).to have_content(I18n.t('devise.failure.unauthorized'))
+  it 'cannot delete other account' do
+    visit user_account_path(no_access_user)
+    expect(page).not_to have_content('Cancel my account')
+  end
+
+  it 'can delete own account' do
+    visit edit_user_registration_path
+    click_button 'Cancel my account'
+    expect(page).to have_content(I18n.t('devise.registrations.destroyed'))
+    expect {
+      User.find(@user.id)
+    }.to raise_error(ActiveRecord::RecordNotFound, "Couldn't find User with 'id'=#{@user.id}")
+    expect(current_path).to eq(root_path)
   end
 end
 

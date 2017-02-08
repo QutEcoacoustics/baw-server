@@ -59,11 +59,15 @@
             - else
               %small
                 (no value)
-    - if Access::Core.is_standard_user?(@user)
-      %hr/
-      %h3 Cancel user's account
-      %p
-        = link_to "Delete user's account", user_account_path(@user),
-        data: { confirm: t('devise.registrations.edit.are_you_sure'), toggle: 'tooltip',  placement: 'right' },
-        title: "WARNING: This will permanently delete this user's account",
-        method: :delete
+
+-# WARNING! LOOK OUT! This MUST be at the top level or be wrapped in a separate form,
+-# otherwise other buttons on the form will delete the account!!!
+- if Access::Core.is_standard_user?(@user)
+  = form_tag(user_account_path(@user)) do
+    %hr/
+    %h3 Dangerous actions
+    %p
+      = button_to "Delete user's account", user_account_path(@user),
+      data: { confirm: t('devise.registrations.edit.are_you_sure'), toggle: 'tooltip',  placement: 'right' },
+      title: "WARNING: This will permanently delete this user's account",
+      method: :delete, class: 'btn btn-danger'

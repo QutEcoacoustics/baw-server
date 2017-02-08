@@ -93,11 +93,11 @@ ELSE last_sign_in_at END DESC'
     if Access::Core.is_standard_user?(@user)
       @user.destroy
       respond_to do |format|
-        format.html { redirect_to user_accounts_path, notice: 'User was successfully deleted.' }
+        format.html { redirect_to user_accounts_path, notice: t('baw.shared.actions.user_deleted')}
         format.json { respond_destroy }
       end
     else
-      respond_error(:unprocessable_entity, 'Cannot delete an admin or harvester account.')
+      fail CustomErrors::UnprocessableEntityError.new(t('baw.shared.actions.cannot_delete_account'))
     end
   end
 
