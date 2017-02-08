@@ -1,6 +1,6 @@
 - content_for :meta_title, "User #{@user.user_name}"
 - content_for :page_title, @user.user_name
-
+- @info_bar = {title: t('baw.shared.links.profile.title'), icon: 'user'}
 = render partial: 'shared/sidebar_user', locals: {user_show: @user, user_current: current_user}
 
 - is_valid_user = defined?(@user) && !@user.nil? && !@user.id.nil?

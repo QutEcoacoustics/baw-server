@@ -1,12 +1,34 @@
 - content_for :meta_title, t('devise.shared.links.sign_in')
 - content_for :page_title, t('devise.sessions.new.sign_in')
+- @info_bar = {title: t('baw.shared.links.accounts.title'),  icon: 'user'}
 
-= render partial: 'shared/sidebar_devise',
-locals: { devise_mapping_o: devise_mapping,
-resource_class_o: resource_class,
-resource_name_o: resource_name,
-user_show: resource,
-user_current: current_user}
+- content_for :page_actions do
+  - devise_mapping_o = devise_mapping
+  - resource_class_o = resource_class
+  - resource_name_o = resource_name
+  - user_show = resource
+  - user_current= current_user
+
+  - if devise_mapping_o.omniauthable?
+    - resource_class_o.omniauth_providers.each do |provider|
+      = nav_item(href: (omniauth_authorize_path(resource_name_o, provider)),
+        tooltip: t('devise.shared.links.sign_in_with_provider', provider: provider.to_s.titleize),
+        title: t('baw.shared.links.sign_in_with_provider.description', provider: provider.to_s.titleize))
+  - if devise_mapping_o.recoverable? && user_current.blank?
+    = nav_item(href: new_password_path(resource_name_o),
+      title: t('devise.shared.links.reset_password'),
+      tooltip: t('baw.shared.links.reset_password.description'),
+      icon: 'key' )
+  - if devise_mapping_o.confirmable?
+    = nav_item(href: new_confirmation_path(resource_name_o),
+        title: t('devise.shared.links.confirm_account'),
+        tooltip: t('baw.shared.links.confirm_account.description'),
+        icon: 'envelope' )
+  - if devise_mapping_o.lockable? && resource_class_o.unlock_strategy_enabled?(:email) && user_current.blank?
+    = nav_item(href: new_unlock_path(resource_name_o),
+        title: t('devise.shared.links.unlock_account'),
+        tooltip: t('baw.shared.links.unlock_account.description'),
+        icon: 'unlock-alt')
 
 = simple_form_for(resource, as: resource_name, url: session_path(resource_name), html: { class: 'form-horizontal', method: :post }) do |f|
   = field_set_tag do

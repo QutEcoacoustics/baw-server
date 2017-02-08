@@ -1,13 +1,26 @@
 - content_for :meta_title, "Project #{@project.name}"
-- content_for :page_title do
-  = @project.name
+- content_for :page_title, @project.name
+- @info_bar = {model: @project, icon: 'globe'}
 
-= render partial: 'shared/sidebar_project', locals: {project: @project}
+- content_for :page_actions do
+  - is_owner = Access::Core.can?(current_user, :owner, @project)
+  = nav_item(href: make_visualise_path(@project),
+    title: t('baw.shared.links.visualize.title'),
+    tooltip: t('baw.shared.links.visualize.description'),
+    icon: 'map' )
+  - if can? :edit, @project
+    = edit_link(edit_project_path(@project), 'project')
+  - if can? :update_permissions, @project
+    = edit_link(project_permissions_path(@project), 'permissions', 'key')
+  - if can?(:update_sites, @project)
+    = new_link(new_project_site_path(@project), 'site')
+    = nav_item(href: edit_sites_project_path(@project),
+        title: t('baw.shared.links.site_mapping.title'),
+        tooltip: t('baw.shared.links.site_mapping.description') )
+  - if can?(:destroy, @project)
+    = destroy_button(@project, 'project')
 
 - content_for :right_sidebar do
-  = render partial: 'shared/sidebar_metadata_heading', locals: {title: 'Project', icon_class: 'home'}
-  = render partial: 'shared/sidebar_metadata_user_created', locals: { item: @project }
-  = render partial: 'shared/sidebar_metadata_user_updated', locals: { item: @project }
   - levels = Access::Core.user_levels(current_user, @project)
   - level = Access::Core.highest(levels)
   - unless level.blank?

@@ -172,6 +172,38 @@ ORDER BY s.name")
     respond_filter(filter_response, opts)
   end
 
+  def nav_menu
+    {
+        anchor_after: 'baw.shared.links.projects.title',
+        menu_items: [
+            {
+                title: 'baw.shared.links.projects.title',
+                href: project_path(@project),
+                tooltip: 'baw.shared.links.projects.description',
+                icon: nil,
+                indentation: 1,
+                #predicate:
+            },
+            {
+                title: 'baw.shared.links.site.title',
+                href: project_site_path(@project, @site),
+                tooltip: 'baw.shared.links.site.description',
+                icon: nil,
+                indentation: 2,
+                #predicate:
+            },
+            # {
+            #     title: 'baw.shared.links.ethics_statement.title',
+            #     href: ethics_statement_path,
+            #     tooltip: 'baw.shared.links.ethics_statement.description',
+            #     icon: nil,
+            #     indentation: 0,
+            #     predicate: lambda { |user| action_name == 'ethics_statement' }
+            # }
+        ]
+    }
+  end
+
   private
 
   def get_project

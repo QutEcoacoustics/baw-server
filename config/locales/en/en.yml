@@ -156,10 +156,21 @@ en:
       destroy: "Delete"
       new: "New"
     titles:
-      edit: "Edit"
+      edit:
+        one: "Edit this"
+        other: Edit
       save: "Save"
       new: "New"
-      delete: "Delete"
+      destroy: "Delete this"
+      editing: "Editing"
+
+    tooltips:
+      edit: Change the details for this %{model}
+      save: Save changes to this %{model}
+      new: Create a new %{model}
+      destroy: Delete this %{model}
+    confirm:
+      destroy: "Are you sure you want to delete this %{model}?"
     page_entries_info:
       one_page:
         display_entries:

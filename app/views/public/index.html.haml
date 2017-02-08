@@ -1,7 +1,5 @@
-- content_for :meta_title, 'Home'
+- content_for :meta_title, t('baw.shared.links.home.title')
 - content_for :page_title, Settings.organisation_names.site_long_name
-
-= render partial: 'shared/sidebar_public', locals: {user_show: @user, user_current: current_user}
 
 %p
   Welcome! This is a repository of environmental audio recordings and web-based applications for analysing sounds.

@@ -37,11 +37,11 @@ class PublicController < ApplicationController
     end
 
     @random_projects = Access::ByPermission
-        .projects(current_user)
-        .includes(:creator)
-        .references(:creator)
-        .order("RANDOM()")
-        .take(3)
+                           .projects(current_user)
+                           .includes(:creator)
+                           .references(:creator)
+                           .order('RANDOM()')
+                           .take(3)
 
     respond_to do |format|
       format.html
@@ -254,6 +254,38 @@ class PublicController < ApplicationController
     fail CustomErrors::BadRequestError, "CORS preflight request to '#{params[:requested_route]}' was not valid. Required headers: Origin, Access-Control-Request-Method. Optional headers: Access-Control-Request-Headers."
   end
 
+  def nav_menu
+    {
+        #anchor_after: 'baw.shared.links.home.title',
+        menu_items: [
+            {
+                title: 'baw.shared.links.disclaimers.title',
+                href: disclaimers_path,
+                tooltip: 'baw.shared.links.disclaimers.description',
+                icon: nil,
+                indentation: 0,
+                predicate: lambda { |user| action_name == 'disclaimers' }
+            },
+            {
+                title: 'baw.shared.links.credits.title',
+                href: credits_path,
+                tooltip: 'baw.shared.links.credits.description',
+                icon: nil,
+                indentation: 0,
+                predicate: lambda { |user| action_name == 'credits' }
+            },
+            {
+                title: 'baw.shared.links.ethics_statement.title',
+                href: ethics_statement_path,
+                tooltip: 'baw.shared.links.ethics_statement.description',
+                icon: nil,
+                indentation: 0,
+                predicate: lambda { |user| action_name == 'ethics_statement' }
+            }
+        ]
+    }
+  end
+
   private
 
   def recent_audio_recordings
@@ -272,18 +304,18 @@ class PublicController < ApplicationController
 
     if current_user.blank?
       @recent_audio_events = AudioEvent
-          .order(order_by_coalesce)
-          .limit(7)
+                                 .order(order_by_coalesce)
+                                 .limit(7)
     elsif Access::Core.is_admin?(current_user)
       @recent_audio_events = AudioEvent
-          .includes([:creator, audio_recording: {site: :projects}])
-          .order(order_by_coalesce)
-          .limit(10)
+                                 .includes([:creator, audio_recording: {site: :projects}])
+                                 .order(order_by_coalesce)
+                                 .limit(10)
     else
       @recent_audio_events = Access::ByPermission
-          .audio_events(current_user, Access::Core.levels)
-          .includes([:updater, audio_recording: :site])
-          .order(order_by_coalesce).limit(10)
+                                 .audio_events(current_user, Access::Core.levels)
+                                 .includes([:updater, audio_recording: :site])
+                                 .order(order_by_coalesce).limit(10)
     end
 
   end
@@ -343,5 +375,6 @@ class PublicController < ApplicationController
         :selected_user_id,
         :selected_timezone_name)
   end
+
 
 end

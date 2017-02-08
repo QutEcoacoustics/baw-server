@@ -148,10 +148,10 @@ defaults: &defaults
   # min duration (default 10): must be larger than audio_recording_max_overlap_sec
   audio_recording_min_duration_sec: 10.0
   organisation_names:
-    site_long_name: Audio Workbench
+    site_long_name: Acoustic Workbench
     organisation_name: Audio Group
     github_issues_url: 'url to github issues page'
-    parent_site_name: Parent Site
+    parent_site_name: '<<Brand name here>>'
     parent_site_link: 'http://example.com'
     custom_menu:
       header_title: Custom Menu

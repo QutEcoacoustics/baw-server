@@ -112,7 +112,7 @@ describe 'checking reactions to errors', :type => :feature do
     it 'displays the correct page on unauthorized error' do
       visit '/test_exceptions?exception_class=CanCan::AccessDenied'
       expect(current_path).to eq('/test_exceptions')
-      expect(page).to have_content('You need to sign in or sign up before continuing')
+      expect(page).to have_content('You need to log in or register before continuing')
       expect(page).to have_content('Unauthorized')
       expect(page).not_to have_content('::')
       expect(page.status_code).to eq(401)
@@ -123,18 +123,18 @@ describe 'checking reactions to errors', :type => :feature do
 
       create_entire_hierarchy
 
-    it 'displays the correct page on forbidden error' do
-      login_as no_access_user, scope: :user
-      url = "/projects/#{project.id}"
+      it 'displays the correct page on forbidden error' do
+        login_as no_access_user, scope: :user
+        url = "/projects/#{project.id}"
 
-      visit url
-      expect(current_path).to eq(url)
-      expect(page).to have_content(I18n.t('devise.failure.unauthorized'))
-      expect(page).to have_content('Forbidden')
-      expect(page).not_to have_content('::')
-      expect(page.status_code).to eq(403)
-      expect(response_headers['Content-Type']).to match %r(text/html)
-    end
+        visit url
+        expect(current_path).to eq(url)
+        expect(page).to have_content(I18n.t('devise.failure.unauthorized'))
+        expect(page).to have_content('Forbidden')
+        expect(page).not_to have_content('::')
+        expect(page.status_code).to eq(403)
+        expect(response_headers['Content-Type']).to match %r(text/html)
+      end
     end
 
     it 'displays the correct page on custom routing error' do

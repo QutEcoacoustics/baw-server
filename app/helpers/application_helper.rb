@@ -1,5 +1,6 @@
 module ApplicationHelper
 
+
   def titles(which_title = :title)
     which_title_sym = which_title.to_s.to_sym
 
@@ -12,8 +13,10 @@ module ApplicationHelper
   end
 
   def format_sidebar_datetime(value, options = {})
+    return "" if value.nil?
+
     options.reverse_merge!({ago: true})
-    time_distance = distance_of_time_in_words(Time.zone.now, value, nil, {vague: true})
+    time_distance = distance_of_time_in_words(Time.zone.now, value, {vague: true})
     time_distance = time_distance + ' ago' if options[:ago]
     time_distance
   end
@@ -26,106 +29,55 @@ module ApplicationHelper
     flash_type_keys.include?(flash_type.to_s) ? flash_types[flash_type.to_sym] : 'alert-info'
   end
 
-  # for constructing links to the angular site
-  def make_listen_path(value, start_offset_sec = nil, end_offset_sec = nil)
-    fail ArgumentError, 'Must specify a value for make_listen_path.' if value.blank?
-
-    # obtain audio recording id
-    if value.is_a?(AudioRecording)
-      ar_id = value.id
-    elsif value.is_a?(AudioEvent)
-      ar_id = value.audio_recording_id
-    elsif value.is_a?(Bookmark)
-      ar_id = value.audio_recording_id
-    else
-      ar_id = value.to_i
-    end
-
-    # obtain offsets
-    if value.is_a?(AudioEvent)
-      start_offset_sec = value.start_time_seconds if start_offset_sec.blank?
-      end_offset_sec = value.end_time_seconds if end_offset_sec.blank?
-    elsif value.is_a?(Bookmark)
-      start_offset_sec = value.offset_seconds if start_offset_sec.blank?
-    end
-
-    start_offset_sec = end_offset_sec if start_offset_sec.blank? && !end_offset_sec.blank?
-    end_offset_sec = start_offset_sec if end_offset_sec.blank? && !start_offset_sec.blank?
-
-    link = "/listen/#{ar_id}"
-
-    if start_offset_sec.blank? && end_offset_sec.blank?
-      link
-    else
-      segment_duration_seconds = 30
-
-      offset_start_rounded = (start_offset_sec / segment_duration_seconds).floor * segment_duration_seconds
-      offset_end_rounded = (end_offset_sec / segment_duration_seconds).floor * segment_duration_seconds
-      offset_end_rounded += (offset_start_rounded == offset_end_rounded ? segment_duration_seconds : 0)
-
-      "#{link}?start=#{offset_start_rounded}&end=#{offset_end_rounded}"
-    end
-
+  def nav_item(options)
+    render partial: 'shared/nav_item', locals: options
   end
 
-  def make_library_path(ar_value, ae_value = nil)
-    fail ArgumentError, 'Must provide audio recording id.' if ar_value.blank?
-
-    ar_id, ae_id = nil
-
-    # obtain audio recording id
-    if ar_value.is_a?(AudioRecording)
-      ar_id = ar_value.id
-    elsif ar_value.is_a?(AudioEvent)
-      ar_id = ar_value.audio_recording_id
-      ae_id = ar_value.id
-    else
-      ar_id = ar_value.to_i
-    end
-
-    # obtain audio event id
-    if ae_value.is_a?(AudioEvent)
-      ae_id = ae_value.id
-    elsif !ae_value.blank?
-      ae_id = ae_value.to_i
-    end
-
-    fail ArgumentError, 'Must provide audio event id' if ae_id.blank?
-
-    "/library/#{ar_id}/audio_events/#{ae_id}"
+  def destroy_button(href, model_name, icon = 'trash')
+    render partial: 'shared/nav_button', locals: {
+        href: href,
+        title: t('helpers.titles.destroy') + ' ' + t('baw.shared.links.' + model_name + '.title').downcase,
+        tooltip: t('helpers.tooltips.destroy', model: model_name),
+        icon: icon,
+        method: :delete,
+        confirm: t('helpers.confirm.destroy', model: model_name)
+    }
   end
 
-  def make_library_tag_search_path(tag_text)
-    "/library?reference=all&tagsPartial=#{tag_text}"
+  def edit_link(href, model_name, icon = 'pencil')
+    model_text = t('baw.shared.links.' + model_name + '.title').downcase
+    words = model_text.split.size == 1 && model_text.singularize == model_text ? 1 : 2
+    render partial: 'shared/nav_item', locals: {
+        href: href,
+        title: t('helpers.titles.edit', count: words) + ' ' + model_text,
+        tooltip: t('helpers.tooltips.edit', model: model_name),
+        icon: icon
+    }
   end
 
-  def make_visualise_path(value)
-    fail ArgumentError, 'Must provide project or site' if value.blank?
-
-    link = '/visualize?'
-
-    if value.is_a?(Project)
-      "#{link}projectId=#{value.id}"
-    elsif value.is_a?(Site)
-      "#{link}siteId=#{value.id}"
-    else
-      fail ArgumentError, "Must provide project or site, got #{value.class}"
-    end
+  def new_link(href, model_name, icon = 'plus')
+    render partial: 'shared/nav_item', locals: {
+        href: href,
+        title: t('helpers.titles.new') + ' ' + t('baw.shared.links.' + model_name + '.title').downcase,
+        tooltip: t('helpers.tooltips.new', model: model_name),
+        icon: icon
+    }
   end
 
-  # create annotation download link for a user
-  def make_user_annotations_path(user_value)
-    user_id = user_value.is_a?(User) ? user_value.id : user_value.to_i
-    user_tz = user_value.is_a?(User) && !user_value.rails_tz.blank? ? user_value.rails_tz : 'UTC'
-    data_request_path(selected_user_id: user_id, selected_timezone_name: user_tz)
+  def listen_link(site)
+    play_details = site.get_bookmark_or_recording
+    play_link = play_details.blank? ? nil : make_listen_path(play_details[:audio_recording], play_details[:start_offset_seconds])
+
+    return nil if play_link.blank?
+
+    render partial: 'shared/nav_item', locals: {
+        href: play_link,
+        title: t('baw.shared.links.listen.long_title'),
+        tooltip: t('baw.shared.links.listen.description'),
+        icon: 'headphones'
+    }
   end
 
-  # create annotations download link for a site
-  def make_site_annotations_path(project_value, site_value)
-    project_id = project_value.is_a?(Project) ? project_value.id : project_value.to_i
-    site_id = site_value.is_a?(Site) ? site_value.id : site_value.to_i
-    site_tz = site_value.is_a?(Site) && !site_value.rails_tz.blank? ? site_value.rails_tz : 'UTC'
-    data_request_path(selected_project_id: project_id, selected_site_id: site_id, selected_timezone_name: site_tz)
-  end
+
 
 end

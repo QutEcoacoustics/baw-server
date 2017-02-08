@@ -1,6 +1,6 @@
 - content_for :title, 'Data Request'
+- @info_bar = {title: t('baw.shared.links.home.title'),  icon: 'home'}
 
-= render partial: 'shared/sidebar_public', locals: {user_show: @user, user_current: current_user}
 
 %div.col-md-12
 
@@ -12,7 +12,8 @@
       %li Then, choose the site you want to download annotations for
       %li
         Finally, click the
-        %i Annotations (CSV)
+        %i
+          = t('baw.shared.links.annotations_download.title')
         link
   - else
     %h2 Annotations Download

@@ -103,7 +103,7 @@ class Site < ActiveRecord::Base
 
   def update_location_obfuscated(current_user)
     Access::Core.check_orphan_site!(self)
-    is_owner = Access::Core.can_any?(current_user, :owner, self.projects.includes(:creator))
+    is_owner = Access::Core.can_any?(current_user, :owner, self.projects)
 
     # obfuscate if level is less than owner
     @location_obfuscated = !is_owner

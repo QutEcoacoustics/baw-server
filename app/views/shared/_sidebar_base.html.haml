@@ -1,18 +1,30 @@
 -# locals: user_show, user_current
-%li{class: ('active' if current_page?(root_path))}
-  = link_to t('baw.shared.links.home.title'), root_path,  title: t('baw.shared.links.home.description'), data: {toggle: 'tooltip',  placement: 'right'}
-- if can? :index, Project
-  %li{class: ('active' if current_page?(projects_path))}
-    = link_to t('baw.shared.links.projects.title'), projects_path, title: t('baw.shared.links.projects.description'), data: {toggle: 'tooltip',  placement: 'right'}
-- if current_user.blank?
-  %li{class: ('active' if current_page?(new_user_session_path))}
-    = link_to t('devise.shared.links.sign_in'), new_user_session_path, title: t('devise.shared.links.sign_in'), data: {toggle: 'tooltip',  placement: 'right'}
-  %li{class: ('active' if current_page?(new_user_registration_path))}
-    = link_to t('devise.shared.links.sign_up'), new_user_registration_path, title: t('baw.shared.links.register.description'), data: {toggle: 'tooltip',  placement: 'right'}
-- else
-  - is_own_profile = User.same_user?(current_user, @user)
-  - is_own_profile_path = is_own_profile ? User.profile_paths(@user).any?{ |p| current_page?(p)} : false
-  %li{class: ('active' if is_own_profile_path)}
-    = link_to t('baw.shared.links.profile.title'), my_account_path, title: t('baw.shared.links.profile.description'), data: {toggle: 'tooltip',  placement: 'right'}
-  %li{class: ('active' if current_page?(audio_events_user_account_path(current_user)))}
-    = link_to t('baw.shared.links.annotations.title'), audio_events_user_account_path(current_user), title: t('baw.shared.links.annotations.description'), data: {toggle: 'tooltip',  placement: 'right'}
+-#%li{class: ('active' if current_page?(root_path))}
+-#  = link_to t('baw.shared.links.home.title'), root_path,  title: t('baw.shared.links.home.description'), data: {toggle: 'tooltip',  placement: 'right'}
+-#- if can? :index, Project
+-#  %li{class: ('active' if current_page?(projects_path))}
+-#    = link_to t('baw.shared.links.projects.title'), projects_path, title: t('baw.shared.links.projects.description'), data: {toggle: 'tooltip',  placement: 'right'}
+-#- if current_user.blank?
+-#  %li{class: ('active' if current_page?(new_user_session_path))}
+-#    = link_to t('devise.shared.links.sign_in'), new_user_session_path, title: t('devise.shared.links.sign_in'), data: {toggle: 'tooltip',  placement: 'right'}
+-#  %li{class: ('active' if current_page?(new_user_registration_path))}
+-#    = link_to t('devise.shared.links.sign_up'), new_user_registration_path, title: t('baw.shared.links.register.description'), data: {toggle: 'tooltip',  placement: 'right'}
+-#- else
+-#  - is_own_profile = User.same_user?(current_user, @user)
+-#  - is_own_profile_path = is_own_profile ? User.profile_paths(@user).any?{ |p| current_page?(p)} : false
+-#  %li{class: ('active' if is_own_profile_path)}
+-#    = link_to t('baw.shared.links.profile.title'), my_account_path, title: t('baw.shared.links.profile.description'), data: {toggle: 'tooltip',  placement: 'right'}
+-#  %li{class: ('active' if current_page?(audio_events_user_account_path(current_user)))}
+-#    = link_to t('baw.shared.links.annotations.title'), audio_events_user_account_path(current_user), title: t('baw.shared.links.annotations.description'), data: {toggle: 'tooltip',  placement: 'right'}
+
+
+- menu_definition.each do |item|
+  - if item.nil?
+    %hr
+  - else
+    = render partial: 'shared/nav_item', locals: item
+
+-# Old style escape (just in case I missed anything)
+- if content_for?(:left_sidebar)
+  %hr
+  = content_for(:left_sidebar)
