@@ -1,18 +1,53 @@
 # Changelog
 
 ## Unreleased
+
+## [Release 1.1.0](https://github.com/QutBioacoustics/baw-server/releases/tag/1.1.0)
+
+Our major new feature in this release is support for user based analysis-jobs!
+ - 2017-02-01
+   - Brand new design for our secondary navigation menu. Should be much easier
+   for users to navidate through our menus now. 
+   See [#313](https://github.com/QutBioacoustics/baw-server/pull/313)
+ - 2017-01-23
+   - Fixed an important bug that prevented high quality audio data from being
+   sent to users on the listen page. There were several bugs in the byte
+   range request code.
+   See [#319](https://github.com/QutBioacoustics/baw-server/pull/319)
+ - 2017-01-06
+   - Fix flash notifications. A notification consisting of _true_ no longer 
+   flashes up when a user comes back to the site with an expires session.
+   See [#242](https://github.com/QutBioacoustics/baw-server/issues/242)
+ - 2016-12-11
+   - The REST API no longer returns every site (even those not in the project)
+   when a site listing of an empty project is requested.
+   See [#312](https://github.com/QutBioacoustics/baw-server/pull/312)
+   - The annotation downloader no longer return deleted audio events
+   See [#310](https://github.com/QutBioacoustics/baw-server/pull/310)
+ - 2016-12-04
+   - The REST API now better handles malformed payloads.
+   See [#309](https://github.com/QutBioacoustics/baw-server/pull/309)
+ - 2016-11-25
+   - Further refinements to analysis jobs, See
+       - [f9e2036](https://github.com/QutBioacoustics/baw-server/commit/f9e2036b7190279577a9469f37146e41f2f139e4)
+       - [8b770bf](https://github.com/QutBioacoustics/baw-server/commit/8b770bfccbe9b09df9973e3a7955f6542195e0b1)
+       - [5fd6970](https://github.com/QutBioacoustics/baw-server/commit/5fd6970b6418ca19f5381ef6aef25de7e39125ca)
+ - 2016-10-20
+   - Enhanced annotation download page to make the choices clearer for users
+   See [#304](https://github.com/QutBioacoustics/baw-server/commit/114831322a8dd2b329f71e130b4f9afbfaf39582)
  - 2016-09-16
-    - Added support for partial payloads for analysis jobs items [TODO]
+   - Added support for partial payloads for analysis jobs items
+   See [5f96b96](https://github.com/QutBioacoustics/baw-server/commit/5f96b963480c3192533759f9fdf8fa2cfb08f1f0)
+- 
  - 2016-09-13
-    - Updated gems [6e469cf](https://github.com/QutBioacoustics/baw-server/commit/6e469cf4be7e16ce632f5b380e7c9101fea36bdb)
+   - Updated gems [6e469cf](https://github.com/QutBioacoustics/baw-server/commit/6e469cf4be7e16ce632f5b380e7c9101fea36bdb)
  - 2016-08-10
-    - Removing support for Ruby 2.2.3 [eac760c](https://github.com/QutBioacoustics/baw-server/commit/eac760c4351131a05fdcce6fdd2dce1e8d0a6568)
+   - Removing support for Ruby 2.2.3 [eac760c](https://github.com/QutBioacoustics/baw-server/commit/eac760c4351131a05fdcce6fdd2dce1e8d0a6568)
  - 2016-08-09
-    - Fix: Split out analysis jobs items API from analysis results API.
-      WARNING: BROKEN REST API. See [#301](https://github.com/QutBioacoustics/baw-server/issues/301)
+   - Fix: Split out analysis jobs items API from analysis results API.
+    See [#301](https://github.com/QutBioacoustics/baw-server/issues/301)
  - 2016-08-03
-   - Feature: Analysis Jobs items integration. Analysis jobs have been setup and their complete workflows tested and 
-     integrated. See [#300](https://github.com/QutBioacoustics/baw-server/pull/300)
+   - Feature: Analysis Jobs items integration. Analysis jobs have been setup and their complete workflows tested and integrated. See [#300](https://github.com/QutBioacoustics/baw-server/pull/300)
      
 ## [Release 0.19.2](https://github.com/QutBioacoustics/baw-server/releases/tag/0.19.2) (2016-06-26)
 
