@@ -12,10 +12,10 @@
       %ul.nav.navbar-nav
         %li{class: ('active' if request.path.start_with?(projects_path))}
           %a{href: projects_path}= t('baw.shared.links.projects.title')
-        %li{class: ('active' if request.original_fullpath == '/listen')}
-          %a{href: '/listen'}= t('baw.shared.links.listen.title')
-        %li{class: ('active' if request.original_fullpath == '/library')}
-          %a{href: '/library'}= t('baw.shared.links.library.title')
+        %li{class: ('active' if request.original_fullpath == make_listen_path)}
+          %a{href: make_listen_path }= t('baw.shared.links.listen.title')
+        %li{class: ('active' if request.original_fullpath == make_library_path)}
+          %a{href: make_library_path }= t('baw.shared.links.library.title')
         %li{class: 'dropdown'}
           %a.dropdown-toggle{ aria: {expanded: 'false'}, data: {toggle: 'dropdown'}, href: '#', role: 'button'}
             = Settings.organisation_names.custom_menu.header_title
@@ -33,7 +33,7 @@
           %li{class: ('active' if current_page?(new_user_session_path))}
             %a{href: new_user_session_path}= t('devise.sessions.new.sign_in')
         - else
-          - if Access::Check.is_admin?(current_user)
+          - if Access::Core.is_admin?(current_user)
             %li{class: ('active' if current_page?(admin_dashboard_path))}
               %a{href: admin_dashboard_path}
                 %span.fa.fa-cog

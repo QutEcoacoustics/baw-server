@@ -1,0 +1,28 @@
+%p
+  Hello,
+
+%p
+  You are receiving this email because you <strong>created a new</strong> analysis job.
+
+
+%p<
+  Your analysis job (
+  =@info[:analysis_job][:name]
+  ) will be processed by
+  =Settings.organisation_names.organisation_name
+  \.
+
+%p<
+  You can get progress updates on your analysis job by clicking
+  =link_to "here", analysis_job_url(@info[:analysis_job])
+  \.
+
+Additional information:
+%p<
+  Date stamp:
+  =@info[:datestamp]
+%p
+  Analysis Job ID: #{ @info[:analysis_job][:id] }
+
+Regards,
+%br= Settings.organisation_names.organisation_name

@@ -1,10 +1,9 @@
 - content_for :meta_title, "Project #{@project.name} | Assign Sites"
 - content_for :page_title, @project.name
+- @info_bar = {model: @project, icon: 'globe'}
+- set_current_menu_item(:project, {title: t('baw.shared.links.site_mapping.title')  })
 
-= render partial: 'shared/sidebar_project', locals: {project: @project}
 
-- content_for :right_sidebar do
-  = render partial: 'shared/sidebar_metadata_heading', locals: {title: 'Project', icon_class: 'home'}
 
 %h2
   Assign Sites

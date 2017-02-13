@@ -15,7 +15,7 @@ module Admin
     private
 
     def verify_admin
-      fail CanCan::AccessDenied, 'Administrator access only.' unless Access::Check.is_admin?(current_user)
+      fail CanCan::AccessDenied, 'Administrator access only.' unless Access::Core.is_admin?(current_user)
     end
   end
 end

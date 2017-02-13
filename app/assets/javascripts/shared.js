@@ -1,5 +1,24 @@
 $(document).ready(function () {
-    $('body').tooltip({selector: "[data-toggle~='tooltip']"})
+    var body = $('body');
+    body.tooltip({
+        selector: "[data-toggle~='tooltip']",
+        container: 'body',
+        placement: function getPlacement(tooltip, element) {
+            var rect = element.getBoundingClientRect(),
+                top = rect.top,
+                left = rect.left,
+                docHeight = body.outerHeight(),
+                docWidth = body.outerWidth(),
+                vertical = 0.5 * docHeight - top,
+                verticalPlacement = vertical > 0 ? 'bottom' : 'top',
+                horizontal = 0.5 * docWidth - left,
+                horizontalPlacement = horizontal > 0 ? 'right' : 'left',
+                // if the page is wider than taller, choose horizontal
+                //placement = Math.abs(horizontal) > Math.abs(vertical) ?  horizontalPlacement : verticalPlacement;
+                placement = rect.width + 200 < docWidth ? horizontalPlacement : verticalPlacement;
+            return placement
+        }
+    })
 });
 
 

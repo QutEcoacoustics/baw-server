@@ -1,5 +1,6 @@
 require 'rails_helper'
 require 'helpers/resque_helper'
+require 'aasm/rspec'
 
 describe AnalysisJobsItem, type: :model do
   let!(:analysis_jobs_item) { create(:analysis_jobs_item) }
@@ -11,7 +12,7 @@ describe AnalysisJobsItem, type: :model do
   it 'cannot be created when status is not new' do
     expect {
       create(:analysis_jobs_item, status: nil)
-    }.to raise_error
+    }.to raise_error(AASM::NoDirectAssignmentError, /direct assignment of AASM column has been disabled/)
   end
 
   it 'created_at should be set by rails' do
@@ -36,11 +37,6 @@ describe AnalysisJobsItem, type: :model do
 
   it { should validate_uniqueness_of(:queue_id) }
 
-  it {
-    is_expected.to enumerize(:status)
-                       .in(*AnalysisJobsItem::AVAILABLE_ITEM_STATUS_SYMBOLS)
-                       .with_default(:new)
-  }
 
   it 'does not allow dates greater than now for created_at' do
     analysis_jobs_item.created_at = Time.zone.now + 1.day
@@ -62,99 +58,50 @@ describe AnalysisJobsItem, type: :model do
     expect(analysis_jobs_item).not_to be_valid
   end
 
-  describe 'analysis_jobs_item state transitions' do
-    [
-        # old, new, []shouldPass|shouldPassAndUpdateField]
-        [:new, :new, true],
-        [:new, :queued, :queued_at],
-        [:new, :working, false],
-        [:new, :successful, false],
-        [:new, :failed, false],
-        [:new, :timed_out, false],
-        [:new, :cancelled, :completed_at],
-        [:new, nil, false],
-        [:queued, :new, false],
-        [:queued, :queued, true],
-        [:queued, :working, :work_started_at],
-        [:queued, :successful, false],
-        [:queued, :failed, false],
-        [:queued, :timed_out, false],
-        [:queued, :cancelled, :completed_at],
-        [:queued, nil, false],
-        [:working, :new, false],
-        [:working, :queued, false],
-        [:working, :working, true],
-        [:working, :successful, :completed_at],
-        [:working, :failed, :completed_at],
-        [:working, :timed_out, :completed_at],
-        [:working, :cancelled, :completed_at],
-        [:working, nil, false],
-        [:successful, :new, false],
-        [:successful, :queued, false],
-        [:successful, :working, false],
-        [:successful, :successful, true],
-        [:successful, :failed, false],
-        [:successful, :timed_out, false],
-        [:successful, :cancelled, false],
-        [:successful, nil, false],
-        [:failed, :new, false],
-        [:failed, :queued, false],
-        [:failed, :working, false],
-        [:failed, :successful, false],
-        [:failed, :failed, true],
-        [:failed, :timed_out, false],
-        [:failed, :cancelled, false],
-        [:failed, nil, false],
-        [:timed_out, :new, false],
-        [:timed_out, :queued, false],
-        [:timed_out, :working, false],
-        [:timed_out, :successful, false],
-        [:timed_out, :failed, false],
-        [:timed_out, :timed_out, true],
-        [:timed_out, :cancelled, false],
-        [:timed_out, nil, false],
-        [:cancelled, :new, false],
-        [:cancelled, :queued, false],
-        [:cancelled, :working, false],
-        [:cancelled, :successful, false],
-        [:cancelled, :failed, false],
-        [:cancelled, :timed_out, false],
-        [:cancelled, :cancelled, true],
-        [:cancelled, nil, false],
-        [nil, :new, false],
-        [nil, :queued, false],
-        [nil, :working, false],
-        [nil, :successful, false],
-        [nil, :failed, false],
-        [nil, :timed_out, false],
-        [nil, :cancelled, false],
-        # if all the other combinations hold true this case will never happen anyway.
-        # note: nil is a valid value for system queries, but we should never be able to
-        # transition the model to nil (other cases).
-        [nil, nil, true]
-    ].each do |test_case|
+  describe 'state machine' do
+    let(:analysis_jobs_item) {
+      create(:analysis_jobs_item)
+    }
 
-      it "tests state transition #{ test_case[0].to_s }→#{ test_case[1].to_s }" do
+    it 'defines the queue event' do
+      expect(analysis_jobs_item).to transition_from(:new).to(:queued).on_event(:queue)
+    end
 
-        analysis_jobs_item.write_attribute(:status, test_case[0])
+    it 'defines the work event' do
+      expect(analysis_jobs_item).to transition_from(:queued).to(:working).on_event(:work)
+    end
 
-        date_field = test_case[2]
-        if date_field
-          if date_field.is_a? Symbol
-            first_date = analysis_jobs_item[date_field]
-          end
+    it 'defines the succeed event' do
+      expect(analysis_jobs_item).to transition_from(:working).to(:successful).on_event(:succeed)
+      expect(analysis_jobs_item).to transition_from(:cancelling).to(:successful).on_event(:succeed)
+      expect(analysis_jobs_item).to transition_from(:cancelled).to(:successful).on_event(:succeed)
+    end
 
-          analysis_jobs_item.status = test_case[1]
+    it 'defines the fail event' do
+      expect(analysis_jobs_item).to transition_from(:working).to(:failed).on_event(:fail)
+      expect(analysis_jobs_item).to transition_from(:cancelling).to(:failed).on_event(:fail)
+      expect(analysis_jobs_item).to transition_from(:cancelled).to(:failed).on_event(:fail)
+    end
 
-          expect(analysis_jobs_item.status == test_case[1]).to be true
-          expect(analysis_jobs_item[date_field]).to_not eq(first_date) if date_field.is_a? Symbol
-        else
-          expect {
-            analysis_jobs_item.status = test_case[1]
-          }.to raise_error
+    it 'defines the time_out event' do
+      expect(analysis_jobs_item).to transition_from(:working).to(:timed_out).on_event(:time_out)
+      expect(analysis_jobs_item).to transition_from(:cancelling).to(:timed_out).on_event(:time_out)
+      expect(analysis_jobs_item).to transition_from(:cancelled).to(:timed_out).on_event(:time_out)
+    end
 
-        end
-      end
+    it 'defines the cancel event' do
+      expect(analysis_jobs_item).to transition_from(:queued).to(:cancelling).on_event(:cancel)
+    end
+
+    it 'defines the confirm_cancel event' do
+      expect(analysis_jobs_item).to transition_from(:cancelling).to(:cancelled).on_event(:confirm_cancel)
+    end
+
+    it 'defines the retry event' do
+      expect(analysis_jobs_item).to transition_from(:failed).to(:queued).on_event(:retry)
+      expect(analysis_jobs_item).to transition_from(:timed_out).to(:queued).on_event(:retry)
+      expect(analysis_jobs_item).to transition_from(:cancelling).to(:queued).on_event(:retry)
+      expect(analysis_jobs_item).to transition_from(:cancelled).to(:queued).on_event(:retry)
     end
 
   end
@@ -164,7 +111,7 @@ describe AnalysisJobsItem, type: :model do
     create_entire_hierarchy
 
     let!(:second_project) {
-      Creation::Common.create_project(other_user)
+      Creation::Common.create_project(no_access_user)
     }
 
     # The second analysis jobs item allows us to test for different permission combinations
@@ -172,8 +119,7 @@ describe AnalysisJobsItem, type: :model do
     # access to the results
     let!(:second_analysis_jobs_item) {
       project = second_project
-      permission = FactoryGirl.create(:read_permission, creator: owner_user, user: other_user, project: project)
-      site = Creation::Common.create_site(other_user, project)
+      site = Creation::Common.create_site(no_access_user, project)
       audio_recording = Creation::Common.create_audio_recording(owner_user, owner_user, site)
       saved_search.projects << project
 
@@ -184,7 +130,7 @@ describe AnalysisJobsItem, type: :model do
       # give the original user permissions to access the second project
       permission = FactoryGirl.create(:read_permission, creator: owner_user, user: reader_user, project: second_project)
 
-      query = Access::Query.analysis_jobs_items(analysis_job, reader_user)
+      query = Access::ByPermission.analysis_jobs_items(analysis_job, reader_user)
 
       rows = query.all
 
@@ -195,7 +141,7 @@ describe AnalysisJobsItem, type: :model do
     end
 
     it 'ensures users with access to one project only get some recordings when new projects added' do
-      query = Access::Query.analysis_jobs_items(analysis_job, reader_user)
+      query = Access::ByPermission.analysis_jobs_items(analysis_job, reader_user)
 
       rows = query.all
 
@@ -206,7 +152,7 @@ describe AnalysisJobsItem, type: :model do
     end
 
     it 'ensures users with access to one projects get only some recordings' do
-      query = Access::Query.analysis_jobs_items(analysis_job, other_user)
+      query = Access::ByPermission.analysis_jobs_items(analysis_job, no_access_user)
 
       rows = query.all
 
@@ -273,18 +219,17 @@ describe AnalysisJobsItem, type: :model do
 
       # the values from the second will be our case
       let!(:second_recording) {
-        project = Creation::Common.create_project(other_user)
-        permission = FactoryGirl.create(:read_permission, creator: owner_user, user: other_user, project: project)
-        site = Creation::Common.create_site(other_user, project)
+        project = Creation::Common.create_project(no_access_user)
+        site = Creation::Common.create_site(no_access_user, project)
         audio_recording = Creation::Common.create_audio_recording(owner_user, owner_user, site)
         audio_recording
       }
 
       it 'only returns recordings the user has access too' do
-        user = other_user
+        user = no_access_user
 
         # augment the system with query with permissions
-        query = Access::Query.analysis_jobs_items(nil, user, true)
+        query = Access::ByPermission.analysis_jobs_items(nil, user, true)
 
         rows = query.all
 
@@ -292,5 +237,36 @@ describe AnalysisJobsItem, type: :model do
         expect(rows[0].audio_recording_id).to be second_recording.id
       end
     end
+  end
+
+  context 'job items' do
+
+    it 'extracts the correct payloads' do
+      project_1 = create(:project)
+      user = project_1.creator
+      site_1 = create(:site, projects: [project_1], creator: user)
+
+      create(:audio_recording, site: site_1, creator: user, uploader: user)
+
+      project_2 = create(:project, creator: user)
+      site_2 = create(:site, projects: [project_2], creator: user)
+      audio_recording_2 = create(:audio_recording, site: site_2, creator: user, uploader: user)
+
+      ss = create(:saved_search, creator: user, stored_query: {id: {in: [audio_recording_2.id]}})
+      s = create(:script, creator: user, verified: true)
+
+      aj = create(:analysis_job, creator: user, script: s, saved_search: ss)
+
+      payload = AnalysisJobsItem.create_action_payload(aj, audio_recording_2)
+
+      # ensure result is as expected
+      expect(payload.is_a?(Hash)).to be_truthy
+      expect(payload[:command_format]).to eq(aj.script.executable_command)
+      expect(payload[:uuid]).to eq(audio_recording_2.uuid)
+      expect(payload[:id]).to eq(audio_recording_2.id)
+      expect(payload[:datetime_with_offset]).to eq(audio_recording_2.recorded_date.iso8601(3))
+      expect(payload[:job_id]).to eq(aj.id)
+    end
+
   end
 end

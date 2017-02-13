@@ -1,10 +1,7 @@
 - content_for :meta_title, "Project #{@project.name} | New Site"
 - content_for :page_title, @project.name
-
-= render partial: 'shared/sidebar_project', locals: {project: @project}
-
-- content_for :right_sidebar do
-  = render partial: 'shared/sidebar_metadata_heading', locals: {title: 'Project', icon_class: 'home'}
+- @info_bar = {title: t('baw.shared.links.project.title'),  icon: 'home'}
+- menu_new_link(:project, new_project_site_path(@project), 'site')
 
 %h2
   New Site

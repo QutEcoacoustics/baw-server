@@ -1,5 +1,6 @@
 require 'rails_helper'
 require 'helpers/resque_helper'
+require 'aasm/rspec'
 
 describe AnalysisJob, type: :model do
   it 'has a valid factory' do
@@ -10,9 +11,6 @@ describe AnalysisJob, type: :model do
   it { is_expected.to belong_to(:creator).with_foreign_key(:creator_id) }
   it { is_expected.to belong_to(:updater).with_foreign_key(:updater_id) }
   it { is_expected.to belong_to(:deleter).with_foreign_key(:deleter_id) }
-
-  # .with_predicates(true).with_multiple(false)
-  it { is_expected.to enumerize(:overall_status).in(*AnalysisJob::AVAILABLE_JOB_STATUS) }
 
   it { is_expected.to validate_presence_of(:name) }
   it 'is invalid without a name' do
@@ -25,10 +23,11 @@ describe AnalysisJob, type: :model do
   end
   it 'should ensure name is unique  (case-insensitive)' do
     create(:analysis_job, name: 'There ain\'t room enough in this town for two of us sonny!')
-    as2 = build(:analysis_job, name: 'THERE AIN\'T ROOM ENOUGH IN THIS TOWN FOR TWO OF US SONNY!')
-    expect(as2).not_to be_valid
-    expect(as2.valid?).to be_falsey
-    expect(as2.errors[:name].size).to eq(1)
+    aj2 = build(:analysis_job, name: 'THERE AIN\'T ROOM ENOUGH IN THIS TOWN FOR TWO OF US SONNY!')
+
+    expect(aj2).not_to be_valid
+    expect(aj2.valid?).to be_falsey
+    expect(aj2.errors[:name].size).to eq(1)
   end
 
   it 'fails validation when script is nil' do
@@ -55,66 +54,77 @@ describe AnalysisJob, type: :model do
     expect(build(:analysis_job, saved_search: nil)).not_to be_valid
   end
 
-  context 'job items' do
 
-    it 'extracts the correct payloads' do
-      project_1 = create(:project)
-      user = project_1.creator
-      site_1 = create(:site, projects: [project_1], creator: user)
 
-      create(:audio_recording, site: site_1, creator: user, uploader: user)
+  describe 'state machine' do
+    let(:analysis_job) {
+       create(:analysis_job)
+    }
 
-      project_2 = create(:project, creator: user)
-      site_2 = create(:site, projects: [project_2], creator: user)
-      audio_recording_2 = create(:audio_recording, site: site_2, creator: user, uploader: user)
+    it 'defines the initialize_workflow event (allows before_save->new)' do
+      analysis_job = build(:analysis_job, overall_status_modified_at: nil)
 
-      ss = create(:saved_search, creator: user, stored_query: {id: {in: [audio_recording_2.id]}})
-      s = create(:script, creator: user, verified: true)
-
-      aj = create(:analysis_job, creator: user, script: s, saved_search: ss)
-
-      payload = aj.create_payload(audio_recording_2)
-      result = aj.begin_work(user)
-      
-      # ensure result is as expected
-      expect(result.size).to eq(1)
-      expect(result[0].is_a?(Hash)).to be_truthy
-      expect(result[0][:payload][:command_format]).to eq(aj.script.executable_command)
-      expect(result[0][:error]).to be_blank
-      expect(result[0][:payload]).to eq(payload)
-      expect(result[0][:result].is_a?(String)).to be_truthy
-      expect(result[0][:result].size).to eq(32)
+      expect(analysis_job).to transition_from(:before_save).to(:new).on_event(:initialize_workflow)
     end
 
-    it 'enqueues and processes payloads' do
-      project_1 = create(:project)
-      user = project_1.creator
-      site_1 = create(:site, projects: [project_1], creator: user)
+    it 'can\'t transition to new twice' do
+      analysis_job = build(:analysis_job, overall_status_modified_at: nil)
 
-      create(:audio_recording, site: site_1, creator: user, uploader: user)
+      analysis_job.initialize_workflow
 
-      project_2 = create(:project, creator: user)
-      site_2 = create(:site, projects: [project_2], creator: user)
-      audio_recording_2 = create(:audio_recording, site: site_2, creator: user, uploader: user)
-
-      ss = create(:saved_search, creator: user, stored_query: {id: {in: [audio_recording_2.id]}})
-      s = create(:script, creator: user, verified: true)
-
-      aj = create(:analysis_job, creator: user, script: s, saved_search: ss)
-
-      result = aj.begin_work(user)
-
-      queue_name = Settings.actions.analysis.queue
-
-      expect(Resque.size(queue_name)).to eq(1)
-      worker, job = emulate_resque_worker(queue_name, false, true)
-      expect(Resque.size(queue_name)).to eq(0)
-
-      #expect(BawWorkers::ResqueApi.jobs.inspect).to eq(1)
-
-
+      expect(analysis_job).to_not allow_event(:initialize_workflow)
     end
 
+    it 'calls initialize_workflow when created' do
+      analysis_job = build(:analysis_job)
+
+      allow(analysis_job).to receive(:save!).and_call_original
+      allow(analysis_job).to receive(:initialize_workflow).and_call_original
+
+      analysis_job.save!
+
+      expect(analysis_job).to have_received(:save!)
+      expect(analysis_job).to have_received(:initialize_workflow).once
+    end
+
+    it 'defines the prepare event' do
+      allow(analysis_job).to receive(:process!).and_return(nil)
+
+      expect(analysis_job).to transition_from(:new).to(:preparing).on_event(:prepare)
+    end
+
+    it 'defines the process event' do
+      allow(analysis_job).to receive(:all_job_items_completed?).and_return(false)
+      expect(analysis_job).to transition_from(:preparing).to(:processing).on_event(:process)
+    end
+
+    it 'defines the process event - and complete if all items are done!' do
+      allow(analysis_job).to receive(:all_job_items_completed?).and_return(true)
+      expect(analysis_job).to transition_from(:preparing).to(:completed).on_event(:process)
+    end
+
+    it 'defines the suspend event' do
+      expect(analysis_job).to transition_from(:processing).to(:suspended).on_event(:suspend)
+    end
+
+    it 'defines the resume event' do
+      expect(analysis_job).to transition_from(:suspended).to(:processing).on_event(:resume)
+    end
+
+    it 'defines the complete event' do
+      expect(analysis_job).to transition_from(:processing).to(:completed).on_event(:complete)
+    end
+
+    it 'defines the retry event - which does not work if all items successful' do
+      allow(analysis_job).to receive(:are_any_job_items_failed?).and_return(false)
+      allow(analysis_job).to receive(:retry_job).and_return(nil)
+      expect(analysis_job).not_to allow_event(:retry)
+    end
+
+    it 'defines the retry event' do
+      allow(analysis_job).to receive(:are_any_job_items_failed?).and_return(true)
+      expect(analysis_job).to transition_from(:completed).to(:processing).on_event(:retry)
+    end
   end
 
 end

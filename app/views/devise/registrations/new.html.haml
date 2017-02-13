@@ -1,12 +1,7 @@
 - content_for :meta_title, t('devise.shared.links.sign_up')
 - content_for :page_title, t('devise.registrations.new.sign_up')
+- @info_bar = {title: t('baw.shared.links.accounts.title'),  icon: 'user'}
 
-= render partial: 'shared/sidebar_devise',
-locals: { devise_mapping_o: devise_mapping,
-resource_class_o: resource_class,
-resource_name_o: resource_name,
-user_show: resource,
-user_current: current_user}
 
 = simple_form_for(resource, as: resource_name, url: registration_path(resource_name), html: { class: 'form-horizontal', method: :post }) do |f|
   = field_set_tag do
@@ -16,4 +11,5 @@ user_current: current_user}
     = f.input :password, label: t('devise.passwords.edit.new_password'), required: true, autofocus: true, placeholder: 'Password',
       hint: (t('devise.passwords.edit.hint_password_length',  minimum_password_length: @minimum_password_length) if @minimum_password_length)
     = f.input :password_confirmation, label: t('devise.passwords.edit.confirm_new_password'), required: true, placeholder: 'Confirm password'
+    = render partial: 'shared/recaptcha', locals: {data_item: resource, data_item_name: resource_name }
     = f.button :submit_cancel, t('devise.shared.links.sign_up'), class: 'btn-default'

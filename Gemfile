@@ -15,7 +15,7 @@ source 'https://rubygems.org'
 
 gem 'rails', '~> 4.2.4'
 gem 'rack-cors', '~> 0.4.0', require: 'rack/cors'
-gem 'responders', '~> 2.1.0'
+gem 'responders', '~> 2.3.0'
 
 # RAILS 3 compatibility gems
 # -------------------------------------
@@ -31,25 +31,25 @@ gem 'activesupport-json_encoder', git: 'https://github.com/rails/activesupport-j
 # Use SCSS for stylesheets
 gem 'sass-rails', '~> 5.0.3'
 # Use Uglifier as compressor for JavaScript assets
-gem 'uglifier', '>= 1.3.0'
+gem 'uglifier', '~> 3.0.0'
 # Use CoffeeScript for .js.coffee assets and views
-gem 'coffee-rails', '~> 4.1.0'
+gem 'coffee-rails', '~> 4.2.0'
 # See https://github.com/sstephenson/execjs#readme for more supported runtimes
 gem 'therubyracer', '~> 0.12.1', platforms: :ruby, require: 'v8'
 
 # Use jquery as the JavaScript library
-gem 'jquery-rails', '~> 4.1.0'
+gem 'jquery-rails', '~> 4.2.0'
 # Turbolinks makes following links in your web application faster. Read more: https://github.com/rails/turbolinks
 #gem 'turbolinks'
 # Build JSON APIs with ease. Read more: https://github.com/rails/jbuilder
-gem 'jbuilder', '~> 2.5.0'
+gem 'jbuilder', '~> 2.6.0'
 
 gem 'haml', '~> 4.0.6'
 gem 'haml-rails', '~> 0.9.0'
 
-gem 'simple_form', '~> 3.2.0'
-gem 'paperclip', '~> 4.3.0'
-gem 'kramdown', '~> 1.10.0'
+gem 'simple_form', '~> 3.3.0'
+gem 'paperclip', '~> 5.0.0'
+gem 'kramdown', '~> 1.12.0'
 
 # Bootstrap UI
 gem 'bootstrap-sass', '~> 3.3.4'
@@ -60,17 +60,20 @@ gem 'font-awesome-sass', '~> 4.6.2'
 # for rails 3, 4
 gem 'kaminari'
 gem 'dotiw','~> 3.1.1'
-gem 'recaptcha', '~> 1.3.0',  require: 'recaptcha/rails'
+gem 'recaptcha', '~> 3.3.0',  require: 'recaptcha/rails'
 
 # for proper timezone support
 gem 'tzinfo', '~> 1.2.2'
 gem 'tzinfo-data', '~> 1.2016'
 
+# for tying inflections into I18n
+gem 'i18n-inflector-rails', '~>1.0'
+
 # USERS & PERMISSIONS
 # -------------------------------------
 # https://github.com/plataformatec/devise/blob/master/CHANGELOG.md
 # http://joanswork.com/devise-3-1-update/
-gem 'devise', '~> 3.5.1'
+gem 'devise', '~> 4.2.0'
 gem 'devise-i18n'
 gem 'cancancan', '~> 1.15'
 gem 'role_model', '~> 0.8.1'
@@ -94,9 +97,17 @@ gem 'jc-validates_timeliness', '~> 3.1.1'
 # No longer used - incorporated the gem's functionality directly.
 #gem 'userstamp', git: 'https://github.com/theepan/userstamp.git'
 
-gem 'enumerize', '~> 1.0'
+gem 'enumerize', '~> 2.0'
 gem 'uuidtools', '~> 2.1.5'
-gem 'acts_as_paranoid', git: 'https://github.com/ActsAsParanoid/acts_as_paranoid.git', branch: :master, ref: 'ab31723bc1'
+
+# Note: if other modifications are made to the default_scope
+# there are manually constructed queries that need to be updated to match
+# (search for ':deleted_at' to find the relevant places)
+gem 'acts_as_paranoid', git: 'https://github.com/ActsAsParanoid/acts_as_paranoid.git', branch: :master, ref: 'c2db19554ddaedcac0a2b8d6a0563dea83c972c5'
+
+
+# for state machines
+gem 'aasm'
 
 # SETTINGS
 # -------------------------------------
@@ -105,19 +116,19 @@ require 'rbconfig'
 
 # MONITORING
 # -------------------------------------
-gem 'exception_notification', '~> 4.1.0'
-gem 'newrelic_rpm', '~> 3.15'
+gem 'exception_notification', '~> 4.2.0'
+gem 'newrelic_rpm', '~> 3.16'
 
 # Documentation & UI
 # -------------------------------------
 # these gems are required here to serve /doc url
-gem 'rspec_api_documentation', '~> 4.7.0'
+gem 'rspec_api_documentation', '~> 4.8.0'
 gem 'raddocs', '~> 1.0.0'
 
 # MEDIA
 # -------------------------------------
 # set to a specific commit when releasing to master branch
-gem 'baw-audio-tools', git: 'https://github.com/QutBioacoustics/baw-audio-tools.git', branch: :master, ref: 'f4ef9f775d'
+gem 'baw-audio-tools', git: 'https://github.com/QutBioacoustics/baw-audio-tools.git', branch: :master, ref: 'd8b0f4e2796c0c5ba5c2356b029a4019a9db8002'
 gem 'rack-rewrite', '~> 1.5.1'
 
 # ASYNC JOBS
@@ -126,7 +137,7 @@ gem 'resque', '~> 1.25.2'
 gem 'resque-job-stats', git: 'https://github.com/echannel/resque-job-stats.git', branch: :master, ref: '8932c036ae'
 gem 'resque-status', '~> 0.5.0'
 # set to a specific commit when releasing to master branch
-gem 'baw-workers', git: 'https://github.com/QutBioacoustics/baw-workers.git', branch: :master, ref: '18943af4b977749b9ec58bb566a8a30861f5fabc'
+gem 'baw-workers', git: 'https://github.com/QutBioacoustics/baw-workers.git', branch: :master, ref: 'b825d00e12e14a30f0358cff173fc1a26e6d73c6'
 
 
 # Gems restricted by environment and/or platform
@@ -142,9 +153,9 @@ group :development, :test do
 
   gem 'quiet_assets'
 
-  gem 'rack-mini-profiler', '~> 0.9.2'
+  gem 'rack-mini-profiler', '~> 0.10.0'
   gem 'i18n-tasks', '~> 0.9.0'
-  gem 'bullet', '~> 5.0.0'
+  gem 'bullet', '~> 5.2.0'
 
   # Spring speeds up development by keeping your application running in the background. Read more: https://github.com/rails/spring
   #gem 'spring', '~> 1.4.0'
@@ -155,13 +166,13 @@ group :development, :test do
   # bundle exec rake doc:rails generates the API under doc/api.
   gem 'sdoc', '~> 0.4.0'
 
-  gem 'thin', '~> 1.6.3'
+  gem 'thin', '~> 1.7.0'
 
-  gem 'notiffany', '~> 0.0.3'
-  gem 'guard', '~> 2.13.0'
-  gem 'guard-rspec', '~> 4.6.0'
+  gem 'notiffany', '~> 0.1.0'
+  gem 'guard', '~> 2.14.0'
+  gem 'guard-rspec', '~> 4.7.0'
   gem 'guard-yard', '~> 2.1.4', require: false
-  gem 'rubocop', '~> 0.39.0', require: false
+  gem 'rubocop', '~> 0.42.0', require: false
   gem 'haml_lint', require: false
 
   gem 'fakeredis', '~> 0.5.0', require: 'fakeredis/rspec'
@@ -187,21 +198,26 @@ group :development, :test do
   #gem 'debugger'
   # gem install traceroute --no-ri --no-rdoc
 
-  gem 'rspec-rails', '~> 3.4.0'
+  gem 'rspec-rails', '~> 3.5.0'
   gem 'factory_girl_rails', '~>  4.7.0'
   gem 'capybara', '~> 2.7.0'
 
-  gem 'rspec', '~> 3.4.0'
-  gem 'simplecov', '~> 0.11.1', require: false
+  gem 'rspec', '~> 3.5.0'
+  gem 'simplecov', '~> 0.12.0', require: false
   gem 'launchy', '~> 2.4.3'
   gem 'json_spec', '~> 1.1.4'
   gem 'database_cleaner', '~> 1.5.0'
 
-  gem 'coveralls', '~> 0.8.10', require: false
-  gem 'codeclimate-test-reporter', '~> 0.5.0', require: nil
+  gem 'coveralls', '~> 0.8.14', require: false
+  gem 'codeclimate-test-reporter', '~> 0.6.0', require: nil
 end
 
 group :test do
-  gem 'webmock', '~> 1.24.0'
+  gem 'webmock', '~> 2.1.0'
   gem 'shoulda-matchers', '< 3.0.0', require: false
+
+  gem 'rspec-mocks', '~>3.5.0'
+
+  # use to mock time in tests - currently not needed
+  #gem 'timecop'
 end

@@ -5,6 +5,11 @@
     accessible by
     = image_tag @user.image.url(:spanhalf), alt: @user.user_name
     = @user.user_name
+- @info_bar = {title: t('baw.shared.links.profile_projects.title'),  icon: 'globe'}
+- set_current_menu_item(:my_profile, {href: projects_user_account_path(@user),
+      title: t('baw.shared.links.profile_projects.title'),
+      tooltip: t('baw.shared.links.profile_projects.description', user_name: @user.user_name),
+      icon: 'globe' })
 
 = render partial: 'shared/sidebar_user', locals: {user_show: @user, user_current: current_user}
 
@@ -38,9 +43,10 @@
         %td= link_to project.name, project_path(project)
         %td= project.sites.size
         %td
-          - actual_level = Access::Level.project(@user, project)
+          - actual_levels = Access::Core.user_levels(@user, project)
+          - actual_level = Access::Core.highest(actual_levels)
           - level_name = Access::Core.get_level_name(actual_level)
-          - if Access::Check.allowed?(:writer, actual_level)
+          - if Access::Core.allowed?(:owner, actual_level)
             = link_to level_name, project_permissions_path(project)
           - else
             = level_name

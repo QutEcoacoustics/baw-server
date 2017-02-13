@@ -52,7 +52,7 @@ Rails.application.configure do
   # config.action_controller.action_on_unpermitted_parameters property in your environment files.
   # If set to :log the unpermitted attributes will be logged, if set to :raise an exception will
   # be raised.
-  config.action_controller.action_on_unpermitted_parameters = :log
+  config.action_controller.action_on_unpermitted_parameters = :raise
 
   # Raises error for missing translations
   config.action_view.raise_on_missing_translations = true
@@ -75,7 +75,8 @@ Rails.application.configure do
     Bullet.enable = true
     Bullet.bullet_logger = true
     Bullet.console = true
-    Bullet.alert = true
+    Bullet.alert = false
+    Bullet.console = true
     Bullet.rails_logger = true
     Bullet.add_footer = true
     Bullet.raise = false

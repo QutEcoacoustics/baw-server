@@ -1,13 +1,28 @@
 - content_for :meta_title, "Project #{@project.name} | Site #{@site.name}"
 - content_for :page_title, @site.name
+- @info_bar = {model: @site,  icon: 'map-marker'}
 
-= render partial: 'shared/sidebar_site', locals: {project: @project, site: @site}
+- content_for :page_actions do
+  = nav_item(href: make_visualise_path(@site),
+    title: t('baw.shared.links.visualize.title'),
+    tooltip: t('baw.shared.links.visualize.description'),
+    icon: 'map' )
+  = listen_link(@site)
+  = nav_item(href: make_site_annotations_path(@project, @site),
+    title: t('baw.shared.links.annotations_download.title'),
+    tooltip: t('baw.shared.links.annotations_download.description'),
+    icon: 'table' )
+  - if can? :edit, @site
+    = edit_link(edit_project_site_path(@project, @site), 'site')
+  - if can? :upload_instructions, @site
+    = nav_item(href:  upload_instructions_project_site_path(@project, @site),
+      title: t('baw.shared.links.harvest.title'),
+      tooltip: t('baw.shared.links.harvest.description') )
+  - if defined?(@project) && defined?(@site) && Access::Core.is_admin?(current_user)
+    = destroy_button([@project, @site], 'site')
 
 - content_for :right_sidebar do
-  = render partial: 'shared/sidebar_metadata_heading', locals: {title: 'Site', icon_class: 'map-marker'}
-  = render partial: 'shared/sidebar_metadata_user_created', locals: { item: @site }
-  = render partial: 'shared/sidebar_metadata_user_updated', locals: { item: @site }
-  - level = Access::Level.project(current_user, @project)
+  - level = Access::Core.user_levels(current_user, @project)
   - unless level.blank?
     - level_name = Access::Core.get_level_name(level)
     = render partial: 'shared/sidebar_metadata', locals: {title: 'Your access level', text: level_name}

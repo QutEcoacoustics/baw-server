@@ -12,7 +12,7 @@ class SitesController < ApplicationController
       format.json {
         @sites, opts = Settings.api_response.response_advanced(
             api_filter_params,
-            Access::Query.project_sites(@project, current_user),
+            Access::ByPermission.sites(current_user, Access::Core.levels, [@project.id]),
             Site,
             Site.filter_settings
         )
@@ -90,12 +90,15 @@ class SitesController < ApplicationController
     get_project
     do_authorize_instance
 
+    @original_site_name = @site.name
+
     respond_to do |format|
       if @site.update_attributes(site_params)
         format.html { redirect_to [@project, @site], notice: 'Site was successfully updated.' }
         format.json { respond_show }
       else
         format.html {
+
           render action: 'edit'
         }
         format.json { respond_change_fail }
@@ -162,11 +165,43 @@ ORDER BY s.name")
 
     filter_response, opts = Settings.api_response.response_advanced(
         api_filter_params,
-        Access::Query.sites(current_user),
+        Access::ByPermission.sites(current_user),
         Site,
         Site.filter_settings
     )
     respond_filter(filter_response, opts)
+  end
+
+  def nav_menu
+    {
+        anchor_after: 'baw.shared.links.projects.title',
+        menu_items: [
+            {
+                title: 'baw.shared.links.projects.title',
+                href: project_path(@project),
+                tooltip: 'baw.shared.links.projects.description',
+                icon: nil,
+                indentation: 1,
+                #predicate:
+            },
+            {
+                title: 'baw.shared.links.site.title',
+                href: project_site_path(@project, @site),
+                tooltip: 'baw.shared.links.site.description',
+                icon: nil,
+                indentation: 2,
+                #predicate:
+            },
+            # {
+            #     title: 'baw.shared.links.ethics_statement.title',
+            #     href: ethics_statement_path,
+            #     tooltip: 'baw.shared.links.ethics_statement.description',
+            #     icon: nil,
+            #     indentation: 0,
+            #     predicate: lambda { |user| action_name == 'ethics_statement' }
+            # }
+        ]
+    }
   end
 
   private

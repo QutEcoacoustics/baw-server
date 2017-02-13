@@ -26,6 +26,7 @@ module Filter
     # @return [Arel::Nodes::Node] condition
     def compose_eq_node(node, value)
       validate_node_or_attribute(node)
+      validate_basic_class(node, value)
       node.eq(value)
     end
 
@@ -46,6 +47,7 @@ module Filter
     # @return [Arel::Nodes::Node] condition
     def compose_not_eq_node(node, value)
       validate_node_or_attribute(node)
+      validate_basic_class(node, value)
       node.not_eq(value)
     end
 
@@ -66,6 +68,7 @@ module Filter
     # @return [Arel::Nodes::Node] condition
     def compose_lt_node(node, value)
       validate_node_or_attribute(node)
+      validate_basic_class(node, value)
       node.lt(value)
     end
 
@@ -104,6 +107,7 @@ module Filter
     # @return [Arel::Nodes::Node] condition
     def compose_gt_node(node, value)
       validate_node_or_attribute(node)
+      validate_basic_class(node, value)
       node.gt(value)
     end
 
@@ -142,6 +146,7 @@ module Filter
     # @return [Arel::Nodes::Node] condition
     def compose_lteq_node(node, value)
       validate_node_or_attribute(node)
+      validate_basic_class(node, value)
       node.lteq(value)
     end
 
@@ -180,6 +185,7 @@ module Filter
     # @return [Arel::Nodes::Node] condition
     def compose_gteq_node(node, value)
       validate_node_or_attribute(node)
+      validate_basic_class(node, value)
       node.gteq(value)
     end
 

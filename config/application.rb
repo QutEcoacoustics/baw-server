@@ -40,9 +40,6 @@ module AWB
     Resque.redis = HashWithIndifferentAccess.new(Settings.resque.connection)
     Resque.redis.namespace = Settings.resque.namespace
 
-    # resque job status expiry for job status entries
-    Resque::Plugins::Status::Hash.expire_in = (24 * 60 * 60) # 24hrs / 1 day in seconds
-
     # logging
     # By default, each log is created under Rails.root/log/ and the log file name is <component_name>.<environment_name>.log.
 
@@ -145,11 +142,15 @@ module AWB
     config.middleware.insert_before 0, Rack::Rewrite do
       # angular routing system will use the url that was originally requested
       # rails just needs to load the index.html
+
+      # ensure you add url helpers in app/helpers/application_helper.rb
+
       rewrite /^\/listen.*/i, '/listen_to/index.html'
       rewrite /^\/birdwalks.*/i, '/listen_to/index.html'
       rewrite /^\/library.*/i, '/listen_to/index.html'
       rewrite /^\/demo.*/i, '/listen_to/index.html'
       rewrite /^\/visualize.*/i, '/listen_to/index.html'
+      rewrite /^\/audio_analysis.*/i, '/listen_to/index.html'
     end
 
     # allow any origin, with any header, to access the array of methods

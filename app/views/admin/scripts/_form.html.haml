@@ -4,9 +4,10 @@
   = f.input :name
   = f.input :description, input_html: {rows: '3'}
   = f.input :analysis_identifier
-  = f.input :version
+  = f.input :version, input_html: { min: '0', step: '0.1' }
   = f.input :executable_command, input_html: {rows: '3'}
   = f.input :executable_settings, input_html: {rows: '3'}
   = f.input :executable_settings_media_type
+  = f.input :analysis_action_params, input_html: {rows: '3'}, as: :text
   = f.input :verified, wrapper: :horizontal_boolean
   = f.button :submit_cancel, 'Submit', class: 'btn btn-default'

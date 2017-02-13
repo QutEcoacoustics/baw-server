@@ -1,38 +1,39 @@
 -# locals: user_show, user_current
-- content_for(:left_sidebar_header, 'Users')
-- content_for(:left_sidebar) do
+- content_for :page_actions do
 
   - is_valid_user = defined?(user_show) && !user_show.nil? && !user_show.id.nil?
-  - is_admin = Access::Check.is_admin?(user_current)
+  - is_admin = Access::Core.is_admin?(user_current)
   - is_own_profile = is_valid_user && User.same_user?(user_current, user_show)
   - is_own_profile_path = is_own_profile ? User.profile_paths(user_show).any?{ |p| current_page?(p)} : false
   - first_word = is_own_profile ? 'My' : 'Their'
 
-  %li{class: ('active' if current_page?(root_path))}
-    = link_to t('baw.shared.links.home.title'), root_path,  title: t('baw.shared.links.home.description'), data: {toggle: 'tooltip',  placement: 'right'}
-
-  %li{class: ('active' if is_own_profile_path)}
-    = link_to t('baw.shared.links.profile.title'), my_account_path, title: t('baw.shared.links.profile.description'), data: {toggle: 'tooltip',  placement: 'right'}
-
   - if is_own_profile
-    %li{class: ('active' if current_page?(edit_user_registration_path))}
-      = link_to 'Edit my profile', edit_user_registration_path, title: 'Edit your account information', data: {toggle: 'tooltip',  placement: 'right'}
+    = edit_link(edit_user_registration_path, 'profile')
   - elsif is_valid_user
-    %li{class: ('active' if current_page?(user_account_path(user_show)))}
-      = link_to 'Their Profile', user_account_path(user_show), title: "#{user_show.user_name}'s profile", data: {toggle: 'tooltip',  placement: 'right'}
+    = nav_item(href: user_account_path(user_show),
+      title: t('baw.shared.links.profile.title'),
+      tooltip: t('baw.shared.links.profile.description', user_name: user_show.user_name),
+      icon: 'user' )
 
   - if is_admin && is_valid_user && !is_own_profile
-    %li{class: ('active' if current_page?(edit_user_account_path(user_show)))}
-      = link_to 'Edit their profile', edit_user_account_path(user_show), title: 'Edit account', data: {toggle: 'tooltip',  placement: 'right'}
+    = edit_link(edit_user_account_path(user_show), 'profile')
 
   - if is_own_profile || (is_admin && is_valid_user)
-    %li{class: ('active' if current_page?(projects_user_account_path(user_show)))}
-      = link_to "#{first_word} Projects", projects_user_account_path(user_show), title: "Projects #{user_show.user_name} can access", data: {toggle: 'tooltip',  placement: 'right'}
-    %li{class: ('active' if current_page?(sites_user_account_path(user_show)))}
-      = link_to "#{first_word} Sites", sites_user_account_path(user_show), title: "Sites #{user_show.user_name} can access", data: {toggle: 'tooltip',  placement: 'right'}
-    %li{class: ('active' if current_page?(bookmarks_user_account_path(user_show)))}
-      = link_to "#{first_word} Bookmarks", bookmarks_user_account_path(user_show), title: "Bookmarks created by #{user_show.user_name}", data: {toggle: 'tooltip',  placement: 'right'}
-    %li{class: ('active' if current_page?(audio_events_user_account_path(user_show)))}
-      = link_to "#{first_word} Annotations", audio_events_user_account_path(user_show), title: "Annotations created by #{user_show.user_name}", data: {toggle: 'tooltip',  placement: 'right'}
-    %li{class: ('active' if current_page?(audio_event_comments_user_account_path(user_show)))}
-      = link_to "#{first_word} Comments", audio_event_comments_user_account_path(user_show), title: "Comments by #{user_show.user_name}", data: {toggle: 'tooltip',  placement: 'right'}
+    = nav_item(href: projects_user_account_path(user_show),
+      title: t('baw.shared.links.profile_projects.title'),
+      tooltip: t('baw.shared.links.profile_projects.description', user_name: user_show.user_name),
+      icon: 'globe' )
+    = nav_item(href: sites_user_account_path(user_show),
+      title: t('baw.shared.links.profile_sites.title'),
+      tooltip: t('baw.shared.links.profile_sites.description', user_name: user_show.user_name),
+      icon: 'map-marker' )
+    = nav_item(href: bookmarks_user_account_path(user_show),
+      title: t('baw.shared.links.profile_bookmarks.title'),
+      tooltip: t('baw.shared.links.profile_bookmarks.description', user_name: user_show.user_name),
+      icon: 'bookmark' )
+    = nav_item(href: audio_events_user_account_path(user_show),
+      title: t('baw.shared.links.profile_audio_events.title'),
+      tooltip: t('baw.shared.links.profile_audio_events.description', user_name: user_show.user_name),
+      icon: 'baw-annotation' )
+
+

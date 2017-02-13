@@ -3,7 +3,7 @@
 = render partial: 'shared/admin/sidebar_tag_groups', locals: {tag_group_to_manage: @tag_group}
 
 - content_for :right_sidebar do
-  = render partial: 'shared/sidebar_metadata_heading', locals: {title: 'Tags', icon_class: 'tags'}
+  = render partial: 'shared/sidebar_metadata_heading', locals: {title: 'Tags', icon: 'tags'}
   = render partial: 'shared/sidebar_metadata_user_created', locals: {item: @tag_group}
 
 = render 'form'

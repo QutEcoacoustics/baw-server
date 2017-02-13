@@ -29,6 +29,7 @@ describe 'MANAGE Scripts as admin user', :type => :feature do
     fill_in 'script[executable_command]', with: 'command'
     fill_in 'script[executable_settings]', with: 'settings'
     fill_in 'script[executable_settings_media_type]', with: 'text/plain'
+    fill_in 'script[analysis_action_params]', with: '{}'
 
     click_button 'Submit'
     expect(page).to_not have_content('Please review the problems below')
@@ -54,6 +55,7 @@ describe 'MANAGE Scripts as admin user', :type => :feature do
     fill_in 'script[executable_command]', with: 'command'
     fill_in 'script[executable_settings]', with: 'settings'
     fill_in 'script[executable_settings_media_type]', with: 'application/javascript'
+    fill_in 'script[analysis_action_params]', with: '{}'
 
     click_button 'Submit'
     expect(page).to_not have_content('Please review the problems below')

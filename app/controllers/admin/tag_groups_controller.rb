@@ -88,7 +88,7 @@ module Admin
 
       @tag_group.destroy
       respond_to do |format|
-        format.html { redirect_to admin_tag_groups_path, notice: 'Tag was successfully destroyed.' }
+        format.html { redirect_to admin_tag_groups_path, notice: 'Tag group was successfully deleted.' }
       end
     end
 

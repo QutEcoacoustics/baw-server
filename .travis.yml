@@ -1,9 +1,9 @@
 language: ruby
 sudo: false
 rvm:
-- 2.2.3
-- 2.2.5
 - 2.3.1
+- 2.3.3
+- 2.4.0
 branches:
   only:
   - master
@@ -20,6 +20,7 @@ addons:
     - shntool
     - mp3splt
     - libav-tools
+  postgresql: "9.3"
 before_install:
 
   # download, extract, and add ffmpeg and ffprobe to path

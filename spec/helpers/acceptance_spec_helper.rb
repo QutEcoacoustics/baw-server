@@ -31,6 +31,7 @@ end
 # @option opts [Hash]    :file_exists            (nil) Check if file exists
 # @option opts [Class]   :expected_error_class   (nil) The expected error class
 # @option opts [Regexp]  :expected_error_regexp  (nil) The expected error regular expression
+# @option opts [Boolean]  :remove_auth  (nil) True to remove the authorization header
 # @param [Proc] opts_mod an optional block that is called when rspec is running - allows dynamic changing of opts with
 #    access to rspec context (i.e. let and let! values)
 # @return [void]
@@ -43,7 +44,7 @@ def standard_request_options(http_method, description, expected_status, opts = {
 
     # allow for modification of opts, provide context so let and let! values can be accessed
     if opts_mod
-      opts_mod.call self, opts
+      opts_mod.call(self, opts)
     end
 
     expected_error_class = opts[:expected_error_class]
@@ -51,33 +52,48 @@ def standard_request_options(http_method, description, expected_status, opts = {
     problem = (expected_error_class.blank? && !expected_error_regexp.blank?) ||
         (!expected_error_class.blank? && expected_error_regexp.blank?)
 
-    fail "Specify both expected_error_class and expected_error_regexp" if problem
+    fail 'Specify both expected_error_class and expected_error_regexp' if problem
 
-    if !expected_error_class.blank? && !expected_error_regexp.blank?
-      expect {
-        do_request
-      }.to raise_error(expected_error_class, expected_error_regexp)
-    else
-      request = do_request
+    # remove the auth header if specified
+    is_remove_header = opts[:remove_auth] && opts[:remove_auth] === true
+    header_key = 'Authorization'
+    current_metadata = example.metadata
+    has_header = current_metadata[:headers] && current_metadata[:headers].include?(header_key)
+    header_value = has_header ? current_metadata[:headers][header_key] : nil
 
-      opts.merge!(
-          {
-              expected_status: expected_status,
-              expected_method: http_method
-          })
-
-      opts = acceptance_checks_shared(request, opts)
-
-      if opts[:expected_response_content_type] == 'application/json'
-        acceptance_checks_json(opts)
-      else
-        message_prefix = "Requested #{opts[:actual_method]} #{opts[:actual_path]} expecting"
-        check_response_content(opts, message_prefix)
-        check_invalid_content(opts, message_prefix)
-      end
-
+    if is_remove_header && has_header
+      current_metadata[:headers].delete(header_key)
     end
 
+    begin
+      if !expected_error_class.blank? && !expected_error_regexp.blank?
+        expect {
+          do_request
+        }.to raise_error(expected_error_class, expected_error_regexp)
+      else
+        request = do_request
+
+        opts.merge!(
+            {
+                expected_status: expected_status,
+                expected_method: http_method
+            })
+
+        opts = acceptance_checks_shared(request, opts)
+
+        if opts[:expected_response_content_type] == 'application/json'
+          acceptance_checks_json(opts)
+        else
+          message_prefix = "Requested #{opts[:actual_method]} #{opts[:actual_path]} expecting"
+          check_response_content(opts, message_prefix)
+          check_invalid_content(opts, message_prefix)
+        end
+
+      end
+    ensure
+      # make sure to replace the auth header if it was removed
+      current_metadata[:headers][header_key] = header_value
+    end
   end
 end
 
@@ -163,6 +179,7 @@ def acceptance_checks_shared(request, opts = {})
 
           #actual_request_content_type: request_headers['Content-Type'],
           actual_request_headers: (request.nil? || request.size < 1) ? nil : request[0][:request_headers],
+          actual_request: (request.nil? || request.size < 1) ? nil : request[0][:request_body],
 
           expected_status: opts[:expected_status].is_a?(Symbol) ? opts[:expected_status] : Settings.api_response.status_symbol(opts[:expected_status]),
       })

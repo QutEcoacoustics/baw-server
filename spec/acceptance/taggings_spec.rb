@@ -2,6 +2,23 @@ require 'rails_helper'
 require 'rspec_api_documentation/dsl'
 require 'helpers/acceptance_spec_helper'
 
+def audio_recording_params
+  parameter :audio_recording_id, 'Accessed audio recording ID (in path/route)', required: true
+  parameter :audio_event_id, 'Requested audio event ID (in path/route)', required: true
+end
+
+def user_params
+  parameter :user_id, 'Get taggings for user id (in path/route)', required: true
+end
+
+def body_params
+  parameter :project_id, 'Accessed project ID (in path/route)', required: true
+  parameter :site_id, 'Accessed site ID (in path/route)', required: true
+  parameter :audio_recording_id, 'Requested audio recording ID (in path/route)', required: true
+  parameter :audio_event_id, 'Requested audio event id (in path/route)', required: true
+  parameter :id, 'Requested tag ID (in path/route)', required: true
+end
+
 # https://github.com/zipmark/rspec_api_documentation
 resource 'Taggings' do
 
@@ -36,37 +53,38 @@ resource 'Taggings' do
   ################################
 
   get '/audio_recordings/:audio_recording_id/audio_events/:audio_event_id/taggings' do
-    # Execute request with ids defined in above let(:id) statements
-    parameter :audio_recording_id, 'Accessed audio recording ID (in path/route)', required: true
-    parameter :audio_event_id, 'Requested audio event ID (in path/route)', required: true
-
+    audio_recording_params
     let(:authentication_token) { writer_token }
     standard_request_options(:get, 'LIST (as writer, with shallow path)', :ok, {expected_json_path: 'data/0/tag_id', data_item_count: 1})
   end
 
   get '/audio_recordings/:audio_recording_id/audio_events/:audio_event_id/taggings' do
-    # Execute request with ids defined in above let(:id) statements
-    parameter :audio_recording_id, 'Requested audio recording ID (in path/route)', required: true
-    parameter :audio_event_id, 'Requested audio event ID (in path/route)', required: true
-
+    audio_recording_params
     let(:authentication_token) { reader_token }
     standard_request_options(:get, 'LIST (as reader, with shallow path)', :ok, {expected_json_path: 'data/0/tag_id', data_item_count: 1})
   end
 
   get '/audio_recordings/:audio_recording_id/audio_events/:audio_event_id/taggings' do
-    # Execute request with ids defined in above let(:id) statements
-    parameter :audio_recording_id, 'Requested audio recording ID (in path/route)', required: true
-    parameter :audio_event_id, 'Requested audio event ID (in path/route)', required: true
-
-    let(:authentication_token) { unconfirmed_token }
-    standard_request_options(:get, 'LIST (as unconfirmed user, with shallow path)', :forbidden, {expected_json_path: get_json_error_path(:confirm)})
+    audio_recording_params
+    let(:authentication_token) { no_access_token }
+    standard_request_options(:get, 'LIST (as no access user, with shallow path)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
   end
 
   get '/user_accounts/:user_id/taggings' do
-    parameter :user_id, 'Get taggings for user id (in path/route)', required: true
-
+    user_params
     let(:authentication_token) { reader_token }
     standard_request_options(:get, 'LIST (as reader, user taggings)', :ok, {expected_json_path: 'data/0/tag_id', data_item_count: 1})
+  end
+
+  get '/audio_recordings/:audio_recording_id/audio_events/:audio_event_id/taggings' do
+    audio_recording_params
+    let(:authentication_token) { invalid_token }
+    standard_request_options(:get, 'LIST (with invalid token, with shallow path)', :unauthorized, {expected_json_path: get_json_error_path(:sign_in)})
+  end
+
+  get '/audio_recordings/:audio_recording_id/audio_events/:audio_event_id/taggings' do
+    audio_recording_params
+    standard_request_options(:get, 'LIST (as anonymous user, with shallow path)', :unauthorized, {remove_auth: true, expected_json_path: get_json_error_path(:sign_in)})
   end
 
   ################################
@@ -74,36 +92,32 @@ resource 'Taggings' do
   ################################
 
   get '/audio_recordings/:audio_recording_id/audio_events/:audio_event_id/taggings/:id' do
-    parameter :project_id, 'Accessed project ID (in path/route)', required: true
-    parameter :site_id, 'Accessed site ID (in path/route)', required: true
-    parameter :audio_recording_id, 'Requested audio recording ID (in path/route)', required: true
-    parameter :audio_event_id, 'Requested audio event id (in path/route)', required: true
-    parameter :id, 'Requested tag ID (in path/route)', required: true
-
+    body_params
     let(:authentication_token) { writer_token }
     standard_request_options(:get, 'SHOW (as writer, with shallow path)', :ok, {expected_json_path: 'data/tag_id'})
   end
 
   get '/audio_recordings/:audio_recording_id/audio_events/:audio_event_id/taggings/:id' do
-    parameter :project_id, 'Accessed project ID (in path/route)', required: true
-    parameter :site_id, 'Accessed site ID (in path/route)', required: true
-    parameter :audio_recording_id, 'Requested audio recording ID (in path/route)', required: true
-    parameter :audio_event_id, 'Requested audio event id (in path/route)', required: true
-    parameter :id, 'Requested tag ID (in path/route)', required: true
-
+    body_params
     let(:authentication_token) { reader_token }
     standard_request_options(:get, 'SHOW (as reader, with shallow path)', :ok, {expected_json_path: 'data/tag_id'})
   end
 
   get '/audio_recordings/:audio_recording_id/audio_events/:audio_event_id/taggings/:id' do
-    parameter :project_id, 'Accessed project ID (in path/route)', required: true
-    parameter :site_id, 'Accessed site ID (in path/route)', required: true
-    parameter :audio_recording_id, 'Requested audio recording ID (in path/route)', required: true
-    parameter :audio_event_id, 'Requested audio event id (in path/route)', required: true
-    parameter :id, 'Requested tag ID (in path/route)', required: true
+    body_params
+    let(:authentication_token) { no_access_token }
+    standard_request_options(:get, 'SHOW (as no access user, with shallow path)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
+  end
 
-    let(:authentication_token) { unconfirmed_token }
-    standard_request_options(:get, 'SHOW (as unconfirmed user, with shallow path)', :forbidden, {expected_json_path: get_json_error_path(:confirm)})
+  get '/audio_recordings/:audio_recording_id/audio_events/:audio_event_id/taggings/:id' do
+    body_params
+    let(:authentication_token) { invalid_token }
+    standard_request_options(:get, 'SHOW (with invalid token, with shallow path)', :unauthorized, {expected_json_path: get_json_error_path(:sign_in)})
+  end
+
+  get '/audio_recordings/:audio_recording_id/audio_events/:audio_event_id/taggings/:id' do
+    body_params
+    standard_request_options(:get, 'SHOW (as anonymous user, with shallow path)', :unauthorized, {remove_auth: true, expected_json_path: get_json_error_path(:sign_in)})
   end
 
   ################################

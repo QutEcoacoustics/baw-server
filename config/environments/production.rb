@@ -54,6 +54,14 @@ Rails.application.configure do
   # Use a different logger for distributed setups.
   # config.logger = ActiveSupport::TaggedLogging.new(SyslogLogger.new)
 
+  # By default parameter keys that are not explicitly permitted will be logged in the development
+  # and test environment. In other environments these parameters will simply be filtered out
+  # and ignored. Additionally, this behaviour can be changed by changing the
+  # config.action_controller.action_on_unpermitted_parameters property in your environment files.
+  # If set to :log the unpermitted attributes will be logged, if set to :raise an exception will
+  # be raised.
+  #config.action_controller.action_on_unpermitted_parameters = :raise
+
   # Use a different cache store in production.
   # config.cache_store = :mem_cache_store
 

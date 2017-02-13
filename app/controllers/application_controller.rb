@@ -1,6 +1,7 @@
 class ApplicationController < ActionController::Base
   include Api::ApiAuth
 
+
   layout :select_layout
 
   # custom authentication for api only
@@ -27,6 +28,7 @@ class ApplicationController < ActionController::Base
   rescue_from ActionController::BadRequest, with: :bad_request_response
   rescue_from ActionController::InvalidAuthenticityToken, with: :invalid_csrf_response
   rescue_from NotImplementedError, with: :not_implemented_response
+  rescue_from ActionController::UnknownFormat, with: :unknown_format_response
 
   # Custom errors - these use the message in the error
   # RoutingArgumentError - error handling for routes that take a combination of attributes
@@ -65,11 +67,37 @@ class ApplicationController < ActionController::Base
                     (session[:last_seen_at].blank? || Time.zone.at(session[:last_seen_at].to_i) < 10.minutes.ago)
                 }
 
+  # We've had headers misbehave. Validating them here means we can email someone about the problem!
+  after_action :validate_headers
+
+  # A dummy method to get rid of all the Rubymine errors.
+  # @return [User]
+  def current_user
+    super
+  end
+
+  # A dummy method to get rid of all the Rubymine errors.
+  # @return [Boolean]
+  def user_signed_in?
+    super
+  end
+
+
   protected
 
+  inflection_method :possessive_determiner
+
+  def possessive_determiner
+    current_user&.id != nil && User.same_user?(current_user, @user) ? :my : :their
+  end
+
+  # Add archived at header to HTTP response
+  # @param [ActiveRecord::Base] model
+  # @return [void]
   def add_archived_at_header(model)
     if model.respond_to?(:deleted_at) && !model.deleted_at.blank?
-      response.headers['X-Archived-At'] = model.deleted_at.httpdate # must be a string, can't just pass a Date or Time
+      # response header must be a string, can't just pass a Date or Time
+      response.headers['X-Archived-At'] = model.deleted_at.httpdate
     end
   end
 
@@ -155,6 +183,11 @@ class ApplicationController < ActionController::Base
     audio_event
   end
 
+  # Authorise audio event by audio recording and offsets
+  # @param [Hash] request_params
+  # @param [AudioRecording] audio_recording
+  # @param [AudioEvent] audio_event
+  # @return [void]
   def auth_custom_offsets(request_params, audio_recording, audio_event)
     # check offsets are within range
 
@@ -268,8 +301,8 @@ class ApplicationController < ActionController::Base
   end
 
   def configure_permitted_parameters
-    devise_parameter_sanitizer.for(:sign_up) { |u| u.permit(:user_name, :email, :password, :password_confirmation) }
-    devise_parameter_sanitizer.for(:account_update) { |u| u.permit(:user_name, :email, :password, :password_confirmation, :current_password, :image, :tzinfo_tz) }
+    devise_parameter_sanitizer.permit(:sign_up, keys: [:user_name, :email, :password, :password_confirmation])
+    devise_parameter_sanitizer.permit(:account_update, keys: [:user_name, :email, :password, :password_confirmation, :current_password, :image, :tzinfo_tz])
   end
 
   def after_sign_in_path_for(resource)
@@ -386,6 +419,19 @@ class ApplicationController < ActionController::Base
         'The request could not be verified.',
         error,
         'invalid_csrf_response',
+    )
+  end
+
+  def unknown_format_response(error)
+    # similar to 406 - can't send in format requested
+
+    request.format = :json
+
+    render_error(
+        :not_acceptable,
+        "This resource is not available in this format '#{request.format}'.",
+        error,
+        'unknown_format_response'
     )
   end
 
@@ -527,6 +573,15 @@ class ApplicationController < ActionController::Base
     is_admin_controller = respond_to?(:admin_controller?) && admin_controller?
 
     !is_devise_controller && !is_admin_controller
+  end
+
+  def validate_headers
+    if response.headers.has_key?('Content-Length') && response.headers['Content-Length'].to_i < 0
+      raise CustomErrors::BadHeaderError
+    end
+    if response.headers.has_key?(:content_length) && response.headers[:content_length].to_i < 0
+      raise CustomErrors::BadHeaderError
+    end
   end
 
 end

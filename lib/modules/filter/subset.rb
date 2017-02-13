@@ -16,7 +16,7 @@ module Filter
     # @return [Arel::Nodes::Node] condition
     def compose_contains(table, column_name, allowed, value)
       validate_table_column(table, column_name, allowed)
-      compose_contains_node(table[column_name],value)
+      compose_contains_node(table[column_name], value)
     end
 
     # Create contains condition.
@@ -25,6 +25,7 @@ module Filter
     # @return [Arel::Nodes::Node] condition
     def compose_contains_node(node, value)
       validate_node_or_attribute(node)
+      validate_basic_class(node, value)
       sanitized_value = sanitize_like_value(value)
       contains_value = "%#{sanitized_value}%"
       node.matches(contains_value)
@@ -65,6 +66,7 @@ module Filter
     # @return [Arel::Nodes::Node] condition
     def compose_starts_with_node(node, value)
       validate_node_or_attribute(node)
+      validate_basic_class(node, value)
       sanitized_value = sanitize_like_value(value)
       contains_value = "#{sanitized_value}%"
       node.matches(contains_value)
@@ -105,6 +107,7 @@ module Filter
     # @return [Arel::Nodes::Node] condition
     def compose_ends_with_node(node, value)
       validate_node_or_attribute(node)
+      validate_basic_class(node, value)
       sanitized_value = sanitize_like_value(value)
       contains_value = "%#{sanitized_value}"
       node.matches(contains_value)
@@ -307,6 +310,8 @@ module Filter
     # @return [Arel::Nodes::Node] condition
     def compose_range_node(node, from, to)
       validate_node_or_attribute(node)
+      validate_basic_class(node, from)
+      validate_basic_class(node, to)
       range = Range.new(from, to, true)
       node.in(range)
     end
@@ -348,6 +353,7 @@ module Filter
     # @return [Arel::Nodes::Node] condition
     def compose_regex_node(node, value)
       validate_node_or_attribute(node)
+      validate_string(value)
       Arel::Nodes::Regexp.new(node, Arel::Nodes.build_quoted(value))
     end
 
@@ -370,6 +376,7 @@ module Filter
     # @return [Arel::Nodes::Node] condition
     def compose_not_regex_node(node, value)
       validate_node_or_attribute(node)
+      validate_string(value)
       Arel::Nodes::NotRegexp.new(node, Arel::Nodes.build_quoted(value))
     end
 

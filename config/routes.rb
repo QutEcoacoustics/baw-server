@@ -133,49 +133,7 @@ Rails.application.routes.draw do
   # audio_recording_update_status: /audio_recordings/:id/update_status
 
   # endpoints used by client:
-  # routes: {
-  #     project: "/projects/{projectId}",
-  #     site: {
-  #         flattened: "/sites/{siteId}",
-  #         nested: "/projects/{projectId}/sites/{siteId}"
-  #     },
-  #     audioRecording: {
-  #         listShort: "/audio_recordings/{recordingId}",
-  #         show: "/audio_recordings/{recordingId}",
-  #         list: "/audio_recordings/"
-  #     },
-  #     audioEvent: {
-  #         list: "/audio_recordings/{recordingId}/audio_events",
-  #         show: "/audio_recordings/{recordingId}/audio_events/{audioEventId}",
-  #         csv: "/audio_recordings/{recordingId}/audio_events/download.{format}",
-  #     },
-  #     tagging: {
-  #         list: "/audio_recordings/{recordingId}/audio_events/{audioEventId}/taggings",
-  #         show: "/audio_recordings/{recordingId}/audio_events/{audioEventId}/taggings/{taggingId}"
-  #     },
-  #     tag: {
-  #         list: '/tags/',
-  #         show: '/tags/{tagId}'
-  #     },
-  #     media: {
-  #         show: "/audio_recordings/{recordingId}/media.{format}"
-  #     },
-  #     security: {
-  #         ping: "/security/sign_in",
-  #         signIn: "/my_account/sign_in"
-  #     },
-  #     user: {
-  #         profile: "/my_account",
-  #         settings: "/my_account/prefs"
-  #     }
-  # },
-  #     links: {
-  #     projects: '/projects',
-  #     home: '/',
-  #     project: '/projects/{projectId}',
-  #     site: '/projects/{projectId}/sites/{siteId}',
-  #     userAccounts: '/user_accounts/{userId}'
-  # }
+  # see:  https://github.com/QutBioacoustics/baw-client/blob/master/src/baw.paths.nobuild.js#L3
 
   # placed above related resource so it does not conflict with (resource)/:id => (resource)#show
   match 'projects/filter' => 'projects#filter', via: [:get, :post], defaults: {format: 'json'}
@@ -183,7 +141,6 @@ Rails.application.routes.draw do
   # routes for projects and nested resources
   resources :projects do
     member do
-      post 'update_permissions'
       get 'edit_sites'
       put 'update_sites'
       patch 'update_sites'
@@ -192,10 +149,9 @@ Rails.application.routes.draw do
       get 'new_access_request'
       post 'submit_access_request'
     end
-    # HTML project permissions list
+    # project permissions
     resources :permissions, only: [:index]
-    # API project permission item
-    resources :permissions, except: [:index, :edit, :update], defaults: {format: 'json'}
+    resources :permissions, except: [:edit, :update, :index], defaults: {format: 'json'}
     # HTML project site item
     resources :sites, except: [:index] do
       member do
@@ -210,9 +166,7 @@ Rails.application.routes.draw do
       end
     end
     # API project sites list
-
     resources :sites, only: [:index], defaults: {format: 'json'}
-
   end
 
   # placed above related resource so it does not conflict with (resource)/:id => (resource)#show
@@ -224,8 +178,10 @@ Rails.application.routes.draw do
         via: [:get, :post], defaults: {format: 'json'}
 
   # route for AnalysisJobsItems and results
-  match 'analysis_jobs/:analysis_job_id/audio_recordings/:audio_recording_id/*results_path' => 'analysis_jobs_items#show',
-        defaults: {format: 'json'}, as: :analysis_jobs_items_show, via: [:get, :head], format: false
+  match 'analysis_jobs/:analysis_job_id/results/' => 'analysis_jobs_results#index',
+        defaults: {format: 'json'}, as: :analysis_jobs_results_index, via: [:get, :head], format: false, action: 'index'
+  match 'analysis_jobs/:analysis_job_id/results/:audio_recording_id(/*results_path)' => 'analysis_jobs_results#show',
+        defaults: {format: 'json'}, as: :analysis_jobs_results_show, via: [:get, :head], format: false, action: 'show'
 
   # API only for analysis_jobs, analysis_jobs_items and saved_searches
   resources :analysis_jobs, except: [:edit], defaults: {format: 'json'} do
@@ -317,7 +273,7 @@ Rails.application.routes.draw do
   get '/credits' => 'public#credits'
 
   # resque front end - admin only
-  authenticate :user, lambda { |u| Access::Check.is_admin?(u) } do
+  authenticate :user, lambda { |u| Access::Core.is_admin?(u) } do
     # add stats tab to web interface from resque-job-stats
     require 'resque-job-stats/server'
     # adds Statuses tab to web interface from resque-status

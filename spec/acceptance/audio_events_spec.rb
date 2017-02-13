@@ -2,43 +2,23 @@ require 'rails_helper'
 require 'rspec_api_documentation/dsl'
 require 'helpers/acceptance_spec_helper'
 
-def library_request(settings = {})
-  description = settings[:description]
-  expected_status = settings[:expected_status]
-  expected_json_path = settings[:expected_json_path]
-  document = settings[:document]
-  response_body_content = settings[:response_body_content]
+def get_index_params
+  parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
+  parameter :start_offset, 'Request audio events within offset bounds (start)'
+  parameter :end_offset, 'Request audio events within offset bounds (end)'
+end
 
-  example "#{description} - #{expected_status}", :document => document do
-    do_request
+def get_route_params
+  parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
+  parameter :id, 'Requested audio event id (in path/route)', required: true
+end
 
-    expect(status).to eq(expected_status), "Requested #{path} expecting status #{expected_status} but got status #{status}. Response body was #{response_body}"
-
-    unless expected_json_path.blank?
-      response_body.should have_json_path(expected_json_path), "could not find #{expected_json_path} in #{response_body}"
-    end
-
-    unless response_body_content.blank?
-      expect(response_body).to include(response_body_content)
-    end
-
-    parsed_response_body = JsonSpec::Helpers::parse_json(response_body)
-
-    if !ordered_audio_recordings.blank? && ordered_audio_recordings.respond_to?(:each_index) &&
-        !parsed_response_body.blank? && parsed_response_body.respond_to?(:each_index)
-      parsed_response_body.each_index do |index|
-        expect(parsed_response_body[index]['audio_event_id'])
-            .to eq(ordered_audio_recordings[index]),
-                "Result body index #{index} in #{ordered_audio_recordings}: #{parsed_response_body}"
-      end
-      ordered_audio_recordings.each_index do |index|
-        expect(ordered_audio_recordings[index])
-            .to eq(parsed_response_body[index]['audio_event_id']),
-                "Audio Event Order index #{index} in #{ordered_audio_recordings}: #{parsed_response_body}"
-      end
-    end
-
-  end
+def get_modify_params
+  parameter :start_time_seconds, 'start_time in seconds, has to be lower than end_time', scope: :audio_event, required: true
+  parameter :end_time_seconds, 'end_time in seconds, has to be higher than start_time', scope: :audio_event
+  parameter :low_frequency_hertz, 'low_frequency in hertz, has to be lower than high_frequency', scope: :audio_event, :required => true
+  parameter :high_frequency_hertz, 'high_frequency in hertz, has to be higher than low frequency', scope: :audio_event
+  parameter :is_reference, 'set to true if audio event is a reference', scope: :audio_event
 end
 
 # https://github.com/zipmark/rspec_api_documentation
@@ -75,62 +55,40 @@ resource 'AudioEvents' do
   ################################
   # LIST
   ################################
+
   get '/audio_recordings/:audio_recording_id/audio_events' do
+    get_index_params
+    let(:authentication_token) { admin_token }
+    standard_request_options(:get, 'LIST (as admin)', :ok, {expected_json_path: 'data/0/start_time_seconds', data_item_count: 1})
+  end
 
-    parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
-    parameter :start_offset, 'Request audio events within offset bounds (start)'
-    parameter :end_offset, 'Request audio events within offset bounds (end)'
+  get '/audio_recordings/:audio_recording_id/audio_events' do
+    get_index_params
+    let(:authentication_token) { owner_token }
+    standard_request_options(:get, 'LIST (as owner)', :ok, {expected_json_path: 'data/0/start_time_seconds', data_item_count: 1})
+  end
 
+  get '/audio_recordings/:audio_recording_id/audio_events' do
+    get_index_params
     let(:authentication_token) { writer_token }
-
     standard_request_options(:get, 'LIST (as writer)', :ok, {expected_json_path: 'data/0/start_time_seconds', data_item_count: 1})
-
   end
 
   get '/audio_recordings/:audio_recording_id/audio_events' do
-
-    parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
-    parameter :start_offset, 'Request audio events within offset bounds (start)'
-    parameter :end_offset, 'Request audio events within offset bounds (end)'
-
+    get_index_params
     let(:authentication_token) { reader_token }
-
     standard_request_options(:get, 'LIST (as reader)', :ok, {expected_json_path: 'data/0/start_time_seconds', data_item_count: 1})
-
   end
 
-
   get '/audio_recordings/:audio_recording_id/audio_events' do
-
-    parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
-    parameter :start_offset, 'Request audio events within offset bounds (start)'
-    parameter :end_offset, 'Request audio events within offset bounds (end)'
-
+    get_index_params
     let(:authentication_token) { reader_token }
-
     standard_request_options(:get, 'LIST (as reader with shallow path)', :ok, {expected_json_path: 'data/0/start_time_seconds', data_item_count: 1})
-
   end
 
   get '/audio_recordings/:audio_recording_id/audio_events' do
-    parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
-    parameter :start_offset, 'Request audio events within offset bounds (start)'
-    parameter :end_offset, 'Request audio events within offset bounds (end)'
-
-    let(:authentication_token) { unconfirmed_token }
-
-    standard_request_options(:get, 'LIST (as unconfirmed user)', :forbidden, {expected_json_path: get_json_error_path(:confirm)})
-
-  end
-
-  get '/audio_recordings/:audio_recording_id/audio_events' do
-
-    parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
-    parameter :start_offset, 'Request audio events within offset bounds (start)'
-    parameter :end_offset, 'Request audio events within offset bounds (end)'
-
+    get_index_params
     let(:authentication_token) { reader_token }
-
     standard_request_options(:get, 'LIST (as reader with shallow path testing quoted numbers)', :ok,
                              {
                                  data_item_count: 1,
@@ -144,42 +102,60 @@ resource 'AudioEvents' do
 
   end
 
+  get '/audio_recordings/:audio_recording_id/audio_events' do
+    get_index_params
+    let(:authentication_token) { no_access_token }
+    standard_request_options(:get, 'LIST (as no access user)', :ok, {response_body_content: '200', data_item_count: 0})
+  end
+
+  get '/audio_recordings/:audio_recording_id/audio_events' do
+    get_index_params
+    let(:authentication_token) { invalid_token }
+    standard_request_options(:get, 'LIST (with invalid token)', :unauthorized, {expected_json_path: get_json_error_path(:sign_in)})
+  end
+
+  get '/audio_recordings/:audio_recording_id/audio_events' do
+    get_index_params
+    standard_request_options(:get, 'LIST (as anonymous user)', :ok, {remove_auth: true, response_body_content: '200', data_item_count: 0})
+  end
+
   ################################
   # SHOW
   ################################
+
   get '/audio_recordings/:audio_recording_id/audio_events/:id' do
-    parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
-    parameter :id, 'Requested audio event id (in path/route)', required: true
+    get_route_params
+    let(:authentication_token) { admin_token }
+    standard_request_options(:get, 'SHOW (as admin)', :ok, {expected_json_path: 'data/start_time_seconds'})
+  end
 
+  get '/audio_recordings/:audio_recording_id/audio_events/:id' do
+    get_route_params
+    let(:authentication_token) { owner_token }
+    standard_request_options(:get, 'SHOW (as owner)', :ok, {expected_json_path: 'data/start_time_seconds'})
+  end
+
+  get '/audio_recordings/:audio_recording_id/audio_events/:id' do
+    get_route_params
     let(:authentication_token) { writer_token }
-
     standard_request_options(:get, 'SHOW (as writer)', :ok, {expected_json_path: 'data/start_time_seconds'})
   end
 
   get '/audio_recordings/:audio_recording_id/audio_events/:id' do
-    parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
-    parameter :id, 'Requested audio event id (in path/route)', required: true
-
+    get_route_params
     let(:authentication_token) { reader_token }
-
     standard_request_options(:get, 'SHOW (as reader)', :ok, {expected_json_path: 'data/start_time_seconds'})
   end
 
   get '/audio_recordings/:audio_recording_id/audio_events/:id' do
-    parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
-    parameter :id, 'Requested audio event id (in path/route)', required: true
-
+    get_route_params
     let(:authentication_token) { reader_token }
-
     standard_request_options(:get, 'SHOW (as reader with shallow path)', :ok, {expected_json_path: 'data/start_time_seconds'})
   end
 
   get '/audio_recordings/:audio_recording_id/audio_events/:id' do
-    parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
-    parameter :id, 'Requested audio event id (in path/route)', required: true
-
+    get_route_params
     let(:authentication_token) { reader_token }
-
     let(:id) { @audio_event.id }
     let(:audio_recording_id) { @other_audio_recording_id }
 
@@ -193,18 +169,7 @@ resource 'AudioEvents' do
   end
 
   get '/audio_recordings/:audio_recording_id/audio_events/:id' do
-    parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
-    parameter :id, 'Requested audio event id (in path/route)', required: true
-
-    let(:authentication_token) { unconfirmed_token }
-
-    standard_request_options(:get, 'SHOW (as unconfirmed user)', :forbidden, {expected_json_path: get_json_error_path(:confirm)})
-  end
-
-  get '/audio_recordings/:audio_recording_id/audio_events/:id' do
-    parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
-    parameter :id, 'Requested audio event id (in path/route)', required: true
-
+    get_route_params
     let(:authentication_token) { reader_token }
 
 
@@ -218,87 +183,62 @@ resource 'AudioEvents' do
                              })
   end
 
+  get '/audio_recordings/:audio_recording_id/audio_events/:id' do
+    get_route_params
+    let(:authentication_token) { no_access_token }
+    standard_request_options(:get, 'SHOW (as no access user)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
+  end
+
+  get '/audio_recordings/:audio_recording_id/audio_events/:id' do
+    get_route_params
+    let(:authentication_token) { invalid_token }
+    standard_request_options(:get, 'SHOW (with invalid token)', :unauthorized, {expected_json_path: get_json_error_path(:sign_in)})
+  end
+
+  get '/audio_recordings/:audio_recording_id/audio_events/:id' do
+    get_route_params
+    standard_request_options(:get, 'SHOW (as anonymous user', :unauthorized, {remove_auth: true, expected_json_path: get_json_error_path(:sign_in)})
+  end
+
   ################################
   # CREATE
   ################################
   post '/audio_recordings/:audio_recording_id/audio_events' do
     parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
-
-    parameter :start_time_seconds, 'start_time in seconds, has to be lower than end_time', scope: :audio_event, required: true
-    parameter :end_time_seconds, 'end_time in seconds, has to be higher than start_time', scope: :audio_event
-    parameter :low_frequency_hertz, 'low_frequency in hertz, has to be lower than high_frequency', scope: :audio_event, :required => true
-    parameter :high_frequency_hertz, 'high_frequency in hertz, has to be higher than low frequency', scope: :audio_event
-    parameter :is_reference, 'set to true if audio event is a reference', scope: :audio_event
-
+    get_modify_params
     let(:raw_post) { {'audio_event' => post_attributes}.to_json }
-
     let(:authentication_token) { admin_token }
-
     standard_request_options(:post, 'CREATE (as admin)', :created, {expected_json_path: 'data/is_reference'})
-
   end
 
   post 'audio_recordings/:audio_recording_id/audio_events' do
     parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
-
-    parameter :start_time_seconds, 'start_time in seconds, has to be lower than end_time', scope: :audio_event, required: true
-    parameter :end_time_seconds, 'end_time in seconds, has to be higher than start_time', scope: :audio_event
-    parameter :low_frequency_hertz, 'low_frequency in hertz, has to be lower than high_frequency', scope: :audio_event, :required => true
-    parameter :high_frequency_hertz, 'high_frequency in hertz, has to be higher than low frequency', scope: :audio_event
-    parameter :is_reference, 'set to true if audio event is a reference', scope: :audio_event
-
+    get_modify_params
     let(:raw_post) { {'audio_event' => post_attributes}.to_json }
+    let(:authentication_token) { owner_token }
+    standard_request_options(:post, 'CREATE (as owner)', :created, {expected_json_path: 'data/is_reference'})
+  end
 
+  post 'audio_recordings/:audio_recording_id/audio_events' do
+    parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
+    get_modify_params
+    let(:raw_post) { {'audio_event' => post_attributes}.to_json }
     let(:authentication_token) { writer_token }
-
     standard_request_options(:post, 'CREATE (as writer)', :created, {expected_json_path: 'data/is_reference'})
-
   end
 
   post '/audio_recordings/:audio_recording_id/audio_events' do
     parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
-
-    parameter :start_time_seconds, 'start_time in seconds, has to be lower than end_time', scope: :audio_event, required: true
-    parameter :end_time_seconds, 'end_time in seconds, has to be higher than start_time', scope: :audio_event
-    parameter :low_frequency_hertz, 'low_frequency in hertz, has to be lower than high_frequency', scope: :audio_event, :required => true
-    parameter :high_frequency_hertz, 'high_frequency in hertz, has to be higher than low frequency', scope: :audio_event
-    parameter :is_reference, 'set to true if audio event is a reference', scope: :audio_event
-
+    get_modify_params
     let(:raw_post) { {'audio_event' => post_attributes}.to_json }
-
     let(:authentication_token) { reader_token }
-
     standard_request_options(:post, 'CREATE (as reader)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
-
   end
 
   post '/audio_recordings/:audio_recording_id/audio_events' do
     parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
-
-    parameter :start_time_seconds, 'start_time in seconds, has to be lower than end_time', scope: :audio_event, required: true
-    parameter :end_time_seconds, 'end_time in seconds, has to be higher than start_time', scope: :audio_event
-    parameter :low_frequency_hertz, 'low_frequency in hertz, has to be lower than high_frequency', scope: :audio_event, :required => true
-    parameter :high_frequency_hertz, 'high_frequency in hertz, has to be higher than low frequency', scope: :audio_event
-    parameter :is_reference, 'set to true if audio event is a reference', scope: :audio_event
-
-    let(:raw_post) { {'audio_event' => post_attributes}.to_json }
-
-    let(:authentication_token) { unconfirmed_token }
-
-    standard_request_options(:post, 'CREATE (as unconfirmed user)', :forbidden, {expected_json_path: get_json_error_path(:confirm)})
-
-  end
-
-  post '/audio_recordings/:audio_recording_id/audio_events' do
-    parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
-
-    parameter :start_time_seconds, 'start_time in seconds, has to be lower than end_time', scope: :audio_event, required: true
-    parameter :end_time_seconds, 'end_time in seconds, has to be higher than start_time', scope: :audio_event
-    parameter :low_frequency_hertz, 'low_frequency in hertz, has to be lower than high_frequency', scope: :audio_event, :required => true
-    parameter :high_frequency_hertz, 'high_frequency in hertz, has to be higher than low frequency', scope: :audio_event
-    parameter :is_reference, 'set to true if audio event is a reference', scope: :audio_event
     parameter :tags_attributes, 'array of valid tag attributes, see tag resource', scope: :audio_event
-
+    get_modify_params
     let(:raw_post) { {'audio_event' => post_attributes.merge(post_nested_attributes)}.to_json }
     let(:authentication_token) { writer_token }
 
@@ -331,13 +271,8 @@ resource 'AudioEvents' do
 
   post '/audio_recordings/:audio_recording_id/audio_events' do
     parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
-
-    parameter :start_time_seconds, 'start_time in seconds, has to be lower than end_time', scope: :audio_event, required: true
-    parameter :end_time_seconds, 'end_time in seconds, has to be higher than start_time', scope: :audio_event
-    parameter :low_frequency_hertz, 'low_frequency in hertz, has to be lower than high_frequency', scope: :audio_event, :required => true
-    parameter :high_frequency_hertz, 'high_frequency in hertz, has to be higher than low frequency', scope: :audio_event
-    parameter :is_reference, 'set to true if audio event is a reference', scope: :audio_event
     parameter :tag_ids, 'array of existing tag ids', scope: :audio_event
+    get_modify_params
 
     let(:raw_post) { {'audio_event' => post_attributes.merge("tag_ids" => [@tag1.id, @tag2.id])}.to_json }
     let(:authentication_token) { writer_token }
@@ -374,75 +309,94 @@ resource 'AudioEvents' do
     end
   end
 
+  post '/audio_recordings/:audio_recording_id/audio_events' do
+    parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
+    get_modify_params
+    let(:raw_post) { {'audio_event' => post_attributes}.to_json }
+    let(:authentication_token) { no_access_token }
+    standard_request_options(:post, 'CREATE (as no access user)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
+  end
+
+  post '/audio_recordings/:audio_recording_id/audio_events' do
+    parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
+    get_modify_params
+    let(:raw_post) { {'audio_event' => post_attributes}.to_json }
+    let(:authentication_token) { invalid_token }
+    standard_request_options(:post, 'CREATE (with invalid token)', :unauthorized, {expected_json_path: get_json_error_path(:sign_in)})
+  end
+
+  post '/audio_recordings/:audio_recording_id/audio_events' do
+    parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
+    get_modify_params
+    let(:raw_post) { {'audio_event' => post_attributes}.to_json }
+    standard_request_options(:post, 'CREATE (as anonymous user)', :unauthorized, {remove_auth: true, expected_json_path: get_json_error_path(:sign_in)})
+  end
+
   ################################
   # UPDATE
   ################################
+
   put '/audio_recordings/:audio_recording_id/audio_events/:id' do
-    parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
-    parameter :id, 'Requested audio event id (in path/route)', required: true
-
-    parameter :start_time_seconds, 'start_time in seconds, has to be lower than end_time', scope: :audio_event, required: true
-    parameter :end_time_seconds, 'end_time in seconds, has to be higher than start_time', scope: :audio_event
-    parameter :low_frequency_hertz, 'low_frequency in hertz, has to be lower than high_frequency', scope: :audio_event, :required => true
-    parameter :high_frequency_hertz, 'high_frequency in hertz, has to be higher than low frequency', scope: :audio_event
-    parameter :is_reference, 'set to true if audio event is a reference', scope: :audio_event
-
+    get_route_params
+    get_modify_params
     let(:raw_post) { {'audio_event' => post_attributes}.to_json }
+    let(:authentication_token) { admin_token }
+    standard_request_options(:put, 'UPDATE (as admin)', :ok, {expected_json_path: 'data/taggings/0/audio_event_id'})
+  end
 
+  put '/audio_recordings/:audio_recording_id/audio_events/:id' do
+    get_route_params
+    get_modify_params
+    let(:raw_post) { {'audio_event' => post_attributes}.to_json }
+    let(:authentication_token) { owner_token }
+    standard_request_options(:put, 'UPDATE (as owner)', :ok, {expected_json_path: 'data/taggings/0/audio_event_id'})
+  end
+
+  put '/audio_recordings/:audio_recording_id/audio_events/:id' do
+    get_route_params
+    get_modify_params
+    let(:raw_post) { {'audio_event' => post_attributes}.to_json }
     let(:authentication_token) { writer_token }
-
     standard_request_options(:put, 'UPDATE (as writer)', :ok, {expected_json_path: 'data/taggings/0/audio_event_id'})
   end
 
   put '/audio_recordings/:audio_recording_id/audio_events/:id' do
-    parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
-    parameter :id, 'Requested audio event id (in path/route)', required: true
-
-    parameter :start_time_seconds, 'start_time in seconds, has to be lower than end_time', scope: :audio_event, required: true
-    parameter :end_time_seconds, 'end_time in seconds, has to be higher than start_time', scope: :audio_event
-    parameter :low_frequency_hertz, 'low_frequency in hertz, has to be lower than high_frequency', scope: :audio_event, :required => true
-    parameter :high_frequency_hertz, 'high_frequency in hertz, has to be higher than low frequency', scope: :audio_event
-    parameter :is_reference, 'set to true if audio event is a reference', scope: :audio_event
-
+    get_route_params
+    get_modify_params
     let(:raw_post) { {'audio_event' => post_attributes}.to_json }
-
     let(:authentication_token) { writer_token }
-
     standard_request_options(:put, 'UPDATE (as writer with shallow path)', :ok, {expected_json_path: 'data/taggings/0/audio_event_id'})
   end
 
   put '/audio_recordings/:audio_recording_id/audio_events/:id' do
-    parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
-    parameter :id, 'Requested audio event id (in path/route)', required: true
-
-    parameter :start_time_seconds, 'start_time in seconds, has to be lower than end_time', scope: :audio_event, required: true
-    parameter :end_time_seconds, 'end_time in seconds, has to be higher than start_time', scope: :audio_event
-    parameter :low_frequency_hertz, 'low_frequency in hertz, has to be lower than high_frequency', scope: :audio_event, :required => true
-    parameter :high_frequency_hertz, 'high_frequency in hertz, has to be higher than low frequency', scope: :audio_event
-    parameter :is_reference, 'set to true if audio event is a reference', scope: :audio_event
-
+    get_route_params
+    get_modify_params
     let(:raw_post) { {'audio_event' => post_attributes}.to_json }
-
     let(:authentication_token) { reader_token }
-
     standard_request_options(:put, 'UPDATE (as reader)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
   end
 
   put '/audio_recordings/:audio_recording_id/audio_events/:id' do
-    parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
-    parameter :id, 'Requested audio event id (in path/route)', required: true
-
-    parameter :start_time_seconds, 'start_time in seconds, has to be lower than end_time', scope: :audio_event, required: true
-    parameter :end_time_seconds, 'end_time in seconds, has to be higher than start_time', scope: :audio_event
-    parameter :low_frequency_hertz, 'low_frequency in hertz, has to be lower than high_frequency', scope: :audio_event, :required => true
-    parameter :high_frequency_hertz, 'high_frequency in hertz, has to be higher than low frequency', scope: :audio_event
-    parameter :is_reference, 'set to true if audio event is a reference', scope: :audio_event
-
+    get_route_params
+    get_modify_params
     let(:raw_post) { {'audio_event' => post_attributes}.to_json }
+    let(:authentication_token) { reader_token }
+    standard_request_options(:put, 'UPDATE (as no access user)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
+  end
 
-    let(:authentication_token) { unconfirmed_token }
+  put '/audio_recordings/:audio_recording_id/audio_events/:id' do
+    get_route_params
+    get_modify_params
+    let(:raw_post) { {'audio_event' => post_attributes}.to_json }
+    let(:authentication_token) { invalid_token }
+    standard_request_options(:put, 'UPDATE (with invalid token)', :unauthorized, {expected_json_path: get_json_error_path(:sign_in)})
+  end
 
-    standard_request_options(:put, 'UPDATE (as unconfirmed user)', :forbidden, {expected_json_path: get_json_error_path(:confirm)})
+  put '/audio_recordings/:audio_recording_id/audio_events/:id' do
+    get_route_params
+    get_modify_params
+    let(:raw_post) { {'audio_event' => post_attributes}.to_json }
+    standard_request_options(:put, 'UPDATE (as anonymous user)', :unauthorized, {remove_auth: true, expected_json_path: get_json_error_path(:sign_in)})
   end
 
   ################################
@@ -450,51 +404,44 @@ resource 'AudioEvents' do
   ################################
 
   delete '/audio_recordings/:audio_recording_id/audio_events/:id' do
-    parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
-    parameter :id, 'Requested audio event id (in path/route)', required: true
-
-    let(:authentication_token) { writer_token }
-    standard_request_options(:delete, 'DELETE (as writer user)', :no_content, {expected_response_has_content: false, expected_response_content_type: nil})
-  end
-
-  delete '/audio_recordings/:audio_recording_id/audio_events/:id' do
-    parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
-    parameter :id, 'Requested audio event id (in path/route)', required: true
-
-    let(:authentication_token) { reader_token }
-    standard_request_options(:delete, 'DELETE (as reader user)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
-  end
-
-  delete '/audio_recordings/:audio_recording_id/audio_events/:id' do
-    parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
-    parameter :id, 'Requested audio event id (in path/route)', required: true
-
-    let(:authentication_token) { other_token }
-    standard_request_options(:delete, 'DELETE (as other user)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
-  end
-
-  delete '/audio_recordings/:audio_recording_id/audio_events/:id' do
-    parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
-    parameter :id, 'Requested audio event id (in path/route)', required: true
-
-    let(:authentication_token) { unconfirmed_token }
-    standard_request_options(:delete, 'DELETE (as unconfirmed user)', :forbidden, {expected_json_path: get_json_error_path(:confirm)})
-  end
-
-  delete '/audio_recordings/:audio_recording_id/audio_events/:id' do
-    parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
-    parameter :id, 'Requested audio event id (in path/route)', required: true
-
+    get_route_params
     let(:authentication_token) { admin_token }
     standard_request_options(:delete, 'DELETE (as admin user)', :no_content, {expected_response_has_content: false, expected_response_content_type: nil})
   end
 
   delete '/audio_recordings/:audio_recording_id/audio_events/:id' do
-    parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
-    parameter :id, 'Requested audio event id (in path/route)', required: true
+    get_route_params
+    let(:authentication_token) { owner_token }
+    standard_request_options(:delete, 'DELETE (as owner)', :no_content, {expected_response_has_content: false, expected_response_content_type: nil})
+  end
 
+  delete '/audio_recordings/:audio_recording_id/audio_events/:id' do
+    get_route_params
+    let(:authentication_token) { writer_token }
+    standard_request_options(:delete, 'DELETE (as writer user)', :no_content, {expected_response_has_content: false, expected_response_content_type: nil})
+  end
+
+  delete '/audio_recordings/:audio_recording_id/audio_events/:id' do
+    get_route_params
+    let(:authentication_token) { reader_token }
+    standard_request_options(:delete, 'DELETE (as reader user)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
+  end
+
+  delete '/audio_recordings/:audio_recording_id/audio_events/:id' do
+    get_route_params
+    let(:authentication_token) { no_access_token }
+    standard_request_options(:delete, 'DELETE (as other user)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
+  end
+
+  delete '/audio_recordings/:audio_recording_id/audio_events/:id' do
+    get_route_params
     let(:authentication_token) { invalid_token }
     standard_request_options(:delete, 'DELETE (with invalid token)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
+  end
+
+  delete '/audio_recordings/:audio_recording_id/audio_events/:id' do
+    get_route_params
+    standard_request_options(:delete, 'DELETE (as anonymous user)', :unauthorized, {remove_auth: true, expected_json_path: get_json_error_path(:sign_up)})
   end
 
   #####################
@@ -703,4 +650,47 @@ resource 'AudioEvents' do
                              })
   end
 
+  post '/audio_events/filter' do
+    let(:raw_post) { {
+        'filter' => {
+            'audio_events_tags.tag_id' => {
+                'gt' => 0
+            }
+        }
+    }.to_json }
+    standard_request_options(:post, 'FILTER (as anonymous user)', :ok, {
+        remove_auth: true,
+        response_body_content: '{"meta":{"status":200,"message":"OK","filter":{"audio_events_tags.tag_id":{"gt":0}},"sorting":{"order_by":"created_at","direction":"desc"},"paging":{"page":1,"items":25,"total":0,"max_page":0,"current":"http://localhost:3000/audio_events/filter?direction=desc\u0026items=25\u0026order_by=created_at\u0026page=0","previous":null,"next":null}},"data":[]}'})
+  end
+
+  post '/audio_events/filter' do
+    let(:authentication_token) { reader_token }
+    let(:raw_post) {
+      {
+          "filter" => {
+              "isReference" => {
+                  "eq" => true
+              },
+              "durationSeconds" => {
+                  "gteq" => {
+                      "from" => 0,
+                      "to" => nil
+                  }
+              },
+              "lowFrequencyHertz" => {
+                  "gteq" => 1100
+              }
+          },
+          "paging" => {
+              "items" => 10,
+              "page" => 1
+          }
+      }.to_json
+    }
+
+    standard_request_options(:post, 'FILTER (as reader, with invalid nil for gteq interval)', :bad_request,
+                             {
+                                  response_body_content: '{"meta":{"status":400,"message":"Bad Request","error":{"details":"Filter parameters were not valid: The value for (custom item) must not be a hash","info":null}},"data":null}'
+                              })
+  end
 end

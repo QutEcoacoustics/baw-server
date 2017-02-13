@@ -1,5 +1,67 @@
 # Changelog
 
+## Unreleased
+
+## [Release 1.1.0](https://github.com/QutBioacoustics/baw-server/releases/tag/1.1.0)
+
+Our major new feature in this release is support for user based analysis-jobs!
+ - 2017-02-01
+   - Brand new design for our secondary navigation menu. Should be much easier
+   for users to navidate through our menus now. 
+   See [#313](https://github.com/QutBioacoustics/baw-server/pull/313)
+ - 2017-01-23
+   - Fixed an important bug that prevented high quality audio data from being
+   sent to users on the listen page. There were several bugs in the byte
+   range request code.
+   See [#319](https://github.com/QutBioacoustics/baw-server/pull/319)
+ - 2017-01-06
+   - Fix flash notifications. A notification consisting of _true_ no longer 
+   flashes up when a user comes back to the site with an expires session.
+   See [#242](https://github.com/QutBioacoustics/baw-server/issues/242)
+ - 2016-12-11
+   - The REST API no longer returns every site (even those not in the project)
+   when a site listing of an empty project is requested.
+   See [#312](https://github.com/QutBioacoustics/baw-server/pull/312)
+   - The annotation downloader no longer return deleted audio events
+   See [#310](https://github.com/QutBioacoustics/baw-server/pull/310)
+ - 2016-12-04
+   - The REST API now better handles malformed payloads.
+   See [#309](https://github.com/QutBioacoustics/baw-server/pull/309)
+ - 2016-11-25
+   - Further refinements to analysis jobs, See
+       - [f9e2036](https://github.com/QutBioacoustics/baw-server/commit/f9e2036b7190279577a9469f37146e41f2f139e4)
+       - [8b770bf](https://github.com/QutBioacoustics/baw-server/commit/8b770bfccbe9b09df9973e3a7955f6542195e0b1)
+       - [5fd6970](https://github.com/QutBioacoustics/baw-server/commit/5fd6970b6418ca19f5381ef6aef25de7e39125ca)
+ - 2016-10-20
+   - Enhanced annotation download page to make the choices clearer for users
+   See [#304](https://github.com/QutBioacoustics/baw-server/commit/114831322a8dd2b329f71e130b4f9afbfaf39582)
+ - 2016-09-16
+   - Added support for partial payloads for analysis jobs items
+   See [5f96b96](https://github.com/QutBioacoustics/baw-server/commit/5f96b963480c3192533759f9fdf8fa2cfb08f1f0)
+- 
+ - 2016-09-13
+   - Updated gems [6e469cf](https://github.com/QutBioacoustics/baw-server/commit/6e469cf4be7e16ce632f5b380e7c9101fea36bdb)
+ - 2016-08-10
+   - Removing support for Ruby 2.2.3 [eac760c](https://github.com/QutBioacoustics/baw-server/commit/eac760c4351131a05fdcce6fdd2dce1e8d0a6568)
+ - 2016-08-09
+   - Fix: Split out analysis jobs items API from analysis results API.
+    See [#301](https://github.com/QutBioacoustics/baw-server/issues/301)
+ - 2016-08-03
+   - Feature: Analysis Jobs items integration. Analysis jobs have been setup and their complete workflows tested and integrated. See [#300](https://github.com/QutBioacoustics/baw-server/pull/300)
+     
+## [Release 0.19.2](https://github.com/QutBioacoustics/baw-server/releases/tag/0.19.2) (2016-06-26)
+
+ - 2016-06-21
+   - Fixed critical auth bug for analysis results endpoint [#294](https://github.com/QutBioacoustics/baw-server/issues/294)
+ - 2016-06-20
+   - Bug fixes for processing and working with timezone fields. API now automatically fixes up ill-
+     formatted timezone entries in the database. [52866cd](https://github.com/QutBioacoustics/baw-server/commit/52866cd371d3438c8c63e8d1b32a4af8796fd895)
+     
+## [Release 0.19.1](https://github.com/QutBioacoustics/baw-server/releases/tag/0.19.1) (2016-06-17)
+
+ - 2016-06-11
+   - Fixed outdated reference to baw-workers[ebeaab5](https://github.com/QutBioacoustics/baw-server/commit/ebeaab569f85bad22325c01628e47118ac7662f6)
+     
 ## [Release 0.19.0](https://github.com/QutBioacoustics/baw-server/releases/tag/0.19.0) (2016-06-17)
 
  - 2016-06-11
@@ -39,7 +101,7 @@
     - added basic admin list and view for analysis jobs
     - Added executable_settings_media_type to scripts table. Exposed scripts#show. [#258](https://github.com/QutBioacoustics/baw-server/issues/258) [#259](https://github.com/QutBioacoustics/baw-server/issues/259)
  - 2016-02-20
-    - partial fix for sorting by calculated fields - some inital queries still include sorting [#254](https://github.com/QutBioacoustics/baw-server/issues/254) 
+    - partial fix for sorting by calculated fields - some inital queries still include sorting [#254](https://github.com/QutBioacoustics/baw-server/issues/254)
     - potential fix for problems with filtering by calculated fields [#145](https://github.com/QutBioacoustics/baw-server/issues/145)
     - fixed `/taggings/filter` - it was present, but naming mismatches were causing errors
  - 2016-02-19
@@ -93,7 +155,7 @@
 ## [Release 0.17.0](https://github.com/QutBioacoustics/baw-server/releases/tag/0.17.0) (2015-08-17)
 
  - 2015-08-16
-    - More UI changes to sync with baw-client UI 
+    - More UI changes to sync with baw-client UI
  - 2015-08-10
     - Updated website navigation bar
  - 2015-08-08
@@ -109,7 +171,7 @@
     - Fixed a bug in `user_accounts#filter`: it tried to access model attributes that weren't loaded
 
  - 2015-07-08
-    - Changes to media polling to reduce the number of errors raised. 
+    - Changes to media polling to reduce the number of errors raised.
 
  - 2015-07-06
     - enable sorting on custom fields [#220](https://github.com/QutBioacoustics/baw-server/issues/220)

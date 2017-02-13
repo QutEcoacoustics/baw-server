@@ -24,7 +24,8 @@ describe AudioEvent, :type => :model do
   it { is_expected.to have_many(:tags) }
   it { is_expected.to accept_nested_attributes_for(:tags) }
 
-  it { is_expected.to validate_inclusion_of(:is_reference).in_array([true, false]) }
+  # this test is not possible, since everything is converted to a bool when set to :is_reference...
+  #it { is_expected.to validate_inclusion_of(:is_reference).in_array([true, false]) }
 
   it { is_expected.to validate_presence_of(:start_time_seconds) }
   it { is_expected.to validate_numericality_of(:start_time_seconds).is_greater_than_or_equal_to(0) }
@@ -59,7 +60,9 @@ to_char("audio_recordings"."recorded_date" + INTERVAL '0 seconds', 'YYYY-MM-DD"T
 to_char("audio_events"."created_at" + INTERVAL '0 seconds', 'YYYY-MM-DD') AS event_created_at_date_utc_00_00,
 to_char("audio_events"."created_at" + INTERVAL '0 seconds', 'HH24:MI:SS') AS event_created_at_time_utc_00_00,
 to_char("audio_events"."created_at" + INTERVAL '0 seconds', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS event_created_at_datetime_utc_00_00,
-(SELECT string_agg(CAST("projects"."id" as varchar) || ':' || "projects"."name", '|') FROM "projects_sites" INNER JOIN "projects" ON "projects"."id" = "projects_sites"."project_id" WHERE "projects_sites"."site_id" = "sites"."id") projects,
+(SELECT string_agg(CAST("projects"."id" as varchar) || ':' || "projects"."name", '|') FROM "projects_sites" INNER JOIN "projects" ON "projects"."id" = "projects_sites"."project_id" WHERE
+"projects"."deleted_at" IS NULL AND
+"projects_sites"."site_id" = "sites"."id") projects,
 "sites"."id" AS site_id, "sites"."name" AS site_name,
 to_char("audio_recordings"."recorded_date" + CAST("audio_events"."start_time_seconds" || ' seconds' as interval) + INTERVAL '0 seconds', 'YYYY-MM-DD') AS event_start_date_utc_00_00,
 to_char("audio_recordings"."recorded_date" + CAST("audio_events"."start_time_seconds" || ' seconds' as interval) + INTERVAL '0 seconds', 'HH24:MI:SS') AS event_start_time_utc_00_00,
@@ -83,10 +86,17 @@ FROM "audio_events"
 INNER JOIN "users" ON "users"."id" = "audio_events"."creator_id"
 INNER JOIN "audio_recordings" ON "audio_recordings"."id" = "audio_events"."audio_recording_id"
 INNER JOIN "sites" ON "sites"."id" = "audio_recordings"."site_id"
+WHERE 
+"audio_events"."deleted_at" IS NULL AND 
+"audio_recordings"."deleted_at" IS NULL AND 
+"sites"."deleted_at" IS NULL AND 
+"sites"."id" IN 
+(SELECT DISTINCT "sites"."id" FROM "projects" INNER JOIN "projects_sites" ON "projects"."id" = "projects_sites"."project_id" 
+WHERE "projects"."deleted_at" IS NULL AND "sites"."id" = "projects_sites"."site_id")
  ORDER BY "audio_events"."id" DESC
     eos
 
-    expect(query.to_sql).to eq(sql.gsub("\n", ' ').trim(' ', ''))
+    expect(query.to_sql.gsub("\n", ' ').gsub(' ', '')).to eq(sql.gsub("\n", ' ').gsub(' ', ''))
 
   end
 
@@ -105,7 +115,9 @@ to_char("audio_recordings"."recorded_date" + INTERVAL '36000 seconds', 'YYYY-MM-
 to_char("audio_events"."created_at" + INTERVAL '36000 seconds', 'YYYY-MM-DD') AS event_created_at_date_brisbane_10_00,
 to_char("audio_events"."created_at" + INTERVAL '36000 seconds', 'HH24:MI:SS') AS event_created_at_time_brisbane_10_00,
 to_char("audio_events"."created_at" + INTERVAL '36000 seconds', 'YYYY-MM-DD"T"HH24:MI:SS"+10:00"') AS event_created_at_datetime_brisbane_10_00,
-(SELECT string_agg(CAST("projects"."id" as varchar) || ':' || "projects"."name", '|') FROM "projects_sites" INNER JOIN "projects" ON "projects"."id" = "projects_sites"."project_id" WHERE "projects_sites"."site_id" = "sites"."id") projects,
+(SELECT string_agg(CAST("projects"."id" as varchar) || ':' || "projects"."name", '|') FROM "projects_sites" INNER JOIN "projects" ON "projects"."id" = "projects_sites"."project_id" WHERE 
+"projects"."deleted_at" IS NULL AND
+"projects_sites"."site_id" = "sites"."id") projects,
 "sites"."id" AS site_id, "sites"."name" AS site_name,
 to_char("audio_recordings"."recorded_date" + CAST("audio_events"."start_time_seconds" || ' seconds' as interval) + INTERVAL '36000 seconds', 'YYYY-MM-DD') AS event_start_date_brisbane_10_00,
 to_char("audio_recordings"."recorded_date" + CAST("audio_events"."start_time_seconds" || ' seconds' as interval) + INTERVAL '36000 seconds', 'HH24:MI:SS') AS event_start_time_brisbane_10_00,
@@ -129,10 +141,119 @@ FROM "audio_events"
 INNER JOIN "users" ON "users"."id" = "audio_events"."creator_id"
 INNER JOIN "audio_recordings" ON "audio_recordings"."id" = "audio_events"."audio_recording_id"
 INNER JOIN "sites" ON "sites"."id" = "audio_recordings"."site_id"
+WHERE 
+"audio_events"."deleted_at" IS NULL AND 
+"audio_recordings"."deleted_at" IS NULL AND 
+"sites"."deleted_at" IS NULL AND 
+"sites"."id" IN 
+(SELECT DISTINCT "sites"."id" FROM "projects" INNER JOIN "projects_sites" ON "projects"."id" = "projects_sites"."project_id" 
+WHERE "projects"."deleted_at" IS NULL AND "sites"."id" = "projects_sites"."site_id")
  ORDER BY "audio_events"."id" DESC
     eos
 
-    expect(query.to_sql).to eq(sql.gsub("\n", ' ').trim(' ', ''))
+    expect(query.to_sql.gsub("\n", ' ').gsub(' ', '')).to eq(sql.gsub("\n", ' ').gsub(' ', ''))
+
+  end
+
+  it 'excludes deleted projects, sites, audio_recordings, and audio_events from annotation download' do
+    user = FactoryGirl.create(:user, user_name: 'owner user checking excluding deleted items in annotation download')
+
+    # create combinations of deleted and not deleted for project, site, audio_recording, audio_event
+    expected_audio_recording = nil
+    (0..1).each do |project_n|
+      project = FactoryGirl.create(:project, creator: user)
+      project.destroy if project_n == 1
+
+      (0..1).each do |site_n|
+        site = FactoryGirl.create(:site, :with_lat_long, creator: user)
+        site.projects << project
+        site.save!
+        site.destroy if site_n == 1
+
+        (0..1).each do |audio_recording_n|
+          audio_recording = FactoryGirl.create(:audio_recording, :status_ready, creator: user, uploader: user, site: site)
+          audio_recording.destroy if audio_recording_n == 1
+
+          (0..1).each do |audio_event_n|
+            audio_event = FactoryGirl.create(:audio_event, creator: user, audio_recording: audio_recording)
+            audio_event.destroy if audio_event_n == 1
+            if project_n == 0 && site_n == 0 && audio_recording_n == 0 && audio_event_n == 0
+              expected_audio_recording = audio_event
+            end
+
+          end
+        end
+      end
+    end
+
+    # check that AudioEvent.csv_query returns only non-deleted items
+    query = AudioEvent.csv_query(nil, nil, nil, nil, nil, nil, nil)
+    query_sql = query.to_sql
+    formatted_annotations = AudioEvent.connection.select_all(query_sql)
+
+    expect(Project.with_deleted.count).to eq(2)
+    expect(Project.count).to eq(1)
+    expect(Project.only_deleted.count).to eq(1)
+
+    expect(Site.with_deleted.count).to eq(4)
+    expect(Site.count).to eq(2)
+    expect(Site.only_deleted.count).to eq(2)
+
+    expect(AudioRecording.with_deleted.count).to eq(8)
+    expect(AudioRecording.count).to eq(4)
+    expect(AudioRecording.only_deleted.count).to eq(4)
+
+    expect(AudioEvent.with_deleted.count).to eq(16)
+    expect(AudioEvent.count).to eq(8)
+    expect(AudioEvent.only_deleted.count).to eq(8)
+
+    expected_audio_events = [expected_audio_recording.id.to_s]
+    actual_audio_event_ids = formatted_annotations.map { |item| item['audio_event_id'] }
+
+    expect(actual_audio_event_ids).to eq(expected_audio_events)
+
+  end
+
+  it 'ensures only one instance of each audio event in annotation download' do
+    user = FactoryGirl.create(:user, user_name: 'owner user checking audio event uniqueness in annotation download')
+
+    # create 2 of everything for project, site, audio_recording, audio_event
+    (0..1).each do
+      project = FactoryGirl.create(:project, creator: user)
+
+      (0..1).each do
+        site = FactoryGirl.create(:site, :with_lat_long, creator: user)
+        site.projects << project
+        site.save!
+
+        (0..1).each do
+          audio_recording = FactoryGirl.create(:audio_recording, :status_ready, creator: user, uploader: user, site: site)
+
+          (0..1).each do
+            FactoryGirl.create(:audio_event, creator: user, audio_recording: audio_recording)
+
+          end
+        end
+      end
+    end
+
+    # check that AudioEvent.csv_query returns unique audio events
+    query = AudioEvent.csv_query(nil, nil, nil, nil, nil, nil, nil)
+    query_sql = query.to_sql
+    formatted_annotations = AudioEvent.connection.select_all(query_sql)
+
+    expect(Project.with_deleted.count).to eq(2)
+    expect(Site.with_deleted.count).to eq(2 * 2)
+    expect(AudioRecording.with_deleted.count).to eq(2 * 2 * 2)
+    expect(AudioEvent.with_deleted.count).to eq(2 * 2 * 2 * 2)
+
+    actual_audio_event_ids = formatted_annotations.map { |item| item['audio_event_id'] }
+
+    expect(actual_audio_event_ids.count).to eq(2 * 2 * 2 * 2)
+
+    expected_audio_event_ids = actual_audio_event_ids.uniq
+
+    expect(actual_audio_event_ids).to eq(expected_audio_event_ids)
 
   end
 

@@ -102,8 +102,8 @@ class Site < ActiveRecord::Base
   end
 
   def update_location_obfuscated(current_user)
-    Access::Check.check_orphan_site!(self)
-    is_owner = Access::Check.can_any?(current_user, :owner, self.projects.includes(:creator))
+    Access::Core.check_orphan_site!(self)
+    is_owner = Access::Core.can_any?(current_user, :owner, self.projects)
 
     # obfuscate if level is less than owner
     @location_obfuscated = !is_owner
@@ -140,6 +140,11 @@ class Site < ActiveRecord::Base
 
     # select a random value from the available array of ints
     selected = available.sample
+
+    # ensure the last digit is not zero (0), as this will be removed when converted
+    if selected.to_s.last == '0'
+      selected += 1
+    end
 
     # round to ensure precision is maintained (damn floating point in-exactness)
     # 3 decimal places is at the scale of an 'individual street, land parcel'

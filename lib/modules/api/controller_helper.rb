@@ -1,6 +1,7 @@
 module Api
   module ControllerHelper
     extend ActiveSupport::Concern
+    include Api::DirectoryRenderer
 
     # based on https://codelation.com/blog/rails-restful-api-just-add-water
     private
@@ -170,11 +171,6 @@ module Api
     def do_authorize_class(custom_action_name = nil, custom_class = nil)
       authorize! (custom_action_name || action_name).to_sym, (custom_class || resource_class)
     end
-
-    def do_authorise_instance_or_class
-      authorize! action_name.to_sym, (get_resource || resource_class)
-    end
-
 
   end
 end

@@ -75,17 +75,19 @@ class SavedSearchesController < ApplicationController
 
   def saved_search_params
     # can't permit arbitrary hash
-    # https://github.com/rails/rails/issues/9454#issuecomment-14167664
+    # ~~https://github.com/rails/rails/issues/9454#issuecomment-14167664~~
+    # http://stackoverflow.com/questions/19172893/rails-hashes-with-unknown-keys-and-strong-parameters/24752108#24752108
     # add arbitrary hash for stored_query manually
+    properties = params[:saved_search].delete(:stored_query)
     params.require(:saved_search).permit(:id, :name, :description).tap do |allowed_params|
-      if params[:saved_search][:stored_query]
-        allowed_params[:stored_query] = params[:saved_search][:stored_query]
+      if properties
+        allowed_params[:stored_query] = properties
       end
     end
   end
 
   def get_saved_searches
-    Access::Query.saved_searches(current_user, Access::Core.levels_allow)
+    Access::ByPermission.saved_searches(current_user)
   end
 
 end

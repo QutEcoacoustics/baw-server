@@ -1,11 +1,11 @@
 require 'rails_helper'
 
-describe 'CRUD Sites as valid user with write permission', :type => :feature do
+describe 'CRUD Sites as valid user with owner permission', type: :feature do
 
   create_entire_hierarchy
 
   before(:each) do
-    login_as writer_user, scope: :user
+    login_as owner_user, scope: :user
   end
 
   it 'lists all sites' do
@@ -17,9 +17,11 @@ describe 'CRUD Sites as valid user with write permission', :type => :feature do
   it 'shows site details' do
     visit project_site_path(project, site)
     expect(page).to have_content(site.name)
-    expect(page).to have_link('Edit Site')
-    expect(page).not_to have_link('Add New Site')
-    expect(page).not_to have_link('Delete')
+    expect(page).to have_link('Edit this site')
+    expect(page).to have_link('Explore audio')
+    expect(page).to have_link('Listen to audio')
+    expect(page).to have_link('Download annotations')
+    expect(page).not_to have_button('Delete this site')
   end
 
   it 'creates new site when filling out form correctly' do
@@ -44,21 +46,23 @@ describe 'CRUD Sites as valid user with write permission', :type => :feature do
 
   it 'updates site when filling out form correctly' do
     visit edit_project_site_path(project, site)
-    #save_and_open_page
-    fill_in 'site[name]', with: 'test name'
-    fill_in 'site[description]', with: 'description'
-    attach_file('site[image]', 'public/images/user/user-512.png')
+    expect(page).to have_content(site.name)
+    expect(page).to have_content('Original name is')
+    fill_in 'site[name]', with: 'test name 2'
     click_button 'Submit'
-    expect(page).to have_content('test name')
+    expect(page).to have_content('test name 2')
+    expect(page).to have_content('Site was successfully updated.')
   end
 
   it 'shows errors when updating form incorrectly' do
     visit edit_project_site_path(project, site)
-    #save_and_open_page
+    # save_and_open_page
     fill_in 'site[name]', with: ''
     click_button 'Submit'
     expect(page).to have_content('Please review the problems below:')
     expect(page).to have_content('can\'t be blank')
+    expect(page).to have_content(site.name)
+
   end
 
   it 'downloads csv file successfully' do
@@ -66,8 +70,8 @@ describe 'CRUD Sites as valid user with write permission', :type => :feature do
     site.save!
 
     visit project_site_path(project, site)
-    expect(page).to have_content('Annotations (csv)')
-    click_link('Annotations (csv)')
+    expect(page).to have_content('Download annotations')
+    click_link('Download annotations')
 
     expected_url = "#{data_request_url}?selected_project_id=#{project.id}&selected_site_id=#{site.id}&selected_timezone_name=Brisbane"
 
@@ -91,18 +95,18 @@ describe 'CRUD Sites as valid user with write permission', :type => :feature do
   end
 
   it 'rejects access to view project site harvest' do
-    visit harvest_project_site_path(project, site)
-    expect(page).to have_content(I18n.t('devise.failure.unauthorized'))
+    visit harvest_project_site_path(project, site, format: :yml)
+    expect(page).to have_content('# this needs to be set manually')
   end
 
-  it 'rejects access to view project site upload' do
+  it 'allows access to view project site upload' do
     visit upload_instructions_project_site_path(project, site)
-    expect(page).to have_content(I18n.t('devise.failure.unauthorized'))
+    expect(page).to have_content('Follow these instructions to upload audio to the site')
   end
 
 end
 
-describe 'CRUD Sites as valid user with read permission', :type => :feature do
+describe 'CRUD Sites as valid user with read permission', type: :feature do
 
   create_entire_hierarchy
 
@@ -119,9 +123,8 @@ describe 'CRUD Sites as valid user with read permission', :type => :feature do
   it 'shows site details' do
     visit project_site_path(project, site)
     expect(page).to have_content(site.name)
-    expect(page).not_to have_link('Edit Site')
-    expect(page).not_to have_link('Add New Site')
-    expect(page).not_to have_link('Delete')
+    expect(page).not_to have_link('Edit site')
+    expect(page).not_to have_button('Delete this site')
   end
 
   it 'rejects access to create project site' do
@@ -150,7 +153,7 @@ describe 'CRUD Sites as valid user with no permission', :type => :feature do
   create_entire_hierarchy
 
   before(:each) do
-    login_as other_user, scope: :user
+    login_as no_access_user, scope: :user
   end
 
   it 'lists all sites' do
@@ -196,10 +199,10 @@ describe 'Delete Site as admin user', :type => :feature do
   it 'successfully deletes the entity' do
     visit project_site_path(project, site)
     #save_and_open_page
-    expect(page).to have_link('Delete Site')
-    page.has_xpath? "//a[@href=\"/projects/#{project.id}/sites/#{site.id}\" and @data-method=\"delete\" and @data-confirm=\"Are you sure?\"]"
+    expect(page).to have_button('Delete this site')
+    page.has_xpath? "//form[@action=\"/projects/#{project.id}/sites/#{site.id}\" and @data-method=\"delete\" and @data-confirm=\"Are you sure?\"]"
 
-    expect { first(:link, 'Delete').click }.to change(Site, :count).by(-1)
+    expect { first(:button, 'Delete').click }.to change(Site, :count).by(-1)
 
     #expect { page.driver.delete project_dataset_path(project, dataset) }.to change(Dataset, :count).by(-1)
     #page.driver.response.should be_redirect

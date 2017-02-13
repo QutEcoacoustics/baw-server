@@ -20,7 +20,7 @@
         rvm1_rubies:
           # use full 'ruby-*' name
           # last ruby listed is the default
-          - "ruby-2.2.4"
+          - "ruby-2.3.1"
     postgresql_version: 9.3
   pre_tasks:
     - debug: var=ansible_ssh_user
@@ -31,7 +31,7 @@
       rvm1_install_flags: ""
       #rvm1_install_flags: '--auto-dotfiles --user-install'
       #rvm1_install_path: '/home/{{ ansible_ssh_user }}/.rvm'
-      ruby_rvm_extra_user: ~
+      ruby_rvm_extra_user: vagrant
       become: true
       tags: ["ruby"]
     - role: "{{ source_path }}/external/ANXS.postgresql"
@@ -59,3 +59,8 @@
         db: baw_local_dev
         user: postgres
         password: NULL
+    - name: APT | Install zip and unzip
+      apt:
+        pkg: zip
+        state: present
+      become: true
