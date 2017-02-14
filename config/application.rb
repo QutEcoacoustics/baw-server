@@ -23,9 +23,9 @@ module AWB
     config.autoload_paths << config.root.join('lib', 'modules')
 
     # add patches
-    config.autoload_paths << config.root.join('lib', 'patches','mime_type.rb')
-    config.autoload_paths << config.root.join('lib', 'patches','paperclip_content_matcher.rb')
-    config.autoload_paths << config.root.join('lib', 'patches','rspec_api_documentation.rb')
+    config.autoload_paths << config.root.join('lib', 'patches', 'mime_type.rb')
+    config.autoload_paths << config.root.join('lib', 'patches', 'paperclip_content_matcher.rb')
+    config.autoload_paths << config.root.join('lib', 'patches', 'rspec_api_documentation.rb')
 
     # Custom setup
     # enable garbage collection profiling (reported in New Relic)
@@ -189,7 +189,8 @@ module AWB
                  headers: :any,
                  methods: [:get, :post, :put, :patch, :head, :delete, :options],
                  credentials: true,
-                 expose: MediaPoll::HEADERS_EXPOSED + %w(X-Archived-At X-Error-Type)
+                 expose: Api::Constants::HTTP_HEADERS_MEDIA_EXPOSED +
+                     [Api::Constants::HTTP_HEADER_ARCHIVED_AT, Api::Constants::HTTP_HEADER_ERROR_TYPE]
       end
     end
 

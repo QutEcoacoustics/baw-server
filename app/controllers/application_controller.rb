@@ -97,12 +97,12 @@ class ApplicationController < ActionController::Base
   def add_archived_at_header(model)
     if model.respond_to?(:deleted_at) && !model.deleted_at.blank?
       # response header must be a string, can't just pass a Date or Time
-      response.headers['X-Archived-At'] = model.deleted_at.httpdate
+      response.headers[Api::Constants::HTTP_HEADER_ARCHIVED_AT] = model.deleted_at.httpdate
     end
   end
 
   def add_header_length(length)
-    response.headers['Content-Length'] = length.to_s
+    response.headers[Api::Constants::HTTP_HEADER_CONTENT_LENGTH] = length.to_s
   end
 
   def no_content_as_json
@@ -116,8 +116,7 @@ class ApplicationController < ActionController::Base
   # CSRF protection is enabled for API.
   # This enforces login via the UI only, since requests without a logged in user won't have access to the CSRF cookie.
   def verified_request?
-    csrf_header_key = 'X-XSRF-TOKEN'
-    super || valid_authenticity_token?(session, request.headers[csrf_header_key]) || api_auth_success?
+    super || valid_authenticity_token?(session, request.headers[Api::Constants::HTTP_HEADER_CSRF_TOKEN]) || api_auth_success?
   end
 
   # from http://stackoverflow.com/a/94626
@@ -244,7 +243,7 @@ class ApplicationController < ActionController::Base
     log_original_error(method_name, error, json_response)
 
     # add custom header
-    headers['X-Error-Type'] = error.class.to_s.titleize unless error.nil?
+    headers[Api::Constants::HTTP_HEADER_ERROR_TYPE] = error.class.to_s.titleize unless error.nil?
 
     respond_to do |format|
       # format.all will be used for Accept: */* as it is first in the list
@@ -576,7 +575,8 @@ class ApplicationController < ActionController::Base
   end
 
   def validate_headers
-    if response.headers.has_key?('Content-Length') && response.headers['Content-Length'].to_i < 0
+    if response.headers.has_key?(Api::Constants::HTTP_HEADER_CONTENT_LENGTH) &&
+        response.headers[Api::Constants::HTTP_HEADER_CONTENT_LENGTH].to_i < 0
       raise CustomErrors::BadHeaderError
     end
     if response.headers.has_key?(:content_length) && response.headers[:content_length].to_i < 0

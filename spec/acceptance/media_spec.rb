@@ -763,11 +763,11 @@ resource 'Media' do
                 expected_method: :get,
                 expected_response_content_type: 'audio/mpeg',
                 document: document_media_requests,
-                expected_response_media_from_header: MediaPoll::HEADER_VALUE_RESPONSE_REMOTE,
+                expected_response_media_from_header: Api::Constants::HTTP_HEADER_RESPONSE_REMOTE,
                 expected_response_has_content: false,
                 expected_response_header_values_match: false,
                 expected_response_header_values: {
-                    'X-Error-Type' => 'Custom Errors/Audio Generation Error'
+                    Api::Constants::HTTP_HEADER_ERROR_TYPE => 'Custom Errors/Audio Generation Error'
                 }
             }
 
@@ -794,7 +794,7 @@ resource 'Media' do
                 expected_method: :get,
                 expected_response_content_type: 'audio/mpeg',
                 document: document_media_requests,
-                expected_response_media_from_header: MediaPoll::HEADER_VALUE_RESPONSE_CACHE
+                expected_response_media_from_header: Api::Constants::HTTP_HEADER_RESPONSE_CACHE
             }
 
         opts2 = acceptance_checks_shared(request2, opts2)

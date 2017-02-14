@@ -1,6 +1,19 @@
 # Changelog
 
 ## Unreleased
+ - 2017-02-12
+    - Updated how the site deals with cancelling a user account [#295](https://github.com/QutBioacoustics/baw-server/issues/295):
+        - add `acts_as_paranoid` to `users`
+        - add tests for archiving users
+        - add tests to ensure related records are not deleted when a user is archived
+        - add tests to ensure audio recordings are not deleted when a user is archived or deleted
+        - change buttons in UI to be "deactivate my account" rather than 'cancel/delete my account"
+        - in user profile, add text "When your account is deactivated, you can no longer log in, or make any changes. No other user will be able to see your identifiable information."
+        - places on the Rails views that show user names should show "Deactivated user" for archived users instead of user name
+        - change exports that include user names to be blank instead if user is archived
+        - only admin & user themselves can archive/deactivate a user
+        - only admin can hard delete a user (must be archived first)
+        - can set foreign keys to null or another user instead of cascading (not sure about this)?
  - 2016-09-16
     - Added support for partial payloads for analysis jobs items [TODO]
  - 2016-09-13

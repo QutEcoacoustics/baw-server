@@ -79,7 +79,7 @@ resource 'Errors' do
                                  expected_response_header_values_match: false,
                                  expected_response_header_values:
                                      {
-                                         'X-Error-Type' => 'Baw Audio Tools/Exceptions/Audio Tool Error'
+                                         Api::Constants::HTTP_HEADER_ERROR_TYPE => 'Baw Audio Tools/Exceptions/Audio Tool Error'
                                      }
                              })
   end

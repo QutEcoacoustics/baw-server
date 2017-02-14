@@ -6,7 +6,7 @@ RSpec.describe ApplicationController, type: :controller do
     skip_authorization_check
 
     def index
-      response.headers['Content-Length'] = -100
+      response.headers[Api::Constants::HTTP_HEADER_CONTENT_LENGTH] = -100
       render text: "test response"
     end
   end

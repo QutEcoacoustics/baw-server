@@ -10,6 +10,12 @@ class User < ActiveRecord::Base
   # http://www.phase2technology.com/blog/authentication-permissions-and-roles-in-rails-with-devise-cancan-and-role-model/
   include RoleModel
 
+  # ensures that creator_id, updater_id, deleter_id are set
+  include UserChange
+
+  # enables soft deletes and hard deletes
+  include ModelArchiveAndDelete
+
   # user must always have an authentication token
   before_save :ensure_authentication_token
 
@@ -42,6 +48,9 @@ class User < ActiveRecord::Base
   has_many :readable_projects, -> { where("permissions.level = 'reader'") }, through: :permissions, source: :project
   has_many :writable_projects, -> { where("permissions.level = 'writer'") }, through: :permissions, source: :project
   has_many :owned_projects, -> { where("permissions.level = 'owner'") }, through: :permissions, source: :project
+
+  # for acts_as_paranoid
+  belongs_to :deleter, class_name: 'User', foreign_key: :deleter_id, inverse_of: :deleted_users
 
   # relations for creator, updater, deleter, and others.
   has_many :created_audio_events, class_name: 'AudioEvent', foreign_key: :creator_id, inverse_of: :creator
@@ -89,6 +98,9 @@ class User < ActiveRecord::Base
   has_many :updated_tags, class_name: 'Tag', foreign_key: :updater_id, inverse_of: :updater
 
   has_many :created_tag_groups, class_name: 'TagGroup', foreign_key: :creator_id, inverse_of: :creator
+
+  # for acts_as_paranoid
+  has_many :deleted_users, class_name: 'User', foreign_key: :deleter_id, inverse_of: :deleter
 
   # scopes
   scope :users, -> { where(roles_mask: 2) }

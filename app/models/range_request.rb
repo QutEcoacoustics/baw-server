@@ -21,47 +21,7 @@
 #
 
 class RangeRequest
-
-  module Constants
-    MULTIPART_BOUNDARY = '<q1w2e3r4t5y6u7i8o9p0>'
-    MULTIPART_CONTENT_TYPE = 'multipart/byteranges boundary=' + MULTIPART_BOUNDARY
-    DEFAULT_CONTENT_TYPE = 'application/octet-stream'
-    MULTIPART_HEADER_LENGTH = 49
-    MULTIPART_DASH_LINE_BREAK_LENGTH = 8
-    CONVERT_INDEX_TO_LENGTH = 1
-    CONVERT_LENGTH_TO_INDEX = -1
-    REQUIRED_PARAMETERS = [:start_offset, :end_offset, :recorded_date, :site_id, :site_name, :ext, :file_path, :media_type]
-
-
-    HTTP_HEADER_ACCEPT_RANGES = 'Accept-Ranges'
-    HTTP_HEADER_ACCEPT_RANGES_BYTES = 'bytes'
-    HTTP_HEADER_ACCEPT_RANGES_BYTES_EQUAL = 'bytes='
-    HTTP_HEADER_ACCEPT_RANGES_NONE = 'none'
-    HTTP_HEADER_CONTENT_TYPE = 'Content-Type'
-    HTTP_HEADER_CONTENT_RANGE = 'Content-Range'
-    HTTP_HEADER_CONTENT_LENGTH = 'Content-Length'
-    HTTP_HEADER_CONTENT_DISPOSITION = 'Content-Disposition'
-    HTTP_HEADER_ENTITY_TAG = 'ETag'
-    HTTP_HEADER_LAST_MODIFIED = 'Last-Modified'
-    HTTP_HEADER_RANGE = 'Range'
-    HTTP_HEADER_IF_RANGE = 'If-Range'
-    HTTP_HEADER_IF_MATCH = 'If-Match'
-    HTTP_HEADER_IF_NONE_MATCH = 'If-None-Match'
-    HTTP_HEADER_IF_MODIFIED_SINCE = 'If-Modified-Since'
-    HTTP_HEADER_IF_UNMODIFIED_SINCE = 'If-Unmodified-Since'
-    HTTP_HEADER_UNLESS_MODIFIED_SINCE = 'Unless-Modified-Since'
-
-    HTTP_METHOD_GET = 'GET'
-    HTTP_METHOD_HEAD = 'HEAD'
-
-    HTTP_CODE_PARTIAL_CONTENT = 206
-    HTTP_CODE_PRECONDITION_FAILED = 412
-    HTTP_CODE_NOT_MODIFIED = 304
-    HTTP_CODE_OK = 200
-  end
-  include Constants
-
-  attr_reader :max_range_size, :write_buffer_size
+    attr_reader :max_range_size, :write_buffer_size
 
   # @param [int] max_range_size Maximum range length in bytes
   # @param [int] write_buffer_size Buffer write size in bytes
@@ -73,7 +33,7 @@ class RangeRequest
   # @param [Hash] options
   def build_response(options, rails_request)
 
-    check_options(options, REQUIRED_PARAMETERS)
+    check_options(options, Api::Constants::REQUIRED_PARAMETERS)
 
     info = response_info(options, rails_request)
 
@@ -122,12 +82,12 @@ class RangeRequest
 
         file_io.seek(range_start, IO::SEEK_SET)
 
-        remaining = range_end - range_start + CONVERT_INDEX_TO_LENGTH
+        remaining = range_end - range_start + Api::Constants::CONVERT_INDEX_TO_LENGTH
 
         if info[:is_multipart]
-          output_io.write("--#{MULTIPART_BOUNDARY}\r\n")
-          output_io.write("#{HTTP_HEADER_CONTENT_TYPE}: #{info[:file_media_type]}\r\n")
-          output_io.write("#{HTTP_HEADER_CONTENT_RANGE}: #{HTTP_HEADER_ACCEPT_RANGES_BYTES} #{range_start}-#{range_end}/#{info[:file_size]}\r\n")
+          output_io.write("--#{Api::Constants::MULTIPART_BOUNDARY}\r\n")
+          output_io.write("#{Api::Constants::HTTP_HEADER_CONTENT_TYPE}: #{info[:file_media_type]}\r\n")
+          output_io.write("#{Api::Constants::HTTP_HEADER_CONTENT_RANGE}: #{Api::Constants::HTTP_HEADER_ACCEPT_RANGES_BYTES} #{range_start}-#{range_end}/#{info[:file_size]}\r\n")
         end
 
         while remaining > 0
@@ -186,25 +146,25 @@ class RangeRequest
       range_start = info[:range_start_bytes][index]
       range_end = info[:range_end_bytes][index]
 
-      content_length += (range_end - range_start) + CONVERT_INDEX_TO_LENGTH
+      content_length += (range_end - range_start) + Api::Constants::CONVERT_INDEX_TO_LENGTH
 
       content_length += (
-      MULTIPART_BOUNDARY.size +
+      Api::Constants::MULTIPART_BOUNDARY.size +
           info[:file_media_type].size +
           range_start.to_s.size +
           range_end.to_s.size +
           info[:file_size].to_s.size +
-          MULTIPART_HEADER_LENGTH
+          Api::Constants::MULTIPART_HEADER_LENGTH
       )
     end
 
-    content_length += MULTIPART_BOUNDARY.size + MULTIPART_DASH_LINE_BREAK_LENGTH
+    content_length += Api::Constants::MULTIPART_BOUNDARY.size + Api::Constants::MULTIPART_DASH_LINE_BREAK_LENGTH
 
-    return_value[:response_code] = HTTP_CODE_PARTIAL_CONTENT
+    return_value[:response_code] = Api::Constants::HTTP_CODEPARTIAL_CONTENT
 
     return_value[:response_headers] = {}
-    return_value[:response_headers][HTTP_HEADER_CONTENT_LENGTH] = content_length
-    return_value[:response_headers][HTTP_HEADER_CONTENT_TYPE] = MULTIPART_CONTENT_TYPE
+    return_value[:response_headers][Api::Constants::HTTP_HEADER_CONTENT_LENGTH] = content_length
+    return_value[:response_headers][Api::Constants::HTTP_HEADER_CONTENT_TYPE] = Api::Constants::MULTIPART_CONTENT_TYPE
 
     return_value
   end
@@ -218,14 +178,14 @@ class RangeRequest
     range_end = info[:range_end_bytes][0]
     file_size = info[:file_size]
 
-    content_length = (range_end - range_start) + CONVERT_INDEX_TO_LENGTH
+    content_length = (range_end - range_start) + Api::Constants::CONVERT_INDEX_TO_LENGTH
 
-    return_value[:response_code] = HTTP_CODE_PARTIAL_CONTENT
+    return_value[:response_code] = Api::Constants::HTTP_CODEPARTIAL_CONTENT
 
     return_value[:response_headers] = {}
-    return_value[:response_headers][HTTP_HEADER_CONTENT_RANGE] = "#{HTTP_HEADER_ACCEPT_RANGES_BYTES} #{range_start}-#{range_end}/#{file_size}"
-    return_value[:response_headers][HTTP_HEADER_CONTENT_LENGTH] = content_length
-    return_value[:response_headers][HTTP_HEADER_CONTENT_TYPE] = info[:file_media_type]
+    return_value[:response_headers][Api::Constants::HTTP_HEADER_CONTENT_RANGE] = "#{Api::Constants::HTTP_HEADER_ACCEPT_RANGES_BYTES} #{range_start}-#{range_end}/#{file_size}"
+    return_value[:response_headers][Api::Constants::HTTP_HEADER_CONTENT_LENGTH] = content_length
+    return_value[:response_headers][Api::Constants::HTTP_HEADER_CONTENT_TYPE] = info[:file_media_type]
 
     return_value
   end
@@ -234,11 +194,11 @@ class RangeRequest
     return {} if info[:is_range]
     return_value = {}
 
-    return_value[:response_code] = HTTP_CODE_OK
+    return_value[:response_code] = Api::Constants::HTTP_CODEOK
 
     return_value[:response_headers] = {}
-    return_value[:response_headers][HTTP_HEADER_CONTENT_LENGTH] = info[:file_size]
-    return_value[:response_headers][HTTP_HEADER_CONTENT_TYPE] = info[:file_media_type]
+    return_value[:response_headers][Api::Constants::HTTP_HEADER_CONTENT_LENGTH] = info[:file_size]
+    return_value[:response_headers][Api::Constants::HTTP_HEADER_CONTENT_TYPE] = info[:file_media_type]
 
     return_value
   end
@@ -248,10 +208,10 @@ class RangeRequest
     return_value = {}
 
     return_value[:response_headers] = {}
-    return_value[:response_headers][HTTP_HEADER_LAST_MODIFIED] = info[:file_modified_time].httpdate
-    return_value[:response_headers][HTTP_HEADER_ENTITY_TAG] = '"' + info[:file_entity_tag] + '"'
-    return_value[:response_headers][HTTP_HEADER_ACCEPT_RANGES] = HTTP_HEADER_ACCEPT_RANGES_BYTES
-    return_value[:response_headers][HTTP_HEADER_CONTENT_DISPOSITION] = "inline; filename=\"#{info[:response_suggested_file_name]}\""
+    return_value[:response_headers][Api::Constants::HTTP_HEADER_LAST_MODIFIED] = info[:file_modified_time].httpdate
+    return_value[:response_headers][Api::Constants::HTTP_HEADER_ENTITY_TAG] = '"' + info[:file_entity_tag] + '"'
+    return_value[:response_headers][Api::Constants::HTTP_HEADER_ACCEPT_RANGES] = Api::Constants::HTTP_HEADER_ACCEPT_RANGES_BYTES
+    return_value[:response_headers][Api::Constants::HTTP_HEADER_CONTENT_DISPOSITION] = "inline; filename=\"#{info[:response_suggested_file_name]}\""
 
     return_value
   end
@@ -261,7 +221,7 @@ class RangeRequest
     file_path = File.expand_path(options[:file_path])
     media_type = options[:media_type]
 
-    range_header = rails_request.headers[HTTP_HEADER_RANGE]
+    range_header = rails_request.headers[Api::Constants::HTTP_HEADER_RANGE]
 
     audio_recording = {
         id: options[:recording_id],
@@ -304,7 +264,7 @@ class RangeRequest
         range_end_bytes: [],
 
         # the largest possible value for range_end_bytes
-        range_end_bytes_max: file_size + CONVERT_LENGTH_TO_INDEX,
+        range_end_bytes_max: file_size + Api::Constants::CONVERT_LENGTH_TO_INDEX,
 
         range_length_max: @max_range_size,
         write_buffer_size: @write_buffer_size,
@@ -322,7 +282,7 @@ class RangeRequest
 
         response_has_content: true,
         response_is_range: false,
-        response_code: HTTP_CODE_OK,
+        response_code: Api::Constants::HTTP_CODEOK,
         response_headers: {},
         stop_processing_request_headers: false,
         response_suggested_file_name: suggested_file_name
@@ -340,12 +300,12 @@ class RangeRequest
     return_value[:range_start_bytes] = []
     return_value[:range_end_bytes] = []
 
-    ranges = info[:requested_range].gsub(HTTP_HEADER_ACCEPT_RANGES_BYTES_EQUAL, '').split(',')
+    ranges = info[:requested_range].gsub(Api::Constants::HTTP_HEADER_ACCEPT_RANGES_BYTES_EQUAL, '').split(',')
 
     return_value[:is_range] = true
     return_value[:is_multipart] = ranges.size > 1
     return_value[:response_is_range] = true
-    return_value[:response_code] = HTTP_CODE_PARTIAL_CONTENT
+    return_value[:response_code] = Api::Constants::HTTP_CODEPARTIAL_CONTENT
 
     start_index = 0
     end_index = 1
@@ -383,7 +343,7 @@ class RangeRequest
       if start_range.blank? && end_range.blank?
         # default to 0 - @max_range_size (or whatever is available) of file
         start_range = info[:range_start_bytes_min]
-        end_range = [@max_range_size + CONVERT_LENGTH_TO_INDEX, info[:range_end_bytes_max]].min
+        end_range = [@max_range_size + Api::Constants::CONVERT_LENGTH_TO_INDEX, info[:range_end_bytes_max]].min
 
       # e.g. "0-1", "0-500", "400-1000"
       elsif !start_range.blank? && !end_range.blank?
@@ -395,7 +355,7 @@ class RangeRequest
       elsif !start_range.blank? && end_range.blank?
         # given a start but no end, get the smallest of remaining length and @max_range_size
         start_range = start_range.to_i
-        end_range = [start_range + @max_range_size + CONVERT_LENGTH_TO_INDEX, info[:range_end_bytes_max]].min
+        end_range = [start_range + @max_range_size + Api::Constants::CONVERT_LENGTH_TO_INDEX, info[:range_end_bytes_max]].min
 
       # https://tools.ietf.org/html/rfc7233#page-5
       # assuming a representation of length 10000:
@@ -404,7 +364,7 @@ class RangeRequest
       # e.g. "-200"
       elsif start_range.blank? && !end_range.blank?
         # No beginning specified, get last n bytes of file
-        start_range = info[:range_end_bytes_max] + CONVERT_INDEX_TO_LENGTH - [end_range.to_i, @max_range_size].min
+        start_range = info[:range_end_bytes_max] + Api::Constants::CONVERT_INDEX_TO_LENGTH - [end_range.to_i, @max_range_size].min
         end_range = info[:range_end_bytes_max]
 
       end
@@ -412,7 +372,7 @@ class RangeRequest
       start_range = info[:range_start_bytes_min] if start_range < info[:range_start_bytes_min]
       end_range = info[:range_end_bytes_max] if end_range > info[:range_end_bytes_max]
       # e.g. bytes=0-499, max_range_size=500 => 499 - 0 + 1 = 500 > 500
-      if (end_range - start_range + CONVERT_INDEX_TO_LENGTH) > @max_range_size
+      if (end_range - start_range + Api::Constants::CONVERT_INDEX_TO_LENGTH) > @max_range_size
         fail CustomErrors::BadRequestError, 'The requested range exceeded the maximum allowed.'
       end
       if start_range > end_range
@@ -432,14 +392,14 @@ class RangeRequest
     return_value = {}
 
     # check If modified since header to determine if file needs to be resent
-    if_mod_since = info[:request_headers][HTTP_HEADER_IF_MODIFIED_SINCE]
+    if_mod_since = info[:request_headers][Api::Constants::HTTP_HEADER_IF_MODIFIED_SINCE]
 
     unless if_mod_since.blank?
       header_modified_time = Time.zone.parse(if_mod_since)
 
       # use .to_i so that compares will match even if sub-seconds are removed by Time.zone.parse
       if !header_modified_time.blank? && info[:file_modified_time].getutc.to_i <= header_modified_time.getutc.to_i
-        return_value[:response_code] = HTTP_CODE_NOT_MODIFIED
+        return_value[:response_code] = Api::Constants::HTTP_CODENOT_MODIFIED
         return_value[:response_is_range] = false
         return_value[:response_has_content] = false
         return_value[:stop_processing_request_headers] = true
@@ -455,10 +415,10 @@ class RangeRequest
     return_value = {}
 
     # check for if unmod since and unless mod since (not quite sure what these headers do or are for)
-    if_unmod_since = info[:request_headers][HTTP_HEADER_IF_UNMODIFIED_SINCE]
+    if_unmod_since = info[:request_headers][Api::Constants::HTTP_HEADER_IF_UNMODIFIED_SINCE]
 
     if if_unmod_since.blank?
-      if_unmod_since = info[:request_headers][HTTP_HEADER_UNLESS_MODIFIED_SINCE]
+      if_unmod_since = info[:request_headers][Api::Constants::HTTP_HEADER_UNLESS_MODIFIED_SINCE]
     end
 
     unless if_unmod_since.blank?
@@ -467,7 +427,7 @@ class RangeRequest
       # use .to_i so that compares will match even if sub-seconds are removed by Time.zone.parse
       if !header_time.blank? && info[:file_modified_time].getutc.to_i > header_time.getutc.to_i
         # file was created after specified date
-        return_value[:response_code] = HTTP_CODE_PRECONDITION_FAILED
+        return_value[:response_code] = Api::Constants::HTTP_CODEPRECONDITION_FAILED
         return_value[:response_is_range] = false
         return_value[:response_has_content] = false
         return_value[:stop_processing_request_headers] = true
@@ -486,7 +446,7 @@ class RangeRequest
     # If the entity tag given in the If-Range header matches the current entity tag for the entity, then the server
     # SHOULD provide the specified sub-range of the entity using a 206 (Partial content) response. If the entity tag
     # does not match, then the server SHOULD return the entire entity using a 200 (OK) response.
-    if_match = info[:request_headers][HTTP_HEADER_IF_MATCH]
+    if_match = info[:request_headers][Api::Constants::HTTP_HEADER_IF_MATCH]
     # Only perform the action if the client supplied entity matches the same entity on the server.
     unless if_match.blank?
       entity_ids = if_match.split(',')
@@ -505,7 +465,7 @@ class RangeRequest
 
       unless found
         # did not find a match
-        return_value[:response_code] = HTTP_CODE_PRECONDITION_FAILED
+        return_value[:response_code] = Api::Constants::HTTP_CODEPRECONDITION_FAILED
         return_value[:response_is_range] = false
         return_value[:response_has_content] = false
         return_value[:stop_processing_request_headers] = true
@@ -522,12 +482,12 @@ class RangeRequest
     return_value = {}
 
     # Check if none match header
-    if_none_match = info[:request_headers][HTTP_HEADER_IF_NONE_MATCH]
+    if_none_match = info[:request_headers][Api::Constants::HTTP_HEADER_IF_NONE_MATCH]
     # Allows a 304 Not Modified to be returned if content is unchanged
     if if_none_match
       if if_none_match == '*'
         # Any etag will match
-        return_value[:response_code] = HTTP_CODE_NOT_MODIFIED
+        return_value[:response_code] = Api::Constants::HTTP_CODENOT_MODIFIED
         return_value[:response_is_range] = false
         return_value[:response_has_content] = false
         return_value[:stop_processing_request_headers] = true
@@ -541,9 +501,9 @@ class RangeRequest
           if etag_value == info[:file_entity_tag]
 
             return_value[:response_headers] = {}
-            return_value[:response_headers][HTTP_HEADER_ENTITY_TAG] = '"' + etag_value + '"'
+            return_value[:response_headers][Api::Constants::HTTP_HEADER_ENTITY_TAG] = '"' + etag_value + '"'
 
-            return_value[:response_code] = HTTP_CODE_NOT_MODIFIED
+            return_value[:response_code] = Api::Constants::HTTP_CODENOT_MODIFIED
             return_value[:response_is_range] = false
             return_value[:response_has_content] = false
             return_value[:stop_processing_request_headers] = true
@@ -561,11 +521,11 @@ class RangeRequest
     return_value = {}
 
     # Check if range header
-    if_range = info[:request_headers][HTTP_HEADER_IF_RANGE]
+    if_range = info[:request_headers][Api::Constants::HTTP_HEADER_IF_RANGE]
     # If the entity is unchanged, send me the part(s) that I am missing; otherwise, send me the entire new entity
     # change is determined by etag in if-range header
     if !if_range.blank? && if_range != info[:file_entity_tag] && info[:is_range]
-      return_value[:response_code] = HTTP_CODE_OK
+      return_value[:response_code] = Api::Constants::HTTP_CODEOK
       return_value[:response_is_range] = false
       return_value[:response_has_content] = true
       return_value[:stop_processing_request_headers] = true

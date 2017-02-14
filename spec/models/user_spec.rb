@@ -30,6 +30,8 @@ describe User, :type => :model do
     }.to raise_exception(ActiveRecord::RecordInvalid, /Validation failed: Tzinfo tz is not a recognised timezone/)
   end
 
+  it { is_expected.to belong_to(:deleter).with_foreign_key(:deleter_id) }
+
   #pending "add some examples to (or delete) #{__FILE__}"
 
   # this should pass, but the paperclip implementation of validate_attachment_content_type is buggy.

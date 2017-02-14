@@ -332,7 +332,7 @@ CREATE TABLE permissions (
     updated_at timestamp without time zone,
     allow_logged_in boolean DEFAULT false NOT NULL,
     allow_anonymous boolean DEFAULT false NOT NULL,
-    CONSTRAINT permissions_exclusive_cols CHECK ((((((user_id IS NOT NULL) AND (NOT allow_logged_in)) AND (NOT allow_anonymous)) OR (((user_id IS NULL) AND allow_logged_in) AND (NOT allow_anonymous))) OR (((user_id IS NULL) AND (NOT allow_logged_in)) AND allow_anonymous)))
+    CONSTRAINT permissions_exclusive_cols CHECK ((((user_id IS NOT NULL) AND (NOT allow_logged_in) AND (NOT allow_anonymous)) OR ((user_id IS NULL) AND allow_logged_in AND (NOT allow_anonymous)) OR ((user_id IS NULL) AND (NOT allow_logged_in) AND allow_anonymous)))
 );
 
 
@@ -651,7 +651,9 @@ CREATE TABLE users (
     preferences text,
     tzinfo_tz character varying(255),
     rails_tz character varying(255),
-    last_seen_at timestamp without time zone
+    last_seen_at timestamp without time zone,
+    deleter_id integer,
+    deleted_at timestamp without time zone
 );
 
 
@@ -1320,6 +1322,13 @@ CREATE UNIQUE INDEX index_users_on_confirmation_token ON users USING btree (conf
 
 
 --
+-- Name: index_users_on_deleter_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_users_on_deleter_id ON users USING btree (deleter_id);
+
+
+--
 -- Name: index_users_on_email; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1792,7 +1801,7 @@ ALTER TABLE ONLY tags
 -- PostgreSQL database dump complete
 --
 
-SET search_path TO "$user",public;
+SET search_path TO "$user", public;
 
 INSERT INTO schema_migrations (version) VALUES ('20130715022212');
 
@@ -1887,4 +1896,6 @@ INSERT INTO schema_migrations (version) VALUES ('20160614230504');
 INSERT INTO schema_migrations (version) VALUES ('20160712051359');
 
 INSERT INTO schema_migrations (version) VALUES ('20160726014747');
+
+INSERT INTO schema_migrations (version) VALUES ('20170212000106');
 

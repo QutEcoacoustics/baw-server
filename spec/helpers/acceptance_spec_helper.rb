@@ -200,13 +200,13 @@ def acceptance_checks_shared(request, opts = {})
 
   unless opts[:actual_response_content_type].blank?
 
-    if opts[:actual_response_content_type] == 'application/json' || opts[:actual_response_headers].include?('X-Error-Type')
+    if opts[:actual_response_content_type] == 'application/json' || opts[:actual_response_headers].include?(Api::Constants::HTTP_HEADER_ERROR_TYPE)
       expect(opts[:actual_response_headers]['Content-Transfer-Encoding']).to be_nil, "Mismatch: content transfer encoding. #{opts[:msg]}"
       expect(opts[:actual_response_headers]['Content-Disposition']).to be_nil, "Mismatch: content disposition. #{opts[:msg]}"
     end
 
     if (opts[:actual_response_content_type].start_with?('image/') || opts[:actual_response_content_type].start_with?('audio/')) &&
-        !opts[:actual_response_headers].include?('X-Error-Type')
+        !opts[:actual_response_headers].include?(Api::Constants::HTTP_HEADER_ERROR_TYPE)
       expect(opts[:actual_response_headers]['Content-Transfer-Encoding']).to eq('binary'), "Mismatch: content transfer encoding. #{opts[:msg]}"
       expect(opts[:actual_response_headers]['Content-Disposition']).to start_with('inline; filename='), "Mismatch: content disposition. #{opts[:msg]}"
     end
@@ -376,18 +376,18 @@ def acceptance_checks_media(opts = {})
     expect(opts[:actual_response_headers]['Accept-Ranges']).to be_nil, "Mismatch: accept ranges. #{opts[:msg]}"
   end
 
-  expect(opts[:actual_response_headers]).to include('Content-Length'), "Missing header: content length. #{opts[:msg]}"
-  expect(opts[:actual_response_headers]['Content-Length']).to_not be_blank, "Mismatch: content length. #{opts[:msg]}"
+  expect(opts[:actual_response_headers]).to include(Api::Constants::HTTP_HEADER_CONTENT_LENGTH), "Missing header: content length. #{opts[:msg]}"
+  expect(opts[:actual_response_headers][Api::Constants::HTTP_HEADER_CONTENT_LENGTH]).to_not be_blank, "Mismatch: content length. #{opts[:msg]}"
 
   if is_json
-    not_allowed_headers = MediaPoll::HEADERS_EXPOSED - ['Content-Length']
+    not_allowed_headers = Api::Constants::HTTP_HEADERS_MEDIA_EXPOSED - [Api::Constants::HTTP_HEADER_CONTENT_LENGTH]
     actual_present = opts[:actual_response_headers].keys - (opts[:actual_response_headers].keys - not_allowed_headers)
     expect(opts[:actual_response_headers].keys).to_not include(*not_allowed_headers), "These headers were present when they should not be #{actual_present} #{opts[:msg]}"
-  elsif opts[:actual_response_headers].keys.include?('X-Error-Type')
-    expected_headers = MediaPoll::HEADERS_EXPOSED - [MediaPoll::HEADER_KEY_ELAPSED_TOTAL, MediaPoll::HEADER_KEY_ELAPSED_PROCESSING, MediaPoll::HEADER_KEY_ELAPSED_WAITING]
+  elsif opts[:actual_response_headers].keys.include?(Api::Constants::HTTP_HEADER_ERROR_TYPE)
+    expected_headers = Api::Constants::HTTP_HEADERS_MEDIA_EXPOSED - [Api::Constants::HTTP_HEADER_ELAPSED_TOTAL, Api::Constants::HTTP_HEADER_ELAPSED_PROCESSING, Api::Constants::HTTP_HEADER_ELAPSED_WAITING]
     expect(opts[:actual_response_headers].keys).to include(*expected_headers), "Missing headers: #{expected_headers - opts[:actual_response_headers].keys} #{opts[:msg]}"
   else
-    expect(opts[:actual_response_headers].keys).to include(*MediaPoll::HEADERS_EXPOSED), "Missing headers: #{MediaPoll::HEADERS_EXPOSED - opts[:actual_response_headers].keys} #{opts[:msg]}"
+    expect(opts[:actual_response_headers].keys).to include(*Api::Constants::HTTP_HEADERS_MEDIA_EXPOSED), "Missing headers: #{Api::Constants::HTTP_HEADERS_MEDIA_EXPOSED - opts[:actual_response_headers].keys} #{opts[:msg]}"
   end
 
   if opts[:is_range_request]
@@ -412,7 +412,7 @@ def acceptance_checks_media(opts = {})
       cache_spectrogram_possible_paths = spectrogram_cache.possible_paths(options)
 
       if opts[:expected_response_has_content]
-        expect(opts[:actual_response_headers]['Content-Length'].to_i).to eq(File.size(cache_spectrogram_possible_paths.first)),
+        expect(opts[:actual_response_headers][Api::Constants::HTTP_HEADER_CONTENT_LENGTH].to_i).to eq(File.size(cache_spectrogram_possible_paths.first)),
                                                                          "Mismatch: response image length. #{opts[:msg]}"
       end
     elsif is_audio
@@ -423,21 +423,21 @@ def acceptance_checks_media(opts = {})
       cache_audio_possible_paths = audio_cache.possible_paths(options)
 
       if opts[:expected_response_has_content]
-        expect(opts[:actual_response_headers]['Content-Length'].to_i).to eq(File.size(cache_audio_possible_paths.first)),
+        expect(opts[:actual_response_headers][Api::Constants::HTTP_HEADER_CONTENT_LENGTH].to_i).to eq(File.size(cache_audio_possible_paths.first)),
                                                                          "Mismatch: response audio length. #{opts[:msg]}"
       end
     elsif is_json
-      expect(opts[:actual_response_headers]['Content-Length'].to_i).to be > 0,
+      expect(opts[:actual_response_headers][Api::Constants::HTTP_HEADER_CONTENT_LENGTH].to_i).to be > 0,
                                                                        "Mismatch: actual media json length. #{opts[:msg]}"
       # TODO: files should not exist?
     else
-      fail "Unrecognised content type: #{opts[:actual_response_headers]['Content-Type']}"
+      fail "Unrecognised content type: #{opts[:actual_response_headers][Api::Constants::HTTP_HEADER_CONTENT_TYPE]}"
     end
   else
     begin
       temp_file = File.join(Settings.paths.temp_dir, 'temp-media_controller_response')
       File.open(temp_file, 'wb') { |f| f.write(response_body) }
-      expect(opts[:actual_response_headers]['Content-Length'].to_i).to eq(File.size(temp_file)),
+      expect(opts[:actual_response_headers][Api::Constants::HTTP_HEADER_CONTENT_LENGTH].to_i).to eq(File.size(temp_file)),
                                                                        "Mismatch: actual media length. #{opts[:msg]}"
     ensure
       File.delete temp_file if File.exists? temp_file

@@ -87,18 +87,33 @@ ELSE last_sign_in_at END DESC'
 
   # DELETE /user_accounts/:id
   def destroy
-    do_load_resource
-    do_authorize_instance
 
-    if Access::Core.is_standard_user?(@user)
-      @user.destroy
-      respond_to do |format|
-        format.html { redirect_to user_accounts_path, notice: t('baw.shared.actions.user_deleted')}
-        format.json { respond_destroy }
-      end
+    # TODO: change  do_load_with_deleted_resource to use
+    # ModelArchiveAndDelete / ModelArchiveOnly
+    # to decide how to load the instance
+    # and if ok to hard delete
+    user_deleted = !do_check_resource_exists?
+
+    if user_deleted
+      do_load_with_deleted_resource
     else
-      fail CustomErrors::UnprocessableEntityError.new(t('baw.shared.actions.cannot_delete_account'))
+      do_load_resource
     end
+
+      do_authorize_instance
+
+      if Access::Core.is_standard_user?(@user)
+        @user.destroy
+
+        add_archived_at_header(@user) unless user_deleted
+
+        respond_to do |format|
+          format.html { redirect_to user_accounts_path, notice: t('baw.shared.actions.user_deleted')}
+          format.json { respond_destroy }
+        end
+      else
+        fail CustomErrors::UnprocessableEntityError.new(t('baw.shared.actions.cannot_delete_account'))
+      end
   end
 
   # PUT /my_account/prefs

@@ -68,4 +68,5 @@ module CustomErrors
       @message
     end
   end
+  class DeleteNotPermittedError < RuntimeError; end
 end

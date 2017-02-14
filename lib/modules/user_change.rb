@@ -4,7 +4,7 @@ module UserChange
   included do
     before_validation :set_creator_id, on: :create
     before_validation :set_updater_id, on: :update
-    before_validation :set_deleter_id, on: :delete
+    after_destroy :set_deleter_id, on: :delete
   end
 
   private
@@ -24,6 +24,7 @@ module UserChange
   def set_deleter_id
     if respond_to?('deleter_id='.to_sym) && self.deleter_id.blank?
       self.deleter_id= User.stamper
+      self.save
     end
   end
 

@@ -416,35 +416,35 @@ class MediaController < ApplicationController
   end
 
   def add_header_cache
-    headers[MediaPoll::HEADER_KEY_RESPONSE_FROM] = MediaPoll::HEADER_VALUE_RESPONSE_CACHE
+    headers[Api::Constants::HTTP_HEADER_RESPONSE_FROM] = Api::Constants::HTTP_HEADER_RESPONSE_CACHE
   end
 
   def add_header_generated_remote
-    headers[MediaPoll::HEADER_KEY_RESPONSE_FROM] = MediaPoll::HEADER_VALUE_RESPONSE_REMOTE
+    headers[Api::Constants::HTTP_HEADER_RESPONSE_FROM] = Api::Constants::HTTP_HEADER_RESPONSE_REMOTE
   end
 
   def add_header_generated_local
-    headers[MediaPoll::HEADER_KEY_RESPONSE_FROM] = MediaPoll::HEADER_VALUE_RESPONSE_LOCAL
+    headers[Api::Constants::HTTP_HEADER_RESPONSE_FROM] = Api::Constants::HTTP_HEADER_RESPONSE_LOCAL
   end
 
   # request received
   def add_header_started(start_datetime)
-    headers[MediaPoll::HEADER_KEY_RESPONSE_START] = start_datetime.httpdate
+    headers[Api::Constants::HTTP_HEADER_RESPONSE_START] = start_datetime.httpdate
   end
 
   # from request received to data sent to client
   def add_header_total_elapsed(elapsed_seconds)
-    headers[MediaPoll::HEADER_KEY_ELAPSED_TOTAL] = elapsed_seconds.to_s
+    headers[Api::Constants::HTTP_HEADER_ELAPSED_TOTAL] = elapsed_seconds.to_s
   end
 
   # from job queue/generation start to job finished/generation finished
   def add_header_processing_elapsed(elapsed_seconds)
-    headers[MediaPoll::HEADER_KEY_ELAPSED_PROCESSING] = elapsed_seconds.to_s
+    headers[Api::Constants::HTTP_HEADER_ELAPSED_PROCESSING] = elapsed_seconds.to_s
   end
 
   # from job finished/generation finished to data sent to client
   def add_header_waiting_elapsed(elapsed_seconds)
-    headers[MediaPoll::HEADER_KEY_ELAPSED_WAITING] = elapsed_seconds.to_s
+    headers[Api::Constants::HTTP_HEADER_ELAPSED_WAITING] = elapsed_seconds.to_s
   end
 
 end

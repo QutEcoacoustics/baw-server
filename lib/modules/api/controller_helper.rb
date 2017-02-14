@@ -160,12 +160,24 @@ module Api
       set_resource(resource_class.find(params[:id]))
     end
 
+    def do_load_with_deleted_resource
+      set_resource(resource_class.with_deleted.find(params[:id]))
+    end
+
+    def do_check_resource_exists?
+      resource_class.exists?(id: params[:id])
+    end
+
+    def do_check_with_deleted_resource_exists?
+      resource_class.with_deleted.exists?(id: params[:id])
+    end
+
     def do_load_resources
       set_resource_plural(resource_class.accessible_by(current_ability))
     end
 
     def do_authorize_instance(custom_action_name = nil, custom_resource = nil)
-      authorize! (custom_action_name ||action_name).to_sym, (custom_resource || get_resource)
+      authorize! (custom_action_name || action_name).to_sym, (custom_resource || get_resource)
     end
 
     def do_authorize_class(custom_action_name = nil, custom_class = nil)

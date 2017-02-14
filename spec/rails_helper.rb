@@ -45,6 +45,8 @@ require 'database_cleaner'
 require 'rspec_api_documentation'
 
 require 'helpers/misc_helper'
+require 'support/support_helpers'
+require 'support/archivable_spec'
 
 WebMock.disable_net_connect!(allow_localhost: true, allow: 'codeclimate.com')
 

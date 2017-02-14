@@ -1,25 +1,5 @@
 class MediaPoll
 
-  HEADER_KEY_RESPONSE_FROM = 'X-Media-Response-From'
-  HEADER_KEY_RESPONSE_START = 'X-Media-Response-Start'
-
-  HEADER_VALUE_RESPONSE_CACHE = 'Cache'
-  HEADER_VALUE_RESPONSE_REMOTE = 'Generated Remotely'
-  HEADER_VALUE_RESPONSE_LOCAL = 'Generated Locally'
-
-  HEADER_KEY_ELAPSED_TOTAL = 'X-Media-Elapsed-Seconds-Total'
-  HEADER_KEY_ELAPSED_PROCESSING = 'X-Media-Elapsed-Seconds-Processing'
-  HEADER_KEY_ELAPSED_WAITING = 'X-Media-Elapsed-Seconds-Waiting'
-
-  HEADERS_EXPOSED = [
-      'Content-Length',
-      HEADER_KEY_RESPONSE_FROM,
-      HEADER_KEY_RESPONSE_START,
-      HEADER_KEY_ELAPSED_TOTAL,
-      HEADER_KEY_ELAPSED_PROCESSING,
-      HEADER_KEY_ELAPSED_WAITING
-  ].freeze
-
   class << self
 
     # this will block the request and wait until at least one of the files is available

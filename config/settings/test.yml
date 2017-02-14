@@ -10,7 +10,7 @@ test:
     database: baw_local_test
     pool: 5
     username: postgres
-    password: ''
+    password: 'y1o2551u5Pip'
     host: localhost
   devise:
      pepper: 128 char random pepper 128 char random pepper
