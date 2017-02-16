@@ -10,7 +10,7 @@ development:
      database: baw_local_dev
      pool: 5
      username: postgres
-     password: 'y1o2551u5Pip'
+     password: ''
      host: localhost
   devise:
      pepper: 128 char random pepper 128 char random pepper

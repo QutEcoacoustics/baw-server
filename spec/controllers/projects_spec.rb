@@ -12,7 +12,7 @@ describe ProjectsController do
 
     it_behaves_like :a_delete_api_call, Project, :allow_archive #, :allow_delete
 
-    context 'archivable with associations' do
+    context 'with associations' do
       create_entire_hierarchy
 
       let(:delete_api_model){

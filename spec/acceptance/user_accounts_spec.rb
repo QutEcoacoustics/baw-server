@@ -200,14 +200,16 @@ resource 'Users' do
     id_param
     let(:id) { writer_id }
     let(:authentication_token) { writer_token }
-    standard_request_options(:delete, 'DESTROY (as writer, deleting same user)', :no_content)
+    standard_request_options(:delete, 'DESTROY (as writer, deleting same user)', :no_content, {
+        expected_response_has_content: false, expected_response_content_type: nil})
   end
 
   delete '/user_accounts/:id' do
     id_param
     let(:id) { reader_id }
     let(:authentication_token) { reader_token }
-    standard_request_options(:delete, 'DESTROY (as reader, deleting same user)', :no_content)
+    standard_request_options(:delete, 'DESTROY (as reader, deleting same user)', :no_content, {
+        expected_response_has_content: false, expected_response_content_type: nil})
   end
 
   delete '/user_accounts/:id' do

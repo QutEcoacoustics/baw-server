@@ -89,8 +89,6 @@ RSpec.shared_examples :a_delete_api_call do |klass, *options|
         create(model_symbol)
       end
 
-
-
       # check request with invalid id
       delete_api_invalid_id_check(klass)
 
@@ -110,7 +108,7 @@ RSpec.shared_examples :a_delete_api_call do |klass, *options|
 
         current_case = selected_cases[call-1]
         current_message = "#{ActiveSupport::Inflector.ordinalize(call)} delete api call (expected response: #{current_case})"
-        p "#{klass}: #{current_message}"
+        # p "#{klass}: #{current_message}"  # for debugging
 
         item_count_before = klass.count
         item_count_all_before = klass.unscoped.count

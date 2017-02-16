@@ -82,6 +82,20 @@ class ApplicationController < ActionController::Base
     super
   end
 
+  # A dummy method to get rid of all the Rubymine errors.
+  # see https://github.com/plataformatec/devise/blob/v4.2.0/lib/devise/controllers/helpers.rb#L149
+  # @return [Boolean]
+  def devise_controller?
+    super
+  end
+
+  # A dummy method to get rid of all the Rubymine errors.
+  # see https://github.com/plataformatec/devise/blob/v4.2.0/lib/devise/controllers/helpers.rb#L114
+  # @return [Void]
+  def authenticate_user!(opts={})
+    super(opts)
+  end
+
 
   protected
 

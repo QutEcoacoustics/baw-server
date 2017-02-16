@@ -417,7 +417,7 @@ describe 'MANAGE User Accounts as admin user', :type => :feature do
     expect(page).to have_content(I18n.t('baw.shared.actions.user_deleted'))
     expect {
       User.find(user.id)
-    }.to raise_error(ActiveRecord::RecordNotFound, "Couldn't find User with 'id'=#{user.id}")
+    }.to raise_error(ActiveRecord::RecordNotFound, "Couldn't find User with 'id'=#{user.id} [WHERE \"users\".\"deleted_at\" IS NULL]")
   end
 
   it 'provides link to Projects Sites Bookmarks Annotations Comments' do
@@ -547,7 +547,7 @@ describe 'MANAGE User Accounts as user', :type => :feature do
     expect(page).to have_content(I18n.t('devise.registrations.destroyed'))
     expect {
       User.find(@user.id)
-    }.to raise_error(ActiveRecord::RecordNotFound, "Couldn't find User with 'id'=#{@user.id}")
+    }.to raise_error(ActiveRecord::RecordNotFound, "Couldn't find User with 'id'=#{@user.id} [WHERE \"users\".\"deleted_at\" IS NULL]")
     expect(current_path).to eq(root_path)
   end
 end

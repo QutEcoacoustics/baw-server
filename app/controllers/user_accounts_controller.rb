@@ -112,7 +112,7 @@ ELSE last_sign_in_at END DESC'
           format.json { respond_destroy }
         end
       else
-        fail CustomErrors::UnprocessableEntityError.new(t('baw.shared.actions.cannot_delete_account'))
+        fail CustomErrors::BadRequestError.new(t('baw.shared.actions.cannot_delete_account'))
       end
   end
 
