@@ -7,6 +7,6 @@ $grid-float-breakpoint: 992px;
 @import "bootstrap-sprockets";
 @import "bootstrap";
 
-@import "bootstrap-datetimepicker.min.css";
+@import "../../../vendor/assets/stylesheets/bootstrap-datetimepicker.min";
 @import "custom";
 @import "twitter_typeahead";
