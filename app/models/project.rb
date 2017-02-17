@@ -40,7 +40,7 @@ class Project < ActiveRecord::Base
   after_create :create_owner_permission
 
   def description_html
-    CustomRender.render_markdown(self, :description)
+    CustomRender.render_model_markdown(self, :description)
   end
 
   # Define filter api settings

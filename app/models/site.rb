@@ -110,7 +110,7 @@ class Site < ActiveRecord::Base
   end
 
   def description_html
-    CustomRender.render_markdown(self, :description)
+    CustomRender.render_model_markdown(self, :description)
   end
 
   def self.add_location_jitter(value, min, max)
