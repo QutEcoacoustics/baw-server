@@ -1,5 +1,12 @@
 module ApplicationHelper
 
+  def partial_exists?(path_to_partial)
+    lookup_context.find_all(path_to_partial,[],true).any?
+  end
+
+  def render_if_exists(path_to_partial)
+    render path_to_partial if partial_exists?(path_to_partial)
+  end
 
   def titles(which_title = :title)
     which_title_sym = which_title.to_s.to_sym

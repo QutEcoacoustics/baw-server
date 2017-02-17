@@ -134,6 +134,8 @@ module AWB
     Paperclip::Attachment.default_options[:path] = ':rails_root/public:url'
     Paperclip::Attachment.default_options[:url] = '/system/:class/:attachment/:id_partition/:style/:filename'
 
+    ActionView::Base.sanitized_allowed_tags.merge(['table', 'tr', 'td', 'caption', 'thead', 'th', 'tfoot', 'tbody', 'colgroup'])
+
     # for generating documentation from tests
     Raddocs.configuration.docs_dir = "doc/api"
 

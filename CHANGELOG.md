@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## [Release 1.2.0](https://github.com/QutBioacoustics/baw-server/releases/tag/1.2.0)
+
+ - 2017-02-16
+   - Added support for rendering markdown partials
+   - Refactored existing instance partials and added a new instance partial for
+   the credits page.  
+
 ## [Release 1.1.0](https://github.com/QutBioacoustics/baw-server/releases/tag/1.1.0)
 
 Our major new feature in this release is support for user based analysis-jobs!
