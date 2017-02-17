@@ -69,3 +69,24 @@ git push --tags
 git push
 ```
 
+## Fast release protocol
+
+**WARNING**: The following steps assume:
+- all tests pass (e.g. on CI)
+- all gems are updated
+- all master patches have been (correctly) previously merged into develop
+
+```
+git checkout develop
+git checkout -b release-<version> develop
+# change version numbers: app/models/settings.rb
+# update CHANGELOG.md
+git commit -am "increment version to <version>"
+git checkout master
+git merge --no-ff release-<version>
+git tag -a <version>
+git checkout develop
+git merge --no-ff release-<version>
+git push --tags
+git push
+```
