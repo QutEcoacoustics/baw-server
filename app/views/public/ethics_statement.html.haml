@@ -2,7 +2,7 @@
 - @info_bar = {title: t('baw.shared.links.home.title'),  icon: 'home'}
 - menu_default_link('ethics_statement')
 
-- if File.exists? "#{Rails.root}/app/views/public/_ethics.html.haml"
+- if partial_exists?('public/ethics')
   = render partial: 'public/ethics'
 - else
   %p No ethics statement available for this project.

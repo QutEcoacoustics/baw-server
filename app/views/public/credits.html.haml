@@ -4,7 +4,7 @@
 %p
   The development of this web application was an initiative of the
   %a{href: 'https://www.qut.edu.au/'} Queensland University of Technology's
-  %a{href: 'http://www.ecosounds.org/'} Ecoacoustics Research Group.
+  %a{href: 'http://research.ecosounds.org/'} Ecoacoustics Research Group.
   This website makes use of a range of other technologies and libraries.
 
 %p
@@ -38,6 +38,11 @@
         %a{href: 'http://mp3splt.sourceforge.net/mp3splt_page/home.php'} mp3split
         (for quickly segmenting large .mp3 files)
 
+%ul
+  %li
+    %a{href: 'https://angularjs.org/'} AngularJS
+  %li
+    %a{href: 'https://d3js.org/'} D3.js
 %h2
   Platforms and services
 
@@ -46,3 +51,9 @@
     %a{href: 'https://github.com'} Github
   %li
     %a{href: 'https://travis-ci.org'} TravisCI
+
+- if partial_exists?('public/credits')
+  %h1
+    = Settings.organisation_names.parent_site_name
+    Credits
+  = render partial: 'public/credits'

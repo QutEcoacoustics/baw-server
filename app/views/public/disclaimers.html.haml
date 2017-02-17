@@ -15,8 +15,8 @@
   We may make improvements or changes to the information and data at any time.
 
 
-- if File.exists? "#{Rails.root}/app/views/public/_privacy.html.haml"
-  = render partial: 'public/privacy'
+- if partial_exists?('public/privacy')
+  = render 'public/privacy'
 - else
   %h1 Privacy Statement
   %p No privacy statement available for this project.

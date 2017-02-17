@@ -1,7 +1,7 @@
 - content_for :title, t('baw.shared.links.upload_audio.title')
 - @info_bar = {title: t('baw.shared.links.home.title'),  icon: 'home'}
 
-- if File.exists? "#{Rails.root}/app/views/public/_data_upload.html.haml"
-  = render partial: 'public/data_upload'
+- if partial_exists?('public/data_upload')
+  ~ render partial: 'public/data_upload'
 - else
   %p No instructions are available.
