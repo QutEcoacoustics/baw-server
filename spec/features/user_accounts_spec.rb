@@ -315,6 +315,9 @@ describe "User account actions", :type => :feature do
       find(:xpath, '/descendant::input[@type="submit"]').click
       expect(current_path).to eq('/')
       expect(page).to have_content('Your password was changed successfully. You are now logged in.')
+      expect(page).to have_content(user.user_name)
+      expect(page).to have_content(I18n.t('devise.shared.links.sign_out'))
+
     end
 
     it 'email is sent and password can be changed for restricted user name' do
@@ -402,18 +405,18 @@ describe 'MANAGE User Accounts as admin user', :type => :feature do
 
   it 'cannot delete account from my account page' do
     visit edit_user_registration_path
-    expect(page).not_to have_content('Cancel my account')
+    expect(page).not_to have_content(I18n.t('devise.registrations.edit.cancel_my_account'))
   end
 
   it 'cannot delete account from user accounts edit page' do
     visit user_account_path(@admin)
-    expect(page).not_to have_content('Cancel my account')
+    expect(page).not_to have_content(I18n.t('devise.registrations.edit.cancel_my_account'))
   end
 
   it 'can delete other non-admin user account' do
     user = FactoryGirl.create(:user)
     visit edit_user_account_path(user)
-    click_button "Delete user's account"
+    click_button I18n.t('devise.registrations.edit.cancel_user_account')
     expect(page).to have_content(I18n.t('baw.shared.actions.user_deleted'))
     expect {
       User.find(user.id)
@@ -536,14 +539,15 @@ describe 'MANAGE User Accounts as user', :type => :feature do
     end
   end
 
-  it 'cannot delete other account' do
+  it 'should not show button to deactivate other account' do
     visit user_account_path(no_access_user)
-    expect(page).not_to have_content('Cancel my account')
+    expect(page).not_to have_content(I18n.t('devise.registrations.edit.cancel_my_account'))
   end
 
   it 'can delete own account' do
     visit edit_user_registration_path
-    click_button 'Cancel my account'
+    click_button I18n.t('devise.registrations.edit.cancel_my_account')
+    expect(current_path).to eq('/')
     expect(page).to have_content(I18n.t('devise.registrations.destroyed'))
     expect {
       User.find(@user.id)

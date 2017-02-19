@@ -66,7 +66,10 @@ en:
       updated: You updated your account successfully.
       edit:
         are_you_sure: "Are you sure?"
-        cancel_my_account: "Cancel my account"
+        cancel_my_account: "Deactivate my account"
+        cancel_user_account: "Deactivate user's account"
+        cancel_my_account_confirmation: "WARNING: Please be sure you want to deactivate your account!"
+        cancel_user_account_confirmation: "WARNING: Please be sure you want to deactivate this account!"
         leave_blank_if_you_don_t_want_to_change_it: "leave blank if you don't want to change it"
         currently_waiting_confirmation_for_email: "Currently waiting confirmation for: %{email}"
         title: "Edit %{resource}"

@@ -186,6 +186,22 @@ def acceptance_checks_shared(request, opts = {})
 
   opts[:msg] = "Requested #{opts[:actual_method]} #{opts[:actual_path]}. Information hash: #{opts}"
 
+  # compare the keys that actual and expected have in common
+  opts_actual = opts.select { |key, value| key.to_s.start_with?('actual') }
+  opts_expected = opts.select { |key, value| key.to_s.start_with?('expected') }
+  common_keys = opts_actual.keys.map { |key| key.to_s.gsub('actual_', '') } & opts_expected.keys.map { |key| key.to_s.gsub('expected_', '') }
+  common_keys.each do |key|
+    actual_value = opts_actual["actual_#{key}".to_sym]
+    expected_value = opts_expected["expected_#{key}".to_sym]
+    if actual_value.is_a?(Symbol) && expected_value.is_a?(Symbol)
+      expect(actual_value).to eq(expected_value),
+                              "Mismatch: #{key} - expected #{expected_value} but got #{actual_value}. #{opts[:msg]}"
+    elsif actual_value.is_a?(String) && expected_value.is_a?(String)
+      expect(actual_value).to start_with(expected_value),
+                              "Mismatch: #{key} - expected #{expected_value} but got #{actual_value}. #{opts[:msg]}"
+    end
+  end
+
   # expectations
   expect(opts[:actual_status]).to eq(opts[:expected_status]), "Mismatch: status. #{opts[:msg]}"
   expect(opts[:actual_method]).to eq(opts[:expected_method]), "Mismatch: HTTP method. #{opts[:msg]}"
@@ -413,7 +429,7 @@ def acceptance_checks_media(opts = {})
 
       if opts[:expected_response_has_content]
         expect(opts[:actual_response_headers][Api::Constants::HTTP_HEADER_CONTENT_LENGTH].to_i).to eq(File.size(cache_spectrogram_possible_paths.first)),
-                                                                         "Mismatch: response image length. #{opts[:msg]}"
+                                                                                                   "Mismatch: response image length. #{opts[:msg]}"
       end
     elsif is_audio
       options[:format] = default_audio.extension
@@ -424,11 +440,11 @@ def acceptance_checks_media(opts = {})
 
       if opts[:expected_response_has_content]
         expect(opts[:actual_response_headers][Api::Constants::HTTP_HEADER_CONTENT_LENGTH].to_i).to eq(File.size(cache_audio_possible_paths.first)),
-                                                                         "Mismatch: response audio length. #{opts[:msg]}"
+                                                                                                   "Mismatch: response audio length. #{opts[:msg]}"
       end
     elsif is_json
       expect(opts[:actual_response_headers][Api::Constants::HTTP_HEADER_CONTENT_LENGTH].to_i).to be > 0,
-                                                                       "Mismatch: actual media json length. #{opts[:msg]}"
+                                                                                                 "Mismatch: actual media json length. #{opts[:msg]}"
       # TODO: files should not exist?
     else
       fail "Unrecognised content type: #{opts[:actual_response_headers][Api::Constants::HTTP_HEADER_CONTENT_TYPE]}"
@@ -438,7 +454,7 @@ def acceptance_checks_media(opts = {})
       temp_file = File.join(Settings.paths.temp_dir, 'temp-media_controller_response')
       File.open(temp_file, 'wb') { |f| f.write(response_body) }
       expect(opts[:actual_response_headers][Api::Constants::HTTP_HEADER_CONTENT_LENGTH].to_i).to eq(File.size(temp_file)),
-                                                                       "Mismatch: actual media length. #{opts[:msg]}"
+                                                                                                 "Mismatch: actual media length. #{opts[:msg]}"
     ensure
       File.delete temp_file if File.exists? temp_file
     end

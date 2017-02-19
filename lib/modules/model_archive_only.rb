@@ -2,7 +2,7 @@ module ModelArchiveOnly
   extend ActiveSupport::Concern
 
   included do
-    # add deleted_at and deleter_id
+    # enable archiving
     acts_as_paranoid
     validates_as_paranoid
 

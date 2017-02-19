@@ -1,14 +1,19 @@
 class UserAccountsController < ApplicationController
   include Api::ControllerHelper
 
+  # these actions are used by both standard users and admins
+
   # GET /user_accounts
   def index
+    # only admin has access to index
+
     do_authorize_class
- 
+
     order = 'CASE WHEN last_seen_at IS NOT NULL THEN last_seen_at
 WHEN current_sign_in_at IS NOT NULL THEN current_sign_in_at
 ELSE last_sign_in_at END DESC'
-    @users = User.order(order).page(params[:page])
+    # included archied users
+    @users = User.with_deleted.order(order).page(params[:page])
 
     respond_to do |format|
       format.html
@@ -17,7 +22,14 @@ ELSE last_sign_in_at END DESC'
 
   # GET /user_accounts/:id
   def show
-    do_load_resource
+    # admin, this account's user, and other users can access show
+    if Access::Core.is_admin?(current_user)
+      do_load_with_deleted_resource
+    else
+      # users who are not admin cannot access archived user's details
+      do_load_resource
+    end
+
     do_authorize_instance
 
     respond_to do |format|
@@ -28,6 +40,7 @@ ELSE last_sign_in_at END DESC'
 
   # GET /my_account
   def my_account
+    # admin and this account's user can access my_account
     @user = current_user
 
     do_authorize_instance
@@ -40,13 +53,15 @@ ELSE last_sign_in_at END DESC'
 
   # GET /user_accounts/:id/edit
   def edit
-    do_load_resource
+    # only admins have access to edit
+    do_load_with_deleted_resource
     do_authorize_instance
   end
 
   # PUT|PATCH /user_accounts/:id
   def update
-    do_load_resource
+    # only admins have access to update
+    do_load_with_deleted_resource
     do_authorize_instance
 
     the_params = user_update_params.dup
@@ -87,33 +102,31 @@ ELSE last_sign_in_at END DESC'
 
   # DELETE /user_accounts/:id
   def destroy
+    # admin or account's user have access to destroy
 
-    # TODO: change  do_load_with_deleted_resource to use
-    # ModelArchiveAndDelete / ModelArchiveOnly
-    # to decide how to load the instance
-    # and if ok to hard delete
-    user_deleted = !do_check_resource_exists?
+    # do_load_resource will fail for an archived user
+    # this is what we want - cannot hard delete a user from UI, even if admin
+    do_load_resource
+    do_authorize_instance
 
-    if user_deleted
-      do_load_with_deleted_resource
-    else
-      do_load_resource
+    if @user.deleted?
+      # just make sure that we cannot hard delete a user from UI, even if admin!
+      fail CustomErrors::DeleteNotPermittedError.new(I18n.t('baw.shared.actions.cannot_hard_delete_account'))
     end
 
-      do_authorize_instance
+    if Access::Core.is_standard_user?(@user)
+      @user.destroy
 
-      if Access::Core.is_standard_user?(@user)
-        @user.destroy
+      # archived at header is only added if user is not archived already
+      add_archived_at_header(@user) if do_check_resource_exists?
 
-        add_archived_at_header(@user) unless user_deleted
-
-        respond_to do |format|
-          format.html { redirect_to user_accounts_path, notice: t('baw.shared.actions.user_deleted')}
-          format.json { respond_destroy }
-        end
-      else
-        fail CustomErrors::BadRequestError.new(t('baw.shared.actions.cannot_delete_account'))
+      respond_to do |format|
+        format.html { redirect_to root_path, notice: I18n.t('devise.registrations.destroyed') }
+        format.json { respond_destroy }
       end
+    else
+      fail CustomErrors::BadRequestError.new(t('baw.shared.actions.cannot_delete_account'))
+    end
   end
 
   # PUT /my_account/prefs
@@ -154,8 +167,8 @@ ELSE last_sign_in_at END DESC'
     do_authorize_instance
 
     @user_sites = Access::ByPermission.sites(@user).includes(:creator, :projects).references(:creator, :project)
-        .order('sites.name ASC')
-        .page(paging_params[:page].blank? ? 1 : paging_params[:page])
+                      .order('sites.name ASC')
+                      .page(paging_params[:page].blank? ? 1 : paging_params[:page])
 
     respond_to do |format|
       format.html

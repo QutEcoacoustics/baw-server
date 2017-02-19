@@ -128,3 +128,4 @@ en:
       actions:
         user_deleted: User was successfully deleted.
         cannot_delete_account: Cannot delete this account.
+        cannot_hard_delete_account: Cannot permanently delete an account using UI or API.

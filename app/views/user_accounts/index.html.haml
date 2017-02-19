@@ -27,6 +27,9 @@
         %span.fa.fa-check-square-o{aria: {hidden: 'true'}}
         Confirmed?
       %th
+        %span.fa.fa-times-circle-o{aria: {hidden: 'true'}}
+        Active?
+      %th
 
   %tbody
     - @users.each do |user|
@@ -34,7 +37,20 @@
       %tr
         %td= link_to "#{user.user_name} (#{user.role_symbols.join(', ')})", user_account_path(user)
         %td= last_seen.blank? ? '?' : format_sidebar_datetime(last_seen)
-        %td= user.confirmed? ? 'confirmed' : 'no'
+        %td
+          - if user.confirmed?
+            %span.fa.fa-check{aria: {hidden: 'true'}}
+            yes
+          - else
+            %span.fa.fa-times{aria: {hidden: 'true'}}
+            no
+        %td
+          - unless user.deleted?
+            %span.fa.fa-check{aria: {hidden: 'true'}}
+            yes
+          - else
+            %span.fa.fa-times{aria: {hidden: 'true'}}
+            no
         %td
           = link_to edit_user_account_path(user), target: '_self', class: 'btn btn-default btn-xs' do
             %span.fa.fa-edit{aria: {hidden: 'true'}}

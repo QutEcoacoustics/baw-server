@@ -73,9 +73,6 @@ RSpec.shared_examples :a_delete_api_call do |klass, *options|
   context "delete api call to #{klass} testing #{options.join(', ')}" do
 
     it "succeeds for cases #{selected_cases.join(', ')}" do
-
-
-
       # create the item to test
       if defined?(delete_api_model)
         item = delete_api_model

@@ -34,10 +34,7 @@
     = render partial: 'shared/image_upload', locals: { f: f,  model_instance: @user, model_name: 'user' }
     = f.button :submit_cancel, 'Update User', class: 'btn-default'
     %hr/
-    - [:confirmed_at,:reset_password_sent_at, :remember_created_at, :sign_in_count, :last_seen_at,
-    :current_sign_in_at, :last_sign_in_at, :current_sign_in_ip, :last_sign_in_ip,
-    :confirmation_sent_at, :failed_attempts,:locked_at, :created_at, :updated_at,
-    :roles_mask, :image_updated_at, :tzinfo_tz, :rails_tz].each do |item|
+    - (User.column_names.select { |name| !name.include?('token') && !name.include?('password')}).each do |item|
       - human_ed = item.to_s.humanize
       - param_ed = item.to_s.parameterize
       - sym_ed = item
@@ -60,14 +57,28 @@
               %small
                 (no value)
 
+%hr/
+%h3 Dangerous actions
+
 -# WARNING! LOOK OUT! This MUST be at the top level or be wrapped in a separate form,
 -# otherwise other buttons on the form will delete the account!!!
-- if Access::Core.is_standard_user?(@user)
+- if Access::Core.is_standard_user?(@user) && !@user.deleted?
   = form_tag(user_account_path(@user)) do
-    %hr/
-    %h3 Dangerous actions
     %p
-      = button_to "Delete user's account", user_account_path(@user),
+      This button deactivate a user's account (not delete it).
+    %p
+      There is information on how to delete this user's account on the
+      %a{href: 'https://github.com/QutBioacoustics/baw-server/wiki/Deleting-user-accounts'}
+        Github wiki
+      = '.'
+    %p
+      = button_to t('devise.registrations.edit.cancel_user_account'), user_account_path(@user),
       data: { confirm: t('devise.registrations.edit.are_you_sure'), toggle: 'tooltip',  placement: 'right' },
-      title: "WARNING: This will permanently delete this user's account",
+      title: t('devise.registrations.edit.cancel_user_account_confirmation'),
       method: :delete, class: 'btn btn-danger'
+- elsif @user.deleted?
+  %p
+    This user has already been archived.
+- else
+  %p
+    Cannot deactivate or delete this user.

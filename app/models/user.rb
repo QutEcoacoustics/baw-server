@@ -170,6 +170,10 @@ class User < ActiveRecord::Base
     save
   end
 
+  def active_for_authentication?
+    super && !self.deleted?
+  end
+
   def self.same_user?(user1, user2)
     if user1.blank? || user2.blank?
       false
