@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## [Release 1.2.1](https://github.com/QutBioacoustics/baw-server/releases/tag/1.2.1)
+
+ - 2017-02-20
+   - Updated dependencies to fix production bug with harvesting
+   See [921a82b](https://github.com/QutBioacoustics/baw-server/commit/921a82b359c1a51185b8384710cf95e557e47de6)
+
 ## [Release 1.2.0](https://github.com/QutBioacoustics/baw-server/releases/tag/1.2.0)
 
  - 2017-02-16
