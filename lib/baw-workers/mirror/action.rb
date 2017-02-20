@@ -83,7 +83,7 @@ module BawWorkers
       # Should be unique but does not need to be. Has no operational effect.
       # This value is only used when the status is updated by resque:status.
       def name
-        "Mirroring from:#{@options['source']}, to: #{@options['destinations']}"
+        "Mirroring: from=#{@options['source']}, to=#{@options['destinations']}"
       end
 
     end

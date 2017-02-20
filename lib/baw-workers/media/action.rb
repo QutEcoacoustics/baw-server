@@ -138,7 +138,7 @@ module BawWorkers
       # This value is only used when the status is updated by resque:status.
       def name
         mrp = @options['media_request_params']
-        "Media request: #{@options['media_type']}, [#{mrp['start_offset']}-#{mrp['end_offset']}), format:#{mrp['format']}}"
+        "Media request: #{@options['media_type']}, [#{mrp['start_offset']}-#{mrp['end_offset']}), format=#{mrp['format']}"
       end
 
     end

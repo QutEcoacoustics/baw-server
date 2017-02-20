@@ -55,6 +55,19 @@ describe BawWorkers::Harvest::Action do
     expect(actual.to_json.to_s).to eq(expected_payload.to_json.to_s)
   end
 
+  it 'has a sensible name' do
+    allow_any_instance_of(BawWorkers::Harvest::SingleFile).to receive(:run).and_return(['/tmp/a_fake_file_mock'])
+
+    unique_key = BawWorkers::Harvest::Action.action_enqueue(test_harvest_request_params)
+
+    was_run = emulate_resque_worker(BawWorkers::Harvest::Action.queue)
+    status = BawWorkers::ResqueApi.status_by_key(unique_key)
+
+    expected = 'Harvest for: TEST_20140731_100956.wav, data_length_bytes=498220, site_id=1109'
+    expect(status.name).to eq(expected)
+  end
+
+
   it 'can enqueue from rake using resque in dry run' do
     result = BawWorkers::Harvest::Action.action_enqueue_rake(harvest_to_do_path, false)
   end

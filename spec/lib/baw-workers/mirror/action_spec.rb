@@ -46,6 +46,17 @@ describe BawWorkers::Mirror::Action do
       expect(actual).to include(expected_payload)
     end
 
+    it 'has a sensible name' do
+      allow(BawWorkers::Mirror::Action).to receive(:action_perform).and_return('an invalid mock value')
+
+      unique_key = BawWorkers::Mirror::Action.action_enqueue(mirror_source, mirror_dest)
+      was_run = emulate_resque_worker(BawWorkers::Mirror::Action.queue)
+      status = BawWorkers::ResqueApi.status_by_key(unique_key)
+
+      expected = "Mirroring: from=#{mirror_source}, to=#{mirror_dest}"
+      expect(status.name).to eq(expected)
+    end
+
     it 'does not enqueue the same payload into the same queue more than once' do
 
       queued_query = {source: mirror_source, destinations: mirror_dest}

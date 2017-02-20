@@ -36,6 +36,29 @@ describe BawWorkers::Media::Action do
       expect(actual).to include(expected_payload)
     end
 
+    it 'has a sensible name' do
+      allow(BawWorkers::Media::Action).to receive(:action_perform).and_return(['/tmp/a_fake_file_mock'])
+      params =
+        {
+            uuid: '7bb0c719-143f-4373-a724-8138219006d9',
+            format: 'wav',
+            media_type: 'audio/wav',
+            start_offset: 5,
+            end_offset: 10,
+            channel: 0,
+            sample_rate: 22050,
+            datetime_with_offset: Time.zone.now,
+            original_format: audio_file_mono_format
+        }
+
+      unique_key = BawWorkers::Media::Action.action_enqueue(:audio, params)
+      was_run = emulate_resque_worker(BawWorkers::Media::Action.queue)
+      status = BawWorkers::ResqueApi.status_by_key(unique_key)
+
+      expected = 'Media request: audio, [5-10), format=wav'
+      expect(status.name).to eq(expected)
+    end
+
     it 'does not enqueue the same payload into the same queue more than once' do
 
       queued_query = {media_type: :audio, media_request_params: test_media_request_params}

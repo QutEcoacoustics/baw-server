@@ -238,7 +238,7 @@ module BawWorkers
       # This value is only used when the status is updated by resque:status.
       def name
         ap = @options['analysis_params']
-        "Analysis for #{ap['id']}, job=#{ap['job_id']}"
+        "Analysis for: #{ap['id']}, job=#{ap['job_id']}"
       end
 
     end

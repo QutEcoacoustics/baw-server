@@ -70,6 +70,17 @@ describe BawWorkers::Analysis::Action do
       expect(actual).to include(expected_payload)
     end
 
+    it 'has a sensible name' do
+      allow(BawWorkers::Analysis::Action).to receive(:action_perform).and_return({mock: 'a_fake_mock_result'})
+
+      unique_key = BawWorkers::Analysis::Action.action_enqueue(analysis_params)
+      was_run = emulate_resque_worker(BawWorkers::Analysis::Action.queue)
+      status = BawWorkers::ResqueApi.status_by_key(unique_key)
+
+      expected = 'Analysis for: 123456, job=20'
+      expect(status.name).to eq(expected)
+    end
+
     it 'does not enqueue the same payload into the same queue more than once' do
       expect(Resque.size(queue_name)).to eq(0)
       expect(BawWorkers::ResqueApi.job_queued?(BawWorkers::Analysis::Action, analysis_query)).to eq(false)
