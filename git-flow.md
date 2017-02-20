@@ -84,9 +84,10 @@ git checkout -b release-<version> develop
 git commit -am "increment version to <version>"
 git checkout master
 git merge --no-ff release-<version>
-git tag -a <version>
+git tag -a <version> -m "Version <version>"
 git checkout develop
 git merge --no-ff release-<version>
+git branch -d release-<version>
 git push --tags
 git push
 ```
