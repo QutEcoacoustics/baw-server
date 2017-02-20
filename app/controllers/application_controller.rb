@@ -41,6 +41,7 @@ class ApplicationController < ActionController::Base
   rescue_from CustomErrors::FilterArgumentError, with: :filter_argument_error_response
   rescue_from CustomErrors::AudioGenerationError, with: :audio_generation_error_response
   rescue_from BawAudioTools::Exceptions::AudioToolError, with: :audio_tool_error_response
+  rescue_from CustomErrors::DeleteNotPermittedError, with: :bad_request_error_response
 
   # Don't rescue this, it is the base for 406 and 415
   #rescue_from CustomErrors::RequestedMediaTypeError, with: :requested_media_type_error_response

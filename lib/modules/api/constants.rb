@@ -91,6 +91,8 @@ module Api
     CONVERT_LENGTH_TO_INDEX = -1
     REQUIRED_PARAMETERS = [:start_offset, :end_offset, :recorded_date, :site_id, :site_name, :ext, :file_path, :media_type]
 
+    # User model
+    ARCHIVED_USER_NAME = '(archived user)'
 
   end
 end

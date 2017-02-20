@@ -5,7 +5,7 @@ describe ProjectsController do
   describe 'archivable' do
     before(:each) do
       # see https://github.com/plataformatec/devise/wiki/How-To:-Test-controllers-with-Rails-3-and-4-(and-RSpec)
-      @request.env['devise.mapping'] = Devise.mappings[:admin]
+      @request.env['devise.mapping'] = Devise.mappings[:user]
       admin = FactoryGirl.create(:admin)
       sign_in(admin, scope: :user) # sign_in(scope, resource)
     end
@@ -19,7 +19,7 @@ describe ProjectsController do
         project
       }
 
-      it_behaves_like :a_delete_api_call, Project, :allow_archive, :allow_delete
+      it_behaves_like :a_delete_api_call, Project, :allow_archive #, :allow_delete
     end
 
   end

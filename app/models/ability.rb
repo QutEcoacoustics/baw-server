@@ -70,6 +70,7 @@ class Ability
 
     # api security endpoints for logged in users
     can [:show, :destroy], :api_security unless is_guest
+    can [:destroy], :api_registrations unless is_guest
 
     if Access::Core.is_admin?(user)
       for_admin
@@ -494,7 +495,7 @@ class Ability
   end
 
   def to_user(user, is_guest)
-    # admin only: :index, :edit, :update
+    # admin only: :index, :edit, :update, :destroy
     # :edit and :update are the Admin interface for editing any user
     # normal users edit their profile using devise/registrations#edit
 
@@ -502,7 +503,8 @@ class Ability
     can [:projects, :sites, :bookmarks, :audio_events, :audio_event_comments], User, id: user.id
 
     # users get their own account and preferences from these actions
-    can [:my_account, :modify_preferences, :destroy], User, id: user.id
+    # destroy is done through :api_registrations endpoints for logged in users above
+    can [:my_account, :modify_preferences], User, id: user.id
 
     # only logged in users can view a user's profile (read-only)
     can [:show, :filter], User unless is_guest

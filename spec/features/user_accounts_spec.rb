@@ -61,7 +61,7 @@ describe "User account actions", :type => :feature do
       user_name = 'tester_tester'
       email = 'test.email@example.com'
       password = 'password123'
-      visit new_user_registration_url
+      visit new_user_registration_path
 
       fill_in 'User name', with: user_name
       fill_in 'Password', with: password, match: :prefer_exact
@@ -80,7 +80,7 @@ describe "User account actions", :type => :feature do
       user_name = 'tester_tester!@'
       email = 'test.email@example.com'
       password = 'password123'
-      visit new_user_registration_url
+      visit new_user_registration_path
 
       fill_in 'User name', with: user_name
       fill_in 'Password', with: password, match: :prefer_exact

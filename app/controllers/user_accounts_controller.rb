@@ -102,7 +102,8 @@ ELSE last_sign_in_at END DESC'
 
   # DELETE /user_accounts/:id
   def destroy
-    # admin or account's user have access to destroy
+    # admin only has access to destroy
+    # users delete their own account using DELETE /my_account ( users/registrations#destroy )
 
     # do_load_resource will fail for an archived user
     # this is what we want - cannot hard delete a user from UI, even if admin
@@ -115,13 +116,14 @@ ELSE last_sign_in_at END DESC'
     end
 
     if Access::Core.is_standard_user?(@user)
+      user_was_active = do_check_resource_exists?
       @user.destroy
 
       # archived at header is only added if user is not archived already
-      add_archived_at_header(@user) if do_check_resource_exists?
+      add_archived_at_header(@user) if user_was_active
 
       respond_to do |format|
-        format.html { redirect_to root_path, notice: I18n.t('devise.registrations.destroyed') }
+        format.html { redirect_to user_accounts_path, notice: I18n.t('baw.shared.actions.user_deleted') }
         format.json { respond_destroy }
       end
     else
