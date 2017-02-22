@@ -2,11 +2,13 @@ require 'digest'
 require 'digest/md5'
 
 class AudioRecording < ActiveRecord::Base
-
   extend Enumerize
 
   # ensures that creator_id, updater_id, deleter_id are set
   include UserChange
+
+  # ensures that this model can be archived, but not deleted
+  include ModelArchive
 
   attr_reader :overlapping
 
@@ -23,10 +25,6 @@ class AudioRecording < ActiveRecord::Base
   belongs_to :uploader, class_name: 'User', foreign_key: :uploader_id, inverse_of: :uploaded_audio_recordings
 
   accepts_nested_attributes_for :site
-
-  # add deleted_at and deleter_id
-  acts_as_paranoid
-  validates_as_paranoid
 
   # Enums for audio recording status
   # new - record created and passes validation

@@ -2,6 +2,9 @@ class AudioEvent < ActiveRecord::Base
   # ensures that creator_id, updater_id, deleter_id are set
   include UserChange
 
+  # ensures that this model can be archived, but not deleted
+  include ModelArchive
+
   # relations
   belongs_to :audio_recording, inverse_of: :audio_events
   has_many :taggings, inverse_of: :audio_event
@@ -13,10 +16,6 @@ class AudioEvent < ActiveRecord::Base
   has_many :comments, class_name: 'AudioEventComment', foreign_key: 'audio_event_id', inverse_of: :audio_event
 
   accepts_nested_attributes_for :tags
-
-  # add deleted_at and deleter_id
-  acts_as_paranoid
-  validates_as_paranoid
 
   # association validations
   validates :audio_recording, existence: true

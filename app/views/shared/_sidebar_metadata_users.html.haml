@@ -3,9 +3,16 @@
   %h4= title
   .media
     .media-left.media-middle
-      %a{href: user_account_path(user)}
-        = image_tag user.image.url(:spanhalf), alt: user.user_name, class: 'media-object'
+      - if user.deleted?
+        %a{href: '#'}
+          = image_tag '/images/user/user_spanhalf.png', alt: User.archived_user_name, class: 'media-object'
+      - else
+        %a{href: user_account_path(user)}
+          = image_tag user.image.url(:spanhalf), alt: user.user_name, class: 'media-object'
     .media-body
-      = link_to user.user_name, user_account_path(user)
+      - if user.deleted?
+        = User.archived_user_name
+      - else
+        = link_to user.user_name, user_account_path(user)
       %br/
       = subtext

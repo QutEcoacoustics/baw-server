@@ -70,6 +70,8 @@ class Ability
 
     # api security endpoints for logged in users
     can [:show, :destroy], :api_security unless is_guest
+
+    # for a user to archive their own account
     can [:destroy], :api_registrations unless is_guest
 
     if Access::Core.is_admin?(user)

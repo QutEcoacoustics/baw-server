@@ -2,6 +2,9 @@ class Site < ActiveRecord::Base
   # ensures that creator_id, updater_id, deleter_id are set
   include UserChange
 
+  # ensures that this model can be archived, but not deleted
+  include ModelArchive
+
   attr_accessor :project_ids, :custom_latitude, :custom_longitude, :location_obfuscated
 
   # relations
@@ -24,10 +27,6 @@ class Site < ActiveRecord::Base
   # See https://en.wikipedia.org/wiki/Decimal_degrees
   # (scale of a large town or village)
   JITTER_RANGE = 0.03
-
-  # add deleted_at and deleter_id
-  acts_as_paranoid
-  validates_as_paranoid
 
   # association validations
   validates :creator, existence: true

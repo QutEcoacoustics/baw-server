@@ -19,6 +19,7 @@ resource 'Users' do
 
   # prepare ids needed for paths in requests below
   let(:admin_id) { admin_user.id }
+  let(:harvester_id) { harvester_user.id }
   let(:owner_id) { owner_user.id }
   let(:writer_id) { writer_user.id }
   let(:reader_id) { reader_user.id }
@@ -183,15 +184,24 @@ resource 'Users' do
     id_param
     let(:id) { admin_id }
     let(:authentication_token) { admin_token }
-    standard_request_options(:delete, 'DESTROY (as admin, deleting same user)', :unprocessable_entity, {
+    standard_request_options(:delete, 'DESTROY (as admin, deleting same user)', :bad_request, {
         expected_json_path: 'meta/error/details',
         expected_body_content: I18n.t('baw.shared.actions.cannot_delete_account')})
   end
 
   delete '/user_accounts/:id' do
     id_param
+    let(:id) { harvester_id }
+    let(:authentication_token) { harvester_token }
+    standard_request_options(:delete, 'DESTROY (as harvester, deleting same user)', :forbidden, {
+        expected_json_path: 'meta/error/details',
+        expected_body_content: I18n.t('devise.failure.unauthorized')})
+  end
+
+  delete '/user_accounts/:id' do
+    id_param
     let(:id) { reader_id }
-    let(:authentication_token) { admin_token } # admins only can delete users using devise/registrations#destroy
+    let(:authentication_token) { admin_token } # admins only can archive users using devise/registrations#destroy
     standard_request_options(:delete, 'DESTROY (as admin, deleting other user)', :no_content, {
         expected_response_has_content: false, expected_response_content_type: nil})
   end
@@ -200,16 +210,14 @@ resource 'Users' do
     id_param
     let(:id) { writer_id }
     let(:authentication_token) { writer_token }
-    standard_request_options(:delete, 'DESTROY (as writer, deleting same user)', :no_content, {
-        expected_response_has_content: false, expected_response_content_type: nil})
+    standard_request_options(:delete, 'DESTROY (as writer, deleting same user)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
   end
 
   delete '/user_accounts/:id' do
     id_param
     let(:id) { reader_id }
     let(:authentication_token) { reader_token }
-    standard_request_options(:delete, 'DESTROY (as reader, deleting same user)', :no_content, {
-        expected_response_has_content: false, expected_response_content_type: nil})
+    standard_request_options(:delete, 'DESTROY (as reader, deleting same user)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
   end
 
   delete '/user_accounts/:id' do
@@ -250,7 +258,7 @@ resource 'Users' do
 
   get '/my_account' do
     let(:authentication_token) { writer_token }
-    standard_request_options(:get, 'MY ACCOUNT (as writer)', :ok, {expected_json_path: 'data/user_name'} )
+    standard_request_options(:get, 'MY ACCOUNT (as writer)', :ok, {expected_json_path: 'data/user_name'})
   end
 
   get '/my_account' do
@@ -273,26 +281,29 @@ resource 'Users' do
 
   delete '/my_account' do
     let(:authentication_token) { admin_token }
-    standard_request_options(:delete, 'DESTROY (as admin)', :unprocessable_entity, {
+    standard_request_options(:delete, 'DESTROY (as admin)', :bad_request, {
         expected_json_path: 'meta/error/details',
         expected_body_content: I18n.t('baw.shared.actions.cannot_delete_account')})
   end
 
   delete '/my_account' do
     let(:authentication_token) { harvester_token }
-    standard_request_options(:delete, 'DESTROY (as harvester)', :unprocessable_entity, {
+    standard_request_options(:delete, 'DESTROY (as harvester)', :bad_request, {
         expected_json_path: 'meta/error/details',
         expected_body_content: I18n.t('baw.shared.actions.cannot_delete_account')})
   end
 
   delete '/my_account' do
     let(:authentication_token) { writer_token }
-    standard_request_options(:delete, 'DESTROY (as writer)', :no_content)
+    standard_request_options(:delete, 'DESTROY (as writer)', :no_content, {
+        expected_response_has_content: false, expected_response_content_type: nil})
+
   end
 
   delete '/my_account' do
     let(:authentication_token) { reader_token }
-    standard_request_options(:delete, 'DESTROY (as reader)', :no_content)
+    standard_request_options(:delete, 'DESTROY (as reader)', :no_content, {
+        expected_response_has_content: false, expected_response_content_type: nil})
   end
 
   delete '/my_account' do

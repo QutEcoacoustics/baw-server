@@ -13,8 +13,8 @@ class User < ActiveRecord::Base
   # ensures that creator_id, updater_id, deleter_id are set
   include UserChange
 
-  # enables soft deletes and hard deletes
-  include ModelArchiveAndDelete
+  # ensures that this model can be archived, but not deleted
+  include ModelArchive
 
   # user must always have an authentication token
   before_save :ensure_authentication_token
@@ -227,6 +227,10 @@ class User < ActiveRecord::Base
   # Retrieves the existing stamper (current_user id) for the current request.
   def self.stamper
     Thread.current["#{self.to_s.downcase}_#{self.object_id}_stamper"]
+  end
+
+  def self.archived_user_name
+    '(archived user)'
   end
 
   # Define filter api settings

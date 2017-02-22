@@ -2,6 +2,9 @@ class AnalysisJob < ActiveRecord::Base
   # ensures that creator_id, updater_id, deleter_id are set
   include UserChange
 
+  # ensures that this model can be archived, but not deleted
+  include ModelArchive
+
   # allow a state machine to work with this class
   include AASM
   include AASMHelpers
@@ -16,11 +19,6 @@ class AnalysisJob < ActiveRecord::Base
   belongs_to :saved_search, inverse_of: :analysis_jobs
   has_many :projects, through: :saved_search
   has_many :analysis_jobs_items, inverse_of: :analysis_job
-
-  # add deleted_at and deleter_id
-  acts_as_paranoid
-  validates_as_paranoid
-
 
   # association validations
   validates :script, existence: true

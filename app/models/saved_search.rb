@@ -1,7 +1,9 @@
 class SavedSearch < ActiveRecord::Base
-
   # ensures that creator_id, updater_id, deleter_id are set
   include UserChange
+
+  # ensures that this model can be archived, but not deleted
+  include ModelArchive
 
   belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_saved_searches
   belongs_to :deleter, class_name: 'User', foreign_key: :deleter_id, inverse_of: :deleted_saved_searches
@@ -12,10 +14,6 @@ class SavedSearch < ActiveRecord::Base
   # Serialize stored_query using JSON as coder.
   # this is a filter query for audio recordings.
   serialize :stored_query, JSON
-
-  # add deleted_at and deleter_id
-  acts_as_paranoid
-  validates_as_paranoid
 
   validates :name, presence: true, length: {minimum: 2, maximum: 255},
             uniqueness: {case_sensitive: false, scope: :creator_id, message: 'should be unique per user'}

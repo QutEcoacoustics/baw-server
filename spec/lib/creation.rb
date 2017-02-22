@@ -33,8 +33,7 @@ module Creation
 
       prepare_project
 
-      # available after permission system is upgraded
-      #prepare_permission_owner
+      prepare_permission_owner
       prepare_permission_writer
       prepare_permission_reader
 

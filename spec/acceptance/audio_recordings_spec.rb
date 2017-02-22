@@ -634,7 +634,7 @@ resource 'AudioRecordings' do
     standard_request_options(:post, 'CREATE (as reader)', :forbidden,
                              {
                                  expected_json_path: get_json_error_path(:permissions),
-                                 respond_body_content: '"You do not have sufficient permissions to access this page."'
+                                 respond_body_content: "'\"#{I18n.t('devise.failure.unauthorized')}\"'"
                              }
     )
 

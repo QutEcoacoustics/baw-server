@@ -2,6 +2,9 @@ class Project < ActiveRecord::Base
   # ensures that creator_id, updater_id, deleter_id are set
   include UserChange
 
+  # ensures that this model can be archived, but not deleted
+  include ModelArchive
+
   # relationships
   belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_projects
   belongs_to :updater, class_name: 'User', foreign_key: :updater_id, inverse_of: :updated_projects
@@ -21,11 +24,6 @@ class Project < ActiveRecord::Base
   has_attached_file :image,
                     styles: {span4: '300x300#', span3: '220x220#', span2: '140x140#', span1: '60x60#', spanhalf: '30x30#'},
                     default_url: '/images/project/project_:style.png'
-
-
-  # add deleted_at and deleter_id
-  acts_as_paranoid
-  validates_as_paranoid
 
   # association validations
   validates :creator, existence: true

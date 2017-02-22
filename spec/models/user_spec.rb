@@ -32,7 +32,22 @@ describe User, :type => :model do
 
   it { is_expected.to belong_to(:deleter).with_foreign_key(:deleter_id) }
 
-  #pending "add some examples to (or delete) #{__FILE__}"
+  context 'hard deleting by admin' do
+    create_entire_hierarchy
+
+    it 'is successful with entire hierarchy' do
+      # disable callback that prevents deletion just for this test
+      User.skip_callback :destroy, :before, :prevent_destroy_for_archived
+
+      owner_user.destroy  # archive
+      owner_user.destroy  # delete
+
+      writer_user.destroy  # archive
+      writer_user.destroy  # delete
+
+      User.set_callback :destroy, :before, :prevent_destroy_for_archived
+    end
+  end
 
   # this should pass, but the paperclip implementation of validate_attachment_content_type is buggy.
   # it { should validate_attachment_content_type(:image)
