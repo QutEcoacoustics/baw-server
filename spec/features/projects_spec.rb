@@ -366,7 +366,7 @@ describe 'Project', type: :feature do
         visit project_path(project)
         expect(page).to have_content(project.name)
         expect(page).to have_link('Edit this project')
-        expect(page).not_to have_link('New site')
+        expect(page).to have_link('New site')
         expect(page).to have_link('Edit permissions')
         expect(page).not_to have_link('Assign sites')
         expect(page).to have_button('Delete this project')

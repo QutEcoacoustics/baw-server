@@ -46,7 +46,7 @@ All changes go in feature branches.
 1. Run tests: `bin/rspec`. Fix any failing tests.
 1. Delete release branch locally: `git branch -d release-<version>`
 1. **OPTIONAL: only needs to be deleted if the branch was pushed to remote** Delete release branch remotely: `git push origin --delete release-<version>`
-1. Push the new tag to `origin`: `git push --tags`
+1. Push the new tag to `origin`: `git push <version>`
 1. Push the merges to `origin`: `git push`
 
 ### Summarised
@@ -65,8 +65,7 @@ git merge --no-ff release-<version>
 git tag -a <version>
 git checkout develop
 git merge --no-ff release-<version>
-git push --tags
-git push
+git push --follow-tags
 ```
 
 ## Fast release protocol
@@ -88,6 +87,5 @@ git tag -a <version> -m "Version <version>"
 git checkout develop
 git merge --no-ff release-<version>
 git branch -d release-<version>
-git push --tags
-git push
+git push --follow-tags
 ```

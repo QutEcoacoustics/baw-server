@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## [Release 1.2.2](https://github.com/QutBioacoustics/baw-server/releases/tag/1.2.2)
+
+- 2017-02-24
+    - Fixed bugs with site/project permissions - owners can once again create new sites. Further updated site new 
+    permissions to match specification.
+    See [#328](https://github.com/QutBioacoustics/baw-server/issues/328)
+
 ## [Release 1.2.1](https://github.com/QutBioacoustics/baw-server/releases/tag/1.2.1)
 
  - 2017-02-20

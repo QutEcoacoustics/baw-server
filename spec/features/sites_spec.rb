@@ -127,8 +127,20 @@ describe 'CRUD Sites as valid user with read permission', type: :feature do
     expect(page).not_to have_button('Delete this site')
   end
 
-  it 'rejects access to create project site' do
+  it 'allows access to create project site' do
     visit new_project_site_path(project)
+    expect(page).to have_content('New Site')
+  end
+
+  # we allow access to new for API (so form as well) but we don't allow the form to work
+  it 'rejects a new site when filling out form correctly' do
+    url = new_project_site_path(project)
+    visit url
+    #save_and_open_page
+    fill_in 'site[name]', with: 'test name'
+    fill_in 'site[description]', with: 'description'
+    attach_file('site[image]', 'public/images/user/user-512.png')
+    click_button 'Submit'
     expect(page).to have_content(I18n.t('devise.failure.unauthorized'))
   end
 
@@ -167,8 +179,20 @@ describe 'CRUD Sites as valid user with no permission', :type => :feature do
 
   end
 
-  it 'rejects access to create project site' do
+  it 'allows access to create project site' do
     visit new_project_site_path(project)
+    expect(page).to have_content('New Site')
+  end
+
+  # we allow access to new for API (so form as well) but we don't allow the form to work
+  it 'rejects a new site when filling out form correctly' do
+    url = new_project_site_path(project)
+    visit url
+    #save_and_open_page
+    fill_in 'site[name]', with: 'test name'
+    fill_in 'site[description]', with: 'description'
+    attach_file('site[image]', 'public/images/user/user-512.png')
+    click_button 'Submit'
     expect(page).to have_content(I18n.t('devise.failure.unauthorized'))
   end
 
