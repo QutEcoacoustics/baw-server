@@ -113,13 +113,13 @@ resource 'Sites' do
   get '/projects/:project_id/sites/new' do
     let(:project_id) { project.id }
     let(:authentication_token) { reader_token }
-    standard_request_options(:get, 'NEW (as reader)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
+    standard_request_options(:get, 'NEW (as reader)',  :ok, {expected_json_path: 'data/longitude'})
   end
 
   get '/projects/:project_id/sites/new' do
     let(:project_id) { project.id }
     let(:authentication_token) { no_access_token }
-    standard_request_options(:get, 'NEW (as no access user)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
+    standard_request_options(:get, 'NEW (as no access user)',  :ok, {expected_json_path: 'data/longitude'})
   end
 
   get '/projects/:project_id/sites/new' do
@@ -130,7 +130,7 @@ resource 'Sites' do
 
   get '/projects/:project_id/sites/new' do
     let(:project_id) { project.id }
-    standard_request_options(:get, 'NEW (as anonymous user)', :unauthorized, {remove_auth: true, expected_json_path: get_json_error_path(:sign_up)})
+    standard_request_options(:get, 'NEW (as anonymous user)',  :ok, {expected_json_path: 'data/longitude'})
   end
 
   ################################
@@ -160,7 +160,7 @@ resource 'Sites' do
     let(:project_id) { project.id }
     let(:authentication_token) { writer_token }
     let(:raw_post) { {site: post_attributes}.to_json }
-    standard_request_options(:post, 'CREATE (as writer)', :created, {expected_json_path: 'data/project_ids'})
+    standard_request_options(:post, 'CREATE (as writer)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
   end
 
   post '/projects/:project_id/sites' do

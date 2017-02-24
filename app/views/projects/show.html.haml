@@ -12,8 +12,9 @@
     = edit_link(edit_project_path(@project), 'project')
   - if can? :update_permissions, @project
     = edit_link(project_permissions_path(@project), 'permissions', 'key')
-  - if can?(:update_sites, @project)
+  - if can? :create_sites, @project
     = new_link(new_project_site_path(@project), 'site')
+  - if can?(:update_sites, @project)
     = nav_item(href: edit_sites_project_path(@project),
         title: t('baw.shared.links.site_mapping.title'),
         tooltip: t('baw.shared.links.site_mapping.description') )

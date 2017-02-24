@@ -166,12 +166,19 @@ class Ability
       Access::Core.can?(user, :reader, project)
     end
 
-    # TODO: only admin can #edit_sites, #update_sites (update_sites is html-only)
+    # only admin can #edit_sites, #update_sites (update_sites is html-only)
+    # below definition is redundant but added for clarity
+    can [:update_sites], Project do |project|
+      check_model(project)
+      Access::Core.is_admin?(user)
+    end
+
     # TODO: update_sites will be merged with sites#orphans
 
     # must be owner to do these actions
     # :update_permissions is html-only
-    can [:edit, :update, :update_permissions, :destroy], Project do |project|
+    # :creates_sites:  Can we create a site that belongs to this project? This is mainly used in views
+    can [:edit, :update, :update_permissions, :destroy, :create_sites], Project do |project|
       check_model(project)
       Access::Core.can?(user, :owner, project)
     end
@@ -233,22 +240,18 @@ class Ability
       Access::Core.can_any?(user, :reader, site.projects)
     end
 
-    # must have write permission or higher to create a new site in a project (logged in users only as guest users can only be reader)
-    can [:create, :new], Site do |site|
-      check_model(site)
-      Access::Core.check_orphan_site!(site)
-      Access::Core.can_any?(user, :writer, site.projects)
-    end
-
-    # only owner can access these actions
-    can [:edit, :update, :destroy, :upload_instructions, :harvest], Site do |site|
+    # only owner can access these actions.
+    # :create (create a new site in a project) requires an instance to be available before permissions are checked.
+    # This is done in controller action.
+    # Note: duplicate definition :create_sites in project abilities above used for rendering view capabilities.
+    can [:create, :edit, :update, :destroy, :upload_instructions, :harvest], Site do |site|
       check_model(site)
       Access::Core.check_orphan_site!(site)
       Access::Core.can_any?(user, :owner, site.projects)
     end
 
     # available to any user, including guest
-    can [:index, :filter], Site
+    can [:index, :filter, :new], Site
   end
 
   def to_audio_recording(user, is_guest)
