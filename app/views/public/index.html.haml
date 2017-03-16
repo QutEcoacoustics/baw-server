@@ -1,10 +1,12 @@
 - content_for :meta_title, t('baw.shared.links.home.title')
 - content_for :page_title, Settings.organisation_names.site_long_name
 
-%p
-  Welcome! This is a repository of environmental audio recordings and web-based applications for analysing sounds.
-  It enables us to facilitate
-  = link_to "research into bioacoustics and ecoacoustics.", "http://research.ecosounds.org"
+- if partial_exists?('public/home')
+  = render partial: 'public/home'
+- else
+  %p
+    Welcome! This is an Acoustic Workbench website. It is a repository of environmental audio recordings.
+
 
 - unless @selected_images.blank?
   .row
