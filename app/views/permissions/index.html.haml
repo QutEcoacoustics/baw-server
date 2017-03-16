@@ -102,9 +102,8 @@
     %p
       <strong>If you only want some users to have access, use this section only.</strong>
 
-
-    %p= page_entries_info @users
-    %p= paginate  @users
+    = alphabetical_paginator(params[:page], 2, 1)
+    = hidden_field_tag(:page, params[:page])
 
     %table.table.table-striped.table-hover.table-condensed
       %thead
@@ -166,3 +165,8 @@
               = logged_in_level_words
             %td.overall-permission.text-center{style: 'white-space: nowrap;'}
               = "#{level_with_logged_in_level_words}"
+        - if @users.length == 0
+          %tr
+            %td{colspan: '5'}
+              - empty_message do
+                No users found for this page
