@@ -11,6 +11,14 @@ describe 'Permissions', type: :feature do
         expect(page).to have_content('Permissions')
       end
 
+      it 'lists the creator and owner' do
+        visit project_permissions_path(project)
+        expect(page).to have_content('Created by')
+        expect(page).to have_link(project.creator.user_name, user_account_path(project.creator))
+        expect(page).to have_content('Owned by')
+        expect(page).to have_link(owner_user.user_name, user_account_path(owner_user))
+      end
+
       def check_row(user, level)
         overall_selector = "tr[data-user-id='#{user.id}'] .overall-permission"
         overall = find(overall_selector)

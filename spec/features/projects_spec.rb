@@ -29,6 +29,14 @@ describe 'CRUD Projects as valid user with write permission', type: :feature do
     expect(page).not_to have_link('Delete')
   end
 
+  it 'lists the creator and owner' do
+    visit project_path(project)
+    expect(page).to have_content('Created by')
+    expect(page).to have_link(project.creator.user_name, user_account_path(project.creator))
+    expect(page).to have_content('Owned by')
+    expect(page).to have_link(owner_user.user_name, user_account_path(owner_user))
+  end
+
   it 'creates new project when filling out form correctly' do
     visit new_project_path
     fill_in 'project[name]', with: 'test name'
@@ -77,6 +85,14 @@ describe 'CRUD Projects as valid user and project creator', :type => :feature do
     expect(page).to have_button('Delete this project')
   end
 
+  it 'lists the creator and owner' do
+    visit project_path(project)
+    expect(page).to have_content('Created by')
+    expect(page).to have_link(project.creator.user_name, user_account_path(project.creator))
+    expect(page).to have_content('Owned by')
+    expect(page).to have_link(owner_user.user_name, user_account_path(owner_user))
+  end
+
   it 'creates new project when filling out form correctly' do
     visit new_project_path
     #save_and_open_page
@@ -122,6 +138,14 @@ describe 'CRUD Projects as valid user with read permission', :type => :feature d
     expect(page).not_to have_link('Edit')
     expect(page).not_to have_link('Edit Permissions')
     expect(page).not_to have_link('Delete')
+  end
+
+  it 'lists the creator and owner' do
+    visit project_path(project)
+    expect(page).to have_content('Created by')
+    expect(page).to have_link(project.creator.user_name, user_account_path(project.creator))
+    expect(page).to have_content('Owned by')
+    expect(page).to have_link(owner_user.user_name, user_account_path(owner_user))
   end
 
   it 'creates new project when filling out form correctly' do
@@ -324,6 +348,14 @@ describe 'Project', type: :feature do
         expect(page).to have_button('Delete this project')
       end
 
+      it 'lists the creator and owner' do
+        visit project_path(project)
+        expect(page).to have_content('Created by')
+        expect(page).to have_link(project.creator.user_name, user_account_path(project.creator))
+        expect(page).to have_content('Owned by')
+        expect(page).to have_link(owner_user.user_name, user_account_path(owner_user))
+      end
+
       it 'creates new project when filling out form correctly' do
         visit new_project_path
         fill_in 'project_name', with: 'test name'
@@ -370,6 +402,14 @@ describe 'Project', type: :feature do
         expect(page).to have_link('Edit permissions')
         expect(page).not_to have_link('Assign sites')
         expect(page).to have_button('Delete this project')
+      end
+
+      it 'lists the creator and owner' do
+        visit project_path(project)
+        expect(page).to have_content('Created by')
+        expect(page).to have_link(project.creator.user_name, user_account_path(project.creator))
+        expect(page).to have_content('Owned by')
+        expect(page).to have_link(owner_user.user_name, user_account_path(owner_user))
       end
 
       it 'creates new project when filling out form correctly' do
@@ -420,6 +460,14 @@ describe 'Project', type: :feature do
         expect(page).not_to have_link('Delete Project')
       end
 
+      it 'lists the creator and owner' do
+        visit project_path(project)
+        expect(page).to have_content('Created by')
+        expect(page).to have_link(project.creator.user_name, user_account_path(project.creator))
+        expect(page).to have_content('Owned by')
+        expect(page).to have_link(owner_user.user_name, user_account_path(owner_user))
+      end
+
       it 'creates new project when filling out form correctly' do
         visit new_project_path
         fill_in 'project[name]', with: 'test name'
@@ -463,6 +511,14 @@ describe 'Project', type: :feature do
         expect(page).not_to have_link('Edit Permissions')
         expect(page).not_to have_link('Edit Sites')
         expect(page).not_to have_link('Delete Project')
+      end
+
+      it 'lists the creator and owner' do
+        visit project_path(project)
+        expect(page).to have_content('Created by')
+        expect(page).to have_link(project.creator.user_name, user_account_path(project.creator))
+        expect(page).to have_content('Owned by')
+        expect(page).to have_link(owner_user.user_name, user_account_path(owner_user))
       end
 
       it 'creates new project when filling out form correctly' do

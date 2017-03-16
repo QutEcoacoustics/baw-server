@@ -7,7 +7,8 @@
 - menu_edit_link(:project, project_permissions_path(@project), 'permissions')
 
 - content_for :right_sidebar do
-  = render partial: 'shared/sidebar_metadata', locals: {title: 'Creator', text: link_to(@project.creator.user_name, user_account_path(@project.creator))}
+  = render partial: 'shared/sidebar_metadata_user_created', locals: { item: @project }
+  = render partial: 'shared/sidebar_metadata_users', locals: { title: 'Owned by', users: @project.owners }
 
 - anon_level = Access::Core.highest(Access::Core.anon_levels(@project))
 - anon_is_none = anon_level.blank?
