@@ -1,0 +1,11 @@
+-# locals paginator
+%ul.pagination
+  - paginator[:pages].each do |page|
+    - if page[:current?]
+      %li.active
+        %a
+          = page[:title]
+    - else
+      %li
+        = link_to page[:title], page: page[:page]
+
