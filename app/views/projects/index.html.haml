@@ -10,17 +10,7 @@
     tooltip: t('baw.shared.links.project_request_access.description'),
     icon: 'key' }
 
-- @projects.each_slice(3) do |projects|
-  .row
-    - projects.each do |project|
-      .col-sm-4
-        .thumbnail.project_thumbnail
-          %a{href: project_path(project), style: 'width:100%;'}
-            %img{src: project.image.url(:span3), alt: project.name}/
-          .caption
-            %h4{style: 'margin-top:0'}
-              %a{href: project_path(project)}= project.name
-            %p= truncate(project.description, separator: ' ', length: 60)
+= render partial: 'shared/project_info_cards', locals: {projects: @projects}
 
 - if @projects.empty?
   %p
