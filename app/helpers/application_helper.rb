@@ -36,6 +36,21 @@ module ApplicationHelper
     flash_type_keys.include?(flash_type.to_s) ? flash_types[flash_type.to_sym] : 'alert-info'
   end
 
+  def empty_message(align='center')
+    haml_tag :p, class: ['text-muted', "text-#{align}"] do
+      haml_tag :small do
+        haml_tag :em do
+          yield
+        end
+      end
+    end
+  end
+
+  def insert_icon(icon_name)
+    icon = icon_name && ('fa-' + icon_name) ||''
+    haml_tag :i, class: ['fa', 'fa-fw', icon]
+  end
+
   def nav_item(options)
     render partial: 'shared/nav_item', locals: options
   end
