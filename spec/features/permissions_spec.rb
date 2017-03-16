@@ -19,7 +19,14 @@ describe 'Permissions', type: :feature do
         expect(page).to have_link(owner_user.user_name, user_account_path(owner_user))
       end
 
+      def page_to_user(user)
+        initial = user.user_name[0]
+        visit project_permissions_path(project, {page: initial + '-' + initial})
+      end
+
       def check_row(user, level)
+        page_to_user(user)
+
         overall_selector = "tr[data-user-id='#{user.id}'] .overall-permission"
         overall = find(overall_selector)
 
@@ -134,7 +141,7 @@ describe 'Permissions', type: :feature do
       end
 
       it 'updates project permissions for a user' do
-        visit project_permissions_path(project)
+        page_to_user(no_access_user)
 
         # set other user to writer
         change_permission(no_access_user, :writer)
