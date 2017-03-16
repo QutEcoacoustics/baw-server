@@ -28,7 +28,7 @@
 
     .container#bawMainContent
       .row
-        .col-md-2.left-nav-bar
+        .col-md-2.col-sm-12.left-nav-bar
           %nav{role: 'navigation'}
             %h6
               %strong.text-uppercase.text-muted
@@ -36,8 +36,9 @@
             %ul.nav.nav-pills.nav-stacked
               -# = content_for(:left_sidebar)
               = render partial: 'shared/sidebar_base', locals: {menu_definition: menu_definition }
-
-        .col-md-8
+        .col-md-2.col-sm-12.right-nav-bar.col-md-push-8
+          = render partial: 'shared/info_bar_base', locals: @info_bar
+        .col-md-8.col-sm-12.col-md-pull-2
           - if flash.any?
             - flash.each do |msg_type, msg_text|
               - if !["timedout"].include?(msg_type)
@@ -50,10 +51,6 @@
           .row
             %h1=titles(:page_title)
             = content_for?(:content) ? content_for(:content) : yield
-
-        .col-md-2.right-nav-bar
-          = render partial: 'shared/info_bar_base', locals: @info_bar
-
 
     %footer
       .container
