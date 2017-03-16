@@ -1,5 +1,6 @@
 - content_for :meta_title, "Project #{@project.name}"
-- content_for :page_title, @project.name
+- content_for :page_title do
+  = @project.name
 - @info_bar = {model: @project, icon: 'globe'}
 
 - content_for :page_actions do
@@ -22,6 +23,7 @@
     = destroy_button(@project, 'project')
 
 - content_for :right_sidebar do
+  = render partial: 'shared/sidebar_metadata_users', locals: { title: 'Owned by', users: @project.owners }
   - levels = Access::Core.user_levels(current_user, @project)
   - level = Access::Core.highest(levels)
   - unless level.blank?

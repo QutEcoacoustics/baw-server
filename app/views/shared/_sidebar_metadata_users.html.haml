@@ -1,11 +1,16 @@
--# locals: title, user, subtext
-- if !title.blank? && !user.blank? && !subtext.blank?
+-# locals: title, user, users, subtext
+- user ||= nil
+- users ||= []
+- users << user if user
+- subtext ||= nil
+- if !title.blank? && users.length > 0
   %h4= title
-  .media
-    .media-left.media-middle
-      %a{href: user_account_path(user)}
-        = image_tag user.image.url(:spanhalf), alt: user.user_name, class: 'media-object'
-    .media-body
-      = link_to user.user_name, user_account_path(user)
-      %br/
-      = subtext
+  - users.each do |user|
+    .media
+      .media-left.media-middle
+        %a{href: user_account_path(user)}
+          = image_tag user.image.url(:spanhalf), alt: user.user_name, class: 'media-object'
+      .media-body
+        = link_to user.user_name, user_account_path(user)
+        %br/
+        = subtext
