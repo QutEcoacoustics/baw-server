@@ -57,15 +57,7 @@
 - unless @random_projects.blank?
   %h3 Some of the projects you can access
   .row
-    -  @random_projects.each do |project|
-      .col-sm-4
-        .thumbnail.project_thumbnail
-          %a{href: project_path(project), style: 'width:100%;'}
-            %img{src: project.image.url(:span3), alt: project.name}/
-          .caption
-            %h4{style: 'margin-top:0'}
-              %a{href: project_path(project)}= project.name
-            %p= truncate(project.description, length: 75)
+    = render partial: 'shared/project_info_cards', locals: {projects: @random_projects}
 
   .row
     .pull-right

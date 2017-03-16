@@ -1,0 +1,15 @@
+-# locals: projects
+.project_thumbnails
+  - projects.each do |project|
+    .col-sm-4.project_thumbnail
+      .thumbnail
+        %a{href: project_path(project), style: 'width:100%;'}
+          %img{src: project.image.url(:span3), alt: project.name}/
+        .caption
+          %h4{style: 'margin-top:0'}
+            %a{href: project_path(project)}= project.name
+          - if project.description.blank?
+            - empty_message('left') do
+              No description available
+          - else
+            %p= truncate(project.description_html(true), separator: ' ', length: 100, escape: false)

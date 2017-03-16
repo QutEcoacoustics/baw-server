@@ -231,12 +231,30 @@ footer {
 .project_sites {
   height: 400px;
   overflow: auto;
+  justify-content: space-between;
+}
+
+.project_thumbnails {
+  display: flex;
+  flex-wrap: wrap;
 }
 
 .project_thumbnail {
-  overflow-wrap: break-word;
-  word-break: break-all;
-  height: 24em;
+  // override bootstrap styles
+  float: none !important;
+  position: static !important;
+  margin-bottom: $line-height-computed;
+
+
+  min-height: 21em;
+
+  &>.thumbnail {
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: normal;
+    height: 100%;
+    margin-bottom: -$line-height-computed;;
+  }
 }
 
 select[multiple] {

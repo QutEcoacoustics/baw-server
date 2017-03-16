@@ -39,8 +39,8 @@ class Project < ActiveRecord::Base
   # make sure the project has a permission entry for the creator after it is created
   after_create :create_owner_permission
 
-  def description_html
-    CustomRender.render_model_markdown(self, :description)
+  def description_html(inline = false)
+    CustomRender.render_model_markdown(self, :description, inline)
   end
 
   # Define filter api settings
