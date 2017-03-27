@@ -2,6 +2,28 @@
 
 ## Unreleased
 
+## [Release 1.3.0](https://github.com/QutBioacoustics/baw-server/releases/tag/1.3.0)
+
+- 2017-03-16
+    - Fixed feature tests for permissions page
+    See [fd0316d](https://github.com/QutBioacoustics/baw-server/commit/fd0316dc04cf2ed5d8a9fb111dcbb30ea69da6e3)
+    - Reorders columns for small layout scenarios
+    See [fab0709](https://github.com/QutBioacoustics/baw-server/commit/fab0709481400656fcc97b416da2872b77b3bc8c)
+    -  Adds alphabetical paging to permissions page
+    See [b32494a](https://github.com/QutBioacoustics/baw-server/commit/b32494a61c3c1e43f5b13fc82346f7e8865dc721)
+    - Created an alphabetical pager
+    See [cdcdd3d](https://github.com/QutBioacoustics/baw-server/commit/cdcdd3d0aa31e625cfca077ad8c539026524fe29)
+    - Standardizes project card rendering
+    See [52f17c8](https://github.com/QutBioacoustics/baw-server/commit/52f17c8f04944d635b1c3a3ff15133702bc99a51)
+    - Added ability to render simplified markdown
+    See [1c778d0](https://github.com/QutBioacoustics/baw-server/commit/1c778d05e5165cb89505c30b8272c47380926346)
+    - Added instance template for home page
+    See [eb7d20a](https://github.com/QutBioacoustics/baw-server/commit/eb7d20a02ac42bc6957eaddd61d646ed65e0350b)
+    - General cleanup of view code
+    See [7af8cad](https://github.com/QutBioacoustics/baw-server/commit/7af8cadea71d0e45bc374c5161760ec253a6add7)
+    - Adds owner user to project show and permissions pages
+    See [e26a8e4](https://github.com/QutBioacoustics/baw-server/commit/e26a8e463ea607e00cdc46f018c6cf5329f34c66)
+  
 ## [Release 1.2.2](https://github.com/QutBioacoustics/baw-server/releases/tag/1.2.2)
 
 - 2017-02-24
