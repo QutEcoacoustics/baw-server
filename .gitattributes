@@ -13,6 +13,10 @@
 Rakefile diff=ruby eol=lf
 bin/* diff=ruby eol=lf
 
+*.yml eol=lf
+*.html eol=lf
+*.css eol=lf
+*.xml eol=lf
 
 # Ensure those won't be messed up with
 *.jpg binary

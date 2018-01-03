@@ -73,20 +73,19 @@ Vagrant.configure(2) do |config|
   # Enable provisioning with a shell script. Additional provisioners such as
   # Puppet, Chef, Ansible, Salt, and Docker are also available. Please see the
   # documentation for more information about their specific syntax and use.
-  config.vm.provision 'shell', inline: <<-SHELL
-    sudo apt-get update
-    # temporary workaround for https://github.com/mitchellh/vagrant/issues/6793
-    echo "Installing build tools..."
-    sudo apt-get install -y build-essential libffi-dev libssl-dev python-dev
-    echo "Installing git, pip, and ansible..."
-    sudo apt-get install -y git python-pip && sudo pip install ansible==1.9.3 && sudo cp /usr/local/bin/ansible /usr/bin/ansible
-  SHELL
+  #config.vm.provision 'shell', inline: <<-SHELL
+  #  sudo apt-get update
+  #  # temporary workaround for https://github.com/mitchellh/vagrant/issues/6793
+  #  echo "Installing build tools..."
+  #  sudo apt-get install -y build-essential libffi-dev libssl-dev python-dev
+  #  echo "Installing git, pip, and ansible..."
+  #  sudo apt-get install -y git python-pip && sudo pip install ansible && sudo cp /usr/local/bin/ansible /usr/bin/ansible
+  #SHELL
   
   config.vm.provision 'ansible_local' do |ansible|
-    # currently defaults to ansible 2.0 which we haven't tested
-    # the shell provisioner bootstraps us with v1.9.3 instead
-    #ansible.install = true
-    ansible.version = '1.9.3'
+    ansible.install = true
+    ansible.version = 'latest'
+    ansible.install_mode = :pip
 
     ansible.verbose = true
 

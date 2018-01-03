@@ -28,14 +28,13 @@
     - role: "{{ source_path }}/roles/audio_tools"
       tags: ["audio_tools"]
     - role: "{{ source_path }}/roles/ruby"
-      rvm1_install_flags: ""
-      #rvm1_install_flags: '--auto-dotfiles --user-install'
-      #rvm1_install_path: '/home/{{ ansible_ssh_user }}/.rvm'
-      ruby_rvm_extra_user: vagrant
+      rvm1_install_flags: '--user-install --auto-dotfiles'
+      rvm1_install_path: '/home/vagrant/.rvm'
+      rvm1_user: vagrant
       become: true
+      become_user: root
       tags: ["ruby"]
     - role: "{{ source_path }}/external/ANXS.postgresql"
-      postgresql_version: "{{ postgresql_version }}"
       # be careful when enabling this: anyone on public network could access db with
       # no password and admin access!
       #postgresql_listen_addresses: "*"

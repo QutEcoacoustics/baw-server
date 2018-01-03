@@ -73,9 +73,9 @@ gem 'i18n-inflector-rails', '~>1.0'
 # -------------------------------------
 # https://github.com/plataformatec/devise/blob/master/CHANGELOG.md
 # http://joanswork.com/devise-3-1-update/
-gem 'devise', '~> 4.2.0'
+gem 'devise', '~> 4.2.1'
 gem 'devise-i18n'
-gem 'cancancan', '~> 1.15'
+gem 'cancancan', '~> 1.16'
 gem 'role_model', '~> 0.8.1'
 # Use ActiveModel has_secure_password
 gem 'bcrypt', '~> 3.1.9'
@@ -107,7 +107,7 @@ gem 'acts_as_paranoid', git: 'https://github.com/ActsAsParanoid/acts_as_paranoid
 
 
 # for state machines
-gem 'aasm'
+gem 'aasm', '~>4.12.0'
 
 # SETTINGS
 # -------------------------------------
