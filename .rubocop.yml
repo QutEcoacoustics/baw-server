@@ -1,7 +1,5 @@
-inherit_from: .rubocop_todo.yml
 
 AllCops:
-  RunRailsCops: true
   DisplayCopNames: true
   DisplayStyleGuide: true
   Include:
@@ -11,3 +9,13 @@ AllCops:
     - 'db/**/*'
     - 'config/**/*'
     - 'script/**/*'
+Rails:
+  Enabled: true
+
+# Customized options
+Metrics/LineLength:
+  Max: 120
+Style/BracesAroundHashParameters:
+  EnforcedStyle: braces
+Style/WordArray:
+  EnforcedStyle: brackets
