@@ -102,15 +102,9 @@ class AnalysisJobsResultsController < ApplicationController
         file_name: file_name.blank? ? '' : file_name
     }
 
-    if is_root_path
-      paths = BawWorkers::Config.analysis_cache_helper.possible_paths_dir(results_path_arguments)
-    else
-      paths = BawWorkers::Config.analysis_cache_helper.existing_paths(results_path_arguments)
-    end
-
     # shared error info
-    msg = "Could not find results directory for analysis job '#{analysis_job_id}' for recording '#{audio_recording.id}'" +
-        " at '#{results_path}'."
+    msg = "Could not find results directory for analysis job '#{analysis_job_id}'" \
+          " for recording '#{audio_recording.id}' at '#{results_path}'."
 
     # can the audio recording be accessed (is it's status ready)?
     is_audio_ready = audio_recording.ready?
@@ -118,17 +112,20 @@ class AnalysisJobsResultsController < ApplicationController
     # do initial checking
     if !is_audio_ready
       # changed from 422 Unprocessable entity
-      #head :not_found if is_head_request # disabled head here because render_error should take care of that
+      # render_error should take care of head requests
       fail CustomErrors::ItemNotFoundError, "Audio recording id #{audio_recording.id} is not ready"
 
     elsif is_audio_ready
+      paths = BawWorkers::Config.analysis_cache_helper.possible_paths_dir(results_path_arguments)
+
       # for paths that exist, filter out into files or directories
       # the exception is the root results folder - it always should 'exist' for the API even if it doesn't on disk
-      dirs = paths
-                 .select { |p| is_root_path || File.directory?(p) }
-                 .map { |d| d.end_with?(File::SEPARATOR + '.') ? d[0..-2] : d }
-      files = paths.select { |p| File.file?(p) }
+      # The .map trims a trailing '/.' off any directory
 
+      dirs = paths
+             .select { |p| is_root_path || Combined.directory_exists?(p) }
+             .map { |d| d.end_with?(File::SEPARATOR + '.') ? d[0..-2] : d }
+      files = paths.select { |p| Combined.file_exists?(p) }
 
       # fail if no paths are files or dirs ... I don't know if that's possible or not.
       fail CustomErrors::ItemNotFoundError, msg if dirs.size < 1 && files.size < 1
@@ -143,26 +140,23 @@ class AnalysisJobsResultsController < ApplicationController
       respond_with_directory(dirs, base_paths, get_base_url_path, analysis_job_item.as_json, is_head_request, api_opts) if dirs.size > 0 && files.size < 1
 
     else
-      fail CustomErrors::BadRequestError, 'There was a problem with the request.'
+      fail CustomErrors::BadRequestError, 'There was an unknown problem with the request.'
     end
 
   end
 
   def get_base_path(path, analysis_job_id, uuid)
     analysis_base_paths = BawWorkers::Config.analysis_cache_helper.possible_paths_dir(
-        {
-            job_id: analysis_job_id,
-            uuid: uuid,
-            sub_folders: [],
-            file_name: ''
-
-        })
+      {
+        job_id: analysis_job_id,
+        uuid: uuid,
+        sub_folders: [],
+        file_name: ''
+      })
     matching_base_path = analysis_base_paths.select { |abp| path.start_with?(abp) }
 
     fail CustomErrors::UnprocessableEntityError, 'Incorrect analysis base path.' if matching_base_path.size != 1
 
     matching_base_path[0]
   end
-
-
 end

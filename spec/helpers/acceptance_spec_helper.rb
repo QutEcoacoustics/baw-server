@@ -1,4 +1,5 @@
 require 'helpers/compare_spec_helper'
+require 'helpers/misc_helper'
 
 def document_media_requests
   # this is here so rspec_api_documentation can be generated
@@ -184,7 +185,7 @@ def acceptance_checks_shared(request, opts = {})
           expected_status: opts[:expected_status].is_a?(Symbol) ? opts[:expected_status] : Settings.api_response.status_symbol(opts[:expected_status]),
       })
 
-  opts[:msg] = "Requested #{opts[:actual_method]} #{opts[:actual_path]}. Information hash: #{opts}"
+  opts[:msg] = "Requested #{opts[:actual_method]} #{opts[:actual_path]}. Information hash: #{MiscHelper::pretty_hash(opts)}"
 
   # expectations
   expect(opts[:actual_status]).to eq(opts[:expected_status]), "Mismatch: status. #{opts[:msg]}"

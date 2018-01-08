@@ -69,6 +69,9 @@ gem 'tzinfo-data', '~> 1.2016'
 # for tying inflections into I18n
 gem 'i18n-inflector-rails', '~>1.0'
 
+# for simple caching of functions
+gem 'memoist'
+
 # USERS & PERMISSIONS
 # -------------------------------------
 # https://github.com/plataformatec/devise/blob/master/CHANGELOG.md
@@ -86,6 +89,7 @@ gem 'bcrypt', '~> 3.1.9'
 # don't change the database gems - causes:
 # Please install the <db> adapter: `gem install activerecord-<db>-adapter` (<db> is not part of the bundle. Add it to Gemfile.)
 gem 'pg', '~> 0.18.1'
+gem 'sqlite3'
 
 # MODELS
 # -------------------------------------
