@@ -123,9 +123,9 @@ class AnalysisJobsResultsController < ApplicationController
       # The .map trims a trailing '/.' off any directory
 
       dirs = paths
-             .select { |p| is_root_path || Combined.directory_exists?(p) }
+             .select { |p| is_root_path || FileSystems::Combined.directory_exists?(p) }
              .map { |d| d.end_with?(File::SEPARATOR + '.') ? d[0..-2] : d }
-      files = paths.select { |p| Combined.file_exists?(p) }
+      files = paths.select { |p| FileSystems::Combined.file_exists?(p) }
 
       # fail if no paths are files or dirs ... I don't know if that's possible or not.
       fail CustomErrors::ItemNotFoundError, msg if dirs.size < 1 && files.size < 1
