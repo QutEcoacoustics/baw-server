@@ -34,6 +34,7 @@ module FileSystems
       # @param [string] path - the path to list contents for
       # @param [int] offset - the number of items to skip
       # @param [int] max_items - the maximum number of items that will be enumerated through
+      # @return [string[],int] - the paths that match and a total count
       def directory_list(path, items, offset, max_items)
         check_and_open_sqlite(path) do |db, sqlite_path, sub_path|
           return Sqlite.directory_list(db, sqlite_path, sub_path, items, offset, max_items)
@@ -65,8 +66,6 @@ module FileSystems
 
         Physical.get_blob(path)
       end
-
-      private
 
       # Determines if given string has an .sqlite extension in it.
       # If it does, it returns two strings, the path to the sqlite file, and the sub file

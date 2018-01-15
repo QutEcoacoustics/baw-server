@@ -660,11 +660,23 @@ resource 'AnalysisJobsItemsResults' do
 
     context 'escaping result dir is not not possible' do
       before do
-        create_file(Dir.home + '../test-file.png', '')
+        File.open(Dir.home + '/home-file.png', 'w') { |f| f.write('') }
+        create_file('/../parent-file.png', '')
+
+        path = create_full_path('../parent-file.png')
+        unless File.exist?(path)
+          raise "parent-file not found"
+        end
+
+        path2 = Dir.home + '/home-file.png'
+        unless File.exist?(path2)
+          raise "home-file not found"
+        end
       end
 
       after do
-        File.delete(Dir.home + '../test-file.png')
+        File.delete(Dir.home + '/home-file.png')
+        File.delete(create_full_path('../parent-file.png'))
       end
 
       get test_url do
@@ -678,7 +690,10 @@ resource 'AnalysisJobsItemsResults' do
           :not_found,
           {
               expected_json_path: 'meta/error/details',
-              response_body_content: ["Could not find file for analysis job 'system' for recording ", " at '../parent-file.png'."]
+              response_body_content: [
+                "Could not find the requested item: Could not find results directory for analysis job 'system' for recording",
+                " at '../parent-file.png'."
+              ]
           }
         )
       end
@@ -694,7 +709,10 @@ resource 'AnalysisJobsItemsResults' do
           :not_found,
           {
               expected_json_path: 'meta/error/details',
-              response_body_content: ["Could not find file for analysis job 'system' for recording ", " at '~/parent-file.png'."]
+              response_body_content: [
+                "Could not find the requested item: Could not find results directory for analysis job 'system' for recording",
+                " at '~/parent-file.png'."
+              ]
           }
         )
       end

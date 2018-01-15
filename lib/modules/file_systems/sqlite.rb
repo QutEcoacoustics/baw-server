@@ -20,12 +20,20 @@ module FileSystems
       end
 
       def list_files_query
+        # This query returns all the paths that match, and the total count of paths that match
+        # as the ?last? result
         <<-SQL
-          SELECT #{FILES_PATH}
-          FROM #{FILES_TABLE}
-          WHERE #{make_file_filter('path', false)} AND @path NOT LIKE '%/.%' 
+          WITH filtered AS(
+            SELECT #{FILES_PATH}
+            FROM #{FILES_TABLE}
+            WHERE #{make_file_filter('path', false)} AND @path NOT LIKE '%/.%'
+            ORDER BY #{FILES_PATH}
+          )
+          SELECT #{FILES_PATH} FROM filtered
           OFFSET @offset
           LIMIT @limit
+          UNION ALL
+          SELECT COUNT(path) FROM filtered
         SQL
       end
 
@@ -53,7 +61,9 @@ module FileSystems
       def directory_list(db, sqlite_path, path, items, offset, max_items)
         paths = db.execute(list_files_query, {path: path, limit: items, offset: offset})
 
-        paths.select {|path| sqlite_path + path}
+        count = paths.pop
+
+        return paths.select {|path| sqlite_path + path}, count
       end
 
       def directory_has_children?(db, sqlite_path, path)

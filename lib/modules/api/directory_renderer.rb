@@ -20,13 +20,17 @@ module Api
 
       if is_head_request
         head :ok, content_length: file_size, content_type: mime_type_s
-      elsif (paths = Combined.has_sqlite?(file_path))
+      end
+
+      # if sqlite, return blob
+      FileSystems::Combined.check_and_open_sqlite(file_path) do
         # we only want to send data if pulling blob from container db, otherwise use send_file method
         blob = FileSystems::Sqlite.get_blob(*paths)
-        send_data(blob, {filename: File.basename(paths[1]), type: mime_type_s})
-      else
-        send_file(file_path, {url_based_filename: true, type: mime_type_s, content_length: file_size})
+        return send_data(blob, {filename: File.basename(paths[1]), type: mime_type_s})
       end
+
+      # else return file as normal
+      send_file(file_path, {url_based_filename: true, type: mime_type_s, content_length: file_size})
     end
 
     # Returns a directory metadata object for the first directory supplied in `directories`
@@ -125,7 +129,7 @@ module Api
 
       max_items = 1000
 
-      child_paths = FileSystems::Combined.directory_list(path, items, offset, max_items)
+      child_paths, total = FileSystems::Combined.directory_list(path, items, offset, max_items)
 
       children = child_paths.map do |full_path|
         if FileSystems::Combined.directory_exists?(full_path)
@@ -136,8 +140,8 @@ module Api
         end
       end
 
-      paging[:total] = filtered_count
-      paging[:warning] = "Only first #{max_items} results are available" if filtered_count >= max_items
+      paging[:total] = total
+      paging[:warning] = "Only first #{max_items} results are available" if total >= max_items
 
       children
     end

@@ -45,6 +45,8 @@ module FileSystems
           full_path = File.join(path, item)
           children.push(full_path)
         end
+
+        return children, filtered_count
       end
 
       def directory_has_children?(path)
