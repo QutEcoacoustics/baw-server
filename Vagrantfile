@@ -5,7 +5,13 @@ ansible_files = '/home/vagrant/baw-deploy'
 
 
 # http://matthewcooper.net/2015/01/15/automatically-installing-vagrant-plugin-dependencies/
-required_plugins = %w( vagrant-winnfsd )
+required_plugins = %w( )
+
+# windows only plugins
+if Vagrant::Util::Platform.windows?
+  required_plugins = required_plugins.concat %w( vagrant-winnfsd )
+end
+
 required_plugins.each do |plugin|
   unless Vagrant.has_plugin? plugin || ARGV[0] == 'plugin'
     command_separator = Vagrant::Util::Platform.windows? ? " & " : ";"
@@ -50,8 +56,10 @@ Vagrant.configure(2) do |config|
   # the path on the host to the actual folder. The second argument is
   # the path on the guest to mount the folder. And the optional third
   # argument is a set of non-required options.
-  config.winnfsd.uid = 1000 # vagrant
-  config.winnfsd.gid = 1000 # vagrant
+  if Vagrant.has_plugin? "vagrant-winnfsd"
+      config.winnfsd.uid = 1000 # vagrant
+      config.winnfsd.gid = 1000 # vagrant
+  end
   config.vm.synced_folder './', '/home/vagrant/baw-server', type: "nfs"
   config.vm.synced_folder '../baw-workers', '/home/vagrant/baw-workers', type: "nfs"
   config.vm.synced_folder '../baw-audio-tools', '/home/vagrant/baw-audio-tools', type: "nfs"
