@@ -22,6 +22,8 @@ class AudioRecording < ActiveRecord::Base
   belongs_to :deleter, class_name: 'User', foreign_key: :deleter_id, inverse_of: :deleted_audio_recordings
   belongs_to :uploader, class_name: 'User', foreign_key: :uploader_id, inverse_of: :uploaded_audio_recordings
 
+  has_many :dataset_items, inverse_of: :audio_recording
+
   accepts_nested_attributes_for :site
 
   # add deleted_at and deleter_id
