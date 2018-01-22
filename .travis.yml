@@ -25,8 +25,8 @@ before_install:
 
   # download, extract, and add ffmpeg and ffprobe to path
   - mkdir /tmp/ffmpeg
-  - wget http://ffmpeg.gusari.org/static/64bit/ffmpeg.static.64bit.latest.tar.gz -O /tmp/ffmpeg/download-ffmpeg.tar.gz
-  - tar -xzf /tmp/ffmpeg/download-ffmpeg.tar.gz -C /tmp/ffmpeg/
+  - wget https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-64bit-static.tar.xz -O /tmp/ffmpeg/ffmpeg-release-64bit-static.tar.xz
+  - tar -xf /tmp/ffmpeg/ffmpeg-release-64bit-static.tar.xz -C /tmp/ffmpeg/ --strip 1
   - export PATH=/tmp/ffmpeg:$PATH
 
   # check versions
