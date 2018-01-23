@@ -139,6 +139,9 @@ gem 'resque-status', '~> 0.5.0'
 # set to a specific commit when releasing to master branch
 gem 'baw-workers', git: 'https://github.com/QutBioacoustics/baw-workers.git', branch: :master, ref: '54f28d351a5ba7ff0cfab45bce6ba8d645a9599b'
 
+# Other Gems
+# This was needed at some point to boot rails. I think we can remove this dependency later after some gem upgrades
+gem 'concurrent-ruby', require: 'concurrent'
 
 # Gems restricted by environment and/or platform
 # ====================================================

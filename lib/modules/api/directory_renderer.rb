@@ -122,7 +122,9 @@ module Api
       max_items = 1000
 
       children = []
-      listing = Dir.foreach(path)
+      # Note: added a sort here for stable sorting. We're pivoting away from having thousands of files in folders
+      # so hopefully we can take (the massive) penalty hit of evaluating the entire directory listing each time
+      listing = Dir.foreach(path).sort
       filtered_count = 0
 
       listing.each do |item|
