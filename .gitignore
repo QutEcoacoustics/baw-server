@@ -46,3 +46,6 @@ external_modules.log
 /app/views/public/_*
 
 /.vagrant
+
+# mac development
+.DS_Store
