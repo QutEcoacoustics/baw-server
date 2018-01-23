@@ -21,7 +21,11 @@ module FileSystems
       # @param [int] max_items - the maximum number of items that will be enumerated through
       def directory_list(path, items, offset, max_items)
         children = []
-        listing = Dir.foreach(path)
+
+        # Note: added a sort here for stable sorting. We're pivoting away from having thousands of files in folders
+        # so hopefully we can take (the massive) penalty hit of evaluating the entire directory listing each time
+        listing = Dir.foreach(path).sort
+
         filtered_count = 0
 
         listing.each do |item|

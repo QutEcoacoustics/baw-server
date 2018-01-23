@@ -28,3 +28,12 @@ if harvester_user.blank?
   harvester_user.save!(validate: false)
 end
 
+# default dataset
+default_dataset = Dataset.where(name: 'default').first
+if default_dataset.blank?
+  default_dataset = Dataset.new(name: 'default')
+  default_dataset.description = 'The default dataset'
+  default_dataset.creator_id = admin_user.id
+  default_dataset.save!(validate: false)
+end
+

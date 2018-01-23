@@ -1,41 +1,20 @@
 ---
 
-# An Ansible playbook to provision a dev machine that has been created by vagrant
-#
-# WARNING: this is not ready for widespread use! The roles that we depend on are
-# not yet publicly available. This playbook uses relative paths to find the
-# currently private roles that are in the baw-private repository.
-#
-
-
-- name: Manage deploy server
+- name: Manage baw-server development machine
   hosts: all
   vars:
-    source_path: "/home/vagrant/baw-deploy"
-    baw:
-      # rvm
-      rvm:
-        # note: rubies not in this list will automatically be uninstalled
-        # see: /roles/common/tasks/main.yml
-        rvm1_rubies:
-          # use full 'ruby-*' name
-          # last ruby listed is the default
-          - "ruby-2.3.1"
+    rvm_rubies:
+      # use full 'ruby-*' name
+      # last ruby listed is the default
+      - "ruby-2.3.5"
+    rvm_default_ruby_version: '{{ rvm_rubies | last if rvm_rubies and rvm_rubies is iterable else rvm_rubies }}'
+    rvm_install_path: /usr/share/rvm
+    rvm_path: /usr/share/rvm/bin/rvm
     postgresql_version: 9.3
   pre_tasks:
     - debug: var=ansible_ssh_user
   roles:
-    - role: "{{ source_path }}/roles/audio_tools"
-      tags: ["audio_tools"]
-    - role: "{{ source_path }}/roles/ruby"
-      rvm1_install_flags: ""
-      #rvm1_install_flags: '--auto-dotfiles --user-install'
-      #rvm1_install_path: '/home/{{ ansible_ssh_user }}/.rvm'
-      ruby_rvm_extra_user: vagrant
-      become: true
-      tags: ["ruby"]
-    - role: "{{ source_path }}/external/ANXS.postgresql"
-      postgresql_version: "{{ postgresql_version }}"
+    - role: "/home/vagrant/.ansible/roles/ANXS.postgresql"
       # be careful when enabling this: anyone on public network could access db with
       # no password and admin access!
       #postgresql_listen_addresses: "*"
@@ -44,6 +23,12 @@
           owner: postgres          # optional; specify the owner of the database
       become: true
   tasks:
+    - name: IMPORT | audio tools tasks
+      import_tasks: audio_tools.yml
+      tags: [ "audio_tools" ]
+    - name: IMPORT | ruby tasks
+      import_tasks: ruby.yml
+      tags: [ "ruby" ]
     - name: APT | Install tools needed for installing pg gem
       apt:
         pkg: libpq-dev
