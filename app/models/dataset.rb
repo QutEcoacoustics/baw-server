@@ -1,5 +1,8 @@
 class Dataset < ActiveRecord::Base
 
+  # ensures that creator_id, updater_id, deleter_id are set
+  include UserChange
+
   #relationships
   belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_datasets
   belongs_to :updater, class_name: 'User', foreign_key: :updater_id, inverse_of: :updated_datasets
@@ -13,6 +16,5 @@ class Dataset < ActiveRecord::Base
 
   # validation
   validates :name, presence: true, length: {minimum: 2}
-
 
 end

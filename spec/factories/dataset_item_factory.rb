@@ -7,9 +7,7 @@ FactoryGirl.define do
 
     dataset
     audio_recording
-
-
-
+    creator
 
   end
 end

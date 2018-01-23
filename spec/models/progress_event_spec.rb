@@ -16,8 +16,8 @@ RSpec.describe ProgressEvent, type: :model do
     expect(build(:progress_event, {activity: 'something else'})).not_to be_valid
   end
 
-  it 'is invalid if missing user_id' do
-    expect(build(:progress_event, {user_id: nil})).not_to be_valid
+  it 'is invalid if missing creator_id' do
+    expect(build(:progress_event, {creator_id: nil})).not_to be_valid
   end
 
   it 'is invalid if missing dataset_item_id' do
