@@ -330,8 +330,7 @@ CREATE TABLE dataset_items (
     start_time_seconds numeric NOT NULL,
     end_time_seconds numeric NOT NULL,
     "order" numeric,
-    created_at timestamp without time zone NOT NULL,
-    updated_at timestamp without time zone NOT NULL
+    created_at timestamp without time zone
 );
 
 

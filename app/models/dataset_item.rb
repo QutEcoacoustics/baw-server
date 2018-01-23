@@ -5,8 +5,8 @@ class DatasetItem < ActiveRecord::Base
   belongs_to :audio_recording, inverse_of: :dataset_items
   has_many :progress_events, inverse_of: :dataset_item
 
-  # add deleted_at and deleter_id
-  # TODO: ask anthony
+  # We have not enabled soft deletes yet since we do not support deleting dataset items
+  # This may change in the future
 
   # association validations
   validates :dataset, existence: true

@@ -12,10 +12,10 @@ class CreateDatasetsV2 < ActiveRecord::Migration
 
       t.integer :dataset_id
       t.integer :audio_recording_id
-      t.decimal :start_time_seconds       , :null => false
-      t.decimal :end_time_seconds       , :null => false
+      t.decimal :start_time_seconds, :null => false
+      t.decimal :end_time_seconds, :null => false
       t.decimal :order
-      t.timestamps null: false
+      t.datetime :created_at
 
     end
     create_table :progress_events do |t|

@@ -15,5 +15,26 @@ RSpec.describe ProgressEvent, type: :model do
     expect(build(:progress_event, {activity: activities[2]})).to be_valid
     expect(build(:progress_event, {activity: 'something else'})).not_to be_valid
   end
+
+  it 'is invalid if missing user_id' do
+    expect(build(:progress_event, {user_id: nil})).not_to be_valid
+  end
+
+  it 'is invalid if missing dataset_item_id' do
+    expect(build(:progress_event, {dataset_item_id: nil})).not_to be_valid
+  end
+
+  it 'should get the created_at field populated automatically' do
+
+    now = Time.zone.now
+    soon = now + 60 # in one minute
+
+    progress_event = FactoryGirl.create(:progress_event)
+
+    expect(progress_event.created_at).to be_kind_of(ActiveSupport::TimeWithZone)
+    expect(progress_event.created_at > now).to be_truthy
+    expect(progress_event.created_at < soon).to be_truthy
+
+  end
   
 end

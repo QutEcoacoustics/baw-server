@@ -91,6 +91,7 @@ class User < ActiveRecord::Base
   has_many :created_tag_groups, class_name: 'TagGroup', foreign_key: :creator_id, inverse_of: :creator
 
   has_many :created_datasets, class_name: 'Dataset', foreign_key: :creator_id, inverse_of: :creator
+  has_many :updated_datasets, class_name: 'Dataset', foreign_key: :updater_id, inverse_of: :updater
   has_many :progress_events, class_name: 'ProgressEvent', foreign_key: :user_id, inverse_of: :user
 
   # scopes
