@@ -3,6 +3,6 @@ FactoryGirl.define do
     activity "viewed"
 
     dataset_item
-    user
+    creator
   end
 end

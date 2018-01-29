@@ -4,6 +4,7 @@ FactoryGirl.define do
     description "This is a test dataset description."
 
     creator
+    updater
 
   end
 end

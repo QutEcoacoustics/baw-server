@@ -327,6 +327,7 @@ CREATE TABLE dataset_items (
     id integer NOT NULL,
     dataset_id integer,
     audio_recording_id integer,
+    creator_id integer,
     start_time_seconds numeric NOT NULL,
     end_time_seconds numeric NOT NULL,
     "order" numeric,
@@ -359,9 +360,10 @@ ALTER SEQUENCE dataset_items_id_seq OWNED BY dataset_items.id;
 
 CREATE TABLE datasets (
     id integer NOT NULL,
+    creator_id integer,
+    updater_id integer,
     name character varying,
     description text,
-    creator_id integer,
     created_at timestamp without time zone NOT NULL,
     updated_at timestamp without time zone NOT NULL
 );
@@ -430,7 +432,7 @@ ALTER SEQUENCE permissions_id_seq OWNED BY permissions.id;
 
 CREATE TABLE progress_events (
     id integer NOT NULL,
-    user_id integer,
+    creator_id integer,
     dataset_item_id integer,
     activity character varying,
     created_at timestamp without time zone
@@ -1782,6 +1784,14 @@ ALTER TABLE ONLY analysis_jobs_items
 
 
 --
+-- Name: dataset_items fk_rails_5bf6548424; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY dataset_items
+    ADD CONSTRAINT fk_rails_5bf6548424 FOREIGN KEY (creator_id) REFERENCES users(id);
+
+
+--
 -- Name: dataset_items fk_rails_81ed124069; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1798,6 +1808,14 @@ ALTER TABLE ONLY analysis_jobs_items
 
 
 --
+-- Name: datasets fk_rails_c2337cbe35; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY datasets
+    ADD CONSTRAINT fk_rails_c2337cbe35 FOREIGN KEY (updater_id) REFERENCES users(id);
+
+
+--
 -- Name: dataset_items fk_rails_c97bdfad35; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1806,11 +1824,11 @@ ALTER TABLE ONLY dataset_items
 
 
 --
--- Name: progress_events fk_rails_d8951ac6ce; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: progress_events fk_rails_cf446a18ca; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY progress_events
-    ADD CONSTRAINT fk_rails_d8951ac6ce FOREIGN KEY (user_id) REFERENCES users(id);
+    ADD CONSTRAINT fk_rails_cf446a18ca FOREIGN KEY (creator_id) REFERENCES users(id);
 
 
 --

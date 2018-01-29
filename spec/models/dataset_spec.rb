@@ -16,7 +16,7 @@ RSpec.describe Dataset, type: :model do
     expect(build(:dataset, {creator_id: nil})).not_to be_valid
   end
 
-  it 'should get the created_at field populated automatically' do
+  it 'should have the created_at and updated_at field populated automatically' do
 
     now = Time.zone.now
     soon = now + 60 # in one minute
