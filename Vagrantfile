@@ -27,7 +27,9 @@ end
 def nfs_opts
   {
       type: "nfs",
-      mount_options: [ "dir_mode=0700,file_mode=0600" ],
+
+      # these mount options are not needed unless using nfs on Windows
+      #mount_options: [ "dir_mode=0700,file_mode=0600" ],
   }
 end
 
