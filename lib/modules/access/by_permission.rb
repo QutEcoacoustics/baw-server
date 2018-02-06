@@ -160,6 +160,18 @@ module Access
         permission_sites(user, levels, query)
       end
 
+      # Get all datasets for which this user has these access levels.
+      # @param [User] user
+      # @param [Symbol, Array<Symbol>] levels
+      # @return [ActiveRecord::Relation] datasets
+      def datasets(user, levels = Access::Core.levels)
+        query = Dataset.all
+        #permission_admin(user, levels, query)
+      end
+
+
+
+
       private
 
       def permission_admin(user, levels, query)
@@ -353,6 +365,8 @@ module Access
           query.where(permissions_by_saved_search.not)
         end
       end
+
+
 
       def calculate_levels(levels)
         # levels can be nil to indicate get projects user has no access

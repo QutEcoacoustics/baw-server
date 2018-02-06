@@ -251,6 +251,9 @@ Rails.application.routes.draw do
   # shallow path to sites
   get '/sites/:id' => 'sites#show_shallow', defaults: {format: 'json'}, as: 'shallow_site'
 
+  # datasets
+  resources :datasets
+
   # route to the home page of site
   root to: 'public#index'
 
