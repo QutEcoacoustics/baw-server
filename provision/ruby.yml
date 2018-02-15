@@ -74,3 +74,4 @@
   with_items: '{{ ruby_patch.results }}'
   register: bundler_install
   changed_when: '"Successfully installed bundler" in bundler_install.stdout'
+  tags: ["rvm_bundler_install"]
