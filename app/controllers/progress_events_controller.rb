@@ -1,0 +1,2 @@
+class ProgressEventsController < ApplicationController
+end

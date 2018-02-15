@@ -1,7 +1,5 @@
 class DatasetsController < ApplicationController
 
-
-
   include Api::ControllerHelper
 
   # GET /datasets

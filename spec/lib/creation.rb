@@ -25,6 +25,10 @@ module Creation
       prepare_saved_search
       prepare_analysis_job
       prepare_analysis_jobs_item
+
+      prepare_dataset
+      prepare_dataset_item
+
     end
 
     # create audio recordings and all parent entities
@@ -142,6 +146,18 @@ module Creation
       prepare_analysis_job
       let!(:analysis_jobs_item) { Common.create_analysis_job_item(analysis_job, audio_recording) }
     end
+
+    def prepare_dataset
+      let!(:dataset) { Common.create_dataset(admin_user) }
+    end
+
+    def prepare_dataset_item
+      prepare_dataset
+      prepare_audio_recording
+      let!(:dataset_item) { Common.create_dataset_item(admin_user, dataset, audio_recording) }
+    end
+
+
   end
 
   # Accessible inside `it` blocks
@@ -214,6 +230,14 @@ module Creation
 
       def create_analysis_job_item(analysis_job, audio_recording)
         FactoryGirl.create(:analysis_jobs_item, analysis_job: analysis_job, audio_recording: audio_recording)
+      end
+
+      def create_dataset(creator)
+        FactoryGirl.create(:dataset, creator: creator)
+      end
+
+      def create_dataset_item(creator, dataset, audio_recording)
+        FactoryGirl.create(:dataset_item, creator: creator, dataset: dataset, audio_recording: audio_recording)
       end
 
     end

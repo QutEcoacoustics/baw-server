@@ -160,17 +160,40 @@ module Access
         permission_sites(user, levels, query)
       end
 
-      # Get all datasets for which this user has these access levels.
+      # Get all datasets
       # @param [User] user
-      # @param [Symbol, Array<Symbol>] levels
       # @return [ActiveRecord::Relation] datasets
-      def datasets(user, levels = Access::Core.levels)
-        query = Dataset.all
-        #permission_admin(user, levels, query)
+      def datasets(user)
+
+        if (!user)
+          Dataset.none
+        elsif (Access::Core.is_admin?(user))
+          Dataset.all
+        else
+          Dataset.where(creator_id: user.id)
+        end
+
       end
 
+      # Get all dataset_items for which this user has these access levels
+      # @param [User] user
+      # @param [Dataset] dataset
+      # @param [Symbol, Array<Symbol>] levels
+      # @return [ActiveRecord::Relation] dataset items
+      def dataset_items(user, dataset = nil, levels = Access::Core.levels)
 
+          query = DatasetItem
+                      .joins(audio_recording: :site)
+                      .order(audio_recording_id: :asc)
+                      .joins(:dataset) # this join ensures only non-deleted results are returned
 
+          if (dataset)
+              dataset = Access::Core.validate_dataset(dataset)
+              query = query.where(datasets: {id: dataset.id})
+          end
+
+          permission_sites(user, levels, query)
+      end
 
       private
 
@@ -365,8 +388,6 @@ module Access
           query.where(permissions_by_saved_search.not)
         end
       end
-
-
 
       def calculate_levels(levels)
         # levels can be nil to indicate get projects user has no access
