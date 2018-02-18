@@ -62,11 +62,11 @@ def insert_audio_recording_id(context, opts, array_index = 1)
   template_object(opts, :response_body_content, hash, array_index)
 end
 
-def insert_audio_recording_ids(context, opts)
+def insert_audio_recording_ids(context, opts, hash_extend = {})
   hash = {
       audio_recording_id_1: context.analysis_jobs_item.audio_recording_id,
       audio_recording_id_2: context.second_analysis_jobs_item.audio_recording_id
-  }
+  }.merge(hash_extend)
 
   template_object(opts, :response_body_content, hash)
   template_object(opts, :invalid_data_content, hash)
@@ -739,7 +739,7 @@ resource 'AnalysisJobsItemsResults' do
               expected_response_content_type: 'image/png',
               expected_response_has_content: true,
               # PNG magic header
-              response_body_content: '\x89\x50\x4e\x47\x0d\x0a\x1a\x0a'
+              response_body_content: [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a].pack("c*")
             })
         end
 
@@ -757,7 +757,26 @@ resource 'AnalysisJobsItemsResults' do
               expected_response_content_type: 'image/png',
               expected_response_has_content: true,
               # PNG magic header
-              response_body_content: '\x89\x50\x4e\x47\x0d\x0a\x1a\x0a'
+              response_body_content: [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a].pack("c*")
+            })
+        end
+
+        get test_url do
+          standard_analysis_parameters
+          let(:authentication_token) { token(self) }
+          # The `blended` part of the path is not lowercase in the fixture - this tests 404 and case sensitivity
+          let(:results_path) { SQLITE_FIXTURE + '/sub_dir_2/blended.Tile_20160727T123000Z_7.5.png'}
+
+          standard_request_options(
+            :get,
+            'ANALYSIS (as ' + current_user.to_s + ', requesting file in incorrect case that does exist)',
+            :not_found,
+            {
+              expected_json_path: 'meta/error/details',
+              response_body_content: [
+                  "Could not find results directory for analysis job 'system' for recording '",
+                  " at '#{SQLITE_FIXTURE}/sub_dir_2/blended.Tile_20160727T123000Z_7.5.png'."
+              ]
             })
         end
 
@@ -768,13 +787,16 @@ resource 'AnalysisJobsItemsResults' do
           let(:results_path) { SQLITE_FIXTURE + '/SUB_dir_2/BLENDED.Tile_20160727T123000Z_7.5.png'}
 
           standard_request_options(
-            :get,
-            'ANALYSIS (as ' + current_user.to_s + ', requesting file in incorrect case that does exist)',
-            :not_found,
-            {
-              expected_json_path: 'meta/error/details',
-              response_body_content: ["Could not find file for analysis job 'system' for recording ", " at '/SUB_dir_2/BLENDED.Tile_20160727T123000Z_7.5.png'."]
-            })
+              :get,
+              'ANALYSIS (as ' + current_user.to_s + ', requesting file in directory in incorrect case that does exist)',
+              :not_found,
+              {
+                  expected_json_path: 'meta/error/details',
+                  response_body_content: [
+                      "Could not find results directory for analysis job 'system' for recording ",
+                      " at '#{SQLITE_FIXTURE}/SUB_dir_2/BLENDED.Tile_20160727T123000Z_7.5.png'."
+                  ]
+              })
         end
       end
 
@@ -793,14 +815,17 @@ resource 'AnalysisJobsItemsResults' do
                 '{"meta":{"status":200,"message":"OK"',
                 paging_helper(7),
                 '{"id":null,"analysis_job_id":"system","audio_recording_id":%{audio_recording_id_1},',
-                '{"name":"BLENDED.Tile_20160727T110000Z_240.png","size_bytes":14,"type":"file","mime":"image/png"}',
-                '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/sub_dir_1/","name":"sub_dir_1","type":"directory","has_children":true',
-                '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/sub_dir_2/","name":"sub_dir_2","type":"directory","has_children":true',
+                '{"mime":"image/png","name":"BLENDED.Tile_20160727T110000Z_240.png","size_bytes":4393,"type":"file"}',
+
+                '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/%{sqlite3_file}/sub_dir_1/","name":"sub_dir_1","type":"directory","has_children":true',
+                '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/%{sqlite3_file}/sub_dir_2/","name":"sub_dir_2","type":"directory","has_children":true',
               ],
               invalid_data_content: [
               ]
             },
-            &proc { |context, opts| insert_audio_recording_ids context, opts }
+            &proc { |context, opts|
+              insert_audio_recording_ids context, opts, { sqlite3_file: SQLITE_FIXTURE }
+            }
           )
         end
 
@@ -815,9 +840,9 @@ resource 'AnalysisJobsItemsResults' do
           let(:page) { 2 }
           let(:items) { 1 }
 
-          # - `/sub_dir_1/BLENDED.Tile_20160727T122624Z_3.2.png`
-          # - `/sub_dir_1/BLENDED.Tile_20160727T123600Z_3.2.png` <-- this one
-          # - `/sub_dir_1/BLENDED.Tile_20160727T124536Z_3.2.png`
+          # - `example__Tiles.sqlite3/sub_dir_1/BLENDED.Tile_20160727T122624Z_3.2.png`
+          # - `example__Tiles.sqlite3/sub_dir_1/BLENDED.Tile_20160727T123600Z_3.2.png` <-- this one
+          # - `example__Tiles.sqlite3/sub_dir_1/BLENDED.Tile_20160727T124536Z_3.2.png`
           standard_request_options(
             :get,
             'ANALYSIS (as ' + current_user.to_s + ', requesting sub dir in sqlite file, with paging params)',
@@ -827,16 +852,18 @@ resource 'AnalysisJobsItemsResults' do
                 '{"meta":{"status":200,"message":"OK"',
                 paging_helper(3, 3, 2, 1),
                 '{"id":null,"analysis_job_id":"system","audio_recording_id":%{audio_recording_id_1},',
-                '"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/sub_dir_1/","name":"sub_dir_1","type":"directory","children":[',
+                '"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/%{sqlite3_file}/sub_dir_1/","name":"sub_dir_1","type":"directory","children":[',
 
-                '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/sub_dir_1/BLENDED.Tile_20160727T123600Z_3.2.png","name":"BLENDED.Tile_20160727T123600Z_3.2.png","type":"file"}',
+                '{"mime":"image/png","name":"BLENDED.Tile_20160727T123600Z_3.2.png","size_bytes":97722,"type":"file"}',
               ],
               invalid_data_content:[
-                '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/sub_dir_1/BLENDED.Tile_20160727T124536Z_3.2.png","name":"BLENDED.Tile_20160727T124536Z_3.2.png","type":"file"}',
-                '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/sub_dir_1/BLENDED.Tile_20160727T122624Z_3.2.png","name":"BLENDED.Tile_20160727T122624Z_3.2.png","type":"file"}',
+                'BLENDED.Tile_20160727T124536Z_3.2.png',
+                'BLENDED.Tile_20160727T122624Z_3.2.png',
               ]
             },
-            &proc { |context, opts| insert_audio_recording_ids context, opts }
+            &proc { |context, opts|
+              insert_audio_recording_ids context, opts, { sqlite3_file: SQLITE_FIXTURE }
+            }
           )
         end
       end

@@ -86,10 +86,13 @@ gem 'bcrypt', '~> 3.1.9'
 
 # Database gems
 # -------------------------------------
+# This gem MUST be loaded before any other DB gem
+# It seems the 'pg' loads sqlite itself ... and it loads whichever sqlite lib it was compiled against
+gem 'sqlite3'
+
 # don't change the database gems - causes:
 # Please install the <db> adapter: `gem install activerecord-<db>-adapter` (<db> is not part of the bundle. Add it to Gemfile.)
 gem 'pg', '~> 0.18.1'
-gem 'sqlite3'
 
 # MODELS
 # -------------------------------------

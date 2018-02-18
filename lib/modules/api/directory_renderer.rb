@@ -23,10 +23,10 @@ module Api
       end
 
       # if sqlite, return blob
-      FileSystems::Combined.check_and_open_sqlite(file_path) do
+      FileSystems::Combined.check_and_open_sqlite(file_path) do |db, sqlite_path, sub_path|
         # we only want to send data if pulling blob from container db, otherwise use send_file method
-        blob = FileSystems::Sqlite.get_blob(*paths)
-        return send_data(blob, {filename: File.basename(paths[1]), type: mime_type_s})
+        blob = FileSystems::Sqlite.get_blob(db, sqlite_path, sub_path)
+        return send_data(blob, {filename: File.basename(sub_path), type: mime_type_s, disposition: 'inline'})
       end
 
       # else return file as normal
@@ -104,7 +104,7 @@ module Api
 
       children = []
       paging[:total] = 0
-      children = dir_list(path, bases, paging) if Dir.exist?(path)
+      children = dir_list(path, bases, paging) if FileSystems::Combined.directory_exists?(path)
 
       result.merge({
                        type: 'directory',
@@ -167,10 +167,10 @@ module Api
 
     def file_info(path)
       {
+          mime: Mime::Type.lookup_by_extension(File.extname(path)[1..-1]).to_s,
           name: normalised_name(path),
-          type: 'file',
           size_bytes: FileSystems::Combined.size(path),
-          mime: Mime::Type.lookup_by_extension(File.extname(path)[1..-1]).to_s
+          type: 'file'
       }
     end
 

@@ -8,11 +8,16 @@
       # last ruby listed is the default
       - "ruby-2.3.5"
     rvm_default_ruby_version: '{{ rvm_rubies | last if rvm_rubies and rvm_rubies is iterable else rvm_rubies }}'
-    rvm_install_path: /usr/share/rvm
     rvm_path: /usr/share/rvm/bin/rvm
     postgresql_version: 9.3
+    sqlite_version: "3.22.0"
+    sqlite_version_download: "3220000"
+
   pre_tasks:
     - debug: var=ansible_ssh_user
+    - name: IMPORT | SQLite 3 Tasks
+      import_tasks: sqlite3.yml
+      tags: [ "sqlite3" ]
   roles:
     - role: "/home/vagrant/.ansible/roles/ANXS.postgresql"
       # be careful when enabling this: anyone on public network could access db with
@@ -22,6 +27,7 @@
         - name: baw_local_dev
           owner: postgres          # optional; specify the owner of the database
       become: true
+      tags: [ "postgres" ]
   tasks:
     - name: IMPORT | audio tools tasks
       import_tasks: audio_tools.yml
@@ -29,6 +35,18 @@
     - name: IMPORT | ruby tasks
       import_tasks: ruby.yml
       tags: [ "ruby" ]
+    - name: GEM | Install SQLite3 gem
+      shell: gem install --force sqlite3 -- --with-sqlite3-include=/usr/local/include --with-sqlite3-lib=/usr/local/lib
+      register: sqlite3_gem_results
+    - name: SHELL | Check sqlite3 gem
+      changed_when: false
+      shell: ruby -e "require 'sqlite3'; puts SQLite3::SQLITE_VERSION; puts SQLite3::Database.new(':memory:').get_first_value('SELECT sqlite_version();')"
+      register: sqlite3_gem_check
+    - name: ASSERT | Assert correct version of SQLite has been bound to by gem
+      assert:
+        that:
+          -  sqlite3_gem_check.stdout_lines[0].find(sqlite_version) == 0
+          -  sqlite3_gem_check.stdout_lines[1].find(sqlite_version) == 0
     - name: APT | Install tools needed for installing pg gem
       apt:
         pkg: libpq-dev
@@ -44,8 +62,6 @@
         db: baw_local_dev
         user: postgres
         password: NULL
-    - name: APT | Install zip and unzip
-      apt:
-        pkg: zip
-        state: present
-      become: true
+
+
+

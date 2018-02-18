@@ -116,7 +116,7 @@ class AnalysisJobsResultsController < ApplicationController
       fail CustomErrors::ItemNotFoundError, "Audio recording id #{audio_recording.id} is not ready"
 
     elsif is_audio_ready
-      paths = BawWorkers::Config.analysis_cache_helper.possible_paths_dir(results_path_arguments)
+      paths = BawWorkers::Config.analysis_cache_helper.possible_paths(results_path_arguments)
 
       # for paths that exist, filter out into files or directories
       # the exception is the root results folder - it always should 'exist' for the API even if it doesn't on disk

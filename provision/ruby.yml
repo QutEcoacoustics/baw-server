@@ -19,6 +19,8 @@
   become: true
 
 # Have to force a disconnect to make sure we're in rvm group
+# Bug in Ansible https://github.com/ansible/ansible/issues/27520
+# for now we just have to run vagrant provision twice
 #- name: META | reset ssh connection to allow user changes to affect 'current login user'
 #  meta: reset_connection
 #  when: rvm_installed.changed
@@ -31,6 +33,12 @@
   assert:
     that:
       - "'rvm' in user_groups.stdout"
+
+# Despite the fact that the rvm ubuntu package installs as mixed mode, it's still easier for us to use a single-user
+# installation!
+
+- name: Switch to single-user mode
+  command: '{{ rvm_path }} user all'
 
 # The following is lifted from the rvm1-ansible role
 
@@ -67,10 +75,10 @@
 
 - name: Install bundler if not installed
   shell: >
-    ls {{ rvm_install_path }}/rubies/{{ item.stdout }}
-    | if ! grep "^bundler " ; then {{ rvm_install_path }}/rubies/{{ item.stdout }}/bin/gem install bundler ; fi
+    ls /home/vagrant/.rvm/rubies/{{ item.stdout }}/bin
+    | if ! grep "^bundler " ; then /home/vagrant/.rvm/rubies/{{ item.stdout }}/bin/gem install bundler ; fi
   args:
-    creates: '{{ rvm_install_path }}/rubies/{{ item.stdout }}/bin/bundler'
+    creates: '/home/vagrant/.rvm/rubies/{{ item.stdout }}/bin/bundler'
   with_items: '{{ ruby_patch.results }}'
   register: bundler_install
   changed_when: '"Successfully installed bundler" in bundler_install.stdout'

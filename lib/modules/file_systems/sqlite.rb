@@ -7,45 +7,77 @@ module FileSystems
       FILES_PATH = 'path'
       FILES_BLOB = 'blob'
 
+      def required_version
+        Gem::Version.new('3.18.0')
+      end
+
+      # Check we've been provided with a recent version of SQLite.
+      # This should be called on application initialization
+      def check_version
+        # hard coded dependency for sqlite v3.18.0 or higher.
+        # Note: this is not a dependency we can encode in the Gemfile
+        # because the sqlite gem depends on the system installed sqlite binary
+        # Note2: I've found SQLite3::SQLITE_VERSION_NUMBER and SQLite3::SQLITE_VERSION
+        # to be unreliable indicators of the version actually used!
+
+        require 'sqlite3'
+        version = Gem::Version.new(SQLite3::Database.new(':memory:').get_first_value('SELECT sqlite_version();'))
+
+        if version < required_version
+          raise "Sqlite3 lib version #{version} is below required version #{required_version}"
+        end
+      end
+
+
       def file_exists
-        <<-SQL
-          SELECT EXISTS(SELECT 1 FROM #{FILES_TABLE} WHERE #{FILES_PATH} = @path LIMIT 1)
+        <<~SQL
+          SELECT EXISTS(SELECT 1 FROM #{FILES_TABLE} WHERE #{FILES_PATH} = :path LIMIT 1)
         SQL
       end
 
       def directory_exists
-        <<-SQL
+        <<~SQL
           SELECT EXISTS(SELECT 1 FROM #{FILES_TABLE} WHERE #{make_file_filter('path', true)} LIMIT 1)
         SQL
       end
 
-      def list_files_query
+      def list_files_query(path)
+        length = path.length
         # This query returns all the paths that match, and the total count of paths that match
-        # as the ?last? result
-        <<-SQL
-          WITH filtered AS(
+        # as the first result
+        <<~SQL
+          WITH filtered AS (
+            SELECT DISTINCT(
+              substr(#{FILES_PATH}, 0, #{length + 1} + instr(substr(#{FILES_PATH}, #{length + 1}), '/'))
+            ) AS #{FILES_PATH}
+            FROM #{FILES_TABLE}
+            WHERE #{FILES_PATH} LIKE :#{FILES_PATH} || '_%/%'
+            UNION ALL
             SELECT #{FILES_PATH}
             FROM #{FILES_TABLE}
-            WHERE #{make_file_filter('path', false)} AND @path NOT LIKE '%/.%'
+            WHERE #{make_file_filter('path', false)} AND #{FILES_PATH} NOT LIKE '%/.%'
             ORDER BY #{FILES_PATH}
           )
-          SELECT #{FILES_PATH} FROM filtered
-          OFFSET @offset
-          LIMIT @limit
-          UNION ALL
           SELECT COUNT(path) FROM filtered
+          UNION ALL
+          SELECT #{FILES_PATH} FROM (            
+            SELECT #{FILES_PATH}
+            FROM filtered
+            LIMIT :limit            
+            OFFSET :offset
+          )
         SQL
       end
 
       def get_file_length_query
-        <<-SQL
-          SELECT length(#{FilesBlob}) FROM #{FILES_TABLE} WHERE #{FILES_PATH} = @path LIMIT 1
+        <<~SQL
+          SELECT length(#{FILES_BLOB}) FROM #{FILES_TABLE} WHERE #{FILES_PATH} = :path LIMIT 1
         SQL
       end
 
       def get_file_blob_query
-        <<-SQL
-          SELECT #{FilesBlob} FROM #{FILES_TABLE} WHERE #{FILES_PATH} = @path LIMIT 1
+        <<~SQL
+          SELECT #{FILES_BLOB} FROM #{FILES_TABLE} WHERE #{FILES_PATH} = :path LIMIT 1
         SQL
       end
 
@@ -59,11 +91,14 @@ module FileSystems
       end
 
       def directory_list(db, sqlite_path, path, items, offset, max_items)
-        paths = db.execute(list_files_query, {path: path, limit: items, offset: offset})
+        path = '/' if path.blank?
+        paths = db.execute(list_files_query(path), {path: path, limit: items, offset: offset})
 
-        count = paths.pop
+        count = paths.shift
 
-        return paths.select {|path| sqlite_path + path}, count
+        # zero-index is the first-column of each row
+        full_paths = paths.map{|row| row[0] }.map{|path| sqlite_path + path }
+        [full_paths, count[0]]
       end
 
       def directory_has_children?(db, sqlite_path, path)
@@ -94,8 +129,8 @@ module FileSystems
       #
 
       def make_file_filter(param_name, include_sub_directories)
-        base_filter = "#{FilesPath} LIKE @#{param_name} || '_%'"
-        this_dir_filter = "AND #{FilesPath} NOT LIKE @#{param_name} || '_%/%'"
+        base_filter = "#{FILES_PATH} LIKE :#{param_name} || '_%'"
+        this_dir_filter = "AND #{FILES_PATH} NOT LIKE :#{param_name} || '_%/%'"
         base_filter + (include_sub_directories ? '' : this_dir_filter)
       end
 

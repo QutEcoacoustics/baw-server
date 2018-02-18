@@ -9,7 +9,7 @@ module FileSystems
       FileSystems::Sqlite
 
       def file_exists?(path)
-        check_and_open_sqlite(path) do |db, sqlite_path, sub_path|
+        check_and_open_sqlite path do |db, sqlite_path, sub_path|
           return Sqlite.file_exists?(db, sqlite_path, sub_path)
         end
 
@@ -17,7 +17,7 @@ module FileSystems
       end
 
       def directory_exists?(path)
-        check_and_open_sqlite(path) do |db, sqlite_path, sub_path|
+        check_and_open_sqlite path do |db, sqlite_path, sub_path|
           return Sqlite.directory_exists?(db, sqlite_path, sub_path)
         end
 
@@ -36,7 +36,7 @@ module FileSystems
       # @param [int] max_items - the maximum number of items that will be enumerated through
       # @return [string[],int] - the paths that match and a total count
       def directory_list(path, items, offset, max_items)
-        check_and_open_sqlite(path) do |db, sqlite_path, sub_path|
+        check_and_open_sqlite path do |db, sqlite_path, sub_path|
           return Sqlite.directory_list(db, sqlite_path, sub_path, items, offset, max_items)
         end
 
@@ -44,7 +44,7 @@ module FileSystems
       end
 
       def directory_has_children?(path)
-        check_and_open_sqlite(path) do |db, sqlite_path, sub_path|
+        check_and_open_sqlite path do |db, sqlite_path, sub_path|
           return Sqlite.directory_has_children?(db, sqlite_path, sub_path)
         end
 
@@ -52,7 +52,7 @@ module FileSystems
       end
 
       def size(path)
-        check_and_open_sqlite(path) do |db, sqlite_path, sub_path|
+        check_and_open_sqlite path do |db, sqlite_path, sub_path|
           return Sqlite.size(db, sqlite_path, sub_path)
         end
 
@@ -60,7 +60,7 @@ module FileSystems
       end
 
       def get_blob(path)
-        check_and_open_sqlite(path) do |db, sqlite_path, sub_path|
+        check_and_open_sqlite path do |db, sqlite_path, sub_path|
           return Sqlite.get_blob(db, sqlite_path, sub_path)
         end
 
@@ -70,17 +70,31 @@ module FileSystems
       # Determines if given string has an .sqlite extension in it.
       # If it does, it returns two strings, the path to the sqlite file, and the sub file
       def check_and_open_sqlite(path, &sqlite)
-        paths = path.split(SQLITE_EXTENSION)
+        index = path.index(SQLITE_EXTENSION)
+        return [path,  nil] if index.nil?
 
-        return paths unless paths.length > 1
+        index += SQLITE_EXTENSION.length
+        db_path = path.slice(0, index)
+        if index == path.length - 1
+          sub_path = '/'
+        else
+          sub_path = path.slice(index, path.length - index)
+        end
 
-        paths = [paths[0] + SQLITE_EXTENSION, paths[1]]
-        db = Sqlite.open_database(paths[0])
-        sqlite.call(db, *paths)
+        db = open_sqlite_inner(db_path)
 
-        paths
+        if db
+          sqlite.call db, db_path, sub_path
+        end
+
+        [db_path, sub_path]
       end
-      memoize :check_and_open_sqlite
+
+      # memoize the sqlite file path check and the database open
+      def open_sqlite_inner(path)
+        Sqlite.open_database(path)
+      end
+      memoize :open_sqlite_inner
     end
   end
 end
