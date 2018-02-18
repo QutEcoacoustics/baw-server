@@ -10,7 +10,7 @@ required_plugins.each do |plugin|
   end
 end
 
-def sshfs_opts
+def hyperv_opts
   # Explored using the vagrant-sshfs plugin but found it didn't work well. Might be better in the future.
   # {
   #   type: "sshfs",
@@ -24,9 +24,9 @@ def sshfs_opts
   }
 end
 
-def nfs_opts
+def virtualbox_opts
   {
-      type: "nfs",
+      type: "virtualbox",
 
       # these mount options are not needed unless using nfs on Windows
       #mount_options: [ "dir_mode=0700,file_mode=0600" ],
@@ -40,9 +40,9 @@ def set_synced_folders(config, type)
   # argument is a set of non-required options.
   # Option hashes are modified by reference - can't pass the same hash to multiple synced folder calls.
 
-  config.vm.synced_folder '../baw-server', '/home/vagrant/baw-server', **(type == "sshfs" ? sshfs_opts : nfs_opts)
-  config.vm.synced_folder '../baw-workers', '/home/vagrant/baw-workers', **(type == "sshfs" ? sshfs_opts : nfs_opts)
-  config.vm.synced_folder '../baw-audio-tools', '/home/vagrant/baw-audio-tools', **(type == "sshfs" ? sshfs_opts : nfs_opts)
+  config.vm.synced_folder '../baw-server', '/home/vagrant/baw-server', **(type == "hyperv" ? hyperv_opts : virtualbox_opts)
+  config.vm.synced_folder '../baw-workers', '/home/vagrant/baw-workers', **(type == "hyperv" ? hyperv_opts : virtualbox_opts)
+  config.vm.synced_folder '../baw-audio-tools', '/home/vagrant/baw-audio-tools', **(type == "hyperv" ? hyperv_opts : virtualbox_opts)
   config.vm.synced_folder '.', '/vagrant', disabled: true
 end
 
@@ -88,7 +88,7 @@ Vagrant.configure(2) do |config|
     # Customize the amount of memory on the VM:
     hyperv.memory = 1536
     hyperv.cpus = 2
-    set_synced_folders(override, "sshfs")
+    set_synced_folders(override, "hyperv")
   end
   
   # Provider-specific configuration so you can fine-tune various
@@ -102,7 +102,7 @@ Vagrant.configure(2) do |config|
     # Customize the amount of memory on the VM:
     vb.memory = 1536
     vb.cpus = 2
-    set_synced_folders(override, "nfs")
+    set_synced_folders(override, "virtualbox")
   end
   
   config.vm.provision 'ansible_local' do |ansible|
