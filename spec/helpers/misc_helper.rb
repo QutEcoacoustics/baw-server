@@ -22,4 +22,8 @@ class MiscHelper
         .gsub('OR', "\nOR")
         .gsub('SELECT', "\nSELECT")
   end
+
+  def self.pretty_hash(hash)
+    hash.pretty_inspect
+  end
 end

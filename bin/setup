@@ -13,6 +13,7 @@ Dir.chdir APP_ROOT do
   system 'gem install rake'
   system 'gem install debugger-ruby_core_source --pre'
   system 'gem install ruby-debug-ide --pre'
+  system 'bundle install'
 
 
   puts "\n== Removing logs, tempfiles, docs, and test results =="
