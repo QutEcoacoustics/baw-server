@@ -92,7 +92,7 @@ module FileSystems
 
       # memoize the sqlite file path check and the database open
       def open_sqlite_inner(path)
-        Sqlite.open_database(path)
+        Sqlite.open_database(path) if File.file?(path)
       end
       memoize :open_sqlite_inner
     end

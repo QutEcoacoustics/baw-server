@@ -611,7 +611,7 @@ resource 'AnalysisJobsItemsResults' do
                     paging_helper(2),
                     '{"id":null,"analysis_job_id":"system","audio_recording_id":%{audio_recording_id_1},',
                     '"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one/two/three/four/","name":"four","type":"directory","children":[',
-                    '{"name":"five.txt","type":"file","size_bytes":14,"mime":"text/plain"}',
+                    '{"mime":"text/plain","name":"five.txt","size_bytes":14,"type":"file"}',
                     '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one/two/three/four/five/","name":"five","type":"directory","has_children":true}'
                 ],
                 invalid_data_content: [
@@ -832,6 +832,25 @@ resource 'AnalysisJobsItemsResults' do
         get test_url do
           standard_analysis_parameters
           let(:authentication_token) { token(self) }
+          let(:results_path) { "IDontExist.sqlite3" }
+
+          standard_request_options(
+            :get,
+            'ANALYSIS (as ' + current_user.to_s + ', requesting sqlite file that does not exist)',
+            :not_found,
+            {
+              expected_json_path: 'meta/error/details',
+              response_body_content: [
+                "Could not find results directory for analysis job 'system' for recording '",
+                " at 'IDontExist.sqlite3'."
+              ]
+            }
+          )
+        end
+
+        get test_url do
+          standard_analysis_parameters
+          let(:authentication_token) { token(self) }
           let(:results_path) { SQLITE_FIXTURE + '/sub_dir_1' }
 
           parameter :page, 'The page of results', required: true
@@ -871,13 +890,13 @@ resource 'AnalysisJobsItemsResults' do
     end
   end
 
-  # describe 'Admin user' do
-  #   it_should_behave_like 'AnalysisJobsItems results', :admin
-  # end
-  #
-  # describe 'Writer user' do
-  #   it_should_behave_like 'AnalysisJobsItems results', :writer
-  # end
+  describe 'Admin user' do
+    it_should_behave_like 'AnalysisJobsItems results', :admin
+  end
+
+  describe 'Writer user' do
+    it_should_behave_like 'AnalysisJobsItems results', :writer
+  end
 
   describe 'Reader user' do
     it_should_behave_like 'AnalysisJobsItems results', :reader
