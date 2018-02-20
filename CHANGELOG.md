@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+## [Release 1.4.0](https://github.com/QutBioacoustics/baw-server/releases/tag/1.4.0)
+
+- 2018-02-21
+  - baw-server can now serve analysis result items from SQLite 3 files. This functionality will be used to 
+    serve zooming spectrogram image tiles. See:
+    - [da5f35f](https://github.com/QutEcoacoustics/baw-server/commit/da5f35f7778ce8e4ad0986861c77ee375845b05f)
+    - [94cd57b](https://github.com/QutEcoacoustics/baw-server/commit/94cd57bb8be33913092585a941d2aacee044e096)
+    - [32e6cdd](https://github.com/QutEcoacoustics/baw-server/commit/32e6cdd702508f6ccf72de7d4264e82754dff2ff)
+    - [571f136](https://github.com/QutEcoacoustics/baw-server/commit/571f136f8cbc1fdb2e23891310afae64dbe43294)
+    - [ea9e1d7](https://github.com/QutEcoacoustics/baw-server/commit/ea9e1d7f86c385b7f2f532e580de9d2f62480c25)
+- 2018-01-13
+  - Add models and migrations for Datasets, DatasetItems, and ProgressEvents.
+    See [#349](https://github.com/QutEcoacoustics/baw-server/pull/349)
+
 ## [Release 1.3.0](https://github.com/QutBioacoustics/baw-server/releases/tag/1.3.0)
 
 - 2017-03-16
