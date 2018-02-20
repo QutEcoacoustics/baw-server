@@ -26,10 +26,10 @@ class DatasetItem < ActiveRecord::Base
   def self.filter_settings
     {
         valid_fields: [
-            :id, :dataset_id, :audio_recording_id, :start_time_seconds, :end_time_seconds, :order, :creator_id, :created_at
+            :id, :dataset_id, :audio_recording_id, :start_time_seconds, :end_time_seconds, :order, :creator_id, :created_at, :priority
         ],
         render_fields: [
-            :id, :dataset_id, :audio_recording_id, :start_time_seconds, :end_time_seconds, :order, :creator_id, :created_at
+            :id, :dataset_id, :audio_recording_id, :start_time_seconds, :end_time_seconds, :order, :creator_id, :created_at, :priority
         ],
         new_spec_fields: lambda { |user|
           {
@@ -40,6 +40,12 @@ class DatasetItem < ActiveRecord::Base
               order: nil
           }
         },
+        field_mappings: [
+            {
+                name: :priority,
+                value: (DatasetItem.arel_table[:order].+(0))
+            }
+        ],
         controller: :dataset_items,
         action: :filter,
         defaults: {
@@ -64,6 +70,21 @@ class DatasetItem < ActiveRecord::Base
             }
         ]
     }
+  end
+
+  # sets the priority virtual field to the product of the order and given value
+  # @param [filter_settings] object
+  # @param [multiply] float
+  # @return object
+  def self.set_priority(filter_settings, multiply = 1)
+
+    mapping_index = filter_settings[:field_mappings].index do | field_mapping |
+      field_mapping[:name] == :priority
+    end
+    value = (DatasetItem.arel_table[:order].*(multiply))
+    filter_settings[:field_mappings][mapping_index][:value] = value
+    return(filter_settings)
+
   end
 
 end

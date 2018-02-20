@@ -13,6 +13,7 @@ class DatasetItemsController < ApplicationController
         DatasetItem,
         DatasetItem.filter_settings
     )
+
     respond_index(opts)
   end
 
@@ -28,12 +29,16 @@ class DatasetItemsController < ApplicationController
   def filter
     do_authorize_class
 
+    # set the value for the priority virtual field
+    filter_settings = DatasetItem.set_priority(DatasetItem.filter_settings, -1)
+
     filter_response, opts = Settings.api_response.response_advanced(
         api_filter_params,
         Access::ByPermission.dataset_items(current_user, nil),
         DatasetItem,
-        DatasetItem.filter_settings
+        filter_settings
     )
+
     respond_filter(filter_response, opts)
   end
 

@@ -367,14 +367,14 @@ resource 'DatasetItems' do
   post '/dataset_items/filter' do
     let(:authentication_token) { reader_token }
     let(:raw_post) { {
-        'filter' => {
-            'start_time_seconds' => {
-                'in' => ['11', '7', '100', '4']
-            }
-        },
-        'projection' => {
-            'include' => ['id', 'start_time_seconds', 'audio_recording_id', 'creator_id']
-        }
+      'filter' => {
+          'start_time_seconds' => {
+              'in' => ['11', '7', '100', '4']
+          }
+      },
+      'projection' => {
+          'include' => ['id', 'start_time_seconds', 'audio_recording_id', 'creator_id']
+      }
     }.to_json }
     standard_request_options(:post, 'FILTER (as reader)', :ok,
                              {
@@ -389,20 +389,93 @@ resource 'DatasetItems' do
   post '/dataset_items/filter' do
     let(:authentication_token) { reader_token }
     let(:raw_post) { {
-        'filter' => {
-            'start_time_seconds' => {
-                'in' => ['7', '100', '4']
-            }
-        },
-        'projection' => {
-            'include' => ['id', 'start_time_seconds', 'audio_recording_id', 'creator_id']
-        }
+      'filter' => {
+          'start_time_seconds' => {
+              'in' => ['7', '100', '4']
+          }
+      },
+      'projection' => {
+          'include' => ['id', 'start_time_seconds', 'audio_recording_id', 'creator_id']
+      }
     }.to_json }
     standard_request_options(:post, 'FILTER (as reader)', :ok,
                              {
                                  expected_json_path: 'data',
                                  data_item_count: 0
                              })
+  end
+
+  # sort by virtual column
+  post '/dataset_items/filter' do
+    let(:authentication_token) { reader_token }
+    let(:raw_post) {
+      {
+        'filter' => {
+            'start_time_seconds' => {
+                'in' => ['1', '3', '8']
+            }
+        },
+        'projection' => {
+            'include' => ['id', 'start_time_seconds', 'audio_recording_id', 'creator_id', 'order']
+        },
+        sorting: {
+            order_by: :priority,
+            direction: :asc
+        }
+      }.to_json
+    }
+
+    let!(:new_dataset_item) {
+
+      # is included in the filter
+      FactoryGirl.create(:dataset_item,
+                         creator: admin_user,
+                         dataset: dataset,
+                         audio_recording: audio_recording,
+                         start_time_seconds: 3,
+                         end_time_seconds: 4,
+                         order: 1).save!
+
+      # is included in the filter by start time
+      FactoryGirl.create(:dataset_item,
+                         creator: admin_user,
+                         dataset: dataset,
+                         audio_recording: audio_recording,
+                         start_time_seconds: 1,
+                         end_time_seconds: 2,
+                         order: 5).save!
+
+      # is not included in the filter by start time
+      FactoryGirl.create(:dataset_item,
+                         creator: admin_user,
+                         dataset: dataset,
+                         audio_recording: audio_recording,
+                         start_time_seconds: 5,
+                         end_time_seconds: 6,
+                         order: 2).save!
+
+      # is included in the filter
+      FactoryGirl.create(:dataset_item,
+                         creator: admin_user,
+                         dataset: dataset,
+                         audio_recording: audio_recording,
+                         start_time_seconds: 8,
+                         end_time_seconds: 80,
+                         order: 4).save!
+
+    }
+
+    example 'FILTER by start time and sort by virtual column', document: true do
+      do_request
+      expect(status).to eq(200)
+      json = JsonSpec::Helpers::parse_json(response_body)
+      expect(json['meta']['paging']['total']).to eq(3)
+      expect(json['data'].size).to eq(3)
+      expect(json['data'][0]['start_time_seconds']).to eq(1)
+      expect(json['data'][1]['start_time_seconds']).to eq(8)
+      expect(json['data'][2]['start_time_seconds']).to eq(3)
+    end
+
   end
 
 end
