@@ -69,13 +69,16 @@ gem 'tzinfo-data', '~> 1.2016'
 # for tying inflections into I18n
 gem 'i18n-inflector-rails', '~>1.0'
 
+# for simple caching of functions
+gem 'memoist'
+
 # USERS & PERMISSIONS
 # -------------------------------------
 # https://github.com/plataformatec/devise/blob/master/CHANGELOG.md
 # http://joanswork.com/devise-3-1-update/
-gem 'devise', '~> 4.2.0'
+gem 'devise', '~> 4.2.1'
 gem 'devise-i18n'
-gem 'cancancan', '~> 1.15'
+gem 'cancancan', '~> 1.16'
 gem 'role_model', '~> 0.8.1'
 # Use ActiveModel has_secure_password
 gem 'bcrypt', '~> 3.1.9'
@@ -83,6 +86,10 @@ gem 'bcrypt', '~> 3.1.9'
 
 # Database gems
 # -------------------------------------
+# This gem MUST be loaded before any other DB gem
+# It seems the 'pg' loads sqlite itself ... and it loads whichever sqlite lib it was compiled against
+gem 'sqlite3'
+
 # don't change the database gems - causes:
 # Please install the <db> adapter: `gem install activerecord-<db>-adapter` (<db> is not part of the bundle. Add it to Gemfile.)
 gem 'pg', '~> 0.18.1'
@@ -107,7 +114,7 @@ gem 'acts_as_paranoid', git: 'https://github.com/ActsAsParanoid/acts_as_paranoid
 
 
 # for state machines
-gem 'aasm'
+gem 'aasm', '~>4.12.0'
 
 # SETTINGS
 # -------------------------------------
@@ -139,6 +146,9 @@ gem 'resque-status', '~> 0.5.0'
 # set to a specific commit when releasing to master branch
 gem 'baw-workers', git: 'https://github.com/QutBioacoustics/baw-workers.git', branch: :master, ref: '54f28d351a5ba7ff0cfab45bce6ba8d645a9599b'
 
+# Other Gems
+# This was needed at some point to boot rails. I think we can remove this dependency later after some gem upgrades
+gem 'concurrent-ruby', require: 'concurrent'
 
 # Gems restricted by environment and/or platform
 # ====================================================

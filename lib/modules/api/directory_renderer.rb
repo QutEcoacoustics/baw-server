@@ -16,13 +16,21 @@ module Api
       ext = File.extname(file_path).trim('.', '')
       mime_type = Mime::Type.lookup_by_extension(ext)
       mime_type_s = mime_type.to_s
-      file_size = File.size(file_path)
+      file_size = FileSystems::Combined.size(file_path)
 
       if is_head_request
         head :ok, content_length: file_size, content_type: mime_type_s
-      else
-        send_file(file_path, url_based_filename: true, type: mime_type_s, content_length: file_size)
       end
+
+      # if sqlite, return blob
+      FileSystems::Combined.check_and_open_sqlite(file_path) do |db, sqlite_path, sub_path|
+        # we only want to send data if pulling blob from container db, otherwise use send_file method
+        blob = FileSystems::Sqlite.get_blob(db, sqlite_path, sub_path)
+        return send_data(blob, {filename: File.basename(sub_path), type: mime_type_s, disposition: 'inline'})
+      end
+
+      # else return file as normal
+      send_file(file_path, {url_based_filename: true, type: mime_type_s, content_length: file_size})
     end
 
     # Returns a directory metadata object for the first directory supplied in `directories`
@@ -39,8 +47,8 @@ module Api
       dir_path = existing_paths[0]
 
       bases = {
-          directory: base_directories[0],
-          url_base_path: url_base_path
+        directory: base_directories[0],
+        url_base_path: url_base_path
       }
 
       # api_opts's values are modified by reference in this call
@@ -96,7 +104,7 @@ module Api
 
       children = []
       paging[:total] = 0
-      children = dir_list(path, bases, paging) if Dir.exist?(path)
+      children = dir_list(path, bases, paging) if FileSystems::Combined.directory_exists?(path)
 
       result.merge({
                        type: 'directory',
@@ -121,35 +129,19 @@ module Api
 
       max_items = 1000
 
-      children = []
-      listing = Dir.foreach(path)
-      filtered_count = 0
+      child_paths, total = FileSystems::Combined.directory_list(path, items, offset, max_items)
 
-      listing.each do |item|
-        # skip dot paths ('current path', 'parent path') and hidden files/folders (that start with a dot)
-        next if item == '.' || item == '..' || item.start_with?('.')
-
-        # special case - stop scanning large dirs
-        if filtered_count >= max_items
-          break;
+      children = child_paths.map do |full_path|
+        if FileSystems::Combined.directory_exists?(full_path)
+          dir_info(full_path, bases)
+        else
+          raise "File should exist" unless FileSystems::Combined.file_exists?(full_path)
+          file_info(full_path)
         end
-
-        filtered_count += 1
-
-        # skip
-        next if filtered_count <= offset
-
-        # break
-        next if children.length >= items
-
-        # take
-        full_path = File.join(path, item)
-        children.push(dir_info(full_path, bases)) if File.directory?(full_path)
-        children.push(file_info(full_path)) if File.file?(full_path) && !File.directory?(full_path)
       end
 
-      paging[:total] = filtered_count
-      paging[:warning] = "Only first #{max_items} results are available" if filtered_count >= max_items
+      paging[:total] = total
+      paging[:warning] = "Only first #{max_items} results are available" if total >= max_items
 
       children
     end
@@ -157,36 +149,28 @@ module Api
     def dir_info(path, bases)
       result = normalized_path_name(path, bases)
 
-
-      has_children = false
-      Dir.foreach(path) do |item|
-        # skip dot paths ('current path', 'parent path') and hidden files/folders (that start with a dot)
-        next if item == '.' || item == '..' || item.start_with?('.')
-
-        has_children = true
-        break
-      end
+      has_children = FileSystems::Combined.directory_has_children?(path)
 
       result.merge({
-                       type: 'directory',
-                       has_children: has_children
-                   })
+          type: 'directory',
+          has_children: has_children
+      })
     end
 
     def fake_dir_info(path, bases)
       result = normalized_path_name(path, bases)
       result.merge({
-                       type: 'directory',
-                       has_children: true
-                   })
+        type: 'directory',
+        has_children: true
+      })
     end
 
     def file_info(path)
       {
+          mime: Mime::Type.lookup_by_extension(File.extname(path)[1..-1]).to_s,
           name: normalised_name(path),
-          type: 'file',
-          size_bytes: File.size(path),
-          mime: Mime::Type.lookup_by_extension(File.extname(path)[1..-1]).to_s
+          size_bytes: FileSystems::Combined.size(path),
+          type: 'file'
       }
     end
 

@@ -29,6 +29,16 @@ def create_file(file = File.join('Test1', 'Test2', 'test-CASE.csv'),
   File.open(full_path, 'w') { |f| f.write(content) }
 end
 
+# We want to be able serve files out of an Sqlite3 file as if it were just a directory
+# This is the fixture that we will use to test this feature
+SQLITE_FIXTURE = 'example__Tiles.sqlite3'
+def copy_sqlite_file(dest = SQLITE_FIXTURE)
+  full_path = create_full_path(dest)
+  FileUtils.mkpath File.dirname(full_path)
+
+  FileUtils.copy("#{Rails.root}/spec/fixtures/files/#{SQLITE_FIXTURE}", full_path)
+end
+
 def create_dir(dir = File.join('Test1', 'Test2'))
   full_path = create_full_path(dir)
   FileUtils.mkpath full_path
@@ -52,11 +62,11 @@ def insert_audio_recording_id(context, opts, array_index = 1)
   template_object(opts, :response_body_content, hash, array_index)
 end
 
-def insert_audio_recording_ids(context, opts)
+def insert_audio_recording_ids(context, opts, hash_extend = {})
   hash = {
       audio_recording_id_1: context.analysis_jobs_item.audio_recording_id,
       audio_recording_id_2: context.second_analysis_jobs_item.audio_recording_id
-  }
+  }.merge(hash_extend)
 
   template_object(opts, :response_body_content, hash)
   template_object(opts, :invalid_data_content, hash)
@@ -585,6 +595,7 @@ resource 'AnalysisJobsItemsResults' do
             &proc { |context, opts| insert_audio_recording_ids context, opts }
         )
       end
+
       get test_url do
         standard_analysis_parameters
         let(:authentication_token) { token(self) }
@@ -600,7 +611,7 @@ resource 'AnalysisJobsItemsResults' do
                     paging_helper(2),
                     '{"id":null,"analysis_job_id":"system","audio_recording_id":%{audio_recording_id_1},',
                     '"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one/two/three/four/","name":"four","type":"directory","children":[',
-                    '{"name":"five.txt","type":"file","size_bytes":14,"mime":"text/plain"}',
+                    '{"mime":"text/plain","name":"five.txt","size_bytes":14,"type":"file"}',
                     '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one/two/three/four/five/","name":"five","type":"directory","has_children":true}'
                 ],
                 invalid_data_content: [
@@ -614,7 +625,6 @@ resource 'AnalysisJobsItemsResults' do
       end
 
     end
-
 
     context 'dot files are not included' do
 
@@ -648,6 +658,236 @@ resource 'AnalysisJobsItemsResults' do
 
     end
 
+    context 'escaping result dir is not not possible' do
+      before do
+        File.open(Dir.home + '/home-file.png', 'w') { |f| f.write('') }
+        create_file('/../parent-file.png', '')
+
+        path = create_full_path('../parent-file.png')
+        unless File.exist?(path)
+          raise "parent-file not found"
+        end
+
+        path2 = Dir.home + '/home-file.png'
+        unless File.exist?(path2)
+          raise "home-file not found"
+        end
+      end
+
+      after do
+        File.delete(Dir.home + '/home-file.png')
+        File.delete(create_full_path('../parent-file.png'))
+      end
+
+      get test_url do
+        standard_analysis_parameters
+        let(:authentication_token) { token(self) }
+        let(:results_path) { '../parent-file.png' }
+
+        standard_request_options(
+          :get,
+          'ANALYSIS (as ' + current_user.to_s + ', requesting file above result root fails)',
+          :not_found,
+          {
+              expected_json_path: 'meta/error/details',
+              response_body_content: [
+                "Could not find the requested item: Could not find results directory for analysis job 'system' for recording",
+                " at '../parent-file.png'."
+              ]
+          }
+        )
+      end
+
+      get test_url do
+        standard_analysis_parameters
+        let(:authentication_token) { token(self) }
+        let(:results_path) { '~/parent-file.png' }
+
+        standard_request_options(
+          :get,
+          'ANALYSIS (as ' + current_user.to_s + ', requesting file above result root fails)',
+          :not_found,
+          {
+              expected_json_path: 'meta/error/details',
+              response_body_content: [
+                "Could not find the requested item: Could not find results directory for analysis job 'system' for recording",
+                " at '~/parent-file.png'."
+              ]
+          }
+        )
+      end
+
+    end
+
+    context 'reading from sqlite3 files' do
+      before(:each) do
+        copy_sqlite_file
+      end
+
+      context 'sqlite individual files' do
+        get test_url do
+
+          standard_analysis_parameters
+          let(:authentication_token) { token(self) }
+          let(:results_path) { SQLITE_FIXTURE + '/BLENDED.Tile_20160727T110000Z_120.png'}
+
+          standard_request_options(
+            :get,
+            'ANALYSIS (as ' + current_user.to_s + ', requesting file in sqlite file acts like a file request)',
+            :ok,
+            {
+              expected_response_content_type: 'image/png',
+              expected_response_has_content: true,
+              # PNG magic header
+              response_body_content: [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a].pack("c*")
+            })
+        end
+
+        get test_url do
+
+          standard_analysis_parameters
+          let(:authentication_token) { token(self) }
+          let(:results_path) { SQLITE_FIXTURE + '/sub_dir_2/BLENDED.Tile_20160727T123000Z_7.5.png'}
+
+          standard_request_options(
+            :get,
+            'ANALYSIS (as ' + current_user.to_s + ', requesting file (in sub directory) in sqlite file acts like a file request)',
+            :ok,
+            {
+              expected_response_content_type: 'image/png',
+              expected_response_has_content: true,
+              # PNG magic header
+              response_body_content: [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a].pack("c*")
+            })
+        end
+
+        get test_url do
+          standard_analysis_parameters
+          let(:authentication_token) { token(self) }
+          # The `blended` part of the path is not lowercase in the fixture - this tests 404 and case sensitivity
+          let(:results_path) { SQLITE_FIXTURE + '/sub_dir_2/blended.Tile_20160727T123000Z_7.5.png'}
+
+          standard_request_options(
+            :get,
+            'ANALYSIS (as ' + current_user.to_s + ', requesting file in incorrect case that does exist)',
+            :not_found,
+            {
+              expected_json_path: 'meta/error/details',
+              response_body_content: [
+                  "Could not find results directory for analysis job 'system' for recording '",
+                  " at '#{SQLITE_FIXTURE}/sub_dir_2/blended.Tile_20160727T123000Z_7.5.png'."
+              ]
+            })
+        end
+
+        get test_url do
+          standard_analysis_parameters
+          let(:authentication_token) { token(self) }
+          # The `SUB` part of the path is not uppercase in the fixture - this tests 404 and case sensitivity
+          let(:results_path) { SQLITE_FIXTURE + '/SUB_dir_2/BLENDED.Tile_20160727T123000Z_7.5.png'}
+
+          standard_request_options(
+              :get,
+              'ANALYSIS (as ' + current_user.to_s + ', requesting file in directory in incorrect case that does exist)',
+              :not_found,
+              {
+                  expected_json_path: 'meta/error/details',
+                  response_body_content: [
+                      "Could not find results directory for analysis job 'system' for recording ",
+                      " at '#{SQLITE_FIXTURE}/SUB_dir_2/BLENDED.Tile_20160727T123000Z_7.5.png'."
+                  ]
+              })
+        end
+      end
+
+      context 'sqlite directory listings' do
+        get test_url do
+          standard_analysis_parameters
+          let(:authentication_token) { token(self) }
+          let(:results_path) { SQLITE_FIXTURE }
+
+          standard_request_options(
+            :get,
+            'ANALYSIS (as ' + current_user.to_s + ', requesting sqlite file should act like dir listing)',
+            :ok,
+            {
+              response_body_content: [
+                '{"meta":{"status":200,"message":"OK"',
+                paging_helper(7),
+                '{"id":null,"analysis_job_id":"system","audio_recording_id":%{audio_recording_id_1},',
+                '{"mime":"image/png","name":"BLENDED.Tile_20160727T110000Z_240.png","size_bytes":4393,"type":"file"}',
+
+                '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/%{sqlite3_file}/sub_dir_1/","name":"sub_dir_1","type":"directory","has_children":true',
+                '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/%{sqlite3_file}/sub_dir_2/","name":"sub_dir_2","type":"directory","has_children":true',
+              ],
+              invalid_data_content: [
+              ]
+            },
+            &proc { |context, opts|
+              insert_audio_recording_ids context, opts, { sqlite3_file: SQLITE_FIXTURE }
+            }
+          )
+        end
+
+        get test_url do
+          standard_analysis_parameters
+          let(:authentication_token) { token(self) }
+          let(:results_path) { "IDontExist.sqlite3" }
+
+          standard_request_options(
+            :get,
+            'ANALYSIS (as ' + current_user.to_s + ', requesting sqlite file that does not exist)',
+            :not_found,
+            {
+              expected_json_path: 'meta/error/details',
+              response_body_content: [
+                "Could not find results directory for analysis job 'system' for recording '",
+                " at 'IDontExist.sqlite3'."
+              ]
+            }
+          )
+        end
+
+        get test_url do
+          standard_analysis_parameters
+          let(:authentication_token) { token(self) }
+          let(:results_path) { SQLITE_FIXTURE + '/sub_dir_1' }
+
+          parameter :page, 'The page of results', required: true
+          parameter :items, 'The number of results per page', required: true
+
+          let(:page) { 2 }
+          let(:items) { 1 }
+
+          # - `example__Tiles.sqlite3/sub_dir_1/BLENDED.Tile_20160727T122624Z_3.2.png`
+          # - `example__Tiles.sqlite3/sub_dir_1/BLENDED.Tile_20160727T123600Z_3.2.png` <-- this one
+          # - `example__Tiles.sqlite3/sub_dir_1/BLENDED.Tile_20160727T124536Z_3.2.png`
+          standard_request_options(
+            :get,
+            'ANALYSIS (as ' + current_user.to_s + ', requesting sub dir in sqlite file, with paging params)',
+            :ok,
+            {
+              response_body_content: [
+                '{"meta":{"status":200,"message":"OK"',
+                paging_helper(3, 3, 2, 1),
+                '{"id":null,"analysis_job_id":"system","audio_recording_id":%{audio_recording_id_1},',
+                '"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/%{sqlite3_file}/sub_dir_1/","name":"sub_dir_1","type":"directory","children":[',
+
+                '{"mime":"image/png","name":"BLENDED.Tile_20160727T123600Z_3.2.png","size_bytes":97722,"type":"file"}',
+              ],
+              invalid_data_content:[
+                'BLENDED.Tile_20160727T124536Z_3.2.png',
+                'BLENDED.Tile_20160727T122624Z_3.2.png',
+              ]
+            },
+            &proc { |context, opts|
+              insert_audio_recording_ids context, opts, { sqlite3_file: SQLITE_FIXTURE }
+            }
+          )
+        end
+      end
+
+    end
   end
 
   describe 'Admin user' do

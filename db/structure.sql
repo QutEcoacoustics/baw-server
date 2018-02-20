@@ -2,15 +2,17 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 9.3.12
--- Dumped by pg_dump version 9.5.2
+-- Dumped from database version 9.3.20
+-- Dumped by pg_dump version 10.1
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SET check_function_bodies = false;
 SET client_min_messages = warning;
+SET row_security = off;
 
 --
 -- Name: plpgsql; Type: EXTENSION; Schema: -; Owner: -
@@ -318,6 +320,75 @@ ALTER SEQUENCE bookmarks_id_seq OWNED BY bookmarks.id;
 
 
 --
+-- Name: dataset_items; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE dataset_items (
+    id integer NOT NULL,
+    dataset_id integer,
+    audio_recording_id integer,
+    creator_id integer,
+    start_time_seconds numeric NOT NULL,
+    end_time_seconds numeric NOT NULL,
+    "order" numeric,
+    created_at timestamp without time zone
+);
+
+
+--
+-- Name: dataset_items_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE dataset_items_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: dataset_items_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE dataset_items_id_seq OWNED BY dataset_items.id;
+
+
+--
+-- Name: datasets; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE datasets (
+    id integer NOT NULL,
+    creator_id integer,
+    updater_id integer,
+    name character varying,
+    description text,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL
+);
+
+
+--
+-- Name: datasets_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE datasets_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: datasets_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE datasets_id_seq OWNED BY datasets.id;
+
+
+--
 -- Name: permissions; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -353,6 +424,38 @@ CREATE SEQUENCE permissions_id_seq
 --
 
 ALTER SEQUENCE permissions_id_seq OWNED BY permissions.id;
+
+
+--
+-- Name: progress_events; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE progress_events (
+    id integer NOT NULL,
+    creator_id integer,
+    dataset_item_id integer,
+    activity character varying,
+    created_at timestamp without time zone
+);
+
+
+--
+-- Name: progress_events_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE progress_events_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: progress_events_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE progress_events_id_seq OWNED BY progress_events.id;
 
 
 --
@@ -675,112 +778,133 @@ ALTER SEQUENCE users_id_seq OWNED BY users.id;
 
 
 --
--- Name: id; Type: DEFAULT; Schema: public; Owner: -
+-- Name: analysis_jobs id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY analysis_jobs ALTER COLUMN id SET DEFAULT nextval('analysis_jobs_id_seq'::regclass);
 
 
 --
--- Name: id; Type: DEFAULT; Schema: public; Owner: -
+-- Name: analysis_jobs_items id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY analysis_jobs_items ALTER COLUMN id SET DEFAULT nextval('analysis_jobs_items_id_seq'::regclass);
 
 
 --
--- Name: id; Type: DEFAULT; Schema: public; Owner: -
+-- Name: audio_event_comments id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY audio_event_comments ALTER COLUMN id SET DEFAULT nextval('audio_event_comments_id_seq'::regclass);
 
 
 --
--- Name: id; Type: DEFAULT; Schema: public; Owner: -
+-- Name: audio_events id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY audio_events ALTER COLUMN id SET DEFAULT nextval('audio_events_id_seq'::regclass);
 
 
 --
--- Name: id; Type: DEFAULT; Schema: public; Owner: -
+-- Name: audio_events_tags id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY audio_events_tags ALTER COLUMN id SET DEFAULT nextval('audio_events_tags_id_seq'::regclass);
 
 
 --
--- Name: id; Type: DEFAULT; Schema: public; Owner: -
+-- Name: audio_recordings id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY audio_recordings ALTER COLUMN id SET DEFAULT nextval('audio_recordings_id_seq'::regclass);
 
 
 --
--- Name: id; Type: DEFAULT; Schema: public; Owner: -
+-- Name: bookmarks id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY bookmarks ALTER COLUMN id SET DEFAULT nextval('bookmarks_id_seq'::regclass);
 
 
 --
--- Name: id; Type: DEFAULT; Schema: public; Owner: -
+-- Name: dataset_items id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY dataset_items ALTER COLUMN id SET DEFAULT nextval('dataset_items_id_seq'::regclass);
+
+
+--
+-- Name: datasets id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY datasets ALTER COLUMN id SET DEFAULT nextval('datasets_id_seq'::regclass);
+
+
+--
+-- Name: permissions id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY permissions ALTER COLUMN id SET DEFAULT nextval('permissions_id_seq'::regclass);
 
 
 --
--- Name: id; Type: DEFAULT; Schema: public; Owner: -
+-- Name: progress_events id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY progress_events ALTER COLUMN id SET DEFAULT nextval('progress_events_id_seq'::regclass);
+
+
+--
+-- Name: projects id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY projects ALTER COLUMN id SET DEFAULT nextval('projects_id_seq'::regclass);
 
 
 --
--- Name: id; Type: DEFAULT; Schema: public; Owner: -
+-- Name: saved_searches id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY saved_searches ALTER COLUMN id SET DEFAULT nextval('saved_searches_id_seq'::regclass);
 
 
 --
--- Name: id; Type: DEFAULT; Schema: public; Owner: -
+-- Name: scripts id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY scripts ALTER COLUMN id SET DEFAULT nextval('scripts_id_seq'::regclass);
 
 
 --
--- Name: id; Type: DEFAULT; Schema: public; Owner: -
+-- Name: sites id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY sites ALTER COLUMN id SET DEFAULT nextval('sites_id_seq'::regclass);
 
 
 --
--- Name: id; Type: DEFAULT; Schema: public; Owner: -
+-- Name: tag_groups id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY tag_groups ALTER COLUMN id SET DEFAULT nextval('tag_groups_id_seq'::regclass);
 
 
 --
--- Name: id; Type: DEFAULT; Schema: public; Owner: -
+-- Name: tags id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY tags ALTER COLUMN id SET DEFAULT nextval('tags_id_seq'::regclass);
 
 
 --
--- Name: id; Type: DEFAULT; Schema: public; Owner: -
+-- Name: users id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY users ALTER COLUMN id SET DEFAULT nextval('users_id_seq'::regclass);
 
 
 --
--- Name: analysis_jobs_items_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: analysis_jobs_items analysis_jobs_items_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY analysis_jobs_items
@@ -788,7 +912,7 @@ ALTER TABLE ONLY analysis_jobs_items
 
 
 --
--- Name: analysis_jobs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: analysis_jobs analysis_jobs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY analysis_jobs
@@ -796,7 +920,7 @@ ALTER TABLE ONLY analysis_jobs
 
 
 --
--- Name: audio_event_comments_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: audio_event_comments audio_event_comments_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY audio_event_comments
@@ -804,7 +928,7 @@ ALTER TABLE ONLY audio_event_comments
 
 
 --
--- Name: audio_events_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: audio_events audio_events_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY audio_events
@@ -812,7 +936,7 @@ ALTER TABLE ONLY audio_events
 
 
 --
--- Name: audio_events_tags_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: audio_events_tags audio_events_tags_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY audio_events_tags
@@ -820,7 +944,7 @@ ALTER TABLE ONLY audio_events_tags
 
 
 --
--- Name: audio_recordings_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: audio_recordings audio_recordings_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY audio_recordings
@@ -828,7 +952,7 @@ ALTER TABLE ONLY audio_recordings
 
 
 --
--- Name: bookmarks_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: bookmarks bookmarks_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY bookmarks
@@ -836,7 +960,23 @@ ALTER TABLE ONLY bookmarks
 
 
 --
--- Name: permissions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: dataset_items dataset_items_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY dataset_items
+    ADD CONSTRAINT dataset_items_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: datasets datasets_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY datasets
+    ADD CONSTRAINT datasets_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: permissions permissions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY permissions
@@ -844,7 +984,15 @@ ALTER TABLE ONLY permissions
 
 
 --
--- Name: projects_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: progress_events progress_events_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY progress_events
+    ADD CONSTRAINT progress_events_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: projects projects_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY projects
@@ -852,7 +1000,7 @@ ALTER TABLE ONLY projects
 
 
 --
--- Name: saved_searches_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: saved_searches saved_searches_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY saved_searches
@@ -860,7 +1008,7 @@ ALTER TABLE ONLY saved_searches
 
 
 --
--- Name: scripts_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: scripts scripts_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY scripts
@@ -868,7 +1016,7 @@ ALTER TABLE ONLY scripts
 
 
 --
--- Name: sites_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: sites sites_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY sites
@@ -876,7 +1024,7 @@ ALTER TABLE ONLY sites
 
 
 --
--- Name: tag_groups_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: tag_groups tag_groups_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY tag_groups
@@ -884,7 +1032,7 @@ ALTER TABLE ONLY tag_groups
 
 
 --
--- Name: tags_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: tags tags_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY tags
@@ -892,7 +1040,7 @@ ALTER TABLE ONLY tags
 
 
 --
--- Name: users_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY users
@@ -953,6 +1101,13 @@ CREATE UNIQUE INDEX audio_recordings_uuid_uidx ON audio_recordings USING btree (
 --
 
 CREATE UNIQUE INDEX bookmarks_name_creator_id_uidx ON bookmarks USING btree (name, creator_id);
+
+
+--
+-- Name: dataset_items_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX dataset_items_idx ON dataset_items USING btree (start_time_seconds, end_time_seconds);
 
 
 --
@@ -1397,7 +1552,7 @@ CREATE UNIQUE INDEX users_user_name_unique ON users USING btree (user_name);
 
 
 --
--- Name: analysis_jobs_creator_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: analysis_jobs analysis_jobs_creator_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY analysis_jobs
@@ -1405,7 +1560,7 @@ ALTER TABLE ONLY analysis_jobs
 
 
 --
--- Name: analysis_jobs_deleter_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: analysis_jobs analysis_jobs_deleter_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY analysis_jobs
@@ -1413,7 +1568,7 @@ ALTER TABLE ONLY analysis_jobs
 
 
 --
--- Name: analysis_jobs_saved_search_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: analysis_jobs analysis_jobs_saved_search_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY analysis_jobs
@@ -1421,7 +1576,7 @@ ALTER TABLE ONLY analysis_jobs
 
 
 --
--- Name: analysis_jobs_script_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: analysis_jobs analysis_jobs_script_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY analysis_jobs
@@ -1429,7 +1584,7 @@ ALTER TABLE ONLY analysis_jobs
 
 
 --
--- Name: analysis_jobs_updater_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: analysis_jobs analysis_jobs_updater_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY analysis_jobs
@@ -1437,7 +1592,7 @@ ALTER TABLE ONLY analysis_jobs
 
 
 --
--- Name: audio_event_comments_audio_event_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: audio_event_comments audio_event_comments_audio_event_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY audio_event_comments
@@ -1445,7 +1600,7 @@ ALTER TABLE ONLY audio_event_comments
 
 
 --
--- Name: audio_event_comments_creator_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: audio_event_comments audio_event_comments_creator_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY audio_event_comments
@@ -1453,7 +1608,7 @@ ALTER TABLE ONLY audio_event_comments
 
 
 --
--- Name: audio_event_comments_deleter_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: audio_event_comments audio_event_comments_deleter_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY audio_event_comments
@@ -1461,7 +1616,7 @@ ALTER TABLE ONLY audio_event_comments
 
 
 --
--- Name: audio_event_comments_flagger_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: audio_event_comments audio_event_comments_flagger_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY audio_event_comments
@@ -1469,7 +1624,7 @@ ALTER TABLE ONLY audio_event_comments
 
 
 --
--- Name: audio_event_comments_updater_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: audio_event_comments audio_event_comments_updater_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY audio_event_comments
@@ -1477,7 +1632,7 @@ ALTER TABLE ONLY audio_event_comments
 
 
 --
--- Name: audio_events_audio_recording_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: audio_events audio_events_audio_recording_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY audio_events
@@ -1485,7 +1640,7 @@ ALTER TABLE ONLY audio_events
 
 
 --
--- Name: audio_events_creator_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: audio_events audio_events_creator_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY audio_events
@@ -1493,7 +1648,7 @@ ALTER TABLE ONLY audio_events
 
 
 --
--- Name: audio_events_deleter_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: audio_events audio_events_deleter_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY audio_events
@@ -1501,7 +1656,7 @@ ALTER TABLE ONLY audio_events
 
 
 --
--- Name: audio_events_tags_audio_event_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: audio_events_tags audio_events_tags_audio_event_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY audio_events_tags
@@ -1509,7 +1664,7 @@ ALTER TABLE ONLY audio_events_tags
 
 
 --
--- Name: audio_events_tags_creator_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: audio_events_tags audio_events_tags_creator_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY audio_events_tags
@@ -1517,7 +1672,7 @@ ALTER TABLE ONLY audio_events_tags
 
 
 --
--- Name: audio_events_tags_tag_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: audio_events_tags audio_events_tags_tag_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY audio_events_tags
@@ -1525,7 +1680,7 @@ ALTER TABLE ONLY audio_events_tags
 
 
 --
--- Name: audio_events_tags_updater_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: audio_events_tags audio_events_tags_updater_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY audio_events_tags
@@ -1533,7 +1688,7 @@ ALTER TABLE ONLY audio_events_tags
 
 
 --
--- Name: audio_events_updater_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: audio_events audio_events_updater_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY audio_events
@@ -1541,7 +1696,7 @@ ALTER TABLE ONLY audio_events
 
 
 --
--- Name: audio_recordings_creator_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: audio_recordings audio_recordings_creator_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY audio_recordings
@@ -1549,7 +1704,7 @@ ALTER TABLE ONLY audio_recordings
 
 
 --
--- Name: audio_recordings_deleter_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: audio_recordings audio_recordings_deleter_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY audio_recordings
@@ -1557,7 +1712,7 @@ ALTER TABLE ONLY audio_recordings
 
 
 --
--- Name: audio_recordings_site_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: audio_recordings audio_recordings_site_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY audio_recordings
@@ -1565,7 +1720,7 @@ ALTER TABLE ONLY audio_recordings
 
 
 --
--- Name: audio_recordings_updater_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: audio_recordings audio_recordings_updater_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY audio_recordings
@@ -1573,7 +1728,7 @@ ALTER TABLE ONLY audio_recordings
 
 
 --
--- Name: audio_recordings_uploader_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: audio_recordings audio_recordings_uploader_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY audio_recordings
@@ -1581,7 +1736,7 @@ ALTER TABLE ONLY audio_recordings
 
 
 --
--- Name: bookmarks_audio_recording_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: bookmarks bookmarks_audio_recording_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY bookmarks
@@ -1589,7 +1744,7 @@ ALTER TABLE ONLY bookmarks
 
 
 --
--- Name: bookmarks_creator_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: bookmarks bookmarks_creator_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY bookmarks
@@ -1597,7 +1752,7 @@ ALTER TABLE ONLY bookmarks
 
 
 --
--- Name: bookmarks_updater_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: bookmarks bookmarks_updater_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY bookmarks
@@ -1605,7 +1760,15 @@ ALTER TABLE ONLY bookmarks
 
 
 --
--- Name: fk_rails_1ba11222e1; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: progress_events fk_rails_15ea2f07e1; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY progress_events
+    ADD CONSTRAINT fk_rails_15ea2f07e1 FOREIGN KEY (dataset_item_id) REFERENCES dataset_items(id);
+
+
+--
+-- Name: tag_groups fk_rails_1ba11222e1; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY tag_groups
@@ -1613,7 +1776,7 @@ ALTER TABLE ONLY tag_groups
 
 
 --
--- Name: fk_rails_522df5cc92; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: analysis_jobs_items fk_rails_522df5cc92; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY analysis_jobs_items
@@ -1621,7 +1784,23 @@ ALTER TABLE ONLY analysis_jobs_items
 
 
 --
--- Name: fk_rails_86f75840f2; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: dataset_items fk_rails_5bf6548424; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY dataset_items
+    ADD CONSTRAINT fk_rails_5bf6548424 FOREIGN KEY (creator_id) REFERENCES users(id);
+
+
+--
+-- Name: dataset_items fk_rails_81ed124069; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY dataset_items
+    ADD CONSTRAINT fk_rails_81ed124069 FOREIGN KEY (audio_recording_id) REFERENCES audio_recordings(id);
+
+
+--
+-- Name: analysis_jobs_items fk_rails_86f75840f2; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY analysis_jobs_items
@@ -1629,7 +1808,39 @@ ALTER TABLE ONLY analysis_jobs_items
 
 
 --
--- Name: permissions_creator_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: datasets fk_rails_c2337cbe35; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY datasets
+    ADD CONSTRAINT fk_rails_c2337cbe35 FOREIGN KEY (updater_id) REFERENCES users(id);
+
+
+--
+-- Name: dataset_items fk_rails_c97bdfad35; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY dataset_items
+    ADD CONSTRAINT fk_rails_c97bdfad35 FOREIGN KEY (dataset_id) REFERENCES datasets(id);
+
+
+--
+-- Name: progress_events fk_rails_cf446a18ca; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY progress_events
+    ADD CONSTRAINT fk_rails_cf446a18ca FOREIGN KEY (creator_id) REFERENCES users(id);
+
+
+--
+-- Name: datasets fk_rails_faaf9c0bcd; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY datasets
+    ADD CONSTRAINT fk_rails_faaf9c0bcd FOREIGN KEY (creator_id) REFERENCES users(id);
+
+
+--
+-- Name: permissions permissions_creator_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY permissions
@@ -1637,7 +1848,7 @@ ALTER TABLE ONLY permissions
 
 
 --
--- Name: permissions_project_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: permissions permissions_project_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY permissions
@@ -1645,7 +1856,7 @@ ALTER TABLE ONLY permissions
 
 
 --
--- Name: permissions_updater_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: permissions permissions_updater_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY permissions
@@ -1653,7 +1864,7 @@ ALTER TABLE ONLY permissions
 
 
 --
--- Name: permissions_user_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: permissions permissions_user_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY permissions
@@ -1661,7 +1872,7 @@ ALTER TABLE ONLY permissions
 
 
 --
--- Name: projects_creator_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: projects projects_creator_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY projects
@@ -1669,7 +1880,7 @@ ALTER TABLE ONLY projects
 
 
 --
--- Name: projects_deleter_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: projects projects_deleter_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY projects
@@ -1677,7 +1888,7 @@ ALTER TABLE ONLY projects
 
 
 --
--- Name: projects_saved_searches_project_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: projects_saved_searches projects_saved_searches_project_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY projects_saved_searches
@@ -1685,7 +1896,7 @@ ALTER TABLE ONLY projects_saved_searches
 
 
 --
--- Name: projects_saved_searches_saved_search_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: projects_saved_searches projects_saved_searches_saved_search_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY projects_saved_searches
@@ -1693,7 +1904,7 @@ ALTER TABLE ONLY projects_saved_searches
 
 
 --
--- Name: projects_sites_project_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: projects_sites projects_sites_project_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY projects_sites
@@ -1701,7 +1912,7 @@ ALTER TABLE ONLY projects_sites
 
 
 --
--- Name: projects_sites_site_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: projects_sites projects_sites_site_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY projects_sites
@@ -1709,7 +1920,7 @@ ALTER TABLE ONLY projects_sites
 
 
 --
--- Name: projects_updater_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: projects projects_updater_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY projects
@@ -1717,7 +1928,7 @@ ALTER TABLE ONLY projects
 
 
 --
--- Name: saved_searches_creator_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: saved_searches saved_searches_creator_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY saved_searches
@@ -1725,7 +1936,7 @@ ALTER TABLE ONLY saved_searches
 
 
 --
--- Name: saved_searches_deleter_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: saved_searches saved_searches_deleter_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY saved_searches
@@ -1733,7 +1944,7 @@ ALTER TABLE ONLY saved_searches
 
 
 --
--- Name: scripts_creator_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: scripts scripts_creator_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY scripts
@@ -1741,7 +1952,7 @@ ALTER TABLE ONLY scripts
 
 
 --
--- Name: scripts_group_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: scripts scripts_group_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY scripts
@@ -1749,7 +1960,7 @@ ALTER TABLE ONLY scripts
 
 
 --
--- Name: sites_creator_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: sites sites_creator_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY sites
@@ -1757,7 +1968,7 @@ ALTER TABLE ONLY sites
 
 
 --
--- Name: sites_deleter_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: sites sites_deleter_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY sites
@@ -1765,7 +1976,7 @@ ALTER TABLE ONLY sites
 
 
 --
--- Name: sites_updater_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: sites sites_updater_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY sites
@@ -1773,7 +1984,7 @@ ALTER TABLE ONLY sites
 
 
 --
--- Name: tags_creator_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: tags tags_creator_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY tags
@@ -1781,7 +1992,7 @@ ALTER TABLE ONLY tags
 
 
 --
--- Name: tags_updater_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: tags tags_updater_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY tags
@@ -1887,4 +2098,6 @@ INSERT INTO schema_migrations (version) VALUES ('20160614230504');
 INSERT INTO schema_migrations (version) VALUES ('20160712051359');
 
 INSERT INTO schema_migrations (version) VALUES ('20160726014747');
+
+INSERT INTO schema_migrations (version) VALUES ('20180118002015');
 
