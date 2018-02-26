@@ -25,5 +25,9 @@ describe MediaController, :type => :routing do
     it { expect(head('/audio_recordings/3/media.mp3')).to route_to('media#show', audio_recording_id: '3', format: 'mp3') }
     it { expect(head('/audio_recordings/3/media')).to route_to('errors#route_error', requested_route: 'audio_recordings/3/media') }
 
+
+    # original audio download routes
+    it { expect(get('/audio_recordings/3/original')).to route_to('media#original', audio_recording_id: '3', format: false) }
+
   end
 end

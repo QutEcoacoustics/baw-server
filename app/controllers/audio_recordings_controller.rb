@@ -18,7 +18,6 @@ class AudioRecordingsController < ApplicationController
   end
 
   # GET /audio_recordings/:id
-
   def show
     do_load_resource
     do_authorize_instance

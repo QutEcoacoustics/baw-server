@@ -251,7 +251,7 @@ class RangeRequest
     return_value[:response_headers][HTTP_HEADER_LAST_MODIFIED] = info[:file_modified_time].httpdate
     return_value[:response_headers][HTTP_HEADER_ENTITY_TAG] = '"' + info[:file_entity_tag] + '"'
     return_value[:response_headers][HTTP_HEADER_ACCEPT_RANGES] = HTTP_HEADER_ACCEPT_RANGES_BYTES
-    return_value[:response_headers][HTTP_HEADER_CONTENT_DISPOSITION] = "inline; filename=\"#{info[:response_suggested_file_name]}\""
+    return_value[:response_headers][HTTP_HEADER_CONTENT_DISPOSITION] = "#{info[:response_disposition_type]}; filename=\"#{info[:response_suggested_file_name]}\""
 
     return_value
   end
@@ -273,10 +273,12 @@ class RangeRequest
     }
     response_extra_info = "#{options[:channel]}_#{options[:sample_rate]}"
 
-    suggested_file_name = NameyWamey.create_audio_recording_name(
+    suggested_file_name = options[:suggested_file_name] || NameyWamey.create_audio_recording_name(
         audio_recording,
         options[:start_offset], options[:end_offset],
         response_extra_info, options[:ext])
+    disposition_type = options[:disposition_type] || :inline
+    raise ArgumentError, "Unknown content disposition type #{disposition_type}" unless [:inline, :attachment].include?(disposition_type)
 
     file_modified_time = File.mtime(file_path).getutc
     file_size = File.size(file_path)
@@ -325,7 +327,8 @@ class RangeRequest
         response_code: HTTP_CODE_OK,
         response_headers: {},
         stop_processing_request_headers: false,
-        response_suggested_file_name: suggested_file_name
+        response_suggested_file_name: suggested_file_name,
+        response_disposition_type: disposition_type
     }
 
     info[:file_entity_tag] = file_entity_tag(info)

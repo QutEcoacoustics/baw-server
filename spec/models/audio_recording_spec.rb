@@ -373,4 +373,29 @@ describe AudioRecording, :type => :model do
     ar2.file_hash = MiscHelper.new.create_sha_256_hash
     ar2.save!
   end
+
+  it 'provides a hash split function to return the file_hash components' do
+    ar = FactoryGirl.build(:audio_recording, file_hash: 'SHA256::abc123')
+
+    protocol, value = ar.split_file_hash
+
+    expect(protocol).to eq('SHA256')
+    expect(value).to eq('abc123')
+
+    expect {
+      ar = FactoryGirl.build(:audio_recording, file_hash: 'SHA256::abc::123')
+      ar.split_file_hash
+    }.to raise_error(RuntimeError, 'Invalid file hash detected (more than one "::" found)' )
+  end
+
+  it 'can return a canonical filename for an audio recording' do
+    uuid = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
+    date = '20180226-222930Z'
+
+    ar = FactoryGirl.build(:audio_recording, uuid: uuid, recorded_date: DateTime.strptime(date, '%Y%m%d-%H%M%S%z'), media_type: "audio/wav")
+
+    actual = ar.canonical_filename
+
+    expect(actual).to eq("#{uuid}_#{date}.wav")
+  end
 end
