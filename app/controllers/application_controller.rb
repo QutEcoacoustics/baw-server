@@ -141,7 +141,7 @@ class ApplicationController < ActionController::Base
     render layout: false
   end
 
-  def auth_custom_audio_recording(request_params)
+  def auth_custom_audio_recording(request_params, action = :show)
     # do auth manually
     #authorize! :show, @audio_recording
 
@@ -149,7 +149,7 @@ class ApplicationController < ActionController::Base
     fail CustomErrors::ItemNotFoundError, "Could not find audio recording with id #{request_params[:audio_recording_id]}." if audio_recording.blank?
 
     # can? also checks for admin access
-    can_access_audio_recording = can? :show, audio_recording
+    can_access_audio_recording = can? action, audio_recording
 
     # Can't do anything if can't access audio recording and no audio event id given
     has_any_permission = can_access_audio_recording || !request_params[:audio_event_id].blank?

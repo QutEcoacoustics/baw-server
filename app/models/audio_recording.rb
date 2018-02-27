@@ -40,6 +40,10 @@ class AudioRecording < ActiveRecord::Base
   AVAILABLE_STATUSES = AVAILABLE_STATUSES_SYMBOLS.map { |item| item.to_s }
   enumerize :status, in: AVAILABLE_STATUSES, predicates: true
 
+  # The token that separates the hash protocol from the hash value.
+  # Do not change unless updating all records in the DB!
+  HASH_TOKEN = "::".freeze
+
   # TODO clean notes column in db
   serialize :notes, JSON
 
@@ -64,11 +68,11 @@ class AudioRecording < ActiveRecord::Base
   # file hash validations
   # on create, ensure present, case insensitive unique, starts with 'SHA256::', and exactly 72 chars
   validates :file_hash, presence: true, uniqueness: {case_sensitive: false}, length: {is: 72},
-            format: {with: /\ASHA256::.{64}\z/, message: 'must start with "SHA256::" with 64 char hash'},
+            format: {with: /\ASHA256#{HASH_TOKEN}.{64}\z/, message: "must start with \"SHA256#{HASH_TOKEN}\" with 64 char hash"},
             on: :create
   # on update would usually be the same, but for the audio check this needs to ignore
   validates :file_hash, presence: true, uniqueness: {case_sensitive: false}, length: {is: 72},
-            format: {with: /\ASHA256::.{64}\z/, message: 'must start with "SHA256::" with 64 char hash'},
+            format: {with: /\ASHA256#{HASH_TOKEN}.{64}\z/, message: "must start with \"SHA256#{HASH_TOKEN}\" with 64 char hash"},
             on: :update, unless: :missing_hash_value?
 
   after_initialize :set_uuid
@@ -133,20 +137,32 @@ class AudioRecording < ActiveRecord::Base
           original_format: self.original_format_calculated
       }
 
-      audio_original = BawWorkers::Settings.original_audio_helper
+      audio_original = BawWorkers::Config.original_audio_helper
       source_existing_paths = audio_original.existing_paths(modify_parameters)
     end
 
     source_existing_paths
   end
 
+  # gets the 'ideal' file name (not path) for an audio recording that is stored on disk
+  def canonical_filename
+    modify_parameters = {
+        uuid: self.uuid,
+        datetime_with_offset: self.recorded_date,
+        original_format: self.original_format_calculated
+    }
+
+    audio_original = BawWorkers::Config.original_audio_helper
+    audio_original.file_name_utc(modify_parameters)
+  end
+
   # Calculate the format of original audio recording.
   def original_format_calculated
-    if self.original_file_name.blank?
-      Mime::Type.lookup(self.media_type).to_sym.to_s
-    else
-      File.extname(self.original_file_name).delete('.')
-    end
+    # this method previously determined format based on `original_file_name` but this approach is erroneous;
+    # Our source of truth should be the `media_type` field. The `original_file_name` is kept as metadata only.
+    # In practice, there is no difference currently but later when transcoding harvested audio is enabled,
+    # these formats will not agree.
+    Mime::Type.lookup(self.media_type).to_sym.to_s
   end
 
   # check for and correct any overlaps.
@@ -306,10 +322,19 @@ class AudioRecording < ActiveRecord::Base
     end
   end
 
+  # Splits the file hash into an array with two values. The first value is the hash type, the second is the hash value.
+  # @return string[] - Of length 2. First value is hash protocol. Second value is hash value.
+  def split_file_hash
+    result = file_hash.split(HASH_TOKEN)
+    raise "Invalid file hash detected (more than one \"#{HASH_TOKEN}\" found)" if result.length != 2
+
+    result
+  end
+
   private
 
   def missing_hash_value?
-    file_hash == 'SHA256::'
+    file_hash == "SHA256#{HASH_TOKEN}"
   end
 
   # Results in:

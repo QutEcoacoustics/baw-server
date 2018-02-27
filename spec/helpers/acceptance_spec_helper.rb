@@ -161,7 +161,11 @@ def acceptance_checks_shared(request, opts = {})
   # don't document because it returns binary data that can't be json encoded
   #is_documentation_run = !!(ENV['GENERATE_DOC'])
 
-  actual_response = response_body
+  if http_method == :get && response_headers['Content-Transfer-Encoding'] == 'binary'
+    actual_response = response_body[0...100] + ' <TRIMMED>'
+  else
+    actual_response = response_body
+  end
 
   # info hash
   opts.merge!(
@@ -209,7 +213,7 @@ def acceptance_checks_shared(request, opts = {})
     if (opts[:actual_response_content_type].start_with?('image/') || opts[:actual_response_content_type].start_with?('audio/')) &&
         !opts[:actual_response_headers].include?('X-Error-Type')
       expect(opts[:actual_response_headers]['Content-Transfer-Encoding']).to eq('binary'), "Mismatch: content transfer encoding. #{opts[:msg]}"
-      expect(opts[:actual_response_headers]['Content-Disposition']).to start_with('inline; filename='), "Mismatch: content disposition. #{opts[:msg]}"
+      expect(opts[:actual_response_headers]['Content-Disposition']).to match(/(inline|attachment); filename=/), "Mismatch: content disposition. #{opts[:msg]}"
     end
   end
 
