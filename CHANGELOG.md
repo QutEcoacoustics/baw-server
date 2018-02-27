@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+## [Release 1.5.1](https://github.com/QutBioacoustics/baw-server/releases/tag/1.5.1)
+
+- 2018-02-27
+  - Hacky patch to try and fix bugs with sqlite-serve.
+    See [5f6bc21](https://github.com/QutEcoacoustics/baw-server/commit/5f6bc21cd73736156c8f6429a7ae022747c02585)
+- 2018-02-26
+  - Adds the ability for Admin or Harvester users to download full original audio files.
+    See [#353](https://github.com/QutEcoacoustics/baw-server/issues/353)
+
 ## [Release 1.4.0](https://github.com/QutBioacoustics/baw-server/releases/tag/1.4.0)
 
 - 2018-02-21
