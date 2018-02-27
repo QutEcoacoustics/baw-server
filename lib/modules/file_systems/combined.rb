@@ -94,7 +94,10 @@ module FileSystems
       def open_sqlite_inner(path)
         Sqlite.open_database(path) if File.file?(path)
       end
-      memoize :open_sqlite_inner
+
+      # I'm disabling the memoization on a hunch that it is caching the result for the application life time. I've
+      # got do idea how to confirm this though.
+      #memoize :open_sqlite_inner
     end
   end
 end
