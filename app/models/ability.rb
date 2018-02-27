@@ -124,7 +124,8 @@ class Ability
 
   def for_harvester
     # actions used for harvesting. See baw-workers.
-    can [:new, :create, :check_uploader, :update_status, :update], AudioRecording
+    # :original is the permission to download an original audio file
+    can [:new, :create, :check_uploader, :update_status, :update, :original], AudioRecording
 
     # omitted: :new, :create,
     # applied by default: :index, :show, :filter
@@ -257,7 +258,7 @@ class Ability
   def to_audio_recording(user, is_guest)
     # cannot use block for #index, #filter
     # See permissions for harvester (#for_harvester)
-    # Only admin and harvester can #create, #check_uploader, #update_status, #update
+    #   - Only admin and harvester can #create, #check_uploader, #update_status, #update
     # permissions are also checked in controller actions
     # GET       /projects/:project_id/sites/:site_id/audio_recordings/check_uploader/:uploader_id audio_recordings#check_uploader {:format=>"json"}
     # POST      /projects/:project_id/sites/:site_id/audio_recordings                             audio_recordings#create {:format=>"json"}
@@ -521,6 +522,10 @@ class Ability
     # available to any user, including guest
     # skips CanCan auth
     can [:show], :media
+
+    # See permissions for harvester:
+    #   - Only admin and harvester can download original recording (#original)
+    # GET       /audio_recordings/:id/original     media#original
   end
 
   def to_error(user, is_guest)

@@ -10,8 +10,6 @@ describe AudioRecordingsController, :type => :routing do
 
     it { expect(get('/audio_recordings/new')).to route_to('audio_recordings#new', format: 'json') }
 
-
-
     # used by harvester
     it { expect(get('/audio_recordings/3')).to route_to('audio_recordings#show', id: '3', format: 'json') }
     it { expect(post('/projects/1/sites/2/audio_recordings')).to route_to('audio_recordings#create', project_id: '1', site_id: '2', format: 'json') }
