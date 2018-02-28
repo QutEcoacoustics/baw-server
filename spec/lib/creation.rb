@@ -31,6 +31,26 @@ module Creation
 
     end
 
+    # similar to create entire hierarchy
+    # but the project does not give any permissions to the owner writer reader users
+    # So, it allows testing whether the get methods are correctly handling results that
+    # the owner/reader/writer does not have read access to.
+    # Here we create:
+    #   - project with admin as creator called no_access_project. This project has no permissions applied to it
+    #   - site under that project called no_access_site
+    #   - audio recording under that site called no_access_audio_recording
+    #   - 1 dataset items under that audio_recording called no_access_dataset_item
+
+    def create_no_access_hierarchy
+
+      let!(:no_access_project) { Common.create_project(admin_user) }
+      let!(:no_access_site) { Common.create_site(admin_user, no_access_project) }
+      let!(:no_access_audio_recording) { Common.create_audio_recording(admin_user, admin_user, no_access_site) }
+      let!(:no_access_dataset_item) { Common.create_dataset_item(admin_user, dataset, no_access_audio_recording) }
+
+    end
+
+
     # create audio recordings and all parent entities
     def create_audio_recordings_hierarchy
       prepare_users

@@ -36,11 +36,74 @@ resource 'DatasetItems' do
     post_attributes
   }
 
+
+  # create multiple dataset items
+  #
+  # In order to test get requests where the user does not have permission,
+  # we include some dataset items for audio recordings that the user can not access
+  #
+  # After this, the dataset_items will be
+  # - 1 created by the create_entire_hierarchy
+  # - 1 created by create_no_access_hierarchy
+  # - 1 created under a different dataset to test the dataset id path parameter
+  # - 4 created with custom field values to test sorting and filtering
+  # - total: 7 dataset items
+  #
+
+  create_no_access_hierarchy
+
+  # a different dataset with one dataset item
+  # to test index and filter by dataset id
+  let!(:another_dataset) {
+    FactoryGirl.create(:dataset, creator: admin_user)
+  }
+
+  let!(:another_dataset_item) {
+    FactoryGirl.create(:dataset_item, creator: admin_user, dataset: another_dataset, audio_recording: audio_recording)
+  }
+
+  let!(:new_dataset_item) {
+
+    FactoryGirl.create(:dataset_item,
+                       creator: admin_user,
+                       dataset: dataset,
+                       audio_recording: audio_recording,
+                       start_time_seconds: 3,
+                       end_time_seconds: 4,
+                       order: 1).save!
+
+    FactoryGirl.create(:dataset_item,
+                       creator: admin_user,
+                       dataset: dataset,
+                       audio_recording: audio_recording,
+                       start_time_seconds: 1,
+                       end_time_seconds: 2,
+                       order: 5).save!
+
+    FactoryGirl.create(:dataset_item,
+                       creator: admin_user,
+                       dataset: dataset,
+                       audio_recording: audio_recording,
+                       start_time_seconds: 5,
+                       end_time_seconds: 6,
+                       order: 2).save!
+
+    FactoryGirl.create(:dataset_item,
+                       creator: admin_user,
+                       dataset: dataset,
+                       audio_recording: audio_recording,
+                       start_time_seconds: 8,
+                       end_time_seconds: 80,
+                       order: 4).save!
+
+  }
+
+
+
+
   ################################
   # INDEX
   ################################
-
-  # Expected count is 2 because of the 'default dataset', which is seed data added during a clean install.
 
   get '/datasets/:dataset_id/items' do
     let(:authentication_token) { admin_token }
@@ -49,7 +112,7 @@ resource 'DatasetItems' do
         :get,
         'INDEX (as admin)',
         :ok,
-        {expected_json_path: 'data/0/audio_recording_id', data_item_count: 1}
+        {expected_json_path: 'data/0/audio_recording_id', data_item_count: 6}
     )
   end
 
@@ -59,7 +122,7 @@ resource 'DatasetItems' do
     standard_request_options(:get,
                              'INDEX (as reader)',
                              :ok,
-                             {expected_json_path: 'data/0/audio_recording_id', data_item_count: 1}
+                             {expected_json_path: 'data/0/audio_recording_id', data_item_count: 5}
     )
   end
 
@@ -69,7 +132,7 @@ resource 'DatasetItems' do
     standard_request_options(
         :get,
         'INDEX (as writer)',
-        :ok, {expected_json_path: 'data/0/audio_recording_id', data_item_count: 1}
+        :ok, {expected_json_path: 'data/0/audio_recording_id', data_item_count: 5}
     )
   end
 
@@ -498,16 +561,18 @@ resource 'DatasetItems' do
   # FILTER
   ################################
 
+  # with shallow route (no dataset id)
   post '/dataset_items/filter' do
     let(:authentication_token) { admin_token }
     standard_request_options(
         :post,
         'FILTER (as admin)',
         :ok,
-        {response_body_content: ['200', '11'], expected_json_path: 'data/0/start_time_seconds', data_item_count: 1}
+        {response_body_content: ['200', '11'], expected_json_path: 'data/0/start_time_seconds', data_item_count: 7}
     )
   end
 
+  # with deep route including dataset id
   post '/datasets/:dataset_id/dataset_items/filter' do
     dataset_id_param
     let(:dataset_id) { dataset.id }
@@ -516,11 +581,11 @@ resource 'DatasetItems' do
         :post,
         'FILTER (as admin)',
         :ok,
-        {response_body_content: ['200', '11'], expected_json_path: 'data/0/start_time_seconds', data_item_count: 1}
+        {response_body_content: ['200', '11'], expected_json_path: 'data/0/start_time_seconds', data_item_count: 6}
     )
   end
 
-  # supply a dataset id that doesn't have any items
+  # suppling a dataset id that doesn't have any items
   post '/datasets/:dataset_id/dataset_items/filter' do
     let(:dataset_id) { 1234567 }
     let(:authentication_token) { admin_token }
@@ -538,7 +603,7 @@ resource 'DatasetItems' do
         :post,
         'FILTER (as reader)',
         :ok,
-        {response_body_content: ['200', '"start_time_seconds":11.0'], expected_json_path: 'data/0/start_time_seconds', data_item_count: 1}
+        {response_body_content: ['200', '"start_time_seconds":11.0'], expected_json_path: 'data/0/start_time_seconds', data_item_count: 6}
     )
   end
 
@@ -548,7 +613,7 @@ resource 'DatasetItems' do
         :post,
         'FILTER (as writer)',
         :ok,
-        {response_body_content: ['200', '11'], expected_json_path: 'data/0/start_time_seconds', data_item_count: 1}
+        {response_body_content: ['200', '11'], expected_json_path: 'data/0/start_time_seconds', data_item_count: 6}
     )
   end
 
@@ -582,6 +647,8 @@ resource 'DatasetItems' do
     )
   end
 
+  # start_time_seconds for the factory dataset item is within the values
+  # There are 2 dataset items because there is no dataset id supplied in route params
   post '/dataset_items/filter' do
     let(:authentication_token) { reader_token }
     let(:raw_post) { {
@@ -600,13 +667,14 @@ resource 'DatasetItems' do
         :ok,
         {
             expected_json_path: 'data/0/start_time_seconds',
-            data_item_count: 1,
+            data_item_count: 2,
             response_body_content: "\"start_time_seconds\":",
             invalid_content: "end_time_seconds"
         }
     )
   end
 
+  # none of the datasets have any of those start_time_seconds
   post '/dataset_items/filter' do
     let(:authentication_token) { reader_token }
     let(:raw_post) { {
@@ -648,46 +716,6 @@ resource 'DatasetItems' do
             direction: :asc
         }
       }.to_json
-    }
-
-    let!(:new_dataset_item) {
-
-      # is included in the filter
-      FactoryGirl.create(:dataset_item,
-                         creator: admin_user,
-                         dataset: dataset,
-                         audio_recording: audio_recording,
-                         start_time_seconds: 3,
-                         end_time_seconds: 4,
-                         order: 1).save!
-
-      # is included in the filter by start time
-      FactoryGirl.create(:dataset_item,
-                         creator: admin_user,
-                         dataset: dataset,
-                         audio_recording: audio_recording,
-                         start_time_seconds: 1,
-                         end_time_seconds: 2,
-                         order: 5).save!
-
-      # is not included in the filter by start time
-      FactoryGirl.create(:dataset_item,
-                         creator: admin_user,
-                         dataset: dataset,
-                         audio_recording: audio_recording,
-                         start_time_seconds: 5,
-                         end_time_seconds: 6,
-                         order: 2).save!
-
-      # is included in the filter
-      FactoryGirl.create(:dataset_item,
-                         creator: admin_user,
-                         dataset: dataset,
-                         audio_recording: audio_recording,
-                         start_time_seconds: 8,
-                         end_time_seconds: 80,
-                         order: 4).save!
-
     }
 
     example 'FILTER by start time and sort by virtual column', document: true do
