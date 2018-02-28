@@ -62,13 +62,12 @@ class DatasetsController < ApplicationController
     do_load_resource
     do_authorize_instance
 
-    respond_to do |format|
-      if @dataset.update_attributes(dataset_params)
-        format.json { respond_show }
-      else
-        format.json { respond_change_fail }
-      end
+    if @dataset.update_attributes(dataset_params)
+      respond_show
+    else
+      respond_change_fail
     end
+
   end
 
   private

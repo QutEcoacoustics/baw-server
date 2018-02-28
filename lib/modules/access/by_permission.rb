@@ -165,9 +165,9 @@ module Access
       # @return [ActiveRecord::Relation] datasets
       def datasets(user)
 
-        if (!user)
+        if !user
           Dataset.none
-        elsif (Access::Core.is_admin?(user))
+        elsif Access::Core.is_admin?(user)
           Dataset.all
         else
           Dataset.where(creator_id: user.id)
@@ -177,22 +177,21 @@ module Access
 
       # Get all dataset_items for which this user has these access levels
       # @param [User] user
-      # @param [Dataset] dataset
+      # @param [Int] dataset_id
       # @param [Symbol, Array<Symbol>] levels
       # @return [ActiveRecord::Relation] dataset items
-      def dataset_items(user, dataset = nil, levels = Access::Core.levels)
+      def dataset_items(user, dataset_id = nil, levels = Access::Core.levels)
 
-          query = DatasetItem
+        query = DatasetItem
                       .joins(audio_recording: :site)
                       .order(audio_recording_id: :asc)
                       .joins(:dataset) # this join ensures only non-deleted results are returned
 
-          if (dataset)
-              dataset = Access::Core.validate_dataset(dataset)
-              query = query.where(datasets: {id: dataset.id})
-          end
+        if dataset_id
+          query = query.where(datasets: {id: dataset_id})
+        end
 
-          permission_sites(user, levels, query)
+        permission_sites(user, levels, query)
       end
 
       private

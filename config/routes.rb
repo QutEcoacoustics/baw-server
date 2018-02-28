@@ -254,8 +254,9 @@ Rails.application.routes.draw do
   # datasets, dataset_items
   match 'datasets/filter' => 'datasets#filter', via: [:get, :post], defaults: {format: 'json'}
   match 'dataset_items/filter' => 'dataset_items#filter', via: [:get, :post], defaults: {format: 'json'}
-  resources :datasets, except: :destroy do
-    resources :items, controller: 'dataset_items'
+  match 'datasets/:dataset_id/dataset_items/filter' => 'dataset_items#filter', via: [:get, :post], defaults: {format: 'json'}
+  resources :datasets, except: :destroy, defaults:  {format: 'json'} do
+    resources :items, controller: 'dataset_items', defaults: {format: 'json'}
   end
 
   # route to the home page of site

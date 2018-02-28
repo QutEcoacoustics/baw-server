@@ -439,20 +439,16 @@ class Ability
     can [:update, :destroy], Dataset, creator_id: user.id
 
     # actions any logged in user can access
-    can [:new, :create, :show], Dataset unless is_guest
+    can [:create, :show], Dataset unless is_guest
 
     # available to any user, including guest
-    can [:index, :filter], Dataset
+    can [:new, :index, :filter], Dataset
 
   end
 
   def to_dataset_item(user, is_guest)
 
     # only admin can create, update, delete
-    can [:create, :update, :destroy, :new], DatasetItem do |dataset_item|
-      check_model(dataset_item)
-      Access::Core.is_admin?(user)
-    end
 
     # must have read permissions to show
     can [:show], DatasetItem do |dataset_item|
@@ -467,7 +463,7 @@ class Ability
     end
 
     # actions any logged in user can access
-    can [:index, :filter], DatasetItem
+    can [:new, :index, :filter], DatasetItem
 
   end
 

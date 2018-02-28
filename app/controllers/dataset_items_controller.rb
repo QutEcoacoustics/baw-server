@@ -5,11 +5,9 @@ class DatasetItemsController < ApplicationController
   # GET /datasets/:dataset_id/items
   def index
     do_authorize_class
-    get_dataset
-
     @dataset_items, opts = Settings.api_response.response_advanced(
         api_filter_params,
-        Access::ByPermission.dataset_items(current_user, @dataset),
+        Access::ByPermission.dataset_items(current_user, params[:dataset_id]),
         DatasetItem,
         DatasetItem.filter_settings
     )
@@ -20,23 +18,20 @@ class DatasetItemsController < ApplicationController
   # GET /datasets/:dataset_id/items/:dataset_item_id
   def show
     do_load_resource
-    get_dataset
     do_authorize_instance
     respond_show
   end
 
   # GET|POST /dataset_items/filter
+  # GET|POST datasets/:dataset_id/dataset_items/filter
   def filter
     do_authorize_class
 
-    # set the value for the priority virtual field
-    filter_settings = DatasetItem.set_priority(DatasetItem.filter_settings, -1)
-
     filter_response, opts = Settings.api_response.response_advanced(
         api_filter_params,
-        Access::ByPermission.dataset_items(current_user, nil),
+        Access::ByPermission.dataset_items(current_user, params[:dataset_id]),
         DatasetItem,
-        filter_settings
+        DatasetItem.filter_settings(:reverse_order)
     )
 
     respond_filter(filter_response, opts)
@@ -45,7 +40,6 @@ class DatasetItemsController < ApplicationController
   # GET /datasets/:dataset_id/items/new
   def new
     do_new_resource
-    get_dataset
     do_set_attributes
     do_authorize_instance
 
@@ -56,14 +50,12 @@ class DatasetItemsController < ApplicationController
   def create
     do_new_resource
     do_set_attributes(dataset_item_params)
-    get_dataset
-    get_audio_recording
 
     # only admins can create
     do_authorize_instance
 
     if @dataset_item.save
-      respond_create_success(dataset_item_path(@dataset, @dataset_item))
+      respond_create_success(dataset_item_path(params[:dataset_id], @dataset_item))
     else
       respond_change_fail
     end
@@ -73,26 +65,22 @@ class DatasetItemsController < ApplicationController
   def update
     do_load_resource
     do_set_attributes(dataset_item_params)
-    get_dataset
     do_authorize_instance
 
-    respond_to do |format|
-      if @dataset_item.update_attributes(dataset_item_params)
-        format.json { respond_show }
-      else
-        format.json { respond_change_fail }
-      end
+    if @dataset_item.update_attributes(dataset_item_params)
+      respond_show
+    else
+      respond_change_fail
     end
+
   end
 
   # DELETE /datasets/:dataset_id/items/:dataset_item_id
   def destroy
     do_load_resource
-    get_dataset
     do_authorize_instance
 
     @dataset_item.destroy
-    add_archived_at_header(@dataset_item)
 
     respond_destroy
 
@@ -101,24 +89,18 @@ class DatasetItemsController < ApplicationController
   private
 
   def dataset_item_params
-    params.require(:dataset_item).permit(:audio_recording_id,
+
+    params[:dataset_item][:dataset_id] = params[:dataset_id]
+
+    params.require(:dataset_item).permit(:dataset_id,
+                                         :audio_recording_id,
                                          :start_time_seconds,
                                          :end_time_seconds,
                                          :order)
+
+
+
   end
 
-  def get_dataset
-    @dataset = Dataset.find(params[:dataset_id])
-    if defined?(@dataset_item) && @dataset_item.dataset.blank?
-      @dataset_item.dataset = @dataset
-    end
-  end
-
-  def get_audio_recording
-    if defined?(@dataset_item) && @dataset_item.audio_recording.blank?
-      @audio_recording = AudioRecording.find(params[:audio_recording_id])
-      @dataset_item.audio_recording = @audio_recording
-    end
-  end
 
 end

@@ -23,29 +23,24 @@ class DatasetItem < ActiveRecord::Base
   validates :order, numericality: true, allow_nil: true
 
   # Define filter api settings
-  def self.filter_settings
-    {
+  # @param [Symbol] priority_algorithm The key of the @priority_algorithms to use as the priority virtual field.
+  def self.filter_settings (priority_algorithm = nil)
+    result = {
         valid_fields: [
             :id, :dataset_id, :audio_recording_id, :start_time_seconds, :end_time_seconds, :order, :creator_id, :created_at, :priority
         ],
         render_fields: [
-            :id, :dataset_id, :audio_recording_id, :start_time_seconds, :end_time_seconds, :order, :creator_id, :created_at, :priority
+            :id, :dataset_id, :audio_recording_id, :start_time_seconds, :end_time_seconds, :order, :creator_id, :created_at
         ],
         new_spec_fields: lambda { |user|
           {
-              dataset_id: nil,
+              #dataset_id: nil,
               audio_recording_id: nil,
               start_time_seconds: nil,
               end_time_seconds: nil,
               order: nil
           }
         },
-        field_mappings: [
-            {
-                name: :priority,
-                value: (DatasetItem.arel_table[:order].+(0))
-            }
-        ],
         controller: :dataset_items,
         action: :filter,
         defaults: {
@@ -70,21 +65,32 @@ class DatasetItem < ActiveRecord::Base
             }
         ]
     }
-  end
 
-  # sets the priority virtual field to the product of the order and given value
-  # @param [filter_settings] object
-  # @param [multiply] float
-  # @return object
-  def self.set_priority(filter_settings, multiply = 1)
-
-    mapping_index = filter_settings[:field_mappings].index do | field_mapping |
-      field_mapping[:name] == :priority
+    if priority_algorithm
+      if @priority_algorithms.key?(priority_algorithm)
+        if !result.key(:field_mappings)
+          result[:field_mappings] = []
+        end
+        result[:field_mappings] << {
+            name: :priority,
+            value: @priority_algorithms[priority_algorithm]
+        }
+        result[:valid_fields] << :priority
+      else
+        # todo: error: invalid priority specified
+      end
     end
-    value = (DatasetItem.arel_table[:order].*(multiply))
-    filter_settings[:field_mappings][mapping_index][:value] = value
-    return(filter_settings)
 
+
+    return result
   end
+
+
+  # this will contain some named algorithms for sorting the dataset items by priority virtual field
+  # Currently only one dummy algorithm for testing
+  @priority_algorithms = {
+      :reverse_order => DatasetItem.arel_table[:order].*(-1)
+  }
+
 
 end
