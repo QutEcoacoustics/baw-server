@@ -5,6 +5,7 @@ class DatasetItemsController < ApplicationController
   # GET /datasets/:dataset_id/items
   def index
     do_authorize_class
+
     @dataset_items, opts = Settings.api_response.response_advanced(
         api_filter_params,
         Access::ByPermission.dataset_items(current_user, params[:dataset_id]),
@@ -97,8 +98,6 @@ class DatasetItemsController < ApplicationController
                                          :start_time_seconds,
                                          :end_time_seconds,
                                          :order)
-
-
 
   end
 

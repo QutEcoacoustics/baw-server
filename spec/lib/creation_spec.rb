@@ -54,5 +54,10 @@ describe 'creation helper' do
     expect(AnalysisJobsItem.first.id).to eq(AnalysisJob.first.analysis_jobs_items.first.id)
     expect(AnalysisJobsItem.first.audio_recording.id).to eq(AudioRecording.first.id)
     expect(AnalysisJobsItem.first.id).to eq(AudioRecording.first.analysis_jobs_items.first.id)
+
+    expect(Dataset.count).to eq(2)
+    expect(DatasetItem.count).to eq(1)
+    expect(Dataset.all[1].id).to eq(DatasetItem.first.dataset_id)
+
   end
 end

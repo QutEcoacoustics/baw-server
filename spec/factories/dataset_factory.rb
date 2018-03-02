@@ -5,7 +5,6 @@ FactoryGirl.define do
     sequence(:description) { |n| "dataset description #{n}" }
 
     creator
-    updater
 
   end
 end

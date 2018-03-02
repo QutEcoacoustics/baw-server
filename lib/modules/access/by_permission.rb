@@ -161,18 +161,10 @@ module Access
       end
 
       # Get all datasets
-      # @param [User] user
+      # @param [User] user (parameter passed for consistency with other models, and may be used in the future)
       # @return [ActiveRecord::Relation] datasets
       def datasets(user)
-
-        if !user
-          Dataset.none
-        elsif Access::Core.is_admin?(user)
           Dataset.all
-        else
-          Dataset.where(creator_id: user.id)
-        end
-
       end
 
       # Get all dataset_items for which this user has these access levels

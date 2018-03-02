@@ -25,6 +25,13 @@ resource 'Datasets' do
   # Create post parameters from factory
   let(:post_attributes) { FactoryGirl.attributes_for(:dataset, name: 'New Dataset name') }
 
+
+  # note about harvester
+  # Harvester can access filter and index, but nothing else
+  # This is because no permissions have been blacklisted in by_permission.rb
+  # and no permissions have been whitelisted for harvester in ability.rb
+
+
   ################################
   # INDEX
   ################################
@@ -41,15 +48,15 @@ resource 'Datasets' do
     )
   end
 
-  # will only return dataset that are created by the user
+  # writer and owner user don't need tests because datasets don't derive permissions from projects
 
   get '/datasets' do
     let(:authentication_token) { reader_token }
     standard_request_options(
         :get,
-        'INDEX (as non admin user)',
+        'INDEX (as reader user)',
         :ok,
-        {response_body_content: '200', data_item_count: 0}
+        {response_body_content: '200', data_item_count: 2}
     )
   end
 
@@ -68,7 +75,7 @@ resource 'Datasets' do
         :get,
         'INDEX (as anonymous user)',
         :ok,
-        {remove_auth: true, response_body_content: '200', data_item_count: 0}
+        {remove_auth: true, response_body_content: '200', data_item_count: 2}
     )
   end
 
@@ -78,7 +85,7 @@ resource 'Datasets' do
         :get,
         'INDEX (as harvester)',
         :ok,
-        {remove_auth: true, response_body_content: '200', data_item_count: 0}
+        {remove_auth: true, response_body_content: '200', data_item_count: 2}
     )
   end
 
@@ -104,7 +111,19 @@ resource 'Datasets' do
     let(:authentication_token) { reader_token }
     standard_request_options(
         :post,
-        'CREATE (as non admin user)',
+        'CREATE (as reader user)',
+        :created,
+        {expected_json_path: 'data/name', response_body_content: 'New Dataset name'}
+    )
+  end
+
+  post '/datasets' do
+    body_params
+    let(:raw_post) { {'dataset' => post_attributes}.to_json }
+    let(:authentication_token) { no_access_token }
+    standard_request_options(
+        :post,
+        'CREATE (as no access user)',
         :created,
         {expected_json_path: 'data/name', response_body_content: 'New Dataset name'}
     )
@@ -130,6 +149,18 @@ resource 'Datasets' do
         'CREATE (as anonymous user)',
         :unauthorized,
         {remove_auth: true, expected_json_path: get_json_error_path(:sign_up)}
+    )
+  end
+
+  post '/datasets' do
+    body_params
+    let(:raw_post) { {'dataset' => post_attributes}.to_json }
+    let(:authentication_token) { harvester_token }
+    standard_request_options(
+        :post,
+        'CREATE (as harvester user)',
+        :forbidden,
+        {expected_json_path: get_json_error_path(:permissions)}
     )
   end
 
@@ -176,6 +207,16 @@ resource 'Datasets' do
     )
   end
 
+  get '/datasets/new' do
+    let(:authentication_token) { harvester_token }
+    standard_request_options(
+        :get,
+        'NEW (as harvester user)',
+        :forbidden,
+        {expected_json_path: get_json_error_path(:permissions)}
+    )
+  end
+
   ################################
   # SHOW
   ################################
@@ -198,7 +239,19 @@ resource 'Datasets' do
     let(:authentication_token) { no_access_token }
     standard_request_options(
         :get,
-        'SHOW (as non admin user)',
+        'SHOW (as no access user)',
+        :ok,
+        {expected_json_path: 'data/name'}
+    )
+  end
+
+  get '/datasets/:id' do
+    id_params
+    let(:id) { dataset.id }
+    let(:authentication_token) { reader_token }
+    standard_request_options(
+        :get,
+        'SHOW (as reader user)',
         :ok,
         {expected_json_path: 'data/name'}
     )
@@ -222,8 +275,8 @@ resource 'Datasets' do
     standard_request_options(
         :get,
         'SHOW (an anonymous user)',
-        :unauthorized,
-        {remove_auth: true, expected_json_path: get_json_error_path(:sign_up)}
+        :ok,
+        {expected_json_path: 'data/name'}
     )
   end
 
@@ -231,6 +284,9 @@ resource 'Datasets' do
   ################################
   # UPDATE
   ################################
+
+
+  # add tests for creator
 
   put '/datasets/:id' do
     body_params
@@ -245,6 +301,35 @@ resource 'Datasets' do
     )
   end
 
+  # owner user is the user who is the creator of the dataset
+  # can therefore update the dataset
+  put '/datasets/:id' do
+    body_params
+    let(:id) { dataset.id }
+    let(:raw_post) { {dataset: post_attributes}.to_json }
+    let(:authentication_token) { owner_token }
+    standard_request_options(
+        :put,
+        'UPDATE (as owner user)',
+        :ok,
+        {expected_json_path: 'data/name', response_body_content: 'New Dataset name'}
+    )
+  end
+
+
+  put '/datasets/:id' do
+    body_params
+    let(:id) { dataset.id }
+    let(:raw_post) { {dataset: post_attributes}.to_json }
+    let(:authentication_token) { reader_token }
+    standard_request_options(
+        :put,
+        'UPDATE (as reader user)',
+        :forbidden,
+        {expected_json_path: get_json_error_path(:permissions)}
+    )
+  end
+
   put '/datasets/:id' do
     body_params
     let(:id) { dataset.id }
@@ -252,7 +337,7 @@ resource 'Datasets' do
     let(:authentication_token) { no_access_token }
     standard_request_options(
         :put,
-        'UPDATE (as non admin user)',
+        'UPDATE (as no access user)',
         :forbidden,
         {expected_json_path: get_json_error_path(:permissions)}
     )
@@ -283,6 +368,18 @@ resource 'Datasets' do
     )
   end
 
+  put '/datasets/:id' do
+    body_params
+    let(:id) { dataset.id }
+    let(:raw_post) { {dataset: post_attributes}.to_json }
+    let(:authentication_token) { harvester_token }
+    standard_request_options(
+        :put,
+        'UPDATE (with harvester token)',
+        :forbidden,
+        {expected_json_path: get_json_error_path(:permissions)}
+    )
+  end
 
   ################################
   # DESTROY
@@ -317,12 +414,40 @@ resource 'Datasets' do
   end
 
   post '/datasets/filter' do
+    let(:authentication_token) { owner_token }
+    standard_request_options(
+        :post,
+        'FILTER (as no reader user)',
+        :ok,
+        {response_body_content: ['200'], expected_json_path: 'data', data_item_count: 2}
+    )
+  end
+  post '/datasets/filter' do
+    let(:authentication_token) { writer_token }
+    standard_request_options(
+        :post,
+        'FILTER (as no reader user)',
+        :ok,
+        {response_body_content: ['200'], expected_json_path: 'data', data_item_count: 2}
+    )
+  end
+  post '/datasets/filter' do
+    let(:authentication_token) { reader_token }
+    standard_request_options(
+        :post,
+        'FILTER (as no reader user)',
+        :ok,
+        {response_body_content: ['200'], expected_json_path: 'data', data_item_count: 2}
+    )
+  end
+
+  post '/datasets/filter' do
     let(:authentication_token) { no_access_token }
     standard_request_options(
         :post,
-        'FILTER (as non admin user)',
+        'FILTER (as no access user)',
         :ok,
-        {response_body_content: ['200'], expected_json_path: 'data', data_item_count: 0}
+        {response_body_content: ['200'], expected_json_path: 'data', data_item_count: 2}
     )
   end
 
@@ -341,7 +466,7 @@ resource 'Datasets' do
         :post,
         'FILTER (as anonymous user)',
         :ok,
-        {expected_json_path: 'data', data_item_count: 0}
+        {expected_json_path: 'data', data_item_count: 2}
     )
   end
 

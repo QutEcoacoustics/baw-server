@@ -6,6 +6,8 @@ module Creation
 
       prepare_project
 
+
+
       prepare_permission_owner
       prepare_permission_writer
       prepare_permission_reader
@@ -14,6 +16,9 @@ module Creation
       prepare_script
 
       prepare_site
+
+
+
 
       prepare_audio_recording
       prepare_bookmark
@@ -26,8 +31,14 @@ module Creation
       prepare_analysis_job
       prepare_analysis_jobs_item
 
+
       prepare_dataset
+
       prepare_dataset_item
+
+
+
+
 
     end
 
@@ -36,16 +47,18 @@ module Creation
     # So, it allows testing whether the get methods are correctly handling results that
     # the owner/reader/writer does not have read access to.
     # Here we create:
+    #   - A new user, who will be the owner/creator of the project
     #   - project with admin as creator called no_access_project. This project has no permissions applied to it
     #   - site under that project called no_access_site
     #   - audio recording under that site called no_access_audio_recording
-    #   - 1 dataset items under that audio_recording called no_access_dataset_item
+    #   - 1 dataset item under that audio_recording called no_access_dataset_item
 
     def create_no_access_hierarchy
 
-      let!(:no_access_project) { Common.create_project(admin_user) }
-      let!(:no_access_site) { Common.create_site(admin_user, no_access_project) }
-      let!(:no_access_audio_recording) { Common.create_audio_recording(admin_user, admin_user, no_access_site) }
+      let!(:no_access_project_creator) { FactoryGirl.create(:user, user_name: 'creator_2') }
+      let!(:no_access_project) { Common.create_project(no_access_project_creator) }
+      let!(:no_access_site) { Common.create_site(no_access_project_creator, no_access_project) }
+      let!(:no_access_audio_recording) { Common.create_audio_recording(no_access_project_creator, no_access_project_creator, no_access_site) }
       let!(:no_access_dataset_item) { Common.create_dataset_item(admin_user, dataset, no_access_audio_recording) }
 
     end
@@ -168,7 +181,7 @@ module Creation
     end
 
     def prepare_dataset
-      let!(:dataset) { Common.create_dataset(admin_user) }
+      let!(:dataset) { Common.create_dataset(owner_user) }
     end
 
     def prepare_dataset_item

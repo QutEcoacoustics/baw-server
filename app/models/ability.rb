@@ -435,14 +435,14 @@ class Ability
 
   def to_dataset(user, is_guest)
 
-    # only creator can update, destroy their own dataset
-    can [:update, :destroy], Dataset, creator_id: user.id
+    # only creator can update their own dataset
+    can [:update], Dataset, creator_id: user.id
 
     # actions any logged in user can access
-    can [:create, :show], Dataset unless is_guest
+    can [:create], Dataset unless is_guest
 
     # available to any user, including guest
-    can [:new, :index, :filter], Dataset
+    can [:new, :index, :filter, :show], Dataset
 
   end
 
