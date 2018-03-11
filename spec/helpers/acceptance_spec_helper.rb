@@ -32,6 +32,7 @@ end
 # @option opts [Class]   :expected_error_class   (nil) The expected error class
 # @option opts [Regexp]  :expected_error_regexp  (nil) The expected error regular expression
 # @option opts [Boolean]  :remove_auth  (nil) True to remove the authorization header
+# @option opts [Hash]   :order      (nil) The name of a property and the expected values of that property in the expected order
 # @param [Proc] opts_mod an optional block that is called when rspec is running - allows dynamic changing of opts with
 #    access to rspec context (i.e. let and let! values)
 # @return [void]
@@ -263,6 +264,7 @@ end
 # @option opts [Symbol] :data_item_count       (nil) Number of items in a json response
 # @option opts [Hash]   :property_match        (nil) Properties to match
 # @option opts [Regex]  :regex_match           (nil) Regex that must match content
+# @option opts [Hash]   :order      (nil) The name of a property and the expected values of that property in the expected order
 # @return [void]
 def acceptance_checks_json(opts = {})
   opts.reverse_merge!(
@@ -273,7 +275,8 @@ def acceptance_checks_json(opts = {})
           invalid_data_content: nil,
           data_item_count: nil,
           property_match: nil,
-          regex_match: nil
+          regex_match: nil,
+          order: nil
       })
 
   actual_response_parsed = opts[:actual_response].blank? ? nil : JsonSpec::Helpers::parse_json(opts[:actual_response])
@@ -344,6 +347,23 @@ def acceptance_checks_json(opts = {})
       expect(actual_response_parsed['data']).to include(key.to_s)
       expect(actual_response_parsed['data'][key.to_s].to_s).to eq(value.to_s)
     end
+  end
+
+  # creates a series of expectations checking that the given property of each member of the data array
+  # matches the given value in the right order
+  # order option is a hash with the keys 'property' (string) and 'values' (array)
+  # Alternatively, just the array of values can be supplied to use the 'id' as the property
+  unless opts[:order].nil?
+    if !opts[:order].respond_to?(:has_key?)
+      opts[:order] = {
+          property: 'id',
+          values: opts[:order]
+      }
+    end
+    response_values = actual_response_parsed['data'].map { |x|
+      x.include?(opts[:order][:property]) ? x[opts[:order][:property]] : nil
+    }
+    expect(response_values).to eq(opts[:order][:values])
   end
 
   check_regex_match(opts)

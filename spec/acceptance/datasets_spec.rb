@@ -44,7 +44,7 @@ resource 'Datasets' do
         :get,
         'INDEX (as admin)',
         :ok,
-        {expected_json_path: 'data/0/name', data_item_count: 2}
+        {response_body_content: ['The default dataset', 'gen_dataset'], expected_json_path: 'data/0/name', data_item_count: 2}
     )
   end
 
@@ -56,7 +56,7 @@ resource 'Datasets' do
         :get,
         'INDEX (as reader user)',
         :ok,
-        {response_body_content: '200', data_item_count: 2}
+        {response_body_content: ['The default dataset', 'gen_dataset'], expected_json_path: 'data/0/name', data_item_count: 2}
     )
   end
 
@@ -75,17 +75,18 @@ resource 'Datasets' do
         :get,
         'INDEX (as anonymous user)',
         :ok,
-        {remove_auth: true, response_body_content: '200', data_item_count: 2}
+        {remove_auth: true, response_body_content: ['The default dataset', 'gen_dataset'], data_item_count: 2}
     )
   end
+
 
   get '/datasets' do
     let(:authentication_token) { harvester_token }
     standard_request_options(
         :get,
         'INDEX (as harvester)',
-        :ok,
-        {remove_auth: true, response_body_content: '200', data_item_count: 2}
+        :forbidden,
+        {expected_json_path: get_json_error_path(:permissions)}
     )
   end
 
@@ -402,53 +403,39 @@ resource 'Datasets' do
   # FILTER
   ################################
 
-  # expected count is 2 because of the 'default dataset'. The 'default dataset' exists as seed data in a clean install
+
+  # Basic filter with no conditions is expected count is 2 because of the 'default dataset'.
+  # The 'default dataset' exists as seed data in a clean install
+  # for no filter constraints, use the following opts
+  basic_filter_opts = {
+      response_body_content: ['The default dataset', 'gen_dataset'],
+      expected_json_path: 'data/0/name',
+      data_item_count: 2
+  }
+
   post '/datasets/filter' do
     let(:authentication_token) { admin_token }
-    standard_request_options(
-        :post,
-        'FILTER (as admin)',
-        :ok,
-        {response_body_content: ['200', 'gen_dataset'], expected_json_path: 'data/0/name', data_item_count: 2}
-    )
+    standard_request_options(:post,'FILTER (as admin)',:ok, basic_filter_opts)
   end
 
   post '/datasets/filter' do
     let(:authentication_token) { owner_token }
-    standard_request_options(
-        :post,
-        'FILTER (as no reader user)',
-        :ok,
-        {response_body_content: ['200'], expected_json_path: 'data', data_item_count: 2}
-    )
+    standard_request_options(:post,'FILTER (as owner user)',:ok, basic_filter_opts)
   end
+
   post '/datasets/filter' do
     let(:authentication_token) { writer_token }
-    standard_request_options(
-        :post,
-        'FILTER (as no reader user)',
-        :ok,
-        {response_body_content: ['200'], expected_json_path: 'data', data_item_count: 2}
-    )
+    standard_request_options(:post,'FILTER (as writer user)',:ok, basic_filter_opts)
   end
+
   post '/datasets/filter' do
     let(:authentication_token) { reader_token }
-    standard_request_options(
-        :post,
-        'FILTER (as no reader user)',
-        :ok,
-        {response_body_content: ['200'], expected_json_path: 'data', data_item_count: 2}
-    )
+    standard_request_options(:post,'FILTER (as reader user)',:ok, basic_filter_opts)
   end
 
   post '/datasets/filter' do
     let(:authentication_token) { no_access_token }
-    standard_request_options(
-        :post,
-        'FILTER (as no access user)',
-        :ok,
-        {response_body_content: ['200'], expected_json_path: 'data', data_item_count: 2}
-    )
+    standard_request_options(:post,'FILTER (as no access user)',:ok, basic_filter_opts)
   end
 
   post '/datasets/filter' do
@@ -462,12 +449,44 @@ resource 'Datasets' do
   end
 
   post '/datasets/filter' do
+    standard_request_options(:post,'FILTER (as anonymous user)',:ok, basic_filter_opts)
+  end
+
+  post '/datasets/filter' do
+    let(:authentication_token) { harvester_token }
     standard_request_options(
         :post,
-        'FILTER (as anonymous user)',
-        :ok,
-        {expected_json_path: 'data', data_item_count: 2}
+        'FILTER (with harvester token)',
+        :forbidden,
+        {response_body_content: ['"data":null'], expected_json_path: get_json_error_path(:permissions)}
     )
   end
+
+  post '/datasets/filter' do
+    let(:raw_post) {
+      {
+          filter: {
+              name: {
+                  eq: 'default'
+              }
+          }
+          # projection: {
+          #     include: [:name, :description]
+          # }
+      }.to_json
+    }
+    let(:authentication_token) { reader_token }
+    standard_request_options(
+        :post,
+        'FILTER (with admin token: filter by name with projection)',
+        :ok,
+        {
+            response_body_content: ['The default dataset'],
+            expected_json_path: 'data/0/name',
+            data_item_count: 1
+        }
+    )
+  end
+
 
 end

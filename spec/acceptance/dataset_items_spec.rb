@@ -466,7 +466,7 @@ resource 'DatasetItems' do
         :put,
         'UPDATE (as admin)',
         :ok,
-        {expected_json_path: 'data/end_time_seconds/', response_body_content: '234.0'}
+        {expected_json_path: 'data/end_time_seconds/', response_body_content: '"end_time_seconds":234.0'}
     )
   end
 
@@ -688,17 +688,23 @@ resource 'DatasetItems' do
   ################################
 
   # with shallow route (no dataset id)
+  # admin finds all 7 items
   post '/dataset_items/filter' do
     let(:authentication_token) { admin_token }
     standard_request_options(
         :post,
         'FILTER (as admin)',
         :ok,
-        {response_body_content: ['"start_time_seconds":11.0'], expected_json_path: 'data/0/start_time_seconds', data_item_count: 7}
+        {
+            response_body_content: ['"start_time_seconds":11.0'],
+            expected_json_path: 'data/0/start_time_seconds',
+            data_item_count: 7
+        }
     )
   end
 
   # with deep route including dataset id
+  # One item has a different dataset id, so only 6 items
   post '/datasets/:dataset_id/dataset_items/filter' do
     dataset_id_param
     let(:dataset_id) { dataset.id }
@@ -707,24 +713,22 @@ resource 'DatasetItems' do
         :post,
         'FILTER (as admin)',
         :ok,
-        {response_body_content: ['"start_time_seconds":11.0'], expected_json_path: 'data/0/start_time_seconds', data_item_count: 6}
+        {
+            response_body_content: ['"start_time_seconds":11.0'],
+            expected_json_path: 'data/0/start_time_seconds',
+            data_item_count: 6
+        }
     )
   end
 
-  # suppling a dataset id that doesn't have any items
-  post '/datasets/:dataset_id/dataset_items/filter' do
-    let(:dataset_id) { 1234567 }
-    let(:authentication_token) { admin_token }
-    standard_request_options(
-        :post,
-        'FILTER (as admin)',
-        :ok,
-        {response_body_content: ['"order_by":"order"'], expected_json_path: 'data', data_item_count: 0}
-        )
-  end
-
-  # permissions will be the same for reader,writer,owner so they will have the same response for the same filter params
-  regular_user_opts = {response_body_content: ['"start_time_seconds":11.0'], expected_json_path: 'data/0/start_time_seconds', data_item_count: 6}
+  # permissions will be the same for reader,writer,owner so they will have
+  # the same response for the same filter params. Should return 6 items
+  # from the two datasets, but not the dataset item from the no-access hierarchy
+  regular_user_opts = {
+      response_body_content: ['"start_time_seconds":11.0'],
+      expected_json_path: 'data/0/start_time_seconds',
+      data_item_count: 6
+  }
 
   post '/dataset_items/filter' do
     let(:authentication_token) { owner_token }
@@ -740,6 +744,24 @@ resource 'DatasetItems' do
     let(:authentication_token) { reader_token }
     standard_request_options(:post,'FILTER (as reader)',:ok,regular_user_opts)
   end
+
+  # reader user using nested path, which will filter out the no access item and also the
+  # item from a different dataset, leaving 5 dataset items
+  post '/datasets/:dataset_id/dataset_items/filter' do
+    let(:authentication_token) { reader_token }
+    let(:dataset_id) { dataset.id }
+    standard_request_options(
+        :post,
+        'FILTER (as reader)',
+        :ok,
+        {
+            response_body_content: ['"start_time_seconds":11.0'],
+            expected_json_path: 'data/0/start_time_seconds',
+            data_item_count: 5
+        }
+    )
+  end
+
 
 
   post '/dataset_items/filter' do
@@ -783,7 +805,7 @@ resource 'DatasetItems' do
   end
 
 
-  # start_time_seconds for the factory dataset item is within the values
+  # start_time_seconds for the factory dataset item is within the filter 'in' values
   # There are 2 dataset items because there is no dataset id supplied in route params
   post '/dataset_items/filter' do
     let(:authentication_token) { reader_token }
@@ -804,8 +826,8 @@ resource 'DatasetItems' do
         {
             expected_json_path: 'data/0/start_time_seconds',
             data_item_count: 2,
-            response_body_content: "\"start_time_seconds\":",
-            invalid_content: "end_time_seconds"
+            response_body_content: '"start_time_seconds":',
+            invalid_content: 'end_time_seconds'
         }
     )
   end
@@ -825,7 +847,7 @@ resource 'DatasetItems' do
     }.to_json }
     standard_request_options(
         :post,
-        'FILTER (as reader)',
+        'FILTER (as reader) filtered by start time with projection',
         :ok,
         {
             expected_json_path: 'data',
@@ -854,16 +876,19 @@ resource 'DatasetItems' do
       }.to_json
     }
 
-    example 'FILTER by start time and sort by virtual column', document: true do
-      do_request
-      expect(status).to eq(200)
-      json = JsonSpec::Helpers::parse_json(response_body)
-      expect(json['meta']['paging']['total']).to eq(3)
-      expect(json['data'].size).to eq(3)
-      expect(json['data'][0]['start_time_seconds']).to eq(1)
-      expect(json['data'][1]['start_time_seconds']).to eq(8)
-      expect(json['data'][2]['start_time_seconds']).to eq(3)
-    end
+    standard_request_options(
+        :post,
+        'FILTER (as reader) by start time and sort by virtual column',
+        :ok,
+        {
+            expected_json_path: 'data',
+            data_item_count: 3,
+            order: {
+                property: 'start_time_seconds',
+                values: [1,8,3]
+            }
+        }
+    )
 
   end
 
