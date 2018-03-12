@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+## [Release 1.6.1](https://github.com/QutBioacoustics/baw-server/releases/tag/1.6.1)
+
+- 2018-03-12
+  - Fixes bug with original file download
+    See [#358](https://github.com/QutEcoacoustics/baw-server/issues/358)
+  - Adds support for Datasets and DatasetItems. These are disjoint collections of audio recording
+    segments that can be analyzed or processed in a sequence. This has been done to support the CS
+    use case.
+    See [#352](https://github.com/QutEcoacoustics/baw-server/pull/352)
+
 ## [Release 1.5.1](https://github.com/QutBioacoustics/baw-server/releases/tag/1.5.1)
 
 - 2018-02-27
