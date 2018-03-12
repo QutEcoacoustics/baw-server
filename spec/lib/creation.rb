@@ -6,6 +6,8 @@ module Creation
 
       prepare_project
 
+
+
       prepare_permission_owner
       prepare_permission_writer
       prepare_permission_reader
@@ -14,6 +16,9 @@ module Creation
       prepare_script
 
       prepare_site
+
+
+
 
       prepare_audio_recording
       prepare_bookmark
@@ -25,7 +30,39 @@ module Creation
       prepare_saved_search
       prepare_analysis_job
       prepare_analysis_jobs_item
+
+
+      prepare_dataset
+
+      prepare_dataset_item
+
+
+
+
+
     end
+
+    # similar to create entire hierarchy
+    # but the project does not give any permissions to the owner writer reader users
+    # So, it allows testing whether the get methods are correctly handling results that
+    # the owner/reader/writer does not have read access to.
+    # Here we create:
+    #   - A new user, who will be the owner/creator of the project
+    #   - project with admin as creator called no_access_project. This project has no permissions applied to it
+    #   - site under that project called no_access_site
+    #   - audio recording under that site called no_access_audio_recording
+    #   - 1 dataset item under that audio_recording called no_access_dataset_item
+
+    def create_no_access_hierarchy
+
+      let!(:no_access_project_creator) { FactoryGirl.create(:user, user_name: 'creator_2') }
+      let!(:no_access_project) { Common.create_project(no_access_project_creator) }
+      let!(:no_access_site) { Common.create_site(no_access_project_creator, no_access_project) }
+      let!(:no_access_audio_recording) { Common.create_audio_recording(no_access_project_creator, no_access_project_creator, no_access_site) }
+      let!(:no_access_dataset_item) { Common.create_dataset_item(admin_user, dataset, no_access_audio_recording) }
+
+    end
+
 
     # create audio recordings and all parent entities
     def create_audio_recordings_hierarchy
@@ -142,6 +179,18 @@ module Creation
       prepare_analysis_job
       let!(:analysis_jobs_item) { Common.create_analysis_job_item(analysis_job, audio_recording) }
     end
+
+    def prepare_dataset
+      let!(:dataset) { Common.create_dataset(owner_user) }
+    end
+
+    def prepare_dataset_item
+      prepare_dataset
+      prepare_audio_recording
+      let!(:dataset_item) { Common.create_dataset_item(admin_user, dataset, audio_recording) }
+    end
+
+
   end
 
   # Accessible inside `it` blocks
@@ -214,6 +263,14 @@ module Creation
 
       def create_analysis_job_item(analysis_job, audio_recording)
         FactoryGirl.create(:analysis_jobs_item, analysis_job: analysis_job, audio_recording: audio_recording)
+      end
+
+      def create_dataset(creator)
+        FactoryGirl.create(:dataset, creator: creator)
+      end
+
+      def create_dataset_item(creator, dataset, audio_recording)
+        FactoryGirl.create(:dataset_item, creator: creator, dataset: dataset, audio_recording: audio_recording)
       end
 
     end

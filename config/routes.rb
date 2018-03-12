@@ -254,6 +254,14 @@ Rails.application.routes.draw do
   # shallow path to sites
   get '/sites/:id' => 'sites#show_shallow', defaults: {format: 'json'}, as: 'shallow_site'
 
+  # datasets, dataset_items
+  match 'datasets/filter' => 'datasets#filter', via: [:get, :post], defaults: {format: 'json'}
+  match 'dataset_items/filter' => 'dataset_items#filter', via: [:get, :post], defaults: {format: 'json'}
+  match 'datasets/:dataset_id/dataset_items/filter' => 'dataset_items#filter', via: [:get, :post], defaults: {format: 'json'}
+  resources :datasets, except: :destroy, defaults:  {format: 'json'} do
+    resources :items, controller: 'dataset_items', defaults: {format: 'json'}
+  end
+
   # route to the home page of site
   root to: 'public#index'
 
