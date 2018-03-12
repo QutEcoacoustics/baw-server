@@ -228,7 +228,7 @@ class MediaController < ApplicationController
         recorded_date: audio_recording.recorded_date,
         recording_duration: audio_recording.duration_seconds,
         recording_id: audio_recording.id,
-        ext: Mime::Type.file_extension_of(audio_recording.media_type),
+        ext: MIME::Types[audio_recording.media_type].first.extensions.first,
         # assume first file of returned files is correct
         file_path: existing_files.first,
         start_offset: 0,

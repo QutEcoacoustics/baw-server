@@ -2,8 +2,6 @@ require 'rails_helper'
 require 'rspec_api_documentation/dsl'
 require 'helpers/acceptance_spec_helper'
 require 'helpers/resque_helper'
-# For some reason this patch is not loaded and I can't work out why
-require (File.expand_path(__FILE__ + "/../../../lib/patches/mime_type.rb"))
 
 # https://github.com/zipmark/rspec_api_documentation
 resource 'Media' do
