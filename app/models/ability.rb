@@ -93,6 +93,8 @@ class Ability
       to_bookmark(user, is_guest)
       to_analysis_job(user, is_guest)
       to_analysis_jobs_item(user)
+      to_dataset(user, is_guest)
+      to_dataset_item(user, is_guest)
       to_saved_search(user, is_guest)
       to_script(user, is_guest)
       to_tag(user, is_guest)
@@ -430,6 +432,40 @@ class Ability
 
     # actions any logged in user can access
     can [:index, :filter], AnalysisJobsItem
+  end
+
+  def to_dataset(user, is_guest)
+
+    # only creator can update their own dataset
+    can [:update], Dataset, creator_id: user.id
+
+    # actions any logged in user can access
+    can [:create], Dataset unless is_guest
+
+    # available to any user, including guest
+    can [:new, :index, :filter, :show], Dataset
+
+  end
+
+  def to_dataset_item(user, is_guest)
+
+    # only admin can create, update, delete
+
+    # must have read permissions to show
+    can [:show], DatasetItem do |dataset_item|
+      check_model(dataset_item)
+
+      if dataset_item.audio_recording.nil?
+        fail CustomErrors::BadRequestError.new('Dataset Item must have a Audio Recording.')
+      end
+
+      Access::Core.check_orphan_site!(dataset_item.audio_recording.site)
+      Access::Core.can_any?(user, :reader, dataset_item.audio_recording.site.projects)
+    end
+
+    # actions any logged in user can access
+    can [:new, :index, :filter], DatasetItem
+
   end
 
   def to_saved_search(user, is_guest)

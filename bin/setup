@@ -15,6 +15,7 @@ Dir.chdir APP_ROOT do
   system 'gem install ruby-debug-ide --pre'
   system 'bundle install'
 
+  system 'bundle check || bundle install'
 
   puts "\n== Removing logs, tempfiles, docs, and test results =="
   system 'rm -f log/*'

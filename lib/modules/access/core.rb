@@ -236,6 +236,14 @@ module Access
         analysis_job
       end
 
+      # Validate dataset.
+      # @param [Array<Dataset>] dataset
+      # @return [Array<Dataset>] dataset
+      def validate_dataset(dataset)
+        fail ArgumentError, "Dataset was not valid, got '#{dataset.class}'." if dataset.blank? || !dataset.is_a?(Dataset)
+        dataset
+      end
+
       # Get an array of access levels that are equal or lower.
       # @param [Symbol] level
       # @return [Array<Symbol>]

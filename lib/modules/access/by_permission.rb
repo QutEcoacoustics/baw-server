@@ -160,6 +160,32 @@ module Access
         permission_sites(user, levels, query)
       end
 
+      # Get all datasets
+      # @param [User] user (parameter passed for consistency with other models, and may be used in the future)
+      # @return [ActiveRecord::Relation] datasets
+      def datasets(user)
+          Dataset.all
+      end
+
+      # Get all dataset_items for which this user has these access levels
+      # @param [User] user
+      # @param [Int] dataset_id
+      # @param [Symbol, Array<Symbol>] levels
+      # @return [ActiveRecord::Relation] dataset items
+      def dataset_items(user, dataset_id = nil, levels = Access::Core.levels)
+
+        query = DatasetItem
+                      .joins(audio_recording: :site)
+                      .order(audio_recording_id: :asc)
+                      .joins(:dataset) # this join ensures only non-deleted results are returned
+
+        if dataset_id
+          query = query.where(datasets: {id: dataset_id})
+        end
+
+        permission_sites(user, levels, query)
+      end
+
       private
 
       def permission_admin(user, levels, query)
