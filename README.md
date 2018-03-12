@@ -2,30 +2,29 @@
 
 The bioacoustic workbench server. Manages the structure and audio data. Provides an API for client access.
 
-[![Dependency Status](https://gemnasium.com/QutBioacoustics/baw-server.png)](https://gemnasium.com/QutBioacoustics/baw-server)
-[![Documentation](https://img.shields.io/badge/docs-rdoc.info-blue.svg)](http://www.rubydoc.info/github/QutBioacoustics/baw-server)
-[![Code Climate](https://codeclimate.com/github/QutBioacoustics/baw-server/badges/gpa.svg)](https://codeclimate.com/github/QutBioacoustics/baw-server)
-[![Test Coverage](https://codeclimate.com/github/QutBioacoustics/baw-server/badges/coverage.svg)](https://codeclimate.com/github/QutBioacoustics/baw-server/coverage)
+[![Documentation](https://img.shields.io/badge/docs-rdoc.info-blue.svg)](http://www.rubydoc.info/github/QutEcoacoustics/baw-server)
+[![Code Climate](https://codeclimate.com/github/QutEcoacoustics/baw-server/badges/gpa.svg)](https://codeclimate.com/github/QutEcoacoustics/baw-server)
+[![Test Coverage](https://codeclimate.com/github/QutEcoacoustics/baw-server/badges/coverage.svg)](https://codeclimate.com/github/QutEcoacoustics/baw-server/coverage)
 
 ## Branches
 
 ### master (latest release)
 
-[![Build Status](https://travis-ci.org/QutBioacoustics/baw-server.png?branch=master)](https://travis-ci.org/QutBioacoustics/baw-server)
-[![Documentation Status](http://inch-ci.org/github/QutBioacoustics/baw-server.png?branch=master)](http://inch-ci.org/github/QutBioacoustics/baw-server)
-[![Coverage Status](https://coveralls.io/repos/github/QutBioacoustics/baw-server/badge.svg?branch=master)](https://coveralls.io/github/QutBioacoustics/baw-server?branch=master)
+[![Build Status](https://travis-ci.org/QutEcoacoustics/baw-server.png?branch=master)](https://travis-ci.org/QutEcoacoustics/baw-server)
+[![Documentation Status](http://inch-ci.org/github/QutEcoacoustics/baw-server.png?branch=master)](http://inch-ci.org/github/QutEcoacoustics/baw-server)
+[![Coverage Status](https://coveralls.io/repos/github/QutEcoacoustics/baw-server/badge.svg?branch=master)](https://coveralls.io/github/QutEcoacoustics/baw-server?branch=master)
 
 ### develop (most recent commits)
 
-[![Build Status](https://travis-ci.org/QutBioacoustics/baw-server.png?branch=develop)](https://travis-ci.org/QutBioacoustics/baw-server)
-[![Documentation Status](http://inch-ci.org/github/QutBioacoustics/baw-server.png?branch=develop)](http://inch-ci.org/github/QutBioacoustics/baw-server)
-[![Coverage Status](https://coveralls.io/repos/github/QutBioacoustics/baw-server/badge.svg?branch=develop)](https://coveralls.io/github/QutBioacoustics/baw-server?branch=develop)
+[![Build Status](https://travis-ci.org/QutEcoacoustics/baw-server.png?branch=develop)](https://travis-ci.org/QutEcoacoustics/baw-server)
+[![Documentation Status](http://inch-ci.org/github/QutEcoacoustics/baw-server.png?branch=develop)](http://inch-ci.org/github/QutEcoacoustics/baw-server)
+[![Coverage Status](https://coveralls.io/repos/github/QutEcoacoustics/baw-server/badge.svg?branch=develop)](https://coveralls.io/github/QutEcoacoustics/baw-server?branch=develop)
 
 ## Dependencies
 
 This project's dev environment is managed by [Vagrant](https://www.vagrantup.com/downloads.html) and Ansible. Ensure Vagrant `v1.8.1` or greater is installed on your dev machine.
 
-Audio processing and other long-running tasks are performed using [baw-workers](https://github.com/QutBioacoustics/baw-workers).
+Audio processing and other long-running tasks are performed using [baw-workers](https://github.com/QutEcoacoustics/baw-workers).
 
 ## Contributing
 
