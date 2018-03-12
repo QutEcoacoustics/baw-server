@@ -52,16 +52,18 @@
         pkg: libpq-dev
         state: present
       become: true
+      tags: [ "postgres" ]
     - name: APT | Install tools needed for working with postgres
       apt:
         pkg: postgresql-client
         state: present
       become: true
+      tags: [ "postgres" ]
     - name: POSTGRES | Ensure postgres password is blank
       postgresql_user:
         db: baw_local_dev
         user: postgres
         password: NULL
-
+      tags: [ "postgres" ]
 
 
