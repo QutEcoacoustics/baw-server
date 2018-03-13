@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## [Release 1.6.2](https://github.com/QutBioacoustics/baw-server/releases/tag/1.6.2)
+
+- 2018-03-13
+  - Fixes more bugs bugs with original file download.
+    See [f5ceb7e](https://github.com/QutEcoacoustics/baw-server/commit/f5ceb7e2f9d7e63b47d2f91740b44e27690ffefa)
+
 ## [Release 1.6.1](https://github.com/QutBioacoustics/baw-server/releases/tag/1.6.1)
 
 - 2018-03-12

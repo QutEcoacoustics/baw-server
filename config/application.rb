@@ -23,7 +23,11 @@ module AWB
     config.autoload_paths << config.root.join('lib', 'modules')
 
     # add patches
-    config.autoload_paths << config.root.join('lib', 'patches','mime_type.rb')
+
+    # autoload was not working for the mime type patch so we just do a regular ol require
+    #config.autoload_paths << config.root.join('lib', 'patches','mime_type.rb')
+    require (config.root.join('lib', 'patches', 'mime_type.rb'))
+
     config.autoload_paths << config.root.join('lib', 'patches','paperclip_content_matcher.rb')
     config.autoload_paths << config.root.join('lib', 'patches','rspec_api_documentation.rb')
 
