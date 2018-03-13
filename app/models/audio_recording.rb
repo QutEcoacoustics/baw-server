@@ -162,7 +162,7 @@ class AudioRecording < ActiveRecord::Base
     # Our source of truth should be the `media_type` field. The `original_file_name` is kept as metadata only.
     # In practice, there is no difference currently but later when transcoding harvested audio is enabled,
     # these formats will not agree.
-    Mime::Type.lookup(self.media_type).to_sym.to_s
+    Mime::Type.file_extension_of(self.media_type)
   end
 
   # check for and correct any overlaps.

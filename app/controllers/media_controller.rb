@@ -228,7 +228,7 @@ class MediaController < ApplicationController
         recorded_date: audio_recording.recorded_date,
         recording_duration: audio_recording.duration_seconds,
         recording_id: audio_recording.id,
-        ext: MIME::Types[audio_recording.media_type].first.extensions.first,
+        ext: Mime::Type.file_extension_of(audio_recording.media_type),
         # assume first file of returned files is correct
         file_path: existing_files.first,
         start_offset: 0,
@@ -398,7 +398,7 @@ class MediaController < ApplicationController
     # headers[RangeRequest::HTTP_HEADER_ACCEPT_RANGES] = RangeRequest::HTTP_HEADER_ACCEPT_RANGES_BYTES
     # content length is added by RangeRequest
 
-  info = range_request.build_response(options, rails_request)
+    info = range_request.build_response(options, rails_request)
 
     headers.merge!(info[:response_headers])
 
