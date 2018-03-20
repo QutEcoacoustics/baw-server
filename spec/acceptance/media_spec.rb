@@ -18,6 +18,10 @@ resource 'Media' do
 
   create_entire_hierarchy
 
+
+
+
+
   after(:each) do
     remove_media_dirs
   end
@@ -34,7 +38,11 @@ resource 'Media' do
   let(:audio_file_mono_channels) { 1 }
   let(:audio_file_mono_duration_seconds) { 70 }
 
-  let(:audio_original) { BawWorkers::Storage::AudioOriginal.new(BawWorkers::Settings.paths.original_audios) }
+  let(:audio_original) {
+    puts "audio original path"
+    puts BawWorkers::Settings.paths.original_audios
+    ao = BawWorkers::Storage::AudioOriginal.new(BawWorkers::Settings.paths.original_audios)
+  }
   let(:audio_cache) { BawWorkers::Storage::AudioCache.new(BawWorkers::Settings.paths.cached_audios) }
   let(:spectrogram_cache) { BawWorkers::Storage::SpectrogramCache.new(BawWorkers::Settings.paths.cached_spectrograms) }
   let(:analysis_cache) { BawWorkers::Storage::AnalysisCache.new(BawWorkers::Settings.paths.cached_analysis_jobs) }
@@ -436,6 +444,86 @@ resource 'Media' do
         })
   end
 
+  describe 'requesting non-standard sample rates' do
+
+
+    let(:audio_file_mono2) {
+      {
+          source: File.join(File.dirname(__FILE__), '..', 'media_tools', 'test-audio-stereo-7777hz.ogg'),
+          media_type: Mime::Type.lookup('audio/ogg'),
+          sample_rate: 7777,
+          channels: 2,
+          duration_seconds: 70
+      }
+    }
+
+    before(:each) do
+        audio_recording.update_attribute(:sample_rate_hertz, 7777)
+        # create_media_options creates the options for testing, but also copies the actual file
+        # so we need to call it here again to copy the correct file
+        create_media_options audio_recording, audio_file_mono2[:source]
+    end
+
+    # non-standard sample rate that is the original sample rate
+    get '/audio_recordings/:audio_recording_id/media.:format?start_offset=:start_offset&end_offset=:end_offset&sample_rate=:sample_rate' do
+      standard_media_parameters
+      let(:authentication_token) { reader_token }
+      let(:format) { 'wav' }
+      let(:sample_rate) { '7777' }
+
+      media_request_options(
+          :get,
+          'MEDIA (audio get request wav with non-standard original sample rate as reader)',
+          :ok,
+          {
+              dont_copy_test_audio: true,
+              expected_response_content_type: 'audio/wav'
+          }
+      )
+    end
+
+    # non-standard sample rate should fail if it is not the original sample rate
+    get '/audio_recordings/:audio_recording_id/media.:format?start_offset=:start_offset&end_offset=:end_offset&sample_rate=:sample_rate' do
+      standard_media_parameters
+      let(:authentication_token) { reader_token }
+      let(:format) { 'wav' }
+      let(:sample_rate) { '7776' }
+
+      media_request_options(
+          :get,
+          'MEDIA (audio get request wav with non-standard and non-original sample rate as reader)',
+          :unprocessable_entity,
+          {
+              expected_response_content_type: 'audio/wav',
+              expected_response_has_content: false,
+              expected_headers: []
+          }
+      )
+    end
+
+    # non-standard sample rate should fail for mp3 even if it is the original sample rate
+    get '/audio_recordings/:audio_recording_id/media.:format?start_offset=:start_offset&end_offset=:end_offset&sample_rate=:sample_rate' do
+      standard_media_parameters
+      let(:authentication_token) { reader_token }
+      let(:format) { 'mp3' }
+      let(:sample_rate) { '7777' }
+
+      media_request_options(
+          :get,
+          'MEDIA (audio get request mp3 with non-standard original sample rate as reader)',
+          :unprocessable_entity,
+          {
+              expected_response_content_type: 'audio/mpeg',
+              expected_response_has_content: false,
+              expected_headers: []
+          }
+      )
+    end
+
+  end
+
+
+
   # head requests
 
   head '/audio_recordings/:audio_recording_id/media.:format?start_offset=:start_offset&end_offset=:end_offset' do
@@ -707,7 +795,7 @@ resource 'Media' do
     standard_request_options(:get, 'MEDIA (as reader invalid sample rate)', :unprocessable_entity,
                              {
                                  expected_json_path: 'meta/error/details',
-                                 response_body_content: 'The request could not be understood: sample_rate parameter (22050user_token=ANAUTHTOKEN) must be valid'
+                                 response_body_content: 'The request could not be understood: sample_rate parameter (22050user_token=ANAUTHTOKEN) must be an integer'
                              })
   end
 
@@ -752,7 +840,7 @@ resource 'Media' do
       example ':get MEDIA (audio get request mp3 as reader with shallow path process using resque)', document: document_media_requests do
         remove_media_dirs
 
-        options = create_media_options(audio_recording)
+        options = create_media_options(audio_recording, audio_file_mono)
 
         queue_name = Settings.actions.media.queue
 
@@ -879,7 +967,7 @@ resource 'Media' do
       # the standard media route only allows short recordings, purposely mock a long duration to make sure long
       # original recordings succeed.
       audio_recording.update_attribute(:duration_seconds, 3600) # one hour
-      create_media_options(audio_recording)
+      create_media_options(audio_recording, audio_file_mono)
     end
 
     after(:each) do
@@ -971,5 +1059,7 @@ resource 'Media' do
             context.full_file_result(context, opts)
           })
     end
+
   end
+
 end
