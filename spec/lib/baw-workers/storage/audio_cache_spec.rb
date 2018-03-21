@@ -29,11 +29,6 @@ describe BawWorkers::Storage::AudioCache do
   let(:cached_audio_file_name_given_parameters) { "#{uuid}_#{start_offset}_#{end_offset}_#{channel}_#{sample_rate}.#{format_audio}" }
 
 
-  let(:non_standard_sample_rate) { 12345 }
-  let(:invalid_sample_rate) { 54321 }
-
-  # file name with non-standard sample rate
-  let(:cached_audio_file_name_given_parameters_nssr) { "#{uuid}_#{start_offset}_#{end_offset}_#{channel}_#{non_standard_sample_rate}.#{format_audio}" }
 
 
   it 'no storage directories exist' do
@@ -50,9 +45,87 @@ describe BawWorkers::Storage::AudioCache do
     ).to eq cached_audio_file_name_given_parameters
   end
 
-  it 'creates the correct name with non standard original sample rate' do
+  context 'checking validation of sample rate' do
 
-    expect(
+    let(:non_standard_sample_rate) { 12345 }
+    # file name with non-standard sample rate
+    let(:cached_audio_file_name_given_parameters_nssr) { "#{uuid}_#{start_offset}_#{end_offset}_#{channel}_#{non_standard_sample_rate}.#{format_audio}" }
+
+    it 'creates the correct name with non standard original sample rate' do
+
+      expect(
+          audio_cache.file_name(
+              {
+                  uuid: uuid,
+                  start_offset: start_offset,
+                  end_offset: end_offset,
+                  channel: channel,
+                  sample_rate: non_standard_sample_rate,
+                  original_sample_rate: non_standard_sample_rate,
+                  format: format_audio
+              }
+          )
+      ).to eq cached_audio_file_name_given_parameters_nssr
+
+    end
+
+    it 'creates the correct name with non standard original sample rate and a standard requested sample rate' do
+
+      expect(
+          audio_cache.file_name(
+              {
+                  uuid: uuid,
+                  start_offset: start_offset,
+                  end_offset: end_offset,
+                  channel: channel,
+                  sample_rate: sample_rate,
+                  original_sample_rate: non_standard_sample_rate,
+                  format: format_audio
+              }
+          )
+      ).to eq cached_audio_file_name_given_parameters
+
+    end
+
+    it 'fails validation with invalid sample rate' do
+
+      expect {
+        audio_cache.file_name(
+            {
+                uuid: uuid,
+                start_offset: start_offset,
+                end_offset: end_offset,
+                channel: channel,
+                sample_rate: 75757,
+                original_sample_rate: non_standard_sample_rate,
+                format: format_audio
+            }
+        )
+      }.to raise_error(ArgumentError)
+
+    end
+
+    it 'fails validation with non standard sample rate and original sample rate not supplied' do
+
+      expect {
+        audio_cache.file_name(
+            {
+                uuid: uuid,
+                start_offset: start_offset,
+                end_offset: end_offset,
+                channel: channel,
+                sample_rate: non_standard_sample_rate,
+                format: format_audio
+            }
+        )
+      }.to raise_error(ArgumentError)
+
+    end
+
+
+    it 'fails validation with a sample rate not supported by the format (mp3)' do
+
+      expect {
         audio_cache.file_name(
             {
                 uuid: uuid,
@@ -61,46 +134,12 @@ describe BawWorkers::Storage::AudioCache do
                 channel: channel,
                 sample_rate: non_standard_sample_rate,
                 original_sample_rate: non_standard_sample_rate,
-                format: format_audio
+                format: 'mp3'
             }
         )
-    ).to eq cached_audio_file_name_given_parameters_nssr
+      }.to raise_error(ArgumentError)
 
-  end
-
-  it 'creates the correct name with non standard original sample rate and a standard requested sample rate' do
-
-    expect(
-        audio_cache.file_name(
-            {
-                uuid: uuid,
-                start_offset: start_offset,
-                end_offset: end_offset,
-                channel: channel,
-                sample_rate: sample_rate,
-                original_sample_rate: non_standard_sample_rate,
-                format: format_audio
-            }
-        )
-    ).to eq cached_audio_file_name_given_parameters
-
-  end
-
-  it 'fails validation with invalid sample rate' do
-
-    expect {
-        audio_cache.file_name(
-            {
-                uuid: uuid,
-                start_offset: start_offset,
-                end_offset: end_offset,
-                channel: channel,
-                sample_rate: invalid_sample_rate,
-                original_sample_rate: non_standard_sample_rate,
-                format: format_audio
-            }
-        )
-    }.to raise_error(ArgumentError)
+    end
 
   end
 

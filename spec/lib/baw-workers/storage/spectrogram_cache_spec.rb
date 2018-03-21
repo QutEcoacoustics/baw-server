@@ -50,6 +50,100 @@ describe BawWorkers::Storage::SpectrogramCache do
     ).to eq cached_spectrogram_file_name_given_parameters
   end
 
+  context 'checking validation of sample rate' do
+
+    let(:non_standard_sample_rate) { 2323 }
+    # file name with non-standard sample rate
+    let(:cached_spectrogram_file_name_given_parameters_nssr) { "#{uuid}_#{start_offset}_#{end_offset}_#{channel}_#{non_standard_sample_rate}_#{window}_#{window_function}_#{colour}.#{format_spectrogram}" }
+
+    it 'creates the correct name with non standard original sample rate' do
+
+      expect(
+          spectrogram_cache.file_name(
+              {
+                  uuid: uuid,
+                  start_offset: start_offset,
+                  end_offset: end_offset,
+                  channel: channel,
+                  sample_rate: non_standard_sample_rate,
+                  original_sample_rate: non_standard_sample_rate,
+                  window: window,
+                  colour: colour,
+                  window_function: window_function,
+                  format: format_spectrogram
+              }
+          )
+      ).to eq cached_spectrogram_file_name_given_parameters_nssr
+
+    end
+
+    it 'creates the correct name with non standard original sample rate and a standard requested sample rate' do
+
+      expect(
+          spectrogram_cache.file_name(
+              {
+                  uuid: uuid,
+                  start_offset: start_offset,
+                  end_offset: end_offset,
+                  channel: channel,
+                  sample_rate: sample_rate,
+                  original_sample_rate: non_standard_sample_rate,
+                  window: window,
+                  colour: colour,
+                  window_function: window_function,
+                  format: format_spectrogram
+              }
+          )
+      ).to eq cached_spectrogram_file_name_given_parameters
+
+    end
+
+    it 'fails validation with non-standard sample rate different from specified original sample rate' do
+
+      expect {
+        spectrogram_cache.file_name(
+            {
+                uuid: uuid,
+                start_offset: start_offset,
+                end_offset: end_offset,
+                channel: channel,
+                sample_rate: 75757,
+                original_sample_rate: 12345,
+                window: window,
+                colour: colour,
+                window_function: window_function,
+                format: format_spectrogram
+            }
+        )
+      }.to raise_error(ArgumentError)
+
+    end
+
+    it 'fails validation with non standard sample rate and original sample rate not supplied' do
+
+      expect {
+        spectrogram_cache.file_name(
+            {
+                uuid: uuid,
+                start_offset: start_offset,
+                end_offset: end_offset,
+                channel: channel,
+                sample_rate: 87,
+                window: window,
+                colour: colour,
+                window_function: window_function,
+                format: format_spectrogram
+            }
+        )
+      }.to raise_error(ArgumentError)
+
+    end
+
+  end
+
+
+
+
   it 'creates the correct partial path' do
     expect(spectrogram_cache.partial_path(opts)).to eq partial_path
   end

@@ -152,8 +152,9 @@ module BawWorkers
         fail ArgumentError, "#{validate_msg_base} sample_rate. #{provided}" unless opts.include? :sample_rate
 
         # sample rate must be either the native sample rate or on the list of allowed sample rates
-        unless BawAudioTools::AudioBase.valid_sample_rates.include?(opts[:sample_rate].to_i) || opts[:sample_rate].to_i == opts[:original_sample_rate].to_i
-            fail ArgumentError, "sample_rate must be in #{BawAudioTools::AudioBase.valid_sample_rates} or the original sample rate of #{opts[:original_sample_rate]}: #{opts[:sample_rate]}. #{provided}"
+        valid_sample_rates = BawAudioTools::AudioBase.valid_sample_rates(opts[:format], opts[:original_sample_rate])
+        unless valid_sample_rates.include?(opts[:sample_rate].to_i)
+            fail ArgumentError, "sample_rate (#{opts[:sample_rate]}) must be in #{valid_sample_rates}. #{provided}"
         end
       end
 
