@@ -254,18 +254,17 @@ module BawAudioTools
 
     # Creates a new audio file from source path in target path, modified according to the
     # parameters in modify_parameters. Possible options for modify_parameters:
-    # :start_offset :end_offset :channel :sample_rate :format
+    # :start_offset :end_offset :channel :sample_rate
     def modify(source, target, modify_parameters = {})
       fail ArgumentError, "Source and Target are the same file: #{target}" if source == target
       fail Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.exists? source
       fail Exceptions::FileAlreadyExistsError, "Target exists: #{target}" if File.exists? target
-
       fail Exceptions::InvalidTargetMediaTypeError, 'Cannot convert to .wac' if File.extname(target) == '.wac'
 
       source_info = info(source)
 
       check_offsets(source_info, @audio_defaults.min_duration_seconds, @audio_defaults.max_duration_seconds, modify_parameters)
-      check_sample_rate(target, modify_parameters)
+      check_sample_rate(target, modify_parameters, source_info)
 
       modify_worker(source_info, source, target, modify_parameters)
     end
@@ -313,18 +312,76 @@ module BawAudioTools
       fail Exceptions::FileEmptyError, "#{target}" if File.size(target) < 1
     end
 
-    def check_sample_rate(target, modify_parameters = {})
-      # enforce sample rates for all formats, including wav
-      # must be 8, 11.025, 12, 16, 22.05, 24, 32, 44.1, 48 khz
+
+    # Checks whether the sample rate in modify_parameters is allowed
+    # @param [String] target  the path to the target file (used to determine format and for error reporting)
+    # @param [Hash] modify_parameters values specifying how to modify the audio file, including :sample_rate and optionally :original_sample_rate
+    # @param [Array] source_info (optional) the metadata of the source file
+    # Checks the sample rate specified is in the list of standard sample rates, plus the sample rate of the original file,
+    # minus sample rates not supported by the format.
+    # Original file sample rate is determined either from the modify_parameters hash (originally coming from the audio recording record)
+    # or the source_info hash. If both are supplied, they must be the same value or an exception is thrown    #
+    def check_sample_rate(target, modify_parameters = {}, source_info = {})
+
       if modify_parameters.include?(:sample_rate)
         sample_rate = modify_parameters[:sample_rate].to_i
-        fail Exceptions::InvalidSampleRateError, "Sample rate #{sample_rate} requested for " +
-            "#{File.extname(target)} not in #{AudioBase.valid_sample_rates}." unless AudioBase.valid_sample_rates.include?(sample_rate)
+
+        # source_info sample_rate_hertz should match modify_parameters original_sample_rate if both are supplied
+        if source_info.include?(:sample_rate) &&
+            modify_parameters.key?(:original_sample_rate) &&
+            source_info[:sample_rate].to_i != modify_parameters[:original_sample_rate].to_i
+          fail Exceptions::InvalidSampleRateError, "Sample rate of audio file #{source_info[:sample_rate]} " +
+              "not equal to given original sample rate #{modify_parameters[:original_sample_rate]}"
+        end
+
+        if source_info.include?(:sample_rate)
+          original_sample_rate = source_info[:sample_rate].to_i
+        elsif modify_parameters.key?(:original_sample_rate)
+          original_sample_rate = modify_parameters[:original_sample_rate]
+        else
+          original_sample_rate = nil
+        end
+
+        format = File.extname(target)
+        format[0] = '' #remove dot character from extension
+
+        valid_sample_rates = AudioBase.valid_sample_rates(format, original_sample_rate)
+
+        unless valid_sample_rates.include?(sample_rate)
+          fail Exceptions::InvalidSampleRateError, "Sample rate #{sample_rate} requested for " +
+              "#{format} not in #{valid_sample_rates}"
+        end
+
       end
     end
 
-    def self.valid_sample_rates
-      [8000, 11025, 12000, 16000, 22050, 24000, 32000, 44100, 48000]
+    # returns a list of valid target sample rates for the given target format and source sample rate
+    # @param [symbol] format optional if omitted will just give the standard sample rates
+    # @param [int] source_sample_rate optional the sample rate to dynamically include in the valid sample rates
+    def self.valid_sample_rates(format = nil, source_sample_rate = nil)
+
+      formats_valid_sample_rates = {
+          mp3: [8000, 12000, 11025, 16000, 24000, 22050, 32000, 48000, 44100]
+      }
+
+      sample_rates = AudioBase.standard_sample_rates
+      if source_sample_rate && !sample_rates.include?(source_sample_rate)
+        sample_rates.push(source_sample_rate.to_i)
+      end
+
+      # if the target format is in the hash of whitelisted sample rates,
+      # intersect those target format valid sample rates with the standard sample rates
+      if format && formats_valid_sample_rates.has_key?(format.to_sym)
+        sample_rates = sample_rates & formats_valid_sample_rates[format.to_sym]
+      end
+
+      sample_rates
+    end
+
+    # a list of standard sample rates, defined so that the number of possible
+    # cached files is reduced
+    def self.standard_sample_rates
+      [8000, 11025, 12000, 16000, 22050, 24000, 32000, 44100, 48000, 96000]
     end
 
     def execute(cmd)

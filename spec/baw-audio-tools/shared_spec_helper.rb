@@ -52,6 +52,11 @@ shared_context 'test audio files' do
   let(:audio_file_stereo_channels) { 2 }
   let(:audio_file_stereo_duration_seconds) { 70 }
 
+  let(:audio_file_7777hz) { File.join(audio_dir, 'test-audio-stereo-7777hz.ogg') }
+  let(:audio_file_7777hz_media_type) { Mime::Type.lookup('audio/ogg') }
+  let(:audio_file_7777hz_sample_rate) { 7777 }
+  let(:audio_file_7777hz_channels) { 2 }
+  let(:audio_file_7777hz_duration_seconds) { 70 }
 
 
   let(:audio_file_empty) { File.join(audio_dir, 'test-audio-empty.ogg') }
