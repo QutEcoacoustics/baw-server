@@ -77,13 +77,17 @@ module Api
     def valid_options(audio_recording, available_formats)
       {
           # all formats, even wav, must adhere to this list
-          valid_sample_rates: valid_sample_rates,
           channels: [*0..audio_recording.channels],
           #statuses: AudioRecording::AVAILABLE_STATUSES,
           audio: {
               duration_max: @default_audio.max_duration_seconds,
               duration_min: @default_audio.min_duration_seconds,
-              formats: available_formats.audio
+              formats: available_formats.audio.map do | format |
+                {
+                    name: format,
+                    valid_sample_rates: BawAudioTools::AudioBase.valid_sample_rates(format, audio_recording[:sample_rate_hertz])
+                }
+              end
           },
           image: {
               spectrogram: {
@@ -93,6 +97,7 @@ module Api
                   window_sizes: window_options,
                   window_functions: window_function_options,
                   colours: colour_options,
+                  valid_sample_rates: BawAudioTools::AudioBase.valid_sample_rates(nil, audio_recording[:sample_rate_hertz])
               }
           },
           text: {
@@ -138,7 +143,14 @@ module Api
     # @param [Hash] current
     # @param [Hash] modified_params
     def api_response(audio_recording, original, current, modified_params)
-      available_formats = Settings.available_formats
+      available_formats = Settings.available_formats.dup
+
+      # remove available formats for which the specified sample rate is not valid
+      if modified_params.key?(:sample_rate)
+        available_formats["audio"] = available_formats["audio"].select do | format |
+          BawAudioTools::AudioBase.valid_sample_rates(format, audio_recording[:sample_rate_hertz]).include?(modified_params[:sample_rate].to_i)
+        end
+      end
 
       available = available_request_details(audio_recording, current, modified_params, available_formats)
 

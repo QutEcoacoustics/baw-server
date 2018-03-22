@@ -541,9 +541,19 @@ def find_unexpected_entries(parent, hash, remaining_to_match, not_included)
   not_included
 end
 
-def check_hash_matches(expected, actual)
+# Checks each of an array of expected json paths against an actual json object
+# @param [Array] expected
+# @param [String] actual
+# @param [Array] unexpected. Any unexpected json paths that include an. Note: Any json paths
+#                            in actual that don't include an array index are checked automatically,
+#                            but arrays are skipped.
+def check_hash_matches(expected, actual, unexpected_array_paths = [])
   expected.each do |expected_json_path|
     expect(actual).to have_json_path(expected_json_path), "Expected #{expected_json_path} in #{actual}"
+  end
+
+  unexpected_array_paths.each do | unexpected_json_path |
+    expect(actual).not_to have_json_path(unexpected_json_path), "Unexpected #{unexpected_json_path} in #{actual}"
   end
 
   parsed = JsonSpec::Helpers::parse_json(actual)
@@ -581,8 +591,8 @@ def create_media_options(audio_recording, test_audio_file = nil)
   options[:datetime_with_offset] = audio_recording.recorded_date
   options[:uuid] = audio_recording.uuid
   options[:id] = audio_recording.id
-  options[:start_offset] = start_offset unless start_offset.blank?
-  options[:end_offset] = end_offset unless end_offset.blank?
+  options[:start_offset] = start_offset unless (!defined? start_offset) || start_offset.blank?
+  options[:end_offset] = end_offset unless (!defined? start_offset) || end_offset.blank?
 
   original_possible_paths = audio_original.possible_paths(options)
 
