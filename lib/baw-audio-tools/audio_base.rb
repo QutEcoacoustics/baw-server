@@ -361,11 +361,11 @@ module BawAudioTools
     def self.valid_sample_rates(format = nil, source_sample_rate = nil)
 
       formats_valid_sample_rates = {
-          mp3: [44100, 48000, 32000, 22050, 24000, 16000, 11025, 12000, 8000]
+          mp3: [8000, 8000, 12000, 11025, 16000, 24000, 22050, 32000, 48000, 44100]
       }
 
       sample_rates = AudioBase.standard_sample_rates
-      if source_sample_rate
+      if source_sample_rate && !sample_rates.include?(source_sample_rate)
         sample_rates.push(source_sample_rate.to_i)
       end
 
