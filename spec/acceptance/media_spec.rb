@@ -18,10 +18,6 @@ resource 'Media' do
 
   create_entire_hierarchy
 
-
-
-
-
   after(:each) do
     remove_media_dirs
   end
@@ -536,7 +532,6 @@ resource 'Media' do
 
   describe 'requesting non-standard sample rates' do
 
-
     let(:audio_file_mono2) {
       {
           source: File.join(File.dirname(__FILE__), '..', 'media_tools', 'test-audio-stereo-7777hz.ogg'),
@@ -610,7 +605,6 @@ resource 'Media' do
       )
     end
 
-
     get '/audio_recordings/:audio_recording_id/media.:format' do
       standard_media_parameters
       let(:authentication_token) { reader_token }
@@ -637,7 +631,6 @@ resource 'Media' do
       let(:sample_rate) { 7777 }
 
       let(:raw_post) { params.to_json }
-
 
       example 'MEDIA (json), as reader with non-standard sample rate which is original sample rate', document: false do
         do_request
@@ -702,7 +695,6 @@ resource 'Media' do
 
       end
     end
-
 
     get '/audio_recordings/:audio_recording_id/media.:format' do
       parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
