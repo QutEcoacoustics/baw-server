@@ -113,7 +113,14 @@ def media_request_options(http_method, description, expected_status, opts = {})
   opts.reverse_merge!({document: true})
 
   example "#{http_method} #{description} - #{expected_status}", document: opts[:document] do
-    options = create_media_options(audio_recording)
+
+    if opts[:dont_copy_test_audio]
+      audio_file = nil
+    else
+      audio_file = audio_file_mono
+    end
+
+    options = create_media_options(audio_recording, audio_file)
     request = do_request
 
     opts.merge!(
@@ -409,7 +416,8 @@ def acceptance_checks_media(opts = {})
     actual_present = opts[:actual_response_headers].keys - (opts[:actual_response_headers].keys - not_allowed_headers)
     expect(opts[:actual_response_headers].keys).to_not include(*not_allowed_headers), "These headers were present when they should not be #{actual_present} #{opts[:msg]}"
   elsif opts[:actual_response_headers].keys.include?('X-Error-Type')
-    expected_headers = MediaPoll::HEADERS_EXPOSED - [MediaPoll::HEADER_KEY_ELAPSED_TOTAL, MediaPoll::HEADER_KEY_ELAPSED_PROCESSING, MediaPoll::HEADER_KEY_ELAPSED_WAITING]
+    # only use default expected headers for error if expected headers were not specified in opts
+    expected_headers = opts[:expected_headers] ? opts[:expected_headers] : MediaPoll::HEADERS_EXPOSED - [MediaPoll::HEADER_KEY_ELAPSED_TOTAL, MediaPoll::HEADER_KEY_ELAPSED_PROCESSING, MediaPoll::HEADER_KEY_ELAPSED_WAITING]
     expect(opts[:actual_response_headers].keys).to include(*expected_headers), "Missing headers: #{expected_headers - opts[:actual_response_headers].keys} #{opts[:msg]}"
   else
     expect(opts[:actual_response_headers].keys).to include(*MediaPoll::HEADERS_EXPOSED), "Missing headers: #{MediaPoll::HEADERS_EXPOSED - opts[:actual_response_headers].keys} #{opts[:msg]}"
@@ -533,9 +541,19 @@ def find_unexpected_entries(parent, hash, remaining_to_match, not_included)
   not_included
 end
 
-def check_hash_matches(expected, actual)
+# Checks each of an array of expected json paths against an actual json object
+# @param [Array] expected
+# @param [String] actual
+# @param [Array] unexpected. Any unexpected json paths that include an. Note: Any json paths
+#                            in actual that don't include an array index are checked automatically,
+#                            but arrays are skipped.
+def check_hash_matches(expected, actual, unexpected_array_paths = [])
   expected.each do |expected_json_path|
     expect(actual).to have_json_path(expected_json_path), "Expected #{expected_json_path} in #{actual}"
+  end
+
+  unexpected_array_paths.each do | unexpected_json_path |
+    expect(actual).not_to have_json_path(unexpected_json_path), "Unexpected #{unexpected_json_path} in #{actual}"
   end
 
   parsed = JsonSpec::Helpers::parse_json(actual)
@@ -565,7 +583,7 @@ def remove_media_dirs
   analysis_cache.existing_dirs.each { |dir| FileUtils.rm_r dir }
 end
 
-def create_media_options(audio_recording)
+def create_media_options(audio_recording, test_audio_file = nil)
   options = {}
   options[:datetime] = audio_recording.recorded_date
   options[:original_format] = File.extname(audio_recording.original_file_name) unless audio_recording.original_file_name.blank?
@@ -573,13 +591,16 @@ def create_media_options(audio_recording)
   options[:datetime_with_offset] = audio_recording.recorded_date
   options[:uuid] = audio_recording.uuid
   options[:id] = audio_recording.id
-  options[:start_offset] = start_offset unless start_offset.blank?
-  options[:end_offset] = end_offset unless end_offset.blank?
+  options[:start_offset] = start_offset unless (!defined? start_offset) || start_offset.blank?
+  options[:end_offset] = end_offset unless (!defined? start_offset) || end_offset.blank?
 
   original_possible_paths = audio_original.possible_paths(options)
 
-  FileUtils.mkpath File.dirname(original_possible_paths.first)
-  FileUtils.cp audio_file_mono, original_possible_paths.first
+  if (test_audio_file)
+    FileUtils.mkpath File.dirname(original_possible_paths.first)
+    FileUtils.cp test_audio_file, original_possible_paths.first
+  end
+
 
   options
 end
