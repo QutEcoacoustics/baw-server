@@ -4,6 +4,13 @@
 
 _nothing_
 
+## [Release 2.0.1](https://github.com/QutBioacoustics/baw-server/releases/tag/2.0.1)
+
+- 2018-03-27
+  - Media defaults to native sample rate when filtering out invalid available objects
+    See [#363](https://github.com/QutEcoacoustics/baw-server/pull/363)
+
+
 ## [Release 2.0.0](https://github.com/QutBioacoustics/baw-server/releases/tag/2.0.0)
 
 - 2018-03-26
