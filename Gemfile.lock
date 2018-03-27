@@ -10,17 +10,17 @@ GIT
 
 GIT
   remote: https://github.com/QutBioacoustics/baw-audio-tools.git
-  revision: d8b0f4e2796c0c5ba5c2356b029a4019a9db8002
-  ref: d8b0f4e2796c0c5ba5c2356b029a4019a9db8002
+  revision: 5ec1af05280e43b6827ddc71f50593c217b3e373
+  ref: 5ec1af05280e43b6827ddc71f50593c217b3e373
   branch: master
   specs:
-    baw-audio-tools (0.4.0)
+    baw-audio-tools (0.4.1)
       activesupport (>= 3.2)
 
 GIT
   remote: https://github.com/QutBioacoustics/baw-workers.git
-  revision: 54f28d351a5ba7ff0cfab45bce6ba8d645a9599b
-  ref: 54f28d351a5ba7ff0cfab45bce6ba8d645a9599b
+  revision: 78b90d619aa81d9cb344ad9bced6ca2ef66f9a54
+  ref: 78b90d619aa81d9cb344ad9bced6ca2ef66f9a54
   branch: master
   specs:
     baw-workers (0.5.0)
@@ -364,7 +364,7 @@ GEM
       vegas (~> 0.1.2)
     resque-status (0.5.0)
       resque (~> 1.19)
-    resque_solo (0.3.0)
+    resque_solo (0.4.0)
       resque (~> 1.25)
     role_model (0.8.2)
     rspec (3.5.0)
