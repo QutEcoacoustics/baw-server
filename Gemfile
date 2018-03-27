@@ -135,7 +135,7 @@ gem 'raddocs', '~> 1.0.0'
 # MEDIA
 # -------------------------------------
 # set to a specific commit when releasing to master branch
-gem 'baw-audio-tools', git: 'https://github.com/QutBioacoustics/baw-audio-tools.git', branch: :master, ref: 'd8b0f4e2796c0c5ba5c2356b029a4019a9db8002'
+gem 'baw-audio-tools', git: 'https://github.com/QutBioacoustics/baw-audio-tools.git', branch: :master, ref: '5ec1af05280e43b6827ddc71f50593c217b3e373'
 gem 'rack-rewrite', '~> 1.5.1'
 
 # ASYNC JOBS
@@ -144,7 +144,7 @@ gem 'resque', '~> 1.25.2'
 gem 'resque-job-stats', git: 'https://github.com/echannel/resque-job-stats.git', branch: :master, ref: '8932c036ae'
 gem 'resque-status', '~> 0.5.0'
 # set to a specific commit when releasing to master branch
-gem 'baw-workers', git: 'https://github.com/QutBioacoustics/baw-workers.git', branch: :master, ref: '54f28d351a5ba7ff0cfab45bce6ba8d645a9599b'
+gem 'baw-workers', git: 'https://github.com/QutBioacoustics/baw-workers.git', branch: :master, ref: '78b90d619aa81d9cb344ad9bced6ca2ef66f9a54'
 
 # Other Gems
 # This was needed at some point to boot rails. I think we can remove this dependency later after some gem upgrades

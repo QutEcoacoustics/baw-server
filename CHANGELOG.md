@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+_nothing_
+
+## [Release 2.0.0](https://github.com/QutBioacoustics/baw-server/releases/tag/2.0.0)
+
+- 2018-03-26
+  - Adds support for more sample rates in media generation. Now the recording's native sample rate is always allowed,
+    and support for returning 96 kHz files has been added. Note, this change requires a breaking change in the Media
+    REST API, hence the major version bump. We have reviewed our code and have found no code that was dependent on the
+    changes so we anticipate no breakage. Special mention to [@peichins](https://github.com/peichins) for the hard work
+    required for this change.
+    See [#351](https://github.com/QutEcoacoustics/baw-server/issues/351)
+
+
 ## [Release 1.6.2](https://github.com/QutBioacoustics/baw-server/releases/tag/1.6.2)
 
 - 2018-03-13

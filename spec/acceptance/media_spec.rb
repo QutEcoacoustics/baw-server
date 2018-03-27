@@ -32,7 +32,11 @@ resource 'Media' do
   let(:audio_file_mono_channels) { 1 }
   let(:audio_file_mono_duration_seconds) { 70 }
 
-  let(:audio_original) { BawWorkers::Storage::AudioOriginal.new(BawWorkers::Settings.paths.original_audios) }
+  let(:audio_original) {
+    puts "audio original path"
+    puts BawWorkers::Settings.paths.original_audios
+    ao = BawWorkers::Storage::AudioOriginal.new(BawWorkers::Settings.paths.original_audios)
+  }
   let(:audio_cache) { BawWorkers::Storage::AudioCache.new(BawWorkers::Settings.paths.cached_audios) }
   let(:spectrogram_cache) { BawWorkers::Storage::SpectrogramCache.new(BawWorkers::Settings.paths.cached_spectrograms) }
   let(:analysis_cache) { BawWorkers::Storage::AnalysisCache.new(BawWorkers::Settings.paths.cached_analysis_jobs) }
@@ -224,12 +228,16 @@ resource 'Media' do
           'data/available/text/json/extension',
           'data/available/text/json/url',
           'data/options',
-          'data/options/valid_sample_rates',
           'data/options/channels',
           'data/options/audio',
           'data/options/audio/duration_max',
           'data/options/audio/duration_min',
           'data/options/audio/formats',
+          # there are 5 valid sample formats, but just check the first and last
+          'data/options/audio/formats/0/name',
+          'data/options/audio/formats/0/valid_sample_rates',
+          'data/options/audio/formats/4/name',
+          'data/options/audio/formats/4/valid_sample_rates',
           'data/options/image',
           'data/options/image/spectrogram',
           'data/options/image/spectrogram/duration_max',
@@ -239,8 +247,94 @@ resource 'Media' do
           'data/options/image/spectrogram/window_functions',
           'data/options/image/spectrogram/colours',
           'data/options/image/spectrogram/colours/g',
+          'data/options/image/spectrogram/valid_sample_rates',
           'data/options/text',
           'data/options/text/formats',
+      ]
+
+      # check that audio formats options has the right number of entries
+      unexpected_json_paths = [
+          'data/options/audio/formats/5/'
+      ]
+
+      check_hash_matches(json_paths, response_body, unexpected_json_paths)
+
+      mp3_valid_sample_rates = (JsonSpec::Helpers::parse_json(response_body)["data"]["options"]["audio"]["formats"].select { | vsr | vsr["name"] == 'mp3'})[0]["valid_sample_rates"]
+      wav_valid_sample_rates = (JsonSpec::Helpers::parse_json(response_body)["data"]["options"]["audio"]["formats"].select { | vsr | vsr["name"] == 'wav'})[0]["valid_sample_rates"]
+
+      expect(mp3_valid_sample_rates).to eq([8000, 11025, 12000, 16000, 22050, 24000, 32000, 44100, 48000])
+      expect(wav_valid_sample_rates).to eq([8000, 11025, 12000, 16000, 22050, 24000, 32000, 44100, 48000, 96000])
+
+    end
+  end
+
+  get '/audio_recordings/:audio_recording_id/media.:format?sample_rate=:sample_rate' do
+    parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
+    parameter :format, 'Required format of the audio segment (options: json|mp3|flac|webm|ogg|wav|png). Use json if requesting metadata', required: true
+
+    let(:raw_post) { params.to_json }
+
+    let(:authentication_token) { reader_token }
+    let(:format) { 'json' }
+    let(:sample_rate) { 96000 }
+
+    example 'MEDIA (as reader)json 96000hz', document: true do
+      do_request
+      expect(status).to eq(200), "expected status #{200} but was #{status}. Response body was #{response_body}"
+
+      # no data/options when modified params are supplied
+
+      json_paths = [
+          'meta',
+          'meta/status',
+          'meta/message',
+          'data',
+          'data/recording',
+          'data/recording/id',
+          'data/recording/uuid',
+          'data/recording/recorded_date',
+          'data/recording/duration_seconds',
+          'data/recording/sample_rate_hertz',
+          'data/recording/channel_count',
+          'data/recording/media_type',
+          'data/common_parameters',
+          'data/common_parameters/start_offset',
+          'data/common_parameters/end_offset',
+          'data/common_parameters/audio_event_id',
+          'data/common_parameters/channel',
+          'data/common_parameters/sample_rate',
+          'data/available',
+          'data/available/audio',
+          'data/available/audio/webm',
+          'data/available/audio/webm/media_type',
+          'data/available/audio/webm/extension',
+          'data/available/audio/webm/url',
+          'data/available/audio/ogg',
+          'data/available/audio/ogg/media_type',
+          'data/available/audio/ogg/extension',
+          'data/available/audio/ogg/url',
+          'data/available/audio/flac',
+          'data/available/audio/flac/media_type',
+          'data/available/audio/flac/extension',
+          'data/available/audio/flac/url',
+          'data/available/audio/wav',
+          'data/available/audio/wav/media_type',
+          'data/available/audio/wav/extension',
+          'data/available/audio/wav/url',
+          'data/available/image',
+          'data/available/image/png',
+          'data/available/image/png/window_size',
+          'data/available/image/png/window_function',
+          'data/available/image/png/colour',
+          'data/available/image/png/ppms',
+          'data/available/image/png/media_type',
+          'data/available/image/png/extension',
+          'data/available/image/png/url',
+          'data/available/text',
+          'data/available/text/json',
+          'data/available/text/json/media_type',
+          'data/available/text/json/extension',
+          'data/available/text/json/url'
       ]
 
       check_hash_matches(json_paths, response_body)
@@ -432,6 +526,195 @@ resource 'Media' do
             document: document_media_requests,
             expected_response_content_type: 'image/png'
         })
+  end
+
+  describe 'requesting non-standard sample rates' do
+
+    let(:audio_file_mono2) {
+      {
+          source: File.join(File.dirname(__FILE__), '..', 'media_tools', 'test-audio-stereo-7777hz.ogg'),
+          media_type: Mime::Type.lookup('audio/ogg'),
+          sample_rate: 7777,
+          channels: 2,
+          duration_seconds: 70
+      }
+    }
+
+    before(:each) do
+        audio_recording.update_attribute(:sample_rate_hertz, 7777)
+        # create_media_options creates the options for testing, but also copies the actual file
+        # so we need to call it here again to copy the correct file
+        create_media_options audio_recording, audio_file_mono2[:source]
+    end
+
+    # non-standard sample rate that is the original sample rate
+    get '/audio_recordings/:audio_recording_id/media.:format?start_offset=:start_offset&end_offset=:end_offset&sample_rate=:sample_rate' do
+      standard_media_parameters
+      let(:authentication_token) { reader_token }
+      let(:format) { 'wav' }
+      let(:sample_rate) { '7777' }
+
+      media_request_options(
+          :get,
+          'MEDIA (audio get request wav with non-standard original sample rate as reader)',
+          :ok,
+          {
+              dont_copy_test_audio: true,
+              expected_response_content_type: 'audio/wav'
+          }
+      )
+    end
+
+    # non-standard sample rate should fail if it is not the original sample rate
+    get '/audio_recordings/:audio_recording_id/media.:format?start_offset=:start_offset&end_offset=:end_offset&sample_rate=:sample_rate' do
+      standard_media_parameters
+      let(:authentication_token) { reader_token }
+      let(:format) { 'wav' }
+      let(:sample_rate) { '7776' }
+
+      media_request_options(
+          :get,
+          'MEDIA (audio get request wav with non-standard and non-original sample rate as reader)',
+          :unprocessable_entity,
+          {
+              expected_response_content_type: 'audio/wav',
+              expected_response_has_content: false,
+              expected_headers: []
+          }
+      )
+    end
+
+    # non-standard sample rate should fail for mp3 even if it is the original sample rate
+    get '/audio_recordings/:audio_recording_id/media.:format?start_offset=:start_offset&end_offset=:end_offset&sample_rate=:sample_rate' do
+      standard_media_parameters
+      let(:authentication_token) { reader_token }
+      let(:format) { 'mp3' }
+      let(:sample_rate) { '7777' }
+
+      media_request_options(
+          :get,
+          'MEDIA (audio get request mp3 with non-standard original sample rate as reader)',
+          :unprocessable_entity,
+          {
+              expected_response_content_type: 'audio/mpeg',
+              expected_response_has_content: false,
+              expected_headers: []
+          }
+      )
+    end
+
+    get '/audio_recordings/:audio_recording_id/media.:format' do
+      standard_media_parameters
+      let(:authentication_token) { reader_token }
+      let(:format) { 'json' }
+      parameter :sample_rate
+      let(:sample_rate) { '1234' }
+      standard_request_options(
+          :get,
+          'MEDIA (json), as reader with non-standard non-original sample rate)',
+          :unprocessable_entity,
+          {
+              expected_response_content_type: 'application/json',
+              expected_json_path: ['meta/error'],
+              invalid_content: ['"available":{"audio"']
+          }
+      )
+    end
+
+    get '/audio_recordings/:audio_recording_id/media.:format?sample_rate=:sample_rate' do
+      parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
+      parameter :format, 'Required format of the audio segment (options: json|mp3|flac|webm|ogg|wav|png). Use json if requesting metadata', required: true
+      let(:authentication_token) { reader_token }
+      let(:format) { 'json' }
+      let(:sample_rate) { 7777 }
+
+      let(:raw_post) { params.to_json }
+
+      example 'MEDIA (json), as reader with non-standard sample rate which is original sample rate', document: false do
+        do_request
+        expect(status).to eq(200), "expected status #{200} but was #{status}. Response body was #{response_body}"
+
+        # no data/options when modified params are supplied
+
+        json_paths = [
+            'meta',
+            'meta/status',
+            'meta/message',
+            'data',
+            'data/recording',
+            'data/recording/id',
+            'data/recording/uuid',
+            'data/recording/recorded_date',
+            'data/recording/duration_seconds',
+            'data/recording/sample_rate_hertz',
+            'data/recording/channel_count',
+            'data/recording/media_type',
+            'data/common_parameters',
+            'data/common_parameters/start_offset',
+            'data/common_parameters/end_offset',
+            'data/common_parameters/audio_event_id',
+            'data/common_parameters/channel',
+            'data/common_parameters/sample_rate',
+            'data/available',
+            'data/available/audio',
+            'data/available/audio/webm',
+            'data/available/audio/webm/media_type',
+            'data/available/audio/webm/extension',
+            'data/available/audio/webm/url',
+            'data/available/audio/ogg',
+            'data/available/audio/ogg/media_type',
+            'data/available/audio/ogg/extension',
+            'data/available/audio/ogg/url',
+            'data/available/audio/flac',
+            'data/available/audio/flac/media_type',
+            'data/available/audio/flac/extension',
+            'data/available/audio/flac/url',
+            'data/available/audio/wav',
+            'data/available/audio/wav/media_type',
+            'data/available/audio/wav/extension',
+            'data/available/audio/wav/url',
+            'data/available/image',
+            'data/available/image/png',
+            'data/available/image/png/window_size',
+            'data/available/image/png/window_function',
+            'data/available/image/png/colour',
+            'data/available/image/png/ppms',
+            'data/available/image/png/media_type',
+            'data/available/image/png/extension',
+            'data/available/image/png/url',
+            'data/available/text',
+            'data/available/text/json',
+            'data/available/text/json/media_type',
+            'data/available/text/json/extension',
+            'data/available/text/json/url'
+        ]
+
+        check_hash_matches(json_paths, response_body)
+
+      end
+    end
+
+    get '/audio_recordings/:audio_recording_id/media.:format' do
+      parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
+      parameter :format, 'Required format of the audio segment (options: json|mp3|flac|webm|ogg|wav|png). Use json if requesting metadata', required: true
+
+      let(:raw_post) { params.to_json }
+      let(:authentication_token) { reader_token }
+      let(:format) { 'json' }
+
+      example 'MEDIA (as reader) checking json valid sample rates for audio recording with non-standard original sample rate - 200', document: true do
+        do_request
+        expect(status).to eq(200), "expected status #{200} but was #{status}. Response body was #{response_body}"
+
+        mp3_valid_sample_rates = (JsonSpec::Helpers::parse_json(response_body)["data"]["options"]["audio"]["formats"].select { | vsr | vsr["name"] == 'mp3'})[0]["valid_sample_rates"]
+        wav_valid_sample_rates = (JsonSpec::Helpers::parse_json(response_body)["data"]["options"]["audio"]["formats"].select { | vsr | vsr["name"] == 'wav'})[0]["valid_sample_rates"]
+
+        expect(mp3_valid_sample_rates).to eq([8000, 11025, 12000, 16000, 22050, 24000, 32000, 44100, 48000])
+        expect(wav_valid_sample_rates).to eq([8000, 11025, 12000, 16000, 22050, 24000, 32000, 44100, 48000, 96000, 7777])
+
+      end
+    end
+
   end
 
   # head requests
@@ -705,7 +988,7 @@ resource 'Media' do
     standard_request_options(:get, 'MEDIA (as reader invalid sample rate)', :unprocessable_entity,
                              {
                                  expected_json_path: 'meta/error/details',
-                                 response_body_content: 'The request could not be understood: sample_rate parameter (22050user_token=ANAUTHTOKEN) must be valid'
+                                 response_body_content: 'The request could not be understood: sample_rate parameter (22050user_token=ANAUTHTOKEN) must be an integer'
                              })
   end
 
@@ -750,7 +1033,7 @@ resource 'Media' do
       example ':get MEDIA (audio get request mp3 as reader with shallow path process using resque)', document: document_media_requests do
         remove_media_dirs
 
-        options = create_media_options(audio_recording)
+        options = create_media_options(audio_recording, audio_file_mono)
 
         queue_name = Settings.actions.media.queue
 
@@ -877,7 +1160,7 @@ resource 'Media' do
       # the standard media route only allows short recordings, purposely mock a long duration to make sure long
       # original recordings succeed.
       audio_recording.update_attribute(:duration_seconds, 3600) # one hour
-      create_media_options(audio_recording)
+      create_media_options(audio_recording, audio_file_mono)
     end
 
     after(:each) do
@@ -939,7 +1222,6 @@ resource 'Media' do
       standard_request_options(:get, 'ORIGINAL (as owner token)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
     end
 
-
     get '/audio_recordings/:audio_recording_id/original' do
       parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
 
@@ -969,5 +1251,7 @@ resource 'Media' do
             context.full_file_result(context, opts)
           })
     end
+
   end
+
 end

@@ -6,8 +6,6 @@ module Creation
 
       prepare_project
 
-
-
       prepare_permission_owner
       prepare_permission_writer
       prepare_permission_reader
@@ -16,9 +14,6 @@ module Creation
       prepare_script
 
       prepare_site
-
-
-
 
       prepare_audio_recording
       prepare_bookmark
@@ -36,10 +31,6 @@ module Creation
 
       prepare_dataset_item
 
-
-
-
-
     end
 
     # similar to create entire hierarchy
@@ -47,11 +38,11 @@ module Creation
     # So, it allows testing whether the get methods are correctly handling results that
     # the owner/reader/writer does not have read access to.
     # Here we create:
-    #   - A new user, who will be the owner/creator of the project
-    #   - project with admin as creator called no_access_project. This project has no permissions applied to it
-    #   - site under that project called no_access_site
-    #   - audio recording under that site called no_access_audio_recording
-    #   - 1 dataset item under that audio_recording called no_access_dataset_item
+    #   - A new user, creator_2, who will be the owner/creator of the project
+    #   - project with creator_2 as creator called no_access_project. This project has no permissions applied to it
+    #   - site under that project called no_access_site, with creator_2 as creator
+    #   - audio recording under that site called no_access_audio_recording, with creator_2 as creator
+    #   - 1 dataset item under that audio_recording called no_access_dataset_item, with admin as creator
 
     def create_no_access_hierarchy
 
@@ -226,7 +217,7 @@ module Creation
       end
 
       def create_audio_recording(creator, uploader, site)
-        FactoryGirl.create(:audio_recording, :status_ready, creator: creator, uploader: uploader, site: site)
+        FactoryGirl.create(:audio_recording, :status_ready, creator: creator, uploader: uploader, site: site, sample_rate_hertz: 44100)
       end
 
       def create_bookmark(creator, audio_recording)
