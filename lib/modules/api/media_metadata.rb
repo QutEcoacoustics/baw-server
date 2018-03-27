@@ -143,22 +143,21 @@ module Api
     # @param [Hash] current
     # @param [Hash] modified_params
     def api_response(audio_recording, original, current, modified_params)
-      available_formats = Settings.available_formats.dup
 
       # remove available formats for which the specified sample rate is not valid
-      if modified_params.key?(:sample_rate)
-        available_formats["audio"] = available_formats["audio"].select do | format |
-          BawAudioTools::AudioBase.valid_sample_rates(format, audio_recording[:sample_rate_hertz]).include?(modified_params[:sample_rate].to_i)
-        end
+      # if no sample rate is specified, remove formats that don't support the native sample rate
+      filtered_available_formats = Settings.available_formats.dup
+      filter_by_sample_rate = modified_params.key?(:sample_rate) ? modified_params[:sample_rate].to_i : audio_recording[:sample_rate_hertz].to_i
+      filtered_available_formats["audio"] = filtered_available_formats["audio"].select do | format |
+        BawAudioTools::AudioBase.valid_sample_rates(format, audio_recording[:sample_rate_hertz]).include?(filter_by_sample_rate)
       end
 
-      available = available_request_details(audio_recording, current, modified_params, available_formats)
-
+      available = available_request_details(audio_recording, current, modified_params, filtered_available_formats)
       details = {recording: original, common_parameters: current, available: available}
 
       if modified_params.size < 1
-        valid_options = valid_options(audio_recording, available_formats)
-        details[:options] = valid_options
+        # give options for all available formats, not just those that support the native sample rate
+        details[:options] = valid_options(audio_recording, Settings.available_formats)
       end
 
       # ensure media_type for original is a string
