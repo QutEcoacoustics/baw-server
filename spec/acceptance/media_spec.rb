@@ -702,13 +702,17 @@ resource 'Media' do
       let(:authentication_token) { reader_token }
       let(:format) { 'json' }
 
-      example 'MEDIA (as reader) checking json valid sample rates for audio recording with non-standard original sample rate - 200', document: true do
+      example 'MEDIA (as reader) checking available and formats valid sample rates for audio recording with non-standard original sample rate - 200', document: true do
         do_request
         expect(status).to eq(200), "expected status #{200} but was #{status}. Response body was #{response_body}"
 
         mp3_valid_sample_rates = (JsonSpec::Helpers::parse_json(response_body)["data"]["options"]["audio"]["formats"].select { | vsr | vsr["name"] == 'mp3'})[0]["valid_sample_rates"]
         wav_valid_sample_rates = (JsonSpec::Helpers::parse_json(response_body)["data"]["options"]["audio"]["formats"].select { | vsr | vsr["name"] == 'wav'})[0]["valid_sample_rates"]
 
+        available = JsonSpec::Helpers::parse_json(response_body)["data"]["available"]["audio"].keys
+
+        # mp3 not included in available because native sample of 7777 rate not supported by mp3
+        expect(available).to eq(["webm", "ogg", "flac", "wav"])
         expect(mp3_valid_sample_rates).to eq([8000, 11025, 12000, 16000, 22050, 24000, 32000, 44100, 48000])
         expect(wav_valid_sample_rates).to eq([8000, 11025, 12000, 16000, 22050, 24000, 32000, 44100, 48000, 96000, 7777])
 
