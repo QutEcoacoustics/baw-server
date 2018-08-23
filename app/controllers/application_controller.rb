@@ -15,6 +15,8 @@ class ApplicationController < ActionController::Base
   before_action :current_user, unless: :devise_controller?
   before_action :authenticate_user!, if: :devise_controller?
 
+  before_action :validate_contains_post_params, only: [:create, :update]
+
   # CanCan - always check authorization
   check_authorization if: :should_check_authorization?
 
@@ -312,6 +314,37 @@ class ApplicationController < ActionController::Base
   def store_location(path)
     super
   end
+
+  # all create and update actions should have post parameters. If not, in addition to not doing anything,
+  # they might cause errors where these parameters are expected
+  def validate_contains_post_params
+
+    # post values should be in the form {model => {attr => value, attr2 => value}}
+    # an empty body parsed as json will have the form {model => {}}
+    # json body with application/x-www-form-urlencoded content type will have the form {json_string => {}}
+    # json or form encoded with text/plain content type will have the form {}
+    if request.POST.values.all? { |val| val.blank? }
+
+      if (request.body.string.blank?)
+        message = "Request body was empty"
+        status = :bad_request
+        # include link to 'new' endpoint if body was empty
+        options = {should_notify_error: true, error_links: [{text: "New Resource", url: self.send("new_#{resource_name}_path")}]}
+      else
+        options = {should_notify_error: true}
+        status = :unsupported_media_type
+        if request.content_type == "text/plain"
+          message = "Request content-type text/plain not supported"
+        else
+          # Catch anything else, but should not reach here because body parsing will have already crashed for
+          # malformed encoding for anything other than text/plain
+          message = "Failed to parse the request body. Ensure that it is formed correctly and matches the content-type (#{request.content_type})"
+        end
+      end
+      render_error(status, message, nil, 'validate_contains_params', options)
+    end
+  end
+
 
   private
 

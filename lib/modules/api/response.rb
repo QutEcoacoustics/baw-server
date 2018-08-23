@@ -175,12 +175,18 @@ module Api
       error_hash
     end
 
+    # @param [mixed] link_ids either a symbol that corresponds to predefined links
+    #                         or a hash with the keys :text and :url
     def response_error_links(link_ids)
       result = {}
       unless link_ids.blank?
         error_links = error_links_hash
         link_ids.each do |id|
-          link_info = error_links[id]
+          if id.is_a?(Symbol)
+            link_info = error_links[id]
+          else
+            link_info = id
+          end
           result[link_info[:text]] = link_info[:url]
         end
       end

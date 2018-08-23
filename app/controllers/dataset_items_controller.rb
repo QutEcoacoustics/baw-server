@@ -49,6 +49,7 @@ class DatasetItemsController < ApplicationController
 
   # POST /datasets/:dataset_id/items
   def create
+
     do_new_resource
     do_set_attributes(dataset_item_params)
 
