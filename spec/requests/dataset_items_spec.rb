@@ -17,8 +17,8 @@ describe "Dataset Items" do
     @env ||= {}
     @env['HTTP_AUTHORIZATION'] = admin_token
 
-    @create_dataset_item_url = "/datasets/" + dataset.id.to_s + "/items"
-    @update_dataset_item_url = "/datasets/" + dataset_item.dataset_id.to_s + "/items/" + dataset_item.id.to_s
+    @create_dataset_item_url = "/datasets/#{dataset.id}/items"
+    @update_dataset_item_url = "/datasets/#{dataset_item.dataset_id}/items/#{dataset_item.id}"
   end
 
   describe 'Creating a dataset item' do
@@ -59,6 +59,8 @@ describe "Dataset Items" do
       params = nil
       post @create_dataset_item_url, params, @env
       expect(response).to have_http_status(400)
+      parsed_response = JSON.parse(response.body)
+      expect(parsed_response['meta']['error']['links']).to eq({"New Resource"=>"/datasets/2/items/new"})
     end
 
     it 'does not allow empty body (empty string, json)' do
@@ -98,6 +100,25 @@ describe "Dataset Items" do
 
       put @update_dataset_item_url, params, @env
       expect(response).to have_http_status(200)
+    end
+
+    it 'does not allow empty body (nil, json)' do
+      @env['CONTENT_TYPE'] = "application/json"
+      params = nil
+      put @update_dataset_item_url, params, @env
+      expect(response).to have_http_status(400)
+      parsed_response = JSON.parse(response.body)
+      expect(parsed_response['meta']['error']['links']).to eq({"New Resource"=>"/datasets/2/items/new"})
+    end
+
+    it 'does not allow empty body (empty string, json)' do
+      @env['CONTENT_TYPE'] = "application/json"
+      params = ""
+      put @update_dataset_item_url, params, @env
+      expect(response).to have_http_status(400)
+      expect(response.content_type).to eq "application/json"
+      parsed_response = JSON.parse(response.body)
+      expect(parsed_response['meta']['error']['links']).to eq({"New Resource"=>"/datasets/2/items/new"})
     end
 
   end

@@ -323,9 +323,9 @@ class ApplicationController < ActionController::Base
     # an empty body parsed as json will have the form {model => {}}
     # json body with application/x-www-form-urlencoded content type will have the form {json_string => {}}
     # json or form encoded with text/plain content type will have the form {}
-    if request.POST.values.all? { |val| val.nil? || (val.is_a?(Hash) && val.empty?) }
+    if request.POST.values.all? { |val| val.blank? }
 
-      if (request.body.string == "")
+      if (request.body.string.blank?)
         message = "Request body was empty"
         status = :bad_request
         # include link to 'new' endpoint if body was empty
@@ -341,7 +341,7 @@ class ApplicationController < ActionController::Base
           message = "Failed to parse the request body. Ensure that it is formed correctly and matches the content-type (#{request.content_type})"
         end
       end
-      render_error(status, message,nil,'validate_contains_params', options)
+      render_error(status, message, nil, 'validate_contains_params', options)
     end
   end
 
