@@ -175,15 +175,41 @@ module Access
       def dataset_items(user, dataset_id = nil, levels = Access::Core.levels)
 
         query = DatasetItem
-                      .joins(audio_recording: :site)
-                      .order(audio_recording_id: :asc)
-                      .joins(:dataset) # this join ensures only non-deleted results are returned
+                    .joins(audio_recording: :site)
+                    .order(audio_recording_id: :asc)
+                    .joins(:dataset) # this join ensures only non-deleted results are returned
 
         if dataset_id
           query = query.where(datasets: {id: dataset_id})
         end
 
         permission_sites(user, levels, query)
+      end
+
+      # Get all progress_events for which this user has these access levels
+      # Or for which this user is the creator
+      # @param [User] user
+      # @param [Int] dataset_item_id
+      # @param [Symbol, Array<Symbol>] levels
+      # @return [ActiveRecord::Relation] progress_events
+      def progress_events(user, dataset_item_id = nil, levels = Access::Core.levels)
+
+        query = ProgressEvent
+                    .joins(dataset_item: {audio_recording: :site})
+                    .order(created_at: :asc)
+
+        if dataset_item_id
+          query = query.where(dataset_items: {id: dataset_item_id})
+        end
+
+        or_conditions = nil
+        unless (user.blank?)
+          pe = ProgressEvent.arel_table
+          or_conditions = pe[:creator_id].eq(user.id)
+        end
+
+        permission_sites(user, levels, query, nil, or_conditions)
+
       end
 
       private
@@ -259,8 +285,9 @@ module Access
       # @param [Array<Symbol>] levels
       # @param [ActiveRecord::Relation] query
       # @param [Array<Integer>] project_ids
+      # @param [Object] or_conditions result of any Arel::Predications method
       # @return [ActiveRecord::Relation]
-      def permission_sites(user, levels, query, project_ids = nil)
+      def permission_sites(user, levels, query, project_ids = nil, or_conditions = nil)
 
         is_admin, query = permission_admin(user, levels, query)
 
@@ -339,7 +366,13 @@ module Access
             query.where(permissions_by_site.and(reference_audio_events))
           end
         else
-          query.where(permissions_by_site)
+
+          if (or_conditions.blank?)
+            query.where(permissions_by_site)
+          else
+            query.where(permissions_by_site.or(or_conditions))
+          end
+
         end
 
       end

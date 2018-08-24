@@ -262,6 +262,10 @@ Rails.application.routes.draw do
     resources :items, controller: 'dataset_items', defaults: {format: 'json'}
   end
 
+  # progress events
+  match 'progress_events/filter' => 'progress_events#filter', via: [:get, :post], defaults: {format: 'json'}
+  resources :progress_events, defaults:  {format: 'json'}
+
   # route to the home page of site
   root to: 'public#index'
 

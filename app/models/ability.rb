@@ -95,6 +95,7 @@ class Ability
       to_analysis_jobs_item(user)
       to_dataset(user, is_guest)
       to_dataset_item(user, is_guest)
+      to_progress_event(user, is_guest)
       to_saved_search(user, is_guest)
       to_script(user, is_guest)
       to_tag(user, is_guest)
@@ -465,6 +466,29 @@ class Ability
 
     # actions any logged in user can access
     can [:new, :index, :filter], DatasetItem
+
+  end
+
+
+  def to_progress_event(user, is_guest)
+
+    # anyone can create as long as they have read access on the ancestor project of the dataset item
+    can [:create], ProgressEvent do |progress_event|
+      check_model(progress_event)
+      Access::Core.can_any?(user, :reader, progress_event.dataset_item.audio_recording.site.projects)
+    end
+
+    # must have read permissions or be creator to view
+    can [:show, :index, :filter], ProgressEvent do |progress_event|
+      check_model(progress_event)
+      Access::Core.can_any?(user, :reader, progress_event.dataset_item.audio_recording.site.projects) ||
+          progress_event.creator_id === user.id
+    end
+
+    can :new, ProgressEvent
+
+    # update and edit are admin only
+    cannot [:update, :destroy]
 
   end
 

@@ -31,6 +31,8 @@ module Creation
 
       prepare_dataset_item
 
+      prepare_progress_event
+
     end
 
     # similar to create entire hierarchy
@@ -51,6 +53,9 @@ module Creation
       let!(:no_access_site) { Common.create_site(no_access_project_creator, no_access_project) }
       let!(:no_access_audio_recording) { Common.create_audio_recording(no_access_project_creator, no_access_project_creator, no_access_site) }
       let!(:no_access_dataset_item) { Common.create_dataset_item(admin_user, dataset, no_access_audio_recording) }
+      let!(:no_access_progress_event) {
+        Common.create_progress_event(admin_user, no_access_dataset_item)
+      }
 
     end
 
@@ -181,6 +186,46 @@ module Creation
       let!(:dataset_item) { Common.create_dataset_item(admin_user, dataset, audio_recording) }
     end
 
+    def prepare_progress_event
+      let!(:progress_event) {
+        Common.create_progress_event(admin_user, dataset_item)
+      }
+      let!(:progress_event_for_no_access_user) {
+        # create a progress event where the creator does not have read permissions
+        # To test that a user always has access to their own progress events, even if
+        # project permission has been revoked
+        Common.create_progress_event_full(no_access_user, dataset_item, "played")
+      }
+    end
+
+    # creates a whole lot of progress events for filter testing
+    def prepare_many_progress_events
+      let!(:progress_events_stats) {
+
+        creators = [admin_user, owner_user, reader_user, writer_user]
+        activities = ["viewed", "played"]
+        dataset_items = [dataset_item, no_access_dataset_item]
+        num = 4
+        result = []
+
+        for c in creators do
+          for a in activities do
+            for d in dataset_items do
+              for n in 1..num do
+                if c == admin_user || d != no_access_dataset_item
+                  Common.create_progress_event_full(c, d, a)
+                  result.push({creator_id: c.id, dataset_item_id: d.id, activity: a})
+                end
+              end
+            end
+          end
+        end
+
+        return result
+
+      }
+    end
+
 
   end
 
@@ -262,6 +307,14 @@ module Creation
 
       def create_dataset_item(creator, dataset, audio_recording)
         FactoryGirl.create(:dataset_item, creator: creator, dataset: dataset, audio_recording: audio_recording)
+      end
+
+      def create_progress_event(creator, dataset_item)
+        FactoryGirl.create(:progress_event, creator: creator, dataset_item: dataset_item)
+      end
+
+      def create_progress_event_full(creator, dataset_item, activity)
+        FactoryGirl.create(:progress_event, creator: creator, dataset_item: dataset_item, activity: activity)
       end
 
     end
