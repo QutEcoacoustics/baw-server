@@ -33,8 +33,10 @@ resource 'ProgressEvents' do
   # create some progress events
   #
   # After this, the dataset_items and progress events are:
-  # - 1 dataset item created by the create_entire_hierarchy
-  #   - with 2 progress events, one created by admin and one by no_access_user
+  # - 1 dataset item created by writer_user (create_entire_hierarchy)
+  #   - with 1 progress event created by no_access_user
+  # - 1 dataset item in the default dataset, created by writer_user
+  #   - with 1 progress event created by admin_user
   # - 1 dataset item created by create_no_access_hierarchy
   #   - with 1 progress event, created by a different user
   # -> 3 progress events total
@@ -769,7 +771,27 @@ resource 'ProgressEvents' do
       )
     end
 
-
+    # filter progress events by dataset id
+    post '/progress_events/filter' do
+      let(:authentication_token) { reader_token }
+      let(:raw_post) { {
+          'filter' => {
+              'datasets.id' => {
+                  'eq' => 1
+              }
+          }
+      }.to_json }
+      standard_request_options(
+          :post,
+          'FILTER (as reader) by dataset id',
+          :ok,
+          {
+              expected_json_path: 'data/0/creator_id',
+              data_item_count: 1,
+              response_body_content: '"created_at":'
+          }
+      )
+    end
 
   end
 

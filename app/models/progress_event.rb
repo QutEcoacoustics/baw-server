@@ -42,7 +42,12 @@ class ProgressEvent < ActiveRecord::Base
             {
                 join: DatasetItem,
                 on: ProgressEvent.arel_table[:dataset_item_id].eq(DatasetItem.arel_table[:id]),
-                available: true
+                available: true,
+                associations: [
+                    join: Dataset,
+                    on: DatasetItem.arel_table[:dataset_id].eq(Dataset.arel_table[:id]),
+                    available: true
+                ]
             }
         ]
     }

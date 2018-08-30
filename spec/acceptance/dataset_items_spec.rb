@@ -43,11 +43,12 @@ resource 'DatasetItems' do
   # we include some dataset items for audio recordings that the user can not access
   #
   # After this, the dataset_items will be
-  # - 1 created by the create_entire_hierarchy
+  # - 2 created by the create_entire_hierarchy
+  #   - including one in the default dataset
   # - 1 created by create_no_access_hierarchy
   # - 1 created under a different dataset to test the dataset id path parameter
   # - 4 created with custom field values to test sorting and filtering
-  # - total: 7 dataset items
+  # - total: 8 dataset items
   #
 
   create_no_access_hierarchy
@@ -688,7 +689,7 @@ resource 'DatasetItems' do
   ################################
 
   # with shallow route (no dataset id)
-  # admin finds all 7 items
+  # admin finds all 8 items
   post '/dataset_items/filter' do
     let(:authentication_token) { admin_token }
     standard_request_options(
@@ -698,7 +699,7 @@ resource 'DatasetItems' do
         {
             response_body_content: ['"start_time_seconds":11.0'],
             expected_json_path: 'data/0/start_time_seconds',
-            data_item_count: 7
+            data_item_count: 8
         }
     )
   end
@@ -722,12 +723,12 @@ resource 'DatasetItems' do
   end
 
   # permissions will be the same for reader,writer,owner so they will have
-  # the same response for the same filter params. Should return 6 items
+  # the same response for the same filter params. Should return 7 items
   # from the two datasets, but not the dataset item from the no-access hierarchy
   regular_user_opts = {
       response_body_content: ['"start_time_seconds":11.0'],
       expected_json_path: 'data/0/start_time_seconds',
-      data_item_count: 6
+      data_item_count: 7
   }
 
   post '/dataset_items/filter' do

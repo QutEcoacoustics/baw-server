@@ -188,7 +188,8 @@ module Creation
 
     def prepare_progress_event
       let!(:progress_event) {
-        Common.create_progress_event(admin_user, dataset_item)
+        default_dataset_item = FactoryGirl.create(:default_dataset_item, creator: writer_user, audio_recording: audio_recording)
+        Common.create_progress_event(admin_user, default_dataset_item)
       }
       let!(:progress_event_for_no_access_user) {
         # create a progress event where the creator does not have read permissions
