@@ -192,8 +192,6 @@ module Creation
       }
       let!(:progress_event_for_no_access_user) {
         # create a progress event where the creator does not have read permissions
-        # To test that a user always has access to their own progress events, even if
-        # project permission has been revoked
         Common.create_progress_event_full(no_access_user, dataset_item, "played")
       }
     end

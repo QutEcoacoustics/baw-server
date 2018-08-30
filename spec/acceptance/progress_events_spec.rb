@@ -81,9 +81,9 @@ resource 'ProgressEvents' do
     let(:authentication_token) { no_access_token }
     standard_request_options(
         :get,
-        'INDEX (as reader)',
+        'INDEX (as no access user)',
         :ok,
-        {expected_json_path: 'data/0/dataset_item_id', data_item_count: 1}
+        {response_body_content: ['"order_by":"created_at","direction":"desc"'], data_item_count: 0}
     )
   end
 
@@ -673,17 +673,16 @@ resource 'ProgressEvents' do
       standard_request_options(:post,'FILTER (as reader)',:ok,regular_user_opts)
     end
 
-    # no-access user has is the creator of 1 progress event for a dataset_item that
-    # this user does not have access to, to simulate access to a progress event if the
-    # user has had access to the project revoked.
+    # no-access user is the creator of 1 progress event for a dataset_item that
+    # this user does not have access to. User can not access the record even if
+    # they are creator
     post '/progress_events/filter' do
       let(:authentication_token) { no_access_token }
-      let(:raw_post) { {'paging' => {'items' => 100}}.to_json }
       standard_request_options(
           :post,
           'FILTER (as no access)',
           :ok,
-          {response_body_content: ['"order_by":"created_at"'], expected_json_path: 'data', data_item_count: 1})
+          {response_body_content: ['"order_by":"created_at"'], expected_json_path: 'data', data_item_count: 0})
     end
 
     post '/progress_events/filter' do
@@ -770,20 +769,7 @@ resource 'ProgressEvents' do
       )
     end
 
-    # users can view progress events they created, even if they don't have access to the dataset item
-    post '/progress_events/filter' do
-      let(:authentication_token) { no_access_token }
-      standard_request_options(
-          :post,
-          'FILTER (as no access user)',
-          :ok,
-          {
-              response_body_content: ['"activity":"played"'],
-              expected_json_path: 'data/0/dataset_item_id',
-              data_item_count: 1
-          }
-      )
-    end
+
 
   end
 

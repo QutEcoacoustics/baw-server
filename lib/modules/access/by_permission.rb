@@ -202,13 +202,7 @@ module Access
           query = query.where(dataset_items: {id: dataset_item_id})
         end
 
-        or_conditions = nil
-        unless (user.blank?)
-          pe = ProgressEvent.arel_table
-          or_conditions = pe[:creator_id].eq(user.id)
-        end
-
-        permission_sites(user, levels, query, nil, or_conditions)
+        permission_sites(user, levels, query)
 
       end
 
@@ -367,11 +361,13 @@ module Access
           end
         else
 
-          if (or_conditions.blank?)
-            query.where(permissions_by_site)
-          else
-            query.where(permissions_by_site.or(or_conditions))
-          end
+          # if at some stage, we want to have exceptions to permissions inherited from projects
+          # e.g. the creator of progress_events or audio_events can view them after progress is revoked
+          # we can add an "OR" clause like this:
+          #  progress_event = ProgressEvent.arel_table
+          #  query.where(permissions_by_site.or(progress_event[:creator_id].eq(user.id)))
+
+          query.where(permissions_by_site)
 
         end
 
