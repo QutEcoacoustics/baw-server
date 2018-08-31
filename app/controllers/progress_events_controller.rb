@@ -45,7 +45,7 @@ class ProgressEventsController < ApplicationController
     respond_show
   end
 
-  # POST /progress_events/items
+  # POST /progress_events
   def create
 
     do_new_resource

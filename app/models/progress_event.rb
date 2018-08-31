@@ -8,8 +8,8 @@ class ProgressEvent < ActiveRecord::Base
   belongs_to :dataset_item, inverse_of: :progress_events
 
   # association validations
-  validates :creator, existence: true
-  validates :dataset_item, existence: true
+  validates_presence_of :dataset_item
+  validates_presence_of :creator
 
   # field validations
 
