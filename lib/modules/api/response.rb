@@ -282,6 +282,12 @@ module Api
         # execute a count against entire set without paging
         total = new_query.size
 
+        # if query involves aggregation, size returns the size of each group.
+        # and what we need is the number of groups
+        if total.is_a? Hash
+          total = total.length
+        end
+
         # add paging
         new_query = filter_query.query_paging(new_query)
         items = filter_query.is_paging_disabled? ? total : filter_query.paging[:items]

@@ -187,8 +187,10 @@ module Creation
     end
 
     def prepare_progress_event
+      let!(:default_dataset_item) {
+        FactoryGirl.create(:default_dataset_item, creator: writer_user, audio_recording: audio_recording)
+      }
       let!(:progress_event) {
-        default_dataset_item = FactoryGirl.create(:default_dataset_item, creator: writer_user, audio_recording: audio_recording)
         Common.create_progress_event(admin_user, default_dataset_item)
       }
       let!(:progress_event_for_no_access_user) {
@@ -224,7 +226,6 @@ module Creation
 
       }
     end
-
 
   end
 

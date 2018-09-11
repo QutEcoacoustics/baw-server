@@ -258,6 +258,7 @@ Rails.application.routes.draw do
   match 'datasets/filter' => 'datasets#filter', via: [:get, :post], defaults: {format: 'json'}
   match 'dataset_items/filter' => 'dataset_items#filter', via: [:get, :post], defaults: {format: 'json'}
   match 'datasets/:dataset_id/dataset_items/filter' => 'dataset_items#filter', via: [:get, :post], defaults: {format: 'json'}
+  match 'datasets/:dataset_id/dataset_items/filter_todo' => 'dataset_items#filter_todo', via: [:get], defaults: {format: 'json'}
   resources :datasets, except: :destroy, defaults:  {format: 'json'} do
     resources :items, controller: 'dataset_items', defaults: {format: 'json'}
   end

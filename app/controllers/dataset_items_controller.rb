@@ -38,6 +38,39 @@ class DatasetItemsController < ApplicationController
     respond_filter(filter_response, opts)
   end
 
+  # GET datasets/:dataset_id/dataset_items/filter_todo
+  def filter_todo
+
+    # items from a dataset with priority given to not viewed
+
+    do_authorize_class
+
+    params[:sorting] = {
+        order_by: :priority
+    }
+
+    # sort by least viewed, then least viewed by current user, then id
+    priority_algorithm = ["(SELECT count(*) FROM progress_events WHERE dataset_item_id = dataset_items.id AND progress_events.activity = 'viewed') ASC"]
+    if (current_user)
+      # todo: ensure not vulnerable to sql injection through current_user.id
+      priority_algorithm.push "(SELECT count(*) FROM progress_events WHERE dataset_item_id = dataset_items.id AND progress_events.activity = 'viewed' AND progress_events.creator_id = #{current_user.id}) ASC"
+    end
+    priority_algorithm.push "dataset_items.id ASC"
+    priority_algorithm = priority_algorithm.join(", ")
+
+    filter_response, opts = Settings.api_response.response_advanced(
+        api_filter_params,
+        Access::ByPermission.dataset_items(current_user, params[:dataset_id]),
+        DatasetItem,
+        DatasetItem.filter_settings(priority_algorithm)
+    )
+
+    respond_filter(filter_response, opts)
+
+
+  end
+
+
   # GET /datasets/:dataset_id/items/new
   def new
     do_new_resource

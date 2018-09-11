@@ -24,7 +24,7 @@ class DatasetItem < ActiveRecord::Base
 
   # Define filter api settings
   # @param [Symbol] priority_algorithm The key of the @priority_algorithms to use as the priority virtual field.
-  def self.filter_settings (priority_algorithm = nil)
+  def self.filter_settings (priority_algorithm = nil, current_user_id = nil)
     result = {
         valid_fields: [
             :id, :dataset_id, :audio_recording_id, :start_time_seconds, :end_time_seconds, :order, :creator_id, :created_at, :priority
@@ -66,19 +66,27 @@ class DatasetItem < ActiveRecord::Base
         ]
     }
 
+    # add the relevant priority algorithm to the field_mapping for "priority" and
+    # add "priority" to the valid fields
     if priority_algorithm
+
+      result[:valid_fields] << :priority
+
       if @priority_algorithms.key?(priority_algorithm)
-        if !result.key(:field_mappings)
-          result[:field_mappings] = []
-        end
-        result[:field_mappings] << {
-            name: :priority,
-            value: @priority_algorithms[priority_algorithm]
-        }
-        result[:valid_fields] << :priority
+        priority_algorithm_value = @priority_algorithms[priority_algorithm]
       else
-        # todo: error: invalid priority specified
+        priority_algorithm_value = priority_algorithm
       end
+
+      if !result.key(:field_mappings)
+        result[:field_mappings] = []
+      end
+
+      result[:field_mappings] << {
+          name: :priority,
+          value: priority_algorithm_value
+      }
+
     end
 
 
@@ -88,9 +96,19 @@ class DatasetItem < ActiveRecord::Base
 
   # this will contain some named algorithms for sorting the dataset items by priority virtual field
   # Currently only one dummy algorithm for testing
+  # Is current_user.id vulnerable to sql injection?
   @priority_algorithms = {
-      :reverse_order => DatasetItem.arel_table[:order].*(-1)
+      :reverse_order => DatasetItem.arel_table[:order].*(-1),
   }
+
+  # scope :num_views, lambda {
+  #   joins(:progress_events).select("dataset_items.*, count(DISTINCT progress_events.id) as num_views").group('dataset_items.id')
+  # }
+
+
+
+
+
 
 
 end

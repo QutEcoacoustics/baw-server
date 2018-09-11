@@ -45,7 +45,7 @@ class ProgressEventsController < ApplicationController
     respond_show
   end
 
-  # POST /progress_events
+  # POST /progress_events/items
   def create
 
     do_new_resource
@@ -91,5 +91,7 @@ class ProgressEventsController < ApplicationController
     params.require(:progress_event).permit(:dataset_item_id, :activity)
 
   end
+
+
 
 end

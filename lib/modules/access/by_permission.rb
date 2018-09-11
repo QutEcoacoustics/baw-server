@@ -176,7 +176,6 @@ module Access
 
         query = DatasetItem
                     .joins(audio_recording: :site)
-                    .order(audio_recording_id: :asc)
                     .joins(:dataset) # this join ensures only non-deleted results are returned
 
         if dataset_id

@@ -465,7 +465,7 @@ class Ability
     end
 
     # actions any logged in user can access
-    can [:new, :index, :filter], DatasetItem
+    can [:new, :index, :filter, :filter_todo], DatasetItem
 
   end
 
