@@ -254,6 +254,10 @@ Rails.application.routes.draw do
   # shallow path to sites
   get '/sites/:id' => 'sites#show_shallow', defaults: {format: 'json'}, as: 'shallow_site'
 
+
+  match 'datasets/:dataset_id/progress_events/audio_recordings/:audio_recording_id/start/:start_time_seconds/end/:end_time_seconds' => 'progress_events#create_by_dataset_item_params', :constraints => { :dataset_id => /\d+/, :audio_recording_id => /\d+/, :start_time_seconds => /\d+(\.\d+)?/, :end_time_seconds => /\d+(\.\d+)?/ }, via: [:post], defaults: {format: 'json'}
+
+
   # datasets, dataset_items
   match 'datasets/filter' => 'datasets#filter', via: [:get, :post], defaults: {format: 'json'}
   match 'dataset_items/filter' => 'dataset_items#filter', via: [:get, :post], defaults: {format: 'json'}

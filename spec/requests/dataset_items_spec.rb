@@ -75,7 +75,6 @@ describe "Dataset Items" do
 
   end
 
-
   describe 'Updating a dataset item' do
 
     it 'does not allow text/plain content-type' do
@@ -147,16 +146,11 @@ describe "Dataset Items" do
 
     end
 
-
-
     before(:each) do
       @env['CONTENT_TYPE'] = "application/json"
       @dataset_item_filter_url = "/datasets/#{dataset_item.dataset_id}/dataset_items/filter"
       @dataset_item_filter_todo_url = "/datasets/#{dataset_item.dataset_id}/dataset_items/filter_todo"
     end
-
-
-
 
     # creates 12 dataset items. Every 3rd dataset item has a progress event created by the writer user
     # and every 2nd has a progress event created by the reader user.
@@ -214,7 +208,6 @@ describe "Dataset Items" do
 
     }
 
-
     let(:raw_post) {
       {
           sorting: {
@@ -244,7 +237,6 @@ describe "Dataset Items" do
       expect(ids).to eq(sorted_ids)
 
     end
-
 
     it 'orders dataset items by least viewed first (writer user)' do
 
@@ -276,9 +268,7 @@ describe "Dataset Items" do
 
     end
 
-
   end
-
 
 end
 

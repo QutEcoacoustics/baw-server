@@ -2,6 +2,7 @@ require 'rails_helper'
 require 'rspec_api_documentation/dsl'
 require 'helpers/acceptance_spec_helper'
 
+
 def progress_event_id_param
   parameter :progress_event_id, 'Progress Event id in request url', required: true
 end
@@ -9,6 +10,10 @@ end
 def body_params
   parameter :activity, 'type of progress event', scope: :progress_event, :required => true
   parameter :dataset_item_id, 'id of dataset item', scope: :progress_event, :required => true
+end
+
+def body_params_2
+  parameter :activity, 'type of progress event', scope: :progress_event, :required => true
 end
 
 # https://github.com/zipmark/rspec_api_documentation
@@ -212,6 +217,121 @@ resource 'ProgressEvents' do
         :forbidden,
         {expected_json_path: get_json_error_path(:permissions)})
   end
+
+
+  ################################
+  # CREATE BY DATASET ITEM PARAMS
+  ################################
+
+  # any user can create a dataset item if they have read-access on the project
+
+  context 'CREATE BY DATASET ITEM PARAMS' do
+
+    create_success_opts = {expected_json_path: 'data/activity/', response_body_content: ['"activity":"viewed"'] }
+
+    let(:post_attributes_2) {
+      post_attributes_2 = FactoryGirl.attributes_for(:progress_event)
+      post_attributes_2 = post_attributes_2.except(:dataset_item_id)
+      post_attributes_2
+    }
+
+    create_by_dataset_item_params_url = '/datasets/:dataset_id/progress_events/audio_recordings/:audio_recording_id/start/:start_time_seconds/end/:end_time_seconds'
+
+    post create_by_dataset_item_params_url do
+      let(:authentication_token) { admin_token }
+      body_params_2
+      let(:raw_post) { {'progress_event' => post_attributes_2}.to_json }
+      let(:dataset_id) { 1 }
+      let(:audio_recording_id) { audio_recording.id }
+      let(:start_time_seconds) { 1234 }
+      let(:end_time_seconds) { 1245 }
+
+      standard_request_options(
+          :post,
+          'CREATE (as admin)',
+          :created,
+          create_success_opts
+      )
+    end
+
+    post create_by_dataset_item_params_url do
+      let(:authentication_token) { owner_token }
+      body_params_2
+      let(:raw_post) { {'progress_event' => post_attributes_2}.to_json }
+      let(:dataset_id) { 1 }
+      let(:audio_recording_id) { audio_recording.id }
+      let(:start_time_seconds) { 1234 }
+      let(:end_time_seconds) { 1245 }
+      standard_request_options(:post,'CREATE (as owner)',:created, create_success_opts)
+    end
+
+    post create_by_dataset_item_params_url do
+      let(:authentication_token) { writer_token }
+      body_params_2
+      let(:raw_post) { {'progress_event' => post_attributes_2}.to_json }
+      let(:dataset_id) { 1 }
+      let(:audio_recording_id) { audio_recording.id }
+      let(:start_time_seconds) { 1234 }
+      let(:end_time_seconds) { 1245 }
+      standard_request_options(:post,'CREATE (as writer)',:created, create_success_opts)
+    end
+
+    post create_by_dataset_item_params_url do
+      let(:authentication_token) { reader_token }
+      body_params_2
+      let(:raw_post) { {'progress_event' => post_attributes_2}.to_json }
+      let(:dataset_id) { 1 }
+      let(:audio_recording_id) { audio_recording.id }
+      let(:start_time_seconds) { 1234 }
+      let(:end_time_seconds) { 1245 }
+      standard_request_options(:post,'CREATE (as reader)',:created, create_success_opts)
+    end
+
+    post create_by_dataset_item_params_url do
+      let(:authentication_token) { no_access_token }
+      body_params_2
+      let(:raw_post) { {'progress_event' => post_attributes_2}.to_json }
+      let(:dataset_id) { 1 }
+      let(:audio_recording_id) { audio_recording.id }
+      let(:start_time_seconds) { 1234 }
+      let(:end_time_seconds) { 1245 }
+      standard_request_options(:post,'CREATE (as no access user)',:forbidden, {expected_json_path: get_json_error_path(:permissions)})
+    end
+
+    post create_by_dataset_item_params_url do
+      let(:authentication_token) { invalid_token }
+      body_params_2
+      let(:raw_post) { {'progress_event' => post_attributes_2}.to_json }
+      let(:dataset_id) { 1 }
+      let(:audio_recording_id) { audio_recording.id }
+      let(:start_time_seconds) { 1234 }
+      let(:end_time_seconds) { 1245 }
+      standard_request_options(:post,'CREATE (invalid token)',:unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
+    end
+
+    post create_by_dataset_item_params_url do
+      body_params_2
+      let(:raw_post) { {'progress_event' => post_attributes_2}.to_json }
+      let(:dataset_id) { 1 }
+      let(:audio_recording_id) { audio_recording.id }
+      let(:start_time_seconds) { 1234 }
+      let(:end_time_seconds) { 1245 }
+      standard_request_options(:post,'CREATE (anonymous user)',:unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
+    end
+
+    post create_by_dataset_item_params_url do
+      let(:authentication_token) { harvester_token }
+      body_params_2
+      let(:raw_post) { {'progress_event' => post_attributes_2}.to_json }
+      let(:dataset_id) { 1 }
+      let(:audio_recording_id) { audio_recording.id }
+      let(:start_time_seconds) { 1234 }
+      let(:end_time_seconds) { 1245 }
+      standard_request_options(:post,'CREATE (as harvester)',:forbidden, {expected_json_path: get_json_error_path(:permissions)})
+    end
+
+  end
+
 
   # ################################
   # # NEW
