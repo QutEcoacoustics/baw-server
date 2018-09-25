@@ -55,6 +55,7 @@ class DatasetItemsController < ApplicationController
       # todo: ensure not vulnerable to sql injection through current_user.id
       priority_algorithm.push "(SELECT count(*) FROM progress_events WHERE dataset_item_id = dataset_items.id AND progress_events.activity = 'viewed' AND progress_events.creator_id = #{current_user.id}) ASC"
     end
+    priority_algorithm.push "dataset_items.order ASC"
     priority_algorithm.push "dataset_items.id ASC"
     priority_algorithm = priority_algorithm.join(", ")
 

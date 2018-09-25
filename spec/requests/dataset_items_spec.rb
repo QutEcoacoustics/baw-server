@@ -135,6 +135,8 @@ describe "Dataset Items" do
           (item[:progress_events].select { |progress_event| progress_event.activity == "viewed"}).size,
           # number of progress events of type "viewed" created by the user
           (item[:progress_events].select { |progress_event| progress_event.activity == "viewed" && progress_event.creator_id == user.id}).size,
+          # order
+          item[:dataset_item][:order],
           # dataset item id
           item[:dataset_item][:id]
       ] }
@@ -178,6 +180,9 @@ describe "Dataset Items" do
 
       audio_recordings = [audio_recording, another_audio_recording]
 
+      # random number generator with seed
+      my_rand = Random.new(99)
+
       for d in 1..num_dataset_items do
 
         # create a dataset item with alternating audio recording id
@@ -187,7 +192,7 @@ describe "Dataset Items" do
                                           audio_recording: audio_recordings[d % 2],
                                           start_time_seconds: d,
                                           end_time_seconds: d+10,
-                                          order: d)
+                                          order: my_rand.rand * 10)
         dataset_item.save!
 
         cur_data = {dataset_item: dataset_item, progress_events: [], progress_event_count: 0 }

@@ -60,6 +60,13 @@ describe "Progress Events" do
 
   describe 'Creating a progress event' do
 
+    it 'creates a progress event' do
+      params = {progress_event: progress_event_attributes}.to_json
+      post @create_progress_event_url, params, @env
+      expect(response).to have_http_status(201)
+    end
+
+
     it 'does not allow a non-existent dataset item id' do
       params = {progress_event: progress_event_attributes_invalid_dataset_item_id}.to_json
       post @create_progress_event_url, params, @env
