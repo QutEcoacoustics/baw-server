@@ -106,7 +106,7 @@ Tests can also be run with a specified seed using rspec:
 
 ### Style
 
-Use this style guide as a reference: https://github.com/bbatsov/ruby-style-guide.
+Use this style guide as a reference: https://github.com/rubocop-hq/ruby-style-guide.
 
 ## Documentation
 
