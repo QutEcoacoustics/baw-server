@@ -76,9 +76,9 @@ class ProgressEventsController < ApplicationController
     dataset_item = DatasetItem.find_by(dataset_item_params)
 
     resource_params = progress_event_params
-    if (dataset_item)
+    if dataset_item
       resource_params[:dataset_item_id] = dataset_item.id
-    elsif (dataset_item_params[:dataset_id].to_i == 1)
+    elsif dataset_item_params[:dataset_id].to_i == 1
 
       # is for the default dataset, so create the dataset item
       dataset_item = DatasetItem.new(dataset_item_params)

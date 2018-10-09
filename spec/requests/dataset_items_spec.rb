@@ -134,7 +134,9 @@ describe "Dataset Items" do
           # number of progress events of type "viewed"
           (item[:progress_events].select { |progress_event| progress_event.activity == "viewed"}).size,
           # number of progress events of type "viewed" created by the user
-          (item[:progress_events].select { |progress_event| progress_event.activity == "viewed" && progress_event.creator_id == user.id}).size,
+          (item[:progress_events].select { |progress_event|
+            progress_event.activity == "viewed" && progress_event.creator_id == user.id
+          }).size,
           # order
           item[:dataset_item][:order],
           # dataset item id
@@ -176,7 +178,13 @@ describe "Dataset Items" do
       num_dataset_items = 12
 
       # create another audio recording so we can make sure the order is not affected by the audio recording id
-      another_audio_recording = FactoryGirl.create(:audio_recording, :status_ready, creator: writer_user, uploader: writer_user, site: site, sample_rate_hertz: 22050)
+      another_audio_recording = FactoryGirl.create(
+          :audio_recording,
+          :status_ready,
+          creator: writer_user,
+          uploader: writer_user,
+          site: site,
+          sample_rate_hertz: 22050)
 
       audio_recordings = [audio_recording, another_audio_recording]
 
@@ -200,7 +208,12 @@ describe "Dataset Items" do
         for c in progress_event_creators do
           progress_event = nil
           if d % c[:view_every] == 0
-            progress_event = FactoryGirl.create(:progress_event, creator: c[:creator], dataset_item: dataset_item, activity: "viewed", created_at: "2017-01-01 12:34:56")
+            progress_event = FactoryGirl.create(
+                :progress_event,
+                creator: c[:creator],
+                dataset_item: dataset_item,
+                activity: "viewed",
+                created_at: "2017-01-01 12:34:56")
             #has_saved = progress_event.save!
             cur_data[:progress_events].push(progress_event)
           end

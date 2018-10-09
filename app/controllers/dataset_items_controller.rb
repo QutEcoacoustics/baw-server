@@ -50,10 +50,14 @@ class DatasetItemsController < ApplicationController
     }
 
     # sort by least viewed, then least viewed by current user, then id
-    priority_algorithm = ["(SELECT count(*) FROM progress_events WHERE dataset_item_id = dataset_items.id AND progress_events.activity = 'viewed') ASC"]
+    priority_algorithm = ["(SELECT count(*) FROM progress_events" +
+                              " WHERE dataset_item_id = dataset_items.id AND progress_events.activity = 'viewed') ASC"]
     if (current_user)
       # todo: ensure not vulnerable to sql injection through current_user.id
-      priority_algorithm.push "(SELECT count(*) FROM progress_events WHERE dataset_item_id = dataset_items.id AND progress_events.activity = 'viewed' AND progress_events.creator_id = #{current_user.id}) ASC"
+      priority_algorithm.push "(SELECT count(*) FROM progress_events" +
+                                  " WHERE dataset_item_id = dataset_items.id" +
+                                  " AND progress_events.activity = 'viewed'" +
+                                  " AND progress_events.creator_id = #{current_user.id}) ASC"
     end
     priority_algorithm.push "dataset_items.order ASC"
     priority_algorithm.push "dataset_items.id ASC"

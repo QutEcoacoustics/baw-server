@@ -51,7 +51,9 @@ module Creation
       let!(:no_access_project_creator) { FactoryGirl.create(:user, user_name: 'creator_2') }
       let!(:no_access_project) { Common.create_project(no_access_project_creator) }
       let!(:no_access_site) { Common.create_site(no_access_project_creator, no_access_project) }
-      let!(:no_access_audio_recording) { Common.create_audio_recording(no_access_project_creator, no_access_project_creator, no_access_site) }
+      let!(:no_access_audio_recording) {
+        Common.create_audio_recording(no_access_project_creator, no_access_project_creator, no_access_site)
+      }
       let!(:no_access_dataset_item) { Common.create_dataset_item(admin_user, dataset, no_access_audio_recording) }
       let!(:no_access_progress_event) {
         Common.create_progress_event(admin_user, no_access_dataset_item)
@@ -116,11 +118,15 @@ module Creation
     end
 
     def prepare_permission_writer
-      let!(:writer_permission) { FactoryGirl.create(:write_permission, creator: owner_user, user: writer_user, project: project) }
+      let!(:writer_permission) {
+        FactoryGirl.create(:write_permission, creator: owner_user, user: writer_user, project: project)
+      }
     end
 
     def prepare_permission_reader
-      let!(:reader_permission) { FactoryGirl.create(:read_permission, creator: owner_user, user: reader_user, project: project) }
+      let!(:reader_permission) {
+        FactoryGirl.create(:read_permission, creator: owner_user, user: reader_user, project: project)
+      }
     end
 
     def prepare_project_anon
@@ -262,7 +268,13 @@ module Creation
       end
 
       def create_audio_recording(creator, uploader, site)
-        FactoryGirl.create(:audio_recording, :status_ready, creator: creator, uploader: uploader, site: site, sample_rate_hertz: 44100)
+        FactoryGirl.create(
+            :audio_recording,
+            :status_ready,
+            creator: creator,
+            uploader: uploader,
+            site: site,
+            sample_rate_hertz: 44100)
       end
 
       def create_bookmark(creator, audio_recording)

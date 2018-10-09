@@ -123,19 +123,19 @@ resource 'DatasetItems' do
   get '/datasets/:dataset_id/items' do
     let(:authentication_token) { owner_token }
     let(:dataset_id) { dataset.id }
-    standard_request_options(:get,'INDEX (as owner)',:ok, non_admin_opts)
+    standard_request_options(:get, 'INDEX (as owner)', :ok, non_admin_opts)
   end
 
   get '/datasets/:dataset_id/items' do
     let(:authentication_token) { writer_token }
     let(:dataset_id) { dataset.id }
-    standard_request_options(:get,'INDEX (as writer)',:ok, non_admin_opts)
+    standard_request_options(:get, 'INDEX (as writer)', :ok, non_admin_opts)
   end
 
   get '/datasets/:dataset_id/items' do
     let(:authentication_token) { reader_token }
     let(:dataset_id) { dataset.id }
-    standard_request_options(:get,'INDEX (as reader)',:ok, non_admin_opts)
+    standard_request_options(:get, 'INDEX (as reader)', :ok, non_admin_opts)
   end
 
 
@@ -191,7 +191,6 @@ resource 'DatasetItems' do
         'CREATE (as admin)',
         :created,
         {expected_json_path: 'data/end_time_seconds/', response_body_content: ['"end_time_seconds":234.0']}
-         # {expected_json_path: 'data/end_time_seconds/', response_body_content: ['"end_time_seconds":234.0', "\"dataset_id\":#{dataset.id}"]}
     )
   end
 
@@ -203,7 +202,11 @@ resource 'DatasetItems' do
     let(:authentication_token) { owner_token }
     let(:dataset_id) { dataset.id }
     let(:audio_recording_id) { audio_recording.id }
-    standard_request_options(:post,'CREATE (as owner)',:forbidden, non_admin_opts)
+    standard_request_options(
+        :post,
+        'CREATE (as owner)',
+        :forbidden,
+        non_admin_opts)
   end
 
   post '/datasets/:dataset_id/items' do
@@ -212,7 +215,11 @@ resource 'DatasetItems' do
     let(:authentication_token) { writer_token }
     let(:dataset_id) { dataset.id }
     let(:audio_recording_id) { audio_recording.id }
-    standard_request_options(:post,'CREATE (as writer)',:forbidden, non_admin_opts)
+    standard_request_options(
+        :post,
+        'CREATE (as writer)',
+        :forbidden,
+        non_admin_opts)
   end
 
   post '/datasets/:dataset_id/items' do
@@ -221,7 +228,11 @@ resource 'DatasetItems' do
     let(:authentication_token) { reader_token }
     let(:dataset_id) { dataset.id }
     let(:audio_recording_id) { audio_recording.id }
-    standard_request_options(:post,'CREATE (as reader)',:forbidden, non_admin_opts)
+    standard_request_options(
+        :post,
+        'CREATE (as reader)',
+        :forbidden,
+        non_admin_opts)
   end
 
   post '/datasets/:dataset_id/items' do
@@ -722,7 +733,7 @@ resource 'DatasetItems' do
     )
   end
 
-  # permissions will be the same for reader,writer,owner so they will have
+  # permissions will be the same for reader, writer, owner so they will have
   # the same response for the same filter params. Should return 7 items
   # from the two datasets, but not the dataset item from the no-access hierarchy
   regular_user_opts = {
@@ -733,17 +744,17 @@ resource 'DatasetItems' do
 
   post '/dataset_items/filter' do
     let(:authentication_token) { owner_token }
-    standard_request_options(:post,'FILTER (as owner)',:ok,regular_user_opts)
+    standard_request_options(:post, 'FILTER (as owner)', :ok, regular_user_opts)
   end
 
   post '/dataset_items/filter' do
     let(:authentication_token) { writer_token }
-    standard_request_options(:post,'FILTER (as writer)',:ok,regular_user_opts)
+    standard_request_options(:post, 'FILTER (as writer)', :ok, regular_user_opts)
   end
 
   post '/dataset_items/filter' do
     let(:authentication_token) { reader_token }
-    standard_request_options(:post,'FILTER (as reader)',:ok,regular_user_opts)
+    standard_request_options(:post, 'FILTER (as reader)', :ok, regular_user_opts)
   end
 
   # reader user using nested path, which will filter out the no access item and also the
@@ -886,7 +897,7 @@ resource 'DatasetItems' do
             data_item_count: 3,
             order: {
                 property: 'start_time_seconds',
-                values: [1,8,3]
+                values: [1, 8, 3]
             }
         }
     )
@@ -918,7 +929,7 @@ resource 'DatasetItems' do
       )
     end
 
-    # permissions will be the same for reader,writer,owner so they will have
+    # permissions will be the same for reader, writer, owner so they will have
     # the same response for the same filter params.
     # Using nested path, which will filter out the no access item and also the
     # item from a different dataset, leaving 5 dataset items
@@ -931,19 +942,31 @@ resource 'DatasetItems' do
     get '/datasets/:dataset_id/dataset_items/filter_todo' do
       let(:dataset_id) { dataset.id }
       let(:authentication_token) { owner_token }
-      standard_request_options(:get,'FILTER TODO (as owner)',:ok,regular_user_opts)
+      standard_request_options(
+          :get,
+          'FILTER TODO (as owner)',
+          :ok,
+          regular_user_opts)
     end
 
     get '/datasets/:dataset_id/dataset_items/filter_todo' do
       let(:dataset_id) { dataset.id }
       let(:authentication_token) { writer_token }
-      standard_request_options(:get,'FILTER TODO (as writer)',:ok,regular_user_opts)
+      standard_request_options(
+          :get,
+          'FILTER TODO (as writer)',
+          :ok,
+          regular_user_opts)
     end
 
     get '/datasets/:dataset_id/dataset_items/filter_todo' do
       let(:dataset_id) { dataset.id }
       let(:authentication_token) { reader_token }
-      standard_request_options(:get,'FILTER TODO (as reader)',:ok,regular_user_opts)
+      standard_request_options(
+          :get,
+          'FILTER TODO (as reader)',
+          :ok,
+          regular_user_opts)
     end
 
     get '/datasets/:dataset_id/dataset_items/filter_todo' do

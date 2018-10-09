@@ -455,7 +455,7 @@ class Ability
     # only admin can create, unless it is the default dataset
     # if default dataset, must have read permission or higher to create
     can [:create], DatasetItem do |dataset_item|
-      if (dataset_item.dataset_id == 1)
+      if dataset_item.dataset_id == 1
         check_model(dataset_item)
         #Access::Core.check_orphan_site!(audio_event.audio_recording.site)
         Access::Core.can_any?(user, :reader, dataset_item.audio_recording.site.projects)
@@ -488,6 +488,7 @@ class Ability
     can [:create], ProgressEvent do |progress_event|
       check_model(progress_event)
 
+      # the dataset_item may not be valid and therefore may not be associated with a project
       begin
         Access::Core.can_any?(user, :reader, progress_event.dataset_item.audio_recording.site.projects)
       rescue

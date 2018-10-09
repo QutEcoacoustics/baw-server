@@ -27,10 +27,12 @@ class DatasetItem < ActiveRecord::Base
   def self.filter_settings (priority_algorithm = nil, current_user_id = nil)
     result = {
         valid_fields: [
-            :id, :dataset_id, :audio_recording_id, :start_time_seconds, :end_time_seconds, :order, :creator_id, :created_at, :priority
+            :id, :dataset_id, :audio_recording_id, :start_time_seconds,
+            :end_time_seconds, :order, :creator_id, :created_at, :priority
         ],
         render_fields: [
-            :id, :dataset_id, :audio_recording_id, :start_time_seconds, :end_time_seconds, :order, :creator_id, :created_at
+            :id, :dataset_id, :audio_recording_id, :start_time_seconds,
+            :end_time_seconds, :order, :creator_id, :created_at
         ],
         new_spec_fields: lambda { |user|
           {
@@ -102,7 +104,8 @@ class DatasetItem < ActiveRecord::Base
   }
 
   # scope :num_views, lambda {
-  #   joins(:progress_events).select("dataset_items.*, count(DISTINCT progress_events.id) as num_views").group('dataset_items.id')
+  #   joins(:progress_events).select("dataset_items.*, count(DISTINCT progress_events.id) as num_views")
+  #      .group('dataset_items.id')
   # }
 
 

@@ -308,7 +308,7 @@ module Filter
       sort_field = @build.build_custom_field(column_name)
       sort_field = table[column_name] if sort_field.blank?
 
-      if (sort_field.is_a? String)
+      if sort_field.is_a? String
         sort_field_by = sort_field
       else
 

@@ -255,14 +255,25 @@ Rails.application.routes.draw do
   get '/sites/:id' => 'sites#show_shallow', defaults: {format: 'json'}, as: 'shallow_site'
 
 
-  match 'datasets/:dataset_id/progress_events/audio_recordings/:audio_recording_id/start/:start_time_seconds/end/:end_time_seconds' => 'progress_events#create_by_dataset_item_params', :constraints => { :dataset_id => /\d+/, :audio_recording_id => /\d+/, :start_time_seconds => /\d+(\.\d+)?/, :end_time_seconds => /\d+(\.\d+)?/ }, via: [:post], defaults: {format: 'json'}
+  match 'datasets/:dataset_id/progress_events/audio_recordings/:audio_recording_id/start/:start_time_seconds/end/:end_time_seconds' => 'progress_events#create_by_dataset_item_params',
+        :constraints => {
+            :dataset_id => /\d+/,
+            :audio_recording_id => /\d+/,
+            :start_time_seconds => /\d+(\.\d+)?/,
+            :end_time_seconds => /\d+(\.\d+)?/ },
+        via: [:post],
+        defaults: {format: 'json'}
 
 
   # datasets, dataset_items
   match 'datasets/filter' => 'datasets#filter', via: [:get, :post], defaults: {format: 'json'}
   match 'dataset_items/filter' => 'dataset_items#filter', via: [:get, :post], defaults: {format: 'json'}
-  match 'datasets/:dataset_id/dataset_items/filter' => 'dataset_items#filter', via: [:get, :post], defaults: {format: 'json'}
-  match 'datasets/:dataset_id/dataset_items/filter_todo' => 'dataset_items#filter_todo', via: [:get], defaults: {format: 'json'}
+  match 'datasets/:dataset_id/dataset_items/filter' => 'dataset_items#filter',
+        via: [:get, :post],
+        defaults: {format: 'json'}
+  match 'datasets/:dataset_id/dataset_items/filter_todo' => 'dataset_items#filter_todo',
+        via: [:get],
+        defaults: {format: 'json'}
   resources :datasets, except: :destroy, defaults:  {format: 'json'} do
     resources :items, controller: 'dataset_items', defaults: {format: 'json'}
   end

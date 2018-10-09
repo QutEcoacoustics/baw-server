@@ -6,9 +6,17 @@ require 'rspec/mocks'
 # @param params Hash any values to use instead of the dataset_item's values
 def create_by_dataset_item_params_path (dataset_item, params = {})
   valid_params = [:dataset_id, :audio_recording_id, :start_time_seconds, :end_time_seconds]
-  params = values_to_string(dataset_item.attributes.symbolize_keys.slice(*valid_params).merge(params.symbolize_keys.slice(*valid_params)))
+  params = values_to_string(dataset_item.attributes.symbolize_keys.slice(*valid_params)
+                                .merge(params.symbolize_keys.slice(*valid_params)))
   url = "/datasets/#{params[:dataset_id]}/progress_events/audio_recordings/#{params[:audio_recording_id]}/start/#{params[:start_time_seconds]}/end/#{params[:end_time_seconds]}"
   { path: url, params: params }
+end
+
+# converts values of a hash to string
+# not recursive: does not work on nested hashes
+def values_to_string hash
+  hash.each { |key, val| hash[key] = val.to_s }
+  hash
 end
 
 describe "Progress Events" do
@@ -49,13 +57,6 @@ describe "Progress Events" do
 
     @create_progress_event_url = "/progress_events"
     @update_progress_event_url = "/progress_events/#{progress_event.id}"
-  end
-
-  # converts values of a hash to string
-  # not recursive: does not work on nested hashes
-  def values_to_string hash
-    hash.each { |key,val| hash[key] = val.to_s }
-    hash
   end
 
   describe 'Creating a progress event' do
@@ -143,7 +144,8 @@ describe "Progress Events" do
     end
 
     it 'Returns 422 when parameters do not match existing dataset item for non-default dataset' do
-      url = create_by_dataset_item_params_path(another_dataset_item, {'end_time_seconds' => another_dataset_item.end_time_seconds + 1})
+      url = create_by_dataset_item_params_path(
+          another_dataset_item, {'end_time_seconds' => another_dataset_item.end_time_seconds + 1})
       params = {progress_event: progress_event_attributes_2}.to_json
       post url[:path], params, @env
       parsed_response = JSON.parse(response.body)
@@ -155,7 +157,12 @@ describe "Progress Events" do
     describe 'using parameters of non-existing dataset item in default dataset' do
 
       let (:url) {
-        create_by_dataset_item_params_path(default_dataset_item, {'start_time_seconds' => default_dataset_item.start_time_seconds + 100, 'end_time_seconds' => default_dataset_item.end_time_seconds + 100})
+        create_by_dataset_item_params_path(
+            default_dataset_item,
+            {
+                'start_time_seconds' => default_dataset_item.start_time_seconds + 100,
+                'end_time_seconds' => default_dataset_item.end_time_seconds + 100
+            })
       }
 
       it 'Creates a dataset item and progress event for the default dataset' do
@@ -165,7 +172,8 @@ describe "Progress Events" do
         parsed_response = JSON.parse(response.body)
         created_dataset_item = DatasetItem.find(parsed_response['data']['dataset_item_id'])
         # check that the associated dataset item has the same attributes as what we specified in the request
-        created_dataset_item_attributes = values_to_string(created_dataset_item.attributes.symbolize_keys.slice(*url[:params].keys))
+        created_dataset_item_attributes = values_to_string(
+            created_dataset_item.attributes.symbolize_keys.slice(*url[:params].keys))
         expect(created_dataset_item_attributes).to eq(url[:params])
         expect(created_dataset_item.dataset_id).to eq(1)
         check_counts true, true
@@ -183,7 +191,9 @@ describe "Progress Events" do
     end
 
     it 'Responds with 422 if dataset item params for default dataset are invalid: same start and end time' do
-      url = create_by_dataset_item_params_path(default_dataset_item, {'start_time_seconds' => '123', 'end_time_seconds' => '123'})
+      url = create_by_dataset_item_params_path(
+          default_dataset_item,
+          {'start_time_seconds' => '123', 'end_time_seconds' => '123'})
       params = {progress_event: progress_event_attributes_2}.to_json
       post url[:path], params, @env
       num_progress_events_after = ProgressEvent.count

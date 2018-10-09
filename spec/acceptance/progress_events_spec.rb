@@ -71,17 +71,17 @@ resource 'ProgressEvents' do
 
   get '/progress_events' do
     let(:authentication_token) { owner_token }
-    standard_request_options(:get,'INDEX (as owner)',:ok, non_admin_opts)
+    standard_request_options(:get, 'INDEX (as owner)', :ok, non_admin_opts)
   end
 
   get '/progress_events' do
     let(:authentication_token) { writer_token }
-    standard_request_options(:get,'INDEX (as writer)',:ok, non_admin_opts)
+    standard_request_options(:get, 'INDEX (as writer)', :ok, non_admin_opts)
   end
 
   get '/progress_events' do
     let(:authentication_token) { reader_token }
-    standard_request_options(:get,'INDEX (as reader)',:ok, non_admin_opts)
+    standard_request_options(:get, 'INDEX (as reader)', :ok, non_admin_opts)
   end
 
   get '/progress_events' do
@@ -109,7 +109,11 @@ resource 'ProgressEvents' do
         :get,
         'INDEX (as anonymous user)',
         :ok,
-        {remove_auth: true, response_body_content: ['"order_by":"created_at","direction":"desc"'], data_item_count: 0}
+        {
+            remove_auth: true,
+            response_body_content: ['"order_by":"created_at","direction":"desc"'],
+            data_item_count: 0
+        }
     )
   end
 
@@ -149,7 +153,11 @@ resource 'ProgressEvents' do
     let(:raw_post) { {'progress_event' => post_attributes}.to_json }
     let(:authentication_token) { owner_token }
     let(:dataset_item_id) { dataset_item.id }
-    standard_request_options(:post,'CREATE (as owner)',:created, create_success_opts)
+    standard_request_options(
+        :post,
+        'CREATE (as owner)',
+        :created,
+        create_success_opts)
   end
 
   post '/progress_events' do
@@ -157,7 +165,11 @@ resource 'ProgressEvents' do
     let(:raw_post) { {'progress_event' => post_attributes}.to_json }
     let(:authentication_token) { writer_token }
     let(:dataset_item_id) { dataset_item.id }
-    standard_request_options(:post,'CREATE (as writer)',:created, create_success_opts)
+    standard_request_options(
+        :post,
+        'CREATE (as writer)',
+        :created,
+        create_success_opts)
   end
 
   post '/progress_events' do
@@ -165,7 +177,11 @@ resource 'ProgressEvents' do
     let(:raw_post) { {'progress_event' => post_attributes}.to_json }
     let(:authentication_token) { reader_token }
     let(:dataset_item_id) { dataset_item.id }
-    standard_request_options(:post,'CREATE (as reader)',:created, create_success_opts)
+    standard_request_options(
+        :post,
+        'CREATE (as reader)',
+        :created,
+        create_success_opts)
   end
 
   post '/progress_events' do
@@ -262,7 +278,11 @@ resource 'ProgressEvents' do
       let(:audio_recording_id) { audio_recording.id }
       let(:start_time_seconds) { 1234 }
       let(:end_time_seconds) { 1245 }
-      standard_request_options(:post,'CREATE (as owner)',:created, create_success_opts)
+      standard_request_options(
+          :post,
+          'CREATE (as owner)',
+          :created,
+          create_success_opts)
     end
 
     post create_by_dataset_item_params_url do
@@ -273,7 +293,11 @@ resource 'ProgressEvents' do
       let(:audio_recording_id) { audio_recording.id }
       let(:start_time_seconds) { 1234 }
       let(:end_time_seconds) { 1245 }
-      standard_request_options(:post,'CREATE (as writer)',:created, create_success_opts)
+      standard_request_options(
+          :post,
+          'CREATE (as writer)',
+          :created,
+          create_success_opts)
     end
 
     post create_by_dataset_item_params_url do
@@ -284,7 +308,11 @@ resource 'ProgressEvents' do
       let(:audio_recording_id) { audio_recording.id }
       let(:start_time_seconds) { 1234 }
       let(:end_time_seconds) { 1245 }
-      standard_request_options(:post,'CREATE (as reader)',:created, create_success_opts)
+      standard_request_options(
+          :post,
+          'CREATE (as reader)',
+          :created,
+          create_success_opts)
     end
 
     post create_by_dataset_item_params_url do
@@ -295,7 +323,11 @@ resource 'ProgressEvents' do
       let(:audio_recording_id) { audio_recording.id }
       let(:start_time_seconds) { 1234 }
       let(:end_time_seconds) { 1245 }
-      standard_request_options(:post,'CREATE (as no access user)',:forbidden, {expected_json_path: get_json_error_path(:permissions)})
+      standard_request_options(
+          :post,
+          'CREATE (as no access user)',
+          :forbidden,
+          {expected_json_path: get_json_error_path(:permissions)})
     end
 
     post create_by_dataset_item_params_url do
@@ -306,7 +338,11 @@ resource 'ProgressEvents' do
       let(:audio_recording_id) { audio_recording.id }
       let(:start_time_seconds) { 1234 }
       let(:end_time_seconds) { 1245 }
-      standard_request_options(:post,'CREATE (invalid token)',:unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
+      standard_request_options(
+          :post,
+          'CREATE (invalid token)',
+          :unauthorized,
+          {expected_json_path: get_json_error_path(:sign_up)})
     end
 
     post create_by_dataset_item_params_url do
@@ -316,7 +352,11 @@ resource 'ProgressEvents' do
       let(:audio_recording_id) { audio_recording.id }
       let(:start_time_seconds) { 1234 }
       let(:end_time_seconds) { 1245 }
-      standard_request_options(:post,'CREATE (anonymous user)',:unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
+      standard_request_options(
+          :post,
+          'CREATE (anonymous user)',
+          :unauthorized,
+          {expected_json_path: get_json_error_path(:sign_up)})
     end
 
     post create_by_dataset_item_params_url do
@@ -327,7 +367,11 @@ resource 'ProgressEvents' do
       let(:audio_recording_id) { audio_recording.id }
       let(:start_time_seconds) { 1234 }
       let(:end_time_seconds) { 1245 }
-      standard_request_options(:post,'CREATE (as harvester)',:forbidden, {expected_json_path: get_json_error_path(:permissions)})
+      standard_request_options(
+          :post,
+          'CREATE (as harvester)',
+          :forbidden,
+          {expected_json_path: get_json_error_path(:permissions)})
     end
 
   end
@@ -571,7 +615,11 @@ resource 'ProgressEvents' do
     let(:id) { progress_event.id }
     let(:raw_post) {  {progress_event: {activity: "played"}}.to_json }
     let(:authentication_token) { owner_token }
-    standard_request_options(:put, 'UPDATE (as owner)', :forbidden, forbidden_opts)
+    standard_request_options(
+        :put,
+        'UPDATE (as owner)',
+        :forbidden,
+        forbidden_opts)
   end
 
   put '/progress_events/:id' do
@@ -580,7 +628,11 @@ resource 'ProgressEvents' do
     let(:id) { progress_event.id }
     let(:raw_post) {  {progress_event: {activity: "played"}}.to_json }
     let(:authentication_token) { writer_token }
-    standard_request_options(:put, 'UPDATE (as writer)', :forbidden, forbidden_opts)
+    standard_request_options(
+        :put,
+        'UPDATE (as writer)',
+        :forbidden,
+        forbidden_opts)
   end
 
   put '/progress_events/:id' do
@@ -589,7 +641,11 @@ resource 'ProgressEvents' do
     let(:id) { progress_event.id }
     let(:raw_post) {  {progress_event: {activity: "played"}}.to_json }
     let(:authentication_token) { reader_token }
-    standard_request_options(:put, 'UPDATE (as reader)', :forbidden, forbidden_opts)
+    standard_request_options(
+        :put,
+        'UPDATE (as reader)',
+        :forbidden,
+        forbidden_opts)
   end
 
   put '/progress_events/:id' do
@@ -598,7 +654,11 @@ resource 'ProgressEvents' do
     let(:id) { progress_event.id }
     let(:raw_post) {  {progress_event: {activity: "played"}}.to_json }
     let(:authentication_token) { no_access_token }
-    standard_request_options(:put, 'UPDATE (as no access user)', :forbidden, forbidden_opts)
+    standard_request_options(
+        :put,
+        'UPDATE (as no access user)',
+        :forbidden,
+        forbidden_opts)
   end
 
   # can not update the progress event, even through is the creator
@@ -608,7 +668,11 @@ resource 'ProgressEvents' do
     let(:id) { progress_event_for_no_access_user.id }
     let(:raw_post) {  {progress_event: {activity: "viewed"}}.to_json }
     let(:authentication_token) { no_access_token }
-    standard_request_options(:put, 'UPDATE (as no access user)', :forbidden, forbidden_opts)
+    standard_request_options(
+        :put,
+        'UPDATE (as no access user)',
+        :forbidden,
+        forbidden_opts)
   end
 
   put '/progress_events/:id' do
@@ -617,7 +681,11 @@ resource 'ProgressEvents' do
     let(:id) { progress_event.id }
     let(:raw_post) {  {progress_event: {activity: "played"}}.to_json }
     let(:authentication_token) { invalid_token }
-    standard_request_options(:put, 'UPDATE (as invalid token)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
+    standard_request_options(
+        :put,
+        'UPDATE (as invalid token)',
+        :unauthorized,
+        {expected_json_path: get_json_error_path(:sign_up)})
   end
 
   put '/progress_events/:id' do
@@ -625,7 +693,11 @@ resource 'ProgressEvents' do
     body_params
     let(:id) { progress_event.id }
     let(:raw_post) {  {progress_event: {activity: "played"}}.to_json }
-    standard_request_options(:put, 'UPDATE (as not logged in)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
+    standard_request_options(
+        :put,
+        'UPDATE (as not logged in)',
+        :unauthorized,
+        {expected_json_path: get_json_error_path(:sign_up)})
   end
 
   put '/progress_events/:id' do
@@ -634,7 +706,11 @@ resource 'ProgressEvents' do
     let(:id) { progress_event.id }
     let(:raw_post) {  {progress_event: {activity: "played"}}.to_json }
     let(:authentication_token) { harvester_token }
-    standard_request_options(:put, 'UPDATE (as harvester)', :forbidden, forbidden_opts)
+    standard_request_options(
+        :put,
+        'UPDATE (as harvester)',
+        :forbidden,
+        forbidden_opts)
   end
 
   # ################################
@@ -662,7 +738,10 @@ resource 'ProgressEvents' do
     body_params
     let(:id) { progress_event.id }
     let(:authentication_token) { owner_token }
-    standard_request_options(:delete, 'DELETE (as owner)', :forbidden, forbidden_opts)
+    standard_request_options(
+        :delete,
+        'DELETE (as owner)',
+        :forbidden, forbidden_opts)
   end
 
   delete '/progress_events/:id' do
@@ -670,7 +749,10 @@ resource 'ProgressEvents' do
     body_params
     let(:id) { progress_event.id }
     let(:authentication_token) { writer_token }
-    standard_request_options(:delete, 'DELETE (as writer)', :forbidden, forbidden_opts)
+    standard_request_options(
+        :delete,
+        'DELETE (as writer)',
+        :forbidden, forbidden_opts)
   end
 
   delete '/progress_events/:id' do
@@ -678,7 +760,11 @@ resource 'ProgressEvents' do
     body_params
     let(:id) { progress_event.id }
     let(:authentication_token) { reader_token }
-    standard_request_options(:delete, 'DELETE (as reader)', :forbidden, forbidden_opts)
+    standard_request_options(
+        :delete,
+        'DELETE (as reader)',
+        :forbidden,
+        forbidden_opts)
   end
 
   delete '/progress_events/:id' do
@@ -686,7 +772,11 @@ resource 'ProgressEvents' do
     body_params
     let(:id) { progress_event.id }
     let(:authentication_token) { no_access_token }
-    standard_request_options(:delete, 'DELETE (as no access user)', :forbidden, forbidden_opts)
+    standard_request_options(
+        :delete,
+        'DELETE (as no access user)',
+        :forbidden,
+        forbidden_opts)
   end
 
   # can not delete the progress event, even through is the creator
@@ -695,7 +785,11 @@ resource 'ProgressEvents' do
     body_params
     let(:id) { progress_event_for_no_access_user.id }
     let(:authentication_token) { no_access_token }
-    standard_request_options(:delete, 'DELETE (as no access user)', :forbidden, forbidden_opts)
+    standard_request_options(
+        :delete,
+        'DELETE (as no access user)',
+        :forbidden,
+        forbidden_opts)
   end
 
   delete '/progress_events/:id' do
@@ -703,14 +797,22 @@ resource 'ProgressEvents' do
     body_params
     let(:id) { progress_event.id }
     let(:authentication_token) { invalid_token }
-    standard_request_options(:delete, 'DELETE (as invalid token)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
+    standard_request_options(
+        :delete,
+        'DELETE (as invalid token)',
+        :unauthorized,
+        {expected_json_path: get_json_error_path(:sign_up)})
   end
 
   delete '/progress_events/:id' do
     progress_event_id_param
     body_params
     let(:id) { progress_event.id }
-    standard_request_options(:delete, 'DELETE (as not logged in)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
+    standard_request_options(
+        :delete,
+        'DELETE (as not logged in)',
+        :unauthorized,
+        {expected_json_path: get_json_error_path(:sign_up)})
   end
 
   delete '/progress_events/:id' do
@@ -718,7 +820,10 @@ resource 'ProgressEvents' do
     body_params
     let(:id) { progress_event.id }
     let(:authentication_token) { harvester_token }
-    standard_request_options(:delete, 'DELETE (as harvester)', :forbidden, forbidden_opts)
+    standard_request_options(
+        :delete,
+        'DELETE (as harvester)',
+        :forbidden, forbidden_opts)
   end
 
   # ################################
@@ -768,7 +873,7 @@ resource 'ProgressEvents' do
       )
     end
 
-    # permissions will be the same for reader,writer,owner so they will have
+    # permissions will be the same for reader, writer, owner so they will have
     # the same response for the same filter params. Should return 6 items
     # from the two datasets, but not the dataset item from the no-access hierarchy
     regular_user_opts = {
@@ -780,19 +885,19 @@ resource 'ProgressEvents' do
     post '/progress_events/filter' do
       let(:authentication_token) { owner_token }
       let(:raw_post) { {'paging' => {'items' => 100}}.to_json }
-      standard_request_options(:post,'FILTER (as owner)',:ok,regular_user_opts)
+      standard_request_options(:post, 'FILTER (as owner)', :ok, regular_user_opts)
     end
 
     post '/progress_events/filter' do
       let(:authentication_token) { writer_token }
       let(:raw_post) { {'paging' => {'items' => 100}}.to_json }
-      standard_request_options(:post,'FILTER (as writer)',:ok,regular_user_opts)
+      standard_request_options(:post, 'FILTER (as writer)', :ok, regular_user_opts)
     end
 
     post '/progress_events/filter' do
       let(:authentication_token) { reader_token }
       let(:raw_post) { {'paging' => {'items' => 100}}.to_json }
-      standard_request_options(:post,'FILTER (as reader)',:ok,regular_user_opts)
+      standard_request_options(:post, 'FILTER (as reader)', :ok, regular_user_opts)
     end
 
     # no-access user is the creator of 1 progress event for a dataset_item that
