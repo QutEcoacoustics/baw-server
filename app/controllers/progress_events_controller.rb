@@ -66,6 +66,8 @@ class ProgressEventsController < ApplicationController
 
     # find dataset_item
 
+
+
     dataset_item_params = {
         dataset_id: params[:dataset_id].to_i,
         audio_recording_id: params[:audio_recording_id],
@@ -73,12 +75,16 @@ class ProgressEventsController < ApplicationController
         end_time_seconds: params[:end_time_seconds]
     }
 
+    if params['dataset_id'] == 'default'
+      dataset_item_params[:dataset_id] = Dataset.default_dataset_id
+    end
+
     dataset_item = DatasetItem.find_by(dataset_item_params)
 
     resource_params = progress_event_params
     if dataset_item
       resource_params[:dataset_item_id] = dataset_item.id
-    elsif dataset_item_params[:dataset_id].to_i == 1
+    elsif params['dataset_id'] == 'default'
 
       # is for the default dataset, so create the dataset item
       dataset_item = DatasetItem.new(dataset_item_params)

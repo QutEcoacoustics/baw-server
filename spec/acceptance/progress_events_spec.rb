@@ -257,7 +257,7 @@ resource 'ProgressEvents' do
       let(:authentication_token) { admin_token }
       body_params_2
       let(:raw_post) { {'progress_event' => post_attributes_2}.to_json }
-      let(:dataset_id) { 1 }
+      let(:dataset_id) { 'default' }
       let(:audio_recording_id) { audio_recording.id }
       let(:start_time_seconds) { 1234 }
       let(:end_time_seconds) { 1245 }
@@ -274,7 +274,7 @@ resource 'ProgressEvents' do
       let(:authentication_token) { owner_token }
       body_params_2
       let(:raw_post) { {'progress_event' => post_attributes_2}.to_json }
-      let(:dataset_id) { 1 }
+      let(:dataset_id) { 'default' }
       let(:audio_recording_id) { audio_recording.id }
       let(:start_time_seconds) { 1234 }
       let(:end_time_seconds) { 1245 }
@@ -289,7 +289,7 @@ resource 'ProgressEvents' do
       let(:authentication_token) { writer_token }
       body_params_2
       let(:raw_post) { {'progress_event' => post_attributes_2}.to_json }
-      let(:dataset_id) { 1 }
+      let(:dataset_id) { 'default' }
       let(:audio_recording_id) { audio_recording.id }
       let(:start_time_seconds) { 1234 }
       let(:end_time_seconds) { 1245 }
@@ -304,7 +304,7 @@ resource 'ProgressEvents' do
       let(:authentication_token) { reader_token }
       body_params_2
       let(:raw_post) { {'progress_event' => post_attributes_2}.to_json }
-      let(:dataset_id) { 1 }
+      let(:dataset_id) { 'default' }
       let(:audio_recording_id) { audio_recording.id }
       let(:start_time_seconds) { 1234 }
       let(:end_time_seconds) { 1245 }
@@ -319,7 +319,7 @@ resource 'ProgressEvents' do
       let(:authentication_token) { no_access_token }
       body_params_2
       let(:raw_post) { {'progress_event' => post_attributes_2}.to_json }
-      let(:dataset_id) { 1 }
+      let(:dataset_id) { 'default' }
       let(:audio_recording_id) { audio_recording.id }
       let(:start_time_seconds) { 1234 }
       let(:end_time_seconds) { 1245 }
@@ -334,7 +334,7 @@ resource 'ProgressEvents' do
       let(:authentication_token) { invalid_token }
       body_params_2
       let(:raw_post) { {'progress_event' => post_attributes_2}.to_json }
-      let(:dataset_id) { 1 }
+      let(:dataset_id) { 'default' }
       let(:audio_recording_id) { audio_recording.id }
       let(:start_time_seconds) { 1234 }
       let(:end_time_seconds) { 1245 }
@@ -348,7 +348,7 @@ resource 'ProgressEvents' do
     post create_by_dataset_item_params_url do
       body_params_2
       let(:raw_post) { {'progress_event' => post_attributes_2}.to_json }
-      let(:dataset_id) { 1 }
+      let(:dataset_id) { 'default' }
       let(:audio_recording_id) { audio_recording.id }
       let(:start_time_seconds) { 1234 }
       let(:end_time_seconds) { 1245 }
@@ -363,7 +363,7 @@ resource 'ProgressEvents' do
       let(:authentication_token) { harvester_token }
       body_params_2
       let(:raw_post) { {'progress_event' => post_attributes_2}.to_json }
-      let(:dataset_id) { 1 }
+      let(:dataset_id) { 'default' }
       let(:audio_recording_id) { audio_recording.id }
       let(:start_time_seconds) { 1234 }
       let(:end_time_seconds) { 1245 }

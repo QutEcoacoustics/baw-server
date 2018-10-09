@@ -1,7 +1,7 @@
 require 'rails_helper'
 require 'rspec/mocks'
 
-# create the url for create_by_dataset_item_params based on the dataset item
+# create the url for create_by_dataset_item_params
 # @param dataset_item Object to use for the dataset item params
 # @param params Hash any values to use instead of the dataset_item's values
 def create_by_dataset_item_params_path (dataset_item, params = {})
@@ -160,6 +160,7 @@ describe "Progress Events" do
         create_by_dataset_item_params_path(
             default_dataset_item,
             {
+                'dataset_id' => 'default',
                 'start_time_seconds' => default_dataset_item.start_time_seconds + 100,
                 'end_time_seconds' => default_dataset_item.end_time_seconds + 100
             })
@@ -172,10 +173,15 @@ describe "Progress Events" do
         parsed_response = JSON.parse(response.body)
         created_dataset_item = DatasetItem.find(parsed_response['data']['dataset_item_id'])
         # check that the associated dataset item has the same attributes as what we specified in the request
+        # convert to string for comparison with url[:params]
         created_dataset_item_attributes = values_to_string(
             created_dataset_item.attributes.symbolize_keys.slice(*url[:params].keys))
-        expect(created_dataset_item_attributes).to eq(url[:params])
-        expect(created_dataset_item.dataset_id).to eq(1)
+        # expected dataset item attributes will be those used in the url, but with the actual default dataset
+        # id instead of the word 'default'
+        expected_dataset_items_attributes = url[:params].merge({ dataset_id: Dataset.default_dataset_id.to_s })
+        expect(created_dataset_item_attributes).to eq(expected_dataset_items_attributes)
+        default_dataset_id = Dataset.default_dataset_id
+        expect(created_dataset_item.dataset_id).to eq(default_dataset_id)
         check_counts true, true
       end
 
@@ -193,14 +199,26 @@ describe "Progress Events" do
     it 'Responds with 422 if dataset item params for default dataset are invalid: same start and end time' do
       url = create_by_dataset_item_params_path(
           default_dataset_item,
-          {'start_time_seconds' => '123', 'end_time_seconds' => '123'})
+          {'dataset_id' => 'default', 'start_time_seconds' => '123', 'end_time_seconds' => '123'})
       params = {progress_event: progress_event_attributes_2}.to_json
       post url[:path], params, @env
-      num_progress_events_after = ProgressEvent.count
-      num_dataset_items_after = DatasetItem.count
       expect(response).to have_http_status(422)
       parsed_response = JSON.parse(response.body)
       expect(parsed_response['meta']['error']['info']['end_time_seconds']).to eq(['must be greater than 123.0'])
+      check_counts
+    end
+
+    # specifying the dataset by name rather than id is available only for the default dataset
+    # As it is the only one where name is guaranteed to be unique. 
+    it 'Responds with 404 if dataset_id is the name of a dataset other than default' do
+      url = create_by_dataset_item_params_path(
+          another_dataset_item,
+          {'dataset_id' => dataset.name})
+      params = {progress_event: progress_event_attributes_2}.to_json
+      post url[:path], params, @env
+      expect(response).to have_http_status(404)
+      parsed_response = JSON.parse(response.body)
+      #expect(parsed_response['meta']['error']['info']['end_time_seconds']).to eq(['must be greater than 123.0'])
       check_counts
     end
 

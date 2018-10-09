@@ -15,8 +15,16 @@ class Dataset < ActiveRecord::Base
   validates :creator, existence: true
 
   # validation
-  validates :name, presence: true, length: {minimum: 2}
+  # validates :name, presence: true, length: {minimum: 2}
+  validates :name, presence: true, length: {minimum: 2}, exclusion: { in: ['default'], message: "%{value} is a reserved dataset name" }
 
+
+  # lookup the default dataset id
+  # This will potentially be hit very often, maybe multiple times per request
+  # and therefore is a possible avenue for future optimization if necessary
+  def self.default_dataset_id
+    Dataset.where(name: 'default').first.id
+  end
 
   # Define filter api settings
   def self.filter_settings

@@ -257,7 +257,7 @@ Rails.application.routes.draw do
 
   match 'datasets/:dataset_id/progress_events/audio_recordings/:audio_recording_id/start/:start_time_seconds/end/:end_time_seconds' => 'progress_events#create_by_dataset_item_params',
         :constraints => {
-            :dataset_id => /\d+/,
+            :dataset_id => /(\d+|default)/,
             :audio_recording_id => /\d+/,
             :start_time_seconds => /\d+(\.\d+)?/,
             :end_time_seconds => /\d+(\.\d+)?/ },
