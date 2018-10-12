@@ -906,20 +906,20 @@ resource 'DatasetItems' do
 
 
   ################################
-  # FILTER TODO
+  # NEXT FOR ME
   ################################
 
-  context 'filter todo' do
+  context 'next for me' do
 
     # with deep route including dataset id
     # One item has a different dataset id, so only 6 items
-    get '/datasets/:dataset_id/dataset_items/filter_todo' do
+    get '/datasets/:dataset_id/dataset_items/next_for_me' do
       dataset_id_param
       let(:dataset_id) { dataset.id }
       let(:authentication_token) { admin_token }
       standard_request_options(
           :get,
-          'FILTER TODO (as admin)',
+          'NEXT FOR ME (as admin)',
           :ok,
           {
               response_body_content: ['"start_time_seconds":11.0'],
@@ -939,75 +939,86 @@ resource 'DatasetItems' do
         data_item_count: 5
     }
 
-    get '/datasets/:dataset_id/dataset_items/filter_todo' do
+    get '/datasets/:dataset_id/dataset_items/next_for_me' do
       let(:dataset_id) { dataset.id }
       let(:authentication_token) { owner_token }
       standard_request_options(
           :get,
-          'FILTER TODO (as owner)',
+          'NEXT FOR ME (as owner)',
           :ok,
           regular_user_opts)
     end
 
-    get '/datasets/:dataset_id/dataset_items/filter_todo' do
+    get '/datasets/:dataset_id/dataset_items/next_for_me' do
       let(:dataset_id) { dataset.id }
       let(:authentication_token) { writer_token }
       standard_request_options(
           :get,
-          'FILTER TODO (as writer)',
+          'NEXT FOR ME (as writer)',
           :ok,
           regular_user_opts)
     end
 
-    get '/datasets/:dataset_id/dataset_items/filter_todo' do
+    get '/datasets/:dataset_id/dataset_items/next_for_me' do
       let(:dataset_id) { dataset.id }
       let(:authentication_token) { reader_token }
       standard_request_options(
           :get,
-          'FILTER TODO (as reader)',
+          'NEXT FOR ME (as reader)',
           :ok,
           regular_user_opts)
     end
 
-    get '/datasets/:dataset_id/dataset_items/filter_todo' do
+    get '/datasets/:dataset_id/dataset_items/next_for_me' do
       let(:dataset_id) { dataset.id }
       let(:authentication_token) { no_access_token }
       standard_request_options(
           :get,
-          'FILTER TODO (as no access)',
+          'NEXT FOR ME (as no access)',
           :ok,
           {response_body_content: ['"order_by":"priority"'], expected_json_path: 'data', data_item_count: 0}
       )
     end
 
-    get '/datasets/:dataset_id/dataset_items/filter_todo' do
+    get '/datasets/:dataset_id/dataset_items/next_for_me' do
       let(:dataset_id) { dataset.id }
       let(:authentication_token) { invalid_token }
       standard_request_options(
           :get,
-          'FILTER TODO (as invalid token)',
+          'NEXT FOR ME (as invalid token)',
           :unauthorized,
           {expected_json_path: get_json_error_path(:sign_up)}
       )
     end
 
     # not logged in users can filter dataset items, but they won't get any items that they don't have permission for
-    get '/datasets/:dataset_id/dataset_items/filter_todo' do
+    get '/datasets/:dataset_id/dataset_items/next_for_me' do
       let(:dataset_id) { dataset.id }
       standard_request_options(
           :get,
-          'FILTER TODO (as not logged in)',
+          'NEXT FOR ME (as not logged in)',
           :ok,
           {response_body_content: ['"order_by":"priority"'], expected_json_path: 'data', data_item_count: 0}
       )
     end
 
-    get '/datasets/:dataset_id/dataset_items/filter_todo' do
+    get '/datasets/:dataset_id/dataset_items/next_for_me' do
+      create_anon_hierarchy
+      let(:dataset_id) { dataset.id }
+      standard_request_options(
+          :get,
+          'NEXT FOR ME (as not logged in) with public project',
+          :ok,
+          {response_body_content: ['"order_by":"priority"'], expected_json_path: 'data', data_item_count: 1}
+      )
+    end
+
+    get '/datasets/:dataset_id/dataset_items/next_for_me' do
       let(:dataset_id) { dataset.id }
       let(:authentication_token) { harvester_token }
       standard_request_options(
           :get,
-          'FILTER TODO (as harvester)',
+          'NEXT FOR ME (as harvester)',
           :forbidden,
           {response_body_content: ['"data":null'], expected_json_path: get_json_error_path(:permissions)}
       )

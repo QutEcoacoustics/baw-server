@@ -24,7 +24,7 @@ class DatasetItem < ActiveRecord::Base
 
   # Define filter api settings
   # @param [Symbol] priority_algorithm The key of the @priority_algorithms to use as the priority virtual field.
-  def self.filter_settings (priority_algorithm = nil, current_user_id = nil)
+  def self.filter_settings (priority_algorithm = nil)
     result = {
         valid_fields: [
             :id, :dataset_id, :audio_recording_id, :start_time_seconds,
@@ -74,6 +74,8 @@ class DatasetItem < ActiveRecord::Base
 
       result[:valid_fields] << :priority
 
+      # priority algorithm can either be a key in priority_algorithm
+      # or a custom value
       if @priority_algorithms.key?(priority_algorithm)
         priority_algorithm_value = @priority_algorithms[priority_algorithm]
       else
@@ -103,15 +105,51 @@ class DatasetItem < ActiveRecord::Base
       :reverse_order => DatasetItem.arel_table[:order].*(-1),
   }
 
+  # Below is an attempt to sort by number of views in a more Arel way than the SQL in self.next_for_user
+  # It didn't quite work but is left here for future reference. In this version, we join to progress events
+  # and do a count on progress events grouped by dataset item, however this excludes dataset items with no views.
+  # Doing an outer join would mean that dataset items with zero would both have count 1 which is incorrect.
   # scope :num_views, lambda {
   #   joins(:progress_events).select("dataset_items.*, count(DISTINCT progress_events.id) as num_views")
   #      .group('dataset_items.id')
   # }
 
 
+  # return the value of an SQL order by clause to be used as the
+  # priority algorithm value. This SQL orders by number of views, number of own views
+  # order, and id
+  def self.next_for_user (user_id = nil)
 
+    # sort by least viewed, then least viewed by current user, then id
+    priority_algorithm = []
 
+    # first order by the number of views, ascending
+    priority_algorithm.push <<~SQL
+        (SELECT count(*) FROM progress_events
+         WHERE dataset_item_id = dataset_items.id AND progress_events.activity = 'viewed') ASC
+      SQL
 
+    # Within dataset items that have the same total views, sort by the number of views by the current user.
+    # Anonymous users are permitted to list dataset items, and only items that are associated with permitted
+    # projects are shown.
+    if user_id
+      priority_algorithm.push <<~SQL
+          (SELECT count(*) FROM progress_events
+           WHERE dataset_item_id = dataset_items.id
+           AND progress_events.activity = 'viewed'
+           AND progress_events.creator_id = #{user_id}) ASC
+        SQL
+    end
+
+    # finally, sort by the order field, and then to keep consistent ordering in the case of identical order field
+    # sort by id
+    priority_algorithm.push "dataset_items.order ASC"
+    priority_algorithm.push "dataset_items.id ASC"
+    priority_algorithm = priority_algorithm.join(", ")
+
+    priority_algorithm
+
+  end
 
 
 end

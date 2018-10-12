@@ -132,7 +132,7 @@ resource 'ProgressEvents' do
   # CREATE
   ################################
 
-  # any user can create a dataset item if they have read-access on the project
+  # any user can create a progress event they have read-access on the project
 
   create_success_opts = {expected_json_path: 'data/activity/', response_body_content: ['"activity":"viewed"'] }
 
@@ -239,7 +239,7 @@ resource 'ProgressEvents' do
   # CREATE BY DATASET ITEM PARAMS
   ################################
 
-  # any user can create a dataset item if they have read-access on the project
+  # any user can create a progress event if they have read-access on the project
 
   context 'CREATE BY DATASET ITEM PARAMS' do
 
@@ -874,8 +874,8 @@ resource 'ProgressEvents' do
     end
 
     # permissions will be the same for reader, writer, owner so they will have
-    # the same response for the same filter params. Should return 6 items
-    # from the two datasets, but not the dataset item from the no-access hierarchy
+    # the same response for the same filter params. Should return all progress events
+    # except those for the dataset item from the no-access hierarchy
     regular_user_opts = {
         response_body_content: ['"activity":"viewed"'],
         expected_json_path: 'data/0/dataset_item_id',

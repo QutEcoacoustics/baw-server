@@ -476,7 +476,7 @@ class Ability
     end
 
     # actions any logged in user can access
-    can [:new, :index, :filter, :filter_todo], DatasetItem
+    can [:new, :index, :filter, :next_for_me], DatasetItem
 
   end
 
@@ -488,11 +488,11 @@ class Ability
       check_model(progress_event)
 
       # the dataset_item may not be valid and therefore may not be associated with a project
-      begin
-        Access::Core.can_any?(user, :reader, progress_event.dataset_item.audio_recording.site.projects)
-      rescue
+      audio_recording = progress_event.dataset_item.try(:audio_recording)
+      if audio_recording
+        Access::Core.can_any?(user, :reader, audio_recording.site.projects)
+      else
         fail CustomErrors::UnprocessableEntityError.new('Invalid dataset item')
-        false
       end
 
     end

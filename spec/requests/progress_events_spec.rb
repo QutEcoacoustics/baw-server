@@ -40,6 +40,7 @@ describe "Progress Events" do
 
   let(:progress_event_attributes_invalid_dataset_item_id) {
     attributes = progress_event_attributes
+    # set the dataset_item_id attribute for the progress events that definitely does not exist
     attributes[:dataset_item_id] = 38921111
     attributes
   }
@@ -209,7 +210,7 @@ describe "Progress Events" do
     end
 
     # specifying the dataset by name rather than id is available only for the default dataset
-    # As it is the only one where name is guaranteed to be unique. 
+    # 
     it 'Responds with 404 if dataset_id is the name of a dataset other than default' do
       url = create_by_dataset_item_params_path(
           another_dataset_item,

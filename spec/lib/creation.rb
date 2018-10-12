@@ -62,6 +62,27 @@ module Creation
     end
 
 
+    # creates an project with public (allow anon) permissions
+    # as well as a site, audio recording and dataset item
+    def create_anon_hierarchy
+
+      prepare_project_anon
+
+      let!(:site_anon) {
+        Common.create_site(owner_user, project_anon)
+      }
+
+      let!(:audio_recording_anon) {
+        Common.create_audio_recording(writer_user, writer_user, site_anon)
+      }
+
+      let!(:dataset_item_anon) {
+        Common.create_dataset_item(admin_user, dataset, audio_recording_anon)
+      }
+
+    end
+
+
     # create audio recordings and all parent entities
     def create_audio_recordings_hierarchy
       prepare_users
