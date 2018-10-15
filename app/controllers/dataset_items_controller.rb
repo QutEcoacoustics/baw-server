@@ -39,32 +39,6 @@ class DatasetItemsController < ApplicationController
   end
 
   # GET datasets/:dataset_id/dataset_items/next_for_me
-  # TODO: remove this in favour of next_for_me (below)
-  def next_for_me_filter
-
-    # items from a dataset with priority given to not viewed
-
-    do_authorize_class
-
-    filter_params = params.slice(:format, :controller, :action, :dataset_id, :page, :items)
-    filter_params[:sorting] = {"order_by"=>:priority}
-
-    current_user_id = current_user ? current_user.id : nil
-
-    priority_algorithm = DatasetItem.next_for_user current_user_id
-
-    filter_response, opts = Settings.api_response.response_advanced(
-        filter_params,
-        Access::ByPermission.dataset_items(current_user, params[:dataset_id]),
-        DatasetItem,
-        DatasetItem.filter_settings(priority_algorithm)
-    )
-
-    respond_filter(filter_response, opts)
-
-  end
-
-  # GET datasets/:dataset_id/dataset_items/next_for_me
   def next_for_me
 
     do_authorize_class
@@ -72,23 +46,16 @@ class DatasetItemsController < ApplicationController
 
     # All dataset items that the user has permission to see
     query = Access::ByPermission.dataset_items(current_user, params[:dataset_id])
-    num_items = query.size
 
     # sort by priority
     query = query.order(priority_algorithm)
 
-    # paging must come after calculating num_items
-    paging = Filter::Parse::parse_paging_only(params)
-    query = query.offset(paging[:offset]).limit(paging[:limit])
-
-    # craft opts for response. This is a subset of
-    opts = params.slice(:controller, :action)
-    opts[:total] =num_items
-    opts[:items] = paging[:items]
-    opts[:page] = paging[:page]
-    opts[:additional_params] = { dataset_id: params[:dataset_id] }
-
-    # sort is not user supplied, so don't include it in the opts
+    query, opts = Settings.api_response.response_advanced(
+        api_filter_params,
+        query,
+        DatasetItem,
+        DatasetItem.filter_settings
+    )
 
     respond_filter(query, opts)
 

@@ -121,10 +121,10 @@ class DatasetItem < ActiveRecord::Base
   def self.next_for_user (user_id = nil)
 
     # sort by least viewed, then least viewed by current user, then id
-    priority_algorithm = []
+    order_by_clauses = []
 
     # first order by the number of views, ascending
-    priority_algorithm.push <<~SQL
+    order_by_clauses.push <<~SQL
         (SELECT count(*) FROM progress_events
          WHERE dataset_item_id = dataset_items.id AND progress_events.activity = 'viewed') ASC
       SQL
@@ -133,7 +133,7 @@ class DatasetItem < ActiveRecord::Base
     # Anonymous users are permitted to list dataset items, and only items that are associated with permitted
     # projects are shown.
     if user_id
-      priority_algorithm.push <<~SQL
+      order_by_clauses.push <<~SQL
           (SELECT count(*) FROM progress_events
            WHERE dataset_item_id = dataset_items.id
            AND progress_events.activity = 'viewed'
@@ -143,9 +143,9 @@ class DatasetItem < ActiveRecord::Base
 
     # finally, sort by the order field, and then to keep consistent ordering in the case of identical order field
     # sort by id
-    priority_algorithm.push "dataset_items.order ASC"
-    priority_algorithm.push "dataset_items.id ASC"
-    priority_algorithm = priority_algorithm.join(", ")
+    order_by_clauses.push "dataset_items.order ASC"
+    order_by_clauses.push "dataset_items.id ASC"
+    priority_algorithm = order_by_clauses.join(", ")
 
     priority_algorithm
 

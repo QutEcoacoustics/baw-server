@@ -976,7 +976,7 @@ resource 'DatasetItems' do
           :get,
           'NEXT FOR ME (as no access)',
           :ok,
-          {response_body_content: ['"order_by":"priority"'], expected_json_path: 'data', data_item_count: 0}
+          {expected_json_path: 'meta/paging/total', expected_json_path: 'data', data_item_count: 0}
       )
     end
 
@@ -998,7 +998,7 @@ resource 'DatasetItems' do
           :get,
           'NEXT FOR ME (as not logged in)',
           :ok,
-          {response_body_content: ['"order_by":"priority"'], expected_json_path: 'data', data_item_count: 0}
+          {expected_json_path: 'meta/paging/total', expected_json_path: 'data', data_item_count: 0}
       )
     end
 
@@ -1009,7 +1009,7 @@ resource 'DatasetItems' do
           :get,
           'NEXT FOR ME (as not logged in) with public project',
           :ok,
-          {response_body_content: ['"order_by":"priority"'], expected_json_path: 'data', data_item_count: 1}
+          {expected_json_path: 'meta/paging/total', expected_json_path: 'data', data_item_count: 1}
       )
     end
 
