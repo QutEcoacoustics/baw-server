@@ -15,6 +15,9 @@ addons:
     - python-pip
   postgresql: "9.3"
 before_install:
+  # update python
+  - sudo apt-get update
+  - sudo apt install python2.7 python-pip
   # Install ansible
   - sudo pip install ansible
 
