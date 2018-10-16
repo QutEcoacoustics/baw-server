@@ -337,7 +337,7 @@ module Filter
         value[:field_mappings].each do |field_mapping_hash|
           validate_hash(field_mapping_hash)
           validate_hash_key(field_mapping_hash, :name, Symbol)
-          validate_hash_key(field_mapping_hash, :value, Arel::Nodes::Node)
+          validate_hash_key(field_mapping_hash, :value, [Arel::Nodes::Node, String])
         end
       end
 

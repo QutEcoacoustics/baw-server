@@ -38,6 +38,29 @@ class DatasetItemsController < ApplicationController
     respond_filter(filter_response, opts)
   end
 
+  # GET datasets/:dataset_id/dataset_items/next_for_me
+  def next_for_me
+
+    do_authorize_class
+    priority_algorithm = DatasetItem.next_for_user(current_user_id = current_user ? current_user.id : nil)
+
+    # All dataset items that the user has permission to see
+    query = Access::ByPermission.dataset_items(current_user, params[:dataset_id])
+
+    # sort by priority
+    query = query.order(priority_algorithm)
+
+    query, opts = Settings.api_response.response_advanced(
+        api_filter_params,
+        query,
+        DatasetItem,
+        DatasetItem.filter_settings
+    )
+
+    respond_filter(query, opts)
+
+  end
+
   # GET /datasets/:dataset_id/items/new
   def new
     do_new_resource

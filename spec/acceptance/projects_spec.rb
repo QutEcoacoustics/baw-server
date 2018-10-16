@@ -501,34 +501,46 @@ resource 'Projects' do
     })
   end
 
-  get '/projects/filter?direction=desc&filter_name=a&filter_partial_match=partial_match_text&items=35&order_by=createdAt&page=1' do
-    let(:authentication_token) { reader_token }
-    standard_request_options(:get, 'BASIC FILTER (as reader with filtering, sorting, paging)', :ok, {
-        expected_json_path: 'meta/paging/current',
-        data_item_count: 0,
-        response_body_content: '/projects/filter?direction=desc\u0026filter_name=a\u0026filter_partial_match=partial_match_text\u0026items=35\u0026order_by=createdAt\u0026page=1'
-    })
+  context 'filter partial match' do
+
+    get '/projects/filter?direction=desc&filter_name=a&filter_partial_match=partial_match_text&items=35&order_by=createdAt&page=1' do
+      let(:authentication_token) { reader_token }
+      standard_request_options(:get, 'BASIC FILTER (as reader with filtering, sorting, paging)', :ok, {
+          expected_json_path: 'meta/paging/current',
+          data_item_count: 0,
+          response_body_content: '/projects/filter?direction=desc\u0026filter_name=a\u0026filter_partial_match=partial_match_text\u0026items=35\u0026order_by=createdAt\u0026page=1'
+      })
+    end
+
   end
 
-  get '/projects/filter?disable_paging=true' do
-    let(:authentication_token) { writer_token }
-    let!(:more_projects) {
-      # default items per page is 25
-      29.times do
-        FactoryGirl.create(:project, creator: writer_permission.user)
-      end
-    }
+  context 'filter with paging via GET' do
 
-    standard_request_options(:get, 'BASIC FILTER (as reader with filtering, paging disabled)', :ok, {
-        expected_json_path: 'meta/paging/current',
-        data_item_count: 30,
-        response_body_content: [
-            '{"meta":{"status":200,"message":"OK","sorting":{"order_by":"name","direction":"asc"},',
-            '"paging":{"page":1,"items":30,"total":30,"max_page":1,',
-            '"current":"http://localhost:3000/projects/filter?direction=asc\u0026disable_paging=true\u0026items=30\u0026order_by=name\u0026page=1",',
-            '"previous":null,"next":null}}'
-        ]
-    })
+    get '/projects/filter?page=1&items=2' do
+      let(:authentication_token) { writer_token }
+      let!(:more_projects) {
+        # default items per page is 25
+        29.times do
+          FactoryGirl.create(:project, creator: writer_permission.user)
+        end
+      }
+
+      standard_request_options(:get, 'BASIC FILTER (as reader with paging)', :ok, {
+          expected_json_path: 'meta/paging/current',
+          data_item_count: 2,
+          response_body_content: [
+              '"paging":{"page":1,"items":2,"total":30,"max_page":15',
+              '"current":"http://localhost:3000/projects/filter?direction=asc\u0026items=2\u0026order_by=name\u0026page=1"',
+              '"previous":null,',
+              '"next":"http://localhost:3000/projects/filter?direction=asc\u0026items=2\u0026order_by=name\u0026page=2"'
+          ]
+      })
+    end
+
   end
+
+
+
+
 
 end

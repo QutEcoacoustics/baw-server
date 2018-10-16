@@ -258,7 +258,8 @@ module Api
           model.to_s.underscore.to_sym,
           :filter, :projection,
           :action, :controller,
-          :format, :paging, :sorting)
+          :format, :paging, :sorting,
+          :page, :items)
 
       [paged_sorted_query, opts]
     end
@@ -281,6 +282,13 @@ module Api
 
         # execute a count against entire set without paging
         total = new_query.size
+
+        # if new_query involves aggregation, size returns the size of each group as a hash,
+        # and what we need is the number of groups, so check if it is a hash and if so
+        # use its length for the value of total.
+        if total.is_a? Hash
+          total = total.length
+        end
 
         # add paging
         new_query = filter_query.query_paging(new_query)
@@ -311,11 +319,13 @@ module Api
       [new_query, opts]
     end
 
+    # if lower is higher than upper, lower will have priority
     def restrict_to_bounds(value, lower = 1, upper = nil)
       value_i = value.to_i
 
-      value_i = lower if !lower.blank? && value_i < lower
       value_i = upper if !upper.blank? && value_i > upper
+      value_i = lower if !lower.blank? && value_i < lower
+
       value_i
     end
 

@@ -308,11 +308,17 @@ module Filter
       sort_field = @build.build_custom_field(column_name)
       sort_field = table[column_name] if sort_field.blank?
 
-      if direction == :desc
-        sort_field_by = Arel::Nodes::Descending.new(sort_field)
+      if sort_field.is_a? String
+        sort_field_by = sort_field
       else
-        #direction == :asc
-        sort_field_by = Arel::Nodes::Ascending.new(sort_field)
+
+        if direction == :desc
+          sort_field_by = Arel::Nodes::Descending.new(sort_field)
+        else
+          #direction == :asc
+          sort_field_by = Arel::Nodes::Ascending.new(sort_field)
+        end
+
       end
 
       query.order(sort_field_by)

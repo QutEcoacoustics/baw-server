@@ -591,6 +591,39 @@ resource 'AudioEvents' do
     end
   end
 
+  context 'filter with paging' do
+
+    post '/audio_events/filter' do
+
+      let(:authentication_token) { reader_token }
+      create_entire_hierarchy
+
+      let!(:new_audio_event) {
+        30.times do
+          audio_event_2 = Creation::Common.create_audio_event(writer_user, audio_recording)
+          audio_event_2.is_reference = true
+          audio_event_2.save!
+        end
+      }
+
+      let(:raw_post) {
+        {"filter"=>{"is_reference"=>{"eq"=>true}},"paging"=>{"items"=>10,"page"=>2}}.to_json
+      }
+      standard_request_options(:post, 'FILTER (as reader, page 2 showing 10 items', :ok,
+                               {
+                                   expected_json_path: 'data/0/is_reference',
+                                   data_item_count: 10,
+                                   response_body_content: [
+                                       '"paging":{"page":2,"items":10,"total":30,"max_page":3',
+                                       '"previous":"http://localhost:3000/audio_events/filter?direction=desc\u0026items=10\u0026order_by=created_at\u0026page=1"'
+                                   ]
+                               })
+
+    end
+
+
+  end
+
   post '/audio_events/filter' do
     let(:authentication_token) { reader_token }
     create_entire_hierarchy
@@ -633,6 +666,8 @@ resource 'AudioEvents' do
                              })
   end
 
+
+
   post '/audio_events/filter' do
     let(:authentication_token) { reader_token }
     let(:raw_post) { {
@@ -660,7 +695,7 @@ resource 'AudioEvents' do
     }.to_json }
     standard_request_options(:post, 'FILTER (as anonymous user)', :ok, {
         remove_auth: true,
-        response_body_content: '{"meta":{"status":200,"message":"OK","filter":{"audio_events_tags.tag_id":{"gt":0}},"sorting":{"order_by":"created_at","direction":"desc"},"paging":{"page":1,"items":25,"total":0,"max_page":0,"current":"http://localhost:3000/audio_events/filter?direction=desc\u0026items=25\u0026order_by=created_at\u0026page=0","previous":null,"next":null}},"data":[]}'})
+        response_body_content: '{"meta":{"status":200,"message":"OK","filter":{"audio_events_tags.tag_id":{"gt":0}},"sorting":{"order_by":"created_at","direction":"desc"},"paging":{"page":1,"items":25,"total":0,"max_page":0,"current":"http://localhost:3000/audio_events/filter?direction=desc\u0026items=25\u0026order_by=created_at\u0026page=1","previous":null,"next":null}},"data":[]}'})
   end
 
   post '/audio_events/filter' do
