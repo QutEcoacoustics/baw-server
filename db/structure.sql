@@ -2,8 +2,8 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 9.3.20
--- Dumped by pg_dump version 10.1
+-- Dumped from database version 9.3.21
+-- Dumped by pg_dump version 10.2 (Ubuntu 10.2-1.pgdg14.04+1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -521,6 +521,85 @@ CREATE TABLE projects_sites (
 
 
 --
+-- Name: questions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE questions (
+    id integer NOT NULL,
+    creator_id integer,
+    updater_id integer,
+    text text,
+    data text,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL
+);
+
+
+--
+-- Name: questions_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE questions_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: questions_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE questions_id_seq OWNED BY questions.id;
+
+
+--
+-- Name: questions_studies; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE questions_studies (
+    question_id integer NOT NULL,
+    study_id integer NOT NULL
+);
+
+
+--
+-- Name: responses; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE responses (
+    id integer NOT NULL,
+    creator_id integer,
+    dataset_item_id integer,
+    question_id integer,
+    study_id integer,
+    data text,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL
+);
+
+
+--
+-- Name: responses_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE responses_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: responses_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE responses_id_seq OWNED BY responses.id;
+
+
+--
 -- Name: saved_searches; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -647,6 +726,40 @@ CREATE SEQUENCE sites_id_seq
 --
 
 ALTER SEQUENCE sites_id_seq OWNED BY sites.id;
+
+
+--
+-- Name: studies; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE studies (
+    id integer NOT NULL,
+    creator_id integer,
+    updater_id integer,
+    dataset_id integer,
+    name character varying,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL
+);
+
+
+--
+-- Name: studies_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE studies_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: studies_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE studies_id_seq OWNED BY studies.id;
 
 
 --
@@ -862,6 +975,20 @@ ALTER TABLE ONLY projects ALTER COLUMN id SET DEFAULT nextval('projects_id_seq':
 
 
 --
+-- Name: questions id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY questions ALTER COLUMN id SET DEFAULT nextval('questions_id_seq'::regclass);
+
+
+--
+-- Name: responses id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY responses ALTER COLUMN id SET DEFAULT nextval('responses_id_seq'::regclass);
+
+
+--
 -- Name: saved_searches id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -880,6 +1007,13 @@ ALTER TABLE ONLY scripts ALTER COLUMN id SET DEFAULT nextval('scripts_id_seq'::r
 --
 
 ALTER TABLE ONLY sites ALTER COLUMN id SET DEFAULT nextval('sites_id_seq'::regclass);
+
+
+--
+-- Name: studies id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY studies ALTER COLUMN id SET DEFAULT nextval('studies_id_seq'::regclass);
 
 
 --
@@ -1000,6 +1134,22 @@ ALTER TABLE ONLY projects
 
 
 --
+-- Name: questions questions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY questions
+    ADD CONSTRAINT questions_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: responses responses_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY responses
+    ADD CONSTRAINT responses_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: saved_searches saved_searches_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1021,6 +1171,14 @@ ALTER TABLE ONLY scripts
 
 ALTER TABLE ONLY sites
     ADD CONSTRAINT sites_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: studies studies_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY studies
+    ADD CONSTRAINT studies_pkey PRIMARY KEY (id);
 
 
 --
@@ -1768,11 +1926,59 @@ ALTER TABLE ONLY progress_events
 
 
 --
+-- Name: questions fk_rails_1b78df6070; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY questions
+    ADD CONSTRAINT fk_rails_1b78df6070 FOREIGN KEY (updater_id) REFERENCES users(id);
+
+
+--
 -- Name: tag_groups fk_rails_1ba11222e1; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY tag_groups
     ADD CONSTRAINT fk_rails_1ba11222e1 FOREIGN KEY (tag_id) REFERENCES tags(id);
+
+
+--
+-- Name: questions fk_rails_21f8d26270; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY questions
+    ADD CONSTRAINT fk_rails_21f8d26270 FOREIGN KEY (creator_id) REFERENCES users(id);
+
+
+--
+-- Name: responses fk_rails_325af149a3; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY responses
+    ADD CONSTRAINT fk_rails_325af149a3 FOREIGN KEY (question_id) REFERENCES questions(id);
+
+
+--
+-- Name: studies fk_rails_41770507e5; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY studies
+    ADD CONSTRAINT fk_rails_41770507e5 FOREIGN KEY (dataset_id) REFERENCES datasets(id);
+
+
+--
+-- Name: studies fk_rails_4362b81edd; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY studies
+    ADD CONSTRAINT fk_rails_4362b81edd FOREIGN KEY (updater_id) REFERENCES users(id);
+
+
+--
+-- Name: responses fk_rails_51009e83c9; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY responses
+    ADD CONSTRAINT fk_rails_51009e83c9 FOREIGN KEY (study_id) REFERENCES studies(id);
 
 
 --
@@ -1792,6 +1998,22 @@ ALTER TABLE ONLY dataset_items
 
 
 --
+-- Name: questions_studies fk_rails_6a5ffa3b4f; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY questions_studies
+    ADD CONSTRAINT fk_rails_6a5ffa3b4f FOREIGN KEY (study_id) REFERENCES studies(id);
+
+
+--
+-- Name: responses fk_rails_7a62c4269f; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY responses
+    ADD CONSTRAINT fk_rails_7a62c4269f FOREIGN KEY (dataset_item_id) REFERENCES dataset_items(id);
+
+
+--
 -- Name: dataset_items fk_rails_81ed124069; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1808,11 +2030,35 @@ ALTER TABLE ONLY analysis_jobs_items
 
 
 --
+-- Name: responses fk_rails_a7a3c29a3c; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY responses
+    ADD CONSTRAINT fk_rails_a7a3c29a3c FOREIGN KEY (creator_id) REFERENCES users(id);
+
+
+--
+-- Name: studies fk_rails_a94a68aa0b; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY studies
+    ADD CONSTRAINT fk_rails_a94a68aa0b FOREIGN KEY (creator_id) REFERENCES users(id);
+
+
+--
 -- Name: datasets fk_rails_c2337cbe35; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY datasets
     ADD CONSTRAINT fk_rails_c2337cbe35 FOREIGN KEY (updater_id) REFERENCES users(id);
+
+
+--
+-- Name: questions_studies fk_rails_c7ae81b3ab; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY questions_studies
+    ADD CONSTRAINT fk_rails_c7ae81b3ab FOREIGN KEY (question_id) REFERENCES questions(id);
 
 
 --
@@ -2100,4 +2346,10 @@ INSERT INTO schema_migrations (version) VALUES ('20160712051359');
 INSERT INTO schema_migrations (version) VALUES ('20160726014747');
 
 INSERT INTO schema_migrations (version) VALUES ('20180118002015');
+
+INSERT INTO schema_migrations (version) VALUES ('20181210052707');
+
+INSERT INTO schema_migrations (version) VALUES ('20181210052725');
+
+INSERT INTO schema_migrations (version) VALUES ('20181210052735');
 
