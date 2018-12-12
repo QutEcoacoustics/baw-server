@@ -24,6 +24,7 @@ class Dataset < ActiveRecord::Base
   # This will potentially be hit very often, maybe multiple times per request
   # and therefore is a possible avenue for future optimization if necessary
   def self.default_dataset_id
+    # note: this may cause db:create and db:migrate to fail
     Dataset.where(name: 'default').first.id
   end
 

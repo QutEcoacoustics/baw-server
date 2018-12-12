@@ -95,6 +95,12 @@ class User < ActiveRecord::Base
   has_many :created_dataset_items, class_name: 'DatasetItem', foreign_key: :creator_id, inverse_of: :creator
   has_many :created_progress_events, class_name: 'ProgressEvent', foreign_key: :creator_id, inverse_of: :creator
 
+  has_many :created_studies, class_name: 'Study', foreign_key: :creator_id, inverse_of: :creator
+  has_many :created_questions, class_name: 'Question', foreign_key: :creator_id, inverse_of: :creator
+  has_many :created_responses, class_name: 'Response', foreign_key: :creator_id, inverse_of: :creator
+  has_many :updated_studies, class_name: 'Study', foreign_key: :updater_id, inverse_of: :updater
+  has_many :updated_questions, class_name: 'Question', foreign_key: :updater_id, inverse_of: :updater
+
   # scopes
   scope :users, -> { where(roles_mask: 2) }
 

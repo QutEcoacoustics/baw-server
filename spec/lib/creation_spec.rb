@@ -2,6 +2,7 @@ require 'rails_helper'
 
 describe 'creation helper' do
   create_entire_hierarchy
+  create_study_hierarchy
   it 'correctly creates one of everything' do
 
     expect(User.count).to eq(6)
@@ -58,6 +59,10 @@ describe 'creation helper' do
     expect(Dataset.count).to eq(2)
     expect(DatasetItem.count).to eq(2)
     expect(Dataset.all[1].id).to eq(DatasetItem.first.dataset_id)
+
+    expect(Study.count).to eq(1)
+    expect(Question.count).to eq(1)
+    expect(Response.count).to eq(1)
 
   end
 end

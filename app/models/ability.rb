@@ -107,6 +107,10 @@ class Ability
       to_error(user, is_guest)
       to_public(user, is_guest)
 
+      to_study(user, is_guest)
+      to_question(user, is_guest)
+      to_response(user, is_guest)
+
     else
       fail ArgumentError, "Permissions are not defined for user '#{user.id}': #{user.role_symbols}"
 
@@ -636,5 +640,47 @@ class Ability
             :cors_preflight
         ], :public
   end
+
+  def to_study(user, is_guest)
+
+    # only admin can create, update, delete
+
+    # all users including guest can access any get request
+    can [:new, :index, :filter, :view], Study
+
+  end
+
+  def to_question(user, is_guest)
+
+    can [:new], Question
+
+    # only admin create, update, delete
+
+    # only logged in users can view questions
+    can [:index, :filter, :view], Question unless is_guest
+
+  end
+
+  def to_response(user, is_guest)
+
+    can [:new], Response
+
+    # must have read permission on dataset item to create a response for it
+    can [:create], Response do |response|
+      check_model(response)
+      if response.dataset_item
+        Access::Core.can_any?(user, :reader, response.dataset_item.audio_recording.site.projects)
+      else
+        false
+      end
+    end
+
+    # users can only view their own responses
+    can [:index, :filter, :view], Response, creator_id: user.id
+
+    # only admin can update or delete responses
+
+  end
+
 
 end

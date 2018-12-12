@@ -1,6 +1,7 @@
 require 'resque/server'
 
 Rails.application.routes.draw do
+
   # The priority is based upon order of creation: first created -> highest priority.
   # See how all your routes lay out with "rake routes".
 
@@ -277,6 +278,19 @@ Rails.application.routes.draw do
   resources :datasets, except: :destroy, defaults:  {format: 'json'} do
     resources :items, controller: 'dataset_items', defaults: {format: 'json'}
   end
+
+
+  # studies, questions, responses
+  match 'studies/filter' => 'studies#filter', via: [:get, :post], defaults: {format: 'json'}
+  match 'questions/filter' => 'questions#filter', via: [:get, :post], defaults: {format: 'json'}
+  match 'responses/filter' => 'responses#filter', via: [:get, :post], defaults: {format: 'json'}
+  resources :studies, defaults: {format: 'json'}
+  resources :questions, defaults: {format: 'json'}
+  resources :responses, except: :update, defaults: {format: 'json'}
+  get '/studies/:study_id/questions' => 'questions#index', defaults: {format: 'json'}
+  get '/studies/:study_id/responses' => 'responses#index', defaults: {format: 'json'}
+  post '/studies/:study_id/questions/:question_id/responses' => 'responses#create', defaults: {format: 'json'}
+
 
   # progress events
   match 'progress_events/filter' => 'progress_events#filter', via: [:get, :post], defaults: {format: 'json'}
