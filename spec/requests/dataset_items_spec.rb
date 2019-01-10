@@ -192,86 +192,8 @@ describe "Dataset Items" do
       @dataset_item_next_for_me_url = "/datasets/#{dataset_item.dataset_id}/dataset_items/next_for_me"
     end
 
-    # creates 12 dataset items. Every 3rd dataset item has a progress event created by the writer user
-    # and every 2nd has a progress event created by the reader user.
-    # Half the items are with one audio_recording and the other half with another (alternating between them)
-    # Resulting in dataset items 2,4,6,8,10,12 viewed by reader and
-    # 3,6,9,12 viewed by writer, and 6,12 viewed by both and 1,5,7,11 not viewed
-    # Adding these to the 1 dataset item already created in the create_entire_hierarchy, which
-    # has a progress event, there are 13 dataset items, 4 of which are not viewed
-    let(:many_dataset_items_some_with_events) {
+    create_many_dataset_items
 
-      # start with the 2 dataset items created in the entire hierarchy
-      results = [
-          {dataset_item: dataset_item, progress_events: [progress_event_for_no_access_user]},
-          {dataset_item: default_dataset_item, progress_events: [progress_event]}
-      ]
-
-      # create a progress event for the writer user on every 3rd dataset item
-      # and a progress event for the reader user on every 2nd dataset item.
-      # some dataset items will have no progress events, some by writer only, some by
-      # reader only and some by both
-      progress_event_creators = [
-          {creator: writer_user, view_every: 3},
-          {creator: reader_user, view_every: 2},
-      ]
-
-      # make more than 25 to test paging
-      num_dataset_items = 32
-
-      # create another audio recording so we can make sure the order is not affected by the audio recording id
-      another_audio_recording = FactoryGirl.create(
-          :audio_recording,
-          :status_ready,
-          creator: writer_user,
-          uploader: writer_user,
-          site: site,
-          sample_rate_hertz: 22050)
-
-      audio_recordings = [audio_recording, another_audio_recording]
-
-      # random number generator with seed
-      my_rand = Random.new(99)
-
-      # create the dataset items one at a time
-      for d in 1..num_dataset_items do
-
-        # create a dataset item with alternating audio recording id
-        # So that we can test the audio recording does not affect the order
-        dataset_item = FactoryGirl.create(:dataset_item,
-                                          creator: admin_user,
-                                          dataset: dataset,
-                                          audio_recording: audio_recordings[d % 2],
-                                          start_time_seconds: d,
-                                          end_time_seconds: d+10,
-                                          order: my_rand.rand * 10)
-        dataset_item.save!
-
-        current_data = {dataset_item: dataset_item, progress_events: [], progress_event_count: 0 }
-
-        # for this dataset item, add a progress even for zero or more of the users
-        # If this dataset item is the nth created, add progress events for those users
-        # who's view_every value is a factor of n.
-        for c in progress_event_creators do
-          progress_event = nil
-          if d % c[:view_every] == 0
-            progress_event = FactoryGirl.create(
-                :progress_event,
-                creator: c[:creator],
-                dataset_item: dataset_item,
-                activity: "viewed",
-                created_at: "2017-01-01 12:34:56")
-
-            current_data[:progress_events].push(progress_event)
-          end
-        end
-
-        results.push(current_data)
-      end
-
-      results
-
-    }
 
     let(:raw_post) {
       {

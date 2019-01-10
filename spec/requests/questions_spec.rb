@@ -1,6 +1,9 @@
 require 'rails_helper'
 require 'rspec/mocks'
 
+
+
+
 def question_url(question_id = nil, study_id = nil)
 
   url = "/questions"
@@ -10,9 +13,13 @@ def question_url(question_id = nil, study_id = nil)
 
 end
 
+
 describe "Questions" do
   create_entire_hierarchy
   create_study_hierarchy
+
+  # create a bunch of studies, questions and responses to work with
+  create_many_studies
 
   let(:question_attributes) {
     FactoryGirl.attributes_for(:question)
@@ -47,6 +54,17 @@ describe "Questions" do
         expect(parsed_response['data'].count).to eq(1)
         expect(parsed_response['data'][0]['text']).to eq(question['text'])
       end
+
+      # it 'finds all questions for the given study as admin' do
+      #
+      #   available_records = many_studies
+      #
+      #
+      #
+      #
+      #
+      # end
+
 
     end
 
@@ -116,6 +134,31 @@ describe "Questions" do
         parsed_response = JSON.parse(response.body)
         expect(response).to have_http_status(200)
         expect(parsed_response['data']['text']).to eq('modified question text')
+      end
+
+      it 'adds an existing question to an existing study' do
+
+        available_records = many_studies
+        # find an existing question that is not already associated with all studies
+        existing_question = (available_records[:questions].select {
+            |s| s.studies.length < available_records[:studies].length
+        })[0]
+        # find an existing study id that is not already associated with the question
+        available_study_ids = available_records[:studies].map(&:id) - existing_question.study_ids
+        study_id_to_add = available_study_ids[0]
+
+        study_ids = existing_question.study_ids
+        study_ids.push(study_id_to_add)
+
+        # adding a question to a study requires updating either the question or the study record with
+        # all the associated ids including the new one.
+        params = {question: {study_ids: study_ids}}.to_json
+
+        put question_url(existing_question.id), params, @env
+        #parsed_response = JSON.parse(response.body)
+        expect(response).to have_http_status(200)
+        expect(Question.find(existing_question.id).study_ids.sort).to eq(study_ids.sort)
+
       end
 
     end
