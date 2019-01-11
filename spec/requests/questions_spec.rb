@@ -55,16 +55,23 @@ describe "Questions" do
         expect(parsed_response['data'][0]['text']).to eq(question['text'])
       end
 
-      # it 'finds all questions for the given study as admin' do
-      #
-      #   available_records = many_studies
-      #
-      #
-      #
-      #
-      #
-      # end
+      it 'finds the correct questions for the given study as admin' do
 
+        available_records = many_studies
+
+        study_id = available_records[:studies][0].id
+        get question_url(nil, study_id), nil, @env
+        parsed_response = JSON.parse(response.body)
+        expect(parsed_response['data'].count).to eq(available_records[:studies][0].question_ids.count)
+        expect((parsed_response['data'].map { |q| q['id']  }).sort).to eq(available_records[:studies][0].question_ids.sort)
+
+        study_id = available_records[:studies][1].id
+        get question_url(nil, study_id), nil, @env
+        parsed_response = JSON.parse(response.body)
+        expect(parsed_response['data'].count).to eq(available_records[:studies][1].question_ids.count)
+        expect((parsed_response['data'].map { |q| q['id']  }).sort).to eq(available_records[:studies][1].question_ids.sort)
+
+      end
 
     end
 
@@ -76,6 +83,23 @@ describe "Questions" do
         parsed_response = JSON.parse(response.body)
         expect(parsed_response['data'].count).to eq(1)
         expect(parsed_response['data'][0]['text']).to eq(question['text'])
+      end
+
+      it 'finds the correct questions for the given study as admin' do
+
+        available_records = many_studies
+
+        url = question_url + "/filter"
+
+        study = available_records[:studies][0]
+        # there might be a more efficient way to do this query, without
+        # joining all the way to studies.
+        filter_params = { filter: { 'studies.id'=> {in: [study.id] } }}
+        post url, filter_params.to_json, @env
+        parsed_response = JSON.parse(response.body)
+        expect(parsed_response['data'].count).to eq(available_records[:studies][0].question_ids.count)
+        expect((parsed_response['data'].map { |q| q['id']  }).sort).to eq(available_records[:studies][0].question_ids.sort)
+
       end
 
     end
@@ -160,6 +184,18 @@ describe "Questions" do
         expect(Question.find(existing_question.id).study_ids.sort).to eq(study_ids.sort)
 
       end
+
+      it 'does not allow a question with no studies' do
+
+        # doesn't work because require/permit fails with study_ids = nil
+
+        params = {question: {study_ids: []}}.to_json
+        put question_url(question.id), params, @env
+        parsed_response = JSON.parse(response.body)
+        expect(response).to have_http_status(415)
+
+      end
+
 
     end
 
