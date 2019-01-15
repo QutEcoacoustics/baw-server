@@ -13,7 +13,7 @@ class QuestionsController < ApplicationController
 
     if params[:study_id]
       # todo:
-      # check if this can be done better. We don't need to join
+      # check if this can be done better. We shouln't need to join
       # all the way to study, only to the join table.
       query = query.belonging_to_study(params[:study_id])
     end
@@ -91,10 +91,13 @@ class QuestionsController < ApplicationController
   private
 
   def question_params
-    #params[:question] = params[:question] || {}
-    #params[:question][:study_ids] = params[:study_ids]
-    params.require(:question).permit({:study_ids => []}, :text, :data)
+    # empty array is replaced with nil by rails. Revert to empty array
+    # to avoid errors with strong parameters
+    if params.has_key?(:question) and params[:question].has_key?(:study_ids) and params[:question][:study_ids].nil?
+      params[:question][:study_ids] = []
+    end
+    permitted = [{study_ids: []}, :text, :data]
+    params.require(:question).permit(permitted)
   end
-
 
 end

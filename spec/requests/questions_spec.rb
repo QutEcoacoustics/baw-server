@@ -1,9 +1,6 @@
 require 'rails_helper'
 require 'rspec/mocks'
 
-
-
-
 def question_url(question_id = nil, study_id = nil)
 
   url = "/questions"
@@ -12,7 +9,6 @@ def question_url(question_id = nil, study_id = nil)
   return url
 
 end
-
 
 describe "Questions" do
   create_entire_hierarchy
@@ -121,17 +117,7 @@ describe "Questions" do
 
     describe 'create question' do
 
-      it 'creates an orphan question' do
-        post question_url, question_attributes.to_json, @env
-        parsed_response = JSON.parse(response.body)
-        expect(response).to have_http_status(201)
-        expect(parsed_response['data'].symbolize_keys.slice(:text, :data)).to eq(question_attributes)
-        expect(parsed_response['data'].keys.sort).to eq(%w(id creator_id updater_id text
-                                                        data created_at updated_at).sort)
-        expect(Question.all.count).to eq(2)
-      end
-
-      it 'creates an question for a study' do
+      it 'creates a question for a study' do
         params = { question: question_attributes }
         params[:question][:study_ids] = [study.id]
         post question_url, params.to_json, @env
@@ -146,6 +132,14 @@ describe "Questions" do
         joined_active_record = Question.where(id: parsed_response['data']['id']).includes(:studies)[0]
         expect(joined_active_record.studies.count).to eq(1)
         expect(joined_active_record.studies.first.id).to eq(study.id)
+      end
+
+      it 'can not create an orphan question' do
+        post question_url, question_attributes.to_json, @env
+        parsed_response = JSON.parse(response.body)
+        expect(response).to have_http_status(422)
+        expect(Question.all.count).to eq(1)
+        expect(parsed_response["meta"]["error"]["info"]["studies"]).to eq(["can't be blank"])
       end
 
     end
@@ -186,17 +180,15 @@ describe "Questions" do
       end
 
       it 'does not allow a question with no studies' do
-
-        # doesn't work because require/permit fails with study_ids = nil
-
+        current_study_ids = question.study_ids.dup
         params = {question: {study_ids: []}}.to_json
         put question_url(question.id), params, @env
         parsed_response = JSON.parse(response.body)
-        expect(response).to have_http_status(415)
+        expect(response).to have_http_status(422)
+        expect(Question.find(question.id).study_ids).to eq(current_study_ids)
 
       end
-
-
+            
     end
 
   end

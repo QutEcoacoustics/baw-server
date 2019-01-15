@@ -10,9 +10,10 @@ class Question < ActiveRecord::Base
   has_many :responses, dependent: :destroy
 
   # association validations
-  validates :creator, existence: true
-
-  # todo: validate that question is associated with at least one study
+  validates :creator, presence: true
+  # questions must be associated with at least one study
+  validates :studies, presence: true
+  validates_associated :studies
 
   # Define filter api settings
   def self.filter_settings
@@ -58,7 +59,5 @@ class Question < ActiveRecord::Base
   scope :belonging_to_study, lambda { |study_id|
     joins(:questions_studies).where('questions_studies.study_id = ?', study_id)
   }
-
-
 
 end

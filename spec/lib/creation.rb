@@ -377,7 +377,7 @@ module Creation
       end
 
       def create_question(creator, study)
-        question = FactoryGirl.create(:question, creator: creator)
+        question = FactoryGirl.build(:question, creator: creator)
         question.studies << study
         question.save!
         question

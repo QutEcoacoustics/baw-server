@@ -11,8 +11,10 @@ class Study < ActiveRecord::Base
   has_many :responses, dependent: :destroy
 
   # association validations
-  validates :creator, existence: true
-  validates :dataset, existence: true
+  validates :creator, presence: true
+  validates :dataset, presence: true
+  validates_associated :dataset
+  validates_associated :questions
 
 
   # Define filter api settings
