@@ -13,7 +13,7 @@ class Question < ActiveRecord::Base
   validates :creator, presence: true
   # questions must be associated with at least one study
   validates :studies, presence: true
-  validates_associated :studies
+
 
   # Define filter api settings
   def self.filter_settings

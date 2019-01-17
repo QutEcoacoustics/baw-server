@@ -142,6 +142,7 @@ describe "Questions" do
         expect(parsed_response["meta"]["error"]["info"]["studies"]).to eq(["can't be blank"])
       end
 
+
     end
 
     describe 'update question' do
@@ -188,7 +189,7 @@ describe "Questions" do
         expect(Question.find(question.id).study_ids).to eq(current_study_ids)
 
       end
-            
+
     end
 
   end

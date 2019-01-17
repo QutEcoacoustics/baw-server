@@ -117,6 +117,7 @@ module Creation
     end
 
     def prepare_user_response
+      # named to avoid name collision with rspec 'response'
       let!(:user_response) { Common.create_user_response(reader_user, dataset_item, study, question) }
     end
 

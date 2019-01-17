@@ -6,9 +6,10 @@ class CreateResponses < ActiveRecord::Migration
       t.integer :dataset_item_id
       t.integer :question_id
       t.integer :study_id
+      t.datetime :created_at
 
       t.text :data
-      t.timestamps null: false
+      #t.timestamps null: false
     end
 
     add_foreign_key :responses, :dataset_items

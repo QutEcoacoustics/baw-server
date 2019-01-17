@@ -574,9 +574,8 @@ CREATE TABLE responses (
     dataset_item_id integer,
     question_id integer,
     study_id integer,
-    data text,
-    created_at timestamp without time zone NOT NULL,
-    updated_at timestamp without time zone NOT NULL
+    created_at timestamp without time zone,
+    data text
 );
 
 

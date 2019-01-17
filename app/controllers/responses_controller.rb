@@ -45,6 +45,7 @@ class ResponsesController < ApplicationController
   end
 
   # POST /responses
+  # POST /study/:study_id/questions/:question_id/responses
   def create
     do_new_resource
     do_set_attributes(response_params)
@@ -60,9 +61,9 @@ class ResponsesController < ApplicationController
   private
 
   def response_params
-    params[:response] = params[:response] || {}
-    params[:response][:study_id] = params[:study_id]
-    params.require(:response).permit(:study_id, :text, :data)
+    # params[:response] = params[:response] || {}
+    # params[:response][:study_id] = params[:study_id]
+    params.require(:response).permit(:study_id, :question_id, :dataset_item_id, :text, :data)
   end
 
 

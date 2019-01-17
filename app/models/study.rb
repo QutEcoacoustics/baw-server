@@ -13,9 +13,6 @@ class Study < ActiveRecord::Base
   # association validations
   validates :creator, presence: true
   validates :dataset, presence: true
-  validates_associated :dataset
-  validates_associated :questions
-
 
   # Define filter api settings
   def self.filter_settings

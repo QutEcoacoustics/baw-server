@@ -96,8 +96,6 @@ module CitizenScienceCreation
       results = {
           studies: [],
           questions: [],
-          # question_studies: {},
-          # study_questions: {},
           responses: []
       }
 
@@ -109,10 +107,23 @@ module CitizenScienceCreation
           {creator: reader_user}
       ]
 
-      num_studies = 5
-      num_questions = 6
-      num_responses = 32
+      # for each question, which study should it be associated with?
+      # number represent study index, not id (nothing is created yet)
+      question_study_map = [
+          [0],
+          [1],
+          [1,2],
+          [2]
+      ]
 
+      num_studies = question_study_map.flatten.max + 1
+      # number of responses per study per question per user
+      num_responses = 3
+
+      response_creators = [writer_user, reader_user]
+
+      total_num_respones = question_study_map.flatten.count * response_creators.count
+      puts "creating #{total_num_respones} responses in total"
 
       # #random number generator with seed
       # my_rand = Random.new(99)
@@ -130,45 +141,93 @@ module CitizenScienceCreation
 
       end
 
-      for q in 1..num_questions do
+      question_count = 1
+      question_study_map.each do |q|
 
-        # number of studies to associate question to is q mod max number
-        # pick these at random
-        number_related_studies = (q % num_studies) + 1
-        study_ids = results[:studies].map(&:id).sample(number_related_studies, random:Random.new(q))
+        # # each question is related to one more study than the previous question
+        # # i.e. number of studies is q mod max number
+        # # pick these at random, seeded by q for consistency
+        # number_related_studies = (q % num_studies) + 1
+        # study_ids = results[:studies].map(&:id).sample(number_related_studies, random:Random.new(q))
 
-        # study_ids = [results[:studies][0].id,
-        #              results[:studies][2].id,
-        #              results[:studies][3].id]
-
+        study_ids = results[:studies].values_at(*q).map(&:id)
         question = FactoryGirl.create(:question,
                                       creator: admin_user,
                                       study_ids: study_ids,
-                                      text: "test question text #{q}",
+                                      text: "test question text #{question_count}",
                                       data: {})
 
         question.save!
 
-        # # the returned Question object does not have the study_ids
-        # # so keep track of the relationships here
-        # results[:question_studies][question.id] = study_ids
-        # study_ids.each do |study_id|
-        #   # append the question id to the array of ids for
-        #   results[:study_questions][study_id].push(question.id)
-        # end
-
-
         results[:questions].push(question)
+        question_count += 1
 
+      end
 
+      for r in 1..num_responses do
+        results[:studies].each do |s|
+          s.question_ids.each do |q_id|
+            response_creators.each do |creator|
+
+              # create a response for this study, for this question, for this user
+              data_value = "for study #{s.id}, question #{q_id}, dataset_item #{dataset_item.id}, user #{creator.id}"
+
+              response = FactoryGirl.create(:response,
+                                            creator: creator,
+                                            study_id: s.id,
+                                            question_id: q_id,
+                                            dataset_item: dataset_item,
+                                            data: { some_key: data_value }.to_json)
+
+              response.save!
+              results[:responses].push(response)
+
+            end
+          end
+        end
       end
 
       results
 
     }
 
+  end
+
+
+  # creates a related network of
+  # dataset, dataset_item, progress_event, study, question, response
+  def create_citizen_science_hierarchies (number)
+
+    let(:citizen_science_hierarchies) {
+
+      hierarchies = []
+
+      for i in 1..number do
+
+        records = {}
+        records[:dataset] = FactoryGirl.create(:dataset)
+        records[:study] = FactoryGirl.create(:study,
+                                   creator: admin_user,
+                                   dataset: records[:dataset])
+        records[:question] = FactoryGirl.create(:question,
+                                      creator: admin_user,
+                                      studies: [records[:study]])
+        records[:dataset_item] = FactoryGirl.create(:dataset_item, dataset: records[:dataset])
+        records[:user_response] = FactoryGirl.create(:response,
+                                      creator: reader_user,
+                                      study: records[:study],
+                                      question: records[:question],
+                                      dataset_item: records[:dataset_item])
+        records[:progress_event] = FactoryGirl.create(:progress_event, dataset_item: records[:dataset_item])
+        hierarchies.push(records)
+
+      end
+      hierarchies
+    }
 
   end
+
+
 
 
 end
