@@ -58,6 +58,15 @@ class ResponsesController < ApplicationController
     end
   end
 
+  # DELETE /responses/:id
+  def destroy
+    do_load_resource
+    do_authorize_instance
+    @response.destroy
+    respond_destroy
+  end
+
+
   private
 
   def response_params

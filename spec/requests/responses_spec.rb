@@ -32,6 +32,7 @@ describe "responses" do
     @env ||= {}
     @env['HTTP_AUTHORIZATION'] = admin_token
     @env['CONTENT_TYPE'] = "application/json"
+    @env['ACCEPT'] = "application/json"
   end
 
   describe 'index,filter,show responses' do
@@ -249,11 +250,12 @@ describe "responses" do
     describe 'update response' do
 
       it 'cannot update a response' do
-        # params = {response: {text: 'modified response text'}}.to_json
-        # put response_url(response.id), params, @env
-        # parsed_response = JSON.parse(response.body)
-        # expect(response).to have_http_status(200)
-        # expect(parsed_response['data']['text']).to eq('modified response text')
+        data = {some_answer:'modified response text'}.to_json
+        params = {response: {data: data}}.to_json
+        put response_url(user_response.id), params, @env
+        expect(response).to have_http_status(404)
+        parsed_response = JSON.parse(response.body)
+        expect(parsed_response['meta']['message']).to eq('Not Found')
       end
 
     end
@@ -264,9 +266,8 @@ describe "responses" do
 
     it 'deletes a response' do
 
-      delete response_url(response.id), nil, @env
+      delete response_url(user_response.id), nil, @env
       expect(response).to have_http_status(204)
-      expect(Response.all.count).to eq(0)
       expect(Response.all.count).to eq(0)
 
     end

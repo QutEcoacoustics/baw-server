@@ -94,75 +94,79 @@ resource 'Datasets' do
   # CREATE
   ################################
 
-  post '/datasets' do
-    body_params
-    let(:raw_post) { {'dataset' => post_attributes}.to_json }
-    let(:authentication_token) { admin_token }
-    standard_request_options(
-        :post,
-        'CREATE (as admin)',
-        :created,
-        {expected_json_path: 'data/name', response_body_content: 'New Dataset name'}
-    )
-  end
+  describe 'create' do
 
-  post '/datasets' do
-    body_params
-    let(:raw_post) { {'dataset' => post_attributes}.to_json }
-    let(:authentication_token) { reader_token }
-    standard_request_options(
-        :post,
-        'CREATE (as reader user)',
-        :created,
-        {expected_json_path: 'data/name', response_body_content: 'New Dataset name'}
-    )
-  end
+    post '/datasets' do
+      body_params
+      let(:raw_post) { {'dataset' => post_attributes}.to_json }
+      let(:authentication_token) { admin_token }
+      standard_request_options(
+          :post,
+          'CREATE (as admin)',
+          :created,
+          {expected_json_path: 'data/name', response_body_content: 'New Dataset name'}
+      )
+    end
 
-  post '/datasets' do
-    body_params
-    let(:raw_post) { {'dataset' => post_attributes}.to_json }
-    let(:authentication_token) { no_access_token }
-    standard_request_options(
-        :post,
-        'CREATE (as no access user)',
-        :created,
-        {expected_json_path: 'data/name', response_body_content: 'New Dataset name'}
-    )
-  end
+    post '/datasets' do
+      body_params
+      let(:raw_post) { {'dataset' => post_attributes}.to_json }
+      let(:authentication_token) { reader_token }
+      standard_request_options(
+          :post,
+          'CREATE (as reader user)',
+          :created,
+          {expected_json_path: 'data/name', response_body_content: 'New Dataset name'}
+      )
+    end
 
-  post '/datasets' do
-    body_params
-    let(:raw_post) { {'dataset' => post_attributes}.to_json }
-    let(:authentication_token) { invalid_token }
-    standard_request_options(
-        :post,
-        'CREATE (invalid token)',
-        :unauthorized,
-        {expected_json_path: get_json_error_path(:sign_up)}
-    )
-  end
+    post '/datasets' do
+      body_params
+      let(:raw_post) { {'dataset' => post_attributes}.to_json }
+      let(:authentication_token) { no_access_token }
+      standard_request_options(
+          :post,
+          'CREATE (as no access user)',
+          :created,
+          {expected_json_path: 'data/name', response_body_content: 'New Dataset name'}
+      )
+    end
 
-  post '/datasets' do
-    body_params
-    let(:raw_post) { {'dataset' => post_attributes}.to_json }
-    standard_request_options(
-        :post,
-        'CREATE (as anonymous user)',
-        :unauthorized,
-        {remove_auth: true, expected_json_path: get_json_error_path(:sign_up)}
-    )
-  end
+    post '/datasets' do
+      body_params
+      let(:raw_post) { {'dataset' => post_attributes}.to_json }
+      let(:authentication_token) { invalid_token }
+      standard_request_options(
+          :post,
+          'CREATE (invalid token)',
+          :unauthorized,
+          {expected_json_path: get_json_error_path(:sign_up)}
+      )
+    end
 
-  post '/datasets' do
-    body_params
-    let(:raw_post) { {'dataset' => post_attributes}.to_json }
-    let(:authentication_token) { harvester_token }
-    standard_request_options(
-        :post,
-        'CREATE (as harvester user)',
-        :forbidden,
-        {expected_json_path: get_json_error_path(:permissions)}
-    )
+    post '/datasets' do
+      body_params
+      let(:raw_post) { {'dataset' => post_attributes}.to_json }
+      standard_request_options(
+          :post,
+          'CREATE (as anonymous user)',
+          :unauthorized,
+          {remove_auth: true, expected_json_path: get_json_error_path(:sign_up)}
+      )
+    end
+
+    post '/datasets' do
+      body_params
+      let(:raw_post) { {'dataset' => post_attributes}.to_json }
+      let(:authentication_token) { harvester_token }
+      standard_request_options(
+          :post,
+          'CREATE (as harvester user)',
+          :forbidden,
+          {expected_json_path: get_json_error_path(:permissions)}
+      )
+    end
+
   end
 
   ################################
