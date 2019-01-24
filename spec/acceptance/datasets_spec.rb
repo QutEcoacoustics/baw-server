@@ -473,10 +473,10 @@ resource 'Datasets' do
               name: {
                   eq: 'default'
               }
+          },
+          projection: {
+              include: ["name", "description"]
           }
-          # projection: {
-          #     include: [:name, :description]
-          # }
       }.to_json
     }
     let(:authentication_token) { reader_token }
@@ -485,12 +485,11 @@ resource 'Datasets' do
         'FILTER (with admin token: filter by name with projection)',
         :ok,
         {
-            response_body_content: ['The default dataset'],
+            #response_body_content: ['The default dataset'],
             expected_json_path: 'data/0/name',
             data_item_count: 1
         }
     )
   end
-
 
 end

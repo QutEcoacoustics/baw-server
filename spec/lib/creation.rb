@@ -33,6 +33,8 @@ module Creation
 
       prepare_progress_event
 
+      create_study_hierarchy
+
     end
 
     # similar to create entire hierarchy

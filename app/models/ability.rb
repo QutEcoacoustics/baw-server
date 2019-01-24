@@ -646,7 +646,7 @@ class Ability
     # only admin can create, update, delete
 
     # all users including guest can access any get request
-    can [:new, :index, :filter, :view], Study
+    can [:new, :index, :filter, :show], Study
 
   end
 
@@ -657,7 +657,7 @@ class Ability
     # only admin create, update, delete
 
     # only logged in users can view questions
-    can [:index, :filter, :view], Question unless is_guest
+    can [:index, :filter, :show], Question unless is_guest
 
   end
 
@@ -676,7 +676,8 @@ class Ability
     end
 
     # users can only view their own responses
-    can [:index, :filter, :view], Response, creator_id: user.id
+    # therefore guest can not view any responses
+    can [:index, :filter, :show], Response, creator_id: user.id unless is_guest
 
     # only admin can update or delete responses
 

@@ -37,6 +37,31 @@ describe "Datasets" do
 
   end
 
+  describe 'filter' do
+
+    it 'can do a projection' do
+
+      post_body = {
+          filter: {
+              name: {
+                  eq: 'default'
+              }
+          },
+          projection: {
+              include: [:name]
+          }
+      }.to_json
+
+      post "/datasets/filter", post_body, @env
+      expect(response).to have_http_status(200)
+      #parsed_response = JSON.parse(response.body)
+      #expect(parsed_response).to include('The default dataset')
+
+    end
+
+
+  end
+
 end
 
 

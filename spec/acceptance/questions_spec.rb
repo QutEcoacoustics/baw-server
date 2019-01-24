@@ -3,25 +3,25 @@ require 'rspec_api_documentation/dsl'
 require 'helpers/acceptance_spec_helper'
 
 def id_params
-  parameter :id, 'Study id in request url', required: true
+  parameter :id, 'Question id in request url', required: true
 end
 
 def body_params
-  parameter :name, 'Name of study', scope: :study, :required => true
-  parameter :description, 'Description of study', scope: :study
-  parameter :dataset_id, 'ID of dataset', scope: :study, :required => true
+  parameter :text, 'Name of question', scope: :question, :required => true
+  parameter :data, 'Description of question', scope: :question
+  parameter :study_ids, 'IDs of studies', scope: :question, :required => true
 end
 
 def basic_filter_opts
   {
-      #response_body_content: ['test study'],
-      expected_json_path: 'data/0/name',
+      #response_body_content: ['test question'],
+      expected_json_path: ['data/0/text', 'data/0/data'],
       data_item_count: 1
   }
 end
 
 # https://github.com/zipmark/rspec_api_documentation
-resource 'Studies' do
+resource 'Questions' do
 
   header 'Accept', 'application/json'
   header 'Content-Type', 'application/json'
@@ -33,11 +33,11 @@ resource 'Studies' do
   create_study_hierarchy
 
   # Create post parameters from factory
-  let(:post_attributes) { FactoryGirl.attributes_for(:study, name: 'New Study name', dataset_id: dataset.id) }
+  let(:post_attributes) { FactoryGirl.attributes_for(:question, text: 'New Question text', study_ids: [study.id]) }
 
 
-  # reader, writer and owner should all act the same, because studies don't derive permissions from projects
-  shared_examples_for 'Studies results' do |current_user|
+  # reader, writer and owner should all act the same, because questions don't derive permissions from projects
+  shared_examples_for 'Questions results' do |current_user|
 
     let(:current_user) { current_user }
 
@@ -46,20 +46,20 @@ resource 'Studies' do
     end
 
     # INDEX
-    get '/studies' do
+    get '/questions' do
       let(:authentication_token) { token(self) }
       standard_request_options(
           :get,
           "Any user, including #{current_user.to_s}, can access",
           :ok,
-          {expected_json_path: 'data/0/name', data_item_count: 1}
+          basic_filter_opts
       )
     end
 
     # CREATE
-    post '/studies' do
+    post '/questions' do
       body_params
-      let(:raw_post) { {'study' => post_attributes}.to_json }
+      let(:raw_post) { {'question' => post_attributes}.to_json }
       let(:authentication_token) { token(self) }
       standard_request_options(
           :post,
@@ -70,34 +70,34 @@ resource 'Studies' do
     end
 
     # NEW
-    get '/studies/new' do
+    get '/questions/new' do
       let(:authentication_token) { token(self) }
       standard_request_options(
           :get,
           "Any user, including #{current_user.to_s}, can access",
           :ok,
-          {expected_json_path: 'data/name'}
+          {expected_json_path: ['data/text', 'data/data']}
       )
     end
 
     # SHOW
-    get '/studies/:id' do
+    get '/questions/:id' do
       id_params
-      let(:id) { study.id }
+      let(:id) { question.id }
       let(:authentication_token) { token(self) }
       standard_request_options(
           :get,
           "Any user, including #{current_user.to_s}, can access",
           :ok,
-          {expected_json_path: 'data/name'}
+          {expected_json_path: ['data/text', 'data/data']}
       )
     end
 
     # UPDATE
-    put '/studies/:id' do
+    put '/questions/:id' do
       body_params
-      let(:id) { study.id }
-      let(:raw_post) { {study: post_attributes}.to_json }
+      let(:id) { question.id }
+      let(:raw_post) { {question: post_attributes}.to_json }
       let(:authentication_token) { token(self) }
       standard_request_options(
           :put,
@@ -109,7 +109,7 @@ resource 'Studies' do
 
     # FILTER
 
-    post '/studies/filter' do
+    post '/questions/filter' do
       let(:authentication_token) { token(self) }
       standard_request_options(
           :post,
@@ -132,17 +132,17 @@ resource 'Studies' do
 
   describe 'index' do
 
-    get '/studies' do
+    get '/questions' do
       let(:authentication_token) { admin_token }
       standard_request_options(
           :get,
           'INDEX (as admin)',
           :ok,
-          {expected_json_path: 'data/0/name', data_item_count: 1}
+          basic_filter_opts
       )
     end
 
-    get '/studies' do
+    get '/questions' do
       let(:authentication_token) { invalid_token }
       standard_request_options(
           :get,
@@ -152,17 +152,17 @@ resource 'Studies' do
       )
     end
 
-    get '/studies' do
+    get '/questions' do
       standard_request_options(
           :get,
           'INDEX (as anonymous user)',
-          :ok,
-          {remove_auth: true, expected_json_path: 'data/0/name', data_item_count: 1}
+          :unauthorized,
+          {expected_json_path: get_json_error_path(:sign_up)}
       )
     end
 
 
-    get '/studies' do
+    get '/questions' do
       let(:authentication_token) { harvester_token }
       standard_request_options(
           :get,
@@ -178,23 +178,23 @@ resource 'Studies' do
   # CREATE
   ################################
 
-  describe 'create studies' do
+  describe 'create questions' do
 
-    post '/studies' do
+    post '/questions' do
       body_params
-      let(:raw_post) { {'study' => post_attributes}.to_json }
+      let(:raw_post) { {'question' => post_attributes}.to_json }
       let(:authentication_token) { admin_token }
       standard_request_options(
           :post,
           'CREATE (as admin)',
           :created,
-          {expected_json_path: 'data/name', response_body_content: 'New Study name'}
+          {expected_json_path: ['data/text','data/data'], response_body_content: 'New Question text'}
       )
     end
 
-    post '/studies' do
+    post '/questions' do
       body_params
-      let(:raw_post) { {'study' => post_attributes}.to_json }
+      let(:raw_post) { {'question' => post_attributes}.to_json }
       let(:dataset_id) { dataset.id}
       let(:authentication_token) { no_access_token }
       standard_request_options(
@@ -205,9 +205,9 @@ resource 'Studies' do
       )
     end
 
-    post '/studies' do
+    post '/questions' do
       body_params
-      let(:raw_post) { {'study' => post_attributes}.to_json }
+      let(:raw_post) { {'question' => post_attributes}.to_json }
       let(:authentication_token) { invalid_token }
       standard_request_options(
           :post,
@@ -217,9 +217,9 @@ resource 'Studies' do
       )
     end
 
-    post '/studies' do
+    post '/questions' do
       body_params
-      let(:raw_post) { {'study' => post_attributes}.to_json }
+      let(:raw_post) { {'question' => post_attributes}.to_json }
       standard_request_options(
           :post,
           'CREATE (as anonymous user)',
@@ -228,9 +228,9 @@ resource 'Studies' do
       )
     end
 
-    post '/studies' do
+    post '/questions' do
       body_params
-      let(:raw_post) { {'study' => post_attributes}.to_json }
+      let(:raw_post) { {'question' => post_attributes}.to_json }
       let(:authentication_token) { harvester_token }
       standard_request_options(
           :post,
@@ -248,27 +248,27 @@ resource 'Studies' do
 
   describe 'new' do
 
-    get '/studies/new' do
+    get '/questions/new' do
       let(:authentication_token) { admin_token }
       standard_request_options(
           :get,
           'NEW (as admin)',
           :ok,
-          {expected_json_path: 'data/name/'}
+          {expected_json_path: ['data/text','data/data']}
       )
     end
 
-    get '/studies/new' do
+    get '/questions/new' do
       let(:authentication_token) { no_access_token }
       standard_request_options(
           :get,
           'NEW (as non admin user)',
           :ok,
-          {expected_json_path: 'data/name'}
+          {expected_json_path: ['data/text','data/data']}
       )
     end
 
-    get '/studies/new' do
+    get '/questions/new' do
       let(:authentication_token) { invalid_token }
       standard_request_options(
           :get,
@@ -278,16 +278,16 @@ resource 'Studies' do
       )
     end
 
-    get '/studies/new' do
+    get '/questions/new' do
       standard_request_options(
           :get,
           'NEW (as anonymous user)',
           :ok,
-          {expected_json_path: 'data/name'}
+          {expected_json_path: ['data/text','data/data']}
       )
     end
 
-    get '/studies/new' do
+    get '/questions/new' do
       let(:authentication_token) { harvester_token }
       standard_request_options(
           :get,
@@ -305,35 +305,33 @@ resource 'Studies' do
 
   describe 'show' do
 
-    get '/studies/:id' do
+    get '/questions/:id' do
       id_params
-      let(:id) { study.id }
+      let(:id) { question.id }
       let(:authentication_token) { admin_token }
       standard_request_options(
           :get,
           'SHOW (as admin)',
           :ok,
-          {expected_json_path: 'data/name'}
+          {expected_json_path: ['data/text','data/data']}
       )
     end
 
-    get '/studies/:id' do
+    get '/questions/:id' do
       id_params
-      let(:id) { study.id }
+      let(:id) { question.id }
       let(:authentication_token) { no_access_token }
       standard_request_options(
           :get,
           'SHOW (as no access user)',
           :ok,
-          {expected_json_path: 'data/name'}
+          {expected_json_path: ['data/text','data/data']}
       )
     end
 
-
-
-    get '/studies/:id' do
+    get '/questions/:id' do
       id_params
-      let(:id) { study.id }
+      let(:id) { question.id }
       let(:authentication_token) { invalid_token }
       standard_request_options(
           :get,
@@ -343,14 +341,26 @@ resource 'Studies' do
       )
     end
 
-    get '/studies/:id' do
+    get '/questions/:id' do
       id_params
-      let(:id) { study.id }
+      let(:id) { question.id }
       standard_request_options(
           :get,
-          'SHOW (an anonymous user)',
-          :ok,
-          {expected_json_path: 'data/name'}
+          'SHOW (as anonymous user)',
+          :unauthorized,
+          {expected_json_path: get_json_error_path(:sign_up)}
+      )
+    end
+
+    get '/questions/:id' do
+      id_params
+      let(:id) { question.id }
+      let(:authentication_token) { harvester_token }
+      standard_request_options(
+          :get,
+          'SHOW (as harvester)',
+          :forbidden,
+          {expected_json_path: get_json_error_path(:permissions)}
       )
     end
 
@@ -362,23 +372,23 @@ resource 'Studies' do
 
   describe 'update' do
 
-    put '/studies/:id' do
+    put '/questions/:id' do
       body_params
-      let(:id) { study.id }
-      let(:raw_post) { {study: post_attributes}.to_json }
+      let(:id) { question.id }
+      let(:raw_post) { {question: post_attributes}.to_json }
       let(:authentication_token) { admin_token }
       standard_request_options(
           :put,
           'UPDATE (as admin)',
           :ok,
-          {expected_json_path: 'data/name', response_body_content: 'New Study name'}
+          {expected_json_path: ['data/text','data/data'], response_body_content: 'New Question text'}
       )
     end
 
-    put '/studies/:id' do
+    put '/questions/:id' do
       body_params
-      let(:id) { study.id }
-      let(:raw_post) { {study: post_attributes}.to_json }
+      let(:id) { question.id }
+      let(:raw_post) { {question: post_attributes}.to_json }
       let(:authentication_token) { no_access_token }
       standard_request_options(
           :put,
@@ -388,10 +398,10 @@ resource 'Studies' do
       )
     end
 
-    put '/studies/:id' do
+    put '/questions/:id' do
       body_params
-      let(:id) { study.id }
-      let(:raw_post) { {study: post_attributes}.to_json }
+      let(:id) { question.id }
+      let(:raw_post) { {question: post_attributes}.to_json }
       let(:authentication_token) { invalid_token }
       standard_request_options(
           :put,
@@ -401,10 +411,10 @@ resource 'Studies' do
       )
     end
 
-    put '/studies/:id' do
+    put '/questions/:id' do
       body_params
-      let(:id) { study.id }
-      let(:raw_post) { {study: post_attributes}.to_json }
+      let(:id) { question.id }
+      let(:raw_post) { {question: post_attributes}.to_json }
       standard_request_options(
           :put,
           'UPDATE (as anonymous user)',
@@ -413,10 +423,10 @@ resource 'Studies' do
       )
     end
 
-    put '/studies/:id' do
+    put '/questions/:id' do
       body_params
-      let(:id) { study.id }
-      let(:raw_post) { {study: post_attributes}.to_json }
+      let(:id) { question.id }
+      let(:raw_post) { {question: post_attributes}.to_json }
       let(:authentication_token) { harvester_token }
       standard_request_options(
           :put,
@@ -434,9 +444,9 @@ resource 'Studies' do
 
   describe 'destroy' do
 
-    delete '/studies/:id' do
+    delete '/questions/:id' do
       id_params
-      let(:id) { study.id }
+      let(:id) { question.id }
       let(:authentication_token) { admin_token }
       standard_request_options(
           :delete,
@@ -446,9 +456,9 @@ resource 'Studies' do
       )
     end
 
-    delete '/studies/:id' do
+    delete '/questions/:id' do
       id_params
-      let(:id) { study.id }
+      let(:id) { question.id }
       let(:authentication_token) { owner_token }
       standard_request_options(
           :delete,
@@ -458,9 +468,9 @@ resource 'Studies' do
       )
     end
 
-    delete '/studies/:id' do
+    delete '/questions/:id' do
       id_params
-      let(:id) { study.id }
+      let(:id) { question.id }
       let(:authentication_token) { reader_token }
       standard_request_options(
           :delete,
@@ -470,9 +480,9 @@ resource 'Studies' do
       )
     end
 
-    delete '/studies/:id' do
+    delete '/questions/:id' do
       id_params
-      let(:id) { study.id }
+      let(:id) { question.id }
       let(:authentication_token) { no_access_token }
       standard_request_options(
           :delete,
@@ -482,9 +492,9 @@ resource 'Studies' do
       )
     end
 
-    delete '/studies/:id' do
+    delete '/questions/:id' do
       id_params
-      let(:id) { study.id }
+      let(:id) { question.id }
       let(:authentication_token) { invalid_token }
       standard_request_options(
           :delete,
@@ -494,10 +504,10 @@ resource 'Studies' do
       )
     end
 
-    delete '/studies/:id' do
+    delete '/questions/:id' do
       id_params
-      let(:id) { study.id }
-      let(:raw_post) { {study: post_attributes}.to_json }
+      let(:id) { question.id }
+      let(:raw_post) { {question: post_attributes}.to_json }
       standard_request_options(
           :delete,
           'DESTROY (as anonymous user)',
@@ -506,9 +516,9 @@ resource 'Studies' do
       )
     end
 
-    delete '/studies/:id' do
+    delete '/questions/:id' do
       id_params
-      let(:id) { study.id }
+      let(:id) { question.id }
       let(:authentication_token) { harvester_token }
       standard_request_options(
           :delete,
@@ -525,23 +535,19 @@ resource 'Studies' do
   # ################################
 
 
-
-
-
-
   describe 'filter' do
 
-    post '/studies/filter' do
+    post '/questions/filter' do
       let(:authentication_token) { admin_token }
       standard_request_options(:post,'FILTER (as admin)',:ok, basic_filter_opts)
     end
 
-    post '/studies/filter' do
+    post '/questions/filter' do
       let(:authentication_token) { no_access_token }
       standard_request_options(:post,'FILTER (as no access user)',:ok, basic_filter_opts)
     end
 
-    post '/studies/filter' do
+    post '/questions/filter' do
       let(:authentication_token) { invalid_token }
       standard_request_options(
           :post,
@@ -551,11 +557,15 @@ resource 'Studies' do
       )
     end
 
-    post '/studies/filter' do
-      standard_request_options(:post,'FILTER (as anonymous user)',:ok, basic_filter_opts)
+    post '/questions/filter' do
+      standard_request_options(
+          :post,
+          'FILTER (as anonymous user)',
+          :unauthorized,
+          {expected_json_path: get_json_error_path(:sign_up)})
     end
 
-    post '/studies/filter' do
+    post '/questions/filter' do
       let(:authentication_token) { harvester_token }
       standard_request_options(
           :post,
@@ -565,16 +575,16 @@ resource 'Studies' do
       )
     end
 
-    post '/studies/filter' do
+    post '/questions/filter' do
       let(:raw_post) {
         {
             filter: {
-                name: {
-                    starts_with: 'test study'
+                text: {
+                    starts_with: 'test question'
                 }
             },
             projection: {
-                include: [:name]
+                include: [:text]
             }
         }.to_json
       }
@@ -584,29 +594,26 @@ resource 'Studies' do
           'FILTER (with admin token: filter by name with projection)',
           :ok,
           {
-              #response_body_content: ['Test study'],
-              expected_json_path: 'data/0/name',
+              #response_body_content: ['Test question'],
+              expected_json_path: 'data/0/text',
               data_item_count: 1
           }
       )
     end
 
-
-
-
   end
 
 
   describe 'Owner user' do
-    it_should_behave_like 'Studies results', :owner
+    it_should_behave_like 'Questions results', :owner
   end
 
   describe 'Writer user' do
-    it_should_behave_like 'Studies results', :writer
+    it_should_behave_like 'Questions results', :writer
   end
 
   describe 'Reader user' do
-    it_should_behave_like 'Studies results', :reader
+    it_should_behave_like 'Questions results', :reader
   end
 
 end
