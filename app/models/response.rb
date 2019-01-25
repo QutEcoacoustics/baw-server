@@ -30,7 +30,6 @@ class Response < ActiveRecord::Base
         render_fields: [:id, :data, :created_at, :creator_id, :study_id, :question_id, :dataset_item_id],
         new_spec_fields: lambda { |user|
           {
-              text: nil,
               data: nil
           }
         },

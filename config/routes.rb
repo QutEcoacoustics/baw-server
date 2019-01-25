@@ -281,6 +281,8 @@ Rails.application.routes.draw do
 
 
   # studies, questions, responses
+  put 'responses/:id', to: 'errors#method_not_allowed_error'
+  put '/studies/:study_id/responses/:id', to: 'errors#method_not_allowed'
   match 'studies/filter' => 'studies#filter', via: [:get, :post], defaults: {format: 'json'}
   match 'questions/filter' => 'questions#filter', via: [:get, :post], defaults: {format: 'json'}
   match 'responses/filter' => 'responses#filter', via: [:get, :post], defaults: {format: 'json'}

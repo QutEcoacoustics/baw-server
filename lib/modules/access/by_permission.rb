@@ -215,11 +215,19 @@ module Access
         query = Response
                     .joins(dataset_item: {audio_recording: :site})
 
+        is_admin, query = permission_admin(user, levels, query)
+
         if study_id
           query = query.where(study_id: study_id)
         end
 
-        permission_sites(user, levels, query)
+        if !is_admin
+          query = query.where(creator_id: user.id)
+        end
+
+        query = permission_sites(user, levels, query)
+
+        query
       end
 
 
