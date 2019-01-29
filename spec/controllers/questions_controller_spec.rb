@@ -6,6 +6,8 @@ describe QuestionsController, type: :controller do
   #   allow(CanCan::ControllerResource).to receive(:load_and_authorize_resource){ nil }
   # }
 
+  create_entire_hierarchy
+
   describe "GET #index" do
     it "returns http success" do
       get :index
@@ -15,8 +17,8 @@ describe QuestionsController, type: :controller do
 
   describe "GET #show" do
     it "returns http success" do
-      get :show, { :id => 1}
-      expect(response).to have_http_status(404)
+      get :show, { :id => question.id}
+      expect(response).to have_http_status(401)
     end
   end
 
@@ -30,22 +32,22 @@ describe QuestionsController, type: :controller do
   describe "GET #new" do
     it "returns http success" do
       get :new
+      # no permissions needed for new
       expect(response).to have_http_status(:success)
     end
   end
 
   describe "POST #create" do
     it "returns http success" do
-      # is this how it is done for HABTM associations?
-      post :create, { :study_ids => [1] }
-      expect(response).to have_http_status(404)
+      post :create, { :question => { :study_ids => [study.id] }, :format => :json}
+      expect(response).to have_http_status(401)
     end
   end
 
   describe "PUT #update" do
     it "returns http success" do
-      put :update, { :id => 1, :data => "something" }
-      expect(response).to have_http_status(404)
+      put :update, { :id => question.id, :data => "something" }
+      expect(response).to have_http_status(401)
     end
   end
 

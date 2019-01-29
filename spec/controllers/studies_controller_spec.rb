@@ -2,6 +2,8 @@ require 'rails_helper'
 
 describe StudiesController, type: :controller do
 
+  create_entire_hierarchy
+
   describe "GET #index" do
     it "returns http success" do
       get :index
@@ -11,8 +13,8 @@ describe StudiesController, type: :controller do
 
   describe "GET #show" do
     it "returns http success" do
-      get :show, { :id => 1}
-      expect(response).to have_http_status(404)
+      get :show, { :id => study.id}
+      expect(response).to have_http_status(:success)
     end
   end
 
@@ -32,15 +34,15 @@ describe StudiesController, type: :controller do
 
   describe "POST #create" do
     it "returns http success" do
-      post :create, { :dataset_id => 1 }
+      post :create, { study: { :dataset_id => dataset.id, :name => "something" }}
       expect(response).to have_http_status(401)
     end
   end
 
   describe "PUT #update" do
     it "returns http success" do
-      put :update, { :id => 1, :dataset_id => 1, :name => "something" }
-      expect(response).to have_http_status(404)
+      put :update, { :id => study.id, :name => "something" }
+      expect(response).to have_http_status(401)
     end
   end
 

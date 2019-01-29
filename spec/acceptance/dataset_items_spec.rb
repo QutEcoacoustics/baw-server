@@ -584,6 +584,7 @@ resource 'DatasetItems' do
   # DESTROY
   ################################
 
+
   delete '/datasets/:dataset_id/items/:id' do
     dataset_id_param
     dataset_item_id_param

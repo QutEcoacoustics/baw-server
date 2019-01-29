@@ -8,10 +8,7 @@ class DatasetItem < ActiveRecord::Base
   belongs_to :audio_recording, inverse_of: :dataset_items
   belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_dataset_items
   has_many :progress_events, inverse_of: :dataset_item, dependent: :destroy
-  has_many :responses
-
-  # We have not enabled soft deletes yet since we do not support deleting dataset items
-  # This may change in the future
+  has_many :responses, dependent: :destroy
 
   # association validations
   validates :dataset, existence: true

@@ -83,7 +83,7 @@ describe "responses" do
         expect(response).to have_http_status(200)
         parsed_response = JSON.parse(response.body)
         expect(parsed_response['data'].count).to eq(1)
-        expect(parsed_response['data'][0]['data']).to eq(response['data'])
+        expect(parsed_response['data'][0]['data']).to eq(user_response['data'])
       end
 
       it 'finds responses to the study0 and study1 using studies.id' do
@@ -253,9 +253,9 @@ describe "responses" do
         data = {some_answer:'modified response text'}.to_json
         params = {response: {data: data}}.to_json
         put response_url(user_response.id), params, @env
-        expect(response).to have_http_status(404)
+        expect(response).to have_http_status(405)
         parsed_response = JSON.parse(response.body)
-        expect(parsed_response['meta']['message']).to eq('Not Found')
+        expect(parsed_response['meta']['message']).to eq('Method Not Allowed')
       end
 
     end

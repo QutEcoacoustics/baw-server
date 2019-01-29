@@ -6,7 +6,7 @@ RSpec.describe Response, type: :model do
     FactoryGirl.create(:dataset_item)
   }
   let(:study) {
-    FactoryGirl.create(:study)
+    FactoryGirl.create(:study, dataset_id: dataset_item.dataset_id)
   }
   let(:question) {
     FactoryGirl.create(:question, studies: [study])
@@ -35,7 +35,9 @@ RSpec.describe Response, type: :model do
 
   describe 'validations' do
 
-    it { is_expected.to validate_presence_of(:dataset_item) }
+    it {
+      is_expected.to validate_presence_of(:dataset_item)
+    }
     it 'cannot be created without a dataset_item' do
       expect {
         create(:response, question: question, study: study, dataset_item: nil)

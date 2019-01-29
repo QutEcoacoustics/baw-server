@@ -76,10 +76,13 @@ class ErrorsController < ApplicationController
 
   def method_not_allowed_error
 
-    status_symbol = :method_not_allowed
-    detail_message = 'HTTP method not allowed for this resource.'
-    opts = {error_info: {original_route: params[:requested_route], original_http_method: request.method}}
-    render_error(status_symbol, detail_message, nil, nil, opts)
+    render_error(
+        :method_not_allowed,
+        'HTTP method not allowed for this resource.2',
+        nil,
+        'method_not_allowed_error_1',
+        {error_info: {original_route: params[:requested_route], original_http_method: request.method}}
+    )
 
   end
 

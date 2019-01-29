@@ -17,8 +17,8 @@ describe "Dataset Items" do
     @env ||= {}
     @env['HTTP_AUTHORIZATION'] = admin_token
 
-    @create_dataset_item_url = "/datasets/#{dataset.id}/items"
-    @update_dataset_item_url = "/datasets/#{dataset_item.dataset_id}/items/#{dataset_item.id}"
+    @direct_dataset_item_url = "/datasets/#{dataset.id}/items" #@direct_dataset_item_url
+    @nested_dataset_item_url = "/datasets/#{dataset_item.dataset_id}/items/#{dataset_item.id}" #@nested_dataset_item_url
   end
 
   describe 'Creating a dataset item' do
@@ -26,28 +26,28 @@ describe "Dataset Items" do
     it 'does not allow text/plain content-type' do
       @env['CONTENT_TYPE'] = "text/plain"
       params = {dataset_item: dataset_item_attributes}.to_json
-      post @create_dataset_item_url, params, @env
+      post @direct_dataset_item_url, params, @env
       expect(response).to have_http_status(415)
     end
 
     it 'does not allow application/x-www-form-urlencoded content-type with json data' do
       # use default form content type
       params = {dataset_item: dataset_item_attributes}.to_json
-      post @create_dataset_item_url, params, @env
+      post @direct_dataset_item_url, params, @env
       expect(response).to have_http_status(415)
     end
 
     it 'allows application/json content-type with json data' do
       @env['CONTENT_TYPE'] = "application/json"
       params = {dataset_item: dataset_item_attributes}.to_json
-      post @create_dataset_item_url, params, @env
+      post @direct_dataset_item_url, params, @env
       expect(response).to have_http_status(201)
     end
 
     it 'allows application/json content-type with unnested json data' do
       @env['CONTENT_TYPE'] = "application/json"
       params = dataset_item_attributes.to_json
-      post @create_dataset_item_url, params, @env
+      post @direct_dataset_item_url, params, @env
       expect(response).to have_http_status(201)
     end
 
@@ -57,7 +57,7 @@ describe "Dataset Items" do
     it 'does not allow empty body (nil, json)' do
       @env['CONTENT_TYPE'] = "application/json"
       params = nil
-      post @create_dataset_item_url, params, @env
+      post @direct_dataset_item_url, params, @env
       expect(response).to have_http_status(400)
       parsed_response = JSON.parse(response.body)
       expect(parsed_response['meta']['error']['links']).to eq({"New Resource"=>"/datasets/2/items/new"})
@@ -66,7 +66,7 @@ describe "Dataset Items" do
     it 'does not allow empty body (empty string, json)' do
       @env['CONTENT_TYPE'] = "application/json"
       params = ""
-      post @create_dataset_item_url, params, @env
+      post @direct_dataset_item_url, params, @env
       expect(response).to have_http_status(400)
       expect(response.content_type).to eq "application/json"
       parsed_response = JSON.parse(response.body)
@@ -81,7 +81,7 @@ describe "Dataset Items" do
       @env['CONTENT_TYPE'] = "text/plain"
       params = {dataset_item: update_dataset_item_attributes}.to_json
 
-      put @update_dataset_item_url, params, @env
+      put @nested_dataset_item_url, params, @env
       expect(response).to have_http_status(415)
     end
 
@@ -89,7 +89,7 @@ describe "Dataset Items" do
       # use default form content type
       params = {dataset_item: update_dataset_item_attributes}.to_json
 
-      put @update_dataset_item_url, params, @env
+      put @nested_dataset_item_url, params, @env
       expect(response).to have_http_status(415)
     end
 
@@ -97,14 +97,14 @@ describe "Dataset Items" do
       @env['CONTENT_TYPE'] = "application/json"
       params = {dataset_item: update_dataset_item_attributes}.to_json
 
-      put @update_dataset_item_url, params, @env
+      put @nested_dataset_item_url, params, @env
       expect(response).to have_http_status(200)
     end
 
     it 'does not allow empty body (nil, json)' do
       @env['CONTENT_TYPE'] = "application/json"
       params = nil
-      put @update_dataset_item_url, params, @env
+      put @nested_dataset_item_url, params, @env
       expect(response).to have_http_status(400)
       parsed_response = JSON.parse(response.body)
       expect(parsed_response['meta']['error']['links']).to eq({"New Resource"=>"/datasets/2/items/new"})
@@ -113,7 +113,7 @@ describe "Dataset Items" do
     it 'does not allow empty body (empty string, json)' do
       @env['CONTENT_TYPE'] = "application/json"
       params = ""
-      put @update_dataset_item_url, params, @env
+      put @nested_dataset_item_url, params, @env
       expect(response).to have_http_status(400)
       expect(response.content_type).to eq "application/json"
       parsed_response = JSON.parse(response.body)
@@ -122,7 +122,33 @@ describe "Dataset Items" do
 
   end
 
-  describe "filter" do
+  describe 'delete' do
+
+    it 'deletes dataset item and any children' do
+
+      dataset_item_count = DatasetItem.all.count
+      progress_event_count = ProgressEvent.all.count
+      response_count = Response.all.count
+      expected_progress_event_count = progress_event_count - ProgressEvent.where(dataset_item_id: dataset_item.id).count
+      expected_response_count = response_count - Response.where(dataset_item_id: dataset_item.id).count
+
+      @env['CONTENT_TYPE'] = "application/json"
+      params = ""
+      delete @nested_dataset_item_url, params, @env
+      expect(response).to have_http_status(204)
+      #parsed_response = JSON.parse(response.body)
+
+      # ensure dataset has been deleted
+      expect(DatasetItem.all.count).to eq(dataset_item_count - 1)
+      # ensure children are deleted
+      expect(ProgressEvent.all.count).to eq(expected_progress_event_count)
+      expect(Response.all.count).to eq(expected_response_count)
+
+    end
+
+  end
+
+  describe 'filter' do
 
     it 'does not allow arbitrary string in sort column' do
 

@@ -45,27 +45,7 @@ describe "Studies" do
         expect(parsed_response['data'].count).to eq(1)
         expect(parsed_response['data'][0]['name']).to eq(study['name'])
       end
-
-      it 'can do a projection' do
-
-        post_body = {
-            filter: {
-                name: {
-                    starts_with: 'test study'
-                }
-            }
-        }.to_json
-
-        post "#{@study_url}/filter", post_body, @env
-        expect(response).to have_http_status(200)
-        parsed_response = JSON.parse(response.body)
-        expect(parsed_response).to include('test study')
-
-
-      end
-
-
-
+      
     end
 
     describe 'show' do

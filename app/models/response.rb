@@ -62,11 +62,15 @@ class Response < ActiveRecord::Base
   private
 
   def consistent_associations
-    if !study.question_ids.include?(question.id)
-      errors.add(:question_id, "parent question is not associated with parent study")
+    if !study.nil? && !question.nil?
+      if !study.question_ids.include?(question.id)
+        errors.add(:question_id, "parent question is not associated with parent study")
+      end
     end
-    if study.dataset_id != dataset_item.dataset_id
-      errors.add(:dataset_item_id, "dataset item and study must belong to the same dataset")
+    if !study.nil? && !dataset_item.nil?
+      if study.dataset_id != dataset_item.dataset_id
+        errors.add(:dataset_item_id, "dataset item and study must belong to the same dataset")
+      end
     end
   end
 
