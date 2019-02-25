@@ -93,6 +93,7 @@ class QuestionsController < ApplicationController
   def question_params
     # empty array is replaced with nil by rails. Revert to empty array
     # to avoid errors with strong parameters
+    # https://github.com/rails/rails/issues/13766
     if params.has_key?(:question) and params[:question].has_key?(:study_ids) and params[:question][:study_ids].nil?
       params[:question][:study_ids] = []
     end

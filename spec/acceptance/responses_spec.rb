@@ -658,7 +658,7 @@ resource 'Responses' do
       let(:authentication_token) { owner_token }
       standard_request_options(
           :post,
-          'FILTER (as no ow user)',
+          'FILTER (as owner user)',
           :ok,
           {response_body_content: ['"order_by":"created_at","direction":"desc"'], data_item_count: 0})
     end
@@ -668,7 +668,7 @@ resource 'Responses' do
       let(:authentication_token) { writer_token }
       standard_request_options(
           :post,
-          'FILTER (as no owner user)',
+          'FILTER (as no writer user)',
           :ok,
           {response_body_content: ['"order_by":"created_at","direction":"desc"'], data_item_count: 0})
     end

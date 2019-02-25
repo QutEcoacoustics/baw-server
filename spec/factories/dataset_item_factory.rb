@@ -20,7 +20,10 @@ FactoryGirl.define do
     end_time_seconds 1442
     sequence(:order) { |n| (n+10.0)/2 }
 
-    dataset_id Dataset.default_dataset_id
+    # curly braces around the value to delay execution
+    # https://stackoverflow.com/questions/12423273/factorygirl-screws-up-rake-dbmigrate-process
+    dataset_id { Dataset.default_dataset_id }
+
     audio_recording
     creator
 

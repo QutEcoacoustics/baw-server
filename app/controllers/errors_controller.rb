@@ -78,9 +78,9 @@ class ErrorsController < ApplicationController
 
     render_error(
         :method_not_allowed,
-        'HTTP method not allowed for this resource.2',
+        'HTTP method not allowed for this resource.',
         nil,
-        'method_not_allowed_error_1',
+        'method_not_allowed_error',
         {error_info: {original_route: params[:requested_route], original_http_method: request.method}}
     )
 

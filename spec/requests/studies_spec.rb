@@ -45,7 +45,7 @@ describe "Studies" do
         expect(parsed_response['data'].count).to eq(1)
         expect(parsed_response['data'][0]['name']).to eq(study['name'])
       end
-      
+
     end
 
     describe 'show' do
