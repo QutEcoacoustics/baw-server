@@ -115,6 +115,9 @@ RSpec.configure do |config|
   config.include Creation::Example
   config.extend Creation::ExampleGroup
 
+  require File.join(File.dirname(File.expand_path(__FILE__)), 'lib', 'citizen_science_creation.rb')
+  config.extend CitizenScienceCreation
+
   require 'enumerize/integrations/rspec'
   extend Enumerize::Integrations::RSpec
 

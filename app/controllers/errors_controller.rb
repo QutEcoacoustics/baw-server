@@ -1,6 +1,6 @@
 class ErrorsController < ApplicationController
 
-  skip_authorization_check only: [:route_error, :uncaught_error, :test_exceptions, :show]
+  skip_authorization_check only: [:route_error, :uncaught_error, :test_exceptions, :show, :method_not_allowed_error]
 
   # see application_controller.rb for error handling for specific exceptions.
   # see routes.rb for the catch-all route for routing errors.
@@ -30,6 +30,9 @@ class ErrorsController < ApplicationController
       when 404, '404', 'not_found'
         status_symbol = :not_found
         detail_message = 'Could not find the requested page.'
+      when 405, '405', 'method_not_allowed'
+        status_symbol = :method_not_allowed
+        detail_message = 'HTTP method not allowed for this resource.'
       when 406, '406', 'not_acceptable'
         status_symbol = :not_acceptable
         detail_message = 'We cold not provide the format you asked for. Perhaps try a different file extension?'
@@ -66,6 +69,18 @@ class ErrorsController < ApplicationController
         'Could not find the requested page.',
         nil,
         'route_error',
+        {error_info: {original_route: params[:requested_route], original_http_method: request.method}}
+    )
+
+  end
+
+  def method_not_allowed_error
+
+    render_error(
+        :method_not_allowed,
+        'HTTP method not allowed for this resource.',
+        nil,
+        'method_not_allowed_error',
         {error_info: {original_route: params[:requested_route], original_http_method: request.method}}
     )
 

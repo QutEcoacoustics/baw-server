@@ -33,6 +33,8 @@ module Creation
 
       prepare_progress_event
 
+      create_study_hierarchy
+
     end
 
     # similar to create entire hierarchy
@@ -98,6 +100,29 @@ module Creation
 
       prepare_audio_recording
     end
+
+    # create study, question, response hierarchy
+    def create_study_hierarchy
+
+      prepare_study
+      prepare_question
+      prepare_user_response
+
+    end
+
+    def prepare_study
+      let!(:study) { Common.create_study(admin_user, dataset) }
+    end
+
+    def prepare_question
+      let!(:question) { Common.create_question(admin_user, study) }
+    end
+
+    def prepare_user_response
+      # named to avoid name collision with rspec 'response'
+      let!(:user_response) { Common.create_user_response(reader_user, dataset_item, study, question) }
+    end
+
 
     def prepare_users
       # these 7 user types must be used to test every endpoint:
@@ -348,6 +373,21 @@ module Creation
 
       def create_progress_event_full(creator, dataset_item, activity)
         FactoryGirl.create(:progress_event, creator: creator, dataset_item: dataset_item, activity: activity)
+      end
+
+      def create_study(creator, dataset)
+        FactoryGirl.create(:study, creator: creator, dataset: dataset)
+      end
+
+      def create_question(creator, study)
+        question = FactoryGirl.build(:question, creator: creator)
+        question.studies << study
+        question.save!
+        question
+      end
+
+      def create_user_response(creator, dataset_item, study, question)
+        FactoryGirl.create(:response, creator: creator, dataset_item: dataset_item, study: study, question: question)
       end
 
     end

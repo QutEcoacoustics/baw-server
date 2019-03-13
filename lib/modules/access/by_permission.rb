@@ -205,6 +205,32 @@ module Access
 
       end
 
+      # Get all responses for which this user has these access levels
+      # @param [User] user
+      # @param [Int] study_id
+      # @param [Symbol, Array<Symbol>] levels
+      # @return [ActiveRecord::Relation] responses
+      def responses(user, study_id = nil, levels = Access::Core.levels)
+
+        query = Response
+                    .joins(dataset_item: {audio_recording: :site})
+
+        is_admin, query = permission_admin(user, levels, query)
+
+        if study_id
+          query = query.where(study_id: study_id)
+        end
+
+        if !is_admin
+          query = query.where(creator_id: user.id)
+        end
+
+        query = permission_sites(user, levels, query)
+
+        query
+      end
+
+
       private
 
       def permission_admin(user, levels, query)
