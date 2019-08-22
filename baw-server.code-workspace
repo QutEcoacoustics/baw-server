@@ -1,0 +1,31 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"cSpell.ignorePaths": [
+			"**/package-lock.json",
+			"**/node_modules/**",
+			"**/vscode-extension/**",
+			"**/.git/objects/**",
+			".vscode",
+			"baw-server.code-workspace"
+		],
+		"ruby.lint": {
+			"rubocop": true,
+			"debride": true,
+		}
+	},
+	"extensions": {
+		"recommendations": [
+			"rebornix.ruby",
+			"misogi.ruby-rubocop",
+			"bung87.rails",
+			"castwide.solargraph",
+			"ms-azuretools.vscode-docker"
+		],
+		"unwantedRecommendations": []
+	}
+}

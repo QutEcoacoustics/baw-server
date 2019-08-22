@@ -150,6 +150,11 @@ gem 'baw-workers', git: 'https://github.com/QutBioacoustics/baw-workers.git', br
 # This was needed at some point to boot rails. I think we can remove this dependency later after some gem upgrades
 gem 'concurrent-ruby', require: 'concurrent'
 
+# Application/webserver
+# We used to use passenger for development
+#gem 'thin', '~> 1.7.0'
+gem "passenger"
+
 # Gems restricted by environment and/or platform
 # ====================================================
 
@@ -175,8 +180,6 @@ group :development, :test do
 
   # bundle exec rake doc:rails generates the API under doc/api.
   gem 'sdoc', '~> 0.4.0'
-
-  gem 'thin', '~> 1.7.0'
 
   gem 'notiffany', '~> 0.1.0'
   gem 'guard', '~> 2.14.0'
