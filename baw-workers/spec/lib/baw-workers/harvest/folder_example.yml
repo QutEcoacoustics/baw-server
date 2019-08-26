@@ -1,0 +1,22 @@
+# the project
+project_id: 10
+
+# the site
+site_id: 20
+
+# this needs to be set manually
+# below is a list of uploader_ids that have write access to this project
+# uncomment the one that you want to set as the uploader of the audio files
+# |---------- IMPORTANT: Ensure there is no whitespaces left before uploader_id
+uploader_id: 30
+
+# this is the timezone for all the recordings
+utc_offset: '+10'
+
+# structured metadata to add to each recording.
+# use this to record information about sensors, etc...
+metadata:
+   sensor_type: SM2
+   information:
+     - stripped left channel due to bad mic
+     - appears to have electronic interference from solar panel

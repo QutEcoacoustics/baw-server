@@ -1,0 +1,61 @@
+language: ruby
+sudo: false
+rvm:
+  - 2.2.5
+  - 2.3.1
+branches:
+  only:
+    - master
+addons:
+  apt:
+    packages:
+    - imagemagick
+    - wavpack
+    - libsox-fmt-all
+    - sox
+    - shntool
+    - mp3splt
+    - libav-tools
+    - make
+    - g++
+    - libsndfile1-dev
+    - libpng++-dev
+    - libpng12-dev
+    - libboost-program-options-dev
+    - unzip
+before_install:
+
+  # download, extract, and add ffmpeg and ffprobe to path
+    - mkdir /tmp/ffmpeg
+    - wget http://johnvansickle.com/ffmpeg/releases/ffmpeg-release-64bit-static.tar.xz -O /tmp/ffmpeg/download-ffmpeg.tar.xz
+    - tar -xf /tmp/ffmpeg/download-ffmpeg.tar.xz -C /tmp/ffmpeg/ --strip=1
+    - export PATH=/tmp/ffmpeg:$PATH
+
+    # download, extract, and add wav2png to path
+    - mkdir /tmp/wav2png
+    - git clone https://github.com/beschulz/wav2png.git /tmp/wav2png_git
+    - make -C /tmp/wav2png_git/build all
+    - mv /tmp/wav2png_git/bin/Linux/wav2png /tmp/wav2png/wav2png
+    - export PATH=/tmp/wav2png:$PATH
+  
+    # download, extract, build, and add wac2wavcmd to path
+    - mkdir /tmp/wac2wav
+    - wget https://github.com/QutBioacoustics/wac2wavcmd/archive/master.zip
+    - unzip master.zip
+    - make -C ./wac2wavcmd-master/
+    - mv ./wac2wavcmd-master/wac2wavcmd /tmp/wac2wav/wac2wavcmd
+    - export PATH=/tmp/wac2wav/:$PATH
+
+    # check versions
+    - which ffmpeg
+    - ffmpeg -version
+    - mp3splt -version
+    - sox --version
+    - wav2png --version
+    - wac2wavcmd </dev/null || true
+script:
+  - bundle exec rspec
+env:
+  global:
+    secure: "Kq1sbJ7fwl27/QICiZtzdPe9mmPbnQfgyOujm+stPTmnpHtYU1gfwJtyrw+bBi9INdxiZHTzPjRdLM36zWEysSi8HRySVkVCzG3fgG/AWvmTlqzBigLjlHV0Xhb9YRSb1FgbC2UNcp2YF4FcAdlFkrgRKWNxNGLAy4gyH3E9a3A="
+

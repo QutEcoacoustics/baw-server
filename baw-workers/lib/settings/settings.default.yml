@@ -1,0 +1,129 @@
+settings:
+  redis:
+    namespace: 'baw-workers'
+    # http://www.rubydoc.info/github/redis/redis-rb/Redis#initialize-instance_method
+    connection: &redis_config
+      host: localhost
+      port: 6379
+      password: password
+      db: 0
+  resque:
+    # queues_to_process is only needed when running a Resque worker to
+    # specify the Resque queues to watch.
+    queues_to_process:
+      - example
+    connection: *redis_config
+    namespace: resque
+    log_level: 'Logger::INFO'
+    polling_interval_seconds: 5
+    # specify background_pid_file to have a Resque worker run in the background
+    # otherwise it will run in the foreground
+    background_pid_file: ./tmp/logs/resque_worker.pid
+    # output and error log files are only used when a Resque worker is running
+    # in the background
+    output_log_file: ./tmp/logs/program_stdout.log
+    error_log_file: ./tmp/logs/program_stderr.log
+  actions:
+    analysis:
+      # name of queue to append jobs onto
+      queue: analysis_default
+    audio_check:
+      # name of queue to append jobs onto
+      queue: maintenance_default
+    harvest:
+      # name of queue to append jobs onto
+      queue: harvest_default
+      config_file_name: harvest.yml
+      # top level directory for mirroring harvested files, used by dequeue workers only
+      copy_base_path: ./tmp/custom_temp_dir/temp/copy_base_path
+    media:
+      # name of queue to append jobs onto
+      queue: media_default
+    mirror:
+      # name of queue to append jobs onto
+      queue: mirror_default
+  paths:
+    original_audios:
+      - ./tmp/custom_temp_dir/_original_audio
+    cached_spectrograms:
+      - ./tmp/custom_temp_dir/_cached_spectrogram
+    cached_audios:
+      - ./tmp/custom_temp_dir/_cached_audio
+    cached_analysis_jobs:
+      - ./tmp/custom_temp_dir/_analysis_results
+    worker_log_file: ./tmp/logs/worker.log
+    mailer_log_file: ./tmp/logs/mailer.log
+    audio_tools_log_file: ./tmp/logs/audio_tools.log
+    temp_dir: ./tmp/custom_temp_dir/temp
+    programs_dir: ./tmp/programs
+  endpoints:
+    use_ssl: true
+    login: /security
+    audio_recording: /audio_recordings/:id
+    audio_recording_create: /projects/:project_id/sites/:site_id/audio_recordings
+    audio_recording_uploader: /projects/:project_id/sites/:site_id/audio_recordings/check_uploader/:uploader_id
+    audio_recording_update_status: /audio_recordings/:id/update_status
+    analysis_jobs_item_update_status: /analysis_jobs/:analysis_job_id/audio_recordings/:audio_recording_id
+  api:
+    host: localhost
+    port: 3030
+    user: address@example.com
+    password: password
+  mailer:
+    # this gets set directly to the mailer.
+    # See http://api.rubyonrails.org/classes/ActionMailer/Base.html#class-ActionMailer::Base-label-Configuration+options
+    smtp:
+      address: localhost
+      port: 25
+      #domain: domain.com
+      #user_name: username
+      #authentication: login
+      #password: password
+    emails:
+      email_prefix: '[worker exception prefix]'
+      sender_address: address@example.com
+      required_recipients:
+       - address@example.com
+    log_level: 'Logger::INFO'
+  cached_audio_defaults:
+    extension: mp3
+    channel: 0
+    sample_rate: 22050
+    max_duration_seconds: 300.0
+    min_duration_seconds: 0.5
+  cached_spectrogram_defaults:
+    extension: png
+    channel: 0
+    sample_rate: 22050
+    window: 512
+    window_function: Hamming
+    colour: 'g'
+    ppms: 0.045
+    max_duration_seconds: 120.0
+    min_duration_seconds: 0.5
+  available_formats:
+    text:
+      - json
+    audio:
+      - mp3
+      - webm
+      - ogg
+      - flac
+      - wav
+      - wac
+    image:
+      - png
+  audio_tools:
+    ffmpeg_executable: ffmpeg
+    ffprobe_executable: ffprobe
+    mp3splt_executable: mp3splt
+    sox_executable: sox
+    wavpack_executable: wvunpack
+    shntool_executable: shntool
+    wav2png_executable: wav2png
+    wac2wav_executable: wac2wavcmd
+    imagemagick_convert_executable: convert
+    imagemagick_identify_executable: identify
+    max_duration_seconds: 300
+    log_level: 'Logger::WARN'
+  audio_tools_timeout_sec: 20
