@@ -1,0 +1,27 @@
+version: '3'
+volumes:
+  postgre-data:
+services:
+  redis:
+    image: redis
+  db:
+    image: postgres
+    volumes:
+      - postgre-data:/var/lib/postgresql/data
+  web:
+    build: .
+    # standalone mode start server command
+    command: "bundle exec passenger start"
+    # integration mode start server command
+    # command:
+    volumes:
+      # some guides put the app in the user's folder. 
+      # this one puts it in /var/www/run
+      - ./myapp:/home/myappuser/myapp
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+#   This is to
+#    env_file:
+#      - .env
