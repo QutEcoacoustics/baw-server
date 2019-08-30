@@ -9,8 +9,8 @@ AllCops:
     - 'db/**/*'
     - 'config/**/*'
     - 'script/**/*'
-Rails:
-  Enabled: true
+# Rails:
+#   Enabled: true
 
 # Customized options
 Metrics/LineLength:

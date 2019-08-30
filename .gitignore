@@ -49,3 +49,6 @@ external_modules.log
 
 # mac development
 .DS_Store
+
+# vendor is like node_modules for bundler in deployment mode
+vendor/bundle/*

@@ -22,9 +22,10 @@ The bioacoustic workbench server. Manages the structure and audio data. Provides
 
 ## Dependencies
 
-This project's dev environment is managed by [Vagrant](https://www.vagrantup.com/downloads.html) and Ansible. Ensure Vagrant `v1.8.1` or greater is installed on your dev machine.
+This project's dev environment is managed by [Docker](https://www.docker.com/products/docker-desktop).
+Please ensure the latest version of Docker Desktop is installed on your machine
 
-Audio processing and other long-running tasks are performed using [baw-workers](https://github.com/QutEcoacoustics/baw-workers).
+Audio processing and other long-running tasks are performed using [baw-workers](./baw-workers).
 
 ## Contributing
 
@@ -34,60 +35,68 @@ See the [git-flow.md](./git-flow.md) document for guidelines on making changes.
 
 Clone this repo, then change directory to your cloned directory and on your **host** machine run
 
-	$ vagrant up
+	$ docker-compose up
 
-This will prepare a complete development environment. To see what is involved in the setup, look at the  [`provision/vagrant.yml`](provision/vagrant.yml) and [`bin/setup`](bin/setup) files.
+This will prepare a complete development environment. To see what is involved in
+the setup, look at the  [`Dockerfile`](./Dockerfile) and [`bin/setup`](bin/setup) files.
 
-### Reprovision
+You can `stop` the running containers using <kbd>ctrl+c</kbd> which is equivalent
+to `docker-compose stop`.
 
-To reprovision your environment, on your **host** machine run:
+- `docker-compose stop` will stop the containers
+- `docker-compose down` will stop containers, remove containers, and delete networks
+    - images will not be deleted
+    - the primary application state (on the postgres volume) will not be removed
 
-    $ vagrant provision
+**NOTE:** changes in the Dockerfile will not be reflected in docker-compose images
+or containers unless the compose project is destroyed or the containers are
+rebuilt.
 
-or
+### Destroy or rebuild the docker environment
 
-    $ vagrant up --provision
+By default docker volume state is persisted between restarts of `docker-compose`.
+This means you can return to your previous development session easily. If,
+however, you want to start from scratch you can remove state by doing one of
+the following.
 
-### Destroy your environment
+To start from scratch by **removing all containers, images, and volumes**:
 
-If you wish to remove the baw-server development environment completely,  on your **host** machine run:
+    $ docker-compose down --remove-orphans --volumes --rmi local
 
-    $ vagrant destroy
+To rebuild the `web` service / `baw-server` image (e.g. to update dependencies)
+but keep state from our volume:
 
-This will **completely delete the development VM**.
+    $ docker-compose build
 
 ## Development
 
 Start by running, on your **host** machine:
 
-    $ vagrant up
-    $ vagrant ssh
-	# in the dev machine
-	$ cd ~/baw-server
+    $ docker-compose up
 
-Sometimes you may need to update dependencies first:
+Common tasks that you may need:
 
-    ~/baw-server$ bundle install
+- `docker-compose exec web bundle install`
+- `docker-compose run web bundle exec rails console`
+- `docker-compose exec web bundle exec rake db:create`
+- `docker-compose exec web bundle exec rake db:migrate`
+- `docker-compose stop` will stop the containers
+- `docker-compose stop web` stop web container so you can do something else
+- `docker-compose exec bundle exec passenger stop`
+- `docker-compose exec bundle exec passenger start` - the default action for `docker-compose up`
+- `docker-compose run web bash` - like `up` but starts the web service without
+    running the default `passenger start` command
 
-End by suspending the virtual machine:
+Use `exec` to run a command while the `web` service is running, and `run` to
+start the `web` service and then run the command
 
-    # exit the ssh session
-	$ exit
-	# on the host machine:
-    $ vagrant halt
-
-When running the server in `development` or `test` modes, these configuration files will be used:
+When running the server in `development` or `test` modes, these configuration
+files will be used:
 
  - `/config/settings/development.yml`
  - `/config/settings/test.yml`
 
 They are based on `/config/settings/default.yml`.
-
-### Web Server
-
-To start the development server
-
-    $ thin start
 
 ### Tests
 The tests are run using Guard, either:
@@ -127,7 +136,7 @@ These commands should be executed automatically but are listed because they are 
 
 ## Production setup and deploying
 
-Create production settings file `config/settings/production.yml` based on `config/settings/default.yml`.  
+Create production settings file `config/settings/production.yml` based on `config/settings/default.yml`.
 Create staging settings file `config/settings/staging.yml` based on `config/settings/default.yml`.
 
 We deploy using Ansible (and in particular [Ansistrano](http://ansistrano.com/)).

@@ -5,27 +5,38 @@
 		}
 	],
 	"settings": {
-		"cSpell.ignorePaths": [
-			"**/package-lock.json",
-			"**/node_modules/**",
-			"**/vscode-extension/**",
-			"**/.git/objects/**",
-			".vscode",
-			"baw-server.code-workspace"
+		"cSpell.words": [
+			"postgresql"
 		],
-		"ruby.lint": {
-			"rubocop": true,
-			"debride": true,
-		}
+		"files.associations": {
+			"**/provision/*.json": "jsonc"
+		},
+		"workbench.colorCustomizations": {
+			"activityBar.background": "#97d9a2",
+			"activityBar.foreground": "#15202b",
+			"activityBar.inactiveForeground": "#15202b99",
+			"activityBarBadge.background": "#8273cc",
+			"activityBarBadge.foreground": "#15202b",
+			"titleBar.activeBackground": "#72cb80",
+			"titleBar.inactiveBackground": "#72cb8099",
+			"titleBar.activeForeground": "#15202b",
+			"titleBar.inactiveForeground": "#15202b99",
+			"statusBar.background": "#72cb80",
+			"statusBarItem.hoverBackground": "#4dbd5e",
+			"statusBar.foreground": "#15202b"
+		},
+		"peacock.color": "#72cb80"
 	},
 	"extensions": {
 		"recommendations": [
 			"rebornix.ruby",
-			"misogi.ruby-rubocop",
 			"bung87.rails",
+			"misogi.ruby-rubocop",
 			"castwide.solargraph",
-			"ms-azuretools.vscode-docker"
-		],
-		"unwantedRecommendations": []
+			"bung87.vscode-gemfile",
+      "streetsidesoftware.code-spell-checker",
+      "EditorConfig.EditorConfig"
+
+		]
 	}
 }

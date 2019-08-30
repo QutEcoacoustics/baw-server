@@ -3,6 +3,15 @@
 # Accessible through Settings.key
 # Environment specific settings expected in config/settings/{environment_name}.yml
 defaults: &defaults
+  redis:
+    namespace: 'baw-workers'
+    # http://www.rubydoc.info/github/redis/redis-rb/Redis#initialize-instance_method
+    connection: &redis_config
+      # see docker compose
+      host: redis
+      port: 6379
+      password:
+      db: 0
   host:
     name: localhost
     port: 3000
@@ -11,12 +20,7 @@ defaults: &defaults
      - !ruby/regexp '/\A(https?:\/\/)?127\.0\.0\.1(:\d+)?\z/'
      - !ruby/regexp '/\A(https?:\/\/)?192\.168\.0\.\d{1,3}(:\d+)?\z/'
   resque:
-    connection:
-      host: localhost
-      port: 6379
-      password: password
-      db: 0
-      timeout: 5.0
+    connection:  *redis_config
     namespace: resque
     log_level: 'Logger::INFO'
   actions:
@@ -34,18 +38,19 @@ defaults: &defaults
       queue: media_default
       dry_run: false
   media_request_processor: local # options are local or resque
-  db:
+  db: &db
     ######################################################
     # these values are read by config/database.yml
     ######################################################
-    adapter: sqlite3
-    encoding: utf8
-    reconnect: false
-    database: db/default.sqlite3
-    pool: 5
-    username: root
-    password:
-    host: localhost
+     adapter: postgresql
+     encoding: utf8
+     reconnect: false
+     database: baw_local_dev
+     pool: 5
+     username: postgres
+     password: ''
+     # see docker compose
+     host: db
   devise:
     ######################################################
     # these values are read for config.{key} in

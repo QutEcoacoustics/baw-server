@@ -19,7 +19,7 @@ class Settings < BawWorkers::Settings
     instance_merge(settings_file_env, Rails.env)
     BawWorkers::Settings.instance_merge(settings_file_env, Rails.env)
   else
-    puts "===> environment specific settings file #{settings_file_env} not found."
+    raise "===> environment specific settings file #{settings_file_env} not found."
   end
 
   MEDIA_PROCESSOR_LOCAL = 'local'

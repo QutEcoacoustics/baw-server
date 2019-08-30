@@ -76,7 +76,7 @@ gem 'memoist'
 # -------------------------------------
 # https://github.com/plataformatec/devise/blob/master/CHANGELOG.md
 # http://joanswork.com/devise-3-1-update/
-gem 'devise', '~> 4.2.1'
+gem 'devise', '~> 4.7.0'
 gem 'devise-i18n'
 gem 'cancancan', '~> 1.16'
 gem 'role_model', '~> 0.8.1'
@@ -135,7 +135,7 @@ gem 'raddocs', '~> 1.0.0'
 # MEDIA
 # -------------------------------------
 # set to a specific commit when releasing to master branch
-gem 'baw-audio-tools', git: 'https://github.com/QutBioacoustics/baw-audio-tools.git', branch: :master, ref: '5ec1af05280e43b6827ddc71f50593c217b3e373'
+gem 'baw-audio-tools', path: 'baw-audio-tools'
 gem 'rack-rewrite', '~> 1.5.1'
 
 # ASYNC JOBS
@@ -144,16 +144,18 @@ gem 'resque', '~> 1.25.2'
 gem 'resque-job-stats', git: 'https://github.com/echannel/resque-job-stats.git', branch: :master, ref: '8932c036ae'
 gem 'resque-status', '~> 0.5.0'
 # set to a specific commit when releasing to master branch
-gem 'baw-workers', git: 'https://github.com/QutBioacoustics/baw-workers.git', branch: :master, ref: '78b90d619aa81d9cb344ad9bced6ca2ef66f9a54'
+gem 'baw-workers', path: 'baw-workers'
 
 # Other Gems
 # This was needed at some point to boot rails. I think we can remove this dependency later after some gem upgrades
-gem 'concurrent-ruby', require: 'concurrent'
+gem 'concurrent-ruby', '~> 1', require: 'concurrent'
 
 # Application/webserver
-# We used to use passenger for development
+# We used to use thin for development
 #gem 'thin', '~> 1.7.0'
-gem "passenger"
+# Now we use passenger for all environments. The require: allows for integration
+# with the `rails server` command
+gem "passenger", require: "phusion_passenger/rack_handler"
 
 # Gems restricted by environment and/or platform
 # ====================================================
@@ -185,7 +187,7 @@ group :development, :test do
   gem 'guard', '~> 2.14.0'
   gem 'guard-rspec', '~> 4.7.0'
   gem 'guard-yard', '~> 2.1.4', require: false
-  gem 'rubocop', '~> 0.42.0', require: false
+  gem 'rubocop', '~> 0.74.0', require: false
   gem 'haml_lint', require: false
 
   gem 'fakeredis', '~> 0.5.0', require: 'fakeredis/rspec'

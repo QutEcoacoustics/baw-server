@@ -3,9 +3,10 @@ settings:
     namespace: 'baw-workers'
     # http://www.rubydoc.info/github/redis/redis-rb/Redis#initialize-instance_method
     connection: &redis_config
-      host: localhost
+      # see docker compose
+      host: redis
       port: 6379
-      password: password
+      password:
       db: 0
   resque:
     # queues_to_process is only needed when running a Resque worker to

@@ -1,27 +1,45 @@
-version: '3'
+version: '3.4'
 volumes:
-  postgre-data:
+  postgres-data:
 services:
   redis:
     image: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - baw_docker_network
   db:
     image: postgres
     volumes:
-      - postgre-data:/var/lib/postgresql/data
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - baw_docker_network
   web:
-    build: .
-    # standalone mode start server command
-    command: "bundle exec passenger start"
-    # integration mode start server command
+    #image: qutecoacoustics/baw-server:dev
+    build:
+      context: .
+      target: baw-server-dev
+    command: "./provision/entrypoint.sh bundle exec passenger start"
+    environment:
+      RAILS_ENV: development
+
     # command:
     volumes:
-      # some guides put the app in the user's folder. 
-      # this one puts it in /var/www/run
-      - ./myapp:/home/myappuser/myapp
+      - type: bind
+        source: ./
+        target: /home/baw_web/baw-server
+      - type: bind
+        source: ./provision/Passengerfile.development.json
+        target: /home/baw_web/baw-server/Passengerfile.json
     ports:
       - "3000:3000"
+    networks:
+      - baw_docker_network
     depends_on:
       - db
-#   This is to
-#    env_file:
-#      - .env
+      - redis
+
+networks:
+  baw_docker_network:
