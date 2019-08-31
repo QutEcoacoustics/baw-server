@@ -23,6 +23,6 @@ else
     echo -e "\n\n== Unknown error occurred executing db:status '$RESULT'. ==\n\n"
 fi
 
-echo -e "\n\n== Executing original command ==\n\n"
+echo -e "\n\n== Executing original command '$@' ==\n\n"
 exec "$@"
 

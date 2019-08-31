@@ -21,7 +21,9 @@ services:
     build:
       context: .
       target: baw-server-dev
-    command: "./provision/entrypoint.sh bundle exec passenger start"
+    entrypoint: ./provision/entrypoint.sh bundle exec passenger start
+    #command: bundle exec passenger start
+    #command: /bin/bash
     environment:
       RAILS_ENV: development
 

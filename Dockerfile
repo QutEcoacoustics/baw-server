@@ -5,7 +5,7 @@ FROM ruby:2.6-slim-buster AS baw-server-core
 ARG app_name=baw-server
 ARG app_user=baw_web
 
-COPY ./provision/install_passenger.sh /install_passenger.sh
+COPY ./provision/install_audio_tools.sh.sh /install_audio_tools.sh.sh
 
 
 RUN apt-get update \
@@ -21,6 +21,8 @@ RUN apt-get update \
     build-essential patch ruby-dev zlib1g-dev liblzma-dev \
     # for the postgre gem and postgresql-client rails rake db commands
     libpq-dev postgresql-client \
+    # install audio tools and other binaries
+    && ./install_audio_tools.sh
     && rm -rf /var/lib/apt/lists/* \
     # create a user for the app
     # -D is for defaults, which includes NO PASSWORD
