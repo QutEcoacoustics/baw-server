@@ -5,8 +5,9 @@ FROM ruby:2.6-slim-buster AS baw-server-core
 ARG app_name=baw-server
 ARG app_user=baw_web
 
-COPY ./provision/install_audio_tools.sh.sh /install_audio_tools.sh.sh
-
+# install audio tools and other binaries
+COPY ./provision/install_audio_tools.sh /install_audio_tools.sh
+RUN chmod u+x /install_audio_tools.sh
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
@@ -21,8 +22,6 @@ RUN apt-get update \
     build-essential patch ruby-dev zlib1g-dev liblzma-dev \
     # for the postgre gem and postgresql-client rails rake db commands
     libpq-dev postgresql-client \
-    # install audio tools and other binaries
-    && ./install_audio_tools.sh
     && rm -rf /var/lib/apt/lists/* \
     # create a user for the app
     # -D is for defaults, which includes NO PASSWORD
@@ -35,7 +34,8 @@ RUN apt-get update \
     && chown -R ${app_user}:${app_user} /home/${app_user}
 #&& bash /install_passenger.sh
 
-
+# install audio tools and other binaries
+RUN ./install_audio_tools.sh
 
 USER ${app_user}
 
@@ -63,6 +63,9 @@ USER ${app_user}
 RUN bundle install --system \
     # precompile passenger standalone
     && bundle exec passenger start --runtime-check-only
+
+# RUN chmod u+x ./provision/entrypoint.sh
+RUN chmod 777 ./provision/entrypoint.sh
 ENTRYPOINT ./provision/entrypoint.sh
 CMD []
 

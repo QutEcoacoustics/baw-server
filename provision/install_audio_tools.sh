@@ -4,7 +4,9 @@ set -e
 # Historical note:
 # no longer installing libpng or wav2png
 
-add-apt-repository ppa:jonathonf/ffmpeg-4
+# add-apt-repository ppa:jonathonf/ffmpeg-4
+
+apt-get update
 
 apt-get install -y --no-install-recommends \
     imagemagick \
@@ -13,7 +15,6 @@ apt-get install -y --no-install-recommends \
     sox \
     shntool \
     mp3splt \
-    libav-tools \
     g++ \
     libsndfile1-dev \
     apt-transport-https \
