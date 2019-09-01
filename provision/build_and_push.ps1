@@ -4,9 +4,10 @@ $ErrorActionPreference = "Stop"
 
 try {
   Push-Location
-  Set-Location ..
-  docker build . -t qutecoacoustics/baw-server:latest
+  Set-Location "$PSScriptRoot/.."
+  docker build . -t qutecoacoustics/workbench-server:latest
 
+  docker push qutecoacoustics/workbench-server:latest
 
 
 }

@@ -35,6 +35,7 @@ RUN apt-get update \
     && chown -R ${app_user}:${app_user} /home/${app_user} \
     # allow bundle install to work as app_user
     # modified from here: https://github.com/docker-library/ruby/blob/6a7df7a72b4a3d1b3e06ead303841b3fdaca560e/2.6/buster/slim/Dockerfile#L114
+    && mkdir -p "$GEM_HOME/bin" \
     && chmod 777 "$GEM_HOME/bin"
 
 ENV RAILS_ENV=production \
