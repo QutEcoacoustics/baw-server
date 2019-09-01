@@ -1,5 +1,8 @@
 #!/bin/bash
 
+echo -e "\n\n== Checking bundler install ==\n\n"
+
+bundle check || bundle install --system --binstubs
 
 echo -e "\n\n== Checking database status ==\n\n"
 

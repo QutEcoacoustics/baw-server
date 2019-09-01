@@ -7,7 +7,6 @@ ARG app_user=baw_web
 
 # install audio tools and other binaries
 COPY ./provision/install_audio_tools.sh /install_audio_tools.sh
-RUN chmod u+x /install_audio_tools.sh
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
@@ -22,6 +21,8 @@ RUN apt-get update \
     build-essential patch ruby-dev zlib1g-dev liblzma-dev \
     # for the postgre gem and postgresql-client rails rake db commands
     libpq-dev postgresql-client \
+    # install audio tools and other binaries
+    && chmod u+x /install_audio_tools.sh \
     && rm -rf /var/lib/apt/lists/* \
     # create a user for the app
     # -D is for defaults, which includes NO PASSWORD
@@ -31,11 +32,16 @@ RUN apt-get update \
     && groupadd -r ${app_user} \
     && useradd -r -g ${app_user} ${app_user} \
     && mkdir -p /home/${app_user}/${app_name} \
-    && chown -R ${app_user}:${app_user} /home/${app_user}
-#&& bash /install_passenger.sh
+    && chown -R ${app_user}:${app_user} /home/${app_user} \
+    # allow bundle install to work as app_user
+    # modified from here: https://github.com/docker-library/ruby/blob/6a7df7a72b4a3d1b3e06ead303841b3fdaca560e/2.6/buster/slim/Dockerfile#L114
+    && chmod 777 "$GEM_HOME/bin"
 
-# install audio tools and other binaries
-RUN ./install_audio_tools.sh
+ENV RAILS_ENV=production \
+    APP_USER=${app_user} \
+    APP_NAME=${app_name} \
+    # enable binstubs to take priority
+    PATH=:./bin:$PATH
 
 USER ${app_user}
 
@@ -50,30 +56,32 @@ COPY --chown=${app_user} ./ /home/${app_user}/${app_name}
 COPY ./provision/Passengerfile.production.json /home/${app_user}/${app_name}/Passengerfile.json
 
 
-EXPOSE 3000
-ENV RAILS_ENV=${environment} APP_USER=${app_user} APP_NAME=${app_name}
-
 ENTRYPOINT [ "bundle", "exec" ]
 CMD [ "passenger", "start" ]
 
+#
+# For development
+#
 FROM baw-server-core AS baw-server-dev
 
-USER ${app_user}
+ENV RAILS_ENV=development
+EXPOSE 3000
 
-RUN bundle install --system \
+RUN bundle install --binstubs --system \
     # precompile passenger standalone
     && bundle exec passenger start --runtime-check-only
 
-# RUN chmod u+x ./provision/entrypoint.sh
-RUN chmod 777 ./provision/entrypoint.sh
 ENTRYPOINT ./provision/entrypoint.sh
 CMD []
 
-
-
-
+#
+# For production/staging
+#
 FROM baw-server-core AS baw-server
 
+EXPOSE 80
+
 # install deps
-RUN bundle install --system --without 'development' 'test' \
+RUN bundle install --binstubs --system --without 'development' 'test' \
+    # precompile passenger standalone
     && bundle exec passenger start --runtime-check-only
