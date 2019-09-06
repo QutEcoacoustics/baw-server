@@ -124,7 +124,6 @@ require 'rbconfig'
 # MONITORING
 # -------------------------------------
 gem 'exception_notification', '~> 4.2.0'
-gem 'newrelic_rpm', '~> 3.16'
 
 # Documentation & UI
 # -------------------------------------

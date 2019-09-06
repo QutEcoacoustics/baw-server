@@ -1,5 +1,5 @@
 # MySQL.  Versions 4.1 and 5.0 are recommended.
-# 
+#
 # Install the MYSQL driver
 #   gem install mysql2
 #
@@ -19,6 +19,7 @@ development:
   username: <%= Settings.db.username %>
   password: <%= Settings.db.password %>
   host: <%= Settings.db.host %>
+  sslmode:  <%= Settings.db.sslmode %>
 
 #
 # To create a new database:
@@ -36,6 +37,7 @@ test:
   username: <%= Settings.db.username %>
   password: <%= Settings.db.password %>
   host: <%= Settings.db.host %>
+  sslmode:  <%= Settings.db.sslmode %>
 
 production:
   adapter: <%= Settings.db.adapter %>
@@ -46,6 +48,7 @@ production:
   username: <%= Settings.db.username %>
   password: <%= Settings.db.password %>
   host: <%= Settings.db.host %>
+  sslmode:  <%= Settings.db.sslmode %>
 
 staging:
   adapter: <%= Settings.db.adapter %>
@@ -56,3 +59,4 @@ staging:
   username: <%= Settings.db.username %>
   password: <%= Settings.db.password %>
   host: <%= Settings.db.host %>
+  sslmode:  <%= Settings.db.sslmode %>

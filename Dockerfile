@@ -29,8 +29,8 @@ RUN apt-get update \
     # adduser myappuser
     # we use useradd instead of adduser, since it can be done without any interactivity
     # might need to do some other stuff achieve the full effect of adduser.
-    && groupadd -r ${app_user} \
-    && useradd -r -g ${app_user} ${app_user} \
+    && groupadd -g 1000 ${app_user} \
+    && useradd -u 1000 -g ${app_user} ${app_user} \
     && mkdir -p /home/${app_user}/${app_name} \
     && chown -R ${app_user}:${app_user} /home/${app_user} \
     # allow bundle install to work as app_user
@@ -86,3 +86,4 @@ EXPOSE 80
 RUN bundle install --binstubs --system --without 'development' 'test' \
     # precompile passenger standalone
     && bundle exec passenger start --runtime-check-only
+

@@ -273,7 +273,6 @@ GEM
     multi_json (1.13.1)
     mustache (1.1.0)
     nenv (0.3.0)
-    newrelic_rpm (3.18.1.330)
     nokogiri (1.10.4)
       mini_portile2 (~> 2.4.0)
     nokogiri (1.10.4-x64-mingw32)
@@ -522,7 +521,6 @@ DEPENDENCIES
   kramdown (~> 1.13.2)
   launchy (~> 2.4.3)
   memoist
-  newrelic_rpm (~> 3.16)
   notiffany (~> 0.1.0)
   paperclip (~> 5.0.0)
   passenger

@@ -32,8 +32,8 @@ module AWB
     config.autoload_paths << config.root.join('lib', 'patches','rspec_api_documentation.rb')
 
     # Custom setup
-    # enable garbage collection profiling (reported in New Relic)
-    GC::Profiler.enable
+    # enable garbage collection profiling (reported in New Relic, which we no longer use)
+    #GC::Profiler.enable
 
     require "#{File.dirname(__FILE__)}/../app/models/settings"
 

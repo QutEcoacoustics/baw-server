@@ -19,7 +19,6 @@
 /config/settings/test.yml
 /config/settings/staging.yml
 /config/settings/production.yml
-/config/newrelic.yml
 
 # files created by tests and extra temp files
 /public/system/*
