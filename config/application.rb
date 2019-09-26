@@ -157,6 +157,7 @@ module AWB
       rewrite /^\/demo.*/i, '/listen_to/index.html'
       rewrite /^\/visualize.*/i, '/listen_to/index.html'
       rewrite /^\/audio_analysis.*/i, '/listen_to/index.html'
+      rewrite /^\/citsci.*/i, '/listen_to/index.html'
     end
 
     # allow any origin, with any header, to access the array of methods
