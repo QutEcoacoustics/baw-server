@@ -179,9 +179,15 @@ module BawAudioTools
           # this chomp reverse stuff is due to the lack of a proper 'trim'
           ffprobe_current_block_name = line.chomp(']').reverse.chomp('[').reverse
         else
-          current_key = line[0, line.index('=')].strip
-          current_value = line[line.index('=')+1, line.length].strip
-          result[ffprobe_current_block_name + ' ' + current_key] = current_value
+          # some lines won't output key=value data, especially when FLAC metadata
+          # is output as `\t\tkey\t:\tvalue` (where \t denotes a tab)
+          # When encountering such lines, just skip for now.
+          index = line.index('=')
+          if index != nil
+            current_key = line[0, index].strip
+            current_value = line[index+1, line.length].strip
+            result[ffprobe_current_block_name + ' ' + current_key] = current_value
+          end
         end
       end
 
