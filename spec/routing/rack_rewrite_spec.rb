@@ -35,5 +35,10 @@ describe 'Rack rewrite', :type => :feature do # :type => :routing
       expect(page.text).to include(client_app_content)
     }
 
+    it {
+      visit '/citsci'
+      expect(page.text).to include(client_app_content)
+    }
+
   end
 end
