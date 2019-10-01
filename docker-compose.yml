@@ -16,6 +16,15 @@ services:
       - "5432:5432"
     networks:
       - baw_docker_network
+  workers:
+    build:
+      context: .
+      target: baw-server-dev
+    entrypoint: >
+      ../bin/bundle exec rake baw:worker:run[
+      "/home/baw_web/baw-server/baw-workers/lib/settings.default.yml"]
+    networks:
+      - baw_docker_network
   web:
     #image: qutecoacoustics/baw-server:dev
     build:
