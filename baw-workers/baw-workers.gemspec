@@ -20,27 +20,27 @@ Gem::Specification.new do |spec|
 
   # dev dependencies
   spec.add_development_dependency 'bundler', '~> 1.7'
-  spec.add_development_dependency 'rake', '~> 11.1'
+  spec.add_development_dependency 'codeclimate-test-reporter', '~> 0.4'
+  spec.add_development_dependency 'fakeredis', '~> 0.5'
   spec.add_development_dependency 'guard', '~> 2.11'
   spec.add_development_dependency 'guard-rspec', '~> 4.5'
   spec.add_development_dependency 'guard-yard', '~> 2.1'
   spec.add_development_dependency 'simplecov', '~> 0.9'
-  spec.add_development_dependency 'codeclimate-test-reporter', '~> 0.4'
   spec.add_development_dependency 'webmock', '~> 2.0'
   spec.add_development_dependency 'zonebie', '~> 0.5'
-  spec.add_development_dependency 'i18n', '~> 0.7'
-  spec.add_development_dependency 'tzinfo', '~> 1.2'
-  spec.add_development_dependency 'fakeredis', '~> 0.5'
 
   # runtime dependencies
 
   # Resque is hard locked to 1.25.2 because 1.26 has a breaking change with the loggers. When below lands when can bump version.
   # https://github.com/resque/resque/commit/eaaac2acc209456cdd0dd794d2d3714968cf76e4
-  spec.add_runtime_dependency 'resque', '1.25.2'
-  spec.add_runtime_dependency 'settingslogic', '~> 2.0'
+  spec.add_runtime_dependency 'actionmailer', '~> 4.2'
   spec.add_runtime_dependency 'activesupport', '>= 4.2'
+  spec.add_runtime_dependency 'i18n', '~> 0.7'
+  spec.add_runtime_dependency 'rake', '>= 11.1'
+  spec.add_runtime_dependency 'resque', '1.25.2'
   spec.add_runtime_dependency 'resque_solo', '~> 0.1'
   spec.add_runtime_dependency 'resque-status', '~> 0.5'
-  spec.add_runtime_dependency 'actionmailer', '~> 4.2'
   spec.add_runtime_dependency 'redis', '~> 3.2'
+  spec.add_runtime_dependency 'settingslogic', '~> 2.0'
+  spec.add_runtime_dependency 'tzinfo', '~> 1.2'
 end

@@ -17,10 +17,11 @@ if [[ $RESULT == 0 ]]; then
     echo -e "\n\n== Database is ready ==\n\n"
 elif [[ $RESULT == 1 ]]; then
     echo "\n\n== Database does not exist, running db:setup. ==\n\n"
-    bundle exec rake db:setup db:migrate
+    bundle exec rake db:setup db:migrate db:seed || exit 1
 elif [[ $RESULT == 2 ]]; then
     echo -e "\n\n== Database needs to be migrated, running db:migrate. ==\n\n"
-    bundle exec rake db:migrate
+    bundle exec rake db:migrate db:seed || exit 1
 else
     echo -e "\n\n== Unknown error occurred executing db:status '$RESULT'. ==\n\n"
+    exit 1
 fi

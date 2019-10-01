@@ -21,17 +21,17 @@ Gem::Specification.new do |spec|
 
   # dev dependencies
   spec.add_development_dependency 'bundler', '~> 1.12'
-  spec.add_development_dependency 'rake', '~> 11.1'
+  spec.add_development_dependency 'codeclimate-test-reporter', '~> 0.4'
   spec.add_development_dependency 'guard', '~> 2.12'
   spec.add_development_dependency 'guard-rspec', '~> 4.5'
   spec.add_development_dependency 'guard-yard', '~> 2.1'
+  spec.add_development_dependency 'rake', '~> 11.1'
   spec.add_development_dependency 'simplecov', '~> 0.10'
-  spec.add_development_dependency 'codeclimate-test-reporter', '~> 0.4'
   spec.add_development_dependency 'zonebie', '~> 0.5'
-  spec.add_development_dependency 'i18n', '~> 0.7'
-  spec.add_development_dependency 'tzinfo', '~> 1.2'
 
   # runtime dependencies
   spec.add_runtime_dependency 'activesupport', '>= 3.2'
+  spec.add_runtime_dependency 'i18n', '~> 0.7'
+  spec.add_runtime_dependency 'tzinfo', '~> 1.2'
 
 end

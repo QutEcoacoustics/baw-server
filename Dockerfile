@@ -23,6 +23,8 @@ RUN apt-get update \
     libpq-dev postgresql-client \
     # install audio tools and other binaries
     && chmod u+x /install_audio_tools.sh \
+    && /install_audio_tools.sh \
+    && rm /install_audio_tools.sh \
     && rm -rf /var/lib/apt/lists/* \
     # create a user for the app
     # -D is for defaults, which includes NO PASSWORD
@@ -56,7 +58,7 @@ COPY --chown=${app_user} ./ /home/${app_user}/${app_name}
 # use a mount/volume to override this file for other environments
 COPY ./provision/Passengerfile.production.json /home/${app_user}/${app_name}/Passengerfile.json
 
-
+VOLUME [ "/data" ]
 ENTRYPOINT [ "bundle", "exec" ]
 CMD [ "passenger", "start" ]
 
@@ -68,7 +70,16 @@ FROM baw-server-core AS baw-server-dev
 ENV RAILS_ENV=development
 EXPOSE 3000
 
-RUN bundle install --binstubs --system \
+# install deps
+RUN cd baw-audio-tools \
+    # install baw-audio-tools
+    && bundle install --binstubs --system \
+    && cd ../baw-workers\
+    # install baw-workers
+    && bundle install --binstubs --system \
+    && cd .. \
+    # install baw-server
+    && bundle install --binstubs --system \
     # precompile passenger standalone
     && bundle exec passenger start --runtime-check-only
 
@@ -83,7 +94,15 @@ FROM baw-server-core AS baw-server
 EXPOSE 80
 
 # install deps
-RUN bundle install --binstubs --system --without 'development' 'test' \
+RUN cd baw-audio-tools \
+    # install baw-audio-tools
+    && bundle install --binstubs --system --without 'development' 'test' \
+    && cd ../baw-workers\
+    # install baw-workers
+    && bundle install --binstubs --system --without 'development' 'test' \
+    && cd .. \
+    # install baw-server
+    && bundle install --binstubs --system --without 'development' 'test' \
     # precompile passenger standalone
     && bundle exec passenger start --runtime-check-only
 

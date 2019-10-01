@@ -31,6 +31,8 @@ PATH
   specs:
     baw-audio-tools (0.4.1)
       activesupport (>= 3.2)
+      i18n (~> 0.7)
+      tzinfo (~> 1.2)
 
 PATH
   remote: baw-workers
@@ -38,11 +40,14 @@ PATH
     baw-workers (0.5.0)
       actionmailer (~> 4.2)
       activesupport (>= 4.2)
+      i18n (~> 0.7)
+      rake (>= 11.1)
       redis (~> 3.2)
       resque (= 1.25.2)
       resque-status (~> 0.5)
       resque_solo (~> 0.1)
       settingslogic (~> 2.0)
+      tzinfo (~> 1.2)
 
 GEM
   remote: https://rubygems.org/
