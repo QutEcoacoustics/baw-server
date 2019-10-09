@@ -156,6 +156,7 @@ class PublicController < ApplicationController
 
     model_valid = @contact_us.valid?
     recaptcha_valid = verify_recaptcha(
+        action: 'contact_us',
         model: @contact_us,
         message: 'Captcha response was not correct. Please try again.',
         attribute: :recaptcha)
@@ -190,9 +191,10 @@ class PublicController < ApplicationController
 
     model_valid = @bug_report.valid?
     recaptcha_valid = verify_recaptcha(
-        model: @bug_report,
-        message: 'Captcha response was not correct. Please try again.',
-        attribute: :recaptcha)
+      action: 'bug_report',
+      model: @bug_report,
+      message: 'Captcha response was not correct. Please try again.',
+      attribute: :recaptcha)
 
     respond_to do |format|
       if recaptcha_valid && model_valid
@@ -227,9 +229,10 @@ class PublicController < ApplicationController
 
     model_valid = @data_request.valid?
     recaptcha_valid = verify_recaptcha(
-        model: @data_request,
-        message: 'Captcha response was not correct. Please try again.',
-        attribute: :recaptcha)
+      action: 'data_request',
+      model: @data_request,
+      message: 'Captcha response was not correct. Please try again.',
+      attribute: :recaptcha)
 
     respond_to do |format|
       if recaptcha_valid && model_valid

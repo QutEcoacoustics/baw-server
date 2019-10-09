@@ -60,7 +60,7 @@ gem 'font-awesome-sass', '~> 4.6.2'
 # for rails 3, 4
 gem 'kaminari'
 gem 'dotiw','~> 3.1.1'
-gem 'recaptcha', '~> 3.3.0',  require: 'recaptcha/rails'
+gem 'recaptcha', '~> 5.1.0', require: 'recaptcha/rails'
 
 # for proper timezone support
 gem 'tzinfo', '~> 1.2.2'

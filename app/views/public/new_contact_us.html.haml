@@ -16,5 +16,5 @@
     = f.input :name,  label: 'Your Name'
     = f.input :email,  label: 'Contact Email'
     = f.input :content, as: :text,  input_html: {rows: '8',style: 'width:100%'}, label: 'Message'
-    = render partial: 'shared/recaptcha', locals: {data_item: @contact_us, data_item_name: 'contact_us'}
+    = render partial: 'shared/recaptcha', locals: {data_item: @contact_us, data_item_name: 'contact_us', data_action: 'contact_us'}
     = f.button :submit_cancel, 'Submit', class: 'btn-default'

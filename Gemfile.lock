@@ -352,7 +352,7 @@ GEM
     rb-inotify (0.10.0)
       ffi (~> 1.0)
     rdoc (4.3.0)
-    recaptcha (3.3.0)
+    recaptcha (5.1.1)
       json
     redis (3.3.5)
     redis-namespace (1.6.0)
@@ -536,7 +536,7 @@ DEPENDENCIES
   rack-rewrite (~> 1.5.1)
   raddocs (~> 1.0.0)
   rails (~> 4.2.4)
-  recaptcha (~> 3.3.0)
+  recaptcha (~> 5.1.0)
   responders (~> 2.3.0)
   resque (~> 1.25.2)
   resque-job-stats!
