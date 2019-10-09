@@ -20,11 +20,16 @@ services:
     build:
       context: .
       target: baw-server-dev
-    entrypoint: >
-      ../bin/bundle exec rake baw:worker:run[
-      "/home/baw_web/baw-server/baw-workers/lib/settings.default.yml"]
+    command: >-
+      ../bin/bundle exec rake baw:worker:run['/home/baw_web/baw-server/baw-workers/lib/settings/settings.default.yml']
+    entrypoint: []
     networks:
       - baw_docker_network
+    volumes:
+      - type: bind
+        source: ./
+        target: /home/baw_web/baw-server
+    working_dir: /home/baw_web/baw-server/baw-workers
   web:
     #image: qutecoacoustics/baw-server:dev
     build:
@@ -35,8 +40,6 @@ services:
     #command: /bin/bash
     environment:
       RAILS_ENV: development
-
-    # command:
     volumes:
       - type: bind
         source: ./

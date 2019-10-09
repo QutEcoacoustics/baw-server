@@ -83,7 +83,7 @@ RUN cd baw-audio-tools \
     # precompile passenger standalone
     && bundle exec passenger start --runtime-check-only
 
-ENTRYPOINT ./provision/entrypoint.sh
+ENTRYPOINT /home/${app_user}/${app_name}/provision/entrypoint.sh
 CMD []
 
 #

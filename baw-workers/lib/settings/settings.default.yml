@@ -19,11 +19,12 @@ settings:
     polling_interval_seconds: 5
     # specify background_pid_file to have a Resque worker run in the background
     # otherwise it will run in the foreground
-    background_pid_file: ./tmp/logs/resque_worker.pid
+    # We always want a worker to run in the foreground in a container
+    background_pid_file: ~
     # output and error log files are only used when a Resque worker is running
     # in the background
-    output_log_file: ./tmp/logs/program_stdout.log
-    error_log_file: ./tmp/logs/program_stderr.log
+    output_log_file: ../log/program_stdout.log
+    error_log_file: ../log/program_stderr.log
   actions:
     analysis:
       # name of queue to append jobs onto
@@ -45,18 +46,22 @@ settings:
       queue: mirror_default
   paths:
     original_audios:
-      - ./tmp/custom_temp_dir/_original_audio
+      - ../tmp/_development_original_audio
     cached_spectrograms:
-      - ./tmp/custom_temp_dir/_cached_spectrogram
+      - ../tmp/_development_cached_spectrogram
     cached_audios:
-      - ./tmp/custom_temp_dir/_cached_audio
+      - ../tmp/_development_cached_audio
+    analysis_scripts:
+      - ../tmp/_development_analysis_script
+    cached_datasets:
+      - ../tmp/_development_cached_dataset
     cached_analysis_jobs:
-      - ./tmp/custom_temp_dir/_analysis_results
-    worker_log_file: ./tmp/logs/worker.log
-    mailer_log_file: ./tmp/logs/mailer.log
-    audio_tools_log_file: ./tmp/logs/audio_tools.log
-    temp_dir: ./tmp/custom_temp_dir/temp
-    programs_dir: ./tmp/programs
+      - ../tmp/_development_analysis_results
+    worker_log_file: ../log/worker.development.log
+    mailer_log_file: ../log/mailer.development.log
+    audio_tools_log_file: ../log/audio_tools.development.log
+    temp_dir: ../tmp
+    programs_dir: ../tmp/programs
   endpoints:
     use_ssl: true
     login: /security

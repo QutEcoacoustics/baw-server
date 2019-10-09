@@ -37,7 +37,7 @@ defaults: &defaults
       # name of queue to append jobs onto
       queue: media_default
       dry_run: false
-  media_request_processor: local # options are local or resque
+  media_request_processor: resque # options are local or resque (now only ever use resque with containers)
   db: &db
     ######################################################
     # these values are read by config/database.yml
@@ -51,6 +51,7 @@ defaults: &defaults
      password: ''
      # see docker compose
      host: db
+     sslmode: allow
   devise:
     ######################################################
     # these values are read for config.{key} in
