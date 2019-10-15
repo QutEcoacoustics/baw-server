@@ -185,7 +185,7 @@ group :development, :test do
   gem 'notiffany', '~> 0.1.0'
   gem 'guard', '~> 2.14.0'
   gem 'guard-rspec', '~> 4.7.0'
-  gem 'guard-yard', '~> 2.1.4', require: false
+  gem 'guard-yard', '~> 2.2.1', require: false
   gem 'rubocop', '~> 0.74.0', require: false
   gem 'haml_lint', require: false
 
