@@ -161,23 +161,19 @@ gem "passenger", require: "phusion_passenger/rack_handler"
 
 # gems that are only required on development machines or for testings
 group :development, :test do
-  # allow remote debugging
-  #gem 'ruby-debug19'
-  #gem 'ruby-debug-ide'
-  #gem 'debase'
+  # allow debugging
+  gem 'ruby-debug-ide'
+  gem 'debase'
   #gem 'traceroute'
+
+  # a ruby language server
+  gem 'solargraph'
 
   gem 'quiet_assets'
 
   gem 'rack-mini-profiler', '~> 0.10.0'
   gem 'i18n-tasks', '~> 0.9.0'
   gem 'bullet', '~> 5.2.0'
-
-  # Spring speeds up development by keeping your application running in the background. Read more: https://github.com/rails/spring
-  #gem 'spring', '~> 1.4.0'
-
-  # Run `rails console` in the browser. Read more: https://github.com/rails/web-console
-  #gem 'web-console', '~> 2.1.1'
 
   # bundle exec rake doc:rails generates the API under doc/api.
   gem 'sdoc', '~> 0.4.0'

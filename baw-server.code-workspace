@@ -11,6 +11,7 @@
 		"files.associations": {
 			"**/provision/*.json": "jsonc"
 		},
+		"peacock.color": "#72cb80",
 		"workbench.colorCustomizations": {
 			"activityBar.background": "#97d9a2",
 			"activityBar.foreground": "#15202b",
@@ -25,7 +26,7 @@
 			"statusBarItem.hoverBackground": "#4dbd5e",
 			"statusBar.foreground": "#15202b"
 		},
-		"peacock.color": "#72cb80"
+		"peacock.remoteColor": "#72cb80"
 	},
 	"extensions": {
 		"recommendations": [
@@ -34,9 +35,8 @@
 			"misogi.ruby-rubocop",
 			"castwide.solargraph",
 			"bung87.vscode-gemfile",
-      "streetsidesoftware.code-spell-checker",
-      "EditorConfig.EditorConfig"
-
+			"streetsidesoftware.code-spell-checker",
+			"EditorConfig.EditorConfig"
 		]
 	}
 }

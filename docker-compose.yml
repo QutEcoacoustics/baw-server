@@ -35,7 +35,8 @@ services:
     build:
       context: .
       target: baw-server-dev
-    entrypoint: ./provision/entrypoint.sh bundle exec passenger start
+    entrypoint: ""
+    command: /home/baw_web/baw-server/provision/entrypoint.sh bundle exec passenger start
     #command: bundle exec passenger start
     #command: /bin/bash
     environment:
@@ -49,6 +50,8 @@ services:
         target: /home/baw_web/baw-server/Passengerfile.json
     ports:
       - "3000:3000"
+      # rdebug-ide port
+      - "1234:1234"
     networks:
       - baw_docker_network
     depends_on:

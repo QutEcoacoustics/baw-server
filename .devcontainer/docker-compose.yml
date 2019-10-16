@@ -10,7 +10,7 @@ services:
     # You may want to add a non-root user to your Dockerfile. On Linux, this will prevent
     # new files getting created as root. See https://aka.ms/vscode-remote/containers/non-root-user
     # for the needed Dockerfile updates and then uncomment the next line.
-    # user: vscode
+    user: baw_web
 
     # Uncomment if you want to add a different Dockerfile in the .devcontainer folder
     # build:
@@ -21,9 +21,9 @@ services:
     # ports:
     #   - 3000:3000
 
-    volumes:
+    volumes: []
       # Update this to wherever you want VS Code to mount the folder of your project
-      - ..:/home/baw_web/baw-server
+      #- .:/home/baw_web/baw-server
 
       # Uncomment the next line to use Docker from inside the container. See https://aka.ms/vscode-remote/samples/docker-in-docker-compose for details.
       # - /var/run/docker.sock:/var/run/docker.sock
