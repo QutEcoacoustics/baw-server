@@ -48,7 +48,7 @@ gem 'haml', '~> 4.0.6'
 gem 'haml-rails', '~> 0.9.0'
 
 gem 'simple_form', '~> 3.3.0'
-gem 'paperclip', '~> 5.0.0'
+gem 'paperclip', '~> 6.1.0'
 gem 'kramdown', '~> 1.13.2'
 
 # Bootstrap UI
