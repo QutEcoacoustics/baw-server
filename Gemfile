@@ -29,7 +29,7 @@ gem 'activesupport-json_encoder', git: 'https://github.com/rails/activesupport-j
 # UI HELPERS
 # -------------------------------------
 # Use SCSS for stylesheets
-gem 'sass-rails', '~> 5.0.3'
+gem 'sass-rails', '~> 6.0.0'
 # Use Uglifier as compressor for JavaScript assets
 gem 'uglifier', '~> 3.0.0'
 # Use CoffeeScript for .js.coffee assets and views
