@@ -76,7 +76,7 @@ gem 'memoist'
 # -------------------------------------
 # https://github.com/plataformatec/devise/blob/master/CHANGELOG.md
 # http://joanswork.com/devise-3-1-update/
-gem 'devise', '~> 4.7.0'
+gem 'devise', '~> 4.7.1'
 gem 'devise-i18n'
 gem 'cancancan', '~> 1.16'
 gem 'role_model', '~> 0.8.1'
