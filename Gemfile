@@ -64,7 +64,7 @@ gem 'recaptcha', '~> 5.1.0', require: 'recaptcha/rails'
 
 # for proper timezone support
 gem 'tzinfo', '~> 1.2.2'
-gem 'tzinfo-data', '~> 1.2016'
+gem 'tzinfo-data', '~> 1.2019'
 
 # for tying inflections into I18n
 gem 'i18n-inflector-rails', '~>1.0'

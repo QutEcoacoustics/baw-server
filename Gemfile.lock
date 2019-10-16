@@ -462,7 +462,7 @@ GEM
     tins (1.21.1)
     tzinfo (1.2.5)
       thread_safe (~> 0.1)
-    tzinfo-data (1.2019.2)
+    tzinfo-data (1.2019.3)
       tzinfo (>= 1.0.0)
     uglifier (3.0.4)
       execjs (>= 0.3.0, < 3)
@@ -556,7 +556,7 @@ DEPENDENCIES
   sqlite3
   therubyracer (~> 0.12.1)
   tzinfo (~> 1.2.2)
-  tzinfo-data (~> 1.2016)
+  tzinfo-data (~> 1.2019)
   uglifier (~> 3.0.0)
   uuidtools (~> 2.1.5)
   webmock (~> 2.1.0)
