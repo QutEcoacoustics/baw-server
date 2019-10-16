@@ -52,7 +52,7 @@ gem 'paperclip', '~> 5.0.0'
 gem 'kramdown', '~> 1.13.2'
 
 # Bootstrap UI
-gem 'bootstrap-sass', '~> 3.3.4'
+gem 'bootstrap-sass', '~> 3.4.1'
 # for sass variables: http://getbootstrap.com/customize/#less-variables
 # sprockets-rails gem is included via rails dependency
 gem 'font-awesome-sass', '~> 4.6.2'
