@@ -18,7 +18,8 @@ apt-get install -y --no-install-recommends \
     g++ \
     libsndfile1-dev \
     apt-transport-https \
-    ffmpeg
+    ffmpeg \
+    imagemagick
 
 
     # link ffmpeg to /usr/bin/local

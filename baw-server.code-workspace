@@ -1,42 +1,43 @@
 {
-	"folders": [
-		{
-			"path": "."
-		}
-	],
-	"settings": {
-		"cSpell.words": [
-			"postgresql"
-		],
-		"files.associations": {
-			"**/provision/*.json": "jsonc"
-		},
-		"peacock.color": "#72cb80",
-		"workbench.colorCustomizations": {
-			"activityBar.background": "#97d9a2",
-			"activityBar.foreground": "#15202b",
-			"activityBar.inactiveForeground": "#15202b99",
-			"activityBarBadge.background": "#8273cc",
-			"activityBarBadge.foreground": "#15202b",
-			"titleBar.activeBackground": "#72cb80",
-			"titleBar.inactiveBackground": "#72cb8099",
-			"titleBar.activeForeground": "#15202b",
-			"titleBar.inactiveForeground": "#15202b99",
-			"statusBar.background": "#72cb80",
-			"statusBarItem.hoverBackground": "#4dbd5e",
-			"statusBar.foreground": "#15202b"
-		},
-		"peacock.remoteColor": "#72cb80"
-	},
-	"extensions": {
-		"recommendations": [
-			"rebornix.ruby",
-			"bung87.rails",
-			"misogi.ruby-rubocop",
-			"castwide.solargraph",
-			"bung87.vscode-gemfile",
-			"streetsidesoftware.code-spell-checker",
-			"EditorConfig.EditorConfig"
-		]
-	}
+    "folders": [
+        {
+            "path": "."
+        }
+    ],
+    "settings": {
+        "cSpell.words": [
+            "postgresql"
+        ],
+        "files.associations": {
+            "**/provision/*.json": "jsonc"
+        },
+        "peacock.color": "#72cb80",
+        "workbench.colorCustomizations": {
+            "activityBar.background": "#97d9a2",
+            "activityBar.foreground": "#15202b",
+            "activityBar.inactiveForeground": "#15202b99",
+            "activityBarBadge.background": "#8273cc",
+            "activityBarBadge.foreground": "#15202b",
+            "titleBar.activeBackground": "#72cb80",
+            "titleBar.inactiveBackground": "#72cb8099",
+            "titleBar.activeForeground": "#15202b",
+            "titleBar.inactiveForeground": "#15202b99",
+            "statusBar.background": "#72cb80",
+            "statusBarItem.hoverBackground": "#4dbd5e",
+            "statusBar.foreground": "#15202b"
+        },
+        "peacock.remoteColor": "#72cb80"
+    },
+    "extensions": {
+        "recommendations": [
+            "rebornix.ruby",
+            "bung87.rails",
+            "misogi.ruby-rubocop",
+            "castwide.solargraph",
+            "bung87.vscode-gemfile",
+            "streetsidesoftware.code-spell-checker",
+            "EditorConfig.EditorConfig",
+            "ms-vscode-remote.vscode-remote-extensionpack"
+        ]
+    }
 }
