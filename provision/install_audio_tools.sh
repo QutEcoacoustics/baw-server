@@ -19,7 +19,8 @@ apt-get install -y --no-install-recommends \
     libsndfile1-dev \
     apt-transport-https \
     ffmpeg \
-    imagemagick
+    imagemagick \
+    file
 
 
     # link ffmpeg to /usr/bin/local

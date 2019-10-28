@@ -14,7 +14,8 @@ RUN apt-get update \
     # in our gem files
     # - curl is needed for passenger
     # - nano not needed for prod
-    ca-certificates curl nano git \
+    # - iproute2 install ip and basic network debugging tools
+    ca-certificates curl nano git iproute2 \
     # sqlite
     sqlite3 libsqlite3-dev libgmp-dev \
     # the following are for nokogiri and the like
