@@ -9,7 +9,8 @@
             "postgresql"
         ],
         "files.associations": {
-            "**/provision/*.json": "jsonc"
+            "**/provision/*.json": "jsonc",
+            "**/Passengerfile.json": "jsonc",
         },
         "peacock.color": "#72cb80",
         "workbench.colorCustomizations": {
@@ -26,7 +27,24 @@
             "statusBarItem.hoverBackground": "#4dbd5e",
             "statusBar.foreground": "#15202b"
         },
-        "peacock.remoteColor": "#72cb80"
+        "peacock.remoteColor": "#72cb80",
+        "testExplorer.addToEditorContextMenu": true,
+        "testExplorer.codeLens": true,
+        "testExplorer.gutterDecoration": true,
+        "testExplorer.errorDecorationHover":true,
+        "testExplorer.hideEmptyLog": false,
+        "rubyTestExplorer.logpanel": true,
+        "solargraph.diagnostics": true,
+        "solargraph.completion": true,
+        "solargraph.hover": true,
+        "solargraph.symbols": true,
+        "solargraph.definitions": true,
+        "solargraph.rename": true,
+        "solargraph.references": true,
+        "solargraph.folding": true,
+        "solargraph.logLevel": "debug",
+        "solargraph.useBundler": true,
+        "solargraph.bundlerPath": "bundle"
     },
     "extensions": {
         "recommendations": [
@@ -37,7 +55,9 @@
             "bung87.vscode-gemfile",
             "streetsidesoftware.code-spell-checker",
             "EditorConfig.EditorConfig",
-            "ms-vscode-remote.vscode-remote-extensionpack"
+            "ms-vscode-remote.vscode-remote-extensionpack",
+            "connorshea.vscode-ruby-test-adapter"
+
         ]
     }
 }

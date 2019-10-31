@@ -42,7 +42,7 @@ def standard_request_options(http_method, description, expected_status, opts = {
 
   # 406 when you can't send what they want, 415 when they send what you don't want
 
-  example "#{http_method} #{description} - #{expected_status}", document: opts[:document] do
+  example "#{http_method} #{description} - #{expected_status}", document: opts[:document], :caller => caller do
 
     # allow for modification of opts, provide context so let and let! values can be accessed
     if opts_mod
@@ -112,8 +112,10 @@ end
 def media_request_options(http_method, description, expected_status, opts = {})
   opts.reverse_merge!({document: true})
 
-  example "#{http_method} #{description} - #{expected_status}", document: opts[:document] do
+  # add better metadata for tests, get the caller information that invoked this method
 
+
+  example "#{http_method} #{description} - #{expected_status}", document: opts[:document], :caller => caller do
     if opts[:dont_copy_test_audio]
       audio_file = nil
     else
@@ -479,7 +481,7 @@ def acceptance_checks_media(opts = {})
 end
 
 def check_site_lat_long_response(description, expected_status, should_be_obfuscated = true)
-  example "#{description} - #{expected_status}", document: false do
+  example "#{description} - #{expected_status}", document: false, :caller => caller do
     do_request
     status.should eq(expected_status), "Requested #{path} expecting status #{expected_status} but got status #{status}. Response body was #{response_body}"
     response_body.should have_json_path('data/location_obfuscated'), response_body.to_s

@@ -84,6 +84,8 @@ Common tasks that you may need:
 - `docker-compose stop web` stop web container so you can do something else
 - `docker-compose exec bundle exec passenger stop`
 - `docker-compose exec bundle exec passenger start` - the default action for `docker-compose up`
+- `docker-compose exec bundle exec rails start --bindingIP=0.0.0.0`. If you use `rails server`, make sure you bind to anyhost
+  otherwise connections outside the container won't work
 - `docker-compose run web bash` - like `up` but starts the web service without
     running the default `passenger start` command
 

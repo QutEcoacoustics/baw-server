@@ -29,7 +29,7 @@
         ],
         "env": {
           "RAILS_ENV":"test"
-        }
+        },
       },
       {
         "name": "Rails server",
@@ -37,10 +37,15 @@
         "request": "launch",
         "program": "${workspaceRoot}/bin/rails",
         "args": [
-          "server"
+          "server",
+          "--binding=0.0.0.0"
         ],
         "env": {
           "RAILS_ENV":"development"
+        },
+        "postDebugTask": {
+          "task": "Stop Passenger",
+          "type": "shell"
         }
       },
       {

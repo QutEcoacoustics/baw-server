@@ -37,17 +37,13 @@ services:
       target: baw-server-dev
     entrypoint: ""
     command: /home/baw_web/baw-server/provision/entrypoint.sh bundle exec passenger start
-    #command: bundle exec passenger start
-    #command: /bin/bash
     environment:
       RAILS_ENV: development
+    user: baw_web
     volumes:
       - type: bind
         source: ./
         target: /home/baw_web/baw-server
-      - type: bind
-        source: ./provision/Passengerfile.development.json
-        target: /home/baw_web/baw-server/Passengerfile.json
     ports:
       - "3000:3000"
       # rdebug-ide port

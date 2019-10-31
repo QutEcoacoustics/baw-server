@@ -55,10 +55,6 @@ WORKDIR /home/${app_user}/${app_name}
 # Add the Rails app
 COPY --chown=${app_user} ./ /home/${app_user}/${app_name}
 
-# copy the passenger config
-# use a mount/volume to override this file for other environments
-COPY ./provision/Passengerfile.production.json /home/${app_user}/${app_name}/Passengerfile.json
-
 VOLUME [ "/data" ]
 ENTRYPOINT [ "bundle", "exec" ]
 CMD [ "passenger", "start" ]
@@ -82,7 +78,9 @@ RUN cd baw-audio-tools \
     # install baw-server
     && bundle install --binstubs --system \
     # precompile passenger standalone
-    && bundle exec passenger start --runtime-check-only
+    && bundle exec passenger start --runtime-check-only \
+    # install docs for dev work
+    && solargraph download-core  
 
 ENTRYPOINT /home/${app_user}/${app_name}/provision/entrypoint.sh
 CMD []
@@ -91,6 +89,10 @@ CMD []
 # For production/staging
 #
 FROM baw-server-core AS baw-server
+
+# copy the passenger production config
+# use a mount/volume to override this file for other environments
+COPY ./provision/Passengerfile.production.json /home/${app_user}/${app_name}/Passengerfile.json
 
 EXPOSE 80
 
