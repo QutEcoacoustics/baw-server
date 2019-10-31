@@ -256,6 +256,8 @@ class ApplicationController < ActionController::Base
 
         if actual_format.start_with?('audio') || actual_format.start_with?('image')
           headers['Accept-Ranges'] = 'bytes'
+          # add additional error message in here for sanity
+          headers['X-Error-Message'] = error.message
           head status_symbol
         else
           render json: json_response, status: status_symbol, content_type: 'application/json'

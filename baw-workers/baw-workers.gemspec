@@ -21,7 +21,6 @@ Gem::Specification.new do |spec|
   # dev dependencies
   spec.add_development_dependency 'bundler', '~> 1.7'
   spec.add_development_dependency 'codeclimate-test-reporter', '~> 0.4'
-  spec.add_development_dependency 'fakeredis', '~> 0.5'
   spec.add_development_dependency 'guard', '~> 2.11'
   spec.add_development_dependency 'guard-rspec', '~> 4.5'
   spec.add_development_dependency 'guard-yard', '~> 2.1'
@@ -40,7 +39,7 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency 'resque', '1.25.2'
   spec.add_runtime_dependency 'resque_solo', '~> 0.1'
   spec.add_runtime_dependency 'resque-status', '~> 0.5'
-  spec.add_runtime_dependency 'redis', '~> 3.2'
+  spec.add_runtime_dependency 'redis', '~> 4.1'
   spec.add_runtime_dependency 'settingslogic', '~> 2.0'
   spec.add_runtime_dependency 'tzinfo', '~> 1.2'
 end

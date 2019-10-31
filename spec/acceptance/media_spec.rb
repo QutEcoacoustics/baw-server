@@ -5,7 +5,6 @@ require 'helpers/resque_helper'
 
 # https://github.com/zipmark/rspec_api_documentation
 resource 'Media' do
-
   # set header
   header 'Accept', 'application/json'
   header 'Content-Type', 'application/json'
@@ -33,9 +32,10 @@ resource 'Media' do
   let(:audio_file_mono_duration_seconds) { 70 }
 
   let(:audio_original) {
-    puts "audio original path"
-    puts BawWorkers::Settings.paths.original_audios
+    #puts "audio original path"
+    #puts BawWorkers::Settings.paths.original_audios
     ao = BawWorkers::Storage::AudioOriginal.new(BawWorkers::Settings.paths.original_audios)
+    ao
   }
   let(:audio_cache) { BawWorkers::Storage::AudioCache.new(BawWorkers::Settings.paths.cached_audios) }
   let(:spectrogram_cache) { BawWorkers::Storage::SpectrogramCache.new(BawWorkers::Settings.paths.cached_spectrograms) }

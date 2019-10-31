@@ -185,8 +185,6 @@ group :development, :test do
   gem 'rubocop', '~> 0.74.0', require: false
   gem 'haml_lint', require: false
 
-  gem 'fakeredis', '~> 0.5.0', require: 'fakeredis/rspec'
-
   gem 'zonebie'
 
   # for cleaning up Rails apps
@@ -208,11 +206,11 @@ group :development, :test do
   #gem 'debugger'
   # gem install traceroute --no-ri --no-rdoc
 
-  gem 'rspec-rails', '~> 3.5.0'
+  gem 'rspec-rails', '~> 3.9.0'
   gem 'factory_girl_rails', '~>  4.7.0'
   gem 'capybara', '~> 2.7.0'
 
-  gem 'rspec', '~> 3.5.0'
+  gem 'rspec', '~> 3.9.0'
   gem 'simplecov', '~> 0.12.0', require: false
   gem 'launchy', '~> 2.4.3'
   gem 'json_spec', '~> 1.1.4'
@@ -226,7 +224,7 @@ group :test do
   gem 'webmock', '~> 2.1.0'
   gem 'shoulda-matchers', '< 3.0.0', require: false
 
-  gem 'rspec-mocks', '~>3.5.0'
+  gem 'rspec-mocks', '~>3.9.0'
 
   # use to mock time in tests - currently not needed
   #gem 'timecop'

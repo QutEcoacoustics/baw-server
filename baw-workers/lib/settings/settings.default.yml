@@ -12,11 +12,15 @@ settings:
     # queues_to_process is only needed when running a Resque worker to
     # specify the Resque queues to watch.
     queues_to_process:
-      - example
+      - analysis_default
+      - maintenance_default
+      - harvest_default
+      - media_default
+      - mirror_default
     connection: *redis_config
     namespace: resque
     log_level: 'Logger::INFO'
-    polling_interval_seconds: 5
+    polling_interval_seconds: 0.5
     # specify background_pid_file to have a Resque worker run in the background
     # otherwise it will run in the foreground
     # We always want a worker to run in the foreground in a container

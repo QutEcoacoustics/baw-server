@@ -60,7 +60,7 @@ Rails.application.configure do
   # Set path for image magick for windows only
   if RbConfig::CONFIG['target_os'] =~ /mswin|mingw/i
     im_dir = Settings.paths.image_magick_dir
-    if Dir.exists?(im_dir) && File.directory?(im_dir)
+    if Dir.exist?(im_dir) && File.directory?(im_dir)
       Paperclip.options[:command_path] = im_dir
     else
       puts "WARN: cannot find image magick path #{im_dir}"
@@ -76,10 +76,5 @@ Rails.application.configure do
     Bullet.rails_logger = false
     Bullet.add_footer = false
     Bullet.raise = false
-
-    # overwrite redis
-    require 'fakeredis'
-    Resque.redis = Redis.new
   end
-
 end

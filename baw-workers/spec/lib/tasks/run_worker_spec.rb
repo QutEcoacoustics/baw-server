@@ -1,5 +1,4 @@
 require 'spec_helper'
-require 'fakeredis'
 
 describe 'rake tasks' do
   include_context 'shared_test_helpers'
