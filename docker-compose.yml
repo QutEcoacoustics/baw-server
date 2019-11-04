@@ -1,6 +1,4 @@
 version: '3.4'
-volumes:
-  postgres-data:
 services:
   redis:
     image: redis
@@ -25,11 +23,23 @@ services:
     entrypoint: []
     networks:
       - baw_docker_network
+    ports:
+      # rdebug-ide port (mapped for workers)
+      - "1235:1234"
+      - "26162:26162"
     volumes:
       - type: bind
         source: ./
         target: /home/baw_web/baw-server
+      # see comment on volume declaration below
+      - type: volume
+        source: baw_docker_shared_storage
+        target: /home/baw_web/baw-server/tmp
+
     working_dir: /home/baw_web/baw-server/baw-workers
+    depends_on:
+      - db
+      - redis
   web:
     #image: qutecoacoustics/baw-server:dev
     build:
@@ -44,6 +54,10 @@ services:
       - type: bind
         source: ./
         target: /home/baw_web/baw-server
+      # see comment on volume declaration below
+      - type: volume
+        source: baw_docker_shared_storage
+        target: /home/baw_web/baw-server/tmp
     ports:
       - "3000:3000"
       # rdebug-ide port
@@ -53,6 +67,14 @@ services:
     depends_on:
       - db
       - redis
-
+      - workers
 networks:
   baw_docker_network:
+volumes:
+  # We're using a volume mount for tmp because it offers better performance
+  # than a bind mount. It also does not seem to suffer from cache/metadata
+  # problems that bind mounts (see caching in cifs/nfs).
+  # The downside to this is that we can no longer access files in /tmp on
+  # out hosts for dev work.
+  baw_docker_shared_storage:
+  postgres-data:

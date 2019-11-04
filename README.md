@@ -100,6 +100,11 @@ files will be used:
 
 They are based on `/config/settings/default.yml`.
 
+### Debugging workers
+
+docker-compose run --service-ports    --use-aliases  workers bash
+../bin/bundle exec rdebug-ide --host 0.0.0.0 --port 1234 ../bin/rake baw:worker:run['/home/baw_web/baw-server/baw-workers/lib/settings/settings.default.yml']
+
 ### Tests
 The tests are run using Guard, either:
 

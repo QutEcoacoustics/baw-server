@@ -1,3 +1,5 @@
+# These settings are for a hybrid development/test worker.
+# In production, a worker should only server one environment
 settings:
   redis:
     namespace: 'baw-workers'
@@ -51,19 +53,25 @@ settings:
   paths:
     original_audios:
       - ../tmp/_development_original_audio
+      - ../tmp/_test_original_audio
     cached_spectrograms:
       - ../tmp/_development_cached_spectrogram
+      - ../tmp/_test_cached_spectrogram
     cached_audios:
       - ../tmp/_development_cached_audio
+      - ../tmp/_test_cached_audio
     analysis_scripts:
       - ../tmp/_development_analysis_script
+      - ../tmp/_test_analysis_script
     cached_datasets:
       - ../tmp/_development_cached_dataset
+      - ../tmp/_test_cached_dataset
     cached_analysis_jobs:
       - ../tmp/_development_analysis_results
-    worker_log_file: ../log/worker.development.log
-    mailer_log_file: ../log/mailer.development.log
-    audio_tools_log_file: ../log/audio_tools.development.log
+      - ../tmp/_test_analysis_results
+    worker_log_file: ../log/worker.development_and_test.log
+    mailer_log_file: ../log/mailer.development_and_test.log
+    audio_tools_log_file: ../log/audio_tools.development_and_test.log
     temp_dir: ../tmp
     programs_dir: ../tmp/programs
   endpoints:
@@ -75,8 +83,8 @@ settings:
     audio_recording_update_status: /audio_recordings/:id/update_status
     analysis_jobs_item_update_status: /analysis_jobs/:analysis_job_id/audio_recordings/:audio_recording_id
   api:
-    host: localhost
-    port: 3030
+    host: web
+    port: 3000
     user: address@example.com
     password: password
   mailer:
@@ -135,5 +143,5 @@ settings:
     imagemagick_convert_executable: convert
     imagemagick_identify_executable: identify
     max_duration_seconds: 300
-    log_level: 'Logger::WARN'
+    log_level: 'Logger::DEBUG'
   audio_tools_timeout_sec: 20

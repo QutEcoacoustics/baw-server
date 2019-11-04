@@ -472,8 +472,12 @@ def acceptance_checks_media(opts = {})
     begin
       temp_file = File.join(Settings.paths.temp_dir, 'temp-media_controller_response')
       File.open(temp_file, 'wb') { |f| f.write(response_body) }
-      expect(opts[:actual_response_headers]['Content-Length'].to_i).to eq(File.size(temp_file)),
-                                                                       "Mismatch: actual media length. #{opts[:msg]}"
+      actual_length = opts[:actual_response_headers]['Content-Length'].to_i
+      downloaded_length = File.size(temp_file)
+      expect(actual_length).to(
+        eq(downloaded_length),
+        "Mismatch: actual media length #{actual_length} did not match recieved length of #{downloaded_length}. #{opts[:msg]}"
+      )
     ensure
       File.delete temp_file if File.exists? temp_file
     end

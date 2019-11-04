@@ -52,7 +52,7 @@ module BawWorkers
       # @param [Hash] opts
       # @return [Array<String>]
       def existing_paths(opts)
-        possible_paths(opts).select { |file| File.exists? file }
+        possible_paths(opts).select { |file| File.exist? file }
       end
 
       # Get file name, possible paths, existing paths.
@@ -228,7 +228,7 @@ module BawWorkers
         fail ArgumentError, "#{validate_msg_base} saved_search_id. #{provided}" unless opts.include? :saved_search_id
         fail ArgumentError, "saved_search_id must be greater than 0: #{opts[:saved_search_id]}. #{provided}" unless opts[:saved_search_id].to_i > 0
       end
-      
+
     end
   end
 end
