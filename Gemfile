@@ -179,7 +179,7 @@ group :development, :test do
   gem 'sdoc', '~> 0.4.0'
 
   gem 'notiffany', '~> 0.1.0'
-  gem 'guard', '~> 2.14.0'
+  gem 'guard', '~> 2.16.1'
   gem 'guard-rspec', '~> 4.7.0'
   gem 'guard-yard', '~> 2.1.4', require: false
   gem 'rubocop', '~> 0.74.0', require: false
