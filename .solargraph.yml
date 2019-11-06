@@ -9,7 +9,11 @@ exclude:
 require: []
 domains: []
 reporters:
-- rubocop
-- require_not_found
-require_paths: []
+- all!
+require_paths:
+  - spec/lib
+  - spec/helpers
+  - spec
+  - lib
+
 max_files: 5000

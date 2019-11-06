@@ -44,7 +44,8 @@
         "solargraph.folding": true,
         "solargraph.logLevel": "debug",
         "solargraph.useBundler": true,
-        "solargraph.bundlerPath": "bundle"
+        "solargraph.bundlerPath": "bundle",
+        "ruby.intellisense": false
     },
     "extensions": {
         "recommendations": [

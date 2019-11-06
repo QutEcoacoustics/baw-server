@@ -211,12 +211,12 @@ group :development, :test do
   gem 'capybara', '~> 2.7.0'
 
   gem 'rspec', '~> 3.9.0'
-  gem 'simplecov', '~> 0.12.0', require: false
+  gem 'simplecov', '~> 0.16', require: false
   gem 'launchy', '~> 2.4.3'
   gem 'json_spec', '~> 1.1.4'
   gem 'database_cleaner', '~> 1.5.0'
 
-  gem 'coveralls', '~> 0.8.14', require: false
+  gem 'coveralls', '~> 0.8.23', require: false
   gem 'codeclimate-test-reporter', '~> 0.6.0', require: nil
 end
 

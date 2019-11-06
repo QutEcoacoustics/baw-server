@@ -33,8 +33,18 @@
 	// "shutdownAction": "none",
 
 	// Uncomment the next line to run commands after the container is created - for example installing git.
-	// "postCreateCommand": "apt-get update && apt-get install -y git",
+	"postCreateCommand": "/home/baw_web/baw-server/provision/dev_setup.sh",
 
 	// Add the IDs of extensions you want installed when the container is created in the array below.
-	"extensions": []
+	"extensions": [
+    "rebornix.ruby",
+    "bung87.rails",
+    "misogi.ruby-rubocop",
+    "castwide.solargraph",
+    "bung87.vscode-gemfile",
+    "streetsidesoftware.code-spell-checker",
+    "EditorConfig.EditorConfig",
+    "ms-vscode-remote.vscode-remote-extensionpack",
+    "connorshea.vscode-ruby-test-adapter"
+  ]
 }
