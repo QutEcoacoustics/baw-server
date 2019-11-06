@@ -296,7 +296,7 @@ GEM
     passenger (6.0.4)
       rack
       rake (>= 0.8.1)
-    pg (0.18.4)
+    pg (0.21.0)
     pry (0.12.2)
       coderay (~> 1.1.0)
       method_source (~> 0.9.0)
@@ -540,7 +540,7 @@ DEPENDENCIES
   notiffany (~> 0.1.0)
   paperclip (~> 5.0.0)
   passenger
-  pg (~> 0.18.1)
+  pg (~> 0.21)
   quiet_assets
   rack-cors (~> 0.4.0)
   rack-mini-profiler (~> 0.10.0)
