@@ -1,13 +1,15 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 require 'rspec_api_documentation/dsl'
 require 'helpers/acceptance_spec_helper'
+require 'fixtures/fixtures'
 
 #
 # This file contains tests for the #show endpoint for the AnalysisJobsItems controller
 #
 
 def standard_analysis_parameters
-
   parameter :analysis_job_id, 'Requested analysis job id (in path/route)', required: true
   parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
   parameter :results_path, 'Result file path', required: true
@@ -21,8 +23,11 @@ def create_full_path(item)
   File.join(top_path, item)
 end
 
-def create_file(file = File.join('Test1', 'Test2', 'test-CASE.csv'),
-                content = '"header1", "header2", "header3"\n"content1","content2", "content2"')
+DEFAULT_CREATE_FILE = File.join('Test1', 'Test2', 'test-CASE.csv')
+
+def create_file(
+  file = DEFAULT_CREATE_FILE,
+  content = '"header1", "header2", "header3"\n"content1","content2", "content2"')
 
   full_path = create_full_path(file)
   FileUtils.mkpath File.dirname(full_path)
@@ -31,15 +36,16 @@ end
 
 # We want to be able serve files out of an Sqlite3 file as if it were just a directory
 # This is the fixture that we will use to test this feature
-SQLITE_FIXTURE = 'example__Tiles.sqlite3'
-def copy_sqlite_file(dest = SQLITE_FIXTURE)
-  full_path = create_full_path(dest)
+SQLITE_FIXTURE = Fixtures.sqlite_fixture.basename.to_s
+def copy_sqlite_file
+  full_path = create_full_path(SQLITE_FIXTURE)
   FileUtils.mkpath File.dirname(full_path)
 
-  FileUtils.copy("#{Rails.root}/spec/fixtures/files/#{SQLITE_FIXTURE}", full_path)
+  FileUtils.copy(Fixtures.sqlite_fixture, full_path)
 end
 
-def create_dir(dir = File.join('Test1', 'Test2'))
+DEFAULT_CREATE_DIR = File.join('Test1', 'Test2')
+def create_dir(dir = DEFAULT_CREATE_DIR)
   full_path = create_full_path(dir)
   FileUtils.mkpath full_path
 end

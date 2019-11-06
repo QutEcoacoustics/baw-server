@@ -329,17 +329,8 @@ def acceptance_checks_json(opts = {})
 
   check_invalid_data_content(opts, message_prefix, actual_response_parsed)
 
-
   unless opts[:expected_json_path].blank?
-
-    expected_json_path_array = []
-    if opts[:expected_json_path].is_a?(Array)
-      expected_json_path_array = opts[:expected_json_path]
-    else
-      opts[:expected_json_path] = [opts[:expected_json_path]]
-    end
-
-    opts[:expected_json_path].each do |expected_json_path_item|
+    Array.wrap(opts[:expected_json_path]).each do |expected_json_path_item|
       expect(opts[:actual_response]).to have_json_path(expected_json_path_item), "#{message_prefix} to find '#{expected_json_path_item}' in '#{opts[:actual_response]}'"
     end
 
@@ -611,7 +602,7 @@ def create_media_options(audio_recording, test_audio_file = nil)
   options
 end
 
-def process_custom(method, path, params = {}, headers ={})
+def process_custom(method, path, params = {}, headers = {})
   do_request(method, path, params, headers)
   document_example(method.to_s.upcase, path)
 end
