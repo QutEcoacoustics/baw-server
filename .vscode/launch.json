@@ -4,7 +4,6 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-
       {
         "name": "RSpec - all",
         "type": "Ruby",
@@ -27,6 +26,20 @@
           "-I",
           "${workspaceRoot}",
           "${file}"
+        ],
+        "env": {
+          "RAILS_ENV":"test"
+        },
+      },
+      {
+        "name": "RSpec - specific spec in active file only",
+        "type": "Ruby",
+        "request": "launch",
+        "program": "${workspaceRoot}/bin/rspec",
+        "args": [
+          "-I",
+          "${workspaceRoot}",
+          "${file}[${input:rspecSpecId}]"
         ],
         "env": {
           "RAILS_ENV":"test"
@@ -67,5 +80,13 @@
         "remoteWorkspaceRoot": "${workspaceRoot}",
         "cwd": "${workspaceRoot}/baw-workers"
       },
+    ],
+    "inputs": [
+      {
+        "id": "rspecSpecId",
+        "type": "promptString",
+        "description": "Enter the rspec spec ID (without square braces). E.g. `1:3:5:1:1`",
+        "default": "1"
+      }
     ]
 }

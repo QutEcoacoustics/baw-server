@@ -11,44 +11,47 @@ See rails_helper.rb to disable this check
 ***
 }
   ENV['RAILS_ENV'] = "test"
-end  
+end
 
 abort "You must run tests using 'bundle exec ...'" unless ENV['BUNDLE_BIN_PATH'] || ENV['BUNDLE_GEMFILE']
 
-require 'simplecov'
+if not RSpec.configuration.dry_run?
+  require 'simplecov'
 
-if ENV['TRAVIS']
-  require 'codeclimate-test-reporter'
-  require 'coveralls'
+  if ENV['TRAVIS']
+    require 'codeclimate-test-reporter'
+    require 'coveralls'
 
-  # code climate
-  CodeClimate::TestReporter.configure do |config|
-    config.logger.level = Logger::WARN
+    # code climate
+    CodeClimate::TestReporter.configure do |config|
+      config.logger.level = Logger::WARN
+    end
+    CodeClimate::TestReporter.start
+
+    # coveralls
+    Coveralls.wear!('rails')
+
+    SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter.new([
+                                                                      Coveralls::SimpleCov::Formatter,
+                                                                      CodeClimate::TestReporter::Formatter
+                                                                  ])
+
+  else
+    SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter.new([
+                                                                      SimpleCov::Formatter::HTMLFormatter
+                                                                  ])
   end
-  CodeClimate::TestReporter.start
 
-  # coveralls
-  Coveralls.wear!('rails')
-
-  SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter.new([
-                                                                     Coveralls::SimpleCov::Formatter,
-                                                                     CodeClimate::TestReporter::Formatter
-                                                                 ])
-
-else
-  SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter.new([
-                                                                     SimpleCov::Formatter::HTMLFormatter
-                                                                 ])
+  # start code coverage
+  SimpleCov.start 'rails'
 end
-
-# start code coverage
-SimpleCov.start 'rails'
 
 require File.expand_path('../../config/environment', __FILE__)
 
 # Prevent database truncation if the environment is production
 abort('The Rails environment is running in production mode!') if Rails.env.production?
 abort('The Rails environment is running in staging mode!') if Rails.env.staging?
+abort('The Rails environment is NOT running in test mode!') unless Rails.env.test?
 
 require 'rspec/rails'
 # Add additional requires below this line. Rails is not loaded until this point!
