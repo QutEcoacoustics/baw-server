@@ -26,7 +26,6 @@ module Creation
       prepare_analysis_job
       prepare_analysis_jobs_item
 
-
       prepare_dataset
 
       prepare_dataset_item
@@ -34,7 +33,6 @@ module Creation
       prepare_progress_event
 
       create_study_hierarchy
-
     end
 
     # similar to create entire hierarchy
@@ -49,7 +47,6 @@ module Creation
     #   - 1 dataset item under that audio_recording called no_access_dataset_item, with admin as creator
 
     def create_no_access_hierarchy
-
       let!(:no_access_project_creator) { FactoryGirl.create(:user, user_name: 'creator_2') }
       let!(:no_access_project) { Common.create_project(no_access_project_creator) }
       let!(:no_access_site) { Common.create_site(no_access_project_creator, no_access_project) }
@@ -60,14 +57,11 @@ module Creation
       let!(:no_access_progress_event) {
         Common.create_progress_event(admin_user, no_access_dataset_item)
       }
-
     end
-
 
     # creates an project with public (allow anon) permissions
     # as well as a site, audio recording and dataset item
     def create_anon_hierarchy
-
       prepare_project_anon
 
       let!(:site_anon) {
@@ -81,18 +75,20 @@ module Creation
       let!(:dataset_item_anon) {
         Common.create_dataset_item(admin_user, dataset, audio_recording_anon)
       }
-
     end
 
-
     # create audio recordings and all parent entities
-    def create_audio_recordings_hierarchy
+    def create_audio_recordings_hierarchy(project_prepare_method = nil)
       prepare_users
 
-      prepare_project
+      if project_prepare_method.nil?
+        prepare_project
+      else
+        project_prepare_method.call(:project)
+      end
 
       # available after permission system is upgraded
-      #prepare_permission_owner
+      prepare_permission_owner
       prepare_permission_writer
       prepare_permission_reader
 
@@ -103,11 +99,9 @@ module Creation
 
     # create study, question, response hierarchy
     def create_study_hierarchy
-
       prepare_study
       prepare_question
       prepare_user_response
-
     end
 
     def prepare_study
@@ -122,7 +116,6 @@ module Creation
       # named to avoid name collision with rspec 'response'
       let!(:user_response) { Common.create_user_response(reader_user, dataset_item, study, question) }
     end
-
 
     def prepare_users
       # these 7 user types must be used to test every endpoint:
@@ -145,14 +138,64 @@ module Creation
 
       # there is also anonymous users who do not have a token
       # use: standard_request_options({remove_auth: true})
+      let!(:no_token) { nil }
 
       # harvester is only needed for cases where the api is used by automated systems
       let!(:harvester_user) { User.where(user_name: 'Harvester').first }
       let!(:harvester_token) { Common.create_user_token(harvester_user) }
     end
 
-    def prepare_project
+    def prepare_project(alternate_name = nil)
       let!(:project) { Common.create_project(owner_user) }
+      let!(alternate_name) { project_anon } if alternate_name && alternate_name != :project
+    end
+
+    def prepare_project_anon(alternate_name = nil)
+      let!(:project_anon) {
+        FactoryGirl.create(:project, creator: owner_user, name: 'Anon Project')
+      }
+      let!(alternate_name) { project_anon } if alternate_name
+      let!(:permission_anon) { FactoryGirl.create(:permission, creator: owner_user, user: nil, project: project_anon, allow_anonymous: true, level: 'reader') }
+    end
+
+    def prepare_project_logged_in(alternate_name = nil)
+      let!(:project_logged_in) {
+        FactoryGirl.create(:project, creator: owner_user, name: 'Logged In Project')
+      }
+      let!(alternate_name) { project_logged_in } if alternate_name
+      let!(:permission_logged_in) { FactoryGirl.create(:permission, creator: owner_user, user: nil, project: project_logged_in, allow_logged_in: true, level: 'reader') }
+    end
+
+    def prepare_project_anon_and_logged_in(alternate_name = nil)
+      let!(:project_anon_and_logged_in) {
+        FactoryGirl.create(:project, creator: owner_user, name: 'Anon & Logged In Project')
+      }
+      let!(alternate_name) { project_anon_and_logged_in } if alternate_name
+      let!(:permission_anon) {
+        FactoryGirl.create(
+          :permission,
+          {
+            creator: owner_user,
+            user: nil,
+            project: project_anon_and_logged_in,
+            allow_anonymous: true,
+            level: 'reader'
+          }
+        )
+      }
+
+      let!(:permission_logged_in) {
+        FactoryGirl.create(
+          :permission,
+          {
+            creator: owner_user,
+            user: nil,
+            project: project_anon_and_logged_in,
+            allow_logged_in: true,
+            level: 'reader'
+          }
+        )
+      }
     end
 
     def prepare_site
@@ -173,16 +216,6 @@ module Creation
       let!(:reader_permission) {
         FactoryGirl.create(:read_permission, creator: owner_user, user: reader_user, project: project)
       }
-    end
-
-    def prepare_project_anon
-      let!(:project_anon) { FactoryGirl.create(:project, creator: owner_user, name: 'Anon Project') }
-      let!(:permission_anon) { FactoryGirl.create(:permission, creator: owner_user, user: nil, project: project_anon, allow_anonymous: true, level: 'reader') }
-    end
-
-    def prepare_project_logged_in
-      let!(:project_logged_in) { FactoryGirl.create(:project, creator: owner_user, name: 'Logged In Project') }
-      let!(:permission_logged_in) { FactoryGirl.create(:permission, creator: owner_user, user: nil, project: project_logged_in, allow_logged_in: true, level: 'reader') }
     end
 
     def prepare_tag

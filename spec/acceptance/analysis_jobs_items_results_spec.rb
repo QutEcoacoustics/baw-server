@@ -90,9 +90,7 @@ end
 test_url = "/analysis_jobs/:analysis_job_id/results/:audio_recording_id/:results_path"
 
 resource 'AnalysisJobsItemsResults' do
-
   shared_examples_for 'AnalysisJobsItems results' do |current_user|
-
     header 'Authorization', :authentication_token
     header 'Accept', 'application/json'
 

@@ -57,10 +57,10 @@ def standard_request_options(http_method, description, expected_status, opts = {
     fail 'Specify both expected_error_class and expected_error_regexp' if problem
 
     # remove the auth header if specified
-    is_remove_header = opts[:remove_auth] && opts[:remove_auth] === true
+    is_remove_header = opts.dig(:remove_auth) == true
     header_key = 'Authorization'
     current_metadata = example.metadata
-    has_header = current_metadata[:headers] && current_metadata[:headers].include?(header_key)
+    has_header = current_metadata[:headers]&.include?(header_key)
     header_value = has_header ? current_metadata[:headers][header_key] : nil
 
     if is_remove_header && has_header
