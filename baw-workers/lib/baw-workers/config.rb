@@ -44,6 +44,7 @@ module BawWorkers
 
         # easy access to options
         is_test = ENV['RUNNING_RSPEC'] == 'yes'
+        is_development = ENV['RAILS_ENV'] == 'development' || ENV['RAILS_ENV'] == ''
         is_redis = opts.include?(:redis) && opts[:redis]
         is_resque_worker = opts.include?(:resque_worker) && opts[:resque_worker]
         is_resque_worker_fg = BawWorkers::Settings.resque.background_pid_file.blank?
@@ -118,7 +119,13 @@ module BawWorkers
         #     File.expand_path(File.join(File.dirname(__FILE__), 'mail'))
         # ]
 
-        if is_test
+        if is_development
+          ActionMailer::Base.delivery_method = :file
+          ActionMailer::Base.file_settings =
+            {
+              location: File.join(BawWorkers::Config.temp_dir, 'mail')
+            }
+        elsif is_test
           ActionMailer::Base.delivery_method = :test
           ActionMailer::Base.smtp_settings = nil
         else
@@ -182,6 +189,7 @@ module BawWorkers
         result = {
             settings: {
                 test: is_test,
+                environment: is_development,
                 file: settings_file,
                 namespace: settings_namespace
             },
@@ -228,7 +236,8 @@ module BawWorkers
       end
 
       def run_web(core_logger, mailer_logger, resque_logger, audio_tools_logger, settings, is_test)
-        
+        is_development = ENV['RAILS_ENV'] == 'development' || ENV['RAILS_ENV'] == ''
+
         # configure basic attributes first
         BawWorkers::Config.temp_dir = File.expand_path(settings.paths.temp_dir)
 
@@ -256,7 +265,13 @@ module BawWorkers
         ActionMailer::Base.raise_delivery_errors = true
         ActionMailer::Base.perform_deliveries = true
 
-        if is_test
+        if is_development
+          ActionMailer::Base.delivery_method = :file
+          ActionMailer::Base.file_settings =
+            {
+              location: File.join(BawWorkers::Config.temp_dir, 'mail')
+            }
+        elsif is_test
           ActionMailer::Base.delivery_method = :test
           ActionMailer::Base.smtp_settings = nil
         else
@@ -316,18 +331,11 @@ module BawWorkers
       private
 
       # Configures redis connections for both Resque and our own Redis wrapper
-      def configure_redis(needs_redis, is_test, settings)
+      def configure_redis(needs_redis, _is_test, settings)
         if needs_redis
-          communicator_redis = nil
+          Resque.redis = HashWithIndifferentAccess.new(settings.resque.connection)
+          communicator_redis =  Redis.new(HashWithIndifferentAccess.new(settings.redis.connection))
 
-          if is_test
-            # use fake redis
-            Resque.redis = Redis.new
-            communicator_redis = Redis.new
-          else
-            Resque.redis = HashWithIndifferentAccess.new(settings.resque.connection)
-            communicator_redis =  Redis.new(HashWithIndifferentAccess.new(settings.redis.connection))
-          end
           Resque.redis.namespace = BawWorkers::Settings.resque.namespace
 
           # Set up standard redis wrapper.
@@ -338,7 +346,6 @@ module BawWorkers
           )
         end
       end
-      
     end
   end
 end

@@ -14,7 +14,6 @@ end
 
 # https://github.com/zipmark/rspec_api_documentation
 resource 'Projects' do
-
   header 'Accept', 'application/json'
   header 'Content-Type', 'application/json'
   header 'Authorization', :authentication_token
@@ -49,7 +48,7 @@ resource 'Projects' do
     let(:authentication_token) { no_access_token }
     standard_request_options(:get, 'INDEX (as no access user)', :ok, {response_body_content: '200', data_item_count: 0})
   end
- 
+
   get '/projects' do
     let(:authentication_token) { invalid_token }
     standard_request_options(:get, 'INDEX (with invalid token)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
@@ -391,7 +390,7 @@ resource 'Projects' do
     body_params
     prepare_project_anon
     let(:id) { project_anon.id }
-    standard_request_options(:delete, 'DESTROY (as anonymous user allowed read)', :unauthorized, 
+    standard_request_options(:delete, 'DESTROY (as anonymous user allowed read)', :unauthorized,
                              {remove_auth: true, expected_json_path: get_json_error_path(:sign_up)})
   end
 
@@ -407,7 +406,7 @@ resource 'Projects' do
     body_params
     prepare_project_logged_in
     let(:id) { project_logged_in.id }
-    standard_request_options(:delete, 'DESTROY (as anonymous user to logged in allowed read)', :unauthorized, 
+    standard_request_options(:delete, 'DESTROY (as anonymous user to logged in allowed read)', :unauthorized,
                              {remove_auth: true, expected_json_path: get_json_error_path(:sign_up)})
   end
 
@@ -477,7 +476,7 @@ resource 'Projects' do
     let(:authentication_token) { no_access_token }
     standard_request_options(:post, 'FILTER (as no access user to anon allowed read)', :ok, {data_item_count: 0, response_body_content: ['200']})
   end
-  
+
   post '/projects/filter' do
     let(:raw_post) {
       {

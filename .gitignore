@@ -29,6 +29,7 @@ external_modules.log
 
 # ignore temporary files
 /tmp
+!/tmp/README.md
 /.bundle
 
 # ignore ide settings

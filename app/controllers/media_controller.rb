@@ -76,7 +76,11 @@ class MediaController < ApplicationController
   def authorise_custom(request_params, user)
     # AT 2018-02-26: removed the following condition because it should be covered by standard abilities
     # # (!Access::Core.is_standard_user?(user) && !Access::Core.is_admin?(user))
-    if user.blank? || !user.confirmed?
+
+    # AT 2019-11-07: Public access will allow auth to progress past this point
+    # where as it used to be if there was no user, we'd stop here.
+    # I'm stil going to make sure actual users are confirmed though.
+    if !user.blank? && !user.confirmed?
       fail CanCan::AccessDenied, 'xxxx'
     end
 

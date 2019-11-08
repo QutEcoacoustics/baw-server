@@ -91,8 +91,9 @@ gem 'bcrypt', '~> 3.1.9'
 gem 'sqlite3'
 
 # don't change the database gems - causes:
-# Please install the <db> adapter: `gem install activerecord-<db>-adapter` (<db> is not part of the bundle. Add it to Gemfile.)
-gem 'pg', '~> 0.18.1'
+# Please install the <db> adapter: `gem install activerecord-<db>-adapter`
+# (<db> is not part of the bundle. Add it to Gemfile.)
+gem 'pg', '~> 0.21'
 
 # MODELS
 # -------------------------------------
@@ -185,8 +186,6 @@ group :development, :test do
   gem 'rubocop', '~> 0.74.0', require: false
   gem 'haml_lint', require: false
 
-  gem 'fakeredis', '~> 0.5.0', require: 'fakeredis/rspec'
-
   gem 'zonebie'
 
   # for cleaning up Rails apps
@@ -208,17 +207,17 @@ group :development, :test do
   #gem 'debugger'
   # gem install traceroute --no-ri --no-rdoc
 
-  gem 'rspec-rails', '~> 3.5.0'
+  gem 'rspec-rails', '~> 3.9.0'
   gem 'factory_girl_rails', '~>  4.7.0'
   gem 'capybara', '~> 2.7.0'
 
-  gem 'rspec', '~> 3.5.0'
-  gem 'simplecov', '~> 0.12.0', require: false
+  gem 'rspec', '~> 3.9.0'
+  gem 'simplecov', '~> 0.16', require: false
   gem 'launchy', '~> 2.4.3'
   gem 'json_spec', '~> 1.1.4'
   gem 'database_cleaner', '~> 1.5.0'
 
-  gem 'coveralls', '~> 0.8.14', require: false
+  gem 'coveralls', '~> 0.8.23', require: false
   gem 'codeclimate-test-reporter', '~> 0.6.0', require: nil
 end
 
@@ -226,7 +225,7 @@ group :test do
   gem 'webmock', '~> 2.1.0'
   gem 'shoulda-matchers', '< 3.0.0', require: false
 
-  gem 'rspec-mocks', '~>3.5.0'
+  gem 'rspec-mocks', '~>3.9.0'
 
   # use to mock time in tests - currently not needed
   #gem 'timecop'

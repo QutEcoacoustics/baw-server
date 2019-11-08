@@ -2,10 +2,10 @@ require 'rails_helper'
 require 'rspec_api_documentation/dsl'
 require 'helpers/acceptance_spec_helper'
 require 'helpers/resque_helper'
+require 'fixtures/fixtures'
 
 # https://github.com/zipmark/rspec_api_documentation
 resource 'Media' do
-
   # set header
   header 'Accept', 'application/json'
   header 'Content-Type', 'application/json'
@@ -25,52 +25,19 @@ resource 'Media' do
   let(:site_id) { site.id }
   let(:audio_recording_id) { audio_recording.id }
 
-  let(:audio_file_mono) { File.join(File.dirname(__FILE__), '..', 'media_tools', 'test-audio-mono.ogg') }
+  let(:audio_file_mono) { Fixtures.audio_file_mono }
   let(:audio_file_mono_media_type) { Mime::Type.lookup('audio/ogg') }
-  let(:audio_file_mono_size_bytes) { 822281 }
-  let(:audio_file_mono_sample_rate) { 44100 }
+  let(:audio_file_mono_size_bytes) { 822_281 }
+  let(:audio_file_mono_sample_rate) { 44_100 }
   let(:audio_file_mono_channels) { 1 }
   let(:audio_file_mono_duration_seconds) { 70 }
 
   let(:audio_original) {
-    puts "audio original path"
-    puts BawWorkers::Settings.paths.original_audios
-    ao = BawWorkers::Storage::AudioOriginal.new(BawWorkers::Settings.paths.original_audios)
+    BawWorkers::Storage::AudioOriginal.new(BawWorkers::Settings.paths.original_audios)
   }
   let(:audio_cache) { BawWorkers::Storage::AudioCache.new(BawWorkers::Settings.paths.cached_audios) }
   let(:spectrogram_cache) { BawWorkers::Storage::SpectrogramCache.new(BawWorkers::Settings.paths.cached_spectrograms) }
   let(:analysis_cache) { BawWorkers::Storage::AnalysisCache.new(BawWorkers::Settings.paths.cached_analysis_jobs) }
-
-  ################################
-  # MEDIA GET - long path
-  ################################
-  get '/audio_recordings/:audio_recording_id/media.:format' do
-    standard_media_parameters
-    let(:authentication_token) { admin_token }
-    let(:format) { 'json' }
-    standard_request_options(:get, 'MEDIA (as admin)', :ok, {expected_json_path: 'data/recording/channel_count'})
-  end
-
-  get 'audio_recordings/:audio_recording_id/media.:format' do
-    standard_media_parameters
-    let(:authentication_token) { owner_token }
-    let(:format) { 'json' }
-    standard_request_options(:get, 'MEDIA (as owner)', :ok, {expected_json_path: 'data/recording/channel_count'})
-  end
-
-  get 'audio_recordings/:audio_recording_id/media.:format' do
-    standard_media_parameters
-    let(:authentication_token) { writer_token }
-    let(:format) { 'json' }
-    standard_request_options(:get, 'MEDIA (as writer)', :ok, {expected_json_path: 'data/recording/channel_count'})
-  end
-
-  get '/audio_recordings/:audio_recording_id/media.:format' do
-    standard_media_parameters
-    let(:authentication_token) { reader_token }
-    let(:format) { 'json' }
-    standard_request_options(:get, 'MEDIA (as reader)', :ok, {expected_json_path: 'data/recording/channel_count'})
-  end
 
   get '/audio_recordings/:audio_recording_id/media.:format' do
     standard_media_parameters
@@ -81,82 +48,10 @@ resource 'Media' do
 
   get '/audio_recordings/:audio_recording_id/media.:format' do
     standard_media_parameters
-    let(:authentication_token) { no_access_token }
-    let(:format) { 'json' }
-    standard_request_options(:get, 'MEDIA (as no access user)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
-  end
-
-  get '/audio_recordings/:audio_recording_id/media.:format' do
-    standard_media_parameters
-    let(:authentication_token) { invalid_token }
-    let(:format) { 'json' }
-    standard_request_options(:get, 'MEDIA (with invalid token)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
-  end
-
-  get '/audio_recordings/:audio_recording_id/media.:format' do
-    standard_media_parameters
-    let(:format) { 'json' }
-    standard_request_options(:get, 'MEDIA (as anonymous user)', :unauthorized, {remove_auth: true, expected_json_path: get_json_error_path(:sign_up)})
-  end
-
-  ################################
-  # MEDIA GET - shallow path
-  ################################
-
-  get '/audio_recordings/:audio_recording_id/media.:format' do
-    standard_media_parameters
-    let(:authentication_token) { admin_token }
-    let(:format) { 'json' }
-    standard_request_options(:get, 'MEDIA (as admin with shallow path)', :ok, {expected_json_path: 'data/common_parameters/start_offset'})
-  end
-
-  get '/audio_recordings/:audio_recording_id/media.:format' do
-    standard_media_parameters
-    let(:authentication_token) { writer_token }
-    let(:format) { 'json' }
-    standard_request_options(:get, 'MEDIA (as writer with shallow path)', :ok, {expected_json_path: 'data/common_parameters/start_offset'})
-  end
-
-  get '/audio_recordings/:audio_recording_id/media.:format' do
-    standard_media_parameters
-    let(:authentication_token) { reader_token }
-    let(:format) { 'json' }
-    standard_request_options(:get, 'MEDIA (as reader with shallow path)', :ok, {expected_json_path: 'data/common_parameters/start_offset'})
-  end
-
-  get '/audio_recordings/:audio_recording_id/media.:format' do
-    standard_media_parameters
-    let(:authentication_token) { no_access_token }
-    let(:format) { 'json' }
-    standard_request_options(:get, 'MEDIA (as no access user with shallow path)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
-  end
-
-  get '/audio_recordings/:audio_recording_id/media.:format' do
-    standard_media_parameters
-    let(:authentication_token) { invalid_token }
-    let(:format) { 'json' }
-    standard_request_options(:get, 'MEDIA (with invalid token with shallow path)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
-  end
-
-  get '/audio_recordings/:audio_recording_id/media.:format' do
-    standard_media_parameters
-    let(:format) { 'json' }
-    standard_request_options(:get, 'MEDIA (as anonymous user with shallow path)', :unauthorized, {remove_auth: true, expected_json_path: get_json_error_path(:sign_up)})
-  end
-
-  get '/audio_recordings/:audio_recording_id/media.:format' do
-    standard_media_parameters
-    let(:authentication_token) { reader_token }
-    let(:format) { 'mp4' }
-    standard_request_options(:get, 'MEDIA (invalid format (mp4), as reader with shallow path)', :not_acceptable, {expected_json_path: 'meta/error/info/available_formats'})
-  end
-
-  get '/audio_recordings/:audio_recording_id/media.:format' do
-    standard_media_parameters
     let(:authentication_token) { reader_token }
     let(:format) { 'zjfyrdnd' }
     # can't respond with the format requested
-    standard_request_options(:get, 'MEDIA (invalid format (zjfyrdnd), as reader with shallow path)', :not_acceptable, {expected_json_path: 'meta/error/info/available_formats'})
+    standard_request_options(:get, 'MEDIA (invalid format (zjfyrdnd), as reader)', :not_acceptable, {expected_json_path: 'meta/error/info/available_formats'})
   end
 
   get '/audio_recordings/:audio_recording_id/media.:format' do
@@ -445,7 +340,7 @@ resource 'Media' do
 
     media_request_options(
         :get,
-        'MEDIA (audio get request mp3 as reader with shallow path)',
+        'MEDIA (audio get request mp3 as reader)',
         :ok,
         {
             document: document_media_requests,
@@ -460,7 +355,7 @@ resource 'Media' do
 
     media_request_options(
         :get,
-        'MEDIA (audio get request wav as reader with shallow path)',
+        'MEDIA (audio get request wav as reader)',
         :ok,
         {
             document: document_media_requests,
@@ -475,7 +370,7 @@ resource 'Media' do
 
     media_request_options(
         :get,
-        'MEDIA (audio get request ogg as reader with shallow path)',
+        'MEDIA (audio get request ogg as reader)',
         :ok,
         {
             document: document_media_requests,
@@ -490,7 +385,7 @@ resource 'Media' do
 
     media_request_options(
         :get,
-        'MEDIA (audio get request webm as reader with shallow path)',
+        'MEDIA (audio get request webm as reader)',
         :ok,
         {
             document: document_media_requests,
@@ -505,7 +400,7 @@ resource 'Media' do
 
     media_request_options(
         :get,
-        'MEDIA (audio get request flac as reader with shallow path)',
+        'MEDIA (audio get request flac as reader)',
         :ok,
         {
             document: document_media_requests,
@@ -520,7 +415,7 @@ resource 'Media' do
 
     media_request_options(
         :get,
-        'MEDIA (spectrogram get request as reader with shallow path)',
+        'MEDIA (spectrogram get request as reader)',
         :ok,
         {
             document: document_media_requests,
@@ -532,7 +427,7 @@ resource 'Media' do
 
     let(:audio_file_mono2) {
       {
-          source: File.join(File.dirname(__FILE__), '..', 'media_tools', 'test-audio-stereo-7777hz.ogg'),
+          source: Fixtures.audio_file_stereo_7777hz,
           media_type: Mime::Type.lookup('audio/ogg'),
           sample_rate: 7777,
           channels: 2,
@@ -730,7 +625,7 @@ resource 'Media' do
 
     media_request_options(
         :head,
-        'MEDIA (json head request as reader with shallow path)',
+        'MEDIA (json head request as reader)',
         :ok,
         {
             document: document_media_requests,
@@ -746,7 +641,7 @@ resource 'Media' do
 
     media_request_options(
         :head,
-        'MEDIA (audio head request mp3 as reader with shallow path)',
+        'MEDIA (audio head request mp3 as reader)',
         :ok,
         {
             document: document_media_requests,
@@ -762,7 +657,7 @@ resource 'Media' do
 
     media_request_options(
         :head,
-        'MEDIA (spectrogram head request as reader with shallow path)',
+        'MEDIA (spectrogram head request as reader)',
         :ok,
         {
             document: document_media_requests,
@@ -785,7 +680,7 @@ resource 'Media' do
       audio_event = FactoryGirl.create(:audio_event, audio_recording_id: audio_recording_id, start_time_seconds: 5, end_time_seconds: 6, is_reference: true)
     end
 
-    standard_request_options(:get, 'MEDIA (as reader with shallow path, valid audio event request offsets with read access to audio recording)', :ok, {expected_json_path: 'data/recording/recorded_date'})
+    standard_request_options(:get, 'MEDIA (as reader, valid audio event request offsets with read access to audio recording)', :ok, {expected_json_path: 'data/recording/recorded_date'})
   end
 
   get '/audio_recordings/:audio_recording_id/media.:format?audio_event_id=:audio_event_id&start_offset=:start_offset&end_offset=:end_offset' do
@@ -807,7 +702,7 @@ resource 'Media' do
       audio_event.id
     }
 
-    standard_request_options(:get, 'MEDIA (as reader with shallow path, valid audio event request offsets with no access to audio recording)', :ok, {expected_json_path: 'data/recording/recorded_date'})
+    standard_request_options(:get, 'MEDIA (as reader, valid audio event request offsets with no access to audio recording)', :ok, {expected_json_path: 'data/recording/recorded_date'})
   end
 
   get '/audio_recordings/:audio_recording_id/media.:format?audio_event_id=:audio_event_id&start_offset=:start_offset&end_offset=:end_offset' do
@@ -822,7 +717,7 @@ resource 'Media' do
       audio_event = FactoryGirl.create(:audio_event, audio_recording_id: audio_recording_id, start_time_seconds: 0, end_time_seconds: 10, is_reference: true)
     end
 
-    standard_request_options(:get, 'MEDIA (as reader with shallow path, invalid audio event request offsets)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
+    standard_request_options(:get, 'MEDIA (as reader, invalid audio event request offsets)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
   end
 
   get '/audio_recordings/:audio_recording_id/media.:format?audio_event_id=:audio_event_id&start_offset=:start_offset&end_offset=:end_offset' do
@@ -842,7 +737,7 @@ resource 'Media' do
       audio_event.id
     }
 
-    standard_request_options(:get, 'MEDIA (as reader with shallow path, not a reference audio event)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
+    standard_request_options(:get, 'MEDIA (as reader, not a reference audio event)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
   end
 
   get '/audio_recordings/:audio_recording_id/media.:format?audio_event_id=:audio_event_id&start_offset=:start_offset&end_offset=:end_offset' do
@@ -868,7 +763,7 @@ resource 'Media' do
       audio_event.id
     }
 
-    standard_request_options(:get, 'MEDIA (as reader with shallow path, audio event request not related to audio recording)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
+    standard_request_options(:get, 'MEDIA (as reader, audio event request not related to audio recording)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
   end
 
   #
@@ -1018,81 +913,6 @@ resource 'Media' do
                              })
   end
 
-  # test remote audio and spectrogram generation
-  context 'remote media generation' do
-    around(:each) do |example|
-      Settings[:media_request_processor] = Settings::MEDIA_PROCESSOR_RESQUE
-      stored = Settings.audio_tools_timeout_sec
-      Settings[:audio_tools_timeout_sec] = 2
-      example.run
-      Settings[:media_request_processor] = Settings::MEDIA_PROCESSOR_LOCAL
-      Settings[:audio_tools_timeout_sec] = stored
-    end
-
-    get '/audio_recordings/:audio_recording_id/media.:format' do
-      standard_media_parameters
-      let(:authentication_token) { reader_token }
-      let(:format) { 'mp3' }
-
-      example ':get MEDIA (audio get request mp3 as reader with shallow path process using resque)', document: document_media_requests do
-        remove_media_dirs
-
-        options = create_media_options(audio_recording, audio_file_mono)
-
-        queue_name = Settings.actions.media.queue
-
-        # do first request - this purposely fails,
-        request1 = do_request
-
-        # check response
-        opts1 =
-            {
-                expected_status: :internal_server_error,
-                expected_method: :get,
-                expected_response_content_type: 'audio/mpeg',
-                document: document_media_requests,
-                expected_response_media_from_header: MediaPoll::HEADER_VALUE_RESPONSE_REMOTE,
-                expected_response_has_content: false,
-                expected_response_header_values_match: false,
-                expected_response_header_values: {
-                    'X-Error-Type' => 'Custom Errors/Audio Generation Error'
-                }
-            }
-
-        opts1 = acceptance_checks_shared(request1, opts1)
-
-        acceptance_checks_media(opts1.merge({audio_recording: options}))
-
-        # store request that's in queue
-        expect(Resque.size(queue_name)).to eq(1)
-
-        # run emulated worker - this will process the single job in the queue
-        # we're restricted to a single thread, so can't run request and worker at once (they both block)
-        emulate_resque_worker(queue_name, false, true)
-
-        # run a second request, which should use the cached file to complete the request
-        request2 = do_request
-
-        expect(Resque.size(queue_name)).to eq(0)
-
-        # check response
-        opts2 =
-            {
-                expected_status: :ok,
-                expected_method: :get,
-                expected_response_content_type: 'audio/mpeg',
-                document: document_media_requests,
-                expected_response_media_from_header: MediaPoll::HEADER_VALUE_RESPONSE_CACHE
-            }
-
-        opts2 = acceptance_checks_shared(request2, opts2)
-
-        opts2.merge!({audio_recording: options})
-        acceptance_checks_media(opts2)
-      end
-    end
-
-  end
 
   context 'range request' do
     header 'Range', 'bytes=0-'
@@ -1104,7 +924,7 @@ resource 'Media' do
 
       media_request_options(
           :get,
-          'MEDIA (audio get request mp3 as reader with shallow path using range request)',
+          'MEDIA (audio get request mp3 as reader using range request)',
           :partial_content,
           {
               document: document_media_requests,
@@ -1120,7 +940,7 @@ resource 'Media' do
 
       media_request_options(
           :head,
-          'MEDIA (audio get request mp3 as reader with shallow path using range request)',
+          'MEDIA (audio get request mp3 as reader using range request)',
           :partial_content,
           {
               document: document_media_requests,
@@ -1137,10 +957,9 @@ resource 'Media' do
       let(:authentication_token) { reader_token }
       let(:format) { 'wav' }
 
-
       media_request_options(
           :get,
-          'MEDIA (audio get request wav as reader with shallow path)',
+          'MEDIA (audio get request wav as reader)',
           :ok,
           {
               document: document_media_requests,
@@ -1152,110 +971,5 @@ resource 'Media' do
     end
   end
 
-  ################################
-  # ORIGINAL
-  ################################
-  describe "original audio download" do
-
-    let(:start_offset) { nil }
-    let(:end_offset) { nil }
-
-    before(:each) do
-      # the standard media route only allows short recordings, purposely mock a long duration to make sure long
-      # original recordings succeed.
-      audio_recording.update_attribute(:duration_seconds, 3600) # one hour
-      create_media_options(audio_recording, audio_file_mono)
-    end
-
-    after(:each) do
-      remove_media_dirs
-    end
-
-    def full_file_result(context, opts)
-      filename = context.audio_recording.canonical_filename
-      opts.merge!({
-          expected_response_content_type: context.audio_recording.media_type,
-          expected_response_has_content: true,
-          expected_response_header_values_match: false,
-          expected_response_header_values: {
-            'Content-Length' => context.audio_file_mono_size_bytes.to_s,
-            'Content-Disposition' => "attachment; filename=\"#{filename}\"",
-            'Digest' => 'SHA256=' + context.audio_recording.split_file_hash[1]
-          },
-          is_range_request: false
-      })
-    end
-
-    get '/audio_recordings/:audio_recording_id/original' do
-      parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
-
-      let(:authentication_token) { reader_token }
-
-      standard_request_options(:get, 'ORIGINAL (as reader)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
-    end
-
-    get '/audio_recordings/:audio_recording_id/original' do
-      parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
-
-      let(:authentication_token) { writer_token }
-
-      standard_request_options(:get, 'ORIGINAL (as writer)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
-    end
-
-    get '/audio_recordings/:audio_recording_id/original' do
-      parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
-
-      let(:authentication_token) { no_access_token }
-
-      standard_request_options(:get, 'ORIGINAL (as no access)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
-    end
-
-    get '/audio_recordings/:audio_recording_id/original' do
-      parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
-
-      let(:authentication_token) { invalid_token }
-
-      standard_request_options(:get, 'ORIGINAL (with invalid token)', :unauthorized, {expected_json_path: get_json_error_path(:sign_in)})
-    end
-
-    get '/audio_recordings/:audio_recording_id/original' do
-      parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
-
-      let(:authentication_token) { owner_token }
-
-      standard_request_options(:get, 'ORIGINAL (as owner token)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
-    end
-
-    get '/audio_recordings/:audio_recording_id/original' do
-      parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
-
-      let(:authentication_token) { admin_token }
-
-      standard_request_options(
-          :get,
-          'ORIGINAL (as admin token)',
-          :ok,
-          {},
-          &proc { |context, opts|
-            context.full_file_result(context, opts)
-          })
-    end
-
-    get '/audio_recordings/:audio_recording_id/original' do
-      parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
-
-      let(:authentication_token) { harvester_token }
-
-      standard_request_options(
-          :get,
-          'ORIGINAL (as harvester token)',
-          :ok,
-          {},
-          &proc { |context, opts|
-            context.full_file_result(context, opts)
-          })
-    end
-
-  end
 
 end

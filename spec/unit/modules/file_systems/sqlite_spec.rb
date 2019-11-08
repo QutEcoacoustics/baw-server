@@ -1,9 +1,11 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
+require 'fixtures/fixtures'
 
 describe 'sqlite filesystems' do
-  SQLITE_FIXTURE = 'example__Tiles.sqlite3'
   let(:sqlite_fixture) {
-    "#{Rails.root}/spec/fixtures/files/#{SQLITE_FIXTURE}"
+    Fixtures.sqlite_fixture
   }
 
   before :each do
@@ -14,5 +16,7 @@ describe 'sqlite filesystems' do
     FileSystems::Sqlite.check_version
   end
 
-
+  it 'checks the fixture exists' do
+    expect(sqlite_fixture.exist?).to be(true)
+  end
 end

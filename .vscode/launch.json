@@ -29,7 +29,21 @@
         ],
         "env": {
           "RAILS_ENV":"test"
-        }
+        },
+      },
+      {
+        "name": "RSpec - specific spec in active file only",
+        "type": "Ruby",
+        "request": "launch",
+        "program": "${workspaceRoot}/bin/rspec",
+        "args": [
+          "-I",
+          "${workspaceRoot}",
+          "${file}[${input:rspecSpecId}]"
+        ],
+        "env": {
+          "RAILS_ENV":"test"
+        },
       },
       {
         "name": "Rails server",
@@ -37,10 +51,15 @@
         "request": "launch",
         "program": "${workspaceRoot}/bin/rails",
         "args": [
-          "server"
+          "server",
+          "--binding=0.0.0.0"
         ],
         "env": {
           "RAILS_ENV":"development"
+        },
+        "postDebugTask": {
+          "task": "Stop Passenger",
+          "type": "shell"
         }
       },
       {
@@ -52,5 +71,22 @@
         "remoteWorkspaceRoot": "${workspaceRoot}",
         "cwd": "${workspaceRoot}"
       },
+      {
+        "name": "Listen for rdebug-ide (workers)",
+        "type": "Ruby",
+        "request": "attach",
+        "remoteHost": "workers",
+        "remotePort": "1234",
+        "remoteWorkspaceRoot": "${workspaceRoot}",
+        "cwd": "${workspaceRoot}/baw-workers"
+      },
+    ],
+    "inputs": [
+      {
+        "id": "rspecSpecId",
+        "type": "promptString",
+        "description": "Enter the rspec spec ID (without square braces). E.g. `1:3:5:1:1`",
+        "default": "1"
+      }
     ]
 }

@@ -73,7 +73,7 @@ module BawAudioTools
     # @return Path to a file. The file does not exist.
     # @param [String] extension
     def temp_file(extension)
-      File.join(@temp_dir, ::SecureRandom.hex(7)+'.'+extension.trim('.', '')).to_s
+      File.join(@temp_dir, ::SecureRandom.hex(7) + '.' + extension.trim('.', '')).to_s
     end
 
     # Construct path to a temp file with full_name as the file name that does not exist.
@@ -127,7 +127,7 @@ module BawAudioTools
       if bit_rate_bps_format && (bit_rate_bps == '' || bit_rate_bps == 'N/A' || bit_rate_bps == '0')
         bit_rate_bps = bit_rate_bps_format
       end
-      
+
       {
           media_type: @audio_ffmpeg.get_mime_type(info),
           sample_rate: info['STREAM sample_rate'].to_f,
@@ -308,8 +308,15 @@ module BawAudioTools
     end
 
     def check_target(target)
-      fail Exceptions::FileNotFoundError, "#{target}" unless File.exists?(target)
-      fail Exceptions::FileEmptyError, "#{target}" if File.size(target) < 1
+      raise Exceptions::FileNotFoundError, "#{target}" unless File.exist?(target)
+
+      return unless File.size(target) < 1
+
+      # Force open file to invalidate cache. This happens on nfs/cifs caches
+      # where it caches metadata
+      IO.new(IO.sysopen(target, 'r')).close
+
+      raise Exceptions::FileEmptyError, "#{target}" if File.size(target) < 1
     end
 
 

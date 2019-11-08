@@ -6,7 +6,7 @@ ARG app_name=baw-server
 ARG app_user=baw_web
 
 # install audio tools and other binaries
-COPY ./provision/install_audio_tools.sh /install_audio_tools.sh
+COPY ./provision/install_audio_tools.sh ./provision/install_postgresql_client.sh  /tmp/
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
@@ -15,17 +15,18 @@ RUN apt-get update \
     # - curl is needed for passenger
     # - nano not needed for prod
     # - iproute2 install ip and basic network debugging tools
-    ca-certificates curl nano git iproute2 \
+    # - gnupg is for validating apt public keys
+    ca-certificates curl gnupg nano git iproute2 \
     # sqlite
     sqlite3 libsqlite3-dev libgmp-dev \
     # the following are for nokogiri and the like
     build-essential patch ruby-dev zlib1g-dev liblzma-dev \
-    # for the postgre gem and postgresql-client rails rake db commands
-    libpq-dev postgresql-client \
+    && chmod u+x /tmp/*.sh  \
+    # for the pg gem we need postgresql-client (also used by rails rake db commands)
+    && /tmp/install_postgresql_client.sh \
     # install audio tools and other binaries
-    && chmod u+x /install_audio_tools.sh \
-    && /install_audio_tools.sh \
-    && rm /install_audio_tools.sh \
+    && /tmp/install_audio_tools.sh \
+    && rm -rf /tmp/*.sh \
     && rm -rf /var/lib/apt/lists/* \
     # create a user for the app
     # -D is for defaults, which includes NO PASSWORD
@@ -55,10 +56,6 @@ WORKDIR /home/${app_user}/${app_name}
 # Add the Rails app
 COPY --chown=${app_user} ./ /home/${app_user}/${app_name}
 
-# copy the passenger config
-# use a mount/volume to override this file for other environments
-COPY ./provision/Passengerfile.production.json /home/${app_user}/${app_name}/Passengerfile.json
-
 VOLUME [ "/data" ]
 ENTRYPOINT [ "bundle", "exec" ]
 CMD [ "passenger", "start" ]
@@ -82,7 +79,10 @@ RUN cd baw-audio-tools \
     # install baw-server
     && bundle install --binstubs --system \
     # precompile passenger standalone
-    && bundle exec passenger start --runtime-check-only
+    && bundle exec passenger start --runtime-check-only \
+    # install docs for dev work
+    && solargraph download-core \
+    && solargraph bundle
 
 ENTRYPOINT /home/${app_user}/${app_name}/provision/entrypoint.sh
 CMD []
@@ -91,6 +91,10 @@ CMD []
 # For production/staging
 #
 FROM baw-server-core AS baw-server
+
+# copy the passenger production config
+# use a mount/volume to override this file for other environments
+COPY ./provision/Passengerfile.production.json /home/${app_user}/${app_name}/Passengerfile.json
 
 EXPOSE 80
 
