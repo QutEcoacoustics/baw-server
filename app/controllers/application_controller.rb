@@ -1,7 +1,6 @@
 class ApplicationController < ActionController::Base
   include Api::ApiAuth
 
-
   layout :select_layout
 
   # custom authentication for api only
@@ -83,7 +82,6 @@ class ApplicationController < ActionController::Base
   def user_signed_in?
     super
   end
-
 
   protected
 
@@ -223,8 +221,8 @@ class ApplicationController < ActionController::Base
   end
 
   def render_error(status_symbol, detail_message, error, method_name, options = {})
-    options.merge!(error_details: detail_message) # overwrites error_details
-    options.reverse_merge!(should_notify_error: true) # default for should_notify_error is true, value in options will overwrite
+    options.merge!({ error_details: detail_message }) # overwrites error_details
+    options.reverse_merge!({ should_notify_error: true }) # default for should_notify_error is true, value in options will overwrite
 
     # notify of exception when head requests AND when should_notify_error is true
     should_notify_error = request.head? && (options.include?(:should_notify_error) && options[:should_notify_error])
@@ -247,6 +245,8 @@ class ApplicationController < ActionController::Base
 
     # add custom header
     headers['X-Error-Type'] = error.class.to_s.titleize unless error.nil?
+    # add additional error message in here for sanity
+    headers['X-Error-Message'] = error.message if request.head? && !error.nil?
 
     respond_to do |format|
       # format.all will be used for Accept: */* as it is first in the list
@@ -256,8 +256,10 @@ class ApplicationController < ActionController::Base
 
         if actual_format.start_with?('audio') || actual_format.start_with?('image')
           headers['Accept-Ranges'] = 'bytes'
+
           # add additional error message in here for sanity
-          headers['X-Error-Message'] = error.message
+          headers['X-Error-Message'] = error.message unless error.nil?
+
           head status_symbol
         else
           render json: json_response, status: status_symbol, content_type: 'application/json'
@@ -297,7 +299,6 @@ class ApplicationController < ActionController::Base
           # use stored_location_for to ensure the redirect is safe (i.e. doesn't go to another website)
           @details[:redirect_to_url] = stored_location_for(:user)
         end
-
 
         render template: 'errors/generic', status: status_symbol
       }
@@ -347,11 +348,9 @@ class ApplicationController < ActionController::Base
     end
   end
 
-
   private
 
   def record_not_found_response(error)
-
     render_error(
         :not_found,
         'Could not find the requested item.',
@@ -371,9 +370,7 @@ class ApplicationController < ActionController::Base
     )
   end
 
-
   def record_not_unique_response(error)
-
     render_error(
         :conflict,
         'The item must be unique.',

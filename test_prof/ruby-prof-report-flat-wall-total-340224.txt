@@ -1,0 +1,36 @@
+Measure Mode: wall_time
+Thread ID: 47276346440040
+Fiber ID: 47276352649440
+Total: 11.435848
+Sort by: self_time
+
+ %self      total      self      wait     child     calls  name                           location
+ 16.01      1.831     1.831     0.000     0.000     2981   <Class::RubyVM::InstructionSequence>#compile_file 
+ 15.99      1.828     1.828     0.000     0.000       73   PG::Connection#async_exec_without_profiling 
+ 11.12      1.272     1.272     0.000     0.000        1   <Module::Kernel>#system        
+  7.93      0.906     0.906     0.000     0.000     2981   RubyVM::InstructionSequence#to_binary 
+  5.95      0.702     0.681     0.000     0.022        4   <Module::Marshal>#load_without_autoloading 
+  5.56      0.635     0.635     0.000     0.000      476   <Class::Dir>#glob              
+  4.12      5.677     0.472     0.000     5.206     3036  *Kernel#require_without_bootsnap 
+  4.04      3.585     0.463     0.000     3.123     3037   <Module::Bootsnap::CompileCache::Native>#fetch 
+  2.51      0.287     0.287     0.000     0.000     2983   <Class::RubyVM::InstructionSequence>#load_from_binary 
+  2.25     11.435     0.257     0.000    11.177     5141  *Kernel#require                 
+  1.62      0.185     0.185     0.000     0.000      221   <Class::Dir>#[]                
+
+* recursively called methods
+
+Columns are:
+
+  %self     - The percentage of time spent in this method, derived from self_time/total_time.
+  total     - The time spent in this method and its children.
+  self      - The time spent in this method.
+  wait      - The amount of time this method waited for other threads.
+  child     - The time spent in this method's children.
+  calls     - The number of times this method was called.
+  name      - The name of the method.
+  location  - The location of the method.
+
+The interpretation of method names is:
+
+  * MyObject#test - An instance method "test" of the class "MyObject"
+  * <Object:MyObject>#test - The <> characters indicate a method on a singleton class.
