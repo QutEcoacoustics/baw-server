@@ -56,3 +56,6 @@ vendor/bundle/*
 
 # we'll rely on the container to always genrate bin stubs for us
 bin/*
+
+# we don't need to commit test_prof reports
+/test_prof

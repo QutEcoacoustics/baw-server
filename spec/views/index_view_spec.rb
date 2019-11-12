@@ -18,5 +18,4 @@ describe 'public/index', type: :view do
     expect(rendered).to_not have_content(standard_text)
     expect(rendered).to include('This is a testy <strong>test</strong> test')
   end
-
 end

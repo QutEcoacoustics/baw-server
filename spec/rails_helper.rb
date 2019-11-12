@@ -2,7 +2,7 @@
 
 # attempting to prevent trivial mistakes
 #ENV['RAILS_ENV'] ||= 'test'
-if ENV['RAILS_ENV'] != "test"
+if ENV['RAILS_ENV'] != 'test'
   puts %{
 ***
 Tests must be run in the test envrionment.
@@ -10,12 +10,24 @@ The current envrionment `#{ENV['RAILS_ENV']}` has been changed to `test`.
 See rails_helper.rb to disable this check
 ***
 }
-  ENV['RAILS_ENV'] = "test"
+  ENV['RAILS_ENV'] = 'test'
 end
 
 abort "You must run tests using 'bundle exec ...'" unless ENV['BUNDLE_BIN_PATH'] || ENV['BUNDLE_GEMFILE']
 
-if not RSpec.configuration.dry_run?
+require 'test-prof'
+TestProf.configure do |config|
+  # the directory to put artifacts (reports) in ('tmp/test_prof' by default)
+  config.output_dir = 'test_prof'
+
+  # use unique filenames for reports (by simply appending current timestamp)
+  config.timestamps = true
+
+  # color output
+  config.color = true
+end
+
+if ENV['CI'] || ENV['COVERAGE']
   require 'simplecov'
 
   if ENV['TRAVIS']

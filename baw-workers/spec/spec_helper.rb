@@ -19,12 +19,12 @@ if ENV['TRAVIS']
   CodeClimate::TestReporter.start
 
   SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter.new(
-      CodeClimate::TestReporter::Formatter
+    CodeClimate::TestReporter::Formatter
   )
 
 else
   SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter.new(
-      SimpleCov::Formatter::HTMLFormatter
+    SimpleCov::Formatter::HTMLFormatter
   )
 end
 
@@ -37,7 +37,7 @@ require 'webmock/rspec'
 
 require 'baw-workers'
 
-WebMock.disable_net_connect!(allow: 'codeclimate.com')
+WebMock.disable_net_connect!({ allow: 'codeclimate.com' })
 
 # include shared_context
 Dir[File.join(File.dirname(__FILE__), 'support', '**', '*.rb')].each { |file| require file }

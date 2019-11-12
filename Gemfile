@@ -157,6 +157,9 @@ gem 'concurrent-ruby', '~> 1', require: 'concurrent'
 # with the `rails server` command
 gem "passenger", require: "phusion_passenger/rack_handler"
 
+# bootsnap helps rails boot quickly
+gem 'bootsnap', require: false
+
 # Gems restricted by environment and/or platform
 # ====================================================
 
@@ -206,27 +209,23 @@ group :development, :test do
 
   #gem 'debugger'
   # gem install traceroute --no-ri --no-rdoc
-
-  gem 'rspec-rails', '~> 3.9.0'
-  gem 'factory_girl_rails', '~>  4.7.0'
-  gem 'capybara', '~> 2.7.0'
-
-  gem 'rspec', '~> 3.9.0'
-  gem 'simplecov', '~> 0.16', require: false
-  gem 'launchy', '~> 2.4.3'
-  gem 'json_spec', '~> 1.1.4'
-  gem 'database_cleaner', '~> 1.5.0'
-
-  gem 'coveralls', '~> 0.8.23', require: false
-  gem 'codeclimate-test-reporter', '~> 0.6.0', require: nil
 end
 
 group :test do
-  gem 'webmock', '~> 2.1.0'
-  gem 'shoulda-matchers', '< 3.0.0', require: false
-
+  gem 'capybara', '~> 2.7.0'
+  gem 'codeclimate-test-reporter', '~> 0.6.0', require: nil
+  gem 'coveralls', '~> 0.8.23', require: false
+  gem 'database_cleaner', '~> 1.5.0'
+  gem 'factory_girl_rails', '~>  4.7.0'
+  gem 'json_spec', '~> 1.1.4'
+  gem 'rspec', '~> 3.9.0'
   gem 'rspec-mocks', '~>3.9.0'
-
-  # use to mock time in tests - currently not needed
-  #gem 'timecop'
+  gem 'rspec-rails', '~> 3.9.0'
+  # for porfiling
+  gem "ruby-prof", ">= 0.17.0", require: false
+  gem 'shoulda-matchers', '~> 4', require: false
+  gem 'simplecov', '~> 0.16', require: false
+  # for profiling
+  gem 'test-prof', require: false
+  gem 'webmock', '~> 2.1.0'
 end
