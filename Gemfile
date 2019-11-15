@@ -14,7 +14,7 @@ source 'https://rubygems.org'
 # -------------------------------------
 
 gem 'rails', '~> 4.2.4'
-gem 'rack-cors', '~> 0.4.0', require: 'rack/cors'
+gem 'rack-cors', '~> 1.0.6', require: 'rack/cors'
 gem 'responders', '~> 2.3.0'
 
 # RAILS 3 compatibility gems
