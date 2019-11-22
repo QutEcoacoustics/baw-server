@@ -32,7 +32,7 @@ All changes go in feature branches.
 1. Run tests: `bin/rspec`
 1. Fix any failing tests.
 1. Create a new branch: `git checkout -b release-<version> develop`
-1. Change the version numbers in `app/models/settings.rb`
+1. Change the version numbers in `settings.rb`
 1. Check for newer versions of gems: `bundle outdated`. Update in Gemfile if necessary.
 1. Check for newer versions of gems from Github in Gemfile. Update commit reference if necessary.
 1. Commit the changes: `git commit -am "increment version to <version>"`
@@ -55,7 +55,7 @@ All changes go in feature branches.
 git checkout develop
 bin/rspec
 git checkout -b release-<version> develop
-# change version numbers: app/models/settings.rb
+# change version numbers: settings.rb
 bundle outdated
 # update gems, commit if changed
 git commit -am "increment version to <version>"
@@ -78,7 +78,7 @@ git push --follow-tags
 ```
 git checkout develop
 git checkout -b release-<version> develop
-# change version numbers: app/models/settings.rb
+# change version numbers: settings.rb
 # update CHANGELOG.md
 git commit -am "increment version to <version>"
 git checkout master

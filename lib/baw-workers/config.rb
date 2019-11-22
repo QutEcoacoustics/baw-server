@@ -35,7 +35,7 @@ module BawWorkers
         fail BawAudioTools::Exceptions::FileNotFoundError, "Settings file could not be found: '#{opts[:settings_file]}'." unless File.file?(opts[:settings_file])
 
         settings_file = File.expand_path(opts[:settings_file])
-        settings_namespace = 'settings'
+        settings_namespace = BawApp.env
 
         BawWorkers::Settings.configure(settings_file, settings_namespace)
 

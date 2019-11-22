@@ -1,6 +1,6 @@
 require 'rake'
 require 'resque/tasks'
-require 'baw-workers'
+require_relative '../baw-workers'
 
 namespace :baw do
 

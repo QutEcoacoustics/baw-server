@@ -35,7 +35,7 @@ module AWB
     # enable garbage collection profiling (reported in New Relic, which we no longer use)
     #GC::Profiler.enable
 
-    require "#{File.dirname(__FILE__)}/../app/models/settings"
+    require "#{File.dirname(__FILE__)}/settings"
 
     # validate server Settings file
     Settings.validate

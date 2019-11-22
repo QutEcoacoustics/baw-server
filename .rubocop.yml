@@ -14,6 +14,8 @@ AllCops:
 #   Enabled: true
 
 # Customized options
+Layout/EndOfLine:
+  EnforcedStyle: lf
 Layout/EmptyLinesAroundBlockBody:
   Enabled: false
 Metrics/BlockLength:
@@ -26,7 +28,9 @@ Metrics/LineLength:
 Style/BlockDelimiters:
   EnforcedStyle: semantic
 Style/BracesAroundHashParameters:
-  EnforcedStyle: braces
+  EnforcedStyle: context_dependent
+Layout/LeadingCommentSpace:
+  Enabled: false
 Style/SymbolArray:
   EnforcedStyle: brackets
 Style/WordArray:

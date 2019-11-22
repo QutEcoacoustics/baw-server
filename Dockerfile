@@ -53,37 +53,34 @@ USER ${app_user}
 # change the working directory to the user's home directory
 WORKDIR /home/${app_user}/${app_name}
 
-# Add the Rails app
-COPY --chown=${app_user} ./ /home/${app_user}/${app_name}
+# add base dependency files for bundle install (so we don't invalidate docker cache)
+COPY Gemfile Gemfile.lock /home/${app_user}/${app_name}/
 
 VOLUME [ "/data" ]
-ENTRYPOINT [ "bundle", "exec" ]
-CMD [ "passenger", "start" ]
 
 #
 # For development
 #
 FROM baw-server-core AS baw-server-dev
 
+ARG app_name=baw-server
+ARG app_user=baw_web
 ENV RAILS_ENV=development
 EXPOSE 3000
 
 # install deps
-RUN cd baw-audio-tools \
-    # install baw-audio-tools
-    && bundle install --binstubs --system \
-    && cd ../baw-workers\
-    # install baw-workers
-    && bundle install --binstubs --system \
-    && cd .. \
+RUN \
     # install baw-server
-    && bundle install --binstubs --system \
-    # precompile passenger standalone
-    && bundle exec passenger start --runtime-check-only \
+    bundle install --binstubs --system \
     # install docs for dev work
     && solargraph download-core \
     && solargraph bundle
 
+# Add the Rails app
+COPY --chown=${app_user} ./ /home/${app_user}/${app_name}
+
+# precompile passenger standalone
+#RUN bundle exec passenger start --runtime-check-only
 ENTRYPOINT /home/${app_user}/${app_name}/provision/entrypoint.sh
 CMD []
 
@@ -92,22 +89,25 @@ CMD []
 #
 FROM baw-server-core AS baw-server
 
+ARG app_name=baw-server
+ARG app_user=baw_web
+EXPOSE 80
+
+# install deps
+# skip installing gem documentation
+RUN echo 'gem: --no-rdoc --no-ri' >> "$HOME/.gemrc" \
+  # install baw-server
+  && bundle install --binstubs --system --without 'development' 'test'
+
+# Add the Rails app
+COPY --chown=${app_user} ./ /home/${app_user}/${app_name}
+
 # copy the passenger production config
 # use a mount/volume to override this file for other environments
 COPY ./provision/Passengerfile.production.json /home/${app_user}/${app_name}/Passengerfile.json
 
-EXPOSE 80
+# precompile passenger standalone
+RUN bundle exec passenger start --runtime-check-only
 
-# install deps
-RUN cd baw-audio-tools \
-    # install baw-audio-tools
-    && bundle install --binstubs --system --without 'development' 'test' \
-    && cd ../baw-workers\
-    # install baw-workers
-    && bundle install --binstubs --system --without 'development' 'test' \
-    && cd .. \
-    # install baw-server
-    && bundle install --binstubs --system --without 'development' 'test' \
-    # precompile passenger standalone
-    && bundle exec passenger start --runtime-check-only
-
+ENTRYPOINT [ "bundle", "exec" ]
+CMD [ "passenger", "start" ]

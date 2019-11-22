@@ -19,7 +19,7 @@ services:
       context: .
       target: baw-server-dev
     command: >-
-      ../bin/bundle exec rake baw:worker:run['/home/baw_web/baw-server/baw-workers/lib/settings/settings.default.yml']
+      bundle exec rake baw:worker:run['/home/baw_web/baw-server/config/settings/default.yml']
     entrypoint: []
     networks:
       - baw_docker_network
@@ -36,7 +36,7 @@ services:
         source: baw_docker_shared_storage
         target: /home/baw_web/baw-server/tmp
 
-    working_dir: /home/baw_web/baw-server/baw-workers
+    working_dir: /home/baw_web/baw-server
     depends_on:
       - db
       - redis

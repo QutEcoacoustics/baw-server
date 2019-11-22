@@ -4,7 +4,6 @@ module BawWorkers
   # Provides access to settings from yaml file.
   class Settings < Settingslogic
     class << self
-
       # Configure the settings file and namespace.
       # @param [String] settings_file
       # @param [String] namespace
@@ -24,7 +23,6 @@ module BawWorkers
         env_settings = BawWorkers::Settings.new(settings_file, namespace)
         instance.deep_merge!(env_settings)
       end
-
     end
   end
 end

@@ -20,23 +20,43 @@ defaults: &defaults
      - !ruby/regexp '/\A(https?:\/\/)?127\.0\.0\.1(:\d+)?\z/'
      - !ruby/regexp '/\A(https?:\/\/)?192\.168\.0\.\d{1,3}(:\d+)?\z/'
   resque:
-    connection:  *redis_config
+    # queues_to_process is only needed when running a Resque worker to
+    # specify the Resque queues to watch.
+    queues_to_process:
+      - analysis_default
+      - maintenance_default
+      - harvest_default
+      - media_default
+      - mirror_default
+    connection: *redis_config
     namespace: resque
     log_level: 'Logger::INFO'
+    polling_interval_seconds: 0.5
+    # specify background_pid_file to have a Resque worker run in the background
+    # otherwise it will run in the foreground
+    # We always want a worker to run in the foreground in a container
+    background_pid_file: ~
+    # output and error log files are only used when a Resque worker is running
+    # in the background
+    output_log_file: ../log/program_stdout.log
+    error_log_file: ../log/program_stderr.log
+  # these are the available background jobs that can be enqueued
   actions:
     analysis:
       queue: analysis_default
     harvest:
-      # name of queue to append jobs onto
       queue: harvest_default
       dry_run: false
       to_do_path: ./tmp/_harvester_to_do_path
       config_file_name: harvest.yml
       progressive_upload_directory: ./tmp/_progressive-upload/
+      # top level directory for mirroring harvested files, used by dequeue workers only
+      copy_base_path: ./tmp/custom_temp_dir/temp/copy_base_path
     media:
-      # name of queue to append jobs onto
       queue: media_default
       dry_run: false
+    mirror:
+      queue: mirror_default
   media_request_processor: resque # options are local or resque (now only ever use resque with containers)
   db: &db
     ######################################################
@@ -69,23 +89,39 @@ defaults: &defaults
   ##secret_token: some long secret token - at least 30 chars, all random
   ##secret_key_base: some long secret token - at least 30 chars, all random
   paths:
-    image_magick_dir: <%= Rails.root %>/tmp/_image-magick
+    image_magick_dir: <%= BawApp.root %>/tmp/_image-magick
     original_audios:
-      - <%= Rails.root %>/tmp/_<%= Rails.env %>_original_audio
+      - <%= BawApp.root %>/tmp/_<%= BawApp.env %>_original_audio
     cached_spectrograms:
-      - <%= Rails.root %>/tmp/_<%= Rails.env %>_cached_spectrogram
+      - <%= BawApp.root %>/tmp/_<%= BawApp.env %>_cached_spectrogram
     cached_audios:
-      - <%= Rails.root %>/tmp/_<%= Rails.env %>_cached_audio
+      - <%= BawApp.root %>/tmp/_<%= BawApp.env %>_cached_audio
     analysis_scripts:
-      - <%= Rails.root %>/tmp/_<%= Rails.env %>_analysis_script
+      - <%= BawApp.root %>/tmp/_<%= BawApp.env %>_analysis_script
     cached_datasets:
-      - <%= Rails.root %>/tmp/_<%= Rails.env %>_cached_dataset
+      - <%= BawApp.root %>/tmp/_<%= BawApp.env %>_cached_dataset
     cached_analysis_jobs:
-      - <%= Rails.root %>/tmp/_<%= Rails.env %>_analysis_results
-    worker_log_file: <%= Rails.root %>/log/worker.<%= Rails.env %>.log
-    mailer_log_file: <%= Rails.root %>/log/mailer.<%= Rails.env %>.log
-    audio_tools_log_file: <%= Rails.root %>/log/audio_tools.<%= Rails.env %>.log
-    temp_dir: <%= Rails.root %>/tmp
+      - <%= BawApp.root %>/tmp/_<%= BawApp.env %>_analysis_results
+    worker_log_file: <%= BawApp.root %>/log/worker.<%= BawApp.env %>.log
+    mailer_log_file: <%= BawApp.root %>/log/mailer.<%= BawApp.env %>.log
+    audio_tools_log_file: <%= BawApp.root %>/log/audio_tools.<%= BawApp.env %>.log
+    temp_dir: <%= BawApp.root %>/tmp
+    programs_dir: ../tmp/programs
+  # used by workers to contact a web-server
+  endpoints:
+    use_ssl: true
+    login: /security
+    audio_recording: /audio_recordings/:id
+    audio_recording_create: /projects/:project_id/sites/:site_id/audio_recordings
+    audio_recording_uploader: /projects/:project_id/sites/:site_id/audio_recordings/check_uploader/:uploader_id
+    audio_recording_update_status: /audio_recordings/:id/update_status
+    analysis_jobs_item_update_status: /analysis_jobs/:analysis_job_id/audio_recordings/:audio_recording_id
+  # used by workers to contact a web-server
+  api:
+    host: web
+    port: 3000
+    user: address@example.com
+    password: password
   harvester:
     email: address+harvester@example.com
     password: password
@@ -94,8 +130,8 @@ defaults: &defaults
     password: password
   mailer:
     # smtp gets set directly to config.action_mailer.smtp_settings in File environments/{environment_name}.rb
-    # See http://api.rubyonrails.org/classes/ActionMailer/Base.html#class-ActionMailer::Base-label-Configuration+options
-    # see http://guides.rubyonrails.org/action_mailer_basics.html#action-mailer-configuration
+    # See http://api.rubyonBawApp.org/classes/ActionMailer/Base.html#class-ActionMailer::Base-label-Configuration+options
+    # see http://guides.rubyonBawApp.org/action_mailer_basics.html#action-mailer-configuration
     smtp:
       address: localhost
       port: 25
@@ -122,6 +158,7 @@ defaults: &defaults
     window: 512
     window_function: Hamming
     colour: 'g'
+    ppms: 0.045
     max_duration_seconds: 180.0
     min_duration_seconds: 0.5
   available_formats:
@@ -133,6 +170,7 @@ defaults: &defaults
       - ogg
       - flac
       - wav
+      - wac
     image:
       - png
   audio_tools:
@@ -143,6 +181,7 @@ defaults: &defaults
     wavpack_executable: wvunpack
     shntool_executable: shntool
     wav2png_executable: wav2png
+    wac2wav_executable: wac2wavcmd
     imagemagick_convert_executable: convert
     imagemagick_identify_executable: identify
     max_duration_seconds: 300.0

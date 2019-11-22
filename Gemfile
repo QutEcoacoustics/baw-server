@@ -10,12 +10,15 @@ source 'https://rubygems.org'
 # Gems required in all environments and all platforms
 # ====================================================
 
+# For autoloading Gems. Zeitwerk is the default in Rails 6.
+gem 'zeitwerk', require: false
+
 # RAILS
 # -------------------------------------
 
+gem 'responders', '~> 2.3.0'
 gem 'rails', '~> 4.2.4'
 gem 'rack-cors', '~> 0.4.0', require: 'rack/cors'
-gem 'responders', '~> 2.3.0'
 
 # RAILS 3 compatibility gems
 # -------------------------------------
@@ -64,7 +67,7 @@ gem 'recaptcha', '~> 5.1.0', require: 'recaptcha/rails'
 
 # for proper timezone support
 gem 'tzinfo', '~> 1.2.2'
-gem 'tzinfo-data', '~> 1.2016'
+gem 'tzinfo-data'
 
 # for tying inflections into I18n
 gem 'i18n-inflector-rails', '~>1.0'
@@ -113,7 +116,6 @@ gem 'uuidtools', '~> 2.1.5'
 # (search for ':deleted_at' to find the relevant places)
 gem 'acts_as_paranoid', git: 'https://github.com/ActsAsParanoid/acts_as_paranoid.git', branch: :master, ref: 'c2db19554ddaedcac0a2b8d6a0563dea83c972c5'
 
-
 # for state machines
 gem 'aasm', '~>4.12.0'
 
@@ -129,22 +131,22 @@ gem 'exception_notification', '~> 4.2.0'
 # Documentation & UI
 # -------------------------------------
 # these gems are required here to serve /doc url
-gem 'rspec_api_documentation', '~> 4.8.0'
 gem 'raddocs', '~> 1.0.0'
+gem 'rspec_api_documentation', '~> 4.8.0'
 
-# MEDIA
+# MEDIA?
 # -------------------------------------
-# set to a specific commit when releasing to master branch
-gem 'baw-audio-tools', path: 'baw-audio-tools'
 gem 'rack-rewrite', '~> 1.5.1'
 
 # ASYNC JOBS
 # ------------------------------------
-gem 'resque', '~> 1.25.2'
+# Resque is hard locked to 1.25.2 because 1.26 has a breaking change with the loggers. When below lands when can bump version.
+# https://github.com/resque/resque/commit/eaaac2acc209456cdd0dd794d2d3714968cf76e4
+gem 'redis', '~> 4.1'
+gem 'resque', '1.25.2'
 gem 'resque-job-stats', git: 'https://github.com/echannel/resque-job-stats.git', branch: :master, ref: '8932c036ae'
 gem 'resque-status', '~> 0.5.0'
-# set to a specific commit when releasing to master branch
-gem 'baw-workers', path: 'baw-workers'
+gem 'resque_solo', '~> 0.5.0'
 
 # Other Gems
 # This was needed at some point to boot rails. I think we can remove this dependency later after some gem upgrades
@@ -182,13 +184,12 @@ group :development, :test do
   # bundle exec rake doc:rails generates the API under doc/api.
   gem 'sdoc', '~> 0.4.0'
 
-  gem 'notiffany', '~> 0.1.0'
   gem 'guard', '~> 2.14.0'
   gem 'guard-rspec', '~> 4.7.0'
   gem 'guard-yard', '~> 2.1.4', require: false
-  gem 'rubocop', '~> 0.74.0', require: false
   gem 'haml_lint', require: false
-
+  gem 'notiffany', '~> 0.1.0'
+  gem 'rubocop', '~> 0.74.0', require: false
   gem 'zonebie'
 
   # for cleaning up Rails apps
