@@ -192,7 +192,10 @@ class Ability
     end
 
     # actions any logged in user can access
-    can [:create, :new_access_request, :submit_access_request], Project unless is_guest
+    can [:new_access_request, :submit_access_request], Project unless is_guest
+
+    # Restricted to Admin Temporarily (admin has implicit access)
+    #can [:create], Project
 
     # available to any user, including guest
     can [:index, :filter, :new], Project
@@ -221,7 +224,7 @@ class Ability
     end
 
   end
-  
+
   def to_site(user, is_guest)
     # only admin can :destroy, :orphans
 
