@@ -86,46 +86,119 @@ resource 'Projects' do
   ################################
   # CREATE
   ################################
-  post '/projects' do
-    body_params
-    let(:raw_post) { {'project' => post_attributes}.to_json }
-    let(:authentication_token) { admin_token }
-    standard_request_options(:post, 'CREATE (as admin)', :created, {expected_json_path: 'data/name'})
+
+
+  describe 'any_user_can_create_projects' do
+
+    original_value = Settings.permissions.any_user_can_create_projects
+
+    before(:all) do
+      Settings.permissions['any_user_can_create_projects'] = true
+    end
+
+    after(:all) do
+      Settings.permissions['any_user_can_create_projects'] = original_value
+    end
+
+    post '/projects' do
+      body_params
+      let(:raw_post) { {'project' => post_attributes}.to_json }
+      let(:authentication_token) { admin_token }
+      standard_request_options(:post, 'CREATE (as admin)', :created, {expected_json_path: 'data/name'})
+    end
+
+    post '/projects' do
+      body_params
+      let(:raw_post) { {'project' => post_attributes}.to_json }
+      let(:authentication_token) { writer_token }
+      standard_request_options(:post, 'CREATE (as writer)', :created, {expected_json_path: 'data/name'})
+    end
+
+    post '/projects' do
+      body_params
+      let(:raw_post) { {'project' => post_attributes}.to_json }
+      let(:authentication_token) { reader_token }
+      standard_request_options(:post, 'CREATE (as reader)', :created, {expected_json_path: 'data/name'})
+    end
+
+    post '/projects' do
+      body_params
+      let(:raw_post) { {'project' => post_attributes}.to_json }
+      let(:authentication_token) { no_access_token }
+      standard_request_options(:post, 'CREATE (as no access user)', :created, {expected_json_path: 'data/name'})
+    end
+
+    post '/projects' do
+      body_params
+      let(:raw_post) { {'project' => post_attributes}.to_json }
+      let(:authentication_token) { invalid_token }
+      standard_request_options(:post, 'CREATE (invalid token)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
+    end
+
+    post '/projects' do
+      body_params
+      let(:raw_post) { {'project' => post_attributes}.to_json }
+      standard_request_options(:post, 'CREATE (as anonymous user)', :unauthorized, {remove_auth: true, expected_json_path: get_json_error_path(:sign_up)})
+    end
+
   end
 
-  post '/projects' do
-    body_params
-    let(:raw_post) { {'project' => post_attributes}.to_json }
-    let(:authentication_token) { writer_token }
-    standard_request_options(:post, 'CREATE (as writer)', :created, {expected_json_path: 'data/name'})
+
+  describe 'NOT any_user_can_create_projects' do
+
+    original_value = Settings.permissions.any_user_can_create_projects
+
+    before(:all) do
+      Settings.permissions['any_user_can_create_projects'] = false
+    end
+
+    after(:all) do
+      Settings.permissions['any_user_can_create_projects'] = original_value
+    end
+
+    post '/projects' do
+      body_params
+      let(:raw_post) { {'project' => post_attributes}.to_json }
+      let(:authentication_token) { admin_token }
+      standard_request_options(:post, 'CREATE (as admin)', :created, {expected_json_path: 'data/name'})
+    end
+
+    post '/projects' do
+      body_params
+      let(:raw_post) { {'project' => post_attributes}.to_json }
+      let(:authentication_token) { writer_token }
+      standard_request_options(:post, 'CREATE (as anonymous user) ', :unauthorized, {remove_auth: true, expected_json_path: get_json_error_path(:sign_up)})
+    end
+
+    post '/projects' do
+      body_params
+      let(:raw_post) { {'project' => post_attributes}.to_json }
+      let(:authentication_token) { reader_token }
+      standard_request_options(:post, 'CREATE (as anonymous user)', :unauthorized, {remove_auth: true, expected_json_path: get_json_error_path(:sign_up)})
+    end
+
+    post '/projects' do
+      body_params
+      let(:raw_post) { {'project' => post_attributes}.to_json }
+      let(:authentication_token) { no_access_token }
+      standard_request_options(:post, 'CREATE (as anonymous user)', :unauthorized, {remove_auth: true, expected_json_path: get_json_error_path(:sign_up)})
+    end
+
+    post '/projects' do
+      body_params
+      let(:raw_post) { {'project' => post_attributes}.to_json }
+      let(:authentication_token) { invalid_token }
+      standard_request_options(:post, 'CREATE (invalid token)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
+    end
+
+    post '/projects' do
+      body_params
+      let(:raw_post) { {'project' => post_attributes}.to_json }
+      standard_request_options(:post, 'CREATE (as anonymous user)', :unauthorized, {remove_auth: true, expected_json_path: get_json_error_path(:sign_up)})
+    end
+
   end
 
-  post '/projects' do
-    body_params
-    let(:raw_post) { {'project' => post_attributes}.to_json }
-    let(:authentication_token) { reader_token }
-    standard_request_options(:post, 'CREATE (as reader)', :created, {expected_json_path: 'data/name'})
-  end
-
-  post '/projects' do
-    body_params
-    let(:raw_post) { {'project' => post_attributes}.to_json }
-    let(:authentication_token) { no_access_token }
-    standard_request_options(:post, 'CREATE (as no access user)', :created, {expected_json_path: 'data/name'})
-  end
-
-  post '/projects' do
-    body_params
-    let(:raw_post) { {'project' => post_attributes}.to_json }
-    let(:authentication_token) { invalid_token }
-    standard_request_options(:post, 'CREATE (invalid token)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
-  end
-
-  post '/projects' do
-    body_params
-    let(:raw_post) { {'project' => post_attributes}.to_json }
-    standard_request_options(:post, 'CREATE (as anonymous user)', :unauthorized, {remove_auth: true, expected_json_path: get_json_error_path(:sign_up)})
-  end
 
   ################################
   # NEW

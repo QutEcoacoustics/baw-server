@@ -194,8 +194,8 @@ class Ability
     # actions any logged in user can access
     can [:new_access_request, :submit_access_request], Project unless is_guest
 
-    # Restricted to Admin Temporarily (admin has implicit access)
-    #can [:create], Project
+    # Restricted to Admin according to settings (admin has implicit access)
+    can [:create], Project unless is_guest or !Settings.permissions.any_user_can_create_projects
 
     # available to any user, including guest
     can [:index, :filter, :new], Project

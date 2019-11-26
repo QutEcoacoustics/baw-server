@@ -175,6 +175,8 @@ defaults: &defaults
     proxy:
   google_maps:
     api_key: your google maps api key
+  permissions:
+    any_user_can_create_projects: true
 
 development:
   <<: *defaults

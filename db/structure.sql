@@ -1,10 +1,9 @@
-
 --
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 12.0 (Debian 12.0-2.pgdg100+1)
--- Dumped by pg_dump version 12.0 (Debian 12.0-2.pgdg100+1)
+-- Dumped from database version 12.1 (Debian 12.1-1.pgdg100+1)
+-- Dumped by pg_dump version 12.1 (Debian 12.1-1.pgdg100+1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -19,7 +18,7 @@ SET row_security = off;
 
 SET default_tablespace = '';
 
---SET default_table_access_method = heap;
+SET default_table_access_method = heap;
 
 --
 -- Name: analysis_jobs; Type: TABLE; Schema: public; Owner: -
