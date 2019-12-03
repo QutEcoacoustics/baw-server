@@ -71,7 +71,7 @@ EXPOSE 3000
 # install deps
 RUN \
     # install baw-server
-    bundle install --binstubs --system \
+    bundle install --system \
     # install docs for dev work
     && solargraph download-core \
     && solargraph bundle
@@ -97,7 +97,7 @@ EXPOSE 80
 # skip installing gem documentation
 RUN echo 'gem: --no-rdoc --no-ri' >> "$HOME/.gemrc" \
   # install baw-server
-  && bundle install --binstubs --system --without 'development' 'test'
+  && bundle install --system --without 'development' 'test'
 
 # Add the Rails app
 COPY --chown=${app_user} ./ /home/${app_user}/${app_name}

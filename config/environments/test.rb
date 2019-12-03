@@ -68,13 +68,5 @@ Rails.application.configure do
   end
 
   config.after_initialize do
-    # detect n+1 queries
-    Bullet.enable = false
-    Bullet.bullet_logger = false
-    Bullet.console = false
-    Bullet.alert = false
-    Bullet.rails_logger = false
-    Bullet.add_footer = false
-    Bullet.raise = false
   end
 end

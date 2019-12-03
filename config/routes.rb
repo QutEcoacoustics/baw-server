@@ -343,7 +343,8 @@ Rails.application.routes.draw do
   end
 
   # provide access to API documentation
-  mount Raddocs::App => '/doc'
+  # NOTE: disabled because broken
+  #mount Raddocs::App => '/doc'
 
   # enable CORS preflight requests
   match '*requested_route', to: 'public#cors_preflight', via: :options

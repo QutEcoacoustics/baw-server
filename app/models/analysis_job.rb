@@ -4,7 +4,7 @@ class AnalysisJob < ActiveRecord::Base
 
   # allow a state machine to work with this class
   include AASM
-  include AASMHelpers
+  include AasmHelpers
 
   OVERALL_PROGRESS_REFRESH_SECONDS = 30.0
 

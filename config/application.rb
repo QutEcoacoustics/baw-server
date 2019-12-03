@@ -8,7 +8,8 @@ require "#{File.dirname(__FILE__)}/../lib/patches/random"
 
 # Require the gems listed in Gemfile, including any gems
 # you've limited to :test, :development, or :production.
-Bundler.require(*Rails.groups)
+Bundler.setup(*Rails.groups, :default, :server)
+Bundler.require(*Rails.groups, :server)
 
 module AWB
   class Application < Rails::Application
@@ -16,20 +17,28 @@ module AWB
     # Application configuration should go into files in config/initializers
     # -- all .rb files in that directory are automatically loaded.
 
-    # Custom directories with classes and modules you want to be autoloadable.
-    config.autoload_paths << config.root.join('lib', 'validators')
-
-    # add /lib/modules and everything underneath it.
-    config.autoload_paths << config.root.join('lib', 'modules')
+    # TODO: remove when upgrading to rails 6
+    require 'zeitwerk'
+    loader = Zeitwerk::Loader.new
+    loader.tag = 'rails'
+    loader.ignore(config.root.join('lib', 'tasks'))
+    loader.push_dir(config.root.join('lib', 'gems'))
+    loader.push_dir(config.root.join('lib', 'modules'))
+    loader.push_dir(config.root.join('lib', 'patches'))
+    loader.push_dir(config.root.join('lib', 'validators'))
+    loader.tag = 'rails'
+    #loader.log! # debug only!
+    loader.setup
+    # TODO: but add this back in
+    #config.autoload_paths << config.root.join('lib')
 
     # add patches
-
     # autoload was not working for the mime type patch so we just do a regular ol require
     #config.autoload_paths << config.root.join('lib', 'patches','mime_type.rb')
-    require (config.root.join('lib', 'patches', 'mime_type.rb'))
+    require (config.root.join('lib', 'patches', 'mime', 'type.rb'))
 
-    config.autoload_paths << config.root.join('lib', 'patches','paperclip_content_matcher.rb')
-    config.autoload_paths << config.root.join('lib', 'patches','rspec_api_documentation.rb')
+    #config.autoload_paths << config.root.join('lib', 'patches','paperclip_content_matcher.rb')
+    #config.autoload_paths << config.root.join('lib', 'patches','rspec_api_documentation.rb')
 
     # Custom setup
     # enable garbage collection profiling (reported in New Relic, which we no longer use)
@@ -37,7 +46,6 @@ module AWB
 
     require "#{File.dirname(__FILE__)}/settings"
 
-    # validate server Settings file
     Settings.validate
 
     # resque setup
@@ -140,9 +148,6 @@ module AWB
 
     ActionView::Base.sanitized_allowed_tags.merge(['table', 'tr', 'td', 'caption', 'thead', 'th', 'tfoot', 'tbody', 'colgroup'])
 
-    # for generating documentation from tests
-    Raddocs.configuration.docs_dir = "doc/api"
-
     # middleware to rewrite angular urls
     # insert at the start of the Rack stack.
     config.middleware.insert_before 0, Rack::Rewrite do
@@ -200,5 +205,17 @@ module AWB
       end
     end
 
+    # Sanity check: test dependencies should not be loadable
+    unless Rails.env.test?
+      def module_exists?(name, base = self.class)
+        base.const_defined?(name) && base.const_get(name).instance_of?(::Module)
+      end
+
+      test_deps = [ 'RSpec::Core::DSL', 'RSpec::Core::Version' ]
+      first_successful_require = test_deps.find { |x| module_exists?(x) }
+      if first_successful_require
+        throw "Test dependencies available in non-test environment. `#{first_successful_require}` should not be a constant`"
+      end
+    end
   end
 end

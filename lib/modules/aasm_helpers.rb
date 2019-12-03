@@ -1,5 +1,5 @@
 # TODO: I'm pretty sure there is a better way to do this?
-module AASMHelpers
+module AasmHelpers
 
   def may_transition_to_state(state)
     events = events_for_transition_to_state(state)

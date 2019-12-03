@@ -1,5 +1,4 @@
 require 'settingslogic'
-require 'baw-workers/settings'
 
 # Using SettingsLogic, see https://github.com/binarylogic/settingslogic
 # settings loaded in model/settings.rb

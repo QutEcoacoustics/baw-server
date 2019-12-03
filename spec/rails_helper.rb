@@ -3,13 +3,14 @@
 # attempting to prevent trivial mistakes
 #ENV['RAILS_ENV'] ||= 'test'
 if ENV['RAILS_ENV'] != 'test'
-  puts %{
-***
-Tests must be run in the test envrionment.
-The current envrionment `#{ENV['RAILS_ENV']}` has been changed to `test`.
-See rails_helper.rb to disable this check
-***
-}
+  puts \
+    <<~MESSAGE
+      ***
+      Tests must be run in the test envrionment.
+      The current envrionment `#{ENV['RAILS_ENV']}` has been changed to `test`.
+      See rails_helper.rb to disable this check
+      ***
+    MESSAGE
   ENV['RAILS_ENV'] = 'test'
 end
 
@@ -141,11 +142,11 @@ RSpec.configure do |config|
   config.include Paperclip::Shoulda::Matchers
   config.include FactoryGirl::Syntax::Methods
 
-  require File.join(File.dirname(File.expand_path(__FILE__)), 'lib', 'creation.rb')
+  require_relative 'helpers/creation'
   config.include Creation::Example
   config.extend Creation::ExampleGroup
 
-  require File.join(File.dirname(File.expand_path(__FILE__)), 'lib', 'citizen_science_creation.rb')
+  require_relative 'helpers/citizen_science_creation.rb'
   config.extend CitizenScienceCreation
 
   require 'enumerize/integrations/rspec'
@@ -210,8 +211,6 @@ RSpec.configure do |config|
     DatabaseCleaner.start
     example_description = example.description
     Rails::logger.info "\n\n#{example_description}\n#{'-' * (example_description.length)}"
-
-    #Bullet.start_request if Bullet.enable?
   end
 
   config.after(:each) do
@@ -220,9 +219,6 @@ RSpec.configure do |config|
     DatabaseCleaner.clean
 
     Rails.application.load_seed if is_truncating
-
-    #Bullet.perform_out_of_channel_notifications if Bullet.enable? && Bullet.notification?
-    #Bullet.end_request if Bullet.enable?
 
     # https://github.com/plataformatec/devise/wiki/How-To:-Test-with-Capybara
     # reset warden after each test

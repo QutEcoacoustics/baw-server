@@ -1,6 +1,8 @@
-require 'spec_helper'
+#require 'spec_helper'
 
 describe 'rake tasks' do
+  require 'helpers/shared_test_helpers'
+
   include_context 'shared_test_helpers'
 
   context 'rake task' do
