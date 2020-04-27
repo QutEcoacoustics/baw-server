@@ -29,10 +29,11 @@ module BawWorkers
       # @return [Hash] configuration result
       def run(opts)
         if !opts.include?(:settings_file) || opts[:settings_file].blank?
-          opts[:settings_file] = File.join(File.dirname(__FILE__), '..', 'settings', 'settings.default.yml')
+          opts[:settings_file] =
+            File.join(File.dirname(__FILE__), '..', '..', '..', 'config', 'settings', 'default.yml')
         end
 
-        fail BawAudioTools::Exceptions::FileNotFoundError, "Settings file could not be found: '#{opts[:settings_file]}'." unless File.file?(opts[:settings_file])
+        raise BawAudioTools::Exceptions::FileNotFoundError, "Settings file could not be found: '#{opts[:settings_file]}'." unless File.file?(opts[:settings_file])
 
         settings_file = File.expand_path(opts[:settings_file])
         settings_namespace = BawApp.env

@@ -19,7 +19,7 @@ services:
       context: .
       target: baw-server-dev
     command: >-
-      bundle exec rake baw:worker:run['/home/baw_web/baw-server/config/settings/default.yml']
+      baw-workers baw:worker:run
     entrypoint: []
     networks:
       - baw_docker_network

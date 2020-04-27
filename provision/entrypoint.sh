@@ -8,7 +8,7 @@ set -e
 
 echo -e "\n\n== Checking bundler install ==\n\n"
 
-bundle check || bundle install --system --binstubs
+bundle check || bundle install --system
 echo "`pwd`"
 $(dirname "$0")/migrate.sh
 

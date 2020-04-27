@@ -146,6 +146,7 @@ end
 
 group :workers do
   gem 'activesupport'
+  gem 'actionmailer'
 end
 
 group :workers, :server do

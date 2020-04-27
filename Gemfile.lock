@@ -480,6 +480,7 @@ PLATFORMS
 
 DEPENDENCIES
   aasm (~> 4.12.0)
+  actionmailer
   activesupport
   activesupport-json_encoder!
   acts_as_paranoid!

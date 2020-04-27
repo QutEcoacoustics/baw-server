@@ -54,8 +54,5 @@ external_modules.log
 # we do not use vendor anymore with docker
 vendor/bundle/*
 
-# we'll rely on the container to always genrate bin stubs for us
-bin/*
-
 # we don't need to commit test_prof reports
 /test_prof

@@ -10,13 +10,13 @@ COPY ./provision/install_audio_tools.sh ./provision/install_postgresql_client.sh
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-    # - we'd like to remove git dependency but we have multiple git based dependencies
+    # - git: we'd like to remove git dependency but we have multiple git based dependencies
     # in our gem files
     # - curl is needed for passenger
     # - nano not needed for prod
     # - iproute2 install ip and basic network debugging tools
     # - gnupg is for validating apt public keys
-    ca-certificates curl gnupg nano git iproute2 \
+    ca-certificates git curl gnupg nano iproute2 \
     # sqlite
     sqlite3 libsqlite3-dev libgmp-dev \
     # the following are for nokogiri and the like

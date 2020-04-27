@@ -2,10 +2,20 @@
     "cSpell.words": [
         "Passengerfile",
         "Resque",
+        "binstub",
+        "cors",
         "entrypoint",
+        "ffmpeg",
+        "ffprobe",
+        "imagemagick",
+        "organisation",
         "postgres",
         "postgresql",
-        "qutecoacoustics"
+        "qutecoacoustics",
+        "recaptcha",
+        "shntool",
+        "wavpack",
+        "wvunpack"
     ]
 
 }

@@ -14,7 +14,11 @@ if ENV['RAILS_ENV'] != 'test'
   ENV['RAILS_ENV'] = 'test'
 end
 
-abort "You must run tests using 'bundle exec ...'" unless ENV['BUNDLE_BIN_PATH'] || ENV['BUNDLE_GEMFILE']
+#abort "You must run tests using 'bundle exec ...'" unless ENV['BUNDLE_BIN_PATH'] || ENV['BUNDLE_GEMFILE']
+
+require 'bundler' # Set up gems listed in the Gemfile.
+Bundler.setup(:test)
+Bundler.require(:test)
 
 require 'test-prof'
 TestProf.configure do |config|

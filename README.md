@@ -74,23 +74,41 @@ Start by running, on your **host** machine:
 
     $ docker-compose up
 
+If you're using VSCode's remote container development features you'll need to
+start the web server.
+
+### Web server
+
+For the following commands:
+
+- if you're using VSCode's remote container feature you can run these commands
+  in the built in terminal
+- if you're entering these commands from your host
+  - cd to this directory
+  - prefix commands with `docker-compose web exec` to run the commands once off
+  - if the service isn't started, use `docker-compose web start` to start it
+  - use `docker-compose web run xxx` to run the web service and then run command `xxx`
+  - `docker-compose exec web bash` to enter an interactive session
+
 Common tasks that you may need:
 
-- `docker-compose exec web bundle install`
-- `docker-compose run web bundle exec rails console`
-- `docker-compose exec web bundle exec rake db:create`
-- `docker-compose exec web bundle exec rake db:migrate`
+- `bundle install` to install a new gem
+- `rake db:xxx` to manipulate database
+    - `rake db:setup` - does all of the below
+    - `rake db:create` - create database
+    - `rake db:migrate` - run migrations
+    - `rake db:seed` - seed the database with default data
+- `rails console` to use the rails console
+- `rails start` to run a web server
+
+Note: the binstubs in the `bin` folder automatically load bundler. You should not
+need to use `bundle exec`.
+
+Docker commands:
+
 - `docker-compose stop` will stop the containers
 - `docker-compose stop web` stop web container so you can do something else
-- `docker-compose exec bundle exec passenger stop`
 - `docker-compose exec bundle exec passenger start` - the default action for `docker-compose up`
-- `docker-compose exec bundle exec rails start --bindingIP=0.0.0.0`. If you use `rails server`, make sure you bind to anyhost
-  otherwise connections outside the container won't work
-- `docker-compose run web bash` - like `up` but starts the web service without
-    running the default `passenger start` command
-
-Use `exec` to run a command while the `web` service is running, and `run` to
-start the `web` service and then run the command
 
 When running the server in `development` or `test` modes, these configuration
 files will be used:
@@ -100,10 +118,18 @@ files will be used:
 
 They are based on `/config/settings/default.yml`.
 
-### Debugging workers
+### Workers
 
+- run commands on the worker container
+    - e.g. `docker-compose workers exec ...`
+- list worker commands: `baw-workers -T` or `baw-workers` (using the manually maintained binstub)
+- run a new worker: `baw-workers baw:worker:run`
+
+Debugging:
+```
 docker-compose run --service-ports    --use-aliases  workers bash
 ../bin/bundle exec rdebug-ide --host 0.0.0.0 --port 1234 ../bin/rake baw:worker:run['/home/baw_web/baw-server/baw-workers/lib/settings/settings.default.yml']
+```
 
 ### Tests
 The tests are run using Guard, either:
@@ -146,17 +172,26 @@ These commands should be executed automatically but are listed because they are 
 Create production settings file `config/settings/production.yml` based on `config/settings/default.yml`.
 Create staging settings file `config/settings/staging.yml` based on `config/settings/default.yml`.
 
-We deploy using Ansible (and in particular [Ansistrano](http://ansistrano.com/)).
-Our Ansible playbooks are currently private but we have plans to release them.
+We deploy using Ansible.
 
 If you want to use background workers, you'll need to set up [Redis](http://redis.io/).
+A basic redis setup is included with the docker-compose file.
 
-## Working with RubyMine
+## Architecture
 
-If using a remote setup (i.e. vagrant) make sure you set up a
-[remote Ruby SDK using the RVM instructions](https://www.jetbrains.com/help/ruby/2016.1/configuring-remote-ruby-interpreters.html?origin=old_help).
+- Two main parts
+  - web server (Rails)
+  - job workers (under lib/gems/baw-workers)
+- docker compose is used to run
+  - postgresql
+  - redis
+  - a single worker
 
-If you need sudo to install a gem (i.e. if Rubymine can't do it) try running `rvm fix-permissions`.
+
+## IDE
+
+We recommend using VSCode's remote container development mode, with the included
+workspace..
 
 ## Credits
 
