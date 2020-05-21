@@ -1,21 +1,28 @@
-module BawAudioTools
-  class AudioWaveform
+# frozen_string_literal: true
 
+module BawAudioTools
+  # deprecated: no longer supported
+  class AudioWaveform
     def initialize(wav2png_executable, temp_dir)
       @wav2png_executable = wav2png_executable
       @temp_dir = temp_dir
     end
 
-    def command(source, source_info, target,
+    def command(source, _source_info, target,
                 width = 1800, height = 280,
                 colour_bg = 'efefefff', colour_fg = '00000000',
                 scale = :linear,
                 db_min = -48, db_max = 0)
-      fail ArgumentError, "Source is not a wav file: #{source}" unless source.match(/\.wav$/)
-      fail ArgumentError, "Target is not a png file: : #{target}" unless target.match(/\.png/)
-      fail Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.file? source
-      fail Exceptions::FileAlreadyExistsError, "Target exists: #{target}" if File.file? target
-      fail ArgumentError "Source and Target are the same file: #{target}" if source == target
+
+      # Too hard to maintain, wav2png is hard to install, feature never used.
+      # If we want this to work then ffmpeg has a `showwavespic` command.
+      raise NotImplementedError, 'Drawing waveforms has been deprecated and is no longer supported'
+
+      raise ArgumentError, "Source is not a wav file: #{source}" unless source.match(/\.wav$/)
+      raise ArgumentError, "Target is not a png file: : #{target}" unless target.match(/\.png/)
+      raise Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.file? source
+      raise Exceptions::FileAlreadyExistsError, "Target exists: #{target}" if File.file? target
+      raise ArgumentError "Source and Target are the same file: #{target}" if source == target
 
       cmd_scale = arg_scale(scale)
       cmd_colour_bg = arg_colour_bg(colour_bg)
@@ -25,9 +32,9 @@ module BawAudioTools
       cmd_db_min = arg_db_min(db_min)
       cmd_db_max = arg_db_max(db_max)
 
-      "#{@wav2png_executable} #{cmd_scale} #{cmd_colour_bg} #{cmd_colour_fg} " +
-          "#{cmd_width} #{cmd_height} #{cmd_db_max} #{cmd_db_min} " +
-          "--output \"#{target}\" \"#{source}\""
+      "#{@wav2png_executable} #{cmd_scale} #{cmd_colour_bg} #{cmd_colour_fg} " \
+        "#{cmd_width} #{cmd_height} #{cmd_db_max} #{cmd_db_min} " \
+        "--output \"#{target}\" \"#{source}\""
     end
 
     def self.scale_options
@@ -43,7 +50,7 @@ module BawAudioTools
 
         scale_param = scale.to_s
         unless AudioWaveform.scale_options.include? scale_param.to_sym
-          fail ArgumentError, "Scale must be one of '#{all_scale_options}', given '#{scale_param}'."
+          raise ArgumentError, "Scale must be one of '#{all_scale_options}', given '#{scale_param}'."
         end
 
         cmd_arg = scale_param.to_sym == :logarithmic ? '--db-scale' : ''
@@ -87,12 +94,18 @@ module BawAudioTools
 
     def numeric?(value)
       return true if value =~ /\A\d+\Z/
-      true if Float(value) rescue false
+
+      begin
+        true if Float(value)
+      rescue StandardError
+        false
+      end
     end
 
     def arg_number(name, param_string, value)
-      fail ArgumentError, "#{name} must not be blank." if value.blank?
-      fail ArgumentError, "#{name} must be a number, given '#{value}'." unless numeric?(value)
+      raise ArgumentError, "#{name} must not be blank." if value.blank?
+      raise ArgumentError, "#{name} must be a number, given '#{value}'." unless numeric?(value)
+
       "#{param_string} #{value}"
     end
 
@@ -106,7 +119,7 @@ module BawAudioTools
         value_param = value.to_s
 
         if !hex_digits?(value_param) || value_param.length != 8
-          fail ArgumentError, "#{name} must be a hexadecimal rgba value, given '#{value_param}'."
+          raise ArgumentError, "#{name} must be a hexadecimal rgba value, given '#{value_param}'."
         end
 
         cmd_arg = "#{param_string} #{value_param}"
@@ -114,6 +127,5 @@ module BawAudioTools
 
       cmd_arg
     end
-
   end
 end

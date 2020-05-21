@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 require 'helpers/resque_helper'
 require 'rspec/mocks'
@@ -7,8 +9,7 @@ require 'rspec/mocks'
 # API level tests should be put in acceptance/analysis_jobs_spec.rb
 #
 
-
-describe "Analysis Jobs" do
+describe 'Analysis Jobs' do
 
   create_audio_recordings_hierarchy
 
@@ -17,32 +18,32 @@ describe "Analysis Jobs" do
   # create another 5 recordings
   let!(:other_recordings) {
     [
-        Creation::Common.create_audio_recording(writer_user, writer_user, site),
-        Creation::Common.create_audio_recording(writer_user, writer_user, site),
-        Creation::Common.create_audio_recording(writer_user, writer_user, site),
-        Creation::Common.create_audio_recording(writer_user, writer_user, site),
-        Creation::Common.create_audio_recording(writer_user, writer_user, site)
+      Creation::Common.create_audio_recording(writer_user, writer_user, site),
+      Creation::Common.create_audio_recording(writer_user, writer_user, site),
+      Creation::Common.create_audio_recording(writer_user, writer_user, site),
+      Creation::Common.create_audio_recording(writer_user, writer_user, site),
+      Creation::Common.create_audio_recording(writer_user, writer_user, site)
     ]
   }
 
   let!(:saved_search) {
-    Creation::Common.create_saved_search(writer_user, project, {
-        'site_id': {'eq': site.id}
-    })
+    Creation::Common.create_saved_search(writer_user, project,
+                                         'site_id': { 'eq': site.id })
   }
 
   let!(:script) {
     FactoryGirl.create(
-        :script,
-        creator: admin_user,
-        executable_command: 'echo  "<{file_executable}>" audio2csv /source:"<{file_source}>" /config:"<{file_config}>" /tempdir:"<{dir_temp}>" /output:"<{dir_output}>"',
-        analysis_action_params: {
-            file_executable: './AnalysisPrograms/AnalysisPrograms.exe',
-            copy_paths: [
-                './programs/AnalysisPrograms/Logs/log.txt'
-            ],
-            sub_folders: []
-        })
+      :script,
+      creator: admin_user,
+      executable_command: 'echo  "<{file_executable}>" audio2csv /source:"<{file_source}>" /config:"<{file_config}>" /tempdir:"<{dir_temp}>" /output:"<{dir_output}>"',
+      analysis_action_params: {
+        file_executable: './AnalysisPrograms/AnalysisPrograms.exe',
+        copy_paths: [
+          './programs/AnalysisPrograms/Logs/log.txt'
+        ],
+        sub_folders: []
+      }
+    )
   }
 
   before(:all) do
@@ -50,18 +51,18 @@ describe "Analysis Jobs" do
 
     # process one fake job so that the queue exists!
     options = {
-        queue: @queue_name,
-        verbose: true,
-        fork: false
+      queue: @queue_name,
+      verbose: true,
+      fork: false
     }
-    @worker, job = emulate_resque_worker_with_job(FakeJob, {an_argument: 3}, options)
+    @worker, job = emulate_resque_worker_with_job(FakeJob, { an_argument: 3 }, options)
   end
 
   before(:each) do
     @env ||= {}
     @env['HTTP_AUTHORIZATION'] = writer_token
 
-    @analysis_job_url = "/analysis_jobs"
+    @analysis_job_url = '/analysis_jobs'
   end
 
   def get_queue_count
@@ -73,28 +74,25 @@ describe "Analysis Jobs" do
   end
 
   def get_items_count(status = nil)
-    predicates = {analysis_job_id: @analysis_job.id}
+    predicates = { analysis_job_id: @analysis_job.id }
     predicates[:status] = status if status
     AnalysisJobsItem.where(predicates).count
   end
 
   def create_analysis_job
-
     valid_attributes = {
-        analysis_job: {
-            script_id: script.id,
-            saved_search_id: saved_search.id,
-            name: 'Analysis Job #' + Time.now.to_s,
-            custom_settings: script.executable_settings,
-            description: 'Description...'
-        }
+      analysis_job: {
+        script_id: script.id,
+        saved_search_id: saved_search.id,
+        name: 'Analysis Job #' + Time.now.to_s,
+        custom_settings: script.executable_settings,
+        description: 'Description...'
+      }
     }
 
     post @analysis_job_url, valid_attributes, @env
 
-    if response.status != 201
-      fail "Failed to create test AnalysisJob, status: #{response.status}"
-    end
+    raise "Failed to create test AnalysisJob, status: #{response.status}" if response.status != 201
 
     body = JSON.parse(response.body)
     item = AnalysisJob.find(body['data']['id'])
@@ -122,14 +120,12 @@ describe "Analysis Jobs" do
     @env['HTTP_AUTHORIZATION'] = writer_token
 
     put update_route, {
-        analysis_job: {
-            overall_status: overall_status
-        }
+      analysis_job: {
+        overall_status: overall_status
+      }
     }, @env
 
-    if response.status != 200
-      fail "Failed to update AnalysisJob, status: #{response.status}"
-    end
+    raise "Failed to update AnalysisJob, status: #{response.status}" if response.status != 200
   end
 
   def destroy_analysis_job(analysis_job_id)
@@ -144,20 +140,20 @@ describe "Analysis Jobs" do
 
   def test_stats(analysis_job, expected = {})
     opts = {
-        overall_count: 0,
-        overall_duration_seconds: 0,
-        overall_data_length_bytes: 0,
-        overall_progress: {
-            queued: 0,
-            working: 0,
-            successful: 0,
-            failed: 0,
-            total: 0,
-            cancelled: 0,
-            cancelling: 0,
-            new: 0,
-            timed_out: 0
-        }
+      overall_count: 0,
+      overall_duration_seconds: 0,
+      overall_data_length_bytes: 0,
+      overall_progress: {
+        queued: 0,
+        working: 0,
+        successful: 0,
+        failed: 0,
+        total: 0,
+        cancelled: 0,
+        cancelling: 0,
+        new: 0,
+        timed_out: 0
+      }
     }
 
     expected = opts.deep_merge(expected)
@@ -173,9 +169,9 @@ describe "Analysis Jobs" do
 
   def test_stats_for(analysis_job, expected, n)
     opts = {
-        overall_count: n,
-        overall_duration_seconds: (n * 60000),
-        overall_data_length_bytes: (n * 3800),
+      overall_count: n,
+      overall_duration_seconds: (n * 60_000),
+      overall_data_length_bytes: (n * 3800)
 
     }
 
@@ -192,9 +188,7 @@ describe "Analysis Jobs" do
 
     get route, {}, @env
 
-    if response.status != 200
-      fail RuntimeError, "Failed to get AnalysisJobItem, status: #{response.status}"
-    end
+    raise "Failed to get AnalysisJobItem, status: #{response.status}" if response.status != 200
 
     JSON.parse(response.body)
   end
@@ -207,14 +201,12 @@ describe "Analysis Jobs" do
     @env['HTTP_ACCEPT'] = 'application/json'
 
     put update_route, {
-        analysis_jobs_item: {
-            status: status
-        }
+      analysis_jobs_item: {
+        status: status
+      }
     }, @env
 
-    if response.status != 200
-      fail RuntimeError, "Failed to update AnalysisJobItem, status: #{response.status}"
-    end
+    raise "Failed to update AnalysisJobItem, status: #{response.status}" if response.status != 200
   end
 
   class FakeAnalysisJob
@@ -235,7 +227,7 @@ describe "Analysis Jobs" do
       # simulate the working call
       if good_cancel_behaviour
         status = test_instance.get_analysis_job_item(analysis_job_id, audio_recording_id)['data']['status']
-        if status == "cancelling"
+        if status == 'cancelling'
           test_instance.update_analysis_job_item(analysis_job_id, audio_recording_id, 'cancelled')
           return
         else
@@ -247,18 +239,16 @@ describe "Analysis Jobs" do
 
       # do some work
       work = {
-          resque_id: resque_id,
-          params: params,
-          result: Time.now
+        resque_id: resque_id,
+        params: params,
+        result: Time.now
       }
 
       unless skip_completion
         # simulate the complete call
         test_instance.update_analysis_job_item(analysis_job_id, audio_recording_id, mock_result)
 
-        if mock_result == 'failed'
-          fail 'Fake analysis job failing on purpose'
-        end
+        raise 'Fake analysis job failing on purpose' if mock_result == 'failed'
       end
     end
 
@@ -269,16 +259,16 @@ describe "Analysis Jobs" do
 
   attr_writer :job_perform_failure
 
-  def perform_job()
+  def perform_job
     @job_perform_failure = nil
 
     # execute the next available job
     FakeAnalysisJob.test_instance = self
-    emulate_resque_worker(@queue_name, true, false, "FakeAnalysisJob")
+    emulate_resque_worker(@queue_name, true, false, 'FakeAnalysisJob')
 
     if @job_perform_failure && @job_perform_failure[0].message != 'Fake analysis job failing on purpose'
 
-      fail 'job perform failed: ' + @job_perform_failure.to_s
+      raise 'job perform failed: ' + @job_perform_failure.to_s
     end
   end
 
@@ -317,7 +307,6 @@ describe "Analysis Jobs" do
 
     describe 'status: "preparing"' do
 
-
       before(:each) do
         ActionMailer::Base.deliveries.clear
 
@@ -325,7 +314,7 @@ describe "Analysis Jobs" do
         allow(AnalysisJob).to receive(:batch_size).and_return(2)
 
         # don't allow automatic transition to :processing state
-        allow_any_instance_of(AnalysisJob).to receive(:process!).and_wrap_original do |m, *args|
+        allow_any_instance_of(AnalysisJob).to receive(:process!).and_wrap_original do |m, *_args|
           m.receiver.send(:update_job_progress)
           m.receiver.save!
         end
@@ -343,21 +332,20 @@ describe "Analysis Jobs" do
         expect(mail.body.raw_source).to include('localhost:3000/analysis_jobs/' + @analysis_job.id.to_s)
       end
 
-
       it 'should be :preparing when preparing' do
         expect(@analysis_job.preparing?).to be_truthy
       end
 
       it 'has the correct progress statistics' do
         test_stats_for(@analysis_job, {
-            overall_progress: {
-                queued: 6,
-                working: 0,
-                successful: 0,
-                failed: 0,
-                total: 6
-            }
-        }, 6)
+                         overall_progress: {
+                           queued: 6,
+                           working: 0,
+                           successful: 0,
+                           failed: 0,
+                           total: 6
+                         }
+                       }, 6)
       end
 
       it 'ensures new job items exist in the message queue' do
@@ -402,18 +390,17 @@ describe "Analysis Jobs" do
         expect(get_items_count).to eq(6)
 
         test_stats_for(@analysis_job, {
-            overall_progress: {
-                queued: 3,
-                working: 0,
-                successful: 3,
-                failed: 0,
-                total: 6
-            }
-        }, 6)
+                         overall_progress: {
+                           queued: 3,
+                           working: 0,
+                           successful: 3,
+                           failed: 0,
+                           total: 6
+                         }
+                       }, 6)
 
         expect(@analysis_job.processing?).to be_truthy
       end
-
 
       it 'allows for all jobs items to have complete while still preparing - and to skip `processing` completely' do
 
@@ -444,14 +431,14 @@ describe "Analysis Jobs" do
         expect(get_items_count).to eq(6)
 
         test_stats_for(@analysis_job, {
-            overall_progress: {
-                queued: 0,
-                working: 0,
-                successful: 6,
-                failed: 0,
-                total: 6
-            }
-        }, 6)
+                         overall_progress: {
+                           queued: 0,
+                           working: 0,
+                           successful: 6,
+                           failed: 0,
+                           total: 6
+                         }
+                       }, 6)
 
         expect(@analysis_job.completed?).to be_truthy
       end
@@ -465,13 +452,13 @@ describe "Analysis Jobs" do
 
         # here we simulate a system with a variety of sub-statuses
         states = [
-            [true, nil], # 'working'
-            [false, 'successful'],
-            [false, 'timed_out'],
-            [false, 'failed'],
-            # the following two aren't run
-            [false, 'successful'],
-            [true, nil]
+          [true, nil], # 'working'
+          [false, 'successful'],
+          [false, 'timed_out'],
+          [false, 'failed'],
+          # the following two aren't run
+          [false, 'successful'],
+          [true, nil]
         ]
 
         allow(AnalysisJobsItem).to receive(:create_action_payload).and_wrap_original do |m, *args|
@@ -491,9 +478,8 @@ describe "Analysis Jobs" do
         # pause time
         #Timecop.freeze
 
-
         # start 4/6 of actions
-        (1..4).each { perform_job }
+        4.times { perform_job }
       end
 
       it 'should be :processing when processing' do
@@ -514,16 +500,15 @@ describe "Analysis Jobs" do
         #  it 'allows for jobs items to have all different states'
         @analysis_job.reload
         test_stats_for(@analysis_job, {
-            overall_progress: {
-                queued: 2,
-                working: 1,
-                successful: 1,
-                failed: 1,
-                timed_out: 1,
-                total: 6
-            }
-        }, 6)
-
+                         overall_progress: {
+                           queued: 2,
+                           working: 1,
+                           successful: 1,
+                           failed: 1,
+                           timed_out: 1,
+                           total: 6
+                         }
+                       }, 6)
 
       end
 
@@ -533,15 +518,15 @@ describe "Analysis Jobs" do
         # stats shouldn't have changed
         @analysis_job.reload
         test_stats_for(@analysis_job, {
-            overall_progress: {
-                queued: 2,
-                working: 1,
-                successful: 1,
-                failed: 1,
-                timed_out: 1,
-                total: 6
-            }
-        }, 6)
+                         overall_progress: {
+                           queued: 2,
+                           working: 1,
+                           successful: 1,
+                           failed: 1,
+                           timed_out: 1,
+                           total: 6
+                         }
+                       }, 6)
         expect(@analysis_job.updated_at).to eq(updated_at)
 
         # complete a job to finish
@@ -550,17 +535,16 @@ describe "Analysis Jobs" do
         # reload to see the change
         @analysis_job.reload
         test_stats_for(@analysis_job, {
-            overall_progress: {
-                queued: 1,
-                working: 1,
-                successful: 2,
-                failed: 1,
-                timed_out: 1,
-                total: 6
-            }
-        }, 6)
+                         overall_progress: {
+                           queued: 1,
+                           working: 1,
+                           successful: 2,
+                           failed: 1,
+                           timed_out: 1,
+                           total: 6
+                         }
+                       }, 6)
         expect(@analysis_job.updated_at).to eq(updated_at)
-
 
         # start another job - do not complete (see `states` in before(:each))
         perform_job
@@ -568,15 +552,15 @@ describe "Analysis Jobs" do
         # reload to see the change
         @analysis_job.reload
         test_stats_for(@analysis_job, {
-            overall_progress: {
-                queued: 0,
-                working: 2,
-                successful: 2,
-                failed: 1,
-                timed_out: 1,
-                total: 6
-            }
-        }, 6)
+                         overall_progress: {
+                           queued: 0,
+                           working: 2,
+                           successful: 2,
+                           failed: 1,
+                           timed_out: 1,
+                           total: 6
+                         }
+                       }, 6)
         expect(@analysis_job.updated_at).to eq(updated_at)
       end
 
@@ -590,13 +574,13 @@ describe "Analysis Jobs" do
         # here we simulate a system with a variety of sub-statuses
         # [skip_completion, mock_result, good_cancel_behaviour]
         states = [
-            [true, nil], # 'working'
-            [false, 'successful'],
-            [false, 'timed_out'],
-            [false, 'failed'],
-            # the following two aren't run
-            [false, 'successful', true],
-            [true, 'successful']
+          [true, nil], # 'working'
+          [false, 'successful'],
+          [false, 'timed_out'],
+          [false, 'failed'],
+          # the following two aren't run
+          [false, 'successful', true],
+          [true, 'successful']
         ]
 
         @working_audio_recording_id
@@ -618,29 +602,27 @@ describe "Analysis Jobs" do
 
         @analysis_job = create_analysis_job
 
-
         # start 4/6 of actions
-        (1..4).each { perform_job }
+        4.times do perform_job end
 
         expect(get_queue_count).to eq(2)
         expect(get_failed_queue_count).to eq(1)
         expect(get_items_count).to eq(6)
         @analysis_job.reload
         test_stats_for(@analysis_job, {
-            overall_progress: {
-                queued: 2,
-                working: 1,
-                successful: 1,
-                failed: 1,
-                timed_out: 1,
-                total: 6
-            }
-        }, 6)
+                         overall_progress: {
+                           queued: 2,
+                           working: 1,
+                           successful: 1,
+                           failed: 1,
+                           timed_out: 1,
+                           total: 6
+                         }
+                       }, 6)
 
         update_analysis_job(@analysis_job.id, 'suspended')
         @analysis_job.reload
       end
-
 
       it 'should be :suspended when suspended' do
         expect(@analysis_job.suspended?).to be_truthy
@@ -653,17 +635,17 @@ describe "Analysis Jobs" do
 
       it 'ensures all AnalysisJobsItems that are :queued are reset to :cancelling' do
         test_stats_for(@analysis_job, {
-            overall_progress: {
-                queued: 0,
-                cancelled: 0,
-                cancelling: 2,
-                working: 1,
-                successful: 1,
-                failed: 1,
-                timed_out: 1,
-                total: 6
-            }
-        }, 6)
+                         overall_progress: {
+                           queued: 0,
+                           cancelled: 0,
+                           cancelling: 2,
+                           working: 1,
+                           successful: 1,
+                           failed: 1,
+                           timed_out: 1,
+                           total: 6
+                         }
+                       }, 6)
 
         expect(get_items_count).to eq(6)
         expect(get_items_count('cancelling')).to eq(2)
@@ -672,20 +654,19 @@ describe "Analysis Jobs" do
       it 'will let job items finish (i.e. race conditions)' do
         update_analysis_job_item(@analysis_job.id, @working_audio_recording_id, 'successful')
 
-
         @analysis_job.reload
         test_stats_for(@analysis_job, {
-            overall_progress: {
-                queued: 0,
-                cancelled: 0,
-                cancelling: 2,
-                working: 0,
-                successful: 2,
-                failed: 1,
-                timed_out: 1,
-                total: 6
-            }
-        }, 6)
+                         overall_progress: {
+                           queued: 0,
+                           cancelled: 0,
+                           cancelling: 2,
+                           working: 0,
+                           successful: 2,
+                           failed: 1,
+                           timed_out: 1,
+                           total: 6
+                         }
+                       }, 6)
       end
 
       it 'It confirms cancellation when the job tries to run (:cancelling --> :cancelled)' do
@@ -700,17 +681,17 @@ describe "Analysis Jobs" do
 
         @analysis_job.reload
         test_stats_for(@analysis_job, {
-            overall_progress: {
-                queued: 0,
-                cancelled: 2,
-                cancelling: 0,
-                working: 1,
-                successful: 1,
-                failed: 1,
-                timed_out: 1,
-                total: 6
-            }
-        }, 6)
+                         overall_progress: {
+                           queued: 0,
+                           cancelled: 2,
+                           cancelling: 0,
+                           working: 1,
+                           successful: 1,
+                           failed: 1,
+                           timed_out: 1,
+                           total: 6
+                         }
+                       }, 6)
       end
 
       it 'can not resume when items are still queued' do
@@ -744,17 +725,17 @@ describe "Analysis Jobs" do
 
           @analysis_job.reload
           test_stats_for(@analysis_job, {
-              overall_progress: {
-                  queued: 0,
-                  cancelled: 1,
-                  cancelling: 1,
-                  working: 1,
-                  successful: 1,
-                  failed: 1,
-                  timed_out: 1,
-                  total: 6
-              }
-          }, 6)
+                           overall_progress: {
+                             queued: 0,
+                             cancelled: 1,
+                             cancelling: 1,
+                             working: 1,
+                             successful: 1,
+                             failed: 1,
+                             timed_out: 1,
+                             total: 6
+                           }
+                         }, 6)
 
           # resume job
           update_analysis_job(@analysis_job.id, 'processing')
@@ -777,7 +758,6 @@ describe "Analysis Jobs" do
           expect(get_items_count('cancelling')).to eq(0)
           expect(get_items_count('queued')).to eq(2)
 
-
           # expect first item (which was cancelled to get a new queue_id)
           expect(@old_items[0].queue_id).to_not eq(AnalysisJobsItem.find(@old_items[0].id).queue_id)
 
@@ -787,15 +767,15 @@ describe "Analysis Jobs" do
 
         it 'has the correct progress statistics' do
           test_stats_for(@analysis_job, {
-              overall_progress: {
-                  queued: 2,
-                  working: 1,
-                  successful: 1,
-                  failed: 1,
-                  timed_out: 1,
-                  total: 6
-              }
-          }, 6)
+                           overall_progress: {
+                             queued: 2,
+                             working: 1,
+                             successful: 1,
+                             failed: 1,
+                             timed_out: 1,
+                             total: 6
+                           }
+                         }, 6)
         end
 
       end
@@ -809,12 +789,12 @@ describe "Analysis Jobs" do
         # here we simulate a system with a variety of sub-statuses
         # [skip_completion, mock_result, good_cancel_behaviour]
         states = [
-            [false, 'successful'],
-            [false, 'successful'],
-            [false, 'timed_out'],
-            [false, 'failed'],
-            [false, 'successful'],
-            [false, 'successful']
+          [false, 'successful'],
+          [false, 'successful'],
+          [false, 'timed_out'],
+          [false, 'failed'],
+          [false, 'successful'],
+          [false, 'successful']
         ]
 
         allow(AnalysisJobsItem).to receive(:create_action_payload).and_wrap_original do |m, *args|
@@ -831,13 +811,11 @@ describe "Analysis Jobs" do
 
         @analysis_job = create_analysis_job
 
-
         # start all actions - and complete the job!
-        (1..6).each { perform_job }
+        6.times do perform_job end
 
         @analysis_job.reload
       end
-
 
       it 'should be :completed when completed' do
         expect(@analysis_job.completed?).to be_truthy
@@ -855,17 +833,17 @@ describe "Analysis Jobs" do
 
       it 'correctly updates progress statistics' do
         test_stats_for(@analysis_job, {
-            overall_progress: {
-                queued: 0,
-                cancelled: 0,
-                cancelling: 0,
-                working: 0,
-                successful: 4,
-                failed: 1,
-                timed_out: 1,
-                total: 6
-            }
-        }, 6)
+                         overall_progress: {
+                           queued: 0,
+                           cancelled: 0,
+                           cancelling: 0,
+                           working: 0,
+                           successful: 4,
+                           failed: 1,
+                           timed_out: 1,
+                           total: 6
+                         }
+                       }, 6)
       end
 
       it 'emails the user when the job is complete' do
@@ -897,17 +875,17 @@ describe "Analysis Jobs" do
           expect(get_failed_queue_count).to eq(1)
 
           test_stats_for(@analysis_job, {
-              overall_progress: {
-                  queued: 0,
-                  cancelled: 1,
-                  cancelling: 0,
-                  working: 0,
-                  successful: 3,
-                  failed: 1,
-                  timed_out: 1,
-                  total: 6
-              }
-          }, 6)
+                           overall_progress: {
+                             queued: 0,
+                             cancelled: 1,
+                             cancelling: 0,
+                             working: 0,
+                             successful: 3,
+                             failed: 1,
+                             timed_out: 1,
+                             total: 6
+                           }
+                         }, 6)
 
           # resume job
           update_analysis_job(@analysis_job.id, 'processing')
@@ -937,15 +915,15 @@ describe "Analysis Jobs" do
 
         it 'has the correct progress statistics' do
           test_stats_for(@analysis_job, {
-              overall_progress: {
-                  queued: 3,
-                  working: 0,
-                  successful: 3,
-                  failed: 0,
-                  timed_out: 0,
-                  total: 6
-              }
-          }, 6)
+                           overall_progress: {
+                             queued: 3,
+                             working: 0,
+                             successful: 3,
+                             failed: 0,
+                             timed_out: 0,
+                             total: 6
+                           }
+                         }, 6)
         end
 
         it 'emails the user when the job has been retried' do
@@ -969,15 +947,15 @@ describe "Analysis Jobs" do
           expect(get_failed_queue_count).to eq(1)
 
           test_stats_for(@analysis_job, {
-              overall_progress: {
-                  queued: 0,
-                  working: 0,
-                  successful: 6,
-                  failed: 0,
-                  timed_out: 0,
-                  total: 6
-              }
-          }, 6)
+                           overall_progress: {
+                             queued: 0,
+                             working: 0,
+                             successful: 6,
+                             failed: 0,
+                             timed_out: 0,
+                             total: 6
+                           }
+                         }, 6)
 
           mail = ActionMailer::Base.deliveries.last
 
@@ -991,7 +969,6 @@ describe "Analysis Jobs" do
       end
 
     end
-
 
   end
 
@@ -1020,7 +997,7 @@ describe "Analysis Jobs" do
         @analysis_job = create_analysis_job_direct
 
         # don't allow automatic transition to :processing state
-        allow_any_instance_of(AnalysisJob).to receive(:process!).and_wrap_original do |m, *args|
+        allow_any_instance_of(AnalysisJob).to receive(:process!).and_wrap_original do |m, *_args|
           m.receiver.send(:update_job_progress)
           m.receiver.save!
         end
@@ -1088,17 +1065,17 @@ describe "Analysis Jobs" do
 
       it 'correctly reports progress statistics' do
         test_stats_for(@analysis_job, {
-            overall_progress: {
-                queued: 0,
-                cancelled: 0,
-                cancelling: 6,
-                working: 0,
-                successful: 0,
-                failed: 0,
-                timed_out: 0,
-                total: 6
-            }
-        }, 6)
+                         overall_progress: {
+                           queued: 0,
+                           cancelled: 0,
+                           cancelling: 6,
+                           working: 0,
+                           successful: 0,
+                           failed: 0,
+                           timed_out: 0,
+                           total: 6
+                         }
+                       }, 6)
       end
 
       it 'will let job items finish (race conditions)' do
@@ -1114,17 +1091,17 @@ describe "Analysis Jobs" do
 
         @analysis_job.reload
         test_stats_for(@analysis_job, {
-            overall_progress: {
-                queued: 0,
-                cancelled: 0,
-                cancelling: 5,
-                working: 0,
-                successful: 1,
-                failed: 0,
-                timed_out: 0,
-                total: 6
-            }
-        }, 6)
+                         overall_progress: {
+                           queued: 0,
+                           cancelled: 0,
+                           cancelling: 5,
+                           working: 0,
+                           successful: 1,
+                           failed: 0,
+                           timed_out: 0,
+                           total: 6
+                         }
+                       }, 6)
 
         expect(@analysis_job.deleted?).to eq(true)
       end
@@ -1147,28 +1124,27 @@ describe "Analysis Jobs" do
 
         @analysis_job.reload
         test_stats_for(@analysis_job, {
-            overall_progress: {
-                queued: 0,
-                cancelled: 1,
-                cancelling: 5,
-                working: 0,
-                successful: 0,
-                failed: 0,
-                timed_out: 0,
-                total: 6
-            }
-        }, 6)
+                         overall_progress: {
+                           queued: 0,
+                           cancelled: 1,
+                           cancelling: 5,
+                           working: 0,
+                           successful: 0,
+                           failed: 0,
+                           timed_out: 0,
+                           total: 6
+                         }
+                       }, 6)
 
         expect(@analysis_job.deleted?).to eq(true)
       end
 
       it 'will let all job items complete (message queue depletion) - but it wont transition to :complete!' do
-        (1..6).each {
+        6.times do
           expect {
             perform_job
           }.to raise_error(RuntimeError, /Failed to update AnalysisJobItem, status: 422/)
-        }
-
+        end
 
         expect(get_items_count).to eq(6)
         expect(get_items_count('cancelled')).to eq(6)
@@ -1179,17 +1155,17 @@ describe "Analysis Jobs" do
 
         @analysis_job.reload
         test_stats_for(@analysis_job, {
-            overall_progress: {
-                queued: 0,
-                cancelled: 6,
-                cancelling: 0,
-                working: 0,
-                successful: 0,
-                failed: 0,
-                timed_out: 0,
-                total: 6
-            }
-        }, 6)
+                         overall_progress: {
+                           queued: 0,
+                           cancelled: 6,
+                           cancelling: 0,
+                           working: 0,
+                           successful: 0,
+                           failed: 0,
+                           timed_out: 0,
+                           total: 6
+                         }
+                       }, 6)
 
         expect(@analysis_job.suspended?).to be_truthy
         expect(@analysis_job.deleted?).to eq(true)
@@ -1207,9 +1183,9 @@ describe "Analysis Jobs" do
 
         @analysis_job = create_analysis_job
 
-        (1..6).each {
-            perform_job
-        }
+        6.times do
+          perform_job
+        end
 
         status_code, response = destroy_analysis_job(@analysis_job.id)
         expect(status_code).to eq(204)
@@ -1235,17 +1211,17 @@ describe "Analysis Jobs" do
 
       it 'correctly updates progress statistics' do
         test_stats_for(@analysis_job, {
-            overall_progress: {
-                queued: 0,
-                cancelled: 0,
-                cancelling: 0,
-                working: 0,
-                successful: 6,
-                failed: 0,
-                timed_out: 0,
-                total: 6
-            }
-        }, 6)
+                         overall_progress: {
+                           queued: 0,
+                           cancelled: 0,
+                           cancelling: 0,
+                           working: 0,
+                           successful: 6,
+                           failed: 0,
+                           timed_out: 0,
+                           total: 6
+                         }
+                       }, 6)
       end
 
     end
@@ -1253,6 +1229,3 @@ describe "Analysis Jobs" do
   end
 
 end
-
-
-

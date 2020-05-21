@@ -1,30 +1,50 @@
-require 'spec_helper'
+# frozen_string_literal: true
+
+require 'workers_helper'
 
 describe BawWorkers::Media::Action do
   require 'helpers/shared_test_helpers'
- 
+
   include_context 'shared_test_helpers'
+
+  # we want to control the execution of jobs for this set of tests,
+  # so change the queue name so the test worker does not
+  # automatically process the jobs
+  before(:each) do
+    default_queue = BawWorkers::Settings.actions.media.queue
+
+    allow(BawWorkers::Settings.actions.media).to receive(:queue).and_return(default_queue + '_manual_tick')
+
+    # cleanup resque queues before each test
+    Resque.remove_queue_with_cleanup(default_queue)
+    Resque.remove_queue_with_cleanup(BawWorkers::Settings.actions.media.queue)
+
+  end
 
   let(:queue_name) { BawWorkers::Settings.actions.media.queue }
 
   context 'queues' do
 
-    let(:test_media_request_params) { {testing: :testing} }
+    let(:test_media_request_params) { { testing: :testing } }
     let(:expected_payload) {
       {
-          'class' => 'BawWorkers::Media::Action',
-          'args' => [
-              '10fc094504a0a38f859f35d1b3055ca1',
-              {
-                  'media_type' => 'audio',
-                  'media_request_params' =>
-                      {
-                          'testing' => 'testing'
-                      }
-              }
-          ]
+        'class' => 'BawWorkers::Media::Action',
+        'args' => [
+          '10fc094504a0a38f859f35d1b3055ca1',
+          {
+            'media_type' => 'audio',
+            'media_request_params' =>
+                  {
+                    'testing' => 'testing'
+                  }
+          }
+        ]
       }
     }
+
+    it 'checks we\'re using a manual queue' do
+      expect(Resque.queue_from_class(BawWorkers::Media::Action)).to end_with('_manual_tick')
+    end
 
     it 'works on the media queue' do
       expect(Resque.queue_from_class(BawWorkers::Media::Action)).to eq(queue_name)
@@ -42,15 +62,15 @@ describe BawWorkers::Media::Action do
       allow(BawWorkers::Media::Action).to receive(:action_perform).and_return(['/tmp/a_fake_file_mock'])
       params =
         {
-            uuid: '7bb0c719-143f-4373-a724-8138219006d9',
-            format: 'wav',
-            media_type: 'audio/wav',
-            start_offset: 5,
-            end_offset: 10,
-            channel: 0,
-            sample_rate: 22050,
-            datetime_with_offset: Time.zone.now,
-            original_format: audio_file_mono_format
+          uuid: '7bb0c719-143f-4373-a724-8138219006d9',
+          format: 'wav',
+          media_type: 'audio/wav',
+          start_offset: 5,
+          end_offset: 10,
+          channel: 0,
+          sample_rate: 22_050,
+          datetime_with_offset: Time.zone.now,
+          original_format: audio_file_mono_format
         }
 
       unique_key = BawWorkers::Media::Action.action_enqueue(:audio, params)
@@ -63,7 +83,7 @@ describe BawWorkers::Media::Action do
 
     it 'does not enqueue the same payload into the same queue more than once' do
 
-      queued_query = {media_type: :audio, media_request_params: test_media_request_params}
+      queued_query = { media_type: :audio, media_request_params: test_media_request_params }
 
       expect(Resque.size(queue_name)).to eq(0)
       expect(BawWorkers::ResqueApi.job_queued?(BawWorkers::Media::Action, queued_query)).to eq(false)
@@ -78,13 +98,13 @@ describe BawWorkers::Media::Action do
 
       result2 = BawWorkers::Media::Action.action_enqueue(:audio, test_media_request_params)
       expect(Resque.size(queue_name)).to eq(1)
-      expect(result2).to eq(result1)
+      expect(result2).to eq(nil)
       expect(BawWorkers::ResqueApi.job_queued?(BawWorkers::Media::Action, queued_query)).to eq(true)
       expect(Resque.enqueued?(BawWorkers::Media::Action, queued_query)).to eq(true)
 
       result3 = BawWorkers::Media::Action.action_enqueue(:audio, test_media_request_params)
       expect(Resque.size(queue_name)).to eq(1)
-      expect(result3).to eq(result1)
+      expect(result3).to eq(nil)
       expect(BawWorkers::ResqueApi.job_queued?(BawWorkers::Media::Action, queued_query)).to eq(true)
       expect(Resque.enqueued?(BawWorkers::Media::Action, queued_query)).to eq(true)
 
@@ -98,8 +118,8 @@ describe BawWorkers::Media::Action do
     end
 
     it 'can retrieve the job' do
-      queued_query = {media_type: :audio, media_request_params: test_media_request_params}
-      queued_query_normalised = BawWorkers::ResqueJobId.normalise({media_type: :audio, media_request_params: test_media_request_params})
+      queued_query = { media_type: :audio, media_request_params: test_media_request_params }
+      queued_query_normalised = BawWorkers::ResqueJobId.normalise(media_type: :audio, media_request_params: test_media_request_params)
 
       expect(Resque.size(queue_name)).to eq(0)
       expect(BawWorkers::ResqueApi.job_queued?(BawWorkers::Media::Action, queued_query)).to eq(false)
@@ -128,9 +148,9 @@ describe BawWorkers::Media::Action do
 
       expect(job_id).to_not be_nil
 
-      expect(status.status ).to eq('queued')
-      expect(status.uuid ).to eq(job_id)
-      expect(status.options ).to eq(queued_query_normalised)
+      expect(status.status).to eq('queued')
+      expect(status.uuid).to eq(job_id)
+      expect(status.options).to eq(queued_query_normalised)
 
     end
 
@@ -139,47 +159,47 @@ describe BawWorkers::Media::Action do
   context 'executes perform method' do
     context 'raises error' do
 
-    it 'when params is not a hash' do
+      it 'when params is not a hash' do
 
-      expect {
-        BawWorkers::Media::Action.action_perform(:audio, 'not a hash')
-      }.to raise_error(ArgumentError, /Param was a 'String'\. It must be a 'Hash'\./)
+        expect {
+          BawWorkers::Media::Action.action_perform(:audio, 'not a hash')
+        }.to raise_error(ArgumentError, /Param was a 'String'\. It must be a 'Hash'\./)
 
-      expect(ActionMailer::Base.deliveries.count).to eq(1)
-    end
+        expect(ActionMailer::Base.deliveries.count).to eq(1)
+      end
 
-    it 'when media type is invalid' do
-      expect {
-        BawWorkers::Media::Action.action_perform(:not_valid_param, {})
-      }.to raise_error(ArgumentError, /Media type 'not_valid_param' is not in list of valid media types/)
+      it 'when media type is invalid' do
+        expect {
+          BawWorkers::Media::Action.action_perform(:not_valid_param, {})
+        }.to raise_error(ArgumentError, /Media type 'not_valid_param' is not in list of valid media types/)
 
-      expect(ActionMailer::Base.deliveries.count).to eq(1)
-    end
+        expect(ActionMailer::Base.deliveries.count).to eq(1)
+      end
 
-    it 'when recorded date is invalid' do
+      it 'when recorded date is invalid' do
 
-      media_request_params =
+        media_request_params =
           {
-              uuid: '7bb0c719-143f-4373-a724-8138219006d9',
-              format: 'png',
-              media_type: 'image/png',
-              start_offset: 5,
-              end_offset: 10,
-              channel: 0,
-              sample_rate: 22050,
-              datetime_with_offset: 'blah blah blah',
-              original_format: audio_file_mono_format,
-              window: 512,
-              window_function: 'Hamming',
-              colour: 'g'
+            uuid: '7bb0c719-143f-4373-a724-8138219006d9',
+            format: 'png',
+            media_type: 'image/png',
+            start_offset: 5,
+            end_offset: 10,
+            channel: 0,
+            sample_rate: 22_050,
+            datetime_with_offset: 'blah blah blah',
+            original_format: audio_file_mono_format,
+            window: 512,
+            window_function: 'Hamming',
+            colour: 'g'
           }
 
-      expect {
-        BawWorkers::Media::Action.action_perform(:audio, media_request_params)
-      }.to raise_error(ArgumentError, /Could not parse ActiveSupport::TimeWithZone from blah blah blah/)
+        expect {
+          BawWorkers::Media::Action.action_perform(:audio, media_request_params)
+        }.to raise_error(ArgumentError, /Could not parse ActiveSupport::TimeWithZone from blah blah blah/)
 
-      expect(ActionMailer::Base.deliveries.count).to eq(1)
-    end
+        expect(ActionMailer::Base.deliveries.count).to eq(1)
+      end
 
     end
 
@@ -195,7 +215,7 @@ describe BawWorkers::Media::Action do
 
       it 'raises error with some bad params' do
         expect {
-          BawWorkers::Media::Action.action_perform(:spectrogram, {datetime_with_offset: Time.zone.now})
+          BawWorkers::Media::Action.action_perform(:spectrogram, datetime_with_offset: Time.zone.now)
         }.to raise_error(ArgumentError, /Required parameter missing: uuid/)
 
         expect(ActionMailer::Base.deliveries.count).to eq(1)
@@ -204,20 +224,20 @@ describe BawWorkers::Media::Action do
       it 'is successful with correct parameters' do
 
         media_request_params =
-            {
-                uuid: '7bb0c719-143f-4373-a724-8138219006d9',
-                format: 'png',
-                media_type: 'image/png',
-                start_offset: 5,
-                end_offset: 10,
-                channel: 0,
-                sample_rate: 22050,
-                datetime_with_offset: Time.zone.now,
-                original_format: audio_file_mono_format,
-                window: 512,
-                window_function: 'Hamming',
-                colour: 'g'
-            }
+          {
+            uuid: '7bb0c719-143f-4373-a724-8138219006d9',
+            format: 'png',
+            media_type: 'image/png',
+            start_offset: 5,
+            end_offset: 10,
+            channel: 0,
+            sample_rate: 22_050,
+            datetime_with_offset: Time.zone.now,
+            original_format: audio_file_mono_format,
+            window: 512,
+            window_function: 'Hamming',
+            colour: 'g'
+          }
         # arrange
         create_original_audio(media_request_params, audio_file_mono)
 
@@ -246,7 +266,7 @@ describe BawWorkers::Media::Action do
 
       it 'raises error with some bad params' do
         expect {
-          BawWorkers::Media::Action.action_perform(:audio, {datetime_with_offset: Time.zone.now})
+          BawWorkers::Media::Action.action_perform(:audio, datetime_with_offset: Time.zone.now)
         }.to raise_error(ArgumentError, /Required parameter missing: uuid/)
 
         expect(ActionMailer::Base.deliveries.count).to eq(1)
@@ -255,17 +275,17 @@ describe BawWorkers::Media::Action do
       it 'is successful with correct parameters' do
 
         media_request_params =
-            {
-                uuid: '7bb0c719-143f-4373-a724-8138219006d9',
-                format: 'wav',
-                media_type: 'audio/wav',
-                start_offset: 5,
-                end_offset: 10,
-                channel: 0,
-                sample_rate: 22050,
-                datetime_with_offset: Time.zone.now,
-                original_format: audio_file_mono_format
-            }
+          {
+            uuid: '7bb0c719-143f-4373-a724-8138219006d9',
+            format: 'wav',
+            media_type: 'audio/wav',
+            start_offset: 5,
+            end_offset: 10,
+            channel: 0,
+            sample_rate: 22_050,
+            datetime_with_offset: Time.zone.now,
+            original_format: audio_file_mono_format
+          }
         # arrange
         create_original_audio(media_request_params, audio_file_mono)
 
@@ -285,17 +305,17 @@ describe BawWorkers::Media::Action do
 
         # create original audio file
         media_request_params =
-            {
-                uuid: '7bb0c719-143f-4373-a724-8138219006d9',
-                format: 'wav',
-                media_type: 'audio/wav',
-                start_offset: 5,
-                end_offset: 10,
-                channel: 0,
-                sample_rate: 22050,
-                datetime_with_offset: Time.zone.now,
-                original_format: audio_file_mono_format
-            }
+          {
+            uuid: '7bb0c719-143f-4373-a724-8138219006d9',
+            format: 'wav',
+            media_type: 'audio/wav',
+            start_offset: 5,
+            end_offset: 10,
+            channel: 0,
+            sample_rate: 22_050,
+            datetime_with_offset: Time.zone.now,
+            original_format: audio_file_mono_format
+          }
 
         create_original_audio(media_request_params, audio_file_mono)
 
@@ -307,7 +327,7 @@ describe BawWorkers::Media::Action do
         # assert
         expected_paths = get_cached_audio_paths(media_request_params)
         expect(expected_paths.size).to eq(1)
-        expect(File.exists?(expected_paths[0])).to be_truthy
+        expect(File.exist?(expected_paths[0])).to be_truthy
       end
 
     end

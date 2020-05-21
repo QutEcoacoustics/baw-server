@@ -104,7 +104,7 @@ module BawWorkers
         # @return [BawWorkers::Harvest::GatherFiles]
         def action_gather_files
           config_file_name = BawWorkers::Settings.actions.harvest.config_file_name
-          valid_audio_formats = BawWorkers::Settings.available_formats.audio
+          valid_audio_formats = BawWorkers::Settings.available_formats.audio + BawWorkers::Settings.available_formats.audio_decode_only
 
           BawWorkers::Harvest::GatherFiles.new(
               BawWorkers::Config.logger_worker,

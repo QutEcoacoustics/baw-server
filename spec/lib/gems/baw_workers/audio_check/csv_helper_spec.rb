@@ -1,8 +1,10 @@
-require 'spec_helper'
+# frozen_string_literal: true
+
+require 'workers_helper'
 
 describe BawWorkers::AudioCheck::CsvHelper do
   require 'helpers/shared_test_helpers'
- 
+
   include_context 'shared_test_helpers'
 
   let(:audio_original) { BawWorkers::Config.original_audio_helper }
@@ -11,6 +13,7 @@ describe BawWorkers::AudioCheck::CsvHelper do
   let(:original_format) { 'mp3' }
 
   it 'can compare csv file and audio files' do
+    clear_original_audio
     csv_file = copy_test_audio_check_csv
 
     expected_intersection = []
@@ -22,18 +25,18 @@ describe BawWorkers::AudioCheck::CsvHelper do
     excluded = nil
     BawWorkers::ReadCsv.read_audio_recording_csv(csv_file) do |audio_params|
       opts =
-          {
-              uuid: audio_params[:uuid],
-              datetime_with_offset: BawWorkers::Validation.normalise_datetime(audio_params[:recorded_date]),
-              original_format: audio_params[:original_format]
+        {
+          uuid: audio_params[:uuid],
+          datetime_with_offset: BawWorkers::Validation.normalise_datetime(audio_params[:recorded_date]),
+          original_format: audio_params[:original_format]
 
-          }
+        }
       paths = audio_original.possible_paths(opts)
 
       if excluded.nil?
         # add utc file name by convention
         expected_db_entries_without_file.push(File.basename(paths[1]).downcase)
-        excluded = opts.merge({paths: paths})
+        excluded = opts.merge(paths: paths)
         next
       end
 
@@ -54,11 +57,10 @@ describe BawWorkers::AudioCheck::CsvHelper do
 
     # create one additional file
     additional_file = audio_original.possible_paths(
-        {
-            uuid: uuid,
-            datetime_with_offset: BawWorkers::Validation.normalise_datetime(Time.zone.now),
-            original_format: original_format
-        })[1]
+      uuid: uuid,
+      datetime_with_offset: BawWorkers::Validation.normalise_datetime(Time.zone.now),
+      original_format: original_format
+    )[1]
     FileUtils.mkpath(File.dirname(additional_file))
     FileUtils.touch(additional_file)
     expected_files_without_db_entry.push(File.basename(additional_file).downcase)

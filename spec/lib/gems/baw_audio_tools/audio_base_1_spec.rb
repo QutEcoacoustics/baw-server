@@ -1,4 +1,7 @@
-require 'spec_helper'
+# frozen_string_literal: true
+
+require 'workers_helper'
+require_relative '../../../helpers/baw_audio_tools_shared'
 
 # tests audio file integrity functionality
 describe BawAudioTools::AudioBase do
@@ -10,8 +13,8 @@ describe BawAudioTools::AudioBase do
   context 'verifying integrity' do
     context 'succeeds' do
       it 'processing valid .wv file' do
-        temp_media_file_a = temp_media_file_1+'.wv'
-        result_1 = audio_base.modify(audio_file_stereo, temp_media_file_a)
+        temp_media_file_a = temp_media_file_1 + '.wv'
+        _ = audio_base.modify(audio_file_stereo, temp_media_file_a)
         result = audio_base.integrity_check(temp_media_file_a)
         expect(result[:errors]).to be_blank
         expect(result[:info][:operation]).to eq('verified')
@@ -19,8 +22,8 @@ describe BawAudioTools::AudioBase do
       end
 
       it 'processing valid .mp3 file' do
-        temp_media_file_a = temp_media_file_1+'.mp3'
-        result_1 = audio_base.modify(audio_file_stereo, temp_media_file_a)
+        temp_media_file_a = temp_media_file_1 + '.mp3'
+        _ = audio_base.modify(audio_file_stereo, temp_media_file_a)
         result = audio_base.integrity_check(temp_media_file_a)
         expect(result[:errors]).to be_blank
         expect(result[:warnings][0][:description]).to eq('Skipping 0 bytes of junk at 253.')
@@ -28,64 +31,63 @@ describe BawAudioTools::AudioBase do
       end
 
       it 'processing valid .asf file' do
-        temp_media_file_a = temp_media_file_1+'.asf'
-        result_1 = audio_base.modify(audio_file_stereo, temp_media_file_a)
+        temp_media_file_a = temp_media_file_1 + '.asf'
+        _ = audio_base.modify(audio_file_stereo, temp_media_file_a)
         result = audio_base.integrity_check(temp_media_file_a)
         expect(result[:errors]).to be_blank
         expect(result[:info][:read][:samples]).to eq(result[:info][:write][:samples])
       end
 
       it 'processing valid .wav file' do
-        temp_media_file_a = temp_media_file_1+'.wav'
-        result_1 = audio_base.modify(audio_file_stereo, temp_media_file_a)
+        temp_media_file_a = temp_media_file_1 + '.wav'
+        _ = audio_base.modify(audio_file_stereo, temp_media_file_a)
         result = audio_base.integrity_check(temp_media_file_a)
         expect(result[:errors]).to be_blank
         expect(result[:info][:read][:samples]).to eq(result[:info][:write][:samples])
       end
 
-
       it 'processing valid .flac file' do
-        temp_media_file_a = temp_media_file_1+'.flac'
-        result_1 = audio_base.modify(audio_file_stereo, temp_media_file_a)
+        temp_media_file_a = temp_media_file_1 + '.flac'
+        _ = audio_base.modify(audio_file_stereo, temp_media_file_a)
         result = audio_base.integrity_check(temp_media_file_a)
         expect(result[:errors]).to be_blank
         expect(result[:info][:read][:samples]).to eq(result[:info][:write][:samples])
       end
 
       it 'processing valid .ogg file' do
-        temp_media_file_a = temp_media_file_1+'.ogg'
-        result_1 = audio_base.modify(audio_file_stereo, temp_media_file_a)
+        temp_media_file_a = temp_media_file_1 + '.ogg'
+        _ = audio_base.modify(audio_file_stereo, temp_media_file_a)
         result = audio_base.integrity_check(temp_media_file_a)
         expect(result[:errors]).to be_blank
         expect(result[:info][:read][:samples]).to eq(result[:info][:write][:samples])
       end
 
       it 'processing valid .wma file' do
-        temp_media_file_a = temp_media_file_1+'.wma'
-        result_1 = audio_base.modify(audio_file_stereo, temp_media_file_a)
+        temp_media_file_a = temp_media_file_1 + '.wma'
+        _ = audio_base.modify(audio_file_stereo, temp_media_file_a)
         result = audio_base.integrity_check(temp_media_file_a)
         expect(result[:errors]).to be_blank
         expect(result[:info][:read][:samples]).to eq(result[:info][:write][:samples])
       end
 
       it 'processing valid .webm file' do
-        temp_media_file_a = temp_media_file_1+'.webm'
-        result_1 = audio_base.modify(audio_file_stereo, temp_media_file_a)
+        temp_media_file_a = temp_media_file_1 + '.webm'
+        _ = audio_base.modify(audio_file_stereo, temp_media_file_a)
         result = audio_base.integrity_check(temp_media_file_a)
         expect(result[:errors]).to be_blank
         expect(result[:info][:read][:samples]).to eq(result[:info][:write][:samples])
       end
 
       it 'processing valid .webm file' do
-        temp_media_file_a = temp_media_file_1+'.webm'
-        result_1 = audio_base.modify(audio_file_stereo, temp_media_file_a)
+        temp_media_file_a = temp_media_file_1 + '.webm'
+        _ = audio_base.modify(audio_file_stereo, temp_media_file_a)
         result = audio_base.integrity_check(temp_media_file_a)
         expect(result[:errors]).to be_blank
         expect(result[:info][:read][:samples]).to eq(result[:info][:write][:samples])
       end
 
       it 'processing valid .wac file' do
-        result = audio_base.integrity_check(audio_file_wac_2)
+        _ = audio_base.integrity_check(audio_file_wac_2)
       end
     end
     context 'fails' do
@@ -99,27 +101,27 @@ describe BawAudioTools::AudioBase do
         expect(result[:warnings][0][:description]).to eq('Format ogg detected only with low score of 1, misdetection possible!')
 
         if result[:warnings].size > 1
-          expect(result[:warnings][1][:id]).to eq('end of file')
-          expect(result[:warnings][1][:description]).to include('End of file')
+          expect(result[:warnings][2][:id]).to eq('end of file')
+          expect(result[:warnings][2][:description]).to include('End of file')
         end
 
       end
 
       it 'processing empty .mp3 file' do
-        temp_media_file_a = temp_media_file_1+'.mp3'
+        temp_media_file_a = temp_media_file_1 + '.mp3'
         FileUtils.touch(temp_media_file_a)
 
         result = audio_base.integrity_check(temp_media_file_a)
 
         expect(result[:errors]).to be_blank
-        expect(result[:warnings].size).to eq(2)
+        expect(result[:warnings].size).to eq(3)
 
         expect(result[:warnings][0][:id]).to eq('mp3')
         expect(result[:warnings][0][:description]).to eq('Format mp3 detected only with low score of 1, misdetection possible!')
 
         warning_text_options = [
-            'Could not find codec parameters for stream 0 (Audio: mp3, 0 channels, s16p): unspecified frame size',
-            'Failed to read frame size: Could not seek to 1026.'
+          'Could not find codec parameters for stream 0 (Audio: mp3, 0 channels, s16p): unspecified frame size',
+          'Failed to read frame size: Could not seek to 1026.'
         ]
 
         expect(result[:warnings][1][:id]).to eq('mp3')
@@ -139,8 +141,8 @@ describe BawAudioTools::AudioBase do
         expect(result[:warnings][0][:description]).to eq('Invalid Setup header')
 
         if result[:warnings].size > 1
-          expect(result[:warnings][1][:id]).to eq('end of file')
-          expect(result[:warnings][1][:description]).to match(/End of file/)
+          expect(result[:warnings][1][:id]).to eq('ogg')
+          expect(result[:warnings][1][:description]).to match(/Header processing failed/)
         end
 
         #expect(result[:errors][5][:id]).to eq('error')

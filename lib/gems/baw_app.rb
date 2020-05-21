@@ -18,4 +18,16 @@ module BawApp
       ENV['RAILS_ENV'].presence || ENV['RACK_ENV'].presence || 'development'
     )
   end
+
+  def development?
+    env == 'development'
+  end
+
+  def test?
+    ENV['RUNNING_RSPEC'] == 'yes' || env == 'test'
+  end
+
+  def initialize
+    require_relative('baw_app/initializers/register_mime_types')
+  end
 end

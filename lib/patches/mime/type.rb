@@ -1,3 +1,7 @@
+# frozen_string_literal: true
+
+require 'English'
+
 # http://blog.choonkeat.com/weblog/2007/02/retrieving-a-se.html
 module Mime
   class Type
@@ -9,9 +13,9 @@ module Mime
       # => "xml"
       def file_extension_of(mime_string)
         set = Mime::LOOKUP[mime_string]
-        sym = set.instance_variable_get("@symbol") if set
+        sym = set.instance_variable_get('@symbol') if set
         return sym.to_s if sym
-        return $1 if mime_string =~ /(\w+)$/
+        return $LAST_MATCH_INFO[:last_token] if mime_string =~ /(?<last_token>\w+)$/
       end
     end
   end

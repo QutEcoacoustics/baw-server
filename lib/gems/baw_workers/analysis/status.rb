@@ -1,12 +1,11 @@
+# frozen_string_literal: true
+
 module BawWorkers
   module Analysis
-
     # Integrates an Analysis action with our tracking systems
     # The broader resque:status concerns are handled higher up the hierarchy
     class Status
-
       def initialize(api_communicator)
-
         @api_communicator = api_communicator
 
         # sign into the website
@@ -23,32 +22,30 @@ module BawWorkers
 
         # check if job has been killed by website tracking
         cancel_result = @api_communicator.get_analysis_jobs_item_status(
-            analysis_job_id,
-            audio_recording_id,
-            @security_info)
+          analysis_job_id,
+          audio_recording_id,
+          @security_info
+        )
         cancelled_by_website = cancel_result[:status].nil? ? false : cancel_result[:status].to_sym == :cancelling
-
 
         # if it has been cancelled
         if cancelled_by_website
           # raise an action cancelled exception - it will be caught by action_perform
-          BawWorkers::Config.logger_worker.warn(self.class.name) {
-            "The website cancelled this analysis job"
-          }
-          raise BawWorkers::Exceptions::ActionCancelledError.new(cancel_result[:response_json])
+          BawWorkers::Config.logger_worker.warn(self.class.name) do
+            'The website cancelled this analysis job'
+          end
+          raise BawWorkers::Exceptions::ActionCancelledError, cancel_result[:response_json]
         end
 
         working_json = @api_communicator.update_analysis_jobs_item_status(
-            analysis_job_id,
-            audio_recording_id,
-            :working,
-            @security_info)
+          analysis_job_id,
+          audio_recording_id,
+          :working,
+          @security_info
+        )
 
-        if working_json[:failed]
-          raise AnalysisEndpointError.new(working_json[:response_json])
-        end
+        raise AnalysisEndpointError, working_json[:response_json] if working_json[:failed]
       end
-
 
       # Update the tracking system. At this point the status is either cancelled, timed_out, successful, or failed
       # @param [Symbol] status
@@ -66,7 +63,7 @@ module BawWorkers
         retry_attempts = self.class.retry_attempts
         attempts_left = retry_attempts
         failed = false
-        while attempts_left > 0
+        while attempts_left.positive?
           # = 0.0, ~1.718, ~6.389, ~19.085
           back_off = Math.exp(retry_attempts - attempts_left) - 1
           sleep(back_off)
@@ -75,13 +72,13 @@ module BawWorkers
           # the API communicator heavily logs what is is doing
           begin
             result = @api_communicator.update_analysis_jobs_item_status(analysis_job_id, audio_recording_id, status, @security_info)
-          rescue Timeout::Error => te
+          rescue Timeout::Error
             # yeah we're squashing :-/ but this is all error handling code...
             failed = true
           end
 
           if failed || result[:failed]
-            attempts_left = attempts_left - 1
+            attempts_left -= 1
             @api_communicator.logger.warn(self.class.name) {
               "AnalysisJobItem status update failed, trying again, #{attempts_left} attempts left"
             }
@@ -91,12 +88,8 @@ module BawWorkers
         end
 
         # the web request has failed multiple times
-        if attempts_left == 0
-          self.class.mail_error(params, status)
-        end
+        self.class.mail_error(params, status) if attempts_left.zero?
       end
-
-      private
 
       def self.retry_attempts
         4
@@ -107,13 +100,13 @@ module BawWorkers
 
         if security_info.blank?
           msg = 'Could not log in.'
-          @logger.error(@class_name) { msg }
-          fail BawWorkers::Exceptions::AnalysisEndpointError, msg
+          @logger.error(@class_name) do msg end
+          raise BawWorkers::Exceptions::AnalysisEndpointError, msg
         end
 
         security_info
-      rescue => e
-        self.class.mail_error(nil, nil, e)
+      rescue StandardError => e
+        BawWorkers::Analysis::Status.mail_error(nil, nil, e)
         raise e
       end
 
@@ -123,13 +116,12 @@ module BawWorkers
 
       def self.mail_error(params, status, e = nil)
         BawWorkers::Mail::Mailer.send_worker_error_email(
-            BawWorkers::Analysis::Status,
-            {params: params, status: status},
-            BawWorkers::Analysis::Action::queue,
-            e || StandardError.new("Could not update AnalysisJobsItems status")
+          BawWorkers::Analysis::Status,
+          { params: params, status: status },
+          BawWorkers::Analysis::Action.queue,
+          e || StandardError.new('Could not update AnalysisJobsItems status')
         )
       end
     end
   end
 end
-

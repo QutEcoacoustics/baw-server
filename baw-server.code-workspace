@@ -1,68 +1,83 @@
 {
-    "folders": [
-        {
-            "path": "."
-        }
-    ],
-    "settings": {
-        "cSpell.words": [
-            "postgresql"
-        ],
-        "files.associations": {
-            "**/provision/*.json": "jsonc",
-            "**/Passengerfile.json": "jsonc",
-        },
-        "peacock.color": "#72cb80",
-        "workbench.colorCustomizations": {
-            "activityBar.background": "#97d9a2",
-            "activityBar.activeBorder": "#8273cc",
-            "activityBar.foreground": "#15202b",
-            "activityBar.inactiveForeground": "#15202b99",
-            "activityBarBadge.background": "#8273cc",
-            "activityBarBadge.foreground": "#15202b",
-            "titleBar.activeBackground": "#72cb80",
-            "titleBar.inactiveBackground": "#72cb8099",
-            "titleBar.activeForeground": "#15202b",
-            "titleBar.inactiveForeground": "#15202b99",
-            "statusBar.background": "#72cb80",
-            "statusBarItem.hoverBackground": "#4dbd5e",
-            "statusBar.foreground": "#15202b",
-            "activityBar.activeBackground": "#97d9a2",
-            "statusBar.border": "#72cb80",
-            "titleBar.border": "#72cb80"
-        },
-        "peacock.remoteColor": "#72cb80",
-        "testExplorer.addToEditorContextMenu": true,
-        "testExplorer.codeLens": true,
-        "testExplorer.gutterDecoration": true,
-        "testExplorer.errorDecorationHover":true,
-        "testExplorer.hideEmptyLog": false,
-        "rubyTestExplorer.logpanel": true,
-        "solargraph.diagnostics": true,
-        "solargraph.completion": true,
-        "solargraph.hover": true,
-        "solargraph.symbols": true,
-        "solargraph.definitions": true,
-        "solargraph.rename": true,
-        "solargraph.references": true,
-        "solargraph.folding": true,
-        "solargraph.logLevel": "debug",
-        "solargraph.useBundler": true,
-        "solargraph.bundlerPath": "bundle",
-        "ruby.intellisense": "rubyLocate"
-    },
-    "extensions": {
-        "recommendations": [
-            "rebornix.ruby",
-            "bung87.rails",
-            "misogi.ruby-rubocop",
-            "castwide.solargraph",
-            "bung87.vscode-gemfile",
-            "streetsidesoftware.code-spell-checker",
-            "EditorConfig.EditorConfig",
-            "ms-vscode-remote.vscode-remote-extensionpack",
-            "connorshea.vscode-ruby-test-adapter"
-
-        ]
+  "folders": [
+    {
+      "path": "."
     }
+  ],
+  "settings": {
+    "cSpell.words": [
+      "postgresql"
+    ],
+    "files.associations": {
+      "**/provision/*.json": "jsonc",
+      "**/Passengerfile.json": "jsonc",
+    },
+    "peacock.color": "#72cb80",
+    "workbench.colorCustomizations": {
+      "activityBar.background": "#97d9a2",
+      "activityBar.activeBorder": "#8273cc",
+      "activityBar.foreground": "#15202b",
+      "activityBar.inactiveForeground": "#15202b99",
+      "activityBarBadge.background": "#8273cc",
+      "activityBarBadge.foreground": "#15202b",
+      "titleBar.activeBackground": "#72cb80",
+      "titleBar.inactiveBackground": "#72cb8099",
+      "titleBar.activeForeground": "#15202b",
+      "titleBar.inactiveForeground": "#15202b99",
+      "statusBar.background": "#72cb80",
+      "statusBarItem.hoverBackground": "#4dbd5e",
+      "statusBar.foreground": "#15202b",
+      "activityBar.activeBackground": "#97d9a2",
+      "statusBar.border": "#72cb80",
+      "titleBar.border": "#72cb80"
+    },
+    "peacock.remoteColor": "#72cb80",
+    "testExplorer.addToEditorContextMenu": true,
+    "testExplorer.codeLens": true,
+    "testExplorer.gutterDecoration": true,
+    "testExplorer.errorDecorationHover": true,
+    "testExplorer.hideEmptyLog": false,
+    "rubyTestExplorer.logpanel": true,
+    "solargraph.diagnostics": true,
+    "solargraph.completion": true,
+    "solargraph.hover": true,
+    "solargraph.symbols": true,
+    "solargraph.definitions": true,
+    "solargraph.rename": true,
+    "solargraph.references": true,
+    "solargraph.folding": true,
+    "solargraph.logLevel": "debug",
+    "solargraph.useBundler": true,
+    "solargraph.bundlerPath": "bundle",
+    //"ruby.intellisense": "rubyLocate",
+    "editor.formatOnSave": true,
+    "editor.formatOnSaveTimeout": 5000,
+    "ruby.rubocop.onSave": true,
+    "ruby.format": "rubocop",
+    "ruby.useBundler": true,
+    "ruby.useLanguageServer": true,
+    "ruby.lint": {
+      "rubocop": {
+        "useBundler": true
+      }
+    },
+    "cSpell.enableFiletypes": [
+      "ruby"
+    ],
+  },
+  "extensions": {
+    "recommendations": [
+      "rebornix.ruby",
+      // "bung87.rails",
+      "misogi.ruby-rubocop",
+      "castwide.solargraph",
+      // "bung87.vscode-gemfile",
+      "streetsidesoftware.code-spell-checker",
+      "EditorConfig.EditorConfig",
+      "ms-vscode-remote.vscode-remote-extensionpack",
+      "connorshea.vscode-ruby-test-adapter",
+      "knisterpeter.vscode-github",
+      //"castwide.ruby-debug"
+    ]
+  }
 }

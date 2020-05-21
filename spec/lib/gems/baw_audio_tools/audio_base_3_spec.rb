@@ -1,4 +1,6 @@
-require 'spec_helper'
+# frozen_string_literal: true
+
+require 'workers_helper'
 
 # tests getting audio info
 describe BawAudioTools::AudioBase do
@@ -27,7 +29,7 @@ describe BawAudioTools::AudioBase do
     it 'gives correct error for corrupt file' do
       expect {
         audio_base.info(audio_file_corrupt)
-      }.to raise_error(BawAudioTools::Exceptions::AudioToolError, /string=End of file/)
+      }.to raise_error(BawAudioTools::Exceptions::AudioToolError, /string=Unknown error occurred/)
     end
 
     it 'returns all required information' do
@@ -43,22 +45,22 @@ describe BawAudioTools::AudioBase do
 
     it 'ignores low level warnings for ffmpeg' do
       input =
-          "[wav @ 0x1d35020] max_analyze_duration 5000000 reached at 5015510 microseconds
+        "[wav @ 0x1d35020] max_analyze_duration 5000000 reached at 5015510 microseconds
 [wav @ 0x1d35020] Estimating duration from bitrate, this may be inaccurate
 [mp3 @ 0x2935600] overread, skip -6 enddists: -4 -4"
       expect {
-        audio_base.audio_ffmpeg.check_for_errors({stderr: input})
+        audio_base.audio_ffmpeg.check_for_errors(stderr: input)
       }.to_not raise_error
     end
 
     it 'fails on end of line error for ffmpeg' do
       input =
-          "[wav @ 0x1d35020] max_analyze_duration 5000000 reached at 5015510 microseconds
+        "[wav @ 0x1d35020] max_analyze_duration 5000000 reached at 5015510 microseconds
 [wav @ 0x1d35020] Estimating duration from bitrate, this may be inaccurate
 [mp3 @ 0x2935600] overread, skip -6 enddists: -4 -4
 [wav @ 0x1d35020] the end of file"
       expect {
-        audio_base.audio_ffmpeg.check_for_errors({stderr: input})
+        audio_base.audio_ffmpeg.check_for_errors(stderr: input)
       }.to raise_error(BawAudioTools::Exceptions::FileCorruptError, /Ffmpeg encountered unexpected end of file/)
     end
 
@@ -67,82 +69,81 @@ describe BawAudioTools::AudioBase do
   context 'getting info succeeds when' do
 
     it 'processes a valid .wv file' do
-      temp_media_file_a = temp_media_file_1+'.wv'
+      temp_media_file_a = temp_media_file_1 + '.wv'
       audio_base.modify(audio_file_stereo, temp_media_file_a)
       result = audio_base.info(temp_media_file_a)
       expect(result[:media_type]).to eq('audio/wavpack')
-      expect(result[:sample_rate]).to be_within(1.0).of(44100.0)
+      expect(result[:sample_rate]).to be_within(1.0).of(44_100.0)
       expect(result[:duration_seconds]).to be_within(0.5).of(70.0)
       expect(result[:channels]).to eq(2)
     end
 
     it 'processes a valid .mp3 file' do
-      temp_media_file_a = temp_media_file_1+'.mp3'
+      temp_media_file_a = temp_media_file_1 + '.mp3'
       audio_base.modify(audio_file_stereo, temp_media_file_a)
       result = audio_base.info(temp_media_file_a)
       expect(result[:media_type]).to eq('audio/mp3')
-      expect(result[:sample_rate]).to be_within(1.0).of(44100.0)
+      expect(result[:sample_rate]).to be_within(1.0).of(44_100.0)
       expect(result[:duration_seconds]).to be_within(0.5).of(70.0)
       expect(result[:channels]).to eq(2)
     end
 
     it 'processes a valid .asf file' do
-      temp_media_file_a = temp_media_file_1+'.asf'
+      temp_media_file_a = temp_media_file_1 + '.asf'
       audio_base.modify(audio_file_stereo, temp_media_file_a)
       result = audio_base.info(temp_media_file_a)
       expect(result[:media_type]).to eq('audio/asf')
-      expect(result[:sample_rate]).to be_within(1.0).of(44100.0)
+      expect(result[:sample_rate]).to be_within(1.0).of(44_100.0)
       expect(result[:duration_seconds]).to be_within(0.5).of(70.0)
       expect(result[:channels]).to eq(2)
     end
 
     it 'processes a valid .wav file' do
-      temp_media_file_a = temp_media_file_1+'.wav'
+      temp_media_file_a = temp_media_file_1 + '.wav'
       audio_base.modify(audio_file_stereo, temp_media_file_a)
       result = audio_base.info(temp_media_file_a)
       expect(result[:media_type]).to eq('audio/wav')
-      expect(result[:sample_rate]).to be_within(1.0).of(44100.0)
+      expect(result[:sample_rate]).to be_within(1.0).of(44_100.0)
       expect(result[:duration_seconds]).to be_within(0.5).of(70.0)
       expect(result[:channels]).to eq(2)
     end
 
-
     it 'processes a valid .flac file' do
-      temp_media_file_a = temp_media_file_1+'.flac'
+      temp_media_file_a = temp_media_file_1 + '.flac'
       audio_base.modify(audio_file_stereo, temp_media_file_a)
       result = audio_base.info(temp_media_file_a)
       expect(result[:media_type]).to eq('audio/x-flac')
-      expect(result[:sample_rate]).to be_within(1.0).of(44100.0)
+      expect(result[:sample_rate]).to be_within(1.0).of(44_100.0)
       expect(result[:duration_seconds]).to be_within(0.5).of(70.0)
       expect(result[:channels]).to eq(2)
     end
 
     it 'processes a valid .ogg file' do
-      temp_media_file_a = temp_media_file_1+'.ogg'
+      temp_media_file_a = temp_media_file_1 + '.ogg'
       audio_base.modify(audio_file_stereo, temp_media_file_a)
       result = audio_base.info(audio_file_stereo)
       expect(result[:media_type]).to eq('audio/ogg')
-      expect(result[:sample_rate]).to be_within(1.0).of(44100.0)
+      expect(result[:sample_rate]).to be_within(1.0).of(44_100.0)
       expect(result[:duration_seconds]).to be_within(0.5).of(70.0)
       expect(result[:channels]).to eq(2)
     end
 
     it 'processes a valid .wma file' do
-      temp_media_file_a = temp_media_file_1+'.wma'
+      temp_media_file_a = temp_media_file_1 + '.wma'
       audio_base.modify(audio_file_stereo, temp_media_file_a)
       result = audio_base.info(temp_media_file_a)
       expect(result[:media_type]).to eq('audio/asf')
-      expect(result[:sample_rate]).to be_within(1.0).of(44100.0)
+      expect(result[:sample_rate]).to be_within(1.0).of(44_100.0)
       expect(result[:duration_seconds]).to be_within(0.5).of(70.0)
       expect(result[:channels]).to eq(2)
     end
 
     it 'processes a valid .webm file' do
-      temp_media_file_a = temp_media_file_1+'.webm'
+      temp_media_file_a = temp_media_file_1 + '.webm'
       audio_base.modify(audio_file_stereo, temp_media_file_a)
       result = audio_base.info(temp_media_file_a)
       expect(result[:media_type]).to eq('audio/webm')
-      expect(result[:sample_rate]).to be_within(1.0).of(44100.0)
+      expect(result[:sample_rate]).to be_within(1.0).of(44_100.0)
       expect(result[:duration_seconds]).to be_within(0.5).of(70.0)
       expect(result[:channels]).to eq(2)
     end
@@ -156,7 +157,7 @@ describe BawAudioTools::AudioBase do
     it 'processes a valid .wac file' do
       result = audio_base.info(audio_file_wac_2)
       expect(result[:media_type]).to eq('audio/x-waac')
-      expect(result[:sample_rate]).to be_within(1.0).of(22050)
+      expect(result[:sample_rate]).to be_within(1.0).of(22_050)
       expect(result[:duration_seconds]).to be_within(0.5).of(60.0)
       expect(result[:channels]).to eq(2)
     end

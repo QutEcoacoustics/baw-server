@@ -1,8 +1,9 @@
+# frozen_string_literal: true
+
 module BawAudioTools
   class AudioFfmpeg
-
-    ERROR_FRAME_SIZE_1 = "Could not find codec parameters for stream [0-9]+ \\(Audio\\: [a-zA-Z0-9]+\\, [0-9]+ channels\\, [a-zA-Z0-9]+\\)\\: unspecified frame size"
-    ERROR_FRAME_SIZE_2 = "Failed to read frame size: Could not seek to [0-9]+\\."
+    ERROR_FRAME_SIZE_1 = 'Could not find codec parameters for stream [0-9]+ \\(Audio\\: [a-zA-Z0-9]+\\, [0-9]+ channels\\, [a-zA-Z0-9]+\\)\\: unspecified frame size'
+    ERROR_FRAME_SIZE_2 = 'Failed to read frame size: Could not seek to [0-9]+\\.'
     ERROR_END_OF_FILE = 'End of file'
 
     # @param [String] ffmpeg_executable
@@ -29,18 +30,18 @@ module BawAudioTools
     end
 
     def modify_command(source, source_info, target, start_offset = nil, end_offset = nil, channel = nil, sample_rate = nil)
-      fail Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.exists? source
-      fail Exceptions::FileAlreadyExistsError, "Target exists: #{target}" if File.exists? target
-      fail ArgumentError, "Source and Target are the same file: #{target}" if source == target
+      raise Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.exist? source
+      raise Exceptions::FileAlreadyExistsError, "Target exists: #{target}" if File.exist? target
+      raise ArgumentError, "Source and Target are the same file: #{target}" if source == target
 
       cmd_offsets = arg_offsets(start_offset, end_offset)
       cmd_sample_rate = arg_sample_rate(sample_rate)
 
-      if sample_rate.blank? && source_info.include?(:sample_rate)
-        cmd_sample_rate = arg_sample_rate(source_info[:sample_rate])
-      else
-        cmd_sample_rate = arg_sample_rate(sample_rate)
-      end
+      cmd_sample_rate = if sample_rate.blank? && source_info.include?(:sample_rate)
+                          arg_sample_rate(source_info[:sample_rate])
+                        else
+                          arg_sample_rate(sample_rate)
+                        end
 
       cmd_channel = arg_channel(channel)
       codec_info = codec_calc(target)
@@ -52,7 +53,7 @@ module BawAudioTools
         cmd = audio_cmd
       else
         partial_cmd = "\"#{codec_info[:target]}\" \"#{codec_info[:old_target]}\""
-        separator_move = OS.windows? ? '&& move' : '; mv'
+        separator_move = '; mv'
         cmd = "#{audio_cmd} #{separator_move} #{partial_cmd}"
       end
 
@@ -64,13 +65,13 @@ module BawAudioTools
       stderr = execute_msg[:stderr]
 
       if !stderr.blank? && /#{ERROR_FRAME_SIZE_1}/.match(stderr)
-        fail Exceptions::FileCorruptError, "Ffmpeg could not get frame size (msg type 1).\n\t#{execute_msg[:execute_msg]}"
+        raise Exceptions::FileCorruptError, "Ffmpeg could not get frame size (msg type 1).\n\t#{execute_msg[:execute_msg]}"
       end
       if !stderr.blank? && /#{ERROR_FRAME_SIZE_2}/.match(stderr)
-        fail Exceptions::FileCorruptError, "Ffmpeg could not get frame size (msg type 2).\n\t#{execute_msg[:execute_msg]}"
+        raise Exceptions::FileCorruptError, "Ffmpeg could not get frame size (msg type 2).\n\t#{execute_msg[:execute_msg]}"
       end
       if !stderr.blank? && /#{ERROR_END_OF_FILE}/i.match(stderr)
-        fail Exceptions::FileCorruptError, "Ffmpeg encountered unexpected end of file.\n\t#{execute_msg[:execute_msg]}"
+        raise Exceptions::FileCorruptError, "Ffmpeg encountered unexpected end of file.\n\t#{execute_msg[:execute_msg]}"
       end
     end
 
@@ -79,16 +80,16 @@ module BawAudioTools
       stderr = execute_msg[:stderr]
 
       result = {
-          errors: [],
-          warnings: [],
-          info: {
-              read: {
-                  packets: 0, bytes: 0, frames: 0, samples: 0
-              },
-              write: {
-                  packets: 0, bytes: 0, frames: 0, samples: 0
-              }
+        errors: [],
+        warnings: [],
+        info: {
+          read: {
+            packets: 0, bytes: 0, frames: 0, samples: 0
+          },
+          write: {
+            packets: 0, bytes: 0, frames: 0, samples: 0
           }
+        }
       }
 
       return result if stderr.blank?
@@ -96,8 +97,12 @@ module BawAudioTools
       stderr.each_line do |line|
         match_result = /\A\[(.+?) @ 0x.+?\] (.*)/.match(line)
         item = nil
-        item = check_integrity_item({id: match_result[1], description: match_result[2]}) unless match_result.blank?
+        item = check_integrity_item(id: match_result[1], description: match_result[2]) unless match_result.blank?
         result[:warnings].push(item) unless item.blank?
+
+        if /: End of file$/ =~ line
+          result[:warnings].push(id: 'end of file', description: 'End of file')
+        end
 
         read_packets_match = /Total: (\d+) packets \((\d+) bytes\) demuxed/.match(line)
         unless read_packets_match.blank?
@@ -183,23 +188,23 @@ module BawAudioTools
           # is output as `\t\tkey\t:\tvalue` (where \t denotes a tab)
           # When encountering such lines, just skip for now.
           index = line.index('=')
-          if index != nil
+          unless index.nil?
             current_key = line[0, index].strip
-            current_value = line[index+1, line.length].strip
+            current_value = line[index + 1, line.length].strip
             result[ffprobe_current_block_name + ' ' + current_key] = current_value
           end
         end
       end
 
-      unless File.exists?(source)
-        fail Exceptions::AudioFileNotFoundError, "Could not locate #{source}\n\t#{execute_msg[:execute_msg]}"
+      unless File.exist?(source)
+        raise Exceptions::AudioFileNotFoundError, "Could not locate #{source}\n\t#{execute_msg[:execute_msg]}"
       end
 
       actual_stream_codec_type = result['STREAM codec_type']
       expected_stream_codec_type = 'audio'
       if actual_stream_codec_type != expected_stream_codec_type
         msg = "Not an audio file #{source} ('#{actual_stream_codec_type}' is not '#{expected_stream_codec_type}'): #{result.to_json}\n\t#{execute_msg[:execute_msg]}"
-        fail Exceptions::NotAnAudioFileError, msg
+        raise Exceptions::NotAnAudioFileError, msg
       end
 
       result
@@ -209,13 +214,13 @@ module BawAudioTools
       cmd_arg = ''
       unless channel.blank?
         channel_number = channel.to_i
-        if channel_number < 1
-          # mix down to mono
-          cmd_arg = ' -ac 1 '
-        else
-          # select the channel (0 index based)
-          cmd_arg = " -map_channel 0.0.#{channel_number - 1} "
-        end
+        cmd_arg = if channel_number < 1
+                    # mix down to mono
+                    ' -ac 1 '
+                  else
+                    # select the channel (0 index based)
+                    " -map_channel 0.0.#{channel_number - 1} "
+                  end
       end
       cmd_arg
     end
@@ -260,7 +265,6 @@ module BawAudioTools
     end
 
     def codec_calc(target)
-
       # high quality codec settings
       # https://trac.ffmpeg.org/wiki/GuidelinesHighQualityAudio
 
@@ -300,90 +304,87 @@ module BawAudioTools
       # set the right codec if we know it
       extension = File.extname(target).upcase!.reverse.chomp('.').reverse
       case extension
-        when 'WAV'
-          codec = codec_high_wav
-        when 'MP3'
-          codec = codec_high_mp3
-        when 'OGG'
-          codec = codec_high_vorbis
-        when 'OGA'
-          codec = codec_high_vorbis
-          target = target.chomp(File.extname(target))+'.ogg'
-        when 'WEBM'
-          codec = codec_high_vorbis
-        when 'WEBMA'
-          codec = codec_high_vorbis
-          target = target.chomp(File.extname(target))+'.webm'
-        when 'WV'
-          codec = codec_high_wavpack
-        when 'FLAC'
-          codec = codec_high_flac
-        else
-          # don't specify codec for any other extension
-          # Alternative: Use the 'copy' special value to specify that the raw codec data must be copied as is.
-          codec = ''
+      when 'WAV'
+        codec = codec_high_wav
+      when 'MP3'
+        codec = codec_high_mp3
+      when 'OGG'
+        codec = codec_high_vorbis
+      when 'OGA'
+        codec = codec_high_vorbis
+        target = target.chomp(File.extname(target)) + '.ogg'
+      when 'WEBM'
+        codec = codec_high_vorbis
+      when 'WEBMA'
+        codec = codec_high_vorbis
+        target = target.chomp(File.extname(target)) + '.webm'
+      when 'WV'
+        codec = codec_high_wavpack
+      when 'FLAC'
+        codec = codec_high_flac
+      else
+        # don't specify codec for any other extension
+        # Alternative: Use the 'copy' special value to specify that the raw codec data must be copied as is.
+        codec = ''
       end
 
       # -acodec Force audio codec to codec.
       {
-          codec: codec.blank? ? '' : " -acodec #{codec}",
-          target: target,
-          old_target: old_target
+        codec: codec.blank? ? '' : " -acodec #{codec}",
+        target: target,
+        old_target: old_target
       }
-
     end
 
     # mime type to ffmpeg string identifier conversions
     def get_mime_type(ffmpeg_info)
-
       #[:info][:ffmpeg]['STREAM codec_type']+'/'+file_info[:info][:ffmpeg]['STREAM codec_name']
 
       case ffmpeg_info['FORMAT format_long_name']
-        when 'WAV / WAVE (Waveform Audio)'
-          # :codec_name => 'pcm_s16le',
-          # :codec_long_name => 'PCM signed 16-bit little-endian',
-          'audio/wav'
-        when 'MP2/3 (MPEG audio layer 2/3)', 'MP3 (MPEG audio layer 3)'
-          # :codec_name => 'mp3',
-          # :codec_long_name => 'MP3 (MPEG audio layer 3)',
-          'audio/mp3'
-        when 'Matroska / WebM', 'WebM'
-          # :codec_name => 'vorbis',
-          # :codec_long_name => 'Vorbis',
-          # :format_name => 'matroska,webm',
-          'audio/webm'
-        when 'Ogg'
-          # :codec_name => 'vorbis',
-          # :codec_long_name => 'Vorbis',
-          'audio/ogg'
-        when 'ASF (Advanced / Active Streaming Format)'
-          # :codec_name => 'wmav2',
-          # :codec_long_name => 'Windows Media Audio 2',
-          'audio/asf'
-        when 'WavPack', 'raw WavPack'
-          # :codec_name => 'wavpack',
-          # :codec_long_name => 'WavPack',
-          'audio/wavpack'
-        when 'QuickTime / MOV', 'MP4 (MPEG-4 Part 14)', 'PSP MP4 (MPEG-4 Part 14)', 'iPod H.264 MP4 (MPEG-4 Part 14)'
-          # codec_name=alac
-          # codec_long_name=ALAC (Apple Lossless Audio Codec)
-          # format_name=mov,mp4,m4a,3gp,3g2,mj2
-          'audio/mp4'
-        when 'AAC (Advanced Audio Coding)', 'AAC LATM (Advanced Audio Coding LATM syntax)',
+      when 'WAV / WAVE (Waveform Audio)'
+        # :codec_name => 'pcm_s16le',
+        # :codec_long_name => 'PCM signed 16-bit little-endian',
+        'audio/wav'
+      when 'MP2/3 (MPEG audio layer 2/3)', 'MP3 (MPEG audio layer 3)'
+        # :codec_name => 'mp3',
+        # :codec_long_name => 'MP3 (MPEG audio layer 3)',
+        'audio/mp3'
+      when 'Matroska / WebM', 'WebM'
+        # :codec_name => 'vorbis',
+        # :codec_long_name => 'Vorbis',
+        # :format_name => 'matroska,webm',
+        'audio/webm'
+      when 'Ogg'
+        # :codec_name => 'vorbis',
+        # :codec_long_name => 'Vorbis',
+        'audio/ogg'
+      when 'ASF (Advanced / Active Streaming Format)'
+        # :codec_name => 'wmav2',
+        # :codec_long_name => 'Windows Media Audio 2',
+        'audio/asf'
+      when 'WavPack', 'raw WavPack'
+        # :codec_name => 'wavpack',
+        # :codec_long_name => 'WavPack',
+        'audio/wavpack'
+      when 'QuickTime / MOV', 'MP4 (MPEG-4 Part 14)', 'PSP MP4 (MPEG-4 Part 14)', 'iPod H.264 MP4 (MPEG-4 Part 14)'
+        # codec_name=alac
+        # codec_long_name=ALAC (Apple Lossless Audio Codec)
+        # format_name=mov,mp4,m4a,3gp,3g2,mj2
+        'audio/mp4'
+      when 'AAC (Advanced Audio Coding)', 'AAC LATM (Advanced Audio Coding LATM syntax)',
             'ADTS AAC (Advanced Audio Coding)', 'raw ADTS AAC (Advanced Audio Coding)'
-          # codec_name=aac
-          # codec_long_name=AAC (Advanced Audio Coding)
-          # format_name=aac
-          'audio/aac'
-        when 'FLAC (Free Lossless Audio Codec)', 'raw FLAC', 'flac'
-          # codec_name=flac
-          # codec_long_name=raw FLAC
-          # format_name=flac
-          'audio/x-flac'
-        else
-          'application/octet-stream'
+        # codec_name=aac
+        # codec_long_name=AAC (Advanced Audio Coding)
+        # format_name=aac
+        'audio/aac'
+      when 'FLAC (Free Lossless Audio Codec)', 'raw FLAC', 'flac'
+        # codec_name=flac
+        # codec_long_name=raw FLAC
+        # format_name=flac
+        'audio/x-flac'
+      else
+        'application/octet-stream'
       end
     end
-
   end
 end

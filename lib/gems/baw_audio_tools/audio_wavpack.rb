@@ -1,6 +1,7 @@
+# frozen_string_literal: true
+
 module BawAudioTools
   class AudioWavpack
-
     ERROR_NOT_COMPATIBLE = 'not compatible with this version of WavPack file!'
     ERROR_NOT_VALID = 'not a valid WavPack file!'
     ERROR_CANNOT_OPEN = 'can\'t open file'
@@ -26,7 +27,7 @@ module BawAudioTools
       output.strip.split(/\r?\n|\r/).each do |line|
         line.strip!
         current_key = line[0, line.index(':')].strip
-        current_value = line[line.index(':')+1, line.length].strip
+        current_value = line[line.index(':') + 1, line.length].strip
         result[current_key] = current_value
       end
 
@@ -42,13 +43,13 @@ module BawAudioTools
       stderr = execute_msg[:stderr]
 
       if !stderr.blank? && stderr.include?(ERROR_CANNOT_OPEN)
-        fail Exceptions::FileCorruptError, "Wavpack could not open the file.\n\t#{execute_msg[:execute_msg]}"
+        raise Exceptions::FileCorruptError, "Wavpack could not open the file.\n\t#{execute_msg[:execute_msg]}"
       end
       if !stderr.blank? && stderr.include?(ERROR_NOT_VALID)
-        fail Exceptions::AudioToolError, "Wavpack was given a non-wavpack file.\n\t#{execute_msg[:execute_msg]}"
+        raise Exceptions::AudioToolError, "Wavpack was given a non-wavpack file.\n\t#{execute_msg[:execute_msg]}"
       end
       if !stderr.blank? && stderr.include?(ERROR_NOT_COMPATIBLE)
-        fail Exceptions::AudioToolError, "Wavpack was given a non-compatible wavpack file.\n\t#{execute_msg[:execute_msg]}"
+        raise Exceptions::AudioToolError, "Wavpack was given a non-compatible wavpack file.\n\t#{execute_msg[:execute_msg]}"
       end
     end
 
@@ -57,13 +58,13 @@ module BawAudioTools
       stderr = execute_msg[:stderr]
 
       result = {
-          errors: [],
-          info: {
-              operation: '',
-              time: 0,
-              mode: '',
-              ratio: ''
-          }
+        errors: [],
+        info: {
+          operation: '',
+          time: 0,
+          mode: '',
+          ratio: ''
+        }
       }
 
       return result if stderr.blank?
@@ -81,28 +82,21 @@ module BawAudioTools
       end
 
       # consider verification failed if info is not populated
-      if result[:info][:operation].blank?
-        result[:errors].push('Verification failed')
-      end
+      result[:errors].push('Verification failed') if result[:info][:operation].blank?
 
       result
     end
 
-    def modify_command(source, source_info, target, start_offset = nil, end_offset = nil)
-      fail ArgumentError, "Source is not a wavpack file: #{source}" unless source.match(/\.wv$/)
-      fail ArgumentError, "Target is not a wav file: : #{target}" unless target.match(/\.wav$/)
-      fail Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.exists? source
-      fail Exceptions::FileAlreadyExistsError, "Target exists: #{target}" if File.exists? target
-      fail ArgumentError "Source and Target are the same file: #{target}" if source == target
+    def modify_command(source, _source_info, target, start_offset = nil, end_offset = nil)
+      raise ArgumentError, "Source is not a wavpack file: #{source}" unless source.match(/\.wv$/)
+      raise ArgumentError, "Target is not a wav file: : #{target}" unless target.match(/\.wav$/)
+      raise Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.exist? source
+      raise Exceptions::FileAlreadyExistsError, "Target exists: #{target}" if File.exist? target
+      raise ArgumentError "Source and Target are the same file: #{target}" if source == target
 
       cmd_offsets = arg_offsets(start_offset, end_offset)
 
-      if OS.windows?
-        wvunpack_command = "#{@wavpack_executable} #{cmd_offsets} \"#{source}\" \"#{target}\""
-      else
-        wvunpack_command = "#{@wavpack_executable} #{cmd_offsets} \"#{source}\" -o \"#{target}\""
-      end
-      wvunpack_command = wvunpack_command.gsub(%r{/}) { "\\" } if OS.windows?
+      wvunpack_command = "#{@wavpack_executable} #{cmd_offsets} \"#{source}\" -o \"#{target}\""
       wvunpack_command
     end
 
@@ -131,6 +125,5 @@ module BawAudioTools
       end
       duration
     end
-
   end
 end

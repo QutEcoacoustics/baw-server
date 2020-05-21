@@ -1,8 +1,10 @@
-require 'spec_helper'
+# frozen_string_literal: true
+
+require 'workers_helper'
 
 describe BawWorkers::Harvest::SingleFile do
   require 'helpers/shared_test_helpers'
- 
+
   include_context 'shared_test_helpers'
 
   let(:file_info) { BawWorkers::Config.file_info }
@@ -11,19 +13,19 @@ describe BawWorkers::Harvest::SingleFile do
 
   let(:gather_files) {
     BawWorkers::Harvest::GatherFiles.new(
-        BawWorkers::Config.logger_worker,
-        file_info,
-        BawWorkers::Settings.available_formats.audio,
-        BawWorkers::Settings.actions.harvest.config_file_name
+      BawWorkers::Config.logger_worker,
+      file_info,
+      BawWorkers::Settings.available_formats.audio + BawWorkers::Settings.available_formats.audio_decode_only,
+      BawWorkers::Settings.actions.harvest.config_file_name
     )
   }
 
   let(:single_file) {
     BawWorkers::Harvest::SingleFile.new(
-        BawWorkers::Config.logger_worker,
-        file_info,
-        api_comm,
-        BawWorkers::Config.original_audio_helper
+      BawWorkers::Config.logger_worker,
+      file_info,
+      api_comm,
+      BawWorkers::Config.original_audio_helper
     )
   }
 
@@ -38,7 +40,7 @@ describe BawWorkers::Harvest::SingleFile do
       sub_folder = File.expand_path File.join(harvest_to_do_path, 'harvest_file_exists')
       FileUtils.mkpath(sub_folder)
 
-      source_audio_file = File.expand_path File.join('.', 'spec', 'example_media', 'test-audio-mono.ogg')
+      source_audio_file = audio_file_mono
       dest_audio_file = File.join(sub_folder, 'test_20141012_181455.ogg')
 
       source_harvest_folder_config = folder_example
@@ -60,88 +62,86 @@ describe BawWorkers::Harvest::SingleFile do
 
       request_login_body = get_api_security_request(email, password)
       response_login_body = get_api_security_response(user_name, auth_token)
-      request_headers_base = {'Accept' => 'application/json', 'Content-Type' => 'application/json', 'User-Agent' => 'Ruby'}
+      request_headers_base = { 'Accept' => 'application/json', 'Content-Type' => 'application/json', 'User-Agent' => 'Ruby' }
       request_headers = request_headers_base.merge('Authorization' => "Token token=\"#{auth_token}\"")
       request_create_body = {
-          uploader_id: 30,
-          recorded_date: recorded_date,
-          site_id: 20,
-          duration_seconds: 70.0,
-          sample_rate_hertz: 44100,
-          channels: 1,
-          bit_rate_bps: 239920,
-          media_type: 'audio/ogg',
-          data_length_bytes: 822281,
-          file_hash: file_hash,
-          original_file_name: 'test_20141012_181455.ogg',
-          notes: {
-              relative_path: 'test_20141012_181455.ogg',
-              sensor_type: 'SM2',
-              information: [
-                  'stripped left channel due to bad mic',
-                  'appears to have electronic interference from solar panel'
-              ]
-          }
+        uploader_id: 30,
+        recorded_date: recorded_date,
+        site_id: 20,
+        duration_seconds: 70.0,
+        sample_rate_hertz: 44_100,
+        channels: 1,
+        bit_rate_bps: 239_920,
+        media_type: 'audio/ogg',
+        data_length_bytes: 822_281,
+        file_hash: file_hash,
+        original_file_name: 'test_20141012_181455.ogg',
+        notes: {
+          relative_path: 'test_20141012_181455.ogg',
+          sensor_type: 'SM2',
+          information: [
+            'stripped left channel due to bad mic',
+            'appears to have electronic interference from solar panel'
+          ]
+        }
       }
       response_create_body = {
-          meta: {
-              status: 201,
-              message: 'Created'
-          },
-          data: {
-              recorded_date: '2014-10-12T08:14:55Z',
-              site_id: 20,
-              duration_seconds: 70.0,
-              sample_rate_hertz: 44100,
-              channels: 1,
-              bit_rate_bps: 239920,
-              media_type: 'audio/ogg',
-              data_length_bytes: 822281,
-              file_hash: file_hash,
-              status: 'new',
-              original_file_name: 'test_20141012_181455.ogg',
+        meta: {
+          status: 201,
+          message: 'Created'
+        },
+        data: {
+          recorded_date: '2014-10-12T08:14:55Z',
+          site_id: 20,
+          duration_seconds: 70.0,
+          sample_rate_hertz: 44_100,
+          channels: 1,
+          bit_rate_bps: 239_920,
+          media_type: 'audio/ogg',
+          data_length_bytes: 822_281,
+          file_hash: file_hash,
+          status: 'new',
+          original_file_name: 'test_20141012_181455.ogg',
 
-              created_at: '2014-10-13T05:21:13Z',
-              id: 177,
-              notes: 'note number 183',
-              updated_at: '2014-10-13T05:21:13Z',
-              uuid: uuid
-          }
+          created_at: '2014-10-13T05:21:13Z',
+          id: 177,
+          notes: 'note number 183',
+          updated_at: '2014-10-13T05:21:13Z',
+          uuid: uuid
+        }
       }
 
       request_update_status_body = {
-          uuid: uuid,
-          file_hash: file_hash,
-          status: nil
+        uuid: uuid,
+        file_hash: file_hash,
+        status: nil
       }
 
       possible_paths = audio_original.possible_paths(
-          {
-              uuid: uuid,
-              datetime_with_offset: Time.zone.parse(recorded_date),
-              original_format: original_format
-          }
+        uuid: uuid,
+        datetime_with_offset: Time.zone.parse(recorded_date),
+        original_format: original_format
       )
 
       stub_login = stub_request(:post, "#{default_uri}/security")
-                       .with(body: request_login_body.to_json, headers: request_headers_base)
-                       .to_return(status: 200, body: response_login_body.to_json)
+                   .with(body: request_login_body.to_json, headers: request_headers_base)
+                   .to_return(status: 200, body: response_login_body.to_json)
 
       stub_uploader_check = stub_request(:get, "#{default_uri}/projects/10/sites/20/audio_recordings/check_uploader/30")
-                                .with(headers: request_headers)
-                                .to_return(status: 204)
+                            .with(headers: request_headers)
+                            .to_return(status: 204)
 
       stub_create = stub_request(:post, "#{default_uri}/projects/10/sites/20/audio_recordings")
-                        .with(body: request_create_body.to_json, headers: request_headers)
-                        .to_return(status: 201, body: response_create_body.to_json)
+                    .with(body: request_create_body.to_json, headers: request_headers)
+                    .to_return(status: 201, body: response_create_body.to_json)
 
       stub_uploading_status = stub_request(:put, "#{default_uri}/audio_recordings/177/update_status")
-                                  .with(body: request_update_status_body.merge(status: 'uploading'), headers: request_headers)
-                                  .to_return(status: 200)
+                              .with(body: request_update_status_body.merge(status: 'uploading'), headers: request_headers)
+                              .to_return(status: 200)
 
       stub_ready_status = stub_request(:put, "#{default_uri}/audio_recordings/177/update_status")
-                              .with(body: request_update_status_body.merge(status: 'ready'), headers: request_headers)
-                              .to_return(status: 200)
+                          .with(body: request_update_status_body.merge(status: 'ready'), headers: request_headers)
+                          .to_return(status: 200)
 
       # execute - process a single file
       file_info_hash = gather_files.run(dest_audio_file)
@@ -155,11 +155,11 @@ describe BawWorkers::Harvest::SingleFile do
       stub_ready_status.should have_been_made.once
 
       # ensure file is moved to correct location
-      expect(File.exists?(possible_paths[1])).to be_truthy
+      expect(File.exist?(possible_paths[1])).to be_truthy
 
       # ensure source file is renamed to *.completed
-      expect(File.exists?(dest_audio_file)).to be_falsey
-      expect(File.exists?(dest_audio_file+'.completed')).to be_truthy
+      expect(File.exist?(dest_audio_file)).to be_falsey
+      expect(File.exist?(dest_audio_file + '.completed')).to be_truthy
 
       # clean up
       FileUtils.rm_rf(sub_folder)
@@ -170,7 +170,7 @@ describe BawWorkers::Harvest::SingleFile do
       sub_folder = File.expand_path File.join(harvest_to_do_path, 'harvest_file_exists')
       FileUtils.mkpath(sub_folder)
 
-      source_audio_file = File.expand_path File.join('.', 'spec', 'example_media', 'test-wac-1.wac')
+      source_audio_file = audio_file_wac
       dest_audio_file = File.join(sub_folder, 'test_20141012_181455.wac')
 
       source_harvest_folder_config = folder_example
@@ -192,88 +192,86 @@ describe BawWorkers::Harvest::SingleFile do
 
       request_login_body = get_api_security_request(email, password)
       response_login_body = get_api_security_response(user_name, auth_token)
-      request_headers_base = {'Accept' => 'application/json', 'Content-Type' => 'application/json', 'User-Agent' => 'Ruby'}
+      request_headers_base = { 'Accept' => 'application/json', 'Content-Type' => 'application/json', 'User-Agent' => 'Ruby' }
       request_headers = request_headers_base.merge('Authorization' => "Token token=\"#{auth_token}\"")
       request_create_body = {
-          uploader_id: 30,
-          recorded_date: recorded_date,
+        uploader_id: 30,
+        recorded_date: recorded_date,
+        site_id: 20,
+        duration_seconds: 6.577,
+        sample_rate_hertz: 22_050,
+        channels: 2,
+        bit_rate_bps: 16,
+        media_type: 'audio/x-waac',
+        data_length_bytes: 394_644,
+        file_hash: file_hash,
+        original_file_name: 'test_20141012_181455.wac',
+        notes: {
+          relative_path: 'test_20141012_181455.wac',
+          sensor_type: 'SM2',
+          information: [
+            'stripped left channel due to bad mic',
+            'appears to have electronic interference from solar panel'
+          ]
+        }
+      }
+      response_create_body = {
+        meta: {
+          status: 201,
+          message: 'Created'
+        },
+        data: {
+          recorded_date: '2014-10-12T08:14:55Z',
           site_id: 20,
           duration_seconds: 6.577,
-          sample_rate_hertz: 22050,
+          sample_rate_hertz: 22_050,
           channels: 2,
           bit_rate_bps: 16,
           media_type: 'audio/x-waac',
-          data_length_bytes: 394644,
+          data_length_bytes: 394_644,
           file_hash: file_hash,
+          status: 'new',
           original_file_name: 'test_20141012_181455.wac',
-          notes: {
-              relative_path: 'test_20141012_181455.wac',
-              sensor_type: 'SM2',
-              information: [
-                  'stripped left channel due to bad mic',
-                  'appears to have electronic interference from solar panel'
-              ]
-          }
-      }
-      response_create_body = {
-          meta: {
-              status: 201,
-              message: 'Created'
-          },
-          data: {
-              recorded_date: '2014-10-12T08:14:55Z',
-              site_id: 20,
-              duration_seconds: 6.577,
-              sample_rate_hertz: 22050,
-              channels: 2,
-              bit_rate_bps: 16,
-              media_type: 'audio/x-waac',
-              data_length_bytes: 394644,
-              file_hash: file_hash,
-              status: 'new',
-              original_file_name: 'test_20141012_181455.wac',
 
-              created_at: '2014-10-13T05:21:13Z',
-              id: 177,
-              notes: 'note number 183',
-              updated_at: '2014-10-13T05:21:13Z',
-              uuid: uuid
-          }
+          created_at: '2014-10-13T05:21:13Z',
+          id: 177,
+          notes: 'note number 183',
+          updated_at: '2014-10-13T05:21:13Z',
+          uuid: uuid
+        }
       }
 
       request_update_status_body = {
-          uuid: uuid,
-          file_hash: file_hash,
-          status: nil
+        uuid: uuid,
+        file_hash: file_hash,
+        status: nil
       }
 
       possible_paths = audio_original.possible_paths(
-          {
-              uuid: uuid,
-              datetime_with_offset: Time.zone.parse(recorded_date),
-              original_format: original_format
-          }
+        uuid: uuid,
+        datetime_with_offset: Time.zone.parse(recorded_date),
+        original_format: original_format
       )
 
       stub_login = stub_request(:post, "#{default_uri}/security")
-                       .with(body: request_login_body.to_json, headers: request_headers_base)
-                       .to_return(status: 200, body: response_login_body.to_json)
+                   .with(body: request_login_body.to_json, headers: request_headers_base)
+                   .to_return(status: 200, body: response_login_body.to_json)
 
       stub_uploader_check = stub_request(:get, "#{default_uri}/projects/10/sites/20/audio_recordings/check_uploader/30")
-                                .with(headers: request_headers)
-                                .to_return(status: 204)
+                            .with(headers: request_headers)
+                            .to_return(status: 204)
 
       stub_create = stub_request(:post, "#{default_uri}/projects/10/sites/20/audio_recordings")
-                        .with(body: request_create_body.to_json, headers: request_headers)
-                        .to_return(status: 201, body: response_create_body.to_json)
+                    .with(body: request_create_body.to_json, headers: request_headers)
+                    .to_return(status: 201, body: response_create_body.to_json)
 
       stub_uploading_status = stub_request(:put, "#{default_uri}/audio_recordings/177/update_status")
-                                  .with(body: request_update_status_body.merge(status: 'uploading'), headers: request_headers)
-                                  .to_return(status: 200)
+                              .with(body: request_update_status_body.merge(status: 'uploading'), headers: request_headers)
+                              .to_return(status: 200)
 
       stub_ready_status = stub_request(:put, "#{default_uri}/audio_recordings/177/update_status")
-                              .with(body: request_update_status_body.merge(status: 'ready'), headers: request_headers)
-                              .to_return(status: 200)
+                          .with(body: request_update_status_body.merge(status: 'ready'), headers: request_headers)
+                          .to_return(status: 200)
 
       # execute - process a single file
       file_info_hash = gather_files.run(dest_audio_file)
@@ -287,11 +285,11 @@ describe BawWorkers::Harvest::SingleFile do
       stub_ready_status.should have_been_made.once
 
       # ensure file is moved to correct location
-      expect(File.exists?(possible_paths[1])).to be_truthy
+      expect(File.exist?(possible_paths[1])).to be_truthy
 
       # ensure source file is renamed to *.completed
-      expect(File.exists?(dest_audio_file)).to be_falsey
-      expect(File.exists?(dest_audio_file+'.completed')).to be_truthy
+      expect(File.exist?(dest_audio_file)).to be_falsey
+      expect(File.exist?(dest_audio_file + '.completed')).to be_truthy
 
       # clean up
       FileUtils.rm_rf(sub_folder)
@@ -302,7 +300,7 @@ describe BawWorkers::Harvest::SingleFile do
       sub_folder = File.expand_path File.join(harvest_to_do_path, 'harvest_file_exists')
       FileUtils.mkpath(sub_folder)
 
-      source_audio_file = File.expand_path File.join('.', 'spec', 'example_media', 'test-audio-mono.ogg')
+      source_audio_file = audio_file_mono
       dest_audio_file = File.join(sub_folder, 'test_20141012_181455.ogg')
 
       source_harvest_folder_config = folder_example
@@ -324,88 +322,88 @@ describe BawWorkers::Harvest::SingleFile do
 
       request_login_body = get_api_security_request(email, password)
       response_login_body = get_api_security_response(user_name, auth_token)
-      request_headers_base = {'Accept' => 'application/json', 'Content-Type' => 'application/json', 'User-Agent' => 'Ruby'}
+      request_headers_base = { 'Accept' => 'application/json', 'Content-Type' => 'application/json', 'User-Agent' => 'Ruby' }
       request_headers = request_headers_base.merge('Authorization' => "Token token=\"#{auth_token}\"")
       request_create_body = {
-          uploader_id: 30,
-          recorded_date: recorded_date,
-          site_id: 20,
-          duration_seconds: 70.0,
-          sample_rate_hertz: 44100,
-          channels: 1,
-          bit_rate_bps: 239920,
-          media_type: 'audio/ogg',
-          data_length_bytes: 822281,
-          file_hash: file_hash,
-          original_file_name: 'test_20141012_181455.ogg',
-          notes: {
-              relative_path: 'test_20141012_181455.ogg',
-              sensor_type: 'SM2',
-              information: [
-                  'stripped left channel due to bad mic',
-                  'appears to have electronic interference from solar panel'
-              ]
-          }
+        uploader_id: 30,
+        recorded_date: recorded_date,
+        site_id: 20,
+        duration_seconds: 70.0,
+        sample_rate_hertz: 44_100,
+        channels: 1,
+        bit_rate_bps: 239_920,
+        media_type: 'audio/ogg',
+        data_length_bytes: 822_281,
+        file_hash: file_hash,
+        original_file_name: 'test_20141012_181455.ogg',
+        notes: {
+          relative_path: 'test_20141012_181455.ogg',
+          sensor_type: 'SM2',
+          information: [
+            'stripped left channel due to bad mic',
+            'appears to have electronic interference from solar panel'
+          ]
+        }
       }
       response_create_body = {
-          meta: {
-              status: 201,
-              message: 'Created'
-          },
-          data: {
-              recorded_date: '2014-10-12T08:14:55Z',
-              site_id: 20,
-              duration_seconds: 70.0,
-              sample_rate_hertz: 44100,
-              channels: 1,
-              bit_rate_bps: 239920,
-              media_type: 'audio/ogg',
-              data_length_bytes: 822281,
-              file_hash: file_hash,
-              status: 'new',
-              original_file_name: 'test_20141012_181455.ogg',
+        meta: {
+          status: 201,
+          message: 'Created'
+        },
+        data: {
+          recorded_date: '2014-10-12T08:14:55Z',
+          site_id: 20,
+          duration_seconds: 70.0,
+          sample_rate_hertz: 44_100,
+          channels: 1,
+          bit_rate_bps: 239_920,
+          media_type: 'audio/ogg',
+          data_length_bytes: 822_281,
+          file_hash: file_hash,
+          status: 'new',
+          original_file_name: 'test_20141012_181455.ogg',
 
-              created_at: '2014-10-13T05:21:13Z',
-              id: 177,
-              notes: 'note number 183',
-              updated_at: '2014-10-13T05:21:13Z',
-              uuid: uuid
-          }
+          created_at: '2014-10-13T05:21:13Z',
+          id: 177,
+          notes: 'note number 183',
+          updated_at: '2014-10-13T05:21:13Z',
+          uuid: uuid
+        }
       }
 
       request_update_status_body = {
-          uuid: uuid,
-          file_hash: file_hash,
-          status: nil
+        uuid: uuid,
+        file_hash: file_hash,
+        status: nil
       }
 
       storage_opts = {
-          uuid: uuid,
-          datetime_with_offset: Time.zone.parse(recorded_date),
-          original_format: original_format
+        uuid: uuid,
+        datetime_with_offset: Time.zone.parse(recorded_date),
+        original_format: original_format
       }
 
       possible_paths = audio_original.possible_paths(storage_opts)
 
       stub_login = stub_request(:post, "#{default_uri}/security")
-                       .with(body: request_login_body.to_json, headers: request_headers_base)
-                       .to_return(status: 200, body: response_login_body.to_json)
+                   .with(body: request_login_body.to_json, headers: request_headers_base)
+                   .to_return(status: 200, body: response_login_body.to_json)
 
       stub_uploader_check = stub_request(:get, "#{default_uri}/projects/10/sites/20/audio_recordings/check_uploader/30")
-                                .with(headers: request_headers)
-                                .to_return(status: 204)
+                            .with(headers: request_headers)
+                            .to_return(status: 204)
 
       stub_create = stub_request(:post, "#{default_uri}/projects/10/sites/20/audio_recordings")
-                        .with(body: request_create_body.to_json, headers: request_headers)
-                        .to_return(status: 201, body: response_create_body.to_json)
+                    .with(body: request_create_body.to_json, headers: request_headers)
+                    .to_return(status: 201, body: response_create_body.to_json)
 
       stub_uploading_status = stub_request(:put, "#{default_uri}/audio_recordings/177/update_status")
-                                  .with(body: request_update_status_body.merge(status: 'uploading'), headers: request_headers)
-                                  .to_return(status: 200)
+                              .with(body: request_update_status_body.merge(status: 'uploading'), headers: request_headers)
+                              .to_return(status: 200)
 
       stub_ready_status = stub_request(:put, "#{default_uri}/audio_recordings/177/update_status")
-                              .with(body: request_update_status_body.merge(status: 'ready'), headers: request_headers)
-                              .to_return(status: 200)
+                          .with(body: request_update_status_body.merge(status: 'ready'), headers: request_headers)
+                          .to_return(status: 200)
 
       # execute - process a single file
       file_info_hash = gather_files.run(dest_audio_file)
@@ -419,11 +417,11 @@ describe BawWorkers::Harvest::SingleFile do
       stub_ready_status.should have_been_made.once
 
       # ensure file is moved to correct location
-      expect(File.exists?(possible_paths[1])).to be_truthy
+      expect(File.exist?(possible_paths[1])).to be_truthy
 
       # ensure source file is renamed to *.completed
-      expect(File.exists?(dest_audio_file)).to be_falsey
-      expect(File.exists?(dest_audio_file+'.completed')).to be_truthy
+      expect(File.exist?(dest_audio_file)).to be_falsey
+      expect(File.exist?(dest_audio_file + '.completed')).to be_truthy
 
       # predict source and destination for mirror task
       mirror_source = File.expand_path(possible_paths[1])
@@ -433,7 +431,7 @@ describe BawWorkers::Harvest::SingleFile do
       mirror_destination = File.expand_path(File.join(BawWorkers::Settings.actions.harvest.copy_base_path, partial_path, file_name))
 
       # ensure copy job was enqueued
-      queued_query = {source: mirror_source, destinations: [mirror_destination]}
+      queued_query = { source: mirror_source, destinations: [mirror_destination] }
       expect(Resque.size(BawWorkers::Mirror::Action.queue)).to eq(1)
       expect(BawWorkers::ResqueApi.job_queued?(BawWorkers::Mirror::Action, queued_query)).to eq(true)
       expect(Resque.enqueued?(BawWorkers::Mirror::Action, queued_query)).to eq(true)
@@ -442,18 +440,21 @@ describe BawWorkers::Harvest::SingleFile do
       emulate_resque_worker(BawWorkers::Mirror::Action.queue)
 
       # ensure harvested file was copied
-      expect(File.exists?(mirror_destination)).to be_truthy
+      expect(File.exist?(mirror_destination)).to be_truthy
 
       # clean up
       FileUtils.rm_rf(sub_folder)
     end
 
     it 'renames audio file with short duration' do
+
+      clear_original_audio
+
       # set up audio file and folder config
       sub_folder = File.expand_path File.join(harvest_to_do_path, 'harvest_file_exists')
       FileUtils.mkpath(sub_folder)
 
-      source_audio_file = File.expand_path File.join('.', 'spec', 'example_media', 'test-audio-mono-29.ogg')
+      source_audio_file = Fixtures.audio_file_mono29
       dest_audio_file = File.join(sub_folder, 'test_20141012_181455.ogg')
 
       source_harvest_folder_config = folder_example
@@ -475,71 +476,70 @@ describe BawWorkers::Harvest::SingleFile do
 
       request_login_body = get_api_security_request(email, password)
       response_login_body = get_api_security_response(user_name, auth_token)
-      request_headers_base = {'Accept' => 'application/json', 'Content-Type' => 'application/json', 'User-Agent' => 'Ruby'}
+      request_headers_base = { 'Accept' => 'application/json', 'Content-Type' => 'application/json', 'User-Agent' => 'Ruby' }
       request_headers = request_headers_base.merge('Authorization' => "Token token=\"#{auth_token}\"")
       request_create_body = {
-          uploader_id: 30,
-          recorded_date: recorded_date,
-          site_id: 20,
-          duration_seconds: 29.0,
-          sample_rate_hertz: 44100,
-          channels: 1,
-          bit_rate_bps: 160000,
-          media_type: 'audio/ogg',
-          data_length_bytes: 296756,
-          file_hash: file_hash,
-          original_file_name: 'test_20141012_181455.ogg',
-          notes: {
-              relative_path: 'test_20141012_181455.ogg',
-              sensor_type: 'SM2',
-              information: [
-                  'stripped left channel due to bad mic',
-                  'appears to have electronic interference from solar panel'
-              ]
-          }
+        uploader_id: 30,
+        recorded_date: recorded_date,
+        site_id: 20,
+        duration_seconds: 29.0,
+        sample_rate_hertz: 44_100,
+        channels: 1,
+        bit_rate_bps: 160_000,
+        media_type: 'audio/ogg',
+        data_length_bytes: 296_756,
+        file_hash: file_hash,
+        original_file_name: 'test_20141012_181455.ogg',
+        notes: {
+          relative_path: 'test_20141012_181455.ogg',
+          sensor_type: 'SM2',
+          information: [
+            'stripped left channel due to bad mic',
+            'appears to have electronic interference from solar panel'
+          ]
+        }
       }
       response_create_body = {
-          meta: {
-              status: 422,
-              message: 'Unprocessable Entity',
-              error: {
-                  details: 'Record could not be saved',
-                  info: {
-                      duration_seconds:
-                          ['must be greater than or equal to 10']
-                  }}},
-          data: nil
+        meta: {
+          status: 422,
+          message: 'Unprocessable Entity',
+          error: {
+            details: 'Record could not be saved',
+            info: {
+              duration_seconds:
+                    ['must be greater than or equal to 10']
+            }
+          }
+        },
+        data: nil
       }
 
-
       possible_paths = audio_original.possible_paths(
-          {
-              uuid: uuid,
-              datetime_with_offset: Time.zone.parse(recorded_date),
-              original_format: original_format
-          }
+        uuid: uuid,
+        datetime_with_offset: Time.zone.parse(recorded_date),
+        original_format: original_format
       )
 
       stub_login = stub_request(:post, "#{default_uri}/security")
-                       .with(body: request_login_body.to_json, headers: request_headers_base)
-                       .to_return(status: 200, body: response_login_body.to_json)
+                   .with(body: request_login_body.to_json, headers: request_headers_base)
+                   .to_return(status: 200, body: response_login_body.to_json)
 
       stub_uploader_check = stub_request(:get, "#{default_uri}/projects/10/sites/20/audio_recordings/check_uploader/30")
-                                .with(headers: request_headers)
-                                .to_return(status: 204)
+                            .with(headers: request_headers)
+                            .to_return(status: 204)
 
       stub_create = stub_request(:post, "#{default_uri}/projects/10/sites/20/audio_recordings")
-                        .with(body: request_create_body.to_json, headers: request_headers)
-                        .to_return(status: 422, body: response_create_body.to_json)
-
+                    .with(body: request_create_body.to_json, headers: request_headers)
+                    .to_return(status: 422, body: response_create_body.to_json)
 
       # execute - process a single file
       file_info_hash = gather_files.run(dest_audio_file)
       expect {
         single_file.run(file_info_hash[0], true)
       }.to raise_error(
-               BawWorkers::Exceptions::HarvesterEndpointError,
-               /test_20141012_181455.ogg failed: Code 422, Message: , Body: \{"meta":\{"status":422,"message":"Unprocessable Entity","error":\{"details":"Record could not be saved","info":\{"duration_seconds":\["must be greater than or equal to 10"\]\}\}\},"data":null\}, File renamed to/)
+        BawWorkers::Exceptions::HarvesterEndpointError,
+        /test_20141012_181455.ogg failed: Code 422, Message: , Body: \{"meta":\{"status":422,"message":"Unprocessable Entity","error":\{"details":"Record could not be saved","info":\{"duration_seconds":\["must be greater than or equal to 10"\]\}\}\},"data":null\}, File renamed to/
+      )
 
       # verify - requests made in the correct order
       stub_login.should have_been_made.once
@@ -547,11 +547,11 @@ describe BawWorkers::Harvest::SingleFile do
       stub_create.should have_been_made.once
 
       # ensure file was not moved to new location
-      expect(File.exists?(possible_paths[1])).to be_falsy
+      expect(File.exist?(possible_paths[1])).to be_falsy
 
       # ensure source file is renamed to *.error_duration
-      expect(File.exists?(dest_audio_file)).to be_falsey
-      expect(File.exists?(dest_audio_file+'.error_duration')).to be_truthy
+      expect(File.exist?(dest_audio_file)).to be_falsey
+      expect(File.exist?(dest_audio_file + '.error_duration')).to be_truthy
 
       # clean up
       FileUtils.rm_rf(sub_folder)
@@ -575,11 +575,9 @@ describe BawWorkers::Harvest::SingleFile do
       original_format = 'ogg'
 
       possible_paths = audio_original.possible_paths(
-          {
-              uuid: uuid,
-              datetime_with_offset: Time.zone.parse(recorded_date),
-              original_format: original_format
-          }
+        uuid: uuid,
+        datetime_with_offset: Time.zone.parse(recorded_date),
+        original_format: original_format
       )
 
       # execute - process a single file
@@ -589,11 +587,11 @@ describe BawWorkers::Harvest::SingleFile do
       }.to raise_error(BawAudioTools::Exceptions::FileEmptyError, /File has no content \(length of 0 bytes\) renamed to/)
 
       # ensure file was not moved to new location
-      expect(File.exists?(possible_paths[1])).to be_falsey
+      expect(File.exist?(possible_paths[1])).to be_falsey
 
       # ensure source file is renamed to *.error_empty
-      expect(File.exists?(dest_audio_file)).to be_falsey
-      expect(File.exists?(dest_audio_file+'.error_empty')).to be_truthy
+      expect(File.exist?(dest_audio_file)).to be_falsey
+      expect(File.exist?(dest_audio_file + '.error_empty')).to be_truthy
 
       # clean up
       FileUtils.rm_rf(sub_folder)

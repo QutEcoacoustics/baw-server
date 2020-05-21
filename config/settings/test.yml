@@ -4,6 +4,7 @@
 #
 test:
   # overwrites settings from config/settings/default.yml
+
   db:
     database: baw_local_test
   devise:

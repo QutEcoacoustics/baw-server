@@ -1,4 +1,6 @@
-require 'spec_helper'
+# frozen_string_literal: true
+
+require 'workers_helper'
 
 describe BawAudioTools::Spectrogram do
   include_context 'common'
@@ -7,22 +9,24 @@ describe BawAudioTools::Spectrogram do
   include_context 'test audio files'
 
   let(:spectrogram) {
-    audio_tools = RSpec.configuration.test_settings.audio_tools
+    audio_tools = BawWorkers::Settings.audio_tools
 
     BawAudioTools::Spectrogram.from_executables(
-        audio_base,
-        audio_tools.imagemagick_convert_executable,
-        audio_tools.imagemagick_identify_executable,
-        RSpec.configuration.test_settings.cached_spectrogram_defaults,
-        temp_dir) }
+      audio_base,
+      audio_tools.imagemagick_convert_executable,
+      audio_tools.imagemagick_identify_executable,
+      BawWorkers::Settings.cached_spectrogram_defaults,
+      temp_dir
+    )
+  }
 
   context 'getting info about image' do
     it 'returns all required information' do
 
-      source = temp_media_file_1+'.wav'
+      source = temp_media_file_1 + '.wav'
       audio_base.modify(audio_file_mono, source)
 
-      target = temp_media_file_1+'.png'
+      target = temp_media_file_1 + '.png'
       spectrogram.modify(source, target)
       info = spectrogram.info(target)
       expect(info).to include(:media_type)
@@ -36,10 +40,10 @@ describe BawAudioTools::Spectrogram do
   context 'generating spectrogram' do
     it 'runs to completion when given an existing audio file' do
 
-      source = temp_media_file_1+'.wav'
+      source = temp_media_file_1 + '.wav'
       audio_base.modify(audio_file_mono, source)
 
-      target = temp_media_file_1+'.png'
+      target = temp_media_file_1 + '.png'
       spectrogram.modify(source, target)
     end
 
@@ -48,11 +52,13 @@ describe BawAudioTools::Spectrogram do
   context 'generating waveform' do
     it 'runs to completion when given an existing audio file' do
 
-      source = temp_media_file_1+'.wav'
+      source = temp_media_file_1 + '.wav'
       audio_base.modify(audio_file_mono, source)
 
-      target = temp_media_file_1+'.png'
-      spectrogram.modify(source, target, {colour: 'w', sample_rate: 22050})
+      target = temp_media_file_1 + '.png'
+      expect {
+        spectrogram.modify(source, target, colour: 'w', sample_rate: 22_050)
+      }.to raise_error(NotImplementedError, 'Drawing waveforms has been deprecated and is no longer supported')
     end
 
   end

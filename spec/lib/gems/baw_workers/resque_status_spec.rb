@@ -1,8 +1,10 @@
-require 'spec_helper'
+# frozen_string_literal: true
+
+require 'workers_helper'
 
 describe 'Resque::Plugins::Status' do
   require 'helpers/shared_test_helpers'
- 
+
   include_context 'shared_test_helpers'
 
   # We had a bug were configs were not initializing expire_in for resque status.
@@ -13,32 +15,31 @@ describe 'Resque::Plugins::Status' do
     it 'ensures expire_in is set for worker init' do
       # run is called in the test initialization in `spec_helper.rb`
 
-      expect(Resque::Plugins::Status::Hash.expire_in).to eq(86400)
+      expect(Resque::Plugins::Status::Hash.expire_in).to eq(86_400)
     end
 
-
     it 'ensures expire_in is set for worker init' do
-      # clear settings loaded in spec helper
-      reset_settings
+      # clear settings already loaded
+      Resque::Plugins::Status::Hash.expire_in = nil
 
       expect(Resque::Plugins::Status::Hash.expire_in).to eq(nil)
 
       BawWorkers::Config.run_web(
-          BawWorkers::MultiLogger.new,
-          BawWorkers::MultiLogger.new,
-          BawWorkers::MultiLogger.new,
-          BawWorkers::MultiLogger.new,
-          BawWorkers::Settings,
-          true)
+        BawWorkers::Config.logger_worker,
+        BawWorkers::Config.logger_mailer,
+        Resque.logger,
+        BawWorkers::Config.logger_audio_tools,
+        BawWorkers::Settings
+      )
 
-      expect(Resque::Plugins::Status::Hash.expire_in).to eq(86400)
+      expect(Resque::Plugins::Status::Hash.expire_in).to eq(86_400)
     end
 
     it 'ensures our monkey patch exists' do
       expect(Resque::Plugins::Status::EXPIRE_STATUSES).to eq([
-                                                                 'completed',
-                                                                 'failed',
-                                                                 'killed',
+                                                               'completed',
+                                                               'failed',
+                                                               'killed'
                                                              ])
     end
 
@@ -53,8 +54,8 @@ describe 'Resque::Plugins::Status' do
       # setup
       queue_name = 'template_default'
 
-      payload = {test_payload: 'a value'}
-      payload_wrapped = {template_params: {test_payload: 'a value'}}
+      payload = { test_payload: 'a value' }
+      payload_wrapped = { template_params: { test_payload: 'a value' } }
       payload_normalised = BawWorkers::ResqueJobId.normalise(payload_wrapped)
 
       # check before
@@ -88,7 +89,7 @@ describe 'Resque::Plugins::Status' do
       expect(status.status).to eq('queued')
       expect(status.uuid).to eq(job_id)
       expect(status.options).to eq(payload_normalised)
-      expect(BawWorkers::ResqueApi.status_ttl(result1)).to eq (-1)
+      expect(BawWorkers::ResqueApi.status_ttl(result1)).to eq -1
 
       # dequeue and run the job
       was_run = emulate_resque_worker(BawWorkers::Template::Action.queue)
@@ -102,7 +103,7 @@ describe 'Resque::Plugins::Status' do
       expect(status.uuid).to eq(job_id)
       expect(status.uuid).to eq(result1)
       expect(status.options).to eq(payload_normalised)
-      expect(BawWorkers::ResqueApi.status_ttl(result1)).to eq(86400)
+      expect(BawWorkers::ResqueApi.status_ttl(result1)).to eq(86_400)
     end
   end
 
@@ -111,17 +112,16 @@ describe 'Resque::Plugins::Status' do
   context 'sensible names' do
 
     it 'ensures action base has a name method that throws' do
-      new_base = BawWorkers::ActionBase.new('imtotesauuidbro', {im_an_option: :options!})
+      new_base = BawWorkers::ActionBase.new('imtotesauuidbro', im_an_option: :options!)
 
       expect {
         new_base.name
       }.to raise_error(NotImplementedError)
     end
 
-
     it 'allows for empty names' do
       allow_any_instance_of(BawWorkers::Template::Action).to receive(:name).and_return(nil)
-      payload = {im_an_option: :options!}
+      payload = { im_an_option: :options! }
 
       unique_key = BawWorkers::Template::Action.action_enqueue(payload)
       was_run = emulate_resque_worker(BawWorkers::Template::Action.queue)
@@ -135,7 +135,7 @@ describe 'Resque::Plugins::Status' do
 
       (1..2).each do |index|
         # technically a different job so resque solo should not complain
-        payload = {im_an_option: index}
+        payload = { im_an_option: index }
 
         unique_key = BawWorkers::Template::Action.action_enqueue(payload)
         was_run = emulate_resque_worker(BawWorkers::Template::Action.queue)
@@ -146,7 +146,7 @@ describe 'Resque::Plugins::Status' do
     end
 
     it 'names can reuse the uuid' do
-      payload = {im_an_option: :options!}
+      payload = { im_an_option: :options! }
 
       unique_key = BawWorkers::Template::Action.action_enqueue(payload)
       was_run = emulate_resque_worker(BawWorkers::Template::Action.queue)

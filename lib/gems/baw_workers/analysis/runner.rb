@@ -1,9 +1,9 @@
+# frozen_string_literal: true
+
 module BawWorkers
   module Analysis
-
     # Run an Analysis action.
     class Runner
-
       # File name for config file per run.
       FILE_CONFIG = 'run.config'
 
@@ -68,12 +68,12 @@ module BawWorkers
         dir_run_programs = copy_programs(dir_run)
 
         command_opts = {
-            file_source: get_file_source(opts),
-            file_executable: get_file_executable(dir_run_programs, opts),
-            dir_output: dir_output,
-            file_config: create_config_file(dir_run, opts),
-            dir_run: dir_run,
-            dir_temp: dir_run_temp
+          file_source: get_file_source(opts),
+          file_executable: get_file_executable(dir_run_programs, opts),
+          dir_output: dir_output,
+          file_config: create_config_file(dir_run, opts),
+          dir_run: dir_run,
+          dir_temp: dir_run_temp
         }
 
         # format command string
@@ -111,15 +111,14 @@ module BawWorkers
         result = {}
 
         begin
-
-          logger.info(@class_name) { "Executing #{command}." }
+          logger.info(@class_name) do "Executing #{command}." end
 
           # change to run dir
           Dir.chdir(dir_run)
           result = external_program.execute(command, true)
-        rescue => e
+        rescue StandardError => e
           error = e
-          logger.error(@class_name) { "Error executing #{command}: #{e.inspect}." }
+          logger.error(@class_name) do "Error executing #{command}: #{e.inspect}." end
           result[:error] = error
         else
           # run if no error
@@ -156,7 +155,7 @@ module BawWorkers
 
         # remove worker started file
         started_file = File.join(dir_output, FILE_WORKER_STARTED)
-        File.delete(started_file) if File.exists?(started_file)
+        File.delete(started_file) if File.exist?(started_file)
 
         # include command format
         result[:command_format] = opts[:command_format]
@@ -186,15 +185,15 @@ module BawWorkers
         current_time = Time.zone.now.utc.iso8601.to_s.downcase.gsub(normalise_regex, '_')
 
         dir_run = File.join(@dir_worker_top, BawWorkers::Analysis::Runner::DIR_RUNS, "#{opts[:job_id]}_#{opts[:id]}_#{current_time}")
-        dir_run_temp = File.join(dir_run,  BawWorkers::Analysis::Runner::DIR_TEMP)
+        dir_run_temp = File.join(dir_run, BawWorkers::Analysis::Runner::DIR_TEMP)
         file_run_log = File.join(dir_run, BawWorkers::Analysis::Runner::FILE_LOG)
 
         FileUtils.mkpath([dir_run, dir_run_temp])
 
         {
-            dir_run: dir_run,
-            dir_run_temp: dir_run_temp,
-            file_run_log: file_run_log
+          dir_run: dir_run,
+          dir_run_temp: dir_run_temp,
+          file_run_log: file_run_log
         }
       end
 
@@ -205,9 +204,9 @@ module BawWorkers
         BawWorkers::Validation.check_custom_hash(opts, BawWorkers::Analysis::Payload::OPTS_FIELDS)
 
         analysis_store_opts = {
-            job_id: opts[:job_id],
-            uuid: opts[:uuid],
-            sub_folders: []
+          job_id: opts[:job_id],
+          uuid: opts[:uuid],
+          sub_folders: []
         }
 
         dirs_output = @analysis_cache.possible_paths_dir(analysis_store_opts)
@@ -229,7 +228,7 @@ module BawWorkers
         config_content = opts[:config]
         config_file = File.join(dir_run, BawWorkers::Analysis::Runner::FILE_CONFIG)
 
-        File.open(config_file, 'w') { |file| file.write(config_content) }
+        File.open(config_file, 'w') do |file| file.write(config_content) end
 
         config_file
       end
@@ -245,11 +244,11 @@ module BawWorkers
         if file_sources.empty?
           possible_sources = @original_store.possible_paths(opts)
           msg = "No original audio files found in #{possible_sources.join(', ')} using #{opts.to_json}."
-          @logger.error(@class_name) { msg }
-          fail BawAudioTools::Exceptions::AudioFileNotFoundError, msg
+          @logger.error(@class_name) do msg end
+          raise BawAudioTools::Exceptions::AudioFileNotFoundError, msg
         end
 
-        File.expand_path(BawWorkers::Validation.normalise_path(file_sources.first, nil))
+        File.expand_path(BawWorkers::Validation.normalise_path(file_sources.last, nil))
       end
 
       # Get absolute path to executable.
@@ -268,10 +267,10 @@ module BawWorkers
       # @return [String] programs dir for a run
       def copy_programs(dir_run)
         src = @dir_programs
-        fail ArgumentError, "programs path does not exist #{src}" unless Dir.exists?(src)
+        raise ArgumentError, "programs path does not exist #{src}" unless Dir.exist?(src)
 
         dest = BawWorkers::Validation.normalise_path(dir_run, @dir_worker_top)
-        FileUtils.cp_r("#{src}", dest)
+        FileUtils.cp_r(src.to_s, dest)
 
         dir_run_programs = File.join(dest, BawWorkers::Analysis::Runner::DIR_PROGRAMS)
         BawWorkers::Validation.normalise_path(dir_run_programs, @dir_worker_top)
@@ -300,11 +299,11 @@ module BawWorkers
             dest_file_name = File.basename(path)
             dest = BawWorkers::Validation.normalise_path(dest_file_name, dir_output)
             FileUtils.cp(src, dest)
-          rescue => e
+          rescue StandardError => e
             error = e
           end
 
-          copy_results.push({error: error, source: src, destination: dest})
+          copy_results.push(error: error, source: src, destination: dest)
         end
 
         copy_results
@@ -316,7 +315,7 @@ module BawWorkers
       def delete_run_dir(run_dir)
         # make sure the dir is underneath the runs dir
         runs_dir = File.join(@dir_worker_top, BawWorkers::Analysis::Runner::DIR_RUNS)
-        fail ArgumentError, "dir must be in runs dir, given #{run_dir}" unless run_dir.start_with?(runs_dir)
+        raise ArgumentError, "dir must be in runs dir, given #{run_dir}" unless run_dir.start_with?(runs_dir)
 
         FileUtils.rm_rf(run_dir)
       end
@@ -338,10 +337,9 @@ module BawWorkers
         command_placeholders.each do |command_placeholder|
           unless allowed_placeholders.include?(command_placeholder)
             all_placeholders = allowed_placeholders.join(', ')
-            fail ArgumentError, "Command #{command_format} can only contain #{all_placeholders}."
+            raise ArgumentError, "Command #{command_format} can only contain #{all_placeholders}."
           end
         end
-
       end
 
       # Format command string.
@@ -357,12 +355,12 @@ module BawWorkers
         command_placeholders.each do |command_placeholder|
 
           if !command_opts.include?(command_placeholder) ||
-              command_opts[command_placeholder].blank?
-            fail ArgumentError, "Value not supplied for placeholder #{command_placeholder} in #{command_format}."
+             command_opts[command_placeholder].blank?
+            raise ArgumentError, "Value not supplied for placeholder #{command_placeholder} in #{command_format}."
           end
 
           unless allowed_placeholders.include?(command_placeholder)
-            fail ArgumentError, "Placeholder #{command_placeholder} is not allowed in #{command_format}."
+            raise ArgumentError, "Placeholder #{command_placeholder} is not allowed in #{command_format}."
           end
 
           placeholder_value = command_opts[command_placeholder]
@@ -378,9 +376,8 @@ module BawWorkers
         command_format = opts[:command_format]
         # placeholder: <{PLACEHOLDER}>
         # find placeholders and remove surrounding chars
-        command_format.scan(/<{.*?}>/i).map { |placeholder| placeholder[2..-3].downcase.to_sym}
+        command_format.scan(/<{.*?}>/i).map { |placeholder| placeholder[2..-3].downcase.to_sym }
       end
-
     end
   end
 end

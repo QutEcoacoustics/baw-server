@@ -1,6 +1,6 @@
 module BawWorkers
+  # Named errors for communication. Mainly just wrap other standard errors.
   module Exceptions
-    public
     class UnsupportedAudioFile < BawAudioTools::Exceptions::NotAnAudioFileError; end
     class HarvesterError < StandardError; end
     class HarvesterConfigurationError < HarvesterError; end

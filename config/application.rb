@@ -1,5 +1,6 @@
 require File.expand_path('../boot', __FILE__)
 
+require 'English'
 require 'rails/all'
 
 # some patches need to be applied before gems load
@@ -21,11 +22,13 @@ module AWB
     require 'zeitwerk'
     loader = Zeitwerk::Loader.new
     loader.tag = 'rails'
+
     loader.ignore(config.root.join('lib', 'tasks'))
+
+    loader.push_dir(config.root.join('lib', 'validators'))
     loader.push_dir(config.root.join('lib', 'gems'))
     loader.push_dir(config.root.join('lib', 'modules'))
-    loader.push_dir(config.root.join('lib', 'patches'))
-    loader.push_dir(config.root.join('lib', 'validators'))
+
     loader.tag = 'rails'
     #loader.log! # debug only!
     loader.setup
@@ -33,9 +36,10 @@ module AWB
     #config.autoload_paths << config.root.join('lib')
 
     # add patches
-    # autoload was not working for the mime type patch so we just do a regular ol require
+    # zeitwerk specifically avoids double loading modules, so patches need to be
+    # required manually
     #config.autoload_paths << config.root.join('lib', 'patches','mime_type.rb')
-    require (config.root.join('lib', 'patches', 'mime', 'type.rb'))
+    require config.root.join('lib', 'patches', 'mime', 'type.rb')
 
     #config.autoload_paths << config.root.join('lib', 'patches','paperclip_content_matcher.rb')
     #config.autoload_paths << config.root.join('lib', 'patches','rspec_api_documentation.rb')
@@ -95,7 +99,7 @@ module AWB
     BawWorkers::Config.logger_audio_tools = audio_tools_logger
 
     # BawWorkers setup
-    BawWorkers::Config.run_web(rails_logger, mailer_logger, resque_logger, audio_tools_logger, Settings, Rails.env.test? || Rails.env.development?)
+    BawWorkers::Config.run_web(rails_logger, mailer_logger, resque_logger, audio_tools_logger, Settings)
 
     # end custom setup
 

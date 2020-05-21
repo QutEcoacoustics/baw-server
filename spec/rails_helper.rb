@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # This file is copied to spec/ when you run 'rails generate rspec:install'
 
 # attempting to prevent trivial mistakes
@@ -19,6 +21,8 @@ end
 require 'bundler' # Set up gems listed in the Gemfile.
 Bundler.setup(:test)
 Bundler.require(:test)
+
+require 'spec_helper'
 
 require 'test-prof'
 TestProf.configure do |config|
@@ -49,21 +53,21 @@ if ENV['CI'] || ENV['COVERAGE']
     Coveralls.wear!('rails')
 
     SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter.new([
-                                                                      Coveralls::SimpleCov::Formatter,
-                                                                      CodeClimate::TestReporter::Formatter
-                                                                  ])
+                                                                     Coveralls::SimpleCov::Formatter,
+                                                                     CodeClimate::TestReporter::Formatter
+                                                                   ])
 
   else
     SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter.new([
-                                                                      SimpleCov::Formatter::HTMLFormatter
-                                                                  ])
+                                                                     SimpleCov::Formatter::HTMLFormatter
+                                                                   ])
   end
 
   # start code coverage
   SimpleCov.start 'rails'
 end
 
-require File.expand_path('../../config/environment', __FILE__)
+require File.expand_path('../config/environment', __dir__)
 
 # Prevent database truncation if the environment is production
 abort('The Rails environment is running in production mode!') if Rails.env.production?
@@ -80,6 +84,9 @@ require 'database_cleaner'
 require 'rspec_api_documentation'
 
 require 'helpers/misc_helper'
+require 'fixtures/fixtures'
+
+require_relative '../lib/patches/test_response_reuse.rb'
 
 WebMock.disable_net_connect!(allow_localhost: true, allow: 'codeclimate.com')
 
@@ -214,7 +221,7 @@ RSpec.configure do |config|
     # start database cleaner
     DatabaseCleaner.start
     example_description = example.description
-    Rails::logger.info "\n\n#{example_description}\n#{'-' * (example_description.length)}"
+    Rails.logger.info "\n\n#{example_description}\n#{'-' * example_description.length}"
   end
 
   config.after(:each) do
@@ -239,12 +246,12 @@ RSpec.configure do |config|
 end
 
 require 'shoulda-matchers'
-# Shoulda::Matchers.configure do |config|
-#   config.integrate do |with|
-#     with.test_framework :rspec
-#     with.library :rails
-#   end
-# end
+Shoulda::Matchers.configure do |config|
+  config.integrate do |with|
+    with.test_framework :rspec
+    with.library :rails
+  end
+end
 
 # Customise rspec api documentation
 ENV['DOC_FORMAT'] ||= 'json'

@@ -12,6 +12,7 @@ namespace :baw do
 
       print_media_types('Text', available_text_formats)
       print_media_types('Audio', available_audio_formats)
+      print_media_types('Audio (decode only)', BawWorkers::Settings.available_formats.audio_decode_only)
       print_media_types('Image', available_image_formats)
 
       # list all

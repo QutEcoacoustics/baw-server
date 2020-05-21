@@ -1,9 +1,15 @@
-require 'spec_helper'
+# frozen_string_literal: true
+
+require 'workers_helper'
 
 describe BawWorkers::Harvest::GatherFiles do
   require 'helpers/shared_test_helpers'
- 
+
   include_context 'shared_test_helpers'
+
+  before(:each) do
+    clear_harvester_to_do
+  end
 
   let(:config_file_name) { BawWorkers::Settings.actions.harvest.config_file_name }
 
@@ -11,15 +17,14 @@ describe BawWorkers::Harvest::GatherFiles do
 
   let(:gather_files) {
     BawWorkers::Harvest::GatherFiles.new(
-        BawWorkers::Config.logger_worker,
-        file_info,
-        BawWorkers::Settings.available_formats.audio,
-        config_file_name
+      BawWorkers::Config.logger_worker,
+      file_info,
+      BawWorkers::Settings.available_formats.audio + BawWorkers::Settings.available_formats.audio_decode_only,
+      config_file_name
     )
   }
 
-  let(:example_audio) { audio_file_mono }
-
+  let(:example_audio) { audio_file_mono.to_s }
 
   let(:folder_example) { File.expand_path File.join(File.dirname(__FILE__), 'folder_example.yml') }
 
@@ -128,7 +133,7 @@ describe BawWorkers::Harvest::GatherFiles do
       three = File.join(sub_folder, 'two', 'three')
       four = File.join(sub_folder, 'two', 'four')
       FileUtils.mkpath(three)
-      FileUtils.mkpath(four, mode: 0400)
+      FileUtils.mkpath(four, mode: 0o400)
       expect {
         gather_files.run(harvest_to_do_path)
       }.to raise_error(ArgumentError, /Found read-only directory: /)
@@ -156,7 +161,6 @@ describe BawWorkers::Harvest::GatherFiles do
       FileUtils.mkpath(sub_folder)
       FileUtils.cp(folder_example, File.join(sub_folder, 'harvest.yml'))
       FileUtils.touch(File.join(sub_folder, 'amazing_thingo.log'))
-
 
       FileUtils.touch(File.join(sub_folder, 'a file.txt'))
       FileUtils.cp(audio_file_mono, File.join(sub_folder, 'some sound.mp3'))
@@ -201,29 +205,45 @@ describe BawWorkers::Harvest::GatherFiles do
 
       expect(results.size).to eq(8)
 
-      expect(results.find { |item| item.include?(:metadata) &&
-                 item[:file_rel_path] == 'one/prefix_20140101_235959.mp3' }).to_not be_nil
+      expect(results.find { |item|
+               item.include?(:metadata) &&
+                 item[:file_rel_path] == 'one/prefix_20140101_235959.mp3'
+             }).to_not be_nil
 
-      expect(results.find { |item| item.include?(:metadata) &&
-                 item[:file_rel_path] == 'one/SERF_20130314_000021_000.wav' }).to_not be_nil
+      expect(results.find { |item|
+               item.include?(:metadata) &&
+                 item[:file_rel_path] == 'one/SERF_20130314_000021_000.wav'
+             }).to_not be_nil
 
-      expect(results.find { |item| !item.include?(:metadata) &&
-                 item[:file_rel_path] == 'one/two/p1_s2_u3_d20140101_t235959Z.mp3' }).to_not be_nil
+      expect(results.find { |item|
+               !item.include?(:metadata) &&
+                 item[:file_rel_path] == 'one/two/p1_s2_u3_d20140101_t235959Z.mp3'
+             }).to_not be_nil
 
-      expect(results.find { |item| !item.include?(:metadata) &&
-                 item[:file_rel_path] == 'one/two/three/prefix_20140101_235959+10.mp3' }).to_not be_nil
+      expect(results.find { |item|
+               !item.include?(:metadata) &&
+                 item[:file_rel_path] == 'one/two/three/prefix_20140101_235959+10.mp3'
+             }).to_not be_nil
 
-      expect(results.find { |item| !item.include?(:metadata) &&
-                 item[:file_rel_path] == 'one/two/four/prefix_20140101_235959+10.webm' }).to_not be_nil
+      expect(results.find { |item|
+               !item.include?(:metadata) &&
+                 item[:file_rel_path] == 'one/two/four/prefix_20140101_235959+10.webm'
+             }).to_not be_nil
 
-      expect(results.find { |item| !item.include?(:metadata) &&
-                 item[:file_rel_path] == 'one/two/five/prefix_20140101_235959+10.ogg' }).to_not be_nil
+      expect(results.find { |item|
+               !item.include?(:metadata) &&
+                 item[:file_rel_path] == 'one/two/five/prefix_20140101_235959+10.ogg'
+             }).to_not be_nil
 
-      expect(results.find { |item| !item.include?(:metadata) &&
-                 item[:file_rel_path] == 'one/two/six/prefix_20140101_235959+10.flac' }).to_not be_nil
+      expect(results.find { |item|
+               !item.include?(:metadata) &&
+                 item[:file_rel_path] == 'one/two/six/prefix_20140101_235959+10.flac'
+             }).to_not be_nil
 
-      expect(results.find { |item| !item.include?(:metadata) &&
-                 item[:file_rel_path] == 'one/two/seven/prefix_20140101_235959+10.wac' }).to_not be_nil
+      expect(results.find { |item|
+               !item.include?(:metadata) &&
+                 item[:file_rel_path] == 'one/two/seven/prefix_20140101_235959+10.wac'
+             }).to_not be_nil
     end
 
     it 'should error on read-only directory' do
@@ -231,7 +251,7 @@ describe BawWorkers::Harvest::GatherFiles do
       FileUtils.mkpath(sub_folder)
       FileUtils.cp(folder_example, File.join(sub_folder, 'harvest.yml'))
       FileUtils.touch(File.join(sub_folder, 'amazing_thingo.log'))
-      FileUtils.mkpath(File.join(sub_folder, 'read_only'), mode: 0400)
+      FileUtils.mkpath(File.join(sub_folder, 'read_only'), mode: 0o400)
 
       FileUtils.touch(File.join(sub_folder, 'a file.txt'))
       FileUtils.cp(audio_file_mono, File.join(sub_folder, 'some sound.mp3'))

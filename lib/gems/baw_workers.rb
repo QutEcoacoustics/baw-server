@@ -1,5 +1,8 @@
 # frozen_string_literal: true
+
 module BawWorkers
+  require_relative 'baw_workers/resque'
+
   module Analysis
   end
 

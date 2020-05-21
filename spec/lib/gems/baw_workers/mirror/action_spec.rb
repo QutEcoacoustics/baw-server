@@ -1,38 +1,54 @@
-require 'spec_helper'
+# frozen_string_literal: true
+
+require 'workers_helper'
 
 describe BawWorkers::Mirror::Action do
   require 'helpers/shared_test_helpers'
- 
+
   include_context 'shared_test_helpers'
+
+  # we want to control the execution of jobs for this set of tests,
+  # so change the queue name so the test worker does not
+  # automatically process the jobs
+  before(:each) do
+    default_queue = BawWorkers::Settings.actions.mirror.queue
+
+    allow(BawWorkers::Settings.actions.mirror).to receive(:queue).and_return(default_queue + '_manual_tick')
+
+    # cleanup resque queues before each test
+    Resque.remove_queue_with_cleanup(default_queue)
+    Resque.remove_queue_with_cleanup(BawWorkers::Settings.actions.mirror.queue)
+
+  end
 
   let(:queue_name) { BawWorkers::Settings.actions.mirror.queue }
 
-  let(:mirror_source) { audio_file_mono }
-  let(:mirror_dest) { [
+  let(:mirror_source) { audio_file_mono.to_s }
+  let(:mirror_dest) {
+    [
       File.join(custom_temp, 'mirror_test_1.ogg'),
       File.join(custom_temp, 'mirror_test_2.ogg')
-  ] }
+    ]
+  }
 
   let(:mirror_params) {
     {
-        'source' => mirror_source,
-        'destinations' => mirror_dest
+      'source' => mirror_source,
+      'destinations' => mirror_dest
     }
   }
 
-  let(:mirror_params_id) { BawWorkers::ResqueJobId.create_id_props(BawWorkers::Mirror::Action, mirror_params)}
+  let(:mirror_params_id) { BawWorkers::ResqueJobId.create_id_props(BawWorkers::Mirror::Action, mirror_params) }
 
   let(:expected_payload) {
     {
-        'class' => 'BawWorkers::Mirror::Action',
-        'args' => [
-            mirror_params_id,
-            mirror_params
-        ]
+      'class' => 'BawWorkers::Mirror::Action',
+      'args' => [
+        mirror_params_id,
+        mirror_params
+      ]
     }
   }
-
-
 
   context 'queues' do
 
@@ -61,7 +77,7 @@ describe BawWorkers::Mirror::Action do
 
     it 'does not enqueue the same payload into the same queue more than once' do
 
-      queued_query = {source: mirror_source, destinations: mirror_dest}
+      queued_query = { source: mirror_source, destinations: mirror_dest }
 
       expect(Resque.size(queue_name)).to eq(0)
       expect(BawWorkers::ResqueApi.job_queued?(BawWorkers::Mirror::Action, queued_query)).to eq(false)
@@ -76,13 +92,13 @@ describe BawWorkers::Mirror::Action do
 
       result2 = BawWorkers::Mirror::Action.action_enqueue(mirror_source, mirror_dest)
       expect(Resque.size(queue_name)).to eq(1)
-      expect(result2).to eq(result1)
+      expect(result2).to eq(nil)
       expect(BawWorkers::ResqueApi.job_queued?(BawWorkers::Mirror::Action, queued_query)).to eq(true)
       expect(Resque.enqueued?(BawWorkers::Mirror::Action, queued_query)).to eq(true)
 
       result3 = BawWorkers::Mirror::Action.action_enqueue(mirror_source, mirror_dest)
       expect(Resque.size(queue_name)).to eq(1)
-      expect(result3).to eq(result1)
+      expect(result3).to eq(nil)
       expect(BawWorkers::ResqueApi.job_queued?(BawWorkers::Mirror::Action, queued_query)).to eq(true)
       expect(Resque.enqueued?(BawWorkers::Mirror::Action, queued_query)).to eq(true)
 
@@ -96,7 +112,7 @@ describe BawWorkers::Mirror::Action do
     end
 
     it 'can retrieve the job' do
-      queued_query = {source: mirror_source, destinations: mirror_dest}
+      queued_query = { source: mirror_source, destinations: mirror_dest }
       queued_query_normalised = BawWorkers::ResqueJobId.normalise(queued_query)
 
       expect(Resque.size(queue_name)).to eq(0)
@@ -126,17 +142,22 @@ describe BawWorkers::Mirror::Action do
 
       expect(job_id).to_not be_nil
 
-      expect(status.status ).to eq('queued')
-      expect(status.uuid ).to eq(job_id)
-      expect(status.options ).to eq(queued_query_normalised)
+      expect(status.status).to eq('queued')
+      expect(status.uuid).to eq(job_id)
+      expect(status.options).to eq(queued_query_normalised)
 
     end
-    
+
   end
 
   it 'successfully mirrors a file' do
 
     expect(File.file?(mirror_source)).to be_truthy
+
+    mirror_dest.each do |path|
+      File.delete path if File.exist? path
+    end
+
     expect(File.file?(mirror_dest[0])).to be_falsey
     expect(File.file?(mirror_dest[1])).to be_falsey
 

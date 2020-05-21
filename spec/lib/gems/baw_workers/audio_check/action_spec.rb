@@ -1,32 +1,51 @@
-require 'spec_helper'
+# frozen_string_literal: true
+
+require 'workers_helper'
 
 describe BawWorkers::AudioCheck::Action do
   require 'helpers/shared_test_helpers'
- 
+
   include_context 'shared_test_helpers'
+
+  # we want to control the execution of jobs for this set of tests,
+  # so change the queue name so the test worker does not
+  # automatically process the jobs
+  before(:each) do
+    default_queue = BawWorkers::Settings.actions.audio_check.queue
+
+    allow(BawWorkers::Settings.actions.audio_check).to receive(:queue).and_return(default_queue + '_manual_tick')
+
+    # cleanup resque queues before each test
+    Resque.remove_queue_with_cleanup(default_queue)
+    Resque.remove_queue_with_cleanup(BawWorkers::Settings.actions.audio_check.queue)
+    Resque::Plugins::Status::Hash.clear
+
+  end
 
   let(:queue_name) { BawWorkers::Settings.actions.audio_check.queue }
 
-  let(:audio_file_check) { BawWorkers::AudioCheck::WorkHelper.new(
+  let(:audio_file_check) {
+    BawWorkers::AudioCheck::WorkHelper.new(
       BawWorkers::Config.logger_worker,
       BawWorkers::Config.file_info,
-      BawWorkers::Config.api_communicator)
+      BawWorkers::Config.api_communicator
+    )
   }
 
   # when args are retreived from redis, they are all strings.
   let(:test_params) {
     {
-        'id' => 5,
-        'uuid' => '7bb0c719-143f-4373-a724-8138219006d9',
-        'recorded_date' => '2010-02-23 20:42:00Z',
-        'duration_seconds' => audio_file_mono_duration_seconds.to_s,
-        'sample_rate_hertz' => audio_file_mono_sample_rate.to_s,
-        'channels' => audio_file_mono_channels.to_s,
-        'bit_rate_bps' => audio_file_mono_bit_rate_bps.to_s,
-        'media_type' => audio_file_mono_media_type.to_s,
-        'data_length_bytes' => audio_file_mono_data_length_bytes.to_s,
-        'file_hash' => 'SHA256::c110884206d25a83dd6d4c741861c429c10f99df9102863dde772f149387d891',
-        'original_format' => audio_file_mono_format.to_s
+      'id' => 5,
+      'uuid' => '7bb0c719-143f-4373-a724-8138219006d9',
+      'recorded_date' => '2010-02-23 20:42:00Z',
+      'duration_seconds' => audio_file_mono_duration_seconds.to_s,
+      'sample_rate_hertz' => audio_file_mono_sample_rate.to_s,
+      'channels' => audio_file_mono_channels.to_s,
+      'bit_rate_bps' => audio_file_mono_bit_rate_bps.to_s,
+      'media_type' => audio_file_mono_media_type.to_s,
+      'data_length_bytes' => audio_file_mono_data_length_bytes.to_s,
+      'file_hash' => 'SHA256::c110884206d25a83dd6d4c741861c429c10f99df9102863dde772f149387d891',
+      'original_format' => audio_file_mono_format.to_s
     }
   }
 
@@ -34,21 +53,26 @@ describe BawWorkers::AudioCheck::Action do
 
     let(:expected_payload) {
       {
-          'class' => BawWorkers::AudioCheck::Action.to_s,
-          'args' => [
-              '2f65b9b2d3ffd4222b82102bc0e15e79',
-              {
-                  'audio_params' => test_params
-              }
-          ]
+        'class' => BawWorkers::AudioCheck::Action.to_s,
+        'args' => [
+          '2f65b9b2d3ffd4222b82102bc0e15e79',
+          {
+            'audio_params' => test_params
+          }
+        ]
       }
     }
+
+    it 'checks we\'re using a manual queue' do
+      expect(Resque.queue_from_class(BawWorkers::AudioCheck::Action)).to end_with('_manual_tick')
+    end
 
     it 'works on the media queue' do
       expect(Resque.queue_from_class(BawWorkers::AudioCheck::Action)).to eq(queue_name)
     end
 
     it 'can enqueue' do
+
       BawWorkers::AudioCheck::Action.action_enqueue(test_params)
       expect(Resque.size(queue_name)).to eq(1)
 
@@ -58,7 +82,7 @@ describe BawWorkers::AudioCheck::Action do
 
     it 'does not enqueue the same payload into the same queue more than once' do
 
-      queued_query = {audio_params: test_params}
+      queued_query = { audio_params: test_params }
 
       expect(Resque.size(queue_name)).to eq(0)
       expect(BawWorkers::ResqueApi.job_queued?(BawWorkers::AudioCheck::Action, queued_query)).to eq(false)
@@ -114,6 +138,17 @@ describe BawWorkers::AudioCheck::Action do
 
         original_params = test_params.dup
 
+        media_request_params =
+          {
+            uuid: '7bb0c719-143f-4373-a724-8138219006d9',
+            datetime_with_offset: Time.zone.parse('2010-02-23 20:42:00Z'),
+            original_format: audio_file_mono_format
+          }
+
+        audio_original.possible_paths(media_request_params).each do |file|
+          File.delete file
+        end
+
         expect {
           BawWorkers::AudioCheck::Action.action_perform(original_params)
         }.to raise_error(BawAudioTools::Exceptions::FileNotFoundError, /No existing files for.*?7bb0c719-143f-4373-a724-8138219006d9.*?\.ogg/)
@@ -124,11 +159,11 @@ describe BawWorkers::AudioCheck::Action do
       it 'when file hash is incorrect' do
 
         media_request_params =
-            {
-                uuid: '7bb0c719-143f-4373-a724-8138219006d9',
-                datetime_with_offset: '2010-02-23 20:42:00Z',
-                original_format: audio_file_mono_format,
-            }
+          {
+            uuid: '7bb0c719-143f-4373-a724-8138219006d9',
+            datetime_with_offset: '2010-02-23 20:42:00Z',
+            original_format: audio_file_mono_format
+          }
 
         original_params = test_params.dup
         original_params['file_hash'] = 'SHA256::this is really very wrong'
@@ -147,11 +182,11 @@ describe BawWorkers::AudioCheck::Action do
       it 'when file extension is incorrect' do
 
         media_request_params =
-            {
-                uuid: '7bb0c719-143f-4373-a724-8138219006d9',
-                datetime_with_offset: '2010-02-23 20:42:00Z',
-                original_format: audio_file_mono_format,
-            }
+          {
+            uuid: '7bb0c719-143f-4373-a724-8138219006d9',
+            datetime_with_offset: '2010-02-23 20:42:00Z',
+            original_format: audio_file_mono_format
+          }
 
         original_params = test_params.dup
         original_params['original_format'] = 'mp3'
@@ -170,11 +205,11 @@ describe BawWorkers::AudioCheck::Action do
       it 'when file hashes do not match' do
 
         media_request_params =
-            {
-                uuid: '7bb0c719-143f-4373-a724-8138219006d9',
-                datetime_with_offset: '2010-02-23 20:42:00Z',
-                original_format: audio_file_mono_format,
-            }
+          {
+            uuid: '7bb0c719-143f-4373-a724-8138219006d9',
+            datetime_with_offset: '2010-02-23 20:42:00Z',
+            original_format: audio_file_mono_format
+          }
 
         original_params = test_params.dup
 
@@ -182,7 +217,7 @@ describe BawWorkers::AudioCheck::Action do
         new_file = create_original_audio(media_request_params, audio_file_mono, true)
 
         # modify audio file
-        a = ["010", "1111", "10", "10", "110", "1110", "001", "110", "000", "10", "011"]
+        a = ['010', '1111', '10', '10', '110', '1110', '001', '110', '000', '10', '011']
         File.open(new_file, 'ab') do |output|
           output.seek(0, IO::SEEK_END)
           output.write [a.join].pack('B*')
@@ -199,11 +234,11 @@ describe BawWorkers::AudioCheck::Action do
       it 'when file integrity is uncertain' do
 
         media_request_params =
-            {
-                uuid: '7bb0c719-143f-4373-a724-8138219006d9',
-                datetime_with_offset: '2010-02-23 20:42:00Z',
-                original_format: audio_file_mono_format,
-            }
+          {
+            uuid: '7bb0c719-143f-4373-a724-8138219006d9',
+            datetime_with_offset: '2010-02-23 20:42:00Z',
+            original_format: audio_file_mono_format
+          }
 
         original_params = test_params.dup
 
@@ -213,7 +248,7 @@ describe BawWorkers::AudioCheck::Action do
         # act
         expect {
           BawWorkers::AudioCheck::Action.action_perform(original_params)
-        }.to raise_error(BawAudioTools::Exceptions::AudioToolError, /End of file/)
+        }.to raise_error(BawAudioTools::Exceptions::AudioToolError, /Header processing failed/)
 
         expect(ActionMailer::Base.deliveries.count).to eq(0)
       end
@@ -221,16 +256,16 @@ describe BawWorkers::AudioCheck::Action do
       it 'when file hash is empty and other properties do not match' do
 
         media_request_params =
-            {
-                uuid: '7bb0c719-143f-4373-a724-8138219006d9',
-                datetime_with_offset: '2010-02-23 20:42:00Z',
-                original_format: audio_file_mono_format,
-            }
+          {
+            uuid: '7bb0c719-143f-4373-a724-8138219006d9',
+            datetime_with_offset: '2010-02-23 20:42:00Z',
+            original_format: audio_file_mono_format
+          }
 
         original_params = test_params.dup
 
         original_params['file_hash'] = 'SHA256::'
-        original_params['duration_seconds'] = 12345
+        original_params['duration_seconds'] = 12_345
 
         # arrange
         create_original_audio(media_request_params, audio_file_mono, true)
@@ -246,11 +281,11 @@ describe BawWorkers::AudioCheck::Action do
       it 'when recorded date is in incorrect format' do
 
         media_request_params =
-            {
-                uuid: '7bb0c719-143f-4373-a724-8138219006d9',
-                datetime_with_offset: '2010-02-23 20:42:00Z',
-                original_format: audio_file_mono_format,
-            }
+          {
+            uuid: '7bb0c719-143f-4373-a724-8138219006d9',
+            datetime_with_offset: '2010-02-23 20:42:00Z',
+            original_format: audio_file_mono_format
+          }
 
         original_params = test_params.dup
 
@@ -273,16 +308,16 @@ describe BawWorkers::AudioCheck::Action do
       it 'with correct parameters for file with old style name' do
 
         media_request_params =
-            {
-                uuid: '7bb0c719-143f-4373-a724-8138219006d9',
-                datetime_with_offset: '2010-02-23 20:42:00Z',
-                original_format: audio_file_mono_format,
-            }
+          {
+            uuid: '7bb0c719-143f-4373-a724-8138219006d9',
+            datetime_with_offset: '2010-02-23 20:42:00Z',
+            original_format: audio_file_mono_format
+          }
 
         original_params = test_params.dup
 
         # arrange
-        create_original_audio(media_request_params, audio_file_mono)
+        create_original_audio(media_request_params, audio_file_mono, false, true)
 
         # act
         result = BawWorkers::AudioCheck::Action.action_perform(original_params)
@@ -304,16 +339,16 @@ describe BawWorkers::AudioCheck::Action do
       it 'with correct parameters for file with new style name' do
 
         media_request_params =
-            {
-                uuid: '7bb0c719-143f-4373-a724-8138219006d9',
-                datetime_with_offset: '2010-02-23 20:42:00Z',
-                original_format: audio_file_mono_format,
-            }
+          {
+            uuid: '7bb0c719-143f-4373-a724-8138219006d9',
+            datetime_with_offset: '2010-02-23 20:42:00Z',
+            original_format: audio_file_mono_format
+          }
 
         original_params = test_params.dup
 
         # arrange
-        create_original_audio(media_request_params, audio_file_mono, true)
+        create_original_audio(media_request_params, audio_file_mono, true, true)
 
         # act
         result = BawWorkers::AudioCheck::Action.action_perform(original_params)
@@ -332,11 +367,11 @@ describe BawWorkers::AudioCheck::Action do
       it 'with correct parameters when both old and new files exist' do
 
         media_request_params =
-            {
-                uuid: '7bb0c719-143f-4373-a724-8138219006d9',
-                datetime_with_offset: '2010-02-23 20:42:00Z',
-                original_format: audio_file_mono_format,
-            }
+          {
+            uuid: '7bb0c719-143f-4373-a724-8138219006d9',
+            datetime_with_offset: '2010-02-23 20:42:00Z',
+            original_format: audio_file_mono_format
+          }
 
         original_params = test_params.dup
 
@@ -349,7 +384,6 @@ describe BawWorkers::AudioCheck::Action do
 
         # assert
         expect(result.size).to eq(2)
-
 
         original_possible_paths = audio_original.possible_paths(media_request_params)
         expect(File.expand_path(original_possible_paths.first)).to eq(result[0][:file_path])
@@ -364,27 +398,26 @@ describe BawWorkers::AudioCheck::Action do
         expect(ActionMailer::Base.deliveries.count).to eq(0)
       end
 
-
       it 'when updating audio file properties' do
 
         media_request_params =
-            {
-                uuid: '7bb0c719-143f-4373-a724-8138219006d9',
-                datetime_with_offset: '2010-02-23 20:42:00Z',
-                original_format: audio_file_mono_format,
-            }
+          {
+            uuid: '7bb0c719-143f-4373-a724-8138219006d9',
+            datetime_with_offset: '2010-02-23 20:42:00Z',
+            original_format: audio_file_mono_format
+          }
 
         original_params = test_params.dup
 
         original_params['media_type'] = 'audio/mp3'
-        original_params['sample_rate_hertz'] = 22050
+        original_params['sample_rate_hertz'] = 22_050
         original_params['channels'] = 5
         original_params['bit_rate_bps'] = 800
         original_params['data_length_bytes'] = 99
         original_params['duration_seconds'] = 120
 
         # arrange
-        create_original_audio(media_request_params, audio_file_mono, true)
+        create_original_audio(media_request_params, audio_file_mono, true, true)
 
         auth_token = 'auth token I am'
         email = 'address@example.com'
@@ -392,26 +425,26 @@ describe BawWorkers::AudioCheck::Action do
         xsrf_value = 'DFvcwhrXYL8AJKl%2BlZznx%2FJFz15%2BHKPQg%2BAXwYsOIHx%2BRxVEHDPya%2Fm%2Bv9BgbcVSsQ6CGi8%2BLLbzBCAtg%3D%3D'
         xsrf_decoded = 'DFvcwhrXYL8AJKl+lZznx/JFz15+HKPQg+AXwYsOIHx+RxVEHDPya/m+v9BgbcVSsQ6CGi8+LLbzBCAtg=='
         cookie_value = "XSRF-TOKEN=#{xsrf_value}; path=/"
-        login_request = stub_request(:post, "#{default_uri}/security").
-            with(:body => get_api_security_request(email, password),
-                 :headers => {'Accept' => 'application/json', 'Content-Type' => 'application/json', 'User-Agent' => 'Ruby'}).
-            to_return(status: 200, body: get_api_security_response(email, auth_token).to_json, headers: {'Set-Cookie' => cookie_value})
+        login_request = stub_request(:post, "#{default_uri}/security")
+                        .with(body: get_api_security_request(email, password),
+                              headers: { 'Accept' => 'application/json', 'Content-Type' => 'application/json', 'User-Agent' => 'Ruby' })
+                        .to_return(status: 200, body: get_api_security_response(email, auth_token).to_json, headers: { 'Set-Cookie' => cookie_value })
 
         expected_request_body = {
-            media_type: audio_file_mono_media_type.to_s,
-            sample_rate_hertz: audio_file_mono_sample_rate.to_f,
-            channels: audio_file_mono_channels,
-            bit_rate_bps: audio_file_mono_bit_rate_bps,
-            data_length_bytes: audio_file_mono_data_length_bytes,
-            duration_seconds: audio_file_mono_duration_seconds.to_f
+          media_type: audio_file_mono_media_type.to_s,
+          sample_rate_hertz: audio_file_mono_sample_rate.to_f,
+          channels: audio_file_mono_channels,
+          bit_rate_bps: audio_file_mono_bit_rate_bps,
+          data_length_bytes: audio_file_mono_data_length_bytes,
+          duration_seconds: audio_file_mono_duration_seconds.to_f
         }
 
-        stub_request(:put, "#{default_uri}/audio_recordings/#{test_params['id']}").
-            with(:body => expected_request_body.to_json,
-                 :headers => {'Accept' => 'application/json', 'Authorization' => 'Token token="'+auth_token+'"',
-                              'Content-Type' => 'application/json', 'User-Agent' => 'Ruby',
-                              'X-Xsrf-Token' => xsrf_decoded}).
-            to_return(:status => 200)
+        stub_request(:put, "#{default_uri}/audio_recordings/#{test_params['id']}")
+          .with(body: expected_request_body.to_json,
+                headers: { 'Accept' => 'application/json', 'Authorization' => 'Token token="' + auth_token + '"',
+                           'Content-Type' => 'application/json', 'User-Agent' => 'Ruby',
+                           'X-Xsrf-Token' => xsrf_decoded })
+          .to_return(status: 200)
 
         # act
         result = BawWorkers::AudioCheck::Action.action_perform(original_params)
@@ -433,33 +466,33 @@ describe BawWorkers::AudioCheck::Action do
       it 'when file hash not given, and only file hash needs to be updated' do
 
         media_request_params =
-            {
-                uuid: '7bb0c719-143f-4373-a724-8138219006d9',
-                datetime_with_offset: '2010-02-23 20:42:00Z',
-                original_format: audio_file_mono_format,
-            }
+          {
+            uuid: '7bb0c719-143f-4373-a724-8138219006d9',
+            datetime_with_offset: '2010-02-23 20:42:00Z',
+            original_format: audio_file_mono_format
+          }
 
         original_params = test_params.dup
         expected_request_body = {
-            file_hash: original_params['file_hash']
+          file_hash: original_params['file_hash']
         }
         original_params['file_hash'] = 'SHA256::'
 
         # arrange
-        create_original_audio(media_request_params, audio_file_mono, true)
+        create_original_audio(media_request_params, audio_file_mono, true, true)
 
         auth_token = 'auth token I am'
         email = 'address@example.com'
         password = 'password'
-        login_request = stub_request(:post, "#{default_uri}/security").
-            with(:body => get_api_security_request(email, password),
-                 :headers => {'Accept' => 'application/json', 'Content-Type' => 'application/json', 'User-Agent' => 'Ruby'}).
-            to_return(status: 200, body: get_api_security_response(email, auth_token).to_json)
+        login_request = stub_request(:post, "#{default_uri}/security")
+                        .with(body: get_api_security_request(email, password),
+                              headers: { 'Accept' => 'application/json', 'Content-Type' => 'application/json', 'User-Agent' => 'Ruby' })
+                        .to_return(status: 200, body: get_api_security_response(email, auth_token).to_json)
 
-        stub_request(:put, "#{default_uri}/audio_recordings/#{test_params['id']}").
-            with(:body => expected_request_body.to_json,
-                 :headers => {'Accept' => 'application/json', 'Authorization' => 'Token token="'+auth_token+'"', 'Content-Type' => 'application/json', 'User-Agent' => 'Ruby'}).
-            to_return(:status => 200)
+        stub_request(:put, "#{default_uri}/audio_recordings/#{test_params['id']}")
+          .with(body: expected_request_body.to_json,
+                headers: { 'Accept' => 'application/json', 'Authorization' => 'Token token="' + auth_token + '"', 'Content-Type' => 'application/json', 'User-Agent' => 'Ruby' })
+          .to_return(status: 200)
 
         # act
         result = BawWorkers::AudioCheck::Action.action_perform(original_params)
@@ -480,46 +513,45 @@ describe BawWorkers::AudioCheck::Action do
 
         it 'does nothing even when there are changes to be made' do
           media_request_params =
-              {
-                  uuid: '7bb0c719-143f-4373-a724-8138219006d9',
-                  datetime_with_offset: '2010-02-23 20:42:00Z',
-                  original_format: audio_file_mono_format,
-              }
+            {
+              uuid: '7bb0c719-143f-4373-a724-8138219006d9',
+              datetime_with_offset: '2010-02-23 20:42:00Z',
+              original_format: audio_file_mono_format
+            }
 
           original_params = test_params.dup
 
           original_params['media_type'] = 'audio/mp3'
-          original_params['sample_rate_hertz'] = 22050
+          original_params['sample_rate_hertz'] = 22_050
           original_params['channels'] = 5
           original_params['bit_rate_bps'] = 800
           original_params['data_length_bytes'] = 99
           original_params['duration_seconds'] = 120
 
           # arrange
-          create_original_audio(media_request_params, audio_file_mono)
+          create_original_audio(media_request_params, audio_file_mono, false, true)
 
           auth_token = 'auth token I am'
           email = 'address@example.com'
           password = 'password'
-          login_request = stub_request(:post, "#{default_uri}/security").
-              with(:body => get_api_security_request(email, password),
-                   :headers => {'Accept' => 'application/json', 'Content-Type' => 'application/json', 'User-Agent' => 'Ruby'}).
-              to_return(status: 200, body: get_api_security_response(email, auth_token).to_json)
-
+          login_request = stub_request(:post, "#{default_uri}/security")
+                          .with(body: get_api_security_request(email, password),
+                                headers: { 'Accept' => 'application/json', 'Content-Type' => 'application/json', 'User-Agent' => 'Ruby' })
+                          .to_return(status: 200, body: get_api_security_response(email, auth_token).to_json)
 
           expected_request_body = {
-              media_type: audio_file_mono_media_type.to_s,
-              sample_rate_hertz: audio_file_mono_sample_rate.to_f,
-              channels: audio_file_mono_channels,
-              bit_rate_bps: audio_file_mono_bit_rate_bps,
-              data_length_bytes: audio_file_mono_data_length_bytes,
-              duration_seconds: audio_file_mono_duration_seconds.to_f
+            media_type: audio_file_mono_media_type.to_s,
+            sample_rate_hertz: audio_file_mono_sample_rate.to_f,
+            channels: audio_file_mono_channels,
+            bit_rate_bps: audio_file_mono_bit_rate_bps,
+            data_length_bytes: audio_file_mono_data_length_bytes,
+            duration_seconds: audio_file_mono_duration_seconds.to_f
           }
 
-          update_request = stub_request(:put, "#{default_uri}/audio_recordings/#{test_params['id']}").
-              with(:body => expected_request_body.to_json,
-                   :headers => {'Accept' => 'application/json', 'Authorization' => 'Token token="'+auth_token+'"', 'Content-Type' => 'application/json', 'User-Agent' => 'Ruby'}).
-              to_return(:status => 200)
+          update_request = stub_request(:put, "#{default_uri}/audio_recordings/#{test_params['id']}")
+                           .with(body: expected_request_body.to_json,
+                                 headers: { 'Accept' => 'application/json', 'Authorization' => 'Token token="' + auth_token + '"', 'Content-Type' => 'application/json', 'User-Agent' => 'Ruby' })
+                           .to_return(status: 200)
 
           # act
           #result = BawWorkers::AudioCheck::Action.action_perform(original_params)

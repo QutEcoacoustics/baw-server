@@ -1,40 +1,56 @@
-require 'spec_helper'
+# frozen_string_literal: true
+
+require 'workers_helper'
 
 describe BawWorkers::Analysis::Status do
   require 'helpers/shared_test_helpers'
- 
+
   include_context 'shared_test_helpers'
+
+  # we want to control the execution of jobs for this set of tests,
+  # so change the queue name so the test worker does not
+  # automatically process the jobs
+  before(:each) do
+    default_queue = BawWorkers::Settings.actions.analysis.queue
+
+    allow(BawWorkers::Settings.actions.analysis).to receive(:queue).and_return(default_queue + '_manual_tick')
+
+    # cleanup resque queues before each test
+    Resque.remove_queue_with_cleanup(default_queue)
+    Resque.remove_queue_with_cleanup(BawWorkers::Settings.actions.analysis.queue)
+
+  end
 
   let(:analysis_params) {
     {
-        command_format: '<{file_executable}> "analysis_type -source <{file_source}> -config <{file_config}> -output <{dir_output}> -tempdir <{dir_temp}>"',
-        config: 'blah a very long and repeated blob of text' * 300,
-        file_executable: 'echo',
-        copy_paths: [],
+      command_format: '<{file_executable}> "analysis_type -source <{file_source}> -config <{file_config}> -output <{dir_output}> -tempdir <{dir_temp}>"',
+      config: 'blah a very long and repeated blob of text' * 300,
+      file_executable: 'echo',
+      copy_paths: [],
 
-        uuid: 'f7229504-76c5-4f88-90fc-b7c3f5a8732e',
-        id: 123456,
-        datetime_with_offset: '2014-11-18T16:05:00Z',
-        original_format: 'wav',
+      uuid: 'f7229504-76c5-4f88-90fc-b7c3f5a8732e',
+      id: 123_456,
+      datetime_with_offset: '2014-11-18T16:05:00Z',
+      original_format: 'wav',
 
-        job_id: 20,
-        sub_folders: ['hello', 'here_i_am']
+      job_id: 20,
+      sub_folders: ['hello', 'here_i_am']
     }
   }
 
   def prepare_audio_file
-    target_file = audio_original.possible_paths({
-                                                    uuid: 'f7229504-76c5-4f88-90fc-b7c3f5a8732e',
-                                                    id: 123456,
-                                                    datetime_with_offset: Time.zone.parse('"2014-11-18T16:05:00Z'),
-                                                    original_format: 'wav'
-                                                })[0]
+    target_file = audio_original.possible_paths(
+      uuid: 'f7229504-76c5-4f88-90fc-b7c3f5a8732e',
+      id: 123_456,
+      datetime_with_offset: Time.zone.parse('"2014-11-18T16:05:00Z'),
+      original_format: 'wav'
+    )[0]
     FileUtils.mkpath(File.dirname(target_file))
     FileUtils.cp(audio_file_mono, target_file)
   end
 
   def stub_status_get(status)
-    body = <<-json
+    body = <<-JSON
       {
           "meta": {
               "status": 200,
@@ -52,16 +68,16 @@ describe BawWorkers::Analysis::Status do
               "completed_at": null
           }
       }
-    json
+    JSON
 
-    stub_request(:get, "#{default_uri}/analysis_jobs/20/audio_recordings/123456").
-        with(headers: {'Accept' => 'application/json', 'Authorization' => 'Token token="auth_token_string"',
-                       'Content-Type' => 'application/json', 'User-Agent' => 'Ruby'}).
-        to_return(status: 200, body: body)
+    stub_request(:get, "#{default_uri}/analysis_jobs/20/audio_recordings/123456")
+      .with(headers: { 'Accept' => 'application/json', 'Authorization' => 'Token token="auth_token_string"',
+                       'Content-Type' => 'application/json', 'User-Agent' => 'Ruby' })
+      .to_return(status: 200, body: body)
   end
 
   def stub_status_put(new_status, failCount = 0)
-    body = <<-json
+    body = <<-JSON
       {
           "meta": {
               "status": 200,
@@ -79,15 +95,14 @@ describe BawWorkers::Analysis::Status do
               "completed_at": null
           }
       }
-    json
+    JSON
 
-    s = stub_request(:put, "#{default_uri}/analysis_jobs/20/audio_recordings/123456").
-        with(headers: {'Accept' => 'application/json', 'Authorization' => 'Token token="auth_token_string"',
-                       'Content-Type' => 'application/json', 'User-Agent' => 'Ruby'},
-             body: {status: new_status}.to_json)
+    s = stub_request(:put, "#{default_uri}/analysis_jobs/20/audio_recordings/123456")
+        .with(headers: { 'Accept' => 'application/json', 'Authorization' => 'Token token="auth_token_string"',
+                         'Content-Type' => 'application/json', 'User-Agent' => 'Ruby' },
+              body: { status: new_status }.to_json)
 
-
-    s = s.to_timeout().times(failCount) if failCount > 0
+    s = s.to_timeout.times(failCount) if failCount > 0
     s = s.then.to_return(status: 200, body: body)
 
     s
@@ -95,8 +110,8 @@ describe BawWorkers::Analysis::Status do
 
   def stub_login
     stub_request(:post, default_uri + BawWorkers::Settings.endpoints.login)
-        .with(body: get_api_security_request('address@example.com', 'password'))
-        .to_return(body: get_api_security_response('address@example.com', 'auth_token_string').to_json)
+      .with(body: get_api_security_request('address@example.com', 'password'))
+      .to_return(body: get_api_security_response('address@example.com', 'auth_token_string').to_json)
   end
 
   it 'sets the website status to :successful if it just works' do
@@ -106,7 +121,7 @@ describe BawWorkers::Analysis::Status do
     expect(Resque.size(queue_name)).to eq(0)
 
     # enqueue
-    result1 = BawWorkers::Analysis::Action.action_enqueue(analysis_params)
+    _ = BawWorkers::Analysis::Action.action_enqueue(analysis_params)
 
     expect(Resque.size(queue_name)).to eq(1)
 
@@ -138,7 +153,7 @@ describe BawWorkers::Analysis::Status do
     analysis_params_modified[:command_format] = 'sleep 5 && <{file_executable}> "analysis_type -source <{file_source}> -config <{file_config}> -output <{dir_output}> -tempdir <{dir_temp}>"'
 
     # enqueue
-    result1 = BawWorkers::Analysis::Action.action_enqueue(analysis_params_modified)
+    _ = BawWorkers::Analysis::Action.action_enqueue(analysis_params_modified)
 
     expect(Resque.size(queue_name)).to eq(1)
 
@@ -152,7 +167,7 @@ describe BawWorkers::Analysis::Status do
     expect_requests_made_in_order(l, s1, s2, s3) do
       # dequeue and run a job
       expect {
-        was_run = emulate_resque_worker(BawWorkers::Analysis::Action.queue)
+        _ = emulate_resque_worker(BawWorkers::Analysis::Action.queue)
       }.to raise_error(BawAudioTools::Exceptions::AudioToolTimedOutError)
     end
   end
@@ -230,7 +245,6 @@ describe BawWorkers::Analysis::Status do
     s2 = stub_status_put(:working)
     s3 = stub_status_put(:successful, 3)
 
-
     expect_requests_made_in_order(l, s1, s2) do
       # dequeue and run a job
       was_run = false
@@ -246,6 +260,5 @@ describe BawWorkers::Analysis::Status do
 
     expect(ActionMailer::Base.deliveries.count).to eq(1)
   end
-
 
 end

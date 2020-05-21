@@ -1,20 +1,22 @@
-require 'spec_helper'
+# frozen_string_literal: true
+
+require 'workers_helper'
 
 describe BawWorkers::Storage::SpectrogramCache do
 
   let(:spectrogram_cache) { BawWorkers::Config.spectrogram_cache_helper }
 
   let(:uuid) { '5498633d-89a7-4b65-8f4a-96aa0c09c619' }
-  let(:datetime) { Time.zone.parse("2012-03-02 16:05:37+1100") }
+  let(:datetime) { Time.zone.parse('2012-03-02 16:05:37+1100') }
   let(:end_offset) { 20.02 }
   let(:partial_path) { uuid[0, 2] }
 
   let(:start_offset) { 8.1 }
   let(:channel) { 0 }
-  let(:sample_rate) { 22050 }
+  let(:sample_rate) { 22_050 }
   let(:format_audio) { 'wav' }
   let(:window) { 1024 }
-  let(:window_function) { "Hann" }
+  let(:window_function) { 'Hann' }
   let(:colour) { 'g' }
   let(:format_spectrogram) { 'jpg' }
 
@@ -23,18 +25,17 @@ describe BawWorkers::Storage::SpectrogramCache do
 
   let(:opts) {
     {
-        uuid: uuid,
-        start_offset: start_offset,
-        end_offset: end_offset,
-        channel: channel,
-        sample_rate: sample_rate,
-        window: window,
-        colour: colour,
-        window_function: window_function,
-        format: format_spectrogram
+      uuid: uuid,
+      start_offset: start_offset,
+      end_offset: end_offset,
+      channel: channel,
+      sample_rate: sample_rate,
+      window: window,
+      colour: colour,
+      window_function: window_function,
+      format: format_spectrogram
     }
   }
-
 
   it 'no storage directories exist' do
     expect(spectrogram_cache.existing_dirs).to be_empty
@@ -46,7 +47,7 @@ describe BawWorkers::Storage::SpectrogramCache do
 
   it 'creates the correct name' do
     expect(
-        spectrogram_cache.file_name(opts)
+      spectrogram_cache.file_name(opts)
     ).to eq cached_spectrogram_file_name_given_parameters
   end
 
@@ -59,20 +60,18 @@ describe BawWorkers::Storage::SpectrogramCache do
     it 'creates the correct name with non standard original sample rate' do
 
       expect(
-          spectrogram_cache.file_name(
-              {
-                  uuid: uuid,
-                  start_offset: start_offset,
-                  end_offset: end_offset,
-                  channel: channel,
-                  sample_rate: non_standard_sample_rate,
-                  original_sample_rate: non_standard_sample_rate,
-                  window: window,
-                  colour: colour,
-                  window_function: window_function,
-                  format: format_spectrogram
-              }
-          )
+        spectrogram_cache.file_name(
+          uuid: uuid,
+          start_offset: start_offset,
+          end_offset: end_offset,
+          channel: channel,
+          sample_rate: non_standard_sample_rate,
+          original_sample_rate: non_standard_sample_rate,
+          window: window,
+          colour: colour,
+          window_function: window_function,
+          format: format_spectrogram
+        )
       ).to eq cached_spectrogram_file_name_given_parameters_nssr
 
     end
@@ -80,20 +79,18 @@ describe BawWorkers::Storage::SpectrogramCache do
     it 'creates the correct name with non standard original sample rate and a standard requested sample rate' do
 
       expect(
-          spectrogram_cache.file_name(
-              {
-                  uuid: uuid,
-                  start_offset: start_offset,
-                  end_offset: end_offset,
-                  channel: channel,
-                  sample_rate: sample_rate,
-                  original_sample_rate: non_standard_sample_rate,
-                  window: window,
-                  colour: colour,
-                  window_function: window_function,
-                  format: format_spectrogram
-              }
-          )
+        spectrogram_cache.file_name(
+          uuid: uuid,
+          start_offset: start_offset,
+          end_offset: end_offset,
+          channel: channel,
+          sample_rate: sample_rate,
+          original_sample_rate: non_standard_sample_rate,
+          window: window,
+          colour: colour,
+          window_function: window_function,
+          format: format_spectrogram
+        )
       ).to eq cached_spectrogram_file_name_given_parameters
 
     end
@@ -102,18 +99,16 @@ describe BawWorkers::Storage::SpectrogramCache do
 
       expect {
         spectrogram_cache.file_name(
-            {
-                uuid: uuid,
-                start_offset: start_offset,
-                end_offset: end_offset,
-                channel: channel,
-                sample_rate: 75757,
-                original_sample_rate: 12345,
-                window: window,
-                colour: colour,
-                window_function: window_function,
-                format: format_spectrogram
-            }
+          uuid: uuid,
+          start_offset: start_offset,
+          end_offset: end_offset,
+          channel: channel,
+          sample_rate: 75_757,
+          original_sample_rate: 12_345,
+          window: window,
+          colour: colour,
+          window_function: window_function,
+          format: format_spectrogram
         )
       }.to raise_error(ArgumentError)
 
@@ -123,26 +118,21 @@ describe BawWorkers::Storage::SpectrogramCache do
 
       expect {
         spectrogram_cache.file_name(
-            {
-                uuid: uuid,
-                start_offset: start_offset,
-                end_offset: end_offset,
-                channel: channel,
-                sample_rate: 87,
-                window: window,
-                colour: colour,
-                window_function: window_function,
-                format: format_spectrogram
-            }
+          uuid: uuid,
+          start_offset: start_offset,
+          end_offset: end_offset,
+          channel: channel,
+          sample_rate: 87,
+          window: window,
+          colour: colour,
+          window_function: window_function,
+          format: format_spectrogram
         )
       }.to raise_error(ArgumentError)
 
     end
 
   end
-
-
-
 
   it 'creates the correct partial path' do
     expect(spectrogram_cache.partial_path(opts)).to eq partial_path
@@ -164,7 +154,7 @@ describe BawWorkers::Storage::SpectrogramCache do
     path_info = spectrogram_cache.parse_file_path(path[0])
 
     expect(path.size).to eq 1
-    expect(path.first).to eq "./tmp/custom_temp_dir/_cached_spectrogram/54/5498633d-89a7-4b65-8f4a-96aa0c09c619_8.1_20.02_0_22050_1024_Hann_g.jpg"
+    expect(path.first).to eq './tmp/custom_temp_dir/_cached_spectrogram/54/5498633d-89a7-4b65-8f4a-96aa0c09c619_8.1_20.02_0_22050_1024_Hann_g.jpg'
 
     expect(path_info.keys.size).to eq 9
     expect(path_info[:uuid]).to eq uuid

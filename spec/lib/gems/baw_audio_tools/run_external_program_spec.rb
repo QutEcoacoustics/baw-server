@@ -1,4 +1,6 @@
-require 'spec_helper'
+# frozen_string_literal: true
+
+require 'workers_helper'
 
 describe BawAudioTools::RunExternalProgram do
   include_context 'common'
@@ -9,7 +11,11 @@ describe BawAudioTools::RunExternalProgram do
 
     # 0 = A value of 0 will cause error checking to be performed (with no signal being sent).
     # This can be used to check the validity of pid.
-    is_running = (!!Process.kill(0, pid) rescue false)
+    is_running = (begin
+                    !!Process.kill(0, pid)
+                  rescue StandardError
+                    false
+                  end)
 
     expect(is_running).to be_falsey
   end
@@ -22,7 +28,7 @@ describe BawAudioTools::RunExternalProgram do
 
     begin
       run_program.execute(command)
-    rescue => e
+    rescue StandardError => e
       error = e
     end
 
@@ -34,8 +40,9 @@ describe BawAudioTools::RunExternalProgram do
 
   it 'check timeout does not impact successful execution' do
     run_program = BawAudioTools::RunExternalProgram.new(
-        RSpec.configuration.test_settings.audio_tools_timeout_sec,
-        logger)
+      BawWorkers::Settings.audio_tools_timeout_sec,
+      logger
+    )
 
     sleep_duration = 1
     command = "sleep #{sleep_duration}"
@@ -47,7 +54,7 @@ describe BawAudioTools::RunExternalProgram do
     expect(result[:stderr]).to be_blank
     expect(result[:command]).to eq(command)
     expect(result[:exit_code]).to eq(0)
-    expect(result[:execute_msg]).to match(/External Program: status=0;killed=false;pid=[0-9]+;time_out_sec=10;time_taken_sec=1/)
+    expect(result[:execute_msg]).to match(/External Program: status=0;killed=false;pid=[0-9]+;time_out_sec=5;time_taken_sec=1\.\d+/)
   end
 
   it 'ensures non-zero exit codes are treated as failures' do
@@ -59,7 +66,7 @@ describe BawAudioTools::RunExternalProgram do
 
     begin
       run_program.execute(command)
-    rescue => e
+    rescue StandardError => e
       error = e
     end
 
@@ -78,13 +85,11 @@ describe BawAudioTools::RunExternalProgram do
 
     result = run_program.execute(command, raise_exit_error)
 
-
     expect(result[:exit_code]).to eq(255)
     expect(result[:success]).to eq(false)
     expect(result[:execute_msg]).to match(/#{command}/)
 
     test_is_not_running(result[:execute_msg])
   end
-
 
 end

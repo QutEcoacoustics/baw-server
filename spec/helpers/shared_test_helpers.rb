@@ -1,36 +1,38 @@
+# frozen_string_literal: true
+
 shared_context 'shared_test_helpers' do
 
-  let(:host) { 'localhost' }
-  let(:port) { 3030 }
-  let(:scheme) { BawWorkers::Settings.endpoints.use_ssl.to_s.downcase == 'true' ? 'https' : 'http'}
+  let(:host) { BawWorkers::Settings.api.host }
+  let(:port) { BawWorkers::Settings.api.port }
+  let(:scheme) { BawWorkers::Settings.endpoints.use_ssl.to_s.downcase == 'true' ? 'https' : 'http' }
   let(:default_uri) { "#{scheme}://#{host}:#{port}" }
 
   # example files
-  let(:example_media_dir) { File.expand_path(File.join(File.dirname(__FILE__), '..', 'example_media')) }
+  let(:example_media_dir) { Fixtures::FILES_PATH }
 
-  let(:audio_file_mono) { File.expand_path(File.join(example_media_dir, 'test-audio-mono.ogg')) }
+  let(:audio_file_mono) { Fixtures.audio_file_mono }
   let(:audio_file_mono_media_type) { Mime::Type.lookup('audio/ogg') }
   let(:audio_file_mono_format) { 'ogg' }
-  let(:audio_file_mono_sample_rate) { 44100 }
+  let(:audio_file_mono_sample_rate) { 44_100 }
   let(:audio_file_mono_channels) { 1 }
   let(:audio_file_mono_duration_seconds) { 70 }
-  let(:audio_file_mono_data_length_bytes) { 822281 }
-  let(:audio_file_mono_bit_rate_bps) { 239920 }
+  let(:audio_file_mono_data_length_bytes) { 822_281 }
+  let(:audio_file_mono_bit_rate_bps) { 239_920 }
 
-  let(:audio_file_mono_29) { File.expand_path(File.join(example_media_dir, 'test-audio-mono.ogg')) }
+  let(:audio_file_mono_29) { Fixtures.audio_file_mono }
   let(:audio_file_mono_29_media_type) { Mime::Type.lookup('audio/ogg') }
   let(:audio_file_mono_29_format) { 'ogg' }
-  let(:audio_file_mono_29_sample_rate) { 44100 }
+  let(:audio_file_mono_29_sample_rate) { 44_100 }
   let(:audio_file_mono_29_channels) { 1 }
   let(:audio_file_mono_29_duration_seconds) { 29.0 }
-  let(:audio_file_mono_29_data_length_bytes) { 296756 }
-  let(:audio_file_mono_29_bit_rate_bps) { 239920 }
+  let(:audio_file_mono_29_data_length_bytes) { 296_756 }
+  let(:audio_file_mono_29_bit_rate_bps) { 239_920 }
 
-  let(:audio_file_wac) { File.expand_path(File.join(example_media_dir, 'test-wac-1.wac')) }
+  let(:audio_file_wac) { Fixtures.audio_file_wac_1 }
 
   let(:duration_range) { 0.11 }
 
-  let(:audio_file_corrupt) { File.expand_path(File.join(example_media_dir, 'test-audio-corrupt.ogg')) }
+  let(:audio_file_corrupt) { Fixtures.audio_file_corrupt }
 
   let(:temporary_dir) { BawWorkers::Settings.paths.temp_dir }
 
@@ -45,7 +47,7 @@ shared_context 'shared_test_helpers' do
   let(:worker_log_content) {  File.read(worker_log_file) }
 
   let(:default_settings_file) { RSpec.configuration.default_settings_path }
-  let(:harvest_to_do_path) { File.expand_path('./tmp/custom_temp_dir/_harvester_to_do_path') }
+  let(:harvest_to_do_path) { File.expand_path(BawWorkers::Settings.actions.harvest.to_do_path) }
   let(:custom_temp) { BawWorkers::Config.temp_dir }
 
   # easy access to config & settings
@@ -61,34 +63,48 @@ shared_context 'shared_test_helpers' do
   let(:file_info) { BawWorkers::Config.file_info }
   let(:api) { BawWorkers::Config.api_communicator }
 
-  let(:api_security_response) {
+  let(:api_security_response) {}
 
-  }
-
-  def create_original_audio(options, example_file_name, new_name_style = false)
-
+  def create_original_audio(options, example_file_name, new_name_style = false, delete_other = false)
     # ensure :datetime_with_offset is an ActiveSupport::TimeWithZone object
     if options.include?(:datetime_with_offset) && options[:datetime_with_offset].is_a?(ActiveSupport::TimeWithZone)
       # all good - no op
     elsif options.include?(:datetime_with_offset) && options[:datetime_with_offset].end_with?('Z')
       options[:datetime_with_offset] = Time.zone.parse(options[:datetime_with_offset])
     else
-      fail ArgumentError, "recorded_date must be a UTC time (i.e. end with Z), given '#{options[:datetime_with_offset]}'."
+      raise ArgumentError, "recorded_date must be a UTC time (i.e. end with Z), given '#{options[:datetime_with_offset]}'."
     end
 
-    original_file_names = audio_original.file_names(options)
     original_possible_paths = audio_original.possible_paths(options)
 
-    if new_name_style
-      file_to_make = original_possible_paths.second
-    else
-      file_to_make = original_possible_paths.first
-    end
+    file_to_make = new_name_style ? original_possible_paths.second : original_possible_paths.first
+    file_to_delete = new_name_style ? original_possible_paths.first : original_possible_paths.second
 
+    File.delete(file_to_delete) if delete_other && File.exist?(file_to_delete)
     FileUtils.mkpath File.dirname(file_to_make)
     FileUtils.cp example_file_name, file_to_make
 
     file_to_make
+  end
+
+  def clear_original_audio
+    paths = BawWorkers::Settings.paths.original_audios
+
+    paths.each do |path|
+      raise "Will not delete #{path} because it does not contain 'test'" unless path =~ /_test_/
+
+      FileUtils.remove_dir path
+    end
+  end
+
+  def clear_harvester_to_do
+    paths = [harvest_to_do_path]
+
+    paths.each do |path|
+      raise "Will not delete #{path} because it does not contain 'test'" unless path =~ /_test_/
+
+      FileUtils.remove_dir path if Dir.exist? path
+    end
   end
 
   def get_cached_audio_paths(options)
@@ -100,7 +116,7 @@ shared_context 'shared_test_helpers' do
   end
 
   def copy_test_audio_check_csv
-    csv_file_example  = File.join(example_media_dir, 'audio_check.csv')
+    csv_file_example = Fixtures.audio_check_csv
 
     FileUtils.mkpath(custom_temp)
     csv_file = File.join(custom_temp, '_audio_check_to_do.csv')
@@ -108,6 +124,15 @@ shared_context 'shared_test_helpers' do
     FileUtils.cp(csv_file_example, csv_file)
 
     csv_file
+  end
+
+  def copy_test_programs
+    echo = Pathname.new(BawWorkers::Config.programs_dir) / 'echo'
+    touch = Pathname.new(BawWorkers::Config.programs_dir) / 'touch'
+    return if echo.exist? && touch.exist?
+
+    FileUtils.cp('/bin/echo', echo)
+    FileUtils.cp('/usr/bin/touch', touch)
   end
 
   def emulate_resque_worker(queue)
@@ -163,22 +188,22 @@ shared_context 'shared_test_helpers' do
 
   def get_api_security_response(user_name, auth_token)
     {
-        meta: {
-            status: 200,
-            message: 'OK'
-        },
-        data: {
-            auth_token: auth_token,
-            user_name: user_name,
-            message: 'Signed in successfully.'
-        }
+      meta: {
+        status: 200,
+        message: 'OK'
+      },
+      data: {
+        auth_token: auth_token,
+        user_name: user_name,
+        message: 'Signed in successfully.'
+      }
     }
   end
 
   def get_api_security_request(email, password)
     {
-        email: email,
-        password: password
+      email: email,
+      password: password
     }
   end
 
@@ -199,7 +224,6 @@ shared_context 'shared_test_helpers' do
       matches = expected_request.matches?(actual_requests[index])
       expect(matches).to be_truthy, "Request order does not match, expected:\n\n#{expected_request}\n\nIn position #{index}, got\n\n#{actual_requests[index]}"
     end
-
   end
 
 end

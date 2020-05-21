@@ -1,4 +1,4 @@
-require 'spec_helper'
+require 'workers_helper'
 
 describe BawAudioTools::AudioFfmpeg do
   include_context 'common'

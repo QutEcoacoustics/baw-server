@@ -23,11 +23,11 @@ defaults: &defaults
     # queues_to_process is only needed when running a Resque worker to
     # specify the Resque queues to watch.
     queues_to_process:
-      - analysis_default
-      - maintenance_default
-      - harvest_default
-      - media_default
-      - mirror_default
+      - analysis_<%= BawApp.env %>
+      - maintenance_<%= BawApp.env %>
+      - harvest_<%= BawApp.env %>
+      - media_<%= BawApp.env %>
+      - mirror_<%= BawApp.env %>
     connection: *redis_config
     namespace: resque
     log_level: 'Logger::INFO'
@@ -38,25 +38,27 @@ defaults: &defaults
     background_pid_file: ~
     # output and error log files are only used when a Resque worker is running
     # in the background
-    output_log_file: ../log/program_stdout.log
-    error_log_file: ../log/program_stderr.log
+    output_log_file: <%= BawApp.root %>/log/worker_stdout.log
+    error_log_file: <%= BawApp.root %>/log/worker_stderr.log
   # these are the available background jobs that can be enqueued
   actions:
     analysis:
-      queue: analysis_default
+      queue: analysis_<%= BawApp.env %>
     harvest:
-      queue: harvest_default
+      queue: harvest_<%= BawApp.env %>
       dry_run: false
-      to_do_path: ./tmp/_harvester_to_do_path
+      to_do_path: ./tmp/_<%= BawApp.env %>_harvester_to_do_path
       config_file_name: harvest.yml
       progressive_upload_directory: ./tmp/_progressive-upload/
       # top level directory for mirroring harvested files, used by dequeue workers only
       copy_base_path: ./tmp/custom_temp_dir/temp/copy_base_path
     media:
-      queue: media_default
+      queue: media_<%= BawApp.env %>
       dry_run: false
     mirror:
-      queue: mirror_default
+      queue: mirror_<%= BawApp.env %>
+    audio_check:
+      queue:  maintenance_<%= BawApp.env %>
   media_request_processor: resque # options are local or resque (now only ever use resque with containers)
   db: &db
     ######################################################
@@ -106,7 +108,7 @@ defaults: &defaults
     mailer_log_file: <%= BawApp.root %>/log/mailer.<%= BawApp.env %>.log
     audio_tools_log_file: <%= BawApp.root %>/log/audio_tools.<%= BawApp.env %>.log
     temp_dir: <%= BawApp.root %>/tmp
-    programs_dir: ../tmp/programs
+    programs_dir: <%= BawApp.root %>/programs
   # used by workers to contact a web-server
   endpoints:
     use_ssl: true
@@ -170,6 +172,7 @@ defaults: &defaults
       - ogg
       - flac
       - wav
+    audio_decode_only:
       - wac
     image:
       - png

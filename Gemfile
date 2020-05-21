@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 source 'https://rubygems.org'
 
 # Available groups:
@@ -26,9 +28,9 @@ gem 'bootsnap', require: false
 group :server do
   # RAILS
   # -------------------------------------
-  gem 'responders', '~> 2.3.0'
-  gem 'rails', '~> 4.2.4'
   gem 'rack-cors', '~> 0.4.0', require: 'rack/cors'
+  gem 'rails', '~> 4.2.4'
+  gem 'responders', '~> 2.3.0'
 
   # RAILS 3 compatibility gems
   # -------------------------------------
@@ -60,9 +62,9 @@ group :server do
   gem 'haml', '~> 4.0.6'
   gem 'haml-rails', '~> 0.9.0'
 
-  gem 'simple_form', '~> 3.3.0'
-  gem 'paperclip', '~> 5.0.0'
   gem 'kramdown', '~> 1.13.2'
+  gem 'paperclip', '~> 5.0.0'
+  gem 'simple_form', '~> 3.3.0'
 
   # Bootstrap UI
   gem 'bootstrap-sass', '~> 3.3.4'
@@ -71,8 +73,8 @@ group :server do
   gem 'font-awesome-sass', '~> 4.6.2'
 
   # for rails 3, 4
+  gem 'dotiw', '~> 3.1.1'
   gem 'kaminari'
-  gem 'dotiw','~> 3.1.1'
   gem 'recaptcha', '~> 5.1.0', require: 'recaptcha/rails'
 
   # for tying inflections into I18n
@@ -82,9 +84,9 @@ group :server do
   # -------------------------------------
   # https://github.com/plataformatec/devise/blob/master/CHANGELOG.md
   # http://joanswork.com/devise-3-1-update/
+  gem 'cancancan', '~> 1.16'
   gem 'devise', '~> 4.7.0'
   gem 'devise-i18n'
-  gem 'cancancan', '~> 1.16'
   gem 'role_model', '~> 0.8.1'
   # Use ActiveModel has_secure_password
   gem 'bcrypt', '~> 3.1.9'
@@ -141,12 +143,12 @@ group :server do
   #gem 'thin', '~> 1.7.0'
   # Now we use passenger for all environments. The require: allows for integration
   # with the `rails server` command
-  gem "passenger", require: "phusion_passenger/rack_handler"
+  gem 'passenger', require: 'phusion_passenger/rack_handler'
 end
 
 group :workers do
-  gem 'activesupport'
   gem 'actionmailer'
+  gem 'activesupport'
 end
 
 group :workers, :server do
@@ -169,8 +171,9 @@ end
 # gems that are only required on development machines or for testings
 group :development do
   # allow debugging
-  gem 'ruby-debug-ide'
-  gem 'debase'
+  gem 'debase', '>= 0.2.5.beta1'
+  gem 'readapt'
+  gem 'ruby-debug-ide', '>= 0.7.2'
   #gem 'traceroute'
 
   # a ruby language server
@@ -178,12 +181,12 @@ group :development do
 
   gem 'quiet_assets'
 
-  gem 'rack-mini-profiler', '~> 0.10.0'
-  gem 'i18n-tasks', '~> 0.9.0'
   gem 'bullet', '~> 5.2.0'
   gem 'guard', '~> 2.14.0'
   gem 'guard-yard', '~> 2.1.4', require: false
+  gem 'i18n-tasks', '~> 0.9.0'
   gem 'notiffany', '~> 0.1.0'
+  gem 'rack-mini-profiler', '~> 0.10.0'
   gem 'rubocop', '~> 0.74.0', require: false
 
   # for cleaning up Rails apps
@@ -223,7 +226,7 @@ group :test do
   gem 'simplecov', '~> 0.16', require: false
   # for profiling
   gem 'test-prof', require: false
-  gem 'webmock', '~> 2.1.0'
+  gem 'webmock', '~> 3.8.3'
   gem 'zonebie'
 
   # Documentation & UI

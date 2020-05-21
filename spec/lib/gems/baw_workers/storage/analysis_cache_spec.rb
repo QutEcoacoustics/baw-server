@@ -1,4 +1,6 @@
-require 'spec_helper'
+# frozen_string_literal: true
+
+require 'workers_helper'
 
 describe BawWorkers::Storage::AnalysisCache do
 
@@ -37,10 +39,10 @@ describe BawWorkers::Storage::AnalysisCache do
 
   let(:opts) {
     {
-        uuid: uuid,
-        sub_folders: [sub_folder_valid_1, sub_folder_valid_2],
-        file_name: file_name_valid,
-        job_id: job_id
+      uuid: uuid,
+      sub_folders: [sub_folder_valid_1, sub_folder_valid_2],
+      file_name: file_name_valid,
+      job_id: job_id
     }
   }
 
@@ -54,7 +56,7 @@ describe BawWorkers::Storage::AnalysisCache do
 
   it 'creates the correct name' do
     expect(
-        analysis_cache.file_name(opts)
+      analysis_cache.file_name(opts)
     ).to eq cached_analysis_file_name_given_parameters
   end
 
@@ -80,23 +82,24 @@ describe BawWorkers::Storage::AnalysisCache do
   it 'creates the correct full path for a single file with invalid chars using integer job id' do
 
     expected = [File.join(
-                    analysis_cache_path,
-                    File.join(job_id.to_s,
-                              uuid_chars,
-                              uuid,
-                              sub_folder_invalid_1_normalised),
-                    file_name_invalid_normalised)]
+      analysis_cache_path,
+      File.join(job_id.to_s,
+                uuid_chars,
+                uuid,
+                sub_folder_invalid_1_normalised),
+      file_name_invalid_normalised
+    )]
 
     test_opts = {
-        uuid: uuid,
-        sub_folders: [sub_folder_invalid_1],
-        file_name: file_name_invalid,
-        job_id: job_id
+      uuid: uuid,
+      sub_folders: [sub_folder_invalid_1],
+      file_name: file_name_invalid,
+      job_id: job_id
     }
 
     test = analysis_cache.possible_paths_file(
-        test_opts,
-        analysis_cache.file_name({file_name: file_name_invalid})
+      test_opts,
+      analysis_cache.file_name(file_name: file_name_invalid)
     )
 
     expect(test).to eq expected
@@ -105,23 +108,24 @@ describe BawWorkers::Storage::AnalysisCache do
   it 'creates the correct full path for a single file with invalid chars using system job id' do
 
     expected = [File.join(
-                    analysis_cache_path,
-                    File.join(BawWorkers::Storage::AnalysisCache::JOB_ID_SYSTEM,
-                              uuid_chars,
-                              uuid,
-                              sub_folder_invalid_1_normalised),
-                    file_name_invalid_normalised)]
+      analysis_cache_path,
+      File.join(BawWorkers::Storage::AnalysisCache::JOB_ID_SYSTEM,
+                uuid_chars,
+                uuid,
+                sub_folder_invalid_1_normalised),
+      file_name_invalid_normalised
+    )]
 
     test_opts = {
-        uuid: uuid,
-        sub_folders: [sub_folder_invalid_1],
-        file_name: file_name_invalid,
-        job_id: BawWorkers::Storage::AnalysisCache::JOB_ID_SYSTEM
+      uuid: uuid,
+      sub_folders: [sub_folder_invalid_1],
+      file_name: file_name_invalid,
+      job_id: BawWorkers::Storage::AnalysisCache::JOB_ID_SYSTEM
     }
 
     test = analysis_cache.possible_paths_file(
-        test_opts,
-        analysis_cache.file_name({file_name: file_name_invalid})
+      test_opts,
+      analysis_cache.file_name(file_name: file_name_invalid)
     )
 
     expect(test).to eq expected
@@ -134,14 +138,14 @@ describe BawWorkers::Storage::AnalysisCache do
 
     expect(path.size).to eq 1
     expect(path.first).to eq File.join(
-                                 analysis_cache_path,
-                                 job_id.to_s,
-                                 uuid_chars,
-                                 uuid,
-                                 sub_folder_valid_1,
-                                 sub_folder_valid_2,
-                                 file_name_valid)
-
+      analysis_cache_path,
+      job_id.to_s,
+      uuid_chars,
+      uuid,
+      sub_folder_valid_1,
+      sub_folder_valid_2,
+      file_name_valid
+    )
 
     expect(path_info.keys.size).to eq 4
     expect(path_info[:job_id]).to eq job_id
@@ -153,10 +157,10 @@ describe BawWorkers::Storage::AnalysisCache do
   it 'parses a valid cache file name correctly with system job id' do
 
     test_opts = {
-        uuid: uuid,
-        sub_folders: [sub_folder_valid_1, sub_folder_valid_2],
-        file_name: file_name_valid,
-        job_id: BawWorkers::Storage::AnalysisCache::JOB_ID_SYSTEM
+      uuid: uuid,
+      sub_folders: [sub_folder_valid_1, sub_folder_valid_2],
+      file_name: file_name_valid,
+      job_id: BawWorkers::Storage::AnalysisCache::JOB_ID_SYSTEM
     }
 
     path = analysis_cache.possible_paths_file(test_opts, cached_analysis_file_name_given_parameters)
@@ -165,14 +169,14 @@ describe BawWorkers::Storage::AnalysisCache do
 
     expect(path.size).to eq 1
     expect(path.first).to eq File.join(
-                                 analysis_cache_path,
-                                 BawWorkers::Storage::AnalysisCache::JOB_ID_SYSTEM,
-                                 uuid_chars,
-                                 uuid,
-                                 sub_folder_valid_1,
-                                 sub_folder_valid_2,
-                                 file_name_valid)
-
+      analysis_cache_path,
+      BawWorkers::Storage::AnalysisCache::JOB_ID_SYSTEM,
+      uuid_chars,
+      uuid,
+      sub_folder_valid_1,
+      sub_folder_valid_2,
+      file_name_valid
+    )
 
     expect(path_info.keys.size).to eq 4
     expect(path_info[:job_id]).to eq BawWorkers::Storage::AnalysisCache::JOB_ID_SYSTEM
@@ -186,16 +190,16 @@ describe BawWorkers::Storage::AnalysisCache do
     tilde = '~'
 
     test_opts = {
-        uuid: uuid,
-        sub_folders: [tilde],
-        file_name: tilde,
-        job_id: tilde
+      uuid: uuid,
+      sub_folders: [tilde],
+      file_name: tilde,
+      job_id: tilde
     }
 
     expect {
       analysis_cache.possible_paths_file(
-          test_opts,
-          analysis_cache.file_name({file_name: tilde})
+        test_opts,
+        analysis_cache.file_name(file_name: tilde)
       )
     }.to raise_error(ArgumentError, 'job_id must be equal to or greater than 1: ~. Provided parameters: {:uuid=>"5498633d-89a7-4b65-8f4a-96aa0c09c619", :sub_folders=>["~"], :file_name=>"~", :job_id=>"~"}')
   end
@@ -205,16 +209,16 @@ describe BawWorkers::Storage::AnalysisCache do
     double_dot = '..'
 
     test_opts = {
-        uuid: uuid,
-        sub_folders: [double_dot],
-        file_name: double_dot,
-        job_id: double_dot
+      uuid: uuid,
+      sub_folders: [double_dot],
+      file_name: double_dot,
+      job_id: double_dot
     }
 
     expect {
       analysis_cache.possible_paths_file(
-          test_opts,
-          analysis_cache.file_name({file_name: double_dot})
+        test_opts,
+        analysis_cache.file_name(file_name: double_dot)
       )
     }.to raise_error(ArgumentError, 'job_id must be equal to or greater than 1: ... Provided parameters: {:uuid=>"5498633d-89a7-4b65-8f4a-96aa0c09c619", :sub_folders=>[".."], :file_name=>"..", :job_id=>".."}')
   end
@@ -224,16 +228,16 @@ describe BawWorkers::Storage::AnalysisCache do
     single_dot = '.'
 
     test_opts = {
-        uuid: uuid,
-        sub_folders: [single_dot],
-        file_name: single_dot,
-        job_id: single_dot
+      uuid: uuid,
+      sub_folders: [single_dot],
+      file_name: single_dot,
+      job_id: single_dot
     }
 
     expect {
       analysis_cache.possible_paths_file(
-          test_opts,
-          analysis_cache.file_name({file_name: single_dot})
+        test_opts,
+        analysis_cache.file_name(file_name: single_dot)
       )
     }.to raise_error(ArgumentError, 'job_id must be equal to or greater than 1: .. Provided parameters: {:uuid=>"5498633d-89a7-4b65-8f4a-96aa0c09c619", :sub_folders=>["."], :file_name=>".", :job_id=>"."}')
   end
@@ -243,23 +247,24 @@ describe BawWorkers::Storage::AnalysisCache do
     tilde = '~'
 
     expected = [File.join(
-                    analysis_cache_path,
-                    File.join(BawWorkers::Storage::AnalysisCache::JOB_ID_SYSTEM,
-                              uuid_chars,
-                              uuid,
-                              '_'),
-                              '_')]
+      analysis_cache_path,
+      File.join(BawWorkers::Storage::AnalysisCache::JOB_ID_SYSTEM,
+                uuid_chars,
+                uuid,
+                '_'),
+      '_'
+    )]
 
     test_opts = {
-        uuid: uuid,
-        sub_folders: [tilde],
-        file_name: tilde,
-        job_id: BawWorkers::Storage::AnalysisCache::JOB_ID_SYSTEM
+      uuid: uuid,
+      sub_folders: [tilde],
+      file_name: tilde,
+      job_id: BawWorkers::Storage::AnalysisCache::JOB_ID_SYSTEM
     }
 
     test = analysis_cache.possible_paths_file(
-        test_opts,
-        analysis_cache.file_name({file_name: tilde})
+      test_opts,
+      analysis_cache.file_name(file_name: tilde)
     )
 
     expect(test).to eq expected
@@ -270,23 +275,24 @@ describe BawWorkers::Storage::AnalysisCache do
     double_dot = '..'
 
     expected = [File.join(
-                    analysis_cache_path,
-                    File.join(BawWorkers::Storage::AnalysisCache::JOB_ID_SYSTEM,
-                              uuid_chars,
-                              uuid,
-                              '_'),
-                              '_')]
+      analysis_cache_path,
+      File.join(BawWorkers::Storage::AnalysisCache::JOB_ID_SYSTEM,
+                uuid_chars,
+                uuid,
+                '_'),
+      '_'
+    )]
 
     test_opts = {
-        uuid: uuid,
-        sub_folders: [double_dot],
-        file_name: double_dot,
-        job_id: BawWorkers::Storage::AnalysisCache::JOB_ID_SYSTEM
+      uuid: uuid,
+      sub_folders: [double_dot],
+      file_name: double_dot,
+      job_id: BawWorkers::Storage::AnalysisCache::JOB_ID_SYSTEM
     }
 
     test = analysis_cache.possible_paths_file(
-        test_opts,
-        analysis_cache.file_name({file_name: double_dot})
+      test_opts,
+      analysis_cache.file_name(file_name: double_dot)
     )
 
     expect(test).to eq expected
@@ -297,23 +303,24 @@ describe BawWorkers::Storage::AnalysisCache do
     single_dot = '.'
 
     expected = [File.join(
-                    analysis_cache_path,
-                    File.join(BawWorkers::Storage::AnalysisCache::JOB_ID_SYSTEM,
-                              uuid_chars,
-                              uuid,
-                              '_'),
-                    '_')]
+      analysis_cache_path,
+      File.join(BawWorkers::Storage::AnalysisCache::JOB_ID_SYSTEM,
+                uuid_chars,
+                uuid,
+                '_'),
+      '_'
+    )]
 
     test_opts = {
-        uuid: uuid,
-        sub_folders: [single_dot],
-        file_name: single_dot,
-        job_id: BawWorkers::Storage::AnalysisCache::JOB_ID_SYSTEM
+      uuid: uuid,
+      sub_folders: [single_dot],
+      file_name: single_dot,
+      job_id: BawWorkers::Storage::AnalysisCache::JOB_ID_SYSTEM
     }
 
     test = analysis_cache.possible_paths_file(
-        test_opts,
-        analysis_cache.file_name({file_name: single_dot})
+      test_opts,
+      analysis_cache.file_name(file_name: single_dot)
     )
 
     expect(test).to eq expected
@@ -323,24 +330,26 @@ describe BawWorkers::Storage::AnalysisCache do
     tilde = '~'
 
     expected = [File.join(
-                    analysis_cache_path,
-                    File.join(
-                        BawWorkers::Storage::AnalysisCache::JOB_ID_SYSTEM,
-                        uuid_chars,
-                        uuid,
-                        sub_folder_valid_1),
-                        '_')]
+      analysis_cache_path,
+      File.join(
+        BawWorkers::Storage::AnalysisCache::JOB_ID_SYSTEM,
+        uuid_chars,
+        uuid,
+        sub_folder_valid_1
+      ),
+      '_'
+    )]
 
     test_opts = {
-        uuid: uuid,
-        sub_folders: [sub_folder_valid_1],
-        file_name: tilde,
-        job_id: BawWorkers::Storage::AnalysisCache::JOB_ID_SYSTEM
+      uuid: uuid,
+      sub_folders: [sub_folder_valid_1],
+      file_name: tilde,
+      job_id: BawWorkers::Storage::AnalysisCache::JOB_ID_SYSTEM
     }
 
     test = analysis_cache.possible_paths_file(
-        test_opts,
-        analysis_cache.file_name({file_name: tilde})
+      test_opts,
+      analysis_cache.file_name(file_name: tilde)
     )
 
     expect(test).to eq expected
@@ -350,24 +359,26 @@ describe BawWorkers::Storage::AnalysisCache do
     double_dot = '..'
 
     expected = [File.join(
-                    analysis_cache_path,
-                    File.join(
-                        BawWorkers::Storage::AnalysisCache::JOB_ID_SYSTEM,
-                        uuid_chars,
-                        uuid,
-                        sub_folder_valid_1),
-                    '_')]
+      analysis_cache_path,
+      File.join(
+        BawWorkers::Storage::AnalysisCache::JOB_ID_SYSTEM,
+        uuid_chars,
+        uuid,
+        sub_folder_valid_1
+      ),
+      '_'
+    )]
 
     test_opts = {
-        uuid: uuid,
-        sub_folders: [sub_folder_valid_1],
-        file_name: double_dot,
-        job_id: BawWorkers::Storage::AnalysisCache::JOB_ID_SYSTEM
+      uuid: uuid,
+      sub_folders: [sub_folder_valid_1],
+      file_name: double_dot,
+      job_id: BawWorkers::Storage::AnalysisCache::JOB_ID_SYSTEM
     }
 
     test = analysis_cache.possible_paths_file(
-        test_opts,
-        analysis_cache.file_name({file_name: double_dot})
+      test_opts,
+      analysis_cache.file_name(file_name: double_dot)
     )
 
     expect(test).to eq expected
@@ -377,24 +388,26 @@ describe BawWorkers::Storage::AnalysisCache do
     single_dot = '.'
 
     expected = [File.join(
-                    analysis_cache_path,
-                    File.join(
-                        BawWorkers::Storage::AnalysisCache::JOB_ID_SYSTEM,
-                        uuid_chars,
-                        uuid,
-                        sub_folder_valid_1,
-                        '_'))]
+      analysis_cache_path,
+      File.join(
+        BawWorkers::Storage::AnalysisCache::JOB_ID_SYSTEM,
+        uuid_chars,
+        uuid,
+        sub_folder_valid_1,
+        '_'
+      )
+    )]
 
     test_opts = {
-        uuid: uuid,
-        sub_folders: [sub_folder_valid_1],
-        file_name: single_dot,
-        job_id: BawWorkers::Storage::AnalysisCache::JOB_ID_SYSTEM
+      uuid: uuid,
+      sub_folders: [sub_folder_valid_1],
+      file_name: single_dot,
+      job_id: BawWorkers::Storage::AnalysisCache::JOB_ID_SYSTEM
     }
 
     test = analysis_cache.possible_paths_file(
-        test_opts,
-        analysis_cache.file_name({file_name: single_dot})
+      test_opts,
+      analysis_cache.file_name(file_name: single_dot)
     )
 
     expect(test).to eq expected

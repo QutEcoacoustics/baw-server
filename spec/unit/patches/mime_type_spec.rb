@@ -1,19 +1,20 @@
-require 'rails_helper'
+# frozen_string_literal: true
 
+require 'rails_helper'
 
 describe 'mime type extension patch' do
 
   let(:mime_types) {
     [
-        ["audio/x-wav", 'wav'],
-        ["audio/wav", 'wav'],
-        ["audio/vnd.wave", 'wav'],
-        ["audio/mp3", 'mp3'],
-        ["audio/mpeg", 'mp3'],
-        ["video/x-ms-asf", 'asf'],
-        ["audio/x-ms-wma", 'asf'],
-        ["audio/x-wv", 'wv'],
-        ["audio/flac", 'flac'],
+      ['audio/x-wav', 'wav'],
+      ['audio/wav', 'wav'],
+      ['audio/vnd.wave', 'wav'],
+      ['audio/mp3', 'mp3'],
+      ['audio/mpeg', 'mp3'],
+      ['video/x-ms-asf', 'asf'],
+      ['audio/x-ms-wma', 'asf'],
+      ['audio/x-wv', 'wv'],
+      ['audio/flac', 'flac']
     ]
   }
 
@@ -29,4 +30,3 @@ describe 'mime type extension patch' do
   end
 
 end
-

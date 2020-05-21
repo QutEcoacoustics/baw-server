@@ -1,4 +1,6 @@
-require 'spec_helper'
+# frozen_string_literal: true
+
+require 'workers_helper'
 
 # tests audio channels
 describe BawAudioTools::AudioBase do
@@ -23,15 +25,12 @@ describe BawAudioTools::AudioBase do
   end
 
   it 'segments and converts successfully for 2 channels' do
-    temp_audio_file = temp_media_file_1+'.wav'
+    temp_audio_file = temp_media_file_1 + '.wav'
     audio_base.modify(audio_file_amp_2_channels, temp_audio_file,
-                      {
-                          start_offset: 3,
-                          end_offset: 9,
-                          channel: 1,
-                          sample_rate: 8000
-                      }
-    )
+                      start_offset: 3,
+                      end_offset: 9,
+                      channel: 1,
+                      sample_rate: 8000)
     info = audio_base.info(temp_audio_file)
     expect(info[:media_type]).to eq('audio/wav')
     expect(info[:sample_rate]).to be_within(0.0).of(8000)
@@ -41,95 +40,92 @@ describe BawAudioTools::AudioBase do
   end
 
   it 'segments and converts successfully for 1 channel' do
-    temp_audio_file = temp_media_file_1+'.wav'
+    temp_audio_file = temp_media_file_1 + '.wav'
     audio_base.modify(audio_file_amp_1_channels, temp_audio_file,
-                      {
-                          start_offset: 2.5,
-                          end_offset: 7.5,
-                          channel: 1,
-                          sample_rate: 48000
-                      }
-    )
+                      start_offset: 2.5,
+                      end_offset: 7.5,
+                      channel: 1,
+                      sample_rate: 48_000)
     info = audio_base.info(temp_audio_file)
     expect(info[:media_type]).to eq('audio/wav')
-    expect(info[:sample_rate]).to be_within(0.0).of(48000)
+    expect(info[:sample_rate]).to be_within(0.0).of(48_000)
     expect(info[:channels]).to eq(1)
     expect(info[:duration_seconds]).to be_within(duration_range).of(5)
     expect(info[:max_amplitude]).to be_within(amplitude_range).of(0.5)
   end
 
   it 'mixes 2 channels down to mono' do
-    temp_audio_file = temp_media_file_1+'.ogg'
-    result = audio_base.modify(audio_file_amp_2_channels, temp_audio_file, {channel: 0})
+    temp_audio_file = temp_media_file_1 + '.ogg'
+    result = audio_base.modify(audio_file_amp_2_channels, temp_audio_file, channel: 0)
     info = audio_base.info(temp_audio_file)
     expect(info[:media_type]).to eq('audio/ogg')
-    expect(info[:sample_rate]).to be_within(0.0).of(44100)
+    expect(info[:sample_rate]).to be_within(0.0).of(44_100)
     expect(info[:channels]).to eq(1)
     expect(info[:duration_seconds]).to be_within(duration_range).of(10)
     expect(info[:max_amplitude]).to be_within(amplitude_range).of(0.43) # 0.2, 0.4 = 0.43
   end
 
   it 'mixes 3 channels down to mono' do
-    temp_audio_file = temp_media_file_1+'.ogg'
-    result = audio_base.modify(audio_file_amp_3_channels, temp_audio_file, {channel: 0})
+    temp_audio_file = temp_media_file_1 + '.ogg'
+    result = audio_base.modify(audio_file_amp_3_channels, temp_audio_file, channel: 0)
     info = audio_base.info(temp_audio_file)
     expect(info[:media_type]).to eq('audio/ogg')
-    expect(info[:sample_rate]).to be_within(0.0).of(44100)
+    expect(info[:sample_rate]).to be_within(0.0).of(44_100)
     expect(info[:channels]).to eq(1)
     expect(info[:duration_seconds]).to be_within(duration_range).of(10)
     expect(info[:max_amplitude]).to be_within(amplitude_range).of(0.81) # 0.1, 0.3, 0.6 = 0.81
   end
 
   it 'selects the first of two channels' do
-    temp_audio_file = temp_media_file_1+'.ogg'
-    result = audio_base.modify(audio_file_amp_2_channels, temp_audio_file, {channel: 1})
+    temp_audio_file = temp_media_file_1 + '.ogg'
+    result = audio_base.modify(audio_file_amp_2_channels, temp_audio_file, channel: 1)
     info = audio_base.info(temp_audio_file)
     expect(info[:media_type]).to eq('audio/ogg')
-    expect(info[:sample_rate]).to be_within(0.0).of(44100)
+    expect(info[:sample_rate]).to be_within(0.0).of(44_100)
     expect(info[:channels]).to eq(1)
     expect(info[:duration_seconds]).to be_within(duration_range).of(10)
     expect(info[:max_amplitude]).to be_within(amplitude_range).of(0.2)
   end
 
   it 'selects the second of two channels' do
-    temp_audio_file = temp_media_file_1+'.ogg'
-    result = audio_base.modify(audio_file_amp_2_channels, temp_audio_file, {channel: 2})
+    temp_audio_file = temp_media_file_1 + '.ogg'
+    result = audio_base.modify(audio_file_amp_2_channels, temp_audio_file, channel: 2)
     info = audio_base.info(temp_audio_file)
     expect(info[:media_type]).to eq('audio/ogg')
-    expect(info[:sample_rate]).to be_within(0.0).of(44100)
+    expect(info[:sample_rate]).to be_within(0.0).of(44_100)
     expect(info[:channels]).to eq(1)
     expect(info[:duration_seconds]).to be_within(duration_range).of(10)
     expect(info[:max_amplitude]).to be_within(amplitude_range).of(0.4)
   end
 
   it 'selects the first of three channels' do
-    temp_audio_file = temp_media_file_1+'.ogg'
-    result = audio_base.modify(audio_file_amp_3_channels, temp_audio_file, {channel: 1})
+    temp_audio_file = temp_media_file_1 + '.ogg'
+    result = audio_base.modify(audio_file_amp_3_channels, temp_audio_file, channel: 1)
     info = audio_base.info(temp_audio_file)
     expect(info[:media_type]).to eq('audio/ogg')
-    expect(info[:sample_rate]).to be_within(0.0).of(44100)
+    expect(info[:sample_rate]).to be_within(0.0).of(44_100)
     expect(info[:channels]).to eq(1)
     expect(info[:duration_seconds]).to be_within(duration_range).of(10)
     expect(info[:max_amplitude]).to be_within(amplitude_range).of(0.1)
   end
 
   it 'selects the second of three channels' do
-    temp_audio_file = temp_media_file_1+'.ogg'
-    result = audio_base.modify(audio_file_amp_3_channels, temp_audio_file, {channel: 2})
+    temp_audio_file = temp_media_file_1 + '.ogg'
+    result = audio_base.modify(audio_file_amp_3_channels, temp_audio_file, channel: 2)
     info = audio_base.info(temp_audio_file)
     expect(info[:media_type]).to eq('audio/ogg')
-    expect(info[:sample_rate]).to be_within(0.0).of(44100)
+    expect(info[:sample_rate]).to be_within(0.0).of(44_100)
     expect(info[:channels]).to eq(1)
     expect(info[:duration_seconds]).to be_within(duration_range).of(10)
     expect(info[:max_amplitude]).to be_within(amplitude_range).of(0.6) # this is the third channel as created by audacity
   end
 
   it 'selects the third of three channels' do
-    temp_audio_file = temp_media_file_1+'.ogg'
-    result = audio_base.modify(audio_file_amp_3_channels, temp_audio_file, {channel: 3})
+    temp_audio_file = temp_media_file_1 + '.ogg'
+    result = audio_base.modify(audio_file_amp_3_channels, temp_audio_file, channel: 3)
     info = audio_base.info(temp_audio_file)
     expect(info[:media_type]).to eq('audio/ogg')
-    expect(info[:sample_rate]).to be_within(0.0).of(44100)
+    expect(info[:sample_rate]).to be_within(0.0).of(44_100)
     expect(info[:channels]).to eq(1)
     expect(info[:duration_seconds]).to be_within(duration_range).of(10)
     expect(info[:max_amplitude]).to be_within(amplitude_range).of(0.3) # this is the second channel as created by audacity
