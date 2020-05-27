@@ -8,21 +8,13 @@ require 'resque/tasks'
 # application
 #
 
-require 'active_support/all'
-require 'logger'
-require 'net/http'
-require 'pathname'
-require 'yaml'
-require 'fileutils'
-require 'resque'
-require 'resque_solo'
-require 'resque-job-stats'
-require 'resque-status'
+require_relative '../../baw_workers'
 
 require 'zeitwerk'
 loader = Zeitwerk::Loader.new
 base_dir = "#{__dir__}/../.."
 loader.push_dir(base_dir)
+loader.ignore("#{base_dir}/baw_workers/patches")
 loader.tag = 'baw-workers'
 # loader.inflector.inflect(
 #   'baw-workers' => 'BawWorkers',

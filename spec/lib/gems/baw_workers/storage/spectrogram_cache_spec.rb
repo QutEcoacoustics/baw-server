@@ -154,7 +154,7 @@ describe BawWorkers::Storage::SpectrogramCache do
     path_info = spectrogram_cache.parse_file_path(path[0])
 
     expect(path.size).to eq 1
-    expect(path.first).to eq './tmp/custom_temp_dir/_cached_spectrogram/54/5498633d-89a7-4b65-8f4a-96aa0c09c619_8.1_20.02_0_22050_1024_Hann_g.jpg'
+    expect(path.first).to eq(BawWorkers::Config.spectrogram_cache_helper.possible_dirs[0] + '/54/5498633d-89a7-4b65-8f4a-96aa0c09c619_8.1_20.02_0_22050_1024_Hann_g.jpg')
 
     expect(path_info.keys.size).to eq 9
     expect(path_info[:uuid]).to eq uuid

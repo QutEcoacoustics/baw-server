@@ -63,9 +63,9 @@ shared_context 'test audio files' do
   let(:audio_file_corrupt) { Fixtures.audio_file_corrupt }
   let(:audio_file_does_not_exist_1) { Fixtures::FILES_PATH / 'not-here-1.ogg' }
   let(:audio_file_does_not_exist_2) { Fixtures::FILES_PATH / 'not-here-2.ogg' }
-  let(:audio_file_amp_1_channels) { Fixtures::FILES_PATH / 'amp-channels-1.ogg' }
-  let(:audio_file_amp_2_channels) { Fixtures::FILES_PATH / 'amp-channels-2.ogg' }
-  let(:audio_file_amp_3_channels) { Fixtures::FILES_PATH / 'amp-channels-3.ogg' }
+  let(:audio_file_amp_1_channels) { Fixtures.audio_file_amp_channels_1 }
+  let(:audio_file_amp_2_channels) { Fixtures.audio_file_amp_channels_2 }
+  let(:audio_file_amp_3_channels) { Fixtures.audio_file_amp_channels_3 }
 
   let(:audio_file_wac_1) { Fixtures.audio_file_wac_1 }
 
@@ -78,11 +78,17 @@ shared_context 'temp media files' do
   let(:temp_media_file_3) { File.join(temp_dir, 'temp-media-3') }
   let(:temp_media_file_4) { File.join(temp_dir, 'temp-media-4') }
 
-  after(:each) do
-    Dir.glob(temp_media_file_1 + '*.*').each do |f| File.delete(f) end
-    Dir.glob(temp_media_file_2 + '*.*').each do |f| File.delete(f) end
-    Dir.glob(temp_media_file_3 + '*.*').each do |f| File.delete(f) end
-    Dir.glob(temp_media_file_4 + '*.*').each { |f| File.delete(f) }
+  before(:each) do
+    Dir.glob(temp_media_file_1 + '*').each do |f| File.delete(f) end
+    Dir.glob(temp_media_file_2 + '*').each do |f| File.delete(f) end
+    Dir.glob(temp_media_file_3 + '*').each do |f| File.delete(f) end
+    Dir.glob(temp_media_file_4 + '*').each { |f| File.delete(f) }
   end
 
+  after(:each) do
+    Dir.glob(temp_media_file_1 + '*').each do |f| File.delete(f) end
+    Dir.glob(temp_media_file_2 + '*').each do |f| File.delete(f) end
+    Dir.glob(temp_media_file_3 + '*').each do |f| File.delete(f) end
+    Dir.glob(temp_media_file_4 + '*').each { |f| File.delete(f) }
+  end
 end

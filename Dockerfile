@@ -46,7 +46,7 @@ ENV RAILS_ENV=production \
   APP_USER=${app_user} \
   APP_NAME=${app_name} \
   # enable binstubs to take priority
-  PATH=:./bin:$PATH
+  PATH=./bin:$PATH
 
 USER ${app_user}
 
@@ -81,7 +81,7 @@ COPY --chown=${app_user} ./ /home/${app_user}/${app_name}
 
 # precompile passenger standalone
 #RUN bundle exec passenger start --runtime-check-only
-ENTRYPOINT /home/${app_user}/${app_name}/provision/entrypoint.sh
+ENTRYPOINT [ "./provision/entrypoint.sh" ]
 CMD []
 
 #

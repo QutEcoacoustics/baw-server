@@ -20,7 +20,6 @@ services:
       target: baw-server-dev
     command: >-
       baw-workers baw:worker:run
-    entrypoint: []
     networks:
       - baw_docker_network
     #ports:
@@ -43,10 +42,6 @@ services:
       - redis
   workers_test:
     <<: *worker
-    #ports:
-    # rdebug-ide port (mapped for workers), non standard mapping!
-    # - "1236:1234"
-    # - "26163:26162"
     environment:
       RAILS_ENV: test
   web:
@@ -54,8 +49,7 @@ services:
     build:
       context: .
       target: baw-server-dev
-    entrypoint: ""
-    command: /home/baw_web/baw-server/provision/entrypoint.sh bundle exec passenger start
+    command: ./provision/migrate.sh && bundle exec passenger start
     environment:
       RAILS_ENV: development
     user: baw_web

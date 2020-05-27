@@ -54,7 +54,7 @@ describe BawAudioTools::RunExternalProgram do
     expect(result[:stderr]).to be_blank
     expect(result[:command]).to eq(command)
     expect(result[:exit_code]).to eq(0)
-    expect(result[:execute_msg]).to match(/External Program: status=0;killed=false;pid=[0-9]+;time_out_sec=5;time_taken_sec=1\.\d+/)
+    expect(result[:execute_msg]).to match(/External Program: status=0;killed=false;pid=[0-9]+;time_out_sec=[.\d]+;time_taken_sec=1\.\d+/)
   end
 
   it 'ensures non-zero exit codes are treated as failures' do

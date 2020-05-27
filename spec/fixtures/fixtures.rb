@@ -60,4 +60,19 @@ module Fixtures
   def self.audio_file_stereo_7777hz
     FILES_PATH / 'test-audio-stereo-7777hz.ogg'
   end
+
+  # @return [Pathname]
+  def self.audio_file_amp_channels_1
+    FILES_PATH / 'amp-channels-1.flac'
+  end
+
+  # @return [Pathname]
+  def self.audio_file_amp_channels_2
+    FILES_PATH / 'amp-channels-2.flac'
+  end
+
+  # @return [Pathname]
+  def self.audio_file_amp_channels_3
+    FILES_PATH / 'amp-channels-3.flac'
+  end
 end

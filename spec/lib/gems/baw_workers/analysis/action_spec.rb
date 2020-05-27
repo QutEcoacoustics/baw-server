@@ -17,9 +17,9 @@ describe BawWorkers::Analysis::Action do
     allow(BawWorkers::Settings.actions.analysis).to receive(:queue).and_return(default_queue + '_manual_tick')
 
     # cleanup resque queues before each test
-    Resque.remove_queue_with_cleanup(default_queue)
-    Resque.remove_queue_with_cleanup(BawWorkers::Settings.actions.analysis.queue)
-
+    BawWorkers::ResqueApi.clear_queue(default_queue)
+    BawWorkers::ResqueApi.clear_queue(BawWorkers::Settings.actions.analysis.queue)
+    BawWorkers::ResqueApi.clear_queue('failed')
   end
 
   let(:queue_name) { BawWorkers::Settings.actions.analysis.queue }

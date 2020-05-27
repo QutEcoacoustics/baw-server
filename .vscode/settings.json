@@ -25,6 +25,7 @@
         "recaptcha",
         "shntool",
         "smtp",
+        "unregister",
         "wavpack",
         "webm",
         "wvunpack"

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'action_mailer'
+raise 'baw-workers/patches not loaded' unless defined?(Resque::Plugins::Status::EXPIRE_STATUSES)
 
 module BawWorkers
   class Config
@@ -190,7 +191,7 @@ module BawWorkers
         audio_tools_open.sync = true
         BawWorkers::Config.logger_audio_tools.attach(Logger.new(audio_tools_open))
 
-        if (is_resque_worker && !is_resque_worker_fg) || BawApp.test?
+        if is_resque_worker && !is_resque_worker_fg
           # when running a Resque worker in bg, or running in a test, redirect stdout and stderr to files
           stdout_log_file = File.expand_path(settings.resque.output_log_file)
           $stdout = File.open(stdout_log_file, 'a+')
@@ -328,7 +329,7 @@ module BawWorkers
           },
           redis: {
             namespace: Resque.redis.namespace.to_s,
-            connection: is_test ? 'fake' : settings.resque.connection,
+            connection: settings.resque.connection,
             info: Resque.info
           },
           resque: {
@@ -352,7 +353,7 @@ module BawWorkers
           mode: is_resque_worker_fg ? 'fg' : 'bg',
           pid_file: is_resque_worker ? ENV['PIDFILE'] : nil,
           queues: is_resque_worker ? ENV['QUEUES'] : nil,
-          poll_interval: is_resque_worker ? ENV['INTERVAL'].to_i : nil
+          poll_interval: is_resque_worker ? ENV['INTERVAL'].to_f : nil
         }
         result
       end

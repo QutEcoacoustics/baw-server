@@ -47,7 +47,14 @@ describe 'Analysis Jobs' do
   }
 
   before(:all) do
-    @queue_name = Settings.actions.analysis.queue
+    @default_queue = Settings.actions.analysis.queue
+    @manual_queue = @default_queue + '_manual_tick'
+    @queue_name = @manual_queue
+
+    # cleanup resque queues before each test
+    BawWorkers::ResqueApi.clear_queue(@default_queue)
+    BawWorkers::ResqueApi.clear_queue(@manual_queue)
+    Resque::Failure.clear
 
     # process one fake job so that the queue exists!
     options = {
@@ -55,7 +62,7 @@ describe 'Analysis Jobs' do
       verbose: true,
       fork: false
     }
-    @worker, job = emulate_resque_worker_with_job(FakeJob, { an_argument: 3 }, options)
+    @worker, _job = emulate_resque_worker_with_job(FakeJob, { an_argument: 3 }, options)
   end
 
   before(:each) do
@@ -63,6 +70,34 @@ describe 'Analysis Jobs' do
     @env['HTTP_AUTHORIZATION'] = writer_token
 
     @analysis_job_url = '/analysis_jobs'
+
+    # we want to control the execution of jobs for this set of tests,
+    # so change the queue name so the test worker does not
+    # automatically process the jobs
+    allow(BawWorkers::Analysis::Action).to receive(:queue).and_return(@manual_queue)
+
+  end
+
+  after(:each) do |example|
+    if example.exception
+      require 'json'
+
+      ajids = AnalysisJob.all.join(', ')
+      ajis = AnalysisJobsItem.all.join('\n\t- ')
+
+      puts <<~DEBUGMESSAGE
+        Queue name: #{@queue_name}
+        Queue count: #{get_queue_count}
+        Failure count: #{get_failed_queue_count}
+        All analysis job ids: #{ajids}
+        All analysis job items:\n#{ajis}
+      DEBUGMESSAGE
+    end
+  end
+
+  def reset
+    BawWorkers::ResqueApi.clear_queue(@queue_name)
+    Resque::Failure.clear
   end
 
   def get_queue_count
@@ -206,7 +241,7 @@ describe 'Analysis Jobs' do
       }
     }, @env
 
-    raise "Failed to update AnalysisJobItem, status: #{response.status}" if response.status != 200
+    raise "Failed to update AnalysisJobItem, status: #{response.status} #{response.message}" if response.status != 200
   end
 
   class FakeAnalysisJob
@@ -268,7 +303,11 @@ describe 'Analysis Jobs' do
 
     if @job_perform_failure && @job_perform_failure[0].message != 'Fake analysis job failing on purpose'
 
-      raise 'job perform failed: ' + @job_perform_failure.to_s
+      message = @job_perform_failure if @job_perform_failure.is_a? String
+      message = @job_perform_failure.join("\n") if @job_perform_failure.is_a? Array
+      message = @job_perform_failure.full_message if @job_perform_failure.is_a? Exception
+
+      raise 'job perform failed: ' + message
     end
   end
 
@@ -277,6 +316,7 @@ describe 'Analysis Jobs' do
     describe 'status: "new"' do
 
       before(:each) do
+        reset
 
         # stub the prepare_job method so that it is a no-op
         # so we can test :new in isolation
@@ -308,6 +348,7 @@ describe 'Analysis Jobs' do
     describe 'status: "preparing"' do
 
       before(:each) do
+        reset
         ActionMailer::Base.deliveries.clear
 
         # stub batch-size so we so batches that are relevant to our test case.
@@ -357,10 +398,13 @@ describe 'Analysis Jobs' do
       it 'ensures new AnalysisJobsItems exist' do
         expect(get_items_count).to eq(6)
       end
-
     end
 
     describe 'distributed patterns, "preparing" -> "completed"' do
+      before(:each) do
+        reset
+        ActionMailer::Base.deliveries.clear
+      end
 
       it 'allows for some jobs items to have be started while still preparing' do
 
@@ -402,7 +446,7 @@ describe 'Analysis Jobs' do
         expect(@analysis_job.processing?).to be_truthy
       end
 
-      it 'allows for all jobs items to have complete while still preparing - and to skip `processing` completely' do
+      it 'allows for all jobs items to have completed while still preparing - and to skip `processing` completely' do
 
         allow(AnalysisJob).to receive(:batch_size).and_return(2)
 
@@ -411,7 +455,7 @@ describe 'Analysis Jobs' do
         # hook in and run one job for every batch
         # we're simulating a distributed system here
         # for each two recordings added, process one afterwards
-        # i.e. prepare 1,2; run 1; prepare 3,4; run 2; prepare 5,6; run 3;
+        # i.e. prepare 1,2; run 1,2; prepare 3,4; run 3,4; prepare 5,6; run 5,6;
         allow(@analysis_job).to receive(:prepare_analysis_job_item).and_wrap_original do |m, *args|
           result = m.call(*args)
 
@@ -448,6 +492,7 @@ describe 'Analysis Jobs' do
     describe 'status: "processing"' do
 
       before(:each) do
+        reset
         ActionMailer::Base.deliveries.clear
 
         # here we simulate a system with a variety of sub-statuses
@@ -569,6 +614,7 @@ describe 'Analysis Jobs' do
     describe 'status: "suspended"' do
 
       before(:each) do
+        reset
         ActionMailer::Base.deliveries.clear
 
         # here we simulate a system with a variety of sub-statuses
@@ -709,6 +755,7 @@ describe 'Analysis Jobs' do
       describe 'status: "suspended"→"processing"' do
 
         before(:each) do
+          #reset
           # reset our mocks, or else create_payload will be mocked again!
           RSpec::Mocks.space.proxy_for(AnalysisJobsItem).reset
 
@@ -784,6 +831,7 @@ describe 'Analysis Jobs' do
 
     describe 'status: "completed"' do
       before(:each) do
+        reset
         ActionMailer::Base.deliveries.clear
 
         # here we simulate a system with a variety of sub-statuses
@@ -859,6 +907,7 @@ describe 'Analysis Jobs' do
       describe 'retrying failed items, status: "completed"→"processing"' do
 
         before(:each) do
+          #reset
           ActionMailer::Base.deliveries.clear
 
           # reset our mocks, or else create_payload will be mocked again!
@@ -977,6 +1026,7 @@ describe 'Analysis Jobs' do
     describe 'status: "new"' do
 
       before(:each) do
+        reset
         @analysis_job = create_analysis_job_direct
 
         expect(@analysis_job.new?).to be_truthy
@@ -994,6 +1044,7 @@ describe 'Analysis Jobs' do
     describe 'status: "preparing"' do
 
       before(:each) do
+        reset
         @analysis_job = create_analysis_job_direct
 
         # don't allow automatic transition to :processing state
@@ -1019,6 +1070,7 @@ describe 'Analysis Jobs' do
     describe 'status: "processing"' do
 
       before(:each) do
+        reset
         @analysis_job = create_analysis_job
 
         expect(@analysis_job.processing?).to be_truthy
@@ -1037,6 +1089,7 @@ describe 'Analysis Jobs' do
 
     describe 'status: "suspended"' do
       before(:each) do
+        reset
         ActionMailer::Base.deliveries.clear
 
         @analysis_job = create_analysis_job
@@ -1179,6 +1232,7 @@ describe 'Analysis Jobs' do
     describe 'status: "completed"' do
 
       before(:each) do
+        reset
         ActionMailer::Base.deliveries.clear
 
         @analysis_job = create_analysis_job

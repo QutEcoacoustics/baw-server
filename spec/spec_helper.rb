@@ -76,29 +76,28 @@ RSpec.configure do |config|
   #     --seed 1234
   config.order = :random
 
-  # mixin core factory girl methods
   #config.include FactoryGirl::Syntax::Methods
 
   # redirect puts into a text file
-  original_stderr = $stderr
-  original_stdout = $stdout
+  #original_stderr = $stderr
+  #original_stdout = $stdout
 
-  config.before(:suite) do
-    # Redirect stderr and stdout
-    $stderr = File.new(File.join(File.dirname(__FILE__), '..', 'tmp', 'rspec_stderr.txt'), 'w')
-    $stdout = File.new(File.join(File.dirname(__FILE__), '..', 'tmp', 'rspec_stdout.txt'), 'w')
-  end
+  # config.before(:suite) do
+  #   # Redirect stderr and stdout
+  #   $stderr = File.new(File.join(File.dirname(__FILE__), '..', 'tmp', 'rspec_stderr.txt'), 'w')
+  #   $stdout = File.new(File.join(File.dirname(__FILE__), '..', 'tmp', 'rspec_stdout.txt'), 'w')
+  # end
 
-  config.after(:suite) do
-    $stderr = original_stderr
-    $stdout = original_stdout
-  end
+  # config.after(:suite) do
+  #   $stderr = original_stderr
+  #   $stdout = original_stdout
+  # end
 
   # These two settings work together to allow you to limit a spec run
   # to individual examples or groups you care about by tagging them with
   # `:focus` metadata. When nothing is tagged with `:focus`, all examples
   # get run.
-  #config.filter_run :focus
+  config.filter_run_when_matching :focus
   config.run_all_when_everything_filtered = false
 
   # Allows RSpec to persist some state between runs in order to support

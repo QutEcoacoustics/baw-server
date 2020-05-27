@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'workers_helper'
+require_relative '../../../helpers/baw_audio_tools_shared'
 
 # tests audio channels
 describe BawAudioTools::AudioBase do

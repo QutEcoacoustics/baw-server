@@ -16,8 +16,8 @@ describe BawWorkers::AudioCheck::Action do
     allow(BawWorkers::Settings.actions.audio_check).to receive(:queue).and_return(default_queue + '_manual_tick')
 
     # cleanup resque queues before each test
-    Resque.remove_queue_with_cleanup(default_queue)
-    Resque.remove_queue_with_cleanup(BawWorkers::Settings.actions.audio_check.queue)
+    BawWorkers::ResqueApi.clear_queue(default_queue)
+    BawWorkers::ResqueApi.clear_queue(BawWorkers::Settings.actions.audio_check.queue)
     Resque::Plugins::Status::Hash.clear
 
   end
@@ -96,12 +96,12 @@ describe BawWorkers::AudioCheck::Action do
 
       result2 = BawWorkers::AudioCheck::Action.action_enqueue(test_params)
       expect(Resque.size(queue_name)).to eq(1)
-      expect(result2).to eq(result1)
+      expect(result2).to eq(nil)
       expect(Resque.enqueued?(BawWorkers::AudioCheck::Action, queued_query)).to eq(true)
 
       result3 = BawWorkers::AudioCheck::Action.action_enqueue(test_params)
       expect(Resque.size(queue_name)).to eq(1)
-      expect(result3).to eq(result1)
+      expect(result3).to eq(nil)
       expect(Resque.enqueued?(BawWorkers::AudioCheck::Action, queued_query)).to eq(true)
 
       actual = Resque.peek(queue_name)

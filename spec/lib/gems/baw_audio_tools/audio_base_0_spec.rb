@@ -40,7 +40,7 @@ describe BawAudioTools::AudioBase do
     it 'mp3splt must have a mp3 file as the source' do
       temp_audio_file = temp_media_file_1 + '.mp3'
       expect {
-        audio_base.audio_mp3splt.modify_command(audio_file_stereo, audio_base.info(audio_file_stereo), temp_audio_file)
+        audio_base.audio_mp3splt.modify_command(audio_file_stereo.to_s, audio_base.info(audio_file_stereo.to_s), temp_audio_file)
       }.to raise_error(ArgumentError, /Source is not a mp3 file/)
     end
 
@@ -65,7 +65,7 @@ describe BawAudioTools::AudioBase do
     it 'wavpack must have a wavpack file as the source' do
       temp_audio_file = temp_media_file_1 + '.mp3'
       expect {
-        audio_base.audio_wavpack.modify_command(audio_file_stereo, audio_base.info(audio_file_stereo), temp_audio_file)
+        audio_base.audio_wavpack.modify_command(audio_file_stereo.to_s, audio_base.info(audio_file_stereo.to_s), temp_audio_file)
       }.to raise_error(ArgumentError, /Source is not a wavpack file/)
     end
 

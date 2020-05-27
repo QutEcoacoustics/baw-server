@@ -1,6 +1,7 @@
+# frozen_string_literal: true
+
 module BawAudioTools
   class AudioBase
-
     attr_reader :audio_defaults, :logger, :temp_dir, :timeout_sec,
                 :audio_ffmpeg, :audio_mp3splt, :audio_sox,
                 :audio_wavpack, :audio_shntool, :audio_wav2png,
@@ -55,13 +56,13 @@ module BawAudioTools
     # @return [BawAudioTools::AudioBase]
     def self.from_executables(audio_defaults, logger, temp_dir, timeout_sec, opts = {})
       audio_tool_opts = {
-          ffmpeg: BawAudioTools::AudioFfmpeg.new(opts[:ffmpeg], opts[:ffprobe], logger, temp_dir),
-          mp3splt: BawAudioTools::AudioMp3splt.new(opts[:mp3splt], temp_dir),
-          sox: BawAudioTools::AudioSox.new(opts[:sox], temp_dir),
-          wavpack: BawAudioTools::AudioWavpack.new(opts[:wavpack], temp_dir),
-          shntool: BawAudioTools::AudioShntool.new(opts[:shntool], temp_dir),
-          wav2png: BawAudioTools::AudioWaveform.new(opts[:wav2png], temp_dir),
-          wac2wav: BawAudioTools::AudioWac2wav.new(opts[:wac2wav], temp_dir)
+        ffmpeg: BawAudioTools::AudioFfmpeg.new(opts[:ffmpeg], opts[:ffprobe], logger, temp_dir),
+        mp3splt: BawAudioTools::AudioMp3splt.new(opts[:mp3splt], temp_dir),
+        sox: BawAudioTools::AudioSox.new(opts[:sox], temp_dir),
+        wavpack: BawAudioTools::AudioWavpack.new(opts[:wavpack], temp_dir),
+        shntool: BawAudioTools::AudioShntool.new(opts[:shntool], temp_dir),
+        wav2png: BawAudioTools::AudioWaveform.new(opts[:wav2png], temp_dir),
+        wac2wav: BawAudioTools::AudioWac2wav.new(opts[:wac2wav], temp_dir)
       }
 
       run_program = BawAudioTools::RunExternalProgram.new(timeout_sec, logger)
@@ -85,8 +86,8 @@ module BawAudioTools
 
     # Provides information about an audio file.
     def info(source)
-      fail Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.exists? source
-      fail Exceptions::FileEmptyError, "Source exists, but has no content: #{source}" if File.size(source) < 1
+      raise Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.exist? source
+      raise Exceptions::FileEmptyError, "Source exists, but has no content: #{source}" if File.size(source) < 1
 
       if File.extname(source) == '.wac'
         info = info_wac2wav(source)
@@ -101,15 +102,15 @@ module BawAudioTools
       if info[:media_type] == 'audio/wavpack'
         # only get wavpack info for wavpack files
         info = info.merge(info_wavpack(source))
-      # not using shntool for now, partly because it can't process some .wav formats
-      #elsif info[:media_type] == 'audio/wav'
-      #  # only get shntool info for wav files
-      #  info = info.merge(info_shntool(source))
+        # not using shntool for now, partly because it can't process some .wav formats
+        #elsif info[:media_type] == 'audio/wav'
+        #  # only get shntool info for wav files
+        #  info = info.merge(info_shntool(source))
       end
 
-      @logger.debug(@class_name) {
+      @logger.debug(@class_name) do
         "Info for #{source}: #{info.to_json}"
-      }
+      end
 
       info
     end
@@ -129,12 +130,12 @@ module BawAudioTools
       end
 
       {
-          media_type: @audio_ffmpeg.get_mime_type(info),
-          sample_rate: info['STREAM sample_rate'].to_f,
-          duration_seconds: @audio_ffmpeg.parse_duration(info['FORMAT duration']).to_f,
-          bit_rate_bps: bit_rate_bps.to_i,
-          data_length_bytes: info['FORMAT size'].to_i,
-          channels: info['STREAM channels'].to_i
+        media_type: @audio_ffmpeg.get_mime_type(info),
+        sample_rate: info['STREAM sample_rate'].to_f,
+        duration_seconds: @audio_ffmpeg.parse_duration(info['FORMAT duration']).to_f,
+        bit_rate_bps: bit_rate_bps.to_i,
+        data_length_bytes: info['FORMAT size'].to_i,
+        channels: info['STREAM channels'].to_i
       }
     end
 
@@ -146,10 +147,10 @@ module BawAudioTools
       @audio_wavpack.check_for_errors(info_output)
 
       {
-          bit_rate_bps: info['ave bitrate'].to_f * 1000.0,
-          data_length_bytes: info['file size'].to_f,
-          channels: info['channels'].to_i,
-          duration_seconds: @audio_wavpack.parse_duration(info['duration']).to_f
+        bit_rate_bps: info['ave bitrate'].to_f * 1000.0,
+        data_length_bytes: info['file size'].to_f,
+        channels: info['channels'].to_i,
+        duration_seconds: @audio_wavpack.parse_duration(info['duration']).to_f
       }
     end
 
@@ -160,10 +161,10 @@ module BawAudioTools
       @audio_shntool.check_for_errors(info_output)
 
       {
-          bit_rate_bps: info['Average bytes/sec'].to_f,
-          data_length_bytes: info['Actual file size'].to_f,
-          channels: info['Channels'].to_i,
-          duration_seconds: @audio_shntool.parse_duration(info['Length']).to_f
+        bit_rate_bps: info['Average bytes/sec'].to_f,
+        data_length_bytes: info['Actual file size'].to_f,
+        channels: info['Channels'].to_i,
+        duration_seconds: @audio_shntool.parse_duration(info['Length']).to_f
       }
     end
 
@@ -172,7 +173,7 @@ module BawAudioTools
     end
 
     def integrity_check(source)
-      fail Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.exists? source
+      raise Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.exist? source
 
       if File.extname(source) == '.wv'
         wvpack_integrity_cmd = @audio_wavpack.integrity_command(source)
@@ -200,7 +201,7 @@ module BawAudioTools
       if (info_flattened[:media_type] == 'audio/wav' ||
           info_flattened[:media_type] == 'audio/mp3' ||
           info_flattened[:media_type] == 'audio/ogg') &&
-          info_flattened[:duration_seconds] < four_minutes_in_sec
+         info_flattened[:duration_seconds] < four_minutes_in_sec
 
         #sox_info_cmd = @audio_sox.info_command_info(source)
         #sox_info_output = @run_program.execute(sox_info_cmd)
@@ -256,10 +257,10 @@ module BawAudioTools
     # parameters in modify_parameters. Possible options for modify_parameters:
     # :start_offset :end_offset :channel :sample_rate
     def modify(source, target, modify_parameters = {})
-      fail ArgumentError, "Source and Target are the same file: #{target}" if source == target
-      fail Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.exists? source
-      fail Exceptions::FileAlreadyExistsError, "Target exists: #{target}" if File.exists? target
-      fail Exceptions::InvalidTargetMediaTypeError, 'Cannot convert to .wac' if File.extname(target) == '.wac'
+      raise ArgumentError, "Source and Target are the same file: #{target}" if source == target
+      raise Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.exist? source
+      raise Exceptions::FileAlreadyExistsError, "Target exists: #{target}" if File.exist? target
+      raise Exceptions::InvalidTargetMediaTypeError, 'Cannot convert to .wac' if File.extname(target) == '.wac'
 
       source_info = info(source)
 
@@ -268,7 +269,6 @@ module BawAudioTools
 
       modify_worker(source_info, source, target, modify_parameters)
     end
-
 
     def tempfile_content(tempfile)
       tempfile.rewind
@@ -282,13 +282,9 @@ module BawAudioTools
       start_offset = 0.0
       end_offset = source_info[:duration_seconds].to_f
 
-      if modify_parameters.include? :start_offset
-        start_offset = modify_parameters[:start_offset].to_f
-      end
+      start_offset = modify_parameters[:start_offset].to_f if modify_parameters.include? :start_offset
 
-      if modify_parameters.include? :end_offset
-        end_offset = modify_parameters[:end_offset].to_f
-      end
+      end_offset = modify_parameters[:end_offset].to_f if modify_parameters.include? :end_offset
 
       if end_offset < start_offset
         temp_end_offset = end_offset
@@ -297,8 +293,8 @@ module BawAudioTools
       end
 
       duration = end_offset - start_offset
-      fail Exceptions::SegmentRequestTooLong, "#{end_offset} - #{start_offset} = #{duration} (max: #{max_duration_seconds})" if duration > max_duration_seconds
-      fail Exceptions::SegmentRequestTooShort, "#{end_offset} - #{start_offset} = #{duration} (min: #{min_duration_seconds})" if duration < min_duration_seconds
+      raise Exceptions::SegmentRequestTooLong, "#{end_offset} - #{start_offset} = #{duration} (max: #{max_duration_seconds})" if duration > max_duration_seconds
+      raise Exceptions::SegmentRequestTooShort, "#{end_offset} - #{start_offset} = #{duration} (min: #{min_duration_seconds})" if duration < min_duration_seconds
 
       modify_parameters[:start_offset] = start_offset
       modify_parameters[:end_offset] = end_offset
@@ -308,7 +304,7 @@ module BawAudioTools
     end
 
     def check_target(target)
-      raise Exceptions::FileNotFoundError, "#{target}" unless File.exist?(target)
+      raise Exceptions::FileNotFoundError, target.to_s unless File.exist?(target)
 
       return unless File.size(target) < 1
 
@@ -316,9 +312,8 @@ module BawAudioTools
       # where it caches metadata
       IO.new(IO.sysopen(target, 'r')).close
 
-      raise Exceptions::FileEmptyError, "#{target}" if File.size(target) < 1
+      raise Exceptions::FileEmptyError, target.to_s if File.size(target) < 1
     end
-
 
     # Checks whether the sample rate in modify_parameters is allowed
     # @param [String] target  the path to the target file (used to determine format and for error reporting)
@@ -329,25 +324,22 @@ module BawAudioTools
     # Original file sample rate is determined either from the modify_parameters hash (originally coming from the audio recording record)
     # or the source_info hash. If both are supplied, they must be the same value or an exception is thrown    #
     def check_sample_rate(target, modify_parameters = {}, source_info = {})
-
       if modify_parameters.include?(:sample_rate)
         sample_rate = modify_parameters[:sample_rate].to_i
 
         # source_info sample_rate_hertz should match modify_parameters original_sample_rate if both are supplied
         if source_info.include?(:sample_rate) &&
-            modify_parameters.key?(:original_sample_rate) &&
-            source_info[:sample_rate].to_i != modify_parameters[:original_sample_rate].to_i
-          fail Exceptions::InvalidSampleRateError, "Sample rate of audio file #{source_info[:sample_rate]} " +
-              "not equal to given original sample rate #{modify_parameters[:original_sample_rate]}"
+           modify_parameters.key?(:original_sample_rate) &&
+           source_info[:sample_rate].to_i != modify_parameters[:original_sample_rate].to_i
+          raise Exceptions::InvalidSampleRateError, "Sample rate of audio file #{source_info[:sample_rate]} " \
+                                                   "not equal to given original sample rate #{modify_parameters[:original_sample_rate]}"
         end
 
-        if source_info.include?(:sample_rate)
-          original_sample_rate = source_info[:sample_rate].to_i
-        elsif modify_parameters.key?(:original_sample_rate)
-          original_sample_rate = modify_parameters[:original_sample_rate]
-        else
-          original_sample_rate = nil
-        end
+        original_sample_rate = if source_info.include?(:sample_rate)
+                                 source_info[:sample_rate].to_i
+                               elsif modify_parameters.key?(:original_sample_rate)
+                                 modify_parameters[:original_sample_rate]
+                               end
 
         format = File.extname(target)
         format[0] = '' #remove dot character from extension
@@ -355,8 +347,8 @@ module BawAudioTools
         valid_sample_rates = AudioBase.valid_sample_rates(format, original_sample_rate)
 
         unless valid_sample_rates.include?(sample_rate)
-          fail Exceptions::InvalidSampleRateError, "Sample rate #{sample_rate} requested for " +
-              "#{format} not in #{valid_sample_rates}"
+          raise Exceptions::InvalidSampleRateError, "Sample rate #{sample_rate} requested for " \
+                                                   "#{format} not in #{valid_sample_rates}"
         end
 
       end
@@ -366,20 +358,17 @@ module BawAudioTools
     # @param [symbol] format optional if omitted will just give the standard sample rates
     # @param [int] source_sample_rate optional the sample rate to dynamically include in the valid sample rates
     def self.valid_sample_rates(format = nil, source_sample_rate = nil)
-
       formats_valid_sample_rates = {
-          mp3: [8000, 12000, 11025, 16000, 24000, 22050, 32000, 48000, 44100]
+        mp3: [8000, 12_000, 11_025, 16_000, 24_000, 22_050, 32_000, 48_000, 44_100]
       }
 
       sample_rates = AudioBase.standard_sample_rates
-      if source_sample_rate && !sample_rates.include?(source_sample_rate)
-        sample_rates.push(source_sample_rate.to_i)
-      end
+      sample_rates.push(source_sample_rate.to_i) if source_sample_rate && !sample_rates.include?(source_sample_rate)
 
       # if the target format is in the hash of whitelisted sample rates,
       # intersect those target format valid sample rates with the standard sample rates
-      if format && formats_valid_sample_rates.has_key?(format.to_sym)
-        sample_rates = sample_rates & formats_valid_sample_rates[format.to_sym]
+      if format && formats_valid_sample_rates.key?(format.to_sym)
+        sample_rates &= formats_valid_sample_rates[format.to_sym]
       end
 
       sample_rates
@@ -388,7 +377,7 @@ module BawAudioTools
     # a list of standard sample rates, defined so that the number of possible
     # cached files is reduced
     def self.standard_sample_rates
-      [8000, 11025, 12000, 16000, 22050, 24000, 32000, 44100, 48000, 96000]
+      [8000, 11_025, 12_000, 16_000, 22_050, 24_000, 32_000, 44_100, 48_000, 96_000]
     end
 
     def execute(cmd)
@@ -492,7 +481,7 @@ module BawAudioTools
     def audio_tool_segment(extension, audio_tool_method, source, source_info, target, modify_parameters)
       # process the source file, put output to temp file
       temp_file = temp_file(extension)
-      self.send(audio_tool_method, source, source_info, temp_file, modify_parameters[:start_offset], modify_parameters[:end_offset])
+      send(audio_tool_method, source, source_info, temp_file, modify_parameters[:start_offset], modify_parameters[:end_offset])
       check_target(temp_file)
 
       # remove start and end offset from new_params (otherwise it will be done again!)
@@ -505,7 +494,5 @@ module BawAudioTools
 
       File.delete temp_file
     end
-
-
   end
 end

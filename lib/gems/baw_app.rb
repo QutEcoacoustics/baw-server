@@ -11,7 +11,7 @@ module BawApp
   end
 
   def env
-    return Rails.env if defined?(Rails)
+    return Rails.env if defined?(Rails) && defined?(Rails.env)
 
     # https://github.com/rails/rails/blob/1ccc407e9dc95bda4d404c192bbb9ce2b8bb7424/railties/lib/rails.rb#L67
     @env ||= ActiveSupport::StringInquirer.new(

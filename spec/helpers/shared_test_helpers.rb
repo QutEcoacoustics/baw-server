@@ -93,7 +93,7 @@ shared_context 'shared_test_helpers' do
     paths.each do |path|
       raise "Will not delete #{path} because it does not contain 'test'" unless path =~ /_test_/
 
-      FileUtils.remove_dir path
+      FileUtils.remove_dir path if Dir.exist? path
     end
   end
 
@@ -133,6 +133,15 @@ shared_context 'shared_test_helpers' do
 
     FileUtils.cp('/bin/echo', echo)
     FileUtils.cp('/usr/bin/touch', touch)
+  end
+
+  def copy_worker_config
+    settings_file_src = File.join(BawApp.root, 'config', 'settings', 'default.yml')
+    settings_file_dest = File.join(BawApp.root, 'tmp', 'default.yml')
+
+    FileUtils.cp(settings_file_src, settings_file_dest)
+
+    settings_file_dest
   end
 
   def emulate_resque_worker(queue)

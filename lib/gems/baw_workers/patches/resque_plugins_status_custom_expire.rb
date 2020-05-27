@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 # A monkey patch for resque status
+
 module Resque
   module Plugins
     module Status

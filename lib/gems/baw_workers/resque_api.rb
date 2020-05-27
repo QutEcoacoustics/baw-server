@@ -1,8 +1,9 @@
+# frozen_string_literal: true
+
 module BawWorkers
   # Custom api for access to resque information.
   class ResqueApi
     class << self
-
       # Is this type of job with these args currently queued?
       # @param [Class] klass
       # @param [Hash] args
@@ -20,6 +21,7 @@ module BawWorkers
         # from https://github.com/neighborland/resque_solo/blob/master/lib/resque_ext/resque.rb
         item = BawWorkers::ResqueJobId.create_payload(klass, args)
         return nil unless ResqueSolo::Queue.is_unique?(item)
+
         ResqueSolo::Queue.queued?(queue, item)
       end
 
@@ -40,7 +42,7 @@ module BawWorkers
         # from http://blog.mojotech.com/hello-resque-whats-happening-under-the-hood/
         payloads = []
         index = 0
-        while payload = Resque.redis.lindex("queue:#{queue}", index) do
+        while payload = Resque.redis.lindex("queue:#{queue}", index)
           payloads << Resque.decode(payload).merge('queue' => queue)
           index += 1
         end
@@ -142,33 +144,40 @@ module BawWorkers
         BawWorkers::Validation.compare(a_array, b[1..-1])
       end
 
+      # clear worker heartbeats from redis
+      def clear_workers
+        workers = Resque.workers
+
+        workers.each(&:unregister_worker)
+      end
+
       # List all running workers.
       # @return [Array] details of running workers
       def workers_running
         workers = Resque.workers
         running_workers = []
 
-        if workers.size > 0
+        if !workers.empty?
 
-          BawWorkers::Config.logger_worker.info(self.name) {
+          BawWorkers::Config.logger_worker.info(name) do
             "There are #{workers.size} Resque workers currently running."
-          }
+          end
 
           workers.each do |worker|
             running_workers.push(worker.to_s)
           end
 
-          BawWorkers::Config.logger_worker.info(self.name) {
+          BawWorkers::Config.logger_worker.info(name) {
             worker_details = running_workers.map { |worker|
               host, pid, queues = worker.split(':')
-              {host: host, pid: pid, queues: queues}
+              { host: host, pid: pid, queues: queues }
             }.join(',')
 
             "Resque worker details: #{worker_details}."
           }
 
         else
-          BawWorkers::Config.logger_worker.info(self.name) {
+          BawWorkers::Config.logger_worker.info(name) {
             'No Resque workers currently running.'
           }
         end
@@ -186,16 +195,16 @@ module BawWorkers
 
         pids = pids.uniq
 
-        BawWorkers::Config.logger_worker.info(self.name) {
+        BawWorkers::Config.logger_worker.info(name) do
           "Pids of running Resque workers: '#{pids.join(',')}'."
-        }
+        end
 
         unless pids.empty?
           syscmd = "kill -s QUIT #{pids.join(' ')}"
 
-          BawWorkers::Config.logger_worker.warn(self.name) {
+          BawWorkers::Config.logger_worker.warn(name) do
             "Running syscmd to kill all workers: '#{syscmd}'"
-          }
+          end
 
           system(syscmd)
         end
@@ -203,24 +212,33 @@ module BawWorkers
         pids
       end
 
+      def clear_queues(env = BawApp.env)
+        env_regex = Regexp.new(env)
+        Resque
+          .queues
+          .select { |queue| queue =~ env_regex }
+          .each { |queue| clear_queue(queue) }
+      end
+
       # Clear a queue
       # @see https://gist.github.com/denmarkin/1228863
       # @param [String] queue
       # @return [void]
       def clear_queue(queue)
-        BawWorkers::Config.logger_worker.warn(self.name) {
+        BawWorkers::Config.logger_worker.warn(name) do
           "Clearing queue #{queue}..."
-        }
-        Resque.remove_queue_with_cleanup(queue)
+        end
+        Resque.remove_queue(queue)
+        ResqueSolo::Queue.cleanup(queue)
       end
 
       # Clear resque stats
       # @see https://gist.github.com/denmarkin/1228863
       # @return [void]
       def clear_stats
-        BawWorkers::Config.logger_worker.warn(self.name) {
+        BawWorkers::Config.logger_worker.warn(name) do
           'Clearing stats...'
-        }
+        end
         Resque.redis.set 'stat:failed', 0
         Resque.redis.set 'stat:processed', 0
       end
@@ -232,26 +250,27 @@ module BawWorkers
         failure_count = Resque::Failure.count
         retried_count = 0
 
-        BawWorkers::Config.logger_worker.warn(self.name) {
+        BawWorkers::Config.logger_worker.warn(name) do
           "Retrying failed jobs (total : #{failure_count})."
-        }
+        end
 
         (0...failure_count).each do |i|
           serialized_job = redis.lindex(:failed, i)
           job = Resque.decode(serialized_job)
 
           next if job.nil?
-          if job['exception'] == 'Resque::DirtyExit'
-            retried_count = retried_count +1
-            BawWorkers::Config.logger_worker.warn(self.name) {
-              "Retrying job  #{job['payload']['class']}..."
-            }
-            Resque::Failure.requeue(i)
-            Resque::Failure.remove(i)
+
+          next unless job['exception'] == 'Resque::DirtyExit'
+
+          retried_count += 1
+          BawWorkers::Config.logger_worker.warn(name) do
+            "Retrying job  #{job['payload']['class']}..."
           end
+          Resque::Failure.requeue(i)
+          Resque::Failure.remove(i)
         end
 
-        BawWorkers::Config.logger_worker.warn(self.name) {
+        BawWorkers::Config.logger_worker.warn(name) {
           "Retried #{retried_count} failed jobs."
         }
       end
@@ -278,7 +297,6 @@ module BawWorkers
         key = Resque::Plugins::Status::Hash.status_key(unique_key)
         Resque::Plugins::Status::Hash.redis.ttl(key)
       end
-
     end
   end
 end
