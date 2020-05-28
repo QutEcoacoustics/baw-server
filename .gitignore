@@ -28,7 +28,7 @@
 external_modules.log
 
 # ignore temporary files
-/tmp
+/tmp/*
 !/tmp/README.md
 /.bundle
 

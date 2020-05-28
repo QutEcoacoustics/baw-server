@@ -134,7 +134,7 @@ describe 'Website forms with user', type: :feature do
       expect(page).to have_content('Unique tags attached to annotations')
     end
 
-    it 'shows the status page' do
+    it 'shows the status page (when there\'s no audio)' do
       clear_original_audio
 
       visit status_path
@@ -185,12 +185,6 @@ describe 'public website forms', type: :feature do
       visit website_status_path
       expect(current_path).to eq(website_status_path)
       expect(page).to have_content('Unique tags attached to annotations')
-    end
-
-    it 'shows the status page' do
-      visit status_path
-      expect(current_path).to eq(status_path)
-      expect(page).to have_content('bad')
     end
   end
 end
