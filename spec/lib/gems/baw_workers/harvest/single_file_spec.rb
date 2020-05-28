@@ -558,6 +558,8 @@ describe BawWorkers::Harvest::SingleFile do
     end
 
     it 'renames audio file with no content' do
+      clear_original_audio
+
       # set up audio file and folder config
       sub_folder = File.expand_path File.join(harvest_to_do_path, 'harvest_file_exists')
       FileUtils.mkpath(sub_folder)

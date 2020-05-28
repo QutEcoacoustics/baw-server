@@ -146,7 +146,7 @@ describe BawWorkers::AudioCheck::Action do
           }
 
         audio_original.possible_paths(media_request_params).each do |file|
-          File.delete file
+          File.delete file if File.exist? file
         end
 
         expect {

@@ -7,6 +7,10 @@ describe 'Resque::Plugins::Status' do
 
   include_context 'shared_test_helpers'
 
+  before(:each) do
+    BawWorkers::ResqueApi.clear_queue(BawWorkers::Template::Action.queue)
+  end
+
   # We had a bug were configs were not initializing expire_in for resque status.
   # This test ensures that it is set.
   # These tests also test the monkey patch in `resque_status_custom_expire.rb` exists

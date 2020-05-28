@@ -8,6 +8,11 @@ describe BawWorkers::Harvest::Action do
   include_context 'shared_test_helpers'
 
   let(:queue_name) { BawWorkers::Settings.actions.harvest.queue }
+
+  before(:each) do
+    BawWorkers::ResqueApi.clear_queue(queue_name)
+  end
+
   let(:folder_example) { File.expand_path File.join(File.dirname(__FILE__), 'folder_example.yml') }
 
   let(:test_harvest_request_params) {

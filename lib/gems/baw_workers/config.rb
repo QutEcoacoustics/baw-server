@@ -191,7 +191,7 @@ module BawWorkers
         audio_tools_open.sync = true
         BawWorkers::Config.logger_audio_tools.attach(Logger.new(audio_tools_open))
 
-        if is_resque_worker && !is_resque_worker_fg
+        if (is_resque_worker && !is_resque_worker_fg) || BawApp.test?
           # when running a Resque worker in bg, or running in a test, redirect stdout and stderr to files
           stdout_log_file = File.expand_path(settings.resque.output_log_file)
           $stdout = File.open(stdout_log_file, 'a+')

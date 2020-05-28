@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Creation
   # accessible in describe/context blocks
   module ExampleGroup
@@ -125,13 +127,13 @@ module Creation
       let!(:owner_user) { FactoryGirl.create(:user, user_name: 'owner user') }
       let!(:owner_token) { Common.create_user_token(owner_user) }
 
-      let!(:writer_user) { FactoryGirl.create(:user, user_name: 'writer') }
+      let!(:writer_user) { FactoryGirl.create(:user, user_name: 'writer', skip_creation_email: true) }
       let!(:writer_token) { Common.create_user_token(writer_user) }
 
-      let!(:reader_user) { FactoryGirl.create(:user, user_name: 'reader') }
+      let!(:reader_user) { FactoryGirl.create(:user, user_name: 'reader', skip_creation_email: true) }
       let!(:reader_token) { Common.create_user_token(reader_user) }
 
-      let!(:no_access_user) { FactoryGirl.create(:user, user_name: 'no_access') }
+      let!(:no_access_user) { FactoryGirl.create(:user, user_name: 'no_access', skip_creation_email: true) }
       let!(:no_access_token) { Common.create_user_token(no_access_user) }
 
       let!(:invalid_token) { Common.create_user_token }
@@ -174,26 +176,22 @@ module Creation
       let!(:permission_anon) {
         FactoryGirl.create(
           :permission,
-          {
-            creator: owner_user,
-            user: nil,
-            project: project_anon_and_logged_in,
-            allow_anonymous: true,
-            level: 'reader'
-          }
+          creator: owner_user,
+          user: nil,
+          project: project_anon_and_logged_in,
+          allow_anonymous: true,
+          level: 'reader'
         )
       }
 
       let!(:permission_logged_in) {
         FactoryGirl.create(
           :permission,
-          {
-            creator: owner_user,
-            user: nil,
-            project: project_anon_and_logged_in,
-            allow_logged_in: true,
-            level: 'reader'
-          }
+          creator: owner_user,
+          user: nil,
+          project: project_anon_and_logged_in,
+          allow_logged_in: true,
+          level: 'reader'
         )
       }
     end
@@ -280,7 +278,7 @@ module Creation
       }
       let!(:progress_event_for_no_access_user) {
         # create a progress event where the creator does not have read permissions
-        Common.create_progress_event_full(no_access_user, dataset_item, "played")
+        Common.create_progress_event_full(no_access_user, dataset_item, 'played')
       }
     end
 
@@ -289,18 +287,18 @@ module Creation
       let!(:progress_events_stats) {
 
         creators = [admin_user, owner_user, reader_user, writer_user]
-        activities = ["viewed", "played"]
+        activities = ['viewed', 'played']
         dataset_items = [dataset_item, no_access_dataset_item]
         num = 4
         result = []
 
-        for c in creators do
-          for a in activities do
-            for d in dataset_items do
-              for n in 1..num do
+        creators.each do |c|
+          activities.each do |a|
+            dataset_items.each do |d|
+              (1..num).each do |_n|
                 if c == admin_user || d != no_access_dataset_item
                   Common.create_progress_event_full(c, d, a)
-                  result.push({creator_id: c.id, dataset_item_id: d.id, activity: a})
+                  result.push(creator_id: c.id, dataset_item_id: d.id, activity: a)
                 end
               end
             end
@@ -311,17 +309,14 @@ module Creation
 
       }
     end
-
   end
 
   # Accessible inside `it` blocks
   module Example
-
   end
 
   class Common
     class << self
-
       def create_user_token(user = nil)
         token = user.blank? ? 'NOT_A_VALID_TOKEN' : user.authentication_token
         "Token token=\"#{token}\""
@@ -348,12 +343,13 @@ module Creation
 
       def create_audio_recording(creator, uploader, site)
         FactoryGirl.create(
-            :audio_recording,
-            :status_ready,
-            creator: creator,
-            uploader: uploader,
-            site: site,
-            sample_rate_hertz: 44100)
+          :audio_recording,
+          :status_ready,
+          creator: creator,
+          uploader: uploader,
+          site: site,
+          sample_rate_hertz: 44_100
+        )
       end
 
       def create_bookmark(creator, audio_recording)
@@ -373,11 +369,11 @@ module Creation
       end
 
       def create_saved_search(creator, project, stored_query = nil)
-        if stored_query.nil?
-          saved_search = FactoryGirl.create(:saved_search, creator: creator)
-        else
-          saved_search = FactoryGirl.create(:saved_search, creator: creator, stored_query: stored_query)
-        end
+        saved_search = if stored_query.nil?
+                         FactoryGirl.create(:saved_search, creator: creator)
+                       else
+                         FactoryGirl.create(:saved_search, creator: creator, stored_query: stored_query)
+                       end
 
         saved_search.projects << project
         saved_search.save!
@@ -422,7 +418,6 @@ module Creation
       def create_user_response(creator, dataset_item, study, question)
         FactoryGirl.create(:response, creator: creator, dataset_item: dataset_item, study: study, question: question)
       end
-
     end
   end
 end

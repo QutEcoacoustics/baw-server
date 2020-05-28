@@ -97,6 +97,16 @@ shared_context 'shared_test_helpers' do
     end
   end
 
+  def make_original_audio
+    paths = BawWorkers::Settings.paths.original_audios
+
+    paths.each do |path|
+      raise "Will not create #{path} because it does not contain 'test'" unless path =~ /_test_/
+
+      FileUtils.mkdir path unless Dir.exist? path
+    end
+  end
+
   def clear_harvester_to_do
     paths = [harvest_to_do_path]
 
