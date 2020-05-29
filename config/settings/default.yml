@@ -70,7 +70,7 @@ defaults: &defaults
      database: baw_local_dev
      pool: 5
      username: postgres
-     password: ''
+     password: 'password'
      # see docker compose
      host: db
      sslmode: allow

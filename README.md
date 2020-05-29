@@ -31,6 +31,25 @@ Audio processing and other long-running tasks are performed using [baw-workers](
 
 See the [git-flow.md](./git-flow.md) document for guidelines on making changes.
 
+## Development requirements
+
+Docker and docker-compose are required to run this application.
+
+### Windows
+
+Install:
+- Optionally: At least Windows 10 Version 2004
+- Docker desktop
+- WSL Version 2 (and add a default Ubuntu distro): https://docs.microsoft.com/en-us/windows/wsl/install-win10
+
+### MacOS
+
+Install Docker Desktop
+
+### Linux
+
+Install docker as normal.
+
 ## Environment Setup
 
 Clone this repo, then change directory to your cloned directory and on your **host** machine run
@@ -68,14 +87,24 @@ but keep state from our volume:
 
     $ docker-compose build
 
+
+## IDE
+
+We recommend using VSCode and VSCode's remote container development mode, with the included
+workspace. When you open the [baw-server.code-workspace](./baw-server.code-workspace)
+with vscode it should ask you to open the workspace dev container with a prompt similar to this:
+
+![Example dev container prompt](./.vscode/dev_container.png)
+
 ## Development
 
-Start by running, on your **host** machine:
+If you're using VSCode's remote container development features you'll need to
+start the web server. See the command below.
+
+Otherwise, Start by running, on your **host** machine:
 
     $ docker-compose up
 
-If you're using VSCode's remote container development features you'll need to
-start the web server.
 
 ### Web server
 
@@ -186,12 +215,6 @@ A basic redis setup is included with the docker-compose file.
   - postgresql
   - redis
   - a single worker
-
-
-## IDE
-
-We recommend using VSCode's remote container development mode, with the included
-workspace..
 
 ## Credits
 

@@ -14,6 +14,10 @@ services:
       - "5432:5432"
     networks:
       - baw_docker_network
+    environment:
+      # never, ever, ever use this is a production setup!
+      # Only use this in a dev environment
+      POSTGRES_PASSWORD: password
   workers: &worker
     build:
       context: .
@@ -49,9 +53,10 @@ services:
     build:
       context: .
       target: baw-server-dev
-    command: ./provision/migrate.sh && bundle exec passenger start
+    command: bundle exec passenger start
     environment:
       RAILS_ENV: development
+      MIGRATE_DB: 'true'
     user: baw_web
     volumes:
       - type: bind
