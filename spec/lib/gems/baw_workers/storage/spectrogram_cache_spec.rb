@@ -1,8 +1,11 @@
 # frozen_string_literal: true
 
 require 'workers_helper'
+require 'helpers/shared_test_helpers'
 
 describe BawWorkers::Storage::SpectrogramCache do
+
+  include_context 'shared_test_helpers'
 
   let(:spectrogram_cache) { BawWorkers::Config.spectrogram_cache_helper }
 
@@ -36,6 +39,10 @@ describe BawWorkers::Storage::SpectrogramCache do
       format: format_spectrogram
     }
   }
+
+  before(:each) do
+    clear_spectrogram_cache
+  end
 
   it 'no storage directories exist' do
     expect(spectrogram_cache.existing_dirs).to be_empty

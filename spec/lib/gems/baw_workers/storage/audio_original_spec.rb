@@ -1,8 +1,11 @@
 # frozen_string_literal: true
 
 require 'workers_helper'
+require 'helpers/shared_test_helpers'
 
 describe BawWorkers::Storage::AudioOriginal do
+
+  include_context 'shared_test_helpers'
 
   let(:audio_original) { BawWorkers::Config.original_audio_helper }
 
@@ -22,6 +25,10 @@ describe BawWorkers::Storage::AudioOriginal do
       original_format: original_format
     }
   }
+
+  before(:each) do
+    clear_original_audio
+  end
 
   it 'no storage directories exist' do
     expect(audio_original.existing_dirs).to be_empty

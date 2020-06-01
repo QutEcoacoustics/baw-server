@@ -90,7 +90,23 @@ shared_context 'shared_test_helpers' do
   def clear_original_audio
     paths = BawWorkers::Settings.paths.original_audios
 
-    paths.each do |path|
+    clear_directories(paths)
+  end
+
+  def clear_spectrogram_cache
+    paths = BawWorkers::Settings.paths.cached_spectrograms
+
+    clear_directories(paths)
+  end
+
+  def clear_audio_cache
+    paths = BawWorkers::Settings.paths.cached_audios
+
+    clear_directories(paths)
+  end
+
+  def clear_directories(directories)
+    directories.each do |path|
       raise "Will not delete #{path} because it does not contain 'test'" unless path =~ /_test_/
 
       FileUtils.remove_dir path if Dir.exist? path

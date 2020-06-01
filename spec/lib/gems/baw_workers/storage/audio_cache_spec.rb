@@ -1,9 +1,10 @@
 # frozen_string_literal: true
 
 require 'workers_helper'
+require 'helpers/shared_test_helpers'
 
 describe BawWorkers::Storage::AudioCache do
-
+  include_context 'shared_test_helpers'
   let(:audio_cache) { BawWorkers::Config.audio_cache_helper }
 
   let(:uuid) { '5498633d-89a7-4b65-8f4a-96aa0c09c619' }
@@ -29,6 +30,10 @@ describe BawWorkers::Storage::AudioCache do
 
   let(:cached_audio_file_name_defaults) { "#{uuid}_0.0_#{end_offset}_0_22050.mp3" }
   let(:cached_audio_file_name_given_parameters) { "#{uuid}_#{start_offset}_#{end_offset}_#{channel}_#{sample_rate}.#{format_audio}" }
+
+  before(:each) do
+    clear_audio_cache
+  end
 
   it 'no storage directories exist' do
     expect(audio_cache.existing_dirs).to be_empty
