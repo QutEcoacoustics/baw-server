@@ -16,7 +16,7 @@ echo -e "\n\n== Checking bundler install ==\n\n"
 
 bundle check || bundle install --system
 
-if [[ -z "${MIGRATE_DB}" ]] || ["${MIGRATE_DB}" == "false" ]; then
+if [[ -z "${MIGRATE_DB+x}" || "${MIGRATE_DB,,}" == "false" ]]; then
   echo -e "\n\n== Skipping database status checks ==\n\n"
 else
   /home/baw_web/baw-server/provision/migrate.sh
