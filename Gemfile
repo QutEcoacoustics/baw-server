@@ -28,7 +28,7 @@ gem 'bootsnap', require: false
 group :server do
   # RAILS
   # -------------------------------------
-  gem 'rack-cors', '~> 0.4.0', require: 'rack/cors'
+  gem 'rack-cors', '~> 1.0.5', require: 'rack/cors'
   gem 'rails', '~> 4.2.4'
   gem 'responders', '~> 2.3.0'
 
