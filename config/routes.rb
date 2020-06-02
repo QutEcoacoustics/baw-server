@@ -1,6 +1,7 @@
 require 'resque/server'
 
 Rails.application.routes.draw do
+
   # The priority is based upon order of creation: first created -> highest priority.
   # See how all your routes lay out with "rake routes".
 
@@ -254,13 +255,48 @@ Rails.application.routes.draw do
   # shallow path to sites
   get '/sites/:id' => 'sites#show_shallow', defaults: {format: 'json'}, as: 'shallow_site'
 
+
+  match 'datasets/:dataset_id/progress_events/audio_recordings/:audio_recording_id/start/:start_time_seconds/end/:end_time_seconds' => 'progress_events#create_by_dataset_item_params',
+        :constraints => {
+            :dataset_id => /(\d+|default)/,
+            :audio_recording_id => /\d+/,
+            :start_time_seconds => /\d+(\.\d+)?/,
+            :end_time_seconds => /\d+(\.\d+)?/ },
+        via: [:post],
+        defaults: {format: 'json'}
+
+
   # datasets, dataset_items
   match 'datasets/filter' => 'datasets#filter', via: [:get, :post], defaults: {format: 'json'}
   match 'dataset_items/filter' => 'dataset_items#filter', via: [:get, :post], defaults: {format: 'json'}
-  match 'datasets/:dataset_id/dataset_items/filter' => 'dataset_items#filter', via: [:get, :post], defaults: {format: 'json'}
+  match 'datasets/:dataset_id/dataset_items/filter' => 'dataset_items#filter',
+        via: [:get, :post],
+        defaults: {format: 'json'}
+  match 'datasets/:dataset_id/dataset_items/next_for_me' => 'dataset_items#next_for_me',
+        via: [:get],
+        defaults: {format: 'json'}
   resources :datasets, except: :destroy, defaults:  {format: 'json'} do
     resources :items, controller: 'dataset_items', defaults: {format: 'json'}
   end
+
+
+  # studies, questions, responses
+  put 'responses/:id', to: 'errors#method_not_allowed_error'
+  put '/studies/:study_id/responses/:id', to: 'errors#method_not_allowed'
+  match 'studies/filter' => 'studies#filter', via: [:get, :post], defaults: {format: 'json'}
+  match 'questions/filter' => 'questions#filter', via: [:get, :post], defaults: {format: 'json'}
+  match 'responses/filter' => 'responses#filter', via: [:get, :post], defaults: {format: 'json'}
+  resources :studies, defaults: {format: 'json'}
+  resources :questions, defaults: {format: 'json'}
+  resources :responses, except: :update, defaults: {format: 'json'}
+  get '/studies/:study_id/questions' => 'questions#index', defaults: {format: 'json'}
+  get '/studies/:study_id/responses' => 'responses#index', defaults: {format: 'json'}
+  post '/studies/:study_id/questions/:question_id/responses' => 'responses#create', defaults: {format: 'json'}
+
+
+  # progress events
+  match 'progress_events/filter' => 'progress_events#filter', via: [:get, :post], defaults: {format: 'json'}
+  resources :progress_events, defaults:  {format: 'json'}
 
   # route to the home page of site
   root to: 'public#index'
@@ -307,7 +343,8 @@ Rails.application.routes.draw do
   end
 
   # provide access to API documentation
-  mount Raddocs::App => '/doc'
+  # NOTE: disabled because broken
+  #mount Raddocs::App => '/doc'
 
   # enable CORS preflight requests
   match '*requested_route', to: 'public#cors_preflight', via: :options

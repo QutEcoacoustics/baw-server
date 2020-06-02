@@ -2,43 +2,29 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 9.3.20
--- Dumped by pg_dump version 10.1
+-- Dumped from database version 12.3 (Debian 12.3-1.pgdg100+1)
+-- Dumped by pg_dump version 12.3 (Debian 12.3-1.pgdg100+1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
 SET check_function_bodies = false;
+SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
 
---
--- Name: plpgsql; Type: EXTENSION; Schema: -; Owner: -
---
-
-CREATE EXTENSION IF NOT EXISTS plpgsql WITH SCHEMA pg_catalog;
-
-
---
--- Name: EXTENSION plpgsql; Type: COMMENT; Schema: -; Owner: -
---
-
-COMMENT ON EXTENSION plpgsql IS 'PL/pgSQL procedural language';
-
-
-SET search_path = public, pg_catalog;
-
 SET default_tablespace = '';
 
-SET default_with_oids = false;
+SET default_table_access_method = heap;
 
 --
 -- Name: analysis_jobs; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE analysis_jobs (
+CREATE TABLE public.analysis_jobs (
     id integer NOT NULL,
     name character varying NOT NULL,
     annotation_name character varying,
@@ -67,7 +53,7 @@ CREATE TABLE analysis_jobs (
 -- Name: analysis_jobs_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
-CREATE SEQUENCE analysis_jobs_id_seq
+CREATE SEQUENCE public.analysis_jobs_id_seq
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -79,14 +65,14 @@ CREATE SEQUENCE analysis_jobs_id_seq
 -- Name: analysis_jobs_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
-ALTER SEQUENCE analysis_jobs_id_seq OWNED BY analysis_jobs.id;
+ALTER SEQUENCE public.analysis_jobs_id_seq OWNED BY public.analysis_jobs.id;
 
 
 --
 -- Name: analysis_jobs_items; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE analysis_jobs_items (
+CREATE TABLE public.analysis_jobs_items (
     id integer NOT NULL,
     analysis_job_id integer NOT NULL,
     audio_recording_id integer NOT NULL,
@@ -104,7 +90,7 @@ CREATE TABLE analysis_jobs_items (
 -- Name: analysis_jobs_items_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
-CREATE SEQUENCE analysis_jobs_items_id_seq
+CREATE SEQUENCE public.analysis_jobs_items_id_seq
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -116,14 +102,14 @@ CREATE SEQUENCE analysis_jobs_items_id_seq
 -- Name: analysis_jobs_items_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
-ALTER SEQUENCE analysis_jobs_items_id_seq OWNED BY analysis_jobs_items.id;
+ALTER SEQUENCE public.analysis_jobs_items_id_seq OWNED BY public.analysis_jobs_items.id;
 
 
 --
 -- Name: audio_event_comments; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE audio_event_comments (
+CREATE TABLE public.audio_event_comments (
     id integer NOT NULL,
     audio_event_id integer NOT NULL,
     comment text NOT NULL,
@@ -144,7 +130,7 @@ CREATE TABLE audio_event_comments (
 -- Name: audio_event_comments_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
-CREATE SEQUENCE audio_event_comments_id_seq
+CREATE SEQUENCE public.audio_event_comments_id_seq
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -156,14 +142,14 @@ CREATE SEQUENCE audio_event_comments_id_seq
 -- Name: audio_event_comments_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
-ALTER SEQUENCE audio_event_comments_id_seq OWNED BY audio_event_comments.id;
+ALTER SEQUENCE public.audio_event_comments_id_seq OWNED BY public.audio_event_comments.id;
 
 
 --
 -- Name: audio_events; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE audio_events (
+CREATE TABLE public.audio_events (
     id integer NOT NULL,
     audio_recording_id integer NOT NULL,
     start_time_seconds numeric(10,4) NOT NULL,
@@ -184,7 +170,7 @@ CREATE TABLE audio_events (
 -- Name: audio_events_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
-CREATE SEQUENCE audio_events_id_seq
+CREATE SEQUENCE public.audio_events_id_seq
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -196,14 +182,14 @@ CREATE SEQUENCE audio_events_id_seq
 -- Name: audio_events_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
-ALTER SEQUENCE audio_events_id_seq OWNED BY audio_events.id;
+ALTER SEQUENCE public.audio_events_id_seq OWNED BY public.audio_events.id;
 
 
 --
 -- Name: audio_events_tags; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE audio_events_tags (
+CREATE TABLE public.audio_events_tags (
     id integer NOT NULL,
     audio_event_id integer NOT NULL,
     tag_id integer NOT NULL,
@@ -218,7 +204,7 @@ CREATE TABLE audio_events_tags (
 -- Name: audio_events_tags_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
-CREATE SEQUENCE audio_events_tags_id_seq
+CREATE SEQUENCE public.audio_events_tags_id_seq
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -230,14 +216,14 @@ CREATE SEQUENCE audio_events_tags_id_seq
 -- Name: audio_events_tags_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
-ALTER SEQUENCE audio_events_tags_id_seq OWNED BY audio_events_tags.id;
+ALTER SEQUENCE public.audio_events_tags_id_seq OWNED BY public.audio_events_tags.id;
 
 
 --
 -- Name: audio_recordings; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE audio_recordings (
+CREATE TABLE public.audio_recordings (
     id integer NOT NULL,
     uuid character varying(36) NOT NULL,
     uploader_id integer NOT NULL,
@@ -267,7 +253,7 @@ CREATE TABLE audio_recordings (
 -- Name: audio_recordings_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
-CREATE SEQUENCE audio_recordings_id_seq
+CREATE SEQUENCE public.audio_recordings_id_seq
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -279,14 +265,14 @@ CREATE SEQUENCE audio_recordings_id_seq
 -- Name: audio_recordings_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
-ALTER SEQUENCE audio_recordings_id_seq OWNED BY audio_recordings.id;
+ALTER SEQUENCE public.audio_recordings_id_seq OWNED BY public.audio_recordings.id;
 
 
 --
 -- Name: bookmarks; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE bookmarks (
+CREATE TABLE public.bookmarks (
     id integer NOT NULL,
     audio_recording_id integer,
     offset_seconds numeric(10,4),
@@ -304,7 +290,7 @@ CREATE TABLE bookmarks (
 -- Name: bookmarks_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
-CREATE SEQUENCE bookmarks_id_seq
+CREATE SEQUENCE public.bookmarks_id_seq
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -316,14 +302,14 @@ CREATE SEQUENCE bookmarks_id_seq
 -- Name: bookmarks_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
-ALTER SEQUENCE bookmarks_id_seq OWNED BY bookmarks.id;
+ALTER SEQUENCE public.bookmarks_id_seq OWNED BY public.bookmarks.id;
 
 
 --
 -- Name: dataset_items; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE dataset_items (
+CREATE TABLE public.dataset_items (
     id integer NOT NULL,
     dataset_id integer,
     audio_recording_id integer,
@@ -339,7 +325,7 @@ CREATE TABLE dataset_items (
 -- Name: dataset_items_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
-CREATE SEQUENCE dataset_items_id_seq
+CREATE SEQUENCE public.dataset_items_id_seq
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -351,14 +337,14 @@ CREATE SEQUENCE dataset_items_id_seq
 -- Name: dataset_items_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
-ALTER SEQUENCE dataset_items_id_seq OWNED BY dataset_items.id;
+ALTER SEQUENCE public.dataset_items_id_seq OWNED BY public.dataset_items.id;
 
 
 --
 -- Name: datasets; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE datasets (
+CREATE TABLE public.datasets (
     id integer NOT NULL,
     creator_id integer,
     updater_id integer,
@@ -373,7 +359,7 @@ CREATE TABLE datasets (
 -- Name: datasets_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
-CREATE SEQUENCE datasets_id_seq
+CREATE SEQUENCE public.datasets_id_seq
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -385,14 +371,14 @@ CREATE SEQUENCE datasets_id_seq
 -- Name: datasets_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
-ALTER SEQUENCE datasets_id_seq OWNED BY datasets.id;
+ALTER SEQUENCE public.datasets_id_seq OWNED BY public.datasets.id;
 
 
 --
 -- Name: permissions; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE permissions (
+CREATE TABLE public.permissions (
     id integer NOT NULL,
     creator_id integer NOT NULL,
     level character varying NOT NULL,
@@ -403,7 +389,7 @@ CREATE TABLE permissions (
     updated_at timestamp without time zone,
     allow_logged_in boolean DEFAULT false NOT NULL,
     allow_anonymous boolean DEFAULT false NOT NULL,
-    CONSTRAINT permissions_exclusive_cols CHECK ((((((user_id IS NOT NULL) AND (NOT allow_logged_in)) AND (NOT allow_anonymous)) OR (((user_id IS NULL) AND allow_logged_in) AND (NOT allow_anonymous))) OR (((user_id IS NULL) AND (NOT allow_logged_in)) AND allow_anonymous)))
+    CONSTRAINT permissions_exclusive_cols CHECK ((((user_id IS NOT NULL) AND (NOT allow_logged_in) AND (NOT allow_anonymous)) OR ((user_id IS NULL) AND allow_logged_in AND (NOT allow_anonymous)) OR ((user_id IS NULL) AND (NOT allow_logged_in) AND allow_anonymous)))
 );
 
 
@@ -411,7 +397,7 @@ CREATE TABLE permissions (
 -- Name: permissions_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
-CREATE SEQUENCE permissions_id_seq
+CREATE SEQUENCE public.permissions_id_seq
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -423,14 +409,14 @@ CREATE SEQUENCE permissions_id_seq
 -- Name: permissions_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
-ALTER SEQUENCE permissions_id_seq OWNED BY permissions.id;
+ALTER SEQUENCE public.permissions_id_seq OWNED BY public.permissions.id;
 
 
 --
 -- Name: progress_events; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE progress_events (
+CREATE TABLE public.progress_events (
     id integer NOT NULL,
     creator_id integer,
     dataset_item_id integer,
@@ -443,7 +429,7 @@ CREATE TABLE progress_events (
 -- Name: progress_events_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
-CREATE SEQUENCE progress_events_id_seq
+CREATE SEQUENCE public.progress_events_id_seq
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -455,14 +441,14 @@ CREATE SEQUENCE progress_events_id_seq
 -- Name: progress_events_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
-ALTER SEQUENCE progress_events_id_seq OWNED BY progress_events.id;
+ALTER SEQUENCE public.progress_events_id_seq OWNED BY public.progress_events.id;
 
 
 --
 -- Name: projects; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE projects (
+CREATE TABLE public.projects (
     id integer NOT NULL,
     name character varying NOT NULL,
     description text,
@@ -485,7 +471,7 @@ CREATE TABLE projects (
 -- Name: projects_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
-CREATE SEQUENCE projects_id_seq
+CREATE SEQUENCE public.projects_id_seq
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -497,14 +483,14 @@ CREATE SEQUENCE projects_id_seq
 -- Name: projects_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
-ALTER SEQUENCE projects_id_seq OWNED BY projects.id;
+ALTER SEQUENCE public.projects_id_seq OWNED BY public.projects.id;
 
 
 --
 -- Name: projects_saved_searches; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE projects_saved_searches (
+CREATE TABLE public.projects_saved_searches (
     project_id integer NOT NULL,
     saved_search_id integer NOT NULL
 );
@@ -514,17 +500,95 @@ CREATE TABLE projects_saved_searches (
 -- Name: projects_sites; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE projects_sites (
+CREATE TABLE public.projects_sites (
     project_id integer NOT NULL,
     site_id integer NOT NULL
 );
 
 
 --
+-- Name: questions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.questions (
+    id integer NOT NULL,
+    creator_id integer,
+    updater_id integer,
+    text text,
+    data text,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL
+);
+
+
+--
+-- Name: questions_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.questions_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: questions_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.questions_id_seq OWNED BY public.questions.id;
+
+
+--
+-- Name: questions_studies; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.questions_studies (
+    question_id integer NOT NULL,
+    study_id integer NOT NULL
+);
+
+
+--
+-- Name: responses; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.responses (
+    id integer NOT NULL,
+    creator_id integer,
+    dataset_item_id integer,
+    question_id integer,
+    study_id integer,
+    created_at timestamp without time zone,
+    data text
+);
+
+
+--
+-- Name: responses_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.responses_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: responses_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.responses_id_seq OWNED BY public.responses.id;
+
+
+--
 -- Name: saved_searches; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE saved_searches (
+CREATE TABLE public.saved_searches (
     id integer NOT NULL,
     name character varying NOT NULL,
     description text,
@@ -540,7 +604,7 @@ CREATE TABLE saved_searches (
 -- Name: saved_searches_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
-CREATE SEQUENCE saved_searches_id_seq
+CREATE SEQUENCE public.saved_searches_id_seq
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -552,14 +616,14 @@ CREATE SEQUENCE saved_searches_id_seq
 -- Name: saved_searches_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
-ALTER SEQUENCE saved_searches_id_seq OWNED BY saved_searches.id;
+ALTER SEQUENCE public.saved_searches_id_seq OWNED BY public.saved_searches.id;
 
 
 --
 -- Name: schema_migrations; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE schema_migrations (
+CREATE TABLE public.schema_migrations (
     version character varying NOT NULL
 );
 
@@ -568,7 +632,7 @@ CREATE TABLE schema_migrations (
 -- Name: scripts; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE scripts (
+CREATE TABLE public.scripts (
     id integer NOT NULL,
     name character varying NOT NULL,
     description character varying,
@@ -589,7 +653,7 @@ CREATE TABLE scripts (
 -- Name: scripts_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
-CREATE SEQUENCE scripts_id_seq
+CREATE SEQUENCE public.scripts_id_seq
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -601,14 +665,14 @@ CREATE SEQUENCE scripts_id_seq
 -- Name: scripts_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
-ALTER SEQUENCE scripts_id_seq OWNED BY scripts.id;
+ALTER SEQUENCE public.scripts_id_seq OWNED BY public.scripts.id;
 
 
 --
 -- Name: sites; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE sites (
+CREATE TABLE public.sites (
     id integer NOT NULL,
     name character varying NOT NULL,
     longitude numeric(9,6),
@@ -634,7 +698,7 @@ CREATE TABLE sites (
 -- Name: sites_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
-CREATE SEQUENCE sites_id_seq
+CREATE SEQUENCE public.sites_id_seq
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -646,14 +710,48 @@ CREATE SEQUENCE sites_id_seq
 -- Name: sites_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
-ALTER SEQUENCE sites_id_seq OWNED BY sites.id;
+ALTER SEQUENCE public.sites_id_seq OWNED BY public.sites.id;
+
+
+--
+-- Name: studies; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.studies (
+    id integer NOT NULL,
+    creator_id integer,
+    updater_id integer,
+    dataset_id integer,
+    name character varying,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL
+);
+
+
+--
+-- Name: studies_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.studies_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: studies_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.studies_id_seq OWNED BY public.studies.id;
 
 
 --
 -- Name: tag_groups; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE tag_groups (
+CREATE TABLE public.tag_groups (
     id integer NOT NULL,
     group_identifier character varying(255) NOT NULL,
     created_at timestamp without time zone NOT NULL,
@@ -666,7 +764,7 @@ CREATE TABLE tag_groups (
 -- Name: tag_groups_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
-CREATE SEQUENCE tag_groups_id_seq
+CREATE SEQUENCE public.tag_groups_id_seq
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -678,14 +776,14 @@ CREATE SEQUENCE tag_groups_id_seq
 -- Name: tag_groups_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
-ALTER SEQUENCE tag_groups_id_seq OWNED BY tag_groups.id;
+ALTER SEQUENCE public.tag_groups_id_seq OWNED BY public.tag_groups.id;
 
 
 --
 -- Name: tags; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE tags (
+CREATE TABLE public.tags (
     id integer NOT NULL,
     text character varying NOT NULL,
     is_taxanomic boolean DEFAULT false NOT NULL,
@@ -703,7 +801,7 @@ CREATE TABLE tags (
 -- Name: tags_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
-CREATE SEQUENCE tags_id_seq
+CREATE SEQUENCE public.tags_id_seq
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -715,14 +813,14 @@ CREATE SEQUENCE tags_id_seq
 -- Name: tags_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
-ALTER SEQUENCE tags_id_seq OWNED BY tags.id;
+ALTER SEQUENCE public.tags_id_seq OWNED BY public.tags.id;
 
 
 --
 -- Name: users; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE users (
+CREATE TABLE public.users (
     id integer NOT NULL,
     email character varying NOT NULL,
     user_name character varying NOT NULL,
@@ -762,7 +860,7 @@ CREATE TABLE users (
 -- Name: users_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
-CREATE SEQUENCE users_id_seq
+CREATE SEQUENCE public.users_id_seq
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -774,140 +872,161 @@ CREATE SEQUENCE users_id_seq
 -- Name: users_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
-ALTER SEQUENCE users_id_seq OWNED BY users.id;
+ALTER SEQUENCE public.users_id_seq OWNED BY public.users.id;
 
 
 --
 -- Name: analysis_jobs id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY analysis_jobs ALTER COLUMN id SET DEFAULT nextval('analysis_jobs_id_seq'::regclass);
+ALTER TABLE ONLY public.analysis_jobs ALTER COLUMN id SET DEFAULT nextval('public.analysis_jobs_id_seq'::regclass);
 
 
 --
 -- Name: analysis_jobs_items id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY analysis_jobs_items ALTER COLUMN id SET DEFAULT nextval('analysis_jobs_items_id_seq'::regclass);
+ALTER TABLE ONLY public.analysis_jobs_items ALTER COLUMN id SET DEFAULT nextval('public.analysis_jobs_items_id_seq'::regclass);
 
 
 --
 -- Name: audio_event_comments id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY audio_event_comments ALTER COLUMN id SET DEFAULT nextval('audio_event_comments_id_seq'::regclass);
+ALTER TABLE ONLY public.audio_event_comments ALTER COLUMN id SET DEFAULT nextval('public.audio_event_comments_id_seq'::regclass);
 
 
 --
 -- Name: audio_events id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY audio_events ALTER COLUMN id SET DEFAULT nextval('audio_events_id_seq'::regclass);
+ALTER TABLE ONLY public.audio_events ALTER COLUMN id SET DEFAULT nextval('public.audio_events_id_seq'::regclass);
 
 
 --
 -- Name: audio_events_tags id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY audio_events_tags ALTER COLUMN id SET DEFAULT nextval('audio_events_tags_id_seq'::regclass);
+ALTER TABLE ONLY public.audio_events_tags ALTER COLUMN id SET DEFAULT nextval('public.audio_events_tags_id_seq'::regclass);
 
 
 --
 -- Name: audio_recordings id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY audio_recordings ALTER COLUMN id SET DEFAULT nextval('audio_recordings_id_seq'::regclass);
+ALTER TABLE ONLY public.audio_recordings ALTER COLUMN id SET DEFAULT nextval('public.audio_recordings_id_seq'::regclass);
 
 
 --
 -- Name: bookmarks id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY bookmarks ALTER COLUMN id SET DEFAULT nextval('bookmarks_id_seq'::regclass);
+ALTER TABLE ONLY public.bookmarks ALTER COLUMN id SET DEFAULT nextval('public.bookmarks_id_seq'::regclass);
 
 
 --
 -- Name: dataset_items id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY dataset_items ALTER COLUMN id SET DEFAULT nextval('dataset_items_id_seq'::regclass);
+ALTER TABLE ONLY public.dataset_items ALTER COLUMN id SET DEFAULT nextval('public.dataset_items_id_seq'::regclass);
 
 
 --
 -- Name: datasets id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY datasets ALTER COLUMN id SET DEFAULT nextval('datasets_id_seq'::regclass);
+ALTER TABLE ONLY public.datasets ALTER COLUMN id SET DEFAULT nextval('public.datasets_id_seq'::regclass);
 
 
 --
 -- Name: permissions id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY permissions ALTER COLUMN id SET DEFAULT nextval('permissions_id_seq'::regclass);
+ALTER TABLE ONLY public.permissions ALTER COLUMN id SET DEFAULT nextval('public.permissions_id_seq'::regclass);
 
 
 --
 -- Name: progress_events id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY progress_events ALTER COLUMN id SET DEFAULT nextval('progress_events_id_seq'::regclass);
+ALTER TABLE ONLY public.progress_events ALTER COLUMN id SET DEFAULT nextval('public.progress_events_id_seq'::regclass);
 
 
 --
 -- Name: projects id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY projects ALTER COLUMN id SET DEFAULT nextval('projects_id_seq'::regclass);
+ALTER TABLE ONLY public.projects ALTER COLUMN id SET DEFAULT nextval('public.projects_id_seq'::regclass);
+
+
+--
+-- Name: questions id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.questions ALTER COLUMN id SET DEFAULT nextval('public.questions_id_seq'::regclass);
+
+
+--
+-- Name: responses id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.responses ALTER COLUMN id SET DEFAULT nextval('public.responses_id_seq'::regclass);
 
 
 --
 -- Name: saved_searches id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY saved_searches ALTER COLUMN id SET DEFAULT nextval('saved_searches_id_seq'::regclass);
+ALTER TABLE ONLY public.saved_searches ALTER COLUMN id SET DEFAULT nextval('public.saved_searches_id_seq'::regclass);
 
 
 --
 -- Name: scripts id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY scripts ALTER COLUMN id SET DEFAULT nextval('scripts_id_seq'::regclass);
+ALTER TABLE ONLY public.scripts ALTER COLUMN id SET DEFAULT nextval('public.scripts_id_seq'::regclass);
 
 
 --
 -- Name: sites id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY sites ALTER COLUMN id SET DEFAULT nextval('sites_id_seq'::regclass);
+ALTER TABLE ONLY public.sites ALTER COLUMN id SET DEFAULT nextval('public.sites_id_seq'::regclass);
+
+
+--
+-- Name: studies id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.studies ALTER COLUMN id SET DEFAULT nextval('public.studies_id_seq'::regclass);
 
 
 --
 -- Name: tag_groups id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY tag_groups ALTER COLUMN id SET DEFAULT nextval('tag_groups_id_seq'::regclass);
+ALTER TABLE ONLY public.tag_groups ALTER COLUMN id SET DEFAULT nextval('public.tag_groups_id_seq'::regclass);
 
 
 --
 -- Name: tags id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY tags ALTER COLUMN id SET DEFAULT nextval('tags_id_seq'::regclass);
+ALTER TABLE ONLY public.tags ALTER COLUMN id SET DEFAULT nextval('public.tags_id_seq'::regclass);
 
 
 --
 -- Name: users id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY users ALTER COLUMN id SET DEFAULT nextval('users_id_seq'::regclass);
+ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_id_seq'::regclass);
 
 
 --
 -- Name: analysis_jobs_items analysis_jobs_items_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY analysis_jobs_items
+ALTER TABLE ONLY public.analysis_jobs_items
     ADD CONSTRAINT analysis_jobs_items_pkey PRIMARY KEY (id);
 
 
@@ -915,7 +1034,7 @@ ALTER TABLE ONLY analysis_jobs_items
 -- Name: analysis_jobs analysis_jobs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY analysis_jobs
+ALTER TABLE ONLY public.analysis_jobs
     ADD CONSTRAINT analysis_jobs_pkey PRIMARY KEY (id);
 
 
@@ -923,7 +1042,7 @@ ALTER TABLE ONLY analysis_jobs
 -- Name: audio_event_comments audio_event_comments_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY audio_event_comments
+ALTER TABLE ONLY public.audio_event_comments
     ADD CONSTRAINT audio_event_comments_pkey PRIMARY KEY (id);
 
 
@@ -931,7 +1050,7 @@ ALTER TABLE ONLY audio_event_comments
 -- Name: audio_events audio_events_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY audio_events
+ALTER TABLE ONLY public.audio_events
     ADD CONSTRAINT audio_events_pkey PRIMARY KEY (id);
 
 
@@ -939,7 +1058,7 @@ ALTER TABLE ONLY audio_events
 -- Name: audio_events_tags audio_events_tags_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY audio_events_tags
+ALTER TABLE ONLY public.audio_events_tags
     ADD CONSTRAINT audio_events_tags_pkey PRIMARY KEY (id);
 
 
@@ -947,7 +1066,7 @@ ALTER TABLE ONLY audio_events_tags
 -- Name: audio_recordings audio_recordings_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY audio_recordings
+ALTER TABLE ONLY public.audio_recordings
     ADD CONSTRAINT audio_recordings_pkey PRIMARY KEY (id);
 
 
@@ -955,7 +1074,7 @@ ALTER TABLE ONLY audio_recordings
 -- Name: bookmarks bookmarks_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY bookmarks
+ALTER TABLE ONLY public.bookmarks
     ADD CONSTRAINT bookmarks_pkey PRIMARY KEY (id);
 
 
@@ -963,7 +1082,7 @@ ALTER TABLE ONLY bookmarks
 -- Name: dataset_items dataset_items_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY dataset_items
+ALTER TABLE ONLY public.dataset_items
     ADD CONSTRAINT dataset_items_pkey PRIMARY KEY (id);
 
 
@@ -971,7 +1090,7 @@ ALTER TABLE ONLY dataset_items
 -- Name: datasets datasets_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY datasets
+ALTER TABLE ONLY public.datasets
     ADD CONSTRAINT datasets_pkey PRIMARY KEY (id);
 
 
@@ -979,7 +1098,7 @@ ALTER TABLE ONLY datasets
 -- Name: permissions permissions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY permissions
+ALTER TABLE ONLY public.permissions
     ADD CONSTRAINT permissions_pkey PRIMARY KEY (id);
 
 
@@ -987,7 +1106,7 @@ ALTER TABLE ONLY permissions
 -- Name: progress_events progress_events_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY progress_events
+ALTER TABLE ONLY public.progress_events
     ADD CONSTRAINT progress_events_pkey PRIMARY KEY (id);
 
 
@@ -995,15 +1114,31 @@ ALTER TABLE ONLY progress_events
 -- Name: projects projects_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY projects
+ALTER TABLE ONLY public.projects
     ADD CONSTRAINT projects_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: questions questions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.questions
+    ADD CONSTRAINT questions_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: responses responses_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.responses
+    ADD CONSTRAINT responses_pkey PRIMARY KEY (id);
 
 
 --
 -- Name: saved_searches saved_searches_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY saved_searches
+ALTER TABLE ONLY public.saved_searches
     ADD CONSTRAINT saved_searches_pkey PRIMARY KEY (id);
 
 
@@ -1011,7 +1146,7 @@ ALTER TABLE ONLY saved_searches
 -- Name: scripts scripts_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY scripts
+ALTER TABLE ONLY public.scripts
     ADD CONSTRAINT scripts_pkey PRIMARY KEY (id);
 
 
@@ -1019,15 +1154,23 @@ ALTER TABLE ONLY scripts
 -- Name: sites sites_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY sites
+ALTER TABLE ONLY public.sites
     ADD CONSTRAINT sites_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: studies studies_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.studies
+    ADD CONSTRAINT studies_pkey PRIMARY KEY (id);
 
 
 --
 -- Name: tag_groups tag_groups_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY tag_groups
+ALTER TABLE ONLY public.tag_groups
     ADD CONSTRAINT tag_groups_pkey PRIMARY KEY (id);
 
 
@@ -1035,7 +1178,7 @@ ALTER TABLE ONLY tag_groups
 -- Name: tags tags_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY tags
+ALTER TABLE ONLY public.tags
     ADD CONSTRAINT tags_pkey PRIMARY KEY (id);
 
 
@@ -1043,7 +1186,7 @@ ALTER TABLE ONLY tags
 -- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY users
+ALTER TABLE ONLY public.users
     ADD CONSTRAINT users_pkey PRIMARY KEY (id);
 
 
@@ -1051,959 +1194,1047 @@ ALTER TABLE ONLY users
 -- Name: analysis_jobs_name_uidx; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX analysis_jobs_name_uidx ON analysis_jobs USING btree (name, creator_id);
+CREATE UNIQUE INDEX analysis_jobs_name_uidx ON public.analysis_jobs USING btree (name, creator_id);
 
 
 --
 -- Name: audio_recordings_created_updated_at; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX audio_recordings_created_updated_at ON audio_recordings USING btree (created_at, updated_at);
+CREATE INDEX audio_recordings_created_updated_at ON public.audio_recordings USING btree (created_at, updated_at);
 
 
 --
 -- Name: audio_recordings_icase_file_hash_id_idx; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX audio_recordings_icase_file_hash_id_idx ON audio_recordings USING btree (lower((file_hash)::text), id);
+CREATE INDEX audio_recordings_icase_file_hash_id_idx ON public.audio_recordings USING btree (lower((file_hash)::text), id);
 
 
 --
 -- Name: audio_recordings_icase_file_hash_idx; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX audio_recordings_icase_file_hash_idx ON audio_recordings USING btree (lower((file_hash)::text));
+CREATE INDEX audio_recordings_icase_file_hash_idx ON public.audio_recordings USING btree (lower((file_hash)::text));
 
 
 --
 -- Name: audio_recordings_icase_uuid_id_idx; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX audio_recordings_icase_uuid_id_idx ON audio_recordings USING btree (lower((uuid)::text), id);
+CREATE INDEX audio_recordings_icase_uuid_id_idx ON public.audio_recordings USING btree (lower((uuid)::text), id);
 
 
 --
 -- Name: audio_recordings_icase_uuid_idx; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX audio_recordings_icase_uuid_idx ON audio_recordings USING btree (lower((uuid)::text));
+CREATE INDEX audio_recordings_icase_uuid_idx ON public.audio_recordings USING btree (lower((uuid)::text));
 
 
 --
 -- Name: audio_recordings_uuid_uidx; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX audio_recordings_uuid_uidx ON audio_recordings USING btree (uuid);
+CREATE UNIQUE INDEX audio_recordings_uuid_uidx ON public.audio_recordings USING btree (uuid);
 
 
 --
 -- Name: bookmarks_name_creator_id_uidx; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX bookmarks_name_creator_id_uidx ON bookmarks USING btree (name, creator_id);
+CREATE UNIQUE INDEX bookmarks_name_creator_id_uidx ON public.bookmarks USING btree (name, creator_id);
 
 
 --
 -- Name: dataset_items_idx; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX dataset_items_idx ON dataset_items USING btree (start_time_seconds, end_time_seconds);
+CREATE INDEX dataset_items_idx ON public.dataset_items USING btree (start_time_seconds, end_time_seconds);
 
 
 --
 -- Name: index_analysis_jobs_items_on_analysis_job_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_analysis_jobs_items_on_analysis_job_id ON analysis_jobs_items USING btree (analysis_job_id);
+CREATE INDEX index_analysis_jobs_items_on_analysis_job_id ON public.analysis_jobs_items USING btree (analysis_job_id);
 
 
 --
 -- Name: index_analysis_jobs_items_on_audio_recording_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_analysis_jobs_items_on_audio_recording_id ON analysis_jobs_items USING btree (audio_recording_id);
+CREATE INDEX index_analysis_jobs_items_on_audio_recording_id ON public.analysis_jobs_items USING btree (audio_recording_id);
 
 
 --
 -- Name: index_analysis_jobs_on_creator_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_analysis_jobs_on_creator_id ON analysis_jobs USING btree (creator_id);
+CREATE INDEX index_analysis_jobs_on_creator_id ON public.analysis_jobs USING btree (creator_id);
 
 
 --
 -- Name: index_analysis_jobs_on_deleter_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_analysis_jobs_on_deleter_id ON analysis_jobs USING btree (deleter_id);
+CREATE INDEX index_analysis_jobs_on_deleter_id ON public.analysis_jobs USING btree (deleter_id);
 
 
 --
 -- Name: index_analysis_jobs_on_saved_search_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_analysis_jobs_on_saved_search_id ON analysis_jobs USING btree (saved_search_id);
+CREATE INDEX index_analysis_jobs_on_saved_search_id ON public.analysis_jobs USING btree (saved_search_id);
 
 
 --
 -- Name: index_analysis_jobs_on_script_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_analysis_jobs_on_script_id ON analysis_jobs USING btree (script_id);
+CREATE INDEX index_analysis_jobs_on_script_id ON public.analysis_jobs USING btree (script_id);
 
 
 --
 -- Name: index_analysis_jobs_on_updater_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_analysis_jobs_on_updater_id ON analysis_jobs USING btree (updater_id);
+CREATE INDEX index_analysis_jobs_on_updater_id ON public.analysis_jobs USING btree (updater_id);
 
 
 --
 -- Name: index_audio_event_comments_on_audio_event_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_audio_event_comments_on_audio_event_id ON audio_event_comments USING btree (audio_event_id);
+CREATE INDEX index_audio_event_comments_on_audio_event_id ON public.audio_event_comments USING btree (audio_event_id);
 
 
 --
 -- Name: index_audio_event_comments_on_creator_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_audio_event_comments_on_creator_id ON audio_event_comments USING btree (creator_id);
+CREATE INDEX index_audio_event_comments_on_creator_id ON public.audio_event_comments USING btree (creator_id);
 
 
 --
 -- Name: index_audio_event_comments_on_deleter_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_audio_event_comments_on_deleter_id ON audio_event_comments USING btree (deleter_id);
+CREATE INDEX index_audio_event_comments_on_deleter_id ON public.audio_event_comments USING btree (deleter_id);
 
 
 --
 -- Name: index_audio_event_comments_on_flagger_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_audio_event_comments_on_flagger_id ON audio_event_comments USING btree (flagger_id);
+CREATE INDEX index_audio_event_comments_on_flagger_id ON public.audio_event_comments USING btree (flagger_id);
 
 
 --
 -- Name: index_audio_event_comments_on_updater_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_audio_event_comments_on_updater_id ON audio_event_comments USING btree (updater_id);
+CREATE INDEX index_audio_event_comments_on_updater_id ON public.audio_event_comments USING btree (updater_id);
 
 
 --
 -- Name: index_audio_events_on_audio_recording_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_audio_events_on_audio_recording_id ON audio_events USING btree (audio_recording_id);
+CREATE INDEX index_audio_events_on_audio_recording_id ON public.audio_events USING btree (audio_recording_id);
 
 
 --
 -- Name: index_audio_events_on_creator_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_audio_events_on_creator_id ON audio_events USING btree (creator_id);
+CREATE INDEX index_audio_events_on_creator_id ON public.audio_events USING btree (creator_id);
 
 
 --
 -- Name: index_audio_events_on_deleter_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_audio_events_on_deleter_id ON audio_events USING btree (deleter_id);
+CREATE INDEX index_audio_events_on_deleter_id ON public.audio_events USING btree (deleter_id);
 
 
 --
 -- Name: index_audio_events_on_updater_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_audio_events_on_updater_id ON audio_events USING btree (updater_id);
+CREATE INDEX index_audio_events_on_updater_id ON public.audio_events USING btree (updater_id);
 
 
 --
 -- Name: index_audio_events_tags_on_audio_event_id_and_tag_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX index_audio_events_tags_on_audio_event_id_and_tag_id ON audio_events_tags USING btree (audio_event_id, tag_id);
+CREATE UNIQUE INDEX index_audio_events_tags_on_audio_event_id_and_tag_id ON public.audio_events_tags USING btree (audio_event_id, tag_id);
 
 
 --
 -- Name: index_audio_events_tags_on_creator_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_audio_events_tags_on_creator_id ON audio_events_tags USING btree (creator_id);
+CREATE INDEX index_audio_events_tags_on_creator_id ON public.audio_events_tags USING btree (creator_id);
 
 
 --
 -- Name: index_audio_events_tags_on_updater_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_audio_events_tags_on_updater_id ON audio_events_tags USING btree (updater_id);
+CREATE INDEX index_audio_events_tags_on_updater_id ON public.audio_events_tags USING btree (updater_id);
 
 
 --
 -- Name: index_audio_recordings_on_creator_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_audio_recordings_on_creator_id ON audio_recordings USING btree (creator_id);
+CREATE INDEX index_audio_recordings_on_creator_id ON public.audio_recordings USING btree (creator_id);
 
 
 --
 -- Name: index_audio_recordings_on_deleter_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_audio_recordings_on_deleter_id ON audio_recordings USING btree (deleter_id);
+CREATE INDEX index_audio_recordings_on_deleter_id ON public.audio_recordings USING btree (deleter_id);
 
 
 --
 -- Name: index_audio_recordings_on_site_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_audio_recordings_on_site_id ON audio_recordings USING btree (site_id);
+CREATE INDEX index_audio_recordings_on_site_id ON public.audio_recordings USING btree (site_id);
 
 
 --
 -- Name: index_audio_recordings_on_updater_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_audio_recordings_on_updater_id ON audio_recordings USING btree (updater_id);
+CREATE INDEX index_audio_recordings_on_updater_id ON public.audio_recordings USING btree (updater_id);
 
 
 --
 -- Name: index_audio_recordings_on_uploader_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_audio_recordings_on_uploader_id ON audio_recordings USING btree (uploader_id);
+CREATE INDEX index_audio_recordings_on_uploader_id ON public.audio_recordings USING btree (uploader_id);
 
 
 --
 -- Name: index_bookmarks_on_audio_recording_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_bookmarks_on_audio_recording_id ON bookmarks USING btree (audio_recording_id);
+CREATE INDEX index_bookmarks_on_audio_recording_id ON public.bookmarks USING btree (audio_recording_id);
 
 
 --
 -- Name: index_bookmarks_on_creator_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_bookmarks_on_creator_id ON bookmarks USING btree (creator_id);
+CREATE INDEX index_bookmarks_on_creator_id ON public.bookmarks USING btree (creator_id);
 
 
 --
 -- Name: index_bookmarks_on_updater_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_bookmarks_on_updater_id ON bookmarks USING btree (updater_id);
+CREATE INDEX index_bookmarks_on_updater_id ON public.bookmarks USING btree (updater_id);
 
 
 --
 -- Name: index_permissions_on_creator_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_permissions_on_creator_id ON permissions USING btree (creator_id);
+CREATE INDEX index_permissions_on_creator_id ON public.permissions USING btree (creator_id);
 
 
 --
 -- Name: index_permissions_on_project_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_permissions_on_project_id ON permissions USING btree (project_id);
+CREATE INDEX index_permissions_on_project_id ON public.permissions USING btree (project_id);
 
 
 --
 -- Name: index_permissions_on_updater_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_permissions_on_updater_id ON permissions USING btree (updater_id);
+CREATE INDEX index_permissions_on_updater_id ON public.permissions USING btree (updater_id);
 
 
 --
 -- Name: index_permissions_on_user_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_permissions_on_user_id ON permissions USING btree (user_id);
+CREATE INDEX index_permissions_on_user_id ON public.permissions USING btree (user_id);
 
 
 --
 -- Name: index_projects_on_creator_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_projects_on_creator_id ON projects USING btree (creator_id);
+CREATE INDEX index_projects_on_creator_id ON public.projects USING btree (creator_id);
 
 
 --
 -- Name: index_projects_on_deleter_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_projects_on_deleter_id ON projects USING btree (deleter_id);
+CREATE INDEX index_projects_on_deleter_id ON public.projects USING btree (deleter_id);
 
 
 --
 -- Name: index_projects_on_updater_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_projects_on_updater_id ON projects USING btree (updater_id);
+CREATE INDEX index_projects_on_updater_id ON public.projects USING btree (updater_id);
 
 
 --
 -- Name: index_projects_saved_searches_on_project_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_projects_saved_searches_on_project_id ON projects_saved_searches USING btree (project_id);
+CREATE INDEX index_projects_saved_searches_on_project_id ON public.projects_saved_searches USING btree (project_id);
 
 
 --
 -- Name: index_projects_saved_searches_on_project_id_and_saved_search_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_projects_saved_searches_on_project_id_and_saved_search_id ON projects_saved_searches USING btree (project_id, saved_search_id);
+CREATE INDEX index_projects_saved_searches_on_project_id_and_saved_search_id ON public.projects_saved_searches USING btree (project_id, saved_search_id);
 
 
 --
 -- Name: index_projects_saved_searches_on_saved_search_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_projects_saved_searches_on_saved_search_id ON projects_saved_searches USING btree (saved_search_id);
+CREATE INDEX index_projects_saved_searches_on_saved_search_id ON public.projects_saved_searches USING btree (saved_search_id);
 
 
 --
 -- Name: index_projects_sites_on_project_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_projects_sites_on_project_id ON projects_sites USING btree (project_id);
+CREATE INDEX index_projects_sites_on_project_id ON public.projects_sites USING btree (project_id);
 
 
 --
 -- Name: index_projects_sites_on_project_id_and_site_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_projects_sites_on_project_id_and_site_id ON projects_sites USING btree (project_id, site_id);
+CREATE INDEX index_projects_sites_on_project_id_and_site_id ON public.projects_sites USING btree (project_id, site_id);
 
 
 --
 -- Name: index_projects_sites_on_site_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_projects_sites_on_site_id ON projects_sites USING btree (site_id);
+CREATE INDEX index_projects_sites_on_site_id ON public.projects_sites USING btree (site_id);
 
 
 --
 -- Name: index_saved_searches_on_creator_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_saved_searches_on_creator_id ON saved_searches USING btree (creator_id);
+CREATE INDEX index_saved_searches_on_creator_id ON public.saved_searches USING btree (creator_id);
 
 
 --
 -- Name: index_saved_searches_on_deleter_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_saved_searches_on_deleter_id ON saved_searches USING btree (deleter_id);
+CREATE INDEX index_saved_searches_on_deleter_id ON public.saved_searches USING btree (deleter_id);
 
 
 --
 -- Name: index_scripts_on_creator_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_scripts_on_creator_id ON scripts USING btree (creator_id);
+CREATE INDEX index_scripts_on_creator_id ON public.scripts USING btree (creator_id);
 
 
 --
 -- Name: index_scripts_on_group_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_scripts_on_group_id ON scripts USING btree (group_id);
+CREATE INDEX index_scripts_on_group_id ON public.scripts USING btree (group_id);
 
 
 --
 -- Name: index_sites_on_creator_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_sites_on_creator_id ON sites USING btree (creator_id);
+CREATE INDEX index_sites_on_creator_id ON public.sites USING btree (creator_id);
 
 
 --
 -- Name: index_sites_on_deleter_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_sites_on_deleter_id ON sites USING btree (deleter_id);
+CREATE INDEX index_sites_on_deleter_id ON public.sites USING btree (deleter_id);
 
 
 --
 -- Name: index_sites_on_updater_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_sites_on_updater_id ON sites USING btree (updater_id);
+CREATE INDEX index_sites_on_updater_id ON public.sites USING btree (updater_id);
 
 
 --
 -- Name: index_tag_groups_on_tag_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_tag_groups_on_tag_id ON tag_groups USING btree (tag_id);
+CREATE INDEX index_tag_groups_on_tag_id ON public.tag_groups USING btree (tag_id);
 
 
 --
 -- Name: index_tags_on_creator_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_tags_on_creator_id ON tags USING btree (creator_id);
+CREATE INDEX index_tags_on_creator_id ON public.tags USING btree (creator_id);
 
 
 --
 -- Name: index_tags_on_updater_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_tags_on_updater_id ON tags USING btree (updater_id);
+CREATE INDEX index_tags_on_updater_id ON public.tags USING btree (updater_id);
 
 
 --
 -- Name: index_users_on_authentication_token; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX index_users_on_authentication_token ON users USING btree (authentication_token);
+CREATE UNIQUE INDEX index_users_on_authentication_token ON public.users USING btree (authentication_token);
 
 
 --
 -- Name: index_users_on_confirmation_token; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX index_users_on_confirmation_token ON users USING btree (confirmation_token);
+CREATE UNIQUE INDEX index_users_on_confirmation_token ON public.users USING btree (confirmation_token);
 
 
 --
 -- Name: index_users_on_email; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX index_users_on_email ON users USING btree (email);
+CREATE UNIQUE INDEX index_users_on_email ON public.users USING btree (email);
 
 
 --
 -- Name: permissions_project_allow_anonymous_uidx; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX permissions_project_allow_anonymous_uidx ON permissions USING btree (project_id, allow_anonymous) WHERE (allow_anonymous IS TRUE);
+CREATE UNIQUE INDEX permissions_project_allow_anonymous_uidx ON public.permissions USING btree (project_id, allow_anonymous) WHERE (allow_anonymous IS TRUE);
 
 
 --
 -- Name: permissions_project_allow_logged_in_uidx; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX permissions_project_allow_logged_in_uidx ON permissions USING btree (project_id, allow_logged_in) WHERE (allow_logged_in IS TRUE);
+CREATE UNIQUE INDEX permissions_project_allow_logged_in_uidx ON public.permissions USING btree (project_id, allow_logged_in) WHERE (allow_logged_in IS TRUE);
 
 
 --
 -- Name: permissions_project_user_uidx; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX permissions_project_user_uidx ON permissions USING btree (project_id, user_id) WHERE (user_id IS NOT NULL);
+CREATE UNIQUE INDEX permissions_project_user_uidx ON public.permissions USING btree (project_id, user_id) WHERE (user_id IS NOT NULL);
 
 
 --
 -- Name: projects_name_uidx; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX projects_name_uidx ON projects USING btree (name);
+CREATE UNIQUE INDEX projects_name_uidx ON public.projects USING btree (name);
 
 
 --
 -- Name: queue_id_uidx; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX queue_id_uidx ON analysis_jobs_items USING btree (queue_id);
+CREATE UNIQUE INDEX queue_id_uidx ON public.analysis_jobs_items USING btree (queue_id);
 
 
 --
 -- Name: saved_searches_name_creator_id_uidx; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX saved_searches_name_creator_id_uidx ON saved_searches USING btree (name, creator_id);
+CREATE UNIQUE INDEX saved_searches_name_creator_id_uidx ON public.saved_searches USING btree (name, creator_id);
 
 
 --
 -- Name: tag_groups_uidx; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX tag_groups_uidx ON tag_groups USING btree (tag_id, group_identifier);
+CREATE UNIQUE INDEX tag_groups_uidx ON public.tag_groups USING btree (tag_id, group_identifier);
 
 
 --
 -- Name: tags_text_uidx; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX tags_text_uidx ON tags USING btree (text);
+CREATE UNIQUE INDEX tags_text_uidx ON public.tags USING btree (text);
 
 
 --
 -- Name: unique_schema_migrations; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX unique_schema_migrations ON schema_migrations USING btree (version);
+CREATE UNIQUE INDEX unique_schema_migrations ON public.schema_migrations USING btree (version);
 
 
 --
 -- Name: users_user_name_unique; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX users_user_name_unique ON users USING btree (user_name);
+CREATE UNIQUE INDEX users_user_name_unique ON public.users USING btree (user_name);
 
 
 --
 -- Name: analysis_jobs analysis_jobs_creator_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY analysis_jobs
-    ADD CONSTRAINT analysis_jobs_creator_id_fk FOREIGN KEY (creator_id) REFERENCES users(id);
+ALTER TABLE ONLY public.analysis_jobs
+    ADD CONSTRAINT analysis_jobs_creator_id_fk FOREIGN KEY (creator_id) REFERENCES public.users(id);
 
 
 --
 -- Name: analysis_jobs analysis_jobs_deleter_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY analysis_jobs
-    ADD CONSTRAINT analysis_jobs_deleter_id_fk FOREIGN KEY (deleter_id) REFERENCES users(id);
+ALTER TABLE ONLY public.analysis_jobs
+    ADD CONSTRAINT analysis_jobs_deleter_id_fk FOREIGN KEY (deleter_id) REFERENCES public.users(id);
 
 
 --
 -- Name: analysis_jobs analysis_jobs_saved_search_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY analysis_jobs
-    ADD CONSTRAINT analysis_jobs_saved_search_id_fk FOREIGN KEY (saved_search_id) REFERENCES saved_searches(id);
+ALTER TABLE ONLY public.analysis_jobs
+    ADD CONSTRAINT analysis_jobs_saved_search_id_fk FOREIGN KEY (saved_search_id) REFERENCES public.saved_searches(id);
 
 
 --
 -- Name: analysis_jobs analysis_jobs_script_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY analysis_jobs
-    ADD CONSTRAINT analysis_jobs_script_id_fk FOREIGN KEY (script_id) REFERENCES scripts(id);
+ALTER TABLE ONLY public.analysis_jobs
+    ADD CONSTRAINT analysis_jobs_script_id_fk FOREIGN KEY (script_id) REFERENCES public.scripts(id);
 
 
 --
 -- Name: analysis_jobs analysis_jobs_updater_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY analysis_jobs
-    ADD CONSTRAINT analysis_jobs_updater_id_fk FOREIGN KEY (updater_id) REFERENCES users(id);
+ALTER TABLE ONLY public.analysis_jobs
+    ADD CONSTRAINT analysis_jobs_updater_id_fk FOREIGN KEY (updater_id) REFERENCES public.users(id);
 
 
 --
 -- Name: audio_event_comments audio_event_comments_audio_event_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY audio_event_comments
-    ADD CONSTRAINT audio_event_comments_audio_event_id_fk FOREIGN KEY (audio_event_id) REFERENCES audio_events(id);
+ALTER TABLE ONLY public.audio_event_comments
+    ADD CONSTRAINT audio_event_comments_audio_event_id_fk FOREIGN KEY (audio_event_id) REFERENCES public.audio_events(id);
 
 
 --
 -- Name: audio_event_comments audio_event_comments_creator_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY audio_event_comments
-    ADD CONSTRAINT audio_event_comments_creator_id_fk FOREIGN KEY (creator_id) REFERENCES users(id);
+ALTER TABLE ONLY public.audio_event_comments
+    ADD CONSTRAINT audio_event_comments_creator_id_fk FOREIGN KEY (creator_id) REFERENCES public.users(id);
 
 
 --
 -- Name: audio_event_comments audio_event_comments_deleter_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY audio_event_comments
-    ADD CONSTRAINT audio_event_comments_deleter_id_fk FOREIGN KEY (deleter_id) REFERENCES users(id);
+ALTER TABLE ONLY public.audio_event_comments
+    ADD CONSTRAINT audio_event_comments_deleter_id_fk FOREIGN KEY (deleter_id) REFERENCES public.users(id);
 
 
 --
 -- Name: audio_event_comments audio_event_comments_flagger_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY audio_event_comments
-    ADD CONSTRAINT audio_event_comments_flagger_id_fk FOREIGN KEY (flagger_id) REFERENCES users(id);
+ALTER TABLE ONLY public.audio_event_comments
+    ADD CONSTRAINT audio_event_comments_flagger_id_fk FOREIGN KEY (flagger_id) REFERENCES public.users(id);
 
 
 --
 -- Name: audio_event_comments audio_event_comments_updater_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY audio_event_comments
-    ADD CONSTRAINT audio_event_comments_updater_id_fk FOREIGN KEY (updater_id) REFERENCES users(id);
+ALTER TABLE ONLY public.audio_event_comments
+    ADD CONSTRAINT audio_event_comments_updater_id_fk FOREIGN KEY (updater_id) REFERENCES public.users(id);
 
 
 --
 -- Name: audio_events audio_events_audio_recording_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY audio_events
-    ADD CONSTRAINT audio_events_audio_recording_id_fk FOREIGN KEY (audio_recording_id) REFERENCES audio_recordings(id);
+ALTER TABLE ONLY public.audio_events
+    ADD CONSTRAINT audio_events_audio_recording_id_fk FOREIGN KEY (audio_recording_id) REFERENCES public.audio_recordings(id);
 
 
 --
 -- Name: audio_events audio_events_creator_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY audio_events
-    ADD CONSTRAINT audio_events_creator_id_fk FOREIGN KEY (creator_id) REFERENCES users(id);
+ALTER TABLE ONLY public.audio_events
+    ADD CONSTRAINT audio_events_creator_id_fk FOREIGN KEY (creator_id) REFERENCES public.users(id);
 
 
 --
 -- Name: audio_events audio_events_deleter_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY audio_events
-    ADD CONSTRAINT audio_events_deleter_id_fk FOREIGN KEY (deleter_id) REFERENCES users(id);
+ALTER TABLE ONLY public.audio_events
+    ADD CONSTRAINT audio_events_deleter_id_fk FOREIGN KEY (deleter_id) REFERENCES public.users(id);
 
 
 --
 -- Name: audio_events_tags audio_events_tags_audio_event_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY audio_events_tags
-    ADD CONSTRAINT audio_events_tags_audio_event_id_fk FOREIGN KEY (audio_event_id) REFERENCES audio_events(id);
+ALTER TABLE ONLY public.audio_events_tags
+    ADD CONSTRAINT audio_events_tags_audio_event_id_fk FOREIGN KEY (audio_event_id) REFERENCES public.audio_events(id);
 
 
 --
 -- Name: audio_events_tags audio_events_tags_creator_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY audio_events_tags
-    ADD CONSTRAINT audio_events_tags_creator_id_fk FOREIGN KEY (creator_id) REFERENCES users(id);
+ALTER TABLE ONLY public.audio_events_tags
+    ADD CONSTRAINT audio_events_tags_creator_id_fk FOREIGN KEY (creator_id) REFERENCES public.users(id);
 
 
 --
 -- Name: audio_events_tags audio_events_tags_tag_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY audio_events_tags
-    ADD CONSTRAINT audio_events_tags_tag_id_fk FOREIGN KEY (tag_id) REFERENCES tags(id);
+ALTER TABLE ONLY public.audio_events_tags
+    ADD CONSTRAINT audio_events_tags_tag_id_fk FOREIGN KEY (tag_id) REFERENCES public.tags(id);
 
 
 --
 -- Name: audio_events_tags audio_events_tags_updater_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY audio_events_tags
-    ADD CONSTRAINT audio_events_tags_updater_id_fk FOREIGN KEY (updater_id) REFERENCES users(id);
+ALTER TABLE ONLY public.audio_events_tags
+    ADD CONSTRAINT audio_events_tags_updater_id_fk FOREIGN KEY (updater_id) REFERENCES public.users(id);
 
 
 --
 -- Name: audio_events audio_events_updater_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY audio_events
-    ADD CONSTRAINT audio_events_updater_id_fk FOREIGN KEY (updater_id) REFERENCES users(id);
+ALTER TABLE ONLY public.audio_events
+    ADD CONSTRAINT audio_events_updater_id_fk FOREIGN KEY (updater_id) REFERENCES public.users(id);
 
 
 --
 -- Name: audio_recordings audio_recordings_creator_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY audio_recordings
-    ADD CONSTRAINT audio_recordings_creator_id_fk FOREIGN KEY (creator_id) REFERENCES users(id);
+ALTER TABLE ONLY public.audio_recordings
+    ADD CONSTRAINT audio_recordings_creator_id_fk FOREIGN KEY (creator_id) REFERENCES public.users(id);
 
 
 --
 -- Name: audio_recordings audio_recordings_deleter_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY audio_recordings
-    ADD CONSTRAINT audio_recordings_deleter_id_fk FOREIGN KEY (deleter_id) REFERENCES users(id);
+ALTER TABLE ONLY public.audio_recordings
+    ADD CONSTRAINT audio_recordings_deleter_id_fk FOREIGN KEY (deleter_id) REFERENCES public.users(id);
 
 
 --
 -- Name: audio_recordings audio_recordings_site_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY audio_recordings
-    ADD CONSTRAINT audio_recordings_site_id_fk FOREIGN KEY (site_id) REFERENCES sites(id);
+ALTER TABLE ONLY public.audio_recordings
+    ADD CONSTRAINT audio_recordings_site_id_fk FOREIGN KEY (site_id) REFERENCES public.sites(id);
 
 
 --
 -- Name: audio_recordings audio_recordings_updater_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY audio_recordings
-    ADD CONSTRAINT audio_recordings_updater_id_fk FOREIGN KEY (updater_id) REFERENCES users(id);
+ALTER TABLE ONLY public.audio_recordings
+    ADD CONSTRAINT audio_recordings_updater_id_fk FOREIGN KEY (updater_id) REFERENCES public.users(id);
 
 
 --
 -- Name: audio_recordings audio_recordings_uploader_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY audio_recordings
-    ADD CONSTRAINT audio_recordings_uploader_id_fk FOREIGN KEY (uploader_id) REFERENCES users(id);
+ALTER TABLE ONLY public.audio_recordings
+    ADD CONSTRAINT audio_recordings_uploader_id_fk FOREIGN KEY (uploader_id) REFERENCES public.users(id);
 
 
 --
 -- Name: bookmarks bookmarks_audio_recording_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY bookmarks
-    ADD CONSTRAINT bookmarks_audio_recording_id_fk FOREIGN KEY (audio_recording_id) REFERENCES audio_recordings(id);
+ALTER TABLE ONLY public.bookmarks
+    ADD CONSTRAINT bookmarks_audio_recording_id_fk FOREIGN KEY (audio_recording_id) REFERENCES public.audio_recordings(id);
 
 
 --
 -- Name: bookmarks bookmarks_creator_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY bookmarks
-    ADD CONSTRAINT bookmarks_creator_id_fk FOREIGN KEY (creator_id) REFERENCES users(id);
+ALTER TABLE ONLY public.bookmarks
+    ADD CONSTRAINT bookmarks_creator_id_fk FOREIGN KEY (creator_id) REFERENCES public.users(id);
 
 
 --
 -- Name: bookmarks bookmarks_updater_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY bookmarks
-    ADD CONSTRAINT bookmarks_updater_id_fk FOREIGN KEY (updater_id) REFERENCES users(id);
+ALTER TABLE ONLY public.bookmarks
+    ADD CONSTRAINT bookmarks_updater_id_fk FOREIGN KEY (updater_id) REFERENCES public.users(id);
 
 
 --
 -- Name: progress_events fk_rails_15ea2f07e1; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY progress_events
-    ADD CONSTRAINT fk_rails_15ea2f07e1 FOREIGN KEY (dataset_item_id) REFERENCES dataset_items(id);
+ALTER TABLE ONLY public.progress_events
+    ADD CONSTRAINT fk_rails_15ea2f07e1 FOREIGN KEY (dataset_item_id) REFERENCES public.dataset_items(id);
+
+
+--
+-- Name: questions fk_rails_1b78df6070; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.questions
+    ADD CONSTRAINT fk_rails_1b78df6070 FOREIGN KEY (updater_id) REFERENCES public.users(id);
 
 
 --
 -- Name: tag_groups fk_rails_1ba11222e1; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY tag_groups
-    ADD CONSTRAINT fk_rails_1ba11222e1 FOREIGN KEY (tag_id) REFERENCES tags(id);
+ALTER TABLE ONLY public.tag_groups
+    ADD CONSTRAINT fk_rails_1ba11222e1 FOREIGN KEY (tag_id) REFERENCES public.tags(id);
+
+
+--
+-- Name: questions fk_rails_21f8d26270; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.questions
+    ADD CONSTRAINT fk_rails_21f8d26270 FOREIGN KEY (creator_id) REFERENCES public.users(id);
+
+
+--
+-- Name: responses fk_rails_325af149a3; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.responses
+    ADD CONSTRAINT fk_rails_325af149a3 FOREIGN KEY (question_id) REFERENCES public.questions(id);
+
+
+--
+-- Name: studies fk_rails_41770507e5; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.studies
+    ADD CONSTRAINT fk_rails_41770507e5 FOREIGN KEY (dataset_id) REFERENCES public.datasets(id);
+
+
+--
+-- Name: studies fk_rails_4362b81edd; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.studies
+    ADD CONSTRAINT fk_rails_4362b81edd FOREIGN KEY (updater_id) REFERENCES public.users(id);
+
+
+--
+-- Name: responses fk_rails_51009e83c9; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.responses
+    ADD CONSTRAINT fk_rails_51009e83c9 FOREIGN KEY (study_id) REFERENCES public.studies(id);
 
 
 --
 -- Name: analysis_jobs_items fk_rails_522df5cc92; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY analysis_jobs_items
-    ADD CONSTRAINT fk_rails_522df5cc92 FOREIGN KEY (audio_recording_id) REFERENCES audio_recordings(id);
+ALTER TABLE ONLY public.analysis_jobs_items
+    ADD CONSTRAINT fk_rails_522df5cc92 FOREIGN KEY (audio_recording_id) REFERENCES public.audio_recordings(id);
 
 
 --
 -- Name: dataset_items fk_rails_5bf6548424; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY dataset_items
-    ADD CONSTRAINT fk_rails_5bf6548424 FOREIGN KEY (creator_id) REFERENCES users(id);
+ALTER TABLE ONLY public.dataset_items
+    ADD CONSTRAINT fk_rails_5bf6548424 FOREIGN KEY (creator_id) REFERENCES public.users(id);
+
+
+--
+-- Name: questions_studies fk_rails_6a5ffa3b4f; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.questions_studies
+    ADD CONSTRAINT fk_rails_6a5ffa3b4f FOREIGN KEY (study_id) REFERENCES public.studies(id);
+
+
+--
+-- Name: responses fk_rails_7a62c4269f; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.responses
+    ADD CONSTRAINT fk_rails_7a62c4269f FOREIGN KEY (dataset_item_id) REFERENCES public.dataset_items(id);
 
 
 --
 -- Name: dataset_items fk_rails_81ed124069; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY dataset_items
-    ADD CONSTRAINT fk_rails_81ed124069 FOREIGN KEY (audio_recording_id) REFERENCES audio_recordings(id);
+ALTER TABLE ONLY public.dataset_items
+    ADD CONSTRAINT fk_rails_81ed124069 FOREIGN KEY (audio_recording_id) REFERENCES public.audio_recordings(id);
 
 
 --
 -- Name: analysis_jobs_items fk_rails_86f75840f2; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY analysis_jobs_items
-    ADD CONSTRAINT fk_rails_86f75840f2 FOREIGN KEY (analysis_job_id) REFERENCES analysis_jobs(id);
+ALTER TABLE ONLY public.analysis_jobs_items
+    ADD CONSTRAINT fk_rails_86f75840f2 FOREIGN KEY (analysis_job_id) REFERENCES public.analysis_jobs(id);
+
+
+--
+-- Name: responses fk_rails_a7a3c29a3c; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.responses
+    ADD CONSTRAINT fk_rails_a7a3c29a3c FOREIGN KEY (creator_id) REFERENCES public.users(id);
+
+
+--
+-- Name: studies fk_rails_a94a68aa0b; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.studies
+    ADD CONSTRAINT fk_rails_a94a68aa0b FOREIGN KEY (creator_id) REFERENCES public.users(id);
 
 
 --
 -- Name: datasets fk_rails_c2337cbe35; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY datasets
-    ADD CONSTRAINT fk_rails_c2337cbe35 FOREIGN KEY (updater_id) REFERENCES users(id);
+ALTER TABLE ONLY public.datasets
+    ADD CONSTRAINT fk_rails_c2337cbe35 FOREIGN KEY (updater_id) REFERENCES public.users(id);
+
+
+--
+-- Name: questions_studies fk_rails_c7ae81b3ab; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.questions_studies
+    ADD CONSTRAINT fk_rails_c7ae81b3ab FOREIGN KEY (question_id) REFERENCES public.questions(id);
 
 
 --
 -- Name: dataset_items fk_rails_c97bdfad35; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY dataset_items
-    ADD CONSTRAINT fk_rails_c97bdfad35 FOREIGN KEY (dataset_id) REFERENCES datasets(id);
+ALTER TABLE ONLY public.dataset_items
+    ADD CONSTRAINT fk_rails_c97bdfad35 FOREIGN KEY (dataset_id) REFERENCES public.datasets(id);
 
 
 --
 -- Name: progress_events fk_rails_cf446a18ca; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY progress_events
-    ADD CONSTRAINT fk_rails_cf446a18ca FOREIGN KEY (creator_id) REFERENCES users(id);
+ALTER TABLE ONLY public.progress_events
+    ADD CONSTRAINT fk_rails_cf446a18ca FOREIGN KEY (creator_id) REFERENCES public.users(id);
 
 
 --
 -- Name: datasets fk_rails_faaf9c0bcd; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY datasets
-    ADD CONSTRAINT fk_rails_faaf9c0bcd FOREIGN KEY (creator_id) REFERENCES users(id);
+ALTER TABLE ONLY public.datasets
+    ADD CONSTRAINT fk_rails_faaf9c0bcd FOREIGN KEY (creator_id) REFERENCES public.users(id);
 
 
 --
 -- Name: permissions permissions_creator_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY permissions
-    ADD CONSTRAINT permissions_creator_id_fk FOREIGN KEY (creator_id) REFERENCES users(id);
+ALTER TABLE ONLY public.permissions
+    ADD CONSTRAINT permissions_creator_id_fk FOREIGN KEY (creator_id) REFERENCES public.users(id);
 
 
 --
 -- Name: permissions permissions_project_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY permissions
-    ADD CONSTRAINT permissions_project_id_fk FOREIGN KEY (project_id) REFERENCES projects(id);
+ALTER TABLE ONLY public.permissions
+    ADD CONSTRAINT permissions_project_id_fk FOREIGN KEY (project_id) REFERENCES public.projects(id);
 
 
 --
 -- Name: permissions permissions_updater_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY permissions
-    ADD CONSTRAINT permissions_updater_id_fk FOREIGN KEY (updater_id) REFERENCES users(id);
+ALTER TABLE ONLY public.permissions
+    ADD CONSTRAINT permissions_updater_id_fk FOREIGN KEY (updater_id) REFERENCES public.users(id);
 
 
 --
 -- Name: permissions permissions_user_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY permissions
-    ADD CONSTRAINT permissions_user_id_fk FOREIGN KEY (user_id) REFERENCES users(id);
+ALTER TABLE ONLY public.permissions
+    ADD CONSTRAINT permissions_user_id_fk FOREIGN KEY (user_id) REFERENCES public.users(id);
 
 
 --
 -- Name: projects projects_creator_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY projects
-    ADD CONSTRAINT projects_creator_id_fk FOREIGN KEY (creator_id) REFERENCES users(id);
+ALTER TABLE ONLY public.projects
+    ADD CONSTRAINT projects_creator_id_fk FOREIGN KEY (creator_id) REFERENCES public.users(id);
 
 
 --
 -- Name: projects projects_deleter_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY projects
-    ADD CONSTRAINT projects_deleter_id_fk FOREIGN KEY (deleter_id) REFERENCES users(id);
+ALTER TABLE ONLY public.projects
+    ADD CONSTRAINT projects_deleter_id_fk FOREIGN KEY (deleter_id) REFERENCES public.users(id);
 
 
 --
 -- Name: projects_saved_searches projects_saved_searches_project_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY projects_saved_searches
-    ADD CONSTRAINT projects_saved_searches_project_id_fk FOREIGN KEY (project_id) REFERENCES projects(id);
+ALTER TABLE ONLY public.projects_saved_searches
+    ADD CONSTRAINT projects_saved_searches_project_id_fk FOREIGN KEY (project_id) REFERENCES public.projects(id);
 
 
 --
 -- Name: projects_saved_searches projects_saved_searches_saved_search_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY projects_saved_searches
-    ADD CONSTRAINT projects_saved_searches_saved_search_id_fk FOREIGN KEY (saved_search_id) REFERENCES saved_searches(id);
+ALTER TABLE ONLY public.projects_saved_searches
+    ADD CONSTRAINT projects_saved_searches_saved_search_id_fk FOREIGN KEY (saved_search_id) REFERENCES public.saved_searches(id);
 
 
 --
 -- Name: projects_sites projects_sites_project_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY projects_sites
-    ADD CONSTRAINT projects_sites_project_id_fk FOREIGN KEY (project_id) REFERENCES projects(id);
+ALTER TABLE ONLY public.projects_sites
+    ADD CONSTRAINT projects_sites_project_id_fk FOREIGN KEY (project_id) REFERENCES public.projects(id);
 
 
 --
 -- Name: projects_sites projects_sites_site_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY projects_sites
-    ADD CONSTRAINT projects_sites_site_id_fk FOREIGN KEY (site_id) REFERENCES sites(id);
+ALTER TABLE ONLY public.projects_sites
+    ADD CONSTRAINT projects_sites_site_id_fk FOREIGN KEY (site_id) REFERENCES public.sites(id);
 
 
 --
 -- Name: projects projects_updater_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY projects
-    ADD CONSTRAINT projects_updater_id_fk FOREIGN KEY (updater_id) REFERENCES users(id);
+ALTER TABLE ONLY public.projects
+    ADD CONSTRAINT projects_updater_id_fk FOREIGN KEY (updater_id) REFERENCES public.users(id);
 
 
 --
 -- Name: saved_searches saved_searches_creator_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY saved_searches
-    ADD CONSTRAINT saved_searches_creator_id_fk FOREIGN KEY (creator_id) REFERENCES users(id);
+ALTER TABLE ONLY public.saved_searches
+    ADD CONSTRAINT saved_searches_creator_id_fk FOREIGN KEY (creator_id) REFERENCES public.users(id);
 
 
 --
 -- Name: saved_searches saved_searches_deleter_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY saved_searches
-    ADD CONSTRAINT saved_searches_deleter_id_fk FOREIGN KEY (deleter_id) REFERENCES users(id);
+ALTER TABLE ONLY public.saved_searches
+    ADD CONSTRAINT saved_searches_deleter_id_fk FOREIGN KEY (deleter_id) REFERENCES public.users(id);
 
 
 --
 -- Name: scripts scripts_creator_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY scripts
-    ADD CONSTRAINT scripts_creator_id_fk FOREIGN KEY (creator_id) REFERENCES users(id);
+ALTER TABLE ONLY public.scripts
+    ADD CONSTRAINT scripts_creator_id_fk FOREIGN KEY (creator_id) REFERENCES public.users(id);
 
 
 --
 -- Name: scripts scripts_group_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY scripts
-    ADD CONSTRAINT scripts_group_id_fk FOREIGN KEY (group_id) REFERENCES scripts(id);
+ALTER TABLE ONLY public.scripts
+    ADD CONSTRAINT scripts_group_id_fk FOREIGN KEY (group_id) REFERENCES public.scripts(id);
 
 
 --
 -- Name: sites sites_creator_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY sites
-    ADD CONSTRAINT sites_creator_id_fk FOREIGN KEY (creator_id) REFERENCES users(id);
+ALTER TABLE ONLY public.sites
+    ADD CONSTRAINT sites_creator_id_fk FOREIGN KEY (creator_id) REFERENCES public.users(id);
 
 
 --
 -- Name: sites sites_deleter_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY sites
-    ADD CONSTRAINT sites_deleter_id_fk FOREIGN KEY (deleter_id) REFERENCES users(id);
+ALTER TABLE ONLY public.sites
+    ADD CONSTRAINT sites_deleter_id_fk FOREIGN KEY (deleter_id) REFERENCES public.users(id);
 
 
 --
 -- Name: sites sites_updater_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY sites
-    ADD CONSTRAINT sites_updater_id_fk FOREIGN KEY (updater_id) REFERENCES users(id);
+ALTER TABLE ONLY public.sites
+    ADD CONSTRAINT sites_updater_id_fk FOREIGN KEY (updater_id) REFERENCES public.users(id);
 
 
 --
 -- Name: tags tags_creator_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY tags
-    ADD CONSTRAINT tags_creator_id_fk FOREIGN KEY (creator_id) REFERENCES users(id);
+ALTER TABLE ONLY public.tags
+    ADD CONSTRAINT tags_creator_id_fk FOREIGN KEY (creator_id) REFERENCES public.users(id);
 
 
 --
 -- Name: tags tags_updater_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY tags
-    ADD CONSTRAINT tags_updater_id_fk FOREIGN KEY (updater_id) REFERENCES users(id);
+ALTER TABLE ONLY public.tags
+    ADD CONSTRAINT tags_updater_id_fk FOREIGN KEY (updater_id) REFERENCES public.users(id);
 
 
 --
 -- PostgreSQL database dump complete
 --
 
-SET search_path TO "$user",public;
+SET search_path TO "$user", public;
 
 INSERT INTO schema_migrations (version) VALUES ('20130715022212');
 
@@ -2100,4 +2331,10 @@ INSERT INTO schema_migrations (version) VALUES ('20160712051359');
 INSERT INTO schema_migrations (version) VALUES ('20160726014747');
 
 INSERT INTO schema_migrations (version) VALUES ('20180118002015');
+
+INSERT INTO schema_migrations (version) VALUES ('20181210052707');
+
+INSERT INTO schema_migrations (version) VALUES ('20181210052725');
+
+INSERT INTO schema_migrations (version) VALUES ('20181210052735');
 

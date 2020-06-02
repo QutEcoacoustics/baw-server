@@ -1,39 +1,78 @@
+# frozen_string_literal: true
+
 # This file is copied to spec/ when you run 'rails generate rspec:install'
-ENV['RAILS_ENV'] ||= 'test'
 
-require 'simplecov'
-
-if ENV['TRAVIS']
-  require 'codeclimate-test-reporter'
-  require 'coveralls'
-
-  # code climate
-  CodeClimate::TestReporter.configure do |config|
-    config.logger.level = Logger::WARN
-  end
-  CodeClimate::TestReporter.start
-
-  # coveralls
-  Coveralls.wear!('rails')
-
-  SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter.new([
-                                                                     Coveralls::SimpleCov::Formatter,
-                                                                     CodeClimate::TestReporter::Formatter
-                                                                 ])
-
-else
-  SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter.new([
-                                                                     SimpleCov::Formatter::HTMLFormatter
-                                                                 ])
+# attempting to prevent trivial mistakes
+#ENV['RAILS_ENV'] ||= 'test'
+if ENV['RAILS_ENV'] != 'test'
+  puts \
+    <<~MESSAGE
+      ***
+      Tests must be run in the test envrionment.
+      The current envrionment `#{ENV['RAILS_ENV']}` has been changed to `test`.
+      See rails_helper.rb to disable this check
+      ***
+    MESSAGE
+  ENV['RAILS_ENV'] = 'test'
 end
 
-# start code coverage
-SimpleCov.start 'rails'
+#abort "You must run tests using 'bundle exec ...'" unless ENV['BUNDLE_BIN_PATH'] || ENV['BUNDLE_GEMFILE']
 
-require File.expand_path('../../config/environment', __FILE__)
+require 'bundler' # Set up gems listed in the Gemfile.
+Bundler.setup(:test)
+Bundler.require(:test)
+
+require 'spec_helper'
+
+require 'test-prof'
+TestProf.configure do |config|
+  # the directory to put artifacts (reports) in ('tmp/test_prof' by default)
+  config.output_dir = 'test_prof'
+
+  # use unique filenames for reports (by simply appending current timestamp)
+  config.timestamps = true
+
+  # color output
+  config.color = true
+end
+
+if ENV['CI'] || ENV['COVERAGE']
+  require 'simplecov'
+
+  if ENV['TRAVIS']
+    require 'codeclimate-test-reporter'
+    require 'coveralls'
+
+    # code climate
+    CodeClimate::TestReporter.configure do |config|
+      config.logger.level = Logger::WARN
+    end
+    CodeClimate::TestReporter.start
+
+    # coveralls
+    Coveralls.wear!('rails')
+
+    SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter.new([
+                                                                     Coveralls::SimpleCov::Formatter,
+                                                                     CodeClimate::TestReporter::Formatter
+                                                                   ])
+
+  else
+    SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter.new([
+                                                                     SimpleCov::Formatter::HTMLFormatter
+                                                                   ])
+  end
+
+  # start code coverage
+  SimpleCov.start 'rails'
+end
+
+require File.expand_path('../config/environment', __dir__)
 
 # Prevent database truncation if the environment is production
 abort('The Rails environment is running in production mode!') if Rails.env.production?
+abort('The Rails environment is running in staging mode!') if Rails.env.staging?
+abort('The Rails environment is NOT running in test mode!') unless Rails.env.test?
 
 require 'rspec/rails'
 # Add additional requires below this line. Rails is not loaded until this point!
@@ -45,6 +84,9 @@ require 'database_cleaner'
 require 'rspec_api_documentation'
 
 require 'helpers/misc_helper'
+require 'fixtures/fixtures'
+
+require_relative '../lib/patches/test_response_reuse.rb'
 
 WebMock.disable_net_connect!(allow_localhost: true, allow: 'codeclimate.com')
 
@@ -111,9 +153,12 @@ RSpec.configure do |config|
   config.include Paperclip::Shoulda::Matchers
   config.include FactoryGirl::Syntax::Methods
 
-  require File.join(File.dirname(File.expand_path(__FILE__)), 'lib', 'creation.rb')
+  require_relative 'helpers/creation'
   config.include Creation::Example
   config.extend Creation::ExampleGroup
+
+  require_relative 'helpers/citizen_science_creation.rb'
+  config.extend CitizenScienceCreation
 
   require 'enumerize/integrations/rspec'
   extend Enumerize::Integrations::RSpec
@@ -176,9 +221,7 @@ RSpec.configure do |config|
     # start database cleaner
     DatabaseCleaner.start
     example_description = example.description
-    Rails::logger.info "\n\n#{example_description}\n#{'-' * (example_description.length)}"
-
-    #Bullet.start_request if Bullet.enable?
+    Rails.logger.info "\n\n#{example_description}\n#{'-' * example_description.length}"
   end
 
   config.after(:each) do
@@ -187,9 +230,6 @@ RSpec.configure do |config|
     DatabaseCleaner.clean
 
     Rails.application.load_seed if is_truncating
-
-    #Bullet.perform_out_of_channel_notifications if Bullet.enable? && Bullet.notification?
-    #Bullet.end_request if Bullet.enable?
 
     # https://github.com/plataformatec/devise/wiki/How-To:-Test-with-Capybara
     # reset warden after each test
@@ -206,12 +246,12 @@ RSpec.configure do |config|
 end
 
 require 'shoulda-matchers'
-# Shoulda::Matchers.configure do |config|
-#   config.integrate do |with|
-#     with.test_framework :rspec
-#     with.library :rails
-#   end
-# end
+Shoulda::Matchers.configure do |config|
+  config.integrate do |with|
+    with.test_framework :rspec
+    with.library :rails
+  end
+end
 
 # Customise rspec api documentation
 ENV['DOC_FORMAT'] ||= 'json'

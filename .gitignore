@@ -19,7 +19,6 @@
 /config/settings/test.yml
 /config/settings/staging.yml
 /config/settings/production.yml
-/config/newrelic.yml
 
 # files created by tests and extra temp files
 /public/system/*
@@ -29,7 +28,8 @@
 external_modules.log
 
 # ignore temporary files
-/tmp
+/tmp/*
+!/tmp/README.md
 /.bundle
 
 # ignore ide settings
@@ -49,3 +49,12 @@ external_modules.log
 
 # mac development
 .DS_Store
+
+# vendor is like node_modules for bundler in deployment mode
+# we do not use vendor anymore with docker
+vendor/bundle/*
+
+# we don't need to commit test_prof reports
+/test_prof
+passenger.3000.pid
+passenger.3000.pid.lock

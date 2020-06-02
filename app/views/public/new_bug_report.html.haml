@@ -17,7 +17,7 @@
     = f.input :date, label: 'Date issue occurred', as: :string, order: [:year, :month, :day], input_html: {value: @bug_report.date}
     = f.input :description, as: :text, input_html: {rows: '4',style: 'width:100%'}, label: 'Steps to reproduce issue'
     = f.input :content, as: :text, input_html: {rows: '7',style: 'width:100%'}, label: 'What do you expect to happen? What actually happens?'
-    = render partial: 'shared/recaptcha', locals: {data_item: @bug_report, data_item_name: 'bug_report'}
+    = render partial: 'shared/recaptcha', locals: {data_item: @bug_report, data_item_name: 'bug_report', data_action: 'bug_report'}
     = f.button :submit_cancel, 'Submit', class: 'btn-default'
 
 :javascript

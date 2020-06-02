@@ -1,7 +1,6 @@
 class ApplicationController < ActionController::Base
   include Api::ApiAuth
 
-
   layout :select_layout
 
   # custom authentication for api only
@@ -14,6 +13,8 @@ class ApplicationController < ActionController::Base
   # devise's generated methods
   before_action :current_user, unless: :devise_controller?
   before_action :authenticate_user!, if: :devise_controller?
+
+  before_action :validate_contains_post_params, only: [:create, :update]
 
   # CanCan - always check authorization
   check_authorization if: :should_check_authorization?
@@ -52,7 +53,7 @@ class ApplicationController < ActionController::Base
 
   # Prevent CSRF attacks by raising an exception.
   # For APIs, you may want to use :null_session instead.
-  protect_from_forgery with: :exception
+  protect_from_forgery unless: -> { request.format.json? }
 
   # for responses, ensure CSRF cookie is set and fix problems with Vary header
   after_action :set_csrf_cookie, :resource_representation_caching_fixes
@@ -81,7 +82,6 @@ class ApplicationController < ActionController::Base
   def user_signed_in?
     super
   end
-
 
   protected
 
@@ -221,8 +221,8 @@ class ApplicationController < ActionController::Base
   end
 
   def render_error(status_symbol, detail_message, error, method_name, options = {})
-    options.merge!(error_details: detail_message) # overwrites error_details
-    options.reverse_merge!(should_notify_error: true) # default for should_notify_error is true, value in options will overwrite
+    options.merge!({ error_details: detail_message }) # overwrites error_details
+    options.reverse_merge!({ should_notify_error: true }) # default for should_notify_error is true, value in options will overwrite
 
     # notify of exception when head requests AND when should_notify_error is true
     should_notify_error = request.head? && (options.include?(:should_notify_error) && options[:should_notify_error])
@@ -245,6 +245,8 @@ class ApplicationController < ActionController::Base
 
     # add custom header
     headers['X-Error-Type'] = error.class.to_s.titleize unless error.nil?
+    # add additional error message in here for sanity
+    headers['X-Error-Message'] = error.message if request.head? && !error.nil?
 
     respond_to do |format|
       # format.all will be used for Accept: */* as it is first in the list
@@ -254,6 +256,10 @@ class ApplicationController < ActionController::Base
 
         if actual_format.start_with?('audio') || actual_format.start_with?('image')
           headers['Accept-Ranges'] = 'bytes'
+
+          # add additional error message in here for sanity
+          headers['X-Error-Message'] = error.message unless error.nil?
+
           head status_symbol
         else
           render json: json_response, status: status_symbol, content_type: 'application/json'
@@ -294,7 +300,6 @@ class ApplicationController < ActionController::Base
           @details[:redirect_to_url] = stored_location_for(:user)
         end
 
-
         render template: 'errors/generic', status: status_symbol
       }
     end
@@ -313,10 +318,39 @@ class ApplicationController < ActionController::Base
     super
   end
 
+  # all create and update actions should have post parameters. If not, in addition to not doing anything,
+  # they might cause errors where these parameters are expected
+  def validate_contains_post_params
+
+    # post values should be in the form {model => {attr => value, attr2 => value}}
+    # an empty body parsed as json will have the form {model => {}}
+    # json body with application/x-www-form-urlencoded content type will have the form {json_string => {}}
+    # json or form encoded with text/plain content type will have the form {}
+    if request.POST.values.all? { |val| val.blank? }
+
+      if (request.body.string.blank?)
+        message = "Request body was empty"
+        status = :bad_request
+        # include link to 'new' endpoint if body was empty
+        options = {should_notify_error: true, error_links: [{text: "New Resource", url: self.send("new_#{resource_name}_path")}]}
+      else
+        options = {should_notify_error: true}
+        status = :unsupported_media_type
+        if request.content_type == "text/plain"
+          message = "Request content-type text/plain not supported"
+        else
+          # Catch anything else, but should not reach here because body parsing will have already crashed for
+          # malformed encoding for anything other than text/plain
+          message = "Failed to parse the request body. Ensure that it is formed correctly and matches the content-type (#{request.content_type})"
+        end
+      end
+      render_error(status, message, nil, 'validate_contains_params', options)
+    end
+  end
+
   private
 
   def record_not_found_response(error)
-
     render_error(
         :not_found,
         'Could not find the requested item.',
@@ -336,9 +370,7 @@ class ApplicationController < ActionController::Base
     )
   end
 
-
   def record_not_unique_response(error)
-
     render_error(
         :conflict,
         'The item must be unique.',

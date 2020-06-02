@@ -1,5 +1,5 @@
 <%# <%== does not do html entity escaping %>
-<%== @formatted_annotations.columns.join(', ') %>
+<%== @formatted_annotations.columns.join(',') %>
 <%==
      CSV.generate do |csv|
        @formatted_annotations.each do |row|

@@ -2,16 +2,11 @@
 # This config file is in the .gitignore so you can make changes to it.
 # If you want to persist changes for an upstream edit, do a `git add -f ...`
 #
+#
+# The settings for the worker are for a hybrid development/test worker.
+# In production, a worker should only serve one environment
 development:
   # overwrites settings from config/settings/default.yml
-  db:
-     adapter: postgresql
-     encoding: unicode
-     database: baw_local_dev
-     pool: 5
-     username: postgres
-     password: ''
-     host: localhost
   devise:
      pepper: 128 char random pepper 128 char random pepper
      secret_key: 128 char random pepper 128 char random pepper
@@ -19,22 +14,22 @@ development:
   secret_key_base: some long secret token - at least 30 chars, all random
   google_maps:
     api_key: ~
-  # Anthony's custom configuration
   paths:
-    image_magick_dir: <%= Rails.root %>/../tmp/_image-magick
     original_audios:
-      - <%= Rails.root %>/../tmp/_<%= Rails.env %>_original_audio
+      - tmp/_development_original_audio
+      - tmp/_test_original_audio
     cached_spectrograms:
-      - <%= Rails.root %>/../tmp/_<%= Rails.env %>_cached_spectrogram
+      - tmp/_development_cached_spectrogram
+      - tmp/_test_cached_spectrogram
     cached_audios:
-      - <%= Rails.root %>/../tmp/_<%= Rails.env %>_cached_audio
+      - tmp/_development_cached_audio
+      - tmp/_test_cached_audio
     analysis_scripts:
-      - <%= Rails.root %>/../tmp/_<%= Rails.env %>_analysis_script
+      - tmp/_development_analysis_script
+      - tmp/_test_analysis_script
     cached_datasets:
-      - <%= Rails.root %>/../tmp/_<%= Rails.env %>_cached_dataset
+      - tmp/_development_cached_dataset
+      - tmp/_test_cached_dataset
     cached_analysis_jobs:
-      - <%= Rails.root %>/../tmp/_<%= Rails.env %>_analysis_results
-    worker_log_file: <%= Rails.root %>/log/worker.<%= Rails.env %>.log
-    mailer_log_file: <%= Rails.root %>/log/mailer.<%= Rails.env %>.log
-    audio_tools_log_file: <%= Rails.root %>/log/audio_tools.<%= Rails.env %>.log
-    temp_dir: <%= Rails.root %>/../tmp
+      - tmp/_development_analysis_results
+      - tmp/_test_analysis_results

@@ -43,11 +43,12 @@ resource 'DatasetItems' do
   # we include some dataset items for audio recordings that the user can not access
   #
   # After this, the dataset_items will be
-  # - 1 created by the create_entire_hierarchy
+  # - 2 created by the create_entire_hierarchy
+  #   - including one in the default dataset
   # - 1 created by create_no_access_hierarchy
   # - 1 created under a different dataset to test the dataset id path parameter
   # - 4 created with custom field values to test sorting and filtering
-  # - total: 7 dataset items
+  # - total: 8 dataset items
   #
 
   create_no_access_hierarchy
@@ -122,19 +123,19 @@ resource 'DatasetItems' do
   get '/datasets/:dataset_id/items' do
     let(:authentication_token) { owner_token }
     let(:dataset_id) { dataset.id }
-    standard_request_options(:get,'INDEX (as owner)',:ok, non_admin_opts)
+    standard_request_options(:get, 'INDEX (as owner)', :ok, non_admin_opts)
   end
 
   get '/datasets/:dataset_id/items' do
     let(:authentication_token) { writer_token }
     let(:dataset_id) { dataset.id }
-    standard_request_options(:get,'INDEX (as writer)',:ok, non_admin_opts)
+    standard_request_options(:get, 'INDEX (as writer)', :ok, non_admin_opts)
   end
 
   get '/datasets/:dataset_id/items' do
     let(:authentication_token) { reader_token }
     let(:dataset_id) { dataset.id }
-    standard_request_options(:get,'INDEX (as reader)',:ok, non_admin_opts)
+    standard_request_options(:get, 'INDEX (as reader)', :ok, non_admin_opts)
   end
 
 
@@ -190,7 +191,6 @@ resource 'DatasetItems' do
         'CREATE (as admin)',
         :created,
         {expected_json_path: 'data/end_time_seconds/', response_body_content: ['"end_time_seconds":234.0']}
-         # {expected_json_path: 'data/end_time_seconds/', response_body_content: ['"end_time_seconds":234.0', "\"dataset_id\":#{dataset.id}"]}
     )
   end
 
@@ -202,7 +202,11 @@ resource 'DatasetItems' do
     let(:authentication_token) { owner_token }
     let(:dataset_id) { dataset.id }
     let(:audio_recording_id) { audio_recording.id }
-    standard_request_options(:post,'CREATE (as owner)',:forbidden, non_admin_opts)
+    standard_request_options(
+        :post,
+        'CREATE (as owner)',
+        :forbidden,
+        non_admin_opts)
   end
 
   post '/datasets/:dataset_id/items' do
@@ -211,7 +215,11 @@ resource 'DatasetItems' do
     let(:authentication_token) { writer_token }
     let(:dataset_id) { dataset.id }
     let(:audio_recording_id) { audio_recording.id }
-    standard_request_options(:post,'CREATE (as writer)',:forbidden, non_admin_opts)
+    standard_request_options(
+        :post,
+        'CREATE (as writer)',
+        :forbidden,
+        non_admin_opts)
   end
 
   post '/datasets/:dataset_id/items' do
@@ -220,7 +228,11 @@ resource 'DatasetItems' do
     let(:authentication_token) { reader_token }
     let(:dataset_id) { dataset.id }
     let(:audio_recording_id) { audio_recording.id }
-    standard_request_options(:post,'CREATE (as reader)',:forbidden, non_admin_opts)
+    standard_request_options(
+        :post,
+        'CREATE (as reader)',
+        :forbidden,
+        non_admin_opts)
   end
 
   post '/datasets/:dataset_id/items' do
@@ -572,6 +584,7 @@ resource 'DatasetItems' do
   # DESTROY
   ################################
 
+
   delete '/datasets/:dataset_id/items/:id' do
     dataset_id_param
     dataset_item_id_param
@@ -688,7 +701,7 @@ resource 'DatasetItems' do
   ################################
 
   # with shallow route (no dataset id)
-  # admin finds all 7 items
+  # admin finds all 8 items
   post '/dataset_items/filter' do
     let(:authentication_token) { admin_token }
     standard_request_options(
@@ -698,7 +711,7 @@ resource 'DatasetItems' do
         {
             response_body_content: ['"start_time_seconds":11.0'],
             expected_json_path: 'data/0/start_time_seconds',
-            data_item_count: 7
+            data_item_count: 8
         }
     )
   end
@@ -721,28 +734,28 @@ resource 'DatasetItems' do
     )
   end
 
-  # permissions will be the same for reader,writer,owner so they will have
-  # the same response for the same filter params. Should return 6 items
+  # permissions will be the same for reader, writer, owner so they will have
+  # the same response for the same filter params. Should return 7 items
   # from the two datasets, but not the dataset item from the no-access hierarchy
   regular_user_opts = {
       response_body_content: ['"start_time_seconds":11.0'],
       expected_json_path: 'data/0/start_time_seconds',
-      data_item_count: 6
+      data_item_count: 7
   }
 
   post '/dataset_items/filter' do
     let(:authentication_token) { owner_token }
-    standard_request_options(:post,'FILTER (as owner)',:ok,regular_user_opts)
+    standard_request_options(:post, 'FILTER (as owner)', :ok, regular_user_opts)
   end
 
   post '/dataset_items/filter' do
     let(:authentication_token) { writer_token }
-    standard_request_options(:post,'FILTER (as writer)',:ok,regular_user_opts)
+    standard_request_options(:post, 'FILTER (as writer)', :ok, regular_user_opts)
   end
 
   post '/dataset_items/filter' do
     let(:authentication_token) { reader_token }
-    standard_request_options(:post,'FILTER (as reader)',:ok,regular_user_opts)
+    standard_request_options(:post, 'FILTER (as reader)', :ok, regular_user_opts)
   end
 
   # reader user using nested path, which will filter out the no access item and also the
@@ -885,10 +898,133 @@ resource 'DatasetItems' do
             data_item_count: 3,
             order: {
                 property: 'start_time_seconds',
-                values: [1,8,3]
+                values: [1, 8, 3]
             }
         }
     )
+
+  end
+
+
+  ################################
+  # NEXT FOR ME
+  ################################
+
+  context 'next for me' do
+
+    # with deep route including dataset id
+    # One item has a different dataset id, so only 6 items
+    get '/datasets/:dataset_id/dataset_items/next_for_me' do
+      dataset_id_param
+      let(:dataset_id) { dataset.id }
+      let(:authentication_token) { admin_token }
+      standard_request_options(
+          :get,
+          'NEXT FOR ME (as admin)',
+          :ok,
+          {
+              response_body_content: ['"start_time_seconds":11.0'],
+              expected_json_path: 'data/0/start_time_seconds',
+              data_item_count: 6
+          }
+      )
+    end
+
+    # permissions will be the same for reader, writer, owner so they will have
+    # the same response for the same filter params.
+    # Using nested path, which will filter out the no access item and also the
+    # item from a different dataset, leaving 5 dataset items
+    regular_user_opts = {
+        response_body_content: ['"start_time_seconds":11.0'],
+        expected_json_path: 'data/0/start_time_seconds',
+        data_item_count: 5
+    }
+
+    get '/datasets/:dataset_id/dataset_items/next_for_me' do
+      let(:dataset_id) { dataset.id }
+      let(:authentication_token) { owner_token }
+      standard_request_options(
+          :get,
+          'NEXT FOR ME (as owner)',
+          :ok,
+          regular_user_opts)
+    end
+
+    get '/datasets/:dataset_id/dataset_items/next_for_me' do
+      let(:dataset_id) { dataset.id }
+      let(:authentication_token) { writer_token }
+      standard_request_options(
+          :get,
+          'NEXT FOR ME (as writer)',
+          :ok,
+          regular_user_opts)
+    end
+
+    get '/datasets/:dataset_id/dataset_items/next_for_me' do
+      let(:dataset_id) { dataset.id }
+      let(:authentication_token) { reader_token }
+      standard_request_options(
+          :get,
+          'NEXT FOR ME (as reader)',
+          :ok,
+          regular_user_opts)
+    end
+
+    get '/datasets/:dataset_id/dataset_items/next_for_me' do
+      let(:dataset_id) { dataset.id }
+      let(:authentication_token) { no_access_token }
+      standard_request_options(
+          :get,
+          'NEXT FOR ME (as no access)',
+          :ok,
+          {expected_json_path: ['meta/paging/total', 'data'], data_item_count: 0}
+      )
+    end
+
+    get '/datasets/:dataset_id/dataset_items/next_for_me' do
+      let(:dataset_id) { dataset.id }
+      let(:authentication_token) { invalid_token }
+      standard_request_options(
+          :get,
+          'NEXT FOR ME (as invalid token)',
+          :unauthorized,
+          {expected_json_path: get_json_error_path(:sign_up)}
+      )
+    end
+
+    # not logged in users can filter dataset items, but they won't get any items that they don't have permission for
+    get '/datasets/:dataset_id/dataset_items/next_for_me' do
+      let(:dataset_id) { dataset.id }
+      standard_request_options(
+          :get,
+          'NEXT FOR ME (as not logged in)',
+          :ok,
+          {expected_json_path: ['meta/paging/total', 'data'], data_item_count: 0}
+      )
+    end
+
+    get '/datasets/:dataset_id/dataset_items/next_for_me' do
+      create_anon_hierarchy
+      let(:dataset_id) { dataset.id }
+      standard_request_options(
+          :get,
+          'NEXT FOR ME (as not logged in) with public project',
+          :ok,
+          {expected_json_path: ['meta/paging/total', 'data'], data_item_count: 1}
+      )
+    end
+
+    get '/datasets/:dataset_id/dataset_items/next_for_me' do
+      let(:dataset_id) { dataset.id }
+      let(:authentication_token) { harvester_token }
+      standard_request_options(
+          :get,
+          'NEXT FOR ME (as harvester)',
+          :forbidden,
+          {response_body_content: ['"data":null'], expected_json_path: get_json_error_path(:permissions)}
+      )
+    end
+
 
   end
 

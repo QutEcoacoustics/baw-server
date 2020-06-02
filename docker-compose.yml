@@ -1,0 +1,89 @@
+version: "3.4"
+services:
+  redis:
+    image: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - baw_docker_network
+  db:
+    image: postgres
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - baw_docker_network
+    environment:
+      # never, ever, ever use this is a production setup!
+      # Only use this in a dev environment
+      POSTGRES_PASSWORD: password
+  workers: &worker
+    build:
+      context: .
+      target: baw-server-dev
+    command: >-
+      baw-workers baw:worker:run
+    networks:
+      - baw_docker_network
+    #ports:
+    # rdebug-ide port (mapped for workers)
+    # - "1235:1234"
+    # - "26162:26162"
+    restart: on-failure
+    volumes:
+      - type: bind
+        source: ./
+        target: /home/baw_web/baw-server
+      # see comment on volume declaration below
+      - type: volume
+        source: baw_docker_shared_storage
+        target: /home/baw_web/baw-server/tmp
+
+    working_dir: /home/baw_web/baw-server
+    depends_on:
+      - db
+      - redis
+  workers_test:
+    <<: *worker
+    environment:
+      RAILS_ENV: test
+  web:
+    #image: qutecoacoustics/baw-server:dev
+    build:
+      context: .
+      target: baw-server-dev
+    command: bundle exec passenger start
+    environment:
+      RAILS_ENV: development
+      MIGRATE_DB: 'true'
+    user: baw_web
+    volumes:
+      - type: bind
+        source: ./
+        target: /home/baw_web/baw-server
+      # see comment on volume declaration below
+      - type: volume
+        source: baw_docker_shared_storage
+        target: /home/baw_web/baw-server/tmp
+    ports:
+      - "3000:3000"
+      # rdebug-ide port
+      - "1234:1234"
+      - "26162:26162"
+    networks:
+      - baw_docker_network
+    depends_on:
+      - db
+      - redis
+      - workers
+networks:
+  baw_docker_network:
+volumes:
+  # We're using a volume mount for tmp because it offers better performance
+  # than a bind mount. It also does not seem to suffer from cache/metadata
+  # problems that bind mounts (see caching in cifs/nfs).
+  # The downside to this is that we can no longer access files in /tmp on
+  # out hosts for dev work.
+  baw_docker_shared_storage:
+  postgres-data:

@@ -1,0 +1,34 @@
+{
+    "cSpell.words": [
+        "FLAC",
+        "Passengerfile",
+        "RSPEC",
+        "Resque",
+        "Zeitwerk",
+        "binstub",
+        "constantize",
+        "cors",
+        "datetime",
+        "downcase",
+        "entrypoint",
+        "executables",
+        "ffmpeg",
+        "ffprobe",
+        "fileutils",
+        "imagemagick",
+        "mkpath",
+        "organisation",
+        "paginator",
+        "postgres",
+        "postgresql",
+        "qutecoacoustics",
+        "recaptcha",
+        "shntool",
+        "smtp",
+        "unregister",
+        "wavpack",
+        "webm",
+        "wvunpack"
+    ]
+
+}

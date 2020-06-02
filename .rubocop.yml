@@ -9,13 +9,40 @@ AllCops:
     - 'db/**/*'
     - 'config/**/*'
     - 'script/**/*'
-Rails:
-  Enabled: true
+  TargetRubyVersion: 2.5
+# Rails:
+#   Enabled: true
 
 # Customized options
+Layout/EndOfLine:
+  EnforcedStyle: lf
+Metrics/ClassLength:
+  Max: 300
+Layout/EmptyLinesAroundBlockBody:
+  Enabled: false
+Metrics/BlockLength:
+  ExcludedMethods:
+    - resource
+    - describe
+    - shared_examples_for
+    - shared_context
+    - context
+    - it
+    - group
+    - namespace
 Metrics/LineLength:
   Max: 120
+Metrics/MethodLength:
+  Max: 30
+Metrics/AbcSize:
+  Max: 60
+Style/BlockDelimiters:
+  EnforcedStyle: semantic
 Style/BracesAroundHashParameters:
-  EnforcedStyle: braces
+  EnforcedStyle: context_dependent
+Layout/LeadingCommentSpace:
+  Enabled: false
+Style/SymbolArray:
+  EnforcedStyle: brackets
 Style/WordArray:
   EnforcedStyle: brackets

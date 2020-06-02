@@ -16,14 +16,14 @@ Rails.application.configure do
   # configure mailer for development.
   config.action_mailer.raise_delivery_errors = true
   config.action_mailer.default_url_options =
-      {
-          host: "#{Settings.host.name}:#{Settings.host.port}"
-      }
+    {
+      host: "#{Settings.host.name}:#{Settings.host.port}"
+    }
   config.action_mailer.delivery_method = :file
   config.action_mailer.file_settings =
-      {
-          location: Rails.root.join('tmp', 'mail')
-      }
+    {
+      location: Rails.root.join('tmp', 'mail')
+    }
   config.action_mailer.perform_deliveries = true
 
   # Print deprecation notices to the Rails logger.
@@ -57,15 +57,6 @@ Rails.application.configure do
   # Raises error for missing translations
   config.action_view.raise_on_missing_translations = true
 
-  # Set path for image magick for windows only
-  if RbConfig::CONFIG['target_os'] =~ /mswin|mingw/i
-    im_dir = Settings.paths.image_magick_dir
-    if Dir.exists?(im_dir) && File.directory?(im_dir)
-      Paperclip.options[:command_path] = im_dir
-    else
-      puts "WARN: cannot find image magick path #{im_dir}"
-    end
-  end
 
   # profile requests
   #config.middleware.insert 0, 'Rack::RequestProfiler', printer: ::RubyProf::CallTreePrinter

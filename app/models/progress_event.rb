@@ -8,13 +8,49 @@ class ProgressEvent < ActiveRecord::Base
   belongs_to :dataset_item, inverse_of: :progress_events
 
   # association validations
-  validates :creator, existence: true
-  validates :dataset_item, existence: true
+  validates_presence_of :dataset_item
+  validates_presence_of :creator
 
   # field validations
 
   # Activity types are largely arbitrary. In the future the set of activity types may be changed or the
   # restriction removed altogether
   validates :activity, inclusion: { in: ['viewed', 'played', 'annotated'] }
+
+  # Define filter api settings
+  def self.filter_settings
+    return {
+        valid_fields: [
+            :id, :dataset_item_id, :activity, :creator_id, :created_at
+        ],
+        render_fields: [
+            :id, :dataset_item_id, :activity, :creator_id, :created_at
+        ],
+        new_spec_fields: lambda { |user|
+          {
+              dataset_item_id: nil,
+              activity: nil
+          }
+        },
+        controller: :progress_events,
+        action: :filter,
+        defaults: {
+            order_by: :created_at,
+            direction: :desc
+        },
+        valid_associations: [
+            {
+                join: DatasetItem,
+                on: ProgressEvent.arel_table[:dataset_item_id].eq(DatasetItem.arel_table[:id]),
+                available: true,
+                associations: [
+                    join: Dataset,
+                    on: DatasetItem.arel_table[:dataset_id].eq(Dataset.arel_table[:id]),
+                    available: true
+                ]
+            }
+        ]
+    }
+  end
 
 end

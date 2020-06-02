@@ -14,7 +14,6 @@ end
 
 # https://github.com/zipmark/rspec_api_documentation
 resource 'Projects' do
-
   header 'Accept', 'application/json'
   header 'Content-Type', 'application/json'
   header 'Authorization', :authentication_token
@@ -49,7 +48,7 @@ resource 'Projects' do
     let(:authentication_token) { no_access_token }
     standard_request_options(:get, 'INDEX (as no access user)', :ok, {response_body_content: '200', data_item_count: 0})
   end
- 
+
   get '/projects' do
     let(:authentication_token) { invalid_token }
     standard_request_options(:get, 'INDEX (with invalid token)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
@@ -87,46 +86,119 @@ resource 'Projects' do
   ################################
   # CREATE
   ################################
-  post '/projects' do
-    body_params
-    let(:raw_post) { {'project' => post_attributes}.to_json }
-    let(:authentication_token) { admin_token }
-    standard_request_options(:post, 'CREATE (as admin)', :created, {expected_json_path: 'data/name'})
+
+
+  describe 'any_user_can_create_projects' do
+
+    original_value = Settings.permissions.any_user_can_create_projects
+
+    before(:all) do
+      Settings.permissions['any_user_can_create_projects'] = true
+    end
+
+    after(:all) do
+      Settings.permissions['any_user_can_create_projects'] = original_value
+    end
+
+    post '/projects' do
+      body_params
+      let(:raw_post) { {'project' => post_attributes}.to_json }
+      let(:authentication_token) { admin_token }
+      standard_request_options(:post, 'CREATE (as admin)', :created, {expected_json_path: 'data/name'})
+    end
+
+    post '/projects' do
+      body_params
+      let(:raw_post) { {'project' => post_attributes}.to_json }
+      let(:authentication_token) { writer_token }
+      standard_request_options(:post, 'CREATE (as writer)', :created, {expected_json_path: 'data/name'})
+    end
+
+    post '/projects' do
+      body_params
+      let(:raw_post) { {'project' => post_attributes}.to_json }
+      let(:authentication_token) { reader_token }
+      standard_request_options(:post, 'CREATE (as reader)', :created, {expected_json_path: 'data/name'})
+    end
+
+    post '/projects' do
+      body_params
+      let(:raw_post) { {'project' => post_attributes}.to_json }
+      let(:authentication_token) { no_access_token }
+      standard_request_options(:post, 'CREATE (as no access user)', :created, {expected_json_path: 'data/name'})
+    end
+
+    post '/projects' do
+      body_params
+      let(:raw_post) { {'project' => post_attributes}.to_json }
+      let(:authentication_token) { invalid_token }
+      standard_request_options(:post, 'CREATE (invalid token)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
+    end
+
+    post '/projects' do
+      body_params
+      let(:raw_post) { {'project' => post_attributes}.to_json }
+      standard_request_options(:post, 'CREATE (as anonymous user)', :unauthorized, {remove_auth: true, expected_json_path: get_json_error_path(:sign_up)})
+    end
+
   end
 
-  post '/projects' do
-    body_params
-    let(:raw_post) { {'project' => post_attributes}.to_json }
-    let(:authentication_token) { writer_token }
-    standard_request_options(:post, 'CREATE (as writer)', :created, {expected_json_path: 'data/name'})
+
+  describe 'NOT any_user_can_create_projects' do
+
+    original_value = Settings.permissions.any_user_can_create_projects
+
+    before(:all) do
+      Settings.permissions['any_user_can_create_projects'] = false
+    end
+
+    after(:all) do
+      Settings.permissions['any_user_can_create_projects'] = original_value
+    end
+
+    post '/projects' do
+      body_params
+      let(:raw_post) { {'project' => post_attributes}.to_json }
+      let(:authentication_token) { admin_token }
+      standard_request_options(:post, 'CREATE (as admin)', :created, {expected_json_path: 'data/name'})
+    end
+
+    post '/projects' do
+      body_params
+      let(:raw_post) { {'project' => post_attributes}.to_json }
+      let(:authentication_token) { writer_token }
+      standard_request_options(:post, 'CREATE (as anonymous user) ', :unauthorized, {remove_auth: true, expected_json_path: get_json_error_path(:sign_up)})
+    end
+
+    post '/projects' do
+      body_params
+      let(:raw_post) { {'project' => post_attributes}.to_json }
+      let(:authentication_token) { reader_token }
+      standard_request_options(:post, 'CREATE (as anonymous user)', :unauthorized, {remove_auth: true, expected_json_path: get_json_error_path(:sign_up)})
+    end
+
+    post '/projects' do
+      body_params
+      let(:raw_post) { {'project' => post_attributes}.to_json }
+      let(:authentication_token) { no_access_token }
+      standard_request_options(:post, 'CREATE (as anonymous user)', :unauthorized, {remove_auth: true, expected_json_path: get_json_error_path(:sign_up)})
+    end
+
+    post '/projects' do
+      body_params
+      let(:raw_post) { {'project' => post_attributes}.to_json }
+      let(:authentication_token) { invalid_token }
+      standard_request_options(:post, 'CREATE (invalid token)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
+    end
+
+    post '/projects' do
+      body_params
+      let(:raw_post) { {'project' => post_attributes}.to_json }
+      standard_request_options(:post, 'CREATE (as anonymous user)', :unauthorized, {remove_auth: true, expected_json_path: get_json_error_path(:sign_up)})
+    end
+
   end
 
-  post '/projects' do
-    body_params
-    let(:raw_post) { {'project' => post_attributes}.to_json }
-    let(:authentication_token) { reader_token }
-    standard_request_options(:post, 'CREATE (as reader)', :created, {expected_json_path: 'data/name'})
-  end
-
-  post '/projects' do
-    body_params
-    let(:raw_post) { {'project' => post_attributes}.to_json }
-    let(:authentication_token) { no_access_token }
-    standard_request_options(:post, 'CREATE (as no access user)', :created, {expected_json_path: 'data/name'})
-  end
-
-  post '/projects' do
-    body_params
-    let(:raw_post) { {'project' => post_attributes}.to_json }
-    let(:authentication_token) { invalid_token }
-    standard_request_options(:post, 'CREATE (invalid token)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
-  end
-
-  post '/projects' do
-    body_params
-    let(:raw_post) { {'project' => post_attributes}.to_json }
-    standard_request_options(:post, 'CREATE (as anonymous user)', :unauthorized, {remove_auth: true, expected_json_path: get_json_error_path(:sign_up)})
-  end
 
   ################################
   # NEW
@@ -391,7 +463,7 @@ resource 'Projects' do
     body_params
     prepare_project_anon
     let(:id) { project_anon.id }
-    standard_request_options(:delete, 'DESTROY (as anonymous user allowed read)', :unauthorized, 
+    standard_request_options(:delete, 'DESTROY (as anonymous user allowed read)', :unauthorized,
                              {remove_auth: true, expected_json_path: get_json_error_path(:sign_up)})
   end
 
@@ -407,7 +479,7 @@ resource 'Projects' do
     body_params
     prepare_project_logged_in
     let(:id) { project_logged_in.id }
-    standard_request_options(:delete, 'DESTROY (as anonymous user to logged in allowed read)', :unauthorized, 
+    standard_request_options(:delete, 'DESTROY (as anonymous user to logged in allowed read)', :unauthorized,
                              {remove_auth: true, expected_json_path: get_json_error_path(:sign_up)})
   end
 
@@ -477,7 +549,7 @@ resource 'Projects' do
     let(:authentication_token) { no_access_token }
     standard_request_options(:post, 'FILTER (as no access user to anon allowed read)', :ok, {data_item_count: 0, response_body_content: ['200']})
   end
-  
+
   post '/projects/filter' do
     let(:raw_post) {
       {
@@ -501,34 +573,46 @@ resource 'Projects' do
     })
   end
 
-  get '/projects/filter?direction=desc&filter_name=a&filter_partial_match=partial_match_text&items=35&order_by=createdAt&page=1' do
-    let(:authentication_token) { reader_token }
-    standard_request_options(:get, 'BASIC FILTER (as reader with filtering, sorting, paging)', :ok, {
-        expected_json_path: 'meta/paging/current',
-        data_item_count: 0,
-        response_body_content: '/projects/filter?direction=desc\u0026filter_name=a\u0026filter_partial_match=partial_match_text\u0026items=35\u0026order_by=createdAt\u0026page=1'
-    })
+  context 'filter partial match' do
+
+    get '/projects/filter?direction=desc&filter_name=a&filter_partial_match=partial_match_text&items=35&order_by=createdAt&page=1' do
+      let(:authentication_token) { reader_token }
+      standard_request_options(:get, 'BASIC FILTER (as reader with filtering, sorting, paging)', :ok, {
+          expected_json_path: 'meta/paging/current',
+          data_item_count: 0,
+          response_body_content: '/projects/filter?direction=desc\u0026filter_name=a\u0026filter_partial_match=partial_match_text\u0026items=35\u0026order_by=createdAt\u0026page=1'
+      })
+    end
+
   end
 
-  get '/projects/filter?disable_paging=true' do
-    let(:authentication_token) { writer_token }
-    let!(:more_projects) {
-      # default items per page is 25
-      29.times do
-        FactoryGirl.create(:project, creator: writer_permission.user)
-      end
-    }
+  context 'filter with paging via GET' do
 
-    standard_request_options(:get, 'BASIC FILTER (as reader with filtering, paging disabled)', :ok, {
-        expected_json_path: 'meta/paging/current',
-        data_item_count: 30,
-        response_body_content: [
-            '{"meta":{"status":200,"message":"OK","sorting":{"order_by":"name","direction":"asc"},',
-            '"paging":{"page":1,"items":30,"total":30,"max_page":1,',
-            '"current":"http://localhost:3000/projects/filter?direction=asc\u0026disable_paging=true\u0026items=30\u0026order_by=name\u0026page=1",',
-            '"previous":null,"next":null}}'
-        ]
-    })
+    get '/projects/filter?page=1&items=2' do
+      let(:authentication_token) { writer_token }
+      let!(:more_projects) {
+        # default items per page is 25
+        29.times do
+          FactoryGirl.create(:project, creator: writer_permission.user)
+        end
+      }
+
+      standard_request_options(:get, 'BASIC FILTER (as reader with paging)', :ok, {
+          expected_json_path: 'meta/paging/current',
+          data_item_count: 2,
+          response_body_content: [
+              '"paging":{"page":1,"items":2,"total":30,"max_page":15',
+              '"current":"http://localhost:3000/projects/filter?direction=asc\u0026items=2\u0026order_by=name\u0026page=1"',
+              '"previous":null,',
+              '"next":"http://localhost:3000/projects/filter?direction=asc\u0026items=2\u0026order_by=name\u0026page=2"'
+          ]
+      })
+    end
+
   end
+
+
+
+
 
 end

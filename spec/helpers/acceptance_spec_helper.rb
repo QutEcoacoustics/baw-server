@@ -42,7 +42,7 @@ def standard_request_options(http_method, description, expected_status, opts = {
 
   # 406 when you can't send what they want, 415 when they send what you don't want
 
-  example "#{http_method} #{description} - #{expected_status}", document: opts[:document] do
+  example "#{http_method} #{description} - #{expected_status}", document: opts[:document], :caller => caller do
 
     # allow for modification of opts, provide context so let and let! values can be accessed
     if opts_mod
@@ -57,10 +57,10 @@ def standard_request_options(http_method, description, expected_status, opts = {
     fail 'Specify both expected_error_class and expected_error_regexp' if problem
 
     # remove the auth header if specified
-    is_remove_header = opts[:remove_auth] && opts[:remove_auth] === true
+    is_remove_header = opts.dig(:remove_auth) == true
     header_key = 'Authorization'
     current_metadata = example.metadata
-    has_header = current_metadata[:headers] && current_metadata[:headers].include?(header_key)
+    has_header = current_metadata[:headers]&.include?(header_key)
     header_value = has_header ? current_metadata[:headers][header_key] : nil
 
     if is_remove_header && has_header
@@ -112,8 +112,10 @@ end
 def media_request_options(http_method, description, expected_status, opts = {})
   opts.reverse_merge!({document: true})
 
-  example "#{http_method} #{description} - #{expected_status}", document: opts[:document] do
+  # add better metadata for tests, get the caller information that invoked this method
 
+
+  example "#{http_method} #{description} - #{expected_status}", document: opts[:document], :caller => caller do
     if opts[:dont_copy_test_audio]
       audio_file = nil
     else
@@ -327,17 +329,8 @@ def acceptance_checks_json(opts = {})
 
   check_invalid_data_content(opts, message_prefix, actual_response_parsed)
 
-
   unless opts[:expected_json_path].blank?
-
-    expected_json_path_array = []
-    if opts[:expected_json_path].is_a?(Array)
-      expected_json_path_array = opts[:expected_json_path]
-    else
-      opts[:expected_json_path] = [opts[:expected_json_path]]
-    end
-
-    opts[:expected_json_path].each do |expected_json_path_item|
+    Array.wrap(opts[:expected_json_path]).each do |expected_json_path_item|
       expect(opts[:actual_response]).to have_json_path(expected_json_path_item), "#{message_prefix} to find '#{expected_json_path_item}' in '#{opts[:actual_response]}'"
     end
 
@@ -470,8 +463,12 @@ def acceptance_checks_media(opts = {})
     begin
       temp_file = File.join(Settings.paths.temp_dir, 'temp-media_controller_response')
       File.open(temp_file, 'wb') { |f| f.write(response_body) }
-      expect(opts[:actual_response_headers]['Content-Length'].to_i).to eq(File.size(temp_file)),
-                                                                       "Mismatch: actual media length. #{opts[:msg]}"
+      actual_length = opts[:actual_response_headers]['Content-Length'].to_i
+      downloaded_length = File.size(temp_file)
+      expect(actual_length).to(
+        eq(downloaded_length),
+        "Mismatch: actual media length #{actual_length} did not match recieved length of #{downloaded_length}. #{opts[:msg]}"
+      )
     ensure
       File.delete temp_file if File.exists? temp_file
     end
@@ -479,7 +476,7 @@ def acceptance_checks_media(opts = {})
 end
 
 def check_site_lat_long_response(description, expected_status, should_be_obfuscated = true)
-  example "#{description} - #{expected_status}", document: false do
+  example "#{description} - #{expected_status}", document: false, :caller => caller do
     do_request
     status.should eq(expected_status), "Requested #{path} expecting status #{expected_status} but got status #{status}. Response body was #{response_body}"
     response_body.should have_json_path('data/location_obfuscated'), response_body.to_s
@@ -605,7 +602,7 @@ def create_media_options(audio_recording, test_audio_file = nil)
   options
 end
 
-def process_custom(method, path, params = {}, headers ={})
+def process_custom(method, path, params = {}, headers = {})
   do_request(method, path, params, headers)
   document_example(method.to_s.upcase, path)
 end

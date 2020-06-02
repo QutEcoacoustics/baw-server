@@ -66,6 +66,6 @@
       = f.input :group, label: 'Organisation'
       = f.input :group_type, label: 'Organisation Type', include_blank: false
       = f.input :content, label: 'Request details (include Projects/Sites, dates/times, data format)', as: :text, input_html: {rows: '8',style: 'width:100%'}
-      = render partial: 'shared/recaptcha', locals: {data_item: @data_request, data_item_name: 'data_request'}
+      = render partial: 'shared/recaptcha', locals: {data_item: @data_request, data_item_name: 'data_request', data_action: 'data_request'}
       = f.button :submit_cancel, 'Submit', class: 'btn-default'
 
