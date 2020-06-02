@@ -1,0 +1,87 @@
+name: Docker
+
+on:
+  push:
+    # Publish `master` as Docker `latest` image.
+    branches:
+      - master
+
+    # Publish `v1.2.3` tags as releases.
+    tags:
+      - v*
+
+  # Run tests for any PRs.
+  pull_request:
+
+env:
+  # TODO: Change variable to your image's name.
+  IMAGE_NAME: workbench-server
+
+jobs:
+  # Run tests.
+  # See also https://docs.docker.com/docker-hub/builds/automated-testing/
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build image
+        uses: docker/build-push-action@v1.1.0
+        with:
+          # Path to the build context
+          path: .
+          # Sets the target stage to build
+          target: baw-server-dev
+          # Whether to push the image
+          push: false
+      - name: Start docker-comoose
+        run: docker-compose up -d
+      - name: Run tests
+        run: docker-compose run web rspec
+
+  # Push image to GitHub Packages.
+  # See also https://docs.docker.com/docker-hub/builds/
+  push:
+    # Ensure test job passes before pushing image.
+    needs: test
+
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v1.1.0
+        with:
+          # Username used to log in to a Docker registry. If not set then no login will occur
+          username: atruskie
+          # Password or personal access token used to log in to a Docker registry. If not set then no login will occur
+          password:  ${{ secrets.DOCKER_HUB_TOKEN }}
+          # Server address of Docker registry. If not set then will default to Docker Hub
+          #registry: # optional
+          # Docker repository to tag the image with
+          repository: qutecoacoustics/workbench-server
+          # Comma-delimited list of tags. These will be added to the registry/repository to form the image's tags
+          #tags: # optional
+          # Automatically tags the built image with the git reference as per the readme
+          tag_with_ref: true
+          # Automatically tags the built image with the git short SHA as per the readme
+          tag_with_sha: true
+          # Path to the build context
+          path: .
+          # Path to the Dockerfile (Default is '{path}/Dockerfile')
+          #dockerfile: # optional
+          # Sets the target stage to build
+          target: baw-server
+          # Always attempt to pull a newer version of the image
+          always_pull: true
+          # Comma-delimited list of build-time variables
+          #build_args: # optional
+          # Comma-delimited list of images to consider as cache sources
+          #cache_froms: # optional
+          # Comma-delimited list of labels to add to the built image
+          #labels: # optional
+          # Adds labels with git repository information to the built image
+          add_git_labels: true
+          # Whether to push the image
+          push: true
