@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 require 'rspec_api_documentation/dsl'
 require 'helpers/acceptance_spec_helper'
@@ -5,8 +7,8 @@ require 'helpers/acceptance_spec_helper'
 # https://github.com/zipmark/rspec_api_documentation
 resource 'Public' do
 
-  expose_headers = (MediaPoll::HEADERS_EXPOSED + %w(X-Archived-At X-Error-Type)).join(', ')
-  allow_methods = %w(GET POST PUT PATCH HEAD DELETE OPTIONS).join(', ')
+  expose_headers = (MediaPoll::HEADERS_EXPOSED + ['X-Archived-At', 'X-Error-Type']).join(', ')
+  allow_methods = ['GET', 'POST', 'PUT', 'PATCH', 'HEAD', 'DELETE', 'OPTIONS'].join(', ')
 
   # have to specify content type header, otherwise it gets set to application/x-www-form-urlencoded
   header 'Content-Type', ''
@@ -29,42 +31,40 @@ resource 'Public' do
 
       http_options_verb '/my_account/prefs' do
         standard_request_options(
-            :http_options_verb,
-            'OPTIONS /my_account/prefs (example 1)',
-            :ok,
-            {
-                expected_response_has_content: false,
-                expected_response_content_type: 'text/plain',
-                expected_response_header_values:
-                    {
-                        'Access-Control-Allow-Origin' => 'http://localhost:8080',
-                        'Access-Control-Expose-Headers' => expose_headers,
-                        'Access-Control-Allow-Credentials' => 'true',
-                        'Access-Control-Allow-Methods' => allow_methods,
-                        'Access-Control-Allow-Headers' => 'accept, content-type',
-                        'Access-Control-Max-Age' => "1728000",
-                        'Content-Type' => 'text/plain',
-                        'Set-Cookie' => '__profilin=p%3Dt; path=/'
-                    },
-                expected_request_header_values:
-                    {
-                        'Host' => 'localhost:8080',
-                        'Connection' => 'keep-alive',
-                        'Cache-Control' => 'max-age=0',
-                        'Access-Control-Request-Method' => 'PUT',
-                        'Origin' => 'http://localhost:8080',
-                        'User-Agent' => 'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36',
-                        'Access-Control-Request-Headers' => 'accept, content-type',
-                        'Accept' => '*/*',
-                        'Referer' => 'http://localhost:8080/listen/234234?start=30&end=60',
-                        'Accept-Encoding' => 'gzip, deflate, sdch',
-                        'Accept-Language' => 'en-US,en;q=0.8',
+          :http_options_verb,
+          'OPTIONS /my_account/prefs (example 1)',
+          :ok,
+          expected_response_has_content: false,
+          expected_response_content_type: 'text/plain',
+          expected_response_header_values:
+                {
+                  'Access-Control-Allow-Origin' => 'http://localhost:8080',
+                  'Access-Control-Expose-Headers' => expose_headers,
+                  'Access-Control-Allow-Credentials' => 'true',
+                  'Access-Control-Allow-Methods' => allow_methods,
+                  'Access-Control-Allow-Headers' => 'accept, content-type',
+                  'Access-Control-Max-Age' => '1728000',
+                  'Content-Type' => 'text/plain'
+                },
+          expected_request_header_values:
+                {
+                  'Host' => 'localhost:8080',
+                  'Connection' => 'keep-alive',
+                  'Cache-Control' => 'max-age=0',
+                  'Access-Control-Request-Method' => 'PUT',
+                  'Origin' => 'http://localhost:8080',
+                  'User-Agent' => 'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36',
+                  'Access-Control-Request-Headers' => 'accept, content-type',
+                  'Accept' => '*/*',
+                  'Referer' => 'http://localhost:8080/listen/234234?start=30&end=60',
+                  'Accept-Encoding' => 'gzip, deflate, sdch',
+                  'Accept-Language' => 'en-US,en;q=0.8',
 
-                        # these headers are added/modified by the framework :/
-                        'Content-Type' => '',
-                        'Cookie' => ''
-                    }
-            })
+                  # these headers are added/modified by the framework :/
+                  'Content-Type' => '',
+                  'Cookie' => ''
+                }
+        )
       end
     end
 
@@ -82,41 +82,39 @@ resource 'Public' do
 
       http_options_verb '/audio_recordings/filter' do
         standard_request_options(
-            :http_options_verb,
-            'OPTIONS /my_account/prefs (example 2)',
-            :ok,
-            {
-                expected_response_has_content: false,
-                expected_response_content_type: 'text/plain',
-                expected_response_header_values:
-                    {
-                        'Access-Control-Allow-Origin' => 'http://localhost:8080',
-                        'Access-Control-Expose-Headers' => expose_headers,
-                        'Access-Control-Allow-Credentials' => 'true',
-                        'Access-Control-Allow-Methods' => allow_methods,
-                        'Access-Control-Allow-Headers' => 'accept, content-type',
-                        'Access-Control-Max-Age' => "1728000",
-                        'Content-Type' => 'text/plain',
-                        'Set-Cookie' => '__profilin=p%3Dt; path=/'
-                    },
-                expected_request_header_values:
-                    {
-                        'Host' => 'localhost:8080',
-                        'Connection' => 'keep-alive',
-                        'Access-Control-Request-Method' => 'POST',
-                        'Origin' => 'http://localhost:8080',
-                        'User-Agent' => 'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36',
-                        'Access-Control-Request-Headers' => 'accept, content-type',
-                        'Accept' => '*/*',
-                        'Referer' => 'http://localhost:8080/listen',
-                        'Accept-Encoding' => 'gzip, deflate, sdch',
-                        'Accept-Language' => 'en-US,en;q=0.8',
+          :http_options_verb,
+          'OPTIONS /my_account/prefs (example 2)',
+          :ok,
+          expected_response_has_content: false,
+          expected_response_content_type: 'text/plain',
+          expected_response_header_values:
+                {
+                  'Access-Control-Allow-Origin' => 'http://localhost:8080',
+                  'Access-Control-Expose-Headers' => expose_headers,
+                  'Access-Control-Allow-Credentials' => 'true',
+                  'Access-Control-Allow-Methods' => allow_methods,
+                  'Access-Control-Allow-Headers' => 'accept, content-type',
+                  'Access-Control-Max-Age' => '1728000',
+                  'Content-Type' => 'text/plain'
+                },
+          expected_request_header_values:
+                {
+                  'Host' => 'localhost:8080',
+                  'Connection' => 'keep-alive',
+                  'Access-Control-Request-Method' => 'POST',
+                  'Origin' => 'http://localhost:8080',
+                  'User-Agent' => 'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36',
+                  'Access-Control-Request-Headers' => 'accept, content-type',
+                  'Accept' => '*/*',
+                  'Referer' => 'http://localhost:8080/listen',
+                  'Accept-Encoding' => 'gzip, deflate, sdch',
+                  'Accept-Language' => 'en-US,en;q=0.8',
 
-                        # these headers are added/modified by the framework :/
-                        'Content-Type' => '',
-                        'Cookie' => ''
-                    }
-            })
+                  # these headers are added/modified by the framework :/
+                  'Content-Type' => '',
+                  'Cookie' => ''
+                }
+        )
       end
     end
 
@@ -138,36 +136,34 @@ resource 'Public' do
           let(:header_method) { 'GET' }
           let(:header_headers) { 'Origin, Content-Type, Accept, Authorization, Token' }
           standard_request_options(
-              :http_options_verb,
-              'OPTIONS /projects (all headers)',
-              :ok,
-              {
-                  expected_response_has_content: false,
-                  expected_response_content_type: 'text/plain',
-                  expected_response_header_values:
-                      {
-                          'Access-Control-Allow-Origin' => 'http://localhost:3000',
-                          'Access-Control-Expose-Headers' => expose_headers,
-                          'Access-Control-Allow-Credentials' => 'true',
-                          'Access-Control-Allow-Methods' => allow_methods,
-                          'Access-Control-Allow-Headers' => 'Origin, Content-Type, Accept, Authorization, Token',
-                          'Access-Control-Max-Age' => "1728000",
-                          'Content-Type' => 'text/plain',
-                          'Set-Cookie' => '__profilin=p%3Dt; path=/'
-                      },
-                  expected_request_header_values:
-                      {
-                          'Origin' => 'http://localhost:3000',
-                          'Access-Control-Request-Method' => 'GET',
-                          'Access-Control-Request-Headers' => 'Origin, Content-Type, Accept, Authorization, Token',
+            :http_options_verb,
+            'OPTIONS /projects (all headers)',
+            :ok,
+            expected_response_has_content: false,
+            expected_response_content_type: 'text/plain',
+            expected_response_header_values:
+                  {
+                    'Access-Control-Allow-Origin' => 'http://localhost:3000',
+                    'Access-Control-Expose-Headers' => expose_headers,
+                    'Access-Control-Allow-Credentials' => 'true',
+                    'Access-Control-Allow-Methods' => allow_methods,
+                    'Access-Control-Allow-Headers' => 'Origin, Content-Type, Accept, Authorization, Token',
+                    'Access-Control-Max-Age' => '1728000',
+                    'Content-Type' => 'text/plain'
+                  },
+            expected_request_header_values:
+                  {
+                    'Origin' => 'http://localhost:3000',
+                    'Access-Control-Request-Method' => 'GET',
+                    'Access-Control-Request-Headers' => 'Origin, Content-Type, Accept, Authorization, Token',
 
-                          # defaults and framework-specified headers
-                          'Accept' => '*/*',
-                          'Host' => 'localhost:8080',
-                          'Content-Type' => '',
-                          'Cookie' => ''
-                      },
-              })
+                    # defaults and framework-specified headers
+                    'Accept' => '*/*',
+                    'Host' => 'localhost:8080',
+                    'Content-Type' => '',
+                    'Cookie' => ''
+                  }
+          )
         end
       end
 
@@ -177,34 +173,32 @@ resource 'Public' do
         header 'Access-Control-Request-Method', 'GET'
         http_options_verb '/projects' do
           standard_request_options(
-              :http_options_verb,
-              'OPTIONS /projects (without request-headers)',
-              :ok,
-              {
-                  expected_response_has_content: false,
-                  expected_response_content_type: 'text/plain',
-                  expected_response_header_values:
-                      {
-                          'Access-Control-Allow-Origin' => 'http://192.168.0.10:3000',
-                          'Access-Control-Expose-Headers' => expose_headers,
-                          'Access-Control-Allow-Credentials' => 'true',
-                          'Access-Control-Allow-Methods' => allow_methods,
-                          'Access-Control-Max-Age' => "1728000",
-                          'Content-Type' => 'text/plain',
-                          'Set-Cookie' => '__profilin=p%3Dt; path=/' 
-                      },
-                  expected_request_header_values:
-                      {
-                          'Origin' => 'http://192.168.0.10:3000',
-                          'Access-Control-Request-Method' => 'GET',
+            :http_options_verb,
+            'OPTIONS /projects (without request-headers)',
+            :ok,
+            expected_response_has_content: false,
+            expected_response_content_type: 'text/plain',
+            expected_response_header_values:
+                  {
+                    'Access-Control-Allow-Origin' => 'http://192.168.0.10:3000',
+                    'Access-Control-Expose-Headers' => expose_headers,
+                    'Access-Control-Allow-Credentials' => 'true',
+                    'Access-Control-Allow-Methods' => allow_methods,
+                    'Access-Control-Max-Age' => '1728000',
+                    'Content-Type' => 'text/plain'
+                  },
+            expected_request_header_values:
+                  {
+                    'Origin' => 'http://192.168.0.10:3000',
+                    'Access-Control-Request-Method' => 'GET',
 
-                          # defaults and framework-specified headers
-                          'Accept' => '*/*',
-                          'Host' => 'localhost:8080',
-                          'Content-Type' => '',
-                          'Cookie' => ''
-                      },
-              })
+                    # defaults and framework-specified headers
+                    'Accept' => '*/*',
+                    'Host' => 'localhost:8080',
+                    'Content-Type' => '',
+                    'Cookie' => ''
+                  }
+          )
         end
       end
 
@@ -217,12 +211,11 @@ resource 'Public' do
         header 'Access-Control-Request-Headers', 'PUT'
         http_options_verb '/projects' do
           standard_request_options(
-              :http_options_verb,
-              'OPTIONS /projects (without Origin)',
-              :bad_request,
-              {
-                  response_body_content: "The request was not valid: CORS preflight request to 'projects' was not valid."
-              })
+            :http_options_verb,
+            'OPTIONS /projects (without Origin)',
+            :bad_request,
+            response_body_content: "The request was not valid: CORS preflight request to 'projects' was not valid."
+          )
         end
       end
 
@@ -231,12 +224,11 @@ resource 'Public' do
         header 'Access-Control-Request-Headers', 'Origin, Content-Type, Accept, Authorization, Token'
         http_options_verb '/projects' do
           standard_request_options(
-              :http_options_verb,
-              'OPTIONS /projects (without request-method)',
-              :bad_request,
-              {
-                  response_body_content: "The request was not valid: CORS preflight request to 'projects' was not valid."
-              })
+            :http_options_verb,
+            'OPTIONS /projects (without request-method)',
+            :bad_request,
+            response_body_content: "The request was not valid: CORS preflight request to 'projects' was not valid."
+          )
         end
       end
 
@@ -246,12 +238,11 @@ resource 'Public' do
         header 'Access-Control-Request-Headers', 'Origin, Content-Type, Accept, Authorization, Token'
         http_options_verb '/projects' do
           standard_request_options(
-              :http_options_verb,
-              'OPTIONS /projects (with invalid Origin)',
-              :bad_request,
-              {
-                  response_body_content: "The request was not valid: CORS preflight request to 'projects' was not valid."
-              })
+            :http_options_verb,
+            'OPTIONS /projects (with invalid Origin)',
+            :bad_request,
+            response_body_content: "The request was not valid: CORS preflight request to 'projects' was not valid."
+          )
         end
       end
 

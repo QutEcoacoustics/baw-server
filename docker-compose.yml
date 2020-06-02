@@ -1,4 +1,4 @@
-version: '3.4'
+version: "3.4"
 services:
   redis:
     image: redis
@@ -14,19 +14,23 @@ services:
       - "5432:5432"
     networks:
       - baw_docker_network
-  workers:
+    environment:
+      # never, ever, ever use this is a production setup!
+      # Only use this in a dev environment
+      POSTGRES_PASSWORD: password
+  workers: &worker
     build:
       context: .
       target: baw-server-dev
     command: >-
-      ../bin/bundle exec rake baw:worker:run['/home/baw_web/baw-server/baw-workers/lib/settings/settings.default.yml']
-    entrypoint: []
+      baw-workers baw:worker:run
     networks:
       - baw_docker_network
-    ports:
-      # rdebug-ide port (mapped for workers)
-      - "1235:1234"
-      - "26162:26162"
+    #ports:
+    # rdebug-ide port (mapped for workers)
+    # - "1235:1234"
+    # - "26162:26162"
+    restart: on-failure
     volumes:
       - type: bind
         source: ./
@@ -36,19 +40,23 @@ services:
         source: baw_docker_shared_storage
         target: /home/baw_web/baw-server/tmp
 
-    working_dir: /home/baw_web/baw-server/baw-workers
+    working_dir: /home/baw_web/baw-server
     depends_on:
       - db
       - redis
+  workers_test:
+    <<: *worker
+    environment:
+      RAILS_ENV: test
   web:
     #image: qutecoacoustics/baw-server:dev
     build:
       context: .
       target: baw-server-dev
-    entrypoint: ""
-    command: /home/baw_web/baw-server/provision/entrypoint.sh bundle exec passenger start
+    command: bundle exec passenger start
     environment:
       RAILS_ENV: development
+      MIGRATE_DB: 'true'
     user: baw_web
     volumes:
       - type: bind
@@ -62,6 +70,7 @@ services:
       - "3000:3000"
       # rdebug-ide port
       - "1234:1234"
+      - "26162:26162"
     networks:
       - baw_docker_network
     depends_on:

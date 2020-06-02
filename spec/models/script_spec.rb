@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-describe Script, :type => :model do
+describe Script, type: :model do
   #pending "add some examples to (or delete) #{__FILE__}"
 
   # this should pass, but the paperclip implementation of validate_attachment_content_type is buggy.

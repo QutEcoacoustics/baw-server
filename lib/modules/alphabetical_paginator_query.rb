@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module AlphabeticalPaginatorQuery
   OTHER = "\u{1F30F}"
   NUMBERS = '0-9'
@@ -11,26 +13,23 @@ module AlphabeticalPaginatorQuery
       left, right = range.split('-')
       query_type = validate_range(left, right)
 
-      if query_type == :normal
-        if left == right then
-          q = where(["LOWER(LEFT(\"#{field.to_s}\", ?)) = ?",
+      q = if query_type == :normal
+            if left == right
+              where(["LOWER(LEFT(\"#{field}\", ?)) = ?",
                      left.length,
-                     left
-                    ])
-        else
-          q = where(["LOWER(LEFT(\"#{field.to_s}\", ?)) >= ? AND LOWER(LEFT(\"#{field.to_s}\", ?)) <= ?",
+                     left])
+            else
+              where(["LOWER(LEFT(\"#{field}\", ?)) >= ? AND LOWER(LEFT(\"#{field}\", ?)) <= ?",
                      left.length,
                      left,
                      right.length,
-                     right
-                    ])
-        end
-      elsif query_type == :numbers
-        q = where(["\"#{field.to_s}\" ~ '^\\d+'", field])
-      else
-        q = where(["\"#{field.to_s}\" !~ '^[a-zA-Z0-9]'", field])
-      end
-
+                     right])
+                end
+          elsif query_type == :numbers
+            where(["\"#{field}\" ~ '^\\d+'", field])
+          else
+            where(["\"#{field}\" !~ '^[a-zA-Z0-9]'", field])
+          end
 
       q.order(field)
     end
@@ -43,12 +42,8 @@ module AlphabeticalPaginatorQuery
 
       return :normal if /^[a-z]+$/ =~ left && /^[a-z]+$/ =~ right
 
-      fail ArgumentError, 'Alphabetical paginator range invalid'
+      raise ArgumentError, 'Alphabetical paginator range invalid'
     end
 
   end
-
 end
-
-
-ActiveRecord::Base.send(:include, AlphabeticalPaginatorQuery)

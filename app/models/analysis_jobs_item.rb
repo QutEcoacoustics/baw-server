@@ -1,13 +1,12 @@
 class AnalysisJobsItem < ActiveRecord::Base
   # allow a state machine to work with this class
   include AASM
-  include AASMHelpers
+  include AasmHelpers
 
   SYSTEM_JOB_ID = 'system'
 
   belongs_to :analysis_job, inverse_of: :analysis_jobs_items
   belongs_to :audio_recording, inverse_of: :analysis_jobs_items
-
 
   # association validations
   validates :analysis_job, existence: true

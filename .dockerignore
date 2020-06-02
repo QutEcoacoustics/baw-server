@@ -5,8 +5,6 @@
 log/*
 
 # don't build these file into our image
-# they'll available for running tests when we run the docker container with 
+# they'll available for running tests when we run the docker container with
 # a mount overlay
 spec/
-baw-workers/spec
-baw-audio-tools/spec

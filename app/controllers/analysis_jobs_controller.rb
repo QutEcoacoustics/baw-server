@@ -8,10 +8,10 @@ class AnalysisJobsController < ApplicationController
     do_authorize_class
 
     @analysis_jobs, opts = Settings.api_response.response_advanced(
-        api_filter_params,
-        get_analysis_jobs,
-        AnalysisJob,
-        AnalysisJob.filter_settings
+      api_filter_params,
+      get_analysis_jobs,
+      AnalysisJob,
+      AnalysisJob.filter_settings
     )
     respond_index(opts)
   end

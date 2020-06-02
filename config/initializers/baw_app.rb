@@ -1,0 +1,1 @@
+BawApp.initialize

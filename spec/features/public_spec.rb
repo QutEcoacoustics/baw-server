@@ -1,6 +1,9 @@
-require 'rails_helper'
+# frozen_string_literal: true
 
-describe 'Website forms with user', :type => :feature do
+require 'rails_helper'
+require 'helpers/shared_test_helpers'
+
+describe 'Website forms with user', type: :feature do
   before(:each) do
     @user = FactoryGirl.create(:user)
     login_as @user, scope: :user
@@ -119,6 +122,8 @@ describe 'Website forms with user', :type => :feature do
 
   context 'website status' do
 
+    include_context 'shared_test_helpers'
+
     create_entire_hierarchy
 
     it 'shows the Statistics page' do
@@ -129,15 +134,25 @@ describe 'Website forms with user', :type => :feature do
       expect(page).to have_content('Unique tags attached to annotations')
     end
 
-    it 'shows the status page' do
+    it 'shows the status page (when there\'s no audio)' do
+      clear_original_audio
+
       visit status_path
       expect(current_path).to eq(status_path)
       expect(page).to have_content('bad')
     end
+
+    it 'shows the status page' do
+      make_original_audio
+
+      visit status_path
+      expect(current_path).to eq(status_path)
+      expect(page).to have_content('good')
+    end
   end
 end
 
-describe 'public website forms', :type => :feature do
+describe 'public website forms', type: :feature do
   context 'static pages' do
     it 'shows the ethics_statement page' do
       visit ethics_statement_path
@@ -170,12 +185,6 @@ describe 'public website forms', :type => :feature do
       visit website_status_path
       expect(current_path).to eq(website_status_path)
       expect(page).to have_content('Unique tags attached to annotations')
-    end
-
-    it 'shows the status page' do
-      visit status_path
-      expect(current_path).to eq(status_path)
-      expect(page).to have_content('bad')
     end
   end
 end

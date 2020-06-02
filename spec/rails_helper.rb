@@ -1,19 +1,28 @@
+# frozen_string_literal: true
+
 # This file is copied to spec/ when you run 'rails generate rspec:install'
 
 # attempting to prevent trivial mistakes
 #ENV['RAILS_ENV'] ||= 'test'
 if ENV['RAILS_ENV'] != 'test'
-  puts %{
-***
-Tests must be run in the test envrionment.
-The current envrionment `#{ENV['RAILS_ENV']}` has been changed to `test`.
-See rails_helper.rb to disable this check
-***
-}
+  puts \
+    <<~MESSAGE
+      ***
+      Tests must be run in the test envrionment.
+      The current envrionment `#{ENV['RAILS_ENV']}` has been changed to `test`.
+      See rails_helper.rb to disable this check
+      ***
+    MESSAGE
   ENV['RAILS_ENV'] = 'test'
 end
 
-abort "You must run tests using 'bundle exec ...'" unless ENV['BUNDLE_BIN_PATH'] || ENV['BUNDLE_GEMFILE']
+#abort "You must run tests using 'bundle exec ...'" unless ENV['BUNDLE_BIN_PATH'] || ENV['BUNDLE_GEMFILE']
+
+require 'bundler' # Set up gems listed in the Gemfile.
+Bundler.setup(:test)
+Bundler.require(:test)
+
+require 'spec_helper'
 
 require 'test-prof'
 TestProf.configure do |config|
@@ -44,21 +53,21 @@ if ENV['CI'] || ENV['COVERAGE']
     Coveralls.wear!('rails')
 
     SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter.new([
-                                                                      Coveralls::SimpleCov::Formatter,
-                                                                      CodeClimate::TestReporter::Formatter
-                                                                  ])
+                                                                     Coveralls::SimpleCov::Formatter,
+                                                                     CodeClimate::TestReporter::Formatter
+                                                                   ])
 
   else
     SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter.new([
-                                                                      SimpleCov::Formatter::HTMLFormatter
-                                                                  ])
+                                                                     SimpleCov::Formatter::HTMLFormatter
+                                                                   ])
   end
 
   # start code coverage
   SimpleCov.start 'rails'
 end
 
-require File.expand_path('../../config/environment', __FILE__)
+require File.expand_path('../config/environment', __dir__)
 
 # Prevent database truncation if the environment is production
 abort('The Rails environment is running in production mode!') if Rails.env.production?
@@ -75,6 +84,9 @@ require 'database_cleaner'
 require 'rspec_api_documentation'
 
 require 'helpers/misc_helper'
+require 'fixtures/fixtures'
+
+require_relative '../lib/patches/test_response_reuse.rb'
 
 WebMock.disable_net_connect!(allow_localhost: true, allow: 'codeclimate.com')
 
@@ -141,11 +153,11 @@ RSpec.configure do |config|
   config.include Paperclip::Shoulda::Matchers
   config.include FactoryGirl::Syntax::Methods
 
-  require File.join(File.dirname(File.expand_path(__FILE__)), 'lib', 'creation.rb')
+  require_relative 'helpers/creation'
   config.include Creation::Example
   config.extend Creation::ExampleGroup
 
-  require File.join(File.dirname(File.expand_path(__FILE__)), 'lib', 'citizen_science_creation.rb')
+  require_relative 'helpers/citizen_science_creation.rb'
   config.extend CitizenScienceCreation
 
   require 'enumerize/integrations/rspec'
@@ -209,9 +221,7 @@ RSpec.configure do |config|
     # start database cleaner
     DatabaseCleaner.start
     example_description = example.description
-    Rails::logger.info "\n\n#{example_description}\n#{'-' * (example_description.length)}"
-
-    #Bullet.start_request if Bullet.enable?
+    Rails.logger.info "\n\n#{example_description}\n#{'-' * example_description.length}"
   end
 
   config.after(:each) do
@@ -220,9 +230,6 @@ RSpec.configure do |config|
     DatabaseCleaner.clean
 
     Rails.application.load_seed if is_truncating
-
-    #Bullet.perform_out_of_channel_notifications if Bullet.enable? && Bullet.notification?
-    #Bullet.end_request if Bullet.enable?
 
     # https://github.com/plataformatec/devise/wiki/How-To:-Test-with-Capybara
     # reset warden after each test
@@ -239,12 +246,12 @@ RSpec.configure do |config|
 end
 
 require 'shoulda-matchers'
-# Shoulda::Matchers.configure do |config|
-#   config.integrate do |with|
-#     with.test_framework :rspec
-#     with.library :rails
-#   end
-# end
+Shoulda::Matchers.configure do |config|
+  config.integrate do |with|
+    with.test_framework :rspec
+    with.library :rails
+  end
+end
 
 # Customise rspec api documentation
 ENV['DOC_FORMAT'] ||= 'json'
