@@ -1,38 +1,40 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 
 latitudes = [
-    {-100 => false},
-    {-91 => false},
-    {-90 => true},
-    {-89 => true},
-    {0 => true},
-    {89 => true},
-    {90 => true},
-    {91 => false},
-    {100 => false}
+  { -100 => false },
+  { -91 => false },
+  { -90 => true },
+  { -89 => true },
+  { 0 => true },
+  { 89 => true },
+  { 90 => true },
+  { 91 => false },
+  { 100 => false }
 ]
 
 longitudes = [
-    {-200 => false},
-    {-181 => false},
-    {-180 => true},
-    {-179 => true},
-    {0 => true},
-    {179 => true},
-    {180 => true},
-    {181 => false},
-    {200 => false}
+  { -200 => false },
+  { -181 => false },
+  { -180 => true },
+  { -179 => true },
+  { 0 => true },
+  { 179 => true },
+  { 180 => true },
+  { 181 => false },
+  { 200 => false }
 ]
 
-describe Site, :type => :model do
+describe Site, type: :model do
   it 'has a valid factory' do
     expect(FactoryGirl.create(:site)).to be_valid
   end
   it 'is invalid without a name' do
-    expect(FactoryGirl.build(:site, :name => nil)).not_to be_valid
+    expect(FactoryGirl.build(:site, name: nil)).not_to be_valid
   end
   it 'requires a name with at least two characters' do
-    s = FactoryGirl.build(:site, :name => 's')
+    s = FactoryGirl.build(:site, name: 's')
     expect(s).not_to be_valid
     expect(s.valid?).to be_falsey
     expect(s.errors[:name].size).to eq(1)
@@ -71,7 +73,7 @@ describe Site, :type => :model do
 
     latitudes.each { |value, pass|
       site.latitude = value
-      if pass then
+      if pass
         expect(site).to be_valid
       else
         expect(site).not_to be_valid
@@ -83,18 +85,25 @@ describe Site, :type => :model do
 
     longitudes.each { |value, pass|
       site.longitude = value
-      if pass then
+      if pass
         expect(site).to be_valid
       else
         expect(site).not_to be_valid
       end
     }
   end
-  it { is_expected.to have_and_belong_to_many :projects }
-
-  it { is_expected.to belong_to(:creator).with_foreign_key(:creator_id) }
-  it { is_expected.to belong_to(:updater).with_foreign_key(:updater_id) }
-  it { is_expected.to belong_to(:deleter).with_foreign_key(:deleter_id) }
+  it 'should belong to many projects' do
+    is_expected.to have_and_belong_to_many :projects
+  end
+  it 'should have creator associated with foreign key' do
+    is_expected.to belong_to(:creator).with_foreign_key(:creator_id)
+  end
+  it 'should have updater associated with foreign key' do
+    is_expected.to belong_to(:updater).with_foreign_key(:updater_id)
+  end
+  it 'should have deleter associated with foreign key' do
+    is_expected.to belong_to(:deleter).with_foreign_key(:deleter_id)
+  end
 
   it 'should error on checking orphaned site if site is orphaned' do
     site = FactoryGirl.create(:site, projects: [])
@@ -106,10 +115,10 @@ describe Site, :type => :model do
   it 'generates html for description' do
     md = "# Header\r\n [a link](https://github.com)."
     html = "<h1>Header</h1>\n<p><a href=\"https://github.com\">a link</a>.</p>\n"
-    projectHtml = FactoryGirl.create(:site, description: md)
+    project_html = FactoryGirl.create(:site, description: md)
 
-    expect(projectHtml.description).to eq(md)
-    expect(projectHtml.description_html).to eq(html)
+    expect(project_html.description).to eq(md)
+    expect(project_html.description_html).to eq(html)
 
   end
 

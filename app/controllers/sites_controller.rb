@@ -52,7 +52,7 @@ class SitesController < ApplicationController
     do_set_attributes
     do_authorize_instance
 
-    # initialise lat/lng to Brisbane-ish
+    # initialize lat/lng to Brisbane-ish
     @site.longitude = 152
     @site.latitude = -27
     respond_to do |format|

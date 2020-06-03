@@ -181,7 +181,6 @@ class Site < ActiveRecord::Base
       render_fields: [:id, :name, :description, :creator_id, :updater_id, :created_at, :updated_at],
       text_fields: [:description, :name],
       custom_fields: lambda { |item, user|
-
                        # item can be nil or a new record
                        is_new_record = item.nil? || item.new_record?
                        fresh_site = is_new_record ? nil : Site.find(item.id)
@@ -202,7 +201,6 @@ class Site < ActiveRecord::Base
 
                        [item, site_hash]
                      },
-
       new_spec_fields: lambda { |user| # rubocop:disable Lint/UnusedBlockArgument
                          {
                            longitude: nil,

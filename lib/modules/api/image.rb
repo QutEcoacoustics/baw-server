@@ -1,9 +1,12 @@
 # frozen_string_literal: true
 
 module Api
-  # Handles extracting image urls
+  # Handle model images
   class Image
     class << self
+      # Extract image urls from an image
+      # @param [Object] image Fresh model image parameter (ie. fresh_site.image)
+      # @return [Array] Array of image urls and sizes
       def image_urls(image)
         [
           { size: :extralarge, url: image.url(:span4), width: 300, height: 300 },
