@@ -34,7 +34,7 @@ jobs:
       # The easiest way I can think of to get this working is to just set the
       # uid to 1000.
       - name: Set permissions for checked out files
-        run: chown -R 1000 .
+        run: sudo chown -R 1000 .
       - name: Build image
         uses: docker/build-push-action@v1.1.0
         with:
