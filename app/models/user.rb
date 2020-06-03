@@ -241,14 +241,7 @@ class User < ActiveRecord::Base
                          {
                            timezone_information: TimeZoneHelper.info_hash(fresh_user),
                            roles_mask_names: fresh_user.roles,
-                           image_urls:
-                                 [
-                                   { size: :extralarge, url: fresh_user.image.url(:span4), width: 300, height: 300 },
-                                   { size: :large, url: fresh_user.image.url(:span3), width: 220, height: 220 },
-                                   { size: :medium, url: fresh_user.image.url(:span2), width: 140, height: 140 },
-                                   { size: :small, url: fresh_user.image.url(:span1), width: 60, height: 60 },
-                                   { size: :tiny, url: fresh_user.image.url(:spanhalf), width: 30, height: 30 }
-                                 ]
+                           image_urls: Api::Image.image_urls(fresh_user.image)
                          }
 
                        if is_admin || is_same_user
