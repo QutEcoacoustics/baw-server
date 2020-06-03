@@ -1,4 +1,4 @@
-name: Docker
+name: Run tests, publish docker image
 
 on:
   push:
@@ -25,6 +25,16 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+      # by default the user on GH seems to have the UID 1001
+      # however our docker container expects a uid of 1000.
+      # This is not an issue in Docker since we chown files when they are added.
+      # However when docker-compose bind mounts the volumes for development
+      # the permissions of the files reflect those that are on the host, in the
+      # GH action case uid 1001 and gid 116.
+      # The easiest way I can think of to get this working is to just set the
+      # uid to 1000.
+      - name: Set permissions for checked out files
+        run: chown -R 1000 .
       - name: Build image
         uses: docker/build-push-action@v1.1.0
         with:
