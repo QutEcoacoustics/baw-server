@@ -38,8 +38,6 @@ Metrics/MethodLength:
     - filter_settings
 Metrics/AbcSize:
   Max: 60
-Naming/AccessorMethodName:
-  Enabled: false
 Style/BlockDelimiters:
   EnforcedStyle: semantic
   AllowBracesOnProceduralOneLiners: true
