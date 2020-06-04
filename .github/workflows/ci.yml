@@ -53,6 +53,7 @@ jobs:
         env:
           RAILS_ENV: test
       - name: Stop docker-compose
+        if: ${{ always() }}
         run: docker-compose stop
 
   # Push image to GitHub Packages.
