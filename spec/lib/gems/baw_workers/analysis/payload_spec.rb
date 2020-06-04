@@ -99,9 +99,21 @@ describe BawWorkers::Analysis::Payload do
     }
   }
 
-  it 'stores and retrieves partial payloads' do
-    queue_name = BawWorkers::Settings.actions.analysis.queue
+  before(:each) do
+    default_queue = BawWorkers::Settings.actions.analysis.queue
 
+    allow(BawWorkers::Settings.actions.analysis).to receive(:queue).and_return(default_queue + '_manual_tick')
+
+    # cleanup resque queues before each test
+    BawWorkers::ResqueApi.clear_queue(default_queue)
+    BawWorkers::ResqueApi.clear_queue(BawWorkers::Settings.actions.analysis.queue)
+    BawWorkers::ResqueApi.clear_queue('failed')
+    BawWorkers::PartialPayload.delete_all
+  end
+
+  let(:queue_name) { BawWorkers::Settings.actions.analysis.queue }
+
+  it 'stores and retrieves partial payloads' do
     # set up
     expect(Resque.size(queue_name)).to eq(0)
 
