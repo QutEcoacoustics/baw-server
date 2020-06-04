@@ -39,14 +39,10 @@ jobs:
         run: docker build . -t baw-server-dev
       - name: Start docker-compose
         run: docker-compose up -d
-      - name: Prepare test database
-        run: docker-compose run web ./provision/migrate.sh
-        env:
-          RAILS_ENV: test
       - name: Run tests
-        run: docker-compose run web rspec
-        env:
-          RAILS_ENV: test
+        # make sure we run command with RAILS_ENV test, this will run
+        # entrypoint.sh -> migrate.sh -> and then rspec
+        run: docker-compose run -e RAILS_ENV=test web rspec
 
   # Push image to GitHub Packages.
   # See also https://docs.docker.com/docker-hub/builds/

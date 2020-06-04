@@ -6,7 +6,7 @@ if [[ -z "$RAILS_ENV" ]]; then
     exit 1
 fi
 
-echo -e "\n\n== Checking database status ==\n\n"
+echo -e "\n\n== Checking database status for $RAILS_ENV ==\n\n"
 
 # this is a custom rake task in /lib/tasks/database_status.rake
 bundle exec rake db:status
