@@ -105,6 +105,12 @@ shared_context 'shared_test_helpers' do
     clear_directories(paths)
   end
 
+  def clear_analysis_cache
+    paths = BawWorkers::Settings.paths.cached_analysis_jobs
+
+    clear_directories(paths)
+  end
+
   def clear_directories(directories)
     directories.each do |path|
       raise "Will not delete #{path} because it does not contain 'test'" unless path =~ /_test_/

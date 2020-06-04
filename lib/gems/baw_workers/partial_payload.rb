@@ -53,7 +53,11 @@ module BawWorkers
       def create_or_validate(base_payload, key)
         existing_base = get(key)
         if existing_base
-          raise InconsistentBasePayloadError if existing_base != BawWorkers::ResqueJobId.normalise(base_payload)
+          normalized_base = BawWorkers::ResqueJobId.normalise(base_payload)
+          if existing_base != normalized_base
+            message = "Existing base `#{existing_base}` did not match #{normalized_base}"
+            raise InconsistentBasePayloadError, message
+          end
 
           # return a hash with the absolute redis_key that can be used to retrieve the base payload
           { PARTIAL_PAYLOAD_KEY.to_sym => @communicator.add_namespace(add_namespace(key)) }

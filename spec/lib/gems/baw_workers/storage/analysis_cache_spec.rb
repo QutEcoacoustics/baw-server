@@ -3,6 +3,7 @@
 require 'workers_helper'
 
 describe BawWorkers::Storage::AnalysisCache do
+  include_context 'shared_test_helpers'
 
   let(:analysis_cache) { BawWorkers::Storage::AnalysisCache.new(BawWorkers::Settings.paths.cached_analysis_jobs) }
   let(:analysis_cache_paths) { BawWorkers::Settings.paths.cached_analysis_jobs }
@@ -45,6 +46,10 @@ describe BawWorkers::Storage::AnalysisCache do
       job_id: job_id
     }
   }
+
+  before(:each) do
+    clear_analysis_cache
+  end
 
   it 'no storage directories exist' do
     expect(analysis_cache.existing_dirs).to be_empty
