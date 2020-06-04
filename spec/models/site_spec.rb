@@ -92,18 +92,11 @@ describe Site, type: :model do
       end
     }
   end
-  it 'should belong to many projects' do
-    is_expected.to have_and_belong_to_many :projects
-  end
-  it 'should have creator associated with foreign key' do
-    is_expected.to belong_to(:creator).with_foreign_key(:creator_id)
-  end
-  it 'should have updater associated with foreign key' do
-    is_expected.to belong_to(:updater).with_foreign_key(:updater_id)
-  end
-  it 'should have deleter associated with foreign key' do
-    is_expected.to belong_to(:deleter).with_foreign_key(:deleter_id)
-  end
+  it { is_expected.to have_and_belong_to_many :projects }
+
+  it { is_expected.to belong_to(:creator).with_foreign_key(:creator_id) }
+  it { is_expected.to belong_to(:updater).with_foreign_key(:updater_id) }
+  it { is_expected.to belong_to(:deleter).with_foreign_key(:deleter_id) }
 
   it 'should error on checking orphaned site if site is orphaned' do
     site = FactoryGirl.create(:site, projects: [])

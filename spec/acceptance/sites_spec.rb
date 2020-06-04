@@ -70,28 +70,28 @@ resource 'Sites' do
     standard_request_options(:get, 'INDEX (as reader)', :ok, expected_json_path: 'data/0/custom_latitude', data_item_count: 1)
   end
 
-  Array[
-    'id',
-    'name',
-    'description',
-    'creator_id',
-    'updater_id',
-    'created_at',
-    'updated_at',
-    'project_ids',
-    'location_obfuscated',
-    'custom_latitude',
-    'custom_longitude',
-    'timezone_information',
-    'description_html',
-    'image_urls'
-  ].each do |x|
-    get '/projects/:project_id/sites' do
-      sites_project_id_param
-      let(:project_id) { project.id }
-      let(:authentication_token) { reader_token }
-      standard_request_options(:get, "INDEX (has #{x}, as reader)", :ok, expected_json_path: "data/0/#{x}", data_item_count: 1)
-    end
+  get '/projects/:project_id/sites' do
+    expected_paths = Array[
+      'id',
+      'name',
+      'description',
+      'creator_id',
+      'updater_id',
+      'created_at',
+      'updated_at',
+      'project_ids',
+      'location_obfuscated',
+      'custom_latitude',
+      'custom_longitude',
+      'timezone_information',
+      'description_html',
+      'image_urls'
+    ].map { |x| "data/0/#{x}" }
+
+    sites_project_id_param
+    let(:project_id) { project.id }
+    let(:authentication_token) { reader_token }
+    standard_request_options(:get, 'INDEX (has parameters, as reader)', :ok, expected_json_path: expected_paths, data_item_count: 1)
   end
 
   get '/projects/:project_id/sites' do
