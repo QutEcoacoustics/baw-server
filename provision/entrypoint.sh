@@ -16,6 +16,8 @@ echo -e "\n\n== Checking bundler install ==\n\n"
 
 bundle check || bundle install --system
 
+# run the migration if MIGRATE_DB is not defined
+# or if defined or if not value is not false
 if [[ -z "${MIGRATE_DB+x}" || "${MIGRATE_DB,,}" == "false" ]]; then
   echo -e "\n\n== Skipping database status checks ==\n\n"
 else

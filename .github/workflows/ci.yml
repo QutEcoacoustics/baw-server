@@ -46,8 +46,14 @@ jobs:
           push: false
       - name: Start docker-comoose
         run: docker-compose up -d
+      - name: Prepare test database
+        run: docker-compose run web ./provision/migrate.sh
+        env:
+          RAILS_ENV: test
       - name: Run tests
         run: docker-compose run web rspec
+        env:
+          RAILS_ENV: test
 
   # Push image to GitHub Packages.
   # See also https://docs.docker.com/docker-hub/builds/

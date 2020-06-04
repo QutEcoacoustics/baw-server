@@ -53,7 +53,7 @@ services:
     build:
       context: .
       target: baw-server-dev
-    command: bundle exec passenger start
+    command: bundle exec rails server
     environment:
       RAILS_ENV: development
       MIGRATE_DB: 'true'

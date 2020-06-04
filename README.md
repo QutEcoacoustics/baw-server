@@ -6,30 +6,17 @@ The bioacoustic workbench server. Manages the structure and audio data. Provides
 [![Code Climate](https://codeclimate.com/github/QutEcoacoustics/baw-server/badges/gpa.svg)](https://codeclimate.com/github/QutEcoacoustics/baw-server)
 [![Test Coverage](https://codeclimate.com/github/QutEcoacoustics/baw-server/badges/coverage.svg)](https://codeclimate.com/github/QutEcoacoustics/baw-server/coverage)
 
-## Branches
-
-### master (latest release)
-
-[![Build Status](https://travis-ci.org/QutEcoacoustics/baw-server.png?branch=master)](https://travis-ci.org/QutEcoacoustics/baw-server)
-[![Documentation Status](http://inch-ci.org/github/QutEcoacoustics/baw-server.png?branch=master)](http://inch-ci.org/github/QutEcoacoustics/baw-server)
-[![Coverage Status](https://coveralls.io/repos/github/QutEcoacoustics/baw-server/badge.svg?branch=master)](https://coveralls.io/github/QutEcoacoustics/baw-server?branch=master)
-
-### develop (most recent commits)
-
-[![Build Status](https://travis-ci.org/QutEcoacoustics/baw-server.png?branch=develop)](https://travis-ci.org/QutEcoacoustics/baw-server)
-[![Documentation Status](http://inch-ci.org/github/QutEcoacoustics/baw-server.png?branch=develop)](http://inch-ci.org/github/QutEcoacoustics/baw-server)
-[![Coverage Status](https://coveralls.io/repos/github/QutEcoacoustics/baw-server/badge.svg?branch=develop)](https://coveralls.io/github/QutEcoacoustics/baw-server?branch=develop)
 
 ## Dependencies
 
 This project's dev environment is managed by [Docker](https://www.docker.com/products/docker-desktop).
 Please ensure the latest version of Docker Desktop is installed on your machine
 
-Audio processing and other long-running tasks are performed using [baw-workers](./baw-workers).
+Audio processing and other long-running tasks are performed using [baw-workers](./lib/gems/baw-workers).
 
 ## Contributing
 
-See the [git-flow.md](./git-flow.md) document for guidelines on making changes.
+We're working on that.
 
 ## Development requirements
 
@@ -129,6 +116,8 @@ Common tasks that you may need:
     - `rake db:seed` - seed the database with default data
 - `rails console` to use the rails console
 - `rails start` to run a web server
+- `passenger-config restart-app /` to restart passenger and hot-reload code
+- `touch tmp/restart.txt` to trigger a passenger reload before every request
 
 Note: the binstubs in the `bin` folder automatically load bundler. You should not
 need to use `bundle exec`.
@@ -181,19 +170,17 @@ Use this style guide as a reference: https://github.com/rubocop-hq/ruby-style-gu
 
 ## Documentation
 
-Documentation can be generated from tests using [rspec_api_documentation](https://github.com/zipmark/rspec_api_documentation):
 
-    $ bin/rake docs:generate GENERATE_DOC=true
 
 ## Other commands
 These commands should be executed automatically but are listed because they are helpful to know.
 
 
-- Create the test database: `bin/rake db:create RAILS_ENV=test`
-- Then migrate and seed the test database: `bin/rake db:migrate db:seed RAILS_ENV=test`
-- Prepare the local development database:`bin/rake db:setup RAILS_ENV=development`
-- Run rspec tests: `bin/rspec`
-- Generate API documentation: `bin/rake docs:generate GENERATE_DOC=true`
+- Create the test database: `rake db:create RAILS_ENV=test`
+- Then migrate and seed the test database: `rake db:migrate db:seed RAILS_ENV=test`
+- Prepare the local development database:`rake db:setup RAILS_ENV=development`
+- Run rspec tests: `rspec`
+- Generate API documentation: `rake docs:generate GENERATE_DOC=true`
 
 
 ## Production setup and deploying

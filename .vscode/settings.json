@@ -9,6 +9,7 @@
         "constantize",
         "cors",
         "datetime",
+        "devcontainer",
         "downcase",
         "entrypoint",
         "executables",
