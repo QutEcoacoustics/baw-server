@@ -5,6 +5,7 @@ module Api
   class Image
     class << self
       # Extract image urls from an image
+      # TODO Implement original size, and extract magic width and height values
       # @param [Object] image Fresh model image parameter (ie. fresh_site.image)
       # @return [Array] Array of image urls and sizes
       def image_urls(image)
