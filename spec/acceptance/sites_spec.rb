@@ -86,7 +86,7 @@ resource 'Sites' do
       'timezone_information',
       'description_html',
       'image_urls'
-    ].map { |x| "data/0/#{x}" }
+    ].map { |path| "data/0/#{path}" }
 
     sites_project_id_param
     let(:project_id) { project.id }
