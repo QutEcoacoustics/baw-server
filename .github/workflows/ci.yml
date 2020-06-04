@@ -36,15 +36,8 @@ jobs:
       - name: Set permissions for checked out files
         run: sudo chown -R 1000 .
       - name: Build image
-        uses: docker/build-push-action@v1.1.0
-        with:
-          # Path to the build context
-          path: .
-          # Sets the target stage to build
-          target: baw-server-dev
-          # Whether to push the image
-          push: false
-      - name: Start docker-comoose
+        run: docker build . -t baw-server-dev
+      - name: Start docker-compose
         run: docker-compose up -d
       - name: Prepare test database
         run: docker-compose run web ./provision/migrate.sh
