@@ -84,9 +84,9 @@ RSpec.configure do |config|
 
   config.before(:suite) do
     # Redirect stderr and stdout
-    puts "$stdout and $stderr redirected to log files in ./logs/rspec_*.txt"
-    $stderr = File.new(File.join(File.dirname(__FILE__), '..', 'tmp', 'rspec_stderr.txt'), 'w')
-    $stdout = File.new(File.join(File.dirname(__FILE__), '..', 'tmp', 'rspec_stdout.txt'), 'w')
+    puts '$stdout and $stderr redirected to log files in ./logs/rspec_*.txt'
+    $stderr = File.new(File.join(File.dirname(__FILE__), '..', 'log', 'rspec_stderr.test.log'), 'w')
+    $stdout = File.new(File.join(File.dirname(__FILE__), '..', 'log', 'rspec_stdout.test.log'), 'w')
   end
 
   config.after(:suite) do
