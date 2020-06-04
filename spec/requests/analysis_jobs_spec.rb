@@ -116,12 +116,14 @@ describe 'Analysis Jobs' do
   end
 
   def create_analysis_job
+    this_script = script
+    puts "creating analysis job using script with id #{this_script.id} and settings '#{this_script.executable_settings}'"
     valid_attributes = {
       analysis_job: {
-        script_id: script.id,
+        script_id: this_script.id,
         saved_search_id: saved_search.id,
         name: 'Analysis Job #' + Time.now.to_s,
-        custom_settings: script.executable_settings,
+        custom_settings: this_script.executable_settings,
         description: 'Description...'
       }
     }
@@ -137,11 +139,13 @@ describe 'Analysis Jobs' do
   end
 
   def create_analysis_job_direct
+    this_script = script
+    puts "creating analysis job using script with id #{this_script.id} and settings '#{this_script.executable_settings}'"
     analysis_job = AnalysisJob.new
-    analysis_job.script_id = script.id
+    analysis_job.script_id = this_script.id
     analysis_job.saved_search_id = saved_search.id
     analysis_job.name = 'Analysis Job #' + Time.now.to_s
-    analysis_job.custom_settings = script.executable_settings
+    analysis_job.custom_settings = this_script.executable_settings
     analysis_job.description = 'Description...'
     analysis_job.creator = writer_user
 
