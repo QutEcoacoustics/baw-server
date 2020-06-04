@@ -7,10 +7,10 @@
 
 set -e
 
-echo -e "\n\n== Debug container permissions  ==\n\n"
+# echo -e "\n\n== Debug container permissions  ==\n\n"
 
-whoami
-ls -la
+# whoami
+# ls -la
 
 echo -e "\n\n== Checking bundler install ==\n\n"
 

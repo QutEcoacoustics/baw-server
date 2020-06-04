@@ -45,7 +45,7 @@ jobs:
       - name: Start docker-compose
         run: docker-compose up -d
       - name: prepare test database
-        run: docker-compose run web exit
+        run: docker-compose run web echo 'database created'
         env:
           RAILS_ENV: test
       - name: Run tests
