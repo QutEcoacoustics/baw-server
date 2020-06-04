@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class SitesController < ApplicationController
   include Api::ControllerHelper
 
@@ -9,15 +11,15 @@ class SitesController < ApplicationController
 
     respond_to do |format|
       #format.html # index.html.erb
-      format.json {
+      format.json do
         @sites, opts = Settings.api_response.response_advanced(
-            api_filter_params,
-            Access::ByPermission.sites(current_user, Access::Core.levels, [@project.id]),
-            Site,
-            Site.filter_settings
+          api_filter_params,
+          Access::ByPermission.sites(current_user, Access::Core.levels, [@project.id]),
+          Site,
+          Site.filter_settings
         )
         respond_index(opts)
-      }
+      end
     end
   end
 
@@ -26,9 +28,7 @@ class SitesController < ApplicationController
     do_load_resource
     do_authorize_instance
 
-    respond_to do |format|
-      format.json { respond_show }
-    end
+    respond_to { |format| format.json { respond_show } }
   end
 
   # GET /projects/:project_id/sites/:id
@@ -50,7 +50,7 @@ class SitesController < ApplicationController
     do_set_attributes
     do_authorize_instance
 
-    # initialise lat/lng to Brisbane-ish
+    # initialize lat/lng to Brisbane-ish
     @site.longitude = 152
     @site.latitude = -27
     respond_to do |format|
@@ -97,10 +97,10 @@ class SitesController < ApplicationController
         format.html { redirect_to [@project, @site], notice: 'Site was successfully updated.' }
         format.json { respond_show }
       else
-        format.html {
+        format.html do
 
           render action: 'edit'
-        }
+        end
         format.json { respond_change_fail }
       end
     end
@@ -127,9 +127,7 @@ class SitesController < ApplicationController
     get_project
     do_authorize_instance
 
-    respond_to do |format|
-      format.html
-    end
+    respond_to { |format| format.html }
   end
 
   # GET /projects/:project_id/sites/:id/harvest
@@ -149,14 +147,9 @@ class SitesController < ApplicationController
   def orphans
     do_authorize_class
 
-    @sites = Site.find_by_sql("SELECT * FROM sites s
-WHERE s.id NOT IN (SELECT site_id FROM projects_sites)
-ORDER BY s.name")
+    @sites = Site.find_by_sql('SELECT * FROM sites s WHERE s.id NOT IN (SELECT site_id FROM projects_sites) ORDER BY s.name')
 
-    respond_to do |format|
-      format.html
-    end
-
+    respond_to { |format| format.html }
   end
 
   # GET|POST /sites/filter
@@ -164,43 +157,43 @@ ORDER BY s.name")
     do_authorize_class
 
     filter_response, opts = Settings.api_response.response_advanced(
-        api_filter_params,
-        Access::ByPermission.sites(current_user),
-        Site,
-        Site.filter_settings
+      api_filter_params,
+      Access::ByPermission.sites(current_user),
+      Site,
+      Site.filter_settings
     )
     respond_filter(filter_response, opts)
   end
 
   def nav_menu
     {
-        anchor_after: 'baw.shared.links.projects.title',
-        menu_items: [
-            {
-                title: 'baw.shared.links.projects.title',
-                href: project_path(@project),
-                tooltip: 'baw.shared.links.projects.description',
-                icon: nil,
-                indentation: 1,
-                #predicate:
-            },
-            {
-                title: 'baw.shared.links.site.title',
-                href: project_site_path(@project, @site),
-                tooltip: 'baw.shared.links.site.description',
-                icon: nil,
-                indentation: 2,
-                #predicate:
-            },
-            # {
-            #     title: 'baw.shared.links.ethics_statement.title',
-            #     href: ethics_statement_path,
-            #     tooltip: 'baw.shared.links.ethics_statement.description',
-            #     icon: nil,
-            #     indentation: 0,
-            #     predicate: lambda { |user| action_name == 'ethics_statement' }
-            # }
-        ]
+      anchor_after: 'baw.shared.links.projects.title',
+      menu_items: [
+        {
+          title: 'baw.shared.links.projects.title',
+          href: project_path(@project),
+          tooltip: 'baw.shared.links.projects.description',
+          icon: nil,
+          indentation: 1
+          #predicate:
+        },
+        {
+          title: 'baw.shared.links.site.title',
+          href: project_site_path(@project, @site),
+          tooltip: 'baw.shared.links.site.description',
+          icon: nil,
+          indentation: 2
+          #predicate:
+        }
+        # {
+        #     title: 'baw.shared.links.ethics_statement.title',
+        #     href: ethics_statement_path,
+        #     tooltip: 'baw.shared.links.ethics_statement.description',
+        #     icon: nil,
+        #     indentation: 0,
+        #     predicate: lambda { |user| action_name == 'ethics_statement' }
+        # }
+      ]
     }
   end
 
@@ -210,9 +203,7 @@ ORDER BY s.name")
     @project = Project.find(params[:project_id])
 
     # avoid the same project assigned more than once to a site
-    if defined?(@site) && !@site.projects.include?(@project)
-      @site.projects << @project
-    end
+    @site.projects << @project if defined?(@site) && !@site.projects.include?(@project)
   end
 
   def site_params
@@ -222,5 +213,4 @@ ORDER BY s.name")
   def site_show_params
     params.permit(:id, :project_id, site: {})
   end
-
 end
