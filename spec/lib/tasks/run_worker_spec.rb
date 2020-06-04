@@ -72,6 +72,7 @@ describe 'rake tasks' do
       BawWorkers::Config.run({})
 
       # simulate running the current rake task
+      BawWorkers::ResqueApi.clear_workers
       BawWorkers::ResqueApi.workers_running
 
       expect(worker_log_content).to include('No Resque workers currently running.')
