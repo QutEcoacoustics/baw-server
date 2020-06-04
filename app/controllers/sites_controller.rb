@@ -11,7 +11,7 @@ class SitesController < ApplicationController
 
     respond_to do |format|
       #format.html # index.html.erb
-      format.json {
+      format.json do
         @sites, opts = Settings.api_response.response_advanced(
           api_filter_params,
           Access::ByPermission.sites(current_user, Access::Core.levels, [@project.id]),
@@ -19,7 +19,7 @@ class SitesController < ApplicationController
           Site.filter_settings
         )
         respond_index(opts)
-      }
+      end
     end
   end
 
@@ -28,9 +28,7 @@ class SitesController < ApplicationController
     do_load_resource
     do_authorize_instance
 
-    respond_to do |format|
-      format.json { respond_show }
-    end
+    respond_to { |format| format.json { respond_show } }
   end
 
   # GET /projects/:project_id/sites/:id
@@ -40,7 +38,7 @@ class SitesController < ApplicationController
     do_authorize_instance
 
     respond_to do |format|
-      format.html do @site.update_location_obfuscated(current_user) end
+      format.html { @site.update_location_obfuscated(current_user) }
       format.json { respond_show }
     end
   end
@@ -77,10 +75,10 @@ class SitesController < ApplicationController
 
     respond_to do |format|
       if @site.save
-        format.html do redirect_to [@project, @site], notice: 'Site was successfully created.' end
+        format.html { redirect_to [@project, @site], notice: 'Site was successfully created.' }
         format.json { respond_create_success(project_site_path(@project, @site)) }
       else
-        format.html do render action: 'new' end
+        format.html { render action: 'new' }
         format.json { respond_change_fail }
       end
     end
@@ -96,7 +94,7 @@ class SitesController < ApplicationController
 
     respond_to do |format|
       if @site.update_attributes(site_params)
-        format.html do redirect_to [@project, @site], notice: 'Site was successfully updated.' end
+        format.html { redirect_to [@project, @site], notice: 'Site was successfully updated.' }
         format.json { respond_show }
       else
         format.html do
@@ -118,7 +116,7 @@ class SitesController < ApplicationController
     add_archived_at_header(@site)
 
     respond_to do |format|
-      format.html do redirect_to project_sites_url(@project) end
+      format.html { redirect_to project_sites_url(@project) }
       format.json { respond_destroy }
     end
   end
@@ -129,9 +127,7 @@ class SitesController < ApplicationController
     get_project
     do_authorize_instance
 
-    respond_to do |format|
-      format.html
-    end
+    respond_to { |format| format.html }
   end
 
   # GET /projects/:project_id/sites/:id/harvest
@@ -153,9 +149,7 @@ class SitesController < ApplicationController
 
     @sites = Site.find_by_sql('SELECT * FROM sites s WHERE s.id NOT IN (SELECT site_id FROM projects_sites) ORDER BY s.name')
 
-    respond_to do |format|
-      format.html
-    end
+    respond_to { |format| format.html }
   end
 
   # GET|POST /sites/filter
