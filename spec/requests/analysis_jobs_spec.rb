@@ -36,6 +36,7 @@ describe 'Analysis Jobs' do
       :script,
       creator: admin_user,
       executable_command: 'echo  "<{file_executable}>" audio2csv /source:"<{file_source}>" /config:"<{file_config}>" /tempdir:"<{dir_temp}>" /output:"<{dir_output}>"',
+      executable_settings: 'staticsettings',
       analysis_action_params: {
         file_executable: './AnalysisPrograms/AnalysisPrograms.exe',
         copy_paths: [
