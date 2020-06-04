@@ -1,9 +1,10 @@
+# frozen_string_literal: true
+
 module BawWorkers
-  class DecodeException < StandardError;
+  class DecodeException < StandardError
   end
 
   class RedisCommunicator
-
     attr_accessor :logger
 
     # Create a new BawWorkers::ApiCommunicator.
@@ -12,7 +13,7 @@ module BawWorkers
     # @param [Object] settings
     # @return [BawWorkers::RedisCommunicator]
     def initialize(logger, redis_instance, settings = {})
-      fail '`redis_instance` must be a valid Redis instance' unless redis_instance.is_a?(Redis)
+      raise '`redis_instance` must be a valid Redis instance' unless redis_instance.is_a?(Redis)
 
       @logger = logger
       @redis = redis_instance
@@ -29,9 +30,7 @@ module BawWorkers
       namespace + ':' + key
     end
 
-    def redis
-      @redis
-    end
+    attr_reader :redis
 
     # Delete a single key.
     # @param [String] key
@@ -46,6 +45,20 @@ module BawWorkers
       raise 'Too many keys deleted' if deleted > 1
 
       deleted == 1
+    end
+
+    # Deletes all keys that have at least the given key as a prefix
+    # @param [String] the key prefix to delete. A wildcard is added as a suffix
+    # @return [Boolean] if any keys were deleted
+    def delete_all(key)
+      raise ArgumentError if key.blank?
+
+      count = 0
+      @redis.keys(key + '*').each do |k|
+        count += @redis.del k
+      end
+
+      count.positive?
     end
 
     # @param [String] key
@@ -83,7 +96,6 @@ module BawWorkers
       boolify(result)
     end
 
-
     # Given a Ruby object, returns a string suitable for storage in a
     # queue.
     # Blatantly lifted from: https://github.com/resque/resque/blob/d0e187881e02d852f8e4755aef3c14319636527b/lib/resque.rb#L30
@@ -114,13 +126,11 @@ module BawWorkers
     private
 
     def boolify(value)
-      if value && value.is_a?(String) && 'OK' == value
+      if value&.is_a?(String) && value == 'OK'
         true
       else
         false
       end
     end
-
-
   end
 end

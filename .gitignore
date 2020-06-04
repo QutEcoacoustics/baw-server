@@ -58,3 +58,4 @@ vendor/bundle/*
 /test_prof
 passenger.3000.pid
 passenger.3000.pid.lock
+rspec_results.html

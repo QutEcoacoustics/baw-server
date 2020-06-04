@@ -49,9 +49,17 @@ jobs:
         env:
           RAILS_ENV: test
       - name: Run tests
-        run: docker-compose run web rspec
+        run: docker-compose run web rspec --format documentation --format html --out rspec_results.html
         env:
           RAILS_ENV: test
+      - name: Upload test results
+        uses: actions/upload-artifact@v2
+        if: ${{ always() }}
+        with:
+          # Artifact name
+          name: rspec test results
+          # A file, directory or wildcard pattern that describes what to upload
+          path: rspec_results.html
       - name: Stop docker-compose
         if: ${{ always() }}
         run: docker-compose stop
