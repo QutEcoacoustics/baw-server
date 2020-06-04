@@ -55,7 +55,7 @@ services:
       target: baw-server-dev
     command: bundle exec rails server
     environment:
-      RAILS_ENV: development
+      RAILS_ENV: ${RAILS_ENV:-development}
       MIGRATE_DB: 'true'
     user: baw_web
     volumes:

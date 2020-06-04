@@ -35,14 +35,25 @@ jobs:
       # uid to 1000.
       - name: Set permissions for checked out files
         run: sudo chown -R 1000 .
+      # there is a bug where docker build and docker-compose don't produce the
+      # same results
+      # see https://github.com/docker/compose/issues/883
+      # So we use docker-compose build instead
       - name: Build image
-        run: docker build . -t baw-server-dev
+        #run: docker build . -t baw-server-dev
+        run: docker-compose build --no-rm web
       - name: Start docker-compose
         run: docker-compose up -d
+      - name: prepare test database
+        run: docker-compose run web exit
+        env:
+          RAILS_ENV: test
       - name: Run tests
-        # make sure we run command with RAILS_ENV test, this will run
-        # entrypoint.sh -> migrate.sh -> and then rspec
-        run: docker-compose run -e RAILS_ENV=test web rspec
+        run: docker-compose run web rspec
+        env:
+          RAILS_ENV: test
+      - name: Stop docker-compose
+        run: docker-compose stop
 
   # Push image to GitHub Packages.
   # See also https://docs.docker.com/docker-hub/builds/

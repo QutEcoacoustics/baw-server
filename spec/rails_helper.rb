@@ -39,7 +39,7 @@ end
 if ENV['CI'] || ENV['COVERAGE']
   require 'simplecov'
 
-  if ENV['TRAVIS']
+  if ENV['GITHUB_WORKFLOW']
     require 'codeclimate-test-reporter'
     require 'coveralls'
 
