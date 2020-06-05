@@ -29,6 +29,8 @@ Install:
 - Docker desktop
 - WSL Version 2 (and add a default Ubuntu distro): https://docs.microsoft.com/en-us/windows/wsl/install-win10
 - Enable the `metadata` flag for DrvFS mounts: https://docs.microsoft.com/en-us/windows/wsl/wsl-config#configure-per-distro-launch-settings-with-wslconf
+- If you have issue with bind mount permissions, boot the container as the root
+  user and `chown -R 1000 .` to grant access to files
 
 ### MacOS
 

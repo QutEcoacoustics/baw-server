@@ -122,9 +122,6 @@ module AWB
     # check that locales are valid - new default in rails 3.2.14
     config.i18n.enforce_available_locales = true
 
-    # this is only respected by the activesupport-json_encoder gem.
-    ActiveSupport.encode_big_decimal_as_string = false
-
     # Set Time.zone default to the specified zone and make Active Record auto-convert to this zone.
     # Run "rake -D time" for a list of tasks for finding time zone names. Default is UTC.
     # config.time_zone = 'Central Time (US & Canada)'
