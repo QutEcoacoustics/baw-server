@@ -57,15 +57,6 @@ Rails.application.configure do
   # Paperclip default location in tmp, so it can be cleared after test suite is run
   Paperclip::Attachment.default_options[:path] = ':rails_root/tmp/paperclip:url'
 
-  # Set path for image magick for windows only
-  if RbConfig::CONFIG['target_os'] =~ /mswin|mingw/i
-    im_dir = Settings.paths.image_magick_dir
-    if Dir.exist?(im_dir) && File.directory?(im_dir)
-      Paperclip.options[:command_path] = im_dir
-    else
-      puts "WARN: cannot find image magick path #{im_dir}"
-    end
-  end
 
   config.after_initialize do
   end

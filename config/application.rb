@@ -209,6 +209,9 @@ module AWB
       end
     end
 
+    # Do not swallow errors in after_commit/after_rollback callbacks.
+    config.active_record.raise_in_transactional_callbacks = true
+
     # Sanity check: test dependencies should not be loadable
     unless Rails.env.test?
       def module_exists?(name, base = self.class)

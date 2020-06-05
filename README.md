@@ -28,6 +28,7 @@ Install:
 - Optionally: At least Windows 10 Version 2004
 - Docker desktop
 - WSL Version 2 (and add a default Ubuntu distro): https://docs.microsoft.com/en-us/windows/wsl/install-win10
+- Enable the `metadata` flag for DrvFS mounts: https://docs.microsoft.com/en-us/windows/wsl/wsl-config#configure-per-distro-launch-settings-with-wslconf
 
 ### MacOS
 
