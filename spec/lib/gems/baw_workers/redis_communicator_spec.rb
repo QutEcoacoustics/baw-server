@@ -9,10 +9,9 @@ describe BawWorkers::RedisCommunicator do
 
   let(:redis) { BawWorkers::Config.redis_communicator }
 
-  let(:fake_redis) { Redis.new(HashWithIndifferentAccess.new(BawWorkers::Settings.redis.connection)) }
+  let(:fake_redis) { Redis.new(ActiveSupport::HashWithIndifferentAccess.new(BawWorkers::Settings.redis.connection)) }
 
   context 'wraps a basic redis API' do
-
     it 'should wrap keys in a namespace' do
       redis.set('abc', 123)
 
@@ -32,7 +31,6 @@ describe BawWorkers::RedisCommunicator do
     end
 
     it 'wraps the SET command' do
-
       success = redis.set('my_object', test: { nested_hash: 123 }, string: 'test')
 
       expect(success).to eq(true)
@@ -97,6 +95,5 @@ describe BawWorkers::RedisCommunicator do
 
       expect(redis.exists('my_object')).to eq(true)
     end
-
   end
 end

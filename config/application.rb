@@ -56,7 +56,7 @@ module AWB
     Settings.validate
 
     # resque setup
-    Resque.redis = HashWithIndifferentAccess.new(Settings.resque.connection)
+    Resque.redis = ActiveSupport::HashWithIndifferentAccess.new(Settings.resque.connection)
     Resque.redis.namespace = Settings.resque.namespace
 
     # logging

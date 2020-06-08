@@ -132,8 +132,8 @@ module BawWorkers
       def configure_redis(needs_redis, _is_test, settings)
         return unless needs_redis
 
-        Resque.redis = HashWithIndifferentAccess.new(settings.resque.connection)
-        communicator_redis = Redis.new(HashWithIndifferentAccess.new(settings.redis.connection))
+        Resque.redis = ActiveSupport::HashWithIndifferentAccess.new(settings.resque.connection)
+        communicator_redis = Redis.new(ActiveSupport::HashWithIndifferentAccess.new(settings.redis.connection))
 
         Resque.redis.namespace = BawWorkers::Settings.resque.namespace
 
