@@ -13,7 +13,7 @@ source 'https://rubygems.org'
 # ====================================================
 
 # For autoloading Gems. Zeitwerk is the default in Rails 6.
-gem 'zeitwerk', require: false
+gem 'zeitwerk', '>= 2.3', require: false
 
 # for proper timezone support
 gem 'tzinfo'
@@ -155,7 +155,8 @@ group :workers, :server do
   gem 'redis', '~> 4.1'
   gem 'resque'
   gem 'resque-job-stats'
-  gem 'resque-status'
+  # source copied into repo, see lib/gems/resque-status
+  gem 'resque-status', path: 'lib/gems/resque-status'
   gem 'resque_solo'
 end
 

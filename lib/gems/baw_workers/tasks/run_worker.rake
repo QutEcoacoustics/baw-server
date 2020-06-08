@@ -12,10 +12,16 @@ require_relative '../../baw_workers'
 
 require 'zeitwerk'
 loader = Zeitwerk::Loader.new
+
+loader.tag = 'baw-workers'
+
 base_dir = "#{__dir__}/../.."
 loader.push_dir(base_dir)
 loader.ignore("#{base_dir}/baw_workers/patches")
-loader.tag = 'baw-workers'
+
+# collapse gem like folder structures
+loader.collapse('*/lib')
+
 # loader.inflector.inflect(
 #   'baw-workers' => 'BawWorkers',
 #   'baw-audio-tools' => 'BawAudioTools'

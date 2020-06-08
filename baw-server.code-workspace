@@ -6,8 +6,11 @@
   ],
   "settings": {
     "cSpell.words": [
+      "Bootsnap",
+      "autoload",
       "mkdir",
-      "postgresql"
+      "postgresql",
+      "rakefile"
     ],
     "files.associations": {
       "**/provision/*.json": "jsonc",

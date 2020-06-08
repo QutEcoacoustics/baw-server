@@ -9,9 +9,8 @@ require 'fileutils'
 require 'resque'
 require 'resque_solo'
 require 'resque-job-stats'
-require 'resque-status'
 
-Dir.glob("#{__dir__}/baw_workers/patches/**/*.rb").each do |override|
+Dir.glob("#{__dir__}/baw_workers/patches/**/*.rb").sort.each do |override|
   #puts "loading #{override}"
   require override
 end

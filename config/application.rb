@@ -21,17 +21,20 @@ module AWB
     # TODO: remove when upgrading to rails 6
     require 'zeitwerk'
     loader = Zeitwerk::Loader.new
+    loader.enable_reloading if Rails.env.development?
     loader.tag = 'rails'
 
     loader.ignore(config.root.join('lib', 'tasks'))
 
     loader.push_dir(config.root.join('lib', 'validators'))
     loader.push_dir(config.root.join('lib', 'gems'))
+    loader.ignore(config.root.join('lib', 'gems', 'resque-status'))
     loader.push_dir(config.root.join('lib', 'modules'))
 
     loader.tag = 'rails'
     #loader.log! # debug only!
     loader.setup
+
     # TODO: but add this back in
     #config.autoload_paths << config.root.join('lib')
 
