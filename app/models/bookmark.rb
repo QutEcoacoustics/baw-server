@@ -1,4 +1,4 @@
-class Bookmark < ActiveRecord::Base
+class Bookmark < ApplicationRecord
   # ensures that creator_id, updater_id, deleter_id are set
   include UserChange
 

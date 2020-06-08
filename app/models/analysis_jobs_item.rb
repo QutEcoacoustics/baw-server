@@ -1,4 +1,4 @@
-class AnalysisJobsItem < ActiveRecord::Base
+class AnalysisJobsItem < ApplicationRecord
   # allow a state machine to work with this class
   include AASM
   include AasmHelpers

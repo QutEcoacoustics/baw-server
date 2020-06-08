@@ -1,4 +1,4 @@
-class AnalysisJob < ActiveRecord::Base
+class AnalysisJob < ApplicationRecord
   # ensures that creator_id, updater_id, deleter_id are set
   include UserChange
 

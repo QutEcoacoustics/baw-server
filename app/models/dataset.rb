@@ -1,5 +1,6 @@
-class Dataset < ActiveRecord::Base
+# frozen_string_literal: true
 
+class Dataset < ApplicationRecord
   # ensures that creator_id, updater_id, deleter_id are set
   include UserChange
 
@@ -17,8 +18,7 @@ class Dataset < ActiveRecord::Base
 
   # validation
   # validates :name, presence: true, length: {minimum: 2}
-  validates :name, presence: true, length: {minimum: 2}, exclusion: { in: ['default'], message: "%{value} is a reserved dataset name" }
-
+  validates :name, presence: true, length: { minimum: 2 }, exclusion: { in: ['default'], message: '%{value} is a reserved dataset name' }
 
   # lookup the default dataset id
   # This will potentially be hit very often, maybe multiple times per request
@@ -31,50 +31,47 @@ class Dataset < ActiveRecord::Base
   # Define filter api settings
   def self.filter_settings
     {
-        valid_fields: [
-            :id, :name, :description, :created_at, :creator_id, :updated_at, :updater_id
-        ],
-        render_fields: [
-            :id, :name, :description, :created_at, :creator_id, :updated_at, :updater_id
-        ],
-        new_spec_fields: lambda { |user|
-          {
-              name: nil,
-              description: nil
-          }
-        },
-        controller: :datasets,
-        action: :filter,
-        defaults: {
-            order_by: :name,
-            direction: :asc
-        },
-        valid_associations: [
+      valid_fields: [
+        :id, :name, :description, :created_at, :creator_id, :updated_at, :updater_id
+      ],
+      render_fields: [
+        :id, :name, :description, :created_at, :creator_id, :updated_at, :updater_id
+      ],
+      new_spec_fields: lambda { |_user|
+                         {
+                           name: nil,
+                           description: nil
+                         }
+                       },
+      controller: :datasets,
+      action: :filter,
+      defaults: {
+        order_by: :name,
+        direction: :asc
+      },
+      valid_associations: [
+        {
+          join: DatasetItem,
+          on: Dataset.arel_table[:id].eq(DatasetItem.arel_table[:dataset_id]),
+          available: true,
+          associations: [
             {
-                join: DatasetItem,
-                on: Dataset.arel_table[:id].eq(DatasetItem.arel_table[:dataset_id]),
-                available: true,
-                associations: [
-                    {
-                        join: ProgressEvent,
-                        on: DatasetItem.arel_table[:id].eq(ProgressEvent.arel_table[:dataset_item_id]),
-                        available: true,
-                        associations: []
+              join: ProgressEvent,
+              on: DatasetItem.arel_table[:id].eq(ProgressEvent.arel_table[:dataset_item_id]),
+              available: true,
+              associations: []
 
-                    },
-                    {
-                        join: AudioRecording,
-                        on: DatasetItem.arel_table[:audio_recording_id].eq(AudioRecording.arel_table[:id]),
-                        available: true,
-                        associations: []
+            },
+            {
+              join: AudioRecording,
+              on: DatasetItem.arel_table[:audio_recording_id].eq(AudioRecording.arel_table[:id]),
+              available: true,
+              associations: []
 
-                    },
-                ]
             }
-        ]
+          ]
+        }
+      ]
     }
   end
-
-
-
 end

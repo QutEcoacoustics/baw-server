@@ -1,4 +1,4 @@
-class DatasetItem < ActiveRecord::Base
+class DatasetItem < ApplicationRecord
 
   # ensures that creator_id, updater_id, deleter_id are set
   include UserChange

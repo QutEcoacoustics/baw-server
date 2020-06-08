@@ -1,4 +1,4 @@
-class AudioEvent < ActiveRecord::Base
+class AudioEvent < ApplicationRecord
   # ensures that creator_id, updater_id, deleter_id are set
   include UserChange
 

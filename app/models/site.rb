@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class Site < ActiveRecord::Base
+class Site < ApplicationRecord
   # ensures that creator_id, updater_id, deleter_id are set
   include UserChange
 

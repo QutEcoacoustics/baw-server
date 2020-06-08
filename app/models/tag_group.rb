@@ -1,4 +1,6 @@
-class TagGroup < ActiveRecord::Base
+# frozen_string_literal: true
+
+class TagGroup < ApplicationRecord
   # ensures that creator_id, updater_id, deleter_id are set
   include UserChange
 

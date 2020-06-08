@@ -1,4 +1,4 @@
-class AudioEventComment < ActiveRecord::Base
+class AudioEventComment < ApplicationRecord
   extend Enumerize
   # ensures that creator_id, updater_id, deleter_id are set
   include UserChange

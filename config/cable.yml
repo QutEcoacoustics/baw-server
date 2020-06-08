@@ -1,0 +1,14 @@
+development:
+  adapter:  <%= Settings.action_cable.adapter %>
+  url:  <%= Settings.action_cable.url %>
+  channel_prefix :  <%= Settings.action_cable.channel_prefix  %>
+
+test:
+  adapter:  <%= Settings.action_cable.adapter %>
+  url:  <%= Settings.action_cable.url %>
+  channel_prefix :  <%= Settings.action_cable.channel_prefix  %>
+
+production:
+  adapter:  <%= Settings.action_cable.adapter %>
+  url:  <%= Settings.action_cable.url %>
+  channel_prefix :  <%= Settings.action_cable.channel_prefix  %>

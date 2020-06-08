@@ -1,4 +1,4 @@
-class Study < ActiveRecord::Base
+class Study < ApplicationRecord
 
   # ensures that creator_id, updater_id, deleter_id are set
   include UserChange

@@ -1,4 +1,4 @@
-ENV['BUNDLE_GEMFILE'] ||= File.expand_path('../../Gemfile', __FILE__)
+ENV['BUNDLE_GEMFILE'] ||= File.expand_path('../Gemfile', __dir__)
 
 require 'bundler' # Set up gems listed in the Gemfile.
 Bundler.setup(:default, :server)

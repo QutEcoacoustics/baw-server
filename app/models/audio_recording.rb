@@ -1,7 +1,7 @@
 require 'digest'
 require 'digest/md5'
 
-class AudioRecording < ActiveRecord::Base
+class AudioRecording < ApplicationRecord
 
   extend Enumerize
 
