@@ -22,6 +22,7 @@ defaults: &defaults
   action_cable:
     adapter: redis
     url: redis://redis:6379/1
+    channel_prefix:
   resque:
     # queues_to_process is only needed when running a Resque worker to
     # specify the Resque queues to watch.
@@ -135,8 +136,8 @@ defaults: &defaults
     password: password
   mailer:
     # smtp gets set directly to config.action_mailer.smtp_settings in File environments/{environment_name}.rb
-    # See http://api.rubyonBawApp.org/classes/ActionMailer/Base.html#class-ActionMailer::Base-label-Configuration+options
-    # see http://guides.rubyonBawApp.org/action_mailer_basics.html#action-mailer-configuration
+    # See http://api.rubyonrails.org/classes/ActionMailer/Base.html#class-ActionMailer::Base-label-Configuration+options
+    # see http://guides.rubyonrails.org/action_mailer_basics.html#action-mailer-configuration
     smtp:
       address: localhost
       port: 25

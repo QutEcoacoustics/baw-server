@@ -12,11 +12,8 @@ source 'https://rubygems.org'
 # Gems required in all environments and all platforms
 # ====================================================
 
-# For autoloading Gems. Zeitwerk is the default in Rails 6.
-gem 'zeitwerk', '>= 2.3', require: false
-
 # for proper timezone support
-gem 'tzinfo'
+gem 'tzinfo' # active support pins the version of tzinfo, no point in setting it here
 gem 'tzinfo-data'
 
 # for simple caching of functions
@@ -25,14 +22,15 @@ gem 'memoist'
 # bootsnap helps rails boot quickly
 gem 'bootsnap', require: false
 
-RAILS_VERSION = '~> 5.0.1.rc1'
+RAILS_VERSION = '~> 6.0.3'
 
 group :server do
   # RAILS
+
   # -------------------------------------
-  gem 'rack-cors', '~> 0.4.0', require: 'rack/cors'
+  gem 'rack-cors', '~> 1.1.1', require: 'rack/cors'
   gem 'rails', RAILS_VERSION
-  gem 'responders', '~> 2.3.0'
+  gem 'responders', '~> 3.0.1'
 
   # RAILS 3 compatibility gems
   # -------------------------------------
@@ -54,15 +52,15 @@ group :server do
   # Build JSON APIs with ease. Read more: https://github.com/rails/jbuilder
   #gem 'jbuilder' # deprecate this maybe? let's see what fails!
 
-  gem 'haml', '~> 4.0.6'
-  gem 'haml-rails', '~> 0.9.0'
+  gem 'haml', '~> 5.1.2'
+  gem 'haml-rails', '~> 2.0.1'
 
-  gem 'kramdown', '~> 1.13.2'
-  gem 'paperclip', '~> 5.0.0'
+  gem 'kramdown', '~> 2.2.1'
+  gem 'paperclip', '> 6.0.0'
   gem 'simple_form'
 
   # Bootstrap UI
-  gem 'bootstrap-sass', '~> 3.3.4'
+  gem 'bootstrap-sass', '~> 3.4.1'
   # for sass variables: http://getbootstrap.com/customize/#less-variables
   # sprockets-rails gem is included via rails dependency
   gem 'font-awesome-sass', '~> 4.6.2'
@@ -79,7 +77,7 @@ group :server do
   # -------------------------------------
   # https://github.com/plataformatec/devise/blob/master/CHANGELOG.md
   # http://joanswork.com/devise-3-1-update/
-  gem 'cancancan', '~> 1.16'
+  gem 'cancancan', '> 3'
   gem 'devise', '~> 4.7.0'
   gem 'devise-i18n'
   gem 'role_model', '~> 0.8.1'
@@ -117,7 +115,7 @@ group :server do
   gem 'acts_as_paranoid'
 
   # for state machines
-  gem 'aasm', '~>4.12.0'
+  gem 'aasm', '> 5'
 
   # MONITORING
   # -------------------------------------
@@ -145,10 +143,12 @@ group :workers do
 end
 
 group :workers, :server do
+  # For autoloading Gems. Zeitwerk is the default in Rails 6.
+  gem 'zeitwerk', '>= 2.3', require: false
+
   # SETTINGS
   # -------------------------------------
-  gem 'settingslogic', '~> 2.0.9'
-  require 'rbconfig'
+  gem 'config'
 
   # ASYNC JOBS
   # ------------------------------------
@@ -171,11 +171,11 @@ group :development do
   # a ruby language server
   gem 'solargraph'
 
-  gem 'bullet', '~> 5.2.0'
-  gem 'guard', '~> 2.14.0'
+  gem 'bullet'
+  gem 'guard', '~> 2.16.0'
   gem 'i18n-tasks', '~> 0.9.0'
   gem 'notiffany', '~> 0.1.0'
-  gem 'rack-mini-profiler', '~> 0.10.0'
+  gem 'rack-mini-profiler', '>= 2.0.2'
   gem 'rubocop', require: false
 
   # for cleaning up Rails apps
@@ -199,7 +199,7 @@ group :development do
 end
 
 group :test do
-  gem 'coveralls', require: false
+  gem 'coveralls', '>= 0.8.23', require: false
   gem 'database_cleaner'
   gem 'factory_girl_rails'
   gem 'guard-rspec'

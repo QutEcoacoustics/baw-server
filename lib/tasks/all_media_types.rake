@@ -25,7 +25,7 @@ namespace :baw do
     def list_supported(extensions)
       media_types = []
       extensions.each do |m|
-        ext = NameyWamey.trim(m.downcase, '.', '')
+        ext = m.downcase.trim( '.', '')
         mime_type = Mime::Type.lookup_by_extension(ext)
         media_types.push mime_type unless mime_type.blank?
       end

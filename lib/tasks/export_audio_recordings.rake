@@ -32,7 +32,7 @@ namespace :baw do
             original_format = Mime::Type.file_extension_of(ar[media_type])
           end
 
-          original_format = NameyWamey.trim(original_format, '.', '')
+          original_format = original_format.trim('.', '')
 
           data_item = [
               ar[id],

@@ -25,5 +25,5 @@ Rake.application
 Rake.application.init('baw-workers', ARGV)
 # this allows us to print a list of tasks
 Rake::TaskManager.record_task_metadata = true
-Rake.load_rakefile("#{__dir__}/../lib/gems/baw_workers/tasks/run_worker.rake")
+Rake.load_rakefile("#{__dir__}/../lib/gems/baw-workers/lib/baw_workers/tasks/run_worker.rake")
 Rake.application.top_level

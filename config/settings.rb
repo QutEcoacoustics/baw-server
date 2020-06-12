@@ -1,7 +1,8 @@
+# TODO: replace with https://github.com/rubyconfig/config
 require 'settingslogic'
 
 # Using SettingsLogic, see https://github.com/binarylogic/settingslogic
-# settings loaded in model/settings.rb
+# settings loaded in
 # Accessible through Settings.key
 # Environment specific settings expected in config/settings/{environment_name}.yml
 class Settings < BawWorkers::Settings
@@ -9,14 +10,14 @@ class Settings < BawWorkers::Settings
 
   # set default settings source
   settings_file_default = "#{Rails.root}/config/settings/default.yml"
-  configure(settings_file_default, Rails.env)
+  #configure(settings_file_default, Rails.env)
   BawWorkers::Settings.configure(settings_file_default, Rails.env)
 
   # merge environment specific settings in separate yml files
   settings_file_env = "#{Rails.root}/config/settings/#{Rails.env}.yml"
 
   if File.exist?(settings_file_env)
-    instance_merge(settings_file_env, Rails.env)
+    #instance_merge(settings_file_env, Rails.env)
     BawWorkers::Settings.instance_merge(settings_file_env, Rails.env)
   else
     raise "===> environment specific settings file #{settings_file_env} not found."
@@ -40,8 +41,6 @@ class Settings < BawWorkers::Settings
     end
 
     def version_info
-      # see http://semver.org/
-      # see http://nvie.com/posts/a-successful-git-branching-model/
       {
           major: 2,
           minor: 0,
@@ -76,7 +75,7 @@ class Settings < BawWorkers::Settings
           @media_types[media_category] = []
 
           value.each do |media_type|
-            ext = NameyWamey.trim(media_type.downcase, '.', '')
+            ext = media_type.downcase.trim('.', '')
             mime_type = Mime::Type.lookup_by_extension(ext)
             @media_types[media_category].push mime_type unless mime_type.blank?
           end
@@ -133,5 +132,7 @@ class Settings < BawWorkers::Settings
     end
 
   end
+
+  self.validate
 
 end

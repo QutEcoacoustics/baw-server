@@ -10,35 +10,13 @@ require 'resque/tasks'
 
 require_relative '../../baw_workers'
 
-require 'zeitwerk'
-loader = Zeitwerk::Loader.new
-
-loader.tag = 'baw-workers'
-
-base_dir = "#{__dir__}/../.."
-loader.push_dir(base_dir)
-loader.ignore("#{base_dir}/baw_workers/patches")
-
-# collapse gem like folder structures
-loader.collapse('*/lib')
-
-# loader.inflector.inflect(
-#   'baw-workers' => 'BawWorkers',
-#   'baw-audio-tools' => 'BawAudioTools'
-# )
-loader.enable_reloading
-#loader.log! # debug only!
-loader.setup # ready!
-
 # set time zone
 Time.zone = 'UTC'
 
 BawApp.initialize
 
 namespace :baw do
-
   namespace :worker do
-
     # run a worker. Passes parameter to prerequisite 'setup_worker'. Takes one argument: settings_file
     # start examples:
     # bundle exec rake baw_workers:run_worker
@@ -90,7 +68,6 @@ namespace :baw do
       BawWorkers::Config.run(settings_file: args.settings_file, redis: true, resque_worker: false)
       BawWorkers::ResqueApi.retry_failed
     end
-
   end
 
   namespace :analysis do
@@ -106,7 +83,6 @@ namespace :baw do
         BawWorkers::Config.run(settings_file: args.settings_file, redis: true, resque_worker: false)
         BawWorkers::Analysis::Action.action_enqueue_rake_csv(args.csv_file, args.config_file, args.command_file)
       end
-
     end
     namespace :standalone do
       desc 'Directly analyse an audio file'
@@ -191,7 +167,6 @@ namespace :baw do
     # Consider defaults and offsets: from start of file, or from time of day e.g. 22:54:00 / 22:54:30 for 30 second segments?
     # This could be created for eager caching
   end
-
 end
 
 # if no rguments, list available tasks

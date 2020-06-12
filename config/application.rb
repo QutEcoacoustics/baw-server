@@ -3,108 +3,53 @@ require File.expand_path('../boot', __FILE__)
 require 'English'
 require 'rails/all'
 
-# some patches need to be applied before gems load
-require "#{File.dirname(__FILE__)}/../lib/patches/random"
-#require "#{File.dirname(__FILE__)}/../lib/patches/big_decimal"
-
 # Require the gems listed in Gemfile, including any gems
 # you've limited to :test, :development, or :production.
 Bundler.setup(*Rails.groups, :default, :server)
 Bundler.require(*Rails.groups, :server)
+
+require 'rails/commands/server/server_command.rb'
+# bind to 0.0.0.0 by default when running rails server
+# - useful when running inside a container
+module Rails
+  class Server
+    alias :default_options_backup :default_options
+    def default_options
+      default_options_backup.merge!(Host: '0.0.0.0')
+    end
+  end
+end
+
+# require things that aren't gems but are gem-like
+# Why do this and not rely on autoload magic? Because magic. I find it is simpler
+# to debug things that have less magic and a clear, transparent invocation
+require "#{__dir__}/../lib/gems/baw-app/lib/baw_app"
+require "#{__dir__}/../lib/gems/baw-audio-tools/lib/baw_audio_tools"
+require "#{__dir__}/../lib/gems/baw-workers/lib/baw_workers"
 
 module AWB
   class Application < Rails::Application
     # Settings in config/environments/* take precedence over those specified here.
     # Application configuration should go into files in config/initializers
     # -- all .rb files in that directory are automatically loaded.
+    config.before_initialize do
+      require "#{__dir__}/settings"
+    end
 
-    # TODO: remove when upgrading to rails 6
-    require 'zeitwerk'
-    loader = Zeitwerk::Loader.new
-    loader.enable_reloading if Rails.env.development?
-    loader.tag = 'rails'
+    config.load_defaults '6.0'
 
-    loader.ignore(config.root.join('lib', 'tasks'))
+    # we should never need to to autoload anything in ./app
+    config.add_autoload_paths_to_load_path = false
 
-    loader.push_dir(config.root.join('lib', 'validators'))
-    loader.push_dir(config.root.join('lib', 'gems'))
-    loader.ignore(config.root.join('lib', 'gems', 'resque-status'))
-    loader.push_dir(config.root.join('lib', 'modules'))
-
-    loader.tag = 'rails'
-    #loader.log! # debug only!
-    loader.setup
-
-    # TODO: but add this back in
-    #config.autoload_paths << config.root.join('lib')
+    Rails.autoloaders.log! # debug only!
 
     # add patches
-    # zeitwerk specifically avoids double loading modules, so patches need to be
-    # required manually
-    #config.autoload_paths << config.root.join('lib', 'patches','mime_type.rb')
-    require config.root.join('lib', 'patches', 'mime', 'type.rb')
-
-    #config.autoload_paths << config.root.join('lib', 'patches','paperclip_content_matcher.rb')
-    #config.autoload_paths << config.root.join('lib', 'patches','rspec_api_documentation.rb')
-
-    # Custom setup
-    # enable garbage collection profiling (reported in New Relic, which we no longer use)
-    #GC::Profiler.enable
-
-    require "#{File.dirname(__FILE__)}/settings"
-
-    Settings.validate
-
-    # resque setup
-    Resque.redis = ActiveSupport::HashWithIndifferentAccess.new(Settings.resque.connection)
-    Resque.redis.namespace = Settings.resque.namespace
-
-    # logging
-    # By default, each log is created under Rails.root/log/ and the log file name is <component_name>.<environment_name>.log.
-
-    # The default Rails log level is warn in production env and info in any other env.
-    current_log_level = Logger::DEBUG
-    current_log_level = Logger::INFO if Rails.env.staging?
-    current_log_level = Logger::WARN if Rails.env.production?
-
-    rails_logger = BawWorkers::MultiLogger.new(Logger.new(Rails.root.join('log', "rails.#{Rails.env}.log")))
-    rails_logger.attach(Logger.new(STDOUT)) if Rails.env.development?
-    rails_logger.level = current_log_level
-
-    mailer_logger = BawWorkers::MultiLogger.new(Logger.new(Settings.paths.mailer_log_file))
-    mailer_logger.level = Logger.const_get(Settings.mailer.log_level)
-
-    active_record_logger = BawWorkers::MultiLogger.new(Logger.new(Rails.root.join('log', "activerecord.#{Rails.env}.log")))
-    active_record_logger.attach(Logger.new(STDOUT)) if Rails.env.development?
-    active_record_logger.level = current_log_level
-
-    resque_logger = BawWorkers::MultiLogger.new(Logger.new(Settings.paths.worker_log_file))
-    resque_logger.level = Logger.const_get(Settings.resque.log_level)
-
-    audio_tools_logger = BawWorkers::MultiLogger.new(Logger.new(Settings.paths.audio_tools_log_file))
-    audio_tools_logger.level = Logger.const_get(Settings.audio_tools.log_level)
-
-    # core rails logging
-    config.logger = rails_logger
-
-    # action mailer logging
-    config.action_mailer.logger = mailer_logger
-    BawWorkers::Config.logger_mailer = mailer_logger
-
-    # activerecord logging
-    ActiveRecord::Base.logger = active_record_logger
-
-    # resque logging
-    Resque.logger = resque_logger
-    BawWorkers::Config.logger_worker = resque_logger
-
-    # audio tools logging
-    BawWorkers::Config.logger_audio_tools = audio_tools_logger
-
-    # BawWorkers setup
-    BawWorkers::Config.run_web(rails_logger, mailer_logger, resque_logger, audio_tools_logger, Settings)
-
-    # end custom setup
+    # zeitwerk specifically does not deal with the concept if overrides,
+    # so patches need to be required manually
+    Dir.glob(config.root.join('lib', 'patches', '**/*.rb')).sort.each do |override|
+      #puts "loading #{override}"
+      require override
+    end
 
     # Only load the plugins named here, in the order given (default is alphabetical).
     # :all can be used as a placeholder for all plugins not explicitly named.
@@ -115,12 +60,6 @@ module AWB
 
     # schema format - set to sql to support case-insensitive indexes and other things
     config.active_record.schema_format = :sql
-
-    # Currently, Active Record suppresses errors raised within `after_rollback`/`after_commit`
-    # callbacks and only print them to the logs. In the next version, these errors will no
-    # longer be suppressed. Instead, the errors will propagate normally just like in other
-    # Active Record callbacks.
-    config.active_record.raise_in_transactional_callbacks = true
 
     # check that locales are valid - new default in rails 3.2.14
     config.i18n.enforce_available_locales = true
@@ -146,11 +85,8 @@ module AWB
       ErrorsController.action(:uncaught_error).call(env)
     }
 
-    # set paperclip default path and url
-    Paperclip::Attachment.default_options[:path] = ':rails_root/public:url'
-    Paperclip::Attachment.default_options[:url] = '/system/:class/:attachment/:id_partition/:style/:filename'
 
-    ActionView::Base.sanitized_allowed_tags.merge(['table', 'tr', 'td', 'caption', 'thead', 'th', 'tfoot', 'tbody', 'colgroup'])
+    Rails::Html::SafeListSanitizer.allowed_tags.merge(['table', 'tr', 'td', 'caption', 'thead', 'th', 'tfoot', 'tbody', 'colgroup'])
 
     # middleware to rewrite angular urls
     # insert at the start of the Rack stack.
@@ -172,7 +108,7 @@ module AWB
     # allow any origin, with any header, to access the array of methods
     # insert as first middleware, after other changes.
     # this ensures static files, caching, and auth will include CORS headers
-    config.middleware.insert_before 0, 'Rack::Cors', debug: true, logger: (-> { Rails.logger }) do
+    config.middleware.insert_before 0, Rack::Cors, debug: true, logger: (-> { Rails.logger }) do
       allow do
 
         # 'Access-Control-Allow-Origin' (origins):
@@ -208,9 +144,6 @@ module AWB
                  expose: MediaPoll::HEADERS_EXPOSED + %w(X-Archived-At X-Error-Type)
       end
     end
-
-    # Do not swallow errors in after_commit/after_rollback callbacks.
-    config.active_record.raise_in_transactional_callbacks = true
 
     # Sanity check: test dependencies should not be loadable
     unless Rails.env.test?

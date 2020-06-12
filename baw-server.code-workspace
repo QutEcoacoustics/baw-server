@@ -7,7 +7,13 @@
   "settings": {
     "cSpell.words": [
       "Bootsnap",
+      "Gemfile",
       "autoload",
+      "autoloaded",
+      "autoloaders",
+      "bootsnap",
+      "cleanpath",
+      "gsub",
       "mkdir",
       "postgresql",
       "rakefile"

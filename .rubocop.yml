@@ -9,9 +9,7 @@ AllCops:
     - 'db/**/*'
     - 'config/**/*'
     - 'script/**/*'
-  TargetRubyVersion: 2.5
-# Rails:
-#   Enabled: true
+  TargetRubyVersion: 2.6
 
 # Customized options
 Lint/DeprecatedOpenSSLConstant:
@@ -45,6 +43,9 @@ Metrics/BlockLength:
     - it
     - group
     - namespace
+    - draw
+    - setup
+    - configure
 Metrics/MethodLength:
   Max: 30
   ExcludedMethods:

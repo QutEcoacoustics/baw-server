@@ -118,7 +118,7 @@ class NameyWamey
       name = standard.join('_') + get_extra_options(extra)
       name_parameterize = name.parameterize('_')
 
-      name_parameterize + '.' + NameyWamey.trim(extension, '.', '').parameterize('_')
+      name_parameterize + '.' + extension.trim('.', '').parameterize('_')
     end
   end
 end

@@ -10,9 +10,9 @@ FactoryGirl.define do
     trait :with_lat_long do
       # Random.rand returns "a random integer greater than or equal to zero and less than the argument"
       # between -90 and 90 degrees
-      latitude { Random.rand_incl(180.0) - 90.0 }
+      latitude { Random.rand(-90.0..90.0)}
       # -180 and 180 degrees
-      longitude { Random.rand_incl(360.0) - 180.0 }
+      longitude { Random.rand(-180.0..180.0) }
     end
 
     # the after(:create) yields two values; the instance itself and the

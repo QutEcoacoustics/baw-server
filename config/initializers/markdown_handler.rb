@@ -3,7 +3,7 @@
 # https://github.com/rails/rails/blob/5-0-stable/actionview/lib/action_view/template/handlers/html.rb
 class MarkdownHandler
 
-  def call(template)
+  def call(template, _source)
     erb = ActionView::Template.registered_template_handler(:erb)
 
     compiled_template = erb.call(template)

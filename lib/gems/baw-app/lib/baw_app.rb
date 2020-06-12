@@ -1,5 +1,9 @@
 # frozen_string_literal: true
 
+Dir.glob("#{__dir__}/patches/**/*.rb").sort.each do |override|
+  require override
+end
+
 # A module for app wide constants or defs.
 module BawApp
   # makes module methods 'static'
@@ -7,7 +11,7 @@ module BawApp
   module_function
 
   def root
-    @root ||= Pathname.new("#{__dir__}/../..").cleanpath
+    @root ||= Pathname.new("#{__dir__}/../../../..").cleanpath
   end
 
   def env
@@ -28,6 +32,8 @@ module BawApp
   end
 
   def initialize
-    require_relative('baw_app/initializers/register_mime_types')
+    Dir.glob("#{__dir__}/initializers/**/*.rb").sort.each do |file|
+      require file
+    end
   end
 end

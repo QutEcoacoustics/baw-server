@@ -23,7 +23,7 @@ module Api
         stored_extension = Mime::Type.lookup(audio_recording.media_type).to_sym.to_s
       else
         stored_extension = File.extname(audio_recording.original_file_name)
-        stored_media_type = Mime::Type.lookup_by_extension(NameyWamey.trim(stored_extension, '.', ''))
+        stored_media_type = Mime::Type.lookup_by_extension(stored_extension.trim('.', ''))
       end
 
       {

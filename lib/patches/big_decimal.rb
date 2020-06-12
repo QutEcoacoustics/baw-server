@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # http://stackoverflow.com/questions/6128794/rails-json-serialization-of-decimal-adds-quotes
 # patch BigDecimal so json is output without quotes.
 # this was introduced in Rails 4.0 as `Rails.application.config.active_support.encode_big_decimal_as_string`
@@ -6,14 +8,14 @@
 # http://guides.rubyonrails.org/upgrading_ruby_on_rails.html#changes-in-json-handling
 # https://github.com/rails/rails/pull/13060
 
-# require 'bigdecimal'
-#
-# class BigDecimal
-#   def as_json(options = nil) #:nodoc:
-#     if finite?
-#       self
-#     else
-#       NilClass::AS_JSON
-#     end
-#   end
-# end
+require 'bigdecimal'
+
+class BigDecimal
+  def as_json(_options = nil) #:nodoc:
+    if finite?
+      self
+    else
+      NilClass::AS_JSON
+    end
+  end
+end
