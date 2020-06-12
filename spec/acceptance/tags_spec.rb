@@ -72,6 +72,25 @@ resource 'Tags' do
   end
 
   get '/audio_recordings/:audio_recording_id/audio_events/:audio_event_id/tags' do
+    expected_paths = Array[
+      'id',
+      'text',
+      'is_taxanomic',
+      'type_of_tag',
+      'retired',
+      'creator_id',
+      'updater_id',
+      'created_at',
+      'updated_at',
+      'notes',
+    ].map { |path| "data/0/#{path}" }
+
+    tag_extras_id_params
+    let(:authentication_token) { reader_token }
+    standard_request_options(:get, 'LIST for audio_event (has parameters, as reader)', :ok, expected_json_path: expected_paths, data_item_count: 1)
+  end
+
+  get '/audio_recordings/:audio_recording_id/audio_events/:audio_event_id/tags' do
     tag_extras_id_params
     let(:authentication_token) { no_access_token }
     standard_request_options(:get, 'LIST for audio_event (as no access user)', :forbidden, expected_json_path: get_json_error_path(:permissions))

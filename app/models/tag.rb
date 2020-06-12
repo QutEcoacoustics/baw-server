@@ -95,7 +95,10 @@ class Tag < ActiveRecord::Base
         :id, :text, :is_taxanomic, :type_of_tag, :retired, :notes,
         :creator_id, :created_at, :updater_id, :updated_at
       ],
-      render_fields: [:id, :text, :is_taxanomic, :type_of_tag, :retired],
+      render_fields: [
+        :id, :text, :is_taxanomic, :type_of_tag, :retired, :creator_id,
+        :updater_id, :created_at, :updated_at, :notes
+      ],
       text_fields: [:text, :type_of_tag, :notes],
       controller: :tags,
       action: :filter,

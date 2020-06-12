@@ -4,6 +4,16 @@
   "version": "2.0.0",
   "tasks": [
     {
+      "label": "Start Passenger",
+      "type": "shell",
+      "command": "passenger start",
+      "group": "none",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      }
+    },
+    {
       "label": "Stop Passenger",
       "type": "shell",
       "command": "passenger stop",
