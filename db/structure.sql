@@ -789,7 +789,7 @@ CREATE TABLE public.tags (
     is_taxanomic boolean DEFAULT false NOT NULL,
     type_of_tag character varying DEFAULT 'general'::character varying NOT NULL,
     retired boolean DEFAULT false NOT NULL,
-    notes text,
+    notes jsonb,
     creator_id integer NOT NULL,
     updater_id integer,
     created_at timestamp without time zone,
@@ -2337,4 +2337,6 @@ INSERT INTO schema_migrations (version) VALUES ('20181210052707');
 INSERT INTO schema_migrations (version) VALUES ('20181210052725');
 
 INSERT INTO schema_migrations (version) VALUES ('20181210052735');
+
+INSERT INTO schema_migrations (version) VALUES ('20200612004608');
 
