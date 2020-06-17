@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+# The first file actually loaded is config.rb through a special Raitie integration.
+# See config.rb
+
 # resque setup
 Resque.redis = ActiveSupport::HashWithIndifferentAccess.new(Settings.resque.connection)
 Resque.redis.namespace = Settings.resque.namespace

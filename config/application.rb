@@ -8,18 +8,6 @@ require 'rails/all'
 Bundler.setup(*Rails.groups, :default, :server)
 Bundler.require(*Rails.groups, :server)
 
-require 'rails/commands/server/server_command.rb'
-# bind to 0.0.0.0 by default when running rails server
-# - useful when running inside a container
-module Rails
-  class Server
-    alias :default_options_backup :default_options
-    def default_options
-      default_options_backup.merge!(Host: '0.0.0.0')
-    end
-  end
-end
-
 # require things that aren't gems but are gem-like
 # Why do this and not rely on autoload magic? Because magic. I find it is simpler
 # to debug things that have less magic and a clear, transparent invocation
@@ -32,16 +20,13 @@ module AWB
     # Settings in config/environments/* take precedence over those specified here.
     # Application configuration should go into files in config/initializers
     # -- all .rb files in that directory are automatically loaded.
-    config.before_initialize do
-      require "#{__dir__}/settings"
-    end
 
     config.load_defaults '6.0'
 
     # we should never need to to autoload anything in ./app
     config.add_autoload_paths_to_load_path = false
 
-    Rails.autoloaders.log! # debug only!
+    #Rails.autoloaders.log! # debug only!
 
     # add patches
     # zeitwerk specifically does not deal with the concept if overrides,

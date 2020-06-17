@@ -8,6 +8,7 @@
     "cSpell.words": [
       "Bootsnap",
       "Gemfile",
+      "Railtie",
       "autoload",
       "autoloaded",
       "autoloaders",
@@ -16,6 +17,7 @@
       "gsub",
       "mkdir",
       "postgresql",
+      "prepend",
       "rakefile"
     ],
     "files.associations": {

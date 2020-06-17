@@ -46,6 +46,7 @@ Metrics/BlockLength:
     - draw
     - setup
     - configure
+    - draw
 Metrics/MethodLength:
   Max: 30
   ExcludedMethods:
@@ -55,6 +56,8 @@ Metrics/AbcSize:
 Style/BlockDelimiters:
   EnforcedStyle: semantic
   AllowBracesOnProceduralOneLiners: true
+  IgnoredMethods:
+    - its
 Style/ExponentialNotation:
   Enabled: true
   EnforcedStyle: scientific

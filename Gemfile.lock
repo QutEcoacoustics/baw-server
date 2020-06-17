@@ -537,6 +537,7 @@ DEPENDENCIES
   devise (~> 4.7.0)
   devise-i18n
   dotiw
+  dry-validation
   enumerize
   exception_notification
   factory_girl_rails

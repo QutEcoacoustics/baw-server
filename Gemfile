@@ -22,6 +22,9 @@ gem 'memoist'
 # bootsnap helps rails boot quickly
 gem 'bootsnap', require: false
 
+# standardised way to validate objects
+gem 'dry-validation'
+
 RAILS_VERSION = '~> 6.0.3'
 
 group :server do
@@ -67,11 +70,12 @@ group :server do
 
   # for rails 3, 4
   gem 'dotiw'
+  # Easy paging, adds scopes to ActiveRecord objects  like .page()
   gem 'kaminari'
   gem 'recaptcha', require: 'recaptcha/rails'
 
   # for tying inflections into I18n
-  gem 'i18n-inflector-rails', '~>1.0'
+  gem 'i18n-inflector-rails', '~>1.0', require: false
 
   # USERS & PERMISSIONS
   # -------------------------------------
@@ -83,7 +87,6 @@ group :server do
   gem 'role_model', '~> 0.8.1'
   # Use ActiveModel has_secure_password
   gem 'bcrypt', '~> 3.1.9'
-  #gem 'rails_admin', '~> 0.7'
 
   # Database gems
   # -------------------------------------

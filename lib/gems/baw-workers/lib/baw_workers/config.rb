@@ -30,13 +30,9 @@ module BawWorkers
       # @option opts [Boolean] :resque_worker (false) are we running in the context of a Resque worker?
       # @return [Hash] configuration result
       def run(opts)
-        settings_file, default_used = use_supplied_config_or_default(opts)
-        settings_namespace = BawApp.env
+        settings_files, default_used = use_supplied_config_or_default(opts)
 
-        BawWorkers::Settings.configure(settings_file, settings_namespace)
-
-        # ensure settings are updated if they have already been loaded
-        BawWorkers::Settings.instance_merge(settings_file, settings_namespace)
+        load_settings(settings_files)
 
         # easy access to options
         is_test = BawApp.test?
@@ -78,11 +74,18 @@ module BawWorkers
 
         check_resque_formatter
 
-        BawWorkers::Config.logger_worker.warn('BawWorkers::Config') { result.to_json }
+        log_info result
       end
 
       def run_web(core_logger, mailer_logger, resque_logger, audio_tools_logger, settings)
         is_test = BawApp.test?
+
+        # assert settings is a singleton
+        raise StandardError, 'run_web: Settings should have already been initialized' if settings.nil?
+        raise StandardError, 'run_web: BawWorkers::Settings were nil but should be defined' if BawWorkers::Settings.nil?
+        if settings != BawWorkers::Settings
+          raise StandardError, 'run_web:  BawWorkers::Settings should be identical to Settings'
+        end
 
         # configure basic attributes first
         configure_paths(settings)
@@ -108,24 +111,34 @@ module BawWorkers
 
         check_resque_formatter
 
-        BawWorkers::Config.logger_worker.warn('BawWorkers::Config') { result.to_json }
+        log_info result
       end
 
       private
 
       def use_supplied_config_or_default(opts)
+        default_configs = BawApp.config_files
+
         default_used = false
         if !opts.include?(:settings_file) || opts[:settings_file].blank?
           default_used = true
-          opts[:settings_file] =
-            File.join(File.dirname(__FILE__), '..', '..', '..', 'config', 'settings', 'default.yml')
+        else
+          provided = File.expand_path(opts[:settings_file])
+          default_configs.push(provided)
         end
 
-        unless File.file?(opts[:settings_file])
-          raise BawAudioTools::Exceptions::FileNotFoundError, "Settings file could not be found: '#{opts[:settings_file]}'."
+        unless File.file?(default_configs.last)
+          message = "The last settings must exist and yet the file could not be found: '#{default_configs.last}'."
+          raise BawAudioTools::Exceptions::FileNotFoundError, message
         end
 
-        [File.expand_path(opts[:settings_file]), default_used]
+        [default_configs, default_used]
+      end
+
+      def load_settings(config_files)
+        ::Config.load_and_set_settings(config_files)
+
+        puts "BawWorkers::Settings loaded from #{BawWorkers::Settings.sources}"
       end
 
       # Configures redis connections for both Resque and our own Redis wrapper
@@ -356,6 +369,12 @@ module BawWorkers
           poll_interval: is_resque_worker ? ENV['INTERVAL'].to_f : nil
         }
         result
+      end
+
+      def log_info(result)
+        BawWorkers::Config.logger_worker.warn('BawWorkers::Config') {
+          JSON.fast_generate result
+        }
       end
     end
   end

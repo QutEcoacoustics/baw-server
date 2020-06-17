@@ -2,21 +2,8 @@
 /db/*.sqlite3
 /db/*.sqlite3-journal
 
-# ignore media folder
-/media/*
-
-# ignore custom rake import task
-/lib/tasks/import.rake
-/lib/tasks/sample_data.rake
-
-# ignore deploy files
-/config/deploy.rb
-/config/deploy/production.rb
-/config/deploy/staging.rb
-
 # ignore settings files (except default.yml)
-/config/settings/development.yml
-/config/settings/test.yml
+/config/settings/*.local.yml
 /config/settings/staging.yml
 /config/settings/production.yml
 

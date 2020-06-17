@@ -28,6 +28,9 @@ Rails.application.configure do
     }
   config.action_mailer.perform_deliveries = true
 
+  # enable colorized logs
+  config.colorized_logging = true
+
   # Print deprecation notices to the Rails logger.
   config.active_support.deprecation = :log
 
@@ -59,7 +62,6 @@ Rails.application.configure do
   # Raises error for missing translations
   config.action_view.raise_on_missing_translations = true
 
-
   # profile requests
   #config.middleware.insert 0, Rack::RequestProfiler, printer: ::RubyProf::CallTreePrinter
 
@@ -73,8 +75,8 @@ Rails.application.configure do
     Bullet.rails_logger = true
     Bullet.add_footer = true
     Bullet.raise = false
-
   end
+
   # Use an evented file watcher to asynchronously detect changes in source code,
   # routes, locales, etc. This feature depends on the listen gem.
   # config.file_watcher = ActiveSupport::EventedFileUpdateChecker

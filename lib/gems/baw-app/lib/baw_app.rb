@@ -4,6 +4,10 @@ Dir.glob("#{__dir__}/patches/**/*.rb").sort.each do |override|
   require override
 end
 
+Dir.glob("#{__dir__}/initializers/**/*.rb").sort.each do |file|
+  require file
+end
+
 # A module for app wide constants or defs.
 module BawApp
   # makes module methods 'static'
@@ -23,6 +27,15 @@ module BawApp
     )
   end
 
+  # Get the path to the default config files that will be loaded by the app
+  def config_files(config_root = @root, env = @env)
+    [
+      File.join(config_root, 'settings.yml').to_s,
+      File.join(config_root, 'settings', 'default.yml').to_s,
+      File.join(config_root, 'settings', "#{env}.yml").to_s
+    ].freeze
+  end
+
   def development?
     env == 'development'
   end
@@ -31,9 +44,6 @@ module BawApp
     ENV['RUNNING_RSPEC'] == 'yes' || env == 'test'
   end
 
-  def initialize
-    Dir.glob("#{__dir__}/initializers/**/*.rb").sort.each do |file|
-      require file
-    end
-  end
+  # currently a no-op, thinking about collapsing the concept of initializers and patches
+  def initialize; end
 end

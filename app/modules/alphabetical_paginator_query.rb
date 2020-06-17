@@ -7,7 +7,6 @@ module AlphabeticalPaginatorQuery
   extend ActiveSupport::Concern
 
   class_methods do
-
     def alphabetical_page(field, range)
       range = 'a-b' if range.blank?
       left, right = range.split('-')
@@ -44,6 +43,5 @@ module AlphabeticalPaginatorQuery
 
       raise ArgumentError, 'Alphabetical paginator range invalid'
     end
-
   end
 end
