@@ -118,7 +118,6 @@ class Tag < ActiveRecord::Base
               available: true
             }
           ]
-
         }
       ]
     }

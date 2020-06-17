@@ -54,6 +54,7 @@ CREATE TABLE public.analysis_jobs (
 --
 
 CREATE SEQUENCE public.analysis_jobs_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -91,6 +92,7 @@ CREATE TABLE public.analysis_jobs_items (
 --
 
 CREATE SEQUENCE public.analysis_jobs_items_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -131,6 +133,7 @@ CREATE TABLE public.audio_event_comments (
 --
 
 CREATE SEQUENCE public.audio_event_comments_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -171,6 +174,7 @@ CREATE TABLE public.audio_events (
 --
 
 CREATE SEQUENCE public.audio_events_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -205,6 +209,7 @@ CREATE TABLE public.audio_events_tags (
 --
 
 CREATE SEQUENCE public.audio_events_tags_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -254,6 +259,7 @@ CREATE TABLE public.audio_recordings (
 --
 
 CREATE SEQUENCE public.audio_recordings_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -291,6 +297,7 @@ CREATE TABLE public.bookmarks (
 --
 
 CREATE SEQUENCE public.bookmarks_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -326,6 +333,7 @@ CREATE TABLE public.dataset_items (
 --
 
 CREATE SEQUENCE public.dataset_items_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -360,6 +368,7 @@ CREATE TABLE public.datasets (
 --
 
 CREATE SEQUENCE public.datasets_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -398,6 +407,7 @@ CREATE TABLE public.permissions (
 --
 
 CREATE SEQUENCE public.permissions_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -430,6 +440,7 @@ CREATE TABLE public.progress_events (
 --
 
 CREATE SEQUENCE public.progress_events_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -472,6 +483,7 @@ CREATE TABLE public.projects (
 --
 
 CREATE SEQUENCE public.projects_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -526,6 +538,7 @@ CREATE TABLE public.questions (
 --
 
 CREATE SEQUENCE public.questions_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -570,6 +583,7 @@ CREATE TABLE public.responses (
 --
 
 CREATE SEQUENCE public.responses_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -605,6 +619,7 @@ CREATE TABLE public.saved_searches (
 --
 
 CREATE SEQUENCE public.saved_searches_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -654,6 +669,7 @@ CREATE TABLE public.scripts (
 --
 
 CREATE SEQUENCE public.scripts_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -699,6 +715,7 @@ CREATE TABLE public.sites (
 --
 
 CREATE SEQUENCE public.sites_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -733,6 +750,7 @@ CREATE TABLE public.studies (
 --
 
 CREATE SEQUENCE public.studies_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -765,6 +783,7 @@ CREATE TABLE public.tag_groups (
 --
 
 CREATE SEQUENCE public.tag_groups_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -802,6 +821,7 @@ CREATE TABLE public.tags (
 --
 
 CREATE SEQUENCE public.tags_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -861,6 +881,7 @@ CREATE TABLE public.users (
 --
 
 CREATE SEQUENCE public.users_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
