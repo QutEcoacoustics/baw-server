@@ -28,13 +28,13 @@ longitudes = [
 
 describe Site, type: :model do
   it 'has a valid factory' do
-    expect(FactoryGirl.create(:site)).to be_valid
+    expect(FactoryBot.create(:site)).to be_valid
   end
   it 'is invalid without a name' do
-    expect(FactoryGirl.build(:site, name: nil)).not_to be_valid
+    expect(FactoryBot.build(:site, name: nil)).not_to be_valid
   end
   it 'requires a name with at least two characters' do
-    s = FactoryGirl.build(:site, name: 's')
+    s = FactoryBot.build(:site, name: 's')
     expect(s).not_to be_valid
     expect(s.valid?).to be_falsey
     expect(s.errors[:name].size).to eq(1)
@@ -43,7 +43,7 @@ describe Site, type: :model do
   it 'should obfuscate lat/longs properly' do
     original_lat = -23.0
     original_lng = 127.0
-    s = FactoryGirl.build(:site, :with_lat_long)
+    s = FactoryBot.build(:site, :with_lat_long)
 
     jitter_range = Site::JITTER_RANGE
     jitter_exclude_range = Site::JITTER_RANGE * 0.1
@@ -69,7 +69,7 @@ describe Site, type: :model do
   end
 
   it 'latitude should be within the range [-90, 90]' do
-    site = FactoryGirl.build(:site)
+    site = FactoryBot.build(:site)
 
     latitudes.each { |value, pass|
       site.latitude = value
@@ -81,7 +81,7 @@ describe Site, type: :model do
     }
   end
   it 'longitudes should be within the range [-180, 180]' do
-    site = FactoryGirl.build(:site)
+    site = FactoryBot.build(:site)
 
     longitudes.each { |value, pass|
       site.longitude = value
@@ -99,7 +99,7 @@ describe Site, type: :model do
   it { is_expected.to belong_to(:deleter).with_foreign_key(:deleter_id) }
 
   it 'should error on checking orphaned site if site is orphaned' do
-    site = FactoryGirl.create(:site, projects: [])
+    site = FactoryBot.create(:site, projects: [])
     expect {
       Access::Core.check_orphan_site!(site)
     }.to raise_error(CustomErrors::OrphanedSiteError)
@@ -108,21 +108,20 @@ describe Site, type: :model do
   it 'generates html for description' do
     md = "# Header\r\n [a link](https://github.com)."
     html = "<h1>Header</h1>\n<p><a href=\"https://github.com\">a link</a>.</p>\n"
-    project_html = FactoryGirl.create(:site, description: md)
+    project_html = FactoryBot.create(:site, description: md)
 
     expect(project_html.description).to eq(md)
     expect(project_html.description_html).to eq(html)
-
   end
 
   it 'should error on invalid timezone' do
     expect {
-      FactoryGirl.create(:site, tzinfo_tz: 'blah')
+      FactoryBot.create(:site, tzinfo_tz: 'blah')
     }.to raise_error(ActiveRecord::RecordInvalid, "Validation failed: Tzinfo tz is not a recognised timezone ('blah')")
   end
 
   it 'should be valid for a valid timezone' do
-    expect(FactoryGirl.create(:site, tzinfo_tz: 'Australia - Brisbane')).to be_valid
+    expect(FactoryBot.create(:site, tzinfo_tz: 'Australia - Brisbane')).to be_valid
   end
 
   # this should pass, but the paperclip implementation of validate_attachment_content_type is buggy.

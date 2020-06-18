@@ -47,6 +47,8 @@ Metrics/BlockLength:
     - setup
     - configure
     - draw
+    - define
+    - factory
 Metrics/MethodLength:
   Max: 30
   ExcludedMethods:

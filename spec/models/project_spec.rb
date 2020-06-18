@@ -1,8 +1,10 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 
-describe Project, :type => :model do
+describe Project, type: :model do
   it 'has a valid factory' do
-    expect(FactoryGirl.create(:project)).to be_valid
+    expect(FactoryBot.create(:project)).to be_valid
   end
 
   it { is_expected.to have_many :permissions }
@@ -13,25 +15,24 @@ describe Project, :type => :model do
   it { is_expected.to belong_to(:deleter).with_foreign_key(:deleter_id) }
 
   it 'is invalid without a name' do
-    expect(FactoryGirl.build(:project, name: nil)).not_to be_valid
+    expect(FactoryBot.build(:project, name: nil)).not_to be_valid
   end
   it 'is invalid without a creator' do
     expect {
-      FactoryGirl.create(:project, creator_id: nil)
+      FactoryBot.create(:project, creator_id: nil)
     }.to raise_error(ActiveRecord::RecordInvalid, /Creator must exist as an object or foreign key/)
   end
   it 'is invalid without a created_at' do
-
-    expect(FactoryGirl.create(:project, created_at: nil)).not_to be_a_new(Project)
+    expect(FactoryBot.create(:project, created_at: nil)).not_to be_a_new(Project)
   end
 
   it 'generates html for description' do
     md = "# Header\r\n [a link](https://github.com)."
     html = "<h1>Header</h1>\n<p><a href=\"https://github.com\">a link</a>.</p>\n"
-    projectHtml = FactoryGirl.create(:project, description: md)
+    project_html = FactoryBot.create(:project, description: md)
 
-    expect(projectHtml.description).to eq(md)
-    expect(projectHtml.description_html).to eq(html)
+    expect(project_html.description).to eq(md)
+    expect(project_html.description_html).to eq(html)
   end
 
   # this should pass, but the paperclip implementation of validate_attachment_content_type is buggy.
@@ -39,24 +40,22 @@ describe Project, :type => :model do
   #                allowing('image/gif', 'image/jpeg', 'image/jpg','image/png').
   #                rejecting('text/xml', 'image_maybe/abc', 'some_image/png') }
 
-
   #it 'is invalid without a urn' do
-  #  FactoryGirl.build(:project, :urn => nil).should_not be_valid
+  #  FactoryBot.build(:project, :urn => nil).should_not be_valid
   #end
   #it 'requires unique case-insensitive project names (case insensitive)' do
-  #  p1 = FactoryGirl.create(:project, :name => 'the same name')
-  #  p2 = FactoryGirl.build(:project, :name => 'tHE Same naMe')
+  #  p1 = FactoryBot.create(:project, :name => 'the same name')
+  #  p2 = FactoryBot.build(:project, :name => 'tHE Same naMe')
   #  p2.should_not be_valid
   #  p2.should have(1).error_on(:name)
   #end
   #it 'requires a unique urn (case insensitive)' do
-  #  p1 = FactoryGirl.create(:project, :urn => 'urn:organisation:project')
-  #  p2 = FactoryGirl.build(:project, :urn => 'urn:organisation:project')
+  #  p1 = FactoryBot.create(:project, :urn => 'urn:organisation:project')
+  #  p2 = FactoryBot.build(:project, :urn => 'urn:organisation:project')
   #  p2.should_not be_valid
   #  p2.should have(1).error_on(:urn)
   #end
   #it 'requires a valid urn' do
-  #  FactoryGirl.build(:project, :urn => 'not a urn').should_not be_valid
+  #  FactoryBot.build(:project, :urn => 'not a urn').should_not be_valid
   #end
-
 end

@@ -175,7 +175,6 @@ group :development do
   gem 'solargraph'
 
   gem 'bullet'
-  gem 'guard', '~> 2.16.0'
   gem 'i18n-tasks', '~> 0.9.0'
   gem 'notiffany', '~> 0.1.0'
   gem 'rack-mini-profiler', '>= 2.0.2'
@@ -203,9 +202,9 @@ end
 
 group :test do
   gem 'coveralls', '>= 0.8.23', require: false
-  gem 'database_cleaner'
-  gem 'factory_girl_rails'
-  gem 'guard-rspec'
+  gem 'database_cleaner-active_record'
+  gem 'database_cleaner-redis'
+  gem 'factory_bot_rails'
   gem 'json_spec', '~> 1.1.4'
   gem 'rspec'
   gem 'rspec-mocks'

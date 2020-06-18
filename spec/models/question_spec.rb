@@ -1,9 +1,10 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 
 RSpec.describe Question, type: :model do
-
   let(:study) {
-    FactoryGirl.create(:study)
+    FactoryBot.create(:study)
   }
 
   it 'has a valid factory' do
@@ -38,10 +39,8 @@ RSpec.describe Question, type: :model do
     it 'can not create a question associated with a nonexistent study' do
       expect {
         # array with both an existing and nonexistent study
-        create(:question, study_ids: [study.id, 12345])
+        create(:question, study_ids: [study.id, 12_345])
       }.to raise_error(ActiveRecord::RecordNotFound)
     end
-
   end
-
 end

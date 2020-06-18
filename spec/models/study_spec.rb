@@ -1,9 +1,10 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 
 RSpec.describe Study, type: :model do
-
   let(:dataset) {
-    FactoryGirl.create(:dataset)
+    FactoryBot.create(:dataset)
   }
 
   it 'has a valid factory' do
@@ -28,7 +29,6 @@ RSpec.describe Study, type: :model do
   end
 
   describe 'validations' do
-
     it { is_expected.to validate_presence_of(:dataset) }
 
     it 'cannot be created without a dataset' do
@@ -41,17 +41,15 @@ RSpec.describe Study, type: :model do
 
     it 'can not create a study associated with a nonexistent dataset' do
       expect {
-        create(:study, dataset_id: 12345)
+        create(:study, dataset_id: 12_345)
       }.to raise_error(ActiveRecord::RecordInvalid)
     end
 
     it 'can not create a study with a nonexistent question' do
       expect {
-        create(:study, question_ids: [12345])
+        create(:study, question_ids: [12_345])
         # not sure why the error is different for the two associations
       }.to raise_error(ActiveRecord::RecordNotFound)
     end
-
   end
-
 end

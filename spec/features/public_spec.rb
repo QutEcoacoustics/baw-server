@@ -5,7 +5,7 @@ require 'helpers/shared_test_helpers'
 
 describe 'Website forms with user', type: :feature do
   before(:each) do
-    @user = FactoryGirl.create(:user)
+    @user = FactoryBot.create(:user)
     login_as @user, scope: :user
   end
 
@@ -121,14 +121,13 @@ describe 'Website forms with user', type: :feature do
   end
 
   context 'website status' do
-
     include_context 'shared_test_helpers'
 
     create_entire_hierarchy
 
     it 'shows the Statistics page' do
       # create project, permissions, site, audio_recording, audio_event, tag, comment, bookmark
-      FactoryGirl.create(:permission, level: 'writer', creator: @user, user: @user)
+      FactoryBot.create(:permission, level: 'writer', creator: @user, user: @user)
       visit website_status_path
       expect(current_path).to eq(website_status_path)
       expect(page).to have_content('Unique tags attached to annotations')
@@ -177,7 +176,6 @@ describe 'public website forms', type: :feature do
       expect(current_path).to eq(data_upload_path)
       expect(page).to have_content(I18n.t('baw.shared.links.upload_audio.title'))
     end
-
   end
 
   context 'website status' do

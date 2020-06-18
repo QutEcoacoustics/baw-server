@@ -1,16 +1,16 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 require 'rspec/mocks'
 
 def response_url(response_id = nil, study_id = nil)
-
-  url = "/responses"
-  url = url + "/" + response_id.to_s if response_id
-  url = "/studies/#{study_id.to_s}" + url if study_id
-  return url
-
+  url = '/responses'
+  url = url + '/' + response_id.to_s if response_id
+  url = "/studies/#{study_id}" + url if study_id
+  url
 end
 
-describe "responses" do
+describe 'responses' do
   create_entire_hierarchy
   create_study_hierarchy
 
@@ -21,24 +21,22 @@ describe "responses" do
   create_citizen_science_hierarchies(2)
 
   let(:response_attributes) {
-    FactoryGirl.attributes_for(:response)
+    FactoryBot.attributes_for(:response)
   }
 
   let(:update_response_attributes) {
-    {data: {some_key: 'updated response data'}.to_json }
+    { data: { some_key: 'updated response data' }.to_json }
   }
 
   before(:each) do
     @env ||= {}
     @env['HTTP_AUTHORIZATION'] = admin_token
-    @env['CONTENT_TYPE'] = "application/json"
-    @env['ACCEPT'] = "application/json"
+    @env['CONTENT_TYPE'] = 'application/json'
+    @env['ACCEPT'] = 'application/json'
   end
 
   describe 'index,filter,show responses' do
-
     describe 'index' do
-
       it 'finds all (1) responses as admin' do
         get response_url, nil, @env
         expect(response).to have_http_status(200)
@@ -56,7 +54,6 @@ describe "responses" do
       end
 
       it 'finds the correct responses for the given study as admin' do
-
         available_records = many_studies
 
         # find responses for the first study in many_studies
@@ -64,22 +61,19 @@ describe "responses" do
         get response_url(nil, study_id), nil, @env
         parsed_response = JSON.parse(response.body)
         expect(parsed_response['data'].count).to eq(available_records[:studies][0].response_ids.count)
-        expect((parsed_response['data'].map { |q| q['id']  }).sort).to eq(available_records[:studies][0].response_ids.sort)
+        expect((parsed_response['data'].map { |q| q['id'] }).sort).to eq(available_records[:studies][0].response_ids.sort)
 
         study_id = available_records[:studies][1].id
         get response_url(nil, study_id), nil, @env
         parsed_response = JSON.parse(response.body)
         expect(parsed_response['data'].count).to eq(available_records[:studies][1].response_ids.count)
-        expect((parsed_response['data'].map { |q| q['id']  }).sort).to eq(available_records[:studies][1].response_ids.sort)
-
+        expect((parsed_response['data'].map { |q| q['id'] }).sort).to eq(available_records[:studies][1].response_ids.sort)
       end
-
     end
 
     describe 'filter' do
-
       it 'finds all (1) responses as admin' do
-        get response_url + "/filter", nil, @env
+        get response_url + '/filter', nil, @env
         expect(response).to have_http_status(200)
         parsed_response = JSON.parse(response.body)
         expect(parsed_response['data'].count).to eq(1)
@@ -87,59 +81,48 @@ describe "responses" do
       end
 
       it 'finds responses to the study0 and study1 using studies.id' do
-
         available_records = many_studies
 
-        url = response_url + "/filter"
+        url = response_url + '/filter'
 
         study0 = available_records[:studies][0]
         study1 = available_records[:studies][1]
-        expected_response_ids = (study0.response_ids +  study1.response_ids).uniq
-        filter_params  = { filter: { 'studies.id'  => { in: [study0.id, study1.id] }}}
+        expected_response_ids = (study0.response_ids + study1.response_ids).uniq
+        filter_params = { filter: { 'studies.id' => { in: [study0.id, study1.id] } } }
         post url, filter_params.to_json, @env
         parsed_response = JSON.parse(response.body)
         expect(parsed_response['data'].count).to eq(expected_response_ids.count)
-        expect((parsed_response['data'].map { |q| q['id']  }).sort).to eq(expected_response_ids.sort)
-
+        expect((parsed_response['data'].map { |q| q['id'] }).sort).to eq(expected_response_ids.sort)
       end
 
       it 'finds responses to the study0 and study1 using study_id' do
-
         available_records = many_studies
 
-        url = response_url + "/filter"
+        url = response_url + '/filter'
 
         study0 = available_records[:studies][0]
         study1 = available_records[:studies][1]
-        expected_response_ids = (study0.response_ids +  study1.response_ids).uniq
-        filter_params  = { filter: { 'study_id'  => { in: [study0.id, study1.id] }}}
+        expected_response_ids = (study0.response_ids + study1.response_ids).uniq
+        filter_params = { filter: { 'study_id' => { in: [study0.id, study1.id] } } }
         post url, filter_params.to_json, @env
         parsed_response = JSON.parse(response.body)
         expect(parsed_response['data'].count).to eq(expected_response_ids.count)
-        expect((parsed_response['data'].map { |q| q['id']  }).sort).to eq(expected_response_ids.sort)
-
+        expect((parsed_response['data'].map { |q| q['id'] }).sort).to eq(expected_response_ids.sort)
       end
-
-
     end
 
     describe 'show' do
-
       it 'show response as admin' do
         get response_url(user_response.id), nil, @env
         expect(response).to have_http_status(200)
         parsed_response = JSON.parse(response.body)
         expect(parsed_response['data'].to_json).to eq(user_response.to_json)
       end
-
     end
-
   end
 
   describe 'create and update' do
-
     describe 'create response' do
-
       it 'creates a response' do
         params = { response: response_attributes }
         params[:response][:study_id] = study.id
@@ -150,13 +133,12 @@ describe "responses" do
         parsed_response = JSON.parse(response.body)
         expect(response).to have_http_status(201)
         expect(parsed_response['data'].symbolize_keys.slice(*params[:response].keys)).to eq(params[:response])
-        expected_keys = params[:response].keys.map(&:to_s) + %w(id creator_id created_at)
+        expected_keys = params[:response].keys.map(&:to_s) + ['id', 'creator_id', 'created_at']
         expect(parsed_response['data'].keys.sort).to eq(expected_keys.sort)
         expect(Response.all.count).to eq(2)
       end
 
       describe 'missing foreign key' do
-
         it 'cannot create a response with no study' do
           params = { response: response_attributes }
           params[:response][:question_id] = question.id
@@ -183,7 +165,6 @@ describe "responses" do
           expect(response).to have_http_status(422)
           expect(Response.all.count).to eq(1)
         end
-
       end
 
       it 'cannot create a response with no data' do
@@ -196,15 +177,11 @@ describe "responses" do
         expect(Response.all.count).to eq(1)
       end
 
-
-
       # todo:
       # These checks will slow down writing so removing this would be an option for speeding
       # things up if necessary in the future
       describe 'incompatible dependencies' do
-
         it 'ensures parent study and question are associated with each other' do
-
           # elements of citizen_science_hierarchies are not related to each other (except through audio_recording)
           study_id = citizen_science_hierarchies[0][:study].id
           question_id = citizen_science_hierarchies[1][:question].id
@@ -219,12 +196,10 @@ describe "responses" do
           expect(response).to have_http_status(422)
           expect(Response.all.count).to eq(count_before)
           parsed_response = JSON.parse(response.body)
-          expect(parsed_response['meta']['error']['info']).to eq({"question_id"=>["parent question is not associated with parent study"]})
-
+          expect(parsed_response['meta']['error']['info']).to eq({ 'question_id' => ['parent question is not associated with parent study'] })
         end
 
         it 'ensures parent study dataset item are associated with each other through dataset' do
-
           study_id = citizen_science_hierarchies[0][:study].id
           question_id = citizen_science_hierarchies[0][:question].id
           dataset_item_id = citizen_science_hierarchies[1][:dataset_item].id
@@ -238,43 +213,28 @@ describe "responses" do
           expect(response).to have_http_status(422)
           expect(Response.all.count).to eq(count_before)
           parsed_response = JSON.parse(response.body)
-          expect(parsed_response['meta']['error']['info']).to eq({"dataset_item_id"=>["dataset item and study must belong to the same dataset"]})
-
+          expect(parsed_response['meta']['error']['info']).to eq({ 'dataset_item_id' => ['dataset item and study must belong to the same dataset'] })
         end
-
       end
-
-
     end
 
     describe 'update response' do
-
       it 'cannot update a response' do
-        data = {some_answer:'modified response text'}.to_json
-        params = {response: {data: data}}.to_json
+        data = { some_answer: 'modified response text' }.to_json
+        params = { response: { data: data } }.to_json
         put response_url(user_response.id), params, @env
         expect(response).to have_http_status(405)
         parsed_response = JSON.parse(response.body)
         expect(parsed_response['meta']['message']).to eq('Method Not Allowed')
       end
-
     end
-
   end
 
   describe 'delete' do
-
     it 'deletes a response' do
-
       delete response_url(user_response.id), nil, @env
       expect(response).to have_http_status(204)
       expect(Response.all.count).to eq(0)
-
     end
-
   end
-
 end
-
-
-

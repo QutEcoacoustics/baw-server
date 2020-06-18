@@ -25,7 +25,6 @@ end
 
 # https://github.com/zipmark/rspec_api_documentation
 resource 'Sites' do
-
   header 'Accept', 'application/json'
   header 'Content-Type', 'application/json'
   header 'Authorization', :authentication_token
@@ -35,8 +34,8 @@ resource 'Sites' do
   create_entire_hierarchy
 
   # Create post parameters from factory
-  let(:post_attributes) { FactoryGirl.attributes_for(:site) }
-  let(:post_attributes_with_lat_long) { FactoryGirl.attributes_for(:site, :with_lat_long) }
+  let(:post_attributes) { FactoryBot.attributes_for(:site) }
+  let(:post_attributes_with_lat_long) { FactoryBot.attributes_for(:site, :with_lat_long) }
 
   ################################
   # INDEX
@@ -533,7 +532,7 @@ resource 'Sites' do
     standard_request_options(:post, 'FILTER (as reader)', :ok,
                              expected_json_path: 'data/0/project_ids/0',
                              data_item_count: 1,
-                             regex_match: /"project_ids"\:\[[0-9]+\]/,
+                             regex_match: /"project_ids":\[[0-9]+\]/,
                              response_body_content: '"project_ids":[',
                              invalid_content: ['"project_ids":[{"id":', '"description":'])
   end
@@ -555,7 +554,7 @@ resource 'Sites' do
     standard_request_options(:post, 'FILTER (as writer)', :ok,
                              expected_json_path: 'data/0/project_ids/0',
                              data_item_count: 1,
-                             regex_match: /"project_ids"\:\[[0-9]+\]/,
+                             regex_match: /"project_ids":\[[0-9]+\]/,
                              response_body_content: '"project_ids":[',
                              invalid_content: ['"project_ids":[{"id":', '"description":'])
   end
@@ -574,7 +573,7 @@ resource 'Sites' do
     standard_request_options(:post, 'FILTER (project ids, as writer)', :ok,
                              expected_json_path: 'data/0/project_ids/0',
                              data_item_count: 1,
-                             regex_match: /"project_ids"\:\[[0-9]+\]/,
+                             regex_match: /"project_ids":\[[0-9]+\]/,
                              response_body_content: '"project_ids":[',
                              invalid_content: '"project_ids":[{"id":')
   end
@@ -624,7 +623,7 @@ resource 'Sites' do
   post '/sites/filter' do
     let(:authentication_token) { writer_token }
     let!(:update_site_tz) {
-      site2 = FactoryGirl.build(:site, creator: writer_user)
+      site2 = FactoryBot.build(:site, creator: writer_user)
       site2.projects << project
       site2.tzinfo_tz = 'Australia - Brisbane'
       site2.save!
@@ -643,9 +642,9 @@ resource 'Sites' do
 
   post '/sites/filter' do
     let!(:create_anon_access_project_with_site) {
-      project = FactoryGirl.create(:project, creator: owner_user, name: 'Anon Project')
-      FactoryGirl.create(:permission, creator: owner_user, user: nil, project: project, allow_anonymous: true, level: 'reader')
-      site = FactoryGirl.build(:site, creator: owner_user)
+      project = FactoryBot.create(:project, creator: owner_user, name: 'Anon Project')
+      FactoryBot.create(:permission, creator: owner_user, user: nil, project: project, allow_anonymous: true, level: 'reader')
+      site = FactoryBot.build(:site, creator: owner_user)
       site.id = 99_998_712
       site.projects << project
       site.save!

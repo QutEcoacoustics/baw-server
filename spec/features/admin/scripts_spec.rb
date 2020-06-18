@@ -1,9 +1,11 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 
-describe 'MANAGE Scripts as admin user', :type => :feature do 
+describe 'MANAGE Scripts as admin user', type: :feature do
   before(:each) do
-    admin = FactoryGirl.create(:admin)
-    @script = FactoryGirl.create(:script)
+    admin = FactoryBot.create(:admin)
+    @script = FactoryBot.create(:script)
     login_as admin, scope: :user
   end
 
@@ -14,7 +16,7 @@ describe 'MANAGE Scripts as admin user', :type => :feature do
   end
 
   it 'shows script account details' do
-    script = FactoryGirl.create(:script)
+    script = FactoryBot.create(:script)
     visit admin_script_path(script)
     expect(page).to have_content(script.name)
   end
@@ -44,7 +46,7 @@ describe 'MANAGE Scripts as admin user', :type => :feature do
   end
 
   it 'updates script when filling out form correctly' do
-    script = FactoryGirl.create(:script)
+    script = FactoryBot.create(:script)
     new_script_version = (script.version + 1).to_s
     visit edit_admin_script_path(script)
     fill_in 'script[name]', with: 'test name'
@@ -65,26 +67,26 @@ describe 'MANAGE Scripts as admin user', :type => :feature do
   end
 
   it 'shows script account details' do
-    script = FactoryGirl.create(:script)
+    script = FactoryBot.create(:script)
     visit edit_admin_script_path(script)
     expect(page).to have_content(script.name)
   end
 
   #it 'deletes a script' do
-  #  FactoryGirl.create(:script)
+  #  FactoryBot.create(:script)
   #  visit scripts_path
   #  expect { first(:link, 'Delete').click }.to change(Script, :count).by(-1)
   #end
 end
 
-describe 'MANAGE Scripts as user', :type => :feature do
+describe 'MANAGE Scripts as user', type: :feature do
   before(:each) do
-    user = FactoryGirl.create(:user)
-      login_as user, scope: :user
+    user = FactoryBot.create(:user)
+    login_as user, scope: :user
   end
 
   it 'denies access' do
-    script = FactoryGirl.create(:script)
+    script = FactoryBot.create(:script)
     visit admin_scripts_path
     expect(page).to have_content(I18n.t('devise.failure.unauthorized'))
     visit admin_script_path(script)
@@ -94,6 +96,4 @@ describe 'MANAGE Scripts as user', :type => :feature do
     visit edit_admin_script_path(script)
     expect(page).to have_content(I18n.t('devise.failure.unauthorized'))
   end
-
-
 end

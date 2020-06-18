@@ -1,16 +1,18 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 
 describe 'alphabetical paginator activerecord extension' do
   before :each do
-    FactoryGirl.build(:user, user_name: '汉字 user').save(validate: false)
-    FactoryGirl.create(:user, user_name: 'aauser')
-    FactoryGirl.create(:user, user_name: 'anuser')
-    FactoryGirl.create(:user, user_name: 'amuser')
-    FactoryGirl.create(:user, user_name: 'azuser')
-    FactoryGirl.create(:user, user_name: 'buser')
-    FactoryGirl.create(:user, user_name: 'zzzzzuser')
-    FactoryGirl.create(:user, user_name: '_user')
-    FactoryGirl.create(:user, user_name: '123user')
+    FactoryBot.build(:user, user_name: '汉字 user').save(validate: false)
+    FactoryBot.create(:user, user_name: 'aauser')
+    FactoryBot.create(:user, user_name: 'anuser')
+    FactoryBot.create(:user, user_name: 'amuser')
+    FactoryBot.create(:user, user_name: 'azuser')
+    FactoryBot.create(:user, user_name: 'buser')
+    FactoryBot.create(:user, user_name: 'zzzzzuser')
+    FactoryBot.create(:user, user_name: '_user')
+    FactoryBot.create(:user, user_name: '123user')
   end
 
   it 'returns users in the other range' do
@@ -76,16 +78,16 @@ describe 'alphabetical paginator activerecord extension' do
 
   context 'validating arguments' do
     cases = [
-        '1-2',
-        "\u{1F30D}",
-        "\u{1F30F}-\u{1F30F}",
-        '汉-字',
-        'a1-a2',
-        '---',
-        '\';-- SELECT * FROM users',
-        'A-Z',
-        'aA-ab',
-        'aa-zZ'
+      '1-2',
+      "\u{1F30D}",
+      "\u{1F30F}-\u{1F30F}",
+      '汉-字',
+      'a1-a2',
+      '---',
+      '\';-- SELECT * FROM users',
+      'A-Z',
+      'aA-ab',
+      'aa-zZ'
     ]
 
     cases.each do |bad_case|

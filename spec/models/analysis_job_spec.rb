@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 require 'helpers/resque_helper'
 require 'aasm/rspec'
@@ -31,7 +33,7 @@ describe AnalysisJob, type: :model do
   end
 
   it 'fails validation when script is nil' do
-    test_item = FactoryGirl.build(:analysis_job)
+    test_item = FactoryBot.build(:analysis_job)
     test_item.script = nil
 
     expect(subject.valid?).to be_falsey
@@ -54,11 +56,9 @@ describe AnalysisJob, type: :model do
     expect(build(:analysis_job, saved_search: nil)).not_to be_valid
   end
 
-
-
   describe 'state machine' do
     let(:analysis_job) {
-       create(:analysis_job)
+      create(:analysis_job)
     }
 
     it 'defines the initialize_workflow event (allows before_save->new)' do
@@ -126,5 +126,4 @@ describe AnalysisJob, type: :model do
       expect(analysis_job).to transition_from(:completed).to(:processing).on_event(:retry)
     end
   end
-
 end

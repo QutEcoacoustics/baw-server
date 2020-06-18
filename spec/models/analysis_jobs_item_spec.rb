@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 require 'helpers/resque_helper'
 require 'aasm/rspec'
@@ -26,17 +28,14 @@ describe AnalysisJobsItem, type: :model do
     expect(item.valid?).to be true
   end
 
-
   it { is_expected.to belong_to(:analysis_job) }
   it { is_expected.to belong_to(:audio_recording) }
-
 
   # it { should validate_presence_of(:status) }
   #
   # it { should validate_length_of(:status).is_at_least(2).is_at_most(255) }
 
   it { should validate_uniqueness_of(:queue_id) }
-
 
   it 'does not allow dates greater than now for created_at' do
     analysis_jobs_item.created_at = Time.zone.now + 1.day
@@ -103,7 +102,6 @@ describe AnalysisJobsItem, type: :model do
       expect(analysis_jobs_item).to transition_from(:cancelling).to(:queued).on_event(:retry)
       expect(analysis_jobs_item).to transition_from(:cancelled).to(:queued).on_event(:retry)
     end
-
   end
 
   describe 'security for results is resolved via audio recordings' do
@@ -128,7 +126,7 @@ describe AnalysisJobsItem, type: :model do
 
     it 'ensures users with access to all projects get all results' do
       # give the original user permissions to access the second project
-      permission = FactoryGirl.create(:read_permission, creator: owner_user, user: reader_user, project: second_project)
+      permission = FactoryBot.create(:read_permission, creator: owner_user, user: reader_user, project: second_project)
 
       query = Access::ByPermission.analysis_jobs_items(analysis_job, reader_user)
 
@@ -165,15 +163,15 @@ describe AnalysisJobsItem, type: :model do
 
   describe 'system query' do
     it 'returns the same number of audio_recordings as exist in the db' do
-      ar = FactoryGirl.create(:audio_recording)
-      ar1 = FactoryGirl.create(:audio_recording)
+      ar = FactoryBot.create(:audio_recording)
+      ar1 = FactoryBot.create(:audio_recording)
 
       ar_count = AnalysisJobsItem.system_query.count
       expect(ar_count).to be 3
     end
 
     it 'does not return deleted audio_recordings' do
-      ar = FactoryGirl.create(:audio_recording)
+      ar = FactoryBot.create(:audio_recording)
 
       ar_count_unscoped = AudioRecording.unscoped.count
       expect(ar_count_unscoped).to be 2
@@ -191,8 +189,8 @@ describe AnalysisJobsItem, type: :model do
     end
 
     it 'fakes the audio_recording_id field' do
-      ar = FactoryGirl.create(:audio_recording)
-      ar1 = FactoryGirl.create(:audio_recording)
+      ar = FactoryBot.create(:audio_recording)
+      ar1 = FactoryBot.create(:audio_recording)
 
       results = AnalysisJobsItem.system_query.all
 
@@ -240,7 +238,6 @@ describe AnalysisJobsItem, type: :model do
   end
 
   context 'job items' do
-
     it 'extracts the correct payloads' do
       project_1 = create(:project)
       user = project_1.creator
@@ -252,7 +249,7 @@ describe AnalysisJobsItem, type: :model do
       site_2 = create(:site, projects: [project_2], creator: user)
       audio_recording_2 = create(:audio_recording, site: site_2, creator: user, uploader: user)
 
-      ss = create(:saved_search, creator: user, stored_query: {id: {in: [audio_recording_2.id]}})
+      ss = create(:saved_search, creator: user, stored_query: { id: { in: [audio_recording_2.id] } })
       s = create(:script, creator: user, verified: true)
 
       aj = create(:analysis_job, creator: user, script: s, saved_search: ss)
@@ -267,6 +264,5 @@ describe AnalysisJobsItem, type: :model do
       expect(payload[:datetime_with_offset]).to eq(audio_recording_2.recorded_date.iso8601(3))
       expect(payload[:job_id]).to eq(aj.id)
     end
-
   end
 end
