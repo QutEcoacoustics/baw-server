@@ -83,7 +83,7 @@ class Script < ApplicationRecord
   end
 
   # a fake reference to the aliased table defined in the default scope
-  @script_group = Arel::Table.new('s2', @arel_engine)
+  @script_group = Arel::Table.new('s2')
 
   def all_versions
     Script.where(group_id: group_id).order(created_at: :desc)
