@@ -627,4 +627,20 @@ class ApplicationController < ActionController::Base # rubocop:disable Metrics/C
       raise CustomErrors::BadHeaderError
     end
   end
+
+  def sanitize_notes(json)
+    if json.nil?
+      nil
+    elsif json.is_a? Hash
+      json
+    elsif json.is_a? String
+      begin
+        JSON.parse(json)
+      rescue JSON::ParserError => _e
+        { 'comment' => json }
+      end
+    else
+      raise CustomErrors::BadRequestError, 'Invalid notes input.'
+    end
+  end
 end

@@ -71,7 +71,10 @@ class TagsController < ApplicationController
   private
 
   def tag_params
-    # TODO: Replace with the following after upgrading Ruby to v5.1.2 or later
+    # Sanitize notes input
+    params[:tag][:notes] = sanitize_notes params[:tag][:notes]
+
+    # TODO: Replace with the following after upgrading Rails to v5.1.2 or later
     # params.require(:tag).permit(:is_taxanomic, :text, :type_of_tag, :retired, notes: {})
     notes = params[:tag].delete(:notes)
     params.require(:tag).permit(:is_taxanomic, :text, :type_of_tag, :retired).tap do |whitelisted|
