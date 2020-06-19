@@ -18,6 +18,7 @@ def tag_body_params
   parameter :text, 'text', scope: :tag, required: true
   parameter :type_of_tag, 'choose from [general, common_name, species_name, looks_like, sounds_like]', scope: :tag, required: true
   parameter :retired, 'true or false', scope: :tag, required: true
+  parameter :notes, 'Json formatted notes', scope: :tag, required: false
 end
 
 # https://github.com/zipmark/rspec_api_documentation
@@ -133,6 +134,25 @@ resource 'Tags' do
     tag_extras_id_params
     let(:authentication_token) { reader_token }
     standard_request_options(:get, 'LIST for audio_event (as reader, shallow route)', :ok, expected_json_path: 'data/0/is_taxanomic', data_item_count: 1)
+  end
+
+  get '/tags' do
+    expected_paths = Array[
+      'id',
+      'text',
+      'is_taxanomic',
+      'type_of_tag',
+      'retired',
+      'creator_id',
+      'updater_id',
+      'created_at',
+      'updated_at',
+      'notes',
+    ].map { |path| "data/0/#{path}" }
+
+    tag_extras_id_params
+    let(:authentication_token) { reader_token }
+    standard_request_options(:get, 'LIST for audio_event (has parameters, as reader, shallow route)', :ok, expected_json_path: expected_paths, data_item_count: 1)
   end
 
   get '/tags' do
