@@ -11,16 +11,14 @@ shared_context 'common' do
   let(:temp_dir) { BawWorkers::Settings.paths.temp_dir }
   let(:audio_dir) { Fixtures::FILES_PATH }
   let(:logger) {
-    logger = Logger.new(File.join(temp_dir, 'test.log'))
+    logger = Logger.new(BawApp.root / 'log' / 'audio_tools.test.log')
     logger.level = Logger::INFO
     logger
   }
-
 end
 
 shared_context 'audio base' do
   let(:audio_base) {
-
     audio_tools = BawWorkers::Settings.audio_tools
 
     BawAudioTools::AudioBase.from_executables(

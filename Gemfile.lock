@@ -240,6 +240,8 @@ GEM
     kaminari-core (1.2.1)
     kramdown (2.2.1)
       rexml
+    kramdown-parser-gfm (1.1.0)
+      kramdown (~> 2.0)
     loofah (2.6.0)
       crass (~> 1.0.2)
       nokogiri (>= 1.5.9)
@@ -365,6 +367,8 @@ GEM
       rspec-core (~> 3.9.0)
       rspec-expectations (~> 3.9.0)
       rspec-mocks (~> 3.9.0)
+    rspec-collection_matchers (1.2.0)
+      rspec-expectations (>= 2.99.0.beta1)
     rspec-core (3.9.2)
       rspec-support (~> 3.9.3)
     rspec-expectations (3.9.2)
@@ -535,6 +539,7 @@ DEPENDENCIES
   json_spec (~> 1.1.4)
   kaminari
   kramdown (~> 2.2.1)
+  kramdown-parser-gfm
   memoist
   notiffany (~> 0.1.0)
   paperclip (> 6.0.0)
@@ -555,6 +560,7 @@ DEPENDENCIES
   resque_solo
   role_model (~> 0.8.1)
   rspec
+  rspec-collection_matchers
   rspec-mocks
   rspec-rails
   rspec_api_documentation (~> 4.8.0)

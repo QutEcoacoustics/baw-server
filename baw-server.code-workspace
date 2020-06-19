@@ -8,13 +8,16 @@
     "cSpell.words": [
       "Bootsnap",
       "Gemfile",
+      "Kramdown",
       "Railtie",
       "autoload",
       "autoloaded",
       "autoloaders",
       "bootsnap",
       "cleanpath",
+      "deleter",
       "gsub",
+      "ltrim",
       "mkdir",
       "postgresql",
       "prepend",
@@ -80,7 +83,6 @@
   "extensions": {
     "recommendations": [
       "rebornix.ruby",
-      // "bung87.rails",
       "misogi.ruby-rubocop",
       "castwide.solargraph",
       // "bung87.vscode-gemfile",
@@ -89,7 +91,8 @@
       "ms-vscode-remote.vscode-remote-extensionpack",
       "connorshea.vscode-ruby-test-adapter",
       "knisterpeter.vscode-github",
-      //"castwide.ruby-debug"
+      "castwide.ruby-debug",
+      "pavlitsky.yard"
     ]
   }
 }

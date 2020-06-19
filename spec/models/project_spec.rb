@@ -11,7 +11,7 @@ describe Project, type: :model do
   it { is_expected.to have_and_belong_to_many :sites }
 
   it { is_expected.to belong_to(:creator).with_foreign_key(:creator_id) }
-  it { is_expected.to belong_to(:updater).with_foreign_key(:updater_id) }
+  it { is_expected.to belong_to(:updater).with_foreign_key(:updater_id).optional }
   it { is_expected.to belong_to(:deleter).with_foreign_key(:deleter_id) }
 
   it 'is invalid without a name' do
@@ -20,7 +20,7 @@ describe Project, type: :model do
   it 'is invalid without a creator' do
     expect {
       FactoryBot.create(:project, creator_id: nil)
-    }.to raise_error(ActiveRecord::RecordInvalid, /Creator must exist as an object or foreign key/)
+    }.to raise_error(ActiveRecord::RecordInvalid, /must exist/)
   end
   it 'is invalid without a created_at' do
     expect(FactoryBot.create(:project, created_at: nil)).not_to be_a_new(Project)

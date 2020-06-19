@@ -11,8 +11,8 @@ describe AnalysisJob, type: :model do
   #it {should have_many(:analysis_items)}
 
   it { is_expected.to belong_to(:creator).with_foreign_key(:creator_id) }
-  it { is_expected.to belong_to(:updater).with_foreign_key(:updater_id) }
-  it { is_expected.to belong_to(:deleter).with_foreign_key(:deleter_id) }
+  it { is_expected.to belong_to(:updater).with_foreign_key(:updater_id).optional }
+  it { is_expected.to belong_to(:deleter).with_foreign_key(:deleter_id).optional }
 
   it { is_expected.to validate_presence_of(:name) }
   it 'is invalid without a name' do
@@ -37,8 +37,9 @@ describe AnalysisJob, type: :model do
     test_item.script = nil
 
     expect(subject.valid?).to be_falsey
-    expect(subject.errors[:script].size).to eq(1)
-    expect(subject.errors[:script].to_s).to match(/must exist as an object or foreign key/)
+
+    expect(subject.errors[:script]).to have(1).items
+    expect(subject.errors[:script].to_s).to match(/must exist/)
   end
 
   it { is_expected.to validate_presence_of(:custom_settings) }

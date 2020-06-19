@@ -53,15 +53,15 @@ describe AudioRecording, type: :model do
 
     expect(subject.valid?).to be_falsey
     expect(subject.errors[:uploader].size).to eq(1)
-    expect(subject.errors[:uploader].to_s).to match(/must exist as an object or foreign key/)
+    expect(subject.errors[:uploader].to_s).to match(/must exist/)
   end
 
   context 'validation' do
     subject { FactoryBot.build(:audio_recording) }
 
     it { is_expected.to belong_to(:creator).with_foreign_key(:creator_id) }
-    it { is_expected.to belong_to(:updater).with_foreign_key(:updater_id) }
-    it { is_expected.to belong_to(:deleter).with_foreign_key(:deleter_id) }
+    it { is_expected.to belong_to(:updater).with_foreign_key(:updater_id).optional }
+    it { is_expected.to belong_to(:deleter).with_foreign_key(:deleter_id).optional }
     it { is_expected.to belong_to(:uploader).with_foreign_key(:uploader_id) }
 
     it { is_expected.to belong_to(:site) }

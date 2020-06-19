@@ -1,13 +1,14 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 
 describe SavedSearch, type: :model do
-
   it 'has a valid factory' do
     expect(create(:saved_search)).to be_valid
   end
 
   it { is_expected.to belong_to(:creator).with_foreign_key(:creator_id) }
-  it { is_expected.to belong_to(:deleter).with_foreign_key(:deleter_id) }
+  it { is_expected.to belong_to(:deleter).with_foreign_key(:deleter_id).optional }
 
   it { is_expected.to validate_presence_of(:stored_query) }
   it { is_expected.to serialize(:stored_query) }
@@ -19,8 +20,8 @@ describe SavedSearch, type: :model do
 
   it 'should not allow duplicate names for the same user (case-insensitive)' do
     user = create(:user)
-    create(:saved_search, {creator: user, name: 'I love the smell of napalm in the morning.'})
-    ss = build(:saved_search, {creator: user, name: 'I LOVE the smell of napalm in the morning.'})
+    create(:saved_search, { creator: user, name: 'I love the smell of napalm in the morning.' })
+    ss = build(:saved_search, { creator: user, name: 'I LOVE the smell of napalm in the morning.' })
     expect(ss).not_to be_valid
     expect(ss.valid?).to be_falsey
     expect(ss.errors[:name].size).to eq(1)
@@ -28,20 +29,19 @@ describe SavedSearch, type: :model do
     ss.name = 'I love the smell of napalm in the morning. It smells like victory.'
     ss.save
     expect(ss).to be_valid
-
   end
 
   it 'should allow duplicate names for different users (case-insensitive)' do
     user1 = create(:user)
     user2 = create(:user)
     user3 = create(:user)
-    ss1 = create(:saved_search, {creator: user1, name: "You talkin' to me?"})
+    ss1 = create(:saved_search, { creator: user1, name: "You talkin' to me?" })
 
-    ss2 = build(:saved_search, {creator: user2, name: "You TALKIN' to me?"})
+    ss2 = build(:saved_search, { creator: user2, name: "You TALKIN' to me?" })
     expect(ss2.creator_id).not_to eql(ss1.creator_id), 'The same user is present for both cases, invalid test!'
     expect(ss2).to be_valid
 
-    ss3 = build(:saved_search, {creator: user3, name: "You talkin' to me?"})
+    ss3 = build(:saved_search, { creator: user3, name: "You talkin' to me?" })
     expect(ss3.creator_id).not_to eql(ss1.creator_id), 'The same user is present for both cases, invalid test!'
     expect(ss3).to be_valid
   end
@@ -70,7 +70,7 @@ describe SavedSearch, type: :model do
     site_2 = create(:site, projects: [project_2], creator: user)
     audio_recording_2 = create(:audio_recording, site: site_2, creator: user, uploader: user)
 
-    ss = create(:saved_search, creator: user, stored_query: {id: {in: [audio_recording_2.id]}})
+    ss = create(:saved_search, creator: user, stored_query: { id: { in: [audio_recording_2.id] } })
 
     result = ss.audio_recordings_extract(user)
 
@@ -89,7 +89,7 @@ describe SavedSearch, type: :model do
     site_2 = create(:site, projects: [project_2], creator: user)
     audio_recording_2 = create(:audio_recording, site: site_2, creator: user, uploader: user)
 
-    ss = create(:saved_search, creator: user, stored_query:  {id: {in: [audio_recording_2.id]}})
+    ss = create(:saved_search, creator: user, stored_query: { id: { in: [audio_recording_2.id] } })
 
     result = ss.projects_extract(user)
 
@@ -116,7 +116,7 @@ describe SavedSearch, type: :model do
     site_2 = create(:site, projects: [project_2], creator: user)
     audio_recording_2 = create(:audio_recording, site: site_2, creator: user, uploader: user)
 
-    ss = build(:saved_search, creator: user, stored_query: {id: {in: [audio_recording_2.id]}})
+    ss = build(:saved_search, creator: user, stored_query: { id: { in: [audio_recording_2.id] } })
 
     result = ss.projects_extract(user)
 
@@ -145,7 +145,7 @@ describe SavedSearch, type: :model do
     site_2 = create(:site, projects: [project_2], creator: user)
     audio_recording_2 = create(:audio_recording, site: site_2, creator: user, uploader: user)
 
-    ss = build(:saved_search, creator: user, stored_query: {id: {in: [audio_recording_2.id]}})
+    ss = build(:saved_search, creator: user, stored_query: { id: { in: [audio_recording_2.id] } })
 
     ss.projects_populate(user)
 
@@ -161,5 +161,4 @@ describe SavedSearch, type: :model do
 
     expect(saved_search.analysis_jobs.size).to eq(1)
   end
-
 end

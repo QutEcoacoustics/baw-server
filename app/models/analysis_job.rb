@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class AnalysisJob < ApplicationRecord
   # ensures that creator_id, updater_id, deleter_id are set
   include UserChange
@@ -9,8 +11,8 @@ class AnalysisJob < ApplicationRecord
   OVERALL_PROGRESS_REFRESH_SECONDS = 30.0
 
   belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_analysis_jobs
-  belongs_to :updater, class_name: 'User', foreign_key: :updater_id, inverse_of: :updated_analysis_jobs
-  belongs_to :deleter, class_name: 'User', foreign_key: :deleter_id, inverse_of: :deleted_analysis_jobs
+  belongs_to :updater, class_name: 'User', foreign_key: :updater_id, inverse_of: :updated_analysis_jobs, optional: true
+  belongs_to :deleter, class_name: 'User', foreign_key: :deleter_id, inverse_of: :deleted_analysis_jobs, optional: true
 
   belongs_to :script, inverse_of: :analysis_jobs
   belongs_to :saved_search, inverse_of: :analysis_jobs
@@ -21,65 +23,61 @@ class AnalysisJob < ApplicationRecord
   acts_as_paranoid
   validates_as_paranoid
 
-
   # association validations
-  validates :script, existence: true
-  validates :saved_search, existence: true
-  validates :creator, existence: true
+  validates_associated :script, :saved_search, :creator
 
   # attribute validations
-  validates :name, presence: true, length: {minimum: 2, maximum: 255}, uniqueness: {case_sensitive: false}
+  validates :name, presence: true, length: { minimum: 2, maximum: 255 }, uniqueness: { case_sensitive: false }
   validates :custom_settings, :overall_progress, presence: true
   # overall_count is the number of audio_recordings/resque jobs. These should be equal.
-  validates :overall_count, presence: true, numericality: {only_integer: true, greater_than_or_equal_to: 0}
-  validates :overall_duration_seconds, presence: true, numericality: {only_integer: false, greater_than_or_equal_to: 0}
+  validates :overall_count, presence: true, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
+  validates :overall_duration_seconds, presence: true, numericality: { only_integer: false, greater_than_or_equal_to: 0 }
   validates :overall_status_modified_at, :overall_progress_modified_at,
-            presence: true, timeliness: {on_or_before: lambda { Time.zone.now }, type: :datetime}
-  validates :started_at, allow_blank: true, allow_nil: true, timeliness: {on_or_before: lambda { Time.zone.now }, type: :datetime}
-  validates :overall_data_length_bytes, presence: true, numericality: {only_integer: true, greater_than_or_equal_to: 0}
+            presence: true, timeliness: { on_or_before: -> { Time.zone.now }, type: :datetime }
+  validates :started_at, allow_blank: true, allow_nil: true, timeliness: { on_or_before: -> { Time.zone.now }, type: :datetime }
+  validates :overall_data_length_bytes, presence: true, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
 
   def self.filter_settings
-
     fields = [
-        :id, :name, :description, :annotation_name,
-        :custom_settings,
-        :creator_id, :updater_id, :deleter_id,
-        :created_at, :updated_at, :deleted_at,
-        :script_id, :saved_search_id,
-        :started_at,
-        :overall_status, :overall_status_modified_at,
-        :overall_progress, :overall_progress_modified_at,
-        :overall_count, :overall_duration_seconds, :overall_data_length_bytes
+      :id, :name, :description, :annotation_name,
+      :custom_settings,
+      :creator_id, :updater_id, :deleter_id,
+      :created_at, :updated_at, :deleted_at,
+      :script_id, :saved_search_id,
+      :started_at,
+      :overall_status, :overall_status_modified_at,
+      :overall_progress, :overall_progress_modified_at,
+      :overall_count, :overall_duration_seconds, :overall_data_length_bytes
     ]
 
     {
-        valid_fields: fields,
-        render_fields: fields,
-        text_fields: [:name, :description, :annotation_name],
-        new_spec_fields: lambda { |user|
-          {
-              annotation_name: nil,
-              custom_settings: nil
-          }
+      valid_fields: fields,
+      render_fields: fields,
+      text_fields: [:name, :description, :annotation_name],
+      new_spec_fields: lambda { |_user|
+                         {
+                           annotation_name: nil,
+                           custom_settings: nil
+                         }
+                       },
+      controller: :audio_events,
+      action: :filter,
+      defaults: {
+        order_by: :updated_at,
+        direction: :desc
+      },
+      valid_associations: [
+        {
+          join: SavedSearch,
+          on: AnalysisJob.arel_table[:saved_search_id].eq(SavedSearch.arel_table[:id]),
+          available: true
         },
-        controller: :audio_events,
-        action: :filter,
-        defaults: {
-            order_by: :updated_at,
-            direction: :desc
-        },
-        valid_associations: [
-            {
-                join: SavedSearch,
-                on: AnalysisJob.arel_table[:saved_search_id].eq(SavedSearch.arel_table[:id]),
-                available: true
-            },
-            {
-                join: Script,
-                on: AnalysisJob.arel_table[:script_id].eq(Script.arel_table[:id]),
-                available: true
-            }
-        ]
+        {
+          join: Script,
+          on: AnalysisJob.arel_table[:script_id].eq(Script.arel_table[:id]),
+          available: true
+        }
+      ]
     }
   end
 
@@ -100,7 +98,7 @@ class AnalysisJob < ApplicationRecord
     # https://github.com/ActsAsParanoid/acts_as_paranoid/issues/45
     was_deleted = deleted?
     if was_deleted
-      old_paranoid_value = self.paranoid_value
+      old_paranoid_value = paranoid_value
       self.paranoid_value = nil
     end
 
@@ -108,9 +106,7 @@ class AnalysisJob < ApplicationRecord
     update_columns(update_job_progress)
 
     # finally, after each update, check if we can finally finish the job!
-    if self.may_complete?
-      self.complete!
-    end
+    complete! if may_complete?
 
     self.paranoid_value = old_paranoid_value if was_deleted
   end
@@ -149,7 +145,7 @@ class AnalysisJob < ApplicationRecord
   #
   aasm column: :overall_status, no_direct_assignment: true, whiny_persistence: true do
     # We don't need to explicitly set display_name - they get humanized by default
-    state :before_save, {initial: true, display_name: 'Before save'}
+    state :before_save, { initial: true, display_name: 'Before save' }
     state :new, enter: [:initialise_job_tracking, :update_job_progress]
     state :preparing, enter: :send_preparing_email, after_enter: [:prepare_job, :process!]
     state :processing, enter: [:update_job_progress]
@@ -202,17 +198,16 @@ class AnalysisJob < ApplicationRecord
   end
 
   # job status values
-  AVAILABLE_JOB_STATUS_SYMBOLS = self.aasm.states.map(&:name)
-  AVAILABLE_JOB_STATUS = AVAILABLE_JOB_STATUS_SYMBOLS.map { |item| item.to_s }
+  AVAILABLE_JOB_STATUS_SYMBOLS = aasm.states.map(&:name)
+  AVAILABLE_JOB_STATUS = AVAILABLE_JOB_STATUS_SYMBOLS.map(&:to_s)
 
-  AVAILABLE_JOB_STATUS_DISPLAY = self.aasm.states.map { |x| [x.name, x.display_name] }.to_h
+  AVAILABLE_JOB_STATUS_DISPLAY = aasm.states.map { |x| [x.name, x.display_name] }.to_h
 
   # hook active record callbacks into state machine
   before_validation(on: :create) do
     # if valid? is called twice, then overall_status already == :new and this will fail. So add extra may_*? check.
     initialize_workflow if may_initialize_workflow?
   end
-
 
   private
 
@@ -221,27 +216,27 @@ class AnalysisJob < ApplicationRecord
   #
 
   def has_status_timestamp?
-    !self.overall_status_modified_at.nil?
+    !overall_status_modified_at.nil?
   end
 
   def has_id?
-    !self.id.nil?
+    !id.nil?
   end
 
   def are_all_enqueued?
-    self.overall_count == AnalysisJobsItem.for_analysis_job(self.id).count
+    overall_count == AnalysisJobsItem.for_analysis_job(id).count
   end
 
   def are_all_cancelled?
-    AnalysisJobsItem.queued_for_analysis_job(self.id).count == 0
+    AnalysisJobsItem.queued_for_analysis_job(id).count == 0
   end
 
   def all_job_items_completed?
-    AnalysisJobsItem.for_analysis_job(self.id).count == AnalysisJobsItem.completed_for_analysis_job(self.id).count
+    AnalysisJobsItem.for_analysis_job(id).count == AnalysisJobsItem.completed_for_analysis_job(id).count
   end
 
   def are_any_job_items_failed?
-    AnalysisJobsItem.failed_for_analysis_job(self.id).count > 0
+    AnalysisJobsItem.failed_for_analysis_job(id).count > 0
   end
 
   #
@@ -265,29 +260,28 @@ class AnalysisJob < ApplicationRecord
 
     Rails.logger.info 'AnalysisJob::prepare_job: Begin.'
 
-    # TODO This may need to be an async operation itself depending on how fast it runs
+    # TODO: This may need to be an async operation itself depending on how fast it runs
 
     # counters
     options = {
-        count: 0,
-        duration_seconds_sum: 0,
-        data_length_bytes_sum: 0,
-        queued_count: 0,
-        failed_count: 0,
-        results: [],
-        analysis_job: self
+      count: 0,
+      duration_seconds_sum: 0,
+      data_length_bytes_sum: 0,
+      queued_count: 0,
+      failed_count: 0,
+      results: [],
+      analysis_job: self
     }
 
     self.started_at = Time.zone.now
-    self.save!
+    save!
 
     # query associated saved_search to get audio_recordings
-    query = self.saved_search.audio_recordings_extract(user)
+    query = saved_search.audio_recordings_extract(user)
 
     options = query
-                  .find_in_batches(batch_size: AnalysisJob.batch_size)
-                  .reduce(options, &self.method(:prepare_analysis_job_item))
-
+              .find_in_batches(batch_size: AnalysisJob.batch_size)
+              .reduce(options, &method(:prepare_analysis_job_item))
 
     # don't update progress - resque jobs may already be processing or completed
     # the resque jobs can do the updating
@@ -295,7 +289,7 @@ class AnalysisJob < ApplicationRecord
     self.overall_count = options[:count]
     self.overall_duration_seconds = options[:duration_seconds_sum]
     self.overall_data_length_bytes = options[:data_length_bytes_sum]
-    self.save!
+    save!
 
     Rails.logger.info "AnalysisJob::prepare_job: Complete. Queued: #{options[:queued_count]}"
   end
@@ -307,10 +301,7 @@ class AnalysisJob < ApplicationRecord
 
     # batch update
     query.find_in_batches(batch_size: AnalysisJob.batch_size) do |items|
-      items.each do |item|
-        # transition to cancelled state and save
-        item.cancel!
-      end
+      items.each(&:cancel!)
     end
   end
 
@@ -321,10 +312,7 @@ class AnalysisJob < ApplicationRecord
 
     # batch update
     query.find_in_batches(batch_size: AnalysisJob.batch_size) do |items|
-      items.each do |item|
-        # transition to queued state and save
-        item.retry!
-      end
+      items.each(&:retry!)
     end
   end
 
@@ -339,10 +327,7 @@ class AnalysisJob < ApplicationRecord
 
     # batch update
     query.find_in_batches(batch_size: AnalysisJob.batch_size) do |items|
-      items.each do |item|
-        # transition to queued state and save
-        item.retry!
-      end
+      items.each(&:retry!)
     end
   end
 
@@ -361,7 +346,7 @@ class AnalysisJob < ApplicationRecord
   # @return [void]
   def update_job_progress
     defaults = AnalysisJobsItem::AVAILABLE_ITEM_STATUS.product([0]).to_h
-    statuses = AnalysisJobsItem.where(analysis_job_id: self.id).group(:status).count
+    statuses = AnalysisJobsItem.where(analysis_job_id: id).group(:status).count
     statuses[:total] = statuses.map(&:last).reduce(:+) || 0
 
     statuses = defaults.merge(statuses)
@@ -369,7 +354,7 @@ class AnalysisJob < ApplicationRecord
     self.overall_progress = statuses
     self.overall_progress_modified_at = Time.zone.now
 
-    {overall_progress: self.overall_progress, overall_progress_modified_at: self.overall_progress_modified_at}
+    { overall_progress: overall_progress, overall_progress_modified_at: overall_progress_modified_at }
   end
 
   #
@@ -379,12 +364,10 @@ class AnalysisJob < ApplicationRecord
   # Process a batch of audio_recordings
   def prepare_analysis_job_item(options, audio_recordings)
     audio_recordings.each do |audio_recording|
-
       # update counters
       options[:count] += 1
       options[:duration_seconds_sum] += audio_recording.duration_seconds
       options[:data_length_bytes_sum] += audio_recording.data_length_bytes
-
 
       # create new analysis jobs item
       item = AnalysisJobsItem.new
@@ -405,6 +388,4 @@ class AnalysisJob < ApplicationRecord
 
     options
   end
-
-
 end

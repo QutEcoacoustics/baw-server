@@ -9,7 +9,7 @@ class Permission < ApplicationRecord
   belongs_to :project, inverse_of: :permissions
   belongs_to :user, inverse_of: :permissions
   belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_permissions
-  belongs_to :updater, class_name: 'User', foreign_key: :updater_id, inverse_of: :updated_permissions
+  belongs_to :updater, class_name: 'User', foreign_key: :updater_id, inverse_of: :updated_permissions, optional: true
 
   AVAILABLE_LEVELS_SYMBOLS = Access::Core.levels
   AVAILABLE_LEVELS = AVAILABLE_LEVELS_SYMBOLS.map(&:to_s)
@@ -20,8 +20,8 @@ class Permission < ApplicationRecord
   }
 
   # association validations
-  validates :project, existence: true
-  validates :creator, existence: true
+  validates_associated :project
+  validates_associated :creator
 
   # attribute validations
   validates :level, presence: true

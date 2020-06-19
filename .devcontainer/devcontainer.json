@@ -30,7 +30,6 @@
   // Add the IDs of extensions you want installed when the container is created in the array below.
   "extensions": [
     "rebornix.ruby",
-    "bung87.rails",
     "misogi.ruby-rubocop",
     "castwide.solargraph",
     "bung87.vscode-gemfile",
@@ -40,5 +39,6 @@
     "connorshea.vscode-ruby-test-adapter",
     "knisterpeter.vscode-github",
     "castwide.ruby-debug",
+    "pavlitsky.yard"
   ]
 }

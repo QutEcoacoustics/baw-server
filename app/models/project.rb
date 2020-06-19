@@ -6,8 +6,8 @@ class Project < ApplicationRecord
 
   # relationships
   belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_projects
-  belongs_to :updater, class_name: 'User', foreign_key: :updater_id, inverse_of: :updated_projects
-  belongs_to :deleter, class_name: 'User', foreign_key: :deleter_id, inverse_of: :deleted_projects
+  belongs_to :updater, class_name: 'User', foreign_key: :updater_id, inverse_of: :updated_projects, optional: true
+  belongs_to :deleter, class_name: 'User', foreign_key: :deleter_id, inverse_of: :deleted_projects, optional: true
 
   has_many :permissions, inverse_of: :project
   has_many :readers, -> { where("permissions.level = 'reader'").uniq }, through: :permissions, source: :user
@@ -29,7 +29,7 @@ class Project < ApplicationRecord
   validates_as_paranoid
 
   # association validations
-  validates :creator, existence: true
+  validates_associated :creator
 
   # attribute validations
   validates :name, presence: true, uniqueness: { case_sensitive: false }

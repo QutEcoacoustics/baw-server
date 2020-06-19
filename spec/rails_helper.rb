@@ -74,6 +74,7 @@ abort('The Rails environment is running in production mode!') if Rails.env.produ
 abort('The Rails environment is running in staging mode!') if Rails.env.staging?
 abort('The Rails environment is NOT running in test mode!') unless Rails.env.test?
 
+require 'rspec/collection_matchers'
 require 'rspec/rails'
 # Add additional requires below this line. Rails is not loaded until this point!
 
@@ -160,6 +161,19 @@ RSpec.configure do |config|
   require 'enumerize/integrations/rspec'
   extend Enumerize::Integrations::RSpec
 
+  # change the default creation strategy
+  # Previous versions of factory but would ensure associations used the :create
+  # strategy, even if were built (:build). This  behavior is misleading since
+  # the database is accessed and objects are saved even though the parent factory
+  # was set to *not* save things via a build call.
+  # The default changed in FactoryBot 5 so that if build is called all associations
+  # will use the build strategy.
+  # Unfortunately for us this broke hundreds of tests. Since our priority right
+  # now is not hand editing 100s of factory invocations were going to revert to
+  # the old behavior.
+  # See https://github.com/thoughtbot/factory_bot/blob/master/GETTING_STARTED.md#build-strategies-1
+  FactoryBot.use_parent_strategy = false
+
   config.before(:suite) do
     # run these rake tasks to ensure the db in is a state that matches the schema.rb
     #bin/rake db:drop RAILS_ENV=test
@@ -187,9 +201,6 @@ RSpec.configure do |config|
     begin
       DatabaseCleaner.start
       puts '===> Database cleaner: start.'
-      #puts '===> FactoryBot lint: started.'
-      #FactoryBot.lint
-      #puts '===> FactoryBot lint: completed.'
     ensure
       DatabaseCleaner.clean
       puts '===> Database cleaner: cleaned.'

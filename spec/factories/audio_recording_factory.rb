@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "#{__dir__}/../helpers/misc_helper"
+
 FactoryBot.define do
   factory :audio_recording do
     sequence(:file_hash) { |n| MiscHelper.new.create_sha_256_hash(n) }

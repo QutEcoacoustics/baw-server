@@ -9,7 +9,8 @@ class TagGroup < ApplicationRecord
   belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_tags
 
   # association validations
-  validates :creator, :tag, existence: true
+  validates_associated :creator
+  validates_associated :tag
   validates :group_identifier, presence: true
   validates_uniqueness_of :group_identifier, scope: [:tag_id], case_sensitive: false
 end

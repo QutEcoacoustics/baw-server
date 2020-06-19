@@ -59,6 +59,7 @@ group :server do
   gem 'haml-rails', '~> 2.0.1'
 
   gem 'kramdown', '~> 2.2.1'
+  gem 'kramdown-parser-gfm'
   gem 'paperclip', '> 6.0.0'
   gem 'simple_form'
 
@@ -207,6 +208,7 @@ group :test do
   gem 'factory_bot_rails'
   gem 'json_spec', '~> 1.1.4'
   gem 'rspec'
+  gem 'rspec-collection_matchers'
   gem 'rspec-mocks'
   gem 'rspec-rails'
   # for profiling

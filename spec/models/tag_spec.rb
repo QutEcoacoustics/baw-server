@@ -1,7 +1,8 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 
-
-describe Tag, :type => :model do
+describe Tag, type: :model do
   it 'has a valid factory' do
     t = create(:tag)
 
@@ -12,7 +13,7 @@ describe Tag, :type => :model do
   it { is_expected.to have_many(:audio_events) }
 
   it { is_expected.to belong_to(:creator).with_foreign_key(:creator_id) }
-  it { is_expected.to belong_to(:updater).with_foreign_key(:updater_id) }
+  it { is_expected.to belong_to(:updater).with_foreign_key(:updater_id).optional }
 
   # .with_predicates(true).with_multiple(false)
   it { is_expected.to enumerize(:type_of_tag).in(*Tag::AVAILABLE_TYPE_OF_TAGS) }
@@ -27,7 +28,7 @@ describe Tag, :type => :model do
     t.is_taxanomic = true
     t.type_of_tag = :common_name
     expect(t).to be_valid
-    
+
     t.is_taxanomic = false
     t.type_of_tag = :general
     expect(t).to be_valid
@@ -58,7 +59,7 @@ describe Tag, :type => :model do
 
   type_of_tags = [:general, :common_name, :species_name, :looks_like, :sounds_like]
 
-  type_of_tags.each { |tag_type|
+  type_of_tags.each do |tag_type|
     expected_is_taxanomic_value = tag_type == :common_name || tag_type == :species_name
     it "ensures type_of_tag can be set to #{tag_type}" do
       t = build(:tag)
@@ -84,7 +85,7 @@ describe Tag, :type => :model do
       t.is_taxanomic = expected_is_taxanomic_value
       expect(t).to be_valid
     end
-  }
+  end
 
   it 'should not allow nil for retired' do
     t = build(:tag)
@@ -104,5 +105,4 @@ describe Tag, :type => :model do
     t = Tag.new
     expect(t.retired).to be_falsey
   end
-
 end

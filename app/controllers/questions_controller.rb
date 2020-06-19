@@ -1,5 +1,6 @@
-class QuestionsController < ApplicationController
+# frozen_string_literal: true
 
+class QuestionsController < ApplicationController
   include Api::ControllerHelper
 
   #skip_authorization_check
@@ -19,10 +20,10 @@ class QuestionsController < ApplicationController
     end
 
     @questions, opts = Settings.api_response.response_advanced(
-        api_filter_params,
-        query,
-        Question,
-        Question.filter_settings
+      api_filter_params,
+      query,
+      Question,
+      Question.filter_settings
     )
     respond_index(opts)
   end
@@ -39,10 +40,10 @@ class QuestionsController < ApplicationController
     do_authorize_class
 
     filter_response, opts = Settings.api_response.response_advanced(
-        api_filter_params,
-        Question.all,
-        Question,
-        Question.filter_settings
+      api_filter_params,
+      Question.all,
+      Question,
+      Question.filter_settings
     )
     respond_filter(filter_response, opts)
   end
@@ -94,11 +95,11 @@ class QuestionsController < ApplicationController
     # empty array is replaced with nil by rails. Revert to empty array
     # to avoid errors with strong parameters
     # https://github.com/rails/rails/issues/13766
-    if params.has_key?(:question) and params[:question].has_key?(:study_ids) and params[:question][:study_ids].nil?
+    # TODO: remove, fixed in https://github.com/rails/rails/pull/16924 (rails 5.1)
+    if params.key?(:question) && params[:question].key?(:study_ids) && params[:question][:study_ids].nil?
       params[:question][:study_ids] = []
     end
-    permitted = [{study_ids: []}, :text, :data]
+    permitted = [{ study_ids: [] }, :text, :data]
     params.require(:question).permit(permitted)
   end
-
 end

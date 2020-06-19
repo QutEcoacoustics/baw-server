@@ -5,7 +5,7 @@ class SavedSearch < ApplicationRecord
   include UserChange
 
   belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_saved_searches
-  belongs_to :deleter, class_name: 'User', foreign_key: :deleter_id, inverse_of: :deleted_saved_searches
+  belongs_to :deleter, class_name: 'User', foreign_key: :deleter_id, inverse_of: :deleted_saved_searches, optional: true
 
   has_and_belongs_to_many :projects, inverse_of: :saved_searches
   has_many :analysis_jobs, inverse_of: :saved_search

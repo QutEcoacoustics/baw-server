@@ -11,8 +11,8 @@ class Site < ApplicationRecord
   has_many :audio_recordings, inverse_of: :site
 
   belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_sites
-  belongs_to :updater, class_name: 'User', foreign_key: :updater_id, inverse_of: :updated_sites
-  belongs_to :deleter, class_name: 'User', foreign_key: :deleter_id, inverse_of: :deleted_sites
+  belongs_to :updater, class_name: 'User', foreign_key: :updater_id, inverse_of: :updated_sites, optional: true
+  belongs_to :deleter, class_name: 'User', foreign_key: :deleter_id, inverse_of: :deleted_sites, optional: true
 
   has_attached_file :image,
                     styles: {
@@ -38,7 +38,7 @@ class Site < ApplicationRecord
   validates_as_paranoid
 
   # association validations
-  validates :creator, existence: true
+  validates_associated :creator
 
   # attribute validations
   validates :name, presence: true, length: { minimum: 2 }

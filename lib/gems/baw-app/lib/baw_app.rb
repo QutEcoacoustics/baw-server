@@ -18,6 +18,10 @@ module BawApp
     @root ||= Pathname.new("#{__dir__}/../../../..").cleanpath
   end
 
+  def config_root
+    @config_root ||= self.root / 'config'
+  end
+
   def env
     return Rails.env if defined?(Rails) && defined?(Rails.env)
 
@@ -28,7 +32,7 @@ module BawApp
   end
 
   # Get the path to the default config files that will be loaded by the app
-  def config_files(config_root = @root, env = @env)
+  def config_files(config_root = self.config_root, env = self.env)
     [
       File.join(config_root, 'settings.yml').to_s,
       File.join(config_root, 'settings', 'default.yml').to_s,

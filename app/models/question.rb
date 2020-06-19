@@ -6,7 +6,7 @@ class Question < ApplicationRecord
 
   #relationships
   belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_questions
-  belongs_to :updater, class_name: 'User', foreign_key: :updater_id, inverse_of: :updated_questions
+  belongs_to :updater, class_name: 'User', foreign_key: :updater_id, inverse_of: :updated_questions, optional: true
   has_and_belongs_to_many :studies, -> { uniq }
   has_many :responses, dependent: :destroy
 
