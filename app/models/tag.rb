@@ -74,7 +74,7 @@ class Tag < ActiveRecord::Base
     return nil if tags.empty?
 
     first = tags.first
-    return first if first.type_of_tag.to_s == 'common_name'
+    return first if first.type_of_tag == 'common_name'
 
     first_common = nil
     first_species = nil
