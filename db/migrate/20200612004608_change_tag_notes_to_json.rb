@@ -11,15 +11,15 @@ class ChangeTagNotesToJson < ActiveRecord::Migration
           EXCEPTION WHEN others THEN
             RETURN FALSE;
           END;
-          RETURN TRUE;
+
+          RETURN json_typeof(x) = 'object';
         END;
       $$ LANGUAGE plpgsql IMMUTABLE;
 
       ALTER TABLE "tags"
         ALTER COLUMN "notes" TYPE jsonb
         USING CASE
-          WHEN notes is NULL THEN '{}'::json
-          WHEN notes = '' THEN '{}'::json
+          WHEN (notes <> '') is NOT TRUE THEN NULL
           WHEN pg_temp.is_json(notes) THEN notes::json
           ELSE json_build_object('comment', notes)
         END

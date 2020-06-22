@@ -72,7 +72,7 @@ class TagsController < ApplicationController
 
   def tag_params
     # Sanitize notes input
-    params[:tag][:notes] = sanitize_notes params[:tag][:notes]
+    params[:tag][:notes] = sanitize_associative_array(params[:tag][:notes], 'notes')
 
     # TODO: Replace with the following after upgrading Rails to v5.1.2 or later
     # params.require(:tag).permit(:is_taxanomic, :text, :type_of_tag, :retired, notes: {})

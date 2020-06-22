@@ -628,19 +628,16 @@ class ApplicationController < ActionController::Base # rubocop:disable Metrics/C
     end
   end
 
-  def sanitize_notes(json)
-    if json.nil?
-      nil
-    elsif json.is_a? Hash
-      json
-    elsif json.is_a? String
-      begin
-        JSON.parse(json)
-      rescue JSON::ParserError => _e
-        { 'comment' => json }
-      end
-    else
-      raise CustomErrors::BadRequestError, 'Invalid notes input.'
+  def sanitize_associative_array(json, field_name, key = 'comment')
+    return nil if json.nil?
+    return { key => json } if json.is_a? Array
+    return json if json.is_a? Hash
+    raise CustomErrors::BadRequestError, "Invalid #{field_name} input." unless json.is_a? String
+
+    begin
+      return JSON.parse(json)
+    rescue JSON::ParserError => _e
+      return { key => json }
     end
   end
 end
