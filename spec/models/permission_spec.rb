@@ -5,10 +5,15 @@ require 'rails_helper'
 describe Permission, type: :model do
   subject { FactoryBot.build(:read_permission, project: FactoryBot.create(:project)) }
 
-  it { is_expected.to belong_to(:creator).class_name('User').with_foreign_key(:creator_id).inverse_of(:created_permissions) }
-  it { is_expected.to belong_to(:updater).class_name('User').with_foreign_key(:updater_id).inverse_of(:updated_permissions) }
+  it do
+    is_expected.to belong_to(:creator).class_name('User').with_foreign_key(:creator_id).inverse_of(:created_permissions)
+  end
+  it do
+    is_expected.to \
+      belong_to(:updater).class_name('User').with_foreign_key(:updater_id).inverse_of(:updated_permissions).optional
+  end
   it { is_expected.to belong_to(:project).inverse_of(:permissions) }
-  it { is_expected.to belong_to(:user).inverse_of(:permissions) }
+  it { is_expected.to belong_to(:user).inverse_of(:permissions).without_validating_presence }
 
   it { is_expected.to validate_presence_of(:level) }
 

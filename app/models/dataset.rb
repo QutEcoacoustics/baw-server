@@ -17,15 +17,22 @@ class Dataset < ApplicationRecord
   validates_associated :creator
 
   # validation
-  # validates :name, presence: true, length: {minimum: 2}
-  validates :name, presence: true, length: { minimum: 2 }, exclusion: { in: ['default'], message: '%{value} is a reserved dataset name' }
+  validates :name, presence: true, length: { minimum: 2 }
+  validates :name, unless: -> { id == Dataset.default_dataset_id }, exclusion: { in: ['default'], message: '%{value} is a reserved dataset name' }
+
+  DEFAULT_DATASET_NAME = 'default'
 
   # lookup the default dataset id
   # This will potentially be hit very often, maybe multiple times per request
   # and therefore is a possible avenue for future optimization if necessary
   def self.default_dataset_id
     # note: this may cause db:create and db:migrate to fail
-    Dataset.where(name: 'default').first.id
+    default_dataset.id
+  end
+
+  # (scope) return the default dataset
+  def self.default_dataset
+    Dataset.where(name: DEFAULT_DATASET_NAME).first
   end
 
   # Define filter api settings

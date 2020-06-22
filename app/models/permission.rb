@@ -7,7 +7,7 @@ class Permission < ApplicationRecord
   include UserChange
 
   belongs_to :project, inverse_of: :permissions
-  belongs_to :user, inverse_of: :permissions
+  belongs_to :user, inverse_of: :permissions, optional: true
   belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_permissions
   belongs_to :updater, class_name: 'User', foreign_key: :updater_id, inverse_of: :updated_permissions, optional: true
 
@@ -22,6 +22,7 @@ class Permission < ApplicationRecord
   # association validations
   validates_associated :project
   validates_associated :creator
+  validates_associated :user
 
   # attribute validations
   validates :level, presence: true

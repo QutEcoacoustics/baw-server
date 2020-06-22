@@ -9,7 +9,7 @@ class AudioEventComment < ApplicationRecord
   belongs_to :creator, class_name: 'User', foreign_key: 'creator_id', inverse_of: :created_audio_event_comments
   belongs_to :updater, class_name: 'User', foreign_key: 'updater_id', inverse_of: :updated_audio_event_comments, optional: true
   belongs_to :deleter, class_name: 'User', foreign_key: 'deleter_id', inverse_of: :deleted_audio_event_comments, optional: true
-  belongs_to :flagger, class_name: 'User', foreign_key: 'flagger_id', inverse_of: :flagged_audio_event_comments
+  belongs_to :flagger, class_name: 'User', foreign_key: 'flagger_id', inverse_of: :flagged_audio_event_comments, optional: true
 
   # add deleted_at and deleter_id
   acts_as_paranoid

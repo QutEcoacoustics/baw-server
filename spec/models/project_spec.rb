@@ -12,7 +12,7 @@ describe Project, type: :model do
 
   it { is_expected.to belong_to(:creator).with_foreign_key(:creator_id) }
   it { is_expected.to belong_to(:updater).with_foreign_key(:updater_id).optional }
-  it { is_expected.to belong_to(:deleter).with_foreign_key(:deleter_id) }
+  it { is_expected.to belong_to(:deleter).with_foreign_key(:deleter_id).optional }
 
   it 'is invalid without a name' do
     expect(FactoryBot.build(:project, name: nil)).not_to be_valid

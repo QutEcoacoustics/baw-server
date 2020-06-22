@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class NameyWamey
   class << self
     # Suggest a file name based on audio recording, start and end offsets, extra options and extension.
@@ -13,11 +15,11 @@ class NameyWamey
       abs_start = audio_recording[:recorded_date].dup.advance(seconds: start_offset_float).strftime('%Y%m%d_%H%M%S')
       duration = end_offset_float - start_offset_float
 
-      if audio_recording.is_a?(Hash)
-        site = audio_recording[:site]
-      else
-        site = audio_recording.site
-      end
+      site = if audio_recording.is_a?(Hash)
+               audio_recording[:site]
+             else
+               audio_recording.site
+             end
 
       if site.is_a?(Hash)
         site_name = site[:name].gsub(' ', '_')
@@ -99,26 +101,26 @@ class NameyWamey
     def get_extra_options(extra_options)
       extra_options_formatted = ''
       if extra_options.is_a?(Hash)
-        extra_options.each_pair do |key, value|
-          extra_options_formatted = "#{value}" if extra_options_formatted.blank?
+        extra_options.each_pair do |_key, value|
+          extra_options_formatted = value.to_s if extra_options_formatted.blank?
           extra_options_formatted = "#{extra_options_formatted}_#{value}" unless extra_options_formatted.blank?
         end
       elsif extra_options.is_a?(Array)
         extra_options.each do |value|
-          extra_options_formatted = "#{value}" if extra_options_formatted.blank?
+          extra_options_formatted = value.to_s if extra_options_formatted.blank?
           extra_options_formatted = "#{extra_options_formatted}_#{value}" unless extra_options_formatted.blank?
         end
       else
         extra_options_formatted = extra_options
       end
-      extra_options_formatted.size > 0 ? '_' + extra_options_formatted : extra_options_formatted
+      !extra_options_formatted.empty? ? '_' + extra_options_formatted : extra_options_formatted
     end
 
     def build_name(standard, extra, extension)
       name = standard.join('_') + get_extra_options(extra)
-      name_parameterize = name.parameterize('_')
+      name_parameterize = name.parameterize(separator: '_')
 
-      name_parameterize + '.' + extension.trim('.', '').parameterize('_')
+      name_parameterize + '.' + extension.trim('.', '').parameterize(separator: '_')
     end
   end
 end

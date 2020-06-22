@@ -69,7 +69,7 @@ module BawWorkers
         # configure resque worker
         configure_resque_worker if is_resque_worker
 
-        result = format_result(settings, is_test, 'worker', settings_file)
+        result = format_result(settings, is_test, 'worker', settings_files)
         result = format_resque_worker(result, is_resque_worker, is_resque_worker_fg)
 
         check_resque_formatter
@@ -330,13 +330,13 @@ module BawWorkers
         raise 'Resque overwrote the default formatter!'
       end
 
-      def format_result(settings, is_test, context, settings_file)
+      def format_result(settings, is_test, context, settings_files)
         result = {
           context: context,
           settings: {
             test: is_test,
             environment: BawApp.env,
-            file: settings_file,
+            files: settings_files,
             run_dir: BawWorkers::Config.worker_top_dir,
             is_development: BawApp.development?
           },

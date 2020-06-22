@@ -206,6 +206,7 @@ group :test do
   gem 'database_cleaner-active_record'
   gem 'database_cleaner-redis'
   gem 'factory_bot_rails'
+  gem 'faker'
   gem 'json_spec', '~> 1.1.4'
   gem 'rspec'
   gem 'rspec-collection_matchers'

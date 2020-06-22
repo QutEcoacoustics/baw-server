@@ -260,6 +260,7 @@ module Creation
     end
 
     def prepare_dataset
+      let!(:default_dataset) { Dataset.default_dataset }
       let!(:dataset) { Common.create_dataset(owner_user) }
     end
 
@@ -271,7 +272,7 @@ module Creation
 
     def prepare_progress_event
       let!(:default_dataset_item) {
-        FactoryBot.create(:default_dataset_item, creator: writer_user, audio_recording: audio_recording)
+        FactoryBot.create(:default_dataset_item, creator: writer_user, audio_recording: audio_recording, dataset: default_dataset)
       }
       let!(:progress_event) {
         Common.create_progress_event(admin_user, default_dataset_item)

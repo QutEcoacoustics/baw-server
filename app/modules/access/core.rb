@@ -1,27 +1,26 @@
+# frozen_string_literal: true
+
 # A module for applying access restrictions.
 module Access
-
   # Basic level, user, and access methods.
   class Core
-
     class << self
-
       # Get a hash with symbols, names, action words for the available levels.
       # @return [Hash]
       def levels_hash
         {
-            owner: {
-                name: 'Owner',
-                action: 'own'
-            },
-            writer: {
-                name: 'Writer',
-                action: 'write'
-            },
-            reader: {
-                name: 'Reader',
-                action: 'read'
-            }
+          owner: {
+            name: 'Owner',
+            action: 'own'
+          },
+          writer: {
+            name: 'Writer',
+            action: 'write'
+          },
+          reader: {
+            name: 'Reader',
+            action: 'read'
+          }
         }
       end
 
@@ -41,22 +40,22 @@ module Access
       # @return [Hash]
       def roles_hash
         {
-            admin: {
-                name: 'Administrator',
-                action: 'administer'
-            },
-            user: {
-                name: 'User',
-                action: 'use'
-            },
-            harvester: {
-                name: 'Harvester',
-                action: 'harvest'
-            },
-            guest: {
-                name: 'Guest',
-                action: 'use as guest'
-            }
+          admin: {
+            name: 'Administrator',
+            action: 'administer'
+          },
+          user: {
+            name: 'User',
+            action: 'use'
+          },
+          harvester: {
+            name: 'Harvester',
+            action: 'harvest'
+          },
+          guest: {
+            name: 'Guest',
+            action: 'use as guest'
+          }
         }
       end
 
@@ -112,28 +111,29 @@ module Access
       # @return [Symbol, nil] normalised level or nil
       def normalise_level(level)
         return nil if level.blank?
+
         case level.to_s
-          when 'reader', 'read'
-            :reader
-          when 'writer', 'write'
-            :writer
-          when 'owner', 'own'
-            :owner
-          else
-            nil
-        end
+        when 'reader', 'read'
+          :reader
+        when 'writer', 'write'
+          :writer
+        when 'owner', 'own'
+          :owner
+          end
       end
 
       # Validate access level.
       # @param [Object] level
       # @return [Symbol] level
       def validate_level(level)
-        fail ArgumentError, 'Access level must not be blank.' if level.blank?
+        raise ArgumentError, 'Access level must not be blank.' if level.blank?
 
         valid_levels = levels.keys
         level_sym = level.to_sym
 
-        fail ArgumentError, "Access level '#{level_sym}' is not in available levels '#{valid_levels}'." unless valid_levels.include?(level_sym)
+        unless valid_levels.include?(level_sym)
+          raise ArgumentError, "Access level '#{level_sym}' is not in available levels '#{valid_levels}'."
+        end
 
         level_sym
       end
@@ -142,7 +142,8 @@ module Access
       # @param [Array<Symbol>] levels
       # @return [Array<Symbol>] levels
       def validate_levels(levels)
-        fail ArgumentError, 'Access level array must not be blank.' if levels.blank?
+        raise ArgumentError, 'Access level array must not be blank.' if levels.blank?
+
         levels = [levels] unless levels.respond_to?(:map)
 
         levels_sym = levels.map { |i| validate_level(i) }.uniq
@@ -158,12 +159,12 @@ module Access
           if (levels.include?(:none) || levels.include?('none')) && levels.size > 1
             # none cannot be with other levels because this can be ambiguous, and points to a problem with how the
             # permissions were obtained.
-            fail ArgumentError, "Level array cannot contain none with other levels, got '#{levels.join(', ')}'."
+            raise ArgumentError, "Level array cannot contain none with other levels, got '#{levels.join(', ')}'."
           else
             levels
           end
         else
-          fail ArgumentError, "Must be an array of levels, got '#{levels.class}'."
+          raise ArgumentError, "Must be an array of levels, got '#{levels.class}'."
         end
       end
 
@@ -171,7 +172,10 @@ module Access
       # @param [Project] project
       # @return [Project] project
       def validate_project(project)
-        fail ArgumentError, "Project was not valid, got '#{project.class}'." if project.blank? || !project.is_a?(Project)
+        if project.blank? || !project.is_a?(Project)
+          raise ArgumentError, "Project was not valid, got '#{project.class}'."
+        end
+
         project
       end
 
@@ -179,7 +183,8 @@ module Access
       # @param [Array<Project>] projects
       # @return [Array<Project>] projects
       def validate_projects(projects)
-        fail ArgumentError, 'No projects provided.' if projects.blank?
+        raise ArgumentError, 'No projects provided.' if projects.blank?
+
         projects.to_a.map { |p| validate_project(p) }
       end
 
@@ -187,7 +192,8 @@ module Access
       # @param [User] user
       # @return [User] user
       def validate_user(user)
-        fail ArgumentError, "User was not valid, got '#{user.class}'." if !user.blank? && !user.is_a?(User)
+        raise ArgumentError, "User was not valid, got '#{user.class}'." if !user.blank? && !user.is_a?(User)
+
         user
       end
 
@@ -202,7 +208,10 @@ module Access
       # @param [AudioRecording] audio_recording
       # @return [AudioRecording] audio_recording
       def validate_audio_recording(audio_recording)
-        fail ArgumentError, "AudioRecording was not valid, got '#{audio_recording.class}'." if audio_recording.blank? || !audio_recording.is_a?(AudioRecording)
+        if audio_recording.blank? || !audio_recording.is_a?(AudioRecording)
+          raise ArgumentError, "AudioRecording was not valid, got '#{audio_recording.class}'."
+        end
+
         audio_recording
       end
 
@@ -217,7 +226,10 @@ module Access
       # @param [AudioEvent] audio_event
       # @return [AudioEvent] audio_event
       def validate_audio_event(audio_event)
-        fail ArgumentError, "AudioRecording was not valid, got '#{audio_event.class}'." if audio_event.blank? || !audio_event.is_a?(AudioEvent)
+        if audio_event.blank? || !audio_event.is_a?(AudioEvent)
+          raise ArgumentError, "AudioRecording was not valid, got '#{audio_event.class}'."
+        end
+
         audio_event
       end
 
@@ -232,7 +244,10 @@ module Access
       # @param [Array<AnalysisJob>] analysis_job
       # @return [Array<AnalysisJob>] analysis_job
       def validate_analysis_job(analysis_job)
-        fail ArgumentError, "AnalysisJob was not valid, got '#{analysis_job.class}'." if analysis_job.blank? || !analysis_job.is_a?(AnalysisJob)
+        if analysis_job.blank? || !analysis_job.is_a?(AnalysisJob)
+          raise ArgumentError, "AnalysisJob was not valid, got '#{analysis_job.class}'."
+        end
+
         analysis_job
       end
 
@@ -240,7 +255,10 @@ module Access
       # @param [Array<Dataset>] dataset
       # @return [Array<Dataset>] dataset
       def validate_dataset(dataset)
-        fail ArgumentError, "Dataset was not valid, got '#{dataset.class}'." if dataset.blank? || !dataset.is_a?(Dataset)
+        if dataset.blank? || !dataset.is_a?(Dataset)
+          raise ArgumentError, "Dataset was not valid, got '#{dataset.class}'."
+        end
+
         dataset
       end
 
@@ -250,14 +268,14 @@ module Access
       def equal_or_lower(level)
         level_sym = Access::Validate.level(level)
         case level_sym
-          when :owner
-            [:reader, :writer, :owner]
-          when :writer
-            [:reader, :writer]
-          when :reader
-            [:reader]
-          else
-            fail ArgumentError, "Can not get equal or lower level for '#{level}', must be one of #{Access::Core.levels.map(&:to_s).join(', ')}."
+        when :owner
+          [:reader, :writer, :owner]
+        when :writer
+          [:reader, :writer]
+        when :reader
+          [:reader]
+        else
+          raise ArgumentError, "Can not get equal or lower level for '#{level}', must be one of #{Access::Core.levels.map(&:to_s).join(', ')}."
         end
       end
 
@@ -267,14 +285,14 @@ module Access
       def equal_or_greater(level)
         level_sym = Access::Validate.level(level)
         case level_sym
-          when :owner
-            [:owner]
-          when :writer
-            [:writer, :owner]
-          when :reader
-            [:reader, :writer, :owner]
-          else
-            fail ArgumentError, "Can not get equal or greater level for '#{level}', must be one of #{Access::Core.levels.map(&:to_s).join(', ')}."
+        when :owner
+          [:owner]
+        when :writer
+          [:writer, :owner]
+        when :reader
+          [:reader, :writer, :owner]
+        else
+          raise ArgumentError, "Can not get equal or greater level for '#{level}', must be one of #{Access::Core.levels.map(&:to_s).join(', ')}."
         end
       end
 
@@ -287,6 +305,7 @@ module Access
         return :owner if levels_sym.include?(:owner)
         return :writer if levels_sym.include?(:writer)
         return :reader if levels_sym.include?(:reader)
+
         nil
       end
 
@@ -299,6 +318,7 @@ module Access
         return nil if Access::Core.is_no_level?(levels)
         return :reader if levels_sym.include?(:reader)
         return :writer if levels_sym.include?(:writer)
+
         :owner if levels_sym.include?(:owner)
       end
 
@@ -317,6 +337,7 @@ module Access
       # @return [Boolean]
       def is_admin?(user)
         return false if Access::Core.is_guest?(user)
+
         user.has_role?(:admin)
       end
 
@@ -339,6 +360,7 @@ module Access
       # @return [Boolean]
       def is_unconfirmed_user?(user)
         return false if Access::Core.is_guest?(user)
+
         !user.confirmed?
       end
 
@@ -348,6 +370,7 @@ module Access
       # @return [Boolean]
       def is_standard_user?(user)
         return false if Access::Core.is_guest?(user)
+
         user.has_role?(:user)
       end
 
@@ -357,6 +380,7 @@ module Access
       # @return [Boolean]
       def is_harvester?(user)
         return false if Access::Core.is_guest?(user)
+
         user.has_role?(:harvester)
       end
 
@@ -371,7 +395,7 @@ module Access
 
         # short circuit checking nils
         return false if requested_array.blank? || requested_array.compact.blank? ||
-            actual_array.blank? || actual_array.compact.blank?
+                        actual_array.blank? || actual_array.compact.blank?
 
         actual_highest = Access::Core.highest(actual_array)
         actual_equal_or_lower = Access::Core.equal_or_lower(actual_highest)
@@ -442,8 +466,10 @@ module Access
       # @param [Site] site
       # @return [void]
       def check_orphan_site!(site)
-        if !site.nil? && site.projects.size == 0
-          fail CustomErrors::OrphanedSiteError.new("Site #{site.name} (#{site.id}) is not in any projects.")
+        return if site.nil?
+
+        if site.projects.empty?
+          raise CustomErrors::OrphanedSiteError, "Site #{site.name} (#{site.id}) is not in any projects."
         end
       end
 
@@ -455,9 +481,7 @@ module Access
       # @return [Array<Symbol, nil>]
       def user_levels(user, projects)
         # moved this case forward to shortcut project query execution
-        if Access::Core.is_admin?(user)
-          return Access::Validate.levels([:owner])
-        end
+        return Access::Validate.levels([:owner]) if Access::Core.is_admin?(user)
 
         projects = Access::Validate.projects([projects])
 
@@ -472,7 +496,7 @@ module Access
           # permissions specified by :allow_logged_in
           levels = levels.where('user_id = ? OR allow_logged_in IS TRUE', user.id)
         else
-          fail ArgumentError, "Invalid user to retrieve levels: '#{user}'."
+          raise ArgumentError, "Invalid user to retrieve levels: '#{user}'."
         end
 
         levels = levels.pluck(:level)
@@ -487,12 +511,12 @@ module Access
       # @return [Array<Symbol, nil>]
       def user_only_levels(user, projects)
         projects = Access::Validate.projects([projects])
-        fail ArgumentError, 'Must provide a user, nil is not valid.' if Access::Core.is_guest?(user)
+        raise ArgumentError, 'Must provide a user, nil is not valid.' if Access::Core.is_guest?(user)
 
         levels = Permission
-            .where(project_id: projects)
-            .where('user_id = ?', user.id)
-            .pluck(:level)
+                 .where(project_id: projects)
+                 .where('user_id = ?', user.id)
+                 .pluck(:level)
 
         Access::Validate.levels(levels)
       end
@@ -511,13 +535,12 @@ module Access
         projects = Access::Validate.projects([projects])
 
         levels = Permission
-            .where(project_id: projects)
-            .where('allow_logged_in IS TRUE')
-            .pluck(:level)
+                 .where(project_id: projects)
+                 .where('allow_logged_in IS TRUE')
+                 .pluck(:level)
 
         Access::Validate.levels(levels)
       end
-
     end
   end
 end

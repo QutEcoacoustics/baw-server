@@ -20,7 +20,7 @@ FactoryBot.define do
 
     # curly braces around the value to delay execution
     # https://stackoverflow.com/questions/12423273/factorygirl-screws-up-rake-dbmigrate-process
-    dataset_id { Dataset.default_dataset_id }
+    dataset { Dataset.default_dataset }
 
     audio_recording
     creator

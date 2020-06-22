@@ -10,12 +10,24 @@
 
 require 'bigdecimal'
 
-class BigDecimal
-  def as_json(_options = nil) #:nodoc:
-    if finite?
-      self
-    else
-      NilClass::AS_JSON
+module  BawWeb
+  module BigDecimal
+    def as_json(_options = nil) #:nodoc:
+      if finite?
+        self
+      else
+        NilClass::AS_JSON
+      end
+    end
+
+    def to_json(_options = nil) #:nodoc:
+      if finite?
+        to_s('F')
+      else
+        'null'
+      end
     end
   end
 end
+
+BigDecimal.prepend BawWeb::BigDecimal

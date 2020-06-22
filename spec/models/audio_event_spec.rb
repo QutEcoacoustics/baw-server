@@ -204,7 +204,7 @@ describe AudioEvent, type: :model do
     expect(AudioEvent.count).to eq(8)
     expect(AudioEvent.only_deleted.count).to eq(8)
 
-    expected_audio_events = [expected_audio_recording.id.to_s]
+    expected_audio_events = [expected_audio_recording.id]
     actual_audio_event_ids = formatted_annotations.map { |item| item['audio_event_id'] }
 
     expect(actual_audio_event_ids).to eq(expected_audio_events)

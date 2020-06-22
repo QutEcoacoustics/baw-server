@@ -99,7 +99,8 @@ describe Site, type: :model do
   it { is_expected.to belong_to(:deleter).with_foreign_key(:deleter_id).optional }
 
   it 'should error on checking orphaned site if site is orphaned' do
-    site = FactoryBot.create(:site, projects: [])
+    # depends on factory not automatically associating a site with any projects
+    site = FactoryBot.create(:site)
     expect {
       Access::Core.check_orphan_site!(site)
     }.to raise_error(CustomErrors::OrphanedSiteError)

@@ -7,7 +7,7 @@ class Site < ApplicationRecord
   attr_accessor :project_ids, :custom_latitude, :custom_longitude, :location_obfuscated
 
   # relations
-  has_and_belongs_to_many :projects, -> { uniq }
+  has_and_belongs_to_many :projects, -> { distinct }
   has_many :audio_recordings, inverse_of: :site
 
   belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_sites
