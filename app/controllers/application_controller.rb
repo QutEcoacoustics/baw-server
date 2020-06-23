@@ -620,24 +620,27 @@ class ApplicationController < ActionController::Base # rubocop:disable Metrics/C
   end
 
   def validate_headers
-    if response.headers.key?('Content-Length') && response.headers['Content-Length'].to_i.negative?
-      raise CustomErrors::BadHeaderError
-    end
-    if response.headers.key?(:content_length) && response.headers[:content_length].to_i.negative?
-      raise CustomErrors::BadHeaderError
-    end
+    raise CustomErrors::BadHeaderError if
+      response.headers.key?('Content-Length') &&
+      response.headers['Content-Length'].to_i.negative?
+    raise CustomErrors::BadHeaderError if
+      response.headers.key?(:content_length) &&
+      response.headers[:content_length].to_i.negative?
   end
 
-  def sanitize_associative_array(json, field_name, key = 'comment')
-    return nil if json.nil?
-    return { key => json } if json.is_a? Array
-    return json if json.is_a? Hash
-    raise CustomErrors::BadRequestError, "Invalid #{field_name} input." unless json.is_a? String
+  def sanitize_associative_array(data, field_name)
+    return nil if data.nil?
+    return data if data.is_a? Hash
 
-    begin
-      return JSON.parse(json)
-    rescue JSON::ParserError => _e
-      return { key => json }
+    if data.is_a? String
+      begin
+        decoded_json = JSON.parse(data)
+        return decoded_json if decoded_json.is_a? Hash
+      rescue JSON::ParserError
+        raise CustomErrors::NotAcceptableError, "#{field_name} failed to parse input as valid JSON."
+      end
     end
+
+    raise CustomErrors::BadRequestError, "#{field_name} must have a root JSON object (not a scalar or an array)."
   end
 end
