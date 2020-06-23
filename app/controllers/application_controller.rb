@@ -355,6 +355,22 @@ class ApplicationController < ActionController::Base # rubocop:disable Metrics/C
     render_error(status, message, nil, 'validate_contains_params', options)
   end
 
+  def sanitize_associative_array(data, field_name)
+    return nil if data.nil?
+    return data if data.is_a? Hash
+
+    if data.is_a? String
+      begin
+        decoded_json = JSON.parse(data)
+        return decoded_json if decoded_json.is_a? Hash
+      rescue JSON::ParserError
+        raise CustomErrors::NotAcceptableError, "#{field_name} failed to parse input as valid JSON."
+      end
+    end
+
+    raise CustomErrors::BadRequestError, "#{field_name} must have a root JSON object (not a scalar or an array)."
+  end
+
   private
 
   def record_not_found_response(error)
@@ -626,21 +642,5 @@ class ApplicationController < ActionController::Base # rubocop:disable Metrics/C
     raise CustomErrors::BadHeaderError if
       response.headers.key?(:content_length) &&
       response.headers[:content_length].to_i.negative?
-  end
-
-  def sanitize_associative_array(data, field_name)
-    return nil if data.nil?
-    return data if data.is_a? Hash
-
-    if data.is_a? String
-      begin
-        decoded_json = JSON.parse(data)
-        return decoded_json if decoded_json.is_a? Hash
-      rescue JSON::ParserError
-        raise CustomErrors::NotAcceptableError, "#{field_name} failed to parse input as valid JSON."
-      end
-    end
-
-    raise CustomErrors::BadRequestError, "#{field_name} must have a root JSON object (not a scalar or an array)."
   end
 end
