@@ -1,8 +1,9 @@
+# frozen_string_literal: true
+
 FactoryGirl.define do
 
-  factory :tag do |f|
+  factory :tag do |_f|
     sequence(:text) { |n| "tag text #{n}" }
-    sequence(:notes) { |n| "note number #{n}" }
 
     creator
     type_of_tag 'general'
@@ -22,10 +23,14 @@ FactoryGirl.define do
       retired true
     end
 
+    trait :notes do
+      notes { { 'comment' => 'value' } }
+    end
+
     factory :tag_taxonomic_true_common, traits: [:taxonomic_true_common]
+    factory :tag_taxonomic_true_common_notes, traits: [:tag_taxonomic_true_common, :notes]
     factory :tag_taxonomic_false_sounds_like, traits: [:taxonomic_false_sounds_like]
     factory :tag_retired_taxonomic_true_common, traits: [:taxonomic_true_common, :retired]
     factory :tag_retired_taxonomic_false_sounds_like, traits: [:taxonomic_false_sounds_like, :retired]
   end
 end
-

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class TagsController < ApplicationController
   include Api::ControllerHelper
 
@@ -15,10 +17,10 @@ class TagsController < ApplicationController
     end
 
     @tags, opts = Settings.api_response.response_advanced(
-        api_filter_params,
-        query,
-        Tag,
-        Tag.filter_settings
+      api_filter_params,
+      query,
+      Tag,
+      Tag.filter_settings
     )
     respond_index(opts)
   end
@@ -58,10 +60,10 @@ class TagsController < ApplicationController
     do_authorize_class
 
     filter_response, opts = Settings.api_response.response_advanced(
-        api_filter_params,
-        Tag.all,
-        Tag,
-        Tag.filter_settings
+      api_filter_params,
+      Tag.all,
+      Tag,
+      Tag.filter_settings
     )
     respond_filter(filter_response, opts)
   end
@@ -69,6 +71,14 @@ class TagsController < ApplicationController
   private
 
   def tag_params
-    params.require(:tag).permit(:is_taxanomic, :text, :type_of_tag, :retired, :notes)
+    # Sanitize notes input
+    params[:tag][:notes] = sanitize_associative_array(params[:tag][:notes], 'notes')
+
+    # TODO: Replace with the following after upgrading Rails to v5.1.2 or later
+    # params.require(:tag).permit(:is_taxanomic, :text, :type_of_tag, :retired, notes: {})
+    notes = params[:tag].delete(:notes)
+    params.require(:tag).permit(:is_taxanomic, :text, :type_of_tag, :retired).tap do |whitelisted|
+      whitelisted[:notes] = notes
+    end
   end
 end

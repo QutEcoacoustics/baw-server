@@ -8,8 +8,8 @@ if ENV['RAILS_ENV'] != 'test'
   puts \
     <<~MESSAGE
       ***
-      Tests must be run in the test envrionment.
-      The current envrionment `#{ENV['RAILS_ENV']}` has been changed to `test`.
+      Tests must be run in the test environment.
+      The current environment `#{ENV['RAILS_ENV']}` has been changed to `test`.
       See rails_helper.rb to disable this check
       ***
     MESSAGE
@@ -52,15 +52,14 @@ if ENV['CI'] || ENV['COVERAGE']
     # coveralls
     Coveralls.wear!('rails')
 
-    SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter.new([
-                                                                     Coveralls::SimpleCov::Formatter,
-                                                                     CodeClimate::TestReporter::Formatter
-                                                                   ])
+    SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter.new(
+      [Coveralls::SimpleCov::Formatter, CodeClimate::TestReporter::Formatter]
+    )
 
   else
-    SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter.new([
-                                                                     SimpleCov::Formatter::HTMLFormatter
-                                                                   ])
+    SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter.new(
+      [SimpleCov::Formatter::HTMLFormatter]
+    )
   end
 
   # start code coverage
@@ -114,7 +113,7 @@ Warden.test_mode!
 # If you are not using ActiveRecord, you can remove this line.
 ActiveRecord::Migration.maintain_test_schema!
 
-RSpec.configure do |config|
+RSpec.configure do |config| # rubocop:disable Metrics/BlockLength
   # Remove this line if you're not using ActiveRecord or ActiveRecord fixtures
   #config.fixture_path = "#{::Rails.root}/spec/fixtures"
 
@@ -125,11 +124,11 @@ RSpec.configure do |config|
   config.use_transactional_fixtures = false
   config.use_transactional_examples = false
 
-  # RSpec Rails can automatically mix in different behaviours to your tests
+  # RSpec Rails can automatically mix in different behaviors to your tests
   # based on their file location, for example enabling you to call `get` and
   # `post` in specs under `spec/controllers`.
   #
-  # You can disable this behaviour by removing the line below, and instead
+  # You can disable this behavior by removing the line below, and instead
   # explicitly tag your specs with their type, e.g.:
   #
   #     RSpec.describe UsersController, :type => :controller do
@@ -152,6 +151,9 @@ RSpec.configure do |config|
   config.include Devise::Test::ControllerHelpers, type: :view
   config.include Paperclip::Shoulda::Matchers
   config.include FactoryGirl::Syntax::Methods
+
+  require_relative 'helpers/migrations_helper'
+  config.include MigrationsHelpers, :migration
 
   require_relative 'helpers/creation'
   config.include Creation::Example
@@ -253,7 +255,7 @@ Shoulda::Matchers.configure do |config|
   end
 end
 
-# Customise rspec api documentation
+# Customize rspec api documentation
 ENV['DOC_FORMAT'] ||= 'json'
 
 RspecApiDocumentation.configure do |config_rspec_api|
