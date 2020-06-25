@@ -311,7 +311,19 @@ module Filter
 
       node_descr = node.respond_to?(:name) ? node.name : '(custom item)'
 
-      raise CustomErrors::FilterArgumentError, "The value for #{node_descr} must not be a hash" if value.is_a?(Hash)
+      # allow treating a hash as a basic value if it serialized into json/jsonb
+      # in the database
+      if value.is_a?(Hash)
+        case node.type_caster
+        when :json
+          return
+        when :jsonb
+          return
+        else
+          raise CustomErrors::FilterArgumentError, "The value for #{node_descr} must not be a hash (unless its underlying type is a hash)"
+        end
+      end
+
       raise CustomErrors::FilterArgumentError, "The value for #{node_descr} must not be an array" if value.is_a?(Array)
       raise CustomErrors::FilterArgumentError, "The value for #{node_descr} must not be a set" if value.is_a?(Set)
       raise CustomErrors::FilterArgumentError, "The value for #{node_descr} must not be a range" if value.is_a?(Range)

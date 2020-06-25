@@ -10,10 +10,6 @@ class SavedSearch < ApplicationRecord
   has_and_belongs_to_many :projects, inverse_of: :saved_searches
   has_many :analysis_jobs, inverse_of: :saved_search
 
-  # Serialize stored_query using JSON as coder.
-  # this is a filter query for audio recordings.
-  serialize :stored_query, JSON
-
   # add deleted_at and deleter_id
   acts_as_paranoid
   validates_as_paranoid

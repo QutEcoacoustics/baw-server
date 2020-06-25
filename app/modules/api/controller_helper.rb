@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Api
   module ControllerHelper
     extend ActiveSupport::Concern
@@ -9,7 +11,7 @@ module Api
     # The singular name for the resource class based on the controller
     # @return [String]
     def resource_name
-      @resource_name ||= self.controller_name.singularize
+      @resource_name ||= controller_name.singularize
     end
 
     # The plural name for the resource class based on the controller
@@ -55,11 +57,9 @@ module Api
     # @return [void]
     def set_user_id(attribute_name)
       responds = get_resource.respond_to?("#{attribute_name}=".to_sym)
-      is_blank = responds ? get_resource.send("#{attribute_name}".to_sym).blank? : false
+      is_blank = responds ? get_resource.send(attribute_name.to_s.to_sym).blank? : false
       current_user_valid = !current_user.blank?
-      if responds && is_blank && current_user_valid
-        get_resource.send("#{attribute_name}=".to_sym, current_user.id)
-      end
+      get_resource.send("#{attribute_name}=".to_sym, current_user.id) if responds && is_blank && current_user_valid
     end
 
     def respond_index(opts = {})
@@ -92,12 +92,13 @@ module Api
     # used for create fail and update fail
     def respond_change_fail
       built_response = Settings.api_response.build(
-          :unprocessable_entity,
-          nil,
-          {
-              error_details: 'Record could not be saved',
-              error_info: get_resource.errors
-          })
+        :unprocessable_entity,
+        nil,
+        {
+          error_details: 'Record could not be saved',
+          error_info: get_resource.errors
+        }
+      )
       render json: built_response, status: :unprocessable_entity, layout: false
     end
 
@@ -108,15 +109,15 @@ module Api
 
     def respond_error(status_symbol, message, opts = {})
       render_error(
-          status_symbol,
-          message,
-          nil,
-          'respond_error',
-          opts)
+        status_symbol,
+        message,
+        nil,
+        'respond_error',
+        opts
+      )
     end
 
     def respond_filter(content, opts = {})
-
       items = content.map { |item|
         Settings.api_response.prepare(item, current_user, opts)
       }
@@ -124,17 +125,6 @@ module Api
       built_response = Settings.api_response.build(:ok, items, opts)
       render json: built_response, status: :ok, content_type: 'application/json', layout: false
     end
-
-    # def attributes_and_authorize(custom_params = nil)
-    #   # need to do what cancan would otherwise do due to before_action creating instance variable, so cancan
-    #   # assumes already authorized
-    #
-    #   do_authorize!
-    # end
-
-    # def do_authorize!
-    #   authorize! action_name.to_sym, (get_resource || resource_class)
-    # end
 
     def api_filter_params
       # for filter api, all validation is done in modules rather than in strong parameters.
@@ -148,8 +138,18 @@ module Api
       current_ability.attributes_for(action_name.to_sym, resource_class).each do |key, value|
         get_resource.send("#{key}=", value)
       end
-      capture_params = custom_params.nil? ? params[resource_name.to_sym] : custom_params
-      get_resource.attributes = capture_params if !capture_params.blank? && capture_params.is_a?(Hash)
+
+      if custom_params.nil?
+        custom_params = params[resource_name.to_sym] if params.permitted?
+      end
+
+      return if custom_params.blank?
+
+      custom_params = custom_params.to_h if custom_params.is_a? ActionController::Parameters
+
+      raise TypeError, 'expect `custom_params` to be a hash' unless custom_params.is_a? Hash
+
+      get_resource.attributes = custom_params
     end
 
     def do_new_resource
@@ -165,12 +165,11 @@ module Api
     end
 
     def do_authorize_instance(custom_action_name = nil, custom_resource = nil)
-      authorize! (custom_action_name ||action_name).to_sym, (custom_resource || get_resource)
+      authorize! (custom_action_name || action_name).to_sym, (custom_resource || get_resource)
     end
 
     def do_authorize_class(custom_action_name = nil, custom_class = nil)
       authorize! (custom_action_name || action_name).to_sym, (custom_class || resource_class)
     end
-
   end
 end

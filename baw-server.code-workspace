@@ -17,6 +17,7 @@
       "cleanpath",
       "deleter",
       "gsub",
+      "jsonb",
       "ltrim",
       "mkdir",
       "postgresql",

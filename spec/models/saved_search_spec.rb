@@ -11,7 +11,9 @@ describe SavedSearch, type: :model do
   it { is_expected.to belong_to(:deleter).with_foreign_key(:deleter_id).optional }
 
   it { is_expected.to validate_presence_of(:stored_query) }
-  it { is_expected.to serialize(:stored_query) }
+  it 'encodes the stored query as jsonb' do
+    expect(SavedSearch.columns_hash['stored_query'].type).to eq(:jsonb)
+  end
 
   it 'is invalid without name specified' do
     b = build(:saved_search, name: nil)
