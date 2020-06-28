@@ -53,7 +53,7 @@ module BawWeb
         if @media_types.blank?
           @media_types = {}
 
-          Settings.available_formats.each do |key, value|
+          available_formats.each do |key, value|
             media_category = key.to_sym
             @media_types[media_category] = []
 
@@ -85,24 +85,24 @@ module BawWeb
         if is_supported_text_media?(requested_format)
           [:text, {}]
         elsif is_supported_audio_media?(requested_format)
-          [:audio, Settings.cached_audio_defaults]
+          [:audio, cached_audio_defaults]
         elsif is_supported_image_media?(requested_format)
-          [:image, Settings.cached_spectrogram_defaults]
+          [:image, cached_spectrogram_defaults]
         else
           [:unknown, {}]
         end
       end
 
       def process_media_locally?
-        Settings.media_request_processor == MEDIA_PROCESSOR_LOCAL
+        media_request_processor == MEDIA_PROCESSOR_LOCAL
       end
 
       def process_media_resque?
-        Settings.media_request_processor == MEDIA_PROCESSOR_RESQUE
+        media_request_processor == MEDIA_PROCESSOR_RESQUE
       end
 
       def min_duration_larger_overlap?
-        Settings.audio_recording_max_overlap_sec >= Settings.audio_recording_min_duration_sec
+        audio_recording_max_overlap_sec >= audio_recording_min_duration_sec
       end
 
   end

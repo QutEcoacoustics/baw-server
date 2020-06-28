@@ -26,7 +26,7 @@
   // Uncomment the next line if you want to keep your containers running after VS Code shuts down.
   // "shutdownAction": "none",
   // Uncomment the next line to run commands after the container is created - for example installing git.
-  "postCreateCommand": "/home/baw_web/baw-server/provision/dev_setup.sh",
+  "postCreateCommand": "/home/baw_web/baw-server/provision/entrypoint.sh",
   // Add the IDs of extensions you want installed when the container is created in the array below.
   "extensions": [
     "rebornix.ruby",

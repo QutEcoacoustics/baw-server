@@ -42,19 +42,27 @@ RUN apt-get update \
   && mkdir -p "$GEM_HOME/bin" \
   && chmod 777 "$GEM_HOME/bin"
 
+
 ENV RAILS_ENV=production \
   APP_USER=${app_user} \
   APP_NAME=${app_name} \
   # enable binstubs to take priority
-  PATH=./bin:$PATH
+  PATH=./bin:$PATH \
+  BUNDLE_PATH__SYSTEM="true"
+
 
 USER ${app_user}
+
+RUN \
+  # temporarily upgrade bundler until we can jump to ruby 2.7 
+  gem update --system \
+  && gem install bundler
 
 # change the working directory to the user's home directory
 WORKDIR /home/${app_user}/${app_name}
 
 # add base dependency files for bundle install (so we don't invalidate docker cache)
-COPY --chown=${app_user} Gemfile Gemfile.lock /home/${app_user}/${app_name}/
+COPY --chown=${app_user} Gemfile Gemfile.lock  /home/${app_user}/${app_name}/
 
 VOLUME [ "/data" ]
 
@@ -71,7 +79,7 @@ EXPOSE 3000
 # install deps
 RUN \
   # install baw-server
-  bundle install --system \
+  BAW_SKIP_LOCAL_GEMS=true bundle install \
   # install docs for dev work
   && solargraph download-core \
   && solargraph bundle
@@ -96,8 +104,9 @@ EXPOSE 80
 # install deps
 # skip installing gem documentation
 RUN echo 'gem: --no-rdoc --no-ri' >> "$HOME/.gemrc" \
+  && bundle config set without development test \
   # install baw-server
-  && bundle install --system --without 'development' 'test'
+  && BAW_SKIP_LOCAL_GEMS=true bundle install
 
 # Add the Rails app
 COPY --chown=${app_user} ./ /home/${app_user}/${app_name}

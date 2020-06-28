@@ -1,12 +1,10 @@
-
 # Accessible through Settings.key
 # Environment specific settings expected in config/settings/{environment_name}.yml
 
 redis:
-  namespace: 'baw-workers'
+  namespace: "baw-workers"
   # http://www.rubydoc.info/github/redis/redis-rb/Redis#initialize-instance_method
-  connection: &redis_config
-    # see docker compose
+  connection: &redis_config # see docker compose
     host: redis
     port: 6379
     password:
@@ -33,7 +31,7 @@ resque:
     - mirror_<%= BawApp.env %>
   connection: *redis_config
   namespace: resque
-  log_level: 'Logger::INFO'
+  log_level: "Logger::INFO"
   polling_interval_seconds: 0.5
   # specify background_pid_file to have a Resque worker run in the background
   # otherwise it will run in the foreground
@@ -61,22 +59,31 @@ actions:
   mirror:
     queue: mirror_<%= BawApp.env %>
   audio_check:
-    queue:  maintenance_<%= BawApp.env %>
+    queue: maintenance_<%= BawApp.env %>
 media_request_processor: resque # options are local or resque (now only ever use resque with containers)
-db: &db
+dbs:
   ######################################################
   # these values are read by config/database.yml
+  # WARNING: sometimes rails loads the settings for multiple environments at the same time!
+  # Thus depending on RAILS_ENV/Rails.env/BawApp.env here will fail!
+  # We can't split it into environment settings files either because only one env is loaded by our config system.
   ######################################################
+  _default: &db
     adapter: postgresql
     encoding: utf8
     reconnect: false
-    database: baw_local_dev
     pool: 5
     username: postgres
-    password: 'password'
+    password: "password"
     # see docker compose
     host: db
     sslmode: allow
+  test:
+    <<: *db
+    database: baw_local_test
+  development:
+    <<: *db
+    database: baw_local_development
 devise:
   ######################################################
   # these values are read for config.{key} in
@@ -145,11 +152,11 @@ mailer:
     #authentication: login
     #password: password
   emails:
-    email_prefix: '[prefix]'
+    email_prefix: "[prefix]"
     sender_address: address@example.com
     required_recipients:
       - address@example.com
-  log_level: 'Logger::INFO'
+  log_level: "Logger::INFO"
 cached_audio_defaults:
   extension: mp3
   channel: 0
@@ -162,7 +169,7 @@ cached_spectrogram_defaults:
   sample_rate: 22050
   window: 512
   window_function: Hamming
-  colour: 'g'
+  colour: "g"
   ppms: 0.045
   max_duration_seconds: 180.0
   min_duration_seconds: 0.5
@@ -191,7 +198,7 @@ audio_tools:
   imagemagick_convert_executable: convert
   imagemagick_identify_executable: identify
   max_duration_seconds: 300.0
-  log_level: 'Logger::INFO'
+  log_level: "Logger::INFO"
 audio_tools_timeout_sec: 60.0
 # max overlap (default 5): maximum amount an audio recording can be trimmed at the end
 audio_recording_max_overlap_sec: 5.0
@@ -200,19 +207,19 @@ audio_recording_min_duration_sec: 10.0
 organisation_names:
   site_long_name: Acoustic Workbench
   organisation_name: Audio Group
-  github_issues_url: 'url to github issues page'
-  parent_site_name: '<<Brand name here>>'
-  parent_site_link: 'http://example.com'
+  github_issues_url: "url to github issues page"
+  parent_site_name: "<<Brand name here>>"
+  parent_site_link: "http://example.com"
   custom_menu:
     header_title: Custom Menu
     items:
       - title: Item 1
-        url: '/item1'
+        url: "/item1"
       - title: Item 2
-        url: '/item2'
+        url: "/item2"
 analytics:
   domain: example.com
-  ua: 'UA-XXXXXX'
+  ua: "UA-XXXXXX"
 recaptcha:
   public_key: set recaptcha public key
   private_key: set recaptcha private key

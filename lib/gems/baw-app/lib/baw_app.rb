@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+require 'dry-validation'
+require 'config'
+
 Dir.glob("#{__dir__}/patches/**/*.rb").sort.each do |override|
   require override
 end
@@ -19,7 +22,7 @@ module BawApp
   end
 
   def config_root
-    @config_root ||= self.root / 'config'
+    @config_root ||= root / 'config'
   end
 
   def env

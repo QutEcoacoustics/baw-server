@@ -160,7 +160,14 @@ group :workers, :server do
   gem 'resque'
   gem 'resque-job-stats'
   # source copied into repo, see lib/gems/resque-status
-  gem 'resque-status', path: 'lib/gems/resque-status'
+  # bypass 'installing' local gems while building the container.
+  # because full web app has not yet been copied to the container.
+  load_local = !ENV.has_key?('BAW_SKIP_LOCAL_GEMS')
+    if load_local
+    install_if -> { load_local } do
+      gem 'resque-status', path: 'lib/gems/resque-status'
+    end
+  end
   gem 'resque_solo'
 end
 

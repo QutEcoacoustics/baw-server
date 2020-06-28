@@ -137,8 +137,6 @@ module BawWorkers
 
       def load_settings(config_files)
         ::Config.load_and_set_settings(config_files)
-
-        puts "BawWorkers::Settings loaded from #{BawWorkers::Settings.sources}"
       end
 
       # Configures redis connections for both Resque and our own Redis wrapper
