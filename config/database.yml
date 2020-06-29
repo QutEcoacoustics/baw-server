@@ -8,7 +8,7 @@
 development:
   _: _
   #<% Settings.dbs.dig('development')&.each do |key, value| %>
-  <%= key %>: <%= value %>
+  "<%= key %>": <%= value %>
   #<% end %>
 
 # Warning: The database defined as "test" will be erased and
@@ -17,17 +17,17 @@ development:
 test:
   _: _
   #<% Settings.dbs.dig('test')&.each do |key, value| %>
-  <%= key %>: <%= value %>
+  "<%= key %>": <%= value %>
   #<% end %>
 
 production:
   _: _
   #<% Settings.dbs.dig('production')&.each do |key, value| %>
-  <%= key %>: <%= value %>
+  "<%= key %>": <%= value %>
   #<% end %>
 
 staging:
   _: _
   #<% Settings.dbs.dig('staging')&.each do |key, value| %>
-  <%= key %>: <%= value %>
+  "<%= key %>": <%= value %>
   #<% end %>

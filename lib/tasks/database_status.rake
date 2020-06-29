@@ -39,9 +39,12 @@ end
 namespace :baw do
   desc 'Cancel database check if MIGRATE_DB=false'
   task :skip_check? do
-    if ENV['MIGRATE_DB'] == 'false'
-      log '⏭ Skipping database status checks'
+    log "❔ Should we skip check? MIGRATE_DB is `#{ENV['MIGRATE_DB']}`"
+    if ENV['MIGRATE_DB'] != 'true'
+      log '⏭ Skipping database status checks because MIGRATE_DB is not exactly `true`'
       exit 0
+    else
+      log '⭐ We should not skip; continuing...'
     end
   end
 
