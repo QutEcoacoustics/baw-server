@@ -447,7 +447,7 @@ module Filter
       model = info[:model]
 
       if current_table != @table
-        base_query = @base_association.nil? ? @table : @table.from(@base_association.arel.as(@table.table_name))
+        base_query = @base_association.nil? ? @table : @table.from.from(@base_association.arel.as(@table.table_name))
         column_to_match_on = @filter_settings[:base_association_key] || :id
         subquery = base_query.project(@table[column_to_match_on])
 

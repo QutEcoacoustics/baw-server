@@ -8,16 +8,10 @@ def compare_filter_sql(filter, sql_result)
   filter_query
 end
 
-def comparison_ignore_spaces(a, b)
-  a_mod = a.gsub(/\s+/, '')
-  b_mod = b.gsub(/\s+/, '')
-  differences = a_mod.chars.each_with_index.to_a - b_mod.chars.each_with_index.to_a
-
-  key_words = ['SELECT', 'WHERE', 'AND', 'OR', 'INNER', 'FROM', 'ORDER']
-  map = Hash[*key_words.collect { |v| [v, "\n#{v}"] }.flatten]
-  re = Regexp.new(key_words.map { |x| Regexp.escape(x) }.join('|'))
-
-  expect(differences).to be_empty, "Strings do not match, first difference is at '#{differences.first(3)}'.\nFirst string: #{a_mod.gsub(re, map)}\n\nSecond string: #{b_mod.gsub(re, map)}"
+def comparison_ignore_spaces(actual, expected)
+  a_mod = actual.gsub(/\s*([A-Z]+)/, "\n\\1").gsub(/(\t| )+/, '').trim('\n')
+  b_mod = expected.gsub(/\s*([A-Z]+)/, "\n\\1").gsub(/(\t| )+/, '').trim('\n')
+  expect(a_mod).to eq(b_mod)
 end
 
 describe Filter::Query do
@@ -357,8 +351,8 @@ describe Filter::Query do
       complex_result = <<~SQL
         SELECT "audio_recordings"."recorded_date", "audio_recordings"."site_id"
         FROM "audio_recordings"
-        WHERE "audio_recordings"."deleted_at" IS NULL
-        AND "audio_recordings"."site_id" = 5
+        WHERE ("audio_recordings"."deleted_at" IS NULL)
+        AND ("audio_recordings"."site_id" = 5)
         ORDER BY "audio_recordings"."recorded_date" DESC
         LIMIT 25 OFFSET 0
       SQL
@@ -384,8 +378,8 @@ describe Filter::Query do
       complex_result = <<~SQL
         SELECT "audio_recordings". "id", "audio_recordings". "duration_seconds"
         FROM "audio_recordings"
-        WHERE "audio_recordings"."deleted_at" IS NULL
-        AND "audio_recordings"."site_id" = 5
+        WHERE ("audio_recordings"."deleted_at" IS NULL)
+        AND ("audio_recordings"."site_id" = 5)
         ORDER BY "audio_recordings"."recorded_date" DESC
         LIMIT 25 OFFSET 0
       SQL
@@ -605,72 +599,98 @@ describe Filter::Query do
       expect(filter_query.filter).to eq(expected_filter)
 
       user_id = user.id
-      complex_result_2 =
-        "SELECT\"audio_recordings\".\"recorded_date\",\"audio_recordings\".\"site_id\",\"audio_recordings\".\"duration_seconds\",\"audio_recordings\".\"media_type\" \
-FROM\"audio_recordings\" \
-INNERJOIN\"sites\"ON\"sites\".\"id\"=\"audio_recordings\".\"site_id\" \
-AND\"sites\".\"deleted_at\"ISNULL \
-WHERE\"audio_recordings\".\"deleted_at\"ISNULL \
-AND(EXISTS( \
-SELECT1 \
-FROM\"projects_sites\" \
-INNERJOIN\"projects\"ON\"projects_sites\".\"project_id\"=\"projects\".\"id\" \
-WHERE\"projects_sites\".\"site_id\"=\"sites\".\"id\" \
-ANDEXISTS( \
-SELECT1 \
-FROM\"permissions\" \
-WHERE\"permissions\".\"level\"IN('owner','writer','reader') \
-AND\"projects\".\"id\"=\"permissions\".\"project_id\" \
-AND\"projects\".\"deleted_at\"ISNULL \
-AND(\"permissions\".\"user_id\"=#{user_id} \
-OR\"permissions\".\"allow_logged_in\"='t')))) \
-AND(\"audio_recordings\".\"site_id\"<123456 \
-AND\"audio_recordings\".\"site_id\">9876 \
-AND\"audio_recordings\".\"site_id\"IN(1,2,3) \
-AND\"audio_recordings\".\"site_id\">=100 \
-AND\"audio_recordings\".\"site_id\"<200 \
-AND\"audio_recordings\".\"status\">='4567' \
-AND\"audio_recordings\".\"status\"ILIKE'%containtext%' \
-AND\"audio_recordings\".\"status\"ILIKE'startswithtext%' \
-AND\"audio_recordings\".\"status\"ILIKE'%endswithtext' \
-AND\"audio_recordings\".\"status\">='123' \
-AND\"audio_recordings\".\"status\"<='128' \
-AND\"audio_recordings\".\"status\"='hello_status' \
-AND\"audio_recordings\".\"duration_seconds\"IN(4,5,6) \
-AND\"audio_recordings\".\"duration_seconds\"=123 \
-AND(\"audio_recordings\".\"duration_seconds\"!=40 \
-ORNOT(\"audio_recordings\".\"channels\"<=9999))) \
-AND\"audio_recordings\".\"id\"IN( \
-SELECT\"audio_recordings\".\"id\" \
-FROM\"audio_recordings\" \
-LEFTOUTERJOIN\"audio_events\"ON\"audio_recordings\".\"id\"=\"audio_events\".\"audio_recording_id\" \
-WHERE\"audio_events\".\"is_reference\"='t') \
-AND((((((((((\"audio_recordings\".\"recorded_date\"='2016-04-2412:00:00' \
-OR\"audio_recordings\".\"media_type\"ILIKE'%world') \
-OR\"audio_recordings\".\"media_type\"ILIKE'%testing\\_testing%') \
-OR\"audio_recordings\".\"duration_seconds\"=60) \
-OR\"audio_recordings\".\"duration_seconds\"<=70) \
-OR\"audio_recordings\".\"duration_seconds\"=50) \
-OR\"audio_recordings\".\"duration_seconds\">=80) \
-OR\"audio_recordings\".\"channels\"=1) \
-OR\"audio_recordings\".\"channels\"<=8888) \
-OR\"audio_recordings\".\"id\"IN( \
-SELECT\"audio_recordings\".\"id\" \
-FROM\"audio_recordings\" \
-LEFTOUTERJOIN\"sites\"ON\"audio_recordings\".\"site_id\"=\"sites\".\"id\" \
-WHERE\"sites\".\"id\"=5)) \
-OR\"audio_recordings\".\"status\"ILIKE'%testing\\_testing%') \
-AND(NOT(\"audio_recordings\".\"duration_seconds\"!=140)) \
-AND(NOT(\"audio_recordings\".\"id\"IN( \
-SELECT\"audio_recordings\".\"id\" \
-FROM\"audio_recordings\" \
-LEFTOUTERJOIN\"audio_events\"ON\"audio_recordings\".\"id\"=\"audio_events\".\"audio_recording_id\" \
-LEFTOUTERJOIN\"audio_events_tags\"ON\"audio_events\".\"id\"=\"audio_events_tags\".\"audio_event_id\" \
-LEFTOUTERJOIN\"tags\"ON\"audio_events_tags\".\"tag_id\"=\"tags\".\"id\" \
-WHERE\"tags\".\"text\"ILIKE'%koala%'))) \
-AND\"audio_recordings\".\"channels\"=28 \
-ORDERBY\"audio_recordings\".\"duration_seconds\"DESC \
-LIMIT10OFFSET0"
+      complex_result_2 = <<~SQL
+        SELECT"audio_recordings"."recorded_date","audio_recordings"."site_id","audio_recordings"."duration_seconds","audio_recordings"."media_type"
+        FROM"audio_recordings"
+        INNER
+        JOIN"sites"
+        ON("sites"."deleted_at"
+        IS
+        NULL)
+        AND("sites"."id"="audio_recordings"."site_id")
+        WHERE("audio_recordings"."deleted_at"
+        IS
+        NULL)
+        AND(
+        EXISTS(
+        SELECT 1
+        FROM"projects_sites"
+        INNER JOIN"projects"ON"projects_sites"."project_id"="projects"."id"
+        WHERE"projects_sites"."site_id"="sites"."id"
+        AND EXISTS(
+        SELECT 1
+        FROM"permissions"
+        WHERE"permissions"."level"
+        IN('owner','writer','reader')
+        AND"projects"."id"="permissions"."project_id"
+        AND"projects"."deleted_at"
+        IS
+        NULL
+        AND("permissions"."user_id"=#{user_id})
+        OR("permissions"."allow_logged_in"=
+        TRUE))))
+        AND("audio_recordings"."site_id"<123456)
+        AND("audio_recordings"."site_id">9876)
+        AND("audio_recordings"."site_id"
+        IN(1,2,3))
+        AND("audio_recordings"."site_id">=100)
+        AND("audio_recordings"."site_id"<200)
+        AND("audio_recordings"."status">='4567')
+        AND("audio_recordings"."status"
+        ILIKE'%containtext%')
+        AND("audio_recordings"."status"
+        ILIKE'startswithtext%')
+        AND("audio_recordings"."status"
+        ILIKE'%endswithtext')
+        AND("audio_recordings"."status">='123')
+        AND("audio_recordings"."status"<='128')
+        AND("audio_recordings"."status"='hello_status')
+        AND("audio_recordings"."duration_seconds"
+        IN(4.0,5.0,6.0))
+        AND("audio_recordings"."duration_seconds"=123.0)
+        AND(("audio_recordings"."duration_seconds"!=40.0)
+        OR(
+        NOT("audio_recordings"."channels"<=9999)))
+        AND("audio_recordings"."id"
+        IN(
+        SELECT"audio_recordings"."id"
+        FROM"audio_recordings"
+        LEFT OUTER JOIN"audio_events"
+        ON"audio_recordings"."id"="audio_events"."audio_recording_id"
+        WHERE"audio_events"."is_reference"=
+        TRUE))
+        AND(("audio_recordings"."recorded_date"='2016-04-2412:00:00')
+        OR("audio_recordings"."media_type"
+          ILIKE '%world')
+        OR("audio_recordings"."media_type"
+          ILIKE '%testing\\_testing%')
+        OR("audio_recordings"."duration_seconds"=60.0)
+        OR("audio_recordings"."duration_seconds"<=70.0)
+        OR("audio_recordings"."duration_seconds"=50.0)
+        OR("audio_recordings"."duration_seconds">=80.0)
+        OR("audio_recordings"."channels"=1)
+        OR("audio_recordings"."channels"<=8888)
+        OR("audio_recordings"."id"
+        IN(
+        SELECT"audio_recordings"."id"
+        FROM"audio_recordings"
+        LEFT OUTER JOIN"sites"ON"audio_recordings"."site_id"="sites"."id"
+        WHERE"sites"."id"=5))
+        OR("audio_recordings"."status"
+        ILIKE '%testing\\_testing%'))
+        AND(NOT("audio_recordings"."duration_seconds"!=140.0))
+        AND(NOT("audio_recordings"."id"IN(
+        SELECT"audio_recordings"."id"
+        FROM"audio_recordings"
+        LEFT OUTER JOIN"audio_events"ON"audio_recordings"."id"="audio_events"."audio_recording_id"
+        LEFT OUTER JOIN"audio_events_tags"ON"audio_events"."id"="audio_events_tags"."audio_event_id"
+        LEFT OUTER JOIN"tags"ON"audio_events_tags"."tag_id"="tags"."id"
+        WHERE"tags"."text"ILIKE'%koala%')))
+        AND("audio_recordings"."channels"=28)
+        ORDER BY"audio_recordings"."duration_seconds"DESC
+        LIMIT 10
+        OFFSET 0
+      SQL
 
       full_query = filter_query.query_full
       comparison_ignore_spaces(full_query.to_sql, complex_result_2)
@@ -702,37 +722,136 @@ LIMIT10OFFSET0"
           }
         }
       }
-      complex_result =
-        "SELECT\"audio_recordings\".\"id\",\"audio_recordings\".\"duration_seconds\" \
-FROM\"audio_recordings\" \
-WHERE\"audio_recordings\".\"deleted_at\"ISNULL \
-AND\"audio_recordings\".\"id\"IN( \
-SELECT\"audio_recordings\".\"id\" \
-FROM\"audio_recordings\" \
-LEFTOUTERJOIN\"sites\"ON\"audio_recordings\".\"site_id\"=\"sites\".\"id\" \
-WHERE\"sites\".\"id\"=5) \
-AND\"audio_recordings\".\"id\"IN( \
-SELECT\"audio_recordings\".\"id\" \
-FROM\"audio_recordings\" \
-LEFTOUTERJOIN\"audio_events\"ON\"audio_recordings\".\"id\"=\"audio_events\".\"audio_recording_id\" \
-WHERE\"audio_events\".\"is_reference\"='t') \
-AND\"audio_recordings\".\"id\"IN( \
-SELECT\"audio_recordings\".\"id\" \
-FROM\"audio_recordings\" \
-LEFTOUTERJOIN\"audio_events\"ON\"audio_recordings\".\"id\"=\"audio_events\".\"audio_recording_id\" \
-LEFTOUTERJOIN\"audio_events_tags\"ON\"audio_events\".\"id\"=\"audio_events_tags\".\"audio_event_id\" \
-LEFTOUTERJOIN\"tags\"ON\"audio_events_tags\".\"tag_id\"=\"tags\".\"id\" \
-WHERE\"tags\".\"text\"ILIKE'%koala%') \
-ORDERBY\"audio_recordings\".\"recorded_date\"DESC \
-LIMIT25OFFSET0"
+      complex_result = <<~SQL
+        SELECT"audio_recordings"."id","audio_recordings"."duration_seconds"
+        FROM"audio_recordings"
+        WHERE("audio_recordings"."deleted_at"
+        IS
+        NULL)
+        AND("audio_recordings"."id"
+        IN(
+        SELECT"audio_recordings"."id"
+        FROM"audio_recordings"
+        LEFT
+        OUTER
+        JOIN"sites"
+        ON"audio_recordings"."site_id"="sites"."id"
+        WHERE"sites"."id"=5))
+        AND("audio_recordings"."id"
+        IN(
+        SELECT"audio_recordings"."id"
+        FROM"audio_recordings"
+        LEFT
+        OUTER
+        JOIN"audio_events"
+        ON"audio_recordings"."id"="audio_events"."audio_recording_id"
+        WHERE"audio_events"."is_reference"=
+        TRUE))
+        AND("audio_recordings"."id"
+        IN(
+        SELECT"audio_recordings"."id"
+        FROM"audio_recordings"
+        LEFT
+        OUTER
+        JOIN"audio_events"
+        ON"audio_recordings"."id"="audio_events"."audio_recording_id"
+        LEFT
+        OUTER
+        JOIN"audio_events_tags"
+        ON"audio_events"."id"="audio_events_tags"."audio_event_id"
+        LEFT
+        OUTER
+        JOIN"tags"
+        ON"audio_events_tags"."tag_id"="tags"."id"
+        WHERE"tags"."text"ILIKE'%koala%'))
+        ORDER
+        BY"audio_recordings"."recorded_date"
+        DESC
+        LIMIT 25
+        OFFSET 0
+      SQL
 
       compare_filter_sql(request_body_obj, complex_result)
 
       user = writer_user
       user_id = user.id
 
-      complex_result_2 =
-        "SELECT\"audio_recordings\".\"id\",\"audio_recordings\".\"duration_seconds\"FROM\"audio_recordings\"INNERJOIN\"sites\"ON\"sites\".\"id\"=\"audio_recordings\".\"site_id\"AND\"sites\".\"deleted_at\"ISNULLWHERE\"audio_recordings\".\"deleted_at\"ISNULLAND(EXISTS(SELECT1FROM\"projects_sites\"INNERJOIN\"projects\"ON\"projects_sites\".\"project_id\"=\"projects\".\"id\"WHERE\"projects_sites\".\"site_id\"=\"sites\".\"id\"ANDEXISTS(SELECT1FROM\"permissions\"WHERE\"permissions\".\"level\"IN('owner','writer','reader')AND\"projects\".\"id\"=\"permissions\".\"project_id\"AND\"projects\".\"deleted_at\"ISNULLAND(\"permissions\".\"user_id\"=#{user_id}OR\"permissions\".\"allow_logged_in\"='t'))))AND\"audio_recordings\".\"id\"IN(SELECT\"audio_recordings\".\"id\"FROM\"audio_recordings\"LEFTOUTERJOIN\"sites\"ON\"audio_recordings\".\"site_id\"=\"sites\".\"id\"WHERE\"sites\".\"id\"=5)AND\"audio_recordings\".\"id\"IN(SELECT\"audio_recordings\".\"id\"FROM\"audio_recordings\"LEFTOUTERJOIN\"audio_events\"ON\"audio_recordings\".\"id\"=\"audio_events\".\"audio_recording_id\"WHERE\"audio_events\".\"is_reference\"='t')AND\"audio_recordings\".\"id\"IN(SELECT\"audio_recordings\".\"id\"FROM\"audio_recordings\"LEFTOUTERJOIN\"audio_events\"ON\"audio_recordings\".\"id\"=\"audio_events\".\"audio_recording_id\"LEFTOUTERJOIN\"audio_events_tags\"ON\"audio_events\".\"id\"=\"audio_events_tags\".\"audio_event_id\"LEFTOUTERJOIN\"tags\"ON\"audio_events_tags\".\"tag_id\"=\"tags\".\"id\"WHERE\"tags\".\"text\"ILIKE'%koala%')ORDERBY\"audio_recordings\".\"recorded_date\"DESCLIMIT25OFFSET0"
+      complex_result_2 = <<~SQL
+        SELECT"audio_recordings"."id","audio_recordings"."duration_seconds"
+        FROM"audio_recordings"
+        INNER
+        JOIN"sites"
+        ON("sites"."deleted_at"
+        IS
+        NULL)
+        AND("sites"."id"="audio_recordings"."site_id")
+        WHERE("audio_recordings"."deleted_at"
+        IS
+        NULL)
+        AND(
+        EXISTS(
+        SELECT1
+        FROM"projects_sites"
+        INNER
+        JOIN"projects"
+        ON"projects_sites"."project_id"="projects"."id"
+        WHERE"projects_sites"."site_id"="sites"."id"
+        AND
+        EXISTS(
+        SELECT1
+        FROM"permissions"
+        WHERE"permissions"."level"
+        IN('owner','writer','reader')
+        AND"projects"."id"="permissions"."project_id"
+        AND"projects"."deleted_at"
+        IS
+        NULL
+        AND("permissions"."user_id"=#{user_id})
+        OR("permissions"."allow_logged_in"=
+        TRUE))))
+        AND ("audio_recordings"."id"
+        IN(
+        SELECT"audio_recordings"."id"
+        FROM"audio_recordings"
+        LEFT
+        OUTER
+        JOIN"sites"
+        ON"audio_recordings"."site_id"="sites"."id"
+        WHERE"sites"."id"=5))
+        AND ("audio_recordings"."id"
+        IN(
+        SELECT"audio_recordings"."id"
+        FROM"audio_recordings"
+        LEFT
+        OUTER
+        JOIN"audio_events"
+        ON"audio_recordings"."id"="audio_events"."audio_recording_id"
+        WHERE"audio_events"."is_reference"=
+        TRUE))
+        AND ("audio_recordings"."id"
+        IN(
+        SELECT"audio_recordings"."id"
+        FROM"audio_recordings"
+        LEFT
+        OUTER
+        JOIN"audio_events"
+        ON"audio_recordings"."id"="audio_events"."audio_recording_id"
+        LEFT
+        OUTER
+        JOIN"audio_events_tags"
+        ON"audio_events"."id"="audio_events_tags"."audio_event_id"
+        LEFT
+        OUTER
+        JOIN"tags"
+        ON"audio_events_tags"."tag_id"="tags"."id"
+        WHERE"tags"."text"
+        ILIKE '%koala%'))
+        ORDER
+        BY"audio_recordings"."recorded_date"
+        DESC
+        LIMIT 25
+        OFFSET 0
+      SQL
 
       filter_query = Filter::Query.new(
         request_body_obj,
@@ -768,31 +887,99 @@ LIMIT25OFFSET0"
           direction: 'desc'
         }
       }
-      complex_result =
-        "SELECT\"audio_recordings\".\"id\", \
-          \"audio_recordings\".\"site_id\", \
-          \"audio_recordings\".\"duration_seconds\", \
-          \"audio_recordings\".\"recorded_date\", \
-          \"audio_recordings\".\"created_at\" \
-FROM\"audio_recordings\" \
-WHERE\"audio_recordings\".\"deleted_at\"ISNULL \
-AND(\"audio_recordings\".\"id\"IN \
-(SELECT\"audio_recordings\".\"id\"FROM\"audio_recordings\" \
-LEFTOUTERJOIN\"sites\"ON\"audio_recordings\".\"site_id\"=\"sites\".\"id\" \
-LEFTOUTERJOIN\"projects_sites\"ON\"sites\".\"id\"=\"projects_sites\".\"site_id\" \
-LEFTOUTERJOIN\"projects\"ON\"projects_sites\".\"project_id\"=\"projects\".\"id\" \
-WHERE\"projects\".\"id\"<123456) \
-AND\"audio_recordings\".\"duration_seconds\"!=40) \
-ORDERBY\"audio_recordings\".\"recorded_date\" \
-DESCLIMIT20OFFSET0"
+      complex_result = <<~SQL
+        SELECT"audio_recordings"."id","audio_recordings"."site_id","audio_recordings"."duration_seconds","audio_recordings"."recorded_date","audio_recordings"."created_at"
+        FROM"audio_recordings"
+        WHERE("audio_recordings"."deleted_at"
+        IS
+        NULL)
+        AND("audio_recordings"."id"
+        IN (
+        SELECT"audio_recordings"."id"
+        FROM"audio_recordings"
+        LEFT
+        OUTER
+        JOIN"sites"
+        ON"audio_recordings"."site_id"="sites"."id"
+        LEFT
+        OUTER
+        JOIN"projects_sites"
+        ON"sites"."id"="projects_sites"."site_id"
+        LEFT
+        OUTER
+        JOIN"projects"
+        ON"projects_sites"."project_id"="projects"."id"
+        WHERE"projects"."id"<123456))
+        AND("audio_recordings"."duration_seconds"!=40.0)
+        ORDER
+        BY"audio_recordings"."recorded_date"
+        DESC
+        LIMIT 20
+        OFFSET 0
+      SQL
 
       compare_filter_sql(request_body_obj, complex_result)
 
       user = writer_user
       user_id = user.id
 
-      complex_result_2 =
-        "SELECT\"audio_recordings\".\"id\",\"audio_recordings\".\"site_id\",\"audio_recordings\".\"duration_seconds\",\"audio_recordings\".\"recorded_date\",\"audio_recordings\".\"created_at\"FROM\"audio_recordings\"INNERJOIN\"sites\"ON\"sites\".\"id\"=\"audio_recordings\".\"site_id\"AND\"sites\".\"deleted_at\"ISNULLWHERE\"audio_recordings\".\"deleted_at\"ISNULLAND(EXISTS(SELECT1FROM\"projects_sites\"INNERJOIN\"projects\"ON\"projects_sites\".\"project_id\"=\"projects\".\"id\"WHERE\"projects_sites\".\"site_id\"=\"sites\".\"id\"ANDEXISTS(SELECT1FROM\"permissions\"WHERE\"permissions\".\"level\"IN('owner','writer','reader')AND\"projects\".\"id\"=\"permissions\".\"project_id\"AND\"projects\".\"deleted_at\"ISNULLAND(\"permissions\".\"user_id\"=#{user_id}OR\"permissions\".\"allow_logged_in\"='t'))))AND(\"audio_recordings\".\"id\"IN(SELECT\"audio_recordings\".\"id\"FROM\"audio_recordings\"LEFTOUTERJOIN\"sites\"ON\"audio_recordings\".\"site_id\"=\"sites\".\"id\"LEFTOUTERJOIN\"projects_sites\"ON\"sites\".\"id\"=\"projects_sites\".\"site_id\"LEFTOUTERJOIN\"projects\"ON\"projects_sites\".\"project_id\"=\"projects\".\"id\"WHERE\"projects\".\"id\"<123456)AND\"audio_recordings\".\"duration_seconds\"!=40)ORDERBY\"audio_recordings\".\"recorded_date\"DESCLIMIT20OFFSET0"
+      complex_result_2 = <<~SQL
+        SELECT"audio_recordings"."id","audio_recordings"."site_id","audio_recordings"."duration_seconds","audio_recordings"."recorded_date","audio_recordings"."created_at"
+        FROM"audio_recordings"
+        INNER
+        JOIN"sites"
+        ON ("sites"."deleted_at"
+        IS
+        NULL)
+        AND("sites"."id"="audio_recordings"."site_id")
+        WHERE("audio_recordings"."deleted_at"
+        IS
+        NULL)
+        AND(
+        EXISTS(
+        SELECT 1
+        FROM"projects_sites"
+        INNER
+        JOIN"projects"
+        ON"projects_sites"."project_id"="projects"."id"
+        WHERE"projects_sites"."site_id"="sites"."id"
+        AND
+        EXISTS(
+        SELECT1
+        FROM"permissions"
+        WHERE"permissions"."level"
+        IN('owner','writer','reader')
+        AND"projects"."id"="permissions"."project_id"
+        AND"projects"."deleted_at"
+        IS
+        NULL
+        AND("permissions"."user_id"=#{user_id})
+        OR("permissions"."allow_logged_in"=
+        TRUE))))
+        AND("audio_recordings"."id"
+        IN(
+        SELECT"audio_recordings"."id"
+        FROM"audio_recordings"
+        LEFT
+        OUTER
+        JOIN"sites"
+        ON"audio_recordings"."site_id"="sites"."id"
+        LEFT
+        OUTER
+        JOIN"projects_sites"
+        ON"sites"."id"="projects_sites"."site_id"
+        LEFT
+        OUTER
+        JOIN"projects"
+        ON"projects_sites"."project_id"="projects"."id"
+        WHERE"projects"."id"<123456))
+        AND("audio_recordings"."duration_seconds"!=40.0)
+        ORDER
+        BY"audio_recordings"."recorded_date"
+        DESC
+        LIMIT 20
+        OFFSET 0
+      SQL
 
       filter_query = Filter::Query.new(
         request_body_obj,
@@ -824,69 +1011,80 @@ DESCLIMIT20OFFSET0"
       user_id = user.id
 
       complex_result = <<~SQL
-        SELECT
-          "analysis_jobs_items"."analysis_job_id",
-          "analysis_jobs_items"."audio_recording_id",
-          "analysis_jobs_items"."status"
-        FROM (SELECT
-          "tmp_audio_recordings_generator"."id" AS "audio_recording_id",
-          "analysis_jobs_items"."id",
-          "analysis_jobs_items"."analysis_job_id",
-          "analysis_jobs_items"."queue_id",
-          "analysis_jobs_items"."status",
-          "analysis_jobs_items"."created_at",
-          "analysis_jobs_items"."queued_at",
-          "analysis_jobs_items"."work_started_at",
-          "analysis_jobs_items"."completed_at",
-          "analysis_jobs_items"."cancel_started_at"
+        SELECT "analysis_jobs_items"."analysis_job_id","analysis_jobs_items"."audio_recording_id","analysis_jobs_items"."status"
+        FROM (
+        SELECT "tmp_audio_recordings_generator"."id"
+        AS "audio_recording_id","analysis_jobs_items"."id","analysis_jobs_items"."analysis_job_id","analysis_jobs_items"."queue_id","analysis_jobs_items"."status","analysis_jobs_items"."created_at","analysis_jobs_items"."queued_at","analysis_jobs_items"."work_started_at",          "analysis_jobs_items"."completed_at","analysis_jobs_items"."cancel_started_at"
         FROM "analysis_jobs_items"
           RIGHT
-          OUTER JOIN "audio_recordings" "tmp_audio_recordings_generator"
-            ON "tmp_audio_recordings_generator"."id" IS NULL
-        ) analysis_jobs_items INNER
+          OUTER
+          JOIN "audio_recordings" "tmp_audio_recordings_generator"
+          ON "tmp_audio_recordings_generator"."id"
+            IS
+            NULL) analysis_jobs_items
+          INNER
           JOIN "audio_recordings"
-            ON "audio_recordings"."id" = "analysis_jobs_items"."audio_recording_id"
-               AND "audio_recordings"."deleted_at" IS NULL
-          INNER JOIN "sites"
-            ON "sites"."id" = "audio_recordings"."site_id"
-               AND "sites"."deleted_at" IS NULL
-        WHERE (EXISTS(SELECT 1
+            ON ("audio_recordings"."deleted_at"
+              IS
+              NULL)
+               AND ("audio_recordings"."id" = "analysis_jobs_items"."audio_recording_id")
+          INNER
+          JOIN "sites"
+            ON ("sites"."deleted_at"
+              IS
+              NULL)
+               AND ("sites"."id" = "audio_recordings"."site_id")
+        WHERE (
+          EXISTS(
+            SELECT 1
                       FROM "projects_sites"
-                      INNERJOIN "projects" ON "projects_sites"."project_id" = "projects"."id"
+                      INNER
+                      JOIN "projects"
+                      ON "projects_sites"."project_id" = "projects"."id"
                       WHERE "projects_sites"."site_id"="sites"."id"
-                      AND EXISTS(
+                      AND
+                      EXISTS(
                       SELECT 1
                       FROM "permissions"
-                      WHERE "permissions"."level" IN ('owner','writer','reader')
+                      WHERE "permissions"."level"
+                      IN ('owner','writer','reader')
                       AND "projects"."id" = "permissions"."project_id"
-                      AND "projects"."deleted_at"ISNULL
-                      AND ("permissions"."user_id" = #{user_id}
-                      OR "permissions"."allow_logged_in"='t'))))
-              AND "analysis_jobs_items"."audio_recording_id" IN (
+                      AND "projects"."deleted_at"
+                      IS
+                      NULL
+                      AND ("permissions"."user_id" = #{user_id})
+                      OR ("permissions"."allow_logged_in"=
+                      TRUE))))
+              AND ("analysis_jobs_items"."audio_recording_id"
+              IN (
               SELECT "analysis_jobs_items"."audio_recording_id"
-                FROM (SELECT "analysis_jobs_items".*
-                  FROM (SELECT
-                    "tmp_audio_recordings_generator"."id" AS "audio_recording_id",
-                    "analysis_jobs_items"."id",
-                    "analysis_jobs_items"."analysis_job_id",
-                    "analysis_jobs_items"."queue_id",
-                    "analysis_jobs_items"."status",
-                    "analysis_jobs_items"."created_at",
-                    "analysis_jobs_items"."queued_at",
-                    "analysis_jobs_items"."work_started_at",
-                    "analysis_jobs_items"."completed_at",
-                    "analysis_jobs_items"."cancel_started_at"
+                FROM (
+                  SELECT "analysis_jobs_items".*
+                  FROM (
+                    SELECT "tmp_audio_recordings_generator"."id"
+                    AS "audio_recording_id","analysis_jobs_items"."id","analysis_jobs_items"."analysis_job_id","analysis_jobs_items"."queue_id","analysis_jobs_items"."status","analysis_jobs_items"."created_at","analysis_jobs_items"."queued_at","analysis_jobs_items"."work_started_at","analysis_jobs_items"."completed_at","analysis_jobs_items"."cancel_started_at"
                   FROM "analysis_jobs_items"
-                    RIGHT OUTER JOIN "audio_recordings" "tmp_audio_recordings_generator"
-                      ON "tmp_audio_recordings_generator"."id" IS NULL) analysis_jobs_items
-                    INNER JOIN "audio_recordings"
-                      ON "audio_recordings"."id" = "analysis_jobs_items"."audio_recording_id"
-                        AND "audio_recordings"."deleted_at" IS NULL) analysis_jobs_items
-                  LEFT OUTER JOIN "audio_recordings"
+                    RIGHT
+                    OUTER
+                    JOIN "audio_recordings" "tmp_audio_recordings_generator"
+                      ON "tmp_audio_recordings_generator"."id"
+                      IS
+                      NULL) analysis_jobs_items
+                    INNER
+                    JOIN "audio_recordings"
+                      ON  ("audio_recordings"."deleted_at"
+                      IS
+                      NULL)
+                        AND ("audio_recordings"."id" = "analysis_jobs_items"."audio_recording_id")) analysis_jobs_items
+                  LEFT
+                  OUTER
+                  JOIN "audio_recordings"
                     ON "analysis_jobs_items"."audio_recording_id" = "audio_recordings"."id"
-              WHERE "audio_recordings"."duration_seconds" >= 60000.0)
-        ORDER BY
-          "analysis_jobs_items"."audio_recording_id" ASC
+              WHERE "audio_recordings"."duration_seconds" >= 60000.0))
+        ORDER
+        BY "audio_recording_id"
+        ASC, "analysis_jobs_items"."audio_recording_id"
+        ASC
         LIMIT 20
         OFFSET 20
       SQL
@@ -922,8 +1120,62 @@ DESCLIMIT20OFFSET0"
         AudioEvent.filter_settings
       )
 
-      expected_sql =
-        "SELECT\"audio_events\".\"id\",\"audio_events\".\"audio_recording_id\",\"audio_events\".\"start_time_seconds\",\"audio_events\".\"end_time_seconds\",\"audio_events\".\"low_frequency_hertz\",\"audio_events\".\"high_frequency_hertz\",\"audio_events\".\"is_reference\",\"audio_events\".\"creator_id\",\"audio_events\".\"updated_at\",\"audio_events\".\"created_at\"FROM\"audio_events\"INNERJOIN\"audio_recordings\"ON\"audio_recordings\".\"id\"=\"audio_events\".\"audio_recording_id\"AND\"audio_recordings\".\"deleted_at\"ISNULLINNERJOIN\"sites\"ON\"sites\".\"id\"=\"audio_recordings\".\"site_id\"AND\"sites\".\"deleted_at\"ISNULLWHERE\"audio_events\".\"deleted_at\"ISNULLAND(EXISTS(SELECT1FROM\"projects_sites\"INNERJOIN\"projects\"ON\"projects_sites\".\"project_id\"=\"projects\".\"id\"WHERE\"projects_sites\".\"site_id\"=\"sites\".\"id\"ANDEXISTS(SELECT1FROM\"permissions\"WHERE\"permissions\".\"level\"IN('owner','writer','reader')AND\"projects\".\"id\"=\"permissions\".\"project_id\"AND\"projects\".\"deleted_at\"ISNULLAND(\"permissions\".\"user_id\"=#{user_id}OR\"permissions\".\"allow_logged_in\"='t')))OREXISTS(SELECT1FROM\"audio_events\"\"ae_ref\"WHERE\"ae_ref\".\"deleted_at\"ISNULLAND\"ae_ref\".\"is_reference\"='t'AND\"ae_ref\".\"id\"=\"audio_events\".\"id\"))AND((\"audio_events\".\"end_time_seconds\"-\"audio_events\".\"start_time_seconds\")>3)ORDERBY\"audio_events\".\"created_at\"DESCLIMIT25OFFSET0"
+      expected_sql = <<~SQL
+        SELECT"audio_events"."id","audio_events"."audio_recording_id","audio_events"."start_time_seconds","audio_events"."end_time_seconds","audio_events"."low_frequency_hertz","audio_events"."high_frequency_hertz","audio_events"."is_reference","audio_events"."creator_id","audio_events"."updated_at","audio_events"."created_at"
+        FROM"audio_events"
+        INNER
+        JOIN"audio_recordings"
+        ON("audio_recordings"."deleted_at"
+        IS
+        NULL)
+        AND ("audio_recordings"."id"="audio_events"."audio_recording_id")
+        INNER
+        JOIN"sites"
+        ON("sites"."deleted_at"
+        IS
+        NULL)
+        AND ("sites"."id"="audio_recordings"."site_id")
+        WHERE("audio_events"."deleted_at"
+        IS
+        NULL)
+        AND((
+        EXISTS(
+        SELECT1
+        FROM"projects_sites"
+        INNER
+        JOIN"projects"
+        ON"projects_sites"."project_id"="projects"."id"
+        WHERE"projects_sites"."site_id"="sites"."id"
+        AND
+        EXISTS(
+        SELECT1
+        FROM"permissions"
+        WHERE"permissions"."level"
+        IN('owner','writer','reader')
+        AND"projects"."id"="permissions"."project_id"
+        AND"projects"."deleted_at"
+        IS
+        NULL
+        AND("permissions"."user_id"=#{user_id})
+        OR("permissions"."allow_logged_in"=
+        TRUE))))
+        OR(
+        EXISTS(
+        SELECT1
+        FROM"audio_events""ae_ref"
+        WHERE"ae_ref"."deleted_at"
+        IS
+        NULL
+        AND"ae_ref"."is_reference"=
+        TRUE
+        AND"ae_ref"."id"="audio_events"."id")))
+        AND(("audio_events"."end_time_seconds"-"audio_events"."start_time_seconds")>3)
+        ORDER
+        BY"audio_events"."created_at"
+        DESC
+        LIMIT25
+        OFFSET0
+      SQL
 
       comparison_ignore_spaces(filter_query.query_full.to_sql, expected_sql)
     end
@@ -951,8 +1203,61 @@ DESCLIMIT20OFFSET0"
         AudioEvent.filter_settings
       )
 
-      expected_sql =
-        "SELECT\"audio_events\".\"id\",\"audio_events\".\"audio_recording_id\",\"audio_events\".\"start_time_seconds\",\"audio_events\".\"end_time_seconds\",\"audio_events\".\"low_frequency_hertz\",\"audio_events\".\"high_frequency_hertz\",\"audio_events\".\"is_reference\",\"audio_events\".\"creator_id\",\"audio_events\".\"updated_at\",\"audio_events\".\"created_at\"FROM\"audio_events\"INNERJOIN\"audio_recordings\"ON\"audio_recordings\".\"id\"=\"audio_events\".\"audio_recording_id\"AND\"audio_recordings\".\"deleted_at\"ISNULLINNERJOIN\"sites\"ON\"sites\".\"id\"=\"audio_recordings\".\"site_id\"AND\"sites\".\"deleted_at\"ISNULLWHERE\"audio_events\".\"deleted_at\"ISNULLAND(EXISTS(SELECT1FROM\"projects_sites\"INNERJOIN\"projects\"ON\"projects_sites\".\"project_id\"=\"projects\".\"id\"WHERE\"projects_sites\".\"site_id\"=\"sites\".\"id\"ANDEXISTS(SELECT1FROM\"permissions\"WHERE\"permissions\".\"level\"IN('owner','writer','reader')AND\"projects\".\"id\"=\"permissions\".\"project_id\"AND\"projects\".\"deleted_at\"ISNULLAND(\"permissions\".\"user_id\"=#{user_id}OR\"permissions\".\"allow_logged_in\"='t')))OREXISTS(SELECT1FROM\"audio_events\"\"ae_ref\"WHERE\"ae_ref\".\"deleted_at\"ISNULLAND\"ae_ref\".\"is_reference\"='t'AND\"ae_ref\".\"id\"=\"audio_events\".\"id\"))AND((\"audio_events\".\"end_time_seconds\"-\"audio_events\".\"start_time_seconds\")>3)ORDERBY(\"audio_events\".\"end_time_seconds\"-\"audio_events\".\"start_time_seconds\")ASCLIMIT25OFFSET0"
+      expected_sql = <<~SQL
+        SELECT"audio_events"."id","audio_events"."audio_recording_id","audio_events"."start_time_seconds","audio_events"."end_time_seconds","audio_events"."low_frequency_hertz","audio_events"."high_frequency_hertz","audio_events"."is_reference","audio_events"."creator_id","audio_events"."updated_at","audio_events"."created_at"
+        FROM"audio_events"
+        INNER JOIN"audio_recordings"
+        ON("audio_recordings"."deleted_at"
+        IS
+        NULL)
+        AND ("audio_recordings"."id"="audio_events"."audio_recording_id")
+        INNER
+        JOIN"sites"
+        ON("sites"."deleted_at"
+        IS
+        NULL)
+        AND("sites"."id"="audio_recordings"."site_id")
+        WHERE("audio_events"."deleted_at"
+        IS
+        NULL)
+        AND((
+        EXISTS(
+        SELECT1
+        FROM"projects_sites"
+        INNER
+        JOIN"projects"
+        ON"projects_sites"."project_id"="projects"."id"
+        WHERE"projects_sites"."site_id"="sites"."id"
+        AND
+        EXISTS(
+        SELECT 1
+        FROM"permissions"
+        WHERE"permissions"."level"
+        IN('owner','writer','reader')
+        AND"projects"."id"="permissions"."project_id"
+        AND"projects"."deleted_at"
+        IS
+        NULL
+        AND("permissions"."user_id"=#{user_id})
+        OR("permissions"."allow_logged_in"=
+        TRUE))))
+        OR(
+        EXISTS(
+        SELECT1
+        FROM"audio_events""ae_ref"
+        WHERE"ae_ref"."deleted_at"
+        IS
+        NULL
+        AND"ae_ref"."is_reference"=
+        TRUE
+        AND"ae_ref"."id"="audio_events"."id")))
+        AND(("audio_events"."end_time_seconds"-"audio_events"."start_time_seconds")>3)
+        ORDER
+        BY("audio_events"."end_time_seconds"-"audio_events"."start_time_seconds")
+        ASC
+        LIMIT 25
+        OFFSET 0
+      SQL
 
       comparison_ignore_spaces(filter_query.query_full.to_sql, expected_sql)
     end
@@ -977,8 +1282,51 @@ DESCLIMIT20OFFSET0"
         AudioRecording.filter_settings
       )
 
-      expected_sql =
-        "SELECT\"audio_recordings\".\"id\",\"audio_recordings\".\"uuid\",\"audio_recordings\".\"recorded_date\",\"audio_recordings\".\"site_id\",\"audio_recordings\".\"duration_seconds\",\"audio_recordings\".\"sample_rate_hertz\",\"audio_recordings\".\"channels\",\"audio_recordings\".\"bit_rate_bps\",\"audio_recordings\".\"media_type\",\"audio_recordings\".\"data_length_bytes\",\"audio_recordings\".\"status\",\"audio_recordings\".\"created_at\",\"audio_recordings\".\"updated_at\"FROM\"audio_recordings\"INNERJOIN\"sites\"ON\"sites\".\"id\"=\"audio_recordings\".\"site_id\"AND\"sites\".\"deleted_at\"ISNULLWHERE\"audio_recordings\".\"deleted_at\"ISNULLAND(EXISTS(SELECT1FROM\"projects_sites\"INNERJOIN\"projects\"ON\"projects_sites\".\"project_id\"=\"projects\".\"id\"WHERE\"projects_sites\".\"site_id\"=\"sites\".\"id\"ANDEXISTS(SELECT1FROM\"permissions\"WHERE\"permissions\".\"level\"IN('owner','writer','reader')AND\"projects\".\"id\"=\"permissions\".\"project_id\"AND\"projects\".\"deleted_at\"ISNULLAND(\"permissions\".\"user_id\"=#{user_id}OR\"permissions\".\"allow_logged_in\"='t'))))AND(\"audio_recordings\".\"recorded_date\"+CAST(\"audio_recordings\".\"duration_seconds\"||'seconds'asinterval)<'2016-03-01T02:00:00')AND(\"audio_recordings\".\"recorded_date\"+CAST(\"audio_recordings\".\"duration_seconds\"||'seconds'asinterval)>'2016-03-01T01:50:00')ORDERBY\"audio_recordings\".\"recorded_date\"DESCLIMIT25OFFSET0"
+      expected_sql = <<~SQL
+        SELECT"audio_recordings"."id","audio_recordings"."uuid","audio_recordings"."recorded_date","audio_recordings"."site_id","audio_recordings"."duration_seconds","audio_recordings"."sample_rate_hertz","audio_recordings"."channels","audio_recordings"."bit_rate_bps","audio_recordings"."media_type","audio_recordings"."data_length_bytes","audio_recordings"."status","audio_recordings"."created_at","audio_recordings"."updated_at"
+        FROM"audio_recordings"
+        INNER
+        JOIN"sites"
+        ON("sites"."deleted_at"
+        IS
+        NULL)
+        AND ("sites"."id"="audio_recordings"."site_id")
+        WHERE("audio_recordings"."deleted_at"
+        IS
+        NULL)
+        AND(
+        EXISTS(
+        SELECT1
+        FROM"projects_sites"
+        INNER
+        JOIN"projects"
+        ON"projects_sites"."project_id"="projects"."id"
+        WHERE"projects_sites"."site_id"="sites"."id"
+        AND
+        EXISTS(
+        SELECT1
+        FROM"permissions"
+        WHERE"permissions"."level"
+        IN('owner','writer','reader')
+        AND"projects"."id"="permissions"."project_id"
+        AND"projects"."deleted_at"
+        IS
+        NULL
+        AND("permissions"."user_id"=#{user_id})
+        OR("permissions"."allow_logged_in"=
+        TRUE))))
+        AND("audio_recordings"."recorded_date"+
+        CAST("audio_recordings"."duration_seconds"||'seconds'asinterval)<'2016-03-01
+        T02:00:00')
+        AND("audio_recordings"."recorded_date"+
+        CAST("audio_recordings"."duration_seconds"||'seconds'asinterval)>'2016-03-01
+        T01:50:00')
+        ORDER
+        BY"audio_recordings"."recorded_date"
+        DESC
+        LIMIT 25
+        OFFSET 0
+      SQL
 
       comparison_ignore_spaces(filter_query.query_full.to_sql, expected_sql)
     end
