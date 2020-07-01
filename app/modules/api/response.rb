@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Api
   # Builds api responses.
   class Response
@@ -30,7 +32,9 @@ module Api
     # @param [Hash] opts the options for additional information.
     # @return [Hash] prepared item
     def prepare(item, user, opts = {})
-      fail CustomErrors::FilterArgumentError, "Item must be an ActiveRecord::Base, got #{item.class}" unless item.is_a?(ActiveRecord::Base)
+      unless item.is_a?(ActiveRecord::Base)
+        raise CustomErrors::FilterArgumentError, "Item must be an ActiveRecord::Base, got #{item.class}"
+      end
 
       filter_settings = item.class.filter_settings
       item_new = item
@@ -85,35 +89,30 @@ module Api
     def build(status_symbol = :ok, data = nil, opts = {})
       # initialise with defaults
       opts.reverse_merge!(
-          {
-              error_links: [], error_details: nil, error_info: nil,
-              order_by: nil, direction: nil,
-              page: nil, items: nil, total: nil,
-              filter_text: nil, filter_generic_keys: {},
-              warning: nil
-          })
+        {
+          error_links: [], error_details: nil, error_info: nil,
+          order_by: nil, direction: nil,
+          page: nil, items: nil, total: nil,
+          filter_text: nil, filter_generic_keys: {},
+          warning: nil
+        }
+      )
 
       # base hash
       result = {
-          meta: {
-              status: status_code(status_symbol),
-              message: status_phrase(status_symbol)
-          },
-          data: data
+        meta: {
+          status: status_code(status_symbol),
+          message: status_phrase(status_symbol)
+        },
+        data: data
       }
 
-      unless opts[:warning].blank?
-        result[:meta][:warning] = opts[:warning]
-      end
+      result[:meta][:warning] = opts[:warning] unless opts[:warning].blank?
 
       # include projection/filter if given
-      unless opts[:projection].blank?
-        result[:meta][:projection] = opts[:projection]
-      end
+      result[:meta][:projection] = opts[:projection] unless opts[:projection].blank?
 
-      unless opts[:filter].blank?
-        result[:meta][:filter] = opts[:filter]
-      end
+      result[:meta][:filter] = opts[:filter] unless opts[:filter].blank?
 
       # error information
       if !opts[:error_details].blank? || !opts[:error_links].blank? || !opts[:error_info].blank?
@@ -123,16 +122,16 @@ module Api
       # sort info
       if !opts[:order_by].blank? && !opts[:direction].blank?
         result[:meta][:sorting] = {
-            order_by: opts[:order_by],
-            direction: opts[:direction]
+          order_by: opts[:order_by],
+          direction: opts[:direction]
         }
       end
 
       # paging: page, items
       if !opts[:page].blank? && !opts[:items].blank?
         result[:meta][:paging] = {
-            page: opts[:page],
-            items: opts[:items]
+          page: opts[:page],
+          items: opts[:items]
         }
       end
 
@@ -182,18 +181,18 @@ module Api
       unless link_ids.blank?
         error_links = error_links_hash
         link_ids.each do |id|
-          if id.is_a?(Symbol)
-            link_info = error_links[id]
-          else
-            link_info = id
-          end
+          link_info = if id.is_a?(Symbol)
+                        error_links[id]
+                      else
+                        id
+                      end
           result[link_info[:text]] = link_info[:url]
         end
       end
       result
     end
 
-    # Create and execute a query based on am index request.
+    # Create and execute a query based on an index request.
     # @param [Hash] params
     # @param [ActiveRecord::Relation] query
     # @param [ActiveRecord::Base] model
@@ -207,30 +206,30 @@ module Api
     # @return [Hash] links hash
     def error_links_hash
       {
-          sign_in: {
-              text: I18n.t('devise.sessions.new.sign_in'),
-              url: url_helpers.new_user_session_path
-          },
-          sign_up: {
-              text: I18n.t('devise.registrations.new.sign_up'),
-              url: url_helpers.new_user_registration_path
-          },
-          permissions: {
-              text: I18n.t('models.permissions.request_permissions'),
-              url: url_helpers.new_access_request_projects_path
-          },
-          confirm: {
-              text: I18n.t('devise.shared.links.confirm_account'),
-              url: url_helpers.new_user_confirmation_path
-          },
-          reset_password: {
-              text: I18n.t('devise.shared.links.reset_password'),
-              url: url_helpers.new_user_password_path
-          },
-          resend_unlock: {
-              text: I18n.t('devise.shared.links.unlock_account'),
-              url: url_helpers.new_user_unlock_path
-          }
+        sign_in: {
+          text: I18n.t('devise.sessions.new.sign_in'),
+          url: url_helpers.new_user_session_path
+        },
+        sign_up: {
+          text: I18n.t('devise.registrations.new.sign_up'),
+          url: url_helpers.new_user_registration_path
+        },
+        permissions: {
+          text: I18n.t('models.permissions.request_permissions'),
+          url: url_helpers.new_access_request_projects_path
+        },
+        confirm: {
+          text: I18n.t('devise.shared.links.confirm_account'),
+          url: url_helpers.new_user_confirmation_path
+        },
+        reset_password: {
+          text: I18n.t('devise.shared.links.reset_password'),
+          url: url_helpers.new_user_password_path
+        },
+        resend_unlock: {
+          text: I18n.t('devise.shared.links.unlock_account'),
+          url: url_helpers.new_user_unlock_path
+        }
       }
     end
 
@@ -243,6 +242,12 @@ module Api
     # @param [Hash] filter_settings
     # @return [Array] query, options
     def response(params, query, model, filter_settings)
+      # extract safe params and ensure we're dealing with a HWIA
+      params = params.to_h if params.is_a? ActionController::Parameters
+      unless params.is_a? HashWithIndifferentAccess
+        raise ArgumentError, 'params needs to be HashWithIndifferentAccess or an ActionController::Parameters'
+      end
+
       filter_query = Filter::Query.new(params, query, model, filter_settings)
 
       # query without paging to get total
@@ -250,16 +255,16 @@ module Api
 
       paged_sorted_query, opts = add_paging_and_sorting(new_query, filter_settings, filter_query)
 
-
       # build complete api response
       opts[:filter] = filter_query.filter unless filter_query.filter.blank?
       opts[:projection] = filter_query.projection unless filter_query.projection.blank?
       opts[:additional_params] = filter_query.parameters.except(
-          model.to_s.underscore.to_sym,
-          :filter, :projection,
-          :action, :controller,
-          :format, :paging, :sorting,
-          :page, :items)
+        model.to_s.underscore.to_sym,
+        :filter, :projection,
+        :action, :controller,
+        :format, :paging, :sorting,
+        :page, :items
+      )
 
       [paged_sorted_query, opts]
     end
@@ -271,10 +276,10 @@ module Api
       param_action = filter_query.parameters[:action]
 
       opts = {
-          controller: param_controller.blank? ? filter_settings[:controller] : param_controller,
-          action: param_action.blank? ? filter_settings[:action] : param_action,
-          filter_text: filter_query.qsp_text_filter,
-          filter_generic_keys: filter_query.qsp_generic_filters
+        controller: param_controller.blank? ? filter_settings[:controller] : param_controller,
+        action: param_action.blank? ? filter_settings[:action] : param_action,
+        filter_text: filter_query.qsp_text_filter,
+        filter_generic_keys: filter_query.qsp_generic_filters
       }
 
       # paging
@@ -286,9 +291,7 @@ module Api
         # if new_query involves aggregation, size returns the size of each group as a hash,
         # and what we need is the number of groups, so check if it is a hash and if so
         # use its length for the value of total.
-        if total.is_a? Hash
-          total = total.length
-        end
+        total = total.length if total.is_a? Hash
 
         # add paging
         new_query = filter_query.query_paging(new_query)
@@ -296,9 +299,9 @@ module Api
 
         # update options
         opts.merge!(
-            page: filter_query.paging[:page],
-            items: items,
-            total: total
+          page: filter_query.paging[:page],
+          items: items,
+          total: total
         )
       end
 
@@ -310,8 +313,8 @@ module Api
 
         # update options
         opts.merge!(
-            order_by: filter_query.sorting[:order_by],
-            direction: filter_query.sorting[:direction]
+          order_by: filter_query.sorting[:order_by],
+          direction: filter_query.sorting[:direction]
         )
       end
 
@@ -339,7 +342,10 @@ module Api
 
     def to_f_or_i_or_s(v)
       # http://stackoverflow.com/questions/8071533/convert-input-value-to-integer-or-float-as-appropriate-using-ruby
-      ((float = Float(v)) && (float % 1.0 == 0) ? float.to_i : float) rescue v
+
+      ((float = Float(v)) && (float % 1.0 == 0) ? float.to_i : float)
+    rescue StandardError
+      v
     end
 
     # @param [Hash] opts the options for additional information.
@@ -352,7 +358,6 @@ module Api
     # @option opts [Hash] :additional_params ({}) Additional property/value pairs.
     # @param [Integer] page_offset
     def paging_link(opts, page_offset)
-
       controller = opts[:controller]
       action = opts[:action]
 
@@ -389,6 +394,5 @@ module Api
 
       url_helpers.url_for(link_params)
     end
-
   end
 end

@@ -314,12 +314,7 @@ module Filter
       # allow treating a hash as a basic value if it serialized into json/jsonb
       # in the database
       if value.is_a?(Hash)
-        case node.type_caster
-        when :json
-          return
-        when :jsonb
-          return
-        else
+        unless json_column?(node)
           raise CustomErrors::FilterArgumentError, "The value for #{node_descr} must not be a hash (unless its underlying type is a hash)"
         end
       end

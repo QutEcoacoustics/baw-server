@@ -730,7 +730,7 @@ resource 'AudioEvents' do
 
     standard_request_options(:post, 'FILTER (as reader, with invalid nil for gteq interval)', :bad_request,
                              {
-                               response_body_content: '{"meta":{"status":400,"message":"Bad Request","error":{"details":"Filter parameters were not valid: The value for (custom item) must not be a hash","info":null}},"data":null}'
+                               response_body_content: '{"meta":{"status":400,"message":"Bad Request","error":{"details":"Filter parameters were not valid: The value for (custom item) must not be a hash (unless its underlying type is a hash)","info":null}},"data":null}'
                              })
   end
 end

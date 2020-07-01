@@ -35,14 +35,6 @@ group :server do
   gem 'rails', RAILS_VERSION
   gem 'responders', '~> 3.0.1'
 
-  # RAILS 3 compatibility gems
-  # -------------------------------------
-  # gem 'protected_attributes'
-  # gem 'rails-observers'
-  # gem 'actionpack-page_caching'
-  # gem 'actionpack-action_caching'
-  # gem 'activerecord-deprecated_finders'
-
   # UI HELPERS
   # -------------------------------------
   # Use SCSS for stylesheets
@@ -97,6 +89,10 @@ group :server do
 
   # take care when changing the database gems
   gem 'pg'
+
+  # extensions to arel https://github.com/Faveod/arel-extensions
+  # in particular, we use `cast`
+  gem 'arel_extensions'
 
   # MODELS
   # -------------------------------------

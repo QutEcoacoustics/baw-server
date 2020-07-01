@@ -53,6 +53,8 @@ Metrics/MethodLength:
   Max: 30
   ExcludedMethods:
     - filter_settings
+Metrics/ModuleLength:
+  Max: 150
 Metrics/AbcSize:
   Max: 60
 Style/BlockDelimiters:

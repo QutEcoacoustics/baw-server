@@ -6,17 +6,14 @@ require 'helpers/acceptance_spec_helper'
 
 # https://github.com/zipmark/rspec_api_documentation
 resource 'Public' do
-
   expose_headers = (MediaPoll::HEADERS_EXPOSED + ['X-Archived-At', 'X-Error-Type']).join(', ')
   allow_methods = ['GET', 'POST', 'PUT', 'PATCH', 'HEAD', 'DELETE', 'OPTIONS'].join(', ')
 
   # have to specify content type header, otherwise it gets set to application/x-www-form-urlencoded
-  header 'Content-Type', ''
+  header 'Content-Type', 'text/plain'
 
   context 'CORS example' do
-
     context '1' do
-
       header 'Host', 'localhost:8080'
       header 'Connection', 'keep-alive'
       header 'Cache-Control', 'max-age=0'
@@ -35,7 +32,7 @@ resource 'Public' do
           'OPTIONS /my_account/prefs (example 1)',
           :ok,
           expected_response_has_content: false,
-          expected_response_content_type: 'text/plain',
+          expected_response_content_type: nil,
           expected_response_header_values:
                 {
                   'Access-Control-Allow-Origin' => 'http://localhost:8080',
@@ -43,8 +40,7 @@ resource 'Public' do
                   'Access-Control-Allow-Credentials' => 'true',
                   'Access-Control-Allow-Methods' => allow_methods,
                   'Access-Control-Allow-Headers' => 'accept, content-type',
-                  'Access-Control-Max-Age' => '1728000',
-                  'Content-Type' => 'text/plain'
+                  'Access-Control-Max-Age' => '7200'
                 },
           expected_request_header_values:
                 {
@@ -61,7 +57,7 @@ resource 'Public' do
                   'Accept-Language' => 'en-US,en;q=0.8',
 
                   # these headers are added/modified by the framework :/
-                  'Content-Type' => '',
+                  'Content-Type' => 'text/plain',
                   'Cookie' => ''
                 }
         )
@@ -86,7 +82,7 @@ resource 'Public' do
           'OPTIONS /my_account/prefs (example 2)',
           :ok,
           expected_response_has_content: false,
-          expected_response_content_type: 'text/plain',
+          expected_response_content_type: nil,
           expected_response_header_values:
                 {
                   'Access-Control-Allow-Origin' => 'http://localhost:8080',
@@ -94,8 +90,7 @@ resource 'Public' do
                   'Access-Control-Allow-Credentials' => 'true',
                   'Access-Control-Allow-Methods' => allow_methods,
                   'Access-Control-Allow-Headers' => 'accept, content-type',
-                  'Access-Control-Max-Age' => '1728000',
-                  'Content-Type' => 'text/plain'
+                  'Access-Control-Max-Age' => '7200'
                 },
           expected_request_header_values:
                 {
@@ -111,22 +106,19 @@ resource 'Public' do
                   'Accept-Language' => 'en-US,en;q=0.8',
 
                   # these headers are added/modified by the framework :/
-                  'Content-Type' => '',
+                  'Content-Type' => 'text/plain',
                   'Cookie' => ''
                 }
         )
       end
     end
-
   end
 
   context 'CORS request' do
-
     header 'Accept', '*/*'
     header 'Host', 'localhost:8080'
 
     context 'valid' do
-
       context 'with all headers' do
         header 'Origin', :header_origin
         header 'Access-Control-Request-Method', :header_method
@@ -140,7 +132,7 @@ resource 'Public' do
             'OPTIONS /projects (all headers)',
             :ok,
             expected_response_has_content: false,
-            expected_response_content_type: 'text/plain',
+            expected_response_content_type: nil,
             expected_response_header_values:
                   {
                     'Access-Control-Allow-Origin' => 'http://localhost:3000',
@@ -148,8 +140,7 @@ resource 'Public' do
                     'Access-Control-Allow-Credentials' => 'true',
                     'Access-Control-Allow-Methods' => allow_methods,
                     'Access-Control-Allow-Headers' => 'Origin, Content-Type, Accept, Authorization, Token',
-                    'Access-Control-Max-Age' => '1728000',
-                    'Content-Type' => 'text/plain'
+                    'Access-Control-Max-Age' => '7200'
                   },
             expected_request_header_values:
                   {
@@ -160,8 +151,8 @@ resource 'Public' do
                     # defaults and framework-specified headers
                     'Accept' => '*/*',
                     'Host' => 'localhost:8080',
-                    'Content-Type' => '',
-                    'Cookie' => ''
+                    'Cookie' => '',
+                    'Content-Type' => 'text/plain'
                   }
           )
         end
@@ -177,15 +168,14 @@ resource 'Public' do
             'OPTIONS /projects (without request-headers)',
             :ok,
             expected_response_has_content: false,
-            expected_response_content_type: 'text/plain',
+            expected_response_content_type: nil,
             expected_response_header_values:
                   {
                     'Access-Control-Allow-Origin' => 'http://192.168.0.10:3000',
                     'Access-Control-Expose-Headers' => expose_headers,
                     'Access-Control-Allow-Credentials' => 'true',
                     'Access-Control-Allow-Methods' => allow_methods,
-                    'Access-Control-Max-Age' => '1728000',
-                    'Content-Type' => 'text/plain'
+                    'Access-Control-Max-Age' => '7200'
                   },
             expected_request_header_values:
                   {
@@ -195,17 +185,15 @@ resource 'Public' do
                     # defaults and framework-specified headers
                     'Accept' => '*/*',
                     'Host' => 'localhost:8080',
-                    'Content-Type' => '',
+                    'Content-Type' => 'text/plain',
                     'Cookie' => ''
                   }
           )
         end
       end
-
     end
 
     context 'invalid' do
-
       context 'without Origin' do
         header 'Access-Control-Request-Method', 'Origin, Content-Type, Accept, Authorization, Token'
         header 'Access-Control-Request-Headers', 'PUT'
@@ -214,7 +202,8 @@ resource 'Public' do
             :http_options_verb,
             'OPTIONS /projects (without Origin)',
             :bad_request,
-            response_body_content: "The request was not valid: CORS preflight request to 'projects' was not valid."
+            response_body_content: "{\"meta\":{\"status\":400,\"message\":\"Bad Request\",\"error\":{\"details\":\"The request was not valid: CORS preflight request to 'projects' was not valid. Required headers: Origin, Access-Control-Request-Method. Optional headers: Access-Control-Request-Headers.\",\"info\":null}},\"data\":null}",
+            expected_response_content_type: 'application/json; charset=utf-8'
           )
         end
       end
@@ -227,7 +216,8 @@ resource 'Public' do
             :http_options_verb,
             'OPTIONS /projects (without request-method)',
             :bad_request,
-            response_body_content: "The request was not valid: CORS preflight request to 'projects' was not valid."
+            response_body_content: "{\"meta\":{\"status\":400,\"message\":\"Bad Request\",\"error\":{\"details\":\"The request was not valid: CORS preflight request to 'projects' was not valid. Required headers: Origin, Access-Control-Request-Method. Optional headers: Access-Control-Request-Headers.\",\"info\":null}},\"data\":null}",
+            expected_response_content_type: 'application/json; charset=utf-8'
           )
         end
       end
@@ -240,14 +230,12 @@ resource 'Public' do
           standard_request_options(
             :http_options_verb,
             'OPTIONS /projects (with invalid Origin)',
-            :bad_request,
-            response_body_content: "The request was not valid: CORS preflight request to 'projects' was not valid."
+            :ok,
+            expected_response_has_content: false,
+            expected_response_content_type: nil
           )
         end
       end
-
     end
-
   end
-
 end

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Defines permissions for controller actions.
 class Ability
   include CanCan::Ability
@@ -6,7 +8,6 @@ class Ability
   # @param [User] user
   # @return [void]
   def initialize(user)
-
     # ======== Reset Actions ========
 
     # clear all aliased actions - these mappings are removed:
@@ -112,7 +113,7 @@ class Ability
       to_response(user, is_guest)
 
     else
-      fail ArgumentError, "Permissions are not defined for user '#{user.id}': #{user.role_symbols}"
+      raise ArgumentError, "Permissions are not defined for user '#{user.id}': #{user.role_symbols}"
 
     end
   end
@@ -120,7 +121,7 @@ class Ability
   private
 
   def check_model(model)
-    fail ArgumentError, 'Must have an instance of the model.' if model.nil?
+    raise ArgumentError, 'Must have an instance of the model.' if model.nil?
     #fail CustomErrors::UnprocessableEntityError.new('Model was invalid.', model.errors) if model.invalid?
   end
 
@@ -136,7 +137,7 @@ class Ability
 
     # omitted: :new, :create,
     # applied by default: :index, :show, :filter
-    can [ :show, :update ], AnalysisJobsItem
+    can [:show, :update], AnalysisJobsItem
   end
 
   def create_guest_user
@@ -195,7 +196,7 @@ class Ability
     can [:new_access_request, :submit_access_request], Project unless is_guest
 
     # Restricted to Admin according to settings (admin has implicit access)
-    can [:create], Project unless is_guest or !Settings.permissions.any_user_can_create_projects
+    can [:create], Project unless is_guest || !Settings.permissions.any_user_can_create_projects
 
     # available to any user, including guest
     can [:index, :filter, :new], Project
@@ -222,10 +223,9 @@ class Ability
       check_model(permission)
       Access::Core.can?(user, :owner, permission.project)
     end
-
   end
 
-  def to_site(user, is_guest)
+  def to_site(user, _is_guest)
     # only admin can :destroy, :orphans
 
     # cannot use block for #index, #filter, #orphans
@@ -265,7 +265,7 @@ class Ability
     can [:index, :filter, :new], Site
   end
 
-  def to_audio_recording(user, is_guest)
+  def to_audio_recording(user, _is_guest)
     # cannot use block for #index, #filter
     # See permissions for harvester (#for_harvester)
     #   - Only admin and harvester can #create, #check_uploader, #update_status, #update
@@ -397,7 +397,6 @@ class Ability
 
     # available to any logged in user
     can [:index, :filter, :new], Bookmark
-
   end
 
   def to_analysis_job(user, is_guest)
@@ -405,9 +404,10 @@ class Ability
 
     can [:show, :create], AnalysisJob do |analysis_job|
       check_model(analysis_job)
-      fail CustomErrors::BadRequestError.new('Analysis Job must have a saved search.') if analysis_job.saved_search.nil?
+      raise CustomErrors::BadRequestError, 'Analysis Job must have a saved search.' if analysis_job.saved_search.nil?
+
       projects = analysis_job.saved_search.projects
-      fail CustomErrors::BadRequestError.new('Saved search must have at least one project.') if projects.size < 1
+      raise CustomErrors::BadRequestError, 'Saved search must have at least one project.' if projects.empty?
 
       # can_any? because AnalysisJobsItem and analysis results can be accessed via AudioRecording. Any AnalysisJobsItem
       # can be accessed if they user has access to the AudioRecording (and thus any project). can_any? here makes access
@@ -432,7 +432,7 @@ class Ability
       check_model(analysis_job_item)
 
       if analysis_job_item.audio_recording.nil?
-        fail CustomErrors::BadRequestError.new('Analysis Jobs Item must have a Audio Recording.')
+        raise CustomErrors::BadRequestError, 'Analysis Jobs Item must have a Audio Recording.'
       end
 
       Access::Core.can_any?(user, :reader, analysis_job_item.audio_recording.site.projects)
@@ -443,7 +443,6 @@ class Ability
   end
 
   def to_dataset(user, is_guest)
-
     # only creator can update their own dataset
     can [:update], Dataset, creator_id: user.id
 
@@ -452,11 +451,9 @@ class Ability
 
     # available to any user, including guest
     can [:new, :index, :filter, :show], Dataset
-
   end
 
-  def to_dataset_item(user, is_guest)
-
+  def to_dataset_item(user, _is_guest)
     # only admin can update, delete
 
     # only admin can create, unless it is the default dataset
@@ -475,7 +472,7 @@ class Ability
       check_model(dataset_item)
 
       if dataset_item.audio_recording.nil?
-        fail CustomErrors::BadRequestError.new('Dataset Item must have a Audio Recording.')
+        raise CustomErrors::BadRequestError, 'Dataset Item must have a Audio Recording.'
       end
 
       Access::Core.check_orphan_site!(dataset_item.audio_recording.site)
@@ -484,12 +481,9 @@ class Ability
 
     # actions any logged in user can access
     can [:new, :index, :filter, :next_for_me], DatasetItem
-
   end
 
-
-  def to_progress_event(user, is_guest)
-
+  def to_progress_event(user, _is_guest)
     # anyone can create as long as they have read access on the ancestor project of the dataset item
     can [:create], ProgressEvent do |progress_event|
       check_model(progress_event)
@@ -499,34 +493,31 @@ class Ability
       if audio_recording
         Access::Core.can_any?(user, :reader, audio_recording.site.projects)
       else
-        fail CustomErrors::UnprocessableEntityError.new('Invalid dataset item')
+        raise CustomErrors::UnprocessableEntityError, 'Invalid dataset item'
       end
-
     end
 
     # must have read permissions or be creator to view
     can [:show, :index, :filter], ProgressEvent do |progress_event|
       check_model(progress_event)
       Access::Core.can_any?(user, :reader, progress_event.dataset_item.audio_recording.site.projects) ||
-          progress_event.creator_id === user.id
+        progress_event.creator_id === user.id
     end
 
     can :new, ProgressEvent
 
     # update and edit are admin only
-    cannot [:update, :destroy]
-
+    cannot [:update, :destroy], ProgressEvent
   end
 
   def to_saved_search(user, is_guest)
-
     # cannot be updated
 
     # must have read permission or higher on all projects to create saved search
     can [:show, :create], SavedSearch do |saved_search|
       check_model(saved_search)
       projects = saved_search.projects
-      fail CustomErrors::BadRequestError.new('Saved Search must have at least one project.') if projects.size < 1
+      raise CustomErrors::BadRequestError, 'Saved Search must have at least one project.' if projects.empty?
 
       Access::Core.can_all?(user, :reader, projects)
     end
@@ -541,7 +532,7 @@ class Ability
     can [:index, :filter], SavedSearch
   end
 
-  def to_script(user, is_guest)
+  def to_script(_user, is_guest)
     # only admin can manipulate scripts
 
     can [:show], Script unless is_guest
@@ -550,7 +541,7 @@ class Ability
     can [:index, :filter], Script
   end
 
-  def to_tag(user, is_guest)
+  def to_tag(_user, is_guest)
     # cannot be updated
     # tag management controller is admin only (checked in before_action)
 
@@ -598,13 +589,13 @@ class Ability
     can [:show, :filter], User unless is_guest
   end
 
-  def to_analysis(user, is_guest)
+  def to_analysis(_user, is_guest)
     # actions any logged in user can access
     # skips CanCan auth
     can [:show], :analysis unless is_guest
   end
 
-  def to_media(user, is_guest)
+  def to_media(_user, _is_guest)
     # available to any user, including guest
     # skips CanCan auth
     can [:show], :media
@@ -614,58 +605,51 @@ class Ability
     # GET       /audio_recordings/:id/original     media#original
   end
 
-  def to_error(user, is_guest)
+  def to_error(_user, _is_guest)
     # available to any user, including guest
     # skips CanCan auth
     can [:route_error, :uncaught_error, :test_exceptions, :show], :error
 
     # only available in Rails test env
-    if ENV['RAILS_ENV'] == 'test'
-      can [:test_exceptions], :error
-    end
+    can [:test_exceptions], :error if ENV['RAILS_ENV'] == 'test'
   end
 
-  def to_public(user, is_guest)
+  def to_public(_user, _is_guest)
     # available to any user, including guest
     # skips CanCan auth
     can [
-            :index, :status,
-            :website_status,
-            :credits,
-            :disclaimers,
-            :ethics_statement,
-            :data_upload,
+      :index, :status,
+      :website_status,
+      :credits,
+      :disclaimers,
+      :ethics_statement,
+      :data_upload,
 
-            :new_contact_us, :create_contact_us,
-            :new_bug_report, :create_bug_report,
-            :new_data_request, :create_data_request,
+      :new_contact_us, :create_contact_us,
+      :new_bug_report, :create_bug_report,
+      :new_data_request, :create_data_request,
 
-            :cors_preflight
-        ], :public
+      :cors_preflight
+    ], :public
   end
 
-  def to_study(user, is_guest)
-
+  def to_study(_user, _is_guest)
     # only admin can create, update, delete
 
     # all users including guest can access any get request
     can [:new, :index, :filter, :show], Study
-
   end
 
-  def to_question(user, is_guest)
-
+  def to_question(_user, is_guest)
     can [:new], Question
 
     # only admin create, update, delete
 
     # only logged in users can view questions
     can [:index, :filter, :show], Question unless is_guest
-
   end
 
   def to_response(user, is_guest)
-
     can [:new], Response
 
     # must have read permission on dataset item to create a response for it
@@ -683,8 +667,5 @@ class Ability
     can [:index, :filter, :show], Response, creator_id: user.id unless is_guest
 
     # only admin can update or delete responses
-
   end
-
-
 end

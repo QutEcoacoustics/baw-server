@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'active_support/concern'
 
 module Filter
@@ -27,6 +29,10 @@ module Filter
       validate_node_or_attribute(node)
       validate_basic_class(node, value)
       sanitized_value = sanitize_like_value(value)
+
+      # if we're querying against a json/jsonb column, then first cast column to json
+      node = node.cast('text') if json_column?(node)
+
       contains_value = "%#{sanitized_value}%"
       node.matches(contains_value)
     end
@@ -182,30 +188,31 @@ module Filter
       compose_range_options_node(table[column_name], hash)
     end
 
-
     # Create IN condition using range.
     # @param [Arel::Nodes::Node, Arel::Attributes::Attribute, String] node
     # @param [Hash] hash
     # @return [Arel::Nodes::Node] condition
     def compose_range_options_node(node, hash)
-      fail CustomErrors::FilterArgumentError.new("Range filter must be {'from': 'value', 'to': 'value'} or {'interval': 'value'} got #{hash}") unless hash.is_a?(Hash)
+      unless hash.is_a?(Hash)
+        raise CustomErrors::FilterArgumentError, "Range filter must be {'from': 'value', 'to': 'value'} or {'interval': 'value'} got #{hash}"
+      end
 
       from = hash[:from]
       to = hash[:to]
       interval = hash[:interval]
 
       if !from.blank? && !to.blank? && !interval.blank?
-        fail CustomErrors::FilterArgumentError.new("Range filter must use either ('from' and 'to') or ('interval'), not both.", {hash: hash})
+        raise CustomErrors::FilterArgumentError.new("Range filter must use either ('from' and 'to') or ('interval'), not both.", { hash: hash })
       elsif from.blank? && !to.blank?
-        fail CustomErrors::FilterArgumentError.new("Range filter missing 'from'.", {hash: hash})
+        raise CustomErrors::FilterArgumentError.new("Range filter missing 'from'.", { hash: hash })
       elsif !from.blank? && to.blank?
-        fail CustomErrors::FilterArgumentError.new("Range filter missing 'to'.", {hash: hash})
+        raise CustomErrors::FilterArgumentError.new("Range filter missing 'to'.", { hash: hash })
       elsif !from.blank? && !to.blank?
         compose_range_node(node, from, to)
       elsif !interval.blank?
         compose_range_string_node(node, interval)
       else
-        fail CustomErrors::FilterArgumentError.new("Range filter was not valid (#{hash})", {hash: hash})
+        raise CustomErrors::FilterArgumentError.new("Range filter was not valid (#{hash})", { hash: hash })
       end
     end
 
@@ -247,7 +254,9 @@ module Filter
 
       range_regex = /(\[|\()(.*),(.*)(\)|\])/i
       matches = range_string.match(range_regex)
-      fail CustomErrors::FilterArgumentError.new("Range string must be in the form (|[.*,.*]|), got #{range_string.inspect}", {field: column_name}) unless matches
+      unless matches
+        raise CustomErrors::FilterArgumentError.new("Range string must be in the form (|[.*,.*]|), got #{range_string.inspect}", { field: column_name })
+      end
 
       captures = matches.captures
 
@@ -258,17 +267,17 @@ module Filter
       end_exclude = captures[3] == ')'
 
       # build using gt, lt, gteq, lteq
-      if start_exclude
-        start_condition = node.gt(start_value)
-      else
-        start_condition =node.gteq(start_value)
-      end
+      start_condition = if start_exclude
+                          node.gt(start_value)
+                        else
+                          node.gteq(start_value)
+                        end
 
-      if end_exclude
-        end_condition = node.lt(end_value)
-      else
-        end_condition =node.lteq(end_value)
-      end
+      end_condition = if end_exclude
+                        node.lt(end_value)
+                      else
+                        node.lteq(end_value)
+                      end
 
       start_condition.and(end_condition)
     end
@@ -379,6 +388,5 @@ module Filter
       validate_string(value)
       Arel::Nodes::NotRegexp.new(node, Arel::Nodes.build_quoted(value))
     end
-
   end
 end

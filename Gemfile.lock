@@ -69,6 +69,8 @@ GEM
       activesupport (>= 4.2, < 7.0)
     addressable (2.7.0)
       public_suffix (>= 2.0.2, < 5.0)
+    arel_extensions (2.0.8)
+      activerecord (>= 6.0)
     ast (2.4.1)
     autoprefixer-rails (9.7.6)
       execjs
@@ -179,6 +181,7 @@ GEM
     faker (2.12.0)
       i18n (>= 1.6, < 2)
     ffi (1.13.1)
+    ffi (1.13.1-x64-mingw32)
     font-awesome-sass (4.6.2)
       sass (>= 3.2)
     globalid (0.4.2)
@@ -263,6 +266,7 @@ GEM
     minitest (5.14.1)
     mono_logger (1.1.0)
     msgpack (1.3.3)
+    msgpack (1.3.3-x64-mingw32)
     multi_json (1.14.1)
     mustache (1.1.1)
     mustermann (1.1.1)
@@ -270,6 +274,8 @@ GEM
     nenv (0.3.0)
     nio4r (2.5.2)
     nokogiri (1.10.9)
+      mini_portile2 (~> 2.4.0)
+    nokogiri (1.10.9-x64-mingw32)
       mini_portile2 (~> 2.4.0)
     notiffany (0.1.3)
       nenv (~> 0.1)
@@ -289,6 +295,7 @@ GEM
       rack
       rake (>= 0.8.1)
     pg (1.2.3)
+    pg (1.2.3-x64-mingw32)
     public_suffix (4.0.5)
     rack (2.2.3)
     rack-cors (1.1.1)
@@ -406,6 +413,7 @@ GEM
     ruby-debug-ide (0.7.2)
       rake (>= 0.8.1)
     ruby-prof (1.4.1)
+    ruby-prof (1.4.1-x64-mingw32)
     ruby-progressbar (1.10.1)
     ruby2_keywords (0.0.2)
     ruby_parser (3.14.2)
@@ -419,6 +427,8 @@ GEM
     sass-rails (6.0.0)
       sassc-rails (~> 2.1, >= 2.1.1)
     sassc (2.4.0)
+      ffi (~> 1.9)
+    sassc (2.4.0-x64-mingw32)
       ffi (~> 1.9)
     sassc-rails (2.1.2)
       railties (>= 4.0.0)
@@ -513,6 +523,7 @@ DEPENDENCIES
   actionmailer (~> 6.0.3)
   activesupport (~> 6.0.3)
   acts_as_paranoid
+  arel_extensions
   bcrypt (~> 3.1.9)
   bootsnap
   bootstrap-sass (~> 3.4.1)

@@ -205,6 +205,8 @@ class AudioRecording < ApplicationRecord
 
       found
     else
+      # this endpoint is reasonably secure and we're quite reliant on it just working!
+      recording_params.permit!
       AudioRecording.new(recording_params)
     end
   end
