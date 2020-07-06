@@ -38,7 +38,7 @@ describe 'responses' do
   describe 'index,filter,show responses' do
     describe 'index' do
       it 'finds all (1) responses as admin' do
-        get response_url, nil, @env
+        get response_url, params: nil, headers: @env
         expect(response).to have_http_status(200)
         parsed_response = JSON.parse(response.body)
         expect(parsed_response['data'].count).to eq(1)
@@ -46,7 +46,7 @@ describe 'responses' do
       end
 
       it 'finds all (1) responses for the given study as admin' do
-        get response_url(nil, study.id), nil, @env
+        get response_url(nil, study.id), params: nil, headers: @env
         expect(response).to have_http_status(200)
         parsed_response = JSON.parse(response.body)
         expect(parsed_response['data'].count).to eq(1)
@@ -58,13 +58,13 @@ describe 'responses' do
 
         # find responses for the first study in many_studies
         study_id = available_records[:studies][0].id
-        get response_url(nil, study_id), nil, @env
+        get response_url(nil, study_id), params: nil, headers: @env
         parsed_response = JSON.parse(response.body)
         expect(parsed_response['data'].count).to eq(available_records[:studies][0].response_ids.count)
         expect((parsed_response['data'].map { |q| q['id'] }).sort).to eq(available_records[:studies][0].response_ids.sort)
 
         study_id = available_records[:studies][1].id
-        get response_url(nil, study_id), nil, @env
+        get response_url(nil, study_id), params: nil, headers: @env
         parsed_response = JSON.parse(response.body)
         expect(parsed_response['data'].count).to eq(available_records[:studies][1].response_ids.count)
         expect((parsed_response['data'].map { |q| q['id'] }).sort).to eq(available_records[:studies][1].response_ids.sort)
@@ -73,7 +73,7 @@ describe 'responses' do
 
     describe 'filter' do
       it 'finds all (1) responses as admin' do
-        get response_url + '/filter', nil, @env
+        get response_url + '/filter', params: nil, headers: @env
         expect(response).to have_http_status(200)
         parsed_response = JSON.parse(response.body)
         expect(parsed_response['data'].count).to eq(1)
@@ -89,7 +89,7 @@ describe 'responses' do
         study1 = available_records[:studies][1]
         expected_response_ids = (study0.response_ids + study1.response_ids).uniq
         filter_params = { filter: { 'studies.id' => { in: [study0.id, study1.id] } } }
-        post url, filter_params.to_json, @env
+        post url, params: filter_params.to_json, headers: @env
         parsed_response = JSON.parse(response.body)
         expect(parsed_response['data'].count).to eq(expected_response_ids.count)
         expect((parsed_response['data'].map { |q| q['id'] }).sort).to eq(expected_response_ids.sort)
@@ -104,7 +104,7 @@ describe 'responses' do
         study1 = available_records[:studies][1]
         expected_response_ids = (study0.response_ids + study1.response_ids).uniq
         filter_params = { filter: { 'study_id' => { in: [study0.id, study1.id] } } }
-        post url, filter_params.to_json, @env
+        post url, params: filter_params.to_json, headers: @env
         parsed_response = JSON.parse(response.body)
         expect(parsed_response['data'].count).to eq(expected_response_ids.count)
         expect((parsed_response['data'].map { |q| q['id'] }).sort).to eq(expected_response_ids.sort)
@@ -113,7 +113,7 @@ describe 'responses' do
 
     describe 'show' do
       it 'show response as admin' do
-        get response_url(user_response.id), nil, @env
+        get response_url(user_response.id), params: nil, headers: @env
         expect(response).to have_http_status(200)
         parsed_response = JSON.parse(response.body)
         expect(parsed_response['data'].to_json).to eq(user_response.to_json)
@@ -129,7 +129,7 @@ describe 'responses' do
         params[:response][:question_id] = question.id
         params[:response][:dataset_item_id] = dataset_item.id
 
-        post response_url, params.to_json, @env
+        post response_url, params: params.to_json, headers: @env
         parsed_response = JSON.parse(response.body)
         expect(response).to have_http_status(201)
         expect(parsed_response['data'].symbolize_keys.slice(*params[:response].keys)).to eq(params[:response])
@@ -143,7 +143,7 @@ describe 'responses' do
           params = { response: response_attributes }
           params[:response][:question_id] = question.id
           params[:response][:dataset_item_id] = dataset_item.id
-          post response_url, params.to_json, @env
+          post response_url, params: params.to_json, headers: @env
           expect(response).to have_http_status(422)
           expect(Response.all.count).to eq(1)
         end
@@ -152,7 +152,7 @@ describe 'responses' do
           params = { response: response_attributes }
           params[:response][:question_id] = question.id
           params[:response][:study_id] = study.id
-          post response_url, params.to_json, @env
+          post response_url, params: params.to_json, headers: @env
           expect(response).to have_http_status(422)
           expect(Response.all.count).to eq(1)
         end
@@ -161,7 +161,7 @@ describe 'responses' do
           params = { response: response_attributes }
           params[:response][:dataset_item_id] = dataset_item.id
           params[:response][:study_id] = study.id
-          post response_url, params.to_json, @env
+          post response_url, params: params.to_json, headers: @env
           expect(response).to have_http_status(422)
           expect(Response.all.count).to eq(1)
         end
@@ -172,7 +172,7 @@ describe 'responses' do
         params[:response][:dataset_item_id] = dataset_item.id
         params[:response][:study_id] = study.id
         params[:response][:question_id] = question.id
-        post response_url, params.to_json, @env
+        post response_url, params: params.to_json, headers: @env
         expect(response).to have_http_status(422)
         expect(Response.all.count).to eq(1)
       end
@@ -192,7 +192,7 @@ describe 'responses' do
           params[:response][:study_id] = study_id
           params[:response][:question_id] = question_id
           count_before = Response.all.count
-          post response_url, params.to_json, @env
+          post response_url, params: params.to_json, headers: @env
           expect(response).to have_http_status(422)
           expect(Response.all.count).to eq(count_before)
           parsed_response = JSON.parse(response.body)
@@ -209,7 +209,7 @@ describe 'responses' do
           params[:response][:study_id] = study_id
           params[:response][:question_id] = question_id
           count_before = Response.all.count
-          post response_url, params.to_json, @env
+          post response_url, params: params.to_json, headers: @env
           expect(response).to have_http_status(422)
           expect(Response.all.count).to eq(count_before)
           parsed_response = JSON.parse(response.body)
@@ -222,7 +222,7 @@ describe 'responses' do
       it 'cannot update a response' do
         data = { some_answer: 'modified response text' }.to_json
         params = { response: { data: data } }.to_json
-        put response_url(user_response.id), params, @env
+        put response_url(user_response.id), params: params, headers: @env
         expect(response).to have_http_status(405)
         parsed_response = JSON.parse(response.body)
         expect(parsed_response['meta']['message']).to eq('Method Not Allowed')
@@ -232,7 +232,7 @@ describe 'responses' do
 
   describe 'delete' do
     it 'deletes a response' do
-      delete response_url(user_response.id), nil, @env
+      delete response_url(user_response.id), params: nil, headers: @env
       expect(response).to have_http_status(204)
       expect(Response.all.count).to eq(0)
     end

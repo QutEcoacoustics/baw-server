@@ -26,28 +26,28 @@ describe 'Dataset Items' do
     it 'does not allow text/plain content-type' do
       @env['CONTENT_TYPE'] = 'text/plain'
       params = { dataset_item: dataset_item_attributes }.to_json
-      post @direct_dataset_item_url, params, @env
+      post @direct_dataset_item_url, params: params, headers: @env
       expect(response).to have_http_status(415)
     end
 
     it 'does not allow application/x-www-form-urlencoded content-type with json data' do
       # use default form content type
       params = { dataset_item: dataset_item_attributes }.to_json
-      post @direct_dataset_item_url, params, @env
+      post @direct_dataset_item_url, params: params, headers: @env
       expect(response).to have_http_status(415)
     end
 
     it 'allows application/json content-type with json data' do
       @env['CONTENT_TYPE'] = 'application/json'
       params = { dataset_item: dataset_item_attributes }.to_json
-      post @direct_dataset_item_url, params, @env
+      post @direct_dataset_item_url, params: params, headers: @env
       expect(response).to have_http_status(201)
     end
 
     it 'allows application/json content-type with unnested json data' do
       @env['CONTENT_TYPE'] = 'application/json'
       params = dataset_item_attributes.to_json
-      post @direct_dataset_item_url, params, @env
+      post @direct_dataset_item_url, params: params, headers: @env
       expect(response).to have_http_status(201)
     end
 
@@ -57,20 +57,20 @@ describe 'Dataset Items' do
     it 'does not allow empty body (nil, json)' do
       @env['CONTENT_TYPE'] = 'application/json'
       params = nil
-      post @direct_dataset_item_url, params, @env
+      post @direct_dataset_item_url, params: params, headers: @env
       expect(response).to have_http_status(400)
       parsed_response = JSON.parse(response.body)
-      expect(parsed_response['meta']['error']['links']).to eq({ 'New Resource' => '/datasets/2/items/new' })
+      expect(parsed_response['meta']['error']['links']).to eq({ 'New Resource' => "/datasets/#{dataset.id}/items/new" })
     end
 
     it 'does not allow empty body (empty string, json)' do
       @env['CONTENT_TYPE'] = 'application/json'
       params = ''
-      post @direct_dataset_item_url, params, @env
+      post @direct_dataset_item_url, params: params, headers: @env
       expect(response).to have_http_status(400)
-      expect(response.content_type).to eq 'application/json'
+      expect(response.content_type).to include('application/json')
       parsed_response = JSON.parse(response.body)
-      expect(parsed_response['meta']['error']['links']).to eq({ 'New Resource' => '/datasets/2/items/new' })
+      expect(parsed_response['meta']['error']['links']).to eq({ 'New Resource' => "/datasets/#{dataset.id}/items/new" })
     end
   end
 
@@ -79,7 +79,7 @@ describe 'Dataset Items' do
       @env['CONTENT_TYPE'] = 'text/plain'
       params = { dataset_item: update_dataset_item_attributes }.to_json
 
-      put @nested_dataset_item_url, params, @env
+      put @nested_dataset_item_url, params: params, headers: @env
       expect(response).to have_http_status(415)
     end
 
@@ -87,7 +87,7 @@ describe 'Dataset Items' do
       # use default form content type
       params = { dataset_item: update_dataset_item_attributes }.to_json
 
-      put @nested_dataset_item_url, params, @env
+      put @nested_dataset_item_url, params: params, headers: @env
       expect(response).to have_http_status(415)
     end
 
@@ -95,27 +95,27 @@ describe 'Dataset Items' do
       @env['CONTENT_TYPE'] = 'application/json'
       params = { dataset_item: update_dataset_item_attributes }.to_json
 
-      put @nested_dataset_item_url, params, @env
+      put @nested_dataset_item_url, params: params, headers: @env
       expect(response).to have_http_status(200)
     end
 
     it 'does not allow empty body (nil, json)' do
       @env['CONTENT_TYPE'] = 'application/json'
       params = nil
-      put @nested_dataset_item_url, params, @env
+      put @nested_dataset_item_url, params: params, headers: @env
       expect(response).to have_http_status(400)
       parsed_response = JSON.parse(response.body)
-      expect(parsed_response['meta']['error']['links']).to eq({ 'New Resource' => '/datasets/2/items/new' })
+      expect(parsed_response['meta']['error']['links']).to eq({ 'New Resource' => "/datasets/#{dataset.id}/items/new" })
     end
 
     it 'does not allow empty body (empty string, json)' do
       @env['CONTENT_TYPE'] = 'application/json'
       params = ''
-      put @nested_dataset_item_url, params, @env
+      put @nested_dataset_item_url, params: params, headers: @env
       expect(response).to have_http_status(400)
-      expect(response.content_type).to eq 'application/json'
+      expect(response.content_type).to include('application/json')
       parsed_response = JSON.parse(response.body)
-      expect(parsed_response['meta']['error']['links']).to eq({ 'New Resource' => '/datasets/2/items/new' })
+      expect(parsed_response['meta']['error']['links']).to eq({ 'New Resource' => "/datasets/#{dataset.id}/items/new" })
     end
   end
 
@@ -129,7 +129,7 @@ describe 'Dataset Items' do
 
       @env['CONTENT_TYPE'] = 'application/json'
       params = ''
-      delete @nested_dataset_item_url, params, @env
+      delete @nested_dataset_item_url, params: params, headers: @env
       expect(response).to have_http_status(204)
       #parsed_response = JSON.parse(response.body)
 
@@ -151,7 +151,7 @@ describe 'Dataset Items' do
         }
       }.to_json
 
-      post '/dataset_items/filter', params, @env
+      post '/dataset_items/filter', params: params, headers: @env
       expect(response).to have_http_status(400)
     end
   end
@@ -218,7 +218,7 @@ describe 'Dataset Items' do
 
     it 'gets all dataset items' do
       many_dataset_items_some_with_events
-      post @dataset_item_filter_url, raw_post, @env
+      post @dataset_item_filter_url, params: raw_post, headers: @env
       parsed_response = JSON.parse(response.body)
       expect(response).to have_http_status(200)
     end
@@ -227,7 +227,7 @@ describe 'Dataset Items' do
       # create an array that has the stuff from create_entire_hierarchy as well as the stuff created above
       all_dataset_items = many_dataset_items_some_with_events
       sorted_ids = filter_and_sort_for_comparison(all_dataset_items, admin_user, 1, 25)
-      get @dataset_item_next_for_me_url, nil, @env
+      get @dataset_item_next_for_me_url, params: nil, headers: @env
       parsed_response = JSON.parse(response.body)
       expect(response).to have_http_status(200)
       ids = parsed_response['data'].map { |item| item['id'] }
@@ -240,7 +240,7 @@ describe 'Dataset Items' do
       # create an array that has the stuff from create_entire_hierarchy as well as the stuff created above
       all_dataset_items = many_dataset_items_some_with_events
       sorted_ids = filter_and_sort_for_comparison(all_dataset_items, writer_user, 1, 25)
-      get @dataset_item_next_for_me_url, nil, @env
+      get @dataset_item_next_for_me_url, params: nil, headers: @env
       parsed_response = JSON.parse(response.body)
       expect(response).to have_http_status(200)
       ids = parsed_response['data'].map { |item| item['id'] }
@@ -253,7 +253,7 @@ describe 'Dataset Items' do
       # create an array that has the stuff from create_entire_hierarchy as well as the stuff created above
       all_dataset_items = many_dataset_items_some_with_events
       sorted_ids = filter_and_sort_for_comparison(all_dataset_items, reader_user, 1, 25)
-      get @dataset_item_next_for_me_url, nil, @env
+      get @dataset_item_next_for_me_url, params: nil, headers: @env
       parsed_response = JSON.parse(response.body)
       expect(response).to have_http_status(200)
       ids = parsed_response['data'].map { |item| item['id'] }
@@ -289,7 +289,7 @@ describe 'Dataset Items' do
           qsp = {}
           qsp[:page] = page if page
           qsp[:items] = limit if limit
-          get @dataset_item_next_for_me_url, qsp, @env
+          get @dataset_item_next_for_me_url, params: qsp, headers: @env
           parsed_response = JSON.parse(response.body)
 
           expect(response).to have_http_status(200)

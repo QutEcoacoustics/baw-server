@@ -1,7 +1,8 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 
-describe 'CRUD Sites as valid user with owner permission', type: :feature do
-
+xdescribe 'CRUD Sites as valid user with owner permission', type: :feature do
   create_entire_hierarchy
 
   before(:each) do
@@ -62,7 +63,6 @@ describe 'CRUD Sites as valid user with owner permission', type: :feature do
     expect(page).to have_content('Please review the problems below:')
     expect(page).to have_content('can\'t be blank')
     expect(page).to have_content(site.name)
-
   end
 
   it 'downloads csv file successfully' do
@@ -91,7 +91,6 @@ describe 'CRUD Sites as valid user with owner permission', type: :feature do
 
     site.tzinfo_tz = nil
     site.save!
-
   end
 
   it 'rejects access to view project site harvest' do
@@ -103,11 +102,9 @@ describe 'CRUD Sites as valid user with owner permission', type: :feature do
     visit upload_instructions_project_site_path(project, site)
     expect(page).to have_content('Follow these instructions to upload audio to the site')
   end
-
 end
 
-describe 'CRUD Sites as valid user with read permission', type: :feature do
-
+xdescribe 'CRUD Sites as valid user with read permission', type: :feature do
   create_entire_hierarchy
 
   before(:each) do
@@ -160,8 +157,7 @@ describe 'CRUD Sites as valid user with read permission', type: :feature do
   end
 end
 
-describe 'CRUD Sites as valid user with no permission', :type => :feature do
-
+xdescribe 'CRUD Sites as valid user with no permission', type: :feature do
   create_entire_hierarchy
 
   before(:each) do
@@ -176,7 +172,6 @@ describe 'CRUD Sites as valid user with no permission', :type => :feature do
   it 'shows site details' do
     visit project_site_path(project, site)
     expect(page).to have_content(I18n.t('devise.failure.unauthorized'))
-
   end
 
   it 'allows access to create project site' do
@@ -212,8 +207,7 @@ describe 'CRUD Sites as valid user with no permission', :type => :feature do
   end
 end
 
-describe 'Delete Site as admin user', :type => :feature do
-
+xdescribe 'Delete Site as admin user', type: :feature do
   create_entire_hierarchy
 
   before(:each) do
@@ -244,11 +238,9 @@ describe 'Delete Site as admin user', :type => :feature do
     visit upload_instructions_project_site_path(project, site)
     expect(page).to have_content('Follow these instructions to upload audio to the site')
   end
-
 end
 
-describe 'Delete Site as admin user', :type => :feature do
-
+xdescribe 'Delete Site as admin user', type: :feature do
   create_entire_hierarchy
 
   before(:each) do
@@ -264,5 +256,4 @@ describe 'Delete Site as admin user', :type => :feature do
     visit upload_instructions_project_site_path(project, site)
     expect(page).to have_content('Follow these instructions to upload audio to the site')
   end
-
 end

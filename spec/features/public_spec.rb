@@ -3,7 +3,7 @@
 require 'rails_helper'
 require 'helpers/shared_test_helpers'
 
-describe 'Website forms with user', type: :feature do
+xdescribe 'Website forms with user', type: :feature do
   before(:each) do
     @user = FactoryBot.create(:user)
     login_as @user, scope: :user
@@ -151,7 +151,7 @@ describe 'Website forms with user', type: :feature do
   end
 end
 
-describe 'public website forms', type: :feature do
+xdescribe 'public website forms', type: :feature do
   context 'static pages' do
     it 'shows the ethics_statement page' do
       visit ethics_statement_path

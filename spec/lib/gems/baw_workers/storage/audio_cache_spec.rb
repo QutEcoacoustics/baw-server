@@ -40,7 +40,7 @@ describe BawWorkers::Storage::AudioCache do
   end
 
   it 'paths match settings' do
-    expect(audio_cache.possible_dirs).to match_array BawWorkers::Settings.paths.cached_audios
+    expect(audio_cache.possible_dirs).to match_array Settings.paths.cached_audios
   end
 
   it 'creates the correct name' do
@@ -50,13 +50,11 @@ describe BawWorkers::Storage::AudioCache do
   end
 
   context 'checking validation of sample rate' do
-
     let(:non_standard_sample_rate) { 12_345 }
     # file name with non-standard sample rate
     let(:cached_audio_file_name_given_parameters_nssr) { "#{uuid}_#{start_offset}_#{end_offset}_#{channel}_#{non_standard_sample_rate}.#{format_audio}" }
 
     it 'creates the correct name with non standard original sample rate' do
-
       expect(
         audio_cache.file_name(
           uuid: uuid,
@@ -68,11 +66,9 @@ describe BawWorkers::Storage::AudioCache do
           format: format_audio
         )
       ).to eq cached_audio_file_name_given_parameters_nssr
-
     end
 
     it 'creates the correct name with non standard original sample rate and a standard requested sample rate' do
-
       expect(
         audio_cache.file_name(
           uuid: uuid,
@@ -84,11 +80,9 @@ describe BawWorkers::Storage::AudioCache do
           format: format_audio
         )
       ).to eq cached_audio_file_name_given_parameters
-
     end
 
     it 'fails validation with invalid sample rate' do
-
       expect {
         audio_cache.file_name(
           uuid: uuid,
@@ -100,11 +94,9 @@ describe BawWorkers::Storage::AudioCache do
           format: format_audio
         )
       }.to raise_error(ArgumentError)
-
     end
 
     it 'fails validation with non standard sample rate and original sample rate not supplied' do
-
       expect {
         audio_cache.file_name(
           uuid: uuid,
@@ -115,11 +107,9 @@ describe BawWorkers::Storage::AudioCache do
           format: format_audio
         )
       }.to raise_error(ArgumentError)
-
     end
 
     it 'fails validation with a sample rate not supported by the format (mp3)' do
-
       expect {
         audio_cache.file_name(
           uuid: uuid,
@@ -131,9 +121,7 @@ describe BawWorkers::Storage::AudioCache do
           format: 'mp3'
         )
       }.to raise_error(ArgumentError)
-
     end
-
   end
 
   it 'creates the correct partial path' do
@@ -141,12 +129,12 @@ describe BawWorkers::Storage::AudioCache do
   end
 
   it 'creates the correct full path for a single file' do
-    expected = [File.join(BawWorkers::Settings.paths.cached_audios[0], partial_path, cached_audio_file_name_defaults)]
+    expected = [File.join(Settings.paths.cached_audios[0], partial_path, cached_audio_file_name_defaults)]
     expect(audio_cache.possible_paths_file(opts, cached_audio_file_name_defaults)).to eq expected
   end
 
   it 'creates the correct full path' do
-    expected = [File.join(BawWorkers::Settings.paths.cached_audios[0], partial_path, cached_audio_file_name_given_parameters)]
+    expected = [File.join(Settings.paths.cached_audios[0], partial_path, cached_audio_file_name_given_parameters)]
     expect(audio_cache.possible_paths(opts)).to eq expected
   end
 
@@ -166,5 +154,4 @@ describe BawWorkers::Storage::AudioCache do
     expect(path_info[:channel]).to eq channel
     expect(path_info[:format]).to eq format_audio
   end
-
 end

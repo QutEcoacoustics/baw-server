@@ -1,7 +1,8 @@
+# frozen_string_literal: true
+
 module BawWorkers
   # Helpers to get info from files.
   class FileInfo
-
     def initialize(audio_base)
       @audio = audio_base
     end
@@ -10,7 +11,6 @@ module BawWorkers
     # @param [String] source
     # @return [Hash] information about an existing file
     def audio_info(source)
-
       # based on how harvester gets file hash.
       generated_file_hash = 'SHA256::' + generate_hash(source).hexdigest
 
@@ -21,16 +21,16 @@ module BawWorkers
       info = @audio.info(source)
 
       {
-          file: source,
-          extension: File.extname(source).delete('.'),
-          errors: integrity_check[:errors],
-          file_hash: generated_file_hash,
-          media_type: info[:media_type],
-          sample_rate_hertz: info[:sample_rate],
-          duration_seconds: info[:duration_seconds].to_f.round(3),
-          bit_rate_bps: info[:bit_rate_bps],
-          data_length_bytes: info[:data_length_bytes],
-          channels: info[:channels],
+        file: source,
+        extension: File.extname(source).delete('.'),
+        errors: integrity_check[:errors],
+        file_hash: generated_file_hash,
+        media_type: info[:media_type],
+        sample_rate_hertz: info[:sample_rate],
+        duration_seconds: info[:duration_seconds].to_f.round(3),
+        bit_rate_bps: info[:bit_rate_bps],
+        data_length_bytes: info[:data_length_bytes],
+        channels: info[:channels]
       }
     end
 
@@ -40,7 +40,7 @@ module BawWorkers
       incr_hash = Digest::SHA256.new
 
       File.open(source) do |file|
-        buffer = ''
+        buffer = String.new
 
         # Read the file 512 bytes at a time
         until file.eof
@@ -75,13 +75,13 @@ module BawWorkers
     # @return [Hash]
     def basic(source)
       {
-          file_path: File.expand_path(source),
-          file_name: File.basename(source),
-          extension: File.extname(source).reverse.chomp('.').reverse,
-          access_time: File.atime(source),
-          change_time: File.ctime(source),
-          modified_time: File.mtime(source),
-          data_length_bytes: File.size(source)
+        file_path: File.expand_path(source),
+        file_name: File.basename(source),
+        extension: File.extname(source).reverse.chomp('.').reverse,
+        access_time: File.atime(source),
+        change_time: File.ctime(source),
+        modified_time: File.mtime(source),
+        data_length_bytes: File.size(source)
       }
     end
 
@@ -116,7 +116,7 @@ module BawWorkers
     # @param [Object] value
     # @return [Boolean]
     def numeric?(value)
-      !value.nil? && value.is_a?(Fixnum)
+      !value.nil? && value.is_a?(Integer)
     end
 
     # Check is a settings value is a time offset.
@@ -125,7 +125,7 @@ module BawWorkers
     # @param [string] value
     # @return [Boolean]
     def time_offset?(value)
-      !value.blank? && ((value =~ /^(\+|\-)\d{1,2}(:?\d{2})?$/) != nil)
+      !value.blank? && ((value =~ /^(\+|-)\d{1,2}(:?\d{2})?$/) != nil)
     end
 
     # Get info from upload dir file name.
@@ -136,10 +136,10 @@ module BawWorkers
       regex = /^p(\d+)_s(\d+)_u(\d+)_d(\d{4})(\d{2})(\d{2})_t(\d{2})(\d{2})(\d{2})Z\.([a-zA-Z0-9]+)$/
       file_name.scan(regex) do |project_id, site_id, uploader_id, year, month, day, hour, min, sec, extension|
         result[:raw] = {
-            project_id: project_id, site_id: site_id, uploader_id: uploader_id,
-            year: year, month: month, day: day,
-            hour: hour, min: min, sec: sec,
-            offset: 'Z', ext: extension
+          project_id: project_id, site_id: site_id, uploader_id: uploader_id,
+          year: year, month: month, day: day,
+          hour: hour, min: min, sec: sec,
+          offset: 'Z', ext: extension
         }
 
         result[:project_id] = project_id.to_i
@@ -165,13 +165,15 @@ module BawWorkers
       regex = /^(.*)(\d{4})(\d{2})(\d{2})(-|_|T)?(\d{2})(\d{2})(\d{2})([+\-]\d{4}|[+\-]\d{1,2}:\d{2}|[+\-]\d{1,2}|Z)?(.*)\.([a-zA-Z0-9]+)$/
       file_name.scan(regex) do |prefix, year, month, day, separator, hour, minute, second, offset, suffix, extension|
         result[:raw] = {
-            year: year, month: month, day: day,
-            hour: hour, min: minute, sec: second,
-            offset: offset.blank? ? '' : offset,
-            ext: extension
+          year: year, month: month, day: day,
+          hour: hour, min: minute, sec: second,
+          offset: offset.blank? ? '' : offset,
+          ext: extension
         }
         available_offset = offset || utc_offset
-        fail BawWorkers::Exceptions::HarvesterConfigurationError, 'No UTC offset provided and file name did not contain a utc offset.' if available_offset.blank?
+        if available_offset.blank?
+          raise BawWorkers::Exceptions::HarvesterConfigurationError, 'No UTC offset provided and file name did not contain a utc offset.'
+        end
 
         result[:utc_offset] = available_offset
         result[:recorded_date] = DateTime.new(year.to_i, month.to_i, day.to_i, hour.to_i, minute.to_i, second.to_i, result[:utc_offset]).iso8601(3)
@@ -182,6 +184,5 @@ module BawWorkers
       end
       result
     end
-
   end
 end

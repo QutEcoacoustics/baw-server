@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 
 describe 'public/data_upload', type: :view do
@@ -5,7 +7,7 @@ describe 'public/data_upload', type: :view do
 
   it 'should render a stock welcome message for new pages' do
     render
-    expect(rendered).to have_content(standard_text)
+    expect(rendered).to include(standard_text)
   end
 
   it 'should allow the standard welcome message to be replaced' do
@@ -14,8 +16,7 @@ describe 'public/data_upload', type: :view do
     MARKDOWN
 
     render
-    expect(rendered).to_not have_content(standard_text)
+    expect(rendered).to_not include(standard_text)
     expect(rendered).to include('This is a testy <strong>test</strong> test')
   end
-
 end

@@ -42,7 +42,7 @@ describe UserAccountsController do
           "hide_fixed": false
         } }
 
-        response = put :modify_preferences, { user_account: post_json, format: :json }
+        response = put :modify_preferences, params: { user_account: post_json, format: :json }
         expect(response).to have_http_status(:ok)
 
         user_good_tz = User.find(user_bad_tz.id)
@@ -91,7 +91,7 @@ describe UserAccountsController do
           "hide_fixed": false
         } }
 
-        response = put :modify_preferences, { user_account: post_json, format: :json }
+        response = put :modify_preferences, params: { user_account: post_json, format: :json }
         expect(response).to have_http_status(:ok)
 
         user_good_tz = User.find(user_bad_tz.id)

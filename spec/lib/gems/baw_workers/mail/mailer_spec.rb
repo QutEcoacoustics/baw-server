@@ -11,7 +11,6 @@ describe BawWorkers::Mail::Mailer do
     let(:job) { { job_class: :job_class_message, job_args: :job_args_message, job_queue: :job_queue_message } }
 
     let(:error) {
-
       error = nil
       begin
         0 / 0
@@ -47,7 +46,7 @@ describe BawWorkers::Mail::Mailer do
       expect(mail.body.encoded).to include(Rack::Utils.escape_html(job[:job_args].to_s))
       expect(mail.body.encoded).to include(Rack::Utils.escape_html(job[:job_queue].to_s))
       expect(mail.body.encoded).to include(Rack::Utils.escape_html(error.message))
-      expect(mail.body.encoded).to include(Rack::Utils.escape_html(error.backtrace[0][0..10]))
+      expect(mail.body.encoded).to include((error.backtrace[0][0..10]))
 
       expect(mail.body.encoded).to include('<p>')
     end
@@ -55,6 +54,5 @@ describe BawWorkers::Mail::Mailer do
     it 'sends an email' do
       expect { mail.deliver_now }.to change { ActionMailer::Base.deliveries.count }.by(1)
     end
-
   end
 end

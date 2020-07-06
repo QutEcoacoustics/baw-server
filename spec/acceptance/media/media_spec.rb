@@ -35,11 +35,11 @@ resource 'Media' do
   let(:audio_file_mono_duration_seconds) { 70 }
 
   let(:audio_original) {
-    BawWorkers::Storage::AudioOriginal.new(BawWorkers::Settings.paths.original_audios)
+    BawWorkers::Storage::AudioOriginal.new(Settings.paths.original_audios)
   }
-  let(:audio_cache) { BawWorkers::Storage::AudioCache.new(BawWorkers::Settings.paths.cached_audios) }
-  let(:spectrogram_cache) { BawWorkers::Storage::SpectrogramCache.new(BawWorkers::Settings.paths.cached_spectrograms) }
-  let(:analysis_cache) { BawWorkers::Storage::AnalysisCache.new(BawWorkers::Settings.paths.cached_analysis_jobs) }
+  let(:audio_cache) { BawWorkers::Storage::AudioCache.new(Settings.paths.cached_audios) }
+  let(:spectrogram_cache) { BawWorkers::Storage::SpectrogramCache.new(Settings.paths.cached_spectrograms) }
+  let(:analysis_cache) { BawWorkers::Storage::AnalysisCache.new(Settings.paths.cached_analysis_jobs) }
 
   get '/audio_recordings/:audio_recording_id/media.:format' do
     standard_media_parameters

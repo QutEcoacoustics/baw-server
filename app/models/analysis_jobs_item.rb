@@ -7,10 +7,11 @@ class AnalysisJobsItem < ApplicationRecord
 
   SYSTEM_JOB_ID = 'system'
 
-  belongs_to :analysis_job, inverse_of: :analysis_jobs_items
+  # ensure we allow with_deleted here for race condition where analysis job
+  # has been soft deleted while job items are still updating
+  belongs_to :analysis_job, -> { with_deleted }, inverse_of: :analysis_jobs_items
   belongs_to :audio_recording, inverse_of: :analysis_jobs_items
 
-  # association validations
   validates_associated :analysis_job
   validates_associated :audio_recording
 

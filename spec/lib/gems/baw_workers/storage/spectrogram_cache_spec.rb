@@ -4,7 +4,6 @@ require 'workers_helper'
 require 'helpers/shared_test_helpers'
 
 describe BawWorkers::Storage::SpectrogramCache do
-
   include_context 'shared_test_helpers'
 
   let(:spectrogram_cache) { BawWorkers::Config.spectrogram_cache_helper }
@@ -49,7 +48,7 @@ describe BawWorkers::Storage::SpectrogramCache do
   end
 
   it 'paths match settings' do
-    expect(spectrogram_cache.possible_dirs).to match_array BawWorkers::Settings.paths.cached_spectrograms
+    expect(spectrogram_cache.possible_dirs).to match_array Settings.paths.cached_spectrograms
   end
 
   it 'creates the correct name' do
@@ -59,13 +58,11 @@ describe BawWorkers::Storage::SpectrogramCache do
   end
 
   context 'checking validation of sample rate' do
-
     let(:non_standard_sample_rate) { 2323 }
     # file name with non-standard sample rate
     let(:cached_spectrogram_file_name_given_parameters_nssr) { "#{uuid}_#{start_offset}_#{end_offset}_#{channel}_#{non_standard_sample_rate}_#{window}_#{window_function}_#{colour}.#{format_spectrogram}" }
 
     it 'creates the correct name with non standard original sample rate' do
-
       expect(
         spectrogram_cache.file_name(
           uuid: uuid,
@@ -80,11 +77,9 @@ describe BawWorkers::Storage::SpectrogramCache do
           format: format_spectrogram
         )
       ).to eq cached_spectrogram_file_name_given_parameters_nssr
-
     end
 
     it 'creates the correct name with non standard original sample rate and a standard requested sample rate' do
-
       expect(
         spectrogram_cache.file_name(
           uuid: uuid,
@@ -99,11 +94,9 @@ describe BawWorkers::Storage::SpectrogramCache do
           format: format_spectrogram
         )
       ).to eq cached_spectrogram_file_name_given_parameters
-
     end
 
     it 'fails validation with non-standard sample rate different from specified original sample rate' do
-
       expect {
         spectrogram_cache.file_name(
           uuid: uuid,
@@ -118,11 +111,9 @@ describe BawWorkers::Storage::SpectrogramCache do
           format: format_spectrogram
         )
       }.to raise_error(ArgumentError)
-
     end
 
     it 'fails validation with non standard sample rate and original sample rate not supplied' do
-
       expect {
         spectrogram_cache.file_name(
           uuid: uuid,
@@ -136,9 +127,7 @@ describe BawWorkers::Storage::SpectrogramCache do
           format: format_spectrogram
         )
       }.to raise_error(ArgumentError)
-
     end
-
   end
 
   it 'creates the correct partial path' do
@@ -146,12 +135,12 @@ describe BawWorkers::Storage::SpectrogramCache do
   end
 
   it 'creates the correct full path for a single file' do
-    expected = [File.join(BawWorkers::Settings.paths.cached_spectrograms[0], partial_path, cached_spectrogram_file_name_defaults)]
+    expected = [File.join(Settings.paths.cached_spectrograms[0], partial_path, cached_spectrogram_file_name_defaults)]
     expect(spectrogram_cache.possible_paths_file(opts, cached_spectrogram_file_name_defaults)).to eq expected
   end
 
   it 'creates the correct full path' do
-    expected = [File.join(BawWorkers::Settings.paths.cached_spectrograms[0], partial_path, cached_spectrogram_file_name_given_parameters)]
+    expected = [File.join(Settings.paths.cached_spectrograms[0], partial_path, cached_spectrogram_file_name_given_parameters)]
     expect(spectrogram_cache.possible_paths(opts)).to eq expected
   end
 
@@ -174,5 +163,4 @@ describe BawWorkers::Storage::SpectrogramCache do
     expect(path_info[:colour]).to eq colour
     expect(path_info[:format]).to eq format_spectrogram
   end
-
 end

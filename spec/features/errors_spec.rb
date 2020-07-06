@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-describe 'checking reactions to errors', :type => :feature do
+xdescribe 'checking reactions to errors', :type => :feature do
 
 
   context 'production with exceptions_app' do

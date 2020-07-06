@@ -2,7 +2,7 @@
 
 require 'rails_helper'
 
-describe 'MANAGE Scripts as admin user', type: :feature do
+xdescribe 'MANAGE Scripts as admin user', type: :feature do
   before(:each) do
     admin = FactoryBot.create(:admin)
     @script = FactoryBot.create(:script)
@@ -79,7 +79,7 @@ describe 'MANAGE Scripts as admin user', type: :feature do
   #end
 end
 
-describe 'MANAGE Scripts as user', type: :feature do
+xdescribe 'MANAGE Scripts as user', type: :feature do
   before(:each) do
     user = FactoryBot.create(:user)
     login_as user, scope: :user

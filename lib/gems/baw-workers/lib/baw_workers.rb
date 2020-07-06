@@ -31,6 +31,8 @@ Zeitwerk::Loader.new.tap do |loader|
 end
 
 module BawWorkers
+  MODULE_ROOT = __dir__.to_s
+
   module Analysis
   end
 

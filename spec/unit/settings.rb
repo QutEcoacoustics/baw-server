@@ -23,10 +23,9 @@ describe Settings do
   its(:sources) { should be(BawApp.config_files.map(&:to_s)) }
 end
 
-describe BawWorkers::Settings do
+describe Settings do
   # it should simply be an alias for Settings
 
   it { should be_a(Config::Options) }
   it { should be_equal(Settings) }
-
 end

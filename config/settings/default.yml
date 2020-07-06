@@ -121,7 +121,6 @@ paths:
   programs_dir: <%= BawApp.root %>/programs
 # used by workers to contact a web-server
 endpoints:
-  use_ssl: true
   login: /security
   audio_recording: /audio_recordings/:id
   audio_recording_create: /projects/:project_id/sites/:site_id/audio_recordings

@@ -1,44 +1,44 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
-
-describe 'Rack rewrite', :type => :feature do # :type => :routing
+# need request spec here so that actual body content is returned
+describe 'Rack rewrite', type: :request do
   describe :routing do
+    client_app_content = /Client application placeholder.*This is the page that will be rendered if a client side view needs to be rendered./m
 
-    client_app_content = 'Client application placeholder This is the page that will be rendered if a client side view needs to be rendered.'
+    it do
+      get('/listen')
+      expect(response.body).to match(client_app_content)
+    end
 
-    it {
-      visit '/listen'
-      expect(page.text).to include(client_app_content)
-    }
+    it do
+      get('/birdwalks')
+      expect(response.body).to match(client_app_content)
+    end
 
-    it {
-      visit '/birdwalks'
-      expect(page.text).to include(client_app_content)
-    }
+    it do
+      get('/library')
+      expect(response.body).to match(client_app_content)
+    end
 
-    it {
-      visit '/library'
-      expect(page.text).to include(client_app_content)
-    }
+    it do
+      get('/demo')
+      expect(response.body).to match(client_app_content)
+    end
 
-    it {
-      visit '/demo'
-      expect(page.text).to include(client_app_content)
-    }
+    it do
+      get('/visualize')
+      expect(response.body).to match(client_app_content)
+    end
 
-    it {
-      visit '/visualize'
-      expect(page.text).to include(client_app_content)
-    }
+    it do
+      get('/audio_analysis')
+      expect(response.body).to match(client_app_content)
+    end
 
-    it {
-      visit '/audio_analysis'
-      expect(page.text).to include(client_app_content)
-    }
-
-    it {
-      visit '/citsci'
-      expect(page.text).to include(client_app_content)
-    }
-
+    it do
+      get('/citsci')
+      expect(response.body).to match(client_app_content)
+    end
   end
 end

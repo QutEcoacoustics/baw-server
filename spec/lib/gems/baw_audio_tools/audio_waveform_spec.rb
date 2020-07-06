@@ -10,7 +10,7 @@ describe BawAudioTools::AudioWaveform, :skip do
   include_context 'test audio files'
 
   let(:waveform) {
-    audio_tools = BawWorkers::Settings.audio_tools
+    audio_tools = Settings.audio_tools
 
     BawAudioTools::AudioWaveform.new(
       audio_tools.wav2png_executable,
@@ -20,7 +20,6 @@ describe BawAudioTools::AudioWaveform, :skip do
 
   context 'waveform' do
     it 'creates correct command line' do
-
       source = temp_media_file_1 + '.wav'
       audio_base.modify(audio_file_mono, source)
 
@@ -43,6 +42,5 @@ describe BawAudioTools::AudioWaveform, :skip do
 
       expect(cmd).to include('wav2png --db-scale --background-color 000000ff --foreground-color 00000000 --width 2000 --height 500 --db-max 10 --db-min -60 --output "')
     end
-
   end
 end

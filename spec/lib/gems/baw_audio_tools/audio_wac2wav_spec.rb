@@ -9,7 +9,7 @@ describe BawAudioTools::AudioWac2wav do
   include_context 'test audio files'
 
   let(:wac2wav) {
-    audio_tools = BawWorkers::Settings.audio_tools
+    audio_tools = Settings.audio_tools
 
     BawAudioTools::AudioWac2wav.new(
       audio_tools.wac2wav_executable,
@@ -94,6 +94,5 @@ describe BawAudioTools::AudioWac2wav do
         audio_base.modify(temp_media_file_a, temp_media_file_b)
       }.to raise_error(BawAudioTools::Exceptions::InvalidTargetMediaTypeError, 'Cannot convert to .wac')
     end
-
   end
 end

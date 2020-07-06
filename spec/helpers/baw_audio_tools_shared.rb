@@ -8,7 +8,7 @@ shared_context 'common' do
   let(:bit_rate_min) { 192_000 }
   let(:sleep_range) { 0.5 }
 
-  let(:temp_dir) { BawWorkers::Settings.paths.temp_dir }
+  let(:temp_dir) { Settings.paths.temp_dir }
   let(:audio_dir) { Fixtures::FILES_PATH }
   let(:logger) {
     logger = Logger.new(BawApp.root / 'log' / 'audio_tools.test.log')
@@ -19,13 +19,13 @@ end
 
 shared_context 'audio base' do
   let(:audio_base) {
-    audio_tools = BawWorkers::Settings.audio_tools
+    audio_tools = Settings.audio_tools
 
     BawAudioTools::AudioBase.from_executables(
-      BawWorkers::Settings.cached_audio_defaults,
+      Settings.cached_audio_defaults,
       logger,
       temp_dir,
-      BawWorkers::Settings.audio_tools_timeout_sec,
+      Settings.audio_tools_timeout_sec,
       ffmpeg: audio_tools.ffmpeg_executable,
       ffprobe: audio_tools.ffprobe_executable,
       mp3splt: audio_tools.mp3splt_executable,

@@ -1,10 +1,11 @@
+# frozen_string_literal: true
+
 require 'pathname'
 
 module BawWorkers
   module Harvest
     # Get a list of files to be harvested.
     class GatherFiles
-
       # Create a new BawWorkers::Harvest::GatherFiles.
       # @param [Logger] logger
       # @param [BawWorkers::FileInfo] file_info_helper
@@ -16,7 +17,7 @@ module BawWorkers
         @file_info_helper = file_info_helper
 
         @ext_include = ext_include #Settings.available_formats.audio
-        @ext_exclude = %w(completed log yml)
+        @ext_exclude = ['completed', 'log', 'yml']
         @config_file_name = config_file_name
 
         @class_name = self.class.name
@@ -35,13 +36,13 @@ module BawWorkers
         input_array = [input] if input.is_a?(String)
         input_array = input if input.is_a?(Array)
 
-        if input_array.size > 0
+        if !input_array.empty?
           input_array.each do |item|
-            if item.is_a?(String) && File.file?(item)
-              top_dir = File.dirname(item)
-            else
-              top_dir = item
-            end
+            top_dir = if item.is_a?(String) && File.file?(item)
+                        File.dirname(item)
+                      else
+                        item
+                      end
 
             results.push(*process(item, top_dir, recurse))
           end
@@ -62,6 +63,8 @@ module BawWorkers
         results = []
 
         path = File.expand_path(path)
+
+        path = path.to_s if path.is_a? Pathname
 
         if path.is_a?(String) && File.file?(path)
           @logger.info(@class_name) { "Found file #{path}." }
@@ -90,7 +93,7 @@ module BawWorkers
           results.push(file_result) unless file_result.blank?
         end
 
-        if results.size > 0
+        if !results.empty?
           @logger.info(@class_name) { "Gathered info for #{results.size} valid files in #{current_dir}." }
         else
           @logger.debug(@class_name) { "No valid files in #{current_dir}." }
@@ -109,7 +112,7 @@ module BawWorkers
         unless File.directory?(path)
           msg = "'#{path}' is not a directory."
           @logger.error(@class_name) { msg }
-          fail ArgumentError, msg
+          raise ArgumentError, msg
         end
 
         is_writable = File.writable?(path)
@@ -118,7 +121,7 @@ module BawWorkers
         if !is_writable || !is_writable_real
           msg = "Found read-only directory: '#{path}'."
           @logger.error(@class_name) { msg }
-          fail ArgumentError, msg
+          raise ArgumentError, msg
         end
 
         path
@@ -133,7 +136,7 @@ module BawWorkers
         unless File.file?(path)
           msg = "'#{path}' is not a file."
           @logger.error(@class_name) { msg }
-          fail ArgumentError, msg
+          raise ArgumentError, msg
         end
 
         path = File.expand_path(path)
@@ -179,7 +182,6 @@ module BawWorkers
           else
             @logger.debug(@class_name) { "Successfully got #{msg_props}" }
           end
-
         rescue StandardError => e
           @logger.error(@class_name) {
             "Problem getting details for #{file} using utc offset '#{utc_offset}': #{format_error(e)}"
@@ -235,24 +237,23 @@ module BawWorkers
           config = YAML.load_file(file)
 
           folder_settings = {
-              project_id: config['project_id'],
-              site_id: config['site_id'],
-              uploader_id: config['uploader_id'],
-              utc_offset: config['utc_offset'],
-              metadata: config['metadata']
+            project_id: config['project_id'],
+            site_id: config['site_id'],
+            uploader_id: config['uploader_id'],
+            utc_offset: config['utc_offset'],
+            metadata: config['metadata']
           }
 
           if @file_info_helper.numeric?(folder_settings[:project_id]) &&
-              @file_info_helper.numeric?(folder_settings[:site_id]) &&
-              @file_info_helper.numeric?(folder_settings[:uploader_id]) &&
-              @file_info_helper.time_offset?(folder_settings[:utc_offset])
+             @file_info_helper.numeric?(folder_settings[:site_id]) &&
+             @file_info_helper.numeric?(folder_settings[:uploader_id]) &&
+             @file_info_helper.time_offset?(folder_settings[:utc_offset])
             @logger.debug(@class_name) { "Harvest directory settings loaded from config file #{file}." }
             folder_settings
           else
             @logger.warn(@class_name) { "Harvest directory config file was not valid '#{file}'. Could not get all settings." }
             {}
           end
-
         rescue StandardError => e
           @logger.warn(@class_name) { "Harvest directory config file was not valid '#{file}'. #{format_error(e)}" }
           {}

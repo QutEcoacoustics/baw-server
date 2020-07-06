@@ -9,7 +9,7 @@ describe BawWorkers::RedisCommunicator do
 
   let(:redis) { BawWorkers::Config.redis_communicator }
 
-  let(:fake_redis) { Redis.new(ActiveSupport::HashWithIndifferentAccess.new(BawWorkers::Settings.redis.connection)) }
+  let(:fake_redis) { Redis.new(ActiveSupport::HashWithIndifferentAccess.new(Settings.redis.connection)) }
 
   context 'wraps a basic redis API' do
     it 'should wrap keys in a namespace' do

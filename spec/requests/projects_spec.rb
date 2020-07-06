@@ -51,7 +51,7 @@ describe 'Projects' do
   describe 'Creating a project' do
     it 'does allows multipart/form-data content-type' do
       @env['CONTENT_TYPE'] = form_content_type_string
-      post @create_project_url, form_project_data, @env
+      post @create_project_url, params: form_project_data, headers: @env
       # 302 because html requests are redirected to the newly created record
       expect(response).to have_http_status(302)
     end
@@ -60,20 +60,20 @@ describe 'Projects' do
       @env['CONTENT_TYPE'] = 'application/json'
       @env['ACCEPT'] = 'application/json'
       params = { project: project_attributes }.to_json
-      post @create_project_url, params, @env
+      post @create_project_url, params: params, headers: @env
       expect(response).to have_http_status(201)
     end
 
     it 'rejects text/plain content-type with valid json multipart-form body' do
       @env['CONTENT_TYPE'] = 'text/plain'
-      post @create_project_url, form_project_data, @env
+      post @create_project_url, params: form_project_data, headers: @env
       expect(response).to have_http_status(415)
     end
 
     it 'rejects text/plain content-type with empty body' do
       @env['CONTENT_TYPE'] = 'application/json'
       params = nil
-      post @create_project_url, params, @env
+      post @create_project_url, params: params, headers: @env
       expect(response).to have_http_status(400)
       # projects#create does not have json as default response format,
       # so, we get a html response
@@ -88,7 +88,7 @@ describe 'Projects' do
   describe 'Updating a project' do
     it 'does allows multipart/form-data content-type' do
       @env['CONTENT_TYPE'] = form_content_type_string
-      put @update_project_url, form_project_data_update, @env
+      put @update_project_url, params: form_project_data_update, headers: @env
       expect(response).to have_http_status(302)
     end
 
@@ -96,7 +96,7 @@ describe 'Projects' do
       @env['CONTENT_TYPE'] = 'application/json'
       @env['ACCEPT'] = 'application/json'
       params = { project: update_project_attributes }.to_json
-      put @update_project_url, params, @env
+      put @update_project_url, params: params, headers: @env
       expect(response).to have_http_status(200)
     end
   end

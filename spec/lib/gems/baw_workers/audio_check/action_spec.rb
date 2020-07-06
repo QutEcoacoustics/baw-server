@@ -11,18 +11,17 @@ describe BawWorkers::AudioCheck::Action do
   # so change the queue name so the test worker does not
   # automatically process the jobs
   before(:each) do
-    default_queue = BawWorkers::Settings.actions.audio_check.queue
+    default_queue = Settings.actions.audio_check.queue
 
-    allow(BawWorkers::Settings.actions.audio_check).to receive(:queue).and_return(default_queue + '_manual_tick')
+    allow(Settings.actions.audio_check).to receive(:queue).and_return(default_queue + '_manual_tick')
 
     # cleanup resque queues before each test
     BawWorkers::ResqueApi.clear_queue(default_queue)
-    BawWorkers::ResqueApi.clear_queue(BawWorkers::Settings.actions.audio_check.queue)
+    BawWorkers::ResqueApi.clear_queue(Settings.actions.audio_check.queue)
     Resque::Plugins::Status::Hash.clear
-
   end
 
-  let(:queue_name) { BawWorkers::Settings.actions.audio_check.queue }
+  let(:queue_name) { Settings.actions.audio_check.queue }
 
   let(:audio_file_check) {
     BawWorkers::AudioCheck::WorkHelper.new(
@@ -50,7 +49,6 @@ describe BawWorkers::AudioCheck::Action do
   }
 
   context 'queues' do
-
     let(:expected_payload) {
       {
         'class' => BawWorkers::AudioCheck::Action.to_s,
@@ -72,7 +70,6 @@ describe BawWorkers::AudioCheck::Action do
     end
 
     it 'can enqueue' do
-
       BawWorkers::AudioCheck::Action.action_enqueue(test_params)
       expect(Resque.size(queue_name)).to eq(1)
 
@@ -81,7 +78,6 @@ describe BawWorkers::AudioCheck::Action do
     end
 
     it 'does not enqueue the same payload into the same queue more than once' do
-
       queued_query = { audio_params: test_params }
 
       expect(Resque.size(queue_name)).to eq(0)
@@ -112,11 +108,9 @@ describe BawWorkers::AudioCheck::Action do
       expect(popped).to include(expected_payload)
       expect(Resque.size(queue_name)).to eq(0)
     end
-
   end
 
   context 'should execute perform method' do
-
     context 'raises error' do
       it 'with a params that is not a hash' do
         expect {
@@ -135,7 +129,6 @@ describe BawWorkers::AudioCheck::Action do
       end
 
       it 'with correct parameters when file does not exist' do
-
         original_params = test_params.dup
 
         media_request_params =
@@ -157,7 +150,6 @@ describe BawWorkers::AudioCheck::Action do
       end
 
       it 'when file hash is incorrect' do
-
         media_request_params =
           {
             uuid: '7bb0c719-143f-4373-a724-8138219006d9',
@@ -180,7 +172,6 @@ describe BawWorkers::AudioCheck::Action do
       end
 
       it 'when file extension is incorrect' do
-
         media_request_params =
           {
             uuid: '7bb0c719-143f-4373-a724-8138219006d9',
@@ -203,7 +194,6 @@ describe BawWorkers::AudioCheck::Action do
       end
 
       it 'when file hashes do not match' do
-
         media_request_params =
           {
             uuid: '7bb0c719-143f-4373-a724-8138219006d9',
@@ -232,7 +222,6 @@ describe BawWorkers::AudioCheck::Action do
       end
 
       it 'when file integrity is uncertain' do
-
         media_request_params =
           {
             uuid: '7bb0c719-143f-4373-a724-8138219006d9',
@@ -254,7 +243,6 @@ describe BawWorkers::AudioCheck::Action do
       end
 
       it 'when file hash is empty and other properties do not match' do
-
         media_request_params =
           {
             uuid: '7bb0c719-143f-4373-a724-8138219006d9',
@@ -279,7 +267,6 @@ describe BawWorkers::AudioCheck::Action do
       end
 
       it 'when recorded date is in incorrect format' do
-
         media_request_params =
           {
             uuid: '7bb0c719-143f-4373-a724-8138219006d9',
@@ -301,12 +288,10 @@ describe BawWorkers::AudioCheck::Action do
 
         expect(ActionMailer::Base.deliveries.count).to eq(0)
       end
-
     end
 
     context 'is successful' do
       it 'with correct parameters for file with old style name' do
-
         media_request_params =
           {
             uuid: '7bb0c719-143f-4373-a724-8138219006d9',
@@ -337,7 +322,6 @@ describe BawWorkers::AudioCheck::Action do
       end
 
       it 'with correct parameters for file with new style name' do
-
         media_request_params =
           {
             uuid: '7bb0c719-143f-4373-a724-8138219006d9',
@@ -365,7 +349,6 @@ describe BawWorkers::AudioCheck::Action do
       end
 
       it 'with correct parameters when both old and new files exist' do
-
         media_request_params =
           {
             uuid: '7bb0c719-143f-4373-a724-8138219006d9',
@@ -399,7 +382,6 @@ describe BawWorkers::AudioCheck::Action do
       end
 
       it 'when updating audio file properties' do
-
         media_request_params =
           {
             uuid: '7bb0c719-143f-4373-a724-8138219006d9',
@@ -460,11 +442,9 @@ describe BawWorkers::AudioCheck::Action do
         expect(result[0][:api_response]).to eq(:success)
 
         expect(ActionMailer::Base.deliveries.count).to eq(0)
-
       end
 
       it 'when file hash not given, and only file hash needs to be updated' do
-
         media_request_params =
           {
             uuid: '7bb0c719-143f-4373-a724-8138219006d9',
@@ -510,7 +490,6 @@ describe BawWorkers::AudioCheck::Action do
       end
 
       context 'in dry run mode' do
-
         it 'does nothing even when there are changes to be made' do
           media_request_params =
             {
@@ -574,7 +553,6 @@ describe BawWorkers::AudioCheck::Action do
           expect(ActionMailer::Base.deliveries.count).to eq(0)
         end
       end
-
     end
   end
 

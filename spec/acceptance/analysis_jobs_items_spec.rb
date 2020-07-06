@@ -20,7 +20,7 @@ end
 # https://github.com/zipmark/rspec_api_documentation
 resource 'AnalysisJobsItems' do
   after(:all) do
-    analysis_cache = BawWorkers::Storage::AnalysisCache.new(BawWorkers::Settings.paths.cached_analysis_jobs)
+    analysis_cache = BawWorkers::Storage::AnalysisCache.new(Settings.paths.cached_analysis_jobs)
     analysis_cache.existing_dirs.each { |dir| FileUtils.rm_r dir }
   end
 

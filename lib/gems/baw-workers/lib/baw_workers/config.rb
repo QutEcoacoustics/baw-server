@@ -38,13 +38,13 @@ module BawWorkers
         is_test = BawApp.test?
         is_redis = opts.include?(:redis) && opts[:redis]
         is_resque_worker = opts.include?(:resque_worker) && opts[:resque_worker]
-        is_resque_worker_fg = BawWorkers::Settings.resque.background_pid_file.blank?
+        is_resque_worker_fg = Settings.resque.background_pid_file.blank?
 
         # configure basic attributes first
-        settings = BawWorkers::Settings
+        settings = Settings
         configure_paths(settings)
-        BawWorkers::Config.worker_top_dir = default_used ? BawWorkers::Config.temp_dir : File.dirname(settings_file)
-        BawWorkers::Config.programs_dir = File.expand_path(BawWorkers::Settings.paths.programs_dir)
+        BawWorkers::Config.worker_top_dir = default_used ? BawWorkers::Config.temp_dir : File.dirname(settings_files.last)
+        BawWorkers::Config.programs_dir = File.expand_path(Settings.paths.programs_dir)
 
         configure_storage(settings)
 
@@ -82,10 +82,8 @@ module BawWorkers
 
         # assert settings is a singleton
         raise StandardError, 'run_web: Settings should have already been initialized' if settings.nil?
-        raise StandardError, 'run_web: BawWorkers::Settings were nil but should be defined' if BawWorkers::Settings.nil?
-        if settings != BawWorkers::Settings
-          raise StandardError, 'run_web:  BawWorkers::Settings should be identical to Settings'
-        end
+        raise StandardError, 'run_web: Settings were nil but should be defined' if Settings.nil?
+        raise StandardError, 'run_web:  Settings should be identical to Settings' if settings != Settings
 
         # configure basic attributes first
         configure_paths(settings)
@@ -124,7 +122,7 @@ module BawWorkers
           default_used = true
         else
           provided = File.expand_path(opts[:settings_file])
-          default_configs.push(provided)
+          default_configs += [provided]
         end
 
         unless File.file?(default_configs.last)
@@ -136,7 +134,8 @@ module BawWorkers
       end
 
       def load_settings(config_files)
-        ::Config.load_and_set_settings(config_files)
+        new_config = ::Config.load_and_set_settings(config_files)
+        new_config
       end
 
       # Configures redis connections for both Resque and our own Redis wrapper
@@ -146,7 +145,7 @@ module BawWorkers
         Resque.redis = ActiveSupport::HashWithIndifferentAccess.new(settings.resque.connection)
         communicator_redis = Redis.new(ActiveSupport::HashWithIndifferentAccess.new(settings.redis.connection))
 
-        Resque.redis.namespace = BawWorkers::Settings.resque.namespace
+        Resque.redis.namespace = Settings.resque.namespace
 
         # Set up standard redis wrapper.
         BawWorkers::Config.redis_communicator = BawWorkers::RedisCommunicator.new(
@@ -293,16 +292,16 @@ module BawWorkers
       end
 
       def configure_resque_worker
-        if BawWorkers::Settings.resque.background_pid_file.blank?
+        if Settings.resque.background_pid_file.blank?
           ENV['PIDFILE'] = nil
           ENV['BACKGROUND'] = nil
         else
-          ENV['PIDFILE'] = BawWorkers::Settings.resque.background_pid_file
+          ENV['PIDFILE'] = Settings.resque.background_pid_file
           ENV['BACKGROUND'] = 'yes'
         end
 
-        ENV['QUEUES'] = BawWorkers::Settings.resque.queues_to_process.join(',')
-        ENV['INTERVAL'] = BawWorkers::Settings.resque.polling_interval_seconds.to_s
+        ENV['QUEUES'] = Settings.resque.queues_to_process.join(',')
+        ENV['INTERVAL'] = Settings.resque.polling_interval_seconds.to_s
 
         # set resque verbose on
         #ENV['VERBOSE '] = '1'

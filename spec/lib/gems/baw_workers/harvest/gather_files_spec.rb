@@ -11,7 +11,7 @@ describe BawWorkers::Harvest::GatherFiles do
     clear_harvester_to_do
   end
 
-  let(:config_file_name) { BawWorkers::Settings.actions.harvest.config_file_name }
+  let(:config_file_name) { Settings.actions.harvest.config_file_name }
 
   let(:file_info) { BawWorkers::Config.file_info }
 
@@ -19,7 +19,7 @@ describe BawWorkers::Harvest::GatherFiles do
     BawWorkers::Harvest::GatherFiles.new(
       BawWorkers::Config.logger_worker,
       file_info,
-      BawWorkers::Settings.available_formats.audio + BawWorkers::Settings.available_formats.audio_decode_only,
+      Settings.available_formats.audio + Settings.available_formats.audio_decode_only,
       config_file_name
     )
   }
@@ -29,7 +29,6 @@ describe BawWorkers::Harvest::GatherFiles do
   let(:folder_example) { File.expand_path File.join(File.dirname(__FILE__), 'folder_example.yml') }
 
   context 'get file info' do
-
     let(:result) { file_info.basic(example_audio) }
 
     it 'should match full path' do
@@ -59,7 +58,6 @@ describe BawWorkers::Harvest::GatherFiles do
     it 'should match file size' do
       expect(result[:data_length_bytes]).to eq(File.size(example_audio))
     end
-
   end
 
   context 'settings values' do
@@ -120,7 +118,6 @@ describe BawWorkers::Harvest::GatherFiles do
   end
 
   context 'get file info' do
-
     it 'should reject directories' do
       sub_folder = File.join(harvest_to_do_path, 'one')
       FileUtils.mkpath(File.join(sub_folder, 'two', 'three'))
@@ -283,7 +280,5 @@ describe BawWorkers::Harvest::GatherFiles do
 
       FileUtils.rm_rf(sub_folder, secure: true)
     end
-
   end
-
 end

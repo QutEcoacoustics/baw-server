@@ -1,6 +1,7 @@
+# frozen_string_literal: true
+
 module BawWorkers
   class ApiCommunicator
-
     attr_accessor :logger
 
     # Create a new BawWorkers::ApiCommunicator.
@@ -16,20 +17,20 @@ module BawWorkers
       @class_name = self.class.name
     end
 
-    def host;
-      @login_details['host'];
+    def host
+      @login_details['host']
     end
 
-    def port;
-      @login_details['port'];
+    def port
+      @login_details['port']
     end
 
-    def user;
-      @login_details['user'];
+    def user
+      @login_details['user']
     end
 
-    def password;
-      @login_details['password'];
+    def password
+      @login_details['password']
     end
 
     def endpoint_login
@@ -65,29 +66,30 @@ module BawWorkers
     # @param [Hash] security_info
     # @param [Hash] body
     # @return [Net::HTTP::Response] The response.
-    def send_request(description, method, host, port, endpoint, security_info = {auth_token: nil, cookies: nil}, body = nil)
-
+    def send_request(description, method, host, port, endpoint, security_info = { auth_token: nil, cookies: nil }, body = nil)
       case method
-        when :get
-          request = Net::HTTP::Get.new(endpoint)
-        when :put
-          request = Net::HTTP::Put.new(endpoint)
-        when :post
-          request = Net::HTTP::Post.new(endpoint)
-        when :head
-          request = Net::HTTP::Head.new(endpoint)
-        when :patch
-          request = Net::HTTP::Patch.new(endpoint)
-        else
-          fail ArgumentError, "Unrecognised HTTP method #{method}."
+      when :get
+        request = Net::HTTP::Get.new(endpoint)
+      when :put
+        request = Net::HTTP::Put.new(endpoint)
+      when :post
+        request = Net::HTTP::Post.new(endpoint)
+      when :head
+        request = Net::HTTP::Head.new(endpoint)
+      when :patch
+        request = Net::HTTP::Patch.new(endpoint)
+      else
+        raise ArgumentError, "Unrecognised HTTP method #{method}."
       end
 
       request['Content-Type'] = 'application/json'
       request['Accept'] = 'application/json'
-      request['Authorization'] = "Token token=\"#{security_info[:auth_token]}\"" if security_info && security_info.include?(:auth_token) && !security_info[:auth_token].nil?
+      if security_info&.include?(:auth_token) && !security_info[:auth_token].nil?
+        request['Authorization'] = "Token token=\"#{security_info[:auth_token]}\""
+      end
 
       # extract XSRF-TOKEN from cookie, and put into X-XSRF-TOKEN header
-      if security_info && security_info.include?(:cookies) && !security_info[:cookies].nil?
+      if security_info&.include?(:cookies) && !security_info[:cookies].nil?
 
         # include cookies if any were set
         request['Cookie'] = security_info[:cookies]
@@ -97,7 +99,7 @@ module BawWorkers
         key_string = 'XSRF-TOKEN='
         cookie_strings.each do |cookie_string|
           if cookie_string.start_with?(key_string)
-            xsrf_cookie = cookie_string[key_string.size..-1]
+            xsrf_cookie = cookie_string[key_string.size..]
             break
           end
         end
@@ -118,32 +120,28 @@ module BawWorkers
       begin
         #res = Net::HTTP::Proxy('127.0.0.1', '8888').start(host, port) do |http|
 
-        use_ssl = BawWorkers::Settings.endpoints.use_ssl.to_s
-        use_ssl = use_ssl.downcase == 'true' ? true : false
-
-        res = Net::HTTP.start(host, port, use_ssl: use_ssl) do |http|
+        res = Net::HTTP.start(host, port, use_ssl: true) { |http|
           response = http.request(request)
 
           @logger.debug(@class_name) {
             "[HTTP] Sent request for #{msg}, Body: #{request.body}, Headers: #{request.to_hash}"
           }
-
+        }
+      rescue Timeout::Error => e
+        @logger.error(@class_name) do
+          "[HTTP] Request TIMED OUT for #{msg}, Body: #{request.body}, Headers: #{request.to_hash}, Error: #{e}\nBacktrace: #{e.backtrace.join("\n")}"
         end
-      rescue Timeout::Error => te
-        @logger.error(@class_name) {
-          "[HTTP] Request TIMED OUT for #{msg}, Body: #{request.body}, Headers: #{request.to_hash}, Error: #{te}\nBacktrace: #{te.backtrace.join("\n")}"
-        }
-        raise te
+        raise e
       rescue StandardError => e
-        @logger.error(@class_name) {
+        @logger.error(@class_name) do
           "[HTTP] Request for #{msg}, Body: #{request.body}, Headers: #{request.to_hash}, Error: #{e}\nBacktrace: #{e.backtrace.join("\n")}"
-        }
-        fail e
+        end
+        raise e
       end
 
-      @logger.info(@class_name) {
+      @logger.info(@class_name) do
         "[HTTP] Received response for #{msg}, Code: #{response.code}, Body: #{response.body}, Headers: #{response.to_hash}"
-      }
+      end
 
       response
     end
@@ -151,7 +149,7 @@ module BawWorkers
     # Request an auth token (using an existing token if available).
     # @return [Hash]
     def request_login
-      login_response = send_request('Login request', :post, host, port, endpoint_login, nil, {email: user, password: password})
+      login_response = send_request('Login request', :post, host, port, endpoint_login, nil, { email: user, password: password })
 
       # get cookies
       # from http://stackoverflow.com/a/9320190/31567
@@ -159,32 +157,32 @@ module BawWorkers
 
       cookies = nil
 
-      if all_cookies && all_cookies.respond_to?(:each)
+      if all_cookies&.respond_to?(:each)
         cookies_array = []
-        all_cookies.each { |cookie|
+        all_cookies.each do |cookie|
           cookies_array.push(cookie.split('; ')[0])
-        }
+        end
         cookies = cookies_array.join('; ')
       end
 
       if login_response.code.to_i == 200 && !login_response.body.blank?
-        @logger.info(@class_name) {
+        @logger.info(@class_name) do
           '[HTTP] Got auth token in response body.'
-        }
+        end
         json_resp = JSON.parse(login_response.body)
 
         {
-            auth_token: json_resp['data']['auth_token'],
-            cookies: cookies
+          auth_token: json_resp['data']['auth_token'],
+          cookies: cookies
         }
       else
-        @logger.error(@class_name) {
+        @logger.error(@class_name) do
           '[HTTP] Problem requesting auth token.'
-        }
+        end
 
         {
-            auth_token: nil,
-            cookies: cookies
+          auth_token: nil,
+          cookies: cookies
         }
       end
     end
@@ -196,14 +194,14 @@ module BawWorkers
       msg = "Code #{response.code}, Id: #{audio_recording_id}, Hash: '#{update_hash}', File: '#{file_to_process}'"
 
       if response.code.to_i == 200 || response.code.to_i == 204
-        @logger.info(@class_name) {
+        @logger.info(@class_name) do
           "[HTTP] Audio recording metadata update '#{description}' succeeded. #{msg}"
-        }
+        end
         true
       else
-        @logger.error(@class_name) {
+        @logger.error(@class_name) do
           "[HTTP] Audio recording metadata update '#{description}' failed. #{msg}"
-        }
+        end
         false
       end
     end
@@ -217,20 +215,20 @@ module BawWorkers
     def check_uploader_project_access(project_id, site_id, uploader_id, security_info)
       if security_info
         if uploader_check_success?(project_id, site_id, uploader_id, security_info)
-          @logger.info(@class_name) {
+          @logger.info(@class_name) do
             "[HTTP] Uploader with id #{uploader_id} has access to project id #{project_id}."
-          }
+          end
           true
         else
-          @logger.error(@class_name) {
+          @logger.error(@class_name) do
             "[HTTP] Uploader id #{uploader_id} does not have required permissions for project id #{project_id}."
-          }
+          end
           false
         end
       else
-        @logger.error(@class_name) {
+        @logger.error(@class_name) do
           "[HTTP] No auth token given so cannot check uploader with id #{uploader_id}  access to project id #{project_id}."
-        }
+        end
         false
       end
     end
@@ -243,9 +241,9 @@ module BawWorkers
     # @return [Boolean] true if uploader_id has access to project_id
     def uploader_check_success?(project_id, site_id, uploader_id, security_info)
       endpoint = endpoint_audio_recording_uploader
-                     .gsub(':project_id', project_id.to_s)
-                     .gsub(':site_id', site_id.to_s)
-                     .gsub(':uploader_id', uploader_id.to_s)
+                 .gsub(':project_id', project_id.to_s)
+                 .gsub(':site_id', site_id.to_s)
+                 .gsub(':uploader_id', uploader_id.to_s)
 
       check_uploader_response = send_request('Check uploader id', :get, host, port, endpoint, security_info)
       check_uploader_response.code.to_i == 204
@@ -260,23 +258,23 @@ module BawWorkers
     # @return [Hash] response and response json
     def create_new_audio_recording(file_to_process, project_id, site_id, audio_info_hash, security_info)
       endpoint = endpoint_audio_recording_create
-                     .gsub(':project_id', project_id.to_s)
-                     .gsub(':site_id', site_id.to_s)
+                 .gsub(':project_id', project_id.to_s)
+                 .gsub(':site_id', site_id.to_s)
 
       msg = "Project: #{project_id}, Site: #{site_id}, File: #{file_to_process}, Params: #{audio_info_hash}"
 
       response = send_request('Create audio recording', :post, host, port, endpoint, security_info, audio_info_hash)
       if response.code.to_i == 201
         response_json = JSON.parse(response.body)
-        @logger.info(@class_name) {
-          "[HTTP] Created new audio recording. Id: #{response_json['data']['id']}, #{msg}"
-        }
-        {response: response, response_json: response_json}
+        @logger.info(@class_name) do
+          "[HTTP] Created new audio recording. Id: #{response_json.dig('data', 'id')}, #{msg}"
+        end
+        { response: response, response_json: response_json }
       else
-        @logger.error(@class_name) {
+        @logger.error(@class_name) do
           "[HTTP] Problem creating new audio recording. #{msg}"
-        }
-        {response: response, response_json: nil}
+        end
+        { response: response, response_json: nil }
       end
     end
 
@@ -292,14 +290,14 @@ module BawWorkers
       response = send_request("Update audio recording status - #{description}", :put, host, port, endpoint, security_info, update_hash)
       msg = "'#{description}'. Code #{response.code}, File: '#{file_to_process}', Id: #{audio_recording_id}, Hash: '#{update_hash}'"
       if response.code.to_i == 200 || response.code.to_i == 204
-        @logger.info(@class_name) {
+        @logger.info(@class_name) do
           "[HTTP] Audio recording status updated for #{msg}"
-        }
+        end
         true
       else
-        @logger.error(@class_name) {
+        @logger.error(@class_name) do
           "[HTTP] Problem updating audio recording status for #{msg}"
-        }
+        end
         false
       end
     end
@@ -310,16 +308,16 @@ module BawWorkers
     # @return [Hash] a hash containing :response,: response_json, and :status
     def get_analysis_jobs_item_status(analysis_job_id, audio_recording_id, security_info)
       endpoint = endpoint_analysis_jobs_item_update_status
-                     .gsub(':audio_recording_id', audio_recording_id.to_s)
-                     .gsub(':analysis_job_id', analysis_job_id.to_s)
+                 .gsub(':audio_recording_id', audio_recording_id.to_s)
+                 .gsub(':analysis_job_id', analysis_job_id.to_s)
 
       response = send_request(
-          "Getting analysis job item status",
-          :get,
-          host,
-          port,
-          endpoint,
-          security_info
+        'Getting analysis job item status',
+        :get,
+        host,
+        port,
+        endpoint,
+        security_info
       )
 
       msg = "analysis_job_id=#{analysis_job_id}, audio_recording_id=#{audio_recording_id}"
@@ -327,15 +325,15 @@ module BawWorkers
       if response.code.to_i == 200
         response_json = response.body.blank? ? nil : JSON.parse(response.body)
         status = response_json.nil? ? nil : response_json['data']['status']
-        @logger.info(@class_name) {
+        @logger.info(@class_name) do
           "[HTTP] Retrieved status for analysis job item: #{status}, #{msg}"
-        }
-        {response: response, failed: false, response_json: response_json, status: status}
+        end
+        { response: response, failed: false, response_json: response_json, status: status }
       else
-        @logger.error(@class_name) {
+        @logger.error(@class_name) do
           "[HTTP] Problem retrieving status for analysis job item: #{msg}"
-        }
-        {response: response, failed: true, response_json: nil, status: nil}
+        end
+        { response: response, failed: true, response_json: nil, status: nil }
       end
     end
 
@@ -350,18 +348,18 @@ module BawWorkers
       raise "Cannot set status to `#{status}`" unless approved_statuses.include?(status)
 
       endpoint = endpoint_analysis_jobs_item_update_status
-                     .gsub(':audio_recording_id', audio_recording_id.to_s)
-                     .gsub(':analysis_job_id', analysis_job_id.to_s)
+                 .gsub(':audio_recording_id', audio_recording_id.to_s)
+                 .gsub(':analysis_job_id', analysis_job_id.to_s)
       response = send_request(
-          "Update analysis job item status - to `#{status}`",
-          :put,
-          host,
-          port,
-          endpoint,
-          security_info,
-          {
-              "status": status
-          }
+        "Update analysis job item status - to `#{status}`",
+        :put,
+        host,
+        port,
+        endpoint,
+        security_info,
+        {
+          "status": status
+        }
       )
 
       msg = "analysis_job_id=#{analysis_job_id}, audio_recording_id=#{audio_recording_id}"
@@ -369,22 +367,21 @@ module BawWorkers
       if response.code.to_i == 200 || response.code.to_i == 204
         response_json = response.body.blank? ? nil : JSON.parse(response.body)
 
-        @logger.info(@class_name) {
+        @logger.info(@class_name) do
           "[HTTP] Audio recording status updated for #{msg}"
-        }
+        end
         {
-            response: response,
-            failed: false,
-            response_json: response_json,
-            status: response_json.nil? ? nil : response_json['data']['status']
+          response: response,
+          failed: false,
+          response_json: response_json,
+          status: response_json.nil? ? nil : response_json['data']['status']
         }
       else
-        @logger.error(@class_name) {
+        @logger.error(@class_name) do
           "[HTTP] Problem updating audio recording status for #{msg}"
-        }
-        {response: response, failed: true, response_json: nil, status: nil}
+        end
+        { response: response, failed: true, response_json: nil, status: nil }
       end
     end
-
   end
 end

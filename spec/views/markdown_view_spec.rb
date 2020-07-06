@@ -25,7 +25,7 @@ describe 'rendering markdown partials', type: :view do
   before(:each) do
     @user = FactoryBot.create(:user)
     #login_as @user, scope: :user
-    allow(view).to recieve(:current_user).and_return(@user)
+    allow(view).to receive(:current_user).and_return(@user)
   end
 
   it 'converts markdown documents correctly' do

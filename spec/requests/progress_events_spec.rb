@@ -64,13 +64,13 @@ describe 'Progress Events' do
   describe 'Creating a progress event' do
     it 'creates a progress event' do
       params = { progress_event: progress_event_attributes }.to_json
-      post @create_progress_event_url, params, @env
+      post @create_progress_event_url, params: params, headers: @env
       expect(response).to have_http_status(201)
     end
 
     it 'does not allow a non-existent dataset item id' do
       params = { progress_event: progress_event_attributes_invalid_dataset_item_id }.to_json
-      post @create_progress_event_url, params, @env
+      post @create_progress_event_url, params: params, headers: @env
       expect(response).to have_http_status(422)
     end
   end
@@ -79,14 +79,14 @@ describe 'Progress Events' do
     it 'does not allow a non-existent dataset item id (admin user)' do
       @env['HTTP_AUTHORIZATION'] = admin_token
       params = { progress_event: progress_event_attributes_invalid_dataset_item_id }.to_json
-      put @update_progress_event_url, params, @env
+      put @update_progress_event_url, params: params, headers: @env
       expect(response).to have_http_status(422)
     end
 
     it 'does not allow a non-existent dataset item id (owner user)' do
       @env['HTTP_AUTHORIZATION'] = owner_token
       params = { progress_event: progress_event_attributes_invalid_dataset_item_id }.to_json
-      put @update_progress_event_url, params, @env
+      put @update_progress_event_url, params: params, headers: @env
       expect(response).to have_http_status(403)
     end
   end
@@ -115,7 +115,7 @@ describe 'Progress Events' do
 
       it 'Creates a progress event when user has access to audio recording' do
         params = { progress_event: progress_event_attributes_2 }.to_json
-        post valid_url[:path], params, @env
+        post valid_url[:path], params: params, headers: @env
         parsed_response = JSON.parse(response.body)
         expect(response).to have_http_status(201)
         expect(parsed_response['data']['dataset_item_id']).to eq(another_dataset_item.id)
@@ -125,7 +125,7 @@ describe 'Progress Events' do
       it 'responds with :forbidden if user does not have access to audio recording' do
         @env['HTTP_AUTHORIZATION'] = no_access_token
         params = { progress_event: progress_event_attributes_2 }.to_json
-        post valid_url[:path], params, @env
+        post valid_url[:path], params: params, headers: @env
         expect(response).to have_http_status(:forbidden)
         check_counts
       end
@@ -136,7 +136,7 @@ describe 'Progress Events' do
         another_dataset_item, { 'end_time_seconds' => another_dataset_item.end_time_seconds + 1 }
       )
       params = { progress_event: progress_event_attributes_2 }.to_json
-      post url[:path], params, @env
+      post url[:path], params: params, headers: @env
       parsed_response = JSON.parse(response.body)
       expect(response).to have_http_status(422)
       expect(values_to_string(parsed_response['meta']['error']['info']).symbolize_keys).to eq(url[:params])
@@ -157,7 +157,7 @@ describe 'Progress Events' do
 
       it 'Creates a dataset item and progress event for the default dataset' do
         params = { progress_event: progress_event_attributes_2 }.to_json
-        post url[:path], params, @env
+        post url[:path], params: params, headers: @env
         expect(response).to have_http_status(201)
         parsed_response = JSON.parse(response.body)
         created_dataset_item = DatasetItem.find(parsed_response['data']['dataset_item_id'])
@@ -178,7 +178,7 @@ describe 'Progress Events' do
       it 'responds with :forbidden if user does not have access to audio recording' do
         @env['HTTP_AUTHORIZATION'] = no_access_token
         params = { progress_event: progress_event_attributes_2 }.to_json
-        post url[:path], params, @env
+        post url[:path], params: params, headers: @env
         expect(response).to have_http_status(:forbidden)
         parsed_response = JSON.parse(response.body)
         check_counts
@@ -191,7 +191,7 @@ describe 'Progress Events' do
         { 'dataset_id' => 'default', 'start_time_seconds' => '123', 'end_time_seconds' => '123' }
       )
       params = { progress_event: progress_event_attributes_2 }.to_json
-      post url[:path], params, @env
+      post url[:path], params: params, headers: @env
       expect(response).to have_http_status(422)
       parsed_response = JSON.parse(response.body)
       expect(parsed_response['meta']['error']['info']['end_time_seconds']).to eq(['must be greater than 123.0'])
@@ -205,7 +205,7 @@ describe 'Progress Events' do
         { 'dataset_id' => dataset.name }
       )
       params = { progress_event: progress_event_attributes_2 }.to_json
-      post url[:path], params, @env
+      post url[:path], params: params, headers: @env
       expect(response).to have_http_status(404)
       parsed_response = JSON.parse(response.body)
       #expect(parsed_response['meta']['error']['info']['end_time_seconds']).to eq(['must be greater than 123.0'])

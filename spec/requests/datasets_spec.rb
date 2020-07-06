@@ -19,7 +19,7 @@ describe 'Datasets' do
   describe 'Creating a dataset' do
     it 'does not allow a new dataset to be named default' do
       params = { dataset: dataset_attributes.merge({ name: 'default' }) }.to_json
-      post '/datasets', params, @env
+      post '/datasets', params: params, headers: @env
       expect(response).to have_http_status(422)
       expect(Dataset.where(name: 'default').count).to eq(1)
     end
@@ -28,7 +28,7 @@ describe 'Datasets' do
   describe 'Updating a dataset' do
     it 'does not allow a dataset to be renamed to default' do
       params = { dataset: { name: 'default' } }.to_json
-      put "/datasets/#{dataset.id}", params, @env
+      put "/datasets/#{dataset.id}", params: params, headers: @env
       expect(response).to have_http_status(422)
       expect(Dataset.where(name: 'default').count).to eq(1)
     end
@@ -47,7 +47,7 @@ describe 'Datasets' do
         }
       }.to_json
 
-      post '/datasets/filter', post_body, @env
+      post '/datasets/filter', params: post_body, headers: @env
       expect(response).to have_http_status(200)
       #parsed_response = JSON.parse(response.body)
       #expect(parsed_response).to include('The default dataset')

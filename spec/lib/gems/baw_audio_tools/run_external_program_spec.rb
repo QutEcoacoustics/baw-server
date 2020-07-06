@@ -40,7 +40,7 @@ describe BawAudioTools::RunExternalProgram do
 
   it 'check timeout does not impact successful execution' do
     run_program = BawAudioTools::RunExternalProgram.new(
-      BawWorkers::Settings.audio_tools_timeout_sec,
+      Settings.audio_tools_timeout_sec,
       logger
     )
 
@@ -91,5 +91,4 @@ describe BawAudioTools::RunExternalProgram do
 
     test_is_not_running(result[:execute_msg])
   end
-
 end

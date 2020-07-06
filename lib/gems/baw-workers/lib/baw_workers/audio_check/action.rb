@@ -1,14 +1,14 @@
+# frozen_string_literal: true
+
 module BawWorkers
   module AudioCheck
     # Runs checks on original audio recording files.
     class Action < BawWorkers::ActionBase
-
       class << self
-
         # Get the queue for this action. Used by Resque.
         # @return [Symbol] The queue.
         def queue
-          BawWorkers::Settings.actions.audio_check.queue
+          Settings.actions.audio_check.queue
         end
 
         # Perform check on a single audio file. Used by Resque.
@@ -23,15 +23,14 @@ module BawWorkers
         # @param [Boolean] is_real_run
         # @return [Array<Hash>] array of hashes representing operations performed
         def action_run(audio_params, is_real_run)
-
-          BawWorkers::Config.logger_worker.info(self.name) {
-            "Started audio check #{is_real_run ? 'real run' : 'dry run' } using '#{audio_params}'."
-          }
+          BawWorkers::Config.logger_worker.info(name) do
+            "Started audio check #{is_real_run ? 'real run' : 'dry run'} using '#{audio_params}'."
+          end
 
           begin
             result = action_audio_check.run(audio_params, is_real_run)
-          rescue => e
-            BawWorkers::Config.logger_worker.error(self.name) { e }
+          rescue StandardError => e
+            BawWorkers::Config.logger_worker.error(name) { e }
             # don't send emails, we will use logs.
             # BawWorkers::Mail::Mailer.send_worker_error_email(
             #     BawWorkers::AudioCheck::Action,
@@ -42,9 +41,9 @@ module BawWorkers
             raise e
           end
 
-          BawWorkers::Config.logger_worker.info(self.name) {
+          BawWorkers::Config.logger_worker.info(name) do
             "Completed audio check with result '#{result}'."
-          }
+          end
 
           result
         end
@@ -59,17 +58,15 @@ module BawWorkers
           successes = []
           failures = []
           BawWorkers::ReadCsv.read_audio_recording_csv(csv_file) do |audio_params|
-            begin
-              result = BawWorkers::AudioCheck::Action.action_run(audio_params, is_real_run)
-              successes.push({params: audio_params, result: result})
-            rescue StandardError => e
-              failures.push({params: audio_params, exception: e})
-            end
+            result = BawWorkers::AudioCheck::Action.action_run(audio_params, is_real_run)
+            successes.push({ params: audio_params, result: result })
+          rescue StandardError => e
+            failures.push({ params: audio_params, exception: e })
           end
 
           {
-              successes: successes,
-              failures: failures
+            successes: successes,
+            failures: failures
           }
         end
 
@@ -81,9 +78,9 @@ module BawWorkers
           audio_params_sym = BawWorkers::AudioCheck::WorkHelper.validate(audio_params)
           #result = Resque.enqueue(BawWorkers::AudioCheck::Action, audio_params_sym)
           result = BawWorkers::AudioCheck::Action.create(audio_params: audio_params_sym)
-          BawWorkers::Config.logger_worker.info(self.name) {
+          BawWorkers::Config.logger_worker.info(name) do
             "Job enqueue returned '#{result}' using #{audio_params}."
-          }
+          end
           result
         end
 
@@ -97,42 +94,39 @@ module BawWorkers
           successes = []
           failures = []
           BawWorkers::ReadCsv.read_audio_recording_csv(csv_file) do |audio_params|
-            begin
-              result = nil
-              result = BawWorkers::AudioCheck::Action.action_enqueue(audio_params) if is_real_run
-              successes.push({params: audio_params, result: result})
-            rescue StandardError => e
-              failures.push({params: audio_params, exception: e})
-            end
+            result = nil
+            result = BawWorkers::AudioCheck::Action.action_enqueue(audio_params) if is_real_run
+            successes.push({ params: audio_params, result: result })
+          rescue StandardError => e
+            failures.push({ params: audio_params, exception: e })
           end
 
           results = {
-              successes: successes,
-              failures: failures
+            successes: successes,
+            failures: failures
           }
 
-          BawWorkers::Config.logger_worker.info(self.name) {
+          BawWorkers::Config.logger_worker.info(name) do
             msg1 = is_real_run ? 'Enqueued jobs.' : 'Dry run without enqueuing jobs.'
             msg2 = "#{successes.size} jobs successful and #{failures.size} jobs failed"
             "#{msg1} #{msg2}: #{results}"
-          }
+          end
 
           results
         end
 
         def action_audio_check
           BawWorkers::AudioCheck::WorkHelper.new(
-              BawWorkers::Config.logger_worker,
-              BawWorkers::Config.file_info,
-              BawWorkers::Config.api_communicator)
+            BawWorkers::Config.logger_worker,
+            BawWorkers::Config.file_info,
+            BawWorkers::Config.api_communicator
+          )
         end
-
       end
 
       def perform_options_keys
         ['audio_params']
       end
-
     end
   end
 end

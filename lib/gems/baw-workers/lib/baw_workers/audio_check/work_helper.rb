@@ -1,7 +1,8 @@
+# frozen_string_literal: true
+
 module BawWorkers
   module AudioCheck
     class WorkHelper
-
       def initialize(logger, file_info, api_comm)
         @logger = logger
         @file_info = file_info
@@ -28,7 +29,7 @@ module BawWorkers
         if audio_params_sym[:recorded_date].end_with?('Z')
           audio_params_sym[:recorded_date] = Time.zone.parse(audio_params_sym[:recorded_date])
         else
-          fail ArgumentError, ":recorded_date must be a UTC time (i.e. end with Z), given #{audio_params_sym[:recorded_date]}"
+          raise ArgumentError, ":recorded_date must be a UTC time (i.e. end with Z), given #{audio_params_sym[:recorded_date]}"
         end
 
         # get the original possible and existing paths, and new and old file names
@@ -40,7 +41,6 @@ module BawWorkers
         # now check the comparisons for each existing file. Any failures will be logged and fixed if possible.
         result = []
         original_paths[:existing].each do |existing_file|
-
           # fix all other issues before renaming file
           single_result = run_single(existing_file, audio_params_sym, is_real_run)
 
@@ -52,7 +52,7 @@ module BawWorkers
           attribute_change_success = good_api_results.include?(single_result[:api_result])
 
           was_file_moved = file_move_info[:moved]
-          attributes_changed = single_result[:api_result_hash].size > 0
+          attributes_changed = !single_result[:api_result_hash].empty?
 
           review_level = :none_all_good
 
@@ -68,28 +68,28 @@ module BawWorkers
 
           # record new file location
           result_hash =
-              {
-                  file_path: existing_file,
-                  exists: true,
-                  moved_path: file_move_info[:moved] ? file_move_info[:new_file] : nil,
-                  compare_hash: single_result[:compare_hash],
-                  api_result_hash: single_result[:api_result_hash],
-                  api_response: single_result[:api_result],
-                  review_level: review_level
-              }
+            {
+              file_path: existing_file,
+              exists: true,
+              moved_path: file_move_info[:moved] ? file_move_info[:new_file] : nil,
+              compare_hash: single_result[:compare_hash],
+              api_result_hash: single_result[:api_result_hash],
+              api_response: single_result[:api_result],
+              review_level: review_level
+            }
 
           result.push(result_hash)
 
           # create csv info line
           log_csv_line(
-              result_hash[:file_path],
-              result_hash[:exists],
-              result_hash[:moved_path],
-              result_hash[:compare_hash],
-              result_hash[:api_result_hash],
-              result_hash[:api_response],
-              result_hash[:review_level],
-              audio_params_sym[:id]
+            result_hash[:file_path],
+            result_hash[:exists],
+            result_hash[:moved_path],
+            result_hash[:compare_hash],
+            result_hash[:api_result_hash],
+            result_hash[:api_response],
+            result_hash[:review_level],
+            audio_params_sym[:id]
           )
         end
 
@@ -107,17 +107,17 @@ module BawWorkers
         # get existing file info and comparisons between expected and actual
         existing_file_info = @file_info.audio_info(existing_file)
 
-        @logger.debug(@class_name) {
+        @logger.debug(@class_name) do
           "Actual file info: #{existing_file_info}"
-        }
+        end
 
         compare_hash = compare_info(existing_file, existing_file_info, audio_params)
 
         base_msg = "for #{compare_hash}"
 
-        @logger.info(@class_name) {
+        @logger.info(@class_name) do
           "Compared expected and actual info #{base_msg}"
-        }
+        end
 
         # MID LEVEL PROBLEM: is the file valid?
         # usually will not log 'File integrity uncertain', since the info check will raise an error
@@ -131,7 +131,6 @@ module BawWorkers
           msg = "File integrity uncertain #{base_msg}"
           @logger.warn(@class_name) { msg }
         end
-
 
         # MID LEVEL PROBLEM: extensions do not match
         # (this is impossible, since if the extension/media_type doesn't match,
@@ -166,12 +165,13 @@ module BawWorkers
 
           # write row of csv into log file
           log_csv_line(
-              existing_file, true, nil,
-              compare_hash, nil, nil,
-              :high_file_hashes_do_not_match,
-              audio_params[:id])
+            existing_file, true, nil,
+            compare_hash, nil, nil,
+            :high_file_hashes_do_not_match,
+            audio_params[:id]
+          )
 
-          fail BawAudioTools::Exceptions::FileCorruptError, msg
+          raise BawAudioTools::Exceptions::FileCorruptError, msg
         end
 
         changed_metadata = {}
@@ -198,7 +198,7 @@ module BawWorkers
         # check on file hash - if everything else matches, update it. if anything else doesn't
         # match, raise an error
         if is_expected_file_hash_default
-          if changed_metadata.size > 0
+          if !changed_metadata.empty?
             msg = "File hash and other properties DO NOT match #{changed_metadata} #{base_msg}"
 
             # log error
@@ -210,7 +210,7 @@ module BawWorkers
                          :medium_multiple_properties_do_not_match,
                          audio_params[:id])
 
-            fail BawAudioTools::Exceptions::FileCorruptError, msg
+            raise BawAudioTools::Exceptions::FileCorruptError, msg
           else
             changed_metadata[:file_hash] = compare_hash[:actual][:file_hash]
           end
@@ -218,26 +218,26 @@ module BawWorkers
 
         # use api for any changes/updates for low level problems
         update_result = nil
-        if changed_metadata.size > 0
+        if !changed_metadata.empty?
 
           msg = "Update required #{changed_metadata} #{base_msg}"
           @logger.warn(@class_name) { msg }
 
           if is_real_run
             @logger.info(@class_name) { 'Updating properties.' }
-            host = BawWorkers::Settings.api.host
-            port = BawWorkers::Settings.api.port
+            host = Settings.api.host
+            port = Settings.api.port
 
             # get auth token
             security_info = @api_communicator.request_login
 
             # update audio recording metadata
             update_result = @api_communicator.update_audio_recording_details(
-                'mismatch between file and database',
-                existing_file,
-                audio_params[:id],
-                changed_metadata,
-                security_info
+              'mismatch between file and database',
+              existing_file,
+              audio_params[:id],
+              changed_metadata,
+              security_info
             )
           else
             @logger.info(@class_name) { 'Dry Run: Would have updated properties.' }
@@ -249,15 +249,15 @@ module BawWorkers
         end
 
         api_result_value = :unknown
-        api_result_value = :notrequired if changed_metadata.size < 1
-        api_result_value = :dry_run if changed_metadata.size > 0 && !is_real_run
-        api_result_value = :sent_with_unknown_response if changed_metadata.size > 0 && is_real_run
+        api_result_value = :notrequired if changed_metadata.empty?
+        api_result_value = :dry_run if !changed_metadata.empty? && !is_real_run
+        api_result_value = :sent_with_unknown_response if !changed_metadata.empty? && is_real_run
         api_result_value = update_result ? :success : :error unless update_result.nil?
 
         {
-            compare_hash: compare_hash,
-            api_result_hash: changed_metadata,
-            api_result: api_result_value
+          compare_hash: compare_hash,
+          api_result_hash: changed_metadata,
+          api_result: api_result_value
         }
       end
 
@@ -274,7 +274,7 @@ module BawWorkers
         audio_params_sym = BawWorkers::Validation.deep_symbolize_keys(audio_params)
 
         props.each do |prop|
-          fail ArgumentError, "Audio params must include #{prop}." unless audio_params_sym.include?(prop)
+          raise ArgumentError, "Audio params must include #{prop}." unless audio_params_sym.include?(prop)
         end
 
         audio_params_sym
@@ -289,9 +289,9 @@ module BawWorkers
         original_audio = BawWorkers::Config.original_audio_helper
 
         modify_parameters = {
-            uuid: audio_params[:uuid],
-            datetime_with_offset: audio_params[:recorded_date],
-            original_format: audio_params[:original_format],
+          uuid: audio_params[:uuid],
+          datetime_with_offset: audio_params[:recorded_date],
+          original_format: audio_params[:original_format]
         }
 
         source_existing_paths = original_audio.existing_paths(modify_parameters)
@@ -301,10 +301,10 @@ module BawWorkers
         name_utc = original_audio.file_name_utc(modify_parameters)
 
         {
-            possible: source_possible_paths.map { |path| File.expand_path(path) },
-            existing: source_existing_paths.map { |path| File.expand_path(path) },
-            name_utc: name_utc,
-            name_old: name_old
+          possible: source_possible_paths.map { |path| File.expand_path(path) },
+          existing: source_existing_paths.map { |path| File.expand_path(path) },
+          name_utc: name_utc,
+          name_old: name_old
         }
       end
 
@@ -317,7 +317,7 @@ module BawWorkers
         correct = :pass
         wrong = :fail
 
-        bit_rate_bps_delta = 10000 # due to difference for asf files of 1300-2000 bps (set large to catch only very different bit rates)
+        bit_rate_bps_delta = 10_000 # due to difference for asf files of 1300-2000 bps (set large to catch only very different bit rates)
         duration_seconds_delta = 0.200 # 200 ms due to estimates of duration for mp3 files
 
         file_hash = existing_file_info[:file_hash].to_s == audio_params[:file_hash].to_s ? correct : wrong
@@ -331,26 +331,26 @@ module BawWorkers
         bit_rate_bps = (existing_file_info[:bit_rate_bps].to_i - audio_params[:bit_rate_bps].to_i).abs <= bit_rate_bps_delta ? correct : wrong
         duration_seconds = (existing_file_info[:duration_seconds].to_f - audio_params[:duration_seconds].to_f).abs <= duration_seconds_delta ? correct : wrong
 
-        file_errors = existing_file_info[:errors].size < 1 ? correct : wrong
+        file_errors = existing_file_info[:errors].empty? ? correct : wrong
         new_file_name = File.basename(existing_file, File.extname(existing_file)).end_with?('Z') ? correct : wrong
 
         {
-            actual: existing_file_info,
-            expected: audio_params,
-            checks: {
-                file_hash: file_hash,
-                extension: extension,
-                media_type: media_type,
-                sample_rate_hertz: sample_rate_hertz,
-                channels: channels,
-                bit_rate_bps: bit_rate_bps,
-                data_length_bytes: data_length_bytes,
-                duration_seconds: duration_seconds,
-                file_errors: file_errors,
-                new_file_name: new_file_name
-            },
-            bit_rate_bps_delta: bit_rate_bps_delta,
-            duration_seconds_delta: duration_seconds_delta
+          actual: existing_file_info,
+          expected: audio_params,
+          checks: {
+            file_hash: file_hash,
+            extension: extension,
+            media_type: media_type,
+            sample_rate_hertz: sample_rate_hertz,
+            channels: channels,
+            bit_rate_bps: bit_rate_bps,
+            data_length_bytes: data_length_bytes,
+            duration_seconds: duration_seconds,
+            file_errors: file_errors,
+            new_file_name: new_file_name
+          },
+          bit_rate_bps_delta: bit_rate_bps_delta,
+          duration_seconds_delta: duration_seconds_delta
         }
       end
 
@@ -359,7 +359,7 @@ module BawWorkers
       # @param [Hash] audio_params
       # @return [void]
       def check_exists(original_paths, audio_params)
-        check_file_exists = original_paths[:existing].size > 0
+        check_file_exists = !original_paths[:existing].empty?
 
         if check_file_exists
           @logger.debug(@class_name) {
@@ -377,7 +377,7 @@ module BawWorkers
                        :high_original_file_does_not_exist,
                        audio_params[:id])
 
-          fail BawAudioTools::Exceptions::FileNotFoundError, msg
+          raise BawAudioTools::Exceptions::FileNotFoundError, msg
         end
       end
 
@@ -396,13 +396,14 @@ module BawWorkers
                        audio_recording_id)
 
         logged_csv_line = BawWorkers::AudioCheck::CsvHelper.logged_csv_line(
-            file_path, exists, moved_path,
-            compare_hash, api_result_hash,
-            api_response, review_level,
-            audio_recording_id)
+          file_path, exists, moved_path,
+          compare_hash, api_result_hash,
+          api_response, review_level,
+          audio_recording_id
+        )
 
         # write to csv
-        csv_options = {col_sep: ',', force_quotes: true}
+        csv_options = { col_sep: ',', force_quotes: true }
 
         csv_header_line = logged_csv_line[:headers].to_csv(csv_options).strip
         @logger.fatal(@class_name) { "[CSV-header], #{csv_header_line}" }
@@ -417,7 +418,6 @@ module BawWorkers
       # @param [Boolean] is_real_run
       # @return [Hash] action applied to existing file
       def rename_file(existing_file, file_name_utc, is_real_run)
-
         # create all needed information
         existing_path = existing_file
         existing_name = File.basename(existing_path)
@@ -434,37 +434,35 @@ module BawWorkers
         if existing_is_new && File.exist?(new_path)
           # existing file is already new format, nothing to change
           {
-              new_file: existing_path,
-              moved: false
+            new_file: existing_path,
+            moved: false
           }
         elsif !existing_is_new && File.exist?(new_path) && File.exist?(existing_path)
           # both new and old formats exist, do nothing
 
-          @logger.info(@class_name) {
+          @logger.info(@class_name) do
             "Found equivalent old and new file names, no action performed. Old: #{existing_path} New: #{new_path}."
-          }
+          end
 
           {
-              new_file: new_path,
-              moved: false
+            new_file: new_path,
+            moved: false
           }
         else
           # file is in old format, file in new format does not exist
 
-          @logger.info(@class_name) { "Moving #{existing_path} to #{new_path}." }  if is_real_run
+          @logger.info(@class_name) { "Moving #{existing_path} to #{new_path}." } if is_real_run
           FileUtils.move(existing_path, new_path) if is_real_run
 
           @logger.info(@class_name) { "Dry Run: Would have moved #{existing_path} to #{new_path}." } unless is_real_run
 
           {
-              new_file: new_path,
-              moved: true
+            new_file: new_path,
+            moved: true
           }
 
         end
-
       end
-
     end
   end
 end

@@ -2,7 +2,7 @@
 
 require 'rails_helper'
 
-describe 'User account actions', type: :feature do
+xdescribe 'User account actions', type: :feature do
   # from: http://guides.rubyonrails.org/testing.html
   # The ActionMailer::Base.deliveries array is only reset automatically in
   # ActionMailer::TestCase tests. If you want to have a clean slate outside Action
@@ -347,7 +347,7 @@ describe 'User account actions', type: :feature do
   end
 end
 
-describe 'MANAGE User Accounts as admin user', type: :feature do
+xdescribe 'MANAGE User Accounts as admin user', type: :feature do
   before(:each) do
     admin = FactoryBot.create(:admin)
     login_as admin, scope: :user
@@ -398,7 +398,7 @@ describe 'MANAGE User Accounts as admin user', type: :feature do
   end
 end
 
-describe 'MANAGE User Accounts as user', type: :feature do
+xdescribe 'MANAGE User Accounts as user', type: :feature do
   before(:each) do
     @user = FactoryBot.create(:user)
     login_as @user, scope: :user
@@ -476,7 +476,7 @@ describe 'MANAGE User Accounts as user', type: :feature do
   end
 end
 
-describe 'User profile pages' do
+xdescribe 'User profile pages' do
   before(:each) do
     @user = FactoryBot.create(:user)
     login_as @user, scope: :user

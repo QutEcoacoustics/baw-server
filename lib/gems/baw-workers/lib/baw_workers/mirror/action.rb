@@ -1,14 +1,14 @@
+# frozen_string_literal: true
+
 module BawWorkers
   module Mirror
     # Copies files from one location to another.
     class Action < BawWorkers::ActionBase
-
       class << self
-
         # Get the queue for this action. Used by Resque. Overrides resque-status class method.
         # @return [Symbol] The queue.
         def queue
-          BawWorkers::Settings.actions.mirror.queue
+          Settings.actions.mirror.queue
         end
 
         # Perform work. Used by Resque.
@@ -16,28 +16,27 @@ module BawWorkers
         # @param [String, Array<String>] destinations
         # @return [Boolean] true if successfully copied
         def action_perform(source, destinations)
-
-          BawWorkers::Config.logger_worker.info(self.name) {
+          BawWorkers::Config.logger_worker.info(name) do
             "Started mirroring from #{source} to '#{destinations}'."
-          }
+          end
 
           begin
             source_file, destination_files = action_validate(source, destinations)
             result = BawWorkers::Config.file_info.copy_to_many(source_file, destination_files)
-          rescue => e
-            BawWorkers::Config.logger_worker.error(self.name) { e }
+          rescue StandardError => e
+            BawWorkers::Config.logger_worker.error(name) { e }
             BawWorkers::Mail::Mailer.send_worker_error_email(
-                BawWorkers::Mirror::Action,
-                {source: source, destinations: destinations},
-                queue,
-                e
+              BawWorkers::Mirror::Action,
+              { source: source, destinations: destinations },
+              queue,
+              e
             )
             raise e
           end
 
-          BawWorkers::Config.logger_worker.info(self.name) {
+          BawWorkers::Config.logger_worker.info(name) do
             "Completed mirror with result '#{result}'."
-          }
+          end
 
           result
         end
@@ -49,9 +48,9 @@ module BawWorkers
         def action_enqueue(source, destinations)
           source_file, destination_files = action_validate(source, destinations)
           result = BawWorkers::Mirror::Action.create(source: source_file, destinations: destination_files)
-          BawWorkers::Config.logger_worker.info(self.name) {
+          BawWorkers::Config.logger_worker.info(name) do
             "Job enqueue returned '#{result}' using source #{source_file} and destinations #{destination_files.join(', ')}."
-          }
+          end
           result
         end
 
@@ -69,14 +68,13 @@ module BawWorkers
         # @return [Resque::Plugins::Status::Hash] status
         def get_job_status(source, destinations)
           source_file, destination_files = action_validate(source, destinations)
-          payload = {source: source_file, destinations: destination_files}
+          payload = { source: source_file, destinations: destination_files }
           BawWorkers::ResqueApi.status(BawWorkers::Mirror::Action, payload)
         end
-
       end
 
       def perform_options_keys
-        %w(source destinations)
+        ['source', 'destinations']
       end
 
       # Produces a sensible name for this payload.
@@ -85,7 +83,6 @@ module BawWorkers
       def name
         "Mirroring: from=#{@options['source']}, to=#{@options['destinations']}"
       end
-
     end
   end
 end

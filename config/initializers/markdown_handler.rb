@@ -3,10 +3,10 @@
 # https://github.com/rails/rails/blob/5-0-stable/actionview/lib/action_view/template/handlers/html.rb
 class MarkdownHandler
 
-  def call(template, _source)
+  def call(template, source)
     erb = ActionView::Template.registered_template_handler(:erb)
 
-    compiled_template = erb.call(template)
+    compiled_template = erb.call(template, source)
 
     <<-SOURCE
         CustomRender::render_markdown(begin;#{compiled_template};end).html_safe

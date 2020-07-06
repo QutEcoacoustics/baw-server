@@ -1,8 +1,9 @@
+# frozen_string_literal: true
+
 module BawWorkers
   module Harvest
     # Get a list of files to be harvested.
     class SingleFile
-
       attr_accessor :logger, :file_info_helper, :api_comm
 
       # Create a new BawWorkers::Harvest::SingleFile.
@@ -26,7 +27,6 @@ module BawWorkers
       # @param [Boolean] copy_on_success
       # @return [Array<String>] existing target paths
       def run(file_info_hash, is_real_run, copy_on_success = false)
-
         file_info_hash.deep_symbolize_keys!
 
         project_id = file_info_hash[:project_id]
@@ -39,14 +39,14 @@ module BawWorkers
 
         # check if file is empty or does not exist first
         # -----------------------------
-        if !File.exists?(file_path)
+        if !File.exist?(file_path)
           @logger.error(@class_name) { "File was not found #{file_path}" }
-          fail BawAudioTools::Exceptions::FileNotFoundError, msg
+          raise BawAudioTools::Exceptions::FileNotFoundError, msg
         elsif File.size(file_path) < 1
           empty_file_new_name = rename_empty_file(file_path)
           msg = "File has no content (length of 0 bytes) renamed to #{File.basename(empty_file_new_name)} from #{file_path}"
           @logger.error(@class_name) { msg }
-          fail BawAudioTools::Exceptions::FileEmptyError, msg
+          raise BawAudioTools::Exceptions::FileEmptyError, msg
         end
 
         # construct file_info_hash for new audio recording request
@@ -58,9 +58,9 @@ module BawWorkers
         # stop here if it is a dry run, shouldn't create a new recording
         # -----------------------------
         unless is_real_run
-          @logger.info(@class_name) {
+          @logger.info(@class_name) do
             "...finished dry run for #{file_path}: #{audio_info_hash}"
-          }
+          end
           return []
         end
 
@@ -80,28 +80,27 @@ module BawWorkers
         audio_recording_uuid = response_hash['data']['uuid']
         audio_recording_recorded_date = response_hash['data']['recorded_date']
 
-
         # catch any errors after audio is created so status can be updated
         # -----------------------------
 
         harvest_completed_successfully = false
 
         begin
-
           # update audio recording status on website to uploading
           # description, file_to_process, audio_recording_id, update_hash, security_info
           update_status_uploading_result = @api_comm.update_audio_recording_status(
-              'record pending file move',
-              file_path,
-              audio_recording_id,
-              create_update_hash(audio_recording_uuid, file_hash, :uploading),
-              security_info)
+            'record pending file move',
+            file_path,
+            audio_recording_id,
+            create_update_hash(audio_recording_uuid, file_hash, :uploading),
+            security_info
+          )
 
           # calculate target storage path using name with utc date
           storage_file_opts = {
-              uuid: audio_recording_uuid,
-              datetime_with_offset: Time.zone.parse(audio_recording_recorded_date),
-              original_format: file_format
+            uuid: audio_recording_uuid,
+            datetime_with_offset: Time.zone.parse(audio_recording_recorded_date),
+            original_format: file_format
           }
 
           # Copy file to be harvested to well-known locations
@@ -113,23 +112,24 @@ module BawWorkers
           # update audio recording status on website to ready (skipping to_check for now)
           # TODO: set to_check so file has is checked independently
           @api_comm.update_audio_recording_status(
-              'record completed file move',
-              file_path,
-              audio_recording_id,
-              create_update_hash(audio_recording_uuid, file_hash, :ready),
-              security_info)
+            'record completed file move',
+            file_path,
+            audio_recording_id,
+            create_update_hash(audio_recording_uuid, file_hash, :ready),
+            security_info
+          )
 
           harvest_completed_successfully = true
-
-        rescue => e
+        rescue StandardError => e
           msg = "Error after audio recording created on website, status set to aborted. Exception: #{e}"
           @logger.error(@class_name) { msg }
           @api_comm.update_audio_recording_status(
-              'record error in harvesting',
-              file_path,
-              audio_recording_id,
-              create_update_hash(audio_recording_uuid, file_hash, :aborted),
-              security_info)
+            'record error in harvesting',
+            file_path,
+            audio_recording_id,
+            create_update_hash(audio_recording_uuid, file_hash, :aborted),
+            security_info
+          )
           raise e
         end
 
@@ -142,7 +142,7 @@ module BawWorkers
           if copy_on_success
             source = File.expand_path(existing_target_paths[0])
 
-            copy_base_path = BawWorkers::Settings.actions.harvest.copy_base_path
+            copy_base_path = Settings.actions.harvest.copy_base_path
             raw_destination = File.join(copy_base_path, create_relative_path(storage_file_opts))
             destination = File.expand_path(raw_destination)
 
@@ -167,7 +167,7 @@ module BawWorkers
         if security_info.blank?
           msg = 'Could not log in.'
           @logger.error(@class_name) { msg }
-          fail BawWorkers::Exceptions::HarvesterEndpointError, msg
+          raise BawWorkers::Exceptions::HarvesterEndpointError, msg
         end
 
         security_info
@@ -179,7 +179,7 @@ module BawWorkers
         unless access_result
           msg = "Could not get access to project_id #{project_id} for uploader_id #{uploader_id}."
           @logger.error(@class_name) { msg }
-          fail BawWorkers::Exceptions::HarvesterEndpointError, msg
+          raise BawWorkers::Exceptions::HarvesterEndpointError, msg
         end
 
         access_result
@@ -191,7 +191,6 @@ module BawWorkers
       end
 
       def get_new_audio_recording(file_path, project_id, site_id, audio_info_hash, security_info)
-
         create_response = @api_comm.create_new_audio_recording(file_path, project_id, site_id, audio_info_hash, security_info)
 
         response_meta = create_response[:response]
@@ -203,15 +202,15 @@ module BawWorkers
 
           # rename file if it is too short
           if response_meta.code == '422' &&
-              response_meta.body.include?('duration_seconds') &&
-              response_meta.body.include?('must be greater than or equal to')
+             response_meta.body.include?('duration_seconds') &&
+             response_meta.body.include?('must be greater than or equal to')
 
             new_file_path = rename_short_file(file_path)
             msg += ", File renamed to #{new_file_path}."
           end
 
           @logger.error(@class_name) { msg }
-          fail BawWorkers::Exceptions::HarvesterEndpointError, msg
+          raise BawWorkers::Exceptions::HarvesterEndpointError, msg
         end
 
         response_hash
@@ -219,26 +218,24 @@ module BawWorkers
 
       def create_audio_info_hash(file_info_hash, content_info_hash)
         info = {
-            uploader_id: file_info_hash[:uploader_id].to_i,
-            recorded_date: file_info_hash[:recorded_date],
-            site_id: file_info_hash[:site_id].to_i,
-            duration_seconds: content_info_hash[:duration_seconds].to_f.round(3),
-            sample_rate_hertz: content_info_hash[:sample_rate_hertz].to_i,
-            channels: content_info_hash[:channels].to_i,
-            bit_rate_bps: content_info_hash[:bit_rate_bps].to_i,
-            media_type: content_info_hash[:media_type].to_s,
-            data_length_bytes: file_info_hash[:data_length_bytes].to_i,
-            file_hash: content_info_hash[:file_hash].to_s,
-            original_file_name: file_info_hash[:file_name].to_s,
+          uploader_id: file_info_hash[:uploader_id].to_i,
+          recorded_date: file_info_hash[:recorded_date],
+          site_id: file_info_hash[:site_id].to_i,
+          duration_seconds: content_info_hash[:duration_seconds].to_f.round(3),
+          sample_rate_hertz: content_info_hash[:sample_rate_hertz].to_i,
+          channels: content_info_hash[:channels].to_i,
+          bit_rate_bps: content_info_hash[:bit_rate_bps].to_i,
+          media_type: content_info_hash[:media_type].to_s,
+          data_length_bytes: file_info_hash[:data_length_bytes].to_i,
+          file_hash: content_info_hash[:file_hash].to_s,
+          original_file_name: file_info_hash[:file_name].to_s
         }
 
         info[:notes] = {
-            relative_path: file_info_hash[:file_rel_path].to_s
+          relative_path: file_info_hash[:file_rel_path].to_s
         }
 
-        if file_info_hash[:metadata]
-          info[:notes] = info[:notes].merge(file_info_hash[:metadata])
-        end
+        info[:notes] = info[:notes].merge(file_info_hash[:metadata]) if file_info_hash[:metadata]
 
         info
       end
@@ -250,9 +247,9 @@ module BawWorkers
       # @return [Hash]
       def create_update_hash(uuid, file_hash, status)
         {
-            uuid: uuid,
-            file_hash: file_hash,
-            status: status
+          uuid: uuid,
+          file_hash: file_hash,
+          status: status
         }
       end
 
@@ -278,17 +275,17 @@ module BawWorkers
         # rename file once it is copied to all destinations
         source_size = File.size(file_path)
 
-        check_target_paths = storage_target_paths.select { |file| File.exists?(file) && File.file?(file) && File.size(file) == source_size }
+        check_target_paths = storage_target_paths.select { |file| File.exist?(file) && File.file?(file) && File.size(file) == source_size }
 
         if storage_target_paths.size == check_target_paths.size
-          @logger.info(@class_name) {
+          @logger.info(@class_name) do
             "Source file #{file_path} was copied successfully to all destinations, renaming source file."
-          }
+          end
 
           renamed_source_file = file_path + '.completed'
           File.rename(file_path, renamed_source_file)
 
-          if File.exists?(renamed_source_file)
+          if File.exist?(renamed_source_file)
             @logger.info(@class_name) {
               "Source file #{file_path} was successfully renamed to #{renamed_source_file}."
             }
@@ -301,7 +298,7 @@ module BawWorkers
         else
           msg = "Source file #{file_path} was not copied to all destinations #{storage_target_paths}."
           @logger.error(@class_name) { msg }
-          fail BawWorkers::Exceptions::HarvesterIOError, msg
+          raise BawWorkers::Exceptions::HarvesterIOError, msg
         end
 
         check_target_paths
@@ -328,7 +325,7 @@ module BawWorkers
         renamed_source_file = file_path + '.' + suffix
         File.rename(file_path, renamed_source_file)
 
-        if File.exists?(renamed_source_file)
+        if File.exist?(renamed_source_file)
           @logger.info(@class_name) {
             "Invalid source file #{file_path} was successfully renamed to #{renamed_source_file}."
           }
@@ -346,7 +343,6 @@ module BawWorkers
         file_name = @original_audio.file_name_utc(storage_file_opts)
         File.join(partial_path, file_name)
       end
-
     end
   end
 end

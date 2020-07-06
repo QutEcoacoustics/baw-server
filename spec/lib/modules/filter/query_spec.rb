@@ -626,9 +626,9 @@ describe Filter::Query do
         AND"projects"."deleted_at"
         IS
         NULL
-        AND("permissions"."user_id"=#{user_id})
+        AND(("permissions"."user_id"=#{user_id})
         OR("permissions"."allow_logged_in"=
-        TRUE))))
+        TRUE)))))
         AND("audio_recordings"."site_id"<123456)
         AND("audio_recordings"."site_id">9876)
         AND("audio_recordings"."site_id"
@@ -806,9 +806,9 @@ describe Filter::Query do
         AND"projects"."deleted_at"
         IS
         NULL
-        AND("permissions"."user_id"=#{user_id})
+        AND(("permissions"."user_id"=#{user_id})
         OR("permissions"."allow_logged_in"=
-        TRUE))))
+        TRUE)))))
         AND ("audio_recordings"."id"
         IN(
         SELECT"audio_recordings"."id"
@@ -953,9 +953,9 @@ describe Filter::Query do
         AND"projects"."deleted_at"
         IS
         NULL
-        AND("permissions"."user_id"=#{user_id})
+        AND(("permissions"."user_id"=#{user_id})
         OR("permissions"."allow_logged_in"=
-        TRUE))))
+        TRUE)))))
         AND("audio_recordings"."id"
         IN(
         SELECT"audio_recordings"."id"
@@ -1052,9 +1052,9 @@ describe Filter::Query do
                       AND "projects"."deleted_at"
                       IS
                       NULL
-                      AND ("permissions"."user_id" = #{user_id})
+                      AND (("permissions"."user_id" = #{user_id})
                       OR ("permissions"."allow_logged_in"=
-                      TRUE))))
+                      TRUE)))))
               AND ("analysis_jobs_items"."audio_recording_id"
               IN (
               SELECT "analysis_jobs_items"."audio_recording_id"
@@ -1156,9 +1156,9 @@ describe Filter::Query do
         AND"projects"."deleted_at"
         IS
         NULL
-        AND("permissions"."user_id"=#{user_id})
+        AND(("permissions"."user_id"=#{user_id})
         OR("permissions"."allow_logged_in"=
-        TRUE))))
+        TRUE)))))
         OR(
         EXISTS(
         SELECT1
@@ -1238,9 +1238,9 @@ describe Filter::Query do
         AND"projects"."deleted_at"
         IS
         NULL
-        AND("permissions"."user_id"=#{user_id})
+        AND(("permissions"."user_id"=#{user_id})
         OR("permissions"."allow_logged_in"=
-        TRUE))))
+        TRUE)))))
         OR(
         EXISTS(
         SELECT1
@@ -1312,9 +1312,9 @@ describe Filter::Query do
         AND"projects"."deleted_at"
         IS
         NULL
-        AND("permissions"."user_id"=#{user_id})
+        AND(("permissions"."user_id"=#{user_id})
         OR("permissions"."allow_logged_in"=
-        TRUE))))
+        TRUE)))))
         AND("audio_recordings"."recorded_date"+
         CAST("audio_recordings"."duration_seconds"||'seconds'asinterval)<'2016-03-01
         T02:00:00')

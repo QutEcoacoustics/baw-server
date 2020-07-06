@@ -127,7 +127,7 @@ describe 'Analysis Jobs' do
       }
     }
 
-    post @analysis_job_url, valid_attributes, @env
+    post @analysis_job_url, params: valid_attributes, headers: @env
 
     raise "Failed to create test AnalysisJob, status: #{response.status}" if response.status != 201
 
@@ -158,11 +158,11 @@ describe 'Analysis Jobs' do
 
     @env['HTTP_AUTHORIZATION'] = writer_token
 
-    put update_route, {
+    put update_route, params: {
       analysis_job: {
         overall_status: overall_status
       }
-    }, @env
+    }, headers: @env
 
     raise "Failed to update AnalysisJob, status: #{response.status}" if response.status != 200
   end
@@ -172,7 +172,7 @@ describe 'Analysis Jobs' do
 
     @env['HTTP_AUTHORIZATION'] = writer_token
 
-    delete destroy_route, {}, @env
+    delete destroy_route, params: {}, headers: @env
 
     [response.status, response]
   end
@@ -224,7 +224,7 @@ describe 'Analysis Jobs' do
     @env['HTTP_AUTHORIZATION'] = harvester_token
     @env['HTTP_ACCEPT'] = 'application/json'
 
-    get route, {}, @env
+    get route, params: {}, headers: @env
 
     raise "Failed to get AnalysisJobItem, status: #{response.status}" if response.status != 200
 
@@ -238,13 +238,15 @@ describe 'Analysis Jobs' do
     @env['HTTP_AUTHORIZATION'] = harvester_token
     @env['HTTP_ACCEPT'] = 'application/json'
 
-    put update_route, {
+    put update_route, params: {
       analysis_jobs_item: {
         status: status
       }
-    }, @env
+    }, headers: @env
 
-    raise "Failed to update AnalysisJobItem, status: #{response.status} #{response.message}" if response.status != 200
+    if response.status != 200
+      raise "Failed to update AnalysisJobItem, status: #{response.status} #{response.message}\n#{response.body}"
+    end
   end
 
   class FakeAnalysisJob
@@ -308,7 +310,10 @@ describe 'Analysis Jobs' do
 
       message = @job_perform_failure if @job_perform_failure.is_a? String
       message = @job_perform_failure.join("\n") if @job_perform_failure.is_a? Array
-      message = @job_perform_failure.full_message if @job_perform_failure.is_a? Exception
+      if @job_perform_failure.is_a? Exception
+        message = @job_perform_failure.full_message
+        message += @job_perform_failure.backtrace.join('\n')
+      end
 
       raise 'job perform failed: ' + message
     end
