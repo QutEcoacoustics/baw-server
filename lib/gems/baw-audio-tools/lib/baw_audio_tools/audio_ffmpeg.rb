@@ -19,8 +19,6 @@ module BawAudioTools
       @class_name = self.class.name
     end
 
-    public
-
     def info_command(source)
       "#{@ffprobe_executable} -sexagesimal -print_format default -show_error -show_streams -show_format \"#{source}\""
     end
@@ -141,7 +139,9 @@ module BawAudioTools
 
       return nil if hash[:description].starts_with?('parser not found for')
       return nil if hash[:description].starts_with?('max_analyze_duration')
-      return nil if hash[:description].starts_with?('Application provided invalid, non monotonically increasing dts to muxer in stream')
+      if hash[:description].starts_with?('Application provided invalid, non monotonically increasing dts to muxer in stream')
+        return nil
+      end
 
       hash
     end
@@ -165,7 +165,7 @@ module BawAudioTools
 
     # returns the duration in seconds (and fractions if present)
     def parse_duration(duration_string)
-      duration_match = /(?<hour>\d+):(?<minute>\d+):(?<second>[\d+\.]+)/i.match(duration_string)
+      duration_match = /(?<hour>\d+):(?<minute>\d+):(?<second>[\d+.]+)/i.match(duration_string)
       duration = 0
       if !duration_match.nil? && duration_match.size == 4
         duration = (duration_match[:hour].to_f * 60 * 60) + (duration_match[:minute].to_f * 60) + duration_match[:second].to_f

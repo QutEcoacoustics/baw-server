@@ -1,7 +1,8 @@
+# frozen_string_literal: true
+
 require 'active_support/concern'
 
 module Filter
-
   # Provides comparisons for composing queries.
   module Comparison
     extend ActiveSupport::Concern
@@ -206,6 +207,5 @@ module Filter
     def compose_not_gteq_node(node, value)
       compose_gteq_node(node, value).not
     end
-
   end
 end

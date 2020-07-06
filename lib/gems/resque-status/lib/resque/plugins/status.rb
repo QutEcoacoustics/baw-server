@@ -1,6 +1,7 @@
+# frozen_string_literal: true
+
 module Resque
   module Plugins
-
     # Resque::Plugins::Status is a module your jobs will include.
     # It provides helper methods for updating the status/etc from within an
     # instance as well as class methods for creating and queuing the jobs.
@@ -56,7 +57,6 @@ module Resque
       end
 
       module ClassMethods
-
         # The default queue is :statused, this can be ovveridden in the specific job
         # class to put the jobs on a specific worker queue
         def queue
@@ -68,7 +68,7 @@ module Resque
         # ovveridden in the specific job class to present a more user friendly job
         # name
         def name
-          self.to_s
+          to_s
         end
 
         # Create is the primary method for adding jobs to the queue. This would be
@@ -90,7 +90,7 @@ module Resque
         #       job_id = ExampleJob.create(:num => 100)
         #
         def create(options = {})
-          self.enqueue(self, options)
+          enqueue(self, options)
         end
 
         # Adds a job of type <tt>klass<tt> to the queue with <tt>options<tt>.
@@ -98,7 +98,7 @@ module Resque
         # Returns the UUID of the job if the job was queued, or nil if the job was
         # rejected by a before_enqueue hook.
         def enqueue(klass, options = {})
-          self.enqueue_to(Resque.queue_from_class(klass) || queue, klass, options)
+          enqueue_to(Resque.queue_from_class(klass) || queue, klass, options)
         end
 
         # Adds a job of type <tt>klass<tt> to a specified queue with <tt>options<tt>.
@@ -107,7 +107,7 @@ module Resque
         # rejected by a before_enqueue hook.
         def enqueue_to(queue, klass, options = {})
           uuid = Resque::Plugins::Status::Hash.generate_uuid
-          Resque::Plugins::Status::Hash.create uuid, :options => options
+          Resque::Plugins::Status::Hash.create uuid, options: options
 
           if Resque.enqueue_to(queue, klass, uuid, options)
             uuid
@@ -131,7 +131,7 @@ module Resque
         # options.
         #
         # You should not override this method, rahter the <tt>perform</tt> instance method.
-        def perform(uuid=nil, options = {})
+        def perform(uuid = nil, options = {})
           uuid ||= Resque::Plugins::Status::Hash.generate_uuid
           instance = new(uuid, options)
           instance.safe_perform!
@@ -141,8 +141,8 @@ module Resque
         # Wrapper API to forward a Resque::Job creation API call into a Resque::Plugins::Status call.
         # This is needed to be used with resque scheduler
         # http://github.com/bvandenbos/resque-scheduler
-        def scheduled(queue, klass, *args)
-          self.enqueue_to(queue, self, *args)
+        def scheduled(queue, _klass, *args)
+          enqueue_to(queue, self, *args)
         end
       end
 
@@ -157,9 +157,9 @@ module Resque
       # If an error occurs within the job's work, it will set the status as failed and
       # re-raise the error.
       def safe_perform!
-        set_status({'status' => STATUS_WORKING})
+        set_status({ 'status' => STATUS_WORKING })
         perform
-        if status && status.failed?
+        if status&.failed?
           on_failure(status.message) if respond_to?(:on_failure)
           return
         elsif status && !status.completed?
@@ -169,7 +169,7 @@ module Resque
       rescue Killed
         Resque::Plugins::Status::Hash.killed(uuid)
         on_killed if respond_to?(:on_killed)
-      rescue => e
+      rescue StandardError => e
         failed("The task failed because of an error: #{e}")
         if respond_to?(:on_failure)
           on_failure(e)
@@ -204,13 +204,12 @@ module Resque
       # This will kill the job if it has been added to the kill list with
       # <tt>Resque::Plugins::Status::Hash.kill()</tt>
       def at(num, total, *messages)
-        if total.to_f <= 0.0
-          raise(NotANumber, "Called at() with total=#{total} which is not a number")
-        end
+        raise(NotANumber, "Called at() with total=#{total} which is not a number") if total.to_f <= 0.0
+
         tick({
-          'num' => num,
-          'total' => total
-        }, *messages)
+               'num' => num,
+               'total' => total
+             }, *messages)
       end
 
       # sets the status of the job for the current itteration. You should use
@@ -219,36 +218,36 @@ module Resque
       # <tt>Resque::Plugins::Status::Hash.kill()</tt>
       def tick(*messages)
         kill! if should_kill?
-        set_status({'status' => STATUS_WORKING}, *messages)
+        set_status({ 'status' => STATUS_WORKING }, *messages)
       end
 
       # set the status to 'failed' passing along any additional messages
       def failed(*messages)
-        set_status({'status' => STATUS_FAILED}, *messages)
+        set_status({ 'status' => STATUS_FAILED }, *messages)
       end
 
       # set the status to 'completed' passing along any addional messages
       def completed(*messages)
         set_status({
-          'status' => STATUS_COMPLETED,
-          'message' => "Completed at #{Time.now}"
-        }, *messages)
+                     'status' => STATUS_COMPLETED,
+                     'message' => "Completed at #{Time.now}"
+                   }, *messages)
       end
 
       # kill the current job, setting the status to 'killed' and raising <tt>Killed</tt>
       def kill!
         set_status({
-          'status' => STATUS_KILLED,
-          'message' => "Killed at #{Time.now}"
-        })
+                     'status' => STATUS_KILLED,
+                     'message' => "Killed at #{Time.now}"
+                   })
         raise Killed
       end
 
       private
-      def set_status(*args)
-        self.status = [status, {'name'  => self.name}, args].flatten
-      end
 
+      def set_status(*args)
+        self.status = [status, { 'name' => name }, args].flatten
+      end
     end
   end
 end

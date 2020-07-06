@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'rails_helper'
 require 'rspec_api_documentation/dsl'
 require 'helpers/acceptance_spec_helper'
@@ -22,7 +23,6 @@ resource 'Media' do
   end
 
   shared_examples_for :media_permissions_ok do |current_user, name|
-
     get '/audio_recordings/:audio_recording_id/media.:format' do
       standard_media_parameters
       header 'Authorization', :authentication_token if current_user != :no_token
@@ -35,11 +35,9 @@ resource 'Media' do
         { expected_json_path: 'data/recording/channel_count' }
       )
     end
-
   end
 
   shared_examples_for :media_permissions_forbidden do |current_user, name|
-
     get '/audio_recordings/:audio_recording_id/media.:format' do
       standard_media_parameters
       header 'Authorization', :authentication_token if current_user != :no_token
@@ -52,11 +50,9 @@ resource 'Media' do
         { expected_json_path: get_json_error_path(:permissions) }
       )
     end
-
   end
 
   shared_examples_for :media_permissions_unauthorized do |current_user, name|
-
     get '/audio_recordings/:audio_recording_id/media.:format' do
       standard_media_parameters
       header 'Authorization', :authentication_token if current_user != :no_token
@@ -69,7 +65,6 @@ resource 'Media' do
         { expected_json_path: get_json_error_path(:sign_up) }
       )
     end
-
   end
 
   describe 'basic project access:' do

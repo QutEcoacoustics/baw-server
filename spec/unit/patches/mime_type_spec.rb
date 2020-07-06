@@ -3,7 +3,6 @@
 require 'rails_helper'
 
 describe 'mime type extension patch' do
-
   let(:mime_types) {
     [
       ['audio/x-wav', 'wav'],
@@ -28,5 +27,4 @@ describe 'mime type extension patch' do
       expect(actual_extension).to eq(expected_extension)
     end
   end
-
 end

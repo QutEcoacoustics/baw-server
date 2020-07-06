@@ -1,11 +1,12 @@
+# frozen_string_literal: true
+
 # fix bug in paperclip content_type matcher
 require 'paperclip'
 module Paperclip
   module Shoulda
     module Matchers
       class ValidateAttachmentContentTypeMatcher
-
-        def matches? subject
+        def matches?(subject)
           @subject = subject
           @subject = @subject.new if @subject.class == Class
           allowed_types_allowed = allowed_types_allowed?
@@ -17,10 +18,10 @@ module Paperclip
         protected
 
         def type_allowed?(type)
-          @subject.send("#@attachment_name_content_type=", type)
+          @subject.send("#{@attachment_name_content_type}=", type)
           @subject.valid?
-          @subject.errors[:"#@attachment_name_content_type"].blank? &&
-              @subject.errors[:"#@attachment_name"].blank?
+          @subject.errors[:"#{@attachment_name_content_type}"].blank? &&
+            @subject.errors[:"#{@attachment_name}"].blank?
         end
       end
     end

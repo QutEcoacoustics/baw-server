@@ -1,7 +1,8 @@
+# frozen_string_literal: true
+
 # from http://dev.mensfeld.pl/2013/05/paperclip-bootstrap-and-simpleform-working-together-on-rails/
 
 module PaperclipExtensions
-
   extend ActiveSupport::Concern
 
   module ClassMethods
@@ -14,19 +15,18 @@ module PaperclipExtensions
       super
       # Then create a hookup to rewrite all the errors after validation
       after_validation do
-        self.errors[name] ||= []
-        %w{file_name file_size content_type updated_at}.each do |field|
-          field_errors = self.errors["#{name}_#{field}"]
+        errors[name] ||= []
+        ['file_name', 'file_size', 'content_type', 'updated_at'].each do |field|
+          field_errors = errors["#{name}_#{field}"]
           next if field_errors.blank?
 
-          self.errors[name] += field_errors
+          errors[name] += field_errors
           field_errors.clear
         end
-        self.errors[name].flatten!
+        errors[name].flatten!
       end
     end
   end
-
 end
 
-ActiveRecord::Base.send(:include, PaperclipExtensions)
+ActiveRecord::Base.include PaperclipExtensions

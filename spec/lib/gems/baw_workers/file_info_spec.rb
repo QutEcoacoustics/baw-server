@@ -49,7 +49,6 @@ describe BawWorkers::FileInfo do
   let(:file_info) { BawWorkers::Config.file_info }
 
   context 'parse file name with all info' do
-
     it 'p1_s2_u3_d20140101_t235959Z.mp3' do |example|
       file_name = example.metadata[:description]
       result = file_info.file_name_all(file_name)
@@ -123,13 +122,10 @@ describe BawWorkers::FileInfo do
         file_info.file_name_all(file_name)
       }.to raise_error(ArgumentError, 'invalid date')
     end
-
   end
 
   context 'parse file name with datetime info' do
-
     context 'invalid' do
-
       [
         'a_99999999_999999_a.dnsb48364JSFDSD',
         'a_00000000_000000.a',
@@ -168,11 +164,9 @@ describe BawWorkers::FileInfo do
       ].each do |item|
         expect_empty_file_name(item)
       end
-
     end
 
     context 'valid' do
-
       {
         'sdncv*_-T&^%34jd_20140301_085031+06:30blah_T-suffix.mp3' =>
             { raw: {
@@ -247,8 +241,6 @@ describe BawWorkers::FileInfo do
       }.each do |file_name, expected_hash|
         expect_correct_file_name(file_name, expected_hash)
       end
-
     end
-
   end
 end

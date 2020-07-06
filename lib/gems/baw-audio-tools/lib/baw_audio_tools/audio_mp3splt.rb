@@ -7,8 +7,6 @@ module BawAudioTools
       @temp_dir = temp_dir
     end
 
-    public
-
     def modify_command(source, _source_info, target, start_offset = nil, end_offset = nil)
       raise ArgumentError, "Source is not a mp3 file: #{source}" unless source.match(/\.mp3$/)
       raise ArgumentError, "Target is not a mp3 file: : #{target}" unless target.match(/\.mp3$/)

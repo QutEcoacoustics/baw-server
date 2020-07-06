@@ -11,8 +11,6 @@ module BawAudioTools
       @temp_dir = temp_dir
     end
 
-    public
-
     def info_command(source)
       "#{@wavpack_executable} -s \"#{source}\""
     end

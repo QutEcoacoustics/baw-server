@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module BawWorkers
   # Named errors for communication. Mainly just wrap other standard errors.
   module Exceptions

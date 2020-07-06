@@ -1,8 +1,9 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 
-describe PublicController, :type => :routing do
+describe PublicController, type: :routing do
   describe :routing do
-
     it { expect(get('/')).to route_to('public#index') }
     it { expect(get('/status')).to route_to('public#status', format: 'json') }
     it { expect(get('/website_status')).to route_to('public#website_status') }

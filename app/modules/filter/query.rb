@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Filter
   # Construct a query using Arel.
   class Query
@@ -147,14 +149,14 @@ module Filter
     # @param [Array<Symbol>] filter_projection
     # @return [ActiveRecord::Relation] query
     def query_projection_custom(query, filter_projection)
-      apply_projections(query, @build.projections({include: filter_projection}))
+      apply_projections(query, @build.projections({ include: filter_projection }))
     end
 
     # Add default projections to a query.
     # @param [ActiveRecord::Relation] query
     # @return [ActiveRecord::Relation] query
     def query_projection_default(query)
-      apply_projections(query, @build.projections({include: @render_fields}))
+      apply_projections(query, @build.projections({ include: @render_fields }))
     end
 
     # Add sorting to query.
@@ -162,6 +164,7 @@ module Filter
     # @return [ActiveRecord::Relation] query
     def query_sort(query)
       return query unless has_sort_params?
+
       apply_sort(query, @table, @sorting[:order_by], @valid_fields, @sorting[:direction])
     end
 
@@ -180,6 +183,7 @@ module Filter
     def query_paging(query)
       return query unless has_paging_params?
       return query if is_paging_disabled?
+
       apply_paging(query, @paging[:offset], @paging[:limit])
     end
 
@@ -214,42 +218,41 @@ module Filter
 
     private
 
-
     # Add qsp spec to filter
     # @param [Hash] filter
     # @param [Hash] additional
     # @param [Symbol] combiner
     # @return [void]
     def add_qsp_to_filter(filter, additional, combiner)
-      fail 'Additional filter items must be a hash.' unless additional.is_a?(Hash)
-      fail 'Filter must be a hash.' unless filter.is_a?(Hash)
-      fail 'Combiner be blank.' if combiner.blank? || !combiner.is_a?(Symbol)
+      raise 'Additional filter items must be a hash.' unless additional.is_a?(Hash)
+      raise 'Filter must be a hash.' unless filter.is_a?(Hash)
+      raise 'Combiner be blank.' if combiner.blank? || !combiner.is_a?(Symbol)
 
       more_than_one = additional.size > 1
       combiner_present = filter.include?(combiner)
-      item_without_combiner_exists = filter.keys.any?{ |k| ![:and, :or, :not].include?(k)}
+      item_without_combiner_exists = filter.keys.any? { |k| ![:and, :or, :not].include?(k) }
 
-        additional.each do |key, value|
-          match_at_top = filter.include?(key)
-          match_in_combiner = combiner_present && filter[combiner].include?(key)
+      additional.each do |key, value|
+        match_at_top = filter.include?(key)
+        match_in_combiner = combiner_present && filter[combiner].include?(key)
 
-          if match_at_top
-            filter[key].merge!(value)
-          elsif match_in_combiner
-            filter[combiner][key].merge!(value)
-          elsif !more_than_one && !combiner_present
-            filter[key] = value
-          elsif more_than_one && !combiner_present && !item_without_combiner_exists
-            filter[combiner] = {} unless filter.include?(combiner)
-            filter[combiner][key] = value
-          elsif combiner_present && combiner != :and
-            filter[combiner][key] = value
-          elsif item_without_combiner_exists && combiner == :and
-            filter[key] = value
-          else
-            fail 'Problem adding additional filter items.'
-          end
+        if match_at_top
+          filter[key].merge!(value)
+        elsif match_in_combiner
+          filter[combiner][key].merge!(value)
+        elsif !more_than_one && !combiner_present
+          filter[key] = value
+        elsif more_than_one && !combiner_present && !item_without_combiner_exists
+          filter[combiner] = {} unless filter.include?(combiner)
+          filter[combiner][key] = value
+        elsif combiner_present && combiner != :and
+          filter[combiner][key] = value
+        elsif item_without_combiner_exists && combiner == :and
+          filter[key] = value
+        else
+          raise 'Problem adding additional filter items.'
         end
+      end
     end
 
     # Add conditions to a query.
@@ -308,18 +311,18 @@ module Filter
       sort_field = @build.build_custom_field(column_name)
       sort_field = table[column_name] if sort_field.blank?
 
-      if sort_field.is_a? String
-        sort_field_by = sort_field
-      else
+      sort_field_by = if sort_field.is_a? String
+                        sort_field
+                      else
 
-        if direction == :desc
-          sort_field_by = Arel::Nodes::Descending.new(sort_field)
-        else
-          #direction == :asc
-          sort_field_by = Arel::Nodes::Ascending.new(sort_field)
-        end
+                        if direction == :desc
+                          Arel::Nodes::Descending.new(sort_field)
+                        else
+                          #direction == :asc
+                          Arel::Nodes::Ascending.new(sort_field)
+                                        end
 
-      end
+                      end
 
       query.order(sort_field_by)
     end
@@ -355,6 +358,5 @@ module Filter
       validate_projection(projection)
       query.select(projection)
     end
-
   end
 end

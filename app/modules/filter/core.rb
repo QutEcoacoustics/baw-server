@@ -1,7 +1,8 @@
+# frozen_string_literal: true
+
 require 'active_support/concern'
 
 module Filter
-
   # Provides grouping, sorting, paging, 'and', and 'or' for composing queries.
   module Core
     extend ActiveSupport::Concern

@@ -1,6 +1,7 @@
+# frozen_string_literal: true
+
 module Admin
   class AudioRecordingsController < BaseController
-
     # GET /admin/audio_recordings
     def index
       page = paging_params[:page].blank? ? 1 : paging_params[:page].to_i
@@ -9,14 +10,16 @@ module Admin
 
       commit = (paging_params[:commit].blank? ? 'filter' : paging_params[:commit]).to_s
 
-      fail 'Invalid order by.' unless [:id, :site, :duration_seconds, :recorded_date, :created_at, :audio_event_count].include?(order_by)
-      fail 'Invalid order dir.' unless [:asc, :desc].include?(order_dir)
+      unless [:id, :site, :duration_seconds, :recorded_date, :created_at, :audio_event_count].include?(order_by)
+        raise 'Invalid order by.'
+      end
+      raise 'Invalid order dir.' unless [:asc, :desc].include?(order_dir)
 
       redirect_to admin_audio_recordings_path if commit.downcase == 'clear'
 
       @audio_recordings_info = {
-          order_by: order_by,
-          order_dir: order_dir
+        order_by: order_by,
+        order_dir: order_dir
       }
 
       query = AudioRecording.includes(:site).all
@@ -36,6 +39,5 @@ module Admin
     def paging_params
       params.permit(:page, :order_by, :order_dir)
     end
-
   end
 end

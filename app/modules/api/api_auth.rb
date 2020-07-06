@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Api
   module ApiAuth
     extend ActiveSupport::Concern
@@ -14,11 +16,7 @@ module Api
 
     def do_sign_in(sign_in_params)
       # only sign in if we have a valid resource and the comparison was successful.
-      if sign_in_params[:resource] && sign_in_params[:comparison]
-        sign_in sign_in_params[:resource], store: false
-      else
-        nil
-      end
+      sign_in sign_in_params[:resource], store: false if sign_in_params[:resource] && sign_in_params[:comparison]
     end
 
     # Retrieve sign in parameters.
@@ -55,13 +53,13 @@ module Api
       end
 
       {
-          email: email,
-          login: login,
-          token: token,
-          password: password,
-          token_options: token_options,
-          resource: resource,
-          comparison: comparison
+        email: email,
+        login: login,
+        token: token,
+        password: password,
+        token_options: token_options,
+        resource: resource,
+        comparison: comparison
       }
     end
 
@@ -73,9 +71,7 @@ module Api
     # http://stackoverflow.com/questions/7600347/rails-api-design-without-disabling-csrf-protection
     def set_csrf_cookie
       csrf_cookie_key = 'XSRF-TOKEN'
-      if protect_against_forgery? && current_user
-        cookies[csrf_cookie_key] = form_authenticity_token
-      end
+      cookies[csrf_cookie_key] = form_authenticity_token if protect_against_forgery? && current_user
     end
 
     # Get the auth token.
@@ -130,10 +126,9 @@ module Api
         token_was_invalid = resource.nil? && !token.blank?
       end
 
-      fail CanCan::AccessDenied, "Invalid authentication token '#{token}'." if token_was_invalid
+      raise CanCan::AccessDenied, "Invalid authentication token '#{token}'." if token_was_invalid
 
       comparison
     end
-
   end
 end

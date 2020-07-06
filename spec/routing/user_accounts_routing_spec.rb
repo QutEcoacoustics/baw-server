@@ -1,8 +1,9 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 
-describe UserAccountsController, :type => :routing do
+describe UserAccountsController, type: :routing do
   describe :routing do
-
     it { expect(get('/user_accounts')).to route_to('user_accounts#index') }
     it { expect(post('/user_accounts')).to route_to('errors#route_error', requested_route: 'user_accounts') }
     it { expect(get('/user_accounts/new')).to route_to('errors#route_error', requested_route: 'user_accounts/new') }
@@ -26,6 +27,5 @@ describe UserAccountsController, :type => :routing do
 
     it { expect(get('/user_accounts/filter')).to route_to('user_accounts#filter', format: 'json') }
     it { expect(post('/user_accounts/filter')).to route_to('user_accounts#filter', format: 'json') }
-
   end
 end

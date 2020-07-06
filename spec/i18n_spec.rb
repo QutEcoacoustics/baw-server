@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # require 'i18n/tasks'
 #
 # describe 'I18n' do

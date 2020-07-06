@@ -1,6 +1,7 @@
+# frozen_string_literal: true
+
 module BawAudioTools
   class AudioShntool
-
     ERROR_NO_HANDLER = 'warning: none of the builtin format modules handle input file:'
 
     def initialize(shntool_executable, temp_dir)
@@ -16,14 +17,14 @@ module BawAudioTools
     def parse_info_output(output)
       # contains key value output (separate on first colon(:))
       result = {}
-      output.strip.split(/\r?\n|\r/).each { |line|
-        if line.include?(':')
-          colon_index = line.index(':')
-          new_value = line[colon_index+1, line.length].strip
-          new_key = line[0, colon_index].strip
-          result[new_key] = new_value
-        end
-      }
+      output.strip.split(/\r?\n|\r/).each do |line|
+        next unless line.include?(':')
+
+        colon_index = line.index(':')
+        new_value = line[colon_index + 1, line.length].strip
+        new_key = line[0, colon_index].strip
+        result[new_key] = new_value
+      end
 
       result
     end
@@ -42,13 +43,13 @@ module BawAudioTools
       stdout = execute_msg[:stdout]
       stderr = execute_msg[:stderr]
       if !stderr.blank? && stderr.include?(ERROR_NO_HANDLER)
-        fail Exceptions::AudioToolError, "shntool cannot open this file type.\n\t#{execute_msg[:execute_msg]}"
+        raise Exceptions::AudioToolError, "shntool cannot open this file type.\n\t#{execute_msg[:execute_msg]}"
       end
     end
 
-    def modify_command(source, source_info, target, start_offset = nil, end_offset = nil)
+    def modify_command(source, _source_info, target, _start_offset = nil, _end_offset = nil)
       #cmd_offsets = arg_offsets(start_offset, end_offset)
-      fail StandardError, 'Not implemented'
+      raise StandardError, 'Not implemented'
       #-O val Overwrite existing files?  val is one of: {ask, always,  never}. The default is ask.
       #-a str Prefix str to base part of output filenames
       #-d dir Specify output directory
@@ -66,16 +67,15 @@ module BawAudioTools
 
       unless end_offset.blank?
         end_offset_formatted = Time.at(end_offset.to_f).utc.strftime('%H:%M:%S.%2N')
-        if start_offset.blank?
-          # if start offset was not included, include audio from the start of the file.
-          cmd_arg += "trim 0 #{end_offset_formatted}"
-        else
-          cmd_arg += " =#{end_offset_formatted}"
-        end
+        cmd_arg += if start_offset.blank?
+                     # if start offset was not included, include audio from the start of the file.
+                     "trim 0 #{end_offset_formatted}"
+                   else
+                     " =#{end_offset_formatted}"
+                   end
       end
 
       cmd_arg
     end
-
   end
 end

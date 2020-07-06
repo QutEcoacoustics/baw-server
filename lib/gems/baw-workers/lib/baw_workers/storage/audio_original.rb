@@ -1,10 +1,10 @@
+# frozen_string_literal: true
+
 module BawWorkers
   module Storage
     # Provides access to original audio storage.
     class AudioOriginal
       include BawWorkers::Storage::Common
-
-      public
 
       # Create a new BawWorkers::Storage::AudioOriginal.
       # @param [Array<String>] storage_paths
@@ -27,8 +27,8 @@ module BawWorkers
         validate_original_format(opts)
 
         result = opts[:uuid].to_s + @separator +
-            opts[:datetime_with_offset].utc.advance(hours: 10).strftime('%y%m%d-%H%M') +
-            @extension_indicator + opts[:original_format].trim('.', '').to_s
+                 opts[:datetime_with_offset].utc.advance(hours: 10).strftime('%y%m%d-%H%M') +
+                 @extension_indicator + opts[:original_format].trim('.', '').to_s
 
         result.downcase
       end
@@ -42,8 +42,8 @@ module BawWorkers
         validate_original_format(opts)
 
         result = opts[:uuid].to_s.downcase + @separator +
-            opts[:datetime_with_offset].utc.strftime('%Y%m%d-%H%M%S').downcase + 'Z' +
-            @extension_indicator + opts[:original_format].trim('.', '').to_s.downcase
+                 opts[:datetime_with_offset].utc.strftime('%Y%m%d-%H%M%S').downcase + 'Z' +
+                 @extension_indicator + opts[:original_format].trim('.', '').to_s.downcase
 
         result
       end
@@ -68,7 +68,6 @@ module BawWorkers
       # @param [String] file_path
       # @return [Hash] info
       def parse_file_path(file_path)
-
         file_name = File.basename(file_path)
         file_name_split = file_name.split('_')
 
@@ -77,31 +76,31 @@ module BawWorkers
         if datetime_with_offset.length == 11
           # 120302-1505
           date = Time.utc(
-              "20#{datetime_with_offset[0..1]}",
-              datetime_with_offset[2..3],
-              datetime_with_offset[4..5],
-              datetime_with_offset[7..8],
-              datetime_with_offset[9..10]
+            "20#{datetime_with_offset[0..1]}",
+            datetime_with_offset[2..3],
+            datetime_with_offset[4..5],
+            datetime_with_offset[7..8],
+            datetime_with_offset[9..10]
           ).advance(hours: -10).in_time_zone
         elsif datetime_with_offset.length == 16
           # 20120302-050537Z
           date = Time.utc(
-              datetime_with_offset[0..3],
-              datetime_with_offset[4..5],
-              datetime_with_offset[6..7],
-              datetime_with_offset[9..10],
-              datetime_with_offset[11..12],
-              datetime_with_offset[13..14],
+            datetime_with_offset[0..3],
+            datetime_with_offset[4..5],
+            datetime_with_offset[6..7],
+            datetime_with_offset[9..10],
+            datetime_with_offset[11..12],
+            datetime_with_offset[13..14]
           ).in_time_zone
         else
           date = nil
-          fail ArgumentError, "Invalid file name date format: #{file_name}."
+          raise ArgumentError, "Invalid file name date format: #{file_name}."
         end
 
         opts = {
-            uuid: file_name_split[0],
-            datetime_with_offset: date,
-            original_format: original_format
+          uuid: file_name_split[0],
+          datetime_with_offset: date,
+          original_format: original_format
         }
 
         validate_uuid(opts)
@@ -110,7 +109,6 @@ module BawWorkers
 
         opts
       end
-
     end
   end
 end

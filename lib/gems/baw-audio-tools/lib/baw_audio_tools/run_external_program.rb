@@ -32,7 +32,6 @@ module BawAudioTools
       pid = nil
 
       time = Benchmark.realtime do
-
         run_with_timeout(command, timeout: @timeout_sec) do |output, error, thread, timed_out_return, killed_return, exceptions_inner, pid_inner|
           #thread_success = thread.value.success?
           stdout_str = output
@@ -46,7 +45,6 @@ module BawAudioTools
       rescue Exception => e
         @logger.fatal(@class_name) do e end
         raise e
-
       end
 
       status_msg = "status=#{status.exitstatus};killed=#{killed};pid=#{pid};"

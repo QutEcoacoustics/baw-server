@@ -1,7 +1,8 @@
+# frozen_string_literal: true
+
 module BawWorkers
   # Common functionality for resque actions.
   class ActionBase
-
     # Ensure that there is only one job with the same payload per queue.
     # The default method to create a job ID from these parameters is to
     # do some normalization on the payload and then md5'ing it
@@ -27,7 +28,6 @@ module BawWorkers
 
     # Class methods
     class << self
-
       # Override: Get the key for resque_solo to use in redis.
       def redis_key(payload)
         BawWorkers::ResqueJobId.create_id_payload(payload)
@@ -41,7 +41,7 @@ module BawWorkers
       # rejected by a before_enqueue hook.
       def enqueue_to(queue, klass, options = {})
         uuid = BawWorkers::ResqueJobId.create_id_props(klass, options)
-        Resque::Plugins::Status::Hash.create uuid, :options => options
+        Resque::Plugins::Status::Hash.create uuid, options: options
 
         if Resque.enqueue_to(queue, klass, uuid, options)
           uuid
@@ -69,12 +69,12 @@ module BawWorkers
       # Get the queue for this action. Used by Resque. Overrides resque-status class method.
       # @return [Symbol] The queue.
       def queue
-        fail NotImplementedError, 'Must implement `queue` method.'
+        raise NotImplementedError, 'Must implement `queue` method.'
       end
 
       # Name for logging.
       def logger_name
-        self.name
+        name
       end
     end
 
@@ -89,7 +89,7 @@ module BawWorkers
     # Order is important
     # @return [Array<String>]
     def perform_options_keys
-      fail NotImplementedError, 'You must implement `perform_options_keys` in your base class.'
+      raise NotImplementedError, 'You must implement `perform_options_keys` in your base class.'
     end
 
     # Perform method used by resque-status.
@@ -101,20 +101,19 @@ module BawWorkers
       values = perform_options_keys.map { |k| options[k] }
 
       # kill the job if it is in resque:status's kill list
-      at(0, 1, "Begin action")
+      at(0, 1, 'Begin action')
 
       # resolve partial payloads
       values = values.map { |value| BawWorkers::PartialPayload.resolve(value) }
 
       begin
         self.class.action_perform(*values)
-      rescue BawWorkers::Exceptions::ActionCancelledError => ace
+      rescue BawWorkers::Exceptions::ActionCancelledError => e
         # catch an action cancelled exception,
         # transform into resque:status killed exception
         kill!
       end
     end
-
 
     # Produces a sensible friendly name for this payload.
     # Should be unique but does not need to be. Has no operational effect.
@@ -125,8 +124,7 @@ module BawWorkers
     # duplicated in a serialized form into the name field.
     # https://github.com/QutBioacoustics/baw-workers/issues/41
     def name
-      fail NotImplementedError, 'You must implement `name` in your base class.'
+      raise NotImplementedError, 'You must implement `name` in your base class.'
     end
-
   end
 end

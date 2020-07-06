@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'pathname'
 
 module BawWorkers
@@ -7,8 +9,6 @@ module BawWorkers
       include BawWorkers::Storage::Common
 
       JOB_ID_SYSTEM = 'system'
-
-      public
 
       # Create a new BawWorkers::Storage::AnalysisCache.
       # @param [Array<String>] storage_paths
@@ -79,22 +79,22 @@ module BawWorkers
         @storage_paths.map { |path| File.join(path, job_path(opts)) }
       end
 
-
       # Extract information from a file name.
       # @param [String] file_path
       # @return [Hash] info
       def parse_file_path(file_path)
-
         # check that file_path starts with one of the possible base directories
         base_dirs = possible_dirs
         base_dirs_matched = base_dirs.select { |base_dir| file_path.start_with?(base_dir) }
-        fail ArgumentError, "Must start with one of '#{base_dirs.join('\', \'')}': #{file_path} " if base_dirs_matched.size != 1
+        if base_dirs_matched.size != 1
+          raise ArgumentError, "Must start with one of '#{base_dirs.join('\', \'')}': #{file_path} "
+        end
 
         # remove base dir from file_path
         relative_path = file_path.sub(base_dirs_matched.first, '')
 
         # clean file_path so it is more likely to match
-        relative_path_clean =  BawWorkers::Validation.normalise_path(relative_path, nil)
+        relative_path_clean = BawWorkers::Validation.normalise_path(relative_path, nil)
 
         # extract parts of path
         path_parts = Pathname(relative_path_clean).each_filename.to_a
@@ -102,10 +102,10 @@ module BawWorkers
         job_id = path_parts[0].to_i.to_s == path_parts[0].to_s ? path_parts[0].to_i : JOB_ID_SYSTEM
 
         opts = {
-            job_id: job_id,
-            uuid: path_parts[2],
-            sub_folders: path_parts[3..-2],
-            file_name: path_parts[-1]
+          job_id: job_id,
+          uuid: path_parts[2],
+          sub_folders: path_parts[3..-2],
+          file_name: path_parts[-1]
         }
 
         validate_job_id(opts)
@@ -115,7 +115,6 @@ module BawWorkers
 
         opts
       end
-
     end
   end
 end

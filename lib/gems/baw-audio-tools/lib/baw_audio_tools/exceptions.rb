@@ -1,6 +1,7 @@
+# frozen_string_literal: true
+
 module BawAudioTools
   module Exceptions
-    public
     class FileCorruptError < IOError; end
     class FileEmptyError < IOError; end
     class FileNotFoundError < IOError; end

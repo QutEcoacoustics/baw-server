@@ -1,14 +1,14 @@
+# frozen_string_literal: true
+
 require 'securerandom'
 
 module Resque
   module Plugins
     module Status
-
       # Resque::Plugins::Status::Hash is a Hash object that has helper methods for dealing with
       # the common status attributes. It also has a number of class methods for
       # creating/updating/retrieving status objects from Redis
       class Hash < ::Hash
-
         # Create a status, generating a new UUID, passing the message to the status
         # Returns the UUID of the new status.
         def self.create(uuid, *messages)
@@ -27,7 +27,8 @@ module Resque
         # Get multiple statuses by UUID. Returns array of Resque::Plugins::Status::Hash
         def self.mget(uuids)
           return [] if uuids.empty?
-          status_keys = uuids.map{|u| status_key(u)}
+
+          status_keys = uuids.map { |u| status_key(u) }
           vals = redis.mget(*status_keys)
 
           uuids.zip(vals).map do |uuid, val|
@@ -40,9 +41,7 @@ module Resque
         def self.set(uuid, *messages)
           val = Resque::Plugins::Status::Hash.new(uuid, *messages)
           redis.set(status_key(uuid), encode(val))
-          if expire_in
-            redis.expire(status_key(uuid), expire_in)
-          end
+          redis.expire(status_key(uuid), expire_in) if expire_in
           val
         end
 
@@ -102,7 +101,7 @@ module Resque
             # Because we want a reverse chronological order, we need to get a range starting
             # by the higest negative number. The ordering is transparent from the API user's
             # perspective so we need to convert the passed params
-            (redis.zrevrange(set_key, (range_start.abs), ((range_end || 1).abs)) || [])
+            (redis.zrevrange(set_key, range_start.abs, (range_end || 1).abs) || [])
           else
             # Because we want a reverse chronological order, we need to get a range starting
             # by the higest negative number.
@@ -149,8 +148,8 @@ module Resque
 
         # The time in seconds that jobs and statuses should expire from Redis (after
         # the last time they are touched/updated)
-        def self.expire_in
-          @expire_in
+        class << self
+          attr_reader :expire_in
         end
 
         # Set the <tt>expire_in</tt> time in seconds
@@ -163,11 +162,11 @@ module Resque
         end
 
         def self.set_key
-          "_statuses"
+          '_statuses'
         end
 
         def self.kill_key
-          "_kill"
+          '_kill'
         end
 
         def self.generate_uuid
@@ -176,7 +175,7 @@ module Resque
 
         def self.hash_accessor(name, options = {})
           options[:default] ||= nil
-          coerce = options[:coerce] ? ".#{options[:coerce]}" : ""
+          coerce = options[:coerce] ? ".#{options[:coerce]}" : ''
           module_eval <<-EOT
           def #{name}
             value = (self['#{name}'] ? self['#{name}']#{coerce} : #{options[:default].inspect})
@@ -222,11 +221,11 @@ module Resque
             'status' => Resque::Plugins::Status::STATUS_QUEUED
           }
           base_status['uuid'] = args.shift if args.length > 1
-          status_hash = args.inject(base_status) do |final, m|
-            m = {'message' => m} if m.is_a?(String)
+          status_hash = args.inject(base_status) { |final, m|
+            m = { 'message' => m } if m.is_a?(String)
             final.merge(m || {})
-          end
-          self.replace(status_hash)
+          }
+          replace(status_hash)
         end
 
         # calculate the % completion of the job based on <tt>status</tt>, <tt>num</tt>
@@ -237,7 +236,7 @@ module Resque
           elsif queued?
             0
           else
-            t = (total == 0 || total.nil?) ? 1 : total
+            t = total == 0 || total.nil? ? 1 : total
             (((num || 0).to_f / t.to_f) * 100).to_i
           end
         end
@@ -261,14 +260,14 @@ module Resque
         end
 
         unless method_defined?(:to_json)
-          def to_json(*args)
+          def to_json(*_args)
             json
           end
         end
 
         # Return a JSON representation of the current object.
         def json
-          h = self.dup
+          h = dup
           h['pct_complete'] = pct_complete
           self.class.encode(h)
         end
@@ -276,7 +275,6 @@ module Resque
         def inspect
           "#<Resque::Plugins::Status::Hash #{super}>"
         end
-
       end
     end
   end

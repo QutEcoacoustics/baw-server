@@ -1,8 +1,9 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 
-describe SavedSearchesController, :type => :routing do
+describe SavedSearchesController, type: :routing do
   describe :routing do
-
     it { expect(get('/user_accounts/1/saved_searches')).to route_to('user_accounts#saved_searches', id: '1') }
 
     it { expect(get('/saved_searches')).to route_to('saved_searches#index', format: 'json') }
@@ -19,6 +20,5 @@ describe SavedSearchesController, :type => :routing do
 
     it { expect(get('/saved_searches/filter')).to route_to('saved_searches#filter', format: 'json') }
     it { expect(post('/saved_searches/filter')).to route_to('saved_searches#filter', format: 'json') }
-
   end
 end

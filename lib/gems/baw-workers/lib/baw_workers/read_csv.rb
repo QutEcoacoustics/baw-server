@@ -1,35 +1,35 @@
+# frozen_string_literal: true
+
 require 'csv'
 
 module BawWorkers
   class ReadCsv
     class << self
-
       # Enumerate through rows in an audio recording csv file using a block.
       # @return [void]
       def read_audio_recording_csv(csv_file)
         index_to_key_map = {
-            id: 0,
-            uuid: 1,
-            recorded_date: 2,
-            duration_seconds: 3,
-            sample_rate_hertz: 4,
-            channels: 5,
-            bit_rate_bps: 6,
-            media_type: 7,
-            data_length_bytes: 8,
-            file_hash: 9,
-            original_file_name: 10
+          id: 0,
+          uuid: 1,
+          recorded_date: 2,
+          duration_seconds: 3,
+          sample_rate_hertz: 4,
+          channels: 5,
+          bit_rate_bps: 6,
+          media_type: 7,
+          data_length_bytes: 8,
+          file_hash: 9,
+          original_file_name: 10
         }
 
         #audio_params_array = []
 
         # load csv file
-        CSV.foreach(csv_file, {headers: true, return_headers: false}) do |row|
-
+        CSV.foreach(csv_file, { headers: true, return_headers: false }) do |row|
           # get values from row, put into hash that matches what check action expects
-          audio_params = index_to_key_map.inject({}) do |hash, (k, v)|
+          audio_params = index_to_key_map.inject({}) { |hash, (k, _v)|
             hash.merge(k.to_sym => row[k.to_s])
-          end
+          }
 
           # try a few ways to get original_format
           original_format = audio_params[:original_format]
@@ -52,7 +52,6 @@ module BawWorkers
 
         #audio_params_array
       end
-
     end
   end
 end

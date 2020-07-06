@@ -1,10 +1,10 @@
+# frozen_string_literal: true
+
 module BawWorkers
   module Storage
     # Provides access to spectrogram cache storage.
     class SpectrogramCache
       include BawWorkers::Storage::Common
-
-      public
 
       # Create a new BawWorkers::Storage::SpectrogramCache.
       # @param [Array<String>] storage_paths
@@ -33,14 +33,14 @@ module BawWorkers
         # TODO: Add in future? brightness, contrast, overlap
 
         opts[:uuid].to_s.downcase + @separator +
-            opts[:start_offset].to_f.to_s + @separator +
-            opts[:end_offset].to_f.to_s + @separator +
-            opts[:channel].to_i.to_s + @separator +
-            opts[:sample_rate].to_i.to_s + @separator +
-            opts[:window].to_i.to_s + @separator +
-            opts[:window_function].to_s + @separator +
-            opts[:colour].to_s +
-            @extension_indicator + opts[:format].trim('.', '').to_s
+          opts[:start_offset].to_f.to_s + @separator +
+          opts[:end_offset].to_f.to_s + @separator +
+          opts[:channel].to_i.to_s + @separator +
+          opts[:sample_rate].to_i.to_s + @separator +
+          opts[:window].to_i.to_s + @separator +
+          opts[:window_function].to_s + @separator +
+          opts[:colour].to_s +
+          @extension_indicator + opts[:format].trim('.', '').to_s
       end
 
       # Get file names
@@ -64,22 +64,21 @@ module BawWorkers
       # @param [String] file_path
       # @return [Hash] info
       def parse_file_path(file_path)
-
         file_name = File.basename(file_path)
         file_name_split = file_name.split('_')
 
         colour, format = file_name_split[7].split('.')
 
         opts = {
-            uuid: file_name_split[0],
-            start_offset: file_name_split[1].to_f,
-            end_offset: file_name_split[2].to_f,
-            channel: file_name_split[3].to_i,
-            sample_rate: file_name_split[4].to_i,
-            window: file_name_split[5].to_i,
-            window_function: file_name_split[6],
-            colour: colour,
-            format: format
+          uuid: file_name_split[0],
+          start_offset: file_name_split[1].to_f,
+          end_offset: file_name_split[2].to_f,
+          channel: file_name_split[3].to_i,
+          sample_rate: file_name_split[4].to_i,
+          window: file_name_split[5].to_i,
+          window_function: file_name_split[6],
+          colour: colour,
+          format: format
         }
 
         validate_uuid(opts)
@@ -94,7 +93,6 @@ module BawWorkers
 
         opts
       end
-
     end
   end
 end

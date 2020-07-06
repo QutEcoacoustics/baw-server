@@ -104,7 +104,6 @@ describe BawAudioTools::AudioBase do
           expect(result[:warnings][2][:id]).to eq('end of file')
           expect(result[:warnings][2][:description]).to include('End of file')
         end
-
       end
 
       it 'processing empty .mp3 file' do
@@ -127,11 +126,9 @@ describe BawAudioTools::AudioBase do
         expect(result[:warnings][1][:id]).to eq('mp3')
         warning_text_options.any? { |i| i == result[:warnings][1][:description] }
         #expect(result[:warnings][1][:description]).to eq('Could not find codec parameters for stream 0 (Audio: mp3, 0 channels, s16p): unspecified frame size')
-
       end
 
       it 'processing corrupt .ogg file' do
-
         result = audio_base.integrity_check(audio_file_corrupt)
 
         expect(result[:errors]).to be_blank
@@ -147,7 +144,6 @@ describe BawAudioTools::AudioBase do
 
         #expect(result[:errors][5][:id]).to eq('error')
         #expect(result[:errors][5][:description]).to include('Error while opening decoder for input stream #0:0 : Invalid data found when processing input')
-
       end
     end
   end

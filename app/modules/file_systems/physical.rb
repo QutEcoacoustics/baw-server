@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module FileSystems
   class Physical
     class << self
@@ -33,9 +35,7 @@ module FileSystems
           next if item == '.' || item == '..' || item.start_with?('.')
 
           # special case - stop scanning large dirs
-          if filtered_count >= max_items
-            break;
-          end
+          break if filtered_count >= max_items
 
           filtered_count += 1
 
@@ -50,7 +50,7 @@ module FileSystems
           children.push(full_path)
         end
 
-        return children, filtered_count
+        [children, filtered_count]
       end
 
       def directory_has_children?(path)

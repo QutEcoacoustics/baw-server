@@ -1,9 +1,8 @@
+# frozen_string_literal: true
+
 module BawAudioTools
   class Spectrogram
-
     attr_reader :audio_base, :image_image_magick, :temp_dir
-
-    public
 
     def initialize(audio_base, image_image_magick, spectrogram_defaults, temp_dir)
       @audio_base = audio_base
@@ -20,15 +19,15 @@ module BawAudioTools
     end
 
     def info(source)
-      fail Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.exists? source
-      fail Exceptions::FileEmptyError, "Source exists, but has no content: #{source}" if File.size(source) < 1
+      raise Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.exist? source
+      raise Exceptions::FileEmptyError, "Source exists, but has no content: #{source}" if File.size(source) < 1
 
       im_info_cmd = @image_image_magick.info_command(source)
       im_info_output = @audio_base.execute(im_info_cmd)
       im_info = @image_image_magick.parse_info_output(im_info_output[:stdout])
 
       im_info[:data_length_bytes] = File.size(source)
-      im_info[:media_type] = 'image/'+im_info[:media_type].downcase
+      im_info[:media_type] = 'image/' + im_info[:media_type].downcase
       im_info[:height] = im_info[:height].to_i
       im_info[:width] = im_info[:width].to_i
 
@@ -39,11 +38,11 @@ module BawAudioTools
     # parameters in modify_parameters. Possible options for modify_parameters:
     # :start_offset :end_offset :channel :sample_rate :window :colour :format
     def modify(source, target, modify_parameters = {})
-      fail ArgumentError, "Target is not a png file: : #{target}" unless target.match(/\.png/)
-      fail ArgumentError, "Source is not a wav file: : #{source}" unless source.match(/\.wav/)
-      fail Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.exists? source
-      fail Exceptions::FileAlreadyExistsError, "Target exists: #{target}" if File.exists? target
-      fail ArgumentError "Source and Target are the same file: #{target}" if source == target
+      raise ArgumentError, "Target is not a png file: : #{target}" unless target.match(/\.png/)
+      raise ArgumentError, "Source is not a wav file: : #{source}" unless source.match(/\.wav/)
+      raise Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.exist? source
+      raise Exceptions::FileAlreadyExistsError, "Target exists: #{target}" if File.exist? target
+      raise ArgumentError "Source and Target are the same file: #{target}" if source == target
 
       source_info = audio_base.info(source)
       audio_base.check_offsets(source_info, @spectrogram_defaults.min_duration_seconds, @spectrogram_defaults.max_duration_seconds, modify_parameters)
@@ -72,24 +71,25 @@ module BawAudioTools
         # start_offset, end_offset, channel, sample_rate
         temp_wav_file = @audio_base.temp_file('wav')
         @audio_base.modify(source, temp_wav_file, {
-            start_offset: start_offset,
-            end_offset: end_offset,
-            channel: channel,
-            sample_rate: sample_rate
-        })
+                             start_offset: start_offset,
+                             end_offset: end_offset,
+                             channel: channel,
+                             sample_rate: sample_rate
+                           })
 
         # create waveform with wav2png
         cmd =
-            @audio_base.audio_wav2png.command(temp_wav_file, source_info, target,
-                                              width, height, colour_bg, colour_fg, scale, db_min, db_max)
+          @audio_base.audio_wav2png.command(temp_wav_file, source_info, target,
+                                            width, height, colour_bg, colour_fg, scale, db_min, db_max)
 
         @audio_base.execute(cmd)
         @audio_base.check_target(target)
       else
         # create spectrogram with sox
         cmd =
-            @audio_base.audio_sox.spectrogram_command(
-                source, source_info, target, start_offset, end_offset, channel, sample_rate, window, window_function, colour)
+          @audio_base.audio_sox.spectrogram_command(
+            source, source_info, target, start_offset, end_offset, channel, sample_rate, window, window_function, colour
+          )
 
         @audio_base.execute(cmd)
         @audio_base.check_target(target)
@@ -100,6 +100,5 @@ module BawAudioTools
         @audio_base.check_target(target)
       end
     end
-
   end
 end

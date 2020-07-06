@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'csv'
 
 # Postgresql query to export csv file
@@ -7,40 +9,39 @@ module BawWorkers
   module AudioCheck
     class CsvHelper
       class << self
-
         def logged_csv_line(file_path, exists, moved_path = nil,
                             compare_hash = nil, api_result_hash = nil,
                             api_response = nil, review_level = :none_all_good,
                             audio_recording_id)
           csv_headers = [
-              :file_path, :exists,
+            :file_path, :exists,
 
-              :moved_path,
-              :errors,
+            :moved_path,
+            :errors,
 
-              :check_new_file_name, :check_file_errors,
+            :check_new_file_name, :check_file_errors,
 
-              :check_file_hash, :check_extension, :check_media_type,
-              :check_sample_rate_hertz, :check_channels, :check_bit_rate_bps,
-              :check_data_length_bytes, :check_duration_seconds,
+            :check_file_hash, :check_extension, :check_media_type,
+            :check_sample_rate_hertz, :check_channels, :check_bit_rate_bps,
+            :check_data_length_bytes, :check_duration_seconds,
 
-              :expected_file_hash, :expected_extension, :expected_media_type,
-              :expected_sample_rate_hertz, :expected_channels, :expected_bit_rate_bps,
-              :expected_data_length_bytes, :expected_duration_seconds,
+            :expected_file_hash, :expected_extension, :expected_media_type,
+            :expected_sample_rate_hertz, :expected_channels, :expected_bit_rate_bps,
+            :expected_data_length_bytes, :expected_duration_seconds,
 
-              :actual_file_hash, :actual_extension, :actual_media_type,
-              :actual_sample_rate_hertz, :actual_channels, :actual_bit_rate_bps,
-              :actual_data_length_bytes, :actual_duration_seconds,
+            :actual_file_hash, :actual_extension, :actual_media_type,
+            :actual_sample_rate_hertz, :actual_channels, :actual_bit_rate_bps,
+            :actual_data_length_bytes, :actual_duration_seconds,
 
-              :api_file_hash, :api_media_type,
-              :api_sample_rate_hertz, :api_channels, :api_bit_rate_bps,
-              :api_data_length_bytes, :api_duration_seconds,
+            :api_file_hash, :api_media_type,
+            :api_sample_rate_hertz, :api_channels, :api_bit_rate_bps,
+            :api_data_length_bytes, :api_duration_seconds,
 
-              :api_response,
+            :api_response,
 
-              :review_level,
+            :review_level,
 
-              :audio_recording_id
+            :audio_recording_id
           ]
 
           csv_values = []
@@ -106,26 +107,23 @@ module BawWorkers
           csv_values[39] = audio_recording_id
 
           {
-              headers: csv_headers,
-              values: csv_values
+            headers: csv_headers,
+            values: csv_values
           }
         end
 
         def read_audio_file_hash_csv(csv_file)
           index_to_key_map = {
-              file_hash: 0,
-              uuid: 1
+            file_hash: 0,
+            uuid: 1
           }
 
           # load csv file
-          CSV.foreach(csv_file, {headers: false, return_headers: false}) do |row|
-
+          CSV.foreach(csv_file, { headers: false, return_headers: false }) do |row|
             audio_params = {}
 
             # get values from row, put into hash that matches what check action expects
-            if row && !row[0].blank? && !row[1].blank?
-              audio_params = {file_hash: row[0].strip, uuid: row[1].strip}
-            end
+            audio_params = { file_hash: row[0].strip, uuid: row[1].strip } if row && !row[0].blank? && !row[1].blank?
 
             # provide the audio parameters to yield
             yield audio_params if block_given?
@@ -133,7 +131,6 @@ module BawWorkers
         end
 
         def write_audio_recordings_csv(original_csv, hash_csv, result_csv)
-
           audio_info = {}
 
           BawWorkers::ReadCsv.read_audio_recording_csv(original_csv) do |audio_params|
@@ -142,7 +139,6 @@ module BawWorkers
           end
 
           BawWorkers::AudioCheck::CsvHelper.read_audio_file_hash_csv(hash_csv) do |hash_params|
-
             new_hash = hash_params[:file_hash]
             new_uuid = hash_params[:uuid]
             prefix = 'SHA256::'
@@ -161,24 +157,23 @@ module BawWorkers
               audio_info[new_uuid][:uuid] = new_uuid
               print ';'
             end
-
           end
 
           # write to csv
-          csv_options = {col_sep: ',', force_quotes: true}
+          csv_options = { col_sep: ',', force_quotes: true }
 
           index_to_key_map = {
-              id: 0,
-              uuid: 1,
-              recorded_date: 2,
-              duration_seconds: 3,
-              sample_rate_hertz: 4,
-              channels: 5,
-              bit_rate_bps: 6,
-              media_type: 7,
-              data_length_bytes: 8,
-              file_hash: 9,
-              original_file_name: 10
+            id: 0,
+            uuid: 1,
+            recorded_date: 2,
+            duration_seconds: 3,
+            sample_rate_hertz: 4,
+            channels: 5,
+            bit_rate_bps: 6,
+            media_type: 7,
+            data_length_bytes: 8,
+            file_hash: 9,
+            original_file_name: 10
           }
 
           column_order = []
@@ -187,8 +182,7 @@ module BawWorkers
           end
 
           CSV.open(result_csv, 'w', csv_options) do |writer|
-            audio_info.each do |key, value|
-
+            audio_info.each do |_key, value|
               row_values = []
               column_order.each do |attr|
                 row_values.push(value[attr])
@@ -197,7 +191,6 @@ module BawWorkers
               writer << row_values
             end
           end
-
         end
 
         # extract the CSV log lines from a log file.
@@ -205,17 +198,15 @@ module BawWorkers
           # for lines that start with a datestamp (format: 2015-04-12T23:06:48.295+0000) and log info
           # keep only if the row then contains '[CSV], '.
 
-          line_start_regexp = /\A\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}\+\d{4} \[[^\]]+\] \[CSV\-data\], /
+          line_start_regexp = /\A\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}\+\d{4} \[[^\]]+\] \[CSV-data\], /
 
           File.open(write_path, 'a') do |dest|
-
             File.open(read_path).each_line do |line|
               next unless line.match(line_start_regexp)
+
               dest.puts line
             end
-
           end
-
         end
 
         # Compare csv file and files.
@@ -238,11 +229,11 @@ module BawWorkers
           # compare with details in db
           BawWorkers::ReadCsv.read_audio_recording_csv(csv_file) do |audio_params|
             opts =
-                {
-                    uuid: audio_params[:uuid],
-                    datetime_with_offset: BawWorkers::Validation.normalise_datetime(audio_params[:recorded_date]),
-                    original_format: audio_params[:original_format]
-                }
+              {
+                uuid: audio_params[:uuid],
+                datetime_with_offset: BawWorkers::Validation.normalise_datetime(audio_params[:recorded_date]),
+                original_format: audio_params[:original_format]
+              }
             utc_file_name = original_audio.file_names(opts)[1].downcase
 
             match_result = files & [utc_file_name]
@@ -262,25 +253,24 @@ module BawWorkers
 
           name = 'baw:worker:audio_check:standalone:compare'
 
-          BawWorkers::Config.logger_worker.warn(name) {
+          BawWorkers::Config.logger_worker.warn(name) do
             "Exact intersection (only utc file names are included) (#{intersection.size}): #{intersection.join(', ')}"
-          }
+          end
 
-          BawWorkers::Config.logger_worker.warn(name) {
+          BawWorkers::Config.logger_worker.warn(name) do
             "Existing files without db entry (only utc file names are included) (#{files_without_db_entry.size}): #{files_without_db_entry.join(', ')}"
-          }
+          end
 
           # BawWorkers::Config.logger_worker.warn(name) {
           #   "Db entries with no files (only utc file names are included) (#{db_entries_without_file.size}): #{db_entries_without_file.join(', ')}"
           # }
 
           {
-              intersection: intersection,
-              files_without_db_entry: files_without_db_entry,
-              db_entries_without_file: db_entries_without_file
+            intersection: intersection,
+            files_without_db_entry: files_without_db_entry,
+            db_entries_without_file: db_entries_without_file
           }
         end
-
       end
     end
   end

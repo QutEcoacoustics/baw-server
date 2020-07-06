@@ -353,7 +353,6 @@ module BawWorkers
         allowed_placeholders = BawWorkers::Analysis::Payload::COMMAND_PLACEHOLDERS
 
         command_placeholders.each do |command_placeholder|
-
           if !command_opts.include?(command_placeholder) ||
              command_opts[command_placeholder].blank?
             raise ArgumentError, "Value not supplied for placeholder #{command_placeholder} in #{command_format}."
@@ -369,8 +368,6 @@ module BawWorkers
 
         command_format
       end
-
-      private
 
       def self.extract_command_placeholders(opts)
         command_format = opts[:command_format]

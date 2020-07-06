@@ -1,18 +1,20 @@
+# frozen_string_literal: true
+
 module Api
   module CustomUrlHelpers
     def make_listen_path(value = nil, start_offset_sec = nil, end_offset_sec = nil)
       return '/listen' if value.blank?
 
       # obtain audio recording id
-      if value.is_a?(AudioRecording)
-        ar_id = value.id
-      elsif value.is_a?(AudioEvent)
-        ar_id = value.audio_recording_id
-      elsif value.is_a?(Bookmark)
-        ar_id = value.audio_recording_id
-      else
-        ar_id = value.to_i
-      end
+      ar_id = if value.is_a?(AudioRecording)
+                value.id
+              elsif value.is_a?(AudioEvent)
+                value.audio_recording_id
+              elsif value.is_a?(Bookmark)
+                value.audio_recording_id
+              else
+                value.to_i
+              end
 
       # obtain offsets
       if value.is_a?(AudioEvent)
@@ -38,9 +40,7 @@ module Api
 
         "#{link}?start=#{offset_start_rounded}&end=#{offset_end_rounded}"
       end
-
     end
-
 
     def make_library_path(ar_value = nil, ae_value = nil)
       return '/library' if ar_value.nil? && ae_value.nil?
@@ -64,18 +64,17 @@ module Api
         ae_id = ae_value.to_i
       end
 
-      fail ArgumentError, 'Must provide audio event id' if ae_id.blank?
+      raise ArgumentError, 'Must provide audio event id' if ae_id.blank?
 
       "/library/#{ar_id}/audio_events/#{ae_id}"
     end
-
 
     def make_library_tag_search_path(tag_text)
       "/library?reference=all&tagsPartial=#{tag_text}"
     end
 
     def make_visualise_path(value)
-      fail ArgumentError, 'Must provide project or site' if value.blank?
+      raise ArgumentError, 'Must provide project or site' if value.blank?
 
       link = '/visualize?'
 
@@ -86,16 +85,15 @@ module Api
       elsif value.is_a?(Array) && value.all? { |item| item.is_a?(Site) }
         "#{link}siteIds=" + value.map(&:id).join(',')
       else
-        fail ArgumentError, "Must provide project or site, got #{value.class}"
+        raise ArgumentError, "Must provide project or site, got #{value.class}"
       end
     end
 
-
-    def make_demo_path()
+    def make_demo_path
       '/demo'
     end
 
-    def make_birdwalks_path()
+    def make_birdwalks_path
       '/birdwalks'
     end
 
@@ -107,10 +105,9 @@ module Api
       if value.is_a?(AnalysisJob)
         "#{link}/#{value.id}"
       else
-        fail ArgumentError, "Must provide project or site, got #{value.class}"
+        raise ArgumentError, "Must provide project or site, got #{value.class}"
       end
     end
-
 
     # create annotation download link for a user
     def make_user_annotations_path(user_value)

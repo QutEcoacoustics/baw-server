@@ -1,16 +1,16 @@
+# frozen_string_literal: true
+
 require 'pathname'
 
 module BawWorkers
   # Common validation methods.
   class Validation
-
-    PATH_REGEXP = /\A(?:[0-9a-zA-Z_\-\.\/])+\z/
-    INVALID_CHARS_REGEXP = /[^0-9a-z\-\._\\\/]/i
-    TOP_DIR_VALID_CHARS_REGEXP = /[0-9a-z\-_]/i
-    UUID_REGEXP = /\A[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\z/i
+    PATH_REGEXP = %r{\A(?:[0-9a-zA-Z_\-./])+\z}.freeze
+    INVALID_CHARS_REGEXP = %r{[^0-9a-z\-._\\/]}i.freeze
+    TOP_DIR_VALID_CHARS_REGEXP = /[0-9a-z\-_]/i.freeze
+    UUID_REGEXP = /\A[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\z/i.freeze
 
     class << self
-
       # true / false validation
 
       # Is this a uuid?
@@ -25,9 +25,10 @@ module BawWorkers
       # @return [Boolean] true for a real run, false for dry run.
       def is_real_run?(real_run)
         # options are 'dry_run' or 'real_run'. If not either of these, raise an erorr.
-        if real_run.blank? || !%w(real_run dry_run).include?(real_run)
-          fail ArgumentError, "real_run must be 'dry_run' or 'real_run', given '#{real_run}'."
+        if real_run.blank? || !['real_run', 'dry_run'].include?(real_run)
+          raise ArgumentError, "real_run must be 'dry_run' or 'real_run', given '#{real_run}'."
         end
+
         real_run == 'real_run'
       end
 
@@ -36,9 +37,10 @@ module BawWorkers
       # @return [Boolean] true to copy on success, false to not copy.
       def should_copy_on_success?(copy_on_success)
         # options are 'dry_run' or 'real_run'. If not either of these, raise an erorr.
-        if copy_on_success.blank? || !%w(no_copy copy_on_success).include?(copy_on_success)
-          fail ArgumentError, "copy_on_success must be 'no_copy' or 'copy_on_success', given '#{copy_on_success}'."
+        if copy_on_success.blank? || !['no_copy', 'copy_on_success'].include?(copy_on_success)
+          raise ArgumentError, "copy_on_success must be 'no_copy' or 'copy_on_success', given '#{copy_on_success}'."
         end
+
         copy_on_success == 'copy_on_success'
       end
 
@@ -48,7 +50,7 @@ module BawWorkers
       # @param [Hash] hash
       # @return [void]
       def check_hash(hash)
-        fail ArgumentError, "Param was a '#{hash.class}'. It must be a 'Hash'. '#{hash}'." unless hash.is_a?(Hash)
+        raise ArgumentError, "Param was a '#{hash.class}'. It must be a 'Hash'. '#{hash}'." unless hash.is_a?(Hash)
       end
 
       # Check that a hash contains expected keys.
@@ -56,14 +58,15 @@ module BawWorkers
       # @param [Array] expected_keys
       # @return [void]
       def check_custom_hash(hash, expected_keys)
-        fail ArgumentError, 'Hash must not be blank.' if hash.blank?
+        raise ArgumentError, 'Hash must not be blank.' if hash.blank?
+
         check_hash(hash)
-        fail ArgumentError, "Keys for #{hash} must not be empty." if expected_keys.blank?
-        fail ArgumentError, "Keys for #{hash} must be an array." unless expected_keys.is_a?(Array)
+        raise ArgumentError, "Keys for #{hash} must not be empty." if expected_keys.blank?
+        raise ArgumentError, "Keys for #{hash} must be an array." unless expected_keys.is_a?(Array)
 
         expected_keys.each do |key|
-          fail ArgumentError, "Hash #{hash} must include key '#{key}'." unless hash.include?(key)
-          fail ArgumentError, "Value in hash #{hash} for #{key} must not be nil." if hash[key].nil?
+          raise ArgumentError, "Hash #{hash} must include key '#{key}'." unless hash.include?(key)
+          raise ArgumentError, "Value in hash #{hash} for #{key} must not be nil." if hash[key].nil?
         end
       end
 
@@ -74,16 +77,16 @@ module BawWorkers
       def check_hash_contains(key, hash)
         unless hash.include?(key)
           msg = "Media type '#{key}' is not in list of valid media types '#{hash}'."
-          fail ArgumentError, msg
+          raise ArgumentError, msg
         end
       end
 
       # methods that might raise errors and normalise/modify the parameters.
 
-      #
       def normalise_file(value, check_exists = true)
         file = Pathname.new(normalise_path(value)).cleanpath
-        fail ArgumentError, "Could not find file #{file}." if check_exists && !file.file?
+        raise ArgumentError, "Could not find file #{file}." if check_exists && !file.file?
+
         file.to_s
       end
 
@@ -98,7 +101,6 @@ module BawWorkers
         else
           [normalise_file(value.to_s, check_exists)]
         end
-
       end
 
       def normalise_path(path, top_level_dir = nil)
@@ -111,7 +113,7 @@ module BawWorkers
         safer_path = path.to_s.dup
         safer_path = safer_path.gsub('..', replace_char)
         safer_path = safer_path.gsub('~', replace_char)
-        safer_path = safer_path.gsub(/\/+/i, '/')
+        safer_path = safer_path.gsub(%r{/+}i, '/')
         safer_path = safer_path.gsub(/\\+/i, '\\')
         safer_path = safer_path.gsub('/.', "#{File::SEPARATOR}#{replace_char}")
         safer_path = safer_path.gsub('\\.', "#{File::SEPARATOR}#{replace_char}")
@@ -129,10 +131,10 @@ module BawWorkers
 
           # ensure path starts with top_level_dir
           unless safer_path.start_with?(safer_top_level_dir)
-            fail ArgumentError, "Path #{path} with base directory #{top_level_dir} was normalised to #{safer_path} using #{safer_top_level_dir}. It is not valid."
+            raise ArgumentError, "Path #{path} with base directory #{top_level_dir} was normalised to #{safer_path} using #{safer_top_level_dir}. It is not valid."
           end
 
-          fail ArgumentError, "Path must start with / but got #{safer_path}." unless safer_path.start_with?('/')
+          raise ArgumentError, "Path must start with / but got #{safer_path}." unless safer_path.start_with?('/')
 
         end
 
@@ -147,19 +149,21 @@ module BawWorkers
       # @param [Object] value
       # @return [ActiveSupport::TimeWithZone]
       def normalise_datetime(value)
-        fail ArgumentError, 'Expected value to be a ActiveSupport::TimeWithZone, got blank.' if value.blank?
+        raise ArgumentError, 'Expected value to be a ActiveSupport::TimeWithZone, got blank.' if value.blank?
 
         return value if value.is_a?(ActiveSupport::TimeWithZone)
 
         parse_error = nil
         begin
           result = Time.zone.parse(value.to_s)
-        rescue => e
+        rescue StandardError => e
           parse_error = e
         end
 
-        fail ArgumentError, "Could not parse ActiveSupport::TimeWithZone from #{value}." if result.blank?
-        fail ArgumentError, "Error parsing #{value} to ActiveSupport::TimeWithZone: #{parse_error}." unless parse_error.blank?
+        raise ArgumentError, "Could not parse ActiveSupport::TimeWithZone from #{value}." if result.blank?
+        unless parse_error.blank?
+          raise ArgumentError, "Error parsing #{value} to ActiveSupport::TimeWithZone: #{parse_error}."
+        end
 
         result
       end
@@ -181,13 +185,15 @@ module BawWorkers
         actual.each do |a|
           index = exp.find_index { |e| compare(a, e) }
           return false if index.nil?
+
           exp.delete_at(index)
         end
-        exp.length == 0
+        exp.empty?
       end
 
       def compare_hash(actual, expected)
-        return false unless (actual.keys - expected.keys).length == 0
+        return false unless (actual.keys - expected.keys).empty?
+
         actual.each { |key, value| return false unless compare(value, expected[key]) }
         true
       end
@@ -202,7 +208,13 @@ module BawWorkers
       #   hash.deep_symbolize_keys
       #   # => {:person=>{:name=>"Rob", :age=>"28"}}
       def deep_symbolize_keys(hash)
-        deep_transform_keys(hash) { |key| key.to_sym rescue key }
+        deep_transform_keys(hash) { |key|
+          begin
+                                            key.to_sym
+          rescue StandardError
+            key
+                                          end
+        }
       end
 
       # from ActiveSupport 4
@@ -222,17 +234,16 @@ module BawWorkers
       # support methods for deep transforming nested hashes and arrays
       def _deep_transform_keys_in_object(object, &block)
         case object
-          when Hash
-            object.each_with_object({}) do |(key, value), result|
-              result[yield(key)] = _deep_transform_keys_in_object(value, &block)
-            end
-          when Array
-            object.map { |e| _deep_transform_keys_in_object(e, &block) }
-          else
-            object
+        when Hash
+          object.each_with_object({}) do |(key, value), result|
+            result[yield(key)] = _deep_transform_keys_in_object(value, &block)
+          end
+        when Array
+          object.map { |e| _deep_transform_keys_in_object(e, &block) }
+        else
+          object
         end
       end
-
     end
   end
 end

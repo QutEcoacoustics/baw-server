@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 
 describe 'public/ethics_statement', type: :view do
@@ -17,5 +19,4 @@ describe 'public/ethics_statement', type: :view do
     expect(rendered).to_not include(standard_text)
     expect(rendered).to include('This is a testy <strong>test</strong> test')
   end
-
 end

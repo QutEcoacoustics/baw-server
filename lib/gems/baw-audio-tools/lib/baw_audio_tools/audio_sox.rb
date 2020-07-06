@@ -1,6 +1,7 @@
+# frozen_string_literal: true
+
 module BawAudioTools
   class AudioSox
-
     ERROR_NO_HANDLER = 'FAIL formats: no handler for file extension'
     ERROR_CANNOT_OPEN = 'FAIL formats: can\'t open input file'
 
@@ -22,14 +23,14 @@ module BawAudioTools
     def parse_info_output(execute_msg)
       # contains key value output (separate on first colon(:))
       result = {}
-      execute_msg[:stderr].strip.split(/\r?\n|\r/).each { |line|
-        if line.include?(':')
-          colon_index = line.index(':')
-          new_value = line[colon_index+1, line.length].strip
-          new_key = line[0, colon_index].strip
-          result[new_key] = new_value
-        end
-      }
+      execute_msg[:stderr].strip.split(/\r?\n|\r/).each do |line|
+        next unless line.include?(':')
+
+        colon_index = line.index(':')
+        new_value = line[colon_index + 1, line.length].strip
+        new_key = line[0, colon_index].strip
+        result[new_key] = new_value
+      end
 
       result
     end
@@ -38,20 +39,19 @@ module BawAudioTools
       stdout = execute_msg[:stdout]
       stderr = execute_msg[:stderr]
       if !stderr.blank? && stderr.include?(ERROR_CANNOT_OPEN)
-        fail Exceptions::FileCorruptError, "sox could not open the file.\n\t#{execute_msg[:execute_msg]}"
+        raise Exceptions::FileCorruptError, "sox could not open the file.\n\t#{execute_msg[:execute_msg]}"
       end
       if !stderr.blank? && stderr.include?(ERROR_NO_HANDLER)
-        fail Exceptions::AudioToolError, "sox cannot open this file type.\n\t#{execute_msg[:execute_msg]}"
+        raise Exceptions::AudioToolError, "sox cannot open this file type.\n\t#{execute_msg[:execute_msg]}"
       end
     end
 
-    def modify_command(source, source_info, target, start_offset = nil, end_offset = nil, channel = nil, sample_rate = nil)
-      fail ArgumentError, "Source is not a wav file: #{source}" unless source.match(/\.wav$/)
-      fail ArgumentError, "Target is not a wav file: : #{target}" unless target.match(/\.wav$/)
-      fail Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.exists? source
-      fail Exceptions::FileAlreadyExistsError, "Target exists: #{target}" if File.exists? target
-      fail ArgumentError "Source and Target are the same file: #{target}" if source == target
-
+    def modify_command(source, _source_info, target, start_offset = nil, end_offset = nil, channel = nil, sample_rate = nil)
+      raise ArgumentError, "Source is not a wav file: #{source}" unless source.match(/\.wav$/)
+      raise ArgumentError, "Target is not a wav file: : #{target}" unless target.match(/\.wav$/)
+      raise Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.exist? source
+      raise Exceptions::FileAlreadyExistsError, "Target exists: #{target}" if File.exist? target
+      raise ArgumentError "Source and Target are the same file: #{target}" if source == target
 
       cmd_offsets = arg_offsets(start_offset, end_offset)
       sample_rate = arg_sample_rate(sample_rate)
@@ -60,13 +60,13 @@ module BawAudioTools
       "#{@sox_executable} -q -V4 \"#{source}\" \"#{target}\" #{cmd_offsets} #{sample_rate} #{cmd_channel}"
     end
 
-    def spectrogram_command(source, source_info, target, start_offset = nil, end_offset = nil, channel = nil, sample_rate = nil,
+    def spectrogram_command(source, _source_info, target, start_offset = nil, end_offset = nil, channel = nil, sample_rate = nil,
                             window = nil, window_function = nil, colour = nil)
-      fail ArgumentError, "Source is not a wav file: #{source}" unless source.match(/\.wav$/)
-      fail ArgumentError, "Target is not a png file: : #{target}" unless target.match(/\.png/)
-      fail Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.exists? source
-      fail Exceptions::FileAlreadyExistsError, "Target exists: #{target}" if File.exists? target
-      fail ArgumentError "Source and Target are the same file: #{target}" if source == target
+      raise ArgumentError, "Source is not a wav file: #{source}" unless source.match(/\.wav$/)
+      raise ArgumentError, "Target is not a png file: : #{target}" unless target.match(/\.png/)
+      raise Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.exist? source
+      raise Exceptions::FileAlreadyExistsError, "Target exists: #{target}" if File.exist? target
+      raise ArgumentError "Source and Target are the same file: #{target}" if source == target
 
       cmd_offsets = arg_offsets(start_offset, end_offset)
       cmd_sample_rate = arg_sample_rate(sample_rate)
@@ -90,9 +90,9 @@ module BawAudioTools
       # sox command to create a spectrogram from an audio file
       # -V is for verbose
       # -n indicates no output audio file
-      "#{@sox_executable} -V \"#{source}\" -n #{cmd_offsets} #{cmd_sample_rate} #{cmd_channel} " +
-          "#{cmd_spectrogram} #{cmd_pixels_second} #{cmd_colour} #{cmd_window} #{cmd_window_function} " +
-          "-o \"#{target}\""
+      "#{@sox_executable} -V \"#{source}\" -n #{cmd_offsets} #{cmd_sample_rate} #{cmd_channel} " \
+        "#{cmd_spectrogram} #{cmd_pixels_second} #{cmd_colour} #{cmd_window} #{cmd_window_function} " \
+        "-o \"#{target}\""
     end
 
     def self.window_options
@@ -100,7 +100,7 @@ module BawAudioTools
     end
 
     def self.colour_options
-      {:g => :greyscale}
+      { g: :greyscale }
     end
 
     def self.window_function_options
@@ -110,7 +110,7 @@ module BawAudioTools
       # and dynamic-range properties. For better frequency resolution (but lower dynamic-range), select a
       # Hamming window; for higher dynamic-range (but poorer frequency-resolution), select a Kaiser window.
       # Bartlett and Rectangular windows are also available.
-      %w(Hann Hamming Bartlett Rectangular Kaiser)
+      ['Hann', 'Hamming', 'Bartlett', 'Rectangular', 'Kaiser']
     end
 
     private
@@ -121,12 +121,10 @@ module BawAudioTools
         channel_number = channel.to_i
         if channel_number < 1
           # mix down to mono
-=begin
-            Where a range of channels is specified, the channel numbers to the left and right of the hyphen are
-            optional and default to 1 and to the number of input channels respectively. Thus
-            sox input.wav output.wav remix −
-            performs a mix-down of all input channels to mono.
-=end
+          #             Where a range of channels is specified, the channel numbers to the left and right of the hyphen are
+          #             optional and default to 1 and to the number of input channels respectively. Thus
+          #             sox input.wav output.wav remix −
+          #             performs a mix-down of all input channels to mono.
           cmd_arg = 'remix -'
         else
           # select the channel (0 indicates silent channel)
@@ -174,12 +172,12 @@ module BawAudioTools
 
       unless end_offset.blank?
         end_offset_formatted = Time.at(end_offset.to_f).utc.strftime('%H:%M:%S.%2N')
-        if start_offset.blank?
-          # if start offset was not included, include audio from the start of the file.
-          cmd_arg += "trim 0 #{end_offset_formatted}"
-        else
-          cmd_arg += " =#{end_offset_formatted}"
-        end
+        cmd_arg += if start_offset.blank?
+                     # if start offset was not included, include audio from the start of the file.
+                     "trim 0 #{end_offset_formatted}"
+                   else
+                     " =#{end_offset_formatted}"
+                   end
       end
 
       cmd_arg
@@ -195,7 +193,9 @@ module BawAudioTools
 
       unless window.blank?
         window_param = window.to_i
-        fail ArgumentError, "Window size must be one of '#{all_window_options}', given '#{window_param}'." unless AudioSox.window_options.include? window_param
+        unless AudioSox.window_options.include? window_param
+          raise ArgumentError, "Window size must be one of '#{all_window_options}', given '#{window_param}'."
+        end
 
         # window size must be one more than a power of two, see sox documentation http://sox.sourceforge.net/sox.html
         window_param = (window_param / 2) + 1
@@ -215,7 +215,7 @@ module BawAudioTools
 
         window_function_param = window_function.to_s
         unless AudioSox.window_function_options.map { |wf| wf }.include? window_function_param
-          fail ArgumentError, "Window function must be one of '#{all_window_function_options}', given '#{window_function_param}'."
+          raise ArgumentError, "Window function must be one of '#{all_window_function_options}', given '#{window_function_param}'."
         end
 
         cmd_arg = "-w #{window_function_param}"
@@ -231,16 +231,18 @@ module BawAudioTools
 
       unless colour.blank?
         colour_param = colour.to_s
-        fail ArgumentError, "Colour must be one of '#{colours_available}', given '#{}'." unless AudioSox.colour_options.include? colour_param.to_sym
+        unless AudioSox.colour_options.include? colour_param.to_sym
+          raise ArgumentError, "Colour must be one of '#{colours_available}', given ''."
+        end
       end
 
       default = '-m -q 249 -z 100'
-      case colour_param
-        when 'g'
-          cmd_arg = default
-        else
-          cmd_arg = default
-      end
+      cmd_arg = case colour_param
+                when 'g'
+                  default
+                else
+                  default
+                end
 
       cmd_arg
     end
@@ -261,6 +263,5 @@ module BawAudioTools
 
       cmd_arg
     end
-
   end
 end

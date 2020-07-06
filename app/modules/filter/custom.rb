@@ -1,7 +1,8 @@
+# frozen_string_literal: true
+
 require 'active_support/concern'
 
 module Filter
-
   # Provides custom filters for composing queries.
   module Custom
     extend ActiveSupport::Concern
@@ -19,7 +20,6 @@ module Filter
     # @param [Array<String>] text_array
     # @return [Arel::Nodes::Node] condition
     def compose_similar(table, column_name, text_allowed, text_array)
-
       #tags_partial = CSV.parse(params[:tagsPartial], col_sep: ',').flatten.map { |item| item.trim(' ', '') }.join('|').downcase
       #tags_query = AudioEvent.joins(:tags).where('lower(tags.text) SIMILAR TO ?', "%(#{tags_partial})%").select('audio_events.id')
 
@@ -58,11 +58,9 @@ module Filter
           select_string.push("power((audio_events.end_time_seconds - audio_events.start_time_seconds) - #{annotation_duration}, 2)")
         end
 
-        sql = 'sqrt('+select_string.join(' + ')+') as distance_calc'
+        sql = 'sqrt(' + select_string.join(' + ') + ') as distance_calc'
 
         Arel::Nodes::SqlLiteral.new(sql)
-      else
-        nil
       end
     end
 
@@ -77,12 +75,14 @@ module Filter
       # construct special conditions
       if table.name == 'sites' && field == :project_ids
         # filter by many-to-many projects <-> sites
-        fail CustomErrors::FilterArgumentError.new("Project_ids permits only 'in' filter, got #{filter_name}.") unless filter_name == :in
+        unless filter_name == :in
+          raise CustomErrors::FilterArgumentError, "Project_ids permits only 'in' filter, got #{filter_name}."
+        end
+
         projects_sites_table = Arel::Table.new(:projects_sites)
         special_value = Arel::Table.new(:projects_sites).project(:site_id).where(compose_in(projects_sites_table, :project_id, [:project_id], filter_value))
         compose_in(table, :id, valid_fields, special_value)
       end
     end
-
   end
 end

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Api
   # @example Usage
   #   include UrlHelpers
@@ -5,7 +7,7 @@ module Api
   # @example Usage
   #   UrlHelpers.posts_url # returns https://blabla.com/posts
   module UrlHelpers
-# from http://stackoverflow.com/questions/16720514/how-to-use-url-helpers-in-lib-modules-and-set-host-for-multiple-environments
+    # from http://stackoverflow.com/questions/16720514/how-to-use-url-helpers-in-lib-modules-and-set-host-for-multiple-environments
     extend ActiveSupport::Concern
 
     class Base

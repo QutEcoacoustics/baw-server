@@ -1,7 +1,8 @@
+# frozen_string_literal: true
+
 require 'active_support/concern'
 
 module Filter
-
   # Provides support for parsing a query from a hash.
   module Parse
     extend ActiveSupport::Concern
@@ -14,7 +15,7 @@ module Filter
     # @param [Integer] max_items
     # @return [Hash] Paging parameters
     def self.parse_paging_only(params, default_page = 1, default_items = 25, max_items = 500)
-      self.instance_method(:parse_paging).bind(self).call(params, default_page, default_items, max_items)
+      instance_method(:parse_paging).bind(self).call(params, default_page, default_items, max_items)
     end
 
     private
@@ -39,7 +40,9 @@ module Filter
       disable_paging = params[:paging][:disable_paging] if !params[:paging].blank? && disable_paging.blank?
 
       # page and items are mutually exclusive with disable_paging
-      fail CustomErrors::UnprocessableEntityError, 'Page and items are mutually exclusive with disable_paging' if (!page.blank? || !items.blank?) && !disable_paging.blank?
+      if (!page.blank? || !items.blank?) && !disable_paging.blank?
+        raise CustomErrors::UnprocessableEntityError, 'Page and items are mutually exclusive with disable_paging'
+      end
 
       # set defaults if no setting was found
       page = default_page if page.blank?
@@ -50,21 +53,23 @@ module Filter
       items = items.to_i
 
       # ensure items is always less than max_items
-      fail CustomErrors::UnprocessableEntityError, "Number of items per page requested #{items} exceeded maximum #{max_items}." if items > max_items
+      if items > max_items
+        raise CustomErrors::UnprocessableEntityError, "Number of items per page requested #{items} exceeded maximum #{max_items}."
+      end
 
       # parse disable paging settings
-      if disable_paging == 'true' || disable_paging == true
-        disable_paging = true
-      else
-        disable_paging = false
-      end
+      disable_paging = if disable_paging == 'true' || disable_paging == true
+                         true
+                       else
+                         false
+                       end
 
       # calculate offset and limit
       offset = (page - 1) * items
       limit = items
 
       # will always set all options
-      {offset: offset, limit: limit, page: page, items: items, disable_paging: disable_paging}
+      { offset: offset, limit: limit, page: page, items: items, disable_paging: disable_paging }
     end
 
     # Parse sort parameters. Will use defaults if not specified.
@@ -89,7 +94,7 @@ module Filter
       order_by = CleanParams.clean(order_by) unless order_by.blank?
       direction = CleanParams.clean(direction) unless direction.blank?
 
-      {order_by: order_by, direction: direction}
+      { order_by: order_by, direction: direction }
     end
 
     # Parse text from parameters.
@@ -105,7 +110,7 @@ module Filter
 
       unless value.blank?
         text_fields.each do |text_field|
-          filter_items[text_field] = {contains: value}
+          filter_items[text_field] = { contains: value }
         end
       end
 
@@ -128,9 +133,9 @@ module Filter
         is_filter_qsp = key_s.starts_with?(key_prefix)
 
         if is_filter_qsp
-          key_without_prefix = key_s[key_prefix.size..-1]
+          key_without_prefix = key_s[key_prefix.size..]
           new_key = CleanParams.clean(key_without_prefix)
-          found[new_key] = {eq: value}
+          found[new_key] = { eq: value }
         end
       end
       found
@@ -160,6 +165,5 @@ module Filter
       end
       found
     end
-
   end
 end

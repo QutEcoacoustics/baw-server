@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module BawWorkers
   # Multilogger is a subclass of the standard Ruby logger that does not itself write
   # messages anywhere. Rather, it serves as a wrapper around multiple Logger-compatible
@@ -5,7 +7,6 @@ module BawWorkers
   # @see https://github.com/ffmike/multilogger/blob/master/multi_logger.rb source document
   # @see http://stackoverflow.com/a/18118055
   class MultiLogger < Logger
-
     # Array of Loggers to be logged to. These can be anything that acts reasonably like a Logger.
     attr_accessor :loggers
 
@@ -32,7 +33,8 @@ module BawWorkers
 
     # Attach a logger to this multi logger.
     def attach(logger)
-      fail ArgumentError, "Must be a Logger, given #{logger.inspect}." unless logger.is_a?(::Logger)
+      raise ArgumentError, "Must be a Logger, given #{logger.inspect}." unless logger.is_a?(::Logger)
+
       logger.formatter = CustomFormatter.new if logger.respond_to?(:formatter=)
       @loggers.push(logger)
     end
@@ -90,7 +92,7 @@ module BawWorkers
     def close
       @loggers.each do |logger|
         # Why can't this just call logger.close ?
-        logger.instance_eval("@logdev").close if logger.instance_eval("@logdev")
+        logger.instance_eval('@logdev')&.close
       end
     end
 
@@ -152,7 +154,7 @@ module BawWorkers
     # Set progname on all contained loggers.
     def progname=(value)
       @loggers.each do |logger|
-        logger.progname = value  if logger.respond_to?(:progname=)
+        logger.progname = value if logger.respond_to?(:progname=)
       end
     end
 
@@ -168,7 +170,7 @@ module BawWorkers
     # Set formatter on all contained loggers.
     def formatter=(value)
       @loggers.each do |logger|
-        logger.formatter = value  if logger.respond_to?(:formatter=)
+        logger.formatter = value if logger.respond_to?(:formatter=)
       end
     end
 
@@ -192,9 +194,7 @@ module BawWorkers
     # Any method not defined on standard Logger class, just send it on to anyone who will listen
     def method_missing(name, *args, &block)
       @loggers.each do |logger|
-        if logger.respond_to?(name)
-          logger.send(name, args, &block)
-        end
+        logger.send(name, args, &block) if logger.respond_to?(name)
       end
     end
 
@@ -204,14 +204,11 @@ module BawWorkers
       info('MultiLogger#write') { message }
     end
 
-    private
-
     # Default formatter for log messages.
     class CustomFormatter < Logger::Formatter
-
       def call(severity, time, progname, msg)
-        sev = sprintf('%5s', severity)
-        pid = sprintf('%06d', $$)
+        sev = format('%5s', severity)
+        pid = format('%06d', $PROCESS_ID)
         # e.g. 2014-04-07T09:49:13.290+0000 [ WARN--024611] <msg>
         # msg2str is the internal helper that handles strings and exceptions correctly
         "#{format_datetime(time)}#{time.strftime('%z')} [#{sev}-#{progname}-#{pid}] #{msg2str(msg)}\n"
@@ -222,13 +219,11 @@ module BawWorkers
       def format_datetime(time)
         if @datetime_format.nil?
           #time.strftime("%Y-%m-%dT%H:%M:%S.") << "%06d " % time.usec
-          time.strftime('%Y-%m-%dT%H:%M:%S.') << sprintf('%03d', time.usec.to_s[0..2].rjust(3))
+          time.strftime('%Y-%m-%dT%H:%M:%S.') << format('%03d', time.usec.to_s[0..2].rjust(3))
         else
           time.strftime(@datetime_format)
         end
       end
-
     end
-
   end
 end

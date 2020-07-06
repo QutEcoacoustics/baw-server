@@ -1,5 +1,6 @@
-class MediaPoll
+# frozen_string_literal: true
 
+class MediaPoll
   HEADER_KEY_RESPONSE_FROM = 'X-Media-Response-From'
   HEADER_KEY_RESPONSE_START = 'X-Media-Response-Start'
 
@@ -12,16 +13,15 @@ class MediaPoll
   HEADER_KEY_ELAPSED_WAITING = 'X-Media-Elapsed-Seconds-Waiting'
 
   HEADERS_EXPOSED = [
-      'Content-Length',
-      HEADER_KEY_RESPONSE_FROM,
-      HEADER_KEY_RESPONSE_START,
-      HEADER_KEY_ELAPSED_TOTAL,
-      HEADER_KEY_ELAPSED_PROCESSING,
-      HEADER_KEY_ELAPSED_WAITING
+    'Content-Length',
+    HEADER_KEY_RESPONSE_FROM,
+    HEADER_KEY_RESPONSE_START,
+    HEADER_KEY_ELAPSED_TOTAL,
+    HEADER_KEY_ELAPSED_PROCESSING,
+    HEADER_KEY_ELAPSED_WAITING
   ].freeze
 
   class << self
-
     # this will block the request and wait until at least one of the files is available
     # waits up to wait_max seconds
     # @param [Array<String>] expected_files
@@ -37,24 +37,23 @@ class MediaPoll
 
       existing_files = []
 
-      poll_result = poll(wait_max, poll_delay) do
-
+      poll_result = poll(wait_max, poll_delay) {
         existing_files = get_existing_files(poll_locations)
 
         Rails.logger.debug "MediaPoll#poll_media: Poll matched files #{existing_files}"
 
         # return true if polling is complete, false to continue polling.
         !existing_files.empty?
-      end
+      }
 
       # raise error if polling did not return a result
       if poll_result[:result].nil?
-        msg ="Media file was not found within #{wait_max} seconds."
+        msg = "Media file was not found within #{wait_max} seconds."
         job_info = poll_result.merge({
-                                         poll_locations: poll_locations,
-                                         existing_files: existing_files
+                                       poll_locations: poll_locations,
+                                       existing_files: existing_files
                                      })
-        fail CustomErrors::AudioGenerationError.new(msg, job_info)
+        raise CustomErrors::AudioGenerationError.new(msg, job_info)
       end
 
       Rails.logger.debug "MediaPoll#poll_media: POST-poll matched file #{existing_files} after #{poll_result[:actual_poll_time]}"
@@ -69,11 +68,10 @@ class MediaPoll
     # @param [Number] poll_delay
     # @return [Resque::Plugins::Status::Hash] job status
     def poll_resque(media_type, media_request_params, wait_max, poll_delay = 0.5)
-
       # store most recent status when polling ends
       status = nil
 
-      poll_result = poll(wait_max, poll_delay) do
+      poll_result = poll(wait_max, poll_delay) {
         status = BawWorkers::Media::Action.get_job_status(media_type, media_request_params)
         #current_status = status.status # e.g. Resque::Plugins::Status::STATUS_QUEUED
 
@@ -87,7 +85,7 @@ class MediaPoll
 
         # job completed successfully?
         !status.blank? && status.completed?
-      end
+      }
 
       Rails.logger.debug "MediaPoll#poll_resque: Result from resque poll was #{status}."
 
@@ -97,11 +95,11 @@ class MediaPoll
 
         msg = "Resque did not complete media request within #{wait_max} seconds, result was '#{resque_task_status}'."
         job_info = poll_result.merge({
-                                         uuid: status.nil? ? nil : status.uuid,
-                                         time: status.nil? ? nil : status.time,
-                                         status: resque_task_status
+                                       uuid: status.nil? ? nil : status.uuid,
+                                       time: status.nil? ? nil : status.time,
+                                       status: resque_task_status
                                      })
-        fail CustomErrors::AudioGenerationError.new(msg, job_info)
+        raise CustomErrors::AudioGenerationError.new(msg, job_info)
       end
 
       status
@@ -113,7 +111,7 @@ class MediaPoll
 
       resque_status = nil
 
-      poll_result = poll(wait_max, poll_delay) do
+      poll_result = poll(wait_max, poll_delay) {
         resque_status = BawWorkers::Media::Action.get_job_status(media_type, media_request_params)
         existing_files = get_existing_files(poll_locations)
 
@@ -124,7 +122,7 @@ class MediaPoll
         completed = true unless existing_files.empty?
 
         completed
-      end
+      }
 
       # raise error if polling did not return a result
       if poll_result[:result].nil?
@@ -132,18 +130,18 @@ class MediaPoll
 
         msg = "Polling expired after #{wait_max} seconds with #{poll_delay} seconds delay with resque job status '#{resque_task_status}'. Could not find media files."
         job_info = poll_result.merge({
-                                         uuid: resque_status.nil? ? nil : resque_status.uuid,
-                                         time: resque_status.nil? ? nil : resque_status.time,
-                                         status: resque_task_status,
-                                         poll_locations: poll_locations,
-                                         existing_files: existing_files
+                                       uuid: resque_status.nil? ? nil : resque_status.uuid,
+                                       time: resque_status.nil? ? nil : resque_status.time,
+                                       status: resque_task_status,
+                                       poll_locations: poll_locations,
+                                       existing_files: existing_files
                                      })
-        fail CustomErrors::AudioGenerationError.new(msg, job_info)
+        raise CustomErrors::AudioGenerationError.new(msg, job_info)
       end
 
       {
-          existing_files: existing_files,
-          resque_status: resque_status
+        existing_files: existing_files,
+        resque_status: resque_status
       }
     end
 
@@ -152,7 +150,7 @@ class MediaPoll
     # @return [Array<Hash>] valid files to poll
     def prepare_locations(files)
       poll_locations = []
-      regex_check = /\A(?:\/?[0-9a-zA-Z_\-\.]+)+\z/
+      regex_check = %r{\A(?:/?[0-9a-zA-Z_\-.]+)+\z}
       files.each do |raw_file|
         next if raw_file.nil?
         next unless regex_check === raw_file
@@ -164,11 +162,11 @@ class MediaPoll
         #next unless file.file?
 
         poll_locations.push(
-            {
-                dir: file.dirname.to_s,
-                file: file.to_s
-            })
-
+          {
+            dir: file.dirname.to_s,
+            file: file.to_s
+          }
+        )
       end
 
       poll_locations
@@ -197,15 +195,14 @@ class MediaPoll
 
         # once one file exists, break out of this loop and return true
         Rails.logger.debug "MediaPoll#get_existing_files: checking #{file}"
-        if File.exists?(file) && File.file?(file)
-          Rails.logger.debug "MediaPoll#get_existing_files: FOUND #{file}"
-          existing_files.push(file)
-          break
-        end
+        next unless File.exist?(file) && File.file?(file)
 
+        Rails.logger.debug "MediaPoll#get_existing_files: FOUND #{file}"
+        existing_files.push(file)
+        break
       end
 
-      existing_files.reject { |i| i.blank? }
+      existing_files.reject(&:blank?)
     end
 
     private
@@ -217,20 +214,20 @@ class MediaPoll
     # @yield return false if polling should continue
     # @yield return true if polling is complete
     # @return the return value of the passed block
-    def poll(seconds=2.0, delay=0.1)
+    def poll(seconds = 2.0, delay = 0.1)
       seconds ||= 2.0 # overall patience
       poll_start_time = Time.now
       give_up_at = poll_start_time + seconds # pick a time to stop being patient
       delay ||= 0.1 # wait a tenth of a second before re-attempting
 
       result_value = {
-          result: nil,
-          max_poll_time: seconds,
-          max_poll_datetime: give_up_at,
-          delay: delay
+        result: nil,
+        max_poll_time: seconds,
+        max_poll_datetime: give_up_at,
+        delay: delay
       }
 
-      while Time.now < give_up_at do
+      while Time.now < give_up_at
         result = yield
 
         if result
@@ -246,6 +243,5 @@ class MediaPoll
 
       result_value
     end
-
   end
 end

@@ -1,10 +1,10 @@
+# frozen_string_literal: true
+
 module BawWorkers
   module Storage
     # Provides access to audio cache storage.
     class AudioCache
       include BawWorkers::Storage::Common
-
-      public
 
       # Create a new BawWorkers::Storage::AudioCache.
       # @param [Array<String>] storage_paths
@@ -28,11 +28,11 @@ module BawWorkers
         validate_format(opts)
 
         result = opts[:uuid].to_s + @separator +
-            opts[:start_offset].to_f.to_s + @separator +
-            opts[:end_offset].to_f.to_s + @separator +
-            opts[:channel].to_i.to_s + @separator +
-            opts[:sample_rate].to_i.to_s +
-            @extension_indicator + opts[:format].trim('.', '').to_s
+                 opts[:start_offset].to_f.to_s + @separator +
+                 opts[:end_offset].to_f.to_s + @separator +
+                 opts[:channel].to_i.to_s + @separator +
+                 opts[:sample_rate].to_i.to_s +
+                 @extension_indicator + opts[:format].trim('.', '').to_s
         result.downcase
       end
 
@@ -57,19 +57,18 @@ module BawWorkers
       # @param [String] file_path
       # @return [Hash] info
       def parse_file_path(file_path)
-
         file_name = File.basename(file_path)
         file_name_split = file_name.split('_')
 
         sample_rate, format = file_name_split[4].split('.')
 
         opts = {
-            uuid: file_name_split[0],
-            start_offset: file_name_split[1].to_f,
-            end_offset: file_name_split[2].to_f,
-            channel: file_name_split[3].to_i,
-            sample_rate: sample_rate.to_i,
-            format: format,
+          uuid: file_name_split[0],
+          start_offset: file_name_split[1].to_f,
+          end_offset: file_name_split[2].to_f,
+          channel: file_name_split[3].to_i,
+          sample_rate: sample_rate.to_i,
+          format: format
         }
 
         validate_uuid(opts)
@@ -81,7 +80,6 @@ module BawWorkers
 
         opts
       end
-
     end
   end
 end

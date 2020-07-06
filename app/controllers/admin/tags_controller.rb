@@ -1,6 +1,7 @@
+# frozen_string_literal: true
+
 module Admin
   class TagsController < BaseController
-
     # GET /admin/tags(.:format)
     def index
       page = paging_params[:page].blank? ? 1 : paging_params[:page].to_i
@@ -11,21 +12,23 @@ module Admin
 
       filter = paging_params[:filter]
 
-      fail 'Invalid order by.' unless [:text, :is_taxanomic, :type_of_tag, :retired, :updated_at, :updater_id].include?(order_by)
-      fail 'Invalid order dir.' unless [:asc, :desc].include?(order_dir)
+      unless [:text, :is_taxanomic, :type_of_tag, :retired, :updated_at, :updater_id].include?(order_by)
+        raise 'Invalid order by.'
+      end
+      raise 'Invalid order dir.' unless [:asc, :desc].include?(order_dir)
 
       redirect_to admin_tags_path if commit.downcase == 'clear'
 
       @tags_info = {
-          order_by: order_by,
-          order_dir: order_dir,
-          filter: filter
+        order_by: order_by,
+        order_dir: order_dir,
+        filter: filter
       }
 
       query = Tag.includes(:updater).references(:users).all
 
       unless filter.blank?
-        sanitized_value = filter.to_s.gsub(/[\\_%\|]/) { |x| "\\#{x}" }
+        sanitized_value = filter.to_s.gsub(/[\\_%|]/) { |x| "\\#{x}" }
         contains_value = "%#{sanitized_value}%"
 
         tag_table = Tag.arel_table
@@ -101,6 +104,5 @@ module Admin
     def paging_params
       params.permit(:page, :order_by, :order_dir, :filter, :commit)
     end
-
   end
 end

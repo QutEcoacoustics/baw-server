@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'tzinfo'
 require 'active_support'
 
@@ -5,7 +7,7 @@ class TimeZoneHelper
   class << self
     def mapping_zone_to_offset
       Hash[
-          TZInfo::Timezone.all.map do |tz|
+          TZInfo::Timezone.all.map { |tz|
             this_tz = TZInfo::Timezone.get(tz.identifier)
             period = this_tz.current_period
             abbr = period.abbreviation
@@ -17,33 +19,25 @@ class TimeZoneHelper
               offset_hours = (offset_hours * -1).to_s.rjust(2, '0')
               offset_hours = '-' + offset_hours
             else
-              offset_hours = '+'+ offset_hours.to_s.rjust(2, '0')
+              offset_hours = '+' + offset_hours.to_s.rjust(2, '0')
             end
 
             [
-                tz.to_s,
-                "#{abbr} (#{offset_hours}:#{offset_minutes})"
+              tz.to_s,
+              "#{abbr} (#{offset_hours}:#{offset_minutes})"
             ]
-          end
+          }
       ]
     end
 
     def to_identifier(friendly_name)
       found = TZInfo::Timezone.all.select { |tz| friendly_name == tz.friendly_identifier }
-      if found.size == 1
-        found[0].identifier
-      else
-        nil
-      end
+      found[0].identifier if found.size == 1
     end
 
     def to_friendly(identifier)
       found = TZInfo::Timezone.all.select { |tz| identifier == tz.identifier }
-      if found.size == 1
-        found[0].friendly_identifier
-      else
-        nil
-      end
+      found[0].friendly_identifier if found.size == 1
     end
 
     # Get the Ruby TimeZone for the name.
@@ -84,7 +78,7 @@ class TimeZoneHelper
         suggestions = tzinfo_friendly_did_you_mean(tzinfo_friendly)[0..2]
         msg1 = "is not a recognised timezone ('#{tzinfo_friendly}'"
         msg2 = suggestions.any? ? " - did you mean '#{suggestions.join("', '")}'?)" : ')'
-        model.errors[:tzinfo_tz] <<  msg1 + msg2
+        model.errors[:tzinfo_tz] << msg1 + msg2
       end
     end
 
@@ -160,16 +154,13 @@ class TimeZoneHelper
 
       if tzinfo_tz
         {
-            identifier_alt: rails_tz.blank? ? nil : rails_tz.name,
-            identifier: tzinfo_tz.identifier,
-            friendly_identifier: tzinfo_tz.friendly_identifier,
-            utc_offset: rails_tz.blank? ? tzinfo_tz.current_period.utc_offset : rails_tz.utc_offset,
-            utc_total_offset: tzinfo_tz.current_period.utc_total_offset
+          identifier_alt: rails_tz.blank? ? nil : rails_tz.name,
+          identifier: tzinfo_tz.identifier,
+          friendly_identifier: tzinfo_tz.friendly_identifier,
+          utc_offset: rails_tz.blank? ? tzinfo_tz.current_period.utc_offset : rails_tz.utc_offset,
+          utc_total_offset: tzinfo_tz.current_period.utc_total_offset
         }
-      else
-        nil
       end
     end
-
   end
 end

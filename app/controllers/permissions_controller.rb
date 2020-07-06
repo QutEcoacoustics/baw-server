@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class PermissionsController < ApplicationController
   include Api::ControllerHelper
 
@@ -16,18 +18,19 @@ class PermissionsController < ApplicationController
     end
 
     respond_to do |format|
-      format.html {
+      format.html do
         params[:page] ||= 'a-b'
         redirect_to project_permissions_path(@project, page: params[:page]) unless result.nil?
         @permissions = Permission.where(project: @project)
         @users = User.users.alphabetical_page(:user_name, params[:page])
-      }
+      end
       format.json {
         @permissions, opts = Settings.api_response.response_advanced(
-            api_filter_params,
-            Access::ByPermission.permissions(@project),
-            Permission,
-            Permission.filter_settings)
+          api_filter_params,
+          Access::ByPermission.permissions(@project),
+          Permission,
+          Permission.filter_settings
+        )
         respond_index(opts)
       }
     end
@@ -70,7 +73,6 @@ class PermissionsController < ApplicationController
         format.json { respond_change_fail }
       end
     end
-
   end
 
   # DELETE /projects/:project_id/permissions/:id
@@ -91,9 +93,7 @@ class PermissionsController < ApplicationController
   def get_project
     @project = Project.find(params[:project_id])
 
-    if defined?(@permission) && @permission.project.blank?
-      @permission.project = @project
-    end
+    @permission.project = @project if defined?(@permission) && @permission.project.blank?
   end
 
   def permission_params
@@ -111,16 +111,22 @@ class PermissionsController < ApplicationController
 
     if request_params.include?(:project_wide) && request_params[:project_wide].include?(:logged_in)
       permission = Permission.where(project: @project, user: nil, allow_logged_in: true, allow_anonymous: false).first
-      permission = Permission.new(project: @project, user: nil, allow_logged_in: true, allow_anonymous: false) if permission.blank?
+      if permission.blank?
+        permission = Permission.new(project: @project, user: nil, allow_logged_in: true, allow_anonymous: false)
+      end
       new_level = request_params[:project_wide][:logged_in].to_s
     elsif request_params.include?(:project_wide) && request_params[:project_wide].include?(:anonymous)
       permission = Permission.where(project: @project, user: nil, allow_logged_in: false, allow_anonymous: true).first
-      permission = Permission.new(project: @project, user: nil, allow_logged_in: false, allow_anonymous: true) if permission.blank?
+      if permission.blank?
+        permission = Permission.new(project: @project, user: nil, allow_logged_in: false, allow_anonymous: true)
+      end
       new_level = request_params[:project_wide][:anonymous].to_s
     elsif request_params.include?(:per_user)
       user_id = request_params[:per_user].values.first.to_i
       permission = Permission.where(project: @project, user_id: user_id, allow_logged_in: false, allow_anonymous: false).first
-      permission = Permission.new(project: @project, user_id: user_id, allow_logged_in: false, allow_anonymous: false) if permission.blank?
+      if permission.blank?
+        permission = Permission.new(project: @project, user_id: user_id, allow_logged_in: false, allow_anonymous: false)
+      end
       new_level = request_params[:per_user].keys.first.to_s
     else
       permission = nil
@@ -137,5 +143,4 @@ class PermissionsController < ApplicationController
 
     result
   end
-
 end

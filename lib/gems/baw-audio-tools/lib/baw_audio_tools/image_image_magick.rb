@@ -1,6 +1,7 @@
+# frozen_string_literal: true
+
 module BawAudioTools
   class ImageImageMagick
-
     ERROR_UNABLE_TO_OPEN = 'unable to open image'
     ERROR_IMAGE_FORMAT = 'no decode delegate for this image format'
 
@@ -18,14 +19,14 @@ module BawAudioTools
     def parse_info_output(output)
       # contains key value output (separate on first colon(:))
       result = {}
-      output.strip.split(/\|\|\|/).each { |line|
-        if line.include?(':')
-          colon_index = line.index(':')
-          new_value = line[colon_index+1, line.length].strip
-          new_key = line[0, colon_index].strip
-          result[new_key.to_sym] = new_value
-        end
-      }
+      output.strip.split(/\|\|\|/).each do |line|
+        next unless line.include?(':')
+
+        colon_index = line.index(':')
+        new_value = line[colon_index + 1, line.length].strip
+        new_key = line[0, colon_index].strip
+        result[new_key.to_sym] = new_value
+      end
 
       result
     end
@@ -34,17 +35,18 @@ module BawAudioTools
       stdout = execute_msg[:stdout]
       stderr = execute_msg[:stderr]
       if !stderr.blank? && stderr.include?(ERROR_UNABLE_TO_OPEN)
-        fail Exceptions::FileCorruptError, "Image magick could not open the file.\n\t#{execute_msg[:execute_msg]}"
+        raise Exceptions::FileCorruptError, "Image magick could not open the file.\n\t#{execute_msg[:execute_msg]}"
       end
       if !stderr.blank? && stderr.include?(ERROR_IMAGE_FORMAT)
-        fail Exceptions::NotAnImageFileError, "Image magick was given a non-image file.\n\t#{execute_msg[:execute_msg]}"
+        raise Exceptions::NotAnImageFileError, "Image magick was given a non-image file.\n\t#{execute_msg[:execute_msg]}"
       end
     end
 
     def modify_command(source, target)
-      fail ArgumentError, "Source is not a png file: #{source}" unless source.match(/\.png/)
-      fail ArgumentError, "Target is not a png file: : #{target}" unless target.match(/\.png/)
-      fail Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.exists? source
+      raise ArgumentError, "Source is not a png file: #{source}" unless source.match(/\.png/)
+      raise ArgumentError, "Target is not a png file: : #{target}" unless target.match(/\.png/)
+      raise Exceptions::FileNotFoundError, "Source does not exist: #{source}" unless File.exist? source
+
       # target will probably already exist, coz we're overwriting the image
       #fail Exceptions::FileAlreadyExistsError, "Target exists: #{target}" if File.exists? target
       #fail ArgumentError "Source and Target are the same file: #{target}" if source == target
@@ -58,6 +60,5 @@ module BawAudioTools
       # chop: http://www.imagemagick.org/Usage/crop/#chop
       '-gravity South -chop 0x1'
     end
-
   end
 end

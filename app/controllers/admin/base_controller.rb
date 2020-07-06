@@ -1,6 +1,7 @@
+# frozen_string_literal: true
+
 module Admin
   class BaseController < ApplicationController
-
     before_action :verify_admin
 
     # Return true if it's an admin controller. false to all controllers unless
@@ -15,7 +16,7 @@ module Admin
     private
 
     def verify_admin
-      fail CanCan::AccessDenied, 'Administrator access only.' unless Access::Core.is_admin?(current_user)
+      raise CanCan::AccessDenied, 'Administrator access only.' unless Access::Core.is_admin?(current_user)
     end
   end
 end

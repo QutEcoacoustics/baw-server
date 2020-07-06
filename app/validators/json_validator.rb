@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # https://gist.github.com/joost/7ee5fbcc40e377369351
 
 # Put this code in lib/validators/json_validator.rb
@@ -9,9 +11,8 @@
 # In your yaml use:
 #   some_i18n_key: "detailed exception message: %{exception_message}"
 class JsonValidator < ActiveModel::EachValidator
-
   def initialize(options)
-    options.reverse_merge!(:message => :invalid)
+    options.reverse_merge!(message: :invalid)
     super(options)
   end
 
@@ -26,8 +27,7 @@ class JsonValidator < ActiveModel::EachValidator
     value = value.strip if value.is_a?(String)
 
     ActiveSupport::JSON.decode(value)
-  rescue MultiJson::LoadError, TypeError => exception
-    record.errors.add(attribute, options[:message], exception_message: exception.message)
+  rescue MultiJson::LoadError, TypeError => e
+    record.errors.add(attribute, options[:message], exception_message: e.message)
   end
-
 end

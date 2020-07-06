@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Api
   # Enables custom routes to be created.
   class CustomRoutes
@@ -19,8 +21,9 @@ module Api
         next if route.engine?
         next if route.verb.blank?
 
-        guessed_controller_name = (route.controller.camelize+'Controller').safe_constantize
+        guessed_controller_name = (route.controller.camelize + 'Controller').safe_constantize
         next if !guessed_controller_name.nil? && guessed_controller_name.superclass.name == 'DeviseController'
+
         # next if route.controller =~ /^docs.*/
         # next if route.controller == "users"
         # next if route.controller == "authentication_jig"
@@ -32,12 +35,12 @@ module Api
     end
 
     def api_specs
-      world.
-          example_groups.
-          map(&:descendants).
-          flatten.
-          reject{ |g| g.metadata.fetch(:api_doc_dsl, :not_found) == :not_found }.
-          reject{ |g| g.metadata.fetch(:method, :not_found) == :not_found }
+      world
+        .example_groups
+        .map(&:descendants)
+        .flatten
+        .reject { |g| g.metadata.fetch(:api_doc_dsl, :not_found) == :not_found }
+        .reject { |g| g.metadata.fetch(:method, :not_found) == :not_found }
     end
 
     def missing_docs
@@ -50,15 +53,15 @@ module Api
     private
 
     def matchable_routes(routes)
-      routes.collect do |r|
+      routes.collect { |r|
         method = r.verb
         method = '' if method.blank?
 
-        path = r.path[/\/[^( ]*/]
+        path = r.path[%r{/[^( ]*}]
         path = '' if path.blank?
 
         ::Route.new(method, path)
-      end.compact
+      }.compact
     end
 
     def matchable_specs(specs)
@@ -72,13 +75,11 @@ module Api
         route = yield ActionDispatch::Routing::RouteWrapper.new(route)
       end
     end
-
   end
 
   class ::Route < Struct.new(:method, :path)
-
     def eql?(other)
-      self.hash == other.hash
+      hash == other.hash
     end
 
     def ==(other)
@@ -92,6 +93,5 @@ module Api
     def to_s
       "#{method} #{path}"
     end
-
   end
 end

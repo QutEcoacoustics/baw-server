@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 module FileSystems
-  SQLITE_EXTENSION = '.sqlite3'.freeze
+  SQLITE_EXTENSION = '.sqlite3'
 
   # Represents a combined physical and sqlite file system abstraction
   class Combined
@@ -71,21 +73,19 @@ module FileSystems
       # If it does, it returns two strings, the path to the sqlite file, and the sub file
       def check_and_open_sqlite(path, &sqlite)
         index = path.index(SQLITE_EXTENSION)
-        return [path,  nil] if index.nil?
+        return [path, nil] if index.nil?
 
         index += SQLITE_EXTENSION.length
         db_path = path.slice(0, index)
-        if index == path.length - 1
-          sub_path = '/'
-        else
-          sub_path = path.slice(index, path.length - index)
-        end
+        sub_path = if index == path.length - 1
+                     '/'
+                   else
+                     path.slice(index, path.length - index)
+                   end
 
         db = open_sqlite_inner(db_path)
 
-        if db
-          sqlite.call db, db_path, sub_path
-        end
+        sqlite.call db, db_path, sub_path if db
 
         [db_path, sub_path]
       end

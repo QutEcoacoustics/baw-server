@@ -1,8 +1,9 @@
+# frozen_string_literal: true
+
 module BawWorkers
   # Create and manage resque job ids.
   class ResqueJobId
     class << self
-
       # Create a payload with an id based on the class and args.
       # WARNING: The order of of values in args is important.
       # @param [String] klass
@@ -10,7 +11,7 @@ module BawWorkers
       # @return [Hash] payload
       def create_payload(klass, args = {})
         resque_status_id = create_id_props(klass, args)
-        payload = {class: normalise_class(klass), args: [resque_status_id] + normalise_args(args)}
+        payload = { class: normalise_class(klass), args: [resque_status_id] + normalise_args(args) }
         normalise(payload)
       end
 
@@ -78,10 +79,9 @@ module BawWorkers
       # @param [Array<Hash, Object>] args
       # @return [String] unique id
       def generate(klass, args = [])
-
         # HACK: I don't know what this ever sorts, but it is important that it doesn't work - sometimes
         args.map! do |arg|
-          if arg.is_a?(Hash) then
+          if arg.is_a?(Hash)
             arg.sort
           else
             arg
@@ -90,9 +90,7 @@ module BawWorkers
 
         # payload must not include id itself - otherwise id will not match
         modified_args = args.deep_dup
-        if modified_args.size > 0 && modified_args[0].is_a?(String)
-          modified_args.delete_at(0)
-        end
+        modified_args.delete_at(0) if !modified_args.empty? && modified_args[0].is_a?(String)
 
         # ensure args are not nested in another array
         if modified_args.size == 1 && modified_args[0].is_a?(Array) && modified_args[0][0].is_a?(Array)
@@ -100,14 +98,13 @@ module BawWorkers
         end
 
         # sort the arg array by the first item in each sub-array
-        modified_args = modified_args.sort{ |a, b|
+        modified_args = modified_args.sort { |a, b|
           a[0] <=> b[0]
         }
 
         id = Digest::MD5.hexdigest Resque.encode(class: klass, args: modified_args)
         id
       end
-
     end
   end
 end

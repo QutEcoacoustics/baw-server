@@ -1,6 +1,7 @@
+# frozen_string_literal: true
+
 module Api
   module DirectoryRenderer
-
     # Returns the first file in `files`
     # Assumes all files exist.
     # @param [string[]] files
@@ -18,19 +19,17 @@ module Api
       mime_type_s = mime_type.to_s
       file_size = FileSystems::Combined.size(file_path)
 
-      if is_head_request
-        head :ok, content_length: file_size, content_type: mime_type_s
-      end
+      head :ok, content_length: file_size, content_type: mime_type_s if is_head_request
 
       # if sqlite, return blob
       FileSystems::Combined.check_and_open_sqlite(file_path) do |db, sqlite_path, sub_path|
         # we only want to send data if pulling blob from container db, otherwise use send_file method
         blob = FileSystems::Sqlite.get_blob(db, sqlite_path, sub_path)
-        return send_data(blob, {filename: File.basename(sub_path), type: mime_type_s, disposition: 'inline'})
+        return send_data(blob, { filename: File.basename(sub_path), type: mime_type_s, disposition: 'inline' })
       end
 
       # else return file as normal
-      send_file(file_path, {url_based_filename: true, type: mime_type_s, content_length: file_size})
+      send_file(file_path, { url_based_filename: true, type: mime_type_s, content_length: file_size })
     end
 
     # Returns a directory metadata object for the first directory supplied in `directories`
@@ -65,15 +64,15 @@ module Api
     # It assumes paging of children is already done!
     def respond_with_fake_directory(directory, children, base_directories, url_base_path, extra_payload = {}, is_head_request = false, api_opts = {})
       bases = {
-          directory: base_directories[0],
-          url_base_path: url_base_path
+        directory: base_directories[0],
+        url_base_path: url_base_path
       }
 
       result = normalized_path_name(directory, bases)
       children_listing = children.map { |child| fake_dir_info(child['path'], bases) }
       result = result.merge({
-                                type: 'directory',
-                                children: children_listing
+                              type: 'directory',
+                              children: children_listing
                             })
       result = extra_payload.merge(result)
 
@@ -83,7 +82,6 @@ module Api
     private
 
     def respond(result, is_head_request, api_opts)
-
       # wrap with our standard api
       wrapped = Settings.api_response.build(:ok, result, api_opts)
 
@@ -93,7 +91,7 @@ module Api
       add_header_length(json_result_size)
 
       if is_head_request
-        head :ok, {content_length: json_result_size, content_type: Mime::Type.lookup('application/json')}
+        head :ok, { content_length: json_result_size, content_type: Mime::Type.lookup('application/json') }
       else
         render json: json_result, content_length: json_result_size
       end
@@ -107,8 +105,8 @@ module Api
       children = dir_list(path, bases, paging) if FileSystems::Combined.directory_exists?(path)
 
       result.merge({
-                       type: 'directory',
-                       children: children
+                     type: 'directory',
+                     children: children
                    })
     end
 
@@ -125,20 +123,21 @@ module Api
       items = paging[:items]
       page = paging[:page]
       offset = paging[:offset]
-      fail 'Disabling paging is not supported for a directory listing' if paging[:disable_paging]
+      raise 'Disabling paging is not supported for a directory listing' if paging[:disable_paging]
 
       max_items = 1000
 
       child_paths, total = FileSystems::Combined.directory_list(path, items, offset, max_items)
 
-      children = child_paths.map do |full_path|
+      children = child_paths.map { |full_path|
         if FileSystems::Combined.directory_exists?(full_path)
           dir_info(full_path, bases)
         else
-          raise "File should exist" unless FileSystems::Combined.file_exists?(full_path)
+          raise 'File should exist' unless FileSystems::Combined.file_exists?(full_path)
+
           file_info(full_path)
         end
-      end
+      }
 
       paging[:total] = total
       paging[:warning] = "Only first #{max_items} results are available" if total >= max_items
@@ -152,25 +151,25 @@ module Api
       has_children = FileSystems::Combined.directory_has_children?(path)
 
       result.merge({
-          type: 'directory',
-          has_children: has_children
-      })
+                     type: 'directory',
+                     has_children: has_children
+                   })
     end
 
     def fake_dir_info(path, bases)
       result = normalized_path_name(path, bases)
       result.merge({
-        type: 'directory',
-        has_children: true
-      })
+                     type: 'directory',
+                     has_children: true
+                   })
     end
 
     def file_info(path)
       {
-          mime: Mime::Type.lookup_by_extension(File.extname(path)[1..-1]).to_s,
-          name: normalised_name(path),
-          size_bytes: FileSystems::Combined.size(path),
-          type: 'file'
+        mime: Mime::Type.lookup_by_extension(File.extname(path)[1..]).to_s,
+        name: normalised_name(path),
+        size_bytes: FileSystems::Combined.size(path),
+        type: 'file'
       }
     end
 
@@ -185,13 +184,12 @@ module Api
       #2.3.1 :006 > File.join("/a/","/b",  "/")  => "/a/b/"
       #2.3.1 :007 > File.join("/a/","/b/", "/")  => "/a/b/"
       #2.3.1 :008 > File.join("/a",  "b",  "/")  => "/a/b/"
-      normalized_url_path = File.join(bases[:url_base_path], normalised_path, "/")
+      normalized_url_path = File.join(bases[:url_base_path], normalised_path, '/')
 
       # we use the normalized_url_path so that the name fragment always has a value that makes sense
       normalised_name = normalised_name(normalized_url_path)
 
-
-      {path: normalized_url_path, name: normalised_name}
+      { path: normalized_url_path, name: normalised_name }
     end
 
     # Returns the last segment of the path, delimited by the path separator
@@ -209,6 +207,5 @@ module Api
       path_without_base = path.gsub(regex, '')
       path_without_base.blank? ? '/' : "/#{path_without_base}"
     end
-
   end
 end

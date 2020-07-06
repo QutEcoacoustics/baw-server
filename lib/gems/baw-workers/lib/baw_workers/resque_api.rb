@@ -141,7 +141,7 @@ module BawWorkers
           a_array.push([key, value])
         end
 
-        BawWorkers::Validation.compare(a_array, b[1..-1])
+        BawWorkers::Validation.compare(a_array, b[1..])
       end
 
       # clear worker heartbeats from redis

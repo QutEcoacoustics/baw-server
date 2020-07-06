@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # from http://stackoverflow.com/questions/4078906/is-there-a-natural-sort-by-method-for-ruby/15170063#15170063
 class NaturalSort
   def self.sort(collection, property)

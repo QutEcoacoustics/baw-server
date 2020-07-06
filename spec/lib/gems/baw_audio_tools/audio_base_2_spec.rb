@@ -106,7 +106,6 @@ describe BawAudioTools::AudioBase do
     end
 
     context 'checking validation of sample rate' do
-
       # sample rate is validated for
       # - making sure that only one of a certain set of 'standard' sample rates are requested, to prevent caching too many versions
       # - making sure that the requested sample rate is supported by the file format (e.g. mp3 can only operate with a given set of sample rates)
@@ -206,7 +205,6 @@ describe BawAudioTools::AudioBase do
           audio_base.check_sample_rate('target.wav', start_offset: 10, end_offset: 40, sample_rate: 939_393)
         }.to raise_error(BawAudioTools::Exceptions::InvalidSampleRateError)
       end
-
     end
 
     context 'special case for wavpack files' do

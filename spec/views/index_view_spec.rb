@@ -1,7 +1,8 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 
 describe 'public/index', type: :view do
-
   standard_text = 'Welcome! This is an Acoustic Workbench website.'
 
   it 'should render a stock welcome message for new pages' do

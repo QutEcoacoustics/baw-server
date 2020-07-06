@@ -1,9 +1,10 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 require 'rspec_api_documentation/dsl'
 require 'helpers/acceptance_spec_helper'
 
-resource 'Sessions' do 
-
+resource 'Sessions' do
   # set header
   header 'Accept', 'application/json'
   header 'Content-Type', 'application/json'
@@ -16,21 +17,21 @@ resource 'Sessions' do
 
   let!(:reader_user_password) { Devise.friendly_token.first(8) }
 
-  before {
+  before do
     reader_user.password = reader_user_password
     reader_user.password_confirmation = reader_user_password
     reader_user.save
-  }
+  end
 
   # Sign in properties (#new)
   # ================
 
   get '/security/new' do
-    standard_request_options(:get, 'security new (reader)', :ok, {expected_json_path: 'data/login'})
+    standard_request_options(:get, 'security new (reader)', :ok, { expected_json_path: 'data/login' })
   end
 
   get '/security/new' do
-    standard_request_options(:get, 'security new (admin)', :ok, {expected_json_path: 'data/password'})
+    standard_request_options(:get, 'security new (admin)', :ok, { expected_json_path: 'data/password' })
   end
 
   # Sign in (#create)
@@ -41,8 +42,8 @@ resource 'Sessions' do
     parameter :login, 'User name or email (must provide one of email or login)', required: false
     parameter :password, 'User password', required: true
 
-    let(:raw_post) { {email: reader_user.email, password: reader_user_password}.to_json }
-    standard_request_options(:post, 'Sign In (reader using email: email)', :ok, {response_body_content: I18n.t('devise.sessions.signed_in'), expected_json_path: 'data/auth_token'})
+    let(:raw_post) { { email: reader_user.email, password: reader_user_password }.to_json }
+    standard_request_options(:post, 'Sign In (reader using email: email)', :ok, { response_body_content: I18n.t('devise.sessions.signed_in'), expected_json_path: 'data/auth_token' })
   end
 
   post '/security' do
@@ -50,8 +51,8 @@ resource 'Sessions' do
     parameter :login, 'User name or email (must provide one of email or login)', required: false
     parameter :password, 'User password', required: true
 
-    let(:raw_post) { {login: reader_user.user_name, password: reader_user_password}.to_json }
-    standard_request_options(:post, 'Sign In (reader using user name and password)', :ok, {response_body_content: I18n.t('devise.sessions.signed_in'), expected_json_path: 'data/auth_token'})
+    let(:raw_post) { { login: reader_user.user_name, password: reader_user_password }.to_json }
+    standard_request_options(:post, 'Sign In (reader using user name and password)', :ok, { response_body_content: I18n.t('devise.sessions.signed_in'), expected_json_path: 'data/auth_token' })
   end
 
   post '/security' do
@@ -59,8 +60,8 @@ resource 'Sessions' do
     parameter :login, 'User name or email (must provide one of email or login)', required: false
     parameter :password, 'User password', required: true
 
-    let(:raw_post) { {login: reader_user.email, password: reader_user_password}.to_json }
-    standard_request_options(:post, 'Sign In (reader using email and password)', :ok, {response_body_content: I18n.t('devise.sessions.signed_in'), expected_json_path: 'data/auth_token'})
+    let(:raw_post) { { login: reader_user.email, password: reader_user_password }.to_json }
+    standard_request_options(:post, 'Sign In (reader using email and password)', :ok, { response_body_content: I18n.t('devise.sessions.signed_in'), expected_json_path: 'data/auth_token' })
   end
 
   post '/security' do
@@ -68,8 +69,8 @@ resource 'Sessions' do
     parameter :login, 'User name or email (must provide one of email or login)', required: false
     parameter :password, 'User password', required: true
 
-    let(:raw_post) { {email: owner_user.email, password: owner_user.password}.to_json }
-    standard_request_options(:post, 'Sign In (owner using email and password)', :ok, {response_body_content: I18n.t('devise.sessions.signed_in'), expected_json_path: 'data/auth_token'})
+    let(:raw_post) { { email: owner_user.email, password: owner_user.password }.to_json }
+    standard_request_options(:post, 'Sign In (owner using email and password)', :ok, { response_body_content: I18n.t('devise.sessions.signed_in'), expected_json_path: 'data/auth_token' })
   end
 
   # Sign out (#destroy)
@@ -78,15 +79,14 @@ resource 'Sessions' do
   delete '/security' do
     header 'Authorization', :authentication_token
     let(:authentication_token) { reader_token }
-    standard_request_options(:delete, 'Sign Out (reader)', :ok, {response_body_content: I18n.t('devise.sessions.signed_out'), expected_json_path: 'data/message'})
+    standard_request_options(:delete, 'Sign Out (reader)', :ok, { response_body_content: I18n.t('devise.sessions.signed_out'), expected_json_path: 'data/message' })
   end
 
   delete '/security' do
     header 'Authorization', :authentication_token
     let(:authentication_token) { admin_token }
-    standard_request_options(:delete, 'Sign Out (admin)', :ok, {response_body_content: I18n.t('devise.sessions.signed_out'), expected_json_path: 'data/message'})
+    standard_request_options(:delete, 'Sign Out (admin)', :ok, { response_body_content: I18n.t('devise.sessions.signed_out'), expected_json_path: 'data/message' })
   end
-
 
   # Get token (#show)
   # ============
@@ -94,43 +94,42 @@ resource 'Sessions' do
   get '/security/user' do
     header 'Authorization', :authentication_token
     let(:authentication_token) { reader_token }
-    standard_request_options(:get, 'Get Token with token auth in header (reader)', :ok, {response_body_content: '"user_name":"reader"', expected_json_path: 'data/auth_token'})
+    standard_request_options(:get, 'Get Token with token auth in header (reader)', :ok, { response_body_content: '"user_name":"reader"', expected_json_path: 'data/auth_token' })
   end
 
   get '/security/user' do
     header 'Authorization', :authentication_token
     let(:authentication_token) { admin_token }
-    standard_request_options(:get, 'Get Token with token auth in header (admin)', :ok, {response_body_content: '"user_name":"Admin"}', expected_json_path: 'data/auth_token'})
+    standard_request_options(:get, 'Get Token with token auth in header (admin)', :ok, { response_body_content: '"user_name":"Admin"}', expected_json_path: 'data/auth_token' })
   end
 
   get '/security/user?user_token=:authentication_token' do
     let(:authentication_token) { Rack::Utils.escape(reader_user.authentication_token) }
-    standard_request_options(:get, 'Get Token with token auth in qsp (reader)', :ok, {response_body_content: '"user_name":"reader"', expected_json_path: 'data/auth_token'})
+    standard_request_options(:get, 'Get Token with token auth in qsp (reader)', :ok, { response_body_content: '"user_name":"reader"', expected_json_path: 'data/auth_token' })
   end
 
   get '/security/user?user_token=:authentication_token' do
     let(:authentication_token) { Rack::Utils.escape(admin_user.authentication_token) }
-    standard_request_options(:get, 'Get Token with token auth in qsp (admin)', :ok, {response_body_content: '"user_name":"Admin"}', expected_json_path: 'data/auth_token'})
+    standard_request_options(:get, 'Get Token with token auth in qsp (admin)', :ok, { response_body_content: '"user_name":"Admin"}', expected_json_path: 'data/auth_token' })
   end
 
   get '/security/user?email=:email&password=:password' do
     let(:email) { Rack::Utils.escape(reader_user.email) }
     let(:password) { Rack::Utils.escape(reader_user_password) }
-    standard_request_options(:get, 'Get Token with email/pass auth in qsp (reader)', :ok, {response_body_content: '"user_name":"reader"', expected_json_path: 'data/auth_token'})
+    standard_request_options(:get, 'Get Token with email/pass auth in qsp (reader)', :ok, { response_body_content: '"user_name":"reader"', expected_json_path: 'data/auth_token' })
   end
 
   get '/security/user?login=:login&password=:password' do
     let(:login) { Rack::Utils.escape(reader_user.email) }
     let(:password) { Rack::Utils.escape(reader_user_password) }
-    standard_request_options(:get, 'Get Token with login (email)/pass auth in qsp (reader)', :ok, {response_body_content: '"user_name":"reader"', expected_json_path: 'data/auth_token'})
+    standard_request_options(:get, 'Get Token with login (email)/pass auth in qsp (reader)', :ok, { response_body_content: '"user_name":"reader"', expected_json_path: 'data/auth_token' })
   end
 
   get '/security/user?login=:login&password=:password' do
     let(:login) { Rack::Utils.escape(reader_user.user_name) }
     let(:password) { Rack::Utils.escape(reader_user_password) }
-    standard_request_options(:get, 'Get Token with login (user name)/pass auth in qsp (reader)', :ok, {response_body_content: '"user_name":"reader"', expected_json_path: 'data/auth_token'})
+    standard_request_options(:get, 'Get Token with login (user name)/pass auth in qsp (reader)', :ok, { response_body_content: '"user_name":"reader"', expected_json_path: 'data/auth_token' })
   end
-
 
   # get '/security/sign_in' do
   #
@@ -185,6 +184,4 @@ resource 'Sessions' do
   #     response_body.should have_json_path(get_json_error_path(:permissions))
   #   end
   # end
-
-
 end

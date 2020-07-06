@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module FileSystems
   # This is an abstraction over the standard file system that allows for SQLite 3 files to be used as container
   # formats for files.
@@ -27,7 +29,6 @@ module FileSystems
           raise "Sqlite3 lib version #{version} is below required version #{required_version}"
         end
       end
-
 
       def file_exists
         <<~SQL
@@ -81,45 +82,44 @@ module FileSystems
         SQL
       end
 
-
-      def file_exists?(db, sqlite_path, path)
+      def file_exists?(db, _sqlite_path, path)
         exists(db, file_exists, path)
       end
 
-      def directory_exists?(db, sqlite_path, path)
+      def directory_exists?(db, _sqlite_path, path)
         exists(db, directory_exists, path)
       end
 
-      def directory_list(db, sqlite_path, path, items, offset, max_items)
+      def directory_list(db, sqlite_path, path, items, offset, _max_items)
         path = '/' if path.blank?
-        paths = db.execute(list_files_query(path), {path: path, limit: items, offset: offset})
+        paths = db.execute(list_files_query(path), { path: path, limit: items, offset: offset })
 
         count = paths.shift
 
         # zero-index is the first-column of each row
-        full_paths = paths.map{|row| row[0] }.map{|path| sqlite_path + path }
+        full_paths = paths.map { |row| row[0] }.map { |path| sqlite_path + path }
         [full_paths, count[0]]
       end
 
-      def directory_has_children?(db, sqlite_path, path)
+      def directory_has_children?(_db, _sqlite_path, _path)
         # We've built this model on the premise that the SQLite file contains a flat file system - a directory can not
         # exist without children.
         true
       end
 
-      def size(db, sqlite_path, path)
-        db.get_first_value(get_file_length_query, {path: path})
+      def size(db, _sqlite_path, path)
+        db.get_first_value(get_file_length_query, { path: path })
       end
 
-      def get_blob(db, sqlite_path, path)
-        db.get_first_value(get_file_blob_query, {path: path})
+      def get_blob(db, _sqlite_path, path)
+        db.get_first_value(get_file_blob_query, { path: path })
       end
 
       # Open a sqlite db. This function get memoized but only for the duration of the request.
       def open_database(sqlite_path)
-        db = SQLite3::Database.new(sqlite_path, {readonly: true})
+        db = SQLite3::Database.new(sqlite_path, { readonly: true })
 
-        raise "Sqlite3 database not opened as readonly!" unless db.readonly?
+        raise 'Sqlite3 database not opened as readonly!' unless db.readonly?
 
         db
       end
@@ -137,7 +137,7 @@ module FileSystems
       # @param [SQLite3::Database] db
       # @param [string] query
       def exists(db, query, path)
-        db.get_first_value(query, {path: path}) == 1
+        db.get_first_value(query, { path: path }) == 1
       end
     end
   end

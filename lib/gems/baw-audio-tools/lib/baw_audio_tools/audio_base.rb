@@ -7,8 +7,6 @@ module BawAudioTools
                 :audio_wavpack, :audio_shntool, :audio_wav2png,
                 :audio_wac2wav
 
-    public
-
     # Create a new BawAudioTools::AudioBase.
     # @param [Hash] audio_defaults
     # @param [Logger] logger
@@ -293,8 +291,12 @@ module BawAudioTools
       end
 
       duration = end_offset - start_offset
-      raise Exceptions::SegmentRequestTooLong, "#{end_offset} - #{start_offset} = #{duration} (max: #{max_duration_seconds})" if duration > max_duration_seconds
-      raise Exceptions::SegmentRequestTooShort, "#{end_offset} - #{start_offset} = #{duration} (min: #{min_duration_seconds})" if duration < min_duration_seconds
+      if duration > max_duration_seconds
+        raise Exceptions::SegmentRequestTooLong, "#{end_offset} - #{start_offset} = #{duration} (max: #{max_duration_seconds})"
+      end
+      if duration < min_duration_seconds
+        raise Exceptions::SegmentRequestTooShort, "#{end_offset} - #{start_offset} = #{duration} (min: #{min_duration_seconds})"
+      end
 
       modify_parameters[:start_offset] = start_offset
       modify_parameters[:end_offset] = end_offset

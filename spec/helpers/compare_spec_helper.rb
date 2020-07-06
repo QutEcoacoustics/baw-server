@@ -1,12 +1,13 @@
+# frozen_string_literal: true
+
 # expect(actual).to be(expected)
 
 def check_regex_match(opts)
-
   actual = opts[:actual_response]
   expected = opts[:regex_match]
 
   unless expected.blank?
-    fail ArgumentError, 'Must include :actual_response to check :regex_match' if actual.blank?
+    raise ArgumentError, 'Must include :actual_response to check :regex_match' if actual.blank?
 
     if expected.respond_to?(:each)
       expected.each do |expected_regex_match|
@@ -16,11 +17,9 @@ def check_regex_match(opts)
       expect(actual).to match(expected)
     end
   end
-
 end
 
 def check_response_content(opts, message_prefix)
-
   actual = opts[:actual_response]
   expected = opts[:response_body_content]
 
@@ -34,11 +33,9 @@ def check_response_content(opts, message_prefix)
     end
 
   end
-
 end
 
 def check_invalid_content(opts, message_prefix)
-
   actual = opts[:actual_response]
   expected = opts[:invalid_content]
 
@@ -55,7 +52,6 @@ def check_invalid_content(opts, message_prefix)
 end
 
 def check_invalid_data_content(opts, message_prefix, parsed_response)
-
   expected = opts[:invalid_data_content]
 
   if !expected.blank? && !parsed_response.blank?

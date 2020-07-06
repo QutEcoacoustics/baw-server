@@ -1,11 +1,10 @@
+# frozen_string_literal: true
+
 # Provides support for creating metadata for media responses.
 module Api
   class MediaMetadata
-
-    public
-
     # accepts '111', '11.123', not '.11'
-    OFFSET_REGEXP = /^-?(\d+\.)?\d+$/
+    OFFSET_REGEXP = /^-?(\d+\.)?\d+$/.freeze
 
     # Create a new Api::Media instance.
     # @param [BawAudioTools::AudioBase] audio
@@ -27,21 +26,21 @@ module Api
       end
 
       {
-          id: audio_recording.id,
-          uuid: audio_recording.uuid,
-          recorded_date: audio_recording.recorded_date,
-          site_id: audio_recording.site_id,
-          site_name: audio_recording.site.name,
-          duration_seconds: audio_recording.duration_seconds.to_f,
-          sample_rate_hertz: audio_recording.sample_rate_hertz,
-          channel_count: audio_recording.channels,
-          bit_rate_bps: audio_recording.bit_rate_bps,
-          media_type: stored_media_type,
-          extension: stored_extension,
-          data_length_bytes: audio_recording.data_length_bytes,
-          file_hash: audio_recording.file_hash,
-          status: audio_recording.status,
-          uploaded_date: audio_recording.created_at
+        id: audio_recording.id,
+        uuid: audio_recording.uuid,
+        recorded_date: audio_recording.recorded_date,
+        site_id: audio_recording.site_id,
+        site_name: audio_recording.site.name,
+        duration_seconds: audio_recording.duration_seconds.to_f,
+        sample_rate_hertz: audio_recording.sample_rate_hertz,
+        channel_count: audio_recording.channels,
+        bit_rate_bps: audio_recording.bit_rate_bps,
+        media_type: stored_media_type,
+        extension: stored_extension,
+        data_length_bytes: audio_recording.data_length_bytes,
+        file_hash: audio_recording.file_hash,
+        status: audio_recording.status,
+        uploaded_date: audio_recording.created_at
       }
     end
 
@@ -58,17 +57,17 @@ module Api
       colour = get_param_value(request_params, modified_params, :colour, @default_spectrogram.colour)
 
       current_details = {
-          start_offset: start_offset.to_f,
-          end_offset: end_offset.to_f,
-          audio_event_id: audio_event_id,
-          channel: channel,
-          sample_rate: sample_rate,
-          window_size: window_size,
-          window_function: window_function,
-          colour: colour,
-          media_type: media_info[:media_type],
-          extension: media_info[:format],
-          ppms: (sample_rate.to_f / window_size.to_f) / 1000.0
+        start_offset: start_offset.to_f,
+        end_offset: end_offset.to_f,
+        audio_event_id: audio_event_id,
+        channel: channel,
+        sample_rate: sample_rate,
+        window_size: window_size,
+        window_function: window_function,
+        colour: colour,
+        media_type: media_info[:media_type],
+        extension: media_info[:format],
+        ppms: (sample_rate.to_f / window_size.to_f) / 1000.0
       }
 
       [current_details, modified_params]
@@ -76,64 +75,64 @@ module Api
 
     def valid_options(audio_recording, available_formats)
       {
-          # all formats, even wav, must adhere to this list
-          channels: [*0..audio_recording.channels],
-          #statuses: AudioRecording::AVAILABLE_STATUSES,
-          audio: {
-              duration_max: @default_audio.max_duration_seconds,
-              duration_min: @default_audio.min_duration_seconds,
-              formats: available_formats.audio.map do | format |
-                {
-                    name: format,
-                    valid_sample_rates: BawAudioTools::AudioBase.valid_sample_rates(format, audio_recording[:sample_rate_hertz])
-                }
-              end
-          },
-          image: {
-              spectrogram: {
-                  duration_max: @default_spectrogram.max_duration_seconds,
-                  duration_min: @default_spectrogram.min_duration_seconds,
-                  formats: available_formats.image,
-                  window_sizes: window_options,
-                  window_functions: window_function_options,
-                  colours: colour_options,
-                  valid_sample_rates: BawAudioTools::AudioBase.valid_sample_rates(nil, audio_recording[:sample_rate_hertz])
-              }
-          },
-          text: {
-              formats: available_formats.text
+        # all formats, even wav, must adhere to this list
+        channels: [*0..audio_recording.channels],
+        #statuses: AudioRecording::AVAILABLE_STATUSES,
+        audio: {
+          duration_max: @default_audio.max_duration_seconds,
+          duration_min: @default_audio.min_duration_seconds,
+          formats: available_formats.audio.map do |format|
+                     {
+                       name: format,
+                       valid_sample_rates: BawAudioTools::AudioBase.valid_sample_rates(format, audio_recording[:sample_rate_hertz])
+                     }
+                   end
+        },
+        image: {
+          spectrogram: {
+            duration_max: @default_spectrogram.max_duration_seconds,
+            duration_min: @default_spectrogram.min_duration_seconds,
+            formats: available_formats.image,
+            window_sizes: window_options,
+            window_functions: window_function_options,
+            colours: colour_options,
+            valid_sample_rates: BawAudioTools::AudioBase.valid_sample_rates(nil, audio_recording[:sample_rate_hertz])
           }
+        },
+        text: {
+          formats: available_formats.text
+        }
       }
     end
 
     def available_request_details(audio_recording, current, modified_params, available_formats)
       audio_keys = [] #[:start_offset, :end_offset, :audio_event_id, :channel, :sample_rate]
       image_keys = #[:start_offset, :end_offset, :audio_event_id, :channel, :sample_rate,
-          [:window_size, :window_function, :colour, :ppms]
+        [:window_size, :window_function, :colour, :ppms]
       text_keys = []
 
       {
-          audio: create_available_details(audio_recording, current, modified_params, available_formats.audio, audio_keys),
-          image: create_available_details(audio_recording, current, modified_params, available_formats.image, image_keys),
-          text: create_available_details(audio_recording, current, modified_params, available_formats.text, text_keys)
+        audio: create_available_details(audio_recording, current, modified_params, available_formats.audio, audio_keys),
+        image: create_available_details(audio_recording, current, modified_params, available_formats.image, image_keys),
+        text: create_available_details(audio_recording, current, modified_params, available_formats.text, text_keys)
       }
     end
 
     def generation_request(audio_recording_info, current_request_info)
       {
-          uuid: audio_recording_info[:uuid],
-          format: current_request_info[:extension],
-          media_type: current_request_info[:media_type],
-          start_offset: current_request_info[:start_offset],
-          end_offset: current_request_info[:end_offset],
-          channel: current_request_info[:channel],
-          sample_rate: current_request_info[:sample_rate],
-          datetime_with_offset: audio_recording_info[:recorded_date],
-          original_format: audio_recording_info[:extension],
-          original_sample_rate: audio_recording_info[:sample_rate_hertz],
-          window: current_request_info[:window_size],
-          window_function: current_request_info[:window_function],
-          colour: current_request_info[:colour]
+        uuid: audio_recording_info[:uuid],
+        format: current_request_info[:extension],
+        media_type: current_request_info[:media_type],
+        start_offset: current_request_info[:start_offset],
+        end_offset: current_request_info[:end_offset],
+        channel: current_request_info[:channel],
+        sample_rate: current_request_info[:sample_rate],
+        datetime_with_offset: audio_recording_info[:recorded_date],
+        original_format: audio_recording_info[:extension],
+        original_sample_rate: audio_recording_info[:sample_rate_hertz],
+        window: current_request_info[:window_size],
+        window_function: current_request_info[:window_function],
+        colour: current_request_info[:colour]
       }
     end
 
@@ -143,19 +142,18 @@ module Api
     # @param [Hash] current
     # @param [Hash] modified_params
     def api_response(audio_recording, original, current, modified_params)
-
       # remove available formats for which the specified sample rate is not valid
       # if no sample rate is specified, remove formats that don't support the native sample rate
       filtered_available_formats = Settings.available_formats.dup
       filter_by_sample_rate = modified_params.key?(:sample_rate) ? modified_params[:sample_rate].to_i : audio_recording[:sample_rate_hertz].to_i
-      filtered_available_formats["audio"] = filtered_available_formats["audio"].select do | format |
+      filtered_available_formats['audio'] = filtered_available_formats['audio'].select { |format|
         BawAudioTools::AudioBase.valid_sample_rates(format, audio_recording[:sample_rate_hertz]).include?(filter_by_sample_rate)
-      end
+      }
 
       available = available_request_details(audio_recording, current, modified_params, filtered_available_formats)
-      details = {recording: original, common_parameters: current, available: available}
+      details = { recording: original, common_parameters: current, available: available }
 
-      if modified_params.size < 1
+      if modified_params.empty?
         # give options for all available formats, not just those that support the native sample rate
         details[:options] = valid_options(audio_recording, Settings.available_formats)
       end
@@ -165,12 +163,12 @@ module Api
 
       # keep only required entries
       details[:recording].slice!(
-          :id, :uuid, :recorded_date, :duration_seconds, :sample_rate_hertz,
-          :channel_count, :media_type
+        :id, :uuid, :recorded_date, :duration_seconds, :sample_rate_hertz,
+        :channel_count, :media_type
       )
 
       details[:common_parameters].slice!(
-          :start_offset, :end_offset, :audio_event_id, :channel, :sample_rate
+        :start_offset, :end_offset, :audio_event_id, :channel, :sample_rate
       )
 
       details
@@ -191,12 +189,12 @@ module Api
       # now check bounds
       if requested_duration > max_duration
         msg = "Requested duration #{requested_duration} (#{start_offset} to #{end_offset}) is greater than maximum (#{max_duration})."
-        fail BawAudioTools::Exceptions::SegmentRequestTooLong, msg
+        raise BawAudioTools::Exceptions::SegmentRequestTooLong, msg
       end
 
       if requested_duration < min_duration
         msg = "Requested duration #{requested_duration} (#{start_offset} to #{end_offset}) is less than minimum (#{min_duration})."
-        fail BawAudioTools::Exceptions::SegmentRequestTooLong, msg
+        raise BawAudioTools::Exceptions::SegmentRequestTooLong, msg
       end
     end
 
@@ -204,7 +202,6 @@ module Api
     # @param [AudioRecording] audio_recording
     # @param [ActionDispatch::Request] request_params
     def check_request_parameters(audio_recording, request_params)
-
       original_duration = audio_recording.duration_seconds
 
       # offsets
@@ -216,17 +213,17 @@ module Api
 
         unless OFFSET_REGEXP === start_offset_s
           msg = "start_offset parameter must be a decimal number indicating seconds (maximum precision milliseconds, e.g., 1.234) (#{start_offset_s})"
-          fail CustomErrors::UnprocessableEntityError, msg
+          raise CustomErrors::UnprocessableEntityError, msg
         end
 
         if start_offset >= original_duration
           msg = "start_offset parameter (#{start_offset}) must be smaller than the duration of the audio recording (#{original_duration})."
-          fail CustomErrors::UnprocessableEntityError, msg
+          raise CustomErrors::UnprocessableEntityError, msg
         end
 
         if start_offset < 0
           msg = "start_offset parameter (#{start_offset}) must be greater than or equal to 0."
-          fail CustomErrors::UnprocessableEntityError, msg
+          raise CustomErrors::UnprocessableEntityError, msg
         end
       end
 
@@ -236,24 +233,24 @@ module Api
 
         unless OFFSET_REGEXP === end_offset_s
           msg = "end_offset parameter must be a decimal number indicating seconds (maximum precision milliseconds, e.g., 1.234) (#{end_offset_s})"
-          fail CustomErrors::UnprocessableEntityError, msg
+          raise CustomErrors::UnprocessableEntityError, msg
         end
 
         if end_offset > original_duration
           msg = "end_offset parameter (#{end_offset}) must be smaller than or equal to the duration of the audio recording (#{original_duration})."
-          fail CustomErrors::UnprocessableEntityError, msg
+          raise CustomErrors::UnprocessableEntityError, msg
         end
 
         if end_offset <= 0
           msg = "end_offset parameter (#{end_offset}) must be greater than 0."
-          fail CustomErrors::UnprocessableEntityError, msg
+          raise CustomErrors::UnprocessableEntityError, msg
         end
       end
 
       if request_params.include?(:start_offset) && request_params.include?(:end_offset)
         if start_offset >= end_offset
           msg = "start_offset parameter (#{start_offset}) must be smaller than end_offset (#{end_offset})."
-          fail CustomErrors::UnprocessableEntityError, msg
+          raise CustomErrors::UnprocessableEntityError, msg
         end
       end
 
@@ -267,24 +264,24 @@ module Api
       if request_params.include?(:window_size) && (!window_options.include?(request_params[:window_size].to_i) ||
               (request_params[:window_size].to_i.to_s != request_params[:window_size].to_s))
         msg = "window_size parameter (#{request_params[:window_size]}) must be valid (#{window_options})."
-        fail CustomErrors::UnprocessableEntityError, msg
+        raise CustomErrors::UnprocessableEntityError, msg
       end
 
       # check window function
       if request_params.include?(:window_function) && !window_function_options.include?(request_params[:window_function])
         msg = "window_function parameter (#{request_params[:window_function]}) must be valid (#{window_function_options})."
-        fail CustomErrors::UnprocessableEntityError, msg
+        raise CustomErrors::UnprocessableEntityError, msg
       end
 
       # check sample rate
       if request_params.include?(:sample_rate)
-        if !valid_sample_rates(request_params[:format], audio_recording.sample_rate_hertz.to_i).include?(request_params[:sample_rate].to_i)
+        unless valid_sample_rates(request_params[:format], audio_recording.sample_rate_hertz.to_i).include?(request_params[:sample_rate].to_i)
           msg = "sample_rate parameter (#{request_params[:sample_rate]}) must be valid (#{valid_sample_rates})."
-          fail CustomErrors::UnprocessableEntityError, msg
+          raise CustomErrors::UnprocessableEntityError, msg
         end
         if request_params[:sample_rate].to_i.to_s != request_params[:sample_rate].to_s
           msg = "sample_rate parameter (#{request_params[:sample_rate]}) must be an integer)."
-          fail CustomErrors::UnprocessableEntityError, msg
+          raise CustomErrors::UnprocessableEntityError, msg
         end
       end
 
@@ -293,13 +290,13 @@ module Api
       if request_params.include?(:channel) && (!valid_channels.include?(request_params[:channel].to_i) ||
           (request_params[:channel].to_i.to_s != request_params[:channel].to_s))
         msg = "channel parameter (#{request_params[:channel]}) must be valid (#{valid_channels})."
-        fail CustomErrors::UnprocessableEntityError, msg
+        raise CustomErrors::UnprocessableEntityError, msg
       end
 
       # check colour
       if request_params.include?(:colour) && !colour_options.keys.include?(request_params[:colour].to_sym)
         msg = "colour parameter (#{request_params[:colour]}) must be valid (#{colour_options})."
-        fail CustomErrors::UnprocessableEntityError, msg
+        raise CustomErrors::UnprocessableEntityError, msg
       end
     end
 
@@ -333,7 +330,6 @@ module Api
       BawAudioTools::AudioSox.window_function_options
     end
 
-
     def window_options
       BawAudioTools::AudioSox.window_options
     end
@@ -356,6 +352,5 @@ module Api
       end
       param_value
     end
-
   end
 end

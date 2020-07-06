@@ -1,6 +1,7 @@
+# frozen_string_literal: true
+
 module Admin
   class AnalysisJobsController < BaseController
-
     # GET /admin/analysis_jobs
     def index
       page = paging_params[:page].blank? ? 1 : paging_params[:page].to_i
@@ -9,14 +10,16 @@ module Admin
 
       commit = (paging_params[:commit].blank? ? 'filter' : paging_params[:commit]).to_s
 
-      fail 'Invalid order by.' unless [:id, :name, :started_at, :overall_status, :overall_status_modified_at].include?(order_by)
-      fail 'Invalid order dir.' unless [:asc, :desc].include?(order_dir)
+      unless [:id, :name, :started_at, :overall_status, :overall_status_modified_at].include?(order_by)
+        raise 'Invalid order by.'
+      end
+      raise 'Invalid order dir.' unless [:asc, :desc].include?(order_dir)
 
       redirect_to admin_analysis_jobs_path if commit.downcase == 'clear'
 
       @analysis_jobs_info = {
-          order_by: order_by,
-          order_dir: order_dir
+        order_by: order_by,
+        order_dir: order_dir
       }
 
       query = AnalysisJob.includes(:script, :creator).all
@@ -33,6 +36,5 @@ module Admin
     def paging_params
       params.permit(:page, :order_by, :order_dir)
     end
-
   end
 end

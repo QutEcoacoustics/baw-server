@@ -1,5 +1,6 @@
-class DatasetItemsController < ApplicationController
+# frozen_string_literal: true
 
+class DatasetItemsController < ApplicationController
   include Api::ControllerHelper
 
   # GET /datasets/:dataset_id/items
@@ -7,10 +8,10 @@ class DatasetItemsController < ApplicationController
     do_authorize_class
 
     @dataset_items, opts = Settings.api_response.response_advanced(
-        api_filter_params,
-        Access::ByPermission.dataset_items(current_user, params[:dataset_id]),
-        DatasetItem,
-        DatasetItem.filter_settings
+      api_filter_params,
+      Access::ByPermission.dataset_items(current_user, params[:dataset_id]),
+      DatasetItem,
+      DatasetItem.filter_settings
     )
 
     respond_index(opts)
@@ -29,10 +30,10 @@ class DatasetItemsController < ApplicationController
     do_authorize_class
 
     filter_response, opts = Settings.api_response.response_advanced(
-        api_filter_params,
-        Access::ByPermission.dataset_items(current_user, params[:dataset_id]),
-        DatasetItem,
-        DatasetItem.filter_settings(:reverse_order)
+      api_filter_params,
+      Access::ByPermission.dataset_items(current_user, params[:dataset_id]),
+      DatasetItem,
+      DatasetItem.filter_settings(:reverse_order)
     )
 
     respond_filter(filter_response, opts)
@@ -40,7 +41,6 @@ class DatasetItemsController < ApplicationController
 
   # GET datasets/:dataset_id/dataset_items/next_for_me
   def next_for_me
-
     do_authorize_class
     #priority_algorithm = DatasetItem.next_for_user(current_user_id = current_user ? current_user.id : nil)
 
@@ -50,25 +50,23 @@ class DatasetItemsController < ApplicationController
     query = query.joins("LEFT OUTER JOIN progress_events ON progress_events.dataset_item_id = dataset_items.id AND activity = 'viewed'")
     query = query.group('dataset_items.id')
     query = query.order('COUNT(progress_events.id) ASC')
-    if (current_user)
+    if current_user
       query = query.order('SUM (CASE WHEN ("progress_events"."creator_id" = ' + current_user.id.to_s + ') THEN 1 ELSE 0 END) ASC')
     end
     query = query.order('dataset_items.order ASC')
     query = query.order('dataset_items.id ASC')
 
-
     # sort by priority
     # query = query.order(priority_algorithm)
 
     query, opts = Settings.api_response.response_advanced(
-        api_filter_params,
-        query,
-        DatasetItem,
-        DatasetItem.filter_settings
+      api_filter_params,
+      query,
+      DatasetItem,
+      DatasetItem.filter_settings
     )
 
     respond_filter(query, opts)
-
   end
 
   # GET /datasets/:dataset_id/items/new
@@ -82,7 +80,6 @@ class DatasetItemsController < ApplicationController
 
   # POST /datasets/:dataset_id/items
   def create
-
     do_new_resource
     do_set_attributes(dataset_item_params)
 
@@ -107,7 +104,6 @@ class DatasetItemsController < ApplicationController
     else
       respond_change_fail
     end
-
   end
 
   # DELETE /datasets/:dataset_id/items/:dataset_item_id
@@ -118,13 +114,11 @@ class DatasetItemsController < ApplicationController
     @dataset_item.destroy
 
     respond_destroy
-
   end
 
   private
 
   def dataset_item_params
-
     params[:dataset_item][:dataset_id] = params[:dataset_id]
 
     params.require(:dataset_item).permit(:dataset_id,
@@ -132,8 +126,5 @@ class DatasetItemsController < ApplicationController
                                          :start_time_seconds,
                                          :end_time_seconds,
                                          :order)
-
   end
-
-
 end
