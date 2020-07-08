@@ -19,10 +19,11 @@ resource 'Scripts' do
 
   # create extra scripts - grouping really needs to be tested with multiple items
   let!(:extra_scripts) {
+    parent = FactoryBot.create(:script, version: 1.0)
     [
-      FactoryBot.create(:script, version: 1.0, id: 1234),
-      FactoryBot.create(:script, version: 1.5, group_id: 1234),
-      FactoryBot.create(:script, version: 1.6, group_id: 1234)
+      parent,
+      FactoryBot.create(:script, version: 1.5, group_id: parent.id),
+      FactoryBot.create(:script, version: 1.6, group_id: parent.id)
     ]
   }
 
@@ -87,11 +88,12 @@ resource 'Scripts' do
           '"filter":{"is_last_version":{"eq":"true"}}',
           '"is_first_version":true',
           '"is_last_version":true',
-          '"version":1.6,"group_id":1234',
+          '"version":1.6,"group_id":%{group_id}',
           '"version":%{version},"group_id":%{group_id}'
         ]
       },
       &proc { |context, opts|
+        opts[:response_body_content][3] = format(opts[:response_body_content][3], group_id: context.extra_scripts.last[:group_id])
         opts[:response_body_content][4] = format(opts[:response_body_content][4], version: context.script[:version], group_id: context.script[:group_id])
       }
     )
