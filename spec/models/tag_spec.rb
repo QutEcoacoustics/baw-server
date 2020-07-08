@@ -105,4 +105,16 @@ describe Tag, type: :model do
     t = Tag.new
     expect(t.retired).to be_falsey
   end
+
+  it 'ensures notes can be nil' do
+    t = build(:tag)
+    t.notes = nil
+    expect(t).to be_valid
+  end
+
+  it 'ensures notes can be a hash' do
+    t = build(:tag)
+    t.notes = { comment: 'testing' }
+    expect(t).to be_valid
+  end
 end

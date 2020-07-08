@@ -2,7 +2,7 @@
 
 module Creation
   # accessible in describe/context blocks
-  module ExampleGroup
+  module ExampleGroup # rubocop:disable Metrics/ModuleLength
     def create_entire_hierarchy
       prepare_users
 

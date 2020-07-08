@@ -59,12 +59,12 @@ class Tag < ApplicationRecord
   def self.user_top_tags(user)
     query = sanitize_sql_array(
       ['select (select tags.text from tags where tags.id = audio_events_tags.tag_id) as tag_name, count(*) as tag_count
-from audio_events_tags
-inner join tags on audio_events_tags.tag_id = tags.id
-where audio_events_tags.creator_id = :user_id
-group by audio_events_tags.tag_id
-order by count(*) DESC
-limit 10', { user_id: user.id }]
+      from audio_events_tags
+      inner join tags on audio_events_tags.tag_id = tags.id
+      where audio_events_tags.creator_id = :user_id
+      group by audio_events_tags.tag_id
+      order by count(*) DESC
+      limit 10', { user_id: user.id }]
     )
     Tag.connection.select_all(query)
   end
@@ -74,7 +74,7 @@ limit 10', { user_id: user.id }]
     return nil if tags.empty?
 
     first = tags.first
-    return first if first.type_of_tag.to_s == 'common_name'
+    return first if first.type_of_tag == 'common_name'
 
     first_common = nil
     first_species = nil
@@ -95,7 +95,10 @@ limit 10', { user_id: user.id }]
         :id, :text, :is_taxanomic, :type_of_tag, :retired, :notes,
         :creator_id, :created_at, :updater_id, :updated_at
       ],
-      render_fields: [:id, :text, :is_taxanomic, :type_of_tag, :retired],
+      render_fields: [
+        :id, :text, :is_taxanomic, :type_of_tag, :retired, :creator_id,
+        :updater_id, :created_at, :updated_at, :notes
+      ],
       text_fields: [:text, :type_of_tag, :notes],
       controller: :tags,
       action: :filter,
@@ -115,7 +118,6 @@ limit 10', { user_id: user.id }]
               available: true
             }
           ]
-
         }
       ]
     }

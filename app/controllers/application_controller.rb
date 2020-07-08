@@ -50,7 +50,7 @@ class ApplicationController < ActionController::Base
 
   rescue_from CustomErrors::BadRequestError, with: :bad_request_error_response
 
-  # error handling for cancan authorisation checks
+  # error handling for cancan authorization checks
   rescue_from CanCan::AccessDenied, with: :access_denied_response
 
   # Prevent CSRF attacks by raising an exception.
@@ -98,10 +98,9 @@ class ApplicationController < ActionController::Base
   # @param [ActiveRecord::Base] model
   # @return [void]
   def add_archived_at_header(model)
-    if model.respond_to?(:deleted_at) && !model.deleted_at.blank?
-      # response header must be a string, can't just pass a Date or Time
-      response.headers['X-Archived-At'] = model.deleted_at.httpdate
-    end
+    return if !model.respond_to?(:deleted_at) || model.deleted_at.blank?
+
+    response.headers['X-Archived-At'] = model.deleted_at.httpdate
   end
 
   def add_header_length(length)
@@ -192,7 +191,7 @@ class ApplicationController < ActionController::Base
     audio_event
   end
 
-  # Authorise audio event by audio recording and offsets
+  # Authorize audio event by audio recording and offsets
   # @param [Hash] request_params
   # @param [AudioRecording] audio_recording
   # @param [AudioEvent] audio_event
@@ -228,9 +227,10 @@ class ApplicationController < ActionController::Base
     end
   end
 
+  # TODO: Simplify Function
   def render_error(status_symbol, detail_message, error, method_name, options = {})
-    options.merge!({ error_details: detail_message }) # overwrites error_details
-    options.reverse_merge!({ should_notify_error: true }) # default for should_notify_error is true, value in options will overwrite
+    options.merge!(error_details: detail_message) # overwrites error_details
+    options.reverse_merge!(should_notify_error: true) # default for should_notify_error is true, value in options will overwrite
 
     # notify of exception when head requests AND when should_notify_error is true
     should_notify_error = request.head? && (options.include?(:should_notify_error) && options[:should_notify_error])
@@ -312,10 +312,15 @@ class ApplicationController < ActionController::Base
       }
     end
   end
+  # rubocop:enable
 
   def configure_permitted_parameters
     devise_parameter_sanitizer.permit(:sign_up, keys: [:user_name, :email, :password, :password_confirmation])
-    devise_parameter_sanitizer.permit(:account_update, keys: [:user_name, :email, :password, :password_confirmation, :current_password, :image, :tzinfo_tz])
+    devise_parameter_sanitizer.permit(
+      :account_update, keys: [
+        :user_name, :email, :password, :password_confirmation, :current_password, :image, :tzinfo_tz
+      ]
+    )
   end
 
   def after_sign_in_path_for(resource)
@@ -333,26 +338,54 @@ class ApplicationController < ActionController::Base
     # an empty body parsed as json will have the form {model => {}}
     # json body with application/x-www-form-urlencoded content type will have the form {json_string => {}}
     # json or form encoded with text/plain content type will have the form {}
-    if request.POST.values.all?(&:blank?)
+    return unless request.POST.values.all?(&:blank?)
 
-      if request.body.string.blank?
-        message = 'Request body was empty'
-        status = :bad_request
-        # include link to 'new' endpoint if body was empty
-        options = { should_notify_error: true, error_links: [{ text: 'New Resource', url: send("new_#{resource_name}_path") }] }
+    if request.body.string.blank?
+      message = 'Request body was empty'
+      status = :bad_request
+      # include link to 'new' endpoint if body was empty
+      options = { should_notify_error: true, error_links: [{ text: 'New Resource', url: send("new_#{resource_name}_path") }] }
+    else
+      options = { should_notify_error: true }
+      status = :unsupported_media_type
+      if request.content_type == 'text/plain'
+        message = 'Request content-type text/plain not supported'
       else
-        options = { should_notify_error: true }
-        status = :unsupported_media_type
-        if request.content_type == 'text/plain'
-          message = 'Request content-type text/plain not supported'
-        else
-          # Catch anything else, but should not reach here because body parsing will have already crashed for
-          # malformed encoding for anything other than text/plain
-          message = "Failed to parse the request body. Ensure that it is formed correctly and matches the content-type (#{request.content_type})"
-        end
+        # Catch anything else, but should not reach here because body parsing will have already crashed for
+        # malformed encoding for anything other than text/plain
+        message = "Failed to parse the request body. Ensure that it is formed correctly and matches the content-type (#{request.content_type})"
       end
-      render_error(status, message, nil, 'validate_contains_params', options)
     end
+    render_error(status, message, nil, 'validate_contains_params', options)
+  end
+
+  def sanitize_associative_array(*fields)
+    *requires, field = fields
+    target = requires.empty? ? params : params.dig(*requires)
+
+    return if target.nil?
+
+    data = target[field]
+    if data.nil?
+      target[field] = {}
+      return
+    end
+
+    return if data.is_a? ActionController::Parameters
+
+    if data.is_a? String
+      begin
+        decoded_json = JSON.parse(data)
+        if decoded_json.is_a? Hash
+          target[field] = decoded_json
+          return
+        end
+      rescue JSON::ParserError
+        raise CustomErrors::BadRequestError, "#{field} is not valid JSON. Additionally, support for string-encoded JSON is deprecated."
+      end
+    end
+
+    raise CustomErrors::UnprocessableEntityError, "#{field} must have a root JSON object (not a scalar or an array)."
   end
 
   private
@@ -389,7 +422,12 @@ class ApplicationController < ActionController::Base
   def unsupported_media_type_error_response(error)
     # 415 - Unsupported Media Type
     # they sent what we don't want
-    # render json: {code: 415, phrase: 'Unsupported Media Type', message: 'Requested format is invalid. It must be one of available_formats.', available_formats: @available_formats}, status: :unsupported_media_type
+    # render json: {
+    #   code: 415,
+    #   phrase: 'Unsupported Media Type',
+    #   message: 'Requested format is invalid. It must be one of available_formats.',
+    #   available_formats: @available_formats
+    # }, status: :unsupported_media_type
 
     render_error(
       :unsupported_media_type,
@@ -565,9 +603,9 @@ class ApplicationController < ActionController::Base
 
   def resource_representation_caching_fixes
     # send Vary: Accept for all text/html and application/json responses
-    if response.content_type == 'text/html' || response.content_type == 'application/json'
-      response.headers['Vary'] = 'Accept'
-    end
+    return unless response.content_type == 'text/html' || response.content_type == 'application/json'
+
+    response.headers['Vary'] = 'Accept'
   end
 
   def log_original_error(method_name, error, response_given)
