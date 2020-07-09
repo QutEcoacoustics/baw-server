@@ -61,7 +61,7 @@ class StudiesController < ApplicationController
     do_load_resource
     do_authorize_instance
 
-    if @study.update_attributes(study_params)
+    if @study.update(study_params)
       respond_show
     else
       respond_change_fail

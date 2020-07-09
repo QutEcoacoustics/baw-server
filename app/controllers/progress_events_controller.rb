@@ -90,7 +90,7 @@ class ProgressEventsController < ApplicationController
     do_set_attributes(progress_event_params)
     do_authorize_instance
 
-    if @progress_event.update_attributes(progress_event_params)
+    if @progress_event.update(progress_event_params)
       respond_show
     else
       respond_change_fail

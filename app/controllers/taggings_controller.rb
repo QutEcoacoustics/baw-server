@@ -93,7 +93,7 @@ class TaggingsController < ApplicationController
     get_audio_event
     do_authorize_instance
 
-    if @tagging.update_attributes(tagging_params)
+    if @tagging.update(tagging_params)
       respond_show
     else
       respond_change_fail

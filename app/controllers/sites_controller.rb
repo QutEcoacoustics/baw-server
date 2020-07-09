@@ -93,7 +93,7 @@ class SitesController < ApplicationController
     @original_site_name = @site.name
 
     respond_to do |format|
-      if @site.update_attributes(site_params)
+      if @site.update(site_params)
         format.html { redirect_to [@project, @site], notice: 'Site was successfully updated.' }
         format.json { respond_show }
       else

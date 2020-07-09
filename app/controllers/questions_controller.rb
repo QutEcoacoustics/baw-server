@@ -73,7 +73,7 @@ class QuestionsController < ApplicationController
     do_load_resource
     do_authorize_instance
 
-    if @question.update_attributes(question_params)
+    if @question.update(question_params)
       respond_show
     else
       respond_change_fail

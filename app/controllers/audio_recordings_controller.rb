@@ -122,7 +122,7 @@ class AudioRecordingsController < ApplicationController
       relevant_params = relevant_params.slice(*valid_keys)
     end
 
-    if @audio_recording.update_attributes(relevant_params)
+    if @audio_recording.update(relevant_params)
       respond_show
     else
       respond_change_fail

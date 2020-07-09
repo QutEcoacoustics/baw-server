@@ -49,7 +49,7 @@ class BookmarksController < ApplicationController
     do_load_resource
     do_authorize_instance
 
-    if @bookmark.update_attributes(bookmark_params)
+    if @bookmark.update(bookmark_params)
       respond_show
     else
       respond_change_fail

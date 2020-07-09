@@ -70,7 +70,7 @@ class AnalysisJobsController < ApplicationController
       parameters = parameters.except(:overall_status)
     end
 
-    if @analysis_job.update_attributes(parameters)
+    if @analysis_job.update(parameters)
       respond_show
     else
       respond_change_fail

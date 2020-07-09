@@ -75,7 +75,7 @@ ELSE last_sign_in_at END DESC'
     end
 
     respond_to do |format|
-      if @user.update_attributes(the_params)
+      if @user.update(the_params)
         format.html { redirect_to user_account_path(@user), notice: 'User was successfully updated.' }
         format.json { respond_show }
       else

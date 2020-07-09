@@ -64,7 +64,7 @@ class AudioEventCommentsController < ApplicationController
             ([:flag] - audio_event_comment_update_params[:audio_event_comment].symbolize_keys.keys).empty?)
 
     if is_creator || is_admin || is_changing_only_flag
-      if @audio_event_comment.update_attributes(audio_event_comment_params)
+      if @audio_event_comment.update(audio_event_comment_params)
         respond_show
       else
         respond_change_fail

@@ -85,7 +85,7 @@ ORDER BY project_count ASC, s.name ASC")
     do_authorize_instance
 
     respond_to do |format|
-      if @project.update_attributes(project_params)
+      if @project.update(project_params)
         format.html { redirect_to @project, notice: 'Project was successfully updated.' }
         format.json { respond_show }
       else

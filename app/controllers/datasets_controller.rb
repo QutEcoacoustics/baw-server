@@ -62,7 +62,7 @@ class DatasetsController < ApplicationController
     do_load_resource
     do_authorize_instance
 
-    if @dataset.update_attributes(dataset_params)
+    if @dataset.update(dataset_params)
       respond_show
     else
       respond_change_fail

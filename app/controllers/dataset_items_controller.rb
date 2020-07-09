@@ -102,7 +102,7 @@ class DatasetItemsController < ApplicationController
     do_set_attributes(dataset_item_params)
     do_authorize_instance
 
-    if @dataset_item.update_attributes(dataset_item_params)
+    if @dataset_item.update(dataset_item_params)
       respond_show
     else
       respond_change_fail
