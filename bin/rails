@@ -8,13 +8,31 @@ require_relative '../config/boot'
 # - useful when running inside a container
 require 'rails/command'
 require 'rails/commands/server/server_command'
+module Baw
+  module DefaultOptions
+    # adapted from https://github.com/rails/rails/blob/9b6f7d7f547e22e73f3127999b154a3bab3ff14e/railties/lib/rails/commands/server/server_command.rb#L220
+    def host
+      if options[:binding]
+        options[:binding]
+      else
+        # i changed only the following line
+        default_host = '0.0.0.0'
 
-module DefaultOptions
-  def default_options
-    super.merge!(Host: '0.0.0.0')
+        if ENV['HOST'] && !ENV['BINDING']
+          ActiveSupport::Deprecation.warn(<<-MSG.squish)
+          Using the `HOST` environment variable to specify the IP is deprecated and will be removed in Rails 6.1.
+          Please use `BINDING` environment variable instead.
+          MSG
+
+          return ENV['HOST']
+        end
+
+        ENV.fetch('BINDING', default_host)
+      end
+    end
   end
 end
 
-Rails::Server.prepend(DefaultOptions)
+Rails::Command::ServerCommand.prepend(Baw::DefaultOptions)
 
 require 'rails/commands'
