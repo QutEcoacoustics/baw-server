@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class AnalysisJobsController < ApplicationController
   include Api::ControllerHelper
 
@@ -93,13 +95,13 @@ class AnalysisJobsController < ApplicationController
       @analysis_job.suspend!
     end
 
-    unless can_delete
-      respond_error(:conflict, "Cannot be deleted while `overall_status` is `#{@analysis_job.overall_status}`")
-    else
+    if can_delete
       @analysis_job.destroy
       add_archived_at_header(@analysis_job)
 
       respond_destroy
+    else
+      respond_error(:conflict, "Cannot be deleted while `overall_status` is `#{@analysis_job.overall_status}`")
     end
   end
 
@@ -108,10 +110,10 @@ class AnalysisJobsController < ApplicationController
     do_authorize_class
 
     filter_response, opts = Settings.api_response.response_advanced(
-        api_filter_params,
-        get_analysis_jobs,
-        AnalysisJob,
-        AnalysisJob.filter_settings
+      api_filter_params,
+      get_analysis_jobs,
+      AnalysisJob,
+      AnalysisJob.filter_settings
     )
     respond_filter(filter_response, opts)
   end
@@ -120,12 +122,12 @@ class AnalysisJobsController < ApplicationController
 
   # GET|HEAD /analysis_jobs/system
   def system_show
-    fail NotImplementedError.new
+    raise NotImplementedError
   end
 
   # PUT|PATCH|DELETE /analysis_jobs/system
   def system_mutate
-    fail CustomErrors::MethodNotAllowedError.new('Cannot update a system job', [:post, :put, :patch, :delete])
+    raise CustomErrors::MethodNotAllowedError.new('Cannot update a system job', [:post, :put, :patch, :delete])
   end
 
   def is_system?
@@ -137,11 +139,12 @@ class AnalysisJobsController < ApplicationController
     # a script, saved search, name, and custom settings.
     # May have a description.
     params.require(:analysis_job).permit(
-        :script_id,
-        :saved_search_id,
-        :name,
-        :custom_settings,
-        :description)
+      :script_id,
+      :saved_search_id,
+      :name,
+      :custom_settings,
+      :description
+    )
   end
 
   def analysis_job_update_params

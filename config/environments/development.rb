@@ -15,16 +15,21 @@ Rails.application.configure do
 
   # configure mailer for development.
   config.action_mailer.raise_delivery_errors = true
-  config.action_mailer.default_url_options =
-    {
-      host: "#{Settings.host.name}:#{Settings.host.port}"
-    }
+  config.after_initialize do
+    config.action_mailer.default_url_options =
+      {
+        host: "#{Settings.host.name}:#{Settings.host.port}"
+      }
+  end
   config.action_mailer.delivery_method = :file
   config.action_mailer.file_settings =
     {
       location: Rails.root.join('tmp', 'mail')
     }
   config.action_mailer.perform_deliveries = true
+
+  # enable colorized logs
+  config.colorized_logging = true
 
   # Print deprecation notices to the Rails logger.
   config.active_support.deprecation = :log
@@ -57,9 +62,8 @@ Rails.application.configure do
   # Raises error for missing translations
   config.action_view.raise_on_missing_translations = true
 
-
   # profile requests
-  #config.middleware.insert 0, 'Rack::RequestProfiler', printer: ::RubyProf::CallTreePrinter
+  #config.middleware.insert 0, Rack::RequestProfiler, printer: ::RubyProf::CallTreePrinter
 
   config.after_initialize do
     # detect n+1 queries
@@ -71,6 +75,9 @@ Rails.application.configure do
     Bullet.rails_logger = true
     Bullet.add_footer = true
     Bullet.raise = false
-
   end
+
+  # Use an evented file watcher to asynchronously detect changes in source code,
+  # routes, locales, etc. This feature depends on the listen gem.
+  # config.file_watcher = ActiveSupport::EventedFileUpdateChecker
 end

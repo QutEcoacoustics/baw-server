@@ -1,8 +1,9 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 
-describe TagsController, :type => :routing do
+describe TagsController, type: :routing do
   describe :routing do
-
     it { expect(get('/projects/1/sites/2/audio_recordings/3/audio_events/4/tags')).to route_to('errors#route_error', requested_route: 'projects/1/sites/2/audio_recordings/3/audio_events/4/tags') }
     it { expect(get('audio_recordings/3/audio_events/4/tags')).to route_to('tags#index', audio_recording_id: '3', audio_event_id: '4', format: 'json') }
 
@@ -13,7 +14,7 @@ describe TagsController, :type => :routing do
     it { expect(put('/tags/1')).to route_to('errors#route_error', requested_route: 'tags/1') }
     it { expect(delete('/tags/1')).to route_to('errors#route_error', requested_route: 'tags/1') }
 
-    it { expect(get('/tags?filter=koala,bellow')).to route_to('tags#index', format: 'json', filter: 'koala,bellow')}
+    it { expect(get('/tags?filter=koala,bellow')).to route_to('tags#index', format: 'json', filter: 'koala,bellow') }
 
     # used by client
     it { expect(get('/tags')).to route_to('tags#index', format: 'json') }
@@ -21,6 +22,5 @@ describe TagsController, :type => :routing do
 
     it { expect(get('/tags/filter')).to route_to('tags#filter', format: 'json') }
     it { expect(post('/tags/filter')).to route_to('tags#filter', format: 'json') }
-
   end
 end

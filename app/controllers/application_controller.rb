@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class ApplicationController < ActionController::Base # rubocop:disable Metrics/ClassLength
+class ApplicationController < ActionController::Base
   include Api::ApiAuth
 
   layout :select_layout
@@ -148,21 +148,27 @@ class ApplicationController < ActionController::Base # rubocop:disable Metrics/C
     #authorize! :show, @audio_recording
 
     audio_recording = AudioRecording.where(id: request_params[:audio_recording_id]).first
-    raise CustomErrors::ItemNotFoundError, "Could not find audio recording with id #{request_params[:audio_recording_id]}." if audio_recording.blank?
+    if audio_recording.blank?
+      raise CustomErrors::ItemNotFoundError, "Could not find audio recording with id #{request_params[:audio_recording_id]}."
+    end
 
     # can? also checks for admin access
     can_access_audio_recording = can? action, audio_recording
 
     # Can't do anything if can't access audio recording and no audio event id given
     has_any_permission = can_access_audio_recording || !request_params[:audio_event_id].blank?
-    raise CanCan::AccessDenied, "Permission denied to audio recording id #{request_params[:audio_recording_id]} and no audio event id given." unless has_any_permission
+    unless has_any_permission
+      raise CanCan::AccessDenied, "Permission denied to audio recording id #{request_params[:audio_recording_id]} and no audio event id given."
+    end
 
     audio_recording
   end
 
   def auth_custom_audio_event(request_params, audio_recording)
     audio_event = AudioEvent.where(id: request_params[:audio_event_id]).first
-    raise CustomErrors::ItemNotFoundError, "Could not find audio event with id #{request_params[:audio_event_id]}." if audio_event.blank?
+    if audio_event.blank?
+      raise CustomErrors::ItemNotFoundError, "Could not find audio event with id #{request_params[:audio_event_id]}."
+    end
 
     # can? also checks for admin access
     can_access_audio_event = can? :show, audio_event
@@ -222,7 +228,6 @@ class ApplicationController < ActionController::Base # rubocop:disable Metrics/C
   end
 
   # TODO: Simplify Function
-  # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
   def render_error(status_symbol, detail_message, error, method_name, options = {})
     options.merge!(error_details: detail_message) # overwrites error_details
     options.reverse_merge!(should_notify_error: true) # default for should_notify_error is true, value in options will overwrite
@@ -252,7 +257,7 @@ class ApplicationController < ActionController::Base # rubocop:disable Metrics/C
     # add additional error message in here for sanity
     headers['X-Error-Message'] = error.message if request.head? && !error.nil?
 
-    respond_to do |format| # rubocop:disable Metrics/BlockLength
+    respond_to do |format|
       # format.all will be used for Accept: */* as it is first in the list
       # http://blogs.thewehners.net/josh/posts/354-obscure-rails-bug-respond_to-formatany
       format.all do
@@ -273,7 +278,6 @@ class ApplicationController < ActionController::Base # rubocop:disable Metrics/C
         render json: json_response, status: status_symbol
       end
       format.html {
-
         status_code = Settings.api_response.status_code(status_symbol)
         status_message = Settings.api_response.status_phrase(status_symbol).humanize
 
@@ -308,7 +312,7 @@ class ApplicationController < ActionController::Base # rubocop:disable Metrics/C
       }
     end
   end
-  # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
+  # rubocop:enable
 
   def configure_permitted_parameters
     devise_parameter_sanitizer.permit(:sign_up, keys: [:user_name, :email, :password, :password_confirmation])
@@ -355,20 +359,33 @@ class ApplicationController < ActionController::Base # rubocop:disable Metrics/C
     render_error(status, message, nil, 'validate_contains_params', options)
   end
 
-  def sanitize_associative_array(data, field_name)
-    return nil if data.nil?
-    return data if data.is_a? Hash
+  def sanitize_associative_array(*fields)
+    *requires, field = fields
+    target = requires.empty? ? params : params.dig(*requires)
+
+    return if target.nil?
+
+    data = target[field]
+    if data.nil?
+      target[field] = {}
+      return
+    end
+
+    return if data.is_a? ActionController::Parameters
 
     if data.is_a? String
       begin
         decoded_json = JSON.parse(data)
-        return decoded_json if decoded_json.is_a? Hash
+        if decoded_json.is_a? Hash
+          target[field] = decoded_json
+          return
+        end
       rescue JSON::ParserError
-        raise CustomErrors::NotAcceptableError, "#{field_name} failed to parse input as valid JSON."
+        raise CustomErrors::BadRequestError, "#{field} is not valid JSON. Additionally, support for string-encoded JSON is deprecated."
       end
     end
 
-    raise CustomErrors::BadRequestError, "#{field_name} must have a root JSON object (not a scalar or an array)."
+    raise CustomErrors::UnprocessableEntityError, "#{field} must have a root JSON object (not a scalar or an array)."
   end
 
   private
@@ -389,7 +406,7 @@ class ApplicationController < ActionController::Base # rubocop:disable Metrics/C
       "Could not find the requested item: #{error.message}",
       error,
       'item_not_found_error_response',
-      should_notify_error: false
+      { should_notify_error: false }
     )
   end
 
@@ -417,7 +434,7 @@ class ApplicationController < ActionController::Base # rubocop:disable Metrics/C
       "The format of the request is not supported: #{error.message}",
       error,
       'unsupported_media_type_error_response',
-      error_info: { available_formats: error.available_formats_info }
+      { error_info: { available_formats: error.available_formats_info } }
     )
   end
 
@@ -432,7 +449,7 @@ class ApplicationController < ActionController::Base # rubocop:disable Metrics/C
       "The method received the request is known by the server but not supported by the target resource: #{error.message}",
       error,
       'method_not_allowed_error_response',
-      error_info: { available_methods: error.available_methods.map { |x| x.to_s.upcase } }
+      { error_info: { available_methods: error.available_methods.map { |x| x.to_s.upcase } } }
     )
   end
 
@@ -447,7 +464,7 @@ class ApplicationController < ActionController::Base # rubocop:disable Metrics/C
       "None of the acceptable response formats are available: #{error.message}",
       error,
       'not_acceptable_error_response',
-      error_info: { available_formats: error.available_formats_info }
+      { error_info: { available_formats: error.available_formats_info } }
     )
   end
 
@@ -502,7 +519,7 @@ class ApplicationController < ActionController::Base # rubocop:disable Metrics/C
         I18n.t('devise.failure.unauthorized'),
         error,
         'access_denied_response - forbidden',
-        error_links: [:permissions]
+        { error_links: [:permissions] }
       )
 
     elsif current_user && !current_user.confirmed?
@@ -511,7 +528,7 @@ class ApplicationController < ActionController::Base # rubocop:disable Metrics/C
         I18n.t('devise.failure.unconfirmed'),
         error,
         'access_denied_response - unconfirmed',
-        error_links: [:confirm]
+        { error_links: [:confirm] }
       )
 
     else
@@ -520,8 +537,8 @@ class ApplicationController < ActionController::Base # rubocop:disable Metrics/C
         :unauthorized,
         I18n.t('devise.failure.unauthenticated'),
         error,
-        'access_denied_response - unauthorized',
-        error_links: [:sign_in, :sign_up, :confirm]
+        'access_denied_response - unauthorised',
+        { error_links: [:sign_in, :sign_up, :confirm] }
       )
 
     end
@@ -533,7 +550,7 @@ class ApplicationController < ActionController::Base # rubocop:disable Metrics/C
       "Could not find the requested page: #{error.message}",
       error,
       'routing_argument_error_response',
-      error_info: { original_route: request.env['PATH_INFO'], original_http_method: request.method }
+      { error_info: { original_route: request.env['PATH_INFO'], original_http_method: request.method } }
     )
   end
 
@@ -552,7 +569,7 @@ class ApplicationController < ActionController::Base # rubocop:disable Metrics/C
       "Filter parameters were not valid: #{error.message}",
       error,
       'filter_argument_error_response',
-      error_info: error.filter_segment
+      { error_info: error.filter_segment }
     )
   end
 
@@ -562,7 +579,7 @@ class ApplicationController < ActionController::Base # rubocop:disable Metrics/C
       "Audio generation failed: #{error.message}",
       error,
       'audio_generation_error_response',
-      error_info: error.job_info
+      { error_info: error.job_info }
     )
   end
 
@@ -636,11 +653,11 @@ class ApplicationController < ActionController::Base # rubocop:disable Metrics/C
   end
 
   def validate_headers
-    raise CustomErrors::BadHeaderError if
-      response.headers.key?('Content-Length') &&
-      response.headers['Content-Length'].to_i.negative?
-    raise CustomErrors::BadHeaderError if
-      response.headers.key?(:content_length) &&
-      response.headers[:content_length].to_i.negative?
+    if response.headers.key?('Content-Length') && response.headers['Content-Length'].to_i < 0
+      raise CustomErrors::BadHeaderError
+    end
+    if response.headers.key?(:content_length) && response.headers[:content_length].to_i < 0
+      raise CustomErrors::BadHeaderError
+    end
   end
 end

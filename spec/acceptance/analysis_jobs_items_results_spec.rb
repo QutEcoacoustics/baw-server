@@ -27,7 +27,8 @@ DEFAULT_CREATE_FILE = File.join('Test1', 'Test2', 'test-CASE.csv')
 
 def create_file(
   file = DEFAULT_CREATE_FILE,
-  content = '"header1", "header2", "header3"\n"content1","content2", "content2"')
+  content = '"header1", "header2", "header3"\n"content1","content2", "content2"'
+)
 
   full_path = create_full_path(file)
   FileUtils.mkpath File.dirname(full_path)
@@ -53,7 +54,7 @@ end
 def template_object(object, key, hash, array_index = nil)
   return if object.nil? || object[key].nil?
 
-  if object[key].kind_of?(Array)
+  if object[key].is_a?(Array)
     object[key].each_index do |index|
       object[key][index] = object[key][index] % hash if array_index.nil? || array_index == index
     end
@@ -63,15 +64,15 @@ def template_object(object, key, hash, array_index = nil)
 end
 
 def insert_audio_recording_id(context, opts, array_index = 1)
-  hash = {audio_recording_id: context.audio_recording.id}
+  hash = { audio_recording_id: context.audio_recording.id }
 
   template_object(opts, :response_body_content, hash, array_index)
 end
 
 def insert_audio_recording_ids(context, opts, hash_extend = {})
   hash = {
-      audio_recording_id_1: context.analysis_jobs_item.audio_recording_id,
-      audio_recording_id_2: context.second_analysis_jobs_item.audio_recording_id
+    audio_recording_id_1: context.analysis_jobs_item.audio_recording_id,
+    audio_recording_id_2: context.second_analysis_jobs_item.audio_recording_id
   }.merge(hash_extend)
 
   template_object(opts, :response_body_content, hash)
@@ -87,7 +88,7 @@ def paging_helper(total = 0, max_page = 1, page = 1, items = 25)
       + ',"current":'
 end
 
-test_url = "/analysis_jobs/:analysis_job_id/results/:audio_recording_id/:results_path"
+test_url = '/analysis_jobs/:analysis_job_id/results/:audio_recording_id/:results_path'
 
 resource 'AnalysisJobsItemsResults' do
   shared_examples_for 'AnalysisJobsItems results' do |current_user|
@@ -113,10 +114,10 @@ resource 'AnalysisJobsItemsResults' do
     let(:site_id) { site.id }
     let(:audio_recording_id) { audio_recording.id }
 
-    let(:audio_original) { BawWorkers::Storage::AudioOriginal.new(BawWorkers::Settings.paths.original_audios) }
-    let(:audio_cache) { BawWorkers::Storage::AudioCache.new(BawWorkers::Settings.paths.cached_audios) }
-    let(:spectrogram_cache) { BawWorkers::Storage::SpectrogramCache.new(BawWorkers::Settings.paths.cached_spectrograms) }
-    let(:analysis_cache) { BawWorkers::Storage::AnalysisCache.new(BawWorkers::Settings.paths.cached_analysis_jobs) }
+    let(:audio_original) { BawWorkers::Storage::AudioOriginal.new(Settings.paths.original_audios) }
+    let(:audio_cache) { BawWorkers::Storage::AudioCache.new(Settings.paths.cached_audios) }
+    let(:spectrogram_cache) { BawWorkers::Storage::SpectrogramCache.new(Settings.paths.cached_spectrograms) }
+    let(:analysis_cache) { BawWorkers::Storage::AnalysisCache.new(Settings.paths.cached_analysis_jobs) }
 
     let(:current_user) { current_user }
 
@@ -133,23 +134,22 @@ resource 'AnalysisJobsItemsResults' do
         }
 
         standard_request_options(
-            :get,
-            'ANALYSIS (as ' + current_user.to_s + ', requesting root results directory)',
-            :ok,
-            {
-                response_body_content: [
-                    '{"meta":{"status":200,"message":"OK"',
-                    '"paging":{"page":1,"items":25,"total":2,"max_page":1,',
-                    '{"analysis_job_id":"system"',
-                    '"path":"/analysis_jobs/system/results/","name":"results","type":"directory","children":[',
-                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/","name":"%{audio_recording_id_1}","type":"directory","has_children":true',
-                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_2}/","name":"%{audio_recording_id_2}","type":"directory","has_children":true'
-                ]
-            },
-            &proc { |context, opts| insert_audio_recording_ids context, opts }
+          :get,
+          'ANALYSIS (as ' + current_user.to_s + ', requesting root results directory)',
+          :ok,
+          {
+            response_body_content: [
+              '{"meta":{"status":200,"message":"OK"',
+              '"paging":{"page":1,"items":25,"total":2,"max_page":1,',
+              '{"analysis_job_id":"system"',
+              '"path":"/analysis_jobs/system/results/","name":"results","type":"directory","children":[',
+              '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/","name":"%{audio_recording_id_1}","type":"directory","has_children":true',
+              '{"path":"/analysis_jobs/system/results/%{audio_recording_id_2}/","name":"%{audio_recording_id_2}","type":"directory","has_children":true'
+            ]
+          },
+          &proc { |context, opts| insert_audio_recording_ids context, opts }
         )
       end
-
 
       # url without '/:audio_recording_id/:results_path'
       get test_url.chomp('/:audio_recording_id/:results_path') do
@@ -165,19 +165,19 @@ resource 'AnalysisJobsItemsResults' do
         let(:items) { 1 }
 
         standard_request_options(
-            :get,
-            'ANALYSIS (as ' + current_user.to_s + ', requesting root results directory, with paging params)',
-            :ok,
-            {
-                response_body_content: [
-                    '{"meta":{"status":200,"message":"OK"',
-                    '"paging":{"page":2,"items":1,"total":2,"max_page":2,',
-                    '{"analysis_job_id":"system"',
-                    '"path":"/analysis_jobs/system/results/","name":"results","type":"directory","children":[',
-                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_2}/","name":"%{audio_recording_id_2}","type":"directory","has_children":true'
-                ]
-            },
-            &proc { |context, opts| insert_audio_recording_ids context, opts }
+          :get,
+          'ANALYSIS (as ' + current_user.to_s + ', requesting root results directory, with paging params)',
+          :ok,
+          {
+            response_body_content: [
+              '{"meta":{"status":200,"message":"OK"',
+              '"paging":{"page":2,"items":1,"total":2,"max_page":2,',
+              '{"analysis_job_id":"system"',
+              '"path":"/analysis_jobs/system/results/","name":"results","type":"directory","children":[',
+              '{"path":"/analysis_jobs/system/results/%{audio_recording_id_2}/","name":"%{audio_recording_id_2}","type":"directory","has_children":true'
+            ]
+          },
+          &proc { |context, opts| insert_audio_recording_ids context, opts }
         )
       end
     end
@@ -191,18 +191,18 @@ resource 'AnalysisJobsItemsResults' do
         let(:results_path) { '' }
 
         standard_request_options(
-            :get,
-            'ANALYSIS (as ' + current_user.to_s + ', requesting audio_recording, empty results_path)',
-            :ok,
-            {
-                response_body_content: [
-                    '{"meta":{"status":200,"message":"OK"',
-                    paging_helper(0, 0, 1, 25),
-                    '{"id":null,"analysis_job_id":"system","audio_recording_id":%{audio_recording_id_1},',
-                    '"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/","name":"%{audio_recording_id_1}","type":"directory","children":['
-                ]
-            },
-            &proc { |context, opts| insert_audio_recording_ids context, opts }
+          :get,
+          'ANALYSIS (as ' + current_user.to_s + ', requesting audio_recording, empty results_path)',
+          :ok,
+          {
+            response_body_content: [
+              '{"meta":{"status":200,"message":"OK"',
+              paging_helper(0, 0, 1, 25),
+              '{"id":null,"analysis_job_id":"system","audio_recording_id":%{audio_recording_id_1},',
+              '"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/","name":"%{audio_recording_id_1}","type":"directory","children":['
+            ]
+          },
+          &proc { |context, opts| insert_audio_recording_ids context, opts }
         )
       end
 
@@ -214,18 +214,18 @@ resource 'AnalysisJobsItemsResults' do
         }
 
         standard_request_options(
-            :get,
-            'ANALYSIS (as ' + current_user.to_s + ', requesting audio_recording, no results_path))',
-            :ok,
-            {
-                response_body_content: [
-                    '{"meta":{"status":200,"message":"OK"',
-                    paging_helper(0, 0, 1, 25),
-                    '{"id":null,"analysis_job_id":"system","audio_recording_id":%{audio_recording_id_1},',
-                    '"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/","name":"%{audio_recording_id_1}","type":"directory","children":['
-                ]
-            },
-            &proc { |context, opts| insert_audio_recording_ids context, opts }
+          :get,
+          'ANALYSIS (as ' + current_user.to_s + ', requesting audio_recording, no results_path))',
+          :ok,
+          {
+            response_body_content: [
+              '{"meta":{"status":200,"message":"OK"',
+              paging_helper(0, 0, 1, 25),
+              '{"id":null,"analysis_job_id":"system","audio_recording_id":%{audio_recording_id_1},',
+              '"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/","name":"%{audio_recording_id_1}","type":"directory","children":['
+            ]
+          },
+          &proc { |context, opts| insert_audio_recording_ids context, opts }
         )
       end
     end
@@ -236,7 +236,6 @@ resource 'AnalysisJobsItemsResults' do
       end
 
       get test_url do
-
         standard_analysis_parameters
         let(:authentication_token) {
           token(self)
@@ -244,70 +243,68 @@ resource 'AnalysisJobsItemsResults' do
         let(:results_path) { 'Test1/TEST2' }
 
         standard_request_options(
-            :get,
-            'ANALYSIS (as ' + current_user.to_s + ', requesting empty directory incorrect case that does exist)',
-            :not_found,
-            {
-                expected_json_path: 'meta/error/details',
-                response_body_content: ["Could not find results directory for analysis job 'system' for recording ", " at 'Test1/TEST2'."]
-            })
+          :get,
+          'ANALYSIS (as ' + current_user.to_s + ', requesting empty directory incorrect case that does exist)',
+          :not_found,
+          {
+            expected_json_path: 'meta/error/details',
+            response_body_content: ["Could not find results directory for analysis job 'system' for recording ", " at 'Test1/TEST2'."]
+          }
+        )
       end
 
       head test_url do
-
         standard_analysis_parameters
         let(:authentication_token) { token(self) }
         let(:results_path) { 'Test1/TEST2' }
 
         standard_request_options(
-            :head,
-            'ANALYSIS (as ' + current_user.to_s + ', requesting empty directory incorrect case that does exist)',
-            :not_found,
-            {
-                expected_response_has_content: false
-            })
+          :head,
+          'ANALYSIS (as ' + current_user.to_s + ', requesting empty directory incorrect case that does exist)',
+          :not_found,
+          {
+            expected_response_has_content: false
+          }
+        )
       end
 
       get test_url do
-
         standard_analysis_parameters
         let(:authentication_token) { token(self) }
         let(:results_path) { 'Test1/Test2' }
 
         standard_request_options(
-            :get,
-            'ANALYSIS (as ' + current_user.to_s + ', requesting empty directory that does exist)',
-            :ok,
-            {
-                expected_response_has_content: true,
-                expected_json_path: 'meta/status',
-                response_body_content: [
-                    '{"meta":{"status":200,"message":"OK"',
-                    paging_helper(0, 0),
-                    '"data":{"id":null,"analysis_job_id":"system","audio_recording_id":%{audio_recording_id_1},',
-                    '"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/Test1/Test2/","name":"Test2","type":"directory","children":[]}}'
-                ]
-            },
-            &proc { |context, opts| insert_audio_recording_ids context, opts }
+          :get,
+          'ANALYSIS (as ' + current_user.to_s + ', requesting empty directory that does exist)',
+          :ok,
+          {
+            expected_response_has_content: true,
+            expected_json_path: 'meta/status',
+            response_body_content: [
+              '{"meta":{"status":200,"message":"OK"',
+              paging_helper(0, 0),
+              '"data":{"id":null,"analysis_job_id":"system","audio_recording_id":%{audio_recording_id_1},',
+              '"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/Test1/Test2/","name":"Test2","type":"directory","children":[]}}'
+            ]
+          },
+          &proc { |context, opts| insert_audio_recording_ids context, opts }
         )
       end
 
       head test_url do
-
         standard_analysis_parameters
         let(:authentication_token) { token(self) }
         let(:results_path) { 'Test1/Test2' }
 
         standard_request_options(
-            :head,
-            'ANALYSIS (as ' + current_user.to_s + ', requesting empty directory that does exist)',
-            :ok,
-            {
-                expected_response_has_content: false
-            })
-
+          :head,
+          'ANALYSIS (as ' + current_user.to_s + ', requesting empty directory that does exist)',
+          :ok,
+          {
+            expected_response_has_content: false
+          }
+        )
       end
-
     end
 
     context 'with file' do
@@ -321,13 +318,14 @@ resource 'AnalysisJobsItemsResults' do
         let(:results_path) { 'Test1/Test2/test-case.csv' }
 
         standard_request_options(
-            :get,
-            'ANALYSIS (as ' + current_user.to_s + ', requesting file in incorrect case that does exist)',
-            :not_found,
-            {
-                expected_json_path: 'meta/error/details',
-                response_body_content: ["Could not find results directory for analysis job 'system' for recording ", " at 'Test1/Test2/test-case.csv'."]
-            })
+          :get,
+          'ANALYSIS (as ' + current_user.to_s + ', requesting file in incorrect case that does exist)',
+          :not_found,
+          {
+            expected_json_path: 'meta/error/details',
+            response_body_content: ["Could not find results directory for analysis job 'system' for recording ", " at 'Test1/Test2/test-case.csv'."]
+          }
+        )
       end
 
       head test_url do
@@ -336,47 +334,47 @@ resource 'AnalysisJobsItemsResults' do
         let(:results_path) { 'Test1/Test2/test-case.csv' }
 
         standard_request_options(
-            :head,
-            'ANALYSIS (as ' + current_user.to_s + ', requesting file in incorrect case that does exist)',
-            :not_found,
-            {
-                expected_response_has_content: false
-            })
+          :head,
+          'ANALYSIS (as ' + current_user.to_s + ', requesting file in incorrect case that does exist)',
+          :not_found,
+          {
+            expected_response_has_content: false
+          }
+        )
       end
 
       get test_url do
-
         standard_analysis_parameters
         let(:authentication_token) { token(self) }
         let(:results_path) { 'Test1/Test2/test-CASE.csv' }
 
         standard_request_options(
-            :get,
-            'ANALYSIS (as ' + current_user.to_s + ', requesting file in correct case that does exist)',
-            :ok,
-            {
-                expected_response_content_type: 'text/csv',
-                expected_response_has_content: true,
-                response_body_content: '"header1", "header2", "header3"\n"content1","content2", "content2"'
-            })
+          :get,
+          'ANALYSIS (as ' + current_user.to_s + ', requesting file in correct case that does exist)',
+          :ok,
+          {
+            expected_response_content_type: 'text/csv',
+            expected_response_has_content: true,
+            response_body_content: '"header1", "header2", "header3"\n"content1","content2", "content2"'
+          }
+        )
       end
 
       head test_url do
-
         standard_analysis_parameters
         let(:authentication_token) { token(self) }
         let(:results_path) { 'Test1/Test2/test-CASE.csv' }
 
         standard_request_options(
-            :head,
-            'ANALYSIS (as ' + current_user.to_s + ', requesting file in correct case that does exist)',
-            :ok,
-            {
-                expected_response_has_content: false,
-                expected_response_content_type: 'text/csv'
-            })
+          :head,
+          'ANALYSIS (as ' + current_user.to_s + ', requesting file in correct case that does exist)',
+          :ok,
+          {
+            expected_response_has_content: false,
+            expected_response_content_type: 'text/csv'
+          }
+        )
       end
-
     end
 
     context 'with no file system changes' do
@@ -386,13 +384,14 @@ resource 'AnalysisJobsItemsResults' do
         let(:results_path) { 'Test1/Test2/test-CASE.csv' }
 
         standard_request_options(
-            :get,
-            'ANALYSIS (as ' + current_user.to_s + ', requesting non-existent file)',
-            :not_found,
-            {
-                expected_json_path: 'meta/error/details',
-                response_body_content: ["Could not find results directory for analysis job 'system' for recording ", " at 'Test1/Test2/test-CASE.csv'."]
-            })
+          :get,
+          'ANALYSIS (as ' + current_user.to_s + ', requesting non-existent file)',
+          :not_found,
+          {
+            expected_json_path: 'meta/error/details',
+            response_body_content: ["Could not find results directory for analysis job 'system' for recording ", " at 'Test1/Test2/test-CASE.csv'."]
+          }
+        )
       end
 
       head test_url do
@@ -401,12 +400,13 @@ resource 'AnalysisJobsItemsResults' do
         let(:results_path) { 'Test1/Test2/test-CASE.csv' }
 
         standard_request_options(
-            :head,
-            'ANALYSIS (as ' + current_user.to_s + ', requesting non-existent file)',
-            :not_found,
-            {
-                expected_response_has_content: false
-            })
+          :head,
+          'ANALYSIS (as ' + current_user.to_s + ', requesting non-existent file)',
+          :not_found,
+          {
+            expected_response_has_content: false
+          }
+        )
       end
 
       get test_url do
@@ -415,13 +415,14 @@ resource 'AnalysisJobsItemsResults' do
         let(:results_path) { 'Test1/Test2' }
 
         standard_request_options(
-            :get,
-            'ANALYSIS (as ' + current_user.to_s + ', requesting non-existent dir)',
-            :not_found,
-            {
-                expected_json_path: 'meta/error/details',
-                response_body_content: ["Could not find results directory for analysis job 'system' for recording ", " at 'Test1/Test2'."]
-            })
+          :get,
+          'ANALYSIS (as ' + current_user.to_s + ', requesting non-existent dir)',
+          :not_found,
+          {
+            expected_json_path: 'meta/error/details',
+            response_body_content: ["Could not find results directory for analysis job 'system' for recording ", " at 'Test1/Test2'."]
+          }
+        )
       end
 
       head test_url do
@@ -430,12 +431,13 @@ resource 'AnalysisJobsItemsResults' do
         let(:results_path) { 'Test1/Test2' }
 
         standard_request_options(
-            :head,
-            'ANALYSIS (as ' + current_user.to_s + ', requesting non-existent dir)',
-            :not_found,
-            {
-                expected_response_has_content: false
-            })
+          :head,
+          'ANALYSIS (as ' + current_user.to_s + ', requesting non-existent dir)',
+          :not_found,
+          {
+            expected_response_has_content: false
+          }
+        )
       end
     end
 
@@ -456,37 +458,37 @@ resource 'AnalysisJobsItemsResults' do
 
         # noinspection RubyLiteralArrayInspection
         standard_request_options(
-            :get,
-            'ANALYSIS (as ' + current_user.to_s + ', requesting top dir with lots of directories and files)',
-            :ok,
-            {
-                response_body_content: [
-                    '{"meta":{"status":200,"message":"OK"',
-                    paging_helper(1),
-                    '{"id":null,"analysis_job_id":"system","audio_recording_id":%{audio_recording_id_1},',
-                    '"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/","name":"%{audio_recording_id_1}","type":"directory","children":[',
-                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/","name":"TopDir","type":"directory","has_children":true',
-                ],
-                invalid_data_content: [
-                    '{"path":".","name":".","type":"directory","children":[',
-                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/./","name":".","type":"directory","children":[',
-                    '{"path":"..","name":"..","type":"directory","children":[',
-                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/../","name":"..","type":"directory","children":[',
-                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/","name":"TopDir","type":"directory","children":[',
-                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one/","name":"one","type":"directory","children":[',
-                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one/two/","name":"two","type":"directory","children":[',
-                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one/two/three/","name":"three","type":"directory","children":[',
-                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one/two/three/four/","name":"four","type":"directory","children":[',
-                    '{"name":"five.txt","size_bytes":14,"type":"file","mime":"text/plain"}',
-                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one/two/three/four/five/","name":"five","type":"directory","children":[',
-                    '{"name":"six.txt","size_bytes":13,"type":"file","mime":"text/plain"}',
-                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one3/","name":"one3","type":"directory","children":[]}',
-                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one1/","name":"one1","type":"directory","children":[]}',
-                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one2/","name":"one2","type":"directory","children":[]}',
-                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one4/","name":"one4","type":"directory","children":[]}'
-                ]
-            },
-            &proc { |context, opts| insert_audio_recording_ids context, opts }
+          :get,
+          'ANALYSIS (as ' + current_user.to_s + ', requesting top dir with lots of directories and files)',
+          :ok,
+          {
+            response_body_content: [
+              '{"meta":{"status":200,"message":"OK"',
+              paging_helper(1),
+              '{"id":null,"analysis_job_id":"system","audio_recording_id":%{audio_recording_id_1},',
+              '"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/","name":"%{audio_recording_id_1}","type":"directory","children":[',
+              '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/","name":"TopDir","type":"directory","has_children":true'
+            ],
+            invalid_data_content: [
+              '{"path":".","name":".","type":"directory","children":[',
+              '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/./","name":".","type":"directory","children":[',
+              '{"path":"..","name":"..","type":"directory","children":[',
+              '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/../","name":"..","type":"directory","children":[',
+              '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/","name":"TopDir","type":"directory","children":[',
+              '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one/","name":"one","type":"directory","children":[',
+              '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one/two/","name":"two","type":"directory","children":[',
+              '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one/two/three/","name":"three","type":"directory","children":[',
+              '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one/two/three/four/","name":"four","type":"directory","children":[',
+              '{"name":"five.txt","size_bytes":14,"type":"file","mime":"text/plain"}',
+              '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one/two/three/four/five/","name":"five","type":"directory","children":[',
+              '{"name":"six.txt","size_bytes":13,"type":"file","mime":"text/plain"}',
+              '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one3/","name":"one3","type":"directory","children":[]}',
+              '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one1/","name":"one1","type":"directory","children":[]}',
+              '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one2/","name":"one2","type":"directory","children":[]}',
+              '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one4/","name":"one4","type":"directory","children":[]}'
+            ]
+          },
+          &proc { |context, opts| insert_audio_recording_ids context, opts }
         )
       end
 
@@ -507,26 +509,26 @@ resource 'AnalysisJobsItemsResults' do
         # one3 <--
         # one4
         standard_request_options(
-            :get,
-            'ANALYSIS (as ' + current_user.to_s + ', requesting sub dir with lots of directories and files, with paging params)',
-            :ok,
-            {
-                response_body_content: [
-                    '{"meta":{"status":200,"message":"OK"',
-                    paging_helper(5, 3, 2, 2),
-                    '{"id":null,"analysis_job_id":"system","audio_recording_id":%{audio_recording_id_1},',
-                    '"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/","name":"TopDir","type":"directory","children":[',
+          :get,
+          'ANALYSIS (as ' + current_user.to_s + ', requesting sub dir with lots of directories and files, with paging params)',
+          :ok,
+          {
+            response_body_content: [
+              '{"meta":{"status":200,"message":"OK"',
+              paging_helper(5, 3, 2, 2),
+              '{"id":null,"analysis_job_id":"system","audio_recording_id":%{audio_recording_id_1},',
+              '"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/","name":"TopDir","type":"directory","children":[',
 
-                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one2/","name":"one2","type":"directory","has_children":false}',
-                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one3/","name":"one3","type":"directory","has_children":false}',
-                ],
-                invalid_data_content:[
-                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one/","name":"one","type":"directory","has_children":true',
-                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one1/","name":"one1","type":"directory","has_children":false}',
-                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one4/","name":"one4","type":"directory","has_children":false}'
-                ]
-            },
-            &proc { |context, opts| insert_audio_recording_ids context, opts }
+              '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one2/","name":"one2","type":"directory","has_children":false}',
+              '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one3/","name":"one3","type":"directory","has_children":false}'
+            ],
+            invalid_data_content: [
+              '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one/","name":"one","type":"directory","has_children":true',
+              '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one1/","name":"one1","type":"directory","has_children":false}',
+              '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one4/","name":"one4","type":"directory","has_children":false}'
+            ]
+          },
+          &proc { |context, opts| insert_audio_recording_ids context, opts }
         )
       end
 
@@ -536,37 +538,37 @@ resource 'AnalysisJobsItemsResults' do
         let(:results_path) { 'TopDir' }
 
         standard_request_options(
-            :get,
-            'ANALYSIS (as ' + current_user.to_s + ', requesting sub dir with lots of directories and files)',
-            :ok,
-            {
-                response_body_content: [
-                    '{"meta":{"status":200,"message":"OK"',
-                    paging_helper(5),
-                    '{"id":null,"analysis_job_id":"system","audio_recording_id":%{audio_recording_id_1},',
-                    '"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/","name":"TopDir","type":"directory","children":[',
-                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one/","name":"one","type":"directory","has_children":true',
-                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one3/","name":"one3","type":"directory","has_children":false}',
-                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one1/","name":"one1","type":"directory","has_children":false}',
-                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one2/","name":"one2","type":"directory","has_children":false}',
-                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one4/","name":"one4","type":"directory","has_children":false}'
-                ],
-                invalid_data_content: [
-                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one/","name":"one","type":"directory","children":[',
-                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one/two/","name":"two","type":"directory","children":[',
-                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one/two/three/","name":"three","type":"directory","children":[',
-                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one/two/three/four/","name":"four","type":"directory","children":[',
-                    '{"name":"five.txt","size_bytes":14,"type":"file","mime":"text/plain"}',
-                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one/two/three/four/five/","name":"five","type":"directory","children":[',
-                    '{"name":"six.txt","size_bytes":13,"type":"file","mime":"text/plain"}',
-                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one3/","name":"one3","type":"directory","children":[]}',
-                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one1/","name":"one1","type":"directory","children":[]}',
-                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one2/","name":"one2","type":"directory","children":[]}',
-                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one4/","name":"one4","type":"directory","children":[]}'
-                ]
+          :get,
+          'ANALYSIS (as ' + current_user.to_s + ', requesting sub dir with lots of directories and files)',
+          :ok,
+          {
+            response_body_content: [
+              '{"meta":{"status":200,"message":"OK"',
+              paging_helper(5),
+              '{"id":null,"analysis_job_id":"system","audio_recording_id":%{audio_recording_id_1},',
+              '"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/","name":"TopDir","type":"directory","children":[',
+              '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one/","name":"one","type":"directory","has_children":true',
+              '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one3/","name":"one3","type":"directory","has_children":false}',
+              '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one1/","name":"one1","type":"directory","has_children":false}',
+              '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one2/","name":"one2","type":"directory","has_children":false}',
+              '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one4/","name":"one4","type":"directory","has_children":false}'
+            ],
+            invalid_data_content: [
+              '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one/","name":"one","type":"directory","children":[',
+              '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one/two/","name":"two","type":"directory","children":[',
+              '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one/two/three/","name":"three","type":"directory","children":[',
+              '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one/two/three/four/","name":"four","type":"directory","children":[',
+              '{"name":"five.txt","size_bytes":14,"type":"file","mime":"text/plain"}',
+              '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one/two/three/four/five/","name":"five","type":"directory","children":[',
+              '{"name":"six.txt","size_bytes":13,"type":"file","mime":"text/plain"}',
+              '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one3/","name":"one3","type":"directory","children":[]}',
+              '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one1/","name":"one1","type":"directory","children":[]}',
+              '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one2/","name":"one2","type":"directory","children":[]}',
+              '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one4/","name":"one4","type":"directory","children":[]}'
+            ]
 
-            },
-            &proc { |context, opts| insert_audio_recording_ids context, opts }
+          },
+          &proc { |context, opts| insert_audio_recording_ids context, opts }
         )
       end
 
@@ -576,27 +578,27 @@ resource 'AnalysisJobsItemsResults' do
         let(:results_path) { 'TopDir/one' }
 
         standard_request_options(
-            :get,
-            'ANALYSIS (as ' + current_user.to_s + ', requesting sub sub dir with lots of directories and files)',
-            :ok,
-            {
-                response_body_content: [
-                    '{"meta":{"status":200,"message":"OK"',
-                    paging_helper(1),
-                    '{"id":null,"analysis_job_id":"system","audio_recording_id":%{audio_recording_id_1},',
-                    '"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one/","name":"one","type":"directory","children":[',
-                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one/two/","name":"two","type":"directory","has_children":true'
-                ],
-                invalid_data_content: [
-                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one/two/","name":"two","type":"directory","children":[',
-                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one/two/three/","name":"three","type":"directory","children":[',
-                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one/two/three/four/","name":"four","type":"directory","children":[',
-                    '{"name":"five.txt","size_bytes":14,"type":"file","mime":"text/plain"}',
-                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one/two/three/four/five/","name":"five","type":"directory","children":[',
-                    '{"name":"six.txt","size_bytes":13,"type":"file","mime":"text/plain"}'
-                ]
-            },
-            &proc { |context, opts| insert_audio_recording_ids context, opts }
+          :get,
+          'ANALYSIS (as ' + current_user.to_s + ', requesting sub sub dir with lots of directories and files)',
+          :ok,
+          {
+            response_body_content: [
+              '{"meta":{"status":200,"message":"OK"',
+              paging_helper(1),
+              '{"id":null,"analysis_job_id":"system","audio_recording_id":%{audio_recording_id_1},',
+              '"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one/","name":"one","type":"directory","children":[',
+              '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one/two/","name":"two","type":"directory","has_children":true'
+            ],
+            invalid_data_content: [
+              '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one/two/","name":"two","type":"directory","children":[',
+              '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one/two/three/","name":"three","type":"directory","children":[',
+              '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one/two/three/four/","name":"four","type":"directory","children":[',
+              '{"name":"five.txt","size_bytes":14,"type":"file","mime":"text/plain"}',
+              '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one/two/three/four/five/","name":"five","type":"directory","children":[',
+              '{"name":"six.txt","size_bytes":13,"type":"file","mime":"text/plain"}'
+            ]
+          },
+          &proc { |context, opts| insert_audio_recording_ids context, opts }
         )
       end
 
@@ -606,32 +608,30 @@ resource 'AnalysisJobsItemsResults' do
         let(:results_path) { 'TopDir/one/two/three/four' }
 
         standard_request_options(
-            :get,
-            'ANALYSIS (as ' + current_user.to_s + ', requesting sub sub dir with files)',
-            :ok,
-            {
-                response_body_content: [
-                    '{"meta":{"status":200,"message":"OK"',
-                    paging_helper(2),
-                    '{"id":null,"analysis_job_id":"system","audio_recording_id":%{audio_recording_id_1},',
-                    '"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one/two/three/four/","name":"four","type":"directory","children":[',
-                    '{"mime":"text/plain","name":"five.txt","size_bytes":14,"type":"file"}',
-                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one/two/three/four/five/","name":"five","type":"directory","has_children":true}'
-                ],
-                invalid_data_content: [
-                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one/two/","name":"two","type":"directory","children":[',
-                    '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one/two/three/","name":"three","type":"directory","children":[',
-                    '{"name":"six.txt","size_bytes":13,"type":"file","mime":"text/plain"}'
-                ]
-            },
-            &proc { |context, opts| insert_audio_recording_ids context, opts }
+          :get,
+          'ANALYSIS (as ' + current_user.to_s + ', requesting sub sub dir with files)',
+          :ok,
+          {
+            response_body_content: [
+              '{"meta":{"status":200,"message":"OK"',
+              paging_helper(2),
+              '{"id":null,"analysis_job_id":"system","audio_recording_id":%{audio_recording_id_1},',
+              '"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one/two/three/four/","name":"four","type":"directory","children":[',
+              '{"mime":"text/plain","name":"five.txt","size_bytes":14,"type":"file"}',
+              '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one/two/three/four/five/","name":"five","type":"directory","has_children":true}'
+            ],
+            invalid_data_content: [
+              '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one/two/","name":"two","type":"directory","children":[',
+              '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/TopDir/one/two/three/","name":"three","type":"directory","children":[',
+              '{"name":"six.txt","size_bytes":13,"type":"file","mime":"text/plain"}'
+            ]
+          },
+          &proc { |context, opts| insert_audio_recording_ids context, opts }
         )
       end
-
     end
 
     context 'dot files are not included' do
-
       before do
         create_file('.test-dot-file', '')
       end
@@ -642,24 +642,23 @@ resource 'AnalysisJobsItemsResults' do
         let(:results_path) { '' }
 
         standard_request_options(
-            :get,
-            'ANALYSIS (as ' + current_user.to_s + ', requesting top dir ensuring no dot files)',
-            :ok,
-            {
-                response_body_content: [
-                    '{"meta":{"status":200,"message":"OK"',
-                    paging_helper(0, 0),
-                    '{"id":null,"analysis_job_id":"system","audio_recording_id":%{audio_recording_id_1},',
-                    '"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/","name":"%{audio_recording_id_1}","type":"directory","children":['
-                ],
-                invalid_data_content: [
-                    '{"name":".test-dot-file","type":"file","size_bytes":0,"mime":""}'
-                ]
-            },
-            &proc { |context, opts| insert_audio_recording_ids context, opts }
+          :get,
+          'ANALYSIS (as ' + current_user.to_s + ', requesting top dir ensuring no dot files)',
+          :ok,
+          {
+            response_body_content: [
+              '{"meta":{"status":200,"message":"OK"',
+              paging_helper(0, 0),
+              '{"id":null,"analysis_job_id":"system","audio_recording_id":%{audio_recording_id_1},',
+              '"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/","name":"%{audio_recording_id_1}","type":"directory","children":['
+            ],
+            invalid_data_content: [
+              '{"name":".test-dot-file","type":"file","size_bytes":0,"mime":""}'
+            ]
+          },
+          &proc { |context, opts| insert_audio_recording_ids context, opts }
         )
       end
-
     end
 
     context 'escaping result dir is not not possible' do
@@ -668,14 +667,10 @@ resource 'AnalysisJobsItemsResults' do
         create_file('/../parent-file.png', '')
 
         path = create_full_path('../parent-file.png')
-        unless File.exist?(path)
-          raise "parent-file not found"
-        end
+        raise 'parent-file not found' unless File.exist?(path)
 
         path2 = Dir.home + '/home-file.png'
-        unless File.exist?(path2)
-          raise "home-file not found"
-        end
+        raise 'home-file not found' unless File.exist?(path2)
       end
 
       after do
@@ -693,11 +688,11 @@ resource 'AnalysisJobsItemsResults' do
           'ANALYSIS (as ' + current_user.to_s + ', requesting file above result root fails)',
           :not_found,
           {
-              expected_json_path: 'meta/error/details',
-              response_body_content: [
-                "Could not find the requested item: Could not find results directory for analysis job 'system' for recording",
-                " at '../parent-file.png'."
-              ]
+            expected_json_path: 'meta/error/details',
+            response_body_content: [
+              "Could not find the requested item: Could not find results directory for analysis job 'system' for recording",
+              " at '../parent-file.png'."
+            ]
           }
         )
       end
@@ -712,15 +707,14 @@ resource 'AnalysisJobsItemsResults' do
           'ANALYSIS (as ' + current_user.to_s + ', requesting file above result root fails)',
           :not_found,
           {
-              expected_json_path: 'meta/error/details',
-              response_body_content: [
-                "Could not find the requested item: Could not find results directory for analysis job 'system' for recording",
-                " at '~/parent-file.png'."
-              ]
+            expected_json_path: 'meta/error/details',
+            response_body_content: [
+              "Could not find the requested item: Could not find results directory for analysis job 'system' for recording",
+              " at '~/parent-file.png'."
+            ]
           }
         )
       end
-
     end
 
     context 'reading from sqlite3 files' do
@@ -730,10 +724,9 @@ resource 'AnalysisJobsItemsResults' do
 
       context 'sqlite individual files' do
         get test_url do
-
           standard_analysis_parameters
           let(:authentication_token) { token(self) }
-          let(:results_path) { SQLITE_FIXTURE + '/BLENDED.Tile_20160727T110000Z_120.png'}
+          let(:results_path) { SQLITE_FIXTURE + '/BLENDED.Tile_20160727T110000Z_120.png' }
 
           standard_request_options(
             :get,
@@ -743,15 +736,15 @@ resource 'AnalysisJobsItemsResults' do
               expected_response_content_type: 'image/png',
               expected_response_has_content: true,
               # PNG magic header
-              response_body_content: [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a].pack("c*")
-            })
+              response_body_content: [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a].pack('c*')
+            }
+          )
         end
 
         get test_url do
-
           standard_analysis_parameters
           let(:authentication_token) { token(self) }
-          let(:results_path) { SQLITE_FIXTURE + '/sub_dir_2/BLENDED.Tile_20160727T123000Z_7.5.png'}
+          let(:results_path) { SQLITE_FIXTURE + '/sub_dir_2/BLENDED.Tile_20160727T123000Z_7.5.png' }
 
           standard_request_options(
             :get,
@@ -761,15 +754,16 @@ resource 'AnalysisJobsItemsResults' do
               expected_response_content_type: 'image/png',
               expected_response_has_content: true,
               # PNG magic header
-              response_body_content: [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a].pack("c*")
-            })
+              response_body_content: [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a].pack('c*')
+            }
+          )
         end
 
         get test_url do
           standard_analysis_parameters
           let(:authentication_token) { token(self) }
           # The `blended` part of the path is not lowercase in the fixture - this tests 404 and case sensitivity
-          let(:results_path) { SQLITE_FIXTURE + '/sub_dir_2/blended.Tile_20160727T123000Z_7.5.png'}
+          let(:results_path) { SQLITE_FIXTURE + '/sub_dir_2/blended.Tile_20160727T123000Z_7.5.png' }
 
           standard_request_options(
             :get,
@@ -778,29 +772,31 @@ resource 'AnalysisJobsItemsResults' do
             {
               expected_json_path: 'meta/error/details',
               response_body_content: [
-                  "Could not find results directory for analysis job 'system' for recording '",
-                  " at '#{SQLITE_FIXTURE}/sub_dir_2/blended.Tile_20160727T123000Z_7.5.png'."
+                "Could not find results directory for analysis job 'system' for recording '",
+                " at '#{SQLITE_FIXTURE}/sub_dir_2/blended.Tile_20160727T123000Z_7.5.png'."
               ]
-            })
+            }
+          )
         end
 
         get test_url do
           standard_analysis_parameters
           let(:authentication_token) { token(self) }
           # The `SUB` part of the path is not uppercase in the fixture - this tests 404 and case sensitivity
-          let(:results_path) { SQLITE_FIXTURE + '/SUB_dir_2/BLENDED.Tile_20160727T123000Z_7.5.png'}
+          let(:results_path) { SQLITE_FIXTURE + '/SUB_dir_2/BLENDED.Tile_20160727T123000Z_7.5.png' }
 
           standard_request_options(
-              :get,
-              'ANALYSIS (as ' + current_user.to_s + ', requesting file in directory in incorrect case that does exist)',
-              :not_found,
-              {
-                  expected_json_path: 'meta/error/details',
-                  response_body_content: [
-                      "Could not find results directory for analysis job 'system' for recording ",
-                      " at '#{SQLITE_FIXTURE}/SUB_dir_2/BLENDED.Tile_20160727T123000Z_7.5.png'."
-                  ]
-              })
+            :get,
+            'ANALYSIS (as ' + current_user.to_s + ', requesting file in directory in incorrect case that does exist)',
+            :not_found,
+            {
+              expected_json_path: 'meta/error/details',
+              response_body_content: [
+                "Could not find results directory for analysis job 'system' for recording ",
+                " at '#{SQLITE_FIXTURE}/SUB_dir_2/BLENDED.Tile_20160727T123000Z_7.5.png'."
+              ]
+            }
+          )
         end
       end
 
@@ -822,10 +818,9 @@ resource 'AnalysisJobsItemsResults' do
                 '{"mime":"image/png","name":"BLENDED.Tile_20160727T110000Z_240.png","size_bytes":4393,"type":"file"}',
 
                 '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/%{sqlite3_file}/sub_dir_1/","name":"sub_dir_1","type":"directory","has_children":true',
-                '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/%{sqlite3_file}/sub_dir_2/","name":"sub_dir_2","type":"directory","has_children":true',
+                '{"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/%{sqlite3_file}/sub_dir_2/","name":"sub_dir_2","type":"directory","has_children":true'
               ],
-              invalid_data_content: [
-              ]
+              invalid_data_content: []
             },
             &proc { |context, opts|
               insert_audio_recording_ids context, opts, { sqlite3_file: SQLITE_FIXTURE }
@@ -836,7 +831,7 @@ resource 'AnalysisJobsItemsResults' do
         get test_url do
           standard_analysis_parameters
           let(:authentication_token) { token(self) }
-          let(:results_path) { "IDontExist.sqlite3" }
+          let(:results_path) { 'IDontExist.sqlite3' }
 
           standard_request_options(
             :get,
@@ -877,11 +872,11 @@ resource 'AnalysisJobsItemsResults' do
                 '{"id":null,"analysis_job_id":"system","audio_recording_id":%{audio_recording_id_1},',
                 '"path":"/analysis_jobs/system/results/%{audio_recording_id_1}/%{sqlite3_file}/sub_dir_1/","name":"sub_dir_1","type":"directory","children":[',
 
-                '{"mime":"image/png","name":"BLENDED.Tile_20160727T123600Z_3.2.png","size_bytes":97722,"type":"file"}',
+                '{"mime":"image/png","name":"BLENDED.Tile_20160727T123600Z_3.2.png","size_bytes":97722,"type":"file"}'
               ],
-              invalid_data_content:[
+              invalid_data_content: [
                 'BLENDED.Tile_20160727T124536Z_3.2.png',
-                'BLENDED.Tile_20160727T122624Z_3.2.png',
+                'BLENDED.Tile_20160727T122624Z_3.2.png'
               ]
             },
             &proc { |context, opts|
@@ -890,7 +885,6 @@ resource 'AnalysisJobsItemsResults' do
           )
         end
       end
-
     end
   end
 
@@ -905,5 +899,4 @@ resource 'AnalysisJobsItemsResults' do
   describe 'Reader user' do
     it_should_behave_like 'AnalysisJobsItems results', :reader
   end
-
 end

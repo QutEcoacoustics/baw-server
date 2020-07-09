@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # make sure head requests get the parameters as a query string, not
 # in the body
 if ENV['RAILS_ENV'] == 'test'
@@ -24,27 +26,23 @@ if ENV['RAILS_ENV'] == 'test'
     end
   end
 
-# need to patch json writing to ensure binary response_body
-# does not get included.
+  # need to patch json writing to ensure binary response_body
+  # does not get included.
   module RspecApiDocumentation
     module Writers
       module Formatter
-
         def self.to_json(object)
           json_obj = object.as_json
 
           if json_obj.include? :requests
             json_obj.requests.each do |request|
               check_non_ascii_printable = request.response_body =~ /[^[:print:]]/
-              unless check_non_ascii_printable.nil?
-                request[:response_body] = 'Cannot be printed.'
-              end
+              request[:response_body] = 'Cannot be printed.' unless check_non_ascii_printable.nil?
             end
           end
 
           JSON.pretty_generate(json_obj)
         end
-
       end
     end
   end

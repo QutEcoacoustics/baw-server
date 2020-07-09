@@ -1,6 +1,8 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 
-describe "User account actions", :type => :feature do
+xdescribe 'User account actions', type: :feature do
   # from: http://guides.rubyonrails.org/testing.html
   # The ActionMailer::Base.deliveries array is only reset automatically in
   # ActionMailer::TestCase tests. If you want to have a clean slate outside Action
@@ -9,12 +11,9 @@ describe "User account actions", :type => :feature do
 
   let(:last_email) { ActionMailer::Base.deliveries.last }
 
-
-
   context 'log in' do
-
     it 'should succeed when using email' do
-      user = FactoryGirl.create(:user)
+      user = FactoryBot.create(:user)
       visit root_url
       first(:link, I18n.t('devise.shared.links.sign_in')).click
 
@@ -28,7 +27,7 @@ describe "User account actions", :type => :feature do
     end
 
     it 'should succeed when using user_name' do
-      user = FactoryGirl.create(:user)
+      user = FactoryBot.create(:user)
       visit root_url
       first(:link, I18n.t('devise.shared.links.sign_in')).click
 
@@ -42,7 +41,7 @@ describe "User account actions", :type => :feature do
     end
 
     it 'should fail when invalid' do
-      user = FactoryGirl.create(:user)
+      user = FactoryBot.create(:user)
       visit root_url
       first(:link, I18n.t('devise.shared.links.sign_in')).click
 
@@ -54,12 +53,11 @@ describe "User account actions", :type => :feature do
       expect(current_path).to eq(new_user_session_path)
       expect(page).to have_content('Invalid login or password.')
     end
-
   end
 
   context 'sign up' do
     it 'should succeed with valid values' do
-      #user = FactoryGirl.create(:user)
+      #user = FactoryBot.create(:user)
       user_name = 'tester_tester'
       email = 'test.email@example.com'
       password = 'password123'
@@ -78,7 +76,7 @@ describe "User account actions", :type => :feature do
     end
 
     it 'should fail when invalid' do
-      #user = FactoryGirl.create(:user)
+      #user = FactoryBot.create(:user)
       user_name = 'tester_tester!@'
       email = 'test.email@example.com'
       password = 'password123'
@@ -99,10 +97,9 @@ describe "User account actions", :type => :feature do
   end
 
   context 'edit account info' do
-
     before(:each) do
       @old_password = 'old password'
-      @user = FactoryGirl.create(:user, password: @old_password)
+      @user = FactoryBot.create(:user, password: @old_password)
       login_as @user, scope: :user
     end
 
@@ -130,7 +127,7 @@ describe "User account actions", :type => :feature do
       #expect(page).to have_content('user_span1.png')
       expect(page.find('.user_image div img')['src']).to include('user_span1.png')
       expect(page).to have_content(new_user_name)
-      expect(page).to have_content('Currently waiting confirmation for: '+new_email)
+      expect(page).to have_content('Currently waiting confirmation for: ' + new_email)
 
       # For some reason the timezone does not show up in the capybara page - i assume because it requires javascript
       #expect(page).to have_content(new_time_zone)
@@ -172,7 +169,7 @@ describe "User account actions", :type => :feature do
       visit edit_user_registration_path
       expect(page).to_not have_content('user_span1.png')
       expect(page).to_not have_content(new_user_name)
-      expect(page).to_not have_content('Currently waiting confirmation for: '+new_email)
+      expect(page).to_not have_content('Currently waiting confirmation for: ' + new_email)
 
       expect(page).to have_content(@user.user_name)
       expect(page).to_not have_content(@user.email)
@@ -190,12 +187,11 @@ describe "User account actions", :type => :feature do
       expect(current_path).to eq(root_path)
       expect(page).to have_content('Logged in successfully.')
     end
-
   end
 
   context 'resend unlock' do
     it 'should succeed when using user_name' do
-      user = FactoryGirl.create(:user)
+      user = FactoryBot.create(:user)
       user.lock_access!
 
       visit root_url
@@ -213,7 +209,7 @@ describe "User account actions", :type => :feature do
     end
 
     it 'should succeed when using email' do
-      user = FactoryGirl.create(:user)
+      user = FactoryBot.create(:user)
       user.lock_access!
 
       visit root_url
@@ -233,7 +229,7 @@ describe "User account actions", :type => :feature do
 
   context 'reset password' do
     it 'should succeed when using user_name' do
-      user = FactoryGirl.create(:user)
+      user = FactoryBot.create(:user)
       user.lock_access!
 
       visit root_url
@@ -250,7 +246,7 @@ describe "User account actions", :type => :feature do
       expect(last_email.body.to_s).to include('change your password')
     end
     it 'should succeed when using email' do
-      user = FactoryGirl.create(:user)
+      user = FactoryBot.create(:user)
       user.lock_access!
 
       visit root_url
@@ -269,7 +265,7 @@ describe "User account actions", :type => :feature do
 
     it 'email is sent and password is changed successfully' do
       # create user and go to forgot password page
-      user = FactoryGirl.create(:user)
+      user = FactoryBot.create(:user)
       visit root_url
       find(:xpath, "/descendant::a[@href='/my_account/sign_in'][1]").click
 
@@ -286,22 +282,22 @@ describe "User account actions", :type => :feature do
 
       # extract token from mail body
       mail_body = last_email.body.to_s
-      token = mail_body[/#{:reset_password.to_s}_token=([^"]+)/, 1]
+      token = mail_body[/reset_password_token=([^"]+)/, 1]
 
       visit edit_user_password_path(reset_password_token: token) # http://stackoverflow.com/a/18262856/31567
 
       # fill in incorrectly
       #save_and_open_page
-      fill_in "user_password", :with => "foobar"
-      fill_in "user_password_confirmation", :with => "foobar1"
+      fill_in 'user_password', with: 'foobar'
+      fill_in 'user_password_confirmation', with: 'foobar1'
       find(:xpath, '/descendant::input[@type="submit"]').click
 
       expect(page).to have_content('Please review the problems below')
       expect(page).to have_content("doesn't match")
 
       # fill in correctly
-      fill_in "user_password", :with => "foobar11"
-      fill_in "user_password_confirmation", :with => "foobar11"
+      fill_in 'user_password', with: 'foobar11'
+      fill_in 'user_password_confirmation', with: 'foobar11'
       find(:xpath, '/descendant::input[@type="submit"]').click
       expect(current_path).to eq('/')
       expect(page).to have_content('Your password was changed successfully. You are now logged in.')
@@ -309,7 +305,7 @@ describe "User account actions", :type => :feature do
 
     it 'email is sent and password can be changed for restricted user name' do
       # create user and go to forgot password page
-      user = FactoryGirl.build(:user, user_name: 'aDmin')
+      user = FactoryBot.build(:user, user_name: 'aDmin')
       user.save!(validate: false)
 
       visit root_url
@@ -328,34 +324,32 @@ describe "User account actions", :type => :feature do
 
       # extract token from mail body
       mail_body = last_email.body.to_s
-      token = mail_body[/#{:reset_password.to_s}_token=([^"]+)/, 1]
+      token = mail_body[/reset_password_token=([^"]+)/, 1]
 
       visit edit_user_password_path(reset_password_token: token) # http://stackoverflow.com/a/18262856/31567
 
       # fill in incorrectly
       #save_and_open_page
-      fill_in "user_password", :with => "foobar"
-      fill_in "user_password_confirmation", :with => "foobar1"
+      fill_in 'user_password', with: 'foobar'
+      fill_in 'user_password_confirmation', with: 'foobar1'
       find(:xpath, '/descendant::input[@type="submit"]').click
 
       expect(page).to have_content('Please review the problems below')
       expect(page).to have_content("doesn't match")
 
       # fill in correctly
-      fill_in "user_password", :with => "foobar11"
-      fill_in "user_password_confirmation", :with => "foobar11"
+      fill_in 'user_password', with: 'foobar11'
+      fill_in 'user_password_confirmation', with: 'foobar11'
       find(:xpath, '/descendant::input[@type="submit"]').click
       expect(current_path).to eq('/')
       expect(page).to have_content('Your password was changed successfully. You are now logged in.')
     end
   end
-
 end
 
-
-describe 'MANAGE User Accounts as admin user', :type => :feature do
+xdescribe 'MANAGE User Accounts as admin user', type: :feature do
   before(:each) do
-    admin = FactoryGirl.create(:admin)
+    admin = FactoryBot.create(:admin)
     login_as admin, scope: :user
   end
 
@@ -366,14 +360,14 @@ describe 'MANAGE User Accounts as admin user', :type => :feature do
   end
 
   it 'shows user account details' do
-    user = FactoryGirl.create(:user)
-    FactoryGirl.create(:bookmark, creator: user)
+    user = FactoryBot.create(:user)
+    FactoryBot.create(:bookmark, creator: user)
     visit user_account_path(user)
     expect(page).to have_content(user.user_name)
   end
 
   it 'updates user_account when filling out form correctly' do
-    user = FactoryGirl.create(:user)
+    user = FactoryBot.create(:user)
     visit edit_user_account_path(user)
     fill_in 'user[user_name]', with: 'test name'
     fill_in 'user[email]', with: 'test@example.com'
@@ -383,34 +377,34 @@ describe 'MANAGE User Accounts as admin user', :type => :feature do
   end
 
   it 'cannot delete account' do
-    FactoryGirl.create(:user)
+    FactoryBot.create(:user)
     visit user_accounts_path
     expect(page).not_to have_content('Cancel my account')
   end
 
   it 'provides link to Projects Sites Bookmarks Annotations Comments' do
-    user = FactoryGirl.create(:user)
+    user = FactoryBot.create(:user)
     visit user_account_path(user)
     expect(page).to have_content('Their Projects Their Sites Their Bookmarks Their Annotations')
   end
 
   it 'lists user\'s projects' do
-    user = FactoryGirl.create(:user)
-    project = FactoryGirl.create(:project)
-    permission = FactoryGirl.create(:write_permission, user_id: user.id, project_id: project.id)
+    user = FactoryBot.create(:user)
+    project = FactoryBot.create(:project)
+    permission = FactoryBot.create(:write_permission, user_id: user.id, project_id: project.id)
     visit projects_user_account_path(user)
     expect(page).to have_content('Project Sites Permission')
     expect(page).to have_content(project.name)
   end
 end
 
-describe 'MANAGE User Accounts as user', :type => :feature do
+xdescribe 'MANAGE User Accounts as user', type: :feature do
   before(:each) do
-    @user = FactoryGirl.create(:user)
+    @user = FactoryBot.create(:user)
     login_as @user, scope: :user
   end
 
-  let(:no_access_user){ FactoryGirl.create(:user)}
+  let(:no_access_user) { FactoryBot.create(:user) }
 
   it 'denies access' do
     visit user_accounts_path
@@ -426,30 +420,29 @@ describe 'MANAGE User Accounts as user', :type => :feature do
 
   context 'links available viewing other user page' do
     # broken - don't know how to fix
-      xit 'should not link to projects' do
-        visit user_account_path(no_access_user)
-        expect(find('nav[role=navigation]')).to_not have_content('Projects')
-      end
-      xit 'should not link to sites' do
-        visit user_account_path(no_access_user)
-        expect(find('nav[role=navigation]')).to_not have_content('Sites')
-      end
-      xit 'should not link to bookmarks' do
-        visit user_account_path(no_access_user)
-        expect(find('nav[role=navigation]')).to_not have_content('Bookmarks')
-      end
-      xit 'should not link to annotations' do
-        visit user_account_path(no_access_user)
-        expect(find('nav[role=navigation]')).to_not have_content('Annotations')
-      end
-      xit 'should not link to comments' do
-        visit user_account_path(no_access_user)
-        expect(find('nav[role=navigation]')).to_not have_content('Comments')
-      end
+    xit 'should not link to projects' do
+      visit user_account_path(no_access_user)
+      expect(find('nav[role=navigation]')).to_not have_content('Projects')
+    end
+    xit 'should not link to sites' do
+      visit user_account_path(no_access_user)
+      expect(find('nav[role=navigation]')).to_not have_content('Sites')
+    end
+    xit 'should not link to bookmarks' do
+      visit user_account_path(no_access_user)
+      expect(find('nav[role=navigation]')).to_not have_content('Bookmarks')
+    end
+    xit 'should not link to annotations' do
+      visit user_account_path(no_access_user)
+      expect(find('nav[role=navigation]')).to_not have_content('Annotations')
+    end
+    xit 'should not link to comments' do
+      visit user_account_path(no_access_user)
+      expect(find('nav[role=navigation]')).to_not have_content('Comments')
+    end
   end
 
   context 'links available viewing current user page' do
-
     it 'should link to projects' do
       visit my_account_path
       expect(find('.right-nav-bar nav[role=navigation]')).to have_content('Projects')
@@ -477,15 +470,15 @@ describe 'MANAGE User Accounts as user', :type => :feature do
   end
 
   it 'denies access to user projects page' do
-    user = FactoryGirl.create(:user)
+    user = FactoryBot.create(:user)
     visit projects_user_account_path(user)
     expect(page).to have_content(I18n.t('devise.failure.unauthorized'))
   end
 end
 
-describe 'User profile pages' do
+xdescribe 'User profile pages' do
   before(:each) do
-    @user = FactoryGirl.create(:user)
+    @user = FactoryBot.create(:user)
     login_as @user, scope: :user
   end
 

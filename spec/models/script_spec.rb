@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 
 describe Script, type: :model do
@@ -49,15 +51,14 @@ describe Script, type: :model do
     expect(script.group_id).to be script.id
   end
 
-  describe "latest and earliest versions" do
+  describe 'latest and earliest versions' do
     let!(:three_versions) {
       [
-          create(:script, version: 1.0, id:999),
-          create(:script, version: 1.5, group_id: 999),
-          create(:script, version: 1.6, group_id: 999)
+        create(:script, version: 1.0, id: 999),
+        create(:script, version: 1.5, group_id: 999),
+        create(:script, version: 1.6, group_id: 999)
       ]
     }
-
 
     it 'when there\'s only item in the group, it is both latest and earliest' do
       script = create(:script)
@@ -76,7 +77,5 @@ describe Script, type: :model do
       expect(three_versions[1].is_first_version?).to be false
       expect(three_versions[2].is_first_version?).to be false
     end
-
   end
-
 end

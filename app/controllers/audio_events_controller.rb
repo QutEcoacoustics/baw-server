@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'csv'
 
 class AudioEventsController < ApplicationController
@@ -11,10 +13,10 @@ class AudioEventsController < ApplicationController
     get_audio_recording
 
     @audio_events, opts = Settings.api_response.response_advanced(
-        api_filter_params,
-        Access::ByPermission.audio_events(current_user, Access::Core.levels, @audio_recording),
-        AudioEvent,
-        AudioEvent.filter_settings
+      api_filter_params,
+      Access::ByPermission.audio_events(current_user, Access::Core.levels, @audio_recording),
+      AudioEvent,
+      AudioEvent.filter_settings
     )
     respond_index(opts)
   end
@@ -24,7 +26,7 @@ class AudioEventsController < ApplicationController
     # allow logged-in users to access reference audio events
     # they would otherwise not have access to
 
-    request_params = audio_event_show_params.dup.symbolize_keys
+    request_params = audio_event_show_params.to_h
     request_params[:audio_event_id] = request_params[:id]
 
     @audio_recording = auth_custom_audio_recording(request_params)
@@ -87,10 +89,10 @@ class AudioEventsController < ApplicationController
     do_authorize_class
 
     filter_response, opts = Settings.api_response.response_advanced(
-        api_filter_params,
-        Access::ByPermission.audio_events(current_user),
-        AudioEvent,
-        AudioEvent.filter_settings
+      api_filter_params,
+      Access::ByPermission.audio_events(current_user),
+      AudioEvent,
+      AudioEvent.filter_settings
     )
     respond_filter(filter_response, opts)
   end
@@ -99,7 +101,6 @@ class AudioEventsController < ApplicationController
   # GET /projects/:project_id/audio_events/download
   # GET /projects/:project_id/sites/:site_id/audio_events/download
   def download
-
     params_cleaned = CleanParams.perform(audio_event_download_params)
 
     is_authorized = false
@@ -151,11 +152,11 @@ class AudioEventsController < ApplicationController
     end
 
     # start offset
-    if params_cleaned[:start_offset]
-      start_offset = params_cleaned[:start_offset].to_f
-    else
-      start_offset = 0
-    end
+    start_offset = if params_cleaned[:start_offset]
+                     params_cleaned[:start_offset].to_f
+                   else
+                     0
+                   end
 
     # end offset
     if params_cleaned[:end_offset]
@@ -165,32 +166,22 @@ class AudioEventsController < ApplicationController
     end
 
     # timezone
-    if params_cleaned[:selected_timezone_name]
-      timezone_name = params_cleaned[:selected_timezone_name]
-    else
-      timezone_name = 'UTC'
-    end
+    timezone_name = params_cleaned[:selected_timezone_name] || 'UTC'
 
     unless is_authorized
-      fail CustomErrors::RoutingArgumentError, 'must provide existing audio_recording_id, start_offset, and end_offset or project_id or site_id or user_id'
+      raise CustomErrors::RoutingArgumentError, 'must provide existing audio_recording_id, start_offset, and end_offset or project_id or site_id or user_id'
     end
 
     # create file name
     time_now = Time.zone.now
-    file_name_append = "#{time_now.strftime('%Y%m%d-%H%M%S')}"
+    file_name_append = time_now.strftime('%Y%m%d-%H%M%S').to_s
     file_name = 'annotations'
 
-    unless user.blank?
-      file_name = NameyWamey.create_user_name(user)
-    end
+    file_name = NameyWamey.create_user_name(user) unless user.blank?
 
-    unless project.blank?
-      file_name = NameyWamey.create_project_name(project)
-    end
+    file_name = NameyWamey.create_project_name(project) unless project.blank?
 
-    unless site.blank?
-      file_name = NameyWamey.create_site_name(site.projects.first, site)
-    end
+    file_name = NameyWamey.create_site_name(site.projects.first, site) unless site.blank?
 
     unless audio_recording.blank?
       file_name = NameyWamey.create_audio_recording_name(audio_recording, start_offset, end_offset)
@@ -212,30 +203,33 @@ class AudioEventsController < ApplicationController
 
   def audio_event_params
     params.require(:audio_event).permit(
-        :audio_recording_id,
-        :start_time_seconds, :end_time_seconds,
-        :low_frequency_hertz, :high_frequency_hertz,
-        :is_reference,
-        tags_attributes: [:is_taxanomic, :text, :type_of_tag, :retired, :notes],
-        tag_ids: [])
+      :audio_recording_id,
+      :start_time_seconds, :end_time_seconds,
+      :low_frequency_hertz, :high_frequency_hertz,
+      :is_reference,
+      tags_attributes: [:is_taxanomic, :text, :type_of_tag, :retired, :notes],
+      tag_ids: []
+    )
   end
 
   def audio_event_index_params
     params.permit(
-        :start_offset, :end_offset,
-        :format, :audio_recording_id, audio_event: {})
+      :start_offset, :end_offset,
+      :format, :audio_recording_id, audio_event: {}
+    )
   end
 
   def audio_event_download_params
     params.permit(
-        :audio_recording_id, :audioRecordingId, :audiorecording_id, :audiorecordingId, :recording_id, :recordingId,
-        :user_id, :userId,
-        :project_id, :projectId,
-        :site_id, :siteId,
-        :start_offset, :startOffset,
-        :end_offset, :endOffset,
-        :selected_timezone_name, :selectedTimezoneName,
-        :format)
+      :audio_recording_id, :audioRecordingId, :audiorecording_id, :audiorecordingId, :recording_id, :recordingId,
+      :user_id, :userId,
+      :project_id, :projectId,
+      :site_id, :siteId,
+      :start_offset, :startOffset,
+      :end_offset, :endOffset,
+      :selected_timezone_name, :selectedTimezoneName,
+      :format
+    )
   end
 
   def audio_event_show_params
@@ -246,9 +240,6 @@ class AudioEventsController < ApplicationController
     @audio_recording = AudioRecording.find(params[:audio_recording_id])
 
     # avoid the same project assigned more than once to a site
-    if defined?(@audio_event) && @audio_event.audio_recording.blank?
-      @audio_event.audio_recording = @audio_recording
-    end
+    @audio_event.audio_recording = @audio_recording if defined?(@audio_event) && @audio_event.audio_recording.blank?
   end
-
 end

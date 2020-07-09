@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 require 'helpers/resque_helper'
 require 'aasm/rspec'
@@ -9,8 +11,8 @@ describe AnalysisJob, type: :model do
   #it {should have_many(:analysis_items)}
 
   it { is_expected.to belong_to(:creator).with_foreign_key(:creator_id) }
-  it { is_expected.to belong_to(:updater).with_foreign_key(:updater_id) }
-  it { is_expected.to belong_to(:deleter).with_foreign_key(:deleter_id) }
+  it { is_expected.to belong_to(:updater).with_foreign_key(:updater_id).optional }
+  it { is_expected.to belong_to(:deleter).with_foreign_key(:deleter_id).optional }
 
   it { is_expected.to validate_presence_of(:name) }
   it 'is invalid without a name' do
@@ -31,12 +33,13 @@ describe AnalysisJob, type: :model do
   end
 
   it 'fails validation when script is nil' do
-    test_item = FactoryGirl.build(:analysis_job)
+    test_item = FactoryBot.build(:analysis_job)
     test_item.script = nil
 
     expect(subject.valid?).to be_falsey
-    expect(subject.errors[:script].size).to eq(1)
-    expect(subject.errors[:script].to_s).to match(/must exist as an object or foreign key/)
+
+    expect(subject.errors[:script]).to have(1).items
+    expect(subject.errors[:script].to_s).to match(/must exist/)
   end
 
   it { is_expected.to validate_presence_of(:custom_settings) }
@@ -54,11 +57,9 @@ describe AnalysisJob, type: :model do
     expect(build(:analysis_job, saved_search: nil)).not_to be_valid
   end
 
-
-
   describe 'state machine' do
     let(:analysis_job) {
-       create(:analysis_job)
+      create(:analysis_job)
     }
 
     it 'defines the initialize_workflow event (allows before_save->new)' do
@@ -126,5 +127,4 @@ describe AnalysisJob, type: :model do
       expect(analysis_job).to transition_from(:completed).to(:processing).on_event(:retry)
     end
   end
-
 end

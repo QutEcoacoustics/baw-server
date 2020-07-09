@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 #
 # A Range Request processor, modified and ported to Ruby by Mark Cottman-Fields.
 #
@@ -21,7 +23,6 @@
 #
 
 class RangeRequest
-
   module Constants
     MULTIPART_BOUNDARY = '<q1w2e3r4t5y6u7i8o9p0>'
     MULTIPART_CONTENT_TYPE = 'multipart/byteranges boundary=' + MULTIPART_BOUNDARY
@@ -30,8 +31,7 @@ class RangeRequest
     MULTIPART_DASH_LINE_BREAK_LENGTH = 8
     CONVERT_INDEX_TO_LENGTH = 1
     CONVERT_LENGTH_TO_INDEX = -1
-    REQUIRED_PARAMETERS = [:start_offset, :end_offset, :recorded_date, :site_id, :site_name, :ext, :file_path, :media_type]
-
+    REQUIRED_PARAMETERS = [:start_offset, :end_offset, :recorded_date, :site_id, :site_name, :ext, :file_path, :media_type].freeze
 
     HTTP_HEADER_ACCEPT_RANGES = 'Accept-Ranges'
     HTTP_HEADER_ACCEPT_RANGES_BYTES = 'bytes'
@@ -65,21 +65,18 @@ class RangeRequest
 
   # @param [int] max_range_size Maximum range length in bytes
   # @param [int] write_buffer_size Buffer write size in bytes
-  def initialize(max_range_size = 512000, write_buffer_size = 10240)
+  def initialize(max_range_size = 512_000, write_buffer_size = 10_240)
     @max_range_size = max_range_size
     @write_buffer_size = write_buffer_size
   end
 
   # @param [Hash] options
   def build_response(options, rails_request)
-
     check_options(options, REQUIRED_PARAMETERS)
 
     info = response_info(options, rails_request)
 
-    unless info[:requested_range].blank?
-      info.deep_merge!(response_range(info))
-    end
+    info.deep_merge!(response_range(info)) unless info[:requested_range].blank?
 
     # auth is performed elsewhere
     # only HTTP get will access this
@@ -90,7 +87,6 @@ class RangeRequest
     info.deep_merge!(response_conditions_etag_match(info))
     info.deep_merge!(response_conditions_etag_no_match(info))
     info.deep_merge!(response_conditions_range(info))
-
 
     unless info[:response_is_range]
       info[:range_start_bytes] = []
@@ -112,10 +108,8 @@ class RangeRequest
   # @param [Hash] info
   # @param [IO] output_io
   def write_content_to_output(info, output_io)
-
     file_name = info[:file_path]
     open(file_name, 'rb') { |file_io| # rb = readonly binary
-
       info[:range_start_bytes].size.times do |index|
         range_start = info[:range_start_bytes][index].to_i
         range_end = info[:range_end_bytes][index].to_i
@@ -145,7 +139,6 @@ class RangeRequest
 
       # file is closed by ruby block
     }
-
   end
 
   private
@@ -165,7 +158,7 @@ class RangeRequest
     msg = 'RangeRequest - Required parameter missing:'
     provided = "Provided parameters: #{options}"
     sym_array.each do |sym|
-      raise ArgumentError, "#{msg} #{sym.to_s}. #{provided}" unless options.include?(sym) && !options[sym].blank?
+      raise ArgumentError, "#{msg} #{sym}. #{provided}" unless options.include?(sym) && !options[sym].blank?
     end
   end
 
@@ -195,7 +188,7 @@ class RangeRequest
           range_end.to_s.size +
           info[:file_size].to_s.size +
           MULTIPART_HEADER_LENGTH
-      )
+    )
     end
 
     content_length += MULTIPART_BOUNDARY.size + MULTIPART_DASH_LINE_BREAK_LENGTH
@@ -232,6 +225,7 @@ class RangeRequest
 
   def response_headers_entire(info)
     return {} if info[:is_range]
+
     return_value = {}
 
     return_value[:response_code] = HTTP_CODE_OK
@@ -244,7 +238,6 @@ class RangeRequest
   end
 
   def response_headers_common(info)
-
     return_value = {}
 
     return_value[:response_headers] = {}
@@ -257,28 +250,30 @@ class RangeRequest
   end
 
   def response_info(options, rails_request)
-
     file_path = File.expand_path(options[:file_path])
     media_type = options[:media_type]
 
     range_header = rails_request.headers[HTTP_HEADER_RANGE]
 
     audio_recording = {
-        id: options[:recording_id],
-        recorded_date: options[:recorded_date],
-        site: {
-            id: options[:site_id],
-            name: options[:site_name]
-        }
+      id: options[:recording_id],
+      recorded_date: options[:recorded_date],
+      site: {
+        id: options[:site_id],
+        name: options[:site_name]
+      }
     }
     response_extra_info = "#{options[:channel]}_#{options[:sample_rate]}"
 
     suggested_file_name = options[:suggested_file_name] || NameyWamey.create_audio_recording_name(
-        audio_recording,
-        options[:start_offset], options[:end_offset],
-        response_extra_info, options[:ext])
+      audio_recording,
+      options[:start_offset], options[:end_offset],
+      response_extra_info, options[:ext]
+    )
     disposition_type = options[:disposition_type] || :inline
-    raise ArgumentError, "Unknown content disposition type #{disposition_type}" unless [:inline, :attachment].include?(disposition_type)
+    unless [:inline, :attachment].include?(disposition_type)
+      raise ArgumentError, "Unknown content disposition type #{disposition_type}"
+    end
 
     file_modified_time = File.mtime(file_path).getutc
     file_size = File.size(file_path)
@@ -290,45 +285,45 @@ class RangeRequest
     end
 
     info = {
-        # Indicates if the HTTP request is for multiple ranges.
-        is_multipart: false,
+      # Indicates if the HTTP request is for multiple ranges.
+      is_multipart: false,
 
-        # Indicates if the HTTP request is for one or more ranges.
-        is_range: false,
+      # Indicates if the HTTP request is for one or more ranges.
+      is_range: false,
 
-        # The start byte(s) for the requested range(s).
-        range_start_bytes: [],
+      # The start byte(s) for the requested range(s).
+      range_start_bytes: [],
 
-        # the smallest possible value for range_start_bytes
-        range_start_bytes_min: 0,
+      # the smallest possible value for range_start_bytes
+      range_start_bytes_min: 0,
 
-        # The end byte(s) for the requested range(s).
-        range_end_bytes: [],
+      # The end byte(s) for the requested range(s).
+      range_end_bytes: [],
 
-        # the largest possible value for range_end_bytes
-        range_end_bytes_max: file_size + CONVERT_LENGTH_TO_INDEX,
+      # the largest possible value for range_end_bytes
+      range_end_bytes_max: file_size + CONVERT_LENGTH_TO_INDEX,
 
-        range_length_max: @max_range_size,
-        write_buffer_size: @write_buffer_size,
+      range_length_max: @max_range_size,
+      write_buffer_size: @write_buffer_size,
 
-        requested_range: range_header,
+      requested_range: range_header,
 
-        # to ensure a new hash is used
-        # http://thingsaaronmade.com/blog/ruby-shallow-copy-surprise.html
-        request_headers: {}.merge!(request_headers_hash),
+      # to ensure a new hash is used
+      # http://thingsaaronmade.com/blog/ruby-shallow-copy-surprise.html
+      request_headers: {}.merge!(request_headers_hash),
 
-        file_path: file_path,
-        file_size: file_size,
-        file_modified_time: file_modified_time,
-        file_media_type: media_type,
+      file_path: file_path,
+      file_size: file_size,
+      file_modified_time: file_modified_time,
+      file_media_type: media_type,
 
-        response_has_content: true,
-        response_is_range: false,
-        response_code: HTTP_CODE_OK,
-        response_headers: {},
-        stop_processing_request_headers: false,
-        response_suggested_file_name: suggested_file_name,
-        response_disposition_type: disposition_type
+      response_has_content: true,
+      response_is_range: false,
+      response_code: HTTP_CODE_OK,
+      response_headers: {},
+      stop_processing_request_headers: false,
+      response_suggested_file_name: suggested_file_name,
+      response_disposition_type: disposition_type
     }
 
     info[:file_entity_tag] = file_entity_tag(info)
@@ -337,7 +332,6 @@ class RangeRequest
   end
 
   def response_range(info)
-
     return_value = {}
 
     return_value[:range_start_bytes] = []
@@ -416,10 +410,10 @@ class RangeRequest
       end_range = info[:range_end_bytes_max] if end_range > info[:range_end_bytes_max]
       # e.g. bytes=0-499, max_range_size=500 => 499 - 0 + 1 = 500 > 500
       if (end_range - start_range + CONVERT_INDEX_TO_LENGTH) > @max_range_size
-        fail CustomErrors::BadRequestError, 'The requested range exceeded the maximum allowed.'
+        raise CustomErrors::BadRequestError, 'The requested range exceeded the maximum allowed.'
       end
       if start_range > end_range
-        fail CustomErrors::BadRequestError, 'The requested range specified a first byte that was greater than the last byte.'
+        raise CustomErrors::BadRequestError, 'The requested range specified a first byte that was greater than the last byte.'
       end
 
       return_value[:range_start_bytes].push(start_range)
@@ -460,9 +454,7 @@ class RangeRequest
     # check for if unmod since and unless mod since (not quite sure what these headers do or are for)
     if_unmod_since = info[:request_headers][HTTP_HEADER_IF_UNMODIFIED_SINCE]
 
-    if if_unmod_since.blank?
-      if_unmod_since = info[:request_headers][HTTP_HEADER_UNLESS_MODIFIED_SINCE]
-    end
+    if_unmod_since = info[:request_headers][HTTP_HEADER_UNLESS_MODIFIED_SINCE] if if_unmod_since.blank?
 
     unless if_unmod_since.blank?
       header_time = Time.zone.parse(if_unmod_since)
@@ -538,19 +530,17 @@ class RangeRequest
         entity_ids = if_none_match.split(',')
 
         entity_ids.each do |value|
-
           etag_value = value.trim(' ', '')
 
-          if etag_value == info[:file_entity_tag]
+          next unless etag_value == info[:file_entity_tag]
 
-            return_value[:response_headers] = {}
-            return_value[:response_headers][HTTP_HEADER_ENTITY_TAG] = '"' + etag_value + '"'
+          return_value[:response_headers] = {}
+          return_value[:response_headers][HTTP_HEADER_ENTITY_TAG] = '"' + etag_value + '"'
 
-            return_value[:response_code] = HTTP_CODE_NOT_MODIFIED
-            return_value[:response_is_range] = false
-            return_value[:response_has_content] = false
-            return_value[:stop_processing_request_headers] = true
-          end
+          return_value[:response_code] = HTTP_CODE_NOT_MODIFIED
+          return_value[:response_is_range] = false
+          return_value[:response_has_content] = false
+          return_value[:stop_processing_request_headers] = true
         end
       end
     end
@@ -576,5 +566,4 @@ class RangeRequest
 
     return_value
   end
-
 end

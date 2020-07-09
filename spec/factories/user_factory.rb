@@ -1,5 +1,6 @@
-FactoryGirl.define do
+# frozen_string_literal: true
 
+FactoryBot.define do
   factory :unconfirmed_user, class: User do
     sequence(:user_name) { |n| "unconfirmed_user #{n}" }
     sequence(:email) { |n| "user#{n}@example.com" }
@@ -17,7 +18,6 @@ FactoryGirl.define do
     # end
 
     trait :confirmed do
-
       sequence(:user_name) { |n| "confirmed_user #{n}" }
       after(:build) do |user|
         user.confirmation_token = nil
@@ -36,7 +36,7 @@ FactoryGirl.define do
     end
 
     trait :saved_preferences do
-      preferences { {someSettingOrOther: [1, 2, 5], ImAnotherOne: 'hello!'}.to_json }
+      preferences { { someSettingOrOther: [1, 2, 5], ImAnotherOne: 'hello!' }.to_json }
     end
 
     trait :avatar_image do
@@ -48,7 +48,5 @@ FactoryGirl.define do
     factory :admin, traits: [:confirmed, :admin_role]
     factory :harvester, traits: [:confirmed, :harvester_role]
     factory :user_with_preferences, traits: [:confirmed, :saved_preferences]
-
   end
-
 end

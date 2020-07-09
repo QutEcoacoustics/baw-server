@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'workers_helper'
 
 describe BawAudioTools::AudioFfmpeg do
@@ -17,27 +19,25 @@ describe BawAudioTools::AudioFfmpeg do
   let(:frame_size_error_2) { "\n[null @ 0x5477dc0] Failed to read frame size: Could not seek to 1026." }
 
   # join using $/ (new line separator)
-  let(:error_msg) { [analyse_duration, estimate_duration, over_read, channel_layout, bytes_of_junk, unknown_warning].shuffle.join($/) }
+  let(:error_msg) { [analyse_duration, estimate_duration, over_read, channel_layout, bytes_of_junk, unknown_warning].shuffle.join($INPUT_RECORD_SEPARATOR) }
 
   it 'removes known warnings' do
     expect {
-      audio_base.audio_ffmpeg.check_for_errors({stderr: error_msg})
+      audio_base.audio_ffmpeg.check_for_errors({ stderr: error_msg })
     }.to_not raise_error
   end
 
   it 'raises on frame size type 1 errors' do
-
     expected_error_msg = "Ffmpeg could not get frame size (msg type 1).\n\tExternal program output"
     expect {
-      audio_base.audio_ffmpeg.check_for_errors({stderr: "#{error_msg}#{frame_size_error_1}", execute_msg: 'External program output'})
+      audio_base.audio_ffmpeg.check_for_errors({ stderr: "#{error_msg}#{frame_size_error_1}", execute_msg: 'External program output' })
     }.to raise_error(BawAudioTools::Exceptions::FileCorruptError, expected_error_msg)
   end
 
   it 'raises on frame size type 2 errors' do
-
     expected_error_msg = "Ffmpeg could not get frame size (msg type 2).\n\tExternal program output"
     expect {
-      audio_base.audio_ffmpeg.check_for_errors({stderr: "#{error_msg}#{frame_size_error_2}", execute_msg: 'External program output'})
+      audio_base.audio_ffmpeg.check_for_errors({ stderr: "#{error_msg}#{frame_size_error_2}", execute_msg: 'External program output' })
     }.to raise_error(BawAudioTools::Exceptions::FileCorruptError, expected_error_msg)
   end
 end

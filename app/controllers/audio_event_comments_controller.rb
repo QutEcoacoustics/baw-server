@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class AudioEventCommentsController < ApplicationController
   include Api::ControllerHelper
 
@@ -8,10 +10,10 @@ class AudioEventCommentsController < ApplicationController
     do_authorize_instance(:show, @audio_event)
 
     @audio_event_comments, opts = Settings.api_response.response_advanced(
-        api_filter_params,
-        Access::ByPermission.audio_event_comments(current_user, Access::Core.levels, @audio_event),
-        AudioEventComment,
-        AudioEventComment.filter_settings
+      api_filter_params,
+      Access::ByPermission.audio_event_comments(current_user, Access::Core.levels, @audio_event),
+      AudioEventComment,
+      AudioEventComment.filter_settings
     )
     respond_index(opts)
   end
@@ -59,9 +61,7 @@ class AudioEventCommentsController < ApplicationController
     # only the user that created the audio comment (or admin) can update any other attribute
     is_creator = @audio_event_comment.creator.id == current_user.id
     is_admin = Access::Core.is_admin?(current_user)
-    is_changing_only_flag =
-        (audio_event_comment_update_params.include?(:audio_event_comment) &&
-            ([:flag] - audio_event_comment_update_params[:audio_event_comment].symbolize_keys.keys).empty?)
+    is_changing_only_flag = changing_only_flag?
 
     if is_creator || is_admin || is_changing_only_flag
       if @audio_event_comment.update_attributes(audio_event_comment_params)
@@ -71,9 +71,8 @@ class AudioEventCommentsController < ApplicationController
       end
     else
       # otherwise, not allowed to update the comment
-      fail CanCan::AccessDenied.new(I18n.t('devise.failure.unauthorized'), :update, AudioEventComment)
+      raise CanCan::AccessDenied.new(I18n.t('devise.failure.unauthorized'), :update, AudioEventComment)
     end
-
   end
 
   # DELETE /audio_events/:audio_event_id/comments/:id
@@ -92,10 +91,10 @@ class AudioEventCommentsController < ApplicationController
     do_authorize_class
 
     filter_response, opts = Settings.api_response.response_advanced(
-        api_filter_params,
-        Access::ByPermission.audio_event_comments(current_user),
-        AudioEventComment,
-        AudioEventComment.filter_settings
+      api_filter_params,
+      Access::ByPermission.audio_event_comments(current_user),
+      AudioEventComment,
+      AudioEventComment.filter_settings
     )
     respond_filter(filter_response, opts)
   end
@@ -116,7 +115,15 @@ class AudioEventCommentsController < ApplicationController
   end
 
   def audio_event_comment_update_params
-    params.permit(:format, :audio_event_id, :id, {audio_event_comment: [:flag, :comment]})
+    params.permit(:format, :audio_event_id, :id, audio_event_comment: [:flag, :comment])
   end
 
+  def changing_only_flag?
+    update_params = audio_event_comment_update_params
+    comment = update_params.dig(:audio_event_comment).to_h
+
+    return false if comment.nil? || comment.size > 1
+
+    !comment[:flag].nil?
+  end
 end

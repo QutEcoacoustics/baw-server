@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class AnalysisJobMailer < ActionMailer::Base
   default from: Settings.mailer.emails.sender_address
 
@@ -26,20 +28,20 @@ class AnalysisJobMailer < ActionMailer::Base
   # @param [ActionDispatch::Request] rails_request
   # @param [string] subject_prefix
   # @param [string] template_name
-  def send_message(analysis_job, rails_request, subject_prefix, template_name)
-    user_emails = User.find([analysis_job.creator_id, analysis_job.updater_id]).map {|u| u.email }.uniq
+  def send_message(analysis_job, _rails_request, subject_prefix, template_name)
+    user_emails = User.find([analysis_job.creator_id, analysis_job.updater_id]).map(&:email).uniq
 
     @info = {
-        analysis_job: analysis_job,
-        datestamp: Time.zone.now.utc.iso8601
+      analysis_job: analysis_job,
+      datestamp: Time.zone.now.utc.iso8601
     }
 
     # email gets sent to required recipients (creator, updater, admins)
     mail(
-        to: user_emails.concat(Settings.mailer.emails.required_recipients).uniq,
-        subject: "#{Settings.mailer.emails.email_prefix} [Analysis Job] #{subject_prefix}: #{@info[:analysis_job].name}.",
-        template_path: 'analysis_jobs_mailer',
-        template_name: template_name)
+      to: user_emails.concat(Settings.mailer.emails.required_recipients).uniq,
+      subject: "#{Settings.mailer.emails.email_prefix} [Analysis Job] #{subject_prefix}: #{@info[:analysis_job].name}.",
+      template_path: 'analysis_jobs_mailer',
+      template_name: template_name
+    )
   end
-
 end

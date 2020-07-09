@@ -49,7 +49,7 @@ module Creation
     #   - 1 dataset item under that audio_recording called no_access_dataset_item, with admin as creator
 
     def create_no_access_hierarchy
-      let!(:no_access_project_creator) { FactoryGirl.create(:user, user_name: 'creator_2') }
+      let!(:no_access_project_creator) { FactoryBot.create(:user, user_name: 'creator_2') }
       let!(:no_access_project) { Common.create_project(no_access_project_creator) }
       let!(:no_access_site) { Common.create_site(no_access_project_creator, no_access_project) }
       let!(:no_access_audio_recording) {
@@ -124,16 +124,16 @@ module Creation
       let!(:admin_user) { User.where(user_name: 'Admin').first }
       let!(:admin_token) { Common.create_user_token(admin_user) }
 
-      let!(:owner_user) { FactoryGirl.create(:user, user_name: 'owner user') }
+      let!(:owner_user) { FactoryBot.create(:user, user_name: 'owner user') }
       let!(:owner_token) { Common.create_user_token(owner_user) }
 
-      let!(:writer_user) { FactoryGirl.create(:user, user_name: 'writer', skip_creation_email: true) }
+      let!(:writer_user) { FactoryBot.create(:user, user_name: 'writer', skip_creation_email: true) }
       let!(:writer_token) { Common.create_user_token(writer_user) }
 
-      let!(:reader_user) { FactoryGirl.create(:user, user_name: 'reader', skip_creation_email: true) }
+      let!(:reader_user) { FactoryBot.create(:user, user_name: 'reader', skip_creation_email: true) }
       let!(:reader_token) { Common.create_user_token(reader_user) }
 
-      let!(:no_access_user) { FactoryGirl.create(:user, user_name: 'no_access', skip_creation_email: true) }
+      let!(:no_access_user) { FactoryBot.create(:user, user_name: 'no_access', skip_creation_email: true) }
       let!(:no_access_token) { Common.create_user_token(no_access_user) }
 
       let!(:invalid_token) { Common.create_user_token }
@@ -154,27 +154,27 @@ module Creation
 
     def prepare_project_anon(alternate_name = nil)
       let!(:project_anon) {
-        FactoryGirl.create(:project, creator: owner_user, name: 'Anon Project')
+        FactoryBot.create(:project, creator: owner_user, name: 'Anon Project')
       }
       let!(alternate_name) { project_anon } if alternate_name
-      let!(:permission_anon) { FactoryGirl.create(:permission, creator: owner_user, user: nil, project: project_anon, allow_anonymous: true, level: 'reader') }
+      let!(:permission_anon) { FactoryBot.create(:permission, creator: owner_user, user: nil, project: project_anon, allow_anonymous: true, level: 'reader') }
     end
 
     def prepare_project_logged_in(alternate_name = nil)
       let!(:project_logged_in) {
-        FactoryGirl.create(:project, creator: owner_user, name: 'Logged In Project')
+        FactoryBot.create(:project, creator: owner_user, name: 'Logged In Project')
       }
       let!(alternate_name) { project_logged_in } if alternate_name
-      let!(:permission_logged_in) { FactoryGirl.create(:permission, creator: owner_user, user: nil, project: project_logged_in, allow_logged_in: true, level: 'reader') }
+      let!(:permission_logged_in) { FactoryBot.create(:permission, creator: owner_user, user: nil, project: project_logged_in, allow_logged_in: true, level: 'reader') }
     end
 
     def prepare_project_anon_and_logged_in(alternate_name = nil)
       let!(:project_anon_and_logged_in) {
-        FactoryGirl.create(:project, creator: owner_user, name: 'Anon & Logged In Project')
+        FactoryBot.create(:project, creator: owner_user, name: 'Anon & Logged In Project')
       }
       let!(alternate_name) { project_anon_and_logged_in } if alternate_name
       let!(:permission_anon) {
-        FactoryGirl.create(
+        FactoryBot.create(
           :permission,
           creator: owner_user,
           user: nil,
@@ -185,7 +185,7 @@ module Creation
       }
 
       let!(:permission_logged_in) {
-        FactoryGirl.create(
+        FactoryBot.create(
           :permission,
           creator: owner_user,
           user: nil,
@@ -206,13 +206,13 @@ module Creation
 
     def prepare_permission_writer
       let!(:writer_permission) {
-        FactoryGirl.create(:write_permission, creator: owner_user, user: writer_user, project: project)
+        FactoryBot.create(:write_permission, creator: owner_user, user: writer_user, project: project)
       }
     end
 
     def prepare_permission_reader
       let!(:reader_permission) {
-        FactoryGirl.create(:read_permission, creator: owner_user, user: reader_user, project: project)
+        FactoryBot.create(:read_permission, creator: owner_user, user: reader_user, project: project)
       }
     end
 
@@ -260,6 +260,7 @@ module Creation
     end
 
     def prepare_dataset
+      let!(:default_dataset) { Dataset.default_dataset }
       let!(:dataset) { Common.create_dataset(owner_user) }
     end
 
@@ -271,7 +272,7 @@ module Creation
 
     def prepare_progress_event
       let!(:default_dataset_item) {
-        FactoryGirl.create(:default_dataset_item, creator: writer_user, audio_recording: audio_recording)
+        FactoryBot.create(:default_dataset_item, creator: writer_user, audio_recording: audio_recording, dataset: default_dataset)
       }
       let!(:progress_event) {
         Common.create_progress_event(admin_user, default_dataset_item)
@@ -285,7 +286,6 @@ module Creation
     # creates a whole lot of progress events for filter testing
     def prepare_many_progress_events
       let!(:progress_events_stats) {
-
         creators = [admin_user, owner_user, reader_user, writer_user]
         activities = ['viewed', 'played']
         dataset_items = [dataset_item, no_access_dataset_item]
@@ -306,7 +306,6 @@ module Creation
         end
 
         return result
-
       }
     end
   end
@@ -323,26 +322,26 @@ module Creation
       end
 
       def create_project(creator)
-        FactoryGirl.create(:project, creator: creator)
+        FactoryBot.create(:project, creator: creator)
       end
 
       def create_site(creator, project)
-        site = FactoryGirl.create(:site, :with_lat_long, creator: creator)
+        site = FactoryBot.create(:site, :with_lat_long, creator: creator)
         site.projects << project
         site.save!
         site
       end
 
       def create_tag(creator)
-        FactoryGirl.create(:tag, creator: creator)
+        FactoryBot.create(:tag, creator: creator)
       end
 
       def create_script(creator)
-        FactoryGirl.create(:script, creator: creator)
+        FactoryBot.create(:script, creator: creator)
       end
 
       def create_audio_recording(creator, uploader, site)
-        FactoryGirl.create(
+        FactoryBot.create(
           :audio_recording,
           :status_ready,
           creator: creator,
@@ -353,26 +352,26 @@ module Creation
       end
 
       def create_bookmark(creator, audio_recording)
-        FactoryGirl.create(:bookmark, creator: creator, audio_recording: audio_recording)
+        FactoryBot.create(:bookmark, creator: creator, audio_recording: audio_recording)
       end
 
       def create_audio_event(creator, audio_recording)
-        FactoryGirl.create(:audio_event, creator: creator, audio_recording: audio_recording)
+        FactoryBot.create(:audio_event, creator: creator, audio_recording: audio_recording)
       end
 
       def create_audio_event_tags(creator, audio_event, tag)
-        FactoryGirl.create(:tagging, creator: creator, audio_event: audio_event, tag: tag)
+        FactoryBot.create(:tagging, creator: creator, audio_event: audio_event, tag: tag)
       end
 
       def create_audio_event_comment(creator, audio_event)
-        FactoryGirl.create(:comment, creator: creator, audio_event: audio_event)
+        FactoryBot.create(:comment, creator: creator, audio_event: audio_event)
       end
 
       def create_saved_search(creator, project, stored_query = nil)
         saved_search = if stored_query.nil?
-                         FactoryGirl.create(:saved_search, creator: creator)
+                         FactoryBot.create(:saved_search, creator: creator)
                        else
-                         FactoryGirl.create(:saved_search, creator: creator, stored_query: stored_query)
+                         FactoryBot.create(:saved_search, creator: creator, stored_query: stored_query)
                        end
 
         saved_search.projects << project
@@ -381,42 +380,42 @@ module Creation
       end
 
       def create_analysis_job(creator, script, saved_search)
-        FactoryGirl.create(:analysis_job, creator: creator, script: script, saved_search: saved_search)
+        FactoryBot.create(:analysis_job, creator: creator, script: script, saved_search: saved_search)
       end
 
       def create_analysis_job_item(analysis_job, audio_recording)
-        FactoryGirl.create(:analysis_jobs_item, analysis_job: analysis_job, audio_recording: audio_recording)
+        FactoryBot.create(:analysis_jobs_item, analysis_job: analysis_job, audio_recording: audio_recording)
       end
 
       def create_dataset(creator)
-        FactoryGirl.create(:dataset, creator: creator)
+        FactoryBot.create(:dataset, creator: creator)
       end
 
       def create_dataset_item(creator, dataset, audio_recording)
-        FactoryGirl.create(:dataset_item, creator: creator, dataset: dataset, audio_recording: audio_recording)
+        FactoryBot.create(:dataset_item, creator: creator, dataset: dataset, audio_recording: audio_recording)
       end
 
       def create_progress_event(creator, dataset_item)
-        FactoryGirl.create(:progress_event, creator: creator, dataset_item: dataset_item)
+        FactoryBot.create(:progress_event, creator: creator, dataset_item: dataset_item)
       end
 
       def create_progress_event_full(creator, dataset_item, activity)
-        FactoryGirl.create(:progress_event, creator: creator, dataset_item: dataset_item, activity: activity)
+        FactoryBot.create(:progress_event, creator: creator, dataset_item: dataset_item, activity: activity)
       end
 
       def create_study(creator, dataset)
-        FactoryGirl.create(:study, creator: creator, dataset: dataset)
+        FactoryBot.create(:study, creator: creator, dataset: dataset)
       end
 
       def create_question(creator, study)
-        question = FactoryGirl.build(:question, creator: creator)
+        question = FactoryBot.build(:question, creator: creator)
         question.studies << study
         question.save!
         question
       end
 
       def create_user_response(creator, dataset_item, study, question)
-        FactoryGirl.create(:response, creator: creator, dataset_item: dataset_item, study: study, question: question)
+        FactoryBot.create(:response, creator: creator, dataset_item: dataset_item, study: study, question: question)
       end
     end
   end

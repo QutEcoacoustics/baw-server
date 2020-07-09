@@ -12,7 +12,9 @@ module Admin
 
       filter = paging_params[:filter]
 
-      raise 'Invalid order by.' unless [:text, :is_taxanomic, :type_of_tag, :retired, :updated_at, :updater_id].include?(order_by)
+      unless [:text, :is_taxanomic, :type_of_tag, :retired, :updated_at, :updater_id].include?(order_by)
+        raise 'Invalid order by.'
+      end
       raise 'Invalid order dir.' unless [:asc, :desc].include?(order_dir)
 
       redirect_to admin_tags_path if commit.downcase == 'clear'
@@ -26,7 +28,7 @@ module Admin
       query = Tag.includes(:updater).references(:users).all
 
       unless filter.blank?
-        sanitized_value = filter.to_s.gsub(/[\\_%\|]/) { |x| "\\#{x}" }
+        sanitized_value = filter.to_s.gsub(/[\\_%|]/) { |x| "\\#{x}" }
         contains_value = "%#{sanitized_value}%"
 
         tag_table = Tag.arel_table

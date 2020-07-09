@@ -1,4 +1,6 @@
-def emulate_resque_worker_with_job(job_class, job_args, opts={})
+# frozen_string_literal: true
+
+def emulate_resque_worker_with_job(job_class, job_args, opts = {})
   # see http://stackoverflow.com/questions/5141378/how-to-bridge-the-testing-using-resque-with-rspec-examples
   queue = opts[:queue] || 'test_queue'
 
@@ -25,7 +27,7 @@ end
 # @return [Array] worker, job
 # @param [String] override_class - specify to switch what type actually processes the payload at the last minute. Useful for testing.
 def emulate_resque_worker(queue, verbose, fork, override_class = nil)
-  queue = queue || 'test_queue'
+  queue ||= 'test_queue'
 
   worker = Resque::Worker.new(queue)
   worker.very_verbose = true if verbose
@@ -51,8 +53,8 @@ def emulate_resque_worker(queue, verbose, fork, override_class = nil)
   else
     job = worker.reserve
 
-    if !job.nil?
-      job.payload["class"] = override_class if override_class
+    unless job.nil?
+      job.payload['class'] = override_class if override_class
       finished_job = worker.perform(job)
       job = finished_job
     end
@@ -62,11 +64,10 @@ def emulate_resque_worker(queue, verbose, fork, override_class = nil)
 end
 
 class FakeJob
-
   def self.perform(*job_args)
     {
-        job_args: job_args,
-        result: Time.now
+      job_args: job_args,
+      result: Time.now
     }
   end
 end

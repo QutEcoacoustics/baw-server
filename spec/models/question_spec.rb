@@ -1,9 +1,10 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 
 RSpec.describe Question, type: :model do
-
   let(:study) {
-    FactoryGirl.create(:study)
+    FactoryBot.create(:study)
   }
 
   it 'has a valid factory' do
@@ -22,7 +23,7 @@ RSpec.describe Question, type: :model do
   describe 'associations' do
     it { is_expected.to have_and_belong_to_many(:studies) }
     it { is_expected.to have_many(:responses) }
-    it { is_expected.to belong_to(:updater).with_foreign_key(:updater_id) }
+    it { is_expected.to belong_to(:updater).with_foreign_key(:updater_id).optional }
     it { is_expected.to belong_to(:creator).with_foreign_key(:creator_id) }
   end
 
@@ -38,10 +39,8 @@ RSpec.describe Question, type: :model do
     it 'can not create a question associated with a nonexistent study' do
       expect {
         # array with both an existing and nonexistent study
-        create(:question, study_ids: [study.id, 12345])
+        create(:question, study_ids: [study.id, 12_345])
       }.to raise_error(ActiveRecord::RecordNotFound)
     end
-
   end
-
 end

@@ -1,234 +1,230 @@
-# Using SettingsLogic, see https://github.com/binarylogic/settingslogic
-# settings loaded in model/settings.rb
 # Accessible through Settings.key
 # Environment specific settings expected in config/settings/{environment_name}.yml
-defaults: &defaults
-  redis:
-    namespace: 'baw-workers'
-    # http://www.rubydoc.info/github/redis/redis-rb/Redis#initialize-instance_method
-    connection: &redis_config
-      # see docker compose
-      host: redis
-      port: 6379
-      password:
-      db: 0
-  host:
-    name: localhost
-    port: 3000
-    cors_origins:
-     - !ruby/regexp '/\A(https?:\/\/)?localhost(:\d+)?\z/'
-     - !ruby/regexp '/\A(https?:\/\/)?127\.0\.0\.1(:\d+)?\z/'
-     - !ruby/regexp '/\A(https?:\/\/)?192\.168\.0\.\d{1,3}(:\d+)?\z/'
-  resque:
-    # queues_to_process is only needed when running a Resque worker to
-    # specify the Resque queues to watch.
-    queues_to_process:
-      - analysis_<%= BawApp.env %>
-      - maintenance_<%= BawApp.env %>
-      - harvest_<%= BawApp.env %>
-      - media_<%= BawApp.env %>
-      - mirror_<%= BawApp.env %>
-    connection: *redis_config
-    namespace: resque
-    log_level: 'Logger::INFO'
-    polling_interval_seconds: 0.5
-    # specify background_pid_file to have a Resque worker run in the background
-    # otherwise it will run in the foreground
-    # We always want a worker to run in the foreground in a container
-    background_pid_file: ~
-    # output and error log files are only used when a Resque worker is running
-    # in the background
-    output_log_file: <%= BawApp.root %>/log/worker_stdout.log
-    error_log_file: <%= BawApp.root %>/log/worker_stderr.log
-  # these are the available background jobs that can be enqueued
-  actions:
-    analysis:
-      queue: analysis_<%= BawApp.env %>
-    harvest:
-      queue: harvest_<%= BawApp.env %>
-      dry_run: false
-      to_do_path: ./tmp/_<%= BawApp.env %>_harvester_to_do_path
-      config_file_name: harvest.yml
-      progressive_upload_directory: ./tmp/_progressive-upload/
-      # top level directory for mirroring harvested files, used by dequeue workers only
-      copy_base_path: ./tmp/custom_temp_dir/temp/copy_base_path
-    media:
-      queue: media_<%= BawApp.env %>
-      dry_run: false
-    mirror:
-      queue: mirror_<%= BawApp.env %>
-    audio_check:
-      queue:  maintenance_<%= BawApp.env %>
-  media_request_processor: resque # options are local or resque (now only ever use resque with containers)
-  db: &db
-    ######################################################
-    # these values are read by config/database.yml
-    ######################################################
-     adapter: postgresql
-     encoding: utf8
-     reconnect: false
-     database: baw_local_dev
-     pool: 5
-     username: postgres
-     password: 'password'
-     # see docker compose
-     host: db
-     sslmode: allow
-  devise:
-    ######################################################
-    # these values are read for config.{key} in
-    # File devise.rb #
-    # We never want these values to make it production.
-    # Documented for completion here but must be overridden!
-    ######################################################
-    ##pepper: 128 char random pepper 128 char random pepper
-    ##secret_key: 128 char random pepper 128 char random pepper
+
+redis:
+  namespace: "baw-workers"
+  # http://www.rubydoc.info/github/redis/redis-rb/Redis#initialize-instance_method
+  connection: &redis_config # see docker compose
+    host: redis
+    port: 6379
+    password:
+    db: 0
+host:
+  name: localhost
+  port: 3000
+  cors_origins:
+    - !ruby/regexp '/\A(https?:\/\/)?localhost(:\d+)?\z/'
+    - !ruby/regexp '/\A(https?:\/\/)?127\.0\.0\.1(:\d+)?\z/'
+    - !ruby/regexp '/\A(https?:\/\/)?192\.168\.0\.\d{1,3}(:\d+)?\z/'
+action_cable:
+  adapter: redis
+  url: redis://redis:6379/0
+  channel_prefix:
+resque:
+  # queues_to_process is only needed when running a Resque worker to
+  # specify the Resque queues to watch.
+  queues_to_process:
+    - analysis_<%= BawApp.env %>
+    - maintenance_<%= BawApp.env %>
+    - harvest_<%= BawApp.env %>
+    - media_<%= BawApp.env %>
+    - mirror_<%= BawApp.env %>
+  connection: *redis_config
+  namespace: resque
+  log_level: "Logger::INFO"
+  polling_interval_seconds: 0.5
+  # specify background_pid_file to have a Resque worker run in the background
+  # otherwise it will run in the foreground
+  # We always want a worker to run in the foreground in a container
+  background_pid_file: ~
+  # output and error log files are only used when a Resque worker is running
+  # in the background
+  output_log_file: <%= BawApp.root %>/log/worker_stdout.log
+  error_log_file: <%= BawApp.root %>/log/worker_stderr.log
+# these are the available background jobs that can be enqueued
+actions:
+  analysis:
+    queue: analysis_<%= BawApp.env %>
+  harvest:
+    queue: harvest_<%= BawApp.env %>
+    dry_run: false
+    to_do_path: ./tmp/_<%= BawApp.env %>_harvester_to_do_path
+    config_file_name: harvest.yml
+    progressive_upload_directory: ./tmp/_progressive-upload/
+    # top level directory for mirroring harvested files, used by dequeue workers only
+    copy_base_path: ./tmp/custom_temp_dir/temp/copy_base_path
+  media:
+    queue: media_<%= BawApp.env %>
+    dry_run: false
+  mirror:
+    queue: mirror_<%= BawApp.env %>
+  audio_check:
+    queue: maintenance_<%= BawApp.env %>
+media_request_processor: resque # options are local or resque (now only ever use resque with containers)
+dbs:
   ######################################################
-  # File secret_token.rb #
+  # these values are read by config/database.yml
+  # WARNING: sometimes rails loads the settings for multiple environments at the same time!
+  # Thus depending on RAILS_ENV/Rails.env/BawApp.env here will fail!
+  # We can't split it into environment settings files either because only one env is loaded by our config system.
+  ######################################################
+  _default: &db
+    adapter: postgresql
+    encoding: utf8
+    reconnect: false
+    pool: 5
+    username: postgres
+    password: "password"
+    # see docker compose
+    host: db
+    sslmode: allow
+  test:
+    <<: *db
+    database: baw_local_test
+  development:
+    <<: *db
+    database: baw_local_development
+devise:
+  ######################################################
+  # these values are read for config.{key} in
+  # File devise.rb #
   # We never want these values to make it production.
   # Documented for completion here but must be overridden!
   ######################################################
-  ##secret_token: some long secret token - at least 30 chars, all random
-  ##secret_key_base: some long secret token - at least 30 chars, all random
-  paths:
-    image_magick_dir: <%= BawApp.root %>/tmp/_image-magick
-    original_audios:
-      - <%= BawApp.root %>/tmp/_<%= BawApp.env %>_original_audio
-    cached_spectrograms:
-      - <%= BawApp.root %>/tmp/_<%= BawApp.env %>_cached_spectrogram
-    cached_audios:
-      - <%= BawApp.root %>/tmp/_<%= BawApp.env %>_cached_audio
-    analysis_scripts:
-      - <%= BawApp.root %>/tmp/_<%= BawApp.env %>_analysis_script
-    cached_datasets:
-      - <%= BawApp.root %>/tmp/_<%= BawApp.env %>_cached_dataset
-    cached_analysis_jobs:
-      - <%= BawApp.root %>/tmp/_<%= BawApp.env %>_analysis_results
-    worker_log_file: <%= BawApp.root %>/log/worker.<%= BawApp.env %>.log
-    mailer_log_file: <%= BawApp.root %>/log/mailer.<%= BawApp.env %>.log
-    audio_tools_log_file: <%= BawApp.root %>/log/audio_tools.<%= BawApp.env %>.log
-    temp_dir: <%= BawApp.root %>/tmp
-    programs_dir: <%= BawApp.root %>/programs
-  # used by workers to contact a web-server
-  endpoints:
-    use_ssl: true
-    login: /security
-    audio_recording: /audio_recordings/:id
-    audio_recording_create: /projects/:project_id/sites/:site_id/audio_recordings
-    audio_recording_uploader: /projects/:project_id/sites/:site_id/audio_recordings/check_uploader/:uploader_id
-    audio_recording_update_status: /audio_recordings/:id/update_status
-    analysis_jobs_item_update_status: /analysis_jobs/:analysis_job_id/audio_recordings/:audio_recording_id
-  # used by workers to contact a web-server
-  api:
-    host: web
-    port: 3000
-    user: address@example.com
-    password: password
-  harvester:
-    email: address+harvester@example.com
-    password: password
-  admin_user:
-    email: address+admin@example.com
-    password: password
-  mailer:
-    # smtp gets set directly to config.action_mailer.smtp_settings in File environments/{environment_name}.rb
-    # See http://api.rubyonBawApp.org/classes/ActionMailer/Base.html#class-ActionMailer::Base-label-Configuration+options
-    # see http://guides.rubyonBawApp.org/action_mailer_basics.html#action-mailer-configuration
-    smtp:
-      address: localhost
-      port: 25
-      #domain: domain.com
-      #user_name: username
-      #authentication: login
-      #password: password
-    emails:
-      email_prefix: '[prefix]'
-      sender_address: address@example.com
-      required_recipients:
-       - address@example.com
-    log_level: 'Logger::INFO'
-  cached_audio_defaults:
-    extension: mp3
-    channel: 0
-    sample_rate: 22050
-    max_duration_seconds: 300.0
-    min_duration_seconds: 0.5
-  cached_spectrogram_defaults:
-    extension: png
-    channel: 0
-    sample_rate: 22050
-    window: 512
-    window_function: Hamming
-    colour: 'g'
-    ppms: 0.045
-    max_duration_seconds: 180.0
-    min_duration_seconds: 0.5
-  available_formats:
-    text:
-      - json
-    audio:
-      - mp3
-      - webm
-      - ogg
-      - flac
-      - wav
-    audio_decode_only:
-      - wac
-    image:
-      - png
-  audio_tools:
-    ffmpeg_executable: ffmpeg
-    ffprobe_executable: ffprobe
-    mp3splt_executable: mp3splt
-    sox_executable: sox
-    wavpack_executable: wvunpack
-    shntool_executable: shntool
-    wav2png_executable: wav2png
-    wac2wav_executable: wac2wavcmd
-    imagemagick_convert_executable: convert
-    imagemagick_identify_executable: identify
-    max_duration_seconds: 300.0
-    log_level: 'Logger::INFO'
-  audio_tools_timeout_sec: 60.0
-  # max overlap (default 5): maximum amount an audio recording can be trimmed at the end
-  audio_recording_max_overlap_sec: 5.0
-  # min duration (default 10): must be larger than audio_recording_max_overlap_sec
-  audio_recording_min_duration_sec: 10.0
-  organisation_names:
-    site_long_name: Acoustic Workbench
-    organisation_name: Audio Group
-    github_issues_url: 'url to github issues page'
-    parent_site_name: '<<Brand name here>>'
-    parent_site_link: 'http://example.com'
-    custom_menu:
-      header_title: Custom Menu
-      items:
-        - title: Item 1
-          url: '/item1'
-        - title: Item 2
-          url: '/item2'
-  analytics:
-    domain: example.com
-    ua: 'UA-XXXXXX'
-  recaptcha:
-    public_key: set recaptcha public key
-    private_key: set recaptcha private key
-    # only set proxy if needed
-    proxy:
-  google_maps:
-    api_key: your google maps api key
-  permissions:
-    any_user_can_create_projects: true
-
-development:
-  <<: *defaults
-  # add overwrites in config/settings/{environment_name}.yml
-test:
-  <<: *defaults
-  # add overwrites in config/settings/{environment_name}.yml
-staging:
-  <<: *defaults
-  # add overwrites in config/settings/{environment_name}.yml
-production:
-  <<: *defaults
-  # add overwrites in config/settings/{environment_name}.yml
+  ##pepper: 128 char random pepper 128 char random pepper
+  ##secret_key: 128 char random pepper 128 char random pepper
+######################################################
+# File secret_token.rb #
+# We never want these values to make it production.
+# Documented for completion here but must be overridden!
+######################################################
+##secret_token: some long secret token - at least 30 chars, all random
+##secret_key_base: some long secret token - at least 30 chars, all random
+paths:
+  image_magick_dir: <%= BawApp.root %>/tmp/_image-magick
+  original_audios:
+    - <%= BawApp.root %>/tmp/_<%= BawApp.env %>_original_audio
+  cached_spectrograms:
+    - <%= BawApp.root %>/tmp/_<%= BawApp.env %>_cached_spectrogram
+  cached_audios:
+    - <%= BawApp.root %>/tmp/_<%= BawApp.env %>_cached_audio
+  analysis_scripts:
+    - <%= BawApp.root %>/tmp/_<%= BawApp.env %>_analysis_script
+  cached_datasets:
+    - <%= BawApp.root %>/tmp/_<%= BawApp.env %>_cached_dataset
+  cached_analysis_jobs:
+    - <%= BawApp.root %>/tmp/_<%= BawApp.env %>_analysis_results
+  worker_log_file: <%= BawApp.root %>/log/worker.<%= BawApp.env %>.log
+  mailer_log_file: <%= BawApp.root %>/log/mailer.<%= BawApp.env %>.log
+  audio_tools_log_file: <%= BawApp.root %>/log/audio_tools.<%= BawApp.env %>.log
+  temp_dir: <%= BawApp.root %>/tmp
+  programs_dir: <%= BawApp.root %>/programs
+# used by workers to contact a web-server
+endpoints:
+  login: /security
+  audio_recording: /audio_recordings/:id
+  audio_recording_create: /projects/:project_id/sites/:site_id/audio_recordings
+  audio_recording_uploader: /projects/:project_id/sites/:site_id/audio_recordings/check_uploader/:uploader_id
+  audio_recording_update_status: /audio_recordings/:id/update_status
+  analysis_jobs_item_update_status: /analysis_jobs/:analysis_job_id/audio_recordings/:audio_recording_id
+# used by workers to contact a web-server
+api:
+  host: web
+  port: 3000
+  user: address@example.com
+  password: password
+harvester:
+  email: address+harvester@example.com
+  password: password
+admin_user:
+  email: address+admin@example.com
+  password: password
+mailer:
+  # smtp gets set directly to config.action_mailer.smtp_settings in File environments/{environment_name}.rb
+  # See http://api.rubyonrails.org/classes/ActionMailer/Base.html#class-ActionMailer::Base-label-Configuration+options
+  # see http://guides.rubyonrails.org/action_mailer_basics.html#action-mailer-configuration
+  smtp:
+    address: localhost
+    port: 25
+    #domain: domain.com
+    #user_name: username
+    #authentication: login
+    #password: password
+  emails:
+    email_prefix: "[prefix]"
+    sender_address: address@example.com
+    required_recipients:
+      - address@example.com
+  log_level: "Logger::INFO"
+cached_audio_defaults:
+  extension: mp3
+  channel: 0
+  sample_rate: 22050
+  max_duration_seconds: 300.0
+  min_duration_seconds: 0.5
+cached_spectrogram_defaults:
+  extension: png
+  channel: 0
+  sample_rate: 22050
+  window: 512
+  window_function: Hamming
+  colour: "g"
+  ppms: 0.045
+  max_duration_seconds: 180.0
+  min_duration_seconds: 0.5
+available_formats:
+  text:
+    - json
+  audio:
+    - mp3
+    - webm
+    - ogg
+    - flac
+    - wav
+  audio_decode_only:
+    - wac
+  image:
+    - png
+audio_tools:
+  ffmpeg_executable: ffmpeg
+  ffprobe_executable: ffprobe
+  mp3splt_executable: mp3splt
+  sox_executable: sox
+  wavpack_executable: wvunpack
+  shntool_executable: shntool
+  wav2png_executable: wav2png
+  wac2wav_executable: wac2wavcmd
+  imagemagick_convert_executable: convert
+  imagemagick_identify_executable: identify
+  max_duration_seconds: 300.0
+  log_level: "Logger::INFO"
+audio_tools_timeout_sec: 60.0
+# max overlap (default 5): maximum amount an audio recording can be trimmed at the end
+audio_recording_max_overlap_sec: 5.0
+# min duration (default 10): must be larger than audio_recording_max_overlap_sec
+audio_recording_min_duration_sec: 10.0
+organisation_names:
+  site_long_name: Acoustic Workbench
+  organisation_name: Audio Group
+  github_issues_url: "url to github issues page"
+  parent_site_name: "<<Brand name here>>"
+  parent_site_link: "http://example.com"
+  custom_menu:
+    header_title: Custom Menu
+    items:
+      - title: Item 1
+        url: "/item1"
+      - title: Item 2
+        url: "/item2"
+analytics:
+  domain: example.com
+  ua: "UA-XXXXXX"
+recaptcha:
+  public_key: set recaptcha public key
+  private_key: set recaptcha private key
+  # only set proxy if needed
+  proxy:
+google_maps:
+  api_key: your google maps api key
+permissions:
+  any_user_can_create_projects: true

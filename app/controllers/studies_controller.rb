@@ -1,5 +1,6 @@
-class StudiesController < ApplicationController
+# frozen_string_literal: true
 
+class StudiesController < ApplicationController
   include Api::ControllerHelper
 
   # GET /studies
@@ -7,10 +8,10 @@ class StudiesController < ApplicationController
     do_authorize_class
 
     @studies, opts = Settings.api_response.response_advanced(
-        api_filter_params,
-        Study.all,
-        Study,
-        Study.filter_settings
+      api_filter_params,
+      Study.all,
+      Study,
+      Study.filter_settings
     )
     respond_index(opts)
   end
@@ -27,10 +28,10 @@ class StudiesController < ApplicationController
     do_authorize_class
 
     filter_response, opts = Settings.api_response.response_advanced(
-        api_filter_params,
-        Study.all,
-        Study,
-        Study.filter_settings
+      api_filter_params,
+      Study.all,
+      Study,
+      Study.filter_settings
     )
     respond_filter(filter_response, opts)
   end
@@ -83,6 +84,4 @@ class StudiesController < ApplicationController
     # params[:study][:dataset_id] = params[:dataset_id]
     params.require(:study).permit(:dataset_id, :name)
   end
-
-
 end

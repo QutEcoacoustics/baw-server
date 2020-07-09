@@ -8,7 +8,7 @@ describe BawWorkers::RedisCommunicator do
 
   include_context 'shared_test_helpers'
 
-  let (:redis) { BawWorkers::Config.redis_communicator }
+  let(:redis) { BawWorkers::Config.redis_communicator }
 
   #let(:fake_redis) { Redis.new }
 
@@ -82,7 +82,6 @@ describe BawWorkers::RedisCommunicator do
   end
 
   it 'can recursively resolve payloads' do
-
     result = {}
     (1..10).each do |index|
       # store each base payload - with the previous key
@@ -101,7 +100,6 @@ describe BawWorkers::RedisCommunicator do
   end
 
   it 'can recursively delete partial payloads' do
-
     result = {}
     items = (1..10)
 
@@ -123,7 +121,5 @@ describe BawWorkers::RedisCommunicator do
     items.each do |item|
       expect(redis.exists("partial_payload:analysis_job:#{item}")).to eq(false)
     end
-
   end
-
 end

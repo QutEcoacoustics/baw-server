@@ -11,17 +11,16 @@ describe BawWorkers::Mirror::Action do
   # so change the queue name so the test worker does not
   # automatically process the jobs
   before(:each) do
-    default_queue = BawWorkers::Settings.actions.mirror.queue
+    default_queue = Settings.actions.mirror.queue
 
-    allow(BawWorkers::Settings.actions.mirror).to receive(:queue).and_return(default_queue + '_manual_tick')
+    allow(Settings.actions.mirror).to receive(:queue).and_return(default_queue + '_manual_tick')
 
     # cleanup resque queues before each test
     BawWorkers::ResqueApi.clear_queue(default_queue)
-    BawWorkers::ResqueApi.clear_queue(BawWorkers::Settings.actions.mirror.queue)
-
+    BawWorkers::ResqueApi.clear_queue(Settings.actions.mirror.queue)
   end
 
-  let(:queue_name) { BawWorkers::Settings.actions.mirror.queue }
+  let(:queue_name) { Settings.actions.mirror.queue }
 
   let(:mirror_source) { audio_file_mono.to_s }
   let(:mirror_dest) {
@@ -51,7 +50,6 @@ describe BawWorkers::Mirror::Action do
   }
 
   context 'queues' do
-
     it 'works on the mirror queue' do
       expect(Resque.queue_from_class(BawWorkers::Mirror::Action)).to eq(queue_name)
     end
@@ -76,7 +74,6 @@ describe BawWorkers::Mirror::Action do
     end
 
     it 'does not enqueue the same payload into the same queue more than once' do
-
       queued_query = { source: mirror_source, destinations: mirror_dest }
 
       expect(Resque.size(queue_name)).to eq(0)
@@ -145,13 +142,10 @@ describe BawWorkers::Mirror::Action do
       expect(status.status).to eq('queued')
       expect(status.uuid).to eq(job_id)
       expect(status.options).to eq(queued_query_normalised)
-
     end
-
   end
 
   it 'successfully mirrors a file' do
-
     expect(File.file?(mirror_source)).to be_truthy
 
     mirror_dest.each do |path|
@@ -183,5 +177,4 @@ describe BawWorkers::Mirror::Action do
     dest_2[:file] = mirror_dest[1]
     expect(BawWorkers::Config.file_info.audio_info(mirror_dest[1])).to eq(dest_2)
   end
-
 end

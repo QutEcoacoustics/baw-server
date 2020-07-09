@@ -5,9 +5,9 @@ require 'workers_helper'
 describe BawWorkers::Storage::AnalysisCache do
   include_context 'shared_test_helpers'
 
-  let(:analysis_cache) { BawWorkers::Storage::AnalysisCache.new(BawWorkers::Settings.paths.cached_analysis_jobs) }
-  let(:analysis_cache_paths) { BawWorkers::Settings.paths.cached_analysis_jobs }
-  let(:analysis_cache_path) { BawWorkers::Settings.paths.cached_analysis_jobs[0] }
+  let(:analysis_cache) { BawWorkers::Storage::AnalysisCache.new(Settings.paths.cached_analysis_jobs) }
+  let(:analysis_cache_paths) { Settings.paths.cached_analysis_jobs }
+  let(:analysis_cache_path) { Settings.paths.cached_analysis_jobs[0] }
 
   let(:uuid) { '5498633d-89a7-4b65-8f4a-96aa0c09c619' }
   let(:uuid_chars) { uuid[0, 2] }
@@ -85,7 +85,6 @@ describe BawWorkers::Storage::AnalysisCache do
   end
 
   it 'creates the correct full path for a single file with invalid chars using integer job id' do
-
     expected = [File.join(
       analysis_cache_path,
       File.join(job_id.to_s,
@@ -111,7 +110,6 @@ describe BawWorkers::Storage::AnalysisCache do
   end
 
   it 'creates the correct full path for a single file with invalid chars using system job id' do
-
     expected = [File.join(
       analysis_cache_path,
       File.join(BawWorkers::Storage::AnalysisCache::JOB_ID_SYSTEM,
@@ -160,7 +158,6 @@ describe BawWorkers::Storage::AnalysisCache do
   end
 
   it 'parses a valid cache file name correctly with system job id' do
-
     test_opts = {
       uuid: uuid,
       sub_folders: [sub_folder_valid_1, sub_folder_valid_2],
@@ -191,7 +188,6 @@ describe BawWorkers::Storage::AnalysisCache do
   end
 
   it 'prevents valid path with job id ~ from going to other parts of the file system' do
-
     tilde = '~'
 
     test_opts = {
@@ -210,7 +206,6 @@ describe BawWorkers::Storage::AnalysisCache do
   end
 
   it 'prevents valid path with job id .. from going to other parts of the file system' do
-
     double_dot = '..'
 
     test_opts = {
@@ -229,7 +224,6 @@ describe BawWorkers::Storage::AnalysisCache do
   end
 
   it 'prevents valid path with job id . from going to other parts of the file system' do
-
     single_dot = '.'
 
     test_opts = {
@@ -248,7 +242,6 @@ describe BawWorkers::Storage::AnalysisCache do
   end
 
   it 'prevents valid path with subfolder ~ from going to other parts of the file system' do
-
     tilde = '~'
 
     expected = [File.join(
@@ -276,7 +269,6 @@ describe BawWorkers::Storage::AnalysisCache do
   end
 
   it 'prevents valid path with subfolder .. from going to other parts of the file system' do
-
     double_dot = '..'
 
     expected = [File.join(
@@ -304,7 +296,6 @@ describe BawWorkers::Storage::AnalysisCache do
   end
 
   it 'prevents valid path with subfolder . from going to other parts of the file system' do
-
     single_dot = '.'
 
     expected = [File.join(
@@ -417,5 +408,4 @@ describe BawWorkers::Storage::AnalysisCache do
 
     expect(test).to eq expected
   end
-
 end

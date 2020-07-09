@@ -16,7 +16,6 @@ if admin_user.blank?
   admin_user.save!(validate: false)
 end
 
-
 # harvester user is for machine access via api
 harvester_user = User.where(user_name: 'Harvester').first
 if harvester_user.blank?
@@ -29,11 +28,10 @@ if harvester_user.blank?
 end
 
 # default dataset
-default_dataset = Dataset.where(name: 'default').first
+default_dataset = Dataset.default_dataset
 if default_dataset.blank?
-  default_dataset = Dataset.new(name: 'default')
+  default_dataset = Dataset.new(name: Dataset::DEFAULT_DATASET_NAME)
   default_dataset.description = 'The default dataset'
   default_dataset.creator_id = admin_user.id
   default_dataset.save!(validate: false)
 end
-

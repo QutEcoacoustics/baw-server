@@ -1,36 +1,38 @@
-FactoryGirl.define do
+# frozen_string_literal: true
 
+FactoryBot.define do
   factory :audio_event do
-
-    start_time_seconds 5.2
-    low_frequency_hertz 400
-    high_frequency_hertz 6000
-    end_time_seconds 5.8
-    is_reference false
+    start_time_seconds { 5.2 }
+    low_frequency_hertz { 400 }
+    high_frequency_hertz { 6000 }
+    end_time_seconds { 5.8 }
+    is_reference { false }
 
     creator
     audio_recording
 
     trait :reference do
-      is_reference true
+      is_reference { true }
     end
 
     trait :with_tags do
       transient do
-        audio_event_count 1
+        audio_event_count { 1 }
       end
       after(:create) do |audio_event, evaluator|
         raise 'Creator was blank' if  evaluator.creator.blank?
+
         create_list(:tagging, evaluator.audio_event_count, audio_event: audio_event, creator: evaluator.creator)
       end
     end
 
     trait :with_comments do
       transient do
-        audio_event_count 1
+        audio_event_count { 1 }
       end
       after(:create) do |audio_event, evaluator|
         raise 'Creator was blank' if  evaluator.creator.blank?
+
         create_list(:comment, evaluator.audio_event_count, audio_event: audio_event, creator: evaluator.creator)
       end
     end

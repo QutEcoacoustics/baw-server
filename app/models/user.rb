@@ -2,7 +2,7 @@
 
 require 'role_model'
 
-class User < ActiveRecord::Base
+class User < ApplicationRecord
   attr_accessor :skip_creation_email
 
   # Include default devise modules. Others available are:

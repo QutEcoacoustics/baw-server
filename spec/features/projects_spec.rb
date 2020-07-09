@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 
 def select_by_value(id, value)
@@ -6,8 +8,7 @@ def select_by_value(id, value)
   page.select(option, from: id)
 end
 
-describe 'CRUD Projects as valid user with write permission', type: :feature do
-
+xdescribe 'CRUD Projects as valid user with write permission', type: :feature do
   create_entire_hierarchy
 
   before(:each) do
@@ -59,11 +60,9 @@ describe 'CRUD Projects as valid user with write permission', type: :feature do
     visit edit_project_path(project)
     expect(page).to have_content(I18n.t('devise.failure.unauthorized'))
   end
-
 end
 
-describe 'CRUD Projects as valid user and project creator', :type => :feature do
-
+xdescribe 'CRUD Projects as valid user and project creator', type: :feature do
   create_entire_hierarchy
 
   before(:each) do
@@ -114,11 +113,9 @@ describe 'CRUD Projects as valid user and project creator', :type => :feature do
     click_button 'Submit'
     expect(page).to have_content('test name')
   end
-
 end
 
-describe 'CRUD Projects as valid user with read permission', :type => :feature do
-
+xdescribe 'CRUD Projects as valid user with read permission', type: :feature do
   create_entire_hierarchy
 
   before(:each) do
@@ -159,16 +156,13 @@ describe 'CRUD Projects as valid user with read permission', :type => :feature d
     expect(page).to have_content('Project was successfully created.')
   end
 
-
   it 'rejects access to update project' do
     visit edit_project_path(project)
     expect(page).to have_content(I18n.t('devise.failure.unauthorized'))
   end
-
 end
 
-describe 'CRUD Projects as valid user with no permissions', :type => :feature do
-
+xdescribe 'CRUD Projects as valid user with no permissions', type: :feature do
   create_entire_hierarchy
 
   before(:each) do
@@ -203,11 +197,9 @@ describe 'CRUD Projects as valid user with no permissions', :type => :feature do
     visit edit_project_path(project)
     expect(page).to have_content(I18n.t('devise.failure.unauthorized'))
   end
-
 end
 
-describe 'Delete Projects as admin user', :type => :feature do
-
+xdescribe 'Delete Projects as admin user', type: :feature do
   create_entire_hierarchy
 
   before(:each) do
@@ -256,12 +248,10 @@ end
 #
 # end
 
-describe 'request project access', :type => :feature do
-
+xdescribe 'request project access', type: :feature do
   create_entire_hierarchy
 
   before(:each) do
-
     login_as no_access_user, scope: :user
   end
 
@@ -321,11 +311,10 @@ describe 'request project access', :type => :feature do
   end
 end
 
-describe 'Project', type: :feature do
+xdescribe 'Project', type: :feature do
   create_entire_hierarchy
 
   context 'CRUD' do
-
     context 'for an admin user' do
       before(:each) do
         login_as admin_user, scope: :user
@@ -488,7 +477,6 @@ describe 'Project', type: :feature do
         visit edit_project_path(project)
         expect(page).to have_content(I18n.t('devise.failure.unauthorized'))
       end
-
     end
 
     context 'for a user with read access' do
@@ -630,6 +618,5 @@ describe 'Project', type: :feature do
 
       expect(ActionMailer::Base.deliveries.size).to eq(0)
     end
-
   end
 end

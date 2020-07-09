@@ -1,10 +1,9 @@
 # frozen_string_literal: true
 
 shared_context 'shared_test_helpers' do
-
-  let(:host) { BawWorkers::Settings.api.host }
-  let(:port) { BawWorkers::Settings.api.port }
-  let(:scheme) { BawWorkers::Settings.endpoints.use_ssl.to_s.downcase == 'true' ? 'https' : 'http' }
+  let(:host) { Settings.api.host }
+  let(:port) { Settings.api.port }
+  let(:scheme) { 'https' }
   let(:default_uri) { "#{scheme}://#{host}:#{port}" }
 
   # example files
@@ -34,20 +33,20 @@ shared_context 'shared_test_helpers' do
 
   let(:audio_file_corrupt) { Fixtures.audio_file_corrupt }
 
-  let(:temporary_dir) { BawWorkers::Settings.paths.temp_dir }
+  let(:temporary_dir) { Settings.paths.temp_dir }
 
   # output file paths
-  let(:program_stderr_file) { BawWorkers::Settings.resque.error_log_file }
+  let(:program_stderr_file) { Settings.resque.error_log_file }
   let(:program_stderr_content) { File.read(program_stderr_file) }
 
-  let(:program_stdout_file) { BawWorkers::Settings.resque.output_log_file }
+  let(:program_stdout_file) { Settings.resque.output_log_file }
   let(:program_stdout_content) { File.read(program_stdout_file) }
 
-  let(:worker_log_file) { BawWorkers::Settings.paths.worker_log_file }
+  let(:worker_log_file) { Settings.paths.worker_log_file }
   let(:worker_log_content) {  File.read(worker_log_file) }
 
   let(:default_settings_file) { RSpec.configuration.default_settings_path }
-  let(:harvest_to_do_path) { File.expand_path(BawWorkers::Settings.actions.harvest.to_do_path) }
+  let(:harvest_to_do_path) { File.expand_path(Settings.actions.harvest.to_do_path) }
   let(:custom_temp) { BawWorkers::Config.temp_dir }
 
   # easy access to config & settings
@@ -88,25 +87,25 @@ shared_context 'shared_test_helpers' do
   end
 
   def clear_original_audio
-    paths = BawWorkers::Settings.paths.original_audios
+    paths = Settings.paths.original_audios
 
     clear_directories(paths)
   end
 
   def clear_spectrogram_cache
-    paths = BawWorkers::Settings.paths.cached_spectrograms
+    paths = Settings.paths.cached_spectrograms
 
     clear_directories(paths)
   end
 
   def clear_audio_cache
-    paths = BawWorkers::Settings.paths.cached_audios
+    paths = Settings.paths.cached_audios
 
     clear_directories(paths)
   end
 
   def clear_analysis_cache
-    paths = BawWorkers::Settings.paths.cached_analysis_jobs
+    paths = Settings.paths.cached_analysis_jobs
 
     clear_directories(paths)
   end
@@ -120,7 +119,7 @@ shared_context 'shared_test_helpers' do
   end
 
   def make_original_audio
-    paths = BawWorkers::Settings.paths.original_audios
+    paths = Settings.paths.original_audios
 
     paths.each do |path|
       raise "Will not create #{path} because it does not contain 'test'" unless path =~ /_test_/
@@ -266,5 +265,4 @@ shared_context 'shared_test_helpers' do
       expect(matches).to be_truthy, "Request order does not match, expected:\n\n#{expected_request}\n\nIn position #{index}, got\n\n#{actual_requests[index]}"
     end
   end
-
 end

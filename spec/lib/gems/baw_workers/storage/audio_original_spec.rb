@@ -4,7 +4,6 @@ require 'workers_helper'
 require 'helpers/shared_test_helpers'
 
 describe BawWorkers::Storage::AudioOriginal do
-
   include_context 'shared_test_helpers'
 
   let(:audio_original) { BawWorkers::Config.original_audio_helper }
@@ -35,30 +34,30 @@ describe BawWorkers::Storage::AudioOriginal do
   end
 
   it 'possible dirs match settings' do
-    expect(audio_original.possible_dirs).to match_array BawWorkers::Settings.paths.original_audios
+    expect(audio_original.possible_dirs).to match_array Settings.paths.original_audios
   end
 
   it 'existing dirs match settings' do
-    Dir.mkdir(BawWorkers::Settings.paths.original_audios[0]) unless Dir.exist?(BawWorkers::Settings.paths.original_audios[0])
-    expect(audio_original.existing_dirs).to match_array BawWorkers::Settings.paths.original_audios
-    FileUtils.rm_rf(BawWorkers::Settings.paths.original_audios[0])
+    Dir.mkdir(Settings.paths.original_audios[0]) unless Dir.exist?(Settings.paths.original_audios[0])
+    expect(audio_original.existing_dirs).to match_array Settings.paths.original_audios
+    FileUtils.rm_rf(Settings.paths.original_audios[0])
   end
 
   it 'possible paths match settings for old names' do
-    files = [File.join(BawWorkers::Settings.paths.original_audios[0], partial_path, original_file_name_old)]
+    files = [File.join(Settings.paths.original_audios[0], partial_path, original_file_name_old)]
     expect(audio_original.possible_paths_file(opts, original_file_name_old)).to match_array files
   end
 
   it 'possible paths match settings for new names' do
-    files = [File.join(BawWorkers::Settings.paths.original_audios[0], partial_path, original_file_name_new)]
+    files = [File.join(Settings.paths.original_audios[0], partial_path, original_file_name_new)]
     expect(audio_original.possible_paths_file(opts, original_file_name_new)).to match_array files
   end
 
   it 'existing paths match settings for old names' do
     files = [
-      File.join(BawWorkers::Settings.paths.original_audios[0], partial_path, original_file_name_old)
+      File.join(Settings.paths.original_audios[0], partial_path, original_file_name_old)
     ]
-    dir = BawWorkers::Settings.paths.original_audios[0]
+    dir = Settings.paths.original_audios[0]
     sub_dir = File.join(dir, partial_path)
     FileUtils.mkpath(sub_dir)
     FileUtils.touch(files[0])
@@ -67,8 +66,8 @@ describe BawWorkers::Storage::AudioOriginal do
   end
 
   it 'existing paths match settings for new names' do
-    files = [File.join(BawWorkers::Settings.paths.original_audios[0], partial_path, original_file_name_new)]
-    dir = BawWorkers::Settings.paths.original_audios[0]
+    files = [File.join(Settings.paths.original_audios[0], partial_path, original_file_name_new)]
+    dir = Settings.paths.original_audios[0]
     sub_dir = File.join(dir, partial_path)
     FileUtils.mkpath(sub_dir)
     FileUtils.touch(files[0])
@@ -93,19 +92,19 @@ describe BawWorkers::Storage::AudioOriginal do
   end
 
   it 'creates the correct full path for old names' do
-    expected = [File.join(BawWorkers::Settings.paths.original_audios[0], partial_path, original_file_name_old)]
+    expected = [File.join(Settings.paths.original_audios[0], partial_path, original_file_name_old)]
     expect(audio_original.possible_paths_file(opts, original_file_name_old)).to eq expected
   end
 
   it 'creates the correct full path for new names for a single file' do
-    expected = [File.join(BawWorkers::Settings.paths.original_audios[0], partial_path, original_file_name_new)]
+    expected = [File.join(Settings.paths.original_audios[0], partial_path, original_file_name_new)]
     expect(audio_original.possible_paths_file(opts, original_file_name_new)).to eq expected
   end
 
   it 'creates the correct full path' do
     expected = [
-      File.join(BawWorkers::Settings.paths.original_audios[0], partial_path, original_file_name_old),
-      File.join(BawWorkers::Settings.paths.original_audios[0], partial_path, original_file_name_new)
+      File.join(Settings.paths.original_audios[0], partial_path, original_file_name_old),
+      File.join(Settings.paths.original_audios[0], partial_path, original_file_name_new)
     ]
     expect(audio_original.possible_paths(opts)).to eq expected
   end
@@ -153,7 +152,6 @@ describe BawWorkers::Storage::AudioOriginal do
   end
 
   it 'enumerates all files in the storage directory' do
-
     paths = audio_original.possible_paths(opts)
     paths.each do |path|
       FileUtils.mkpath(File.dirname(path))
@@ -174,5 +172,4 @@ describe BawWorkers::Storage::AudioOriginal do
     expect(files[0][:original_format]).to eq(original_format)
     expect(files[1][:original_format]).to eq(original_format)
   end
-
 end

@@ -1,10 +1,11 @@
+# frozen_string_literal: true
+
 module Admin
   class ScriptsController < BaseController
-
     # GET /admin/scripts
     def index
       respond_to do |format|
-        format.html { @scripts = get_scripts}
+        format.html { @scripts = get_scripts }
       end
     end
 
@@ -69,11 +70,11 @@ module Admin
           format.html { redirect_to admin_script_path(@new_script), notice: 'A new version of the Script was successfully created.' }
           format.json { respond_show }
         else
-          format.html {
+          format.html do
             @old_script = @script
             @script = @new_script # so that it renders the errors
             render action: 'update'
-          }
+          end
           format.json { respond_change_fail }
         end
       end
@@ -87,11 +88,12 @@ module Admin
 
     def script_params
       params.require(:script).permit(
-          :name, :description, :analysis_identifier,
-          :version, :verified,
-          :executable_command,
-          :executable_settings, :executable_settings_media_type,
-          :analysis_action_params)
+        :name, :description, :analysis_identifier,
+        :version, :verified,
+        :executable_command,
+        :executable_settings, :executable_settings_media_type,
+        :analysis_action_params
+      )
     end
 
     def get_scripts

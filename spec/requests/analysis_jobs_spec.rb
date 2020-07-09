@@ -10,7 +10,6 @@ require 'rspec/mocks'
 #
 
 describe 'Analysis Jobs' do
-
   create_audio_recordings_hierarchy
 
   # https://github.com/aasm/aasm#testing
@@ -32,7 +31,7 @@ describe 'Analysis Jobs' do
   }
 
   let!(:script) {
-    FactoryGirl.create(
+    FactoryBot.create(
       :script,
       creator: admin_user,
       executable_command: 'echo  "<{file_executable}>" audio2csv /source:"<{file_source}>" /config:"<{file_config}>" /tempdir:"<{dir_temp}>" /output:"<{dir_output}>"',
@@ -76,7 +75,6 @@ describe 'Analysis Jobs' do
     # so change the queue name so the test worker does not
     # automatically process the jobs
     allow(BawWorkers::Analysis::Action).to receive(:queue).and_return(@manual_queue)
-
   end
 
   after(:each) do |example|
@@ -129,7 +127,7 @@ describe 'Analysis Jobs' do
       }
     }
 
-    post @analysis_job_url, valid_attributes, @env
+    post @analysis_job_url, params: valid_attributes, headers: @env
 
     raise "Failed to create test AnalysisJob, status: #{response.status}" if response.status != 201
 
@@ -160,11 +158,11 @@ describe 'Analysis Jobs' do
 
     @env['HTTP_AUTHORIZATION'] = writer_token
 
-    put update_route, {
+    put update_route, params: {
       analysis_job: {
         overall_status: overall_status
       }
-    }, @env
+    }, headers: @env
 
     raise "Failed to update AnalysisJob, status: #{response.status}" if response.status != 200
   end
@@ -174,7 +172,7 @@ describe 'Analysis Jobs' do
 
     @env['HTTP_AUTHORIZATION'] = writer_token
 
-    delete destroy_route, {}, @env
+    delete destroy_route, params: {}, headers: @env
 
     [response.status, response]
   end
@@ -200,7 +198,6 @@ describe 'Analysis Jobs' do
     expected = opts.deep_merge(expected)
 
     expected.each do |key, value|
-
       value = value.stringify_keys if value.is_a?(Hash)
 
       actual = analysis_job[key]
@@ -227,7 +224,7 @@ describe 'Analysis Jobs' do
     @env['HTTP_AUTHORIZATION'] = harvester_token
     @env['HTTP_ACCEPT'] = 'application/json'
 
-    get route, {}, @env
+    get route, params: {}, headers: @env
 
     raise "Failed to get AnalysisJobItem, status: #{response.status}" if response.status != 200
 
@@ -241,13 +238,15 @@ describe 'Analysis Jobs' do
     @env['HTTP_AUTHORIZATION'] = harvester_token
     @env['HTTP_ACCEPT'] = 'application/json'
 
-    put update_route, {
+    put update_route, params: {
       analysis_jobs_item: {
         status: status
       }
-    }, @env
+    }, headers: @env
 
-    raise "Failed to update AnalysisJobItem, status: #{response.status} #{response.message}" if response.status != 200
+    if response.status != 200
+      raise "Failed to update AnalysisJobItem, status: #{response.status} #{response.message}\n#{response.body}"
+    end
   end
 
   class FakeAnalysisJob
@@ -311,16 +310,17 @@ describe 'Analysis Jobs' do
 
       message = @job_perform_failure if @job_perform_failure.is_a? String
       message = @job_perform_failure.join("\n") if @job_perform_failure.is_a? Array
-      message = @job_perform_failure.full_message if @job_perform_failure.is_a? Exception
+      if @job_perform_failure.is_a? Exception
+        message = @job_perform_failure.full_message
+        message += @job_perform_failure.backtrace.join('\n')
+      end
 
       raise 'job perform failed: ' + message
     end
   end
 
   describe 'Creating an analysis job' do
-
     describe 'status: "new"' do
-
       before(:each) do
         reset
 
@@ -348,11 +348,9 @@ describe 'Analysis Jobs' do
       it 'ensures no new AnalysisJobsItems exist' do
         expect(get_items_count).to eq(0)
       end
-
     end
 
     describe 'status: "preparing"' do
-
       before(:each) do
         reset
         ActionMailer::Base.deliveries.clear
@@ -398,7 +396,6 @@ describe 'Analysis Jobs' do
       it 'ensures new job items exist in the message queue' do
         expect(get_queue_count).to eq(6)
         expect(get_failed_queue_count).to eq(0)
-
       end
 
       it 'ensures new AnalysisJobsItems exist' do
@@ -413,7 +410,6 @@ describe 'Analysis Jobs' do
       end
 
       it 'allows for some jobs items to have be started while still preparing' do
-
         allow(AnalysisJob).to receive(:batch_size).and_return(2)
 
         @analysis_job = create_analysis_job_direct
@@ -453,7 +449,6 @@ describe 'Analysis Jobs' do
       end
 
       it 'allows for all jobs items to have completed while still preparing - and to skip `processing` completely' do
-
         allow(AnalysisJob).to receive(:batch_size).and_return(2)
 
         @analysis_job = create_analysis_job_direct
@@ -492,11 +487,9 @@ describe 'Analysis Jobs' do
 
         expect(@analysis_job.completed?).to be_truthy
       end
-
     end
 
     describe 'status: "processing"' do
-
       before(:each) do
         reset
         ActionMailer::Base.deliveries.clear
@@ -540,7 +533,6 @@ describe 'Analysis Jobs' do
       it 'ensures some all jobs exist in the message queue' do
         expect(get_queue_count).to eq(2)
         expect(get_failed_queue_count).to eq(1)
-
       end
 
       it 'ensures all AnalysisJobsItems exist' do
@@ -560,7 +552,6 @@ describe 'Analysis Jobs' do
                            total: 6
                          }
                        }, 6)
-
       end
 
       it 'invalidates cached progress statistics every whenever an analysis_job_item is updated' do
@@ -614,11 +605,9 @@ describe 'Analysis Jobs' do
                        }, 6)
         expect(@analysis_job.updated_at).to eq(updated_at)
       end
-
     end
 
     describe 'status: "suspended"' do
-
       before(:each) do
         reset
         ActionMailer::Base.deliveries.clear
@@ -759,7 +748,6 @@ describe 'Analysis Jobs' do
       end
 
       describe 'status: "suspended"→"processing"' do
-
         before(:each) do
           #reset
           # reset our mocks, or else create_payload will be mocked again!
@@ -830,9 +818,7 @@ describe 'Analysis Jobs' do
                            }
                          }, 6)
         end
-
       end
-
     end
 
     describe 'status: "completed"' do
@@ -911,7 +897,6 @@ describe 'Analysis Jobs' do
       end
 
       describe 'retrying failed items, status: "completed"→"processing"' do
-
         before(:each) do
           #reset
           ActionMailer::Base.deliveries.clear
@@ -1020,17 +1005,12 @@ describe 'Analysis Jobs' do
           expect(mail.body.raw_source).to include('ID: ' + @analysis_job.id.to_s)
           expect(mail.body.raw_source).to include('localhost:3000/analysis_jobs/' + @analysis_job.id.to_s)
         end
-
       end
-
     end
-
   end
 
   describe 'Deleting an analysis job' do
-
     describe 'status: "new"' do
-
       before(:each) do
         reset
         @analysis_job = create_analysis_job_direct
@@ -1044,11 +1024,9 @@ describe 'Analysis Jobs' do
         expect(status_code).to be(409)
         expect(response.body).to include('Cannot be deleted while `overall_status` is `new`')
       end
-
     end
 
     describe 'status: "preparing"' do
-
       before(:each) do
         reset
         @analysis_job = create_analysis_job_direct
@@ -1070,11 +1048,9 @@ describe 'Analysis Jobs' do
         expect(status_code).to be(409)
         expect(response.body).to include('Cannot be deleted while `overall_status` is `preparing`')
       end
-
     end
 
     describe 'status: "processing"' do
-
       before(:each) do
         reset
         @analysis_job = create_analysis_job
@@ -1090,7 +1066,6 @@ describe 'Analysis Jobs' do
       it 'should be :suspended when deleted' do
         expect(@analysis_job.suspended?).to be_truthy
       end
-
     end
 
     describe 'status: "suspended"' do
@@ -1232,11 +1207,9 @@ describe 'Analysis Jobs' do
         mail = ActionMailer::Base.deliveries.last
         expect(mail['subject'].value).to_not include('Completed analysis job')
       end
-
     end
 
     describe 'status: "completed"' do
-
       before(:each) do
         reset
         ActionMailer::Base.deliveries.clear
@@ -1283,9 +1256,6 @@ describe 'Analysis Jobs' do
                          }
                        }, 6)
       end
-
     end
-
   end
-
 end

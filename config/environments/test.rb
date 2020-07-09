@@ -12,9 +12,11 @@ Rails.application.configure do
   # preloads Rails for running tests, you may have to set it to true.
   config.eager_load = false
 
-  # Configure static file server for tests with Cache-Control for performance.
-  config.serve_static_files   = true
-  config.static_cache_control = 'public, max-age=3600'
+  # Configure public file server for tests with Cache-Control for performance.
+  config.public_file_server.enabled = true
+  config.public_file_server.headers = {
+    'Cache-Control' => 'public, max-age=3600'
+  }
 
   # Show full error reports and disable caching.
   config.consider_all_requests_local       = true
@@ -25,15 +27,18 @@ Rails.application.configure do
 
   # Disable request forgery protection in test environment.
   config.action_controller.allow_forgery_protection = false
+  config.action_mailer.perform_caching = false
 
   # Tell Action Mailer not to deliver emails to the real world.
   # The :test delivery method accumulates sent emails in the
   # ActionMailer::Base.deliveries array.
   config.action_mailer.raise_delivery_errors = true
+
   config.action_mailer.default_url_options =
-      {
-          host: "#{Settings.host.name}:#{Settings.host.port}"
-      }
+    {
+      host: "#{Settings.host.name}:#{Settings.host.port}"
+    }
+
   config.action_mailer.delivery_method = :test
   config.action_mailer.perform_deliveries = true
 
@@ -57,16 +62,8 @@ Rails.application.configure do
   # Paperclip default location in tmp, so it can be cleared after test suite is run
   Paperclip::Attachment.default_options[:path] = ':rails_root/tmp/paperclip:url'
 
-  # Set path for image magick for windows only
-  if RbConfig::CONFIG['target_os'] =~ /mswin|mingw/i
-    im_dir = Settings.paths.image_magick_dir
-    if Dir.exist?(im_dir) && File.directory?(im_dir)
-      Paperclip.options[:command_path] = im_dir
-    else
-      puts "WARN: cannot find image magick path #{im_dir}"
-    end
-  end
 
   config.after_initialize do
   end
+  # config.action_view.raise_on_missing_translations = true
 end

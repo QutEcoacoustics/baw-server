@@ -1,18 +1,18 @@
 # frozen_string_literal: true
 
-class Site < ActiveRecord::Base
+class Site < ApplicationRecord
   # ensures that creator_id, updater_id, deleter_id are set
   include UserChange
 
   attr_accessor :project_ids, :custom_latitude, :custom_longitude, :location_obfuscated
 
   # relations
-  has_and_belongs_to_many :projects, -> { uniq }
+  has_and_belongs_to_many :projects, -> { distinct }
   has_many :audio_recordings, inverse_of: :site
 
   belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_sites
-  belongs_to :updater, class_name: 'User', foreign_key: :updater_id, inverse_of: :updated_sites
-  belongs_to :deleter, class_name: 'User', foreign_key: :deleter_id, inverse_of: :deleted_sites
+  belongs_to :updater, class_name: 'User', foreign_key: :updater_id, inverse_of: :updated_sites, optional: true
+  belongs_to :deleter, class_name: 'User', foreign_key: :deleter_id, inverse_of: :deleted_sites, optional: true
 
   has_attached_file :image,
                     styles: {
@@ -38,7 +38,7 @@ class Site < ActiveRecord::Base
   validates_as_paranoid
 
   # association validations
-  validates :creator, existence: true
+  validates_associated :creator
 
   # attribute validations
   validates :name, presence: true, length: { minimum: 2 }

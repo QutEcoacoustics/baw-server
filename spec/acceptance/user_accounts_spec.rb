@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 require 'rspec_api_documentation/dsl'
 require 'helpers/acceptance_spec_helper'
@@ -8,7 +10,6 @@ end
 
 # https://github.com/zipmark/rspec_api_documentation
 resource 'Users' do
-
   header 'Accept', 'application/json'
   header 'Content-Type', 'application/json'
   header 'Authorization', :authentication_token
@@ -26,7 +27,7 @@ resource 'Users' do
 
   # Create post parameters from factory
   let(:post_attributes) {
-    post_attrs = FactoryGirl.attributes_for(:user)
+    post_attrs = FactoryBot.attributes_for(:user)
     post_attrs.delete(:authentication_token)
     post_attrs
   }
@@ -40,37 +41,38 @@ resource 'Users' do
   get '/user_accounts' do
     let(:authentication_token) { admin_token }
     standard_request_options(:get, 'INDEX (as admin)', :not_acceptable, {
-        expected_json_path: 'meta/error/details',
-        response_body_content: ['"This resource is not available in this format \'application/json\'."']})
+                               expected_json_path: 'meta/error/details',
+                               response_body_content: ['"This resource is not available in this format \'application/json\'."']
+                             })
   end
 
   get '/user_accounts' do
     let(:authentication_token) { owner_token }
-    standard_request_options(:get, 'INDEX (as owner)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
+    standard_request_options(:get, 'INDEX (as owner)', :forbidden, { expected_json_path: get_json_error_path(:permissions) })
   end
 
   get '/user_accounts' do
     let(:authentication_token) { writer_token }
-    standard_request_options(:get, 'INDEX (as writer)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
+    standard_request_options(:get, 'INDEX (as writer)', :forbidden, { expected_json_path: get_json_error_path(:permissions) })
   end
 
   get '/user_accounts' do
     let(:authentication_token) { reader_token }
-    standard_request_options(:get, 'INDEX (as reader)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
+    standard_request_options(:get, 'INDEX (as reader)', :forbidden, { expected_json_path: get_json_error_path(:permissions) })
   end
 
   get '/user_accounts' do
     let(:authentication_token) { no_access_token }
-    standard_request_options(:get, 'INDEX (as no access user)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
+    standard_request_options(:get, 'INDEX (as no access user)', :forbidden, { expected_json_path: get_json_error_path(:permissions) })
   end
 
   get '/user_accounts' do
     let(:authentication_token) { invalid_token }
-    standard_request_options(:get, 'INDEX (with invalid token)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
+    standard_request_options(:get, 'INDEX (with invalid token)', :unauthorized, { expected_json_path: get_json_error_path(:sign_up) })
   end
 
   get '/user_accounts' do
-    standard_request_options(:get, 'INDEX (as anonymous user)', :unauthorized, {remove_auth: true, expected_json_path: get_json_error_path(:sign_up)})
+    standard_request_options(:get, 'INDEX (as anonymous user)', :unauthorized, { remove_auth: true, expected_json_path: get_json_error_path(:sign_up) })
   end
 
   ################################
@@ -81,41 +83,41 @@ resource 'Users' do
     id_param
     let(:id) { admin_id }
     let(:authentication_token) { admin_token }
-    standard_request_options(:get, 'SHOW (as admin, same user)', :ok, {expected_json_path: 'data/user_name'})
+    standard_request_options(:get, 'SHOW (as admin, same user)', :ok, { expected_json_path: 'data/user_name' })
   end
 
   get '/user_accounts/:id' do
     id_param
     let(:id) { writer_id }
     let(:authentication_token) { owner_token }
-    standard_request_options(:get, 'SHOW (as owner, different user)', :ok, {expected_json_path: 'data/user_name'})
+    standard_request_options(:get, 'SHOW (as owner, different user)', :ok, { expected_json_path: 'data/user_name' })
   end
 
   get '/user_accounts/:id' do
     id_param
     let(:id) { no_access_id }
     let(:authentication_token) { no_access_token }
-    standard_request_options(:get, 'SHOW (as no access user, same user)', :ok, {expected_json_path: 'data/user_name'})
+    standard_request_options(:get, 'SHOW (as no access user, same user)', :ok, { expected_json_path: 'data/user_name' })
   end
 
   get '/user_accounts/:id' do
     id_param
     let(:id) { writer_id }
     let(:authentication_token) { no_access_token }
-    standard_request_options(:get, 'SHOW (as no access user, different user)', :ok, {expected_json_path: 'data/user_name'})
+    standard_request_options(:get, 'SHOW (as no access user, different user)', :ok, { expected_json_path: 'data/user_name' })
   end
 
   get '/user_accounts/:id' do
     id_param
     let(:id) { writer_id }
     let(:authentication_token) { invalid_token }
-    standard_request_options(:get, 'SHOW (with invalid token)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
+    standard_request_options(:get, 'SHOW (with invalid token)', :unauthorized, { expected_json_path: get_json_error_path(:sign_up) })
   end
 
   get '/user_accounts/:id' do
     id_param
     let(:id) { writer_id }
-    standard_request_options(:get, 'SHOW (as anonymous user)', :unauthorized, {remove_auth: true, expected_json_path: get_json_error_path(:sign_in)})
+    standard_request_options(:get, 'SHOW (as anonymous user)', :unauthorized, { remove_auth: true, expected_json_path: get_json_error_path(:sign_in) })
   end
 
   ################################
@@ -124,56 +126,56 @@ resource 'Users' do
   put '/user_accounts/:id' do
     id_param
     let(:id) { admin_id }
-    let(:raw_post) { {user: post_attributes}.to_json }
+    let(:raw_post) { { user: post_attributes }.to_json }
     let(:authentication_token) { admin_token }
-    standard_request_options(:put, 'UPDATE (as admin, same user)', :ok, {expected_json_path: 'data/user_name'})
+    standard_request_options(:put, 'UPDATE (as admin, same user)', :ok, { expected_json_path: 'data/user_name' })
   end
 
   put '/user_accounts/:id' do
     id_param
     let(:id) { reader_id }
-    let(:raw_post) { {user: post_attributes}.to_json }
+    let(:raw_post) { { user: post_attributes }.to_json }
     let(:authentication_token) { admin_token }
-    standard_request_options(:put, 'UPDATE (as admin, different user)', :ok, {expected_json_path: 'data/user_name'})
+    standard_request_options(:put, 'UPDATE (as admin, different user)', :ok, { expected_json_path: 'data/user_name' })
   end
 
   put '/user_accounts/:id' do
     id_param
     let(:id) { writer_id }
-    let(:raw_post) { {user: post_attributes}.to_json }
+    let(:raw_post) { { user: post_attributes }.to_json }
     let(:authentication_token) { writer_token } # admin only, users edit using devise/registrations#edit
-    standard_request_options(:put, 'UPDATE (as writer, same user)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
+    standard_request_options(:put, 'UPDATE (as writer, same user)', :forbidden, { expected_json_path: get_json_error_path(:permissions) })
   end
 
   put '/user_accounts/:id' do
     id_param
     let(:id) { reader_id }
-    let(:raw_post) { {user: post_attributes}.to_json }
+    let(:raw_post) { { user: post_attributes }.to_json }
     let(:authentication_token) { reader_token } # admin only, users edit using devise/registrations#edit
-    standard_request_options(:put, 'UPDATE (as reader, same user)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
+    standard_request_options(:put, 'UPDATE (as reader, same user)', :forbidden, { expected_json_path: get_json_error_path(:permissions) })
   end
 
   put '/user_accounts/:id' do
     id_param
     let(:id) { no_access_id }
-    let(:raw_post) { {user: post_attributes}.to_json }
+    let(:raw_post) { { user: post_attributes }.to_json }
     let(:authentication_token) { writer_token }
-    standard_request_options(:put, 'UPDATE (as writer, different user)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
+    standard_request_options(:put, 'UPDATE (as writer, different user)', :forbidden, { expected_json_path: get_json_error_path(:permissions) })
   end
 
   put '/user_accounts/:id' do
     id_param
     let(:id) { writer_id }
-    let(:raw_post) { {user: post_attributes}.to_json }
+    let(:raw_post) { { user: post_attributes }.to_json }
     let(:authentication_token) { invalid_token }
-    standard_request_options(:put, 'UPDATE (with invalid token)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
+    standard_request_options(:put, 'UPDATE (with invalid token)', :unauthorized, { expected_json_path: get_json_error_path(:sign_up) })
   end
 
   put '/user_accounts/:id' do
     id_param
     let(:id) { writer_id }
-    let(:raw_post) { {user: post_attributes}.to_json }
-    standard_request_options(:put, 'UPDATE (as anonymous user)', :unauthorized, {remove_auth: true, expected_json_path: get_json_error_path(:sign_in)})
+    let(:raw_post) { { user: post_attributes }.to_json }
+    standard_request_options(:put, 'UPDATE (as anonymous user)', :unauthorized, { remove_auth: true, expected_json_path: get_json_error_path(:sign_in) })
   end
 
   ################################
@@ -182,16 +184,16 @@ resource 'Users' do
 
   get '/my_account' do
     let(:authentication_token) { reader_token }
-    standard_request_options(:get, 'MY ACCOUNT (as reader)', :ok, {expected_json_path: 'data/user_name'})
+    standard_request_options(:get, 'MY ACCOUNT (as reader)', :ok, { expected_json_path: 'data/user_name' })
   end
 
   get '/my_account' do
     let(:authentication_token) { invalid_token }
-    standard_request_options(:get, 'MY ACCOUNT (invalid token)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
+    standard_request_options(:get, 'MY ACCOUNT (invalid token)', :unauthorized, { expected_json_path: get_json_error_path(:sign_up) })
   end
 
   get '/my_account' do
-    standard_request_options(:get, 'MY ACCOUNT (as anonymous user)', :unauthorized, {remove_auth: true, expected_json_path: get_json_error_path(:sign_up)})
+    standard_request_options(:get, 'MY ACCOUNT (as anonymous user)', :unauthorized, { remove_auth: true, expected_json_path: get_json_error_path(:sign_up) })
   end
 
   ################################
@@ -201,44 +203,43 @@ resource 'Users' do
   put '/my_account/prefs' do
     let(:raw_post) { '{"volume":1,"muted":false}' }
     let(:authentication_token) { admin_token }
-    standard_request_options(:put, 'USER PREFS (as admin)', :ok, {expected_json_path: 'data/preferences/volume'})
+    standard_request_options(:put, 'USER PREFS (as admin)', :ok, { expected_json_path: 'data/preferences/volume' })
   end
 
   put '/my_account/prefs' do
     let(:raw_post) { '{"volume":1,"muted":false}' }
     let(:authentication_token) { reader_token }
-    standard_request_options(:put, 'USER PREFS (as reader)', :ok, {expected_json_path: 'data/preferences/volume'})
+    standard_request_options(:put, 'USER PREFS (as reader)', :ok, { expected_json_path: 'data/preferences/volume' })
   end
 
   put '/my_account/prefs' do
     let(:raw_post) { '{"volume":1,"muted":false}' }
     let(:authentication_token) { writer_token }
-    standard_request_options(:put, 'USER PREFS (as no access user)', :ok, {expected_json_path: 'data/preferences/volume'})
+    standard_request_options(:put, 'USER PREFS (as no access user)', :ok, { expected_json_path: 'data/preferences/volume' })
   end
 
   put '/my_account/prefs' do
     let(:raw_post) { '{"volume":1,"muted":false}' }
     let(:authentication_token) { invalid_token }
-    standard_request_options(:put, 'USER PREFS (with invalid token)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
+    standard_request_options(:put, 'USER PREFS (with invalid token)', :unauthorized, { expected_json_path: get_json_error_path(:sign_up) })
   end
 
   put '/my_account/prefs' do
     let(:raw_post) { '{"volume":1,"muted":false}' }
-    standard_request_options(:put, 'USER PREFS (as anonymous user)', :unauthorized, {remove_auth: true, expected_json_path: get_json_error_path(:sign_up)})
+    standard_request_options(:put, 'USER PREFS (as anonymous user)', :unauthorized, { remove_auth: true, expected_json_path: get_json_error_path(:sign_up) })
   end
 
   put '/my_account/prefs' do
     let(:raw_post) { '{"volume": 1, "muted": false, "auto_play": false, "visualize": {"hide_images": true, "hide_fixed": false}}' }
     let(:authentication_token) { writer_token }
     standard_request_options(:put, 'modify writer preferences - complex object', :ok, {
-        expected_json_path: [
-            'data/preferences/volume',
-            'data/preferences/visualize',
-            'data/preferences/visualize/hide_fixed'
-        ]
-    })
+                               expected_json_path: [
+                                 'data/preferences/volume',
+                                 'data/preferences/visualize',
+                                 'data/preferences/visualize/hide_fixed'
+                               ]
+                             })
   end
-
 
   ################################
   # FILTER
@@ -251,91 +252,90 @@ resource 'Users' do
     }
     let(:raw_post) {
       {
-          'filter' => {
-              'id' => {
-                  'in' => [writer_id]
-              }
-          },
-          'projection' => {
-              'include' => [:id, :user_name]
+        'filter' => {
+          'id' => {
+            'in' => [writer_id]
           }
+        },
+        'projection' => {
+          'include' => [:id, :user_name]
+        }
       }.to_json
     }
     let(:authentication_token) { writer_token }
     standard_request_options(:post, 'FILTER (as reader checking timezone info)', :ok, {
-        expected_json_path: ['data/0/user_name', 'meta/projection/include', 'data/0/timezone_information'],
-        data_item_count: 1,
-        response_body_content: '"timezone_information":{"identifier_alt":"Sydney","identifier":"Australia/Sydney","friendly_identifier":"Australia - Sydney","utc_offset":'
-    })
+                               expected_json_path: ['data/0/user_name', 'meta/projection/include', 'data/0/timezone_information'],
+                               data_item_count: 1,
+                               response_body_content: '"timezone_information":{"identifier_alt":"Sydney","identifier":"Australia/Sydney","friendly_identifier":"Australia - Sydney","utc_offset":'
+                             })
   end
 
   post '/user_accounts/filter' do
     let(:raw_post) {
       {
-          'filter' => {
-              'id' => {
-                  'in' => [writer_id]
-              }
-          },
-          'projection' => {
-              'include' => [:id, :user_name]
+        'filter' => {
+          'id' => {
+            'in' => [writer_id]
           }
+        },
+        'projection' => {
+          'include' => [:id, :user_name]
+        }
       }.to_json
     }
     let(:authentication_token) { writer_token }
     standard_request_options(:post, 'FILTER (as reader checking no timezone info)', :ok, {
-        expected_json_path: ['data/0/user_name', 'meta/projection/include', 'data/0/timezone_information'],
-        data_item_count: 1,
-        response_body_content: '"timezone_information":null'
-    })
+                               expected_json_path: ['data/0/user_name', 'meta/projection/include', 'data/0/timezone_information'],
+                               data_item_count: 1,
+                               response_body_content: '"timezone_information":null'
+                             })
   end
 
   post '/user_accounts/filter' do
     let(:raw_post) {
       {
-          'filter' => {
-              'id' => {
-                  'in' => [writer_id]
-              }
-          },
-          'projection' => {
-              'include' => [:id, :user_name]
+        'filter' => {
+          'id' => {
+            'in' => [writer_id]
           }
+        },
+        'projection' => {
+          'include' => [:id, :user_name]
+        }
       }.to_json
     }
     let(:authentication_token) { admin_token }
     standard_request_options(:post, 'FILTER (as admin)', :ok, {
-        expected_json_path: ['data/0/user_name', 'meta/projection/include'],
-        data_item_count: 1,
-        response_body_content: ["\"last_seen_at\":null,\"preferences\":null"]
-    })
+                               expected_json_path: ['data/0/user_name', 'meta/projection/include'],
+                               data_item_count: 1,
+                               response_body_content: ['"last_seen_at":null,"preferences":null']
+                             })
   end
 
   post '/user_accounts/filter' do
     let(:raw_post) {
       {
-          'filter' => {
-              'id' => {
-                  'in' => [writer_id, reader_id, admin_id]
-              }
+        'filter' => {
+          'id' => {
+            'in' => [writer_id, reader_id, admin_id]
           }
+        }
       }.to_json
     }
-    standard_request_options(:post, 'FILTER (as anonymous user)', :unauthorized, {remove_auth: true, expected_json_path: get_json_error_path(:sign_up)})
+    standard_request_options(:post, 'FILTER (as anonymous user)', :unauthorized, { remove_auth: true, expected_json_path: get_json_error_path(:sign_up) })
   end
 
   post '/user_accounts/filter' do
     let(:raw_post) {
       {
-          'filter' => {
-              'id' => {
-                  'in' => [writer_id, reader_id, admin_id]
-              }
+        'filter' => {
+          'id' => {
+            'in' => [writer_id, reader_id, admin_id]
           }
+        }
       }.to_json
     }
     let(:authentication_token) { invalid_token }
-    standard_request_options(:post, 'FILTER (with invalid token)', :unauthorized, {expected_json_path: get_json_error_path(:sign_up)})
+    standard_request_options(:post, 'FILTER (with invalid token)', :unauthorized, { expected_json_path: get_json_error_path(:sign_up) })
   end
-
 end

@@ -70,9 +70,9 @@ Rails.application.configure do
   config.action_mailer.perform_deliveries = true
 
   config.action_mailer.default_url_options =
-      {
-          host: "#{Settings.host.name}"
-      }
+    {
+      host: Settings.host.name
+    }
 
   config.action_mailer.delivery_method = :smtp
   config.action_mailer.smtp_settings = Settings.mailer.smtp.deep_symbolize_keys

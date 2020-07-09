@@ -1,26 +1,26 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 
-describe User, :type => :model do
-
-
+describe User, type: :model do
   it 'should error on invalid timezone' do
     expect {
-      FactoryGirl.create(:user, tzinfo_tz: 'blah')
+      FactoryBot.create(:user, tzinfo_tz: 'blah')
     }.to raise_error(ActiveRecord::RecordInvalid, "Validation failed: Tzinfo tz is not a recognised timezone ('blah')")
   end
 
   it 'should be valid for a valid timezone' do
-    expect(FactoryGirl.create(:user, tzinfo_tz: 'Australia - Brisbane')).to be_valid
+    expect(FactoryBot.create(:user, tzinfo_tz: 'Australia - Brisbane')).to be_valid
   end
 
   it 'should be valid for a nil tzinfo' do
-    expect(FactoryGirl.create(:user, tzinfo_tz: nil)).to be_valid
+    expect(FactoryBot.create(:user, tzinfo_tz: nil)).to be_valid
   end
 
   # see https://github.com/QutBioacoustics/baw-server/issues/270
   # We store friendly values
   it 'should not allow bad tz_info' do
-    user = FactoryGirl.create(:user)
+    user = FactoryBot.create(:user)
 
     user.tzinfo_tz = 'Australia/Sydney'
     user.rails_tz = 'Sydney'

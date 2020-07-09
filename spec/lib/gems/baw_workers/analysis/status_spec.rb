@@ -11,14 +11,13 @@ describe BawWorkers::Analysis::Status do
   # so change the queue name so the test worker does not
   # automatically process the jobs
   before(:each) do
-    default_queue = BawWorkers::Settings.actions.analysis.queue
+    default_queue = Settings.actions.analysis.queue
 
-    allow(BawWorkers::Settings.actions.analysis).to receive(:queue).and_return(default_queue + '_manual_tick')
+    allow(Settings.actions.analysis).to receive(:queue).and_return(default_queue + '_manual_tick')
 
     # cleanup resque queues before each test
     BawWorkers::ResqueApi.clear_queue(default_queue)
-    BawWorkers::ResqueApi.clear_queue(BawWorkers::Settings.actions.analysis.queue)
-
+    BawWorkers::ResqueApi.clear_queue(Settings.actions.analysis.queue)
   end
 
   let(:analysis_params) {
@@ -109,13 +108,13 @@ describe BawWorkers::Analysis::Status do
   end
 
   def stub_login
-    stub_request(:post, default_uri + BawWorkers::Settings.endpoints.login)
+    stub_request(:post, default_uri + Settings.endpoints.login)
       .with(body: get_api_security_request('address@example.com', 'password'))
       .to_return(body: get_api_security_response('address@example.com', 'auth_token_string').to_json)
   end
 
   it 'sets the website status to :successful if it just works' do
-    queue_name = BawWorkers::Settings.actions.analysis.queue
+    queue_name = Settings.actions.analysis.queue
 
     # set up
     expect(Resque.size(queue_name)).to eq(0)
@@ -141,7 +140,7 @@ describe BawWorkers::Analysis::Status do
   end
 
   it 'sets the website status to :timed_out if it times out' do
-    queue_name = BawWorkers::Settings.actions.analysis.queue
+    queue_name = Settings.actions.analysis.queue
 
     # set up
     expect(Resque.size(queue_name)).to eq(0)
@@ -173,7 +172,7 @@ describe BawWorkers::Analysis::Status do
   end
 
   it 'sets the website status to :failed if the job fails' do
-    queue_name = BawWorkers::Settings.actions.analysis.queue
+    queue_name = Settings.actions.analysis.queue
 
     # set up
     expect(Resque.size(queue_name)).to eq(0)
@@ -202,7 +201,7 @@ describe BawWorkers::Analysis::Status do
   end
 
   it 'sets the website status to :cancelled if the job was killed by the website' do
-    queue_name = BawWorkers::Settings.actions.analysis.queue
+    queue_name = Settings.actions.analysis.queue
 
     # set up
     expect(Resque.size(queue_name)).to eq(0)
@@ -227,7 +226,7 @@ describe BawWorkers::Analysis::Status do
   end
 
   it 'tries multiple times to set the website, and sends an email if it cant' do
-    queue_name = BawWorkers::Settings.actions.analysis.queue
+    queue_name = Settings.actions.analysis.queue
 
     # set up
     expect(Resque.size(queue_name)).to eq(0)
@@ -260,5 +259,4 @@ describe BawWorkers::Analysis::Status do
 
     expect(ActionMailer::Base.deliveries.count).to eq(1)
   end
-
 end

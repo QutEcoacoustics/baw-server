@@ -1,7 +1,8 @@
 #!/usr/bin/env ruby
+# frozen_string_literal: true
 
-ENV['BUNDLE_GEMFILE'] ||= File.expand_path('../../Gemfile', __FILE__)
-env = ENV['RAILS_ENV'] || ENV['RACK_ENV'] || "development"
+ENV['BUNDLE_GEMFILE'] ||= File.expand_path('../Gemfile', __dir__)
+env = ENV['RAILS_ENV'] || ENV['RACK_ENV'] || 'development'
 
 require 'bundler' # Set up gems listed in the Gemfile.
 Bundler.setup(:default, :workers, env.to_sym)
@@ -24,5 +25,5 @@ Rake.application
 Rake.application.init('baw-workers', ARGV)
 # this allows us to print a list of tasks
 Rake::TaskManager.record_task_metadata = true
-Rake.load_rakefile("#{__dir__}/../lib/gems/baw_workers/tasks/run_worker.rake")
+Rake.load_rakefile("#{__dir__}/../lib/gems/baw-workers/lib/baw_workers/tasks/run_worker.rake")
 Rake.application.top_level
