@@ -183,7 +183,7 @@ These commands should be executed automatically but are listed because they are 
 - Then migrate and seed the test database: `rake db:migrate db:seed RAILS_ENV=test`
 - Prepare the local development database:`rake db:setup RAILS_ENV=development`
 - Run rspec tests: `rspec`
-- Generate API documentation: `rake docs:generate GENERATE_DOC=true`
+- Generate API documentation: `RAILS_ENV=test rails rswag`
 
 
 ## Production setup and deploying

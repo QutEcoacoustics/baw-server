@@ -1,0 +1,153 @@
+---
+openapi: 3.0.1
+info:
+  title: BAW API
+  version: v2
+produces:
+- application/json
+consumes:
+- application/json
+paths:
+  "/projects/filter":
+    post:
+      summary: filter project
+      responses:
+        '200':
+          description: successful
+          content: {}
+  "/projects/{id}/edit_sites":
+    parameters:
+    - name: id
+      in: path
+      description: id
+      required: true
+      schema:
+        type: string
+    get:
+      summary: edit_sites project
+      responses:
+        '200':
+          description: successful
+          content: {}
+  "/projects/{id}/update_sites":
+    parameters:
+    - name: id
+      in: path
+      description: id
+      required: true
+      schema:
+        type: string
+    put:
+      summary: update_sites project
+      responses:
+        '200':
+          description: successful
+          content: {}
+    patch:
+      summary: update_sites project
+      responses:
+        '200':
+          description: successful
+          content: {}
+  "/projects/new_access_request":
+    get:
+      summary: new_access_request project
+      responses:
+        '200':
+          description: successful
+          content: {}
+  "/projects/submit_access_request":
+    post:
+      summary: submit_access_request project
+      responses:
+        '200':
+          description: successful
+          content: {}
+  "/projects":
+    get:
+      summary: list projects
+      responses:
+        '200':
+          description: successful
+          content: {}
+    post:
+      summary: create project
+      responses:
+        '200':
+          description: successful
+          content: {}
+  "/projects/new":
+    get:
+      summary: new project
+      responses:
+        '200':
+          description: successful
+          content: {}
+  "/projects/{id}/edit":
+    parameters:
+    - name: id
+      in: path
+      description: id
+      required: true
+      schema:
+        type: string
+    get:
+      summary: edit project
+      responses:
+        '200':
+          description: successful
+          content: {}
+  "/projects/{id}":
+    parameters:
+    - name: id
+      in: path
+      description: id
+      required: true
+      schema:
+        type: string
+    get:
+      summary: show project
+      responses:
+        '200':
+          description: successful
+          content: {}
+    patch:
+      summary: update project
+      responses:
+        '200':
+          description: successful
+          content: {}
+    put:
+      summary: update project
+      responses:
+        '200':
+          description: successful
+          content: {}
+    delete:
+      summary: delete project
+      responses:
+        '200':
+          description: successful
+          content: {}
+servers:
+- url: https://{defaultHost}
+  variables:
+    defaultHost:
+      default: localhost
+components:
+  securitySchemes:
+    auth_token:
+      type: apiKey
+      name: auth_token
+      in: header
+  schemas:
+    standard_response:
+      type: object
+      properties:
+        meta:
+          type: object
+        data:
+          type: array
+    error_object:
+      type: object
+      properties: {}

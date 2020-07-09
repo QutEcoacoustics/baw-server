@@ -25,6 +25,10 @@ gem 'bootsnap', require: false
 # standardised way to validate objects
 gem 'dry-validation'
 
+# api docs
+gem 'rswag-api'
+gem 'rswag-ui'
+
 RAILS_VERSION = '~> 6.0.3'
 
 group :server do
@@ -214,7 +218,6 @@ group :test do
   gem 'rspec'
   gem 'rspec-collection_matchers'
   gem 'rspec-mocks'
-  gem 'rspec-rails'
   # for profiling
   gem 'ruby-prof', '>= 0.17.0', require: false
   gem 'shoulda-matchers', '~> 4', require: false
@@ -224,11 +227,7 @@ group :test do
   gem 'webmock'
   gem 'zonebie'
 
-  # Documentation & UI
-  # -------------------------------------
-  # these gems are required here to serve /doc url
-  gem 'raddocs'
-  gem 'rspec_api_documentation', '~> 4.8.0'
-  # bundle exec rake doc:rails generates the API under doc/api.
-  gem 'sdoc', '~> 0.4.0'
+  # api docs
+  gem 'rspec-rails'
+  gem 'rswag-specs'
 end

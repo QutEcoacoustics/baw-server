@@ -80,7 +80,6 @@ require 'rspec/rails'
 require 'webmock/rspec'
 require 'paperclip/matchers'
 require 'database_cleaner'
-require 'rspec_api_documentation'
 
 require 'helpers/misc_helper'
 require 'fixtures/fixtures'
@@ -111,7 +110,7 @@ Warden.test_mode!
 # If you are not using ActiveRecord, you can remove this line.
 ActiveRecord::Migration.maintain_test_schema!
 
-RSpec.configure do |config| # rubocop:disable Metrics/BlockLength
+RSpec.configure do |config|
   # Remove this line if you're not using ActiveRecord or ActiveRecord fixtures
   #config.fixture_path = "#{::Rails.root}/spec/fixtures"
 
@@ -157,11 +156,14 @@ RSpec.configure do |config| # rubocop:disable Metrics/BlockLength
   config.include Creation::Example
   config.extend Creation::ExampleGroup
 
-  require_relative 'helpers/citizen_science_creation.rb'
+  require_relative 'helpers/citizen_science_creation'
   config.extend CitizenScienceCreation
 
   require 'enumerize/integrations/rspec'
   extend Enumerize::Integrations::RSpec
+
+  require_relative 'helpers/api_spec_helpers'
+  config.include ApiSpecHelpers, type: :request
 
   # change the default creation strategy
   # Previous versions of factory but would ensure associations used the :create
@@ -177,20 +179,11 @@ RSpec.configure do |config| # rubocop:disable Metrics/BlockLength
   FactoryBot.use_parent_strategy = false
 
   config.before(:suite) do
-    # run these rake tasks to ensure the db in is a state that matches the schema.rb
-    #bin/rake db:drop RAILS_ENV=test
-    #bin/rake db:create RAILS_ENV=test
-    #bin/rake db:migrate RAILS_ENV=test
-    #bin/rake db:structure:dump RAILS_ENV=test
-    #bin/rake db:drop RAILS_ENV=test
-    #bin/rake db:create RAILS_ENV=test
-    #bin/rake db:structure:load RAILS_ENV=test
-
-    if Rails.env == 'test'
-      ActiveRecord::Tasks::DatabaseTasks.drop_current
-      ActiveRecord::Tasks::DatabaseTasks.create_current
-      ActiveRecord::Tasks::DatabaseTasks.load_schema_current
-    end
+    # if Rails.env == 'test'
+    #   ActiveRecord::Tasks::DatabaseTasks.drop_current
+    #   ActiveRecord::Tasks::DatabaseTasks.create_current
+    #   ActiveRecord::Tasks::DatabaseTasks.load_schema_current
+    # end
 
     # https://github.com/DatabaseCleaner/database_cleaner
     DatabaseCleaner[:active_record].strategy = :transaction
@@ -250,22 +243,4 @@ Shoulda::Matchers.configure do |config|
     with.test_framework :rspec
     with.library :rails
   end
-end
-
-# Customize rspec api documentation
-ENV['DOC_FORMAT'] ||= 'json'
-
-RspecApiDocumentation.configure do |config_rspec_api|
-  config_rspec_api.format = ENV['DOC_FORMAT']
-
-  # patch to enable options request
-  module RspecApiDocumentation
-    class ClientBase
-      def http_options_verb(*args)
-        process :options, *args
-      end
-    end
-  end
-
-  RspecApiDocumentation::DSL::Resource::ClassMethods.define_action :http_options_verb
 end
