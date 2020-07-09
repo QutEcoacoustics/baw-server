@@ -1,5 +1,6 @@
-class MediaController < ApplicationController
+# frozen_string_literal: true
 
+class MediaController < ApplicationController
   skip_authorization_check only: [:show, :original]
 
   def show
@@ -7,7 +8,8 @@ class MediaController < ApplicationController
     overall_start = Time.now
 
     # normalise params and get access to rails request instance
-    request_params = CleanParams.perform(params.dup)
+    params.permit!
+    request_params = CleanParams.perform(params.to_h)
 
     # should the response include content?
     is_head_request = request.head?
@@ -30,29 +32,29 @@ class MediaController < ApplicationController
       # changed from 422 Unprocessable entity
       head :accepted
     elsif !is_audio_ready && !is_head_request
-      fail CustomErrors::ItemNotFoundError, "Audio recording id #{audio_recording.id} is not ready"
+      raise CustomErrors::ItemNotFoundError, "Audio recording id #{audio_recording.id} is not ready"
     elsif !is_supported_format && is_head_request
       head :not_acceptable
     elsif !is_supported_format && !is_head_request
       supported_types = Settings.supported_media_types
-      msg = "Requested format #{requested_format} (#{requested_media_type}) is not acceptable. " +
-          'It must be one of available_formats.'
-      fail CustomErrors::NotAcceptableError.new(msg, supported_types)
+      msg = "Requested format #{requested_format} (#{requested_media_type}) is not acceptable. " \
+            'It must be one of available_formats.'
+      raise CustomErrors::NotAcceptableError.new(msg, supported_types)
     elsif is_supported_format && is_audio_ready
 
       category, defaults = Settings.media_category(requested_format)
 
       media_info = {
-          category: category,
-          defaults: defaults,
-          format: requested_format,
-          media_type: requested_media_type,
-          timing_overall_start: overall_start
+        category: category,
+        defaults: defaults,
+        format: requested_format,
+        media_type: requested_media_type,
+        timing_overall_start: overall_start
       }
 
       supported_media_response(audio_recording, audio_event, media_info, request_params)
     else
-      fail CustomErrors::BadRequestError, 'There was a problem with the request.'
+      raise CustomErrors::BadRequestError, 'There was a problem with the request.'
     end
   end
 
@@ -63,10 +65,10 @@ class MediaController < ApplicationController
 
     # unlike a standard media request, the only parameter we allow here is an audio recording id
     # (:format is irrelevant becuase return mime is whatever mime the original recording is)
-    request_params = params.slice(:audio_recording_id)
+    request_params = params.slice(:audio_recording_id).permit(:audio_recording_id).to_h
 
     # check authorisation manually, take audio event into account
-    audio_recording, audio_event = authorise_custom(request_params, current_user)
+    audio_recording, _audio_event = authorise_custom(request_params, current_user)
 
     original_file_response(audio_recording, request, time_start)
   end
@@ -80,9 +82,7 @@ class MediaController < ApplicationController
     # AT 2019-11-07: Public access will allow auth to progress past this point
     # where as it used to be if there was no user, we'd stop here.
     # I'm stil going to make sure actual users are confirmed though.
-    if !user.blank? && !user.confirmed?
-      fail CanCan::AccessDenied, 'xxxx'
-    end
+    raise CanCan::AccessDenied, 'xxxx' if !user.blank? && !user.confirmed?
 
     audio_recording = auth_custom_audio_recording(request_params, action_name.to_sym)
 
@@ -105,7 +105,7 @@ class MediaController < ApplicationController
     audio_recording.status == 'ready'
   end
 
-  def supported_media_response(audio_recording, audio_event, media_info, request_params)
+  def supported_media_response(audio_recording, _audio_event, media_info, request_params)
     rails_request = request
 
     # get pre-defined settings
@@ -130,7 +130,7 @@ class MediaController < ApplicationController
     elsif [:audio, :image].include?(media_info[:category])
       media_response(audio_recording, metadata, original, current, media_info)
     else
-      fail CustomErrors::BadRequestError, 'There was a problem with the request.'
+      raise CustomErrors::BadRequestError, 'There was a problem with the request.'
     end
   end
 
@@ -139,7 +139,6 @@ class MediaController < ApplicationController
   # @param [Hash] current
   # @param [ActionDispatch::Request] rails_request
   def json_response(metadata_response, current, rails_request)
-
     wrapped = Settings.api_response.build(:ok, metadata_response)
 
     json_result = wrapped.to_json
@@ -149,11 +148,12 @@ class MediaController < ApplicationController
 
     if rails_request.head?
       head_response(
-          :ok,
-          {
-              content_length: json_result_size,
-              content_type: current[:media_type]
-          })
+        :ok,
+        {
+          content_length: json_result_size,
+          content_type: current[:media_type]
+        }
+      )
     else
       render json: json_result, content_length: json_result_size
     end
@@ -192,7 +192,6 @@ class MediaController < ApplicationController
       existing_files, time_waiting_start = create_media(media_category, cached_spectrogram_info, generation_request)
       response_local_spectrogram(audio_recording, generation_request, existing_files, rails_request, range_request, time_start, time_waiting_start)
     end
-
   end
 
   # Used to return a whole original audio file, without transcoding. This represents a simplified execution path of a
@@ -210,13 +209,13 @@ class MediaController < ApplicationController
       # changed from 422 Unprocessable entity
       head :accepted
     elsif !is_audio_ready && !is_head_request
-      fail CustomErrors::ItemNotFoundError, "Audio recording id #{audio_recording.id} is not ready"
+      raise CustomErrors::ItemNotFoundError, "Audio recording id #{audio_recording.id} is not ready"
     end
 
     existing_files = audio_recording.original_file_paths
 
-    if existing_files.length < 1
-      fail CustomErrors::ItemNotFoundError, "Audio recording id #{audio_recording.id} can not be found on disk"
+    if existing_files.empty?
+      raise CustomErrors::ItemNotFoundError, "Audio recording id #{audio_recording.id} can not be found on disk"
     end
 
     # add the header from timer start
@@ -226,20 +225,20 @@ class MediaController < ApplicationController
     add_header_hash(audio_recording)
 
     download_options = {
-        media_type:  audio_recording.media_type,
-        site_name: audio_recording.site.name,
-        site_id: audio_recording.site.id,
-        recorded_date: audio_recording.recorded_date,
-        recording_duration: audio_recording.duration_seconds,
-        recording_id: audio_recording.id,
-        ext: Mime::Type.file_extension_of(audio_recording.media_type),
-        # assume first file of returned files is correct
-        file_path: existing_files.first,
-        start_offset: 0,
-        end_offset: audio_recording.duration_seconds,
-        # provide our own name for the recording (normally generated in range request)
-        suggested_file_name: audio_recording.canonical_filename,
-        disposition_type: :attachment
+      media_type: audio_recording.media_type,
+      site_name: audio_recording.site.name,
+      site_id: audio_recording.site.id,
+      recorded_date: audio_recording.recorded_date,
+      recording_duration: audio_recording.duration_seconds,
+      recording_id: audio_recording.id,
+      ext: Mime::Type.file_extension_of(audio_recording.media_type),
+      # assume first file of returned files is correct
+      file_path: existing_files.first,
+      start_offset: 0,
+      end_offset: audio_recording.duration_seconds,
+      # provide our own name for the recording (normally generated in range request)
+      suggested_file_name: audio_recording.canonical_filename,
+      disposition_type: :attachment
     }
     range_request = Settings.range_request
 
@@ -294,7 +293,7 @@ class MediaController < ApplicationController
       msg1 = "Could not create #{media_category}"
       msg2 = "using #{processor}"
       msg3 = "from request #{generation_request}"
-      fail BawAudioTools::Exceptions::AudioToolError, "#{msg1} #{msg2} #{msg3}"
+      raise BawAudioTools::Exceptions::AudioToolError, "#{msg1} #{msg2} #{msg3}"
     end
 
     time_start_waiting = Time.now if time_start_waiting.nil?
@@ -306,7 +305,6 @@ class MediaController < ApplicationController
   # @param [Object] generation_request
   # @return [String] path to existing file
   def create_media_local(media_category, generation_request)
-
     start_time = Time.now
     target_existing_paths = BawWorkers::Media::Action.make_media_request(media_category, generation_request)
     end_time = Time.now
@@ -321,15 +319,15 @@ class MediaController < ApplicationController
   # @param [Object] generation_request
   # @return [Resque::Plugins::Status::Hash] job status
   def create_media_resque(expected_files, media_category, generation_request)
-
     start_time = Time.now
     BawWorkers::Media::Action.action_enqueue(media_category, generation_request)
     #existing_files = MediaPoll.poll_media(expected_files, Settings.audio_tools_timeout_sec)
     poll_result = MediaPoll.poll_resque_and_media(
-        expected_files,
-        media_category,
-        generation_request,
-        Settings.audio_tools_timeout_sec)
+      expected_files,
+      media_category,
+      generation_request,
+      Settings.audio_tools_timeout_sec
+    )
     end_time = Time.now
 
     add_header_processing_elapsed(end_time - start_time)
@@ -337,8 +335,7 @@ class MediaController < ApplicationController
     poll_result
   end
 
-  def response_local_spectrogram(audio_recording, generation_request, existing_files, rails_request, range_request, time_start, time_waiting_start)
-
+  def response_local_spectrogram(audio_recording, generation_request, existing_files, rails_request, _range_request, time_start, time_waiting_start)
     options = generation_request
 
     response_extra_info = "#{options[:channel]}_#{options[:sample_rate]}_#{options[:window]}_#{options[:colour]}"
@@ -355,15 +352,15 @@ class MediaController < ApplicationController
     add_header_waiting_elapsed(time_stop - time_waiting_start)
 
     if rails_request.head?
-      head_response_inline(:ok, {content_length: content_length}, options[:media_type], suggested_file_name, 'inline')
+      head_response_inline(:ok, { content_length: content_length }, options[:media_type], suggested_file_name, 'inline')
 
     else
       info = {
-          file_path: existing_file,
-          response_suggested_file_name: suggested_file_name,
-          response_disposition_type: 'inline',
-          file_media_type: options[:media_type],
-          response_code: :ok
+        file_path: existing_file,
+        response_suggested_file_name: suggested_file_name,
+        response_disposition_type: 'inline',
+        file_media_type: options[:media_type],
+        response_code: :ok
       }
       response_send_file(info)
 
@@ -372,16 +369,16 @@ class MediaController < ApplicationController
 
   def response_local_audio_segment(audio_recording, generation_request, existing_files, rails_request, range_request, time_start, time_waiting_start)
     download_options = {
-        media_type: generation_request[:media_type],
-        site_name: audio_recording.site.name,
-        site_id: audio_recording.site.id,
-        recorded_date: audio_recording.recorded_date,
-        recording_duration: audio_recording.duration_seconds,
-        recording_id: audio_recording.id,
-        ext: generation_request[:format],
-        file_path: existing_files.first,
-        start_offset: generation_request[:start_offset],
-        end_offset: generation_request[:end_offset]
+      media_type: generation_request[:media_type],
+      site_name: audio_recording.site.name,
+      site_id: audio_recording.site.id,
+      recorded_date: audio_recording.recorded_date,
+      recording_duration: audio_recording.duration_seconds,
+      recording_id: audio_recording.id,
+      ext: generation_request[:format],
+      file_path: existing_files.first,
+      start_offset: generation_request[:start_offset],
+      end_offset: generation_request[:end_offset]
     }
 
     download_file(download_options, rails_request, range_request, time_start, time_waiting_start)
@@ -430,22 +427,23 @@ class MediaController < ApplicationController
         info[:response_headers],
         info[:file_media_type],
         info[:response_suggested_file_name],
-        info[:response_disposition_type])
+        info[:response_disposition_type]
+      )
     else
-      fail CustomErrors::UnprocessableEntityError, 'There was a problem with the request.'
+      raise CustomErrors::UnprocessableEntityError, 'There was a problem with the request.'
 
     end
-
   end
 
   def write_to_response_stream(info, range_request)
     # write audio data from the file to a stringIO
     # use the StringIO in send_data
 
-    buffer = ''
-    StringIO.open(buffer, 'w') { |string_io|
+    # must be amutable string
+    buffer = String.new
+    StringIO.open(buffer, 'w') do |string_io|
       range_request.write_content_to_output(info, string_io)
-    }
+    end
     buffer
   end
 
@@ -459,16 +457,16 @@ class MediaController < ApplicationController
   # Responds with file content in file, using metadata from info.
   # @param [Hash] info
   def response_send_file(info)
-    send_file info[:file_path], response_binary_metadata(info)
+    send_file(info[:file_path], response_binary_metadata(info))
   end
 
   def response_binary_metadata(info)
     {
-        filename: info[:response_suggested_file_name],
-        type: info[:file_media_type],
-        content_type: info[:file_media_type],
-        disposition: info[:response_disposition_type],
-        status: info[:response_code]
+      filename: info[:response_suggested_file_name],
+      type: info[:file_media_type],
+      content_type: info[:file_media_type],
+      disposition: info[:response_disposition_type],
+      status: info[:response_code]
     }
   end
 
@@ -482,11 +480,11 @@ class MediaController < ApplicationController
   def head_response_inline(response_code, response_headers, content_type, suggested_name, disposition_type)
     # return response code and headers with no content
     head_response response_code, response_headers.merge(
-                                   content_type: content_type,
-                                   content_transfer_encoding: 'binary',
-                                   content_disposition: "#{disposition_type}; filename=\"#{suggested_name}\"",
-                                   filename: suggested_name
-                               )
+      content_type: content_type,
+      content_transfer_encoding: 'binary',
+      content_disposition: "#{disposition_type}; filename=\"#{suggested_name}\"",
+      filename: suggested_name
+    )
   end
 
   def add_header_cache
@@ -530,7 +528,6 @@ class MediaController < ApplicationController
   # @return String
   def add_header_hash(audio_recording)
     protocol, value = audio_recording.split_file_hash
-    headers['Digest'] = protocol + "=" + value
+    headers['Digest'] = protocol + '=' + value
   end
-
 end

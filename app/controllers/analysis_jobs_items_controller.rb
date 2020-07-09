@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class AnalysisJobsItemsController < ApplicationController
   include Api::ControllerHelper
   include Api::AnalysisJobsItemsShared
@@ -28,10 +30,10 @@ class AnalysisJobsItemsController < ApplicationController
 
     do_get_analysis_job
     @analysis_jobs_items, opts = Settings.api_response.response_advanced(
-        api_filter_params,
-        get_query,
-        AnalysisJobsItem,
-        AnalysisJobsItem.filter_settings(@is_system_job)
+      api_filter_params,
+      get_query,
+      AnalysisJobsItem,
+      AnalysisJobsItem.filter_settings(@is_system_job)
     )
 
     respond_index(opts)
@@ -58,9 +60,10 @@ class AnalysisJobsItemsController < ApplicationController
     do_get_opts
 
     if @is_system_job
-      fail CustomErrors::MethodNotAllowedError.new(
-          'Cannot update a system job\'s analysis jobs items',
-          [:post, :put, :patch, :delete])
+      raise CustomErrors::MethodNotAllowedError.new(
+        'Cannot update a system job\'s analysis jobs items',
+        [:post, :put, :patch, :delete]
+      )
     end
 
     do_load_resource
@@ -91,13 +94,15 @@ class AnalysisJobsItemsController < ApplicationController
       # If someone tried to :cancelling-->:working instead of :cancelling-->:cancelled then it is an error
       # However if client :cancelled when we expected :cancelling-->:cancelled then well behaved
       respond_error(
-          :unprocessable_entity,
-          "This entity has been cancelled - can not set new state to `#{desired_state}`")
+        :unprocessable_entity,
+        "This entity has been cancelled - can not set new state to `#{desired_state}`"
+      )
 
     elsif !valid_transition
       respond_error(
-          :unprocessable_entity,
-          "Cannot transition from `#{@analysis_jobs_item.status}` to `#{desired_state}`")
+        :unprocessable_entity,
+        "Cannot transition from `#{@analysis_jobs_item.status}` to `#{desired_state}`"
+      )
     elsif saved
       respond_show
     else
@@ -112,10 +117,10 @@ class AnalysisJobsItemsController < ApplicationController
 
     do_get_analysis_job
     @analysis_jobs_items, opts = Settings.api_response.response_advanced(
-        api_filter_params,
-        get_query,
-        AnalysisJobsItem,
-        AnalysisJobsItem.filter_settings(@is_system_job)
+      api_filter_params,
+      get_query,
+      AnalysisJobsItem,
+      AnalysisJobsItem.filter_settings(@is_system_job)
     )
 
     respond_index(opts)
@@ -130,6 +135,4 @@ class AnalysisJobsItemsController < ApplicationController
     # Other properties are updated by the model/initial processing system
     params.require(:analysis_jobs_item).permit(:status)
   end
-
-
 end

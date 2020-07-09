@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class ProjectsController < ApplicationController
   include Api::ControllerHelper
 
@@ -6,15 +8,15 @@ class ProjectsController < ApplicationController
     do_authorize_class
 
     respond_to do |format|
-      format.html {
+      format.html do
         @projects = Access::ByPermission.projects(current_user).includes(:creator).references(:creator).order(:name)
-      }
+      end
       format.json {
         @projects, opts = Settings.api_response.response_advanced(
-            api_filter_params,
-            Access::ByPermission.projects(current_user),
-            Project,
-            Project.filter_settings
+          api_filter_params,
+          Access::ByPermission.projects(current_user),
+          Project,
+          Project.filter_settings
         )
         respond_index(opts)
       }
@@ -89,9 +91,9 @@ ORDER BY project_count ASC, s.name ASC")
         format.html { redirect_to @project, notice: 'Project was successfully updated.' }
         format.json { respond_show }
       else
-        format.html {
+        format.html do
           render action: 'edit'
-        }
+        end
         format.json { respond_change_fail }
       end
     end
@@ -119,7 +121,6 @@ ORDER BY project_count ASC, s.name ASC")
     else
       redirect_to edit_sites_project_path(@project), notice: 'Sites for this project were unchanged.'
     end
-
   end
 
   # DELETE /projects/:id
@@ -151,11 +152,11 @@ ORDER BY project_count ASC, s.name ASC")
     do_authorize_class
 
     valid_request = access_request_params.include?(:projects) &&
-        access_request_params[:projects].is_a?(Array) &&
-        access_request_params[:projects].size > 1 &&
-        access_request_params.include?(:reason) &&
-        access_request_params[:reason].is_a?(String) &&
-        access_request_params[:reason].size > 0
+                    access_request_params[:projects].is_a?(Array) &&
+                    access_request_params[:projects].size > 1 &&
+                    access_request_params.include?(:reason) &&
+                    access_request_params[:reason].is_a?(String) &&
+                    !access_request_params[:reason].empty?
 
     respond_to do |format|
       if valid_request
@@ -174,10 +175,10 @@ ORDER BY project_count ASC, s.name ASC")
     do_authorize_class
 
     filter_response, opts = Settings.api_response.response_advanced(
-        api_filter_params,
-        Access::ByPermission.projects(current_user),
-        Project,
-        Project.filter_settings
+      api_filter_params,
+      Access::ByPermission.projects(current_user),
+      Project,
+      Project.filter_settings
     )
     respond_filter(filter_response, opts)
   end
@@ -189,7 +190,7 @@ ORDER BY project_count ASC, s.name ASC")
   end
 
   def access_request_params
-    params.require(:access_request).permit({projects: []}, :reason)
+    params.require(:access_request).permit({ projects: [] }, :reason)
   end
 
   def update_params
@@ -199,5 +200,4 @@ ORDER BY project_count ASC, s.name ASC")
   def edit_sites_params
     params.require(:project).permit!
   end
-
 end

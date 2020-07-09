@@ -1,0 +1,21 @@
+<p>Hello,</p>
+
+<p>A resque worker running on <%= (@details[:host]) %> encountered a problem.</p>
+
+<p>The running job was:</p>
+
+<p>Queue: <%= (@details[:job_queue]) %></p>
+
+<p>Class: <%= (@details[:job_class]) %></p>
+
+<p>Arguments: <%= (@details[:job_args]) %></p>
+
+<p>The error was:</p>
+
+<p>Error: <%= (@details[:error_message]) %></p>
+
+<pre>Backtrace: <code><%= @details[:error_backtrace].map { |i| (i) + '<br>' }.join('') %></code></pre>
+
+<p>This email was generated at <%= (@details[:generated_timestamp]) %>.</p>
+
+<p>Regards, <%= (@details[:host]) %></p>

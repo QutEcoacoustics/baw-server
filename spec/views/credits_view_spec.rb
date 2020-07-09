@@ -1,11 +1,13 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 
 describe 'public/credits', type: :view do
-  standard_text = Settings.organisation_names.parent_site_name + ' Credits'
+  standard_text = Rack::Utils.escape_html(Settings.organisation_names.parent_site_name) + "\nCredits"
 
   it 'should render a stock welcome message for new pages' do
     render
-    expect(rendered).to_not have_content(standard_text)
+    expect(rendered).to_not include(standard_text)
   end
 
   it 'should allow the standard welcome message to be replaced' do
@@ -14,8 +16,7 @@ describe 'public/credits', type: :view do
     MARKDOWN
 
     render
-    expect(rendered).to have_content(standard_text)
+    expect(rendered).to include(standard_text)
     expect(rendered).to include('This is a testy <strong>test</strong> test')
   end
-
 end

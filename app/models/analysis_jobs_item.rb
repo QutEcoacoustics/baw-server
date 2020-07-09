@@ -1,98 +1,100 @@
-class AnalysisJobsItem < ActiveRecord::Base
+# frozen_string_literal: true
+
+class AnalysisJobsItem < ApplicationRecord
   # allow a state machine to work with this class
   include AASM
   include AasmHelpers
 
   SYSTEM_JOB_ID = 'system'
 
-  belongs_to :analysis_job, inverse_of: :analysis_jobs_items
+  # ensure we allow with_deleted here for race condition where analysis job
+  # has been soft deleted while job items are still updating
+  belongs_to :analysis_job, -> { with_deleted }, inverse_of: :analysis_jobs_items
   belongs_to :audio_recording, inverse_of: :analysis_jobs_items
 
-  # association validations
-  validates :analysis_job, existence: true
-  validates :audio_recording, existence: true
+  validates_associated :analysis_job
+  validates_associated :audio_recording
 
   # attribute validations
-  validates :status, presence: true, length: {minimum: 2, maximum: 255}
-  validates :queue_id, uniqueness: {case_sensitive: true}
+  validates :status, presence: true, length: { minimum: 2, maximum: 255 }
+  validates :queue_id, uniqueness: { case_sensitive: true }
 
   validate :is_new_when_created, on: :create
   validate :has_queue_id_when_needed
 
   validates :created_at,
             presence: true,
-            timeliness: {on_or_before: lambda { Time.zone.now }, type: :datetime},
+            timeliness: { on_or_before: -> { Time.zone.now }, type: :datetime },
             unless: :new_record?
 
   validates :queued_at, :work_started_at, :completed_at,
             allow_blank: true, allow_nil: true,
-            timeliness: {on_or_before: lambda { Time.zone.now }, type: :datetime}
+            timeliness: { on_or_before: -> { Time.zone.now }, type: :datetime }
 
   def self.filter_settings(is_system = false)
-
     fields = [
-        :id, :analysis_job_id, :audio_recording_id,
-        :created_at, :queued_at, :work_started_at, :completed_at,
-        :queue_id,
-        :status
+      :id, :analysis_job_id, :audio_recording_id,
+      :created_at, :queued_at, :work_started_at, :completed_at,
+      :queue_id,
+      :status
     ]
 
     settings = {
-        valid_fields: fields,
-        render_fields: fields,
-        text_fields: [:queue_id],
-        controller: :analysis_jobs_items,
-        action: :filter,
-        defaults: {
-            order_by: :audio_recording_id,
-            direction: :asc
-        },
-        valid_associations: [
+      valid_fields: fields,
+      render_fields: fields,
+      text_fields: [:queue_id],
+      controller: :analysis_jobs_items,
+      action: :filter,
+      defaults: {
+        order_by: :audio_recording_id,
+        direction: :asc
+      },
+      valid_associations: [
+        {
+          join: AnalysisJob,
+          on: AnalysisJobsItem.arel_table[:analysis_job_id].eq(AnalysisJob.arel_table[:id]),
+          available: true,
+          associations: [
             {
-                join: AnalysisJob,
-                on: AnalysisJobsItem.arel_table[:analysis_job_id].eq(AnalysisJob.arel_table[:id]),
-                available: true,
-                associations: [
-                    {
-                        join: SavedSearch,
-                        on: AnalysisJob.arel_table[:saved_search_id].eq(SavedSearch.arel_table[:id]),
-                        available: true
-                    },
-                    {
-                        join: Script,
-                        on: AnalysisJob.arel_table[:script_id].eq(Script.arel_table[:id]),
-                        available: true
-                    }
-                ]
+              join: SavedSearch,
+              on: AnalysisJob.arel_table[:saved_search_id].eq(SavedSearch.arel_table[:id]),
+              available: true
             },
             {
-                join: AudioRecording,
-                on: AnalysisJobsItem.arel_table[:audio_recording_id].eq(AudioRecording.arel_table[:id]),
-                available: true,
-                associations: [
-                    {
-                        join: Site,
-                        on: AudioRecording.arel_table[:site_id].eq(Site.arel_table[:id]),
-                        available: true,
-                        associations: [
-                            {
-                                join: Arel::Table.new(:projects_sites),
-                                on: Site.arel_table[:id].eq(Arel::Table.new(:projects_sites)[:site_id]),
-                                available: false,
-                                associations: [
-                                    {
-                                        join: Project,
-                                        on: Arel::Table.new(:projects_sites)[:project_id].eq(Project.arel_table[:id]),
-                                        available: true
-                                    }
-                                ]
-
-                            }
-                        ]
-                    }
-                ]
+              join: Script,
+              on: AnalysisJob.arel_table[:script_id].eq(Script.arel_table[:id]),
+              available: true
             }
-        ]
+          ]
+        },
+        {
+          join: AudioRecording,
+          on: AnalysisJobsItem.arel_table[:audio_recording_id].eq(AudioRecording.arel_table[:id]),
+          available: true,
+          associations: [
+            {
+              join: Site,
+              on: AudioRecording.arel_table[:site_id].eq(Site.arel_table[:id]),
+              available: true,
+              associations: [
+                {
+                  join: Arel::Table.new(:projects_sites),
+                  on: Site.arel_table[:id].eq(Arel::Table.new(:projects_sites)[:site_id]),
+                  available: false,
+                  associations: [
+                    {
+                      join: Project,
+                      on: Arel::Table.new(:projects_sites)[:project_id].eq(Project.arel_table[:id]),
+                      available: true
+                    }
+                  ]
+
+                }
+              ]
+            }
+          ]
+        }
+      ]
     }
 
     if is_system
@@ -130,7 +132,7 @@ class AnalysisJobsItem < ActiveRecord::Base
   # Scoped query for getting fake analysis_jobs.
   # @return [ActiveRecord::Relation]
   def self.system_query
-    analysis_jobs_items = self.arel_table
+    analysis_jobs_items = arel_table
     table_name = analysis_jobs_items.table_name
 
     # alias audio_recordings so other add on queries don't get confused
@@ -145,9 +147,9 @@ class AnalysisJobsItem < ActiveRecord::Base
     # right outer ensures audio_recordings generate 'fake'(empty) analysis_jobs_items rows
     # we make sure the join condition always fails - we don't want the outer join to match real rows
     joined = analysis_jobs_items
-                 .project(*projections)
-                 .join(audio_recordings_inner, Arel::Nodes::RightOuterJoin)
-                 .on(audio_recordings_inner[:id].eq(nil))
+             .project(*projections)
+             .join(audio_recordings_inner, Arel::Nodes::RightOuterJoin)
+             .on(audio_recordings_inner[:id].eq(nil))
 
     # convert to sub-query - hides weird table names
     subquery = joined.as(table_name)
@@ -168,10 +170,10 @@ class AnalysisJobsItem < ActiveRecord::Base
   attr_reader :enqueue_results
 
   def status=(new_status)
-    old_status = self.status
+    old_status = status
 
     # don't let enumerize set the default value when selecting nil from the database
-    new_status = nil if !new_record? && new_status == :new.to_s && old_status == nil
+    new_status = nil if !new_record? && new_status == :new.to_s && old_status.nil?
 
     super(new_status)
   end
@@ -184,7 +186,6 @@ class AnalysisJobsItem < ActiveRecord::Base
     # RESTful object. E.g. routing to a resource is done with analysis_job_id; having it set simplifies client logic.
     !new_record? && id.nil? ? SYSTEM_JOB_ID : super_id
   end
-
 
   #
   # State transition map
@@ -257,7 +258,6 @@ class AnalysisJobsItem < ActiveRecord::Base
     #   transitions from: [:cancelling, :cancelled], to: :timed_out
     # end
 
-
     event :cancel, guards: [:not_system_job] do
       transitions from: :queued, to: :cancelling
     end
@@ -273,15 +273,14 @@ class AnalysisJobsItem < ActiveRecord::Base
     end
   end
 
-
   # item status values - timed out is a special failure case where the worker never reports back
-  AVAILABLE_ITEM_STATUS_SYMBOLS = self.aasm.states.map(&:name)
-  AVAILABLE_ITEM_STATUS = AVAILABLE_ITEM_STATUS_SYMBOLS.map { |item| item.to_s }
+  AVAILABLE_ITEM_STATUS_SYMBOLS = aasm.states.map(&:name)
+  AVAILABLE_ITEM_STATUS = AVAILABLE_ITEM_STATUS_SYMBOLS.map(&:to_s)
 
-  AVAILABLE_ITEM_STATUS_DISPLAY = self.aasm.states.map { |x| [x.name, x.display_name] }.to_h
+  AVAILABLE_ITEM_STATUS_DISPLAY = aasm.states.map { |x| [x.name, x.display_name] }.to_h
 
-  COMPLETED_ITEM_STATUS_SYMBOLS = [:successful, :failed, :timed_out, :cancelled]
-  FAILED_ITEM_STATUS_SYMBOLS = [:failed, :timed_out, :cancelled]
+  COMPLETED_ITEM_STATUS_SYMBOLS = [:successful, :failed, :timed_out, :cancelled].freeze
+  FAILED_ITEM_STATUS_SYMBOLS = [:failed, :timed_out, :cancelled].freeze
 
   private
 
@@ -292,7 +291,6 @@ class AnalysisJobsItem < ActiveRecord::Base
   def not_system_job
     analysis_job_id != SYSTEM_JOB_ID
   end
-
 
   #
   # state machine callbacks
@@ -305,7 +303,7 @@ class AnalysisJobsItem < ActiveRecord::Base
       return
     end
 
-    payload = AnalysisJobsItem::create_action_payload(analysis_job, audio_recording)
+    payload = AnalysisJobsItem.create_action_payload(analysis_job, audio_recording)
 
     result = nil
     error = nil
@@ -316,13 +314,13 @@ class AnalysisJobsItem < ActiveRecord::Base
 
       # the assumption here is that result is a unique identifier that we can later use to interrogate the message queue
       self.queue_id = result
-    rescue => e
+    rescue StandardError => e
       # Note: exception used to be swallowed. We might need better error handling here later on.
       Rails.logger.error "An error occurred when enqueuing an analysis job item: #{e}"
       raise
     end
 
-    @enqueue_results = {result: result, error: error}
+    @enqueue_results = { result: result, error: error }
   end
 
   def set_queued_at
@@ -359,26 +357,24 @@ class AnalysisJobsItem < ActiveRecord::Base
 
     # merge base
     payload.merge({
-                      command_format: command_format,
+                    command_format: command_format,
 
-                      config: config_string,
-                      job_id: job_id,
+                    config: config_string,
+                    job_id: job_id,
 
-                      uuid: audio_recording.uuid,
-                      id: audio_recording.id,
-                      datetime_with_offset: audio_recording.recorded_date.iso8601(3),
-                      original_format: audio_recording.original_format_calculated
+                    uuid: audio_recording.uuid,
+                    id: audio_recording.id,
+                    datetime_with_offset: audio_recording.recorded_date.iso8601(3),
+                    original_format: audio_recording.original_format_calculated
                   })
   end
 
   def is_new_when_created
-    unless status == :new.to_s
-      errors.add(:status, 'must be new when first created')
-    end
+    errors.add(:status, 'must be new when first created') unless status == :new.to_s
   end
 
   def has_queue_id_when_needed
-    if !(status == :new.to_s) && queue_id.blank?
+    if status != :new.to_s && queue_id.blank?
       errors.add(:queue_id, 'A queue_id must be provided when status is not new')
     end
   end

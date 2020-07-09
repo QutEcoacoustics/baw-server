@@ -1,41 +1,47 @@
-class Permission < ActiveRecord::Base
+# frozen_string_literal: true
+
+class Permission < ApplicationRecord
   extend Enumerize
 
   # ensures that creator_id, updater_id, deleter_id are set
   include UserChange
 
   belongs_to :project, inverse_of: :permissions
-  belongs_to :user, inverse_of: :permissions
+  belongs_to :user, inverse_of: :permissions, optional: true
   belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_permissions
-  belongs_to :updater, class_name: 'User', foreign_key: :updater_id, inverse_of: :updated_permissions
+  belongs_to :updater, class_name: 'User', foreign_key: :updater_id, inverse_of: :updated_permissions, optional: true
 
   AVAILABLE_LEVELS_SYMBOLS = Access::Core.levels
-  AVAILABLE_LEVELS = AVAILABLE_LEVELS_SYMBOLS.map { |item| item.to_s }
+  AVAILABLE_LEVELS = AVAILABLE_LEVELS_SYMBOLS.map(&:to_s)
   enumerize :level, in: AVAILABLE_LEVELS, predicates: true
 
-  AVAILABLE_STATUSES_DISPLAY = AVAILABLE_LEVELS_SYMBOLS.map do |l|
-    {id: l, name: Access::Core.get_level_name(l)}
-  end
+  AVAILABLE_STATUSES_DISPLAY = AVAILABLE_LEVELS_SYMBOLS.map { |l|
+    { id: l, name: Access::Core.get_level_name(l) }
+  }
 
   # association validations
-  validates :project, existence: true
-  validates :creator, existence: true
+  validates_associated :project
+  validates_associated :creator
+  validates_associated :user
 
   # attribute validations
   validates :level, presence: true
   validates :user_id, uniqueness: {
-      scope: :project_id,
-      conditions: -> { where('user_id IS NOT NULL') },
-      message: 'permission has already been set for project'}
+    scope: :project_id,
+    conditions: -> { where('user_id IS NOT NULL') },
+    message: 'permission has already been set for project'
+  }
   validates :allow_logged_in, uniqueness: {
-      scope: :project,
-      conditions: -> { where('allow_logged_in IS TRUE') },
-      message: 'has already been set for this project'}
+    scope: :project,
+    conditions: -> { where('allow_logged_in IS TRUE') },
+    message: 'has already been set for this project'
+  }
   validates :allow_anonymous, uniqueness: {
-      scope: :project,
-      conditions: -> { where('allow_anonymous IS TRUE') },
-      message: 'has already been set for this project'}
-  validates :allow_logged_in, :allow_anonymous, inclusion: {in: [true, false]}
+    scope: :project,
+    conditions: -> { where('allow_anonymous IS TRUE') },
+    message: 'has already been set for this project'
+  }
+  validates :allow_logged_in, :allow_anonymous, inclusion: { in: [true, false] }
 
   validate :exclusive_attributes
   validate :additional_levels
@@ -57,22 +63,22 @@ class Permission < ActiveRecord::Base
   # Define filter api settings
   def self.filter_settings
     {
-        valid_fields: [:id, :project_id, :user_id, :level, :allow_anonymous, :allow_logged_in, :creator_id, :created_at],
-        render_fields: [:id, :project_id, :user_id, :level, :allow_anonymous, :allow_logged_in],
-        text_fields: [:level],
-        controller: :permissions,
-        action: :filter,
-        defaults: {
-            order_by: :created_at,
-            direction: :desc
-        },
-        valid_associations: [
-            {
-                join: Project,
-                on: Permission.arel_table[:project_id].eq(Project.arel_table[:id]),
-                available: true
-            }
-        ]
+      valid_fields: [:id, :project_id, :user_id, :level, :allow_anonymous, :allow_logged_in, :creator_id, :created_at],
+      render_fields: [:id, :project_id, :user_id, :level, :allow_anonymous, :allow_logged_in],
+      text_fields: [:level],
+      controller: :permissions,
+      action: :filter,
+      defaults: {
+        order_by: :created_at,
+        direction: :desc
+      },
+      valid_associations: [
+        {
+          join: Project,
+          on: Permission.arel_table[:project_id].eq(Project.arel_table[:id]),
+          available: true
+        }
+      ]
     }
   end
 
@@ -80,9 +86,9 @@ class Permission < ActiveRecord::Base
 
   # must have only one set
   def exclusive_attributes
-    has_user = self.user.blank? ? 0 : 1
-    allows_logged_in = self.allow_logged_in === true ? 1 : 0
-    allows_anon = self.allow_anonymous === true ? 1 : 0
+    has_user = user.blank? ? 0 : 1
+    allows_logged_in = allow_logged_in === true ? 1 : 0
+    allows_anon = allow_anonymous === true ? 1 : 0
     exclusive_set = has_user + allows_logged_in + allows_anon
 
     if exclusive_set != 1
@@ -97,17 +103,16 @@ class Permission < ActiveRecord::Base
       errors.add(:allow_logged_in, error_msg)
       errors.add(:allow_anonymous, error_msg)
     end
-
   end
 
   def additional_levels
-    if self.allow_anonymous && self.level != 'reader'
-      errors.add(:level, "must be reader for anonymous user, but was '#{self.level}'")
-      errors.add(:allow_anonymous, "level must be reader, but was '#{self.level}'")
+    if allow_anonymous && level != 'reader'
+      errors.add(:level, "must be reader for anonymous user, but was '#{level}'")
+      errors.add(:allow_anonymous, "level must be reader, but was '#{level}'")
     end
-    if self.allow_logged_in && !%w(reader writer).include?(self.level.to_s)
-      errors.add(:level, "must be reader or writer for logged in user, but was '#{self.level}'")
-      errors.add(:allow_logged_in, "level must be reader or writer, but was '#{self.level}'")
+    if allow_logged_in && !['reader', 'writer'].include?(level.to_s)
+      errors.add(:level, "must be reader or writer for logged in user, but was '#{level}'")
+      errors.add(:allow_logged_in, "level must be reader or writer, but was '#{level}'")
     end
   end
 end

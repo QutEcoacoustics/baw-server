@@ -1,26 +1,25 @@
 # frozen_string_literal: true
 
-FactoryGirl.define do
-
+FactoryBot.define do
   factory :tag do |_f|
     sequence(:text) { |n| "tag text #{n}" }
 
     creator
-    type_of_tag 'general'
-    is_taxanomic false
+    type_of_tag { 'general' }
+    is_taxanomic { false }
 
     trait :taxonomic_true_common do
-      is_taxanomic true
-      type_of_tag :common_name
+      is_taxanomic { true }
+      type_of_tag { :common_name }
     end
 
     trait :taxonomic_false_sounds_like do
-      is_taxanomic false
-      type_of_tag :sounds_like
+      is_taxanomic { false }
+      type_of_tag { :sounds_like }
     end
 
     trait :retired do
-      retired true
+      retired { true }
     end
 
     trait :notes do

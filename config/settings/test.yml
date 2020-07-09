@@ -1,16 +1,15 @@
-#
-# This config file is in the .gitignore so you can make changes to it.
-# If you want to persist changes for an upstream edit, do a `git add -f ...`
-#
-test:
-  # overwrites settings from config/settings/default.yml
-
-  db:
-    database: baw_local_test
-  devise:
-     pepper: 128 char random pepper 128 char random pepper
-     secret_key: 128 char random pepper 128 char random pepper
-  secret_token: some long secret token - at least 30 chars, all random
-  secret_key_base: some long secret token - at least 30 chars, all random
-  # if a test is failing is just takes way too long to wait for a 60s poll timeout!
-  audio_tools_timeout_sec: 5
+redis:
+  connection:
+    db: 1
+action_cable:
+  url: redis://redis:6379/1
+resque:
+  connection:
+    db: 1
+devise:
+  pepper: 128 char random pepper 128 char random pepper
+  secret_key: 128 char random pepper 128 char random pepper
+secret_token: some long secret token - at least 30 chars, all random
+secret_key_base: some long secret token - at least 30 chars, all random
+# if a test is failing is just takes way too long to wait for a 60s poll timeout!
+audio_tools_timeout_sec: 5

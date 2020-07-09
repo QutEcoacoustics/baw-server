@@ -34,7 +34,6 @@ describe BawAudioTools::AudioBase do
       expect(info[:duration_seconds]).to be_within(duration_range).of(audio_file_stereo_duration_seconds)
       expect(info[:bit_rate_bps]).to be_within(400).of(128_000)
     end
-
   end
   context 'restrictions are enforced' do
     it 'mp3splt must have a mp3 file as the source' do
@@ -100,5 +99,4 @@ describe BawAudioTools::AudioBase do
       }.to raise_error(ArgumentError, /Target is not a wav file/)
     end
   end
-
 end

@@ -1,35 +1,30 @@
-#
-# This config file is in the .gitignore so you can make changes to it.
-# If you want to persist changes for an upstream edit, do a `git add -f ...`
-#
-#
+
 # The settings for the worker are for a hybrid development/test worker.
 # In production, a worker should only serve one environment
-development:
-  # overwrites settings from config/settings/default.yml
-  devise:
-     pepper: 128 char random pepper 128 char random pepper
-     secret_key: 128 char random pepper 128 char random pepper
-  secret_token: some long secret token - at least 30 chars, all random
-  secret_key_base: some long secret token - at least 30 chars, all random
-  google_maps:
-    api_key: ~
-  paths:
-    original_audios:
-      - tmp/_development_original_audio
-      - tmp/_test_original_audio
-    cached_spectrograms:
-      - tmp/_development_cached_spectrogram
-      - tmp/_test_cached_spectrogram
-    cached_audios:
-      - tmp/_development_cached_audio
-      - tmp/_test_cached_audio
-    analysis_scripts:
-      - tmp/_development_analysis_script
-      - tmp/_test_analysis_script
-    cached_datasets:
-      - tmp/_development_cached_dataset
-      - tmp/_test_cached_dataset
-    cached_analysis_jobs:
-      - tmp/_development_analysis_results
-      - tmp/_test_analysis_results
+
+devise:
+    pepper: 128 char random pepper 128 char random pepper
+    secret_key: 128 char random pepper 128 char random pepper
+secret_token: some long secret token - at least 30 chars, all random
+secret_key_base: some long secret token - at least 30 chars, all random
+google_maps:
+  api_key: ~
+paths:
+  original_audios:
+    - tmp/_development_original_audio
+    - tmp/_test_original_audio
+  cached_spectrograms:
+    - tmp/_development_cached_spectrogram
+    - tmp/_test_cached_spectrogram
+  cached_audios:
+    - tmp/_development_cached_audio
+    - tmp/_test_cached_audio
+  analysis_scripts:
+    - tmp/_development_analysis_script
+    - tmp/_test_analysis_script
+  cached_datasets:
+    - tmp/_development_cached_dataset
+    - tmp/_test_cached_dataset
+  cached_analysis_jobs:
+    - tmp/_development_analysis_results
+    - tmp/_test_analysis_results

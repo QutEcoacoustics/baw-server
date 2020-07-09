@@ -98,7 +98,6 @@ class SitesController < ApplicationController
         format.json { respond_show }
       else
         format.html do
-
           render action: 'edit'
         end
         format.json { respond_change_fail }

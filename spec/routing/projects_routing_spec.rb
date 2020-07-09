@@ -1,8 +1,9 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 
-describe ProjectsController, :type => :routing do
+describe ProjectsController, type: :routing do
   describe :routing do
- 
     it { expect(post('/projects/1/update_permissions')).to route_to('errors#route_error', requested_route: 'projects/1/update_permissions') }
     it { expect(get('/projects/new_access_request')).to route_to('projects#new_access_request') }
     it { expect(post('/projects/submit_access_request')).to route_to('projects#submit_access_request') }
@@ -18,6 +19,5 @@ describe ProjectsController, :type => :routing do
     it { expect(get('/projects/1')).to route_to('projects#show', id: '1') }
     it { expect(get('/projects/filter')).to route_to('projects#filter', format: 'json') }
     it { expect(post('/projects/filter')).to route_to('projects#filter', format: 'json') }
-
   end
 end

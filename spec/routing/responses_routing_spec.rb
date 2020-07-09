@@ -1,8 +1,9 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 
-describe ResponsesController, :type => :routing do
+describe ResponsesController, type: :routing do
   describe :routing do
-
     it { expect(get('/responses')).to route_to('responses#index', format: 'json') }
     it { expect(get('studies/1/responses')).to route_to('responses#index', study_id: '1', format: 'json') }
     it { expect(get('/responses/1')).to route_to('responses#show', id: '1', format: 'json') }
@@ -12,6 +13,5 @@ describe ResponsesController, :type => :routing do
     it { expect(post('/responses')).to route_to('responses#create', format: 'json') }
     it { expect(put('/responses/1')).to route_to('errors#method_not_allowed_error', id: '1') }
     it { expect(delete('/responses/1')).to route_to('responses#destroy', id: '1', format: 'json') }
-
   end
 end

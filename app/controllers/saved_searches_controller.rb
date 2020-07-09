@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class SavedSearchesController < ApplicationController
   include Api::ControllerHelper
 
@@ -6,10 +8,10 @@ class SavedSearchesController < ApplicationController
     do_authorize_class
 
     @saved_searches, opts = Settings.api_response.response_advanced(
-        api_filter_params,
-        get_saved_searches,
-        SavedSearch,
-        SavedSearch.filter_settings
+      api_filter_params,
+      get_saved_searches,
+      SavedSearch,
+      SavedSearch.filter_settings
     )
     respond_index(opts)
   end
@@ -45,7 +47,6 @@ class SavedSearchesController < ApplicationController
     else
       respond_change_fail
     end
-
   end
 
   # DELETE /saved_searches/:id
@@ -63,10 +64,10 @@ class SavedSearchesController < ApplicationController
     do_authorize_class
 
     filter_response, opts = Settings.api_response.response_advanced(
-        api_filter_params,
-        get_saved_searches,
-        SavedSearch,
-        SavedSearch.filter_settings
+      api_filter_params,
+      get_saved_searches,
+      SavedSearch,
+      SavedSearch.filter_settings
     )
     respond_filter(filter_response, opts)
   end
@@ -74,20 +75,10 @@ class SavedSearchesController < ApplicationController
   private
 
   def saved_search_params
-    # can't permit arbitrary hash
-    # ~~https://github.com/rails/rails/issues/9454#issuecomment-14167664~~
-    # http://stackoverflow.com/questions/19172893/rails-hashes-with-unknown-keys-and-strong-parameters/24752108#24752108
-    # add arbitrary hash for stored_query manually
-    properties = params[:saved_search].delete(:stored_query)
-    params.require(:saved_search).permit(:id, :name, :description).tap do |allowed_params|
-      if properties
-        allowed_params[:stored_query] = properties
-      end
-    end
+    params.require(:saved_search).permit(:id, :name, :description, stored_query: {})
   end
 
   def get_saved_searches
     Access::ByPermission.saved_searches(current_user)
   end
-
 end

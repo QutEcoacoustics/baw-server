@@ -1,15 +1,16 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 
 RSpec.describe Response, type: :model do
-
   let(:dataset_item) {
-    FactoryGirl.create(:dataset_item)
+    FactoryBot.create(:dataset_item)
   }
   let(:study) {
-    FactoryGirl.create(:study, dataset_id: dataset_item.dataset_id)
+    FactoryBot.create(:study, dataset_id: dataset_item.dataset_id)
   }
   let(:question) {
-    FactoryGirl.create(:question, studies: [study])
+    FactoryBot.create(:question, studies: [study])
   }
 
   it 'has a valid factory' do
@@ -34,10 +35,9 @@ RSpec.describe Response, type: :model do
   end
 
   describe 'validations' do
-
-    it {
+    it do
       is_expected.to validate_presence_of(:dataset_item)
-    }
+    end
     it 'cannot be created without a dataset_item' do
       expect {
         create(:response, question: question, study: study, dataset_item: nil)
@@ -62,31 +62,29 @@ RSpec.describe Response, type: :model do
 
     it 'can not be associated with a nonexistent dataset item' do
       expect {
-        create(:response, question: question, study: study, dataset_item_id: 12345)
+        create(:response, question: question, study: study, dataset_item_id: 12_345)
       }.to raise_error(ActiveRecord::RecordInvalid)
     end
 
     it 'can not be associated with a nonexistent question' do
       expect {
-        create(:response, question: question, study_id: 12345, dataset_item: dataset_item)
+        create(:response, question: question, study_id: 12_345, dataset_item: dataset_item)
         # not sure why the error is different for the two associations
       }.to raise_error(ActiveRecord::RecordInvalid)
     end
 
     it 'can not be associated with a nonexistent study' do
       expect {
-        create(:response, question_id: 12345, study: study, dataset_item: dataset_item)
+        create(:response, question_id: 12_345, study: study, dataset_item: dataset_item)
         # not sure why the error is different for the two associations
       }.to raise_error(ActiveRecord::RecordInvalid)
     end
 
-    it 'does not allow unrelated parent question and parent study'  do
+    it 'does not allow unrelated parent question and parent study' do
       other_study = create(:study)
       expect {
         create(:response, question_id: question.id, study_id: other_study.id, dataset_item: dataset_item)
       }.to raise_error(ActiveRecord::RecordInvalid)
     end
-
   end
-
 end

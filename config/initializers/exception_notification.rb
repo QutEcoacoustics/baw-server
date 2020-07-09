@@ -24,10 +24,10 @@ ExceptionNotification.configure do |config|
 
   # Email notifier sends notifications by email.
   config.add_notifier :email, {
-          email_prefix: "#{Settings.mailer.emails.email_prefix} [Exception] ",
-          sender_address: Settings.mailer.emails.sender_address,
-          exception_recipients: Settings.mailer.emails.required_recipients
-      }
+    email_prefix: "#{Settings.mailer.emails.email_prefix} [Exception] ",
+    sender_address: Settings.mailer.emails.sender_address,
+    exception_recipients: Settings.mailer.emails.required_recipients
+  }
 
   # Campfire notifier sends notifications to your Campfire room. Requires 'tinder' gem.
   # config.add_notifier :campfire, {

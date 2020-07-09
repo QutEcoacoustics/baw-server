@@ -21,7 +21,7 @@ There are two container flavours:
     2. Database migration is not run
 4. The <mark>web</mark> container is started
     1. Entrypoint is set to `entrypoint.sh`
-    2. Database migration is run (`migrate.sh`) for the `development` environment
+    2. Database migration is run (`rake baw:db_prepare`) for the `development` and `test` environments
     3. Command is run from docker-compose: `bundle exec rails server`
 
 ### VSCode
@@ -36,11 +36,8 @@ There are two container flavours:
     2. Database migration is not run
 4. The <mark>web</mark> container is started
     1. Entrypoint is set to `entrypoint.sh`
-    2. Database migration is run (`migrate.sh`)
+    2. Database migration is run (`rake baw:db_prepare`) for the `development` and `test` environments
     3. VSCode **overrides** docker-compose command with: `sleep infinity`
-    4. VSCode runs the _postCreationCommand_ which we've configured to run `dev_setup.sh`. Dev setup runs:
-        1. The `migrate.sh` script for the `development` environment
-        2. The `migrate.sh` script for the `test` environment
 
 ### Production
 
@@ -48,4 +45,4 @@ Everything is different.
 
 - Entrypoint is `bundle exec`
 - Default command is `passenger start`
-- Out of band processes call `migrate.sh` when needed
+- Out of band processes call `rake baw:db_prepare` when needed

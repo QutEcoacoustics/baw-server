@@ -1,12 +1,13 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 require 'rspec/mocks'
 
 describe UserAccountsController do
-
   # make sure it can recover from bad input
   describe 'proper timezones data' do
     let(:user_bad_tz) {
-      user = FactoryGirl.build(:user, tzinfo_tz: 'Australia/Sydney', rails_tz: 'Sydney')
+      user = FactoryBot.build(:user, tzinfo_tz: 'Australia/Sydney', rails_tz: 'Sydney')
       user.save!(validate: false)
       user
     }
@@ -19,11 +20,10 @@ describe UserAccountsController do
       it 'converts proper timezones' do
         old_values = [user_bad_tz.tzinfo_tz, user_bad_tz.rails_tz]
 
-        response = get :my_account, {format: :json}
+        response = get :my_account, { format: :json }
         body = JSON.parse(response.body)
 
         expect(body['data']['timezone_information']['identifier']).to eq('Australia/Sydney')
-
 
         user_good_tz = User.find(user_bad_tz.id)
         new_values = [user_good_tz.tzinfo_tz, user_good_tz.rails_tz]
@@ -34,16 +34,15 @@ describe UserAccountsController do
     end
 
     describe 'PUT update' do
-
       it 'converts proper timezones when updating user_account\'s preferences' do
         old_values = [user_bad_tz.tzinfo_tz, user_bad_tz.rails_tz]
 
-        post_json = {"volume": 1, "muted": false, "auto_play": false, "visualize": {
-            "hide_images": true,
-            "hide_fixed": false}
-        }
+        post_json = { "volume": 1, "muted": false, "auto_play": false, "visualize": {
+          "hide_images": true,
+          "hide_fixed": false
+        } }
 
-        response = put :modify_preferences, {user_account: post_json, format: :json}
+        response = put :modify_preferences, params: { user_account: post_json, format: :json }
         expect(response).to have_http_status(:ok)
 
         user_good_tz = User.find(user_bad_tz.id)
@@ -57,7 +56,7 @@ describe UserAccountsController do
 
   describe 'bad timezones data' do
     let(:user_bad_tz) {
-      user = FactoryGirl.build(:user, tzinfo_tz: 'person@domain.com', rails_tz: 'person@domain.com')
+      user = FactoryBot.build(:user, tzinfo_tz: 'person@domain.com', rails_tz: 'person@domain.com')
       user.save!(validate: false)
       user
     }
@@ -70,10 +69,10 @@ describe UserAccountsController do
       it 'should deleted bad timezones' do
         old_values = [user_bad_tz.tzinfo_tz, user_bad_tz.rails_tz]
 
-        response = get :my_account, {format: :json}
+        response = get :my_account, { format: :json }
         body = JSON.parse(response.body)
 
-        expect(body["timezone_information"]).to be(nil)
+        expect(body['timezone_information']).to be(nil)
 
         user_good_tz = User.find(user_bad_tz.id)
         new_values = [user_good_tz.tzinfo_tz, user_good_tz.rails_tz]
@@ -84,16 +83,15 @@ describe UserAccountsController do
     end
 
     describe 'PUT update' do
-
       it 'deleted bad timezones when updating the requested user_account\'s preferences' do
         old_values = [user_bad_tz.tzinfo_tz, user_bad_tz.rails_tz]
 
-        post_json = {"volume": 1, "muted": false, "auto_play": false, "visualize": {
-            "hide_images": true,
-            "hide_fixed": false}
-        }
+        post_json = { "volume": 1, "muted": false, "auto_play": false, "visualize": {
+          "hide_images": true,
+          "hide_fixed": false
+        } }
 
-        response = put :modify_preferences, {user_account: post_json, format: :json}
+        response = put :modify_preferences, params: { user_account: post_json, format: :json }
         expect(response).to have_http_status(:ok)
 
         user_good_tz = User.find(user_bad_tz.id)

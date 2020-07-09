@@ -1,6 +1,20 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-APP_PATH = File.expand_path('../../config/application', __FILE__)
+APP_PATH = File.expand_path('../config/application', __dir__)
 require_relative '../config/boot'
+
+# bind to 0.0.0.0 by default when running rails server
+# - useful when running inside a container
+require 'rails/command'
+require 'rails/commands/server/server_command'
+
+module DefaultOptions
+  def default_options
+    super.merge!(Host: '0.0.0.0')
+  end
+end
+
+Rails::Server.prepend(DefaultOptions)
+
 require 'rails/commands'

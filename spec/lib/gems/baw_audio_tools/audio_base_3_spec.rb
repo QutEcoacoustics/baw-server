@@ -63,11 +63,9 @@ describe BawAudioTools::AudioBase do
         audio_base.audio_ffmpeg.check_for_errors(stderr: input)
       }.to raise_error(BawAudioTools::Exceptions::FileCorruptError, /Ffmpeg encountered unexpected end of file/)
     end
-
   end
 
   context 'getting info succeeds when' do
-
     it 'processes a valid .wv file' do
       temp_media_file_a = temp_media_file_1 + '.wv'
       audio_base.modify(audio_file_stereo, temp_media_file_a)

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class Tag < ActiveRecord::Base
+class Tag < ApplicationRecord
   extend Enumerize
 
   # ensures that creator_id, updater_id, deleter_id are set
@@ -11,7 +11,7 @@ class Tag < ActiveRecord::Base
   has_many :audio_events, through: :taggings
   has_many :tag_groups, inverse_of: :tag
   belongs_to :creator, class_name: 'User', foreign_key: :creator_id, inverse_of: :created_tags
-  belongs_to :updater, class_name: 'User', foreign_key: :updater_id, inverse_of: :updated_tags
+  belongs_to :updater, class_name: 'User', foreign_key: :updater_id, inverse_of: :updated_tags, optional: true
 
   accepts_nested_attributes_for :audio_events
 
@@ -30,7 +30,7 @@ class Tag < ActiveRecord::Base
   enumerize :type_of_tag, in: AVAILABLE_TYPE_OF_TAGS, predicates: true
 
   # association validations
-  validates :creator, existence: true
+  validates_associated :creator
 
   # attribute validations
   validates :is_taxanomic, inclusion: { in: [true, false] }

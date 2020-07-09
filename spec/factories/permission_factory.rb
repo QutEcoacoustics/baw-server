@@ -1,5 +1,6 @@
-FactoryGirl.define do
+# frozen_string_literal: true
 
+FactoryBot.define do
   # after(:build) { |object|
   #   is_blank = object.respond_to?(:creator) && object.creator.blank? && !object.is_a?(User)
   #   Rails.logger.warn "After build #{is_blank ? '[blank]' : ''} [#{object.object_id}] #{object.inspect}"
@@ -23,31 +24,31 @@ FactoryGirl.define do
   factory :permission do
     user
     project
-    allow_logged_in false
-    allow_anonymous false
+    allow_logged_in { false }
+    allow_anonymous { false }
 
     creator
 
     trait :reader do
-      level 'reader'
+      level { 'reader' }
     end
 
     trait :writer do
-      level 'writer'
+      level { 'writer' }
     end
 
     trait :owner do
-      level 'owner'
+      level { 'owner' }
     end
 
     trait :allow_anonymous do
-      user nil
-      allow_anonymous true
+      user { nil }
+      allow_anonymous { true }
     end
 
     trait :allow_logged_in do
-      user nil
-      allow_logged_in true
+      user { nil }
+      allow_logged_in { true }
     end
 
     factory :read_permission, traits: [:reader]
@@ -57,7 +58,5 @@ FactoryGirl.define do
     factory :read_anon_permission, traits: [:reader, :allow_anonymous]
     factory :read_logged_in_permission, traits: [:reader, :allow_logged_in]
     factory :write_logged_in_permission, traits: [:writer, :allow_logged_in]
-
   end
-
 end

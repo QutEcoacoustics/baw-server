@@ -1,8 +1,9 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 
-describe BookmarksController, :type => :routing do
+describe BookmarksController, type: :routing do
   describe :routing do
-
     it { expect(get('/bookmarks')).to route_to('bookmarks#index') }
     it { expect(post('/bookmarks')).to route_to('bookmarks#create') }
     it { expect(get('/bookmarks/new')).to route_to('bookmarks#new') }
@@ -14,6 +15,5 @@ describe BookmarksController, :type => :routing do
 
     # used by client
     it { expect(get('/bookmarks/1')).to route_to('bookmarks#show', id: '1') }
-
   end
 end

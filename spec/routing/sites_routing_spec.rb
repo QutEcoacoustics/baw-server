@@ -1,8 +1,9 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 
-describe SitesController, :type => :routing do
+describe SitesController, type: :routing do
   describe :routing do
-
     it { expect(get('projects/1/sites/1/upload_instructions')).to route_to('sites#upload_instructions', id: '1', project_id: '1') }
     it { expect(get('projects/1/sites/1/harvest')).to route_to('sites#harvest', id: '1', project_id: '1') }
     it { expect(get('projects/1/sites/1/harvest.yml')).to route_to('sites#harvest', id: '1', project_id: '1', format: 'yml') }
@@ -21,6 +22,5 @@ describe SitesController, :type => :routing do
 
     it { expect(get('sites/filter')).to route_to('sites#filter', format: 'json') }
     it { expect(post('sites/filter')).to route_to('sites#filter', format: 'json') }
-
   end
 end

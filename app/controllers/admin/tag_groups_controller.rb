@@ -1,6 +1,7 @@
+# frozen_string_literal: true
+
 module Admin
   class TagGroupsController < BaseController
-
     # GET /admin/tag_groups
     def index
       page = paging_params[:page].blank? ? 1 : paging_params[:page].to_i
@@ -11,21 +12,21 @@ module Admin
 
       filter = paging_params[:filter]
 
-      fail 'Invalid order by.' unless [:tag_id, :group_identifier].include?(order_by)
-      fail 'Invalid order dir.' unless [:asc, :desc].include?(order_dir)
+      raise 'Invalid order by.' unless [:tag_id, :group_identifier].include?(order_by)
+      raise 'Invalid order dir.' unless [:asc, :desc].include?(order_dir)
 
       redirect_to admin_tag_groups_path if commit.downcase == 'clear'
 
       @tag_groups_info = {
-          order_by: order_by,
-          order_dir: order_dir,
-          filter: filter
+        order_by: order_by,
+        order_dir: order_dir,
+        filter: filter
       }
 
       query = TagGroup.includes(:creator, :tag).references(:users).all
 
       unless filter.blank?
-        sanitized_value = filter.to_s.gsub(/[\\_%\|]/) { |x| "\\#{x}" }
+        sanitized_value = filter.to_s.gsub(/[\\_%|]/) { |x| "\\#{x}" }
         contains_value = "%#{sanitized_value}%"
 
         tag_table = Tag.arel_table
@@ -97,12 +98,11 @@ module Admin
     def tag_group_params
       values = params.require(:tag_group).permit(:id, :tag, :group_identifier)
       tag = Tag.where(text: values[:tag], id: params[:tag_group_tag_hidden]).first
-      {tag: tag, group_identifier: values[:group_identifier]}
+      { tag: tag, group_identifier: values[:group_identifier] }
     end
 
     def paging_params
       params.permit(:page, :order_by, :order_dir, :filter, :commit)
     end
-
   end
 end

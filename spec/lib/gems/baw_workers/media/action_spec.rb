@@ -11,20 +11,18 @@ describe BawWorkers::Media::Action do
   # so change the queue name so the test worker does not
   # automatically process the jobs
   before(:each) do
-    default_queue = BawWorkers::Settings.actions.media.queue
+    default_queue = Settings.actions.media.queue
 
-    allow(BawWorkers::Settings.actions.media).to receive(:queue).and_return(default_queue + '_manual_tick')
+    allow(Settings.actions.media).to receive(:queue).and_return(default_queue + '_manual_tick')
 
     # cleanup resque queues before each test
     BawWorkers::ResqueApi.clear_queue(default_queue)
-    BawWorkers::ResqueApi.clear_queue(BawWorkers::Settings.actions.media.queue)
-
+    BawWorkers::ResqueApi.clear_queue(Settings.actions.media.queue)
   end
 
-  let(:queue_name) { BawWorkers::Settings.actions.media.queue }
+  let(:queue_name) { Settings.actions.media.queue }
 
   context 'queues' do
-
     let(:test_media_request_params) { { testing: :testing } }
     let(:expected_payload) {
       {
@@ -82,7 +80,6 @@ describe BawWorkers::Media::Action do
     end
 
     it 'does not enqueue the same payload into the same queue more than once' do
-
       queued_query = { media_type: :audio, media_request_params: test_media_request_params }
 
       expect(Resque.size(queue_name)).to eq(0)
@@ -151,16 +148,12 @@ describe BawWorkers::Media::Action do
       expect(status.status).to eq('queued')
       expect(status.uuid).to eq(job_id)
       expect(status.options).to eq(queued_query_normalised)
-
     end
-
   end
 
   context 'executes perform method' do
     context 'raises error' do
-
       it 'when params is not a hash' do
-
         expect {
           BawWorkers::Media::Action.action_perform(:audio, 'not a hash')
         }.to raise_error(ArgumentError, /Param was a 'String'\. It must be a 'Hash'\./)
@@ -177,7 +170,6 @@ describe BawWorkers::Media::Action do
       end
 
       it 'when recorded date is invalid' do
-
         media_request_params =
           {
             uuid: '7bb0c719-143f-4373-a724-8138219006d9',
@@ -200,11 +192,9 @@ describe BawWorkers::Media::Action do
 
         expect(ActionMailer::Base.deliveries.count).to eq(1)
       end
-
     end
 
     context 'generate spectrogram' do
-
       it 'raises error with no params' do
         expect {
           BawWorkers::Media::Action.action_perform(:spectrogram, {})
@@ -222,7 +212,6 @@ describe BawWorkers::Media::Action do
       end
 
       it 'is successful with correct parameters' do
-
         media_request_params =
           {
             uuid: '7bb0c719-143f-4373-a724-8138219006d9',
@@ -251,11 +240,9 @@ describe BawWorkers::Media::Action do
 
         expect(ActionMailer::Base.deliveries.count).to eq(0)
       end
-
     end
 
     context 'cut audio' do
-
       it 'raises error with no params' do
         expect {
           BawWorkers::Media::Action.action_perform(:audio, {})
@@ -273,7 +260,6 @@ describe BawWorkers::Media::Action do
       end
 
       it 'is successful with correct parameters' do
-
         media_request_params =
           {
             uuid: '7bb0c719-143f-4373-a724-8138219006d9',
@@ -329,8 +315,6 @@ describe BawWorkers::Media::Action do
         expect(expected_paths.size).to eq(1)
         expect(File.exist?(expected_paths[0])).to be_truthy
       end
-
     end
-
   end
 end

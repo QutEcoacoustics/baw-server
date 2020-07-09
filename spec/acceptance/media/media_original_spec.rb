@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 require 'rspec_api_documentation/dsl'
 require 'helpers/acceptance_spec_helper'
@@ -33,11 +35,11 @@ resource 'Media/original' do
   let(:audio_file_mono_duration_seconds) { 70 }
 
   let(:audio_original) {
-    BawWorkers::Storage::AudioOriginal.new(BawWorkers::Settings.paths.original_audios)
+    BawWorkers::Storage::AudioOriginal.new(Settings.paths.original_audios)
   }
-  let(:audio_cache) { BawWorkers::Storage::AudioCache.new(BawWorkers::Settings.paths.cached_audios) }
-  let(:spectrogram_cache) { BawWorkers::Storage::SpectrogramCache.new(BawWorkers::Settings.paths.cached_spectrograms) }
-  let(:analysis_cache) { BawWorkers::Storage::AnalysisCache.new(BawWorkers::Settings.paths.cached_analysis_jobs) }
+  let(:audio_cache) { BawWorkers::Storage::AudioCache.new(Settings.paths.cached_audios) }
+  let(:spectrogram_cache) { BawWorkers::Storage::SpectrogramCache.new(Settings.paths.cached_spectrograms) }
+  let(:analysis_cache) { BawWorkers::Storage::AnalysisCache.new(Settings.paths.cached_analysis_jobs) }
 
   ################################
   # ORIGINAL
@@ -60,16 +62,16 @@ resource 'Media/original' do
     def full_file_result(context, opts)
       filename = context.audio_recording.canonical_filename
       opts.merge!({
-          expected_response_content_type: context.audio_recording.media_type,
-          expected_response_has_content: true,
-          expected_response_header_values_match: false,
-          expected_response_header_values: {
-            'Content-Length' => context.audio_file_mono_size_bytes.to_s,
-            'Content-Disposition' => "attachment; filename=\"#{filename}\"",
-            'Digest' => 'SHA256=' + context.audio_recording.split_file_hash[1]
-          },
-          is_range_request: false
-      })
+                    expected_response_content_type: context.audio_recording.media_type,
+                    expected_response_has_content: true,
+                    expected_response_header_values_match: false,
+                    expected_response_header_values: {
+                      'Content-Length' => context.audio_file_mono_size_bytes.to_s,
+                      'Content-Disposition' => "attachment; filename=\"#{filename}\"; filename*=UTF-8''#{filename}",
+                      'Digest' => 'SHA256=' + context.audio_recording.split_file_hash[1]
+                    },
+                    is_range_request: false
+                  })
     end
 
     get '/audio_recordings/:audio_recording_id/original' do
@@ -77,7 +79,7 @@ resource 'Media/original' do
 
       let(:authentication_token) { reader_token }
 
-      standard_request_options(:get, 'ORIGINAL (as reader)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
+      standard_request_options(:get, 'ORIGINAL (as reader)', :forbidden, { expected_json_path: get_json_error_path(:permissions) })
     end
 
     get '/audio_recordings/:audio_recording_id/original' do
@@ -85,7 +87,7 @@ resource 'Media/original' do
 
       let(:authentication_token) { writer_token }
 
-      standard_request_options(:get, 'ORIGINAL (as writer)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
+      standard_request_options(:get, 'ORIGINAL (as writer)', :forbidden, { expected_json_path: get_json_error_path(:permissions) })
     end
 
     get '/audio_recordings/:audio_recording_id/original' do
@@ -93,7 +95,7 @@ resource 'Media/original' do
 
       let(:authentication_token) { no_access_token }
 
-      standard_request_options(:get, 'ORIGINAL (as no access)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
+      standard_request_options(:get, 'ORIGINAL (as no access)', :forbidden, { expected_json_path: get_json_error_path(:permissions) })
     end
 
     get '/audio_recordings/:audio_recording_id/original' do
@@ -101,7 +103,7 @@ resource 'Media/original' do
 
       let(:authentication_token) { invalid_token }
 
-      standard_request_options(:get, 'ORIGINAL (with invalid token)', :unauthorized, {expected_json_path: get_json_error_path(:sign_in)})
+      standard_request_options(:get, 'ORIGINAL (with invalid token)', :unauthorized, { expected_json_path: get_json_error_path(:sign_in) })
     end
 
     get '/audio_recordings/:audio_recording_id/original' do
@@ -109,7 +111,7 @@ resource 'Media/original' do
 
       let(:authentication_token) { owner_token }
 
-      standard_request_options(:get, 'ORIGINAL (as owner token)', :forbidden, {expected_json_path: get_json_error_path(:permissions)})
+      standard_request_options(:get, 'ORIGINAL (as owner token)', :forbidden, { expected_json_path: get_json_error_path(:permissions) })
     end
 
     get '/audio_recordings/:audio_recording_id/original' do
@@ -118,13 +120,14 @@ resource 'Media/original' do
       let(:authentication_token) { admin_token }
 
       standard_request_options(
-          :get,
-          'ORIGINAL (as admin token)',
-          :ok,
-          {},
-          &proc { |context, opts|
-            context.full_file_result(context, opts)
-          })
+        :get,
+        'ORIGINAL (as admin token)',
+        :ok,
+        {},
+        &proc { |context, opts|
+          context.full_file_result(context, opts)
+        }
+      )
     end
 
     get '/audio_recordings/:audio_recording_id/original' do
@@ -133,14 +136,14 @@ resource 'Media/original' do
       let(:authentication_token) { harvester_token }
 
       standard_request_options(
-          :get,
-          'ORIGINAL (as harvester token)',
-          :ok,
-          {},
-          &proc { |context, opts|
-            context.full_file_result(context, opts)
-          })
+        :get,
+        'ORIGINAL (as harvester token)',
+        :ok,
+        {},
+        &proc { |context, opts|
+          context.full_file_result(context, opts)
+        }
+      )
     end
-
   end
 end

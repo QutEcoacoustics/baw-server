@@ -66,17 +66,17 @@ if ENV['CI'] || ENV['COVERAGE']
   SimpleCov.start 'rails'
 end
 
-require File.expand_path('../config/environment', __dir__)
+require "#{__dir__}/../config/environment"
 
-# Prevent database truncation if the environment is production
+# Prevent accidental non-tests database access!
 abort('The Rails environment is running in production mode!') if Rails.env.production?
 abort('The Rails environment is running in staging mode!') if Rails.env.staging?
 abort('The Rails environment is NOT running in test mode!') unless Rails.env.test?
 
+require 'rspec/collection_matchers'
 require 'rspec/rails'
 # Add additional requires below this line. Rails is not loaded until this point!
-require 'capybara/rails'
-require 'capybara/rspec'
+
 require 'webmock/rspec'
 require 'paperclip/matchers'
 require 'database_cleaner'
@@ -84,8 +84,6 @@ require 'rspec_api_documentation'
 
 require 'helpers/misc_helper'
 require 'fixtures/fixtures'
-
-require_relative '../lib/patches/test_response_reuse.rb'
 
 WebMock.disable_net_connect!(allow_localhost: true, allow: 'codeclimate.com')
 
@@ -150,7 +148,7 @@ RSpec.configure do |config| # rubocop:disable Metrics/BlockLength
   config.include Devise::Test::ControllerHelpers, type: :controller
   config.include Devise::Test::ControllerHelpers, type: :view
   config.include Paperclip::Shoulda::Matchers
-  config.include FactoryGirl::Syntax::Methods
+  config.include FactoryBot::Syntax::Methods
 
   require_relative 'helpers/migrations_helper'
   config.include MigrationsHelpers, :migration
@@ -165,8 +163,20 @@ RSpec.configure do |config| # rubocop:disable Metrics/BlockLength
   require 'enumerize/integrations/rspec'
   extend Enumerize::Integrations::RSpec
 
-  config.before(:suite) do
+  # change the default creation strategy
+  # Previous versions of factory but would ensure associations used the :create
+  # strategy, even if were built (:build). This  behavior is misleading since
+  # the database is accessed and objects are saved even though the parent factory
+  # was set to *not* save things via a build call.
+  # The default changed in FactoryBot 5 so that if build is called all associations
+  # will use the build strategy.
+  # Unfortunately for us this broke hundreds of tests. Since our priority right
+  # now is not hand editing 100s of factory invocations were going to revert to
+  # the old behavior.
+  # See https://github.com/thoughtbot/factory_bot/blob/master/GETTING_STARTED.md#build-strategies-1
+  FactoryBot.use_parent_strategy = false
 
+  config.before(:suite) do
     # run these rake tasks to ensure the db in is a state that matches the schema.rb
     #bin/rake db:drop RAILS_ENV=test
     #bin/rake db:create RAILS_ENV=test
@@ -183,15 +193,16 @@ RSpec.configure do |config| # rubocop:disable Metrics/BlockLength
     end
 
     # https://github.com/DatabaseCleaner/database_cleaner
-    DatabaseCleaner.strategy = :transaction
+    DatabaseCleaner[:active_record].strategy = :transaction
+
+    DatabaseCleaner[:redis].db = Redis.new(ActiveSupport::HashWithIndifferentAccess.new(Settings.redis.connection))
+    DatabaseCleaner[:redis].strategy = :truncation
+
     DatabaseCleaner.clean_with(:truncation)
 
     begin
       DatabaseCleaner.start
       puts '===> Database cleaner: start.'
-      #puts '===> FactoryGirl lint: started.'
-      #FactoryGirl.lint
-      #puts '===> FactoryGirl lint: completed.'
     ensure
       DatabaseCleaner.clean
       puts '===> Database cleaner: cleaned.'
@@ -202,16 +213,9 @@ RSpec.configure do |config| # rubocop:disable Metrics/BlockLength
   end
 
   config.before type: :request do
-    # Request specs cannot use a transaction because Capybara runs in a
-    # separate thread with a different database connection.
-    DatabaseCleaner.strategy = :truncation
   end
 
   config.after type: :request do
-    # Reset so other non-request specs don't have to deal with slow truncation.
-    # also, truncation does not keep users created by seeds
-    DatabaseCleaner.strategy = :transaction
-
     # clear paperclip attachments from tmp directory
     FileUtils.rm_rf(Dir["#{Rails.root}/tmp/paperclip/[^.]*"])
   end
@@ -227,14 +231,8 @@ RSpec.configure do |config| # rubocop:disable Metrics/BlockLength
   end
 
   config.after(:each) do
-    is_truncating = DatabaseCleaner.connections[0].strategy.class == DatabaseCleaner::ActiveRecord::Truncation
-
     DatabaseCleaner.clean
 
-    Rails.application.load_seed if is_truncating
-
-    # https://github.com/plataformatec/devise/wiki/How-To:-Test-with-Capybara
-    # reset warden after each test
     Warden.test_reset!
   end
 
@@ -244,7 +242,6 @@ RSpec.configure do |config| # rubocop:disable Metrics/BlockLength
       process :options, path, parameters, headers_or_env
     end
   end
-
 end
 
 require 'shoulda-matchers'
@@ -271,5 +268,4 @@ RspecApiDocumentation.configure do |config_rspec_api|
   end
 
   RspecApiDocumentation::DSL::Resource::ClassMethods.define_action :http_options_verb
-
 end

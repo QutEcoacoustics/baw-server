@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class BookmarksController < ApplicationController
   include Api::ControllerHelper
 
@@ -6,10 +8,10 @@ class BookmarksController < ApplicationController
     do_authorize_class
 
     @bookmarks, opts = Settings.api_response.response_advanced(
-        api_filter_params,
-        Access::ByUserModified.bookmarks(current_user),
-        Bookmark,
-        Bookmark.filter_settings
+      api_filter_params,
+      Access::ByUserModified.bookmarks(current_user),
+      Bookmark,
+      Bookmark.filter_settings
     )
     respond_index(opts)
   end
@@ -70,10 +72,10 @@ class BookmarksController < ApplicationController
     do_authorize_class
 
     filter_response, opts = Settings.api_response.response_advanced(
-        api_filter_params,
-        Access::ByUserModified.bookmarks(current_user),
-        Bookmark,
-        Bookmark.filter_settings
+      api_filter_params,
+      Access::ByUserModified.bookmarks(current_user),
+      Bookmark,
+      Bookmark.filter_settings
     )
     respond_filter(filter_response, opts)
   end
@@ -83,5 +85,4 @@ class BookmarksController < ApplicationController
   def bookmark_params
     params.require(:bookmark).permit(:audio_recording_id, :name, :description, :offset_seconds, :category)
   end
-
 end

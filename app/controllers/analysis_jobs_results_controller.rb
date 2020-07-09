@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class AnalysisJobsResultsController < ApplicationController
   include Api::ControllerHelper
   include Api::AnalysisJobsItemsShared
@@ -10,10 +12,10 @@ class AnalysisJobsResultsController < ApplicationController
 
     do_get_analysis_job
     @analysis_jobs_items, opts = Settings.api_response.response_advanced(
-        api_filter_params,
-        get_query,
-        AnalysisJobsItem,
-        AnalysisJobsItem.filter_settings(@is_system_job)
+      api_filter_params,
+      get_query,
+      AnalysisJobsItem,
+      AnalysisJobsItem.filter_settings(@is_system_job)
     )
 
     show_items_as_results(request.head?, @analysis_jobs_items, opts)
@@ -28,9 +30,10 @@ class AnalysisJobsResultsController < ApplicationController
 
     if @analysis_jobs_result.nil?
       respond_error(
-          :not_found,
-          "Could not find Audio Recording with id #{@audio_recording_id}",
-          {error_info: {audio_recording_id: params[@audio_recording_id]}})
+        :not_found,
+        "Could not find Audio Recording with id #{@audio_recording_id}",
+        { error_info: { audio_recording_id: params[@audio_recording_id] } }
+      )
       return
     end
 
@@ -39,7 +42,7 @@ class AnalysisJobsResultsController < ApplicationController
 
     # custom support paging, no other filter options are required
     # standard response functions assume we have an ActiveModel available
-    api_opts = Filter::Parse::parse_paging_only(api_filter_params)
+    api_opts = Filter::Parse.parse_paging_only(api_filter_params)
     api_opts[:controller] = AnalysisJobsResultsController.controller_name
     api_opts[:action] = action_name
     api_opts[:additional_params] = request_params
@@ -51,30 +54,30 @@ class AnalysisJobsResultsController < ApplicationController
 
   def get_base_url_path
     url_for(
-        controller: AnalysisJobsResultsController.controller_name,
-        action: action_name,
-        only_path: true
+      controller: AnalysisJobsResultsController.controller_name,
+      action: action_name,
+      only_path: true
     )
   end
 
   def show_items_as_results(is_head_request, analysis_job_items, opts)
     analysis_job_id = @analysis_job_id
-    result_roots = BawWorkers::Config.analysis_cache_helper.possible_job_paths_dir({job_id: analysis_job_id})
+    result_roots = BawWorkers::Config.analysis_cache_helper.possible_job_paths_dir({ job_id: analysis_job_id })
 
-    ajis_as_hash = analysis_job_items.map do |item|
+    ajis_as_hash = analysis_job_items.map { |item|
       hsh = item.as_json
       hsh['path'] = File.join(result_roots[0], item.audio_recording_id.to_s)
       hsh
-    end
+    }
 
     respond_with_fake_directory(
-        result_roots[0],
-        ajis_as_hash,
-        result_roots,
-        get_base_url_path,
-        {analysis_job_id: analysis_job_id},
-        is_head_request,
-        opts
+      result_roots[0],
+      ajis_as_hash,
+      result_roots,
+      get_base_url_path,
+      { analysis_job_id: analysis_job_id },
+      is_head_request,
+      opts
     )
   end
 
@@ -93,13 +96,13 @@ class AnalysisJobsResultsController < ApplicationController
     results_paths = Pathname(results_path).each_filename.to_a
     sub_folders = results_paths[0..-2]
     file_name = results_paths[-1]
-    is_root_path = sub_folders.size == 0 && file_name.blank?
+    is_root_path = sub_folders.empty? && file_name.blank?
 
     results_path_arguments = {
-        job_id: analysis_job_id,
-        uuid: audio_recording.uuid,
-        sub_folders: sub_folders,
-        file_name: file_name.blank? ? '' : file_name
+      job_id: analysis_job_id,
+      uuid: audio_recording.uuid,
+      sub_folders: sub_folders,
+      file_name: file_name.blank? ? '' : file_name
     }
 
     # shared error info
@@ -113,7 +116,7 @@ class AnalysisJobsResultsController < ApplicationController
     if !is_audio_ready
       # changed from 422 Unprocessable entity
       # render_error should take care of head requests
-      fail CustomErrors::ItemNotFoundError, "Audio recording id #{audio_recording.id} is not ready"
+      raise CustomErrors::ItemNotFoundError, "Audio recording id #{audio_recording.id} is not ready"
 
     elsif is_audio_ready
       paths = BawWorkers::Config.analysis_cache_helper.possible_paths(results_path_arguments)
@@ -128,21 +131,22 @@ class AnalysisJobsResultsController < ApplicationController
       files = paths.select { |p| FileSystems::Combined.file_exists?(p) }
 
       # fail if no paths are files or dirs ... I don't know if that's possible or not.
-      fail CustomErrors::ItemNotFoundError, msg if dirs.size < 1 && files.size < 1
+      raise CustomErrors::ItemNotFoundError, msg if dirs.empty? && files.empty?
       # if paths contains both ... uh, I have no idea. Just fail.
-      fail CustomErrors::TooManyItemsFoundError, msg if dirs.size > 0 && files.size > 0
+      raise CustomErrors::TooManyItemsFoundError, msg if !dirs.empty? && !files.empty?
 
       # if all files, assume all the same files and return the first one
-      respond_with_file(files, is_head_request) if dirs.size < 1 && files.size > 0
+      respond_with_file(files, is_head_request) if dirs.empty? && !files.empty?
 
       # if all dirs, assume all the same and return file list for first existing dir
       base_paths = paths.map { |path| get_base_path(path, analysis_job_id, audio_recording.uuid) }
-      respond_with_directory(dirs, base_paths, get_base_url_path, analysis_job_item.as_json, is_head_request, api_opts) if dirs.size > 0 && files.size < 1
+      if !dirs.empty? && files.empty?
+        respond_with_directory(dirs, base_paths, get_base_url_path, analysis_job_item.as_json, is_head_request, api_opts)
+      end
 
     else
-      fail CustomErrors::BadRequestError, 'There was an unknown problem with the request.'
+      raise CustomErrors::BadRequestError, 'There was an unknown problem with the request.'
     end
-
   end
 
   def get_base_path(path, analysis_job_id, uuid)
@@ -152,10 +156,11 @@ class AnalysisJobsResultsController < ApplicationController
         uuid: uuid,
         sub_folders: [],
         file_name: ''
-      })
+      }
+    )
     matching_base_path = analysis_base_paths.select { |abp| path.start_with?(abp) }
 
-    fail CustomErrors::UnprocessableEntityError, 'Incorrect analysis base path.' if matching_base_path.size != 1
+    raise CustomErrors::UnprocessableEntityError, 'Incorrect analysis base path.' if matching_base_path.size != 1
 
     matching_base_path[0]
   end

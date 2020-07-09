@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class TaggingsController < ApplicationController
   include Api::ControllerHelper
 
@@ -9,10 +11,10 @@ class TaggingsController < ApplicationController
     do_authorize_instance(:show, @audio_event)
 
     @taggings, opts = Settings.api_response.response_advanced(
-        api_filter_params,
-        Access::ByPermission.audio_events_tags(current_user, Access::Core.levels, @audio_event),
-        Tagging,
-        Tagging.filter_settings
+      api_filter_params,
+      Access::ByPermission.audio_events_tags(current_user, Access::Core.levels, @audio_event),
+      Tagging,
+      Tagging.filter_settings
     )
     respond_index(opts)
   end
@@ -24,10 +26,10 @@ class TaggingsController < ApplicationController
     do_authorize_instance(:show, @user)
 
     @taggings, opts = Settings.api_response.response_advanced(
-        api_filter_params,
-        Access::ByPermission.audio_events_tags(current_user).where(creator: @user),
-        Tagging,
-        Tagging.filter_settings
+      api_filter_params,
+      Access::ByPermission.audio_events_tags(current_user).where(creator: @user),
+      Tagging,
+      Tagging.filter_settings
     )
     respond_index(opts)
   end
@@ -67,9 +69,7 @@ class TaggingsController < ApplicationController
       if tag.blank?
         # if the tag with the name does not already exist, create it via tag_attributes
         tag = Tag.new(tagging_params[:tag_attributes])
-        unless tag.save
-          render json: tag.errors, status: :unprocessable_entity and return
-        end
+        render json: tag.errors, status: :unprocessable_entity and return unless tag.save
       end
       @tagging.tag = tag
     else
@@ -115,10 +115,10 @@ class TaggingsController < ApplicationController
     do_authorize_class
 
     filter_response, opts = Settings.api_response.response_advanced(
-        api_filter_params,
-        Access::ByPermission.audio_events_tags(current_user),
-        Tagging,
-        Tagging.filter_settings
+      api_filter_params,
+      Access::ByPermission.audio_events_tags(current_user),
+      Tagging,
+      Tagging.filter_settings
     )
     respond_filter(filter_response, opts)
   end
@@ -138,9 +138,7 @@ class TaggingsController < ApplicationController
     @audio_event = AudioEvent.find(params[:audio_event_id])
 
     # avoid the same project assigned more than once to a site
-    if defined?(@tagging) && @tagging.audio_event.blank?
-      @tagging.audio_event = @audio_event
-    end
+    @tagging.audio_event = @audio_event if defined?(@tagging) && @tagging.audio_event.blank?
   end
 
   def tagging_params

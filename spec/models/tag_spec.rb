@@ -13,7 +13,7 @@ describe Tag, type: :model do
   it { is_expected.to have_many(:audio_events) }
 
   it { is_expected.to belong_to(:creator).with_foreign_key(:creator_id) }
-  it { is_expected.to belong_to(:updater).with_foreign_key(:updater_id) }
+  it { is_expected.to belong_to(:updater).with_foreign_key(:updater_id).optional }
 
   # .with_predicates(true).with_multiple(false)
   it { is_expected.to enumerize(:type_of_tag).in(*Tag::AVAILABLE_TYPE_OF_TAGS) }

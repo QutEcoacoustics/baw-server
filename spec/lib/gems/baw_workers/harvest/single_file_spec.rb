@@ -15,8 +15,8 @@ describe BawWorkers::Harvest::SingleFile do
     BawWorkers::Harvest::GatherFiles.new(
       BawWorkers::Config.logger_worker,
       file_info,
-      BawWorkers::Settings.available_formats.audio + BawWorkers::Settings.available_formats.audio_decode_only,
-      BawWorkers::Settings.actions.harvest.config_file_name
+      Settings.available_formats.audio + Settings.available_formats.audio_decode_only,
+      Settings.actions.harvest.config_file_name
     )
   }
 
@@ -34,7 +34,6 @@ describe BawWorkers::Harvest::SingleFile do
   let(:folder_example) { File.expand_path File.join(File.dirname(__FILE__), 'folder_example.yml') }
 
   context 'entire process' do
-
     it 'should succeed with valid ogg file and settings' do
       # set up audio file and folder config
       sub_folder = File.expand_path File.join(harvest_to_do_path, 'harvest_file_exists')
@@ -428,7 +427,7 @@ describe BawWorkers::Harvest::SingleFile do
 
       partial_path = audio_original.partial_path(storage_opts)
       file_name = audio_original.file_name_utc(storage_opts)
-      mirror_destination = File.expand_path(File.join(BawWorkers::Settings.actions.harvest.copy_base_path, partial_path, file_name))
+      mirror_destination = File.expand_path(File.join(Settings.actions.harvest.copy_base_path, partial_path, file_name))
 
       # ensure copy job was enqueued
       queued_query = { source: mirror_source, destinations: [mirror_destination] }
@@ -447,7 +446,6 @@ describe BawWorkers::Harvest::SingleFile do
     end
 
     it 'renames audio file with short duration' do
-
       clear_original_audio
 
       # set up audio file and folder config
@@ -598,7 +596,5 @@ describe BawWorkers::Harvest::SingleFile do
       # clean up
       FileUtils.rm_rf(sub_folder)
     end
-
   end
-
 end

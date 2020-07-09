@@ -1,0 +1,19 @@
+Hello,
+A resque worker running on <%= @details[:host] %> encountered a problem.
+
+The running job was:
+
+Queue: <%= @details[:job_queue] %>
+
+Class: <%= @details[:job_class] %>
+
+Arguments: <%= @details[:job_args] %>
+
+The error was:
+
+Error: <%= @details[:error_message] %>
+
+Backtrace: <%= @details[:error_backtrace].join("\n") %>
+
+This email was generated at <%= @details[:generated_timestamp] %>.
+Regards, <%= @details[:host] %>

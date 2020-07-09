@@ -15,7 +15,6 @@ describe 'Resque::Plugins::Status' do
   # This test ensures that it is set.
   # These tests also test the monkey patch in `resque_status_custom_expire.rb` exists
   context 'expire_in tests' do
-
     it 'ensures expire_in is set for worker init' do
       # run is called in the test initialization in `spec_helper.rb`
 
@@ -33,7 +32,7 @@ describe 'Resque::Plugins::Status' do
         BawWorkers::Config.logger_mailer,
         Resque.logger,
         BawWorkers::Config.logger_audio_tools,
-        BawWorkers::Settings
+        Settings
       )
 
       expect(Resque::Plugins::Status::Hash.expire_in).to eq(86_400)
@@ -93,7 +92,7 @@ describe 'Resque::Plugins::Status' do
       expect(status.status).to eq('queued')
       expect(status.uuid).to eq(job_id)
       expect(status.options).to eq(payload_normalised)
-      expect(BawWorkers::ResqueApi.status_ttl(result1)).to eq -1
+      expect(BawWorkers::ResqueApi.status_ttl(result1)).to eq(-1)
 
       # dequeue and run the job
       was_run = emulate_resque_worker(BawWorkers::Template::Action.queue)
@@ -114,7 +113,6 @@ describe 'Resque::Plugins::Status' do
   # Tests that sensible names are part our base action's definition.
   # See https://github.com/QutBioacoustics/baw-workers/issues/41
   context 'sensible names' do
-
     it 'ensures action base has a name method that throws' do
       new_base = BawWorkers::ActionBase.new('imtotesauuidbro', im_an_option: :options!)
 
@@ -158,6 +156,5 @@ describe 'Resque::Plugins::Status' do
 
       expect(status.name).to eq('template:' + unique_key)
     end
-
   end
 end

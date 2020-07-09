@@ -12,17 +12,17 @@ describe BawWorkers::Analysis::Action do
   # so change the queue name so the test worker does not
   # automatically process the jobs
   before(:each) do
-    default_queue = BawWorkers::Settings.actions.analysis.queue
+    default_queue = Settings.actions.analysis.queue
 
-    allow(BawWorkers::Settings.actions.analysis).to receive(:queue).and_return(default_queue + '_manual_tick')
+    allow(Settings.actions.analysis).to receive(:queue).and_return(default_queue + '_manual_tick')
 
     # cleanup resque queues before each test
     BawWorkers::ResqueApi.clear_queue(default_queue)
-    BawWorkers::ResqueApi.clear_queue(BawWorkers::Settings.actions.analysis.queue)
+    BawWorkers::ResqueApi.clear_queue(Settings.actions.analysis.queue)
     BawWorkers::ResqueApi.clear_queue('failed')
   end
 
-  let(:queue_name) { BawWorkers::Settings.actions.analysis.queue }
+  let(:queue_name) { Settings.actions.analysis.queue }
 
   let(:analysis_params) {
     {
@@ -75,7 +75,6 @@ describe BawWorkers::Analysis::Action do
   }
 
   context 'queues' do
-
     it 'checks we\'re using a manual queue' do
       expect(Resque.queue_from_class(BawWorkers::Analysis::Action)).to end_with('_manual_tick')
     end
@@ -85,12 +84,10 @@ describe BawWorkers::Analysis::Action do
     end
 
     it 'can enqueue' do
-
       result = BawWorkers::Analysis::Action.action_enqueue(analysis_params)
       expect(Resque.size(queue_name)).to eq(1)
 
       actual = Resque.peek(queue_name)
-
     end
 
     it 'has a sensible name' do
@@ -144,7 +141,6 @@ describe BawWorkers::Analysis::Action do
     end
 
     it 'can retrieve the job' do
-
       expect(Resque.size(queue_name)).to eq(0)
       expect(BawWorkers::ResqueApi.job_queued?(BawWorkers::Analysis::Action, analysis_query)).to eq(false)
       expect(Resque.enqueued?(BawWorkers::Analysis::Action, analysis_query)).to eq(false)
@@ -175,9 +171,7 @@ describe BawWorkers::Analysis::Action do
       expect(status.status).to eq('queued')
       expect(status.uuid).to eq(job_id)
       expect(status.options).to eq(analysis_query_normalised)
-
     end
-
   end
 
   it 'successfully runs an analysis on a file' do
@@ -257,7 +251,5 @@ describe BawWorkers::Analysis::Action do
 
     # deletes the run dir when finished
     expect(Dir.exist?(result[:dir_run])).to be_falsey
-
   end
-
 end

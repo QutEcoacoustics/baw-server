@@ -20,96 +20,168 @@ describe ApplicationController, type: :controller do
     end
   end
 
-  describe 'sanitize_associative_array', type: :controller do
-    let!(:field_name) { 'field_name' }
-    let!(:controller) { ApplicationController.new }
+  describe 'associative array validation', type: :controller do
+    controller do
+      skip_authorization_check
+      skip_load_and_authorize_resource
 
-    describe 'string inputs' do
-      it 'should handle empty string' do
-        expect {
-          controller.instance_eval { sanitize_associative_array('', :field_name) }
-        }.to raise_error(CustomErrors::NotAcceptableError)
+      def index
+        sanitize_associative_array(:some_field)
+        cleaned = params.slice(:some_field).permit(some_field: {}).to_h
+
+        respond cleaned
       end
 
-      it 'should handle single quotes' do
-        expect {
-          controller.instance_eval { sanitize_associative_array('\'\'', :field_name) }
-        }.to raise_error(CustomErrors::NotAcceptableError)
+      def nested
+        sanitize_associative_array(:nested, :some_field)
+        cleaned = params.require(:nested).permit(some_field: {}).to_h
+
+        respond cleaned
       end
 
-      it 'should handle double quotes' do
-        expect {
-          controller.instance_eval { sanitize_associative_array('""', :field_name) }
-        }.to raise_error(CustomErrors::NotAcceptableError)
-      end
+      private
 
-      it 'should handle invalid stringified object' do
-        expect {
-          controller.instance_eval { sanitize_associative_array('{123:123}', :field_name) }
-        }.to raise_error(CustomErrors::NotAcceptableError)
-      end
-
-      it 'should handle stringified array' do
-        expect {
-          controller.instance_eval { sanitize_associative_array('[1,2,3]', :field_name) }
-        }.to raise_error(CustomErrors::BadRequestError)
+      def respond(result)
+        render json: result, status: :created, layout: false
       end
     end
 
-    describe 'scalar inputs' do
-      it 'should handle nil input' do
-        expect(
-          controller.instance_eval { sanitize_associative_array(nil, :field_name) }
-        ).to be_nil
-      end
-
-      it 'should handle number' do
-        expect {
-          controller.instance_eval { sanitize_associative_array(42, :field_name) }
-        }.to raise_error(CustomErrors::BadRequestError)
-      end
-
-      it 'should handle boolean' do
-        expect {
-          controller.instance_eval { sanitize_associative_array(true, :field_name) }
-        }.to raise_error(CustomErrors::BadRequestError)
+    before(:each) do
+      routes.draw do
+        post 'nested' => 'anonymous#nested'
+        post 'index' => 'anonymous#index'
       end
     end
 
-    describe 'non-scalar inputs' do
-
-      it 'should handle empty object' do
-        expect(
-          controller.instance_eval { sanitize_associative_array({}, :field_name) }
-        ).to include({})
+    def error_response(error_message = :root_hash)
+      case error_message
+      when :valid_json
+        status = 400
+        message = 'Bad Request'
+        details = 'The request was not valid: some_field is not valid JSON. Additionally, support for string-encoded JSON is deprecated.'
+      when :root_hash
+        status = 422
+        message = 'Unprocessable Entity'
+        details = 'The request could not be understood: some_field must have a root JSON object (not a scalar or an array).'
       end
-
-      it 'should handle object' do
-        expect(
-          controller.instance_eval { sanitize_associative_array({ 'test': 'value' }, :field_name) }
-        ).to include('test': 'value')
-      end
-
-      it 'should handle array' do
-        expect {
-          controller.instance_eval { sanitize_associative_array([1, 2, 3], :field_name) }
-        }.to raise_error(CustomErrors::BadRequestError)
-      end
-
+      {
+        'meta' =>
+        {
+          'error' =>
+          {
+            'details' => details,
+            'info' => nil
+          },
+          'message' => message,
+          'status' => status
+        }
+      }
     end
 
-    describe 'error messages' do
-      it 'should return not acceptable error' do
-        expect {
-          controller.instance_eval { sanitize_associative_array('', 'custom_field') }
-        }.to raise_error(CustomErrors::NotAcceptableError).with_message(/custom_field/)
+    shared_examples_for :sanitization do |current_action|
+      let(:current_action) { current_action }
+
+      def invoke(test_value, expected = :unprocessable_entity)
+        body = current_action == :nested ? { nested: { some_field: test_value } } : { some_field: test_value }
+        post current_action, body: body.to_json, as: :json, format: :json
+        #post current_action, body: body.to_json, format: :json
+        expect(response.media_type).to include('application/json')
+        expect(response).to have_http_status(expected)
+
+        JSON.parse(response.body)
       end
 
-      it 'should return bad request error' do
-        expect {
-          controller.instance_eval { sanitize_associative_array([1, 2, 3], 'custom_field') }
-        }.to raise_error(CustomErrors::BadRequestError).with_message(/custom_field/)
+      describe 'should parse strings as JSON,' do
+        it 'but reject an empty string' do
+          expect(
+            invoke('', :bad_request)
+          ).to include(error_response(:valid_json))
+        end
+
+        it 'but reject single quotes' do
+          expect(
+            invoke('\'\'', :bad_request)
+          ).to include(error_response(:valid_json))
+        end
+
+        it 'but reject double quotes' do
+          expect(
+            invoke('""', :bad_request)
+          ).to include(error_response(:valid_json))
+        end
+
+        it 'but reject invalid json' do
+          expect(
+            invoke('{123:123}', :bad_request)
+          ).to include(error_response(:valid_json))
+        end
+
+        it 'but reject an array' do
+          expect(
+            invoke('[1,2,3]')
+          ).to include(error_response)
+        end
+
+        it 'and accept an empty object' do
+          expect(
+            invoke('{}', :created)
+          ).to include({ 'some_field' => {} })
+        end
+
+        it 'and accept an object' do
+          expect(
+            invoke('{ "test": "value" }', :created)
+          ).to include({ 'some_field' => { 'test' => 'value' } })
+        end
       end
+
+      describe 'scalar inputs are' do
+        it 'converted when null' do
+          expect(
+            invoke(nil, :created)
+          ).to include({ 'some_field' => {} })
+        end
+
+        it 'rejected when a number' do
+          expect(
+            invoke(42)
+          ).to include(error_response)
+        end
+
+        it 'rejected when a boolean' do
+          expect(
+            invoke(true)
+          ).to include(error_response)
+        end
+      end
+
+      describe 'for non-scalar inputs it will' do
+        it 'accept an empty object' do
+          expect(
+            invoke({}, :created)
+          ).to include({ 'some_field' => {} })
+        end
+
+        it 'accept an object' do
+          expect(
+            invoke({ 'test' => 'value' }, :created)
+          ).to include({ 'some_field' => { 'test' => 'value' } })
+        end
+
+        it 'reject an array' do
+          expect(
+            invoke([1, 2, 3])
+          ).to include(error_response)
+        end
+      end
+    end
+
+    describe 'for root values,' do
+      it_should_behave_like :sanitization, :index
+    end
+
+    describe 'for nested values,' do
+      it_should_behave_like :sanitization, :nested
     end
   end
 end

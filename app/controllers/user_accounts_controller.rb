@@ -1,10 +1,12 @@
+# frozen_string_literal: true
+
 class UserAccountsController < ApplicationController
   include Api::ControllerHelper
 
   # GET /user_accounts
   def index
     do_authorize_class
- 
+
     order = 'CASE WHEN last_seen_at IS NOT NULL THEN last_seen_at
 WHEN current_sign_in_at IS NOT NULL THEN current_sign_in_at
 ELSE last_sign_in_at END DESC'
@@ -66,13 +68,9 @@ ELSE last_sign_in_at END DESC'
       @user.save!
     end
 
-    if params[:commit] == 'Confirm User'
-      @user.confirm
-    end
+    @user.confirm if params[:commit] == 'Confirm User'
 
-    if params[:commit] == 'Resend Confirmation'
-      @user.resend_confirmation_instructions
-    end
+    @user.resend_confirmation_instructions if params[:commit] == 'Resend Confirmation'
 
     respond_to do |format|
       if @user.update(the_params)
@@ -110,8 +108,8 @@ ELSE last_sign_in_at END DESC'
     do_authorize_instance
 
     @user_projects = Access::ByPermission.projects(@user).includes(:creator).references(:creator)
-                         .order('projects.name ASC')
-                         .page(paging_params[:page].blank? ? 1 : paging_params[:page])
+                                         .order('projects.name ASC')
+                                         .page(paging_params[:page].blank? ? 1 : paging_params[:page])
     respond_to do |format|
       format.html
     end
@@ -123,8 +121,8 @@ ELSE last_sign_in_at END DESC'
     do_authorize_instance
 
     @user_sites = Access::ByPermission.sites(@user).includes(:creator, :projects).references(:creator, :project)
-        .order('sites.name ASC')
-        .page(paging_params[:page].blank? ? 1 : paging_params[:page])
+                                      .order('sites.name ASC')
+                                      .page(paging_params[:page].blank? ? 1 : paging_params[:page])
 
     respond_to do |format|
       format.html
@@ -137,8 +135,8 @@ ELSE last_sign_in_at END DESC'
     do_authorize_instance
 
     @user_bookmarks = Access::ByUserModified.bookmarks(@user)
-                          .order('bookmarks.updated_at DESC')
-                          .page(paging_params[:page].blank? ? 1 : paging_params[:page])
+                                            .order('bookmarks.updated_at DESC')
+                                            .page(paging_params[:page].blank? ? 1 : paging_params[:page])
     respond_to do |format|
       format.html
     end
@@ -150,8 +148,8 @@ ELSE last_sign_in_at END DESC'
     do_authorize_instance
 
     @user_audio_event_comments = Access::ByUserModified.audio_event_comments(@user)
-                                     .order('audio_event_comments.updated_at DESC')
-                                     .page(paging_params[:page].blank? ? 1 : paging_params[:page])
+                                                       .order('audio_event_comments.updated_at DESC')
+                                                       .page(paging_params[:page].blank? ? 1 : paging_params[:page])
     respond_to do |format|
       format.html
     end
@@ -163,8 +161,8 @@ ELSE last_sign_in_at END DESC'
     do_authorize_instance
 
     @user_annotations = Access::ByUserModified.audio_events(@user).includes(audio_recording: [:site]).references(:audio_recordings, :sites)
-                            .order('audio_events.updated_at DESC')
-                            .page(paging_params[:page].blank? ? 1 : paging_params[:page])
+                                              .order('audio_events.updated_at DESC')
+                                              .page(paging_params[:page].blank? ? 1 : paging_params[:page])
     respond_to do |format|
       format.html
     end
@@ -176,11 +174,11 @@ ELSE last_sign_in_at END DESC'
     do_authorize_instance
 
     @user_saved_searches = Access::ByUserModified.saved_searches(@user)
-                               .order('saved_searches.created_at DESC')
-                               .paginate(
-                                   page: paging_params[:page].blank? ? 1 : paging_params[:page],
-                                   per_page: 30
-                               )
+                                                 .order('saved_searches.created_at DESC')
+                                                 .paginate(
+                                                   page: paging_params[:page].blank? ? 1 : paging_params[:page],
+                                                   per_page: 30
+                                                 )
     respond_to do |format|
       format.html
     end
@@ -192,11 +190,11 @@ ELSE last_sign_in_at END DESC'
     do_authorize_instance
 
     @user_analysis_jobs = Access::ByUserModified.analysis_jobs(@user)
-                              .order('analysis_jobs.updated_at DESC')
-                              .paginate(
-                                  page: paging_params[:page].blank? ? 1 : paging_params[:page],
-                                  per_page: 30
-                              )
+                                                .order('analysis_jobs.updated_at DESC')
+                                                .paginate(
+                                                  page: paging_params[:page].blank? ? 1 : paging_params[:page],
+                                                  per_page: 30
+                                                )
     respond_to do |format|
       format.html
     end
@@ -207,10 +205,10 @@ ELSE last_sign_in_at END DESC'
     do_authorize_class
 
     filter_response, opts = Settings.api_response.response_advanced(
-        api_filter_params,
-        User.all,
-        User,
-        User.filter_settings
+      api_filter_params,
+      User.all,
+      User,
+      User.filter_settings
     )
     respond_filter(filter_response, opts)
   end
@@ -224,16 +222,18 @@ ELSE last_sign_in_at END DESC'
 
   def user_params
     params.require(:user).permit(
-        :user_name, :email, :password, :password_confirmation, :remember_me,
-        :roles, :roles_mask, :preferences,
-        :image, :login)
+      :user_name, :email, :password, :password_confirmation, :remember_me,
+      :roles, :roles_mask, :preferences,
+      :image, :login
+    )
   end
 
   def user_update_params
     params.require(:user).permit(
-        :id, :user_name, :email, :tzinfo_tz,
-        :password, :password_confirmation,
-        :roles_mask, :image)
+      :id, :user_name, :email, :tzinfo_tz,
+      :password, :password_confirmation,
+      :roles_mask, :image
+    )
   end
 
   def paging_params
@@ -243,5 +243,4 @@ ELSE last_sign_in_at END DESC'
   def user_account_params
     params.require(:user_account).permit!
   end
-
 end

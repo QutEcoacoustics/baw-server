@@ -3,7 +3,6 @@
 require 'rails_helper'
 
 describe RangeRequest, type: :model do
-
   let(:range_request) { RangeRequest.new }
 
   let(:audio_file_mono) { Fixtures.audio_file_mono }
@@ -390,5 +389,4 @@ describe RangeRequest, type: :model do
     expect(info[:range_start_bytes][0]).to eq(50)
     expect(info[:range_end_bytes][0]).to eq(100)
   end
-
 end

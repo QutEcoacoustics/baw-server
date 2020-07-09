@@ -1,4 +1,4 @@
-class ChangeTagNotesToJson < ActiveRecord::Migration
+class ChangeTagNotesToJson < ActiveRecord::Migration[4.2]
   def change
     # https://www.citusdata.com/blog/2016/07/14/choosing-nosql-hstore-json-jsonb/
     execute <<~SQL

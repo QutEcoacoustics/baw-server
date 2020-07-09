@@ -1,9 +1,11 @@
-FactoryGirl.define do
+# frozen_string_literal: true
+
+FactoryBot.define do
   factory :response do
     data_json = <<~JSON
-        {"labels_present": [1,2]}
+      {"labels_present": [1,2]}
     JSON
-    data data_json
+    data { data_json }
     creator
     study
     dataset_item

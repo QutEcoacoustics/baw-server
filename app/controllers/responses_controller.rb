@@ -1,5 +1,6 @@
-class ResponsesController < ApplicationController
+# frozen_string_literal: true
 
+class ResponsesController < ApplicationController
   include Api::ControllerHelper
 
   # GET /responses
@@ -8,10 +9,10 @@ class ResponsesController < ApplicationController
     do_authorize_class
 
     @responses, opts = Settings.api_response.response_advanced(
-        api_filter_params,
-        Access::ByPermission.responses(current_user, params[:study_id]),
-        Response,
-        Response.filter_settings
+      api_filter_params,
+      Access::ByPermission.responses(current_user, params[:study_id]),
+      Response,
+      Response.filter_settings
     )
     respond_index(opts)
   end
@@ -28,10 +29,10 @@ class ResponsesController < ApplicationController
     do_authorize_class
 
     filter_response, opts = Settings.api_response.response_advanced(
-        api_filter_params,
-        Access::ByPermission.responses(current_user, nil),
-        Response,
-        Response.filter_settings
+      api_filter_params,
+      Access::ByPermission.responses(current_user, nil),
+      Response,
+      Response.filter_settings
     )
     respond_filter(filter_response, opts)
   end
@@ -66,12 +67,9 @@ class ResponsesController < ApplicationController
     respond_destroy
   end
 
-
   private
 
   def response_params
     params.require(:response).permit(:study_id, :question_id, :dataset_item_id, :text, :data)
   end
-
-
 end

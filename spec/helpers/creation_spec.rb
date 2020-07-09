@@ -1,10 +1,11 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 
 describe 'creation helper' do
   create_entire_hierarchy
   create_study_hierarchy
   it 'correctly creates one of everything' do
-
     expect(User.count).to eq(6)
     expect(User.where(user_name: 'Admin').count).to eq(1)
     expect(User.where(user_name: 'Harvester').count).to eq(1)
@@ -12,7 +13,6 @@ describe 'creation helper' do
     expect(User.where(user_name: 'writer').count).to eq(1)
     expect(User.where(user_name: 'reader').count).to eq(1)
     expect(User.where(user_name: 'no_access').count).to eq(1)
-
 
     expect(Permission.count).to eq(3)
 
@@ -63,6 +63,5 @@ describe 'creation helper' do
     expect(Study.count).to eq(1)
     expect(Question.count).to eq(1)
     expect(Response.count).to eq(1)
-
   end
 end

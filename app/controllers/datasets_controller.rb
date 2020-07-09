@@ -1,5 +1,6 @@
-class DatasetsController < ApplicationController
+# frozen_string_literal: true
 
+class DatasetsController < ApplicationController
   include Api::ControllerHelper
 
   # GET /datasets
@@ -7,10 +8,10 @@ class DatasetsController < ApplicationController
     do_authorize_class
 
     @datasets, opts = Settings.api_response.response_advanced(
-        api_filter_params,
-        Access::ByPermission.datasets(current_user),
-        Dataset,
-        Dataset.filter_settings
+      api_filter_params,
+      Access::ByPermission.datasets(current_user),
+      Dataset,
+      Dataset.filter_settings
     )
     respond_index(opts)
   end
@@ -27,10 +28,10 @@ class DatasetsController < ApplicationController
     do_authorize_class
 
     filter_response, opts = Settings.api_response.response_advanced(
-        api_filter_params,
-        Access::ByPermission.datasets(current_user),
-        Dataset,
-        Dataset.filter_settings
+      api_filter_params,
+      Access::ByPermission.datasets(current_user),
+      Dataset,
+      Dataset.filter_settings
     )
     respond_filter(filter_response, opts)
   end
@@ -67,7 +68,6 @@ class DatasetsController < ApplicationController
     else
       respond_change_fail
     end
-
   end
 
   private
@@ -75,5 +75,4 @@ class DatasetsController < ApplicationController
   def dataset_params
     params.require(:dataset).permit(:description, :name)
   end
-
 end

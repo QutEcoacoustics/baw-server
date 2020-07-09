@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'helpers/compare_spec_helper'
 require 'helpers/misc_helper'
 
@@ -38,23 +40,20 @@ end
 #    access to rspec context (i.e. let and let! values)
 # @return [void]
 def standard_request_options(http_method, description, expected_status, opts = {}, &opts_mod)
-  opts.reverse_merge!({document: true})
+  opts.reverse_merge!({ document: true })
 
   # 406 when you can't send what they want, 415 when they send what you don't want
 
-  example "#{http_method} #{description} - #{expected_status}", document: opts[:document], :caller => caller do
-
+  example "#{http_method} #{description} - #{expected_status}", document: opts[:document], caller: caller do
     # allow for modification of opts, provide context so let and let! values can be accessed
-    if opts_mod
-      opts_mod.call(self, opts)
-    end
+    opts_mod&.call(self, opts)
 
     expected_error_class = opts[:expected_error_class]
     expected_error_regexp = opts[:expected_error_regexp]
     problem = (expected_error_class.blank? && !expected_error_regexp.blank?) ||
-        (!expected_error_class.blank? && expected_error_regexp.blank?)
+              (!expected_error_class.blank? && expected_error_regexp.blank?)
 
-    fail 'Specify both expected_error_class and expected_error_regexp' if problem
+    raise 'Specify both expected_error_class and expected_error_regexp' if problem
 
     # remove the auth header if specified
     is_remove_header = opts.dig(:remove_auth) == true
@@ -63,9 +62,7 @@ def standard_request_options(http_method, description, expected_status, opts = {
     has_header = current_metadata[:headers]&.include?(header_key)
     header_value = has_header ? current_metadata[:headers][header_key] : nil
 
-    if is_remove_header && has_header
-      current_metadata[:headers].delete(header_key)
-    end
+    current_metadata[:headers].delete(header_key) if is_remove_header && has_header
 
     begin
       if !expected_error_class.blank? && !expected_error_regexp.blank?
@@ -76,10 +73,11 @@ def standard_request_options(http_method, description, expected_status, opts = {
         request = do_request
 
         opts.merge!(
-            {
-                expected_status: expected_status,
-                expected_method: http_method
-            })
+          {
+            expected_status: expected_status,
+            expected_method: http_method
+          }
+        )
 
         opts = acceptance_checks_shared(request, opts)
 
@@ -110,30 +108,30 @@ end
 # @option opts [Boolean] :check_content_length   (true) Check the Content-Length header.
 # @return [void]
 def media_request_options(http_method, description, expected_status, opts = {})
-  opts.reverse_merge!({document: true})
+  opts.reverse_merge!({ document: true })
 
   # add better metadata for tests, get the caller information that invoked this method
 
-
-  example "#{http_method} #{description} - #{expected_status}", document: opts[:document], :caller => caller do
-    if opts[:dont_copy_test_audio]
-      audio_file = nil
-    else
-      audio_file = audio_file_mono
-    end
+  example "#{http_method} #{description} - #{expected_status}", document: opts[:document], caller: caller do
+    audio_file = if opts[:dont_copy_test_audio]
+                   nil
+                 else
+                   audio_file_mono
+                 end
 
     options = create_media_options(audio_recording, audio_file)
     request = do_request
 
     opts.merge!(
-        {
-            expected_status: expected_status,
-            expected_method: http_method
-        })
+      {
+        expected_status: expected_status,
+        expected_method: http_method
+      }
+    )
 
     opts = acceptance_checks_shared(request, opts)
 
-    opts.merge!({audio_recording: options})
+    opts.merge!({ audio_recording: options })
     acceptance_checks_media(opts)
   end
 end
@@ -151,18 +149,19 @@ end
 # @return [void]
 def acceptance_checks_shared(request, opts = {})
   opts.reverse_merge!(
-      {
-          expected_status: :ok,
-          expected_method: :get,
+    {
+      expected_status: :ok,
+      expected_method: :get,
 
-          expected_response_has_content: true,
-          expected_response_content_type: 'application/json',
+      expected_response_has_content: true,
+      expected_response_content_type: 'application/json',
 
-          # @option opts [String]         :expected_request_content_type   (nil) What is the expected request content type?
-          #expected_request_content_type: 'application/json'
+      # @option opts [String]         :expected_request_content_type   (nil) What is the expected request content type?
+      #expected_request_content_type: 'application/json'
 
-          expected_response_header_values_match: true
-      })
+      expected_response_header_values_match: true
+    }
+  )
 
   # Rubymine might think this is an error - it's fine, there are so many methods named 'method' :/
   http_method = method
@@ -171,35 +170,36 @@ def acceptance_checks_shared(request, opts = {})
   # don't document because it returns binary data that can't be json encoded
   #is_documentation_run = !!(ENV['GENERATE_DOC'])
 
-  if http_method == :get && response_headers['Content-Transfer-Encoding'] == 'binary'
-    actual_response = response_body[0...100] + ' <TRIMMED>'
-  else
-    actual_response = response_body
-  end
+  actual_response = if http_method == :get && response_headers['Content-Transfer-Encoding'] == 'binary'
+                      response_body[0...100] + ' <TRIMMED>'
+                    else
+                      response_body
+                    end
 
   # info hash
   opts.merge!(
-      {
-          #is_documentation_run: is_documentation_run,
+    {
+      #is_documentation_run: is_documentation_run,
 
-          actual_method: http_method,
-          actual_status: status.is_a?(Symbol) ? status : Settings.api_response.status_symbol(status),
-          actual_query_string: query_string,
-          actual_path: path,
+      actual_method: http_method,
+      actual_status: status.is_a?(Symbol) ? status : Settings.api_response.status_symbol(status),
+      actual_query_string: query_string,
+      actual_path: path,
 
-          actual_response: actual_response,
-          actual_response_has_content: !actual_response.empty?,
-          actual_response_headers: response_headers,
-          actual_response_content_type: response_headers['Content-Type'],
+      actual_response: actual_response,
+      actual_response_has_content: !actual_response.empty?,
+      actual_response_headers: response_headers,
+      actual_response_content_type: response_headers['Content-Type'],
 
-          #actual_request_content_type: request_headers['Content-Type'],
-          actual_request_headers: (request.nil? || request.size < 1) ? nil : request[0][:request_headers],
-          actual_request: (request.nil? || request.size < 1) ? nil : request[0][:request_body],
+      #actual_request_content_type: request_headers['Content-Type'],
+      actual_request_headers: request.nil? || request.empty? ? nil : request[0][:request_headers],
+      actual_request: request.nil? || request.empty? ? nil : request[0][:request_body],
 
-          expected_status: opts[:expected_status].is_a?(Symbol) ? opts[:expected_status] : Settings.api_response.status_symbol(opts[:expected_status]),
-      })
+      expected_status: opts[:expected_status].is_a?(Symbol) ? opts[:expected_status] : Settings.api_response.status_symbol(opts[:expected_status])
+    }
+  )
 
-  opts[:msg] = "Requested #{opts[:actual_method]} #{opts[:actual_path]}. Information hash: #{MiscHelper::pretty_hash(opts)}"
+  opts[:msg] = "Requested #{opts[:actual_method]} #{opts[:actual_path]}. Information hash: #{MiscHelper.pretty_hash(opts)}"
 
   # expectations
   expect(opts[:actual_status]).to eq(opts[:expected_status]), "Mismatch: status. #{opts[:msg]}"
@@ -210,7 +210,11 @@ def acceptance_checks_shared(request, opts = {})
   if opts[:actual_response_content_type].blank?
     expect(opts[:expected_response_content_type]).to be_nil, "Mismatch: response content type. #{opts[:msg]}"
   elsif opts.include?(:actual_response_content_type)
-    expect(opts[:actual_response_content_type]).to include(opts[:expected_response_content_type]), "Mismatch: response content type. #{opts[:msg]}"
+    if opts[:expected_response_content_type].nil?
+      expect(opts[:actual_response_content_type]).to be_nil, "Mismatch: response content type. #{opts[:msg]}"
+    else
+      expect(opts[:actual_response_content_type]).to include(opts[:expected_response_content_type]), "Mismatch: response content type. #{opts[:msg]}"
+    end
   end
 
   unless opts[:actual_response_content_type].blank?
@@ -221,7 +225,7 @@ def acceptance_checks_shared(request, opts = {})
     end
 
     if (opts[:actual_response_content_type].start_with?('image/') || opts[:actual_response_content_type].start_with?('audio/')) &&
-        !opts[:actual_response_headers].include?('X-Error-Type')
+       !opts[:actual_response_headers].include?('X-Error-Type')
       expect(opts[:actual_response_headers]['Content-Transfer-Encoding']).to eq('binary'), "Mismatch: content transfer encoding. #{opts[:msg]}"
       expect(opts[:actual_response_headers]['Content-Disposition']).to match(/(inline|attachment); filename=/), "Mismatch: content disposition. #{opts[:msg]}"
     end
@@ -237,7 +241,6 @@ def acceptance_checks_shared(request, opts = {})
 
     difference = actual_request_headers.keys - expected_request_headers.keys
     expect(difference).to be_empty, "Mismatch: request headers differ by #{difference}: \nExpected: #{expected_request_headers} \nActual: #{actual_request_headers}"
-
 
   end
 
@@ -282,27 +285,27 @@ end
 # @return [void]
 def acceptance_checks_json(opts = {})
   opts.reverse_merge!(
-      {
-          expected_json_path: nil,
-          response_body_content: nil,
-          invalid_content: nil,
-          invalid_data_content: nil,
-          data_item_count: nil,
-          property_match: nil,
-          regex_match: nil,
-          order: nil
-      })
+    {
+      expected_json_path: nil,
+      response_body_content: nil,
+      invalid_content: nil,
+      invalid_data_content: nil,
+      data_item_count: nil,
+      property_match: nil,
+      regex_match: nil,
+      order: nil
+    }
+  )
 
-  actual_response_parsed = opts[:actual_response].blank? ? nil : JsonSpec::Helpers::parse_json(opts[:actual_response])
+  actual_response_parsed = opts[:actual_response].blank? ? nil : JsonSpec::Helpers.parse_json(opts[:actual_response])
   data_present = !opts[:actual_response].blank? &&
-      !actual_response_parsed.blank? &&
-      actual_response_parsed.include?('data') &&
-      !actual_response_parsed['data'].blank?
+                 !actual_response_parsed.blank? &&
+                 actual_response_parsed.include?('data') &&
+                 !actual_response_parsed['data'].blank?
 
   data_included = !opts[:actual_response].blank? &&
-      !actual_response_parsed.blank? &&
-      actual_response_parsed.include?('data')
-
+                  !actual_response_parsed.blank? &&
+                  actual_response_parsed.include?('data')
 
   if data_included && actual_response_parsed['data'].is_a?(Array)
     actual_response_parsed_size = actual_response_parsed['data'].size
@@ -318,10 +321,16 @@ def acceptance_checks_json(opts = {})
   message_prefix = "Requested #{opts[:actual_method]} #{opts[:actual_path]} expecting"
 
   # this check ensures that there is an assertion when the content is not blank.
-  expect(opts[:actual_response]).to be_blank, "#{message_prefix} blank response, but got #{opts[:actual_response]}" if opts[:response_body_content].blank? && opts[:expected_json_path].blank?
-  expect((data_format == :hash && data_present && actual_response_parsed_size == 1) || !data_present).to be_truthy, "#{message_prefix} no items in response, but got #{actual_response_parsed_size} items in #{opts[:actual_response]} (type #{data_format})" if opts[:data_item_count].blank?
+  if opts[:response_body_content].blank? && opts[:expected_json_path].blank?
+    expect(opts[:actual_response]).to be_blank, "#{message_prefix} blank response, but got #{opts[:actual_response]}"
+  end
+  if opts[:data_item_count].blank?
+    expect((data_format == :hash && data_present && actual_response_parsed_size == 1) || !data_present).to be_truthy, "#{message_prefix} no items in response, but got #{actual_response_parsed_size} items in #{opts[:actual_response]} (type #{data_format})"
+  end
 
-  expect(actual_response_parsed_size).to eq(opts[:data_item_count]), "#{message_prefix} count to be #{opts[:data_item_count]} but got #{actual_response_parsed_size} items in #{opts[:actual_response]} (type #{data_format})" unless opts[:data_item_count].blank?
+  unless opts[:data_item_count].blank?
+    expect(actual_response_parsed_size).to eq(opts[:data_item_count]), "#{message_prefix} count to be #{opts[:data_item_count]} but got #{actual_response_parsed_size} items in #{opts[:actual_response]} (type #{data_format})"
+  end
 
   check_response_content(opts, message_prefix)
 
@@ -337,21 +346,19 @@ def acceptance_checks_json(opts = {})
   end
 
   if defined?(expected_unordered_ids) &&
-      !expected_unordered_ids.blank? &&
-      expected_unordered_ids.is_a?(Array) &&
-      data_present &&
-      actual_response_parsed['data'].is_a?(Array)
+     !expected_unordered_ids.blank? &&
+     expected_unordered_ids.is_a?(Array) &&
+     data_present &&
+     actual_response_parsed['data'].is_a?(Array)
 
     actual_ids = actual_response_parsed['data'].map { |x| x.include?('id') ? x['id'] : nil }
     expect(actual_ids).to match_array(expected_unordered_ids)
 
   end
 
-  unless opts[:property_match].nil?
-    opts[:property_match].each do |key, value|
-      expect(actual_response_parsed['data']).to include(key.to_s)
-      expect(actual_response_parsed['data'][key.to_s].to_s).to eq(value.to_s)
-    end
+  opts[:property_match]&.each do |key, value|
+    expect(actual_response_parsed['data']).to include(key.to_s)
+    expect(actual_response_parsed['data'][key.to_s].to_s).to eq(value.to_s)
   end
 
   # creates a series of expectations checking that the given property of each member of the data array
@@ -359,10 +366,10 @@ def acceptance_checks_json(opts = {})
   # order option is a hash with the keys 'property' (string) and 'values' (array)
   # Alternatively, just the array of values can be supplied to use the 'id' as the property
   unless opts[:order].nil?
-    if !opts[:order].respond_to?(:has_key?)
+    unless opts[:order].respond_to?(:has_key?)
       opts[:order] = {
-          property: 'id',
-          values: opts[:order]
+        property: 'id',
+        values: opts[:order]
       }
     end
     response_values = actual_response_parsed['data'].map { |x|
@@ -372,7 +379,6 @@ def acceptance_checks_json(opts = {})
   end
 
   check_regex_match(opts)
-
 end
 
 # Check media response.
@@ -381,10 +387,11 @@ end
 # @return [void]
 def acceptance_checks_media(opts = {})
   opts.reverse_merge!(
-      {
-          is_range_request: false,
-          expected_response_media_from_header: 'Generated Locally'
-      })
+    {
+      is_range_request: false,
+      expected_response_media_from_header: 'Generated Locally'
+    }
+  )
 
   is_image = opts[:actual_response_headers]['Content-Type'].include? 'image'
   default_spectrogram = Settings.cached_spectrogram_defaults
@@ -410,7 +417,7 @@ def acceptance_checks_media(opts = {})
     expect(opts[:actual_response_headers].keys).to_not include(*not_allowed_headers), "These headers were present when they should not be #{actual_present} #{opts[:msg]}"
   elsif opts[:actual_response_headers].keys.include?('X-Error-Type')
     # only use default expected headers for error if expected headers were not specified in opts
-    expected_headers = opts[:expected_headers] ? opts[:expected_headers] : MediaPoll::HEADERS_EXPOSED - [MediaPoll::HEADER_KEY_ELAPSED_TOTAL, MediaPoll::HEADER_KEY_ELAPSED_PROCESSING, MediaPoll::HEADER_KEY_ELAPSED_WAITING]
+    expected_headers = opts[:expected_headers] || MediaPoll::HEADERS_EXPOSED - [MediaPoll::HEADER_KEY_ELAPSED_TOTAL, MediaPoll::HEADER_KEY_ELAPSED_PROCESSING, MediaPoll::HEADER_KEY_ELAPSED_WAITING]
     expect(opts[:actual_response_headers].keys).to include(*expected_headers), "Missing headers: #{expected_headers - opts[:actual_response_headers].keys} #{opts[:msg]}"
   else
     expect(opts[:actual_response_headers].keys).to include(*MediaPoll::HEADERS_EXPOSED), "Missing headers: #{MediaPoll::HEADERS_EXPOSED - opts[:actual_response_headers].keys} #{opts[:msg]}"
@@ -457,7 +464,7 @@ def acceptance_checks_media(opts = {})
                                                                        "Mismatch: actual media json length. #{opts[:msg]}"
       # TODO: files should not exist?
     else
-      fail "Unrecognised content type: #{opts[:actual_response_headers]['Content-Type']}"
+      raise "Unrecognised content type: #{opts[:actual_response_headers]['Content-Type']}"
     end
   else
     begin
@@ -470,13 +477,13 @@ def acceptance_checks_media(opts = {})
         "Mismatch: actual media length #{actual_length} did not match recieved length of #{downloaded_length}. #{opts[:msg]}"
       )
     ensure
-      File.delete temp_file if File.exists? temp_file
+      File.delete temp_file if File.exist? temp_file
     end
   end
 end
 
 def check_site_lat_long_response(description, expected_status, should_be_obfuscated = true)
-  example "#{description} - #{expected_status}", document: false, :caller => caller do
+  example "#{description} - #{expected_status}", document: false, caller: caller do
     do_request
     status.should eq(expected_status), "Requested #{path} expecting status #{expected_status} but got status #{status}. Response body was #{response_body}"
     response_body.should have_json_path('data/location_obfuscated'), response_body.to_s
@@ -505,36 +512,31 @@ def check_site_lat_long_response(description, expected_status, should_be_obfusca
       min = 3
       max = 6
       expect(lat.to_s.split('.').last.size)
-          .to satisfy { |v| v >= min && v <= max },
-              "expected latitude to be obfuscated to between #{min} to #{max} places, "+
-                  "got #{lat.to_s.split('.').last.size} from #{lat}"
+        .to satisfy { |v| v >= min && v <= max },
+            "expected latitude to be obfuscated to between #{min} to #{max} places, " \
+            "got #{lat.to_s.split('.').last.size} from #{lat}"
 
       expect(long.to_s.split('.').last.size)
-          .to satisfy { |v| v >= min && v <= max },
-              "expected longitude to be obfuscated to between #{min} to #{max} places, "+
-                  "got #{long.to_s.split('.').last.size} from #{long}"
+        .to satisfy { |v| v >= min && v <= max },
+            "expected longitude to be obfuscated to between #{min} to #{max} places, " \
+            "got #{long.to_s.split('.').last.size} from #{long}"
     end
   end
 end
 
 def find_unexpected_entries(parent, hash, remaining_to_match, not_included)
-  hash.each { |key, value|
-
+  hash.each do |key, value|
     new_parent = parent
-    if parent.nil?
-      new_parent = key
-    else
-      new_parent = parent + '/' + key
-    end
+    new_parent = if parent.nil?
+                   key
+                 else
+                   parent + '/' + key
+                 end
 
-    unless remaining_to_match.include?(new_parent)
-      not_included.push(new_parent)
-    end
+    not_included.push(new_parent) unless remaining_to_match.include?(new_parent)
 
-    if value.is_a?(Hash)
-      find_unexpected_entries(new_parent, value, remaining_to_match, not_included)
-    end
-  }
+    find_unexpected_entries(new_parent, value, remaining_to_match, not_included) if value.is_a?(Hash)
+  end
   not_included
 end
 
@@ -549,18 +551,16 @@ def check_hash_matches(expected, actual, unexpected_array_paths = [])
     expect(actual).to have_json_path(expected_json_path), "Expected #{expected_json_path} in #{actual}"
   end
 
-  unexpected_array_paths.each do | unexpected_json_path |
+  unexpected_array_paths.each do |unexpected_json_path|
     expect(actual).not_to have_json_path(unexpected_json_path), "Unexpected #{unexpected_json_path} in #{actual}"
   end
 
-  parsed = JsonSpec::Helpers::parse_json(actual)
+  parsed = JsonSpec::Helpers.parse_json(actual)
   remaining = find_unexpected_entries(nil, parsed, expected.dup, [])
   expect(remaining).to be_empty, "expected no additional elements, got #{remaining}."
 end
 
-
 def standard_media_parameters
-
   parameter :audio_recording_id, 'Requested audio recording id (in path/route)', required: true
 
   parameter :format, 'Required format of the audio segment (options: json|mp3|flac|webm|ogg|wav|png). Use json if requesting metadata', required: true
@@ -583,21 +583,23 @@ end
 def create_media_options(audio_recording, test_audio_file = nil)
   options = {}
   options[:datetime] = audio_recording.recorded_date
-  options[:original_format] = File.extname(audio_recording.original_file_name) unless audio_recording.original_file_name.blank?
-  options[:original_format] = '.' + Mime::Type.lookup(audio_recording.media_type).to_sym.to_s if options[:original_format].blank?
+  unless audio_recording.original_file_name.blank?
+    options[:original_format] = File.extname(audio_recording.original_file_name)
+  end
+  if options[:original_format].blank?
+    options[:original_format] = '.' + Mime::Type.lookup(audio_recording.media_type).to_sym.to_s
+  end
   options[:datetime_with_offset] = audio_recording.recorded_date
   options[:uuid] = audio_recording.uuid
   options[:id] = audio_recording.id
-  options[:start_offset] = start_offset unless (!defined? start_offset) || start_offset.blank?
-  options[:end_offset] = end_offset unless (!defined? start_offset) || end_offset.blank?
-
+  options[:start_offset] = start_offset if defined?(start_offset)
+  options[:end_offset] = end_offset if defined?(start_offset)
   original_possible_paths = audio_original.possible_paths(options)
 
-  if (test_audio_file)
+  if test_audio_file
     FileUtils.mkpath File.dirname(original_possible_paths.first)
     FileUtils.cp test_audio_file, original_possible_paths.first
   end
-
 
   options
 end

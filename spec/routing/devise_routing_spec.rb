@@ -1,8 +1,9 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 
-describe Api::SessionsController, :type => :routing do
+describe Api::SessionsController, type: :routing do
   describe :routing do
-
     it { expect(get('/my_account/sign_in')).to route_to('users/sessions#new') }
     it { expect(post('/my_account/sign_in')).to route_to('users/sessions#create') }
     it { expect(get('/my_account/sign_out')).to route_to('users/sessions#destroy') }
@@ -35,6 +36,5 @@ describe Api::SessionsController, :type => :routing do
 
     # used by client
     it { expect(get('/security/user')).to route_to('api/sessions#show', format: 'json') }
-
   end
 end
