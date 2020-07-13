@@ -145,6 +145,11 @@ module Creation
       # harvester is only needed for cases where the api is used by automated systems
       let!(:harvester_user) { User.where(user_name: 'Harvester').first }
       let!(:harvester_token) { Common.create_user_token(harvester_user) }
+
+      let!(:all_users) {
+        # nil represents a user who is not logged in
+        [admin_user, harvester_user, owner_user, writer_user, reader_user, no_access_user, nil]
+      }
     end
 
     def prepare_project(alternate_name = nil)

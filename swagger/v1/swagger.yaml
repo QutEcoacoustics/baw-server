@@ -11,54 +11,8 @@ paths:
   "/projects/filter":
     post:
       summary: filter project
-      responses:
-        '200':
-          description: successful
-          content: {}
-  "/projects/{id}/edit_sites":
-    parameters:
-    - name: id
-      in: path
-      description: id
-      required: true
-      schema:
-        type: string
-    get:
-      summary: edit_sites project
-      responses:
-        '200':
-          description: successful
-          content: {}
-  "/projects/{id}/update_sites":
-    parameters:
-    - name: id
-      in: path
-      description: id
-      required: true
-      schema:
-        type: string
-    put:
-      summary: update_sites project
-      responses:
-        '200':
-          description: successful
-          content: {}
-    patch:
-      summary: update_sites project
-      responses:
-        '200':
-          description: successful
-          content: {}
-  "/projects/new_access_request":
-    get:
-      summary: new_access_request project
-      responses:
-        '200':
-          description: successful
-          content: {}
-  "/projects/submit_access_request":
-    post:
-      summary: submit_access_request project
+      security:
+      - basic_auth_with_token: []
       responses:
         '200':
           description: successful
@@ -66,12 +20,16 @@ paths:
   "/projects":
     get:
       summary: list projects
+      security:
+      - basic_auth_with_token: []
       responses:
         '200':
           description: successful
           content: {}
     post:
       summary: create project
+      security:
+      - basic_auth_with_token: []
       responses:
         '200':
           description: successful
@@ -79,52 +37,115 @@ paths:
   "/projects/new":
     get:
       summary: new project
+      security:
+      - basic_auth_with_token: []
       responses:
         '200':
           description: successful
           content: {}
   "/projects/{id}/edit":
-    parameters:
-    - name: id
-      in: path
-      description: id
-      required: true
-      schema:
-        type: string
     get:
       summary: edit project
+      security:
+      - basic_auth_with_token: []
+      parameters:
+      - name: id
+        in: path
+        description: id
+        required: true
+        schema:
+          type: string
+      - name: id
+        in: path
+        description: id
+        required: true
+        schema:
+          type: string
       responses:
         '200':
           description: successful
           content: {}
   "/projects/{id}":
-    parameters:
-    - name: id
-      in: path
-      description: id
-      required: true
-      schema:
-        type: string
     get:
       summary: show project
+      security:
+      - basic_auth_with_token: []
+      parameters:
+      - name: id
+        in: path
+        description: id
+        required: true
+        schema:
+          type: string
+      - name: id
+        in: path
+        description: id
+        required: true
+        schema:
+          type: string
       responses:
         '200':
           description: successful
           content: {}
     patch:
       summary: update project
+      security:
+      - basic_auth_with_token: []
+      parameters:
+      - name: id
+        in: path
+        description: id
+        required: true
+        schema:
+          type: string
+      - name: id
+        in: path
+        description: id
+        required: true
+        schema:
+          type: string
       responses:
         '200':
           description: successful
           content: {}
     put:
       summary: update project
+      security:
+      - basic_auth_with_token: []
+      parameters:
+      - name: id
+        in: path
+        description: id
+        required: true
+        schema:
+          type: string
+      - name: id
+        in: path
+        description: id
+        required: true
+        schema:
+          type: string
       responses:
         '200':
           description: successful
           content: {}
     delete:
       summary: delete project
+      security:
+      - basic_auth_with_token: []
+      parameters:
+      - name: id
+        in: path
+        description: id
+        required: true
+        schema:
+          type: string
+      - name: id
+        in: path
+        description: id
+        required: true
+        schema:
+          type: string
       responses:
         '200':
           description: successful
@@ -136,10 +157,13 @@ servers:
       default: localhost
 components:
   securitySchemes:
-    auth_token:
+    basic_auth_with_token:
+      type: http
+      scheme: basic
+    auth_token_query_string:
       type: apiKey
       name: auth_token
-      in: header
+      in: query_string
   schemas:
     standard_response:
       type: object

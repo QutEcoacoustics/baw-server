@@ -43,10 +43,14 @@ RSpec.configure do |config|
       ],
       components: {
         securitySchemes: {
-          auth_token: {
+          basic_auth_with_token: {
+            type: :http,
+            scheme: :basic
+          },
+          auth_token_query_string: {
             type: :apiKey,
             name: 'auth_token',
-            in: :header
+            in: :query_string
 
           }
         },

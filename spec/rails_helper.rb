@@ -136,10 +136,6 @@ RSpec.configure do |config|
   # https://relishapp.com/rspec/rspec-rails/docs
   config.infer_spec_type_from_file_location!
 
-  config.expect_with :rspec do |c|
-    c.syntax = [:should, :expect]
-  end
-
   # set a random timezone to check for time zone issues
   Zonebie.set_random_timezone
   puts "===> Time zone offset is #{Time.zone.utc_offset}."
@@ -163,7 +159,9 @@ RSpec.configure do |config|
   extend Enumerize::Integrations::RSpec
 
   require_relative 'helpers/api_spec_helpers'
-  config.include ApiSpecHelpers, type: :request
+  config.include ApiSpecExampleHelpers, { type: :request, file_path: Regexp.new('/spec/api/') }
+  config.extend ApiSpecDescribeHelpers, { type: :request, file_path: Regexp.new('/spec/api/') }
+  config.include_context :api_spec_shared_context, { type: :request, file_path: Regexp.new('/spec/api/') }
 
   # change the default creation strategy
   # Previous versions of factory but would ensure associations used the :create
