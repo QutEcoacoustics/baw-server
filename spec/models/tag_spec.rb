@@ -18,18 +18,18 @@ describe Tag, type: :model do
   # .with_predicates(true).with_multiple(false)
   it { is_expected.to enumerize(:type_of_tag).in(*Tag::AVAILABLE_TYPE_OF_TAGS) }
 
-  it 'should not allow nil for is_taxanomic' do
-    expect(build(:tag, is_taxanomic: nil)).not_to be_valid
+  it 'should not allow nil for is_taxonomic' do
+    expect(build(:tag, is_taxonomic: nil)).not_to be_valid
   end
-  it 'ensures is_taxanomic can be true or false' do
+  it 'ensures is_taxonomic can be true or false' do
     t = build(:tag)
     expect(t).to be_valid
 
-    t.is_taxanomic = true
+    t.is_taxonomic = true
     t.type_of_tag = :common_name
     expect(t).to be_valid
 
-    t.is_taxanomic = false
+    t.is_taxonomic = false
     t.type_of_tag = :general
     expect(t).to be_valid
   end
@@ -60,12 +60,12 @@ describe Tag, type: :model do
   type_of_tags = [:general, :common_name, :species_name, :looks_like, :sounds_like]
 
   type_of_tags.each do |tag_type|
-    expected_is_taxanomic_value = tag_type == :common_name || tag_type == :species_name
+    expected_is_taxonomic_value = tag_type == :common_name || tag_type == :species_name
     it "ensures type_of_tag can be set to #{tag_type}" do
       t = build(:tag)
       expect(t).to be_valid
       t.type_of_tag = tag_type
-      t.is_taxanomic = expected_is_taxanomic_value
+      t.is_taxonomic = expected_is_taxonomic_value
       expect(t).to be_valid
 
       type_of_tags.each { |type_of_tag|
@@ -73,16 +73,16 @@ describe Tag, type: :model do
       }
     end
 
-    it "ensures is_taxanomic is set to #{expected_is_taxanomic_value} for #{tag_type}" do
+    it "ensures is_taxonomic is set to #{expected_is_taxonomic_value} for #{tag_type}" do
       t = build(:tag)
       expect(t).to be_valid
 
       t.type_of_tag = tag_type
 
-      t.is_taxanomic = !expected_is_taxanomic_value
+      t.is_taxonomic = !expected_is_taxonomic_value
       expect(t).not_to be_valid
 
-      t.is_taxanomic = expected_is_taxanomic_value
+      t.is_taxonomic = expected_is_taxonomic_value
       expect(t).to be_valid
     end
   end

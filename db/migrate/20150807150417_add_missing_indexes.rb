@@ -1,4 +1,4 @@
-class AddMissingIndexes < ActiveRecord::Migration
+class AddMissingIndexes < ActiveRecord::Migration[4.2]
   def change
     # from lol_dba: add indexes on foreign keys
     add_index :analysis_jobs, :creator_id

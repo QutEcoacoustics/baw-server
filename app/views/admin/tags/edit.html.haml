@@ -9,7 +9,7 @@
   - else
     = render partial: 'shared/sidebar_metadata_user_updated', locals: {item: @tag}
   = render partial: 'shared/sidebar_metadata', locals: {title: 'Status', text: @tag.retired ? 'Retired' : 'In use'}
-  = render partial: 'shared/sidebar_metadata', locals: {title: 'Classification', text: @tag.is_taxanomic ? 'Taxonomic' : 'Folksonomic'}
+  = render partial: 'shared/sidebar_metadata', locals: {title: 'Classification', text: @tag.is_taxonomic ? 'Taxonomic' : 'Folksonomic'}
   - display_tag_type = Tag::AVAILABLE_TYPE_OF_TAGS_DISPLAY.select{ |i| i[:id] == @tag.type_of_tag.to_sym}.first
   = render partial: 'shared/sidebar_metadata', locals: {title: 'Type', text: display_tag_type[:name]}
   = render partial: 'shared/sidebar_metadata', locals: {title: 'Count', text: @tag.taggings.count}

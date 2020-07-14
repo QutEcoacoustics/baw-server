@@ -67,6 +67,7 @@ CREATE TABLE public.analysis_jobs (
 --
 
 CREATE SEQUENCE public.analysis_jobs_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -104,6 +105,7 @@ CREATE TABLE public.analysis_jobs_items (
 --
 
 CREATE SEQUENCE public.analysis_jobs_items_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -156,6 +158,7 @@ CREATE TABLE public.audio_event_comments (
 --
 
 CREATE SEQUENCE public.audio_event_comments_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -196,6 +199,7 @@ CREATE TABLE public.audio_events (
 --
 
 CREATE SEQUENCE public.audio_events_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -230,6 +234,7 @@ CREATE TABLE public.audio_events_tags (
 --
 
 CREATE SEQUENCE public.audio_events_tags_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -279,6 +284,7 @@ CREATE TABLE public.audio_recordings (
 --
 
 CREATE SEQUENCE public.audio_recordings_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -316,6 +322,7 @@ CREATE TABLE public.bookmarks (
 --
 
 CREATE SEQUENCE public.bookmarks_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -351,6 +358,7 @@ CREATE TABLE public.dataset_items (
 --
 
 CREATE SEQUENCE public.dataset_items_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -385,6 +393,7 @@ CREATE TABLE public.datasets (
 --
 
 CREATE SEQUENCE public.datasets_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -423,6 +432,7 @@ CREATE TABLE public.permissions (
 --
 
 CREATE SEQUENCE public.permissions_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -455,6 +465,7 @@ CREATE TABLE public.progress_events (
 --
 
 CREATE SEQUENCE public.progress_events_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -485,7 +496,7 @@ CREATE TABLE public.projects (
     deleted_at timestamp without time zone,
     image_file_name character varying,
     image_content_type character varying,
-    image_file_size integer,
+    image_file_size bigint,
     image_updated_at timestamp without time zone,
     created_at timestamp without time zone,
     updated_at timestamp without time zone
@@ -497,6 +508,7 @@ CREATE TABLE public.projects (
 --
 
 CREATE SEQUENCE public.projects_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -551,6 +563,7 @@ CREATE TABLE public.questions (
 --
 
 CREATE SEQUENCE public.questions_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -595,6 +608,7 @@ CREATE TABLE public.responses (
 --
 
 CREATE SEQUENCE public.responses_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -630,6 +644,7 @@ CREATE TABLE public.saved_searches (
 --
 
 CREATE SEQUENCE public.saved_searches_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -679,6 +694,7 @@ CREATE TABLE public.scripts (
 --
 
 CREATE SEQUENCE public.scripts_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -709,7 +725,7 @@ CREATE TABLE public.sites (
     deleted_at timestamp without time zone,
     image_file_name character varying,
     image_content_type character varying,
-    image_file_size integer,
+    image_file_size bigint,
     image_updated_at timestamp without time zone,
     created_at timestamp without time zone,
     updated_at timestamp without time zone,
@@ -724,6 +740,7 @@ CREATE TABLE public.sites (
 --
 
 CREATE SEQUENCE public.sites_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -758,6 +775,7 @@ CREATE TABLE public.studies (
 --
 
 CREATE SEQUENCE public.studies_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -790,6 +808,7 @@ CREATE TABLE public.tag_groups (
 --
 
 CREATE SEQUENCE public.tag_groups_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -811,7 +830,7 @@ ALTER SEQUENCE public.tag_groups_id_seq OWNED BY public.tag_groups.id;
 CREATE TABLE public.tags (
     id integer NOT NULL,
     text character varying NOT NULL,
-    is_taxanomic boolean DEFAULT false NOT NULL,
+    is_taxonomic boolean DEFAULT false NOT NULL,
     type_of_tag character varying DEFAULT 'general'::character varying NOT NULL,
     retired boolean DEFAULT false NOT NULL,
     notes jsonb,
@@ -827,6 +846,7 @@ CREATE TABLE public.tags (
 --
 
 CREATE SEQUENCE public.tags_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -872,7 +892,7 @@ CREATE TABLE public.users (
     roles_mask integer,
     image_file_name character varying,
     image_content_type character varying,
-    image_file_size integer,
+    image_file_size bigint,
     image_updated_at timestamp without time zone,
     preferences text,
     tzinfo_tz character varying(255),
@@ -886,6 +906,7 @@ CREATE TABLE public.users (
 --
 
 CREATE SEQUENCE public.users_id_seq
+    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -1173,6 +1194,14 @@ ALTER TABLE ONLY public.responses
 
 ALTER TABLE ONLY public.saved_searches
     ADD CONSTRAINT saved_searches_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: schema_migrations schema_migrations_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.schema_migrations
+    ADD CONSTRAINT schema_migrations_pkey PRIMARY KEY (version);
 
 
 --
@@ -1711,13 +1740,6 @@ CREATE UNIQUE INDEX tag_groups_uidx ON public.tag_groups USING btree (tag_id, gr
 --
 
 CREATE UNIQUE INDEX tags_text_uidx ON public.tags USING btree (text);
-
-
---
--- Name: unique_schema_migrations; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX unique_schema_migrations ON public.schema_migrations USING btree (version);
 
 
 --
@@ -2323,6 +2345,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20181210052735'),
 ('20200612004608'),
 ('20200625025540'),
-('20200625040615');
+('20200625040615'),
+('20200714005247');
 
 

@@ -1,4 +1,4 @@
-class ChangeDecimalColumns < ActiveRecord::Migration
+class ChangeDecimalColumns < ActiveRecord::Migration[4.2]
   def up
     # http://stackoverflow.com/questions/1196415/what-datatype-to-use-when-storing-latitude-and-longitude-data-in-sql-databases
     # http://en.wikipedia.org/wiki/Wikipedia:WikiProject_Geographical_coordinates#Precision

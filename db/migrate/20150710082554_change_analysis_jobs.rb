@@ -1,4 +1,4 @@
-class ChangeAnalysisJobs < ActiveRecord::Migration
+class ChangeAnalysisJobs < ActiveRecord::Migration[4.2]
   def change
 
     change_table :analysis_jobs do |t|

@@ -1,4 +1,4 @@
-class CreateAudioEventComments < ActiveRecord::Migration
+class CreateAudioEventComments < ActiveRecord::Migration[4.2]
   def change
     create_table :audio_event_comments do |t|
       t.integer :audio_event_id,   null: false

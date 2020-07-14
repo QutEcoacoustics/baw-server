@@ -1,4 +1,4 @@
-class CreateSavedSearches < ActiveRecord::Migration
+class CreateSavedSearches < ActiveRecord::Migration[4.2]
   def change
 
     reversible do |direction|

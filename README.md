@@ -112,11 +112,11 @@ For the following commands:
 Common tasks that you may need:
 
 - `bundle install` to install a new gem
-- `rake db:xxx` to manipulate database
-    - `rake db:setup` - does all of the below
-    - `rake db:create` - create database
-    - `rake db:migrate` - run migrations
-    - `rake db:seed` - seed the database with default data
+- `rails db:xxx` to manipulate database
+    - `rails db:setup` - does all of the below
+    - `rails db:create` - create database
+    - `rails db:migrate` - run migrations
+    - `rails db:seed` - seed the database with default data
 - `rails console` to use the rails console
 - `rails start` to run a web server
 - `passenger-config restart-app /` to restart passenger and hot-reload code
@@ -179,9 +179,9 @@ Use this style guide as a reference: https://github.com/rubocop-hq/ruby-style-gu
 These commands should be executed automatically but are listed because they are helpful to know.
 
 
-- Create the test database: `rake db:create RAILS_ENV=test`
-- Then migrate and seed the test database: `rake db:migrate db:seed RAILS_ENV=test`
-- Prepare the local development database:`rake db:setup RAILS_ENV=development`
+- Create the test database: `rails db:create RAILS_ENV=test`
+- Then migrate and seed the test database: `rails db:migrate db:seed RAILS_ENV=test`
+- Prepare the local development database: `rails db:setup RAILS_ENV=development`
 - Run rspec tests: `rspec`
 - Generate API documentation: `rake docs:generate GENERATE_DOC=true`
 

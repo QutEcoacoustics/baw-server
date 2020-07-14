@@ -33,7 +33,7 @@ class Tag < ApplicationRecord
   validates_associated :creator
 
   # attribute validations
-  validates :is_taxanomic, inclusion: { in: [true, false] }
+  validates :is_taxonomic, inclusion: { in: [true, false] }
   validates :text, uniqueness: { case_sensitive: false }, presence: true
   validates :retired, inclusion: { in: [true, false] }
   validates :type_of_tag, presence: true
@@ -50,9 +50,9 @@ class Tag < ApplicationRecord
 
   def taxonomic_enforced
     if type_of_tag == 'common_name' || type_of_tag == 'species_name'
-      errors.add(:is_taxanomic, "must be true for #{type_of_tag}") unless is_taxanomic
+      errors.add(:is_taxonomic, "must be true for #{type_of_tag}") unless is_taxonomic
     else
-      errors.add(:is_taxanomic, "must be false for #{type_of_tag}") if is_taxanomic
+      errors.add(:is_taxonomic, "must be false for #{type_of_tag}") if is_taxonomic
     end
   end
 
@@ -92,11 +92,11 @@ class Tag < ApplicationRecord
   def self.filter_settings
     {
       valid_fields: [
-        :id, :text, :is_taxanomic, :type_of_tag, :retired, :notes,
+        :id, :text, :is_taxonomic, :type_of_tag, :retired, :notes,
         :creator_id, :created_at, :updater_id, :updated_at
       ],
       render_fields: [
-        :id, :text, :is_taxanomic, :type_of_tag, :retired, :creator_id,
+        :id, :text, :is_taxonomic, :type_of_tag, :retired, :creator_id,
         :updater_id, :created_at, :updated_at, :notes
       ],
       text_fields: [:text, :type_of_tag, :notes],

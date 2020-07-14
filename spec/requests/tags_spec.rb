@@ -58,10 +58,10 @@ describe 'Tags' do
     end
 
     it 'creates a taxonomic tag' do
-      post @tag_url, params: create('is_taxanomic': true, 'type_of_tag': 'common_name').to_json, headers: @env
+      post @tag_url, params: create('is_taxonomic': true, 'type_of_tag': 'common_name').to_json, headers: @env
       parsed_response = JSON.parse(response.body)
       expect(response).to have_http_status(201)
-      expect(parsed_response['data']['is_taxanomic']).to be true
+      expect(parsed_response['data']['is_taxonomic']).to be true
       expect(parsed_response['data']['type_of_tag']).to eq 'common_name'
     end
 

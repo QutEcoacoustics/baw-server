@@ -142,6 +142,6 @@ class TaggingsController < ApplicationController
   end
 
   def tagging_params
-    params.require(:tagging).permit(:audio_event_id, :tag_id, tag_attributes: [:is_taxanomic, :text, :type_of_tag, :retired, :notes])
+    params.require(:tagging).permit(:audio_event_id, :tag_id, tag_attributes: [:is_taxonomic, :text, :type_of_tag, :retired, :notes])
   end
 end

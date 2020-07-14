@@ -1,4 +1,4 @@
-class AddTimezoneColumns < ActiveRecord::Migration
+class AddTimezoneColumns < ActiveRecord::Migration[4.2]
   def change
     add_column :users, :tzinfo_tz, :string, null: true, limit: 255
     add_column :users, :rails_tz, :string, null: true, limit: 255

@@ -46,7 +46,7 @@ resource 'AudioEvents' do
     { tags_attributes: [
       FactoryBot.attributes_for(:tag),
       {
-        is_taxanomic: existing_tag.is_taxanomic,
+        is_taxonomic: existing_tag.is_taxonomic,
         text: existing_tag.text,
         type_of_tag: existing_tag.type_of_tag,
         retired: existing_tag.retired

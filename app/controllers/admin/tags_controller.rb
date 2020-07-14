@@ -12,7 +12,7 @@ module Admin
 
       filter = paging_params[:filter]
 
-      unless [:text, :is_taxanomic, :type_of_tag, :retired, :updated_at, :updater_id].include?(order_by)
+      unless [:text, :is_taxonomic, :type_of_tag, :retired, :updated_at, :updater_id].include?(order_by)
         raise 'Invalid order by.'
       end
       raise 'Invalid order dir.' unless [:asc, :desc].include?(order_dir)
@@ -98,7 +98,7 @@ module Admin
     private
 
     def tag_params
-      params.require(:tag).permit(:id, :text, :is_taxanomic, :type_of_tag, :retired, :notes)
+      params.require(:tag).permit(:id, :text, :is_taxonomic, :type_of_tag, :retired, :notes)
     end
 
     def paging_params

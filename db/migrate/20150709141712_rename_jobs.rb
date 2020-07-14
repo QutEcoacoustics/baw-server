@@ -1,4 +1,4 @@
-class RenameJobs < ActiveRecord::Migration
+class RenameJobs < ActiveRecord::Migration[4.2]
   def change
 
     reversible do |direction|

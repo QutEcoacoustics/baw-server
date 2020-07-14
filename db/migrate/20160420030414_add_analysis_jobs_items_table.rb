@@ -1,4 +1,4 @@
-class AddAnalysisJobsItemsTable < ActiveRecord::Migration
+class AddAnalysisJobsItemsTable < ActiveRecord::Migration[4.2]
   def change
     create_table :analysis_jobs_items do |t|
 
