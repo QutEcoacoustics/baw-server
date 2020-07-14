@@ -26,6 +26,7 @@ module Rswag
           existing_operation_metadata = metadata[:operation]
           subclass = super(summary, &block)
           subclass.metadata[:operation].merge!(existing_operation_metadata) unless existing_operation_metadata.nil?
+          subclass.metadata[:operation].delete(:consumes) if [:get, :head, :options].include?(verb)
         end
       end
     end
@@ -105,15 +106,87 @@ module ApiSpecDescribeHelpers
     consumes 'application/json'
   end
 
-  def for_model(model)
-    let(:model) { model }
+  def for_model(given_model)
+    @@group_model = given_model
+    let(:model) { @@group_model }
+  end
+
+  def which_has_schema(&block)
+    @@group_model_schema = yield block
+    # let(:model_schema) {
+    #   @@group_model_schema
+    # }
+  end
+
+  def body_name
+    # rswag expects let statements to be defined with the same name as the parameters,
+    # however, our creation scripts already define many let statements that have the
+    # same name as our models... so naming the parameter project forces us to overwrite
+    # the project let defined in creation.
+    # All this wouldn't be so bad except that let statements are dynamically scoped
+    # and any redefinition is applied to all uses (it doesn't just hide the parent for
+    # the current lexical scope!)
+    @@body_name ||= (@@group_model.model_name.singular + '_attributes').to_sym
+  end
+
+  def model_sent_as_parameter_in_body
+    parameter name: body_name, in: :body, schema: @@group_model_schema
+  end
+
+  def send_model(&block)
+    let(body_name, &block)
+  end
+
+  def schema_for_single
+    schema allOf: [
+      { '$ref' => '#/components/schemas/standard_response' },
+      {
+        type: 'object',
+        properties: {
+          data: @@group_model_schema
+        }
+      }
+    ]
+  end
+
+  def schema_for_many
+    schema allOf: [
+      { '$ref' => '#/components/schemas/standard_response' },
+      {
+        type: 'object',
+        properties: {
+          data: {
+            type: 'array',
+            items: @@group_model_schema
+          }
+        }
+      }
+    ]
   end
 end
 
 # config.include allows these methods to be used in specs/before/let
 module ApiSpecExampleHelpers
   def api_result
-    JSON.parse(response&.body, symbolize_names: true)
+    @api_result ||= response&.body&.empty? ? nil : JSON.parse(response.body, symbolize_names: true, object_class: OpenStruct)
+  end
+
+  def assert_id_matches(expected)
+    expect(api_result.data.id).to be(expected.id)
+  end
+
+  def assert_has_ids(*expected)
+    expected_ids = expected.map { |e| e.id }
+    actual_ids = api_result.data.map { |a| a.id }
+    expect(actual_ids).to contain(expected_ids)
+  end
+
+  def assert_at_least_one_item
+    api_result.data.should have_at_least(1).items
+  end
+
+  def assert_no_response
+    expect(response.body).to be_empty
   end
 
   def self.included(base); end

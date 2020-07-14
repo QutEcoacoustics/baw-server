@@ -55,22 +55,48 @@ RSpec.configure do |config|
           }
         },
         schemas: {
-          standard_response: {
+          meta: {
+            type: 'object'
+
+          },
+          meta_error: {
             type: 'object',
             properties: {
-              meta: {
+              error: {
                 type: 'object'
+
               },
-              data: {
-                type: 'array'
-              }
+              required: ['error']
             }
           },
-          error_object: {
+          standard_response: {
             type: 'object',
+            additionalProperties: false,
             properties: {
-
-            }
+              meta: {
+                '$ref' => '#/components/schemas/meta'
+              },
+              data: {
+                oneOf: [{ type: 'array' }, { type: 'object' }]
+              }
+            },
+            required: ['meta', 'data']
+          },
+          error_response: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+              meta: {
+                allOf: [
+                  { '$ref' => '#/components/schemas/meta' },
+                  { '$ref' => '#/components/schemas/meta_error' }
+                ]
+              },
+              data: {
+                type: 'null'
+              }
+            },
+            required: ['meta', 'data']
           }
         }
       }
