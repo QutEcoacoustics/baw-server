@@ -1,4 +1,4 @@
-class EnableAnonymousAccess < ActiveRecord::Migration
+class EnableAnonymousAccess < ActiveRecord::Migration[4.2]
   def up
     add_column :permissions, :allow_logged_in, :boolean, default: false, null: false
     add_column :permissions, :allow_anonymous, :boolean, default: false, null: false

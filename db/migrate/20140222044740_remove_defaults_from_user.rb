@@ -1,4 +1,4 @@
-class RemoveDefaultsFromUser < ActiveRecord::Migration
+class RemoveDefaultsFromUser < ActiveRecord::Migration[4.2]
   def up
     change_column_default(:users, :email, nil)
     change_column_default(:users, :user_name, nil)

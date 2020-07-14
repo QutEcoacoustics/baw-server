@@ -1,4 +1,4 @@
-class AddForeignKeys < ActiveRecord::Migration
+class AddForeignKeys < ActiveRecord::Migration[4.2]
   def up
     add_foreign_key "audio_event_comments", "audio_events", name: "audio_event_comments_audio_event_id_fk"
     add_foreign_key "audio_event_comments", "users", column: "creator_id", name: "audio_event_comments_creator_id_fk"

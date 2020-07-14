@@ -1,4 +1,4 @@
-class ChangeScripts < ActiveRecord::Migration
+class ChangeScripts < ActiveRecord::Migration[4.2]
   def change
     reversible do |direction|
       direction.up do

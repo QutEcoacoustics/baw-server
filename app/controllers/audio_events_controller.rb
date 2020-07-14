@@ -207,7 +207,7 @@ class AudioEventsController < ApplicationController
       :start_time_seconds, :end_time_seconds,
       :low_frequency_hertz, :high_frequency_hertz,
       :is_reference,
-      tags_attributes: [:is_taxanomic, :text, :type_of_tag, :retired, :notes],
+      tags_attributes: [:is_taxonomic, :text, :type_of_tag, :retired, :notes],
       tag_ids: []
     )
   end

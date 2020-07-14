@@ -73,6 +73,6 @@ class TagsController < ApplicationController
   def tag_params
     sanitize_associative_array(:tag, :notes)
 
-    params.require(:tag).permit(:is_taxanomic, :text, :type_of_tag, :retired, :notes, notes: {})
+    params.require(:tag).permit(:is_taxonomic, :text, :type_of_tag, :retired, :notes, notes: {})
   end
 end

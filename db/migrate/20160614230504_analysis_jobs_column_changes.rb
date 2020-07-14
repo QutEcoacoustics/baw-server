@@ -1,4 +1,4 @@
-class AnalysisJobsColumnChanges < ActiveRecord::Migration
+class AnalysisJobsColumnChanges < ActiveRecord::Migration[4.2]
   def change
 
     # playing with the state machines, we don't want defaults set

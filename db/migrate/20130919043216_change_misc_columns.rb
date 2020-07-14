@@ -1,4 +1,4 @@
-class ChangeMiscColumns < ActiveRecord::Migration
+class ChangeMiscColumns < ActiveRecord::Migration[4.2]
   def up
     change_column :tags, :type_of_tag, :string  , :null => false, :default => 'general'
     change_column :scripts, :created_at, :datetime, :null => false

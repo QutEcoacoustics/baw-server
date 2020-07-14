@@ -42,10 +42,10 @@
               - if order_by == :text
                 %span.fa{class: "fa-#{order_dir_icon}"}
           %th
-            = link_to admin_tags_path order_by: :is_taxanomic, order_dir: order_by_opposite, filter: filter  do
+            = link_to admin_tags_path order_by: :is_taxonomic, order_dir: order_by_opposite, filter: filter  do
               %span.fa.fa-sticky-note{aria: {hidden: 'true'}}
               Taxonomic
-              - if order_by == :is_taxanomic
+              - if order_by == :is_taxonomic
                 %span.fa{class: "fa-#{order_dir_icon}"}
           %th
             = link_to admin_tags_path order_by: :retired, order_dir: order_by_opposite, filter: filter do
@@ -73,7 +73,7 @@
             %span.label{class: taggings_count > 0 ? 'label-primary' : 'label-default', style: 'margin-right: 5px;'}
               = taggings_count
           %td
-            = tag.is_taxanomic ? 'Taxonomic' : 'Folksonomic'
+            = tag.is_taxonomic ? 'Taxonomic' : 'Folksonomic'
           %td
             = tag.retired ? 'Retired' : 'In use'
           %td

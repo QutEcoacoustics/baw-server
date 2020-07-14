@@ -1,4 +1,4 @@
-class AddDescriptionColumns < ActiveRecord::Migration
+class AddDescriptionColumns < ActiveRecord::Migration[4.2]
   def up
     change_table :sites do |t|
       t.text :description

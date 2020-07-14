@@ -6,15 +6,15 @@ FactoryBot.define do
 
     creator
     type_of_tag { 'general' }
-    is_taxanomic { false }
+    is_taxonomic { false }
 
     trait :taxonomic_true_common do
-      is_taxanomic { true }
+      is_taxonomic { true }
       type_of_tag { :common_name }
     end
 
     trait :taxonomic_false_sounds_like do
-      is_taxanomic { false }
+      is_taxonomic { false }
       type_of_tag { :sounds_like }
     end
 

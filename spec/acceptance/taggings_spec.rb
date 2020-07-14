@@ -168,7 +168,7 @@ resource 'Taggings' do
     parameter :audio_recording_id, 'Requested audio recording ID (in path/route)', required: true
     parameter :audio_event_id, 'Requested audio event ID (in path/route)', required: true
 
-    let(:raw_post) { { tagging: { tag_attributes: { is_taxanomic: false, text: existing_tag.text, type_of_tag: 'looks like', retired: false } } }.to_json }
+    let(:raw_post) { { tagging: { tag_attributes: { is_taxonomic: false, text: existing_tag.text, type_of_tag: 'looks like', retired: false } } }.to_json }
 
     let(:authentication_token) { writer_token }
 
@@ -180,7 +180,7 @@ resource 'Taggings' do
     #
     #  do_request
     #  status.should == 200
-    #  response_body.should have_json_path('2/is_taxanomic')
+    #  response_body.should have_json_path('2/is_taxonomic')
     #end
     standard_request_options(:post, 'CREATE (with tag_attributes but existing tag text as writer, with shallow path)', :created,
                              { expected_json_path: 'data/tag_id' })
