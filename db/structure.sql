@@ -13,7 +13,7 @@ SET row_security = off;
 -- Name: is_json(text); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.is_json(input text) RETURNS boolean
+CREATE OR REPLACE FUNCTION public.is_json(input text) RETURNS boolean
     LANGUAGE plpgsql IMMUTABLE
     AS $$
   DECLARE
