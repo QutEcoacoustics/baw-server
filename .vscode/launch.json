@@ -113,6 +113,25 @@
       },
     },
     {
+      "name": "(Ruby) RSpec - docs generation",
+      "type": "Ruby",
+      "request": "launch",
+      "program": "${workspaceRoot}/bin/rspec",
+      "args": [
+        "-I",
+        "${workspaceRoot}",
+        "--pattern",
+        "spec/api/**/*_spec.rb",
+        "--format",
+        "Rswag::Specs::SwaggerFormatter",
+        "--order",
+        "defined"
+      ],
+      "env": {
+        "RAILS_ENV": "test"
+      },
+    },
+    {
       "name": "Rails server",
       "type": "Ruby",
       "request": "launch",
@@ -153,6 +172,12 @@
     },
   ],
   "inputs": [
+    {
+      "id": "rspecSpecArgs",
+      "type": "promptString",
+      "description": "Enter the rspec command line arguments",
+      "default": "spec"
+    },
     {
       "id": "rspecSpecId",
       "type": "promptString",

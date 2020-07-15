@@ -153,15 +153,9 @@ docker-compose run --service-ports    --use-aliases  workers bash
 ```
 
 ### Tests
-The tests are run using Guard, either:
+The tests are run using rspec, either:
 
-    $ bin/guard
-
-or in case the listening does not work, force the use of file polling:
-
-    $ bin/guard guard --force-polling
-
-Press enter to execute all tests. Guard will monitor for changes and the relevant tests will be run as files are modified.
+    $ bin/rspec
 
 Tests can also be run with a specified seed using rspec:
 
@@ -173,7 +167,18 @@ Use this style guide as a reference: https://github.com/rubocop-hq/ruby-style-gu
 
 ## Documentation
 
+Generate APi documentation with:
 
+```shell
+$ RAILS_ENV=test rails rswag
+```
+
+Note: the above is currently failing due to a [bug](https://github.com/rswag/rswag/pull/274/files).
+Use this command in the interim:
+
+```
+RAILS_ENV=test rspec --pattern spec/api/**/*_spec.rb --format Rswag::Specs::SwaggerFormatter --order defined
+```
 
 ## Other commands
 These commands should be executed automatically but are listed because they are helpful to know.

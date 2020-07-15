@@ -6,19 +6,7 @@ describe 'projects', type: :request do
   sends_json_and_expects_json
   with_authorization
   for_model Project
-  which_has_schema do
-    {
-      type: 'object',
-      properties: {
-        id: { type: 'integer' },
-        name: { type: 'string' },
-        description: { type: 'string' },
-        notes: { type: 'object' },
-        creator_id: { type: 'integer' },
-        updater_id: { type: 'integer' }
-      }
-    }
-  end
+  which_has_schema ref(:project)
 
   path '/projects/filter' do
     post('filter project') do
@@ -45,7 +33,7 @@ describe 'projects', type: :request do
       model_sent_as_parameter_in_body
       response(201, 'successful') do
         schema_for_single
-        send_model { attributes_for(:project) }
+        auto_send_model
         run_test!
       end
     end
@@ -60,7 +48,7 @@ describe 'projects', type: :request do
   end
 
   path '/projects/{id}' do
-    parameter name: 'id', in: :path, type: :integer, description: 'id'
+    with_id_route_parameter
     let(:id) { project.id }
 
     get('show project') do
@@ -76,7 +64,7 @@ describe 'projects', type: :request do
       model_sent_as_parameter_in_body
       response(200, 'successful') do
         schema_for_single
-        send_model { project }
+        auto_send_model
         run_test! do
           assert_id_matches(project)
         end
@@ -87,7 +75,7 @@ describe 'projects', type: :request do
       model_sent_as_parameter_in_body
       response(200, 'successful') do
         schema_for_single
-        send_model { project }
+        auto_send_model
         run_test! do
           assert_id_matches(project)
         end

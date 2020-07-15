@@ -97,7 +97,8 @@ RSpec.configure do |config|
               }
             },
             required: ['meta', 'data']
-          }
+          },
+          project: Project.schema
         }
       }
     }

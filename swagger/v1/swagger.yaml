@@ -13,58 +13,167 @@ paths:
       summary: filter project
       security:
       - basic_auth_with_token: []
+      parameters: []
+      tags:
+      - Admin can access
+      - owner user can access
+      - writer can access
+      - reader can access
+      - no_access can access
+      - anyone can access
       responses:
         '200':
           description: successful
-          content: {}
+          content:
+            application/json:
+              example:
+                meta:
+                  status: 200
+                  message: OK
+                  sorting:
+                    order_by: name
+                    direction: asc
+                  paging:
+                    page: 1
+                    items: 25
+                    total: 1
+                    max_page: 1
+                    current: http://localhost:3000/projects/filter?direction=asc&items=25&order_by=name&page=1
+                    previous: 
+                    next: 
+                data:
+                - id: 1
+                  name: gen_project1
+                  description: project description 1
+                  creator_id: 3
+                  site_ids:
+                  - 1
+                  description_html: "<p>project description 1</p>\n"
+              schema:
+                allOf:
+                - "$ref": "#/components/schemas/standard_response"
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        "$ref": "#/components/schemas/project"
   "/projects":
     get:
       summary: list projects
       security:
       - basic_auth_with_token: []
+      parameters: []
+      tags:
+      - Admin can access
+      - owner user can access
+      - writer can access
+      - reader can access
+      - no_access can access
+      - anyone can access
       responses:
         '200':
           description: successful
-          content: {}
+          content:
+            application/json:
+              example:
+                meta:
+                  status: 200
+                  message: OK
+                  sorting:
+                    order_by: name
+                    direction: asc
+                  paging:
+                    page: 1
+                    items: 25
+                    total: 1
+                    max_page: 1
+                    current: http://localhost:3000/projects?direction=asc&items=25&order_by=name&page=1
+                    previous: 
+                    next: 
+                data:
+                - id: 2
+                  name: gen_project2
+                  description: project description 2
+                  creator_id: 7
+                  site_ids:
+                  - 2
+                  description_html: "<p>project description 2</p>\n"
+              schema:
+                allOf:
+                - "$ref": "#/components/schemas/standard_response"
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        "$ref": "#/components/schemas/project"
     post:
       summary: create project
       security:
       - basic_auth_with_token: []
+      parameters: []
+      tags:
+      - Admin can access
+      - owner user can access
+      - writer can access
+      - reader can access
+      - no_access can access
       responses:
-        '200':
+        '201':
           description: successful
-          content: {}
+          content:
+            application/json:
+              example:
+                meta:
+                  status: 201
+                  message: Created
+                data:
+                  id: 4
+                  name: gen_project4
+                  description: project description 4
+                  creator_id: 1
+                  site_ids: []
+                  description_html: "<p>project description 4</p>\n"
+              schema:
+                allOf:
+                - "$ref": "#/components/schemas/standard_response"
+                - type: object
+                  properties:
+                    data:
+                      "$ref": "#/components/schemas/project"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/project"
   "/projects/new":
     get:
       summary: new project
       security:
       - basic_auth_with_token: []
+      parameters: []
+      tags:
+      - Admin can access
+      - owner user can access
+      - writer can access
+      - reader can access
+      - no_access can access
+      - anyone can access
       responses:
         '200':
           description: successful
-          content: {}
-  "/projects/{id}/edit":
-    get:
-      summary: edit project
-      security:
-      - basic_auth_with_token: []
-      parameters:
-      - name: id
-        in: path
-        description: id
-        required: true
-        schema:
-          type: string
-      - name: id
-        in: path
-        description: id
-        required: true
-        schema:
-          type: string
-      responses:
-        '200':
-          description: successful
-          content: {}
+          content:
+            application/json:
+              example:
+                meta:
+                  status: 200
+                  message: OK
+                data:
+                  id: 
+                  name: 
+                  description: 
+                  creator_id: 
   "/projects/{id}":
     get:
       summary: show project
@@ -76,17 +185,38 @@ paths:
         description: id
         required: true
         schema:
-          type: string
-      - name: id
-        in: path
-        description: id
-        required: true
-        schema:
-          type: string
+          type: integer
+      tags:
+      - Admin can access
+      - owner user can access
+      - writer can access
+      - reader can access
+      - no_access can access
+      - anyone can access
       responses:
         '200':
           description: successful
-          content: {}
+          content:
+            application/json:
+              example:
+                meta:
+                  status: 200
+                  message: OK
+                data:
+                  id: 6
+                  name: gen_project6
+                  description: project description 6
+                  creator_id: 19
+                  site_ids:
+                  - 5
+                  description_html: "<p>project description 6</p>\n"
+              schema:
+                allOf:
+                - "$ref": "#/components/schemas/standard_response"
+                - type: object
+                  properties:
+                    data:
+                      "$ref": "#/components/schemas/project"
     patch:
       summary: update project
       security:
@@ -97,17 +227,43 @@ paths:
         description: id
         required: true
         schema:
-          type: string
-      - name: id
-        in: path
-        description: id
-        required: true
-        schema:
-          type: string
+          type: integer
+      tags:
+      - Admin can access
+      - owner user can access
+      - writer can access
+      - reader can access
+      - no_access can access
+      - anyone can access
       responses:
         '200':
           description: successful
-          content: {}
+          content:
+            application/json:
+              example:
+                meta:
+                  status: 200
+                  message: OK
+                data:
+                  id: 7
+                  description: project description 8
+                  name: gen_project8
+                  creator_id: 23
+                  site_ids:
+                  - 6
+                  description_html: "<p>project description 8</p>\n"
+              schema:
+                allOf:
+                - "$ref": "#/components/schemas/standard_response"
+                - type: object
+                  properties:
+                    data:
+                      "$ref": "#/components/schemas/project"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/project"
     put:
       summary: update project
       security:
@@ -118,17 +274,43 @@ paths:
         description: id
         required: true
         schema:
-          type: string
-      - name: id
-        in: path
-        description: id
-        required: true
-        schema:
-          type: string
+          type: integer
+      tags:
+      - Admin can access
+      - owner user can access
+      - writer can access
+      - reader can access
+      - no_access can access
+      - anyone can access
       responses:
         '200':
           description: successful
-          content: {}
+          content:
+            application/json:
+              example:
+                meta:
+                  status: 200
+                  message: OK
+                data:
+                  id: 8
+                  description: project description 10
+                  name: gen_project10
+                  creator_id: 27
+                  site_ids:
+                  - 7
+                  description_html: "<p>project description 10</p>\n"
+              schema:
+                allOf:
+                - "$ref": "#/components/schemas/standard_response"
+                - type: object
+                  properties:
+                    data:
+                      "$ref": "#/components/schemas/project"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/project"
     delete:
       summary: delete project
       security:
@@ -139,17 +321,20 @@ paths:
         description: id
         required: true
         schema:
-          type: string
-      - name: id
-        in: path
-        description: id
-        required: true
-        schema:
-          type: string
+          type: integer
+      tags:
+      - Admin can access
+      - owner user can access
+      - writer can access
+      - reader can access
+      - no_access can access
+      - anyone can access
       responses:
-        '200':
+        '204':
           description: successful
-          content: {}
+          content:
+            application/json:
+              example: 
 servers:
 - url: https://{defaultHost}
   variables:
@@ -165,13 +350,64 @@ components:
       name: auth_token
       in: query_string
   schemas:
-    standard_response:
+    meta:
+      type: object
+    meta_error:
       type: object
       properties:
-        meta:
+        error:
           type: object
-        data:
-          type: array
-    error_object:
+        required:
+        - error
+    standard_response:
       type: object
-      properties: {}
+      additionalProperties: false
+      properties:
+        meta:
+          "$ref": "#/components/schemas/meta"
+        data:
+          oneOf:
+          - type: array
+          - type: object
+      required:
+      - meta
+      - data
+    error_response:
+      type: object
+      additionalProperties: false
+      properties:
+        meta:
+          allOf:
+          - "$ref": "#/components/schemas/meta"
+          - "$ref": "#/components/schemas/meta_error"
+        data:
+          type: 'null'
+      required:
+      - meta
+      - data
+    project:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+        description:
+          type: string
+        description_html:
+          type: string
+          readOnly: true
+        notes:
+          type: object
+        creator_id:
+          type: integer
+          readOnly: true
+        updater_id:
+          type: integer
+          readOnly: true
+        site_ids:
+          type: array
+          items:
+            type: integer

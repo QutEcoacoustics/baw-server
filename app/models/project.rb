@@ -104,6 +104,23 @@ class Project < ApplicationRecord
     }
   end
 
+  def self.schema
+    {
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        id: { type: 'integer', readOnly: true },
+        name: { type: 'string' },
+        description: { type: 'string' },
+        description_html: { type: 'string', readOnly: true },
+        notes: { type: 'object' },
+        creator_id: { type: 'integer', readOnly: true },
+        updater_id: { type: 'integer', readOnly: true },
+        site_ids: { type: 'array', items: { type: 'integer' } }
+      }
+    }.freeze
+  end
+
   private
 
   def create_owner_permission
