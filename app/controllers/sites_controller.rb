@@ -152,12 +152,27 @@ class SitesController < ApplicationController
   end
 
   # GET|POST /sites/filter
-  def filter
+  def filter_shallow
     do_authorize_class
 
     filter_response, opts = Settings.api_response.response_advanced(
       api_filter_params,
       Access::ByPermission.sites(current_user),
+      Site,
+      Site.filter_settings
+    )
+    respond_filter(filter_response, opts)
+  end
+
+  # GET|POST /projects/:project_id/sites/filter
+  def filter
+    do_authorize_class
+    get_project
+    do_authorize_instance(:show, @project)
+
+    filter_response, opts = Settings.api_response.response_advanced(
+      api_filter_params,
+      Access::ByPermission.sites(current_user, Access::Core.levels, [@project.id]),
       Site,
       Site.filter_settings
     )
