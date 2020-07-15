@@ -250,7 +250,7 @@ Rails.application.routes.draw do
       defaults: { format: 'csv' }, as: :download_user_audio_events
 
   # placed above related resource so it does not conflict with (resource)/:id => (resource)#show
-  match 'sites/filter' => 'sites#filter_shallow', via: [:get, :post], defaults: { format: 'json' }
+  match 'sites/filter' => 'sites#filter', via: [:get, :post], defaults: { format: 'json' }
 
   # path for orphaned sites
   get 'sites/orphans' => 'sites#orphans'

@@ -6,7 +6,7 @@ class SitesController < ApplicationController
   # GET /projects/:project_id/sites
   def index
     do_authorize_class
-    get_project
+    get_project_if_exists
     do_authorize_instance(:show, @project)
 
     respond_to do |format|
@@ -14,7 +14,7 @@ class SitesController < ApplicationController
       format.json do
         @sites, opts = Settings.api_response.response_advanced(
           api_filter_params,
-          Access::ByPermission.sites(current_user, Access::Core.levels, [@project.id]),
+          @permissions,
           Site,
           Site.filter_settings
         )
@@ -152,27 +152,15 @@ class SitesController < ApplicationController
   end
 
   # GET|POST /sites/filter
-  def filter_shallow
-    do_authorize_class
-
-    filter_response, opts = Settings.api_response.response_advanced(
-      api_filter_params,
-      Access::ByPermission.sites(current_user),
-      Site,
-      Site.filter_settings
-    )
-    respond_filter(filter_response, opts)
-  end
-
   # GET|POST /projects/:project_id/sites/filter
   def filter
     do_authorize_class
-    get_project
+    get_project_if_exists
     do_authorize_instance(:show, @project)
 
     filter_response, opts = Settings.api_response.response_advanced(
       api_filter_params,
-      Access::ByPermission.sites(current_user, Access::Core.levels, [@project.id]),
+      @permissions,
       Site,
       Site.filter_settings
     )
@@ -215,9 +203,20 @@ class SitesController < ApplicationController
 
   def get_project
     @project = Project.find(params[:project_id])
-
     # avoid the same project assigned more than once to a site
     @site.projects << @project if defined?(@site) && !@site.projects.include?(@project)
+    @permissions = Access::ByPermission.sites(current_user)
+  end
+
+  def get_project_if_exists
+    @project = (Project.find(params[:project_id]) if params.key?(:project_id))
+    # avoid the same project assigned more than once to a site
+    @site.projects << @project if defined?(@site) && defined?(@project) && !@site.projects.include?(@project)
+    @permissions = if @project.nil?
+                     Access::ByPermission.sites(current_user)
+                   else
+                     Access::ByPermission.sites(current_user, project_ids: [@project.id])
+                   end
   end
 
   def site_params
