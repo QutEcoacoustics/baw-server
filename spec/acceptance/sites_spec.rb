@@ -45,28 +45,32 @@ resource 'Sites' do
     sites_project_id_param
     let(:project_id) { project.id }
     let(:authentication_token) { admin_token }
-    standard_request_options(:get, 'INDEX (as admin)', :ok, expected_json_path: 'data/0/custom_latitude', data_item_count: 1)
+    standard_request_options(:get, 'INDEX (as admin)', :ok,
+                             expected_json_path: 'data/0/custom_latitude', data_item_count: 1)
   end
 
   get '/projects/:project_id/sites' do
     sites_project_id_param
     let(:project_id) { project.id }
     let(:authentication_token) { owner_token }
-    standard_request_options(:get, 'INDEX (as owner)', :ok, expected_json_path: 'data/0/custom_latitude', data_item_count: 1)
+    standard_request_options(:get, 'INDEX (as owner)', :ok,
+                             expected_json_path: 'data/0/custom_latitude', data_item_count: 1)
   end
 
   get '/projects/:project_id/sites' do
     sites_project_id_param
     let(:project_id) { project.id }
     let(:authentication_token) { writer_token }
-    standard_request_options(:get, 'INDEX (as writer)', :ok, expected_json_path: 'data/0/custom_latitude', data_item_count: 1)
+    standard_request_options(:get, 'INDEX (as writer)', :ok,
+                             expected_json_path: 'data/0/custom_latitude', data_item_count: 1)
   end
 
   get '/projects/:project_id/sites' do
     sites_project_id_param
     let(:project_id) { project.id }
     let(:authentication_token) { reader_token }
-    standard_request_options(:get, 'INDEX (as reader)', :ok, expected_json_path: 'data/0/custom_latitude', data_item_count: 1)
+    standard_request_options(:get, 'INDEX (as reader)', :ok,
+                             expected_json_path: 'data/0/custom_latitude', data_item_count: 1)
   end
 
   get '/projects/:project_id/sites' do
@@ -90,27 +94,31 @@ resource 'Sites' do
     sites_project_id_param
     let(:project_id) { project.id }
     let(:authentication_token) { reader_token }
-    standard_request_options(:get, 'INDEX (has parameters, as reader)', :ok, expected_json_path: expected_paths, data_item_count: 1)
+    standard_request_options(:get, 'INDEX (has parameters, as reader)', :ok,
+                             expected_json_path: expected_paths, data_item_count: 1)
   end
 
   get '/projects/:project_id/sites' do
     sites_project_id_param
     let(:project_id) { project.id }
     let(:authentication_token) { no_access_token }
-    standard_request_options(:get, 'INDEX (as other)', :forbidden, expected_json_path: get_json_error_path(:permissions))
+    standard_request_options(:get, 'INDEX (as other)', :forbidden,
+                             expected_json_path: get_json_error_path(:permissions))
   end
 
   get '/projects/:project_id/sites' do
     sites_project_id_param
     let(:project_id) { project.id }
     let(:authentication_token) { invalid_token }
-    standard_request_options(:get, 'INDEX (invalid token)', :unauthorized, expected_json_path: get_json_error_path(:sign_in))
+    standard_request_options(:get, 'INDEX (invalid token)', :unauthorized,
+                             expected_json_path: get_json_error_path(:sign_in))
   end
 
   get '/projects/:project_id/sites' do
     sites_project_id_param
     let(:project_id) { project.id }
-    standard_request_options(:get, 'INDEX (as anonymous user)', :unauthorized, remove_auth: true, expected_json_path: get_json_error_path(:sign_in))
+    standard_request_options(:get, 'INDEX (as anonymous user)', :unauthorized,
+                             remove_auth: true, expected_json_path: get_json_error_path(:sign_in))
   end
 
   ################################
@@ -512,7 +520,7 @@ resource 'Sites' do
   end
 
   #####################
-  # Filter
+  # SHALLOW Filter
   #####################
 
   post '/sites/filter' do
@@ -529,12 +537,14 @@ resource 'Sites' do
         }
       }.to_json
     }
-    standard_request_options(:post, 'FILTER (as reader)', :ok,
-                             expected_json_path: 'data/0/project_ids/0',
-                             data_item_count: 1,
-                             regex_match: /"project_ids":\[[0-9]+\]/,
-                             response_body_content: '"project_ids":[',
-                             invalid_content: ['"project_ids":[{"id":', '"description":'])
+    standard_request_options(
+      :post, 'FILTER (shallow route, as reader)', :ok,
+      expected_json_path: 'data/0/project_ids/0',
+      data_item_count: 1,
+      regex_match: /"project_ids":\[[0-9]+\]/,
+      response_body_content: '"project_ids":[',
+      invalid_content: ['"project_ids":[{"id":', '"description":']
+    )
   end
 
   post '/sites/filter' do
@@ -551,12 +561,14 @@ resource 'Sites' do
         }
       }.to_json
     }
-    standard_request_options(:post, 'FILTER (as writer)', :ok,
-                             expected_json_path: 'data/0/project_ids/0',
-                             data_item_count: 1,
-                             regex_match: /"project_ids":\[[0-9]+\]/,
-                             response_body_content: '"project_ids":[',
-                             invalid_content: ['"project_ids":[{"id":', '"description":'])
+    standard_request_options(
+      :post, 'FILTER (shallow route, as writer)', :ok,
+      expected_json_path: 'data/0/project_ids/0',
+      data_item_count: 1,
+      regex_match: /"project_ids":\[[0-9]+\]/,
+      response_body_content: '"project_ids":[',
+      invalid_content: ['"project_ids":[{"id":', '"description":']
+    )
   end
 
   post '/sites/filter' do
@@ -570,12 +582,14 @@ resource 'Sites' do
         }
       }.to_json
     }
-    standard_request_options(:post, 'FILTER (project ids, as writer)', :ok,
-                             expected_json_path: 'data/0/project_ids/0',
-                             data_item_count: 1,
-                             regex_match: /"project_ids":\[[0-9]+\]/,
-                             response_body_content: '"project_ids":[',
-                             invalid_content: '"project_ids":[{"id":')
+    standard_request_options(
+      :post, 'FILTER (shallow route, project ids, as writer)', :ok,
+      expected_json_path: 'data/0/project_ids/0',
+      data_item_count: 1,
+      regex_match: /"project_ids":\[[0-9]+\]/,
+      response_body_content: '"project_ids":[',
+      invalid_content: '"project_ids":[{"id":'
+    )
   end
 
   post '/sites/filter' do
@@ -592,12 +606,14 @@ resource 'Sites' do
         }
       }.to_json
     }
-    standard_request_options(:post, 'FILTER (audio recordings id, as writer)', :ok,
-                             expected_json_path: 'data/0/project_ids/0',
-                             data_item_count: 1,
-                             regex_match: /"data":\[\{"id":[0-9]+,"name":"site name [0-9]+","project_ids":\[[0-9]+\]/,
-                             response_body_content: '"projection":{"include":["id","name"]}',
-                             invalid_content: '"project_ids":[{"id":')
+    standard_request_options(
+      :post, 'FILTER (shallow route, audio recordings id, as writer)', :ok,
+      expected_json_path: 'data/0/project_ids/0',
+      data_item_count: 1,
+      regex_match: /"data":\[\{"id":[0-9]+,"name":"site name [0-9]+","project_ids":\[[0-9]+\]/,
+      response_body_content: '"projection":{"include":["id","name"]}',
+      invalid_content: '"project_ids":[{"id":'
+    )
   end
 
   post '/sites/filter' do
@@ -614,10 +630,12 @@ resource 'Sites' do
         }
       }.to_json
     }
-    standard_request_options(:post, 'FILTER (as writer checking for timezone info)', :ok,
-                             expected_json_path: ['data/0/project_ids/0', 'data/0/timezone_information'],
-                             data_item_count: 2,
-                             response_body_content: '"timezone_information":{"identifier_alt":"Sydney","identifier":"Australia/Sydney","friendly_identifier":"Australia - Sydney","utc_offset":')
+    standard_request_options(
+      :post, 'FILTER (shallow route, as writer checking for timezone info)', :ok,
+      expected_json_path: ['data/0/project_ids/0', 'data/0/timezone_information'],
+      data_item_count: 2,
+      response_body_content: '"timezone_information":{"identifier_alt":"Sydney","identifier":"Australia/Sydney","friendly_identifier":"Australia - Sydney","utc_offset":'
+    )
   end
 
   post '/sites/filter' do
@@ -635,9 +653,11 @@ resource 'Sites' do
         }
       }.to_json
     }
-    standard_request_options(:post, 'FILTER (as writer ensuring site timezone is valid)', :ok,
-                             data_item_count: 2,
-                             response_body_content: ['"timezone_information":{"identifier_alt":"Brisbane","identifier":"Australia/Brisbane","friendly_identifier":"Australia - Brisbane"'])
+    standard_request_options(
+      :post, 'FILTER (shallow route, as writer ensuring site timezone is valid)', :ok,
+      data_item_count: 2,
+      response_body_content: ['"timezone_information":{"identifier_alt":"Brisbane","identifier":"Australia/Brisbane","friendly_identifier":"Australia - Brisbane"']
+    )
   end
 
   post '/sites/filter' do
@@ -656,10 +676,12 @@ resource 'Sites' do
         }
       }.to_json
     }
-    standard_request_options(:post, 'FILTER (as anonymous user)', :ok,
-                             remove_auth: true,
-                             data_item_count: 1,
-                             response_body_content: ['99998712'],
-                             expected_json_path: ['data/0/project_ids/0', 'data/0/timezone_information'])
+    standard_request_options(
+      :post, 'FILTER (shallow route, as anonymous user)', :ok,
+      remove_auth: true,
+      data_item_count: 1,
+      response_body_content: ['99998712'],
+      expected_json_path: ['data/0/project_ids/0', 'data/0/timezone_information']
+    )
   end
 end
