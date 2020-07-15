@@ -3,11 +3,12 @@
 class SitesController < ApplicationController
   include Api::ControllerHelper
 
+  # GET /sites
   # GET /projects/:project_id/sites
   def index
     do_authorize_class
     get_project_if_exists
-    do_authorize_instance(:show, @project)
+    do_authorize_instance(:show, @project) unless @project.nil?
 
     respond_to do |format|
       #format.html # index.html.erb
@@ -156,7 +157,7 @@ class SitesController < ApplicationController
   def filter
     do_authorize_class
     get_project_if_exists
-    do_authorize_instance(:show, @project)
+    do_authorize_instance(:show, @project) unless @project.nil?
 
     filter_response, opts = Settings.api_response.response_advanced(
       api_filter_params,

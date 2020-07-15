@@ -23,6 +23,25 @@ def sites_body_params
   parameter :rails_tz, 'Analysis Job description in request body', required: false
 end
 
+def expected_paths
+  Array[
+    'id',
+    'name',
+    'description',
+    'creator_id',
+    'updater_id',
+    'created_at',
+    'updated_at',
+    'project_ids',
+    'location_obfuscated',
+    'custom_latitude',
+    'custom_longitude',
+    'timezone_information',
+    'description_html',
+    'image_urls'
+  ].map { |path| "data/0/#{path}" }
+end
+
 # https://github.com/zipmark/rspec_api_documentation
 resource 'Sites' do
   header 'Accept', 'application/json'
@@ -36,6 +55,51 @@ resource 'Sites' do
   # Create post parameters from factory
   let(:post_attributes) { FactoryBot.attributes_for(:site) }
   let(:post_attributes_with_lat_long) { FactoryBot.attributes_for(:site, :with_lat_long) }
+
+  ################################
+  # SHALLOW INDEX
+  ################################
+
+  get '/sites' do
+    let(:authentication_token) { admin_token }
+    standard_request_options(:get, 'INDEX (shallow route, as admin)', :ok,
+                             expected_json_path: 'data/0/custom_latitude', data_item_count: 1)
+  end
+
+  get '/sites' do
+    let(:authentication_token) { owner_token }
+    standard_request_options(:get, 'INDEX (shallow route, as owner)', :ok,
+                             expected_json_path: 'data/0/custom_latitude', data_item_count: 1)
+  end
+
+  get '/sites' do
+    let(:authentication_token) { writer_token }
+    standard_request_options(:get, 'INDEX (shallow route, as writer)', :ok,
+                             expected_json_path: 'data/0/custom_latitude', data_item_count: 1)
+  end
+
+  get '/sites' do
+    let(:authentication_token) { reader_token }
+    standard_request_options(:get, 'INDEX (shallow route, as reader)', :ok,
+                             expected_json_path: 'data/0/custom_latitude', data_item_count: 1)
+  end
+
+  get '/sites' do
+    let(:authentication_token) { reader_token }
+    standard_request_options(:get, 'INDEX (shallow route, has parameters, as reader)', :ok,
+                             expected_json_path: expected_paths, data_item_count: 1)
+  end
+
+  get '/sites' do
+    let(:authentication_token) { invalid_token }
+    standard_request_options(:get, 'INDEX (shallow route, invalid token)', :unauthorized,
+                             expected_json_path: get_json_error_path(:sign_in))
+  end
+
+  get '/sites' do
+    standard_request_options(:get, 'INDEX (shallow route, as anonymous user)', :ok,
+                             remove_auth: true, response_body_content: '200', data_item_count: 0)
+  end
 
   ################################
   # INDEX
@@ -74,23 +138,6 @@ resource 'Sites' do
   end
 
   get '/projects/:project_id/sites' do
-    expected_paths = Array[
-      'id',
-      'name',
-      'description',
-      'creator_id',
-      'updater_id',
-      'created_at',
-      'updated_at',
-      'project_ids',
-      'location_obfuscated',
-      'custom_latitude',
-      'custom_longitude',
-      'timezone_information',
-      'description_html',
-      'image_urls'
-    ].map { |path| "data/0/#{path}" }
-
     sites_project_id_param
     let(:project_id) { project.id }
     let(:authentication_token) { reader_token }
@@ -682,6 +729,183 @@ resource 'Sites' do
       data_item_count: 1,
       response_body_content: ['99998712'],
       expected_json_path: ['data/0/project_ids/0', 'data/0/timezone_information']
+    )
+  end
+
+  #####################
+  # Filter
+  #####################
+
+  post '/projects/:project_id/sites/filter' do
+    sites_project_id_param
+    let(:project_id) { project.id }
+    let(:authentication_token) { reader_token }
+    let(:raw_post) {
+      {
+        'filter' => {
+          'id' => {
+            'in' => ['1', '2', '3', '4', site.id.to_s]
+          }
+        },
+        'projection' => {
+          'include' => ['id', 'name']
+        }
+      }.to_json
+    }
+    standard_request_options(
+      :post, 'FILTER (as reader)', :ok,
+      expected_json_path: 'data/0/project_ids/0',
+      data_item_count: 1,
+      regex_match: /"project_ids":\[[0-9]+\]/,
+      response_body_content: '"project_ids":[',
+      invalid_content: ['"project_ids":[{"id":', '"description":']
+    )
+  end
+
+  post '/projects/:project_id/sites/filter' do
+    sites_project_id_param
+    let(:project_id) { project.id }
+    let(:authentication_token) { writer_token }
+    let(:raw_post) {
+      {
+        'filter' => {
+          'id' => {
+            'in' => ['1', '2', '3', '4', site.id.to_s]
+          }
+        },
+        'projection' => {
+          'include' => ['id', 'name']
+        }
+      }.to_json
+    }
+    standard_request_options(
+      :post, 'FILTER (as writer)', :ok,
+      expected_json_path: 'data/0/project_ids/0',
+      data_item_count: 1,
+      regex_match: /"project_ids":\[[0-9]+\]/,
+      response_body_content: '"project_ids":[',
+      invalid_content: ['"project_ids":[{"id":', '"description":']
+    )
+  end
+
+  post '/projects/:project_id/sites/filter' do
+    sites_project_id_param
+    let(:project_id) { project.id }
+    let(:authentication_token) { writer_token }
+    let(:raw_post) {
+      {
+        'filter' => {
+          'projects.id' => {
+            'in' => [writer_permission.project.id.to_s]
+          }
+        }
+      }.to_json
+    }
+    standard_request_options(
+      :post, 'FILTER (project ids, as writer)', :ok,
+      expected_json_path: 'data/0/project_ids/0',
+      data_item_count: 1,
+      regex_match: /"project_ids":\[[0-9]+\]/,
+      response_body_content: '"project_ids":[',
+      invalid_content: '"project_ids":[{"id":'
+    )
+  end
+
+  post '/projects/:project_id/sites/filter' do
+    sites_project_id_param
+    let(:project_id) { project.id }
+    let(:authentication_token) { writer_token }
+    let(:raw_post) {
+      {
+        'filter' => {
+          'audio_recordings.id' => {
+            'eq' => site.audio_recordings.first.id.to_s
+          }
+        },
+        'projection' => {
+          'include' => ['id', 'name']
+        }
+      }.to_json
+    }
+    standard_request_options(
+      :post, 'FILTER (audio recordings id, as writer)', :ok,
+      expected_json_path: 'data/0/project_ids/0',
+      data_item_count: 1,
+      regex_match: /"data":\[\{"id":[0-9]+,"name":"site name [0-9]+","project_ids":\[[0-9]+\]/,
+      response_body_content: '"projection":{"include":["id","name"]}',
+      invalid_content: '"project_ids":[{"id":'
+    )
+  end
+
+  post '/projects/:project_id/sites/filter' do
+    sites_project_id_param
+    let(:project_id) { project.id }
+    let(:authentication_token) { writer_token }
+    let!(:update_site_tz) {
+      site2 = Creation::Common.create_site(writer_user, project)
+      site2.rails_tz = 'Sydney'
+      site2.save!
+    }
+    let(:raw_post) {
+      {
+        'projection' => {
+          'include' => ['id', 'name']
+        }
+      }.to_json
+    }
+    standard_request_options(
+      :post, 'FILTER (as writer checking for timezone info)', :ok,
+      expected_json_path: ['data/0/project_ids/0', 'data/0/timezone_information'],
+      data_item_count: 2,
+      response_body_content: '"timezone_information":{"identifier_alt":"Sydney","identifier":"Australia/Sydney","friendly_identifier":"Australia - Sydney","utc_offset":'
+    )
+  end
+
+  post '/projects/:project_id/sites/filter' do
+    sites_project_id_param
+    let(:project_id) { project.id }
+    let(:authentication_token) { writer_token }
+    let!(:update_site_tz) {
+      site2 = FactoryBot.build(:site, creator: writer_user)
+      site2.projects << project
+      site2.tzinfo_tz = 'Australia - Brisbane'
+      site2.save!
+    }
+    let(:raw_post) {
+      {
+        'projection' => {
+          'include' => ['id', 'name']
+        }
+      }.to_json
+    }
+    standard_request_options(
+      :post, 'FILTER (as writer ensuring site timezone is valid)', :ok,
+      data_item_count: 2,
+      response_body_content: ['"timezone_information":{"identifier_alt":"Brisbane","identifier":"Australia/Brisbane","friendly_identifier":"Australia - Brisbane"']
+    )
+  end
+
+  post '/projects/:project_id/sites/filter' do
+    sites_project_id_param
+    let(:project_id) { project.id }
+    let!(:create_anon_access_project_with_site) {
+      project = FactoryBot.create(:project, creator: owner_user, name: 'Anon Project')
+      FactoryBot.create(:permission, creator: owner_user, user: nil, project: project, allow_anonymous: true, level: 'reader')
+      site = FactoryBot.build(:site, creator: owner_user)
+      site.id = 99_998_712
+      site.projects << project
+      site.save!
+    }
+    let(:raw_post) {
+      {
+        'projection' => {
+          'include' => ['id', 'name']
+        }
+      }.to_json
+    }
+    standard_request_options(
+      :post, 'FILTER (as anonymous user)', :unauthorized,
+      expected_json_path: get_json_error_path(:sign_in)
     )
   end
 end
