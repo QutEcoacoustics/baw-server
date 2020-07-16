@@ -3,18 +3,19 @@
 class SitesController < ApplicationController
   include Api::ControllerHelper
 
+  # GET /sites
   # GET /projects/:project_id/sites
   def index
     do_authorize_class
-    get_project
-    do_authorize_instance(:show, @project)
+    get_project_if_exists
+    do_authorize_instance(:show, @project) unless @project.nil?
 
     respond_to do |format|
       #format.html # index.html.erb
       format.json do
         @sites, opts = Settings.api_response.response_advanced(
           api_filter_params,
-          Access::ByPermission.sites(current_user, Access::Core.levels, [@project.id]),
+          list_permissions,
           Site,
           Site.filter_settings
         )
@@ -152,12 +153,15 @@ class SitesController < ApplicationController
   end
 
   # GET|POST /sites/filter
+  # GET|POST /projects/:project_id/sites/filter
   def filter
     do_authorize_class
+    get_project_if_exists
+    do_authorize_instance(:show, @project) unless @project.nil?
 
     filter_response, opts = Settings.api_response.response_advanced(
       api_filter_params,
-      Access::ByPermission.sites(current_user),
+      list_permissions,
       Site,
       Site.filter_settings
     )
@@ -200,9 +204,22 @@ class SitesController < ApplicationController
 
   def get_project
     @project = Project.find(params[:project_id])
-
     # avoid the same project assigned more than once to a site
     @site.projects << @project if defined?(@site) && !@site.projects.include?(@project)
+  end
+
+  def get_project_if_exists
+    @project = (Project.find(params[:project_id]) if params.key?(:project_id))
+    # avoid the same project assigned more than once to a site
+    @site.projects << @project if defined?(@site) && defined?(@project) && !@site.projects.include?(@project)
+  end
+
+  def list_permissions
+    if @project.nil?
+      Access::ByPermission.sites(current_user)
+    else
+      Access::ByPermission.sites(current_user, Access::Core.levels, [@project.id])
+    end
   end
 
   def site_params

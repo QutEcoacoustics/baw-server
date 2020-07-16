@@ -6,10 +6,6 @@ AllCops:
     - '**/Rakefile'
     - '**/config.ru'
     - '**/*.rb'
-  Exclude:
-    - 'db/**/*'
-    - 'config/**/*'
-    - 'script/**/*'
   TargetRubyVersion: 2.6
 
 # Customized options
