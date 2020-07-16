@@ -227,7 +227,7 @@ describe AnalysisJobsItem, type: :model do
         user = no_access_user
 
         # augment the system with query with permissions
-        query = Access::ByPermission.analysis_jobs_items(nil, user, true)
+        query = Access::ByPermission.analysis_jobs_items(nil, user, system_mode: true)
 
         rows = query.all
 

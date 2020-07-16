@@ -154,6 +154,6 @@ class AnalysisJobsController < ApplicationController
   end
 
   def get_analysis_jobs
-    Access::ByPermission.analysis_jobs(current_user, Access::Core.levels)
+    Access::ByPermission.analysis_jobs(current_user)
   end
 end

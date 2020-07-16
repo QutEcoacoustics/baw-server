@@ -10,7 +10,7 @@ class ResponsesController < ApplicationController
 
     @responses, opts = Settings.api_response.response_advanced(
       api_filter_params,
-      Access::ByPermission.responses(current_user, params[:study_id]),
+      Access::ByPermission.responses(current_user, study_id: params[:study_id]),
       Response,
       Response.filter_settings
     )
@@ -30,7 +30,7 @@ class ResponsesController < ApplicationController
 
     filter_response, opts = Settings.api_response.response_advanced(
       api_filter_params,
-      Access::ByPermission.responses(current_user, nil),
+      Access::ByPermission.responses(current_user),
       Response,
       Response.filter_settings
     )

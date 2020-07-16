@@ -9,7 +9,7 @@ class DatasetItemsController < ApplicationController
 
     @dataset_items, opts = Settings.api_response.response_advanced(
       api_filter_params,
-      Access::ByPermission.dataset_items(current_user, params[:dataset_id]),
+      Access::ByPermission.dataset_items(current_user, dataset_id: params[:dataset_id]),
       DatasetItem,
       DatasetItem.filter_settings
     )
@@ -31,7 +31,7 @@ class DatasetItemsController < ApplicationController
 
     filter_response, opts = Settings.api_response.response_advanced(
       api_filter_params,
-      Access::ByPermission.dataset_items(current_user, params[:dataset_id]),
+      Access::ByPermission.dataset_items(current_user, dataset_id: params[:dataset_id]),
       DatasetItem,
       DatasetItem.filter_settings(:reverse_order)
     )
@@ -45,7 +45,7 @@ class DatasetItemsController < ApplicationController
     #priority_algorithm = DatasetItem.next_for_user(current_user_id = current_user ? current_user.id : nil)
 
     # All dataset items that the user has permission to see
-    query = Access::ByPermission.dataset_items(current_user, params[:dataset_id])
+    query = Access::ByPermission.dataset_items(current_user, dataset_id: params[:dataset_id])
 
     query = query.joins("LEFT OUTER JOIN progress_events ON progress_events.dataset_item_id = dataset_items.id AND activity = 'viewed'")
     query = query.group('dataset_items.id')

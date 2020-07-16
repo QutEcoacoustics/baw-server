@@ -9,7 +9,7 @@ class ProgressEventsController < ApplicationController
 
     @progress_events, opts = Settings.api_response.response_advanced(
       api_filter_params,
-      Access::ByPermission.progress_events(current_user, params[:dataset_item_id]),
+      Access::ByPermission.progress_events(current_user, dataset_item_id: params[:dataset_item_id]),
       ProgressEvent,
       ProgressEvent.filter_settings
     )
@@ -30,7 +30,7 @@ class ProgressEventsController < ApplicationController
 
     filter_response, opts = Settings.api_response.response_advanced(
       api_filter_params,
-      Access::ByPermission.progress_events(current_user, params[:dataset_item_id]),
+      Access::ByPermission.progress_events(current_user, dataset_item_id: params[:dataset_item_id]),
       ProgressEvent,
       ProgressEvent.filter_settings
     )

@@ -141,7 +141,7 @@ ORDER BY project_count ASC, s.name ASC")
   def new_access_request
     do_authorize_class
 
-    @all_projects = Access::ByPermission.projects(current_user, Access::Core.levels_none).order(name: :asc)
+    @all_projects = Access::ByPermission.projects(current_user, levels: Access::Core.levels_none).order(name: :asc)
     respond_to do |format|
       format.html
     end

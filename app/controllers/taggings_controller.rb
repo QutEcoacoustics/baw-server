@@ -12,7 +12,7 @@ class TaggingsController < ApplicationController
 
     @taggings, opts = Settings.api_response.response_advanced(
       api_filter_params,
-      Access::ByPermission.audio_events_tags(current_user, Access::Core.levels, @audio_event),
+      Access::ByPermission.audio_events_tags(current_user, audio_event: @audio_event),
       Tagging,
       Tagging.filter_settings
     )

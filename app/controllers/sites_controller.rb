@@ -218,7 +218,7 @@ class SitesController < ApplicationController
     if @project.nil?
       Access::ByPermission.sites(current_user)
     else
-      Access::ByPermission.sites(current_user, Access::Core.levels, [@project.id])
+      Access::ByPermission.sites(current_user, project_ids: [@project.id])
     end
   end
 

@@ -11,7 +11,7 @@ class AudioEventCommentsController < ApplicationController
 
     @audio_event_comments, opts = Settings.api_response.response_advanced(
       api_filter_params,
-      Access::ByPermission.audio_event_comments(current_user, Access::Core.levels, @audio_event),
+      Access::ByPermission.audio_event_comments(current_user, audio_event: @audio_event),
       AudioEventComment,
       AudioEventComment.filter_settings
     )
