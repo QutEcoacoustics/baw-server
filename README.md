@@ -153,7 +153,7 @@ docker-compose run --service-ports    --use-aliases  workers bash
 ```
 
 ### Tests
-The tests are run using rspec, either:
+The tests are run using rspec:
 
     $ bin/rspec
 
