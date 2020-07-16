@@ -1454,7 +1454,7 @@ describe Filter::Query do
 
       filter_query_project2 = Filter::Query.new(
         request_body_obj,
-        Access::ByPermission.sites(the_user, project_ids: [project_new.id]),
+        Access::ByPermission.sites(the_user, Access::Core.levels, [project_new.id]),
         Site,
         Site.filter_settings
       )
@@ -1485,7 +1485,7 @@ describe Filter::Query do
 
       filter_query_site = Filter::Query.new(
         request_body_obj,
-        Access::ByPermission.sites(the_user, levels: Access::Core.levels_none, project_ids: [project3.id]),
+        Access::ByPermission.sites(the_user, Access::Core.levels_none, [project3.id]),
         Site,
         Site.filter_settings
       )
@@ -1881,7 +1881,7 @@ describe Filter::Query do
     it 'returns no sites for admin' do
       filter_hash = { filter: {} }
       project_id = FactoryBot.create(:project, creator: admin_user).id
-      filter_query = Access::ByPermission.sites(admin_user, project_ids: project_id)
+      filter_query = Access::ByPermission.sites(admin_user, Access::Core.levels, project_id)
       filter = Filter::Query.new(
         filter_hash,
         filter_query,
@@ -1898,7 +1898,7 @@ describe Filter::Query do
     it 'returns no sites for regular user' do
       filter_hash = { filter: {} }
       project_id = FactoryBot.create(:project, creator: writer_user).id
-      filter_query = Access::ByPermission.sites(writer_user, project_ids: project_id)
+      filter_query = Access::ByPermission.sites(writer_user, Access::Core.levels, project_id)
       filter = Filter::Query.new(
         filter_hash,
         filter_query,
