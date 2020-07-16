@@ -167,7 +167,7 @@ Use this style guide as a reference: https://github.com/rubocop-hq/ruby-style-gu
 
 ## Documentation
 
-Generate APi documentation with:
+Generate API documentation with:
 
 ```shell
 $ RAILS_ENV=test rails rswag
