@@ -49,7 +49,7 @@ module Access
       def sites(user, levels: Access::Core.levels, project_ids: nil)
         # project can be nil
         query = Site.all
-        permission_sites(user, levels, query, project_ids)
+        permission_sites(user, levels, query, project_ids: project_ids)
       end
 
       # Get all audio recordings for which this user has these access levels.
@@ -73,7 +73,7 @@ module Access
         if audio_recording
           query = query.where(audio_recording_id: audio_recording.id)
           project_ids = audio_recording.site.projects.pluck(:id)
-          permission_sites(user, levels, query, project_ids)
+          permission_sites(user, levels, query, project_ids: project_ids)
         else
           permission_sites(user, levels, query)
         end
@@ -91,7 +91,7 @@ module Access
         if audio_event
           query = query.where(audio_event_id: audio_event.id)
           project_ids = audio_event.audio_recording.site.projects.pluck(:id)
-          permission_sites(user, levels, query, project_ids)
+          permission_sites(user, levels, query, project_ids: project_ids)
         else
           permission_sites(user, levels, query)
         end
@@ -109,7 +109,7 @@ module Access
         if audio_event
           query = query.where(audio_event_id: audio_event.id)
           project_ids = audio_event.audio_recording.site.projects.pluck(:id)
-          permission_sites(user, levels, query, project_ids)
+          permission_sites(user, levels, query, project_ids: project_ids)
         else
           permission_sites(user, levels, query)
         end

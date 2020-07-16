@@ -591,7 +591,7 @@ describe Filter::Query do
       user = writer_user
       filter_query = Filter::Query.new(
         posted_filter,
-        Access::ByPermission.audio_recordings(user, Access::Core.levels),
+        Access::ByPermission.audio_recordings(user),
         AudioRecording,
         AudioRecording.filter_settings
       )
@@ -855,7 +855,7 @@ describe Filter::Query do
 
       filter_query = Filter::Query.new(
         request_body_obj,
-        Access::ByPermission.audio_recordings(user, Access::Core.levels),
+        Access::ByPermission.audio_recordings(user),
         AudioRecording,
         AudioRecording.filter_settings
       )
@@ -983,7 +983,7 @@ describe Filter::Query do
 
       filter_query = Filter::Query.new(
         request_body_obj,
-        Access::ByPermission.audio_recordings(user, Access::Core.levels),
+        Access::ByPermission.audio_recordings(user),
         AudioRecording,
         AudioRecording.filter_settings
       )
@@ -1091,7 +1091,7 @@ describe Filter::Query do
 
       filter_query = Filter::Query.new(
         request_body_obj,
-        Access::ByPermission.analysis_jobs_items(nil, user, true),
+        Access::ByPermission.analysis_jobs_items(nil, user, system_mode: true),
         AnalysisJobsItem,
         AnalysisJobsItem.filter_settings(true)
       )
@@ -1115,7 +1115,7 @@ describe Filter::Query do
 
       filter_query = Filter::Query.new(
         request_body_obj,
-        Access::ByPermission.audio_events(user, Access::Core.levels),
+        Access::ByPermission.audio_events(user),
         AudioEvent,
         AudioEvent.filter_settings
       )
@@ -1198,7 +1198,7 @@ describe Filter::Query do
 
       filter_query = Filter::Query.new(
         request_body_obj,
-        Access::ByPermission.audio_events(user, Access::Core.levels),
+        Access::ByPermission.audio_events(user),
         AudioEvent,
         AudioEvent.filter_settings
       )
@@ -1277,7 +1277,7 @@ describe Filter::Query do
 
       filter_query = Filter::Query.new(
         request_body_obj,
-        Access::ByPermission.audio_recordings(user, Access::Core.levels),
+        Access::ByPermission.audio_recordings(user),
         AudioRecording,
         AudioRecording.filter_settings
       )
@@ -1351,7 +1351,7 @@ describe Filter::Query do
 
       filter_query = Filter::Query.new(
         request_body_obj,
-        Access::ByPermission.audio_events(user, Access::Core.levels),
+        Access::ByPermission.audio_events(user),
         AudioEvent,
         AudioEvent.filter_settings
       )
@@ -1379,7 +1379,7 @@ describe Filter::Query do
 
       filter_query = Filter::Query.new(
         request_body_obj,
-        Access::ByPermission.audio_event_comments(user, Access::Core.levels),
+        Access::ByPermission.audio_event_comments(user),
         AudioEventComment,
         AudioEventComment.filter_settings
       )
@@ -1403,7 +1403,7 @@ describe Filter::Query do
 
       filter_query_inaccessible = Filter::Query.new(
         request_body_obj,
-        Access::ByPermission.projects(the_user, Access::Core.levels_none),
+        Access::ByPermission.projects(the_user, levels: Access::Core.levels_none),
         Project,
         Project.filter_settings
       )
@@ -1454,7 +1454,7 @@ describe Filter::Query do
 
       filter_query_project2 = Filter::Query.new(
         request_body_obj,
-        Access::ByPermission.sites(the_user, Access::Core.levels, [project_new.id]),
+        Access::ByPermission.sites(the_user, project_ids: [project_new.id]),
         Site,
         Site.filter_settings
       )
@@ -1485,7 +1485,7 @@ describe Filter::Query do
 
       filter_query_site = Filter::Query.new(
         request_body_obj,
-        Access::ByPermission.sites(the_user, Access::Core.levels_none, [project3.id]),
+        Access::ByPermission.sites(the_user, levels: Access::Core.levels_none, project_ids: [project3.id]),
         Site,
         Site.filter_settings
       )
@@ -1543,7 +1543,7 @@ describe Filter::Query do
 
       filter_query_project2 = Filter::Query.new(
         request_body_obj,
-        Access::ByPermission.audio_events(the_user, Access::Core.levels, audio_recording2),
+        Access::ByPermission.audio_events(the_user, audio_recording: audio_recording2),
         AudioEvent,
         AudioEvent.filter_settings
       )
@@ -1588,7 +1588,7 @@ describe Filter::Query do
 
       filter_query_project2 = Filter::Query.new(
         request_body_obj,
-        Access::ByPermission.audio_event_comments(the_user, Access::Core.levels, audio_event2),
+        Access::ByPermission.audio_event_comments(the_user, audio_event: audio_event2),
         AudioEventComment,
         AudioEventComment.filter_settings
       )
@@ -1623,7 +1623,7 @@ describe Filter::Query do
 
       filter_query_project2 = Filter::Query.new(
         request_body_obj,
-        Access::ByPermission.audio_event_comments(the_user, Access::Core.levels_none, audio_event2),
+        Access::ByPermission.audio_event_comments(the_user, levels: Access::Core.levels_none, audio_event: audio_event2),
         AudioEventComment,
         AudioEventComment.filter_settings
       )
@@ -1660,7 +1660,7 @@ describe Filter::Query do
 
       filter = Filter::Query.new(
         { filter_start_time_seconds: 10, filter_end_time_seconds: 88 },
-        Access::ByPermission.audio_events(admin_user, Access::Core.levels, audio_recording),
+        Access::ByPermission.audio_events(admin_user, audio_recording: audio_recording),
         AudioEvent,
         AudioEvent.filter_settings
       )
@@ -1685,7 +1685,7 @@ describe Filter::Query do
 
       filter = Filter::Query.new(
         { filter_duration_seconds: 78 },
-        Access::ByPermission.audio_events(admin_user, Access::Core.levels, audio_recording),
+        Access::ByPermission.audio_events(admin_user, audio_recording: audio_recording),
         AudioEvent,
         AudioEvent.filter_settings
       )
@@ -1727,7 +1727,7 @@ describe Filter::Query do
           duration_seconds: { eq: 78 }, start_time_seconds: { eq: 20 }
         },
           filter_start_time_seconds: 10, filter_end_time_seconds: 88 },
-        Access::ByPermission.audio_events(admin_user, Access::Core.levels, audio_recording),
+        Access::ByPermission.audio_events(admin_user, audio_recording: audio_recording),
         AudioEvent,
         AudioEvent.filter_settings
       )
@@ -1881,7 +1881,7 @@ describe Filter::Query do
     it 'returns no sites for admin' do
       filter_hash = { filter: {} }
       project_id = FactoryBot.create(:project, creator: admin_user).id
-      filter_query = Access::ByPermission.sites(admin_user, Access::Core.levels, project_id)
+      filter_query = Access::ByPermission.sites(admin_user, project_ids: project_id)
       filter = Filter::Query.new(
         filter_hash,
         filter_query,
@@ -1898,7 +1898,7 @@ describe Filter::Query do
     it 'returns no sites for regular user' do
       filter_hash = { filter: {} }
       project_id = FactoryBot.create(:project, creator: writer_user).id
-      filter_query = Access::ByPermission.sites(writer_user, Access::Core.levels, project_id)
+      filter_query = Access::ByPermission.sites(writer_user, project_ids: project_id)
       filter = Filter::Query.new(
         filter_hash,
         filter_query,

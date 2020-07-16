@@ -301,7 +301,7 @@ class PublicController < ApplicationController
     if current_user.blank?
       @recent_audio_recordings = AudioRecording.order(order_by_coalesce).limit(7)
     else
-      @recent_audio_recordings = Access::ByPermission.audio_recordings(current_user, Access::Core.levels).includes(site: :projects).order(order_by_coalesce).limit(10)
+      @recent_audio_recordings = Access::ByPermission.audio_recordings(current_user).includes(site: :projects).order(order_by_coalesce).limit(10)
     end
   end
 
@@ -319,7 +319,7 @@ class PublicController < ApplicationController
                                .limit(10)
                            else
                              Access::ByPermission
-                               .audio_events(current_user, Access::Core.levels)
+                               .audio_events(current_user)
                                .includes([:updater, audio_recording: :site])
                                .order(order_by_coalesce).limit(10)
                            end

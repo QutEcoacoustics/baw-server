@@ -52,9 +52,9 @@ module Api
 
     def get_query
       if @is_system_job
-        Access::ByPermission.analysis_jobs_items(nil, current_user, true)
+        Access::ByPermission.analysis_jobs_items(nil, current_user, system_mode: true)
       else
-        Access::ByPermission.analysis_jobs_items(@analysis_job, current_user, false)
+        Access::ByPermission.analysis_jobs_items(@analysis_job, current_user)
       end
     end
   end
