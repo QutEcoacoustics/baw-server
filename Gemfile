@@ -230,4 +230,7 @@ group :test do
   # api docs
   gem 'rspec-rails'
   gem 'rswag-specs'
+
+  # old docs (deprecated)
+  gem 'rspec_api_documentation', '~> 4.8.0'
 end
