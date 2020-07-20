@@ -40,6 +40,7 @@ Metrics/BlockLength:
     - resource
     - describe
     - shared_examples_for
+    - shared_examples
     - shared_context
     - context
     - it

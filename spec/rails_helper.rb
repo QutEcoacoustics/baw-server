@@ -144,6 +144,8 @@ RSpec.configure do |config|
   config.include Devise::Test::ControllerHelpers, type: :view
   config.include Paperclip::Shoulda::Matchers
   config.include FactoryBot::Syntax::Methods
+  require_relative 'helpers/factory_bot_helpers'
+  config.include Baw::FactoryBotHelpers
 
   require_relative 'helpers/migrations_helper'
   config.include MigrationsHelpers, :migration
@@ -159,9 +161,14 @@ RSpec.configure do |config|
   extend Enumerize::Integrations::RSpec
 
   require_relative 'helpers/api_spec_helpers'
-  config.include ApiSpecExampleHelpers, { type: :request, file_path: Regexp.new('/spec/api/') }
-  config.extend ApiSpecDescribeHelpers, { type: :request, file_path: Regexp.new('/spec/api/') }
-  config.include_context :api_spec_shared_context, { type: :request, file_path: Regexp.new('/spec/api/') }
+  config.include ApiSpecExampleHelpers, { file_path: Regexp.new('/spec/api/') }
+  config.extend ApiSpecDescribeHelpers, { file_path: Regexp.new('/spec/api/') }
+  config.include_context :api_spec_shared_context, { file_path: Regexp.new('/spec/api/') }
+
+  require_relative 'helpers/permissions_helper'
+  config.extend PermissionsGroupHelpers, {
+    file_path: Regexp.new('/spec/requests/permissions')
+  }
 
   # change the default creation strategy
   # Previous versions of factory but would ensure associations used the :create

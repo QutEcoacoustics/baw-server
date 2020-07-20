@@ -169,13 +169,7 @@ module ApiSpecDescribeHelpers
   # from the hash, according to the given schema
   def auto_send_model
     let((get_parent_param :baw_body_name)) do
-      full = attributes_for(model_name)
-      writeable =
-        model_schema[:properties]
-        .reject { |_key, value| value[:readOnly] }
-        .keys
-      partial = full.slice(*writeable)
-      { model_name => partial }
+      body_attributes_for(model_name, model_schema)
     end
   end
 

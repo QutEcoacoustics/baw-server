@@ -99,6 +99,27 @@
       }
     },
     {
+      "name": "(Ruby) RSpec - current file, tag filter",
+      "type": "Ruby",
+      "request": "launch",
+      "internalConsoleOptions": "openOnSessionStart",
+      "showDebuggerOutput": true,
+      "useBundler": true,
+      "pathToBundler": "${workspaceRoot}/bin/bundle",
+      "program": "${workspaceRoot}/bin/rspec",
+      "args": [
+        "-I",
+        "${workspaceRoot}",
+        "-t",
+        "${input:rspecTagFilter}",
+        "${file}",
+      ],
+      "env": {
+        "RAILS_ENV": "test",
+        "DEBUGGER_HOST": "0.0.0.0"
+      }
+    },
+    {
       "name": "(Ruby) RSpec - specific spec in active file only",
       "type": "Ruby",
       "request": "launch",
@@ -194,6 +215,12 @@
       "id": "rspecNameFilter",
       "type": "promptString",
       "description": "Enter a fragment of the spec name to filter on",
+      "default": ""
+    },
+    {
+      "id": "rspecTagFilter",
+      "type": "promptString",
+      "description": "Enter a tag to filter on",
       "default": ""
     }
   ]

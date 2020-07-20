@@ -29,6 +29,9 @@ gem 'dry-validation'
 gem 'rswag-api'
 gem 'rswag-ui'
 
+# uri parsing and generation
+gem 'addressable'
+
 RAILS_VERSION = '~> 6.0.3'
 
 group :server do
