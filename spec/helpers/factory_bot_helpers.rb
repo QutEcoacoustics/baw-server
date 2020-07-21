@@ -5,7 +5,7 @@ module Baw
     # Relies on the given model having a factory of the same name
     # and also having a schema method defined on it's class if the
     # schema parameter is not provided.
-    # The schema parameter must be a hash of a json schema style structure.
+    # The schema parameter must be a hash of a json-schema-style structure.
     def body_attributes_for(model_name, schema: nil)
       schema = model_name.to_s.classify.constantize.schema if schema.nil?
       full = attributes_for(model_name)
