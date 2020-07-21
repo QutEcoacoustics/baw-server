@@ -8,6 +8,171 @@ produces:
 consumes:
 - application/json
 paths:
+  "/projects/{id}":
+    patch:
+      summary: update project
+      security:
+      - basic_auth_with_token: []
+      parameters:
+      - name: id
+        in: path
+        description: id
+        required: true
+        schema:
+          type: integer
+      tags:
+      - projects
+      description: |2
+
+        Users that can invoke this route: `Admin`, `owner user`, `writer`, `reader`, `no_access`, `anyone`.<br />
+        Users that can't: `Harvester`.
+
+        Note: accessing a list/index/filter endpoint may return no results due to project permissions
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              example:
+                meta:
+                  status: 200
+                  message: OK
+                data:
+                  id: 1
+                  description: project description 2
+                  name: gen_project2
+                  creator_id: 3
+                  site_ids:
+                  - 1
+                  description_html: "<p>project description 2</p>\n"
+              schema:
+                allOf:
+                - "$ref": "#/components/schemas/standard_response"
+                - type: object
+                  properties:
+                    data:
+                      "$ref": "#/components/schemas/project"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/project"
+    get:
+      summary: show project
+      security:
+      - basic_auth_with_token: []
+      parameters:
+      - name: id
+        in: path
+        description: id
+        required: true
+        schema:
+          type: integer
+      tags:
+      - projects
+      description: |2
+
+        Users that can invoke this route: `Admin`, `owner user`, `writer`, `reader`, `no_access`, `anyone`.<br />
+        Users that can't: `Harvester`.
+
+        Note: accessing a list/index/filter endpoint may return no results due to project permissions
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              example:
+                meta:
+                  status: 200
+                  message: OK
+                data:
+                  id: 2
+                  name: gen_project3
+                  description: project description 3
+                  creator_id: 7
+                  site_ids:
+                  - 2
+                  description_html: "<p>project description 3</p>\n"
+              schema:
+                allOf:
+                - "$ref": "#/components/schemas/standard_response"
+                - type: object
+                  properties:
+                    data:
+                      "$ref": "#/components/schemas/project"
+    delete:
+      summary: delete project
+      security:
+      - basic_auth_with_token: []
+      parameters:
+      - name: id
+        in: path
+        description: id
+        required: true
+        schema:
+          type: integer
+      tags:
+      - projects
+      description: |2
+
+        Users that can invoke this route: `Admin`, `owner user`, `writer`, `reader`, `no_access`, `anyone`.<br />
+        Users that can't: `Harvester`.
+
+        Note: accessing a list/index/filter endpoint may return no results due to project permissions
+      responses:
+        '204':
+          description: successful
+          content:
+            application/json:
+              example: 
+    put:
+      summary: update project
+      security:
+      - basic_auth_with_token: []
+      parameters:
+      - name: id
+        in: path
+        description: id
+        required: true
+        schema:
+          type: integer
+      tags:
+      - projects
+      description: |2
+
+        Users that can invoke this route: `Admin`, `owner user`, `writer`, `reader`, `no_access`, `anyone`.<br />
+        Users that can't: `Harvester`.
+
+        Note: accessing a list/index/filter endpoint may return no results due to project permissions
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              example:
+                meta:
+                  status: 200
+                  message: OK
+                data:
+                  id: 4
+                  description: project description 6
+                  name: gen_project6
+                  creator_id: 15
+                  site_ids:
+                  - 4
+                  description_html: "<p>project description 6</p>\n"
+              schema:
+                allOf:
+                - "$ref": "#/components/schemas/standard_response"
+                - type: object
+                  properties:
+                    data:
+                      "$ref": "#/components/schemas/project"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/project"
   "/projects/filter":
     post:
       summary: filter project
@@ -15,12 +180,13 @@ paths:
       - basic_auth_with_token: []
       parameters: []
       tags:
-      - Admin can access
-      - owner user can access
-      - writer can access
-      - reader can access
-      - no_access can access
-      - anyone can access
+      - projects
+      description: |2
+
+        Users that can invoke this route: `Admin`, `owner user`, `writer`, `reader`, `no_access`, `anyone`.<br />
+        Users that can't: `Harvester`.
+
+        Note: accessing a list/index/filter endpoint may return no results due to project permissions
       responses:
         '200':
           description: successful
@@ -42,13 +208,13 @@ paths:
                     previous: 
                     next: 
                 data:
-                - id: 1
-                  name: gen_project1
-                  description: project description 1
-                  creator_id: 3
+                - id: 5
+                  name: gen_project7
+                  description: project description 7
+                  creator_id: 19
                   site_ids:
-                  - 1
-                  description_html: "<p>project description 1</p>\n"
+                  - 5
+                  description_html: "<p>project description 7</p>\n"
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -65,12 +231,13 @@ paths:
       - basic_auth_with_token: []
       parameters: []
       tags:
-      - Admin can access
-      - owner user can access
-      - writer can access
-      - reader can access
-      - no_access can access
-      - anyone can access
+      - projects
+      description: |2
+
+        Users that can invoke this route: `Admin`, `owner user`, `writer`, `reader`, `no_access`, `anyone`.<br />
+        Users that can't: `Harvester`.
+
+        Note: accessing a list/index/filter endpoint may return no results due to project permissions
       responses:
         '200':
           description: successful
@@ -92,13 +259,13 @@ paths:
                     previous: 
                     next: 
                 data:
-                - id: 2
-                  name: gen_project2
-                  description: project description 2
-                  creator_id: 7
+                - id: 6
+                  name: gen_project8
+                  description: project description 8
+                  creator_id: 23
                   site_ids:
-                  - 2
-                  description_html: "<p>project description 2</p>\n"
+                  - 6
+                  description_html: "<p>project description 8</p>\n"
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -114,11 +281,13 @@ paths:
       - basic_auth_with_token: []
       parameters: []
       tags:
-      - Admin can access
-      - owner user can access
-      - writer can access
-      - reader can access
-      - no_access can access
+      - projects
+      description: |2
+
+        Users that can invoke this route: `Admin`, `owner user`, `writer`, `reader`, `no_access`.<br />
+        Users that can't: `Harvester`, `anyone`.
+
+        Note: accessing a list/index/filter endpoint may return no results due to project permissions
       responses:
         '201':
           description: successful
@@ -129,12 +298,12 @@ paths:
                   status: 201
                   message: Created
                 data:
-                  id: 4
-                  name: gen_project4
-                  description: project description 4
+                  id: 8
+                  name: gen_project10
+                  description: project description 10
                   creator_id: 1
                   site_ids: []
-                  description_html: "<p>project description 4</p>\n"
+                  description_html: "<p>project description 10</p>\n"
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -154,12 +323,13 @@ paths:
       - basic_auth_with_token: []
       parameters: []
       tags:
-      - Admin can access
-      - owner user can access
-      - writer can access
-      - reader can access
-      - no_access can access
-      - anyone can access
+      - projects
+      description: |2
+
+        Users that can invoke this route: `Admin`, `owner user`, `writer`, `reader`, `no_access`, `anyone`.<br />
+        Users that can't: `Harvester`.
+
+        Note: accessing a list/index/filter endpoint may return no results due to project permissions
       responses:
         '200':
           description: successful
@@ -174,167 +344,6 @@ paths:
                   name: 
                   description: 
                   creator_id: 
-  "/projects/{id}":
-    get:
-      summary: show project
-      security:
-      - basic_auth_with_token: []
-      parameters:
-      - name: id
-        in: path
-        description: id
-        required: true
-        schema:
-          type: integer
-      tags:
-      - Admin can access
-      - owner user can access
-      - writer can access
-      - reader can access
-      - no_access can access
-      - anyone can access
-      responses:
-        '200':
-          description: successful
-          content:
-            application/json:
-              example:
-                meta:
-                  status: 200
-                  message: OK
-                data:
-                  id: 6
-                  name: gen_project6
-                  description: project description 6
-                  creator_id: 19
-                  site_ids:
-                  - 5
-                  description_html: "<p>project description 6</p>\n"
-              schema:
-                allOf:
-                - "$ref": "#/components/schemas/standard_response"
-                - type: object
-                  properties:
-                    data:
-                      "$ref": "#/components/schemas/project"
-    patch:
-      summary: update project
-      security:
-      - basic_auth_with_token: []
-      parameters:
-      - name: id
-        in: path
-        description: id
-        required: true
-        schema:
-          type: integer
-      tags:
-      - Admin can access
-      - owner user can access
-      - writer can access
-      - reader can access
-      - no_access can access
-      - anyone can access
-      responses:
-        '200':
-          description: successful
-          content:
-            application/json:
-              example:
-                meta:
-                  status: 200
-                  message: OK
-                data:
-                  id: 7
-                  description: project description 8
-                  name: gen_project8
-                  creator_id: 23
-                  site_ids:
-                  - 6
-                  description_html: "<p>project description 8</p>\n"
-              schema:
-                allOf:
-                - "$ref": "#/components/schemas/standard_response"
-                - type: object
-                  properties:
-                    data:
-                      "$ref": "#/components/schemas/project"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              "$ref": "#/components/schemas/project"
-    put:
-      summary: update project
-      security:
-      - basic_auth_with_token: []
-      parameters:
-      - name: id
-        in: path
-        description: id
-        required: true
-        schema:
-          type: integer
-      tags:
-      - Admin can access
-      - owner user can access
-      - writer can access
-      - reader can access
-      - no_access can access
-      - anyone can access
-      responses:
-        '200':
-          description: successful
-          content:
-            application/json:
-              example:
-                meta:
-                  status: 200
-                  message: OK
-                data:
-                  id: 8
-                  description: project description 10
-                  name: gen_project10
-                  creator_id: 27
-                  site_ids:
-                  - 7
-                  description_html: "<p>project description 10</p>\n"
-              schema:
-                allOf:
-                - "$ref": "#/components/schemas/standard_response"
-                - type: object
-                  properties:
-                    data:
-                      "$ref": "#/components/schemas/project"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              "$ref": "#/components/schemas/project"
-    delete:
-      summary: delete project
-      security:
-      - basic_auth_with_token: []
-      parameters:
-      - name: id
-        in: path
-        description: id
-        required: true
-        schema:
-          type: integer
-      tags:
-      - Admin can access
-      - owner user can access
-      - writer can access
-      - reader can access
-      - no_access can access
-      - anyone can access
-      responses:
-        '204':
-          description: successful
-          content:
-            application/json:
-              example: 
 servers:
 - url: https://{defaultHost}
   variables:

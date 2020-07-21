@@ -15,6 +15,7 @@
       "autoloaders",
       "backtrace",
       "bootsnap",
+      "chown",
       "cleanpath",
       "deleter",
       "gsub",

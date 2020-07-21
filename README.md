@@ -170,14 +170,7 @@ Use this style guide as a reference: https://github.com/rubocop-hq/ruby-style-gu
 Generate API documentation with:
 
 ```shell
-$ RAILS_ENV=test rails rswag
-```
-
-Note: the above is currently failing due to a [bug](https://github.com/rswag/rswag/pull/274/files).
-Use this command in the interim:
-
-```
-RAILS_ENV=test rspec --pattern spec/api/**/*_spec.rb --format Rswag::Specs::SwaggerFormatter --order defined
+$ bin/generate_docs.sh
 ```
 
 ## Other commands
