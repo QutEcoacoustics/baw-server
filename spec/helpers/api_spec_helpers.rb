@@ -255,32 +255,3 @@ module ApiSpecDescribeHelpers
     end
   end
 end
-
-# config.include allows these methods to be used in specs/before/let
-module ApiSpecExampleHelpers
-  def api_result
-    # the != false is not redundant here... safe access could result in nil
-    # which would evaluate to false and execute wrong half of conditional
-    @api_result ||= response&.body&.empty? != false ? nil : JSON.parse(response.body, symbolize_names: true)
-  end
-
-  def assert_id_matches(expected)
-    expect(api_result[:data][:id]).to be(expected.id)
-  end
-
-  def assert_has_ids(*expected)
-    expected_ids = expected.map { |e| e.id }
-    actual_ids = api_result[:data].map { |a| a.id }
-    expect(actual_ids).to contain(expected_ids)
-  end
-
-  def assert_at_least_one_item
-    api_result[:data].should have_at_least(1).items
-  end
-
-  def assert_no_response
-    expect(response.body).to be_empty
-  end
-
-  def self.included(base); end
-end

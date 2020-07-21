@@ -18,13 +18,11 @@ describe 'Project permissions' do
     end
   end
 
-  the_user :admin, can_do: everything
-
-  the_user :owner, can_do: everything
-
+  the_users :admin, :owner, can_do: everything
   the_users :writer, :reader, can_do: (reading + creation), and_cannot_do: (writing - creation)
 
   the_user :no_access, can_do: (listing + creation), and_cannot_do: (not_listing - creation)
+
   the_user :harvester, can_do: nothing, and_cannot_do: everything
 
   the_user :anonymous, can_do: listing, and_cannot_do: not_listing, fails_with: :unauthorized

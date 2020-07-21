@@ -160,8 +160,10 @@ RSpec.configure do |config|
   require 'enumerize/integrations/rspec'
   extend Enumerize::Integrations::RSpec
 
+  require_relative 'helpers/request_spec_helpers'
+  config.include RequestSpecExampleHelpers, { type: :request }
+
   require_relative 'helpers/api_spec_helpers'
-  config.include ApiSpecExampleHelpers, { file_path: Regexp.new('/spec/api/') }
   config.extend ApiSpecDescribeHelpers, { file_path: Regexp.new('/spec/api/') }
   config.include_context :api_spec_shared_context, { file_path: Regexp.new('/spec/api/') }
 
@@ -236,8 +238,9 @@ RSpec.configure do |config|
 
   # enable options requests in feature tests
   module ActionDispatch::Integration::RequestHelpers
-    def options(path, parameters = nil, headers_or_env = nil)
-      process :options, path, parameters, headers_or_env
+    # REVIEW: for rails 7: should exist
+    def options(path, **args)
+      process(:options, path, **args)
     end
   end
 end

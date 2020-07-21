@@ -13,7 +13,7 @@ describe 'projects', type: :request do
       response(200, 'successful') do
         schema_for_many
         run_test! do
-          assert_at_least_one_item
+          expect_at_least_one_item
         end
       end
     end
@@ -24,7 +24,7 @@ describe 'projects', type: :request do
       response(200, 'successful') do
         schema_for_many
         run_test! do
-          assert_at_least_one_item
+          expect_at_least_one_item
         end
       end
     end
@@ -55,7 +55,7 @@ describe 'projects', type: :request do
       response(200, 'successful') do
         schema_for_single
         run_test! do
-          assert_id_matches(project)
+          expect_id_matches(project)
         end
       end
     end
@@ -66,7 +66,7 @@ describe 'projects', type: :request do
         schema_for_single
         auto_send_model
         run_test! do
-          assert_id_matches(project)
+          expect_id_matches(project)
         end
       end
     end
@@ -77,7 +77,7 @@ describe 'projects', type: :request do
         schema_for_single
         auto_send_model
         run_test! do
-          assert_id_matches(project)
+          expect_id_matches(project)
         end
       end
     end
@@ -86,7 +86,7 @@ describe 'projects', type: :request do
       response(204, 'successful') do
         schema nil
         run_test! do
-          assert_no_response
+          expect_empty_body
         end
       end
     end

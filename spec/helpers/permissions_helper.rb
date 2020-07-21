@@ -193,42 +193,25 @@ RSpec.shared_examples :permissions_for do |options|
     process(verb, url, headers: headers, params: body, as: as)
   end
 
-  def api_result(response)
-    # the != false is not redundant here... safe access could result in nil
-    # which would evaluate to false and execute wrong half of conditional
-    response&.body&.empty? != false ? nil : JSON.parse(response.body, symbolize_names: true)
+  def get_expected_list_items(user, action)
+    [*instance_exec(user, action, &validate_callback)]
   end
 
-  def get_list_matcher(user, action)
-    ids = [*instance_exec(user, action, &validate_callback)]
-          .map { |x| hash_including({ id: x.id }) }
-          .to_a
-
-    { data: ids }
-  end
-
-  def validate_result(user, action, expect, response)
+  def validate_result(user, action, expect)
     # parse the result and assert our subject exist
-    result = api_result(response)
+    result = api_result
 
     case expect
     when :nothing
       expect(result).to be_nil
     when :template
-      expect(result[:data]).to be_a(Hash)
-      expect(result[:data]).to_not be_empty
+      expect_data_is_hash
     when :created
-      expect(result).to include({ data: hash_including({ id: a_kind_of(Integer) }) })
+      expect_data_is_hash_with_any_id
     when :single
-      expect(result).to include({ data: hash_including({ id: route_params[:id] }) })
+      expect_id_matches(route_params[:id])
     when :list
-      expect(result[:data]).to be_a(Array)
-      expected = get_list_matcher(user, action)
-      if expected.empty?
-        expect(result[:data]).to include({ data: match([]) })
-      else
-        expect(result).to include(expected)
-      end
+      expect_has_ids(get_expected_list_items(user, action))
     end
   end
 
@@ -247,7 +230,7 @@ RSpec.shared_examples :permissions_for do |options|
         # only validate results if we expect valid data
         next unless action[:can]
 
-        validate_result(options[:user], action[:action], action[:expect], response)
+        validate_result(options[:user], action[:action], action[:expect])
       end
     end
   end

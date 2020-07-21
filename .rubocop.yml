@@ -28,7 +28,9 @@ Layout/EmptyLinesAroundAttributeAccessor:
   Enabled: true
 Layout/EndOfLine:
   EnforcedStyle: lf
-# We sometimes leave commented out code in the code base
+Layout/FirstHashElementIndentation:
+  EnforcedStyle: consistent
+  # We sometimes leave commented out code in the code base
 Layout/LeadingCommentSpace:
   Enabled: false
 Metrics/ClassLength:
