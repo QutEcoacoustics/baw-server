@@ -10,9 +10,10 @@ class Project < ApplicationRecord
   belongs_to :deleter, class_name: 'User', foreign_key: :deleter_id, inverse_of: :deleted_projects, optional: true
 
   has_many :permissions, inverse_of: :project
-  has_many :readers, -> { where("permissions.level = 'reader'").uniq }, through: :permissions, source: :user
-  has_many :writers, -> { where("permissions.level = 'writer'").uniq }, through: :permissions, source: :user
-  has_many :owners, -> { where("permissions.level = 'owner'").uniq }, through: :permissions, source: :user
+  # remove joins clause in next major rails version. See https://github.com/rails/rails/pull/39390/files
+  has_many :readers, -> { joins(:permissions).where({ permissions: { level: 'reader' } }).distinct }, through: :permissions, source: :user
+  has_many :writers, -> { joins(:permissions).where({ permissions: { level: 'writer' } }).distinct }, through: :permissions, source: :user
+  has_many :owners, -> { joins(:permissions).where({ permissions: { level: 'owner' } }).distinct }, through: :permissions, source: :user
   has_and_belongs_to_many :sites, -> { distinct }
   has_and_belongs_to_many :saved_searches, inverse_of: :projects
   has_many :analysis_jobs, through: :saved_searches
