@@ -27,7 +27,7 @@ module RequestSpecExampleHelpers
               .map { |x| hash_including({ id: get_id(x) }) }
               .to_a
 
-      expect(api_result).to include(data: inner)
+      expect(api_result).to include(data: match_array(inner))
     end
   end
 

@@ -4,19 +4,19 @@ module PermissionsGroupHelpers
   STANDARD_ACTIONS = Set[:index, :show, :create, :update, :destroy, :filter, :new].freeze
   STANDARD_USERS = Set[:admin, :harvester, :owner, :writer, :reader, :no_access, :invalid, :anonymous].freeze
 
-  attr_accessor :registered_users
+  mattr_accessor :registered_users, :route, :route_params, :factory, :expected_list_items_callback
 
   def given_the_route(route, &route_params)
-    @route = route
-    @route_params = route_params
+    self.route = route
+    self.route_params = route_params
   end
 
   def using_the_factory(factory)
-    @factory = factory
+    self.factory = factory
   end
 
-  def and_validates_list_results(&validate_callback)
-    @validate_callback = validate_callback
+  def for_lists_expects(&expected_list_items_callback)
+    self.expected_list_items_callback = expected_list_items_callback
   end
 
   def the_users(*users, **keyword_args)
@@ -25,24 +25,51 @@ module PermissionsGroupHelpers
     end
   end
 
-  def the_user(user, can_do:, and_cannot_do: Set[], fails_with: :forbidden)
-    can_do = Set.new(can_do) unless can_do.is_a?(Set)
-    and_cannot_do = Set.new(and_cannot_do) unless and_cannot_do.is_a?(Set)
+  # Run permissions tests for users and actions.
+  # Designed to be used to to test all users and actions;
+  # it will error if any of the standard users or actions
+  # are missed.
+  def the_user(
+    user,
+    can_do:,
+    and_cannot_do: Set[],
+    fails_with: :forbidden
+  )
+    can_do = Set.new(can_do)
+    and_cannot_do = Set.new(and_cannot_do)
 
-    validate_sets(user, can_do: can_do, and_cannot_do: and_cannot_do)
+    validate_tests_all(user, can_do: can_do, and_cannot_do: and_cannot_do)
 
-    actions = can_do.map { |x| normalize(x, @route, :successful, true) } +
-              and_cannot_do.map { |x| normalize(x, @route, fails_with, false) }
+    ensures(user, can: can_do, cannot: and_cannot_do, fails_with: fails_with)
 
-    it_behaves_like :permissions_for, {
-      route: @route,
-      route_params: @route_params,
-      user: user,
-      actions: actions,
-      factory: @factory,
-      validate_callback: @validate_callback
-    }
     registered_users << user
+  end
+
+  # Run permissions tests for users and actions.
+  # Similar to `the_users` except it does not error if all
+  # cases are not covered. Designed to test edge cases or
+  # smaller sets of permissions
+  def ensures(*users, can: Set[], cannot: Set[], fails_with: :forbidden)
+    users.each do |user|
+      validate_dsl_state
+
+      can = Set.new(can)
+      cannot = Set.new(cannot)
+
+      validate_sets(user, can_do: can, and_cannot_do: cannot)
+
+      actions = can.map { |x| normalize(x, route, :successful, true) } +
+                cannot.map { |x| normalize(x, route, fails_with, false) }
+
+      it_behaves_like :permissions_for, {
+        route: route,
+        route_params: route_params,
+        user: user,
+        actions: actions,
+        factory: factory,
+        expected_list_items_callback: expected_list_items_callback
+      }
+    end
   end
 
   def everything
@@ -68,6 +95,10 @@ module PermissionsGroupHelpers
 
   def writing
     @writing ||= Set[:create, :update, :destroy].freeze
+  end
+
+  def mutation
+    @mutation ||= Set[:update, :destroy].freeze
   end
 
   def listing
@@ -104,10 +135,10 @@ module PermissionsGroupHelpers
   }.freeze
 
   def validate_dsl_state
-    raise 'route must be set' if @route.nil?
-    raise 'route parameters must be set' if @route_params.nil?
-    raise 'a factory must be set' if @factory.nil?
-    raise 'validate callback must be set' if @validate_callback.nil?
+    raise 'route must be set' if route.nil?
+    raise 'route parameters must be set' if route_params.nil?
+    raise 'a factory must be set' if factory.nil?
+    raise 'validate callback must be set' if expected_list_items_callback.nil?
   end
 
   def validate_sets(user, can_do:, and_cannot_do:)
@@ -117,7 +148,10 @@ module PermissionsGroupHelpers
     if intersection.any?
       raise "#{message} has overlapping can and cannot permissions. The following are duplicates: #{intersection}"
     end
+  end
 
+  def validate_tests_all(user, can_do:, and_cannot_do:)
+    message = "The permission spec for the `:#{user}` user"
     # ensure we've covered all the standard actions
     missing = STANDARD_ACTIONS - (can_do + and_cannot_do)
     raise "#{message} does not cover all standard actions. The following are missing: #{missing}" unless missing.empty?
@@ -152,8 +186,6 @@ module PermissionsGroupHelpers
 end
 
 RSpec.shared_examples :permissions_for do |options|
-  create_entire_hierarchy
-
   @user = options[:user]
   let(:factory) {
     options[:factory]
@@ -172,8 +204,8 @@ RSpec.shared_examples :permissions_for do |options|
     instance_exec(&options[:route_params])
   }
 
-  let(:validate_callback) {
-    options[:validate_callback]
+  let(:expected_list_items_callback) {
+    options[:expected_list_items_callback]
   }
 
   def send_request(action, headers, route_params, factory)
@@ -194,7 +226,7 @@ RSpec.shared_examples :permissions_for do |options|
   end
 
   def get_expected_list_items(user, action)
-    [*instance_exec(user, action, &validate_callback)]
+    [*instance_exec(user, action, &expected_list_items_callback)]
   end
 
   def validate_result(user, action, expect)
