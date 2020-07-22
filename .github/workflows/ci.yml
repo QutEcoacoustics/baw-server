@@ -64,7 +64,7 @@ jobs:
       - name: Generate API docs
         run: docker-compose run web generate_docs.sh
       - name: Commit swagger doc changes
-        uses: stefanzweifel/git-auto-commit-action
+        uses: stefanzweifel/git-auto-commit-action@v4
         with:
           commit_message: |
             Update API docs
