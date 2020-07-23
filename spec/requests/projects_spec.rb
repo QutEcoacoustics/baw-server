@@ -100,4 +100,52 @@ describe 'Projects' do
       expect(response).to have_http_status(200)
     end
   end
+
+  describe 'API filtering' do
+    create_entire_hierarchy
+
+    example 'basically works' do
+      body = {
+        'filter' => {
+          'id' => {
+            'in' => [reader_permission.project.id]
+          }
+        },
+        'projection' => {
+          'include' => [:id, :name]
+        }
+      }
+      post '/projects/filter', params: body, headers: api_request_headers(reader_token, send_body: true), as: :json
+
+      expect(response).to have_http_status(:success)
+      expect_at_least_one_item
+      expect_has_projection({ include: ['id', 'name'] })
+      expect(api_result).to include(data: match_array(hash_including(site_ids: all(be_an(Integer)))))
+    end
+
+    example 'filter partial match' do
+      url = '/projects/filter?direction=desc&filter_name=a&filter_partial_match=partial_match_text&items=35&order_by=createdAt&page=1'
+      get url, headers: api_request_headers(reader_token)
+      expect(response).to have_http_status(:success)
+      expect_zero_items
+      expect_has_paging(
+        page: 1,
+        items: 35,
+        current: 'http://localhost:3000/projects/filter?direction=desc&filter_name=a&filter_partial_match=partial_match_text&items=35&order_by=createdAt&page=1'
+      )
+
+      expect_has_sorting(order_by: 'created_at', direction: 'desc')
+    end
+
+    example 'filter with paging via GET' do
+      # default items per page is 25
+      create_list(:project, 29, creator: writer_user)
+
+      get '/projects/filter?page=1&items=2', headers: api_request_headers(writer_token)
+
+      expect(response).to have_http_status(:success)
+      expect_number_of_items(2)
+      expect_has_paging(page: 1, items: 2, total: Project.all.count)
+    end
+  end
 end

@@ -1,5 +1,18 @@
+# config.extend allows these methods to be used in describe/context groups
+module RequestSpecExampleGroupHelpers
+end
+
 # config.include allows these methods to be used in specs/before/let
 module RequestSpecExampleHelpers
+  def api_request_headers(token, send_body: false, content_type: 'application/json')
+    headers = {
+      'ACCEPT' => 'application/json',
+      'HTTP_AUTHORIZATION' => token
+    }
+    headers['CONTENT_TYPE'] = content_type if send_body
+    headers
+  end
+
   def api_result
     # the != false is not redundant here... safe access could result in nil
     # which would evaluate to false and execute wrong half of conditional
@@ -32,7 +45,17 @@ module RequestSpecExampleHelpers
   end
 
   def expect_at_least_one_item
+    expect(api_result[:data]).to be_a(Array)
     api_result[:data].should have_at_least(1).items
+  end
+
+  def expect_zero_items
+    expect_number_of_items(0)
+  end
+
+  def expect_number_of_items(n)
+    expect(api_result[:data]).to be_a(Array)
+    api_result[:data].should have(n).items
   end
 
   def expect_empty_body
@@ -49,6 +72,39 @@ module RequestSpecExampleHelpers
     expect(api_result).to include({
       data: hash_including({ id: a_kind_of(Integer) })
     })
+  end
+
+  def expect_has_projection(projection)
+    expect(api_result).to include(meta: hash_including({
+      projection: projection
+    }))
+  end
+
+  def expect_has_paging(page: 0, items: 25, current: nil, total: nil)
+    expected = {
+      items: items,
+      page: page
+    }
+    expected[:current] = current unless current.nil?
+    expected[:total] = total unless total.nil?
+    expect(api_result).to include(meta: hash_including({
+      paging: hash_including(expected)
+    }))
+  end
+
+  def expect_has_sorting(order_by:, direction: 'asc')
+    expect(api_result).to include(meta: hash_including({
+      sorting: {
+        direction: direction,
+        order_by: order_by
+      }
+    }))
+  end
+
+  def expect_has_filter(_filter)
+    expect(api_result).to include(meta: hash_including({
+      filter: projection
+    }))
   end
 
   def expect_error(status, details)

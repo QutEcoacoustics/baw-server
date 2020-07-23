@@ -161,6 +161,7 @@ RSpec.configure do |config|
   extend Enumerize::Integrations::RSpec
 
   require_relative 'helpers/request_spec_helpers'
+  config.extend RequestSpecExampleGroupHelpers, { type: :request }
   config.include RequestSpecExampleHelpers, { type: :request }
 
   require_relative 'helpers/api_spec_helpers'
