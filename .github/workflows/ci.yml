@@ -1,6 +1,12 @@
 name: Run tests, publish docker image
 
-on: [push, pull_request]
+on:
+  push:
+    paths-ignore:
+      - 'swagger/**'
+  pull_request:
+    paths-ignore:
+      - 'swagger/**'
 
 env:
   # TODO: Change variable to your image's name.
@@ -53,6 +59,18 @@ jobs:
         with:
           name: rspec test results
           path: log/*test.log
+
+      # update api docs
+      - name: Generate API docs
+        run: docker-compose run web generate_docs.sh
+      - name: Commit swagger doc changes
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: |
+            Update API docs
+
+            [skip_ci]
+          file_pattern: swagger/**
 
       - name: Stop docker-compose
         if: ${{ always() }}

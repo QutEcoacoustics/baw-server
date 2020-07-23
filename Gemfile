@@ -25,6 +25,13 @@ gem 'bootsnap', require: false
 # standardised way to validate objects
 gem 'dry-validation'
 
+# api docs
+gem 'rswag-api'
+gem 'rswag-ui'
+
+# uri parsing and generation
+gem 'addressable'
+
 RAILS_VERSION = '~> 6.0.3'
 
 group :server do
@@ -131,7 +138,7 @@ group :server do
 
   # Application/webserver
   # We used to use thin for development
-  #gem 'thin', '~> 1.7.0'
+  gem 'thin', group: [:development, :test]
   # Now we use passenger for all environments. The require: allows for integration
   # with the `rails server` command
   gem 'passenger', require: 'phusion_passenger/rack_handler'
@@ -163,7 +170,7 @@ group :workers, :server do
     install_if -> { load_local } do
       gem 'resque-status', path: 'lib/gems/resque-status'
     end
-end
+  end
   gem 'resque_solo'
 end
 
@@ -214,7 +221,6 @@ group :test do
   gem 'rspec'
   gem 'rspec-collection_matchers'
   gem 'rspec-mocks'
-  gem 'rspec-rails'
   # for profiling
   gem 'ruby-prof', '>= 0.17.0', require: false
   gem 'shoulda-matchers', '~> 4', require: false
@@ -224,11 +230,10 @@ group :test do
   gem 'webmock'
   gem 'zonebie'
 
-  # Documentation & UI
-  # -------------------------------------
-  # these gems are required here to serve /doc url
-  gem 'raddocs'
+  # api docs
+  gem 'rspec-rails'
+  gem 'rswag-specs'
+
+  # old docs (deprecated)
   gem 'rspec_api_documentation', '~> 4.8.0'
-  # bundle exec rake doc:rails generates the API under doc/api.
-  gem 'sdoc', '~> 0.4.0'
 end

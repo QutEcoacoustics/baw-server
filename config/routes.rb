@@ -61,6 +61,11 @@ Rails.application.routes.draw do
   # The priority is based upon order of creation:
   # first created -> highest priority.
 
+  # api-docs
+  # ======================
+  mount Rswag::Ui::Engine => '/api-docs'
+  mount Rswag::Api::Engine => '/api-docs'
+
   # User and Devise routes
   # ======================
 

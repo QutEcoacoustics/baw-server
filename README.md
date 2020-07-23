@@ -153,15 +153,9 @@ docker-compose run --service-ports    --use-aliases  workers bash
 ```
 
 ### Tests
-The tests are run using Guard, either:
+The tests are run using rspec:
 
-    $ bin/guard
-
-or in case the listening does not work, force the use of file polling:
-
-    $ bin/guard guard --force-polling
-
-Press enter to execute all tests. Guard will monitor for changes and the relevant tests will be run as files are modified.
+    $ bin/rspec
 
 Tests can also be run with a specified seed using rspec:
 
@@ -173,7 +167,11 @@ Use this style guide as a reference: https://github.com/rubocop-hq/ruby-style-gu
 
 ## Documentation
 
+Generate API documentation with:
 
+```shell
+$ bin/generate_docs.sh
+```
 
 ## Other commands
 These commands should be executed automatically but are listed because they are helpful to know.
@@ -183,7 +181,7 @@ These commands should be executed automatically but are listed because they are 
 - Then migrate and seed the test database: `rails db:migrate db:seed RAILS_ENV=test`
 - Prepare the local development database: `rails db:setup RAILS_ENV=development`
 - Run rspec tests: `rspec`
-- Generate API documentation: `rake docs:generate GENERATE_DOC=true`
+- Generate API documentation: `RAILS_ENV=test rails rswag`
 
 
 ## Production setup and deploying
