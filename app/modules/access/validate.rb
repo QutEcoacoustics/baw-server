@@ -8,9 +8,11 @@ module Access
       # @param [Object] level
       # @return [Symbol] level
       def level(level)
+        # ensure we choose just one element if an array was accidentally passed
+        level = level.first if level.is_a?(Array)
+
         return nil if level.blank?
 
-        level = level[0] if level.is_a?(Array) && level.size == 1
         case level.to_s
         when 'reader', 'read'
           :reader
