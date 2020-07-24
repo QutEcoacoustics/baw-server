@@ -1,4 +1,4 @@
-require File.expand_path('../boot', __FILE__)
+require File.expand_path('boot', __dir__)
 
 require 'English'
 require 'rails/all'
@@ -52,8 +52,7 @@ module AWB
     # Set Time.zone default to the specified zone and make Active Record auto-convert to this zone.
     # Run "rake -D time" for a list of tasks for finding time zone names. Default is UTC.
     # config.time_zone = 'Central Time (US & Canada)'
-    #config.time_zone - 'UTC'
-    config.time_zone = 'Brisbane'
+    config.time_zone = 'UTC'
 
     # config.active_record.default_timezone determines whether to use Time.local (if set to :local)
     # or Time.utc (if set to :utc) when pulling dates and times from the database.
@@ -66,10 +65,9 @@ module AWB
     config.i18n.available_locales = [:en]
 
     # specify the class to handle exceptions
-    config.exceptions_app = ->(env) {
+    config.exceptions_app = lambda { |env|
       ErrorsController.action(:uncaught_error).call(env)
     }
-
 
     Rails::Html::SafeListSanitizer.allowed_tags.merge(['table', 'tr', 'td', 'caption', 'thead', 'th', 'tfoot', 'tbody', 'colgroup'])
 
@@ -81,13 +79,13 @@ module AWB
 
       # ensure you add url helpers in app/helpers/application_helper.rb
 
-      rewrite /^\/listen.*/i, '/listen_to/index.html'
-      rewrite /^\/birdwalks.*/i, '/listen_to/index.html'
-      rewrite /^\/library.*/i, '/listen_to/index.html'
-      rewrite /^\/demo.*/i, '/listen_to/index.html'
-      rewrite /^\/visualize.*/i, '/listen_to/index.html'
-      rewrite /^\/audio_analysis.*/i, '/listen_to/index.html'
-      rewrite /^\/citsci.*/i, '/listen_to/index.html'
+      rewrite(%r{^/listen.*}i, '/listen_to/index.html')
+      rewrite(%r{^/birdwalks.*}i, '/listen_to/index.html')
+      rewrite(%r{^/library.*}i, '/listen_to/index.html')
+      rewrite(%r{^/demo.*}i, '/listen_to/index.html')
+      rewrite(%r{^/visualize.*}i, '/listen_to/index.html')
+      rewrite(%r{^/audio_analysis.*}i, '/listen_to/index.html')
+      rewrite(%r{^/citsci.*}i, '/listen_to/index.html')
     end
 
     # Sanity check: test dependencies should not be loadable
@@ -96,7 +94,7 @@ module AWB
         base.const_defined?(name) && base.const_get(name).instance_of?(::Module)
       end
 
-      test_deps = [ 'RSpec::Core::DSL', 'RSpec::Core::Version' ]
+      test_deps = ['RSpec::Core::DSL', 'RSpec::Core::Version']
       first_successful_require = test_deps.find { |x| module_exists?(x) }
       if first_successful_require
         throw "Test dependencies available in non-test environment. `#{first_successful_require}` should not be a constant`"
