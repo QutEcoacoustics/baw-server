@@ -3,4 +3,4 @@
 %script{async: true, defer: true, src: "https://maps.googleapis.com/maps/api/js?key=#{Settings.google_maps.api_key}&callback=initMap"}
 
 :javascript
-  var markersArray = #{markers.to_json};
+  var markersArray = #{markers.to_json.html_safe};

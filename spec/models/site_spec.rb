@@ -118,11 +118,15 @@ describe Site, type: :model do
   it 'should error on invalid timezone' do
     expect {
       FactoryBot.create(:site, tzinfo_tz: 'blah')
-    }.to raise_error(ActiveRecord::RecordInvalid, "Validation failed: Tzinfo tz is not a recognised timezone ('blah')")
+    }.to raise_error(ActiveRecord::RecordInvalid, "Validation failed: Tzinfo tz is not a recognized timezone ('blah')")
   end
 
   it 'should be valid for a valid timezone' do
     expect(FactoryBot.create(:site, tzinfo_tz: 'Australia - Brisbane')).to be_valid
+  end
+
+  it 'should include TimeZoneAttribute' do
+    expect(Site.new).to be_a_kind_of(TimeZoneAttribute)
   end
 
   # this should pass, but the paperclip implementation of validate_attachment_content_type is buggy.

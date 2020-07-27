@@ -12,7 +12,7 @@
   = f.label attribute_name, 'Time Zone', class: 'string optional control-label col-sm-3', for: control_id
   %div{class: (full_width ? 'col-sm-9' : 'col-sm-5')}
     .input-group
-      = f.input_field attribute_name, type: 'text', autocomplete: 'timezone-selection', class: 'form-control'
+      = f.input_field attribute_name, type: 'text', autocomplete: 'timezone-selection', class: 'form-control', value: model.timezone&.dig(:friendly_identifier)
       %span.input-group-addon{id: span_id, title: 'Time zone abbreviation and current UTC offset'}
         (no match)
     %p.help-block{id: help_id }
@@ -22,7 +22,7 @@
         = model.errors[attribute_name].join(', ')
 
 :javascript
-  var mapping = #{TimeZoneHelper.mapping_zone_to_offset.to_json}
+  var mapping = #{TimeZoneHelper.mapping_zone_to_offset.to_json.html_safe}
   var mapping_keys = Object.keys(mapping);
   var mapping_values = Object.keys(mapping).map(function (key) { return mapping[key]; });
 

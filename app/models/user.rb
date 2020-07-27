@@ -3,6 +3,9 @@
 require 'role_model'
 
 class User < ApplicationRecord
+  # ensures timezones are handled consistently
+  include TimeZoneAttribute
+
   attr_accessor :skip_creation_email
 
   # Include default devise modules. Others available are:
@@ -142,9 +145,6 @@ class User < ApplicationRecord
 
   after_create :special_after_create_actions
 
-  validate :check_tz
-  before_save :set_rails_tz, if: proc { |user| user.tzinfo_tz_changed? }
-
   # Get the last time this user was seen.
   # @return [DateTime] Date this user was last seen
   def get_last_seen
@@ -239,7 +239,7 @@ class User < ApplicationRecord
 
                        user_hash =
                          {
-                           timezone_information: TimeZoneHelper.info_hash(fresh_user),
+                           timezone_information: fresh_user.timezone,
                            roles_mask_names: fresh_user.roles,
                            image_urls: Api::Image.image_urls(fresh_user.image)
                          }
@@ -283,13 +283,5 @@ class User < ApplicationRecord
       token = Devise.friendly_token
       break token unless User.where(authentication_token: token).first
     end
-  end
-
-  def set_rails_tz
-    TimeZoneHelper.set_rails_tz(self)
-  end
-
-  def check_tz
-    TimeZoneHelper.validate_tzinfo_tz(self)
   end
 end

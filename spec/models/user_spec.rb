@@ -30,6 +30,10 @@ describe User, type: :model do
     }.to raise_exception(ActiveRecord::RecordInvalid, /Validation failed: Tzinfo tz is not a recognised timezone/)
   end
 
+  it 'should include TimeZoneAttribute' do
+    expect(User.new).to be_a_kind_of(TimeZoneAttribute)
+  end
+
   #pending "add some examples to (or delete) #{__FILE__}"
 
   # this should pass, but the paperclip implementation of validate_attachment_content_type is buggy.

@@ -4,6 +4,9 @@ class Site < ApplicationRecord
   # ensures that creator_id, updater_id, deleter_id are set
   include UserChange
 
+  # ensures timezones are handled consistently
+  include TimeZoneAttribute
+
   attr_accessor :project_ids, :custom_latitude, :custom_longitude, :location_obfuscated
 
   # relations
@@ -62,9 +65,6 @@ class Site < ApplicationRecord
   validates_attachment_content_type :image,
                                     content_type: %r{^image/(jpg|jpeg|pjpeg|png|x-png|gif)$},
                                     message: 'file type %{value} is not allowed (only jpeg/png/gif images)'
-
-  validate :check_tz
-  before_save :set_rails_tz, if: proc { |site| site.tzinfo_tz_changed? }
 
   # commonly used queries
   #scope :specified_sites, lambda { |site_ids| where('id in (:ids)', { :ids => site_ids } ) }
@@ -193,7 +193,7 @@ class Site < ApplicationRecord
                            location_obfuscated: fresh_site.location_obfuscated,
                            custom_latitude: fresh_site.latitude,
                            custom_longitude: fresh_site.longitude,
-                           timezone_information: TimeZoneHelper.info_hash(fresh_site),
+                           timezone_information: fresh_site.timezone,
                            description_html: fresh_site.description_html,
                            image_urls: Api::Image.image_urls(fresh_site.image)
                          }
@@ -238,13 +238,5 @@ class Site < ApplicationRecord
         }
       ]
     }
-  end
-
-  def set_rails_tz
-    TimeZoneHelper.set_rails_tz(self)
-  end
-
-  def check_tz
-    TimeZoneHelper.validate_tzinfo_tz(self)
   end
 end

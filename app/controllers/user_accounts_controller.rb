@@ -88,9 +88,6 @@ ELSE last_sign_in_at END DESC'
     @user = current_user
     do_authorize_instance
 
-    # sometimes faulty timezones are stored, repair them
-    TimeZoneHelper.parse_model(@user)
-
     @user.preferences = user_account_params
 
     respond_to do |format|

@@ -13,7 +13,7 @@
       %p= t('devise.registrations.edit.currently_waiting_confirmation_for_email', email: resource.unconfirmed_email)
     = f.input :password, autocomplete: 'off', hint: t('devise.registrations.edit.leave_blank_if_you_don_t_want_to_change_it'), required: false
     = f.input :password_confirmation, required: false
-    = f.input :current_password, hint: t('devise.registrations.edit.we_need_your_current_password_to_confirm_your_changes'), required: true
+    = f.input :current_password, hint: t('devise.registrations.edit.we_need_your_current_password_to_confirm_your_changes'), required: false
     = render partial: 'shared/image_upload', locals: { f: f,  model_instance: resource, model_name: resource_name }
     = f.button :submit_cancel, t('devise.registrations.edit.update'), class: 'btn-default'
 
