@@ -240,6 +240,12 @@ class AudioRecording < ApplicationRecord
                       :sample_rate_hertz, :channels, :bit_rate_bps, :media_type,
                       :data_length_bytes, :status, :created_at, :updated_at],
       text_fields: [:media_type, :status],
+      custom_fields: lambda { |item, _user|
+        custom_fields = {
+          recorded_date_timezone: item&.site&.timezone&.dig(:identifier)
+        }
+        [item, custom_fields]
+      },
       new_spec_fields: lambda { |_user|
                          {
                            site_id: nil,
@@ -343,7 +349,6 @@ class AudioRecording < ApplicationRecord
     seconds_as_interval = Arel::Nodes::SqlLiteral.new("' seconds' as interval")
     infix_op_string_join = Arel::Nodes::InfixOperation.new('||'.to_sym, AudioRecording.arel_table[:duration_seconds], seconds_as_interval)
     function_cast = Arel::Nodes::NamedFunction.new('CAST', [infix_op_string_join])
-    infix_op_add = Arel::Nodes::InfixOperation.new(:+, AudioRecording.arel_table[:recorded_date], function_cast)
-    infix_op_add
+    Arel::Nodes::InfixOperation.new(:+, AudioRecording.arel_table[:recorded_date], function_cast)
   end
 end
