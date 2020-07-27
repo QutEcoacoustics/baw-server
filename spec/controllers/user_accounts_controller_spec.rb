@@ -7,7 +7,7 @@ describe UserAccountsController do
   # make sure it can recover from bad input
   describe 'proper timezones data' do
     let(:user_bad_tz) {
-      user = FactoryBot.build(:user, tzinfo_tz: 'Australia/Sydney', rails_tz: 'Sydney')
+      user = FactoryBot.build(:user, tzinfo_tz: 'Australia - Sydney', rails_tz: 'Sydney')
       user.save!(validate: false)
       user
     }
@@ -18,7 +18,7 @@ describe UserAccountsController do
 
     describe 'GET my_account' do
       it 'converts proper timezones' do
-        old_values = [user_bad_tz.tzinfo_tz, user_bad_tz.rails_tz]
+        old_values = ['Australia - Sydney', user_bad_tz.rails_tz]
 
         response = get :my_account, { format: :json }
         body = JSON.parse(response.body)
@@ -29,13 +29,13 @@ describe UserAccountsController do
         new_values = [user_good_tz.tzinfo_tz, user_good_tz.rails_tz]
 
         expect(old_values).to_not eq(new_values)
-        expect(new_values).to eq(['Australia - Sydney', 'Sydney'])
+        expect(new_values).to eq(['Australia/Sydney', 'Sydney'])
       end
     end
 
     describe 'PUT update' do
       it 'converts proper timezones when updating user_account\'s preferences' do
-        old_values = [user_bad_tz.tzinfo_tz, user_bad_tz.rails_tz]
+        old_values = ['Australia - Sydney', user_bad_tz.rails_tz]
 
         post_json = { "volume": 1, "muted": false, "auto_play": false, "visualize": {
           "hide_images": true,
@@ -49,7 +49,7 @@ describe UserAccountsController do
         new_values = [user_good_tz.tzinfo_tz, user_good_tz.rails_tz]
 
         expect(old_values).to_not eq(new_values)
-        expect(new_values).to eq(['Australia - Sydney', 'Sydney'])
+        expect(new_values).to eq(['Australia/Sydney', 'Sydney'])
       end
     end
   end
@@ -67,7 +67,7 @@ describe UserAccountsController do
 
     describe 'GET my_account' do
       it 'should deleted bad timezones' do
-        old_values = [user_bad_tz.tzinfo_tz, user_bad_tz.rails_tz]
+        old_values = ['Australia - Sydney', user_bad_tz.rails_tz]
 
         response = get :my_account, { format: :json }
         body = JSON.parse(response.body)
@@ -84,7 +84,7 @@ describe UserAccountsController do
 
     describe 'PUT update' do
       it 'deleted bad timezones when updating the requested user_account\'s preferences' do
-        old_values = [user_bad_tz.tzinfo_tz, user_bad_tz.rails_tz]
+        old_values = ['Australia - Sydney', user_bad_tz.rails_tz]
 
         post_json = { "volume": 1, "muted": false, "auto_play": false, "visualize": {
           "hide_images": true,

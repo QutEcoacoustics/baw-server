@@ -3,30 +3,30 @@ require 'rails_helper'
 describe TimeZoneAttribute do
   # extracted from prod so we can test possible cases
   CASES = [
-    ['Australia - Darwin', 'Darwin', 'Australia/Darwin'],
-    ['Asia - Makassar', '', 'Asia/Makassar'],
-    ['Asia - Yangon', '', 'Asia/Yangon'],
-    ['Australia - Melbourne', 'Melbourne', 'Australia/Melbourne'],
-    ['Australia - Brisbane', 'Brisbane', 'Australia/Brisbane'],
+    ['Australia - Darwin', 'Darwin', 'Australia/Darwin', 'Darwin'],
+    ['Asia - Makassar', '', 'Asia/Makassar', nil],
+    ['Asia - Yangon', '', 'Asia/Yangon', nil],
+    ['Australia - Melbourne', 'Melbourne', 'Australia/Melbourne', 'Melbourne'],
+    ['Australia - Brisbane', 'Brisbane', 'Australia/Brisbane', 'Brisbane'],
     # this case represents a genuinely bad value that somehow ended up in the
     # database. No code that I could find would generate this value.
-    ['UTC -2', '', nil],
-    ['Asia - Thimphu', '', 'Asia/Thimphu'],
-    ['US - Eastern', '', 'US/Eastern'],
-    ['Australia - NSW', '', 'Australia/NSW'],
-    ['America - Costa Rica', '', 'America/Costa_Rica'],
-    ['Australia - Sydney', 'Sydney', 'Australia/Sydney'],
-    ['Asia - Singapore', 'Singapore', 'Asia/Singapore'],
-    ['Australia - Adelaide', 'Adelaide', 'Australia/Adelaide'],
-    ['Asia - Dhaka', 'Dhaka', 'Asia/Dhaka'],
-    ['Asia - Bangkok', 'Hanoi', 'Asia/Bangkok'],
-    ['Australia - Hobart', 'Hobart', 'Australia/Hobart'],
-    ['America - Lima', 'Quito', 'America/Lima'],
-    ['America - Bogota', 'Bogota', 'America/Bogota'],
-    ['Europe - Berlin', 'Bern', 'Europe/Berlin'],
-    ['Pacific - Port Moresby', 'Port Moresby', 'Pacific/Port_Moresby'],
-    ['Australia - Tasmania', '', 'Australia/Tasmania'],
-    ['', nil, nil]
+    ['UTC -2', '', nil, nil],
+    ['Asia - Thimphu', '', 'Asia/Thimphu', nil],
+    ['US - Eastern', '', 'US/Eastern', nil],
+    ['Australia - NSW', '', 'Australia/NSW', nil],
+    ['America - Costa Rica', '', 'America/Costa_Rica', nil],
+    ['Australia - Sydney', 'Sydney', 'Australia/Sydney', 'Sydney'],
+    ['Asia - Singapore', 'Singapore', 'Asia/Singapore', 'Singapore'],
+    ['Australia - Adelaide', 'Adelaide', 'Australia/Adelaide', 'Adelaide'],
+    ['Asia - Dhaka', 'Dhaka', 'Asia/Dhaka', 'Dhaka'],
+    ['Asia - Bangkok', 'Hanoi', 'Asia/Bangkok', 'Hanoi'],
+    ['Australia - Hobart', 'Hobart', 'Australia/Hobart', 'Hobart'],
+    ['America - Lima', 'Quito', 'America/Lima', 'Quito'],
+    ['America - Bogota', 'Bogota', 'America/Bogota', 'Bogota'],
+    ['Europe - Berlin', 'Bern', 'Europe/Berlin', 'Berlin'],
+    ['Pacific - Port Moresby', 'Port Moresby', 'Pacific/Port_Moresby', 'Port Moresby'],
+    ['Australia - Tasmania', '', 'Australia/Tasmania', nil],
+    ['', nil, nil, nil]
   ].freeze
 
   before(:all) do
@@ -49,7 +49,7 @@ describe TimeZoneAttribute do
   end
 
   context 'fixing bad values in database' do
-    CASES.each do |tzinfo_tz, rails_tz, expected|
+    CASES.each do |tzinfo_tz, rails_tz, expected, expected_rails_tz|
       context [tzinfo_tz, rails_tz, expected] do
         it 'handles restoring bad values from the database' do
           # arrange
@@ -63,15 +63,14 @@ describe TimeZoneAttribute do
           # assert
           # value is normalized on read
           expect(loaded.tzinfo_tz).to eq(expected)
-          # rails_tz is unmodified
-          expect(loaded.rails_tz).to eq(rails_tz)
+          expect(loaded.rails_tz).to eq(expected_rails_tz)
 
           # act
           loaded.save!
           results = ActiveRecord::Base.connection.exec_query('SELECT * FROM temp_models LIMIT 1')
 
           # assert
-          expect(results.rows.first[1..]).to match([expected, rails_tz])
+          expect(results.rows.first[1..]).to match([expected, expected_rails_tz])
         end
 
         it 'normalizes values as they are assigned' do
@@ -86,7 +85,6 @@ describe TimeZoneAttribute do
           end
 
           # it sets rails tz at the same time
-          expected_rails_tz = ActiveSupport::TimeZone::MAPPING.invert[expected]
           expect(temp.rails_tz).to eq(expected_rails_tz)
         end
       end

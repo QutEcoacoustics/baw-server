@@ -42,6 +42,7 @@ module TimeZoneAttribute
     # we need to normalize, update value
     value = TimeZoneHelper.to_identifier(value)
     write_attribute(:tzinfo_tz, value)
+    write_attribute(:rails_tz, TimeZoneHelper.tz_identifier_to_ruby(value))
 
     value
   end

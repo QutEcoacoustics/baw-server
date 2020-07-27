@@ -667,6 +667,7 @@ resource 'Sites' do
     let(:authentication_token) { writer_token }
     let!(:update_site_tz) {
       site2 = Creation::Common.create_site(writer_user, project)
+      site2.tzinfo_tz = 'Australia/Sydney'
       site2.rails_tz = 'Sydney'
       site2.save!
     }
@@ -690,7 +691,7 @@ resource 'Sites' do
     let!(:update_site_tz) {
       site2 = FactoryBot.build(:site, creator: writer_user)
       site2.projects << project
-      site2.tzinfo_tz = 'Australia - Brisbane'
+      site2.tzinfo_tz = 'Australia/Brisbane'
       site2.save!
     }
     let(:raw_post) {
@@ -843,6 +844,7 @@ resource 'Sites' do
     let(:authentication_token) { writer_token }
     let!(:update_site_tz) {
       site2 = Creation::Common.create_site(writer_user, project)
+      site2.tzinfo_tz = 'Australia/Sydney'
       site2.rails_tz = 'Sydney'
       site2.save!
     }
@@ -868,7 +870,7 @@ resource 'Sites' do
     let!(:update_site_tz) {
       site2 = FactoryBot.build(:site, creator: writer_user)
       site2.projects << project
-      site2.tzinfo_tz = 'Australia - Brisbane'
+      site2.tzinfo_tz = 'Australia/Brisbane'
       site2.save!
     }
     let(:raw_post) {

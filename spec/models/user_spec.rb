@@ -6,7 +6,7 @@ describe User, type: :model do
   it 'should error on invalid timezone' do
     expect {
       FactoryBot.create(:user, tzinfo_tz: 'blah')
-    }.to raise_error(ActiveRecord::RecordInvalid, "Validation failed: Tzinfo tz is not a recognised timezone ('blah')")
+    }.to raise_error(ActiveRecord::RecordInvalid, "Validation failed: Tzinfo tz is not a recognized timezone ('blah')")
   end
 
   it 'should be valid for a valid timezone' do
@@ -22,12 +22,12 @@ describe User, type: :model do
   it 'should not allow bad tz_info' do
     user = FactoryBot.create(:user)
 
-    user.tzinfo_tz = 'Australia/Sydney'
+    user.tzinfo_tz = 'Australia/fsdjljfssl'
     user.rails_tz = 'Sydney'
 
     expect {
       user.save!
-    }.to raise_exception(ActiveRecord::RecordInvalid, /Validation failed: Tzinfo tz is not a recognised timezone/)
+    }.to raise_exception(ActiveRecord::RecordInvalid, /Validation failed: Tzinfo tz is not a recognized timezone/)
   end
 
   it 'should include TimeZoneAttribute' do

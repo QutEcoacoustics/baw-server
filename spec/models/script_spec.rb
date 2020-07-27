@@ -53,10 +53,11 @@ describe Script, type: :model do
 
   describe 'latest and earliest versions' do
     let!(:three_versions) {
+      first = create(:script, version: 1.0, id: 999)
       [
-        create(:script, version: 1.0, id: 999),
-        create(:script, version: 1.5, group_id: 999),
-        create(:script, version: 1.6, group_id: 999)
+        first,
+        create(:script, version: 1.5, group_id: first.id),
+        create(:script, version: 1.6, group_id: first.id)
       ]
     }
 
