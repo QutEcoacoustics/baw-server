@@ -78,7 +78,7 @@ describe ApplicationController, type: :controller do
       }
     end
 
-    shared_examples_for :sanitization do |current_action|
+    shared_examples_for :sanitization, :aggregate_failures do |current_action|
       let(:current_action) { current_action }
 
       def invoke(test_value, expected = :unprocessable_entity)
@@ -106,8 +106,8 @@ describe ApplicationController, type: :controller do
 
         it 'but reject double quotes' do
           expect(
-            invoke('""', :bad_request)
-          ).to include(error_response(:valid_json))
+            invoke('""')
+          ).to include(error_response)
         end
 
         it 'but reject invalid json' do
