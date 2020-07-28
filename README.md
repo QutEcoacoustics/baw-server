@@ -2,10 +2,7 @@
 
 The bioacoustic workbench server. Manages the structure and audio data. Provides an API for client access.
 
-[![Documentation](https://img.shields.io/badge/docs-rdoc.info-blue.svg)](http://www.rubydoc.info/github/QutEcoacoustics/baw-server)
-[![Code Climate](https://codeclimate.com/github/QutEcoacoustics/baw-server/badges/gpa.svg)](https://codeclimate.com/github/QutEcoacoustics/baw-server)
-[![Test Coverage](https://codeclimate.com/github/QutEcoacoustics/baw-server/badges/coverage.svg)](https://codeclimate.com/github/QutEcoacoustics/baw-server/coverage)
-
+![Run tests, publish docker image](https://github.com/QutEcoacoustics/baw-server/workflows/Run%20tests,%20publish%20docker%20image/badge.svg)
 
 ## Dependencies
 
