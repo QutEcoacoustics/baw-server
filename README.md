@@ -194,6 +194,23 @@ We deploy using Ansible.
 If you want to use background workers, you'll need to set up [Redis](http://redis.io/).
 A basic redis setup is included with the docker-compose file.
 
+## Creating a release
+
+1. `git switch master && git pull`
+2. Determine the next tag name and set it to an environment variable:
+  - `NEXT_VERSION=x.x.x`
+3. Set the GitHub auth token for docs generation:
+  - `CHANGELOG_GITHUB_TOKEN=xxx`
+4. Generate the release notes:
+  - `docker-compose run web rake changelog`
+5. Update the version in the `VERSION` file
+  - `echo "$NEXT_VERSION" > VERSION`
+6. Commit the changed files
+  - `git add -A && git commit -m "Generated changelog for version $NEXT_VERSION"
+7. Tag the release and push
+  - `git tag -a $NEXT_VERSION -m "Version $NEXT_VERSION"
+  - `git push --follow-tags`
+
 ## Architecture
 
 - Two main parts
@@ -207,6 +224,13 @@ A basic redis setup is included with the docker-compose file.
 ## Credits
 
 This project was originally created and maintained by [@cofiem](https://github.com/cofiem) - all the amazing things it does are a credit to them.
+
+Other major credits go to:
+
+- [@atruskie](https://github.com/atruskie)
+- [@peichins](https://github.com/peichins)
+- [@Allcharles](https://github.com/Allcharles)
+- [@JessieLOliver](https://github.com/JessieLOliver) for design and user experience feedback
 
 ## Licence
 Apache License, Version 2.0
