@@ -205,7 +205,7 @@ A basic redis setup is included with the docker-compose file.
 6. Commit the changed files
   - `git add -A && git commit -m "Generated changelog for version $NEXT_VERSION"`
 7. Tag the release and push
-  - `git tag -a $NEXT_VERSION -m "Version $NEXT_VERSION`
+  - `git tag -a $NEXT_VERSION -m "Version $NEXT_VERSION"`
   - `git push --follow-tags`
 
 ## Architecture
