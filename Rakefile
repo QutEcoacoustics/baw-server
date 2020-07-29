@@ -17,7 +17,7 @@ begin
 rescue LoadError
   # allow other environments to fail loading... this set of tasks is only
   # intended to run in a development environment!
-  raise if Rails.development?
+  raise if Rails.env.development?
 end
 
 Rails.application.load_tasks
