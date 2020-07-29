@@ -13,6 +13,7 @@ begin
     config.project = 'baw-server'
     config.since_tag = '2.0.1'
     config.future_release = ENV['NEXT_VERSION']
+    config.verbose = true
   end
 rescue LoadError
   # allow other environments to fail loading... this set of tasks is only

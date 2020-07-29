@@ -1,8 +1,8 @@
 # Changelog
 
-## [3.0.0](https://github.com/QutEcoacoustics/baw-server/tree/3.0.0) (2020-07-28)
+## [3.0.0.0](https://github.com/QutEcoacoustics/baw-server/tree/3.0.0.0) (2020-07-29)
 
-[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/2.0.1...3.0.0)
+[Full Changelog](https://github.com/QutEcoacoustics/baw-server/compare/2.0.1...3.0.0.0)
 
 **Implemented enhancements:**
 
@@ -48,6 +48,7 @@
 
 **Merged pull requests:**
 
+- Adds an automatic changelog generator [\#483](https://github.com/QutEcoacoustics/baw-server/pull/483) ([atruskie](https://github.com/atruskie))
 - Bump json from 1.8.6 to 2.3.1 [\#482](https://github.com/QutEcoacoustics/baw-server/pull/482) ([dependabot[bot]](https://github.com/apps/dependabot))
 - Rswag - adds the ability to generate documentation for the API [\#479](https://github.com/QutEcoacoustics/baw-server/pull/479) ([atruskie](https://github.com/atruskie))
 - Bump rack from 1.4.1 to 2.2.3 in /lib/gems/resque-status [\#473](https://github.com/QutEcoacoustics/baw-server/pull/473) ([dependabot[bot]](https://github.com/apps/dependabot))

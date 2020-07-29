@@ -195,17 +195,17 @@ A basic redis setup is included with the docker-compose file.
 
 1. `git switch master && git pull`
 2. Determine the next tag name and set it to an environment variable:
-  - `NEXT_VERSION=x.x.x`
+  - `export NEXT_VERSION=x.x.x`
 3. Set the GitHub auth token for docs generation:
-  - `CHANGELOG_GITHUB_TOKEN=xxx`
+  - `export CHANGELOG_GITHUB_TOKEN=xxx`
 4. Generate the release notes:
   - `docker-compose run web rake changelog`
 5. Update the version in the `VERSION` file
   - `echo "$NEXT_VERSION" > VERSION`
 6. Commit the changed files
-  - `git add -A && git commit -m "Generated changelog for version $NEXT_VERSION"
+  - `git add -A && git commit -m "Generated changelog for version $NEXT_VERSION"`
 7. Tag the release and push
-  - `git tag -a $NEXT_VERSION -m "Version $NEXT_VERSION"
+  - `git tag -a $NEXT_VERSION -m "Version $NEXT_VERSION`
   - `git push --follow-tags`
 
 ## Architecture
