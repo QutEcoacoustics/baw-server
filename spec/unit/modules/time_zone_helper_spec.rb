@@ -101,10 +101,13 @@ describe TimeZoneHelper do
     )
   end
 
-  it 'can convert an offset in seconds into a readable timestamp' do
-    [[-7200, '-02:00'], [0, '+00:00'], [36_000, '+10:00']].each do |seconds, expected|
-      actual = TimeZoneHelper.offset_seconds_to_formatted(seconds)
-      expect(actual).to eq(expected)
+  context 'can convert an offset in seconds into a readable timestamp' do
+    CASES = [[-7200, '-02:00'], [0, '+00:00'], [15_300, '+04:15'], [36_000, '+10:00']]
+    CASES.each do |seconds, expected|
+      example "#{seconds} ➡ #{expected}" do
+        actual = TimeZoneHelper.offset_seconds_to_formatted(seconds)
+        expect(actual).to eq(expected)
+      end
     end
   end
 
