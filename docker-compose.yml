@@ -57,6 +57,9 @@ services:
     environment:
       RAILS_ENV: ${RAILS_ENV:-development}
       MIGRATE_DB: "true"
+      # pass through values
+      NEXT_VERSION:
+      CHANGELOG_GITHUB_TOKEN:
     user: baw_web
     volumes:
       - type: bind

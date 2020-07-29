@@ -189,26 +189,12 @@ group :development do
   gem 'i18n-tasks', '~> 0.9.0'
   gem 'notiffany', '~> 0.1.0'
   gem 'rack-mini-profiler', '>= 2.0.2'
+
+  # linting and formatting
   gem 'rubocop', require: false
 
-  # for cleaning up Rails apps
-  # gem 'traceroute', require: false
-  # gem 'scrap', require: false
-  # gem 'rails_best_practices', require: false
-  # gem 'rubocop', require: false
-  # gem 'rubycritic', require: false
-  # gem 'metric_fu', require: false
-
-  # security checkers
-  # gem 'codesake-dawn', require: false
-  # gem 'brakeman', require: false
-
-  # database checks
-  # gem 'lol_dba', require: false
-  # gem 'consistency_fail', require: false
-
-  #gem 'debugger'
-  # gem install traceroute --no-ri --no-rdoc
+  # generating changelogs
+  gem 'github_changelog_generator'
 end
 
 group :test do
