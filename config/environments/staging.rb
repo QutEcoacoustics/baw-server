@@ -75,7 +75,7 @@ Rails.application.configure do
     }
 
   config.action_mailer.delivery_method = :smtp
-  config.action_mailer.smtp_settings = Settings.mailer.smtp.deep_symbolize_keys
+  config.action_mailer.smtp_settings = Settings.mailer.smtp
 
   # Enable locale fallbacks for I18n (makes lookups for any locale fall back to
   # the I18n.default_locale when a translation can not be found).
@@ -92,5 +92,4 @@ Rails.application.configure do
 
   # Do not dump schema after migrations.
   config.active_record.dump_schema_after_migration = false
-
 end

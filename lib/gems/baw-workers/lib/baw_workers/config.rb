@@ -134,8 +134,7 @@ module BawWorkers
       end
 
       def load_settings(config_files)
-        new_config = ::Config.load_and_set_settings(config_files)
-        new_config
+        ::Config.load_and_set_settings(config_files)
       end
 
       # Configures redis connections for both Resque and our own Redis wrapper
@@ -249,7 +248,7 @@ module BawWorkers
           ActionMailer::Base.smtp_settings = nil
         else
           ActionMailer::Base.delivery_method = :smtp
-          ActionMailer::Base.smtp_settings = BawWorkers::Validation.deep_symbolize_keys(settings.mailer.smtp)
+          ActionMailer::Base.smtp_settings = settings.mailer.smtp
         end
       end
 
@@ -328,7 +327,7 @@ module BawWorkers
       end
 
       def format_result(settings, is_test, context, settings_files)
-        result = {
+        {
           context: context,
           settings: {
             test: is_test,
@@ -354,7 +353,6 @@ module BawWorkers
             resque: Resque.logger.level
           }
         }
-        result
       end
 
       def format_resque_worker(result, is_resque_worker, is_resque_worker_fg)
