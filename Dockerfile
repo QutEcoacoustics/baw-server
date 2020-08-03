@@ -54,7 +54,7 @@ ENV RAILS_ENV=production \
 USER ${app_user}
 
 RUN \
-  # temporarily upgrade bundler until we can jump to ruby 2.7 
+  # temporarily upgrade bundler until we can jump to ruby 2.7
   gem update --system \
   && gem install bundler
 
@@ -118,5 +118,5 @@ COPY ./provision/Passengerfile.production.json /home/${app_user}/${app_name}/Pas
 # precompile passenger standalone
 RUN bundle exec passenger start --runtime-check-only
 
-ENTRYPOINT [ "bundle", "exec" ]
+ENTRYPOINT [ "./provision/entrypoint.sh" ]
 CMD [ "passenger", "start" ]
