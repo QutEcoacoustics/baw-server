@@ -87,6 +87,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+      - name: Find Tag
+        id: tagger
+        uses: jimschubert/query-tag-action@v1
       - name: Build and push Docker image
         uses: docker/build-push-action@v1.1.0
         with:
@@ -117,7 +120,7 @@ jobs:
           # Comma-delimited list of images to consider as cache sources
           #cache_froms: # optional
           # Comma-delimited list of labels to add to the built image
-          #labels: # optional
+          labels: '${{steps.tagger.outputs.tag}}'
           # Adds labels with git repository information to the built image
           add_git_labels: true
           # Whether to push the image
