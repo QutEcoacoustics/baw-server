@@ -4,28 +4,37 @@
 # user.password is only available when the password is stored in the model instance.
 # loading a user model from the database will not make the password available (as it is hashed)
 
-# Main admin user must always exist
-admin_user = User.where(user_name: 'Admin').first
+def ensure_user(user_name:, email:, password:, roles:)
+  user = User.where(user_name: user_name).first
+  if user.blank?
+    user = User.new(user_name: user_name, email: email, roles: roles)
+    user.password = password
+    user.skip_confirmation!
+    user.save!(validate: false)
+  else
+    user.email = email
+    user.password = password unless user.valid_password?(password)
+    user.roles = roles
+  end
 
-if admin_user.blank?
-  admin_user = User.new(user_name: 'Admin')
-  admin_user.email = Settings.admin_user.email
-  admin_user.password = Settings.admin_user.password
-  admin_user.roles = [:admin]
-  admin_user.skip_confirmation!
-  admin_user.save!(validate: false)
+  user.save!(validate: false)
 end
 
-# harvester user is for machine access via api
-harvester_user = User.where(user_name: 'Harvester').first
-if harvester_user.blank?
-  harvester_user = User.new(user_name: 'Harvester')
-  harvester_user.email = Settings.harvester.email
-  harvester_user.password = Settings.harvester.password
-  harvester_user.roles = [:harvester]
-  harvester_user.skip_confirmation!
-  harvester_user.save!(validate: false)
-end
+# Main admin user must always exist, and must always have these values
+ensure_user(
+  user_name: 'Admin',
+  email: Settings.admin_user.email,
+  password: Settings.admin_user.password,
+  roles: [:admin]
+)
+
+# harvester user is for machine access via api, and must always have these values
+ensure_user(
+  user_name: 'Harvester',
+  email: Settings.harvester.email,
+  password: Settings.harvester.password,
+  roles: [:harvester]
+)
 
 # default dataset
 default_dataset = Dataset.default_dataset

@@ -3,7 +3,7 @@
 require 'tzinfo'
 require 'active_support'
 
-# Collection of tiemzone class helper methods
+# Collection of timezone class helper methods
 module TimeZoneHelper
   # @used by a view
   # @deprecated Remove when views are removed
