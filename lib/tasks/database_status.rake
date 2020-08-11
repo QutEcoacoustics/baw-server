@@ -18,6 +18,9 @@ def __baw_db_status
     if migration_context.needs_migration?
       __baw_db_log 'ℹ Database needs to be migrated'
       result = 2
+    else
+      __baw_db_log '✔ Database is ready'
+      result = 0
     end
   rescue ActiveRecord::NoDatabaseError
     __baw_db_log 'ℹ Database needs to be created'
@@ -28,9 +31,6 @@ def __baw_db_status
     e.backtrace.each { |line| puts line }
 
     exit 255
-  else
-    __baw_db_log '✔ Database is ready'
-    result = 0
   end
 
   result
