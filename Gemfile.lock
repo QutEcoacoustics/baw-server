@@ -258,7 +258,7 @@ GEM
       activerecord
       kaminari-core (= 1.2.1)
     kaminari-core (1.2.1)
-    kramdown (2.2.1)
+    kramdown (2.3.0)
       rexml
     kramdown-parser-gfm (1.1.0)
       kramdown (~> 2.0)
@@ -575,7 +575,7 @@ DEPENDENCIES
   jquery-rails (~> 4.2.0)
   json_spec (~> 1.1.4)
   kaminari
-  kramdown (~> 2.2.1)
+  kramdown (~> 2.3.0)
   kramdown-parser-gfm
   memoist
   notiffany (~> 0.1.0)
