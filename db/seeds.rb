@@ -10,7 +10,6 @@ def ensure_user(user_name:, email:, password:, roles:)
     user = User.new(user_name: user_name, email: email, roles: roles)
     user.password = password
     user.skip_confirmation!
-    user.save!(validate: false)
   else
     user.email = email
     user.password = password unless user.valid_password?(password)
@@ -18,10 +17,11 @@ def ensure_user(user_name:, email:, password:, roles:)
   end
 
   user.save!(validate: false)
+  user
 end
 
 # Main admin user must always exist, and must always have these values
-ensure_user(
+admin_user = ensure_user(
   user_name: 'Admin',
   email: Settings.admin_user.email,
   password: Settings.admin_user.password,
