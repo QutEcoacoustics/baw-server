@@ -37,8 +37,10 @@ jobs:
       - name: Build image
         #run: docker build . -t baw-server-dev
         run: docker-compose build --no-rm web
-      - name: Start docker-compose
-        run: docker-compose up -d
+      # disabled the following - appears to be a race condition between entrypoint script (which does a migration)
+      # and the following prepare database step
+      #- name: Start docker-compose
+      #  run: docker-compose up -d
       - name: prepare test database
         run: docker-compose run web echo 'database created'
         env:
