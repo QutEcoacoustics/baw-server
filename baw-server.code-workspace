@@ -46,9 +46,7 @@
       "statusBar.background": "#72cb80",
       "statusBarItem.hoverBackground": "#4dbd5e",
       "statusBar.foreground": "#15202b",
-      "activityBar.activeBackground": "#97d9a2",
-      "statusBar.border": "#72cb80",
-      "titleBar.border": "#72cb80"
+      "activityBar.activeBackground": "#97d9a2"
     },
     "peacock.remoteColor": "#72cb80",
     "testExplorer.addToEditorContextMenu": true,
