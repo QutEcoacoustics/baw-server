@@ -41,10 +41,17 @@ paths:
                   id: 1
                   description: project description 2
                   name: gen_project2
+                  notes: note number 2
+                  updater_id: 1
                   creator_id: 3
+                  deleted_at: 
+                  deleter_id: 
+                  created_at: '2020-08-27T15:07:15.914+01:00'
+                  updated_at: '2020-08-27T15:07:16.766+01:00'
                   site_ids:
                   - 1
                   description_html: "<p>project description 2</p>\n"
+                  description_html_tagline: project description 2
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -89,10 +96,17 @@ paths:
                   id: 2
                   name: gen_project3
                   description: project description 3
-                  creator_id: 7
+                  notes: note number 3
+                  creator_id: 8
+                  updater_id: 
+                  deleter_id: 
+                  deleted_at: 
+                  created_at: '2020-08-27T15:07:16.832+01:00'
+                  updated_at: '2020-08-27T15:07:16.832+01:00'
                   site_ids:
                   - 2
                   description_html: "<p>project description 3</p>\n"
+                  description_html_tagline: project description 3
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -157,10 +171,17 @@ paths:
                   id: 4
                   description: project description 6
                   name: gen_project6
-                  creator_id: 15
+                  notes: note number 6
+                  updater_id: 1
+                  creator_id: 16
+                  deleted_at: 
+                  deleter_id: 
+                  created_at: '2020-08-27T15:07:17.343+01:00'
+                  updated_at: '2020-08-27T15:07:17.560+01:00'
                   site_ids:
                   - 4
                   description_html: "<p>project description 6</p>\n"
+                  description_html_tagline: project description 6
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -211,10 +232,17 @@ paths:
                 - id: 5
                   name: gen_project7
                   description: project description 7
-                  creator_id: 19
+                  notes: note number 7
+                  creator_id: 21
+                  updater_id: 
+                  deleter_id: 
+                  deleted_at: 
+                  created_at: '2020-08-27T15:07:17.622+01:00'
+                  updated_at: '2020-08-27T15:07:17.622+01:00'
                   site_ids:
                   - 5
                   description_html: "<p>project description 7</p>\n"
+                  description_html_tagline: project description 7
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -262,10 +290,17 @@ paths:
                 - id: 6
                   name: gen_project8
                   description: project description 8
-                  creator_id: 23
+                  notes: note number 8
+                  creator_id: 25
+                  updater_id: 
+                  deleter_id: 
+                  deleted_at: 
+                  created_at: '2020-08-27T15:07:17.944+01:00'
+                  updated_at: '2020-08-27T15:07:17.944+01:00'
                   site_ids:
                   - 6
                   description_html: "<p>project description 8</p>\n"
+                  description_html_tagline: project description 8
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -301,9 +336,16 @@ paths:
                   id: 8
                   name: gen_project10
                   description: project description 10
+                  notes: note number 10
                   creator_id: 1
+                  updater_id: 1
+                  deleter_id: 
+                  deleted_at: 
+                  created_at: '2020-08-27T15:07:18.367+01:00'
+                  updated_at: '2020-08-27T15:07:18.367+01:00'
                   site_ids: []
                   description_html: "<p>project description 10</p>\n"
+                  description_html_tagline: project description 10
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -343,7 +385,2350 @@ paths:
                   id: 
                   name: 
                   description: 
+                  notes: 
                   creator_id: 
+                  updater_id: 
+                  deleter_id: 
+                  deleted_at: 
+                  created_at: 
+                  updated_at: 
+  "/scripts":
+    get:
+      summary: list scripts
+      security:
+      - basic_auth_with_token: []
+      parameters: []
+      tags:
+      - scripts
+      description: |2
+
+        Users that can invoke this route: `Admin`, `owner user`, `writer`, `reader`, `no_access`, `anyone`.<br />
+        Users that can't: `Harvester`.
+
+        Note: accessing a list/index/filter endpoint may return no results due to project permissions
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              example:
+                meta:
+                  status: 200
+                  message: OK
+                  sorting:
+                    order_by: name
+                    direction: asc
+                  paging:
+                    page: 1
+                    items: 25
+                    total: 1
+                    max_page: 1
+                    current: http://localhost:3000/scripts?direction=asc&items=25&order_by=name&page=1
+                    previous: 
+                    next: 
+                data:
+                - id: 9
+                  name: script name 9
+                  description: script description 9
+                  analysis_identifier: script machine identifier 9
+                  version: 0.09
+                  group_id: 9
+                  creator_id: 1
+                  created_at: '2020-08-27T15:07:18.732+01:00'
+                  executable_settings: executable settings 9
+                  executable_settings_media_type: text/plain
+                  analysis_action_params:
+                    file_executable: "./AnalysisPrograms/AnalysisPrograms.exe"
+                    copy_paths:
+                    - "./programs/AnalysisPrograms/Logs/log.txt"
+                    sub_folders: []
+                    custom_setting: 9
+                  is_last_version: true
+                  is_first_version: true
+                  description_html: "<p>script description 9</p>\n"
+                  description_html_tagline: script description 9
+              schema:
+                allOf:
+                - "$ref": "#/components/schemas/standard_response"
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        "$ref": "#/components/schemas/script"
+  "/scripts/{id}":
+    get:
+      summary: show script
+      security:
+      - basic_auth_with_token: []
+      parameters:
+      - name: id
+        in: path
+        description: id
+        required: true
+        schema:
+          type: integer
+      tags:
+      - scripts
+      description: |2
+
+        Users that can invoke this route: `Admin`, `owner user`, `writer`, `reader`, `no_access`.<br />
+        Users that can't: `Harvester`, `anyone`.
+
+        Note: accessing a list/index/filter endpoint may return no results due to project permissions
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              example:
+                meta:
+                  status: 200
+                  message: OK
+                data:
+                  id: 10
+                  name: script name 10
+                  description: script description 10
+                  analysis_identifier: script machine identifier 10
+                  version: 0.1
+                  group_id: 10
+                  creator_id: 1
+                  created_at: '2020-08-27T15:07:18.983+01:00'
+                  executable_settings: executable settings 10
+                  executable_settings_media_type: text/plain
+                  analysis_action_params:
+                    file_executable: "./AnalysisPrograms/AnalysisPrograms.exe"
+                    copy_paths:
+                    - "./programs/AnalysisPrograms/Logs/log.txt"
+                    sub_folders: []
+                    custom_setting: 10
+                  is_last_version: true
+                  is_first_version: true
+                  description_html: "<p>script description 10</p>\n"
+                  description_html_tagline: script description 10
+              schema:
+                allOf:
+                - "$ref": "#/components/schemas/standard_response"
+                - type: object
+                  properties:
+                    data:
+                      "$ref": "#/components/schemas/script"
+  "/scripts/filter":
+    post:
+      summary: filter script
+      security:
+      - basic_auth_with_token: []
+      parameters: []
+      tags:
+      - scripts
+      description: |2
+
+        Users that can invoke this route: `Admin`, `owner user`, `writer`, `reader`, `no_access`, `anyone`.<br />
+        Users that can't: `Harvester`.
+
+        Note: accessing a list/index/filter endpoint may return no results due to project permissions
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              example:
+                meta:
+                  status: 200
+                  message: OK
+                  sorting:
+                    order_by: name
+                    direction: asc
+                  paging:
+                    page: 1
+                    items: 25
+                    total: 1
+                    max_page: 1
+                    current: http://localhost:3000/scripts/filter?direction=asc&items=25&order_by=name&page=1
+                    previous: 
+                    next: 
+                data:
+                - id: 11
+                  name: script name 11
+                  description: script description 11
+                  analysis_identifier: script machine identifier 11
+                  version: 0.11
+                  group_id: 11
+                  creator_id: 1
+                  created_at: '2020-08-27T15:07:19.224+01:00'
+                  executable_settings: executable settings 11
+                  executable_settings_media_type: text/plain
+                  analysis_action_params:
+                    file_executable: "./AnalysisPrograms/AnalysisPrograms.exe"
+                    copy_paths:
+                    - "./programs/AnalysisPrograms/Logs/log.txt"
+                    sub_folders: []
+                    custom_setting: 11
+                  is_last_version: true
+                  is_first_version: true
+                  description_html: "<p>script description 11</p>\n"
+                  description_html_tagline: script description 11
+              schema:
+                allOf:
+                - "$ref": "#/components/schemas/standard_response"
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        "$ref": "#/components/schemas/script"
+  "/sites":
+    post:
+      summary: create site
+      security:
+      - basic_auth_with_token: []
+      parameters: []
+      tags:
+      - sites
+      description: |2
+
+        Users that can invoke this route: `Admin`, `owner user`, `writer`, `reader`, `no_access`, `anyone`.<br />
+        Users that can't: `Harvester`.
+
+        Note: accessing a list/index/filter endpoint may return no results due to project permissions
+      responses:
+        '201':
+          description: successful
+          content:
+            application/json:
+              example:
+                meta:
+                  status: 201
+                  message: Created
+                data:
+                  id: 13
+                  name: site name 13
+                  notes: note number 13
+                  creator_id: 1
+                  updater_id: 
+                  deleter_id: 
+                  deleted_at: 
+                  created_at: '2020-08-27T15:07:19.626+01:00'
+                  updated_at: '2020-08-27T15:07:19.626+01:00'
+                  description: site description 13
+                  project_ids: []
+                  location_obfuscated: true
+                  custom_latitude: 
+                  custom_longitude: 
+                  timezone_information: 
+                  image_urls:
+                  - size: extralarge
+                    url: "/images/site/site_span4.png"
+                    width: 300
+                    height: 300
+                  - size: large
+                    url: "/images/site/site_span3.png"
+                    width: 220
+                    height: 220
+                  - size: medium
+                    url: "/images/site/site_span2.png"
+                    width: 140
+                    height: 140
+                  - size: small
+                    url: "/images/site/site_span1.png"
+                    width: 60
+                    height: 60
+                  - size: tiny
+                    url: "/images/site/site_spanhalf.png"
+                    width: 30
+                    height: 30
+                  description_html: "<p>site description 13</p>\n"
+                  description_html_tagline: site description 13
+              schema:
+                allOf:
+                - "$ref": "#/components/schemas/standard_response"
+                - type: object
+                  properties:
+                    data:
+                      "$ref": "#/components/schemas/site"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/site"
+    get:
+      summary: list sites
+      security:
+      - basic_auth_with_token: []
+      parameters: []
+      tags:
+      - sites
+      description: |2
+
+        Users that can invoke this route: `Admin`, `owner user`, `writer`, `reader`, `no_access`, `anyone`.<br />
+        Users that can't: `Harvester`.
+
+        Note: accessing a list/index/filter endpoint may return no results due to project permissions
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              example:
+                meta:
+                  status: 200
+                  message: OK
+                  sorting:
+                    order_by: name
+                    direction: asc
+                  paging:
+                    page: 1
+                    items: 25
+                    total: 1
+                    max_page: 1
+                    current: http://localhost:3000/sites?direction=asc&items=25&order_by=name&page=1
+                    previous: 
+                    next: 
+                data:
+                - id: 14
+                  name: site name 14
+                  notes: note number 14
+                  creator_id: 55
+                  updater_id: 
+                  deleter_id: 
+                  deleted_at: 
+                  created_at: '2020-08-27T15:07:19.723+01:00'
+                  updated_at: '2020-08-27T15:07:19.723+01:00'
+                  description: site description 14
+                  project_ids:
+                  - 14
+                  location_obfuscated: false
+                  custom_latitude: -49.179023
+                  custom_longitude: 43.082595
+                  timezone_information: 
+                  image_urls:
+                  - size: extralarge
+                    url: "/images/site/site_span4.png"
+                    width: 300
+                    height: 300
+                  - size: large
+                    url: "/images/site/site_span3.png"
+                    width: 220
+                    height: 220
+                  - size: medium
+                    url: "/images/site/site_span2.png"
+                    width: 140
+                    height: 140
+                  - size: small
+                    url: "/images/site/site_span1.png"
+                    width: 60
+                    height: 60
+                  - size: tiny
+                    url: "/images/site/site_spanhalf.png"
+                    width: 30
+                    height: 30
+                  description_html: "<p>site description 14</p>\n"
+                  description_html_tagline: site description 14
+              schema:
+                allOf:
+                - "$ref": "#/components/schemas/standard_response"
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        "$ref": "#/components/schemas/site"
+  "/sites/filter":
+    post:
+      summary: filter site
+      security:
+      - basic_auth_with_token: []
+      parameters: []
+      tags:
+      - sites
+      description: |2
+
+        Users that can invoke this route: `Admin`, `owner user`, `writer`, `reader`, `no_access`, `anyone`.<br />
+        Users that can't: `Harvester`.
+
+        Note: accessing a list/index/filter endpoint may return no results due to project permissions
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              example:
+                meta:
+                  status: 200
+                  message: OK
+                  sorting:
+                    order_by: name
+                    direction: asc
+                  paging:
+                    page: 1
+                    items: 25
+                    total: 1
+                    max_page: 1
+                    current: http://localhost:3000/sites/filter?direction=asc&items=25&order_by=name&page=1
+                    previous: 
+                    next: 
+                data:
+                - id: 15
+                  name: site name 15
+                  notes: note number 15
+                  creator_id: 59
+                  updater_id: 
+                  deleter_id: 
+                  deleted_at: 
+                  created_at: '2020-08-27T15:07:19.964+01:00'
+                  updated_at: '2020-08-27T15:07:19.964+01:00'
+                  description: site description 15
+                  project_ids:
+                  - 15
+                  location_obfuscated: false
+                  custom_latitude: -36.842571
+                  custom_longitude: 42.286205
+                  timezone_information: 
+                  image_urls:
+                  - size: extralarge
+                    url: "/images/site/site_span4.png"
+                    width: 300
+                    height: 300
+                  - size: large
+                    url: "/images/site/site_span3.png"
+                    width: 220
+                    height: 220
+                  - size: medium
+                    url: "/images/site/site_span2.png"
+                    width: 140
+                    height: 140
+                  - size: small
+                    url: "/images/site/site_span1.png"
+                    width: 60
+                    height: 60
+                  - size: tiny
+                    url: "/images/site/site_spanhalf.png"
+                    width: 30
+                    height: 30
+                  description_html: "<p>site description 15</p>\n"
+                  description_html_tagline: site description 15
+              schema:
+                allOf:
+                - "$ref": "#/components/schemas/standard_response"
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        "$ref": "#/components/schemas/site"
+  "/sites/{id}":
+    delete:
+      summary: delete site
+      security:
+      - basic_auth_with_token: []
+      parameters:
+      - name: id
+        in: path
+        description: id
+        required: true
+        schema:
+          type: integer
+      tags:
+      - sites
+      description: |2
+
+        Users that can invoke this route: `Admin`, `owner user`, `writer`, `reader`, `no_access`, `anyone`.<br />
+        Users that can't: `Harvester`.
+
+        Note: accessing a list/index/filter endpoint may return no results due to project permissions
+      responses:
+        '204':
+          description: successful
+          content:
+            application/json:
+              example: 
+    put:
+      summary: update site
+      security:
+      - basic_auth_with_token: []
+      parameters:
+      - name: id
+        in: path
+        description: id
+        required: true
+        schema:
+          type: integer
+      tags:
+      - sites
+      description: |2
+
+        Users that can invoke this route: `Admin`, `owner user`, `writer`, `reader`, `no_access`, `anyone`.<br />
+        Users that can't: `Harvester`.
+
+        Note: accessing a list/index/filter endpoint may return no results due to project permissions
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              example:
+                meta:
+                  status: 200
+                  message: OK
+                data:
+                  id: 17
+                  name: site name 18
+                  description: site description 18
+                  notes: note number 18
+                  updater_id: 1
+                  creator_id: 67
+                  deleted_at: 
+                  deleter_id: 
+                  created_at: '2020-08-27T15:07:20.441+01:00'
+                  updated_at: '2020-08-27T15:07:20.615+01:00'
+                  project_ids:
+                  - 17
+                  location_obfuscated: false
+                  custom_latitude: 42.017445
+                  custom_longitude: -60.299422
+                  timezone_information: 
+                  image_urls:
+                  - size: extralarge
+                    url: "/images/site/site_span4.png"
+                    width: 300
+                    height: 300
+                  - size: large
+                    url: "/images/site/site_span3.png"
+                    width: 220
+                    height: 220
+                  - size: medium
+                    url: "/images/site/site_span2.png"
+                    width: 140
+                    height: 140
+                  - size: small
+                    url: "/images/site/site_span1.png"
+                    width: 60
+                    height: 60
+                  - size: tiny
+                    url: "/images/site/site_spanhalf.png"
+                    width: 30
+                    height: 30
+                  description_html: "<p>site description 18</p>\n"
+                  description_html_tagline: site description 18
+              schema:
+                allOf:
+                - "$ref": "#/components/schemas/standard_response"
+                - type: object
+                  properties:
+                    data:
+                      "$ref": "#/components/schemas/site"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/site"
+    get:
+      summary: show site
+      security:
+      - basic_auth_with_token: []
+      parameters:
+      - name: id
+        in: path
+        description: id
+        required: true
+        schema:
+          type: integer
+      tags:
+      - sites
+      description: |2
+
+        Users that can invoke this route: `Admin`, `owner user`, `writer`, `reader`, `no_access`, `anyone`.<br />
+        Users that can't: `Harvester`.
+
+        Note: accessing a list/index/filter endpoint may return no results due to project permissions
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              example:
+                meta:
+                  status: 200
+                  message: OK
+                data:
+                  id: 18
+                  name: site name 19
+                  notes: note number 19
+                  creator_id: 72
+                  updater_id: 
+                  deleter_id: 
+                  deleted_at: 
+                  created_at: '2020-08-27T15:07:20.750+01:00'
+                  updated_at: '2020-08-27T15:07:20.750+01:00'
+                  description: site description 19
+                  project_ids:
+                  - 18
+                  location_obfuscated: false
+                  custom_latitude: 55.101294
+                  custom_longitude: 104.375337
+                  timezone_information: 
+                  image_urls:
+                  - size: extralarge
+                    url: "/images/site/site_span4.png"
+                    width: 300
+                    height: 300
+                  - size: large
+                    url: "/images/site/site_span3.png"
+                    width: 220
+                    height: 220
+                  - size: medium
+                    url: "/images/site/site_span2.png"
+                    width: 140
+                    height: 140
+                  - size: small
+                    url: "/images/site/site_span1.png"
+                    width: 60
+                    height: 60
+                  - size: tiny
+                    url: "/images/site/site_spanhalf.png"
+                    width: 30
+                    height: 30
+                  description_html: "<p>site description 19</p>\n"
+                  description_html_tagline: site description 19
+              schema:
+                allOf:
+                - "$ref": "#/components/schemas/standard_response"
+                - type: object
+                  properties:
+                    data:
+                      "$ref": "#/components/schemas/site"
+    patch:
+      summary: update site
+      security:
+      - basic_auth_with_token: []
+      parameters:
+      - name: id
+        in: path
+        description: id
+        required: true
+        schema:
+          type: integer
+      tags:
+      - sites
+      description: |2
+
+        Users that can invoke this route: `Admin`, `owner user`, `writer`, `reader`, `no_access`, `anyone`.<br />
+        Users that can't: `Harvester`.
+
+        Note: accessing a list/index/filter endpoint may return no results due to project permissions
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              example:
+                meta:
+                  status: 200
+                  message: OK
+                data:
+                  id: 19
+                  name: site name 21
+                  description: site description 21
+                  notes: note number 21
+                  updater_id: 1
+                  creator_id: 76
+                  deleted_at: 
+                  deleter_id: 
+                  created_at: '2020-08-27T15:07:20.978+01:00'
+                  updated_at: '2020-08-27T15:07:21.154+01:00'
+                  project_ids:
+                  - 19
+                  location_obfuscated: false
+                  custom_latitude: -37.25948
+                  custom_longitude: -144.76369
+                  timezone_information: 
+                  image_urls:
+                  - size: extralarge
+                    url: "/images/site/site_span4.png"
+                    width: 300
+                    height: 300
+                  - size: large
+                    url: "/images/site/site_span3.png"
+                    width: 220
+                    height: 220
+                  - size: medium
+                    url: "/images/site/site_span2.png"
+                    width: 140
+                    height: 140
+                  - size: small
+                    url: "/images/site/site_span1.png"
+                    width: 60
+                    height: 60
+                  - size: tiny
+                    url: "/images/site/site_spanhalf.png"
+                    width: 30
+                    height: 30
+                  description_html: "<p>site description 21</p>\n"
+                  description_html_tagline: site description 21
+              schema:
+                allOf:
+                - "$ref": "#/components/schemas/standard_response"
+                - type: object
+                  properties:
+                    data:
+                      "$ref": "#/components/schemas/site"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/site"
+  "/sites/new":
+    get:
+      summary: new site
+      security:
+      - basic_auth_with_token: []
+      parameters: []
+      tags:
+      - sites
+      description: |2
+
+        Users that can invoke this route: `Admin`, `owner user`, `writer`, `reader`, `no_access`, `anyone`.<br />
+        Users that can't: `Harvester`.
+
+        Note: accessing a list/index/filter endpoint may return no results due to project permissions
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              example:
+                meta:
+                  status: 200
+                  message: OK
+                data:
+                  id: 
+                  name: 
+                  notes: 
+                  creator_id: 
+                  updater_id: 
+                  deleter_id: 
+                  deleted_at: 
+                  created_at: 
+                  updated_at: 
+                  description: 
+                  longitude: 
+                  latitude: 
+                  image: 
+                  tzinfo_tz: 
+                  rails_tz: 
+  "/bookmarks":
+    post:
+      summary: create bookmark
+      security:
+      - basic_auth_with_token: []
+      parameters: []
+      tags:
+      - bookmarks
+      description: |2
+
+        Users that can invoke this route: `Admin`, `owner user`, `writer`, `reader`, `no_access`.<br />
+        Users that can't: `Harvester`, `anyone`.
+
+        Note: accessing a list/index/filter endpoint may return no results due to project permissions
+      responses:
+        '201':
+          description: successful
+          content:
+            application/json:
+              example:
+                meta:
+                  status: 201
+                  message: Created
+                data:
+                  id: 21
+                  audio_recording_id: 21
+                  offset_seconds: 4.0
+                  name: name 21
+                  creator_id: 1
+                  updater_id: 
+                  created_at: '2020-08-27T15:07:21.719+01:00'
+                  updated_at: '2020-08-27T15:07:21.719+01:00'
+                  description: description 21
+                  category: category 21
+                  description_html: "<p>description 21</p>\n"
+                  description_html_tagline: description 21
+              schema:
+                allOf:
+                - "$ref": "#/components/schemas/standard_response"
+                - type: object
+                  properties:
+                    data:
+                      "$ref": "#/components/schemas/bookmark"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/bookmark"
+    get:
+      summary: list bookmarks
+      security:
+      - basic_auth_with_token: []
+      parameters: []
+      tags:
+      - bookmarks
+      description: |2
+
+        Users that can invoke this route: `Admin`, `owner user`, `writer`, `reader`, `no_access`.<br />
+        Users that can't: `Harvester`, `anyone`.
+
+        Note: accessing a list/index/filter endpoint may return no results due to project permissions
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              example:
+                meta:
+                  status: 200
+                  message: OK
+                  sorting:
+                    order_by: created_at
+                    direction: desc
+                  paging:
+                    page: 1
+                    items: 25
+                    total: 1
+                    max_page: 1
+                    current: http://localhost:3000/bookmarks?direction=desc&items=25&order_by=created_at&page=1
+                    previous: 
+                    next: 
+                data:
+                - id: 22
+                  audio_recording_id: 22
+                  offset_seconds: 4.0
+                  name: name 22
+                  creator_id: 1
+                  updater_id: 
+                  created_at: '2020-08-27T15:07:21.842+01:00'
+                  updated_at: '2020-08-27T15:07:21.842+01:00'
+                  description: description 22
+                  category: category 22
+                  description_html: "<p>description 22</p>\n"
+                  description_html_tagline: description 22
+              schema:
+                allOf:
+                - "$ref": "#/components/schemas/standard_response"
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        "$ref": "#/components/schemas/bookmark"
+  "/bookmarks/new":
+    get:
+      summary: new bookmark
+      security:
+      - basic_auth_with_token: []
+      parameters: []
+      tags:
+      - bookmarks
+      description: |2
+
+        Users that can invoke this route: `Admin`, `owner user`, `writer`, `reader`, `no_access`.<br />
+        Users that can't: `Harvester`, `anyone`.
+
+        Note: accessing a list/index/filter endpoint may return no results due to project permissions
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              example:
+                meta:
+                  status: 200
+                  message: OK
+                data:
+                  id: 
+                  audio_recording_id: 
+                  offset_seconds: 
+                  name: 
+                  creator_id: 
+                  updater_id: 
+                  created_at: 
+                  updated_at: 
+                  description: 
+                  category: 
+  "/bookmarks/filter":
+    post:
+      summary: filter bookmark
+      security:
+      - basic_auth_with_token: []
+      parameters: []
+      tags:
+      - bookmarks
+      description: |2
+
+        Users that can invoke this route: `Admin`, `owner user`, `writer`, `reader`, `no_access`.<br />
+        Users that can't: `Harvester`, `anyone`.
+
+        Note: accessing a list/index/filter endpoint may return no results due to project permissions
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              example:
+                meta:
+                  status: 200
+                  message: OK
+                  sorting:
+                    order_by: created_at
+                    direction: desc
+                  paging:
+                    page: 1
+                    items: 25
+                    total: 1
+                    max_page: 1
+                    current: http://localhost:3000/bookmarks/filter?direction=desc&items=25&order_by=created_at&page=1
+                    previous: 
+                    next: 
+                data:
+                - id: 24
+                  audio_recording_id: 24
+                  offset_seconds: 4.0
+                  name: name 24
+                  creator_id: 1
+                  updater_id: 
+                  created_at: '2020-08-27T15:07:22.310+01:00'
+                  updated_at: '2020-08-27T15:07:22.310+01:00'
+                  description: description 24
+                  category: category 24
+                  description_html: "<p>description 24</p>\n"
+                  description_html_tagline: description 24
+              schema:
+                allOf:
+                - "$ref": "#/components/schemas/standard_response"
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        "$ref": "#/components/schemas/bookmark"
+  "/bookmarks/{id}":
+    put:
+      summary: update bookmark
+      security:
+      - basic_auth_with_token: []
+      parameters:
+      - name: id
+        in: path
+        description: id
+        required: true
+        schema:
+          type: integer
+      tags:
+      - bookmarks
+      description: |2
+
+        Users that can invoke this route: `Admin`, `owner user`, `writer`, `reader`, `no_access`.<br />
+        Users that can't: `Harvester`, `anyone`.
+
+        Note: accessing a list/index/filter endpoint may return no results due to project permissions
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              example:
+                meta:
+                  status: 200
+                  message: OK
+                data:
+                  id: 25
+                  audio_recording_id: 26
+                  name: name 26
+                  description: description 26
+                  offset_seconds: 4.0
+                  category: category 26
+                  updater_id: 1
+                  creator_id: 1
+                  created_at: '2020-08-27T15:07:22.552+01:00'
+                  updated_at: '2020-08-27T15:07:22.724+01:00'
+                  description_html: "<p>description 26</p>\n"
+                  description_html_tagline: description 26
+              schema:
+                allOf:
+                - "$ref": "#/components/schemas/standard_response"
+                - type: object
+                  properties:
+                    data:
+                      "$ref": "#/components/schemas/bookmark"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/bookmark"
+    patch:
+      summary: update bookmark
+      security:
+      - basic_auth_with_token: []
+      parameters:
+      - name: id
+        in: path
+        description: id
+        required: true
+        schema:
+          type: integer
+      tags:
+      - bookmarks
+      description: |2
+
+        Users that can invoke this route: `Admin`, `owner user`, `writer`, `reader`, `no_access`.<br />
+        Users that can't: `Harvester`, `anyone`.
+
+        Note: accessing a list/index/filter endpoint may return no results due to project permissions
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              example:
+                meta:
+                  status: 200
+                  message: OK
+                data:
+                  id: 26
+                  audio_recording_id: 28
+                  name: name 28
+                  description: description 28
+                  offset_seconds: 4.0
+                  category: category 28
+                  updater_id: 1
+                  creator_id: 1
+                  created_at: '2020-08-27T15:07:22.894+01:00'
+                  updated_at: '2020-08-27T15:07:23.073+01:00'
+                  description_html: "<p>description 28</p>\n"
+                  description_html_tagline: description 28
+              schema:
+                allOf:
+                - "$ref": "#/components/schemas/standard_response"
+                - type: object
+                  properties:
+                    data:
+                      "$ref": "#/components/schemas/bookmark"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/bookmark"
+    delete:
+      summary: delete bookmark
+      security:
+      - basic_auth_with_token: []
+      parameters:
+      - name: id
+        in: path
+        description: id
+        required: true
+        schema:
+          type: integer
+      tags:
+      - bookmarks
+      description: |2
+
+        Users that can invoke this route: `Admin`, `owner user`, `writer`, `reader`, `no_access`.<br />
+        Users that can't: `Harvester`, `anyone`.
+
+        Note: accessing a list/index/filter endpoint may return no results due to project permissions
+      responses:
+        '204':
+          description: successful
+          content:
+            application/json:
+              example: 
+    get:
+      summary: show bookmark
+      security:
+      - basic_auth_with_token: []
+      parameters:
+      - name: id
+        in: path
+        description: id
+        required: true
+        schema:
+          type: integer
+      tags:
+      - bookmarks
+      description: |2
+
+        Users that can invoke this route: `Admin`, `owner user`, `writer`, `reader`, `no_access`.<br />
+        Users that can't: `Harvester`, `anyone`.
+
+        Note: accessing a list/index/filter endpoint may return no results due to project permissions
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              example:
+                meta:
+                  status: 200
+                  message: OK
+                data:
+                  id: 28
+                  audio_recording_id: 30
+                  offset_seconds: 4.0
+                  name: name 30
+                  creator_id: 1
+                  updater_id: 
+                  created_at: '2020-08-27T15:07:23.421+01:00'
+                  updated_at: '2020-08-27T15:07:23.421+01:00'
+                  description: description 30
+                  category: category 30
+                  description_html: "<p>description 30</p>\n"
+                  description_html_tagline: description 30
+              schema:
+                allOf:
+                - "$ref": "#/components/schemas/standard_response"
+                - type: object
+                  properties:
+                    data:
+                      "$ref": "#/components/schemas/bookmark"
+  "/saved_searches/new":
+    get:
+      summary: new saved_search
+      security:
+      - basic_auth_with_token: []
+      parameters: []
+      tags:
+      - saved_searches
+      description: |2
+
+        Users that can invoke this route: `Admin`, `owner user`, `writer`, `reader`, `no_access`.<br />
+        Users that can't: `Harvester`, `anyone`.
+
+        Note: accessing a list/index/filter endpoint may return no results due to project permissions
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              example:
+                meta:
+                  status: 200
+                  message: OK
+                data:
+                  id: 
+                  name: 
+                  description: 
+                  stored_query: 
+                  creator_id: 
+                  created_at: 
+                  deleter_id: 
+                  deleted_at: 
+  "/saved_searches/filter":
+    post:
+      summary: filter saved_search
+      security:
+      - basic_auth_with_token: []
+      parameters: []
+      tags:
+      - saved_searches
+      description: |2
+
+        Users that can invoke this route: `Admin`, `owner user`, `writer`, `reader`, `no_access`, `anyone`.<br />
+        Users that can't: `Harvester`.
+
+        Note: accessing a list/index/filter endpoint may return no results due to project permissions
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              example:
+                meta:
+                  status: 200
+                  message: OK
+                  sorting:
+                    order_by: created_at
+                    direction: desc
+                  paging:
+                    page: 1
+                    items: 25
+                    total: 1
+                    max_page: 1
+                    current: http://localhost:3000/saved_searches/filter?direction=desc&items=25&order_by=created_at&page=1
+                    previous: 
+                    next: 
+                data:
+                - id: 29
+                  name: saved search name 29
+                  description: saved search description 29
+                  stored_query:
+                    uuid:
+                      eq: blah blah
+                  creator_id: 134
+                  created_at: '2020-08-27T15:07:23.896+01:00'
+                  deleter_id: 
+                  deleted_at: 
+                  project_ids:
+                  - 30
+                  analysis_job_ids:
+                  - 29
+                  description_html: "<p>saved search description 29</p>\n"
+                  description_html_tagline: saved search description 29
+              schema:
+                allOf:
+                - "$ref": "#/components/schemas/standard_response"
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        "$ref": "#/components/schemas/saved_search"
+  "/saved_searches/{id}":
+    put:
+      summary: can't update saved_search
+      security:
+      - basic_auth_with_token: []
+      parameters:
+      - name: id
+        in: path
+        description: id
+        required: true
+        schema:
+          type: integer
+      tags:
+      - saved_searches
+      description: |2
+
+        Users that can invoke this route: `Admin`.<br />
+        Users that can't: `Harvester`, `owner user`, `writer`, `reader`, `no_access`, `anyone`.
+
+        Note: accessing a list/index/filter endpoint may return no results due to project permissions
+      responses:
+        '404':
+          description: not found
+          content:
+            application/json:
+              example:
+                meta:
+                  status: 404
+                  message: Not Found
+                  error:
+                    details: Could not find the requested page.
+                    info:
+                      original_route: saved_searches/30
+                      original_http_method: PUT
+                data: 
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/saved_search"
+    delete:
+      summary: delete saved_search
+      security:
+      - basic_auth_with_token: []
+      parameters:
+      - name: id
+        in: path
+        description: id
+        required: true
+        schema:
+          type: integer
+      tags:
+      - saved_searches
+      description: |2
+
+        Users that can invoke this route: `Admin`, `owner user`, `writer`, `reader`, `no_access`, `anyone`.<br />
+        Users that can't: `Harvester`.
+
+        Note: accessing a list/index/filter endpoint may return no results due to project permissions
+      responses:
+        '204':
+          description: successful
+          content:
+            application/json:
+              example: 
+    patch:
+      summary: can't update saved_search
+      security:
+      - basic_auth_with_token: []
+      parameters:
+      - name: id
+        in: path
+        description: id
+        required: true
+        schema:
+          type: integer
+      tags:
+      - saved_searches
+      description: |2
+
+        Users that can invoke this route: `Admin`.<br />
+        Users that can't: `Harvester`, `owner user`, `writer`, `reader`, `no_access`, `anyone`.
+
+        Note: accessing a list/index/filter endpoint may return no results due to project permissions
+      responses:
+        '404':
+          description: not found
+          content:
+            application/json:
+              example:
+                meta:
+                  status: 404
+                  message: Not Found
+                  error:
+                    details: Could not find the requested page.
+                    info:
+                      original_route: saved_searches/32
+                      original_http_method: PATCH
+                data: 
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/saved_search"
+    get:
+      summary: show saved_search
+      security:
+      - basic_auth_with_token: []
+      parameters:
+      - name: id
+        in: path
+        description: id
+        required: true
+        schema:
+          type: integer
+      tags:
+      - saved_searches
+      description: |2
+
+        Users that can invoke this route: `Admin`, `owner user`, `writer`, `reader`, `no_access`, `anyone`.<br />
+        Users that can't: `Harvester`.
+
+        Note: accessing a list/index/filter endpoint may return no results due to project permissions
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              example:
+                meta:
+                  status: 200
+                  message: OK
+                data:
+                  id: 33
+                  name: saved search name 35
+                  description: saved search description 35
+                  stored_query:
+                    uuid:
+                      eq: blah blah
+                  creator_id: 152
+                  created_at: '2020-08-27T15:07:24.864+01:00'
+                  deleter_id: 
+                  deleted_at: 
+                  project_ids:
+                  - 34
+                  analysis_job_ids:
+                  - 33
+                  description_html: "<p>saved search description 35</p>\n"
+                  description_html_tagline: saved search description 35
+              schema:
+                allOf:
+                - "$ref": "#/components/schemas/standard_response"
+                - type: object
+                  properties:
+                    data:
+                      "$ref": "#/components/schemas/saved_search"
+  "/saved_searches":
+    get:
+      summary: list saved_searches
+      security:
+      - basic_auth_with_token: []
+      parameters: []
+      tags:
+      - saved_searches
+      description: |2
+
+        Users that can invoke this route: `Admin`, `owner user`, `writer`, `reader`, `no_access`, `anyone`.<br />
+        Users that can't: `Harvester`.
+
+        Note: accessing a list/index/filter endpoint may return no results due to project permissions
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              example:
+                meta:
+                  status: 200
+                  message: OK
+                  sorting:
+                    order_by: created_at
+                    direction: desc
+                  paging:
+                    page: 1
+                    items: 25
+                    total: 1
+                    max_page: 1
+                    current: http://localhost:3000/saved_searches?direction=desc&items=25&order_by=created_at&page=1
+                    previous: 
+                    next: 
+                data:
+                - id: 34
+                  name: saved search name 36
+                  description: saved search description 36
+                  stored_query:
+                    uuid:
+                      eq: blah blah
+                  creator_id: 156
+                  created_at: '2020-08-27T15:07:25.093+01:00'
+                  deleter_id: 
+                  deleted_at: 
+                  project_ids:
+                  - 35
+                  analysis_job_ids:
+                  - 34
+                  description_html: "<p>saved search description 36</p>\n"
+                  description_html_tagline: saved search description 36
+              schema:
+                allOf:
+                - "$ref": "#/components/schemas/standard_response"
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        "$ref": "#/components/schemas/saved_search"
+    post:
+      summary: create saved_search
+      security:
+      - basic_auth_with_token: []
+      parameters: []
+      tags:
+      - saved_searches
+      description: |2
+
+        Users that can invoke this route: `Admin`, `owner user`, `writer`, `reader`, `no_access`, `anyone`.<br />
+        Users that can't: `Harvester`.
+
+        Note: accessing a list/index/filter endpoint may return no results due to project permissions
+      responses:
+        '201':
+          description: successful
+          content:
+            application/json:
+              example:
+                meta:
+                  status: 201
+                  message: Created
+                data:
+                  id: 36
+                  name: saved search name 38
+                  description: saved search description 38
+                  stored_query:
+                    uuid:
+                      eq: blah blah
+                  creator_id: 1
+                  created_at: '2020-08-27T15:07:25.521+01:00'
+                  deleter_id: 
+                  deleted_at: 
+                  project_ids: []
+                  analysis_job_ids: []
+                  description_html: "<p>saved search description 38</p>\n"
+                  description_html_tagline: saved search description 38
+              schema:
+                allOf:
+                - "$ref": "#/components/schemas/standard_response"
+                - type: object
+                  properties:
+                    data:
+                      "$ref": "#/components/schemas/saved_search"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/saved_search"
+  "/analysis_jobs":
+    get:
+      summary: list analysis_jobs
+      security:
+      - basic_auth_with_token: []
+      parameters: []
+      tags:
+      - analysis_jobs
+      description: |2
+
+        Users that can invoke this route: `Admin`, `owner user`, `writer`, `reader`, `no_access`, `anyone`.<br />
+        Users that can't: `Harvester`.
+
+        Note: accessing a list/index/filter endpoint may return no results due to project permissions
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              example:
+                meta:
+                  status: 200
+                  message: OK
+                  sorting:
+                    order_by: updated_at
+                    direction: desc
+                  paging:
+                    page: 1
+                    items: 25
+                    total: 1
+                    max_page: 1
+                    current: http://localhost:3000/analysis_jobs?direction=desc&items=25&order_by=updated_at&page=1
+                    previous: 
+                    next: 
+                data:
+                - id: 36
+                  name: job name 36
+                  annotation_name: 
+                  custom_settings: custom settings 36
+                  script_id: 36
+                  creator_id: 165
+                  updater_id: 
+                  deleter_id: 
+                  deleted_at: 
+                  created_at: '2020-08-27T15:07:25.710+01:00'
+                  updated_at: '2020-08-27T15:07:25.710+01:00'
+                  description: job description 36
+                  saved_search_id: 37
+                  started_at: '2020-08-27T15:07:25.705+01:00'
+                  overall_status: new
+                  overall_status_modified_at: '2020-08-27T15:07:25.705+01:00'
+                  overall_progress:
+                    new: 0
+                    queued: 0
+                    working: 0
+                    successful: 0
+                    failed: 0
+                    timed_out: 0
+                    cancelling: 0
+                    cancelled: 0
+                    total: 0
+                  overall_progress_modified_at: '2020-08-27T15:07:25.706+01:00'
+                  overall_count: 0
+                  overall_duration_seconds: 0.0
+                  overall_data_length_bytes: 0
+                  description_html: "<p>job description 36</p>\n"
+                  description_html_tagline: job description 36
+              schema:
+                allOf:
+                - "$ref": "#/components/schemas/standard_response"
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        "$ref": "#/components/schemas/analysis_job"
+    post:
+      summary: create analysis_job
+      security:
+      - basic_auth_with_token: []
+      parameters: []
+      tags:
+      - analysis_jobs
+      description: |2
+
+        Users that can invoke this route: `Admin`, `owner user`, `writer`, `reader`, `no_access`, `anyone`.<br />
+        Users that can't: `Harvester`.
+
+        Note: accessing a list/index/filter endpoint may return no results due to project permissions
+      responses:
+        '201':
+          description: successful
+          content:
+            application/json:
+              example:
+                meta:
+                  status: 201
+                  message: Created
+                data:
+                  id: 38
+                  name: job name 38
+                  annotation_name: 
+                  custom_settings: custom settings 38
+                  script_id: 38
+                  creator_id: 1
+                  updater_id: 1
+                  deleter_id: 
+                  deleted_at: 
+                  created_at: '2020-08-27T15:07:26.285+01:00'
+                  updated_at: '2020-08-27T15:07:26.323+01:00'
+                  description: job description 38
+                  saved_search_id: 39
+                  started_at: '2020-08-27T15:07:26.301+01:00'
+                  overall_status: completed
+                  overall_status_modified_at: '2020-08-27T15:07:26.318+01:00'
+                  overall_progress:
+                    new: 0
+                    queued: 0
+                    working: 0
+                    successful: 0
+                    failed: 0
+                    timed_out: 0
+                    cancelling: 0
+                    cancelled: 0
+                    total: 0
+                  overall_progress_modified_at: '2020-08-27T15:07:26.319+01:00'
+                  overall_count: 0
+                  overall_duration_seconds: 0.0
+                  overall_data_length_bytes: 0
+                  description_html: "<p>job description 38</p>\n"
+                  description_html_tagline: job description 38
+              schema:
+                allOf:
+                - "$ref": "#/components/schemas/standard_response"
+                - type: object
+                  properties:
+                    data:
+                      "$ref": "#/components/schemas/analysis_job"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/analysis_job"
+  "/analysis_jobs/{id}":
+    delete:
+      summary: delete analysis_job
+      security:
+      - basic_auth_with_token: []
+      parameters:
+      - name: id
+        in: path
+        description: id
+        required: true
+        schema:
+          type: integer
+      tags:
+      - analysis_jobs
+      description: |2
+
+        Users that can invoke this route: `Admin`, `owner user`, `writer`, `reader`, `no_access`, `anyone`.<br />
+        Users that can't: `Harvester`.
+
+        Note: accessing a list/index/filter endpoint may return no results due to project permissions
+      responses:
+        '204':
+          description: successful
+          content:
+            application/json:
+              example: 
+    get:
+      summary: show analysis_job
+      security:
+      - basic_auth_with_token: []
+      parameters:
+      - name: id
+        in: path
+        description: id
+        required: true
+        schema:
+          type: integer
+      tags:
+      - analysis_jobs
+      description: |2
+
+        Users that can invoke this route: `Admin`, `owner user`, `writer`, `reader`, `no_access`, `anyone`.<br />
+        Users that can't: `Harvester`.
+
+        Note: accessing a list/index/filter endpoint may return no results due to project permissions
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              example:
+                meta:
+                  status: 200
+                  message: OK
+                data:
+                  id: 40
+                  name: job name 40
+                  annotation_name: 
+                  custom_settings: custom settings 40
+                  script_id: 40
+                  creator_id: 180
+                  updater_id: 
+                  deleter_id: 
+                  deleted_at: 
+                  created_at: '2020-08-27T15:07:26.760+01:00'
+                  updated_at: '2020-08-27T15:07:26.760+01:00'
+                  description: job description 40
+                  saved_search_id: 41
+                  started_at: '2020-08-27T15:07:26.754+01:00'
+                  overall_status: completed
+                  overall_status_modified_at: '2020-08-27T15:07:26.755+01:00'
+                  overall_progress:
+                    new: 0
+                    queued: 0
+                    working: 0
+                    successful: 0
+                    failed: 0
+                    timed_out: 0
+                    cancelling: 0
+                    cancelled: 0
+                    total: 0
+                  overall_progress_modified_at: '2020-08-27T15:07:26.756+01:00'
+                  overall_count: 0
+                  overall_duration_seconds: 0.0
+                  overall_data_length_bytes: 0
+                  description_html: "<p>job description 40</p>\n"
+                  description_html_tagline: job description 40
+              schema:
+                allOf:
+                - "$ref": "#/components/schemas/standard_response"
+                - type: object
+                  properties:
+                    data:
+                      "$ref": "#/components/schemas/analysis_job"
+    patch:
+      summary: update analysis_job
+      security:
+      - basic_auth_with_token: []
+      parameters:
+      - name: id
+        in: path
+        description: id
+        required: true
+        schema:
+          type: integer
+      tags:
+      - analysis_jobs
+      description: |2
+
+        Users that can invoke this route: `Admin`, `owner user`, `writer`, `reader`, `no_access`, `anyone`.<br />
+        Users that can't: `Harvester`.
+
+        Note: accessing a list/index/filter endpoint may return no results due to project permissions
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              example:
+                meta:
+                  status: 200
+                  message: OK
+                data:
+                  id: 41
+                  name: job name 42
+                  annotation_name: 
+                  custom_settings: custom settings 41
+                  script_id: 41
+                  creator_id: 184
+                  updater_id: 1
+                  deleter_id: 
+                  deleted_at: 
+                  created_at: '2020-08-27T15:07:27.006+01:00'
+                  updated_at: '2020-08-27T15:07:27.160+01:00'
+                  description: job description 42
+                  saved_search_id: 42
+                  started_at: '2020-08-27T15:07:27.000+01:00'
+                  overall_status: completed
+                  overall_status_modified_at: '2020-08-27T15:07:27.000+01:00'
+                  overall_progress:
+                    new: 0
+                    queued: 0
+                    working: 0
+                    successful: 0
+                    failed: 0
+                    timed_out: 0
+                    cancelling: 0
+                    cancelled: 0
+                    total: 0
+                  overall_progress_modified_at: '2020-08-27T15:07:27.002+01:00'
+                  overall_count: 0
+                  overall_duration_seconds: 0.0
+                  overall_data_length_bytes: 0
+                  description_html: "<p>job description 42</p>\n"
+                  description_html_tagline: job description 42
+              schema:
+                allOf:
+                - "$ref": "#/components/schemas/standard_response"
+                - type: object
+                  properties:
+                    data:
+                      "$ref": "#/components/schemas/analysis_job"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/analysis_job"
+    put:
+      summary: update analysis_job
+      security:
+      - basic_auth_with_token: []
+      parameters:
+      - name: id
+        in: path
+        description: id
+        required: true
+        schema:
+          type: integer
+      tags:
+      - analysis_jobs
+      description: |2
+
+        Users that can invoke this route: `Admin`, `owner user`, `writer`, `reader`, `no_access`, `anyone`.<br />
+        Users that can't: `Harvester`.
+
+        Note: accessing a list/index/filter endpoint may return no results due to project permissions
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              example:
+                meta:
+                  status: 200
+                  message: OK
+                data:
+                  id: 42
+                  name: job name 44
+                  annotation_name: 
+                  custom_settings: custom settings 43
+                  script_id: 43
+                  creator_id: 191
+                  updater_id: 1
+                  deleter_id: 
+                  deleted_at: 
+                  created_at: '2020-08-27T15:07:27.321+01:00'
+                  updated_at: '2020-08-27T15:07:27.440+01:00'
+                  description: job description 44
+                  saved_search_id: 44
+                  started_at: '2020-08-27T15:07:27.310+01:00'
+                  overall_status: completed
+                  overall_status_modified_at: '2020-08-27T15:07:27.311+01:00'
+                  overall_progress:
+                    new: 0
+                    queued: 0
+                    working: 0
+                    successful: 0
+                    failed: 0
+                    timed_out: 0
+                    cancelling: 0
+                    cancelled: 0
+                    total: 0
+                  overall_progress_modified_at: '2020-08-27T15:07:27.314+01:00'
+                  overall_count: 0
+                  overall_duration_seconds: 0.0
+                  overall_data_length_bytes: 0
+                  description_html: "<p>job description 44</p>\n"
+                  description_html_tagline: job description 44
+              schema:
+                allOf:
+                - "$ref": "#/components/schemas/standard_response"
+                - type: object
+                  properties:
+                    data:
+                      "$ref": "#/components/schemas/analysis_job"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/analysis_job"
+  "/analysis_jobs/new":
+    get:
+      summary: new analysis_job
+      security:
+      - basic_auth_with_token: []
+      parameters: []
+      tags:
+      - analysis_jobs
+      description: |2
+
+        Users that can invoke this route: `Admin`, `owner user`, `writer`, `reader`, `no_access`, `anyone`.<br />
+        Users that can't: `Harvester`.
+
+        Note: accessing a list/index/filter endpoint may return no results due to project permissions
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              example:
+                meta:
+                  status: 200
+                  message: OK
+                data:
+                  id: 
+                  name: 
+                  annotation_name: 
+                  custom_settings: 
+                  script_id: 
+                  creator_id: 
+                  updater_id: 
+                  deleter_id: 
+                  deleted_at: 
+                  created_at: 
+                  updated_at: 
+                  description: 
+                  saved_search_id: 
+                  started_at: 
+                  overall_status: before_save
+                  overall_status_modified_at: 
+                  overall_progress: 
+                  overall_progress_modified_at: 
+                  overall_count: 
+                  overall_duration_seconds: 
+                  overall_data_length_bytes: 0
+  "/analysis_jobs/filter":
+    post:
+      summary: filter analysis_job
+      security:
+      - basic_auth_with_token: []
+      parameters: []
+      tags:
+      - analysis_jobs
+      description: |2
+
+        Users that can invoke this route: `Admin`, `owner user`, `writer`, `reader`, `no_access`, `anyone`.<br />
+        Users that can't: `Harvester`.
+
+        Note: accessing a list/index/filter endpoint may return no results due to project permissions
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              example:
+                meta:
+                  status: 200
+                  message: OK
+                  sorting:
+                    order_by: updated_at
+                    direction: desc
+                  paging:
+                    page: 1
+                    items: 25
+                    total: 1
+                    max_page: 1
+                    current: http://localhost:3000/analysis_jobs/filter?direction=desc&items=25&order_by=updated_at&page=1
+                    previous: 
+                    next: 
+                data:
+                - id: 44
+                  name: job name 46
+                  annotation_name: 
+                  custom_settings: custom settings 46
+                  script_id: 46
+                  creator_id: 202
+                  updater_id: 
+                  deleter_id: 
+                  deleted_at: 
+                  created_at: '2020-08-27T15:07:27.852+01:00'
+                  updated_at: '2020-08-27T15:07:27.852+01:00'
+                  description: job description 46
+                  saved_search_id: 47
+                  started_at: '2020-08-27T15:07:27.846+01:00'
+                  overall_status: new
+                  overall_status_modified_at: '2020-08-27T15:07:27.846+01:00'
+                  overall_progress:
+                    new: 0
+                    queued: 0
+                    working: 0
+                    successful: 0
+                    failed: 0
+                    timed_out: 0
+                    cancelling: 0
+                    cancelled: 0
+                    total: 0
+                  overall_progress_modified_at: '2020-08-27T15:07:27.848+01:00'
+                  overall_count: 0
+                  overall_duration_seconds: 0.0
+                  overall_data_length_bytes: 0
+                  description_html: "<p>job description 46</p>\n"
+                  description_html_tagline: job description 46
+              schema:
+                allOf:
+                - "$ref": "#/components/schemas/standard_response"
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        "$ref": "#/components/schemas/analysis_job"
+  "/datasets":
+    get:
+      summary: list datasets
+      security:
+      - basic_auth_with_token: []
+      parameters: []
+      tags:
+      - datasets
+      description: |2
+
+        Users that can invoke this route: `Admin`, `owner user`, `writer`, `reader`, `no_access`, `anyone`.<br />
+        Users that can't: `Harvester`.
+
+        Note: accessing a list/index/filter endpoint may return no results due to project permissions
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              example:
+                meta:
+                  status: 200
+                  message: OK
+                  sorting:
+                    order_by: name
+                    direction: asc
+                  paging:
+                    page: 1
+                    items: 25
+                    total: 2
+                    max_page: 1
+                    current: http://localhost:3000/datasets?direction=asc&items=25&order_by=name&page=1
+                    previous: 
+                    next: 
+                data:
+                - id: 1
+                  creator_id: 1
+                  updater_id: 
+                  name: default
+                  description: The default dataset
+                  created_at: '2020-08-27T15:07:15.838+01:00'
+                  updated_at: '2020-08-27T15:07:15.838+01:00'
+                  description_html: "<p>The default dataset</p>\n"
+                  description_html_tagline: The default dataset
+                - id: 45
+                  creator_id: 205
+                  updater_id: 
+                  name: gen_dataset_name44
+                  description: dataset description 44
+                  created_at: '2020-08-27T15:07:28.149+01:00'
+                  updated_at: '2020-08-27T15:07:28.149+01:00'
+                  description_html: "<p>dataset description 44</p>\n"
+                  description_html_tagline: dataset description 44
+              schema:
+                allOf:
+                - "$ref": "#/components/schemas/standard_response"
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        "$ref": "#/components/schemas/dataset"
+    post:
+      summary: create dataset
+      security:
+      - basic_auth_with_token: []
+      parameters: []
+      tags:
+      - datasets
+      description: |2
+
+        Users that can invoke this route: `Admin`, `owner user`, `writer`, `reader`, `no_access`.<br />
+        Users that can't: `Harvester`, `anyone`.
+
+        Note: accessing a list/index/filter endpoint may return no results due to project permissions
+      responses:
+        '201':
+          description: successful
+          content:
+            application/json:
+              example:
+                meta:
+                  status: 201
+                  message: Created
+                data:
+                  id: 47
+                  creator_id: 1
+                  updater_id: 
+                  name: gen_dataset_name46
+                  description: dataset description 46
+                  created_at: '2020-08-27T15:07:28.461+01:00'
+                  updated_at: '2020-08-27T15:07:28.461+01:00'
+                  description_html: "<p>dataset description 46</p>\n"
+                  description_html_tagline: dataset description 46
+              schema:
+                allOf:
+                - "$ref": "#/components/schemas/standard_response"
+                - type: object
+                  properties:
+                    data:
+                      "$ref": "#/components/schemas/dataset"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/dataset"
+  "/datasets/{id}":
+    get:
+      summary: show dataset
+      security:
+      - basic_auth_with_token: []
+      parameters:
+      - name: id
+        in: path
+        description: id
+        required: true
+        schema:
+          type: integer
+      tags:
+      - datasets
+      description: |2
+
+        Users that can invoke this route: `Admin`, `owner user`, `writer`, `reader`, `no_access`, `anyone`.<br />
+        Users that can't: `Harvester`.
+
+        Note: accessing a list/index/filter endpoint may return no results due to project permissions
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              example:
+                meta:
+                  status: 200
+                  message: OK
+                data:
+                  id: 48
+                  creator_id: 214
+                  updater_id: 
+                  name: gen_dataset_name47
+                  description: dataset description 47
+                  created_at: '2020-08-27T15:07:28.671+01:00'
+                  updated_at: '2020-08-27T15:07:28.671+01:00'
+                  description_html: "<p>dataset description 47</p>\n"
+                  description_html_tagline: dataset description 47
+              schema:
+                allOf:
+                - "$ref": "#/components/schemas/standard_response"
+                - type: object
+                  properties:
+                    data:
+                      "$ref": "#/components/schemas/dataset"
+    patch:
+      summary: update dataset
+      security:
+      - basic_auth_with_token: []
+      parameters:
+      - name: id
+        in: path
+        description: id
+        required: true
+        schema:
+          type: integer
+      tags:
+      - datasets
+      description: |2
+
+        Users that can invoke this route: `Admin`, `owner user`, `writer`, `reader`, `no_access`, `anyone`.<br />
+        Users that can't: `Harvester`.
+
+        Note: accessing a list/index/filter endpoint may return no results due to project permissions
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              example:
+                meta:
+                  status: 200
+                  message: OK
+                data:
+                  id: 49
+                  description: dataset description 49
+                  name: gen_dataset_name49
+                  updater_id: 1
+                  creator_id: 218
+                  created_at: '2020-08-27T15:07:28.927+01:00'
+                  updated_at: '2020-08-27T15:07:29.003+01:00'
+                  description_html: "<p>dataset description 49</p>\n"
+                  description_html_tagline: dataset description 49
+              schema:
+                allOf:
+                - "$ref": "#/components/schemas/standard_response"
+                - type: object
+                  properties:
+                    data:
+                      "$ref": "#/components/schemas/dataset"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/dataset"
+    put:
+      summary: update dataset
+      security:
+      - basic_auth_with_token: []
+      parameters:
+      - name: id
+        in: path
+        description: id
+        required: true
+        schema:
+          type: integer
+      tags:
+      - datasets
+      description: |2
+
+        Users that can invoke this route: `Admin`, `owner user`, `writer`, `reader`, `no_access`, `anyone`.<br />
+        Users that can't: `Harvester`.
+
+        Note: accessing a list/index/filter endpoint may return no results due to project permissions
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              example:
+                meta:
+                  status: 200
+                  message: OK
+                data:
+                  id: 50
+                  description: dataset description 51
+                  name: gen_dataset_name51
+                  updater_id: 1
+                  creator_id: 223
+                  created_at: '2020-08-27T15:07:29.181+01:00'
+                  updated_at: '2020-08-27T15:07:29.233+01:00'
+                  description_html: "<p>dataset description 51</p>\n"
+                  description_html_tagline: dataset description 51
+              schema:
+                allOf:
+                - "$ref": "#/components/schemas/standard_response"
+                - type: object
+                  properties:
+                    data:
+                      "$ref": "#/components/schemas/dataset"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/dataset"
+    delete:
+      summary: can't delete a dataset
+      security:
+      - basic_auth_with_token: []
+      parameters:
+      - name: id
+        in: path
+        description: id
+        required: true
+        schema:
+          type: integer
+      tags:
+      - datasets
+      description: |2
+
+        Users that can invoke this route: `Admin`.<br />
+        Users that can't: `Harvester`, `owner user`, `writer`, `reader`, `no_access`, `anyone`.
+
+        Note: accessing a list/index/filter endpoint may return no results due to project permissions
+      responses:
+        '404':
+          description: not found
+          content:
+            application/json:
+              example:
+                meta:
+                  status: 404
+                  message: Not Found
+                  error:
+                    details: Could not find the requested page.
+                    info:
+                      original_route: datasets/51
+                      original_http_method: DELETE
+                data: 
+  "/datasets/new":
+    get:
+      summary: new dataset
+      security:
+      - basic_auth_with_token: []
+      parameters: []
+      tags:
+      - datasets
+      description: |2
+
+        Users that can invoke this route: `Admin`, `owner user`, `writer`, `reader`, `no_access`, `anyone`.<br />
+        Users that can't: `Harvester`.
+
+        Note: accessing a list/index/filter endpoint may return no results due to project permissions
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              example:
+                meta:
+                  status: 200
+                  message: OK
+                data:
+                  id: 
+                  creator_id: 
+                  updater_id: 
+                  name: 
+                  description: 
+                  created_at: 
+                  updated_at: 
+  "/datasets/filter":
+    post:
+      summary: filter dataset
+      security:
+      - basic_auth_with_token: []
+      parameters: []
+      tags:
+      - datasets
+      description: |2
+
+        Users that can invoke this route: `Admin`, `owner user`, `writer`, `reader`, `no_access`, `anyone`.<br />
+        Users that can't: `Harvester`.
+
+        Note: accessing a list/index/filter endpoint may return no results due to project permissions
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              example:
+                meta:
+                  status: 200
+                  message: OK
+                  sorting:
+                    order_by: name
+                    direction: asc
+                  paging:
+                    page: 1
+                    items: 25
+                    total: 2
+                    max_page: 1
+                    current: http://localhost:3000/datasets/filter?direction=asc&items=25&order_by=name&page=1
+                    previous: 
+                    next: 
+                data:
+                - id: 1
+                  creator_id: 1
+                  updater_id: 
+                  name: default
+                  description: The default dataset
+                  created_at: '2020-08-27T15:07:15.838+01:00'
+                  updated_at: '2020-08-27T15:07:15.838+01:00'
+                  description_html: "<p>The default dataset</p>\n"
+                  description_html_tagline: The default dataset
+                - id: 53
+                  creator_id: 236
+                  updater_id: 
+                  name: gen_dataset_name54
+                  description: dataset description 54
+                  created_at: '2020-08-27T15:07:29.902+01:00'
+                  updated_at: '2020-08-27T15:07:29.902+01:00'
+                  description_html: "<p>dataset description 54</p>\n"
+                  description_html_tagline: dataset description 54
+              schema:
+                allOf:
+                - "$ref": "#/components/schemas/standard_response"
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        "$ref": "#/components/schemas/dataset"
 servers:
 - url: https://{defaultHost}
   variables:
@@ -359,6 +2744,47 @@ components:
       name: auth_token
       in: query_string
   schemas:
+    id:
+      type: integer
+      minimum: 0
+      readOnly: true
+    nullableId:
+      anyOf:
+      - type: integer
+        minimum: 0
+        readOnly: true
+      - type: 'null'
+    timezone_information:
+      anyOf:
+      - type: object
+        properties:
+          identifier_alt:
+            type:
+            - string
+            - 'null'
+          identifier:
+            type: string
+          friendly_identifier:
+            type: string
+          utc_offset:
+            type: string
+          utc_total_offset:
+            type: integer
+      - type: 'null'
+    image_urls:
+      type: array
+      items:
+        type: object
+        properties:
+          size:
+            type: string
+          url:
+            type: string
+            format: URI
+          width:
+            type: integer
+          height:
+            type: integer
     meta:
       type: object
     meta_error:
@@ -399,24 +2825,480 @@ components:
       additionalProperties: false
       properties:
         id:
-          type: integer
+          "$ref": "#/components/schemas/id"
           readOnly: true
         name:
           type: string
         description:
-          type: string
+          type:
+          - string
+          - 'null'
         description_html:
-          type: string
+          type:
+          - string
+          - 'null'
+          readOnly: true
+        description_html_tagline:
+          type:
+          - string
+          - 'null'
           readOnly: true
         notes:
-          type: object
+          type: string
         creator_id:
-          type: integer
+          "$ref": "#/components/schemas/id"
           readOnly: true
         updater_id:
-          type: integer
+          "$ref": "#/components/schemas/nullableId"
+          readOnly: true
+        deleter_id:
+          "$ref": "#/components/schemas/nullableId"
+          readOnly: true
+        created_at:
+          type: date
+          readOnly: true
+        updated_at:
+          type:
+          - 'null'
+          - date
+          readOnly: true
+        deleted_at:
+          type:
+          - 'null'
+          - date
           readOnly: true
         site_ids:
           type: array
           items:
             type: integer
+      required:
+      - id
+      - name
+      - description
+      - description_html
+      - description_html_tagline
+      - notes
+      - creator_id
+      - created_at
+      - updater_id
+      - updated_at
+      - deleter_id
+      - deleted_at
+      - site_ids
+    analysis_job:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          "$ref": "#/components/schemas/id"
+          readOnly: true
+        name:
+          type: string
+        annotation_name:
+          type:
+          - string
+          - 'null'
+        description:
+          type:
+          - string
+          - 'null'
+        description_html:
+          type:
+          - string
+          - 'null'
+          readOnly: true
+        description_html_tagline:
+          type:
+          - string
+          - 'null'
+          readOnly: true
+        custom_settings:
+          type: string
+        script_id:
+          "$ref": "#/components/schemas/id"
+        saved_search_id:
+          "$ref": "#/components/schemas/id"
+        started_at:
+          type:
+          - 'null'
+          - date
+          readOnly: true
+        overall_status:
+          type: string
+          enum:
+          - before_save
+          - new
+          - preparing
+          - processing
+          - completed
+          - suspended
+          readOnly: true
+        overall_status_modified_at:
+          type:
+          - 'null'
+          - date
+          readOnly: true
+        overall_progress:
+          type: object
+          readOnly: true
+        overall_progress_modified_at:
+          type:
+          - 'null'
+          - date
+          readOnly: true
+        overall_count:
+          type: integer
+          readOnly: true
+        overall_duration_seconds:
+          type: number
+          readOnly: true
+        overall_data_length_bytes:
+          type: integer
+          readOnly: true
+        creator_id:
+          "$ref": "#/components/schemas/id"
+          readOnly: true
+        updater_id:
+          "$ref": "#/components/schemas/nullableId"
+          readOnly: true
+        deleter_id:
+          "$ref": "#/components/schemas/nullableId"
+          readOnly: true
+        created_at:
+          type: date
+          readOnly: true
+        updated_at:
+          type:
+          - 'null'
+          - date
+          readOnly: true
+        deleted_at:
+          type:
+          - 'null'
+          - date
+          readOnly: true
+      required:
+      - id
+      - name
+      - description
+      - description_html
+      - description_html_tagline
+      - custom_settings
+      - script_id
+      - saved_search_id
+      - started_at
+      - overall_status
+      - overall_status_modified_at
+      - overall_progress
+      - overall_progress_modified_at
+      - overall_count
+      - overall_duration_seconds
+      - overall_data_length_bytes
+    bookmark:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          "$ref": "#/components/schemas/id"
+          readOnly: true
+        audio_recording_id:
+          "$ref": "#/components/schemas/id"
+        name:
+          type: string
+        category:
+          type: string
+        offset_seconds:
+          type: number
+        description:
+          type:
+          - string
+          - 'null'
+        description_html:
+          type:
+          - string
+          - 'null'
+          readOnly: true
+        description_html_tagline:
+          type:
+          - string
+          - 'null'
+          readOnly: true
+        creator_id:
+          "$ref": "#/components/schemas/id"
+          readOnly: true
+        updater_id:
+          "$ref": "#/components/schemas/nullableId"
+          readOnly: true
+        created_at:
+          type: date
+          readOnly: true
+        updated_at:
+          type:
+          - 'null'
+          - date
+          readOnly: true
+      required:
+      - id
+      - audio_recording_id
+      - name
+      - category
+      - offset_seconds
+      - description
+      - description_html
+      - description_html_tagline
+      - creator_id
+      - created_at
+      - updater_id
+      - updated_at
+    dataset:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          "$ref": "#/components/schemas/id"
+          readOnly: true
+        name:
+          type: string
+        description:
+          type:
+          - string
+          - 'null'
+        description_html:
+          type:
+          - string
+          - 'null'
+          readOnly: true
+        description_html_tagline:
+          type:
+          - string
+          - 'null'
+          readOnly: true
+        creator_id:
+          "$ref": "#/components/schemas/id"
+          readOnly: true
+        updater_id:
+          "$ref": "#/components/schemas/nullableId"
+          readOnly: true
+        created_at:
+          type: date
+          readOnly: true
+        updated_at:
+          type:
+          - 'null'
+          - date
+          readOnly: true
+      required:
+      - id
+      - name
+      - description
+      - created_at
+      - creator_id
+      - updated_at
+      - updater_id
+    saved_search:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          "$ref": "#/components/schemas/id"
+          readOnly: true
+        analysis_job_ids:
+          type: array
+          items:
+            "$ref": "#/components/schemas/id"
+        project_ids:
+          type: array
+          items:
+            "$ref": "#/components/schemas/id"
+        name:
+          type: string
+        description:
+          type:
+          - string
+          - 'null'
+        description_html:
+          type:
+          - string
+          - 'null'
+          readOnly: true
+        description_html_tagline:
+          type:
+          - string
+          - 'null'
+          readOnly: true
+        stored_query:
+          type: object
+        creator_id:
+          "$ref": "#/components/schemas/id"
+          readOnly: true
+        deleter_id:
+          "$ref": "#/components/schemas/nullableId"
+          readOnly: true
+        created_at:
+          type: date
+          readOnly: true
+        deleted_at:
+          type:
+          - 'null'
+          - date
+          readOnly: true
+      required:
+      - id
+      - name
+      - description
+      - description_html
+      - description_html_tagline
+      - stored_query
+      - creator_id
+      - created_at
+      - deleter_id
+      - deleted_at
+    script:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          "$ref": "#/components/schemas/id"
+          readOnly: true
+        group_id:
+          "$ref": "#/components/schemas/id"
+          readOnly: true
+        name:
+          type: string
+        description:
+          type:
+          - string
+          - 'null'
+        description_html:
+          type:
+          - string
+          - 'null'
+          readOnly: true
+        description_html_tagline:
+          type:
+          - string
+          - 'null'
+          readOnly: true
+        analysis_identifier:
+          type: string
+        executable_settings:
+          type: string
+        executable_settings_media_type:
+          type: string
+        version:
+          type: number
+        creator_id:
+          "$ref": "#/components/schemas/id"
+          readOnly: true
+        created_at:
+          type: date
+          readOnly: true
+        is_last_version:
+          type: boolean
+          readOnly: true
+        is_first_version:
+          type: boolean
+          readOnly: true
+        analysis_action_params:
+          type: object
+      required:
+      - id
+      - group_id
+      - name
+      - description
+      - analysis_identifier
+      - executable_settings_media_type
+      - version
+      - created_at
+      - creator_id
+      - is_last_version
+      - is_first_version
+      - analysis_action_params
+    site:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          "$ref": "#/components/schemas/id"
+          readOnly: true
+        name:
+          type: string
+        description:
+          type:
+          - string
+          - 'null'
+        description_html:
+          type:
+          - string
+          - 'null'
+          readOnly: true
+        description_html_tagline:
+          type:
+          - string
+          - 'null'
+          readOnly: true
+        creator_id:
+          "$ref": "#/components/schemas/id"
+          readOnly: true
+        updater_id:
+          "$ref": "#/components/schemas/nullableId"
+          readOnly: true
+        deleter_id:
+          "$ref": "#/components/schemas/nullableId"
+          readOnly: true
+        created_at:
+          type: date
+          readOnly: true
+        updated_at:
+          type:
+          - 'null'
+          - date
+          readOnly: true
+        deleted_at:
+          type:
+          - 'null'
+          - date
+          readOnly: true
+        notes:
+          type: string
+        project_ids:
+          type: array
+          items:
+            type: integer
+        location_obfuscated:
+          type: boolean
+        custom_latitude:
+          type:
+          - number
+          - 'null'
+          minimum: -90
+          maximum: 90
+        custom_longitude:
+          type:
+          - number
+          - 'null'
+          minimum: -180
+          maximum: 180
+        timezone_information:
+          "$ref": "#/components/schemas/timezone_information"
+        image_urls:
+          "$ref": "#/components/schemas/image_urls"
+      required:
+      - id
+      - name
+      - description
+      - description_html
+      - description_html_tagline
+      - creator_id
+      - created_at
+      - updater_id
+      - updated_at
+      - deleter_id
+      - deleted_at
+      - notes
+      - project_ids
+      - location_obfuscated
+      - custom_latitude
+      - custom_longitude
+      - timezone_information
+      - image_urls

@@ -143,7 +143,8 @@ class AnalysisJobsController < ApplicationController
       :saved_search_id,
       :name,
       :custom_settings,
-      :description
+      :description,
+      :annotation_name
     )
   end
 

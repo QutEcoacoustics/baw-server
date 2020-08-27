@@ -4,6 +4,7 @@ FactoryBot.define do
   factory :analysis_job do
     sequence(:name) { |n| "job name #{n}" }
     sequence(:custom_settings) { |n| "custom settings #{n}" }
+    sequence(:description) { |n| "job description #{n}" }
 
     creator
     saved_search
@@ -19,5 +20,9 @@ FactoryBot.define do
     # should be set by the workflow
     #overall_status_modified_at { Time.zone.now }
     overall_progress_modified_at { Time.zone.now }
+
+    factory :analysis_job_with_valid_saved_search do
+      association :saved_search, factory: :saved_search_with_projects
+    end
   end
 end

@@ -86,19 +86,23 @@ RSpec.configure do |config|
   #config.include FactoryBot::Syntax::Methods
 
   # redirect puts into a text file
-  original_stderr = $stderr
-  original_stdout = $stdout
+  if defined?(Debugger)
+    puts '$stdout and $stderr will NOT be redirected'
+  else
+    original_stderr = $stderr
+    original_stdout = $stdout
 
-  config.before(:suite) do
-    # Redirect stderr and stdout
-    puts '$stdout and $stderr redirected to log files in ./logs/rspec_*.txt'
-    $stderr = File.new(File.join(File.dirname(__FILE__), '..', 'log', 'rspec_stderr.test.log'), 'w')
-    $stdout = File.new(File.join(File.dirname(__FILE__), '..', 'log', 'rspec_stdout.test.log'), 'w')
-  end
+    config.before(:suite) do
+      # Redirect stderr and stdout
+      puts '$stdout and $stderr redirected to log files in ./logs/rspec_*.txt'
+      $stderr = File.new(File.join(File.dirname(__FILE__), '..', 'log', 'rspec_stderr.test.log'), 'w')
+      $stdout = File.new(File.join(File.dirname(__FILE__), '..', 'log', 'rspec_stdout.test.log'), 'w')
+    end
 
-  config.after(:suite) do
-    $stderr = original_stderr
-    $stdout = original_stdout
+    config.after(:suite) do
+      $stderr = original_stderr
+      $stdout = original_stdout
+    end
   end
 
   # These two settings work together to allow you to limit a spec run

@@ -94,12 +94,13 @@ class Script < ApplicationRecord
       valid_fields: [:id, :group_id, :name, :description, :analysis_identifier, :executable_settings_media_type,
                      :version, :created_at, :creator_id, :is_last_version, :is_first_version, :analysis_action_params],
       render_fields: [:id, :group_id, :name, :description, :analysis_identifier, :executable_settings,
-                      :executable_settings_media_type, :version, :created_at, :creator_id],
+                      :executable_settings_media_type, :version, :created_at, :creator_id, :analysis_action_params],
       text_fields: [:name, :description, :analysis_identifier, :executable_settings_media_type, :analysis_action_params],
       custom_fields: lambda { |item, _user|
                        virtual_fields = {
                          is_last_version: item.is_last_version?,
-                         is_first_version: item.is_first_version?
+                         is_first_version: item.is_first_version?,
+                         **item.render_markdown_for_api_for(:description)
                        }
                        [item, virtual_fields]
                      },
@@ -132,6 +133,31 @@ class Script < ApplicationRecord
         direction: :asc
       }
     }
+  end
+
+  def self.schema
+    {
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        id: { '$ref' => '#/components/schemas/id', readOnly: true },
+        group_id: { '$ref' => '#/components/schemas/id', readOnly: true },
+        name: { type: 'string' },
+        **Api::Schema.rendered_markdown(:description),
+        analysis_identifier: { type: 'string' },
+        executable_settings: { type: 'string' },
+        executable_settings_media_type: { type: 'string' },
+        version: { type: 'number' },
+        **Api::Schema.creator_ids_and_ats,
+        is_last_version: { type: 'boolean', readOnly: true },
+        is_first_version: { type: 'boolean', readOnly: true },
+        analysis_action_params: { type: 'object' }
+      },
+      required: [
+        :id, :group_id, :name, :description, :analysis_identifier, :executable_settings_media_type,
+        :version, :created_at, :creator_id, :is_last_version, :is_first_version, :analysis_action_params
+      ]
+    }.freeze
   end
 
   private

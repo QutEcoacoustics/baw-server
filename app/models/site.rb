@@ -118,6 +118,11 @@ class Site < ApplicationRecord
   end
 
   def update_location_obfuscated(current_user)
+    if projects.empty?
+      @location_obfuscated = true
+      return
+    end
+
     Access::Core.check_orphan_site!(self)
     is_owner = Access::Core.can_any?(current_user, :owner, projects)
 
@@ -125,9 +130,7 @@ class Site < ApplicationRecord
     @location_obfuscated = !is_owner
   end
 
-  def description_html
-    CustomRender.render_model_markdown(self, :description)
-  end
+  renders_markdown_for :description
 
   def self.add_location_jitter(value, min, max)
     # multiply by 10,000 to get to ~10m accuracy
@@ -177,8 +180,10 @@ class Site < ApplicationRecord
   # Define filter api settings
   def self.filter_settings
     {
-      valid_fields: [:id, :name, :description, :created_at, :updated_at, :project_ids, :timezone_information],
-      render_fields: [:id, :name, :description, :creator_id, :updater_id, :created_at, :updated_at],
+      valid_fields: [:id, :name, :description, :notes, :creator_id,
+                     :created_at, :updater_id, :updated_at, :deleter_id, :deleted_at],
+      render_fields: [:id, :name, :description, :notes, :creator_id,
+                      :created_at, :updater_id, :updated_at, :deleter_id, :deleted_at],
       text_fields: [:description, :name],
       custom_fields: lambda { |item, user|
                        # item can be nil or a new record
@@ -194,8 +199,8 @@ class Site < ApplicationRecord
                            custom_latitude: fresh_site.latitude,
                            custom_longitude: fresh_site.longitude,
                            timezone_information: fresh_site.timezone,
-                           description_html: fresh_site.description_html,
-                           image_urls: Api::Image.image_urls(fresh_site.image)
+                           image_urls: Api::Image.image_urls(fresh_site.image),
+                           **item.render_markdown_for_api_for(:description)
                          }
                        end
 
@@ -238,5 +243,46 @@ class Site < ApplicationRecord
         }
       ]
     }
+  end
+
+  def self.schema
+    {
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        id: { '$ref' => '#/components/schemas/id', readOnly: true },
+        name: { type: 'string' },
+        **Api::Schema.rendered_markdown(:description),
+        **Api::Schema.all_ids_and_ats,
+        #notes: { type: 'object' }, # TODO: https://github.com/QutEcoacoustics/baw-server/issues/467
+        notes: { type: 'string' },
+        project_ids: { type: 'array', items: { type: 'integer' } },
+        location_obfuscated: { type: 'boolean' },
+        custom_latitude: { type: ['number', 'null'], minimum: -90, maximum: 90 },
+        custom_longitude: { type: ['number', 'null'], minimum: -180, maximum: 180 },
+        timezone_information: Api::Schema.timezone_information,
+        image_urls: Api::Schema.image_urls
+      },
+      required: [
+        :id,
+        :name,
+        :description,
+        :description_html,
+        :description_html_tagline,
+        :creator_id,
+        :created_at,
+        :updater_id,
+        :updated_at,
+        :deleter_id,
+        :deleted_at,
+        :notes,
+        :project_ids,
+        :location_obfuscated,
+        :custom_latitude,
+        :custom_longitude,
+        :timezone_information,
+        :image_urls
+      ]
+    }.freeze
   end
 end

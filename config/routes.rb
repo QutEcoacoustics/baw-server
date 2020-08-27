@@ -261,8 +261,8 @@ Rails.application.routes.draw do
   get 'sites/orphans' => 'sites#orphans'
 
   # shallow path to sites
-  get '/sites' => 'sites#index', defaults: { format: 'json' }, as: 'shallow_site_index'
-  get '/sites/:id' => 'sites#show_shallow', defaults: { format: 'json' }, as: 'shallow_site'
+
+  resources :sites, except: [:edit], defaults: { format: 'json' }, as: 'shallow_site'
 
   match 'datasets/:dataset_id/progress_events/audio_recordings/:audio_recording_id/start/:start_time_seconds/end/:end_time_seconds' =>
     'progress_events#create_by_dataset_item_params',

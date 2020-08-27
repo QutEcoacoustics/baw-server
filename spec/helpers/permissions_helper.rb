@@ -4,19 +4,24 @@ module PermissionsGroupHelpers
   STANDARD_ACTIONS = Set[:index, :show, :create, :update, :destroy, :filter, :new].freeze
   STANDARD_USERS = Set[:admin, :harvester, :owner, :writer, :reader, :no_access, :invalid, :anonymous].freeze
 
-  mattr_accessor :registered_users, :route, :route_params, :factory, :expected_list_items_callback
+  mattr_accessor :registered_users, :route, :route_params, :factory, :model_name, :expected_list_items_callback, :update_attrs_subset
 
   def given_the_route(route, &route_params)
     self.route = route
     self.route_params = route_params
   end
 
-  def using_the_factory(factory)
+  def using_the_factory(factory, model_name: factory)
     self.factory = factory
+    self.model_name = model_name
   end
 
   def for_lists_expects(&expected_list_items_callback)
     self.expected_list_items_callback = expected_list_items_callback
+  end
+
+  def when_updating_send_only(*attrs)
+    self.update_attrs_subset = attrs
   end
 
   def the_users(*users, **keyword_args)
@@ -67,7 +72,9 @@ module PermissionsGroupHelpers
         user: user,
         actions: actions,
         factory: factory,
-        expected_list_items_callback: expected_list_items_callback
+        model_name: model_name,
+        expected_list_items_callback: expected_list_items_callback,
+        update_attrs_subset: update_attrs_subset
       }
     end
   end
@@ -191,8 +198,12 @@ RSpec.shared_examples :permissions_for do |options|
     options[:factory]
   }
 
+  let(:model_name) {
+    options[:model_name]
+  }
+
   let(:headers) {
-    token = (options[:user].to_s + '_token').to_sym
+    token = "#{options[:user]}_token".to_sym
     {
       'ACCEPT' => 'application/json',
       'HTTP_AUTHORIZATION' => send(token)
@@ -204,11 +215,15 @@ RSpec.shared_examples :permissions_for do |options|
     instance_exec(&options[:route_params])
   }
 
+  let(:update_attrs_subset) {
+    options[:update_attrs_subset]
+  }
+
   let(:expected_list_items_callback) {
     options[:expected_list_items_callback]
   }
 
-  def send_request(action, headers, route_params, factory)
+  def send_request(action, headers, route_params, factory, model_name)
     verb = action[:verb]
     path = action[:path]
     action = action[:action]
@@ -216,9 +231,15 @@ RSpec.shared_examples :permissions_for do |options|
     url = path.expand(route_params)
 
     # some endpoints require a valid body is included
-    if [:create, :update].include?(action)
-      body = body_attributes_for(factory)
+    case action
+    when :create
+      body = body_attributes_for(model_name, factory: factory)
       as = :json
+    when :update
+      body = body_attributes_for(model_name, factory: factory, subset: update_attrs_subset)
+      as = :json
+    else
+      body = nil
     end
 
     # process is the generic base method for the get, post, put, etc.. methods
@@ -254,15 +275,15 @@ RSpec.shared_examples :permissions_for do |options|
       # again add metadata to allow filtering by action
       example example_name, { action[:action] => true } do
         # first build and issue request
-        send_request(action, headers, route_params, factory)
+        send_request(action, headers, route_params, factory, model_name)
 
-        expected = action[:expected_status]
-        expect(response).to have_http_status(expected)
+        aggregate_failures 'Failures:' do
+          expected = action[:expected_status]
+          expect(response).to have_http_status(expected)
 
-        # only validate results if we expect valid data
-        next unless action[:can]
-
-        validate_result(options[:user], action[:action], action[:expect])
+          # only validate results if we expect valid data
+          validate_result(options[:user], action[:action], action[:expect]) if action[:can]
+        end
       end
     end
   end

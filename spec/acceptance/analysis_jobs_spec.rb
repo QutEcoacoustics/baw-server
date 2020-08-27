@@ -44,198 +44,6 @@ resource 'AnalysisJobs' do
       .to_json
   }
 
-  ################################
-  # INDEX
-  ################################
-
-  get '/analysis_jobs' do
-    let(:authentication_token) { admin_token }
-    standard_request_options(:get, 'INDEX (as admin)', :ok, { expected_json_path: 'data/0/saved_search_id', data_item_count: 1 })
-  end
-
-  get '/analysis_jobs' do
-    let(:authentication_token) { owner_token }
-    standard_request_options(:get, 'INDEX (as owner)', :ok, { expected_json_path: 'data/0/saved_search_id', data_item_count: 1 })
-  end
-
-  get '/analysis_jobs' do
-    let(:authentication_token) { writer_token }
-    standard_request_options(:get, 'INDEX (as writer)', :ok, { expected_json_path: 'data/0/saved_search_id', data_item_count: 1 })
-  end
-
-  get '/analysis_jobs' do
-    let(:authentication_token) { reader_token }
-    standard_request_options(:get, 'INDEX (as reader)', :ok, { expected_json_path: 'data/0/saved_search_id', data_item_count: 1 })
-  end
-
-  get '/analysis_jobs' do
-    let(:authentication_token) { no_access_token }
-    standard_request_options(:get, 'INDEX (as no access user)', :ok, { response_body_content: ['"total":0,', '"data":[]'] })
-  end
-
-  get '/analysis_jobs' do
-    let(:authentication_token) { invalid_token }
-    standard_request_options(:get, 'INDEX (invalid token)', :unauthorized, { expected_json_path: get_json_error_path(:sign_in) })
-  end
-
-  get '/analysis_jobs' do
-    standard_request_options(:get, 'INDEX (as anonymous user)', :ok, { remove_auth: true, response_body_content: ['"total":0,', '"data":[]'] })
-  end
-
-  ################################
-  # SHOW
-  ################################
-
-  get '/analysis_jobs/:id' do
-    id_params
-    let(:id) { analysis_job.id }
-    let(:authentication_token) { admin_token }
-    standard_request_options(:get, 'SHOW (as admin)', :ok, { expected_json_path: 'data/saved_search_id' })
-  end
-
-  get '/analysis_jobs/:id' do
-    id_params
-    let(:id) { analysis_job.id }
-    let(:authentication_token) { owner_token }
-    standard_request_options(:get, 'SHOW (as owner)', :ok, { expected_json_path: 'data/saved_search_id' })
-  end
-
-  get '/analysis_jobs/:id' do
-    id_params
-    let(:id) { analysis_job.id }
-    let(:authentication_token) { writer_token }
-    standard_request_options(:get, 'SHOW (as writer)', :ok, { expected_json_path: 'data/saved_search_id' })
-  end
-
-  get '/analysis_jobs/:id' do
-    id_params
-    let(:id) { analysis_job.id }
-    let(:authentication_token) { reader_token }
-    standard_request_options(:get, 'SHOW (as reader)', :ok, { expected_json_path: 'data/saved_search_id' })
-  end
-
-  get '/analysis_jobs/:id' do
-    id_params
-    let(:id) { analysis_job.id }
-    let(:authentication_token) { no_access_token }
-    standard_request_options(:get, 'SHOW (as no access)', :forbidden, { expected_json_path: get_json_error_path(:permissions) })
-  end
-
-  get '/analysis_jobs/:id' do
-    id_params
-    let(:id) { analysis_job.id }
-    let(:authentication_token) { invalid_token }
-    standard_request_options(:get, 'SHOW (invalid token)', :unauthorized, { expected_json_path: get_json_error_path(:sign_in) })
-  end
-
-  get '/analysis_jobs/:id' do
-    id_params
-    let(:id) { 'system' }
-    let(:authentication_token) { admin_token }
-    standard_request_options(:get, 'SHOW system (as admin)', :not_implemented, {
-                               response_body_content: '"error":{"details":"The service is not ready for use"'
-                             })
-  end
-
-  get '/analysis_jobs/:id' do
-    id_params
-    let(:id) { analysis_job.id }
-    standard_request_options(:get, 'SHOW (as anonymous user)', :unauthorized, {
-                               remove_auth: true,
-                               expected_json_path: get_json_error_path(:sign_in)
-                             })
-  end
-
-  ################################
-  # NEW
-  ################################
-
-  get '/analysis_jobs/new' do
-    let(:authentication_token) { admin_token }
-    standard_request_options(:get, 'NEW (as admin)', :ok, { expected_json_path: 'data/saved_search_id' })
-  end
-
-  get '/analysis_jobs/new' do
-    let(:authentication_token) { owner_token }
-    standard_request_options(:get, 'NEW (as owner)', :ok, { expected_json_path: 'data/saved_search_id' })
-  end
-
-  get '/analysis_jobs/new' do
-    let(:authentication_token) { writer_token }
-    standard_request_options(:get, 'NEW (as writer)', :ok, { expected_json_path: 'data/saved_search_id' })
-  end
-
-  get '/analysis_jobs/new' do
-    let(:authentication_token) { reader_token }
-    standard_request_options(:get, 'NEW (as reader)', :ok, { expected_json_path: 'data/saved_search_id' })
-  end
-
-  get '/analysis_jobs/new' do
-    let(:authentication_token) { no_access_token }
-    standard_request_options(:get, 'NEW (as no access)', :ok, { expected_json_path: 'data/saved_search_id' })
-  end
-
-  get '/analysis_jobs/new' do
-    let(:authentication_token) { invalid_token }
-    standard_request_options(:get, 'NEW (invalid token)', :unauthorized, { expected_json_path: get_json_error_path(:sign_up) })
-  end
-
-  get '/analysis_jobs/new' do
-    standard_request_options(:get, 'NEW (as anonymous user)', :unauthorized, { remove_auth: true, expected_json_path: get_json_error_path(:sign_up) })
-  end
-
-  ################################
-  # CREATE
-  ################################
-
-  post '/analysis_jobs' do
-    body_params
-    let(:raw_post) { body_attributes }
-    let(:authentication_token) { admin_token }
-    standard_request_options(:post, 'CREATE (as admin)', :created, { expected_json_path: 'data/saved_search_id' })
-  end
-
-  post '/analysis_jobs' do
-    body_params
-    let(:raw_post) { body_attributes }
-    let(:authentication_token) { owner_token }
-    standard_request_options(:post, 'CREATE (as owner)', :created, { expected_json_path: 'data/saved_search_id' })
-  end
-
-  post '/analysis_jobs' do
-    body_params
-    let(:raw_post) { body_attributes }
-    let(:authentication_token) { writer_token }
-    standard_request_options(:post, 'CREATE (as writer)', :created, { expected_json_path: 'data/saved_search_id' })
-  end
-
-  post '/analysis_jobs' do
-    body_params
-    let(:raw_post) { body_attributes }
-    let(:authentication_token) { reader_token }
-    standard_request_options(:post, 'CREATE (as reader)', :created, { expected_json_path: 'data/saved_search_id' })
-  end
-
-  post '/analysis_jobs' do
-    body_params
-    let(:raw_post) { body_attributes }
-    let(:authentication_token) { no_access_token }
-    standard_request_options(:post, 'CREATE (as other)', :forbidden, { expected_json_path: get_json_error_path(:permissions) })
-  end
-
-  post '/analysis_jobs' do
-    body_params
-    let(:raw_post) { body_attributes }
-    let(:authentication_token) { invalid_token }
-    standard_request_options(:post, 'CREATE (invalid token)', :unauthorized, { expected_json_path: get_json_error_path(:sign_up) })
-  end
-
-  post '/analysis_jobs' do
-    body_params
-    let(:raw_post) { body_attributes }
-    standard_request_options(:post, 'CREATE (as anonymous user)', :unauthorized, { remove_auth: true, expected_json_path: get_json_error_path(:sign_up) })
-  end
-
   post '/analysis_jobs' do
     let(:authentication_token) { writer_token }
     let(:raw_post) {
@@ -266,85 +74,6 @@ resource 'AnalysisJobs' do
       saved_search
     }
     standard_request_options(:post, 'CREATE (as writer, testing projects error)', :created, { expected_json_path: 'data/saved_search_id' })
-  end
-
-  ################################
-  # UPDATE
-  ################################
-
-  put '/analysis_jobs/:id' do
-    id_params
-    body_params
-    let(:id) { analysis_job.id }
-    let(:raw_post) { body_attributes_update }
-    let(:authentication_token) { admin_token }
-    standard_request_options(:put, 'UPDATE (as admin)', :ok, { expected_json_path: 'data/saved_search_id' })
-  end
-
-  patch '/analysis_jobs/:id' do
-    id_params
-    body_params
-    let(:id) { analysis_job.id }
-    let(:raw_post) { body_attributes_update }
-    let(:authentication_token) { admin_token }
-    standard_request_options(:patch, 'UPDATE (as admin)', :ok, { expected_json_path: 'data/saved_search_id' })
-  end
-
-  put '/analysis_jobs/:id' do
-    id_params
-    body_params
-    let(:id) { analysis_job.id }
-    let(:raw_post) { body_attributes_update }
-    let(:authentication_token) { writer_token }
-    standard_request_options(:put, 'UPDATE (as writer)', :ok, { expected_json_path: 'data/saved_search_id' })
-  end
-
-  put '/analysis_jobs/:id' do
-    id_params
-    body_params
-    let(:id) { analysis_job.id }
-    let(:raw_post) { body_attributes }
-    let(:authentication_token) { reader_token }
-    standard_request_options(:put, 'UPDATE (as reader)', :forbidden, { expected_json_path: get_json_error_path(:permissions) })
-  end
-
-  put '/analysis_jobs/:id' do
-    id_params
-    body_params
-    let(:id) { analysis_job.id }
-    let(:raw_post) { body_attributes }
-    let(:authentication_token) { no_access_token }
-    standard_request_options(:put, 'UPDATE (as no access)', :forbidden, { expected_json_path: get_json_error_path(:permissions) })
-  end
-
-  put '/analysis_jobs/:id' do
-    id_params
-    body_params
-    let(:id) { analysis_job.id }
-    let(:raw_post) { body_attributes }
-    let(:authentication_token) { invalid_token }
-    standard_request_options(:put, 'UPDATE (invalid token)', :unauthorized, { expected_json_path: get_json_error_path(:sign_up) })
-  end
-
-  put '/analysis_jobs/:id' do
-    id_params
-    let(:id) { 'system' }
-    let(:raw_post) { body_attributes }
-    let(:authentication_token) { admin_token }
-    standard_request_options(:put, 'UPDATE system (as admin)', :method_not_allowed, {
-                               response_body_content: '"info":{"available_methods":["GET","HEAD","OPTIONS"]}}}'
-                             })
-  end
-
-  put '/analysis_jobs/:id' do
-    id_params
-    body_params
-    let(:id) { analysis_job.id }
-    let(:raw_post) { body_attributes }
-    standard_request_options(:put, 'UPDATE (as anonymous user)', :unauthorized, {
-                               remove_auth: true,
-                               expected_json_path: get_json_error_path(:sign_up)
-                             })
   end
 
   describe 'update special case - retrying the job' do
@@ -456,99 +185,6 @@ resource 'AnalysisJobs' do
   end
 
   ################################
-  # DESTROY
-  ################################
-
-  def mock_processing_state(_opts)
-    analysis_job.update_columns(
-      overall_status: 'processing',
-      overall_status_modified_at: Time.zone.now,
-      started_at: Time.zone.now
-    )
-  end
-
-  delete '/analysis_jobs/:id' do
-    id_params
-    let(:id) { analysis_job.id }
-    let(:authentication_token) { admin_token }
-    standard_request_options(
-      :delete,
-      'DESTROY (as admin)',
-      :no_content,
-      {
-        expected_response_has_content: false,
-        expected_response_content_type: nil
-      },
-      &:mock_processing_state
-    )
-  end
-
-  delete '/analysis_jobs/:id' do
-    id_params
-    let(:id) { analysis_job.id }
-    let(:authentication_token) { writer_token }
-    standard_request_options(
-      :delete,
-      'DESTROY (as writer, when [:processing|:suspended|:complete])',
-      :no_content,
-      {
-        expected_response_has_content: false,
-        expected_response_content_type: nil
-      },
-      &:mock_processing_state
-    )
-  end
-
-  delete '/analysis_jobs/:id' do
-    id_params
-    let(:id) { analysis_job.id }
-    let(:authentication_token) { writer_token }
-    standard_request_options(:delete, 'DESTROY (as writer, when [:new|:preparing])', :conflict, {
-                               expected_json_path: 'meta/error/details',
-                               response_body_content: '"message":"Conflict"'
-                             })
-  end
-
-  delete '/analysis_jobs/:id' do
-    id_params
-    let(:id) { analysis_job.id }
-    let(:authentication_token) { reader_token }
-    standard_request_options(:delete, 'DESTROY (as reader)', :forbidden, { expected_json_path: get_json_error_path(:permissions) })
-  end
-
-  delete '/analysis_jobs/:id' do
-    id_params
-    let(:id) { analysis_job.id }
-    let(:authentication_token) { no_access_token }
-    standard_request_options(:delete, 'DESTROY (as no access user)', :forbidden, { expected_json_path: get_json_error_path(:permissions) })
-  end
-
-  delete '/analysis_jobs/:id' do
-    id_params
-    let(:id) { analysis_job.id }
-    let(:authentication_token) { invalid_token }
-    standard_request_options(:delete, 'DESTROY (invalid token)', :unauthorized, { expected_json_path: get_json_error_path(:sign_up) })
-  end
-
-  delete '/analysis_jobs/:id' do
-    id_params
-    let(:id) { 'system' }
-    let(:authentication_token) { admin_token }
-    standard_request_options(:delete, 'DESTROY system (as admin)', :method_not_allowed, {
-                               response_body_content: '"info":{"available_methods":["GET","HEAD","OPTIONS"]}}}'
-                             })
-  end
-
-  delete '/analysis_jobs/:id' do
-    id_params
-    let(:id) { analysis_job.id }
-    standard_request_options(:delete, 'DESTROY (as anonymous user)', :unauthorized, {
-                               remove_auth: true,
-                               expected_json_path: get_json_error_path(:sign_up)
-                             })
-  end
-
-  ################################
   # FILTER
   ################################
 
@@ -567,11 +203,11 @@ resource 'AnalysisJobs' do
       }.to_json
     }
     standard_request_options(:post, 'FILTER (as reader)', :ok, {
-                               expected_json_path: 'meta/filter/saved_searches.stored_query',
-                               data_item_count: 1,
-                               response_body_content: ['"saved_searches.stored_query":{"contains":"blah"}'],
-                               invalid_content: ['"saved_search":', '"script":']
-                             })
+      expected_json_path: 'meta/filter/saved_searches.stored_query',
+      data_item_count: 1,
+      response_body_content: ['"saved_searches.stored_query":{"contains":"blah"}'],
+      invalid_content: ['"saved_search":', '"script":']
+    })
   end
 
   post '/analysis_jobs/filter' do
@@ -586,11 +222,11 @@ resource 'AnalysisJobs' do
       }.to_json
     }
     standard_request_options(:post, 'FILTER (as no access user)', :ok, {
-                               response_body_content: [
-                                 '{"meta":{"status":200,"message":"OK","filter":{"name":{"contains":"name"}},',
-                                 '"paging":{"page":1,"items":25,"total":0,"max_page":0,'
-                               ],
-                               data_item_count: 0
-                             })
+      response_body_content: [
+        '{"meta":{"status":200,"message":"OK","filter":{"name":{"contains":"name"}},',
+        '"paging":{"page":1,"items":25,"total":0,"max_page":0,'
+      ],
+      data_item_count: 0
+    })
   end
 end

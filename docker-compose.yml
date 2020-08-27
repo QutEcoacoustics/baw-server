@@ -48,6 +48,16 @@ services:
     <<: *worker
     environment:
       RAILS_ENV: test
+  # upload:
+  #   image: caddy:2-alpine
+  #   volumes:
+  #     - type: volume
+  #       source: caddy_data
+  #       target: /data
+      # - type: bind
+      #   source: caddy_data
+      #   target: /data
+
   web:
     #image: qutecoacoustics/baw-server:dev
     build:
@@ -96,3 +106,5 @@ volumes:
   # out hosts for dev work.
   baw_docker_shared_storage:
   postgres-data:
+  caddy_data:
+

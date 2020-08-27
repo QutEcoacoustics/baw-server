@@ -18,12 +18,12 @@ class SavedSearch < ApplicationRecord
                    uniqueness: { case_sensitive: false, scope: :creator_id, message: 'should be unique per user' }
   validates :stored_query, presence: true
 
-  validate :has_projects
+  validate :projects?
 
   def self.filter_settings
     {
-      valid_fields: [:id, :name, :description, :stored_query, :created_at, :creator_id],
-      render_fields: [:id, :name, :description, :stored_query, :created_at, :creator_id],
+      valid_fields: [:id, :name, :description, :stored_query, :created_at, :creator_id, :deleter_id, :deleted_at],
+      render_fields: [:id, :name, :description, :stored_query, :created_at, :creator_id, :deleter_id, :deleted_at],
       text_fields: [:name, :description],
       custom_fields: lambda { |item, _user|
                        # do a query for the attributes that may not be in the projection
@@ -34,7 +34,7 @@ class SavedSearch < ApplicationRecord
 
                        saved_search_hash[:project_ids] = fresh_saved_search.nil? ? nil : fresh_saved_search.projects.pluck(:id).flatten
                        saved_search_hash[:analysis_job_ids] = fresh_saved_search.nil? ? nil : fresh_saved_search.analysis_jobs.pluck(:id).flatten
-
+                       saved_search_hash.merge!(item.render_markdown_for_api_for(:description))
                        [item, saved_search_hash]
                      },
       controller: :saved_searches,
@@ -64,6 +64,34 @@ class SavedSearch < ApplicationRecord
         }
       ]
     }
+  end
+
+  def self.schema
+    {
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        id: { '$ref' => '#/components/schemas/id', readOnly: true },
+        analysis_job_ids: { type: 'array', items: { '$ref' => '#/components/schemas/id' } },
+        project_ids: { type: 'array', items: { '$ref' => '#/components/schemas/id' } },
+        name: { type: 'string' },
+        **Api::Schema.rendered_markdown(:description),
+        stored_query: { type: 'object' },
+        **Api::Schema.creator_and_deleter_ids_and_ats
+      },
+      required: [
+        :id,
+        :name,
+        :description,
+        :description_html,
+        :description_html_tagline,
+        :stored_query,
+        :creator_id,
+        :created_at,
+        :deleter_id,
+        :deleted_at
+      ]
+    }.freeze
   end
 
   # Build Arel conditions from stored_query.
@@ -168,5 +196,7 @@ class SavedSearch < ApplicationRecord
     query
   end
 
-  def has_projects; end
+  def projects?
+    !projects.empty?
+  end
 end

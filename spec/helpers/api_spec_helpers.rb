@@ -74,7 +74,7 @@ end
 module ApiSpecDescribeHelpers
   def self.extended(base); end
 
-  attr_accessor :baw_consumes, :baw_produces, :baw_security, :baw_model_name, :baw_body_name, :baw_model, :baw_model_schema, :baw_route_params, :baw_body_params
+  attr_accessor :baw_consumes, :baw_produces, :baw_security, :baw_model_name, :baw_body_name, :baw_model, :baw_factory, :baw_model_schema, :baw_route_params, :baw_body_params
 
   def with_authorization
     # these tests document an API - they're not really for testing user access
@@ -86,13 +86,13 @@ module ApiSpecDescribeHelpers
     #
     # NOTE: rswag won't use the let `Authorization` unless there is a
     # basic auth section defined in components/securitySchemes in swagger_helper!
-    self.baw_security = [basic_auth_with_token: []]
+    self.baw_security = [{ basic_auth_with_token: [] }]
     let(:Authorization) { admin_token }
   end
 
   def with_query_string_authorization
     # see notes in with_authorization about token
-    self.baw_baw_security = [auth_token_query_string: []]
+    self.baw_baw_security = [{ auth_token_query_string: [] }]
     let(:auth_token) { admin_token }
   end
 
@@ -101,8 +101,9 @@ module ApiSpecDescribeHelpers
     self.baw_produces = ['application/json']
   end
 
-  def for_model(given_model)
+  def for_model(given_model, factory: nil)
     self.baw_model_name = baw_model_name = given_model.model_name.singular
+    self.baw_factory = factory || baw_model_name
     # rswag expects let statements to be defined with the same name as the parameters,
     # however, our creation scripts already define many let statements that have the
     # same name as our models... so naming the parameter project forces us to overwrite
@@ -117,6 +118,7 @@ module ApiSpecDescribeHelpers
     let(:model) { given_model }
     let(:model_name) { baw_model_name }
     let(:body_name) { baw_body_name }
+    let(:factory) { factory || baw_model_name }
   end
 
   def resolve_ref(ref)
@@ -167,16 +169,21 @@ module ApiSpecDescribeHelpers
 
   def send_model(&block)
     let((get_parent_param :baw_body_name)) do
-      { model_name => instance_eval(&block) }
+      body = instance_eval(&block)
+      unless body.is_a?(Hash) && body.key?(model_name)
+        raise 'Body must have one key with model name which then contains attributes'
+      end
+
+      body
     end
   end
 
   # sends the default factory bot model for previously set :model
   # using attributes_for and filtering out readonly properties
   # from the hash, according to the given schema
-  def auto_send_model
+  def auto_send_model(subset: nil)
     let((get_parent_param :baw_body_name)) do
-      body_attributes_for(model_name, schema: model_schema)
+      body_attributes_for(model_name, factory: factory, subset: subset)
     end
   end
 
@@ -245,6 +252,12 @@ module ApiSpecDescribeHelpers
     baw_route_params = get_parent_param :baw_route_params
     metadata[:operation][:parameters] += baw_route_params if baw_route_params
 
+    # before do |example|
+    #   # validate schema is valid
+    #   metaschema = JSON::Validator.validator_for_name('http://json-schema.org/draft/schema#').metaschema
+    #   JSON::Validator.validate(metaschema, example.metadata[:response][:schema])
+    # end
+
     before do |example|
       submit_request(example.metadata)
     end
@@ -252,6 +265,25 @@ module ApiSpecDescribeHelpers
     it "returns a #{metadata[:response][:code]} response" do |example|
       assert_response_matches_metadata(example.metadata, &block)
       example.instance_exec(response, &block) if block_given?
+    end
+
+    after do |example|
+      unless example.exception.nil?
+        # I don't know of a good way to augment the original error with more
+        # information. Raising a new error with more information seem to work OK.
+        request&.body&.rewind
+        message = <<~API_RESULT
+          The API result that generated this failure is:
+          ```
+          #{api_result.nil? ? '<empty result>' : api_result}
+          ```
+          The request body was:
+          ```
+          #{request&.body&.nil? != false ? '<empty request body>' : request.body.read}
+          ```
+        API_RESULT
+        raise StandardError, message
+      end
     end
   end
 end

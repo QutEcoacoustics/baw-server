@@ -8,11 +8,11 @@ describe 'rendering markdown' do
       # Testy **test**!
 
       This is a test that tests tests!
-      
+
       - a list
       - really
       - so many items
-      
+
       ~~~
         some code
       ~~~
@@ -21,8 +21,8 @@ describe 'rendering markdown' do
       |-------|-------------------|
       | WAVE  | .wav              |
       | WAC   | .wac              |
-             
-      
+
+
       an image ![user](/images/user/user_spanhalf.png)
     MARKDOWN
   }
@@ -38,7 +38,7 @@ describe 'rendering markdown' do
   end
 
   it 'converts markdown via a attr access helper method' do
-    html = CustomRender.render_model_markdown({ description: markdown_fixture }, :description)
+    html = CustomRender.render_model_markdown(markdown_fixture, inline: false)
 
     expect(html).to match '<h1>Testy <strong>test</strong>!</h1>'
     expect(html).to match(%r{<li>a list</li>})
@@ -48,7 +48,7 @@ describe 'rendering markdown' do
   end
 
   it 'converts markdown via a attr access helper method and can strip block tags' do
-    html = CustomRender.render_model_markdown({ description: markdown_fixture }, :description, true)
+    html = CustomRender.render_model_markdown(markdown_fixture, inline: true)
 
     expect(html).to_not match '<h1>Testy <strong>test</strong>!</h1>'
     expect(html).to match 'Testy <strong>test</strong>!'
@@ -60,5 +60,18 @@ describe 'rendering markdown' do
     expect(html).to match(/WAVE\s*.wav/)
     expect(html).to_not match(%r{<img src="/images/user/user_spanhalf\.png"})
     expect(html).to match 'an image'
+  end
+
+  context 'values are sanitized' do
+    it 'removes script tags' do
+      malicious = '<script src="https://www.whatever.org />'
+      html = CustomRender.render_model_markdown(malicious, inline: false)
+      expect(html).to be_empty
+    end
+    it 'removes script blocks' do
+      malicious = '<script>console.log("i iz l33t hackz0rs")</script>'
+      html = CustomRender.render_model_markdown(malicious, inline: false)
+      expect(html).to be_empty
+    end
   end
 end
