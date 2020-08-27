@@ -6,14 +6,20 @@ module Baw
     # and also having a schema method defined on it's class if the
     # schema parameter is not provided.
     # The schema parameter must be a hash of a json-schema-style structure.
-    def body_attributes_for(model_name, schema: nil)
+    # @param factory - the name of a factory to use instead of model_name
+    # @param subset - an array of properties to keep, further filtering on the schema's writeable properties
+    def body_attributes_for(model_name, factory: nil, subset: nil)
       schema = model_name.to_s.classify.constantize.schema if schema.nil?
-      full = attributes_for(model_name)
-      writeable =
-        schema[:properties]
-        .reject { |_key, value| value[:readOnly] }
-        .keys
-      partial = full.slice(*writeable)
+      # was using attributes_for here but it doesn't include associations!
+      # full = attributes_for(model_name)
+      full = build(factory || model_name).attributes.symbolize_keys
+      writeable = schema[:properties]
+                  .reject { |_key, value| value[:readOnly] }
+                  .keys
+
+      partial = full.slice(*writeable, *subset)
+      # further restrict results if subset supplied
+      partial = partial.slice(*subset) unless subset.nil?
       { model_name => partial }
     end
   end

@@ -25,17 +25,10 @@ class SitesController < ApplicationController
   end
 
   # GET /sites/:id
-  def show_shallow
-    do_load_resource
-    do_authorize_instance
-
-    respond_to { |format| format.json { respond_show } }
-  end
-
   # GET /projects/:project_id/sites/:id
   def show
     do_load_resource
-    get_project
+    get_project_if_exists
     do_authorize_instance
 
     respond_to do |format|
@@ -44,10 +37,11 @@ class SitesController < ApplicationController
     end
   end
 
+  # GET /sites/new
   # GET /projects/:project_id/sites/new
   def new
     do_new_resource
-    get_project
+    get_project_if_exists
     do_set_attributes
     do_authorize_instance
 
@@ -67,17 +61,24 @@ class SitesController < ApplicationController
     do_authorize_instance
   end
 
+  # POST /sites
   # POST /projects/:project_id/sites
   def create
     do_new_resource
     do_set_attributes(site_params)
-    get_project
+    get_project_if_exists
     do_authorize_instance
 
     respond_to do |format|
       if @site.save
         format.html { redirect_to [@project, @site], notice: 'Site was successfully created.' }
-        format.json { respond_create_success(project_site_path(@project, @site)) }
+        format.json {
+          if @project.nil?
+            respond_create_success(shallow_site_path(@site))
+          else
+            respond_create_success(project_site_path(@project, @site))
+          end
+        }
       else
         format.html { render action: 'new' }
         format.json { respond_change_fail }
@@ -85,10 +86,11 @@ class SitesController < ApplicationController
     end
   end
 
+  # PUT|PATCH /sites/:id
   # PUT|PATCH /projects/:project_id/sites/:id
   def update
     do_load_resource
-    get_project
+    get_project_if_exists
     do_authorize_instance
 
     @original_site_name = @site.name
@@ -106,10 +108,11 @@ class SitesController < ApplicationController
     end
   end
 
+  # DELETE /sites/:id
   # DELETE /projects/:project_id/sites/:id
   def destroy
     do_load_resource
-    get_project
+    get_project_if_exists
     do_authorize_instance
 
     @site.destroy
@@ -209,7 +212,9 @@ class SitesController < ApplicationController
   end
 
   def get_project_if_exists
-    @project = (Project.find(params[:project_id]) if params.key?(:project_id))
+    return unless params.key?(:project_id)
+
+    @project = Project.find(params[:project_id])
     # avoid the same project assigned more than once to a site
     @site.projects << @project if defined?(@site) && defined?(@project) && !@site.projects.include?(@project)
   end

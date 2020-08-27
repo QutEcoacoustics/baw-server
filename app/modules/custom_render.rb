@@ -2,30 +2,29 @@
 
 class CustomRender
   class << self
+    # Intended for rendering markdown as partials
     # @param [bool] inline - Renders markdown without HTML block elements...
     # suitable for conversion to plainish-text strings.
-    def render_model_markdown(model, attribute, inline = false)
-      value = model[attribute]
-      convert(value, inline)
-    end
-
-    # Intended for rendering markdown as partials
-    def render_markdown(value)
-      convert(value, false)
+    def render_markdown(value, inline: false, words: 20)
+      convert(value, inline, words)
     end
 
     private
 
-    def convert(value, inline)
+    KRAMDOWN_OPTIONS = { input: 'GFM', hard_wrap: false }.freeze
+    def convert(value, inline, words)
       return nil if value.blank?
 
-      html = Kramdown::Document.new(
-        value,
-        { input: 'GFM', hard_wrap: false }
-      ).to_html
+      html = Kramdown::Document.new(value, KRAMDOWN_OPTIONS).to_html
 
       if inline
-        ApplicationController.helpers.sanitize(html, tags: ['strong', 'em'])
+        sanitized = ApplicationController
+                    .helpers
+                    .sanitize(html, tags: ['strong', 'em'])
+                    .squish
+        truncated = sanitized.truncate_words(words)
+        # cleanup any unbalanced tags
+        Nokogiri::HTML.fragment(truncated).to_html
       else
         ApplicationController.helpers.sanitize(html)
       end

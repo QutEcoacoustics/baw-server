@@ -44,6 +44,9 @@ class Dataset < ApplicationRecord
       render_fields: [
         :id, :name, :description, :created_at, :creator_id, :updated_at, :updater_id
       ],
+      custom_fields: lambda { |item, _user|
+        [item, item.render_markdown_for_api_for(:description)]
+      },
       new_spec_fields: lambda { |_user|
                          {
                            name: nil,
@@ -80,5 +83,27 @@ class Dataset < ApplicationRecord
         }
       ]
     }
+  end
+
+  def self.schema
+    {
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        id: { '$ref' => '#/components/schemas/id', readOnly: true },
+        name: { type: 'string' },
+        **Api::Schema.rendered_markdown(:description),
+        **Api::Schema.updater_and_creator_ids_and_ats
+      },
+      required: [
+        :id,
+        :name,
+        :description,
+        :created_at,
+        :creator_id,
+        :updated_at,
+        :updater_id
+      ]
+    }.freeze
   end
 end

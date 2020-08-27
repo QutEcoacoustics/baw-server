@@ -115,6 +115,8 @@ module RequestSpecExampleHelpers
         case status
         when 400
           'Bad Request'
+        when 404
+          'Not Found'
         else
           raise "Message not yet implemented for status #{status}"
         end

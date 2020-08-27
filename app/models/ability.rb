@@ -399,7 +399,7 @@ class Ability
     can [:index, :filter, :new], Bookmark
   end
 
-  def to_analysis_job(user, is_guest)
+  def to_analysis_job(user, _is_guest)
     # must have read permission or higher on ANY saved_search.projects to create analysis job
 
     can [:show, :create], AnalysisJob do |analysis_job|
@@ -419,7 +419,9 @@ class Ability
     can [:update, :destroy], AnalysisJob, creator_id: user.id
 
     # actions any logged in user can access
-    can [:new], AnalysisJob unless is_guest
+    # AT: 2020 - disabled unless guest filter. Anyone should be able to new
+    #   I'm unsure why it was disabled
+    can [:new], AnalysisJob #unless is_guest
 
     # available to any user, including guest
     can [:index, :filter], AnalysisJob

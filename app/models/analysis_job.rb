@@ -37,6 +37,8 @@ class AnalysisJob < ApplicationRecord
   validates :started_at, allow_blank: true, allow_nil: true, timeliness: { on_or_before: -> { Time.zone.now }, type: :datetime }
   validates :overall_data_length_bytes, presence: true, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
 
+  renders_markdown_for :description
+
   def self.filter_settings
     fields = [
       :id, :name, :description, :annotation_name,
@@ -54,6 +56,9 @@ class AnalysisJob < ApplicationRecord
       valid_fields: fields,
       render_fields: fields,
       text_fields: [:name, :description, :annotation_name],
+      custom_fields: lambda { |item, _user|
+        [item, item.render_markdown_for_api_for(:description)]
+      },
       new_spec_fields: lambda { |_user|
                          {
                            annotation_name: nil,
@@ -79,6 +84,56 @@ class AnalysisJob < ApplicationRecord
         }
       ]
     }
+  end
+
+  def self.schema
+    {
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        id: { '$ref' => '#/components/schemas/id', readOnly: true },
+        name: { type: 'string' },
+        annotation_name: { type: ['string', 'null'] },
+        **Api::Schema.rendered_markdown(:description),
+        custom_settings: { type: 'string' },
+        script_id: { '$ref' => '#/components/schemas/id' },
+        saved_search_id: { '$ref' => '#/components/schemas/id' },
+        started_at: { type: ['null', 'date'], readOnly: true },
+        overall_status: { type: 'string', enum: [
+          :before_save,
+          :new,
+          :preparing,
+          :processing,
+          :completed,
+          :suspended
+        ], readOnly: true },
+        overall_status_modified_at: { type: ['null', 'date'], readOnly: true },
+        overall_progress: { type: 'object', readOnly: true },
+        overall_progress_modified_at: { type: ['null', 'date'], readOnly: true },
+        overall_count: { type: 'integer', readOnly: true },
+        overall_duration_seconds: { type: 'number', readOnly: true },
+        overall_data_length_bytes: { type: 'integer', readOnly: true },
+        **Api::Schema.all_ids_and_ats
+      },
+      required: [
+        :id,
+        :name,
+        :description,
+        :description_html,
+        :description_html_tagline,
+        :custom_settings,
+        :script_id,
+        :saved_search_id,
+        :started_at,
+        :overall_status,
+        :overall_status_modified_at,
+        :overall_progress,
+        :overall_progress_modified_at,
+        :overall_count,
+        :overall_duration_seconds,
+        :overall_data_length_bytes
+      ]
+    }.freeze
   end
 
   #

@@ -22,5 +22,11 @@ FactoryBot.define do
     end
 
     factory :saved_search_with_analysis_jobs, traits: [:with_analysis_jobs]
+
+    factory :saved_search_with_projects do
+      after(:create) do |saved_search, _evaluator|
+        saved_search.projects << Project.all
+      end
+    end
   end
 end

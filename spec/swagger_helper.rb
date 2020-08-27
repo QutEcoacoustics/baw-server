@@ -55,9 +55,54 @@ RSpec.configure do |config|
           }
         },
         schemas: {
+          id: {
+            type: 'integer',
+            minimum: 0,
+            readOnly: true
+          },
+          nullableId: {
+            anyOf: [
+              {
+                type: 'integer',
+                minimum: 0,
+                readOnly: true
+              },
+              {
+                type: 'null'
+              }
+            ]
+          },
+          timezone_information: {
+            anyOf: [
+              {
+                type: 'object',
+                properties: {
+                  identifier_alt: { type: ['string', 'null'] },
+                  identifier: { type: 'string' },
+                  friendly_identifier: { type: 'string' },
+                  utc_offset: { type: 'string' },
+                  utc_total_offset: { type: 'integer' }
+                }
+              },
+              {
+                type: 'null'
+              }
+            ]
+          },
+          image_urls: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                size: { type: 'string' },
+                url: { type: 'string', format: 'URI' },
+                width: { type: 'integer' },
+                height: { type: 'integer' }
+              }
+            }
+          },
           meta: {
             type: 'object'
-
           },
           meta_error: {
             type: 'object',
@@ -98,7 +143,13 @@ RSpec.configure do |config|
             },
             required: ['meta', 'data']
           },
-          project: Project.schema
+          project: Project.schema,
+          analysis_job: AnalysisJob.schema,
+          bookmark: Bookmark.schema,
+          dataset: Dataset.schema,
+          saved_search: SavedSearch.schema,
+          script: Script.schema,
+          site: Site.schema
         }
       }
     }

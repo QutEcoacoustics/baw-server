@@ -41,15 +41,23 @@ class Project < ApplicationRecord
   # make sure the project has a permission entry for the creator after it is created
   after_create :create_owner_permission
 
-  def description_html(inline = false)
-    CustomRender.render_model_markdown(self, :description, inline)
-  end
+  renders_markdown_for :description
 
   # Define filter api settings
   def self.filter_settings
     {
-      valid_fields: [:id, :name, :description, :created_at, :creator_id],
-      render_fields: [:id, :name, :description, :creator_id],
+      valid_fields: [:id, :name, :description, :creator_id,
+                     :created_at,
+                     :updater_id,
+                     :updated_at,
+                     :deleter_id,
+                     :deleted_at],
+      render_fields: [:id, :name, :description, :creator_id,
+                      :created_at,
+                      :updater_id,
+                      :updated_at,
+                      :deleter_id,
+                      :deleted_at, :notes],
       text_fields: [:name, :description],
       custom_fields: lambda { |item, _user|
                        # do a query for the attributes that may not be in the projection
@@ -58,8 +66,9 @@ class Project < ApplicationRecord
 
                        project_hash = {}
                        project_hash[:site_ids] = fresh_project.nil? ? nil : fresh_project.sites.pluck(:id).flatten
+                       project_hash[:owner_ids] = fresh_project.nil? ? nil : fresh_project.owners.pluck(:id).flatten
 
-                       project_hash[:description_html] = fresh_project.description_html
+                       project_hash.merge!(item.render_markdown_for_api_for(:description))
 
                        [item, project_hash]
                      },
@@ -110,15 +119,31 @@ class Project < ApplicationRecord
       type: 'object',
       additionalProperties: false,
       properties: {
-        id: { type: 'integer', readOnly: true },
+        id: { '$ref' => '#/components/schemas/id', readOnly: true },
         name: { type: 'string' },
-        description: { type: 'string' },
-        description_html: { type: 'string', readOnly: true },
-        notes: { type: 'object' },
-        creator_id: { type: 'integer', readOnly: true },
-        updater_id: { type: 'integer', readOnly: true },
-        site_ids: { type: 'array', items: { type: 'integer' } }
-      }
+        **Api::Schema.rendered_markdown(:description),
+        #notes: { type: 'object' }, # TODO: https://github.com/QutEcoacoustics/baw-server/issues/467
+        notes: { type: 'string' },
+        **Api::Schema.all_ids_and_ats,
+        site_ids: { type: 'array', items: { '$ref' => '#/components/schemas/id' } },
+        owner_ids: { type: 'array', items: { '$ref' => '#/components/schemas/id' }, readOnly: true }
+      },
+      required: [
+        :id,
+        :name,
+        :description,
+        :description_html,
+        :description_html_tagline,
+        :notes,
+        :creator_id,
+        :created_at,
+        :updater_id,
+        :updated_at,
+        :deleter_id,
+        :deleted_at,
+        :owner_ids,
+        :site_ids
+      ]
     }.freeze
   end
 
