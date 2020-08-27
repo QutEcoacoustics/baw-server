@@ -67,7 +67,7 @@ class Project < ApplicationRecord
                        project_hash = {}
                        project_hash[:site_ids] = fresh_project.nil? ? nil : fresh_project.sites.pluck(:id).flatten
                        project_hash[:owner_ids] = fresh_project.nil? ? nil : fresh_project.owners.pluck(:id).flatten
-
+                       project_hash[:image_urls] = Api::Image.image_urls(fresh_project.image)
                        project_hash.merge!(item.render_markdown_for_api_for(:description))
 
                        [item, project_hash]
@@ -126,7 +126,8 @@ class Project < ApplicationRecord
         notes: { type: 'string' },
         **Api::Schema.all_ids_and_ats,
         site_ids: { type: 'array', items: { '$ref' => '#/components/schemas/id' } },
-        owner_ids: { type: 'array', items: { '$ref' => '#/components/schemas/id' }, readOnly: true }
+        owner_ids: { type: 'array', items: { '$ref' => '#/components/schemas/id' }, readOnly: true },
+        image_urls: Api::Schema.image_urls
       },
       required: [
         :id,
@@ -142,7 +143,8 @@ class Project < ApplicationRecord
         :deleter_id,
         :deleted_at,
         :owner_ids,
-        :site_ids
+        :site_ids,
+        :image_urls
       ]
     }.freeze
   end

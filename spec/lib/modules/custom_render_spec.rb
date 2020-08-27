@@ -38,7 +38,7 @@ describe 'rendering markdown' do
   end
 
   it 'converts markdown via a attr access helper method' do
-    html = CustomRender.render_model_markdown(markdown_fixture, inline: false)
+    html = CustomRender.render_markdown(markdown_fixture, inline: false)
 
     expect(html).to match '<h1>Testy <strong>test</strong>!</h1>'
     expect(html).to match(%r{<li>a list</li>})
@@ -48,7 +48,7 @@ describe 'rendering markdown' do
   end
 
   it 'converts markdown via a attr access helper method and can strip block tags' do
-    html = CustomRender.render_model_markdown(markdown_fixture, inline: true)
+    html = CustomRender.render_markdown(markdown_fixture, inline: true)
 
     expect(html).to_not match '<h1>Testy <strong>test</strong>!</h1>'
     expect(html).to match 'Testy <strong>test</strong>!'
