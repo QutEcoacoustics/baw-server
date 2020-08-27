@@ -301,7 +301,8 @@ def test_overlap
         do_request
 
         # ensure current state of audio recordings in db matches output
-        if status_code == 201
+        case status_code
+        when 201
           expect(status).to eq(201), "expected status 201 but was #{status}. Response body was #{response_body}"
           expect(response_body).to have_json_path('data/bit_rate_bps'), "could not find bit_rate_bps in #{response_body}"
 
@@ -315,7 +316,7 @@ def test_overlap
             expect(new_recording.notes).to include('duration_adjustment_for_overlap')
           end
 
-        elsif status_code == 422
+        when 422
           expect(status).to eq(422), "expected status 422 but was #{status}. Response body was #{response_body}"
           expect(response_body).to have_json_path('meta/error/info/overlap/count')
           expect(response_body).to have_json_path('meta/error/info/overlap/items/0/overlap_amount')
@@ -987,9 +988,9 @@ resource 'AudioRecordings' do
     }
     let(:authentication_token) { reader_token }
     standard_request_options(:post, 'FILTER (as reader matching)', :ok, {
-                               expected_json_path: 'data/0/sample_rate_hertz',
-                               data_item_count: 1
-                             })
+      expected_json_path: 'data/0/sample_rate_hertz',
+      data_item_count: 1
+    })
   end
 
   post '/audio_recordings/filter' do
@@ -1010,9 +1011,9 @@ resource 'AudioRecordings' do
     }
     let(:authentication_token) { reader_token }
     standard_request_options(:post, 'FILTER (as reader no match)', :ok, {
-                               expected_json_path: 'meta/message',
-                               data_item_count: 0
-                             })
+      expected_json_path: 'meta/message',
+      data_item_count: 0
+    })
   end
 
   post '/audio_recordings/filter' do
@@ -1036,10 +1037,10 @@ resource 'AudioRecordings' do
     }
     let(:authentication_token) { reader_token }
     standard_request_options(:post, 'FILTER (as reader with paging)', :ok, {
-                               expected_json_path: 'meta/paging/page',
-                               data_item_count: 0,
-                               response_body_content: '/audio_recordings/filter?direction=desc\u0026items=30\u0026order_by=recorded_date\u0026page=1'
-                             })
+      expected_json_path: 'meta/paging/page',
+      data_item_count: 0,
+      response_body_content: '/audio_recordings/filter?direction=desc\u0026items=30\u0026order_by=recorded_date\u0026page=1'
+    })
   end
 
   post '/audio_recordings/filter' do
@@ -1063,10 +1064,10 @@ resource 'AudioRecordings' do
     }
     let(:authentication_token) { reader_token }
     standard_request_options(:post, 'FILTER (as reader with sorting)', :ok, {
-                               expected_json_path: 'meta/sorting/direction',
-                               data_item_count: 1,
-                               response_body_content: '/audio_recordings/filter?direction=asc\u0026items=25\u0026order_by=channels\u0026page=1'
-                             })
+      expected_json_path: 'meta/sorting/direction',
+      data_item_count: 1,
+      response_body_content: '/audio_recordings/filter?direction=asc\u0026items=25\u0026order_by=channels\u0026page=1'
+    })
   end
 
   post '/audio_recordings/filter' do
@@ -1089,10 +1090,10 @@ resource 'AudioRecordings' do
     }
     let(:authentication_token) { reader_token }
     standard_request_options(:post, 'FILTER (as reader with projection)', :ok, {
-                               expected_json_path: 'meta/projection/include',
-                               data_item_count: 1,
-                               response_body_content: '/audio_recordings/filter?direction=desc\u0026items=25\u0026order_by=recorded_date\u0026page=1'
-                             })
+      expected_json_path: 'meta/projection/include',
+      data_item_count: 1,
+      response_body_content: '/audio_recordings/filter?direction=desc\u0026items=25\u0026order_by=recorded_date\u0026page=1'
+    })
   end
 
   post '/audio_recordings/filter' do
@@ -1108,11 +1109,11 @@ resource 'AudioRecordings' do
     }
     let(:authentication_token) { reader_token }
     standard_request_options(:post, 'FILTER (as reader checking camel case)', :ok, {
-                               expected_json_path: 'meta/projection/include',
-                               data_item_count: 1,
-                               invalid_data_content: (AudioRecording.filter_settings[:render_fields] - [:id, :site_id, :duration_seconds, :recorded_date, :created_at]).map { |i| "\"#{i}\":" },
-                               response_body_content: '/audio_recordings/filter?direction=desc\u0026items=10\u0026order_by=created_at\u0026page=1'
-                             })
+      expected_json_path: 'meta/projection/include',
+      data_item_count: 1,
+      invalid_data_content: (AudioRecording.filter_settings[:render_fields] - [:id, :site_id, :duration_seconds, :recorded_date, :created_at]).map { |i| "\"#{i}\":" },
+      response_body_content: '/audio_recordings/filter?direction=desc\u0026items=10\u0026order_by=created_at\u0026page=1'
+    })
   end
 
   post '/audio_recordings/filter' do
@@ -1143,9 +1144,9 @@ resource 'AudioRecordings' do
     }
     let(:authentication_token) { reader_token }
     standard_request_options(:post, 'FILTER (as reader filtering by project id)', :ok, {
-                               response_body_content: '"projection":{"include":["id","site_id","duration_seconds","recorded_date","created_at"]},"filter":{"and":{"projects.id":{"less_than":123456},"duration_seconds":{"not_eq":40}}},"sorting":{"order_by":"created_at","direction":"desc"},"paging":{"page":1,"items":20,"total":1,"max_page":1,"current":"http://localhost:3000/audio_recordings/filter?direction=desc\u0026items=20\u0026order_by=created_at\u0026page=1"',
-                               data_item_count: 1
-                             })
+      response_body_content: '"projection":{"include":["id","site_id","duration_seconds","recorded_date","created_at"]},"filter":{"and":{"projects.id":{"less_than":123456},"duration_seconds":{"not_eq":40}}},"sorting":{"order_by":"created_at","direction":"desc"},"paging":{"page":1,"items":20,"total":1,"max_page":1,"current":"http://localhost:3000/audio_recordings/filter?direction=desc\u0026items=20\u0026order_by=created_at\u0026page=1"',
+      data_item_count: 1
+    })
   end
 
   post '/audio_recordings/filter' do
@@ -1153,7 +1154,7 @@ resource 'AudioRecordings' do
       {
         filter: {
           and: {
-            'projects.image_file_name' => {
+            'projects.description' => {
               eq: 'test'
             },
             duration_seconds: {
@@ -1176,8 +1177,8 @@ resource 'AudioRecordings' do
     }
     let(:authentication_token) { reader_token }
     standard_request_options(:post, 'FILTER (as reader filtering by project image_file_name)', :bad_request, {
-                               response_body_content: 'Filter parameters were not valid: Name must be in [:id, :name, :description, :created_at, :creator_id], got image_file_name'
-                             })
+      response_body_content: 'Filter parameters were not valid: Name must be in [:id, :name, :description, :created_at, :creator_id], got image_file_name'
+    })
   end
 
   post '/audio_recordings/filter' do
@@ -1212,8 +1213,8 @@ resource 'AudioRecordings' do
 
     let(:authentication_token) { reader_token }
     standard_request_options(:post, 'FILTER (as reader filtering by recorded_end_date)', :ok, {
-                               response_body_content: "\"recorded_date\":\"#{Time.use_zone('Brisbane') { Time.zone.parse('2016-03-01 11:55:00') }.in_time_zone.iso8601(3).gsub(/\s+/, '')}\"",
-                               data_item_count: 1
-                             })
+      response_body_content: "\"recorded_date\":\"#{Time.use_zone('Brisbane') { Time.zone.parse('2016-03-01 11:55:00') }.in_time_zone.iso8601(3).gsub(/\s+/, '')}\"",
+      data_item_count: 1
+    })
   end
 end
