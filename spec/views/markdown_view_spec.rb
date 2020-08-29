@@ -32,7 +32,7 @@ describe 'rendering markdown partials', type: :view do
     stub_template 'public/_markdown_test.html.md' => markdown_fixture
     render partial: 'public/markdown_test'
 
-    expect(rendered).to match(%r{<h1>Test!</h1>})
+    expect(rendered).to match(%r{<h1 id="test">Test!</h1>})
     expect(rendered).to match(%r{<li>a list</li>})
     expect(rendered).to match(/<code>2/)
     expect(rendered).to match "#{@user.user_name}\n<\/code>"

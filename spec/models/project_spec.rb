@@ -28,7 +28,7 @@ describe Project, type: :model do
 
   it 'generates html for description' do
     md = "# Header\r\n [a link](https://github.com)."
-    html = "<h1>Header</h1>\n<p><a href=\"https://github.com\">a link</a>.</p>\n"
+    html = "<h1 id=\"header\">Header</h1>\n<p><a href=\"https://github.com\">a link</a>.</p>\n"
     project_html = FactoryBot.create(:project, description: md)
 
     expect(project_html.description).to eq(md)

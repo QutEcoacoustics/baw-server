@@ -38,7 +38,7 @@ describe RendersMarkdown do
   describe 'render methods' do
     example 'rendering markdown' do
       subject.some_long_text = '# **hello**'
-      expect(subject.render_markdown_for(:some_long_text)).to eq("<h1><strong>hello</strong></h1>\n")
+      expect(subject.render_markdown_for(:some_long_text)).to eq("<h1 id=\"hello\"><strong>hello</strong></h1>\n")
     end
 
     example 'rendering markdown tagline' do
@@ -76,7 +76,7 @@ describe RendersMarkdown do
     example 'rendering markdown for api' do
       subject.some_long_text = '# **hello**'
       expect(subject.render_markdown_for_api_for(:some_long_text)).to eq({
-        some_long_text_html: "<h1><strong>hello</strong></h1>\n",
+        some_long_text_html: "<h1 id=\"hello\"><strong>hello</strong></h1>\n",
         some_long_text_html_tagline: '<strong>hello</strong>'
       })
     end
