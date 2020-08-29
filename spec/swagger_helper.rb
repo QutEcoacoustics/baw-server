@@ -101,6 +101,10 @@ RSpec.configure do |config|
               }
             }
           },
+          permission_levels: {
+            type: 'string',
+            enum: ['Owner', 'Writer', 'Reader', nil]
+          },
           meta: {
             type: 'object'
           },

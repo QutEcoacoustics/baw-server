@@ -77,7 +77,7 @@ class SavedSearch < ApplicationRecord
         name: { type: 'string' },
         **Api::Schema.rendered_markdown(:description),
         stored_query: { type: 'object' },
-        **Api::Schema.creator_and_deleter_ids_and_ats
+        **Api::Schema.creator_and_deleter_user_stamps
       },
       required: [
         :id,

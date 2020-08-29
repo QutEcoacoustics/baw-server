@@ -420,11 +420,11 @@ class Ability
 
     # actions any logged in user can access
     # AT: 2020 - disabled unless guest filter. Anyone should be able to new
-    #   I'm unsure why it was disabled
-    can [:new], AnalysisJob #unless is_guest
+    #   I'm unsure why it was being excluded to guest
+    #can [:new], AnalysisJob #unless is_guest
 
     # available to any user, including guest
-    can [:index, :filter], AnalysisJob
+    can [:index, :filter, :new], AnalysisJob
   end
 
   def to_analysis_jobs_item(user)

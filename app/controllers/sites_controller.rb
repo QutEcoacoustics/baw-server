@@ -146,13 +146,24 @@ class SitesController < ApplicationController
     end
   end
 
-  # GET /sites/orphans
+  # GET|POST /sites/orphans{/filter}
   def orphans
     do_authorize_class
 
-    @sites = Site.find_by_sql('SELECT * FROM sites s WHERE s.id NOT IN (SELECT site_id FROM projects_sites) ORDER BY s.name')
+    @sites = Site.with_deleted.left_joins(:projects_sites).where('projects_sites.project_id IS NULL')
 
-    respond_to { |format| format.html }
+    respond_to { |format|
+      format.html
+      format.json {
+        filter_response, opts = Settings.api_response.response_advanced(
+          api_filter_params,
+          @sites,
+          Site,
+          Site.filter_settings
+        )
+        respond_filter(filter_response, opts)
+      }
+    }
   end
 
   # GET|POST /sites/filter
@@ -228,7 +239,7 @@ class SitesController < ApplicationController
   end
 
   def site_params
-    params.require(:site).permit(:name, :latitude, :longitude, :description, :image, :notes, :tzinfo_tz)
+    params.require(:site).permit(:name, :latitude, :longitude, :description, :image, :notes, :tzinfo_tz, project_ids: [])
   end
 
   def site_show_params

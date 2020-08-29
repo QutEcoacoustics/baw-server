@@ -55,7 +55,7 @@ class Bookmark < ApplicationRecord
         category: { type: 'string' },
         offset_seconds: { type: 'number' },
         **Api::Schema.rendered_markdown(:description),
-        **Api::Schema.updater_and_creator_ids_and_ats
+        **Api::Schema.updater_and_creator_user_stamps
       },
       required: [
         :id,

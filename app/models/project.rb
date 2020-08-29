@@ -59,7 +59,7 @@ class Project < ApplicationRecord
                       :deleter_id,
                       :deleted_at, :notes],
       text_fields: [:name, :description],
-      custom_fields: lambda { |item, _user|
+      custom_fields: lambda { |item, user|
                        # do a query for the attributes that may not be in the projection
                        # instance or id can be nil
                        fresh_project = item.nil? || item.id.nil? ? nil : Project.find(item.id)
@@ -70,6 +70,8 @@ class Project < ApplicationRecord
                        project_hash[:image_urls] = Api::Image.image_urls(fresh_project.image)
                        project_hash.merge!(item.render_markdown_for_api_for(:description))
 
+                       # access level for the current user - useful for showing users what their current permission level is
+                       project_hash[:access_level] = Project.access_level(item, user)
                        [item, project_hash]
                      },
       controller: :projects,
@@ -124,10 +126,11 @@ class Project < ApplicationRecord
         **Api::Schema.rendered_markdown(:description),
         #notes: { type: 'object' }, # TODO: https://github.com/QutEcoacoustics/baw-server/issues/467
         notes: { type: 'string' },
-        **Api::Schema.all_ids_and_ats,
+        **Api::Schema.all_user_stamps,
         site_ids: { type: 'array', items: { '$ref' => '#/components/schemas/id' } },
         owner_ids: { type: 'array', items: { '$ref' => '#/components/schemas/id' }, readOnly: true },
-        image_urls: Api::Schema.image_urls
+        image_urls: Api::Schema.image_urls,
+        access_level: Api::Schema.permission_levels
       },
       required: [
         :id,
@@ -147,6 +150,12 @@ class Project < ApplicationRecord
         :image_urls
       ]
     }.freeze
+  end
+
+  def self.access_level(project, user)
+    levels = Access::Core.user_levels(user, project)
+    level = Access::Core.highest(levels)
+    level.blank? ? nil : Access::Core.get_level_name(level)
   end
 
   private

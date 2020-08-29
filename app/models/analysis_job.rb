@@ -113,7 +113,7 @@ class AnalysisJob < ApplicationRecord
         overall_count: { type: 'integer', readOnly: true },
         overall_duration_seconds: { type: 'number', readOnly: true },
         overall_data_length_bytes: { type: 'integer', readOnly: true },
-        **Api::Schema.all_ids_and_ats
+        **Api::Schema.all_user_stamps
       },
       required: [
         :id,

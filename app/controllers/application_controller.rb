@@ -43,6 +43,7 @@ class ApplicationController < ActionController::Base
   rescue_from CustomErrors::UnprocessableEntityError, with: :unprocessable_entity_error_response
   rescue_from CustomErrors::FilterArgumentError, with: :filter_argument_error_response
   rescue_from CustomErrors::AudioGenerationError, with: :audio_generation_error_response
+  rescue_from CustomErrors::OrphanedSiteError, with: :orpan_site_error_response
   rescue_from BawAudioTools::Exceptions::AudioToolError, with: :audio_tool_error_response
 
   # Don't rescue this, it is the base for 406 and 415
@@ -580,6 +581,15 @@ class ApplicationController < ActionController::Base
       error,
       'audio_generation_error_response',
       { error_info: error.job_info }
+    )
+  end
+
+  def orpan_site_error_response(error)
+    render_error(
+      :bad_request,
+      error.message,
+      error,
+      'orpan_site_error_response'
     )
   end
 

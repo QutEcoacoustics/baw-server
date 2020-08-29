@@ -259,6 +259,7 @@ Rails.application.routes.draw do
 
   # path for orphaned sites
   get 'sites/orphans' => 'sites#orphans'
+  post 'sites/orphans/filter' => 'sites#orphans'
 
   # shallow path to sites
 
