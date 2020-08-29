@@ -158,6 +158,17 @@ module ApiSpecDescribeHelpers
     }
   end
 
+  def with_route_parameter(name, description = name)
+    self.baw_route_params ||= []
+    self.baw_route_params << {
+      name: name.to_s,
+      in: :path,
+      type: :integer,
+      description: description.to_s,
+      required: true
+    }
+  end
+
   def model_sent_as_parameter_in_body
     self.baw_body_params ||= []
     self.baw_body_params << {

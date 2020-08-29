@@ -33,6 +33,15 @@ module Filter
 
       # `.all' adds 'id' to the select!!
       @initial_query = !query.nil? && query.is_a?(ActiveRecord::Relation) ? query : relation_all(model)
+      # the check for an active record relation above can lead to some subtle
+      # bugs when you pass some non-nil query like thing.
+      # temporarily throwing here to see what breaks. If it is nothing too severe
+      # then we'll make the check below a validation that always rungs
+      unless Rails.env.production?
+        unless query.is_a?(ActiveRecord::Relation)
+          raise ArgumentError, "query was not an ActiveRecord::Relation. Query: #{query}"
+        end
+      end
 
       validate_filter_settings(filter_settings)
       @valid_fields = filter_settings[:valid_fields].map(&:to_sym)
@@ -88,10 +97,9 @@ module Filter
       query = query_sort(query)
 
       # paging
-      query = query_paging(query)
+      query_paging(query)
 
       # result
-      query
     end
 
     # Get the query represented by the parameters sent in new. DOES NOT include paging or sorting.
@@ -103,10 +111,9 @@ module Filter
       query = query_projection(query)
 
       #filter
-      query = query_filter(query)
+      query_filter(query)
 
       # result
-      query
     end
 
     # Get the query represented by the parameters sent in new. DOES NOT include advanced filtering, paging or sorting.
@@ -115,10 +122,9 @@ module Filter
       query = @initial_query.dup
 
       # restrict to select columns
-      query = query_projection(query)
+      query_projection(query)
 
       # result
-      query
     end
 
     # Add filtering to a query.

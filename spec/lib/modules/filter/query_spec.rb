@@ -20,7 +20,7 @@ describe Filter::Query do
   def create_filter(params)
     Filter::Query.new(
       params,
-      nil,
+      AudioRecording.all,
       AudioRecording,
       AudioRecording.filter_settings
     )

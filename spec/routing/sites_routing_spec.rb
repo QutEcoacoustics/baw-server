@@ -19,9 +19,6 @@ describe SitesController, type: :routing do
     it { expect(get('projects/1/sites')).to route_to('sites#index', project_id: '1', format: 'json') }
     it { expect(get('projects/1/sites/1')).to route_to('sites#show', id: '1', project_id: '1') }
 
-    it { expect(get('sites/filter')).to route_to('sites#filter', format: 'json') }
-    it { expect(post('sites/filter')).to route_to('sites#filter', format: 'json') }
-
     # shallow
     it { expect(get('sites')).to route_to('sites#index', format: 'json') }
     it { expect(post('sites')).to route_to('sites#create', format: 'json') }

@@ -93,7 +93,7 @@ class Dataset < ApplicationRecord
         id: { '$ref' => '#/components/schemas/id', readOnly: true },
         name: { type: 'string' },
         **Api::Schema.rendered_markdown(:description),
-        **Api::Schema.updater_and_creator_ids_and_ats
+        **Api::Schema.updater_and_creator_user_stamps
       },
       required: [
         :id,

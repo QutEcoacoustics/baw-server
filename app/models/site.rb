@@ -7,7 +7,7 @@ class Site < ApplicationRecord
   # ensures timezones are handled consistently
   include TimeZoneAttribute
 
-  attr_accessor :project_ids, :custom_latitude, :custom_longitude, :location_obfuscated
+  attr_accessor :custom_latitude, :custom_longitude, :location_obfuscated
 
   # relations
   has_and_belongs_to_many :projects, -> { distinct }
@@ -253,7 +253,7 @@ class Site < ApplicationRecord
         id: { '$ref' => '#/components/schemas/id', readOnly: true },
         name: { type: 'string' },
         **Api::Schema.rendered_markdown(:description),
-        **Api::Schema.all_ids_and_ats,
+        **Api::Schema.all_user_stamps,
         #notes: { type: 'object' }, # TODO: https://github.com/QutEcoacoustics/baw-server/issues/467
         notes: { type: 'string' },
         project_ids: { type: 'array', items: { type: 'integer' } },

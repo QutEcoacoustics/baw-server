@@ -1,38 +1,50 @@
+# frozen_string_literal: true
+
+# Namespace module for API related functionality.
 module Api
+  # A small module that helps output boilerplate JSON schema definitions.
+  # All the declarations here could be inlined with no ill-effect.
   module Schema
-    def self.all_ids_and_ats
+    def self.creator_user_stamp
       {
         creator_id: { '$ref' => '#/components/schemas/id', readOnly: true },
-        updater_id: { '$ref' => '#/components/schemas/nullableId', readOnly: true },
-        deleter_id: { '$ref' => '#/components/schemas/nullableId', readOnly: true },
-        created_at: { type: 'date', readOnly: true },
-        updated_at: { type: ['null', 'date'], readOnly: true },
-        deleted_at: { type: ['null', 'date'], readOnly: true }
+        created_at: { type: 'date', readOnly: true }
       }
     end
 
-    def self.updater_and_creator_ids_and_ats
+    def self.updater_user_stamp
       {
-        creator_id: { '$ref' => '#/components/schemas/id', readOnly: true },
         updater_id: { '$ref' => '#/components/schemas/nullableId', readOnly: true },
-        created_at: { type: 'date', readOnly: true },
         updated_at: { type: ['null', 'date'], readOnly: true }
       }
     end
 
-    def self.creator_and_deleter_ids_and_ats
+    def self.deleter_user_stamp
       {
-        creator_id: { '$ref' => '#/components/schemas/id', readOnly: true },
         deleter_id: { '$ref' => '#/components/schemas/nullableId', readOnly: true },
-        created_at: { type: 'date', readOnly: true },
         deleted_at: { type: ['null', 'date'], readOnly: true }
       }
     end
 
-    def self.creator_ids_and_ats
+    def self.all_user_stamps
       {
-        creator_id: { '$ref' => '#/components/schemas/id', readOnly: true },
-        created_at: { type: 'date', readOnly: true }
+        **creator_user_stamp,
+        **updater_user_stamp,
+        **deleter_user_stamp
+      }
+    end
+
+    def self.updater_and_creator_user_stamps
+      {
+        **creator_user_stamp,
+        **updater_user_stamp
+      }
+    end
+
+    def self.creator_and_deleter_user_stamps
+      {
+        **creator_user_stamp,
+        **deleter_user_stamp
       }
     end
 
@@ -50,6 +62,10 @@ module Api
 
     def self.image_urls
       { '$ref' => '#/components/schemas/image_urls' }
+    end
+
+    def self.permission_levels
+      { '$ref' => '#/components/schemas/permission_levels' }
     end
   end
 end

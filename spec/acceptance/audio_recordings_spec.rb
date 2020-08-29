@@ -1154,7 +1154,7 @@ resource 'AudioRecordings' do
       {
         filter: {
           and: {
-            'projects.description' => {
+            'projects.image_file_name' => {
               eq: 'test'
             },
             duration_seconds: {
@@ -1177,7 +1177,7 @@ resource 'AudioRecordings' do
     }
     let(:authentication_token) { reader_token }
     standard_request_options(:post, 'FILTER (as reader filtering by project image_file_name)', :bad_request, {
-      response_body_content: 'Filter parameters were not valid: Name must be in [:id, :name, :description, :created_at, :creator_id], got image_file_name'
+      response_body_content: 'Filter parameters were not valid: Name must be in [:id, :name, :description, :creator_id, :created_at, :updater_id, :updated_at, :deleter_id, :deleted_at], got image_file_name'
     })
   end
 

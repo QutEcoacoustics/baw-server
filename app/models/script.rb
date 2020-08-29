@@ -148,7 +148,7 @@ class Script < ApplicationRecord
         executable_settings: { type: 'string' },
         executable_settings_media_type: { type: 'string' },
         version: { type: 'number' },
-        **Api::Schema.creator_ids_and_ats,
+        **Api::Schema.creator_user_stamp,
         is_last_version: { type: 'boolean', readOnly: true },
         is_first_version: { type: 'boolean', readOnly: true },
         analysis_action_params: { type: 'object' }
