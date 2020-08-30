@@ -29,7 +29,7 @@ jobs:
       # The easiest way I can think of to get this working is to just set the
       # uid to 1000.
       - name: Set permissions for checked out files
-        run: sudo chown -R 1000 .
+        run: sudo chown -R 1000 . && sudo chmod o+rw -R .
       # there is a bug where docker build and docker-compose don't produce the
       # same results
       # see https://github.com/docker/compose/issues/883
