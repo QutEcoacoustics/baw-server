@@ -2,15 +2,15 @@ require 'rails_helper'
 
 describe RendersMarkdown do
   before(:all) do
-    ActiveRecord::Base.connection.drop_table :temp_models, if_exists: true
+    ActiveRecord::Base.connection.drop_table :temp_model_markdown_tests, if_exists: true
     connection = ActiveRecord::Base.connection
-    connection.create_table :temp_models do |t|
+    connection.create_table :temp_model_markdown_tests do |t|
       t.column :some_long_text, :string
     end
   end
 
   after(:all) do
-    ActiveRecord::Base.connection.drop_table :temp_models
+    ActiveRecord::Base.connection.drop_table :temp_model_markdown_tests
   end
 
   subject do

@@ -30,16 +30,16 @@ describe TimeZoneAttribute do
   ].freeze
 
   before(:all) do
-    ActiveRecord::Base.connection.drop_table :temp_models, if_exists: true
+    ActiveRecord::Base.connection.drop_table :temp_model_timezone_tests, if_exists: true
     connection = ActiveRecord::Base.connection
-    connection.create_table :temp_models do |t|
+    connection.create_table :temp_model_timezone_tests do |t|
       t.column :tzinfo_tz, :string, null: true, limit: 255
       t.column :rails_tz, :string, null: true, limit: 255
     end
   end
 
   after(:all) do
-    ActiveRecord::Base.connection.drop_table :temp_models
+    ActiveRecord::Base.connection.drop_table :temp_model_timezone_tests
   end
 
   subject do
@@ -54,7 +54,7 @@ describe TimeZoneAttribute do
         it 'handles restoring bad values from the database' do
           # arrange
           rails_tz_db_string = rails_tz.nil? ? 'null' : "'#{rails_tz}'"
-          insert_sql = "INSERT INTO temp_models (tzinfo_tz, rails_tz) VALUES ('#{tzinfo_tz}',#{rails_tz_db_string})"
+          insert_sql = "INSERT INTO temp_model_timezone_tests (tzinfo_tz, rails_tz) VALUES ('#{tzinfo_tz}',#{rails_tz_db_string})"
           ActiveRecord::Base.connection.execute insert_sql
 
           # act
@@ -67,7 +67,7 @@ describe TimeZoneAttribute do
 
           # act
           loaded.save!
-          results = ActiveRecord::Base.connection.exec_query('SELECT * FROM temp_models LIMIT 1')
+          results = ActiveRecord::Base.connection.exec_query('SELECT * FROM temp_model_timezone_tests LIMIT 1')
 
           # assert
           expect(results.rows.first[1..]).to match([expected, expected_rails_tz])
