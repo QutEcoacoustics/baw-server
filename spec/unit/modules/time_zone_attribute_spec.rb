@@ -43,7 +43,7 @@ describe TimeZoneAttribute do
   end
 
   subject do
-    class TempModel < ApplicationRecord
+    class TempModelTimezoneTest < ApplicationRecord
       include TimeZoneAttribute
     end
   end

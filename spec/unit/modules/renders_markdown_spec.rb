@@ -14,11 +14,11 @@ describe RendersMarkdown do
   end
 
   subject do
-    class TempModel < ApplicationRecord
+    class TempModelMarkdownTest < ApplicationRecord
       renders_markdown_for :some_long_text
     end
 
-    return TempModel.new
+    return TempModelMarkdownTest.new
   end
 
   describe 'dynamic attribute' do
