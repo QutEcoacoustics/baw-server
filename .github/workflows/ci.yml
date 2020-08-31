@@ -29,7 +29,7 @@ jobs:
       # The easiest way I can think of to get this working is to just set the
       # uid to 1000.
       - name: Set permissions for checked out files
-        run: sudo chown -R 1000 . && sudo chmod o+rw -R .
+        run: sudo chown -R 1000 .
       # there is a bug where docker build and docker-compose don't produce the
       # same results
       # see https://github.com/docker/compose/issues/883
@@ -65,6 +65,15 @@ jobs:
       # update api docs
       - name: Generate API docs
         run: docker-compose run web generate_docs.sh
+
+      - name: Stop docker-compose
+        if: ${{ always() }}
+        run: docker-compose stop
+
+      # Undo permissions change
+      - name: Undo Set permissions for checked out files
+        run: sudo chown -R $(id -u) .
+        
       - name: Commit swagger doc changes
         uses: stefanzweifel/git-auto-commit-action@v4
         with:
@@ -74,9 +83,6 @@ jobs:
             [skip_ci]
           file_pattern: swagger/**
 
-      - name: Stop docker-compose
-        if: ${{ always() }}
-        run: docker-compose stop
 
   # Push image to GitHub Packages.
   # See also https://docs.docker.com/docker-hub/builds/
