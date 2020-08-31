@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require 'resque/server'
-require 'resque-status'
+require "#{__dir__}/../resque-status"
 
 module Resque
   module StatusServer

@@ -5,6 +5,14 @@ require 'securerandom'
 module Resque
   module Plugins
     module Status
+      # Warning: modified by AT from original source
+      # Only set a TTL is the given status is in this list
+      EXPIRE_STATUSES = [
+        Resque::Plugins::Status::STATUS_COMPLETED,
+        Resque::Plugins::Status::STATUS_FAILED,
+        Resque::Plugins::Status::STATUS_KILLED
+      ].freeze
+
       # Resque::Plugins::Status::Hash is a Hash object that has helper methods for dealing with
       # the common status attributes. It also has a number of class methods for
       # creating/updating/retrieving status objects from Redis
@@ -41,7 +49,9 @@ module Resque
         def self.set(uuid, *messages)
           val = Resque::Plugins::Status::Hash.new(uuid, *messages)
           redis.set(status_key(uuid), encode(val))
-          redis.expire(status_key(uuid), expire_in) if expire_in
+
+          # only set the TTL if the job has finished
+          redis.expire(status_key(uuid), expire_in) if expire_in && EXPIRE_STATUSES.include?(val['status'])
           val
         end
 

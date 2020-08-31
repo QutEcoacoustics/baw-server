@@ -66,7 +66,15 @@ if ENV['CI'] || ENV['COVERAGE']
   SimpleCov.start 'rails'
 end
 
-require "#{__dir__}/../config/environment"
+# If app loading fails, rspec just continues trying to load the next file
+# which will generate hundreds of misleading errors which mask the true error.
+# Instead, fail fast if the rails app fails to load!
+begin
+  require "#{__dir__}/../config/environment"
+rescue StandardError => e
+  puts e.full_message(highlight: true, order: :top)
+  exit 1
+end
 
 # Prevent accidental non-tests database access!
 abort('The Rails environment is running in production mode!') if Rails.env.production?

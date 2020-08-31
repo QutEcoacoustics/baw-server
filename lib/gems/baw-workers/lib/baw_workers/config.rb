@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require 'action_mailer'
-raise 'baw-workers/patches not loaded' unless defined?(Resque::Plugins::Status::EXPIRE_STATUSES)
+raise 'modified resque status hash class not loaded' unless defined?(Resque::Plugins::Status::EXPIRE_STATUSES)
 
 module BawWorkers
   class Config

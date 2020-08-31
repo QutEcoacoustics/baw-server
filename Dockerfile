@@ -79,7 +79,7 @@ EXPOSE 3000
 # install deps
 RUN \
   # install baw-server
-  BAW_SKIP_LOCAL_GEMS=true bundle install \
+  bundle install \
   # install docs for dev work
   && solargraph download-core \
   && solargraph bundle
@@ -106,7 +106,7 @@ EXPOSE 80
 RUN echo 'gem: --no-rdoc --no-ri' >> "$HOME/.gemrc" \
   && bundle config set without development test \
   # install baw-server
-  && BAW_SKIP_LOCAL_GEMS=true bundle install
+  && bundle install
 
 # Add the Rails app
 COPY --chown=${app_user} ./ /home/${app_user}/${app_name}

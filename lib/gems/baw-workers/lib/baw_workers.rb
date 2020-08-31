@@ -9,10 +9,13 @@ require 'fileutils'
 require 'resque'
 require 'resque_solo'
 require 'resque-job-stats'
-require 'resque-status'
+require "#{__dir__}/../../resque-status/lib/resque-status"
+unless defined?(Resque::Plugins::Status::EXPIRE_STATUSES)
+  raise 'sanity check failed: modified resque status hash class not loaded'
+end
 
-require_relative '../../baw-app/lib/baw_app.rb'
-require_relative '../../baw-audio-tools/lib/baw_audio_tools.rb'
+require_relative '../../baw-app/lib/baw_app'
+require_relative '../../baw-audio-tools/lib/baw_audio_tools'
 
 Dir.glob("#{__dir__}/patches/**/*.rb").sort.each do |override|
   #puts "loading #{override}"

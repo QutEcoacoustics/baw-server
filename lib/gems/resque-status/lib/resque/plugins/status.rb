@@ -44,7 +44,7 @@ module Resque
         STATUS_KILLED
       ].freeze
 
-      autoload :Hash, 'resque/plugins/status/hash'
+      require "#{__dir__}/status/hash"
 
       # The error class raised when a job is killed
       class Killed < RuntimeError; end
@@ -207,9 +207,9 @@ module Resque
         raise(NotANumber, "Called at() with total=#{total} which is not a number") if total.to_f <= 0.0
 
         tick({
-               'num' => num,
-               'total' => total
-             }, *messages)
+          'num' => num,
+          'total' => total
+        }, *messages)
       end
 
       # sets the status of the job for the current itteration. You should use
@@ -229,17 +229,17 @@ module Resque
       # set the status to 'completed' passing along any addional messages
       def completed(*messages)
         set_status({
-                     'status' => STATUS_COMPLETED,
-                     'message' => "Completed at #{Time.now}"
-                   }, *messages)
+          'status' => STATUS_COMPLETED,
+          'message' => "Completed at #{Time.now}"
+        }, *messages)
       end
 
       # kill the current job, setting the status to 'killed' and raising <tt>Killed</tt>
       def kill!
         set_status({
-                     'status' => STATUS_KILLED,
-                     'message' => "Killed at #{Time.now}"
-                   })
+          'status' => STATUS_KILLED,
+          'message' => "Killed at #{Time.now}"
+        })
         raise Killed
       end
 
