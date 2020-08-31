@@ -46,12 +46,36 @@ paths:
                   creator_id: 3
                   deleted_at: 
                   deleter_id: 
-                  created_at: '2020-08-27T15:07:15.914+01:00'
-                  updated_at: '2020-08-27T15:07:16.766+01:00'
+                  created_at: '2020-08-31T01:37:54.096+01:00'
+                  updated_at: '2020-08-31T01:37:54.704+01:00'
                   site_ids:
                   - 1
+                  owner_ids:
+                  - 3
+                  image_urls:
+                  - size: extralarge
+                    url: "/images/project/project_span4.png"
+                    width: 300
+                    height: 300
+                  - size: large
+                    url: "/images/project/project_span3.png"
+                    width: 220
+                    height: 220
+                  - size: medium
+                    url: "/images/project/project_span2.png"
+                    width: 140
+                    height: 140
+                  - size: small
+                    url: "/images/project/project_span1.png"
+                    width: 60
+                    height: 60
+                  - size: tiny
+                    url: "/images/project/project_spanhalf.png"
+                    width: 30
+                    height: 30
                   description_html: "<p>project description 2</p>\n"
                   description_html_tagline: project description 2
+                  access_level: Owner
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -101,12 +125,36 @@ paths:
                   updater_id: 
                   deleter_id: 
                   deleted_at: 
-                  created_at: '2020-08-27T15:07:16.832+01:00'
-                  updated_at: '2020-08-27T15:07:16.832+01:00'
+                  created_at: '2020-08-31T01:37:54.758+01:00'
+                  updated_at: '2020-08-31T01:37:54.758+01:00'
                   site_ids:
                   - 2
+                  owner_ids:
+                  - 8
+                  image_urls:
+                  - size: extralarge
+                    url: "/images/project/project_span4.png"
+                    width: 300
+                    height: 300
+                  - size: large
+                    url: "/images/project/project_span3.png"
+                    width: 220
+                    height: 220
+                  - size: medium
+                    url: "/images/project/project_span2.png"
+                    width: 140
+                    height: 140
+                  - size: small
+                    url: "/images/project/project_span1.png"
+                    width: 60
+                    height: 60
+                  - size: tiny
+                    url: "/images/project/project_spanhalf.png"
+                    width: 30
+                    height: 30
                   description_html: "<p>project description 3</p>\n"
                   description_html_tagline: project description 3
+                  access_level: Owner
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -176,12 +224,36 @@ paths:
                   creator_id: 16
                   deleted_at: 
                   deleter_id: 
-                  created_at: '2020-08-27T15:07:17.343+01:00'
-                  updated_at: '2020-08-27T15:07:17.560+01:00'
+                  created_at: '2020-08-31T01:37:55.108+01:00'
+                  updated_at: '2020-08-31T01:37:55.277+01:00'
                   site_ids:
                   - 4
+                  owner_ids:
+                  - 16
+                  image_urls:
+                  - size: extralarge
+                    url: "/images/project/project_span4.png"
+                    width: 300
+                    height: 300
+                  - size: large
+                    url: "/images/project/project_span3.png"
+                    width: 220
+                    height: 220
+                  - size: medium
+                    url: "/images/project/project_span2.png"
+                    width: 140
+                    height: 140
+                  - size: small
+                    url: "/images/project/project_span1.png"
+                    width: 60
+                    height: 60
+                  - size: tiny
+                    url: "/images/project/project_spanhalf.png"
+                    width: 30
+                    height: 30
                   description_html: "<p>project description 6</p>\n"
                   description_html_tagline: project description 6
+                  access_level: Owner
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -237,12 +309,36 @@ paths:
                   updater_id: 
                   deleter_id: 
                   deleted_at: 
-                  created_at: '2020-08-27T15:07:17.622+01:00'
-                  updated_at: '2020-08-27T15:07:17.622+01:00'
+                  created_at: '2020-08-31T01:37:55.323+01:00'
+                  updated_at: '2020-08-31T01:37:55.323+01:00'
                   site_ids:
                   - 5
+                  owner_ids:
+                  - 21
+                  image_urls:
+                  - size: extralarge
+                    url: "/images/project/project_span4.png"
+                    width: 300
+                    height: 300
+                  - size: large
+                    url: "/images/project/project_span3.png"
+                    width: 220
+                    height: 220
+                  - size: medium
+                    url: "/images/project/project_span2.png"
+                    width: 140
+                    height: 140
+                  - size: small
+                    url: "/images/project/project_span1.png"
+                    width: 60
+                    height: 60
+                  - size: tiny
+                    url: "/images/project/project_spanhalf.png"
+                    width: 30
+                    height: 30
                   description_html: "<p>project description 7</p>\n"
                   description_html_tagline: project description 7
+                  access_level: Owner
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -295,12 +391,36 @@ paths:
                   updater_id: 
                   deleter_id: 
                   deleted_at: 
-                  created_at: '2020-08-27T15:07:17.944+01:00'
-                  updated_at: '2020-08-27T15:07:17.944+01:00'
+                  created_at: '2020-08-31T01:37:55.506+01:00'
+                  updated_at: '2020-08-31T01:37:55.506+01:00'
                   site_ids:
                   - 6
+                  owner_ids:
+                  - 25
+                  image_urls:
+                  - size: extralarge
+                    url: "/images/project/project_span4.png"
+                    width: 300
+                    height: 300
+                  - size: large
+                    url: "/images/project/project_span3.png"
+                    width: 220
+                    height: 220
+                  - size: medium
+                    url: "/images/project/project_span2.png"
+                    width: 140
+                    height: 140
+                  - size: small
+                    url: "/images/project/project_span1.png"
+                    width: 60
+                    height: 60
+                  - size: tiny
+                    url: "/images/project/project_spanhalf.png"
+                    width: 30
+                    height: 30
                   description_html: "<p>project description 8</p>\n"
                   description_html_tagline: project description 8
+                  access_level: Owner
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -341,11 +461,35 @@ paths:
                   updater_id: 1
                   deleter_id: 
                   deleted_at: 
-                  created_at: '2020-08-27T15:07:18.367+01:00'
-                  updated_at: '2020-08-27T15:07:18.367+01:00'
+                  created_at: '2020-08-31T01:37:55.823+01:00'
+                  updated_at: '2020-08-31T01:37:55.823+01:00'
                   site_ids: []
+                  owner_ids:
+                  - 1
+                  image_urls:
+                  - size: extralarge
+                    url: "/images/project/project_span4.png"
+                    width: 300
+                    height: 300
+                  - size: large
+                    url: "/images/project/project_span3.png"
+                    width: 220
+                    height: 220
+                  - size: medium
+                    url: "/images/project/project_span2.png"
+                    width: 140
+                    height: 140
+                  - size: small
+                    url: "/images/project/project_span1.png"
+                    width: 60
+                    height: 60
+                  - size: tiny
+                    url: "/images/project/project_spanhalf.png"
+                    width: 30
+                    height: 30
                   description_html: "<p>project description 10</p>\n"
                   description_html_tagline: project description 10
+                  access_level: Owner
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -434,7 +578,7 @@ paths:
                   version: 0.09
                   group_id: 9
                   creator_id: 1
-                  created_at: '2020-08-27T15:07:18.732+01:00'
+                  created_at: '2020-08-31T01:37:56.111+01:00'
                   executable_settings: executable settings 9
                   executable_settings_media_type: text/plain
                   analysis_action_params:
@@ -493,7 +637,7 @@ paths:
                   version: 0.1
                   group_id: 10
                   creator_id: 1
-                  created_at: '2020-08-27T15:07:18.983+01:00'
+                  created_at: '2020-08-31T01:37:56.289+01:00'
                   executable_settings: executable settings 10
                   executable_settings_media_type: text/plain
                   analysis_action_params:
@@ -555,7 +699,7 @@ paths:
                   version: 0.11
                   group_id: 11
                   creator_id: 1
-                  created_at: '2020-08-27T15:07:19.224+01:00'
+                  created_at: '2020-08-31T01:37:56.458+01:00'
                   executable_settings: executable settings 11
                   executable_settings_media_type: text/plain
                   analysis_action_params:
@@ -577,6 +721,594 @@ paths:
                       type: array
                       items:
                         "$ref": "#/components/schemas/script"
+  "/projects/{project_id}/sites/filter":
+    post:
+      summary: filter site
+      security:
+      - basic_auth_with_token: []
+      parameters:
+      - name: project_id
+        in: path
+        description: project_id
+        required: true
+        schema:
+          type: integer
+      tags:
+      - sites
+      description: |2
+
+        Users that can invoke this route: `Admin`, `owner user`, `writer`, `reader`, `no_access`, `anyone`.<br />
+        Users that can't: `Harvester`.
+
+        Note: accessing a list/index/filter endpoint may return no results due to project permissions
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              example:
+                meta:
+                  status: 200
+                  message: OK
+                  sorting:
+                    order_by: name
+                    direction: asc
+                  paging:
+                    page: 1
+                    items: 25
+                    total: 1
+                    max_page: 1
+                    current: http://localhost:3000/projects/13/sites/filter?direction=asc&items=25&order_by=name&page=1
+                    previous: 
+                    next: 
+                data:
+                - id: 12
+                  name: site name 12
+                  notes: note number 12
+                  creator_id: 50
+                  updater_id: 
+                  deleter_id: 
+                  deleted_at: 
+                  created_at: '2020-08-31T01:37:56.658+01:00'
+                  updated_at: '2020-08-31T01:37:56.658+01:00'
+                  description: site description 12
+                  project_ids:
+                  - 13
+                  location_obfuscated: false
+                  custom_latitude: 49.530981
+                  custom_longitude: -172.731998
+                  timezone_information: 
+                  image_urls:
+                  - size: extralarge
+                    url: "/images/site/site_span4.png"
+                    width: 300
+                    height: 300
+                  - size: large
+                    url: "/images/site/site_span3.png"
+                    width: 220
+                    height: 220
+                  - size: medium
+                    url: "/images/site/site_span2.png"
+                    width: 140
+                    height: 140
+                  - size: small
+                    url: "/images/site/site_span1.png"
+                    width: 60
+                    height: 60
+                  - size: tiny
+                    url: "/images/site/site_spanhalf.png"
+                    width: 30
+                    height: 30
+                  description_html: "<p>site description 12</p>\n"
+                  description_html_tagline: site description 12
+              schema:
+                allOf:
+                - "$ref": "#/components/schemas/standard_response"
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        "$ref": "#/components/schemas/site"
+  "/projects/{project_id}/sites/new":
+    get:
+      summary: new site
+      security:
+      - basic_auth_with_token: []
+      parameters:
+      - name: project_id
+        in: path
+        description: project_id
+        required: true
+        schema:
+          type: integer
+      tags:
+      - sites
+      description: |2
+
+        Users that can invoke this route: `Admin`, `owner user`, `writer`, `reader`, `no_access`, `anyone`.<br />
+        Users that can't: `Harvester`.
+
+        Note: accessing a list/index/filter endpoint may return no results due to project permissions
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              example:
+                meta:
+                  status: 200
+                  message: OK
+                data:
+                  id: 
+                  name: 
+                  notes: 
+                  creator_id: 
+                  updater_id: 
+                  deleter_id: 
+                  deleted_at: 
+                  created_at: 
+                  updated_at: 
+                  description: 
+                  longitude: 
+                  latitude: 
+                  image: 
+                  tzinfo_tz: 
+                  rails_tz: 
+  "/projects/{project_id}/sites":
+    get:
+      summary: list sites
+      security:
+      - basic_auth_with_token: []
+      parameters:
+      - name: project_id
+        in: path
+        description: project_id
+        required: true
+        schema:
+          type: integer
+      tags:
+      - sites
+      description: |2
+
+        Users that can invoke this route: `Admin`, `owner user`, `writer`, `reader`, `no_access`, `anyone`.<br />
+        Users that can't: `Harvester`.
+
+        Note: accessing a list/index/filter endpoint may return no results due to project permissions
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              example:
+                meta:
+                  status: 200
+                  message: OK
+                  sorting:
+                    order_by: name
+                    direction: asc
+                  paging:
+                    page: 1
+                    items: 25
+                    total: 1
+                    max_page: 1
+                    current: http://localhost:3000/projects/15/sites?direction=asc&items=25&order_by=name&page=1
+                    previous: 
+                    next: 
+                data:
+                - id: 14
+                  name: site name 14
+                  notes: note number 14
+                  creator_id: 58
+                  updater_id: 
+                  deleter_id: 
+                  deleted_at: 
+                  created_at: '2020-08-31T01:37:57.016+01:00'
+                  updated_at: '2020-08-31T01:37:57.016+01:00'
+                  description: site description 14
+                  project_ids:
+                  - 15
+                  location_obfuscated: false
+                  custom_latitude: -12.269087
+                  custom_longitude: 165.051734
+                  timezone_information: 
+                  image_urls:
+                  - size: extralarge
+                    url: "/images/site/site_span4.png"
+                    width: 300
+                    height: 300
+                  - size: large
+                    url: "/images/site/site_span3.png"
+                    width: 220
+                    height: 220
+                  - size: medium
+                    url: "/images/site/site_span2.png"
+                    width: 140
+                    height: 140
+                  - size: small
+                    url: "/images/site/site_span1.png"
+                    width: 60
+                    height: 60
+                  - size: tiny
+                    url: "/images/site/site_spanhalf.png"
+                    width: 30
+                    height: 30
+                  description_html: "<p>site description 14</p>\n"
+                  description_html_tagline: site description 14
+              schema:
+                allOf:
+                - "$ref": "#/components/schemas/standard_response"
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        "$ref": "#/components/schemas/site"
+    post:
+      summary: create site
+      security:
+      - basic_auth_with_token: []
+      parameters:
+      - name: project_id
+        in: path
+        description: project_id
+        required: true
+        schema:
+          type: integer
+      tags:
+      - sites
+      description: |2
+
+        Users that can invoke this route: `Admin`, `owner user`, `writer`, `reader`, `no_access`, `anyone`.<br />
+        Users that can't: `Harvester`.
+
+        Note: accessing a list/index/filter endpoint may return no results due to project permissions
+      responses:
+        '201':
+          description: successful
+          content:
+            application/json:
+              example:
+                meta:
+                  status: 201
+                  message: Created
+                data:
+                  id: 16
+                  name: site name 16
+                  notes: note number 16
+                  creator_id: 1
+                  updater_id: 
+                  deleter_id: 
+                  deleted_at: 
+                  created_at: '2020-08-31T01:37:57.350+01:00'
+                  updated_at: '2020-08-31T01:37:57.350+01:00'
+                  description: site description 16
+                  project_ids:
+                  - 16
+                  location_obfuscated: false
+                  custom_latitude: 
+                  custom_longitude: 
+                  timezone_information: 
+                  image_urls:
+                  - size: extralarge
+                    url: "/images/site/site_span4.png"
+                    width: 300
+                    height: 300
+                  - size: large
+                    url: "/images/site/site_span3.png"
+                    width: 220
+                    height: 220
+                  - size: medium
+                    url: "/images/site/site_span2.png"
+                    width: 140
+                    height: 140
+                  - size: small
+                    url: "/images/site/site_span1.png"
+                    width: 60
+                    height: 60
+                  - size: tiny
+                    url: "/images/site/site_spanhalf.png"
+                    width: 30
+                    height: 30
+                  description_html: "<p>site description 16</p>\n"
+                  description_html_tagline: site description 16
+              schema:
+                allOf:
+                - "$ref": "#/components/schemas/standard_response"
+                - type: object
+                  properties:
+                    data:
+                      "$ref": "#/components/schemas/site"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/site"
+  "/projects/{project_id}/sites/{id}":
+    delete:
+      summary: delete site
+      security:
+      - basic_auth_with_token: []
+      parameters:
+      - name: project_id
+        in: path
+        description: project_id
+        required: true
+        schema:
+          type: integer
+      - name: id
+        in: path
+        description: id
+        required: true
+        schema:
+          type: integer
+      tags:
+      - sites
+      description: |2
+
+        Users that can invoke this route: `Admin`, `owner user`, `writer`, `reader`, `no_access`, `anyone`.<br />
+        Users that can't: `Harvester`.
+
+        Note: accessing a list/index/filter endpoint may return no results due to project permissions
+      responses:
+        '204':
+          description: successful
+          content:
+            application/json:
+              example: 
+    get:
+      summary: show site
+      security:
+      - basic_auth_with_token: []
+      parameters:
+      - name: project_id
+        in: path
+        description: project_id
+        required: true
+        schema:
+          type: integer
+      - name: id
+        in: path
+        description: id
+        required: true
+        schema:
+          type: integer
+      tags:
+      - sites
+      description: |2
+
+        Users that can invoke this route: `Admin`, `owner user`, `writer`, `reader`, `no_access`, `anyone`.<br />
+        Users that can't: `Harvester`.
+
+        Note: accessing a list/index/filter endpoint may return no results due to project permissions
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              example:
+                meta:
+                  status: 200
+                  message: OK
+                data:
+                  id: 18
+                  name: site name 18
+                  notes: note number 18
+                  creator_id: 71
+                  updater_id: 
+                  deleter_id: 
+                  deleted_at: 
+                  created_at: '2020-08-31T01:37:57.633+01:00'
+                  updated_at: '2020-08-31T01:37:57.633+01:00'
+                  description: site description 18
+                  project_ids:
+                  - 18
+                  location_obfuscated: false
+                  custom_latitude: 55.101294
+                  custom_longitude: 104.375337
+                  timezone_information: 
+                  image_urls:
+                  - size: extralarge
+                    url: "/images/site/site_span4.png"
+                    width: 300
+                    height: 300
+                  - size: large
+                    url: "/images/site/site_span3.png"
+                    width: 220
+                    height: 220
+                  - size: medium
+                    url: "/images/site/site_span2.png"
+                    width: 140
+                    height: 140
+                  - size: small
+                    url: "/images/site/site_span1.png"
+                    width: 60
+                    height: 60
+                  - size: tiny
+                    url: "/images/site/site_spanhalf.png"
+                    width: 30
+                    height: 30
+                  description_html: "<p>site description 18</p>\n"
+                  description_html_tagline: site description 18
+              schema:
+                allOf:
+                - "$ref": "#/components/schemas/standard_response"
+                - type: object
+                  properties:
+                    data:
+                      "$ref": "#/components/schemas/site"
+    patch:
+      summary: update site
+      security:
+      - basic_auth_with_token: []
+      parameters:
+      - name: project_id
+        in: path
+        description: project_id
+        required: true
+        schema:
+          type: integer
+      - name: id
+        in: path
+        description: id
+        required: true
+        schema:
+          type: integer
+      tags:
+      - sites
+      description: |2
+
+        Users that can invoke this route: `Admin`, `owner user`, `writer`, `reader`, `no_access`, `anyone`.<br />
+        Users that can't: `Harvester`.
+
+        Note: accessing a list/index/filter endpoint may return no results due to project permissions
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              example:
+                meta:
+                  status: 200
+                  message: OK
+                data:
+                  id: 19
+                  name: site name 20
+                  description: site description 20
+                  notes: note number 20
+                  updater_id: 1
+                  creator_id: 75
+                  deleted_at: 
+                  deleter_id: 
+                  created_at: '2020-08-31T01:37:57.863+01:00'
+                  updated_at: '2020-08-31T01:37:57.983+01:00'
+                  project_ids:
+                  - 19
+                  location_obfuscated: false
+                  custom_latitude: -37.25948
+                  custom_longitude: -144.76369
+                  timezone_information: 
+                  image_urls:
+                  - size: extralarge
+                    url: "/images/site/site_span4.png"
+                    width: 300
+                    height: 300
+                  - size: large
+                    url: "/images/site/site_span3.png"
+                    width: 220
+                    height: 220
+                  - size: medium
+                    url: "/images/site/site_span2.png"
+                    width: 140
+                    height: 140
+                  - size: small
+                    url: "/images/site/site_span1.png"
+                    width: 60
+                    height: 60
+                  - size: tiny
+                    url: "/images/site/site_spanhalf.png"
+                    width: 30
+                    height: 30
+                  description_html: "<p>site description 20</p>\n"
+                  description_html_tagline: site description 20
+              schema:
+                allOf:
+                - "$ref": "#/components/schemas/standard_response"
+                - type: object
+                  properties:
+                    data:
+                      "$ref": "#/components/schemas/site"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/site"
+    put:
+      summary: update site
+      security:
+      - basic_auth_with_token: []
+      parameters:
+      - name: project_id
+        in: path
+        description: project_id
+        required: true
+        schema:
+          type: integer
+      - name: id
+        in: path
+        description: id
+        required: true
+        schema:
+          type: integer
+      tags:
+      - sites
+      description: |2
+
+        Users that can invoke this route: `Admin`, `owner user`, `writer`, `reader`, `no_access`, `anyone`.<br />
+        Users that can't: `Harvester`.
+
+        Note: accessing a list/index/filter endpoint may return no results due to project permissions
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              example:
+                meta:
+                  status: 200
+                  message: OK
+                data:
+                  id: 20
+                  name: site name 22
+                  description: site description 22
+                  notes: note number 22
+                  updater_id: 1
+                  creator_id: 80
+                  deleted_at: 
+                  deleter_id: 
+                  created_at: '2020-08-31T01:37:58.072+01:00'
+                  updated_at: '2020-08-31T01:37:58.193+01:00'
+                  project_ids:
+                  - 20
+                  location_obfuscated: false
+                  custom_latitude: -2.870882
+                  custom_longitude: -20.846214
+                  timezone_information: 
+                  image_urls:
+                  - size: extralarge
+                    url: "/images/site/site_span4.png"
+                    width: 300
+                    height: 300
+                  - size: large
+                    url: "/images/site/site_span3.png"
+                    width: 220
+                    height: 220
+                  - size: medium
+                    url: "/images/site/site_span2.png"
+                    width: 140
+                    height: 140
+                  - size: small
+                    url: "/images/site/site_span1.png"
+                    width: 60
+                    height: 60
+                  - size: tiny
+                    url: "/images/site/site_spanhalf.png"
+                    width: 30
+                    height: 30
+                  description_html: "<p>site description 22</p>\n"
+                  description_html_tagline: site description 22
+              schema:
+                allOf:
+                - "$ref": "#/components/schemas/standard_response"
+                - type: object
+                  properties:
+                    data:
+                      "$ref": "#/components/schemas/site"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/site"
   "/sites":
     post:
       summary: create site
@@ -601,16 +1333,16 @@ paths:
                   status: 201
                   message: Created
                 data:
-                  id: 13
-                  name: site name 13
-                  notes: note number 13
+                  id: 22
+                  name: site name 24
+                  notes: note number 24
                   creator_id: 1
                   updater_id: 
                   deleter_id: 
                   deleted_at: 
-                  created_at: '2020-08-27T15:07:19.626+01:00'
-                  updated_at: '2020-08-27T15:07:19.626+01:00'
-                  description: site description 13
+                  created_at: '2020-08-31T01:37:58.386+01:00'
+                  updated_at: '2020-08-31T01:37:58.386+01:00'
+                  description: site description 24
                   project_ids: []
                   location_obfuscated: true
                   custom_latitude: 
@@ -637,8 +1369,8 @@ paths:
                     url: "/images/site/site_spanhalf.png"
                     width: 30
                     height: 30
-                  description_html: "<p>site description 13</p>\n"
-                  description_html_tagline: site description 13
+                  description_html: "<p>site description 24</p>\n"
+                  description_html_tagline: site description 24
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -685,21 +1417,21 @@ paths:
                     previous: 
                     next: 
                 data:
-                - id: 14
-                  name: site name 14
-                  notes: note number 14
-                  creator_id: 55
+                - id: 23
+                  name: site name 25
+                  notes: note number 25
+                  creator_id: 90
                   updater_id: 
                   deleter_id: 
                   deleted_at: 
-                  created_at: '2020-08-27T15:07:19.723+01:00'
-                  updated_at: '2020-08-27T15:07:19.723+01:00'
-                  description: site description 14
+                  created_at: '2020-08-31T01:37:58.485+01:00'
+                  updated_at: '2020-08-31T01:37:58.485+01:00'
+                  description: site description 25
                   project_ids:
-                  - 14
+                  - 22
                   location_obfuscated: false
-                  custom_latitude: -49.179023
-                  custom_longitude: 43.082595
+                  custom_latitude: -8.422107
+                  custom_longitude: 116.878993
                   timezone_information: 
                   image_urls:
                   - size: extralarge
@@ -722,8 +1454,8 @@ paths:
                     url: "/images/site/site_spanhalf.png"
                     width: 30
                     height: 30
-                  description_html: "<p>site description 14</p>\n"
-                  description_html_tagline: site description 14
+                  description_html: "<p>site description 25</p>\n"
+                  description_html_tagline: site description 25
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -768,21 +1500,21 @@ paths:
                     previous: 
                     next: 
                 data:
-                - id: 15
-                  name: site name 15
-                  notes: note number 15
-                  creator_id: 59
+                - id: 24
+                  name: site name 26
+                  notes: note number 26
+                  creator_id: 94
                   updater_id: 
                   deleter_id: 
                   deleted_at: 
-                  created_at: '2020-08-27T15:07:19.964+01:00'
-                  updated_at: '2020-08-27T15:07:19.964+01:00'
-                  description: site description 15
+                  created_at: '2020-08-31T01:37:58.666+01:00'
+                  updated_at: '2020-08-31T01:37:58.666+01:00'
+                  description: site description 26
                   project_ids:
-                  - 15
+                  - 23
                   location_obfuscated: false
-                  custom_latitude: -36.842571
-                  custom_longitude: 42.286205
+                  custom_latitude: 40.53158
+                  custom_longitude: 37.27334
                   timezone_information: 
                   image_urls:
                   - size: extralarge
@@ -805,8 +1537,8 @@ paths:
                     url: "/images/site/site_spanhalf.png"
                     width: 30
                     height: 30
-                  description_html: "<p>site description 15</p>\n"
-                  description_html_tagline: site description 15
+                  description_html: "<p>site description 26</p>\n"
+                  description_html_tagline: site description 26
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -871,21 +1603,21 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  id: 17
-                  name: site name 18
-                  description: site description 18
-                  notes: note number 18
+                  id: 26
+                  name: site name 29
+                  description: site description 29
+                  notes: note number 29
                   updater_id: 1
-                  creator_id: 67
+                  creator_id: 102
                   deleted_at: 
                   deleter_id: 
-                  created_at: '2020-08-27T15:07:20.441+01:00'
-                  updated_at: '2020-08-27T15:07:20.615+01:00'
+                  created_at: '2020-08-31T01:37:59.012+01:00'
+                  updated_at: '2020-08-31T01:37:59.156+01:00'
                   project_ids:
-                  - 17
+                  - 25
                   location_obfuscated: false
-                  custom_latitude: 42.017445
-                  custom_longitude: -60.299422
+                  custom_latitude: -45.457421
+                  custom_longitude: 158.061453
                   timezone_information: 
                   image_urls:
                   - size: extralarge
@@ -908,8 +1640,8 @@ paths:
                     url: "/images/site/site_spanhalf.png"
                     width: 30
                     height: 30
-                  description_html: "<p>site description 18</p>\n"
-                  description_html_tagline: site description 18
+                  description_html: "<p>site description 29</p>\n"
+                  description_html_tagline: site description 29
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -951,21 +1683,21 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  id: 18
-                  name: site name 19
-                  notes: note number 19
-                  creator_id: 72
+                  id: 27
+                  name: site name 30
+                  notes: note number 30
+                  creator_id: 107
                   updater_id: 
                   deleter_id: 
                   deleted_at: 
-                  created_at: '2020-08-27T15:07:20.750+01:00'
-                  updated_at: '2020-08-27T15:07:20.750+01:00'
-                  description: site description 19
+                  created_at: '2020-08-31T01:37:59.239+01:00'
+                  updated_at: '2020-08-31T01:37:59.239+01:00'
+                  description: site description 30
                   project_ids:
-                  - 18
+                  - 26
                   location_obfuscated: false
-                  custom_latitude: 55.101294
-                  custom_longitude: 104.375337
+                  custom_latitude: 14.494929
+                  custom_longitude: -46.829336
                   timezone_information: 
                   image_urls:
                   - size: extralarge
@@ -988,8 +1720,8 @@ paths:
                     url: "/images/site/site_spanhalf.png"
                     width: 30
                     height: 30
-                  description_html: "<p>site description 19</p>\n"
-                  description_html_tagline: site description 19
+                  description_html: "<p>site description 30</p>\n"
+                  description_html_tagline: site description 30
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -1026,21 +1758,21 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  id: 19
-                  name: site name 21
-                  description: site description 21
-                  notes: note number 21
+                  id: 28
+                  name: site name 32
+                  description: site description 32
+                  notes: note number 32
                   updater_id: 1
-                  creator_id: 76
+                  creator_id: 111
                   deleted_at: 
                   deleter_id: 
-                  created_at: '2020-08-27T15:07:20.978+01:00'
-                  updated_at: '2020-08-27T15:07:21.154+01:00'
+                  created_at: '2020-08-31T01:37:59.417+01:00'
+                  updated_at: '2020-08-31T01:37:59.523+01:00'
                   project_ids:
-                  - 19
+                  - 27
                   location_obfuscated: false
-                  custom_latitude: -37.25948
-                  custom_longitude: -144.76369
+                  custom_latitude: 30.357505
+                  custom_longitude: -139.889771
                   timezone_information: 
                   image_urls:
                   - size: extralarge
@@ -1063,8 +1795,8 @@ paths:
                     url: "/images/site/site_spanhalf.png"
                     width: 30
                     height: 30
-                  description_html: "<p>site description 21</p>\n"
-                  description_html_tagline: site description 21
+                  description_html: "<p>site description 32</p>\n"
+                  description_html_tagline: site description 32
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -1140,18 +1872,18 @@ paths:
                   status: 201
                   message: Created
                 data:
-                  id: 21
-                  audio_recording_id: 21
+                  id: 29
+                  audio_recording_id: 29
                   offset_seconds: 4.0
-                  name: name 21
+                  name: name 29
                   creator_id: 1
                   updater_id: 
-                  created_at: '2020-08-27T15:07:21.719+01:00'
-                  updated_at: '2020-08-27T15:07:21.719+01:00'
-                  description: description 21
-                  category: category 21
-                  description_html: "<p>description 21</p>\n"
-                  description_html_tagline: description 21
+                  created_at: '2020-08-31T01:37:59.937+01:00'
+                  updated_at: '2020-08-31T01:37:59.937+01:00'
+                  description: description 29
+                  category: category 29
+                  description_html: "<p>description 29</p>\n"
+                  description_html_tagline: description 29
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -1198,18 +1930,18 @@ paths:
                     previous: 
                     next: 
                 data:
-                - id: 22
-                  audio_recording_id: 22
+                - id: 30
+                  audio_recording_id: 30
                   offset_seconds: 4.0
-                  name: name 22
+                  name: name 30
                   creator_id: 1
                   updater_id: 
-                  created_at: '2020-08-27T15:07:21.842+01:00'
-                  updated_at: '2020-08-27T15:07:21.842+01:00'
-                  description: description 22
-                  category: category 22
-                  description_html: "<p>description 22</p>\n"
-                  description_html_tagline: description 22
+                  created_at: '2020-08-31T01:38:00.033+01:00'
+                  updated_at: '2020-08-31T01:38:00.033+01:00'
+                  description: description 30
+                  category: category 30
+                  description_html: "<p>description 30</p>\n"
+                  description_html_tagline: description 30
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -1288,18 +2020,18 @@ paths:
                     previous: 
                     next: 
                 data:
-                - id: 24
-                  audio_recording_id: 24
+                - id: 32
+                  audio_recording_id: 32
                   offset_seconds: 4.0
-                  name: name 24
+                  name: name 32
                   creator_id: 1
                   updater_id: 
-                  created_at: '2020-08-27T15:07:22.310+01:00'
-                  updated_at: '2020-08-27T15:07:22.310+01:00'
-                  description: description 24
-                  category: category 24
-                  description_html: "<p>description 24</p>\n"
-                  description_html_tagline: description 24
+                  created_at: '2020-08-31T01:38:00.401+01:00'
+                  updated_at: '2020-08-31T01:38:00.401+01:00'
+                  description: description 32
+                  category: category 32
+                  description_html: "<p>description 32</p>\n"
+                  description_html_tagline: description 32
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -1339,18 +2071,18 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  id: 25
-                  audio_recording_id: 26
-                  name: name 26
-                  description: description 26
+                  id: 33
+                  audio_recording_id: 34
+                  name: name 34
+                  description: description 34
                   offset_seconds: 4.0
-                  category: category 26
+                  category: category 34
                   updater_id: 1
                   creator_id: 1
-                  created_at: '2020-08-27T15:07:22.552+01:00'
-                  updated_at: '2020-08-27T15:07:22.724+01:00'
-                  description_html: "<p>description 26</p>\n"
-                  description_html_tagline: description 26
+                  created_at: '2020-08-31T01:38:00.576+01:00'
+                  updated_at: '2020-08-31T01:38:00.707+01:00'
+                  description_html: "<p>description 34</p>\n"
+                  description_html_tagline: description 34
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -1392,18 +2124,18 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  id: 26
-                  audio_recording_id: 28
-                  name: name 28
-                  description: description 28
+                  id: 34
+                  audio_recording_id: 36
+                  name: name 36
+                  description: description 36
                   offset_seconds: 4.0
-                  category: category 28
+                  category: category 36
                   updater_id: 1
                   creator_id: 1
-                  created_at: '2020-08-27T15:07:22.894+01:00'
-                  updated_at: '2020-08-27T15:07:23.073+01:00'
-                  description_html: "<p>description 28</p>\n"
-                  description_html_tagline: description 28
+                  created_at: '2020-08-31T01:38:00.815+01:00'
+                  updated_at: '2020-08-31T01:38:00.946+01:00'
+                  description_html: "<p>description 36</p>\n"
+                  description_html_tagline: description 36
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -1470,18 +2202,18 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  id: 28
-                  audio_recording_id: 30
+                  id: 36
+                  audio_recording_id: 38
                   offset_seconds: 4.0
-                  name: name 30
+                  name: name 38
                   creator_id: 1
                   updater_id: 
-                  created_at: '2020-08-27T15:07:23.421+01:00'
-                  updated_at: '2020-08-27T15:07:23.421+01:00'
-                  description: description 30
-                  category: category 30
-                  description_html: "<p>description 30</p>\n"
-                  description_html_tagline: description 30
+                  created_at: '2020-08-31T01:38:01.202+01:00'
+                  updated_at: '2020-08-31T01:38:01.202+01:00'
+                  description: description 38
+                  category: category 38
+                  description_html: "<p>description 38</p>\n"
+                  description_html_tagline: description 38
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -1556,22 +2288,22 @@ paths:
                     previous: 
                     next: 
                 data:
-                - id: 29
-                  name: saved search name 29
-                  description: saved search description 29
+                - id: 37
+                  name: saved search name 37
+                  description: saved search description 37
                   stored_query:
                     uuid:
                       eq: blah blah
-                  creator_id: 134
-                  created_at: '2020-08-27T15:07:23.896+01:00'
+                  creator_id: 169
+                  created_at: '2020-08-31T01:38:01.584+01:00'
                   deleter_id: 
                   deleted_at: 
                   project_ids:
-                  - 30
+                  - 38
                   analysis_job_ids:
-                  - 29
-                  description_html: "<p>saved search description 29</p>\n"
-                  description_html_tagline: saved search description 29
+                  - 37
+                  description_html: "<p>saved search description 37</p>\n"
+                  description_html_tagline: saved search description 37
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -1613,7 +2345,7 @@ paths:
                   error:
                     details: Could not find the requested page.
                     info:
-                      original_route: saved_searches/30
+                      original_route: saved_searches/38
                       original_http_method: PUT
                 data: 
       requestBody:
@@ -1677,7 +2409,7 @@ paths:
                   error:
                     details: Could not find the requested page.
                     info:
-                      original_route: saved_searches/32
+                      original_route: saved_searches/40
                       original_http_method: PATCH
                 data: 
       requestBody:
@@ -1714,22 +2446,22 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  id: 33
-                  name: saved search name 35
-                  description: saved search description 35
+                  id: 41
+                  name: saved search name 43
+                  description: saved search description 43
                   stored_query:
                     uuid:
                       eq: blah blah
-                  creator_id: 152
-                  created_at: '2020-08-27T15:07:24.864+01:00'
+                  creator_id: 187
+                  created_at: '2020-08-31T01:38:02.316+01:00'
                   deleter_id: 
                   deleted_at: 
                   project_ids:
-                  - 34
+                  - 42
                   analysis_job_ids:
-                  - 33
-                  description_html: "<p>saved search description 35</p>\n"
-                  description_html_tagline: saved search description 35
+                  - 41
+                  description_html: "<p>saved search description 43</p>\n"
+                  description_html_tagline: saved search description 43
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -1772,22 +2504,22 @@ paths:
                     previous: 
                     next: 
                 data:
-                - id: 34
-                  name: saved search name 36
-                  description: saved search description 36
+                - id: 42
+                  name: saved search name 44
+                  description: saved search description 44
                   stored_query:
                     uuid:
                       eq: blah blah
-                  creator_id: 156
-                  created_at: '2020-08-27T15:07:25.093+01:00'
+                  creator_id: 191
+                  created_at: '2020-08-31T01:38:02.494+01:00'
                   deleter_id: 
                   deleted_at: 
                   project_ids:
-                  - 35
+                  - 43
                   analysis_job_ids:
-                  - 34
-                  description_html: "<p>saved search description 36</p>\n"
-                  description_html_tagline: saved search description 36
+                  - 42
+                  description_html: "<p>saved search description 44</p>\n"
+                  description_html_tagline: saved search description 44
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -1820,20 +2552,20 @@ paths:
                   status: 201
                   message: Created
                 data:
-                  id: 36
-                  name: saved search name 38
-                  description: saved search description 38
+                  id: 44
+                  name: saved search name 46
+                  description: saved search description 46
                   stored_query:
                     uuid:
                       eq: blah blah
                   creator_id: 1
-                  created_at: '2020-08-27T15:07:25.521+01:00'
+                  created_at: '2020-08-31T01:38:02.883+01:00'
                   deleter_id: 
                   deleted_at: 
                   project_ids: []
                   analysis_job_ids: []
-                  description_html: "<p>saved search description 38</p>\n"
-                  description_html_tagline: saved search description 38
+                  description_html: "<p>saved search description 46</p>\n"
+                  description_html_tagline: saved search description 46
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -1846,6 +2578,170 @@ paths:
           application/json:
             schema:
               "$ref": "#/components/schemas/saved_search"
+  "/sites/orphans/filter":
+    post:
+      summary: filter site
+      security:
+      - basic_auth_with_token: []
+      parameters: []
+      tags:
+      - sites
+      description: |2
+
+        Users that can invoke this route: `Admin`.<br />
+        Users that can't: `Harvester`, `owner user`, `writer`, `reader`, `no_access`, `anyone`.
+
+        Note: accessing a list/index/filter endpoint may return no results due to project permissions
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              example:
+                meta:
+                  status: 200
+                  message: OK
+                  sorting:
+                    order_by: name
+                    direction: asc
+                  paging:
+                    page: 1
+                    items: 25
+                    total: 1
+                    max_page: 1
+                    current: http://localhost:3000/sites/orphans?direction=asc&items=25&order_by=name&page=1
+                    previous: 
+                    next: 
+                data:
+                - id: 50
+                  name: site name 54
+                  notes: note number 54
+                  creator_id: 203
+                  updater_id: 
+                  deleter_id: 
+                  deleted_at: 
+                  created_at: '2020-08-31T01:38:03.085+01:00'
+                  updated_at: '2020-08-31T01:38:03.085+01:00'
+                  description: site description 54
+                  project_ids: []
+                  location_obfuscated: true
+                  custom_latitude: 
+                  custom_longitude: 
+                  timezone_information: 
+                  image_urls:
+                  - size: extralarge
+                    url: "/images/site/site_span4.png"
+                    width: 300
+                    height: 300
+                  - size: large
+                    url: "/images/site/site_span3.png"
+                    width: 220
+                    height: 220
+                  - size: medium
+                    url: "/images/site/site_span2.png"
+                    width: 140
+                    height: 140
+                  - size: small
+                    url: "/images/site/site_span1.png"
+                    width: 60
+                    height: 60
+                  - size: tiny
+                    url: "/images/site/site_spanhalf.png"
+                    width: 30
+                    height: 30
+                  description_html: "<p>site description 54</p>\n"
+                  description_html_tagline: site description 54
+              schema:
+                allOf:
+                - "$ref": "#/components/schemas/standard_response"
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        "$ref": "#/components/schemas/site"
+  "/sites/orphans":
+    get:
+      summary: list sites
+      security:
+      - basic_auth_with_token: []
+      parameters: []
+      tags:
+      - sites
+      description: |2
+
+        Users that can invoke this route: `Admin`.<br />
+        Users that can't: `Harvester`, `owner user`, `writer`, `reader`, `no_access`, `anyone`.
+
+        Note: accessing a list/index/filter endpoint may return no results due to project permissions
+      responses:
+        '200':
+          description: successful
+          content:
+            application/json:
+              example:
+                meta:
+                  status: 200
+                  message: OK
+                  sorting:
+                    order_by: name
+                    direction: asc
+                  paging:
+                    page: 1
+                    items: 25
+                    total: 1
+                    max_page: 1
+                    current: http://localhost:3000/sites/orphans?direction=asc&items=25&order_by=name&page=1
+                    previous: 
+                    next: 
+                data:
+                - id: 52
+                  name: site name 56
+                  notes: note number 56
+                  creator_id: 208
+                  updater_id: 
+                  deleter_id: 
+                  deleted_at: 
+                  created_at: '2020-08-31T01:38:03.320+01:00'
+                  updated_at: '2020-08-31T01:38:03.320+01:00'
+                  description: site description 56
+                  project_ids: []
+                  location_obfuscated: true
+                  custom_latitude: 
+                  custom_longitude: 
+                  timezone_information: 
+                  image_urls:
+                  - size: extralarge
+                    url: "/images/site/site_span4.png"
+                    width: 300
+                    height: 300
+                  - size: large
+                    url: "/images/site/site_span3.png"
+                    width: 220
+                    height: 220
+                  - size: medium
+                    url: "/images/site/site_span2.png"
+                    width: 140
+                    height: 140
+                  - size: small
+                    url: "/images/site/site_span1.png"
+                    width: 60
+                    height: 60
+                  - size: tiny
+                    url: "/images/site/site_spanhalf.png"
+                    width: 30
+                    height: 30
+                  description_html: "<p>site description 56</p>\n"
+                  description_html_tagline: site description 56
+              schema:
+                allOf:
+                - "$ref": "#/components/schemas/standard_response"
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        "$ref": "#/components/schemas/site"
   "/analysis_jobs":
     get:
       summary: list analysis_jobs
@@ -1881,22 +2777,22 @@ paths:
                     previous: 
                     next: 
                 data:
-                - id: 36
-                  name: job name 36
+                - id: 46
+                  name: job name 46
                   annotation_name: 
-                  custom_settings: custom settings 36
-                  script_id: 36
-                  creator_id: 165
+                  custom_settings: custom settings 46
+                  script_id: 46
+                  creator_id: 210
                   updater_id: 
                   deleter_id: 
                   deleted_at: 
-                  created_at: '2020-08-27T15:07:25.710+01:00'
-                  updated_at: '2020-08-27T15:07:25.710+01:00'
-                  description: job description 36
-                  saved_search_id: 37
-                  started_at: '2020-08-27T15:07:25.705+01:00'
+                  created_at: '2020-08-31T01:38:03.467+01:00'
+                  updated_at: '2020-08-31T01:38:03.467+01:00'
+                  description: job description 46
+                  saved_search_id: 47
+                  started_at: '2020-08-31T01:38:03.462+01:00'
                   overall_status: new
-                  overall_status_modified_at: '2020-08-27T15:07:25.705+01:00'
+                  overall_status_modified_at: '2020-08-31T01:38:03.462+01:00'
                   overall_progress:
                     new: 0
                     queued: 0
@@ -1907,12 +2803,12 @@ paths:
                     cancelling: 0
                     cancelled: 0
                     total: 0
-                  overall_progress_modified_at: '2020-08-27T15:07:25.706+01:00'
+                  overall_progress_modified_at: '2020-08-31T01:38:03.463+01:00'
                   overall_count: 0
                   overall_duration_seconds: 0.0
                   overall_data_length_bytes: 0
-                  description_html: "<p>job description 36</p>\n"
-                  description_html_tagline: job description 36
+                  description_html: "<p>job description 46</p>\n"
+                  description_html_tagline: job description 46
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -1945,22 +2841,22 @@ paths:
                   status: 201
                   message: Created
                 data:
-                  id: 38
-                  name: job name 38
+                  id: 48
+                  name: job name 48
                   annotation_name: 
-                  custom_settings: custom settings 38
-                  script_id: 38
+                  custom_settings: custom settings 48
+                  script_id: 48
                   creator_id: 1
                   updater_id: 1
                   deleter_id: 
                   deleted_at: 
-                  created_at: '2020-08-27T15:07:26.285+01:00'
-                  updated_at: '2020-08-27T15:07:26.323+01:00'
-                  description: job description 38
-                  saved_search_id: 39
-                  started_at: '2020-08-27T15:07:26.301+01:00'
+                  created_at: '2020-08-31T01:38:03.776+01:00'
+                  updated_at: '2020-08-31T01:38:03.812+01:00'
+                  description: job description 48
+                  saved_search_id: 49
+                  started_at: '2020-08-31T01:38:03.791+01:00'
                   overall_status: completed
-                  overall_status_modified_at: '2020-08-27T15:07:26.318+01:00'
+                  overall_status_modified_at: '2020-08-31T01:38:03.808+01:00'
                   overall_progress:
                     new: 0
                     queued: 0
@@ -1971,12 +2867,12 @@ paths:
                     cancelling: 0
                     cancelled: 0
                     total: 0
-                  overall_progress_modified_at: '2020-08-27T15:07:26.319+01:00'
+                  overall_progress_modified_at: '2020-08-31T01:38:03.809+01:00'
                   overall_count: 0
                   overall_duration_seconds: 0.0
                   overall_data_length_bytes: 0
-                  description_html: "<p>job description 38</p>\n"
-                  description_html_tagline: job description 38
+                  description_html: "<p>job description 48</p>\n"
+                  description_html_tagline: job description 48
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -2044,22 +2940,22 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  id: 40
-                  name: job name 40
+                  id: 50
+                  name: job name 50
                   annotation_name: 
-                  custom_settings: custom settings 40
-                  script_id: 40
-                  creator_id: 180
+                  custom_settings: custom settings 50
+                  script_id: 50
+                  creator_id: 225
                   updater_id: 
                   deleter_id: 
                   deleted_at: 
-                  created_at: '2020-08-27T15:07:26.760+01:00'
-                  updated_at: '2020-08-27T15:07:26.760+01:00'
-                  description: job description 40
-                  saved_search_id: 41
-                  started_at: '2020-08-27T15:07:26.754+01:00'
+                  created_at: '2020-08-31T01:38:04.109+01:00'
+                  updated_at: '2020-08-31T01:38:04.109+01:00'
+                  description: job description 50
+                  saved_search_id: 51
+                  started_at: '2020-08-31T01:38:04.104+01:00'
                   overall_status: completed
-                  overall_status_modified_at: '2020-08-27T15:07:26.755+01:00'
+                  overall_status_modified_at: '2020-08-31T01:38:04.105+01:00'
                   overall_progress:
                     new: 0
                     queued: 0
@@ -2070,12 +2966,12 @@ paths:
                     cancelling: 0
                     cancelled: 0
                     total: 0
-                  overall_progress_modified_at: '2020-08-27T15:07:26.756+01:00'
+                  overall_progress_modified_at: '2020-08-31T01:38:04.106+01:00'
                   overall_count: 0
                   overall_duration_seconds: 0.0
                   overall_data_length_bytes: 0
-                  description_html: "<p>job description 40</p>\n"
-                  description_html_tagline: job description 40
+                  description_html: "<p>job description 50</p>\n"
+                  description_html_tagline: job description 50
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -2112,22 +3008,22 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  id: 41
-                  name: job name 42
+                  id: 51
+                  name: job name 52
                   annotation_name: 
-                  custom_settings: custom settings 41
-                  script_id: 41
-                  creator_id: 184
+                  custom_settings: custom settings 51
+                  script_id: 51
+                  creator_id: 229
                   updater_id: 1
                   deleter_id: 
                   deleted_at: 
-                  created_at: '2020-08-27T15:07:27.006+01:00'
-                  updated_at: '2020-08-27T15:07:27.160+01:00'
-                  description: job description 42
-                  saved_search_id: 42
-                  started_at: '2020-08-27T15:07:27.000+01:00'
+                  created_at: '2020-08-31T01:38:04.313+01:00'
+                  updated_at: '2020-08-31T01:38:04.401+01:00'
+                  description: job description 52
+                  saved_search_id: 52
+                  started_at: '2020-08-31T01:38:04.309+01:00'
                   overall_status: completed
-                  overall_status_modified_at: '2020-08-27T15:07:27.000+01:00'
+                  overall_status_modified_at: '2020-08-31T01:38:04.309+01:00'
                   overall_progress:
                     new: 0
                     queued: 0
@@ -2138,12 +3034,12 @@ paths:
                     cancelling: 0
                     cancelled: 0
                     total: 0
-                  overall_progress_modified_at: '2020-08-27T15:07:27.002+01:00'
+                  overall_progress_modified_at: '2020-08-31T01:38:04.310+01:00'
                   overall_count: 0
                   overall_duration_seconds: 0.0
                   overall_data_length_bytes: 0
-                  description_html: "<p>job description 42</p>\n"
-                  description_html_tagline: job description 42
+                  description_html: "<p>job description 52</p>\n"
+                  description_html_tagline: job description 52
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -2185,22 +3081,22 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  id: 42
-                  name: job name 44
+                  id: 52
+                  name: job name 54
                   annotation_name: 
-                  custom_settings: custom settings 43
-                  script_id: 43
-                  creator_id: 191
+                  custom_settings: custom settings 53
+                  script_id: 53
+                  creator_id: 236
                   updater_id: 1
                   deleter_id: 
                   deleted_at: 
-                  created_at: '2020-08-27T15:07:27.321+01:00'
-                  updated_at: '2020-08-27T15:07:27.440+01:00'
-                  description: job description 44
-                  saved_search_id: 44
-                  started_at: '2020-08-27T15:07:27.310+01:00'
+                  created_at: '2020-08-31T01:38:04.522+01:00'
+                  updated_at: '2020-08-31T01:38:04.612+01:00'
+                  description: job description 54
+                  saved_search_id: 54
+                  started_at: '2020-08-31T01:38:04.517+01:00'
                   overall_status: completed
-                  overall_status_modified_at: '2020-08-27T15:07:27.311+01:00'
+                  overall_status_modified_at: '2020-08-31T01:38:04.517+01:00'
                   overall_progress:
                     new: 0
                     queued: 0
@@ -2211,12 +3107,12 @@ paths:
                     cancelling: 0
                     cancelled: 0
                     total: 0
-                  overall_progress_modified_at: '2020-08-27T15:07:27.314+01:00'
+                  overall_progress_modified_at: '2020-08-31T01:38:04.519+01:00'
                   overall_count: 0
                   overall_duration_seconds: 0.0
                   overall_data_length_bytes: 0
-                  description_html: "<p>job description 44</p>\n"
-                  description_html_tagline: job description 44
+                  description_html: "<p>job description 54</p>\n"
+                  description_html_tagline: job description 54
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -2309,22 +3205,22 @@ paths:
                     previous: 
                     next: 
                 data:
-                - id: 44
-                  name: job name 46
+                - id: 54
+                  name: job name 56
                   annotation_name: 
-                  custom_settings: custom settings 46
-                  script_id: 46
-                  creator_id: 202
+                  custom_settings: custom settings 56
+                  script_id: 56
+                  creator_id: 247
                   updater_id: 
                   deleter_id: 
                   deleted_at: 
-                  created_at: '2020-08-27T15:07:27.852+01:00'
-                  updated_at: '2020-08-27T15:07:27.852+01:00'
-                  description: job description 46
-                  saved_search_id: 47
-                  started_at: '2020-08-27T15:07:27.846+01:00'
+                  created_at: '2020-08-31T01:38:04.921+01:00'
+                  updated_at: '2020-08-31T01:38:04.921+01:00'
+                  description: job description 56
+                  saved_search_id: 57
+                  started_at: '2020-08-31T01:38:04.916+01:00'
                   overall_status: new
-                  overall_status_modified_at: '2020-08-27T15:07:27.846+01:00'
+                  overall_status_modified_at: '2020-08-31T01:38:04.916+01:00'
                   overall_progress:
                     new: 0
                     queued: 0
@@ -2335,12 +3231,12 @@ paths:
                     cancelling: 0
                     cancelled: 0
                     total: 0
-                  overall_progress_modified_at: '2020-08-27T15:07:27.848+01:00'
+                  overall_progress_modified_at: '2020-08-31T01:38:04.917+01:00'
                   overall_count: 0
                   overall_duration_seconds: 0.0
                   overall_data_length_bytes: 0
-                  description_html: "<p>job description 46</p>\n"
-                  description_html_tagline: job description 46
+                  description_html: "<p>job description 56</p>\n"
+                  description_html_tagline: job description 56
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -2390,19 +3286,19 @@ paths:
                   updater_id: 
                   name: default
                   description: The default dataset
-                  created_at: '2020-08-27T15:07:15.838+01:00'
-                  updated_at: '2020-08-27T15:07:15.838+01:00'
+                  created_at: '2020-08-31T01:37:54.040+01:00'
+                  updated_at: '2020-08-31T01:37:54.040+01:00'
                   description_html: "<p>The default dataset</p>\n"
                   description_html_tagline: The default dataset
-                - id: 45
-                  creator_id: 205
+                - id: 55
+                  creator_id: 250
                   updater_id: 
-                  name: gen_dataset_name44
-                  description: dataset description 44
-                  created_at: '2020-08-27T15:07:28.149+01:00'
-                  updated_at: '2020-08-27T15:07:28.149+01:00'
-                  description_html: "<p>dataset description 44</p>\n"
-                  description_html_tagline: dataset description 44
+                  name: gen_dataset_name54
+                  description: dataset description 54
+                  created_at: '2020-08-31T01:38:05.119+01:00'
+                  updated_at: '2020-08-31T01:38:05.119+01:00'
+                  description_html: "<p>dataset description 54</p>\n"
+                  description_html_tagline: dataset description 54
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -2435,15 +3331,15 @@ paths:
                   status: 201
                   message: Created
                 data:
-                  id: 47
+                  id: 57
                   creator_id: 1
                   updater_id: 
-                  name: gen_dataset_name46
-                  description: dataset description 46
-                  created_at: '2020-08-27T15:07:28.461+01:00'
-                  updated_at: '2020-08-27T15:07:28.461+01:00'
-                  description_html: "<p>dataset description 46</p>\n"
-                  description_html_tagline: dataset description 46
+                  name: gen_dataset_name56
+                  description: dataset description 56
+                  created_at: '2020-08-31T01:38:05.421+01:00'
+                  updated_at: '2020-08-31T01:38:05.421+01:00'
+                  description_html: "<p>dataset description 56</p>\n"
+                  description_html_tagline: dataset description 56
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -2486,15 +3382,15 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  id: 48
-                  creator_id: 214
+                  id: 58
+                  creator_id: 259
                   updater_id: 
-                  name: gen_dataset_name47
-                  description: dataset description 47
-                  created_at: '2020-08-27T15:07:28.671+01:00'
-                  updated_at: '2020-08-27T15:07:28.671+01:00'
-                  description_html: "<p>dataset description 47</p>\n"
-                  description_html_tagline: dataset description 47
+                  name: gen_dataset_name57
+                  description: dataset description 57
+                  created_at: '2020-08-31T01:38:05.577+01:00'
+                  updated_at: '2020-08-31T01:38:05.577+01:00'
+                  description_html: "<p>dataset description 57</p>\n"
+                  description_html_tagline: dataset description 57
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -2531,15 +3427,15 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  id: 49
-                  description: dataset description 49
-                  name: gen_dataset_name49
+                  id: 59
+                  description: dataset description 59
+                  name: gen_dataset_name59
                   updater_id: 1
-                  creator_id: 218
-                  created_at: '2020-08-27T15:07:28.927+01:00'
-                  updated_at: '2020-08-27T15:07:29.003+01:00'
-                  description_html: "<p>dataset description 49</p>\n"
-                  description_html_tagline: dataset description 49
+                  creator_id: 263
+                  created_at: '2020-08-31T01:38:05.763+01:00'
+                  updated_at: '2020-08-31T01:38:05.815+01:00'
+                  description_html: "<p>dataset description 59</p>\n"
+                  description_html_tagline: dataset description 59
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -2581,15 +3477,15 @@ paths:
                   status: 200
                   message: OK
                 data:
-                  id: 50
-                  description: dataset description 51
-                  name: gen_dataset_name51
+                  id: 60
+                  description: dataset description 61
+                  name: gen_dataset_name61
                   updater_id: 1
-                  creator_id: 223
-                  created_at: '2020-08-27T15:07:29.181+01:00'
-                  updated_at: '2020-08-27T15:07:29.233+01:00'
-                  description_html: "<p>dataset description 51</p>\n"
-                  description_html_tagline: dataset description 51
+                  creator_id: 268
+                  created_at: '2020-08-31T01:38:05.968+01:00'
+                  updated_at: '2020-08-31T01:38:06.017+01:00'
+                  description_html: "<p>dataset description 61</p>\n"
+                  description_html_tagline: dataset description 61
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -2633,7 +3529,7 @@ paths:
                   error:
                     details: Could not find the requested page.
                     info:
-                      original_route: datasets/51
+                      original_route: datasets/61
                       original_http_method: DELETE
                 data: 
   "/datasets/new":
@@ -2707,19 +3603,19 @@ paths:
                   updater_id: 
                   name: default
                   description: The default dataset
-                  created_at: '2020-08-27T15:07:15.838+01:00'
-                  updated_at: '2020-08-27T15:07:15.838+01:00'
+                  created_at: '2020-08-31T01:37:54.040+01:00'
+                  updated_at: '2020-08-31T01:37:54.040+01:00'
                   description_html: "<p>The default dataset</p>\n"
                   description_html_tagline: The default dataset
-                - id: 53
-                  creator_id: 236
+                - id: 63
+                  creator_id: 281
                   updater_id: 
-                  name: gen_dataset_name54
-                  description: dataset description 54
-                  created_at: '2020-08-27T15:07:29.902+01:00'
-                  updated_at: '2020-08-27T15:07:29.902+01:00'
-                  description_html: "<p>dataset description 54</p>\n"
-                  description_html_tagline: dataset description 54
+                  name: gen_dataset_name64
+                  description: dataset description 64
+                  created_at: '2020-08-31T01:38:06.512+01:00'
+                  updated_at: '2020-08-31T01:38:06.512+01:00'
+                  description_html: "<p>dataset description 64</p>\n"
+                  description_html_tagline: dataset description 64
               schema:
                 allOf:
                 - "$ref": "#/components/schemas/standard_response"
@@ -2785,6 +3681,13 @@ components:
             type: integer
           height:
             type: integer
+    permission_levels:
+      type: string
+      enum:
+      - Owner
+      - Writer
+      - Reader
+      - 
     meta:
       type: object
     meta_error:
@@ -2848,19 +3751,19 @@ components:
         creator_id:
           "$ref": "#/components/schemas/id"
           readOnly: true
-        updater_id:
-          "$ref": "#/components/schemas/nullableId"
-          readOnly: true
-        deleter_id:
-          "$ref": "#/components/schemas/nullableId"
-          readOnly: true
         created_at:
           type: date
+          readOnly: true
+        updater_id:
+          "$ref": "#/components/schemas/nullableId"
           readOnly: true
         updated_at:
           type:
           - 'null'
           - date
+          readOnly: true
+        deleter_id:
+          "$ref": "#/components/schemas/nullableId"
           readOnly: true
         deleted_at:
           type:
@@ -2870,7 +3773,16 @@ components:
         site_ids:
           type: array
           items:
-            type: integer
+            "$ref": "#/components/schemas/id"
+        owner_ids:
+          type: array
+          items:
+            "$ref": "#/components/schemas/id"
+          readOnly: true
+        image_urls:
+          "$ref": "#/components/schemas/image_urls"
+        access_level:
+          "$ref": "#/components/schemas/permission_levels"
       required:
       - id
       - name
@@ -2884,7 +3796,9 @@ components:
       - updated_at
       - deleter_id
       - deleted_at
+      - owner_ids
       - site_ids
+      - image_urls
     analysis_job:
       type: object
       additionalProperties: false
@@ -2958,19 +3872,19 @@ components:
         creator_id:
           "$ref": "#/components/schemas/id"
           readOnly: true
-        updater_id:
-          "$ref": "#/components/schemas/nullableId"
-          readOnly: true
-        deleter_id:
-          "$ref": "#/components/schemas/nullableId"
-          readOnly: true
         created_at:
           type: date
+          readOnly: true
+        updater_id:
+          "$ref": "#/components/schemas/nullableId"
           readOnly: true
         updated_at:
           type:
           - 'null'
           - date
+          readOnly: true
+        deleter_id:
+          "$ref": "#/components/schemas/nullableId"
           readOnly: true
         deleted_at:
           type:
@@ -3026,11 +3940,11 @@ components:
         creator_id:
           "$ref": "#/components/schemas/id"
           readOnly: true
-        updater_id:
-          "$ref": "#/components/schemas/nullableId"
-          readOnly: true
         created_at:
           type: date
+          readOnly: true
+        updater_id:
+          "$ref": "#/components/schemas/nullableId"
           readOnly: true
         updated_at:
           type:
@@ -3076,11 +3990,11 @@ components:
         creator_id:
           "$ref": "#/components/schemas/id"
           readOnly: true
-        updater_id:
-          "$ref": "#/components/schemas/nullableId"
-          readOnly: true
         created_at:
           type: date
+          readOnly: true
+        updater_id:
+          "$ref": "#/components/schemas/nullableId"
           readOnly: true
         updated_at:
           type:
@@ -3131,11 +4045,11 @@ components:
         creator_id:
           "$ref": "#/components/schemas/id"
           readOnly: true
-        deleter_id:
-          "$ref": "#/components/schemas/nullableId"
-          readOnly: true
         created_at:
           type: date
+          readOnly: true
+        deleter_id:
+          "$ref": "#/components/schemas/nullableId"
           readOnly: true
         deleted_at:
           type:
@@ -3240,19 +4154,19 @@ components:
         creator_id:
           "$ref": "#/components/schemas/id"
           readOnly: true
-        updater_id:
-          "$ref": "#/components/schemas/nullableId"
-          readOnly: true
-        deleter_id:
-          "$ref": "#/components/schemas/nullableId"
-          readOnly: true
         created_at:
           type: date
+          readOnly: true
+        updater_id:
+          "$ref": "#/components/schemas/nullableId"
           readOnly: true
         updated_at:
           type:
           - 'null'
           - date
+          readOnly: true
+        deleter_id:
+          "$ref": "#/components/schemas/nullableId"
           readOnly: true
         deleted_at:
           type:
