@@ -153,7 +153,8 @@ RSpec.configure do |config|
           dataset: Dataset.schema,
           saved_search: SavedSearch.schema,
           script: Script.schema,
-          site: Site.schema
+          site: Site.schema,
+          region: Region.schema
         }
       }
     }

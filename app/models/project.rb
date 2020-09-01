@@ -15,6 +15,7 @@ class Project < ApplicationRecord
   has_many :writers, -> { joins(:permissions).where({ permissions: { level: 'writer' } }).distinct }, through: :permissions, source: :user
   has_many :owners, -> { joins(:permissions).where({ permissions: { level: 'owner' } }).distinct }, through: :permissions, source: :user
   has_and_belongs_to_many :sites, -> { distinct }
+  has_many :regions, inverse_of: :project
   has_and_belongs_to_many :saved_searches, inverse_of: :projects
   has_many :analysis_jobs, through: :saved_searches
 

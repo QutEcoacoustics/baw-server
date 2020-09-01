@@ -4,15 +4,16 @@ module PermissionsGroupHelpers
   STANDARD_ACTIONS = Set[:index, :show, :create, :update, :destroy, :filter, :new].freeze
   STANDARD_USERS = Set[:admin, :harvester, :owner, :writer, :reader, :no_access, :invalid, :anonymous].freeze
 
-  mattr_accessor :registered_users, :route, :route_params, :factory, :model_name, :expected_list_items_callback, :update_attrs_subset
+  mattr_accessor :registered_users, :route, :route_params, :factory, :factory_args, :model_name, :expected_list_items_callback, :update_attrs_subset
 
   def given_the_route(route, &route_params)
     self.route = route
     self.route_params = route_params
   end
 
-  def using_the_factory(factory, model_name: factory)
+  def using_the_factory(factory, model_name: factory, factory_args: nil)
     self.factory = factory
+    self.factory_args = factory_args
     self.model_name = model_name
   end
 
@@ -72,6 +73,7 @@ module PermissionsGroupHelpers
         user: user,
         actions: actions,
         factory: factory,
+        factory_args: factory_args,
         model_name: model_name,
         expected_list_items_callback: expected_list_items_callback,
         update_attrs_subset: update_attrs_subset
@@ -198,6 +200,14 @@ RSpec.shared_examples :permissions_for do |options|
     options[:factory]
   }
 
+  let(:factory_args) {
+    if options[:factory_args].nil?
+      {}
+    else
+      instance_exec(&options[:factory_args])
+    end
+  }
+
   let(:model_name) {
     options[:model_name]
   }
@@ -233,10 +243,10 @@ RSpec.shared_examples :permissions_for do |options|
     # some endpoints require a valid body is included
     case action
     when :create
-      body = body_attributes_for(model_name, factory: factory)
+      body = body_attributes_for(model_name, factory: factory, factory_args: factory_args)
       as = :json
     when :update
-      body = body_attributes_for(model_name, factory: factory, subset: update_attrs_subset)
+      body = body_attributes_for(model_name, factory: factory, subset: update_attrs_subset, factory_args: factory_args)
       as = :json
     else
       body = nil

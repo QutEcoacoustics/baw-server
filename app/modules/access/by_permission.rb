@@ -41,6 +41,25 @@ module Access
         Permission.where(project_id: project.id)
       end
 
+      # Get all regions for which this user has these access levels.
+      # @param [User] user
+      # @param [Symbol, Array<Symbol>] levels
+      # @param [Integer] project_id
+      # @return [ActiveRecord::Relation] regions
+      def regions(user, levels: Access::Core.levels, project_id: nil)
+        # project can be nil
+        query = Region.all
+        query = query.where(project_id: project_id) unless project_id.nil?
+        is_admin, query = permission_admin(user, levels, query)
+
+        if is_admin
+          query
+        else
+          permissions = permission_projects(user, levels)
+          query.joins(:project).where(permissions)
+        end
+      end
+
       # Get all sites for which this user has these access levels.
       # @param [User] user
       # @param [Symbol, Array<Symbol>] levels
@@ -86,7 +105,7 @@ module Access
       # @return [ActiveRecord::Relation] audio event tags
       def audio_events_tags(user, levels: Access::Core.levels, audio_event: nil)
         # audio event can be nil
-        query = Tagging.joins(audio_event: [audio_recording: [:site]])
+        query = Tagging.joins(audio_event: [{ audio_recording: [:site] }])
 
         if audio_event
           query = query.where(audio_event_id: audio_event.id)
@@ -104,7 +123,7 @@ module Access
       # @return [ActiveRecord::Relation] audio event comments
       def audio_event_comments(user, levels: Access::Core.levels, audio_event: nil)
         # audio_event can be nil
-        query = AudioEventComment.joins(audio_event: [audio_recording: [:site]])
+        query = AudioEventComment.joins(audio_event: [{ audio_recording: [:site] }])
 
         if audio_event
           query = query.where(audio_event_id: audio_event.id)
@@ -212,9 +231,7 @@ module Access
 
         query = query.where(creator_id: user.id) unless is_admin
 
-        query = permission_sites(user, levels, query)
-
-        query
+        permission_sites(user, levels, query)
       end
 
       private
